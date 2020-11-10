@@ -5,15 +5,14 @@ import static spark.Spark.halt;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
 import org.broadinstitute.ddp.analytics.GoogleAnalyticsMetrics;
 import org.broadinstitute.ddp.analytics.GoogleAnalyticsMetricsTracker;
-import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.client.Auth0ManagementClient;
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.db.TransactionWrapper;
@@ -28,7 +27,6 @@ import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.JdbiUserStudyEnrollment;
 import org.broadinstitute.ddp.db.dao.QueuedEventDao;
 import org.broadinstitute.ddp.db.dao.StudyGovernanceDao;
-import org.broadinstitute.ddp.db.dao.StudyLanguageCachedDao;
 import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dao.UserGovernanceDao;
 import org.broadinstitute.ddp.db.dao.UserProfileDao;
@@ -46,7 +44,6 @@ import org.broadinstitute.ddp.model.event.EventSignal;
 import org.broadinstitute.ddp.model.governance.Governance;
 import org.broadinstitute.ddp.model.governance.GovernancePolicy;
 import org.broadinstitute.ddp.model.invitation.InvitationType;
-import org.broadinstitute.ddp.model.study.StudyLanguage;
 import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
 import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.model.user.UserProfile;
@@ -54,6 +51,8 @@ import org.broadinstitute.ddp.pex.PexInterpreter;
 import org.broadinstitute.ddp.security.StudyClientConfiguration;
 import org.broadinstitute.ddp.service.EventService;
 import org.broadinstitute.ddp.util.Auth0Util;
+import org.broadinstitute.ddp.util.DateTimeUtils;
+import org.broadinstitute.ddp.util.I18nUtil;
 import org.broadinstitute.ddp.util.ResponseUtil;
 import org.broadinstitute.ddp.util.ValidatedJsonInputRoute;
 import org.jdbi.v3.core.Handle;
@@ -103,7 +102,7 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
             auth0UserId.set(payload.getAuth0UserId());
             String auth0Domain = payload.getAuth0Domain();
 
-            StudyDto study = null;
+            StudyDto study;
             if (doLocalRegistration && StringUtils.isBlank(auth0Domain)) {
                 study = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(studyGuid);
             } else {
@@ -225,7 +224,7 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
 
                     invitationDao.markAccepted(invitation.getInvitationId(), Instant.now());
 
-                    EventSignal signal = new EventSignal(user.getId(), user.getId(), user.getGuid(),
+                    EventSignal signal = new EventSignal(user.getId(), user.getId(), user.getGuid(), user.getGuid(),
                             study.getId(), EventTriggerType.GOVERNED_USER_REGISTERED);
                     EventService.getInstance().processAllActionsForEventSignal(handle, signal);
                 } else {
@@ -322,9 +321,11 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
 
         if (status == null) {
             // Find if user is a proxy of any other user in the study, whether active or not.
-            long numGovernances = handle.attach(UserGovernanceDao.class)
-                    .findGovernancesByProxyAndStudyGuids(user.getGuid(), study.getGuid())
-                    .count();
+            long numGovernances;
+            try (Stream<Governance> govStream = handle.attach(UserGovernanceDao.class)
+                    .findGovernancesByProxyAndStudyGuids(user.getGuid(), study.getGuid())) {
+                numGovernances = govStream.count();
+            }
             if (numGovernances > 0) {
                 LOG.info("Existing user {} is a proxy of {} users in study {}", user.getGuid(), numGovernances, study.getGuid());
                 return user.getGuid();
@@ -514,53 +515,6 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
         return userDao.findUserByGuid(tempUserGuid).orElseThrow(() -> new DDPException("Could not find user with guid " + tempUserGuid));
     }
 
-    private LanguageDto determineUserLanguage(Handle handle, UserRegistrationPayload payload) {
-        String studyGuid = payload.getStudyGuid();
-        StudyLanguage userLanguage = null;
-        List<StudyLanguage> studyLanguages = new StudyLanguageCachedDao(handle).findLanguages(studyGuid);
-        for (var language : studyLanguages) {
-            if (language.getLanguageCode().equalsIgnoreCase(payload.getLanguageCode())) {
-                userLanguage = language;
-                break;
-            }
-        }
-
-        // If no language provided or language is not one of study's supported ones,
-        // then use study's default language. If all else fails, fallback to first study language.
-        if (userLanguage == null) {
-            userLanguage = studyLanguages.stream()
-                    .filter(StudyLanguage::isDefault)
-                    .findFirst()
-                    .orElse(null);
-            if (userLanguage == null && !studyLanguages.isEmpty()) {
-                userLanguage = studyLanguages.get(0);
-                LOG.warn("Study {} does not have a default language, falling back to {}",
-                        studyGuid, userLanguage.getLanguageCode());
-            }
-        }
-
-        if (userLanguage != null) {
-            return userLanguage.toLanguageDto();
-        } else {
-            LOG.warn("Study {} does not have any languages configured, falling back to {}",
-                    studyGuid, LanguageStore.DEFAULT_LANG_CODE);
-            return LanguageStore.getDefault();
-        }
-    }
-
-    private ZoneId parseUserTimeZone(String givenTimeZone) {
-        if (givenTimeZone != null) {
-            try {
-                return ZoneId.of(givenTimeZone);
-            } catch (Exception e) {
-                throw new DDPException("Provided timezone '" + givenTimeZone + "' is invalid", e);
-            }
-        } else {
-            LOG.info("No user timezone is provided");
-            return null;
-        }
-    }
-
     private void initializeProfile(Handle handle, User user, UserRegistrationPayload payload) {
         var profileDao = handle.attach(UserProfileDao.class);
         UserProfile profile = profileDao.findProfileByUserId(user.getId()).orElse(null);
@@ -570,9 +524,12 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
         firstName = StringUtils.isNotBlank(firstName) ? firstName.trim() : null;
         String lastName = payload.getLastName();
         lastName = StringUtils.isNotBlank(lastName) ? lastName.trim() : null;
-        LanguageDto languageDto = determineUserLanguage(handle, payload);
+        LanguageDto languageDto = I18nUtil.determineUserLanguage(handle, payload.getStudyGuid(), payload.getLanguageCode());
         long languageId = languageDto.getId();
-        ZoneId timeZone = parseUserTimeZone(payload.getTimeZone());
+        ZoneId timeZone = DateTimeUtils.parseTimeZone(payload.getTimeZone());
+        if (timeZone == null) {
+            LOG.info("No user timezone is provided");
+        }
 
         if (profile == null) {
             profile = new UserProfile.Builder(user.getId())
@@ -630,14 +587,14 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
                 operator.getId(),
                 participant.getId(),
                 participant.getGuid(),
-                studyDto.getId(),
-                EventTriggerType.USER_REGISTERED);
+                operator.getGuid(),
+                studyDto.getId(), EventTriggerType.USER_REGISTERED);
         EventService.getInstance().processAllActionsForEventSignal(handle, signal);
     }
 
     private static class UserPair {
-        private User operatorUser;
-        private User participantUser;
+        private final User operatorUser;
+        private final User participantUser;
 
         public UserPair(User operatorUser, User participantUser) {
             this.operatorUser = operatorUser;

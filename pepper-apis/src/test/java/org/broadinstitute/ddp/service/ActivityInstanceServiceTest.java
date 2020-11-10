@@ -60,7 +60,7 @@ public class ActivityInstanceServiceTest extends TxnAwareBaseTest {
             String instanceGuid = setupActivityAndInstance(handle);
 
             Optional<ActivityInstance> inst = service.getTranslatedActivity(handle,
-                    testData.getUserGuid(), ActivityType.FORMS, instanceGuid, "en", ContentStyle.STANDARD);
+                    testData.getUserGuid(), testData.getUserGuid(), ActivityType.FORMS, instanceGuid, "en", ContentStyle.STANDARD);
             assertTrue(inst.isPresent());
             assertEquals(inst.get().getActivityType(), ActivityType.FORMS);
             assertEquals(inst.get().getGuid(), instanceGuid);
@@ -73,7 +73,7 @@ public class ActivityInstanceServiceTest extends TxnAwareBaseTest {
     public void getTranslatedActivity_notFound() {
         TransactionWrapper.useTxn(handle -> {
             Optional<ActivityInstance> inst = service.getTranslatedActivity(handle,
-                    testData.getUserGuid(), ActivityType.FORMS, "random guid", "en", ContentStyle.STANDARD);
+                    testData.getUserGuid(), testData.getUserGuid(), ActivityType.FORMS, "random guid", "en", ContentStyle.STANDARD);
             assertNotNull(inst);
             assertFalse(inst.isPresent());
         });
@@ -84,7 +84,8 @@ public class ActivityInstanceServiceTest extends TxnAwareBaseTest {
         TransactionWrapper.useTxn(handle -> {
             String instanceGuid = setupActivityAndInstance(handle);
 
-            Optional<FormInstance> inst = service.getTranslatedForm(handle, testData.getUserGuid(), instanceGuid, "en",
+            Optional<FormInstance> inst = service.getTranslatedForm(handle, testData.getUserGuid(),
+                    testData.getUserGuid(), instanceGuid, "en",
                     ContentStyle.STANDARD);
             assertTrue(inst.isPresent());
             assertEquals(inst.get().getActivityType(), ActivityType.FORMS);
@@ -108,7 +109,8 @@ public class ActivityInstanceServiceTest extends TxnAwareBaseTest {
     @Test
     public void getTranslatedForm_notFound() {
         TransactionWrapper.useTxn(handle -> {
-            Optional<FormInstance> inst = service.getTranslatedForm(handle, testData.getUserGuid(), "random guid", "en",
+            Optional<FormInstance> inst = service.getTranslatedForm(handle, testData.getUserGuid(), testData.getUserGuid(),
+                    "random guid", "en",
                     ContentStyle.STANDARD);
             assertNotNull(inst);
             assertFalse(inst.isPresent());

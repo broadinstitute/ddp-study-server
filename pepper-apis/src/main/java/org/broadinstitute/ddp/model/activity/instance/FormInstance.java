@@ -1,5 +1,6 @@
 package org.broadinstitute.ddp.model.activity.instance;
 
+import javax.validation.constraints.NotNull;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -9,7 +10,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
-import javax.validation.constraints.NotNull;
 
 import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.annotations.SerializedName;
@@ -260,10 +260,10 @@ public final class FormInstance extends ActivityInstance {
      * @param instanceGuid the activity instance guid
      * @throws DDPException if pex evaluation error
      */
-    public void updateBlockStatuses(Handle handle, PexInterpreter interpreter, String userGuid, String instanceGuid) {
+    public void updateBlockStatuses(Handle handle, PexInterpreter interpreter, String userGuid, String operatorGuid, String instanceGuid) {
         for (FormSection section : getAllSections()) {
             for (FormBlock block : section.getBlocks()) {
-                updateBlockStatus(handle, interpreter, block, userGuid, instanceGuid);
+                updateBlockStatus(handle, interpreter, block, userGuid, operatorGuid, instanceGuid);
                 if (block.getBlockType().isContainerBlock()) {
                     List<FormBlock> children;
                     if (block.getBlockType() == BlockType.CONDITIONAL) {
@@ -274,17 +274,18 @@ public final class FormInstance extends ActivityInstance {
                         throw new DDPException("Unhandled container block type " + block.getBlockType());
                     }
                     for (FormBlock child : children) {
-                        updateBlockStatus(handle, interpreter, child, userGuid, instanceGuid);
+                        updateBlockStatus(handle, interpreter, child, userGuid, operatorGuid, instanceGuid);
                     }
                 }
             }
         }
     }
 
-    private void updateBlockStatus(Handle handle, PexInterpreter interpreter, FormBlock block, String userGuid, String instanceGuid) {
+    private void updateBlockStatus(Handle handle, PexInterpreter interpreter, FormBlock block, String userGuid,
+                                   String operatorGuid, String instanceGuid) {
         if (block.getShownExpr() != null) {
             try {
-                boolean shown = interpreter.eval(block.getShownExpr(), handle, userGuid, instanceGuid);
+                boolean shown = interpreter.eval(block.getShownExpr(), handle, userGuid, operatorGuid, instanceGuid);
                 block.setShown(shown);
             } catch (PexException e) {
                 String msg = String.format("Error evaluating pex expression for form activity instance %s and block %s: `%s`",

@@ -160,7 +160,7 @@ public class ActivityDefStore {
         }
     }
 
-    public Pair<Integer, Integer> countQuestionsAndAnswers(Handle handle, String userGuid,
+    public Pair<Integer, Integer> countQuestionsAndAnswers(Handle handle, String userGuid, String operatorGuid,
                                                            FormActivityDef formActivityDef,
                                                            String instanceGuid,
                                                            Map<String, FormResponse> instanceResponses) {
@@ -181,7 +181,7 @@ public class ActivityDefStore {
         int numAnswered = 0;
         for (var section : formActivityDef.getAllSections()) {
             for (var block : section.getBlocks()) {
-                Pair<Integer, Integer> counts = countBlock(handle, userGuid, block, formResponse);
+                Pair<Integer, Integer> counts = countBlock(handle, userGuid, operatorGuid, block, formResponse);
                 numQuestions += counts.getLeft();
                 numAnswered += counts.getRight();
                 if (block.getBlockType().isContainerBlock()) {
@@ -194,7 +194,7 @@ public class ActivityDefStore {
                         throw new DDPException("Unhandled container block type " + block.getBlockType());
                     }
                     for (var child : children) {
-                        counts = countBlock(handle, userGuid, child, formResponse);
+                        counts = countBlock(handle, userGuid, operatorGuid, child, formResponse);
                         numQuestions += counts.getLeft();
                         numAnswered += counts.getRight();
                     }
@@ -205,7 +205,8 @@ public class ActivityDefStore {
         return new ImmutablePair<>(numQuestions, numAnswered);
     }
 
-    private Pair<Integer, Integer> countBlock(Handle handle, String userGuid, FormBlockDef block, FormResponse formResponse) {
+    private Pair<Integer, Integer> countBlock(Handle handle, String userGuid, String operatorGuid,
+                                              FormBlockDef block, FormResponse formResponse) {
         int numQuestions = 0;
         int numAnswered = 0;
         boolean shown = true;
@@ -213,7 +214,7 @@ public class ActivityDefStore {
 
         if (block.getShownExpr() != null) {
             try {
-                shown = interpreter.eval(block.getShownExpr(), handle, userGuid, instanceGuid);
+                shown = interpreter.eval(block.getShownExpr(), handle, userGuid, operatorGuid, instanceGuid);
             } catch (PexException e) {
                 String msg = String.format("Error evaluating pex expression for formBlockDef def %s: `%s`",
                         block.getBlockGuid(), block.getShownExpr());

@@ -1,17 +1,20 @@
 package org.broadinstitute.ddp.housekeeping.schedule;
 
 import java.time.Instant;
-import java.util.List;
 
+import com.google.auth.oauth2.GoogleCredentials;
+import com.google.cloud.storage.Bucket;
 import com.typesafe.config.Config;
+import org.broadinstitute.ddp.client.GoogleBucketClient;
+import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.elastic.ElasticSearchIndexType;
-import org.broadinstitute.ddp.export.ActivityExtract;
+import org.broadinstitute.ddp.export.DataExportCoordinator;
 import org.broadinstitute.ddp.export.DataExporter;
-import org.broadinstitute.ddp.model.study.Participant;
 import org.broadinstitute.ddp.util.ConfigManager;
+import org.broadinstitute.ddp.util.GoogleCredentialUtil;
 import org.quartz.Job;
 import org.quartz.JobBuilder;
 import org.quartz.JobDataMap;
@@ -28,14 +31,19 @@ public class OnDemandExportJob implements Job {
 
     public static final String DATA_STUDY = "study";
     public static final String DATA_INDEX = "index";
+    public static final String DATA_CSV = "csv";
+    public static final String ALL_INDICES = "ALL_INDICES";
 
     private static final Logger LOG = LoggerFactory.getLogger(OnDemandExportJob.class);
+
+    private static DataExporter exporter;
 
     public static JobKey getKey() {
         return Keys.Export.OnDemandJob;
     }
 
     public static void register(Scheduler scheduler, Config cfg) throws SchedulerException {
+        exporter = new DataExporter(cfg);
         JobDetail job = JobBuilder.newJob(OnDemandExportJob.class)
                 .withIdentity(getKey())
                 .requestRecovery(false)
@@ -54,7 +62,9 @@ public class OnDemandExportJob implements Job {
             String study = data.getString(DATA_STUDY);
             String index = data.getOrDefault(DATA_INDEX, null) != null
                     ? data.getString(DATA_INDEX) : null;
-            LOG.info("Triggered on-demand export job for study={} and index={}", study, index == null ? "<null>" : index);
+            boolean doCsv = data.getOrDefault(DATA_CSV, null) != null && data.getBoolean(DATA_CSV);
+            LOG.info("Triggered on-demand export job for study={}, index={}, csv={}",
+                    study, index == null ? "<null>" : index, doCsv);
 
             boolean exportCurrentlyRunning = ctx.getScheduler()
                     .getCurrentlyExecutingJobs().stream()
@@ -63,13 +73,13 @@ public class OnDemandExportJob implements Job {
                         return key.equals(StudyDataExportJob.getKey());
                     });
             if (exportCurrentlyRunning) {
-                LOG.warn("Regular data export job currently running, skipping on-demand export job");
+                LOG.warn("Regular data export job currently running, skipping job {}", getKey());
                 return;
             }
 
             LOG.info("Running job {}", getKey());
             long start = Instant.now().toEpochMilli();
-            run(study, index);
+            run(study, index, doCsv);
             long elapsed = Instant.now().toEpochMilli() - start;
             LOG.info("Finished job {}. Took {}s", getKey(), elapsed / 1000);
         } catch (Exception e) {
@@ -78,67 +88,59 @@ public class OnDemandExportJob implements Job {
         }
     }
 
-    private void run(String studyGuid, String index) {
+    private void run(String studyGuid, String index, boolean doCsv) {
         Config cfg = ConfigManager.getInstance().getConfig();
-        var exporter = new DataExporter(cfg);
 
-        TransactionWrapper.useTxn(TransactionWrapper.DB.APIS, handle -> {
-            StudyDto studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(studyGuid);
-            if (studyDto == null) {
-                LOG.warn("Unknown study '{}', skipping data export", studyGuid);
-                return;
-            } else if (!studyDto.isDataExportEnabled()) {
-                LOG.warn("Study {} does not have data export enabled, skipping data export", studyGuid);
-                return;
-            }
-
-            try {
-                if (index == null) {
-                    LOG.info("Running {} elasticsearch export for study {}",
-                            ElasticSearchIndexType.ACTIVITY_DEFINITION, studyGuid);
-                    long start = Instant.now().toEpochMilli();
-                    List<ActivityExtract> activities = exporter.exportActivityDefinitionsToElasticsearch(handle, studyDto, cfg);
-                    long elapsed = Instant.now().toEpochMilli() - start;
-                    LOG.info("Finished {} elasticsearch export for study {} in {}s",
-                            ElasticSearchIndexType.ACTIVITY_DEFINITION, studyGuid, elapsed / 1000);
-
-                    List<Participant> participants = exporter.extractParticipantDataSet(handle, studyDto);
-                    runEsExport(studyGuid, ElasticSearchIndexType.PARTICIPANTS_STRUCTURED,
-                            () -> exporter.exportToElasticsearch(handle, studyDto, activities, participants, true));
-                    runEsExport(studyGuid, ElasticSearchIndexType.PARTICIPANTS,
-                            () -> exporter.exportToElasticsearch(handle, studyDto, activities, participants, false));
-                    runEsExport(studyGuid, ElasticSearchIndexType.USERS,
-                            () -> exporter.exportUsersToElasticsearch(handle, studyDto, null));
-                } else if (index.equals(ElasticSearchIndexType.ACTIVITY_DEFINITION.getElasticSearchCompatibleLabel())) {
-                    runEsExport(studyGuid, ElasticSearchIndexType.ACTIVITY_DEFINITION,
-                            () -> exporter.exportActivityDefinitionsToElasticsearch(handle, studyDto, cfg));
-                } else if (index.equals(ElasticSearchIndexType.PARTICIPANTS_STRUCTURED.getElasticSearchCompatibleLabel())) {
-                    runEsExport(studyGuid, ElasticSearchIndexType.PARTICIPANTS_STRUCTURED,
-                            () -> exporter.exportParticipantsToElasticsearchByIds(handle, studyDto, null, true));
-                } else if (index.equals(ElasticSearchIndexType.PARTICIPANTS.getElasticSearchCompatibleLabel())) {
-                    runEsExport(studyGuid, ElasticSearchIndexType.PARTICIPANTS,
-                            () -> exporter.exportParticipantsToElasticsearchByIds(handle, studyDto, null, false));
-                } else if (index.equals(ElasticSearchIndexType.USERS.getElasticSearchCompatibleLabel())) {
-                    runEsExport(studyGuid, ElasticSearchIndexType.USERS,
-                            () -> exporter.exportUsersToElasticsearch(handle, studyDto, null));
-                } else {
-                    LOG.error("Unknown index type: {}", index);
-                }
-            } catch (Exception e) {
-                LOG.error("Error while exporting data for study {}, continuing", studyGuid, e);
-            }
-        });
-    }
-
-    private void runEsExport(String studyGuid, ElasticSearchIndexType index, Runnable callback) {
-        try {
-            LOG.info("Running {} elasticsearch export for study {}", index, studyGuid);
-            long start = Instant.now().toEpochMilli();
-            callback.run();
-            long elapsed = Instant.now().toEpochMilli() - start;
-            LOG.info("Finished {} elasticsearch export for study {} in {}s", index, studyGuid, elapsed / 1000);
-        } catch (Exception e) {
-            LOG.error("Error while running {} elasticsearch export for study {}, continuing", index, studyGuid, e);
+        StudyDto studyDto = TransactionWrapper.withTxn(TransactionWrapper.DB.APIS, handle ->
+                handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(studyGuid));
+        if (studyDto == null) {
+            LOG.warn("Unknown study '{}', skipping job {}", studyGuid, getKey());
+            return;
+        } else if (!studyDto.isDataExportEnabled()) {
+            LOG.warn("Study {} does not have data export enabled, skipping job {}", studyGuid, getKey());
+            return;
         }
+
+        var coordinator = new DataExportCoordinator(exporter)
+                .withBatchSize(cfg.getInt(ConfigFile.ELASTICSEARCH_EXPORT_BATCH_SIZE));
+
+        if (index != null) {
+            if (ALL_INDICES.equals(index)) {
+                coordinator.includeIndex(ElasticSearchIndexType.ACTIVITY_DEFINITION);
+                coordinator.includeIndex(ElasticSearchIndexType.PARTICIPANTS_STRUCTURED);
+                coordinator.includeIndex(ElasticSearchIndexType.PARTICIPANTS);
+                coordinator.includeIndex(ElasticSearchIndexType.USERS);
+            } else {
+                try {
+                    var indexType = ElasticSearchIndexType.valueOf(index.toUpperCase());
+                    coordinator.includeIndex(indexType);
+                } catch (Exception e) {
+                    LOG.error("Unknown index type: {}", index);
+                    return;
+                }
+            }
+        }
+
+        if (doCsv) {
+            String gcpProjectId = cfg.getString(ConfigFile.GOOGLE_PROJECT_ID);
+            String bucketName = cfg.getString(ConfigFile.STUDY_EXPORT_BUCKET);
+            GoogleCredentials credentials = GoogleCredentialUtil
+                    .initCredentials(cfg.getBoolean(ConfigFile.REQUIRE_DEFAULT_GCP_CREDENTIALS));
+            if (credentials == null) {
+                LOG.error("No Google credentials are provided, skipping job {}", getKey());
+                return;
+            }
+
+            var bucketClient = new GoogleBucketClient(gcpProjectId, credentials);
+            Bucket bucket = bucketClient.getBucket(bucketName);
+            if (bucket == null) {
+                LOG.error("Could not find google bucket {}, skipping job {}", bucketName, getKey());
+                return;
+            }
+
+            coordinator.includeCsv(bucket);
+        }
+
+        coordinator.export(studyDto);
     }
 }

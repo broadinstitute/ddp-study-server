@@ -62,7 +62,7 @@ public class WorkflowService {
             boolean success = true;
             if (candidate.hasPrecondition()) {
                 try {
-                    success = interpreter.eval(candidate.getPrecondition(), handle, userGuid, null);
+                    success = interpreter.eval(candidate.getPrecondition(), handle, userGuid, operatorGuid, null);
                 } catch (PexException e) {
                     LOG.warn("Error evaluating pex expression: `{}`", candidate.getPrecondition(), e);
                     success = false;
@@ -154,6 +154,7 @@ public class WorkflowService {
                 operatorId,
                 participantId,
                 participantGuid,
+                operatorGuid,
                 instanceId,
                 activityId,
                 studyId,

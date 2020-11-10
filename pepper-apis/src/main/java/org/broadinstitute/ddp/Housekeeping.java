@@ -2,6 +2,7 @@ package org.broadinstitute.ddp;
 
 import java.io.IOException;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -17,6 +18,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutureCallback;
 import com.google.api.core.ApiFutures;
+import com.google.api.gax.core.InstantiatingExecutorProvider;
 import com.google.api.gax.rpc.ApiException;
 import com.google.cloud.pubsub.v1.AckReplyConsumer;
 import com.google.cloud.pubsub.v1.MessageReceiver;
@@ -210,6 +212,7 @@ public class Housekeeping {
             LiquibaseUtil.runLiquibase(apisDbUrl, TransactionWrapper.DB.APIS);
             LOG.info("Running Housekeeping liquibase migrations against " + housekeepingDbUrl);
             LiquibaseUtil.runLiquibase(housekeepingDbUrl, TransactionWrapper.DB.HOUSEKEEPING);
+            LiquibaseUtil.releaseResources();
         }
         TransactionWrapper.useTxn(TransactionWrapper.DB.APIS, LanguageStore::init);
 
@@ -253,16 +256,23 @@ public class Housekeeping {
         //loop to pickup pending events on main DB API and create messages to send over to Housekeeping
         while (!stop) {
             try {
-                int numEventsProcessed = TransactionWrapper.withTxn(TransactionWrapper.DB.APIS, apisHandle -> {
+                // in one transaction, query the list of events to consider dispatching
+                final List<QueuedEventDto> pendingEvents = new ArrayList<>();
+                TransactionWrapper.useTxn(TransactionWrapper.DB.APIS, apisHandle -> {
                     EventDao eventDao = apisHandle.attach(EventDao.class);
-                    JdbiQueuedEvent queuedEventDao = apisHandle.attach(JdbiQueuedEvent.class);
                     // first query the full list of pending events, shuffled to avoid event starvation
                     LOG.info("Querying pending events");
-                    List<QueuedEventDto> pendingEvents = eventDao.findPublishableQueuedEvents();
+                    pendingEvents.addAll(eventDao.findPublishableQueuedEvents());
                     LOG.info("Found {} events that may be publishable", pendingEvents.size());
                     Collections.shuffle(pendingEvents);
+                });
 
-                    for (QueuedEventDto pendingEvent : pendingEvents) {
+                for (QueuedEventDto pendingEvent : pendingEvents) {
+                    // for each event we are considering, handle it in its own transaction
+                    TransactionWrapper.useTxn(TransactionWrapper.DB.APIS, apisHandle -> {
+                        boolean shouldSkipEvent = false;
+                        JdbiQueuedEvent queuedEventDao = apisHandle.attach(JdbiQueuedEvent.class);
+                        EventDao eventDao = apisHandle.attach(EventDao.class);
                         if (pendingEvent.getParticipantGuid() != null) {
                             User participant = apisHandle.attach(UserDao.class)
                                     .findUserByGuid(pendingEvent.getParticipantGuid())
@@ -270,143 +280,153 @@ public class Housekeeping {
                             if (participant == null) {
                                 LOG.error("Could not find participant {} for publishing queued event {}, skipping",
                                         pendingEvent.getParticipantGuid(), pendingEvent.getQueuedEventId());
-                                continue;
+                                shouldSkipEvent = true;
                             } else if (participant.isTemporary()) {
                                 LOG.warn("Participant {} for queued event {} is a temporary user, skipping",
                                         pendingEvent.getParticipantGuid(), pendingEvent.getQueuedEventId());
-                                continue;
+                                shouldSkipEvent = true;
                             }
                         }
 
-                        String pendingEventId = pendingEvent.getDdpEventId();
-                        boolean shouldCancel = false;
-                        if (StringUtils.isNotBlank(pendingEvent.getCancelCondition())) {
-                            try {
-                                shouldCancel = pexInterpreter.eval(pendingEvent.getCancelCondition(),
-                                        apisHandle,
-                                        pendingEvent.getParticipantGuid(),
-                                        null);
-                            } catch (PexException e) {
-                                LOG.warn("Failed to evaluate cancelCondition pex, defaulting to false: `{}`",
-                                        pendingEvent.getCancelCondition(), e);
-                                shouldCancel = false;
-                            }
-                        }
-                        if (shouldCancel) {
-                            LOG.info("Deleting queued event {} because its cancel condition has been met", pendingEvent
-                                    .getQueuedEventId());
-                            int rowsDeleted = queuedEventDao.deleteAllByQueuedEventId(pendingEvent.getQueuedEventId());
-                            if (rowsDeleted != 1) {
-                                throw new DDPException("Deleted " + rowsDeleted + " rows for queued event "
-                                        + pendingEvent.getQueuedEventId() + " after hitting cancel "
-                                        + "condition "
-                                        + pendingEvent.getCancelCondition());
-                            }
-                        } else {
-                            boolean hasMetPrecondition = true;
-                            if (StringUtils.isNotBlank(pendingEvent.getPrecondition())) {
+                        if (!shouldSkipEvent) {
+                            String pendingEventId = pendingEvent.getDdpEventId();
+                            boolean shouldCancel = false;
+                            if (StringUtils.isNotBlank(pendingEvent.getCancelCondition())) {
                                 try {
-                                    hasMetPrecondition = pexInterpreter.eval(pendingEvent.getPrecondition(),
+                                    shouldCancel = pexInterpreter.eval(pendingEvent.getCancelCondition(),
                                             apisHandle,
                                             pendingEvent.getParticipantGuid(),
+                                            pendingEvent.getOperatorGuid(),
                                             null);
                                 } catch (PexException e) {
-                                    LOG.warn("Failed to evaluate precondition pex, defaulting to false: `{}`",
-                                            pendingEvent.getPrecondition(), e);
-                                    hasMetPrecondition = false;
+                                    LOG.warn("Failed to evaluate cancelCondition pex, defaulting to false: `{}`",
+                                            pendingEvent.getCancelCondition(), e);
+                                    shouldCancel = false;
                                 }
                             }
-
-                            if (hasMetPrecondition) {
-                                if (pendingEvent.getActionType() == EventActionType.ACTIVITY_INSTANCE_CREATION) {
-                                    Optional<EventConfigurationDto> eventConfOptDto =
-                                            eventDao.getEventConfigurationDtoById(pendingEvent.getEventConfigurationId());
-                                    if (!eventConfOptDto.isPresent()) {
-                                        LOG.error("No event configuration found for ID: {} . skipping queued event : {} ",
-                                                pendingEvent.getEventConfigurationId(), pendingEvent.getQueuedEventId());
-                                    } else {
-                                        createActivityInstance(apisHandle, eventConfOptDto.get(), pendingEvent);
-                                        queuedEventDao.deleteAllByQueuedEventId(pendingEvent.getQueuedEventId());
-                                        continue;
+                            if (shouldCancel) {
+                                LOG.info("Deleting queued event {} because its cancel condition has been met", pendingEvent
+                                        .getQueuedEventId());
+                                int rowsDeleted = queuedEventDao.deleteAllByQueuedEventId(pendingEvent.getQueuedEventId());
+                                if (rowsDeleted != 1) {
+                                    throw new DDPException("Deleted " + rowsDeleted + " rows for queued event "
+                                            + pendingEvent.getQueuedEventId() + " after hitting cancel "
+                                            + "condition "
+                                            + pendingEvent.getCancelCondition());
+                                }
+                            } else {
+                                boolean hasMetPrecondition = true;
+                                if (StringUtils.isNotBlank(pendingEvent.getPrecondition())) {
+                                    try {
+                                        hasMetPrecondition = pexInterpreter.eval(pendingEvent.getPrecondition(),
+                                                apisHandle,
+                                                pendingEvent.getParticipantGuid(),
+                                                pendingEvent.getOperatorGuid(),
+                                                null);
+                                    } catch (PexException e) {
+                                        LOG.warn("Failed to evaluate precondition pex, defaulting to false: `{}`",
+                                                pendingEvent.getPrecondition(), e);
+                                        hasMetPrecondition = false;
                                     }
                                 }
-                                TransactionWrapper.useTxn(TransactionWrapper.DB.HOUSEKEEPING, housekeepingHandle -> {
-                                    JdbiEvent jdbiEvent = housekeepingHandle.attach(JdbiEvent.class);
-                                    JdbiMessage jdbiMessage = housekeepingHandle.attach(JdbiMessage.class);
-                                    if (jdbiEvent.shouldHandleEvent(
-                                            pendingEventId,
-                                            pendingEvent.getActionType().name(),
-                                            pendingEvent.getMaxOccurrencesPerUser())) {
-                                        String ddpMessageId = Long.toString(jdbiMessage.insertMessageForEvent(
-                                                pendingEventId));
-                                        LOG.info("Publishing queued event {}", pendingEvent.getQueuedEventId());
-                                        PubsubMessage message = null;
-                                        try {
-                                            message = messageBuilder.createMessage(ddpMessageId, pendingEvent, apisHandle);
-                                        } catch (NoSendableEmailAddressException e) {
-                                            boolean shouldDeleteEvent = apisHandle.attach(StudyDao.class)
-                                                    .findSettings(pendingEvent.getStudyGuid())
-                                                    .map(StudySettings::shouldDeleteUnsendableEmails)
-                                                    .orElse(false);
-                                            if (shouldDeleteEvent) {
-                                                LOG.warn("Unable to create message for event with queued_event_id={}, proceeding to delete",
-                                                        pendingEvent.getQueuedEventId(), e);
-                                                queuedEventDao.deleteAllByQueuedEventId(pendingEvent.getQueuedEventId());
-                                                return; // Exit out of transaction wrapper and move on to next event.
-                                            } else {
-                                                LOG.error("Could not create message for event with queued_event_id={}"
-                                                        + " because there is no email address to sent to",
-                                                        pendingEvent.getQueuedEventId(), e);
-                                            }
-                                        } catch (MessageBuilderException e) {
-                                            LOG.error("Could not create message for queued event "
-                                                    + pendingEvent.getQueuedEventId(), e);
-                                        }
 
-                                        if (message != null) {
-                                            // publish the message and delete it from the queue when published
-                                            Publisher publisher = null;
-                                            // todo arz cache publishers, creating them is expensive
-                                            try {
-                                                publisher = pubsubConnectionManager.createPublisher(ProjectTopicName.of(
-                                                        pubSubProject, pendingEvent.getPubSubTopic()));
-                                            } catch (IOException e) {
-                                                throw new DDPException("Could not create publisher for " + pendingEvent
-                                                        .getPubSubTopic(), e);
-                                            }
-                                            ApiFuture<String> publishResult = publisher.publish(message);
-
-                                            int numRowsUpdated = queuedEventDao.markPending(pendingEvent.getQueuedEventId());
-                                            LOG.info("Marked queued event {} as pending", pendingEvent.getQueuedEventId());
-                                            if (numRowsUpdated != 1) {
-                                                throw new DaoException("Marked " + numRowsUpdated + " rows as pending for "
-
-                                                        + "queued event " + pendingEventId);
-                                            }
-                                            setPostPublishingCallbacks(publishResult, pendingEvent.getQueuedEventId());
+                                if (hasMetPrecondition) {
+                                    if (pendingEvent.getActionType() == EventActionType.ACTIVITY_INSTANCE_CREATION) {
+                                        Optional<EventConfigurationDto> eventConfOptDto =
+                                                eventDao.getEventConfigurationDtoById(pendingEvent.getEventConfigurationId());
+                                        if (!eventConfOptDto.isPresent()) {
+                                            LOG.error("No event configuration found for ID: {} . skipping queued event : {} ",
+                                                    pendingEvent.getEventConfigurationId(), pendingEvent.getQueuedEventId());
                                         } else {
-                                            LOG.error("null message for " + pendingEvent.getQueuedEventId());
+                                            createActivityInstance(apisHandle, eventConfOptDto.get(), pendingEvent);
+                                            queuedEventDao.deleteAllByQueuedEventId(pendingEvent.getQueuedEventId());
+                                            shouldSkipEvent = true;
                                         }
-                                    } else {
-                                        LOG.info(IGNORE_EVENT_LOG_MESSAGE + "{}", pendingEvent
-                                                .getEventConfigurationId());
-                                        synchronized (afterHandlerGuard) {
-                                            if (afterHandling != null) {
-                                                String eventIdStr = Long.toString(pendingEvent.getEventConfigurationId());
-                                                afterHandling.eventIgnored(eventIdStr);
-                                            }
-                                        }
-                                        queuedEventDao.deleteAllByQueuedEventId(pendingEvent.getQueuedEventId());
                                     }
-                                });
-                            } else {
-                                LOG.info("Skipping event {} because its precondition has not been met", pendingEvent
-                                        .getQueuedEventId());
+
+                                    if (!shouldSkipEvent) {
+                                        TransactionWrapper.useTxn(TransactionWrapper.DB.HOUSEKEEPING, housekeepingHandle -> {
+                                            JdbiEvent jdbiEvent = housekeepingHandle.attach(JdbiEvent.class);
+                                            JdbiMessage jdbiMessage = housekeepingHandle.attach(JdbiMessage.class);
+                                            if (jdbiEvent.shouldHandleEvent(
+                                                    pendingEventId,
+                                                    pendingEvent.getActionType().name(),
+                                                    pendingEvent.getMaxOccurrencesPerUser())) {
+                                                String ddpMessageId = Long.toString(jdbiMessage.insertMessageForEvent(
+                                                        pendingEventId));
+                                                LOG.info("Publishing queued event {}", pendingEvent.getQueuedEventId());
+                                                PubsubMessage message = null;
+                                                try {
+                                                    message = messageBuilder.createMessage(ddpMessageId, pendingEvent,
+                                                            apisHandle);
+                                                } catch (NoSendableEmailAddressException e) {
+                                                    boolean shouldDeleteEvent = apisHandle.attach(StudyDao.class)
+                                                            .findSettings(pendingEvent.getStudyGuid())
+                                                            .map(StudySettings::shouldDeleteUnsendableEmails)
+                                                            .orElse(false);
+                                                    if (shouldDeleteEvent) {
+                                                        LOG.warn("Unable to create message for event with "
+                                                                + "queued_event_id={}, proceeding to delete",
+                                                                pendingEvent.getQueuedEventId(), e);
+                                                        queuedEventDao.deleteAllByQueuedEventId(
+                                                                pendingEvent.getQueuedEventId());
+                                                        return; // Exit out of transaction wrapper and move on to next
+                                                        // event.
+                                                    } else {
+                                                        LOG.error("Could not create message for event with "
+                                                                + "queued_event_id={}"
+                                                                + " because there is no email address to sent to",
+                                                                pendingEvent.getQueuedEventId(), e);
+                                                    }
+                                                } catch (MessageBuilderException e) {
+                                                    LOG.error("Could not create message for queued event "
+                                                            + pendingEvent.getQueuedEventId(), e);
+                                                }
+
+                                                if (message != null) {
+                                                    // publish the message and delete it from the queue when published
+                                                    Publisher publisher = null;
+                                                    try {
+                                                        publisher = pubsubConnectionManager.getOrCreatePublisher(ProjectTopicName.of(
+                                                                pubSubProject, pendingEvent.getPubSubTopic()));
+                                                    } catch (IOException e) {
+                                                        throw new DDPException("Could not create publisher for " + pendingEvent
+                                                                .getPubSubTopic(), e);
+                                                    }
+                                                    ApiFuture<String> publishResult = publisher.publish(message);
+
+                                                    int numRowsUpdated = queuedEventDao.markPending(pendingEvent.getQueuedEventId());
+                                                    LOG.info("Marked queued event {} as pending", pendingEvent.getQueuedEventId());
+                                                    if (numRowsUpdated != 1) {
+                                                        throw new DaoException("Marked " + numRowsUpdated + " rows as pending for "
+
+                                                                + "queued event " + pendingEventId);
+                                                    }
+                                                    setPostPublishingCallbacks(publishResult, pendingEvent.getQueuedEventId());
+                                                } else {
+                                                    LOG.error("null message for " + pendingEvent.getQueuedEventId());
+                                                }
+                                            } else {
+                                                LOG.info(IGNORE_EVENT_LOG_MESSAGE + "{}", pendingEvent
+                                                        .getEventConfigurationId());
+                                                synchronized (afterHandlerGuard) {
+                                                    if (afterHandling != null) {
+                                                        String eventIdStr = Long.toString(pendingEvent.getEventConfigurationId());
+                                                        afterHandling.eventIgnored(eventIdStr);
+                                                    }
+                                                }
+                                                queuedEventDao.deleteAllByQueuedEventId(pendingEvent.getQueuedEventId());
+                                            }
+                                        });
+                                    }
+                                } else {
+                                    LOG.info("Skipping event {} because its precondition has not been met", pendingEvent
+                                            .getQueuedEventId());
+                                }
                             }
                         }
-                    }
-                    return pendingEvents.size();
-                });
+                    });
+                }
 
             } catch (Exception e) {
                 logException(e);
@@ -468,7 +488,12 @@ public class Housekeeping {
         if (enableHKeepTasks) {
             var subName = ProjectSubscriptionName.of(projectId, cfg.getString(ConfigFile.PUBSUB_HKEEP_TASKS_SUB));
             var receiver = new HousekeepingTaskReceiver(subName, scheduler);
-            taskSubscriber = Subscriber.newBuilder(subName, receiver).build();
+            taskSubscriber = Subscriber.newBuilder(subName, receiver)
+                    .setParallelPullCount(1)
+                    .setExecutorProvider(InstantiatingExecutorProvider.newBuilder()
+                            .setExecutorThreadCount(1)
+                            .build())
+                    .build();
             try {
                 taskSubscriber.startAsync().awaitRunning(30L, TimeUnit.SECONDS);
             } catch (TimeoutException e) {
@@ -517,20 +542,8 @@ public class Housekeeping {
         return Instant.now().toEpochMilli() - lastLogTime > ERROR_LOG_QUIET_TIME;
     }
 
-    private static boolean shouldLog(Exception e) {
-        boolean shouldLog = true;
-        if (lastLogTimeForException.containsKey(e)) {
-            long lastLogTime = lastLogTimeForException.get(e);
-            shouldLog = isTimeForLogging(lastLogTime);
-        }
-        return shouldLog;
-    }
-
     private static void logException(Exception e) {
-        if (shouldLog(e)) {
-            LOG.error("Housekeeping error", e);
-            lastLogTimeForException.replace(e, Instant.now().toEpochMilli());
-        }
+        LOG.error("Housekeeping error", e);
     }
 
     public static void stop() {
@@ -689,7 +702,12 @@ public class Housekeeping {
                         }
                     };
 
-            Subscriber subscriber = pubsubConnectionManager.subscribe(projectSubscriptionName, receiver);
+            Subscriber subscriber = pubsubConnectionManager.subscribeBuilder(projectSubscriptionName, receiver)
+                    .setParallelPullCount(1)
+                    .setExecutorProvider(InstantiatingExecutorProvider.newBuilder()
+                            .setExecutorThreadCount(1)
+                            .build())
+                    .build();
             subscriber.startAsync();
         } catch (Exception e) {
             LOG.error("Error during message handling", e);
@@ -705,7 +723,7 @@ public class Housekeeping {
         ActivityInstanceCreationEventAction eventAction = new ActivityInstanceCreationEventAction(
                 eventConf, eventConfDto.getActivityInstanceCreationStudyActivityId());
         eventAction.doAction(apisHandle, new EventSignal(pendingEvent.getOperatorUserId(),
-                participant.getId(), pendingEvent.getParticipantGuid(),
+                participant.getId(), pendingEvent.getParticipantGuid(), pendingEvent.getOperatorGuid(),
                 studyDto.getId(), pendingEvent.getTriggerType()));
     }
 

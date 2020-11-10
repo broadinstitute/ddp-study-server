@@ -2,6 +2,7 @@ package org.broadinstitute.ddp.route;
 
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.http.HttpStatus;
 import org.broadinstitute.ddp.constants.ErrorCodes;
@@ -9,9 +10,11 @@ import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.UserGovernanceDao;
+import org.broadinstitute.ddp.db.dao.UserProfileDao;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.json.GovernedParticipant;
 import org.broadinstitute.ddp.json.errors.ApiError;
+import org.broadinstitute.ddp.model.governance.Governance;
 import org.broadinstitute.ddp.util.ResponseUtil;
 import org.broadinstitute.ddp.util.RouteUtil;
 import org.slf4j.Logger;
@@ -32,15 +35,18 @@ public class GetGovernedStudyParticipantsRoute implements Route {
 
         List<GovernedParticipant> participants = TransactionWrapper.withTxn(handle -> {
             StudyDto studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(studyGuid);
+            UserProfileDao userProfileDao = handle.attach(UserProfileDao.class);
             if (studyDto == null) {
                 ApiError err = new ApiError(ErrorCodes.STUDY_NOT_FOUND, "Could not find study with guid " + studyGuid);
                 LOG.warn(err.getMessage());
                 throw ResponseUtil.haltError(response, HttpStatus.SC_NOT_FOUND, err);
             }
-            return handle.attach(UserGovernanceDao.class)
-                    .findActiveGovernancesByProxyAndStudyGuids(operatorGuid, studyGuid)
-                    .map(governed -> new GovernedParticipant(governed.getGovernedUserGuid(), governed.getAlias()))
-                    .collect(Collectors.toList());
+            try (Stream<Governance> govStream = handle.attach(UserGovernanceDao.class)
+                    .findActiveGovernancesByProxyAndStudyGuids(operatorGuid, studyGuid)) {
+                return govStream.map(governed -> new GovernedParticipant(governed.getGovernedUserGuid(), governed.getAlias(),
+                        userProfileDao.findProfileByUserGuid(governed.getGovernedUserGuid()).orElse(null)))
+                        .collect(Collectors.toList());
+            }
         });
 
         LOG.info("Found {} governed study participants for operator {} in study {}", participants.size(), operatorGuid, studyGuid);

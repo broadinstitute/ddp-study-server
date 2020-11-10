@@ -12,16 +12,16 @@ public class DsmNotificationSignal extends EventSignal {
     private TestResult testResult;
 
     public DsmNotificationSignal(long operatorId, long participantId, String participantGuid,
-                                 long studyId, DsmNotificationEventType eventType,
+                                 String operatorGuid, long studyId, DsmNotificationEventType eventType,
                                  @Nullable TestResult testResult) {
-        super(operatorId, participantId, participantGuid, studyId, EventTriggerType.DSM_NOTIFICATION);
+        super(operatorId, participantId, participantGuid, operatorGuid, studyId, EventTriggerType.DSM_NOTIFICATION);
         this.eventType = eventType;
         this.testResult = testResult;
     }
 
     public DsmNotificationSignal(long operatorId, long participantId, String participantGuid,
-                                 long studyId, DsmNotificationEventType eventType) {
-        this(operatorId, participantId, participantGuid, studyId, eventType, null);
+                                 String operatorGuid, long studyId, DsmNotificationEventType eventType) {
+        this(operatorId, participantId, participantGuid, operatorGuid, studyId, eventType, null);
     }
 
     public DsmNotificationEventType getDsmEventType() {

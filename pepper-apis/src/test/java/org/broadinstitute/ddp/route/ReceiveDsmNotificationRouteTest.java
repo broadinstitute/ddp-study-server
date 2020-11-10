@@ -3,11 +3,13 @@ package org.broadinstitute.ddp.route;
 import static io.restassured.RestAssured.given;
 import static org.broadinstitute.ddp.model.activity.types.DsmNotificationEventType.SALIVA_RECEIVED;
 import static org.broadinstitute.ddp.model.activity.types.DsmNotificationEventType.TESTBOSTON_RECEIVED;
+import static org.broadinstitute.ddp.model.activity.types.DsmNotificationEventType.TESTBOSTON_SENT;
 import static org.broadinstitute.ddp.model.activity.types.DsmNotificationEventType.TEST_RESULT;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.time.Instant;
@@ -23,6 +25,7 @@ import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants.API;
 import org.broadinstitute.ddp.constants.RouteConstants.PathParam;
 import org.broadinstitute.ddp.content.I18nTemplateConstants;
+import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
@@ -31,11 +34,17 @@ import org.broadinstitute.ddp.db.dao.EventDao;
 import org.broadinstitute.ddp.db.dao.EventTriggerDao;
 import org.broadinstitute.ddp.db.dao.JdbiEventConfiguration;
 import org.broadinstitute.ddp.db.dao.JdbiEventConfigurationOccurrenceCounter;
+import org.broadinstitute.ddp.db.dao.JdbiUserStudyEnrollment;
+import org.broadinstitute.ddp.db.dao.KitConfigurationDao;
+import org.broadinstitute.ddp.db.dao.KitScheduleDao;
+import org.broadinstitute.ddp.db.dao.KitScheduleSql;
+import org.broadinstitute.ddp.db.dao.KitTypeDao;
 import org.broadinstitute.ddp.db.dao.QueuedEventDao;
 import org.broadinstitute.ddp.db.dao.UserSql;
 import org.broadinstitute.ddp.db.dto.QueuedEventDto;
 import org.broadinstitute.ddp.db.dto.QueuedNotificationDto;
 import org.broadinstitute.ddp.db.dto.SendgridEmailEventActionDto;
+import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.json.dsm.DsmNotificationPayload;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
 import org.broadinstitute.ddp.model.activity.definition.i18n.Translation;
@@ -281,6 +290,46 @@ public class ReceiveDsmNotificationRouteTest extends DsmRouteTest {
             assertEquals(result.getTimeCompleted().toString(),
                     substitutions.get(I18nTemplateConstants.Snapshot.TEST_RESULT_TIME_COMPLETED));
         });
+    }
+
+    @Test
+    public void testEvents_setInitialKitSentTime() {
+        StudyDto study = TransactionWrapper.withTxn(handle ->
+                TestDataSetupUtil.generateTestStudy(handle, RouteTestUtil.getConfig()));
+
+        long recordId = TransactionWrapper.withTxn(handle -> {
+            handle.attach(JdbiUserStudyEnrollment.class).changeUserStudyEnrollmentStatus(
+                    testData.getUserId(), study.getId(), EnrollmentStatusType.ENROLLED);
+
+            long kitTypeId = handle.attach(KitTypeDao.class).getTestBostonKitType().getId();
+            long kitConfigId = handle.attach(KitConfigurationDao.class)
+                    .insertConfiguration(study.getId(), 1L, kitTypeId, false);
+
+            return handle.attach(KitScheduleDao.class)
+                    .createScheduleRecord(testData.getUserId(), kitConfigId);
+        });
+
+        var payload = new DsmNotificationPayload(null, TESTBOSTON_SENT.name(), 1L);
+        given().auth().oauth2(dsmClientAccessToken)
+                .pathParam("study", study.getGuid())
+                .pathParam("user", testData.getUserGuid())
+                .body(payload, ObjectMapperType.GSON)
+                .log().all()
+                .when().post(urlTemplate)
+                .then().assertThat()
+                .log().all()
+                .statusCode(200);
+
+        try {
+            TransactionWrapper.useTxn(handle -> {
+                var record = handle.attach(KitScheduleDao.class).findRecord(recordId).orElse(null);
+                assertNotNull(record);
+                assertNotNull(record.getInitialKitSentTime());
+            });
+        } finally {
+            TransactionWrapper.useTxn(handle ->
+                    DBUtils.checkDelete(1, handle.attach(KitScheduleSql.class).deleteRecord(recordId)));
+        }
     }
 
     private boolean checkIfNotificationQueued() {

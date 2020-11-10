@@ -65,7 +65,7 @@ public class CreateInvitationEventActionTest extends TxnAwareBaseTest {
             newContactEmailActivity(handle);
 
             var signal = new EventSignal(testData.getUserId(), testData.getUserId(), testData.getUserGuid(),
-                    testData.getStudyId(), EventTriggerType.REACHED_AOM_PREP);
+                    testData.getUserGuid(), testData.getStudyId(), EventTriggerType.REACHED_AOM_PREP);
             var action = new CreateInvitationEventAction(null, CONTACT_EMAIL_SID, false);
             action.doAction(null, handle, signal);
 
@@ -86,7 +86,7 @@ public class CreateInvitationEventActionTest extends TxnAwareBaseTest {
             handle.attach(AnswerDao.class).createAnswer(testData.getUserId(), instance.getId(), ans);
 
             var signal = new EventSignal(testData.getUserId(), testData.getUserId(), testData.getUserGuid(),
-                    testData.getStudyId(), EventTriggerType.REACHED_AOM_PREP);
+                    testData.getUserGuid(), testData.getStudyId(), EventTriggerType.REACHED_AOM_PREP);
             var action = new CreateInvitationEventAction(null, CONTACT_EMAIL_SID, false);
             action.doAction(null, handle, signal);
 
@@ -112,7 +112,7 @@ public class CreateInvitationEventActionTest extends TxnAwareBaseTest {
             answerDao.createAnswer(testData.getUserId(), instance2.getId(), ans2);
 
             var signal = new EventSignal(testData.getUserId(), testData.getUserId(), testData.getUserGuid(),
-                    testData.getStudyId(), EventTriggerType.REACHED_AOM_PREP);
+                    testData.getUserGuid(), testData.getStudyId(), EventTriggerType.REACHED_AOM_PREP);
             var action = new CreateInvitationEventAction(null, CONTACT_EMAIL_SID, false);
             action.doAction(null, handle, signal);
 
@@ -141,8 +141,9 @@ public class CreateInvitationEventActionTest extends TxnAwareBaseTest {
             var ans2 = new TextAnswer(null, CONTACT_EMAIL_SID, null, "not-email");
             answerDao.createAnswer(testData.getUserId(), instance2.getId(), ans2);
 
-            var signal = new ActivityInstanceStatusChangeSignal(testData.getUserId(), testData.getUserId(), testData.getUserGuid(),
-                    instance1.getId(), instance1.getActivityId(), testData.getStudyId(), InstanceStatusType.COMPLETE);
+            var signal = new ActivityInstanceStatusChangeSignal(testData.getUserId(), testData.getUserId(),
+                    testData.getUserGuid(), testData.getUserGuid(), instance1.getId(), instance1.getActivityId(),
+                    testData.getStudyId(), InstanceStatusType.COMPLETE);
             var action = new CreateInvitationEventAction(null, CONTACT_EMAIL_SID, false);
             action.doAction(null, handle, signal);
 
@@ -167,7 +168,7 @@ public class CreateInvitationEventActionTest extends TxnAwareBaseTest {
             handle.attach(AnswerDao.class).createAnswer(testData.getUserId(), instance1.getId(), ans1);
 
             var signal = new EventSignal(testData.getUserId(), testData.getUserId(), testData.getUserGuid(),
-                    testData.getStudyId(), EventTriggerType.REACHED_AOM_PREP);
+                    testData.getUserGuid(), testData.getStudyId(), EventTriggerType.REACHED_AOM_PREP);
             var action = new CreateInvitationEventAction(null, CONTACT_EMAIL_SID, true);
             action.doAction(null, handle, signal);
 
@@ -194,7 +195,7 @@ public class CreateInvitationEventActionTest extends TxnAwareBaseTest {
                     Instant.now().toEpochMilli(), null, null, null, null, false, 1);
 
             var signal = new EventSignal(testData.getUserId(), testData.getUserId(), testData.getUserGuid(),
-                    testData.getStudyId(), EventTriggerType.REACHED_AOM_PREP);
+                    testData.getUserGuid(), testData.getStudyId(), EventTriggerType.REACHED_AOM_PREP);
             var action = new CreateInvitationEventAction(null, CONTACT_EMAIL_SID, true);
 
             InvitationCreatedSignal nextSignal = action.run(handle, signal);

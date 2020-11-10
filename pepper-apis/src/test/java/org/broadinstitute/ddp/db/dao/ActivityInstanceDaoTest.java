@@ -10,6 +10,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.broadinstitute.ddp.TxnAwareBaseTest;
 import org.broadinstitute.ddp.db.TransactionWrapper;
@@ -133,9 +134,11 @@ public class ActivityInstanceDaoTest extends TxnAwareBaseTest {
                     .createAnswer(testData.getUserId(), instanceDto.getId(), answer)
                     .getAnswerGuid();
 
-            List<FormResponse> actual = dao
-                    .findFormResponsesWithAnswersByUserGuids(testData.getStudyId(), new HashSet<>(singletonList(testData.getUserGuid())))
-                    .collect(Collectors.toList());
+            List<FormResponse> actual;
+            try (Stream<FormResponse> responseStream = dao
+                    .findFormResponsesWithAnswersByUserGuids(testData.getStudyId(), new HashSet<>(singletonList(testData.getUserGuid())))) {
+                actual = responseStream.collect(Collectors.toList());
+            }
 
             assertEquals(1, actual.size());
             assertEquals(1, actual.get(0).getAnswers().size());

@@ -172,15 +172,10 @@ public class StackdriverMetricsTransmitter implements Runnable {
                             TimeSeriesAgeFilter.updateTimes(timeSeries);
                         }
                     } catch (ApiException e) {
-                        StatusCode.Code errorCode = e.getStatusCode().getCode();
                         String msg = "Could not send metrics data with {} series to project {}";
-                        if (tolerableErrorCodes.contains(errorCode)) {
-                            LOG.warn(msg, timeSeriesList.size(), projectName.getProject(), e);
-                        } else {
-                            LOG.error(msg, timeSeriesList.size(), projectName.getProject(), e);
-                        }
+                        LOG.warn(msg, timeSeriesList.size(), projectName.getProject(), e);
                     } catch (Exception e) {
-                        LOG.error("Failed to send metrics data with {} series to project {}",
+                        LOG.warn("Failed to send metrics data with {} series to project {}",
                                 timeSeriesList.size(), projectName.getProject(), e);
                     }
                 }

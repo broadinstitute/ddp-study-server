@@ -7,7 +7,9 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.broadinstitute.ddp.db.dto.EnrollmentStatusDto;
+import org.broadinstitute.ddp.db.dto.InvitationDto;
 import org.broadinstitute.ddp.db.dto.MedicalProviderDto;
+import org.broadinstitute.ddp.model.activity.instance.FormResponse;
 import org.broadinstitute.ddp.model.address.MailAddress;
 import org.broadinstitute.ddp.model.study.Participant;
 import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
@@ -23,6 +25,7 @@ import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindList;
 import org.jdbi.v3.sqlobject.customizer.Define;
+import org.jdbi.v3.sqlobject.customizer.FetchSize;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.UseRowReducer;
 import org.jdbi.v3.stringtemplate4.UseStringTemplateSqlLocator;
@@ -35,35 +38,45 @@ public interface ParticipantDao extends SqlObject {
 
     default Stream<Participant> findParticipantsWithFullData(long studyId) {
         Set<Long> userIds = new HashSet<>();
-
-        Map<Long, Participant> participants = findParticipantsWithUserData(studyId)
-                .peek(part -> userIds.add(part.getUser().getId()))
-                .collect(Collectors.toMap(pt -> pt.getUser().getId(), pt -> pt));
+        Map<Long, Participant> participants;
+        try (Stream<Participant> participantStream = findParticipantsWithUserData(studyId)) {
+            participants = participantStream
+                    .peek(part -> userIds.add(part.getUser().getId()))
+                    .collect(Collectors.toMap(pt -> pt.getUser().getId(), pt -> pt));
+        }
 
         // Only support form activities for now.
-        getActivityInstanceDao()
-                .findFormResponsesWithAnswersByUserIds(studyId, participants.keySet())
-                .forEach(resp -> participants.get(resp.getParticipantId()).addResponse(resp));
+        try (Stream<FormResponse> responseStream = getActivityInstanceDao()
+                .findFormResponsesWithAnswersByUserIds(studyId, participants.keySet())) {
+            responseStream.forEach(resp -> participants.get(resp.getParticipantId()).addResponse(resp));
+        }
 
         return participants.values().stream();
     }
 
     default Stream<Participant> findParticipantsWithFullDataByUserIds(long studyId, Set<Long> userIds) {
-        Map<Long, Participant> participants = findParticipantsWithUserDataByUserIds(studyId, userIds)
-                .collect(Collectors.toMap(pt -> pt.getUser().getId(), pt -> pt));
-        getActivityInstanceDao()
-                .findFormResponsesWithAnswersByUserIds(studyId, participants.keySet())
-                .forEach(resp -> participants.get(resp.getParticipantId()).addResponse(resp));
+        Map<Long, Participant> participants;
+        try (Stream<Participant> participantStream = findParticipantsWithUserDataByUserIds(studyId, userIds)) {
+            participants = participantStream.collect(Collectors.toMap(pt -> pt.getUser().getId(), pt -> pt));
+        }
+        try (Stream<FormResponse> responseStream = getActivityInstanceDao()
+                .findFormResponsesWithAnswersByUserIds(studyId, participants.keySet())) {
+            responseStream.forEach(resp -> participants.get(resp.getParticipantId()).addResponse(resp));
+        }
         return participants.values().stream();
     }
 
     default Stream<Participant> findParticipantsWithFullDataByUserGuids(long studyId, Set<String> userGuids) {
-        Map<Long, Participant> participants = findParticipantsWithUserDataByUserGuids(studyId, userGuids)
-                .collect(Collectors.toMap(pt -> pt.getUser().getId(), pt -> pt));
-        getActivityInstanceDao()
-                .findFormResponsesWithAnswersByUserIds(studyId, participants.keySet())
-                .forEach(resp -> participants.get(resp.getParticipantId()).addResponse(resp));
-        return participants.values().stream();
+        Map<Long, Participant> participants;
+        try (var participantStream = findParticipantsWithUserDataByUserGuids(studyId, userGuids)) {
+            participants = participantStream
+                    .collect(Collectors.toMap(pt -> pt.getUser().getId(), pt -> pt));
+        }
+        try (Stream<FormResponse> responseStream = getActivityInstanceDao()
+                .findFormResponsesWithAnswersByUserIds(studyId, participants.keySet())) {
+            responseStream.forEach(resp -> participants.get(resp.getParticipantId()).addResponse(resp));
+            return participants.values().stream();
+        }
     }
 
     default Stream<Participant> findParticipantsWithUserData(long studyId) {
@@ -92,7 +105,9 @@ public interface ParticipantDao extends SqlObject {
     @RegisterConstructorMapper(value = UserProfile.class, prefix = "p")
     @RegisterConstructorMapper(value = MailAddress.class, prefix = "a")
     @RegisterConstructorMapper(value = MedicalProviderDto.class, prefix = "m")
+    @RegisterConstructorMapper(value = InvitationDto.class, prefix = "i")
     @RegisterColumnMapper(DsmAddressValidationStatus.ByOrdinalColumnMapper.class)
+    @FetchSize(300)
     @UseRowReducer(ParticipantsWithUserDataReducer.class)
     Stream<Participant> _findParticipantsWithUserDataByStudyId(
             @Bind("studyId") long studyId,
@@ -137,9 +152,15 @@ public interface ParticipantDao extends SqlObject {
                 }
                 return new Participant(status, user);
             });
-
-            if (row.getColumn("m_user_medical_provider_id", Long.class) != null) {
+            Long medicalProviderId = row.getColumn("m_user_medical_provider_id", Long.class);
+            if (medicalProviderId != null
+                    && participant.getProviders().stream().noneMatch(p -> p.getUserMedicalProviderId() == medicalProviderId)) {
                 participant.addProvider(row.getRow(MedicalProviderDto.class));
+            }
+            Long invitationId = row.getColumn("i_invitation_id", Long.class);
+            if (invitationId != null
+                    && participant.getInvitations().stream().noneMatch(p -> p.getInvitationId() == invitationId)) {
+                participant.addInvitation(row.getRow(InvitationDto.class));
             }
         }
     }

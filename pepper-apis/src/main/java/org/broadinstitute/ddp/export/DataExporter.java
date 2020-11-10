@@ -3,8 +3,10 @@ package org.broadinstitute.ddp.export;
 import static org.broadinstitute.ddp.model.activity.types.ComponentType.MAILING_ADDRESS;
 
 import java.io.BufferedWriter;
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.Writer;
+import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
@@ -38,7 +40,6 @@ import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.db.ActivityDefStore;
 import org.broadinstitute.ddp.db.DaoException;
 import org.broadinstitute.ddp.db.dao.FormActivityDao;
-import org.broadinstitute.ddp.db.dao.InvitationDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiActivityVersion;
 import org.broadinstitute.ddp.db.dao.ParticipantDao;
@@ -50,7 +51,6 @@ import org.broadinstitute.ddp.db.dto.ActivityDto;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceStatusDto;
 import org.broadinstitute.ddp.db.dto.ActivityVersionDto;
 import org.broadinstitute.ddp.db.dto.EnrollmentStatusDto;
-import org.broadinstitute.ddp.db.dto.InvitationDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.elastic.ElasticSearchIndexType;
 import org.broadinstitute.ddp.exception.DDPException;
@@ -126,7 +126,7 @@ import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class DataExporter {
+public class DataExporter implements Closeable {
 
     public static final String TIMESTAMP_PATTERN = "MM/dd/yyyy HH:mm:ss";
     public static final DateTimeFormatter TIMESTAMP_FMT = DateTimeFormatter
@@ -138,10 +138,11 @@ public class DataExporter {
     // A cache for user auth0 emails, storing (auth0UserId -> email).
     private static Map<String, String> emailStore = new HashMap<>();
 
-    private Config cfg;
-    private Gson gson;
-    private Set<String> componentNames;
-    private PdfService pdfService;
+    private final Config cfg;
+    private final Gson gson;
+    private final Set<String> componentNames;
+    private final PdfService pdfService;
+    private final RestHighLevelClient esClient;
 
     public static String makeExportCSVFilename(String studyGuid, Instant timestamp) {
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmssX").withZone(ZoneOffset.UTC);
@@ -170,11 +171,21 @@ public class DataExporter {
         this.cfg = cfg;
         this.gson = new GsonBuilder().serializeNulls().create();
         this.pdfService = new PdfService();
+        try {
+            this.esClient = ElasticsearchServiceUtil.getClientForElasticsearchCloud(cfg);
+        } catch (MalformedURLException e) {
+            throw new IllegalArgumentException(e);
+        }
         componentNames = new HashSet<>();
         componentNames.add("MAILING_ADDRESS");
         componentNames.add("INITIAL_BIOPSY");
         componentNames.add("INSTITUTION");
         componentNames.add("PHYSICIAN");
+    }
+
+    @Override
+    public void close() throws IOException {
+        this.esClient.close();
     }
 
     /**
@@ -217,23 +228,35 @@ public class DataExporter {
     }
 
     public List<Participant> extractParticipantDataSetByIds(Handle handle, StudyDto studyDto, Set<Long> userIds) {
-        Stream<Participant> resultset;
-        if (userIds == null) {
-            resultset = handle.attach(ParticipantDao.class).findParticipantsWithFullData(studyDto.getId());
-        } else {
-            resultset = handle.attach(ParticipantDao.class).findParticipantsWithFullDataByUserIds(studyDto.getId(), userIds);
+        Stream<Participant> resultset = null;
+        try {
+            if (userIds == null) {
+                resultset = handle.attach(ParticipantDao.class).findParticipantsWithFullData(studyDto.getId());
+            } else {
+                resultset = handle.attach(ParticipantDao.class).findParticipantsWithFullDataByUserIds(studyDto.getId(), userIds);
+            }
+            return extractParticipantsFromResultSet(handle, studyDto, resultset);
+        } finally {
+            if (resultset != null) {
+                resultset.close();
+            }
         }
-        return extractParticipantsFromResultSet(handle, studyDto, resultset);
     }
 
     public List<Participant> extractParticipantDataSetByGuids(Handle handle, StudyDto studyDto, Set<String> userGuids) {
-        Stream<Participant> resultset;
-        if (userGuids == null) {
-            resultset = handle.attach(ParticipantDao.class).findParticipantsWithFullData(studyDto.getId());
-        } else {
-            resultset = handle.attach(ParticipantDao.class).findParticipantsWithFullDataByUserGuids(studyDto.getId(), userGuids);
+        Stream<Participant> resultset = null;
+        try {
+            if (userGuids == null) {
+                resultset = handle.attach(ParticipantDao.class).findParticipantsWithFullData(studyDto.getId());
+            } else {
+                resultset = handle.attach(ParticipantDao.class).findParticipantsWithFullDataByUserGuids(studyDto.getId(), userGuids);
+            }
+            return extractParticipantsFromResultSet(handle, studyDto, resultset);
+        } finally {
+            if (resultset != null) {
+                resultset.close();
+            }
         }
-        return extractParticipantsFromResultSet(handle, studyDto, resultset);
     }
 
     private List<Participant> extractParticipantsFromResultSet(Handle handle, StudyDto studyDto, Stream<Participant> resultset) {
@@ -259,9 +282,7 @@ public class DataExporter {
                     .forEach((auth0UserId, email) -> participants.get(usersMissingEmails.get(auth0UserId)).getUser().setEmail(email));
         }
 
-        ArrayList<Participant> dataset = new ArrayList<>(participants.values());
-        LOG.info("[export] extracted {} participants for study {}", dataset.size(), studyDto.getGuid());
-        return dataset;
+        return new ArrayList<>(participants.values());
     }
 
     /**
@@ -306,6 +327,12 @@ public class DataExporter {
             }
         }
 
+        String index = ElasticsearchServiceUtil.getIndexForStudy(
+                handle,
+                studyDto,
+                exportStructuredDocument ? ElasticSearchIndexType.PARTICIPANTS_STRUCTURED : ElasticSearchIndexType.PARTICIPANTS
+        );
+
         List<Participant> batch = new ArrayList<>();
         Iterator<Participant> iter = participants.iterator();
         int exportsSoFar = 0;
@@ -315,19 +342,20 @@ public class DataExporter {
                 batch.add(participant);
                 if (batch.size() == maxExtractSize || !iter.hasNext()) {
                     int extractSize = batch.size();
-                    LOG.info("Exporting " + extractSize + " elasticsearch records");
+                    LOG.info("[export] exporting {} participant records to index {}", extractSize, index);
 
                     convertInfoToJSONAndExportToES(
                             handle,
                             activities,
                             batch,
                             studyDto,
+                            index,
                             exportStructuredDocument
                     );
                     exportsSoFar += extractSize;
                     batch.clear();
 
-                    LOG.info("Have now exported {} participants out of {} for study: {}.",
+                    LOG.info("[export] have now exported {} participants out of {} for study {}",
                             exportsSoFar, participants.size(), studyDto.getGuid());
                 }
             } catch (Exception e) {
@@ -337,8 +365,7 @@ public class DataExporter {
         }
     }
 
-    public List<ActivityExtract> exportActivityDefinitionsToElasticsearch(
-            Handle handle, StudyDto studyDto, Config cfg) {
+    public List<ActivityExtract> exportActivityDefinitionsToElasticsearch(Handle handle, StudyDto studyDto) {
 
         //get study activities
         List<ActivityExtract> activityExtracts = extractActivities(handle, studyDto);
@@ -370,72 +397,79 @@ public class DataExporter {
         );
 
         try {
-            exportDataToElasticSearch(index, allActivityDefs, cfg);
+            exportDataToElasticSearch(index, allActivityDefs);
         } catch (IOException e) {
-            LOG.error("[activitydefinition export] failed during export ", e);
+            LOG.error("[export] failed during export to index {}", index, e);
         }
 
         return activityExtracts;
     }
 
-    private void exportDataToElasticSearch(String index, Map<String, Object> data, Config cfg) throws IOException {
+    private void exportDataToElasticSearch(String index, Map<String, Object> data) throws IOException {
         if (data.isEmpty()) {
             return;
         }
-        try (RestHighLevelClient client = ElasticsearchServiceUtil.getClientForElasticsearchCloud(cfg)) {
-            BulkRequest bulkRequest = new BulkRequest().timeout("2m");
 
-            data.forEach((key, value) -> {
-                String esDoc = gson.toJson(value);
-                UpdateRequest updateRequest = new UpdateRequest()
-                        .index(index)
-                        .type(REQUEST_TYPE)
-                        .id(key)
-                        .doc(esDoc, XContentType.JSON)
-                        .docAsUpsert(true);
-                bulkRequest.add(updateRequest);
-            });
+        BulkRequest bulkRequest = new BulkRequest().timeout("2m");
 
-            BulkResponse bulkResponse = client.bulk(bulkRequest, RequestOptions.DEFAULT);
+        data.forEach((key, value) -> {
+            String esDoc = gson.toJson(value);
+            UpdateRequest updateRequest = new UpdateRequest()
+                    .index(index)
+                    .type(REQUEST_TYPE)
+                    .id(key)
+                    .doc(esDoc, XContentType.JSON)
+                    .docAsUpsert(true);
+            bulkRequest.add(updateRequest);
+        });
 
-            if (bulkResponse.hasFailures()) {
-                LOG.error(bulkResponse.buildFailureMessage());
-            }
+        BulkResponse bulkResponse = esClient.bulk(bulkRequest, RequestOptions.DEFAULT);
+
+        if (bulkResponse.hasFailures()) {
+            LOG.error(bulkResponse.buildFailureMessage());
         }
     }
 
     public void exportUsersToElasticsearch(Handle handle, StudyDto studyDto, Set<Long> userIds) {
 
         //load participants
-        Stream<Participant> resultset;
-        if (userIds != null) {
-            resultset = handle.attach(ParticipantDao.class).findParticipantsWithUserProfileByStudyIdAndUserIds(
-                    studyDto.getId(), userIds);
-        } else {
-            resultset = handle.attach(ParticipantDao.class)
-                    .findParticipantsWithUserProfileByStudyId(studyDto.getId());
+        Stream<Participant> resultset = null;
+        List<Participant> participants;
+        try {
+            if (userIds != null) {
+                resultset = handle.attach(ParticipantDao.class).findParticipantsWithUserProfileByStudyIdAndUserIds(
+                        studyDto.getId(), userIds);
+            } else {
+                resultset = handle.attach(ParticipantDao.class)
+                        .findParticipantsWithUserProfileByStudyId(studyDto.getId());
+            }
+            participants = extractParticipantsFromResultSet(handle, studyDto, resultset);
+        } finally {
+            if (resultset != null) {
+                resultset.close();
+            }
         }
-        List<Participant> participants = extractParticipantsFromResultSet(handle, studyDto, resultset);
+
 
         //load governances and build data structures to get proxies and governedUsers
-        UserGovernanceDao userGovernanceDao = handle.attach(UserGovernanceDao.class);
-        Stream<Governance> allGovernances = userGovernanceDao.findActiveGovernancesByStudyGuid(studyDto.getGuid());
         Map<String, Set<String>> proxiesMap = new HashMap<>();
         Map<String, Set<String>> governedUsersMap = new HashMap<>();
         Set<String> operatorGuids = new HashSet<>();
-
-        allGovernances.forEach(governance -> {
-            String proxyGuid = governance.getProxyUserGuid();
-            String governedUserGuid = governance.getGovernedUserGuid();
-            Long governedUserId = governance.getGovernedUserId();
-            governedUsersMap.computeIfAbsent(governedUserGuid, key -> new HashSet<>());
-            governedUsersMap.get(governedUserGuid).add(proxyGuid);
-            proxiesMap.computeIfAbsent(proxyGuid, key -> new HashSet<>());
-            proxiesMap.get(proxyGuid).add(governedUserGuid);
-            if (userIds == null || userIds.contains(governedUserId)) {
-                operatorGuids.add(proxyGuid);
-            }
-        });
+        UserGovernanceDao userGovernanceDao = handle.attach(UserGovernanceDao.class);
+        try (Stream<Governance> allGovernances = userGovernanceDao.findActiveGovernancesByStudyGuid(studyDto.getGuid())) {
+            allGovernances.forEach(governance -> {
+                String proxyGuid = governance.getProxyUserGuid();
+                String governedUserGuid = governance.getGovernedUserGuid();
+                Long governedUserId = governance.getGovernedUserId();
+                governedUsersMap.computeIfAbsent(governedUserGuid, key -> new HashSet<>());
+                governedUsersMap.get(governedUserGuid).add(proxyGuid);
+                proxiesMap.computeIfAbsent(proxyGuid, key -> new HashSet<>());
+                proxiesMap.get(proxyGuid).add(governedUserGuid);
+                if (userIds == null || userIds.contains(governedUserId)) {
+                    operatorGuids.add(proxyGuid);
+                }
+            });
+        }
 
         Map<String, Object> allUsers = new HashMap<>();
         //load participants
@@ -445,26 +479,28 @@ public class DataExporter {
         });
 
         //load operators
-        Stream<User> users = handle.attach(UserDao.class).findUsersAndProfilesByGuids(operatorGuids);
-        List<User> operators = extractUsersFromResultSet(handle, studyDto, users);
-        operators.forEach(user -> {
-            if (allUsers.containsKey(user.getGuid())) {
-                //operator/user is also a participant... skip
-                return;
-            }
-            allUsers.put(user.getGuid(), createUserRecord(user, proxiesMap, governedUsersMap));
-        });
+        try (Stream<User> users = handle.attach(UserDao.class).findUsersAndProfilesByGuids(operatorGuids)) {
+            List<User> operators = extractUsersFromResultSet(handle, studyDto, users);
+            operators.forEach(user -> {
+                if (allUsers.containsKey(user.getGuid())) {
+                    //operator/user is also a participant... skip
+                    return;
+                }
+                allUsers.put(user.getGuid(), createUserRecord(user, proxiesMap, governedUsersMap));
+            });
+        }
 
         String index = ElasticsearchServiceUtil.getIndexForStudy(
                 handle,
                 studyDto,
                 ElasticSearchIndexType.USERS
         );
+        LOG.info("[export] exporting {} user records to index {}", allUsers.size(), index);
 
         try {
-            exportDataToElasticSearch(index, allUsers, cfg);
+            exportDataToElasticSearch(index, allUsers);
         } catch (IOException e) {
-            LOG.error("[users elasticsearch export] failed during export ", e);
+            LOG.error("[export] failed during export to index {}", index, e);
         }
     }
 
@@ -524,16 +560,11 @@ public class DataExporter {
      */
     private void convertInfoToJSONAndExportToES(Handle handle,
                                                 List<ActivityExtract> activities,
-                                                List<Participant> dataset,
+                                                List<Participant> participants,
                                                 StudyDto studyDto,
+                                                String index,
                                                 boolean exportStructuredDocument
     ) throws IOException {
-        String index = ElasticsearchServiceUtil.getIndexForStudy(
-                handle,
-                studyDto,
-                exportStructuredDocument ? ElasticSearchIndexType.PARTICIPANTS_STRUCTURED : ElasticSearchIndexType.PARTICIPANTS
-        );
-
         List<PdfConfigInfo> studyPdfConfigs = handle.attach(PdfDao.class).findConfigInfoByStudyGuid(studyDto.getGuid());
 
         Map<Long, List<PdfVersion>> configPdfVersions = new HashMap<>();
@@ -549,9 +580,11 @@ public class DataExporter {
         }
 
         //load proxies
-        Map<String, List<Governance>> userProxies = handle.attach(UserGovernanceDao.class)
-                .findActiveGovernancesByStudyGuid(studyDto.getGuid())
-                .collect(Collectors.groupingBy(Governance::getGovernedUserGuid));
+        Map<String, List<Governance>> userProxies;
+        try (Stream<Governance> governanceStream =
+                     handle.attach(UserGovernanceDao.class).findActiveGovernancesByStudyGuid(studyDto.getGuid())) {
+            userProxies = governanceStream.collect(Collectors.groupingBy(Governance::getGovernedUserGuid));
+        }
 
         Map<String, List<String>> participantProxyGuids = new HashMap<>();
         if (!userProxies.isEmpty()) {
@@ -566,37 +599,32 @@ public class DataExporter {
         GovernancePolicy governancePolicy = handle.attach(StudyGovernanceDao.class)
                 .findPolicyByStudyId(studyDto.getId()).orElse(null);
 
-        enrichWithDSMEventDates(handle, medicalRecordService, governancePolicy, studyDto.getId(), dataset);
+        enrichWithDSMEventDates(handle, medicalRecordService, governancePolicy, studyDto.getId(), participants);
 
-        List<InvitationDto> invitations = handle.attach(InvitationDao.class)
-                .findAllInvitations(studyDto.getId());
         StudyExtract studyExtract = new StudyExtract(activities,
                 studyPdfConfigs,
                 configPdfVersions,
-                participantProxyGuids,
-                invitations);
+                participantProxyGuids);
 
         Map<String, String> participantRecords = prepareParticipantRecordsForJSONExport(
-                studyExtract, dataset, exportStructuredDocument, handle, medicalRecordService);
+                studyExtract, participants, exportStructuredDocument, handle, medicalRecordService);
 
-        try (RestHighLevelClient client = ElasticsearchServiceUtil.getClientForElasticsearchCloud(cfg)) {
-            BulkRequest bulkRequest = new BulkRequest().timeout("2m");
+        BulkRequest bulkRequest = new BulkRequest().timeout("2m");
 
-            participantRecords.forEach((key, value) -> {
-                UpdateRequest updateRequest = new UpdateRequest()
-                        .index(index)
-                        .type(REQUEST_TYPE)
-                        .id(key)
-                        .doc(value, XContentType.JSON)
-                        .docAsUpsert(true);
-                bulkRequest.add(updateRequest);
-            });
+        participantRecords.forEach((key, value) -> {
+            UpdateRequest updateRequest = new UpdateRequest()
+                    .index(index)
+                    .type(REQUEST_TYPE)
+                    .id(key)
+                    .doc(value, XContentType.JSON)
+                    .docAsUpsert(true);
+            bulkRequest.add(updateRequest);
+        });
 
-            BulkResponse bulkResponse = client.bulk(bulkRequest, RequestOptions.DEFAULT);
+        BulkResponse bulkResponse = esClient.bulk(bulkRequest, RequestOptions.DEFAULT);
 
-            if (bulkResponse.hasFailures()) {
-                LOG.error(bulkResponse.buildFailureMessage());
-            }
+        if (bulkResponse.hasFailures()) {
+            LOG.error(bulkResponse.buildFailureMessage());
         }
     }
 
@@ -729,23 +757,23 @@ public class DataExporter {
             MedicalRecordService medicalRecordService
     ) {
         EnrollmentStatusDto statusDto = participant.getStatus();
-        User user = participant.getUser();
+        User participantUser = participant.getUser();
 
         // Profile
         ParticipantProfile.Builder builder = ParticipantProfile.builder();
-        UserProfile userProfile = user.getProfile();
+        UserProfile userProfile = participantUser.getProfile();
         if (userProfile != null) {
             builder.setFirstName(userProfile.getFirstName());
             builder.setLastName(userProfile.getLastName());
             builder.setPreferredLanguage(userProfile.getPreferredLangCode());
             builder.setDoNotContact(userProfile.getDoNotContact());
         }
-        builder.setGuid(user.getGuid())
-                .setHruid(user.getHruid())
-                .setLegacyAltPid(user.getLegacyAltPid())
-                .setLegacyShortId(user.getLegacyShortId())
-                .setEmail(user.getEmail())
-                .setCreatedAt(user.getCreatedAt());
+        builder.setGuid(participantUser.getGuid())
+                .setHruid(participantUser.getHruid())
+                .setLegacyAltPid(participantUser.getLegacyAltPid())
+                .setLegacyShortId(participantUser.getLegacyShortId())
+                .setEmail(participantUser.getEmail())
+                .setCreatedAt(participantUser.getCreatedAt());
         ParticipantProfile participantProfile = builder.build();
 
         // ActivityInstances (aka "surveys")
@@ -777,7 +805,7 @@ public class DataExporter {
             }
         }
 
-        String userGuid = user.getGuid();
+        String userGuid = participantUser.getGuid();
         String studyGuid = statusDto.getStudyGuid();
 
         List<PdfConfigInfo> pdfConfigInfoList = findPdfConfigsForStudyUser(
@@ -789,7 +817,7 @@ public class DataExporter {
 
         // Retrieving information to compute the dsm record
         MedicalRecordService.ParticipantConsents consents = medicalRecordService
-                .fetchBloodAndTissueConsents(handle, user.getId(), userGuid, statusDto.getStudyId(), studyGuid);
+                .fetchBloodAndTissueConsents(handle, participantUser.getId(), userGuid, null, statusDto.getStudyId(), studyGuid);
 
         DsmComputedRecord dsmComputedRecord =
                 new DsmComputedRecord(participant.getBirthDate(),
@@ -799,23 +827,21 @@ public class DataExporter {
                         consents.hasConsentedToTissueSample(),
                         pdfConfigRecords);
 
-        List<String> proxies = studyExtract.getParticipantProxyGuids().get(user.getGuid());
+        List<String> proxies = studyExtract.getParticipantProxyGuids().get(participantUser.getGuid());
         if (proxies == null) {
             proxies = List.of();
         }
-        List<InvitationDto> invitations = studyExtract.getInvitations().stream()
-                .filter(invite -> invite.getUserId() != null && invite.getUserId().equals(user.getId()))
-                .collect(Collectors.toList());
+
         ParticipantRecord participantRecord = new ParticipantRecord(
                 statusDto.getEnrollmentStatus(),
                 statusDto.getValidFromMillis(),
                 participantProfile,
                 activityInstanceRecords,
                 participant.getProviders(),
-                user.getAddress(),
+                participantUser.getAddress(),
                 dsmComputedRecord,
                 proxies,
-                invitations
+                participant.getInvitations()
         );
         return gson.toJson(participantRecord);
     }
@@ -1009,7 +1035,7 @@ public class DataExporter {
     public int exportCsvToOutput(Handle handle, StudyDto studyDto, Writer output) throws IOException {
         List<ActivityExtract> activities = extractActivities(handle, studyDto);
         List<Participant> dataset = extractParticipantDataSet(handle, studyDto);
-        return exportDataSetAsCsv(studyDto, activities, dataset, output);
+        return exportDataSetAsCsv(studyDto, activities, dataset.iterator(), output);
     }
 
     /**
@@ -1021,7 +1047,7 @@ public class DataExporter {
      * @return number of participant records written
      * @throws IOException if error while writing
      */
-    public int exportDataSetAsCsv(StudyDto studyDto, List<ActivityExtract> activities, List<Participant> participants,
+    public int exportDataSetAsCsv(StudyDto studyDto, List<ActivityExtract> activities, Iterator<Participant> participants,
                                   Writer output) throws IOException {
         ParticipantMetadataFormatter participantMetaFmt = new ParticipantMetadataFormatter();
         ActivityMetadataCollector activityMetadataCollector = new ActivityMetadataCollector();
@@ -1042,10 +1068,9 @@ public class DataExporter {
         CSVWriter writer = new CSVWriter(output);
         writer.writeNext(headers.toArray(new String[] {}), false);
 
-        int total = participants.size();
         int numWritten = 0;
-
-        for (Participant pt : participants) {
+        while (participants.hasNext()) {
+            Participant pt = participants.next();
             List<String> row = new LinkedList<>();
             try {
                 row.addAll(participantMetaFmt.format(pt.getStatus(), pt.getUser()));
@@ -1080,9 +1105,9 @@ public class DataExporter {
             writer.writeNext(row.toArray(new String[] {}), false);
             numWritten += 1;
 
-            LOG.info("[export] ({}/{}) participant {} for study {}:"
+            LOG.info("[export] ({}) participant {} for study {}:"
                             + " status={}, hasProfile={}, hasAddress={}, numProviders={}, numInstances={}",
-                    numWritten, total, pt.getUser().getGuid(), studyDto.getGuid(),
+                    numWritten, pt.getUser().getGuid(), studyDto.getGuid(),
                     pt.getStatus().getEnrollmentStatus(), pt.getUser().hasProfile(), pt.getUser().hasAddress(),
                     pt.getProviders().size(), pt.getAllResponses().size());
         }

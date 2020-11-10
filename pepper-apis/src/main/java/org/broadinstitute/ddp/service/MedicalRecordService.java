@@ -8,6 +8,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
@@ -49,17 +50,20 @@ public class MedicalRecordService {
 
         Map<Long, ActivityMapping> mappings = handle.attach(ActivityDao.class)
                 .findActivityMappings(studyId, ActivityMappingType.DATE_OF_DIAGNOSIS)
+                .stream()
                 .collect(Collectors.toMap(ActivityMapping::getActivityId, Function.identity()));
 
-        return handle.attach(ActivityInstanceDao.class)
-                .findBaseResponsesByStudyAndUserIds(studyId, Set.of(participantUserId), true, mappings.keySet())
-                .filter(instance -> instance.getFirstCompletedAt() != null)
-                .sorted(Comparator.comparing(ActivityResponse::getFirstCompletedAt).reversed())
-                .flatMap(instance -> answerSql
-                        .findLatestDateValueByQuestionStableIdAndUserId(
-                                mappings.get(instance.getActivityId()).getSubActivityStableId(), participantUserId, studyId)
-                        .stream()
-                ).findFirst();
+
+        try (Stream<ActivityResponse> responseStream = handle.attach(ActivityInstanceDao.class)
+                .findBaseResponsesByStudyAndUserIds(studyId, Set.of(participantUserId), true, mappings.keySet())) {
+            return responseStream.filter(instance -> instance.getFirstCompletedAt() != null)
+                    .sorted(Comparator.comparing(ActivityResponse::getFirstCompletedAt).reversed())
+                    .flatMap(instance -> answerSql
+                            .findLatestDateValueByQuestionStableIdAndUserId(
+                                    mappings.get(instance.getActivityId()).getSubActivityStableId(), participantUserId, studyId)
+                            .stream()
+                    ).findFirst();
+        }
     }
 
     /**
@@ -76,17 +80,20 @@ public class MedicalRecordService {
 
         Map<Long, ActivityMapping> mappings = handle.attach(ActivityDao.class)
                 .findActivityMappings(studyId, ActivityMappingType.DATE_OF_BIRTH)
+                .stream()
                 .collect(Collectors.toMap(ActivityMapping::getActivityId, Function.identity()));
 
-        return handle.attach(ActivityInstanceDao.class)
-                .findBaseResponsesByStudyAndUserIds(studyId, Set.of(participantUserId), true, mappings.keySet())
-                .filter(instance -> instance.getFirstCompletedAt() != null)
-                .sorted(Comparator.comparing(ActivityResponse::getFirstCompletedAt).reversed())
-                .flatMap(instance -> answerSql
-                        .findLatestDateValueByQuestionStableIdAndUserId(
-                                mappings.get(instance.getActivityId()).getSubActivityStableId(), participantUserId, studyId)
-                        .stream()
-                ).findFirst();
+        try (Stream<ActivityResponse> responseStream = handle.attach(ActivityInstanceDao.class)
+                .findBaseResponsesByStudyAndUserIds(studyId, Set.of(participantUserId), true, mappings.keySet())) {
+            return responseStream
+                    .filter(instance -> instance.getFirstCompletedAt() != null)
+                    .sorted(Comparator.comparing(ActivityResponse::getFirstCompletedAt).reversed())
+                    .flatMap(instance -> answerSql
+                            .findLatestDateValueByQuestionStableIdAndUserId(
+                                    mappings.get(instance.getActivityId()).getSubActivityStableId(), participantUserId, studyId)
+                            .stream()
+                    ).findFirst();
+        }
     }
 
     /**
@@ -101,35 +108,41 @@ public class MedicalRecordService {
      * @return the election statuses
      */
     public ParticipantConsents fetchBloodAndTissueConsents(Handle handle, long participantUserId, String participantGuid,
-                                                           long studyId, String studyGuid) {
+                                                           String operatorGuid, long studyId, String studyGuid) {
         var activityDao = handle.attach(ActivityDao.class);
         Map<Long, ActivityMapping> bloodMappings = activityDao
                 .findActivityMappings(studyId, ActivityMappingType.BLOOD)
+                .stream()
                 .collect(Collectors.toMap(ActivityMapping::getActivityId, Function.identity()));
         Map<Long, ActivityMapping> tissueMappings = activityDao
                 .findActivityMappings(studyId, ActivityMappingType.TISSUE)
+                .stream()
                 .collect(Collectors.toMap(ActivityMapping::getActivityId, Function.identity()));
 
         Set<Long> activityIds = new HashSet<>();
         activityIds.addAll(bloodMappings.keySet());
         activityIds.addAll(tissueMappings.keySet());
 
-        List<ActivityResponse> sortedSubmittedInstances = handle.attach(ActivityInstanceDao.class)
-                .findBaseResponsesByStudyAndUserIds(studyId, Set.of(participantUserId), true, activityIds)
-                .filter(instance -> instance.getFirstCompletedAt() != null)
-                .sorted(Comparator.comparing(ActivityResponse::getFirstCompletedAt).reversed())
-                .collect(Collectors.toList());
+        List<ActivityResponse> sortedSubmittedInstances;
+        try (Stream<ActivityResponse> responseStream = handle.attach(ActivityInstanceDao.class)
+                .findBaseResponsesByStudyAndUserIds(studyId, Set.of(participantUserId), true, activityIds)) {
+            sortedSubmittedInstances = responseStream
+                    .filter(instance -> instance.getFirstCompletedAt() != null)
+                    .sorted(Comparator.comparing(ActivityResponse::getFirstCompletedAt).reversed())
+                    .collect(Collectors.toList());
+        }
 
-        boolean hasConsentedToBloodDraw = determineElectionStatus(handle, participantGuid, studyGuid,
+        boolean hasConsentedToBloodDraw = determineElectionStatus(handle, participantGuid, operatorGuid, studyGuid,
                 ActivityMappingType.BLOOD, bloodMappings, sortedSubmittedInstances);
-        boolean hasConsentedToTissueSample = determineElectionStatus(handle, participantGuid, studyGuid,
+        boolean hasConsentedToTissueSample = determineElectionStatus(handle, participantGuid, operatorGuid, studyGuid,
                 ActivityMappingType.TISSUE, tissueMappings, sortedSubmittedInstances);
 
         return new ParticipantConsents(hasConsentedToBloodDraw, hasConsentedToTissueSample);
     }
 
-    private boolean determineElectionStatus(Handle handle, String participantGuid, String studyGuid, ActivityMappingType mappingType,
-                                            Map<Long, ActivityMapping> mappings, List<ActivityResponse> instances) {
+    private boolean determineElectionStatus(Handle handle, String participantGuid, String operatorGuid, String studyGuid,
+                                            ActivityMappingType mappingType, Map<Long, ActivityMapping> mappings,
+                                            List<ActivityResponse> instances) {
         ActivityResponse instance = instances.stream()
                 .filter(inst -> mappings.containsKey(inst.getActivityId()))
                 .findFirst()
@@ -141,7 +154,7 @@ public class MedicalRecordService {
         }
 
         ConsentSummary summary = consentService
-                .getLatestConsentSummary(handle, participantGuid, studyGuid, instance.getActivityCode())
+                .getLatestConsentSummary(handle, participantGuid, operatorGuid, studyGuid, instance.getActivityCode())
                 .orElse(null);
         if (summary == null) {
             LOG.error("No consent summary found for activity {} user {} study {} for mapping type {}",

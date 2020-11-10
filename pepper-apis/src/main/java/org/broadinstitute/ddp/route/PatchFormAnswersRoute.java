@@ -313,17 +313,17 @@ public class PatchFormAnswersRoute implements Route {
 
 
             res.setBlockVisibilities(formService.getBlockVisibilities(handle, instanceSummary, formActivityDef, participantGuid,
-                    instanceGuid));
+                    operatorGuid, instanceGuid));
 
             List<ActivityValidationFailure> failures = getActivityValidationFailures(
-                    handle, participantGuid, instanceDto, languageCodeId
+                    handle, participantGuid, operatorGuid, instanceDto, languageCodeId
             );
             if (!failures.isEmpty()) {
                 LOG.info("Activity validation failed, reasons: {}", createValidationFailureSummaries(failures));
                 return enrichPayloadWithValidationFailures(res, failures);
             }
             handle.attach(ActivityInstanceStatusDao.class).updateOrInsertStatus(instanceDto, InstanceStatusType.IN_PROGRESS,
-                    Instant.now().toEpochMilli(), operatorUser.getId(), instanceSummary.getParticipantUser());
+                    Instant.now().toEpochMilli(), operatorUser, instanceSummary.getParticipantUser());
 
             handle.attach(DataExportDao.class).queueDataSync(participantGuid, studyGuid);
 
@@ -678,10 +678,10 @@ public class PatchFormAnswersRoute implements Route {
     }
 
     private List<ActivityValidationFailure> getActivityValidationFailures(
-            Handle handle, String participantGuid, ActivityInstanceDto instanceDto, long languageCodeId
+            Handle handle, String participantGuid, String operatorGuid, ActivityInstanceDto instanceDto, long languageCodeId
     ) {
         return actValidationService.validate(
-                handle, interpreter, participantGuid, instanceDto.getGuid(), instanceDto.getActivityId(), languageCodeId
+                handle, interpreter, participantGuid, operatorGuid, instanceDto.getGuid(), instanceDto.getActivityId(), languageCodeId
         );
     }
 }

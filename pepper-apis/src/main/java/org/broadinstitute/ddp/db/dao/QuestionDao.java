@@ -117,6 +117,9 @@ public interface QuestionDao extends SqlObject {
     JdbiPicklistQuestion getJdbiPicklistQuestion();
 
     @CreateSqlObject
+    JdbiPicklistOption getJdbiPicklistOption();
+
+    @CreateSqlObject
     JdbiCompositeQuestion getJdbiCompositeQuestion();
 
     @CreateSqlObject
@@ -342,10 +345,10 @@ public interface QuestionDao extends SqlObject {
     /**
      * Build a boolean question.
      *
-     * @param dto          the question dto
+     * @param dto                  the question dto
      * @param activityInstanceGuid the activity instance guid
-     * @param answerIds    list of base answer ids to question (may be empty)
-     * @param untypedRules list of untyped validations for question (may be empty)
+     * @param answerIds            list of base answer ids to question (may be empty)
+     * @param untypedRules         list of untyped validations for question (may be empty)
      * @return boolean question object
      */
     default BoolQuestion getBooleanQuestion(QuestionDto dto,
@@ -417,11 +420,28 @@ public interface QuestionDao extends SqlObject {
         List<PicklistGroup> groups = new ArrayList<>();
         List<PicklistOption> allOptions = new ArrayList<>();
 
+        PicklistOption option = null;
         // Put the ungrouped options in the list first.
         for (PicklistOptionDto optionDto : container.getUngroupedOptions()) {
-            allOptions.add(new PicklistOption(optionDto.getStableId(),
-                    optionDto.getOptionLabelTemplateId(), optionDto.getTooltipTemplateId(), optionDto.getDetailLabelTemplateId(),
-                    optionDto.getAllowDetails(), optionDto.isExclusive()));
+            if (CollectionUtils.isEmpty(optionDto.getNestedOptions())) {
+                option = new PicklistOption(optionDto.getStableId(),
+                        optionDto.getOptionLabelTemplateId(), optionDto.getTooltipTemplateId(), optionDto.getDetailLabelTemplateId(),
+                        optionDto.getAllowDetails(), optionDto.isExclusive());
+            } else {
+                //add nested options
+                List<PicklistOption> nestedOptions = new ArrayList<>();
+                optionDto.getNestedOptions().stream().forEach(nestedOptionDto -> {
+                    nestedOptions.add(new PicklistOption(nestedOptionDto.getStableId(),
+                            nestedOptionDto.getOptionLabelTemplateId(), nestedOptionDto.getTooltipTemplateId(),
+                            nestedOptionDto.getDetailLabelTemplateId(), nestedOptionDto.getAllowDetails(),
+                            nestedOptionDto.isExclusive()));
+                });
+
+                option = new PicklistOption(optionDto.getStableId(),
+                        optionDto.getOptionLabelTemplateId(), optionDto.getTooltipTemplateId(), optionDto.getDetailLabelTemplateId(),
+                        optionDto.getAllowDetails(), optionDto.isExclusive(), optionDto.getNestedOptionsTemplateId(), nestedOptions);
+            }
+            allOptions.add(option);
         }
 
         // Then options from groups.
@@ -498,10 +518,10 @@ public interface QuestionDao extends SqlObject {
     /**
      * Build a date question.
      *
-     * @param dto          the question dto
+     * @param dto                  the question dto
      * @param activityInstanceGuid the activity instance guid
-     * @param answerIds    list of base answer ids to question (may be empty)
-     * @param untypedRules list of untyped validations for question (may be empty)
+     * @param answerIds            list of base answer ids to question (may be empty)
+     * @param untypedRules         list of untyped validations for question (may be empty)
      * @return date question object
      */
     default DateQuestion getDateQuestion(QuestionDto dto,
@@ -559,10 +579,10 @@ public interface QuestionDao extends SqlObject {
     /**
      * Build a numeric question.
      *
-     * @param dto          the question dto
+     * @param dto                  the question dto
      * @param activityInstanceGuid the activity instance guid
-     * @param answerIds    list of base answer ids to question (may be empty)
-     * @param untypedRules list of untyped validations for question (may be empty)
+     * @param answerIds            list of base answer ids to question (may be empty)
+     * @param untypedRules         list of untyped validations for question (may be empty)
      * @return numeric question object
      */
     default Question getNumericQuestion(QuestionDto dto, String activityInstanceGuid, List<Long> answerIds, List<Rule> untypedRules) {
@@ -599,10 +619,10 @@ public interface QuestionDao extends SqlObject {
     /**
      * Build a agreement question.
      *
-     * @param dto          the question dto
+     * @param dto                  the question dto
      * @param activityInstanceGuid the activity instance guid
-     * @param answerIds    list of base answer ids to question (may be empty)
-     * @param untypedRules list of untyped validations for question (may be empty)
+     * @param answerIds            list of base answer ids to question (may be empty)
+     * @param untypedRules         list of untyped validations for question (may be empty)
      * @return agreement question object
      */
     default AgreementQuestion getAgreementQuestion(QuestionDto dto,
@@ -1503,8 +1523,32 @@ public interface QuestionDao extends SqlObject {
                             : templateDao.loadTemplateById(optionDto.getDetailLabelTemplateId());
                     Template tooltipTemplate = optionDto.getTooltipTemplateId() == null ? null
                             : templateDao.loadTemplateById(optionDto.getTooltipTemplateId());
-                    return new PicklistOptionDef(optionDto.getId(), optionDto.getStableId(),
-                            optionLabel, tooltipTemplate, detailLabel, optionDto.isExclusive());
+                    Template nestedOptionsTemplate = optionDto.getNestedOptionsTemplateId() == null ? null
+                            : templateDao.loadTemplateById(optionDto.getNestedOptionsTemplateId());
+
+                    PicklistOptionDef optionDef = null;
+                    if (CollectionUtils.isEmpty(optionDto.getNestedOptions())) {
+                        optionDef = new PicklistOptionDef(optionDto.getId(), optionDto.getStableId(),
+                                optionLabel, tooltipTemplate, detailLabel, optionDto.isExclusive());
+                    } else {
+                        if (CollectionUtils.isNotEmpty(optionDto.getNestedOptions())) {
+                            List<PicklistOptionDef> nestedOptions = new ArrayList<>();
+                            for (PicklistOptionDto nestedOptionDto : optionDto.getNestedOptions()) {
+                                Template nestedOptionLabel = templateDao.loadTemplateById(nestedOptionDto.getOptionLabelTemplateId());
+                                Template nestedDetailLabel = !nestedOptionDto.getAllowDetails() ? null
+                                        : templateDao.loadTemplateById(nestedOptionDto.getDetailLabelTemplateId());
+                                Template nestedTooltipTemplate = nestedOptionDto.getTooltipTemplateId() == null ? null
+                                        : templateDao.loadTemplateById(nestedOptionDto.getTooltipTemplateId());
+                                nestedOptions.add(new PicklistOptionDef(nestedOptionDto.getId(), nestedOptionDto.getStableId(),
+                                        nestedOptionLabel, nestedTooltipTemplate, nestedDetailLabel,
+                                        nestedOptionDto.isExclusive()));
+                            }
+                            optionDef = new PicklistOptionDef(optionDto.getId(), optionDto.getStableId(),
+                                    optionLabel, tooltipTemplate, detailLabel, optionDto.isExclusive(),
+                                    nestedOptionsTemplate, nestedOptions);
+                        }
+                    }
+                    return optionDef;
                 })
                 .collect(Collectors.toList());
 
