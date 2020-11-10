@@ -59,7 +59,7 @@ public class PdfConfiguration {
         return templateIds;
     }
 
-    public void addTemplateId(Long templateId) {
+    public void addTemplateId(long templateId) {
         templateIds.add(templateId);
     }
 
