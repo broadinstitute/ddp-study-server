@@ -70,15 +70,12 @@ public class PdfGenerationServiceTest extends TxnAwareBaseTest {
 
     @BeforeClass
     public static void setup() throws Exception {
-        System.out.println("About to sleep during setup");
-        Thread.sleep(30000);
         pdfInfo = PdfTestingUtil.makePhysicianInstitutionPdf();
     }
 
     @AfterClass
     public static void cleanup() throws Exception {
         PdfTestingUtil.removeConfigurationData(pdfInfo);
-        Thread.sleep(30000);
     }
 
     @Test
