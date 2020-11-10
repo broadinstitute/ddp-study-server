@@ -147,7 +147,7 @@ public class PdfGenerationService {
                 PdfDocument mergedDoc = new PdfDocument(pdfWriter)) {
             int counter = 0;
             for (int pdfOrderIndex = 0; pdfOrderIndex < configuration.getTemplateIds().size(); pdfOrderIndex++) {
-                Long templateId = configuration.getTemplateIds().get(pdfOrderIndex);
+                long templateId = configuration.getTemplateIds().get(pdfOrderIndex);
                 PdfTemplate template = handle.attach(PdfDao.class)
                         .findFullTemplateByTemplateId(templateId)
                         .orElseThrow(() -> new DDPException("Could not find template with id:" + templateId));
