@@ -773,7 +773,7 @@ public class StudyDataLoaderMain {
 
                     long studyId = studyDto.getId();
                     userGuid = dataLoader.loadParticipantData(handle, datstatParticipantData, datstatParticipantMappingData,
-                            phoneNumber, studyDto, clientDto, address, olcService, addressService, 1);
+                            phoneNumber, studyDto, clientDto, address, olcService, addressService, registrationType);
                     UserDto userDto = jdbiUser.findByUserGuid(userGuid);
 
                     hasAboutYou = (sourceData.get("aboutyousurvey") != null && !sourceData.get("aboutyousurvey").isJsonNull());
