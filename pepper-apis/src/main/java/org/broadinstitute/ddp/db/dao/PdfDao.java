@@ -14,7 +14,6 @@ import org.broadinstitute.ddp.db.DaoException;
 import org.broadinstitute.ddp.db.dto.pdf.MailingAddressTemplateDto;
 import org.broadinstitute.ddp.db.dto.pdf.PdfTemplateDto;
 import org.broadinstitute.ddp.db.dto.pdf.PhysicianInstitutionTemplateDto;
-import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
 import org.broadinstitute.ddp.model.pdf.ActivityDateSubstitution;
 import org.broadinstitute.ddp.model.pdf.AnswerSubstitution;
@@ -44,9 +43,11 @@ import org.jdbi.v3.sqlobject.customizer.BindList;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.UseRowReducer;
 import org.jdbi.v3.stringtemplate4.UseStringTemplateSqlLocator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public interface PdfDao extends SqlObject {
-
+    static final Logger LOG = LoggerFactory.getLogger(PdfDao.class);
     @CreateSqlObject
     PdfSql getPdfSql();
 
@@ -208,6 +209,7 @@ public interface PdfDao extends SqlObject {
     }
 
     default void deleteTemplate(PdfTemplate template) {
+        LOG.error("deleting template with id:" + template.getId());
         PdfSql pdfSql = getPdfSql();
         switch (template.getType()) {
             case MAILING_ADDRESS:
@@ -270,16 +272,13 @@ public interface PdfDao extends SqlObject {
      */
     default boolean deleteSpecificConfigVersion(PdfConfiguration config) {
         PdfVersion version = config.getVersion();
-        List<Long> templateIds = config.getTemplateIds();
+
+        List<PdfTemplate> templates = findFullTemplatesByVersionId(version.getId());
 
         PdfSql pdfSql = getPdfSql();
-        DBUtils.checkDelete(templateIds.size(), pdfSql.unassignTemplatesFromVersion(version.getId()));
+        DBUtils.checkDelete(config.getTemplateIds().size(), pdfSql.unassignTemplatesFromVersion(version.getId()));
 
-        for (Long templateId : templateIds) {
-            PdfTemplate template = findFullTemplateByTemplateId(templateId).orElseThrow(() -> new DDPException("Could not find template "
-                    + "with id: " + templateId));
-            deleteTemplate(template);
-        }
+        templates.forEach(template -> deleteTemplate(template));
 
         deleteConfigVersionAndDataSources(version);
 
@@ -307,11 +306,7 @@ public interface PdfDao extends SqlObject {
         for (PdfVersion version : versions) {
             PdfConfiguration config = findFullConfig(version);
             deleteSpecificConfigVersion(config);
-            //TODO query one by one instead of all at once
-            findFullTemplatesByVersionId(version.getId()).forEach(template -> deleteTemplate(template));
         }
-
-
 
         return versions.size();
     }
