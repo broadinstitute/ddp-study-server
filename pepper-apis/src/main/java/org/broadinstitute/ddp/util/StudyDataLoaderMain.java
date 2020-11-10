@@ -49,14 +49,7 @@ import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.TransactionWrapper;
-import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
-import org.broadinstitute.ddp.db.dao.ActivityInstanceStatusDao;
-import org.broadinstitute.ddp.db.dao.AnswerDao;
-import org.broadinstitute.ddp.db.dao.JdbiActivity;
-import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
-import org.broadinstitute.ddp.db.dao.JdbiClient;
-import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
-import org.broadinstitute.ddp.db.dao.JdbiUser;
+import org.broadinstitute.ddp.db.dao.*;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.db.dto.ClientDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
@@ -66,6 +59,7 @@ import org.broadinstitute.ddp.model.address.MailAddress;
 import org.broadinstitute.ddp.model.migration.StudyMigrationRun;
 import org.broadinstitute.ddp.service.AddressService;
 import org.broadinstitute.ddp.service.OLCService;
+import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -747,6 +741,7 @@ public class StudyDataLoaderMain {
 
         TransactionWrapper.useTxn(handle -> {
             String userGuid = null;
+            String operatorUserGuid = null;
             Boolean hasAboutYou = false;
             Boolean hasConsent = false;
             Boolean hasTissueConsent = false;
@@ -797,6 +792,7 @@ public class StudyDataLoaderMain {
                     long studyId = studyDto.getId();
                     userGuid = dataLoader.loadParticipantData(handle, datstatParticipantData, datstatParticipantMappingData,
                             phoneNumber, studyDto, clientDto, address, olcService, addressService, registrationType);
+                    operatorUserGuid = findOperatorUserGuidByGovernedUserGuid(handle, userGuid);
                     UserDto userDto = jdbiUser.findByUserGuid(userGuid);
 
                     hasAboutYou = (sourceData.get("aboutyousurvey") != null && !sourceData.get("aboutyousurvey").isJsonNull());
@@ -1090,6 +1086,13 @@ public class StudyDataLoaderMain {
             */
         });
 
+    }
+
+    private String findOperatorUserGuidByGovernedUserGuid(Handle handle, String userGuid) {
+        long userId = handle.attach(JdbiUser.class)
+                .getUserIdByGuid(userGuid);
+
+        long operatorUserId = handle.attach()
     }
 
     private void setRunEmail(boolean dryRun, JsonElement datstatData) {
