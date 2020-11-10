@@ -140,13 +140,13 @@ public class PdfGenerationService {
         Map<Long, ActivityResponse> instances = loadActivityInstanceData(handle, configuration, participant);
 
         List<String> errors = new ArrayList<>();
-        byte[] pdf;
         try (
                 ByteArrayOutputStream renderedStream = new ByteArrayOutputStream();
                 PdfWriter pdfWriter = new PdfWriter(renderedStream);
                 PdfDocument mergedDoc = new PdfDocument(pdfWriter)) {
             int counter = 0;
             for (int pdfOrderIndex = 0; pdfOrderIndex < configuration.getTemplateIds().size(); pdfOrderIndex++) {
+                byte[] pdf;
                 Long templateId = configuration.getTemplateIds().get(pdfOrderIndex);
                 PdfTemplate template = handle.attach(PdfDao.class)
                         .findFullTemplateByTemplateId(templateId)
