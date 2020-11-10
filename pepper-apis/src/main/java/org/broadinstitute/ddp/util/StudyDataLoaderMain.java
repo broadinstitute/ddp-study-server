@@ -312,7 +312,7 @@ public class StudyDataLoaderMain {
             }
         } else if (hasFile) {
             try {
-                dataLoaderMain.processLocalFile(cfg, positional[0], cmd.getOptionValue('f'), isDryRun);
+                dataLoaderMain.processLocalFile(cfg, positional[0], cmd.getOptionValue('f'), isDryRun, cmd.getOptionValue("psw"));
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -404,7 +404,7 @@ public class StudyDataLoaderMain {
         return mappingData;
     }
 
-    public void processLocalFile(Config cfg, String studyGuid, String fileName, boolean dryRun) throws Exception {
+    public void processLocalFile(Config cfg, String studyGuid, String fileName, boolean dryRun, String pswPath) throws Exception {
         StudyDataLoader dataLoader = new StudyDataLoader(cfg);
         final OLCService olcService = new OLCService(cfg.getString(ConfigFile.GEOCODING_API_KEY));
         final AddressService addressService = new AddressService(cfg.getString(ConfigFile.EASY_POST_API_KEY),
@@ -415,6 +415,29 @@ public class StudyDataLoaderMain {
         //load source survey data
         String data = new String(Files.readAllBytes(Paths.get(fileName)));
         Map<String, JsonElement> surveyDataMap = loadSourceDataFile(data);
+
+        if (pswPath != null && !pswPath.isEmpty()) {
+            String hashedPasswordsData = new String(Files.readAllBytes(Paths.get(pswPath)));
+            JsonElement hashedPasswordsJson;
+            try {
+                hashedPasswordsJson = new Gson().fromJson(hashedPasswordsData, new TypeToken<JsonArray>() {
+                }.getType());
+            } catch (Exception e) {
+                LOG.error("Failed to load file data as JSON ", e);
+                return;
+            }
+            JsonArray hashedPasswordsJsonArray = hashedPasswordsJson.getAsJsonArray();
+            JsonElement datstatData = surveyDataMap.get("datstatparticipantdata");
+            String userEmail = datstatData.getAsJsonObject().get("datstat_email").getAsString();
+            for (JsonElement item: hashedPasswordsJsonArray) {
+                if (item.getAsJsonObject().has(userEmail)
+                        && item.getAsJsonObject().get(userEmail) != null
+                        && !item.getAsJsonObject().get(userEmail).isJsonNull()) {
+                    surveyDataMap.get("datstatparticipantdata").getAsJsonObject()
+                            .add("password", item.getAsJsonObject().get(userEmail));
+                }
+            }
+        }
 
         setRunEmail(dryRun, surveyDataMap.get("datstatparticipantdata"));
         migrationRunReport = new ArrayList<>();
