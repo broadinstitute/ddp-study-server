@@ -54,8 +54,10 @@ import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.db.dto.ClientDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.db.dto.UserDto;
+import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.broadinstitute.ddp.model.address.MailAddress;
+import org.broadinstitute.ddp.model.governance.Governance;
 import org.broadinstitute.ddp.model.migration.StudyMigrationRun;
 import org.broadinstitute.ddp.service.AddressService;
 import org.broadinstitute.ddp.service.OLCService;
@@ -792,7 +794,11 @@ public class StudyDataLoaderMain {
                     long studyId = studyDto.getId();
                     userGuid = dataLoader.loadParticipantData(handle, datstatParticipantData, datstatParticipantMappingData,
                             phoneNumber, studyDto, clientDto, address, olcService, addressService, registrationType);
-                    operatorUserGuid = findOperatorUserGuidByGovernedUserGuid(handle, userGuid);
+                    operatorUserGuid = handle.attach(UserGovernanceDao.class)
+                            .findGovernancesByParticipantAndStudyGuids(userGuid, studyGuid)
+                            .findFirst()
+                            .orElseThrow(() -> new DDPException("Could not find operator with user guid "))
+                            .getProxyUserGuid();
                     UserDto userDto = jdbiUser.findByUserGuid(userGuid);
 
                     hasAboutYou = (sourceData.get("aboutyousurvey") != null && !sourceData.get("aboutyousurvey").isJsonNull());
@@ -817,13 +823,17 @@ public class StudyDataLoaderMain {
 
                     var answerDao = handle.attach(AnswerDao.class);
                     //create prequal
-                    dataLoader.createPrequal(handle,
-                            userGuid, studyId,
-                            createdAt,
-                            jdbiActivity,
-                            activityInstanceDao,
-                            activityInstanceStatusDao,
-                            answerDao);
+                    if (operatorUserGuid != null && !operatorUserGuid.isEmpty()) {
+                        dataLoader.createPrequal(handle,
+                                userGuid, studyId,
+                                createdAt,
+                                jdbiActivity,
+                                activityInstanceDao,
+                                activityInstanceStatusDao,
+                                answerDao);
+                    } else {
+
+                    }
 
 
                     if (hasATRegistration) {
@@ -1086,13 +1096,6 @@ public class StudyDataLoaderMain {
             */
         });
 
-    }
-
-    private String findOperatorUserGuidByGovernedUserGuid(Handle handle, String userGuid) {
-        long userId = handle.attach(JdbiUser.class)
-                .getUserIdByGuid(userGuid);
-
-        long operatorUserId = handle.attach()
     }
 
     private void setRunEmail(boolean dryRun, JsonElement datstatData) {
