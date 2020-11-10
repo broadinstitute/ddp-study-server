@@ -118,7 +118,6 @@ where pvt.pdf_base_template_id = :templateId
 findTemplateIdsByVersionId() ::= <<
     select pvt.pdf_base_template_id
     from pdf_version_template as pvt
-    join pdf_base_template as base on base.pdf_base_template_id = pvt.pdf_base_template_id
     where pvt.pdf_document_version_id = :versionId
     order by pvt.template_order asc
 >>
