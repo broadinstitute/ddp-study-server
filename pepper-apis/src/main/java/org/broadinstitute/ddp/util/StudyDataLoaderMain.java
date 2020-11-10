@@ -833,9 +833,6 @@ public class StudyDataLoaderMain {
                     if (hasATRegistration) {
                         String activityCode = mappingData.get("RegistrationSurvey").getAsJsonObject()
                                 .get("activity_code").getAsString();
-                        List<ActivityInstanceDto> activityInstanceDtoList = jdbiActivityInstance
-                                .findAllByUserGuidAndActivityCode(userGuid, activityCode, studyId);
-                        activityInstanceDao.deleteByInstanceGuid(activityInstanceDtoList.get(0).getGuid());
                         ActivityInstanceDto instanceDto = dataLoader.createActivityInstance(sourceData.get("atregistrationsurvey"),
                                 userGuid, studyId,
                                 activityCode, createdAt,

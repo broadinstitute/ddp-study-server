@@ -59,7 +59,7 @@ public class GovernedParticipantRegistrationRoute extends ValidatedJsonInputRout
             long auth0ClientId = handle.attach(JdbiClient.class)
                     .getClientIdByAuth0ClientIdAndAuth0TenantId(client, study.getAuth0TenantId())
                     .orElseThrow(() -> new DDPException("Could not determine clientId"));
-            Governance governance = userGovernanceDao.createGovernedUserWithGuidAlias(auth0ClientId, operatorUser.getId());
+            Governance governance = userGovernanceDao.createGovernedUserWithGuidAlias(auth0ClientId, operatorUser.getId(), null);
             userGovernanceDao.grantGovernedStudy(governance.getId(), study.getId());
             User governedUser = userDao.findUserById(governance.getGovernedUserId())
                     .orElseThrow(() -> new DDPException("Could not find governed user with id " + governance.getGovernedUserId()));
