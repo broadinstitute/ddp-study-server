@@ -14,6 +14,7 @@ import org.broadinstitute.ddp.db.DaoException;
 import org.broadinstitute.ddp.db.dto.pdf.MailingAddressTemplateDto;
 import org.broadinstitute.ddp.db.dto.pdf.PdfTemplateDto;
 import org.broadinstitute.ddp.db.dto.pdf.PhysicianInstitutionTemplateDto;
+import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
 import org.broadinstitute.ddp.model.pdf.ActivityDateSubstitution;
 import org.broadinstitute.ddp.model.pdf.AnswerSubstitution;
@@ -275,7 +276,10 @@ public interface PdfDao extends SqlObject {
         DBUtils.checkDelete(templateIds.size(), pdfSql.unassignTemplatesFromVersion(version.getId()));
 
         for (Long templateId : templateIds) {
-            findFullTemplateByTemplateId(templateId).ifPresent(template -> deleteTemplate(template));
+            PdfTemplate template = findFullTemplateByTemplateId(templateId).orElseThrow(() -> new DDPException("Could not find template "
+                    + "with id: "
+                    + "templateId"));
+            deleteTemplate(template);
         }
 
         deleteConfigVersionAndDataSources(version);
