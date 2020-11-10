@@ -277,8 +277,7 @@ public interface PdfDao extends SqlObject {
 
         for (Long templateId : templateIds) {
             PdfTemplate template = findFullTemplateByTemplateId(templateId).orElseThrow(() -> new DDPException("Could not find template "
-                    + "with id: "
-                    + "templateId"));
+                    + "with id: " + templateId));
             deleteTemplate(template);
         }
 
