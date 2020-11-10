@@ -2,9 +2,12 @@ package org.broadinstitute.ddp.db.dao;
 
 import java.util.List;
 
+import org.broadinstitute.ddp.db.dto.FormSectionMembershipDto;
 import org.jdbi.v3.sqlobject.SqlObject;
+import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
+import org.jdbi.v3.sqlobject.statement.SqlBatch;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import org.jdbi.v3.stringtemplate4.UseStringTemplateSqlLocator;
@@ -29,4 +32,25 @@ public interface JdbiFormActivityFormSection extends SqlObject {
             + " order by fa_fs.display_order asc")
     List<Long> findOrderedSectionIdsByActivityIdAndTimestamp(@Bind("activityId") long activityId,
                                                              @Bind("timestamp") long timestamp);
+
+    // study-builder
+    @SqlQuery("select fa_fs.*"
+            + "  from form_activity__form_section as fa_fs"
+            + "  join revision as rev on fa_fs.revision_id = rev.revision_id"
+            + " where fa_fs.form_activity_id = :activityId"
+            + "   and rev.start_date <= :timestamp"
+            + "   and (rev.end_date is null or :timestamp < rev.end_date)"
+            + " order by fa_fs.display_order asc")
+    @RegisterConstructorMapper(FormSectionMembershipDto.class)
+    List<FormSectionMembershipDto> findOrderedSectionMemberships(
+            @Bind("activityId") long activityId,
+            @Bind("timestamp") long timestamp);
+
+    // study-builder
+    @SqlBatch("update form_activity__form_section"
+            + "   set revision_id = :revisionId"
+            + " where form_activity__form_section_id = :id")
+    int[] bulkUpdateRevisionIdsByIds(
+            @Bind("id") Iterable<Long> membershipIds,
+            @Bind("revisionId") Iterable<Long> revisionIds);
 }
