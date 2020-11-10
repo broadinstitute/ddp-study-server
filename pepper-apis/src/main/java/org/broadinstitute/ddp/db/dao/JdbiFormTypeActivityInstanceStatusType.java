@@ -26,6 +26,13 @@ public interface JdbiFormTypeActivityInstanceStatusType extends SqlObject {
                 @Bind("statusType") InstanceStatusType statusType,
                 @Bind("icon") byte[] icon, @Bind("revisionId") long revisionId);
 
+    @SqlUpdate("updateIconBlob")
+    @UseStringTemplateSqlLocator
+    //updates ALL revisions
+    int updateIcon(@Bind("studyId") long studyId, @Bind("formType") FormType formType,
+                @Bind("statusType") InstanceStatusType statusType,
+                @Bind("icon") byte[] icon);
+
     @SqlQuery("queryLatestIconBlobs")
     @UseStringTemplateSqlLocator
     @RegisterRowMapper(IconBlobDtoMapper.class)

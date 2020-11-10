@@ -12,11 +12,13 @@ import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import com.auth0.client.mgmt.ManagementAPI;
+import com.auth0.client.mgmt.filter.ConnectionFilter;
 import com.auth0.exception.APIException;
 import com.auth0.json.mgmt.Connection;
 import com.auth0.json.mgmt.ConnectionsPage;
@@ -56,11 +58,14 @@ public class Auth0ManagementClient {
     private static final Logger LOG = LoggerFactory.getLogger(Auth0ManagementClient.class);
     private static final String AUDIENCE_SUFFIX = "api/v2/";
     private static final int DEFAULT_TIMEOUT_SECS = 10;
-    private static final int DEFAULT_MAX_TRIES = 3;
-    private static final long DEFAULT_BACKOFF_MILLIS = 500L;
     private static final int TOKEN_LEEWAY_SECONDS = 30;
     private static final Map<String, DecodedJWT> TOKEN_CACHE = new HashMap<>();
     private static final Gson gson = new Gson();
+
+    // Rate limit and retries
+    private static final int DEFAULT_MAX_RETRIES = 3;
+    private static final long DEFAULT_BACKOFF_MILLIS = 500L;
+    private static final int MAX_JITTER_MILLIS = 100;
 
     private final URI baseUrl;
     private final String clientId;
@@ -69,6 +74,8 @@ public class Auth0ManagementClient {
     private final String tokenLookupKey;
     private final ManagementAPI mgmtApi;
     private final HttpClient httpClient;
+    private int maxRetries;
+    private long backoffMillis;
 
     /**
      * Find the auth0 tenant for the user and create Auth0 Management client for it.
@@ -116,6 +123,8 @@ public class Auth0ManagementClient {
         this.tokenLookupKey = baseUrl.toString() + mgmtClientId;
         this.mgmtApi = mgmtApi;
         this.httpClient = HttpClient.newHttpClient();
+        this.maxRetries = DEFAULT_MAX_RETRIES;
+        this.backoffMillis = DEFAULT_BACKOFF_MILLIS;
     }
 
     /**
@@ -201,15 +210,18 @@ public class Auth0ManagementClient {
      * @return result with list of connections, or error response
      */
     public ApiResult<List<Connection>, APIException> listConnections() {
-        try {
-            mgmtApi.setApiToken(getToken());
-            ConnectionsPage page = mgmtApi.connections().listAll(null).execute();
-            return ApiResult.ok(200, page.getItems());
-        } catch (APIException e) {
-            return ApiResult.err(e.getStatusCode(), e);
-        } catch (Exception e) {
-            return ApiResult.thrown(e);
-        }
+        String msg = String.format("Hit rate limit while listing connections for tenant '%s', retrying", baseUrl);
+        return withRetries(msg, () -> {
+            try {
+                mgmtApi.setApiToken(getToken());
+                ConnectionsPage page = mgmtApi.connections().listAll(null).execute();
+                return ApiResult.ok(200, page.getItems());
+            } catch (APIException e) {
+                return ApiResult.err(e.getStatusCode(), e);
+            } catch (Exception e) {
+                return ApiResult.thrown(e);
+            }
+        });
     }
 
     /**
@@ -231,6 +243,27 @@ public class Auth0ManagementClient {
     }
 
     /**
+     * Get connection in the tenant by name.
+     *
+     * @return result with the connection, or error response
+     */
+    public ApiResult<Connection, APIException> getConnectionByName(String name) {
+        String msg = String.format("Hit rate limit while getting connection with name '%s', retrying", name);
+        var filter = new ConnectionFilter().withName(name);
+        return withRetries(msg, () -> {
+            try {
+                mgmtApi.setApiToken(getToken());
+                ConnectionsPage page = mgmtApi.connections().listAll(filter).execute();
+                return ApiResult.ok(200, page.getItems().get(0));
+            } catch (APIException e) {
+                return ApiResult.err(e.getStatusCode(), e);
+            } catch (Exception e) {
+                return ApiResult.thrown(e);
+            }
+        });
+    }
+
+    /**
      * Create a new auth0 user account. Note: need database connection for creating email/password account.
      *
      * @param connection the database connection name
@@ -239,40 +272,24 @@ public class Auth0ManagementClient {
      * @return result with created user, or error response
      */
     public ApiResult<User, APIException> createAuth0User(String connection, String email, String password) {
-        try {
-            mgmtApi.setApiToken(getToken());
-            User user = new User();
-            user.setEmail(email);
-            user.setPassword(password);
-            user.setConnection(connection);
-            User createdUser = mgmtApi.users().create(user).execute();
-            return ApiResult.ok(200, createdUser);
-        } catch (APIException e) {
-            return ApiResult.err(e.getStatusCode(), e);
-        } catch (Exception e) {
-            return ApiResult.thrown(e);
-        }
-    }
-
-    /**
-     * Initiate password reset flow and get the ticket URL.
-     *
-     * @param auth0UserId the user to do password reset for
-     * @param redirectUrl the URL to go to after user has finished password reset
-     * @return result with ticket URL, or error response
-     */
-    public ApiResult<String, APIException> createPasswordResetTicket(String auth0UserId, String redirectUrl) {
-        try {
-            mgmtApi.setApiToken(getToken());
-            var ticket = new PasswordChangeTicket(auth0UserId);
-            ticket.setResultUrl(redirectUrl);
-            PasswordChangeTicket createdTicket = mgmtApi.tickets().requestPasswordChange(ticket).execute();
-            return ApiResult.ok(200, createdTicket.getTicket());
-        } catch (APIException e) {
-            return ApiResult.err(e.getStatusCode(), e);
-        } catch (Exception e) {
-            return ApiResult.thrown(e);
-        }
+        String msg = String.format(
+                "Hit rate limit while creating auth0 user with email %s in connection %s, retrying",
+                email, connection);
+        return withRetries(msg, () -> {
+            try {
+                mgmtApi.setApiToken(getToken());
+                User user = new User();
+                user.setEmail(email);
+                user.setPassword(password);
+                user.setConnection(connection);
+                User createdUser = mgmtApi.users().create(user).execute();
+                return ApiResult.ok(200, createdUser);
+            } catch (APIException e) {
+                return ApiResult.err(e.getStatusCode(), e);
+            } catch (Exception e) {
+                return ApiResult.thrown(e);
+            }
+        });
     }
 
     /**
@@ -282,12 +299,33 @@ public class Auth0ManagementClient {
      * @return result with the user, or error response
      */
     public ApiResult<User, APIException> getAuth0User(String auth0UserId) {
-        String errorMsg = "Hit rate limit while fetching auth0 user " + auth0UserId;
-        return withRetries(errorMsg, DEFAULT_MAX_TRIES, DEFAULT_BACKOFF_MILLIS, () -> {
+        String msg = "Hit rate limit while fetching auth0 user " + auth0UserId + ", retrying";
+        return withRetries(msg, () -> {
             try {
                 mgmtApi.setApiToken(getToken());
                 var user = mgmtApi.users().get(auth0UserId, null).execute();
                 return ApiResult.ok(200, user);
+            } catch (APIException e) {
+                return ApiResult.err(e.getStatusCode(), e);
+            } catch (Exception e) {
+                return ApiResult.thrown(e);
+            }
+        });
+    }
+
+    /**
+     * Delete the auth0 user. Note: this is a dangerous operation, use with caution.
+     *
+     * @param auth0UserId the auth0 user id
+     * @return a void result, or error response
+     */
+    public ApiResult<Void, APIException> deleteAuth0User(String auth0UserId) {
+        String msg = "Hit rate limit while deleting auth0 user " + auth0UserId + ", retrying";
+        return withRetries(msg, () -> {
+            try {
+                mgmtApi.setApiToken(getToken());
+                mgmtApi.users().delete(auth0UserId).execute();
+                return ApiResult.ok(200, null);
             } catch (APIException e) {
                 return ApiResult.err(e.getStatusCode(), e);
             } catch (Exception e) {
@@ -305,17 +343,20 @@ public class Auth0ManagementClient {
      * @return result with response user, or error response
      */
     public ApiResult<User, APIException> updateUserMetadata(String auth0UserId, Map<String, Object> metadata) {
-        try {
-            mgmtApi.setApiToken(getToken());
-            var payload = new User();
-            payload.setUserMetadata(metadata);
-            var resp = mgmtApi.users().update(auth0UserId, payload).execute();
-            return ApiResult.ok(200, resp);
-        } catch (APIException e) {
-            return ApiResult.err(e.getStatusCode(), e);
-        } catch (Exception e) {
-            return ApiResult.thrown(e);
-        }
+        String msg = "Hit rate limit while updating user_metadata for auth0 user " + auth0UserId + ", retrying";
+        return withRetries(msg, () -> {
+            try {
+                mgmtApi.setApiToken(getToken());
+                var payload = new User();
+                payload.setUserMetadata(metadata);
+                var resp = mgmtApi.users().update(auth0UserId, payload).execute();
+                return ApiResult.ok(200, resp);
+            } catch (APIException e) {
+                return ApiResult.err(e.getStatusCode(), e);
+            } catch (Exception e) {
+                return ApiResult.thrown(e);
+            }
+        });
     }
 
     /**
@@ -327,17 +368,20 @@ public class Auth0ManagementClient {
      * @return result with response user, or error response
      */
     public ApiResult<User, APIException> updateUserAppMetadata(String auth0UserId, Map<String, Object> appMetadata) {
-        try {
-            mgmtApi.setApiToken(getToken());
-            var payload = new User();
-            payload.setAppMetadata(appMetadata);
-            var resp = mgmtApi.users().update(auth0UserId, payload).execute();
-            return ApiResult.ok(200, resp);
-        } catch (APIException e) {
-            return ApiResult.err(e.getStatusCode(), e);
-        } catch (Exception e) {
-            return ApiResult.thrown(e);
-        }
+        String msg = "Hit rate limit while updating app_metadata for auth0 user " + auth0UserId + ", retrying";
+        return withRetries(msg, () -> {
+            try {
+                mgmtApi.setApiToken(getToken());
+                var payload = new User();
+                payload.setAppMetadata(appMetadata);
+                var resp = mgmtApi.users().update(auth0UserId, payload).execute();
+                return ApiResult.ok(200, resp);
+            } catch (APIException e) {
+                return ApiResult.err(e.getStatusCode(), e);
+            } catch (Exception e) {
+                return ApiResult.thrown(e);
+            }
+        });
     }
 
     /**
@@ -399,7 +443,7 @@ public class Auth0ManagementClient {
         }
         Map<String, String> guidByClientId = (Map<String, String>) appMetadata
                 .computeIfAbsent(APP_METADATA_PEPPER_USER_GUIDS, key -> new HashMap<>());
-        guidByClientId.remove(auth0ClientId);
+        String guid = guidByClientId.remove(auth0ClientId);
 
         result = updateUserAppMetadata(auth0UserId, appMetadata);
         if (result.hasFailure()) {
@@ -407,25 +451,76 @@ public class Auth0ManagementClient {
             throw new DDPException("Failed to update app metadata for auth0 user " + auth0UserId, e);
         }
 
-        LOG.info("Removed auth0 user {} with user guid {} for client {}", auth0UserId, auth0ClientId);
+        LOG.info("Removed user guid {} from auth0 user {} for client {}", guid, auth0UserId, auth0ClientId);
         return result.getBody();
     }
 
-    private <B, E> ApiResult<B, E> withRetries(String errorMsg, int numTries, long backoffMillis, Supplier<ApiResult<B, E>> callback) {
+    /**
+     * Initiate password reset flow and get the ticket URL by auth0 user id.
+     *
+     * @param auth0UserId the user to do password reset for
+     * @param redirectUrl the URL to go to after user has finished password reset
+     * @return result with ticket URL, or error response
+     */
+    public ApiResult<String, APIException> createPasswordResetTicket(String auth0UserId, String redirectUrl) {
+        String msg = "Hit rate limit while creating password reset ticket for auth0 user " + auth0UserId + ", retrying";
+        var ticket = new PasswordChangeTicket(auth0UserId);
+        ticket.setResultUrl(redirectUrl);
+        return tryPasswordChangeRequest(ticket, msg);
+    }
+
+    /**
+     * Initiate password reset flow and get the ticket URL by email and connection.
+     *
+     * @param email        the user's email
+     * @param connectionId the auth0 connection id
+     * @param redirectUrl  the URL to go to after user has finished password reset
+     * @return result with ticket URL, or error response
+     */
+    public ApiResult<String, APIException> createPasswordResetTicket(String email, String connectionId, String redirectUrl) {
+        String msg = String.format(
+                "Hit rate limit while creating password reset ticket for email %s and connection %s, retrying",
+                email, connectionId);
+        var ticket = new PasswordChangeTicket(email, connectionId);
+        ticket.setResultUrl(redirectUrl);
+        return tryPasswordChangeRequest(ticket, msg);
+    }
+
+    private ApiResult<String, APIException> tryPasswordChangeRequest(PasswordChangeTicket ticket, String retryMessage) {
+        return withRetries(retryMessage, () -> {
+            try {
+                mgmtApi.setApiToken(getToken());
+                PasswordChangeTicket createdTicket = mgmtApi.tickets().requestPasswordChange(ticket).execute();
+                return ApiResult.ok(200, createdTicket.getTicket());
+            } catch (APIException e) {
+                return ApiResult.err(e.getStatusCode(), e);
+            } catch (Exception e) {
+                return ApiResult.thrown(e);
+            }
+        });
+    }
+
+    private <B, E> ApiResult<B, E> withRetries(String retryMessage, Supplier<ApiResult<B, E>> callback) {
         ApiResult<B, E> res = null;
-        while (numTries > 0) {
+        int numTries = 0;
+        int maxTries = maxRetries + 1;
+        while (numTries < maxTries) {
             res = callback.get();
+            numTries++;
+            if (numTries >= maxTries) {
+                break;
+            }
             if (res.getStatusCode() == 429) {
-                LOG.error(errorMsg, res.getError());
+                LOG.error(retryMessage, res.getError());
+                long wait = backoffMillis * numTries + new Random().nextInt(MAX_JITTER_MILLIS);
                 try {
-                    TimeUnit.MILLISECONDS.sleep(backoffMillis);
+                    TimeUnit.MILLISECONDS.sleep(wait);
                 } catch (InterruptedException e) {
                     LOG.warn("Interrupted while waiting after rate limit", e);
                 }
             } else {
                 break;
             }
-            numTries--;
         }
         return res;
     }

@@ -432,10 +432,6 @@ public class ActivityInstanceDao {
                 .build().getSnapshot();
 
         for (var summary : summaries) {
-            if (StringUtils.isBlank(summary.getActivitySummary())) {
-                continue;
-            }
-
             Map<String, String> subs = substitutions.getOrDefault(summary.getActivityInstanceId(), new HashMap<>());
             var provider = new RenderValueProvider.Builder()
                     .setActivityInstanceNumber(summary.getInstanceNumber())
@@ -460,8 +456,10 @@ public class ActivityInstanceDao {
             summary.setActivityName(nameText);
 
             // Render the summary.
-            String summaryText = renderer.renderToString(summary.getActivitySummary(), context);
-            summary.setActivitySummary(summaryText);
+            if (StringUtils.isNotBlank(summary.getActivitySummary())) {
+                String summaryText = renderer.renderToString(summary.getActivitySummary(), context);
+                summary.setActivitySummary(summaryText);
+            }
         }
     }
 

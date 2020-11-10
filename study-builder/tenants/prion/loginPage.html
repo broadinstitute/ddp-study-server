@@ -231,10 +231,6 @@
         color: #82B547;
     }
 
-    .auth0-lock-password-strength {
-        display: none;
-    }
-
     .auth0-lock.auth0-lock .auth0-lock-form .auth0-lock-alternative .auth0-lock-alternative-link {
         color: #717174;
         font-size: 0.75rem;
@@ -258,8 +254,7 @@
         text-align: left !important;
     }
 
-    .auth0-lock-input-block.auth0-lock-input-show-password .auth0-lock-input-block.auth0-lock-input-password.auth0-lock-error::after {
-        content: unset;
+    .auth0-lock-input-block.auth0-lock-input-password.auth0-lock-error {
         font-family: 'Raleway', sans-serif;
         font-size: 12px;
         color: #f00;
@@ -924,6 +919,9 @@
             'lock.fallback': 'We\'re sorry, something went wrong when attempting to log in.',
             'lock.invalid_email_password': 'Wrong email or password.',
             'lock.network': 'We could not reach the server. Please check your connection and try again.'
+        },
+        passwordStrength: {
+            lengthAtLeast: 'At least %d characters in length'
         }
     };
 
@@ -982,6 +980,9 @@
             'lock.fallback': '(es) We\'re sorry, something went wrong when attempting to log in.',
             'lock.invalid_email_password': '(es) Wrong email or password.',
             'lock.network': '(es) We could not reach the server. Please check your connection and try again.'
+        },
+        passwordStrength: {
+            lengthAtLeast: '(es)At least %d characters in length'
         }
     };
     dictionaries['he'] = {
@@ -1039,6 +1040,9 @@
             'lock.fallback': '(he) We\'re sorry, something went wrong when attempting to log in.',
             'lock.invalid_email_password': '(he) Wrong email or password.',
             'lock.network': '(he) We could not reach the server. Please check your connection and try again.'
+        },
+        passwordStrength: {
+            lengthAtLeast: '(he)At least %d characters in length'
         }
     };
     dictionaries['zh'] = {
@@ -1096,6 +1100,9 @@
             'lock.fallback': '(zh) We\'re sorry, something went wrong when attempting to log in.',
             'lock.invalid_email_password': '(zh) Wrong email or password.',
             'lock.network': '(zh) We could not reach the server. Please check your connection and try again.'
+        },
+        passwordStrength: {
+            lengthAtLeast: '(zh)At least %d characters in length'
         }
     };
     if ('en' !== languageCode && 'es' !== languageCode && 'he' !== languageCode && 'zh' !== languageCode) {
@@ -1249,6 +1256,31 @@
                     console.log('appending password hint');
                     passwordBlock.insertBefore(passwordHint, passwordBlock.childNodes[0]);
                 }
+            }
+            if (!document.getElementById('auth0-lock-error-msg-password') && document.getElementsByClassName('auth0-lock-input-block auth0-lock-input-password auth0-lock-error')[0]) {
+                //If the password is invalid but we haven't added the error message, set it
+                var passwordError = document.getElementsByClassName('auth0-lock-input-block auth0-lock-input-password auth0-lock-error')[0];
+                var errorText = languageDictionary.invalidErrorHint;
+
+                // If the password field isn't empty but is invalid, make that the error message
+                var inputElements = passwordError ? passwordError.getElementsByTagName('input') : null;
+                var value = inputElements && inputElements[0] ? inputElements[0].value : null;
+                if (value.length === 0) {
+                    errorText = languageDictionary.blankErrorHint;
+                }
+
+                var passwordErrorMessage = document.createElement('div');
+                passwordErrorMessage.innerHTML = `<span>${errorText}</span>`;
+                passwordErrorMessage.setAttribute('role', 'alert');
+                passwordErrorMessage.setAttribute('id', 'auth0-lock-error-msg-password');
+                passwordErrorMessage.setAttribute('class', 'auth0-lock-error-msg');
+                console.log('appending password error message');
+                passwordError.appendChild(passwordErrorMessage);
+            }
+            if (document.getElementById('auth0-lock-error-msg-password') && !document.getElementsByClassName('auth0-lock-input-block auth0-lock-input-password auth0-lock-error')[0]){
+                //If we're still showing the error message for the password field even though the field is now valid, get rid of the error message
+                var errorMsg = document.getElementById('auth0-lock-error-msg-password');
+                errorMsg.parentElement.removeChild(errorMsg);
             }
             if (!document.getElementById('ddp-email-prompt')) {
                 // If we are logging in, add some instructions

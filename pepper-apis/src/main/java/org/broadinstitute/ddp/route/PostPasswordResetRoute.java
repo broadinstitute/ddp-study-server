@@ -1,11 +1,15 @@
 package org.broadinstitute.ddp.route;
 
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.Optional;
 
-import okhttp3.HttpUrl;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpStatus;
+import org.apache.http.client.utils.URIBuilder;
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants.QueryParam;
 import org.broadinstitute.ddp.db.TransactionWrapper;
@@ -40,7 +44,7 @@ public class PostPasswordResetRoute implements Route {
             throw ResponseUtil.haltError(response, HttpStatus.SC_BAD_REQUEST, new ApiError(ErrorCodes.REQUIRED_PARAMETER_MISSING, errMsg));
         }
 
-        HttpUrl clientPwdResetUrl = null;
+        URI clientPwdResetUrl = null;
         boolean isDomainSpecified = auth0Domain != null && !auth0Domain.isBlank();
         if (isDomainSpecified) {
             clientPwdResetUrl = getWebClientPasswordResetRedirectUrl(auth0ClientId, auth0Domain, response);
@@ -62,15 +66,15 @@ public class PostPasswordResetRoute implements Route {
             }
         }
 
-        HttpUrl.Builder urlBuilder = clientPwdResetUrl.newBuilder();
+        var urlBuilder = new URIBuilder(clientPwdResetUrl);
         if (StringUtils.isNotBlank(email)) {
-            urlBuilder.addQueryParameter(QueryParam.EMAIL, email);
+            urlBuilder.addParameter(QueryParam.EMAIL, email);
         }
 
         if (!Boolean.valueOf(auth0Success)) {
             String errMsg = "success parameter is FALSE, which means that the Auth0 link has expired";
             LOG.warn(errMsg);
-            urlBuilder.addQueryParameter(QueryParam.ERROR_CODE, ErrorCodes.PASSWORD_RESET_LINK_EXPIRED);
+            urlBuilder.addParameter(QueryParam.ERROR_CODE, ErrorCodes.PASSWORD_RESET_LINK_EXPIRED);
         }
 
         response.header(
@@ -81,7 +85,7 @@ public class PostPasswordResetRoute implements Route {
         return "";
     }
 
-    private HttpUrl getWebClientPasswordResetRedirectUrl(String auth0ClientId, String auth0Domain, Response response) {
+    private URI getWebClientPasswordResetRedirectUrl(String auth0ClientId, String auth0Domain, Response response) {
         return TransactionWrapper.withTxn(
                 handle -> {
                     Optional<ClientDto> clientDtoOpt = null;
@@ -119,11 +123,13 @@ public class PostPasswordResetRoute implements Route {
                         );
                     }
 
-                    HttpUrl parsedUrl = HttpUrl.parse(redirUrl);
-                    if (parsedUrl == null) {
+                    URI parsedUrl = null;
+                    try {
+                        parsedUrl = new URL(redirUrl).toURI();
+                    } catch (URISyntaxException | MalformedURLException e) {
                         String errMsg = "Post password reset URL " + redirUrl + " is malformed";
                         LOG.warn(errMsg);
-                        ResponseUtil.haltError(
+                        throw ResponseUtil.haltError(
                                 response,
                                 HttpStatus.SC_INTERNAL_SERVER_ERROR,
                                 new ApiError(ErrorCodes.MALFORMED_REDIRECT_URL, errMsg)
