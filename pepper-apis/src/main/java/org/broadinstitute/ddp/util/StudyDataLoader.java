@@ -1047,7 +1047,11 @@ public class StudyDataLoader {
                 governedUser.getExpiresAt());
     }
 
-    private org.broadinstitute.ddp.model.user.User createOperatorUser(JdbiUser jdbiUser, JsonElement data, String userGuid, String userHruid, ClientDto clientDto, UserDao userDao, JdbiLanguageCode jdbiLanguageCode, UserProfileDao userProfileDao, JdbiAuth0Tenant jdbiAuth0Tenant) throws IOException, InterruptedException {
+    private org.broadinstitute.ddp.model.user.User createOperatorUser(JdbiUser jdbiUser, JsonElement data,
+                                                                      String userGuid, String userHruid, ClientDto clientDto,
+                                                                      UserDao userDao, JdbiLanguageCode jdbiLanguageCode,
+                                                                      UserProfileDao userProfileDao, JdbiAuth0Tenant jdbiAuth0Tenant)
+            throws IOException, InterruptedException {
         String emailAddress = data.getAsJsonObject().get("portal_user_email").getAsString();
         boolean hasPassword = data.getAsJsonObject().has("password");
         List<User> auth0UsersByEmail = auth0Util.getAuth0UsersByEmail(emailAddress, mgmtToken);
