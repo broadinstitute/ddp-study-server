@@ -293,8 +293,14 @@ public class StudyDataLoader {
                         jdbiLanguageCode, profileDao, studyGovernanceDao, jdbiAuth0Tenant);
                 break;
             case 3:
-                pepperUser = createOperatorUser(jdbiUser, datstatData, userGuid, userHruid, clientDto, userDao,
-                        jdbiLanguageCode, profileDao, jdbiAuth0Tenant);
+                org.broadinstitute.ddp.model.user.User operatorUser = createOperatorUser(jdbiUser, datstatData, userGuid,
+                        userHruid, clientDto, userDao, jdbiLanguageCode, profileDao, jdbiAuth0Tenant);
+                pepperUser = new UserDto(operatorUser.getId(), operatorUser.getAuth0UserId(),
+                        operatorUser.getGuid(), operatorUser.getHruid(), operatorUser.getLegacyAltPid(),
+                        operatorUser.getLegacyShortId(), operatorUser.getCreatedAt(), operatorUser.getUpdatedAt(),
+                        operatorUser.getExpiresAt());
+                //watch out... early return because source data only contains operator user
+                return pepperUser.getUserGuid();
             default:
                 return null;
         }

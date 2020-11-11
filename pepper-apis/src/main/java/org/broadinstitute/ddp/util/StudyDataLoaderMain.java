@@ -677,6 +677,9 @@ public class StudyDataLoaderMain {
             Map<String, JsonElement> surveyDataMap = altpidBucketDataMap.get(altpid);
 
             JsonElement datstatData = surveyDataMap.get("datstatparticipantdata");
+            if (datstatData.getAsJsonObject().get("datstat_email").isJsonNull()) {
+                continue;
+            }
             String userEmail = datstatData.getAsJsonObject().get("datstat_email").getAsString();
             for (JsonElement item: hashedPasswordsJsonArray) {
                 if (item.getAsJsonObject().has(userEmail)
@@ -685,9 +688,6 @@ public class StudyDataLoaderMain {
                     surveyDataMap.get("datstatparticipantdata").getAsJsonObject()
                             .add("password", item.getAsJsonObject().get(userEmail));
                 }
-            }
-            if (datstatData.getAsJsonObject().get("datstat_email").isJsonNull()) {
-                continue;
             }
             String email = datstatData.getAsJsonObject().get("datstat_email").getAsString().toLowerCase();
             setRunEmail(dryRun, datstatData);
@@ -742,9 +742,6 @@ public class StudyDataLoaderMain {
         String emailAddress = datstatParticipantData.getAsJsonObject().get("datstat_email").getAsString().toLowerCase();
         String createdAt = datstatParticipantData.getAsJsonObject().get("datstat_created").getAsString();
         Integer registrationType = datstatParticipantData.getAsJsonObject().get("registration_type").getAsInt();
-        if (registrationType == 3) {
-            return;
-        }
         LOG.info("loading participant: {} email: {} ", altpid, emailAddress);
 
         TransactionWrapper.useTxn(handle -> {
@@ -801,12 +798,17 @@ public class StudyDataLoaderMain {
                     userGuid = dataLoader.loadParticipantData(handle, datstatParticipantData, datstatParticipantMappingData,
                             phoneNumber, studyDto, clientDto, address, olcService, addressService, registrationType);
                     if (registrationType == 2) {
+                        //fetching operator user Guid by governed user Guid
                         operatorUserGuid = handle.attach(UserGovernanceDao.class)
                                 .findGovernancesByParticipantAndStudyGuids(userGuid, studyGuid)
                                 .findFirst()
                                 .orElseThrow(() -> new DDPException("Could not find operator with user guid "))
                                 .getProxyUserGuid();
+                    } else if (registrationType == 3) {
+                        //in type 3 user Guid belongs to operator
+                        operatorUserGuid = userGuid;
                     }
+
                     UserDto userDto = jdbiUser.findByUserGuid(userGuid);
 
                     hasAboutYou = (sourceData.get("aboutyousurvey") != null && !sourceData.get("aboutyousurvey").isJsonNull());
@@ -830,7 +832,7 @@ public class StudyDataLoaderMain {
                             .get("atassentsurvey").isJsonNull();
 
                     var answerDao = handle.attach(AnswerDao.class);
-                    //create prequal
+                    //create prequal only for operator user if exists else for self-enrolled user
                     if (operatorUserGuid != null && !operatorUserGuid.isEmpty()) {
                         List<ActivityInstanceDto> prequalInstance = jdbiActivityInstance
                                 .findAllByUserGuidAndActivityCode(operatorUserGuid, "PREQUAL", studyId);
@@ -851,6 +853,12 @@ public class StudyDataLoaderMain {
                                 activityInstanceDao,
                                 activityInstanceStatusDao,
                                 answerDao);
+                    }
+
+                    //watch out... early return because if registration type is equal to 3 it means that source data only contains
+                    //operator user
+                    if (registrationType == 3) {
+                        return;
                     }
 
 
