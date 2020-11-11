@@ -1,28 +1,5 @@
 package org.broadinstitute.ddp.util;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.time.Duration;
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.Bucket;
@@ -49,7 +26,15 @@ import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.TransactionWrapper;
-import org.broadinstitute.ddp.db.dao.*;
+import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
+import org.broadinstitute.ddp.db.dao.ActivityInstanceStatusDao;
+import org.broadinstitute.ddp.db.dao.AnswerDao;
+import org.broadinstitute.ddp.db.dao.JdbiActivity;
+import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
+import org.broadinstitute.ddp.db.dao.JdbiClient;
+import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
+import org.broadinstitute.ddp.db.dao.JdbiUser;
+import org.broadinstitute.ddp.db.dao.UserGovernanceDao;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.db.dto.ClientDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
@@ -57,13 +42,34 @@ import org.broadinstitute.ddp.db.dto.UserDto;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.broadinstitute.ddp.model.address.MailAddress;
-import org.broadinstitute.ddp.model.governance.Governance;
 import org.broadinstitute.ddp.model.migration.StudyMigrationRun;
 import org.broadinstitute.ddp.service.AddressService;
 import org.broadinstitute.ddp.service.OLCService;
-import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 
 public class StudyDataLoaderMain {
 
@@ -794,11 +800,13 @@ public class StudyDataLoaderMain {
                     long studyId = studyDto.getId();
                     userGuid = dataLoader.loadParticipantData(handle, datstatParticipantData, datstatParticipantMappingData,
                             phoneNumber, studyDto, clientDto, address, olcService, addressService, registrationType);
-                    operatorUserGuid = handle.attach(UserGovernanceDao.class)
-                            .findGovernancesByParticipantAndStudyGuids(userGuid, studyGuid)
-                            .findFirst()
-                            .orElseThrow(() -> new DDPException("Could not find operator with user guid "))
-                            .getProxyUserGuid();
+                    if (registrationType == 2) {
+                        operatorUserGuid = handle.attach(UserGovernanceDao.class)
+                                .findGovernancesByParticipantAndStudyGuids(userGuid, studyGuid)
+                                .findFirst()
+                                .orElseThrow(() -> new DDPException("Could not find operator with user guid "))
+                                .getProxyUserGuid();
+                    }
                     UserDto userDto = jdbiUser.findByUserGuid(userGuid);
 
                     hasAboutYou = (sourceData.get("aboutyousurvey") != null && !sourceData.get("aboutyousurvey").isJsonNull());
@@ -824,6 +832,18 @@ public class StudyDataLoaderMain {
                     var answerDao = handle.attach(AnswerDao.class);
                     //create prequal
                     if (operatorUserGuid != null && !operatorUserGuid.isEmpty()) {
+                        List<ActivityInstanceDto> prequalInstance = jdbiActivityInstance
+                                .findAllByUserGuidAndActivityCode(operatorUserGuid, "PREQUAL", studyId);
+                        if (prequalInstance.isEmpty()) {
+                            dataLoader.createPrequal(handle,
+                                    operatorUserGuid, studyId,
+                                    createdAt,
+                                    jdbiActivity,
+                                    activityInstanceDao,
+                                    activityInstanceStatusDao,
+                                    answerDao);
+                        }
+                    } else {
                         dataLoader.createPrequal(handle,
                                 userGuid, studyId,
                                 createdAt,
@@ -831,8 +851,6 @@ public class StudyDataLoaderMain {
                                 activityInstanceDao,
                                 activityInstanceStatusDao,
                                 answerDao);
-                    } else {
-
                     }
 
 
