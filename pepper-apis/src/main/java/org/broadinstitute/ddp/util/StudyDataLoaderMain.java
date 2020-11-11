@@ -843,7 +843,7 @@ public class StudyDataLoaderMain {
                                     jdbiActivity,
                                     activityInstanceDao,
                                     activityInstanceStatusDao,
-                                    answerDao);
+                                    answerDao, true);
                         }
                     } else {
                         dataLoader.createPrequal(handle,
@@ -852,7 +852,7 @@ public class StudyDataLoaderMain {
                                 jdbiActivity,
                                 activityInstanceDao,
                                 activityInstanceStatusDao,
-                                answerDao);
+                                answerDao, false);
                     }
 
                     //watch out... early return because if registration type is equal to 3 it means that source data only contains

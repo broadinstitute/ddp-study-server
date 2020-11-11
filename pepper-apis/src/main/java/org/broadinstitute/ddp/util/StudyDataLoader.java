@@ -351,7 +351,7 @@ public class StudyDataLoader {
                                              JdbiActivity jdbiActivity,
                                              ActivityInstanceDao activityInstanceDao,
                                              ActivityInstanceStatusDao activityInstanceStatusDao,
-                                             AnswerDao answerDao) throws Exception {
+                                             AnswerDao answerDao, Boolean isOperator) throws Exception {
 
         Long studyActivityId = jdbiActivity.findIdByStudyIdAndCode(studyId, "PREQUAL").get();
         Instant instant;
@@ -380,7 +380,11 @@ public class StudyDataLoader {
         answerTextQuestion("PREQUAL_LAST_NAME", participantGuid, dto.getGuid(),
                 profile.getLastName(), answerDao);
         List<SelectedPicklistOption> options = new ArrayList<SelectedPicklistOption>();
-        options.add(new SelectedPicklistOption("DIAGNOSED"));
+        if (isOperator) {
+            options.add(new SelectedPicklistOption("CHILD_DIAGNOSED"));
+        } else {
+            options.add(new SelectedPicklistOption("DIAGNOSED"));
+        }
         answerPickListQuestion("PREQUAL_SELF_DESCRIBE", participantGuid, dto.getGuid(),
                 options, answerDao);
 
