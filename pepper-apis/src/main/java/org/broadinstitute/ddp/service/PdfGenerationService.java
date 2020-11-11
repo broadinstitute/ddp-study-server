@@ -28,7 +28,6 @@ import com.itextpdf.kernel.pdf.PdfDocumentInfo;
 import com.itextpdf.kernel.pdf.PdfReader;
 import com.itextpdf.kernel.pdf.PdfWriter;
 import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.client.Auth0ManagementClient;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
@@ -88,7 +87,8 @@ public class PdfGenerationService {
     public static final int COPY_START_PAGE = 1;
 
     private static final Logger LOG = LoggerFactory.getLogger(PdfGenerationService.class);
-    private static final String FONT_PATH = "fonts/FreeSans.ttf";
+    private static final String INTERNATIONAL_FONT_PATH = "fonts/FreeSans.ttf";
+    private static final String INTERNATIONAL_FONT_NAME = "freesans";
 
     // canEncode() changes state of the encoder, so we need one per thread
     private static final ThreadLocal<CharsetEncoder> ISO88591 = ThreadLocal.withInitial(() -> Charset.forName("ISO-8859-1").newEncoder());
@@ -498,13 +498,13 @@ public class PdfGenerationService {
      * Loads a font that is generally useful for writing out non-latin symbols
      */
     private PdfFont loadInternationalFont() {
-        ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-        byte[] freeSans;
         try {
-            freeSans = IOUtils.toByteArray(classLoader.getResourceAsStream(FONT_PATH));
-            return PdfFontFactory.createFont(freeSans, PdfEncodings.IDENTITY_H, true);
+            if (!PdfFontFactory.getRegisteredFonts().contains(INTERNATIONAL_FONT_NAME)) {
+                PdfFontFactory.register(INTERNATIONAL_FONT_PATH);
+            }
+            return PdfFontFactory.createRegisteredFont(INTERNATIONAL_FONT_NAME, PdfEncodings.IDENTITY_H, true);
         } catch (IOException e) {
-            throw new RuntimeException("Could not load font " + FONT_PATH, e);
+            throw new RuntimeException("Could not load font " + INTERNATIONAL_FONT_PATH, e);
         }
 
     }
