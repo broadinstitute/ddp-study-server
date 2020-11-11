@@ -292,6 +292,9 @@ public class StudyDataLoader {
                         clientDto, userGovernanceDao, userDao, studyDto,
                         jdbiLanguageCode, profileDao, studyGovernanceDao, jdbiAuth0Tenant);
                 break;
+            case 3:
+                pepperUser = createOperatorUser(jdbiUser, datstatData, userGuid, userHruid, clientDto, userDao,
+                        jdbiLanguageCode, profileDao, jdbiAuth0Tenant);
             default:
                 return null;
         }
@@ -1007,6 +1010,34 @@ public class StudyDataLoader {
                                                  StudyGovernanceDao studyGovernanceDao,
                                                  JdbiAuth0Tenant jdbiAuth0Tenant) throws Exception {
 
+        org.broadinstitute.ddp.model.user.User operatorUser = createOperatorUser(jdbiUser, data, userGuid,
+                userHruid, clientDto, userDao, jdbiLanguageCode, userProfileDao, jdbiAuth0Tenant);
+
+
+        String legacyAltPid = data.getAsJsonObject().get("datstat_altpid").getAsString();
+        Governance governance = userGovernanceDao.createGovernedUserWithGuidAlias(operatorUser.getCreatedByClientId(), operatorUser.getId(),
+                legacyAltPid);
+        userGovernanceDao.grantGovernedStudy(governance.getId(), studyDto.getId());
+        org.broadinstitute.ddp.model.user.User governedUser = userDao.findUserById(governance.getGovernedUserId())
+                .orElseThrow(() -> new DDPException("Could not find governed user with id " + governance.getGovernedUserId()));
+        LOG.info("Created governed user with guid {} and granted access to study {} for proxy {}",
+                governedUser.getGuid(), studyDto.getGuid(), operatorUser.getGuid());
+
+
+        GovernancePolicy policy = studyGovernanceDao.findPolicyByStudyGuid(studyDto.getGuid())
+                .orElse(null);
+        if (policy != null && !policy.getAgeOfMajorityRules().isEmpty()) {
+            studyGovernanceDao.addAgeUpCandidate(policy.getStudyId(), governedUser.getId());
+            LOG.info("Added governed user {} as age-up candidate in study {}", governedUser.getGuid(), policy.getStudyGuid());
+        }
+
+        return new UserDto(governedUser.getId(), governedUser.getAuth0UserId(),
+                governedUser.getGuid(), governedUser.getHruid(), governedUser.getLegacyAltPid(),
+                governedUser.getLegacyShortId(), governedUser.getCreatedAt(), governedUser.getUpdatedAt(),
+                governedUser.getExpiresAt());
+    }
+
+    private org.broadinstitute.ddp.model.user.User createOperatorUser(JdbiUser jdbiUser, JsonElement data, String userGuid, String userHruid, ClientDto clientDto, UserDao userDao, JdbiLanguageCode jdbiLanguageCode, UserProfileDao userProfileDao, JdbiAuth0Tenant jdbiAuth0Tenant) throws IOException, InterruptedException {
         String emailAddress = data.getAsJsonObject().get("portal_user_email").getAsString();
         boolean hasPassword = data.getAsJsonObject().has("password");
         List<User> auth0UsersByEmail = auth0Util.getAuth0UsersByEmail(emailAddress, mgmtToken);
@@ -1033,29 +1064,7 @@ public class StudyDataLoader {
                     .orElseThrow(() -> new DDPException("Could not find operator with guid " + operatorGuid));
             addUserProfile(operatorUserDto, data, jdbiLanguageCode, userProfileDao, true);
         }
-
-
-        String legacyAltPid = data.getAsJsonObject().get("datstat_altpid").getAsString();
-        Governance governance = userGovernanceDao.createGovernedUserWithGuidAlias(operatorUser.getCreatedByClientId(), operatorUser.getId(),
-                legacyAltPid);
-        userGovernanceDao.grantGovernedStudy(governance.getId(), studyDto.getId());
-        org.broadinstitute.ddp.model.user.User governedUser = userDao.findUserById(governance.getGovernedUserId())
-                .orElseThrow(() -> new DDPException("Could not find governed user with id " + governance.getGovernedUserId()));
-        LOG.info("Created governed user with guid {} and granted access to study {} for proxy {}",
-                governedUser.getGuid(), studyDto.getGuid(), operatorUser.getGuid());
-
-
-        GovernancePolicy policy = studyGovernanceDao.findPolicyByStudyGuid(studyDto.getGuid())
-                .orElse(null);
-        if (policy != null && !policy.getAgeOfMajorityRules().isEmpty()) {
-            studyGovernanceDao.addAgeUpCandidate(policy.getStudyId(), governedUser.getId());
-            LOG.info("Added governed user {} as age-up candidate in study {}", governedUser.getGuid(), policy.getStudyGuid());
-        }
-
-        return new UserDto(governedUser.getId(), governedUser.getAuth0UserId(),
-                governedUser.getGuid(), governedUser.getHruid(), governedUser.getLegacyAltPid(),
-                governedUser.getLegacyShortId(), governedUser.getCreatedAt(), governedUser.getUpdatedAt(),
-                governedUser.getExpiresAt());
+        return operatorUser;
     }
 
     public UserDto createLegacyPepperUser(JdbiUser jdbiUser, JdbiClient clientDao,
