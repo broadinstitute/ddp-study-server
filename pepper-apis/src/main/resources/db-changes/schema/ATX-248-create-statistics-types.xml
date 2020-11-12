@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="ypavlov" id="20201110-statistics">
+        <createTable tableName="statistics_type">
+            <column name="statistics_type_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="statistics_type_type_pk"/>
+            </column>
+            <column name="statistics_type_code" type="varchar(20)">
+                <constraints nullable="false" unique="true" uniqueConstraintName="statistics_type_uk"/>
+            </column>
+        </createTable>
+
+        <createTable tableName="statistics_configuration">
+            <column name="statistics_configuration_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="statistics_configuration_pk"/>
+            </column>
+            <column name="umbrella_study_id" type="bigint">
+                <constraints nullable="false" references="umbrella_study(umbrella_study_id)"
+                             foreignKeyName="statistics_configuration_umbrella_study_fk"/>
+            </column>
+            <column name="statistics_configuration_type" type="bigint">
+                <constraints nullable="false" references="statistics_type(statistics_type_id)"
+                             foreignKeyName="statistics_configuration_statistics_type_fk"/>
+            </column>
+            <column name="question_stable_id" type="varchar(45)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="answer_value" type="varchar(45)">
+                <constraints nullable="true"/>
+            </column>
+        </createTable>
+
+        <insert tableName="statistics_type">
+            <column name="statistics_type_code" value="PARTICIPANTS"/>
+        </insert>
+
+        <insert tableName="statistics_type">
+            <column name="statistics_type_code" value="DISTRIBUTION"/>
+        </insert>
+
+        <insert tableName="statistics_type">
+            <column name="statistics_type_code" value="MAILING_LIST"/>
+        </insert>
+
+        <insert tableName="statistics_type">
+            <column name="statistics_type_code" value="SPECIFIC_ANSWER"/>
+        </insert>
+
+        <insert tableName="statistics_type">
+            <column name="statistics_type_code" value="KITS"/>
+        </insert>
+
+    </changeSet>
+</databaseChangeLog>

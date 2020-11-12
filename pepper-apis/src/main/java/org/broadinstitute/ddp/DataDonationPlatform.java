@@ -110,6 +110,7 @@ import org.broadinstitute.ddp.route.GetProfileRoute;
 import org.broadinstitute.ddp.route.GetStudiesRoute;
 import org.broadinstitute.ddp.route.GetStudyDetailRoute;
 import org.broadinstitute.ddp.route.GetStudyPasswordPolicyRoute;
+import org.broadinstitute.ddp.route.GetStudyStatisticsRoute;
 import org.broadinstitute.ddp.route.GetTempMailingAddressRoute;
 import org.broadinstitute.ddp.route.GetUserAnnouncementsRoute;
 import org.broadinstitute.ddp.route.GetWorkflowRoute;
@@ -493,6 +494,8 @@ public class DataDonationPlatform {
         get(API.DSM_DRUG_SUGGESTION, new GetDsmDrugSuggestionsRoute(DrugStore.getInstance()), responseSerializer);
 
         get(API.CANCER_SUGGESTION, new GetCancerSuggestionsRoute(CancerStore.getInstance()), responseSerializer);
+
+        get(API.STUDY_STATISTICS, new GetStudyStatisticsRoute(), responseSerializer);
 
         // Routes calling DSM
         get(API.PARTICIPANT_STATUS, new GetDsmParticipantStatusRoute(new DsmClient(cfg)), responseSerializer);

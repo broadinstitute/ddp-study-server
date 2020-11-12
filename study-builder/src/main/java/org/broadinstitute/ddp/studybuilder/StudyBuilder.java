@@ -25,6 +25,8 @@ import org.broadinstitute.ddp.db.dao.KitConfigurationDao;
 import org.broadinstitute.ddp.db.dao.KitScheduleDao;
 import org.broadinstitute.ddp.db.dao.KitTypeDao;
 import org.broadinstitute.ddp.db.dao.QueuedEventDao;
+import org.broadinstitute.ddp.db.dao.StatisticsConfigurationDao;
+import org.broadinstitute.ddp.db.dao.StatisticsTypeDao;
 import org.broadinstitute.ddp.db.dao.StudyDao;
 import org.broadinstitute.ddp.db.dao.StudyGovernanceDao;
 import org.broadinstitute.ddp.db.dao.StudyLanguageDao;
@@ -43,6 +45,7 @@ import org.broadinstitute.ddp.model.governance.GovernancePolicy;
 import org.broadinstitute.ddp.model.kit.KitRuleType;
 import org.broadinstitute.ddp.model.kit.KitSchedule;
 import org.broadinstitute.ddp.model.pex.Expression;
+import org.broadinstitute.ddp.model.statistics.StatisticsType;
 import org.broadinstitute.ddp.model.study.StudyLanguage;
 import org.broadinstitute.ddp.security.AesUtil;
 import org.broadinstitute.ddp.security.EncryptionKey;
@@ -103,6 +106,7 @@ public class StudyBuilder {
         insertSettings(handle, studyDto, adminDto.getUserId());
         insertSendgrid(handle, studyDto.getId());
         insertKits(handle, studyDto.getId(), adminDto.getUserId());
+        insertStatistics(handle, studyDto.getId());
 
         Path dirPath = cfgPath.getParent();
         new ActivityBuilder(dirPath, cfg, varsCfg, studyDto, adminDto.getUserId()).run(handle);
@@ -621,6 +625,24 @@ public class StudyBuilder {
                 kitConfigId, ruleId, zipCodes,
                 errorMsg == null ? null : errorMsg.getTemplateId(),
                 warningMsg == null ? null : warningMsg.getTemplateId());
+    }
+
+    private void insertStatistics(Handle handle, long studyId) {
+        if (!cfg.hasPath("statistics")) {
+            return;
+        }
+        StatisticsConfigurationDao statConfigDao = handle.attach(StatisticsConfigurationDao.class);
+        StatisticsTypeDao statTypeDao = handle.attach(StatisticsTypeDao.class);
+        for (Config statEntry : cfg.getConfigList("statistics")) {
+            String type = statEntry.getString("type");
+            String stableId = statEntry.hasPath("stableId") ? statEntry.getString("stableId") : null;
+            String value = statEntry.hasPath("value") ? statEntry.getString("value") : null;
+            StatisticsType statType = statTypeDao.getKitTypeByType(type)
+                    .orElseThrow(() -> new DDPException("Could not find statistics type " + type));
+            long statConfigId = statConfigDao.insertConfiguration(studyId, statType.getId(), stableId, value);
+            LOG.info("Created statistics configuration with id={}, type={}, stableId={}, value={}",
+                    statConfigId, type, stableId, value);
+        }
     }
 
     public interface StudyInvalidationHelper extends SqlObject {
