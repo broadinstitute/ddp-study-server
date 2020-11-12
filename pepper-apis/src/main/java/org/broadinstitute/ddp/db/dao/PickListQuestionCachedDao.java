@@ -1,22 +1,16 @@
 package org.broadinstitute.ddp.db.dao;
 
-import static java.util.stream.Collectors.toList;
-
-import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Map;
-import java.util.function.Predicate;
+import java.util.Set;
 import javax.cache.Cache;
 import javax.cache.expiry.Duration;
 
 import org.broadinstitute.ddp.cache.CacheService;
 import org.broadinstitute.ddp.cache.ModelChangeType;
-import org.broadinstitute.ddp.db.dto.PicklistGroupDto;
-import org.broadinstitute.ddp.db.dto.PicklistOptionDto;
-import org.broadinstitute.ddp.db.dto.QuestionDto;
-import org.broadinstitute.ddp.db.dto.TimestampRevisioned;
 import org.jdbi.v3.core.Handle;
+import org.redisson.client.RedisException;
 
 public class PickListQuestionCachedDao extends SQLObjectWrapper<PicklistQuestionDao> implements PicklistQuestionDao {
     private static Cache<Long, GroupAndOptionDtos> questionIdToGroupAndOptionsCache;
@@ -60,42 +54,40 @@ public class PickListQuestionCachedDao extends SQLObjectWrapper<PicklistQuestion
         return delegate.getTemplateDao();
     }
 
-    private void cacheGroupAndOptionDtosForActivity(long activityId) {
-        questionIdToGroupAndOptionsCache.putAll(findAllOrderedGroupAndOptionDtosByQuestion(activityId));
-    }
-
-    public GroupAndOptionDtos findOrderedGroupAndOptionDtos(QuestionDto questionDto, long timestamp) {
+    @Override
+    public Map<Long, GroupAndOptionDtos> findOrderedGroupAndOptionDtos(Iterable<Long> questionIds, long timestamp) {
         if (isNullCache(questionIdToGroupAndOptionsCache)) {
-            var map = delegate.findAllOrderedGroupAndOptionDtosByQuestion(questionDto.getActivityId());
-            GroupAndOptionDtos unfilteredDtos = map.get(questionDto.getId());
-            return buildFilteredGroupAndOptions(unfilteredDtos, timestamp);
+            return delegate.findOrderedGroupAndOptionDtos(questionIds, timestamp);
         } else {
-            GroupAndOptionDtos cachedDto = questionIdToGroupAndOptionsCache.get(questionDto.getId());
-            if (cachedDto == null) {
-                cacheGroupAndOptionDtosForActivity(questionDto.getActivityId());
-                cachedDto = questionIdToGroupAndOptionsCache.get(questionDto.getId());
-            }
-            return cachedDto == null ? null : buildFilteredGroupAndOptions(cachedDto, timestamp);
-        }
-    }
+            Set<Long> missingQuestionIds = new HashSet<>();
+            Map<Long, GroupAndOptionDtos> result = new HashMap<>();
 
-    private GroupAndOptionDtos buildFilteredGroupAndOptions(GroupAndOptionDtos groupsAndOptions, long timestamp) {
-        List<PicklistGroupDto> filteredGroups = filterByTimestamp(groupsAndOptions.getGroups(), timestamp);
-        List<PicklistOptionDto> filteredUngroupedOptions = filterByTimestamp(groupsAndOptions.getUngroupedOptions(), timestamp);
-
-        Map<Long, List<PicklistOptionDto>> filteredGroupIdToOptions = new HashMap<>();
-        filteredGroups.forEach(group -> {
-                    List<PicklistOptionDto> unfilteredOptions = groupsAndOptions.getGroupIdToOptions().get(group.getId());
-                    List<PicklistOptionDto> filteredOptions = filterByTimestamp(unfilteredOptions, timestamp);
-                    filteredGroupIdToOptions.put(group.getId(), filteredOptions);
+            for (var questionId : questionIds) {
+                try {
+                    GroupAndOptionDtos cachedDto = questionIdToGroupAndOptionsCache.get(questionId);
+                    if (cachedDto != null) {
+                        result.put(questionId, cachedDto);
+                    } else {
+                        missingQuestionIds.add(questionId);
+                    }
+                } catch (RedisException e) {
+                    LOG.warn("Failed to retrieve value from Redis cache: " + questionIdToGroupAndOptionsCache.getName()
+                            + " key:" + questionId + " Will try to retrieve from database", e);
+                    missingQuestionIds.add(questionId);
                 }
-        );
-        return new GroupAndOptionDtos(filteredGroups, filteredUngroupedOptions, filteredGroupIdToOptions);
-    }
+            }
 
-    private <T extends TimestampRevisioned> List<T> filterByTimestamp(Collection<T> coll, long timestamp) {
-        Predicate<TimestampRevisioned> timestampFilter = (obj) -> obj.getRevisionStartTimestamp() <= timestamp
-                && (obj.getRevisionEndTimestamp() == null || obj.getRevisionEndTimestamp() > timestamp);
-        return coll.stream().filter(timestampFilter).collect(toList());
+            if (!missingQuestionIds.isEmpty()) {
+                var found = delegate.findOrderedGroupAndOptionDtos(missingQuestionIds, timestamp);
+                try {
+                    questionIdToGroupAndOptionsCache.putAll(found);
+                } catch (RedisException e) {
+                    LOG.warn("Failed to store values to Redis cache: " + questionIdToGroupAndOptionsCache.getName(), e);
+                }
+                result.putAll(found);
+            }
+
+            return result;
+        }
     }
 }

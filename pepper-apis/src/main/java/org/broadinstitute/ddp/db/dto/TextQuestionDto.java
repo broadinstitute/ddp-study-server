@@ -1,7 +1,7 @@
 package org.broadinstitute.ddp.db.dto;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.io.Serializable;
+import java.util.Set;
 
 import org.broadinstitute.ddp.model.activity.types.SuggestionType;
 import org.broadinstitute.ddp.model.activity.types.TextInputType;
@@ -9,20 +9,19 @@ import org.jdbi.v3.core.mapper.Nested;
 import org.jdbi.v3.core.mapper.reflect.ColumnName;
 import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
 
-public final class TextQuestionDto extends QuestionDto {
+public final class TextQuestionDto extends QuestionDto implements Serializable {
 
     private TextInputType inputType;
     private SuggestionType suggestionType;
     private Long placeholderTemplateId;
-    private List<String> suggestions;
     private boolean confirmEntry;
     private Long confirmPromptTemplateId;
     private Long mismatchMessageTemplateId;
 
     @JdbiConstructor
     public TextQuestionDto(@Nested QuestionDto questionDto,
-                           @ColumnName("input_type_code") TextInputType inputType,
-                           @ColumnName("suggestion_type_code") SuggestionType suggestionType,
+                           @ColumnName("input_type") TextInputType inputType,
+                           @ColumnName("suggestion_type") SuggestionType suggestionType,
                            @ColumnName("placeholder_template_id") Long placeholderTemplateId,
                            @ColumnName("confirm_entry") boolean confirmEntry,
                            @ColumnName("confirm_prompt_template_id") Long confirmPromptTemplateId,
@@ -48,17 +47,6 @@ public final class TextQuestionDto extends QuestionDto {
         return placeholderTemplateId;
     }
 
-    public List<String> getSuggestions() {
-        return suggestions;
-    }
-
-    public void addSuggestion(String suggestionToAdd) {
-        if (suggestions == null) {
-            suggestions = new ArrayList<>();
-        }
-        suggestions.add(suggestionToAdd);
-    }
-
     public boolean isConfirmEntry() {
         return confirmEntry;
     }
@@ -69,5 +57,20 @@ public final class TextQuestionDto extends QuestionDto {
 
     public Long getConfirmPromptTemplateId() {
         return confirmPromptTemplateId;
+    }
+
+    @Override
+    public Set<Long> getTemplateIds() {
+        var ids = super.getTemplateIds();
+        if (placeholderTemplateId != null) {
+            ids.add(placeholderTemplateId);
+        }
+        if (confirmPromptTemplateId != null) {
+            ids.add(confirmPromptTemplateId);
+        }
+        if (mismatchMessageTemplateId != null) {
+            ids.add(mismatchMessageTemplateId);
+        }
+        return ids;
     }
 }

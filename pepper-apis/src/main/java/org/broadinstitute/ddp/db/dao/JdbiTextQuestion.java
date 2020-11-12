@@ -67,13 +67,14 @@ public interface JdbiTextQuestion extends SqlObject {
     @UseRowReducer(RowReducer.class)
     List<TextQuestionDto> findDtoByActivityId(@Bind("activityId") long activityId);
 
+    // NOT USED
     class RowReducer implements LinkedHashMapRowReducer<Long, TextQuestionDto> {
         @Override
         public void accumulate(Map<Long, TextQuestionDto> map, RowView rowView) {
             TextQuestionDto textQuestionDto = map.computeIfAbsent(rowView.getColumn("p_question_id", Long.class),
                     id -> rowView.getRow(TextQuestionDto.class));
             if (rowView.getColumn("c_suggestion", String.class) != null) {
-                textQuestionDto.addSuggestion(rowView.getColumn("c_suggestion", String.class));
+                // textQuestionDto.addSuggestion(rowView.getColumn("c_suggestion", String.class));
             }
         }
     }

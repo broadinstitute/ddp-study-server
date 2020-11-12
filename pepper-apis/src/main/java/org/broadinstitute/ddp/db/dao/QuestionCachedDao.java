@@ -19,7 +19,7 @@ public class QuestionCachedDao extends SQLObjectWrapper<QuestionDao> implements 
 
     @Override
     public JdbiQuestion getJdbiQuestion() {
-        return delegate.getJdbiQuestion();
+        return new JdbiQuestionCached(getHandle());
     }
 
     @Override
@@ -29,12 +29,12 @@ public class QuestionCachedDao extends SQLObjectWrapper<QuestionDao> implements 
 
     @Override
     public JdbiBooleanQuestion getJdbiBooleanQuestion() {
-        return new JdbiBooleanQuestionCached(getHandle());
+        return delegate.getJdbiBooleanQuestion();
     }
 
     @Override
     public JdbiTextQuestion getJdbiTextQuestion() {
-        return new JdbiTextQuestionCached(getHandle());
+        return delegate.getJdbiTextQuestion();
     }
 
     @Override
@@ -74,12 +74,12 @@ public class QuestionCachedDao extends SQLObjectWrapper<QuestionDao> implements 
 
     @Override
     public JdbiPicklistQuestion getJdbiPicklistQuestion() {
-        return new JdbiPicklistQuestionCached(getHandle());
+        return delegate.getJdbiPicklistQuestion();
     }
 
     @Override
     public JdbiCompositeQuestion getJdbiCompositeQuestion() {
-        return new JdbiCompositeQuestionCached(getHandle());
+        return delegate.getJdbiCompositeQuestion();
     }
 
     @Override

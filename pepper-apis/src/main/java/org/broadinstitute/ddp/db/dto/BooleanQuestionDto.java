@@ -1,6 +1,7 @@
 package org.broadinstitute.ddp.db.dto;
 
 import java.io.Serializable;
+import java.util.Set;
 
 import org.jdbi.v3.core.mapper.Nested;
 import org.jdbi.v3.core.mapper.reflect.ColumnName;
@@ -29,5 +30,13 @@ public final class BooleanQuestionDto extends QuestionDto implements Serializabl
 
     public long getFalseTemplateId() {
         return falseTemplateId;
+    }
+
+    @Override
+    public Set<Long> getTemplateIds() {
+        var ids = super.getTemplateIds();
+        ids.add(trueTemplateId);
+        ids.add(falseTemplateId);
+        return ids;
     }
 }
