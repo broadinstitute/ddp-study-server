@@ -5,14 +5,19 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import com.google.gson.Gson;
 import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
+import com.typesafe.config.ConfigValueFactory;
 import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivityVersion;
 import org.broadinstitute.ddp.db.dao.JdbiFormActivityFormSection;
 import org.broadinstitute.ddp.db.dao.JdbiFormActivitySetting;
+import org.broadinstitute.ddp.db.dao.JdbiFormSectionBlock;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.SectionBlockDao;
 import org.broadinstitute.ddp.db.dao.TemplateDao;
@@ -20,6 +25,7 @@ import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dto.ActivityVersionDto;
 import org.broadinstitute.ddp.db.dto.FormActivitySettingDto;
 import org.broadinstitute.ddp.db.dto.FormSectionMembershipDto;
+import org.broadinstitute.ddp.db.dto.SectionBlockMembershipDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.activity.definition.ActivityDef;
@@ -42,7 +48,6 @@ public class TestBostonConsentV2 implements CustomTask {
     private static final String STUDY_GUID = "testboston";
     private static final String V1_VERSION_TAG = "v1";
     private static final int V1_NUM_SECTIONS = 4;
-    private static final int V1_NUM_TO_DISABLE = 3;
 
     private Path cfgPath;
     private Config studyCfg;
@@ -72,6 +77,7 @@ public class TestBostonConsentV2 implements CustomTask {
         var jdbiActVersion = handle.attach(JdbiActivityVersion.class);
         var jdbiActSettings = handle.attach(JdbiFormActivitySetting.class);
         var jdbiActSection = handle.attach(JdbiFormActivityFormSection.class);
+        var jdbiSectionBlock = handle.attach(JdbiFormSectionBlock.class);
 
         //
         // Load v2 definition.
@@ -81,6 +87,15 @@ public class TestBostonConsentV2 implements CustomTask {
         var v2Def = (ConsentActivityDef) gson.fromJson(ConfigUtil.toJson(v2Cfg), ActivityDef.class);
         activityBuilder.validateDefinition(v2Def);
         LOG.info("Loaded activity definition from: {}", CONSENT_V2_FILE);
+
+        // Extract the new content blocks and build a section object.
+        var contentBlocks = new ArrayList<Map<String, Object>>();
+        for (var blockCfg : v2Cfg.getConfigList("sections").get(0).getConfigList("contentBlocks")) {
+            contentBlocks.add(blockCfg.root().unwrapped());
+        }
+        var contentBlocksList = ConfigValueFactory.fromIterable(contentBlocks);
+        var sectionCfg = ConfigFactory.empty().withValue("blocks", contentBlocksList);
+        var singlePageSection = gson.fromJson(ConfigUtil.toJson(sectionCfg), FormSectionDef.class);
 
         //
         // Create version 2.
@@ -114,27 +129,34 @@ public class TestBostonConsentV2 implements CustomTask {
         DBUtils.checkUpdate(1, jdbiActSettings.updateRevisionIdById(v1Settings.getId(), v1TerminatedRevId));
 
         //
-        // Disable the first 3 sections of v1.
+        // Disable all the sections of v1.
         //
 
-        LOG.info("{}: disabling first {} sections...", V1_VERSION_TAG, V1_NUM_TO_DISABLE);
+        LOG.info("{}: disabling {} sections...", V1_VERSION_TAG, V1_NUM_SECTIONS);
         List<FormSectionMembershipDto> v1SectionMemberships = jdbiActSection
                 .findOrderedSectionMemberships(activityId, v1Dto.getRevStart());
         if (v1SectionMemberships.size() != V1_NUM_SECTIONS) {
             throw new DDPException("There should be " + V1_NUM_SECTIONS + " sections but got " + v1SectionMemberships.size());
         }
 
+        // Extract the block ids of signature section so we can add it to the single-page section later.
+        long signatureSectionId = v1SectionMemberships.get(V1_NUM_SECTIONS - 1).getSectionId();
+        List<Long> signatureBlockIds = jdbiSectionBlock
+                .getOrderedActiveMemberships(signatureSectionId).stream()
+                .map(SectionBlockMembershipDto::getBlockId)
+                .collect(Collectors.toList());
+
         List<Long> membershipIdsToDisable = new ArrayList<>();
         List<Long> sectionTerminatedRevIds = new ArrayList<>();
-        for (int i = 0; i < V1_NUM_TO_DISABLE; i++) {
-            membershipIdsToDisable.add(v1SectionMemberships.get(i).getId());
+        for (var v1SectionMembership : v1SectionMemberships) {
+            membershipIdsToDisable.add(v1SectionMembership.getId());
             sectionTerminatedRevIds.add(v1TerminatedRevId);
         }
         int[] updated = jdbiActSection.bulkUpdateRevisionIdsByIds(membershipIdsToDisable, sectionTerminatedRevIds);
-        DBUtils.checkUpdate(V1_NUM_TO_DISABLE, Arrays.stream(updated).sum());
+        DBUtils.checkUpdate(V1_NUM_SECTIONS, Arrays.stream(updated).sum());
 
         //
-        // Add the new intro and the 2 new sections of v2.
+        // Add the new intro and the single-page section of v2.
         //
 
         LOG.info("{}: adding introduction section...", v2VersionTag);
@@ -142,25 +164,31 @@ public class TestBostonConsentV2 implements CustomTask {
         sectionBlockDao.insertSection(activityId, introSection, v2Dto.getRevId());
         LOG.info("Added introduction section with sectionId={}", introSection.getSectionId());
 
-        LOG.info("{}: adding overview section...", v2VersionTag);
+        LOG.info("{}: adding single-page section...", v2VersionTag);
         int displayOrder = SectionBlockDao.DISPLAY_ORDER_GAP;
-        FormSectionDef overviewSection = v2Def.getSections().get(0);
-        sectionBlockDao.insertSection(activityId, overviewSection, v2Dto.getRevId());
-        jdbiActSection.insert(activityId, overviewSection.getSectionId(), v2Dto.getRevId(), displayOrder);
-        LOG.info("Added overview section with sectionId={}, displayOrder={}", overviewSection.getSectionId(), displayOrder);
+        sectionBlockDao.insertSection(activityId, singlePageSection, v2Dto.getRevId());
+        jdbiActSection.insert(activityId, singlePageSection.getSectionId(), v2Dto.getRevId(), displayOrder);
+        LOG.info("Added single-page section with sectionId={}, displayOrder={}", singlePageSection.getSectionId(), displayOrder);
 
-        LOG.info("{}: adding detailed section...", v2VersionTag);
-        displayOrder += SectionBlockDao.DISPLAY_ORDER_GAP;
-        FormSectionDef detailedSection = v2Def.getSections().get(1);
-        sectionBlockDao.insertSection(activityId, detailedSection, v2Dto.getRevId());
-        jdbiActSection.insert(activityId, detailedSection.getSectionId(), v2Dto.getRevId(), displayOrder);
-        LOG.info("Added detailed section with sectionId={}, displayOrder={}", detailedSection.getSectionId(), displayOrder);
+        // Figure out the display order to use for the signature blocks so they come at the end.
+        List<Integer> blockOrders = jdbiSectionBlock
+                .getOrderedActiveMemberships(singlePageSection.getSectionId())
+                .stream()
+                .map(SectionBlockMembershipDto::getDisplayOrder)
+                .collect(Collectors.toList());
+        displayOrder = blockOrders.get(blockOrders.size() - 1);
+
+        LOG.info("{}: adding {} signature blocks to single-page section...", v2VersionTag, signatureBlockIds.size());
+        for (var signatureBlockId : signatureBlockIds) {
+            displayOrder += SectionBlockDao.DISPLAY_ORDER_GAP;
+            jdbiSectionBlock.insert(singlePageSection.getSectionId(), signatureBlockId, displayOrder, v2Dto.getRevId());
+        }
 
         //
         // Create v2 form settings with new intro section and last_updated.
         //
 
-        LOG.info("{}: adding new last_updated details...", v2VersionTag);
+        LOG.info("{}: creating new last_updated details...", v2VersionTag);
         LocalDateTime v2LastUpdated = v2Def.getLastUpdated();
         Template v2LastUpdatedTemplate = v2Def.getLastUpdatedTextTemplate();
         templateDao.insertTemplate(v2LastUpdatedTemplate, v2Dto.getRevId());
