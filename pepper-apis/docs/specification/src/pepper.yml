@@ -2,7 +2,7 @@ openapi: 3.0.0
 servers: []
 info:
   description: 'Pepper API specification'
-  version: 1.9.1
+  version: 1.9.5
   title: Pepper
   contact:
     email: info@datadonationplatform.org

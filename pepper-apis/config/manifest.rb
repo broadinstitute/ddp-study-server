@@ -1,4 +1,5 @@
 render "redisson-jcache.yaml.ctmpl"
+render "redisson-jcache-housekeeping.yaml.ctmpl"
 render "application.conf.ctmpl"
 render "DataDonationPlatform.yaml.ctmpl"
 render "Housekeeping.yaml.ctmpl"
