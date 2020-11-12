@@ -1,5 +1,6 @@
 package org.broadinstitute.ddp.model.activity.definition.question;
 
+import java.io.Serializable;
 import java.time.Year;
 import java.util.function.Predicate;
 import javax.validation.constraints.Positive;
@@ -11,7 +12,7 @@ import com.google.gson.annotations.SerializedName;
  * Represents presentation configuration used for picklist dropdowns of a date question.
  * Note the year values follow the AD calendar scheme, and there is no year zero.
  */
-public class DatePicklistDef {
+public class DatePicklistDef implements Serializable {
 
     public static int DEFAULT_YEARS_FORWARD = 5;
     public static int DEFAULT_YEARS_BACK = 100;

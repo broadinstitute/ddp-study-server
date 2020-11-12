@@ -2,7 +2,9 @@ package org.broadinstitute.ddp.db.dto;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.jdbi.v3.core.mapper.reflect.ColumnName;
 import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
@@ -106,4 +108,18 @@ public class PicklistOptionDto implements TimestampRevisioned, Serializable {
         return nestedOptions;
     }
 
+    public Set<Long> getTemplateIds() {
+        var ids = new HashSet<Long>();
+        ids.add(optionLabelTemplateId);
+        if (detailLabelTemplateId != null) {
+            ids.add(detailLabelTemplateId);
+        }
+        if (tooltipTemplateId != null) {
+            ids.add(tooltipTemplateId);
+        }
+        for (var nestedOption : nestedOptions) {
+            ids.addAll(nestedOption.getTemplateIds());
+        }
+        return ids;
+    }
 }

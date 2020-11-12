@@ -83,13 +83,14 @@ public interface JdbiCompositeQuestion extends SqlObject {
         return findParentQuestionIdByChildQuestionId(questionDto.getId());
     }
 
+    // NOT USED
     class RowReducer implements LinkedHashMapRowReducer<Long, CompositeQuestionDto> {
         @Override
         public void accumulate(Map<Long, CompositeQuestionDto> map, RowView rowView) {
             CompositeQuestionDto parentQuestionDto = map.computeIfAbsent(rowView.getColumn("p_question_id", Long.class),
                     id -> rowView.getRow(CompositeQuestionDto.class));
             if (rowView.getColumn("c_question_id", Long.class) != null) {
-                parentQuestionDto.addChildQuestion(rowView.getRow(QuestionDto.class));
+                // parentQuestionDto.addChildQuestion(rowView.getRow(QuestionDto.class));
             }
         }
     }
