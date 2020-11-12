@@ -12,10 +12,10 @@ import org.broadinstitute.ddp.cache.ModelChangeType;
 import org.jdbi.v3.core.Handle;
 import org.redisson.client.RedisException;
 
-public class PickListQuestionCachedDao extends SQLObjectWrapper<PicklistQuestionDao> implements PicklistQuestionDao {
+public class PicklistQuestionCachedDao extends SQLObjectWrapper<PicklistQuestionDao> implements PicklistQuestionDao {
     private static Cache<Long, GroupAndOptionDtos> questionIdToGroupAndOptionsCache;
 
-    public PickListQuestionCachedDao(Handle handle) {
+    public PicklistQuestionCachedDao(Handle handle) {
         super(handle, PicklistQuestionDao.class);
         initializeCache();
     }

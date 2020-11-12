@@ -18,7 +18,6 @@ import org.broadinstitute.ddp.db.dao.JdbiFormSectionBlock;
 import org.broadinstitute.ddp.db.dao.JdbiQuestion;
 import org.broadinstitute.ddp.db.dao.JdbiQuestionValidation;
 import org.broadinstitute.ddp.db.dao.JdbiRevision;
-import org.broadinstitute.ddp.db.dao.JdbiTextQuestion;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.JdbiVariableSubstitution;
 import org.broadinstitute.ddp.db.dao.PdfDao;
@@ -166,7 +165,8 @@ public class BrainConsentVersion2 implements CustomTask {
         ActivityVersionDto activityVersionDto = activityDao.changeVersion(activityId, versionTag, meta);
 
         QuestionDto fullNameDto = jdbiQuestion.findLatestDtoByStudyIdAndQuestionStableId(studyId, "CONSENT_FULLNAME").get();
-        TextQuestionDto fullNameTextDto = handle.attach(JdbiTextQuestion.class).findDtoByQuestionId(fullNameDto.getId()).get();
+        TextQuestionDto fullNameTextDto = (TextQuestionDto) handle.attach(JdbiQuestion.class)
+                .findQuestionDtoById(fullNameDto.getId()).get();
         long fullNameBlockId = helper.findQuestionBlockId(fullNameDto.getId());
         JdbiFormSectionBlock jdbiFormSectionBlock = handle.attach(JdbiFormSectionBlock.class);
         SectionBlockMembershipDto fullNameSectionDto = jdbiFormSectionBlock.getActiveMembershipByBlockId(fullNameBlockId).get();

@@ -114,7 +114,7 @@ public class QuestionCachedDao extends SQLObjectWrapper<QuestionDao> implements 
 
     @Override
     public PicklistQuestionDao getPicklistQuestionDao() {
-        return new PickListQuestionCachedDao(getHandle());
+        return new PicklistQuestionCachedDao(getHandle());
     }
 
     @Override
