@@ -3,11 +3,10 @@ package org.broadinstitute.ddp.route;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.equalTo;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
 
-import okhttp3.HttpUrl;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpStatus;
 import org.broadinstitute.ddp.constants.ConfigFile;
@@ -37,7 +36,8 @@ public class PostPasswordResetRouteTest extends IntegrationTestSuite.TestCase {
     private static String auth0Domain;
     private static final String testEmail = "test_user@datadonationplatform.org";
     private static final String testRedirectUrl = "http://www.datadonationplatform.org/default-password-reset-page/";
-    private static final String testRedirectUrlWithEmail = testRedirectUrl + "?" + QueryParam.EMAIL + "=" + testEmail;
+    private static final String testRedirectUrlWithEmail = testRedirectUrl + "?" + QueryParam.EMAIL + "="
+            + URLEncoder.encode(testEmail, StandardCharsets.UTF_8);
 
     @BeforeClass
     public static void setup() {
@@ -56,27 +56,23 @@ public class PostPasswordResetRouteTest extends IntegrationTestSuite.TestCase {
 
     @Test
     public void test_WhenRouteIsCalledWithValidClientId_ItRespondsWithCorrectHttpRedirect() {
-        Map<String, String> queryParams = new HashMap<>();
-        queryParams.put(QueryParam.AUTH0_CLIENT_ID, auth0ClientId);
-        queryParams.put(QueryParam.AUTH0_DOMAIN, auth0Domain);
-        queryParams.put(QueryParam.EMAIL, testEmail);
-        queryParams.put(QueryParam.SUCCESS, "true");
-        HttpUrl fullUrl = buildEncodedUrl(url, queryParams);
         given(TestUtil.RestAssured.nonFollowingRequestSpec())
-                .when().get(fullUrl.toString()).then().assertThat()
+                .queryParam(QueryParam.AUTH0_CLIENT_ID, auth0ClientId)
+                .queryParam(QueryParam.AUTH0_DOMAIN, auth0Domain)
+                .queryParam(QueryParam.EMAIL, testEmail)
+                .queryParam(QueryParam.SUCCESS, "true")
+                .when().get(url).then().assertThat()
                 .statusCode(HttpStatus.SC_MOVED_TEMPORARILY)
                 .header(HttpHeaders.LOCATION, equalTo(testRedirectUrlWithEmail));
     }
 
     @Test
     public void test_WhenClientDoesNotExist_RouteRespondsWithNotFound() {
-        Map<String, String> queryParams = new HashMap<>();
-        queryParams.put(QueryParam.AUTH0_CLIENT_ID, nonExistentAuth0Client);
-        queryParams.put(QueryParam.AUTH0_DOMAIN, auth0Domain);
-        queryParams.put(QueryParam.EMAIL, testEmail);
-        queryParams.put(QueryParam.SUCCESS, "true");
-        HttpUrl fullUrl = buildEncodedUrl(url, queryParams);
-        given().when().get(fullUrl.toString()).then().assertThat()
+        given().queryParam(QueryParam.AUTH0_CLIENT_ID, nonExistentAuth0Client)
+                .queryParam(QueryParam.AUTH0_DOMAIN, auth0Domain)
+                .queryParam(QueryParam.EMAIL, testEmail)
+                .queryParam(QueryParam.SUCCESS, "true")
+                .when().get(url).then().assertThat()
                 .statusCode(HttpStatus.SC_NOT_FOUND);
     }
 
@@ -86,13 +82,11 @@ public class PostPasswordResetRouteTest extends IntegrationTestSuite.TestCase {
                 handle -> handle.attach(JdbiClient.class)
                         .updateWebPasswordRedirectUrlByAuth0ClientIdAndAuth0Domain(null, auth0ClientId, auth0Domain)
         );
-        Map<String, String> queryParams = new HashMap<>();
-        queryParams.put(QueryParam.AUTH0_CLIENT_ID, auth0ClientId);
-        queryParams.put(QueryParam.AUTH0_DOMAIN, auth0Domain);
-        queryParams.put(QueryParam.EMAIL, testEmail);
-        queryParams.put(QueryParam.SUCCESS, "true");
-        HttpUrl fullUrl = buildEncodedUrl(url, queryParams);
-        given().when().get(fullUrl.toString()).then().assertThat()
+        given().queryParam(QueryParam.AUTH0_CLIENT_ID, auth0ClientId)
+                .queryParam(QueryParam.AUTH0_DOMAIN, auth0Domain)
+                .queryParam(QueryParam.EMAIL, testEmail)
+                .queryParam(QueryParam.SUCCESS, "true")
+                .when().get(url).then().assertThat()
                 .statusCode(HttpStatus.SC_UNPROCESSABLE_ENTITY);
         TransactionWrapper.useTxn(
                 handle -> handle.attach(JdbiClient.class)
@@ -102,53 +96,45 @@ public class PostPasswordResetRouteTest extends IntegrationTestSuite.TestCase {
 
     @Test
     public void test_WhenRouteIsCalledWithEmptyEmail_ItRedirectsWithoutEmail() {
-        Map<String, String> queryParams = new HashMap<>();
-        queryParams.put(QueryParam.AUTH0_CLIENT_ID, auth0ClientId);
-        queryParams.put(QueryParam.AUTH0_DOMAIN, auth0Domain);
-        queryParams.put(QueryParam.EMAIL, "");
-        queryParams.put(QueryParam.SUCCESS, "true");
-        HttpUrl fullUrl = buildEncodedUrl(url, queryParams);
         given(TestUtil.RestAssured.nonFollowingRequestSpec())
-                .when().get(fullUrl.toString()).then().assertThat()
+                .queryParam(QueryParam.AUTH0_CLIENT_ID, auth0ClientId)
+                .queryParam(QueryParam.AUTH0_DOMAIN, auth0Domain)
+                .queryParam(QueryParam.EMAIL, "")
+                .queryParam(QueryParam.SUCCESS, "true")
+                .when().get(url).then().assertThat()
                 .statusCode(HttpStatus.SC_MOVED_TEMPORARILY)
                 .header(HttpHeaders.LOCATION, equalTo(testRedirectUrl));
     }
 
     @Test
     public void test_WhenRouteIsCalledWithoutEmail_ItRedirectsWithoutEmail() {
-        Map<String, String> queryParams = new HashMap<>();
-        queryParams.put(QueryParam.AUTH0_CLIENT_ID, auth0ClientId);
-        queryParams.put(QueryParam.AUTH0_DOMAIN, auth0Domain);
-        queryParams.put(QueryParam.SUCCESS, "true");
-        HttpUrl fullUrl = buildEncodedUrl(url, queryParams);
         given(TestUtil.RestAssured.nonFollowingRequestSpec())
-                .when().get(fullUrl.toString()).then().assertThat()
+                .queryParam(QueryParam.AUTH0_CLIENT_ID, auth0ClientId)
+                .queryParam(QueryParam.AUTH0_DOMAIN, auth0Domain)
+                .queryParam(QueryParam.SUCCESS, "true")
+                .when().get(url).then().assertThat()
                 .statusCode(HttpStatus.SC_MOVED_TEMPORARILY)
                 .header(HttpHeaders.LOCATION, equalTo(testRedirectUrl));
     }
 
     @Test
     public void test_WhenRouteIsCalledWithEmptyClientId_ItRespondsWithBadRequest() {
-        Map<String, String> queryParams = new HashMap<>();
-        queryParams.put(QueryParam.AUTH0_CLIENT_ID, "");
-        queryParams.put(QueryParam.AUTH0_DOMAIN, auth0Domain);
-        queryParams.put(QueryParam.EMAIL, testEmail);
-        queryParams.put(QueryParam.SUCCESS, "true");
-        HttpUrl fullUrl = buildEncodedUrl(url, queryParams);
-        given().when().get(fullUrl.toString()).then().assertThat()
+        given().queryParam(QueryParam.AUTH0_CLIENT_ID, "")
+                .queryParam(QueryParam.AUTH0_DOMAIN, auth0Domain)
+                .queryParam(QueryParam.EMAIL, testEmail)
+                .queryParam(QueryParam.SUCCESS, "true")
+                .when().get(url).then().assertThat()
                 .statusCode(HttpStatus.SC_BAD_REQUEST);
     }
 
     @Test
     public void test_WhenRouteIsCalledWithEmptyAuth0Domain_andClientIdIsUnique_ItRespondsWithHttpRedirect() {
-        Map<String, String> queryParams = new HashMap<>();
-        queryParams.put(QueryParam.AUTH0_CLIENT_ID, auth0ClientId);
-        queryParams.put(QueryParam.AUTH0_DOMAIN, "");
-        queryParams.put(QueryParam.EMAIL, testEmail);
-        queryParams.put(QueryParam.SUCCESS, "true");
-        HttpUrl fullUrl = buildEncodedUrl(url, queryParams);
         given(TestUtil.RestAssured.nonFollowingRequestSpec())
-                .when().get(fullUrl.toString()).then().assertThat()
+                .queryParam(QueryParam.AUTH0_CLIENT_ID, auth0ClientId)
+                .queryParam(QueryParam.AUTH0_DOMAIN, "")
+                .queryParam(QueryParam.EMAIL, testEmail)
+                .queryParam(QueryParam.SUCCESS, "true")
+                .when().get(url).then().assertThat()
                 .statusCode(HttpStatus.SC_MOVED_TEMPORARILY)
                 .header(HttpHeaders.LOCATION, equalTo(testRedirectUrlWithEmail));
     }
@@ -190,13 +176,11 @@ public class PostPasswordResetRouteTest extends IntegrationTestSuite.TestCase {
                         );
                     }
             );
-            Map<String, String> queryParams = new HashMap<>();
-            queryParams.put(QueryParam.AUTH0_CLIENT_ID, duplicatedAuth0ClientId);
-            queryParams.put(QueryParam.AUTH0_DOMAIN, "");
-            queryParams.put(QueryParam.EMAIL, testEmail);
-            queryParams.put(QueryParam.SUCCESS, "true");
-            HttpUrl fullUrl = buildEncodedUrl(url, queryParams);
-            given().when().get(fullUrl.toString()).then().assertThat()
+            given().queryParam(QueryParam.AUTH0_CLIENT_ID, duplicatedAuth0ClientId)
+                    .queryParam(QueryParam.AUTH0_DOMAIN, "")
+                    .queryParam(QueryParam.EMAIL, testEmail)
+                    .queryParam(QueryParam.SUCCESS, "true")
+                    .when().get(url).then().assertThat()
                     .statusCode(HttpStatus.SC_BAD_REQUEST);
         } finally {
             TransactionWrapper.useTxn(
@@ -214,14 +198,12 @@ public class PostPasswordResetRouteTest extends IntegrationTestSuite.TestCase {
 
     @Test
     public void test_WhenRouteIsCalledWithSuccessEqualsFalse_ItRedirectsWithEmailAndErrorCode() {
-        Map<String, String> queryParams = new HashMap<>();
-        queryParams.put(QueryParam.AUTH0_CLIENT_ID, auth0ClientId);
-        queryParams.put(QueryParam.AUTH0_DOMAIN, auth0Domain);
-        queryParams.put(QueryParam.EMAIL, testEmail);
-        queryParams.put(QueryParam.SUCCESS, "false");
-        HttpUrl fullUrl = buildEncodedUrl(url, queryParams);
         given(TestUtil.RestAssured.nonFollowingRequestSpec())
-                .when().get(fullUrl.toString()).then().assertThat()
+                .queryParam(QueryParam.AUTH0_CLIENT_ID, auth0ClientId)
+                .queryParam(QueryParam.AUTH0_DOMAIN, auth0Domain)
+                .queryParam(QueryParam.EMAIL, testEmail)
+                .queryParam(QueryParam.SUCCESS, "false")
+                .when().get(url).then().assertThat()
                 .statusCode(HttpStatus.SC_MOVED_TEMPORARILY)
                 .header(HttpHeaders.LOCATION,
                         Matchers.containsString(QueryParam.ERROR_CODE + "=" + ErrorCodes.PASSWORD_RESET_LINK_EXPIRED));
@@ -232,13 +214,11 @@ public class PostPasswordResetRouteTest extends IntegrationTestSuite.TestCase {
         TransactionWrapper.useTxn(
                 handle -> handle.attach(JdbiClient.class).updateIsRevokedByAuth0ClientIdAndAuth0Domain(true, auth0ClientId, auth0Domain)
         );
-        Map<String, String> queryParams = new HashMap<>();
-        queryParams.put(QueryParam.AUTH0_CLIENT_ID, auth0ClientId);
-        queryParams.put(QueryParam.AUTH0_DOMAIN, auth0Domain);
-        queryParams.put(QueryParam.EMAIL, testEmail);
-        queryParams.put(QueryParam.SUCCESS, "true");
-        HttpUrl fullUrl = buildEncodedUrl(url, queryParams);
-        given().when().get(fullUrl.toString()).then().assertThat()
+        given().queryParam(QueryParam.AUTH0_CLIENT_ID, auth0ClientId)
+                .queryParam(QueryParam.AUTH0_DOMAIN, auth0Domain)
+                .queryParam(QueryParam.EMAIL, testEmail)
+                .queryParam(QueryParam.SUCCESS, "true")
+                .when().get(url).then().assertThat()
                 .statusCode(HttpStatus.SC_UNPROCESSABLE_ENTITY);
         TransactionWrapper.useTxn(
                 handle -> handle.attach(JdbiClient.class).updateIsRevokedByAuth0ClientIdAndAuth0Domain(false, auth0ClientId, auth0Domain)
@@ -252,13 +232,11 @@ public class PostPasswordResetRouteTest extends IntegrationTestSuite.TestCase {
                         "malformedUrl", auth0ClientId, auth0Domain
                 )
         );
-        Map<String, String> queryParams = new HashMap<>();
-        queryParams.put(QueryParam.AUTH0_CLIENT_ID, auth0ClientId);
-        queryParams.put(QueryParam.AUTH0_DOMAIN, auth0Domain);
-        queryParams.put(QueryParam.EMAIL, testEmail);
-        queryParams.put(QueryParam.SUCCESS, "true");
-        HttpUrl fullUrl = buildEncodedUrl(url, queryParams);
-        given().when().get(fullUrl.toString()).then().assertThat()
+        given().queryParam(QueryParam.AUTH0_CLIENT_ID, auth0ClientId)
+                .queryParam(QueryParam.AUTH0_DOMAIN, auth0Domain)
+                .queryParam(QueryParam.EMAIL, testEmail)
+                .queryParam(QueryParam.SUCCESS, "true")
+                .when().get(url).then().assertThat()
                 .statusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR);
         TransactionWrapper.useTxn(
                 handle -> handle.attach(JdbiClient.class).updateWebPasswordRedirectUrlByAuth0ClientIdAndAuth0Domain(
@@ -266,11 +244,4 @@ public class PostPasswordResetRouteTest extends IntegrationTestSuite.TestCase {
                 )
         );
     }
-
-    private static HttpUrl buildEncodedUrl(String url, Map<String, String> queryParams) {
-        HttpUrl.Builder builder = HttpUrl.parse(url).newBuilder();
-        queryParams.forEach((paramName, paramValue) -> builder.addQueryParameter(paramName, paramValue));
-        return builder.build();
-    }
-
 }

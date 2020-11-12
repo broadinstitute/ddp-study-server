@@ -231,10 +231,6 @@
         color: #82B547;
     }
 
-    .auth0-lock-password-strength {
-        display: none;
-    }
-
     .auth0-lock.auth0-lock .auth0-lock-form .auth0-lock-alternative .auth0-lock-alternative-link {
         color: #717174;
         font-size: 0.75rem;
@@ -258,8 +254,7 @@
         text-align: left !important;
     }
 
-    .auth0-lock-input-block.auth0-lock-input-show-password .auth0-lock-input-block.auth0-lock-input-password.auth0-lock-error::after {
-        content: unset;
+    .auth0-lock-input-block.auth0-lock-input-password.auth0-lock-error {
         font-family: 'Raleway', sans-serif;
         font-size: 12px;
         color: #f00;
@@ -883,7 +878,6 @@
         loginTitle: ' ',
         loginLabel: 'Sign In',
         loginSubmitLabel: 'Sign In',
-        loginWithLabel: 'Sign in with %s',
         forgotPasswordTitle: ' ',
         forgotPasswordAction: 'Forgot your password?',
         forgotPasswordInstructions: '<h2 class="Auth0Title">Forgot your password?</h2> <h5>Please enter your email address and we will send you password reset instructions.</h5>',
@@ -941,7 +935,6 @@
         loginTitle: ' ',
         loginLabel: 'Registrarse',
         loginSubmitLabel: 'Registrarse',
-        loginWithLabel: 'Inicia sesión con %s',
         forgotPasswordTitle: ' ',
         forgotPasswordAction: '¿Olvidaste tu contraseña?',
         forgotPasswordInstructions: '<h2 class="Auth0Title">¿Olvidaste tu contraseña?</h2> <h5>Ingrese su dirección de correo electrónico y le enviaremos las instrucciones para restablecer la contraseña.</h5>',
@@ -968,8 +961,8 @@
         contactUs: 'Contacta con nosotros:',
         successForgotPassword: 'Si se ha registrado previamente, revise su correo electrónico para restablecer su contraseña.',
         languageSelection: 'Selección de idioma',
-        invalidErrorHint: 'Invalid',
-        unrecoverableError: 'Something went wrong. Please contact technical support.',
+        invalidErrorHint: '(es)Invalid',
+        unrecoverableError: '(es)Something went wrong. Please contact technical support.',
         error: {
             forgotPassword: {
                 too_many_requests: '(es) We\'re sorry. There are too many requests right now. Please reload the page and try again. If this persists, please try again later.',
@@ -998,7 +991,6 @@
         loginTitle: ' ',
         loginLabel: 'להתחבר',
         loginSubmitLabel: 'להתחבר',
-        loginWithLabel: 'להתחבר עם %s',
         forgotPasswordTitle: ' ',
         forgotPasswordAction: 'שכחת ססמה?',
         forgotPasswordInstructions: '<h2 class="Auth0Title">שכחת ססמה?</h2> <h5>אנא הכנס את כתובת הדוא"ל שלך ואנו נשלח לך הוראות לאיפוס סיסמה.</h5>',
@@ -1055,7 +1047,6 @@
         loginTitle: ' ',
         loginLabel: '登入',
         loginSubmitLabel: '登入',
-        loginWithLabel: '登陸使用 %s',
         forgotPasswordTitle: ' ',
         forgotPasswordAction: '忘記密碼了嗎？',
         forgotPasswordInstructions: '<h2 class="Auth0Title">忘記密碼了嗎？</h2> <h5>請輸入您的電子郵件地址，我們將向您發送密碼重置說明。</h5>',
@@ -1154,8 +1145,7 @@
         assetsUrl:  config.assetsUrl,
         allowedConnections: connection ? [connection] : null,
         rememberLastLogin: false,
-        language: language,
-        languageCode: languageCode,
+        language: languageCode,
         languageDictionary: languageDictionary,
         theme: {
             logo:            headerLogo,
@@ -1249,6 +1239,31 @@
                     console.log('appending password hint');
                     passwordBlock.insertBefore(passwordHint, passwordBlock.childNodes[0]);
                 }
+            }
+            if (!document.getElementById('auth0-lock-error-msg-password') && document.getElementsByClassName('auth0-lock-input-block auth0-lock-input-password auth0-lock-error')[0]) {
+                //If the password is invalid but we haven't added the error message, set it
+                var passwordError = document.getElementsByClassName('auth0-lock-input-block auth0-lock-input-password auth0-lock-error')[0];
+                var errorText = languageDictionary.invalidErrorHint;
+
+                // If the password field isn't empty but is invalid, make that the error message
+                var inputElements = passwordError ? passwordError.getElementsByTagName('input') : null;
+                var value = inputElements && inputElements[0] ? inputElements[0].value : null;
+                if (value.length === 0) {
+                    errorText = languageDictionary.blankErrorHint;
+                }
+
+                var passwordErrorMessage = document.createElement('div');
+                passwordErrorMessage.innerHTML = `<span>${errorText}</span>`;
+                passwordErrorMessage.setAttribute('role', 'alert');
+                passwordErrorMessage.setAttribute('id', 'auth0-lock-error-msg-password');
+                passwordErrorMessage.setAttribute('class', 'auth0-lock-error-msg');
+                console.log('appending password error message');
+                passwordError.appendChild(passwordErrorMessage);
+            }
+            if (document.getElementById('auth0-lock-error-msg-password') && !document.getElementsByClassName('auth0-lock-input-block auth0-lock-input-password auth0-lock-error')[0]){
+                //If we're still showing the error message for the password field even though the field is now valid, get rid of the error message
+                var errorMsg = document.getElementById('auth0-lock-error-msg-password');
+                errorMsg.parentElement.removeChild(errorMsg);
             }
             if (!document.getElementById('ddp-email-prompt')) {
                 // If we are logging in, add some instructions
