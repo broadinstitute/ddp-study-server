@@ -1,22 +1,20 @@
 package org.broadinstitute.ddp.db.dto;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.io.Serializable;
+import java.util.Set;
 
 import org.broadinstitute.ddp.model.activity.types.OrientationType;
 import org.jdbi.v3.core.mapper.Nested;
 import org.jdbi.v3.core.mapper.reflect.ColumnName;
 import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
 
-public final class CompositeQuestionDto extends QuestionDto {
+public final class CompositeQuestionDto extends QuestionDto implements Serializable {
 
     private boolean allowMultiple;
     private boolean unwrapOnExport;
     private Long addButtonTemplateId;
     private Long additionalItemTemplateId;
     private OrientationType childOrientation;
-    private List<QuestionDto> childQuestions = new ArrayList<>();
 
     @JdbiConstructor
     public CompositeQuestionDto(@Nested QuestionDto questionDto,
@@ -53,15 +51,15 @@ public final class CompositeQuestionDto extends QuestionDto {
         return childOrientation;
     }
 
-    public List<QuestionDto> getChildQuestions() {
-        return childQuestions;
-    }
-
-    public void addChildQuestion(QuestionDto childQuestion) {
-        this.childQuestions.add(childQuestion);
-    }
-
-    public Optional<QuestionDto> getChildQuestionByStableId(String childAnswerStableId) {
-        return childQuestions.stream().filter(child -> child.getStableId().equals(childAnswerStableId)).findFirst();
+    @Override
+    public Set<Long> getTemplateIds() {
+        var ids = super.getTemplateIds();
+        if (addButtonTemplateId != null) {
+            ids.add(addButtonTemplateId);
+        }
+        if (additionalItemTemplateId != null) {
+            ids.add(additionalItemTemplateId);
+        }
+        return ids;
     }
 }

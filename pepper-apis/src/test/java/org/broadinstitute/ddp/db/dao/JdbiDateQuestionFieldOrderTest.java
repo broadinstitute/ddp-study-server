@@ -3,12 +3,12 @@ package org.broadinstitute.ddp.db.dao;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
 
 import java.util.List;
 
 import org.broadinstitute.ddp.TxnAwareBaseTest;
 import org.broadinstitute.ddp.db.TransactionWrapper;
+import org.broadinstitute.ddp.db.dto.DateQuestionDto;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
 import org.broadinstitute.ddp.model.activity.definition.FormSectionDef;
 import org.broadinstitute.ddp.model.activity.definition.QuestionBlockDef;
@@ -37,16 +37,6 @@ public class JdbiDateQuestionFieldOrderTest extends TxnAwareBaseTest {
     }
 
     @Test
-    public void testGetOrderedFieldsByQuestionId_noneFound() {
-        TransactionWrapper.useTxn(handle -> {
-            JdbiDateQuestionFieldOrder dao = handle.attach(JdbiDateQuestionFieldOrder.class);
-            List<DateFieldType> fields = dao.getOrderedFieldsByQuestionId(-1);
-            assertNotNull(fields);
-            assertTrue(fields.isEmpty());
-        });
-    }
-
-    @Test
     public void testGetOrderedFieldsByQuestionId() {
         TransactionWrapper.useTxn(handle -> {
             FormActivityDef act = insertDateActivity(handle, testData.getUserGuid(), testData.getStudyGuid());
@@ -58,8 +48,10 @@ public class JdbiDateQuestionFieldOrderTest extends TxnAwareBaseTest {
     private void assertFieldOrdering(Handle handle, FormActivityDef act, String stableId, DateFieldType... expected) {
         long questionId = extractQuestion(act, stableId).getQuestionId();
 
-        JdbiDateQuestionFieldOrder dao = handle.attach(JdbiDateQuestionFieldOrder.class);
-        List<DateFieldType> fields = dao.getOrderedFieldsByQuestionId(questionId);
+        List<DateFieldType> fields = handle.attach(JdbiQuestion.class)
+                .findQuestionDtoById(questionId)
+                .map(dto -> ((DateQuestionDto) dto).getFields())
+                .orElse(null);
         assertNotNull(fields);
 
         assertEquals(expected.length, fields.size());

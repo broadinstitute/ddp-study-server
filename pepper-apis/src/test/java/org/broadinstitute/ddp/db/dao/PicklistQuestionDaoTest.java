@@ -142,9 +142,9 @@ public class PicklistQuestionDaoTest extends TxnAwareBaseTest {
             Optional<PicklistOptionDto> opt = jdbiOption.getByStableId(question.getQuestionId(), "PO1", instanceGuid);
             assertTrue(opt.isPresent());
 
-            QuestionDto question2Dto = handle.attach(JdbiQuestion.class).getQuestionDtoById(question2.getQuestionId()).get();
+            QuestionDto question2Dto = handle.attach(JdbiQuestion.class).findQuestionDtoById(question2.getQuestionId()).get();
             PicklistQuestionDao.GroupAndOptionDtos dtos = handle.attach(PicklistQuestionDao.class)
-                    .findOrderedGroupAndOptionDtos(question2Dto, version1.getRevStart());
+                    .findOrderedGroupAndOptionDtos(question2Dto.getId(), version1.getRevStart());
             assertNotNull(dtos.getUngroupedOptions());
             assertEquals(1, dtos.getUngroupedOptions().size());
 

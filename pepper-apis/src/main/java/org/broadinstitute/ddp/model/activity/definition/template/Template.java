@@ -13,6 +13,7 @@ import org.broadinstitute.ddp.content.I18nContentRenderer;
 import org.broadinstitute.ddp.model.activity.definition.i18n.Translation;
 import org.broadinstitute.ddp.model.activity.types.TemplateType;
 import org.broadinstitute.ddp.util.MiscUtil;
+import org.jdbi.v3.core.mapper.reflect.ColumnName;
 import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,7 +51,12 @@ public class Template {
     }
 
     @JdbiConstructor
-    public Template(long id, TemplateType type, String code, String text, long revisionId) {
+    public Template(
+            @ColumnName("template_id") long id,
+            @ColumnName("template_type") TemplateType type,
+            @ColumnName("template_code") String code,
+            @ColumnName("template_text") String text,
+            @ColumnName("template_revision_id") long revisionId) {
         this(type, code, text);
         this.templateId = id;
         this.revisionId = revisionId;

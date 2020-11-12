@@ -162,9 +162,9 @@ public class AnswerToProfileCopierTest extends TxnAwareBaseTest {
                     .build(handle, testData.getUserId(), testData.getStudyGuid());
 
             QuestionDto cq = handle.attach(JdbiQuestion.class)
-                    .getQuestionDtoById(child.getQuestionId()).get();
+                    .findQuestionDtoById(child.getQuestionId()).get();
             QuestionDto cq2 = handle.attach(JdbiQuestion.class)
-                    .getQuestionDtoById(child2.getQuestionId()).get();
+                    .findQuestionDtoById(child2.getQuestionId()).get();
 
             var instance = new FormResponse(1L, "a", testData.getUserId(), false, 1L, 1L, 1L, "b", "c", null);
             CompositeAnswer answer = new CompositeAnswer(1L, act.getCompositeQuestion().getStableId(), "a");
@@ -195,7 +195,7 @@ public class AnswerToProfileCopierTest extends TxnAwareBaseTest {
                     .withCompositeQuestion(true, child)
                     .build(handle, testData.getUserId(), testData.getStudyGuid());
             QuestionDto cq = handle.attach(JdbiQuestion.class)
-                    .getQuestionDtoById(child.getQuestionId()).get();
+                    .findQuestionDtoById(child.getQuestionId()).get();
 
             var instance = new FormResponse(1L, "a", testData.getUserId(), false, 1L, 1L, 1L, "b", "c", null);
             var copier = new AnswerToProfileCopier(handle, testData.getUserId());
@@ -220,7 +220,7 @@ public class AnswerToProfileCopierTest extends TxnAwareBaseTest {
                     .withCompositeQuestion(true, child)
                     .build(handle, testData.getUserId(), testData.getStudyGuid());
             QuestionDto cq = handle.attach(JdbiQuestion.class)
-                    .getQuestionDtoById(child.getQuestionId()).get();
+                    .findQuestionDtoById(child.getQuestionId()).get();
 
             var instance = new FormResponse(1L, "a", testData.getUserId(), false, 1L, 1L, 1L, "b", "c", null);
             CompositeAnswer answer = new CompositeAnswer(1L, act.getCompositeQuestion().getStableId(), "a");

@@ -6,7 +6,6 @@ import static java.util.stream.Collectors.toList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-
 import javax.cache.Cache;
 import javax.cache.expiry.Duration;
 
@@ -75,7 +74,7 @@ public class JdbiCompositeQuestionCached extends SQLObjectWrapper<JdbiCompositeQ
 
         dtos.forEach(dto -> {
             idToCompositeQuestionDtoCache.put(dto.getId(), dto);
-            dto.getChildQuestions().forEach(childDto -> compositeChildQuestionIdToParentIdCache.put(childDto.getId(), dto.getId()));
+            // dto.getChildQuestions().forEach(childDto -> compositeChildQuestionIdToParentIdCache.put(childDto.getId(), dto.getId()));
         });
 
         activityIdToCompositeQuestionIdsCache.put(activityId, dtos.stream().map(dto -> dto.getId()).collect(toList()));

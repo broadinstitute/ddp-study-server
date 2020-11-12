@@ -8,22 +8,25 @@ select tv.template_id, tv.variable_name, i18n_ts.substitution_value
    and i18n_ts.language_code_id = :langCodeId
 >>
 
-queryTemplateById() ::= <<
-select t.template_id as t_template_id,
-  t.template_code,
-  t.template_text,
-  t.revision_id as template_revision_id,
-  tt.template_type_code,
-  tv.template_variable_id,
-  tv.variable_name,
-  lc.iso_language_code,
-  ts.i18n_template_substitution_id as substitution_id,
-  ts.substitution_value,
-  ts.revision_id as substitution_revision_id
-from template t
-join template_type as tt on tt.template_type_id = t.template_type_id
-left join template_variable as tv on tv.template_id = t.template_id
-left join i18n_template_substitution as ts on ts.template_variable_id = tv.template_variable_id
-left join language_code as lc on lc.language_code_id = ts.language_code_id
-where t.template_id = :templateId
+select_all_templates() ::= <<
+select t.template_id,
+       t.template_code,
+       t.template_text,
+       t.revision_id as template_revision_id,
+       tt.template_type_code as template_type,
+       tv.template_variable_id,
+       tv.variable_name,
+       lc.iso_language_code,
+       ts.i18n_template_substitution_id as substitution_id,
+       ts.substitution_value,
+       ts.revision_id as substitution_revision_id
+  from template t
+  join template_type as tt on tt.template_type_id = t.template_type_id
+  left join template_variable as tv on tv.template_id = t.template_id
+  left join i18n_template_substitution as ts on ts.template_variable_id = tv.template_variable_id
+  left join language_code as lc on lc.language_code_id = ts.language_code_id
+>>
+
+queryTemplatesByIds(templateIds) ::= <<
+<select_all_templates()> where t.template_id in (<templateIds>)
 >>
