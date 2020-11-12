@@ -84,9 +84,7 @@ public class AnswerToProfileCopier {
         CompositeQuestionDto parentDto = parentDtosByChildId.get(sourceQuestion.getId());
         if (parentDto == null) {
             parentDto = jdbiQuestion
-                    .findCompositeParentIdByChildId(sourceQuestion.getId())
-                    .flatMap(jdbiQuestion::findQuestionDtoById)
-                    .map(dto -> (CompositeQuestionDto) dto)
+                    .findCompositeParentDtoByChildId(sourceQuestion.getId())
                     .orElse(null);
             if (parentDto == null) {
                 LOG.info("No parent composite question found for source question {}", sourceQuestion.getStableId());

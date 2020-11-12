@@ -70,9 +70,7 @@ public class AnswerToAnswerCopier {
         CompositeQuestionDto parentDto = parentDtosByChildId.get(childQuestion.getId());
         if (parentDto == null) {
             parentDto = jdbiQuestion
-                    .findCompositeParentIdByChildId(childQuestion.getId())
-                    .flatMap(jdbiQuestion::findQuestionDtoById)
-                    .map(dto -> (CompositeQuestionDto) dto)
+                    .findCompositeParentDtoByChildId(childQuestion.getId())
                     .orElse(null);
             if (parentDto != null) {
                 parentDtosByChildId.put(childQuestion.getId(), parentDto);

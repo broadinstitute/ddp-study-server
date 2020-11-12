@@ -194,9 +194,7 @@ public class PatchFormAnswersRoute implements Route {
                         LOG.warn("Could not find questiondef with id: " + questionStableId);
                     }
 
-                    Optional<QuestionDto> optDto = jdbiQuestion
-                            .findIdByStableIdAndInstanceGuid(questionStableId, instanceGuid)
-                            .flatMap(jdbiQuestion::findQuestionDtoById);
+                    Optional<QuestionDto> optDto = jdbiQuestion.findDtoByStableIdAndInstanceGuid(questionStableId, instanceGuid);
                     QuestionDto questionDto = extractQuestionDto(response, questionStableId, optDto);
                     // @TODO might be able to get rid of this query and a bunch of *CachedDao classes
                     // if can figure out how to create Rule objects from RuleDef

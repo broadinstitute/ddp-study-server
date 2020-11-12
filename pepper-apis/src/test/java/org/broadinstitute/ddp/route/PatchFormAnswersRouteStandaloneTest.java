@@ -749,8 +749,7 @@ public class PatchFormAnswersRouteStandaloneTest {
         TransactionWrapper.useTxn(handle -> {
             var jdbiQuestion = handle.attach(JdbiQuestion.class);
             Optional<QuestionDto> optCompQuestion = jdbiQuestion
-                    .findIdByStableIdAndInstanceGuid(compStabledId, instanceGuid)
-                    .flatMap(jdbiQuestion::findQuestionDtoById);
+                    .findDtoByStableIdAndInstanceGuid(compStabledId, instanceGuid);
             assertTrue(optCompQuestion.isPresent());
             Question compositeQuestionWithAnswers = handle.attach(QuestionDao.class)
                     .getQuestionByIdAndActivityInstanceGuid(optCompQuestion.get().getId(), instanceGuid,

@@ -82,6 +82,11 @@ public interface JdbiQuestion extends SqlObject {
     Optional<Long> findIdByStableIdAndInstanceGuid(@Bind("stableId") String stableId,
                                                    @Bind("instanceGuid") String instanceGuid);
 
+    default Optional<QuestionDto> findDtoByStableIdAndInstanceGuid(String stableId, String instanceGuid) {
+        return findIdByStableIdAndInstanceGuid(stableId, instanceGuid)
+                .flatMap(this::findQuestionDtoById);
+    }
+
     @SqlQuery("select suggestion"
             + "  from text_question_suggestion"
             + " where text_question_id = :questionId"
@@ -92,6 +97,12 @@ public interface JdbiQuestion extends SqlObject {
             + "  from composite_question__question"
             + " where child_question_id = :childId")
     Optional<Long> findCompositeParentIdByChildId(@Bind("childId") long childQuestionId);
+
+    default Optional<CompositeQuestionDto> findCompositeParentDtoByChildId(long childQuestionId) {
+        return findCompositeParentIdByChildId(childQuestionId)
+                .flatMap(this::findQuestionDtoById)
+                .map(dto -> (CompositeQuestionDto) dto);
+    }
 
     default List<Long> findCompositeChildIdsByParentId(long parentQuestionId) {
         return collectOrderedCompositeChildIdsByParentIds(Set.of(parentQuestionId))
