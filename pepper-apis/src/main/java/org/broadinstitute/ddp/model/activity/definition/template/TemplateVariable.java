@@ -11,6 +11,8 @@ import javax.validation.constraints.NotNull;
 import com.google.gson.annotations.SerializedName;
 import org.broadinstitute.ddp.model.activity.definition.i18n.Translation;
 import org.broadinstitute.ddp.util.MiscUtil;
+import org.jdbi.v3.core.mapper.reflect.ColumnName;
+import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
 
 public class TemplateVariable {
 
@@ -36,6 +38,15 @@ public class TemplateVariable {
         List<Translation> texts = new ArrayList<>();
         texts.add(new Translation(languageCode, translatedText));
         return new TemplateVariable(name, texts);
+    }
+
+    @JdbiConstructor
+    public TemplateVariable(
+            @ColumnName("template_variable_id") long id,
+            @ColumnName("variable_name") String name) {
+        this.id = id;
+        this.name = name;
+        this.translations = new ArrayList<>();
     }
 
     public TemplateVariable(Long id, String name, List<Translation> translations) {
