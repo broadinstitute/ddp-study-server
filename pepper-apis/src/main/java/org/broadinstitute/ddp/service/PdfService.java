@@ -113,19 +113,20 @@ public class PdfService {
                                     PdfConfiguration pdfConfiguration,
                                     String participantGuid,
                                     String studyGuid) throws IOException {
-        InputStream pdfStream = pdfGenerationService.generateFlattenedPdfForConfiguration(
+        try (InputStream pdfStream = pdfGenerationService.generateFlattenedPdfForConfiguration(
                 pdfConfiguration,
                 participantGuid,
-                handle);
+                handle)) {
 
-        String umbrellaGuid = handle.attach(JdbiUmbrellaStudy.class)
-                .getUmbrellaGuidForStudyGuid(studyGuid);
+            String umbrellaGuid = handle.attach(JdbiUmbrellaStudy.class)
+                    .getUmbrellaGuidForStudyGuid(studyGuid);
 
-        return pdfBucketService.sendPdfToBucket(umbrellaGuid,
-                studyGuid,
-                participantGuid,
-                pdfConfiguration.getConfigName(),
-                pdfConfiguration.getVersion().getVersionTag(),
-                pdfStream);
+            return pdfBucketService.sendPdfToBucket(umbrellaGuid,
+                    studyGuid,
+                    participantGuid,
+                    pdfConfiguration.getConfigName(),
+                    pdfConfiguration.getVersion().getVersionTag(),
+                    pdfStream);
+        }
     }
 }
