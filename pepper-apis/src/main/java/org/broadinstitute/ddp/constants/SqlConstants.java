@@ -365,4 +365,9 @@ public class SqlConstants {
         public static final String FROM_EMAIL = "from_email";
         public static final String DEFAULT_SALUTATION = "default_salutation";
     }
+
+    public static class StatisticsTypeTable {
+        public static final String ID = "statistics_type_id";
+        public static final String CODE = "statistics_type_code";
+    }
 }

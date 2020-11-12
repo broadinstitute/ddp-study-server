@@ -238,4 +238,5 @@
     <include file="db-changes/schema/DDP-5183-drop-initial-kit-record.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/DDP-5194-picklist-nested-options.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/seed/add-participant-list-workflow-state-type.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/ATX-248-create-statistics-types.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>
