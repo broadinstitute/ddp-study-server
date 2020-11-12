@@ -15,13 +15,15 @@ public class ValidationDto implements Serializable {
 
     private RuleType ruleType;
     private long id;
+    private long questionId;
     private boolean allowSave;
     private Long hintTemplateId;
     private long revisionId;
 
-    public ValidationDto(RuleType ruleType, long id, boolean allowSave, Long hintTemplateId, long revisionId) {
+    public ValidationDto(RuleType ruleType, long questionId, long id, boolean allowSave, Long hintTemplateId, long revisionId) {
         this.ruleType = ruleType;
         this.id = id;
+        this.questionId = questionId;
         this.allowSave = allowSave;
         this.hintTemplateId = hintTemplateId;
         this.revisionId = revisionId;
@@ -33,6 +35,10 @@ public class ValidationDto implements Serializable {
 
     public long getId() {
         return id;
+    }
+
+    public long getQuestionId() {
+        return questionId;
     }
 
     public Long getHintTemplateId() {
@@ -52,6 +58,7 @@ public class ValidationDto implements Serializable {
         public ValidationDto map(ResultSet rs, StatementContext ctx) throws SQLException {
             return new ValidationDto(
                     RuleType.valueOf(rs.getString(ValidationTypeTable.TYPE_CODE)),
+                    (Long) rs.getObject("question_id"),
                     rs.getLong(ValidationTable.ID),
                     rs.getBoolean(ValidationTable.ALLOW_SAVE),
                     (Long) rs.getObject(ValidationTable.CORRECTION_HINT),

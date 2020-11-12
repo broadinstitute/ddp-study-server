@@ -1,11 +1,17 @@
 package org.broadinstitute.ddp.db.dao;
 
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.DaoException;
 import org.broadinstitute.ddp.db.dto.ComponentDto;
+import org.broadinstitute.ddp.db.dto.FormBlockDto;
 import org.broadinstitute.ddp.db.dto.InstitutionPhysicianComponentDto;
 import org.broadinstitute.ddp.db.dto.MailingAddressComponentDto;
 import org.broadinstitute.ddp.model.activity.definition.ComponentBlockDef;
@@ -154,31 +160,50 @@ public interface ComponentDao extends SqlObject {
         return componentId;
     }
 
-    default ComponentBlockDef findDefByBlockIdAndTimestamp(long blockId, long timestamp) {
-        JdbiComponent jdbiComponent = getJdbiComponent();
-        Map<Long, Long> blockIdToComponentId = jdbiComponent
-                .findComponentIdsByBlockIdsAndTimestamp(Set.of(blockId), timestamp);
-        ComponentDto componentDto;
-        try (var stream = jdbiComponent.findComponentDtosByIds(blockIdToComponentId.values())) {
-            componentDto = stream.findFirst().orElse(null);
-        }
-        if (componentDto == null) {
-            throw new DaoException(String.format(
-                    "Could not find component block definition for id %d and timestamp %d", blockId, timestamp));
+    default Map<Long, ComponentBlockDef> collectBlockDefs(Collection<FormBlockDto> blockDtos, long timestamp) {
+        if (blockDtos == null || blockDtos.isEmpty()) {
+            return new HashMap<>();
         }
 
-        Set<Long> templateIds = componentDto.getTemplateIds();
+        Set<Long> blockIds = new HashSet<>();
+        for (var blockDto : blockDtos) {
+            blockIds.add(blockDto.getId());
+        }
+
+        Map<Long, Long> blockIdToComponentId = getJdbiComponent()
+                .findComponentIdsByBlockIdsAndTimestamp(blockIds, timestamp);
+        Map<Long, ComponentDto> componentDtos;
+        try (var stream = getJdbiComponent().findComponentDtosByIds(blockIdToComponentId.values())) {
+            componentDtos = stream.collect(Collectors.toMap(ComponentDto::getComponentId, Function.identity()));
+        }
+
+        Set<Long> templateIds = new HashSet<>();
+        for (var componentDto : componentDtos.values()) {
+            templateIds.addAll(componentDto.getTemplateIds());
+        }
         Map<Long, Template> templates = getTemplateDao().collectTemplatesByIds(templateIds);
 
-        ComponentBlockDef blockDef;
-        if (componentDto.getComponentType() == ComponentType.MAILING_ADDRESS) {
-            blockDef = buildAddressBlockDef((MailingAddressComponentDto) componentDto, templates);
-        } else {
-            blockDef = buildInstitutionBlockDef((InstitutionPhysicianComponentDto) componentDto, templates);
-        }
-        blockDef.setHideNumber(componentDto.shouldHideNumber());
+        Map<Long, ComponentBlockDef> blockDefs = new HashMap<>();
+        for (var blockDto : blockDtos) {
+            long componentId = blockIdToComponentId.get(blockDto.getId());
+            ComponentDto componentDto = componentDtos.get(componentId);
 
-        return blockDef;
+            ComponentBlockDef blockDef;
+            if (componentDto.getComponentType() == ComponentType.MAILING_ADDRESS) {
+                blockDef = buildAddressBlockDef((MailingAddressComponentDto) componentDto, templates);
+            } else {
+                blockDef = buildInstitutionBlockDef((InstitutionPhysicianComponentDto) componentDto, templates);
+            }
+
+            blockDef.setHideNumber(componentDto.shouldHideNumber());
+            blockDef.setBlockId(blockDto.getId());
+            blockDef.setBlockGuid(blockDto.getGuid());
+            blockDef.setShownExpr(blockDto.getShownExpr());
+
+            blockDefs.put(blockDto.getId(), blockDef);
+        }
+
+        return blockDefs;
     }
 
     private ComponentBlockDef buildAddressBlockDef(MailingAddressComponentDto addressComponentDto,

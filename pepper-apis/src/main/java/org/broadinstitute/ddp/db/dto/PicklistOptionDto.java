@@ -117,6 +117,9 @@ public class PicklistOptionDto implements TimestampRevisioned, Serializable {
         if (tooltipTemplateId != null) {
             ids.add(tooltipTemplateId);
         }
+        if (nestedOptionsTemplateId != null) {
+            ids.add(nestedOptionsTemplateId);
+        }
         for (var nestedOption : nestedOptions) {
             ids.addAll(nestedOption.getTemplateIds());
         }

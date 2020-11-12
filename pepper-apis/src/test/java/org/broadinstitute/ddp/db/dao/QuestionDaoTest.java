@@ -16,6 +16,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
+import java.util.Set;
 
 import org.broadinstitute.ddp.TxnAwareBaseTest;
 import org.broadinstitute.ddp.cache.CacheService;
@@ -246,7 +247,9 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
             ActivityVersionDto version = actDao.insertActivity(form, RevisionMetadata.now(testData.getUserId(), "test"));
 
             QuestionDto questionDto = jdbiQuestion.findQuestionDtoById(def.getQuestionId()).get();
-            TextQuestionDef actual = dao.findTextQuestionDefByDtoAndTimestamp((TextQuestionDto) questionDto, version.getRevStart());
+            TextQuestionDef actual = (TextQuestionDef) dao
+                    .collectQuestionDefs(Set.of(questionDto.getId()), version.getRevStart())
+                    .get(questionDto.getId());
 
             assertNotNull(actual);
             assertEquals(def.getQuestionId(), actual.getQuestionId());
@@ -279,7 +282,9 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
             ActivityVersionDto version = actDao.insertActivity(form, RevisionMetadata.now(testData.getUserId(), "test"));
 
             QuestionDto questionDto = jdbiQuestion.findQuestionDtoById(def.getQuestionId()).get();
-            TextQuestionDef actual = dao.findTextQuestionDefByDtoAndTimestamp((TextQuestionDto) questionDto, version.getRevStart());
+            TextQuestionDef actual = (TextQuestionDef) dao
+                    .collectQuestionDefs(Set.of(questionDto.getId()), version.getRevStart())
+                    .get(questionDto.getId());
 
             assertNotNull(actual);
             assertEquals(def.getQuestionId(), actual.getQuestionId());
@@ -444,7 +449,9 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
             ActivityVersionDto version = actDao.insertActivity(form, RevisionMetadata.now(testData.getUserId(), "test"));
 
             PicklistQuestionDto questionDto = (PicklistQuestionDto) jdbiQuestion.findQuestionDtoById(def.getQuestionId()).get();
-            PicklistQuestionDef actual = dao.findPicklistQuestionDefByDtoAndTimestamp(questionDto, version.getRevStart());
+            PicklistQuestionDef actual = (PicklistQuestionDef) dao
+                    .collectQuestionDefs(Set.of(questionDto.getId()), version.getRevStart())
+                    .get(questionDto.getId());
 
             assertNotNull(actual);
             assertEquals(def.getQuestionId(), actual.getQuestionId());
@@ -499,7 +506,9 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
             ActivityVersionDto version = actDao.insertActivity(form, RevisionMetadata.now(testData.getUserId(), "test"));
 
             var questionDto = (PicklistQuestionDto) jdbiQuestion.findQuestionDtoById(def.getQuestionId()).get();
-            PicklistQuestionDef actual = dao.findPicklistQuestionDefByDtoAndTimestamp(questionDto, version.getRevStart());
+            PicklistQuestionDef actual = (PicklistQuestionDef) dao
+                    .collectQuestionDefs(Set.of(questionDto.getId()), version.getRevStart())
+                    .get(questionDto.getId());
 
             assertNotNull(actual);
             assertEquals(def.getQuestionId(), actual.getQuestionId());

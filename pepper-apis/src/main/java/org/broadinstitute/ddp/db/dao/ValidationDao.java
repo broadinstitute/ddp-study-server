@@ -2,8 +2,11 @@ package org.broadinstitute.ddp.db.dao;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -399,48 +402,51 @@ public interface ValidationDao extends SqlObject {
         getJdbiIntRangeValidation().insert(rule.getRuleId(), rule.getMin(), rule.getMax());
     }
 
-    default List<RuleDef> findRuleDefsByQuestionIdAndTimestamp(long questionId, long timestamp) {
-        return getJdbiQuestionValidation()
-                .findDtosByQuestionIdAndTimestamp(questionId, timestamp)
-                .stream().map(dto -> {
-                    // todo: query templates, data for validation rules
-                    RuleDef ruleDef;
-                    switch (dto.getRuleType()) {
-                        case REQUIRED:
-                            ruleDef = new RequiredRuleDef(null);
-                            break;
-                        case COMPLETE:
-                            ruleDef = new CompleteRuleDef(null);
-                            break;
-                        case LENGTH:
-                            ruleDef = new LengthRuleDef(null, null, null);
-                            break;
-                        case REGEX:
-                            ruleDef = new RegexRuleDef(null, "");
-                            break;
-                        case NUM_OPTIONS_SELECTED:
-                            ruleDef = new NumOptionsSelectedRuleDef(null, null, null);
-                            break;
-                        case DAY_REQUIRED:      // fall through
-                        case MONTH_REQUIRED:    // fall through
-                        case YEAR_REQUIRED:
-                            ruleDef = new DateFieldRequiredRuleDef(dto.getRuleType(), null);
-                            break;
-                        case AGE_RANGE:
-                            ruleDef = new AgeRangeRuleDef(null, 0, null);
-                            break;
-                        case DATE_RANGE:
-                            ruleDef = new DateRangeRuleDef(null, null, null, false);
-                            break;
-                        case INT_RANGE:
-                            ruleDef = new IntRangeRuleDef(null, null, null);
-                            break;
-                        default:
-                            throw new DaoException("Unhandled validation rule type " + dto.getRuleType());
-                    }
-                    ruleDef.setHintTemplateId(dto.getHintTemplateId());
-                    return ruleDef;
-                })
-                .collect(Collectors.toList());
+    default Map<Long, List<RuleDef>> collectRuleDefs(Collection<Long> questionIds, long timestamp) {
+        Map<Long, List<RuleDef>> questionIdToRuleDefs = new HashMap<>();
+        try (var stream = getJdbiQuestionValidation().findDtosByQuestionIdsAndTimestamp(questionIds, timestamp)) {
+            stream.forEach(dto -> {
+                // todo: query templates, data for validation rules
+                RuleDef ruleDef;
+                switch (dto.getRuleType()) {
+                    case REQUIRED:
+                        ruleDef = new RequiredRuleDef(null);
+                        break;
+                    case COMPLETE:
+                        ruleDef = new CompleteRuleDef(null);
+                        break;
+                    case LENGTH:
+                        ruleDef = new LengthRuleDef(null, null, null);
+                        break;
+                    case REGEX:
+                        ruleDef = new RegexRuleDef(null, "");
+                        break;
+                    case NUM_OPTIONS_SELECTED:
+                        ruleDef = new NumOptionsSelectedRuleDef(null, null, null);
+                        break;
+                    case DAY_REQUIRED:      // fall through
+                    case MONTH_REQUIRED:    // fall through
+                    case YEAR_REQUIRED:
+                        ruleDef = new DateFieldRequiredRuleDef(dto.getRuleType(), null);
+                        break;
+                    case AGE_RANGE:
+                        ruleDef = new AgeRangeRuleDef(null, 0, null);
+                        break;
+                    case DATE_RANGE:
+                        ruleDef = new DateRangeRuleDef(null, null, null, false);
+                        break;
+                    case INT_RANGE:
+                        ruleDef = new IntRangeRuleDef(null, null, null);
+                        break;
+                    default:
+                        throw new DaoException("Unhandled validation rule type " + dto.getRuleType());
+                }
+                ruleDef.setHintTemplateId(dto.getHintTemplateId());
+                questionIdToRuleDefs
+                        .computeIfAbsent(dto.getQuestionId(), id -> new ArrayList<>())
+                        .add(ruleDef);
+            });
+        }
+        return questionIdToRuleDefs;
     }
 }

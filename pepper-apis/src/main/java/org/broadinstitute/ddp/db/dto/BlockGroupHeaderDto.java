@@ -1,16 +1,9 @@
 package org.broadinstitute.ddp.db.dto;
 
-import static org.broadinstitute.ddp.constants.SqlConstants.BlockGroupHeaderTable;
-import static org.broadinstitute.ddp.constants.SqlConstants.ListStyleHintTable;
-import static org.broadinstitute.ddp.constants.SqlConstants.PresentationHintTable;
-
-import java.sql.ResultSet;
-import java.sql.SQLException;
-
 import org.broadinstitute.ddp.model.activity.types.ListStyleHint;
 import org.broadinstitute.ddp.model.activity.types.PresentationHint;
-import org.jdbi.v3.core.mapper.RowMapper;
-import org.jdbi.v3.core.statement.StatementContext;
+import org.jdbi.v3.core.mapper.reflect.ColumnName;
+import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
 
 public class BlockGroupHeaderDto {
 
@@ -21,8 +14,14 @@ public class BlockGroupHeaderDto {
     private Long titleTemplateId;
     private long revisionId;
 
-    public BlockGroupHeaderDto(long id, long blockId, ListStyleHint listStyleHint, PresentationHint presentationHint,
-                               Long titleTemplateId, long revisionId) {
+    @JdbiConstructor
+    public BlockGroupHeaderDto(
+            @ColumnName("block_group_header_id") long id,
+            @ColumnName("block_id") long blockId,
+            @ColumnName("list_style_hint_code") ListStyleHint listStyleHint,
+            @ColumnName("presentation_hint_code") PresentationHint presentationHint,
+            @ColumnName("title_template_id") Long titleTemplateId,
+            @ColumnName("revision_id") long revisionId) {
         this.id = id;
         this.blockId = blockId;
         this.listStyleHint = listStyleHint;
@@ -53,21 +52,5 @@ public class BlockGroupHeaderDto {
 
     public long getRevisionId() {
         return revisionId;
-    }
-
-    public static class BlockGroupHeaderDtoMapper implements RowMapper<BlockGroupHeaderDto> {
-        @Override
-        public BlockGroupHeaderDto map(ResultSet rs, StatementContext ctx) throws SQLException {
-            String listStyleHintCode = rs.getString(ListStyleHintTable.CODE);
-            ListStyleHint hint = listStyleHintCode == null ? null : ListStyleHint.valueOf(listStyleHintCode);
-            PresentationHint presentationHint = PresentationHint.valueOf(rs.getString(PresentationHintTable.CODE));
-            return new BlockGroupHeaderDto(
-                    rs.getLong(BlockGroupHeaderTable.ID),
-                    rs.getLong(BlockGroupHeaderTable.BLOCK_ID),
-                    hint,
-                    presentationHint,
-                    (Long) rs.getObject(BlockGroupHeaderTable.TITLE_TEMPLATE_ID),
-                    rs.getLong(BlockGroupHeaderTable.REVISION_ID));
-        }
     }
 }
