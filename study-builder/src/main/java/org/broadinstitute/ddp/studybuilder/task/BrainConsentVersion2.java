@@ -30,7 +30,7 @@ import org.broadinstitute.ddp.db.dto.QuestionDto;
 import org.broadinstitute.ddp.db.dto.SectionBlockMembershipDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.db.dto.TextQuestionDto;
-import org.broadinstitute.ddp.db.dto.validation.ValidationDto;
+import org.broadinstitute.ddp.db.dto.validation.RuleDto;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
 import org.broadinstitute.ddp.model.activity.definition.QuestionBlockDef;
@@ -129,8 +129,8 @@ public class BrainConsentVersion2 implements CustomTask {
         //disable AgeTooYoung Dob Validation
         ValidationDao validationDao = handle.attach(ValidationDao.class);
         JdbiQuestionValidation validation = handle.attach(JdbiQuestionValidation.class);
-        List<ValidationDto> consentDobValidations = validation.getAllActiveValidations(dobDto.getId());
-        ValidationDto ageRangeValidation = consentDobValidations.stream().filter(
+        List<RuleDto> consentDobValidations = validation.getAllActiveValidations(dobDto.getId());
+        RuleDto ageRangeValidation = consentDobValidations.stream().filter(
                 validationDto -> validationDto.getRuleType().equals(RuleType.AGE_RANGE)).findFirst().get();
         validationDao.disableBaseRule(ageRangeValidation, meta);
         LOG.info("Disabled age range validation for consent dob QID: {} validationID: {} old ver: {} rule: {}",
