@@ -271,10 +271,9 @@ public class EmailNotificationHandler implements HousekeepingMessageHandler<Noti
                     participantGuid,
                     pdfConfig.getConfigName(),
                     pdfConfig.getVersion().getVersionTag());
-
-            try (
-                    InputStream pdfStreamFromBucket = pdfBucketService.getPdfFromBucket(blobName).orElse(null)) {
-                InputStream pdfStream = pdfStreamFromBucket;
+            InputStream pdfStream =  null;
+            try {
+                pdfStream = pdfBucketService.getPdfFromBucket(blobName).orElse(null);
                 if (pdfStream == null) {
                     // todo: remove the generateIfMissing feature
                     LOG.info("Could not find {} in bucket {}, generating", blobName, pdfBucketService.getBucketName());
@@ -292,6 +291,14 @@ public class EmailNotificationHandler implements HousekeepingMessageHandler<Noti
             } catch (IOException | DDPException e) {
                 throw new MessageHandlingException("Error generating or retrieving PDF from bucket "
                         + pdfBucketService.getBucketName() + " for blob name " + blobName, e, true);
+            } finally {
+                if (pdfStream != null) {
+                    try {
+                        pdfStream.close();
+                    } catch (IOException e) {
+                        LOG.warn("Could not close stream", e);
+                    }
+                }
             }
         }
 
