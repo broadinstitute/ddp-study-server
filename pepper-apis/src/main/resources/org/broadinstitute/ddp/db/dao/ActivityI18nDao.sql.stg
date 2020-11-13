@@ -2,16 +2,20 @@ group ActivityI18nDao;
 
 select_all_i18n_details() ::= <<
 select i18n.*, lang.iso_language_code
-  from i18n_study_activity as i18n
+  from i18n_activity_detail as i18n
   join language_code as lang on lang.language_code_id = i18n.language_code_id
 >>
 
 findDetailById() ::= <<
-<select_all_i18n_details()> where i18n_study_activity_id = :id
+<select_all_i18n_details()> where i18n.i18n_activity_detail_id = :id
 >>
 
-findDetailsByActivityId() ::= <<
-<select_all_i18n_details()> where study_activity_id = :activityId
+findDetailsByActivityIdAndTimestamp() ::= <<
+<select_all_i18n_details()>
+  join revision as rev on rev.revision_id = i18n.revision_id
+ where i18n.study_activity_id = :activityId
+   and rev.start_date \<= :timestamp
+   and (rev.end_date is null or :timestamp \< rev.end_date)
 >>
 
 select_all_i18n_summaries() ::= <<
@@ -26,5 +30,5 @@ select i18n.i18n_study_activity_summary_trans_id,
 >>
 
 findSummariesByActivityId() ::= <<
-<select_all_i18n_summaries()> where study_activity_id = :activityId
+<select_all_i18n_summaries()> where i18n.study_activity_id = :activityId
 >>

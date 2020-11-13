@@ -53,6 +53,16 @@ public interface JdbiActivityVersion extends SqlObject {
                                                                  @Bind("activityCode") String activityCode,
                                                                  @Bind("versionTag") String versionTag);
 
+    // study-builder
+    @SqlQuery("select ver.*, rev.start_date, rev.end_date"
+            + " from activity_version as ver"
+            + " join revision as rev on rev.revision_id = ver.revision_id"
+            + " where ver.study_activity_id = :activityId"
+            + "   and ver.version_tag = :versionTag")
+    @RegisterRowMapper(ActivityVersionDto.ActivityVersionDtoMapper.class)
+    Optional<ActivityVersionDto> findByActivityIdAndVersionTag(@Bind("activityId") long activityId,
+                                                               @Bind("versionTag") String versionTag);
+
     @SqlQuery("select av.*, rev.start_date, rev.end_date"
             + "  from activity_version as av"
             + "  join revision as rev on rev.revision_id = av.revision_id"

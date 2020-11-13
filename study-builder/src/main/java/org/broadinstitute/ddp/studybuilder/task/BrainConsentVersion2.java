@@ -255,7 +255,7 @@ public class BrainConsentVersion2 implements CustomTask {
         @SqlUpdate("update form_section__block set display_order = :displayOrder where form_section__block_id = :formSectionBlockId")
         int updateFormSectionBlockDisplayOrder(@Bind("formSectionBlockId") long formSectionBlockId, @Bind("displayOrder") int displayOrder);
 
-        @SqlUpdate("update i18n_study_activity set subtitle = :text where study_activity_id = :studyActivityId")
+        @SqlUpdate("update i18n_activity_detail set subtitle = :text where study_activity_id = :studyActivityId")
         int update18nActivitySubtitle(@Bind("studyActivityId") long studyActivityId, @Bind("text") String text);
 
         @SqlQuery("select fsi.form_section_icon_id from form_section_icon fsi, form_activity__form_section fafs "

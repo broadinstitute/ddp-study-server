@@ -241,4 +241,5 @@
     <include file="db-changes/seed/DDP-5282-db-translations.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/DDP-5310-create-statistics-types.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/seed/add-languages-de-hi-it-ja-pl-tr.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/DDP-5277-revision-activity-naming-details.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>
