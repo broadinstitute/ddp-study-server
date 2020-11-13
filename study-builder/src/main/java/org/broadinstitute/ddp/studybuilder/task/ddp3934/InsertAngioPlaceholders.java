@@ -10,8 +10,8 @@ import java.util.ResourceBundle;
 import java.util.stream.Collectors;
 
 import com.typesafe.config.Config;
-
 import org.broadinstitute.ddp.db.dao.JdbiDateQuestion;
+import org.broadinstitute.ddp.db.dao.JdbiQuestion;
 import org.broadinstitute.ddp.db.dao.JdbiTemplate;
 import org.broadinstitute.ddp.db.dao.JdbiTemplateVariable;
 import org.broadinstitute.ddp.db.dao.JdbiTextQuestion;
@@ -263,18 +263,18 @@ public class InsertAngioPlaceholders implements CustomTask {
 
                 switch (question.type) {
                     case TEXT: {
-                        JdbiTextQuestion questionDao = handle.attach(JdbiTextQuestion.class);
-                        TextQuestionDto questionDetail = questionDao.findDtoByQuestionId(question.id).orElseThrow();
-                        questionDao.update(question.id,
+                        var jdbiQuestion = handle.attach(JdbiQuestion.class);
+                        TextQuestionDto questionDetail = (TextQuestionDto) jdbiQuestion.findQuestionDtoById(question.id).orElseThrow();
+                        handle.attach(JdbiTextQuestion.class).update(question.id,
                                             questionDetail.getInputType(),
                                             questionDetail.getSuggestionType(),
                                             targetTemplateId);
                     } break;
                     
                     case DATE: {
-                        JdbiDateQuestion questionDao = handle.attach(JdbiDateQuestion.class);
-                        DateQuestionDto questionDetail = questionDao.findDtoByQuestionId(question.id).orElseThrow();
-                        questionDao.update(question.id,
+                        var jdbiQuestion = handle.attach(JdbiQuestion.class);
+                        DateQuestionDto questionDetail = (DateQuestionDto) jdbiQuestion.findQuestionDtoById(question.id).orElseThrow();
+                        handle.attach(JdbiDateQuestion.class).update(question.id,
                                             questionDetail.getRenderMode(),
                                             questionDetail.shouldDisplayCalendar(),
                                             targetTemplateId);

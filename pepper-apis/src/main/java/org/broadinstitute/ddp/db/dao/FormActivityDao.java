@@ -1,18 +1,23 @@
 package org.broadinstitute.ddp.db.dao;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.DaoException;
 import org.broadinstitute.ddp.db.dto.ActivityDto;
 import org.broadinstitute.ddp.db.dto.ActivityVersionDto;
+import org.broadinstitute.ddp.db.dto.FormActivitySettingDto;
 import org.broadinstitute.ddp.model.activity.definition.ConsentActivityDef;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
+import org.broadinstitute.ddp.model.activity.definition.FormSectionDef;
 import org.broadinstitute.ddp.model.activity.definition.i18n.ActivityI18nDetail;
 import org.broadinstitute.ddp.model.activity.definition.i18n.Translation;
+import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
 import org.broadinstitute.ddp.model.activity.types.FormType;
 import org.jdbi.v3.sqlobject.CreateSqlObject;
@@ -151,9 +156,6 @@ public interface FormActivityDao extends SqlObject {
     }
 
     default FormActivityDef findDefByDtoAndVersion(ActivityDto activityDto, String versionTag, long versionId, long revisionStart) {
-        SectionBlockDao sectionBlockDao = getSectionBlockDao();
-        TemplateDao templateDao = getTemplateDao();
-
         FormType type = getJdbiActivity().findFormTypeByActivityId(activityDto.getActivityId());
         String studyGuid = getJdbiUmbrellaStudy().findGuidByStudyId(activityDto.getStudyId());
 
@@ -199,33 +201,44 @@ public interface FormActivityDao extends SqlObject {
         builder.addSubtitles(subtitles);
         builder.addDescriptions(descriptions);
 
-        // todo: query other translations, templates, etc
+        List<Long> orderedSectionIds = getJdbiFormActivityFormSection()
+                .findOrderedSectionIdsByActivityIdAndTimestamp(activityDto.getActivityId(), revisionStart);
+        Set<Long> allSectionIds = new HashSet<>(orderedSectionIds);
+        Long introSectionId = null;
+        Long closingSectionId = null;
 
-        getJdbiFormActivitySetting()
+        FormActivitySettingDto settingDto = getJdbiFormActivitySetting()
                 .findSettingDtoByActivityIdAndTimestamp(activityDto.getActivityId(), revisionStart)
-                .ifPresent(dto -> {
-                    builder.setListStyleHint(dto.getListStyleHint());
-                    builder.setLastUpdated(dto.getLastUpdated());
-                    if (dto.getLastUpdatedTextTemplateId() != null) {
-                        builder.setLastUpdatedTextTemplate(templateDao.loadTemplateById(dto.getLastUpdatedTextTemplateId()));
-                    }
-                    if (dto.getReadonlyHintTemplateId() != null) {
-                        builder.setReadonlyHintTemplate(templateDao.loadTemplateById(dto.getReadonlyHintTemplateId()));
-                    }
-                    builder.setSnapshotSubstitutionsOnSubmit(dto.shouldSnapshotSubstitutionsOnSubmit());
-                    if (dto.getIntroductionSectionId() != null) {
-                        builder.setIntroduction(sectionBlockDao
-                                .findSectionDefByIdAndTimestamp(dto.getIntroductionSectionId(), revisionStart));
-                    }
-                    if (dto.getClosingSectionId() != null) {
-                        builder.setClosing(sectionBlockDao
-                                .findSectionDefByIdAndTimestamp(dto.getClosingSectionId(), revisionStart));
-                    }
-                });
+                .orElse(null);
+        if (settingDto != null) {
+            builder.setListStyleHint(settingDto.getListStyleHint());
+            builder.setLastUpdated(settingDto.getLastUpdated());
+            builder.setSnapshotSubstitutionsOnSubmit(settingDto.shouldSnapshotSubstitutionsOnSubmit());
 
-        getJdbiFormActivityFormSection()
-                .findOrderedSectionIdsByActivityIdAndTimestamp(activityDto.getActivityId(), revisionStart)
-                .forEach(id -> builder.addSection(sectionBlockDao.findSectionDefByIdAndTimestamp(id, revisionStart)));
+            Map<Long, Template> templates = getTemplateDao().collectTemplatesByIds(settingDto.getTemplateIds());
+            builder.setLastUpdatedTextTemplate(templates.getOrDefault(settingDto.getLastUpdatedTextTemplateId(), null));
+            builder.setReadonlyHintTemplate(templates.getOrDefault(settingDto.getReadonlyHintTemplateId(), null));
+
+            if (settingDto.getIntroductionSectionId() != null) {
+                introSectionId = settingDto.getIntroductionSectionId();
+                allSectionIds.add(introSectionId);
+            }
+            if (settingDto.getClosingSectionId() != null) {
+                closingSectionId = settingDto.getClosingSectionId();
+                allSectionIds.add(closingSectionId);
+            }
+        }
+
+        Map<Long, FormSectionDef> sectionDefs = getSectionBlockDao().collectSectionDefs(allSectionIds, revisionStart);
+        for (long sectionId : orderedSectionIds) {
+            builder.addSection(sectionDefs.get(sectionId));
+        }
+        if (introSectionId != null) {
+            builder.setIntroduction(sectionDefs.get(introSectionId));
+        }
+        if (closingSectionId != null) {
+            builder.setClosing(sectionDefs.get(closingSectionId));
+        }
 
         return builder.build();
     }

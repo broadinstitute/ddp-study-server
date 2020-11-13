@@ -1,5 +1,8 @@
 package org.broadinstitute.ddp.db.dto;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import org.broadinstitute.ddp.model.activity.types.ComponentType;
 import org.jdbi.v3.core.mapper.reflect.ColumnName;
 import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
@@ -22,6 +25,13 @@ public class ComponentDto {
         this.revisionId = revisionId;
     }
 
+    public ComponentDto(ComponentDto other) {
+        this.componentId = other.componentId;
+        this.componentType = other.componentType;
+        this.hideNumber = other.hideNumber;
+        this.revisionId = other.revisionId;
+    }
+
     public ComponentType getComponentType() {
         return componentType;
     }
@@ -36,5 +46,9 @@ public class ComponentDto {
 
     public long getRevisionId() {
         return revisionId;
+    }
+
+    public Set<Long> getTemplateIds() {
+        return new HashSet<>();
     }
 }

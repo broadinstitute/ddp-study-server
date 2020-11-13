@@ -116,10 +116,10 @@ public class AngioRestructureConsent implements CustomTask {
         LOG.info("{}: preparing consent questions...", key);
 
         String signatureStableId = dataCfg.getConfig(key).getString("signatureStableId");
-        TextQuestionDto signature = jdbiQuestion
+        TextQuestionDto signature = (TextQuestionDto) jdbiQuestion
                 .findLatestDtoByStudyIdAndQuestionStableId(studyDto.getId(), signatureStableId)
                 .map(QuestionDto::getId)
-                .flatMap(jdbiTextQuestion::findDtoByQuestionId)
+                .flatMap(jdbiQuestion::findQuestionDtoById)
                 .orElseThrow(() -> new DDPException("Could not find question " + signatureStableId));
         helper.updateTextQuestionInputType(signature.getId(), TextInputType.SIGNATURE);
         helper.updateTemplateSubstitutionValue(signature.getPromptTemplateId(), dataCfg.getString("signaturePrompt"));

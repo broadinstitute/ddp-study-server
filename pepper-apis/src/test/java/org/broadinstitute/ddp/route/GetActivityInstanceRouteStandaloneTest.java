@@ -232,7 +232,7 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
 
         handle.attach(AnswerDao.class).createAnswer(testData.getUserId(), instanceDto.getId(),
                 new TextAnswer(null, txt1.getStableId(), null, "valid answer"));
-        answeredQuestionDto = handle.attach(JdbiQuestion.class).getQuestionDtoById(txt1.getQuestionId()).get();
+        answeredQuestionDto = handle.attach(JdbiQuestion.class).findQuestionDtoById(txt1.getQuestionId()).get();
     }
 
     private static Template newTemplate() {
