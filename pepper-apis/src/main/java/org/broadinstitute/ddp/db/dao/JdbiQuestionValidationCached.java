@@ -8,7 +8,7 @@ import java.util.stream.Stream;
 
 import org.broadinstitute.ddp.cache.CacheService;
 import org.broadinstitute.ddp.db.dto.QuestionDto;
-import org.broadinstitute.ddp.db.dto.validation.ValidationDto;
+import org.broadinstitute.ddp.db.dto.validation.RuleDto;
 import org.broadinstitute.ddp.util.RedisConnectionValidator;
 import org.jdbi.v3.core.Handle;
 import org.redisson.api.RLocalCachedMap;
@@ -18,7 +18,7 @@ import org.slf4j.LoggerFactory;
 
 public class JdbiQuestionValidationCached extends SQLObjectWrapper<JdbiQuestionValidation> implements JdbiQuestionValidation {
     private static final Logger LOG = LoggerFactory.getLogger(JdbiQuestionValidationCached.class);
-    private static RLocalCachedMap<Long, List<ValidationDto>> questionIdToValidationsCache;
+    private static RLocalCachedMap<Long, List<RuleDto>> questionIdToValidationsCache;
 
     private void initializeCaching() {
         if (questionIdToValidationsCache == null) {
@@ -46,15 +46,16 @@ public class JdbiQuestionValidationCached extends SQLObjectWrapper<JdbiQuestionV
     }
 
     @Override
-    public List<ValidationDto> getAllActiveValidations(long questionId) {
+    public List<RuleDto> getAllActiveValidations(long questionId) {
         return delegate.getAllActiveValidations(questionId);
     }
 
-    public List<ValidationDto> getAllActiveValidations(QuestionDto questionDto) {
+    @Override
+    public List<RuleDto> getAllActiveValidations(QuestionDto questionDto) {
         if (isNullCache()) {
             return delegate.getAllActiveValidations(questionDto);
         } else {
-            List<ValidationDto> validations = null;
+            List<RuleDto> validations = null;
             try {
                 validations = questionIdToValidationsCache.get(questionDto.getId());
             } catch (RedisException e) {
@@ -63,15 +64,15 @@ public class JdbiQuestionValidationCached extends SQLObjectWrapper<JdbiQuestionV
                 RedisConnectionValidator.doTest();
             }
             if (validations == null) {
-                Map<Long, List<ValidationDto>> data = cacheActivityValidations(questionDto.getActivityId());
+                Map<Long, List<RuleDto>> data = cacheActivityValidations(questionDto.getActivityId());
                 validations = data.get(questionDto.getId());
             }
             return validations == null ? new ArrayList<>() : validations;
         }
     }
 
-    private Map<Long, List<ValidationDto>> cacheActivityValidations(Long activityId) {
-        Map<Long, List<ValidationDto>> dataToCache = delegate.getAllActiveValidationsForActivity(activityId);
+    private Map<Long, List<RuleDto>> cacheActivityValidations(Long activityId) {
+        Map<Long, List<RuleDto>> dataToCache = delegate.getAllActiveValidationsForActivity(activityId);
         try {
             questionIdToValidationsCache.putAllAsync(dataToCache);
         } catch (RedisException e) {
@@ -82,24 +83,18 @@ public class JdbiQuestionValidationCached extends SQLObjectWrapper<JdbiQuestionV
         return dataToCache;
     }
 
-
     @Override
-    public Map<Long, List<ValidationDto>> getAllActiveValidationsForActivity(long activityId) {
-        return delegate.getAllActiveValidationsForActivity(activityId);
+    public Stream<RuleDto> getAllActiveValidationDtosForActivity(long activityId) {
+        return delegate.getAllActiveValidationDtosForActivity(activityId);
     }
 
     @Override
-    public Optional<ValidationDto> getRequiredValidationIfActive(long questionId) {
+    public Optional<RuleDto> getRequiredValidationIfActive(long questionId) {
         return delegate.getRequiredValidationIfActive(questionId);
     }
 
     @Override
-    public List<ValidationDto> findDtosByQuestionIdAndTimestamp(long questionId, long timestamp) {
-        return delegate.findDtosByQuestionIdAndTimestamp(questionId, timestamp);
-    }
-
-    @Override
-    public Stream<ValidationDto> findDtosByQuestionIdsAndTimestamp(Iterable<Long> questionIds, long timestamp) {
+    public Stream<RuleDto> findDtosByQuestionIdsAndTimestamp(Iterable<Long> questionIds, long timestamp) {
         return delegate.findDtosByQuestionIdsAndTimestamp(questionIds, timestamp);
     }
 }

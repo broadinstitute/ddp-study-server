@@ -194,32 +194,6 @@ public class SqlConstants {
         public static final String CODE = "question_type_code";
     }
 
-    public static final class ValidationTable {
-        public static final String ID = "validation_id";
-        public static final String TRANSLATION_TEXT = "translation_text";
-        public static final String CORRECTION_HINT = "correction_hint_template_id";
-        public static final String REVISION_ID = "revision_id";
-        public static final String ALLOW_SAVE = "allow_save";
-    }
-
-    public static final class ValidationTypeTable {
-        public static final String TYPE_CODE = "validation_type_code";
-    }
-
-    public static final class LengthValidationTable {
-        public static final String MIN_LENGTH = "min_length";
-        public static final String MAX_LENGTH = "max_length";
-    }
-
-    public static final class RegexValidationTable {
-        public static final String REGEX_PATTERN = "regex_pattern";
-    }
-
-    public static final class NumOptionsSelectedValidationTable {
-        public static final String MIN_SELECTIONS = "min_selections";
-        public static final String MAX_SELECTIONS = "max_selections";
-    }
-
     public static final class BlockTypeTable {
         public static final String ID = "block_type_id";
         public static final String CODE = "block_type_code";

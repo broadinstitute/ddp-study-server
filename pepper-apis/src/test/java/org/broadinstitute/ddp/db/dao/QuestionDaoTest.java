@@ -34,7 +34,7 @@ import org.broadinstitute.ddp.db.dto.NumericQuestionDto;
 import org.broadinstitute.ddp.db.dto.PicklistQuestionDto;
 import org.broadinstitute.ddp.db.dto.QuestionDto;
 import org.broadinstitute.ddp.db.dto.TextQuestionDto;
-import org.broadinstitute.ddp.db.dto.validation.ValidationDto;
+import org.broadinstitute.ddp.db.dto.validation.RuleDto;
 import org.broadinstitute.ddp.model.activity.definition.ConditionalBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.ContentBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
@@ -599,7 +599,7 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
 
             RequiredRuleDef rule = new RequiredRuleDef(null);
             dao.addRequiredRule(question.getQuestionId(), rule, version1.getRevId());
-            Optional<ValidationDto> dto = jdbiQuestionVal.getRequiredValidationIfActive(question.getQuestionId());
+            Optional<RuleDto> dto = jdbiQuestionVal.getRequiredValidationIfActive(question.getQuestionId());
             assertTrue(dto.isPresent());
             assertEquals(rule.getRuleId(), (Long) dto.get().getId());
 

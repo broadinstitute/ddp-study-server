@@ -14,7 +14,7 @@ import org.broadinstitute.ddp.TxnAwareBaseTest;
 import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dto.QuestionDto;
-import org.broadinstitute.ddp.db.dto.validation.ValidationDto;
+import org.broadinstitute.ddp.db.dto.validation.RuleDto;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
 import org.broadinstitute.ddp.model.activity.definition.FormSectionDef;
 import org.broadinstitute.ddp.model.activity.definition.i18n.Translation;
@@ -241,7 +241,7 @@ public class ValidationDaoTest extends TxnAwareBaseTest {
 
             var form = insertDummyActivity(handle, userGuid, studyGuid, dateQuestionDef, textQuestionDef);
 
-            Map<Long, List<ValidationDto>> validations =
+            Map<Long, List<RuleDto>> validations =
                     handle.attach(JdbiQuestionValidation.class).getAllActiveValidationsForActivity(form.getActivityId());
 
             assertEquals(2, validations.size());
