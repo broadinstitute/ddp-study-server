@@ -60,10 +60,11 @@ public interface JdbiVariableSubstitution extends SqlObject {
                     @Bind("languageCode") String languageCode,
                     @Bind("text") String text);
 
-    @SqlQuery("SELECT sub.i18n_template_substitution_id AS id, "
-                + "     lc.iso_language_code AS languageCode, "
-                + "     sub.substitution_value AS text, "
-                + "     sub.revision_id AS revision_id "
+    // study-builder
+    @SqlQuery("SELECT sub.i18n_template_substitution_id AS substitution_id, "
+                + "     lc.iso_language_code, "
+                + "     sub.substitution_value, "
+                + "     sub.revision_id AS substitution_revision_id "
                 + "FROM i18n_template_substitution AS sub "
                 + "JOIN language_code AS lc ON lc.language_code_id = sub.language_code_id "
                 + "WHERE sub.template_variable_id = :templateVariableId")
