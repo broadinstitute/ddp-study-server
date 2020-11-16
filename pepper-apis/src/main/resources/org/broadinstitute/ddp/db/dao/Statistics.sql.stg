@@ -1,0 +1,87 @@
+group Statistics;
+
+getParticipantStatistics() ::= <<
+select
+    case when ug.user_governance_id is null then 'self' else 'governed' end as user_type,
+    count(1) as user_count
+from
+    user_study_enrollment se
+    left join umbrella_study us on se.study_id = us.umbrella_study_id
+    left join user_governance ug on ug.participant_user_id = se.user_id
+    left join user_study_governance usg on usg.umbrella_study_id = us.umbrella_study_id
+        and usg.user_governance_id = ug.user_governance_id and ug.is_active = 1
+where
+    us.umbrella_id = :studyId and
+    se.enrollment_status_type_id = 2
+group by 1
+>>
+
+getAnswersDistributionByQueryStableId() ::= <<
+select 
+    po.picklist_option_stable_id as answer, 
+    count(1) as count 
+from 
+question_stable_code qsc 
+join umbrella_study us on qsc.umbrella_study_id = us.umbrella_study_id 
+    join question q on qsc.question_stable_code_id = q.question_stable_code_id 
+    join picklist_question pq on pq.question_id = q.question_id 
+    join answer a on a.question_id = q.question_id 
+    join activity_instance ai on ai.activity_instance_id = a.activity_instance_id 
+    join user_study_enrollment se on ai.participant_id = se.user_id 
+    join picklist_option__answer poa on poa.answer_id = a.answer_id 
+    join picklist_option po on po.picklist_option_id = poa.picklist_option_id 
+    join revision as r on r.revision_id = po.revision_id 
+where 
+    us.umbrella_id = :studyId and 
+    qsc.stable_id = :stableId and 
+    se.enrollment_status_type_id = 2 and
+    r.end_date is null 
+group by 1
+>>
+
+getMailingListStatistics() ::= <<
+select 
+    'subscriptions' as name, 
+    count(1) as value 
+from 
+    study_mailing_list sml 
+    join umbrella_study us on sml.umbrella_study_id = us.umbrella_study_id 
+where 
+    us.umbrella_id = :studyId
+>>
+
+getSpecificAnswerStatistics() ::= <<
+select 
+    'answers' as name, 
+    count(1) as value 
+from 
+    question_stable_code qsc 
+    join umbrella_study us on qsc.umbrella_study_id = us.umbrella_study_id 
+    join question q on qsc.question_stable_code_id = q.question_stable_code_id 
+    join answer a on a.question_id = q.question_id 
+    join activity_instance ai on ai.activity_instance_id = a.activity_instance_id 
+    join user_study_enrollment se on ai.participant_id = se.user_id 
+    left join picklist_option__answer poa on poa.answer_id = a.answer_id 
+    left join picklist_option po on po.picklist_option_id = poa.picklist_option_id 
+    left join picklist_question pq on pq.question_id = q.question_id 
+    left join boolean_answer ba on ba.answer_id = a.answer_id 
+where 
+    us.umbrella_id = :studyId and 
+    qsc.stable_id = :stableId and 
+    se.enrollment_status_type_id = 2 and
+    :value = coalesce(po.picklist_option_stable_id, export_set(ba.answer, 'true', 'false', '', 1)) 
+group by 1 
+>>
+
+getKitStatistics() ::= <<
+select
+    kt.name as name,
+    count(1) as value
+from
+    kit_request kr
+    join umbrella_study us on kr.study_id = us.umbrella_study_id
+    left join kit_type kt on kt.kit_type_id = kr.kit_type_id
+where
+    us.umbrella_id = :studyId
+group by 1
+>>
