@@ -4,11 +4,15 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants;
+import org.broadinstitute.ddp.content.ContentStyle;
+import org.broadinstitute.ddp.content.I18nContentRenderer;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
+import org.broadinstitute.ddp.db.dto.LanguageDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.json.errors.ApiError;
 import org.broadinstitute.ddp.util.ResponseUtil;
+import org.broadinstitute.ddp.util.RouteUtil;
 import org.broadinstitute.ddp.util.StatisticsUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,10 +22,17 @@ import spark.Route;
 
 public class GetStudyStatisticsRoute implements Route {
     private static final Logger LOG = LoggerFactory.getLogger(GetStudyStatisticsRoute.class);
+    private final I18nContentRenderer renderer;
+
+    public GetStudyStatisticsRoute(I18nContentRenderer renderer) {
+        this.renderer = renderer;
+    }
 
     @Override
     public Object handle(Request request, Response response) {
         String studyGuid = request.params(RouteConstants.PathParam.STUDY_GUID);
+        ContentStyle style = RouteUtil.parseContentStyleHeaderOrHalt(request, response, ContentStyle.STANDARD);
+        LanguageDto preferredUserLanguage = RouteUtil.getUserLanguage(request);
         if (StringUtils.isBlank(studyGuid)) {
             LOG.warn("Study GUID is blank");
             ResponseUtil.halt400ErrorResponse(response, ErrorCodes.MISSING_STUDY_GUID);
@@ -34,7 +45,7 @@ public class GetStudyStatisticsRoute implements Route {
                 LOG.warn(msg);
                 throw ResponseUtil.haltError(HttpStatus.SC_NOT_FOUND, new ApiError(ErrorCodes.NOT_FOUND, msg));
             }
-            return StatisticsUtil.generateStatisticsForStudy(handle, studyDto);
+            return StatisticsUtil.generateStatisticsForStudy(handle, studyDto, renderer, style, preferredUserLanguage.getId());
         });
     }
 }
