@@ -1157,6 +1157,7 @@ public class StudyDataLoader {
             List<User> auth0UsersByEmail = auth0Util.getAuth0UsersByEmail(emailAddress, mgmtToken);
             auth0UserId = auth0UsersByEmail.get(0).getId();
         }
+        userJsonFile.delete();
         //TODO -> check if job failed
         return auth0UserId;
     }
