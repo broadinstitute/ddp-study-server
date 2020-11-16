@@ -1,6 +1,6 @@
-package org.broadinstitute.ddp.json;
+package org.broadinstitute.ddp.json.statistics;
 
-import java.util.Map;
+import java.util.List;
 
 import com.google.gson.annotations.SerializedName;
 import org.broadinstitute.ddp.model.statistics.StatisticsConfiguration;
@@ -10,19 +10,19 @@ public class StatisticsResponse {
     @SerializedName("configuration")
     private final StatisticsConfiguration configuration;
 
-    @SerializedName("values")
-    private final Map<String, Object> values;
+    @SerializedName("statistics")
+    private final List<StatisticsResponseItem> statistics;
 
-    public StatisticsResponse(StatisticsConfiguration configuration, Map<String, Object> values) {
+    public StatisticsResponse(StatisticsConfiguration configuration, List<StatisticsResponseItem> statistics) {
         this.configuration = configuration;
-        this.values = values;
+        this.statistics = statistics;
     }
 
     public StatisticsConfiguration getConfiguration() {
         return configuration;
     }
 
-    public Map<String, Object> getValues() {
-        return values;
+    public List<StatisticsResponseItem> getStatistics() {
+        return statistics;
     }
 }

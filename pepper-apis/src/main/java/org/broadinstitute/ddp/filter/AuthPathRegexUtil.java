@@ -46,6 +46,9 @@ public class AuthPathRegexUtil {
     private static final Pattern UPDATE_USER_EMAIL_ROUTE_REGEX = Pattern.compile(
             BASE_REGEX + "\\/user\\/" + GUID_PATTERN + "/email");
 
+    private static final Pattern STUDY_STATISTICS_ROUTE_REGEX = Pattern.compile(
+            BASE_REGEX + "\\/studies\\/" + GUID_PATTERN + "/statistics" + "\\/?");
+
     public boolean isProfileRoute(String path) {
         return PROFILE_SUB_PATH_ROUTE_REGEX.matcher(path).matches() || PROFILE_ROUTE_REGEX.matcher(path).matches();
     }
@@ -88,5 +91,9 @@ public class AuthPathRegexUtil {
 
     public boolean isAdminStudyRoute(String path) {
         return ADMIN_STUDY_ROUTE_REGEX.matcher(path).matches();
+    }
+
+    public boolean isStudyStatisticsRoute(String path) {
+        return STUDY_STATISTICS_ROUTE_REGEX.matcher(path).matches();
     }
 }
