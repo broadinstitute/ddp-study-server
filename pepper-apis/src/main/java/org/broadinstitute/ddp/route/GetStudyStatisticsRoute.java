@@ -1,6 +1,5 @@
 package org.broadinstitute.ddp.route;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants;
@@ -33,10 +32,6 @@ public class GetStudyStatisticsRoute implements Route {
         String studyGuid = request.params(RouteConstants.PathParam.STUDY_GUID);
         ContentStyle style = RouteUtil.parseContentStyleHeaderOrHalt(request, response, ContentStyle.STANDARD);
         LanguageDto preferredUserLanguage = RouteUtil.getUserLanguage(request);
-        if (StringUtils.isBlank(studyGuid)) {
-            LOG.warn("Study GUID is blank");
-            ResponseUtil.halt400ErrorResponse(response, ErrorCodes.MISSING_STUDY_GUID);
-        }
         LOG.info("Building statistics for study {}", studyGuid);
         return TransactionWrapper.withTxn(handle -> {
             StudyDto studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(studyGuid);

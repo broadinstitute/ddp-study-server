@@ -26,7 +26,6 @@ import org.broadinstitute.ddp.db.dao.KitScheduleDao;
 import org.broadinstitute.ddp.db.dao.KitTypeDao;
 import org.broadinstitute.ddp.db.dao.QueuedEventDao;
 import org.broadinstitute.ddp.db.dao.StatisticsConfigurationDao;
-import org.broadinstitute.ddp.db.dao.StatisticsTypeDao;
 import org.broadinstitute.ddp.db.dao.StudyDao;
 import org.broadinstitute.ddp.db.dao.StudyGovernanceDao;
 import org.broadinstitute.ddp.db.dao.StudyLanguageDao;
@@ -632,16 +631,14 @@ public class StudyBuilder {
             return;
         }
         StatisticsConfigurationDao statConfigDao = handle.attach(StatisticsConfigurationDao.class);
-        StatisticsTypeDao statTypeDao = handle.attach(StatisticsTypeDao.class);
         for (Config statEntry : cfg.getConfigList("statistics")) {
-            String type = statEntry.getString("type");
+            String typeName = statEntry.getString("type");
             String stableId = statEntry.hasPath("stableId") ? statEntry.getString("stableId") : null;
             String value = statEntry.hasPath("value") ? statEntry.getString("value") : null;
-            StatisticsType statType = statTypeDao.getKitTypeByType(type)
-                    .orElseThrow(() -> new DDPException("Could not find statistics type " + type));
-            long statConfigId = statConfigDao.insertConfiguration(studyId, statType.getId(), stableId, value);
+            StatisticsType statType = StatisticsType.valueOf(typeName);
+            long statConfigId = statConfigDao.insertConfiguration(studyId, statType, stableId, value);
             LOG.info("Created statistics configuration with id={}, type={}, stableId={}, value={}",
-                    statConfigId, type, stableId, value);
+                    statConfigId, typeName, stableId, value);
         }
     }
 
