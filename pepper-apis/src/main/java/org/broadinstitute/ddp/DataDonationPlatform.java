@@ -421,7 +421,7 @@ public class DataDonationPlatform {
 
         // User activity instance routes
         get(API.USER_ACTIVITIES, new UserActivityInstanceListRoute(activityInstanceDao), responseSerializer);
-        post(API.USER_ACTIVITIES, new CreateActivityInstanceRoute(activityInstanceDao), responseSerializer);
+        post(API.USER_ACTIVITIES, new CreateActivityInstanceRoute(), responseSerializer);
         get(
                 API.USER_ACTIVITIES_INSTANCE,
                 new GetActivityInstanceRoute(actInstService, activityValidationService, interpreter),
