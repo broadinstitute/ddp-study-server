@@ -2158,31 +2158,31 @@ Statistics.Configuration:
     answerValue:
       type: string
       description: Answer stableId which is counted for SPECIFIC_ANSWER
-Statistics.Item.Data:
+Statistics.Figure.Item.Data:
   type: object
   properties:
     count:
       type: string
     optionDetails:
       $ref: '../pepper.yml#/components/schemas/PicklistOption'
-Statistics.Item:
+Statistics.Figure.Item:
   type: object
   properties:
     name:
       type: string
       description: Statistics item title
     data:
-      $ref: '../pepper.yml#/components/schemas/Statistics.Item.Data'
-Statistics.Statistics:
-  type: array
-  items:
-    $ref: '../pepper.yml#/components/schemas/Statistics.Item'
+      $ref: '../pepper.yml#/components/schemas/Statistics.Figure.Item.Data'
+Statistics.Figure:
+  type: object
+  properties:
+    configuration:
+      $ref: '../pepper.yml#/components/schemas/Statistics.Configuration'
+    statistics:
+      type: array
+      items:
+        $ref: '../pepper.yml#/components/schemas/Statistics.Figure.Item'
 Statistics:
   type: array
   items:
-    type: object
-    properties:
-      configuration:
-        $ref: '../pepper.yml#/components/schemas/Statistics.Configuration'
-      statistics:
-        $ref: '../pepper.yml#/components/schemas/Statistics.Statistics'
+    $ref: '../pepper.yml#/components/schemas/Statistics.Figure'
