@@ -678,6 +678,7 @@ commands:
           name: Check git changes and stop the job early if certain files did not change
           command: |
             file_patterns='<<parameters.file_patterns>>'
+            file_patterns+=' .circleci/config.yml'
             echo "Checking file patterns: $file_patterns"
             matched=false
             for pattern in $(echo "$file_patterns"); do
