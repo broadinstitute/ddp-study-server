@@ -2135,3 +2135,54 @@ WorkflowNextSuggestion.Static:
           - THANK_YOU
           - PARTICIPANT_LIST
           - UNKNOWN
+Statistics.Configuration:
+  type: object
+  properties:
+    type:
+      type: string
+      description: |
+        * `PARTICIPANTS` - Number of participants enrolled. Divided by types (self, governed).
+        * `DISTRIBUTION` - Shows answers distribution for the specific picklist question. Contains also picklist option details with i18n applied.
+        * `MAILING_LIST` - Number of subscriptions.
+        * `SPECIFIC_ANSWER` - Shows how many specific answers were given for the specific question. Supported question types: picklist, boolean.
+        * `KITS` - Number of kit requests divided by types.
+      enum:
+        - PARTICIPANTS
+        - DISTRIBUTION
+        - MAILING_LIST
+        - SPECIFIC_ANSWER
+        - KITS
+    questionStableId:
+      type: string
+      description: Question stableId if applicable.
+    answerValue:
+      type: string
+      description: Answer stableId which is counted for SPECIFIC_ANSWER
+Statistics.Item.Data:
+  type: object
+  properties:
+    count:
+      type: string
+    optionDetails:
+      $ref: '../pepper.yml#/components/schemas/PicklistOption'
+Statistics.Item:
+  type: object
+  properties:
+    name:
+      type: string
+      description: Statistics item title
+    data:
+      $ref: '../pepper.yml#/components/schemas/Statistics.Item.Data'
+Statistics.Statistics:
+  type: array
+  items:
+    $ref: '../pepper.yml#/components/schemas/Statistics.Item'
+Statistics:
+  type: array
+  items:
+    type: object
+    properties:
+      configuration:
+        $ref: '../pepper.yml#/components/schemas/Statistics.Configuration'
+      statistics:
+        $ref: '../pepper.yml#/components/schemas/Statistics.Statistics'
