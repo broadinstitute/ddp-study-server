@@ -37,7 +37,8 @@ where
     qsc.stable_id = :stableId and 
     est.enrollment_status_type_code = 'ENROLLED' and
     se.valid_to is null and
-    r.end_date is null 
+    r.start_date \<= ai.created_at and
+    (r.end_date is null or ai.created_at \< r.end_date)
 group by 1
 >>
 
