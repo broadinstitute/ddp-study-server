@@ -18,7 +18,7 @@ import org.broadinstitute.ddp.json.statistics.StatisticsResponse;
 import org.broadinstitute.ddp.json.statistics.StatisticsResponseItem;
 import org.broadinstitute.ddp.model.activity.instance.question.PicklistOption;
 import org.broadinstitute.ddp.model.statistics.StatisticsConfiguration;
-import org.broadinstitute.ddp.model.statistics.StatisticsTypes;
+import org.broadinstitute.ddp.model.statistics.StatisticsType;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.stringtemplate4.StringTemplateSqlLocator;
 
@@ -26,14 +26,14 @@ public class StatisticsUtil {
     //private static final Logger LOG = LoggerFactory.getLogger(StatisticsUtil.class);
     private static final String QUERIES_PATH = "org/broadinstitute/ddp/db/dao/Statistics.sql.stg";
 
-    private static final Map<StatisticsTypes, String> STATISTICS_QUERIES = new HashMap<>();
+    private static final Map<StatisticsType, String> STATISTICS_QUERIES = new HashMap<>();
 
     static {
-        STATISTICS_QUERIES.put(StatisticsTypes.PARTICIPANTS, "getParticipantStatistics");
-        STATISTICS_QUERIES.put(StatisticsTypes.DISTRIBUTION, "getAnswersDistributionByQueryStableId");
-        STATISTICS_QUERIES.put(StatisticsTypes.MAILING_LIST, "getMailingListStatistics");
-        STATISTICS_QUERIES.put(StatisticsTypes.SPECIFIC_ANSWER, "getSpecificAnswerStatistics");
-        STATISTICS_QUERIES.put(StatisticsTypes.KITS, "getKitStatistics");
+        STATISTICS_QUERIES.put(StatisticsType.PARTICIPANTS, "getParticipantStatistics");
+        STATISTICS_QUERIES.put(StatisticsType.DISTRIBUTION, "getAnswersDistributionByQueryStableId");
+        STATISTICS_QUERIES.put(StatisticsType.MAILING_LIST, "getMailingListStatistics");
+        STATISTICS_QUERIES.put(StatisticsType.SPECIFIC_ANSWER, "getSpecificAnswerStatistics");
+        STATISTICS_QUERIES.put(StatisticsType.KITS, "getKitStatistics");
     }
 
     public static List<StatisticsResponse> generateStatisticsForStudy(Handle handle, StudyDto study,
@@ -65,7 +65,7 @@ public class StatisticsUtil {
                     return new StatisticsResponseItem(name, data);
                 }).mapTo(StatisticsResponseItem.class).list();
 
-        if (StatisticsTypes.DISTRIBUTION.equals(statConfig.getType())) {
+        if (StatisticsType.DISTRIBUTION.equals(statConfig.getType())) {
             var jdbiQuestion = new JdbiQuestionCached(handle);
             QuestionDto questionDto = jdbiQuestion
                     .findLatestDtoByStudyIdAndQuestionStableId(umbrellaId, statConfig.getQuestionStableId())

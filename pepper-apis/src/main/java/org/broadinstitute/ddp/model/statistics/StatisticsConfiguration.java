@@ -7,7 +7,7 @@ import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
 public class StatisticsConfiguration {
     private final long studyId;
     @SerializedName("type")
-    private final StatisticsTypes type;
+    private final StatisticsType type;
     @SerializedName("questionStableId")
     private final String questionStableId;
     @SerializedName("answerValue")
@@ -15,11 +15,11 @@ public class StatisticsConfiguration {
 
     @JdbiConstructor
     public StatisticsConfiguration(@ColumnName("umbrella_study_id") long studyId,
-                                   @ColumnName("statistics_type_code") String typeCode,
+                                   @ColumnName("statistics_type_code") StatisticsType statisticsType,
                                    @ColumnName("question_stable_id") String questionStableId,
                                    @ColumnName("answer_value") String answerValue) {
         this.studyId = studyId;
-        this.type = StatisticsTypes.valueOf(typeCode);
+        this.type = statisticsType;
         this.questionStableId = questionStableId;
         this.answerValue = answerValue;
     }
@@ -28,7 +28,7 @@ public class StatisticsConfiguration {
         return studyId;
     }
 
-    public StatisticsTypes getType() {
+    public StatisticsType getType() {
         return type;
     }
 
