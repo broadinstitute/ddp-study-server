@@ -3,7 +3,7 @@ get:
   tags:
     - Studies
   summary: Study statistics
-  description: Returns specific data about participants enrolled in the study for logged-in participants.
+  description: Returns specific data about participants enrolled in the study for logged-in participants. The data to be returned is configured in the study configuration.
   parameters:
   - in: path
     name: study

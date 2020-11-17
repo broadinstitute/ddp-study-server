@@ -5,15 +5,15 @@ import java.util.List;
 import com.google.gson.annotations.SerializedName;
 import org.broadinstitute.ddp.model.statistics.StatisticsConfiguration;
 
-public class StatisticsResponse {
+public class StatisticsFigure {
 
     @SerializedName("configuration")
     private final StatisticsConfiguration configuration;
 
     @SerializedName("statistics")
-    private final List<StatisticsResponseItem> statistics;
+    private final List<StatisticsFigureItem> statistics;
 
-    public StatisticsResponse(StatisticsConfiguration configuration, List<StatisticsResponseItem> statistics) {
+    public StatisticsFigure(StatisticsConfiguration configuration, List<StatisticsFigureItem> statistics) {
         this.configuration = configuration;
         this.statistics = statistics;
     }
@@ -22,7 +22,7 @@ public class StatisticsResponse {
         return configuration;
     }
 
-    public List<StatisticsResponseItem> getStatistics() {
+    public List<StatisticsFigureItem> getStatistics() {
         return statistics;
     }
 }

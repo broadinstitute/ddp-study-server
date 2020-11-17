@@ -14,8 +14,8 @@ import org.broadinstitute.ddp.db.dao.StatisticsConfigurationDao;
 import org.broadinstitute.ddp.db.dto.PicklistOptionDto;
 import org.broadinstitute.ddp.db.dto.QuestionDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
-import org.broadinstitute.ddp.json.statistics.StatisticsResponse;
-import org.broadinstitute.ddp.json.statistics.StatisticsResponseItem;
+import org.broadinstitute.ddp.json.statistics.StatisticsFigure;
+import org.broadinstitute.ddp.json.statistics.StatisticsFigureItem;
 import org.broadinstitute.ddp.model.activity.instance.question.PicklistOption;
 import org.broadinstitute.ddp.model.statistics.StatisticsConfiguration;
 import org.broadinstitute.ddp.model.statistics.StatisticsType;
@@ -23,8 +23,6 @@ import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.stringtemplate4.StringTemplateSqlLocator;
 
 public class StatisticsUtil {
-    //private static final Logger LOG = LoggerFactory.getLogger(StatisticsUtil.class);
-    private static final String QUERIES_PATH = "org/broadinstitute/ddp/db/dao/Statistics.sql.stg";
 
     private static final Map<StatisticsType, String> STATISTICS_QUERIES = new HashMap<>();
 
@@ -36,42 +34,43 @@ public class StatisticsUtil {
         STATISTICS_QUERIES.put(StatisticsType.KITS, "getKitStatistics");
     }
 
-    public static List<StatisticsResponse> generateStatisticsForStudy(Handle handle, StudyDto study,
-                                                                      I18nContentRenderer renderer,
-                                                                      ContentStyle style, long langId) {
+    public static List<StatisticsFigure> generateStatisticsForStudy(Handle handle, StudyDto study,
+                                                                    I18nContentRenderer renderer,
+                                                                    ContentStyle style, long langId) {
         StatisticsConfigurationDao statConfigDao = handle.attach(StatisticsConfigurationDao.class);
         List<StatisticsConfiguration> statConfigs = statConfigDao.getStatisticsConfigurationForStudy(study.getId());
-        List<StatisticsResponse> studyStatistics = new ArrayList<>();
+        List<StatisticsFigure> studyStatistics = new ArrayList<>();
         for (StatisticsConfiguration statConfig : statConfigs) {
-            studyStatistics.add(generateStatisticsItem(handle, study.getUmbrellaId(), renderer, statConfig, style, langId));
+            studyStatistics.add(generateStatisticsItem(handle, renderer, statConfig, style, langId));
         }
         return studyStatistics;
     }
 
-    private static StatisticsResponse generateStatisticsItem(Handle handle, long umbrellaId,
-                                                             I18nContentRenderer renderer,
-                                                             StatisticsConfiguration statConfig,
-                                                             ContentStyle style, long langId) {
-        List<StatisticsResponseItem> statisticsItems;
-        String query = StringTemplateSqlLocator.findStringTemplate(QUERIES_PATH, STATISTICS_QUERIES.get(statConfig.getType())).render();
+    private static StatisticsFigure generateStatisticsItem(Handle handle,
+                                                           I18nContentRenderer renderer,
+                                                           StatisticsConfiguration statConfig,
+                                                           ContentStyle style, long langId) {
+        List<StatisticsFigureItem> statisticsItems;
+        String query = StringTemplateSqlLocator.findStringTemplate(StatisticsUtil.class, STATISTICS_QUERIES.get(statConfig.getType()))
+                .render();
         statisticsItems = handle.createQuery(query)
-                .bind("studyId", umbrellaId)
+                .bind("studyId", statConfig.getStudyId())
                 .bind("stableId", statConfig.getQuestionStableId())
                 .bind("value", statConfig.getAnswerValue())
-                .registerRowMapper(StatisticsResponseItem.class, (rs, ctx) -> {
+                .registerRowMapper(StatisticsFigureItem.class, (rs, ctx) -> {
                     String name = rs.getString(1);
                     Map<String, Object> data = new HashMap<>();
                     data.put("count", rs.getString(2));
-                    return new StatisticsResponseItem(name, data);
-                }).mapTo(StatisticsResponseItem.class).list();
+                    return new StatisticsFigureItem(name, data);
+                }).mapTo(StatisticsFigureItem.class).list();
 
         if (StatisticsType.DISTRIBUTION.equals(statConfig.getType())) {
             var jdbiQuestion = new JdbiQuestionCached(handle);
             QuestionDto questionDto = jdbiQuestion
-                    .findLatestDtoByStudyIdAndQuestionStableId(umbrellaId, statConfig.getQuestionStableId())
+                    .findLatestDtoByStudyIdAndQuestionStableId(statConfig.getStudyId(), statConfig.getQuestionStableId())
                     .orElseThrow(() -> new DaoException(String.format(
                             "Could not find question with stable id %s in study %d",
-                            statConfig.getQuestionStableId(), umbrellaId)));
+                            statConfig.getQuestionStableId(), statConfig.getStudyId())));
             List<PicklistOptionDto> optionDtos =
                     handle.attach(QuestionDao.class).getPicklistQuestionDao().getJdbiPicklistOption()
                             .findAllActiveOrderedOptionsByQuestionId(questionDto.getId());
@@ -89,6 +88,6 @@ public class StatisticsUtil {
             statisticsItems.forEach((item) -> item.getData().put("optionDetails", optionByStableId.get(item.getName())));
         }
 
-        return new StatisticsResponse(statConfig, statisticsItems);
+        return new StatisticsFigure(statConfig, statisticsItems);
     }
 }
