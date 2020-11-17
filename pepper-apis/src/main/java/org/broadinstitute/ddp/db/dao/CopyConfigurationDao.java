@@ -31,7 +31,7 @@ public interface CopyConfigurationDao extends SqlObject {
     CopyConfigurationSql getCopyConfigurationSql();
 
     default CopyConfiguration createCopyConfig(CopyConfiguration config) {
-        long configId = getCopyConfigurationSql().insertCopyConfig(config.getStudyId());
+        long configId = getCopyConfigurationSql().insertCopyConfig(config.getStudyId(), config.shouldCopyFromPreviousInstance());
         int order = 1;
         for (var pair : config.getPairs()) {
             pair.setOrder(order);
@@ -116,13 +116,14 @@ public interface CopyConfigurationDao extends SqlObject {
             CopyConfiguration config = container
                     .computeIfAbsent(id, key -> view.getRow(CopyConfiguration.class));
 
-            long pairId = view.getColumn("copy_configuration_pair_id", Long.class);
-            CopyLocation source = reduceLocation(view, "source");
-            CopyLocation target = reduceLocation(view, "target");
-            int order = view.getColumn("execution_order", Integer.class);
-            var pair = new CopyConfigurationPair(pairId, source, target, order);
-
-            config.addPairs(List.of(pair));
+            Long pairId = view.getColumn("copy_configuration_pair_id", Long.class);
+            if (pairId != null) {
+                CopyLocation source = reduceLocation(view, "source");
+                CopyLocation target = reduceLocation(view, "target");
+                int order = view.getColumn("execution_order", Integer.class);
+                var pair = new CopyConfigurationPair(pairId, source, target, order);
+                config.addPairs(List.of(pair));
+            }
         }
 
         private CopyLocation reduceLocation(RowView view, String prefix) {
