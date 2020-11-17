@@ -237,11 +237,12 @@ public class RouteUtil {
             LOG.warn(err.getMessage());
             throw ResponseUtil.haltError(HttpStatus.SC_NOT_FOUND, err);
         }
-        User user = handle.attach(UserDao.class).findUserByGuid(userGuid).orElseThrow(() -> {
+        User user = handle.attach(UserDao.class).findUserByGuid(userGuid).orElse(null);
+        if (user == null) {
             var err = new ApiError(ErrorCodes.USER_NOT_FOUND, "Could not find user with guid " + userGuid);
             LOG.warn(err.getMessage());
-            return ResponseUtil.haltError(HttpStatus.SC_NOT_FOUND, err);
-        });
+            throw ResponseUtil.haltError(HttpStatus.SC_NOT_FOUND, err);
+        }
         return new UserAndStudy(user, studyDto);
     }
 
@@ -260,11 +261,12 @@ public class RouteUtil {
             LOG.warn(err.getMessage());
             throw ResponseUtil.haltError(HttpStatus.SC_NOT_FOUND, err);
         }
-        User user = handle.attach(UserDao.class).findUserByGuidOrAltPid(userGuidOrAltPid).orElseThrow(() -> {
+        User user = handle.attach(UserDao.class).findUserByGuidOrAltPid(userGuidOrAltPid).orElse(null);
+        if (user == null) {
             var err = new ApiError(ErrorCodes.USER_NOT_FOUND, "Could not find user with guid/legacy_altpid " + userGuidOrAltPid);
             LOG.warn(err.getMessage());
-            return ResponseUtil.haltError(HttpStatus.SC_NOT_FOUND, err);
-        });
+            throw ResponseUtil.haltError(HttpStatus.SC_NOT_FOUND, err);
+        }
         return new UserAndStudy(user, studyDto);
     }
 

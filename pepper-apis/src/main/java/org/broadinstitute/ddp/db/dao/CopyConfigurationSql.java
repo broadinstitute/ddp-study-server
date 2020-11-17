@@ -13,8 +13,8 @@ import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 public interface CopyConfigurationSql extends SqlObject {
 
     @GetGeneratedKeys
-    @SqlUpdate("insert into copy_configuration (study_id) values (:studyId)")
-    long insertCopyConfig(@Bind("studyId") long studyId);
+    @SqlUpdate("insert into copy_configuration (study_id, copy_from_previous_instance) values (:studyId, :copyFromPreviousInstance)")
+    long insertCopyConfig(@Bind("studyId") long studyId, @Bind("copyFromPreviousInstance") boolean copyFromPreviousInstance);
 
     @GetGeneratedKeys
     @SqlUpdate("insert into copy_location (copy_location_type_id)"

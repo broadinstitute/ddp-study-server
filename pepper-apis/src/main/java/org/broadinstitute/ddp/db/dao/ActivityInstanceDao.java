@@ -12,6 +12,7 @@ import java.util.stream.Stream;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.DaoException;
+import org.broadinstitute.ddp.db.dto.ActivityInstanceCreationValidation;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.model.activity.instance.ActivityResponse;
 import org.broadinstitute.ddp.model.activity.instance.FormResponse;
@@ -48,6 +49,18 @@ public interface ActivityInstanceDao extends SqlObject {
 
     @CreateSqlObject
     ActivityInstanceSql getActivityInstanceSql();
+
+    /**
+     * Checks whether or not a new instance of activityCode can be created for userGuid by looking at counts of
+     * instances.
+     */
+    @UseStringTemplateSqlLocator
+    @SqlQuery("queryActivityInstanceCreationValidation")
+    @RegisterConstructorMapper(ActivityInstanceCreationValidation.class)
+    Optional<ActivityInstanceCreationValidation> checkSuitabilityForActivityInstanceCreation(
+            @Bind("studyId") long studyId,
+            @Bind("activityCode") String activityCode,
+            @Bind("userGuid") String userGuid);
 
     /**
      * Convenience method to create new activity instance when both operator and participant is the same, and using defaults.
@@ -176,6 +189,18 @@ public interface ActivityInstanceDao extends SqlObject {
             + " join study_activity as sa on sa.study_activity_id = ai.study_activity_id"
             + " where ai.participant_id = :userId and sa.study_id = :studyId")
     Set<Long> findAllInstanceIdsByUserIdAndStudyId(@Bind("userId") long userId, @Bind("studyId") long studyId);
+
+    @SqlQuery("select activity_instance_id"
+            + "  from activity_instance as ai"
+            + "  join (select participant_id, study_activity_id, created_at"
+            + "          from activity_instance where activity_instance_id = :instanceId)"
+            + "       as ai2 on ai.participant_id = ai2.participant_id"
+            + "       and ai.study_activity_id = ai2.study_activity_id"
+            + "       and ai.created_at <= ai2.created_at"
+            + " where ai.activity_instance_id != :instanceId"
+            + " order by ai.created_at desc"
+            + " limit 1")
+    Optional<Long> findMostRecentInstanceBeforeCurrent(@Bind("instanceId") long currentInstanceId);
 
     /**
      * Helper that only deletes an activity instance and its associated status(es).

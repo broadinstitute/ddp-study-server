@@ -82,7 +82,7 @@ public class EventBuilder {
         Config actionCfg = eventCfg.getConfig("action");
 
         long triggerId = insertEventTrigger(handle, triggerCfg);
-        long actionId = insertEventAction(handle, actionCfg);
+        long actionId = insertEventAction(handle, actionCfg, triggerCfg);
 
         Long preconditionExprId = insertExprIfPresent(handle, eventCfg, "preconditionExpr");
         Long cancelExprId = insertExprIfPresent(handle, eventCfg, "cancelExpr");
@@ -132,7 +132,7 @@ public class EventBuilder {
         }
     }
 
-    private long insertEventAction(Handle handle, Config actionCfg) {
+    private long insertEventAction(Handle handle, Config actionCfg, Config triggerCfg) {
         EventActionDao actionDao = handle.attach(EventActionDao.class);
         String type = actionCfg.getString("type");
 
@@ -219,7 +219,16 @@ public class EventBuilder {
             return actionDao.insertAnnouncementAction(tmpl.getTemplateId(), isPermanent, createForProxies);
         } else if (EventActionType.COPY_ANSWER.name().equals(type)) {
             List<Config> pairs = List.copyOf(actionCfg.getConfigList("copyConfigPairs"));
-            CopyConfiguration config = buildCopyConfiguration(studyDto.getId(), pairs);
+            boolean copyFromPreviousInstance = actionCfg.hasPath("copyFromPreviousInstance")
+                    && actionCfg.getBoolean("copyFromPreviousInstance");
+            if (copyFromPreviousInstance) {
+                String triggerType = triggerCfg.getString("type");
+                if (!triggerType.equals(EventTriggerType.ACTIVITY_STATUS.name())) {
+                    throw new DDPException("When copying from previous instance,"
+                            + " COPY_ANSWER should be paired with ACTIVITY_STATUS trigger");
+                }
+            }
+            CopyConfiguration config = buildCopyConfiguration(studyDto.getId(), copyFromPreviousInstance, pairs);
             return actionDao.insertCopyAnswerAction(config);
         } else if (EventActionType.CREATE_INVITATION.name().equals(type)) {
             boolean markExistingAsVoided = actionCfg.getBoolean("markExistingAsVoided");
@@ -242,14 +251,14 @@ public class EventBuilder {
         }
     }
 
-    private CopyConfiguration buildCopyConfiguration(long studyId, List<Config> pairsCfgList) {
+    private CopyConfiguration buildCopyConfiguration(long studyId, boolean copyFromPreviousInstance, List<Config> pairsCfgList) {
         List<CopyConfigurationPair> pairs = new ArrayList<>();
         for (var pairCfg : pairsCfgList) {
             CopyLocation source = buildCopyLocation(pairCfg.getConfig("source"));
             CopyLocation target = buildCopyLocation(pairCfg.getConfig("target"));
             pairs.add(new CopyConfigurationPair(source, target));
         }
-        return new CopyConfiguration(studyId, pairs);
+        return new CopyConfiguration(studyId, copyFromPreviousInstance, pairs);
     }
 
     private CopyLocation buildCopyLocation(Config locationCfg) {

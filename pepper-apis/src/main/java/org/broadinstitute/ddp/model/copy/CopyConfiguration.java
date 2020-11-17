@@ -10,16 +10,22 @@ public class CopyConfiguration {
 
     private long id;
     private long studyId;
+    private boolean copyFromPreviousInstance;
     private List<CopyConfigurationPair> pairs = new ArrayList<>();
 
     @JdbiConstructor
-    public CopyConfiguration(@ColumnName("copy_configuration_id") long id, @ColumnName("study_id") long studyId) {
+    public CopyConfiguration(
+            @ColumnName("copy_configuration_id") long id,
+            @ColumnName("study_id") long studyId,
+            @ColumnName("copy_from_previous_instance") boolean copyFromPreviousInstance) {
         this.id = id;
         this.studyId = studyId;
+        this.copyFromPreviousInstance = copyFromPreviousInstance;
     }
 
-    public CopyConfiguration(long studyId, List<CopyConfigurationPair> pairs) {
+    public CopyConfiguration(long studyId, boolean copyFromPreviousInstance, List<CopyConfigurationPair> pairs) {
         this.studyId = studyId;
+        this.copyFromPreviousInstance = copyFromPreviousInstance;
         addPairs(pairs);
     }
 
@@ -29,6 +35,10 @@ public class CopyConfiguration {
 
     public long getStudyId() {
         return studyId;
+    }
+
+    public boolean shouldCopyFromPreviousInstance() {
+        return copyFromPreviousInstance;
     }
 
     public List<CopyConfigurationPair> getPairs() {

@@ -1,16 +1,3 @@
-ActivityCreateRequestBody:
-  description: activity guid to create a new instance from
-  required: true
-  content:
-    application/json:
-      schema:
-        type: object
-        required:
-          - activityCode
-        properties:
-          activityCode:
-            type: string
-            example: ABCDEFGH12
 ActivityAnswersPatchRequestBody:
   description: answer submissions to create or update
   required: true
