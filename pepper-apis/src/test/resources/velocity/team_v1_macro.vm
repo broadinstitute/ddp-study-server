@@ -1,0 +1,13 @@
+#macro(team $team)
+<div class="pepper-team">
+    <h1 class="pepper-team-header">$t[$team.headerKey]</h1>
+
+    #foreach($textKey in $team.textKeys)
+        <p class="pepper-team-text">$t[$textKey]</p>
+    #end
+
+    #foreach($bio in $team.members)
+        #bio($bio)
+    #end
+</div>
+#end

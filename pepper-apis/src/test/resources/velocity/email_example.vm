@@ -1,0 +1,14 @@
+<html>
+    <body class="pepper-email-body">
+        # if it's a self enroll
+
+        ## $pepper would be a global var that is loaded
+        ## server-side and contain whatever we need.
+        ## profile, auth0 values, activity data, pex etc.
+        <p>$t['greeting'] $pepper.operator.firstName,</p>
+        <p>$t['yourKitIsComing']</p>
+        # else proxy
+        <p>Dear $pepper.participant.firstName,</p>
+        <p>$pepper.participant.firstName will be receiving a kit shortly.</p>
+    </body>
+</html>

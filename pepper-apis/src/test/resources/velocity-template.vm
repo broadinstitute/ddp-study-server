@@ -1,0 +1,95 @@
+
+## example 1: sketch of activity
+{
+
+    ## this is not a template; objects should render a template, which we then version
+    ## this is just for hacking around
+
+    ## the end versioned output is a full template
+    "formType":"$formType",
+    "listStyleHint:"$listStyleHint",
+    "readOnlyHint": "#readonlyHint($readonlyHint)",
+    "sections": [
+        #foreach($section in $sections)
+            #section($section)
+        #end
+    ]
+
+
+}
+
+## example 2: sketch of server-side document for about us
+#macro(team $team)
+    #foreach($titledText in $team.titledTexts)
+        $titledText($titledText)
+    #end
+    #foreach($bio in $team.bios)
+        $bio($bio)
+    #end
+#end
+
+## change to any bit of template makes a new version of the document
+## then the question is: does this new version "replace" existing
+## activity instances, or is it "apply to new participants"?
+
+## macros would live somewhere else and be versioned
+#macro(section $blocks)
+    #foreach( $block in $blocks )
+        #block($section.blocks)
+    #end
+#end
+
+#macro(block $block)
+    #if($block.isQuestion)
+        #if($block.questionType == "TEXT")
+            #text-question($block)
+        #end
+    #end
+#end
+
+#macro(text-question $q)
+    "question": {
+        "inputType": "$q.inputType",
+        "suggestionType": "$q.suggestionType",
+        ## embed some stuff inside the prompt, so $q.prompt is itself vtl and can reference
+        ## anything in the context...so snippets can embed context values but not things
+        ## like macros?
+        "prompt": "$q.prompt",
+        "placeholderText": "$q.placeholderText"
+        "questionType": "$q.questionType",
+        "stableId": "$q.stableId"
+    }
+#end
+
+#macro(titledText $titleText)
+    <div class="pepper-title-text">
+        <h1 class="pepper-title-text-heading">$titleText.heading</h1>
+        <p class="pepper-title-text-text">$titleText.text</p>
+    </div>
+#end
+
+#macro(bio $bio)
+    <div class="pepper-bio">
+        <img class="pepper-bio-img" src="$bio.imageUrl"/>
+        <h1 class="pepper-bio-name">$bio.name</h1>
+        #foreach($p in $bio.texts)
+            <p class="pepper-bio-text">$p</p>
+        #end
+    </div>
+#end
+
+#macro(readonlyHint $readonlyHint)
+    <span class="pepper-readonly-hint">
+        $readonlyHint
+    </span>
+#end
+
+#macro(studyEmail $email)
+    <a href="mailto:$email" class="pepper-study-email">$email</a>
+#end
+
+#macro(studyPhone $phone)
+    <a href="tel:$phone" class="pepper-study-phone">$phone</a>.
+#end
+
+## todo example with content and questions, dynamically set class names, use macro like #question($questions['STABLE_ID'])

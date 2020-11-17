@@ -1,0 +1,9 @@
+#macro(bio $bio)
+<div class="pepper-bio">
+## <img class="pepper-bio-img" src="$bio.imageUrl"/>
+    <h1 class="pepper-bio-name">$bio.name</h1>
+## #foreach($p in $bio.texts)
+##     <p class="pepper-bio-text">$p</p>
+## #end
+</div>
+#end
