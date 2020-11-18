@@ -459,6 +459,52 @@
             ]
           },
           {
+            "name": "menstruation",
+            "stable_id": "FEMALE_ONSET_OF_PERIOD",
+            "type": "Picklist",
+            "source_type": "integer",
+            "options": [
+              {
+                "type": "integer",
+                "stable_id": "YES"
+              },
+              {
+                "type": "integer",
+                "stable_id": "NO"
+              },
+              {
+                "type": "integer",
+                "stable_id": "DONT_KNOW"
+              }
+            ]
+          },
+          {
+            "name": "menstruation_age",
+            "type": "Numeric",
+            "source_type": "integer",
+            "stable_id": "FEMALE_AGE_OF_ONSET_PERIOD"
+          },
+          {
+            "name": "pregnancy",
+            "stable_id": "FEMALE_PREGNANT",
+            "type": "Picklist",
+            "source_type": "integer",
+            "options": [
+              {
+                "type": "integer",
+                "stable_id": "YES"
+              },
+              {
+                "type": "integer",
+                "stable_id": "NO"
+              },
+              {
+                "type": "integer",
+                "stable_id": "DONT_KNOW"
+              }
+            ]
+          },
+          {
             "name": "incontinence_type",
             "stable_id": "INCONTINENCE",
             "type": "Picklist",
