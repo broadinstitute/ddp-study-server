@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+
+    <changeSet author="charlotte" id="20201117-cd-db-translations-activity-instance-status-type">
+        <update tableName="i18n_activity_instance_status_type_name_trans">
+            <column name="translation_text" value="הושלם"/>
+            <where>
+                activity_instance_status_type_id = (select activity_instance_status_type_id from activity_instance_status_type where activity_instance_status_type_code = 'COMPLETE')
+                and language_code_id = (select language_code_id from language_code where iso_language_code = 'he')
+            </where>
+        </update>
+
+        <update tableName="i18n_activity_instance_status_type_name_trans">
+            <column name="translation_text" value="נוצר"/>
+            <where>
+                activity_instance_status_type_id = (select activity_instance_status_type_id from activity_instance_status_type where activity_instance_status_type_code = 'CREATED')
+                and language_code_id = (select language_code_id from language_code where iso_language_code = 'he')
+            </where>
+        </update>
+
+        <update tableName="i18n_activity_instance_status_type_name_trans">
+            <column name="translation_text" value="בביצוע"/>
+            <where>
+                activity_instance_status_type_id = (select activity_instance_status_type_id from activity_instance_status_type where activity_instance_status_type_code = 'IN_PROGRESS')
+                and language_code_id = (select language_code_id from language_code where iso_language_code = 'he')
+            </where>
+        </update>
+    </changeSet>
+
+    <changeSet author="charlotte" id="20200615-cd-hebrew-spanish-chinese-validation-msg-trans">
+        <update tableName="i18n_validation_msg_trans">
+            <column name="translation_text" value="שדה יום הוא שדה חובה."/>
+            <where>
+                validation_type_id = (select validation_type_id from validation_type where validation_type_code = 'DAY_REQUIRED')
+                and language_code_id = (select language_code_id from language_code where iso_language_code = 'he')
+            </where>
+        </update>
+
+        <update tableName="i18n_validation_msg_trans">
+            <column name="translation_text" value="הדרישה של אורך התשובה לא בוצעה."/>
+            <where>
+                validation_type_id = (select validation_type_id from validation_type where validation_type_code = 'LENGTH')
+                and language_code_id = (select language_code_id from language_code where iso_language_code = 'he')
+            </where>
+        </update>
+
+        <update tableName="i18n_validation_msg_trans">
+            <column name="translation_text" value="שדה חודש הוא שדה חובה."/>
+            <where>
+                validation_type_id = (select validation_type_id from validation_type where validation_type_code = 'MONTH_REQUIRED')
+                and language_code_id = (select language_code_id from language_code where iso_language_code = 'he')
+            </where>
+        </update>
+
+        <update tableName="i18n_validation_msg_trans">
+            <column name="translation_text" value="הדרישה של מינימום או מקסימום בחירות לא בוצעה."/>
+            <where>
+                validation_type_id = (select validation_type_id from validation_type where validation_type_code = 'NUM_OPTIONS_SELECTED')
+                and language_code_id = (select language_code_id from language_code where iso_language_code = 'he')
+            </where>
+        </update>
+
+        <update tableName="i18n_validation_msg_trans">
+            <column name="translation_text" value="הדרישה של ביטוי רגולרי בתשובה לא בוצעה."/>
+            <where>
+                validation_type_id = (select validation_type_id from validation_type where validation_type_code = 'REGEX')
+                and language_code_id = (select language_code_id from language_code where iso_language_code = 'he')
+            </where>
+        </update>
+
+        <update tableName="i18n_validation_msg_trans">
+            <column name="translation_text" value="שאלה זו דורשת תשובה."/>
+            <where>
+                validation_type_id = (select validation_type_id from validation_type where validation_type_code = 'REQUIRED')
+                and language_code_id = (select language_code_id from language_code where iso_language_code = 'he')
+            </where>
+        </update>
+
+        <update tableName="i18n_validation_msg_trans">
+            <column name="translation_text" value="שדה שנה הוא שדה חובה."/>
+            <where>
+                validation_type_id = (select validation_type_id from validation_type where validation_type_code = 'YEAR_REQUIRED')
+                and language_code_id = (select language_code_id from language_code where iso_language_code = 'he')
+            </where>
+        </update>
+
+        <update tableName="i18n_validation_msg_trans">
+            <column name="translation_text" value="התאריך הנבחר חייב להיות בטווח התאריכים."/>
+            <where>
+                validation_type_id = (select validation_type_id from validation_type where validation_type_code = 'DATE_RANGE')
+                and language_code_id = (select language_code_id from language_code where iso_language_code = 'he')
+            </where>
+        </update>
+
+        <update tableName="i18n_validation_msg_trans">
+            <column name="translation_text" value="יש להשיב על שאלה זו באופן מלא."/>
+            <where>
+                validation_type_id = (select validation_type_id from validation_type where validation_type_code = 'COMPLETE')
+                and language_code_id = (select language_code_id from language_code where iso_language_code = 'he')
+            </where>
+        </update>
+
+        <update tableName="i18n_validation_msg_trans">
+            <column name="translation_text" value="הגיל חייב להיות בטווח הערכים המוגדרים."/>
+            <where>
+                validation_type_id = (select validation_type_id from validation_type where validation_type_code = 'AGE_RANGE')
+                and language_code_id = (select language_code_id from language_code where iso_language_code = 'he')
+            </where>
+        </update>
+
+        <update tableName="i18n_validation_msg_trans">
+            <column name="translation_text" value="הדרישה של מספר מינימלי או מקסימלי לא מולאה."/>
+            <where>
+                validation_type_id = (select validation_type_id from validation_type where validation_type_code = 'INT_RANGE')
+                and language_code_id = (select language_code_id from language_code where iso_language_code = 'he')
+            </where>
+        </update>
+    </changeSet>
+    <changeSet author="charlotte" id="20200615-cd-hebrew-spanish-chinese-form-activity-type">
+        <update tableName="i18n_activity_type_name_trans">
+            <column name="translation_text" value="טפסים"/>
+            <where>
+                activity_type_id = (select activity_type_id from activity_type where activity_type_code = 'FORMS')
+                and language_code_id = (select language_code_id from language_code where iso_language_code = 'he')
+            </where>
+        </update>
+    </changeSet>
+</databaseChangeLog>
