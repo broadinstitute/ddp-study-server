@@ -1100,6 +1100,13 @@
         languageCode = 'en';
     }
 
+    const html = this.document.querySelector('html');
+    html.setAttribute('lang', languageCode);
+
+    if ('he' === languageCode) {
+        html.setAttribute('dir', 'rtl');
+    }
+
     languageDictionary = dictionaries[languageCode];
     languageDictionary.error = languageDictionary.error || {};
     languageDictionary.error.signUp = languageDictionary.error.signUp || {};
@@ -1151,7 +1158,7 @@
         assetsUrl:  config.assetsUrl,
         allowedConnections: connection ? [connection] : null,
         rememberLastLogin: false,
-        language: languageCode,
+        language: languageCode === 'he' ? language : languageCode,
         languageDictionary: languageDictionary,
         theme: {
             logo:            headerLogo,
