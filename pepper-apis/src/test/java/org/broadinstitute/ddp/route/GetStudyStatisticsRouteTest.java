@@ -10,6 +10,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
+import com.auth0.exception.Auth0Exception;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.typesafe.config.Config;
@@ -73,6 +74,7 @@ public class GetStudyStatisticsRouteTest extends IntegrationTestSuite.TestCase {
     private static String url;
     private static Gson gson;
     private static MailAddress mailAddress;
+    private static long kidRequestId;
 
     @BeforeClass
     public static void setup() throws Exception {
@@ -170,7 +172,7 @@ public class GetStudyStatisticsRouteTest extends IntegrationTestSuite.TestCase {
         // Requesting a kit
         DsmKitRequestDao kitDao = handle.attach(DsmKitRequestDao.class);
         KitType salivaKitType = handle.attach(KitTypeDao.class).getSalivaKitType();
-        kitDao.createKitRequest(testData.getStudyGuid(), mailAddress, testUser3.getUserId(), salivaKitType);
+        kidRequestId = kitDao.createKitRequest(testData.getStudyGuid(), mailAddress, testUser3.getUserId(), salivaKitType);
 
         // Subscribing
         JdbiMailingList jdbiMailingList = handle.attach(JdbiMailingList.class);
@@ -183,13 +185,16 @@ public class GetStudyStatisticsRouteTest extends IntegrationTestSuite.TestCase {
     }
 
     @AfterClass
-    public static void cleanup() {
+    public static void cleanup() throws Auth0Exception {
         TransactionWrapper.useTxn(handle -> {
             ActivityInstanceDao activityInstanceDao = handle.attach(ActivityInstanceDao.class);
             activityInstanceDao.deleteAllByIds(Set.of(instance1Dto.getId()));
             activityInstanceDao.deleteAllByIds(Set.of(instance2Dto.getId()));
             activityInstanceDao.deleteAllByIds(Set.of(instance3Dto.getId()));
+            DsmKitRequestDao kitDao = handle.attach(DsmKitRequestDao.class);
+            kitDao.deleteKitRequest(kidRequestId);
         });
+        TestDataSetupUtil.deleteGeneratedTestData();
     }
 
     @Test
