@@ -1999,6 +1999,27 @@
             "type": "string"
           },
           {
+            "name": "platform_consent_signature",
+            "stable_id": "CONSENT_GUARDIAN_SIGNATURE",
+            "type": "string"
+          },
+          {
+            "name": "platform_consent_relationship",
+            "stable_id": "CONSENT_RELATIONSHIP",
+            "type": "string"
+          },
+          {
+            "name": "platform_consent_participant",
+            "stable_id": "CONSENT_PARENT_SIGNATURE",
+            "type": "string"
+          },
+          {
+            "name": "platform_consent_dob",
+            "stable_id": "CONSENT_GUARDIAN_DOB",
+            "type": "Date",
+            "format": "yyyy-MM-dd"
+          },
+          {
             "name": "platform_consent_dob",
             "stable_id": "CONSENT_DOB",
             "type": "Date",
