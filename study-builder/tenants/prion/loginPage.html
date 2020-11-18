@@ -495,22 +495,35 @@
         padding-left: 33px !important;
     }
 
-    @media only screen and (min-width: 1026px) and (max-width: 1200px) {
+    .navbar-nav {
+        float: right !important;
+        width: 660px;
+    }
+
+    html[lang='es'] .navbar-nav {
+        width: 800px;
+    }
+
+    @media only screen and (min-width: 1027px) and (max-width: 1200px) {
         .Header-background {
             padding: 30px 40px 20px 80px !important;
         }
+        html[lang="es"] .navbar-nav {
+            width: 486px;
+        }
         .navbar-nav {
-            float: right !important;
-            width: 649px;
+            width: 660px;
         }
     }
 
-    @media only screen and (min-width: 993px) and (max-width: 1025px) {
+    @media only screen and (min-width: 993px) and (max-width: 1026px) {
         .Header-background {
             padding: 30px 40px 20px 80px !important;
         }
+        html[lang="es"] .navbar-nav {
+            width: 486px;
+        }
         .navbar-nav {
-            float: right !important;
             width: 584px;
         }
     }
@@ -524,6 +537,12 @@
         }
         .navbar-collapse {
             padding: 0 25px 10px 25px !important;
+        }
+        html[lang="es"] .navbar-nav {
+            width: 430px !important;
+        }
+        html[lang='zh'] .navbar-nav {
+            width: 340px !important;
         }
         .navbar-nav {
             width: 415px !important;
@@ -1457,7 +1476,7 @@
                 footer.setAttribute('id', 'ddp-footer');
                 footer.innerHTML =
                 `<footer class="Footer row">` +
-                    `<div class="col-lg-6 col-md-4 col-sm-4 col-xs-12 Footer-left">` +
+                    `<div class="col-lg-6 col-md-5 col-sm-4 col-xs-12 Footer-left">` +
                         `<a href="${mainUrl}">` +
                         `<img src="https://storage.googleapis.com/dev-prion-assets/images/project-logo-dark.svg" alt="${languageDictionary.logoAlt}"/>` +
                         `</a>` +
@@ -1465,7 +1484,7 @@
                             `<a href="mailto:${contactEmail}" class="Footer-link NoPadding">${contactEmail}</a>` +
                         `</p>` +
                     `</div>` +
-                    `<div class="col-lg-6 col-md-4 col-sm-8 col-xs-12 Footer-links">` +
+                    `<div class="col-lg-6 col-md-7 col-sm-8 col-xs-12 Footer-links">` +
                         `<p class="Footer-text Float--right">` +
                             `<a href="${mainUrl}" class="Footer-link">${languageDictionary.home}</a> ` +
                             `<a href="${mainUrl}/learn-more" class="Footer-link">${languageDictionary.learnMore}</a> ` +
