@@ -61,7 +61,8 @@ from
     join question q on qsc.question_stable_code_id = q.question_stable_code_id 
     join answer a on a.question_id = q.question_id 
     join activity_instance ai on ai.activity_instance_id = a.activity_instance_id 
-    join user_study_enrollment se on ai.participant_id = se.user_id 
+    join user_study_enrollment se on ai.participant_id = se.user_id
+        and se.study_id = qsc.umbrella_study_id
     left join picklist_option__answer poa on poa.answer_id = a.answer_id 
     left join picklist_option po on po.picklist_option_id = poa.picklist_option_id 
     left join picklist_question pq on pq.question_id = q.question_id 
