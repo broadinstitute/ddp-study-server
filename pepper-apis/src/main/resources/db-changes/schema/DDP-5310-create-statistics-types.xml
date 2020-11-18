@@ -23,7 +23,7 @@
                 <constraints nullable="false" references="umbrella_study(umbrella_study_id)"
                              foreignKeyName="statistics_configuration_umbrella_study_fk"/>
             </column>
-            <column name="statistics_configuration_type" type="bigint">
+            <column name="statistics_type_id" type="bigint">
                 <constraints nullable="false" references="statistics_type(statistics_type_id)"
                              foreignKeyName="statistics_configuration_statistics_type_fk"/>
             </column>

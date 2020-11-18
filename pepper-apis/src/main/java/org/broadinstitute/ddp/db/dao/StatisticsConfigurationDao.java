@@ -14,7 +14,7 @@ import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 public interface StatisticsConfigurationDao extends SqlObject {
 
     @GetGeneratedKeys
-    @SqlUpdate("insert into statistics_configuration (umbrella_study_id, statistics_configuration_type, question_stable_id, "
+    @SqlUpdate("insert into statistics_configuration (umbrella_study_id, statistics_type_id, question_stable_id, "
             + "answer_value) values (:studyId, (select statistics_type_id from statistics_type where statistics_type_code = :type), "
             + ":questionStableId, :answerValue)")
     long insertConfiguration(
@@ -24,7 +24,7 @@ public interface StatisticsConfigurationDao extends SqlObject {
             @Bind("answerValue") String answerValue);
 
     @SqlQuery("SELECT sc.umbrella_study_id, st.statistics_type_code, sc.question_stable_id, sc.answer_value FROM "
-            + "statistics_configuration sc left join statistics_type st on sc.statistics_configuration_type = st.statistics_type_id "
+            + "statistics_configuration sc join statistics_type st on sc.statistics_type_id = st.statistics_type_id "
             + "WHERE sc.umbrella_study_id = :umbrellaStudyId")
     @RegisterConstructorMapper(StatisticsConfiguration.class)
     List<StatisticsConfiguration> getStatisticsConfigurationForStudy(@Bind("umbrellaStudyId") long umbrellaStudyId);

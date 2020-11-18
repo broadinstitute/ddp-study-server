@@ -5,7 +5,7 @@ import org.jdbi.v3.core.mapper.reflect.ColumnName;
 import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
 
 public class StatisticsConfiguration {
-    private final long studyId;
+    private final transient long studyId;
     @SerializedName("type")
     private final StatisticsType type;
     @SerializedName("questionStableId")

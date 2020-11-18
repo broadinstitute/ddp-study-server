@@ -29,10 +29,11 @@ public class GetStudyStatisticsRoute implements Route {
 
     @Override
     public Object handle(Request request, Response response) {
+        String operatorGuid = RouteUtil.getDDPAuth(request).getOperator();
         String studyGuid = request.params(RouteConstants.PathParam.STUDY_GUID);
         ContentStyle style = RouteUtil.parseContentStyleHeaderOrHalt(request, response, ContentStyle.STANDARD);
         LanguageDto preferredUserLanguage = RouteUtil.getUserLanguage(request);
-        LOG.info("Building statistics for study {}", studyGuid);
+        LOG.info("Building statistics for study {}, operator {}", studyGuid, operatorGuid);
         return TransactionWrapper.withTxn(handle -> {
             StudyDto studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(studyGuid);
             if (studyDto == null) {
