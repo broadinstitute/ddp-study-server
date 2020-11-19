@@ -16,7 +16,7 @@ import org.broadinstitute.ddp.model.activity.types.QuestionType;
 public final class PicklistQuestionRecord extends QuestionRecord {
 
     @SerializedName("answer")
-    private List<Object> selected = new ArrayList<>();
+    private List<String> selected = new ArrayList<>();
     @SerializedName("optionDetails")
     private List<Map<String, String>> optionDetails = new ArrayList<>();
     @SerializedName("nestedOptions")
