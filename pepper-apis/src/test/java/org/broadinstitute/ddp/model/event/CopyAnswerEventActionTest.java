@@ -71,7 +71,7 @@ public class CopyAnswerEventActionTest extends TxnAwareBaseTest {
             answerDao.createAnswer(testData.getUserId(), instanceId,
                     new TextAnswer(null, act.getTextQuestion().getStableId(), null, "new-last-name"));
 
-            var config = new CopyConfiguration(testData.getStudyId(), List.of(
+            var config = new CopyConfiguration(testData.getStudyId(), false, List.of(
                     new CopyConfigurationPair(
                             new CopyAnswerLocation(act.getTextQuestion().getStableId()),
                             new CopyLocation(CopyLocationType.PARTICIPANT_PROFILE_LAST_NAME)),
@@ -120,7 +120,7 @@ public class CopyAnswerEventActionTest extends TxnAwareBaseTest {
             handle.attach(ActivityInstanceDao.class)
                     .insertInstance(act.getDef().getActivityId(), testData.getUserGuid());
 
-            var config = new CopyConfiguration(testData.getStudyId(), List.of(
+            var config = new CopyConfiguration(testData.getStudyId(), false, List.of(
                     new CopyConfigurationPair(
                             new CopyAnswerLocation(act.getTextQuestion().getStableId()),
                             new CopyLocation(CopyLocationType.PARTICIPANT_PROFILE_LAST_NAME)),
@@ -209,7 +209,7 @@ public class CopyAnswerEventActionTest extends TxnAwareBaseTest {
             instanceDao.insertInstance(act2.getDef().getActivityId(), testData.getUserGuid());
 
             // Setup event configuration
-            var config = new CopyConfiguration(testData.getStudyId(), List.of(
+            var config = new CopyConfiguration(testData.getStudyId(), false, List.of(
                     // Target profile
                     new CopyConfigurationPair(
                             new CopyAnswerLocation(act1.getTextQuestion().getStableId()),

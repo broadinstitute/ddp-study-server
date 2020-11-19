@@ -133,9 +133,6 @@ public class ConfigFile {
 
     public static final class SqlQuery {
         public static final String FORM_ACTIVITY_BY_GUID = "activities.formActivityByGuidQuery";
-
-        public static final String MAX_INSTANCES_PER_USER = "max_instances_per_user";
-        public static final String NUM_INSTANCES_FOR_USER = "num_instances_for_user";
     }
 
     public static final class API_RATE_LIMIT {

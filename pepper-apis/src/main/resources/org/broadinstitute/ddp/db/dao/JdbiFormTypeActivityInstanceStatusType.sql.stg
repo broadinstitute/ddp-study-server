@@ -9,6 +9,14 @@ values (:studyId,
        :icon, :revisionId)
 >>
 
+updateIconBlob() ::= <<
+update form_type__activity_instance_status_type
+set icon_blob = :icon
+where umbrella_study_id = :studyId
+and form_type_id =  (select form_type_id from form_type where form_type_code = :formType)
+and activity_instance_status_type_id = (select activity_instance_status_type_id from activity_instance_status_type where activity_instance_status_type_code = :statusType)
+>>
+
 queryLatestIconBlobs() ::= <<
 	select
         ft.form_type_code,

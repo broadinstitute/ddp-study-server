@@ -92,6 +92,8 @@ public class TestFormActivity {
     }
 
     public static class Builder {
+        private Integer maxInstancesPerUser = null;
+        private boolean hideExistingInstances = false;
         private boolean withAgreementQuestion = false;
         private boolean withBoolQuestion = false;
         private boolean withDateFullQuestion = false;
@@ -103,6 +105,16 @@ public class TestFormActivity {
 
         private Builder() {
             // Use static factories.
+        }
+
+        public Builder setMaxInstancesPerUser(Integer maxInstancesPerUser) {
+            this.maxInstancesPerUser = maxInstancesPerUser;
+            return this;
+        }
+
+        public Builder setHideExistingInstances(boolean hideExistingInstances) {
+            this.hideExistingInstances = hideExistingInstances;
+            return this;
         }
 
         public Builder withAgreementQuestion(boolean include) {
@@ -159,8 +171,11 @@ public class TestFormActivity {
 
         public TestFormActivity build(Handle handle, long userId, String studyGuid) {
             var result = new TestFormActivity();
-            var builder = FormActivityDef.generalFormBuilder("ACT" + Instant.now().toEpochMilli(), "v1", studyGuid)
-                    .addName(new Translation("en", "test activity"));
+            var builder = FormActivityDef
+                    .generalFormBuilder("ACT" + Instant.now().toEpochMilli(), "v1", studyGuid)
+                    .addName(new Translation("en", "test activity"))
+                    .setMaxInstancesPerUser(maxInstancesPerUser)
+                    .setHideInstances(hideExistingInstances);
 
             if (withAgreementQuestion) {
                 var question = new AgreementQuestionDef(

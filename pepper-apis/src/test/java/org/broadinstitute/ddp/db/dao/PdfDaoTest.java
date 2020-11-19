@@ -8,7 +8,9 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -40,6 +42,7 @@ import org.broadinstitute.ddp.model.pdf.PdfConfiguration;
 import org.broadinstitute.ddp.model.pdf.PdfDataSource;
 import org.broadinstitute.ddp.model.pdf.PdfDataSourceType;
 import org.broadinstitute.ddp.model.pdf.PdfSubstitution;
+import org.broadinstitute.ddp.model.pdf.PdfTemplate;
 import org.broadinstitute.ddp.model.pdf.PdfVersion;
 import org.broadinstitute.ddp.model.pdf.PhysicianInstitutionTemplate;
 import org.broadinstitute.ddp.model.pdf.ProfileSubstitution;
@@ -75,12 +78,13 @@ public class PdfDaoTest extends TxnAwareBaseTest {
             CustomTemplate custom = new CustomTemplate(new byte[]{3});
             custom.addSubstitution(new ProfileSubstitution("s1", "first_name"));
 
-            config.addTemplate(custom);
-            config.addTemplate(new MailingAddressTemplate(new byte[]{1}, "fn", "ln", null, null, "st", "c", "s", "z", "country", "phone"));
-            config.addTemplate(new PhysicianInstitutionTemplate(new byte[]{2}, InstitutionType.PHYSICIAN, "pn", "in", "c", "s"));
+            List<PdfTemplate> templates = new ArrayList<>();
+            templates.add(custom);
+            templates.add(new MailingAddressTemplate(new byte[]{1}, "fn", "ln", null, null, "st", "c", "s", "z", "country", "phone"));
+            templates.add(new PhysicianInstitutionTemplate(new byte[]{2}, InstitutionType.PHYSICIAN, "pn", "in", "c", "s"));
 
             PdfDao dao = handle.attach(PdfDao.class);
-            long configId = dao.insertNewConfig(config);
+            long configId = dao.insertNewConfig(config, templates);
             assertTrue(dao.findConfigInfo(configId).isPresent());
             assertEquals(configId, config.getId());
             assertTrue(version.getId() > 0);
@@ -102,8 +106,8 @@ public class PdfDaoTest extends TxnAwareBaseTest {
             PdfConfiguration config2 = new PdfConfiguration(info, new PdfVersion("pdf-v2", rev2));
 
             PdfDao dao = handle.attach(PdfDao.class);
-            long configId = dao.insertNewConfig(config1);
-            long version2Id = dao.insertNewConfigVersion(config2);
+            long configId = dao.insertNewConfig(config1, Collections.emptyList());
+            long version2Id = dao.insertNewConfigVersion(config2, Collections.emptyList());
 
             assertTrue(dao.findConfigInfo(configId).isPresent());
             assertTrue(dao.findConfigVersion(version2Id).isPresent());
@@ -126,7 +130,7 @@ public class PdfDaoTest extends TxnAwareBaseTest {
             PdfConfiguration config = new PdfConfiguration(info, new PdfVersion("new-version", rev));
 
             PdfDao dao = handle.attach(PdfDao.class);
-            dao.insertNewConfigVersion(config);
+            dao.insertNewConfigVersion(config, Collections.emptyList());
 
             fail("expected exception not thrown");
         });
@@ -142,8 +146,8 @@ public class PdfDaoTest extends TxnAwareBaseTest {
             PdfConfiguration config = new PdfConfiguration(info, new PdfVersion("pdf-v1", rev1));
 
             PdfDao dao = handle.attach(PdfDao.class);
-            long configId = dao.insertNewConfig(config);
-            dao.insertNewConfigVersion(new PdfConfiguration(info, new PdfVersion("pdf-v2", rev2)));
+            long configId = dao.insertNewConfig(config, Collections.emptyList());
+            dao.insertNewConfigVersion(new PdfConfiguration(info, new PdfVersion("pdf-v2", rev2)), Collections.emptyList());
 
             int actual = dao.deleteAllConfigVersions(configId);
             assertEquals(2, actual);
@@ -165,8 +169,9 @@ public class PdfDaoTest extends TxnAwareBaseTest {
             PdfConfiguration config = new PdfConfiguration(info, version1);
 
             PdfDao dao = handle.attach(PdfDao.class);
-            long configId = dao.insertNewConfig(config);
-            long version2Id = dao.insertNewConfigVersion(new PdfConfiguration(info, new PdfVersion("pdf-v2", rev2)));
+            long configId = dao.insertNewConfig(config, Collections.emptyList());
+            long version2Id = dao.insertNewConfigVersion(new PdfConfiguration(info, new PdfVersion("pdf-v2", rev2)),
+                    Collections.emptyList());
 
             dao.deleteSpecificConfigVersion(dao.findFullConfig(version2Id));
             assertTrue(dao.findConfigInfo(configId).isPresent());
@@ -189,7 +194,7 @@ public class PdfDaoTest extends TxnAwareBaseTest {
             PdfConfiguration config = new PdfConfiguration(info, version1);
 
             PdfDao dao = handle.attach(PdfDao.class);
-            long configId = dao.insertNewConfig(config);
+            long configId = dao.insertNewConfig(config, Collections.emptyList());
 
             boolean deletedAll = dao.deleteSpecificConfigVersion(dao.findFullConfig(version1.getId()));
             assertTrue(deletedAll);
@@ -210,7 +215,7 @@ public class PdfDaoTest extends TxnAwareBaseTest {
                     new PdfVersion("pdf-v1", revId));
 
             PdfDao dao = handle.attach(PdfDao.class);
-            long configId = dao.insertNewConfig(config);
+            long configId = dao.insertNewConfig(config, Collections.emptyList());
 
             Optional<PdfConfigInfo> actual = dao.findConfigInfo(configId);
             assertTrue(actual.isPresent());
@@ -238,7 +243,7 @@ public class PdfDaoTest extends TxnAwareBaseTest {
                     version);
 
             PdfDao dao = handle.attach(PdfDao.class);
-            long configId = dao.insertNewConfig(config);
+            long configId = dao.insertNewConfig(config, Collections.emptyList());
 
             Optional<PdfVersion> actual = dao.findConfigVersion(version.getId());
             assertTrue(actual.isPresent());
@@ -266,8 +271,9 @@ public class PdfDaoTest extends TxnAwareBaseTest {
             PdfConfiguration config = new PdfConfiguration(info, version1);
 
             PdfDao dao = handle.attach(PdfDao.class);
-            long configId = dao.insertNewConfig(config);
-            long version2Id = dao.insertNewConfigVersion(new PdfConfiguration(info, new PdfVersion("pdf-v2", rev2)));
+            long configId = dao.insertNewConfig(config, Collections.emptyList());
+            long version2Id = dao.insertNewConfigVersion(new PdfConfiguration(info, new PdfVersion("pdf-v2", rev2)),
+                    Collections.emptyList());
 
             List<PdfVersion> actual = dao.findOrderedConfigVersionsByConfigId(configId);
             assertEquals(2, actual.size());
@@ -309,12 +315,13 @@ public class PdfDaoTest extends TxnAwareBaseTest {
             custom.addSubstitution(new ActivityDateSubstitution("s3", act.getActivityId()));
             custom.addSubstitution(new ProfileSubstitution("s4", "first_name"));
 
-            config.addTemplate(custom);
-            config.addTemplate(new MailingAddressTemplate(new byte[]{1}, "fn", "ln", null, null, "st", "c", "s", "z", "country", "phone"));
-            config.addTemplate(new PhysicianInstitutionTemplate(new byte[]{2}, InstitutionType.PHYSICIAN, "pn", "in", "c", "s"));
+            List<PdfTemplate> templates = new ArrayList<>();
+            templates.add(custom);
+            templates.add(new MailingAddressTemplate(new byte[]{1}, "fn", "ln", null, null, "st", "c", "s", "z", "country", "phone"));
+            templates.add(new PhysicianInstitutionTemplate(new byte[]{2}, InstitutionType.PHYSICIAN, "pn", "in", "c", "s"));
 
             PdfDao dao = handle.attach(PdfDao.class);
-            long configId = dao.insertNewConfig(config);
+            long configId = dao.insertNewConfig(config, templates);
 
             PdfConfiguration actual = dao.findFullConfig(version.getId());
             assertNotNull(actual);
@@ -327,7 +334,10 @@ public class PdfDaoTest extends TxnAwareBaseTest {
             assertEquals(1, acceptedActivityVersions.get(act.getActivityCode()).size());
             assertTrue(acceptedActivityVersions.get(act.getActivityCode()).contains(act.getVersionTag()));
 
-            List<PdfSubstitution> substitutions = ((CustomTemplate) actual.getTemplates().get(0)).getSubstitutions();
+            Optional<PdfTemplate> customTemplateOptional = dao.findFullTemplateByTemplateId(actual.getTemplateIds().get(0));
+            assertTrue(customTemplateOptional.isPresent());
+
+            List<PdfSubstitution> substitutions = ((CustomTemplate) customTemplateOptional.get()).getSubstitutions();
             assertEquals(4, substitutions.size());
             for (PdfSubstitution substitution : substitutions) {
                 assertTrue(substitution.getId() > 0);

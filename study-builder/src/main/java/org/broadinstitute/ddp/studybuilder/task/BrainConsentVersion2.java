@@ -16,19 +16,21 @@ import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiActivityVersion;
 import org.broadinstitute.ddp.db.dao.JdbiFormSectionBlock;
 import org.broadinstitute.ddp.db.dao.JdbiQuestion;
+import org.broadinstitute.ddp.db.dao.JdbiQuestionValidation;
 import org.broadinstitute.ddp.db.dao.JdbiRevision;
-import org.broadinstitute.ddp.db.dao.JdbiTextQuestion;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.JdbiVariableSubstitution;
 import org.broadinstitute.ddp.db.dao.PdfDao;
 import org.broadinstitute.ddp.db.dao.SectionBlockDao;
 import org.broadinstitute.ddp.db.dao.UserDao;
+import org.broadinstitute.ddp.db.dao.ValidationDao;
 import org.broadinstitute.ddp.db.dto.ActivityDto;
 import org.broadinstitute.ddp.db.dto.ActivityVersionDto;
 import org.broadinstitute.ddp.db.dto.QuestionDto;
 import org.broadinstitute.ddp.db.dto.SectionBlockMembershipDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.db.dto.TextQuestionDto;
+import org.broadinstitute.ddp.db.dto.validation.RuleDto;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
 import org.broadinstitute.ddp.model.activity.definition.QuestionBlockDef;
@@ -36,6 +38,7 @@ import org.broadinstitute.ddp.model.activity.definition.i18n.Translation;
 import org.broadinstitute.ddp.model.activity.definition.question.TextQuestionDef;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
 import org.broadinstitute.ddp.model.activity.types.ListStyleHint;
+import org.broadinstitute.ddp.model.activity.types.RuleType;
 import org.broadinstitute.ddp.model.pdf.PdfActivityDataSource;
 import org.broadinstitute.ddp.model.pdf.PdfConfigInfo;
 import org.broadinstitute.ddp.model.pdf.PdfVersion;
@@ -88,7 +91,7 @@ public class BrainConsentVersion2 implements CustomTask {
 
     }
 
-    //@Override
+    @Override
     public void run(Handle handle) {
         //creates version: 2 for CONSENT (self/adult consent) activity.
 
@@ -115,6 +118,24 @@ public class BrainConsentVersion2 implements CustomTask {
                 activityCode, "v1").get();
         FormActivityDef activity = (FormActivityDef) activityDao.findDefByDtoAndVersion(activityDto, versionDto);
 
+        JdbiQuestion jdbiQuestion = handle.attach(JdbiQuestion.class);
+        QuestionDto dobDto = jdbiQuestion.findLatestDtoByStudyIdAndQuestionStableId(studyId, "CONSENT_DOB").get();
+
+        String reason = String.format(
+                "Update activity with studyGuid=%s activityCode=%s to versionTag=%s",
+                studyGuid, activityCode, versionTag);
+        RevisionMetadata meta = new RevisionMetadata(timestamp.toEpochMilli(), adminUser.getId(), reason);
+
+        //disable AgeTooYoung Dob Validation
+        ValidationDao validationDao = handle.attach(ValidationDao.class);
+        JdbiQuestionValidation validation = handle.attach(JdbiQuestionValidation.class);
+        List<RuleDto> consentDobValidations = validation.getAllActiveValidations(dobDto.getId());
+        RuleDto ageRangeValidation = consentDobValidations.stream().filter(
+                validationDto -> validationDto.getRuleType().equals(RuleType.AGE_RANGE)).findFirst().get();
+        validationDao.disableBaseRule(ageRangeValidation, meta);
+        LOG.info("Disabled age range validation for consent dob QID: {} validationID: {} old ver: {} rule: {}",
+                dobDto.getId(), ageRangeValidation.getId(), ageRangeValidation.getRevisionId(), ageRangeValidation.getRuleType());
+
         UpdateTemplatesInPlace updateTemplatesTask = new UpdateTemplatesInPlace();
         updateTemplatesTask.traverseActivity(handle, activityCode, definition, activity);
         LOG.info("updated variables for styling changes");
@@ -138,26 +159,19 @@ public class BrainConsentVersion2 implements CustomTask {
         }
 
         //consent ver: 2 stuff
-        String reason = String.format(
-                "Update activity with studyGuid=%s activityCode=%s to versionTag=%s",
-                studyGuid, activityCode, versionTag);
-        RevisionMetadata meta = new RevisionMetadata(timestamp.toEpochMilli(), adminUser.getId(), reason);
-
-
         JdbiRevision jdbiRevision = handle.attach(JdbiRevision.class);
 
         //change version
         ActivityVersionDto activityVersionDto = activityDao.changeVersion(activityId, versionTag, meta);
 
-        JdbiQuestion jdbiQuestion = handle.attach(JdbiQuestion.class);
         QuestionDto fullNameDto = jdbiQuestion.findLatestDtoByStudyIdAndQuestionStableId(studyId, "CONSENT_FULLNAME").get();
-        TextQuestionDto fullNameTextDto = handle.attach(JdbiTextQuestion.class).findDtoByQuestionId(fullNameDto.getId()).get();
+        TextQuestionDto fullNameTextDto = (TextQuestionDto) handle.attach(JdbiQuestion.class)
+                .findQuestionDtoById(fullNameDto.getId()).get();
         long fullNameBlockId = helper.findQuestionBlockId(fullNameDto.getId());
         JdbiFormSectionBlock jdbiFormSectionBlock = handle.attach(JdbiFormSectionBlock.class);
         SectionBlockMembershipDto fullNameSectionDto = jdbiFormSectionBlock.getActiveMembershipByBlockId(fullNameBlockId).get();
         long fullNameRevId = fullNameDto.getRevisionId();
 
-        QuestionDto dobDto = jdbiQuestion.findLatestDtoByStudyIdAndQuestionStableId(studyId, "CONSENT_DOB").get();
         long dobBlockId = helper.findQuestionBlockId(dobDto.getId());
         SectionBlockMembershipDto dobSectionDto = jdbiFormSectionBlock.getActiveMembershipByBlockId(dobBlockId).get();
         long newV2RevId = jdbiRevision.insertStart(timestamp.toEpochMilli(), adminUser.getId(), "consent version#2 change");

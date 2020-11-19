@@ -3,6 +3,7 @@ package org.broadinstitute.ddp.studybuilder;
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.Scanner;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -15,6 +16,7 @@ import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
 import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.exception.DDPException;
@@ -41,6 +43,7 @@ public class StudyBuilderCli {
     private static final String OPT_EMAIL_KEYS = "email-keys";
     private static final String DEFAULT_STUDIES_DIR = "studies";
     private static final String DEFAULT_STUDY_CONF_FILENAME = "study.conf";
+    private static final String DOUBLE_DASH = "--";
 
     public static void main(String[] args) throws Exception {
         var app = new StudyBuilderCli();
@@ -120,7 +123,7 @@ public class StudyBuilderCli {
         boolean isDryRun = cmd.hasOption("dry-run");
         if (cmd.hasOption(OPT_RUN_TASK)) {
             String taskName = cmd.getOptionValue(OPT_RUN_TASK);
-            runCustomTask(taskName, cfgPath, studyCfg, varsCfg, isDryRun);
+            runCustomTask(args, taskName, cfgPath, studyCfg, varsCfg, isDryRun);
             return;
         } else if (cmd.hasOption(OPT_PATCH)) {
             log("executing patches...");
@@ -223,9 +226,32 @@ public class StudyBuilderCli {
         }
     }
 
-    private void runCustomTask(String taskName, Path cfgPath, Config studyCfg, Config varsCfg, boolean isDryRun) {
+    private void runCustomTask(String[] fullArgs, String taskName, Path cfgPath, Config studyCfg, Config varsCfg, boolean isDryRun) {
         CustomTask task = BuilderUtils.loadTask(taskName);
         task.init(cfgPath, studyCfg, varsCfg);
+
+        int separatorIndex = -1;
+        for (int i = 0; i < fullArgs.length; i++) {
+            if (fullArgs[i].equals(DOUBLE_DASH)) {
+                separatorIndex = i;
+                break;
+            }
+        }
+
+        String[] args;
+        if (separatorIndex < 0) {
+            args = new String[] {};
+        } else {
+            args = Arrays.copyOfRange(fullArgs, separatorIndex + 1, fullArgs.length);
+        }
+
+        try {
+            task.consumeArguments(args);
+        } catch (ParseException e) {
+            log("error while task is consuming arguments:\n" + e.getMessage());
+            return;
+        }
+
         log("executing custom task: " + taskName);
         execute(task::run, isDryRun);
         log("done");

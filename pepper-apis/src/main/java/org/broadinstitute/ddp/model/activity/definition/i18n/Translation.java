@@ -6,6 +6,7 @@ import javax.validation.constraints.NotNull;
 
 import com.google.gson.annotations.SerializedName;
 import org.broadinstitute.ddp.util.MiscUtil;
+import org.jdbi.v3.core.mapper.reflect.ColumnName;
 import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
 
 public class Translation {
@@ -22,7 +23,11 @@ public class Translation {
     protected String text;
 
     @JdbiConstructor
-    public Translation(long id, String languageCode, String text, Long revisionId) {
+    public Translation(
+            @ColumnName("substitution_id") long id,
+            @ColumnName("iso_language_code") String languageCode,
+            @ColumnName("substitution_value") String text,
+            @ColumnName("substitution_revision_id") Long revisionId) {
         this.id = id;
         this.revisionId = revisionId;
         this.text = text;

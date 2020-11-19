@@ -4,6 +4,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
 
+import org.broadinstitute.ddp.cache.CacheService;
+import org.broadinstitute.ddp.cache.ModelChangeType;
 import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.DaoException;
 import org.broadinstitute.ddp.model.governance.Governance;
@@ -31,6 +33,7 @@ public interface UserGovernanceDao extends SqlObject {
     default Governance createGovernedUser(long clientId, long proxyUserId, String alias) {
         User governedUser = getUserDao().createUser(clientId, null);
         long governanceId = getUserGovernanceSql().insertGovernance(proxyUserId, governedUser.getId(), alias, true);
+        CacheService.getInstance().modelUpdated(ModelChangeType.USER, getHandle(), proxyUserId);
         return findGovernanceById(governanceId).orElseThrow(() -> new DaoException("Could not find governance with id " + governanceId));
     }
 
@@ -38,10 +41,12 @@ public interface UserGovernanceDao extends SqlObject {
         User governedUser = getUserDao().createUser(clientId, null);
         String alias = governedUser.getGuid();
         long governanceId = getUserGovernanceSql().insertGovernance(proxyUserId, governedUser.getId(), alias, true);
+        CacheService.getInstance().modelUpdated(ModelChangeType.USER, getHandle(), proxyUserId);
         return findGovernanceById(governanceId).orElseThrow(() -> new DaoException("Could not find governance with id " + governanceId));
     }
 
     default long assignProxy(String alias, long proxyUserId, long governedUserId) {
+        CacheService.getInstance().modelUpdated(ModelChangeType.USER, getHandle(), proxyUserId);
         return getUserGovernanceSql().insertGovernance(proxyUserId, governedUserId, alias, true);
     }
 

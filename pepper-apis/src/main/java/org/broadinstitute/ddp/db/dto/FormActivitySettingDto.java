@@ -7,6 +7,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.broadinstitute.ddp.model.activity.types.ListStyleHint;
 import org.jdbi.v3.core.mapper.RowMapper;
@@ -72,6 +74,17 @@ public class FormActivitySettingDto {
 
     public long getRevisionId() {
         return revisionId;
+    }
+
+    public Set<Long> getTemplateIds() {
+        var ids = new HashSet<Long>();
+        if (lastUpdatedTextTemplateId != null) {
+            ids.add(lastUpdatedTextTemplateId);
+        }
+        if (readonlyHintTemplateId != null) {
+            ids.add(readonlyHintTemplateId);
+        }
+        return ids;
     }
 
     public static class FormActivitySettingDtoMapper implements RowMapper<FormActivitySettingDto> {
