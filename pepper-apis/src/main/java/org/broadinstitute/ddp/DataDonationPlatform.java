@@ -110,6 +110,7 @@ import org.broadinstitute.ddp.route.GetProfileRoute;
 import org.broadinstitute.ddp.route.GetStudiesRoute;
 import org.broadinstitute.ddp.route.GetStudyDetailRoute;
 import org.broadinstitute.ddp.route.GetStudyPasswordPolicyRoute;
+import org.broadinstitute.ddp.route.GetStudyStatisticsRoute;
 import org.broadinstitute.ddp.route.GetTempMailingAddressRoute;
 import org.broadinstitute.ddp.route.GetUserAnnouncementsRoute;
 import org.broadinstitute.ddp.route.GetWorkflowRoute;
@@ -338,6 +339,7 @@ public class DataDonationPlatform {
         // - StudyLanguageResolutionFilter figures out and sets the user language in the attribute store
         // - StudyLanguageContentLanguageSettingFilter sets the "Content-Language" header later on
         before(API.BASE + "/user/*/studies/*", new StudyLanguageResolutionFilter());
+        before(API.STUDY_STATISTICS, new StudyLanguageResolutionFilter(), new UserAuthCheckFilter());
         after(API.BASE + "/user/*/studies/*", new StudyLanguageContentLanguageSettingFilter());
         beforeWithExclusion(API.BASE + "/studies/*", new StudyLanguageResolutionFilter(),
                 API.INVITATION_VERIFY, API.INVITATION_CHECK);
@@ -403,8 +405,9 @@ public class DataDonationPlatform {
         WorkflowService workflowService = new WorkflowService(interpreter);
         get(API.USER_STUDY_WORKFLOW, new GetWorkflowRoute(workflowService), responseSerializer);
 
+        I18nContentRenderer i18nContentRenderer = new I18nContentRenderer();
         // User study announcements
-        get(API.USER_STUDY_ANNOUNCEMENTS, new GetUserAnnouncementsRoute(new I18nContentRenderer()), responseSerializer);
+        get(API.USER_STUDY_ANNOUNCEMENTS, new GetUserAnnouncementsRoute(i18nContentRenderer), responseSerializer);
 
         // User prequalifier instance route
         StudyActivityDao studyActivityDao = new StudyActivityDao();
@@ -493,6 +496,8 @@ public class DataDonationPlatform {
         get(API.DSM_DRUG_SUGGESTION, new GetDsmDrugSuggestionsRoute(DrugStore.getInstance()), responseSerializer);
 
         get(API.CANCER_SUGGESTION, new GetCancerSuggestionsRoute(CancerStore.getInstance()), responseSerializer);
+
+        get(API.STUDY_STATISTICS, new GetStudyStatisticsRoute(i18nContentRenderer), responseSerializer);
 
         // Routes calling DSM
         get(API.PARTICIPANT_STATUS, new GetDsmParticipantStatusRoute(new DsmClient(cfg)), responseSerializer);
