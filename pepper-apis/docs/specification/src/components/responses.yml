@@ -447,3 +447,9 @@ WorkflowResponse:
     application/json:
       schema:
         $ref: '../pepper.yml#/components/schemas/WorkflowNextSuggestion'
+StatisticsResponse:
+  description: Study statistics
+  content:
+    application/json:
+      schema:
+        $ref: '../pepper.yml#/components/schemas/Statistics'

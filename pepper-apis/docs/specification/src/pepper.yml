@@ -74,6 +74,8 @@ paths:
     $ref: 'endpoints/studies.suggestions.drugs.yml'
   /studies/{study}/suggestions/cancers:
     $ref: 'endpoints/studies.suggestions.cancers.yml'
+  /studies/{study}/statistics:
+    $ref: 'endpoints/studies.statistics.yml'
   /user/{user}/profile:
     $ref: 'endpoints/user.profile.yml'
   /user/{user}/profile/address:
