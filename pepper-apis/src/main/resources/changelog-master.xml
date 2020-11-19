@@ -237,6 +237,12 @@
     <include file="db-changes/schema/DDP-5183-drop-initial-kit-record.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/DDP-5194-picklist-nested-options.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/seed/add-participant-list-workflow-state-type.xml" relativeToChangelogFile="true"/>
+<<<<<<< HEAD
+=======
+    <include file="db-changes/schema/DDP-5175-copy-from-previous-instance.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/user_legacy_altpid_change_limit_size.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/seed/DDP-5282-db-translations.xml" relativeToChangelogFile="true"/>
+>>>>>>> master
     <include file="db-changes/schema/DDP-5310-create-statistics-types.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/seed/add-languages-de-hi-it-ja-pl-tr.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>

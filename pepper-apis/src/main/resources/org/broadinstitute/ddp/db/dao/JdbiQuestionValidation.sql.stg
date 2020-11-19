@@ -1,0 +1,52 @@
+group JdbiQuestionValidation;
+
+select_all_question_rule_dtos() ::= <<
+select q.question_id,
+       vt.validation_type_code as rule_type,
+       v.validation_id,
+       v.correction_hint_template_id,
+       v.revision_id,
+       v.allow_save,
+       coalesce(arv.min_age, irv.min, lv.min_length, nosv.min_selections) as min,
+       coalesce(arv.max_age, irv.max, lv.max_length, nosv.max_selections) as max,
+       drv.start_date,
+       drv.end_date,
+       drv.use_today_as_end,
+       rv.regex_pattern
+  from question__validation as qv
+  join question as q on q.question_id = qv.question_id
+  join validation as v on v.validation_id = qv.validation_id
+  join validation_type as vt on vt.validation_type_id = v.validation_type_id
+  join revision as rev on rev.revision_id = v.revision_id
+  left join age_range_validation as arv on arv.validation_id = v.validation_id
+  left join date_range_validation as drv on drv.validation_id = v.validation_id
+  left join int_range_validation as irv on irv.validation_id = v.validation_id
+  left join length_validation as lv on lv.validation_id = v.validation_id
+  left join num_options_selected_validation as nosv on nosv.validation_id = v.validation_id
+  left join regex_validation as rv on rv.validation_id = rv.validation_id
+>>
+
+getAllActiveValidations() ::= <<
+<select_all_question_rule_dtos()>
+ where q.question_id = :questionId and rev.end_date is null
+>>
+
+getAllActiveValidationDtosForActivity() ::= <<
+<select_all_question_rule_dtos()>
+ where q.study_activity_id = :activityId and rev.end_date is null
+>>
+
+getRequiredValidationIfActive() ::= <<
+<select_all_question_rule_dtos()>
+ where q.question_id = :questionId
+   and vt.validation_type_code = 'REQUIRED'
+   and rev.end_date is null
+>>
+
+findDtosByQuestionIdsAndTimestamp(questionIds) ::= <<
+<select_all_question_rule_dtos()>
+ where q.question_id in (<questionIds>)
+   and rev.start_date \<= :timestamp
+   and (rev.end_date is null or :timestamp \< rev.end_date)
+ order by q.question_id asc, v.validation_id asc
+>>

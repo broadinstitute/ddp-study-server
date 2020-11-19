@@ -29,6 +29,7 @@ import org.broadinstitute.ddp.model.activity.definition.i18n.Translation;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
 import org.jdbi.v3.core.Handle;
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -58,6 +59,15 @@ public class DsmTriggerOnDemandActivityRouteTest extends DsmRouteTest {
         handle.attach(ActivityDao.class).insertActivity(activity, RevisionMetadata.now(generatedTestData.getUserId(), "test"));
         assertNotNull(activity.getActivityId());
         return activity;
+    }
+
+    @AfterClass
+    public static void testDataCleanup() {
+        TransactionWrapper.useTxn(handle -> {
+            assertEquals(1, handle.createUpdate("update user set legacy_altpid = null where guid = :guid")
+                    .bind("guid", userGuid)
+                    .execute());
+        });
     }
 
     @After

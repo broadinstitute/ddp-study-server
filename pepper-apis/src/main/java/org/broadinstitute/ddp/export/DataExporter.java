@@ -3,7 +3,6 @@ package org.broadinstitute.ddp.export;
 import static org.broadinstitute.ddp.model.activity.types.ComponentType.MAILING_ADDRESS;
 
 import java.io.BufferedWriter;
-import java.io.Closeable;
 import java.io.IOException;
 import java.io.Writer;
 import java.net.MalformedURLException;
@@ -126,7 +125,7 @@ import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class DataExporter implements Closeable {
+public class DataExporter {
 
     public static final String TIMESTAMP_PATTERN = "MM/dd/yyyy HH:mm:ss";
     public static final DateTimeFormatter TIMESTAMP_FMT = DateTimeFormatter
@@ -172,7 +171,7 @@ public class DataExporter implements Closeable {
         this.gson = new GsonBuilder().serializeNulls().create();
         this.pdfService = new PdfService();
         try {
-            this.esClient = ElasticsearchServiceUtil.getClientForElasticsearchCloud(cfg);
+            this.esClient = ElasticsearchServiceUtil.getElasticsearchClient(cfg);
         } catch (MalformedURLException e) {
             throw new IllegalArgumentException(e);
         }
@@ -181,11 +180,6 @@ public class DataExporter implements Closeable {
         componentNames.add("INITIAL_BIOPSY");
         componentNames.add("INSTITUTION");
         componentNames.add("PHYSICIAN");
-    }
-
-    @Override
-    public void close() throws IOException {
-        this.esClient.close();
     }
 
     /**

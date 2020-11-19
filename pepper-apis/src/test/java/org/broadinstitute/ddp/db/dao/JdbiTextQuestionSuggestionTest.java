@@ -74,8 +74,7 @@ public class JdbiTextQuestionSuggestionTest extends TxnAwareBaseTest {
     }
 
     private void testGetSuggestionByQuestion(Handle handle, long questionId) {
-        JdbiTextQuestionSuggestion dao = handle.attach(JdbiTextQuestionSuggestion.class);
-        List<String> suggestions = dao.getTextQuestionSuggestions(questionId);
+        List<String> suggestions = handle.attach(JdbiQuestion.class).findTextQuestionSuggestions(questionId);
         Assert.assertNotNull(suggestions);
         Assert.assertEquals(3, suggestions.size());
         Assert.assertTrue(suggestions.get(1).equals("test typeahead#2"));

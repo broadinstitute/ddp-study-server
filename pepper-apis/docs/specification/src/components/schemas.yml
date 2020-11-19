@@ -757,16 +757,6 @@ Error.Activity:
           type: string
           enum:
             - MALFORMED_ACCEPT_LANGUAGE_HEADER
-Error.ActivityCreate:
-  allOf:
-    - $ref: '../pepper.yml#/components/schemas/Error'
-    - type: object
-      properties:
-        code:
-          type: string
-          enum:
-            - TOO_MANY_INSTANCES
-            - UNSATISFIED_PRECONDITION
 Error.ActivityNotFound:
   allOf:
     - $ref: '../pepper.yml#/components/schemas/Error'
@@ -1027,6 +1017,26 @@ Error.StudyExit:
           enum:
             - OPERATION_NOT_ALLOWED
             - NOT_SUPPORTED
+Error.TooManyInstances:
+  allOf:
+    - $ref: '../pepper.yml#/components/schemas/Error'
+    - type: object
+      properties:
+        code:
+          type: string
+          enum:
+            - TOO_MANY_INSTANCES
+Error.UserStudyActivityNotFound:
+  allOf:
+    - $ref: '../pepper.yml#/components/schemas/Error'
+    - type: object
+      properties:
+        code:
+          type: string
+          enum:
+            - ACTIVITY_NOT_FOUND
+            - STUDY_NOT_FOUND
+            - USER_NOT_FOUND
 Image:
   type: object
   required:

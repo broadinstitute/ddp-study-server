@@ -109,14 +109,13 @@ public class StudyPasswordResetEmailGenerator {
     public boolean sendPasswordResetEmails(String studyGuid, List<ProfileWithEmail> addresseeProfiles, String fromEmailName,
                                            String fromEmailAddress, String emailSubject, String redirectUrlAfterPasswordReset,
                                            String sendgridTemplateId, Auth0ManagementClient mgmtClient) {
-        final Auth0Util auth0Util = buildAuth0Util(mgmtClient.getDomain());
-        String auth0UserNamePasswordConnectionId;
-        try {
-            auth0UserNamePasswordConnectionId = auth0Util.getAuth0UserNamePasswordConnectionId(mgmtClient.getToken());
-        } catch (Auth0Exception e) {
+        var getResult = mgmtClient.getConnectionByName(Auth0ManagementClient.DEFAULT_DB_CONN_NAME);
+        if (getResult.hasFailure()) {
+            var e = getResult.hasThrown() ? getResult.getThrown() : getResult.getError();
             LOG.error("Could not obtain connection id", e);
             return false;
         }
+        String connectionId = getResult.getBody().getId();
         TransactionWrapper.useTxn(handle -> {
             String sendGridApiKey = getSendgridApiKey(studyGuid, handle);
 
@@ -133,15 +132,15 @@ public class StudyPasswordResetEmailGenerator {
                     continue;
                 }
 
-                String originalAuth0ResetLink;
-                try {
-                    originalAuth0ResetLink = auth0Util.generatePasswordResetLink(userEmail, auth0UserNamePasswordConnectionId,
-                            mgmtClient.getToken(), redirectUrlAfterPasswordReset);
-                } catch (Auth0Exception e) {
-                    LOG.error("Could not generate password reset link for email: " + userEmail + " and user id: " + profile.getUserId());
+                LOG.info("Creating password reset for {}", userEmail);
+                var result = mgmtClient.createPasswordResetTicket(userEmail, connectionId, redirectUrlAfterPasswordReset);
+                if (result.hasFailure()) {
+                    var e = result.hasThrown() ? result.getThrown() : result.getError();
+                    LOG.error("Could not generate password reset link for email: " + userEmail + " and user id: " + profile.getUserId(), e);
                     continue;
                 }
 
+                String originalAuth0ResetLink = result.getBody();
                 String resetLinkWithStudyParam = addParamToUrlString(originalAuth0ResetLink, "study", studyGuid);
 
                 Map<String, String> templateSubstitutions = new DdpParticipantSendGridEmailPersonalization()

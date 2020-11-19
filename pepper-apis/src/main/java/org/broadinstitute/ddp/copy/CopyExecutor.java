@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -12,28 +13,45 @@ import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dao.JdbiQuestion;
 import org.broadinstitute.ddp.db.dto.QuestionDto;
 import org.broadinstitute.ddp.exception.DDPException;
+import org.broadinstitute.ddp.model.activity.instance.ActivityResponse;
 import org.broadinstitute.ddp.model.activity.instance.FormResponse;
+import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
+import org.broadinstitute.ddp.model.activity.instance.answer.CompositeAnswer;
+import org.broadinstitute.ddp.model.activity.types.QuestionType;
 import org.broadinstitute.ddp.model.copy.CopyAnswerLocation;
 import org.broadinstitute.ddp.model.copy.CopyConfiguration;
 import org.broadinstitute.ddp.model.copy.CopyLocation;
 import org.broadinstitute.ddp.model.copy.CopyLocationType;
 import org.jdbi.v3.core.Handle;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class CopyExecutor {
 
+    private static final Logger LOG = LoggerFactory.getLogger(CopyExecutor.class);
+
     private Long triggeredInstanceId;
 
-    public void withTriggeredInstanceId(long instanceId) {
+    public CopyExecutor withTriggeredInstanceId(long instanceId) {
         this.triggeredInstanceId = instanceId;
+        return this;
     }
 
     public void execute(Handle handle, long operatorId, long participantId, CopyConfiguration config) {
+        AnswerToAnswerCopier ansToAnsCopier = new AnswerToAnswerCopier(handle, operatorId);
+        AnswerToProfileCopier ansToProfileCopier = new AnswerToProfileCopier(handle, operatorId);
+
+        if (config.shouldCopyFromPreviousInstance()) {
+            copyAnswersFromPreviousInstance(handle, config, ansToAnsCopier);
+        }
+
+        if (config.getPairs().isEmpty()) {
+            return;
+        }
+
         Map<String, QuestionDto> questionDtosByStableId = retrieveQuestionDtos(handle, config);
         Map<Long, FormResponse> responsesById = retrieveActivityData(handle, participantId,
                 List.copyOf(questionDtosByStableId.values()));
-
-        AnswerToAnswerCopier ansToAnsCopier = new AnswerToAnswerCopier(handle, operatorId);
-        AnswerToProfileCopier ansToProfileCopier = new AnswerToProfileCopier(handle, operatorId);
 
         for (var pair : config.getPairs()) {
             CopyLocation source = pair.getSource();
@@ -61,6 +79,79 @@ public class CopyExecutor {
                         source.getType(), target.getType(), config.getId()));
             }
         }
+    }
+
+    private void copyAnswersFromPreviousInstance(Handle handle, CopyConfiguration config, AnswerToAnswerCopier copier) {
+        if (triggeredInstanceId == null) {
+            throw new DDPException("Need to know the current triggered instance for copying from previous instance");
+        }
+
+        var instanceDao = handle.attach(ActivityInstanceDao.class);
+        Long previousInstanceId = instanceDao.findMostRecentInstanceBeforeCurrent(triggeredInstanceId).orElse(null);
+        if (previousInstanceId == null) {
+            LOG.info("No previous instance for triggered instance {} to copy answers from", triggeredInstanceId);
+            return;
+        }
+
+        Map<Long, FormResponse> instances;
+        try (var stream = instanceDao.findFormResponsesWithAnswersByInstanceIds(Set.of(triggeredInstanceId, previousInstanceId))) {
+            instances = stream.collect(Collectors.toMap(ActivityResponse::getId, Function.identity()));
+        }
+        FormResponse currentInstance = instances.get(triggeredInstanceId);
+        FormResponse previousInstance = instances.get(previousInstanceId);
+        if (currentInstance == null || previousInstance == null) {
+            throw new DDPException("Could not find triggered or previous instance");
+        }
+
+        // Build set of stable ids of questions that have an answer in the previous instance.
+        // Copier doesn't support copying top-level composite answers, so we need to drill into child questions.
+        Map<String, Set<String>> childQuestionStableIds = new HashMap<>();
+        Set<String> questionStableIds = previousInstance.getAnswers().stream()
+                .map(answer -> {
+                    if (answer.getQuestionType() == QuestionType.COMPOSITE) {
+                        Set<String> childStableId = ((CompositeAnswer) answer).getValue().stream()
+                                .flatMap(row -> row.getValues().stream())
+                                .filter(Objects::nonNull)
+                                .map(Answer::getQuestionStableId)
+                                .collect(Collectors.toSet());
+                        childQuestionStableIds.put(answer.getQuestionStableId(), childStableId);
+                        return null;
+                    } else {
+                        return answer.getQuestionStableId();
+                    }
+                })
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+        for (var childStableIds : childQuestionStableIds.values()) {
+            questionStableIds.addAll(childStableIds);
+        }
+        if (questionStableIds.isEmpty()) {
+            LOG.info("Previous instance {} does not have any answers to copy from", previousInstance.getGuid());
+            return;
+        }
+
+        Map<String, QuestionDto> questionDtos;
+        var jdbiQuestion = handle.attach(JdbiQuestion.class);
+        try (var stream = jdbiQuestion.findLatestDtosByStudyIdAndQuestionStableIds(config.getStudyId(), questionStableIds)) {
+            questionDtos = stream.collect(Collectors.toMap(QuestionDto::getStableId, Function.identity()));
+        }
+
+        int numCopied = 0;
+        for (var previousAnswer : previousInstance.getAnswers()) {
+            if (previousAnswer.getQuestionType() == QuestionType.COMPOSITE) {
+                for (var childStableId : childQuestionStableIds.get(previousAnswer.getQuestionStableId())) {
+                    QuestionDto childQuestion = questionDtos.get(childStableId);
+                    copier.copy(previousInstance, childQuestion, currentInstance, childQuestion);
+                }
+            } else {
+                QuestionDto question = questionDtos.get(previousAnswer.getQuestionStableId());
+                copier.copy(previousInstance, question, currentInstance, question);
+            }
+            numCopied++;
+        }
+
+        LOG.info("Copied {} answers from previous instance {} to instance {}",
+                numCopied, previousInstance.getGuid(), currentInstance.getGuid());
     }
 
     private Map<String, QuestionDto> retrieveQuestionDtos(Handle handle, CopyConfiguration config) {

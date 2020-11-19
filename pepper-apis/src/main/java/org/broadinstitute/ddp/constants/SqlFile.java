@@ -9,7 +9,6 @@ public class SqlFile {
         public static final String TRANSLATED_SUMMARY_BY_GUID_QUERY = "activityInstance.queryTranslatedSummaryByGuid";
         public static final String INSTANCE_ID_BY_GUID_QUERY = "activityInstance.queryIdByGuid";
         public static final String INSTANCE_SUMMARIES_FOR_USER_QUERY = "listUserActivitiesQuery";
-        public static final String INSTANCE_CREATION_VALIDATION_QUERY = "activityInstanceCreationValidationQuery";
         public static final String SECTIONS_SIZE_FOR_ACTIVITY_INSTANCE = "sectionsSizeForActivityInstance";
     }
 

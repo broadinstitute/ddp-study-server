@@ -1,6 +1,5 @@
 package org.broadinstitute.ddp.route;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import javax.servlet.http.HttpServletResponse;
@@ -102,12 +101,12 @@ public abstract class DsmPdfRoute implements Route {
                     LOG.info("Could not find {} pdf for participant {} using filename {}, generating",
                             pdfMappingType, user.getGuid(), blobName);
                     PdfConfiguration pdfConfig = handle.attach(PdfDao.class).findFullConfig(pdfVersion);
-                    byte[] pdfBytes = pdfGenerationService.generateFlattenedPdfForConfiguration(
+                    pdf = pdfGenerationService.generateFlattenedPdfForConfiguration(
                             pdfConfig,
                             user.getGuid(),
                             handle);
-                    pdf = new ByteArrayInputStream(pdfBytes);
-                    pdfBucketService.sendPdfToBucket(blobName, new ByteArrayInputStream(pdfBytes));
+
+                    pdfBucketService.sendPdfToBucket(blobName, pdf);
                     LOG.info("Uploaded pdf to bucket {} with filename {}", pdfBucketService.getBucketName(), blobName);
                 }
 

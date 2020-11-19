@@ -277,10 +277,10 @@ public class SectionBlockDaoTest extends TxnAwareBaseTest {
             assertNotNull(nested2.getBlockGuid());
 
             assertNotNull(control.getQuestionId());
-            assertTrue(jdbiQuestion.getQuestionDtoIfActive(control.getQuestionId()).isPresent());
+            assertTrue(jdbiQuestion.findQuestionDtoById(control.getQuestionId()).isPresent());
 
             assertNotNull(nested1.getQuestion().getQuestionId());
-            assertTrue(jdbiQuestion.getQuestionDtoIfActive(nested1.getQuestion().getQuestionId()).isPresent());
+            assertTrue(jdbiQuestion.findQuestionDtoById(nested1.getQuestion().getQuestionId()).isPresent());
 
             assertNotNull(nested2.getBodyTemplate().getTemplateId());
             assertTrue(templateDao.findTextAndVarCountById(nested2.getBodyTemplate().getTemplateId()).isPresent());
@@ -367,7 +367,7 @@ public class SectionBlockDaoTest extends TxnAwareBaseTest {
             assertEquals(title.getTemplateId(), headerDtoOpt.get().getTitleTemplateId());
 
             assertNotNull(nested1.getQuestion().getQuestionId());
-            assertTrue(jdbiQuestion.getQuestionDtoIfActive(nested1.getQuestion().getQuestionId()).isPresent());
+            assertTrue(jdbiQuestion.findQuestionDtoById(nested1.getQuestion().getQuestionId()).isPresent());
 
             assertNotNull(nested2.getBodyTemplate().getTemplateId());
             assertTrue(templateDao.findTextAndVarCountById(nested2.getBodyTemplate().getTemplateId()).isPresent());

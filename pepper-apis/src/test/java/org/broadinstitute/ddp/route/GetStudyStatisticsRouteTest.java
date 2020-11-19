@@ -30,6 +30,7 @@ import org.broadinstitute.ddp.db.dao.JdbiMailingList;
 import org.broadinstitute.ddp.db.dao.JdbiUserStudyEnrollment;
 import org.broadinstitute.ddp.db.dao.KitTypeDao;
 import org.broadinstitute.ddp.db.dao.StatisticsConfigurationDao;
+import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dao.UserGovernanceDao;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.json.errors.ApiError;
@@ -49,8 +50,8 @@ import org.broadinstitute.ddp.model.address.MailAddress;
 import org.broadinstitute.ddp.model.dsm.KitType;
 import org.broadinstitute.ddp.model.statistics.StatisticsType;
 import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
+import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.service.AddressService;
-import org.broadinstitute.ddp.util.Auth0Util;
 import org.broadinstitute.ddp.util.ConfigManager;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
 import org.broadinstitute.ddp.util.TestUtil;
@@ -62,8 +63,8 @@ import org.junit.Test;
 public class GetStudyStatisticsRouteTest extends IntegrationTestSuite.TestCase {
 
     private static TestDataSetupUtil.GeneratedTestData testData;
-    private static Auth0Util.TestingUser testUser2;
-    private static Auth0Util.TestingUser testUser3;
+    private static User testUser2;
+    private static User testUser3;
     private static ActivityInstanceDto instance1Dto;
     private static ActivityInstanceDto instance2Dto;
     private static ActivityInstanceDto instance3Dto;
@@ -77,16 +78,17 @@ public class GetStudyStatisticsRouteTest extends IntegrationTestSuite.TestCase {
     private static long kidRequestId;
 
     @BeforeClass
-    public static void setup() throws Exception {
+    public static void setup() {
         gson = new Gson();
         TransactionWrapper.useTxn(handle -> {
             testData = TestDataSetupUtil.generateBasicUserTestData(handle);
-            testUser2 = TestDataSetupUtil.generateTestUser(handle, testData.getStudyGuid());
-            testUser3 = TestDataSetupUtil.generateTestUser(handle, testData.getStudyGuid());
+            var userDao = handle.attach(UserDao.class);
+            testUser2 = userDao.createUser(testData.getClientId(), "user2");
+            testUser3 = userDao.createUser(testData.getClientId(), "user3");
             token = testData.getTestingUser().getToken();
             user1Guid = testData.getUserGuid();
-            user2Guid = testUser2.getUserGuid();
-            user3Guid = testUser3.getUserGuid();
+            user2Guid = testUser2.getGuid();
+            user3Guid = testUser3.getGuid();
             mailAddress = createTestAddress(handle, user3Guid);
             setupData(handle);
         });
@@ -138,10 +140,10 @@ public class GetStudyStatisticsRouteTest extends IntegrationTestSuite.TestCase {
         answerDao.createAnswer(testData.getUserId(), instance1Dto.getId(),
                 new PicklistAnswer(null, "PL", null,
                         Collections.singletonList(new SelectedPicklistOption("PL_OPT_1"))));
-        answerDao.createAnswer(testUser2.getUserId(), instance2Dto.getId(),
+        answerDao.createAnswer(testUser2.getId(), instance2Dto.getId(),
                 new PicklistAnswer(null, "PL", null,
                         Collections.singletonList(new SelectedPicklistOption("PL_OPT_2"))));
-        answerDao.createAnswer(testUser3.getUserId(), instance3Dto.getId(),
+        answerDao.createAnswer(testUser3.getId(), instance3Dto.getId(),
                 new PicklistAnswer(null, "PL", null,
                         Collections.singletonList(new SelectedPicklistOption("PL_OPT_1"))));
 
@@ -166,13 +168,13 @@ public class GetStudyStatisticsRouteTest extends IntegrationTestSuite.TestCase {
 
         // Setting up a governance
         UserGovernanceDao userGovernanceDao = handle.attach(UserGovernanceDao.class);
-        long governanceId = userGovernanceDao.assignProxy("alias", testUser3.getUserId(), testUser2.getUserId());
+        long governanceId = userGovernanceDao.assignProxy("alias", testUser3.getId(), testUser2.getId());
         userGovernanceDao.grantGovernedStudy(governanceId, testData.getStudyId());
 
         // Requesting a kit
         DsmKitRequestDao kitDao = handle.attach(DsmKitRequestDao.class);
         KitType salivaKitType = handle.attach(KitTypeDao.class).getSalivaKitType();
-        kidRequestId = kitDao.createKitRequest(testData.getStudyGuid(), mailAddress, testUser3.getUserId(), salivaKitType);
+        kidRequestId = kitDao.createKitRequest(testData.getStudyGuid(), mailAddress, testUser3.getId(), salivaKitType);
 
         // Subscribing
         JdbiMailingList jdbiMailingList = handle.attach(JdbiMailingList.class);

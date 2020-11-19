@@ -103,7 +103,7 @@ public class UpdateActivityBaseSettings implements CustomTask {
         }
     }
 
-    private void compareNamingDetails(Handle handle, Config definition, long activityId) {
+    public void compareNamingDetails(Handle handle, Config definition, long activityId) {
         var activityI18nDao = handle.attach(ActivityI18nDao.class);
         Map<String, ActivityI18nDetail> currentDetails = activityI18nDao
                 .findDetailsByActivityId(activityId)
