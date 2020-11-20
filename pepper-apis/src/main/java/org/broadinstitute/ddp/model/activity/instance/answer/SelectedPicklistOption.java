@@ -17,12 +17,20 @@ public class SelectedPicklistOption implements Serializable {
     @SerializedName("detail")
     private String detailText;
 
+    private transient  String parentStableId;
+
     public SelectedPicklistOption(String stableId) {
         this(stableId, null);
     }
 
     public SelectedPicklistOption(String stableId, String detailText) {
         this.stableId = MiscUtil.checkNotBlank(stableId, "stableId");
+        this.detailText = detailText;
+    }
+
+    public SelectedPicklistOption(String stableId, String parentStableId, String detailText) {
+        this.stableId = MiscUtil.checkNotBlank(stableId, "stableId");
+        this.parentStableId = parentStableId;
         this.detailText = detailText;
     }
 
@@ -33,4 +41,9 @@ public class SelectedPicklistOption implements Serializable {
     public String getDetailText() {
         return detailText;
     }
+
+    public String getParentStableId() {
+        return parentStableId;
+    }
+
 }
