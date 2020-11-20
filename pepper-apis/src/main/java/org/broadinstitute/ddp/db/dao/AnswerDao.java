@@ -413,6 +413,7 @@ public interface AnswerDao extends SqlObject {
                     if (optionStableId != null) {
                         var option = new SelectedPicklistOption(optionStableId,
                                 view.getColumn("pa_parent_option_stable_id", String.class),
+                                view.getColumn("pa_group_stable_id", String.class),
                                 view.getColumn("pa_detail_text", String.class));
                         ((PicklistAnswer) answer).getValue().add(option);
                     }

@@ -16,9 +16,11 @@ import org.broadinstitute.ddp.model.activity.types.QuestionType;
 public final class PicklistQuestionRecord extends QuestionRecord {
 
     @SerializedName("answer")
-    private List<String> selected = new ArrayList<>();
+    private List<Object> selected = new ArrayList<>();
     @SerializedName("optionDetails")
     private List<Map<String, String>> optionDetails = new ArrayList<>();
+    @SerializedName("groupOptions")
+    private Map<String, List<String>> groupOptions = new HashMap<>();
     @SerializedName("nestedOptions")
     private Map<String, List<String>> nestedOptions = new HashMap<>();
 
@@ -28,7 +30,10 @@ public final class PicklistQuestionRecord extends QuestionRecord {
             List<SelectedPicklistOption> selected = new ArrayList<>(answer);
             selected.sort(Comparator.comparing(SelectedPicklistOption::getStableId));
             for (SelectedPicklistOption option : selected) {
-                if (StringUtils.isNotBlank(option.getParentStableId())) {
+                if (StringUtils.isNotBlank(option.getGroupStableId())) {
+                    String groupStableId = option.getGroupStableId();
+                    groupOptions.computeIfAbsent(groupStableId, id -> new ArrayList<>()).add(option.getStableId());
+                } else if (StringUtils.isNotBlank(option.getParentStableId())) {
                     String parentStableId = option.getParentStableId();
                     nestedOptions.computeIfAbsent(parentStableId, id -> new ArrayList<>()).add(option.getStableId());
                 } else {
@@ -40,6 +45,9 @@ public final class PicklistQuestionRecord extends QuestionRecord {
                     details.put("details", option.getDetailText());
                     this.optionDetails.add(details);
                 }
+            }
+            if (!groupOptions.isEmpty())  {
+                this.selected.addAll(groupOptions.keySet());
             }
         }
     }
