@@ -2081,7 +2081,7 @@
         "activity_code": "REGISTRATION",
         "question_answer_stables": [
           {
-            "name": "",
+            "name": "registration_agreement",
             "stable_id": "REGISTRATION_AGREEMENT",
             "type": "Agreement",
             "source_type": ""
@@ -2227,6 +2227,18 @@
         "name": "GenomeStudySurvey",
         "activity_code": "GENOME_STUDY",
         "question_answer_stables": [
+          {
+            "name": "saliva_agreement",
+            "stable_id": "COLLECTION_KIT",
+            "type": "Picklist",
+            "source_type": "string",
+            "options": [
+              {
+                "name": "AGREE",
+                "type": "string"
+              }
+            ]
+          },
           {
             "name": "genome_study_shipping_address",
             "stable_id": "SHIPPING_ADDRESS",
