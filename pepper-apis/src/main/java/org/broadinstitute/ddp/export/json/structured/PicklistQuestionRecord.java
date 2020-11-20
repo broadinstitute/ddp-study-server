@@ -19,8 +19,8 @@ public final class PicklistQuestionRecord extends QuestionRecord {
     private List<String> selected = new ArrayList<>();
     @SerializedName("optionDetails")
     private List<Map<String, String>> optionDetails = new ArrayList<>();
-    @SerializedName("groupOptions")
-    private Map<String, List<String>> groupOptions = new HashMap<>();
+    @SerializedName("groupedOptions")
+    private Map<String, List<String>> groupedOptions = new HashMap<>();
     @SerializedName("nestedOptions")
     private Map<String, List<String>> nestedOptions = new HashMap<>();
 
@@ -32,7 +32,7 @@ public final class PicklistQuestionRecord extends QuestionRecord {
             for (SelectedPicklistOption option : selected) {
                 if (StringUtils.isNotBlank(option.getGroupStableId())) {
                     String groupStableId = option.getGroupStableId();
-                    groupOptions.computeIfAbsent(groupStableId, id -> new ArrayList<>()).add(option.getStableId());
+                    groupedOptions.computeIfAbsent(groupStableId, id -> new ArrayList<>()).add(option.getStableId());
                 } else if (StringUtils.isNotBlank(option.getParentStableId())) {
                     String parentStableId = option.getParentStableId();
                     nestedOptions.computeIfAbsent(parentStableId, id -> new ArrayList<>()).add(option.getStableId());
@@ -46,8 +46,8 @@ public final class PicklistQuestionRecord extends QuestionRecord {
                     this.optionDetails.add(details);
                 }
             }
-            if (!groupOptions.isEmpty())  {
-                this.selected.addAll(groupOptions.keySet());
+            if (!groupedOptions.isEmpty())  {
+                this.selected.addAll(groupedOptions.keySet());
             }
         }
     }
