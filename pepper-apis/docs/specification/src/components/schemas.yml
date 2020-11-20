@@ -1091,6 +1091,12 @@ PicklistOption:
       type: string
     exclusive:
       type: boolean
+    nestedOptionsLabel:
+      type: string
+    nestedOptions:
+        type: array
+        items:
+          $ref: '../pepper.yml#/components/schemas/PicklistOption'
 PrequalifierModel:
   type: object
   required:
