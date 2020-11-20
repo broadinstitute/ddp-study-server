@@ -18,6 +18,7 @@ public class SelectedPicklistOption implements Serializable {
     private String detailText;
 
     private transient  String parentStableId;
+    private transient  String groupStableId;
 
     public SelectedPicklistOption(String stableId) {
         this(stableId, null);
@@ -28,8 +29,9 @@ public class SelectedPicklistOption implements Serializable {
         this.detailText = detailText;
     }
 
-    public SelectedPicklistOption(String stableId, String parentStableId, String detailText) {
+    public SelectedPicklistOption(String stableId, String parentStableId, String groupStableId, String detailText) {
         this.stableId = MiscUtil.checkNotBlank(stableId, "stableId");
+        this.groupStableId = groupStableId;
         this.parentStableId = parentStableId;
         this.detailText = detailText;
     }
@@ -46,4 +48,7 @@ public class SelectedPicklistOption implements Serializable {
         return parentStableId;
     }
 
+    public String getGroupStableId() {
+        return groupStableId;
+    }
 }
