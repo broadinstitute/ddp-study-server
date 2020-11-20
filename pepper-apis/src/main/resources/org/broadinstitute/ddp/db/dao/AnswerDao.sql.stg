@@ -14,8 +14,8 @@ select ans.answer_id,
        nt.numeric_type_code as na_numeric_type,
        na.int_value         as na_int_value,
        po.picklist_option_stable_id as pa_option_stable_id,
-			 (select ppo.picklist_option_stable_id from picklist_nested_option as npo join picklist_option as ppo
-			   where ppo.picklist_option_id = npo.parent_option_id
+       (select ppo.picklist_option_stable_id from picklist_nested_option as npo join picklist_option as ppo
+         where ppo.picklist_option_id = npo.parent_option_id
          and npo.nested_option_id = pa.picklist_option_id
        ) as pa_parent_option_stable_id,
        (select plg.group_stable_id from picklist_grouped_option pgo join picklist_group plg
