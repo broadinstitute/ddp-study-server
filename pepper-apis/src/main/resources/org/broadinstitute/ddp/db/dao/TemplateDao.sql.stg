@@ -1,11 +1,19 @@
 group TemplateDao;
 
 queryAllTranslatedVariablesByTemplateIdsAndLangId() ::= <<
-select tv.template_id, tv.variable_name, i18n_ts.substitution_value
-  from template_variable as tv
-  join i18n_template_substitution as i18n_ts on i18n_ts.template_variable_id = tv.template_variable_id
- where tv.template_id in (\<templateIds\>)
-   and i18n_ts.language_code_id = :langCodeId
+select
+  tv.template_id, tv.variable_name, coalesce(i18n_ts.substitution_value, i18n_ts_def.substitution_value) as substitution_value
+from
+  template_variable as tv
+  left join i18n_template_substitution as i18n_ts on
+    i18n_ts.template_variable_id = tv.template_variable_id and
+    i18n_ts.language_code_id = :langCodeId
+  left join i18n_template_substitution as i18n_ts_def on
+    i18n_ts_def.template_variable_id = tv.template_variable_id and
+    i18n_ts_def.language_code_id = :defaultLangCodeId
+where
+  tv.template_id in (\<templateIds\>) and
+  (i18n_ts.substitution_value is not null or i18n_ts_def.substitution_value is not null)
 >>
 
 select_all_templates() ::= <<

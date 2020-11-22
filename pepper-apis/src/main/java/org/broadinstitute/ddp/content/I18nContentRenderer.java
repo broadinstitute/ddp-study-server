@@ -181,7 +181,7 @@ public class I18nContentRenderer {
         for (Long langCodeId : languageCodeIds) {
             LOG.info("Fetching translations for the variables with templateId " + contentTemplateId);
             translatedTemplateVariables = templateDao
-                    .findAllTranslatedVariablesByIds(Set.of(contentTemplateId), langCodeId)
+                    .findAllTranslatedVariablesByIds(Set.of(contentTemplateId), langCodeId, null)
                     .getOrDefault(contentTemplateId, new HashMap<>());
             int translatedTemplateVariablesCount = translatedTemplateVariables.size();
             if (templateVariableCount == translatedTemplateVariablesCount) {
@@ -231,7 +231,8 @@ public class I18nContentRenderer {
 
         TemplateDao tmplDao = handle.attach(TemplateDao.class);
         Map<Long, TemplateDao.TextAndVarCount> templateData = tmplDao.findAllTextAndVarCountsByIds(templateIds);
-        Map<Long, Map<String, String>> variables = tmplDao.findAllTranslatedVariablesByIds(templateIds, langCodeId);
+        Map<Long, Map<String, String>> variables = tmplDao
+                .findAllTranslatedVariablesByIds(templateIds, langCodeId, getDefaultLanguageId(handle));
         Map<Long, String> rendered = new HashMap<>(templateIds.size());
 
         for (long templateId : templateIds) {
