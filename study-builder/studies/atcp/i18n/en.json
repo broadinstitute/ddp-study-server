@@ -222,7 +222,7 @@
   "contacting_physician_prompt_evaluated_il_country": "Israel",
   "contacting_physician_prompt_evaluated_us": "A-T Clinical Center at Johns Hopkins Hospital, Baltimore, MD,",
   "contacting_physician_prompt_evaluated_us_country": "USA",
-  "contacting_physician_prompt_evaluation": "Participant has been evaluated at (if applicable):",
+  "contacting_physician_prompt_evaluation": "has been evaluated at (if applicable):",
   "contacting_physician_prompt_firstname": "Physician's First Name (optional)",
   "contacting_physician_prompt_lastname": "Physician's Last Name*",
   "contacting_physician_prompt_mail": "Physician's Complete Mailing Address*",
