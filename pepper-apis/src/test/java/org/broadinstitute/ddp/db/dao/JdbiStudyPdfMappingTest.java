@@ -4,6 +4,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.time.Instant;
+import java.util.Collections;
 import java.util.Optional;
 
 import org.broadinstitute.ddp.TxnAwareBaseTest;
@@ -35,7 +36,7 @@ public class JdbiStudyPdfMappingTest extends TxnAwareBaseTest {
             PdfConfiguration config = new PdfConfiguration(
                     new PdfConfigInfo(testData.getStudyId(), "dummy_pdf", "dummy-pdf", "dummy-display-name"),
                     new PdfVersion("v1-no-data-sources", revId));
-            long expectedPdfConfigId = handle.attach(PdfDao.class).insertNewConfig(config);
+            long expectedPdfConfigId = handle.attach(PdfDao.class).insertNewConfig(config, Collections.emptyList());
 
             long expectedId = dao.insert(testData.getStudyId(), PdfMappingType.RELEASE, expectedPdfConfigId);
 

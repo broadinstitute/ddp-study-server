@@ -88,6 +88,7 @@ import org.broadinstitute.ddp.model.pdf.PdfConfiguration;
 import org.broadinstitute.ddp.model.pdf.PdfDataSource;
 import org.broadinstitute.ddp.model.pdf.PdfDataSourceType;
 import org.broadinstitute.ddp.model.pdf.PdfSubstitution;
+import org.broadinstitute.ddp.model.pdf.PdfTemplate;
 import org.broadinstitute.ddp.model.pdf.PdfVersion;
 import org.broadinstitute.ddp.model.pdf.PhysicianInstitutionTemplate;
 import org.broadinstitute.ddp.model.pdf.ProfileSubstitution;
@@ -189,9 +190,9 @@ public final class PdfTestingUtil {
             String fieldName = UUID.randomUUID().toString();
             CustomTemplate tmpl = new CustomTemplate(generateSingleFieldPdf(fieldName));
             tmpl.addSubstitution(new AnswerSubstitution(fieldName, activity.getActivityId(), QuestionType.TEXT, questionSid));
-            config.addTemplate(tmpl);
 
-            long pdfConfigId = handle.attach(PdfDao.class).insertNewConfig(config);
+
+            long pdfConfigId = handle.attach(PdfDao.class).insertNewConfig(config, Collections.singletonList(tmpl));
             long mappingId = handle.attach(JdbiStudyPdfMapping.class).insert(studyId, pdfMappingType, pdfConfigId);
             return new PdfDbInfo(mappingId, pdfConfigId);
         });
@@ -403,24 +404,25 @@ public final class PdfTestingUtil {
             version.addDataSource(new PdfActivityDataSource(pdfInfo.getTestActivityId(), pdfInfo.getTestActivityVersionId()));
 
             PdfConfiguration config = new PdfConfiguration(info, version);
-            config.addTemplate(institutionTemplate);
-            config.addTemplate(physicianTemplate);
-            config.addTemplate(biopsyTemplate);
-            config.addTemplate(customTemplate);
-            config.addTemplate(addressTemplate);
+            List<PdfTemplate> templates = new ArrayList<>();
+            templates.add(institutionTemplate);
+            templates.add(physicianTemplate);
+            templates.add(biopsyTemplate);
+            templates.add(customTemplate);
+            templates.add(addressTemplate);
 
             PdfDao pdfDao = handle.attach(PdfDao.class);
-            pdfInfo.setConfigurationId(pdfDao.insertNewConfig(config));
+            pdfInfo.setConfigurationId(pdfDao.insertNewConfig(config, templates));
 
             config = pdfDao.findFullConfig(version.getId());
             pdfInfo.setPdfConfiguration(config);
 
-            pdfInfo.setInstitutionTemplate((PhysicianInstitutionTemplate) config.getTemplates().get(0));
-            pdfInfo.setPhysicianTemplate((PhysicianInstitutionTemplate) config.getTemplates().get(1));
-            pdfInfo.setBiopsyTemplate((PhysicianInstitutionTemplate) config.getTemplates().get(2));
-            pdfInfo.setMailingAddressTemplate((MailingAddressTemplate) config.getTemplates().get(4));
+            pdfInfo.setInstitutionTemplate((PhysicianInstitutionTemplate) templates.get(0));
+            pdfInfo.setPhysicianTemplate((PhysicianInstitutionTemplate) templates.get(1));
+            pdfInfo.setBiopsyTemplate((PhysicianInstitutionTemplate) templates.get(2));
+            pdfInfo.setMailingAddressTemplate((MailingAddressTemplate) templates.get(4));
 
-            pdfInfo.setCustomTemplate((CustomTemplate) config.getTemplates().get(3));
+            pdfInfo.setCustomTemplate((CustomTemplate) templates.get(3));
             pdfInfo.setCustomPdfSubstitutions(pdfInfo.getCustomTemplate().getSubstitutions());
         });
 

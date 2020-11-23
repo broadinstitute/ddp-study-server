@@ -281,7 +281,7 @@ public class ActivityBuilder {
         return definition;
     }
 
-    private void validateDefinition(ActivityDef def) {
+    public void validateDefinition(ActivityDef def) {
         List<JsonValidationError> errors = validator.validateAsJson(def);
         if (!errors.isEmpty()) {
             String msg = errors.stream()
