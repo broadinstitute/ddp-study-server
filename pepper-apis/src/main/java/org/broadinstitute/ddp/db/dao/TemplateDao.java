@@ -247,13 +247,14 @@ public interface TemplateDao extends SqlObject {
         }
     }
 
-    default Map<Long, Map<String, String>> findAllTranslatedVariablesByIds(Set<Long> templateIds, long langCodeId) {
+    default Map<Long, Map<String, String>> findAllTranslatedVariablesByIds(Set<Long> templateIds, long langCodeId, Long defaultLangCodeId) {
         String query = StringTemplateSqlLocator
                 .findStringTemplate(TemplateDao.class, "queryAllTranslatedVariablesByTemplateIdsAndLangId")
                 .render();
         return getHandle().createQuery(query)
                 .bindList("templateIds", new ArrayList<>(templateIds))
                 .bind("langCodeId", langCodeId)
+                .bind("defaultLangCodeId", defaultLangCodeId)
                 .reduceRows(new HashMap<>(), (accumulator, row) -> {
                     long key = row.getColumn(TemplateTable.ID, Long.class);
                     Map<String, String> vars = accumulator.computeIfAbsent(key, k -> new HashMap<>());
