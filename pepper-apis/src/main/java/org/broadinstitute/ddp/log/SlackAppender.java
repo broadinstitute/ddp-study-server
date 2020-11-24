@@ -1,10 +1,9 @@
 package org.broadinstitute.ddp.log;
 
+import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.http.HttpClient;
-
-import java.io.IOException;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.ArrayList;
@@ -17,17 +16,16 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.IThrowableProxy;
 import ch.qos.logback.classic.spi.StackTraceElementProxy;
 import ch.qos.logback.core.AppenderBase;
-
 import com.google.gson.Gson;
 import com.google.gson.annotations.SerializedName;
-
+import com.typesafe.config.Config;
 import org.apache.commons.lang3.StringUtils;
-
 import org.apache.http.HttpHeaders;
 import org.apache.http.entity.ContentType;
+import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.thread.ThreadFactory;
 import org.broadinstitute.ddp.thread.ThreadPriorities;
-
+import org.broadinstitute.ddp.util.ConfigManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -60,11 +58,12 @@ public class SlackAppender<E> extends AppenderBase<ILoggingEvent> {
     private int intervalInMillis;
 
     private HttpClient httpClient;
+    private ScheduledThreadPoolExecutor executorService;
 
     private void init(String slackHookUrl,
                       String slackChannel,
-                      String queueSize,
-                      String intervalInMillis) {
+                      Integer queueSize,
+                      Integer intervalInMillis) {
         httpClient = HttpClient.newHttpClient();
         try {
             this.slackHookUrl = new URI(slackHookUrl);
@@ -73,13 +72,14 @@ public class SlackAppender<E> extends AppenderBase<ILoggingEvent> {
         }
 
         this.channel = slackChannel;
-        if (StringUtils.isNumeric(queueSize)) {
-            this.queueSize = Integer.parseInt(queueSize);
+        if (queueSize != null) {
+            this.queueSize = queueSize;
         } else {
             this.queueSize = 10;
         }
-        if (StringUtils.isNumeric(intervalInMillis)) {
-            this.intervalInMillis = Integer.parseInt(intervalInMillis);
+
+        if (intervalInMillis != null) {
+            this.intervalInMillis = intervalInMillis;
         } else {
             this.intervalInMillis = 60;
         }
@@ -94,7 +94,7 @@ public class SlackAppender<E> extends AppenderBase<ILoggingEvent> {
         }
         if (canLog) {
             LOG.info("At most {} slack alerts will be sent to {} every {} ms", queueSize, slackChannel, intervalInMillis);
-            ScheduledThreadPoolExecutor executorService = new ScheduledThreadPoolExecutor(1,
+            executorService = new ScheduledThreadPoolExecutor(1,
                     new ThreadFactory("SlackAppender", ThreadPriorities.SLACK_PRIORITY));
             executorService.scheduleWithFixedDelay(() -> {
                 sendQueuedMessages();
@@ -109,17 +109,35 @@ public class SlackAppender<E> extends AppenderBase<ILoggingEvent> {
      * Constructor used by deployments via logback.xml
      */
     public SlackAppender() {
-        init(System.getenv("SLACK_HOOK"),
-                System.getenv("SLACK_CHANNEL"),
-                System.getenv("SLACK_QUEUE_SIZE"),
-                System.getenv("SLACK_INTERVAL"));
+        Config cfg = ConfigManager.getInstance().getConfig();
+        String slackHook = null;
+        String slackChannel = null;
+        Integer configQueueSize = null;
+        Integer configIntervalInMillis = null;
+        if (cfg != null) {
+            if (cfg.hasPath(ConfigFile.SLACK_HOOK)) {
+                slackHook = cfg.getString(ConfigFile.SLACK_HOOK);
+            }
+            if (cfg.hasPath(ConfigFile.SLACK_CHANNEL)) {
+                slackChannel = cfg.getString(ConfigFile.SLACK_CHANNEL);
+            }
+            if (cfg.hasPath(ConfigFile.SLACK_QUEUE_SIZE)) {
+                configQueueSize = cfg.getInt(ConfigFile.SLACK_QUEUE_SIZE);
+            }
+            if (cfg.hasPath(ConfigFile.SLACK_INTERVAL_IN_MILLIS)) {
+                configIntervalInMillis = cfg.getInt(ConfigFile.SLACK_INTERVAL_IN_MILLIS);
+            }
+            init(slackHook, slackChannel, configQueueSize, configIntervalInMillis);
+        }
+
+
     }
 
     /**
      * Used only for testing.  In the real world, call {@link #SlackAppender()}.
      */
     SlackAppender(String slackHookUrl, String slackChannel, int queueSize, int intervalInMillis) {
-        init(slackHookUrl, slackChannel, Integer.toString(queueSize), Integer.toString(intervalInMillis));
+        init(slackHookUrl, slackChannel, queueSize, intervalInMillis);
     }
 
     private String getExceptionMessage(ILoggingEvent e) {
