@@ -34,7 +34,9 @@
     },
     "slack": {
         "hook": "{{$slack.hook}}",
-        "channel": "{{$slack.channel}}"
+        "channel": "{{$slack.channel}}",
+        "queueSize": 10,
+        "intervalInMillis": 60
     },
     "socialTestEmail": "{{$testingConf.Data.socialTestEmail}}",
     "socialTestPassword": "{{$testingConf.Data.socialTestPassword}}",

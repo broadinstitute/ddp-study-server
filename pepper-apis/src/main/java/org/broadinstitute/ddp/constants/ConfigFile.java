@@ -102,6 +102,8 @@ public class ConfigFile {
     public static final String PUBSUB_HKEEP_TASKS_SUB = "pubsub.housekeepingTasksSubscription";
     public static final String SLACK_HOOK = "slack.hook";
     public static final String SLACK_CHANNEL = "slack.channel";
+    public static final String SLACK_QUEUE_SIZE = "slack.queueSize";
+    public static final String SLACK_INTERVAL_IN_MILLIS = "slack.intervalInMillis";
     public static final String TEST_USER_AUTH0_ID = "testUserAuth0Id";
 
     public static final String DOMAIN = "domain";
