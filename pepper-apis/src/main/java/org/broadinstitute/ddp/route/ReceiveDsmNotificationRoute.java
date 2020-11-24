@@ -58,8 +58,8 @@ public class ReceiveDsmNotificationRoute extends ValidatedJsonInputRoute<DsmNoti
         String studyGuid = request.params(PathParam.STUDY_GUID);
         String participantGuidOrAltPid = request.params(PathParam.USER_GUID);
 
-        LOG.info("Received DSM notification event for userGuidOrAltPid={}, studyGuid={}, and eventType={}",
-                participantGuidOrAltPid, studyGuid, payload.getEventType());
+        LOG.info("Received DSM notification event for userGuidOrAltPid={}, studyGuid={}, eventType={}, kitRequestId={}, kitReasonType={}",
+                participantGuidOrAltPid, studyGuid, payload.getEventType(), payload.getKitRequestId(), payload.getKitReasonType());
 
         return TransactionWrapper.withTxn(handle -> {
             var found = RouteUtil.findPotentiallyLegacyUserAndStudyOrHalt(handle, participantGuidOrAltPid, studyGuid);
@@ -105,6 +105,7 @@ public class ReceiveDsmNotificationRoute extends ValidatedJsonInputRoute<DsmNoti
                     null,
                     studyDto.getId(),
                     eventType,
+                    payload.getKitRequestId(),
                     kitReasonType,
                     testResult);
             EventService.getInstance().processAllActionsForEventSignal(handle, signal);

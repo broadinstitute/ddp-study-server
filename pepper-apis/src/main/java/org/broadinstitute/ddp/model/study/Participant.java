@@ -23,6 +23,7 @@ public class Participant {
 
     private User user;
     private Map<String, List<ActivityResponse>> responses;
+    private Map<Long, Map<String, String>> activityInstanceSubstitutions;
 
     // todo: better models for status and medical providers
     private EnrollmentStatusDto status;
@@ -38,6 +39,7 @@ public class Participant {
         this.providers = new ArrayList<>();
         this.invitations = new ArrayList<>();
         this.responses = new HashMap<>();
+        this.activityInstanceSubstitutions = new HashMap<>();
     }
 
     public EnrollmentStatusDto getStatus() {
@@ -91,6 +93,14 @@ public class Participant {
         responses.computeIfAbsent(response.getActivityTag(), tag -> new ArrayList<>()).add(response);
     }
 
+    public Map<String, String> getActivityInstanceSubstitutions(long activityInstanceId) {
+        return activityInstanceSubstitutions.getOrDefault(activityInstanceId, new HashMap<>());
+    }
+
+    public void putActivityInstanceSubstitutions(long activityInstanceId, Map<String, String> substitutions) {
+        activityInstanceSubstitutions.put(activityInstanceId, substitutions);
+    }
+
     public LocalDate getDateOfMajority() {
         return dateOfMajority;
     }
@@ -98,7 +108,6 @@ public class Participant {
     public void setDateOfMajority(LocalDate dateOfMajority) {
         this.dateOfMajority = dateOfMajority;
     }
-
 
     public List<InvitationDto> getInvitations() {
         return invitations;
