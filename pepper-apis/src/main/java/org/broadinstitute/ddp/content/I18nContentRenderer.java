@@ -181,7 +181,7 @@ public class I18nContentRenderer {
         for (Long langCodeId : languageCodeIds) {
             LOG.info("Fetching translations for the variables with templateId " + contentTemplateId);
             translatedTemplateVariables = templateDao
-                    .findAllTranslatedVariablesByIds(Set.of(contentTemplateId), langCodeId)
+                    .findAllTranslatedVariablesByIds(Set.of(contentTemplateId), langCodeId, null)
                     .getOrDefault(contentTemplateId, new HashMap<>());
             int translatedTemplateVariablesCount = translatedTemplateVariables.size();
             if (templateVariableCount == translatedTemplateVariablesCount) {
@@ -231,7 +231,8 @@ public class I18nContentRenderer {
 
         TemplateDao tmplDao = handle.attach(TemplateDao.class);
         Map<Long, TemplateDao.TextAndVarCount> templateData = tmplDao.findAllTextAndVarCountsByIds(templateIds);
-        Map<Long, Map<String, String>> variables = tmplDao.findAllTranslatedVariablesByIds(templateIds, langCodeId);
+        Map<Long, Map<String, String>> variables = tmplDao
+                .findAllTranslatedVariablesByIds(templateIds, langCodeId, getDefaultLanguageId(handle));
         Map<Long, String> rendered = new HashMap<>(templateIds.size());
 
         for (long templateId : templateIds) {
@@ -288,7 +289,15 @@ public class I18nContentRenderer {
         VelocityContext ctx = new VelocityContext(context);
         StringWriter writer = new StringWriter();
         engine.evaluate(ctx, writer, TEMPLATE_NAME, template);
-        return writer.toString();
+        String result = writer.toString();
+        if (result.contains("$")) {
+            // Here we have a second pass in case of variables in the substitution values,
+            // e.g. participantName() with locale-dependent position in the sentence.
+            writer = new StringWriter();
+            engine.evaluate(ctx, writer, TEMPLATE_NAME, result);
+            result = writer.toString();
+        }
+        return result;
     }
 
     private String convertToString(Object obj) {
