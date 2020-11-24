@@ -81,7 +81,7 @@ public class SlackAppender<E> extends AppenderBase<ILoggingEvent> {
         if (intervalInMillis != null) {
             this.intervalInMillis = intervalInMillis;
         } else {
-            this.intervalInMillis = 60;
+            this.intervalInMillis = 60000;
         }
 
         if (StringUtils.isBlank(slackHookUrl)) {
@@ -217,7 +217,6 @@ public class SlackAppender<E> extends AppenderBase<ILoggingEvent> {
             }
             messagesToSend.clear();
         }
-        notifyAll();
     }
 
     private void sendMessage(SlackMessagePayload payload) {
