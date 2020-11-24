@@ -5,6 +5,9 @@ import static org.junit.Assert.assertNotNull;
 
 import java.time.Instant;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.NoSuchElementException;
 
 import org.broadinstitute.ddp.TxnAwareBaseTest;
@@ -59,6 +62,33 @@ public class I18nContentRendererTest extends TxnAwareBaseTest {
             expected = "<em>Сколько вам лет?</em>";
             actual = renderer.renderContent(handle, tmpl.getTemplateId(), langId);
             assertEquals(expected, actual);
+
+            handle.rollback();
+        });
+    }
+
+    @Test
+    public void testDoubleRenderPass() {
+        TransactionWrapper.useTxn(handle -> {
+            TemplateDao tmplDao = handle.attach(TemplateDao.class);
+            JdbiRevision jdbiRev = handle.attach(JdbiRevision.class);
+
+            RenderValueProvider valueProvider = new RenderValueProvider.Builder().setParticipantFirstName("John").build();
+
+            Map<String, Object> context = new HashMap<>();
+            context.put(I18nTemplateConstants.DDP, valueProvider);
+
+            Template tmpl = new Template(TemplateType.HTML, null, "<em>$question_name</em>");
+            tmpl.addVariable(new TemplateVariable("question_name", Collections.singletonList(
+                    new Translation("en", "Your name is $ddp.participantFirstName()?"))));
+            long revId = jdbiRev.insert(userId, Instant.now().toEpochMilli(), null, "add test template");
+            tmplDao.insertTemplate(tmpl, revId);
+            assertNotNull(tmpl.getTemplateId());
+
+            long langId = LanguageStore.getDefault().getId();
+            String expected = "<em>Your name is John?</em>";
+            Map<Long, String> actual = renderer.bulkRender(handle, Collections.singleton(tmpl.getTemplateId()), langId, context);
+            assertEquals(expected, actual.get(tmpl.getTemplateId()));
 
             handle.rollback();
         });
