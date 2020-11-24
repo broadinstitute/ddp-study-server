@@ -289,7 +289,15 @@ public class I18nContentRenderer {
         VelocityContext ctx = new VelocityContext(context);
         StringWriter writer = new StringWriter();
         engine.evaluate(ctx, writer, TEMPLATE_NAME, template);
-        return writer.toString();
+        String result = writer.toString();
+        if (result.contains("$")) {
+            // Here we have a second pass in case of variables in the substitution values,
+            // e.g. participantName() with locale-dependent position in the sentence.
+            writer = new StringWriter();
+            engine.evaluate(ctx, writer, TEMPLATE_NAME, result);
+            result = writer.toString();
+        }
+        return result;
     }
 
     private String convertToString(Object obj) {

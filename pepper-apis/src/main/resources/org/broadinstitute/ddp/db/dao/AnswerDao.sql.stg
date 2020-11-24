@@ -14,7 +14,15 @@ select ans.answer_id,
        nt.numeric_type_code as na_numeric_type,
        na.int_value         as na_int_value,
        po.picklist_option_stable_id as pa_option_stable_id,
-       pa.detail_text               as pa_detail_text,
+       (select ppo.picklist_option_stable_id from picklist_nested_option as pno join picklist_option as ppo
+         on ppo.picklist_option_id = pno.parent_option_id
+         where pno.nested_option_id = po.picklist_option_id
+       ) as pa_parent_option_stable_id,
+       (select plg.group_stable_id from picklist_grouped_option pgo join picklist_group plg
+         on pgo.picklist_group_id = plg.picklist_group_id
+         where pgo.picklist_option_id = po.picklist_option_id
+       ) as pa_group_stable_id,
+       pa.detail_text                as pa_detail_text,
        cq.allow_multiple   as ca_allow_multiple,
        cq.unwrap_on_export as ca_unwrap_on_export,
        ca.child_answer_id  as ca_child_answer_id,
@@ -40,6 +48,8 @@ select ans.answer_id,
   left join numeric_answer as na on na.answer_id = ans.answer_id
   left join picklist_option__answer as pa on pa.answer_id = ans.answer_id
   left join picklist_option as po on po.picklist_option_id = pa.picklist_option_id
+  left join picklist_nested_option as npo on npo.nested_option_id = pa.picklist_option_id
+  left join picklist_option as ppo on ppo.picklist_option_id = npo.parent_option_id
   left join composite_answer_item as ca on ca.parent_answer_id = ans.answer_id
 >>
 

@@ -91,6 +91,11 @@
         font-family: 'Raleway', sans-serif !important;
     }
 
+    html[dir="rtl"] h2,
+    html[dir="rtl"] h5 {
+        text-align: right !important;
+    }
+
     a,
     button {
         text-decoration: none !important;
@@ -254,6 +259,10 @@
         text-align: left !important;
     }
 
+    html[dir='rtl'] .auth0-lock.auth0-lock .auth0-lock-form p {
+        text-align: right !important;
+    }
+
     .auth0-lock-input-block.auth0-lock-input-password.auth0-lock-error {
         font-family: 'Raleway', sans-serif;
         font-size: 12px;
@@ -408,6 +417,10 @@
         margin-top: 20px !important;
     }
 
+    .Nav-item:nth-of-type(4) {
+        padding-left: 33px !important;
+    }
+
     .Header {
         height: auto;
         width: 100%;
@@ -425,6 +438,99 @@
         box-shadow: none;
         z-index: 100;
         width: 100%;
+    }
+
+    .navbar-nav {
+        float: right !important;
+        width: 660px;
+    }
+
+    html[lang='es'] .navbar-nav {
+        width: 800px;
+    }
+
+    @media only screen and (min-width: 1026px) and (max-width: 1200px) {
+        html[dir='rtl'] .Header-background {
+            padding: 30px 80px 20px 40px !important;
+        }
+        .Header-background {
+            padding: 30px 40px 20px 80px !important;
+        }
+        html[lang="he"] .Nav-item.Nav-item-JoinUs {
+            padding-left: 20px;
+        }
+        html[lang="es"] .navbar-nav {
+            width: 500px;
+        }
+        .navbar-nav {
+            width: 660px;
+        }
+    }
+
+    @media only screen and (min-width: 993px) and (max-width: 1026px) {
+        html[dir='rtl'] .Header-background {
+            padding: 30px 80px 20px 40px !important;
+        }
+        .Header-background {
+            padding: 30px 40px 20px 80px !important;
+        }
+        html[lang="es"] .navbar-nav {
+            width: 486px;
+        }
+        html[lang='he'] .navbar-nav {
+            width: 640px;
+        }
+        .navbar-nav {
+            width: 584px;
+        }
+    }
+
+    @media only screen and (min-width: 768px) and (max-width: 992px) {
+        .Header-background {
+            padding: 25px 0 0 0 !important;
+        }
+        .navbar-header {
+            padding: 0 10px 25px 25px !important;
+        }
+        html[dir="rtl"] .navbar-header {
+            padding: 0 25px 25px 10px !important;
+        }
+        .navbar-collapse {
+            padding: 0 25px 10px 25px !important;
+        }
+        html[lang="es"] .navbar-nav {
+            width: 430px !important;
+        }
+        html[lang='zh'] .navbar-nav {
+            width: 340px !important;
+        }
+        html[dir="rtl"] .navbar-nav {
+            width: 400px !important;
+        }
+        .navbar-nav {
+            width: 415px !important;
+        }
+    }
+
+    @media only screen and (min-width: 768px) {
+        html[dir='rtl'] .navbar-header {
+            float: right !important;
+        }
+
+        html[dir='rtl'] .navbar-nav {
+            float: left !important;
+            padding-right: 0;
+        }
+    }
+
+    @media only screen and (max-width: 767px) {
+        html[dir='rtl'] .Header-logo {
+            float: right !important;
+        }
+
+        html[dir='rtl'] .Header-hamburger {
+            float: left !important;
+        }
     }
 
     .Header-logo img {
@@ -491,45 +597,6 @@
         padding-top: 10px !important;
     }
 
-    .Nav-item:nth-of-type(4) {
-        padding-left: 33px !important;
-    }
-
-    @media only screen and (min-width: 1026px) and (max-width: 1200px) {
-        .Header-background {
-            padding: 30px 40px 20px 80px !important;
-        }
-        .navbar-nav {
-            float: right !important;
-            width: 649px;
-        }
-    }
-
-    @media only screen and (min-width: 993px) and (max-width: 1025px) {
-        .Header-background {
-            padding: 30px 40px 20px 80px !important;
-        }
-        .navbar-nav {
-            float: right !important;
-            width: 584px;
-        }
-    }
-
-    @media only screen and (min-width: 768px) and (max-width: 992px) {
-        .Header-background {
-            padding: 25px 0 0 0 !important;
-        }
-        .navbar-header {
-            padding: 0 10px 25px 25px !important;
-        }
-        .navbar-collapse {
-            padding: 0 25px 10px 25px !important;
-        }
-        .navbar-nav {
-            width: 415px !important;
-        }
-    }
-
     .Nav ul {
         list-style: none;
         float: right;
@@ -542,7 +609,7 @@
     }
 
     .Nav-item:first-of-type {
-        padding-left: 20px !important;
+        padding-left: 0px !important;
     }
 
     #JoinUs {
@@ -639,6 +706,10 @@
     .Footer-links {
         height: 90px;
         padding: 31px 0 0;
+    }
+
+    html[dir='rtl'] .Footer-links {
+        float: right !important;
     }
 
     .Footer-text {
@@ -1018,11 +1089,22 @@
         studyListing: 'רשימת מחקרים',
         backToTop: 'חזור לראש הדף',
         privacyPolicy: 'מדיניות פרטיות',
-        contactUs: 'צרו קשר:',
+        contactUs: "צרו קשר:",
         successForgotPassword: 'אם נרשמתם בעבר, בדקו את הדוא\'ל שלכם כדי לאפס את הסיסמה.',
         languageSelection: 'בחירת שפה',
         invalidErrorHint: 'לא תקף',
         unrecoverableError: 'משהו השתבש. צרו קשר עם התמיכה הטכנית.',
+        passwordStrength: {
+            containsAtLeast: 'מכיל לפחות %d מתוך %d סוגי התווים הבאים',
+            identicalChars: 'לא יותר מ %d תווים זהים ברצף (לדוגמא, "%s" לא תקין)',
+            nonEmpty: 'דרושה סיסמא לא ריקה',
+            numbers: 'מספרים (0-9)',
+            lengthAtLeast: 'באורך %d תווים לפחות',
+            lowerCase: 'אותיות קטנות (a-z)',
+            shouldContain: 'צריך להכיל:',
+            specialCharacters: 'תווים מיוחדים (לדוגמא: !@#$%^&*)',
+            upperCase: 'אותיות גדולות (A-Z)'
+        },
         error: {
             forgotPassword: {
                 too_many_requests: 'אנו מצטערים. ישנן בקשות רבות מדי כעת. טענו מחדש את הדף ונסו שוב. אם הבעיה נמשכת, נסו שוב מאוחר יותר.',
@@ -1457,7 +1539,7 @@
                 footer.setAttribute('id', 'ddp-footer');
                 footer.innerHTML =
                 `<footer class="Footer row">` +
-                    `<div class="col-lg-6 col-md-4 col-sm-4 col-xs-12 Footer-left">` +
+                    `<div class="col-lg-6 col-md-5 col-sm-4 col-xs-12 Footer-left">` +
                         `<a href="${mainUrl}">` +
                         `<img src="https://storage.googleapis.com/dev-prion-assets/images/project-logo-dark.svg" alt="${languageDictionary.logoAlt}"/>` +
                         `</a>` +
@@ -1465,7 +1547,7 @@
                             `<a href="mailto:${contactEmail}" class="Footer-link NoPadding">${contactEmail}</a>` +
                         `</p>` +
                     `</div>` +
-                    `<div class="col-lg-6 col-md-4 col-sm-8 col-xs-12 Footer-links">` +
+                    `<div class="col-lg-6 col-md-7 col-sm-8 col-xs-12 Footer-links">` +
                         `<p class="Footer-text Float--right">` +
                             `<a href="${mainUrl}" class="Footer-link">${languageDictionary.home}</a> ` +
                             `<a href="${mainUrl}/learn-more" class="Footer-link">${languageDictionary.learnMore}</a> ` +
@@ -1521,7 +1603,7 @@
                     var registerMessageWrapper = document.createElement("p");
                     registerMessageWrapper.setAttribute('class','auth0-lock-alternative');
                     registerMessageWrapper.setAttribute('id','ddp-reg');
-                    registerMessageWrapper.setAttribute('style','margin-top:0;font-size: small;text-align: left;');
+                    registerMessageWrapper.setAttribute('style','margin-top:0;font-size: small;');
                     if (showSignUpHelp) {
                         var registerMessage = document.createElement('p');
                         registerMessage.setAttribute('style','margin-top:0;margin-bottom:5px');
