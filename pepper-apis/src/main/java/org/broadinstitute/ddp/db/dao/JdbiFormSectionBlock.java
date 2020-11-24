@@ -14,6 +14,8 @@ import org.jdbi.v3.core.statement.Query;
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
+import org.jdbi.v3.sqlobject.customizer.BindList;
+import org.jdbi.v3.sqlobject.customizer.BindList.EmptyHandling;
 import org.jdbi.v3.sqlobject.customizer.BindMethods;
 import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
 import org.jdbi.v3.sqlobject.statement.SqlBatch;
@@ -89,7 +91,8 @@ public interface JdbiFormSectionBlock extends SqlObject {
                 .getOrDefault(sectionId, new ArrayList<>());
     }
 
-    @SqlQuery("select bt.block_type_code, b.block_id, b.block_guid, e.expression_text"
+    @SqlQuery("select fsb.form_section_id, null as parent_block_id,"
+            + "       bt.block_type_code, b.block_id, b.block_guid, e.expression_text"
             + "  from form_section__block as fsb"
             + "  join revision as rev on rev.revision_id = fsb.revision_id"
             + "  join block as b on b.block_id = fsb.block_id"
@@ -97,13 +100,14 @@ public interface JdbiFormSectionBlock extends SqlObject {
             + "  left join block__expression as be on be.block_id = b.block_id"
             + "  left join expression as e on e.expression_id = be.expression_id"
             + "  left join revision as be_rev on be_rev.revision_id = be.revision_id"
-            + " where fsb.form_section_id = :sectionId"
+            + " where fsb.form_section_id in (<sectionIds>)"
             + "   and rev.start_date <= :timestamp"
             + "   and (rev.end_date is null or :timestamp < rev.end_date)"
             + "   and (be.block__expression_id is null or "
             + "       (be_rev.start_date <= :timestamp and (be_rev.end_date is null or :timestamp < be_rev.end_date)))"
-            + " order by fsb.display_order asc")
+            + " order by fsb.form_section_id asc, fsb.display_order asc")
     @RegisterRowMapper(FormBlockDto.FormBlockDtoMapper.class)
-    List<FormBlockDto> findOrderedFormBlockDtosBySectionIdAndTimestamp(@Bind("sectionId") long sectionId,
-                                                                       @Bind("timestamp") long timestamp);
+    List<FormBlockDto> findOrderedFormBlockDtosBySectionIdsAndTimestamp(
+            @BindList(value = "sectionIds", onEmpty = EmptyHandling.NULL) Iterable<Long> sectionIds,
+            @Bind("timestamp") long timestamp);
 }

@@ -11,12 +11,12 @@ public class PdfConfiguration {
 
     private PdfConfigInfo info;
     private PdfVersion version;
-    private List<PdfTemplate> templates;
+    private List<Long> templateIds;
 
-    public PdfConfiguration(PdfConfigInfo info, PdfVersion version, List<PdfTemplate> templates) {
+    public PdfConfiguration(PdfConfigInfo info, PdfVersion version, List<Long> templateIds) {
         this.info = info;
         this.version = version;
-        this.templates = templates;
+        this.templateIds = templateIds;
     }
 
     public PdfConfiguration(PdfConfigInfo info, PdfVersion version) {
@@ -55,11 +55,12 @@ public class PdfConfiguration {
         return version;
     }
 
-    public List<PdfTemplate> getTemplates() {
-        return templates;
+    public List<Long> getTemplateIds() {
+        return templateIds;
     }
 
-    public void addTemplate(PdfTemplate template) {
-        templates.add(template);
+    public void addTemplateId(long templateId) {
+        templateIds.add(templateId);
     }
+
 }

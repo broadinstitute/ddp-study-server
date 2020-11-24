@@ -17,7 +17,7 @@ select header.block_group_header_id,
    and (rev.end_date is null or ai.created_at \< rev.end_date)
 >>
 
-queryDtoByBlockIdAndTimestamp() ::= <<
+queryDtosByBlockIdsAndTimestamp(blockIds) ::= <<
 select header.block_group_header_id,
        header.block_id,
        (select list_style_hint_code from list_style_hint where list_style_hint_id = header.list_style_hint_id) as list_style_hint_code,
@@ -28,7 +28,7 @@ select header.block_group_header_id,
   join presentation_hint as pres on pres.presentation_hint_id = header.presentation_hint_id
   join block as b on b.block_id = header.block_id
   join revision as rev on rev.revision_id = header.revision_id
- where b.block_id = :blockId
+ where b.block_id in (<blockIds>)
    and rev.start_date \<= :timestamp
    and (rev.end_date is null or :timestamp \< rev.end_date)
 >>

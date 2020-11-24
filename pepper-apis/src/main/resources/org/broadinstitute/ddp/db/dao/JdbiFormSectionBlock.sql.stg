@@ -2,6 +2,7 @@ group JdbiFormSectionBlock;
 
 queryOrderedFormBlockDtosBySectionIdsAndInstanceGuid() ::= <<
 select fsb.form_section_id,
+       null as parent_block_id,
        bt.block_type_code,
        b.block_id,
        b.block_guid,

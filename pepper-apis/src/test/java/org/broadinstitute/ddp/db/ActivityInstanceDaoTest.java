@@ -307,6 +307,19 @@ public class ActivityInstanceDaoTest extends TxnAwareBaseTest {
         });
     }
 
+    @Test
+    public void testRenderActivitySummary_rendersNameEvenWhenThereIsNoSummaryText() {
+        var summaries = List.of(new ActivityInstanceSummary(
+                "activity", 1L, "guid", "name", null, null, null, null, null, "type", "form", "status",
+                null, false, "en", "type", false, false, 1L, false, "version", 1L, 1L));
+        summaries.get(0).setInstanceNumber(2);
+
+        TransactionWrapper.useTxn(handle ->
+                dao.renderActivitySummary(handle, data.getUserId(), summaries));
+
+        assertEquals("name #2", summaries.get(0).getActivityName());
+    }
+
     private String insertNewInstance(Handle handle, long activityId, String userGuid, long createdAt) {
         return handle.attach(org.broadinstitute.ddp.db.dao.ActivityInstanceDao.class)
                 .insertInstance(activityId, userGuid, userGuid, InstanceStatusType.CREATED, false, createdAt)

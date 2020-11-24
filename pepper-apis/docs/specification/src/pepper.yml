@@ -2,7 +2,7 @@ openapi: 3.0.0
 servers: []
 info:
   description: 'Pepper API specification'
-  version: 1.9.1
+  version: 1.9.5
   title: Pepper
   contact:
     email: info@datadonationplatform.org
@@ -74,6 +74,8 @@ paths:
     $ref: 'endpoints/studies.suggestions.drugs.yml'
   /studies/{study}/suggestions/cancers:
     $ref: 'endpoints/studies.suggestions.cancers.yml'
+  /studies/{study}/statistics:
+    $ref: 'endpoints/studies.statistics.yml'
   /user/{user}/profile:
     $ref: 'endpoints/user.profile.yml'
   /user/{user}/profile/address:

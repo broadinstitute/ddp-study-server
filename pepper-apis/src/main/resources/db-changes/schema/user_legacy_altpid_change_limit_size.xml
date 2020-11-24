@@ -4,13 +4,11 @@
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
-    <!-- TODO: wasn't mergeв to Broad -->
-    <changeSet id="20200618-user-legacy-altpid-change-limit-size" author="g.makharashvili">
-        <!-- TODO: fixme "catalogName" and "schemaName" -->
-        <modifyDataType  catalogName="pepperlocal"
-                         columnName="legacy_altpid"
+
+    <changeSet id="20200618-user-legacy-altpid-change-limit-size" author="m.mamytov">
+
+        <modifyDataType  columnName="legacy_altpid"
                          newDataType="varchar(70)"
-                         schemaName="pepperlocal"
                          tableName="user"/>
 
     </changeSet>

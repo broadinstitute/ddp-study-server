@@ -25,7 +25,6 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
-import com.auth0.exception.Auth0Exception;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.typesafe.config.Config;
@@ -214,14 +213,11 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
 
         var mgmtClient = TransactionWrapper.withTxn(handle ->
                 Auth0Util.getManagementClientForDomain(handle, auth0Domain));
-        Auth0Util auth0Util = new Auth0Util(auth0Domain);
-
         for (String auth0UserId : auth0UserIdsToDelete) {
             RouteTestUtil.deleteUserByAuth0UserId(auth0UserId, auth0Domain);
-            try {
-                auth0Util.deleteAuth0User(auth0UserId, mgmtClient.getToken());
-            } catch (Auth0Exception e) {
-                throw new RuntimeException(e);
+            var result = mgmtClient.deleteAuth0User(auth0UserId);
+            if (result.hasFailure()) {
+                throw new RuntimeException(result.hasThrown() ? result.getThrown() : result.getError());
             }
         }
         auth0UserIdsToDelete.clear();
@@ -404,7 +400,7 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
             // Have to create a completely new user that only exists in Auth0, so that email-lookup-by-user will not
             // fail and we can test that user/profile is created post-registration.
             var mgmtClient = Auth0Util.getManagementClientForDomain(handle, auth0Domain);
-            return new Auth0Util(auth0Domain).createTestingUser(mgmtClient.getToken()).getAuth0Id();
+            return Auth0Util.createTestingUser(mgmtClient).getAuth0Id();
         });
         auth0UserIdsToDelete.add(testAuth0UserId);
 

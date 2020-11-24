@@ -16,6 +16,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
 import com.google.gson.JsonObject;
@@ -297,16 +298,18 @@ public class ReceiveDsmNotificationRouteTest extends DsmRouteTest {
         StudyDto study = TransactionWrapper.withTxn(handle ->
                 TestDataSetupUtil.generateTestStudy(handle, RouteTestUtil.getConfig()));
 
+        var kitConfigId = new AtomicLong();
         long recordId = TransactionWrapper.withTxn(handle -> {
             handle.attach(JdbiUserStudyEnrollment.class).changeUserStudyEnrollmentStatus(
                     testData.getUserId(), study.getId(), EnrollmentStatusType.ENROLLED);
 
             long kitTypeId = handle.attach(KitTypeDao.class).getTestBostonKitType().getId();
-            long kitConfigId = handle.attach(KitConfigurationDao.class)
+            long configId = handle.attach(KitConfigurationDao.class)
                     .insertConfiguration(study.getId(), 1L, kitTypeId, false);
+            kitConfigId.set(configId);
 
             return handle.attach(KitScheduleDao.class)
-                    .createScheduleRecord(testData.getUserId(), kitConfigId);
+                    .createScheduleRecord(testData.getUserId(), configId);
         });
 
         var payload = new DsmNotificationPayload(null, TESTBOSTON_SENT.name(), 1L);
@@ -327,8 +330,10 @@ public class ReceiveDsmNotificationRouteTest extends DsmRouteTest {
                 assertNotNull(record.getInitialKitSentTime());
             });
         } finally {
-            TransactionWrapper.useTxn(handle ->
-                    DBUtils.checkDelete(1, handle.attach(KitScheduleSql.class).deleteRecord(recordId)));
+            TransactionWrapper.useTxn(handle -> {
+                DBUtils.checkDelete(1, handle.attach(KitScheduleSql.class).deleteRecord(recordId));
+                DBUtils.checkDelete(1, handle.attach(KitConfigurationDao.class).deleteConfiguration(kitConfigId.get()));
+            });
         }
     }
 

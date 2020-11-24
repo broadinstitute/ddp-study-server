@@ -155,14 +155,16 @@ public class PdfBuilder {
         for (Config versionCfg : versions) {
             long revId = createRevision(handle, pdfCfg, versionCfg);
             PdfConfiguration pdf = buildPdfConfiguration(handle, revId, pdfCfg, versionCfg);
+            List<PdfTemplate> templates = buildPdfTemplates(handle, versionCfg);
             boolean hasExisting = pdfDao.findConfigInfoByStudyIdAndName(pdf.getStudyId(), pdf.getConfigName()).isPresent();
+
             if (hasExisting) {
-                long versionId = pdfDao.insertNewConfigVersion(pdf);
+                long versionId = pdfDao.insertNewConfigVersion(pdf, templates);
                 pdfId = pdf.getId();
                 LOG.info("Added pdf configuration version for id={} with name={}, filename={}, displayName={}, versionId={}, versionTag={}",
                         pdfId, pdf.getConfigName(), pdf.getFilename(), pdf.getDisplayName(), pdf.getVersion().getVersionTag());
             } else {
-                pdfId = pdfDao.insertNewConfig(pdf);
+                pdfId = pdfDao.insertNewConfig(pdf, templates);
                 LOG.info("Created pdf configuration with id={}, name={}, filename={}, displayName={}, versionId={}, versionTag={}",
                         pdfId, pdf.getConfigName(), pdf.getFilename(), pdf.getDisplayName(),
                         pdf.getVersion().getId(), pdf.getVersion().getVersionTag());
@@ -206,17 +208,20 @@ public class PdfBuilder {
         return revId;
     }
 
+    private List<PdfTemplate> buildPdfTemplates(Handle handle, Config versionCfg) {
+        List<PdfTemplate> templates = new ArrayList<>();
+        for (Config fileCfg : versionCfg.getConfigList("files")) {
+            templates.add(buildPdfTemplate(handle, fileCfg));
+        }
+        return templates;
+    }
+
     private PdfConfiguration buildPdfConfiguration(Handle handle, long revId, Config pdfCfg, Config versionCfg) {
         PdfConfigInfo info = new PdfConfigInfo(studyDto.getId(), pdfCfg.getString("name"),
                 pdfCfg.getString("filename"), pdfCfg.getString("displayName"));
         PdfVersion version = buildPdfVersion(handle, revId, versionCfg);
 
-        List<PdfTemplate> templates = new ArrayList<>();
-        for (Config fileCfg : versionCfg.getConfigList("files")) {
-            templates.add(buildPdfTemplate(handle, fileCfg));
-        }
-
-        return new PdfConfiguration(info, version, templates);
+        return new PdfConfiguration(info, version);
     }
 
     private PdfVersion buildPdfVersion(Handle handle, long revId, Config versionCfg) {

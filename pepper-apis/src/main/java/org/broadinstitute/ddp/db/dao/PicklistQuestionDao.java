@@ -15,7 +15,6 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.broadinstitute.ddp.db.DaoException;
 import org.broadinstitute.ddp.db.dto.PicklistGroupDto;
 import org.broadinstitute.ddp.db.dto.PicklistOptionDto;
-import org.broadinstitute.ddp.db.dto.QuestionDto;
 import org.broadinstitute.ddp.db.dto.RevisionDto;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistGroupDef;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistOptionDef;
@@ -387,49 +386,44 @@ public interface PicklistQuestionDao extends SqlObject {
 
     }
 
-    default GroupAndOptionDtos findAllOrderedGroupAndOptionDtos(long questionId) {
-        String queryString = StringTemplateSqlLocator
-                .findStringTemplate(PicklistQuestionDao.class, "queryAllOrderedGroupsAndOptionsByQuestionId")
-                .render();
-        Query query = getHandle().createQuery(queryString)
-                .bind("questionId", questionId);
-        return executeGroupAndOptionDtosQuery(query);
+    default GroupAndOptionDtos findOrderedGroupAndOptionDtos(long questionId, long timestamp) {
+        return findOrderedGroupAndOptionDtos(Set.of(questionId), timestamp).get(questionId);
     }
 
-    default GroupAndOptionDtos findOrderedGroupAndOptionDtos(QuestionDto questionDto, long timestamp) {
+    default Map<Long, GroupAndOptionDtos> findOrderedGroupAndOptionDtos(Iterable<Long> questionIds, long timestamp) {
+        List<Long> ids = new ArrayList<>();
+        if (questionIds != null) {
+            questionIds.forEach(ids::add);
+        }
+        if (ids.isEmpty()) {
+            return new HashMap<>();
+        }
         String queryString = StringTemplateSqlLocator
-                .findStringTemplate(PicklistQuestionDao.class, "queryAllOrderedGroupsAndOptionsByQuestionIdAndTimestamp")
+                .findStringTemplate(PicklistQuestionDao.class, "queryAllOrderedGroupsAndOptionsByQuestionIdsAndTimestamp")
                 .render();
         Query query = getHandle().createQuery(queryString)
-                .bind("questionId", questionDto.getId())
+                .bindList("questionIds", ids)
                 .bind("timestamp", timestamp);
-        return executeGroupAndOptionDtosQuery(query);
-    }
-
-    default Map<Long, GroupAndOptionDtos> findAllOrderedGroupAndOptionDtosByQuestion(long activityId) {
-        String queryString = StringTemplateSqlLocator
-                .findStringTemplate(PicklistQuestionDao.class, "queryAllOrderedGroupsAndOptionsByActivityId")
-                .render();
-        Query query = getHandle().createQuery(queryString)
-                .bind("activityId", activityId);
         return executeGroupAndOptionDtosByQuestionQuery(query);
     }
 
-    private GroupAndOptionDtos executeGroupAndOptionDtosQuery(Query query) {
+    private Map<Long, GroupAndOptionDtos> executeGroupAndOptionDtosByQuestionQuery(Query query) {
         Map<Long, List<PicklistOptionDto>> nestedOptMap = new HashMap<>();
-        GroupAndOptionDtos dtos = query
+        Map<Long, GroupAndOptionDtos> dtosMap = query
                 .registerRowMapper(ConstructorMapper.factory(PicklistOptionDto.class, "po"))
                 .registerRowMapper(ConstructorMapper.factory(PicklistGroupDto.class, "pg"))
-                .reduceRows(new GroupAndOptionDtos(), (container, row) -> {
+                .reduceRows(new HashMap<>(), (result, row) -> {
                     PicklistOptionDto option = row.getRow(PicklistOptionDto.class);
+                    long questionId = row.getColumn("question_id", Long.class);
                     Long groupId = row.getColumn("pg_picklist_group_id", Long.class);
                     Long parentOptionId = row.getColumn("pno_parent_option_id", Long.class);
+                    var container = result.computeIfAbsent(questionId, k -> new GroupAndOptionDtos(questionId));
 
                     if (groupId == null) {
                         if (parentOptionId == null) {
                             container.getUngroupedOptions().add(option);
                         } else {
-                            nestedOptMap.computeIfAbsent(parentOptionId, (k) -> new ArrayList<>());
+                            nestedOptMap.computeIfAbsent(parentOptionId, k -> new ArrayList<>());
                             nestedOptMap.get(parentOptionId).add(option);
                         }
                     } else {
@@ -445,57 +439,11 @@ public interface PicklistQuestionDao extends SqlObject {
                         }
                     }
 
-                    return container;
+                    return result;
                 });
 
-        dtos.getUngroupedOptions().stream().forEach(parentDto -> {
-            if (nestedOptMap.containsKey(parentDto.getId())) {
-                parentDto.getNestedOptions().addAll(nestedOptMap.get(parentDto.getId()));
-            }
-        });
-
-        return dtos;
-    }
-
-    private Map<Long, GroupAndOptionDtos> executeGroupAndOptionDtosByQuestionQuery(Query query) {
-        Map<Long, List<PicklistOptionDto>> nestedOptMap = new HashMap<>();
-        Map<Long, GroupAndOptionDtos> dtosMap = query
-                .registerRowMapper(ConstructorMapper.factory(PicklistOptionDto.class, "po"))
-                .registerRowMapper(ConstructorMapper.factory(PicklistGroupDto.class, "pg"))
-                .reduceRows(new HashMap<Long, GroupAndOptionDtos>(), (container, row) -> {
-                    PicklistOptionDto option = row.getRow(PicklistOptionDto.class);
-                    Long questionId = row.getColumn("question_id", Long.class);
-                    Long groupId = row.getColumn("pg_picklist_group_id", Long.class);
-                    Long parentOptionId = row.getColumn("pno_parent_option_id", Long.class);
-
-                    if (groupId == null) {
-                        if (parentOptionId == null) {
-                            container.computeIfAbsent(questionId, (k) -> new GroupAndOptionDtos()).getUngroupedOptions().add(option);
-                        } else {
-                            nestedOptMap.computeIfAbsent(parentOptionId, (k) -> new ArrayList<>());
-                            nestedOptMap.get(parentOptionId).add(option);
-                        }
-                    } else {
-                        PicklistGroupDto group = row.getRow(PicklistGroupDto.class);
-                        if (container.computeIfAbsent(questionId, (k) ->
-                                new GroupAndOptionDtos()).getGroupIdToOptions().containsKey(groupId)) {
-                            container.computeIfAbsent(questionId, (k) ->
-                                    new GroupAndOptionDtos()).getGroupIdToOptions().get(groupId).add(option);
-                        } else {
-                            List<PicklistOptionDto> options = new ArrayList<>();
-                            options.add(option);
-
-                            container.computeIfAbsent(questionId, (k) -> new GroupAndOptionDtos()).getGroupIdToOptions().put(groupId,
-                                    options);
-                            container.computeIfAbsent(questionId, (k) -> new GroupAndOptionDtos()).getGroups().add(group);
-                        }
-                    }
-
-                    return container;
-                });
-
-        dtosMap.values().stream().forEach(dto -> {
-            dto.getUngroupedOptions().stream().forEach(parentDto -> {
+        dtosMap.values().forEach(dto -> {
+            dto.getUngroupedOptions().forEach(parentDto -> {
                 if (nestedOptMap.containsKey(parentDto.getId())) {
                     parentDto.getNestedOptions().addAll(nestedOptMap.get(parentDto.getId()));
                 }
@@ -507,20 +455,17 @@ public interface PicklistQuestionDao extends SqlObject {
 
     class GroupAndOptionDtos implements Serializable {
 
+        private long questionId;
         private List<PicklistGroupDto> groups = new ArrayList<>();
         private List<PicklistOptionDto> ungroupedOptions = new ArrayList<>();
         private Map<Long, List<PicklistOptionDto>> groupIdToOptions = new HashMap<>();
 
-        public GroupAndOptionDtos() {
-            super();
+        public GroupAndOptionDtos(long questionId) {
+            this.questionId = questionId;
         }
 
-        public GroupAndOptionDtos(List<PicklistGroupDto> groups, List<PicklistOptionDto> ungroupedOptions,
-                                  Map<Long, List<PicklistOptionDto>> groupIdToOptions) {
-            this.groups = groups;
-            this.ungroupedOptions = ungroupedOptions;
-            this.groupIdToOptions = groupIdToOptions;
-
+        public long getQuestionId() {
+            return questionId;
         }
 
         public List<PicklistGroupDto> getGroups() {
@@ -533,6 +478,22 @@ public interface PicklistQuestionDao extends SqlObject {
 
         public Map<Long, List<PicklistOptionDto>> getGroupIdToOptions() {
             return groupIdToOptions;
+        }
+
+        public Set<Long> getTemplateIds() {
+            var ids = new HashSet<Long>();
+            for (var group : groups) {
+                ids.add(group.getNameTemplateId());
+            }
+
+            var options = new ArrayList<>(ungroupedOptions);
+            groupIdToOptions.values().forEach(options::addAll);
+
+            for (var option : options) {
+                ids.addAll(option.getTemplateIds());
+            }
+
+            return ids;
         }
     }
 }
