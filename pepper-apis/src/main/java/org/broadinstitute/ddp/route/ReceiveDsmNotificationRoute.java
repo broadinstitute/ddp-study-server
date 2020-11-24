@@ -18,7 +18,7 @@ import org.broadinstitute.ddp.db.dto.kit.KitConfigurationDto;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.json.dsm.DsmNotificationPayload;
 import org.broadinstitute.ddp.json.errors.ApiError;
-import org.broadinstitute.ddp.model.activity.types.DsmNotificationEventType;
+import org.broadinstitute.ddp.model.dsm.DsmNotificationEventType;
 import org.broadinstitute.ddp.model.dsm.KitType;
 import org.broadinstitute.ddp.model.dsm.TestResult;
 import org.broadinstitute.ddp.model.event.DsmNotificationSignal;
@@ -101,6 +101,7 @@ public class ReceiveDsmNotificationRoute extends ValidatedJsonInputRoute<DsmNoti
                     null,
                     studyDto.getId(),
                     eventType,
+                    payload.getKitReasonType(),
                     testResult);
             EventService.getInstance().processAllActionsForEventSignal(handle, signal);
 

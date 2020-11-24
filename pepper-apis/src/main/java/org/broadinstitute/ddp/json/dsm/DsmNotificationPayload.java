@@ -1,32 +1,40 @@
 package org.broadinstitute.ddp.json.dsm;
 
 import java.util.Optional;
-import javax.annotation.Nullable;
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 
 import com.google.gson.JsonElement;
 import com.google.gson.annotations.SerializedName;
-import org.broadinstitute.ddp.model.activity.types.DsmNotificationEventType;
+import org.broadinstitute.ddp.model.dsm.DsmNotificationEventType;
+import org.broadinstitute.ddp.model.dsm.KitReasonType;
 
 public class DsmNotificationPayload {
-
-    @SerializedName("eventInfo")
-    private String eventInfo;
 
     @NotBlank
     @SerializedName("eventType")
     private String eventType;
 
-    @SerializedName("eventDate")
-    private long eventDate;
+    @NotNull
+    @SerializedName("kitReasonType")
+    private KitReasonType kitReasonType;
 
     @SerializedName("eventData")
     private JsonElement eventData;
 
-    public DsmNotificationPayload(@Nullable String eventInfo, String eventType, long eventDate) {
-        this.eventInfo = eventInfo;
+    // Unused properties.
+    @SerializedName("eventInfo")
+    private String eventInfo;
+    @SerializedName("eventDate")
+    private long eventDate;
+
+    public DsmNotificationPayload(String eventType) {
+        this(eventType, KitReasonType.NORMAL);
+    }
+
+    public DsmNotificationPayload(String eventType, KitReasonType kitReasonType) {
         this.eventType = eventType;
-        this.eventDate = eventDate;
+        this.kitReasonType = kitReasonType;
     }
 
     public String getEventType() {
@@ -39,6 +47,10 @@ public class DsmNotificationPayload {
         } catch (Exception e) {
             return Optional.empty();
         }
+    }
+
+    public KitReasonType getKitReasonType() {
+        return kitReasonType;
     }
 
     public JsonElement getEventData() {
