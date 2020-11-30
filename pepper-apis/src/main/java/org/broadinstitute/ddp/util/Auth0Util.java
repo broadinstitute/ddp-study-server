@@ -295,8 +295,7 @@ public class Auth0Util {
         return new Gson().fromJson(responseBody, RefreshTokenResponse.class);
     }
 
-    public BulkUserImportResponse bulkUserWithHashedPassword(String auth0Domain, File file) throws Auth0Exception {
-
+    public BulkUserImportResponse bulkUserWithHashedPassword(String auth0Domain, String mgmtApiToken, File file) throws Auth0Exception {
         String connectionId = TransactionWrapper.withTxn(handle -> {
             Auth0TenantDto auth0TenantDto = handle.attach(JdbiAuth0Tenant.class).findByDomain(auth0Domain);
             var mgmtClient = new Auth0ManagementClient(
@@ -304,10 +303,9 @@ public class Auth0Util {
                     auth0TenantDto.getManagementClientId(),
                     auth0TenantDto.getManagementClientSecret());
 
-            String connectionIdfromAuth0 = mgmtClient
+            return mgmtClient
                     .getConnectionByName(Auth0ManagementClient.DEFAULT_DB_CONN_NAME)
                     .getBody().getId();
-            return connectionIdfromAuth0;
         });
 
         HttpEntity httpEntity = MultipartEntityBuilder.create().addBinaryBody("users", file)

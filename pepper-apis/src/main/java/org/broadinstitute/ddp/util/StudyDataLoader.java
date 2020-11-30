@@ -1146,7 +1146,8 @@ public class StudyDataLoader {
             throws IOException, InterruptedException {
         String auth0UserId = null;
         File userJsonFile = bulkUserCreateJson(data, userGuid, emailAddress);
-        Auth0Util.BulkUserImportResponse bulkUserImportResponse = auth0Util.bulkUserWithHashedPassword(auth0Domain, userJsonFile);
+        Auth0Util.BulkUserImportResponse bulkUserImportResponse = auth0Util
+                .bulkUserWithHashedPassword(auth0Domain, mgmtToken, userJsonFile);
         Auth0Util.Auth0JobResponse auth0JobResponse = auth0Util.getAuth0Job(bulkUserImportResponse.getJobId(), mgmtToken);
         while (auth0JobResponse.getStatus().equals("pending")) {
             auth0JobResponse = auth0Util.getAuth0Job(bulkUserImportResponse.getJobId(), mgmtToken);

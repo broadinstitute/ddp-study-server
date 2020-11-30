@@ -83,8 +83,8 @@ public class GetStudyStatisticsRouteTest extends IntegrationTestSuite.TestCase {
         TransactionWrapper.useTxn(handle -> {
             testData = TestDataSetupUtil.generateBasicUserTestData(handle);
             var userDao = handle.attach(UserDao.class);
-            testUser2 = userDao.createUser(testData.getClientId(), "user2");
-            testUser3 = userDao.createUser(testData.getClientId(), "user3");
+            testUser2 = userDao.createUser(testData.getClientId(), "user2", null);
+            testUser3 = userDao.createUser(testData.getClientId(), "user3", null);
             token = testData.getTestingUser().getToken();
             user1Guid = testData.getUserGuid();
             user2Guid = testUser2.getGuid();
