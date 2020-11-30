@@ -6,24 +6,6 @@ ActivitiesResponse:
         type: array
         items:
           $ref: '../pepper.yml#/components/schemas/Activity.Summary'
-ActivityCreateErrorResponse:
-  description: activity failed to be created
-  content:
-    application/json:
-      schema:
-        $ref: '../pepper.yml#/components/schemas/Error.ActivityCreate'
-ActivityCreateResponse:
-  description: successfully created a new instance of the specified activity
-  content:
-    application/json:
-      schema:
-        type: object
-        required:
-          - instanceGuid
-        properties:
-          instanceGuid:
-            type: string
-            example: ABCDEFGH12
 ActivityAnswersPatchResponse:
   description: successfully created or updated answers, along with any activity validation failures
   content:
@@ -465,3 +447,9 @@ WorkflowResponse:
     application/json:
       schema:
         $ref: '../pepper.yml#/components/schemas/WorkflowNextSuggestion'
+StatisticsResponse:
+  description: Study statistics
+  content:
+    application/json:
+      schema:
+        $ref: '../pepper.yml#/components/schemas/Statistics'

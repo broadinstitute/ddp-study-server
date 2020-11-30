@@ -1,5 +1,20 @@
 group ActivityInstanceDao;
 
+queryActivityInstanceCreationValidation() ::= <<
+select act.study_activity_id,
+       act.hide_existing_instances_on_creation,
+       act.max_instances_per_user,
+       (select count(1)
+          from activity_instance as ai
+          join user as u on u.user_id = ai.participant_id
+         where ai.study_activity_id = act.study_activity_id
+           and u.guid = :userGuid
+       ) as num_instances_for_user
+  from study_activity as act
+ where act.study_activity_code = :activityCode
+   and act.study_id = :studyId
+>>
+
 select_all_base_instance_responses_with_latest_status() ::= <<
 select ai.activity_instance_id   as instance_id,
        ai.activity_instance_guid as instance_guid,

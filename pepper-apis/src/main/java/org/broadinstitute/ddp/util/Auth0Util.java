@@ -16,13 +16,10 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.auth0.client.mgmt.ManagementAPI;
-import com.auth0.client.mgmt.filter.ConnectionFilter;
 import com.auth0.client.mgmt.filter.UserFilter;
 import com.auth0.exception.APIException;
 import com.auth0.exception.Auth0Exception;
 import com.auth0.json.auth.TokenHolder;
-import com.auth0.json.mgmt.ConnectionsPage;
-import com.auth0.json.mgmt.tickets.PasswordChangeTicket;
 import com.auth0.json.mgmt.users.User;
 import com.auth0.json.mgmt.users.UsersPage;
 import com.auth0.jwk.JwkProvider;
@@ -397,18 +394,6 @@ public class Auth0Util {
     }
 
     /**
-     * Called by tests to delete Auth0 Users. Do not use in production
-     *
-     * @param auth0UserId  userId to be deleted
-     * @param mgmtApiToken management token for the domain in question.
-     * @throws Auth0Exception if Auth0 fails
-     */
-    public void deleteAuth0User(String auth0UserId, String mgmtApiToken) throws Auth0Exception {
-        ManagementAPI auth0Mgmt = new ManagementAPI(baseUrl, mgmtApiToken);
-        auth0Mgmt.users().delete(auth0UserId).execute();
-    }
-
-    /**
      * Returns all users that have the given email address
      */
     public List<User> getAuth0UsersByEmail(String emailAddress, String mgmtApiToken) throws Auth0Exception {
@@ -516,14 +501,15 @@ public class Auth0Util {
     /**
      * Creates a new, unregistered user
      */
-    public TestingUser createTestingUser(String mgmtApiToken) throws Auth0Exception {
-        ManagementAPI auth0Mgmt = new ManagementAPI(baseUrl, mgmtApiToken);
-        User testUser = new User();
-        testUser.setEmail("test+" + System.currentTimeMillis() + "@datadonationplatform.org");
-        String password = Double.toString(Math.random()) + "Aa1";
-        testUser.setPassword(password);
-        testUser.setConnection(USERNAME_PASSWORD_AUTH0_CONN_NAME);
-        User createdUser = auth0Mgmt.users().create(testUser).execute();
+    public static TestingUser createTestingUser(Auth0ManagementClient mgmtClient) {
+        String email = "test+" + System.currentTimeMillis() + "@datadonationplatform.org";
+        String password = Math.random() + "Aa1";
+        String connection = Auth0ManagementClient.DEFAULT_DB_CONN_NAME;
+        var result = mgmtClient.createAuth0User(connection, email, password);
+        if (result.hasFailure()) {
+            throw new RuntimeException(result.hasThrown() ? result.getThrown() : result.getError());
+        }
+        User createdUser = result.getBody();
         return new TestingUser(createdUser.getId(), createdUser.getEmail(), password);
     }
 
@@ -543,43 +529,6 @@ public class Auth0Util {
 
 
     /**
-     * Will generate a URL that will direct to Auth0 and allow them to change password
-     *
-     * @param userEmail    the email for the user
-     * @param connectionId the Auth0 connection id {@link #generatePasswordResetLink}
-     * @param mgmtApiToken Auth0 token with Management API grant
-     * @param redirectUrl  Auth0 will redirect to this URL after user has reset the password
-     * @return a String containing the Auth0 reset password URL
-     * @throws Auth0Exception if there is a problem
-     */
-    public String generatePasswordResetLink(String userEmail, String connectionId, String mgmtApiToken, String redirectUrl)
-            throws Auth0Exception {
-        ManagementAPI mgmt = new ManagementAPI(baseUrl, mgmtApiToken);
-        PasswordChangeTicket ticket = new PasswordChangeTicket(userEmail, connectionId);
-        ticket.setResultUrl(redirectUrl);
-        com.auth0.net.Request<PasswordChangeTicket> request = mgmt.tickets().requestPasswordChange(ticket);
-        LOG.info("Creating password reset for {}", userEmail);
-        return request.execute().getTicket();
-    }
-
-    /**
-     * Get the username-password connection id. Needed to execute other Auth0 API calls.
-     *
-     * @param mgmtApiToken the Auth0 management account token with grant to read connection
-     * @return A String with the connection id
-     * @throws Auth0Exception exception returned by Auth0 API
-     */
-    public String getAuth0UserNamePasswordConnectionId(String mgmtApiToken) throws Auth0Exception {
-        ManagementAPI mgmt = new ManagementAPI(baseUrl, mgmtApiToken);
-        com.auth0.net.Request<ConnectionsPage> connectionsRequest = mgmt.connections().listAll(
-                new ConnectionFilter().withName(USERNAME_PASSWORD_AUTH0_CONN_NAME));
-        return connectionsRequest.execute().getItems().stream()
-                .findFirst()
-                .map(connection -> connection.getId())
-                .orElseThrow(() -> new RuntimeException("Did not find Auth0 connection with name: " + USERNAME_PASSWORD_AUTH0_CONN_NAME));
-    }
-
-    /**
      * Auth0 account deletion .
      * You probably should not ever call this unless no other option.
      */
@@ -594,9 +543,11 @@ public class Auth0Util {
                 auth0TenantDto.getManagementClientId(),
                 auth0TenantDto.getManagementClientSecret());
 
+        String connectionId = mgmtClient
+                .getConnectionByName(Auth0ManagementClient.DEFAULT_DB_CONN_NAME)
+                .getBody().getId();
+
         String mgmtToken = mgmtClient.getToken();
-        Auth0Util auth0Util = new Auth0Util(auth0Domain);
-        String connectionId = auth0Util.getAuth0UserNamePasswordConnectionId(mgmtToken);
         ManagementAPI mgmtAPI = new ManagementAPI(auth0Domain, mgmtToken);
         mgmtAPI.connections().deleteUser(connectionId, email).execute();
     }

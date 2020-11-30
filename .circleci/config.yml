@@ -90,6 +90,7 @@ commands:
 
             # untarring will create a "tcell" dir
             tar --no-same-owner -xvf $TAR_FILE_PATH
+
   build-jar:
     description: Build jar
     parameters:
@@ -104,6 +105,7 @@ commands:
           name: Run maven package
           command: |
             mvn package -DskipTests -file << parameters.pom_file >> -Dcheckstyle.skip -Dmaven.repo.local=<< parameters.m2_repo >>
+
   setup-shared-env:
     description: "Setup shared ENV vars used by multiple scripts"
     steps:
@@ -124,7 +126,7 @@ commands:
             develop)
               DEPLOY_ENV=dev
             ;;
-            TrySavingHeaps)
+            DDP-5236_ReduceMemoryPdfHandling)
               DEPLOY_ENV=dev
             ;;
             test)
@@ -147,13 +149,19 @@ commands:
 
   render-configs:
     description: render config files
+    parameters:
+      application:
+        type: string
+        default: unknown
     steps:
       - run:
           name: show environment variables
           command: env
       - run:
           name: api-build.sh
-          command: ./api-build.sh v1 ${ENVIRONMENT:-dev} . --gae-config
+          command: |
+            echo "We are generating api-build.sh for application << parameters.application >>"
+            ./api-build.sh v1 ${ENVIRONMENT:-dev} . << parameters.application >> --gae-config
           environment:
             USE_DOCKER: false
 
@@ -255,10 +263,14 @@ commands:
             mkdir -p $(dirname $JAR_FILE_PATH)
             gsutil cp  $JAR_FILE_URL $JAR_FILE_PATH
             echo ""
+
   deploy-jar:
     parameters:
       jar_base_name:
         type: string
+      application:
+        type: string
+        default: unknown
       deploy_dir:
         type: string
         default: deployment-assets
@@ -270,7 +282,8 @@ commands:
         default: '../src/appengine'
     steps:
       - set-deployment-env
-      - render-configs
+      - render-configs:
+          application: <<parameters.application>>
       - install-tcell
       - run:
           name: Gather deployment assets
@@ -287,6 +300,7 @@ commands:
             cp "$DEPLOY_CONFIG_FILE_DIR/<<parameters.jar_base_name>>.yaml" .
             cp ../output-config/application.conf .
             cp ../output-config/redisson-jcache.yaml .
+            cp ../output-config/redisson-jcache-housekeeping.yaml .
       - auth-gcp-service-account
       - run:
           name: Deploy <<parameters.jar_base_name>> to GAE
@@ -654,14 +668,48 @@ commands:
           path: <<parameters.ddp_cache_md5_file>>
           destination: ddp-cache-md5.txt
 
+  match-file-patterns-or-halt:
+    parameters:
+      file_patterns:
+        type: string
+        default: "pepper-apis"
+    steps:
+      - run:
+          name: Check git changes and stop the job early if certain files did not change
+          command: |
+            file_patterns='<<parameters.file_patterns>>'
+            file_patterns+=' .circleci/config.yml'
+            echo "Checking file patterns: $file_patterns"
+            matched=false
+            for pattern in $(echo "$file_patterns"); do
+              if git diff --name-only origin/develop "$CIRCLE_BRANCH" | grep -e "$pattern" > /dev/null; then
+                echo "Matched pattern: $pattern"
+                matched=true
+                break
+              fi
+            done
+            if [[ "$matched" == 'false' ]]; then
+              echo "No file patterns matched, skipping job"
+              circleci step halt
+            fi
+
 jobs:
   build-api-docs-job:
     executor:
       name: build-deploy-executor
     working_directory: *api-spec-path
+    parameters:
+      allow_skip_job:
+        type: boolean
+        default: false
     steps:
       - checkout:
           path: *repo_path
+      - when:
+          condition: << parameters.allow_skip_job >>
+          steps:
+            - match-file-patterns-or-halt:
+                file_patterns: "pepper-apis/docs/specification"
       - run:
           name: Build docs
           command: ./build.sh documentation
@@ -670,12 +718,28 @@ jobs:
     executor:
       name: test-executor
     working_directory: *pepper_apis_path
+    parameters:
+      allow_skip_job:
+        type: boolean
+        default: false
     steps:
       - checkout:
           path: *repo_path
+      # When any code or configuration changes, run compile step below.
+      - when:
+          condition: << parameters.allow_skip_job >>
+          steps:
+            - match-file-patterns-or-halt:
+                file_patterns: "pepper-apis/config pepper-apis/src study-builder/src pom.xml checkstyle.xml"
       - setup-shared-env
       - compile-all-jars:
           restore_m2_cache: true
+      # When only pepper code or configuration changes, run the standalone tests.
+      - when:
+          condition: << parameters.allow_skip_job >>
+          steps:
+            - match-file-patterns-or-halt:
+                file_patterns: "pepper-apis/config pepper-apis/src pepper-apis/.*pom.xml"
       - render-configs
       - create-test-dbs
       - restore-ddp-cache
@@ -694,11 +758,19 @@ jobs:
     parallelism: <<parameters.parallelism>>
     parameters:
       parallelism:
-        default: 2
         type: integer
+        default: 2
+      allow_skip_job:
+        type: boolean
+        default: false
     steps:
       - checkout:
           path: *repo_path
+      - when:
+          condition: << parameters.allow_skip_job >>
+          steps:
+            - match-file-patterns-or-halt:
+                file_patterns: "pepper-apis/config pepper-apis/src pepper-apis/.*pom.xml"
       - setup-shared-env
       - run-maven-with-pepper-options:
           phase: process-test-classes
@@ -758,6 +830,7 @@ jobs:
           pom_file: housekeeping-pom.xml
       - deploy-jar:
           jar_base_name: Housekeeping
+          application: housekeeping
           deploy_config_file_dir: ../output-config
       - build-jar:
           pom_file: pom.xml
@@ -827,7 +900,7 @@ workflows:
                 - develop
                 - &rc /^rc.*/
                 - &hotfix /^hotfix.*/
-                - TrySavingHeaps
+                - DDP-5236_ReduceMemoryPdfHandling
       - parallel-compile-and-test-job:
           parallelism: *test_parallelism
           <<: *compile_and_test_filters
@@ -838,7 +911,7 @@ workflows:
             branches:
               only:
                 - develop
-                - TrySavingHeaps
+                - DDP-5236_ReduceMemoryPdfHandling
           requires:
             - parallel-compile-and-test-job
             - compile-and-run-test-suite-job
@@ -855,10 +928,13 @@ workflows:
   run-tests-on-demand-workflow:
     when: << pipeline.parameters.on_demand >>
     jobs:
-      - compile-and-run-test-suite-job
+      - compile-and-run-test-suite-job:
+          allow_skip_job: true
       - parallel-compile-and-test-job:
           parallelism: *test_parallelism
-      - build-api-docs-job
+          allow_skip_job: true
+      - build-api-docs-job:
+          allow_skip_job: true
 
   deploy-workflow:
     jobs:

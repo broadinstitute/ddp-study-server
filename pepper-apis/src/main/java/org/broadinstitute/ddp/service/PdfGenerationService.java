@@ -28,11 +28,11 @@ import com.itextpdf.kernel.pdf.PdfDocumentInfo;
 import com.itextpdf.kernel.pdf.PdfReader;
 import com.itextpdf.kernel.pdf.PdfWriter;
 import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.client.Auth0ManagementClient;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dao.ParticipantDao;
+import org.broadinstitute.ddp.db.dao.PdfDao;
 import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dao.UserGovernanceDao;
 import org.broadinstitute.ddp.db.dao.UserProfileDao;
@@ -87,7 +87,8 @@ public class PdfGenerationService {
     public static final int COPY_START_PAGE = 1;
 
     private static final Logger LOG = LoggerFactory.getLogger(PdfGenerationService.class);
-    private static final String FONT_PATH = "fonts/FreeSans.ttf";
+    private static final String INTERNATIONAL_FONT_PATH = "fonts/FreeSans.ttf";
+    private static final String INTERNATIONAL_FONT_NAME = "freesans";
 
     // canEncode() changes state of the encoder, so we need one per thread
     private static final ThreadLocal<CharsetEncoder> ISO88591 = ThreadLocal.withInitial(() -> Charset.forName("ISO-8859-1").newEncoder());
@@ -105,8 +106,8 @@ public class PdfGenerationService {
         field.setValue(value);
     }
 
-    public byte[] generateFlattenedPdfForConfiguration(PdfConfiguration configuration, String userGuid,
-                                                       Handle handle) throws IOException {
+    public InputStream generateFlattenedPdfForConfiguration(PdfConfiguration configuration, String userGuid,
+                                                            Handle handle) throws IOException {
         byte[] unflattenedPdf = generatePdfForConfiguration(configuration, userGuid, handle);
 
         try (
@@ -119,7 +120,7 @@ public class PdfGenerationService {
 
             LOG.info("Flattened {}", configuration.getConfigName());
             flattenedDoc.close();
-            return baos.toByteArray();
+            return new ByteArrayInputStream(baos.toByteArray());
         }
     }
 
@@ -138,49 +139,42 @@ public class PdfGenerationService {
         Participant participant = loadParticipantData(handle, configuration, userGuid);
         Map<Long, ActivityResponse> instances = loadActivityInstanceData(handle, configuration, participant);
 
-        // for each template, get the rendered doc
-        List<PdfTemplate> templates = configuration.getTemplates();
-
         List<String> errors = new ArrayList<>();
-        List<byte[]> individualPdfs = new ArrayList<>();
-        byte[] pdf = null;
-        for (int pdfOrderIndex = 0; pdfOrderIndex < templates.size(); pdfOrderIndex++) {
-            PdfTemplate template = templates.get(pdfOrderIndex);
-            switch (template.getType()) {
-                case PHYSICIAN_INSTITUTION:
-                    pdf = generatePhysicianInstitutionPdf(configuration.getStudyGuid(),
-                            (PhysicianInstitutionTemplate) template, pdfOrderIndex, configuration.getConfigName(), participant, errors);
-                    break;
-                case CUSTOM:
-                    pdf = generateCustomPdf((CustomTemplate) template,
-                            pdfOrderIndex, configuration.getConfigName(), participant, instances, errors);
-                    break;
-                case MAILING_ADDRESS:
-                    pdf = generateMailingAddressPdf((MailingAddressTemplate) template, participant.getUser(), errors,
-                            configuration.getStudyGuid(), handle);
-                    break;
-                default:
-                    errors.add("Tried to use a template type (" + template.getType() + ") that is unsupported.");
-                    pdf = null;
-                    break;
-            }
-            if (pdf != null && pdf.length != 0) {
-                individualPdfs.add(pdf);
-            }
-        }
-        checkForErrors(errors, userGuid);
-
         try (
                 ByteArrayOutputStream renderedStream = new ByteArrayOutputStream();
                 PdfWriter pdfWriter = new PdfWriter(renderedStream);
                 PdfDocument mergedDoc = new PdfDocument(pdfWriter)) {
-            // concatenate each rendered doc to a master doc
-
             int counter = 0;
-            for (byte[] pdfStream : individualPdfs) {
-                copyPdfToMasterDoc(pdfStream, counter, mergedDoc);
+            for (int pdfOrderIndex = 0; pdfOrderIndex < configuration.getTemplateIds().size(); pdfOrderIndex++) {
+                byte[] pdf;
+                long templateId = configuration.getTemplateIds().get(pdfOrderIndex);
+                PdfTemplate template = handle.attach(PdfDao.class)
+                        .findFullTemplateByTemplateId(templateId)
+                        .orElseThrow(() -> new DDPException("Could not find template with id:" + templateId));
+                switch (template.getType()) {
+                    case PHYSICIAN_INSTITUTION:
+                        pdf = generatePhysicianInstitutionPdf(configuration.getStudyGuid(),
+                                (PhysicianInstitutionTemplate) template, pdfOrderIndex, configuration.getConfigName(), participant, errors);
+                        break;
+                    case CUSTOM:
+                        pdf = generateCustomPdf((CustomTemplate) template,
+                                pdfOrderIndex, configuration.getConfigName(), participant, instances, errors);
+                        break;
+                    case MAILING_ADDRESS:
+                        pdf = generateMailingAddressPdf((MailingAddressTemplate) template, participant.getUser(), errors,
+                                configuration.getStudyGuid(), handle);
+                        break;
+                    default:
+                        errors.add("Tried to use a template type (" + template.getType() + ") that is unsupported.");
+                        pdf = null;
+                        break;
+                }
+                if (pdf != null && pdf.length != 0) {
+                    copyPdfToMasterDoc(pdf, counter, mergedDoc);
+                }
                 counter++;
             }
+            checkForErrors(errors, userGuid);
 
             setOutputPdfMetadata(configuration, mergedDoc, instances);
 
@@ -438,19 +432,19 @@ public class PdfGenerationService {
      * Given the information in a dto, insert it into an existing template for physician institution information
      * and create a PDF.
      *
-     * @param medicalProviderDto the medical provider dto
-     * @param inputStream        the existing template
-     * @param template           the physician institution template it is
+     * @param medicalProviderDto  the medical provider dto
+     * @param templateInputStream the existing template
+     * @param template            the physician institution template it is
      * @return stream of the rendered pdf
      */
-    private byte[] convertMedicalProviderDtoToPdf(MedicalProviderDto medicalProviderDto, InputStream inputStream,
+    private byte[] convertMedicalProviderDtoToPdf(MedicalProviderDto medicalProviderDto, InputStream templateInputStream,
                                                   PhysicianInstitutionTemplate template, int pdfOrderIndex,
                                                   String pdfConfigurationName,
                                                   List<String> errors) throws IOException {
 
         try (
                 ByteArrayOutputStream renderedStream = new ByteArrayOutputStream();
-                PdfDocument renderedPdf = new PdfDocument(new PdfReader(inputStream), new PdfWriter(renderedStream))) {
+                PdfDocument renderedPdf = new PdfDocument(new PdfReader(templateInputStream), new PdfWriter(renderedStream))) {
 
             PdfAcroForm form = PdfAcroForm.getAcroForm(renderedPdf, true);
             form.setGenerateAppearance(true);
@@ -504,13 +498,13 @@ public class PdfGenerationService {
      * Loads a font that is generally useful for writing out non-latin symbols
      */
     private PdfFont loadInternationalFont() {
-        ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-        byte[] freeSans;
         try {
-            freeSans = IOUtils.toByteArray(classLoader.getResourceAsStream(FONT_PATH));
-            return PdfFontFactory.createFont(freeSans, PdfEncodings.IDENTITY_H, true);
+            if (!PdfFontFactory.getRegisteredFonts().contains(INTERNATIONAL_FONT_NAME)) {
+                PdfFontFactory.register(INTERNATIONAL_FONT_PATH);
+            }
+            return PdfFontFactory.createRegisteredFont(INTERNATIONAL_FONT_NAME, PdfEncodings.IDENTITY_H, true);
         } catch (IOException e) {
-            throw new RuntimeException("Could not load font " + FONT_PATH, e);
+            throw new RuntimeException("Could not load font " + INTERNATIONAL_FONT_PATH, e);
         }
 
     }

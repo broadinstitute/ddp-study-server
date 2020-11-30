@@ -47,7 +47,7 @@ public class CopyConfigurationDaoTest extends TxnAwareBaseTest {
         thrown.expect(DaoException.class);
         thrown.expectMessage(containsString("answer source locations"));
         TransactionWrapper.useTxn(handle -> {
-            var config = new CopyConfiguration(testData.getStudyId(), List.of(new CopyConfigurationPair(
+            var config = new CopyConfiguration(testData.getStudyId(), false, List.of(new CopyConfigurationPair(
                     new CopyLocation(CopyLocationType.PARTICIPANT_PROFILE_FIRST_NAME),
                     new CopyLocation(CopyLocationType.PARTICIPANT_PROFILE_LAST_NAME))));
             handle.attach(CopyConfigurationDao.class).createCopyConfig(config);
@@ -64,7 +64,7 @@ public class CopyConfigurationDaoTest extends TxnAwareBaseTest {
                     .withBoolQuestion(true)
                     .withTextQuestion(true)
                     .build(handle, testData.getUserId(), testData.getStudyGuid());
-            var config = new CopyConfiguration(testData.getStudyId(), List.of(new CopyConfigurationPair(
+            var config = new CopyConfiguration(testData.getStudyId(), false, List.of(new CopyConfigurationPair(
                     new CopyAnswerLocation(act.getBoolQuestion().getStableId()),
                     new CopyAnswerLocation(act.getTextQuestion().getStableId()))));
             handle.attach(CopyConfigurationDao.class).createCopyConfig(config);
@@ -80,7 +80,7 @@ public class CopyConfigurationDaoTest extends TxnAwareBaseTest {
             TestFormActivity act = TestFormActivity.builder()
                     .withCompositeQuestion(true, TextQuestionDef.builder(TextInputType.TEXT, "c1", Template.text("child")).build())
                     .build(handle, testData.getUserId(), testData.getStudyGuid());
-            var config = new CopyConfiguration(testData.getStudyId(), List.of(new CopyConfigurationPair(
+            var config = new CopyConfiguration(testData.getStudyId(), false, List.of(new CopyConfigurationPair(
                     new CopyAnswerLocation(act.getCompositeQuestion().getStableId()),
                     new CopyAnswerLocation(act.getCompositeQuestion().getStableId()))));
             handle.attach(CopyConfigurationDao.class).createCopyConfig(config);
@@ -95,7 +95,7 @@ public class CopyConfigurationDaoTest extends TxnAwareBaseTest {
                     .withTextQuestion(true)
                     .build(handle, testData.getUserId(), testData.getStudyGuid());
 
-            var config = new CopyConfiguration(testData.getStudyId(), List.of(new CopyConfigurationPair(
+            var config = new CopyConfiguration(testData.getStudyId(), false, List.of(new CopyConfigurationPair(
                     new CopyAnswerLocation(act.getTextQuestion().getStableId()),
                     new CopyLocation(CopyLocationType.PARTICIPANT_PROFILE_FIRST_NAME))));
 
@@ -129,7 +129,7 @@ public class CopyConfigurationDaoTest extends TxnAwareBaseTest {
                     .withTextQuestion(true)
                     .build(handle, testData.getUserId(), testData.getStudyGuid());
 
-            var config = new CopyConfiguration(testData.getStudyId(), List.of(
+            var config = new CopyConfiguration(testData.getStudyId(), false, List.of(
                     new CopyConfigurationPair(
                             new CopyAnswerLocation(act.getTextQuestion().getStableId()),
                             new CopyLocation(CopyLocationType.PARTICIPANT_PROFILE_FIRST_NAME)),
@@ -168,7 +168,7 @@ public class CopyConfigurationDaoTest extends TxnAwareBaseTest {
                             TextQuestionDef.builder(TextInputType.TEXT, "c2b", Template.text("")).build())
                     .build(handle, testData.getUserId(), testData.getStudyGuid());
 
-            var config = new CopyConfiguration(testData.getStudyId(), List.of(
+            var config = new CopyConfiguration(testData.getStudyId(), false, List.of(
                     new CopyConfigurationPair(new CopyAnswerLocation("c1a"), new CopyAnswerLocation("c1b")),
                     new CopyConfigurationPair(new CopyAnswerLocation("c2a"), new CopyAnswerLocation("c2b"))));
 
@@ -207,7 +207,7 @@ public class CopyConfigurationDaoTest extends TxnAwareBaseTest {
                     .withTextQuestion(true)
                     .build(handle, testData.getUserId(), testData.getStudyGuid());
 
-            var config = new CopyConfiguration(testData.getStudyId(), List.of(new CopyConfigurationPair(
+            var config = new CopyConfiguration(testData.getStudyId(), false, List.of(new CopyConfigurationPair(
                     new CopyAnswerLocation(act.getTextQuestion().getStableId()),
                     new CopyLocation(CopyLocationType.PARTICIPANT_PROFILE_FIRST_NAME))));
 

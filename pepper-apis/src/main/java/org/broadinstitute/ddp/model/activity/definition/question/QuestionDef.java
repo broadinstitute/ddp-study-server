@@ -145,7 +145,7 @@ public abstract class QuestionDef {
      *
      * @param <T> Type of the subclass builder
      */
-    protected abstract static class AbstractQuestionBuilder<T extends AbstractQuestionBuilder<T>> {
+    public abstract static class AbstractQuestionBuilder<T extends AbstractQuestionBuilder<T>> {
 
         protected String stableId;
         protected Template prompt;

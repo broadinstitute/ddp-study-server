@@ -4,17 +4,23 @@ import static io.restassured.RestAssured.given;
 import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import io.restassured.mapper.ObjectMapperType;
 import io.restassured.response.Response;
 import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.db.TransactionWrapper;
+import org.broadinstitute.ddp.db.dao.JdbiUser;
+import org.broadinstitute.ddp.db.dao.JdbiUserStudyEnrollment;
 import org.broadinstitute.ddp.db.dao.UserGovernanceDao;
+import org.broadinstitute.ddp.db.dao.UserProfileDao;
 import org.broadinstitute.ddp.json.GovernedUserRegistrationPayload;
 import org.broadinstitute.ddp.model.governance.Governance;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
+import org.junit.After;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -23,6 +29,7 @@ public class GovernedParticipantRegistrationRouteTest extends IntegrationTestSui
     private static String token;
     private static String url;
     private static TestDataSetupUtil.GeneratedTestData testData;
+    private static Set<String> userGuidsToDelete = new HashSet<>();
 
     @BeforeClass
     public static void setup() {
@@ -36,6 +43,21 @@ public class GovernedParticipantRegistrationRouteTest extends IntegrationTestSui
                 .replace(RouteConstants.PathParam.USER_GUID, "{userGuid}")
                 .replace(RouteConstants.PathParam.STUDY_GUID, "{studyGuid}");
         url = RouteTestUtil.getTestingBaseUrl() + endpoint;
+    }
+
+    @After
+    public void cleanup() {
+        TransactionWrapper.useTxn(handle -> {
+            var jdbiEnrollment = handle.attach(JdbiUserStudyEnrollment.class);
+            var profileDao = handle.attach(UserProfileDao.class);
+            for (var userGuid : userGuidsToDelete) {
+                jdbiEnrollment.deleteByUserGuidStudyGuid(userGuid, testData.getStudyGuid());
+                profileDao.getUserProfileSql().deleteByUserGuid(userGuid);
+            }
+            handle.attach(UserGovernanceDao.class).deleteAllGovernancesForProxy(testData.getUserId());
+            handle.attach(JdbiUser.class).deleteAllByGuids(userGuidsToDelete);
+            userGuidsToDelete.clear();
+        });
     }
 
     @Test
@@ -64,6 +86,7 @@ public class GovernedParticipantRegistrationRouteTest extends IntegrationTestSui
                 .statusCode(200)
                 .extract().path("ddpUserGuid"));
 
+        userGuidsToDelete.addAll(governedUserGuids);
         List<Governance> governances = TransactionWrapper.withTxn(handle -> handle.attach(UserGovernanceDao.class)
                 .findActiveGovernancesByProxyAndStudyGuids(testData.getUserGuid(), testData.getStudyGuid())
                 .collect(Collectors.toList()));

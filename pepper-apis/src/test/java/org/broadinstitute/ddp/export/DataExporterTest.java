@@ -89,6 +89,7 @@ import org.broadinstitute.ddp.model.user.UserProfile;
 import org.broadinstitute.ddp.pex.PexInterpreter;
 import org.broadinstitute.ddp.service.DsmAddressValidationStatus;
 import org.broadinstitute.ddp.service.MedicalRecordService;
+import org.broadinstitute.ddp.util.ElasticsearchServiceUtil;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
 import org.broadinstitute.ddp.util.TestUtil;
 import org.jdbi.v3.core.Handle;
@@ -123,7 +124,7 @@ public class DataExporterTest extends TxnAwareBaseTest {
 
     @AfterClass
     public static void tearDown() throws IOException {
-        exporter.close();
+        ElasticsearchServiceUtil.shutdownElasticsearchClients();
     }
 
     @Before

@@ -2,6 +2,7 @@ package org.broadinstitute.ddp.studybuilder.task;
 
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Set;
 
 import com.typesafe.config.Config;
 import org.broadinstitute.ddp.db.DBUtils;
@@ -45,7 +46,10 @@ public class BackfillMailingAddressComponentTitle implements CustomTask {
 
         for (ComponentDto dto : dtos) {
             long componentId = dto.getComponentId();
-            MailingAddressComponentDto compDto = jdbiComponent.findMailingAddressComponentDtoById(componentId).orElse(null);
+            MailingAddressComponentDto compDto;
+            try (var stream = jdbiComponent.findComponentDtosByIds(Set.of(componentId))) {
+                compDto = (MailingAddressComponentDto) stream.findFirst().orElseThrow();
+            }
 
             if (compDto == null) {
                 long titleTemplateId = createTitleTemplate(handle, dto.getRevisionId());
