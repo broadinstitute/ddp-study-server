@@ -33,9 +33,6 @@ public interface PicklistAnswerDao extends SqlObject {
     JdbiPicklistOption getJdbiPicklistOption();
 
     @CreateSqlObject
-    JdbiPicklistQuestion getJdbiPicklistQuestion();
-
-    @CreateSqlObject
     AnswerSql getAnswerSql();
 
 
@@ -48,8 +45,8 @@ public interface PicklistAnswerDao extends SqlObject {
         AnswerDto answerDto = getAnswerSql().findDtoById(answerId)
                 .orElseThrow(() -> new NoSuchElementException("Could not find answer with id " + answerId));
 
-
-        PicklistQuestionDto questionDto = getJdbiPicklistQuestion().findDtoByQuestionId(answerDto.getQuestionId())
+        PicklistQuestionDto questionDto = (PicklistQuestionDto) new JdbiQuestionCached(getHandle())
+                .findQuestionDtoById(answerDto.getQuestionId())
                 .orElseThrow(() -> new NoSuchElementException("Could not find question id " + answerDto.getQuestionId()
                         + " for answer id " + answerId));
 
@@ -60,8 +57,6 @@ public interface PicklistAnswerDao extends SqlObject {
         List<String> selectedStableIds = selected.stream()
                 .map(SelectedPicklistOption::getStableId)
                 .collect(Collectors.toList());
-
-
 
         Map<String, PicklistOptionDto> dtoMap = new HashMap<>();
         getJdbiPicklistOption()

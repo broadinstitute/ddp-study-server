@@ -73,7 +73,7 @@ order by rev.start_date desc,
       src.pdf_data_source_id asc
 >>
 
-bulkQueryBaseTemplatesByVersionId() ::= <<
+selectBaseTemplates() ::= <<
 select base.pdf_base_template_id    as template_id,
        base.template                as template_blob,
        ttype.pdf_template_type_code as template_type,
@@ -103,8 +103,23 @@ select base.pdf_base_template_id    as template_id,
   left join pdf_mailing_address_template as taddr on taddr.pdf_base_template_id = base.pdf_base_template_id
   left join pdf_physician_institution_template as tphys on tphys.pdf_base_template_id = base.pdf_base_template_id
   left join institution_type as itype on itype.institution_type_id = tphys.institution_type_id
+>>
+bulkQueryBaseTemplatesByVersionId() ::= <<
+<selectBaseTemplates()>
  where pvt.pdf_document_version_id = :versionId
  order by pvt.template_order asc
+>>
+
+findBaseTemplatesByTemplateId() ::= <<
+<selectBaseTemplates()>
+where pvt.pdf_base_template_id = :templateId
+>>
+
+findTemplateIdsByVersionId() ::= <<
+    select pvt.pdf_base_template_id
+    from pdf_version_template as pvt
+    where pvt.pdf_document_version_id = :versionId
+    order by pvt.template_order asc
 >>
 
 bulkQuerySubstitutionsByCustomTemplateIds(customTemplateIds) ::= <<

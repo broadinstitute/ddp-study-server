@@ -14,6 +14,7 @@ import static org.junit.Assert.assertTrue;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -73,7 +74,7 @@ public class PdfGenerationServiceTest extends TxnAwareBaseTest {
     }
 
     @AfterClass
-    public static void cleanup() {
+    public static void cleanup() throws Exception {
         PdfTestingUtil.removeConfigurationData(pdfInfo);
     }
 
@@ -275,11 +276,12 @@ public class PdfGenerationServiceTest extends TxnAwareBaseTest {
 
     @Test
     public void testFlattenedGeneratedPdfForConfiguration() throws Exception {
-        byte[] outputDoc = TransactionWrapper.withTxn(handle ->
+
+        InputStream docStream = TransactionWrapper.withTxn(handle ->
                 pdfGenerationService
                         .generateFlattenedPdfForConfiguration(pdfInfo.getPdfConfiguration(), pdfInfo.getData().getUserGuid(),
                                 handle));
-        PdfDocument sourceDoc = new PdfDocument(new PdfReader(new ByteArrayInputStream(outputDoc)),
+        PdfDocument sourceDoc = new PdfDocument(new PdfReader(docStream),
                 new PdfWriter(new ByteArrayOutputStream()));
         PdfAcroForm form = PdfAcroForm.getAcroForm(sourceDoc, true);
         form.setGenerateAppearance(true);

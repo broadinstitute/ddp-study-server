@@ -1,0 +1,18 @@
+get:
+  operationId: statistics
+  tags:
+    - Studies
+  summary: Study statistics
+  description: Returns specific data about participants enrolled in the study for logged-in participants. The data to be returned is configured in the study configuration.
+  parameters:
+  - in: path
+    name: study
+    required: true
+    description: the unique identifier for the study
+    schema:
+      type: string
+  responses:
+    200:
+      $ref: '../pepper.yml#/components/responses/StatisticsResponse'
+    default:
+      $ref: '../pepper.yml#/components/responses/ErrorResponse'

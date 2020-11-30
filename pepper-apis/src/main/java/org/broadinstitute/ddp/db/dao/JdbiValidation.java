@@ -2,7 +2,7 @@ package org.broadinstitute.ddp.db.dao;
 
 import java.util.List;
 
-import org.broadinstitute.ddp.db.dto.validation.ValidationDto;
+import org.broadinstitute.ddp.db.dto.validation.RuleDto;
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindMethods;
@@ -25,6 +25,6 @@ public interface JdbiValidation extends SqlObject {
     int updateRevisionIdById(long validationId, long revisionId);
 
     @SqlBatch("update validation set revision_id = :revisionId where validation_id = :dto.getId")
-    int[] bulkUpdateRevisionIdsByDtos(@BindMethods("dto") List<ValidationDto> validations,
+    int[] bulkUpdateRevisionIdsByDtos(@BindMethods("dto") List<RuleDto> validations,
                                       @Bind("revisionId") long[] revisionIds);
 }

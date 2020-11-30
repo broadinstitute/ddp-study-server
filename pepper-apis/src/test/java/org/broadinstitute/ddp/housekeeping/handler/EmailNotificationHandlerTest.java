@@ -215,7 +215,7 @@ public class EmailNotificationHandlerTest extends TxnAwareBaseTest {
         when(mockPdf.findFullConfigForUser(any(), eq(1L), any(), any())).thenReturn(pdfConfig);
         when(mockPdfBucket.getPdfFromBucket(any())).thenReturn(Optional.empty());
         when(mockPdfBucket.getBucketName()).thenReturn("test-bucket");
-        when(mockPdfGen.generateFlattenedPdfForConfiguration(any(), any(), any())).thenReturn(content.getBytes());
+        when(mockPdfGen.generateFlattenedPdfForConfiguration(any(), any(), any())).thenReturn(new ByteArrayInputStream(content.getBytes()));
 
         // Run test and assertions
         var actual = handler.buildAttachments(mockHandle, testData.getStudyGuid(), "guid", 1L);

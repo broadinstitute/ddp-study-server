@@ -22,7 +22,6 @@ import java.util.stream.Stream;
 import com.typesafe.config.Config;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
-import org.broadinstitute.ddp.constants.ConfigFile.SqlQuery;
 import org.broadinstitute.ddp.constants.SqlConstants;
 import org.broadinstitute.ddp.constants.SqlConstants.ActivityInstanceTable;
 import org.broadinstitute.ddp.constants.SqlConstants.ActivityTypeTable;
@@ -45,7 +44,6 @@ import org.broadinstitute.ddp.model.activity.instance.ActivityResponse;
 import org.broadinstitute.ddp.model.activity.instance.FormResponse;
 import org.broadinstitute.ddp.model.activity.types.ActivityType;
 import org.broadinstitute.ddp.model.activity.types.FormType;
-import org.broadinstitute.ddp.service.ActivityInstanceCreationValidation;
 import org.broadinstitute.ddp.util.ActivityInstanceUtil;
 import org.broadinstitute.ddp.util.I18nUtil;
 import org.jdbi.v3.core.Handle;
@@ -61,7 +59,6 @@ public class ActivityInstanceDao {
     private static String TRANSLATED_SUMMARY_BY_GUID_QUERY;
     private static String INSTANCE_ID_BY_GUID_QUERY;
     private static String INSTANCE_SUMMARIES_FOR_USER;
-    private static String INSTANCE_CREATION_VALIDATION_QUERY;
     private static String SECTIONS_SIZE_FOR_ACTIVITY_INSTANCE;
 
     private final FormInstanceDao formInstanceDao;
@@ -84,52 +81,7 @@ public class ActivityInstanceDao {
         TRANSLATED_SUMMARY_BY_GUID_QUERY = sqlConfig.getString(ActivityInstanceSql.TRANSLATED_SUMMARY_BY_GUID_QUERY);
         INSTANCE_ID_BY_GUID_QUERY = sqlConfig.getString(ActivityInstanceSql.INSTANCE_ID_BY_GUID_QUERY);
         INSTANCE_SUMMARIES_FOR_USER = sqlConfig.getString(ActivityInstanceSql.INSTANCE_SUMMARIES_FOR_USER_QUERY);
-        INSTANCE_CREATION_VALIDATION_QUERY =
-                sqlConfig.getString(ActivityInstanceSql.INSTANCE_CREATION_VALIDATION_QUERY);
         SECTIONS_SIZE_FOR_ACTIVITY_INSTANCE = sqlConfig.getString(ActivityInstanceSql.SECTIONS_SIZE_FOR_ACTIVITY_INSTANCE);
-    }
-
-    /**
-     * Checks whether or not a new instance of activityCode
-     * can be created for userGuid by looking at counts
-     * of instances and pex precondition.
-     */
-    public ActivityInstanceCreationValidation checkSuitabilityForActivityInstanceCreation(Handle handle,
-                                                                                          String activityCode,
-                                                                                          String userGuid,
-                                                                                          long studyId) {
-        try {
-            try (PreparedStatement stmt = handle.getConnection().prepareStatement(INSTANCE_CREATION_VALIDATION_QUERY)) {
-                stmt.setString(1, userGuid);
-                stmt.setString(2, activityCode);
-                stmt.setLong(3, studyId);
-
-                ResultSet rs = stmt.executeQuery();
-
-                if (!rs.next()) {
-                    throw new DaoException("Could not retrieve validation information for activity code "
-                            + activityCode + " for user " + userGuid);
-                }
-                Number maxInstancesAllowed = (Number) rs.getObject(SqlQuery.MAX_INSTANCES_PER_USER);
-                Number instancesForUser = (Number) rs.getObject(SqlQuery.NUM_INSTANCES_FOR_USER);
-
-                if (rs.next()) {
-                    throw new DaoException("Too many validation rows for activity code "
-                            + activityCode + " for user " + userGuid);
-                }
-
-                boolean hasTooManyInstances = false;
-                boolean hasUnmetPrecondition = false;
-
-                if (maxInstancesAllowed != null) {
-                    hasTooManyInstances = (maxInstancesAllowed.intValue() - instancesForUser.intValue()) <= 0;
-                }
-                return new ActivityInstanceCreationValidation(hasTooManyInstances, hasUnmetPrecondition);
-            }
-        } catch (SQLException e) {
-            throw new DaoException("Could not retrieve validation data before creating activity "
-                    + activityCode + " for user " + userGuid, e);
-        }
     }
 
     /**
@@ -432,10 +384,6 @@ public class ActivityInstanceDao {
                 .build().getSnapshot();
 
         for (var summary : summaries) {
-            if (StringUtils.isBlank(summary.getActivitySummary())) {
-                continue;
-            }
-
             Map<String, String> subs = substitutions.getOrDefault(summary.getActivityInstanceId(), new HashMap<>());
             var provider = new RenderValueProvider.Builder()
                     .setActivityInstanceNumber(summary.getInstanceNumber())
@@ -460,8 +408,10 @@ public class ActivityInstanceDao {
             summary.setActivityName(nameText);
 
             // Render the summary.
-            String summaryText = renderer.renderToString(summary.getActivitySummary(), context);
-            summary.setActivitySummary(summaryText);
+            if (StringUtils.isNotBlank(summary.getActivitySummary())) {
+                String summaryText = renderer.renderToString(summary.getActivitySummary(), context);
+                summary.setActivitySummary(summaryText);
+            }
         }
     }
 

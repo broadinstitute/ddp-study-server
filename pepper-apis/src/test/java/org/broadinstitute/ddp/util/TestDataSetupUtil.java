@@ -927,10 +927,9 @@ public class TestDataSetupUtil {
         version.addDataSource(new PdfActivityDataSource(consentActivityId, generatedTestData.getConsentVersionId()));
 
         PdfConfiguration config = new PdfConfiguration(info, version);
-        config.addTemplate(customTemplate);
 
         PdfDao pdfDao = handle.attach(PdfDao.class);
-        pdfDao.insertNewConfig(config);
+        pdfDao.insertNewConfig(config, Collections.singletonList(customTemplate));
 
         return pdfDao.findConfigInfo(config.getId()).get();
     }

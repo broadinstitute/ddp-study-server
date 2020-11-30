@@ -1,10 +1,13 @@
 package org.broadinstitute.ddp.db.dto;
 
+import java.util.Set;
+
 import org.broadinstitute.ddp.model.activity.types.InstitutionType;
+import org.jdbi.v3.core.mapper.Nested;
 import org.jdbi.v3.core.mapper.reflect.ColumnName;
 import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
 
-public class InstitutionPhysicianComponentDto {
+public final class InstitutionPhysicianComponentDto extends ComponentDto {
 
     private InstitutionType institutionType;
     private Long titleTemplateId;
@@ -15,13 +18,16 @@ public class InstitutionPhysicianComponentDto {
     private boolean required;
 
     @JdbiConstructor
-    public InstitutionPhysicianComponentDto(@ColumnName("institution_type") InstitutionType institutionType,
-                                            @ColumnName("title_template_id") Long titleTemplateId,
-                                            @ColumnName("subtitle_template_id") Long subtitleTemplateId,
-                                            @ColumnName("add_button_template_id") Long buttonTemplateId,
-                                            @ColumnName("allow_multiple") boolean allowMultiple,
-                                            @ColumnName("show_fields_initially") boolean showFields,
-                                            @ColumnName("required") boolean required) {
+    public InstitutionPhysicianComponentDto(
+            @Nested ComponentDto componentDto,
+            @ColumnName("institution_type") InstitutionType institutionType,
+            @ColumnName("title_template_id") Long titleTemplateId,
+            @ColumnName("subtitle_template_id") Long subtitleTemplateId,
+            @ColumnName("add_button_template_id") Long buttonTemplateId,
+            @ColumnName("allow_multiple") boolean allowMultiple,
+            @ColumnName("show_fields_initially") boolean showFields,
+            @ColumnName("required") boolean required) {
+        super(componentDto);
         this.institutionType = institutionType;
         this.titleTemplateId = titleTemplateId;
         this.subtitleTemplateId = subtitleTemplateId;
@@ -57,5 +63,20 @@ public class InstitutionPhysicianComponentDto {
 
     public boolean isRequired() {
         return required;
+    }
+
+    @Override
+    public Set<Long> getTemplateIds() {
+        var ids = super.getTemplateIds();
+        if (titleTemplateId != null) {
+            ids.add(titleTemplateId);
+        }
+        if (subtitleTemplateId != null) {
+            ids.add(subtitleTemplateId);
+        }
+        if (buttonTemplateId != null) {
+            ids.add(buttonTemplateId);
+        }
+        return ids;
     }
 }

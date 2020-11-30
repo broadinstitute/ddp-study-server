@@ -1,22 +1,10 @@
 package org.broadinstitute.ddp.db.dao;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-
-import org.broadinstitute.ddp.db.dto.QuestionDto;
-import org.broadinstitute.ddp.db.dto.TextQuestionDto;
 import org.broadinstitute.ddp.model.activity.types.SuggestionType;
 import org.broadinstitute.ddp.model.activity.types.TextInputType;
-import org.jdbi.v3.core.result.LinkedHashMapRowReducer;
-import org.jdbi.v3.core.result.RowView;
 import org.jdbi.v3.sqlobject.SqlObject;
-import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
-import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
-import org.jdbi.v3.sqlobject.statement.UseRowReducer;
-import org.jdbi.v3.stringtemplate4.UseStringTemplateSqlLocator;
 
 public interface JdbiTextQuestion extends SqlObject {
 
@@ -50,31 +38,4 @@ public interface JdbiTextQuestion extends SqlObject {
                    @Bind("suggestionType") SuggestionType suggestionType,
                    @Bind("placeholderTemplateId") Long placeholderTemplateId);
 
-
-    @UseStringTemplateSqlLocator
-    @SqlQuery("queryDtoAndSuggestionsByQuestionId")
-    @RegisterConstructorMapper(value = TextQuestionDto.class, prefix = "p")
-    @UseRowReducer(RowReducer.class)
-    Optional<TextQuestionDto> findDtoByQuestionId(@Bind("questionId") long questionId);
-
-    default Optional<TextQuestionDto> findDtoByQuestion(QuestionDto questionDto) {
-        return findDtoByQuestionId(questionDto.getId());
-    }
-
-    @UseStringTemplateSqlLocator
-    @SqlQuery("queryDtoAndSuggestionsByActivityId")
-    @RegisterConstructorMapper(value = TextQuestionDto.class, prefix = "p")
-    @UseRowReducer(RowReducer.class)
-    List<TextQuestionDto> findDtoByActivityId(@Bind("activityId") long activityId);
-
-    class RowReducer implements LinkedHashMapRowReducer<Long, TextQuestionDto> {
-        @Override
-        public void accumulate(Map<Long, TextQuestionDto> map, RowView rowView) {
-            TextQuestionDto textQuestionDto = map.computeIfAbsent(rowView.getColumn("p_question_id", Long.class),
-                    id -> rowView.getRow(TextQuestionDto.class));
-            if (rowView.getColumn("c_suggestion", String.class) != null) {
-                textQuestionDto.addSuggestion(rowView.getColumn("c_suggestion", String.class));
-            }
-        }
-    }
 }

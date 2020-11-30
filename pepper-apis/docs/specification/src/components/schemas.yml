@@ -757,16 +757,6 @@ Error.Activity:
           type: string
           enum:
             - MALFORMED_ACCEPT_LANGUAGE_HEADER
-Error.ActivityCreate:
-  allOf:
-    - $ref: '../pepper.yml#/components/schemas/Error'
-    - type: object
-      properties:
-        code:
-          type: string
-          enum:
-            - TOO_MANY_INSTANCES
-            - UNSATISFIED_PRECONDITION
 Error.ActivityNotFound:
   allOf:
     - $ref: '../pepper.yml#/components/schemas/Error'
@@ -1027,6 +1017,26 @@ Error.StudyExit:
           enum:
             - OPERATION_NOT_ALLOWED
             - NOT_SUPPORTED
+Error.TooManyInstances:
+  allOf:
+    - $ref: '../pepper.yml#/components/schemas/Error'
+    - type: object
+      properties:
+        code:
+          type: string
+          enum:
+            - TOO_MANY_INSTANCES
+Error.UserStudyActivityNotFound:
+  allOf:
+    - $ref: '../pepper.yml#/components/schemas/Error'
+    - type: object
+      properties:
+        code:
+          type: string
+          enum:
+            - ACTIVITY_NOT_FOUND
+            - STUDY_NOT_FOUND
+            - USER_NOT_FOUND
 Image:
   type: object
   required:
@@ -1081,6 +1091,12 @@ PicklistOption:
       type: string
     exclusive:
       type: boolean
+    nestedOptionsLabel:
+      type: string
+    nestedOptions:
+        type: array
+        items:
+          $ref: '../pepper.yml#/components/schemas/PicklistOption'
 PrequalifierModel:
   type: object
   required:
@@ -2135,3 +2151,54 @@ WorkflowNextSuggestion.Static:
           - THANK_YOU
           - PARTICIPANT_LIST
           - UNKNOWN
+Statistics.Configuration:
+  type: object
+  properties:
+    type:
+      type: string
+      description: |
+        * `PARTICIPANTS` - Number of participants enrolled. Divided by types (self, governed).
+        * `DISTRIBUTION` - Shows answers distribution for the specific picklist question. Contains also picklist option details with i18n applied.
+        * `MAILING_LIST` - Number of subscriptions.
+        * `SPECIFIC_ANSWER` - Shows how many specific answers were given for the specific question. Supported question types: picklist, boolean.
+        * `KITS` - Number of kit requests divided by types.
+      enum:
+        - PARTICIPANTS
+        - DISTRIBUTION
+        - MAILING_LIST
+        - SPECIFIC_ANSWER
+        - KITS
+    questionStableId:
+      type: string
+      description: Question stableId if applicable.
+    answerValue:
+      type: string
+      description: Answer stableId which is counted for SPECIFIC_ANSWER
+Statistics.Figure.Item.Data:
+  type: object
+  properties:
+    count:
+      type: string
+    optionDetails:
+      $ref: '../pepper.yml#/components/schemas/PicklistOption'
+Statistics.Figure.Item:
+  type: object
+  properties:
+    name:
+      type: string
+      description: Statistics item title
+    data:
+      $ref: '../pepper.yml#/components/schemas/Statistics.Figure.Item.Data'
+Statistics.Figure:
+  type: object
+  properties:
+    configuration:
+      $ref: '../pepper.yml#/components/schemas/Statistics.Configuration'
+    statistics:
+      type: array
+      items:
+        $ref: '../pepper.yml#/components/schemas/Statistics.Figure.Item'
+Statistics:
+  type: array
+  items:
+    $ref: '../pepper.yml#/components/schemas/Statistics.Figure'

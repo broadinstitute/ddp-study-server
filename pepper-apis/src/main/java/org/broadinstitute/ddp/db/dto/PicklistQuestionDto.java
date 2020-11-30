@@ -1,6 +1,7 @@
 package org.broadinstitute.ddp.db.dto;
 
 import java.io.Serializable;
+import java.util.Set;
 
 import org.broadinstitute.ddp.model.activity.types.PicklistRenderMode;
 import org.broadinstitute.ddp.model.activity.types.PicklistSelectMode;
@@ -19,8 +20,8 @@ public final class PicklistQuestionDto extends QuestionDto implements Serializab
 
     @JdbiConstructor
     public PicklistQuestionDto(@Nested QuestionDto questionDto,
-                               @ColumnName("picklist_select_mode_code") PicklistSelectMode selectMode,
-                               @ColumnName("picklist_render_mode_code") PicklistRenderMode renderMode,
+                               @ColumnName("picklist_select_mode") PicklistSelectMode selectMode,
+                               @ColumnName("picklist_render_mode") PicklistRenderMode renderMode,
                                @ColumnName("picklist_label_template_id") Long labelTemplateId) {
         super(questionDto);
         this.selectMode = selectMode;
@@ -38,5 +39,14 @@ public final class PicklistQuestionDto extends QuestionDto implements Serializab
 
     public Long getLabelTemplateId() {
         return labelTemplateId;
+    }
+
+    @Override
+    public Set<Long> getTemplateIds() {
+        var ids = super.getTemplateIds();
+        if (labelTemplateId != null) {
+            ids.add(labelTemplateId);
+        }
+        return ids;
     }
 }

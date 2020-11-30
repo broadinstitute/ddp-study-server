@@ -224,10 +224,13 @@ public class JWTConverter {
      * {@link DDPAuth a ddp auth object}.
      */
     public DDPAuth convertJWTFromHeader(String authHeader) {
-        DDPAuth ddpAuth = new DDPAuth();
+        DDPAuth ddpAuth;
         String jwt = extractEncodedJwtFromHeader(authHeader);
         if (jwt != null) {
             ddpAuth = convertJWT(jwt);
+        } else {
+            ddpAuth = new DDPAuth();
+            ddpAuth.setPreferredLanguage(DEFAULT_ISO_LANGUAGE_CODE);
         }
         return ddpAuth;
     }

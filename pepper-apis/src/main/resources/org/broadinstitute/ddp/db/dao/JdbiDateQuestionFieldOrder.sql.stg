@@ -1,16 +1,5 @@
 group JdbiDateQuestionFieldOrder;
 
-queryOrderedFieldsByQuestionId() ::= <<
-select
-  dft.date_field_type_code
-from
-  date_question_field_order as dqfo,
-  date_field_type as dft
-where dqfo.date_question_id = ?
-and dqfo.date_field_type_id = dft.date_field_type_id
-order by dqfo.display_order asc
->>
-
 insert() ::= <<
 insert into date_question_field_order (date_question_id, date_field_type_id, display_order)
 values (:questionId, :dateFieldTypeId, :displayOrder)
