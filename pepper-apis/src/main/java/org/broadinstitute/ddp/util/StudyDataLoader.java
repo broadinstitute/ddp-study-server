@@ -1680,7 +1680,7 @@ public class StudyDataLoader {
 
         sourceDataSurveyQs.get(surveyName).add(questionName);
         //check if source data doesnot have options. try for a match
-        if (sourceDataElement != null && !sourceDataElement.getAsJsonObject().get(questionName).isJsonNull()) {
+        if (sourceDataElement != null && sourceDataElement.getAsJsonObject().has(questionName)) {
             value = sourceDataElement.getAsJsonObject().get(questionName);
         }
         if (value == null || value.isJsonNull()) {
