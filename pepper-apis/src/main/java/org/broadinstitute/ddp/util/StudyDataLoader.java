@@ -1146,7 +1146,7 @@ public class StudyDataLoader {
             throws IOException, InterruptedException {
         String auth0UserId = null;
         File userJsonFile = bulkUserCreateJson(data, userGuid, emailAddress);
-        Auth0Util.BulkUserImportResponse bulkUserImportResponse = auth0Util.bulkUserWithHashedPassword(mgmtToken, userJsonFile);
+        Auth0Util.BulkUserImportResponse bulkUserImportResponse = auth0Util.bulkUserWithHashedPassword(auth0Domain, userJsonFile);
         Auth0Util.Auth0JobResponse auth0JobResponse = auth0Util.getAuth0Job(bulkUserImportResponse.getJobId(), mgmtToken);
         while (auth0JobResponse.getStatus().equals("pending")) {
             auth0JobResponse = auth0Util.getAuth0Job(bulkUserImportResponse.getJobId(), mgmtToken);
@@ -2422,14 +2422,6 @@ public class StudyDataLoader {
                     streetAddress
             ));
         }
-    }
-
-    public void deleteExistingAuth0User(String emailAddress) throws Auth0Exception {
-        List<User> auth0Users = auth0Util.getAuth0UsersByEmail(emailAddress, mgmtToken);
-        if (auth0Users.size() == 0) {
-            return;
-        }
-        auth0Util.deleteAuth0User(auth0Users.get(0).getId(), mgmtToken);
     }
 
     class UserExistsException extends Exception {
