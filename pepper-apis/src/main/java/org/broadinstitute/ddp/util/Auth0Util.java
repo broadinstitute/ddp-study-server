@@ -42,6 +42,7 @@ import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.http.util.EntityUtils;
 import org.broadinstitute.ddp.client.Auth0ManagementClient;
 import org.broadinstitute.ddp.constants.ConfigFile;
+import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.JdbiAuth0Tenant;
 import org.broadinstitute.ddp.db.dao.JdbiUserStudyEnrollment;
 import org.broadinstitute.ddp.db.dto.Auth0TenantDto;
@@ -294,8 +295,19 @@ public class Auth0Util {
         return new Gson().fromJson(responseBody, RefreshTokenResponse.class);
     }
 
-    public BulkUserImportResponse bulkUserWithHashedPassword(String mgmtApiToken, File file) throws Auth0Exception {
-        String connectionId = getAuth0UserNamePasswordConnectionId(mgmtApiToken);
+    public BulkUserImportResponse bulkUserWithHashedPassword(String auth0Domain, String mgmtApiToken, File file) throws Auth0Exception {
+        String connectionId = TransactionWrapper.withTxn(handle -> {
+            Auth0TenantDto auth0TenantDto = handle.attach(JdbiAuth0Tenant.class).findByDomain(auth0Domain);
+            var mgmtClient = new Auth0ManagementClient(
+                    auth0Domain,
+                    auth0TenantDto.getManagementClientId(),
+                    auth0TenantDto.getManagementClientSecret());
+
+            return mgmtClient
+                    .getConnectionByName(Auth0ManagementClient.DEFAULT_DB_CONN_NAME)
+                    .getBody().getId();
+        });
+
         HttpEntity httpEntity = MultipartEntityBuilder.create().addBinaryBody("users", file)
                 .addTextBody("connection_id", connectionId)
                 .addTextBody("upsert", "true")
