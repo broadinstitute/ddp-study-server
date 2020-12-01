@@ -476,6 +476,9 @@
 	"registration_summary_created": "Registrierung",
 	"registration_summary_in_progress": "Registrierung",
 	"registration_title": "Registrierung",
+	"registration_state_province_prompt": "Bundesland/Kanton/Provinz des Teilnehmers",
+	"registration_choose_state_province": "TBD",
+	"registration_country_label": "Bitte ein Land auswählens",
 	"required_field_hint": "TBD",
 
 	"review_title": "Überprüfung und Einreichung",

@@ -481,6 +481,9 @@
 	"registration_summary_created": "注册",
 	"registration_summary_in_progress": "注册",
 	"registration_title": "注册",
+	"registration_state_province_prompt": "参与者的州/省",
+	"registration_choose_state_province": "TBD",
+	"registration_country_label": "请选择一个国家",
 	"required_field_hint": "TBD",
 
 	"review_title": "审查和提交",

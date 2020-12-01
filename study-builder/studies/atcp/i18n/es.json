@@ -478,7 +478,7 @@
 	"registration_title": "Registro",
 	"registration_state_province_prompt": "Estado/Provincia del participante*",
 	"registration_state_province_req_hint": "TBD",
-	"registration_choose_state_province": "Choose state/province...",
+	"registration_choose_state_province": "TBD",
 	"registration_country_label": "Seleccione un país",
 	"required_field_hint": "TBD",
 

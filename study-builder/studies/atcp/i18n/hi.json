@@ -481,6 +481,9 @@
 	"registration_summary_created": "पंजीकरण",
 	"registration_summary_in_progress": "पंजीकरण",
 	"registration_title": "पंजीकरण",
+	"registration_state_province_prompt": "प्रतिभागी का राज्य/प्रांत",
+	"registration_choose_state_province": "TBD",
+	"registration_country_label": "कृपया एक देश चुनें",
 	"required_field_hint": "TBD",
 
 	"review_title": "समीक्षा एवं प्रस्तुति",

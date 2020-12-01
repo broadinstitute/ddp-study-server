@@ -97,7 +97,7 @@
 	"consent_download_indicates_p1": "Incentivamos você a baixar e ler com atenção o termo de consentimento completo.",
 	"consent_download_indicates_p2_start": "Entre em contato conosco se tiver alguma pergunta:",
 	"consent_download_indicates_p3": "Clique em \"Avançar\" para continuar o processo de consentimento.",
-	"consent_election_agree": "Marque as caixas abaixo para indicar se concorda com as opções a seguir. Caso marque \\\"Não\\\" em alguma opção, ainda poderá participar da iniciativa.",
+	"consent_election_agree": "Marque as caixas abaixo para indicar se concorda com as opções a seguir. Caso marque \"Não\" em alguma opção, ainda poderá participar da iniciativa.",
 	"consent_full_name_indicates": "",
 	"consent_full_name_indicates_p1": "Tive tempo suficiente para ler o termo de consentimento e avaliar minha decisão de participar (ou permitir que meu filho participe) desse estudo.",
 	"consent_full_name_indicates_p2": "Todas as minhas perguntas foram respondidas de maneira satisfatória.",
@@ -482,6 +482,9 @@
 	"registration_summary_created": "Registro",
 	"registration_summary_in_progress": "Registro",
 	"registration_title": "Registro",
+	"registration_state_province_prompt": "Estado/província do participante",
+	"registration_choose_state_province": "TBD",
+	"registration_country_label": "Selecione um país",
 	"required_field_hint": "TBD",
 
 	"review_title": "Verificação e envio",

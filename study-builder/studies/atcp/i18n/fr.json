@@ -480,6 +480,9 @@
 	"registration_summary_created": "Enregistrement",
 	"registration_summary_in_progress": "Enregistrement",
 	"registration_title": "Enregistrement",
+	"registration_state_province_prompt": "État/province du participant",
+	"registration_choose_state_province": "TBD",
+	"registration_country_label": "Sélectionnez un pays",
 	"required_field_hint": "TBD",
 
 	"review_title": "Examen et soumission",

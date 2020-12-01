@@ -97,7 +97,7 @@
 	"consent_download_indicates_p1": "Ti invitiamo a scaricare e a leggere attentamente la versione integrale del modulo di consenso.",
 	"consent_download_indicates_p2_start": "Per qualsiasi domanda contattaci ai recapiti:",
 	"consent_download_indicates_p3": "Fai clic su Avanti per continuare la procedura di rilascio del consenso.",
-	"consent_election_agree": "Contrassegna le caselle qui di seguito per indicare se fornisci il tuo consenso per le seguenti opzioni. Se contrassegni la casella \\\"No\\\" per una determinata opzione, potrai comunque prendere parte all'iniziativa.",
+	"consent_election_agree": "Contrassegna le caselle qui di seguito per indicare se fornisci il tuo consenso per le seguenti opzioni. Se contrassegni la casella \"No\" per una determinata opzione, potrai comunque prendere parte all'iniziativa.",
 	"consent_full_name_indicates": "",
 	"consent_full_name_indicates_p1": "Ho avuto a disposizione tempo sufficiente per leggere il modulo di consenso e per valutare se accettare di partecipare (o permettere a mio/a figlio/a di partecipare) a questo studio.",
 	"consent_full_name_indicates_p2": "Ho ottenuto risposte soddisfacenti a tutte le mie domande.",
@@ -481,6 +481,9 @@
 	"registration_summary_created": "Registrazione",
 	"registration_summary_in_progress": "Registrazione",
 	"registration_title": "Registrazione",
+	"registration_state_province_prompt": "Stato/Provincia del partecipante",
+	"registration_choose_state_province": "TBD",
+	"registration_country_label": "Seleziona un Paese",
 	"required_field_hint": "TBD",
 
 	"review_title": "Revisione e invio",
