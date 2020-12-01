@@ -882,7 +882,9 @@ public class StudyDataLoaderMain {
                                 .get("activity_code").getAsString();
                         List<ActivityInstanceDto> activityInstanceDtoList = jdbiActivityInstance
                                 .findAllByUserGuidAndActivityCode(userGuid, activityCode, studyId);
-                        activityInstanceDao.deleteByInstanceGuid(activityInstanceDtoList.get(0).getGuid());
+                        if (!activityInstanceDtoList.isEmpty()) {
+                            activityInstanceDao.deleteByInstanceGuid(activityInstanceDtoList.get(0).getGuid());
+                        }
                         ActivityInstanceDto instanceDto = dataLoader.createActivityInstance(sourceData.get("atconsentsurvey"),
                                 userGuid, studyId,
                                 activityCode, createdAt,
@@ -898,6 +900,11 @@ public class StudyDataLoaderMain {
                     if (hasATAssent) {
                         String activityCode = mappingData.get("AssentSurvey").getAsJsonObject()
                                 .get("activity_code").getAsString();
+                        List<ActivityInstanceDto> activityInstanceDtoList = jdbiActivityInstance
+                                .findAllByUserGuidAndActivityCode(userGuid, activityCode, studyId);
+                        if (!activityInstanceDtoList.isEmpty()) {
+                            activityInstanceDao.deleteByInstanceGuid(activityInstanceDtoList.get(0).getGuid());
+                        }
                         ActivityInstanceDto instanceDto = dataLoader.createActivityInstance(sourceData.get("atassentsurvey"),
                                 userGuid, studyId,
                                 activityCode, createdAt,
@@ -915,7 +922,9 @@ public class StudyDataLoaderMain {
                                 .get("activity_code").getAsString();
                         List<ActivityInstanceDto> activityInstanceDtoList = jdbiActivityInstance
                                 .findAllByUserGuidAndActivityCode(userGuid, activityCode, studyId);
-                        activityInstanceDao.deleteByInstanceGuid(activityInstanceDtoList.get(0).getGuid());
+                        if (!activityInstanceDtoList.isEmpty()) {
+                            activityInstanceDao.deleteByInstanceGuid(activityInstanceDtoList.get(0).getGuid());
+                        }
                         ActivityInstanceDto instanceDto = dataLoader.createActivityInstance(sourceData.get("atcontactingphysiciansurvey"),
                                 userGuid, studyId,
                                 activityCode, createdAt,
@@ -933,7 +942,9 @@ public class StudyDataLoaderMain {
                                 .get("activity_code").getAsString();
                         List<ActivityInstanceDto> activityInstanceDtoList = jdbiActivityInstance
                                 .findAllByUserGuidAndActivityCode(userGuid, activityCode, studyId);
-                        activityInstanceDao.deleteByInstanceGuid(activityInstanceDtoList.get(0).getGuid());
+                        if (!activityInstanceDtoList.isEmpty()) {
+                            activityInstanceDao.deleteByInstanceGuid(activityInstanceDtoList.get(0).getGuid());
+                        }
                         ActivityInstanceDto instanceDto = dataLoader.createActivityInstance(sourceData.get("medicalhistorysurvey"),
                                 userGuid, studyId,
                                 activityCode, createdAt,
@@ -949,6 +960,11 @@ public class StudyDataLoaderMain {
                     if (hasATGenomeStudy) {
                         String activityCode = mappingData.get("GenomeStudySurvey").getAsJsonObject()
                                 .get("activity_code").getAsString();
+                        List<ActivityInstanceDto> activityInstanceDtoList = jdbiActivityInstance
+                                .findAllByUserGuidAndActivityCode(userGuid, activityCode, studyId);
+                        if (!activityInstanceDtoList.isEmpty()) {
+                            activityInstanceDao.deleteByInstanceGuid(activityInstanceDtoList.get(0).getGuid());
+                        }
                         ActivityInstanceDto instanceDto = dataLoader.createActivityInstance(sourceData.get("atgenomestudysurvey"),
                                 userGuid, studyId,
                                 activityCode, createdAt,
@@ -971,9 +987,15 @@ public class StudyDataLoaderMain {
                     if (registrationStatus >= 7) {
                         List<ActivityInstanceDto> activityInstanceDtoList = jdbiActivityInstance
                                 .findAllByUserGuidAndActivityCode(userGuid, "REVIEW_AND_SUBMISSION", studyId);
-                        activityInstanceStatusDao.deleteAllByInstanceGuid(activityInstanceDtoList.get(0).getGuid());
-                        activityInstanceStatusDao.insertStatus(activityInstanceDtoList.get(0).getId(), InstanceStatusType.COMPLETE,
-                                lastSubmitedToMillis, userGuid);
+                        if (!activityInstanceDtoList.isEmpty()) {
+                            activityInstanceDao.deleteByInstanceGuid(activityInstanceDtoList.get(0).getGuid());
+                        }
+                        ActivityInstanceDto instanceDto = dataLoader.createActivityInstance(sourceData.get("datstatparticipantdata"),
+                                userGuid, studyId,
+                                "REVIEW_AND_SUBMISSION", createdAt,
+                                jdbiActivity,
+                                activityInstanceDao,
+                                activityInstanceStatusDao);
                     }
 
 
