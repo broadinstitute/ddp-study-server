@@ -22,6 +22,7 @@ import com.sendgrid.Response;
 import com.sendgrid.SendGrid;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.http.HttpHost;
+import org.apache.http.impl.NoConnectionReuseStrategy;
 import org.apache.http.impl.client.HttpClients;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -76,6 +77,7 @@ public class SendGridClient {
                 throw new IllegalArgumentException("proxy needs to be a valid url");
             }
             httpClientBuilder.setProxy(new HttpHost(proxyUrl.getHost(), proxyUrl.getPort(), proxyUrl.getProtocol()));
+            httpClientBuilder.setConnectionReuseStrategy(NoConnectionReuseStrategy.INSTANCE);
             LOG.info("Using SendGrid proxy: {}", proxy);
         }
         var client = new Client(httpClientBuilder.build());
