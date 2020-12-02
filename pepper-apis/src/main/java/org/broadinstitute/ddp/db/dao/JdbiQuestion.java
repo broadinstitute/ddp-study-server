@@ -44,17 +44,18 @@ public interface JdbiQuestion extends SqlObject {
 
     @SqlUpdate("insert into question (question_type_id, is_restricted, question_stable_code_id,"
             + " question_prompt_template_id, tooltip_template_id, info_header_template_id, info_footer_template_id,"
-            + " revision_id, study_activity_id, hide_number, is_deprecated)"
+            + " revision_id, study_activity_id, hide_number, is_deprecated, is_write_once)"
             + " values(:questionTypeId, :isRestricted, :stableCodeId, :promptTemplateId, :tooltipTemplateId,"
             + " :infoHeaderTemplateId, :infoFooterTemplateId, :revisionId, :activityId,"
-            + " :hideNumber, :isDeprecated)")
+            + " :hideNumber, :isDeprecated, :isWriteOnce)")
     @GetGeneratedKeys
     long insert(@Bind("questionTypeId") long questionTypeId, @Bind("isRestricted") boolean isRestricted,
                 @Bind("stableCodeId") long stableCodeId, @Bind("promptTemplateId") long promptTemplateId,
                 @Bind("tooltipTemplateId") Long tooltipTemplateId,
                 @Bind("infoHeaderTemplateId") Long infoHeaderTemplateId, @Bind("infoFooterTemplateId") Long infoFooterTemplateId,
                 @Bind("revisionId") long revisionId, @Bind("activityId") long activityId,
-                @Bind("hideNumber") boolean hideNumber, @Bind("isDeprecated") boolean isDeprecated);
+                @Bind("hideNumber") boolean hideNumber, @Bind("isDeprecated") boolean isDeprecated,
+                @Bind("isWriteOnce") boolean isWriteOnce);
 
     // study-builder
     @UseStringTemplateSqlLocator
