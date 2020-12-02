@@ -2,7 +2,6 @@ package org.broadinstitute.ddp.json.dsm;
 
 import java.util.Optional;
 import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
 
 import com.google.gson.JsonElement;
 import com.google.gson.annotations.SerializedName;
@@ -15,7 +14,6 @@ public class DsmNotificationPayload {
     @SerializedName("eventType")
     private String eventType;
 
-    @NotNull
     @SerializedName("kitReasonType")
     private KitReasonType kitReasonType;
 
