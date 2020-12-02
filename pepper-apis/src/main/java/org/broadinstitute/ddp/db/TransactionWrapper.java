@@ -377,8 +377,8 @@ public class TransactionWrapper {
         config.setAutoCommit(true); // will be managed by jdbi, which expects autcommit to be enabled initially
         config.setTransactionIsolation("TRANSACTION_READ_COMMITTED");
         config.setMaximumPoolSize(maxConnections);
-        config.setConnectionTimeout(1000);
-        config.setMaxLifetime((28800 * 1000) - (3 * 60 * 1000));  // as per hikari docs, a few minutes less than mysql wait_timeout
+        config.setConnectionTimeout(TimeUnit.SECONDS.toMillis(5));
+        config.setMaxLifetime(TimeUnit.SECONDS.toMillis(14400)); // 4 hours, which is half the default wait_timeout of mysql
         config.setPoolName(db.name());
 
         // todo arz leverage allowPoolSuspension and mxbeans to fully  automate password rotation
