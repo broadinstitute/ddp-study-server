@@ -86,7 +86,7 @@ public class UserActivityInstanceListRoute implements Route {
             String prevGuid = null;
             for (var summary : summariesWithTheSameCode) {
                 if (prevGuid != null) {
-                    summary.setPrevInstanceGuid(prevGuid);
+                    summary.setPreviousInstanceGuid(prevGuid);
                 }
                 summary.setInstanceNumber(counter);
                 prevGuid = summary.getActivityInstanceGuid();
