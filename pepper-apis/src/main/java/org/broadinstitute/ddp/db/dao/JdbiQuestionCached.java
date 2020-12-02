@@ -64,9 +64,9 @@ public class JdbiQuestionCached extends SQLObjectWrapper<JdbiQuestion> implement
     @Override
     public long insert(long questionTypeId, boolean isRestricted, long stableCodeId, long promptTemplateId, Long tooltipTemplateId,
                        Long infoHeaderTemplateId, Long infoFooterTemplateId, long revisionId, long activityId, boolean hideNumber,
-                       boolean isDeprecated) {
+                       boolean isDeprecated, boolean isWriteOnce) {
         return delegate.insert(questionTypeId, isRestricted, stableCodeId, promptTemplateId, tooltipTemplateId,
-                infoHeaderTemplateId, infoFooterTemplateId, revisionId, activityId, hideNumber, isDeprecated);
+                infoHeaderTemplateId, infoFooterTemplateId, revisionId, activityId, hideNumber, isDeprecated, isWriteOnce);
     }
 
     @Override
