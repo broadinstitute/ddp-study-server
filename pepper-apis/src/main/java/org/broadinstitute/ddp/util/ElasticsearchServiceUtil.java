@@ -13,6 +13,7 @@ import org.apache.http.HttpHost;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.CredentialsProvider;
+import org.apache.http.impl.NoConnectionReuseStrategy;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
@@ -71,6 +72,7 @@ public final class ElasticsearchServiceUtil {
                     httpClientBuilder.setDefaultCredentialsProvider(credentialsProvider);
                     if (proxyUrl != null) {
                         httpClientBuilder.setProxy(new HttpHost(proxyUrl.getHost(), proxyUrl.getPort(), proxyUrl.getProtocol()));
+                        httpClientBuilder.setConnectionReuseStrategy(NoConnectionReuseStrategy.INSTANCE);
                     }
                     return httpClientBuilder;
                 })
