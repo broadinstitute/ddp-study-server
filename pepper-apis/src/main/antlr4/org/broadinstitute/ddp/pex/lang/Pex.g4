@@ -27,6 +27,7 @@ query
   | USER_TYPE '.' study '.' form '.' question '.' 'answers' '.' predicate                   # DefaultLatestAnswerQuery
   | USER_TYPE '.' study '.' form '.' instance '.' question '.' 'answers' '.' predicate      # AnswerQuery
   | USER_TYPE '.' 'profile' '.' profileDataQuery                                            # ProfileQuery
+  | USER_TYPE '.' 'event' '.' 'kit' '.' kitEventQuery                                       # EventKitQuery
   | USER_TYPE '.' 'event' '.' 'testResult' '.' testResultQuery                              # EventTestResultQuery
   ;
 
@@ -73,6 +74,11 @@ predicate
 // Queries to pull out various pieces of profile data
 profileDataQuery
   : 'birthDate' '(' ')'   # ProfileBirthDateQuery
+  ;
+
+// Queries for current kit event.
+kitEventQuery
+  : 'isReason' '(' STR ( ',' STR )* ')'   # IsKitReasonQuery
   ;
 
 // Queries for current test result event.

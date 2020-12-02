@@ -1,10 +1,10 @@
 package org.broadinstitute.ddp.route;
 
 import static io.restassured.RestAssured.given;
-import static org.broadinstitute.ddp.model.activity.types.DsmNotificationEventType.SALIVA_RECEIVED;
-import static org.broadinstitute.ddp.model.activity.types.DsmNotificationEventType.TESTBOSTON_RECEIVED;
-import static org.broadinstitute.ddp.model.activity.types.DsmNotificationEventType.TESTBOSTON_SENT;
-import static org.broadinstitute.ddp.model.activity.types.DsmNotificationEventType.TEST_RESULT;
+import static org.broadinstitute.ddp.model.dsm.DsmNotificationEventType.SALIVA_RECEIVED;
+import static org.broadinstitute.ddp.model.dsm.DsmNotificationEventType.TESTBOSTON_RECEIVED;
+import static org.broadinstitute.ddp.model.dsm.DsmNotificationEventType.TESTBOSTON_SENT;
+import static org.broadinstitute.ddp.model.dsm.DsmNotificationEventType.TEST_RESULT;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertEquals;
@@ -35,6 +35,7 @@ import org.broadinstitute.ddp.db.dao.EventDao;
 import org.broadinstitute.ddp.db.dao.EventTriggerDao;
 import org.broadinstitute.ddp.db.dao.JdbiEventConfiguration;
 import org.broadinstitute.ddp.db.dao.JdbiEventConfigurationOccurrenceCounter;
+import org.broadinstitute.ddp.db.dao.JdbiExpression;
 import org.broadinstitute.ddp.db.dao.JdbiUserStudyEnrollment;
 import org.broadinstitute.ddp.db.dao.KitConfigurationDao;
 import org.broadinstitute.ddp.db.dao.KitScheduleDao;
@@ -51,8 +52,10 @@ import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
 import org.broadinstitute.ddp.model.activity.definition.i18n.Translation;
 import org.broadinstitute.ddp.model.activity.instance.ActivityResponse;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
-import org.broadinstitute.ddp.model.activity.types.DsmNotificationEventType;
+import org.broadinstitute.ddp.model.dsm.DsmNotificationEventType;
+import org.broadinstitute.ddp.model.dsm.KitReasonType;
 import org.broadinstitute.ddp.model.dsm.TestResult;
+import org.broadinstitute.ddp.model.pex.Expression;
 import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
 import org.broadinstitute.ddp.util.GsonUtil;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
@@ -117,7 +120,7 @@ public class ReceiveDsmNotificationRouteTest extends DsmRouteTest {
 
     @Test
     public void testStudyNotFound() {
-        var payload = new DsmNotificationPayload(null, SALIVA_RECEIVED.name(), 1L);
+        var payload = new DsmNotificationPayload(SALIVA_RECEIVED.name());
         given().auth().oauth2(dsmClientAccessToken)
                 .pathParam("study", "foobar")
                 .pathParam("user", testData.getUserGuid())
@@ -130,7 +133,7 @@ public class ReceiveDsmNotificationRouteTest extends DsmRouteTest {
 
     @Test
     public void testUserNotFound() {
-        var payload = new DsmNotificationPayload(null, SALIVA_RECEIVED.name(), 1L);
+        var payload = new DsmNotificationPayload(SALIVA_RECEIVED.name());
         given().auth().oauth2(dsmClientAccessToken)
                 .pathParam("study", testData.getStudyGuid())
                 .pathParam("user", "foobar")
@@ -143,7 +146,7 @@ public class ReceiveDsmNotificationRouteTest extends DsmRouteTest {
 
     @Test
     public void testNotificationEventTypeUnknown() {
-        var payload = new DsmNotificationPayload(null, "foobar", 1L);
+        var payload = new DsmNotificationPayload("foobar");
         given().auth().oauth2(dsmClientAccessToken)
                 .pathParam("study", testData.getStudyGuid())
                 .pathParam("user", testData.getUserGuid())
@@ -157,7 +160,7 @@ public class ReceiveDsmNotificationRouteTest extends DsmRouteTest {
 
     @Test
     public void testNotificationEventTestResultMissingEventData() {
-        var payload = new DsmNotificationPayload(null, TEST_RESULT.name(), 1L);
+        var payload = new DsmNotificationPayload(TEST_RESULT.name());
         given().auth().oauth2(dsmClientAccessToken)
                 .pathParam("study", testData.getStudyGuid())
                 .pathParam("user", testData.getUserGuid())
@@ -171,7 +174,7 @@ public class ReceiveDsmNotificationRouteTest extends DsmRouteTest {
 
     @Test
     public void testNotificationEventTestResultBadEventData() {
-        var payload = new DsmNotificationPayload(null, TEST_RESULT.name(), 1L);
+        var payload = new DsmNotificationPayload(TEST_RESULT.name());
         var result = new JsonObject();
         result.addProperty("result", "NEGATIVE");
         result.addProperty("reason", "the reason");
@@ -190,7 +193,7 @@ public class ReceiveDsmNotificationRouteTest extends DsmRouteTest {
 
     @Test
     public void testNotificationEventTestResultInvalidEventData() {
-        var payload = new DsmNotificationPayload(null, TEST_RESULT.name(), 1L);
+        var payload = new DsmNotificationPayload(TEST_RESULT.name());
         var result = new JsonObject();
         result.addProperty("result", "NEGATIVE");
         result.addProperty("reason", "the reason");
@@ -209,7 +212,7 @@ public class ReceiveDsmNotificationRouteTest extends DsmRouteTest {
 
     @Test
     public void testEvents_success() {
-        var payload = new DsmNotificationPayload(null, SALIVA_RECEIVED.name(), 1L);
+        var payload = new DsmNotificationPayload(SALIVA_RECEIVED.name());
         given().auth().oauth2(dsmClientAccessToken)
                 .pathParam("study", testData.getStudyGuid())
                 .pathParam("user", testData.getUserGuid())
@@ -222,7 +225,7 @@ public class ReceiveDsmNotificationRouteTest extends DsmRouteTest {
 
     @Test
     public void testEvents_usingLegacyAltPid_success() {
-        var payload = new DsmNotificationPayload(null, SALIVA_RECEIVED.name(), 1L);
+        var payload = new DsmNotificationPayload(SALIVA_RECEIVED.name());
         given().auth().oauth2(dsmClientAccessToken)
                 .pathParam("study", testData.getStudyGuid())
                 .pathParam("user", LEGACY_ALT_PID)
@@ -235,7 +238,7 @@ public class ReceiveDsmNotificationRouteTest extends DsmRouteTest {
 
     @Test
     public void testEvents_mismatchedDsmEventType() {
-        var payload = new DsmNotificationPayload(null, TESTBOSTON_RECEIVED.name(), 1L);
+        var payload = new DsmNotificationPayload(TESTBOSTON_RECEIVED.name());
         given().auth().oauth2(dsmClientAccessToken)
                 .pathParam("study", testData.getStudyGuid())
                 .pathParam("user", LEGACY_ALT_PID)
@@ -247,7 +250,7 @@ public class ReceiveDsmNotificationRouteTest extends DsmRouteTest {
     }
 
     @Test
-    public void testEvents_testResult() {
+    public void testEvents_testResult_replacementKit() {
         var activity = TransactionWrapper.withTxn(handle -> {
             var form = FormActivityDef.generalFormBuilder("ACT" + System.currentTimeMillis(), "v1", testData.getStudyGuid())
                     .addName(new Translation("en", "dummy activity"))
@@ -259,22 +262,35 @@ public class ReceiveDsmNotificationRouteTest extends DsmRouteTest {
             long triggerId = handle.attach(EventTriggerDao.class).insertDsmNotificationTrigger(TEST_RESULT);
             long actionId = handle.attach(EventActionDao.class)
                     .insertInstanceCreationAction(activity.getActivityId());
+            Expression cancelExpr = handle.attach(JdbiExpression.class).insertExpression(
+                    "!user.event.kit.isReason(\"REPLACEMENT\")");
             handle.attach(JdbiEventConfiguration.class).insert(
                     triggerId, actionId, testData.getStudyId(),
-                    Instant.now().toEpochMilli(), 1, null, null, null, false, 1);
+                    Instant.now().toEpochMilli(), 1, null, null, cancelExpr.getId(), false, 1);
         });
 
-        var payload = new DsmNotificationPayload(null, TEST_RESULT.name(), 1L);
+        // This DSM event should be ignored because it's not replacement.
+        var payload = new DsmNotificationPayload(TEST_RESULT.name(), KitReasonType.NORMAL);
         var result = new TestResult("NEGATIVE", Instant.now(), false);
         payload.setEventData(GsonUtil.standardGson().toJsonTree(result));
         given().auth().oauth2(dsmClientAccessToken)
                 .pathParam("study", testData.getStudyGuid())
                 .pathParam("user", testData.getUserGuid())
                 .body(payload, ObjectMapperType.GSON)
-                .log().all()
                 .when().post(urlTemplate)
                 .then().assertThat()
-                .log().all()
+                .statusCode(200);
+
+        // This DSM event should pass because it is replacement.
+        payload = new DsmNotificationPayload(TEST_RESULT.name(), KitReasonType.REPLACEMENT);
+        var result2 = new TestResult("Positive", Instant.now(), false);
+        payload.setEventData(GsonUtil.standardGson().toJsonTree(result2));
+        given().auth().oauth2(dsmClientAccessToken)
+                .pathParam("study", testData.getStudyGuid())
+                .pathParam("user", testData.getUserGuid())
+                .body(payload, ObjectMapperType.GSON)
+                .when().post(urlTemplate)
+                .then().assertThat()
                 .statusCode(200);
 
         TransactionWrapper.useTxn(handle -> {
@@ -282,13 +298,14 @@ public class ReceiveDsmNotificationRouteTest extends DsmRouteTest {
             List<ActivityResponse> instances = instanceDao.findBaseResponsesByStudyAndUserIds(
                     testData.getStudyId(), Set.of(testData.getUserId()), true, Set.of(activity.getActivityId()))
                     .collect(Collectors.toList());
-            assertEquals(1, instances.size());
+            assertEquals("should only run event once", 1, instances.size());
 
             ActivityResponse instance = instances.get(0);
             Map<String, String> substitutions = instanceDao.findSubstitutions(instance.getId());
             assertFalse(substitutions.isEmpty());
-            assertEquals("NEGATIVE", substitutions.get(I18nTemplateConstants.Snapshot.TEST_RESULT_CODE));
-            assertEquals(result.getTimeCompleted().toString(),
+            assertEquals("should be result of second request and should normalize result code",
+                    "POSITIVE", substitutions.get(I18nTemplateConstants.Snapshot.TEST_RESULT_CODE));
+            assertEquals(result2.getTimeCompleted().toString(),
                     substitutions.get(I18nTemplateConstants.Snapshot.TEST_RESULT_TIME_COMPLETED));
         });
     }
@@ -312,7 +329,7 @@ public class ReceiveDsmNotificationRouteTest extends DsmRouteTest {
                     .createScheduleRecord(testData.getUserId(), configId);
         });
 
-        var payload = new DsmNotificationPayload(null, TESTBOSTON_SENT.name(), 1L);
+        var payload = new DsmNotificationPayload(TESTBOSTON_SENT.name());
         given().auth().oauth2(dsmClientAccessToken)
                 .pathParam("study", study.getGuid())
                 .pathParam("user", testData.getUserGuid())
