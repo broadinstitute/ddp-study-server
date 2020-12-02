@@ -83,8 +83,13 @@ public class UserActivityInstanceListRoute implements Route {
             summariesWithTheSameCode.sort(Comparator.comparing(ActivityInstanceSummary::getCreatedAt));
             // Number items within each group.
             int counter = 1;
+            String prevGuid = null;
             for (var summary : summariesWithTheSameCode) {
+                if (prevGuid != null) {
+                    summary.setPrevInstanceGuid(prevGuid);
+                }
                 summary.setInstanceNumber(counter);
+                prevGuid = summary.getActivityInstanceGuid();
                 counter++;
             }
         }
