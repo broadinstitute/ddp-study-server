@@ -1,0 +1,513 @@
+{
+  "study": {
+    "name": "MBC",
+    "survey": [
+      {
+        "name": "aboutyousurvey",
+        "data": [
+          {
+            "source_field_name": "diagnosis_date_month",
+            "target_field_name": "DIAGNOSIS_DATE_MONTH",
+            "source_field_type": "Integer"
+          },
+          {
+            "source_field_name": "diagnosis_date_year",
+            "target_field_name": "DIAGNOSIS_DATE_YEAR",
+            "source_field_type": "Integer"
+          },
+          {
+            "source_field_name": "mets_date_month",
+            "target_field_name": "ADVANCED_DIAGNOSIS_DATE_MONTH",
+            "source_field_type": "Integer"
+          },
+          {
+            "source_field_name": "mets_date_year",
+            "target_field_name": "ADVANCED_DIAGNOSIS_DATE_YEAR",
+            "source_field_type": "Integer"
+          },
+          {
+            "source_field_name": "horm_rec_status",
+            "target_field_name": "HR_POSITIVE"
+          },
+          {
+            "source_field_name": "HER2_status",
+            "target_field_name": "HER2_POSITIVE"
+          },
+          {
+            "source_field_name": "triple_neg_status",
+            "target_field_name": "TRIPLE_NEGATIVE"
+          },
+          {
+            "source_field_name": "inflam_status",
+            "target_field_name": "INFLAMMATORY"
+          },
+          {
+            "source_field_name": "therapies_two_years_bool",
+            "target_field_name": "THERAPIES"
+          },
+          {
+            "source_field_name": "therapies_two_years_list",
+            "target_field_name": "THERAPIES_LIST"
+          },
+          {
+            "source_field_name": "extraordinary_therapies_yndk",
+            "target_field_name": "WORKED_THERAPIES"
+          },
+          {
+            "source_field_name": "extraordinary_therapies_list",
+            "target_field_name": "WORKED_THERAPIES_LIST"
+          },
+          {
+            "source_field_name": "extraordinary_therapies_notes",
+            "target_field_name": "WORKED_THERAPIES_NOTE"
+          },
+          {
+            "source_field_name": "last_bx_month",
+            "target_field_name": "LAST_BIOPSY_MONTH",
+            "source_field_type": "Integer"
+          },
+          {
+            "source_field_name": "last_bx_year",
+            "target_field_name": "LAST_BIOPSY_YEAR",
+            "source_field_type": "Integer"
+          },
+          {
+            "source_field_name": "other_comments",
+            "target_field_name": "OTHER_COMMENTS"
+          },
+          {
+            "source_field_name": "birth_year",
+            "target_field_name": "BIRTH_YEAR",
+            "source_field_type": "Integer"
+          },
+          {
+            "source_field_name": "country",
+            "target_field_name": "COUNTRY"
+          },
+          {
+            "source_field_name": "postal_code",
+            "target_field_name": "POSTAL_CODE"
+          },
+          {
+            "source_field_name": "hispanic",
+            "target_field_name": "HISPANIC"
+          },
+          {
+            "source_field_name": "race",
+            "target_field_name": "RACE",
+            "source_field_type": "Picklist"
+          },
+          {
+            "source_field_name": "heard_from",
+            "target_field_name": "HEARD_FROM"
+          },
+          {
+            "source_field_name": "survey_status",
+            "target_field_name": "ABOUTYOU_v1_status"
+          },
+          {
+            "source_field_name": "ddp_created",
+            "target_field_name": "ABOUTYOU_v1_created_at",
+            "source_field_type": "Date",
+            "source_field_format": "yyyy-MM-dd'T'HH:mm:ss'Z'"
+          },
+          {
+            "source_field_name": "ddp_lastupdated",
+            "target_field_name": "ABOUTYOU_v1_updated_at",
+            "source_field_type": "Date",
+            "source_field_format": "yyyy-MM-dd'T'HH:mm:ss'Z'"
+          },
+          {
+            "source_field_name": "ddp_lastsubmitted",
+            "target_field_name": "ABOUTYOU_v1_completed_at",
+            "source_field_type": "Date",
+            "source_field_format": "yyyy-MM-dd'T'HH:mm:ss'Z'"
+          }
+        ]
+      },
+      {
+        "name": "consentsurvey",
+        "version": "v1",
+        "data": [
+          {
+            "source_field_name": "survey_status",
+            "target_field_name": "TISSUECONSENT_v1_status"
+          },
+          {
+            "source_field_name": "ddp_created",
+            "target_field_name": "TISSUECONSENT_v1_created_at",
+            "source_field_type": "Date",
+            "source_field_format": "yyyy-MM-dd'T'HH:mm:ss'Z'"
+          },
+          {
+            "source_field_name": "ddp_lastupdated",
+            "target_field_name": "TISSUECONSENT_v1_updated_at",
+            "source_field_type": "Date",
+            "source_field_format": "yyyy-MM-dd'T'HH:mm:ss'Z'"
+          },
+          {
+            "source_field_name": "consent_dob",
+            "target_field_name": "TISSUECONSENT_DOB",
+            "source_field_type": "Date",
+            "source_field_format": "dd-MMM-yy",
+            "target_field_format": "MM/dd/yy"
+          },
+          {
+            "source_field_name": "fullname",
+            "target_field_name": "TISSUECONSENT_FULLNAME"
+          }
+        ]
+      },
+      {
+        "name": "consentsurvey",
+        "version": "v2",
+        "data": [
+          {
+            "source_field_name": "survey_status",
+            "target_field_name": "TISSUECONSENT_v2_status"
+          },
+          {
+            "source_field_name": "ddp_created",
+            "target_field_name": "TISSUECONSENT_v2_created_at",
+            "source_field_type": "Date",
+            "source_field_format": "yyyy-MM-dd'T'HH:mm:ss'Z'"
+          },
+          {
+            "source_field_name": "ddp_lastupdated",
+            "target_field_name": "TISSUECONSENT_v2_updated_at",
+            "source_field_type": "Date",
+            "source_field_format": "yyyy-MM-dd'T'HH:mm:ss'Z'"
+          },
+          {
+            "source_field_name": "consent_dob",
+            "target_field_name": "TISSUECONSENT_v2_DOB",
+            "source_field_type": "Date",
+            "source_field_format": "dd-MMM-yy",
+            "target_field_format": "MM/dd/yy"
+          },
+          {
+            "source_field_name": "fullname",
+            "target_field_name": "TISSUECONSENT_v2_FULLNAME"
+          }
+        ]
+      },
+      {
+        "name": "bdconsentsurvey",
+        "version": "v1",
+        "data": [
+          {
+            "source_field_name": "survey_status",
+            "target_field_name": "BLOODCONSENT_v1_status"
+          },
+          {
+            "source_field_name": "ddp_created",
+            "target_field_name": "BLOODCONSENT_v1_created_at",
+            "source_field_type": "Date",
+            "source_field_format": "yyyy-MM-dd'T'HH:mm:ss'Z'"
+          },
+          {
+            "source_field_name": "ddp_lastupdated",
+            "target_field_name": "BLOODCONSENT_v1_updated_at",
+            "source_field_type": "Date",
+            "source_field_format": "yyyy-MM-dd'T'HH:mm:ss'Z'"
+          },
+          {
+            "source_field_name": "consent_dob",
+            "target_field_name": "BLOODCONSENT_DOB",
+            "source_field_type": "Date",
+            "source_field_format": "dd-MMM-yy",
+            "target_field_format": "MM/dd/yy"
+          },
+          {
+            "source_field_name": "fullname",
+            "target_field_name": "BLOODCONSENT_FULLNAME"
+          },
+          {
+            "source_field_name": "treatment_now_start_month",
+            "target_field_name": "BLOODCONSENT_TREATMENT_START_MONTH",
+            "source_field_type": "Integer"
+          },
+          {
+            "source_field_name": "treatment_now_start_year",
+            "target_field_name": "BLOODCONSENT_TREATMENT_START_YEAR",
+            "source_field_type": "Integer"
+          },
+          {
+            "source_field_name": "treatment_now_text",
+            "target_field_name": "BLOODCONSENT_TREATMENT_NOW"
+          },
+          {
+            "source_field_name": "treatment_past_text",
+            "target_field_name": "BLOODCONSENT_TREATMENT_PAST"
+          },
+          {
+            "source_field_name": "phone_number",
+            "target_field_name": "BLOODCONSENT_PHONE"
+          }
+        ]
+      },
+      {
+        "name": "bdconsentsurvey",
+        "version": "v2",
+        "data": [
+          {
+            "source_field_name": "survey_status",
+            "target_field_name": "BLOODCONSENT_v2_status"
+          },
+          {
+            "source_field_name": "ddp_created",
+            "target_field_name": "BLOODCONSENT_v2_created_at",
+            "source_field_type": "Date",
+            "source_field_format": "yyyy-MM-dd'T'HH:mm:ss'Z'"
+          },
+          {
+            "source_field_name": "ddp_lastupdated",
+            "target_field_name": "BLOODCONSENT_v2_updated_at",
+            "source_field_type": "Date",
+            "source_field_format": "yyyy-MM-dd'T'HH:mm:ss'Z'"
+          },
+          {
+            "source_field_name": "consent_dob",
+            "target_field_name": "BLOODCONSENT_v2_DOB",
+            "source_field_type": "Date",
+            "source_field_format": "dd-MMM-yy",
+            "target_field_format": "MM/dd/yy"
+          },
+          {
+            "source_field_name": "fullname",
+            "target_field_name": "BLOODCONSENT_v2_FULLNAME"
+          },
+          {
+            "source_field_name": "treatment_now_start_month",
+            "target_field_name": "BLOODCONSENT_v2_TREATMENT_START_MONTH",
+            "source_field_type": "Integer"
+          },
+          {
+            "source_field_name": "treatment_now_start_year",
+            "target_field_name": "BLOODCONSENT_v2_TREATMENT_START_YEAR",
+            "source_field_type": "Integer"
+          },
+          {
+            "source_field_name": "treatment_now_text",
+            "target_field_name": "BLOODCONSENT_v2_TREATMENT_NOW"
+          },
+          {
+            "source_field_name": "treatment_past_text",
+            "target_field_name": "BLOODCONSENT_v2_TREATMENT_PAST"
+          },
+          {
+            "source_field_name": "phone_number",
+            "target_field_name": "BLOODCONSENT_v2_PHONE"
+          }
+        ]
+      },
+      {
+        "name": "tissuereleasesurvey",
+        "data": [
+          {
+            "source_field_name": "survey_status",
+            "target_field_name": "TISSUERELEASE_v1_status"
+          },
+          {
+            "source_field_name": "ddp_created",
+            "target_field_name": "TISSUERELEASE_v1_created_at",
+            "source_field_type": "Date",
+            "source_field_format": "yyyy-MM-dd'T'HH:mm:ss'Z'"
+          },
+          {
+            "source_field_name": "ddp_lastupdated",
+            "target_field_name": "TISSUERELEASE_v1_updated_at",
+            "source_field_type": "Date",
+            "source_field_format": "yyyy-MM-dd'T'HH:mm:ss'Z'"
+          },
+          {
+            "source_field_name": "ddp_lastsubmitted",
+            "target_field_name": "TISSUERELEASE_v1_completed_at",
+            "source_field_type": "Date",
+            "source_field_format": "yyyy-MM-dd'T'HH:mm:ss'Z'"
+          }
+        ]
+      },
+      {
+        "name": "bdreleasesurvey",
+        "data": [
+          {
+            "source_field_name": "survey_status",
+            "target_field_name": "BLOODRELEASE_v1_status"
+          },
+          {
+            "source_field_name": "ddp_created",
+            "target_field_name": "BLOODRELEASE_v1_created_at",
+            "source_field_type": "Date",
+            "source_field_format": "yyyy-MM-dd'T'HH:mm:ss'Z'"
+          },
+          {
+            "source_field_name": "ddp_lastupdated",
+            "target_field_name": "BLOODRELEASE_v1_updated_at",
+            "source_field_type": "Date",
+            "source_field_format": "yyyy-MM-dd'T'HH:mm:ss'Z'"
+          },
+          {
+            "source_field_name": "ddp_firstcompleted",
+            "target_field_name": "BLOODRELEASE_v1_completed_at",
+            "source_field_type": "Date",
+            "source_field_format": "yyyy-MM-dd'T'HH:mm:ss'Z'"
+          },
+          {
+            "source_field_name": "fullname",
+            "target_field_name": "BLOODRELEASE_FULLNAME"
+          }
+        ]
+      },
+      {
+        "name": "followupsurvey",
+        "data": [
+          {
+            "source_field_name": "survey_status",
+            "target_field_name": "FOLLOWUP_v1_status"
+          },
+          {
+            "source_field_name": "ddp_created",
+            "target_field_name": "FOLLOWUP_v1_created_at",
+            "source_field_type": "Date",
+            "source_field_format": "yyyy-MM-dd'T'HH:mm:ss'Z'"
+          },
+          {
+            "source_field_name": "ddp_lastupdated",
+            "target_field_name": "FOLLOWUP_v1_updated_at",
+            "source_field_type": "Date",
+            "source_field_format": "yyyy-MM-dd'T'HH:mm:ss'Z'"
+          },
+          {
+            "source_field_name": "ddp_firstcompleted",
+            "target_field_name": "FOLLOWUP_v1_completed_at",
+            "source_field_type": "Date",
+            "source_field_format": "yyyy-MM-dd'T'HH:mm:ss'Z'"
+          },
+          {
+            "source_field_name": "current_cancer_location",
+            "target_field_name": "CURRENT_CANCER_LOC",
+            "source_field_type": "Picklist",
+            "options": [
+              "breast", "aux_lymph_node", "other_lymph_node", "bone", "chest_wall", "liver", "lung","brain",
+              "pleural_effusion", "ascites", "skin", "ovary", "ned", "other", "dk"
+            ]
+          },
+          {
+            "source_field_name": "current_cancer_location.other.other_text",
+            "target_field_name": "CURRENT_CANCER_LOC_OTHER_DETAILS"
+          },
+          {
+            "source_field_name": "diagnosis_cancer_location",
+            "target_field_name": "DIAGNOSIS_CANCER_LOC",
+            "source_field_type": "Picklist",
+            "options": [
+              "breast", "aux_lymph_node", "other_lymph_node", "bone", "chest_wall", "liver", "lung","brain",
+              "pleural_effusion", "ascites", "skin", "ovary", "ned", "other", "dk"
+            ]
+          },
+          {
+            "source_field_name": "diagnosis_cancer_location.other.other_text",
+            "target_field_name": "DIAGNOSIS_CANCER_LOC_OTHER_DETAILS"
+          },
+          {
+            "source_field_name": "anytime_cancer_location",
+            "target_field_name": "ANYTIME_CANCER_LOC",
+            "source_field_type": "Picklist",
+            "options": [
+              "breast", "aux_lymph_node", "other_lymph_node", "bone", "chest_wall", "liver", "lung","brain",
+              "pleural_effusion", "ascites", "skin", "ovary", "ned", "other", "dk"
+            ]
+          },
+          {
+            "source_field_name": "anytime_cancer_location.other.other_text",
+            "target_field_name": "ANYTIME_CANCER_LOC_OTHER_DETAILS"
+          },
+          {
+            "source_field_name": "cancer_identification",
+            "target_field_name": "CANCER_IDENTIFICATION",
+            "source_field_type": "Picklist",
+            "options": [
+              "idc", "ilc", "idlc", "rare_subtype", "dk"
+            ]
+          },
+          {
+            "source_field_name": "rare_subtypes",
+            "target_field_name": "RARE_SUBTYPES",
+            "source_field_type": "Picklist",
+            "options": [
+              "mucinous", "metaplastic", "tubular", "medullary", "papillary", "sarcoma", "lymphoma","phyllodes",
+              "other", "dk"
+            ]
+          },
+          {
+            "source_field_name": "rare_subtypes.other.other_text",
+            "target_field_name": "RARE_SUBTYPES_OTHER_DETAILS"
+          },
+          {
+            "source_field_name": "currently_medicated",
+            "target_field_name": "CURRENTLY_MEDICATED",
+            "source_field_type": "YesNoDk"
+          },
+          {
+            "source_field_name": "current_medication_names.dk",
+            "target_field_name": "DK_CURRENT_MED_NAMES",
+            "source_field_type": "YesNoDk"
+          },
+          {
+            "source_field_name": "current_med_list",
+            "target_field_name": "CURRENT_MED_LIST",
+            "source_field_type": "Medlist",
+            "elements": [
+              "drugname", "drugstart", "clinicaltrial"
+            ]
+          },
+          {
+            "source_field_name": "previously_medicated",
+            "target_field_name": "PREVIOUSLY_MEDICATED",
+            "source_field_type": "YesNoDk"
+          },
+          {
+            "source_field_name": "previous_medication_names.dk",
+            "target_field_name": "DK_PAST_MED_NAMES",
+            "source_field_type": "YesNoDk"
+          },
+          {
+            "source_field_name": "previous_med_list",
+            "target_field_name": "PAST_MED_LIST",
+            "source_field_type": "Medlist",
+            "elements": [
+              "drugname", "drugstart", "drugend", "clinicaltrial"
+            ]
+          }
+        ]
+      }
+    ],
+    "datstatparticipantdata": {
+      "data": [
+        {
+          "source_field_name": "datstat_altpid",
+          "target_field_name": "legacy_altpid"
+        },
+        {
+          "source_field_name": "datstat_email",
+          "target_field_name": "email"
+        },
+        {
+          "source_field_name": "datstat_created",
+          "target_field_name": "created_at",
+          "source_field_type": "Date",
+          "source_field_format": "yyyy-MM-dd'T'HH:mm:ss'Z'"
+        },
+        {
+          "source_field_name": "datstat_firstname",
+          "target_field_name": "first_name"
+        },
+        {
+          "source_field_name": "datstat_lastname",
+          "target_field_name": "last_name"
+        }
+      ]
+    }
+  }
+}
