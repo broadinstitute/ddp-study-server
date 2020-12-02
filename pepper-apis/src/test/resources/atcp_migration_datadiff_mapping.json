@@ -35,12 +35,37 @@
             "target_field_name": "DETERMINED",
             "source_field_type": "Picklist",
             "options": [
-              "analysis", "afp", "exam", "radio_assay","breakage", "ned", "other", "dk"
+              "analysis", "afp", "exam", "radio_assay","breakage", "western", "fatm", "hist_bio", "img_ct", "img_mri", "img_pet", "unknown", "other"
             ]
           },
           {
-            "source_field_name": "diagnosis_criteria.other.other_text",
-            "target_field_name": "CURRENT_CANCER_LOC_OTHER_DETAILS"
+            "source_field_name": "diagnosis_criteria.other.text",
+            "target_field_name": "DETERMINED_OTHER_DETAILS"
+          },
+          {
+            "source_field_name": "mutation_determination",
+            "target_field_name": "ATM_MUTATIONS"
+          },
+          {
+            "source_field_name": "who_made_diagnosis",
+            "target_field_name": "WHO_MADE_DIAGNOSIS",
+            "source_field_type": "Medlist#NEEDS-CHECK",
+            "elements": [
+              "drugname", "drugstart", "clinicaltrial"
+            ]
+          },
+          {
+            "source_field_name": "where_diagnosis_made",
+            "target_field_name": "WHERE_DIAGNOSIS_MADE",
+            "source_field_type": "Medlist#NEEDS-CHECK",
+            "elements": [
+              "drugname", "drugstart", "clinicaltrial"
+            ]
+          },
+          {
+            "source_field_name": "cancer_history",
+            "target_field_name": "HISTORY_OF_CANCER",
+            "source_field_type": "YesNoDk"
           }
         ]
       },

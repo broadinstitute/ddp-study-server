@@ -115,9 +115,10 @@ public class MigratedDataReconcileCli {
         String mappingFileName = cmd.getOptionValue("mappingfile");
 
         yesNoDkLookup = new HashMap<>();
-        yesNoDkLookup.put(0, ""); //TODO for 0: support NO, null, empty
+        yesNoDkLookup.put(0, "NO"); //TODO for 0: support NO, null, empty
         yesNoDkLookup.put(1, "YES");
-        yesNoDkLookup.put(2, "DK");
+        yesNoDkLookup.put(2, "DONT_KNOW");
+        yesNoDkLookup.put(-1, "DONT_KNOW");
 
         booleanValueLookup = new HashMap<>();
         booleanValueLookup.put(0, false);
