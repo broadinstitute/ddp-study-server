@@ -30,6 +30,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import com.opencsv.CSVReader;
 import org.broadinstitute.ddp.TxnAwareBaseTest;
+import org.broadinstitute.ddp.content.I18nTemplateConstants;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
@@ -553,6 +554,12 @@ public class DataExporterTest extends TxnAwareBaseTest {
         );
         assertEquals(1, result.size());
         assertTrue(result.get(TEST_USER_GUID).contains("invite123"));
+
+        // Check kit-related attributes.
+        assertTrue(result.get(TEST_USER_GUID).contains("\"attributes\""));
+        assertTrue(result.get(TEST_USER_GUID).contains("\"DDP_KIT_REQUEST_ID\":\"kit-1\""));
+        assertTrue(result.get(TEST_USER_GUID).contains("\"DDP_TEST_RESULT_CODE\":\"NEGATIVE\""));
+        assertTrue(result.get(TEST_USER_GUID).contains("\"DDP_TEST_RESULT_TIME_COMPLETED\":\"2018-10-18T20:18:01Z\""));
     }
 
     @Test
@@ -696,6 +703,12 @@ public class DataExporterTest extends TxnAwareBaseTest {
                 instance.putAnswer(new NumericIntegerAnswer(3L, "Q_NUMERIC", "guid", 25L));
                 instance.putAnswer(new DateAnswer(4L, "Q_BIRTHDAY", "guid", new DateValue(1978, 5, 16)));
                 participant.addResponse(instance);
+
+                Map<String, String> substitutions = Map.of(
+                        I18nTemplateConstants.Snapshot.KIT_REQUEST_ID, "kit-1",
+                        I18nTemplateConstants.Snapshot.TEST_RESULT_CODE, "NEGATIVE",
+                        I18nTemplateConstants.Snapshot.TEST_RESULT_TIME_COMPLETED, Instant.ofEpochMilli(timestamp).toString());
+                participant.putActivityInstanceSubstitutions(instance.getId(), substitutions);
             }
 
             participants = new ArrayList<>();

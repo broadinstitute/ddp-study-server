@@ -120,7 +120,7 @@ public class ReceiveDsmNotificationRouteTest extends DsmRouteTest {
 
     @Test
     public void testStudyNotFound() {
-        var payload = new DsmNotificationPayload(SALIVA_RECEIVED.name());
+        var payload = new DsmNotificationPayload(SALIVA_RECEIVED.name(), "kit-1");
         given().auth().oauth2(dsmClientAccessToken)
                 .pathParam("study", "foobar")
                 .pathParam("user", testData.getUserGuid())
@@ -133,7 +133,7 @@ public class ReceiveDsmNotificationRouteTest extends DsmRouteTest {
 
     @Test
     public void testUserNotFound() {
-        var payload = new DsmNotificationPayload(SALIVA_RECEIVED.name());
+        var payload = new DsmNotificationPayload(SALIVA_RECEIVED.name(), "kit-1");
         given().auth().oauth2(dsmClientAccessToken)
                 .pathParam("study", testData.getStudyGuid())
                 .pathParam("user", "foobar")
@@ -146,7 +146,7 @@ public class ReceiveDsmNotificationRouteTest extends DsmRouteTest {
 
     @Test
     public void testNotificationEventTypeUnknown() {
-        var payload = new DsmNotificationPayload("foobar");
+        var payload = new DsmNotificationPayload("foobar", "kit-1");
         given().auth().oauth2(dsmClientAccessToken)
                 .pathParam("study", testData.getStudyGuid())
                 .pathParam("user", testData.getUserGuid())
@@ -160,7 +160,7 @@ public class ReceiveDsmNotificationRouteTest extends DsmRouteTest {
 
     @Test
     public void testNotificationEventTestResultMissingEventData() {
-        var payload = new DsmNotificationPayload(TEST_RESULT.name());
+        var payload = new DsmNotificationPayload(TEST_RESULT.name(), "kit-1");
         given().auth().oauth2(dsmClientAccessToken)
                 .pathParam("study", testData.getStudyGuid())
                 .pathParam("user", testData.getUserGuid())
@@ -174,7 +174,7 @@ public class ReceiveDsmNotificationRouteTest extends DsmRouteTest {
 
     @Test
     public void testNotificationEventTestResultBadEventData() {
-        var payload = new DsmNotificationPayload(TEST_RESULT.name());
+        var payload = new DsmNotificationPayload(TEST_RESULT.name(), "kit-1");
         var result = new JsonObject();
         result.addProperty("result", "NEGATIVE");
         result.addProperty("reason", "the reason");
@@ -193,7 +193,7 @@ public class ReceiveDsmNotificationRouteTest extends DsmRouteTest {
 
     @Test
     public void testNotificationEventTestResultInvalidEventData() {
-        var payload = new DsmNotificationPayload(TEST_RESULT.name());
+        var payload = new DsmNotificationPayload(TEST_RESULT.name(), "kit-1");
         var result = new JsonObject();
         result.addProperty("result", "NEGATIVE");
         result.addProperty("reason", "the reason");
@@ -212,7 +212,7 @@ public class ReceiveDsmNotificationRouteTest extends DsmRouteTest {
 
     @Test
     public void testEvents_success() {
-        var payload = new DsmNotificationPayload(SALIVA_RECEIVED.name());
+        var payload = new DsmNotificationPayload(SALIVA_RECEIVED.name(), "kit-1");
         given().auth().oauth2(dsmClientAccessToken)
                 .pathParam("study", testData.getStudyGuid())
                 .pathParam("user", testData.getUserGuid())
@@ -225,7 +225,7 @@ public class ReceiveDsmNotificationRouteTest extends DsmRouteTest {
 
     @Test
     public void testEvents_usingLegacyAltPid_success() {
-        var payload = new DsmNotificationPayload(SALIVA_RECEIVED.name());
+        var payload = new DsmNotificationPayload(SALIVA_RECEIVED.name(), "kit-1");
         given().auth().oauth2(dsmClientAccessToken)
                 .pathParam("study", testData.getStudyGuid())
                 .pathParam("user", LEGACY_ALT_PID)
@@ -238,7 +238,7 @@ public class ReceiveDsmNotificationRouteTest extends DsmRouteTest {
 
     @Test
     public void testEvents_mismatchedDsmEventType() {
-        var payload = new DsmNotificationPayload(TESTBOSTON_RECEIVED.name());
+        var payload = new DsmNotificationPayload(TESTBOSTON_RECEIVED.name(), "kit-1");
         given().auth().oauth2(dsmClientAccessToken)
                 .pathParam("study", testData.getStudyGuid())
                 .pathParam("user", LEGACY_ALT_PID)
@@ -270,7 +270,7 @@ public class ReceiveDsmNotificationRouteTest extends DsmRouteTest {
         });
 
         // This DSM event should be ignored because it's not replacement.
-        var payload = new DsmNotificationPayload(TEST_RESULT.name(), KitReasonType.NORMAL);
+        var payload = new DsmNotificationPayload(TEST_RESULT.name(), "kit-1", KitReasonType.NORMAL);
         var result = new TestResult("NEGATIVE", Instant.now(), false);
         payload.setEventData(GsonUtil.standardGson().toJsonTree(result));
         given().auth().oauth2(dsmClientAccessToken)
@@ -282,7 +282,7 @@ public class ReceiveDsmNotificationRouteTest extends DsmRouteTest {
                 .statusCode(200);
 
         // This DSM event should pass because it is replacement.
-        payload = new DsmNotificationPayload(TEST_RESULT.name(), KitReasonType.REPLACEMENT);
+        payload = new DsmNotificationPayload(TEST_RESULT.name(), "kit-2", KitReasonType.REPLACEMENT);
         var result2 = new TestResult("Positive", Instant.now(), false);
         payload.setEventData(GsonUtil.standardGson().toJsonTree(result2));
         given().auth().oauth2(dsmClientAccessToken)
@@ -303,6 +303,7 @@ public class ReceiveDsmNotificationRouteTest extends DsmRouteTest {
             ActivityResponse instance = instances.get(0);
             Map<String, String> substitutions = instanceDao.findSubstitutions(instance.getId());
             assertFalse(substitutions.isEmpty());
+            assertEquals("kit-2", substitutions.get(I18nTemplateConstants.Snapshot.KIT_REQUEST_ID));
             assertEquals("should be result of second request and should normalize result code",
                     "POSITIVE", substitutions.get(I18nTemplateConstants.Snapshot.TEST_RESULT_CODE));
             assertEquals(result2.getTimeCompleted().toString(),
@@ -329,7 +330,7 @@ public class ReceiveDsmNotificationRouteTest extends DsmRouteTest {
                     .createScheduleRecord(testData.getUserId(), configId);
         });
 
-        var payload = new DsmNotificationPayload(TESTBOSTON_SENT.name());
+        var payload = new DsmNotificationPayload(TESTBOSTON_SENT.name(), "kit-1");
         given().auth().oauth2(dsmClientAccessToken)
                 .pathParam("study", study.getGuid())
                 .pathParam("user", testData.getUserGuid())

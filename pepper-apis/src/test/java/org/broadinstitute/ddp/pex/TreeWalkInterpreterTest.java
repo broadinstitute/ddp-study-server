@@ -1338,6 +1338,7 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
                 userGuid,
                 testData.getStudyId(),
                 DsmNotificationEventType.TEST_RESULT,
+                "dummy-kit-request-id",
                 kitReasonType,
                 testResult);
     }

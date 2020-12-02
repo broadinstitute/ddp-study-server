@@ -14,6 +14,9 @@ public class DsmNotificationPayload {
     @SerializedName("eventType")
     private String eventType;
 
+    @SerializedName("kitRequestId")
+    private String kitRequestId;
+
     @SerializedName("kitReasonType")
     private KitReasonType kitReasonType;
 
@@ -26,12 +29,13 @@ public class DsmNotificationPayload {
     @SerializedName("eventDate")
     private long eventDate;
 
-    public DsmNotificationPayload(String eventType) {
-        this(eventType, KitReasonType.NORMAL);
+    public DsmNotificationPayload(String eventType, String kitRequestId) {
+        this(eventType, kitRequestId, KitReasonType.NORMAL);
     }
 
-    public DsmNotificationPayload(String eventType, KitReasonType kitReasonType) {
+    public DsmNotificationPayload(String eventType, String kitRequestId, KitReasonType kitReasonType) {
         this.eventType = eventType;
+        this.kitRequestId = kitRequestId;
         this.kitReasonType = kitReasonType;
     }
 
@@ -45,6 +49,10 @@ public class DsmNotificationPayload {
         } catch (Exception e) {
             return Optional.empty();
         }
+    }
+
+    public String getKitRequestId() {
+        return kitRequestId;
     }
 
     public KitReasonType getKitReasonType() {
