@@ -1,13 +1,14 @@
 package org.broadinstitute.ddp.route;
 
-import javax.validation.ValidationException;
 import java.time.Instant;
 import java.util.List;
+import javax.validation.ValidationException;
 
 import org.apache.http.HttpStatus;
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants.PathParam;
 import org.broadinstitute.ddp.db.TransactionWrapper;
+import org.broadinstitute.ddp.db.dao.DataExportDao;
 import org.broadinstitute.ddp.db.dao.JdbiUserStudyEnrollment;
 import org.broadinstitute.ddp.db.dao.KitConfigurationDao;
 import org.broadinstitute.ddp.db.dao.KitScheduleDao;
@@ -102,6 +103,9 @@ public class ReceiveDsmNotificationRoute extends ValidatedJsonInputRoute<DsmNoti
                     eventType,
                     testResult);
             EventService.getInstance().processAllActionsForEventSignal(handle, signal);
+
+            // User data likely changed after executing events, let's request a data sync.
+            handle.attach(DataExportDao.class).queueDataSync(user.getId(), studyDto.getId());
 
             LOG.info("Finished running events for userGuid={} and DSM notification eventType={}", userGuid, eventType);
             response.status(HttpStatus.SC_OK);
