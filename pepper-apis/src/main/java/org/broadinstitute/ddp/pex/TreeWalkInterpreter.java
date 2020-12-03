@@ -335,6 +335,9 @@ public class TreeWalkInterpreter implements PexInterpreter {
                 throw new PexFetchException("Could not find snapshot substitution " + subName);
             }
             return value;
+        } else if (predCtx instanceof PexParser.HasPreviousInstancePredicateContext) {
+            var instanceDao = ictx.getHandle().attach(ActivityInstanceDao.class);
+            return instanceDao.findMostRecentInstanceBeforeCurrent(instanceId).isPresent();
         } else {
             throw new PexUnsupportedException("Unsupported form instance predicate: " + predCtx.getText());
         }
