@@ -11,6 +11,7 @@ import static org.broadinstitute.ddp.constants.NotificationTemplateVariables.DDP
 import static org.broadinstitute.ddp.constants.NotificationTemplateVariables.DDP_PROXY_LAST_NAME;
 
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -27,11 +28,13 @@ import org.broadinstitute.ddp.client.Auth0ManagementClient;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.constants.NotificationTemplateVariables;
 import org.broadinstitute.ddp.db.dao.EventDao;
+import org.broadinstitute.ddp.db.dao.InvitationDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
 import org.broadinstitute.ddp.db.dao.StudyLanguageCachedDao;
 import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dao.UserGovernanceDao;
 import org.broadinstitute.ddp.db.dao.UserProfileDao;
+import org.broadinstitute.ddp.db.dto.InvitationDto;
 import org.broadinstitute.ddp.db.dto.LanguageDto;
 import org.broadinstitute.ddp.db.dto.NotificationTemplateSubstitutionDto;
 import org.broadinstitute.ddp.db.dto.QueuedEventDto;
@@ -46,6 +49,7 @@ import org.broadinstitute.ddp.model.activity.types.EventActionType;
 import org.broadinstitute.ddp.model.event.NotificationTemplate;
 import org.broadinstitute.ddp.model.event.NotificationType;
 import org.broadinstitute.ddp.model.governance.Governance;
+import org.broadinstitute.ddp.model.invitation.InvitationType;
 import org.broadinstitute.ddp.model.study.StudyLanguage;
 import org.broadinstitute.ddp.model.user.UserProfile;
 import org.broadinstitute.ddp.util.GsonUtil;
@@ -179,6 +183,25 @@ public class PubSubMessageBuilder {
                 if (NotificationType.STUDY_EMAIL == queuedNotificationDto.getNotificationType()) {
                     fromName = cfg.getString(ConfigFile.Sendgrid.FROM_NAME);
                     fromEmail = cfg.getString(ConfigFile.Sendgrid.FROM_EMAIL);
+
+                    // Include participant's invite code so email to study staff can embed it.
+                    boolean containsInviteCode = queuedNotificationDto.getTemplateSubstitutions().stream()
+                            .anyMatch(sub -> sub.getVariableName().equals(NotificationTemplateVariables.DDP_INVITATION_ID));
+                    if (!containsInviteCode) {
+                        String inviteCode = apisHandle.attach(InvitationDao.class)
+                                .findInvitations(studyGuid, participantGuid)
+                                .stream()
+                                .filter(invite -> invite.getInvitationType() == InvitationType.RECRUITMENT)
+                                .max(Comparator.comparing(InvitationDto::getCreatedAt))
+                                .map(InvitationDto::getInvitationGuid)
+                                .orElse(null);
+                        if (inviteCode != null) {
+                            queuedNotificationDto.addTemplateSubstitutions(new NotificationTemplateSubstitutionDto(
+                                    NotificationTemplateVariables.DDP_INVITATION_ID, inviteCode));
+                            LOG.info("Added notification template substitution invitationId={} for participant {}",
+                                    inviteCode, participantGuid);
+                        }
+                    }
                 }
 
                 NotificationTemplate template = determineEmailTemplate(

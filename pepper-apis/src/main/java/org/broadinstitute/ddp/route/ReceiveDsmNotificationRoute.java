@@ -18,7 +18,8 @@ import org.broadinstitute.ddp.db.dto.kit.KitConfigurationDto;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.json.dsm.DsmNotificationPayload;
 import org.broadinstitute.ddp.json.errors.ApiError;
-import org.broadinstitute.ddp.model.activity.types.DsmNotificationEventType;
+import org.broadinstitute.ddp.model.dsm.DsmNotificationEventType;
+import org.broadinstitute.ddp.model.dsm.KitReasonType;
 import org.broadinstitute.ddp.model.dsm.KitType;
 import org.broadinstitute.ddp.model.dsm.TestResult;
 import org.broadinstitute.ddp.model.event.DsmNotificationSignal;
@@ -57,8 +58,8 @@ public class ReceiveDsmNotificationRoute extends ValidatedJsonInputRoute<DsmNoti
         String studyGuid = request.params(PathParam.STUDY_GUID);
         String participantGuidOrAltPid = request.params(PathParam.USER_GUID);
 
-        LOG.info("Received DSM notification event for userGuidOrAltPid={}, studyGuid={}, and eventType={}",
-                participantGuidOrAltPid, studyGuid, payload.getEventType());
+        LOG.info("Received DSM notification event for userGuidOrAltPid={}, studyGuid={}, eventType={}, kitRequestId={}, kitReasonType={}",
+                participantGuidOrAltPid, studyGuid, payload.getEventType(), payload.getKitRequestId(), payload.getKitReasonType());
 
         return TransactionWrapper.withTxn(handle -> {
             var found = RouteUtil.findPotentiallyLegacyUserAndStudyOrHalt(handle, participantGuidOrAltPid, studyGuid);
@@ -93,6 +94,9 @@ public class ReceiveDsmNotificationRoute extends ValidatedJsonInputRoute<DsmNoti
                 recordInitialKitSentTime(handle, studyDto, user, kitType, Instant.now());
             }
 
+            KitReasonType kitReasonType = payload.getKitReasonType() != null
+                    ? payload.getKitReasonType() : KitReasonType.NORMAL;
+
             LOG.info("Running events for userGuid={} and DSM notification eventType={}", userGuid, eventType);
             var signal = new DsmNotificationSignal(
                     user.getId(),
@@ -101,6 +105,8 @@ public class ReceiveDsmNotificationRoute extends ValidatedJsonInputRoute<DsmNoti
                     null,
                     studyDto.getId(),
                     eventType,
+                    payload.getKitRequestId(),
+                    kitReasonType,
                     testResult);
             EventService.getInstance().processAllActionsForEventSignal(handle, signal);
 

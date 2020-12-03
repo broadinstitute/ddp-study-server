@@ -26,6 +26,7 @@ public class RenderValueProvider {
     private LocalDate participantBirthDate;
     private ZoneId participantTimeZone;
     private LocalDate date;
+    private String kitRequestId;
     private String testResultCode;
     private Instant testResultTimeCompleted;
     private Integer activityInstanceNumber;
@@ -80,6 +81,13 @@ public class RenderValueProvider {
             LOG.warn("Error formatting date value '{}' using format '{}'", date, format, e);
             return date.toString();
         }
+    }
+
+    /**
+     * Returns the kit request id, if available.
+     */
+    public String kitRequestId() {
+        return kitRequestId;
     }
 
     /**
@@ -177,6 +185,9 @@ public class RenderValueProvider {
         if (date != null) {
             snapshot.put(I18nTemplateConstants.Snapshot.DATE, date.toString());
         }
+        if (kitRequestId != null) {
+            snapshot.put(I18nTemplateConstants.Snapshot.KIT_REQUEST_ID, kitRequestId);
+        }
         if (testResultCode != null) {
             snapshot.put(I18nTemplateConstants.Snapshot.TEST_RESULT_CODE, testResultCode);
         }
@@ -220,6 +231,11 @@ public class RenderValueProvider {
 
         public Builder setDate(LocalDate date) {
             provider.date = date;
+            return this;
+        }
+
+        public Builder setKitRequestId(String kitRequestId) {
+            provider.kitRequestId = kitRequestId;
             return this;
         }
 
@@ -269,6 +285,11 @@ public class RenderValueProvider {
                 provider.date = LocalDate.parse(value);
             }
 
+            value = snapshot.get(I18nTemplateConstants.Snapshot.KIT_REQUEST_ID);
+            if (value != null) {
+                provider.kitRequestId = value;
+            }
+
             value = snapshot.get(I18nTemplateConstants.Snapshot.TEST_RESULT_CODE);
             if (value != null) {
                 provider.testResultCode = value;
@@ -290,6 +311,7 @@ public class RenderValueProvider {
             copy.participantBirthDate = provider.participantBirthDate;
             copy.participantTimeZone = provider.participantTimeZone;
             copy.date = provider.date;
+            copy.kitRequestId = provider.kitRequestId;
             copy.testResultCode = provider.testResultCode;
             copy.testResultTimeCompleted = provider.testResultTimeCompleted;
             copy.activityInstanceNumber = provider.activityInstanceNumber;
