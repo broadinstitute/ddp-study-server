@@ -480,6 +480,7 @@
 	"registration_choose_state_province": "TBD",
 	"registration_country_label": "Bitte ein Land auswählens",
 	"required_field_hint": "TBD",
+	"registration_which_name": "Wenn Sie ein Elternteil/Erziehungsberechtigter eines oder mehrerer Kinder mit AT sind, erstellen Sie das Konto unter Ihrem Namen. Sobald Sie Ihr Konto erstellt haben, können Sie Ihr(e) Kind(er) mit AT als Teilnehmer registrieren.",
 
 	"review_title": "Überprüfung und Einreichung",
 	"review_summary": "Überprüfung und Einreichung",

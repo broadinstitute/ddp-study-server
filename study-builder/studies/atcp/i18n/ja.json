@@ -485,6 +485,7 @@
 	"registration_choose_state_province": "TBD",
 	"registration_country_label": "国名を選択してください",
 	"required_field_hint": "TBD",
+	"registration_which_name": "あなたがA-T患者であるお子様(たち) の親/法的保護者である場合には、あなたのお名前でアカウントを作成してください。あなたのアカウントが作成されれば、A-T患者であるお子様(たち)を参加者として登録できます。",
 
 	"review_title": "レビューおよび提出",
 	"review_summary": "レビューおよび提出",

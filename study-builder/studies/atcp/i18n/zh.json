@@ -485,6 +485,7 @@
 	"registration_choose_state_province": "TBD",
 	"registration_country_label": "请选择一个国家",
 	"required_field_hint": "TBD",
+	"registration_which_name": "如果您是A-T孩子（们）的父母/法定监护人，请以您的姓名创建帐户。 创建帐户后，您将能够将A-T的孩子（们）注册为参与者。",
 
 	"review_title": "审查和提交",
 	"review_summary": "审查和提交",

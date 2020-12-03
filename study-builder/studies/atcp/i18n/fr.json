@@ -484,6 +484,7 @@
 	"registration_choose_state_province": "TBD",
 	"registration_country_label": "Sélectionnez un pays",
 	"required_field_hint": "TBD",
+	"registration_which_name": "Si vous êtes le parent ou le tuteur légal d’un enfant AT, veuillez créer le compte à votre nom. Une fois votre compte créé, vous pourrez enregistrer votre ou vos enfants AT comme participants.",
 
 	"review_title": "Examen et soumission",
 	"review_summary": "Examen et soumission",

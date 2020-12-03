@@ -481,6 +481,7 @@
 	"registration_choose_state_province": "TBD",
 	"registration_country_label": "Seleccione un país",
 	"required_field_hint": "TBD",
+	"registration_which_name": "Si es padre/madre o tutor legal de uno o varios niños con A-T, cree la cuenta con su nombre. Una vez creada la cuenta, podrá registrar a su(s) hijo(s) con A-T como participantes.",
 
 	"review_title": "Revisión y envío",
 	"review_summary": "Revisión y envío",

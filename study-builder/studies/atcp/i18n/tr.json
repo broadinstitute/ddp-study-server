@@ -486,6 +486,7 @@
 	"registration_choose_state_province": "TBD",
 	"registration_country_label": "Lütfen bir ülke seçin",
 	"required_field_hint": "TBD",
+	"registration_which_name": "A-T'li bir çocuğun/çocukların ebeveyni/vasisi iseniz lütfen hesabı kendi adınız altında oluşturun. Hesabınız oluşturulduktan sonra A-T'li çocuğunuzu/çocuklarınızı Katılımcı olarak kaydedebileceksiniz.",
 
 	"review_title": "Gözden Geçir ve Gönder",
 	"review_summary": "Gözden Geçir ve Gönder",

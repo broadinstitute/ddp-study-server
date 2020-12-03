@@ -486,6 +486,7 @@
 	"registration_choose_state_province": "TBD",
 	"registration_country_label": "Selecione um país",
 	"required_field_hint": "TBD",
+	"registration_which_name": "Caso você seja pai ou mãe/responsável legal de uma criança ou crianças com A-T, crie a conta usando o seu nome. Depois que sua conta for criada, você poderá registrar a(s) crianças(s) com A-T como participantes.",
 
 	"review_title": "Verificação e envio",
 	"review_summary": "Verificação e envio",

@@ -45,6 +45,7 @@
   "registration_state_province_req_hint": "State/Province cannot be empty.",
   "registration_choose_state_province": "Choose state/province...",
   "registration_country_label": "Choose country...",
+  "registration_which_name": "If you are a parent/legal guardian of a child(ren) with A-T, please create the account under your name. Once your account is created, you will be able to register your child(ren) with A-T as Participants.",
 
 
   "consent_agreement_indicates_li1": "Researchers may use my health information, medical information, the results of the DNA sequencing (as indicated in the checkboxes on the next page) and any other data I share via this platform for future research studies - including studies that have not yet been designed; studies for A-T; studies involving diseases other than A-T, and/or studies that may be for commercial purposes, subject to review and approval by the A-T data access committee. This information will be stored without identification information on a cloud-computing storage system administered by Broad Institute.",
