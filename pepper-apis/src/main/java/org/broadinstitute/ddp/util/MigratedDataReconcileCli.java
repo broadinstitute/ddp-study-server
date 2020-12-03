@@ -256,7 +256,7 @@ public class MigratedDataReconcileCli {
         JsonElement datstatMappingData = mappingData.get("datstatparticipantdata");
         doCompare(csvRecord, datstatData, datstatMappingData);
 
-        doCompare(csvRecord, userData.get("aboutyousurvey"), mappingData.get("aboutyousurvey"));
+        doCompare(csvRecord, userData.get("atcp_registry_questionnaire"), mappingData.get("atcp_registry_questionnaire"));
 
         //consent has versions
         JsonElement consentSurveyEl = userData.get("consentsurvey");
