@@ -831,7 +831,8 @@ public interface QuestionDao extends SqlObject {
                 headerTemplateId,
                 footerTemplateId,
                 revisionId, activityId, question.shouldHideNumber(),
-                question.isDeprecated());
+                question.isDeprecated(),
+                question.isWriteOnce());
         question.setQuestionId(questionId);
 
         getValidationDao().insertValidations(question, revisionId);

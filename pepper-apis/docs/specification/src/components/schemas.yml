@@ -252,6 +252,9 @@ Activity.Summary:
     isFollowup:
       description: true if the activity is generally considered to be an activity that comes after the "main" activities
       type: boolean
+    previousInstanceGuid:
+      description: GUID of previous instance
+      type: string
 ######
 #
 # Answers

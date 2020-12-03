@@ -1,6 +1,7 @@
 package org.broadinstitute.ddp.util;
 
 import org.broadinstitute.ddp.db.DaoException;
+import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.db.dto.QuestionDto;
@@ -23,13 +24,20 @@ public class QuestionUtil {
             return false;
         }
 
-        InstanceStatusType statusType = handle.attach(JdbiActivityInstance.class)
-                .getByActivityInstanceGuid(activityInstanceGuid)
-                .map(ActivityInstanceDto::getStatusType)
-                .orElseThrow(() -> new DaoException(String.format(
+        ActivityInstanceDto activityInstanceDto = handle.attach(JdbiActivityInstance.class)
+                .getByActivityInstanceGuid(activityInstanceGuid).orElseThrow(() -> new DaoException(String.format(
                         "Could not find activity instance with guid=%s while getting question with id=%d and stableId=%s",
                         activityInstanceGuid, dto.getId(), dto.getStableId())));
 
-        return InstanceStatusType.COMPLETE.equals(statusType);
+        InstanceStatusType statusType = activityInstanceDto.getStatusType();
+        if (InstanceStatusType.COMPLETE.equals(statusType)) {
+            return true;
+        }
+
+        // If it is not the first instance - block editing
+        var instanceDao = handle.attach(ActivityInstanceDao.class);
+        Long previousInstanceId = instanceDao.findMostRecentInstanceBeforeCurrent(activityInstanceDto.getId())
+                .orElse(null);
+        return previousInstanceId != null;
     }
 }
