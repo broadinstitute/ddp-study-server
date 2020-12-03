@@ -52,13 +52,14 @@ import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
 import org.broadinstitute.ddp.model.activity.types.DateFieldType;
 import org.broadinstitute.ddp.model.activity.types.DateRenderMode;
-import org.broadinstitute.ddp.model.activity.types.DsmNotificationEventType;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.broadinstitute.ddp.model.activity.types.NumericType;
 import org.broadinstitute.ddp.model.activity.types.PicklistRenderMode;
 import org.broadinstitute.ddp.model.activity.types.PicklistSelectMode;
 import org.broadinstitute.ddp.model.activity.types.TemplateType;
 import org.broadinstitute.ddp.model.activity.types.TextInputType;
+import org.broadinstitute.ddp.model.dsm.DsmNotificationEventType;
+import org.broadinstitute.ddp.model.dsm.KitReasonType;
 import org.broadinstitute.ddp.model.dsm.TestResult;
 import org.broadinstitute.ddp.model.event.ActivityInstanceStatusChangeSignal;
 import org.broadinstitute.ddp.model.event.DsmNotificationSignal;
@@ -1232,6 +1233,42 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
     }
 
     @Test
+    public void testEval_eventKit_isReason() {
+        String expr = "user.event.kit.isReason(\"NORMAL\")";
+        EventSignal signal = newDsmEventSignal(null, KitReasonType.NORMAL);
+        assertTrue(runEvalEventSignal(expr, signal));
+
+        expr = "user.event.kit.isReason(\"REPLACEMENT\")";
+        signal = newDsmEventSignal(null, KitReasonType.REPLACEMENT);
+        assertTrue(runEvalEventSignal(expr, signal));
+
+        expr = "user.event.kit.isReason(\"NORMAL\")";
+        signal = newDsmEventSignal(null, KitReasonType.REPLACEMENT);
+        assertFalse(runEvalEventSignal(expr, signal));
+
+        expr = "user.event.kit.isReason(\"foobar\")";
+        signal = newDsmEventSignal(null, KitReasonType.REPLACEMENT);
+        assertFalse(runEvalEventSignal(expr, signal));
+    }
+
+    @Test
+    public void testEval_eventKit_notEvent() {
+        thrown.expect(PexRuntimeException.class);
+        thrown.expectMessage(containsString("Expected event signal"));
+        String expr = "user.event.kit.isReason(\"NORMAL\")";
+        assertTrue(run(expr));
+    }
+
+    @Test
+    public void testEval_eventKit_notDsmEvent() {
+        thrown.expect(PexRuntimeException.class);
+        thrown.expectMessage(containsString("Expected DSM notification"));
+        String expr = "user.event.kit.isReason(\"NORMAL\")";
+        EventSignal signal = new ActivityInstanceStatusChangeSignal(1L, 1L, "guid", "guid", 2L, 3L, 4L, InstanceStatusType.COMPLETE);
+        assertTrue(runEvalEventSignal(expr, signal));
+    }
+
+    @Test
     public void testEval_eventTestResult() {
         String expr = "user.event.testResult.isCorrected()";
         EventSignal signal = newDsmEventSignal(new TestResult("NEGATIVE", Instant.now(), true));
@@ -1290,6 +1327,10 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
     }
 
     private DsmNotificationSignal newDsmEventSignal(TestResult testResult) {
+        return newDsmEventSignal(testResult, KitReasonType.NORMAL);
+    }
+
+    private DsmNotificationSignal newDsmEventSignal(TestResult testResult, KitReasonType kitReasonType) {
         return new DsmNotificationSignal(
                 testData.getUserId(),
                 testData.getUserId(),
@@ -1297,6 +1338,8 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
                 userGuid,
                 testData.getStudyId(),
                 DsmNotificationEventType.TEST_RESULT,
+                "dummy-kit-request-id",
+                kitReasonType,
                 testResult);
     }
 }
