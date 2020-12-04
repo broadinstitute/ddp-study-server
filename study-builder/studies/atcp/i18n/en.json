@@ -473,7 +473,7 @@
   "genome_introduction_p2": "We recommend that you provide the saliva collection in the presence of a healthcare professional if possible. This will  help make sure that the saliva sample is collected properly, which in turn should result in high quality genome sequencing.",
   "genome_name": "Genome Study",
   "genome_participant_ethnicity": "$ddp.participantFirstName()'s Ethnicity*",
-  "genome_participant_gender": "'s Gender*",
+  "genome_participant_gender": "$ddp.participantFirstName()'s Gender*",
   "genome_sample_kit": "Please send me a saliva sample collection kit so I can provide a sample for whole genome sequencing.",
   "genome_shipping_address": "Complete Shipping Address*",
   "genome_study_hr": "If you have any questions, please contact us at ",
