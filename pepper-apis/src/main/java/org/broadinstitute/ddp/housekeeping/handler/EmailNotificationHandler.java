@@ -287,6 +287,7 @@ public class EmailNotificationHandler implements HousekeepingMessageHandler<Noti
                 String name = pdfConfig.getFilename() + ".pdf";
                 // Implementation of newPdfAttachment reads stream and saves locally as string
                 // we can close stream when done
+                pdfStream = pdfBucketService.getPdfFromBucket(blobName).orElse(null);
                 attachments.add(SendGridClient.newPdfAttachment(name, pdfStream));
             } catch (IOException | DDPException e) {
                 throw new MessageHandlingException("Error generating or retrieving PDF from bucket "
