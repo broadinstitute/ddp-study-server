@@ -523,14 +523,10 @@ public class MigratedDataReconcileCli {
                     sourceFieldValue = getStringValueFromElement(sourceDataEl, sourceFieldName);
                     altSourceValue = sourceFieldValue;
                     if (StringUtils.isNotBlank(sourceFieldValue)) {
-                        Integer singlePicklistInt = Integer.parseInt(sourceFieldValue);
+                        int singlePicklistInt = Integer.parseInt(sourceFieldValue);
                         if (singlePicklistLookup.containsKey(sourceFieldName)) {
                             altSourceValue = singlePicklistLookup.get(sourceFieldName)
                                     .get(singlePicklistInt);
-                        }
-                        if (sourceFieldName.contains("_medicated") && yesNoInt == 0) {
-                            //special cases!!
-                            altSourceValue = "NO";
                         }
                         if (altSourceValue.equalsIgnoreCase(targetFieldValue)) {
                             LOG.debug("{} and {} values match. source value: {} target value: {} ",
