@@ -35,6 +35,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import com.sendgrid.Email;
 import com.sendgrid.Mail;
@@ -65,6 +66,8 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 
 public class EmailNotificationHandlerTest extends TxnAwareBaseTest {
 
@@ -213,9 +216,20 @@ public class EmailNotificationHandlerTest extends TxnAwareBaseTest {
         when(mockHandle.attach(JdbiUmbrellaStudy.class)).thenReturn(mock(JdbiUmbrellaStudy.class));
         when(mockEventDao.getPdfAttachmentsForEvent(1L)).thenReturn(List.of(new PdfAttachment(1L, true)));
         when(mockPdf.findFullConfigForUser(any(), eq(1L), any(), any())).thenReturn(pdfConfig);
-        when(mockPdfBucket.getPdfFromBucket(any())).thenReturn(Optional.empty());
         when(mockPdfBucket.getBucketName()).thenReturn("test-bucket");
         when(mockPdfGen.generateFlattenedPdfForConfiguration(any(), any(), any())).thenReturn(new ByteArrayInputStream(content.getBytes()));
+
+        var numCalls = new AtomicInteger(0);
+        when(mockPdfBucket.getPdfFromBucket(any())).thenReturn(Optional.empty());
+        when(mockPdfBucket.getPdfFromBucket(any())).thenAnswer(invocationOnMock -> {
+            if (numCalls.getAndIncrement() < 1) {
+                return Optional.empty(); // No pdf on first call.
+            } else {
+                // Second time around, the pdf should be generated and stored in bucket.
+                // So simulate reading it back out from bucket.
+                return Optional.of(new ByteArrayInputStream(content.getBytes()));
+            }
+        });
 
         // Run test and assertions
         var actual = handler.buildAttachments(mockHandle, testData.getStudyGuid(), "guid", 1L);
