@@ -61,6 +61,7 @@ public class MigratedDataReconcileCli {
     Map<Integer, String> yesNoDkLookup;
     Map<Integer, Boolean> booleanValueLookup;
     Map<Integer, String> statusValueLookup;
+    Map<String, List<String>> singlePicklistLookup;
     Set<String> dkSet;
     private List<String> skipFields = new ArrayList<>();
     private String serviceAccountFile = null;
@@ -158,6 +159,45 @@ public class MigratedDataReconcileCli {
         altNames.put("FIRMAGON", "degareliz");
         altNames.put("OTHER_YES", "other_therapy");
         altNames.put("CLINICAL_TRIAL", "exp_clinical_trial");
+
+        //ATCP single picklist option entries
+        singlePicklistLookup.put("cancer_status", new ArrayList<>(List.of(
+                "",
+                "HAS_CANCER_AND_NO_LONGER_TREATMENT",
+                "HAS_CANCER_AND_TREATMENT",
+                "REMISSION_AND_TREATMENT",
+                "CANCER_HAS_RECENTLY_RECURRED",
+                "REMISSION_AND_NO_LONGER_TREATMENT"
+        )));
+
+        singlePicklistLookup.put("ambulation", new ArrayList<>(List.of(
+                "",
+                "INDEPENDENTLY",
+                "MOST_OF_THE_TIME",
+                "WITH_ASSISTANCE",
+                "USES_WALKER",
+                "WHEELCHAIR_WITHOUT_ASSISTANCE",
+                "WHEELCHAIR_WITH_ASSISTANCE"
+        )));
+
+        singlePicklistLookup.put("ethnicity", new ArrayList<>(List.of(
+                "",
+                "AFRICAN_AFRICAN_AMERICAN",
+                "LATINO",
+                "EAST_ASIAN",
+                "FINNISH",
+                "NON-FINNISH_EUROPEAN",
+                "CAUCASIAN",
+                "SOUTH_ASIAN",
+                "OTHER",
+                "PREFER NOT TO ANSWER"
+        )));
+
+        singlePicklistLookup.put("incontinence_type", new ArrayList<>(List.of(
+                "",
+                "INCONTINENCE_OCCASIONAL",
+                "INCONTINENCE_FREQUENT"
+        )));
 
         initStateCodes();
 
@@ -297,6 +337,7 @@ public class MigratedDataReconcileCli {
         String targetFieldName;
         String sourceFieldValue;
         String targetFieldValue;
+        String altSourceValue;
         for (JsonElement thisMapData : dataArray) {
             sourceFieldName = thisMapData.getAsJsonObject().get("source_field_name").getAsString();
             targetFieldName = thisMapData.getAsJsonObject().get("target_field_name").getAsString();
@@ -455,11 +496,37 @@ public class MigratedDataReconcileCli {
 
                 case "YesNoDk":
                     sourceFieldValue = getStringValueFromElement(sourceDataEl, sourceFieldName);
-                    String altSourceValue = sourceFieldValue;
+                    altSourceValue = sourceFieldValue;
                     if (StringUtils.isNotBlank(sourceFieldValue)) {
                         Integer yesNoInt = Integer.parseInt(sourceFieldValue);
                         if (yesNoDkLookup.containsKey(yesNoInt)) {
                             altSourceValue = yesNoDkLookup.get(yesNoInt);
+                        }
+                        if (sourceFieldName.contains("_medicated") && yesNoInt == 0) {
+                            //special cases!!
+                            altSourceValue = "NO";
+                        }
+                        if (altSourceValue.equalsIgnoreCase(targetFieldValue)) {
+                            LOG.debug("{} and {} values match. source value: {} target value: {} ",
+                                    sourceFieldName, targetFieldName, sourceFieldValue, targetFieldValue);
+                        } else {
+                            printRecord(csvRecord.get("legacy_altpid"), csvRecord.get("participant_guid"),
+                                    sourceFieldName, targetFieldName, sourceFieldValue, targetFieldValue, false);
+                        }
+                    } else if (StringUtils.isNotBlank(targetFieldValue)) {
+                        printRecord(csvRecord.get("legacy_altpid"), csvRecord.get("participant_guid"),
+                                sourceFieldName, targetFieldName, null, targetFieldValue, false);
+                    }
+                    break;
+
+                case "SinglePicklist":
+                    sourceFieldValue = getStringValueFromElement(sourceDataEl, sourceFieldName);
+                    altSourceValue = sourceFieldValue;
+                    if (StringUtils.isNotBlank(sourceFieldValue)) {
+                        Integer singlePicklistInt = Integer.parseInt(sourceFieldValue);
+                        if (singlePicklistLookup.containsKey(sourceFieldName)) {
+                            altSourceValue = singlePicklistLookup.get(sourceFieldName)
+                                    .get(singlePicklistInt);
                         }
                         if (sourceFieldName.contains("_medicated") && yesNoInt == 0) {
                             //special cases!!

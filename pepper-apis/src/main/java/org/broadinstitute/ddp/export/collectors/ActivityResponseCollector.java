@@ -390,11 +390,11 @@ public class ActivityResponseCollector {
                 break;
             case COMPOSITE:
                 CompositeQuestionDef composite = (CompositeQuestionDef) questionDef;
-                if (composite.shouldUnwrapChildQuestions()) {
-                    composite.getChildren().forEach(this::collectQuestionIntoHeaders);
-                } else {
-                    headers.addAll(compositeFmt.headers(composite));
-                }
+                //if (composite.shouldUnwrapChildQuestions()) {
+                composite.getChildren().forEach(this::collectQuestionIntoHeaders);
+                //} else {
+                //    headers.addAll(compositeFmt.headers(composite));
+                //}
                 break;
             default:
                 throw new DDPException("Unhandled question type " + questionDef.getQuestionType());
