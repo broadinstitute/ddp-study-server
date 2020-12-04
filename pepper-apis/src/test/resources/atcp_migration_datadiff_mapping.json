@@ -280,6 +280,76 @@
             "source_field_type": "String"
           },
           {
+            "source_field_name": "other_surgeries_1_age",
+            "target_field_name": "AGE_OF_SURGERY",
+            "source_field_type": "String"
+          },
+          {
+            "source_field_name": "other_surgeries_1_desc",
+            "target_field_name": "DESCRIPTION_OF_SURGERY",
+            "source_field_type": "String"
+          },
+          {
+            "source_field_name": "other_surgeries_2_type",
+            "target_field_name": "TYPE_OF_SURGERY",
+            "source_field_type": "String"
+          },
+          {
+            "source_field_name": "other_surgeries_2_age",
+            "target_field_name": "AGE_OF_SURGERY",
+            "source_field_type": "String"
+          },
+          {
+            "source_field_name": "other_surgeries_2_desc",
+            "target_field_name": "DESCRIPTION_OF_SURGERY",
+            "source_field_type": "String"
+          },
+          {
+            "source_field_name": "other_surgeries_3_type",
+            "target_field_name": "TYPE_OF_SURGERY",
+            "source_field_type": "String"
+          },
+          {
+            "source_field_name": "other_surgeries_3_age",
+            "target_field_name": "AGE_OF_SURGERY",
+            "source_field_type": "String"
+          },
+          {
+            "source_field_name": "other_surgeries_3_desc",
+            "target_field_name": "DESCRIPTION_OF_SURGERY",
+            "source_field_type": "String"
+          },
+          {
+            "source_field_name": "other_surgeries_4_type",
+            "target_field_name": "TYPE_OF_SURGERY",
+            "source_field_type": "String"
+          },
+          {
+            "source_field_name": "other_surgeries_4_age",
+            "target_field_name": "AGE_OF_SURGERY",
+            "source_field_type": "String"
+          },
+          {
+            "source_field_name": "other_surgeries_4_desc",
+            "target_field_name": "DESCRIPTION_OF_SURGERY",
+            "source_field_type": "String"
+          },
+          {
+            "source_field_name": "other_surgeries_5_type",
+            "target_field_name": "TYPE_OF_SURGERY",
+            "source_field_type": "String"
+          },
+          {
+            "source_field_name": "other_surgeries_5_age",
+            "target_field_name": "AGE_OF_SURGERY",
+            "source_field_type": "String"
+          },
+          {
+            "source_field_name": "other_surgeries_5_desc",
+            "target_field_name": "DESCRIPTION_OF_SURGERY",
+            "source_field_type": "String"
+          },
+          {
             "source_field_name": "medication_category",
             "target_field_name": "MEDICATION_CATEGORY",
             "source_field_type": "NEEDS CHECK -> CompositeMedical"
