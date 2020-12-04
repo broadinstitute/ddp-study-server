@@ -254,7 +254,7 @@
 	"medical_history_detail_li1": "wypełnienie kwestionariusza zajmuje około 30 minut;",
 	"medical_history_detail_li2": "osoba ze zdiagnozowanym A-T będzie w nim nazywana „$ddp.participantFirstName()”;",
 	"medical_history_detail_li3": "wypełnianie kwestionariusza można wznowić i uaktualniać dane w dowolnej chwili przed wysłaniem go;",
-	"medical_history_detail_p": "raz w roku będziemy prosili o uaktualnienie danych w module.",
+	"medical_history_detail_p": "Raz w roku będziemy prosili o uaktualnienie danych w module.",
 	"medical_history_determined": "W jaki sposób zdiagnozowano A-T? Wybierz wszystkie odpowiedzi, które pasują.",
 	"medical_history_diabetes": "Leki na cukrzycę",
 	"medical_history_diagnosed_note": "Uwaga: Zaznaczenie \"Nie\" spowoduje automatycznie zakończenie tej ankiety.",

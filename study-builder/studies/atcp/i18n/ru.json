@@ -252,7 +252,7 @@
 	"medical_history_currently_participate_p2_start": "в настоящее время",
 	"medical_history_description_of_surgery": "Описание операции:",
 	"medical_history_detail_li1": "Вам потребуется приблизительно 30 минут для заполнения этого модуля",
-	"medical_history_detail_li2": "Человек с диагнозом А-Т будет обозначен здесь как '$ddp.participantFirstName().'",
+	"medical_history_detail_li2": "Человек с диагнозом А-Т будет обозначен здесь как '$ddp.participantFirstName()'.",
 	"medical_history_detail_li3": "Можно возобновить и обновить в любой момент перед отправкой анкеты.",
 	"medical_history_detail_p": "Раз в год мы попросим вас обновлять ваш модуль.",
 	"medical_history_determined": "Как был поставлен диагноз А-Т? Выберите все подходящие варианты.",
