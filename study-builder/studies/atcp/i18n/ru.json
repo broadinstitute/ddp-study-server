@@ -179,7 +179,7 @@
 	"contacting_physician_prompt_lastname": "Фамилия врача",
 	"contacting_physician_prompt_mail": "Полный почтовый адрес врача",
 	"contacting_physician_prompt_phone": "Телефон врача",
-	"contacting_physician_title_p1": "Наши сотрудники могут обратиться к врачу $ddp.participantFirstName() с информацией о данных $ddp.participantFirstName() (если вы согласились на это) или для подтверждения диагноза A-T. Дляя этого, пожалуйста, заполните следующую форму с информацией о враче $ddp.participantFirstName() (врач, который играет главную роль в уходе за $ddp.participantFirstName()).",
+	"contacting_physician_title_p1": "Наши сотрудники могут обратиться к врачу $ddp.participantFirstName() с информацией о данных $ddp.participantFirstName() (если вы согласились на это) или для подтверждения диагноза A-T. Для этого, пожалуйста, заполните следующую форму с информацией о враче $ddp.participantFirstName() (врач, который играет главную роль в уходе за $ddp.participantFirstName()).",
 
 	"genome_ethnicity_african_african_american": "Африканская/Афроамериканская",
 	"genome_ethnicity_caucasian": "Европейская",
