@@ -283,11 +283,11 @@ public class EmailNotificationHandler implements HousekeepingMessageHandler<Noti
                             apisHandle);
                     pdfBucketService.sendPdfToBucket(blobName, pdfStream);
                     LOG.info("Uploaded pdf to bucket {} with filename {}", pdfBucketService.getBucketName(), blobName);
+                    pdfStream = pdfBucketService.getPdfFromBucket(blobName).orElse(null);
                 }
                 String name = pdfConfig.getFilename() + ".pdf";
                 // Implementation of newPdfAttachment reads stream and saves locally as string
                 // we can close stream when done
-                pdfStream = pdfBucketService.getPdfFromBucket(blobName).orElse(null);
                 attachments.add(SendGridClient.newPdfAttachment(name, pdfStream));
             } catch (IOException | DDPException e) {
                 throw new MessageHandlingException("Error generating or retrieving PDF from bucket "
