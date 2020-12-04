@@ -511,6 +511,7 @@
 	"feeding_summary_in_progress": "Feeding Survey",
 	"feeding_summary_complete": "Thank you for signing the Feeding Survey form.",
 	"feeding_intro": "We are interested in how well you manage everyday tasks. Please check the box that best represents how often you perform each task or participate in each activity.  If the task or activity does not apply, please select the number corresponding to the reason in addition to “does not apply.”",
+	"feeding_intro_parent": "We are interested in how well $ddp.participantFirstName() manages everyday tasks. Please check the box that best represents how often $ddp.participantFirstName() performs each task or participates in each activity.  If the task or activity does not apply, please select the number corresponding to the reason in addition to “does not apply”. For example, a child may be too young to brush teeth with our help. In this case, age is the reason for not scoring that task and you would check the boxes:",
 	"feeding_req_hint": "Answer is required",
 	"feeding_always": "Always (every time) (100%)",
 	"feeding_usually": "Usually (80-99%)",
