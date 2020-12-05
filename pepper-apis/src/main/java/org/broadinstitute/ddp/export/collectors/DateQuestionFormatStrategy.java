@@ -90,6 +90,22 @@ public class DateQuestionFormatStrategy implements ResponseFormatStrategy<DateQu
         }
     }
 
+    public List<String> headers(DateQuestionDef definition, int number) {
+        boolean isRequired = definition.getValidations().stream()
+                .anyMatch(rule -> rule.getRuleType() == RuleType.REQUIRED);
+        boolean hasCompleteRule = definition.getValidations().stream()
+                .anyMatch(rule -> rule.getRuleType() == RuleType.COMPLETE);
+
+        if (definition.getFields().size() == 3 && (isRequired || hasCompleteRule)) {
+            return Arrays.asList(definition.getStableId() + "_" + number);
+        } else {
+            boolean appendField = (definition.getFields().size() > 1);
+            return definition.getFields().stream()
+                    .map(field -> fieldHeader(definition.getStableId() + "_" + number, field, appendField))
+                    .collect(Collectors.toList());
+        }
+    }
+
     @Override
     public Map<String, String> collect(DateQuestionDef question, DateAnswer answer) {
         Map<String, String> record = new HashMap<>();

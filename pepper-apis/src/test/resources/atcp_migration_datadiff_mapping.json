@@ -281,7 +281,7 @@
           },
           {
             "source_field_name": "other_surgeries_1_age",
-            "target_field_name": "AGE_OF_SURGERY",
+            "target_field_name": "AGE_OF_SURGERY_1",
             "source_field_type": "String"
           },
           {

@@ -130,6 +130,27 @@ public class PicklistQuestionFormatStrategy implements ResponseFormatStrategy<Pi
         return headers;
     }
 
+    public List<String> headers(PicklistQuestionDef definition, int number) {
+        List<String> headers = new ArrayList<>();
+        headers.add(definition.getStableId() + "_" + number);
+
+        for (PicklistGroupDef group : definition.getGroups()) {
+            for (PicklistOptionDef optionDef : group.getOptions()) {
+                if (optionDef.isDetailsAllowed()) {
+                    headers.add(detailHeader(definition.getStableId(), optionDef.getStableId()));
+                }
+            }
+        }
+
+        for (PicklistOptionDef optionDef : definition.getAllPicklistOptions()) {
+            if (optionDef.isDetailsAllowed()) {
+                headers.add(detailHeader(definition.getStableId(), optionDef.getStableId()));
+            }
+        }
+
+        return headers;
+    }
+
     @Override
     public Map<String, String> collect(PicklistQuestionDef question, PicklistAnswer answer) {
         Map<String, String> record = new HashMap<>();

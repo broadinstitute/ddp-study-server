@@ -41,6 +41,7 @@ import org.broadinstitute.ddp.model.activity.instance.answer.PicklistAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
 import org.broadinstitute.ddp.model.activity.types.ActivityType;
 import org.broadinstitute.ddp.model.activity.types.InstitutionType;
+import org.broadinstitute.ddp.model.activity.types.QuestionType;
 
 public class ActivityResponseCollector {
 
@@ -392,9 +393,36 @@ public class ActivityResponseCollector {
             case COMPOSITE:
                 CompositeQuestionDef composite = (CompositeQuestionDef) questionDef;
                 //if (composite.shouldUnwrapChildQuestions()) {
-                //for (int i = 0; i < 5; i++) {
-                composite.getChildren().forEach(this::collectQuestionIntoHeaders);
-                //}
+                int numberOfIterations;
+                switch (composite.getStableId()) {
+                    case "MEDICATION_CATEGORY":
+                        numberOfIterations = 9;
+                        break;
+
+                    case  "SIBLING":
+                        numberOfIterations = 5;
+                        break;
+
+                    case "SAMPLE":
+                        numberOfIterations = 5;
+                        break;
+
+                    default:
+                        numberOfIterations = 1;
+                        break;
+                }
+                for (int i = 1; i <= numberOfIterations; i++) {
+                    //composite.getChildren().forEach(this::collectQuestionIntoHeaders);
+                    for (QuestionDef child : composite.getChildren()) {
+                        if (child.getQuestionType() == QuestionType.PICKLIST) {
+                            headers.addAll(picklistFmt.headers((PicklistQuestionDef) child, i));
+                        } else if (child.getQuestionType() == QuestionType.TEXT){
+                            headers.addAll(textFmt.headers((TextQuestionDef) child, i));
+                        } else {
+                            headers.addAll(dateFmt.headers((DateQuestionDef) child, i));
+                        }
+                    }
+                }
                 //} else {
                 //    headers.addAll(compositeFmt.headers(composite));
                 //}
