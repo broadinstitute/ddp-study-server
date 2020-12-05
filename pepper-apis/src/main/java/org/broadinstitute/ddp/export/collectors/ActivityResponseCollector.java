@@ -392,9 +392,9 @@ public class ActivityResponseCollector {
             case COMPOSITE:
                 CompositeQuestionDef composite = (CompositeQuestionDef) questionDef;
                 //if (composite.shouldUnwrapChildQuestions()) {
-                for (int i = 0; i < 5; i++) {
-                    composite.getChildren().forEach(this::collectQuestionIntoHeaders);
-                }
+                //for (int i = 0; i < 5; i++) {
+                composite.getChildren().forEach(this::collectQuestionIntoHeaders);
+                //}
                 //} else {
                 //    headers.addAll(compositeFmt.headers(composite));
                 //}
