@@ -161,6 +161,7 @@ public class MigratedDataReconcileCli {
         altNames.put("CLINICAL_TRIAL", "exp_clinical_trial");
 
         //ATCP single picklist option entries
+        singlePicklistLookup = new HashMap<>();
         singlePicklistLookup.put("cancer_status", new ArrayList<>(List.of(
                 "",
                 "HAS_CANCER_AND_NO_LONGER_TREATMENT",
@@ -296,19 +297,19 @@ public class MigratedDataReconcileCli {
         JsonElement datstatMappingData = mappingData.get("datstatparticipantdata");
         doCompare(csvRecord, datstatData, datstatMappingData);
 
-        doCompare(csvRecord, userData.get("atcp_registry_questionnaire"), mappingData.get("atcp_registry_questionnaire"));
+        doCompare(csvRecord, userData.get("medicalhistorysurvey"), mappingData.get("atcp_registry_questionnaire"));
 
         //consent has versions
-        JsonElement consentSurveyEl = userData.get("consentsurvey");
+        JsonElement consentSurveyEl = userData.get("ConsentSurvey");
         if (consentSurveyEl != null && !consentSurveyEl.isJsonNull()) {
-            String consentSurveyName = "consentsurvey";
-            JsonElement consentVersionEl = userData.get("consentsurvey").getAsJsonObject().get("consent_version");
+            String consentSurveyName = "ConsentSurvey";
+            JsonElement consentVersionEl = userData.get("ConsentSurvey").getAsJsonObject().get("consent_version");
             String consentVersion = "1";
             if (consentVersionEl != null && !consentVersionEl.isJsonNull()) {
                 consentVersion = consentVersionEl.getAsString();
             } else {
                 //check by cut-off Timestamp
-                String ddpCreated = userData.get("consentsurvey").getAsJsonObject().get("ddp_created").getAsString();
+                String ddpCreated = userData.get("ConsentSurvey").getAsJsonObject().get("ddp_created").getAsString();
                 Instant createdDate = Instant.parse(ddpCreated);
                 if (!createdDate.isBefore(CONSENT_V2_DATE)) {
                     consentVersion = "2";
@@ -316,16 +317,20 @@ public class MigratedDataReconcileCli {
             }
             consentSurveyName = consentSurveyName.concat("_v").concat(consentVersion);
             //LOG.info("consent survey name: {} .. consent version: {}", consentSurveyName, consentVersion);
-            doCompare(csvRecord, userData.get("consentsurvey"), mappingData.get(consentSurveyName));
+            doCompare(csvRecord, userData.get("ConsentSurvey"), mappingData.get(consentSurveyName));
         }
 
-        doCompare(csvRecord, userData.get("releasesurvey"), mappingData.get("releasesurvey"));
+        doCompare(csvRecord, userData.get("RegistrationSurvey"), mappingData.get("RegistrationSurvey"));
 
-        doCompare(csvRecord, userData.get("followupsurvey"), mappingData.get("followupsurvey"));
+        doCompare(csvRecord, userData.get("ContactingPhysicianSurvey"), mappingData.get("ContactingPhysicianSurvey"));
 
-        processInstitutions(userData.get("releasesurvey"), InstitutionType.PHYSICIAN, csvRecord);
-        processInstitutions(userData.get("releasesurvey"), InstitutionType.INITIAL_BIOPSY, csvRecord);
-        processInstitutions(userData.get("releasesurvey"), InstitutionType.INSTITUTION, csvRecord);
+        doCompare(csvRecord, userData.get("GenomeStudySurvey"), mappingData.get("GenomeStudySurvey"));
+
+        doCompare(csvRecord, userData.get("AssentSurvey"), mappingData.get("AssentSurvey"));
+
+//        processInstitutions(userData.get("releasesurvey"), InstitutionType.PHYSICIAN, csvRecord);
+//        processInstitutions(userData.get("releasesurvey"), InstitutionType.INITIAL_BIOPSY, csvRecord);
+//        processInstitutions(userData.get("releasesurvey"), InstitutionType.INSTITUTION, csvRecord);
     }
 
     private void doCompare(CSVRecord csvRecord, JsonElement sourceDataEl, JsonElement mappingDataEl) throws Exception {

@@ -32,6 +32,7 @@ import org.broadinstitute.ddp.model.activity.instance.ActivityResponse;
 import org.broadinstitute.ddp.model.activity.instance.FormResponse;
 import org.broadinstitute.ddp.model.activity.instance.answer.AgreementAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
+import org.broadinstitute.ddp.model.activity.instance.answer.AnswerRow;
 import org.broadinstitute.ddp.model.activity.instance.answer.BoolAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.CompositeAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.DateAnswer;
@@ -391,7 +392,9 @@ public class ActivityResponseCollector {
             case COMPOSITE:
                 CompositeQuestionDef composite = (CompositeQuestionDef) questionDef;
                 //if (composite.shouldUnwrapChildQuestions()) {
-                composite.getChildren().forEach(this::collectQuestionIntoHeaders);
+                for (int i = 0; i < 5; i++) {
+                    composite.getChildren().forEach(this::collectQuestionIntoHeaders);
+                }
                 //} else {
                 //    headers.addAll(compositeFmt.headers(composite));
                 //}
@@ -500,16 +503,12 @@ public class ActivityResponseCollector {
             case COMPOSITE:
                 CompositeQuestionDef composite = (CompositeQuestionDef) question;
                 CompositeAnswer compositeAnswer = (CompositeAnswer) answer;
-                if (composite.shouldUnwrapChildQuestions()) {
-                    // There should be one row with one answer per child. Put them into the response object so we can recurse.
-                    compositeAnswer.getValue().stream()
-                            .flatMap(row -> row.getValues().stream())
-                            .forEach(instance::putAnswer);
-                    for (QuestionDef childQuestion : composite.getChildren()) {
-                        collectQuestionIntoRecord(record, childQuestion, instance);
-                    }
-                } else {
-                    record.putAll(compositeFmt.collect(composite, compositeAnswer));
+                // There should be one row with one answer per child. Put them into the response object so we can recurse.
+                compositeAnswer.getValue().stream()
+                        .flatMap(row -> row.getValues().stream())
+                        .forEach(instance::putAnswer);
+                for (QuestionDef childQuestion : composite.getChildren()) {
+                    collectQuestionIntoRecord(record, childQuestion, instance);
                 }
                 break;
             default:

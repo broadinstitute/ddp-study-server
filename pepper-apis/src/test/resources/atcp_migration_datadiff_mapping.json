@@ -471,17 +471,18 @@
           {
             "source_field_name": "datstat_physicalcountry",
             "target_field_name": "REGISTRATION_COUNTRY",
-            "source_field_type": "NEEDS CHECK"
+            "source_field_type": "String"
           },
           {
             "source_field_name": "datstat_physicalstate",
             "target_field_name": "REGISTRATION_STATE_PROVINCE",
-            "source_field_type": "NEEDS CHECK"
+            "source_field_type": "String"
           }
         ]
       },
       {
         "name": "ConsentSurvey",
+        "version": "v1",
         "data": [
           {
             "source_field_name": "platform_consent_recontact_participant_followup",
@@ -578,10 +579,7 @@
           {
             "source_field_name": "saliva_agreement",
             "target_field_name": "COLLECTION_KIT",
-            "source_field_type": "Picklist",
-            "options": [
-              "AGREE#needsCheck"
-            ]
+            "source_field_type": "String"
           },
           {
             "source_field_name": "genome_study_shipping_address",
@@ -590,18 +588,12 @@
           {
             "source_field_name": "datstat_gender",
             "target_field_name": "PARTICIPANT_GENDER",
-            "source_field_type": "Picklist",
-            "options": [
-              "F", "M#needsCheck"
-            ]
+            "source_field_type": "String"
           },
           {
             "source_field_name": "ethnicity",
             "target_field_name": "PARTICIPANT_ETHNICITY",
-            "source_field_type": "Picklist",
-            "options": [
-              "#needsCheck"
-            ]
+            "source_field_type": "SinglePicklist"
           }
         ]
       },
@@ -635,7 +627,7 @@
           },
           {
             "source_field_name": "platform_assent_signature",
-            "target_field_name": "ASSENT_CHILD_SIGNATURE",
+            "target_field_name": "ASSENT_CHILD_SIGNATURE"
           },
           {
             "source_field_name": "platform_assent_dob",
@@ -670,7 +662,7 @@
           "source_field_name": "datstat_created",
           "target_field_name": "created_at",
           "source_field_type": "Date",
-          "source_field_format": "yyyy-MM-dd'T'HH:mm:ss'Z'"
+          "source_field_format": "yyyy-MM-dd'T'HH:mm:ss"
         },
         {
           "source_field_name": "datstat_firstname",
