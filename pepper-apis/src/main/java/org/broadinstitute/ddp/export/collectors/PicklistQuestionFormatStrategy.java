@@ -184,6 +184,38 @@ public class PicklistQuestionFormatStrategy implements ResponseFormatStrategy<Pi
         return record;
     }
 
+    public Map<String, String> collect(PicklistQuestionDef question, PicklistAnswer answer, int i) {
+        Map<String, String> record = new HashMap<>();
+
+        Map<String, SelectedPicklistOption> mapping = new HashMap<>();
+        for (SelectedPicklistOption selected : answer.getValue()) {
+            mapping.put(selected.getStableId(), selected);
+        }
+
+        List<PicklistOptionDef> options = new ArrayList<>();
+        List<String> selectedIds = new ArrayList<>();
+        for (PicklistGroupDef group : question.getGroups()) {
+            options.addAll(group.getOptions());
+        }
+
+        options.addAll(question.getAllPicklistOptions());
+
+        for (PicklistOptionDef option : options) {
+            String osid = option.getStableId();
+            if (mapping.containsKey(osid)) {
+                SelectedPicklistOption selected = mapping.get(osid);
+                if (option.isDetailsAllowed() && StringUtils.isNotBlank(selected.getDetailText())) {
+                    String key = detailHeader(question.getStableId(), osid);
+                    record.put(key, selected.getDetailText());
+                }
+                selectedIds.add(osid);
+            }
+        }
+
+        record.put(question.getStableId() + "_" + i, String.join(",", selectedIds));
+        return record;
+    }
+
     private String detailHeader(String questionStableId, String optionStableId) {
         return String.format("%s_%s_DETAILS", questionStableId, optionStableId);
     }

@@ -139,6 +139,38 @@ public class DateQuestionFormatStrategy implements ResponseFormatStrategy<DateQu
         return record;
     }
 
+    public Map<String, String> collect(DateQuestionDef question, DateAnswer answer, int i) {
+        Map<String, String> record = new HashMap<>();
+        DateValue ans = answer.getValue();
+        if (ans == null) {
+            return record;
+        }
+
+        boolean isRequired = question.getValidations().stream()
+                .anyMatch(rule -> rule.getRuleType() == RuleType.REQUIRED);
+        boolean hasCompleteRule = question.getValidations().stream()
+                .anyMatch(rule -> rule.getRuleType() == RuleType.COMPLETE);
+
+        if (question.getFields().size() == 3 && (isRequired || hasCompleteRule)) {
+            record.put(question.getStableId() + "_" + i, ans.toDefaultDateFormat());
+        } else {
+            boolean appendField = (question.getFields().size() > 1);
+            for (DateFieldType field : question.getFields()) {
+                String key = fieldHeader(question.getStableId() + "_" + i, field, appendField);
+                String value = null;
+                if (field == DateFieldType.YEAR && ans.getYear() != null) {
+                    value = String.format("%04d", ans.getYear());
+                } else if (field == DateFieldType.MONTH && ans.getMonth() != null) {
+                    value = String.format("%02d", ans.getMonth());
+                } else if (field == DateFieldType.DAY && ans.getDay() != null) {
+                    value = String.format("%02d", ans.getDay());
+                }
+                record.put(key, value);
+            }
+        }
+        return record;
+    }
+
     private String fieldHeader(String questionStableId, DateFieldType field, boolean appendField) {
         return appendField ? questionStableId + "_" + field.name() : questionStableId;
     }

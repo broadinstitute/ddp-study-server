@@ -535,7 +535,7 @@ public class ActivityResponseCollector {
                 int numberOfIterations;
                 switch (composite.getStableId()) {
                     case "MEDICATION_CATEGORY":
-                        numberOfIterations = 3;
+                        numberOfIterations = 9;
                         break;
 
                     case  "SIBLING":
@@ -547,12 +547,19 @@ public class ActivityResponseCollector {
                         break;
 
                     default:
-                        numberOfIterations = 2;
+                        numberOfIterations = 1;
                         break;
                 }
-                for (int i = 1; i <= 9; i++) {
-                    for () {
-                        record.putAll(textFmt.collect((TextQuestionDef) question, (TextAnswer) answer, i));
+                for (int i = 1; i <= numberOfIterations; i++) {
+                    for (Answer ans: compositeAnswer.getValue().get(i-1).getValues()) {
+                        QuestionDef questionDef = composite.getChildren().get(i-1);
+                        if (ans.getQuestionType() == QuestionType.PICKLIST) {
+                            record.putAll(picklistFmt.collect((PicklistQuestionDef) questionDef, (PicklistAnswer) ans, i));
+                        } else if (ans.getQuestionType() == QuestionType.TEXT){
+                            record.putAll(textFmt.collect((TextQuestionDef) questionDef, (TextAnswer) ans, i));
+                        } else {
+                            record.putAll(dateFmt.collect((DateQuestionDef) questionDef, (DateAnswer) ans, i));
+                        }
                     }
                 }
 
