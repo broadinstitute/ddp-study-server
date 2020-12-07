@@ -532,6 +532,30 @@ public class ActivityResponseCollector {
                 CompositeQuestionDef composite = (CompositeQuestionDef) question;
                 CompositeAnswer compositeAnswer = (CompositeAnswer) answer;
                 // There should be one row with one answer per child. Put them into the response object so we can recurse.
+                int numberOfIterations;
+                switch (composite.getStableId()) {
+                    case "MEDICATION_CATEGORY":
+                        numberOfIterations = 3;
+                        break;
+
+                    case  "SIBLING":
+                        numberOfIterations = 5;
+                        break;
+
+                    case "SAMPLE":
+                        numberOfIterations = 5;
+                        break;
+
+                    default:
+                        numberOfIterations = 2;
+                        break;
+                }
+                for (int i = 1; i <= 9; i++) {
+                    for () {
+                        record.putAll(textFmt.collect((TextQuestionDef) question, (TextAnswer) answer, i));
+                    }
+                }
+
                 compositeAnswer.getValue().stream()
                         .flatMap(row -> row.getValues().stream())
                         .forEach(instance::putAnswer);
