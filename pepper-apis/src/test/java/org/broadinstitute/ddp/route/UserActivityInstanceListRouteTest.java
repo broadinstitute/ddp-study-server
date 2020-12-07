@@ -34,6 +34,7 @@ import org.broadinstitute.ddp.db.dao.AnswerDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
+import org.broadinstitute.ddp.db.dto.ActivityVersionDto;
 import org.broadinstitute.ddp.json.activity.ActivityInstanceSummary;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
 import org.broadinstitute.ddp.model.activity.definition.FormSectionDef;
@@ -63,6 +64,7 @@ public class UserActivityInstanceListRouteTest extends IntegrationTestSuite.Test
 
     private static TestDataSetupUtil.GeneratedTestData testData;
     private static FormActivityDef prequal;
+    private static ActivityVersionDto versionDto;
     private static String prequal1Guid;
     private static String userGuid;
     private static String token;
@@ -110,7 +112,7 @@ public class UserActivityInstanceListRouteTest extends IntegrationTestSuite.Test
                 .addSummary(new SummaryTranslation("en", "$ddp.testResultTimeCompleted(\"MM/dd/uuuu\")", InstanceStatusType.CREATED))
                 .addSection(new FormSectionDef(null, Arrays.asList(controlBlock, toggledBlock)))
                 .build();
-        handle.attach(ActivityDao.class).insertActivity(prequal,
+        versionDto = handle.attach(ActivityDao.class).insertActivity(prequal,
                 RevisionMetadata.now(testData.getUserId(), "add " + code));
 
         assertNotNull(prequal.getActivityId());
@@ -265,7 +267,7 @@ public class UserActivityInstanceListRouteTest extends IntegrationTestSuite.Test
         var oldDetails = new AtomicReference<ActivityI18nDetail>();
         String prequal2Guid = TransactionWrapper.withTxn(handle -> {
             var dao = handle.attach(ActivityI18nDao.class);
-            var enDetails = dao.findDetailsByActivityId(prequal.getActivityId()).get(0);
+            var enDetails = dao.findDetailsByActivityIdAndTimestamp(prequal.getActivityId(), versionDto.getRevStart()).get(0);
             oldDetails.set(enDetails);
             dao.updateDetails(List.of(new ActivityI18nDetail(
                     enDetails.getId(),
@@ -276,7 +278,8 @@ public class UserActivityInstanceListRouteTest extends IntegrationTestSuite.Test
                     "new instance! #$ddp.activityInstanceNumber()",
                     enDetails.getTitle(),
                     enDetails.getSubtitle(),
-                    enDetails.getDescription())));
+                    enDetails.getDescription(),
+                    enDetails.getRevisionId())));
             return handle.attach(ActivityInstanceDao.class)
                     .insertInstance(prequal.getActivityId(), userGuid)
                     .getGuid();

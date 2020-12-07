@@ -213,6 +213,6 @@ public class TestBostonConsentV2 implements CustomTask {
         LOG.info("{}: updating activity naming details...", v2VersionTag);
         var task = new UpdateActivityBaseSettings();
         task.init(cfgPath, studyCfg, varsCfg);
-        task.compareNamingDetails(handle, v2Cfg, activityId);
+        task.compareNamingDetails(handle, v2Cfg, activityId, v1Dto);
     }
 }
