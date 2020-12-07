@@ -217,7 +217,6 @@ public class SlackAppender<E> extends AppenderBase<ILoggingEvent> {
             }
             messagesToSend.clear();
         }
-        notifyAll();
     }
 
     private void sendMessage(SlackMessagePayload payload) {
