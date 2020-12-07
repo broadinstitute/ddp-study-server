@@ -17,11 +17,13 @@ public interface ActivityI18nSql extends SqlObject {
     //
 
     @GetGeneratedKeys
-    @SqlUpdate("insert into i18n_study_activity (study_activity_id, language_code_id, name, second_name, title, subtitle, description)"
-            + " values (:activityId, :langId, :name, :secondName, :title, :subtitle, :description)")
+    @SqlUpdate("insert into i18n_activity_detail (study_activity_id, language_code_id, revision_id,"
+            + "        name, second_name, title, subtitle, description)"
+            + " values (:activityId, :langId, :revId, :name, :secondName, :title, :subtitle, :description)")
     long insertDetail(
             @Bind("activityId") long activityId,
             @Bind("langId") long languageCodeId,
+            @Bind("revId") long revisionId,
             @Bind("name") String name,
             @Bind("secondName") String secondName,
             @Bind("title") String title,
@@ -29,12 +31,14 @@ public interface ActivityI18nSql extends SqlObject {
             @Bind("description") String description);
 
     @GetGeneratedKeys
-    @SqlUpdate("insert into i18n_study_activity (study_activity_id, language_code_id, name, second_name, title, subtitle, description)"
-            + " select :activityId, language_code_id, :name, :secondName, :title, :subtitle, :description"
+    @SqlUpdate("insert into i18n_activity_detail (study_activity_id, language_code_id, revision_id,"
+            + "        name, second_name, title, subtitle, description)"
+            + " select :activityId, language_code_id, :revId, :name, :secondName, :title, :subtitle, :description"
             + "   from language_code where iso_language_code = :isoLangCode")
     long insertDetail(
             @Bind("activityId") long activityId,
             @Bind("isoLangCode") String isoLangCode,
+            @Bind("revId") long revisionId,
             @Bind("name") String name,
             @Bind("secondName") String secondName,
             @Bind("title") String title,
@@ -42,8 +46,10 @@ public interface ActivityI18nSql extends SqlObject {
             @Bind("description") String description);
 
     @GetGeneratedKeys
-    @SqlBatch("insert into i18n_study_activity (study_activity_id, language_code_id, name, second_name, title, subtitle, description)"
-            + "select :d.getActivityId, language_code_id, :d.getName, :d.getSecondName, :d.getTitle, :d.getSubtitle, :d.getDescription"
+    @SqlBatch("insert into i18n_activity_detail (study_activity_id, language_code_id, revision_id,"
+            + "       name, second_name, title, subtitle, description)"
+            + "select :d.getActivityId, language_code_id, :d.getRevisionId,"
+            + "       :d.getName, :d.getSecondName, :d.getTitle, :d.getSubtitle, :d.getDescription"
             + "  from language_code where iso_language_code = :d.getIsoLangCode")
     long[] bulkInsertDetails(@BindMethods("d") Iterable<ActivityI18nDetail> details);
 
@@ -84,13 +90,13 @@ public interface ActivityI18nSql extends SqlObject {
     // updates
     //
 
-    @SqlBatch("update i18n_study_activity"
+    @SqlBatch("update i18n_activity_detail"
             + "   set name = :d.getName,"
             + "       second_name = :d.getSecondName,"
             + "       title = :d.getTitle,"
             + "       subtitle = :d.getSubtitle,"
             + "       description = :d.getDescription"
-            + " where i18n_study_activity_id = :d.getId")
+            + " where i18n_activity_detail_id = :d.getId")
     int[] bulkUpdateDetails(@BindMethods("d") Iterable<ActivityI18nDetail> details);
 
     @SqlBatch("update i18n_study_activity_summary_trans"

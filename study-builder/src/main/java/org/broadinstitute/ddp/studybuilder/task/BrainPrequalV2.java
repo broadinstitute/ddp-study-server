@@ -237,7 +237,7 @@ public class BrainPrequalV2 implements CustomTask {
             }
         }
 
-        @SqlUpdate("update i18n_study_activity set title = :value where study_activity_id = :studyActivityId")
+        @SqlUpdate("update i18n_activity_detail set title = :value where study_activity_id = :studyActivityId")
         int _updateActivityTitle(@Bind("studyActivityId") long studyActivityId, @Bind("value") String value);
 
         default void updateActivityTitle(long studyActivityId, String value) {
