@@ -274,7 +274,7 @@
 	"medical_history_female_pregnant_p1": "（仅限女性）",
 	"medical_history_female_pregnant_p2": "是否曾经怀孕？",
 	"medical_history_foot_surgery": "",
-	"medical_history_frequent_infections": "Sık enfeksiyonlar (geçerli olanların hepsini seçin):",
+	"medical_history_frequent_infections": "频繁感染（选择所有适用）：",
 	"medical_history_frequent_infections_lung": "肺",
 	"medical_history_frequent_infections_other": "其他",
 	"medical_history_frequent_infections_sinus": "窦",
