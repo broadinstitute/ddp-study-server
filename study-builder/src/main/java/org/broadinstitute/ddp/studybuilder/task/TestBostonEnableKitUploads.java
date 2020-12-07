@@ -10,9 +10,11 @@ import com.typesafe.config.Config;
 import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.dao.EventDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
+import org.broadinstitute.ddp.db.dao.JdbiActivityVersion;
 import org.broadinstitute.ddp.db.dao.JdbiExpression;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.UserDao;
+import org.broadinstitute.ddp.db.dto.ActivityVersionDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.activity.types.EventActionType;
@@ -133,10 +135,15 @@ public class TestBostonEnableKitUploads implements CustomTask {
         String activityCode = defCfg.getString("activityCode");
         long activityId = ActivityBuilder.findActivityId(handle, studyDto.getId(), activityCode);
 
+        String versionTag = defCfg.getString("versionTag");
+        ActivityVersionDto versionDto = handle.attach(JdbiActivityVersion.class)
+                .findByActivityCodeAndVersionTag(studyDto.getId(), activityCode, versionTag)
+                .orElseThrow(() -> new DDPException("Could not find version " + versionTag));
+
         LOG.info("Comparing naming details for activityCode={} activityId={} ...", activityCode, activityId);
         var task = new UpdateActivityBaseSettings();
         task.init(cfgPath, studyCfg, varsCfg);
-        task.compareNamingDetails(handle, defCfg, activityId);
+        task.compareNamingDetails(handle, defCfg, activityId, versionDto);
     }
 
     private void enableDisplayOfAdhocSymptomActivity(Handle handle, StudyDto studyDto) {
