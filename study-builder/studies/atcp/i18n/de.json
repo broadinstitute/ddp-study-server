@@ -360,7 +360,7 @@
 	"medical_history_sample_addl_item": "TBD",
 	"medical_history_sample_location": "Entnahmestelle (falls bekannt)",
 	"medical_history_sample_p1": "Proben:",
-	"medical_history_sample_p2": "",
+	"medical_history_sample_p2": "Geben Sie die Art und Entnahmestelle (falls bekannt) jeder von $ddp.participantFirstName() gespendeten Probe an.",
 	"medical_history_sample_type": "Art",
 	"medical_history_scoliosis_surgery": "Operation bezüglich Skoliose, einschließlich Implantation eines Stabsystems an der Wirbelsäule",
 	"medical_history_sibling_add_button": "TBD",

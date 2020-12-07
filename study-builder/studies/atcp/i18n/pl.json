@@ -365,7 +365,7 @@
 	"medical_history_sample_addl_item": "TBD",
 	"medical_history_sample_location": "Lokalizacja (jezeli jest znana)",
 	"medical_history_sample_p1": "Próbki:",
-	"medical_history_sample_p2": "",
+	"medical_history_sample_p2": "Wpisz rodzaj i lokalizacje (jezeli jest znana) wszystkich przekazanych próbek uczestnika $ddp.participantFirstName().",
 	"medical_history_sample_type": "Rodzaj",
 	"medical_history_scoliosis_surgery": "Operacje związane ze skoliozą, w tym wstawianie prętów do kręgosłupa",
 	"medical_history_sibling_add_button": "TBD",

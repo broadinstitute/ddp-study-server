@@ -361,7 +361,7 @@
 	"medical_history_sample_addl_item": "TBD",
 	"medical_history_sample_location": "Ubicación (si la conoce)",
 	"medical_history_sample_p1": "Muestras:",
-	"medical_history_sample_p2": "+",
+	"medical_history_sample_p2": "Escriba el tipo de muestras donadas para $ddp.participantFirstName() y su ubicación (si la conoce).",
 	"medical_history_sample_type": "Tipo",
 	"medical_history_scoliosis_surgery": "Cirugía relacionada con la escoliosis, incluida la colocación de varillas en la columna",
 	"medical_history_sibling_add_button": "TBD",

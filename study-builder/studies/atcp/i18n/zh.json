@@ -365,7 +365,7 @@
 	"medical_history_sample_addl_item": "TBD",
 	"medical_history_sample_location": "位置（如果已知）",
 	"medical_history_sample_p1": "样本：",
-	"medical_history_sample_p2": "",
+	"medical_history_sample_p2": "请输入$ddp.participantFirstName()的任何捐赠样本的类型和位置（如果已知）。",
 	"medical_history_sample_type": "类型",
 	"medical_history_scoliosis_surgery": "与脊柱侧凸有关的手术，包括后背的金属棒置入",
 	"medical_history_sibling_add_button": "TBD",

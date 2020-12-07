@@ -366,7 +366,7 @@
 	"medical_history_sample_addl_item": "TBD",
 	"medical_history_sample_location": "Localização (se conhecida)",
 	"medical_history_sample_p1": "Amostras:",
-	"medical_history_sample_p2": "",
+	"medical_history_sample_p2": "Informe o tipo e a localização (se conhecida) de quaisquer amostras doadas por $ddp.participantFirstName().",
 	"medical_history_sample_type": "Tipo",
 	"medical_history_scoliosis_surgery": "Cirurgia relacionada a escoliose, incluindo colocação de haste nas costas",
 	"medical_history_sibling_add_button": "TBD",

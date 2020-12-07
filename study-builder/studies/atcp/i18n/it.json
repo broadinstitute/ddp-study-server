@@ -365,7 +365,7 @@
 	"medical_history_sample_addl_item": "TBD",
 	"medical_history_sample_location": "Localizzazione (se nota)",
 	"medical_history_sample_p1": "Campioni:",
-	"medical_history_sample_p2": "",
+	"medical_history_sample_p2": "Indica il tipo e la localizzazione (se nota) di eventuali campioni donati per $ddp.participantFirstName().",
 	"medical_history_sample_type": "Tipo",
 	"medical_history_scoliosis_surgery": "Intervento chirurgico legato alla scoliosi, compresa la collocazione di aste nella schiena",
 	"medical_history_sibling_add_button": "TBD",

@@ -364,7 +364,7 @@
 	"medical_history_sample_addl_item": "TBD",
 	"medical_history_sample_location": "Emplacement (si vous le connaissez)",
 	"medical_history_sample_p1": "Échantillons :",
-	"medical_history_sample_p2": "",
+	"medical_history_sample_p2": "S'il vous plaît entrer le type et l'emplacement (si elle est connue) de tous les échantillons donnés pour $ddp.participantFirstName().",
 	"medical_history_sample_type": "Type",
 	"medical_history_scoliosis_surgery": "Intervention chirurgicale liée à la scoliose, y compris la pose d’une tige dans le dos",
 	"medical_history_sibling_add_button": "TBD",

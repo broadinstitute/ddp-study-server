@@ -365,7 +365,7 @@
 	"medical_history_sample_addl_item": "TBD",
 	"medical_history_sample_location": "स्थान (यदि पता है)",
 	"medical_history_sample_p1": "नमूने:",
-	"medical_history_sample_p2": "",
+	"medical_history_sample_p2": "कृपया $ddp.participantFirstName() के लिए दिये गये नमूनों की किस्म और स्थान बताएं (यदि पता हो)।",
 	"medical_history_sample_type": "किस्म",
 	"medical_history_scoliosis_surgery": "पार्श्वकुब्जता (स्कोलियोसिस) से संबंधित शल्यचिकित्सा जिसमें पीठ में छड़ स्थापन शामिल है",
 	"medical_history_sibling_add_button": "TBD",
