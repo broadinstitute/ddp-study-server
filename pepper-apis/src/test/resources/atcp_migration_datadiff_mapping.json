@@ -516,8 +516,103 @@
           },
           {
             "source_field_name": "sibling_1_sex",
-            "target_field_name": "SIBLING",
-            "source_field_type": "String"
+            "target_field_name": "SEX_PICKLIST_1",
+            "source_field_type": "SinglePicklist"
+          },
+          {
+            "source_field_name": "sibling_2_sex",
+            "target_field_name": "SEX_PICKLIST_2",
+            "source_field_type": "SinglePicklist"
+          },
+          {
+            "source_field_name": "sibling_3_sex",
+            "target_field_name": "SEX_PICKLIST_3",
+            "source_field_type": "SinglePicklist"
+          },
+          {
+            "source_field_name": "sibling_4_sex",
+            "target_field_name": "SEX_PICKLIST_4",
+            "source_field_type": "SinglePicklist"
+          },
+          {
+            "source_field_name": "sibling_5_sex",
+            "target_field_name": "SEX_PICKLIST_5",
+            "source_field_type": "SinglePicklist"
+          },
+          {
+            "source_field_name": "sibling_1_age",
+            "target_field_name": "AGE_1",
+            "source_field_type": "SinglePicklist"
+          },
+          {
+            "source_field_name": "sibling_2_age",
+            "target_field_name": "AGE_2",
+            "source_field_type": "SinglePicklist"
+          },
+          {
+            "source_field_name": "sibling_3_age",
+            "target_field_name": "AGE_3",
+            "source_field_type": "SinglePicklist"
+          },
+          {
+            "source_field_name": "sibling_4_age",
+            "target_field_name": "AGE_4",
+            "source_field_type": "SinglePicklist"
+          },
+          {
+            "source_field_name": "sibling_5_age",
+            "target_field_name": "AGE_5",
+            "source_field_type": "SinglePicklist"
+          },
+          {
+            "source_field_name": "sibling_1_dob",
+            "target_field_name": "DATE_OF_BIRTH_1",
+            "source_field_type": "Date"
+          },
+          {
+            "source_field_name": "sibling_2_dob",
+            "target_field_name": "DATE_OF_BIRTH_2",
+            "source_field_type": "Date"
+          },
+          {
+            "source_field_name": "sibling_3_dob",
+            "target_field_name": "DATE_OF_BIRTH_3",
+            "source_field_type": "Date"
+          },
+          {
+            "source_field_name": "sibling_4_dob",
+            "target_field_name": "DATE_OF_BIRTH_4",
+            "source_field_type": "Date"
+          },
+          {
+            "source_field_name": "sibling_5_dob",
+            "target_field_name": "DATE_OF_BIRTH_5",
+            "source_field_type": "Date"
+          },
+          {
+            "source_field_name": "sibling_1_age_death",
+            "target_field_name": "AGE_AT_DEATH_1",
+            "source_field_type": "Integer"
+          },
+          {
+            "source_field_name": "sibling_2_age_death",
+            "target_field_name": "AGE_AT_DEATH_2",
+            "source_field_type": "Integer"
+          },
+          {
+            "source_field_name": "sibling_3_age_death",
+            "target_field_name": "AGE_AT_DEATH_3",
+            "source_field_type": "Integer"
+          },
+          {
+            "source_field_name": "sibling_4_age_death",
+            "target_field_name": "AGE_AT_DEATH_4",
+            "source_field_type": "Integer"
+          },
+          {
+            "source_field_name": "sibling_5_age_death",
+            "target_field_name": "AGE_AT_DEATH_5",
+            "source_field_type": "Integer"
           },
           {
             "source_field_name": "clinical_trials_prev",

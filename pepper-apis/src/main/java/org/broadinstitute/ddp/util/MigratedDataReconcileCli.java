@@ -206,6 +206,18 @@ public class MigratedDataReconcileCli {
                 "DROPDOWN_OTHER"
         )));
 
+        singlePicklistLookup.put("sibling_diagnosis", new ArrayList<>(List.of(
+                "DIAGNOSIS_DROPDOWN_NO",
+                "DIAGNOSIS_DROPDOWN_YES",
+                "DIAGNOSIS_DROPDOWN_UNKNOWN"
+        )));
+
+        singlePicklistLookup.put("sibling_carrier", new ArrayList<>(List.of(
+                "CARRIER_DROPDOWN_NO",
+                "CARRIER_DROPDOWN_YES",
+                "CARRIER_DROPDOWN_UNKNOWN"
+        )));
+
         initStateCodes();
 
         //skip reporting some fields to reduce noise !!
@@ -541,6 +553,19 @@ public class MigratedDataReconcileCli {
                         int singlePicklistInt = Integer.parseInt(sourceFieldValue);
                         if (sourceFieldName.contains("_sex")) {
                             sourceFieldName = "sibling_sex";
+                            if (singlePicklistInt == -1) {
+                                singlePicklistInt = 2;
+                            }
+                        } else if (sourceFieldName.contains("at_diagnosis")) {
+                            sourceFieldName = "sibling_diagnosis";
+                            if (singlePicklistInt == -1) {
+                                singlePicklistInt = 2;
+                            }
+                        } else if (sourceFieldName.contains("at_carrier")) {
+                            sourceFieldName = "sibling_carrier";
+                            if (singlePicklistInt == -1) {
+                                singlePicklistInt = 2;
+                            }
                         }
                         if (singlePicklistLookup.containsKey(sourceFieldName)) {
                             altSourceValue = singlePicklistLookup.get(sourceFieldName)
