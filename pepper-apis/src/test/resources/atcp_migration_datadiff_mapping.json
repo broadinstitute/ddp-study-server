@@ -286,73 +286,218 @@
           },
           {
             "source_field_name": "other_surgeries_1_desc",
-            "target_field_name": "DESCRIPTION_OF_SURGERY",
+            "target_field_name": "DESCRIPTION_OF_SURGERY_1",
             "source_field_type": "String"
           },
           {
             "source_field_name": "other_surgeries_2_type",
-            "target_field_name": "TYPE_OF_SURGERY",
+            "target_field_name": "TYPE_OF_SURGERY_2",
             "source_field_type": "String"
           },
           {
             "source_field_name": "other_surgeries_2_age",
-            "target_field_name": "AGE_OF_SURGERY",
+            "target_field_name": "AGE_OF_SURGERY_2",
             "source_field_type": "String"
           },
           {
             "source_field_name": "other_surgeries_2_desc",
-            "target_field_name": "DESCRIPTION_OF_SURGERY",
+            "target_field_name": "DESCRIPTION_OF_SURGERY_2",
             "source_field_type": "String"
           },
           {
             "source_field_name": "other_surgeries_3_type",
-            "target_field_name": "TYPE_OF_SURGERY",
+            "target_field_name": "TYPE_OF_SURGERY_3",
             "source_field_type": "String"
           },
           {
             "source_field_name": "other_surgeries_3_age",
-            "target_field_name": "AGE_OF_SURGERY",
+            "target_field_name": "AGE_OF_SURGERY_3",
             "source_field_type": "String"
           },
           {
             "source_field_name": "other_surgeries_3_desc",
-            "target_field_name": "DESCRIPTION_OF_SURGERY",
+            "target_field_name": "DESCRIPTION_OF_SURGERY_3",
             "source_field_type": "String"
           },
           {
             "source_field_name": "other_surgeries_4_type",
-            "target_field_name": "TYPE_OF_SURGERY",
+            "target_field_name": "TYPE_OF_SURGERY_4",
             "source_field_type": "String"
           },
           {
             "source_field_name": "other_surgeries_4_age",
-            "target_field_name": "AGE_OF_SURGERY",
+            "target_field_name": "AGE_OF_SURGERY_4",
             "source_field_type": "String"
           },
           {
             "source_field_name": "other_surgeries_4_desc",
-            "target_field_name": "DESCRIPTION_OF_SURGERY",
+            "target_field_name": "DESCRIPTION_OF_SURGERY_4",
             "source_field_type": "String"
           },
           {
             "source_field_name": "other_surgeries_5_type",
-            "target_field_name": "TYPE_OF_SURGERY",
+            "target_field_name": "TYPE_OF_SURGERY_5",
             "source_field_type": "String"
           },
           {
             "source_field_name": "other_surgeries_5_age",
-            "target_field_name": "AGE_OF_SURGERY",
+            "target_field_name": "AGE_OF_SURGERY_5",
             "source_field_type": "String"
           },
           {
             "source_field_name": "other_surgeries_5_desc",
-            "target_field_name": "DESCRIPTION_OF_SURGERY",
+            "target_field_name": "DESCRIPTION_OF_SURGERY_5",
             "source_field_type": "String"
           },
           {
-            "source_field_name": "medication_category",
-            "target_field_name": "MEDICATION_CATEGORY",
-            "source_field_type": "NEEDS CHECK -> CompositeMedical"
+            "source_field_name": "medication_1_category",
+            "target_field_name": "MEDICATION_CATEGORY_1",
+            "source_field_type": "String"
+          },
+          {
+            "source_field_name": "medication_1_name",
+            "target_field_name": "MEDICATION_NAME_1",
+            "source_field_type": "String"
+          },
+          {
+            "source_field_name": "medication_1_age",
+            "target_field_name": "MEDICATION_AGE_1",
+            "source_field_type": "String"
+          },
+          {
+            "source_field_name": "medication_2_category",
+            "target_field_name": "MEDICATION_CATEGORY_2",
+            "source_field_type": "String"
+          },
+          {
+            "source_field_name": "medication_2_name",
+            "target_field_name": "MEDICATION_NAME_2",
+            "source_field_type": "String"
+          },
+          {
+            "source_field_name": "medication_2_age",
+            "target_field_name": "MEDICATION_AGE_2",
+            "source_field_type": "String"
+          },
+          {
+            "source_field_name": "medication_3_category",
+            "target_field_name": "MEDICATION_CATEGORY_3",
+            "source_field_type": "String"
+          },
+          {
+            "source_field_name": "medication_3_name",
+            "target_field_name": "MEDICATION_NAME_3",
+            "source_field_type": "String"
+          },
+          {
+            "source_field_name": "medication_3_age",
+            "target_field_name": "MEDICATION_AGE_3",
+            "source_field_type": "String"
+          },
+          {
+            "source_field_name": "medication_4_category",
+            "target_field_name": "MEDICATION_CATEGORY_4",
+            "source_field_type": "String"
+          },
+          {
+            "source_field_name": "medication_4_name",
+            "target_field_name": "MEDICATION_NAME_4",
+            "source_field_type": "String"
+          },
+          {
+            "source_field_name": "medication_4_age",
+            "target_field_name": "MEDICATION_AGE_4",
+            "source_field_type": "String"
+          },
+          {
+            "source_field_name": "medication_5_category",
+            "target_field_name": "MEDICATION_CATEGORY_5",
+            "source_field_type": "String"
+          },
+          {
+            "source_field_name": "medication_5_name",
+            "target_field_name": "MEDICATION_NAME_5",
+            "source_field_type": "String"
+          },
+          {
+            "source_field_name": "medication_5_age",
+            "target_field_name": "MEDICATION_AGE_5",
+            "source_field_type": "String"
+          },
+          {
+            "source_field_name": "medication_5_category",
+            "target_field_name": "MEDICATION_CATEGORY_5",
+            "source_field_type": "String"
+          },
+          {
+            "source_field_name": "medication_5_name",
+            "target_field_name": "MEDICATION_NAME_5",
+            "source_field_type": "String"
+          },
+          {
+            "source_field_name": "medication_5_age",
+            "target_field_name": "MEDICATION_AGE_5",
+            "source_field_type": "String"
+          },
+          {
+            "source_field_name": "medication_6_category",
+            "target_field_name": "MEDICATION_CATEGORY_6",
+            "source_field_type": "String"
+          },
+          {
+            "source_field_name": "medication_6_name",
+            "target_field_name": "MEDICATION_NAME_6",
+            "source_field_type": "String"
+          },
+          {
+            "source_field_name": "medication_6_age",
+            "target_field_name": "MEDICATION_AGE_6",
+            "source_field_type": "String"
+          },
+          {
+            "source_field_name": "medication_7_category",
+            "target_field_name": "MEDICATION_CATEGORY_7",
+            "source_field_type": "String"
+          },
+          {
+            "source_field_name": "medication_7_name",
+            "target_field_name": "MEDICATION_NAME_7",
+            "source_field_type": "String"
+          },
+          {
+            "source_field_name": "medication_7_age",
+            "target_field_name": "MEDICATION_AGE_7",
+            "source_field_type": "String"
+          },
+          {
+            "source_field_name": "medication_8_category",
+            "target_field_name": "MEDICATION_CATEGORY_8",
+            "source_field_type": "String"
+          },
+          {
+            "source_field_name": "medication_8_name",
+            "target_field_name": "MEDICATION_NAME_8",
+            "source_field_type": "String"
+          },
+          {
+            "source_field_name": "medication_8_age",
+            "target_field_name": "MEDICATION_AGE_8",
+            "source_field_type": "String"
+          },
+          {
+            "source_field_name": "medication_9_category",
+            "target_field_name": "MEDICATION_CATEGORY_9",
+            "source_field_type": "String"
+          },
+          {
+            "source_field_name": "medication_9_name",
+            "target_field_name": "MEDICATION_NAME_9",
+            "source_field_type": "String"
+          },
+          {
+            "source_field_name": "medication_9_age",
+            "target_field_name": "MEDICATION_AGE_9",
+            "source_field_type": "String"
           },
           {
             "source_field_name": "supplements",
@@ -370,9 +515,9 @@
             "source_field_type": "YesNoDk"
           },
           {
-            "source_field_name": "sibling",
+            "source_field_name": "sibling_1_sex",
             "target_field_name": "SIBLING",
-            "source_field_type": "NEED CHECK - > CompositeMedical"
+            "source_field_type": "String"
           },
           {
             "source_field_name": "clinical_trials_prev",

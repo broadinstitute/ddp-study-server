@@ -91,19 +91,21 @@ public class DateQuestionFormatStrategy implements ResponseFormatStrategy<DateQu
     }
 
     public List<String> headers(DateQuestionDef definition, int number) {
-        boolean isRequired = definition.getValidations().stream()
-                .anyMatch(rule -> rule.getRuleType() == RuleType.REQUIRED);
-        boolean hasCompleteRule = definition.getValidations().stream()
-                .anyMatch(rule -> rule.getRuleType() == RuleType.COMPLETE);
+        return Arrays.asList(definition.getStableId() + "_" + number);
 
-        if (definition.getFields().size() == 3 && (isRequired || hasCompleteRule)) {
-            return Arrays.asList(definition.getStableId() + "_" + number);
-        } else {
-            boolean appendField = (definition.getFields().size() > 1);
-            return definition.getFields().stream()
-                    .map(field -> fieldHeader(definition.getStableId() + "_" + number, field, appendField))
-                    .collect(Collectors.toList());
-        }
+//        boolean isRequired = definition.getValidations().stream()
+//                .anyMatch(rule -> rule.getRuleType() == RuleType.REQUIRED);
+//        boolean hasCompleteRule = definition.getValidations().stream()
+//                .anyMatch(rule -> rule.getRuleType() == RuleType.COMPLETE);
+//
+//        if (definition.getFields().size() == 3 && (isRequired || hasCompleteRule)) {
+//            return Arrays.asList(definition.getStableId() + "_" + number);
+//        } else {
+//            boolean appendField = (definition.getFields().size() > 1);
+//            return definition.getFields().stream()
+//                    .map(field -> fieldHeader(definition.getStableId() + "_" + number, field, appendField))
+//                    .collect(Collectors.toList());
+//        }
     }
 
     @Override
@@ -145,29 +147,29 @@ public class DateQuestionFormatStrategy implements ResponseFormatStrategy<DateQu
         if (ans == null) {
             return record;
         }
-
-        boolean isRequired = question.getValidations().stream()
-                .anyMatch(rule -> rule.getRuleType() == RuleType.REQUIRED);
-        boolean hasCompleteRule = question.getValidations().stream()
-                .anyMatch(rule -> rule.getRuleType() == RuleType.COMPLETE);
-
-        if (question.getFields().size() == 3 && (isRequired || hasCompleteRule)) {
-            record.put(question.getStableId() + "_" + i, ans.toDefaultDateFormat());
-        } else {
-            boolean appendField = (question.getFields().size() > 1);
-            for (DateFieldType field : question.getFields()) {
-                String key = fieldHeader(question.getStableId() + "_" + i, field, appendField);
-                String value = null;
-                if (field == DateFieldType.YEAR && ans.getYear() != null) {
-                    value = String.format("%04d", ans.getYear());
-                } else if (field == DateFieldType.MONTH && ans.getMonth() != null) {
-                    value = String.format("%02d", ans.getMonth());
-                } else if (field == DateFieldType.DAY && ans.getDay() != null) {
-                    value = String.format("%02d", ans.getDay());
-                }
-                record.put(key, value);
-            }
-        }
+        record.put(question.getStableId() + "_" + i, ans.toDefaultDateFormat());
+//        boolean isRequired = question.getValidations().stream()
+//                .anyMatch(rule -> rule.getRuleType() == RuleType.REQUIRED);
+//        boolean hasCompleteRule = question.getValidations().stream()
+//                .anyMatch(rule -> rule.getRuleType() == RuleType.COMPLETE);
+//
+//        if (question.getFields().size() == 3 && (isRequired || hasCompleteRule)) {
+//            record.put(question.getStableId() + "_" + i, ans.toDefaultDateFormat());
+//        } else {
+//            boolean appendField = (question.getFields().size() > 1);
+//            for (DateFieldType field : question.getFields()) {
+//                String key = fieldHeader(question.getStableId() + "_" + i, field, appendField);
+//                String value = null;
+//                if (field == DateFieldType.YEAR && ans.getYear() != null) {
+//                    value = String.format("%04d", ans.getYear());
+//                } else if (field == DateFieldType.MONTH && ans.getMonth() != null) {
+//                    value = String.format("%02d", ans.getMonth());
+//                } else if (field == DateFieldType.DAY && ans.getDay() != null) {
+//                    value = String.format("%02d", ans.getDay());
+//                }
+//                record.put(key, value);
+//            }
+//        }
         return record;
     }
 

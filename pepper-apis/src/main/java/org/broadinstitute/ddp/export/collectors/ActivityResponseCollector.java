@@ -395,11 +395,15 @@ public class ActivityResponseCollector {
                 //if (composite.shouldUnwrapChildQuestions()) {
                 int numberOfIterations;
                 switch (composite.getStableId()) {
+                    case  "SURGERY" :
+                        numberOfIterations = 5;
+                        break;
+
                     case "MEDICATION_CATEGORY":
                         numberOfIterations = 9;
                         break;
 
-                    case  "SIBLING":
+                    case  "SIBLING" :
                         numberOfIterations = 5;
                         break;
 
@@ -544,6 +548,10 @@ public class ActivityResponseCollector {
                     for (AnswerRow answerRow : compositeAnswer.getValue()) {
                         int j = 0;
                         for (Answer ans: answerRow.getValues()) {
+                            if (ans == null) {
+                                j++;
+                                continue;
+                            }
                             QuestionDef questionDef = composite.getChildren().get(j);
                             if (ans.getQuestionType() == QuestionType.PICKLIST) {
                                 record.putAll(picklistFmt.collect((PicklistQuestionDef) questionDef, (PicklistAnswer) ans, i));
