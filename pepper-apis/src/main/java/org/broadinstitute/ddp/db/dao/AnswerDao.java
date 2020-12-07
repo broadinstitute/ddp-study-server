@@ -293,6 +293,7 @@ public interface AnswerDao extends SqlObject {
         }
 
         // Child answers are deleted separately, so remove any potential ones from the set of top-level answer ids.
+        answerIds = new HashSet<>(answerIds);
         answerIds.removeAll(childAnswerIds);
 
         // Delete parent answers first so it de-references the child answers
