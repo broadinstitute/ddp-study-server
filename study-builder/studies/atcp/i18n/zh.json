@@ -370,7 +370,7 @@
 	"medical_history_scoliosis_surgery": "与脊柱侧凸有关的手术，包括后背的金属棒置入",
 	"medical_history_sibling_add_button": "TBD",
 	"medical_history_sibling_addl_item": "TBD",
-	"medical_history_siblings": "的兄弟姐妹",
+	"medical_history_siblings": "$ddp.participantFirstName()的兄弟姐妹",
 	"medical_history_siblings_age": "年龄",
 	"medical_history_siblings_age_at_death": "死亡年龄（如适用）",
 	"medical_history_siblings_carrier": "A-T 携带者?",

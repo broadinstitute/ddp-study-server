@@ -370,7 +370,7 @@
 	"medical_history_scoliosis_surgery": "Операция по поводу сколиоза с установкой стержня в позвоночнике",
 	"medical_history_sibling_add_button": "TBD",
 	"medical_history_sibling_addl_item": "TBD",
-	"medical_history_siblings": "Родные братья и сестры",
+	"medical_history_siblings": "Родные братья и сестры $ddp.participantFirstName()",
 	"medical_history_siblings_age": "Возраст",
 	"medical_history_siblings_age_at_death": "Возраст на момент смерти (если применимо)",
 	"medical_history_siblings_carrier": "Носитель A-T?",

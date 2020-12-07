@@ -365,7 +365,7 @@
 	"medical_history_scoliosis_surgery": "Operation bezüglich Skoliose, einschließlich Implantation eines Stabsystems an der Wirbelsäule",
 	"medical_history_sibling_add_button": "TBD",
 	"medical_history_sibling_addl_item": "TBD",
-	"medical_history_siblings": "Geschwister von ",
+	"medical_history_siblings": "Geschwister von $ddp.participantFirstName()",
 	"medical_history_siblings_age": "Alter",
 	"medical_history_siblings_age_at_death": "Sterbealter (falls zutreffend)",
 	"medical_history_siblings_carrier": "AT-Genträger?",

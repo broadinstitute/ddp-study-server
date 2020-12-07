@@ -370,7 +370,7 @@
 	"medical_history_scoliosis_surgery": "Intervento chirurgico legato alla scoliosi, compresa la collocazione di aste nella schiena",
 	"medical_history_sibling_add_button": "TBD",
 	"medical_history_sibling_addl_item": "TBD",
-	"medical_history_siblings": "Fratelli/Sorelle di i",
+	"medical_history_siblings": "Fratelli/Sorelle di i $ddp.participantFirstName()",
 	"medical_history_siblings_age": "Età",
 	"medical_history_siblings_age_at_death": "Età al momento della morte (se applicabile)",
 	"medical_history_siblings_carrier": "Portatore sano di A-T?",

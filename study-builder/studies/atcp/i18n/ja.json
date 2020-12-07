@@ -370,7 +370,7 @@
 	"medical_history_scoliosis_surgery": "背中へのロッドの配置を含む、脊柱側弯症に関連した外科手術",
 	"medical_history_sibling_add_button": "TBD",
 	"medical_history_sibling_addl_item": "TBD",
-	"medical_history_siblings": "の兄弟姉妹",
+	"medical_history_siblings": "$ddp.participantFirstName()の兄弟姉妹",
 	"medical_history_siblings_age": "年齢",
 	"medical_history_siblings_age_at_death": "死亡時の年齢 (該当する場合)",
 	"medical_history_siblings_carrier": "A-Tの保因者ですか?",

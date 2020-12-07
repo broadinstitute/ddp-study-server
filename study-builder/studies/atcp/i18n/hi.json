@@ -370,7 +370,7 @@
 	"medical_history_scoliosis_surgery": "पार्श्वकुब्जता (स्कोलियोसिस) से संबंधित शल्यचिकित्सा जिसमें पीठ में छड़ स्थापन शामिल है",
 	"medical_history_sibling_add_button": "TBD",
 	"medical_history_sibling_addl_item": "TBD",
-	"medical_history_siblings": "के भाई-बहन",
+	"medical_history_siblings": "$ddp.participantFirstName() के भाई-बहन",
 	"medical_history_siblings_age": "आयु",
 	"medical_history_siblings_age_at_death": "मृत्यु के समय आयु (यदि लागू होती है)",
 	"medical_history_siblings_carrier": "ए-टी वाहक?",

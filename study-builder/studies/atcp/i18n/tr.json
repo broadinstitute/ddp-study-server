@@ -371,7 +371,7 @@
 	"medical_history_scoliosis_surgery": "Sırta çubuk yerleştirme dahil skolyozla ilgili ameliyat",
 	"medical_history_sibling_add_button": "TBD",
 	"medical_history_sibling_addl_item": "TBD",
-	"medical_history_siblings": "Kardeşleri",
+	"medical_history_siblings": "$ddp.participantFirstName() Kardeşleri",
 	"medical_history_siblings_age": "Yaş",
 	"medical_history_siblings_age_at_death": "Ölüm Yaşı (Geçerliyse)",
 	"medical_history_siblings_carrier": "A-T Taşıyıcısı?",

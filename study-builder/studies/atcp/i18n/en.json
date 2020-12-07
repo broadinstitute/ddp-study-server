@@ -389,7 +389,7 @@
   "medical_history_scoliosis_surgery": "Surgery related to scoliosis including rod placement in the back",
   "medical_history_sibling_add_button": "+ Add Another Sibling",
   "medical_history_sibling_addl_item": "Other Sibling",
-  "medical_history_siblings": "'s Siblings",
+  "medical_history_siblings": "$ddp.participantFirstName()'s Siblings",
   "medical_history_siblings_age": "Age",
   "medical_history_siblings_age_at_death": "Age at Death (If applicable)",
   "medical_history_siblings_carrier": "A-T Carrier?",
