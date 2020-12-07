@@ -187,10 +187,15 @@ public interface DsmKitRequestDao extends SqlObject {
      * @param kitId the id
      * @return an Optional with a DsmKitRequest present if found in database
      */
-    @SqlQuery("selectKitRequestbyId")
+    @SqlQuery("selectKitRequestById")
     @UseStringTemplateSqlLocator
     @RegisterBeanMapper(DsmKitRequest.class)
-    Optional<DsmKitRequest> findKitRequest(long kitId);
+    Optional<DsmKitRequest> findKitRequest(@Bind("id") long kitId);
+
+    @SqlQuery("selectKitRequestByGuid")
+    @UseStringTemplateSqlLocator
+    @RegisterBeanMapper(DsmKitRequest.class)
+    Optional<DsmKitRequest> findKitRequest(@Bind("guid") String kitGuid);
 
     /**
      * Delete the request kit. For support of testing only

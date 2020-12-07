@@ -16,7 +16,8 @@ insertKitRequest() ::= <<
         :creationTime,
         :needsApproval)
 >>
-selectKitRequestbyId() ::= <<
+
+select_all_kit_requests() ::= <<
     SELECT
          kit_request_id id,
          kit_request_guid kitRequestId,
@@ -30,9 +31,18 @@ selectKitRequestbyId() ::= <<
          JOIN kit_type kt on kr.kit_type_id=kt.kit_type_id
          LEFT JOIN mailing_address ma on kr.mailing_address_id=ma.address_id
          LEFT JOIN user u on ma.participant_user_id=u.user_id
-    WHERE
-        kit_request_id=?
 >>
+selectKitRequestById() ::= <<
+    <select_all_kit_requests()>
+    WHERE
+        kit_request_id=:id
+>>
+selectKitRequestByGuid() ::= <<
+    <select_all_kit_requests()>
+    WHERE
+        kit_request_guid=:guid
+>>
+
 selectAllKitRequestsForStudy() ::= <<
      SELECT
           kit_request_id id,
