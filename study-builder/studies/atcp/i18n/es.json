@@ -285,7 +285,7 @@
 	"medical_history_immunization_example": "(Ejemplo: contrajo varicela a causa de la vacuna contra la varicela)",
 	"medical_history_immunization_p1": "¿Contrajo ",
 	"medical_history_immunization_p2": " alguna vez una infección a causa de una vacuna?",
-	"medical_history_immunodeficiency_p1": "¿==",
+	"medical_history_immunodeficiency_p1": "¿",
 	"medical_history_immunodeficiency_p2": " es inmunodeficiente?",
 	"medical_history_immunodeficiency_type": "Especifique el tipo de inmunodeficiencia (seleccione todas las opciones que correspondan):",
 	"medical_history_immunodeficiency_type_iga": "Deficiencia de IgA",
