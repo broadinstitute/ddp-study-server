@@ -218,6 +218,29 @@ public class MigratedDataReconcileCli {
                 "CARRIER_DROPDOWN_UNKNOWN"
         )));
 
+        singlePicklistLookup.put("medication_category", new ArrayList<>(List.of(
+                "ANTI_SEIZURE",
+                "ANTI_DROOLING",
+                "DIABETES",
+                "ANTI_DEPRESSANT",
+                "STEROID",
+                "BIRTH_CONTROL",
+                "OTHER",
+                "PROPHYLACTIC_ANTIBIOTICS",
+                "ANTI_TREMOR",
+                "CHEMOTHERAPY"
+        )));
+
+        singlePicklistLookup.put("sample_type", new ArrayList<>(List.of(
+                "BLOOD",
+                "URINE",
+                "SALIVA",
+                "OTHER_BODILY_FLUID",
+                "SKIN_PUNCH_BIOPSY",
+                "TISSUE",
+                "OTHER"
+        )));
+
         initStateCodes();
 
         //skip reporting some fields to reduce noise !!
@@ -566,7 +589,10 @@ public class MigratedDataReconcileCli {
                             if (singlePicklistInt == -1) {
                                 singlePicklistInt = 2;
                             }
-                        }
+                        } else if (sourceFieldName.contains("_category")) {
+                            sourceFieldName = "medication_category";
+                            //TODO - > needs check if json value may contain 0
+                        } else if (sourceFieldName.matches("sample_([a-e])_type"))
                         if (singlePicklistLookup.containsKey(sourceFieldName)) {
                             altSourceValue = singlePicklistLookup.get(sourceFieldName)
                                     .get(singlePicklistInt);
