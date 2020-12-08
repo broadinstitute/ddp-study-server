@@ -49,7 +49,7 @@ public interface UserGovernanceDao extends SqlObject {
     }
 
     default Governance createGovernedUserWithGuidAlias(long clientId, long proxyUserId, String legacyAltPid, long createdAtMillis) {
-        User governedUser = getUserDao().createUser(clientId, null, legacyAltPid);
+        User governedUser = getUserDao().createUser(clientId, null, legacyAltPid, createdAtMillis);
         String alias = governedUser.getGuid();
         long governanceId = getUserGovernanceSql().insertGovernance(proxyUserId, governedUser.getId(), alias, true);
         CacheService.getInstance().modelUpdated(ModelChangeType.USER, getHandle(), proxyUserId);

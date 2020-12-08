@@ -293,7 +293,7 @@ public class StudyDataLoader {
                         jdbiLanguageCode, profileDao, studyGovernanceDao, jdbiAuth0Tenant);
                 break;
             case 3:
-                org.broadinstitute.ddp.model.user.User operatorUser = createOperatorUser(jdbiUser, datstatData, userGuid,
+                org.broadinstitute.ddp.model.user.User operatorUser = createOrUpdateOperatorUser(jdbiUser, datstatData, userGuid,
                         userHruid, clientDto, userDao, jdbiLanguageCode, profileDao, jdbiAuth0Tenant);
                 pepperUser = new UserDto(operatorUser.getId(), operatorUser.getAuth0UserId(),
                         operatorUser.getGuid(), operatorUser.getHruid(), operatorUser.getLegacyAltPid(),
@@ -1020,7 +1020,7 @@ public class StudyDataLoader {
                                                  StudyGovernanceDao studyGovernanceDao,
                                                  JdbiAuth0Tenant jdbiAuth0Tenant) throws Exception {
 
-        org.broadinstitute.ddp.model.user.User operatorUser = createOperatorUser(jdbiUser, data, userGuid,
+        org.broadinstitute.ddp.model.user.User operatorUser = createOrUpdateOperatorUser(jdbiUser, data, userGuid,
                 userHruid, clientDto, userDao, jdbiLanguageCode, userProfileDao, jdbiAuth0Tenant);
 
 
@@ -1029,7 +1029,7 @@ public class StudyDataLoader {
         LocalDateTime createdAtDate = LocalDateTime.parse(userCreatedAt, formatter);
         long createdAtMillis = createdAtDate.toInstant(ZoneOffset.UTC).toEpochMilli();
         Governance governance = userGovernanceDao.createGovernedUserWithGuidAlias(operatorUser.getCreatedByClientId(), operatorUser.getId(),
-                legacyAltPid);
+                legacyAltPid, createdAtMillis);
         userGovernanceDao.grantGovernedStudy(governance.getId(), studyDto.getId());
         org.broadinstitute.ddp.model.user.User governedUser = userDao.findUserById(governance.getGovernedUserId())
                 .orElseThrow(() -> new DDPException("Could not find governed user with id " + governance.getGovernedUserId()));
@@ -1050,10 +1050,12 @@ public class StudyDataLoader {
                 governedUser.getExpiresAt());
     }
 
-    private org.broadinstitute.ddp.model.user.User createOperatorUser(JdbiUser jdbiUser, JsonElement data,
-                                                                      String userGuid, String userHruid, ClientDto clientDto,
-                                                                      UserDao userDao, JdbiLanguageCode jdbiLanguageCode,
-                                                                      UserProfileDao userProfileDao, JdbiAuth0Tenant jdbiAuth0Tenant)
+    private org.broadinstitute.ddp.model.user.User createOrUpdateOperatorUser(JdbiUser jdbiUser, JsonElement data,
+                                                                              String userGuid, String userHruid,
+                                                                              ClientDto clientDto, UserDao userDao,
+                                                                              JdbiLanguageCode jdbiLanguageCode,
+                                                                              UserProfileDao userProfileDao,
+                                                                              JdbiAuth0Tenant jdbiAuth0Tenant)
             throws IOException, InterruptedException {
         String emailAddress = data.getAsJsonObject().get("portal_user_email").getAsString();
         boolean hasPassword = data.getAsJsonObject().has("password");
@@ -1066,7 +1068,9 @@ public class StudyDataLoader {
 
 
         if (userOptional.isPresent()) {
-            operatorUser = userOptional.get();
+            String altPid = data.getAsJsonObject().get("datstat_altpid").getAsString();
+            userDao.updateLegacyAltPidByAuth0UserIdAndTenantId(auth0UserId, altPid, tenantId);
+            operatorUser = userDao.findUserByAuth0UserId(auth0UserId, tenantId).get();
         } else {
             if (auth0UserId == null) {
                 if (hasPassword) {
