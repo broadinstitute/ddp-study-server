@@ -232,6 +232,7 @@ public class MigratedDataReconcileCli {
         )));
 
         singlePicklistLookup.put("sample_type", new ArrayList<>(List.of(
+                "",
                 "BLOOD",
                 "URINE",
                 "SALIVA",
@@ -1301,12 +1302,12 @@ public class MigratedDataReconcileCli {
                 "DETERMINED",
                 "DETERMINED_OTHER_DETAILS",
                 "ATM_MUTATIONS",
-                "NAME_PHYSICIAN_1",
-                "PHYSICIAN_TELEPHONE_NUMBER_1",
-                "HOSPITAL_1",
-                "CITY_1",
-                "STATE_1",
-                "COUNTRY_1",
+                "NAME_PHYSICIAN",
+                "PHYSICIAN_TELEPHONE_NUMBER",
+                "HOSPITAL",
+                "CITY",
+                "STATE",
+                "COUNTRY",
                 "HISTORY_OF_CANCER",
                 "CANCER_DIAGNOSED_AGE",
                 "TYPE_OF_CANCER",

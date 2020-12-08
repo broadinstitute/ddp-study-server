@@ -49,27 +49,27 @@
           },
           {
             "source_field_name": "name",
-            "target_field_name": "NAME_PHYSICIAN_1"
+            "target_field_name": "NAME_PHYSICIAN"
           },
           {
             "source_field_name": "phone",
-            "target_field_name": "PHYSICIAN_TELEPHONE_NUMBER_1"
+            "target_field_name": "PHYSICIAN_TELEPHONE_NUMBER"
           },
           {
             "source_field_name": "hospital",
-            "target_field_name": "HOSPITAL_1"
+            "target_field_name": "HOSPITAL"
           },
           {
             "source_field_name": "city",
-            "target_field_name": "CITY_1"
+            "target_field_name": "CITY"
           },
           {
             "source_field_name": "state",
-            "target_field_name": "STATE_1"
+            "target_field_name": "STATE"
           },
           {
             "source_field_name": "country",
-            "target_field_name": "COUNTRY_1"
+            "target_field_name": "COUNTRY"
           },
           {
             "source_field_name": "cancer_history",
@@ -767,10 +767,7 @@
           {
             "source_field_name": "datstat_gender",
             "target_field_name": "REGISTRATION_GENDER",
-            "source_field_type": "Picklist",
-            "options": [
-              "F", "M"
-            ]
+            "source_field_type": "String"
           },
           {
             "source_field_name": "datstat_dateofbirth",
