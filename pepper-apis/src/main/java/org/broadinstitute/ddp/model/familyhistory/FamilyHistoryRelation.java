@@ -1,11 +1,14 @@
 package org.broadinstitute.ddp.model.familyhistory;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
 import org.broadinstitute.ddp.model.user.UserProfile.SexType;
 
+/**
+ * Try to add some additional semantics to the labels used to refer to family relations
+ * We define sex and parents when the label suggests who they might be relative to another relation
+ */
 public enum FamilyHistoryRelation {
     PATERNAL_GRANDFATHER(SexType.MALE, List.of()),
     PATERNAL_GRANDMOTHER(SexType.FEMALE, List.of()),
@@ -23,21 +26,27 @@ public enum FamilyHistoryRelation {
     MATERNAL_HALF_SISTER(SexType.FEMALE,List.of(MOTHER)),
     PATERNAL_HALF_BROTHER(SexType.MALE,List.of(FATHER)),
     PATERNAL_HALF_SISTER(SexType.FEMALE,List.of(FATHER)),
+    /**
+     * The person around which the family history is being built. Note that sex is left open
+     */
     PROBAND(null,List.of(FATHER, MOTHER)),
     SON(SexType.MALE, List.of(PROBAND)),
     DAUGHTER(SexType.FEMALE, List.of(PROBAND)),
     CHILD(null, List.of(PROBAND));
 
     private List<FamilyHistoryRelation> parents;
+    /**
+     * Used only when the relationship is defined by who is a sibling and not sure who are the shared parents
+     */
     private List<FamilyHistoryRelation> siblings;
     private SexType sex;
 
-    private FamilyHistoryRelation(SexType sex, List<FamilyHistoryRelation> parentRelations){
+    FamilyHistoryRelation(SexType sex, List<FamilyHistoryRelation> parentRelations){
         this.sex = sex;
         this.parents = parentRelations;
     }
 
-    private FamilyHistoryRelation(SexType sex, List<FamilyHistoryRelation> parentRelations, List<FamilyHistoryRelation> siblingRelations){
+    FamilyHistoryRelation(SexType sex, List<FamilyHistoryRelation> parentRelations, List<FamilyHistoryRelation> siblingRelations){
         this.sex = sex;
         this.parents = parentRelations;
         this.siblings = siblingRelations;
