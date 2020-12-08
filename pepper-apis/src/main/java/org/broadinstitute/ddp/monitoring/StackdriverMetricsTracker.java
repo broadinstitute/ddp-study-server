@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.TreeSet;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -71,7 +72,7 @@ public class StackdriverMetricsTracker {
         /**
          * List of cached points to send to stackdriver keyed by the metrics series.
          */
-        private static final Map<MetricsSeries, Collection<Point>> pointsForSeries = new HashMap<>();
+        private static final Map<MetricsSeries, Collection<Point>> pointsForSeries = new ConcurrentHashMap<>();
 
         private boolean hasUntransmittedData = false;
 
