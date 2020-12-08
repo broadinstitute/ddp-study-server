@@ -23,8 +23,10 @@ public enum FamilyHistoryRelation {
     MATERNAL_HALF_SISTER(SexType.FEMALE,List.of(MOTHER)),
     PATERNAL_HALF_BROTHER(SexType.MALE,List.of(FATHER)),
     PATERNAL_HALF_SISTER(SexType.FEMALE,List.of(FATHER)),
-    MALE_PROBAND(SexType.MALE,List.of(FATHER, MOTHER)),
-    FEMALE_PROBAND(SexType.MALE,List.of(FATHER, MOTHER));
+    PROBAND(null,List.of(FATHER, MOTHER)),
+    SON(SexType.MALE, List.of(PROBAND)),
+    DAUGHTER(SexType.FEMALE, List.of(PROBAND)),
+    CHILD(null, List.of(PROBAND));
 
     private List<FamilyHistoryRelation> parents;
     private List<FamilyHistoryRelation> siblings;
@@ -39,10 +41,6 @@ public enum FamilyHistoryRelation {
         this.sex = sex;
         this.parents = parentRelations;
         this.siblings = siblingRelations;
-    }
-    private FamilyHistoryRelation(SexType sex, FamilyHistoryRelation...parentRelations){
-        this.sex = sex;
-        this.parents = Arrays.asList(parentRelations);
     }
 
     public SexType getSex() {
@@ -63,6 +61,10 @@ public enum FamilyHistoryRelation {
 
     public Optional<FamilyHistoryRelation> getFather() {
         return parents.stream().filter(parent -> parent.isMale()).findAny();
+    }
+
+    public List<FamilyHistoryRelation> getParents() {
+        return parents;
     }
 
     public boolean isChildOf(FamilyHistoryRelation relation) {
