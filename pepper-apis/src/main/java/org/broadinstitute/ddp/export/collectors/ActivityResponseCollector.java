@@ -542,7 +542,13 @@ public class ActivityResponseCollector {
                 if (compositeAnswer.getValue().size() < 2) {
                     compositeAnswer.getValue().stream()
                             .flatMap(row -> row.getValues().stream())
-                            .forEach(instance::putAnswer);
+                            //.forEach(instance::putAnswer);
+                            .forEach(ans -> {
+                                if (ans == null) {
+                                    return;
+                                }
+                                instance.putAnswer(ans);
+                            });
                     for (QuestionDef childQuestion : composite.getChildren()) {
                         collectQuestionIntoRecord(record, childQuestion, instance);
                     }
