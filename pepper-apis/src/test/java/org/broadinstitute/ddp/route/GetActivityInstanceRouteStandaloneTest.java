@@ -55,9 +55,11 @@ import org.broadinstitute.ddp.json.errors.ApiError;
 import org.broadinstitute.ddp.model.activity.definition.ContentBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
 import org.broadinstitute.ddp.model.activity.definition.FormSectionDef;
+import org.broadinstitute.ddp.model.activity.definition.QuestionBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.SectionIcon;
 import org.broadinstitute.ddp.model.activity.definition.i18n.Translation;
 import org.broadinstitute.ddp.model.activity.definition.question.AgreementQuestionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.CompositeQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.DateQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistGroupDef;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistOptionDef;
@@ -70,6 +72,7 @@ import org.broadinstitute.ddp.model.activity.definition.validation.DateRangeRule
 import org.broadinstitute.ddp.model.activity.definition.validation.LengthRuleDef;
 import org.broadinstitute.ddp.model.activity.definition.validation.RequiredRuleDef;
 import org.broadinstitute.ddp.model.activity.instance.ActivityInstance;
+import org.broadinstitute.ddp.model.activity.instance.answer.CompositeAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
 import org.broadinstitute.ddp.model.activity.types.ActivityType;
@@ -112,6 +115,7 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
     private static QuestionDto answeredQuestionDto;
     private static TextQuestionDef txt1;
     private static TextQuestionDef txt2;
+    private static CompositeQuestionDef comp1;
 
     @BeforeClass
     public static void setup() throws Exception {
@@ -217,11 +221,21 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
         icon2.putSource("2x", new URL("https://dev.ddp.org/icon2_2x.png"));
         FormSectionDef iconSection = new FormSectionDef(null, nameTmpl, Arrays.asList(icon1, icon2), Collections.emptyList());
 
+        comp1 = CompositeQuestionDef.builder()
+                .setStableId("comp" + System.currentTimeMillis())
+                .setPrompt(Template.text("composite"))
+                .addChildrenQuestions(TextQuestionDef
+                        .builder(TextInputType.TEXT, "comp-child" + System.currentTimeMillis(), Template.text("comp child"))
+                        .build())
+                .build();
+        var compSection = new FormSectionDef(null, List.of(new QuestionBlockDef(comp1)));
+
         activityCode = "ACT_ROUTE_ACT" + Instant.now().toEpochMilli();
         activity = FormActivityDef.generalFormBuilder(activityCode, "v1", testData.getStudyGuid())
                 .addName(new Translation("en", "activity " + activityCode))
                 .addSections(Arrays.asList(dateSection, textSection, plistSection, textSection2, agreementSection, contentSection))
                 .addSection(iconSection)
+                .addSection(compSection)
                 .build();
         activityVersionDto = handle.attach(ActivityDao.class).insertActivity(
                 activity, RevisionMetadata.now(testData.getUserId(), "add " + activityCode)
@@ -230,9 +244,14 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
         activityId = activity.getActivityId();
         instanceDto = handle.attach(ActivityInstanceDao.class).insertInstance(activity.getActivityId(), userGuid);
 
-        handle.attach(AnswerDao.class).createAnswer(testData.getUserId(), instanceDto.getId(),
+        AnswerDao answerDao = handle.attach(AnswerDao.class);
+        answerDao.createAnswer(testData.getUserId(), instanceDto.getId(),
                 new TextAnswer(null, txt1.getStableId(), null, "valid answer"));
         answeredQuestionDto = handle.attach(JdbiQuestion.class).findQuestionDtoById(txt1.getQuestionId()).get();
+
+        var compAnswer = new CompositeAnswer(null, comp1.getStableId(), null);
+        compAnswer.addRowOfChildAnswers(new TextAnswer(null, comp1.getChildren().get(0).getStableId(), null, "comp child"));
+        answerDao.createAnswer(testData.getUserId(), instanceDto.getId(), compAnswer);
     }
 
     private static Template newTemplate() {
@@ -738,6 +757,18 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
                 .root("sections[2].blocks[2].question")
                 .body("picklistOptions[1].stableId", equalTo("G1_OPT1"))
                 .body("picklistOptions[1].tooltip", equalTo("option tooltip"));
+    }
+
+    @Test
+    public void test_compositeChildQuestionsShouldNotHaveAnswers() {
+        testFor200()
+                .body("guid", equalTo(instanceDto.getGuid()))
+                .body("sections[7].blocks.size()", equalTo(1))
+                .root("sections[7].blocks[0].question")
+                .body("stableId", equalTo(comp1.getStableId()))
+                .body("answers.size()", equalTo(1))
+                .body("children.size()", equalTo(1))
+                .body("children[0].answers.size()", equalTo(0));
     }
 
     private Response testFor200AndExtractResponse() {
