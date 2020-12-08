@@ -52,6 +52,8 @@ public class ConfigFile {
     // Google Storage bucket name to use for generated PDFs
     public static final String PDF_ARCHIVE_BUCKET = "pdfArchiveBucket";
 
+    public static final String FILE_UPLOAD_BUCKET = "fileUploadBucket";
+
     // whether to use local filesystem for pdf archiving or not
     public static final String PDF_ARCHIVE_USE_FILESYSTEM = "pdfArchiveUseFilesystem";
 

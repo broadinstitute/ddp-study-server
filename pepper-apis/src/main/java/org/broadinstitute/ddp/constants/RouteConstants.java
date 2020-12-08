@@ -161,6 +161,8 @@ public class RouteConstants {
         public static final String STUDY_PASSWORD_POLICY = STUDY_DETAIL + "/password-policy";
 
         public static final String STUDY_STATISTICS = STUDY_DETAIL + "/statistics";
+
+        public static final String FILE_UPLOAD_URL = STUDY_DETAIL + "/get-upload-url";
     }
 
     public static final class PathParam {
