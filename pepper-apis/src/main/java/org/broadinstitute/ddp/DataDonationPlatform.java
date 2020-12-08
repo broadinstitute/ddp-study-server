@@ -505,7 +505,7 @@ public class DataDonationPlatform {
         get(API.PARTICIPANT_STATUS, new GetDsmParticipantStatusRoute(new DsmClient(cfg)), responseSerializer);
 
         FileUploadService fileUploadService = new FileUploadService(cfg);
-        post(API.FILE_UPLOAD_URL, new GetFileUploadUrlRoute(fileUploadService));
+        post(API.FILE_UPLOAD_URL, new GetFileUploadUrlRoute(fileUploadService), responseSerializer);
 
         boolean runScheduler = cfg.getBoolean(ConfigFile.RUN_SCHEDULER);
         if (runScheduler) {

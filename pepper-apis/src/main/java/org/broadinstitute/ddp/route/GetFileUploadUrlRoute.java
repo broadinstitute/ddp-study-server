@@ -6,7 +6,7 @@ import java.net.URL;
 
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.json.FileUploadURLPayload;
-import org.broadinstitute.ddp.json.FileUploadURLResponse;
+import org.broadinstitute.ddp.json.FileUploadUrlResponse;
 import org.broadinstitute.ddp.service.FileUploadService;
 import org.broadinstitute.ddp.util.GuidUtils;
 import org.broadinstitute.ddp.util.ValidatedJsonInputRoute;
@@ -39,6 +39,6 @@ public class GetFileUploadUrlRoute extends ValidatedJsonInputRoute<FileUploadURL
                 payload.getFileSize(),
                 payload.getCreatedDate(),
                 payload.getMimeType()));
-        return new FileUploadURLResponse(url.toString(), fileUploadGuid);
+        return new FileUploadUrlResponse(url.toString(), fileUploadGuid);
     }
 }
