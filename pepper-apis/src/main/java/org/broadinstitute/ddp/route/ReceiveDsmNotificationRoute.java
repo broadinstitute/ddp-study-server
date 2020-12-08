@@ -71,9 +71,10 @@ public class ReceiveDsmNotificationRoute extends ValidatedJsonInputRoute<DsmNoti
                     .getEnrollmentStatusByUserAndStudyIds(user.getId(), studyDto.getId())
                     .orElse(null);
             if (status != EnrollmentStatusType.ENROLLED) {
+                LOG.error("User {} with status {} is not enrolled in study {}, will not process DSM notification event {}",
+                        userGuid, status == null ? "<null>" : status, studyGuid, payload.getEventType());
                 var err = new ApiError(ErrorCodes.UNSATISFIED_PRECONDITION,
-                        "User " + userGuid + " is not enrolled in study " + studyDto.getGuid());
-                LOG.error(err.getMessage());
+                        "User " + userGuid + " is not enrolled in study " + studyGuid);
                 throw ResponseUtil.haltError(response, HttpStatus.SC_INTERNAL_SERVER_ERROR, err);
             }
 
