@@ -46,28 +46,38 @@ public interface UserDao extends SqlObject {
 
 
     default User createUser(String auth0Domain, String auth0ClientId, String auth0UserId) {
-        return createUserByClientIdOrAuth0Ids(false, null, auth0Domain, auth0ClientId, auth0UserId, false, null);
+        return createUserByClientIdOrAuth0Ids(false, null, auth0Domain, auth0ClientId, auth0UserId, false, null, null);
     }
 
     default User createUser(long clientId, String auth0UserId, String legacyAltPid) {
-        return createUserByClientIdOrAuth0Ids(true, clientId, null, null, auth0UserId, false, legacyAltPid);
+        return createUserByClientIdOrAuth0Ids(true, clientId, null, null, auth0UserId, false, legacyAltPid, null);
+    }
+
+    default User createUser(long clientId, String auth0UserId, String legacyAltPid, String userCreatedAt, String userUpdatedAt) {
+        return createUserByClientIdOrAuth0Ids(true, clientId, null, null, auth0UserId, false, legacyAltPid, null);
     }
 
     default User createTempUser(String auth0Domain, String auth0ClientId) {
-        return createUserByClientIdOrAuth0Ids(false, null, auth0Domain, auth0ClientId, null, true, null);
+        return createUserByClientIdOrAuth0Ids(false, null, auth0Domain, auth0ClientId, null, true, null, null);
     }
 
     default User createTempUser(long clientId) {
-        return createUserByClientIdOrAuth0Ids(true, clientId, null, null, null, true, null);
+        return createUserByClientIdOrAuth0Ids(true, clientId, null, null, null, true, null, null);
     }
 
     private User createUserByClientIdOrAuth0Ids(boolean byClientId, Long clientId,
                                                 String auth0Domain, String auth0ClientId,
-                                                String auth0UserId, boolean isTemporary, String legacyAltPid) {
+                                                String auth0UserId, boolean isTemporary, String legacyAltPid,
+                                                String userCreatedAt) {
         Handle handle = getHandle();
         String userGuid = DBUtils.uniqueUserGuid(handle);
         String userHruid = DBUtils.uniqueUserHruid(handle);
+        long userCreatedAtLong = Instant.now().toEpochMilli();
+        long userUpdatedAtLong = Instant.now().toEpochMilli();
 
+        if (userCreatedAt != null) {
+            userCreatedAtLong =
+        }
         long now = Instant.now().toEpochMilli();
         Long expiresAt = isTemporary ? now + EXPIRATION_DURATION_MILLIS : null;
 

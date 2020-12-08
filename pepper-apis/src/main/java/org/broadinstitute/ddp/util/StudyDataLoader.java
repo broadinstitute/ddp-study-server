@@ -1025,6 +1025,9 @@ public class StudyDataLoader {
 
 
         String legacyAltPid = data.getAsJsonObject().get("datstat_altpid").getAsString();
+        String userCreatedAt = getStringValueFromElement(data, "datstat_created");
+        LocalDateTime createdAtDate = LocalDateTime.parse(userCreatedAt, formatter);
+        long createdAtMillis = createdAtDate.toInstant(ZoneOffset.UTC).toEpochMilli();
         Governance governance = userGovernanceDao.createGovernedUserWithGuidAlias(operatorUser.getCreatedByClientId(), operatorUser.getId(),
                 legacyAltPid);
         userGovernanceDao.grantGovernedStudy(governance.getId(), studyDto.getId());
