@@ -342,26 +342,26 @@ public class MigratedDataReconcileCli {
 
 
         //consent has versions
-//        JsonElement consentSurveyEl = userData.get("atconsentsurvey");
+        //JsonElement consentSurveyEl = userData.get("atconsentsurvey");
 
-//        if (consentSurveyEl != null && !consentSurveyEl.isJsonNull()) {
-//            String consentSurveyName = "ConsentSurvey";
-//            JsonElement consentVersionEl = userData.get("atconsentsurvey").getAsJsonObject().get("consent_version");
-//            String consentVersion = "1";
-//            if (consentVersionEl != null && !consentVersionEl.isJsonNull()) {
-//                consentVersion = consentVersionEl.getAsString();
-//            } else {
-//                //check by cut-off Timestamp
-//                String ddpCreated = userData.get("atconsentsurvey").getAsJsonObject().get("ddp_created").getAsString();
-//                Instant createdDate = Instant.parse(ddpCreated);
-//                if (!createdDate.isBefore(CONSENT_V2_DATE)) {
-//                    consentVersion = "2";
-//                }
-//            }
-//            consentSurveyName = consentSurveyName.concat("_v").concat(consentVersion);
-//            //LOG.info("consent survey name: {} .. consent version: {}", consentSurveyName, consentVersion);
-//            doCompare(csvRecord, userData.get("atconsentsurvey"), mappingData.get(consentSurveyName));
-//        }
+        //if (consentSurveyEl != null && !consentSurveyEl.isJsonNull()) {
+        //    String consentSurveyName = "ConsentSurvey";
+        //    JsonElement consentVersionEl = userData.get("atconsentsurvey").getAsJsonObject().get("consent_version");
+        //  String consentVersion = "1";
+        //    if (consentVersionEl != null && !consentVersionEl.isJsonNull()) {
+        //        consentVersion = consentVersionEl.getAsString();
+        //    } else {
+        //        //check by cut-off Timestamp
+        //        String ddpCreated = userData.get("atconsentsurvey").getAsJsonObject().get("ddp_created").getAsString();
+        //        Instant createdDate = Instant.parse(ddpCreated);
+        //        if (!createdDate.isBefore(CONSENT_V2_DATE)) {
+        //            consentVersion = "2";
+        //        }
+        //    }
+        //    consentSurveyName = consentSurveyName.concat("_v").concat(consentVersion);
+        //      LOG.info("consent survey name: {} .. consent version: {}", consentSurveyName, consentVersion);
+        //    doCompare(csvRecord, userData.get("atconsentsurvey"), mappingData.get(consentSurveyName));
+        //}
 
         doCompare(csvRecord, userData.get("atregistrationsurvey"), mappingData.get("RegistrationSurvey"));
 
@@ -373,9 +373,9 @@ public class MigratedDataReconcileCli {
 
         doCompare(csvRecord, userData.get("atassentsurvey"), mappingData.get("AssentSurvey"));
 
-//        processInstitutions(userData.get("releasesurvey"), InstitutionType.PHYSICIAN, csvRecord);
-//        processInstitutions(userData.get("releasesurvey"), InstitutionType.INITIAL_BIOPSY, csvRecord);
-//        processInstitutions(userData.get("releasesurvey"), InstitutionType.INSTITUTION, csvRecord);
+        //processInstitutions(userData.get("releasesurvey"), InstitutionType.PHYSICIAN, csvRecord);
+        //processInstitutions(userData.get("releasesurvey"), InstitutionType.INITIAL_BIOPSY, csvRecord);
+        //processInstitutions(userData.get("releasesurvey"), InstitutionType.INSTITUTION, csvRecord);
     }
 
     private void doCompare(CSVRecord csvRecord, JsonElement sourceDataEl, JsonElement mappingDataEl) throws Exception {
@@ -393,6 +393,10 @@ public class MigratedDataReconcileCli {
             targetFieldName = thisMapData.getAsJsonObject().get("target_field_name").getAsString();
             //LOG.info("checking source field: {} ... target field: {} ", sourceFieldName, targetFieldName);
             //load source and target values
+            if ("REGISTRATION_STATE_PROVINCE".equals(targetFieldName)) {
+                String shortCode = getStringValueFromElement(sourceDataEl, sourceFieldName).substring(0, 2);
+                targetFieldName = shortCode + "_" + targetFieldName;
+            }
             targetFieldValue = csvRecord.get(targetFieldName);
             JsonElement sourceDataTypeEl = thisMapData.getAsJsonObject().get("source_field_type");
             String sourceDataType = DEFAULT_DATA_TYPE;
@@ -592,7 +596,9 @@ public class MigratedDataReconcileCli {
                         } else if (sourceFieldName.contains("_category")) {
                             sourceFieldName = "medication_category";
                             //TODO - > needs check if json value may contain 0
-                        } else if (sourceFieldName.matches("sample_([a-e])_type"))
+                        } else if (sourceFieldName.matches("sample_([a-e])_type")) {
+                            sourceFieldName = "sample_type";
+                        }
                         if (singlePicklistLookup.containsKey(sourceFieldName)) {
                             altSourceValue = singlePicklistLookup.get(sourceFieldName)
                                     .get(singlePicklistInt);
@@ -1231,9 +1237,14 @@ public class MigratedDataReconcileCli {
                 "YE_REGISTRATION_STATE_PROVINCE",
                 "ZM_REGISTRATION_STATE_PROVINCE",
                 "ZW_REGISTRATION_STATE_PROVINCE",
+                "STAY_INFORMED_v1",
+                "STAY_INFORMED_v1_status",
+                "STAY_INFORMED_v1_created_at",
+                "STAY_INFORMED_v1_updated_at",
+                "STAY_INFORMED_v1_completed_at",
                 "FIRSTNAME",
                 "LASTNAME",
-                "EMAIL",
+                "STAY_INFORMED_EMAIL",
                 "CONSENT_v1",
                 "CONSENT_v1_status",
                 "CONSENT_v1_created_at",
@@ -1381,41 +1392,31 @@ public class MigratedDataReconcileCli {
                 "CONSANGUINEOUS_PARENTS",
                 "SEX_PICKLIST_1",
                 "AGE_1",
-                "DATE_OF_BIRTH_1_MONTH",
-                "DATE_OF_BIRTH_1_DAY",
-                "DATE_OF_BIRTH_1_YEAR",
+                "DATE_OF_BIRTH_1",
                 "AGE_AT_DEATH_1",
                 "DIAGNOSIS_PICKLIST_1",
                 "CARRIER_PICKLIST_1",
                 "SEX_PICKLIST_2",
                 "AGE_2",
-                "DATE_OF_BIRTH_2_MONTH",
-                "DATE_OF_BIRTH_2_DAY",
-                "DATE_OF_BIRTH_2_YEAR",
+                "DATE_OF_BIRTH_2",
                 "AGE_AT_DEATH_2",
                 "DIAGNOSIS_PICKLIST_2",
                 "CARRIER_PICKLIST_2",
                 "SEX_PICKLIST_3",
                 "AGE_3",
-                "DATE_OF_BIRTH_3_MONTH",
-                "DATE_OF_BIRTH_3_DAY",
-                "DATE_OF_BIRTH_3_YEAR",
+                "DATE_OF_BIRTH_3",
                 "AGE_AT_DEATH_3",
                 "DIAGNOSIS_PICKLIST_3",
                 "CARRIER_PICKLIST_3",
                 "SEX_PICKLIST_4",
                 "AGE_4",
-                "DATE_OF_BIRTH_4_MONTH",
-                "DATE_OF_BIRTH_4_DAY",
-                "DATE_OF_BIRTH_4_YEAR",
+                "DATE_OF_BIRTH_4",
                 "AGE_AT_DEATH_4",
                 "DIAGNOSIS_PICKLIST_4",
                 "CARRIER_PICKLIST_4",
                 "SEX_PICKLIST_5",
                 "AGE_5",
-                "DATE_OF_BIRTH_5_MONTH",
-                "DATE_OF_BIRTH_5_DAY",
-                "DATE_OF_BIRTH_5_YEAR",
+                "DATE_OF_BIRTH_5",
                 "AGE_AT_DEATH_5",
                 "DIAGNOSIS_PICKLIST_5",
                 "CARRIER_PICKLIST_5",

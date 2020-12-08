@@ -8,7 +8,7 @@
           {
             "source_field_name": "diagnosis",
             "target_field_name": "DIAGNOSED",
-            "source_field_type": "Integer"
+            "source_field_type": "Boolean"
           },
           {
             "source_field_name": "age_diagnosis_years",
@@ -49,27 +49,27 @@
           },
           {
             "source_field_name": "name",
-            "target_field_name": "NAME_PHYSICIAN"
+            "target_field_name": "NAME_PHYSICIAN_1"
           },
           {
             "source_field_name": "phone",
-            "target_field_name": "PHYSICIAN_TELEPHONE_NUMBER"
+            "target_field_name": "PHYSICIAN_TELEPHONE_NUMBER_1"
           },
           {
             "source_field_name": "hospital",
-            "target_field_name": "HOSPITAL"
+            "target_field_name": "HOSPITAL_1"
           },
           {
             "source_field_name": "city",
-            "target_field_name": "CITY"
+            "target_field_name": "CITY_1"
           },
           {
             "source_field_name": "state",
-            "target_field_name": "STATE"
+            "target_field_name": "STATE_1"
           },
           {
             "source_field_name": "country",
-            "target_field_name": "COUNTRY"
+            "target_field_name": "COUNTRY_1"
           },
           {
             "source_field_name": "cancer_history",
@@ -276,7 +276,7 @@
           },
           {
             "source_field_name": "other_surgeries_1_type",
-            "target_field_name": "TYPE_OF_SURGERY",
+            "target_field_name": "TYPE_OF_SURGERY_1",
             "source_field_type": "String"
           },
           {
@@ -351,7 +351,7 @@
           },
           {
             "source_field_name": "medication_1_category",
-            "target_field_name": "MEDICATION_CATEGORY_1",
+            "target_field_name": "MEDICATION_CATEGORY_PICK_LIST_1",
             "source_field_type": "SinglePicklist"
           },
           {
@@ -361,12 +361,12 @@
           },
           {
             "source_field_name": "medication_1_age",
-            "target_field_name": "MEDICATION_AGE_1",
+            "target_field_name": "BEGAN_TAKING_AT_AGE_1",
             "source_field_type": "String"
           },
           {
             "source_field_name": "medication_2_category",
-            "target_field_name": "MEDICATION_CATEGORY_2",
+            "target_field_name": "MEDICATION_CATEGORY_PICK_LIST_2",
             "source_field_type": "SinglePicklist"
           },
           {
@@ -376,12 +376,12 @@
           },
           {
             "source_field_name": "medication_2_age",
-            "target_field_name": "MEDICATION_AGE_2",
+            "target_field_name": "BEGAN_TAKING_AT_AGE_2",
             "source_field_type": "String"
           },
           {
             "source_field_name": "medication_3_category",
-            "target_field_name": "MEDICATION_CATEGORY_3",
+            "target_field_name": "MEDICATION_CATEGORY_PICK_LIST_3",
             "source_field_type": "SinglePicklist"
           },
           {
@@ -391,12 +391,12 @@
           },
           {
             "source_field_name": "medication_3_age",
-            "target_field_name": "MEDICATION_AGE_3",
+            "target_field_name": "BEGAN_TAKING_AT_AGE_3",
             "source_field_type": "String"
           },
           {
             "source_field_name": "medication_4_category",
-            "target_field_name": "MEDICATION_CATEGORY_4",
+            "target_field_name": "MEDICATION_CATEGORY_PICK_LIST_4",
             "source_field_type": "SinglePicklist"
           },
           {
@@ -406,12 +406,12 @@
           },
           {
             "source_field_name": "medication_4_age",
-            "target_field_name": "MEDICATION_AGE_4",
+            "target_field_name": "BEGAN_TAKING_AT_AGE_4",
             "source_field_type": "String"
           },
           {
             "source_field_name": "medication_5_category",
-            "target_field_name": "MEDICATION_CATEGORY_5",
+            "target_field_name": "MEDICATION_CATEGORY_PICK_LIST_5",
             "source_field_type": "SinglePicklist"
           },
           {
@@ -421,12 +421,12 @@
           },
           {
             "source_field_name": "medication_5_age",
-            "target_field_name": "MEDICATION_AGE_5",
+            "target_field_name": "BEGAN_TAKING_AT_AGE_5",
             "source_field_type": "String"
           },
           {
             "source_field_name": "medication_6_category",
-            "target_field_name": "MEDICATION_CATEGORY_6",
+            "target_field_name": "MEDICATION_CATEGORY_PICK_LIST_6",
             "source_field_type": "SinglePicklist"
           },
           {
@@ -436,12 +436,12 @@
           },
           {
             "source_field_name": "medication_6_age",
-            "target_field_name": "MEDICATION_AGE_6",
+            "target_field_name": "BEGAN_TAKING_AT_AGE_6",
             "source_field_type": "String"
           },
           {
             "source_field_name": "medication_7_category",
-            "target_field_name": "MEDICATION_CATEGORY_7",
+            "target_field_name": "MEDICATION_CATEGORY_PICK_LIST_7",
             "source_field_type": "SinglePicklist"
           },
           {
@@ -451,12 +451,12 @@
           },
           {
             "source_field_name": "medication_7_age",
-            "target_field_name": "MEDICATION_AGE_7",
+            "target_field_name": "BEGAN_TAKING_AT_AGE_7",
             "source_field_type": "String"
           },
           {
             "source_field_name": "medication_8_category",
-            "target_field_name": "MEDICATION_CATEGORY_8",
+            "target_field_name": "MEDICATION_CATEGORY_PICK_LIST_8",
             "source_field_type": "SinglePicklist"
           },
           {
@@ -466,12 +466,12 @@
           },
           {
             "source_field_name": "medication_8_age",
-            "target_field_name": "MEDICATION_AGE_8",
+            "target_field_name": "BEGAN_TAKING_AT_AGE_8",
             "source_field_type": "String"
           },
           {
             "source_field_name": "medication_9_category",
-            "target_field_name": "MEDICATION_CATEGORY_9",
+            "target_field_name": "MEDICATION_CATEGORY_PICK_LIST_9",
             "source_field_type": "SinglePicklist"
           },
           {
@@ -481,7 +481,7 @@
           },
           {
             "source_field_name": "medication_9_age",
-            "target_field_name": "MEDICATION_AGE_9",
+            "target_field_name": "BEGAN_TAKING_AT_AGE_9",
             "source_field_type": "String"
           },
           {
@@ -554,35 +554,35 @@
             "target_field_name": "DATE_OF_BIRTH_1",
             "source_field_type": "Date",
             "source_field_format": "yyyy-MM-dd",
-            "target_field_format": "yyyy-MM-dd"
+            "target_field_format": "MM/dd/yyyy"
           },
           {
             "source_field_name": "sibling_2_dob",
             "target_field_name": "DATE_OF_BIRTH_2",
             "source_field_type": "Date",
             "source_field_format": "yyyy-MM-dd",
-            "target_field_format": "yyyy-MM-dd"
+            "target_field_format": "MM/dd/yyyy"
           },
           {
             "source_field_name": "sibling_3_dob",
             "target_field_name": "DATE_OF_BIRTH_3",
             "source_field_type": "Date",
             "source_field_format": "yyyy-MM-dd",
-            "target_field_format": "yyyy-MM-dd"
+            "target_field_format": "MM/dd/yyyy"
           },
           {
             "source_field_name": "sibling_4_dob",
             "target_field_name": "DATE_OF_BIRTH_4",
             "source_field_type": "Date",
             "source_field_format": "yyyy-MM-dd",
-            "target_field_format": "yyyy-MM-dd"
+            "target_field_format": "MM/dd/yyyy"
           },
           {
             "source_field_name": "sibling_5_dob",
             "target_field_name": "DATE_OF_BIRTH_5",
             "source_field_type": "Date",
             "source_field_format": "yyyy-MM-dd",
-            "target_field_format": "yyyy-MM-dd"
+            "target_field_format": "MM/dd/yyyy"
           },
           {
             "source_field_name": "sibling_1_age_death",
@@ -776,7 +776,8 @@
             "source_field_name": "datstat_dateofbirth",
             "target_field_name": "REGISTRATION_DOB",
             "source_field_type": "Date",
-            "source_field_format": "yyyy-MM-dd'T'HH:mm:ss"
+            "source_field_format": "yyyy-MM-dd",
+            "target_field_format": "MM/dd/yyyy"
           },
           {
             "source_field_name": "datstat_homephone",
@@ -816,27 +817,27 @@
           {
             "source_field_name": "platform_consent_recontact_participant_followup",
             "target_field_name": "RE_CONTACT_FOLLOW_UP",
-            "source_field_type": "Integer"
+            "source_field_type": "Boolean"
           },
           {
             "source_field_name": "platform_consent_genseq_study",
             "target_field_name": "PERFORM_DNA",
-            "source_field_type": "Integer"
+            "source_field_type": "Boolean"
           },
           {
             "source_field_name": "platform_consent_medical_record_retrieval",
             "target_field_name": "MEDICAL_RECORDS",
-            "source_field_type": "Integer"
+            "source_field_type": "Boolean"
           },
           {
             "source_field_name": "platform_consent_recontact_research_results",
             "target_field_name": "RE_CONTACT_RETURN_RESULTS",
-            "source_field_type": "Integer"
+            "source_field_type": "Boolean"
           },
           {
             "source_field_name": "platform_consent_recontact_physician_diagnosis_results",
             "target_field_name": "CONTACT_MY_PHYSICIAN",
-            "source_field_type": "Integer"
+            "source_field_type": "Boolean"
           },
           {
             "source_field_name": "platform_consent_signature",
@@ -858,13 +859,15 @@
             "source_field_name": "platform_consent_dob",
             "target_field_name": "CONSENT_GUARDIAN_DOB",
             "source_field_type": "Date",
-            "source_field_format": "yyyy-MM-dd"
+            "source_field_format": "yyyy-MM-dd",
+            "target_field_format": "MM/dd/yyyy"
           },
           {
             "source_field_name": "platform_consent_dob",
             "target_field_name": "CONSENT_DOB",
             "source_field_type": "Date",
-            "source_field_format": "yyyy-MM-dd"
+            "source_field_format": "yyyy-MM-dd",
+            "target_field_format": "MM/dd/yyyy"
           }
         ]
       },
@@ -885,7 +888,8 @@
           },
           {
             "source_field_name": "physician_phone",
-            "target_field_name": "PHYSICIAN_PHONE"
+            "target_field_name": "PHYSICIAN_PHONE",
+            "source_field_type": "String"
           },
           {
             "source_field_name": "physician_email",
@@ -982,10 +986,6 @@
         {
           "source_field_name": "datstat_altpid",
           "target_field_name": "legacy_altpid"
-        },
-        {
-          "source_field_name": "datstat_email",
-          "target_field_name": "email"
         },
         {
           "source_field_name": "datstat_created",

@@ -420,7 +420,7 @@ public class ActivityResponseCollector {
                     for (QuestionDef child : composite.getChildren()) {
                         if (child.getQuestionType() == QuestionType.PICKLIST) {
                             headers.addAll(picklistFmt.headers((PicklistQuestionDef) child, i));
-                        } else if (child.getQuestionType() == QuestionType.TEXT){
+                        } else if (child.getQuestionType() == QuestionType.TEXT) {
                             headers.addAll(textFmt.headers((TextQuestionDef) child, i));
                         } else {
                             headers.addAll(dateFmt.headers((DateQuestionDef) child, i));
@@ -555,7 +555,7 @@ public class ActivityResponseCollector {
                             QuestionDef questionDef = composite.getChildren().get(j);
                             if (ans.getQuestionType() == QuestionType.PICKLIST) {
                                 record.putAll(picklistFmt.collect((PicklistQuestionDef) questionDef, (PicklistAnswer) ans, i));
-                            } else if (ans.getQuestionType() == QuestionType.TEXT){
+                            } else if (ans.getQuestionType() == QuestionType.TEXT) {
                                 record.putAll(textFmt.collect((TextQuestionDef) questionDef, (TextAnswer) ans, i));
                             } else {
                                 record.putAll(dateFmt.collect((DateQuestionDef) questionDef, (DateAnswer) ans, i));
