@@ -36,7 +36,7 @@ public interface FileUploadDao extends SqlObject {
     @RegisterConstructorMapper(FileUpload.class)
     Optional<FileUpload> getFileUploadByGuid(@Bind("guid") String guid);
 
-    @SqlQuery("update file_upload set status = (select file_upload_status_id from file_upload_status where file_upload_status_name = "
+    @SqlUpdate("update file_upload set status = (select file_upload_status_id from file_upload_status where file_upload_status_name = "
             + ":status) where guid = :guid")
     void setStatus(@Bind("guid") String guid, @Bind("status") FileUploadStatus status);
 }
