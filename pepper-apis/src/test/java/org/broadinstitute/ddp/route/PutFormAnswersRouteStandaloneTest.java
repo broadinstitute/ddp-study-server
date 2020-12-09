@@ -39,6 +39,7 @@ import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dao.AnswerDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
+import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
 import org.broadinstitute.ddp.db.dao.JdbiExpression;
 import org.broadinstitute.ddp.db.dao.JdbiMailAddress;
 import org.broadinstitute.ddp.db.dao.JdbiRevision;
@@ -235,7 +236,11 @@ public class PutFormAnswersRouteStandaloneTest {
         TransactionWrapper.useTxn(handle -> {
             testCleanupTasks.forEach((task) -> task.accept(handle));
             ActivityInstanceDao instanceDao = handle.attach(ActivityInstanceDao.class);
+            JdbiActivityInstance jdbiInstance = handle.attach(JdbiActivityInstance.class);
+            AnswerDao answerDao = handle.attach(AnswerDao.class);
             for (String instanceGuid : instanceGuidsToDelete) {
+                long instanceId = jdbiInstance.getActivityInstanceId(instanceGuid);
+                answerDao.deleteAllByInstanceIds(Set.of(instanceId));
                 instanceDao.deleteByInstanceGuid(instanceGuid);
             }
             instanceGuidsToDelete.clear();
@@ -804,6 +809,32 @@ public class PutFormAnswersRouteStandaloneTest {
 
         route.checkAddressRequirements(mockHandle, "", form);
         // Should not have thrown! Not catching it so it gets handled by junit itself.
+    }
+
+    @Test
+    public void testHiddenAnswersAreDeleted() {
+        ActivityInstanceDto instanceDto = TransactionWrapper.withTxn(handle ->
+                insertNewInstanceAndDeferCleanup(handle, form.getActivityId()));
+
+        // Answer the hidden question.
+        Answer answer = TransactionWrapper.withTxn(handle -> {
+            var question = ((QuestionBlockDef) conditionalBlock.getNested().get(0)).getQuestion();
+            return handle.attach(AnswerDao.class).createAnswer(
+                    testData.getUserId(),
+                    instanceDto.getId(),
+                    question.getQuestionId(),
+                    new BoolAnswer(null, question.getStableId(), null, true));
+        });
+
+        given().auth().oauth2(token)
+                .pathParam("instanceGuid", instanceDto.getGuid())
+                .when().put(urlTemplate).then().assertThat()
+                .statusCode(200);
+
+        TransactionWrapper.useTxn(handle -> {
+            var result = handle.attach(AnswerDao.class).findAnswerById(answer.getAnswerId());
+            assertTrue("hidden answer should have been deleted", result.isEmpty());
+        });
     }
 
     private io.restassured.response.Response callEndpoint(String instanceGuid) {
