@@ -742,7 +742,7 @@
           {
             "source_field_name": "registration_agreement",
             "target_field_name": "REGISTRATION_AGREEMENT",
-            "source_field_type": "Integer"
+            "source_field_type": "String"
           },
           {
             "source_field_name": "datstat_firstname",
@@ -933,27 +933,27 @@
           {
             "source_field_name": "platform_assent_recontact_participant_followup",
             "target_field_name": "CAN_CONTACT_LATER",
-            "source_field_type": "integer"
+            "source_field_type": "Boolean"
           },
           {
             "source_field_name": "platform_assent_genseq_study",
             "target_field_name": "ASSENT_CAN_DO_TESTS",
-            "source_field_type": "integer"
+            "source_field_type": "Boolean"
           },
           {
             "source_field_name": "platform_assent_medical_record_retrieval",
             "target_field_name": "MAY_ASK_MY_DOCTOR",
-            "source_field_type": "integer"
+            "source_field_type": "Boolean"
           },
           {
             "source_field_name": "platform_assent_recontact_research_results",
             "target_field_name": "GET_THE_RESULT",
-            "source_field_type": "integer"
+            "source_field_type": "Boolean"
           },
           {
             "source_field_name": "platform_assent_recontact_physician_diagnosis_results",
             "target_field_name": "RESEARCHERS_LEARN_SOMETHING",
-            "source_field_type": "integer"
+            "source_field_type": "Boolean"
           },
           {
             "source_field_name": "platform_assent_signature",
@@ -963,7 +963,8 @@
             "source_field_name": "platform_assent_dob",
             "target_field_name": "ASSENT_DOB",
             "source_field_type": "Date",
-            "source_field_format": "yyyy-MM-dd"
+            "source_field_format": "yyyy-MM-dd",
+            "target_field_format": "MM/dd/yyyy"
           },
           {
             "source_field_name": "platform_assent_guardian_signature",
@@ -973,7 +974,8 @@
             "source_field_name": "platform_assent_signed_on",
             "target_field_name": "ASSENT_DATE",
             "source_field_type": "Date",
-            "source_field_format": "yyyy-MM-dd"
+            "source_field_format": "yyyy-MM-dd",
+            "target_field_format": "MM/dd/yyyy"
           }
         ]
       }

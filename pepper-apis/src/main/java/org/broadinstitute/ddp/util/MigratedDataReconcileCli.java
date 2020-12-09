@@ -395,8 +395,12 @@ public class MigratedDataReconcileCli {
             //LOG.info("checking source field: {} ... target field: {} ", sourceFieldName, targetFieldName);
             //load source and target values
             if ("REGISTRATION_STATE_PROVINCE".equals(targetFieldName)) {
-                String shortCode = getStringValueFromElement(sourceDataEl, sourceFieldName).substring(0, 2);
-                targetFieldName = shortCode + "_" + targetFieldName;
+                if (getStringValueFromElement(sourceDataEl, sourceFieldName) != null) {
+                    String shortCode = getStringValueFromElement(sourceDataEl, sourceFieldName).substring(0, 2);
+                    targetFieldName = shortCode + "_" + targetFieldName;
+                } else {
+                    continue;
+                }
             }
             targetFieldValue = csvRecord.get(targetFieldName);
             JsonElement sourceDataTypeEl = thisMapData.getAsJsonObject().get("source_field_type");
