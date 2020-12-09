@@ -65,9 +65,11 @@ public interface ActivityI18nDao extends SqlObject {
     Optional<ActivityI18nDetail> findDetailById(@Bind("id") long id);
 
     @UseStringTemplateSqlLocator
-    @SqlQuery("findDetailsByActivityId")
+    @SqlQuery("findDetailsByActivityIdAndTimestamp")
     @RegisterConstructorMapper(ActivityI18nDetail.class)
-    List<ActivityI18nDetail> findDetailsByActivityId(@Bind("activityId") long activityId);
+    List<ActivityI18nDetail> findDetailsByActivityIdAndTimestamp(
+            @Bind("activityId") long activityId,
+            @Bind("timestamp") long timestamp);
 
     @UseStringTemplateSqlLocator
     @SqlQuery("findSummariesByActivityId")

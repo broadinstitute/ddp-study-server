@@ -342,7 +342,7 @@ public interface QuestionDao extends SqlObject {
                 break;
             case COMPOSITE:
                 question = getCompositeQuestion((CompositeQuestionDto) dto,
-                        activityInstanceGuid, answerIds, untypedRules, retrieveAnswers, langCodeId);
+                        activityInstanceGuid, answerIds, untypedRules, langCodeId);
                 break;
             default:
                 throw new DaoException("Unknown question type: " + dto.getType());
@@ -657,7 +657,6 @@ public interface QuestionDao extends SqlObject {
                                                    String activityInstanceGuid,
                                                    List<Long> answerIds,
                                                    List<Rule> untypedRules,
-                                                   boolean retrieveAnswers,
                                                    long langCodeId) {
         JdbiQuestion jdbiQuestion = getJdbiQuestion();
         List<Long> childIds = jdbiQuestion.findCompositeChildIdsByParentId(dto.getId());
@@ -665,7 +664,7 @@ public interface QuestionDao extends SqlObject {
         try (var stream = jdbiQuestion.findQuestionDtosByIds(childIds)) {
             childQuestions = stream
                     .map(childQuestionDto ->
-                            getQuestionByActivityInstanceAndDto(childQuestionDto, activityInstanceGuid, retrieveAnswers, langCodeId))
+                            getQuestionByActivityInstanceAndDto(childQuestionDto, activityInstanceGuid, false, langCodeId))
                     .collect(toList());
         }
 
@@ -831,7 +830,8 @@ public interface QuestionDao extends SqlObject {
                 headerTemplateId,
                 footerTemplateId,
                 revisionId, activityId, question.shouldHideNumber(),
-                question.isDeprecated());
+                question.isDeprecated(),
+                question.isWriteOnce());
         question.setQuestionId(questionId);
 
         getValidationDao().insertValidations(question, revisionId);

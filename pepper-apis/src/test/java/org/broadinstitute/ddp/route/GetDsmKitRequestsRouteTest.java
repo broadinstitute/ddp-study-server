@@ -20,8 +20,10 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.reflect.TypeToken;
+import org.apache.http.HttpResponse;
 import org.apache.http.client.fluent.Response;
 import org.apache.http.util.EntityUtils;
+import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.DsmKitRequestDao;
@@ -139,6 +141,22 @@ public class GetDsmKitRequestsRouteTest extends DsmRouteTest {
                     .bind("altpid", altpid)
                     .bind("userId", generatedTestData.getUserId()).execute());
         });
+    }
+
+    @Test
+    public void testGetKitsAfterGivenKitGuid_notFoundReturnsError() throws IOException {
+        String url = RouteTestUtil.getTestingBaseUrl()
+                + RouteConstants.API.DSM_KIT_REQUESTS_STARTING_AFTER
+                .replace(RouteConstants.PathParam.STUDY_GUID, generatedTestData.getStudyGuid())
+                .replace(RouteConstants.PathParam.PREVIOUS_LAST_KIT_REQUEST_ID, "foobar");
+
+        HttpResponse res = RouteTestUtil.buildAuthorizedGetRequest(dsmClientAccessToken, url).execute().returnResponse();
+        int actualStatus = res.getStatusLine().getStatusCode();
+        String actualBody = EntityUtils.toString(res.getEntity());
+
+        assertEquals(404, actualStatus);
+        assertTrue(actualBody.contains(ErrorCodes.NOT_FOUND));
+        assertTrue(actualBody.contains("foobar"));
     }
 
     @Test

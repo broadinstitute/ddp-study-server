@@ -283,6 +283,7 @@ public class EmailNotificationHandler implements HousekeepingMessageHandler<Noti
                             apisHandle);
                     pdfBucketService.sendPdfToBucket(blobName, pdfStream);
                     LOG.info("Uploaded pdf to bucket {} with filename {}", pdfBucketService.getBucketName(), blobName);
+                    pdfStream = pdfBucketService.getPdfFromBucket(blobName).orElse(null);
                 }
                 String name = pdfConfig.getFilename() + ".pdf";
                 // Implementation of newPdfAttachment reads stream and saves locally as string
