@@ -149,6 +149,7 @@ public class RouteConstants {
         );
 
         public static final String SEND_EMAIL = fmt(BASE + "/studies/%s/send-email", PathParam.STUDY_GUID);
+        public static final String SEND_STUDY_EMAIL = fmt(BASE + "/studies/%s/send-study-email", PathParam.STUDY_GUID);
         public static final String POST_PASSWORD_RESET = BASE + "/post-password-reset";
 
         public static final String DSM_DRUG_SUGGESTION = fmt(

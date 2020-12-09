@@ -55,7 +55,7 @@ public interface ActivityStatusEventDao extends SqlObject {
                 templateSubstitutions.put(NotificationTemplateVariables.DDP_ACTIVITY_INSTANCE_GUID, instanceDto.getGuid());
                 queuedEventId = queuedEventDao.insertNotification(eventConfig.getEventConfigurationId(),
                         postAfter, participantId, operatorId,
-                        templateSubstitutions);
+                        templateSubstitutions, null);
             } else {
                 queuedEventId = jdbiQueuedEvent.insert(eventConfig.getEventConfigurationId(),
                         postAfter, participantId, operatorId);

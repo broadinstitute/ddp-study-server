@@ -7,6 +7,7 @@ public class SendgridEmailEventActionDto {
 
     private List<I18nTemplate> templates;
     private Long linkedActivityId;
+    private Boolean allowExternalAttachments;
 
     public SendgridEmailEventActionDto(String templateKey, String languageCode, boolean isDynamic) {
         this.templates = new ArrayList<>();
@@ -33,6 +34,14 @@ public class SendgridEmailEventActionDto {
 
     public void setLinkedActivityId(Long linkedActivityId) {
         this.linkedActivityId = linkedActivityId;
+    }
+
+    public Boolean getAllowExternalAttachments() {
+        return allowExternalAttachments;
+    }
+
+    public void setAllowExternalAttachments(Boolean allowExternalAttachments) {
+        this.allowExternalAttachments = allowExternalAttachments;
     }
 
     public static class I18nTemplate {

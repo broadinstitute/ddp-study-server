@@ -170,6 +170,9 @@ public class EventBuilder {
                 actionDto.setLinkedActivityId(linkedActivityId);
             }
 
+            Boolean allowExternalAttachments = ConfigUtil.getBoolIfPresent(actionCfg, "allowExternalAttachments");
+            actionDto.setAllowExternalAttachments(allowExternalAttachments);
+
             long actionId;
             if (ACTION_STUDY_EMAIL.equals(type)) {
                 actionId = actionDao.insertStudyNotificationAction(actionDto);

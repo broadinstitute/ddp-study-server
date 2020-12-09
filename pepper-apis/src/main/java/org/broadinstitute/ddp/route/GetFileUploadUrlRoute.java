@@ -37,7 +37,6 @@ public class GetFileUploadUrlRoute extends ValidatedJsonInputRoute<FileUploadURL
                 payload.getAnswerGuid(),
                 payload.getFileName(),
                 payload.getFileSize(),
-                payload.getCreatedDate(),
                 payload.getMimeType()));
         return new FileUploadUrlResponse(url.toString(), fileUploadGuid);
     }

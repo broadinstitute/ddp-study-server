@@ -60,6 +60,9 @@ public class EventConfigurationDto {
     /* EXIT_REQUEST */
     // No sub-table
 
+    /* SEND_STUDY_EMAIL */
+    // TODO
+
     /**
      * Actions
      **/

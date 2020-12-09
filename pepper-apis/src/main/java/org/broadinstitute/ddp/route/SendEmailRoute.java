@@ -138,7 +138,8 @@ public class SendEmailRoute extends ValidatedJsonInputRoute<SendEmailPayload> {
                                 0L,
                                 userDto.getUserId(),
                                 userDto.getUserId(),
-                                templateSubstitutions);
+                                templateSubstitutions,
+                                null);
 
                         LOG.info("Queued queuedEventId {} for email resend to participant {}", queuedEventId,
                                 userDto.getUserGuid());
@@ -168,7 +169,8 @@ public class SendEmailRoute extends ValidatedJsonInputRoute<SendEmailPayload> {
                     long queuedEventId = handle.attach(QueuedEventDao.class).insertNotification(eventConfig.getEventConfigurationId(),
                             0,
                             email,
-                            templateSubstitutions);
+                            templateSubstitutions,
+                            null);
                     LOG.info("Queued queuedEventId {} for email resend to participant not in study with email address {}",
                             queuedEventId,
                             email);

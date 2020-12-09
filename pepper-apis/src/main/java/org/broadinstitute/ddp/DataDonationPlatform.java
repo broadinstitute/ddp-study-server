@@ -134,6 +134,7 @@ import org.broadinstitute.ddp.route.PutTempMailingAddressRoute;
 import org.broadinstitute.ddp.route.ReceiveDsmNotificationRoute;
 import org.broadinstitute.ddp.route.SendEmailRoute;
 import org.broadinstitute.ddp.route.SendExitNotificationRoute;
+import org.broadinstitute.ddp.route.SendStudyEmailRoute;
 import org.broadinstitute.ddp.route.SetParticipantDefaultMailAddressRoute;
 import org.broadinstitute.ddp.route.UpdateMailAddressRoute;
 import org.broadinstitute.ddp.route.UpdateUserEmailRoute;
@@ -506,6 +507,8 @@ public class DataDonationPlatform {
 
         FileUploadService fileUploadService = new FileUploadService(cfg);
         post(API.FILE_UPLOAD_URL, new GetFileUploadUrlRoute(fileUploadService), responseSerializer);
+
+        post(API.SEND_STUDY_EMAIL, new SendStudyEmailRoute(fileUploadService), responseSerializer);
 
         boolean runScheduler = cfg.getBoolean(ConfigFile.RUN_SCHEDULER);
         if (runScheduler) {
