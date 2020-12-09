@@ -49,27 +49,27 @@
           },
           {
             "source_field_name": "name",
-            "target_field_name": "NAME_PHYSICIAN"
+            "target_field_name": "NAME_PHYSICIAN_1"
           },
           {
             "source_field_name": "phone",
-            "target_field_name": "PHYSICIAN_TELEPHONE_NUMBER"
+            "target_field_name": "PHYSICIAN_TELEPHONE_NUMBER_1"
           },
           {
             "source_field_name": "hospital",
-            "target_field_name": "HOSPITAL"
+            "target_field_name": "HOSPITAL_1"
           },
           {
             "source_field_name": "city",
-            "target_field_name": "CITY"
+            "target_field_name": "CITY_1"
           },
           {
             "source_field_name": "state",
-            "target_field_name": "STATE"
+            "target_field_name": "STATE_1"
           },
           {
             "source_field_name": "country",
-            "target_field_name": "COUNTRY"
+            "target_field_name": "COUNTRY_1"
           },
           {
             "source_field_name": "cancer_history",

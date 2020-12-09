@@ -536,41 +536,27 @@ public class ActivityResponseCollector {
                 CompositeQuestionDef composite = (CompositeQuestionDef) question;
                 CompositeAnswer compositeAnswer = (CompositeAnswer) answer;
                 // There should be one row with one answer per child. Put them into the response object so we can recurse.
-                if (compositeAnswer.getValue().size() < 2) {
-                    compositeAnswer.getValue().stream()
-                            .flatMap(row -> row.getValues().stream())
-                            //.forEach(instance::putAnswer);
-                            .forEach(ans -> {
-                                if (ans == null) {
-                                    return;
-                                }
-                                instance.putAnswer(ans);
-                            });
-                    for (QuestionDef childQuestion : composite.getChildren()) {
-                        collectQuestionIntoRecord(record, childQuestion, instance);
-                    }
-                } else {
-                    int i = 1;
-                    for (AnswerRow answerRow : compositeAnswer.getValue()) {
-                        int j = 0;
-                        for (Answer ans: answerRow.getValues()) {
-                            if (ans == null) {
-                                j++;
-                                continue;
-                            }
-                            QuestionDef questionDef = composite.getChildren().get(j);
-                            if (ans.getQuestionType() == QuestionType.PICKLIST) {
-                                record.putAll(picklistFmt.collect((PicklistQuestionDef) questionDef, (PicklistAnswer) ans, i));
-                            } else if (ans.getQuestionType() == QuestionType.TEXT) {
-                                record.putAll(textFmt.collect((TextQuestionDef) questionDef, (TextAnswer) ans, i));
-                            } else {
-                                record.putAll(dateFmt.collect((DateQuestionDef) questionDef, (DateAnswer) ans, i));
-                            }
+                int i = 1;
+                for (AnswerRow answerRow : compositeAnswer.getValue()) {
+                    int j = 0;
+                    for (Answer ans: answerRow.getValues()) {
+                        if (ans == null) {
                             j++;
+                            continue;
                         }
-                        i++;
+                        QuestionDef questionDef = composite.getChildren().get(j);
+                        if (ans.getQuestionType() == QuestionType.PICKLIST) {
+                            record.putAll(picklistFmt.collect((PicklistQuestionDef) questionDef, (PicklistAnswer) ans, i));
+                        } else if (ans.getQuestionType() == QuestionType.TEXT) {
+                            record.putAll(textFmt.collect((TextQuestionDef) questionDef, (TextAnswer) ans, i));
+                        } else {
+                            record.putAll(dateFmt.collect((DateQuestionDef) questionDef, (DateAnswer) ans, i));
+                        }
+                        j++;
                     }
+                    i++;
                 }
+
 
                 break;
             default:
