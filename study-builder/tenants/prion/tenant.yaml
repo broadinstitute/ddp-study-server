@@ -19,6 +19,7 @@ pages:
 emailTemplates:
   - template: reset_email
     body: ./passwordResetEmail.html
+    from: Prion <##STUDY_EMAIL##>
     resultUrl: '##SERVER_BASE_URL##/pepper/v1/post-password-reset?clientId={{ application.clientID }}'
     subject: >-
       {% if user.user_metadata.language == "es" %} (es)Password Change Request
@@ -49,3 +50,7 @@ clients:
       ##LOCALHOST_ORIGINS##
     client_metadata:
       study: PRION
+    jwt_configuration:
+      alg: RS256
+      lifetime_in_seconds: 36000
+    oidc_conformant: true
