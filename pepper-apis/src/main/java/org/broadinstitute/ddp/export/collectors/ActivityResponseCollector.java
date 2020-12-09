@@ -415,18 +415,15 @@ public class ActivityResponseCollector {
                         numberOfIterations = 1;
                         break;
                 }
+                //composite.getChildren().forEach(this::collectQuestionIntoHeaders);
                 for (int i = 1; i <= numberOfIterations; i++) {
-                    if (numberOfIterations == 1) {
-                        composite.getChildren().forEach(this::collectQuestionIntoHeaders);
-                    } else {
-                        for (QuestionDef child : composite.getChildren()) {
-                            if (child.getQuestionType() == QuestionType.PICKLIST) {
-                                headers.addAll(picklistFmt.headers((PicklistQuestionDef) child, i));
-                            } else if (child.getQuestionType() == QuestionType.TEXT) {
-                                headers.addAll(textFmt.headers((TextQuestionDef) child, i));
-                            } else {
-                                headers.addAll(dateFmt.headers((DateQuestionDef) child, i));
-                            }
+                    for (QuestionDef child : composite.getChildren()) {
+                        if (child.getQuestionType() == QuestionType.PICKLIST) {
+                            headers.addAll(picklistFmt.headers((PicklistQuestionDef) child, i));
+                        } else if (child.getQuestionType() == QuestionType.TEXT) {
+                            headers.addAll(textFmt.headers((TextQuestionDef) child, i));
+                        } else {
+                            headers.addAll(dateFmt.headers((DateQuestionDef) child, i));
                         }
                     }
                 }
