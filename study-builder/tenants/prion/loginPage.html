@@ -216,6 +216,13 @@
         border-top-right-radius: 5px;
     }
 
+    html[dir='rtl'] .auth0-lock.auth0-lock .auth0-lock-submit span svg {
+        transform: scaleX(-1);
+    }
+    html[dir='rtl'] .auth0-lock.auth0-lock .auth0-lock-submit span svg.icon-text {
+        margin: -4px 5px 0 0;
+    }
+
     .auth0-lock-content {
         padding: 0 !important;
         margin: 0;
@@ -1067,15 +1074,15 @@
         loginWithLabel: 'היכנסו עם %s',
         forgotPasswordTitle: ' ',
         forgotPasswordAction: 'שכחתם את הסיסמה?',
-        forgotPasswordInstructions: '<h2 class="Auth0Title">שכחתם את הסיסמה?</h2> <h5>הזינו את כתובת הדוא\'ל שלכם ואנו נשלח לכם הוראות לאיפוס סיסמה.</h5>',
+        forgotPasswordInstructions: '<h2 class="Auth0Title">שכחתם את הסיסמה?</h2> <h5>הזינו את כתובת הדוא"ל שלכם ואנו נשלח לכם הוראות לאיפוס סיסמה.</h5>',
         forgotPasswordSubmitLabel: 'שלח',
         firstNameHint: 'יש למלא שדה זה.',
         lastNameHint: 'יש למלא שדה זה.',
         alreadyRegisteredText: 'כבר רשומים? היכנסו כאן',
         passwordTooltipText: 'הסיסמה חייבת להיות באורך של 8 תווים לפחות.',
         oldPasswordTooltipText: 'הסיסמה חייבת להיות באורך של 8 תווים לפחות ולכלול לפחות מספר אחד, אות רישית אחת ואות קטנה אחת.',
-        loginDescriptionText: 'באפשרותכם להתחבר ל-Prion Registry באמצעות כתובת הדוא\'ל שלכם.',
-        emailPrompt: 'כתובת דוא\'ל*',
+        loginDescriptionText: 'באפשרותכם להתחבר ל-Prion Registry באמצעות כתובת הדוא"ל שלכם.',
+        emailPrompt: 'כתובת דוא"ל*',
         passwordPrompt: 'סיסמה*',
         firstNamePrompt: 'שם פרטי*',
         lastNamePrompt: 'שם משפחה*',

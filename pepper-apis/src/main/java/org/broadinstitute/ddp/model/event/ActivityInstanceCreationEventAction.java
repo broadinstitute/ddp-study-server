@@ -1,8 +1,10 @@
 package org.broadinstitute.ddp.model.event;
 
 import java.time.Instant;
+import java.util.Map;
 import java.util.Set;
 
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.content.RenderValueProvider;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
@@ -12,8 +14,8 @@ import org.broadinstitute.ddp.db.dao.QueuedEventDao;
 import org.broadinstitute.ddp.db.dto.ActivityDto;
 import org.broadinstitute.ddp.db.dto.EventConfigurationDto;
 import org.broadinstitute.ddp.exception.DDPException;
-import org.broadinstitute.ddp.model.activity.types.DsmNotificationEventType;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
+import org.broadinstitute.ddp.model.dsm.DsmNotificationEventType;
 import org.broadinstitute.ddp.model.dsm.TestResult;
 import org.broadinstitute.ddp.pex.PexInterpreter;
 import org.broadinstitute.ddp.service.EventService;
@@ -122,18 +124,21 @@ public class ActivityInstanceCreationEventAction extends EventAction {
 
         if (signal instanceof DsmNotificationSignal) {
             var dsmSignal = (DsmNotificationSignal) signal;
+            var builder = new RenderValueProvider.Builder();
+            if (StringUtils.isNotBlank(dsmSignal.getKitRequestId())) {
+                builder.setKitRequestId(dsmSignal.getKitRequestId());
+            }
             if (dsmSignal.getDsmEventType() == DsmNotificationEventType.TEST_RESULT) {
                 TestResult result = dsmSignal.getTestResult();
                 if (result != null) {
-                    var provider = new RenderValueProvider.Builder()
-                            .setTestResultCode(result.getNormalizedResult())
-                            .setTestResultTimeCompleted(result.getTimeCompleted())
-                            .build();
-                    handle.attach(ActivityInstanceDao.class).saveSubstitutions(
-                            newActivityInstanceId,
-                            provider.getSnapshot());
-                    LOG.info("Saved test result data as substitution snapshot for activity instance {}", newActivityInstanceId);
+                    builder.setTestResultCode(result.getNormalizedResult())
+                            .setTestResultTimeCompleted(result.getTimeCompleted());
                 }
+            }
+            Map<String, String> snapshot = builder.build().getSnapshot();
+            if (!snapshot.isEmpty()) {
+                handle.attach(ActivityInstanceDao.class).saveSubstitutions(newActivityInstanceId, snapshot);
+                LOG.info("Saved kit event data as substitution snapshot for activity instance {}", newActivityInstanceId);
             }
         }
 

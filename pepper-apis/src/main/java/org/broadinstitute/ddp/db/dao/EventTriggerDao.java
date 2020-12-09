@@ -2,9 +2,9 @@ package org.broadinstitute.ddp.db.dao;
 
 import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.DaoException;
-import org.broadinstitute.ddp.model.activity.types.DsmNotificationEventType;
 import org.broadinstitute.ddp.model.activity.types.EventTriggerType;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
+import org.broadinstitute.ddp.model.dsm.DsmNotificationEventType;
 import org.jdbi.v3.sqlobject.CreateSqlObject;
 
 public interface EventTriggerDao {

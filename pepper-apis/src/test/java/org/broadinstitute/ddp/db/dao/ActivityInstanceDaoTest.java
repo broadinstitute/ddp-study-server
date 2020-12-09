@@ -6,6 +6,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.time.Instant;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -189,6 +190,17 @@ public class ActivityInstanceDaoTest extends TxnAwareBaseTest {
             assertEquals(answer.getAnswerGuid(), resp.getAnswers().get(0).getAnswerGuid());
 
             handle.rollback();
+        });
+    }
+
+    @Test
+    public void testBulkFindSubstitutions() {
+        TransactionWrapper.useTxn(handle -> {
+            var dao = handle.attach(ActivityInstanceDao.class);
+            try (var stream = dao.bulkFindSubstitutions(Collections.emptySet())) {
+                var result = stream.collect(Collectors.toList());
+                assertTrue("should return empty list", result.isEmpty());
+            }
         });
     }
 }

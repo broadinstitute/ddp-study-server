@@ -36,8 +36,10 @@ import org.apache.commons.lang.StringUtils;
 import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.client.Auth0ManagementClient;
 import org.broadinstitute.ddp.constants.ConfigFile;
+import org.broadinstitute.ddp.content.I18nTemplateConstants;
 import org.broadinstitute.ddp.db.ActivityDefStore;
 import org.broadinstitute.ddp.db.DaoException;
+import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dao.FormActivityDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiActivityVersion;
@@ -600,6 +602,18 @@ public class DataExporter {
                 configPdfVersions,
                 participantProxyGuids);
 
+        // Load the activity instance substitutions for this batch of participants.
+        var instanceDao = handle.attach(ActivityInstanceDao.class);
+        for (var participant : participants) {
+            Set<Long> instanceIds = participant.getAllResponses().stream()
+                    .map(ActivityResponse::getId)
+                    .collect(Collectors.toSet());
+            try (var stream = instanceDao.bulkFindSubstitutions(instanceIds)) {
+                stream.forEach(wrapper -> participant
+                        .putActivityInstanceSubstitutions(wrapper.getActivityInstanceId(), wrapper.unwrap()));
+            }
+        }
+
         Map<String, String> participantRecords = prepareParticipantRecordsForJSONExport(
                 studyExtract, participants, exportStructuredDocument, handle, medicalRecordService);
 
@@ -773,6 +787,11 @@ public class DataExporter {
         // ActivityInstances (aka "surveys")
         List<ActivityInstanceRecord> activityInstanceRecords = new ArrayList<>();
         Map<String, Set<String>> userActivityVersions = new HashMap<>();
+        // We're only exposing a few substitutions as "attributes" on the activity instances.
+        List<String> exposedSubs = List.of(
+                I18nTemplateConstants.Snapshot.KIT_REQUEST_ID,
+                I18nTemplateConstants.Snapshot.TEST_RESULT_CODE,
+                I18nTemplateConstants.Snapshot.TEST_RESULT_TIME_COMPLETED);
         for (ActivityExtract activityExtract : studyExtract.getActivities()) {
             List<ActivityResponse> instances = participant.getResponses(activityExtract.getTag());
             for (ActivityResponse instance : instances) {
@@ -789,6 +808,13 @@ public class DataExporter {
                         lastStatus.getUpdatedAt(),
                         questionsAnswers
                 );
+
+                Map<String, String> subs = participant.getActivityInstanceSubstitutions(instance.getId());
+                for (var name : exposedSubs) {
+                    if (subs.containsKey(name)) {
+                        activityInstanceRecord.putAttribute(name, subs.get(name));
+                    }
+                }
 
                 activityInstanceRecords.add(activityInstanceRecord);
                 if (lastStatus.getType().equals(InstanceStatusType.COMPLETE)) {

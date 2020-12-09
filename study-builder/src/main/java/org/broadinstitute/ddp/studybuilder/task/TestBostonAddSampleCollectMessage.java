@@ -25,6 +25,9 @@ import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * One-off task to add sample collection message to TestBoston in deployed environments.
+ */
 public class TestBostonAddSampleCollectMessage implements CustomTask {
 
     private static final Logger LOG = LoggerFactory.getLogger(TestBostonAddSampleCollectMessage.class);

@@ -213,9 +213,13 @@ public class EmailNotificationHandlerTest extends TxnAwareBaseTest {
         when(mockHandle.attach(JdbiUmbrellaStudy.class)).thenReturn(mock(JdbiUmbrellaStudy.class));
         when(mockEventDao.getPdfAttachmentsForEvent(1L)).thenReturn(List.of(new PdfAttachment(1L, true)));
         when(mockPdf.findFullConfigForUser(any(), eq(1L), any(), any())).thenReturn(pdfConfig);
-        when(mockPdfBucket.getPdfFromBucket(any())).thenReturn(Optional.empty());
         when(mockPdfBucket.getBucketName()).thenReturn("test-bucket");
         when(mockPdfGen.generateFlattenedPdfForConfiguration(any(), any(), any())).thenReturn(new ByteArrayInputStream(content.getBytes()));
+
+        // On first call, no pdf in bucket.
+        when(mockPdfBucket.getPdfFromBucket(any())).thenReturn(Optional.empty());
+        // Second time around, the pdf should be generated and stored in bucket. So simulate reading it back out from bucket.
+        when(mockPdfBucket.getPdfFromBucket(any())).thenReturn(Optional.of(new ByteArrayInputStream(content.getBytes())));
 
         // Run test and assertions
         var actual = handler.buildAttachments(mockHandle, testData.getStudyGuid(), "guid", 1L);

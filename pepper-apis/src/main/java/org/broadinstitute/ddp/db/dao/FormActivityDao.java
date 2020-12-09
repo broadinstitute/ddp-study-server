@@ -110,7 +110,8 @@ public interface FormActivityDao extends SqlObject {
                     secondNames.getOrDefault(isoLangCode, null),
                     titles.getOrDefault(isoLangCode, null),
                     subtitles.getOrDefault(isoLangCode, null),
-                    descriptions.getOrDefault(isoLangCode, null)
+                    descriptions.getOrDefault(isoLangCode, null),
+                    revisionId
             ));
         }
 
@@ -179,7 +180,7 @@ public interface FormActivityDao extends SqlObject {
         List<Translation> titles = new ArrayList<>();
         List<Translation> subtitles = new ArrayList<>();
         List<Translation> descriptions = new ArrayList<>();
-        getActivityI18nDao().findDetailsByActivityId(activityDto.getActivityId()).forEach(detail -> {
+        getActivityI18nDao().findDetailsByActivityIdAndTimestamp(activityDto.getActivityId(), revisionStart).forEach(detail -> {
             String isoLangCode = detail.getIsoLangCode();
             names.add(new Translation(isoLangCode, detail.getName()));
             if (detail.getSecondName() != null) {
