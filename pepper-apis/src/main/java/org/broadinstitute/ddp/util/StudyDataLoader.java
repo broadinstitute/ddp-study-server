@@ -1059,6 +1059,7 @@ public class StudyDataLoader {
             throws IOException, InterruptedException {
         String emailAddress = data.getAsJsonObject().get("portal_user_email").getAsString();
         boolean hasPassword = data.getAsJsonObject().has("password");
+        Thread.sleep(200);
         List<User> auth0UsersByEmail = auth0Util.getAuth0UsersByEmail(emailAddress, mgmtToken);
         String auth0UserId = !auth0UsersByEmail.isEmpty() ? auth0UsersByEmail.get(0).getId() : null;
         long tenantId = jdbiAuth0Tenant.findByDomain(auth0Domain).getId();
@@ -1068,8 +1069,10 @@ public class StudyDataLoader {
 
 
         if (userOptional.isPresent()) {
-            String altPid = data.getAsJsonObject().get("datstat_altpid").getAsString();
-            userDao.updateLegacyAltPidByAuth0UserIdAndTenantId(auth0UserId, altPid, tenantId);
+            if (data.getAsJsonObject().get("registration_type").getAsInt() == 3) {
+                String altPid = data.getAsJsonObject().get("datstat_altpid").getAsString();
+                userDao.updateLegacyAltPidByAuth0UserIdAndTenantId(auth0UserId, altPid, tenantId);
+            }
             operatorUser = userDao.findUserByAuth0UserId(auth0UserId, tenantId).get();
         } else {
             if (auth0UserId == null) {
@@ -1093,6 +1096,7 @@ public class StudyDataLoader {
                                           UserDao userDao) throws Exception {
         String emailAddress = data.getAsJsonObject().get("datstat_email").getAsString();
         boolean hasPassword = data.getAsJsonObject().has("password");
+        Thread.sleep(200);
         List<User> auth0UsersByEmail = auth0Util.getAuth0UsersByEmail(emailAddress, mgmtToken);
         String auth0UserId = !auth0UsersByEmail.isEmpty() ? auth0UsersByEmail.get(0).getId() : null;
 
