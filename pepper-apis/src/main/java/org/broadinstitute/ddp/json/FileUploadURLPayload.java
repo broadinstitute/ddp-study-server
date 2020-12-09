@@ -1,7 +1,7 @@
 package org.broadinstitute.ddp.json;
 
 import javax.validation.constraints.NotBlank;
-import java.util.Date;
+import javax.validation.constraints.NotNull;
 
 import com.google.gson.annotations.SerializedName;
 
@@ -14,11 +14,9 @@ public class FileUploadURLPayload {
     @SerializedName("mimeType")
     String mimeType;
 
+    @NotNull
     @SerializedName("fileSize")
     Long fileSize;
-
-    @SerializedName("createdDate")
-    Date createdDate;
 
     @SerializedName("activityCode")
     String activityCode;
@@ -57,10 +55,6 @@ public class FileUploadURLPayload {
 
     public Long getFileSize() {
         return fileSize;
-    }
-
-    public Date getCreatedDate() {
-        return createdDate;
     }
 
     public String getMimeType() {

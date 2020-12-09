@@ -100,7 +100,7 @@ public class SendExitNotificationRoute extends ValidatedJsonInputRoute<StudyExit
                     Map<String, String> vars = new HashMap<>();
                     vars.put(NotificationTemplateVariables.DDP_PARTICIPANT_EXIT_NOTES, StringUtils.defaultString(payload.getNotes()));
                     queuedEventDao.insertNotification(eventDto.getEventConfigurationId(), 0L,
-                            userDto.getUserId(), operatorUser.getId(), vars);
+                            userDto.getUserId(), operatorUser.getId(), vars, null);
                 } else {
                     LOG.error("Exit request event configuration with id={} is configured with unsupported actionType={}",
                             eventDto.getEventConfigurationId(), eventDto.getEventActionType());

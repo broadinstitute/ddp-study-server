@@ -1,6 +1,6 @@
 package org.broadinstitute.ddp.model.fileupload;
 
-import java.util.Date;
+import java.time.Instant;
 
 import org.jdbi.v3.core.mapper.reflect.ColumnName;
 import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
@@ -13,7 +13,7 @@ public class FileUpload {
     private String fileName;
     private Long fileSize;
     private FileUploadStatus status;
-    private Date fileCreationTime;
+    private Instant fileCreationTime;
 
     @JdbiConstructor
     public FileUpload(
@@ -24,7 +24,7 @@ public class FileUpload {
             @ColumnName("file_name") String fileName,
             @ColumnName("file_size") Long fileSize,
             @ColumnName("status") FileUploadStatus status,
-            @ColumnName("file_creation_time") Date fileCreationTime) {
+            @ColumnName("file_creation_time") Instant fileCreationTime) {
         this.id = id;
         this.fileUploadGuid = fileUploadGuid;
         this.bucketFileUrl = bucketFileUrl;
@@ -63,7 +63,7 @@ public class FileUpload {
         return status;
     }
 
-    public Date getFileCreationTime() {
+    public Instant getFileCreationTime() {
         return fileCreationTime;
     }
 }

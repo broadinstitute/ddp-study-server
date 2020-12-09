@@ -102,7 +102,8 @@ public class JoinMailingListRoute extends ValidatedJsonInputRoute<JoinMailingLis
                     queuedEventDao.insertNotification(eventConfig.getEventConfigurationId(),
                             0,
                             payload.getEmailAddress(),
-                            Collections.<String, String>emptyMap());
+                            Collections.<String, String>emptyMap(),
+                            null);
                     LOG.info("Queued mailing list email send to {}", payload.getEmailAddress());
                 }
             }

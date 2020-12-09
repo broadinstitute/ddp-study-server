@@ -38,7 +38,7 @@
             <column name="status" type="bigint">
                 <constraints nullable="false" foreignKeyName="file_upload2file_upload_status_fk" references="file_upload_status(file_upload_status_id)"/>
             </column>
-            <column name="file_creation_time" type="datetime">
+            <column name="file_creation_time" type="bigint">
                 <constraints nullable="true"/>
             </column>
         </createTable>

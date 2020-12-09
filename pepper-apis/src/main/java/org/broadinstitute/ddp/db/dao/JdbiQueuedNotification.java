@@ -17,7 +17,7 @@ public interface JdbiQueuedNotification extends SqlObject {
     /**
      * Updates the email address to use for this notification.  Do not
      * use this method when sending to users who have an auth0 account.
-     * Instead use {@link QueuedEventDao#insertNotification(long, Long, Long, Long, Map)}.
+     * Instead use {@link QueuedEventDao#insertNotification(long, Long, Long, Long, Map, java.util.Set)}.
      * @param queuedEventId the qeueued event id record to update
      * @param toEmailAddress the email address
      * @return number of rows updated

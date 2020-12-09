@@ -2,12 +2,14 @@ package org.broadinstitute.ddp.service;
 
 import java.net.URL;
 import java.time.Instant;
-import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import com.google.api.gax.paging.Page;
 import com.google.auth.oauth2.GoogleCredentials;
+import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.BlobId;
 import com.google.cloud.storage.BlobInfo;
 import com.google.cloud.storage.HttpMethod;
@@ -59,13 +61,13 @@ public class FileUploadService {
 
     public URL getSignedURLForUpload(Handle handle, String fileUploadGuid, String studyGuid, String activityCode,
                                      String activityInstanceGuid, String answerGuid, String filename,
-                                     Long fileSize, Date fileCreationTime, String mimeType) {
+                                     Long fileSize, String mimeType) {
         String bucketFilename = generateName(studyGuid, activityCode, activityInstanceGuid, answerGuid, fileUploadGuid, filename);
         BlobInfo blobInfo = BlobInfo.newBuilder(BlobId.of(bucketName,
                 bucketFilename)).build();
 
         handle.attach(FileUploadDao.class).insertFileUpload(fileUploadGuid, bucketFilename, Instant.now().toEpochMilli(), filename,
-                fileSize, FileUploadStatus.AUTHORIZED, fileCreationTime);
+                fileSize, FileUploadStatus.AUTHORIZED);
 
         Map<String, String> extensionHeaders = new HashMap<>();
         extensionHeaders.put("Content-Type", mimeType);
@@ -79,12 +81,20 @@ public class FileUploadService {
         FileUploadDao fileUploadDao = handle.attach(FileUploadDao.class);
         FileUpload fileUpload = fileUploadDao.getFileUploadByGuid(guid)
                 .orElseThrow(() -> new DaoException("Could not find file upload with guid " + guid));
-        boolean valid = true;
         //TODO: validate bucket contents
-        if (valid) {
-            fileUploadDao.setStatus(fileUpload.getFileUploadGuid(), FileUploadStatus.VERIFIED);
+        Long bucketFileSize;
+        Long bucketFileCreateTime;
+        Page<Blob> page = storage.list(bucketName, Storage.BlobListOption.prefix(fileUpload.getBucketFileUrl()));
+        Iterator<Blob> iterator = page.getValues().iterator();
+        if (iterator.hasNext()) {
+            Blob blob = iterator.next();
+            bucketFileSize = blob.getSize();
+            bucketFileCreateTime = blob.getCreateTime();
+            if (bucketFileSize != null && bucketFileSize.equals(fileUpload.getFileSize())) {
+                fileUploadDao.setVerified(fileUpload.getFileUploadGuid(), bucketFileCreateTime);
+            }
         }
-        return valid;
+        return false;
     }
 
     private static String generateName(String studyGuid, String activityCode, String activityInstanceGuid,
