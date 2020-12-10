@@ -1,5 +1,6 @@
 package org.broadinstitute.ddp.db.dao;
 
+import java.time.Instant;
 import java.util.Optional;
 
 import org.broadinstitute.ddp.model.fileupload.FileUpload;
@@ -21,7 +22,7 @@ public interface FileUploadDao extends SqlObject {
     long insertFileUpload(
             @Bind("fileUploadGuid") String fileUploadGuid,
             @Bind("bucketFileUrl") String bucketFileUrl,
-            @Bind("urlCreationTime") Long urlCreationTime,
+            @Bind("urlCreationTime") Instant urlCreationTime,
             @Bind("fileName") String fileName,
             @Bind("fileSize") Long fileSize,
             @Bind("status") FileUploadStatus status);

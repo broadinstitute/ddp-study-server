@@ -66,7 +66,7 @@ public class FileUploadService {
         BlobInfo blobInfo = BlobInfo.newBuilder(BlobId.of(bucketName,
                 bucketFilename)).build();
 
-        handle.attach(FileUploadDao.class).insertFileUpload(fileUploadGuid, bucketFilename, Instant.now().toEpochMilli(), filename,
+        handle.attach(FileUploadDao.class).insertFileUpload(fileUploadGuid, bucketFilename, Instant.now(), filename,
                 fileSize, FileUploadStatus.AUTHORIZED);
 
         Map<String, String> extensionHeaders = new HashMap<>();
