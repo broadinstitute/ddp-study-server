@@ -678,21 +678,19 @@ public class StudyDataLoaderTest {
 
         when(mockDataLoader.createLegacyPepperUser(
                 any(JdbiUser.class),
-                any(JdbiClient.class),
                 any(JsonElement.class),
                 anyString(),
                 anyString(),
-                any(ClientDto.class),
-                any(UserDao.class))).thenCallRealMethod();
+                any(ClientDto.class)
+        )).thenCallRealMethod();
 
         mockDataLoader.createLegacyPepperUser(
                 mockJdbiUser,
-                mockJdbiClient,
                 participantData,
                 pretendUserGuid,
                 pretendUserHruid,
-                mockClientDto,
-                mockUserDao);
+                mockClientDto
+        );
 
         ArgumentCaptor<String> creationEmail = ArgumentCaptor.forClass(String.class);
         ArgumentCaptor<String> creationPass = ArgumentCaptor.forClass(String.class);
