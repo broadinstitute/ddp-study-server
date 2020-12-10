@@ -461,7 +461,7 @@ public class MigratedDataReconcileCli {
                     }
 
                     //compare values
-                    if (sourceFieldValue.equalsIgnoreCase(targetFieldValue)) {
+                    if (sourceFieldValue.trim().equalsIgnoreCase(targetFieldValue.trim())) {
                         //printRecord(csvRecord.get("legacy_altpid"), csvRecord.get("participant_guid"),
                         // sourceFieldName, targetFieldName, sourceFieldValue, targetFieldValue, true);
                         LOG.debug("{} and {} values match. source value: {} target value: {} ",

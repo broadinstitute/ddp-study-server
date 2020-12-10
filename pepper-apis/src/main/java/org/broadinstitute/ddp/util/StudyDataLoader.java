@@ -71,6 +71,7 @@ import org.broadinstitute.ddp.db.dao.StudyGovernanceDao;
 import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dao.UserGovernanceDao;
 import org.broadinstitute.ddp.db.dao.UserProfileDao;
+import org.broadinstitute.ddp.db.dao.UserProfileSql;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.db.dto.ClientDto;
 import org.broadinstitute.ddp.db.dto.MedicalProviderDto;
@@ -1077,10 +1078,15 @@ public class StudyDataLoader {
             if (data.getAsJsonObject().get("registration_type").getAsInt() == 3) {
                 String altPid = data.getAsJsonObject().get("datstat_altpid").getAsString();
                 String userCreatedAt = getStringValueFromElement(data, "datstat_created");
+                String firstName = getStringValueFromElement(data, "datstat_firstname");
+                String lastName = getStringValueFromElement(data, "datstat_lastname");
                 LocalDateTime createdAtDate = LocalDateTime.parse(userCreatedAt, formatter);
                 long createdAtMillis = createdAtDate.toInstant(ZoneOffset.UTC).toEpochMilli();
+                UserProfileSql userProfileSql = handle.attach(UserProfileSql.class);
                 userDao.updateLegacyAltPidByAuth0UserIdAndTenantId(auth0UserId, altPid, tenantId);
                 userDao.updateLegacyCreatedAtByAuth0UserIdAndTenantId(auth0UserId, createdAtMillis, tenantId);
+                userProfileSql.updateFirstName(userOptional.get().getId(), firstName);
+                userProfileSql.updateLastName(userOptional.get().getId(), lastName);
             }
             operatorUser = userDao.findUserByAuth0UserId(auth0UserId, tenantId).get();
         } else {
@@ -1227,9 +1233,8 @@ public class StudyDataLoader {
         String lastName;
 
         if (isOperator) {
-            String[] portalUsername = data.getAsJsonObject().get("portal_user_name").getAsString().split(" ");
-            firstName = portalUsername[0];
-            lastName = portalUsername[1];
+            firstName = StringUtils.trim(data.getAsJsonObject().get("datstat_firstname").getAsString());
+            lastName = StringUtils.trim(data.getAsJsonObject().get("datstat_lastname").getAsString());
         } else {
             if (!userJsonObject.get("datstat_gender").isJsonNull() && userJsonObject.get("datstat_gender") != null) {
                 String genderCode = StringUtils.trim(data.getAsJsonObject().get("datstat_gender").getAsString());
