@@ -81,7 +81,6 @@ public class FileUploadService {
         FileUploadDao fileUploadDao = handle.attach(FileUploadDao.class);
         FileUpload fileUpload = fileUploadDao.getFileUploadByGuid(guid)
                 .orElseThrow(() -> new DaoException("Could not find file upload with guid " + guid));
-        //TODO: validate bucket contents
         Long bucketFileSize;
         Long bucketFileCreateTime;
         Page<Blob> page = storage.list(bucketName, Storage.BlobListOption.prefix(fileUpload.getBucketFileUrl()));
@@ -92,6 +91,7 @@ public class FileUploadService {
             bucketFileCreateTime = blob.getCreateTime();
             if (bucketFileSize != null && bucketFileSize.equals(fileUpload.getFileSize())) {
                 fileUploadDao.setVerified(fileUpload.getFileUploadGuid(), bucketFileCreateTime);
+                return true;
             }
         }
         return false;
