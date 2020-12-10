@@ -1076,7 +1076,11 @@ public class StudyDataLoader {
         if (userOptional.isPresent()) {
             if (data.getAsJsonObject().get("registration_type").getAsInt() == 3) {
                 String altPid = data.getAsJsonObject().get("datstat_altpid").getAsString();
+                String userCreatedAt = getStringValueFromElement(data, "datstat_created");
+                LocalDateTime createdAtDate = LocalDateTime.parse(userCreatedAt, formatter);
+                long createdAtMillis = createdAtDate.toInstant(ZoneOffset.UTC).toEpochMilli();
                 userDao.updateLegacyAltPidByAuth0UserIdAndTenantId(auth0UserId, altPid, tenantId);
+                userDao.updateLegacyCreatedAtByAuth0UserIdAndTenantId(auth0UserId, createdAtMillis, tenantId);
             }
             operatorUser = userDao.findUserByAuth0UserId(auth0UserId, tenantId).get();
         } else {

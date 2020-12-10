@@ -134,6 +134,10 @@ public interface UserDao extends SqlObject {
     int updateLegacyAltPidByAuth0UserIdAndTenantId(@Bind("auth0UserId") String auth0UserId,
                                                    @Bind("altpid") String legacyAltPid, @Bind("tenantId") long tenantId);
 
+    @SqlUpdate("update user set created_at = :createdAt where auth0_user_id = :auth0UserId and auth0_tenant_id = :tenantId")
+    int updateLegacyCreatedAtByAuth0UserIdAndTenantId(@Bind("auth0UserId") String auth0UserId,
+                                                   @Bind("createdAt") long createdAt, @Bind("tenantId") long tenantId);
+
     default int deleteAllExpiredTemporaryUsers() {
         ActivityInstanceDao instanceDao = getActivityInstanceDao();
         JdbiUser jdbiUser = getJdbiUser();
