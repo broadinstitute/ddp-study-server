@@ -9,22 +9,22 @@ public class FileUpload {
     private long id;
     private String fileUploadGuid;
     private String bucketFileUrl;
-    private Long urlCreationTime;
+    private Instant urlCreationTime;
     private String fileName;
     private Long fileSize;
     private FileUploadStatus status;
-    private Instant fileCreationTime;
+    private Long fileCreationTime;
 
     @JdbiConstructor
     public FileUpload(
             @ColumnName("file_upload_id") long id,
             @ColumnName("file_upload_guid") String fileUploadGuid,
             @ColumnName("bucket_file_url") String bucketFileUrl,
-            @ColumnName("url_creation_time") Long urlCreationTime,
+            @ColumnName("url_creation_time") Instant urlCreationTime,
             @ColumnName("file_name") String fileName,
             @ColumnName("file_size") Long fileSize,
             @ColumnName("status") FileUploadStatus status,
-            @ColumnName("file_creation_time") Instant fileCreationTime) {
+            @ColumnName("file_creation_time") Long fileCreationTime) {
         this.id = id;
         this.fileUploadGuid = fileUploadGuid;
         this.bucketFileUrl = bucketFileUrl;
@@ -47,7 +47,7 @@ public class FileUpload {
         return bucketFileUrl;
     }
 
-    public Long getUrlCreationTime() {
+    public Instant getUrlCreationTime() {
         return urlCreationTime;
     }
 
@@ -63,7 +63,7 @@ public class FileUpload {
         return status;
     }
 
-    public Instant getFileCreationTime() {
+    public Long getFileCreationTime() {
         return fileCreationTime;
     }
 }

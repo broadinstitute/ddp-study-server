@@ -26,7 +26,7 @@
             <column name="bucket_file_url" type="varchar(1000)">
                 <constraints nullable="false" unique="true" uniqueConstraintName="bucket_file_url_uk"/>
             </column>
-            <column name="url_creation_time" type="bigint">
+            <column name="url_creation_time" type="datetime(3)">
                 <constraints nullable="false"/>
             </column>
             <column name="file_name" type="varchar(1000)">
