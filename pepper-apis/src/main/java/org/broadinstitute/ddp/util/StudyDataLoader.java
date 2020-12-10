@@ -268,7 +268,7 @@ public class StudyDataLoader {
         if (userGuid != null) {
             LOG.warn("Looks like  Participant data already loaded: " + userGuid);
             return userGuid;
-            //watch out.. early return
+            //watch out.. early reuserGuidturn
         }
 
         userGuid = DBUtils.uniqueUserGuid(handle);
@@ -278,7 +278,6 @@ public class StudyDataLoader {
         JdbiClient clientDao = handle.attach(JdbiClient.class);
         JdbiLanguageCode jdbiLanguageCode = handle.attach(JdbiLanguageCode.class);
         UserProfileDao profileDao = handle.attach(UserProfileDao.class);
-        StudyGovernanceDao studyGovernanceDao = handle.attach(StudyGovernanceDao.class);
         JdbiAuth0Tenant jdbiAuth0Tenant = handle.attach(JdbiAuth0Tenant.class);
 
         UserDto pepperUser;
@@ -288,12 +287,12 @@ public class StudyDataLoader {
                 pepperUser = createLegacyPepperUser(jdbiUser, clientDao, datstatData, userGuid, userHruid, clientDto, userDao);
                 break;
             case 2:
-                pepperUser = createOperatorAndGovernedUser(jdbiUser, clientDao, datstatData, userGuid, userHruid,
+                pepperUser = createOperatorAndGovernedUser(datstatData, userHruid,
                         clientDto, userGovernanceDao, userDao, studyDto,
-                        jdbiLanguageCode, profileDao, studyGovernanceDao, jdbiAuth0Tenant, handle);
+                        jdbiLanguageCode, profileDao, jdbiAuth0Tenant, handle);
                 break;
             case 3:
-                org.broadinstitute.ddp.model.user.User operatorUser = createOrUpdateOperatorUser(jdbiUser, datstatData, userGuid,
+                org.broadinstitute.ddp.model.user.User operatorUser = createOrUpdateOperatorUser(datstatData,
                         userHruid, clientDto, userDao, jdbiLanguageCode, profileDao, jdbiAuth0Tenant, handle);
                 pepperUser = new UserDto(operatorUser.getId(), operatorUser.getAuth0UserId(),
                         operatorUser.getGuid(), operatorUser.getHruid(), operatorUser.getLegacyAltPid(),
@@ -1016,16 +1015,17 @@ public class StudyDataLoader {
         return parentAnswer.getAnswerGuid();
     }
 
-    public UserDto createOperatorAndGovernedUser(JdbiUser jdbiUser, JdbiClient clientDao,
-                                                 JsonElement data, String userGuid, String userHruid, ClientDto clientDto,
+    public UserDto createOperatorAndGovernedUser(JsonElement data, String userHruid, ClientDto clientDto,
                                                  UserGovernanceDao userGovernanceDao, UserDao userDao, StudyDto studyDto,
                                                  JdbiLanguageCode jdbiLanguageCode,
                                                  UserProfileDao userProfileDao,
-                                                 StudyGovernanceDao studyGovernanceDao,
                                                  JdbiAuth0Tenant jdbiAuth0Tenant, Handle handle) throws Exception {
 
-        org.broadinstitute.ddp.model.user.User operatorUser = createOrUpdateOperatorUser(jdbiUser, data, userGuid,
+        org.broadinstitute.ddp.model.user.User operatorUser = createOrUpdateOperatorUser(data,
                 userHruid, clientDto, userDao, jdbiLanguageCode, userProfileDao, jdbiAuth0Tenant, handle);
+
+
+        StudyGovernanceDao studyGovernanceDao = handle.attach(StudyGovernanceDao.class);
 
 
         String legacyAltPid = data.getAsJsonObject().get("datstat_altpid").getAsString();
@@ -1054,13 +1054,14 @@ public class StudyDataLoader {
                 governedUser.getExpiresAt());
     }
 
-    private org.broadinstitute.ddp.model.user.User createOrUpdateOperatorUser(JdbiUser jdbiUser, JsonElement data,
-                                                                              String userGuid, String userHruid,
+    private org.broadinstitute.ddp.model.user.User createOrUpdateOperatorUser(JsonElement data,
+                                                                              String userHruid,
                                                                               ClientDto clientDto, UserDao userDao,
                                                                               JdbiLanguageCode jdbiLanguageCode,
                                                                               UserProfileDao userProfileDao,
                                                                               JdbiAuth0Tenant jdbiAuth0Tenant, Handle handle)
             throws IOException, InterruptedException {
+        JdbiUser jdbiUser = handle.attach(JdbiUser.class);
         String emailAddress = data.getAsJsonObject().get("portal_user_email").getAsString();
         boolean hasPassword = data.getAsJsonObject().has("password");
         List<User> auth0UsersByEmail = auth0Util.getAuth0UsersByEmail(emailAddress, mgmtToken);
@@ -1070,6 +1071,7 @@ public class StudyDataLoader {
 
         org.broadinstitute.ddp.model.user.User operatorUser;
 
+        String userGuid = DBUtils.uniqueUserGuid(handle);
 
         if (userOptional.isPresent()) {
             if (data.getAsJsonObject().get("registration_type").getAsInt() == 3) {
@@ -1086,12 +1088,11 @@ public class StudyDataLoader {
                 }
             }
             UserDto operatorUserDto = insertNewUser(jdbiUser, data, userGuid, userHruid, clientDto, auth0UserId);
-            String operatorGuid = operatorUserDto.getUserGuid();
-            operatorUser = userDao.findUserByGuid(operatorGuid)
-                    .orElseThrow(() -> new DDPException("Could not find operator with guid " + operatorGuid));
+            operatorUser = userDao.findUserByGuid(userGuid)
+                    .orElseThrow(() -> new DDPException("Could not find operator with guid " + userGuid));
             addUserProfile(operatorUserDto, data, jdbiLanguageCode, userProfileDao, true);
             StudyDto studyDto = handle.attach(StudyDto.class);
-            addUserStudyEnrollment(handle, data, studyDto, operatorGuid, );
+            addUserStudyEnrollment(handle, data, studyDto, userGuid, operatorUserDto);
         }
         return operatorUser;
     }
