@@ -23,7 +23,6 @@ import org.broadinstitute.ddp.db.dto.SendgridEmailEventActionDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
-import org.broadinstitute.ddp.model.activity.types.DsmNotificationEventType;
 import org.broadinstitute.ddp.model.activity.types.EventActionType;
 import org.broadinstitute.ddp.model.activity.types.EventTriggerType;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
@@ -32,6 +31,7 @@ import org.broadinstitute.ddp.model.copy.CopyConfiguration;
 import org.broadinstitute.ddp.model.copy.CopyConfigurationPair;
 import org.broadinstitute.ddp.model.copy.CopyLocation;
 import org.broadinstitute.ddp.model.copy.CopyLocationType;
+import org.broadinstitute.ddp.model.dsm.DsmNotificationEventType;
 import org.broadinstitute.ddp.model.event.ActivityStatusChangeTrigger;
 import org.broadinstitute.ddp.model.event.DsmNotificationTrigger;
 import org.broadinstitute.ddp.model.event.EventTrigger;
@@ -169,6 +169,9 @@ public class EventBuilder {
                 long linkedActivityId = ActivityBuilder.findActivityId(handle, studyDto.getId(), linkedActivityCode);
                 actionDto.setLinkedActivityId(linkedActivityId);
             }
+
+            Boolean allowExternalAttachments = ConfigUtil.getBoolIfPresent(actionCfg, "allowExternalAttachments");
+            actionDto.setAllowExternalAttachments(allowExternalAttachments);
 
             long actionId;
             if (ACTION_STUDY_EMAIL.equals(type)) {

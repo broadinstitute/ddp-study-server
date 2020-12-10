@@ -335,6 +335,9 @@ public class TreeWalkInterpreter implements PexInterpreter {
                 throw new PexFetchException("Could not find snapshot substitution " + subName);
             }
             return value;
+        } else if (predCtx instanceof PexParser.HasPreviousInstancePredicateContext) {
+            var instanceDao = ictx.getHandle().attach(ActivityInstanceDao.class);
+            return instanceDao.findMostRecentInstanceBeforeCurrent(instanceId).isPresent();
         } else {
             throw new PexUnsupportedException("Unsupported form instance predicate: " + predCtx.getText());
         }
@@ -647,10 +650,11 @@ public class TreeWalkInterpreter implements PexInterpreter {
         }
     }
 
-    private Object evalEventTestResultQuery(InterpreterContext ictx, PexParser.EventTestResultQueryContext ctx) {
+    private Object evalEventKitQuery(InterpreterContext ictx, PexParser.EventKitQueryContext ctx) {
         if (UserType.OPERATOR.equals(ctx.USER_TYPE().getText())) {
             throw new PexUnsupportedException("Operator context is not supported for event queries");
         }
+
         EventSignal eventSignal = ictx.getEventSignal();
         if (eventSignal == null) {
             throw new PexRuntimeException("Expected event signal data but none found in evaluation context");
@@ -659,6 +663,33 @@ public class TreeWalkInterpreter implements PexInterpreter {
             throw new PexRuntimeException("Expected DSM notification but found in evaluation context event type "
                     + eventSignal.getEventTriggerType());
         }
+
+        var signal = (DsmNotificationSignal) eventSignal;
+        PexParser.KitEventQueryContext queryCtx = ctx.kitEventQuery();
+        if (queryCtx instanceof PexParser.IsKitReasonQueryContext) {
+            return ((PexParser.IsKitReasonQueryContext) queryCtx).STR()
+                    .stream()
+                    .map(this::extractString)
+                    .anyMatch(reason -> signal.getKitReasonType().name().equals(reason));
+        } else {
+            throw new PexUnsupportedException("Unhandled kit event query: " + queryCtx.getText());
+        }
+    }
+
+    private Object evalEventTestResultQuery(InterpreterContext ictx, PexParser.EventTestResultQueryContext ctx) {
+        if (UserType.OPERATOR.equals(ctx.USER_TYPE().getText())) {
+            throw new PexUnsupportedException("Operator context is not supported for event queries");
+        }
+
+        EventSignal eventSignal = ictx.getEventSignal();
+        if (eventSignal == null) {
+            throw new PexRuntimeException("Expected event signal data but none found in evaluation context");
+        }
+        if (eventSignal.getEventTriggerType() != EventTriggerType.DSM_NOTIFICATION) {
+            throw new PexRuntimeException("Expected DSM notification but found in evaluation context event type "
+                    + eventSignal.getEventTriggerType());
+        }
+
         TestResult testResult = ((DsmNotificationSignal) eventSignal).getTestResult();
         if (testResult == null) {
             throw new PexRuntimeException("Expected test result event data but none found in evaluation context");
@@ -782,6 +813,11 @@ public class TreeWalkInterpreter implements PexInterpreter {
         @Override
         public Object visitEventTestResultQuery(PexParser.EventTestResultQueryContext ctx) {
             return interpreter.evalEventTestResultQuery(ictx, ctx);
+        }
+
+        @Override
+        public Object visitEventKitQuery(PexParser.EventKitQueryContext ctx) {
+            return interpreter.evalEventKitQuery(ictx, ctx);
         }
     }
 }

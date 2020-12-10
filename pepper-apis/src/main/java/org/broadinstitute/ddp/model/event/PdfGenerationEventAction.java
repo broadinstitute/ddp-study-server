@@ -38,7 +38,8 @@ public class PdfGenerationEventAction extends EventAction {
                 postAfter,
                 eventSignal.getParticipantId(),
                 eventSignal.getOperatorId(),
-                new HashMap<>());
+                new HashMap<>(),
+                null);
 
         LOG.info("Inserted queued event {} for configuration {}", queuedEventId,
                 eventConfiguration.getEventConfigurationId());

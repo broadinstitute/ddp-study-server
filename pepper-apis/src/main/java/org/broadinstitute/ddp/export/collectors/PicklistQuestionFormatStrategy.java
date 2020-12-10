@@ -35,15 +35,6 @@ public class PicklistQuestionFormatStrategy implements ResponseFormatStrategy<Pi
             props.put(definition.getStableId(), MappingUtil.newTextType());
         }
 
-        for (PicklistGroupDef group : definition.getGroups()) {
-            for (PicklistOptionDef optionDef : group.getOptions()) {
-                if (optionDef.isDetailsAllowed()) {
-                    String key = detailHeader(definition.getStableId(), optionDef.getStableId());
-                    props.put(key, MappingUtil.newTextType());
-                }
-            }
-        }
-
         for (PicklistOptionDef optionDef : definition.getAllPicklistOptions()) {
             if (optionDef.isDetailsAllowed()) {
                 String key = detailHeader(definition.getStableId(), optionDef.getStableId());
@@ -113,14 +104,6 @@ public class PicklistQuestionFormatStrategy implements ResponseFormatStrategy<Pi
         List<String> headers = new ArrayList<>();
         headers.add(definition.getStableId());
 
-        for (PicklistGroupDef group : definition.getGroups()) {
-            for (PicklistOptionDef optionDef : group.getOptions()) {
-                if (optionDef.isDetailsAllowed()) {
-                    headers.add(detailHeader(definition.getStableId(), optionDef.getStableId()));
-                }
-            }
-        }
-
         for (PicklistOptionDef optionDef : definition.getAllPicklistOptions()) {
             if (optionDef.isDetailsAllowed()) {
                 headers.add(detailHeader(definition.getStableId(), optionDef.getStableId()));
@@ -141,9 +124,6 @@ public class PicklistQuestionFormatStrategy implements ResponseFormatStrategy<Pi
 
         List<PicklistOptionDef> options = new ArrayList<>();
         List<String> selectedIds = new ArrayList<>();
-        for (PicklistGroupDef group : question.getGroups()) {
-            options.addAll(group.getOptions());
-        }
 
         options.addAll(question.getAllPicklistOptions());
 

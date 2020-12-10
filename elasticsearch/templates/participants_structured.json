@@ -196,6 +196,9 @@
               "ignore_malformed": false,
               "format": "strict_date_time||strict_date_time_no_millis||epoch_millis"
             },
+            "attributes": {
+              "type": "object"
+            },
             "questionsAnswers": {
               "type": "nested",
               "properties": {

@@ -73,7 +73,8 @@ public class NotificationEventAction extends EventAction {
                 postAfter,
                 signal.getParticipantId(),
                 signal.getOperatorId(),
-                templateSubstitutions);
+                templateSubstitutions,
+                null);
 
         if (notificationType == NotificationType.INVITATION_EMAIL) {
             InvitationDto invitationDto;

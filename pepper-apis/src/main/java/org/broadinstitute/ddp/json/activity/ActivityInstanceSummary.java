@@ -55,6 +55,9 @@ public class ActivityInstanceSummary implements TranslatedSummary {
     @SerializedName("isFollowup")
     private boolean isFollowup;
 
+    @SerializedName("previousInstanceGuid")
+    private String previousInstanceGuid;
+
     private transient long activityInstanceId;
     private transient String isoLanguageCode;
     private transient String activityTypeName;
@@ -249,5 +252,9 @@ public class ActivityInstanceSummary implements TranslatedSummary {
 
     public void setInstanceNumber(int instanceNumber) {
         this.instanceNumber = instanceNumber;
+    }
+
+    public void setPreviousInstanceGuid(String previousInstanceGuid) {
+        this.previousInstanceGuid = previousInstanceGuid;
     }
 }

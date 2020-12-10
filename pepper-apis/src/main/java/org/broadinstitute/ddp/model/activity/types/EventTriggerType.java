@@ -15,7 +15,8 @@ public enum EventTriggerType {
     REACHED_AOM_PREP(true),
     USER_NOT_IN_STUDY(true),
     USER_REGISTERED(true),
-    WORKFLOW_STATE(false);
+    WORKFLOW_STATE(false),
+    SEND_STUDY_EMAIL(true);
 
     private boolean isStatic;
 

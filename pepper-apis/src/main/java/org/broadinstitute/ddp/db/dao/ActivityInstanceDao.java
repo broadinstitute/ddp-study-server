@@ -247,7 +247,8 @@ public interface ActivityInstanceDao extends SqlObject {
 
     @SqlQuery("select * from activity_instance_substitution where activity_instance_id in (<instanceIds>)")
     @UseRowReducer(BulkFindSubstitutionsReducer.class)
-    Stream<SubstitutionsWrapper> bulkFindSubstitutions(@BindList("instanceIds") Set<Long> instanceIds);
+    Stream<SubstitutionsWrapper> bulkFindSubstitutions(
+            @BindList(value = "instanceIds", onEmpty = EmptyHandling.NULL) Set<Long> instanceIds);
 
     @UseStringTemplateSqlLocator
     @SqlQuery("queryBaseResponsesByInstanceId")

@@ -435,10 +435,10 @@ public class BrainPediatricsUpdates implements CustomTask {
         @SqlUpdate("update i18n_study_activity_summary_trans set translation_text = :text where i18n_study_activity_summary_trans_id = :id")
         int updateSummaryTransText(@Bind("id") long id, @Bind("text") String text);
 
-        @SqlUpdate("update i18n_study_activity set name = :name where study_activity_id = :studyActivityId")
+        @SqlUpdate("update i18n_activity_detail set name = :name where study_activity_id = :studyActivityId")
         int update18nActivityName(@Bind("studyActivityId") long studyActivityId, @Bind("name") String name);
 
-        @SqlUpdate("update i18n_study_activity set subtitle = :text where study_activity_id = :studyActivityId")
+        @SqlUpdate("update i18n_activity_detail set subtitle = :text where study_activity_id = :studyActivityId")
         int update18nActivitySubtitle(@Bind("studyActivityId") long studyActivityId, @Bind("text") String text);
 
         @SqlQuery("select e.expression_id from kit_configuration kc, kit_configuration__kit_rule kckr, kit_rule kr, "

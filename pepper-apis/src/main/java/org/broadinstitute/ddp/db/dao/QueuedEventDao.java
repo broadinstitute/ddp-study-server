@@ -79,21 +79,23 @@ public interface QueuedEventDao extends SqlObject {
 
 
     /**
-     * When sending notifications to users, please use {@link #insertNotification(long, Long, Long, Long, Map)} to
+     * When sending notifications to users, please use {@link #insertNotification(long, Long, Long, Long, Map, Set)} to
      * properly reference user rows.  This method is for sending emails to people other than users, such
      * as people on the stay informed mailing list.
      */
     default long insertNotification(long eventConfigurationId,
                                     long postAfterEpochSeconds,
                                     String toEmailAddress,
-                                    Map<String, String> templateSubstitutions) {
+                                    Map<String, String> templateSubstitutions,
+                                    Set<String> attachmentGuids) {
 
 
         long queuedEventId = insertNotification(eventConfigurationId,
                 postAfterEpochSeconds,
                 null,
                 null,
-                templateSubstitutions);
+                templateSubstitutions,
+                attachmentGuids);
 
         int numRowsUpdated = getJdbiQueuedNotification().updateEmailAddress(queuedEventId, toEmailAddress);
 
@@ -109,7 +111,8 @@ public interface QueuedEventDao extends SqlObject {
                                     Long postAfterEpochSeconds,
                                     Long participantId,
                                     Long operatorId,
-                                    Map<String, String> templateSubstitutions) {
+                                    Map<String, String> templateSubstitutions,
+                                    Set<String> attachmentGuids) {
 
         // insert into base queued_event
         long queuedEventId = getJdbiQueuedEvent().insert(eventConfigurationId,
@@ -124,6 +127,8 @@ public interface QueuedEventDao extends SqlObject {
         }
         JdbiQueuedNotificationTemplateSubstitution jdbiTemplateSubstitution = getJdbiTemplateSubstitution();
 
+        // TODO: create attachments2notification linkage (new table), which is going to be picked up by housekeeping if
+        // "allowExternalAttachments" is set on event configuration
 
         for (Map.Entry<String, String> templateSubstitution : templateSubstitutions.entrySet()) {
             long substitutionId = jdbiTemplateSubstitution.insert(queuedEventId,

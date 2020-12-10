@@ -32,13 +32,15 @@ from
     join picklist_option po on po.picklist_option_id = poa.picklist_option_id 
     join revision as r on r.revision_id = po.revision_id
     join enrollment_status_type est on est.enrollment_status_type_id = se.enrollment_status_type_id
+    left join activity_instance ai_ex on ai_ex.participant_id = se.user_id and ai_ex.study_activity_id = ai.study_activity_id and ai_ex.created_at > ai.created_at
 where 
     se.study_id = :studyId and
     qsc.stable_id = :stableId and 
     est.enrollment_status_type_code = 'ENROLLED' and
     se.valid_to is null and
     r.start_date \<= ai.created_at and
-    (r.end_date is null or ai.created_at \< r.end_date)
+    (r.end_date is null or ai.created_at \< r.end_date) and
+    ai_ex.activity_instance_id is null
 group by 1
 >>
 
@@ -68,12 +70,14 @@ from
     left join picklist_question pq on pq.question_id = q.question_id 
     left join boolean_answer ba on ba.answer_id = a.answer_id
     join enrollment_status_type est on est.enrollment_status_type_id = se.enrollment_status_type_id
+    left join activity_instance ai_ex on ai_ex.participant_id = se.user_id and ai_ex.study_activity_id = ai.study_activity_id and ai_ex.created_at > ai.created_at
 where 
     qsc.umbrella_study_id = :studyId and
     qsc.stable_id = :stableId and 
     est.enrollment_status_type_code = 'ENROLLED' and
     se.valid_to is null and
-    :value = coalesce(po.picklist_option_stable_id, export_set(ba.answer, 'true', 'false', '', 1)) 
+    :value = coalesce(po.picklist_option_stable_id, export_set(ba.answer, 'true', 'false', '', 1)) and
+    ai_ex.activity_instance_id is null
 group by 1 
 >>
 

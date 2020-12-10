@@ -1,7 +1,7 @@
 package org.broadinstitute.ddp.model.event;
 
 import org.broadinstitute.ddp.db.dto.EventConfigurationDto;
-import org.broadinstitute.ddp.model.activity.types.DsmNotificationEventType;
+import org.broadinstitute.ddp.model.dsm.DsmNotificationEventType;
 import org.jdbi.v3.core.Handle;
 
 public class DsmNotificationTrigger extends EventTrigger {

@@ -55,7 +55,8 @@ public interface EventActionSql extends SqlObject {
             @Bind("actionId") long eventActionId,
             @Bind("notificationType") NotificationType notificationType,
             @Bind("notificationService") NotificationServiceType notificationServiceType,
-            @Bind("linkedActivityId") Long linkedActivityId);
+            @Bind("linkedActivityId") Long linkedActivityId,
+            @Bind("allowExternalAttachments") Boolean allowExternalAttachments);
 
     @GetGeneratedKeys
     @SqlUpdate("insert into notification_template (template_key, language_code_id, is_dynamic)"

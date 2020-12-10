@@ -96,6 +96,7 @@ import org.broadinstitute.ddp.route.GetDsmParticipantStatusRoute;
 import org.broadinstitute.ddp.route.GetDsmReleasePdfRoute;
 import org.broadinstitute.ddp.route.GetDsmStudyParticipant;
 import org.broadinstitute.ddp.route.GetDsmTriggeredInstancesRoute;
+import org.broadinstitute.ddp.route.GetFileUploadUrlRoute;
 import org.broadinstitute.ddp.route.GetGovernedStudyParticipantsRoute;
 import org.broadinstitute.ddp.route.GetInstitutionSuggestionsRoute;
 import org.broadinstitute.ddp.route.GetMailAddressRoute;
@@ -133,6 +134,7 @@ import org.broadinstitute.ddp.route.PutTempMailingAddressRoute;
 import org.broadinstitute.ddp.route.ReceiveDsmNotificationRoute;
 import org.broadinstitute.ddp.route.SendEmailRoute;
 import org.broadinstitute.ddp.route.SendExitNotificationRoute;
+import org.broadinstitute.ddp.route.SendStudyEmailRoute;
 import org.broadinstitute.ddp.route.SetParticipantDefaultMailAddressRoute;
 import org.broadinstitute.ddp.route.UpdateMailAddressRoute;
 import org.broadinstitute.ddp.route.UpdateUserEmailRoute;
@@ -149,6 +151,7 @@ import org.broadinstitute.ddp.service.ActivityValidationService;
 import org.broadinstitute.ddp.service.AddressService;
 import org.broadinstitute.ddp.service.CancerService;
 import org.broadinstitute.ddp.service.ConsentService;
+import org.broadinstitute.ddp.service.FileUploadService;
 import org.broadinstitute.ddp.service.FormActivityService;
 import org.broadinstitute.ddp.service.MedicalRecordService;
 import org.broadinstitute.ddp.service.PdfBucketService;
@@ -501,6 +504,11 @@ public class DataDonationPlatform {
 
         // Routes calling DSM
         get(API.PARTICIPANT_STATUS, new GetDsmParticipantStatusRoute(new DsmClient(cfg)), responseSerializer);
+
+        FileUploadService fileUploadService = new FileUploadService(cfg);
+        post(API.FILE_UPLOAD_URL, new GetFileUploadUrlRoute(fileUploadService), responseSerializer);
+
+        post(API.SEND_STUDY_EMAIL, new SendStudyEmailRoute(fileUploadService), responseSerializer);
 
         boolean runScheduler = cfg.getBoolean(ConfigFile.RUN_SCHEDULER);
         if (runScheduler) {
