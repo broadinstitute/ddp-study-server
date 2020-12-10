@@ -1058,7 +1058,8 @@ public class StudyDataLoader {
                                                                               ClientDto clientDto, UserDao userDao,
                                                                               JdbiLanguageCode jdbiLanguageCode,
                                                                               UserProfileDao userProfileDao,
-                                                                              JdbiAuth0Tenant jdbiAuth0Tenant, Handle handle, StudyDto studyDto)
+                                                                              JdbiAuth0Tenant jdbiAuth0Tenant, Handle handle,
+                                                                              StudyDto studyDto)
             throws IOException, InterruptedException {
         JdbiUser jdbiUser = handle.attach(JdbiUser.class);
         String emailAddress = data.getAsJsonObject().get("portal_user_email").getAsString();
@@ -1130,8 +1131,7 @@ public class StudyDataLoader {
         long updatedAtMillis = lastModifiedDate.toInstant(ZoneOffset.UTC).toEpochMilli();
 
         String shortId = null;
-        boolean isOperatorUser = data.getAsJsonObject().get("registration_type").getAsInt() == 2;
-        String altpid = isOperatorUser ? null : data.getAsJsonObject().get("datstat_altpid").getAsString();
+        String altpid = data.getAsJsonObject().get("datstat_altpid").getAsString();
         long userId = userDao.insertMigrationUser(auth0UserId, userGuid, clientDto.getId(), userHruid,
                 altpid, shortId, createdAtMillis, updatedAtMillis);
         UserDto newUser = new UserDto(userId, auth0UserId, userGuid, userHruid, altpid,

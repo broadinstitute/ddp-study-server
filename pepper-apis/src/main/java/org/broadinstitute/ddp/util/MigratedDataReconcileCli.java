@@ -337,10 +337,23 @@ public class MigratedDataReconcileCli {
         csvPrinter.printRecord(csvRecord.get("legacy_altpid"));
         JsonElement datstatData = userData.get("datstatparticipantdata");
         JsonElement datstatMappingData = mappingData.get("datstatparticipantdata");
+        int registrationType = datstatData.getAsJsonObject().get("registration_type").getAsInt();
+
         doCompare(csvRecord, datstatData, datstatMappingData);
 
-        doCompare(csvRecord, userData.get("medicalhistorysurvey"), mappingData.get("atcp_registry_questionnaire"));
+        if (registrationType != 3) {
+            doCompare(csvRecord, userData.get("medicalhistorysurvey"), mappingData.get("atcp_registry_questionnaire"));
 
+            doCompare(csvRecord, userData.get("atregistrationsurvey"), mappingData.get("RegistrationSurvey"));
+
+            doCompare(csvRecord, userData.get("atconsentsurvey"), mappingData.get("ConsentSurvey"));
+
+            doCompare(csvRecord, userData.get("atcontactingphysiciansurvey"), mappingData.get("ContactingPhysicianSurvey"));
+
+            doCompare(csvRecord, userData.get("atgenomestudysurvey"), mappingData.get("GenomeStudySurvey"));
+
+            doCompare(csvRecord, userData.get("atassentsurvey"), mappingData.get("AssentSurvey"));
+        }
 
         //consent has versions
         //JsonElement consentSurveyEl = userData.get("atconsentsurvey");
@@ -363,16 +376,6 @@ public class MigratedDataReconcileCli {
         //      LOG.info("consent survey name: {} .. consent version: {}", consentSurveyName, consentVersion);
         //    doCompare(csvRecord, userData.get("atconsentsurvey"), mappingData.get(consentSurveyName));
         //}
-
-        doCompare(csvRecord, userData.get("atregistrationsurvey"), mappingData.get("RegistrationSurvey"));
-
-        doCompare(csvRecord, userData.get("atconsentsurvey"), mappingData.get("ConsentSurvey"));
-
-        doCompare(csvRecord, userData.get("atcontactingphysiciansurvey"), mappingData.get("ContactingPhysicianSurvey"));
-
-        doCompare(csvRecord, userData.get("atgenomestudysurvey"), mappingData.get("GenomeStudySurvey"));
-
-        doCompare(csvRecord, userData.get("atassentsurvey"), mappingData.get("AssentSurvey"));
 
         //processInstitutions(userData.get("releasesurvey"), InstitutionType.PHYSICIAN, csvRecord);
         //processInstitutions(userData.get("releasesurvey"), InstitutionType.INITIAL_BIOPSY, csvRecord);
