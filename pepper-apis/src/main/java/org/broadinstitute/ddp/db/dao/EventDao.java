@@ -222,13 +222,18 @@ public interface EventDao extends SqlObject {
 
             if (actionType == EventActionType.NOTIFICATION) {
                 long id = view.getColumn("queued_event_id", Long.class);
-                String varName = view.getColumn("substitution_variable_name", String.class);
-
                 var notificationDto = (QueuedNotificationDto) container
                         .computeIfAbsent(id, key -> view.getRow(QueuedNotificationDto.class));
+
+                String varName = view.getColumn("substitution_variable_name", String.class);
                 if (varName != null) {
                     var substitution = view.getRow(NotificationTemplateSubstitutionDto.class);
                     notificationDto.addTemplateSubstitutions(substitution);
+                }
+
+                Long attachmentId = view.getColumn("file_upload_id", Long.class);
+                if (attachmentId != null) {
+                    notificationDto.addAttachments(attachmentId);
                 }
 
                 queuedDto = notificationDto;

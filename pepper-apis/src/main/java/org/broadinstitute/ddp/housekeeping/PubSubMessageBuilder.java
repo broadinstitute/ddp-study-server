@@ -258,7 +258,8 @@ public class PubSubMessageBuilder {
                         queuedNotificationDto.getDefaultSalutation(),
                         queuedNotificationDto.getTemplateSubstitutions(),
                         queuedNotificationDto.getWebBaseUrl(),
-                        queuedNotificationDto.getEventConfigurationId()
+                        queuedNotificationDto.getEventConfigurationId(),
+                        queuedNotificationDto.getAttachmentIds()
                 );
 
                 messageJson = gson.toJson(notificationMessage);

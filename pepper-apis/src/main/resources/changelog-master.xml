@@ -245,4 +245,5 @@
     <include file="db-changes/schema/DDP-5277-revision-activity-naming-details.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/DDP-3709-file-uploads-tables.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/seed/DDP-5385-send-study-email-trigger.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/DDP-5385-notification-attachment.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>

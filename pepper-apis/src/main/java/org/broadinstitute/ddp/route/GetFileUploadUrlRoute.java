@@ -4,6 +4,7 @@ import static org.broadinstitute.ddp.constants.RouteConstants.PathParam.STUDY_GU
 
 import java.net.URL;
 
+import com.google.cloud.storage.HttpMethod;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.json.FileUploadURLPayload;
 import org.broadinstitute.ddp.json.FileUploadUrlResponse;
@@ -31,13 +32,14 @@ public class GetFileUploadUrlRoute extends ValidatedJsonInputRoute<FileUploadURL
     public Object handle(Request request, Response response, FileUploadURLPayload payload) {
         String studyGuid = request.params(STUDY_GUID);
         String fileUploadGuid = GuidUtils.randomStandardGuid();
+        HttpMethod httpMethod = payload.getResumable() ? HttpMethod.POST : HttpMethod.PUT;
         URL url = TransactionWrapper.withTxn(handle -> fileUploadService.getSignedURLForUpload(handle, fileUploadGuid, studyGuid,
-                payload.getActivityCode(),
                 payload.getActivityInstanceGuid(),
                 payload.getAnswerGuid(),
                 payload.getFileName(),
                 payload.getFileSize(),
-                payload.getMimeType()));
-        return new FileUploadUrlResponse(url.toString(), fileUploadGuid);
+                payload.getMimeType(),
+                httpMethod));
+        return new FileUploadUrlResponse(url.toString(), fileUploadGuid, httpMethod.name());
     }
 }

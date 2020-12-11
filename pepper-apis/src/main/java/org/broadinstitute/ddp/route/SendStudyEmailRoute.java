@@ -1,9 +1,9 @@
 package org.broadinstitute.ddp.route;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import com.typesafe.config.Config;
 import org.apache.http.HttpStatus;
@@ -54,32 +54,32 @@ public class SendStudyEmailRoute extends ValidatedJsonInputRoute<SendStudyEmailP
                     handle.attach(EventDao.class)
                             .getNotificationConfigsForMailingListByEventType(studyGuid, EventTriggerType.SEND_STUDY_EMAIL);
             if (!eventConfigs.isEmpty()) {
+                Set<Long> fileUploadIds = new HashSet<>();
                 List<Attachment> attachments = payload.getAttachments();
                 if (attachments != null) {
                     for (Attachment attachment : attachments) {
-                        if (!fileUploadService.validateUpload(handle, attachment.getGuid())) {
+                        Long fileUploadId = fileUploadService.validateUploadAndGetId(handle, attachment.getGuid());
+                        if (fileUploadId == null) {
                             String msg = String.format("Attachment %s is not verified", attachment.getGuid());
                             throw ResponseUtil.haltError(response, HttpStatus.SC_BAD_REQUEST, msg);
                         }
+                        fileUploadIds.add(fileUploadId);
                     }
                 }
                 Config cfg = ConfigManager.getInstance().getConfig();
-                String toEmail = cfg.getString(ConfigFile.Sendgrid.FROM_STUDY_EMAIL);
+                String toEmail = cfg.getString(ConfigFile.Sendgrid.TO_STUDY_EMAIL);
                 for (EventConfigurationDto eventConfig : eventConfigs) {
-                    Set<String> attachmentGuids = attachments != null
-                            ? attachments.stream().map(Attachment::getGuid).collect(Collectors.toSet())
-                            : null;
                     long queuedEventId = handle.attach(QueuedEventDao.class).insertNotification(eventConfig.getEventConfigurationId(),
                             0,
                             toEmail,
                             payload.getData(),
-                            attachmentGuids);
+                            fileUploadIds);
                     LOG.info("Queued queuedEventId {} for study email sending.", queuedEventId);
                 }
             }
         });
 
-        // TODO
+        response.status(HttpStatus.SC_ACCEPTED);
         return "";
     }
 }

@@ -85,6 +85,7 @@ import org.broadinstitute.ddp.pex.PexException;
 import org.broadinstitute.ddp.pex.PexInterpreter;
 import org.broadinstitute.ddp.pex.TreeWalkInterpreter;
 import org.broadinstitute.ddp.schedule.JobScheduler;
+import org.broadinstitute.ddp.service.FileUploadService;
 import org.broadinstitute.ddp.service.PdfBucketService;
 import org.broadinstitute.ddp.service.PdfGenerationService;
 import org.broadinstitute.ddp.service.PdfService;
@@ -601,6 +602,7 @@ public class Housekeeping {
         PdfService pdfService = new PdfService();
         PdfBucketService pdfBucketService = new PdfBucketService(cfg);
         PdfGenerationService pdfGenerationService = new PdfGenerationService();
+        FileUploadService fileUploadService = new FileUploadService(cfg);
         PdfGenerationHandler pdfGenerationHandler = new PdfGenerationHandler(pdfService, pdfBucketService, pdfGenerationService);
         Gson gson = new Gson();
         if (sendGridSupplier == null) {
@@ -649,7 +651,7 @@ public class Housekeeping {
                                             }
 
                                             new EmailNotificationHandler(sendGridProvider.get(notificationMessage.getApiKey()),
-                                                    pdfService, pdfBucketService, pdfGenerationService)
+                                                    pdfService, pdfBucketService, pdfGenerationService, fileUploadService)
                                                     .handleMessage(notificationMessage);
 
                                         } else if (EventActionType.PDF_GENERATION.name().equals(ddpEventType)) {

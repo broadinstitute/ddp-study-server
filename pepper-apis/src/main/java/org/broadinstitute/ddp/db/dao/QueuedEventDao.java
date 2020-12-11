@@ -24,6 +24,9 @@ public interface QueuedEventDao extends SqlObject {
     JdbiQueuedNotificationTemplateSubstitution getJdbiTemplateSubstitution();
 
     @CreateSqlObject
+    JdbiQueuedNotificationAttachment getJdbiQueuedNotificationAttachment();
+
+    @CreateSqlObject
     JdbiQueuedNotification getJdbiQueuedNotification();
 
     /**
@@ -49,6 +52,7 @@ public interface QueuedEventDao extends SqlObject {
         // not checking counts on subclass tables--they might be empty
         getJdbiTemplateSubstitution().deleteByQueuedEventId(queuedEventId);
         getJdbiQueuedNotification().delete(queuedEventId);
+        getJdbiQueuedNotificationAttachment().deleteByQueuedEventId(queuedEventId);
         return getJdbiQueuedEvent().delete(queuedEventId);
     }
 
@@ -56,6 +60,7 @@ public interface QueuedEventDao extends SqlObject {
         JdbiQueuedEvent jdbiQueuedEvent = getJdbiQueuedEvent();
         jdbiQueuedEvent.deleteQueuedNotificationSubstitutionsByStudyId(studyId);
         jdbiQueuedEvent.deleteQueuedNotificationsByStudyId(studyId);
+        jdbiQueuedEvent.deleteNotificationAttachmentsByStudyId(studyId);
         return jdbiQueuedEvent.deleteQueuedEventsByStudyId(studyId);
     }
 
@@ -63,6 +68,7 @@ public interface QueuedEventDao extends SqlObject {
         JdbiQueuedEvent jdbiQueuedEvent = getJdbiQueuedEvent();
         jdbiQueuedEvent.deleteQueuedNotificationSubstitutionsByUserIds(userIds);
         jdbiQueuedEvent.deleteQueuedNotificationsByUserIds(userIds);
+        jdbiQueuedEvent.deleteNotificationAttachmentsByUserIds(userIds);
         return jdbiQueuedEvent.deleteQueuedEventsByUserIds(userIds);
     }
 
@@ -87,7 +93,7 @@ public interface QueuedEventDao extends SqlObject {
                                     long postAfterEpochSeconds,
                                     String toEmailAddress,
                                     Map<String, String> templateSubstitutions,
-                                    Set<String> attachmentGuids) {
+                                    Set<Long> fileUploadIds) {
 
 
         long queuedEventId = insertNotification(eventConfigurationId,
@@ -95,7 +101,7 @@ public interface QueuedEventDao extends SqlObject {
                 null,
                 null,
                 templateSubstitutions,
-                attachmentGuids);
+                fileUploadIds);
 
         int numRowsUpdated = getJdbiQueuedNotification().updateEmailAddress(queuedEventId, toEmailAddress);
 
@@ -112,7 +118,7 @@ public interface QueuedEventDao extends SqlObject {
                                     Long participantId,
                                     Long operatorId,
                                     Map<String, String> templateSubstitutions,
-                                    Set<String> attachmentGuids) {
+                                    Set<Long> fileUploadIds) {
 
         // insert into base queued_event
         long queuedEventId = getJdbiQueuedEvent().insert(eventConfigurationId,
@@ -125,13 +131,17 @@ public interface QueuedEventDao extends SqlObject {
         if (!inserted) {
             throw new DaoException("No rows inserted for queued notification");
         }
+
+        JdbiQueuedNotificationAttachment jdbiQueuedNotificationAttachment = getJdbiQueuedNotificationAttachment();
+        if (fileUploadIds != null) {
+            for (Long fileUploadId : fileUploadIds) {
+                jdbiQueuedNotificationAttachment.insert(queuedEventId, fileUploadId);
+            }
+        }
+
         JdbiQueuedNotificationTemplateSubstitution jdbiTemplateSubstitution = getJdbiTemplateSubstitution();
-
-        // TODO: create attachments2notification linkage (new table), which is going to be picked up by housekeeping if
-        // "allowExternalAttachments" is set on event configuration
-
         for (Map.Entry<String, String> templateSubstitution : templateSubstitutions.entrySet()) {
-            long substitutionId = jdbiTemplateSubstitution.insert(queuedEventId,
+            jdbiTemplateSubstitution.insert(queuedEventId,
                     templateSubstitution.getKey(),
                     templateSubstitution.getValue());
         }

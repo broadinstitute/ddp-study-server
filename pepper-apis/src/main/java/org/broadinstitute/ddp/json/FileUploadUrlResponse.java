@@ -9,8 +9,12 @@ public class FileUploadUrlResponse {
     @SerializedName("guid")
     String guid;
 
-    public FileUploadUrlResponse(String url, String guid) {
+    @SerializedName("httpMethod")
+    String httpMethod;
+
+    public FileUploadUrlResponse(String url, String guid, String httpMethod) {
         this.url = url;
         this.guid = guid;
+        this.httpMethod = httpMethod;
     }
 }

@@ -2,11 +2,14 @@ package org.broadinstitute.ddp.json;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Positive;
+import javax.validation.constraints.Size;
 
 import com.google.gson.annotations.SerializedName;
 
 public class FileUploadURLPayload {
     @NotBlank
+    @Size(max = 200, message = "fileName shouldn't be longer than 200 characters")
     @SerializedName("fileName")
     String fileName;
 
@@ -15,11 +18,13 @@ public class FileUploadURLPayload {
     String mimeType;
 
     @NotNull
+    @Positive
     @SerializedName("fileSize")
     Long fileSize;
 
-    @SerializedName("activityCode")
-    String activityCode;
+    @NotNull
+    @SerializedName("resumable")
+    Boolean resumable;
 
     @SerializedName("activityInstanceGuid")
     String activityInstanceGuid;
@@ -27,22 +32,18 @@ public class FileUploadURLPayload {
     @SerializedName("answerGuid")
     String answerGuid;
 
-    public FileUploadURLPayload(String fileName, Long fileSize, String activityCode, String activityInstanceGuid, String answerGuid,
-                                String mimeType) {
+    public FileUploadURLPayload(String fileName, Long fileSize, String activityInstanceGuid, String answerGuid,
+                                String mimeType, Boolean resumable) {
         this.fileName = fileName;
         this.fileSize = fileSize;
-        this.activityCode = activityCode;
         this.activityInstanceGuid = activityInstanceGuid;
         this.answerGuid = answerGuid;
         this.mimeType = mimeType;
+        this.resumable = resumable;
     }
 
     public String getFileName() {
         return fileName;
-    }
-
-    public String getActivityCode() {
-        return activityCode;
     }
 
     public String getActivityInstanceGuid() {
@@ -59,5 +60,9 @@ public class FileUploadURLPayload {
 
     public String getMimeType() {
         return mimeType;
+    }
+
+    public Boolean getResumable() {
+        return resumable;
     }
 }

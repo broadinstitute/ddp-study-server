@@ -1,7 +1,8 @@
 package org.broadinstitute.ddp.db.dto;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.broadinstitute.ddp.model.event.NotificationServiceType;
 import org.broadinstitute.ddp.model.event.NotificationType;
@@ -21,7 +22,8 @@ public class NotificationDetailsDto {
     private String defaultSalutation;
     private String participantFirstName;
     private String participantLastName;
-    private List<NotificationTemplateSubstitutionDto> templateSubstitutions = new ArrayList<>();
+    private Set<NotificationTemplateSubstitutionDto> templateSubstitutions = new HashSet<>();
+    private Set<Long> attachmentIds = new HashSet<>();
 
     @JdbiConstructor
     public NotificationDetailsDto(
@@ -93,13 +95,23 @@ public class NotificationDetailsDto {
         return participantLastName;
     }
 
-    public List<NotificationTemplateSubstitutionDto> getTemplateSubstitutions() {
+    public Set<NotificationTemplateSubstitutionDto> getTemplateSubstitutions() {
         return templateSubstitutions;
+    }
+
+    public Collection<Long> getAttachmentIds() {
+        return attachmentIds;
     }
 
     public void addTemplateSubstitution(NotificationTemplateSubstitutionDto substitution) {
         if (substitution != null) {
             templateSubstitutions.add(substitution);
+        }
+    }
+
+    public void addAttachmentId(Long attachmentId) {
+        if (attachmentId != null) {
+            attachmentIds.add(attachmentId);
         }
     }
 }
