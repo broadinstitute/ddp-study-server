@@ -409,6 +409,11 @@ public class Auth0Util {
      * Returns all users that have the given email address
      */
     public List<User> getAuth0UsersByEmail(String emailAddress, String mgmtApiToken) throws Auth0Exception {
+        try {
+            Thread.sleep(500);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
         ManagementAPI auth0Mgmt = new ManagementAPI(baseUrl, mgmtApiToken);
         return auth0Mgmt.users().listByEmail(emailAddress, null).execute();
     }

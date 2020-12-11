@@ -71,6 +71,7 @@ import org.broadinstitute.ddp.db.dao.StudyGovernanceDao;
 import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dao.UserGovernanceDao;
 import org.broadinstitute.ddp.db.dao.UserProfileDao;
+import org.broadinstitute.ddp.db.dao.UserProfileSql;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.db.dto.ClientDto;
 import org.broadinstitute.ddp.db.dto.MedicalProviderDto;
@@ -268,33 +269,31 @@ public class StudyDataLoader {
         if (userGuid != null) {
             LOG.warn("Looks like  Participant data already loaded: " + userGuid);
             return userGuid;
-            //watch out.. early return
+            //watch out.. early reuserGuidturn
         }
 
         userGuid = DBUtils.uniqueUserGuid(handle);
         String userHruid = DBUtils.uniqueUserHruid(handle);
         UserDao userDao = handle.attach(UserDao.class);
-        UserGovernanceDao userGovernanceDao = handle.attach(UserGovernanceDao.class);
         JdbiClient clientDao = handle.attach(JdbiClient.class);
         JdbiLanguageCode jdbiLanguageCode = handle.attach(JdbiLanguageCode.class);
         UserProfileDao profileDao = handle.attach(UserProfileDao.class);
-        StudyGovernanceDao studyGovernanceDao = handle.attach(StudyGovernanceDao.class);
         JdbiAuth0Tenant jdbiAuth0Tenant = handle.attach(JdbiAuth0Tenant.class);
 
         UserDto pepperUser;
 
         switch (registrationType) {
             case 1:
-                pepperUser = createLegacyPepperUser(jdbiUser, clientDao, datstatData, userGuid, userHruid, clientDto, userDao);
+                pepperUser = createLegacyPepperUser(jdbiUser, datstatData, userGuid, userHruid, clientDto);
                 break;
             case 2:
-                pepperUser = createOperatorAndGovernedUser(jdbiUser, clientDao, datstatData, userGuid, userHruid,
-                        clientDto, userGovernanceDao, userDao, studyDto,
-                        jdbiLanguageCode, profileDao, studyGovernanceDao, jdbiAuth0Tenant);
+                pepperUser = createOperatorAndGovernedUser(datstatData, userHruid,
+                        clientDto, userDao, studyDto,
+                        jdbiLanguageCode, profileDao, jdbiAuth0Tenant, handle);
                 break;
             case 3:
-                org.broadinstitute.ddp.model.user.User operatorUser = createOperatorUser(jdbiUser, datstatData, userGuid,
-                        userHruid, clientDto, userDao, jdbiLanguageCode, profileDao, jdbiAuth0Tenant);
+                org.broadinstitute.ddp.model.user.User operatorUser = createOrUpdateOperatorUser(datstatData,
+                        userHruid, clientDto, userDao, jdbiLanguageCode, profileDao, jdbiAuth0Tenant, handle, studyDto);
                 pepperUser = new UserDto(operatorUser.getId(), operatorUser.getAuth0UserId(),
                         operatorUser.getGuid(), operatorUser.getHruid(), operatorUser.getLegacyAltPid(),
                         operatorUser.getLegacyShortId(), operatorUser.getCreatedAt(), operatorUser.getUpdatedAt(),
@@ -316,6 +315,16 @@ public class StudyDataLoader {
                 jdbiMailAddress,
                 olcService, addressService);
 
+        addUserStudyEnrollment(handle, datstatData, studyDto, userGuid, pepperUser);
+
+        LOG.info("user guid: " + pepperUser.getUserGuid());
+        processLegacyFields(handle, datstatData, mappingData.getAsJsonArray().get(1),
+                studyDto.getId(), pepperUser.getUserId(), null);
+
+        return pepperUser.getUserGuid();
+    }
+
+    private void addUserStudyEnrollment(Handle handle, JsonElement datstatData, StudyDto studyDto, String userGuid, UserDto pepperUser) {
         String ddpCreated = getStringValueFromElement(datstatData, "datstat_created");
         LocalDateTime ddpCreatedLocalDateTime = LocalDateTime.parse(ddpCreated, formatter);
         Long ddpCreatedAt = null;
@@ -339,12 +348,6 @@ public class StudyDataLoader {
         handle.attach(JdbiUserStudyEnrollment.class)
                 .changeUserStudyEnrollmentStatus(pepperUser.getUserGuid(), studyDto.getGuid(),
                         EnrollmentStatusType.REGISTERED, ddpCreatedAt);
-
-        LOG.info("user guid: " + pepperUser.getUserGuid());
-        processLegacyFields(handle, datstatData, mappingData.getAsJsonArray().get(1),
-                studyDto.getId(), pepperUser.getUserId(), null);
-
-        return pepperUser.getUserGuid();
     }
 
     public ActivityInstanceDto createPrequal(Handle handle, String participantGuid, long studyId, String ddpCreated,
@@ -1012,21 +1015,25 @@ public class StudyDataLoader {
         return parentAnswer.getAnswerGuid();
     }
 
-    public UserDto createOperatorAndGovernedUser(JdbiUser jdbiUser, JdbiClient clientDao,
-                                                 JsonElement data, String userGuid, String userHruid, ClientDto clientDto,
-                                                 UserGovernanceDao userGovernanceDao, UserDao userDao, StudyDto studyDto,
+    public UserDto createOperatorAndGovernedUser(JsonElement data, String userHruid, ClientDto clientDto,
+                                                 UserDao userDao, StudyDto studyDto,
                                                  JdbiLanguageCode jdbiLanguageCode,
                                                  UserProfileDao userProfileDao,
-                                                 StudyGovernanceDao studyGovernanceDao,
-                                                 JdbiAuth0Tenant jdbiAuth0Tenant) throws Exception {
+                                                 JdbiAuth0Tenant jdbiAuth0Tenant, Handle handle) throws Exception {
 
-        org.broadinstitute.ddp.model.user.User operatorUser = createOperatorUser(jdbiUser, data, userGuid,
-                userHruid, clientDto, userDao, jdbiLanguageCode, userProfileDao, jdbiAuth0Tenant);
+        org.broadinstitute.ddp.model.user.User operatorUser = createOrUpdateOperatorUser(data,
+                userHruid, clientDto, userDao, jdbiLanguageCode, userProfileDao, jdbiAuth0Tenant, handle, studyDto);
 
+
+        StudyGovernanceDao studyGovernanceDao = handle.attach(StudyGovernanceDao.class);
+        UserGovernanceDao userGovernanceDao = handle.attach(UserGovernanceDao.class);
 
         String legacyAltPid = data.getAsJsonObject().get("datstat_altpid").getAsString();
+        String userCreatedAt = getStringValueFromElement(data, "datstat_created");
+        LocalDateTime createdAtDate = LocalDateTime.parse(userCreatedAt, formatter);
+        long createdAtMillis = createdAtDate.toInstant(ZoneOffset.UTC).toEpochMilli();
         Governance governance = userGovernanceDao.createGovernedUserWithGuidAlias(operatorUser.getCreatedByClientId(), operatorUser.getId(),
-                legacyAltPid);
+                legacyAltPid, createdAtMillis);
         userGovernanceDao.grantGovernedStudy(governance.getId(), studyDto.getId());
         org.broadinstitute.ddp.model.user.User governedUser = userDao.findUserById(governance.getGovernedUserId())
                 .orElseThrow(() -> new DDPException("Could not find governed user with id " + governance.getGovernedUserId()));
@@ -1047,11 +1054,15 @@ public class StudyDataLoader {
                 governedUser.getExpiresAt());
     }
 
-    private org.broadinstitute.ddp.model.user.User createOperatorUser(JdbiUser jdbiUser, JsonElement data,
-                                                                      String userGuid, String userHruid, ClientDto clientDto,
-                                                                      UserDao userDao, JdbiLanguageCode jdbiLanguageCode,
-                                                                      UserProfileDao userProfileDao, JdbiAuth0Tenant jdbiAuth0Tenant)
+    private org.broadinstitute.ddp.model.user.User createOrUpdateOperatorUser(JsonElement data,
+                                                                              String userHruid,
+                                                                              ClientDto clientDto, UserDao userDao,
+                                                                              JdbiLanguageCode jdbiLanguageCode,
+                                                                              UserProfileDao userProfileDao,
+                                                                              JdbiAuth0Tenant jdbiAuth0Tenant, Handle handle,
+                                                                              StudyDto studyDto)
             throws IOException, InterruptedException {
+        JdbiUser jdbiUser = handle.attach(JdbiUser.class);
         String emailAddress = data.getAsJsonObject().get("portal_user_email").getAsString();
         boolean hasPassword = data.getAsJsonObject().has("password");
         List<User> auth0UsersByEmail = auth0Util.getAuth0UsersByEmail(emailAddress, mgmtToken);
@@ -1061,9 +1072,23 @@ public class StudyDataLoader {
 
         org.broadinstitute.ddp.model.user.User operatorUser;
 
+        String userGuid = DBUtils.uniqueUserGuid(handle);
 
         if (userOptional.isPresent()) {
-            operatorUser = userOptional.get();
+            if (data.getAsJsonObject().get("registration_type").getAsInt() == 3) {
+                String altPid = data.getAsJsonObject().get("datstat_altpid").getAsString();
+                String userCreatedAt = getStringValueFromElement(data, "datstat_created");
+                String firstName = getStringValueFromElement(data, "datstat_firstname");
+                String lastName = getStringValueFromElement(data, "datstat_lastname");
+                LocalDateTime createdAtDate = LocalDateTime.parse(userCreatedAt, formatter);
+                long createdAtMillis = createdAtDate.toInstant(ZoneOffset.UTC).toEpochMilli();
+                UserProfileSql userProfileSql = handle.attach(UserProfileSql.class);
+                userDao.updateLegacyAltPidByAuth0UserIdAndTenantId(auth0UserId, altPid, tenantId);
+                userDao.updateLegacyCreatedAtByAuth0UserIdAndTenantId(auth0UserId, createdAtMillis, tenantId);
+                userProfileSql.updateFirstName(userOptional.get().getId(), firstName);
+                userProfileSql.updateLastName(userOptional.get().getId(), lastName);
+            }
+            operatorUser = userDao.findUserByAuth0UserId(auth0UserId, tenantId).get();
         } else {
             if (auth0UserId == null) {
                 if (hasPassword) {
@@ -1073,22 +1098,20 @@ public class StudyDataLoader {
                 }
             }
             UserDto operatorUserDto = insertNewUser(jdbiUser, data, userGuid, userHruid, clientDto, auth0UserId);
-            String operatorGuid = operatorUserDto.getUserGuid();
-            operatorUser = userDao.findUserByGuid(operatorGuid)
-                    .orElseThrow(() -> new DDPException("Could not find operator with guid " + operatorGuid));
+            operatorUser = userDao.findUserByGuid(userGuid)
+                    .orElseThrow(() -> new DDPException("Could not find operator with guid " + userGuid));
             addUserProfile(operatorUserDto, data, jdbiLanguageCode, userProfileDao, true);
+            addUserStudyEnrollment(handle, data, studyDto, userGuid, operatorUserDto);
         }
         return operatorUser;
     }
 
-    public UserDto createLegacyPepperUser(JdbiUser jdbiUser, JdbiClient clientDao,
-                                          JsonElement data, String userGuid, String userHruid, ClientDto clientDto,
-                                          UserDao userDao) throws Exception {
+    public UserDto createLegacyPepperUser(JdbiUser jdbiUser,
+                                          JsonElement data, String userGuid, String userHruid, ClientDto clientDto) throws Exception {
         String emailAddress = data.getAsJsonObject().get("datstat_email").getAsString();
         boolean hasPassword = data.getAsJsonObject().has("password");
         List<User> auth0UsersByEmail = auth0Util.getAuth0UsersByEmail(emailAddress, mgmtToken);
         String auth0UserId = !auth0UsersByEmail.isEmpty() ? auth0UsersByEmail.get(0).getId() : null;
-
 
         if (auth0UserId == null) {
             // Create a user for the given domain
@@ -1118,8 +1141,7 @@ public class StudyDataLoader {
         long updatedAtMillis = lastModifiedDate.toInstant(ZoneOffset.UTC).toEpochMilli();
 
         String shortId = null;
-        boolean isOperatorUser = data.getAsJsonObject().get("registration_type").getAsInt() == 2;
-        String altpid = isOperatorUser ? null : data.getAsJsonObject().get("datstat_altpid").getAsString();
+        String altpid = data.getAsJsonObject().get("datstat_altpid").getAsString();
         long userId = userDao.insertMigrationUser(auth0UserId, userGuid, clientDto.getId(), userHruid,
                 altpid, shortId, createdAtMillis, updatedAtMillis);
         UserDto newUser = new UserDto(userId, auth0UserId, userGuid, userHruid, altpid,
@@ -1211,9 +1233,8 @@ public class StudyDataLoader {
         String lastName;
 
         if (isOperator) {
-            String[] portalUsername = data.getAsJsonObject().get("portal_user_name").getAsString().split(" ");
-            firstName = portalUsername[0];
-            lastName = portalUsername[1];
+            firstName = StringUtils.trim(data.getAsJsonObject().get("datstat_firstname").getAsString());
+            lastName = StringUtils.trim(data.getAsJsonObject().get("datstat_lastname").getAsString());
         } else {
             if (!userJsonObject.get("datstat_gender").isJsonNull() && userJsonObject.get("datstat_gender") != null) {
                 String genderCode = StringUtils.trim(data.getAsJsonObject().get("datstat_gender").getAsString());

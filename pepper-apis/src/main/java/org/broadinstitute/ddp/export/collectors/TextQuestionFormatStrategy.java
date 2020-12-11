@@ -40,10 +40,20 @@ public class TextQuestionFormatStrategy implements ResponseFormatStrategy<TextQu
         return Arrays.asList(definition.getStableId());
     }
 
+    public List<String> headers(TextQuestionDef definition, int number) {
+        return Arrays.asList(definition.getStableId() + "_" + number);
+    }
+
     @Override
     public Map<String, String> collect(TextQuestionDef question, TextAnswer answer) {
         Map<String, String> record = new HashMap<>();
         record.put(question.getStableId(), StringUtils.defaultString(answer.getValue(), ""));
+        return record;
+    }
+
+    public Map<String, String> collect(TextQuestionDef question, TextAnswer answer, int i) {
+        Map<String, String> record = new HashMap<>();
+        record.put(question.getStableId() + "_" + i, StringUtils.defaultString(answer.getValue(), ""));
         return record;
     }
 }

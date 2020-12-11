@@ -31,3 +31,6 @@ docker-compose.yaml
 
 # runtestresults
 src/test/resources/runtestresults.csv
+
+*.csv
+*.csv#

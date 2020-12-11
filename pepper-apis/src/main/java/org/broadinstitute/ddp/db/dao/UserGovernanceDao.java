@@ -48,6 +48,14 @@ public interface UserGovernanceDao extends SqlObject {
         return findGovernanceById(governanceId).orElseThrow(() -> new DaoException("Could not find governance with id " + governanceId));
     }
 
+    default Governance createGovernedUserWithGuidAlias(long clientId, long proxyUserId, String legacyAltPid, long createdAtMillis) {
+        User governedUser = getUserDao().createUser(clientId, null, legacyAltPid, createdAtMillis);
+        String alias = governedUser.getGuid();
+        long governanceId = getUserGovernanceSql().insertGovernance(proxyUserId, governedUser.getId(), alias, true);
+        CacheService.getInstance().modelUpdated(ModelChangeType.USER, getHandle(), proxyUserId);
+        return findGovernanceById(governanceId).orElseThrow(() -> new DaoException("Could not find governance with id " + governanceId));
+    }
+
     default long assignProxy(String alias, long proxyUserId, long governedUserId) {
         CacheService.getInstance().modelUpdated(ModelChangeType.USER, getHandle(), proxyUserId);
         return getUserGovernanceSql().insertGovernance(proxyUserId, governedUserId, alias, true);

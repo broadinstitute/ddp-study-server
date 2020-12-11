@@ -1,0 +1,1006 @@
+{
+  "study": {
+    "name": "ATCP",
+    "survey": [
+      {
+        "name": "atcp_registry_questionnaire",
+        "data": [
+          {
+            "source_field_name": "diagnosis",
+            "target_field_name": "DIAGNOSED",
+            "source_field_type": "Boolean"
+          },
+          {
+            "source_field_name": "age_diagnosis_years",
+            "target_field_name": "YEARS",
+            "source_field_type": "Integer"
+          },
+          {
+            "source_field_name": "age_diagnosis_months",
+            "target_field_name": "MONTHS",
+            "source_field_type": "Integer"
+          },
+          {
+            "source_field_name": "age_first_symp",
+            "target_field_name": "FIRST_SYMPTOM",
+            "source_field_type": "Integer"
+          },
+          {
+            "source_field_name": "age_first_neurologic",
+            "target_field_name": "NEUROLOGIC_PROBLEM",
+            "source_field_type": "Integer"
+          },
+          {
+            "source_field_name": "diagnosis_criteria",
+            "target_field_name": "DETERMINED",
+            "source_field_type": "Picklist",
+            "options": [
+              "analysis", "afp", "exam", "radio_assay","breakage", "western", "fatm",
+              "hist_bio", "img_ct", "img_mri", "img_pet", "unknown", "other"
+            ]
+          },
+          {
+            "source_field_name": "diagnosis_criteria.other.text",
+            "target_field_name": "DETERMINED_OTHER_DETAILS"
+          },
+          {
+            "source_field_name": "mutation_determination",
+            "target_field_name": "ATM_MUTATIONS"
+          },
+          {
+            "source_field_name": "name",
+            "target_field_name": "NAME_PHYSICIAN_1"
+          },
+          {
+            "source_field_name": "phone",
+            "target_field_name": "PHYSICIAN_TELEPHONE_NUMBER_1"
+          },
+          {
+            "source_field_name": "hospital",
+            "target_field_name": "HOSPITAL_1"
+          },
+          {
+            "source_field_name": "city",
+            "target_field_name": "CITY_1"
+          },
+          {
+            "source_field_name": "state",
+            "target_field_name": "STATE_1"
+          },
+          {
+            "source_field_name": "country",
+            "target_field_name": "COUNTRY_1"
+          },
+          {
+            "source_field_name": "cancer_history",
+            "target_field_name": "HISTORY_OF_CANCER",
+            "source_field_type": "YesNoDk"
+          },
+          {
+            "source_field_name": "cancer_diagnosis_age",
+            "target_field_name": "CANCER_DIAGNOSED_AGE",
+            "source_field_type": "Integer"
+          },
+          {
+            "source_field_name": "cancer_type",
+            "target_field_name": "TYPE_OF_CANCER",
+            "source_field_type": "Picklist",
+            "options": [
+              "leukemia", "non_hodgkins", "hodgkins", "other"
+            ]
+          },
+          {
+            "source_field_name": "cancer_type.other.text",
+            "target_field_name": "TYPE_OF_CANCER_OTHER_DETAILS"
+          },
+          {
+            "source_field_name": "cancer_status",
+            "target_field_name": "CANCER_CONDITION_STATE",
+            "source_field_type": "SinglePicklist"
+          },
+          {
+            "source_field_name": "ambulation",
+            "target_field_name": "AMBULATION",
+            "source_field_type": "SinglePicklist"
+          },
+          {
+            "source_field_name": "wheelchair_age_start",
+            "target_field_name": "BEGIN_WHEELCHAIR_AGE",
+            "source_field_type": "Integer"
+          },
+          {
+            "source_field_name": "wheelchair_age_depend",
+            "target_field_name": "COMPLETELY_WHEELCHAIR_AGE",
+            "source_field_type": "Integer"
+          },
+          {
+            "source_field_name": "at_symptoms",
+            "target_field_name": "SYMPTOMS_OR_CONDITIONS",
+            "source_field_type": "Picklist",
+            "options": [
+              "ataxic_gait", "eye_mvmt_diff", "fatigue", "nausea", "tremors", "slurred_speech", "drooling",
+              "diabetes", "scoliosis", "slow_speech", "swallow_diff_asp", "swallow_diff_gag", "other"
+            ]
+          },
+          {
+            "source_field_name": "at_symptoms.other.text3",
+            "target_field_name": "SYMPTOMS_OR_CONDITIONS_OTHER_DETAILS"
+          },
+          {
+            "source_field_name": "at_symptoms",
+            "target_field_name": "TELANGIECTASIA",
+            "source_field_type": "Picklist",
+            "options": [
+              "telangiectasia_eyes", "telangiectasia_skin"
+            ]
+          },
+          {
+            "source_field_name": "at_symptoms.telangiectasia_eyes.eye_symp_appear",
+            "target_field_name": "TELANGIECTASIA_TELANGIECTASIA_EYES_DETAILS"
+          },
+          {
+            "source_field_name": "at_symptoms.telangiectasia_skin.skin_symp_appear",
+            "target_field_name": "TELANGIECTASIA_TELANGIECTASIA_SKIN_DETAILS"
+          },
+          {
+            "source_field_name": "at_symptoms",
+            "target_field_name": "FREQUENT_INFECTIONS",
+            "source_field_type": "Picklist",
+            "options": [
+              "infection_lung", "infection_sinus", "infection_other"
+            ]
+          },
+          {
+            "source_field_name": "at_symptoms.infection_other.text",
+            "target_field_name": "FREQUENT_INFECTIONS_INFECTION_OTHER_DETAILS"
+          },
+          {
+            "source_field_name": "at_symptoms",
+            "target_field_name": "SKIN_CONDITIONS",
+            "source_field_type": "Picklist",
+            "options": [
+              "vitiligo", "cafe_spots", "granulomas", "skin_cond_other"
+            ]
+          },
+          {
+            "source_field_name": "at_symptoms.skin_cond_other.text2",
+            "target_field_name": "SKIN_CONDITIONS_SKIN_COND_OTHER_DETAILS"
+          },
+          {
+            "source_field_name": "other_symptoms",
+            "target_field_name": "OTHER_SYMPTOMS_OR_CONDITIONS",
+            "source_field_type": "Picklist",
+            "options": [
+              "allergies", "arthritis", "asthma", "freq_infect_lung", "high_cholesterol", "high_pulse",
+              "incontinence", "leg_cramps", "liver_issues", "osteoporosis", "renal_issues",
+              "thyroid_issues", "other"
+            ]
+          },
+          {
+            "source_field_name": "other_symptoms.allergies.allergies_desc",
+            "target_field_name": "OTHER_SYMPTOMS_OR_CONDITIONS_ALLERGIES_DETAILS"
+          },
+          {
+            "source_field_name": "other_symptoms.high_cholesterol.chol_level",
+            "target_field_name": "OTHER_SYMPTOMS_OR_CONDITIONS_HIGH_CHOLESTEROL_DETAILS"
+          },
+          {
+            "source_field_name": "other_symptoms.liver_issues.liver_issues_desc",
+            "target_field_name": "OTHER_SYMPTOMS_OR_CONDITIONS_LIVER_ISSUES_DETAILS"
+          },
+          {
+            "source_field_name": "other_symptoms.renal_issues.renal_issues_desc",
+            "target_field_name": "OTHER_SYMPTOMS_OR_CONDITIONS_RENAL_ISSUES_DETAILS"
+          },
+          {
+            "source_field_name": "other_symptoms.thyroid_issues.thyroid_issues_desc",
+            "target_field_name": "OTHER_SYMPTOMS_OR_CONDITIONS_THYROID_ISSUES_DETAILS"
+          },
+          {
+            "source_field_name": "other_symptoms.other.text",
+            "target_field_name": "OTHER_SYMPTOMS_OR_CONDITIONS_OTHER_DETAILS"
+          },
+          {
+            "source_field_name": "menstruation",
+            "target_field_name": "FEMALE_ONSET_OF_PERIOD",
+            "source_field_type": "YesNoDk"
+          },
+          {
+            "source_field_name": "menstruation_age",
+            "target_field_name": "FEMALE_AGE_OF_ONSET_PERIOD",
+            "source_field_type": "Integer"
+          },
+          {
+            "source_field_name": "pregnancy",
+            "target_field_name": "FEMALE_PREGNANT",
+            "source_field_type": "YesNoDk"
+          },
+          {
+            "source_field_name": "incontinence_type",
+            "target_field_name": "INCONTINENCE",
+            "source_field_type": "SinglePicklist"
+          },
+          {
+            "source_field_name": "infectious_diseases",
+            "target_field_name": "INFECTIOUS_DISEASES",
+            "source_field_type": "Picklist",
+            "options": [
+              "chicken_pox", "measles", "mumps", "mrsa", "warts", "m_contagiosum"
+            ]
+          },
+          {
+            "source_field_name": "immunodeficiency",
+            "target_field_name": "IMMUNODEFICIENCY",
+            "source_field_type": "YesNoDk"
+          },
+          {
+            "source_field_name": "immunodeficiency_type_all",
+            "target_field_name": "IMMUNODEFICIENCY_TYPE",
+            "source_field_type": "Picklist",
+            "options": [
+              "iga_deficiency", "ivig", "sub_ig", "antibiotics", "no_treatment"
+            ]
+          },
+          {
+            "source_field_name": "vaccine_infection",
+            "target_field_name": "IMMUNIZATION",
+            "source_field_type": "YesNoDk"
+          },
+          {
+            "source_field_name": "surgeries",
+            "target_field_name": "SURGERIES",
+            "source_field_type": "Picklist",
+            "options": [
+              "none", "g_tube", "eye", "heel_cord", "rod_placement", "other"
+            ]
+          },
+          {
+            "source_field_name": "surgeries.g_tube.g_tube_age",
+            "target_field_name": "SURGERIES_G_TUBE_DETAILS",
+            "source_field_type": "Integer"
+          },
+          {
+            "source_field_name": "surgeries.eye.eye_age",
+            "target_field_name": "SURGERIES_EYE_DETAILS",
+            "source_field_type": "Integer"
+          },
+          {
+            "source_field_name": "surgeries.heel_cord.heel_cord_age",
+            "target_field_name": "SURGERIES_HEEL_CORD_DETAILS",
+            "source_field_type": "Integer"
+          },
+          {
+            "source_field_name": "surgeries.rod_placement.rod_placement_age",
+            "target_field_name": "SURGERIES_ROD_PLACEMENT_DETAILS",
+            "source_field_type": "Integer"
+          },
+          {
+            "source_field_name": "other_surgeries_1_type",
+            "target_field_name": "TYPE_OF_SURGERY_1",
+            "source_field_type": "String"
+          },
+          {
+            "source_field_name": "other_surgeries_1_age",
+            "target_field_name": "AGE_OF_SURGERY_1",
+            "source_field_type": "String"
+          },
+          {
+            "source_field_name": "other_surgeries_1_desc",
+            "target_field_name": "DESCRIPTION_OF_SURGERY_1",
+            "source_field_type": "String"
+          },
+          {
+            "source_field_name": "other_surgeries_2_type",
+            "target_field_name": "TYPE_OF_SURGERY_2",
+            "source_field_type": "String"
+          },
+          {
+            "source_field_name": "other_surgeries_2_age",
+            "target_field_name": "AGE_OF_SURGERY_2",
+            "source_field_type": "String"
+          },
+          {
+            "source_field_name": "other_surgeries_2_desc",
+            "target_field_name": "DESCRIPTION_OF_SURGERY_2",
+            "source_field_type": "String"
+          },
+          {
+            "source_field_name": "other_surgeries_3_type",
+            "target_field_name": "TYPE_OF_SURGERY_3",
+            "source_field_type": "String"
+          },
+          {
+            "source_field_name": "other_surgeries_3_age",
+            "target_field_name": "AGE_OF_SURGERY_3",
+            "source_field_type": "String"
+          },
+          {
+            "source_field_name": "other_surgeries_3_desc",
+            "target_field_name": "DESCRIPTION_OF_SURGERY_3",
+            "source_field_type": "String"
+          },
+          {
+            "source_field_name": "other_surgeries_4_type",
+            "target_field_name": "TYPE_OF_SURGERY_4",
+            "source_field_type": "String"
+          },
+          {
+            "source_field_name": "other_surgeries_4_age",
+            "target_field_name": "AGE_OF_SURGERY_4",
+            "source_field_type": "String"
+          },
+          {
+            "source_field_name": "other_surgeries_4_desc",
+            "target_field_name": "DESCRIPTION_OF_SURGERY_4",
+            "source_field_type": "String"
+          },
+          {
+            "source_field_name": "other_surgeries_5_type",
+            "target_field_name": "TYPE_OF_SURGERY_5",
+            "source_field_type": "String"
+          },
+          {
+            "source_field_name": "other_surgeries_5_age",
+            "target_field_name": "AGE_OF_SURGERY_5",
+            "source_field_type": "String"
+          },
+          {
+            "source_field_name": "other_surgeries_5_desc",
+            "target_field_name": "DESCRIPTION_OF_SURGERY_5",
+            "source_field_type": "String"
+          },
+          {
+            "source_field_name": "medication_1_category",
+            "target_field_name": "MEDICATION_CATEGORY_PICK_LIST_1",
+            "source_field_type": "SinglePicklist"
+          },
+          {
+            "source_field_name": "medication_1_name",
+            "target_field_name": "MEDICATION_NAME_1",
+            "source_field_type": "String"
+          },
+          {
+            "source_field_name": "medication_1_age",
+            "target_field_name": "BEGAN_TAKING_AT_AGE_1",
+            "source_field_type": "String"
+          },
+          {
+            "source_field_name": "medication_2_category",
+            "target_field_name": "MEDICATION_CATEGORY_PICK_LIST_2",
+            "source_field_type": "SinglePicklist"
+          },
+          {
+            "source_field_name": "medication_2_name",
+            "target_field_name": "MEDICATION_NAME_2",
+            "source_field_type": "String"
+          },
+          {
+            "source_field_name": "medication_2_age",
+            "target_field_name": "BEGAN_TAKING_AT_AGE_2",
+            "source_field_type": "String"
+          },
+          {
+            "source_field_name": "medication_3_category",
+            "target_field_name": "MEDICATION_CATEGORY_PICK_LIST_3",
+            "source_field_type": "SinglePicklist"
+          },
+          {
+            "source_field_name": "medication_3_name",
+            "target_field_name": "MEDICATION_NAME_3",
+            "source_field_type": "String"
+          },
+          {
+            "source_field_name": "medication_3_age",
+            "target_field_name": "BEGAN_TAKING_AT_AGE_3",
+            "source_field_type": "String"
+          },
+          {
+            "source_field_name": "medication_4_category",
+            "target_field_name": "MEDICATION_CATEGORY_PICK_LIST_4",
+            "source_field_type": "SinglePicklist"
+          },
+          {
+            "source_field_name": "medication_4_name",
+            "target_field_name": "MEDICATION_NAME_4",
+            "source_field_type": "String"
+          },
+          {
+            "source_field_name": "medication_4_age",
+            "target_field_name": "BEGAN_TAKING_AT_AGE_4",
+            "source_field_type": "String"
+          },
+          {
+            "source_field_name": "medication_5_category",
+            "target_field_name": "MEDICATION_CATEGORY_PICK_LIST_5",
+            "source_field_type": "SinglePicklist"
+          },
+          {
+            "source_field_name": "medication_5_name",
+            "target_field_name": "MEDICATION_NAME_5",
+            "source_field_type": "String"
+          },
+          {
+            "source_field_name": "medication_5_age",
+            "target_field_name": "BEGAN_TAKING_AT_AGE_5",
+            "source_field_type": "String"
+          },
+          {
+            "source_field_name": "medication_6_category",
+            "target_field_name": "MEDICATION_CATEGORY_PICK_LIST_6",
+            "source_field_type": "SinglePicklist"
+          },
+          {
+            "source_field_name": "medication_6_name",
+            "target_field_name": "MEDICATION_NAME_6",
+            "source_field_type": "String"
+          },
+          {
+            "source_field_name": "medication_6_age",
+            "target_field_name": "BEGAN_TAKING_AT_AGE_6",
+            "source_field_type": "String"
+          },
+          {
+            "source_field_name": "medication_7_category",
+            "target_field_name": "MEDICATION_CATEGORY_PICK_LIST_7",
+            "source_field_type": "SinglePicklist"
+          },
+          {
+            "source_field_name": "medication_7_name",
+            "target_field_name": "MEDICATION_NAME_7",
+            "source_field_type": "String"
+          },
+          {
+            "source_field_name": "medication_7_age",
+            "target_field_name": "BEGAN_TAKING_AT_AGE_7",
+            "source_field_type": "String"
+          },
+          {
+            "source_field_name": "medication_8_category",
+            "target_field_name": "MEDICATION_CATEGORY_PICK_LIST_8",
+            "source_field_type": "SinglePicklist"
+          },
+          {
+            "source_field_name": "medication_8_name",
+            "target_field_name": "MEDICATION_NAME_8",
+            "source_field_type": "String"
+          },
+          {
+            "source_field_name": "medication_8_age",
+            "target_field_name": "BEGAN_TAKING_AT_AGE_8",
+            "source_field_type": "String"
+          },
+          {
+            "source_field_name": "medication_9_category",
+            "target_field_name": "MEDICATION_CATEGORY_PICK_LIST_9",
+            "source_field_type": "SinglePicklist"
+          },
+          {
+            "source_field_name": "medication_9_name",
+            "target_field_name": "MEDICATION_NAME_9",
+            "source_field_type": "String"
+          },
+          {
+            "source_field_name": "medication_9_age",
+            "target_field_name": "BEGAN_TAKING_AT_AGE_9",
+            "source_field_type": "String"
+          },
+          {
+            "source_field_name": "supplements",
+            "target_field_name": "NUTRITIONAL_SUPPLEMENTS",
+            "source_field_type": "YesNoDk"
+          },
+          {
+            "source_field_name": "supplements.text",
+            "target_field_name": "NUTRITIONAL_SUPPLEMENTS_YES_DETAILS",
+            "source_field_type": "String"
+          },
+          {
+            "source_field_name": "consanguineous",
+            "target_field_name": "CONSANGUINEOUS_PARENTS",
+            "source_field_type": "YesNoDk"
+          },
+          {
+            "source_field_name": "sibling_1_sex",
+            "target_field_name": "SEX_PICKLIST_1",
+            "source_field_type": "SinglePicklist"
+          },
+          {
+            "source_field_name": "sibling_2_sex",
+            "target_field_name": "SEX_PICKLIST_2",
+            "source_field_type": "SinglePicklist"
+          },
+          {
+            "source_field_name": "sibling_3_sex",
+            "target_field_name": "SEX_PICKLIST_3",
+            "source_field_type": "SinglePicklist"
+          },
+          {
+            "source_field_name": "sibling_4_sex",
+            "target_field_name": "SEX_PICKLIST_4",
+            "source_field_type": "SinglePicklist"
+          },
+          {
+            "source_field_name": "sibling_5_sex",
+            "target_field_name": "SEX_PICKLIST_5",
+            "source_field_type": "SinglePicklist"
+          },
+          {
+            "source_field_name": "sibling_1_age",
+            "target_field_name": "AGE_1",
+            "source_field_type": "SinglePicklist"
+          },
+          {
+            "source_field_name": "sibling_2_age",
+            "target_field_name": "AGE_2",
+            "source_field_type": "SinglePicklist"
+          },
+          {
+            "source_field_name": "sibling_3_age",
+            "target_field_name": "AGE_3",
+            "source_field_type": "SinglePicklist"
+          },
+          {
+            "source_field_name": "sibling_4_age",
+            "target_field_name": "AGE_4",
+            "source_field_type": "SinglePicklist"
+          },
+          {
+            "source_field_name": "sibling_5_age",
+            "target_field_name": "AGE_5",
+            "source_field_type": "SinglePicklist"
+          },
+          {
+            "source_field_name": "sibling_1_dob",
+            "target_field_name": "DATE_OF_BIRTH_1",
+            "source_field_type": "Date",
+            "source_field_format": "yyyy-MM-dd",
+            "target_field_format": "MM/dd/yyyy"
+          },
+          {
+            "source_field_name": "sibling_2_dob",
+            "target_field_name": "DATE_OF_BIRTH_2",
+            "source_field_type": "Date",
+            "source_field_format": "yyyy-MM-dd",
+            "target_field_format": "MM/dd/yyyy"
+          },
+          {
+            "source_field_name": "sibling_3_dob",
+            "target_field_name": "DATE_OF_BIRTH_3",
+            "source_field_type": "Date",
+            "source_field_format": "yyyy-MM-dd",
+            "target_field_format": "MM/dd/yyyy"
+          },
+          {
+            "source_field_name": "sibling_4_dob",
+            "target_field_name": "DATE_OF_BIRTH_4",
+            "source_field_type": "Date",
+            "source_field_format": "yyyy-MM-dd",
+            "target_field_format": "MM/dd/yyyy"
+          },
+          {
+            "source_field_name": "sibling_5_dob",
+            "target_field_name": "DATE_OF_BIRTH_5",
+            "source_field_type": "Date",
+            "source_field_format": "yyyy-MM-dd",
+            "target_field_format": "MM/dd/yyyy"
+          },
+          {
+            "source_field_name": "sibling_1_age_death",
+            "target_field_name": "AGE_AT_DEATH_1",
+            "source_field_type": "Integer"
+          },
+          {
+            "source_field_name": "sibling_2_age_death",
+            "target_field_name": "AGE_AT_DEATH_2",
+            "source_field_type": "Integer"
+          },
+          {
+            "source_field_name": "sibling_3_age_death",
+            "target_field_name": "AGE_AT_DEATH_3",
+            "source_field_type": "Integer"
+          },
+          {
+            "source_field_name": "sibling_4_age_death",
+            "target_field_name": "AGE_AT_DEATH_4",
+            "source_field_type": "Integer"
+          },
+          {
+            "source_field_name": "sibling_5_age_death",
+            "target_field_name": "AGE_AT_DEATH_5",
+            "source_field_type": "Integer"
+          },
+          {
+            "source_field_name": "sibling_1_at_diagnosis",
+            "target_field_name": "DIAGNOSIS_PICKLIST_1",
+            "source_field_type": "SinglePicklist"
+          },
+          {
+            "source_field_name": "sibling_2_at_diagnosis",
+            "target_field_name": "DIAGNOSIS_PICKLIST_2",
+            "source_field_type": "SinglePicklist"
+          },
+          {
+            "source_field_name": "sibling_3_at_diagnosis",
+            "target_field_name": "DIAGNOSIS_PICKLIST_3",
+            "source_field_type": "SinglePicklist"
+          },
+          {
+            "source_field_name": "sibling_4_at_diagnosis",
+            "target_field_name": "DIAGNOSIS_PICKLIST_4",
+            "source_field_type": "SinglePicklist"
+          },
+          {
+            "source_field_name": "sibling_5_at_diagnosis",
+            "target_field_name": "DIAGNOSIS_PICKLIST_5",
+            "source_field_type": "SinglePicklist"
+          },
+          {
+            "source_field_name": "sibling_1_at_carrier",
+            "target_field_name": "CARRIER_PICKLIST_1",
+            "source_field_type": "SinglePicklist"
+          },
+          {
+            "source_field_name": "sibling_2_at_carrier",
+            "target_field_name": "CARRIER_PICKLIST_2",
+            "source_field_type": "SinglePicklist"
+          },
+          {
+            "source_field_name": "sibling_3_at_carrier",
+            "target_field_name": "CARRIER_PICKLIST_3",
+            "source_field_type": "SinglePicklist"
+          },
+          {
+            "source_field_name": "sibling_4_at_carrier",
+            "target_field_name": "CARRIER_PICKLIST_4",
+            "source_field_type": "SinglePicklist"
+          },
+          {
+            "source_field_name": "sibling_5_at_carrier",
+            "target_field_name": "CARRIER_PICKLIST_5",
+            "source_field_type": "SinglePicklist"
+          },
+          {
+            "source_field_name": "clinical_trials_prev",
+            "target_field_name": "PREVIOUSLY_PARTICIPATED",
+            "source_field_type": "YesNoDk"
+          },
+          {
+            "source_field_name": "clinical_trials_prev.text",
+            "target_field_name": "PREVIOUSLY_PARTICIPATED_YES_DETAILS",
+            "source_field_type": "String"
+          },
+          {
+            "source_field_name": "clinical_trials_current",
+            "target_field_name": "currently_participate",
+            "source_field_type": "YesNoDk"
+          },
+          {
+            "source_field_name": "clinical_trials_current.text",
+            "target_field_name": "currently_participate_YES_DETAILS",
+            "source_field_type": "String"
+          },
+          {
+            "source_field_name": "sample_donated",
+            "target_field_name": "PREVIOUSLY_DONATED",
+            "source_field_type": "YesNoDk"
+          },
+          {
+            "source_field_name": "sample_a_type",
+            "target_field_name": "SAMPLE_TYPE_1",
+            "source_field_type": "SinglePicklist"
+          },
+          {
+            "source_field_name": "sample_a_location",
+            "target_field_name": "SAMPLE_LOCATION_1",
+            "source_field_type": "String"
+          },
+          {
+            "source_field_name": "sample_b_type",
+            "target_field_name": "SAMPLE_TYPE_2",
+            "source_field_type": "SinglePicklist"
+          },
+          {
+            "source_field_name": "sample_b_location",
+            "target_field_name": "SAMPLE_LOCATION_2",
+            "source_field_type": "String"
+          },
+          {
+            "source_field_name": "sample_c_type",
+            "target_field_name": "SAMPLE_TYPE_3",
+            "source_field_type": "SinglePicklist"
+          },
+          {
+            "source_field_name": "sample_c_location",
+            "target_field_name": "SAMPLE_LOCATION_3",
+            "source_field_type": "String"
+          },
+          {
+            "source_field_name": "sample_d_type",
+            "target_field_name": "SAMPLE_TYPE_4",
+            "source_field_type": "SinglePicklist"
+          },
+          {
+            "source_field_name": "sample_d_location",
+            "target_field_name": "SAMPLE_LOCATION_4",
+            "source_field_type": "String"
+          },
+          {
+            "source_field_name": "sample_e_type",
+            "target_field_name": "SAMPLE_TYPE_5",
+            "source_field_type": "SinglePicklist"
+          },
+          {
+            "source_field_name": "sample_e_location",
+            "target_field_name": "SAMPLE_LOCATION_5",
+            "source_field_type": "String"
+          }
+        ]
+      },
+      {
+        "name": "RegistrationSurvey",
+        "data": [
+          {
+            "source_field_name": "registration_agreement",
+            "target_field_name": "REGISTRATION_AGREEMENT",
+            "source_field_type": "String"
+          },
+          {
+            "source_field_name": "datstat_firstname",
+            "target_field_name": "REGISTRATION_FIRST_NAME",
+            "source_field_type": "String"
+          },
+          {
+            "source_field_name": "datstat_lastname",
+            "target_field_name": "REGISTRATION_LAST_NAME",
+            "source_field_type": "String"
+          },
+          {
+            "source_field_name": "datstat_middlename",
+            "target_field_name": "REGISTRATION_MIDDLE_NAME",
+            "source_field_type": "String"
+          },
+          {
+            "source_field_name": "datstat_suffix",
+            "target_field_name": "REGISTRATION_PREFIX",
+            "source_field_type": "String"
+          },
+          {
+            "source_field_name": "datstat_gender",
+            "target_field_name": "REGISTRATION_GENDER",
+            "source_field_type": "String"
+          },
+          {
+            "source_field_name": "datstat_dateofbirth",
+            "target_field_name": "REGISTRATION_DOB",
+            "source_field_type": "Date",
+            "source_field_format": "yyyy-MM-dd",
+            "target_field_format": "MM/dd/yyyy"
+          },
+          {
+            "source_field_name": "datstat_homephone",
+            "target_field_name": "REGISTRATION_PHONE",
+            "source_field_type": "String"
+          },
+          {
+            "source_field_name": "datstat_physicaladdress",
+            "target_field_name": "REGISTRATION_STREET_ADDRESS",
+            "source_field_type": "String"
+          },
+          {
+            "source_field_name": "datstat_physicalcity",
+            "target_field_name": "REGISTRATION_CITY",
+            "source_field_type": "String"
+          },
+          {
+            "source_field_name": "datstat_physicalzip",
+            "target_field_name": "REGISTRATION_POSTAL_CODE",
+            "source_field_type": "String"
+          },
+          {
+            "source_field_name": "datstat_physicalcountry",
+            "target_field_name": "REGISTRATION_COUNTRY",
+            "source_field_type": "String"
+          },
+          {
+            "source_field_name": "datstat_physicalstate",
+            "target_field_name": "REGISTRATION_STATE_PROVINCE",
+            "source_field_type": "String"
+          }
+        ]
+      },
+      {
+        "name": "ConsentSurvey",
+        "data": [
+          {
+            "source_field_name": "platform_consent_recontact_participant_followup",
+            "target_field_name": "RE_CONTACT_FOLLOW_UP",
+            "source_field_type": "Boolean"
+          },
+          {
+            "source_field_name": "platform_consent_genseq_study",
+            "target_field_name": "PERFORM_DNA",
+            "source_field_type": "Boolean"
+          },
+          {
+            "source_field_name": "platform_consent_medical_record_retrieval",
+            "target_field_name": "MEDICAL_RECORDS",
+            "source_field_type": "Boolean"
+          },
+          {
+            "source_field_name": "platform_consent_recontact_research_results",
+            "target_field_name": "RE_CONTACT_RETURN_RESULTS",
+            "source_field_type": "Boolean"
+          },
+          {
+            "source_field_name": "platform_consent_recontact_physician_diagnosis_results",
+            "target_field_name": "CONTACT_MY_PHYSICIAN",
+            "source_field_type": "Boolean"
+          },
+          {
+            "source_field_name": "platform_consent_signature",
+            "target_field_name": "CONSENT_SIGNATURE"
+          },
+          {
+            "source_field_name": "platform_consent_signature",
+            "target_field_name": "CONSENT_GUARDIAN_SIGNATURE"
+          },
+          {
+            "source_field_name": "platform_consent_relationship",
+            "target_field_name": "CONSENT_RELATIONSHIP"
+          },
+          {
+            "source_field_name": "platform_consent_participant",
+            "target_field_name": "CONSENT_PARENT_SIGNATURE"
+          },
+          {
+            "source_field_name": "platform_consent_dob",
+            "target_field_name": "CONSENT_GUARDIAN_DOB",
+            "source_field_type": "Date",
+            "source_field_format": "yyyy-MM-dd",
+            "target_field_format": "MM/dd/yyyy"
+          },
+          {
+            "source_field_name": "platform_consent_dob",
+            "target_field_name": "CONSENT_DOB",
+            "source_field_type": "Date",
+            "source_field_format": "yyyy-MM-dd",
+            "target_field_format": "MM/dd/yyyy"
+          }
+        ]
+      },
+      {
+        "name": "ContactingPhysicianSurvey",
+        "data": [
+          {
+            "source_field_name": "physician_first_name",
+            "target_field_name": "PHYSICIAN_FIRSTNAME"
+          },
+          {
+            "source_field_name": "physician_last_name",
+            "target_field_name": "PHYSICIAN_LASTNAME"
+          },
+          {
+            "source_field_name": "physician_address",
+            "target_field_name": "PHYSICIAN_MAIL"
+          },
+          {
+            "source_field_name": "physician_phone",
+            "target_field_name": "PHYSICIAN_PHONE",
+            "source_field_type": "String"
+          },
+          {
+            "source_field_name": "physician_email",
+            "target_field_name": "PHYSICIAN_EMAIL"
+          },
+          {
+            "source_field_name": "received_cares",
+            "target_field_name": "EVALUATION",
+            "source_field_type": "Picklist",
+            "options": [
+              "brisbane_received_care", "jwg_received_care", "sheba_received_care",
+              "nottingham_received_care","johns_hopkins_received_care"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "GenomeStudySurvey",
+        "data": [
+          {
+            "source_field_name": "saliva_agreement",
+            "target_field_name": "COLLECTION_KIT",
+            "source_field_type": "String"
+          },
+          {
+            "source_field_name": "genome_study_shipping_address",
+            "target_field_name": "SHIPPING_ADDRESS"
+          },
+          {
+            "source_field_name": "datstat_gender",
+            "target_field_name": "PARTICIPANT_GENDER",
+            "source_field_type": "String"
+          },
+          {
+            "source_field_name": "ethnicity",
+            "target_field_name": "PARTICIPANT_ETHNICITY",
+            "source_field_type": "SinglePicklist"
+          }
+        ]
+      },
+      {
+        "name": "AssentSurvey",
+        "data": [
+          {
+            "source_field_name": "platform_assent_recontact_participant_followup",
+            "target_field_name": "CAN_CONTACT_LATER",
+            "source_field_type": "Boolean"
+          },
+          {
+            "source_field_name": "platform_assent_genseq_study",
+            "target_field_name": "ASSENT_CAN_DO_TESTS",
+            "source_field_type": "Boolean"
+          },
+          {
+            "source_field_name": "platform_assent_medical_record_retrieval",
+            "target_field_name": "MAY_ASK_MY_DOCTOR",
+            "source_field_type": "Boolean"
+          },
+          {
+            "source_field_name": "platform_assent_recontact_research_results",
+            "target_field_name": "GET_THE_RESULT",
+            "source_field_type": "Boolean"
+          },
+          {
+            "source_field_name": "platform_assent_recontact_physician_diagnosis_results",
+            "target_field_name": "RESEARCHERS_LEARN_SOMETHING",
+            "source_field_type": "Boolean"
+          },
+          {
+            "source_field_name": "platform_assent_signature",
+            "target_field_name": "ASSENT_CHILD_SIGNATURE"
+          },
+          {
+            "source_field_name": "platform_assent_dob",
+            "target_field_name": "ASSENT_DOB",
+            "source_field_type": "Date",
+            "source_field_format": "yyyy-MM-dd",
+            "target_field_format": "MM/dd/yyyy"
+          },
+          {
+            "source_field_name": "platform_assent_guardian_signature",
+            "target_field_name": "ASSENT_SIGNATURE_OF_PERSON_EXPLAINING"
+          },
+          {
+            "source_field_name": "platform_assent_signed_on",
+            "target_field_name": "ASSENT_DATE",
+            "source_field_type": "Date",
+            "source_field_format": "yyyy-MM-dd",
+            "target_field_format": "MM/dd/yyyy"
+          }
+        ]
+      }
+    ],
+    "datstatparticipantdata": {
+      "data": [
+        {
+          "source_field_name": "datstat_altpid",
+          "target_field_name": "legacy_altpid"
+        },
+        {
+          "source_field_name": "datstat_created",
+          "target_field_name": "created_at",
+          "source_field_type": "Date",
+          "source_field_format": "yyyy-MM-dd'T'HH:mm:ss"
+        },
+        {
+          "source_field_name": "datstat_firstname",
+          "target_field_name": "first_name"
+        },
+        {
+          "source_field_name": "datstat_lastname",
+          "target_field_name": "last_name"
+        }
+      ]
+    }
+  }
+}

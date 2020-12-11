@@ -90,6 +90,10 @@ public class DateQuestionFormatStrategy implements ResponseFormatStrategy<DateQu
         }
     }
 
+    public List<String> headers(DateQuestionDef definition, int number) {
+        return Arrays.asList(definition.getStableId() + "_" + number);
+    }
+
     @Override
     public Map<String, String> collect(DateQuestionDef question, DateAnswer answer) {
         Map<String, String> record = new HashMap<>();
@@ -120,6 +124,16 @@ public class DateQuestionFormatStrategy implements ResponseFormatStrategy<DateQu
                 record.put(key, value);
             }
         }
+        return record;
+    }
+
+    public Map<String, String> collect(DateQuestionDef question, DateAnswer answer, int i) {
+        Map<String, String> record = new HashMap<>();
+        DateValue ans = answer.getValue();
+        if (ans == null) {
+            return record;
+        }
+        record.put(question.getStableId() + "_" + i, ans.toDefaultDateFormat());
         return record;
     }
 

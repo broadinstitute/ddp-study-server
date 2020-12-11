@@ -32,6 +32,7 @@ import org.broadinstitute.ddp.model.activity.instance.ActivityResponse;
 import org.broadinstitute.ddp.model.activity.instance.FormResponse;
 import org.broadinstitute.ddp.model.activity.instance.answer.AgreementAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
+import org.broadinstitute.ddp.model.activity.instance.answer.AnswerRow;
 import org.broadinstitute.ddp.model.activity.instance.answer.BoolAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.CompositeAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.DateAnswer;
@@ -40,6 +41,7 @@ import org.broadinstitute.ddp.model.activity.instance.answer.PicklistAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
 import org.broadinstitute.ddp.model.activity.types.ActivityType;
 import org.broadinstitute.ddp.model.activity.types.InstitutionType;
+import org.broadinstitute.ddp.model.activity.types.QuestionType;
 
 public class ActivityResponseCollector {
 
@@ -390,11 +392,44 @@ public class ActivityResponseCollector {
                 break;
             case COMPOSITE:
                 CompositeQuestionDef composite = (CompositeQuestionDef) questionDef;
-                if (composite.shouldUnwrapChildQuestions()) {
-                    composite.getChildren().forEach(this::collectQuestionIntoHeaders);
-                } else {
-                    headers.addAll(compositeFmt.headers(composite));
+                //if (composite.shouldUnwrapChildQuestions()) {
+                int numberOfIterations;
+                switch (composite.getStableId()) {
+                    case  "SURGERY" :
+                        numberOfIterations = 5;
+                        break;
+
+                    case "MEDICATION_CATEGORY":
+                        numberOfIterations = 9;
+                        break;
+
+                    case  "SIBLING" :
+                        numberOfIterations = 5;
+                        break;
+
+                    case "SAMPLE":
+                        numberOfIterations = 5;
+                        break;
+
+                    default:
+                        numberOfIterations = 1;
+                        break;
                 }
+                //composite.getChildren().forEach(this::collectQuestionIntoHeaders);
+                for (int i = 1; i <= numberOfIterations; i++) {
+                    for (QuestionDef child : composite.getChildren()) {
+                        if (child.getQuestionType() == QuestionType.PICKLIST) {
+                            headers.addAll(picklistFmt.headers((PicklistQuestionDef) child, i));
+                        } else if (child.getQuestionType() == QuestionType.TEXT) {
+                            headers.addAll(textFmt.headers((TextQuestionDef) child, i));
+                        } else {
+                            headers.addAll(dateFmt.headers((DateQuestionDef) child, i));
+                        }
+                    }
+                }
+                //} else {
+                //    headers.addAll(compositeFmt.headers(composite));
+                //}
                 break;
             default:
                 throw new DDPException("Unhandled question type " + questionDef.getQuestionType());
@@ -500,17 +535,29 @@ public class ActivityResponseCollector {
             case COMPOSITE:
                 CompositeQuestionDef composite = (CompositeQuestionDef) question;
                 CompositeAnswer compositeAnswer = (CompositeAnswer) answer;
-                if (composite.shouldUnwrapChildQuestions()) {
-                    // There should be one row with one answer per child. Put them into the response object so we can recurse.
-                    compositeAnswer.getValue().stream()
-                            .flatMap(row -> row.getValues().stream())
-                            .forEach(instance::putAnswer);
-                    for (QuestionDef childQuestion : composite.getChildren()) {
-                        collectQuestionIntoRecord(record, childQuestion, instance);
+                // There should be one row with one answer per child. Put them into the response object so we can recurse.
+                int i = 1;
+                for (AnswerRow answerRow : compositeAnswer.getValue()) {
+                    int j = 0;
+                    for (Answer ans: answerRow.getValues()) {
+                        if (ans == null) {
+                            j++;
+                            continue;
+                        }
+                        QuestionDef questionDef = composite.getChildren().get(j);
+                        if (ans.getQuestionType() == QuestionType.PICKLIST) {
+                            record.putAll(picklistFmt.collect((PicklistQuestionDef) questionDef, (PicklistAnswer) ans, i));
+                        } else if (ans.getQuestionType() == QuestionType.TEXT) {
+                            record.putAll(textFmt.collect((TextQuestionDef) questionDef, (TextAnswer) ans, i));
+                        } else {
+                            record.putAll(dateFmt.collect((DateQuestionDef) questionDef, (DateAnswer) ans, i));
+                        }
+                        j++;
                     }
-                } else {
-                    record.putAll(compositeFmt.collect(composite, compositeAnswer));
+                    i++;
                 }
+
+
                 break;
             default:
                 throw new DDPException("Unhandled question type " + question.getQuestionType());

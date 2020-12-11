@@ -61,6 +61,7 @@ public class MigratedDataReconcileCli {
     Map<Integer, String> yesNoDkLookup;
     Map<Integer, Boolean> booleanValueLookup;
     Map<Integer, String> statusValueLookup;
+    Map<String, List<String>> singlePicklistLookup;
     Set<String> dkSet;
     private List<String> skipFields = new ArrayList<>();
     private String serviceAccountFile = null;
@@ -115,9 +116,10 @@ public class MigratedDataReconcileCli {
         String mappingFileName = cmd.getOptionValue("mappingfile");
 
         yesNoDkLookup = new HashMap<>();
-        yesNoDkLookup.put(0, ""); //TODO for 0: support NO, null, empty
+        yesNoDkLookup.put(0, "NO"); //TODO for 0: support NO, null, empty
         yesNoDkLookup.put(1, "YES");
-        yesNoDkLookup.put(2, "DK");
+        yesNoDkLookup.put(2, "DONT_KNOW");
+        yesNoDkLookup.put(-1, "DONT_KNOW");
 
         booleanValueLookup = new HashMap<>();
         booleanValueLookup.put(0, false);
@@ -157,6 +159,88 @@ public class MigratedDataReconcileCli {
         altNames.put("FIRMAGON", "degareliz");
         altNames.put("OTHER_YES", "other_therapy");
         altNames.put("CLINICAL_TRIAL", "exp_clinical_trial");
+
+        //ATCP single picklist option entries
+        singlePicklistLookup = new HashMap<>();
+        singlePicklistLookup.put("cancer_status", new ArrayList<>(List.of(
+                "",
+                "HAS_CANCER_AND_NO_LONGER_TREATMENT",
+                "HAS_CANCER_AND_TREATMENT",
+                "REMISSION_AND_TREATMENT",
+                "CANCER_HAS_RECENTLY_RECURRED",
+                "REMISSION_AND_NO_LONGER_TREATMENT"
+        )));
+
+        singlePicklistLookup.put("ambulation", new ArrayList<>(List.of(
+                "",
+                "INDEPENDENTLY",
+                "MOST_OF_THE_TIME",
+                "WITH_ASSISTANCE",
+                "USES_WALKER",
+                "WHEELCHAIR_WITHOUT_ASSISTANCE",
+                "WHEELCHAIR_WITH_ASSISTANCE"
+        )));
+
+        singlePicklistLookup.put("ethnicity", new ArrayList<>(List.of(
+                "",
+                "AFRICAN_AFRICAN_AMERICAN",
+                "LATINO",
+                "EAST_ASIAN",
+                "FINNISH",
+                "NON-FINNISH_EUROPEAN",
+                "CAUCASIAN",
+                "SOUTH_ASIAN",
+                "OTHER",
+                "PREFER NOT TO ANSWER"
+        )));
+
+        singlePicklistLookup.put("incontinence_type", new ArrayList<>(List.of(
+                "",
+                "INCONTINENCE_OCCASIONAL",
+                "INCONTINENCE_FREQUENT"
+        )));
+
+        singlePicklistLookup.put("sibling_sex", new ArrayList<>(List.of(
+                "DROPDOWN_MALE",
+                "DROPDOWN_FEMALE",
+                "DROPDOWN_OTHER"
+        )));
+
+        singlePicklistLookup.put("sibling_diagnosis", new ArrayList<>(List.of(
+                "DIAGNOSIS_DROPDOWN_NO",
+                "DIAGNOSIS_DROPDOWN_YES",
+                "DIAGNOSIS_DROPDOWN_UNKNOWN"
+        )));
+
+        singlePicklistLookup.put("sibling_carrier", new ArrayList<>(List.of(
+                "CARRIER_DROPDOWN_NO",
+                "CARRIER_DROPDOWN_YES",
+                "CARRIER_DROPDOWN_UNKNOWN"
+        )));
+
+        singlePicklistLookup.put("medication_category", new ArrayList<>(List.of(
+                "ANTI_SEIZURE",
+                "ANTI_DROOLING",
+                "DIABETES",
+                "ANTI_DEPRESSANT",
+                "STEROID",
+                "BIRTH_CONTROL",
+                "OTHER",
+                "PROPHYLACTIC_ANTIBIOTICS",
+                "ANTI_TREMOR",
+                "CHEMOTHERAPY"
+        )));
+
+        singlePicklistLookup.put("sample_type", new ArrayList<>(List.of(
+                "",
+                "BLOOD",
+                "URINE",
+                "SALIVA",
+                "OTHER_BODILY_FLUID",
+                "SKIN_PUNCH_BIOPSY",
+                "TISSUE",
+                "OTHER"
+        )));
 
         initStateCodes();
 
@@ -253,38 +337,49 @@ public class MigratedDataReconcileCli {
         csvPrinter.printRecord(csvRecord.get("legacy_altpid"));
         JsonElement datstatData = userData.get("datstatparticipantdata");
         JsonElement datstatMappingData = mappingData.get("datstatparticipantdata");
+        int registrationType = datstatData.getAsJsonObject().get("registration_type").getAsInt();
+
         doCompare(csvRecord, datstatData, datstatMappingData);
 
-        doCompare(csvRecord, userData.get("aboutyousurvey"), mappingData.get("aboutyousurvey"));
+        if (registrationType != 3) {
+            doCompare(csvRecord, userData.get("medicalhistorysurvey"), mappingData.get("atcp_registry_questionnaire"));
 
-        //consent has versions
-        JsonElement consentSurveyEl = userData.get("consentsurvey");
-        if (consentSurveyEl != null && !consentSurveyEl.isJsonNull()) {
-            String consentSurveyName = "consentsurvey";
-            JsonElement consentVersionEl = userData.get("consentsurvey").getAsJsonObject().get("consent_version");
-            String consentVersion = "1";
-            if (consentVersionEl != null && !consentVersionEl.isJsonNull()) {
-                consentVersion = consentVersionEl.getAsString();
-            } else {
-                //check by cut-off Timestamp
-                String ddpCreated = userData.get("consentsurvey").getAsJsonObject().get("ddp_created").getAsString();
-                Instant createdDate = Instant.parse(ddpCreated);
-                if (!createdDate.isBefore(CONSENT_V2_DATE)) {
-                    consentVersion = "2";
-                }
-            }
-            consentSurveyName = consentSurveyName.concat("_v").concat(consentVersion);
-            //LOG.info("consent survey name: {} .. consent version: {}", consentSurveyName, consentVersion);
-            doCompare(csvRecord, userData.get("consentsurvey"), mappingData.get(consentSurveyName));
+            doCompare(csvRecord, userData.get("atregistrationsurvey"), mappingData.get("RegistrationSurvey"));
+
+            doCompare(csvRecord, userData.get("atconsentsurvey"), mappingData.get("ConsentSurvey"));
+
+            doCompare(csvRecord, userData.get("atcontactingphysiciansurvey"), mappingData.get("ContactingPhysicianSurvey"));
+
+            doCompare(csvRecord, userData.get("atgenomestudysurvey"), mappingData.get("GenomeStudySurvey"));
+
+            doCompare(csvRecord, userData.get("atassentsurvey"), mappingData.get("AssentSurvey"));
         }
 
-        doCompare(csvRecord, userData.get("releasesurvey"), mappingData.get("releasesurvey"));
+        //consent has versions
+        //JsonElement consentSurveyEl = userData.get("atconsentsurvey");
 
-        doCompare(csvRecord, userData.get("followupsurvey"), mappingData.get("followupsurvey"));
+        //if (consentSurveyEl != null && !consentSurveyEl.isJsonNull()) {
+        //    String consentSurveyName = "ConsentSurvey";
+        //    JsonElement consentVersionEl = userData.get("atconsentsurvey").getAsJsonObject().get("consent_version");
+        //  String consentVersion = "1";
+        //    if (consentVersionEl != null && !consentVersionEl.isJsonNull()) {
+        //        consentVersion = consentVersionEl.getAsString();
+        //    } else {
+        //        //check by cut-off Timestamp
+        //        String ddpCreated = userData.get("atconsentsurvey").getAsJsonObject().get("ddp_created").getAsString();
+        //        Instant createdDate = Instant.parse(ddpCreated);
+        //        if (!createdDate.isBefore(CONSENT_V2_DATE)) {
+        //            consentVersion = "2";
+        //        }
+        //    }
+        //    consentSurveyName = consentSurveyName.concat("_v").concat(consentVersion);
+        //      LOG.info("consent survey name: {} .. consent version: {}", consentSurveyName, consentVersion);
+        //    doCompare(csvRecord, userData.get("atconsentsurvey"), mappingData.get(consentSurveyName));
+        //}
 
-        processInstitutions(userData.get("releasesurvey"), InstitutionType.PHYSICIAN, csvRecord);
-        processInstitutions(userData.get("releasesurvey"), InstitutionType.INITIAL_BIOPSY, csvRecord);
-        processInstitutions(userData.get("releasesurvey"), InstitutionType.INSTITUTION, csvRecord);
+        //processInstitutions(userData.get("releasesurvey"), InstitutionType.PHYSICIAN, csvRecord);
+        //processInstitutions(userData.get("releasesurvey"), InstitutionType.INITIAL_BIOPSY, csvRecord);
+        //processInstitutions(userData.get("releasesurvey"), InstitutionType.INSTITUTION, csvRecord);
     }
 
     private void doCompare(CSVRecord csvRecord, JsonElement sourceDataEl, JsonElement mappingDataEl) throws Exception {
@@ -296,11 +391,20 @@ public class MigratedDataReconcileCli {
         String targetFieldName;
         String sourceFieldValue;
         String targetFieldValue;
+        String altSourceValue;
         for (JsonElement thisMapData : dataArray) {
             sourceFieldName = thisMapData.getAsJsonObject().get("source_field_name").getAsString();
             targetFieldName = thisMapData.getAsJsonObject().get("target_field_name").getAsString();
             //LOG.info("checking source field: {} ... target field: {} ", sourceFieldName, targetFieldName);
             //load source and target values
+            if ("REGISTRATION_STATE_PROVINCE".equals(targetFieldName)) {
+                if (getStringValueFromElement(sourceDataEl, sourceFieldName) != null) {
+                    String shortCode = getStringValueFromElement(sourceDataEl, sourceFieldName).substring(0, 2);
+                    targetFieldName = shortCode + "_" + targetFieldName;
+                } else {
+                    continue;
+                }
+            }
             targetFieldValue = csvRecord.get(targetFieldName);
             JsonElement sourceDataTypeEl = thisMapData.getAsJsonObject().get("source_field_type");
             String sourceDataType = DEFAULT_DATA_TYPE;
@@ -357,7 +461,7 @@ public class MigratedDataReconcileCli {
                     }
 
                     //compare values
-                    if (sourceFieldValue.equalsIgnoreCase(targetFieldValue)) {
+                    if (sourceFieldValue.trim().equalsIgnoreCase(targetFieldValue.trim())) {
                         //printRecord(csvRecord.get("legacy_altpid"), csvRecord.get("participant_guid"),
                         // sourceFieldName, targetFieldName, sourceFieldValue, targetFieldValue, true);
                         LOG.debug("{} and {} values match. source value: {} target value: {} ",
@@ -454,7 +558,7 @@ public class MigratedDataReconcileCli {
 
                 case "YesNoDk":
                     sourceFieldValue = getStringValueFromElement(sourceDataEl, sourceFieldName);
-                    String altSourceValue = sourceFieldValue;
+                    altSourceValue = sourceFieldValue;
                     if (StringUtils.isNotBlank(sourceFieldValue)) {
                         Integer yesNoInt = Integer.parseInt(sourceFieldValue);
                         if (yesNoDkLookup.containsKey(yesNoInt)) {
@@ -463,6 +567,49 @@ public class MigratedDataReconcileCli {
                         if (sourceFieldName.contains("_medicated") && yesNoInt == 0) {
                             //special cases!!
                             altSourceValue = "NO";
+                        }
+                        if (altSourceValue.equalsIgnoreCase(targetFieldValue)) {
+                            LOG.debug("{} and {} values match. source value: {} target value: {} ",
+                                    sourceFieldName, targetFieldName, sourceFieldValue, targetFieldValue);
+                        } else {
+                            printRecord(csvRecord.get("legacy_altpid"), csvRecord.get("participant_guid"),
+                                    sourceFieldName, targetFieldName, sourceFieldValue, targetFieldValue, false);
+                        }
+                    } else if (StringUtils.isNotBlank(targetFieldValue)) {
+                        printRecord(csvRecord.get("legacy_altpid"), csvRecord.get("participant_guid"),
+                                sourceFieldName, targetFieldName, null, targetFieldValue, false);
+                    }
+                    break;
+
+                case "SinglePicklist":
+                    sourceFieldValue = getStringValueFromElement(sourceDataEl, sourceFieldName);
+                    altSourceValue = sourceFieldValue;
+                    if (StringUtils.isNotBlank(sourceFieldValue)) {
+                        int singlePicklistInt = Integer.parseInt(sourceFieldValue);
+                        if (sourceFieldName.contains("_sex")) {
+                            sourceFieldName = "sibling_sex";
+                            if (singlePicklistInt == -1) {
+                                singlePicklistInt = 2;
+                            }
+                        } else if (sourceFieldName.contains("at_diagnosis")) {
+                            sourceFieldName = "sibling_diagnosis";
+                            if (singlePicklistInt == -1) {
+                                singlePicklistInt = 2;
+                            }
+                        } else if (sourceFieldName.contains("at_carrier")) {
+                            sourceFieldName = "sibling_carrier";
+                            if (singlePicklistInt == -1) {
+                                singlePicklistInt = 2;
+                            }
+                        } else if (sourceFieldName.contains("_category")) {
+                            sourceFieldName = "medication_category";
+                            //TODO - > needs check if json value may contain 0
+                        } else if (sourceFieldName.matches("sample_([a-e])_type")) {
+                            sourceFieldName = "sample_type";
+                        }
+                        if (singlePicklistLookup.containsKey(sourceFieldName)) {
+                            altSourceValue = singlePicklistLookup.get(sourceFieldName)
+                                    .get(singlePicklistInt);
                         }
                         if (altSourceValue.equalsIgnoreCase(targetFieldValue)) {
                             LOG.debug("{} and {} values match. source value: {} target value: {} ",
@@ -886,89 +1033,508 @@ public class MigratedDataReconcileCli {
                 "PREQUAL_FIRST_NAME",
                 "PREQUAL_LAST_NAME",
                 "PREQUAL_SELF_DESCRIBE",
-                "ABOUTYOU_v1",
-                "ABOUTYOU_v1_status",
-                "ABOUTYOU_v1_created_at",
-                "ABOUTYOU_v1_updated_at",
-                "ABOUTYOU_v1_completed_at",
-                "DIAGNOSIS_DATE_MONTH",
-                "DIAGNOSIS_DATE_YEAR",
-                "DIAGNOSED_ADVANCED_METASTATIC",
-                "LOCAL_TREATMENT",
-                "PROSTATECTOMY",
-                "CURRENT_CANCER_LOC",
-                "CURRENT_CANCER_LOC_OTHER_DETAILS",
-                "THERAPIES",
-                "THERAPIES_CLINICAL_TRIAL_DETAILS",
-                "THERAPIES_OTHER_YES_DETAILS",
-                "ADDITIONAL_MEDICATIONS",
-                "OTHER_CANCERS",
-                "OTHER_CANCER_NAMES",
-                "FAMILY_HISTORY",
-                "HEARD_FROM",
-                "HISPANIC",
-                "OTHER_COMMENTS",
-                "BIRTH_YEAR",
-                "COUNTRY",
-                "POSTAL_CODE",
-                "RACE",
-                "RACE_OTHER_DETAILS",
+                "REGISTRATION_v1",
+                "REGISTRATION_v1_status",
+                "REGISTRATION_v1_created_at",
+                "REGISTRATION_v1_updated_at",
+                "REGISTRATION_v1_completed_at",
+                "REGISTRATION_AGREEMENT",
+                "REGISTRATION_FIRST_NAME",
+                "REGISTRATION_LAST_NAME",
+                "REGISTRATION_MIDDLE_NAME",
+                "REGISTRATION_PREFIX",
+                "REGISTRATION_GENDER",
+                "REGISTRATION_DOB",
+                "REGISTRATION_PHONE",
+                "REGISTRATION_STREET_ADDRESS",
+                "REGISTRATION_CITY",
+                "REGISTRATION_POSTAL_CODE",
+                "REGISTRATION_COUNTRY",
+                "AF_REGISTRATION_STATE_PROVINCE",
+                "AL_REGISTRATION_STATE_PROVINCE",
+                "DZ_REGISTRATION_STATE_PROVINCE",
+                "AD_REGISTRATION_STATE_PROVINCE",
+                "AO_REGISTRATION_STATE_PROVINCE",
+                "AG_REGISTRATION_STATE_PROVINCE",
+                "AR_REGISTRATION_STATE_PROVINCE",
+                "AM_REGISTRATION_STATE_PROVINCE",
+                "AU_REGISTRATION_STATE_PROVINCE",
+                "AT_REGISTRATION_STATE_PROVINCE",
+                "AZ_REGISTRATION_STATE_PROVINCE",
+                "BS_REGISTRATION_STATE_PROVINCE",
+                "BH_REGISTRATION_STATE_PROVINCE",
+                "BD_REGISTRATION_STATE_PROVINCE",
+                "BB_REGISTRATION_STATE_PROVINCE",
+                "BY_REGISTRATION_STATE_PROVINCE",
+                "BE_REGISTRATION_STATE_PROVINCE",
+                "BZ_REGISTRATION_STATE_PROVINCE",
+                "BJ_REGISTRATION_STATE_PROVINCE",
+                "BT_REGISTRATION_STATE_PROVINCE",
+                "BO_REGISTRATION_STATE_PROVINCE",
+                "BQ_REGISTRATION_STATE_PROVINCE",
+                "BA_REGISTRATION_STATE_PROVINCE",
+                "BW_REGISTRATION_STATE_PROVINCE",
+                "BR_REGISTRATION_STATE_PROVINCE",
+                "BN_REGISTRATION_STATE_PROVINCE",
+                "BG_REGISTRATION_STATE_PROVINCE",
+                "BF_REGISTRATION_STATE_PROVINCE",
+                "BI_REGISTRATION_STATE_PROVINCE",
+                "KH_REGISTRATION_STATE_PROVINCE",
+                "CM_REGISTRATION_STATE_PROVINCE",
+                "CA_REGISTRATION_STATE_PROVINCE",
+                "CV_REGISTRATION_STATE_PROVINCE",
+                "CF_REGISTRATION_STATE_PROVINCE",
+                "TD_REGISTRATION_STATE_PROVINCE",
+                "CL_REGISTRATION_STATE_PROVINCE",
+                "CN_REGISTRATION_STATE_PROVINCE",
+                "CO_REGISTRATION_STATE_PROVINCE",
+                "KM_REGISTRATION_STATE_PROVINCE",
+                "CG_REGISTRATION_STATE_PROVINCE",
+                "CD_REGISTRATION_STATE_PROVINCE",
+                "CR_REGISTRATION_STATE_PROVINCE",
+                "HR_REGISTRATION_STATE_PROVINCE",
+                "CU_REGISTRATION_STATE_PROVINCE",
+                "CY_REGISTRATION_STATE_PROVINCE",
+                "CZ_REGISTRATION_STATE_PROVINCE",
+                "CI_REGISTRATION_STATE_PROVINCE",
+                "DK_REGISTRATION_STATE_PROVINCE",
+                "DJ_REGISTRATION_STATE_PROVINCE",
+                "DM_REGISTRATION_STATE_PROVINCE",
+                "DO_REGISTRATION_STATE_PROVINCE",
+                "EC_REGISTRATION_STATE_PROVINCE",
+                "EG_REGISTRATION_STATE_PROVINCE",
+                "SV_REGISTRATION_STATE_PROVINCE",
+                "GQ_REGISTRATION_STATE_PROVINCE",
+                "ER_REGISTRATION_STATE_PROVINCE",
+                "EE_REGISTRATION_STATE_PROVINCE",
+                "ET_REGISTRATION_STATE_PROVINCE",
+                "FJ_REGISTRATION_STATE_PROVINCE",
+                "FI_REGISTRATION_STATE_PROVINCE",
+                "FR_REGISTRATION_STATE_PROVINCE",
+                "TF_REGISTRATION_STATE_PROVINCE",
+                "GA_REGISTRATION_STATE_PROVINCE",
+                "GM_REGISTRATION_STATE_PROVINCE",
+                "GE_REGISTRATION_STATE_PROVINCE",
+                "DE_REGISTRATION_STATE_PROVINCE",
+                "GH_REGISTRATION_STATE_PROVINCE",
+                "GR_REGISTRATION_STATE_PROVINCE",
+                "GD_REGISTRATION_STATE_PROVINCE",
+                "GT_REGISTRATION_STATE_PROVINCE",
+                "GN_REGISTRATION_STATE_PROVINCE",
+                "GW_REGISTRATION_STATE_PROVINCE",
+                "GY_REGISTRATION_STATE_PROVINCE",
+                "HT_REGISTRATION_STATE_PROVINCE",
+                "HN_REGISTRATION_STATE_PROVINCE",
+                "HU_REGISTRATION_STATE_PROVINCE",
+                "IS_REGISTRATION_STATE_PROVINCE",
+                "IN_REGISTRATION_STATE_PROVINCE",
+                "ID_REGISTRATION_STATE_PROVINCE",
+                "IR_REGISTRATION_STATE_PROVINCE",
+                "IQ_REGISTRATION_STATE_PROVINCE",
+                "IE_REGISTRATION_STATE_PROVINCE",
+                "IL_REGISTRATION_STATE_PROVINCE",
+                "IT_REGISTRATION_STATE_PROVINCE",
+                "JM_REGISTRATION_STATE_PROVINCE",
+                "JP_REGISTRATION_STATE_PROVINCE",
+                "JO_REGISTRATION_STATE_PROVINCE",
+                "KZ_REGISTRATION_STATE_PROVINCE",
+                "KE_REGISTRATION_STATE_PROVINCE",
+                "KI_REGISTRATION_STATE_PROVINCE",
+                "KP_REGISTRATION_STATE_PROVINCE",
+                "KR_REGISTRATION_STATE_PROVINCE",
+                "KW_REGISTRATION_STATE_PROVINCE",
+                "KG_REGISTRATION_STATE_PROVINCE",
+                "LA_REGISTRATION_STATE_PROVINCE",
+                "LV_REGISTRATION_STATE_PROVINCE",
+                "LB_REGISTRATION_STATE_PROVINCE",
+                "LS_REGISTRATION_STATE_PROVINCE",
+                "LR_REGISTRATION_STATE_PROVINCE",
+                "LY_REGISTRATION_STATE_PROVINCE",
+                "LI_REGISTRATION_STATE_PROVINCE",
+                "LT_REGISTRATION_STATE_PROVINCE",
+                "LU_REGISTRATION_STATE_PROVINCE",
+                "MK_REGISTRATION_STATE_PROVINCE",
+                "MG_REGISTRATION_STATE_PROVINCE",
+                "MW_REGISTRATION_STATE_PROVINCE",
+                "MY_REGISTRATION_STATE_PROVINCE",
+                "MV_REGISTRATION_STATE_PROVINCE",
+                "ML_REGISTRATION_STATE_PROVINCE",
+                "MT_REGISTRATION_STATE_PROVINCE",
+                "MH_REGISTRATION_STATE_PROVINCE",
+                "MR_REGISTRATION_STATE_PROVINCE",
+                "MU_REGISTRATION_STATE_PROVINCE",
+                "MX_REGISTRATION_STATE_PROVINCE",
+                "FM_REGISTRATION_STATE_PROVINCE",
+                "MD_REGISTRATION_STATE_PROVINCE",
+                "MN_REGISTRATION_STATE_PROVINCE",
+                "ME_REGISTRATION_STATE_PROVINCE",
+                "MA_REGISTRATION_STATE_PROVINCE",
+                "MZ_REGISTRATION_STATE_PROVINCE",
+                "MM_REGISTRATION_STATE_PROVINCE",
+                "NA_REGISTRATION_STATE_PROVINCE",
+                "NR_REGISTRATION_STATE_PROVINCE",
+                "NP_REGISTRATION_STATE_PROVINCE",
+                "NL_REGISTRATION_STATE_PROVINCE",
+                "NZ_REGISTRATION_STATE_PROVINCE",
+                "NI_REGISTRATION_STATE_PROVINCE",
+                "NE_REGISTRATION_STATE_PROVINCE",
+                "NG_REGISTRATION_STATE_PROVINCE",
+                "NO_REGISTRATION_STATE_PROVINCE",
+                "OM_REGISTRATION_STATE_PROVINCE",
+                "PK_REGISTRATION_STATE_PROVINCE",
+                "PW_REGISTRATION_STATE_PROVINCE",
+                "PA_REGISTRATION_STATE_PROVINCE",
+                "PG_REGISTRATION_STATE_PROVINCE",
+                "PY_REGISTRATION_STATE_PROVINCE",
+                "PE_REGISTRATION_STATE_PROVINCE",
+                "PH_REGISTRATION_STATE_PROVINCE",
+                "PL_REGISTRATION_STATE_PROVINCE",
+                "PT_REGISTRATION_STATE_PROVINCE",
+                "QA_REGISTRATION_STATE_PROVINCE",
+                "RO_REGISTRATION_STATE_PROVINCE",
+                "RU_REGISTRATION_STATE_PROVINCE",
+                "RW_REGISTRATION_STATE_PROVINCE",
+                "SH_REGISTRATION_STATE_PROVINCE",
+                "KN_REGISTRATION_STATE_PROVINCE",
+                "VC_REGISTRATION_STATE_PROVINCE",
+                "WS_REGISTRATION_STATE_PROVINCE",
+                "SM_REGISTRATION_STATE_PROVINCE",
+                "ST_REGISTRATION_STATE_PROVINCE",
+                "SA_REGISTRATION_STATE_PROVINCE",
+                "SN_REGISTRATION_STATE_PROVINCE",
+                "RS_REGISTRATION_STATE_PROVINCE",
+                "SC_REGISTRATION_STATE_PROVINCE",
+                "SL_REGISTRATION_STATE_PROVINCE",
+                "SG_REGISTRATION_STATE_PROVINCE",
+                "SK_REGISTRATION_STATE_PROVINCE",
+                "SI_REGISTRATION_STATE_PROVINCE",
+                "SB_REGISTRATION_STATE_PROVINCE",
+                "SO_REGISTRATION_STATE_PROVINCE",
+                "ZA_REGISTRATION_STATE_PROVINCE",
+                "ES_REGISTRATION_STATE_PROVINCE",
+                "LK_REGISTRATION_STATE_PROVINCE",
+                "SD_REGISTRATION_STATE_PROVINCE",
+                "SR_REGISTRATION_STATE_PROVINCE",
+                "SZ_REGISTRATION_STATE_PROVINCE",
+                "SE_REGISTRATION_STATE_PROVINCE",
+                "CH_REGISTRATION_STATE_PROVINCE",
+                "SY_REGISTRATION_STATE_PROVINCE",
+                "TW_REGISTRATION_STATE_PROVINCE",
+                "TZ_REGISTRATION_STATE_PROVINCE",
+                "TH_REGISTRATION_STATE_PROVINCE",
+                "TL_REGISTRATION_STATE_PROVINCE",
+                "TG_REGISTRATION_STATE_PROVINCE",
+                "TO_REGISTRATION_STATE_PROVINCE",
+                "TT_REGISTRATION_STATE_PROVINCE",
+                "TN_REGISTRATION_STATE_PROVINCE",
+                "TR_REGISTRATION_STATE_PROVINCE",
+                "TM_REGISTRATION_STATE_PROVINCE",
+                "TV_REGISTRATION_STATE_PROVINCE",
+                "UG_REGISTRATION_STATE_PROVINCE",
+                "UA_REGISTRATION_STATE_PROVINCE",
+                "AE_REGISTRATION_STATE_PROVINCE",
+                "GB_REGISTRATION_STATE_PROVINCE",
+                "US_REGISTRATION_STATE_PROVINCE",
+                "UM_REGISTRATION_STATE_PROVINCE",
+                "UY_REGISTRATION_STATE_PROVINCE",
+                "UZ_REGISTRATION_STATE_PROVINCE",
+                "VU_REGISTRATION_STATE_PROVINCE",
+                "VE_REGISTRATION_STATE_PROVINCE",
+                "VN_REGISTRATION_STATE_PROVINCE",
+                "EH_REGISTRATION_STATE_PROVINCE",
+                "YE_REGISTRATION_STATE_PROVINCE",
+                "ZM_REGISTRATION_STATE_PROVINCE",
+                "ZW_REGISTRATION_STATE_PROVINCE",
+                "STAY_INFORMED_v1",
+                "STAY_INFORMED_v1_status",
+                "STAY_INFORMED_v1_created_at",
+                "STAY_INFORMED_v1_updated_at",
+                "STAY_INFORMED_v1_completed_at",
+                "FIRSTNAME",
+                "LASTNAME",
+                "STAY_INFORMED_EMAIL",
                 "CONSENT_v1",
                 "CONSENT_v1_status",
                 "CONSENT_v1_created_at",
                 "CONSENT_v1_updated_at",
                 "CONSENT_v1_completed_at",
-                "CONSENT_BLOOD",
-                "CONSENT_TISSUE",
-                "CONSENT_FULLNAME",
+                "CONSENT_MAKE_CHANGES_DESCRIPTION",
+                "CONSENT_MAKE_CHANGES_PHONE",
+                "RE_CONTACT_FOLLOW_UP",
+                "PERFORM_DNA",
+                "MEDICAL_RECORDS",
+                "RE_CONTACT_RETURN_RESULTS",
+                "CONTACT_MY_PHYSICIAN",
+                "CONSENT_PARENT_SIGNATURE",
+                "CONSENT_RELATIONSHIP",
+                "CONSENT_SIGNATURE",
+                "CONSENT_GUARDIAN_SIGNATURE",
                 "CONSENT_DOB",
-                "CONSENT_v2",
-                "CONSENT_v2_status",
-                "CONSENT_v2_created_at",
-                "CONSENT_v2_updated_at",
-                "CONSENT_v2_completed_at",
-                "CONSENT_v2_BLOOD",
-                "CONSENT_v2_TISSUE",
-                "CONSENT_v2_FULLNAME",
-                "CONSENT_v2_DOB",
-                "RELEASE_v1",
-                "RELEASE_v1_status",
-                "RELEASE_v1_created_at",
-                "RELEASE_v1_updated_at",
-                "RELEASE_v1_completed_at",
-                "ADDRESS_FULLNAME",
-                "ADDRESS_STREET1",
-                "ADDRESS_STREET2",
-                "ADDRESS_CITY",
-                "ADDRESS_STATE",
-                "ADDRESS_ZIP",
-                "ADDRESS_COUNTRY",
-                "ADDRESS_PHONE",
-                "ADDRESS_PLUSCODE",
-                "ADDRESS_STATUS",
-                "PHYSICIAN",
-                "INITIAL_BIOPSY",
-                "INSTITUTION",
-                "RELEASE_AGREEMENT",
-                "FOLLOWUPCONSENT_v1",
-                "FOLLOWUPCONSENT_v1_status",
-                "FOLLOWUPCONSENT_v1_created_at",
-                "FOLLOWUPCONSENT_v1_updated_at",
-                "FOLLOWUPCONSENT_v1_completed_at",
-                "FOLLOWUPCONSENT_BLOOD",
-                "FOLLOWUPCONSENT_TISSUE",
-                "FOLLOWUPCONSENT_FULLNAME",
-                "FOLLOWUPCONSENT_DOB",
-                "FOLLOWUPCONSENT_v2",
-                "FOLLOWUPCONSENT_v2_status",
-                "FOLLOWUPCONSENT_v2_created_at",
-                "FOLLOWUPCONSENT_v2_updated_at",
-                "FOLLOWUPCONSENT_v2_completed_at",
-                "FOLLOWUPCONSENT_v2_BLOOD",
-                "FOLLOWUPCONSENT_v2_TISSUE",
-                "FOLLOWUPCONSENT_v2_FULLNAME",
-                "FOLLOWUPCONSENT_v2_DOB"
-                )
+                "CONSENT_GUARDIAN_DOB",
+                "ASSENT_v1",
+                "ASSENT_v1_status",
+                "ASSENT_v1_created_at",
+                "ASSENT_v1_updated_at",
+                "ASSENT_v1_completed_at",
+                "CAN_CONTACT_LATER",
+                "ASSENT_CAN_DO_TESTS",
+                "MAY_ASK_MY_DOCTOR",
+                "GET_THE_RESULT",
+                "RESEARCHERS_LEARN_SOMETHING",
+                "ASSENT_CHILD_SIGNATURE",
+                "ASSENT_DOB",
+                "ASSENT_SIGNATURE_OF_PERSON_EXPLAINING",
+                "ASSENT_DATE",
+                "CONTACTING_PHYSICIAN_v1",
+                "CONTACTING_PHYSICIAN_v1_status",
+                "CONTACTING_PHYSICIAN_v1_created_at",
+                "CONTACTING_PHYSICIAN_v1_updated_at",
+                "CONTACTING_PHYSICIAN_v1_completed_at",
+                "PHYSICIAN_FIRSTNAME",
+                "PHYSICIAN_LASTNAME",
+                "PHYSICIAN_MAIL",
+                "PHYSICIAN_PHONE",
+                "PHYSICIAN_EMAIL",
+                "EVALUATION",
+                "MEDICAL_HISTORY_v1",
+                "MEDICAL_HISTORY_v1_status",
+                "MEDICAL_HISTORY_v1_created_at",
+                "MEDICAL_HISTORY_v1_updated_at",
+                "MEDICAL_HISTORY_v1_completed_at",
+                "DIAGNOSED",
+                "YEARS",
+                "MONTHS",
+                "FIRST_SYMPTOM",
+                "NEUROLOGIC_PROBLEM",
+                "DETERMINED",
+                "DETERMINED_OTHER_DETAILS",
+                "ATM_MUTATIONS",
+                "NAME_PHYSICIAN_1",
+                "PHYSICIAN_TELEPHONE_NUMBER_1",
+                "HOSPITAL_1",
+                "CITY_1",
+                "STATE_1",
+                "COUNTRY_1",
+                "HISTORY_OF_CANCER",
+                "CANCER_DIAGNOSED_AGE",
+                "TYPE_OF_CANCER",
+                "TYPE_OF_CANCER_OTHER_DETAILS",
+                "CANCER_CONDITION_STATE",
+                "AMBULATION",
+                "BEGIN_WHEELCHAIR_AGE",
+                "COMPLETELY_WHEELCHAIR_AGE",
+                "SYMPTOMS_OR_CONDITIONS",
+                "SYMPTOMS_OR_CONDITIONS_OTHER_DETAILS",
+                "TELANGIECTASIA",
+                "TELANGIECTASIA_TELANGIECTASIA_EYES_DETAILS",
+                "TELANGIECTASIA_TELANGIECTASIA_SKIN_DETAILS",
+                "FREQUENT_INFECTIONS",
+                "FREQUENT_INFECTIONS_INFECTION_OTHER_DETAILS",
+                "SKIN_CONDITIONS",
+                "SKIN_CONDITIONS_SKIN_COND_OTHER_DETAILS",
+                "OTHER_SYMPTOMS_OR_CONDITIONS",
+                "OTHER_SYMPTOMS_OR_CONDITIONS_ALLERGIES_DETAILS",
+                "OTHER_SYMPTOMS_OR_CONDITIONS_HIGH_CHOLESTEROL_DETAILS",
+                "OTHER_SYMPTOMS_OR_CONDITIONS_LIVER_ISSUES_DETAILS",
+                "OTHER_SYMPTOMS_OR_CONDITIONS_RENAL_ISSUES_DETAILS",
+                "OTHER_SYMPTOMS_OR_CONDITIONS_THYROID_ISSUES_DETAILS",
+                "OTHER_SYMPTOMS_OR_CONDITIONS_OTHER_DETAILS",
+                "INCONTINENCE",
+                "FEMALE_ONSET_OF_PERIOD",
+                "FEMALE_AGE_OF_ONSET_PERIOD",
+                "FEMALE_PREGNANT",
+                "INFECTIOUS_DISEASES",
+                "IMMUNODEFICIENCY",
+                "IMMUNODEFICIENCY_TYPE",
+                "IMMUNIZATION",
+                "IMMUNIZATION_YES_DETAILS",
+                "SURGERIES",
+                "SURGERIES_G_TUBE_DETAILS",
+                "SURGERIES_EYE_DETAILS",
+                "SURGERIES_HEEL_CORD_DETAILS",
+                "SURGERIES_ROD_PLACEMENT_DETAILS",
+                "TYPE_OF_SURGERY_1",
+                "AGE_OF_SURGERY_1",
+                "DESCRIPTION_OF_SURGERY_1",
+                "TYPE_OF_SURGERY_2",
+                "AGE_OF_SURGERY_2",
+                "DESCRIPTION_OF_SURGERY_2",
+                "TYPE_OF_SURGERY_3",
+                "AGE_OF_SURGERY_3",
+                "DESCRIPTION_OF_SURGERY_3",
+                "TYPE_OF_SURGERY_4",
+                "AGE_OF_SURGERY_4",
+                "DESCRIPTION_OF_SURGERY_4",
+                "TYPE_OF_SURGERY_5",
+                "AGE_OF_SURGERY_5",
+                "DESCRIPTION_OF_SURGERY_5",
+                "MEDICATION_CATEGORY_PICK_LIST_1",
+                "MEDICATION_NAME_1",
+                "BEGAN_TAKING_AT_AGE_1",
+                "MEDICATION_CATEGORY_PICK_LIST_2",
+                "MEDICATION_NAME_2",
+                "BEGAN_TAKING_AT_AGE_2",
+                "MEDICATION_CATEGORY_PICK_LIST_3",
+                "MEDICATION_NAME_3",
+                "BEGAN_TAKING_AT_AGE_3",
+                "MEDICATION_CATEGORY_PICK_LIST_4",
+                "MEDICATION_NAME_4",
+                "BEGAN_TAKING_AT_AGE_4",
+                "MEDICATION_CATEGORY_PICK_LIST_5",
+                "MEDICATION_NAME_5",
+                "BEGAN_TAKING_AT_AGE_5",
+                "MEDICATION_CATEGORY_PICK_LIST_6",
+                "MEDICATION_NAME_6",
+                "BEGAN_TAKING_AT_AGE_6",
+                "MEDICATION_CATEGORY_PICK_LIST_7",
+                "MEDICATION_NAME_7",
+                "BEGAN_TAKING_AT_AGE_7",
+                "MEDICATION_CATEGORY_PICK_LIST_8",
+                "MEDICATION_NAME_8",
+                "BEGAN_TAKING_AT_AGE_8",
+                "MEDICATION_CATEGORY_PICK_LIST_9",
+                "MEDICATION_NAME_9",
+                "BEGAN_TAKING_AT_AGE_9",
+                "NUTRITIONAL_SUPPLEMENTS",
+                "NUTRITIONAL_SUPPLEMENTS_YES_DETAILS",
+                "CONSANGUINEOUS_PARENTS",
+                "SEX_PICKLIST_1",
+                "AGE_1",
+                "DATE_OF_BIRTH_1",
+                "AGE_AT_DEATH_1",
+                "DIAGNOSIS_PICKLIST_1",
+                "CARRIER_PICKLIST_1",
+                "SEX_PICKLIST_2",
+                "AGE_2",
+                "DATE_OF_BIRTH_2",
+                "AGE_AT_DEATH_2",
+                "DIAGNOSIS_PICKLIST_2",
+                "CARRIER_PICKLIST_2",
+                "SEX_PICKLIST_3",
+                "AGE_3",
+                "DATE_OF_BIRTH_3",
+                "AGE_AT_DEATH_3",
+                "DIAGNOSIS_PICKLIST_3",
+                "CARRIER_PICKLIST_3",
+                "SEX_PICKLIST_4",
+                "AGE_4",
+                "DATE_OF_BIRTH_4",
+                "AGE_AT_DEATH_4",
+                "DIAGNOSIS_PICKLIST_4",
+                "CARRIER_PICKLIST_4",
+                "SEX_PICKLIST_5",
+                "AGE_5",
+                "DATE_OF_BIRTH_5",
+                "AGE_AT_DEATH_5",
+                "DIAGNOSIS_PICKLIST_5",
+                "CARRIER_PICKLIST_5",
+                "PREVIOUSLY_PARTICIPATED",
+                "PREVIOUSLY_PARTICIPATED_YES_DETAILS",
+                "currently_participate",
+                "currently_participate_YES_DETAILS",
+                "PREVIOUSLY_DONATED",
+                "SAMPLE_TYPE_1",
+                "SAMPLE_LOCATION_1",
+                "SAMPLE_TYPE_2",
+                "SAMPLE_LOCATION_2",
+                "SAMPLE_TYPE_3",
+                "SAMPLE_LOCATION_3",
+                "SAMPLE_TYPE_4",
+                "SAMPLE_LOCATION_4",
+                "SAMPLE_TYPE_5",
+                "SAMPLE_LOCATION_5",
+                "GENOME_STUDY_v1",
+                "GENOME_STUDY_v1_status",
+                "GENOME_STUDY_v1_created_at",
+                "GENOME_STUDY_v1_updated_at",
+                "GENOME_STUDY_v1_completed_at",
+                "COLLECTION_KIT",
+                "SHIPPING_ADDRESS",
+                "PARTICIPANT_GENDER",
+                "PARTICIPANT_ETHNICITY",
+                "FEEDING_v1",
+                "FEEDING_v1_status",
+                "FEEDING_v1_created_at",
+                "FEEDING_v1_updated_at",
+                "FEEDING_v1_completed_at",
+                "FEEDING_SELF_FEED_FORK",
+                "FEEDING_SELF_FEED_FORK_NA_REASON",
+                "FEEDING_SELF_FEED_FORK_NA_REASON_NA_OTHER_REASONS_DETAILS",
+                "FEEDING_SELF_FEED_SPOON",
+                "FEEDING_SELF_FEED_SPOON_NA_REASON",
+                "FEEDING_SELF_FEED_SPOON_NA_REASON_NA_OTHER_REASONS_DETAILS",
+                "FEED_PO_SELF_FEED_FORK",
+                "FEED_PO_SELF_FEED_FORK_NA_REASON",
+                "FEED_PO_SELF_FEED_FORK_NA_REASON_NA_OTHER_REASONS_DETAILS",
+                "FEED_PO_SELF_FEED_SPOON",
+                "FEED_PO_SELF_FEED_SPOON_NA_REASON",
+                "FEED_PO_SELF_FEED_SPOON_NA_REASON_NA_OTHER_REASONS_DETAILS",
+                "FEEDING_EAT_WITH_FINGERS",
+                "FEEDING_EAT_WITH_FINGERS_NA_REASON",
+                "FEEDING_EAT_WITH_FINGERS_NA_REASON_NA_OTHER_REASONS_DETAILS",
+                "FEEDING_DRINK_FROM_OPEN_CUP",
+                "FEEDING_DRINK_FROM_OPEN_CUP_NA_REASON",
+                "FEEDING_DRINK_FROM_OPEN_CUP_NA_REASON_NA_OTHER_REASONS_DETAILS",
+                "FEED_PO_EAT_WITH_FINGERS",
+                "FEED_PO_EAT_WITH_FINGERS_NA_REASON",
+                "FEED_PO_EAT_WITH_FINGERS_NA_REASON_NA_OTHER_REASONS_DETAILS",
+                "FEED_PO_DRINK_FROM_OPEN_CUP",
+                "FEED_PO_DRINK_FROM_OPEN_CUP_NA_REASON",
+                "FEED_PO_DRINK_FROM_OPEN_CUP_NA_REASON_NA_OTHER_REASONS_DETAILS",
+                "FEEDING_DRINK_USING_LID",
+                "FEEDING_DRINK_USING_LID_NA_REASON",
+                "FEEDING_DRINK_USING_LID_NA_REASON_NA_OTHER_REASONS_DETAILS",
+                "FEEDING_FINISH_YOURSELF",
+                "FEEDING_FINISH_YOURSELF_NA_REASON",
+                "FEEDING_FINISH_YOURSELF_NA_REASON_NA_OTHER_REASONS_DETAILS",
+                "FEED_PO_DRINK_USING_LID",
+                "FEED_PO_DRINK_USING_LID_NA_REASON",
+                "FEED_PO_DRINK_USING_LID_NA_REASON_NA_OTHER_REASONS_DETAILS",
+                "FEED_PO_FINISH_YOURSELF",
+                "FEED_PO_FINISH_YOURSELF_NA_REASON",
+                "FEED_PO_FINISH_YOURSELF_NA_REASON_NA_OTHER_REASONS_DETAILS",
+                "FEEDING_HELP_DIFFICULTY",
+                "FEEDING_HELP_DIFFICULTY_NA_REASON",
+                "FEEDING_HELP_DIFFICULTY_NA_REASON_NA_OTHER_REASONS_DETAILS",
+                "FEEDING_HELP_FATIGUE",
+                "FEEDING_HELP_FATIGUE_NA_REASON",
+                "FEEDING_HELP_FATIGUE_NA_REASON_NA_OTHER_REASONS_DETAILS",
+                "FEED_PO_HELP_DIFFICULTY",
+                "FEED_PO_HELP_DIFFICULTY_NA_REASON",
+                "FEED_PO_HELP_DIFFICULTY_NA_REASON_NA_OTHER_REASONS_DETAILS",
+                "FEED_PO_HELP_FATIGUE",
+                "FEED_PO_HELP_FATIGUE_NA_REASON",
+                "FEED_PO_HELP_FATIGUE_NA_REASON_NA_OTHER_REASONS_DETAILS",
+                "FEEDING_HELP_TIME",
+                "FEEDING_HELP_TIME_NA_REASON",
+                "FEEDING_HELP_TIME_NA_REASON_NA_OTHER_REASONS_DETAILS",
+                "FEEDING_HELP_CONCERN",
+                "FEEDING_HELP_CONCERN_NA_REASON",
+                "FEEDING_HELP_CONCERN_NA_REASON_NA_OTHER_REASONS_DETAILS",
+                "FEED_PO_HELP_TIME",
+                "FEED_PO_HELP_TIME_NA_REASON",
+                "FEED_PO_HELP_TIME_NA_REASON_NA_OTHER_REASONS_DETAILS",
+                "FEED_PO_HELP_CONCERN",
+                "FEED_PO_HELP_CONCERN_NA_REASON",
+                "FEED_PO_HELP_CONCERN_NA_REASON_NA_OTHER_REASONS_DETAILS",
+                "FEEDING_POOR_APPETITE",
+                "FEEDING_POOR_APPETITE_NA_REASON",
+                "FEEDING_POOR_APPETITE_NA_REASON_NA_OTHER_REASONS_DETAILS",
+                "FEEDING_MEDICATION",
+                "FEEDING_MEDICATION_NA_REASON",
+                "FEEDING_MEDICATION_NA_REASON_NA_OTHER_REASONS_DETAILS",
+                "FEED_PO_POOR_APPETITE",
+                "FEED_PO_POOR_APPETITE_NA_REASON",
+                "FEED_PO_POOR_APPETITE_NA_REASON_NA_OTHER_REASONS_DETAILS",
+                "FEED_PO_MEDICATION",
+                "FEED_PO_MEDICATION_NA_REASON",
+                "FEED_PO_MEDICATION_NA_REASON_NA_OTHER_REASONS_DETAILS",
+                "REVIEW_AND_SUBMISSION_v1",
+                "REVIEW_AND_SUBMISSION_v1_status",
+                "REVIEW_AND_SUBMISSION_v1_created_at",
+                "REVIEW_AND_SUBMISSION_v1_updated_at",
+                "REVIEW_AND_SUBMISSION_v1_completed_at"
+        )
                 .withDelimiter(',')
                 .withIgnoreHeaderCase()
                 .withSkipHeaderRecord(true)

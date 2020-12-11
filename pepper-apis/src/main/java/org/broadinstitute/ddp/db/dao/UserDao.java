@@ -46,34 +46,42 @@ public interface UserDao extends SqlObject {
 
 
     default User createUser(String auth0Domain, String auth0ClientId, String auth0UserId) {
-        return createUserByClientIdOrAuth0Ids(false, null, auth0Domain, auth0ClientId, auth0UserId, false, null);
+        return createUserByClientIdOrAuth0Ids(false, null, auth0Domain, auth0ClientId, auth0UserId, false, null,
+                Instant.now().toEpochMilli());
     }
 
     default User createUser(long clientId, String auth0UserId, String legacyAltPid) {
-        return createUserByClientIdOrAuth0Ids(true, clientId, null, null, auth0UserId, false, legacyAltPid);
+        return createUserByClientIdOrAuth0Ids(true, clientId, null, null, auth0UserId, false, legacyAltPid,
+                Instant.now().toEpochMilli());
+    }
+
+    default User createUser(long clientId, String auth0UserId, String legacyAltPid, long createdAtMillis) {
+        return createUserByClientIdOrAuth0Ids(true, clientId, null, null, auth0UserId, false, legacyAltPid,
+                createdAtMillis);
     }
 
     default User createTempUser(String auth0Domain, String auth0ClientId) {
-        return createUserByClientIdOrAuth0Ids(false, null, auth0Domain, auth0ClientId, null, true, null);
+        return createUserByClientIdOrAuth0Ids(false, null, auth0Domain, auth0ClientId, null, true, null,
+                Instant.now().toEpochMilli());
     }
 
     default User createTempUser(long clientId) {
-        return createUserByClientIdOrAuth0Ids(true, clientId, null, null, null, true, null);
+        return createUserByClientIdOrAuth0Ids(true, clientId, null, null, null, true, null, Instant.now().toEpochMilli());
     }
 
     private User createUserByClientIdOrAuth0Ids(boolean byClientId, Long clientId,
                                                 String auth0Domain, String auth0ClientId,
-                                                String auth0UserId, boolean isTemporary, String legacyAltPid) {
+                                                String auth0UserId, boolean isTemporary, String legacyAltPid, long createdAtMillis) {
         Handle handle = getHandle();
         String userGuid = DBUtils.uniqueUserGuid(handle);
         String userHruid = DBUtils.uniqueUserHruid(handle);
 
-        long now = Instant.now().toEpochMilli();
-        Long expiresAt = isTemporary ? now + EXPIRATION_DURATION_MILLIS : null;
+        //long now = Instant.now().toEpochMilli();
+        Long expiresAt = isTemporary ? createdAtMillis + EXPIRATION_DURATION_MILLIS : null;
 
         long userId = getUserSql().insertByClientIdOrAuth0Ids(
                 byClientId, clientId, auth0Domain, auth0ClientId, auth0UserId,
-                userGuid, userHruid, legacyAltPid, null, false, now, now, expiresAt);
+                userGuid, userHruid, legacyAltPid, null, false, createdAtMillis, createdAtMillis, expiresAt);
         return findUserById(userId).orElseThrow(() -> new DaoException("Could not find user with id " + userId));
     }
 
@@ -121,6 +129,14 @@ public interface UserDao extends SqlObject {
     @UseStringTemplateSqlLocator
     @SqlUpdate("deleteAllTempUserRelatedDataByUserIds")
     int _deleteAllTempUserRelatedDataByUserIds(@BindList(value = "userIds", onEmpty = BindList.EmptyHandling.NULL) Set<Long> userIds);
+
+    @SqlUpdate("update user set legacy_altpid = :altpid where auth0_user_id = :auth0UserId and auth0_tenant_id = :tenantId")
+    int updateLegacyAltPidByAuth0UserIdAndTenantId(@Bind("auth0UserId") String auth0UserId,
+                                                   @Bind("altpid") String legacyAltPid, @Bind("tenantId") long tenantId);
+
+    @SqlUpdate("update user set created_at = :createdAt where auth0_user_id = :auth0UserId and auth0_tenant_id = :tenantId")
+    int updateLegacyCreatedAtByAuth0UserIdAndTenantId(@Bind("auth0UserId") String auth0UserId,
+                                                   @Bind("createdAt") long createdAt, @Bind("tenantId") long tenantId);
 
     default int deleteAllExpiredTemporaryUsers() {
         ActivityInstanceDao instanceDao = getActivityInstanceDao();
