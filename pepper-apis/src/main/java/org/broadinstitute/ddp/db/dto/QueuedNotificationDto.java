@@ -1,6 +1,6 @@
 package org.broadinstitute.ddp.db.dto;
 
-import java.util.List;
+import java.util.Collection;
 
 import org.broadinstitute.ddp.model.event.NotificationServiceType;
 import org.broadinstitute.ddp.model.event.NotificationType;
@@ -63,13 +63,23 @@ public class QueuedNotificationDto extends QueuedEventDto {
         return notificationDetailsDto.getParticipantLastName();
     }
 
-    public List<NotificationTemplateSubstitutionDto> getTemplateSubstitutions() {
+    public Collection<NotificationTemplateSubstitutionDto> getTemplateSubstitutions() {
         return notificationDetailsDto.getTemplateSubstitutions();
+    }
+
+    public Collection<Long> getAttachmentIds() {
+        return notificationDetailsDto.getAttachmentIds();
     }
 
     public void addTemplateSubstitutions(NotificationTemplateSubstitutionDto... substitutions) {
         for (NotificationTemplateSubstitutionDto substitution : substitutions) {
             notificationDetailsDto.addTemplateSubstitution(substitution);
+        }
+    }
+
+    public void addAttachments(Long... attachmentIds) {
+        for (Long attachmentId : attachmentIds) {
+            notificationDetailsDto.addAttachmentId(attachmentId);
         }
     }
 }

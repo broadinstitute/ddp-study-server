@@ -23,13 +23,13 @@
             <column name="file_upload_guid" type="varchar(10)">
                 <constraints nullable="false" unique="true" uniqueConstraintName="file_upload_guid_uk"/>
             </column>
-            <column name="bucket_file_url" type="varchar(1000)">
+            <column name="bucket_file_url" type="varchar(300)">
                 <constraints nullable="false" unique="true" uniqueConstraintName="bucket_file_url_uk"/>
             </column>
-            <column name="url_creation_time" type="datetime(3)">
+            <column name="url_creation_time" type="datetime(6)">
                 <constraints nullable="false"/>
             </column>
-            <column name="file_name" type="varchar(1000)">
+            <column name="file_name" type="varchar(200)">
                 <constraints nullable="false"/>
             </column>
             <column name="file_size" type="bigint">

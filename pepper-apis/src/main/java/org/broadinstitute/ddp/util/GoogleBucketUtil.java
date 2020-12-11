@@ -7,6 +7,7 @@ import java.util.Optional;
 
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.storage.Blob;
+import com.google.cloud.storage.BlobId;
 import com.google.cloud.storage.Bucket;
 import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageOptions;
@@ -76,6 +77,16 @@ public class GoogleBucketUtil {
             return Optional.of(Channels.newInputStream(blob.reader()));
         } else {
             return Optional.empty();
+        }
+    }
+
+    public static boolean removeFile(Storage storage, String bucketName, String filename) {
+        try {
+            BlobId blobId = BlobId.of(bucketName, filename);
+            return storage.delete(blobId);
+        } catch (Exception e) {
+            String msg = String.format("Error while removing file %s from bucket %s", filename, bucketName);
+            throw new DDPException(msg, e);
         }
     }
 }

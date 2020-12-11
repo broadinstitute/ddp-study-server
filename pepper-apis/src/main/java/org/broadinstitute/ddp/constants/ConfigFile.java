@@ -186,7 +186,7 @@ public class ConfigFile {
         public static final String TEMPLATE_VERSION = "version";
         public static final String FROM_NAME = "sendgrid.fromName";
         public static final String FROM_EMAIL = "sendgrid.fromEmail";
-        public static final String FROM_STUDY_EMAIL = "sendgrid.fromStudyEmail";
+        public static final String TO_STUDY_EMAIL = "sendgrid.toStudyEmail";
         // The proxy URL to use for all outgoing SendGrid requests.
         public static final String PROXY = "sendgrid.proxy";
     }

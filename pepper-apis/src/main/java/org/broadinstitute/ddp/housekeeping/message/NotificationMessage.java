@@ -56,6 +56,9 @@ public class NotificationMessage implements HousekeepingMessage {
     @SerializedName("eventConfigId")
     private long eventConfigurationId;
 
+    @SerializedName("attachmentIds")
+    private Collection<Long> attachmentIds;
+
     private boolean isDynamicTemplate;
 
     public NotificationMessage(NotificationType notificationType,
@@ -72,7 +75,8 @@ public class NotificationMessage implements HousekeepingMessage {
                                String defaultSalutation,
                                Collection<NotificationTemplateSubstitutionDto> templateSubstitutions,
                                String webBaseUrl,
-                               long eventConfigurationId) {
+                               long eventConfigurationId,
+                               Collection<Long> attachmentsIds) {
         this.notificationType = notificationType;
         this.notificationService = service;
         this.templateKey = templateKey;
@@ -91,6 +95,7 @@ public class NotificationMessage implements HousekeepingMessage {
         }
         this.webBaseUrl = webBaseUrl;
         this.eventConfigurationId = eventConfigurationId;
+        this.attachmentIds = attachmentsIds;
     }
 
     @Override
@@ -156,5 +161,9 @@ public class NotificationMessage implements HousekeepingMessage {
 
     public boolean isDynamicTemplate() {
         return isDynamicTemplate;
+    }
+
+    public Collection<Long> getAttachmentIds() {
+        return attachmentIds;
     }
 }

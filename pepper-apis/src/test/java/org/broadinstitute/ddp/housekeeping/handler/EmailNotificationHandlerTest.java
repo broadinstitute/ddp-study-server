@@ -56,6 +56,7 @@ import org.broadinstitute.ddp.model.pdf.PdfConfigInfo;
 import org.broadinstitute.ddp.model.pdf.PdfConfiguration;
 import org.broadinstitute.ddp.model.pdf.PdfVersion;
 import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
+import org.broadinstitute.ddp.service.FileUploadService;
 import org.broadinstitute.ddp.service.PdfBucketService;
 import org.broadinstitute.ddp.service.PdfGenerationService;
 import org.broadinstitute.ddp.service.PdfService;
@@ -75,6 +76,7 @@ public class EmailNotificationHandlerTest extends TxnAwareBaseTest {
     private PdfBucketService mockPdfBucket;
     private PdfGenerationService mockPdfGen;
     private EmailNotificationHandler handler;
+    private FileUploadService mockFileUpload;
 
     @BeforeClass
     public static void setup() {
@@ -87,7 +89,8 @@ public class EmailNotificationHandlerTest extends TxnAwareBaseTest {
         mockPdf = mock(PdfService.class);
         mockPdfBucket = mock(PdfBucketService.class);
         mockPdfGen = mock(PdfGenerationService.class);
-        handler = new EmailNotificationHandler(mockSendGrid, mockPdf, mockPdfBucket, mockPdfGen);
+        mockFileUpload = mock(FileUploadService.class);
+        handler = new EmailNotificationHandler(mockSendGrid, mockPdf, mockPdfBucket, mockPdfGen, mockFileUpload);
     }
 
     @Test
@@ -161,7 +164,7 @@ public class EmailNotificationHandlerTest extends TxnAwareBaseTest {
                 "study", "pepper", "from@ddp.org", "key", "salutation",
                 List.of(new NotificationTemplateSubstitutionDto("-ddp.foo-", "bar"),
                         new NotificationTemplateSubstitutionDto("-ddp.alice-", "bob")),
-                "url", 1L);
+                "url", 1L, null);
         var subs = handler.buildSubstitutions(msg);
         assertEquals("Dear first last,", subs.get(DDP_SALUTATION));
         assertEquals("url", subs.get(DDP_BASE_WEB_URL));
@@ -184,7 +187,7 @@ public class EmailNotificationHandlerTest extends TxnAwareBaseTest {
                         new NotificationTemplateSubstitutionDto("-ddp.abc.xyz.guid-", "abc xyz guid"),
                         new NotificationTemplateSubstitutionDto("-ddpabc.xyz.guid-", "ddpabc xyz guid"),
                         new NotificationTemplateSubstitutionDto("dynamicVar", "dynamic var value")),
-                "url", 1L);
+                "url", 1L, null);
         var subs = handler.getDynamicData(msg);
         assertEquals("Dear first last,", subs.get(SALUTATION));
         assertEquals("url", subs.get(BASE_WEB_URL));
@@ -326,7 +329,7 @@ public class EmailNotificationHandlerTest extends TxnAwareBaseTest {
         var msg = new NotificationMessage(
                 NotificationType.EMAIL, NotificationServiceType.SENDGRID,
                 "template1", false, List.of("to@ddp.org"), "first", "last", "guid",
-                "study", "pepper", "from@ddp.org", "key", "salutation", List.of(), "url", 1L);
+                "study", "pepper", "from@ddp.org", "key", "salutation", List.of(), "url", 1L, null);
         spiedHandler.handleMessage(msg);
 
         ArgumentCaptor<Mail> captor = ArgumentCaptor.forClass(Mail.class);
@@ -367,7 +370,7 @@ public class EmailNotificationHandlerTest extends TxnAwareBaseTest {
         var msg = new NotificationMessage(
                 NotificationType.EMAIL, NotificationServiceType.SENDGRID,
                 "template1", false, List.of("join.mailing.list@ddp.org"), null, null, null,    // no participant guid
-                "study", "pepper", "from@ddp.org", "key", "salutation", List.of(), "url", 1L);
+                "study", "pepper", "from@ddp.org", "key", "salutation", List.of(), "url", 1L, null);
         spiedHandler.handleMessage(msg);
 
         ArgumentCaptor<Mail> captor = ArgumentCaptor.forClass(Mail.class);
@@ -391,7 +394,7 @@ public class EmailNotificationHandlerTest extends TxnAwareBaseTest {
         var msg = new NotificationMessage(
                 NotificationType.EMAIL, NotificationServiceType.SENDGRID,
                 "template1", false, List.of("to@ddp.org"), "first", "last", "guid", "study",
-                "pepper", "from@ddp.org", "key", "salutation", List.of(), "url", 1L);
+                "pepper", "from@ddp.org", "key", "salutation", List.of(), "url", 1L, null);
         spiedHandler.handleMessage(msg);
 
         verify(mockSendGrid, never()).sendMail(any());
@@ -413,7 +416,7 @@ public class EmailNotificationHandlerTest extends TxnAwareBaseTest {
             var msg = new NotificationMessage(
                     NotificationType.EMAIL, NotificationServiceType.SENDGRID,
                     "abcxyz", false, List.of("to@ddp.org"), null, null, null,
-                    "study", "pepper", "from@ddp.org", "key", "salutation", List.of(), "url", 1L);
+                    "study", "pepper", "from@ddp.org", "key", "salutation", List.of(), "url", 1L, null);
             spiedHandler.handleMessage(msg);
             fail("expected exception not thrown");
         } catch (MessageHandlingException e) {
@@ -435,7 +438,7 @@ public class EmailNotificationHandlerTest extends TxnAwareBaseTest {
         var msg = new NotificationMessage(
                 NotificationType.EMAIL, NotificationServiceType.SENDGRID,
                 "abcxyz", false, List.of("to@ddp.org"), null, null, null,
-                "study", "pepper", "from@ddp.org", "key", "salutation", List.of(), "url", 1L);
+                "study", "pepper", "from@ddp.org", "key", "salutation", List.of(), "url", 1L, null);
 
         when(mockSendGrid.sendMail(any()))
                 .thenReturn(ApiResult.thrown(new IOException("from test")));
