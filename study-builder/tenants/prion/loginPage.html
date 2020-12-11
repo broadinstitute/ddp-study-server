@@ -842,6 +842,7 @@
         fill: transparent;
         vertical-align: middle;
         transition: stroke 0.3s ease;
+        display: none;
     }
 
     .SimpleButton:hover .ddp-globe {
@@ -856,10 +857,12 @@
 
     .ddp-current-language {
         vertical-align: middle;
+        display: none;
     }
 
     i.ddp-dropdown-arrow {
         vertical-align: middle;
+        display: none;
     }
 
     .dropdown-content {
@@ -918,7 +921,8 @@
     var config = JSON.parse(decodeURIComponent(escape(window.atob('@@config@@'))));
     config.extraParams = config.extraParams || {};
     var mode = config.extraParams.mode;
-    var languageCode = config.extraParams.language;
+    //var languageCode = config.extraParams.language;
+    var languageCode = 'en';
     var headerLogo = 'https://storage.googleapis.com/dev-prion-assets/images/prion-logo.svg';
     var studyColor = '#DDDDDD';
 
@@ -1508,7 +1512,8 @@
                     `<img src="${headerLogo}" alt="${languageDictionary.logoAlt}"></a>` +
                     `</div>` +
                     `<div class="collapse navbar-collapse Header-collapse" id="menu">` +
-                    `<ul class="nav navbar-nav navbar-right NoMargin">${languageSelector}` +
+                     `<ul class="nav navbar-nav navbar-right NoMargin">${languageSelector}` +
+                     //   '<ul class="nav navbar-nav navbar-right NoMargin>' +
                     `<li class="Nav-item"><a href="${mainUrl}/learn-more" class="Nav-itemLink">` +
                     `${languageDictionary.learnMore}</a></li>` +
                     `<li class="Nav-item"><a href="${mainUrl}/study-listing" class="Nav-itemLink">${languageDictionary.studyListing}</a></li>` +

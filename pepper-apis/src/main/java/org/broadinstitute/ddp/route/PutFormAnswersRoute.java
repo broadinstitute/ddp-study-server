@@ -1,7 +1,9 @@
 package org.broadinstitute.ddp.route;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
@@ -13,6 +15,7 @@ import org.broadinstitute.ddp.content.I18nContentRenderer;
 import org.broadinstitute.ddp.db.FormInstanceDao;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
+import org.broadinstitute.ddp.db.dao.AnswerDao;
 import org.broadinstitute.ddp.db.dao.DataExportDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiFormActivitySetting;
@@ -26,6 +29,7 @@ import org.broadinstitute.ddp.model.activity.instance.ComponentBlock;
 import org.broadinstitute.ddp.model.activity.instance.FormComponent;
 import org.broadinstitute.ddp.model.activity.instance.FormInstance;
 import org.broadinstitute.ddp.model.activity.instance.MailingAddressComponent;
+import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
 import org.broadinstitute.ddp.model.activity.instance.validation.ActivityValidationFailure;
 import org.broadinstitute.ddp.model.activity.types.BlockType;
 import org.broadinstitute.ddp.model.activity.types.ComponentType;
@@ -139,6 +143,16 @@ public class PutFormAnswersRoute implements Route {
                     FormActivityStatusUtil.updateFormActivityStatus(
                             handle, InstanceStatusType.COMPLETE, instanceGuid, operatorGuid
                     );
+
+                    // Cleanup hidden answers.
+                    Set<Long> answerIdsToDelete = form.collectHiddenAnswers()
+                            .stream()
+                            .map(Answer::getAnswerId)
+                            .filter(Objects::nonNull)
+                            .collect(Collectors.toSet());
+                    handle.attach(AnswerDao.class).deleteAnswers(answerIdsToDelete);
+                    LOG.info("Deleted {} hidden answers for user {} and activity instance {}",
+                            answerIdsToDelete.size(), userGuid, instanceGuid);
 
                     WorkflowState fromState = new ActivityState(form.getActivityId());
                     WorkflowResponse workflowResp = workflowService
