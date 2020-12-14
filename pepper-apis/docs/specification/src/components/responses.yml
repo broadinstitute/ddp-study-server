@@ -455,15 +455,10 @@ StatisticsResponse:
         $ref: '../pepper.yml#/components/schemas/Statistics'
 CreateFileUploadUrlResponse:
   description: file upload properties
-  required: true
   content:
     application/json:
       schema:
         type: object
-        required:
-          - url;
-          - guid;
-          - resumable;
         properties:
           url:
             type: string
