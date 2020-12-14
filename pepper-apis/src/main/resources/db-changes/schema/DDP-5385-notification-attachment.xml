@@ -33,4 +33,12 @@
         </addColumn>
     </changeSet>
 
+    <changeSet author="ypavlov" id="20201214-add-study-staff-email">
+        <addColumn tableName="sendgrid_configuration">
+            <column name="staff_email" type="varchar(200)">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>

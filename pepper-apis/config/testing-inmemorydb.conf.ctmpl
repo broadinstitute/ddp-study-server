@@ -89,6 +89,7 @@
     "googleProjectId": "broad-ddp-dev",
     "pdfArchiveBucket": "pepper-pdf-dev",
     "pdfArchiveUseFilesystem": true,
+    "fileUploadUseBucket": false,
     "pubsub": {
         "enableHousekeepingTasks": false,
         "housekeepingTasksSubscription": "local-housekeeping-tasks-sub",
@@ -128,6 +129,9 @@
              },
              "userNotEnrolledInStudy": {
                  "template": "bfb0d8c1-f127-4ebf-a2fd-faef23b36a1f"
+             },
+             "dataAccessRequest": {
+                "template": "d-5ec2c969bbad4fffabb8168abafa470c"
              }
          {{end}}
          {{if eq $environment "test"}}
@@ -143,6 +147,9 @@
               },
               "userNotEnrolledInStudy": {
                    "template": "bfb0d8c1-f127-4ebf-a2fd-faef23b36a1f"
+              },
+              "dataAccessRequest": {
+                    "template": "d-5ec2c969bbad4fffabb8168abafa470c"
               }
           {{end}}
           {{if eq $environment "staging"}}
@@ -158,6 +165,9 @@
             },
             "userNotEnrolledInStudy": {
                 "template": "bfb0d8c1-f127-4ebf-a2fd-faef23b36a1f"
+            },
+            "dataAccessRequest": {
+                "template": "d-5ec2c969bbad4fffabb8168abafa470c"
             }
         {{end}}
         {{if eq $environment "prod"}}
@@ -173,6 +183,9 @@
           },
           "userNotEnrolledInStudy": {
               "template": "bfb0d8c1-f127-4ebf-a2fd-faef23b36a1f"
+          },
+          "dataAccessRequest": {
+              "template": "d-5ec2c969bbad4fffabb8168abafa470c"
           }
       {{end}}
     }

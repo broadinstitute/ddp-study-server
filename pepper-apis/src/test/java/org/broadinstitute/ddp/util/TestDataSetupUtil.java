@@ -459,7 +459,8 @@ public class TestDataSetupUtil {
                 .orElse(null);
         if (sendgridConfigurationDto == null) {
             long sendgridConfigurationId = jdbiSendgridConfig.insert(study.getId(), sendgridApiKey, "Testing",
-                    "testing@datadonationplatform.org", "Hello test patient,");
+                    "testing@datadonationplatform.org", "testing@datadonationplatform.org",
+                    "Hello test patient,");
 
         }
     }

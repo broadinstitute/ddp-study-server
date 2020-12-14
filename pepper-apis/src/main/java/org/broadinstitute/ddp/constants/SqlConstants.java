@@ -326,6 +326,7 @@ public class SqlConstants {
         public static final String API_KEY = "api_key";
         public static final String FROM_NAME = "from_name";
         public static final String FROM_EMAIL = "from_email";
+        public static final String STAFF_EMAIL = "staff_email";
         public static final String DEFAULT_SALUTATION = "default_salutation";
     }
 }

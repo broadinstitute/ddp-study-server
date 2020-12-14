@@ -30,11 +30,15 @@ import static org.mockito.Mockito.when;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.time.Instant;
 import java.util.Base64;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.regex.Pattern;
 
 import com.sendgrid.Email;
 import com.sendgrid.Mail;
@@ -52,6 +56,8 @@ import org.broadinstitute.ddp.housekeeping.message.NotificationMessage;
 import org.broadinstitute.ddp.model.event.NotificationServiceType;
 import org.broadinstitute.ddp.model.event.NotificationType;
 import org.broadinstitute.ddp.model.event.PdfAttachment;
+import org.broadinstitute.ddp.model.fileupload.FileUpload;
+import org.broadinstitute.ddp.model.fileupload.FileUploadStatus;
 import org.broadinstitute.ddp.model.pdf.PdfConfigInfo;
 import org.broadinstitute.ddp.model.pdf.PdfConfiguration;
 import org.broadinstitute.ddp.model.pdf.PdfVersion;
@@ -66,6 +72,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
+import org.mockito.stubbing.Answer;
 
 public class EmailNotificationHandlerTest extends TxnAwareBaseTest {
 
@@ -76,7 +83,6 @@ public class EmailNotificationHandlerTest extends TxnAwareBaseTest {
     private PdfBucketService mockPdfBucket;
     private PdfGenerationService mockPdfGen;
     private EmailNotificationHandler handler;
-    private FileUploadService mockFileUpload;
 
     @BeforeClass
     public static void setup() {
@@ -89,7 +95,21 @@ public class EmailNotificationHandlerTest extends TxnAwareBaseTest {
         mockPdf = mock(PdfService.class);
         mockPdfBucket = mock(PdfBucketService.class);
         mockPdfGen = mock(PdfGenerationService.class);
-        mockFileUpload = mock(FileUploadService.class);
+        FileUploadService mockFileUpload = mock(FileUploadService.class);
+        when(mockFileUpload.getFilesByIds(any(), any())).thenAnswer((Answer<Map<FileUpload, InputStream>>) invocation -> {
+            Collection<Long> ids = invocation.getArgument(1);
+            Map<FileUpload, InputStream> attachments = new HashMap<>();
+            if (ids != null) {
+                for (Long id : ids) {
+                    String content = "upload pdf for test #" + id;
+                    var input = new ByteArrayInputStream(content.getBytes());
+                    FileUpload fileUpload = new FileUpload(1L, "GUIDTEST42", "bucket/file.pdf", Instant.now(),
+                            "test-file.pdf", 100L, FileUploadStatus.VERIFIED, Instant.now().toEpochMilli());
+                    attachments.put(fileUpload, input);
+                }
+            }
+            return attachments;
+        });
         handler = new EmailNotificationHandler(mockSendGrid, mockPdf, mockPdfBucket, mockPdfGen, mockFileUpload);
     }
 
@@ -329,7 +349,7 @@ public class EmailNotificationHandlerTest extends TxnAwareBaseTest {
         var msg = new NotificationMessage(
                 NotificationType.EMAIL, NotificationServiceType.SENDGRID,
                 "template1", false, List.of("to@ddp.org"), "first", "last", "guid",
-                "study", "pepper", "from@ddp.org", "key", "salutation", List.of(), "url", 1L, null);
+                "study", "pepper", "from@ddp.org", "key", "salutation", List.of(), "url", 1L, List.of(1L));
         spiedHandler.handleMessage(msg);
 
         ArgumentCaptor<Mail> captor = ArgumentCaptor.forClass(Mail.class);
@@ -340,13 +360,18 @@ public class EmailNotificationHandlerTest extends TxnAwareBaseTest {
         assertEquals("template1", actualMail.getTemplateId());
         assertEquals(new Email("from@ddp.org", "pepper"), actualMail.getFrom());
         assertEquals(1, actualMail.getPersonalization().size());
-        assertEquals(1, actualMail.getAttachments().size());
+        assertEquals(2, actualMail.getAttachments().size());
 
+        var att1 = actualMail.getAttachments().get(0);
+        assertTrue(att1.getType().contains("pdf"));
+        assertEquals("test-file.pdf", att1.getFilename());
+        assertTrue(Pattern.compile("upload pdf for test #\\d+")
+                .matcher(new String(Base64.getDecoder().decode(att1.getContent()))).matches());
         // Assert attachments
-        var att = actualMail.getAttachments().get(0);
-        assertTrue(att.getType().contains("pdf"));
-        assertEquals(pdfName, att.getFilename());
-        assertEquals(pdfContent, new String(Base64.getDecoder().decode(att.getContent())));
+        var att2 = actualMail.getAttachments().get(1);
+        assertTrue(att2.getType().contains("pdf"));
+        assertEquals(pdfName, att2.getFilename());
+        assertEquals(pdfContent, new String(Base64.getDecoder().decode(att2.getContent())));
 
         // Assert customizations
         var ps = actualMail.getPersonalization().get(0);
