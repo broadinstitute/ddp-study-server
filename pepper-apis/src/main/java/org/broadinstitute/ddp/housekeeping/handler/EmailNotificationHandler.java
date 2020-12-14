@@ -107,8 +107,10 @@ public class EmailNotificationHandler implements HousekeepingMessageHandler<Noti
 
             Map<FileUpload, InputStream> externalAttachments = fileUploadService.getFilesByIds(handle, message.getAttachmentIds());
             for (Map.Entry<FileUpload, InputStream> attachmentEntry : externalAttachments.entrySet()) {
-                mail.addAttachments(SendGridClient.newPdfAttachment(attachmentEntry.getKey().getFileName(),
-                        attachmentEntry.getValue()));
+                if (attachmentEntry.getValue() != null) {
+                    mail.addAttachments(SendGridClient.newPdfAttachment(attachmentEntry.getKey().getFileName(),
+                            attachmentEntry.getValue()));
+                }
             }
 
             boolean skippingPdfs = false;
