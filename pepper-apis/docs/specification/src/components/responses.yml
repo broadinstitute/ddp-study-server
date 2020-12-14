@@ -453,3 +453,24 @@ StatisticsResponse:
     application/json:
       schema:
         $ref: '../pepper.yml#/components/schemas/Statistics'
+CreateFileUploadUrlResponse:
+  description: file upload properties
+  required: true
+  content:
+    application/json:
+      schema:
+        type: object
+        required:
+          - url;
+          - guid;
+          - resumable;
+        properties:
+          url:
+            type: string
+            description: Signed URL which needs to be used for file upload
+          guid:
+            type: string
+            description: File Upload GUID
+          resumable:
+            type: boolean
+            description: Whether URL supports resumable upload

@@ -1,0 +1,13 @@
+post:
+  operationId: sendStudyEmail
+  tags:
+    - Studies
+  summary: Email to study staff
+  description: Sends email to study staff if corresponding configuration is present in the study. Message is composed using template preconfigured for study with substitutions passed in the request. Previously uploaded files can be attached to the message.
+  requestBody:
+    $ref: '../pepper.yml#/components/requestBodies/SendStudyEmailRequestBody'
+  responses:
+    200:
+      description: Message queued
+    default:
+      $ref: '../pepper.yml#/components/responses/ErrorResponse'
