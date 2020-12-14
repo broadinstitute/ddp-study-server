@@ -11,20 +11,17 @@ import org.broadinstitute.ddp.json.FileUploadUrlResponse;
 import org.broadinstitute.ddp.service.FileUploadService;
 import org.broadinstitute.ddp.util.GuidUtils;
 import org.broadinstitute.ddp.util.ValidatedJsonInputRoute;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import spark.Request;
 import spark.Response;
 
 /**
  *  This route returns the URL for file upload
  */
-public class GetFileUploadUrlRoute extends ValidatedJsonInputRoute<FileUploadURLPayload> {
+public class CreateFileUploadUrlRoute extends ValidatedJsonInputRoute<FileUploadURLPayload> {
 
-    private static final Logger LOG = LoggerFactory.getLogger(GetFileUploadUrlRoute.class);
     private final FileUploadService fileUploadService;
 
-    public GetFileUploadUrlRoute(FileUploadService fileUploadService) {
+    public CreateFileUploadUrlRoute(FileUploadService fileUploadService) {
         this.fileUploadService = fileUploadService;
     }
 
@@ -40,6 +37,6 @@ public class GetFileUploadUrlRoute extends ValidatedJsonInputRoute<FileUploadURL
                 payload.getFileSize(),
                 payload.getMimeType(),
                 httpMethod));
-        return new FileUploadUrlResponse(url.toString(), fileUploadGuid, httpMethod.name());
+        return new FileUploadUrlResponse(url.toString(), fileUploadGuid, payload.getResumable());
     }
 }

@@ -13,8 +13,8 @@ import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 public interface JdbiSendgridConfiguration extends SqlObject {
 
     @SqlUpdate(
-            "insert into sendgrid_configuration (umbrella_study_id, api_key, from_name, from_email, default_salutation)"
-                    + " values (:umbrellaStudyId, :apiKey, :fromName, :fromEmail, :defaultSalutation)"
+            "insert into sendgrid_configuration (umbrella_study_id, api_key, from_name, from_email, staff_email, default_salutation)"
+                    + " values (:umbrellaStudyId, :apiKey, :fromName, :fromEmail, :staffEmail, :defaultSalutation)"
     )
     @GetGeneratedKeys
     long insert(
@@ -22,11 +22,12 @@ public interface JdbiSendgridConfiguration extends SqlObject {
             @Bind("apiKey") String apiKey,
             @Bind("fromName") String fromName,
             @Bind("fromEmail") String fromEmail,
+            @Bind("staffEmail") String staffEmail,
             @Bind("defaultSalutation") String defaultSalutation
     );
 
     @SqlQuery(
-            "select sc.umbrella_study_id, sc.api_key, sc.from_name, sc.from_email, sc.default_salutation"
+            "select sc.umbrella_study_id, sc.api_key, sc.from_name, sc.from_email, sc.staff_email, sc.default_salutation"
                     + " from sendgrid_configuration sc, umbrella_study us"
                     + " where sc.umbrella_study_id = us.umbrella_study_id and us.guid = :umbrellaStudyGuid"
     )

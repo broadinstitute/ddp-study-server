@@ -49,6 +49,7 @@
     "googleProjectId": "{{$conf.Data.googleProjectId}}",
     "pdfArchiveBucket": "{{$conf.Data.pdfArchiveBucket}}",
     "pdfArchiveUseFilesystem": false,
+    "fileUploadUseBucket": true,
     "pubsub": {
         "enableHousekeepingTasks": {{$conf.Data.pubsub.enableHousekeepingTasks}},
         "housekeepingTasksSubscription": "{{$conf.Data.pubsub.housekeepingTasksSubscription}}",

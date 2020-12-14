@@ -539,9 +539,11 @@ public class StudyBuilder {
         String apiKey = sendgridCfg.getString("apiKey");
         String fromName = sendgridCfg.getString("fromName");
         String fromEmail = sendgridCfg.getString("fromEmail");
+        String staffEmail = sendgridCfg.hasPath("staffEmail") ? sendgridCfg.getString("staffEmail") : null;
         String defaultSalutation = sendgridCfg.getString("defaultSalutation");
 
-        long id = handle.attach(JdbiSendgridConfiguration.class).insert(studyId, apiKey, fromName, fromEmail, defaultSalutation);
+        long id = handle.attach(JdbiSendgridConfiguration.class)
+                .insert(studyId, apiKey, fromName, fromEmail, staffEmail, defaultSalutation);
         LOG.info("Created sendgrid configuration with id={}, fromName={}, fromEmail={}", id, fromName, fromEmail);
     }
 

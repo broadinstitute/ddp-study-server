@@ -9,12 +9,12 @@ public class FileUploadUrlResponse {
     @SerializedName("guid")
     String guid;
 
-    @SerializedName("httpMethod")
-    String httpMethod;
+    @SerializedName("resumable")
+    boolean resumable;
 
-    public FileUploadUrlResponse(String url, String guid, String httpMethod) {
+    public FileUploadUrlResponse(String url, String guid, boolean resumable) {
         this.url = url;
         this.guid = guid;
-        this.httpMethod = httpMethod;
+        this.resumable = resumable;
     }
 }

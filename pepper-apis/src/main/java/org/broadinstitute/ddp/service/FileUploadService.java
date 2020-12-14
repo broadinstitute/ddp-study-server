@@ -28,13 +28,18 @@ import org.broadinstitute.ddp.model.fileupload.FileUploadStatus;
 import org.broadinstitute.ddp.util.GoogleBucketUtil;
 import org.broadinstitute.ddp.util.GoogleCredentialUtil;
 import org.jdbi.v3.core.Handle;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class FileUploadService {
+
+    private static final Logger LOG = LoggerFactory.getLogger(FileUploadService.class);
 
     private static final long URL_VALID_TIME_MINUTES = 5;
 
     private final Storage storage;
     private final String bucketName;
+    private final boolean useBucket;
 
     /**
      * Service initialization
@@ -42,14 +47,21 @@ public class FileUploadService {
      * @param cfg application configs
      */
     public FileUploadService(Config cfg) {
-        boolean ensureDefault = cfg.getBoolean(ConfigFile.REQUIRE_DEFAULT_GCP_CREDENTIALS);
-        GoogleCredentials googleCredentials = GoogleCredentialUtil.initCredentials(ensureDefault);
-        if (googleCredentials != null) {
-            storage = GoogleBucketUtil.getStorage(googleCredentials, cfg.getString(ConfigFile.GOOGLE_PROJECT_ID));
+        useBucket = cfg.getBoolean(ConfigFile.FILE_UPLOAD_USE_BUCKET);
+        if (useBucket) {
+            bucketName = cfg.getString(ConfigFile.FILE_UPLOAD_BUCKET);
+            boolean ensureDefault = cfg.getBoolean(ConfigFile.REQUIRE_DEFAULT_GCP_CREDENTIALS);
+            GoogleCredentials googleCredentials = GoogleCredentialUtil.initCredentials(ensureDefault);
+            if (googleCredentials != null) {
+                storage = GoogleBucketUtil.getStorage(googleCredentials, cfg.getString(ConfigFile.GOOGLE_PROJECT_ID));
+            } else {
+                throw new IllegalStateException("Need to have backing storage for uploads!");
+            }
         } else {
-            throw new IllegalStateException("Need to have backing storage for uploads!");
+            storage = null;
+            bucketName = null;
+            LOG.error("Bucket usage is disabled - service has limited capabilities.");
         }
-        bucketName = cfg.getString(ConfigFile.FILE_UPLOAD_BUCKET);
     }
 
     public String getBucketName() {
@@ -63,6 +75,9 @@ public class FileUploadService {
     public URL getSignedURLForUpload(Handle handle, String fileUploadGuid, String studyGuid,
                                      String activityInstanceGuid, String answerGuid, String filename,
                                      Long fileSize, String mimeType, HttpMethod httpMethod) {
+        if (!useBucket) {
+            throw new DDPException("Server is not configured to use bucket");
+        }
         String bucketFilename = generateName(studyGuid, activityInstanceGuid, answerGuid, fileUploadGuid, filename);
         BlobInfo blobInfo = BlobInfo.newBuilder(BlobId.of(bucketName,
                 bucketFilename)).build();
@@ -82,18 +97,22 @@ public class FileUploadService {
         FileUploadDao fileUploadDao = handle.attach(FileUploadDao.class);
         FileUpload fileUpload = fileUploadDao.getFileUploadByGuid(guid)
                 .orElseThrow(() -> new DaoException("Could not find file upload with guid " + guid));
-        Long bucketFileSize;
-        Long bucketFileCreateTime;
-        Page<Blob> page = storage.list(bucketName, Storage.BlobListOption.prefix(fileUpload.getBucketFileUrl()));
-        Iterator<Blob> iterator = page.getValues().iterator();
-        if (iterator.hasNext()) {
-            Blob blob = iterator.next();
-            bucketFileSize = blob.getSize();
-            bucketFileCreateTime = blob.getCreateTime();
-            if (bucketFileSize != null && bucketFileSize.equals(fileUpload.getFileSize())) {
-                fileUploadDao.setVerified(fileUpload.getFileUploadGuid(), bucketFileCreateTime);
-                return fileUpload.getId();
+        if (useBucket) {
+            Long bucketFileSize;
+            Long bucketFileCreateTime;
+            Page<Blob> page = storage.list(bucketName, Storage.BlobListOption.prefix(fileUpload.getBucketFileUrl()));
+            Iterator<Blob> iterator = page.getValues().iterator();
+            if (iterator.hasNext()) {
+                Blob blob = iterator.next();
+                bucketFileSize = blob.getSize();
+                bucketFileCreateTime = blob.getCreateTime();
+                if (bucketFileSize != null && bucketFileSize.equals(fileUpload.getFileSize())) {
+                    fileUploadDao.setVerified(fileUpload.getFileUploadGuid(), bucketFileCreateTime);
+                    return fileUpload.getId();
+                }
             }
+        } else {
+            return fileUpload.getId();
         }
         return null;
     }
@@ -102,11 +121,11 @@ public class FileUploadService {
         Map<FileUpload, InputStream> result = new HashMap<>();
         List<FileUpload> fileUploads = handle.attach(FileUploadDao.class).getFileUploadsByIds(ids);
         fileUploads.forEach(fileUpload -> result.put(fileUpload,
-                GoogleBucketUtil.downloadFile(storage, bucketName, fileUpload.getBucketFileUrl())
-                .orElseThrow(() -> {
-                    String msg = String.format("File %s not found in bucket %s", fileUpload.getFileUploadGuid(), bucketName);
-                    throw new DDPException(msg);
-                })));
+                useBucket && FileUploadStatus.VERIFIED.equals(fileUpload.getStatus()) ? GoogleBucketUtil
+                        .downloadFile(storage, bucketName, fileUpload.getBucketFileUrl()).orElseThrow(() -> {
+                            String msg = String.format("File %s not found in bucket %s", fileUpload.getFileUploadGuid(), bucketName);
+                            throw new DDPException(msg);
+                        }) : null));
         return result;
     }
 
@@ -117,7 +136,7 @@ public class FileUploadService {
         FileUploadDao fileUploadDao = handle.attach(FileUploadDao.class);
         List<FileUpload> fileUploads = fileUploadDao.getFileUploadsByIds(ids);
         for (FileUpload fileUpload : fileUploads) {
-            if (GoogleBucketUtil.removeFile(storage, bucketName, fileUpload.getBucketFileUrl())) {
+            if (!useBucket || GoogleBucketUtil.removeFile(storage, bucketName, fileUpload.getBucketFileUrl())) {
                 fileUploadDao.removeFileUploadById(fileUpload.getId());
             }
         }

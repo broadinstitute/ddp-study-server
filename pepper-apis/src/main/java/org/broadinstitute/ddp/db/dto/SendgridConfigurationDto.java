@@ -5,27 +5,29 @@ import java.sql.SQLException;
 
 import org.broadinstitute.ddp.constants.SqlConstants.SendgridConfigurationTable;
 import org.broadinstitute.ddp.constants.SqlConstants.UmbrellaStudyTable;
-
 import org.jdbi.v3.core.mapper.RowMapper;
 import org.jdbi.v3.core.statement.StatementContext;
 
 public class SendgridConfigurationDto {
 
-    private long umbrellaStudyId;
-    private String apiKey;
-    private String fromName;
-    private String fromEmail;
-    private String defaultSalutation;
+    private final long umbrellaStudyId;
+    private final String apiKey;
+    private final String fromName;
+    private final String fromEmail;
+    private final String staffEmail;
+    private final String defaultSalutation;
 
     public SendgridConfigurationDto(long umbrellaStudyId,
                                     String apiKey,
                                     String fromName,
                                     String fromEmail,
+                                    String staffEmail,
                                     String defaultSalutation) {
         this.umbrellaStudyId = umbrellaStudyId;
         this.apiKey = apiKey;
         this.fromName = fromName;
         this.fromEmail = fromEmail;
+        this.staffEmail = staffEmail;
         this.defaultSalutation = defaultSalutation;
     }
 
@@ -37,6 +39,7 @@ public class SendgridConfigurationDto {
                     rs.getString(SendgridConfigurationTable.API_KEY),
                     rs.getString(SendgridConfigurationTable.FROM_NAME),
                     rs.getString(SendgridConfigurationTable.FROM_EMAIL),
+                    rs.getString(SendgridConfigurationTable.STAFF_EMAIL),
                     rs.getString(SendgridConfigurationTable.DEFAULT_SALUTATION)
              );
         }
@@ -56,6 +59,10 @@ public class SendgridConfigurationDto {
 
     public String getFromEmail() {
         return fromEmail;
+    }
+
+    public String getStaffEmail() {
+        return staffEmail;
     }
 
     public String getDefaultSalutation() {

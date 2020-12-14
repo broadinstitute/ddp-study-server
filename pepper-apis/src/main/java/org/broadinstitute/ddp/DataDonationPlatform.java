@@ -96,7 +96,7 @@ import org.broadinstitute.ddp.route.GetDsmParticipantStatusRoute;
 import org.broadinstitute.ddp.route.GetDsmReleasePdfRoute;
 import org.broadinstitute.ddp.route.GetDsmStudyParticipant;
 import org.broadinstitute.ddp.route.GetDsmTriggeredInstancesRoute;
-import org.broadinstitute.ddp.route.GetFileUploadUrlRoute;
+import org.broadinstitute.ddp.route.CreateFileUploadUrlRoute;
 import org.broadinstitute.ddp.route.GetGovernedStudyParticipantsRoute;
 import org.broadinstitute.ddp.route.GetInstitutionSuggestionsRoute;
 import org.broadinstitute.ddp.route.GetMailAddressRoute;
@@ -506,7 +506,7 @@ public class DataDonationPlatform {
         get(API.PARTICIPANT_STATUS, new GetDsmParticipantStatusRoute(new DsmClient(cfg)), responseSerializer);
 
         FileUploadService fileUploadService = new FileUploadService(cfg);
-        post(API.FILE_UPLOAD_URL, new GetFileUploadUrlRoute(fileUploadService), responseSerializer);
+        post(API.FILE_UPLOAD_URL, new CreateFileUploadUrlRoute(fileUploadService), responseSerializer);
 
         post(API.SEND_STUDY_EMAIL, new SendStudyEmailRoute(fileUploadService), responseSerializer);
 
