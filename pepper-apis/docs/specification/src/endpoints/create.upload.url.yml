@@ -1,0 +1,13 @@
+post:
+  operationId: createUploadUrl
+  tags:
+    - Other
+  summary: create url for file upload
+  description: Request for a new URL for file upload. Link is accessible for limited period of time (5 min). Resumable uploads are supported. Response contains File Upload GUID which needs to be used next (for patch answer etc).
+  requestBody:
+    $ref: '../pepper.yml#/components/requestBodies/CreateFileUploadUrlRequestBody'
+  responses:
+    200:
+      $ref: '../pepper.yml#/components/responses/CreateFileUploadUrlResponse'
+    default:
+      $ref: '../pepper.yml#/components/responses/ErrorResponse'

@@ -76,6 +76,8 @@ paths:
     $ref: 'endpoints/studies.suggestions.cancers.yml'
   /studies/{study}/statistics:
     $ref: 'endpoints/studies.statistics.yml'
+  /studies/{study}/send-study-email:
+    $ref: 'endpoints/send.study.email.yml'
   /user/{user}/profile:
     $ref: 'endpoints/user.profile.yml'
   /user/{user}/profile/address:
@@ -126,6 +128,8 @@ paths:
     $ref: 'endpoints/autocomplete.institution.yml'
   /post-password-reset:
     $ref: 'endpoints/post-password-reset.yml'
+  /upload-url:
+    $ref: 'endpoints/create.upload.url.yml'
 components:
   parameters:
     $ref: 'components/parameters.yml'

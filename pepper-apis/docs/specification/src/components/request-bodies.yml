@@ -191,3 +191,61 @@ RegisterGovernedRequestBody:
             type: string
             description: user's time zone, as an IANA time zone region identifier
             example: America/New_York
+CreateFileUploadUrlRequestBody:
+    description: file upload properties
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          required:
+            - fileName
+            - mimeType
+            - fileSize
+            - resumable
+          properties:
+            fileName:
+              type: string
+              description: Name of the file to be uploaded
+            mimeType:
+              type: string
+              description: Mime type
+            fileSize:
+              type: integer
+              description: Size of the file
+            resumable:
+              type: boolean
+              description: Whether URL should support resumable upload
+            activityInstanceGuid:
+              type: string
+              description: Activity instance GUID this file is related to (if applicable)
+            answerGuid:
+              type: string
+              description: Answer GUID this file is related to (if applicable)
+SendStudyEmailRequestBody:
+  description: Data, required to compose a message
+  required: true
+  content:
+    application/json:
+      schema:
+        type: object
+        required:
+          - data
+        properties:
+          data:
+            type: object
+            description: Key-value pairs, used for template substitutions
+          attachments:
+            type: array
+            items:
+              type: object
+              required:
+                - name
+                - guid
+              properties:
+                name:
+                  type: string
+                  description: File name
+                guid:
+                  type: string
+                  description: File upload GUID
