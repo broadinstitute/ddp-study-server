@@ -4,6 +4,13 @@ post:
     - Studies
   summary: Email to study staff
   description: Sends email to study staff if corresponding configuration is present in the study. Message is composed using template preconfigured for study with substitutions passed in the request. Previously uploaded files can be attached to the message.
+  parameters:
+    - in: path
+      name: study
+      required: true
+      description: the unique identifier for the study
+      schema:
+        type: string
   requestBody:
     $ref: '../pepper.yml#/components/requestBodies/SendStudyEmailRequestBody'
   responses:
