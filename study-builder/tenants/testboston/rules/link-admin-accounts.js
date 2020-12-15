@@ -104,6 +104,8 @@ function(user, context, callback) {
             return callback(new Error(body));
           }
 
+          // Note that once identity linking is done, Auth0 will actually delete the google profile
+          // and merge it into the database profile.
           console.log(`Successfully linked identity ${user.user_id} to admin user ${adminUser.user_id}`);
 
           // Setting the primary user seems to be required so that we designate the original admin

@@ -4,14 +4,21 @@ tenant:
 databases:
   - name: study-admin-authentication
     strategy: auth0
+    # Idea is to NOT enable this database for any client, so that clients can't add users to it.
+    # However, you need to enable database for AT LEAST one client, otherwise Auth0 will mark it as
+    # inactive and you can't even manually add users. Auth0 Management client is an arbitrary choice,
+    # but seems fine for now.
     enabled_clients:
       - Auth0 Management API
     is_domain_connection: false
     options:
+      # Don't allow any clients to add users, so it must be done manually so we have finer control.
       disable_signup: true
     realms:
       - study-admin-authentication
 
+# Order of rules is important here. link-admin should go before registration rule so that admin
+# accounts are sorted out before we run "registration/login" rule.
 rules:
   - name: Link Admin Accounts
     script: ./rules/link-admin-accounts.js
