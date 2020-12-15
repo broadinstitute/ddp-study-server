@@ -1,9 +1,33 @@
+parameters:
+  - in: path
+    name: user
+    required: true
+    description: the participant's guid
+    schema:
+      type: string
+  - in: path
+    name: study
+    required: true
+    description: the study's unique identifier
+    schema:
+      type: string
+  - in: path
+    name: instance
+    required: true
+    description: the activity instance guid
+    schema:
+      type: string
 post:
   operationId: createUploadUrl
   tags:
-    - Other
+    - Activities
   summary: create url for file upload
-  description: Request for a new URL for file upload. Link is accessible for limited period of time (5 min). Resumable uploads are supported. Response contains File Upload GUID which needs to be used next (for patch answer etc).
+  description: |
+    Request for a new URL for file upload. Link is accessible for limited period of time (5 min). Resumable uploads are supported.
+    With information in response body, client will be able to upload the file directly to a Google Bucket.
+    If resumable=true is specified in request, client will assume responsibility for creating the session URI with provided URL in
+    addition to follow up requests that contain the file contents.
+    Documentation for resumable uploads can be found at: https://cloud.google.com/storage/docs/performing-resumable-uploads.
   requestBody:
     $ref: '../pepper.yml#/components/requestBodies/CreateFileUploadUrlRequestBody'
   responses:

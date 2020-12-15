@@ -100,6 +100,8 @@ paths:
     $ref: 'endpoints/user.studies.activity.yml'
   /user/{user}/studies/{study}/activities/{instance}/answers:
     $ref: 'endpoints/user.studies.activity.answers.yml'
+  /user/{user}/studies/{study}/activities/{instance}/upload-url:
+    $ref: 'endpoints/create.upload.url.yml'
   /user/{user}/studies/{study}/consents:
     $ref: 'endpoints/user.studies.consents.yml'
   /user/{user}/studies/{study}/consents/{instance}:
@@ -128,8 +130,6 @@ paths:
     $ref: 'endpoints/autocomplete.institution.yml'
   /post-password-reset:
     $ref: 'endpoints/post-password-reset.yml'
-  /upload-url:
-    $ref: 'endpoints/create.upload.url.yml'
 components:
   parameters:
     $ref: 'components/parameters.yml'

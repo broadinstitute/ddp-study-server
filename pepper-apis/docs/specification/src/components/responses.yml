@@ -463,9 +463,15 @@ CreateFileUploadUrlResponse:
           url:
             type: string
             description: Signed URL which needs to be used for file upload
-          guid:
+          httpMethod:
             type: string
-            description: File Upload GUID
+            enum:
+              - POST
+              - PUT
+            description: The method to be used for initial call to provided signed URL
+          uploadId:
+            type: string
+            description: File Upload id
           resumable:
             type: boolean
             description: Whether URL supports resumable upload

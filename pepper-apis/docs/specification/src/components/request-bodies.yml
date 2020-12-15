@@ -200,28 +200,25 @@ CreateFileUploadUrlRequestBody:
           type: object
           required:
             - fileName
-            - mimeType
             - fileSize
             - resumable
+            - stableId
           properties:
             fileName:
               type: string
               description: Name of the file to be uploaded
             mimeType:
               type: string
-              description: Mime type
+              description: Mime type. If not specified mime type default value is `application/octet-stream`
             fileSize:
               type: integer
               description: Size of the file
             resumable:
               type: boolean
               description: Whether URL should support resumable upload
-            activityInstanceGuid:
+            stableId:
               type: string
-              description: Activity instance GUID this file is related to (if applicable)
-            answerGuid:
-              type: string
-              description: Answer GUID this file is related to (if applicable)
+              description: the question stable id
 SendStudyEmailRequestBody:
   description: Data, required to compose a message
   required: true

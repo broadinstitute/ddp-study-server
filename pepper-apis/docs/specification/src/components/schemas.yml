@@ -351,6 +351,26 @@ Answer.Picklist:
           type: array
           items:
             $ref: '../pepper.yml#/components/schemas/SelectedOption'
+Answer.File:
+  allOf:
+    - $ref: '../pepper.yml#/components/schemas/Answer'
+    - type: object
+      required:
+        - value
+      properties:
+        value:
+          type: object
+          $ref: '../pepper.yml#/components/schemas/FileInfo'
+FileInfo:
+  type: object
+  required:
+    - fileName
+    - fileSize
+  properties:
+    fileName:
+      type: string
+    fileSize:
+      type: integer
 SelectedOption:
   type: object
   required:
@@ -378,6 +398,12 @@ DateValue:
       type: integer
       nullable: true
       minimum: 0
+FileAnswerValue:
+  type: object
+  description: an object which represents a day, month, and year in UTC.
+  properties:
+    uploadId: string
+    description: id provided by server in original request for upload URL.
 AnswerSubmission:
   type: object
   discriminator:
@@ -401,6 +427,16 @@ AnswerSubmission.Boolean:
       properties:
         value:
           type: boolean
+AnswerSubmission.File:
+  allOf:
+    - $ref: '../pepper.yml#/components/schemas/AnswerSubmission'
+    - type: object
+      required:
+        - value
+      properties:
+        value:
+          type: string
+          description: the upload id provided by server when upload URL was requested.
 AnswerSubmission.Composite:
   allOf:
     - $ref: '../pepper.yml#/components/schemas/AnswerSubmission'
@@ -1234,6 +1270,22 @@ Question.Agreement:
         type: array
         items:
           $ref: '../pepper.yml#/components/schemas/Answer.Boolean'
+Question.File:
+  allOf:
+    - $ref: '../pepper.yml#/components/schemas/Question'
+    - type: object
+      required:
+        - answers
+      properties:
+        questionType:
+          type: string
+          default: FILE
+          enum:
+            - FILE
+        answers:
+          type: array
+          items:
+            $ref: '../pepper.yml#/components/schemas/Answer.File'
 Question.Boolean:
   allOf:
   - $ref: '../pepper.yml#/components/schemas/Question'
