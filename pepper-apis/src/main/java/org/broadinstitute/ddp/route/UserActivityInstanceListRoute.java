@@ -49,8 +49,11 @@ public class UserActivityInstanceListRoute implements Route {
         }
 
         DDPAuth ddpAuth = RouteUtil.getDDPAuth(request);
-        String operatorGuid = ddpAuth.getOperator();
-        LOG.info("Looking up activity instances for user {} in study {} by operator {}", userGuid, studyGuid, operatorGuid);
+        String operatorGuid = StringUtils.defaultIfBlank(ddpAuth.getOperator(), userGuid);
+        boolean isStudyAdmin = ddpAuth.hasAdminAccessToStudy(studyGuid);
+
+        LOG.info("Looking up activity instances for user {} in study {} by operator {} (isStudyAdmin={})",
+                userGuid, studyGuid, operatorGuid, isStudyAdmin);
 
         return TransactionWrapper.withTxn(handle -> {
             var found = RouteUtil.findUserAndStudyOrHalt(handle, userGuid, studyGuid);
@@ -60,7 +63,10 @@ public class UserActivityInstanceListRoute implements Route {
             );
             // IMPORTANT: do numbering before filtering so each instance is assigned their correct number.
             performActivityInstanceNumbering(summaries);
-            summaries = filterActivityInstancesFromDisplay(summaries);
+            if (!isStudyAdmin) {
+                // Study admins are allowed to view all the data, so if they're NOT admin then do filtering.
+                summaries = filterActivityInstancesFromDisplay(summaries);
+            }
             activityInstanceDao.countActivitySummaryQuestionsAndAnswers(handle, userGuid, operatorGuid, studyGuid, summaries);
             activityInstanceDao.renderActivitySummary(handle, found.getUser().getId(), summaries);
             return summaries;
@@ -97,7 +103,7 @@ public class UserActivityInstanceListRoute implements Route {
 
     private List<ActivityInstanceSummary> filterActivityInstancesFromDisplay(List<ActivityInstanceSummary> summaries) {
         return summaries.stream()
-                .filter(instance -> !instance.isExcludeFromDisplay() && !instance.isHidden())
+                .filter(instance -> !instance.isHidden())
                 .collect(Collectors.toList());
     }
 }

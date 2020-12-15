@@ -264,7 +264,7 @@ public class ActivityInstanceDao {
                             createdAtMillis, statusTypeCode, isActivityWriteOnce, isActivityInstanceReadonly);
                     long createdAt = rs.getLong(SqlConstants.ActivityInstanceTable.CREATED_AT);
                     boolean isFollowup = rs.getBoolean(SqlConstants.StudyActivityTable.IS_FOLLOWUP);
-                    boolean isHidden = rs.getBoolean(SqlConstants.ActivityInstanceTable.IS_HIDDEN);
+                    boolean isInstanceHidden = rs.getBoolean(SqlConstants.ActivityInstanceTable.IS_HIDDEN);
 
                     String versionTag = rs.getString(SqlConstants.ActivityVersionTable.TAG);
                     long versionId = rs.getLong(SqlConstants.ActivityVersionTable.REVISION_ID);
@@ -288,7 +288,7 @@ public class ActivityInstanceDao {
                             languageCode,
                             activityTypeName,
                             excludeFromDisplay,
-                            isHidden,
+                            isInstanceHidden,
                             createdAt,
                             isFollowup,
                             versionTag,

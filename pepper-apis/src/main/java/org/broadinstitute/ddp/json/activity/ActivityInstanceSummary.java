@@ -58,11 +58,14 @@ public class ActivityInstanceSummary implements TranslatedSummary {
     @SerializedName("previousInstanceGuid")
     private String previousInstanceGuid;
 
+    @SerializedName("isHidden")
+    private boolean isHidden;
+
     private transient long activityInstanceId;
     private transient String isoLanguageCode;
     private transient String activityTypeName;
     private transient boolean excludeFromDisplay;
-    private transient boolean isHidden;
+    private transient boolean isInstanceHidden;
     private transient String activitySecondName;
     private transient int instanceNumber;
     private transient String versionTag;
@@ -90,7 +93,7 @@ public class ActivityInstanceSummary implements TranslatedSummary {
             String isoLanguageCode,
             String activityTypeName,
             boolean excludeFromDisplay,
-            boolean isHidden,
+            boolean isInstanceHidden,
             long createdAt,
             boolean isFollowup,
             String versionTag,
@@ -116,7 +119,8 @@ public class ActivityInstanceSummary implements TranslatedSummary {
         this.isoLanguageCode = isoLanguageCode;
         this.activityTypeName = activityTypeName;
         this.excludeFromDisplay = excludeFromDisplay;
-        this.isHidden = isHidden;
+        this.isInstanceHidden = isInstanceHidden;
+        this.isHidden = isInstanceHidden || excludeFromDisplay;
         this.createdAt = createdAt;
         this.isFollowup = isFollowup;
         this.versionTag = versionTag;
@@ -206,10 +210,23 @@ public class ActivityInstanceSummary implements TranslatedSummary {
         return createdAt;
     }
 
+    /**
+     * Returns whether the activity was defined to be excluded from display.
+     */
     public boolean isExcludeFromDisplay() {
         return excludeFromDisplay;
     }
 
+    /**
+     * Returns whether this specific instance is hidden.
+     */
+    public boolean isInstanceHidden() {
+        return isInstanceHidden;
+    }
+
+    /**
+     * Returns whether instance is hidden or not, either at the activity definition or instance level.
+     */
     public boolean isHidden() {
         return isHidden;
     }

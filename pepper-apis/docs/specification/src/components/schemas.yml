@@ -116,6 +116,7 @@ Activity:
     - lastUpdatedText
     - lastUpdated
     - isFollowup
+    - isHidden
     - sectionIndex
   properties:
     activityType:
@@ -175,6 +176,9 @@ Activity:
     isFollowup:
       type: boolean
       description: whether this activity is considered a "follow-up"
+    isHidden:
+      type: boolean
+      description: whether the activity instance is hidden
     sectionIndex:
       type: integer
       minimum: 0
@@ -197,6 +201,7 @@ Activity.Summary:
     - numQuestions
     - numQuestionsAnswered
     - isFollowup
+    - isHidden
   properties:
     activityCode:
       description: the source activity for this instance
@@ -252,6 +257,9 @@ Activity.Summary:
     isFollowup:
       description: true if the activity is generally considered to be an activity that comes after the "main" activities
       type: boolean
+    isHidden:
+      type: boolean
+      description: whether the activity instance is hidden
     previousInstanceGuid:
       description: GUID of previous instance
       type: string

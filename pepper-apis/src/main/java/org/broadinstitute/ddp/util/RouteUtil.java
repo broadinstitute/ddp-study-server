@@ -136,7 +136,8 @@ public class RouteUtil {
 
     public static UserActivityInstanceSummary findUserActivityInstanceSummaryOrHalt(Response response, Handle handle,
                                                                                     String participantGuid, String studyGuid,
-                                                                                    String instanceGuid) {
+                                                                                    String instanceGuid,
+                                                                                    boolean isOperatorStudyAdmin) {
         var found = findUserAndStudyOrHalt(handle, participantGuid, studyGuid);
         var studyDto = found.getStudyDto();
         User user = found.getUser();
@@ -153,24 +154,26 @@ public class RouteUtil {
 
         ActivityInstanceDto instanceDto = activityInstanceSummary.getActivityInstanceByGuid(instanceGuid).orElseThrow(handleMissing);
 
-        haltIfError(user, participantGuid, studyGuid, instanceGuid, studyDto, instanceDto, response);
+        haltIfError(user, participantGuid, studyGuid, instanceGuid, studyDto, instanceDto, response, isOperatorStudyAdmin);
 
         return activityInstanceSummary;
     }
 
     /**
-     * Get the activity instance, ensuring the study/user/instance exists and the instance is accessible. Otherwise, will set the
-     * appropriate route response.
+     * Get the activity instance, ensuring the study/user/instance exists and the instance is accessible. Otherwise,
+     * will set the appropriate route response.
      *
-     * @param response        the route response
-     * @param handle          the database handle
-     * @param participantGuid the user guid
-     * @param studyGuid       the study guid
-     * @param instanceGuid    the activity instance guid
+     * @param response             the route response
+     * @param handle               the database handle
+     * @param participantGuid      the user guid
+     * @param studyGuid            the study guid
+     * @param instanceGuid         the activity instance guid
+     * @param isOperatorStudyAdmin whether the operator user is study admin
      * @return the activity instance dto
      */
     public static ActivityInstanceDto findAccessibleInstanceOrHalt(Response response, Handle handle,
-                                                                   String participantGuid, String studyGuid, String instanceGuid) {
+                                                                   String participantGuid, String studyGuid, String instanceGuid,
+                                                                   boolean isOperatorStudyAdmin) {
         var found = findUserAndStudyOrHalt(handle, participantGuid, studyGuid);
         var studyDto = found.getStudyDto();
         var user = found.getUser();
@@ -182,13 +185,13 @@ public class RouteUtil {
                     return ResponseUtil.haltError(response, 404, new ApiError(ErrorCodes.ACTIVITY_NOT_FOUND, msg));
                 });
 
-        haltIfError(user, participantGuid, studyGuid, instanceGuid, studyDto, instanceDto, response);
+        haltIfError(user, participantGuid, studyGuid, instanceGuid, studyDto, instanceDto, response, isOperatorStudyAdmin);
 
         return instanceDto;
     }
 
     public static void haltIfError(User user, String participantGuid, String studyGuid, String instanceGuid, StudyDto studyDto,
-                                   ActivityInstanceDto instanceDto, Response response) {
+                                   ActivityInstanceDto instanceDto, Response response, boolean isOperatorStudyAdmin) {
         if (instanceDto.getStudyId() != studyDto.getId() || instanceDto.getParticipantId() != user.getId()) {
             LOG.warn("Activity instance {} does not belong to participant {} in study {}", instanceGuid, participantGuid, studyGuid);
             LOG.warn("InstanceDTO: " + new Gson().toJson(instanceDto));
@@ -196,10 +199,10 @@ public class RouteUtil {
             LOG.warn("StudyDto: " + new Gson().toJson(studyDto));
             String msg = "Could not find activity instance with guid " + instanceGuid;
             throw ResponseUtil.haltError(response, 404, new ApiError(ErrorCodes.ACTIVITY_NOT_FOUND, msg));
-        } else if (instanceDto.isHidden()) {
+        } else if (!isOperatorStudyAdmin && instanceDto.isHidden()) {
             String msg = "Activity instance " + instanceDto.getGuid() + " is hidden and cannot be retrieved or interacted with";
             throw ResponseUtil.haltError(response, 404, new ApiError(ErrorCodes.ACTIVITY_NOT_FOUND, msg));
-        } else if (user.isTemporary() && !instanceDto.isAllowUnauthenticated()) {
+        } else if (!isOperatorStudyAdmin && user.isTemporary() && !instanceDto.isAllowUnauthenticated()) {
             String msg = "Activity instance " + instanceDto.getGuid() + " not accessible to unauthenticated users";
             throw ResponseUtil.haltError(response, 401, new ApiError(ErrorCodes.OPERATION_NOT_ALLOWED, msg));
         }

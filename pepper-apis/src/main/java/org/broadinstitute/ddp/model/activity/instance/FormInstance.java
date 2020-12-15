@@ -89,10 +89,12 @@ public final class FormInstance extends ActivityInstance {
             Long lastUpdatedTextTemplateId,
             LocalDateTime activityDefinitionLastUpdated,
             boolean isFollowup,
+            boolean isInstanceHidden,
+            boolean excludeFromDisplay,
             int sectionIndex
     ) {
         super(participantUserId, instanceId, activityId, ActivityType.FORMS, guid, title, subtitle, statusTypeCode, readonly, activityCode,
-                createdAtMillis, firstCompletedAt, isFollowup);
+                createdAtMillis, firstCompletedAt, isFollowup, isInstanceHidden, excludeFromDisplay);
         this.formType = MiscUtil.checkNonNull(formType, "formType");
         if (listStyleHint != null) {
             this.listStyleHint = listStyleHint;

@@ -80,13 +80,16 @@ public class PutFormAnswersRoute implements Route {
         String instanceGuid = request.params(PathParam.INSTANCE_GUID);
 
         DDPAuth ddpAuth = RouteUtil.getDDPAuth(request);
-        String operatorGuid = ddpAuth.getOperator() != null ? ddpAuth.getOperator() : userGuid;
+        String operatorGuid = StringUtils.defaultIfBlank(ddpAuth.getOperator(), userGuid);
+        boolean isStudyAdmin = ddpAuth.hasAdminAccessToStudy(studyGuid);
 
-        LOG.info("Completing form for user {}, operator {}, activity instance {}", userGuid, operatorGuid, instanceGuid);
+        LOG.info("Completing form for user {}, operator {} (isStudyAdmin={}), activity instance {}, study {}",
+                userGuid, operatorGuid, isStudyAdmin, instanceGuid, studyGuid);
 
         PutAnswersResponse resp = TransactionWrapper.withTxn(
                 handle -> {
-                    var instanceDto = RouteUtil.findAccessibleInstanceOrHalt(response, handle, userGuid, studyGuid, instanceGuid);
+                    var instanceDto = RouteUtil.findAccessibleInstanceOrHalt(
+                            response, handle, userGuid, studyGuid, instanceGuid, isStudyAdmin);
 
                     LanguageDto preferredUserLanguage = RouteUtil.getUserLanguage(request);
                     String isoLangCode = preferredUserLanguage.getIsoCode();
@@ -100,7 +103,7 @@ public class PutFormAnswersRoute implements Route {
                         throw ResponseUtil.haltError(response, 404, new ApiError(ErrorCodes.ACTIVITY_NOT_FOUND, msg));
                     }
 
-                    if (form.isReadonly()) {
+                    if (!isStudyAdmin && form.isReadonly()) {
                         String msg = "Activity instance " + instanceGuid + " is read-only, cannot update activity";
                         LOG.info(msg);
                         throw ResponseUtil.haltError(response, 422, new ApiError(ErrorCodes.ACTIVITY_INSTANCE_IS_READONLY, msg));

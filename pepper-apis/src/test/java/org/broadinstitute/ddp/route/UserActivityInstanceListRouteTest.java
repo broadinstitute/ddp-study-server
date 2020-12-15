@@ -4,6 +4,7 @@ import static io.restassured.RestAssured.given;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import java.time.Instant;
 import java.util.Arrays;
@@ -31,6 +32,7 @@ import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.ActivityI18nDao;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dao.AnswerDao;
+import org.broadinstitute.ddp.db.dao.AuthDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
@@ -355,6 +357,33 @@ public class UserActivityInstanceListRouteTest extends IntegrationTestSuite.Test
         } finally {
             TransactionWrapper.useTxn(handle -> handle.attach(ActivityInstanceDao.class)
                     .bulkUpdateIsHiddenByActivityIds(testData.getUserId(), false, Set.of(prequal.getActivityId())));
+        }
+    }
+
+    @Test
+    public void testStudyAdmin_returnsHiddenInstances() {
+        TransactionWrapper.useTxn(handle -> {
+            assertEquals(1, handle.attach(ActivityInstanceDao.class)
+                    .bulkUpdateIsHiddenByActivityIds(testData.getUserId(), true, Set.of(prequal.getActivityId())));
+            handle.attach(AuthDao.class).assignStudyAdmin(testData.getUserId(), testData.getStudyId());
+        });
+        try {
+            String body = given().auth().oauth2(token)
+                    .when().get(url)
+                    .then().assertThat()
+                    .statusCode(200).contentType(ContentType.JSON)
+                    .and().extract().body().asString();
+
+            ActivityInstanceSummary[] activities = gson.fromJson(body, ActivityInstanceSummary[].class);
+
+            assertEquals("should return instances since it's study admin", 1, activities.length);
+            assertTrue("returned instance should be marked hidden", activities[0].isHidden());
+        } finally {
+            TransactionWrapper.useTxn(handle -> {
+                handle.attach(ActivityInstanceDao.class)
+                        .bulkUpdateIsHiddenByActivityIds(testData.getUserId(), false, Set.of(prequal.getActivityId()));
+                handle.attach(AuthDao.class).removeAdminFromAllStudies(testData.getUserId());
+            });
         }
     }
 }
