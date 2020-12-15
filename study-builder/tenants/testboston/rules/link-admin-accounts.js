@@ -28,13 +28,12 @@ function(user, context, callback) {
   }
 
   request({
-    url: auth0.baseUrl + '/users',
+    url: auth0.baseUrl + '/users-by-email',
     headers: {
       Authorization: 'Bearer ' + auth0.accessToken
     },
     qs: {
-      search_engine: 'v3',
-      q: `identities.connection:"${adminConnection}" AND email:"${user.email}"`
+      email: user.email
     }
   }, function(err, response, body) {
     if (err) {
@@ -45,13 +44,19 @@ function(user, context, callback) {
 
     if (response.statusCode !== 200) {
       console.log('Failed to search for admin user with email:', user.email);
-      console.log(body);
+      console.log('Status code:', response.statusCode);
+      console.log('Body:', body);
       return callback(new Error(body));
     }
 
-    const data = JSON.parse(body);
+    const data = JSON.parse(body).filter(obj => obj.identities
+      .findIndex(identity => identity.connection === adminConnection) >= 0);
+
     if (data.length !== 1) {
-      console.log('Expected to find one admin user but found', data.length);
+      // Failing from this rule should halt the auth pipeline so we don't run Pepper registration,
+      // which should be the next rule. Auth0 will still create a profile but at least it won't be
+      // created in Pepper yet.
+      console.log(`Expected to find one admin user but found ${data.length} using email ${user.email}`);
       return callback(new Error("Could not find a corresponding study admin account"));
     }
 
@@ -92,9 +97,10 @@ function(user, context, callback) {
             return callback(err);
           }
 
-          if (response.statusCode >= 400) {
+          if (response.statusCode !== 201) {
             console.log('Failed to link identities');
-            console.log(body);
+            console.log('Status code:', response.statusCode);
+            console.log('Body:', body);
             return callback(new Error(body));
           }
 
