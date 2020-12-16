@@ -223,7 +223,7 @@ function docker_nginx_push {
 }
 
 function print_usage() {
-    echo "usage: $NAME <version> <environment> <dir> <option>..."
+    echo "usage: $NAME <version> <environment> <dir> [housekeeping] <option>..."
     echo "       $NAME [-h, --help]"
 }
 
@@ -293,6 +293,7 @@ DOCS_PROXIED_HOST=$DOCS_PROXIED_HOST
 VERSION=$1
 ENVIRONMENT=$2
 DIR=$3
+APPLICATION=unknown
 
 VAULT_TOKEN=$VAULT_TOKEN
 tag=${VERSION}_${ENVIRONMENT}
