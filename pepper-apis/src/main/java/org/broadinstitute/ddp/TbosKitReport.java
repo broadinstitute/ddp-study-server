@@ -28,8 +28,8 @@ public class TbosKitReport {
             "k.tracking_to_id,\n" +
             "k.tracking_return_id,\n" +
             "json_extract(k.test_result, '$[0].result') test_result,\n" +
-            "ifnull(STR_TO_DATE(json_extract(k.test_result, '$[0].timeCompleted'), '\"%Y-%m-%dT%H:%i:%sZ\"'),\n" +
-            "    STR_TO_DATE(json_extract(k.test_result, '$[0].timeCompleted'), '\"%Y-%m-%dT%H:%i:%s.%fZ\"')\n" +
+            "ifnull(STR_TO_DATE(replace(json_extract(k.test_result, '$[0].timeCompleted'),'\"',''), '%Y-%m-%dT%H:%i:%sZ'),\n" +
+            "    STR_TO_DATE(replace(json_extract(k.test_result, '$[0].timeCompleted'),'\"',''), '%Y-%m-%dT%H:%i:%s.%fZ')\n" +
             ")as test_completion_time,\n" +
             "u.hruid\n" +
             "from\n" +
