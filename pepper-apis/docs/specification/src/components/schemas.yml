@@ -400,7 +400,7 @@ DateValue:
       minimum: 0
 FileAnswerValue:
   type: object
-  description: an object which represents a day, month, and year in UTC.
+  description: The upload id that identifies  the just completed upload.
   properties:
     uploadId: string
     description: id provided by server in original request for upload URL.
