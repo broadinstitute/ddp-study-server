@@ -71,8 +71,9 @@ public class SendStudyEmailRoute extends ValidatedJsonInputRoute<SendStudyEmailP
                     String toEmail = conf.get().getStaffEmail();
                     for (EventConfigurationDto eventConfig : eventConfigs) {
                         long queuedEventId = handle.attach(QueuedEventDao.class).insertNotification(eventConfig.getEventConfigurationId(),
-                                0,
-                                toEmail,
+                                0L,
+                                null,
+                                null,
                                 payload.getData(),
                                 fileUploadIds);
                         LOG.info("Queued queuedEventId {} for study email sending.", queuedEventId);

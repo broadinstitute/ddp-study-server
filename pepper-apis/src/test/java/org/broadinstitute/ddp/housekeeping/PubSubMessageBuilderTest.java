@@ -71,7 +71,7 @@ public class PubSubMessageBuilderTest extends TxnAwareBaseTest {
                         "topic", null, null, testData.getStudyGuid()),
                 new NotificationDetailsDto(NotificationType.EMAIL, NotificationServiceType.SENDGRID,
                         null, null, "url", "apiKey", "fromName", "fromEmail",
-                        "salutation", "first", "last"));
+                        null, "salutation", "first", "last"));
 
         PubsubMessage msg = TransactionWrapper.withTxn(handle -> builder.createMessage("test", event, handle));
         assertEquals("test", msg.getAttributesOrThrow(DDP_MESSAGE_ID));
@@ -96,7 +96,7 @@ public class PubSubMessageBuilderTest extends TxnAwareBaseTest {
                             "topic", null, null, testData.getStudyGuid()),
                     new NotificationDetailsDto(NotificationType.EMAIL, NotificationServiceType.SENDGRID,
                             null, null, "url", "apiKey", "fromName", "fromEmail",
-                            "salutation", "first", "last"));
+                            null, "salutation", "first", "last"));
 
             PubSubMessageBuilder builder = spy(new PubSubMessageBuilder(cfg));
             doReturn(new NotificationTemplate(1L, "template", false, 1L, "en"))
@@ -138,7 +138,7 @@ public class PubSubMessageBuilderTest extends TxnAwareBaseTest {
                             "topic", null, null, testData.getStudyGuid()),
                     new NotificationDetailsDto(NotificationType.EMAIL, NotificationServiceType.SENDGRID,
                             null, null, "url", "apiKey", "fromName", "fromEmail",
-                            "salutation", "first", "last"));
+                            null, "salutation", "first", "last"));
 
             PubSubMessageBuilder builder = spy(new PubSubMessageBuilder(cfg));
             doReturn(new NotificationTemplate(1L, "template", false, 1L, "en"))
@@ -180,7 +180,7 @@ public class PubSubMessageBuilderTest extends TxnAwareBaseTest {
                             "topic", null, null, testData.getStudyGuid()),
                     new NotificationDetailsDto(NotificationType.EMAIL, NotificationServiceType.SENDGRID,
                             null, null, "url", "apiKey", "fromName", "fromEmail",
-                            "salutation", "first", "last"));
+                            null, "salutation", "first", "last"));
 
             try {
                 PubSubMessageBuilder builder = new PubSubMessageBuilder(cfg);
@@ -224,7 +224,7 @@ public class PubSubMessageBuilderTest extends TxnAwareBaseTest {
                             "topic", null, null, testData.getStudyGuid()),
                     new NotificationDetailsDto(NotificationType.STUDY_EMAIL, NotificationServiceType.SENDGRID,
                             null, null, "url", "apiKey", "studyFromName", "studyFromEmail",
-                            "salutation", "first", "last"));
+                            null, "salutation", "first", "last"));
 
             InvitationDto invite = handle.attach(InvitationFactory.class)
                     .createRecruitmentInvitation(testData.getStudyId(), "dummy-invite-code");

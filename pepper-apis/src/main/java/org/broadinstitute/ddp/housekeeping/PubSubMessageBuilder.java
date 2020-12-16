@@ -90,7 +90,11 @@ public class PubSubMessageBuilder {
 
                 String userPreferredLangCode = null;
                 if (NotificationType.STUDY_EMAIL == queuedNotificationDto.getNotificationType()) {
-                    sendToList.add(queuedNotificationDto.getStudyFromEmail());
+                    String toEmail = queuedNotificationDto.getStaffEmail();
+                    if (toEmail == null) {
+                        toEmail = queuedNotificationDto.getStudyFromEmail();
+                    }
+                    sendToList.add(toEmail);
                     // No user language since email is sent to study staff instead. Use study default language instead.
                     userPreferredLangCode = null;
                 } else if (StringUtils.isNotBlank(queuedNotificationDto.getToEmail())) {

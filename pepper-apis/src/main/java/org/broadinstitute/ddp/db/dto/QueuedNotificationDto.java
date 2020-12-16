@@ -51,6 +51,10 @@ public class QueuedNotificationDto extends QueuedEventDto {
         return notificationDetailsDto.getStudyFromEmail();
     }
 
+    public String getStaffEmail() {
+        return notificationDetailsDto.getStaffEmail();
+    }
+
     public String getDefaultSalutation() {
         return notificationDetailsDto.getDefaultSalutation();
     }

@@ -19,6 +19,7 @@ public class NotificationDetailsDto {
     private String apiKey;
     private String studyFromName;
     private String studyFromEmail;
+    private String staffEmail;
     private String defaultSalutation;
     private String participantFirstName;
     private String participantLastName;
@@ -35,6 +36,7 @@ public class NotificationDetailsDto {
             @ColumnName("sendgrid_api_key") String apiKey,
             @ColumnName("sendgrid_from_name") String studyFromName,
             @ColumnName("sendgrid_from_email") String studyFromEmail,
+            @ColumnName("sendgrid_staff_email") String staffEmail,
             @ColumnName("sendgrid_default_salutation") String defaultSalutation,
             @ColumnName("participant_first_name") String participantFirstName,
             @ColumnName("participant_last_name") String participantLastName) {
@@ -46,6 +48,7 @@ public class NotificationDetailsDto {
         this.apiKey = apiKey;
         this.studyFromName = studyFromName;
         this.studyFromEmail = studyFromEmail;
+        this.staffEmail = staffEmail;
         this.defaultSalutation = defaultSalutation;
         this.participantFirstName = participantFirstName;
         this.participantLastName = participantLastName;
@@ -81,6 +84,10 @@ public class NotificationDetailsDto {
 
     public String getStudyFromEmail() {
         return studyFromEmail;
+    }
+
+    public String getStaffEmail() {
+        return staffEmail;
     }
 
     public String getDefaultSalutation() {
