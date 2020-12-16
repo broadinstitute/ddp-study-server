@@ -178,7 +178,10 @@ Activity:
       description: whether this activity is considered a "follow-up"
     isHidden:
       type: boolean
-      description: whether the activity instance is hidden
+      description: |
+        Whether the activity instance is hidden from the participant. When
+        true, client should prefer to show some indicator to operator that
+        activity is hidden from participant's view.
     sectionIndex:
       type: integer
       minimum: 0
@@ -259,7 +262,10 @@ Activity.Summary:
       type: boolean
     isHidden:
       type: boolean
-      description: whether the activity instance is hidden
+      description: |
+        Whether the activity instance is hidden from the participant. When
+        true, client should prefer to show some indicator to operator that
+        activity is hidden from participant's view.
     previousInstanceGuid:
       description: GUID of previous instance
       type: string
