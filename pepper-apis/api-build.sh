@@ -223,7 +223,7 @@ function docker_nginx_push {
 }
 
 function print_usage() {
-    echo "usage: $NAME <version> <environment> <dir> <option>..."
+    echo "usage: $NAME <version> <environment> <dir> [housekeeping] g<option>..."
     echo "       $NAME [-h, --help]"
 }
 
