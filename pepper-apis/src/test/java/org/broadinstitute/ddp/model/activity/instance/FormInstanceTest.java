@@ -513,7 +513,7 @@ public class FormInstanceTest extends TxnAwareBaseTest {
         return new FormInstance(
                 participantUserId, 1L, 1L, "SOME_CODE", FormType.GENERAL, "SOME_GUID", "name", "subtitle", "CREATED", false,
                 ListStyleHint.NUMBER, null, null, null, Instant.now().toEpochMilli(), null, null, null, false,
-                0
+                false, false, 0
         );
     }
 
@@ -521,7 +521,7 @@ public class FormInstanceTest extends TxnAwareBaseTest {
         return new FormInstance(
                 1L, 1L, 1L, "SOME_CODE", FormType.GENERAL, "SOME_GUID", "<div>title</div>", "<em>subtitle</em>", "CREATED", false,
                 ListStyleHint.NUMBER, null, null, null, Instant.now().toEpochMilli(), null, null, null, false,
-                0
+                false, false, 0
         );
     }
 

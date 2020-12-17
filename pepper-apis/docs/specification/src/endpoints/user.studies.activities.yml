@@ -17,7 +17,9 @@ get:
   tags:
     - Activities
   summary: summary of a participant's activities
-  description: returns a summary for each activity instance a `user` has for a specific `study`, excluding ones that are hidden
+  description: |
+    Returns a summary for each activity instance a `user` has for a specific `study`, excluding ones that are hidden.
+    If operator is a study admin, all of participant's activities will be returned.
   responses:
       200:
         $ref: '../pepper.yml#/components/responses/ActivitiesResponse'

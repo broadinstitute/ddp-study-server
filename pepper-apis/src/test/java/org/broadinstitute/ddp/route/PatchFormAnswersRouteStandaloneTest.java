@@ -51,6 +51,7 @@ import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceStatusDao;
 import org.broadinstitute.ddp.db.dao.AnswerCachedDao;
+import org.broadinstitute.ddp.db.dao.AuthDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
 import org.broadinstitute.ddp.db.dao.JdbiActivityInstanceStatusType;
@@ -147,6 +148,7 @@ public class PatchFormAnswersRouteStandaloneTest {
     private static String childTextStableId;
     private static String childDateStableId;
     private static String compStabledId;
+    private static NumericQuestionDef numericQuestionDef;
     private static String numericIntegerSid;
     private static String numericIntegerReqSid;
     private static String numericIntegerWithMultipleRulesSid;
@@ -295,7 +297,7 @@ public class PatchFormAnswersRouteStandaloneTest {
         FormSectionDef agreementSection = new FormSectionDef(null, TestUtil.wrapQuestions(a1));
 
         numericIntegerSid = "PATCH_NUMERIC_INTEGER_Q" + timestamp;
-        NumericQuestionDef n1 = NumericQuestionDef
+        numericQuestionDef = NumericQuestionDef
                 .builder(NumericType.INTEGER, numericIntegerSid, newTemplate())
                 .addValidation(new IntRangeRuleDef(null, 5L, 100L))
                 .build();
@@ -310,7 +312,7 @@ public class PatchFormAnswersRouteStandaloneTest {
                 .addValidation(new IntRangeRuleDef(null, 5L, 100L))
                 .addValidation(new IntRangeRuleDef(null, 200L, 500L))
                 .build();
-        FormSectionDef numericSection = new FormSectionDef(null, TestUtil.wrapQuestions(n1, n2, n3));
+        FormSectionDef numericSection = new FormSectionDef(null, TestUtil.wrapQuestions(numericQuestionDef, n2, n3));
 
         String code = "PATCH_ANS_ACT_" + timestamp;
         activity = FormActivityDef.generalFormBuilder(code, "v1", testData.getStudyGuid())
@@ -1742,7 +1744,6 @@ public class PatchFormAnswersRouteStandaloneTest {
         }
     }
 
-
     private String extractAnswerGuid(HttpResponse response) throws IOException {
         String json = EntityUtils.toString(response.getEntity());
         PatchAnswerResponse resp = gson.fromJson(json, PatchAnswerResponse.class);
@@ -1752,5 +1753,100 @@ public class PatchFormAnswersRouteStandaloneTest {
         assertNotNull(ans.getAnswerGuid());
 
         return ans.getAnswerGuid();
+    }
+
+    @Test
+    public void testStudyAdmin_patchHiddenInstance() {
+        TransactionWrapper.useTxn(handle -> {
+            assertEquals(1, handle.attach(ActivityInstanceDao.class)
+                    .bulkUpdateIsHiddenByActivityIds(testData.getUserId(), true, Set.of(activity.getActivityId())));
+            handle.attach(AuthDao.class).assignStudyAdmin(testData.getUserId(), testData.getStudyId());
+        });
+
+        AnswerSubmission submission = new AnswerSubmission(numericIntegerSid, null, gson.toJsonTree(25));
+        PatchAnswerPayload data = new PatchAnswerPayload(List.of(submission));
+
+        try {
+            String guid = givenAnswerPatchRequest(instanceGuid, data)
+                    .then().assertThat()
+                    .statusCode(200).contentType(ContentType.JSON)
+                    .body("answers.size()", equalTo(1))
+                    .body("answers[0].stableId", equalTo(numericIntegerSid))
+                    .body("answers[0].answerGuid", not(isEmptyOrNullString()))
+                    .and().extract().path("answers[0].answerGuid");
+            answerGuidsToDelete.get(QuestionType.NUMERIC).add(guid);
+        } finally {
+            TransactionWrapper.useTxn(handle -> {
+                handle.attach(AuthDao.class).removeAdminFromAllStudies(testData.getUserId());
+            });
+        }
+    }
+
+    @Test
+    public void testStudyAdmin_patchReadOnlyInstance() {
+        TransactionWrapper.useTxn(handle -> {
+            assertEquals(1, handle.attach(ActivityInstanceDao.class)
+                    .bulkUpdateReadOnlyByActivityIds(testData.getUserId(), true, Set.of(activity.getActivityId())));
+            handle.attach(AuthDao.class).assignStudyAdmin(testData.getUserId(), testData.getStudyId());
+        });
+
+        AnswerSubmission submission = new AnswerSubmission(numericIntegerSid, null, gson.toJsonTree(25));
+        PatchAnswerPayload data = new PatchAnswerPayload(List.of(submission));
+
+        try {
+            String guid = givenAnswerPatchRequest(instanceGuid, data)
+                    .then().assertThat()
+                    .statusCode(200).contentType(ContentType.JSON)
+                    .body("answers.size()", equalTo(1))
+                    .body("answers[0].stableId", equalTo(numericIntegerSid))
+                    .body("answers[0].answerGuid", not(isEmptyOrNullString()))
+                    .and().extract().path("answers[0].answerGuid");
+            answerGuidsToDelete.get(QuestionType.NUMERIC).add(guid);
+        } finally {
+            TransactionWrapper.useTxn(handle -> {
+                handle.attach(AuthDao.class).removeAdminFromAllStudies(testData.getUserId());
+            });
+        }
+    }
+
+    @Test
+    public void testStudyAdmin_patchReadOnlyQuestion() {
+        AnswerSubmission submission = new AnswerSubmission(numericIntegerSid, null, gson.toJsonTree(25));
+        PatchAnswerPayload data = new PatchAnswerPayload(List.of(submission));
+
+        String updateSql = "update question set is_write_once = ? where question_id = ?";
+        TransactionWrapper.useTxn(handle -> {
+            assertEquals(1, handle.execute(updateSql, true, numericQuestionDef.getQuestionId()));
+            handle.attach(ActivityInstanceStatusDao.class).insertStatus(
+                    instanceGuid, InstanceStatusType.COMPLETE, Instant.now().toEpochMilli(), testData.getUserGuid());
+        });
+
+        // Need to define question as write-once and instance need to be completed for the question to be read-only.
+        // Let's make sure that's the case by doing a PATCH request.
+        givenAnswerPatchRequest(instanceGuid, data)
+                .then().assertThat()
+                .statusCode(422).contentType(ContentType.JSON)
+                .body("code", equalTo(ErrorCodes.QUESTION_IS_READONLY))
+                .body("message", containsString(numericIntegerSid));
+
+        // Now mark user as study admin and try again.
+        TransactionWrapper.useTxn(handle -> {
+            handle.attach(AuthDao.class).assignStudyAdmin(testData.getUserId(), testData.getStudyId());
+        });
+        try {
+            String guid = givenAnswerPatchRequest(instanceGuid, data)
+                    .then().assertThat()
+                    .statusCode(200).contentType(ContentType.JSON)
+                    .body("answers.size()", equalTo(1))
+                    .body("answers[0].stableId", equalTo(numericIntegerSid))
+                    .body("answers[0].answerGuid", not(isEmptyOrNullString()))
+                    .and().extract().path("answers[0].answerGuid");
+            answerGuidsToDelete.get(QuestionType.NUMERIC).add(guid);
+        } finally {
+            TransactionWrapper.useTxn(handle -> {
+                handle.attach(AuthDao.class).removeAdminFromAllStudies(testData.getUserId());
+                assertEquals(1, handle.execute(updateSql, false, numericQuestionDef.getQuestionId()));
+            });
+        }
     }
 }

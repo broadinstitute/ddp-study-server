@@ -1,11 +1,9 @@
 package org.broadinstitute.ddp.model.activity.instance;
 
 import java.util.Optional;
-
 import javax.validation.constraints.NotNull;
 
 import com.google.gson.annotations.SerializedName;
-
 import org.broadinstitute.ddp.model.activity.types.ActivityType;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.broadinstitute.ddp.util.MiscUtil;
@@ -37,17 +35,22 @@ public class ActivityInstance {
     @SerializedName("isFollowup")
     private boolean isFollowup;
 
+    @SerializedName("isHidden")
+    private boolean isHidden;
+
     private transient long participantUserId;
     private transient long instanceId;
     private transient long activityId;
     private transient long createdAtMillis;
     private transient Long firstCompletedAt;
+    private transient boolean excludeFromDisplay;
+    private transient boolean isInstanceHidden;
 
     public ActivityInstance(
             long participantUserId,
             long instanceId, long activityId, ActivityType activityType, String guid, String title, String subtitle,
             String statusTypeCode, Boolean readonly, String activityCode, long createdAtMillis, Long firstCompletedAt,
-            boolean isFollowup
+            boolean isFollowup, boolean excludeFromDisplay, boolean isInstanceHidden
     ) {
         this.participantUserId = participantUserId;
         this.instanceId = instanceId;
@@ -62,6 +65,9 @@ public class ActivityInstance {
         this.createdAtMillis = createdAtMillis;
         this.firstCompletedAt = firstCompletedAt;
         this.isFollowup = isFollowup;
+        this.excludeFromDisplay = excludeFromDisplay;
+        this.isInstanceHidden = isInstanceHidden;
+        this.isHidden = isInstanceHidden || excludeFromDisplay;
     }
 
     public long getParticipantUserId() {
@@ -118,5 +124,26 @@ public class ActivityInstance {
 
     public Long getFirstCompletedAt() {
         return firstCompletedAt;
+    }
+
+    /**
+     * Returns whether the activity was defined to be excluded from display.
+     */
+    public boolean isExcludeFromDisplay() {
+        return excludeFromDisplay;
+    }
+
+    /**
+     * Returns whether this specific instance is hidden.
+     */
+    public boolean isInstanceHidden() {
+        return isInstanceHidden;
+    }
+
+    /**
+     * Returns whether instance is hidden or not, either at the activity definition or instance level.
+     */
+    public boolean isHidden() {
+        return isHidden;
     }
 }
