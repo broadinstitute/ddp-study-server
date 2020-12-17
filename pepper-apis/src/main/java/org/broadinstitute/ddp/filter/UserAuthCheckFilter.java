@@ -128,7 +128,7 @@ public class UserAuthCheckFilter implements Filter {
             LOG.warn("Could not find temporary user with guid '{}'", tempUserGuid);
             canAccess = false;
         } else if (!tempUser.isTemporary()) {
-            LOG.error("User with guid '{}' is not a temporary user but is used to access"
+            LOG.warn("User with guid '{}' is not a temporary user but is used to access"
                     + " temp-user whitelisted path without a token", tempUserGuid);
             canAccess = false;
         } else if (tempUser.isExpired()) {

@@ -1,6 +1,8 @@
 package org.broadinstitute.ddp.export.json.structured;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import com.google.gson.annotations.SerializedName;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
@@ -23,6 +25,8 @@ public class ActivityInstanceRecord {
     private Long lastUpdatedAtMillis;
     @SerializedName("questionsAnswers")
     private List<QuestionRecord> questionsAnswers;
+    @SerializedName("attributes")
+    private Map<String, String> attributes = new HashMap<>();
 
     public ActivityInstanceRecord(
             String versionTag,
@@ -42,5 +46,9 @@ public class ActivityInstanceRecord {
         this.completedAtMillis = completedAtMillis;
         this.lastUpdatedAtMillis = lastUpdatedAtMillis;
         this.questionsAnswers = questionsAnswers;
+    }
+
+    public void putAttribute(String name, String value) {
+        attributes.put(name, value);
     }
 }

@@ -1,0 +1,88 @@
+package org.broadinstitute.ddp.route;
+
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+
+import org.apache.http.HttpStatus;
+import org.broadinstitute.ddp.constants.ErrorCodes;
+import org.broadinstitute.ddp.constants.RouteConstants;
+import org.broadinstitute.ddp.db.TransactionWrapper;
+import org.broadinstitute.ddp.db.dao.EventDao;
+import org.broadinstitute.ddp.db.dao.JdbiSendgridConfiguration;
+import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
+import org.broadinstitute.ddp.db.dao.QueuedEventDao;
+import org.broadinstitute.ddp.db.dto.EventConfigurationDto;
+import org.broadinstitute.ddp.db.dto.SendgridConfigurationDto;
+import org.broadinstitute.ddp.json.errors.ApiError;
+import org.broadinstitute.ddp.json.studyemail.Attachment;
+import org.broadinstitute.ddp.json.studyemail.SendStudyEmailPayload;
+import org.broadinstitute.ddp.model.activity.types.EventTriggerType;
+import org.broadinstitute.ddp.service.FileUploadService;
+import org.broadinstitute.ddp.util.ResponseUtil;
+import org.broadinstitute.ddp.util.ValidatedJsonInputRoute;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import spark.Request;
+import spark.Response;
+
+public class SendStudyEmailRoute extends ValidatedJsonInputRoute<SendStudyEmailPayload> {
+
+    private static final Logger LOG = LoggerFactory.getLogger(SendStudyEmailRoute.class);
+
+    private final FileUploadService fileUploadService;
+
+
+    public SendStudyEmailRoute(FileUploadService fileUploadService) {
+        this.fileUploadService = fileUploadService;
+    }
+
+    @Override
+    public Object handle(Request request, Response response, SendStudyEmailPayload payload) throws Exception {
+        String studyGuid = request.params(RouteConstants.PathParam.STUDY_GUID);
+
+        TransactionWrapper.useTxn(handle -> {
+            Optional<Long> studyId = handle.attach(JdbiUmbrellaStudy.class).getIdByGuid(studyGuid);
+            if (studyId.isEmpty()) {
+                ApiError err = new ApiError(ErrorCodes.STUDY_NOT_FOUND, "Could not find study with guid " + studyGuid);
+                throw ResponseUtil.haltError(response, HttpStatus.SC_NOT_FOUND, err);
+            }
+            LOG.info("Handling study email sending in study {}", studyGuid);
+            List<EventConfigurationDto> eventConfigs =
+                    handle.attach(EventDao.class)
+                            .getNotificationConfigsForMailingListByEventType(studyGuid, EventTriggerType.SEND_STUDY_EMAIL);
+            if (!eventConfigs.isEmpty()) {
+                Optional<SendgridConfigurationDto> conf =
+                        handle.attach(JdbiSendgridConfiguration.class).findByStudyGuid(studyGuid);
+                if (conf.isPresent() && conf.get().getStaffEmail() != null) {
+                    Set<Long> fileUploadIds = new HashSet<>();
+                    List<Attachment> attachments = payload.getAttachments();
+                    if (attachments != null) {
+                        for (Attachment attachment : attachments) {
+                            Long fileUploadId = fileUploadService.validateUploadAndGetId(handle, attachment.getGuid());
+                            if (fileUploadId == null) {
+                                String msg = String.format("Attachment %s is not verified", attachment.getGuid());
+                                throw ResponseUtil.haltError(response, HttpStatus.SC_BAD_REQUEST, msg);
+                            }
+                            fileUploadIds.add(fileUploadId);
+                        }
+                    }
+                    String toEmail = conf.get().getStaffEmail();
+                    for (EventConfigurationDto eventConfig : eventConfigs) {
+                        long queuedEventId = handle.attach(QueuedEventDao.class).insertNotification(eventConfig.getEventConfigurationId(),
+                                0L,
+                                null,
+                                null,
+                                payload.getData(),
+                                fileUploadIds);
+                        LOG.info("Queued queuedEventId {} for study email sending.", queuedEventId);
+                    }
+                }
+            }
+        });
+
+        response.status(HttpStatus.SC_ACCEPTED);
+        return "";
+    }
+}

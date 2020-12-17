@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="ypavlov" id="20201210-notification-attachment">
+
+        <createTable tableName="notification_attachment">
+            <column name="notification_attachment_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="queued_notification_template_queued_event_pk"/>
+            </column>
+            <column name="queued_event_id" type="bigint">
+                <constraints nullable="false"
+                             foreignKeyName="notification_attachment_queued_event_fk"
+                             references="queued_event(queued_event_id)"/>
+            </column>
+            <column name="file_upload_id" type="bigint">
+                <constraints nullable="false"
+                             foreignKeyName="notification_attachment_file_upload_fk"
+                             references="file_upload(file_upload_id)"/>
+            </column>
+        </createTable>
+
+    </changeSet>
+
+    <changeSet author="ypavlov" id="20201210-add-external-attachment-toggle">
+        <addColumn tableName="user_notification_event_action">
+            <column name="allow_external_attachments" type="boolean" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet author="ypavlov" id="20201214-add-study-staff-email">
+        <addColumn tableName="sendgrid_configuration">
+            <column name="staff_email" type="varchar(200)">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+</databaseChangeLog>

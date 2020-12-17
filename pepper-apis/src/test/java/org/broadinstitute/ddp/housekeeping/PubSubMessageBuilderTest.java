@@ -2,6 +2,7 @@ package org.broadinstitute.ddp.housekeeping;
 
 import static org.broadinstitute.ddp.Housekeeping.DDP_MESSAGE_ID;
 import static org.broadinstitute.ddp.Housekeeping.DDP_STUDY_GUID;
+import static org.broadinstitute.ddp.constants.NotificationTemplateVariables.DDP_INVITATION_ID;
 import static org.broadinstitute.ddp.constants.NotificationTemplateVariables.DDP_PROXY_FIRST_NAME;
 import static org.broadinstitute.ddp.constants.NotificationTemplateVariables.DDP_PROXY_LAST_NAME;
 import static org.junit.Assert.assertEquals;
@@ -14,6 +15,7 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -22,9 +24,12 @@ import com.google.pubsub.v1.PubsubMessage;
 import org.broadinstitute.ddp.TxnAwareBaseTest;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.EventDao;
+import org.broadinstitute.ddp.db.dao.InvitationDao;
+import org.broadinstitute.ddp.db.dao.InvitationFactory;
 import org.broadinstitute.ddp.db.dao.StudyDao;
 import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dao.UserGovernanceDao;
+import org.broadinstitute.ddp.db.dto.InvitationDto;
 import org.broadinstitute.ddp.db.dto.NotificationDetailsDto;
 import org.broadinstitute.ddp.db.dto.QueuedEventDto;
 import org.broadinstitute.ddp.db.dto.QueuedNotificationDto;
@@ -66,7 +71,7 @@ public class PubSubMessageBuilderTest extends TxnAwareBaseTest {
                         "topic", null, null, testData.getStudyGuid()),
                 new NotificationDetailsDto(NotificationType.EMAIL, NotificationServiceType.SENDGRID,
                         null, null, "url", "apiKey", "fromName", "fromEmail",
-                        "salutation", "first", "last"));
+                        null, "salutation", "first", "last"));
 
         PubsubMessage msg = TransactionWrapper.withTxn(handle -> builder.createMessage("test", event, handle));
         assertEquals("test", msg.getAttributesOrThrow(DDP_MESSAGE_ID));
@@ -91,7 +96,7 @@ public class PubSubMessageBuilderTest extends TxnAwareBaseTest {
                             "topic", null, null, testData.getStudyGuid()),
                     new NotificationDetailsDto(NotificationType.EMAIL, NotificationServiceType.SENDGRID,
                             null, null, "url", "apiKey", "fromName", "fromEmail",
-                            "salutation", "first", "last"));
+                            null, "salutation", "first", "last"));
 
             PubSubMessageBuilder builder = spy(new PubSubMessageBuilder(cfg));
             doReturn(new NotificationTemplate(1L, "template", false, 1L, "en"))
@@ -133,7 +138,7 @@ public class PubSubMessageBuilderTest extends TxnAwareBaseTest {
                             "topic", null, null, testData.getStudyGuid()),
                     new NotificationDetailsDto(NotificationType.EMAIL, NotificationServiceType.SENDGRID,
                             null, null, "url", "apiKey", "fromName", "fromEmail",
-                            "salutation", "first", "last"));
+                            null, "salutation", "first", "last"));
 
             PubSubMessageBuilder builder = spy(new PubSubMessageBuilder(cfg));
             doReturn(new NotificationTemplate(1L, "template", false, 1L, "en"))
@@ -175,7 +180,7 @@ public class PubSubMessageBuilderTest extends TxnAwareBaseTest {
                             "topic", null, null, testData.getStudyGuid()),
                     new NotificationDetailsDto(NotificationType.EMAIL, NotificationServiceType.SENDGRID,
                             null, null, "url", "apiKey", "fromName", "fromEmail",
-                            "salutation", "first", "last"));
+                            null, "salutation", "first", "last"));
 
             try {
                 PubSubMessageBuilder builder = new PubSubMessageBuilder(cfg);
@@ -208,5 +213,42 @@ public class PubSubMessageBuilderTest extends TxnAwareBaseTest {
         assertNotNull(actual);
         assertEquals("t2", actual.getTemplateKey());
         assertEquals("fr", actual.getLanguageCode());
+    }
+
+    @Test
+    public void testCreateMessage_studyEmail() {
+        TransactionWrapper.useTxn(handle -> {
+            QueuedEventDto event = new QueuedNotificationDto(
+                    new QueuedEventDto(1L, testData.getUserId(), testData.getUserGuid(), testData.getUserHruid(),
+                            testData.getUserGuid(), 1L, EventTriggerType.ACTIVITY_STATUS, EventActionType.NOTIFICATION, null, null,
+                            "topic", null, null, testData.getStudyGuid()),
+                    new NotificationDetailsDto(NotificationType.STUDY_EMAIL, NotificationServiceType.SENDGRID,
+                            null, null, "url", "apiKey", "studyFromName", "studyFromEmail",
+                            null, "salutation", "first", "last"));
+
+            InvitationDto invite = handle.attach(InvitationFactory.class)
+                    .createRecruitmentInvitation(testData.getStudyId(), "dummy-invite-code");
+            handle.attach(InvitationDao.class)
+                    .assignAcceptingUser(invite.getInvitationId(), testData.getUserId(), Instant.now());
+
+            PubSubMessageBuilder builder = spy(new PubSubMessageBuilder(cfg));
+            doReturn(new NotificationTemplate(1L, "template", false, 1L, "en"))
+                    .when(builder).determineEmailTemplate(any(), anyLong(), any(), any());
+
+            PubsubMessage msg = builder.createMessage("test", event, handle);
+            assertEquals("test", msg.getAttributesOrThrow(DDP_MESSAGE_ID));
+            assertEquals(testData.getStudyGuid(), msg.getAttributesOrThrow(DDP_STUDY_GUID));
+
+            NotificationMessage content = gson.fromJson(msg.getData().toStringUtf8(), NotificationMessage.class);
+            assertEquals(1, content.getDistributionList().size());
+            assertEquals("the 'to' field should be directed to study's email",
+                    "studyFromEmail", content.getDistributionList().iterator().next());
+
+            Optional<String> inviteCode = content.getTemplateSubstitutionValue(DDP_INVITATION_ID);
+            assertTrue("email substitutions should have invite code", inviteCode.isPresent());
+            assertEquals(invite.getInvitationGuid(), inviteCode.get());
+
+            handle.rollback();
+        });
     }
 }

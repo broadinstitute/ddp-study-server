@@ -191,6 +191,7 @@ select q.queued_event_id,
        sg.api_key            as sendgrid_api_key,
        sg.from_name          as sendgrid_from_name,
        sg.from_email         as sendgrid_from_email,
+       sg.staff_email        as sendgrid_staff_email,
        sg.default_salutation as sendgrid_default_salutation,
        (select notification_type_code from notification_type where notification_type_id = n.notification_type_id)   as notification_type,
        (select service_code from notification_service where notification_service_id = n.notification_service_id)    as service_type,
@@ -201,7 +202,8 @@ select q.queued_event_id,
        (select pdf_document_configuration_id
           from pdf_generation_event_action
          where event_action_id = cfg.event_action_id
-       ) as pdf_document_configuration_id
+       ) as pdf_document_configuration_id,
+       na.file_upload_id
   from queued_event as q
   join event_configuration as cfg on cfg.event_configuration_id = q.event_configuration_id
   join event_trigger as et on et.event_trigger_id = cfg.event_trigger_id
@@ -216,6 +218,7 @@ select q.queued_event_id,
   left join queued_notification as qn on qn.queued_event_id = q.queued_event_id
   left join queued_notification_template_substitution as sub on sub.queued_event_id = q.queued_event_id
   left join user_notification_event_action as n on n.user_notification_event_action_id = ea.event_action_id
+  left join notification_attachment as na on na.queued_event_id = q.queued_event_id and n.allow_external_attachments = true
 >>
 
 /**

@@ -38,12 +38,14 @@ import org.broadinstitute.ddp.housekeeping.message.HousekeepingMessageHandler;
 import org.broadinstitute.ddp.housekeeping.message.NotificationMessage;
 import org.broadinstitute.ddp.model.event.NotificationType;
 import org.broadinstitute.ddp.model.event.PdfAttachment;
+import org.broadinstitute.ddp.model.fileupload.FileUpload;
 import org.broadinstitute.ddp.model.pdf.PdfConfiguration;
 import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
 import org.broadinstitute.ddp.model.user.UserProfile;
 import org.broadinstitute.ddp.monitoring.PointsReducerFactory;
 import org.broadinstitute.ddp.monitoring.StackdriverCustomMetric;
 import org.broadinstitute.ddp.monitoring.StackdriverMetricsTracker;
+import org.broadinstitute.ddp.service.FileUploadService;
 import org.broadinstitute.ddp.service.PdfBucketService;
 import org.broadinstitute.ddp.service.PdfGenerationService;
 import org.broadinstitute.ddp.service.PdfService;
@@ -59,6 +61,7 @@ public class EmailNotificationHandler implements HousekeepingMessageHandler<Noti
     private final PdfService pdfService;
     private final PdfBucketService pdfBucketService;
     private final PdfGenerationService pdfGenerationService;
+    private final FileUploadService fileUploadService;
 
     static String generateSalutation(String firstName, String lastName, String defaultSalutation) {
         if (StringUtils.isNotEmpty(firstName) && StringUtils.isNotEmpty(lastName)) {
@@ -69,11 +72,13 @@ public class EmailNotificationHandler implements HousekeepingMessageHandler<Noti
     }
 
     public EmailNotificationHandler(SendGridClient sendGrid, PdfService pdfService,
-                                    PdfBucketService pdfBucketService, PdfGenerationService pdfGenerationService) {
+                                    PdfBucketService pdfBucketService, PdfGenerationService pdfGenerationService,
+                                    FileUploadService fileUploadService) {
         this.sendGrid = sendGrid;
         this.pdfService = pdfService;
         this.pdfBucketService = pdfBucketService;
         this.pdfGenerationService = pdfGenerationService;
+        this.fileUploadService = fileUploadService;
     }
 
     /**
@@ -81,83 +86,103 @@ public class EmailNotificationHandler implements HousekeepingMessageHandler<Noti
      */
     @Override
     public void handleMessage(NotificationMessage message) {
-        String studyGuid = message.getStudyGuid();
-        String participantGuid = message.getParticipantGuid();
-        boolean hasParticipantGuid = StringUtils.isNotBlank(participantGuid);
-        if (hasParticipantGuid && message.getNotificationType() == NotificationType.EMAIL) {
-            boolean shouldIgnore = TransactionWrapper.withTxn(TransactionWrapper.DB.APIS,
-                    apisHandle -> messageShouldBeIgnored(apisHandle, studyGuid, participantGuid));
-            if (shouldIgnore) {
-                return;
+        TransactionWrapper.useTxn(TransactionWrapper.DB.APIS, handle -> {
+            String studyGuid = message.getStudyGuid();
+            String participantGuid = message.getParticipantGuid();
+            boolean hasParticipantGuid = StringUtils.isNotBlank(participantGuid);
+            if (hasParticipantGuid && message.getNotificationType() == NotificationType.EMAIL) {
+                boolean shouldIgnore = messageShouldBeIgnored(handle, studyGuid, participantGuid);
+                if (shouldIgnore) {
+                    return;
+                }
             }
-        }
 
-        String templateId = message.getTemplateKey();
-        Email fromEmail = new Email(message.getFromEmail(), message.getFromName());
+            String templateId = message.getTemplateKey();
+            Email fromEmail = new Email(message.getFromEmail(), message.getFromName());
 
-        Mail mail = new Mail();
-        mail.setFrom(fromEmail);
-        mail.setTemplateId(templateId);
+            Mail mail = new Mail();
+            mail.setFrom(fromEmail);
+            mail.setTemplateId(templateId);
 
-        boolean skippingPdfs = false;
-        boolean hasPdfConfiguration = false;
-        if (hasParticipantGuid) {
-            List<Attachments> attachments = TransactionWrapper.withTxn(TransactionWrapper.DB.APIS, apisHandle ->
-                    buildAttachments(apisHandle, studyGuid, participantGuid, message.getEventConfigurationId()));
-            if (!attachments.isEmpty()) {
-                attachments.forEach(mail::addAttachments);
-                hasPdfConfiguration = true;
+
+            Map<FileUpload, InputStream> externalAttachments = fileUploadService.getFilesByIds(handle, message.getAttachmentIds());
+            for (Map.Entry<FileUpload, InputStream> attachmentEntry : externalAttachments.entrySet()) {
+                if (attachmentEntry.getValue() != null) {
+                    mail.addAttachments(SendGridClient.newPdfAttachment(attachmentEntry.getKey().getFileName(),
+                            attachmentEntry.getValue()));
+                }
             }
-        } else {
-            skippingPdfs = true;
-        }
 
-        Personalization personalization = new Personalization();
-        for (String toAddress : message.getDistributionList()) {
-            Email toEmail = new Email(toAddress, toAddress);
-            personalization.addTo(toEmail);
-            if (skippingPdfs && hasPdfConfiguration) {
-                LOG.warn("Skipping PDF configuration for {} since PDF substitution can't happen without a participant.",
-                        toAddress);
-            }
-        }
-
-        if (message.isDynamicTemplate()) {
-            //add dynamic data
-            Map<String, Object> dynamicData = getDynamicData(message);
-            dynamicData.forEach(personalization::addDynamicTemplateData);
-        } else {
-            //legacy template
-            buildSubstitutions(message).forEach(personalization::addSubstitution);
-        }
-        mail.addPersonalization(personalization);
-
-        var versionResult = sendGrid.getTemplateActiveVersionId(templateId);
-        if (versionResult.hasThrown() || versionResult.getStatusCode() != 200) {
-            String msg = "Error looking up version of template " + templateId;
-            if (versionResult.hasThrown()) {
-                throw new MessageHandlingException(msg, versionResult.getThrown(), true);
+            boolean skippingPdfs = false;
+            boolean hasPdfConfiguration = false;
+            if (hasParticipantGuid) {
+                List<Attachments> attachments = buildAttachments(handle, studyGuid, participantGuid, message.getEventConfigurationId());
+                if (!attachments.isEmpty()) {
+                    attachments.forEach(mail::addAttachments);
+                    hasPdfConfiguration = true;
+                }
             } else {
-                throw new MessageHandlingException(msg, true);
+                skippingPdfs = true;
             }
-        }
 
-        String versionUsed = versionResult.getBody();
-        String distributionList = StringUtils.join(message.getDistributionList(), " ");
+            Personalization personalization = new Personalization();
+            for (String toAddress : message.getDistributionList()) {
+                Email toEmail = new Email(toAddress, toAddress);
+                personalization.addTo(toEmail);
+                if (skippingPdfs && hasPdfConfiguration) {
+                    LOG.warn("Skipping PDF configuration for {} since PDF substitution can't happen without a participant.",
+                            toAddress);
+                }
+            }
 
-        var sendResult = sendGrid.sendMail(mail);
+            if (message.isDynamicTemplate()) {
+                //add dynamic data
+                Map<String, Object> dynamicData = getDynamicData(message);
+                dynamicData.forEach(personalization::addDynamicTemplateData);
+            } else {
+                //legacy template
+                buildSubstitutions(message).forEach(personalization::addSubstitution);
+            }
+            mail.addPersonalization(personalization);
 
-        // should retry since the send call failed
-        sendResult.rethrowIfThrown(e -> new MessageHandlingException(
-                "Error sending template " + templateId + " to " + distributionList, e, true));
+            var versionResult = sendGrid.getTemplateActiveVersionId(templateId);
+            if (versionResult.hasThrown() || versionResult.getStatusCode() != 200) {
+                String msg = "Error looking up version of template " + templateId;
+                if (versionResult.hasThrown()) {
+                    throw new MessageHandlingException(msg, versionResult.getThrown(), true);
+                } else {
+                    throw new MessageHandlingException(msg, true);
+                }
+            }
 
-        if (sendResult.getStatusCode() == 200 || sendResult.getStatusCode() == 202) {
-            LOG.info("Sent template {} version {} to {}", templateId, versionUsed, distributionList);
-            new StackdriverMetricsTracker(StackdriverCustomMetric.EMAILS_SENT, studyGuid,
-                    PointsReducerFactory.buildSumReducer()).addPoint(1, Instant.now().toEpochMilli());
-        } else {
-            throw new MessageHandlingException("Attempt to send template " + templateId + " to " + distributionList
-                    + " failed with " + sendResult.getStatusCode() + ":" + sendResult.getError(), true);
+            String versionUsed = versionResult.getBody();
+            String distributionList = StringUtils.join(message.getDistributionList(), " ");
+
+            var sendResult = sendGrid.sendMail(mail);
+
+            // should retry since the send call failed
+            sendResult.rethrowIfThrown(e -> new MessageHandlingException(
+                    "Error sending template " + templateId + " to " + distributionList, e, true));
+
+            if (sendResult.getStatusCode() == 200 || sendResult.getStatusCode() == 202) {
+                LOG.info("Sent template {} version {} to {}", templateId, versionUsed, distributionList);
+                new StackdriverMetricsTracker(StackdriverCustomMetric.EMAILS_SENT, studyGuid,
+                        PointsReducerFactory.buildSumReducer()).addPoint(1, Instant.now().toEpochMilli());
+            } else {
+                throw new MessageHandlingException("Attempt to send template " + templateId + " to " + distributionList
+                        + " failed with " + sendResult.getStatusCode() + ":" + sendResult.getError(), true);
+            }
+            fileUploadService.removeFilesByIds(handle, message.getAttachmentIds());
+        });
+
+        // Removing attachments in a separate transaction and not throwing exception further
+        // just because we don't want to duplicate emails because of attachment deletion issues.
+        try {
+            TransactionWrapper.useTxn(TransactionWrapper.DB.APIS, handle -> {
+                fileUploadService.removeFilesByIds(handle, message.getAttachmentIds());
+            });
+        } catch (Exception e) {
+            LOG.error("Could not remove file uploads", e);
         }
     }
 
@@ -283,6 +308,7 @@ public class EmailNotificationHandler implements HousekeepingMessageHandler<Noti
                             apisHandle);
                     pdfBucketService.sendPdfToBucket(blobName, pdfStream);
                     LOG.info("Uploaded pdf to bucket {} with filename {}", pdfBucketService.getBucketName(), blobName);
+                    pdfStream = pdfBucketService.getPdfFromBucket(blobName).orElse(null);
                 }
                 String name = pdfConfig.getFilename() + ".pdf";
                 // Implementation of newPdfAttachment reads stream and saves locally as string

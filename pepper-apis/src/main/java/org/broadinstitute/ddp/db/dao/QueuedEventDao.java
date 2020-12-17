@@ -24,6 +24,9 @@ public interface QueuedEventDao extends SqlObject {
     JdbiQueuedNotificationTemplateSubstitution getJdbiTemplateSubstitution();
 
     @CreateSqlObject
+    JdbiQueuedNotificationAttachment getJdbiQueuedNotificationAttachment();
+
+    @CreateSqlObject
     JdbiQueuedNotification getJdbiQueuedNotification();
 
     /**
@@ -49,6 +52,7 @@ public interface QueuedEventDao extends SqlObject {
         // not checking counts on subclass tables--they might be empty
         getJdbiTemplateSubstitution().deleteByQueuedEventId(queuedEventId);
         getJdbiQueuedNotification().delete(queuedEventId);
+        getJdbiQueuedNotificationAttachment().deleteByQueuedEventId(queuedEventId);
         return getJdbiQueuedEvent().delete(queuedEventId);
     }
 
@@ -56,6 +60,7 @@ public interface QueuedEventDao extends SqlObject {
         JdbiQueuedEvent jdbiQueuedEvent = getJdbiQueuedEvent();
         jdbiQueuedEvent.deleteQueuedNotificationSubstitutionsByStudyId(studyId);
         jdbiQueuedEvent.deleteQueuedNotificationsByStudyId(studyId);
+        jdbiQueuedEvent.deleteNotificationAttachmentsByStudyId(studyId);
         return jdbiQueuedEvent.deleteQueuedEventsByStudyId(studyId);
     }
 
@@ -63,6 +68,7 @@ public interface QueuedEventDao extends SqlObject {
         JdbiQueuedEvent jdbiQueuedEvent = getJdbiQueuedEvent();
         jdbiQueuedEvent.deleteQueuedNotificationSubstitutionsByUserIds(userIds);
         jdbiQueuedEvent.deleteQueuedNotificationsByUserIds(userIds);
+        jdbiQueuedEvent.deleteNotificationAttachmentsByUserIds(userIds);
         return jdbiQueuedEvent.deleteQueuedEventsByUserIds(userIds);
     }
 
@@ -79,21 +85,23 @@ public interface QueuedEventDao extends SqlObject {
 
 
     /**
-     * When sending notifications to users, please use {@link #insertNotification(long, Long, Long, Long, Map)} to
+     * When sending notifications to users, please use {@link #insertNotification(long, Long, Long, Long, Map, Set)} to
      * properly reference user rows.  This method is for sending emails to people other than users, such
      * as people on the stay informed mailing list.
      */
     default long insertNotification(long eventConfigurationId,
                                     long postAfterEpochSeconds,
                                     String toEmailAddress,
-                                    Map<String, String> templateSubstitutions) {
+                                    Map<String, String> templateSubstitutions,
+                                    Set<Long> fileUploadIds) {
 
 
         long queuedEventId = insertNotification(eventConfigurationId,
                 postAfterEpochSeconds,
                 null,
                 null,
-                templateSubstitutions);
+                templateSubstitutions,
+                fileUploadIds);
 
         int numRowsUpdated = getJdbiQueuedNotification().updateEmailAddress(queuedEventId, toEmailAddress);
 
@@ -109,7 +117,8 @@ public interface QueuedEventDao extends SqlObject {
                                     Long postAfterEpochSeconds,
                                     Long participantId,
                                     Long operatorId,
-                                    Map<String, String> templateSubstitutions) {
+                                    Map<String, String> templateSubstitutions,
+                                    Set<Long> fileUploadIds) {
 
         // insert into base queued_event
         long queuedEventId = getJdbiQueuedEvent().insert(eventConfigurationId,
@@ -122,11 +131,17 @@ public interface QueuedEventDao extends SqlObject {
         if (!inserted) {
             throw new DaoException("No rows inserted for queued notification");
         }
+
+        JdbiQueuedNotificationAttachment jdbiQueuedNotificationAttachment = getJdbiQueuedNotificationAttachment();
+        if (fileUploadIds != null) {
+            for (Long fileUploadId : fileUploadIds) {
+                jdbiQueuedNotificationAttachment.insert(queuedEventId, fileUploadId);
+            }
+        }
+
         JdbiQueuedNotificationTemplateSubstitution jdbiTemplateSubstitution = getJdbiTemplateSubstitution();
-
-
         for (Map.Entry<String, String> templateSubstitution : templateSubstitutions.entrySet()) {
-            long substitutionId = jdbiTemplateSubstitution.insert(queuedEventId,
+            jdbiTemplateSubstitution.insert(queuedEventId,
                     templateSubstitution.getKey(),
                     templateSubstitution.getValue());
         }

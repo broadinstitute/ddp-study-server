@@ -296,7 +296,7 @@
         <dependency>
             <groupId>com.google.cloud</groupId>
             <artifactId>google-cloud-storage</artifactId>
-            <version>1.48.0</version>
+            <version>1.69.0</version>
         </dependency>
 
         <dependency>

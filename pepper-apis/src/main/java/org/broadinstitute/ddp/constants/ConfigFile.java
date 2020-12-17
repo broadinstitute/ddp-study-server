@@ -52,6 +52,8 @@ public class ConfigFile {
     // Google Storage bucket name to use for generated PDFs
     public static final String PDF_ARCHIVE_BUCKET = "pdfArchiveBucket";
 
+    public static final String FILE_UPLOAD_BUCKET = "fileUploadBucket";
+
     // whether to use local filesystem for pdf archiving or not
     public static final String PDF_ARCHIVE_USE_FILESYSTEM = "pdfArchiveUseFilesystem";
 
@@ -102,12 +104,16 @@ public class ConfigFile {
     public static final String PUBSUB_HKEEP_TASKS_SUB = "pubsub.housekeepingTasksSubscription";
     public static final String SLACK_HOOK = "slack.hook";
     public static final String SLACK_CHANNEL = "slack.channel";
+    public static final String SLACK_QUEUE_SIZE = "slack.queueSize";
+    public static final String SLACK_INTERVAL_IN_MILLIS = "slack.intervalInMillis";
     public static final String TEST_USER_AUTH0_ID = "testUserAuth0Id";
 
     public static final String DOMAIN = "domain";
     public static final String SEND_METRICS = "sendMetrics";
 
     public static final String RESTRICT_REGISTER_ROUTE = "restrictRegisterRoute";
+
+    public static final String FILE_UPLOAD_USE_BUCKET = "fileUploadUseBucket";
 
     /**
      * Google API key for geocoding

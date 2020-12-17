@@ -46,16 +46,18 @@ public interface EventActionSql extends SqlObject {
     //
 
     @SqlUpdate("insert into user_notification_event_action ("
-            + "        user_notification_event_action_id, notification_type_id, notification_service_id, linked_activity_id)"
+            + "        user_notification_event_action_id, notification_type_id, notification_service_id, linked_activity_id,"
+            + "        allow_external_attachments)"
             + " values (:actionId,"
             + "        (select notification_type_id from notification_type where notification_type_code = :notificationType),"
             + "        (select notification_service_id from notification_service where service_code = :notificationService),"
-            + "        :linkedActivityId)")
+            + "        :linkedActivityId, :allowExternalAttachments)")
     int insertUserNotificationAction(
             @Bind("actionId") long eventActionId,
             @Bind("notificationType") NotificationType notificationType,
             @Bind("notificationService") NotificationServiceType notificationServiceType,
-            @Bind("linkedActivityId") Long linkedActivityId);
+            @Bind("linkedActivityId") Long linkedActivityId,
+            @Bind("allowExternalAttachments") Boolean allowExternalAttachments);
 
     @GetGeneratedKeys
     @SqlUpdate("insert into notification_template (template_key, language_code_id, is_dynamic)"

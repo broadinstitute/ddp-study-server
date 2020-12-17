@@ -39,11 +39,17 @@ gcloud --project="$PROJECT_ID" compute ssh "$INSTANCE_NAME" --zone=us-central1-a
     && sudo apt-get update \
     && sudo apt-get install -y curl docker.io docker-compose \
     && curl -sSO https://dl.google.com/cloudagents/add-monitoring-agent-repo.sh \
+    && curl -sSO https://dl.google.com/cloudagents/add-logging-agent-repo.sh \
     && sudo bash add-monitoring-agent-repo.sh \
+    && sudo bash add-logging-agent-repo.sh \
     && sudo apt-get update \
     && sudo apt-get install -y 'stackdriver-agent=6.*' \
+    && sudo apt-get install -y 'google-fluentd=1.*' \
+    && sudo apt-get install -y google-fluentd-catch-all-config \
     && sudo service stackdriver-agent start \
     && sudo service stackdriver-agent status \
+    && sudo service google-fluentd start \
+    && sudo service google-fluentd status \
     && sudo mkdir /app"
 
 echo ""

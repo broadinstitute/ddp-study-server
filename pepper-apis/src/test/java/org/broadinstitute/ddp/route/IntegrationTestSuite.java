@@ -130,7 +130,8 @@ import org.slf4j.LoggerFactory;
         StudyLanguageContentLanguageSettingFilterTest.class,
         GetStudyDetailRouteTest.class,
         GovernedParticipantRegistrationRouteTest.class,
-        GetStudyStatisticsRouteTest.class
+        GetStudyStatisticsRouteTest.class,
+        SendEmailRouteTest.class
 })
 public class IntegrationTestSuite {
 

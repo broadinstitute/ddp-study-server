@@ -53,7 +53,8 @@ public interface EventActionDao extends SqlObject {
 
         long actionId = getJdbiEventAction().insert(messageDestinationId, EventActionType.NOTIFICATION);
         DBUtils.checkInsert(1, eventActionSql.insertUserNotificationAction(
-                actionId, notificationType, NotificationServiceType.SENDGRID, eventAction.getLinkedActivityId()));
+                actionId, notificationType, NotificationServiceType.SENDGRID, eventAction.getLinkedActivityId(),
+                eventAction.getAllowExternalAttachments() != null && eventAction.getAllowExternalAttachments()));
 
         Set<Long> notificationTemplateIds = eventAction.getTemplates().stream()
                 .map(tmpl -> eventActionSql.findOrInsertNotificationTemplateId(tmpl.getTemplateKey(), tmpl.getLanguageCode(),

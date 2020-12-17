@@ -11,9 +11,11 @@ import com.google.common.base.Functions;
 import com.typesafe.config.Config;
 import org.broadinstitute.ddp.db.dao.ActivityI18nDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
+import org.broadinstitute.ddp.db.dao.JdbiActivityVersion;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dto.ActivityDto;
+import org.broadinstitute.ddp.db.dto.ActivityVersionDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.model.activity.definition.i18n.ActivityI18nDetail;
 import org.broadinstitute.ddp.model.activity.definition.i18n.SummaryTranslation;
@@ -51,15 +53,19 @@ public class UpdateActivityBaseSettings implements CustomTask {
         StudyDto studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(studyCfg.getString("study.guid"));
         User admin = handle.attach(UserDao.class).findUserByGuid(studyCfg.getString("adminUser.guid")).get();
         var activityBuilder = new ActivityBuilder(cfgPath.getParent(), studyCfg, varsCfg, studyDto, admin.getId());
+        var jdbiActVersion = handle.attach(JdbiActivityVersion.class);
 
         for (Config activityCfg : studyCfg.getConfigList("activities")) {
             Config definition = activityBuilder.readDefinitionConfig(activityCfg.getString("filepath"));
             String activityCode = definition.getString("activityCode");
+            String versionTag = definition.getString("versionTag");
+
             long activityId = ActivityBuilder.findActivityId(handle, studyDto.getId(), activityCode);
-            LOG.info("Working on activity {}...", activityCode);
+            ActivityVersionDto versionDto = jdbiActVersion.findByActivityIdAndVersionTag(activityId, versionTag).orElseThrow();
+            LOG.info("Working on activity {} version {} (revisionId={})...", activityCode, versionTag, versionDto.getRevId());
 
             compareBasicSettings(handle, definition, activityId);
-            compareNamingDetails(handle, definition, activityId);
+            compareNamingDetails(handle, definition, activityId, versionDto);
             compareStatusSummaries(handle, definition, activityId);
         }
     }
@@ -103,13 +109,14 @@ public class UpdateActivityBaseSettings implements CustomTask {
         }
     }
 
-    public void compareNamingDetails(Handle handle, Config definition, long activityId) {
+    public void compareNamingDetails(Handle handle, Config definition, long activityId, ActivityVersionDto versionDto) {
         var activityI18nDao = handle.attach(ActivityI18nDao.class);
         Map<String, ActivityI18nDetail> currentDetails = activityI18nDao
-                .findDetailsByActivityId(activityId)
+                .findDetailsByActivityIdAndTimestamp(activityId, versionDto.getRevStart())
                 .stream()
                 .collect(Collectors.toMap(ActivityI18nDetail::getIsoLangCode, Functions.identity()));
-        Map<String, ActivityI18nDetail> latestDetails = buildLatestNamingDetails(activityId, definition, currentDetails);
+        Map<String, ActivityI18nDetail> latestDetails =
+                buildLatestNamingDetails(activityId, versionDto.getRevId(), definition, currentDetails);
 
         List<ActivityI18nDetail> updatedDetails = new ArrayList<>();
         for (String language : currentDetails.keySet()) {
@@ -131,7 +138,7 @@ public class UpdateActivityBaseSettings implements CustomTask {
                 newDetails.stream().map(ActivityI18nDetail::getIsoLangCode).collect(Collectors.toList()));
     }
 
-    private Map<String, ActivityI18nDetail> buildLatestNamingDetails(long activityId, Config definition,
+    private Map<String, ActivityI18nDetail> buildLatestNamingDetails(long activityId, long revisionId, Config definition,
                                                                      Map<String, ActivityI18nDetail> currentDetails) {
         Map<String, String> names = collectTranslatedText(definition, "translatedNames");
         Map<String, String> secondNames = collectTranslatedText(definition, "translatedSecondNames");
@@ -150,7 +157,8 @@ public class UpdateActivityBaseSettings implements CustomTask {
                     secondNames.getOrDefault(language, null),
                     titles.getOrDefault(language, null),
                     subtitles.getOrDefault(language, null),
-                    descriptions.getOrDefault(language, null));
+                    descriptions.getOrDefault(language, null),
+                    current == null ? revisionId : current.getRevisionId());
             details.put(language, current == null ? latest : mergeNamingDetails(current, latest));
         }
         return details;
@@ -174,7 +182,8 @@ public class UpdateActivityBaseSettings implements CustomTask {
                 latest.getSecondName(),
                 latest.getTitle(),
                 latest.getSubtitle(),
-                latest.getDescription());
+                latest.getDescription(),
+                current.getRevisionId());
     }
 
     private void compareStatusSummaries(Handle handle, Config definition, long activityId) {

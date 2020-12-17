@@ -35,6 +35,7 @@ public interface JdbiQueuedEvent extends SqlObject {
     default int deleteAllByQueuedEventId(long queuedEventId) {
         getHandle().attach(JdbiQueuedNotificationTemplateSubstitution.class).deleteByQueuedEventId(queuedEventId);
         getHandle().attach(JdbiQueuedNotification.class).delete(queuedEventId);
+        getHandle().attach(JdbiQueuedNotificationAttachment.class).deleteByQueuedEventId(queuedEventId);
         return delete(queuedEventId);
     }
 
@@ -85,4 +86,15 @@ public interface JdbiQueuedEvent extends SqlObject {
 
     @SqlUpdate("delete from queued_event where operator_user_id in (<userIds>) or participant_user_id in (<userIds>)")
     int deleteQueuedEventsByUserIds(@BindList(value = "userIds", onEmpty = EmptyHandling.NULL) Set<Long> userIds);
+
+    @SqlUpdate("delete na from queued_event as q"
+            + "   left join notification_attachment as na on na.queued_event_id = q.queued_event_id"
+            + "  where q.event_configuration_id in ("
+            + "        select e.event_configuration_id from event_configuration as e where e.umbrella_study_id = :studyId)")
+    int deleteNotificationAttachmentsByStudyId(@Bind("studyId") long studyId);
+
+    @SqlUpdate("delete na from queued_event as q"
+            + "   left join notification_attachment as na on na.queued_event_id = q.queued_event_id"
+            + "  where q.operator_user_id in (<userIds>) or q.participant_user_id in (<userIds>)")
+    int deleteNotificationAttachmentsByUserIds(@BindList(value = "userIds", onEmpty = EmptyHandling.NULL) Set<Long> userIds);
 }

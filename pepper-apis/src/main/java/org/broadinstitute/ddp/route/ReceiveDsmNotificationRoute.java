@@ -1,13 +1,14 @@
 package org.broadinstitute.ddp.route;
 
-import javax.validation.ValidationException;
 import java.time.Instant;
 import java.util.List;
+import javax.validation.ValidationException;
 
 import org.apache.http.HttpStatus;
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants.PathParam;
 import org.broadinstitute.ddp.db.TransactionWrapper;
+import org.broadinstitute.ddp.db.dao.DataExportDao;
 import org.broadinstitute.ddp.db.dao.JdbiUserStudyEnrollment;
 import org.broadinstitute.ddp.db.dao.KitConfigurationDao;
 import org.broadinstitute.ddp.db.dao.KitScheduleDao;
@@ -17,7 +18,8 @@ import org.broadinstitute.ddp.db.dto.kit.KitConfigurationDto;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.json.dsm.DsmNotificationPayload;
 import org.broadinstitute.ddp.json.errors.ApiError;
-import org.broadinstitute.ddp.model.activity.types.DsmNotificationEventType;
+import org.broadinstitute.ddp.model.dsm.DsmNotificationEventType;
+import org.broadinstitute.ddp.model.dsm.KitReasonType;
 import org.broadinstitute.ddp.model.dsm.KitType;
 import org.broadinstitute.ddp.model.dsm.TestResult;
 import org.broadinstitute.ddp.model.event.DsmNotificationSignal;
@@ -56,8 +58,8 @@ public class ReceiveDsmNotificationRoute extends ValidatedJsonInputRoute<DsmNoti
         String studyGuid = request.params(PathParam.STUDY_GUID);
         String participantGuidOrAltPid = request.params(PathParam.USER_GUID);
 
-        LOG.info("Received DSM notification event for userGuidOrAltPid={}, studyGuid={}, and eventType={}",
-                participantGuidOrAltPid, studyGuid, payload.getEventType());
+        LOG.info("Received DSM notification event for userGuidOrAltPid={}, studyGuid={}, eventType={}, kitRequestId={}, kitReasonType={}",
+                participantGuidOrAltPid, studyGuid, payload.getEventType(), payload.getKitRequestId(), payload.getKitReasonType());
 
         return TransactionWrapper.withTxn(handle -> {
             var found = RouteUtil.findPotentiallyLegacyUserAndStudyOrHalt(handle, participantGuidOrAltPid, studyGuid);
@@ -69,9 +71,10 @@ public class ReceiveDsmNotificationRoute extends ValidatedJsonInputRoute<DsmNoti
                     .getEnrollmentStatusByUserAndStudyIds(user.getId(), studyDto.getId())
                     .orElse(null);
             if (status != EnrollmentStatusType.ENROLLED) {
+                LOG.error("User {} with status {} is not enrolled in study {}, will not process DSM notification event {}",
+                        userGuid, status == null ? "<null>" : status, studyGuid, payload.getEventType());
                 var err = new ApiError(ErrorCodes.UNSATISFIED_PRECONDITION,
-                        "User " + userGuid + " is not enrolled in study " + studyDto.getGuid());
-                LOG.error(err.getMessage());
+                        "User " + userGuid + " is not enrolled in study " + studyGuid);
                 throw ResponseUtil.haltError(response, HttpStatus.SC_INTERNAL_SERVER_ERROR, err);
             }
 
@@ -92,6 +95,9 @@ public class ReceiveDsmNotificationRoute extends ValidatedJsonInputRoute<DsmNoti
                 recordInitialKitSentTime(handle, studyDto, user, kitType, Instant.now());
             }
 
+            KitReasonType kitReasonType = payload.getKitReasonType() != null
+                    ? payload.getKitReasonType() : KitReasonType.NORMAL;
+
             LOG.info("Running events for userGuid={} and DSM notification eventType={}", userGuid, eventType);
             var signal = new DsmNotificationSignal(
                     user.getId(),
@@ -100,8 +106,13 @@ public class ReceiveDsmNotificationRoute extends ValidatedJsonInputRoute<DsmNoti
                     null,
                     studyDto.getId(),
                     eventType,
+                    payload.getKitRequestId(),
+                    kitReasonType,
                     testResult);
             EventService.getInstance().processAllActionsForEventSignal(handle, signal);
+
+            // User data likely changed after executing events, let's request a data sync.
+            handle.attach(DataExportDao.class).queueDataSync(user.getId(), studyDto.getId());
 
             LOG.info("Finished running events for userGuid={} and DSM notification eventType={}", userGuid, eventType);
             response.status(HttpStatus.SC_OK);

@@ -1,7 +1,8 @@
 package org.broadinstitute.ddp.db.dto;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.broadinstitute.ddp.model.event.NotificationServiceType;
 import org.broadinstitute.ddp.model.event.NotificationType;
@@ -18,10 +19,12 @@ public class NotificationDetailsDto {
     private String apiKey;
     private String studyFromName;
     private String studyFromEmail;
+    private String staffEmail;
     private String defaultSalutation;
     private String participantFirstName;
     private String participantLastName;
-    private List<NotificationTemplateSubstitutionDto> templateSubstitutions = new ArrayList<>();
+    private Set<NotificationTemplateSubstitutionDto> templateSubstitutions = new HashSet<>();
+    private Set<Long> attachmentIds = new HashSet<>();
 
     @JdbiConstructor
     public NotificationDetailsDto(
@@ -33,6 +36,7 @@ public class NotificationDetailsDto {
             @ColumnName("sendgrid_api_key") String apiKey,
             @ColumnName("sendgrid_from_name") String studyFromName,
             @ColumnName("sendgrid_from_email") String studyFromEmail,
+            @ColumnName("sendgrid_staff_email") String staffEmail,
             @ColumnName("sendgrid_default_salutation") String defaultSalutation,
             @ColumnName("participant_first_name") String participantFirstName,
             @ColumnName("participant_last_name") String participantLastName) {
@@ -44,6 +48,7 @@ public class NotificationDetailsDto {
         this.apiKey = apiKey;
         this.studyFromName = studyFromName;
         this.studyFromEmail = studyFromEmail;
+        this.staffEmail = staffEmail;
         this.defaultSalutation = defaultSalutation;
         this.participantFirstName = participantFirstName;
         this.participantLastName = participantLastName;
@@ -81,6 +86,10 @@ public class NotificationDetailsDto {
         return studyFromEmail;
     }
 
+    public String getStaffEmail() {
+        return staffEmail;
+    }
+
     public String getDefaultSalutation() {
         return defaultSalutation;
     }
@@ -93,13 +102,23 @@ public class NotificationDetailsDto {
         return participantLastName;
     }
 
-    public List<NotificationTemplateSubstitutionDto> getTemplateSubstitutions() {
+    public Set<NotificationTemplateSubstitutionDto> getTemplateSubstitutions() {
         return templateSubstitutions;
+    }
+
+    public Collection<Long> getAttachmentIds() {
+        return attachmentIds;
     }
 
     public void addTemplateSubstitution(NotificationTemplateSubstitutionDto substitution) {
         if (substitution != null) {
             templateSubstitutions.add(substitution);
+        }
+    }
+
+    public void addAttachmentId(Long attachmentId) {
+        if (attachmentId != null) {
+            attachmentIds.add(attachmentId);
         }
     }
 }

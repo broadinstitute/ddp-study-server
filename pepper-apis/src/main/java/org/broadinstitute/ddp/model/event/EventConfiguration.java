@@ -67,6 +67,8 @@ public class EventConfiguration {
                 // The simple case
                 eventTrigger = new EventTrigger(dto);
                 break;
+            case SEND_STUDY_EMAIL:
+                // No sub-tables
             default:
                 throw new DDPException("Trigger type: " + eventTriggerType.name() + " is not properly configured in "
                         + "the EventConfiguration ctor");

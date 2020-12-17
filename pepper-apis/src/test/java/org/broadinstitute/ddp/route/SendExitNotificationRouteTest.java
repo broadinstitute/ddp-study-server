@@ -9,6 +9,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.time.Instant;
+import java.util.Collection;
 import java.util.List;
 
 import io.restassured.http.ContentType;
@@ -219,7 +220,7 @@ public class SendExitNotificationRouteTest extends IntegrationTestSuite.TestCase
                 assertEquals(1, res.size());
 
                 long queuedId = res.get(0);
-                List<NotificationTemplateSubstitutionDto> subs = handle.attach(EventDao.class)
+                Collection<NotificationTemplateSubstitutionDto> subs = handle.attach(EventDao.class)
                         .findQueuedEventById(queuedId)
                         .map(eventDto -> ((QueuedNotificationDto) eventDto).getTemplateSubstitutions())
                         .orElse(List.of());
