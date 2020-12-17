@@ -114,6 +114,8 @@ public class FormInstanceDao {
                 Long lastUpdatedTemplateId = (Long)rs.getObject(FormActivitySettingTable.LAST_UPDATED_TEXT_TEMPLATE_ID);
                 LocalDateTime lastUpdated = rs.getObject(FormActivitySettingTable.LAST_UPDATED, LocalDateTime.class);
                 boolean isFollowup = rs.getBoolean(StudyActivityTable.IS_FOLLOWUP);
+                boolean isInstanceHidden = rs.getBoolean(ActivityInstanceTable.IS_HIDDEN);
+                boolean excludeFromDisplay = rs.getBoolean(StudyActivityTable.EXCLUDE_FROM_DISPLAY);
                 int sectionIndex = rs.getInt(ActivityInstanceTable.SECTION_INDEX);
 
                 form = new FormInstance(
@@ -136,6 +138,8 @@ public class FormInstanceDao {
                         lastUpdatedTemplateId,
                         lastUpdated,
                         isFollowup,
+                        isInstanceHidden,
+                        excludeFromDisplay,
                         sectionIndex
                 );
 

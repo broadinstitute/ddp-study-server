@@ -52,6 +52,11 @@ patch:
     simply contains an empty object/map. Otherwise, it provides the
     `blockGuid` and the new visibility state of blocks that are toggle-able.
 
+    **Study Admins**
+
+    Updating of answers is not supported if activity instance is hidden or
+    read-only, or if question is read-only, unless operator is a study admin.
+
     _This API allows access to temporary users._
   requestBody:
     $ref: '../pepper.yml#/components/requestBodies/ActivityAnswersPatchRequestBody'
@@ -84,6 +89,11 @@ put:
     typically part of a workflow along with other activities, thus this API
     returns the "next" state of the workflow as a suggestion of where to bring
     the user next. See the [Workflow API](#tag/Workflow) for more details.
+
+    **Study Admins**
+
+    Submitting activity is not supported if activity instance is hidden or
+    read-only, unless operator is a study admin.
 
     _This API allows access to temporary users._
   responses:

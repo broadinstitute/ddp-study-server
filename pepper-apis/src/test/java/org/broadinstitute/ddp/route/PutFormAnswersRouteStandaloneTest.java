@@ -38,6 +38,7 @@ import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dao.AnswerDao;
+import org.broadinstitute.ddp.db.dao.AuthDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
 import org.broadinstitute.ddp.db.dao.JdbiExpression;
@@ -739,7 +740,7 @@ public class PutFormAnswersRouteStandaloneTest {
     public void testCheckAddressRequirements_noRequirements() {
         var mockHandle = mock(Handle.class);
         var form = new FormInstance(1L, 1L, 1L, "", FormType.GENERAL, "", "", "", "CREATED",
-                null, null, null, null, null, 1L, null, null, null, false, 0);
+                null, null, null, null, null, 1L, null, null, null, false, false, false, 0);
         form.addBodySections(List.of(new FormSection(List.of(
                 new ComponentBlock(new MailingAddressComponent(1L, 1L, false, false, false))))));
         new PutFormAnswersRoute(null, null, null, null)
@@ -754,7 +755,7 @@ public class PutFormAnswersRouteStandaloneTest {
         doReturn(mockAddrDao).when(mockHandle).attach(JdbiMailAddress.class);
 
         var form = new FormInstance(1L, 1L, 1L, "", FormType.GENERAL, "", "", "", "CREATED",
-                null, null, null, null, null, 1L, null, null, null, false, 0);
+                null, null, null, null, null, 1L, null, null, null, false, false, false, 0);
         form.addBodySections(List.of(new FormSection(List.of(
                 new ComponentBlock(new MailingAddressComponent(1L, 1L, false, true, false))))));
         var route = new PutFormAnswersRoute(null, null, null, null);
@@ -786,7 +787,7 @@ public class PutFormAnswersRouteStandaloneTest {
         doReturn(mockAddrDao).when(mockHandle).attach(JdbiMailAddress.class);
 
         var form = new FormInstance(1L, 1L, 1L, "", FormType.GENERAL, "", "", "", "CREATED",
-                null, null, null, null, null, 1L, null, null, null, false, 0);
+                null, null, null, null, null, 1L, null, null, null, false, false, false, 0);
         form.addBodySections(List.of(new FormSection(List.of(
                 new ComponentBlock(new MailingAddressComponent(1L, 1L, false, true, true))))));
         var route = new PutFormAnswersRoute(null, null, null, null);
@@ -871,5 +872,49 @@ public class PutFormAnswersRouteStandaloneTest {
 
     private void turnOffTransition(Handle handle, WorkflowTransition transition) {
         assertEquals(1, handle.attach(JdbiWorkflowTransition.class).updateIsActiveById(transition.getId(), false));
+    }
+
+    @Test
+    public void testStudyAdmin_hiddenInstance() {
+        ActivityInstanceDto instanceDto = TransactionWrapper.withTxn(handle -> {
+            ActivityInstanceDto dto = insertNewInstanceAndDeferCleanup(handle, form.getActivityId());
+            assertEquals(1, handle.attach(ActivityInstanceDao.class)
+                    .bulkUpdateIsHiddenByActivityIds(testData.getUserId(), true, Set.of(form.getActivityId())));
+            handle.attach(AuthDao.class).assignStudyAdmin(testData.getUserId(), testData.getStudyId());
+            return dto;
+        });
+        try {
+            given().auth().oauth2(token)
+                    .pathParam("instanceGuid", instanceDto.getGuid())
+                    .when().put(urlTemplate).then().assertThat()
+                    .log().all()
+                    .statusCode(200);
+        } finally {
+            TransactionWrapper.useTxn(handle -> {
+                handle.attach(AuthDao.class).removeAdminFromAllStudies(testData.getUserId());
+            });
+        }
+    }
+
+    @Test
+    public void testStudyAdmin_readOnlyInstance() {
+        ActivityInstanceDto instanceDto = TransactionWrapper.withTxn(handle -> {
+            ActivityInstanceDto dto = insertNewInstanceAndDeferCleanup(handle, form.getActivityId());
+            assertEquals(1, handle.attach(ActivityInstanceDao.class)
+                    .bulkUpdateReadOnlyByActivityIds(testData.getUserId(), true, Set.of(form.getActivityId())));
+            handle.attach(AuthDao.class).assignStudyAdmin(testData.getUserId(), testData.getStudyId());
+            return dto;
+        });
+        try {
+            given().auth().oauth2(token)
+                    .pathParam("instanceGuid", instanceDto.getGuid())
+                    .when().put(urlTemplate).then().assertThat()
+                    .log().all()
+                    .statusCode(200);
+        } finally {
+            TransactionWrapper.useTxn(handle -> {
+                handle.attach(AuthDao.class).removeAdminFromAllStudies(testData.getUserId());
+            });
+        }
     }
 }

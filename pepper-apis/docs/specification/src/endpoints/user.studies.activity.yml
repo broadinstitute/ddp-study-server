@@ -4,7 +4,8 @@ get:
     - Activities
   summary: fetch a complete activity instance
   description: |
-    returns the complete version of the specified `activity` instance. This includes any answers the user may have previously saved.
+    Returns the complete version of the specified `activity` instance. This includes any answers the user may have previously saved.
+    This route does not all accessing/retrieving instances that are hidden, unless the operator is a study admin.
 
     ### Working with COMPONENT types
     Some activities include objects identified as `COMPONENTS`. These are used to request that the client collect a potentially complex set of information from a user, and save it to the server. At the moment, the uses for this are to get the participant's mailing address or medical provider details.
@@ -48,6 +49,7 @@ patch:
   summary: updates activity instance properties
   description: |
     With given user Guid, study's unique identifier and instance Guid updates properties of `activity` instance.
+    Updating is not allowed when activity instance is hidden, unless the operator is a study admin.
 
     _Note: Currently, this API supports only updating of the section index._
   parameters:

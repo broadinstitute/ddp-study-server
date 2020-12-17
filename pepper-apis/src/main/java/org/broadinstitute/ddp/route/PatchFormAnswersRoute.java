@@ -127,13 +127,15 @@ public class PatchFormAnswersRoute implements Route {
         String instanceGuid = request.params(PathParam.INSTANCE_GUID);
 
         DDPAuth ddpAuth = RouteUtil.getDDPAuth(request);
-        String operatorGuid = ddpAuth.getOperator() != null ? ddpAuth.getOperator() : participantGuid;
+        String operatorGuid = StringUtils.defaultIfBlank(ddpAuth.getOperator(), participantGuid);
+        boolean isStudyAdmin = ddpAuth.hasAdminAccessToStudy(studyGuid);
 
-        LOG.info("Attempting to patch answers for activity instance {}", instanceGuid);
+        LOG.info("Attempting to patch answers for activity instance {} for participant {} in study {} by operator {} (isStudyAdmin={})",
+                instanceGuid, participantGuid, studyGuid, operatorGuid, isStudyAdmin);
 
         PatchAnswerResponse result = TransactionWrapper.withTxn(handle -> {
             UserActivityInstanceSummary instanceSummary = RouteUtil.findUserActivityInstanceSummaryOrHalt(
-                    response, handle, participantGuid, studyGuid, instanceGuid);
+                    response, handle, participantGuid, studyGuid, instanceGuid, isStudyAdmin);
 
             ActivityInstanceDto instanceDto = instanceSummary.getActivityInstanceByGuid(instanceGuid).get();
 
@@ -168,7 +170,7 @@ public class PatchFormAnswersRoute implements Route {
                 return res;
             }
 
-            if (ActivityInstanceUtil.isReadonly(formActivityDef.getEditTimeoutSec(), instanceDto.getCreatedAtMillis(),
+            if (!isStudyAdmin && ActivityInstanceUtil.isReadonly(formActivityDef.getEditTimeoutSec(), instanceDto.getCreatedAtMillis(),
                     instanceDto.getStatusType().name(), formActivityDef.isWriteOnce(), instanceDto.getReadonly())) {
                 String msg = "Activity instance with GUID " + instanceGuid + " is read-only, cannot submit answer(s) for it";
                 LOG.info(msg);
@@ -200,7 +202,7 @@ public class PatchFormAnswersRoute implements Route {
                     Question question = questionDao.getQuestionByActivityInstanceAndDto(questionDto,
                             instanceGuid, false, languageCodeId);
 
-                    if (question.isReadonly()) {
+                    if (!isStudyAdmin && question.isReadonly()) {
                         String msg = "Question with stable id " + questionStableId + " is read-only, cannot update question";
                         LOG.info(msg);
                         throw ResponseUtil.haltError(response, 422, new ApiError(ErrorCodes.QUESTION_IS_READONLY, msg));

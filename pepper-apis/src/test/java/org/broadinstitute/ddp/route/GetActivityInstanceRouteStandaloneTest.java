@@ -42,6 +42,7 @@ import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dao.AnswerDao;
+import org.broadinstitute.ddp.db.dao.AuthDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
 import org.broadinstitute.ddp.db.dao.JdbiQuestion;
@@ -732,6 +733,30 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
         } finally {
             TransactionWrapper.useTxn(handle -> assertEquals(1, handle.attach(ActivityInstanceDao.class)
                     .bulkUpdateIsHiddenByActivityIds(testData.getUserId(), false, Set.of(activity.getActivityId()))));
+        }
+    }
+
+    @Test
+    public void testStudyAdmin_canRetrieveInstances() {
+        TransactionWrapper.useTxn(handle -> {
+            assertEquals(1, handle.attach(ActivityInstanceDao.class)
+                    .bulkUpdateIsHiddenByActivityIds(testData.getUserId(), true, Set.of(activity.getActivityId())));
+            handle.attach(AuthDao.class).assignStudyAdmin(testData.getUserId(), testData.getStudyId());
+        });
+        try {
+            given().auth().oauth2(token)
+                    .pathParam("instanceGuid", instanceDto.getGuid())
+                    .when().get(url).then().assertThat()
+                    .log().all()
+                    .statusCode(200).contentType(ContentType.JSON)
+                    .body("guid", equalTo(instanceDto.getGuid()))
+                    .body("isHidden", equalTo(true));
+        } finally {
+            TransactionWrapper.useTxn(handle -> {
+                assertEquals(1, handle.attach(ActivityInstanceDao.class)
+                        .bulkUpdateIsHiddenByActivityIds(testData.getUserId(), false, Set.of(activity.getActivityId())));
+                handle.attach(AuthDao.class).removeAdminFromAllStudies(testData.getUserId());
+            });
         }
     }
 

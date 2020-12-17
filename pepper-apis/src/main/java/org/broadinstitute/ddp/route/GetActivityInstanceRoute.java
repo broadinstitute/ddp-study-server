@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.analytics.GoogleAnalyticsMetrics;
 import org.broadinstitute.ddp.analytics.GoogleAnalyticsMetricsTracker;
 import org.broadinstitute.ddp.constants.RouteConstants.PathParam;
@@ -28,6 +29,7 @@ import org.broadinstitute.ddp.model.activity.instance.validation.ActivityValidat
 import org.broadinstitute.ddp.model.activity.types.BlockType;
 import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
 import org.broadinstitute.ddp.pex.PexInterpreter;
+import org.broadinstitute.ddp.security.DDPAuth;
 import org.broadinstitute.ddp.service.ActivityInstanceService;
 import org.broadinstitute.ddp.service.ActivityValidationService;
 import org.broadinstitute.ddp.util.RouteUtil;
@@ -62,13 +64,17 @@ public class GetActivityInstanceRoute implements Route {
         String userGuid = request.params(PathParam.USER_GUID);
         String studyGuid = request.params(PathParam.STUDY_GUID);
         String instanceGuid = request.params(PathParam.INSTANCE_GUID);
-        String operatorGuid = RouteUtil.getDDPAuth(request).getOperator();
 
-        LOG.info("Attempting to retrieve activity instance {} for participant {} in study {}", instanceGuid, userGuid, studyGuid);
+        DDPAuth ddpAuth = RouteUtil.getDDPAuth(request);
+        String operatorGuid = StringUtils.defaultIfBlank(ddpAuth.getOperator(), userGuid);
+        boolean isStudyAdmin = ddpAuth.hasAdminAccessToStudy(studyGuid);
+
+        LOG.info("Attempting to retrieve activity instance {} for participant {} in study {} by operator {} (isStudyAdmin={})",
+                instanceGuid, userGuid, studyGuid, operatorGuid, isStudyAdmin);
 
         ActivityInstance result = TransactionWrapper.withTxn(handle -> {
             ActivityInstanceDto instanceDto = RouteUtil.findAccessibleInstanceOrHalt(
-                    response, handle, userGuid, studyGuid, instanceGuid);
+                    response, handle, userGuid, studyGuid, instanceGuid, isStudyAdmin);
 
             ContentStyle style = RouteUtil.parseContentStyleHeaderOrHalt(request, response, ContentStyle.STANDARD);
             LOG.info("Using ddp content style {} to format activity content", style);
