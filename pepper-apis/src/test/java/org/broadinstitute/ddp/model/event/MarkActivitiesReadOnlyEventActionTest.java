@@ -1,7 +1,7 @@
 package org.broadinstitute.ddp.model.event;
 
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.time.Instant;
@@ -108,7 +108,7 @@ public class MarkActivitiesReadOnlyEventActionTest extends TxnAwareBaseTest {
 
             var jdbiInstance = handle.attach(JdbiActivityInstance.class);
             assertTrue(jdbiInstance.getByActivityInstanceId(instance1.getId()).get().getReadonly());
-            assertFalse(jdbiInstance.getByActivityInstanceId(instance2.getId()).get().getReadonly());
+            assertNull(jdbiInstance.getByActivityInstanceId(instance2.getId()).get().getReadonly());
 
             handle.rollback();
         });
