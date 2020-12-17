@@ -171,9 +171,8 @@ public class PatchFormAnswersRoute implements Route {
             }
 
             if (!isStudyAdmin && ActivityInstanceUtil.isReadonly(formActivityDef.getEditTimeoutSec(), instanceDto.getCreatedAtMillis(),
-                    instanceDto.getStatusType().name(), formActivityDef.isWriteOnce(), instanceDto.isReadonly())) {
-                String msg = "Activity instance with GUID " + instanceGuid
-                        + " is read-only, cannot submit answer(s) for it";
+                    instanceDto.getStatusType().name(), formActivityDef.isWriteOnce(), instanceDto.getReadonly())) {
+                String msg = "Activity instance with GUID " + instanceGuid + " is read-only, cannot submit answer(s) for it";
                 LOG.info(msg);
                 throw ResponseUtil.haltError(response, 422, new ApiError(ErrorCodes.ACTIVITY_INSTANCE_IS_READONLY, msg));
             }

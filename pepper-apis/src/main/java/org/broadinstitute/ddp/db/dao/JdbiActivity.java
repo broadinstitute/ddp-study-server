@@ -124,6 +124,9 @@ public interface JdbiActivity extends SqlObject {
     @SqlUpdate("update study_activity set edit_timeout_sec = :editTimeoutSec where study_id = :studyId and study_activity_code = :code")
     int updateEditTimeoutSecByCode(Long editTimeoutSec, String code, long studyId);
 
+    @SqlUpdate("update study_activity set is_write_once = :isWriteOnce where study_activity_id = :id")
+    int updateWriteOnceById(@Bind("id") long studyActivityId, @Bind("isWriteOnce") boolean isWriteOnce);
+
     @SqlUpdate("update study_activity set instantiate_upon_registration = :autoInstantiate"
             + " where study_activity_id = :studyActivityId")
     int updateAutoInstantiateById(long studyActivityId, boolean autoInstantiate);

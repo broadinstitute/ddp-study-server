@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Pattern;
 
 import com.google.gson.Gson;
@@ -412,6 +413,38 @@ public class PatchFormAnswersRouteStandaloneTest {
                 .statusCode(404).contentType(ContentType.JSON)
                 .body("code", equalTo(ErrorCodes.ACTIVITY_NOT_FOUND))
                 .body("message", containsString("is hidden"));
+    }
+
+    @Test
+    public void testPatch_activityIsWriteOnce() {
+        var oldWriteOnce = new AtomicBoolean(activity.isWriteOnce());
+        TransactionWrapper.useTxn(handle -> {
+            // Make activity write-once and instance COMPLETE to activate read-only state.
+            assertEquals(1, handle.attach(JdbiActivity.class).updateWriteOnceById(activity.getActivityId(), true));
+            handle.attach(ActivityInstanceStatusDao.class).insertStatus(
+                    instanceGuid, InstanceStatusType.COMPLETE, Instant.now().toEpochMilli(), testData.getUserGuid());
+        });
+
+        // Activity definition is cached! Clear cache since we made change to definition.
+        ActivityDefStore.getInstance().clear();
+
+        AnswerSubmission submission = new AnswerSubmission(numericIntegerSid, null, gson.toJsonTree(10));
+        PatchAnswerPayload data = new PatchAnswerPayload(List.of(submission));
+
+        try {
+            givenAnswerPatchRequest(instanceGuid, data)
+                    .then().assertThat()
+                    .statusCode(422).contentType(ContentType.JSON)
+                    .log().all()
+                    .body("code", equalTo(ErrorCodes.ACTIVITY_INSTANCE_IS_READONLY))
+                    .body("message", containsString(instanceGuid))
+                    .body("message", containsString("read-only"));
+        } finally {
+            TransactionWrapper.useTxn(handle -> {
+                assertEquals(1, handle.attach(JdbiActivity.class).updateWriteOnceById(activity.getActivityId(), oldWriteOnce.get()));
+            });
+            ActivityDefStore.getInstance().clear();
+        }
     }
 
     private void assert400AndBadPayloadResponse(String uri, String payload) throws Exception {
