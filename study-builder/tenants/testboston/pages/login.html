@@ -105,9 +105,11 @@
     var connection = config.connection;
     var prompt = !prompt;
     var showPasswordRecentText = false;
-    var doNotShowRegLink = false;
     var language = config.extraParams.language || 'en';
     var loginUrl = '##BASE_URL##/language-redirect?language=' + language + '&destination=' + encodeURIComponent('login-landing/login');
+
+    // Hide registration link for admin client. Note that param values are passed as strings.
+    var doNotShowRegLink = config.extraParams.is_admin_client === 'true';
 
     var i18n = {};
     i18n['en'] = {
