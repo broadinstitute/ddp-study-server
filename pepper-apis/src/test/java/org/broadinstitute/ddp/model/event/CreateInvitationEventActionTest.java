@@ -205,7 +205,7 @@ public class CreateInvitationEventActionTest extends TxnAwareBaseTest {
 
             // do it for real
             action.doAction(null, handle, signal);
-            assertTrue(handle.attach(JdbiActivityInstance.class).getByActivityInstanceId(instance1.getId()).get().isReadonly());
+            assertTrue(handle.attach(JdbiActivityInstance.class).getByActivityInstanceId(instance1.getId()).get().getReadonly());
 
             handle.rollback();
         });

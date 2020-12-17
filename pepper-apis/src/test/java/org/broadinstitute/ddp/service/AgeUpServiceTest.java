@@ -149,7 +149,7 @@ public class AgeUpServiceTest extends TxnAwareBaseTest {
             assertEquals(EnrollmentStatusType.CONSENT_SUSPENDED, status.get());
 
             assertTrue("activity instance should have been made read-only", handle.attach(JdbiActivityInstance.class)
-                    .getByActivityInstanceId(instanceDto.getId()).get().isReadonly());
+                    .getByActivityInstanceId(instanceDto.getId()).get().getReadonly());
 
             handle.rollback();
         });
@@ -181,7 +181,7 @@ public class AgeUpServiceTest extends TxnAwareBaseTest {
             assertTrue(candidates.get(0).hasInitiatedPrep());
 
             assertTrue("activity instance should have been made read-only", handle.attach(JdbiActivityInstance.class)
-                    .getByActivityInstanceId(instanceDto.getId()).get().isReadonly());
+                    .getByActivityInstanceId(instanceDto.getId()).get().getReadonly());
 
             handle.rollback();
         });

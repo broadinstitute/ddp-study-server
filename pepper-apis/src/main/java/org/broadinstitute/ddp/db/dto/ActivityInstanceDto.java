@@ -95,10 +95,6 @@ public class ActivityInstanceDto {
         return firstCompletedAt;
     }
 
-    public boolean isReadonly() {
-        return Optional.ofNullable(isReadonly).orElse(false);
-    }
-
     public Boolean getReadonly() {
         return isReadonly;
     }

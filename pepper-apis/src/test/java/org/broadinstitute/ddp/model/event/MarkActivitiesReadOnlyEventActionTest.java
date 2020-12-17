@@ -62,8 +62,8 @@ public class MarkActivitiesReadOnlyEventActionTest extends TxnAwareBaseTest {
             action.doAction(null, handle, signal);
 
             var jdbiInstance = handle.attach(JdbiActivityInstance.class);
-            assertTrue(jdbiInstance.getByActivityInstanceId(instance1.getId()).get().isReadonly());
-            assertTrue(jdbiInstance.getByActivityInstanceId(instance2.getId()).get().isReadonly());
+            assertTrue(jdbiInstance.getByActivityInstanceId(instance1.getId()).get().getReadonly());
+            assertTrue(jdbiInstance.getByActivityInstanceId(instance2.getId()).get().getReadonly());
 
             handle.rollback();
         });
@@ -84,8 +84,8 @@ public class MarkActivitiesReadOnlyEventActionTest extends TxnAwareBaseTest {
             action.doAction(null, handle, signal);
 
             var jdbiInstance = handle.attach(JdbiActivityInstance.class);
-            assertTrue(jdbiInstance.getByActivityInstanceId(instance1.getId()).get().isReadonly());
-            assertTrue(jdbiInstance.getByActivityInstanceId(instance2.getId()).get().isReadonly());
+            assertTrue(jdbiInstance.getByActivityInstanceId(instance1.getId()).get().getReadonly());
+            assertTrue(jdbiInstance.getByActivityInstanceId(instance2.getId()).get().getReadonly());
 
             handle.rollback();
         });
@@ -107,8 +107,8 @@ public class MarkActivitiesReadOnlyEventActionTest extends TxnAwareBaseTest {
             action.doAction(null, handle, signal);
 
             var jdbiInstance = handle.attach(JdbiActivityInstance.class);
-            assertTrue(jdbiInstance.getByActivityInstanceId(instance1.getId()).get().isReadonly());
-            assertFalse(jdbiInstance.getByActivityInstanceId(instance2.getId()).get().isReadonly());
+            assertTrue(jdbiInstance.getByActivityInstanceId(instance1.getId()).get().getReadonly());
+            assertFalse(jdbiInstance.getByActivityInstanceId(instance2.getId()).get().getReadonly());
 
             handle.rollback();
         });
