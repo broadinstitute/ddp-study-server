@@ -423,6 +423,9 @@ public class PatchFormAnswersRouteStandaloneTest {
                     instanceGuid, InstanceStatusType.COMPLETE, Instant.now().toEpochMilli(), testData.getUserGuid());
         });
 
+        // Activity definition is cached! Clear cache since we made change to definition.
+        ActivityDefStore.getInstance().clear();
+
         AnswerSubmission submission = new AnswerSubmission(numericIntegerSid, null, gson.toJsonTree(10));
         PatchAnswerPayload data = new PatchAnswerPayload(List.of(submission));
 
@@ -430,6 +433,7 @@ public class PatchFormAnswersRouteStandaloneTest {
             givenAnswerPatchRequest(instanceGuid, data)
                     .then().assertThat()
                     .statusCode(422).contentType(ContentType.JSON)
+                    .log().all()
                     .body("code", equalTo(ErrorCodes.ACTIVITY_INSTANCE_IS_READONLY))
                     .body("message", containsString(instanceGuid))
                     .body("message", containsString("read-only"));
@@ -437,6 +441,7 @@ public class PatchFormAnswersRouteStandaloneTest {
             TransactionWrapper.useTxn(handle -> {
                 assertEquals(1, handle.attach(JdbiActivity.class).updateWriteOnceById(activity.getActivityId(), oldWriteOnce.get()));
             });
+            ActivityDefStore.getInstance().clear();
         }
     }
 
