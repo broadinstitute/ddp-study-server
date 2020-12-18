@@ -41,6 +41,7 @@ import org.broadinstitute.ddp.db.dto.ClientDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.db.dto.UserDto;
 import org.broadinstitute.ddp.exception.DDPException;
+import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.broadinstitute.ddp.model.address.MailAddress;
 import org.broadinstitute.ddp.model.migration.StudyMigrationRun;
 import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
@@ -998,6 +999,14 @@ public class StudyDataLoaderMain {
                                 activityInstanceDao,
                                 activityInstanceStatusDao);
                         JdbiUserStudyEnrollment jdbiUserStudyEnrollment = handle.attach(JdbiUserStudyEnrollment.class);
+
+                        Long studyActivityId = jdbiActivity.findIdByStudyIdAndCode(studyId, "FEEDING").get();
+
+                        ActivityInstanceDto dto = activityInstanceDao
+                                .insertInstance(studyActivityId, userGuid, userGuid, InstanceStatusType.CREATED,
+                                        null,
+                                        Instant.now().toEpochMilli(),
+                                        null, null, null);
 
                         jdbiUserStudyEnrollment.changeUserStudyEnrollmentStatus(
                                 userDto.getUserId(),
