@@ -1002,12 +1002,15 @@ public class StudyDataLoaderMain {
 
                         activityInstanceDtoList = jdbiActivityInstance
                                 .findAllByUserGuidAndActivityCode(userGuid, "MEDICAL_HISTORY", studyId);
-                        String lastUpdatedAt = sourceData.get("medicalhistorysurvey").getAsJsonObject().get("datstat.enddatetime").getAsString();
-                        long lastUpdatedAtEpochi = LocalDateTime.parse(lastUpdatedAt, DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss"))
-                                .toInstant(ZoneOffset.UTC).toEpochMilli();
-                        activityInstanceStatusDao
-                                .insertStatus(activityInstanceDtoList.get(0).getId(), InstanceStatusType.COMPLETE,
-                                        lastUpdatedAtEpochi+1, userGuid);
+                        JsonElement medicalhistorysurvey = sourceData.get("medicalhistorysurvey");
+                        if (medicalhistorysurvey != null) {
+                            String lastUpdatedAt = sourceData.get("medicalhistorysurvey").getAsJsonObject().get("datstat.enddatetime").getAsString();
+                            long lastUpdatedAtEpochi = LocalDateTime.parse(lastUpdatedAt, DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss"))
+                                    .toInstant(ZoneOffset.UTC).toEpochMilli();
+                            activityInstanceStatusDao
+                                    .insertStatus(activityInstanceDtoList.get(0).getId(), InstanceStatusType.COMPLETE,
+                                            lastUpdatedAtEpochi+1, userGuid);
+                        }
 
                         Long studyActivityId = jdbiActivity.findIdByStudyIdAndCode(studyId, "FEEDING").get();
 
