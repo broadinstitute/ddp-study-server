@@ -92,10 +92,14 @@
               },
               {
                 "name": "other",
-                "text": "text",
                 "type": "integer"
               }
             ]
+          },
+          {
+            "name": "diagnosis_criteria.other.text",
+            "type": "string",
+            "stable_id": "DETERMINED_OTHER_DETAILS"
           },
           {
             "name": "mutation_determination",
