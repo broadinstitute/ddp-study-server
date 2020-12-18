@@ -367,14 +367,14 @@ public class Auth0Util {
             return new HashMap<>();
         }
 
-        int maxPerPage = 100;
+        int maxPerPage = 50;
         Map<String, String> results = new HashMap<>();
         List<String> ids = new ArrayList<>(auth0UserIds);
         ManagementAPI auth0Mgmt = new ManagementAPI(baseUrl, mgmtApiToken);
 
-        // IMPORTANT: in order to satisfy certain limits and restrictions, especially URL length limits, we "pagination"
-        // through the authUserIds. 100 auth0UserIds in the Lucene query seems like a safe limit. And it works out that
-        // the max items per page from the API is 100.
+        // IMPORTANT: In order to satisfy certain limits and restrictions, especially URL length limits, we "pagination"
+        // through the auth0UserIds. We had issues with 100 auth0UserIds, so 50 in the Lucene query seems like a safe bet.
+        // 50 also happens to be Auth0's default for this parameter.
         for (int i = 0; i < ids.size(); i += maxPerPage) {
             int end = Math.min(i + maxPerPage, ids.size());
             List<String> subset = ids.subList(i, end);
@@ -385,7 +385,7 @@ public class Auth0Util {
 
             UserFilter filter = new UserFilter()
                     .withFields("user_id,email", true)
-                    .withPage(0, 100)
+                    .withPage(0, maxPerPage)
                     .withQuery(query)
                     .withSearchEngine("v3");
 
