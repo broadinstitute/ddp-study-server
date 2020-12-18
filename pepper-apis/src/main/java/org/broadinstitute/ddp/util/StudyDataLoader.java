@@ -1073,9 +1073,10 @@ public class StudyDataLoader {
         org.broadinstitute.ddp.model.user.User operatorUser;
 
         String userGuid = DBUtils.uniqueUserGuid(handle);
+        boolean isOperator = data.getAsJsonObject().get("registration_type").getAsInt() == 3;
 
         if (userOptional.isPresent()) {
-            if (data.getAsJsonObject().get("registration_type").getAsInt() == 3) {
+            if (isOperator) {
                 String altPid = data.getAsJsonObject().get("datstat_altpid").getAsString();
                 String userCreatedAt = getStringValueFromElement(data, "datstat_created");
                 String firstName = getStringValueFromElement(data, "datstat_firstname");
@@ -1097,7 +1098,7 @@ public class StudyDataLoader {
                     auth0UserId = createAuth0UserWithRandomPassword(emailAddress);
                 }
             }
-            UserDto operatorUserDto = insertNewUser(jdbiUser, data, userGuid, userHruid, clientDto, auth0UserId);
+            UserDto operatorUserDto = insertNewUser(jdbiUser, data, userGuid, userHruid, clientDto, auth0UserId, !isOperator);
             operatorUser = userDao.findUserByGuid(userGuid)
                     .orElseThrow(() -> new DDPException("Could not find operator with guid " + userGuid));
             addUserProfile(operatorUserDto, data, jdbiLanguageCode, userProfileDao, true);
@@ -1122,11 +1123,11 @@ public class StudyDataLoader {
             }
         }
 
-        return insertNewUser(jdbiUser, data, userGuid, userHruid, clientDto, auth0UserId);
+        return insertNewUser(jdbiUser, data, userGuid, userHruid, clientDto, auth0UserId, false);
     }
 
     private UserDto insertNewUser(JdbiUser userDao, JsonElement data, String userGuid, String userHruid,
-                                  ClientDto clientDto, String auth0UserId) {
+                                  ClientDto clientDto, String auth0UserId, boolean isFromGoverned) {
         String userCreatedAt = getStringValueFromElement(data, "datstat_created");
 
         LocalDateTime createdAtDate = LocalDateTime.parse(userCreatedAt, formatter);
@@ -1141,7 +1142,7 @@ public class StudyDataLoader {
         long updatedAtMillis = lastModifiedDate.toInstant(ZoneOffset.UTC).toEpochMilli();
 
         String shortId = null;
-        String altpid = data.getAsJsonObject().get("datstat_altpid").getAsString();
+        String altpid = isFromGoverned ? null : data.getAsJsonObject().get("datstat_altpid").getAsString();
         long userId = userDao.insertMigrationUser(auth0UserId, userGuid, clientDto.getId(), userHruid,
                 altpid, shortId, createdAtMillis, updatedAtMillis);
         UserDto newUser = new UserDto(userId, auth0UserId, userGuid, userHruid, altpid,
