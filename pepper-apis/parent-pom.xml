@@ -663,8 +663,8 @@
                     <environmentVariables>
                         <PUBSUB_EMULATOR_HOST>localhost:8442</PUBSUB_EMULATOR_HOST>
                         <JAVA_HOME>${java.home}</JAVA_HOME>
-                        <GAE_INSTANCE>tst-GAE-inst</GAE_INSTANCE>
-                        <GAE_SERVICE>tst-GAE-srv</GAE_SERVICE>
+                        <GAE_INSTANCE>test-GAE-instance</GAE_INSTANCE>
+                        <GAE_SERVICE>test-GAE-service</GAE_SERVICE>
                     </environmentVariables>
                 </configuration>
             </plugin>
