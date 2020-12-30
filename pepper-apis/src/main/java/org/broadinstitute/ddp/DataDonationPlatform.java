@@ -43,6 +43,7 @@ import org.broadinstitute.ddp.db.FormInstanceDao;
 import org.broadinstitute.ddp.db.SectionBlockDao;
 import org.broadinstitute.ddp.db.StudyActivityDao;
 import org.broadinstitute.ddp.db.TransactionWrapper;
+import org.broadinstitute.ddp.environment.HostUtil;
 import org.broadinstitute.ddp.filter.AddDDPAuthLoggingFilter;
 import org.broadinstitute.ddp.filter.DsmAuthFilter;
 import org.broadinstitute.ddp.filter.HttpHeaderMDCFilter;
@@ -232,6 +233,7 @@ public class DataDonationPlatform {
     }
 
     private static void start() {
+        HostUtil.putGAEInstanceAndGAEServiceToMDC();
         LogbackConfigurationPrinter.printLoggingConfiguration();
         Config cfg = ConfigManager.getInstance().getConfig();
         int maxConnections = cfg.getInt(ConfigFile.NUM_POOLED_CONNECTIONS);

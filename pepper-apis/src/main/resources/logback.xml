@@ -4,7 +4,7 @@
         <!-- this filter is here to help prevent sensitive data like PHI from bleeding into stdout -->
         <filter class="org.broadinstitute.ddp.logging.NonSecureFilter" />
         <encoder>
-            <pattern>%d{HH:mm:ss.SSS} %X{LogBreadCrumb} %X{X-Forwarded-For} C:%X{ClientId} S:%X{UserId} [%thread] %-5level %logger{36} %msg%n</pattern>
+            <pattern>%d{HH:mm:ss.SSS} %X{GAEInstanceAndService} %X{LogBreadCrumb} %X{X-Forwarded-For} C:%X{ClientId} S:%X{UserId} [%thread] %-5level %logger{36} %msg%n</pattern>
         </encoder>
     </appender>
 
