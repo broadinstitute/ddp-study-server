@@ -364,13 +364,15 @@ Answer.File:
 FileInfo:
   type: object
   required:
-    - fileName
-    - fileSize
+    - name
+    - size
   properties:
-    fileName:
+    name:
       type: string
-    fileSize:
+      description: Name of the file
+    size:
       type: integer
+      description: Size of the file in bytes
 SelectedOption:
   type: object
   required:

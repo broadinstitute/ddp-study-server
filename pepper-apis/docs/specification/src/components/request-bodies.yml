@@ -199,18 +199,19 @@ CreateFileUploadUrlRequestBody:
         schema:
           type: object
           required:
-            - fileName
-            - fileSize
+            - name
+            - size
             - resumable
             - stableId
           properties:
-            fileName:
+            name:
               type: string
               description: Name of the file to be uploaded
             mimeType:
               type: string
+              default: application/octet-stream
               description: Mime type. If not specified mime type default value is `application/octet-stream`
-            fileSize:
+            size:
               type: integer
               description: Size of the file
             resumable:
@@ -219,30 +220,4 @@ CreateFileUploadUrlRequestBody:
             stableId:
               type: string
               description: the question stable id
-SendStudyEmailRequestBody:
-  description: Data, required to compose a message
-  required: true
-  content:
-    application/json:
-      schema:
-        type: object
-        required:
-          - data
-        properties:
-          data:
-            type: object
-            description: Key-value pairs, used for template substitutions
-          attachments:
-            type: array
-            items:
-              type: object
-              required:
-                - name
-                - guid
-              properties:
-                name:
-                  type: string
-                  description: File name
-                guid:
-                  type: string
-                  description: File upload GUID
+

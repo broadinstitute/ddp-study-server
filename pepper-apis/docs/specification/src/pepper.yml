@@ -76,8 +76,6 @@ paths:
     $ref: 'endpoints/studies.suggestions.cancers.yml'
   /studies/{study}/statistics:
     $ref: 'endpoints/studies.statistics.yml'
-  /studies/{study}/send-study-email:
-    $ref: 'endpoints/send.study.email.yml'
   /user/{user}/profile:
     $ref: 'endpoints/user.profile.yml'
   /user/{user}/profile/address:
@@ -98,6 +96,8 @@ paths:
     $ref: 'endpoints/user.studies.activities.yml'
   /user/{user}/studies/{study}/activities/{instance}:
     $ref: 'endpoints/user.studies.activity.yml'
+  /user/{user}/studies/{study}/activities/{instance}/answer/{answerGuid}:
+    $ref: 'endpoints/user.studies.activity.answer.yml'
   /user/{user}/studies/{study}/activities/{instance}/answers:
     $ref: 'endpoints/user.studies.activity.answers.yml'
   /user/{user}/studies/{study}/activities/{instance}/upload-url:

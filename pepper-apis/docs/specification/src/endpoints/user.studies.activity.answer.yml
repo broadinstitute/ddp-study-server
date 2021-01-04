@@ -1,0 +1,44 @@
+parameters:
+  - in: path
+    name: user
+    required: true
+    description: the participant's guid
+    schema:
+      type: string
+  - in: path
+    name: study
+    required: true
+    description: the study's unique identifier
+    schema:
+      type: string
+  - in: path
+    name: instance
+    required: true
+    description: the activity instance guid
+    schema:
+      type: string
+  - in: path
+    name: answerGuid
+    required: true
+    description: the answer guid
+    schema:
+      type: string
+
+delete:
+  operationId: deleteAnswer
+  tags:
+    - Activities
+  summary: delete an  existing answer
+  description: |
+    Currently only applicable for File Answers! Trying to delete any other answer will result in a 406 error.
+  responses:
+    200:
+      description: deletion successful
+    406:
+      description:  delete  is not supported for this answer
+    401:
+      description: missing credentials or temporary user is invalid
+    404:
+      $ref: '../pepper.yml#/components/responses/ActivityAnswersPatchNotFoundResponse'
+    default:
+      $ref: '../pepper.yml#/components/responses/ErrorResponse'
