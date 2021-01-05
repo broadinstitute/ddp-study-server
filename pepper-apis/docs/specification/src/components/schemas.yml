@@ -438,7 +438,8 @@ AnswerSubmission.File:
       properties:
         value:
           type: string
-          description: the upload id provided by server when upload URL was requested.
+          nullable: true
+          description: the upload id provided by server when upload URL was requested. A null value clears any previous answers.
 AnswerSubmission.Composite:
   allOf:
     - $ref: '../pepper.yml#/components/schemas/AnswerSubmission'

@@ -96,8 +96,6 @@ paths:
     $ref: 'endpoints/user.studies.activities.yml'
   /user/{user}/studies/{study}/activities/{instance}:
     $ref: 'endpoints/user.studies.activity.yml'
-  /user/{user}/studies/{study}/activities/{instance}/answer/{answerGuid}:
-    $ref: 'endpoints/user.studies.activity.answer.yml'
   /user/{user}/studies/{study}/activities/{instance}/answers:
     $ref: 'endpoints/user.studies.activity.answers.yml'
   /user/{user}/studies/{study}/activities/{instance}/upload-url:
