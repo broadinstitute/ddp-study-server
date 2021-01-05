@@ -7,6 +7,7 @@ import com.google.cloud.pubsub.v1.MessageReceiver;
 import com.google.gson.Gson;
 import com.google.pubsub.v1.ProjectSubscriptionName;
 import com.google.pubsub.v1.PubsubMessage;
+import org.broadinstitute.ddp.cache.CacheService;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.db.ActivityDefStore;
 import org.broadinstitute.ddp.exception.DDPException;
@@ -60,6 +61,9 @@ public class HousekeepingTaskReceiver implements MessageReceiver {
             case CLEAR_CACHE:
                 handleClearCache(message, reply);
                 break;
+            case CLEAR_REDIS:
+                handleClearRedis(message, reply);
+                break;
             case CLEANUP_TEMP_USERS:
                 handleCleanupTempUsers(message, reply);
                 break;
@@ -82,6 +86,13 @@ public class HousekeepingTaskReceiver implements MessageReceiver {
         ActivityDefStore.getInstance().clear();
         DataExporter.clearCachedAuth0Emails();
         LOG.info("Finished clearing activity and email caches, ack-ing");
+        reply.ack();
+    }
+
+    private void handleClearRedis(PubsubMessage message, AckReplyConsumer reply) {
+        LOG.info("Clearing redis caches used in Housekeeping...");
+        CacheService.getInstance().resetAllCaches();
+        LOG.info("Finished clearing redis caches, ack-ing");
         reply.ack();
     }
 
@@ -165,6 +176,7 @@ public class HousekeepingTaskReceiver implements MessageReceiver {
 
     public enum TaskType {
         CLEAR_CACHE,
+        CLEAR_REDIS,
         CLEANUP_TEMP_USERS,
         CSV_EXPORT,
         ELASTIC_EXPORT,

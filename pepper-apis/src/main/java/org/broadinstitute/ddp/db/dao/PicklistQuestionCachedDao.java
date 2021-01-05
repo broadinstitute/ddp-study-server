@@ -13,7 +13,7 @@ import org.jdbi.v3.core.Handle;
 import org.redisson.client.RedisException;
 
 public class PicklistQuestionCachedDao extends SQLObjectWrapper<PicklistQuestionDao> implements PicklistQuestionDao {
-    private static Cache<Long, GroupAndOptionDtos> questionIdToGroupAndOptionsCache;
+    private static Cache<String, GroupAndOptionDtos> questionVersionKeyToGroupAndOptionsCache;
 
     public PicklistQuestionCachedDao(Handle handle) {
         super(handle, PicklistQuestionDao.class);
@@ -21,8 +21,9 @@ public class PicklistQuestionCachedDao extends SQLObjectWrapper<PicklistQuestion
     }
 
     private void initializeCache() {
-        if (questionIdToGroupAndOptionsCache == null) {
-            questionIdToGroupAndOptionsCache = CacheService.getInstance().getOrCreateCache("questionIdToGroupAndOptionsCache",
+        if (questionVersionKeyToGroupAndOptionsCache == null) {
+            questionVersionKeyToGroupAndOptionsCache = CacheService.getInstance().getOrCreateCache(
+                    "questionVersionKeyToGroupAndOptionsCache",
                     new Duration(),
                     ModelChangeType.STUDY,
                     this.getClass());
@@ -56,23 +57,24 @@ public class PicklistQuestionCachedDao extends SQLObjectWrapper<PicklistQuestion
 
     @Override
     public Map<Long, GroupAndOptionDtos> findOrderedGroupAndOptionDtos(Iterable<Long> questionIds, long timestamp) {
-        if (isNullCache(questionIdToGroupAndOptionsCache)) {
+        if (isNullCache(questionVersionKeyToGroupAndOptionsCache)) {
             return delegate.findOrderedGroupAndOptionDtos(questionIds, timestamp);
         } else {
             Set<Long> missingQuestionIds = new HashSet<>();
             Map<Long, GroupAndOptionDtos> result = new HashMap<>();
 
             for (var questionId : questionIds) {
+                String key = questionId + ":" + timestamp;
                 try {
-                    GroupAndOptionDtos cachedDto = questionIdToGroupAndOptionsCache.get(questionId);
+                    GroupAndOptionDtos cachedDto = questionVersionKeyToGroupAndOptionsCache.get(key);
                     if (cachedDto != null) {
                         result.put(questionId, cachedDto);
                     } else {
                         missingQuestionIds.add(questionId);
                     }
                 } catch (RedisException e) {
-                    LOG.warn("Failed to retrieve value from Redis cache: " + questionIdToGroupAndOptionsCache.getName()
-                            + " key:" + questionId + " Will try to retrieve from database", e);
+                    LOG.warn("Failed to retrieve value from Redis cache: " + questionVersionKeyToGroupAndOptionsCache.getName()
+                            + " key:" + key + " Will try to retrieve from database", e);
                     missingQuestionIds.add(questionId);
                 }
             }
@@ -80,9 +82,12 @@ public class PicklistQuestionCachedDao extends SQLObjectWrapper<PicklistQuestion
             if (!missingQuestionIds.isEmpty()) {
                 var found = delegate.findOrderedGroupAndOptionDtos(missingQuestionIds, timestamp);
                 try {
-                    questionIdToGroupAndOptionsCache.putAll(found);
+                    found.forEach((questionId, dto) -> {
+                        String key = questionId + ":" + timestamp;
+                        questionVersionKeyToGroupAndOptionsCache.put(key, dto);
+                    });
                 } catch (RedisException e) {
-                    LOG.warn("Failed to store values to Redis cache: " + questionIdToGroupAndOptionsCache.getName(), e);
+                    LOG.warn("Failed to store values to Redis cache: " + questionVersionKeyToGroupAndOptionsCache.getName(), e);
                 }
                 result.putAll(found);
             }
