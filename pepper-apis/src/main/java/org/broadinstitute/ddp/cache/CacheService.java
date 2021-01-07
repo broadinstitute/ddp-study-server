@@ -141,6 +141,7 @@ public class CacheService {
             cache = cacheManager.createCache(cacheName, cacheConfig);
             if (resetCaches) {
                 cache.clear();
+                LOG.info("Cleared redis cache {}", cacheName);
             }
         }
         return (Cache<K, V>) cache;
@@ -161,11 +162,16 @@ public class CacheService {
 
     public void resetAllCaches() {
         if (cacheManager instanceof JCacheManager) {
-            cacheManager.getCacheNames().forEach(cacheName -> cacheManager.getCache(cacheName).clear());
+            cacheManager.getCacheNames().forEach(cacheName -> {
+                cacheManager.getCache(cacheName).clear();
+                LOG.info("Cleared redis cache {}", cacheName);
+            });
         }
         if (!(cacheManager instanceof NullCacheManager)) {
-            redissonClient.getKeys().getKeysByPattern(LOCAL_CACHE_PREFIX + "*").forEach(cacheKey ->
-                    redissonClient.getLocalCachedMap(cacheKey, new FstCodec(), LocalCachedMapOptions.defaults()).delete());
+            redissonClient.getKeys().getKeysByPattern(LOCAL_CACHE_PREFIX + "*").forEach(cacheKey -> {
+                redissonClient.getLocalCachedMap(cacheKey, new FstCodec(), LocalCachedMapOptions.defaults()).delete();
+                LOG.info("Cleared local redis cache {}", cacheKey);
+            });
         }
         resetCaches = true;
     }

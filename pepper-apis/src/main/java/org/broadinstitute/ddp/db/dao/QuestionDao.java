@@ -14,8 +14,10 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.commons.collections4.CollectionUtils;
+import org.broadinstitute.ddp.db.ActivityDefStore;
 import org.broadinstitute.ddp.db.DaoException;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
+import org.broadinstitute.ddp.db.dto.ActivityVersionDto;
 import org.broadinstitute.ddp.db.dto.AgreementQuestionDto;
 import org.broadinstitute.ddp.db.dto.BooleanQuestionDto;
 import org.broadinstitute.ddp.db.dto.CompositeQuestionDto;
@@ -410,15 +412,19 @@ public interface QuestionDao extends SqlObject {
                 .map(rule -> (Rule<PicklistAnswer>) rule)
                 .collect(toList());
 
-        long timestamp = getHandle().attach(JdbiActivityInstance.class)
+        ActivityInstanceDto instanceDto = getHandle().attach(JdbiActivityInstance.class)
                 .getByActivityInstanceGuid(activityInstanceGuid)
-                .map(ActivityInstanceDto::getCreatedAtMillis)
+                .orElseThrow(() -> new DaoException("Could not find activity instance using guid " + activityInstanceGuid
+                        + " while getting picklist question " + dto.getStableId()));
+        ActivityVersionDto versionDto = ActivityDefStore.getInstance()
+                .findVersionDto(getHandle(), instanceDto.getActivityId(), instanceDto.getCreatedAtMillis())
                 .orElseThrow(() -> new DaoException(String.format(
-                        "Could not find activity instance with guid=%s while getting picklist question with id=%d and stableId=%s",
-                        activityInstanceGuid, dto.getId(), dto.getStableId())));
+                        "Could not find activity version for instance with guid=%s using"
+                                + " activityId=%d and createdAt=%d while getting picklist question %s",
+                        activityInstanceGuid, instanceDto.getActivityId(), instanceDto.getCreatedAtMillis(), dto.getStableId())));
 
         PicklistQuestionDao.GroupAndOptionDtos container = getPicklistQuestionDao()
-                .findOrderedGroupAndOptionDtos(dto.getId(), timestamp);
+                .findOrderedGroupAndOptionDtos(dto.getId(), versionDto.getRevStart());
 
         List<PicklistGroup> groups = new ArrayList<>();
         List<PicklistOption> allOptions = new ArrayList<>();
