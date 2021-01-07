@@ -1,5 +1,6 @@
 package org.broadinstitute.ddp.studybuilder.task;
 
+import java.io.File;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
@@ -8,6 +9,7 @@ import java.util.stream.Collectors;
 
 import com.google.gson.Gson;
 import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.EventDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
@@ -45,6 +47,7 @@ public class TestBostonLongitudinalV2 implements CustomTask {
 
     private static final Logger LOG = LoggerFactory.getLogger(TestBostonLongitudinalV2.class);
     private static final String LONGITUDINAL_V2_FILE = "longitudinal-covid-v2.conf";
+    private static final String VACCINE_COPY_EVENT_FILE = "patches/vaccine-copy-answer-event.conf";
     private static final String STUDY_GUID = "testboston";
     private static final String V1_VERSION_TAG = "v1";
 
@@ -196,22 +199,13 @@ public class TestBostonLongitudinalV2 implements CustomTask {
         } else {
             LOG.info("Did not find longitudinal copy answer event, creating...");
 
-            // Extract the copy answer event definition.
-            Config copyEventCfg = null;
-            for (var eventCfg : studyCfg.getConfigList("events")) {
-                Config triggerCfg = eventCfg.getConfig("trigger");
-                Config actionCfg = eventCfg.getConfig("action");
-                if (triggerCfg.getString("type").equals("ACTIVITY_STATUS")
-                        && triggerCfg.getString("activityCode").equals(activityCode)
-                        && triggerCfg.getString("statusType").equals("CREATED")
-                        && actionCfg.getString("type").equals("COPY_ANSWER")) {
-                    copyEventCfg = eventCfg;
-                    break;
-                }
+            // Load the copy answer event definition.
+            File file = cfgPath.getParent().resolve(VACCINE_COPY_EVENT_FILE).toFile();
+            if (!file.exists()) {
+                throw new DDPException("Data file is missing: " + file);
             }
-            if (copyEventCfg == null) {
-                throw new DDPException("Could not find longitudinal copy answer event in study config file!");
-            }
+            Config copyEventCfg = ConfigFactory.parseFile(file);
+            copyEventCfg = copyEventCfg.resolveWith(varsCfg);
 
             eventBuilder.insertEvent(handle, copyEventCfg);
         }
