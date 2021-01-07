@@ -31,7 +31,8 @@ public class TbosKitReport {
             "ifnull(STR_TO_DATE(replace(json_extract(k.test_result, '$[0].timeCompleted'),'\"',''), '%Y-%m-%dT%H:%i:%sZ'),\n" +
             "    STR_TO_DATE(replace(json_extract(k.test_result, '$[0].timeCompleted'),'\"',''), '%Y-%m-%dT%H:%i:%s.%fZ')\n" +
             ")as test_completion_time,\n" +
-            "u.hruid\n" +
+            "u.hruid,\n" +
+            "dkr.upload_reason\n" +
             "from\n" +
             "prod_dsm_db.ddp_kit k,\n" +
             "prod_dsm_db.ddp_kit_request dkr,\n" +
@@ -51,6 +52,7 @@ public class TbosKitReport {
             "and\n" +
             "kt.kit_type_name = 'AN'\n" +
             "and k.kit_label like 'TBOS-%'\n" +
+            "and dkr.upload_reason is null\n" +
             "order by 7";
 
     public static void main(String[] args) throws Exception {
@@ -107,9 +109,12 @@ public class TbosKitReport {
         @SerializedName("hruid")
         private final String hruid;
 
-        @ConstructorProperties({"guid", "kit_label", "kit_requested_at", "tracking_to_id","tracking_return_id","test_result","test_completion_time","hruid"})
+        @SerializedName("reason")
+        private final String reason;
+
+        @ConstructorProperties({"guid", "kit_label", "kit_requested_at", "tracking_to_id","tracking_return_id","test_result","test_completion_time","hruid","upload_reason"})
         public KitRow(String guid, String kitBarcode, Instant kitReqestTime, String outboundTrackingId,
-                      String returnTrackingId, String testResult, Instant resultGenerationTime, String hruid) {
+                      String returnTrackingId, String testResult, Instant resultGenerationTime, String hruid, String reason) {
 
             this.guid = guid;
             this.kitBarcode = kitBarcode;
@@ -119,6 +124,7 @@ public class TbosKitReport {
             this.testResult = testResult;
             this.resultGenerationTime = resultGenerationTime;
             this.hruid = hruid;
+            this.reason = reason;
         }
 
         public String getGuid() {
