@@ -125,6 +125,17 @@ public class CopyExecutor {
         for (var childStableIds : childQuestionStableIds.values()) {
             questionStableIds.addAll(childStableIds);
         }
+
+        Set<String> specifiedStableIds = config.getPreviousInstanceFilters().stream()
+                .map(item -> item.getLocation().getQuestionStableId())
+                .collect(Collectors.toSet());
+        if (!specifiedStableIds.isEmpty()) {
+            // If config has previous answer questions specified, then filter down the list to only those
+            // that we want to copy over. This can be done using a set intersection operation.
+            questionStableIds.retainAll(specifiedStableIds);
+            LOG.info("Filtered previous instance answers to only questions specified in copy config {}", config.getId());
+        }
+
         if (questionStableIds.isEmpty()) {
             LOG.info("Previous instance {} does not have any answers to copy from", previousInstance.getGuid());
             return;
@@ -138,16 +149,24 @@ public class CopyExecutor {
 
         int numCopied = 0;
         for (var previousAnswer : previousInstance.getAnswers()) {
+            String stableId = previousAnswer.getQuestionStableId();
             if (previousAnswer.getQuestionType() == QuestionType.COMPOSITE) {
-                for (var childStableId : childQuestionStableIds.get(previousAnswer.getQuestionStableId())) {
-                    QuestionDto childQuestion = questionDtos.get(childStableId);
-                    copier.copy(previousInstance, childQuestion, currentInstance, childQuestion);
+                boolean copiedChild = false;
+                for (var childStableId : childQuestionStableIds.get(stableId)) {
+                    if (specifiedStableIds.isEmpty() || specifiedStableIds.contains(childStableId)) {
+                        QuestionDto childQuestion = questionDtos.get(childStableId);
+                        copier.copy(previousInstance, childQuestion, currentInstance, childQuestion);
+                        copiedChild = true;
+                    }
                 }
-            } else {
-                QuestionDto question = questionDtos.get(previousAnswer.getQuestionStableId());
+                if (copiedChild) {
+                    numCopied++;
+                }
+            } else if (specifiedStableIds.isEmpty() || specifiedStableIds.contains(stableId)) {
+                QuestionDto question = questionDtos.get(stableId);
                 copier.copy(previousInstance, question, currentInstance, question);
+                numCopied++;
             }
-            numCopied++;
         }
 
         LOG.info("Copied {} answers from previous instance {} to instance {}",
