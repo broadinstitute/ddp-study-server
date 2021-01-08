@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="yufeng" id="20210107-copy-previous-instance-filter-table">
+        <createTable tableName="copy_previous_instance_filter">
+            <column name="copy_previous_instance_filter_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="copy_previous_instance_filter_id"/>
+            </column>
+            <column name="copy_configuration_id" type="bigint">
+                <constraints nullable="false"
+                             references="copy_configuration(copy_configuration_id)"
+                             foreignKeyName="copy_previous_instance_filter_copy_config_fk"
+                             deleteCascade="true"/>
+            </column>
+            <column name="answer_location_id" type="bigint">
+                <constraints nullable="false"
+                             references="copy_answer_location(copy_location_id)"
+                             foreignKeyName="copy_previous_instance_filter_answer_location_fk"/>
+            </column>
+            <column name="execution_order" type="int">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+</databaseChangeLog>

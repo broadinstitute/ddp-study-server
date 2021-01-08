@@ -15,6 +15,7 @@ import org.broadinstitute.ddp.model.copy.CopyConfiguration;
 import org.broadinstitute.ddp.model.copy.CopyConfigurationPair;
 import org.broadinstitute.ddp.model.copy.CopyLocation;
 import org.broadinstitute.ddp.model.copy.CopyLocationType;
+import org.broadinstitute.ddp.model.copy.CopyPreviousInstanceFilter;
 import org.jdbi.v3.core.result.LinkedHashMapRowReducer;
 import org.jdbi.v3.core.result.RowView;
 import org.jdbi.v3.sqlobject.CreateSqlObject;
@@ -32,14 +33,34 @@ public interface CopyConfigurationDao extends SqlObject {
 
     default CopyConfiguration createCopyConfig(CopyConfiguration config) {
         long configId = getCopyConfigurationSql().insertCopyConfig(config.getStudyId(), config.shouldCopyFromPreviousInstance());
+
         int order = 1;
+        for (var filter : config.getPreviousInstanceFilters()) {
+            filter.setOrder(order);
+            createPreviousInstanceFilter(config.getStudyId(), configId, filter);
+            order += 1;
+        }
+
+        order = 1;
         for (var pair : config.getPairs()) {
             pair.setOrder(order);
             createCopyPair(config.getStudyId(), configId, pair);
             order += 1;
         }
+
         return findCopyConfigById(configId).orElseThrow(() ->
                 new DaoException("Could not find newly created copy configuration with id " + configId));
+    }
+
+    private long createPreviousInstanceFilter(long studyId, long configId, CopyPreviousInstanceFilter filter) {
+        CopyAnswerLocation location = filter.getLocation();
+        getHandle().attach(JdbiQuestion.class)
+                .findLatestDtoByStudyIdAndQuestionStableId(studyId, location.getQuestionStableId())
+                .orElseThrow(() -> new DaoException(String.format(
+                        "Could not find previous instance filter question with stable id %s in study %d",
+                        location.getQuestionStableId(), studyId)));
+        long locationId = createCopyLocation(studyId, location);
+        return getCopyConfigurationSql().insertCopyPreviousInstanceFilter(configId, locationId, filter.getOrder());
     }
 
     private long createCopyPair(long studyId, long configId, CopyConfigurationPair pair) {
@@ -92,6 +113,9 @@ public interface CopyConfigurationDao extends SqlObject {
                 .orElseThrow(() -> new DaoException("Copy configuration with id " + configId + " does not exist"));
 
         Set<Long> locationIds = new HashSet<>();
+        for (var filter : config.getPreviousInstanceFilters()) {
+            locationIds.add(filter.getLocation().getId());
+        }
         for (var pair : config.getPairs()) {
             locationIds.add(pair.getSource().getId());
             locationIds.add(pair.getTarget().getId());
@@ -102,14 +126,24 @@ public interface CopyConfigurationDao extends SqlObject {
         DBUtils.checkDelete(locationIds.size(), copyConfigurationSql.bulkDeleteCopyLocations(locationIds));
     }
 
+    default Optional<CopyConfiguration> findCopyConfigById(long configId) {
+        var result = findConfigWithPairsByConfigId(configId);
+        result.ifPresent(config -> config.addPreviousInstanceFilters(findPreviousInstanceFiltersByConfigId(configId)));
+        return result;
+    }
+
     @UseStringTemplateSqlLocator
-    @SqlQuery("queryCopyConfigById")
+    @SqlQuery("findConfigWithPairsByConfigId")
     @RegisterConstructorMapper(CopyConfiguration.class)
     @UseRowReducer(CopyConfigurationWithPairsReducer.class)
-    Optional<CopyConfiguration> findCopyConfigById(@Bind("id") long configId);
+    Optional<CopyConfiguration> findConfigWithPairsByConfigId(@Bind("configId") long configId);
+
+    @UseStringTemplateSqlLocator
+    @SqlQuery("findPreviousInstanceFiltersByConfigId")
+    @UseRowReducer(CopyPreviousInstanceFilterReducer.class)
+    List<CopyPreviousInstanceFilter> findPreviousInstanceFiltersByConfigId(@Bind("configId") long configId);
 
     class CopyConfigurationWithPairsReducer implements LinkedHashMapRowReducer<Long, CopyConfiguration> {
-
         @Override
         public void accumulate(Map<Long, CopyConfiguration> container, RowView view) {
             long id = view.getColumn("copy_configuration_id", Long.class);
@@ -140,6 +174,20 @@ public interface CopyConfigurationDao extends SqlObject {
 
         private String columnName(String prefix, String name) {
             return prefix + "_" + name;
+        }
+    }
+
+    class CopyPreviousInstanceFilterReducer implements LinkedHashMapRowReducer<Long, CopyPreviousInstanceFilter> {
+        @Override
+        public void accumulate(Map<Long, CopyPreviousInstanceFilter> container, RowView view) {
+            long id = view.getColumn("copy_previous_instance_filter_id", Long.class);
+            int order = view.getColumn("execution_order", Integer.class);
+            var location = new CopyAnswerLocation(
+                    view.getColumn("answer_location_id", Long.class),
+                    view.getColumn("question_stable_code_id", Long.class),
+                    view.getColumn("question_stable_id", String.class));
+            var filter = new CopyPreviousInstanceFilter(id, location, order);
+            container.put(id, filter);
         }
     }
 }
