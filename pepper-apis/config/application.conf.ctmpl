@@ -45,6 +45,7 @@
     "usePubSubEmulator": false,
     "runScheduler": {{$conf.Data.runScheduler}},
     "restrictRegisterRoute": {{$conf.Data.restrictRegisterRoute}},
+    "restrictAuth0LogEventRoute": {{$conf.Data.restrictAuth0LogEventRoute}},
     "requireDefaultGcpCredentials": {{$conf.Data.requireDefaultGcpCredentials}},
     "googleProjectId": "{{$conf.Data.googleProjectId}}",
     "pdfArchiveBucket": "{{$conf.Data.pdfArchiveBucket}}",

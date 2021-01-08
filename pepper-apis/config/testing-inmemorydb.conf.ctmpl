@@ -30,6 +30,7 @@
     "dsmJwtSigner": "org.broadinstitute.kdux",
     "dbInstanceId": "ddp-dev",
     "restrictRegisterRoute": false,
+    "restrictAuth0LogEventRoute": false,
     "auth0": {
         "domain": "{{$auth0.domain}}",
         "domain2": "{{$auth0.domain2}}",

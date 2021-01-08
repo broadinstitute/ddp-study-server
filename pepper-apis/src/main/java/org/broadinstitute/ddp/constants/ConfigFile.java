@@ -110,6 +110,7 @@ public class ConfigFile {
     public static final String SEND_METRICS = "sendMetrics";
 
     public static final String RESTRICT_REGISTER_ROUTE = "restrictRegisterRoute";
+    public static final String RESTRICT_AUTH0_LOG_EVENT_ROUTE = "restrictAuth0LogEventRoute";
 
     /**
      * Google API key for geocoding
