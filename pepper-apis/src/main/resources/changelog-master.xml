@@ -243,4 +243,5 @@
     <include file="db-changes/seed/add-languages-de-hi-it-ja-pl-tr.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/DDP-5277-revision-activity-naming-details.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/DDP-5509-copy-previous-instance-filter.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/seed/DDP-5505-text-question-institution-suggestion-type.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>
