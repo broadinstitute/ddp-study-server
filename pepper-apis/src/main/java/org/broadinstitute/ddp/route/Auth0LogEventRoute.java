@@ -19,7 +19,7 @@ public class Auth0LogEventRoute implements Route {
 
     @Override
     public Object handle(Request request, Response response) throws Exception {
-        LOG.error("AUTH0-LOG-EVENT:\n-------------------------\n" + request.body() + "\n-------------------------");
+        LOG.info("AUTH0-LOG-EVENT:\n-------------------------\n" + request.body() + "\n-------------------------");
         return null;
     }
 
