@@ -34,23 +34,9 @@
     .auth0-lock.auth0-lock.auth0-lock-opened .auth0-lock-widget {
         box-shadow: 0 0 40px 4px #888888;
     }
-    .auth0-lock-name {
-        font-size:12pt !important;
-        text-align:left;
-        text-overflow: clip !important;
-        white-space: normal !important;
-    }
 
     .auth0-lock-content {
         padding-top:10px !important;
-    }
-
-    .auth0-lock-header .auth0-lock-header-bg {
-        background-color:white !important;
-    }
-
-    .auth0-lock-header, .auth0-lock-header-bg.auth0-lock-blur-support {
-        height:148px !important;
     }
 
     .auth0-lock.auth0-lock .auth0-lock-form p {
@@ -101,46 +87,42 @@
 
     var dictionaries = {};
     dictionaries['en'] = {
-        loginTitle: 'Welcome back! Please sign in to your account.',
-        signupTitle: 'Please create an account to begin your application questionnaire.',
-        forgotPasswordTitle: 'Please enter your email address and we will send you password reset instructions.',
         emailInputPlaceholder: 'Email address *',
         passwordInputPlaceholder: 'Password *',
-        passwordMessage: 'Password must be at least 8 characters long and contain at least one number, one upper case letter, and one lower case letter',
+        signupTitle: 'Create an account',
+        databaseSignUpInstructions: 'Please create an account to begin your application questionnaire.',
+        alreadyRegisteredInner: 'If you have already registered, sign in here.',
+        loginTitle: 'Sign In',
+        databaseEnterpriseLoginInstructions: 'Welcome back! Please sign in to your account.',
         loginLinkText: 'Already have an account? Sign in here',
-        loginHeaderText: 'Sign In',
-        signupHeaderText: 'Create an account',
-        passwordHeaderText: 'Forgot Password?',
-        signupLinkText: 'Don\'t have an account?  Learn about how to get started',
         forgotPasswordAction: 'Forgot your password?',
-        forgotPasswordInstructions: 'Please enter your email address and we will send you password reset instructions.'
+        signupLinkText: 'Don\'t have an account?  Learn about how to get started',
+        userExists: 'If you have already registered, sign in here.',
+        forgotPasswordTitle: 'Forgot Password?',
+        forgotPasswordInstructions: 'Please enter your email address and we will send you password reset instructions.',
+        passwordMessage: 'Password must be at least 8 characters long and contain at least one number, one upper case letter, and one lower case letter',
+        successForgotPassword: 'If you have previously registered, please check your email to reset your password',
+        resetPasswordInnerText: 'Password reset successfully.  Please sign in with your new password.',
     };
-    dictionaries['en'].error.signUp.user_exists = 'If you have already registered, sign in here.';
-    dictionaries['en'].success = {
-        forgotPassword: "If you have previously registered, please check your email to reset your password.",
-    };
-    dictionaries['en'].lastLoginInstructions = 'Last time you signed in with';
 
     dictionaries['es'] = {
-        loginTitle: '[es]Welcome back! Please sign in to your account.',
-        signupTitle: '[es]Please create an account to begin your application questionnaire.',
-        forgotPasswordTitle: '[es]Please enter your email address and we will send you password reset instructions.',
         emailInputPlaceholder: '[es]Email address *',
         passwordInputPlaceholder: '[es]Password *',
-        passwordMessage: '[es]Password must be at least 8 characters long and contain at least one number, one upper case letter, and one lower case letter',
+        signupTitle: '[es]Create an account',
+        databaseSignUpInstructions: '[es]Please create an account to begin your application questionnaire.',
+        alreadyRegisteredInner: '[es]If you have already registered, sign in here.',
+        loginTitle: '[es]Sign In',
+        databaseEnterpriseLoginInstructions: '[es]Welcome back! Please sign in to your account.',
         loginLinkText: '[es]Already have an account? Sign in here',
-        loginHeaderText: '[es]Sign In',
-        signupHeaderText: '[es]Create an account',
-        passwordHeaderText: '[es]Forgot Password?',
-        signupLinkText: '[es]Don\'t have an account?  Learn about how to get started',
         forgotPasswordAction: '[es]Forgot your password?',
-        forgotPasswordInstructions: '[es]Please enter your email address and we will send you password reset instructions.'
+        signupLinkText: '[es]Don\'t have an account?  Learn about how to get started',
+        userExists: '[es]If you have already registered, sign in here.',
+        forgotPasswordTitle: '[es]Forgot Password?',
+        forgotPasswordInstructions: '[es]Please enter your email address and we will send you password reset instructions.',
+        passwordMessage: '[es]Password must be at least 8 characters long and contain at least one number, one upper case letter, and one lower case letter',
+        successForgotPassword: '[es]If you have previously registered, please check your email to reset your password',
+        resetPasswordInnerText: '[es]Password reset successfully.  Please sign in with your new password.',
     };
-    dictionaries['es'].error.signUp.user_exists = '[es]If you have already registered, sign in here.';
-    dictionaries['es'].success = {
-        forgotPassword: "[es]If you have previously registered, please check your email to reset your password.",
-    };
-    dictionaries['es'].lastLoginInstructions = '[es]Last time you signed in with';
 
     var languageDictionary = dictionaries[languageCode];
     languageDictionary.displayNames = {
@@ -149,6 +131,9 @@
     };
     languageDictionary.error = languageDictionary.error || {};
     languageDictionary.error.signUp = languageDictionary.error.signUp || {};
+    languageDictionary.error.signUp.user_exists = languageDictionary.userExists;
+    languageDictionary.success = languageDictionary.success || {};
+    languageDictionary.success.forgotPassword = languageDictionary.successForgotPassword;
     languageDictionary.title = mode === 'login' ? languageDictionary.loginTitle : languageDictionary.signupTitle;
 
 
@@ -227,7 +212,7 @@
                         alreadyRegistered.setAttribute('href', loginUrl);
                         alreadyRegistered.setAttribute('style','color:black');
                         alreadyRegistered.setAttribute('id','ddp-already-registered');
-                        alreadyRegistered.innerText = 'If you have already registered, sign in here.';
+                        alreadyRegistered.innerText = languageDictionary.alreadyRegisteredInner;
                         document.getElementsByClassName('auth0-global-message')[0].children[0].appendChild(alreadyRegistered);
 
                     }
@@ -237,9 +222,8 @@
             if (!document.getElementById('ddp-header')) {
                 // tweak the header
                 var header = document.createElement('div');
-                var headerText = mode === 'login' ? languageDictionary.loginHeaderText : languageDictionary.signupHeaderText;
                 header.innerHTML = '<div id="ddp-header" style="display:flex;flex-direction:row;justify-content: flex-start;align-items:center;"' +
-                    '><img class="auth0-lock-header-logo" src="' + headerLogo + '"/><div style="padding-left:8px;">' + headerText + '</div></div></div>';
+                    '><img class="auth0-lock-header-logo" src="' + headerLogo + '"/></div></div>';
                 var auth0LockHeader = document.getElementsByClassName('auth0-lock-header-logo')[0];
 
                 if (auth0LockHeader) {
@@ -310,7 +294,7 @@
                         resetPasswordWrapper.setAttribute('style','margin-top:0px;');
 
                         var resetPasswordText = document.createElement("div");
-                        resetPasswordText.innerText = "Password reset successfully.  Please sign in with your new password.";
+                        resetPasswordText.innerText = languageDictionary.resetPasswordInnerText;
 
                         resetPasswordWrapper.appendChild(resetPasswordText);
                         document.getElementsByClassName('auth0-lock-content')[0].prepend(resetPasswordWrapper);
