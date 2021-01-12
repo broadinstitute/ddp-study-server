@@ -136,11 +136,19 @@ public class GetInstitutionSuggestionsRouteTest extends IntegrationTestSuite.Tes
     }
 
     @Test
-    public void testResultsAreLimited() throws IOException {
+    public void testResultsAreLimited_defaultLimit() throws IOException {
         String url = endpoint + "?namePattern=limit";
         List<InstitutionSuggestion> suggestions = executeGetRequestAndGetResponseBody(token, url);
         Assert.assertNotNull(suggestions);
         Assert.assertEquals(GetInstitutionSuggestionsRoute.LIMIT, suggestions.size());
+    }
+
+    @Test
+    public void testResultsAreLimited_customLimit() throws IOException {
+        String url = endpoint + "?namePattern=limit&limit=10";
+        List<InstitutionSuggestion> suggestions = executeGetRequestAndGetResponseBody(token, url);
+        Assert.assertNotNull(suggestions);
+        Assert.assertEquals(10, suggestions.size());
     }
 
     private static class NewInstitutionTestData {
