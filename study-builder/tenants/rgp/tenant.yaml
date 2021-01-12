@@ -1,0 +1,54 @@
+tenant:
+  default_directory: Username-Password-Authentication
+
+rules:
+  - name: Register User in Pepper
+    script: ../register-user-in-pepper.js
+    stage: login_success
+    enabled: true
+    order: 1
+
+pages:
+  - name: login
+    html: ./pages/login.html
+    enabled: true
+  - name: password_reset
+    html: ./pages/password_reset.html
+    enabled: true
+
+emailTemplates:
+  - template: reset_email
+    body: ./emails/change_password.html
+    from: Rare Genomes Project <##STUDY_EMAIL##>
+    resultUrl: '##SERVER_BASE_URL##/pepper/v1/post-password-reset?clientId={{ application.clientID }}'
+    subject: >-
+      {% if user.user_metadata.language == "es" %} [es]Reset Your Password
+      {% else %} Reset Your Password {% endif %}
+    urlLifetimeInSeconds: 432000
+    syntax: liquid
+    enabled: true
+
+# NOTE: client names must match what's in Auth0's dashboard, otherwise deploy
+# will create new clients. Everytime deploy happens, client configurations here
+# will overwrite what's in Auth0. If there are additional urls not in here then
+# those need to be added back manually. Other settings not configured here will
+# also need to be configured manually.
+clients:
+  - name: rgp-angular-client
+    app_type: spa
+    callbacks:
+      - '##BASE_URL##/login-landing'
+      ##LOCALHOST_CALLBACKS##
+    allowed_logout_urls:
+      - '##BASE_URL##'
+      - '##BASE_URL##/session-expired'
+      ##LOCALHOST_LOGOUTS##
+    web_origins:
+      - '##BASE_URL##'
+      ##LOCALHOST_ORIGINS##
+    client_metadata:
+      study: RGP
+    jwt_configuration:
+      alg: RS256
+      lifetime_in_seconds: 36000
+    oidc_conformant: true
