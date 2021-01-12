@@ -4,5 +4,6 @@ public enum SuggestionType {
     NONE,
     DRUG,
     CANCER,
-    INCLUDED
+    INCLUDED,
+    INSTITUTION
 }
