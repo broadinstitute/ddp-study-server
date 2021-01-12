@@ -9,6 +9,12 @@ get:
       description: the substring to filter on
       schema:
         type: string
+    - in: query
+      name: limit
+      description: maximum number of suggestions to return
+      schema:
+        type: integer
+        minimum: 0
   responses:
     200:
       $ref: '../pepper.yml#/components/responses/InstitutionSuggestion'

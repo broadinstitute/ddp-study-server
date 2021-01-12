@@ -15,11 +15,13 @@ import org.broadinstitute.ddp.db.dao.EventDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiActivityVersion;
 import org.broadinstitute.ddp.db.dao.JdbiBlockNesting;
+import org.broadinstitute.ddp.db.dao.JdbiFormSectionBlock;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.SectionBlockDao;
 import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dto.ActivityDto;
 import org.broadinstitute.ddp.db.dto.ActivityVersionDto;
+import org.broadinstitute.ddp.db.dto.SectionBlockMembershipDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.activity.definition.ActivityDef;
@@ -161,14 +163,23 @@ public class TestBostonLongitudinalV2 implements CustomTask {
         sectionBlockDao.insertBlockByType(activityId, hospitalDaysBlockDef, revisionId);
         jdbiBlockNesting.insert(parentBlockId, hospitalDaysBlockDef.getBlockId(), displayOrder, revisionId);
 
-        // Vaccine question blocks should show up after Flu Shot question which is 7th, so start display order after 70.
-        displayOrder = 73;
+        // Vaccine question blocks should show up after Flu Shot question.
+        String fluShotStableId = varsCfg.getString("id.q.flu_shot");
+        QuestionBlockDef fluShotBlockDef = currentSectionDef.getBlocks().stream()
+                .filter(b -> b.getBlockType() == BlockType.QUESTION)
+                .map(b -> (QuestionBlockDef) b)
+                .filter(b -> b.getQuestion().getStableId().equals(fluShotStableId))
+                .findFirst().get();
+        displayOrder = handle.attach(JdbiFormSectionBlock.class)
+                .getActiveMembershipByBlockId(fluShotBlockDef.getBlockId())
+                .map(SectionBlockMembershipDto::getDisplayOrder)
+                .get() + 3;
 
         LOG.info("Adding question block {} to section {} with displayOrder={}...",
                 vaccineStudyBlockDef.getControl().getStableId(), sectionId, displayOrder);
         sectionBlockDao.insertBlockForSection(activityId, sectionId, displayOrder, vaccineStudyBlockDef, revisionId);
 
-        displayOrder = 76;
+        displayOrder += 3;
         LOG.info("Adding question block {} to section {} with displayOrder={}...",
                 vaccineReceivedBlockDef.getControl().getStableId(), sectionId, displayOrder);
         sectionBlockDao.insertBlockForSection(activityId, sectionId, displayOrder, vaccineReceivedBlockDef, revisionId);
