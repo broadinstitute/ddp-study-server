@@ -2,6 +2,7 @@ package org.broadinstitute.ddp.copy;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 
 import java.util.List;
 
@@ -15,6 +16,7 @@ import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.model.activity.definition.question.NumericQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
+import org.broadinstitute.ddp.model.activity.instance.answer.BoolAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.CompositeAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.NumericIntegerAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
@@ -25,6 +27,7 @@ import org.broadinstitute.ddp.model.copy.CopyConfiguration;
 import org.broadinstitute.ddp.model.copy.CopyConfigurationPair;
 import org.broadinstitute.ddp.model.copy.CopyLocation;
 import org.broadinstitute.ddp.model.copy.CopyLocationType;
+import org.broadinstitute.ddp.model.copy.CopyPreviousInstanceFilter;
 import org.broadinstitute.ddp.model.user.UserProfile;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
 import org.broadinstitute.ddp.util.TestFormActivity;
@@ -104,6 +107,7 @@ public class CopyExecutorTest extends TxnAwareBaseTest {
     public void testExecute_copyFromPreviousInstance() {
         TransactionWrapper.useTxn(handle -> {
             TestFormActivity act = TestFormActivity.builder()
+                    .withBoolQuestion(true)
                     .withTextQuestion(true)
                     .withCompositeQuestion(true, NumericQuestionDef
                             .builder(NumericType.INTEGER, "child-num", Template.text("child-num-prompt"))
@@ -112,6 +116,9 @@ public class CopyExecutorTest extends TxnAwareBaseTest {
             long instance1Id = createInstance(handle, act.getDef().getActivityId()).getId();
 
             AnswerDao answerDao = handle.attach(AnswerDao.class);
+            answerDao.createAnswer(testData.getUserId(), instance1Id,
+                    new BoolAnswer(null, act.getBoolQuestion().getStableId(), null, true));
+
             var answer = new TextAnswer(null, act.getTextQuestion().getStableId(), null, "prev-text");
             answerDao.createAnswer(testData.getUserId(), instance1Id, answer);
 
@@ -120,7 +127,11 @@ public class CopyExecutorTest extends TxnAwareBaseTest {
             compAnswer.addRowOfChildAnswers(new NumericIntegerAnswer(null, "child-num", null, 25L));
             answerDao.createAnswer(testData.getUserId(), instance1Id, compAnswer);
 
-            var config = new CopyConfiguration(testData.getStudyId(), true, List.of());
+            var config = new CopyConfiguration(testData.getStudyId(), true,
+                    List.of(new CopyPreviousInstanceFilter(new CopyAnswerLocation(act.getTextQuestion().getStableId())),
+                            new CopyPreviousInstanceFilter(new CopyAnswerLocation(
+                                    act.getCompositeQuestion().getChildren().get(0).getStableId()))),
+                    List.of());
             config = handle.attach(CopyConfigurationDao.class).createCopyConfig(config);
 
             long instance2Id = createInstance(handle, act.getDef().getActivityId()).getId();
@@ -133,6 +144,8 @@ public class CopyExecutorTest extends TxnAwareBaseTest {
                     .orElse(null);
             assertNotNull(actual);
             assertEquals(2, actual.getAnswers().size());
+            assertNull("should not copy bool answer since it is not specified",
+                    actual.getAnswer(act.getBoolQuestion().getStableId()));
 
             var actualAnswer = actual.getAnswer(act.getTextQuestion().getStableId());
             assertNotNull(actualAnswer);

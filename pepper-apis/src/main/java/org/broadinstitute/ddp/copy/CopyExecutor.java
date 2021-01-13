@@ -8,6 +8,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dao.JdbiQuestion;
@@ -103,31 +104,65 @@ public class CopyExecutor {
             throw new DDPException("Could not find triggered or previous instance");
         }
 
+        Map<String, QuestionDto> questionDtos = retrievePreviousInstanceQuestionDtos(handle, config, previousInstance);
+        if (questionDtos.isEmpty()) {
+            LOG.info("Previous instance {} does not have any answers to copy from", previousInstance.getGuid());
+            return;
+        }
+
+        Iterable<String> questionsToCopy;
+        if (!config.getPreviousInstanceFilters().isEmpty()) {
+            // Create iterable so we copy answers in execution order of filters, ensuring that those
+            // questions have answers in previous instance (by checking existence of questionDto).
+            questionsToCopy = config.getPreviousInstanceFilters().stream()
+                    .map(item -> item.getLocation().getQuestionStableId())
+                    .filter(questionDtos::containsKey)
+                    .collect(Collectors.toList());
+        } else {
+            questionsToCopy = questionDtos.keySet();
+        }
+
+        int numCopied = 0;
+        for (var questionStableId : questionsToCopy) {
+            QuestionDto question = questionDtos.get(questionStableId);
+            copier.copy(previousInstance, question, currentInstance, question);
+            numCopied++;
+        }
+
+        LOG.info("Copied answers for {} questions from previous instance {} to instance {}",
+                numCopied, previousInstance.getGuid(), currentInstance.getGuid());
+    }
+
+    private Map<String, QuestionDto> retrievePreviousInstanceQuestionDtos(
+            Handle handle, CopyConfiguration config, FormResponse previousInstance) {
         // Build set of stable ids of questions that have an answer in the previous instance.
         // Copier doesn't support copying top-level composite answers, so we need to drill into child questions.
-        Map<String, Set<String>> childQuestionStableIds = new HashMap<>();
         Set<String> questionStableIds = previousInstance.getAnswers().stream()
-                .map(answer -> {
+                .flatMap(answer -> {
                     if (answer.getQuestionType() == QuestionType.COMPOSITE) {
-                        Set<String> childStableId = ((CompositeAnswer) answer).getValue().stream()
+                        return ((CompositeAnswer) answer).getValue().stream()
                                 .flatMap(row -> row.getValues().stream())
                                 .filter(Objects::nonNull)
-                                .map(Answer::getQuestionStableId)
-                                .collect(Collectors.toSet());
-                        childQuestionStableIds.put(answer.getQuestionStableId(), childStableId);
-                        return null;
+                                .map(Answer::getQuestionStableId);
                     } else {
-                        return answer.getQuestionStableId();
+                        return Stream.of(answer.getQuestionStableId());
                     }
                 })
                 .filter(Objects::nonNull)
                 .collect(Collectors.toSet());
-        for (var childStableIds : childQuestionStableIds.values()) {
-            questionStableIds.addAll(childStableIds);
+
+        Set<String> specifiedStableIds = config.getPreviousInstanceFilters().stream()
+                .map(item -> item.getLocation().getQuestionStableId())
+                .collect(Collectors.toSet());
+        if (!specifiedStableIds.isEmpty()) {
+            // If config has previous answer questions specified, then filter down the list to only those
+            // that we want to copy over. This can be done using a set intersection operation.
+            questionStableIds.retainAll(specifiedStableIds);
+            LOG.info("Filtered previous instance answers to only questions specified in copy config {}", config.getId());
         }
+
         if (questionStableIds.isEmpty()) {
-            LOG.info("Previous instance {} does not have any answers to copy from", previousInstance.getGuid());
-            return;
+            return new HashMap<>();
         }
 
         Map<String, QuestionDto> questionDtos;
@@ -136,22 +171,7 @@ public class CopyExecutor {
             questionDtos = stream.collect(Collectors.toMap(QuestionDto::getStableId, Function.identity()));
         }
 
-        int numCopied = 0;
-        for (var previousAnswer : previousInstance.getAnswers()) {
-            if (previousAnswer.getQuestionType() == QuestionType.COMPOSITE) {
-                for (var childStableId : childQuestionStableIds.get(previousAnswer.getQuestionStableId())) {
-                    QuestionDto childQuestion = questionDtos.get(childStableId);
-                    copier.copy(previousInstance, childQuestion, currentInstance, childQuestion);
-                }
-            } else {
-                QuestionDto question = questionDtos.get(previousAnswer.getQuestionStableId());
-                copier.copy(previousInstance, question, currentInstance, question);
-            }
-            numCopied++;
-        }
-
-        LOG.info("Copied {} answers from previous instance {} to instance {}",
-                numCopied, previousInstance.getGuid(), currentInstance.getGuid());
+        return questionDtos;
     }
 
     private Map<String, QuestionDto> retrieveQuestionDtos(Handle handle, CopyConfiguration config) {

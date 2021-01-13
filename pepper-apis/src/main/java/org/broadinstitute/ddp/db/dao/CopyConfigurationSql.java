@@ -36,6 +36,14 @@ public interface CopyConfigurationSql extends SqlObject {
             @Bind("questionStableId") String questionStableId);
 
     @GetGeneratedKeys
+    @SqlUpdate("insert into copy_previous_instance_filter (copy_configuration_id, answer_location_id, execution_order)"
+            + " values (:configId, :locId, :order)")
+    long insertCopyPreviousInstanceFilter(
+            @Bind("configId") long configId,
+            @Bind("locId") long answerLocationId,
+            @Bind("order") int order);
+
+    @GetGeneratedKeys
     @SqlUpdate("insert into copy_configuration_pair (copy_configuration_id, source_location_id, target_location_id, execution_order)"
             + " values (:configId, :sourceLocId, :targetLocId, :order)")
     long insertCopyConfigPair(

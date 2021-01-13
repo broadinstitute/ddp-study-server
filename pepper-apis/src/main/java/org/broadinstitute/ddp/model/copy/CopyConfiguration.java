@@ -11,6 +11,7 @@ public class CopyConfiguration {
     private long id;
     private long studyId;
     private boolean copyFromPreviousInstance;
+    private List<CopyPreviousInstanceFilter> previousInstanceFilters = new ArrayList<>();
     private List<CopyConfigurationPair> pairs = new ArrayList<>();
 
     @JdbiConstructor
@@ -29,6 +30,15 @@ public class CopyConfiguration {
         addPairs(pairs);
     }
 
+    public CopyConfiguration(long studyId, boolean copyFromPreviousInstance,
+                             List<CopyPreviousInstanceFilter> previousInstanceFilters,
+                             List<CopyConfigurationPair> pairs) {
+        this.studyId = studyId;
+        this.copyFromPreviousInstance = copyFromPreviousInstance;
+        addPreviousInstanceFilters(previousInstanceFilters);
+        addPairs(pairs);
+    }
+
     public long getId() {
         return id;
     }
@@ -39,6 +49,16 @@ public class CopyConfiguration {
 
     public boolean shouldCopyFromPreviousInstance() {
         return copyFromPreviousInstance;
+    }
+
+    public List<CopyPreviousInstanceFilter> getPreviousInstanceFilters() {
+        return previousInstanceFilters;
+    }
+
+    public void addPreviousInstanceFilters(List<CopyPreviousInstanceFilter> previousInstanceFilters) {
+        if (previousInstanceFilters != null) {
+            this.previousInstanceFilters.addAll(previousInstanceFilters);
+        }
     }
 
     public List<CopyConfigurationPair> getPairs() {
