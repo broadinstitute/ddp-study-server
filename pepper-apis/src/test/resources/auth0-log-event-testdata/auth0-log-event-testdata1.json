@@ -1,0 +1,130 @@
+{
+  "logs": [
+    {
+      "log_id": "90020210109193422350000813516550845677722180126643322962",
+      "data": {
+        "date": "2021-01-09T19:34:18.617Z",
+        "type": "s",
+        "connection": "Username-Password-Authentication",
+        "connection_id": "con_7q6tTpAKRg1fvS5j",
+        "client_id": "XXX_client_id_XXX",
+        "client_name": "angio-angular-client",
+        "ip": "83.102.216.27",
+        "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
+        "details": {
+          "prompts": [
+            {
+              "name": "lock-password-authenticate",
+              "initiatedAt": 1610220857358,
+              "completedAt": 1610220857885,
+              "connection": "Username-Password-Authentication",
+              "connection_id": "con_7q6tTpAKRg1fvS5j",
+              "strategy": "auth0",
+              "identity": "XXX_user_id_XXX",
+              "stats": {
+                "loginsCount": 39
+              },
+              "session_user": "5ffa05399e904a006eb84e85",
+              "elapsedTime": 527
+            },
+            {
+              "name": "login",
+              "flow": "login",
+              "initiatedAt": 1610220854143,
+              "completedAt": 1610220857888,
+              "timers": {
+                "rules": 701
+              },
+              "user_id": "auth0|XXX_user_id_XXX",
+              "user_name": "test_name@broadinstitute.org",
+              "elapsedTime": 3745
+            }
+          ],
+          "initiatedAt": 1610220854141,
+          "completedAt": 1610220858612,
+          "elapsedTime": 4471,
+          "session_id": "xXhZyQ2FrfARBk64_MIp561Bfy7ig0CJ",
+          "stats": {
+            "loginsCount": 39
+          }
+        },
+        "hostname": "login-dev.joincountmein.org",
+        "user_id": "auth0|XXX_user_id_XXX",
+        "user_name": "test_name@broadinstitute.org",
+        "strategy": "auth0",
+        "strategy_type": "database",
+        "log_id": "90020210109193422350000813516550845677722180126643322962"
+      }
+    },
+    {
+      "log_id": "90020210109193423748000813518392039700995260428440305746",
+      "data": {
+        "date": "2021-01-09T19:34:18.537Z",
+        "type": "sapi",
+        "description": "Update a user",
+        "client_id": "XXX_client_id_XXX_2",
+        "client_name": "",
+        "ip": "35.167.74.121",
+        "user_agent": "node-superagent/1.8.5",
+        "details": {
+          "request": {
+            "method": "patch",
+            "path": "/api/v2/users/auth0%7CXXX_user_id_XXX",
+            "query": {},
+            "userAgent": "node-superagent/1.8.5",
+            "body": {
+              "app_metadata": {
+                "pepper_user_guids": {},
+                "user_guid": "XXX_user_guid_XXX"
+              }
+            },
+            "channel": "api",
+            "ip": "35.167.74.121",
+            "auth": {
+              "user": {},
+              "strategy": "jwt",
+              "credentials": {
+                "jti": "XXX_jti_XXX",
+                "scopes": [
+                  "read:users",
+                  "update:users"
+                ]
+              }
+            }
+          },
+          "response": {
+            "statusCode": 200,
+            "body": {
+              "created_at": "2020-12-16T14:08:02.908Z",
+              "email": "test_name@broadinstitute.org",
+              "email_verified": false,
+              "identities": [
+                {
+                  "user_id": "XXX_user_id_XXX",
+                  "provider": "auth0",
+                  "connection": "Username-Password-Authentication",
+                  "isSocial": false
+                }
+              ],
+              "name": "test_name@broadinstitute.org",
+              "nickname": "test_name",
+              "updated_at": "2021-01-09T19:34:18.532Z",
+              "user_id": "auth0|XXX_user_id_XXX",
+              "user_metadata": {
+                "language": "en"
+              },
+              "app_metadata": {
+                "pepper_user_guids": {},
+                "user_guid": "XXX_user_guid_XXX"
+              },
+              "last_ip": "83.102.216.27",
+              "last_login": "2021-01-09T19:34:17.881Z",
+              "logins_count": 39
+            }
+          }
+        },
+        "log_id": "90020210109193423748000813518392039700995260428440305746"
+      }
+    }
+  ]
+}

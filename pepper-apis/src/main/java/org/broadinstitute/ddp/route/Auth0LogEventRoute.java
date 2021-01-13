@@ -1,26 +1,36 @@
 package org.broadinstitute.ddp.route;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.util.List;
+import java.util.Map;
+
+
+import com.google.gson.JsonElement;
+import org.broadinstitute.ddp.service.Auth0LogEventService;
 import spark.Request;
 import spark.Response;
 import spark.Route;
 
 /**
- * Handler for POST ../auth0-log-event
- * 
- * <p>TODO: Current version of the class is just for investigating of log event data passed from Auth0
- * (this POST endpoint should be registered in a Auth0 custom webhook stream.
- * Next version will save the log event to an appropriate DB table(s).
+ * Handler for POST ../auth0-log-event?tenant=TENANT_NAME
+ *
+ * <p>JSON (sent in payload) is parsed and auth0 log events are extracted from it.
+ * Then log events are logged and persisted into table 'auth0_log_event'.
  */
 public class Auth0LogEventRoute implements Route {
 
-    private static final Logger LOG = LoggerFactory.getLogger(Auth0LogEventRoute.class);
+    private static final String QUERY_PARAM_TENANT = "tenant";
 
     @Override
     public Object handle(Request request, Response response) throws Exception {
-        LOG.info("AUTH0-LOG-EVENT:\n-------------------------\n" + request.body() + "\n-------------------------");
+
+        final Auth0LogEventService auth0LogEventService = new Auth0LogEventService();
+
+        final List<Map<String, JsonElement>> logEvents = auth0LogEventService.parseAuth0LogEvents(request.body());
+        String tenant = request.queryParams(QUERY_PARAM_TENANT);
+        for (var logEvent : logEvents) {
+            auth0LogEventService.logAuth0LogEvent(logEvent, tenant);
+            auth0LogEventService.persistAuth0LogEvent(logEvent, tenant);
+        }
         return null;
     }
-
 }

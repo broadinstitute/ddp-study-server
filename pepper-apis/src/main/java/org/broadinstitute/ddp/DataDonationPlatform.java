@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
+
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import org.apache.http.HttpStatus;
@@ -325,10 +326,9 @@ public class DataDonationPlatform {
         if (cfg.getBoolean(ConfigFile.RESTRICT_REGISTER_ROUTE)) {
             whitelist(API.REGISTRATION, cfg.getStringList(ConfigFile.AUTH0_IP_WHITE_LIST));
         }
-        // TODO: needs to uncomment when the auth0-log-event feature implementation completed
-        //        if (cfg.getBoolean(ConfigFile.RESTRICT_AUTH0_LOG_EVENT_ROUTE)) {
-        //            whitelist(API.AUTH0_LOG_EVENT, cfg.getStringList(ConfigFile.AUTH0_IP_WHITE_LIST));
-        //        }
+        if (cfg.getBoolean(ConfigFile.RESTRICT_AUTH0_LOG_EVENT_ROUTE)) {
+            whitelist(API.AUTH0_LOG_EVENT, cfg.getStringList(ConfigFile.AUTH0_IP_WHITE_LIST));
+        }
 
         post(API.REGISTRATION, new UserRegistrationRoute(interpreter), responseSerializer);
         post(API.TEMP_USERS, new CreateTemporaryUserRoute(), responseSerializer);

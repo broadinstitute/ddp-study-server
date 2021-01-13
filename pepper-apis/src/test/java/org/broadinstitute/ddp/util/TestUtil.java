@@ -3,17 +3,22 @@ package org.broadinstitute.ddp.util;
 import static io.restassured.RestAssured.config;
 import static io.restassured.config.RedirectConfig.redirectConfig;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+
+import com.google.gson.Gson;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import io.restassured.builder.RequestSpecBuilder;
 import io.restassured.specification.RequestSpecification;
-
 import org.broadinstitute.ddp.model.activity.definition.FormBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.QuestionBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
-
 import org.mockserver.client.MockServerClient;
 import org.mockserver.model.Header;
 import org.mockserver.model.HttpRequest;
@@ -74,4 +79,7 @@ public class TestUtil {
         );
     }
 
+    public static JsonElement readJSONFromFile(String fileName) throws FileNotFoundException {
+        return new Gson().fromJson(new FileReader(new File(fileName)), JsonObject.class);
+    }
 }
