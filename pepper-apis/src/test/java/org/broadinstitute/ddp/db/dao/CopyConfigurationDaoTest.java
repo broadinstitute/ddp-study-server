@@ -23,6 +23,7 @@ import org.broadinstitute.ddp.model.copy.CopyConfiguration;
 import org.broadinstitute.ddp.model.copy.CopyConfigurationPair;
 import org.broadinstitute.ddp.model.copy.CopyLocation;
 import org.broadinstitute.ddp.model.copy.CopyLocationType;
+import org.broadinstitute.ddp.model.copy.CopyPreviousInstanceFilter;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
 import org.broadinstitute.ddp.util.TestFormActivity;
 import org.junit.BeforeClass;
@@ -95,15 +96,24 @@ public class CopyConfigurationDaoTest extends TxnAwareBaseTest {
                     .withTextQuestion(true)
                     .build(handle, testData.getUserId(), testData.getStudyGuid());
 
-            var config = new CopyConfiguration(testData.getStudyId(), false, List.of(new CopyConfigurationPair(
-                    new CopyAnswerLocation(act.getTextQuestion().getStableId()),
-                    new CopyLocation(CopyLocationType.PARTICIPANT_PROFILE_FIRST_NAME))));
+            var config = new CopyConfiguration(testData.getStudyId(), true,
+                    List.of(new CopyPreviousInstanceFilter(new CopyAnswerLocation(act.getTextQuestion().getStableId()))),
+                    List.of(new CopyConfigurationPair(
+                            new CopyAnswerLocation(act.getTextQuestion().getStableId()),
+                            new CopyLocation(CopyLocationType.PARTICIPANT_PROFILE_FIRST_NAME))));
 
             CopyConfiguration actual = handle.attach(CopyConfigurationDao.class).createCopyConfig(config);
 
             assertNotNull(actual);
             assertTrue(actual.getId() > 0);
+            assertTrue(actual.shouldCopyFromPreviousInstance());
+            assertEquals(1, actual.getPreviousInstanceFilters().size());
             assertEquals(1, actual.getPairs().size());
+
+            CopyPreviousInstanceFilter actualFilter = actual.getPreviousInstanceFilters().get(0);
+            assertTrue(actualFilter.getId() > 0);
+            assertTrue(actualFilter.getLocation().getQuestionStableCodeId() > 0);
+            assertEquals(act.getTextQuestion().getStableId(), actualFilter.getLocation().getQuestionStableId());
 
             CopyConfigurationPair actualPair = actual.getPairs().get(0);
             assertTrue(actualPair.getId() > 0);
@@ -207,9 +217,11 @@ public class CopyConfigurationDaoTest extends TxnAwareBaseTest {
                     .withTextQuestion(true)
                     .build(handle, testData.getUserId(), testData.getStudyGuid());
 
-            var config = new CopyConfiguration(testData.getStudyId(), false, List.of(new CopyConfigurationPair(
-                    new CopyAnswerLocation(act.getTextQuestion().getStableId()),
-                    new CopyLocation(CopyLocationType.PARTICIPANT_PROFILE_FIRST_NAME))));
+            var config = new CopyConfiguration(testData.getStudyId(), true,
+                    List.of(new CopyPreviousInstanceFilter(new CopyAnswerLocation(act.getTextQuestion().getStableId()))),
+                    List.of(new CopyConfigurationPair(
+                            new CopyAnswerLocation(act.getTextQuestion().getStableId()),
+                            new CopyLocation(CopyLocationType.PARTICIPANT_PROFILE_FIRST_NAME))));
 
             CopyConfigurationDao copyConfigurationDao = handle.attach(CopyConfigurationDao.class);
             CopyConfiguration actual = copyConfigurationDao.createCopyConfig(config);

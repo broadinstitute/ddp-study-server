@@ -1,6 +1,6 @@
 group CopyConfigurationDao;
 
-all_configs_select() ::= <<
+all_configs_with_pairs_select() ::= <<
 select cfg.copy_configuration_id,
        cfg.study_id,
        cfg.copy_from_previous_instance,
@@ -30,12 +30,20 @@ select cfg.copy_configuration_id,
   left join copy_answer_location as tgt_ans on tgt_ans.copy_location_id = tgt.copy_location_id
 >>
 
-all_configs_order_by() ::= <<
+findConfigWithPairsByConfigId() ::= <<
+<all_configs_with_pairs_select()>
+where cfg.copy_configuration_id = :configId
 order by pair.execution_order asc
 >>
 
-queryCopyConfigById() ::= <<
-<all_configs_select()>
-where cfg.copy_configuration_id = :id
-<all_configs_order_by()>
+findPreviousInstanceFiltersByConfigId() ::= <<
+select filter.*,
+       loc.question_stable_code_id,
+       (select stable_id from question_stable_code
+         where question_stable_code_id = loc.question_stable_code_id
+       ) as question_stable_id
+  from copy_previous_instance_filter as filter
+  join copy_answer_location as loc on loc.copy_location_id = filter.answer_location_id
+ where filter.copy_configuration_id = :configId
+ order by filter.execution_order asc
 >>

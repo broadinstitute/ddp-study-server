@@ -170,7 +170,6 @@ public class BrainConsentVersion2 implements CustomTask {
         long fullNameBlockId = helper.findQuestionBlockId(fullNameDto.getId());
         JdbiFormSectionBlock jdbiFormSectionBlock = handle.attach(JdbiFormSectionBlock.class);
         SectionBlockMembershipDto fullNameSectionDto = jdbiFormSectionBlock.getActiveMembershipByBlockId(fullNameBlockId).get();
-        long fullNameRevId = fullNameDto.getRevisionId();
 
         long dobBlockId = helper.findQuestionBlockId(dobDto.getId());
         SectionBlockMembershipDto dobSectionDto = jdbiFormSectionBlock.getActiveMembershipByBlockId(dobBlockId).get();
@@ -188,9 +187,10 @@ public class BrainConsentVersion2 implements CustomTask {
         LOG.info("Added first name and last name questions.");
 
         //change displayOrder of fullname
-        long fullnameNewRevId = jdbiRevision.copyAndTerminate(fullNameRevId, meta);
-        jdbiFormSectionBlock.updateRevisionIdById(fullNameDto.getId(), fullnameNewRevId);
-        helper.updateFormSectionBlockDisplayOrder(fullNameSectionDto.getId(), dobSectionDto.getDisplayOrder() + 5);
+        long terminatedFullnameOrderRevId = jdbiRevision.copyAndTerminate(fullNameSectionDto.getRevisionId(), meta);
+        jdbiFormSectionBlock.updateRevisionIdById(fullNameSectionDto.getId(), terminatedFullnameOrderRevId);
+        jdbiFormSectionBlock.insert(fullNameSectionDto.getSectionId(), fullNameSectionDto.getBlockId(),
+                dobSectionDto.getDisplayOrder() + 5, activityVersionDto.getRevId());
 
         //update template placeholder text
         String newTemplateText = "Your Signature (Full Name)*";
