@@ -80,8 +80,7 @@
   "consent_download_indicates_p3": "Please click \"Next\" to continue the consent process.",
 
   "consent_make_changes_intro": "If you would like to change what you consented to or withdraw your information for use in future studies, please let us know by submitting the following form. Our study staff will contact you and help you make the changes.",
-  "consent_make_changes_contact": "You may also contact Jennifer Thornton, the Principal Investigator of the data repository, ",
-  "consent_make_changes_contact_at": "at: ",
+  "consent_make_changes_contact": "You may also contact Jennifer Thornton, the Principal Investigator of the data repository, at:",
   "consent_make_changes_contact_email": "support@atfamilies.org",
   "consent_make_changes_contact_or": " or ",
   "consent_make_changes_contact_phone": "+1 954-481-6611.",
@@ -514,8 +513,6 @@
   "feeding_help_concern_prompt": "How often do others help you finish meals because of concerns about getting enough to eat or drink? ",
   "feeding_poor_appetite_prompt": "How often do you have a poor appetite (are not hungry) that limits intake?",
   "feeding_madication_prompt": "How often do you take medications by mouth on your own?",
-  "feed_pa_how_often_does": "How often does",
-  "feed_pa_how_often_do_others_help": "How often do others help",
   "feed_pa_self_feed_fork_prompt": "self-feed with a fork?",
   "feed_pa_self_feed_spoon_prompt": "scoop food and self-feed with a spoon?",
   "feed_pa_eat_with_fingers_prompt": "eat foods with fingers?",
