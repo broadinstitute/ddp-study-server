@@ -86,8 +86,6 @@ public class ConfigFile {
     public static final String AUTH0_DSM_CLIENT_SECRET = "dsmClientSecret";
     public static final String AUTH0_DSM_API_AUDIENCE = "dsmApiAudience";
 
-    public static final String AUTH0_LOG_EVENT_API_AUTHORIZATION_TOKEN = "auth0LogEventApiAuthorizationToken";
-
     public static final String EASY_POST_API_KEY = "easyPostApiKey";
     public static final String USE_PUBSUB_EMULATOR = "usePubSubEmulator";
 
@@ -189,5 +187,11 @@ public class ConfigFile {
         public static final String FROM_EMAIL = "sendgrid.fromEmail";
         // The proxy URL to use for all outgoing SendGrid requests.
         public static final String PROXY = "sendgrid.proxy";
+    }
+
+    public static class Auth0LogEventApi {
+        public static final String AUTH0_LOG_EVENT_API = "auth0LogEventApi";
+        public static final String TOKEN_CHECK_ENABLED = AUTH0_LOG_EVENT_API + '.' + "tokenCheckEnabled";
+        public static final String BEARER_TOKEN = AUTH0_LOG_EVENT_API + '.' + "bearerToken";
     }
 }

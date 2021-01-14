@@ -3,11 +3,14 @@ package org.broadinstitute.ddp.route;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
 import static org.apache.http.HttpStatus.SC_UNAUTHORIZED;
-import static org.broadinstitute.ddp.constants.ConfigFile.AUTH0_LOG_EVENT_API_AUTHORIZATION_TOKEN;
+import static org.broadinstitute.ddp.constants.ConfigFile.Auth0LogEventApi.AUTH0_LOG_EVENT_API;
+import static org.broadinstitute.ddp.constants.ConfigFile.Auth0LogEventApi.BEARER_TOKEN;
+import static org.broadinstitute.ddp.constants.ConfigFile.Auth0LogEventApi.TOKEN_CHECK_ENABLED;
 import static org.broadinstitute.ddp.constants.ErrorCodes.INVALID_TOKEN;
 import static org.broadinstitute.ddp.constants.ErrorCodes.MALFORMED_HEADER;
 import static org.broadinstitute.ddp.constants.ErrorCodes.REQUIRED_PARAMETER_MISSING;
 import static org.broadinstitute.ddp.constants.RouteConstants.Header.AUTHORIZATION;
+import static org.broadinstitute.ddp.constants.RouteConstants.Header.BEARER;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.util.List;
@@ -17,7 +20,6 @@ import java.util.Map;
 import com.google.gson.JsonElement;
 import com.typesafe.config.Config;
 import org.apache.http.HttpStatus;
-import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.json.errors.ApiError;
 import org.broadinstitute.ddp.service.Auth0LogEventService;
 import org.broadinstitute.ddp.util.ResponseUtil;
@@ -35,11 +37,12 @@ import spark.Route;
  * <p>Header ("Authorization") to be specified as a parameter in Auth0 Custom Webhook definition.
  * It can contain API token.<br>
  * This is OPTIONAL:<br>
- * - if config parameter 'auth0.auth0LogEventApiAuthorizationToken' is specified (and it should contain
- *   the token value), then on the other side (in Auth0 Custom Webhook) it should be defined,
- *   and it will be checked by {@link Auth0LogEventRoute};<br>
- * - if config parameter 'auth0.auth0LogEventApiAuthorizationToken' is not specified or empty then
- *   token is NOT checked by {@link Auth0LogEventRoute}.
+ *   if config parameter 'auth0LogEventApi.tokenCheckEnabled' is true then a token
+ *   passed in REST header 'Authorization' will be compared with
+ *   'Bearer ' + 'auth0LogEventApi.bearerToken'.
+ *   On the other side in Auth0 Custom Webhook in "Authorization token".<br>
+ * If config section 'auth0LogEventApi' not specified or auth0LogEventApi.tokenCheckEnabled' is false,
+ * then token is not checked.
  */
 public class Auth0LogEventRoute implements Route {
 
@@ -48,12 +51,11 @@ public class Auth0LogEventRoute implements Route {
     /** Mandatory parameter in the log event URL. Specifies name of auth0 tenant */
     static final String QUERY_PARAM_TENANT = "tenant";
 
-    private final String auth0LogEventApiAuthorizationToken;
+    private final String auth0LogEventApiBearerToken;
 
     public Auth0LogEventRoute(final Config config) {
-        Config auth0Config = config.getConfig(ConfigFile.AUTH0);
-        auth0LogEventApiAuthorizationToken = auth0Config.hasPath(AUTH0_LOG_EVENT_API_AUTHORIZATION_TOKEN) ?
-            auth0Config.getString(AUTH0_LOG_EVENT_API_AUTHORIZATION_TOKEN) : null;
+        auth0LogEventApiBearerToken = config.hasPath(AUTH0_LOG_EVENT_API) && config.getBoolean(TOKEN_CHECK_ENABLED)
+                ? config.getString(BEARER_TOKEN) : null;
     }
 
     @Override
@@ -75,22 +77,26 @@ public class Auth0LogEventRoute implements Route {
 
     private String readTenant(final Request request) {
         String tenant = request.queryParams(QUERY_PARAM_TENANT);
-        if (tenant==null) {
+        if (tenant == null) {
             haltError(SC_BAD_REQUEST, REQUIRED_PARAMETER_MISSING, "Parameter not specified: " + QUERY_PARAM_TENANT);
         }
         return tenant;
     }
 
     private void checkAuthorizationToken(final Request request) {
-        if (isNotBlank(auth0LogEventApiAuthorizationToken)) {
+        if (isNotBlank(auth0LogEventApiBearerToken)) {
             String authorizationToken = request.headers(AUTHORIZATION);
             if (authorizationToken == null) {
                 haltError(SC_BAD_REQUEST, MALFORMED_HEADER, "Header not specified: " + AUTHORIZATION);
             }
-            if (!auth0LogEventApiAuthorizationToken.equals(authorizationToken)) {
+            if (!addBearerPrefixToToken(auth0LogEventApiBearerToken).equals(authorizationToken)) {
                 haltError(SC_UNAUTHORIZED, INVALID_TOKEN, "Invalid authorization token");
             }
         }
+    }
+
+    private String addBearerPrefixToToken(String token) {
+        return BEARER + token;
     }
 
     private void haltError(int status, String code, String msg) {
