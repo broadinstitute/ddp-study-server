@@ -45,6 +45,7 @@ import org.broadinstitute.ddp.db.dto.ActivityVersionDto;
 import org.broadinstitute.ddp.db.dto.EnrollmentStatusDto;
 import org.broadinstitute.ddp.db.dto.InvitationDto;
 import org.broadinstitute.ddp.db.dto.MedicalProviderDto;
+import org.broadinstitute.ddp.export.collectors.ActivityAttributesCollector;
 import org.broadinstitute.ddp.export.collectors.ActivityResponseCollector;
 import org.broadinstitute.ddp.model.activity.definition.ActivityDef;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
@@ -80,6 +81,7 @@ import org.broadinstitute.ddp.model.activity.types.PicklistSelectMode;
 import org.broadinstitute.ddp.model.activity.types.TemplateType;
 import org.broadinstitute.ddp.model.activity.types.TextInputType;
 import org.broadinstitute.ddp.model.address.MailAddress;
+import org.broadinstitute.ddp.model.dsm.KitReasonType;
 import org.broadinstitute.ddp.model.governance.AgeOfMajorityRule;
 import org.broadinstitute.ddp.model.governance.GovernancePolicy;
 import org.broadinstitute.ddp.model.invitation.InvitationType;
@@ -558,6 +560,7 @@ public class DataExporterTest extends TxnAwareBaseTest {
         // Check kit-related attributes.
         assertTrue(result.get(TEST_USER_GUID).contains("\"attributes\""));
         assertTrue(result.get(TEST_USER_GUID).contains("\"DDP_KIT_REQUEST_ID\":\"kit-1\""));
+        assertTrue(result.get(TEST_USER_GUID).contains("\"DDP_KIT_REASON_TYPE\":\"NORMAL\""));
         assertTrue(result.get(TEST_USER_GUID).contains("\"DDP_TEST_RESULT_CODE\":\"NEGATIVE\""));
         assertTrue(result.get(TEST_USER_GUID).contains("\"DDP_TEST_RESULT_TIME_COMPLETED\":\"2018-10-18T20:18:01Z\""));
     }
@@ -585,6 +588,7 @@ public class DataExporterTest extends TxnAwareBaseTest {
 
         // Run the test!
         StringWriter buffer = new StringWriter();
+        activities.get(0).setMaxInstancesSeen(2);   // Do 2 so we get a second set of columns.
         int numWritten = exporter.exportDataSetAsCsv(testData.getTestingStudy(), activities, participants.iterator(), buffer);
         assertEquals(1, numWritten);
 
@@ -595,9 +599,18 @@ public class DataExporterTest extends TxnAwareBaseTest {
         Iterator<String[]> iter = reader.iterator();
 
         String[] expected = new String[] {
+                // Participant metadata columns.
                 "participant_guid", "participant_hruid", "legacy_altpid", "legacy_shortid",
                 "first_name", "last_name", "email", "do_not_contact", "created_at", "status", "status_timestamp",
+                // First set of activity columns.
                 "ACT_v1", "ACT_v1_status", "ACT_v1_created_at", "ACT_v1_updated_at", "ACT_v1_completed_at",
+                "DDP_KIT_REASON_TYPE", "DDP_KIT_REQUEST_ID", "DDP_TEST_RESULT_CODE", "DDP_TEST_RESULT_TIME_COMPLETED",
+                "Q_BIRTHDAY_DAY", "Q_BIRTHDAY_MONTH", "Q_BIRTHDAY_YEAR", "Q_BOOL", "Q_TEXT", "Q_NUMERIC",
+                "ADDRESS_FULLNAME", "ADDRESS_STREET1", "ADDRESS_STREET2", "ADDRESS_CITY", "ADDRESS_STATE",
+                "ADDRESS_ZIP", "ADDRESS_COUNTRY", "ADDRESS_PHONE", "ADDRESS_PLUSCODE", "ADDRESS_STATUS", "PHYSICIAN",
+                // Second set of activity columns.
+                "ACT_v1_2", "ACT_v1_2_status", "ACT_v1_2_created_at", "ACT_v1_2_updated_at", "ACT_v1_2_completed_at",
+                "DDP_KIT_REASON_TYPE", "DDP_KIT_REQUEST_ID", "DDP_TEST_RESULT_CODE", "DDP_TEST_RESULT_TIME_COMPLETED",
                 "Q_BIRTHDAY_DAY", "Q_BIRTHDAY_MONTH", "Q_BIRTHDAY_YEAR", "Q_BOOL", "Q_TEXT", "Q_NUMERIC",
                 "ADDRESS_FULLNAME", "ADDRESS_STREET1", "ADDRESS_STREET2", "ADDRESS_CITY", "ADDRESS_STATE",
                 "ADDRESS_ZIP", "ADDRESS_COUNTRY", "ADDRESS_PHONE", "ADDRESS_PLUSCODE", "ADDRESS_STATUS", "PHYSICIAN"};
@@ -605,12 +618,21 @@ public class DataExporterTest extends TxnAwareBaseTest {
         assertArrayEquals(expected, actual);
 
         expected = new String[] {
+                // Participant metadata values.
                 TEST_USER_GUID, "blah-hruid", "blah-legacy-altpid", "blah-shortid",
                 "first-foo", "last-bar", "test@datadonationplatform.org", "true", "10/18/2018 20:18:01", "ENROLLED", "10/18/2018 20:18:01",
+                // First set of activity values.
                 "instance-guid-xyz", "COMPLETE", "10/18/2018 20:18:01", "10/18/2018 20:18:21", "10/18/2018 20:18:11",
+                "NORMAL", "kit-1", "NEGATIVE", "2018-10-18T20:18:01Z",
                 "16", "05", "1978", "true", "john smith", "25",
                 "foo bar", "85 Main St", "Apt 2", "Boston", "MA", "02115", "US", "6171112233",
-                "87JC9WFP+HV", "INVALID", "dr. a;inst a;boston;ma"};
+                "87JC9WFP+HV", "INVALID", "dr. a;inst a;boston;ma",
+                // Second set of activity values, which should be all empty.
+                "", "", "", "", "",         // Empty instance metadata.
+                "", "", "", "",             // Empty attributes.
+                "", "", "", "", "", "",     // Empty question answers/responses.
+                "", "", "", "", "", "", "", "",
+                "", "", ""};
         actual = iter.next();
         assertArrayEquals(expected, actual);
         assertFalse(iter.hasNext());
@@ -676,6 +698,8 @@ public class DataExporterTest extends TxnAwareBaseTest {
                     .build();
             ActivityVersionDto versionDto = new ActivityVersionDto(1L, 1L, "v1", 1L, timestamp, null);
             activities = List.of(new ActivityExtract(def, versionDto));
+            activities.get(0).setMaxInstancesSeen(1);
+            activities.get(0).addAttributesSeen(ActivityAttributesCollector.EXPOSED_ATTRIBUTES);
 
             EnrollmentStatusDto status = new EnrollmentStatusDto(1L, 1L, "user", 1L, testData.getStudyGuid(),
                     EnrollmentStatusType.ENROLLED, timestamp, null);
@@ -706,6 +730,7 @@ public class DataExporterTest extends TxnAwareBaseTest {
 
                 Map<String, String> substitutions = Map.of(
                         I18nTemplateConstants.Snapshot.KIT_REQUEST_ID, "kit-1",
+                        I18nTemplateConstants.Snapshot.KIT_REASON_TYPE, KitReasonType.NORMAL.name(),
                         I18nTemplateConstants.Snapshot.TEST_RESULT_CODE, "NEGATIVE",
                         I18nTemplateConstants.Snapshot.TEST_RESULT_TIME_COMPLETED, Instant.ofEpochMilli(timestamp).toString());
                 participant.putActivityInstanceSubstitutions(instance.getId(), substitutions);

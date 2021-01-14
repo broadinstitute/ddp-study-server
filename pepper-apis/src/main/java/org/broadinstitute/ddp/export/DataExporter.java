@@ -36,7 +36,6 @@ import org.apache.commons.lang.StringUtils;
 import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.client.Auth0ManagementClient;
 import org.broadinstitute.ddp.constants.ConfigFile;
-import org.broadinstitute.ddp.content.I18nTemplateConstants;
 import org.broadinstitute.ddp.db.ActivityDefStore;
 import org.broadinstitute.ddp.db.DaoException;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
@@ -55,6 +54,7 @@ import org.broadinstitute.ddp.db.dto.EnrollmentStatusDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.elastic.ElasticSearchIndexType;
 import org.broadinstitute.ddp.exception.DDPException;
+import org.broadinstitute.ddp.export.collectors.ActivityAttributesCollector;
 import org.broadinstitute.ddp.export.collectors.ActivityMetadataCollector;
 import org.broadinstitute.ddp.export.collectors.ActivityResponseCollector;
 import org.broadinstitute.ddp.export.collectors.MailingAddressFormatter;
@@ -219,6 +219,41 @@ public class DataExporter {
         return activities;
     }
 
+    /**
+     * Find and set the max number of instances seen per participant across the study for each given activity extract.
+     *
+     * @param handle     the database handle
+     * @param activities the list of activities to look at
+     */
+    public void computeMaxInstancesSeen(Handle handle, List<ActivityExtract> activities) {
+        var instanceDao = handle.attach(ActivityInstanceDao.class);
+        for (var activity : activities) {
+            long activityId = activity.getDefinition().getActivityId();
+            long versionId = activity.getVersionDto().getId();
+            int maxInstancesSeen = instanceDao
+                    .findMaxInstancesSeenPerUserByActivityAndVersion(activityId, versionId)
+                    .orElse(0);
+            activity.setMaxInstancesSeen(maxInstancesSeen);
+        }
+    }
+
+    /**
+     * Find and set the attribute names seen across all participants in study for each given activity extract.
+     *
+     * @param handle     the database handle
+     * @param activities the list of activities to look at
+     */
+    public void computeActivityAttributesSeen(Handle handle, List<ActivityExtract> activities) {
+        var instanceDao = handle.attach(ActivityInstanceDao.class);
+        for (var activity : activities) {
+            long activityId = activity.getDefinition().getActivityId();
+            long versionId = activity.getVersionDto().getId();
+            List<String> names = instanceDao
+                    .findSubstitutionNamesSeenAcrossUsersByActivityAndVersion(activityId, versionId);
+            activity.addAttributesSeen(names);
+        }
+    }
+
     public List<Participant> extractParticipantDataSet(Handle handle, StudyDto studyDto) {
         return extractParticipantDataSetByIds(handle, studyDto, null);
     }
@@ -258,6 +293,7 @@ public class DataExporter {
     private List<Participant> extractParticipantsFromResultSet(Handle handle, StudyDto studyDto, Stream<Participant> resultset) {
         Map<String, String> usersMissingEmails = new HashMap<>();
 
+        var instanceDao = handle.attach(ActivityInstanceDao.class);
         Map<String, Participant> participants = resultset
                 .peek(pt -> {
                     String auth0UserId = pt.getUser().getAuth0UserId();
@@ -269,6 +305,14 @@ public class DataExporter {
                         usersMissingEmails.put(auth0UserId, pt.getUser().getGuid());
                     } else {
                         pt.getUser().setEmail(email);
+                    }
+
+                    Set<Long> instanceIds = pt.getAllResponses().stream()
+                            .map(ActivityResponse::getId)
+                            .collect(Collectors.toSet());
+                    try (var stream = instanceDao.bulkFindSubstitutions(instanceIds)) {
+                        stream.forEach(wrapper -> pt.putActivityInstanceSubstitutions(
+                                wrapper.getActivityInstanceId(), wrapper.unwrap()));
                     }
                 })
                 .collect(Collectors.toMap(pt -> pt.getUser().getGuid(), pt -> pt));
@@ -602,18 +646,6 @@ public class DataExporter {
                 configPdfVersions,
                 participantProxyGuids);
 
-        // Load the activity instance substitutions for this batch of participants.
-        var instanceDao = handle.attach(ActivityInstanceDao.class);
-        for (var participant : participants) {
-            Set<Long> instanceIds = participant.getAllResponses().stream()
-                    .map(ActivityResponse::getId)
-                    .collect(Collectors.toSet());
-            try (var stream = instanceDao.bulkFindSubstitutions(instanceIds)) {
-                stream.forEach(wrapper -> participant
-                        .putActivityInstanceSubstitutions(wrapper.getActivityInstanceId(), wrapper.unwrap()));
-            }
-        }
-
         Map<String, String> participantRecords = prepareParticipantRecordsForJSONExport(
                 studyExtract, participants, exportStructuredDocument, handle, medicalRecordService);
 
@@ -787,11 +819,6 @@ public class DataExporter {
         // ActivityInstances (aka "surveys")
         List<ActivityInstanceRecord> activityInstanceRecords = new ArrayList<>();
         Map<String, Set<String>> userActivityVersions = new HashMap<>();
-        // We're only exposing a few substitutions as "attributes" on the activity instances.
-        List<String> exposedSubs = List.of(
-                I18nTemplateConstants.Snapshot.KIT_REQUEST_ID,
-                I18nTemplateConstants.Snapshot.TEST_RESULT_CODE,
-                I18nTemplateConstants.Snapshot.TEST_RESULT_TIME_COMPLETED);
         for (ActivityExtract activityExtract : studyExtract.getActivities()) {
             List<ActivityResponse> instances = participant.getResponses(activityExtract.getTag());
             for (ActivityResponse instance : instances) {
@@ -809,8 +836,9 @@ public class DataExporter {
                         questionsAnswers
                 );
 
+                // We're only exposing a few substitutions as "attributes" on the activity instances.
                 Map<String, String> subs = participant.getActivityInstanceSubstitutions(instance.getId());
-                for (var name : exposedSubs) {
+                for (var name : ActivityAttributesCollector.EXPOSED_ATTRIBUTES) {
                     if (subs.containsKey(name)) {
                         activityInstanceRecord.putAttribute(name, subs.get(name));
                     }
@@ -1055,13 +1083,15 @@ public class DataExporter {
     public int exportCsvToOutput(Handle handle, StudyDto studyDto, Writer output) throws IOException {
         List<ActivityExtract> activities = extractActivities(handle, studyDto);
         List<Participant> dataset = extractParticipantDataSet(handle, studyDto);
+        computeMaxInstancesSeen(handle, activities);
+        computeActivityAttributesSeen(handle, activities);
         return exportDataSetAsCsv(studyDto, activities, dataset.iterator(), output);
     }
 
     /**
      * Export the given dataset to the given output using CSV formatting. Caller is responsible for closing the given output writer.
      *
-     * @param activities   the list of activity data for a study
+     * @param activities   the list of activity data for a study, with additional data pre-computed
      * @param participants the participant data for a study
      * @param output       the output writer to use
      * @return number of participant records written
@@ -1075,14 +1105,35 @@ public class DataExporter {
         List<String> headers = new LinkedList<>();
         headers.addAll(participantMetaFmt.headers());
 
+        Map<String, Integer> normalizedMaxInstanceCounts = new HashMap<>();
         Map<String, ActivityResponseCollector> responseCollectors = new HashMap<>();
+        Map<String, ActivityAttributesCollector> attributesCollectors = new HashMap<>();
         for (ActivityExtract activity : activities) {
-            headers.addAll(activityMetadataCollector.headers(activity.getTag()));
+            Integer maxInstances = activity.getMaxInstancesSeen();
+            if (maxInstances == null || maxInstances < 1) {
+                LOG.warn("Found max instances count {} for activity tag {}, defaulting to 1", maxInstances, activity.getTag());
+                // NOTE: default to one so we always have one set of columns even if no participant has an instance.
+                maxInstances = 1;
+            }
 
-            ActivityResponseCollector formatter = new ActivityResponseCollector(activity.getDefinition());
-            headers.addAll(formatter.getHeaders());
+            ActivityResponseCollector responseCollector = new ActivityResponseCollector(activity.getDefinition());
+            ActivityAttributesCollector attributesCollector = new ActivityAttributesCollector(activity.getAttributesSeen());
 
-            responseCollectors.put(activity.getTag(), formatter);
+            normalizedMaxInstanceCounts.put(activity.getTag(), maxInstances);
+            responseCollectors.put(activity.getTag(), responseCollector);
+            attributesCollectors.put(activity.getTag(), attributesCollector);
+
+            for (var i = 1; i <= maxInstances; i++) {
+                List<String> activityMetadataColumns;
+                if (i == 1) {
+                    activityMetadataColumns = activityMetadataCollector.headers(activity.getTag());
+                } else {
+                    activityMetadataColumns = activityMetadataCollector.headers(activity.getTag(), i);
+                }
+                headers.addAll(activityMetadataColumns);
+                headers.addAll(attributesCollector.headers());
+                headers.addAll(responseCollector.getHeaders());
+            }
         }
 
         CSVWriter writer = new CSVWriter(output);
@@ -1096,22 +1147,29 @@ public class DataExporter {
                 row.addAll(participantMetaFmt.format(pt.getStatus(), pt.getUser()));
                 ComponentDataSupplier supplier = new ComponentDataSupplier(pt.getUser().getAddress(), pt.getProviders());
                 for (ActivityExtract activity : activities) {
-                    ActivityResponseCollector formatter = responseCollectors.get(activity.getTag());
-                    List<ActivityResponse> instances = pt.getResponses(activity.getTag());
-                    if (instances.isEmpty()) {
-                        row.addAll(activityMetadataCollector.emptyRow());
-                        row.addAll(formatter.emptyRow());
-                    } else {
-                        if (instances.size() > 1) {
-                            LOG.warn("[export] participant {} has {} instances of activity {} {}, will only export the latest one",
-                                    pt.getUser().getGuid(), instances.size(),
-                                    activity.getDefinition().getActivityCode(), activity.getDefinition().getVersionTag());
-                        }
-                        ActivityResponse instance = instances.stream()
-                                .max(Comparator.comparing(ActivityResponse::getCreatedAt))
-                                .get();
+                    String activityTag = activity.getTag();
+                    int maxInstances = normalizedMaxInstanceCounts.get(activityTag);
+                    ActivityResponseCollector responseCollector = responseCollectors.get(activityTag);
+                    ActivityAttributesCollector attributesCollector = attributesCollectors.get(activityTag);
+
+                    List<ActivityResponse> instances = pt.getResponses(activityTag).stream()
+                            .sorted(Comparator.comparing(ActivityResponse::getCreatedAt))
+                            .collect(Collectors.toList());
+
+                    int numInstancesProcessed = 0;
+                    for (var instance : instances) {
+                        Map<String, String> subs = pt.getActivityInstanceSubstitutions(instance.getId());
                         row.addAll(activityMetadataCollector.format(instance));
-                        row.addAll(formatter.format(instance, supplier, ""));
+                        row.addAll(attributesCollector.format(subs));
+                        row.addAll(responseCollector.format(instance, supplier, ""));
+                        numInstancesProcessed++;
+                    }
+
+                    while (numInstancesProcessed < maxInstances) {
+                        row.addAll(activityMetadataCollector.emptyRow());
+                        row.addAll(attributesCollector.emptyRow());
+                        row.addAll(responseCollector.emptyRow());
+                        numInstancesProcessed++;
                     }
                 }
             } catch (Exception e) {
