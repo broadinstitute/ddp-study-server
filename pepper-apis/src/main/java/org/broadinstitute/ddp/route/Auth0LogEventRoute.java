@@ -29,19 +29,19 @@ import spark.Response;
 import spark.Route;
 
 /**
- * Handler for POST ../auth0-log-event?tenant=TENANT_NAME
+ * Handler for POST ../auth0-log-event?tenant=[TENANT_NAME]
  *
  * <p>JSON (sent in payload) is parsed and auth0 log events are extracted from it.
  * Then log events are logged and persisted into table 'auth0_log_event'.
  *
- * <p>Header ("Authorization") to be specified as a parameter in Auth0 Custom Webhook definition.
- * It can contain API token.<br>
- * This is OPTIONAL:<br>
- *   if config parameter 'auth0LogEventApi.tokenCheckEnabled' is true then a token
- *   passed in REST header 'Authorization' will be compared with
- *   'Bearer ' + 'auth0LogEventApi.bearerToken'.
- *   On the other side in Auth0 Custom Webhook in "Authorization token".<br>
- * If config section 'auth0LogEventApi' not specified or auth0LogEventApi.tokenCheckEnabled' is false,
+ * <p>Header ("Authorization") with authorization token can be (optionally) specified in
+ * Auth0 Custom Webhook definition.<br>
+ * If config parameter 'auth0LogEventApi.tokenCheckEnabled' is true then a token
+ * which is passed in the REST header 'Authorization' will be compared with
+ * 'Bearer ' + 'auth0LogEventApi.bearerToken'.
+ * On the other side in Auth0 Custom Webhook in "Authorization token" the same token
+ * (with prefix 'Bearer') should be specified.<br>
+ * If config section 'auth0LogEventApi' not specified or 'auth0LogEventApi.tokenCheckEnabled' is false,
  * then token is not checked.
  */
 public class Auth0LogEventRoute implements Route {
