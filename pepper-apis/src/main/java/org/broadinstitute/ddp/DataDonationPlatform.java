@@ -314,9 +314,13 @@ public class DataDonationPlatform {
         // before filter converts jwt into DDP_AUTH request attribute
         // we exclude the DSM paths. DSM paths have own separate authentication
         beforeWithExclusion(API.BASE + "/*", new TokenConverterFilter(new JWTConverter()),
-                API.DSM_BASE + "/*", API.CHECK_IRB_PASSWORD);
+                API.DSM_BASE + "/*",
+                API.CHECK_IRB_PASSWORD,
+                API.AUTH0_LOG_EVENT);
         beforeWithExclusion(API.BASE + "/*", new AddDDPAuthLoggingFilter(),
-                API.DSM_BASE + "/*", API.CHECK_IRB_PASSWORD);
+                API.DSM_BASE + "/*",
+                API.CHECK_IRB_PASSWORD,
+                API.AUTH0_LOG_EVENT);
 
         // Internal routes
         get(API.HEALTH_CHECK, new HealthCheckRoute(healthcheckPassword), responseSerializer);
@@ -333,7 +337,7 @@ public class DataDonationPlatform {
         post(API.REGISTRATION, new UserRegistrationRoute(interpreter), responseSerializer);
         post(API.TEMP_USERS, new CreateTemporaryUserRoute(), responseSerializer);
 
-        post(API.AUTH0_LOG_EVENT, new Auth0LogEventRoute(), responseSerializer);
+        post(API.AUTH0_LOG_EVENT, new Auth0LogEventRoute(cfg), responseSerializer);
 
         // Admin APIs
         before(API.ADMIN_BASE + "/*", new StudyAdminAuthFilter());

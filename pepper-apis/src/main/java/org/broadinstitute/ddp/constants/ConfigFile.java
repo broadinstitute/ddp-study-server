@@ -86,6 +86,8 @@ public class ConfigFile {
     public static final String AUTH0_DSM_CLIENT_SECRET = "dsmClientSecret";
     public static final String AUTH0_DSM_API_AUDIENCE = "dsmApiAudience";
 
+    public static final String AUTH0_LOG_EVENT_API_AUTHORIZATION_TOKEN = "auth0LogEventApiAuthorizationToken";
+
     public static final String EASY_POST_API_KEY = "easyPostApiKey";
     public static final String USE_PUBSUB_EMULATOR = "usePubSubEmulator";
 
