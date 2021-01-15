@@ -142,22 +142,21 @@ public class TestBostonLongitudinalV2 implements CustomTask {
         long parentBlockId = question1Def.getBlockId();
         long revisionId = v2Dto.getRevId();
 
-        // Hospital question blocks should show up between 3rd and 4th nested blocks, so use display order between 30 and 40.
-        // We leave a gap in-between these new display orders so we have room to insert other stuff in the future.
-        int displayOrder = 32;
+        // Hospital question blocks should show up last in nested blocks.
+        int displayOrder = 60;
 
         LOG.info("Adding question {} as nested block to question {} with nestedDisplayOrder={}...",
                 hospitalizedBlockDef.getQuestion().getStableId(), question1Def.getControl().getStableId(), displayOrder);
         sectionBlockDao.insertBlockByType(activityId, hospitalizedBlockDef, revisionId);
         jdbiBlockNesting.insert(parentBlockId, hospitalizedBlockDef.getBlockId(), displayOrder, revisionId);
 
-        displayOrder = 34;
+        displayOrder += SectionBlockDao.DISPLAY_ORDER_GAP;
         LOG.info("Adding question {} as nested block to question {} with nestedDisplayOrder={}...",
                 hospitalNameBlockDef.getQuestion().getStableId(), question1Def.getControl().getStableId(), displayOrder);
         sectionBlockDao.insertBlockByType(activityId, hospitalNameBlockDef, revisionId);
         jdbiBlockNesting.insert(parentBlockId, hospitalNameBlockDef.getBlockId(), displayOrder, revisionId);
 
-        displayOrder = 36;
+        displayOrder += SectionBlockDao.DISPLAY_ORDER_GAP;
         LOG.info("Adding question {} as nested block to question {} with nestedDisplayOrder={}...",
                 hospitalDaysBlockDef.getQuestion().getStableId(), question1Def.getControl().getStableId(), displayOrder);
         sectionBlockDao.insertBlockByType(activityId, hospitalDaysBlockDef, revisionId);

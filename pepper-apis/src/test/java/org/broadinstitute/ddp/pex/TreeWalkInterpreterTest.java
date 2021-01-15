@@ -36,6 +36,7 @@ import org.broadinstitute.ddp.model.activity.definition.FormSectionDef;
 import org.broadinstitute.ddp.model.activity.definition.QuestionBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.i18n.Translation;
 import org.broadinstitute.ddp.model.activity.definition.question.BoolQuestionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.CompositeQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.DateQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.NumericQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistOptionDef;
@@ -43,6 +44,7 @@ import org.broadinstitute.ddp.model.activity.definition.question.PicklistQuestio
 import org.broadinstitute.ddp.model.activity.definition.question.TextQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.activity.instance.answer.BoolAnswer;
+import org.broadinstitute.ddp.model.activity.instance.answer.CompositeAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.DateAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.DateValue;
 import org.broadinstitute.ddp.model.activity.instance.answer.NumericIntegerAnswer;
@@ -93,6 +95,7 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
     private static String conditionalControlStableId;
     private static String conditionalNestedStableId;
     private static String numericStableId;
+    private static CompositeQuestionDef compositeDef;
 
     @Rule
     public ExpectedException thrown = ExpectedException.none();
@@ -147,6 +150,17 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
                 .setNumericType(NumericType.INTEGER)
                 .build();
 
+        compositeDef = CompositeQuestionDef.builder()
+                .setStableId("PEX_COMP_" + timestamp)
+                .setPrompt(Template.text("pex composite"))
+                .addChildrenQuestions(PicklistQuestionDef
+                        .buildSingleSelect(PicklistRenderMode.LIST, "PEX_COMP_PL_" + timestamp, Template.text("pex comp plist"))
+                        .addOption(new PicklistOptionDef("POSITIVE", Template.text("positive")))
+                        .addOption(new PicklistOptionDef("NEGATIVE", Template.text("negative")))
+                        .build())
+                .setAllowMultiple(true)
+                .build();
+
         conditionalControlStableId = "PEX_COND_CONTROL_TEXT_" + timestamp;
         conditionalNestedStableId = "PEX_COND_NESTED_TEXT_" + timestamp;
         ConditionalBlockDef condDef = new ConditionalBlockDef(TextQuestionDef
@@ -162,6 +176,7 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
         FormActivityDef form = FormActivityDef.generalFormBuilder(activityCode, "v1", studyGuid)
                 .addName(new Translation("en", "pex test activity"))
                 .addSection(new FormSectionDef(null, TestUtil.wrapQuestions(boolDef, textDef, picklistDef, dateDef, numericDef)))
+                .addSection(new FormSectionDef(null, TestUtil.wrapQuestions(compositeDef)))
                 .addSection(new FormSectionDef(null, Collections.singletonList(condDef)))
                 .build();
 
@@ -1156,6 +1171,27 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
                 "18 != user.studies[\"%s\"].forms[\"%s\"].questions[\"%s\"].answers.value()",
                 studyGuid, activityCode, picklistStableId);
         run(expr);
+    }
+
+    @Test
+    public void testEval_compositeChildAnswer() {
+        String stableId = compositeDef.getStableId();
+        String childStableId = compositeDef.getChildren().get(0).getStableId();
+        String expr = String.format("user.studies[\"%s\"].forms[\"%s\"].instances[specific]"
+                        + ".questions[\"%s\"].children[\"%s\"].answers.hasOption(\"POSITIVE\")",
+                studyGuid, activityCode, stableId, childStableId);
+
+        var answer = new CompositeAnswer(null, stableId, null);
+        answer.addRowOfChildAnswers(new PicklistAnswer(null, childStableId, null,
+                List.of(new SelectedPicklistOption("NEGATIVE"))));
+        answer.addRowOfChildAnswers(new PicklistAnswer(null, childStableId, null,
+                List.of(new SelectedPicklistOption("POSITIVE"))));
+
+        TransactionWrapper.useTxn(handle -> {
+            handle.attach(AnswerDao.class).createAnswer(testData.getUserId(), firstInstance.getId(), answer);
+            assertTrue("should look at specific instance and look at all child answers", run(handle, expr));
+            handle.rollback();
+        });
     }
 
     @Test
