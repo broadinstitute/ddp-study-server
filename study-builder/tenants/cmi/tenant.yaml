@@ -110,7 +110,7 @@ clients:
     client_metadata:
       study: cmi-mpc
 
-  - name:esc-angular-client
+  - name: esc-angular-client
     app_type: spa
     callbacks:
       - '##ESC_BASE_URL##/login-landing'
