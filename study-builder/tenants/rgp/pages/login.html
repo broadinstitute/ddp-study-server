@@ -18,7 +18,7 @@
 <script src="https://cdn.auth0.com/js/es5-shim.min.js"></script>
 <![endif]-->
 
-<script src="https://cdn.auth0.com/js/lock/11.5.2/lock.min.js"></script>
+<script src="https://cdn.auth0.com/js/lock/11.28.0/lock.min.js"></script>
 
 <style type="text/css">
     body {
@@ -53,26 +53,10 @@
     var config = JSON.parse(decodeURIComponent(escape(window.atob('@@config@@'))));
     config.extraParams = config.extraParams || {};
 
-    var inviteKey = 'invitationId';
-
-    // save the invitation in local storage to minimize breached password loss-of-invitation
-    if (config.extraParams.invitation_id) {
-        localStorage.setItem(inviteKey,config.extraParams.invitation_id);
-        console.log('Saving invitation ' + config.extraParams.invitation_id);
-    } else {
-        var invitation = localStorage.getItem(inviteKey);
-        if (invitation) {
-            // unsafe, but better than losing this value during breached password shield
-            config.internalOptions.invitation_id = invitation;
-            console.log('Using stored invitation ' + invitation + ' from local storage');
-        }
-    }
-
     var mode = config.extraParams.mode;
     var languageCode = config.extraParams.language;
     var study_guid = config.extraParams.study_guid;
     var studyColor = '#e8702a';
-    var studyHelpEmail = 'info@prionregistry.org';
     var headerLogo = 'https://storage.googleapis.com/ddp-rgp-assets/images/rgp-logo.svg';
 
     var authLoc = Math.max(config.callbackURL.indexOf('/auth'), config.callbackURL.indexOf('/login-landing'));
@@ -81,7 +65,6 @@
     var registerUrl = mainUrl + '/how-it-works';
 
     var connection = config.connection;
-    var prompt = !prompt;
     var showPasswordRecentText = false;
     var doNotShowRegLink = false;
 
@@ -91,6 +74,7 @@
         passwordInputPlaceholder: 'Password *',
         signupTitle: 'Create an account',
         databaseSignUpInstructions: 'Please create an account to begin your application questionnaire.',
+        signUpTerms: '',
         alreadyRegisteredInner: 'If you have already registered, sign in here.',
         loginTitle: 'Sign In',
         databaseEnterpriseLoginInstructions: 'Welcome back! Please sign in to your account.',
@@ -101,7 +85,7 @@
         forgotPasswordTitle: 'Forgot Password?',
         forgotPasswordInstructions: 'Please enter your email address and we will send you password reset instructions.',
         passwordMessage: 'Password must be at least 8 characters long and contain at least one number, one upper case letter, and one lower case letter',
-        successForgotPassword: 'If you have previously registered, please check your email to reset your password',
+        successForgotPassword: 'Thank you.  Please check your email for reset instructions.',
         resetPasswordInnerText: 'Password reset successfully.  Please sign in with your new password.',
     };
 
@@ -110,6 +94,7 @@
         passwordInputPlaceholder: '[es]Password *',
         signupTitle: '[es]Create an account',
         databaseSignUpInstructions: '[es]Please create an account to begin your application questionnaire.',
+        signUpTerms: '',
         alreadyRegisteredInner: '[es]If you have already registered, sign in here.',
         loginTitle: '[es]Sign In',
         databaseEnterpriseLoginInstructions: '[es]Welcome back! Please sign in to your account.',
@@ -120,7 +105,7 @@
         forgotPasswordTitle: '[es]Forgot Password?',
         forgotPasswordInstructions: '[es]Please enter your email address and we will send you password reset instructions.',
         passwordMessage: '[es]Password must be at least 8 characters long and contain at least one number, one upper case letter, and one lower case letter',
-        successForgotPassword: '[es]If you have previously registered, please check your email to reset your password',
+        successForgotPassword: '[es]Thank you.  Please check your email for reset instructions.',
         resetPasswordInnerText: '[es]Password reset successfully.  Please sign in with your new password.',
     };
 
@@ -334,16 +319,7 @@
     });
 
     lock.on('forgot_password ready', function() {
-        //doNotShowRegLink = true;
-        //var registerLink = document.getElementById('ddp-reg');
-        //if (registerLink) {
-        //  registerLink.parentNode.removeChild(registerLink);
-        //}
     });
-
-    //lock.on('signin ready', function() {
-    //doNotShowRegLink = false;
-    //});
 
     console.log('auth mode: ' + mode);
     console.log('study_guid: ' + study_guid);

@@ -20,7 +20,6 @@ emailTemplates:
   - template: reset_email
     body: ./emails/change_password.html
     from: Rare Genomes Project <##STUDY_EMAIL##>
-    resultUrl: '##SERVER_BASE_URL##/pepper/v1/post-password-reset?clientId={{ application.clientID }}'
     subject: >-
       {% if user.user_metadata.language == "es" %} [es]Reset Your Password
       {% else %} Reset Your Password {% endif %}
