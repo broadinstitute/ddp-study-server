@@ -9,7 +9,7 @@ import static org.broadinstitute.ddp.constants.ConfigFile.Auth0LogEventApi.BEARE
 import static org.broadinstitute.ddp.constants.ConfigFile.Auth0LogEventApi.TOKEN_CHECK_ENABLED;
 import static org.broadinstitute.ddp.constants.ErrorCodes.DATA_PERSIST_ERROR;
 import static org.broadinstitute.ddp.constants.ErrorCodes.INVALID_TOKEN;
-import static org.broadinstitute.ddp.constants.ErrorCodes.MALFORMED_HEADER;
+import static org.broadinstitute.ddp.constants.ErrorCodes.REQUIRED_HEADER_MISSING;
 import static org.broadinstitute.ddp.constants.ErrorCodes.REQUIRED_PARAMETER_MISSING;
 import static org.broadinstitute.ddp.constants.RouteConstants.Header.AUTHORIZATION;
 import static org.broadinstitute.ddp.constants.RouteConstants.Header.BEARER;
@@ -58,8 +58,7 @@ public class Auth0LogEventRoute implements Route {
     private final String auth0LogEventApiBearerToken;
 
     public Auth0LogEventRoute(final Config config) {
-        auth0LogEventApiBearerToken = config.hasPath(AUTH0_LOG_EVENT_API) && config.getBoolean(TOKEN_CHECK_ENABLED)
-                ? config.getString(BEARER_TOKEN) : null;
+        auth0LogEventApiBearerToken = detectBearerTokenFromConfigIfDefinedAndEnabled(config);
     }
 
     @Override
@@ -67,7 +66,7 @@ public class Auth0LogEventRoute implements Route {
         String tenant = readTenant(request);
         checkAuthorizationToken(request);
 
-        final Auth0LogEventService auth0LogEventService = new Auth0LogEventService();
+        final var auth0LogEventService = new Auth0LogEventService();
 
         final List<Map<String, JsonElement>> logEvents = auth0LogEventService.parseAuth0LogEvents(request.body());
         for (final var logEvent : logEvents) {
@@ -78,6 +77,11 @@ public class Auth0LogEventRoute implements Route {
 
         response.status(HttpStatus.SC_OK);
         return "";
+    }
+
+    private String detectBearerTokenFromConfigIfDefinedAndEnabled(final Config config) {
+        return config.hasPath(AUTH0_LOG_EVENT_API) && config.getBoolean(TOKEN_CHECK_ENABLED)
+                ? config.getString(BEARER_TOKEN) : null;
     }
 
     private String readTenant(final Request request) {
@@ -92,7 +96,7 @@ public class Auth0LogEventRoute implements Route {
         if (isNotBlank(auth0LogEventApiBearerToken)) {
             String authorizationToken = request.headers(AUTHORIZATION);
             if (authorizationToken == null) {
-                haltError(SC_BAD_REQUEST, MALFORMED_HEADER, "Header not specified: " + AUTHORIZATION);
+                haltError(SC_BAD_REQUEST, REQUIRED_HEADER_MISSING, "Header not specified: " + AUTHORIZATION);
             }
             if (!addBearerPrefixToToken(auth0LogEventApiBearerToken).equals(authorizationToken)) {
                 haltError(SC_UNAUTHORIZED, INVALID_TOKEN, "Invalid authorization token");

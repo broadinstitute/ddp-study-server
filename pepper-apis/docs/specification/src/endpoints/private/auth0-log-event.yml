@@ -1,0 +1,57 @@
+post:
+  operationId: postAuth0LogEvents
+  tags:
+    - Admin
+  summary: post Auth0 log events 
+  description: Post Auth0 log events portion (it could be fired by Auth0 Custom Webhook)
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+  responses:
+    200:
+      description: auth0 log events are saved
+    400:
+      description: invalid request, required parameter missing or required Authorization header missing
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '../../pepper.yml#/components/schemas/Error'
+              - type: object
+                properties:
+                  code:
+                    type: string
+                    enum:
+                      - REQUIRED_PARAMETER_MISSING
+                      - REQUIRED_HEADER_MISSING
+    401:
+      description: invalid token passed in header Authorization
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '../../pepper.yml#/components/schemas/Error'
+              - type: object
+                properties:
+                  code:
+                    type: string
+                    enum:
+                      - INVALID_TOKEN
+    500:
+      description: error during data persisting on server side
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '../../pepper.yml#/components/schemas/Error'
+              - type: object
+                properties:
+                  code:
+                    type: string
+                    enum:
+                      - DATA_PERSIST_ERROR
+    default:
+      $ref: '../../pepper.yml#/components/responses/ErrorResponse'

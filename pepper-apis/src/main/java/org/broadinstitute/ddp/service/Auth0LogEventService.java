@@ -42,7 +42,7 @@ import org.slf4j.Logger;
  */
 public class Auth0LogEventService {
 
-    private final Logger log = getLogger(this.getClass());
+    private static final Logger LOG = getLogger(Auth0LogEventService.class);
 
     /**
      * List of Auth0 Log Event JSON node names which to read (recursively)
@@ -80,7 +80,7 @@ public class Auth0LogEventService {
     }
 
     public void logAuth0LogEvent(final Auth0LogEvent logEvent) {
-        log.debug(
+        LOG.debug(
                 "AUTH0-LOG-EVENT[{}]: type:{}, date:{}, log_id:{}\n"
                         + "\tclient_id:{}, connection_id:{}, user_id:{}\n"
                         + "\tuser_agent:{}\n"

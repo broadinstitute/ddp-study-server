@@ -48,6 +48,8 @@ paths:
     $ref: 'endpoints/private/healthcheck.yml'
   /register:
     $ref: 'endpoints/private/register.yml'
+  /auth0-log-event:
+    $ref: 'endpoints/private/auth0-log-event.yml'
   /temporary-users:
     $ref: 'endpoints/temporary-users.yml'
   /studies:
