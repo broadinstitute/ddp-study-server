@@ -7,6 +7,7 @@
 {{with $testingConf := vault (printf "secret/pepper/%s/%s/testing" $environment $version)}}
 {{with $auth0 := index $testingConf.Data "auth0"}}
 {{with $testingAuth := index $testingConf.Data "auth0"}}
+{{with $auth0LogEventApi := index $conf.Data "auth0LogEventApi"}}
 {{with $elasticsearchConf := vault (printf "secret/pepper/%s/%s/elasticsearch" $environment $version)}}
 
 {
@@ -59,6 +60,10 @@
         "backendTestClientName": "{{$testingAuth.backendTestClientName}}",
         "backendTestClientName2": "{{$testingAuth.backendTestClientName2}}"
     },
+	"auth0LogEventApi" : {
+		"tokenCheckEnabled" : {{$auth0LogEventApi.tokenCheckEnabled}},
+		"bearerToken" : "{{$auth0LogEventApi.bearerToken}}"
+	},
     "googleGeocodingApiKey": "{{$testingConf.Data.geocodingKey}}",
     "jcacheConfigurationFile": "src/test/resources/redisson-test-jcache.yaml",
     "redisServerAddress":"redis://127.0.0.1:6379",

@@ -2,10 +2,12 @@ package org.broadinstitute.ddp.route;
 
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
+import static org.apache.http.HttpStatus.SC_INTERNAL_SERVER_ERROR;
 import static org.apache.http.HttpStatus.SC_UNAUTHORIZED;
 import static org.broadinstitute.ddp.constants.ConfigFile.Auth0LogEventApi.AUTH0_LOG_EVENT_API;
 import static org.broadinstitute.ddp.constants.ConfigFile.Auth0LogEventApi.BEARER_TOKEN;
 import static org.broadinstitute.ddp.constants.ConfigFile.Auth0LogEventApi.TOKEN_CHECK_ENABLED;
+import static org.broadinstitute.ddp.constants.ErrorCodes.DATA_PERSIST_ERROR;
 import static org.broadinstitute.ddp.constants.ErrorCodes.INVALID_TOKEN;
 import static org.broadinstitute.ddp.constants.ErrorCodes.MALFORMED_HEADER;
 import static org.broadinstitute.ddp.constants.ErrorCodes.REQUIRED_PARAMETER_MISSING;
@@ -20,6 +22,8 @@ import java.util.Map;
 import com.google.gson.JsonElement;
 import com.typesafe.config.Config;
 import org.apache.http.HttpStatus;
+import org.broadinstitute.ddp.db.TransactionWrapper;
+import org.broadinstitute.ddp.json.auth0.Auth0LogEvent;
 import org.broadinstitute.ddp.json.errors.ApiError;
 import org.broadinstitute.ddp.service.Auth0LogEventService;
 import org.broadinstitute.ddp.util.ResponseUtil;
@@ -66,9 +70,10 @@ public class Auth0LogEventRoute implements Route {
         final Auth0LogEventService auth0LogEventService = new Auth0LogEventService();
 
         final List<Map<String, JsonElement>> logEvents = auth0LogEventService.parseAuth0LogEvents(request.body());
-        for (var logEvent : logEvents) {
-            auth0LogEventService.logAuth0LogEvent(logEvent, tenant);
-            auth0LogEventService.persistAuth0LogEvent(logEvent, tenant);
+        for (final var logEvent : logEvents) {
+            final var logEventObject = Auth0LogEvent.createInstance(logEvent, tenant);
+            auth0LogEventService.logAuth0LogEvent(logEventObject);
+            persistLogEvent(auth0LogEventService, logEventObject);
         }
 
         response.status(HttpStatus.SC_OK);
@@ -92,6 +97,14 @@ public class Auth0LogEventRoute implements Route {
             if (!addBearerPrefixToToken(auth0LogEventApiBearerToken).equals(authorizationToken)) {
                 haltError(SC_UNAUTHORIZED, INVALID_TOKEN, "Invalid authorization token");
             }
+        }
+    }
+
+    private void persistLogEvent(final Auth0LogEventService auth0LogEventService, final Auth0LogEvent logEventObject) {
+        try {
+            TransactionWrapper.useTxn(handle -> auth0LogEventService.persistAuth0LogEvent(handle, logEventObject));
+        } catch (Exception e) {
+            haltError(SC_INTERNAL_SERVER_ERROR, DATA_PERSIST_ERROR, e.getMessage());
         }
     }
 

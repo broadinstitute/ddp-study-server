@@ -12,8 +12,6 @@ import static org.broadinstitute.ddp.json.auth0.Auth0LogEventNode.TYPE;
 import static org.broadinstitute.ddp.json.auth0.Auth0LogEventNode.USER_AGENT;
 import static org.broadinstitute.ddp.json.auth0.Auth0LogEventNode.USER_ID;
 import static org.broadinstitute.ddp.json.auth0.Auth0LogEventNode.USER_NAME;
-import static org.broadinstitute.ddp.json.auth0.Auth0LogEventNode.resolveDateTimeValue;
-import static org.broadinstitute.ddp.json.auth0.Auth0LogEventNode.resolveStringValue;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.util.ArrayList;
@@ -24,9 +22,10 @@ import java.util.Map;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.Auth0LogEventDao;
+import org.broadinstitute.ddp.json.auth0.Auth0LogEvent;
 import org.broadinstitute.ddp.util.GsonRecursiveReader;
+import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
 
 /**
@@ -74,39 +73,37 @@ public class Auth0LogEventService {
         var rootNode = new Gson().fromJson(logEventsJson, JsonObject.class);
         var logsNode = rootNode.getAsJsonArray(LOGS.nodeName());
         final List<Map<String, JsonElement>> logEvents = new ArrayList<>();
-        for (JsonElement node : logsNode) {
+        for (final var node : logsNode) {
             logEvents.add(GsonRecursiveReader.readValues(node, AUTH0_LOG_EVENT_NODE_NAMES));
         }
         return logEvents;
     }
 
-    public void logAuth0LogEvent(final Map<String, JsonElement> logEvent, String tenant) {
-        log.info(
+    public void logAuth0LogEvent(final Auth0LogEvent logEvent) {
+        log.debug(
                 "AUTH0-LOG-EVENT[{}]: type:{}, date:{}, log_id:{}\n"
                         + "\tclient_id:{}, connection_id:{}, user_id:{}\n"
                         + "\tuser_agent:{}\n"
                         + "\tip:{}, email:{}\n"
                         + "\tdata: {}",
-                tenant,
-                resolveStringValue(TYPE, logEvent),
-                resolveDateTimeValue(DATE, logEvent),
-                resolveStringValue(LOG_ID, logEvent),
-                resolveStringValue(CLIENT_ID, logEvent),
-                resolveStringValue(CONNECTION_ID, logEvent),
-                resolveStringValue(USER_ID, logEvent),
-                resolveStringValue(USER_AGENT, logEvent),
-                resolveStringValue(IP, logEvent),
-                resolveStringValue(EMAIL, logEvent),
-                resolveStringValue(DATA, logEvent));
+                logEvent.getTenant(),
+                logEvent.getType(),
+                logEvent.getDate(),
+                logEvent.getLogId(),
+                logEvent.getClientId(),
+                logEvent.getConnectionId(),
+                logEvent.getUserId(),
+                logEvent.getUserAgent(),
+                logEvent.getIp(),
+                logEvent.getEmail(),
+                logEvent.getData());
     }
 
     /**
      * Save log event and tenant data to DB table 'auth0-log-event'
      */
-    public void persistAuth0LogEvent(final Map<String, JsonElement> logEvent, String tenant) {
-        TransactionWrapper.useTxn(handle -> {
-            Auth0LogEventDao auth0LogEventDao = handle.attach(Auth0LogEventDao.class);
-            auth0LogEventDao.insertAuth0LogEvent(logEvent, tenant);
-        });
+    public void persistAuth0LogEvent(final Handle handle, final Auth0LogEvent logEvent) {
+        final var auth0LogEventDao = handle.attach(Auth0LogEventDao.class);
+        auth0LogEventDao.insertAuth0LogEvent(logEvent);
     }
 }

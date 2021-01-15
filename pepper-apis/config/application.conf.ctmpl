@@ -8,6 +8,7 @@
 {{with $auth0 := index $conf.Data "auth0"}}
 {{with $testingConf := vault (printf "secret/pepper/%s/%s/testing" $environment $version)}}
 {{with $testingAuth := index $testingConf.Data "auth0"}}
+{{with $auth0LogEventApi := index $conf.Data "auth0LogEventApi"}}
 {{with $slack := index $conf.Data "slack"}}
 {{with $elasticsearchConf := vault (printf "secret/pepper/%s/%s/elasticsearch" $environment $version)}}
 {
@@ -32,6 +33,10 @@
         "dsmClientId": "{{$auth0.dsmClientId}}",
         "dsmClientSecret": "{{$auth0.dsmClientSecret}}"
     },
+	"auth0LogEventApi" : {
+		"tokenCheckEnabled" : {{$auth0LogEventApi.tokenCheckEnabled}},
+		"bearerToken" : "{{$auth0LogEventApi.bearerToken}}"
+	},
     "slack": {
         "hook": "{{$slack.hook}}",
         "channel": "{{$slack.channel}}",

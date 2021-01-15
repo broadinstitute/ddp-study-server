@@ -5,7 +5,7 @@
         xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
 
-    <changeSet author="evgenii.pr" id="20210113-create-auth0-log-event-table">
+    <changeSet author="evgeniipr" id="20210113-create-auth0-log-event-table">
         <createTable tableName="auth0_log_event">
             <column name="auth0_log_event_id" type="bigint" autoIncrement="true" startWith="1">
                 <constraints primaryKey="true" primaryKeyName="auth0_log_event_pk"/>
@@ -16,7 +16,7 @@
             <column name="log_id" type="varchar(200)">
                 <constraints nullable="false"/>
             </column>
-            <column name="date" type="datetime">
+            <column name="date" type="datetime(6)">
                 <constraints nullable="false"/>
             </column>
             <column name="type" type="varchar(100)">
@@ -59,21 +59,6 @@
         <createIndex tableName="auth0_log_event" indexName="auth0_log_event_email_idx">
             <column name="email" type="varchar(200)"/>
         </createIndex>
-
-    </changeSet>
-
-    <changeSet author="evgenii.pr" id="20210113-create-auth0-log-event-code-table">
-        <createTable tableName="auth0_log_event_code">
-            <column name="code" type="varchar(100)" >
-                <constraints primaryKey="true" primaryKeyName="auth0_log_event_code_pk"/>
-            </column>
-            <column name="title" type="varchar(200)">
-                <constraints nullable="false"/>
-            </column>
-            <column name="description" type="varchar(2000)">
-                <constraints nullable="true"/>
-            </column>
-        </createTable>
 
     </changeSet>
 

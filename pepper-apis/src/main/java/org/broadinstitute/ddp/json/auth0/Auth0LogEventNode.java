@@ -1,9 +1,9 @@
 package org.broadinstitute.ddp.json.auth0;
 
+import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.broadinstitute.ddp.json.auth0.Auth0LogEventNode.NodeType.DATETIME;
 import static org.broadinstitute.ddp.json.auth0.Auth0LogEventNode.NodeType.E_MAIL;
 import static org.broadinstitute.ddp.json.auth0.Auth0LogEventNode.NodeType.JSON_NODE;
-import static org.broadinstitute.ddp.json.auth0.Auth0LogEventNode.NodeType.PREFIXED_STR;
 import static org.broadinstitute.ddp.json.auth0.Auth0LogEventNode.NodeType.STR;
 
 import java.time.Instant;
@@ -11,7 +11,6 @@ import java.util.Map;
 
 
 import com.google.gson.JsonElement;
-import org.apache.commons.lang3.StringUtils;
 
 
 /**
@@ -36,20 +35,19 @@ public enum Auth0LogEventNode {
     TYPE("type", STR),
     CLIENT_ID("client_id", STR),
     CONNECTION_ID("connection_id", STR),
-    USER_ID("user_id", PREFIXED_STR, null, "|"),
+    USER_ID("user_id", STR),
     USER_AGENT("user_agent", STR),
     IP("ip", STR),
     USER_NAME("user_name", E_MAIL),
-    EMAIL("email", E_MAIL, USER_NAME, null),
+    EMAIL("email", E_MAIL, USER_NAME),
     DATA("data", JSON_NODE);
 
     private String nodeName;
     private NodeType nodeType;
     private Auth0LogEventNode secondNode;
-    private String prefixSep;
 
     Auth0LogEventNode(String nodeName, NodeType nodeType) {
-        this(nodeName, nodeType, null, null);
+        this(nodeName, nodeType, null);
     }
 
     /**
@@ -58,13 +56,11 @@ public enum Auth0LogEventNode {
      * @param nodeName   - name of a node in Auth0 Log Events JSON doc
      * @param nodeType   - type of a node (string, datetime, email, etc)
      * @param secondNode - node which value will be fetched in case if this node value is null
-     * @param prefixSep  - separator which used to separate prefix and value (and prefix with separator should be rejected)
      */
-    Auth0LogEventNode(String nodeName, NodeType nodeType, Auth0LogEventNode secondNode, String prefixSep) {
+    Auth0LogEventNode(String nodeName, NodeType nodeType, Auth0LogEventNode secondNode) {
         this.nodeName = nodeName;
         this.nodeType = nodeType;
         this.secondNode = secondNode;
-        this.prefixSep = prefixSep;
     }
 
     public String nodeName() {
@@ -77,10 +73,6 @@ public enum Auth0LogEventNode {
 
     public Auth0LogEventNode getSecondNode() {
         return secondNode;
-    }
-
-    public String prefixSep() {
-        return prefixSep;
     }
 
     /**
@@ -107,20 +99,18 @@ public enum Auth0LogEventNode {
      * Get from logEvent a value of a specified node
      */
     public static Object resolveValue(final Auth0LogEventNode node, final Map<String, JsonElement> logEvent) {
-        Auth0LogEventNode resolvedNode = node;
-        JsonElement value = logEvent.get(resolvedNode.nodeName());
+        var resolvedNode = node;
+        var value = logEvent.get(resolvedNode.nodeName());
         if (value == null) {
             if (resolvedNode.getSecondNode() != null) {
                 resolvedNode = resolvedNode.getSecondNode();
                 value = logEvent.get(resolvedNode.nodeName());
             }
         }
-        if (value != null && StringUtils.isNotBlank(value.toString())) {
+        if (value != null && isNotBlank(value.toString())) {
             switch (resolvedNode.nodeType()) {
                 case DATETIME:
                     return Instant.parse(value.getAsString());
-                case PREFIXED_STR:
-                    return rejectPrefix(value.getAsString(), node.prefixSep());
                 case JSON_NODE:
                     return value.toString();
                 case E_MAIL:
@@ -133,20 +123,11 @@ public enum Auth0LogEventNode {
     }
 
     /**
-     * Reject prefix and separator after it.
-     */
-    private static String rejectPrefix(String str, String prefixSep) {
-        int prefixInd = str.indexOf(prefixSep);
-        return prefixInd != -1 ? str.substring(str.indexOf(prefixSep) + 1) : str;
-    }
-
-    /**
      * Types of JSON node
      */
     public enum NodeType {
         STR,
         DATETIME,
-        PREFIXED_STR,  // f.ex "auth0|45394573849"
         E_MAIL,
         JSON_NODE
     }

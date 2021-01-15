@@ -2,6 +2,7 @@ package org.broadinstitute.ddp.util;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -36,7 +37,7 @@ public class GsonRecursiveReader {
     public static Map<String, JsonElement> readValues(final JsonElement rootNode, final List<String> names) {
         final Map<String, JsonElement> results = new HashMap<>();
         if (names != null && names.size() > 0) {
-            final List<String> yetNotReadNames = new ArrayList<>(names);
+            final List<String> yetNotReadNames = new LinkedList<>(names);
             getValuesRecursively(rootNode, yetNotReadNames, results);
         }
         return results;
@@ -46,8 +47,8 @@ public class GsonRecursiveReader {
             final Map.Entry<String, JsonElement> entry,
             final List<String> yetNotReadNames,
             final Map<String, JsonElement> results) {
-        final List<String> foundNames = new ArrayList<>();
-        for (String name : yetNotReadNames) {
+        final var foundNames = new ArrayList<>();
+        for (var name : yetNotReadNames) {
             if (entry.getKey().equals(name)) {
                 foundNames.add(name);
                 results.put(name, entry.getValue());
@@ -63,7 +64,7 @@ public class GsonRecursiveReader {
         if (node instanceof JsonArray) {
             readArray((JsonArray) node, yetNotReadNames, results);
         } else if (node instanceof JsonObject) {
-            for (Map.Entry<String, JsonElement> entry : ((JsonObject) node).entrySet()) {
+            for (final var entry : ((JsonObject) node).entrySet()) {
                 if (entry.getValue() instanceof JsonArray) {
                     readArray((JsonArray) entry.getValue(), yetNotReadNames, results);
                 }
@@ -79,7 +80,7 @@ public class GsonRecursiveReader {
             final JsonArray nodeArray,
             final List<String> yetNotReadNames,
             final Map<String, JsonElement> results) {
-        for (JsonElement node : nodeArray) {
+        for (final var node : nodeArray) {
             getValuesRecursively(node, yetNotReadNames, results);
         }
     }

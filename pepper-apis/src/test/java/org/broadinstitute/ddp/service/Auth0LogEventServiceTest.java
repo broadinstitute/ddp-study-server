@@ -12,11 +12,8 @@ import static org.broadinstitute.ddp.util.TestUtil.readJSONFromFile;
 import static org.junit.Assert.assertEquals;
 
 import java.io.FileNotFoundException;
-import java.util.List;
-import java.util.Map;
 
 
-import com.google.gson.JsonElement;
 import org.junit.Test;
 
 
@@ -30,28 +27,27 @@ public class Auth0LogEventServiceTest {
 
     @Test
     public void testAuth0LogEventsParse() throws FileNotFoundException {
-        List<Map<String, JsonElement>> logEvents = auth0LogEventService.parseAuth0LogEvents(readJSONFromFile(TESTDATA1).toString());
+        final var logEvents = auth0LogEventService.parseAuth0LogEvents(readJSONFromFile(TESTDATA1).toString());
 
         assertEquals(2, logEvents.size());
 
-        Map<String, JsonElement> logEvent = logEvents.get(0);
+        final var logEvent = logEvents.get(0);
 
         assertEquals("s", logEvent.get(TYPE.nodeName()).getAsString());
         assertEquals("auth0|XXX_user_id_XXX", logEvent.get(USER_ID.nodeName()).getAsString());
         assertEquals("XXX_client_id_XXX", logEvent.get(CLIENT_ID.nodeName()).getAsString());
-        assertEquals("test_name@broadinstitute.org", logEvent.get(USER_NAME.nodeName()).getAsString());
+        assertEquals("test_name@datadonationplatform.org", logEvent.get(USER_NAME.nodeName()).getAsString());
 
-        assertEquals("XXX_user_id_XXX", resolveStringValue(USER_ID, logEvent));
-        assertEquals("test_name@broadinstitute.org", resolveStringValue(EMAIL, logEvent));
+        assertEquals("test_name@datadonationplatform.org", resolveStringValue(EMAIL, logEvent));
     }
 
     @Test
     public void testOneAuth0LogEventParse() throws FileNotFoundException {
-        List<Map<String, JsonElement>> logEvents = auth0LogEventService.parseAuth0LogEvents(readJSONFromFile(TESTDATA2).toString());
+        final var logEvents = auth0LogEventService.parseAuth0LogEvents(readJSONFromFile(TESTDATA2).toString());
 
         assertEquals(1, logEvents.size());
 
-        Map<String, JsonElement> logEvent = logEvents.get(0);
+        final var logEvent = logEvents.get(0);
 
         assertEquals("seccft", logEvent.get(TYPE.nodeName()).getAsString());
         assertEquals("XXX_client_id_XXX", logEvent.get(CLIENT_ID.nodeName()).getAsString());
