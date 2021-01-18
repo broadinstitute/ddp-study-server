@@ -51,7 +51,6 @@ import org.broadinstitute.ddp.db.dto.QueuedEventDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.db.housekeeping.dao.JdbiEvent;
 import org.broadinstitute.ddp.db.housekeeping.dao.JdbiMessage;
-import org.broadinstitute.ddp.environment.HostUtil;
 import org.broadinstitute.ddp.event.HousekeepingTaskReceiver;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.exception.MessageBuilderException;
@@ -188,7 +187,6 @@ public class Housekeeping {
     }
 
     public static void start(String[] args, SendGridSupplier sendGridSupplier) {
-        HostUtil.putGAEInstanceAndGAEServiceToMDC();
         LogbackConfigurationPrinter.printLoggingConfiguration();
         Config cfg = ConfigManager.getInstance().getConfig();
         boolean doLiquibase = cfg.getBoolean(ConfigFile.DO_LIQUIBASE);

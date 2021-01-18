@@ -7,7 +7,6 @@ import com.google.common.annotations.VisibleForTesting;
 import org.apache.commons.lang.RandomStringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.slf4j.MDC;
 import spark.utils.StringUtils;
 
 
@@ -68,15 +67,6 @@ public class HostUtil {
     }
 
     /**
-     * Used to add to log message a substring of GAE_INSTANCE (or host) + GAE_SERVICE to logging infrastructure.<br>
-     * Parameter in logback.xml: %X{GAEInstanceAndService}<br>
-     * Example of a substring added to log message: [GAE_INST_XX:GAE_SERV_XX]
-     */
-    public static void putGAEInstanceAndGAEServiceToMDC() {
-        MDC.put(GAE_INSTANCE_AND_SERVICE_LOG_PARAM, generateGAEInstanceAndGAEServiceForLogging());
-    }
-
-    /**
      * Needed for testing purposes
      */
     @VisibleForTesting
@@ -92,9 +82,5 @@ public class HostUtil {
      */
     private static String generateUnknownName(String title) {
         return FAKE_VALUE_PREFIX + title + "-" + RandomStringUtils.randomAlphabetic(5).toUpperCase();
-    }
-
-    private static String generateGAEInstanceAndGAEServiceForLogging() {
-        return '[' + getGAEInstanceOrHostName() + ':' + getGAEServiceName() + ']';
     }
 }
