@@ -189,9 +189,7 @@ public class ConfigFile {
         public static final String PROXY = "sendgrid.proxy";
     }
 
-    public static class Auth0LogEventApi {
-        public static final String AUTH0_LOG_EVENT_API = "auth0LogEventApi";
-        public static final String TOKEN_CHECK_ENABLED = AUTH0_LOG_EVENT_API + '.' + "tokenCheckEnabled";
-        public static final String BEARER_TOKEN = AUTH0_LOG_EVENT_API + '.' + "bearerToken";
+    public static class PrivateApisTokens {
+        public static final String AUTH0_LOG_EVENT_BEARER_TOKEN = "privateApisTokens.auth0LogEventBearerToken";
     }
 }

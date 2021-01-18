@@ -14,7 +14,7 @@ post:
     200:
       description: auth0 log events are saved
     400:
-      description: invalid request, required parameter missing or required Authorization header missing
+      description: invalid request, required parameter, body, or required Authorization header missing
       content:
         application/json:
           schema:
@@ -27,6 +27,7 @@ post:
                     enum:
                       - REQUIRED_PARAMETER_MISSING
                       - REQUIRED_HEADER_MISSING
+                      - MISSING_BODY
     401:
       description: invalid token passed in header Authorization
       content:

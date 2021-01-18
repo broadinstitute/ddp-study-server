@@ -1,11 +1,15 @@
 package org.broadinstitute.ddp.db.dao;
 
 import java.time.Instant;
+import java.util.Optional;
 
 
+import org.broadinstitute.ddp.json.auth0.Auth0LogEvent;
 import org.jdbi.v3.sqlobject.SqlObject;
+import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
+import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 
 public interface JdbiAuth0LogEvent extends SqlObject {
@@ -31,4 +35,8 @@ public interface JdbiAuth0LogEvent extends SqlObject {
             @Bind("email") String email,
             @Bind("data") String data
     );
+
+    @SqlQuery("select c.title, c.description from auth0_log_event_code c where c.code=:code")
+    @RegisterRowMapper(Auth0LogEvent.Auth0LogEventCodeDto.Auth0LogEventCodeDtoMapper.class)
+    Optional<Auth0LogEvent.Auth0LogEventCodeDto> findByCode(@Bind("code") String code);
 }

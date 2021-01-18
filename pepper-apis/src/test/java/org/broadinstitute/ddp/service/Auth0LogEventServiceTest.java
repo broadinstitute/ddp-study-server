@@ -1,5 +1,7 @@
 package org.broadinstitute.ddp.service;
 
+import static org.broadinstitute.ddp.constants.Auth0LogEventTestConstants.AUTH0_LOG_EVENT_TESTDATA1;
+import static org.broadinstitute.ddp.constants.Auth0LogEventTestConstants.AUTH0_LOG_EVENT_TESTDATA2;
 import static org.broadinstitute.ddp.json.auth0.Auth0LogEventNode.CLIENT_ID;
 import static org.broadinstitute.ddp.json.auth0.Auth0LogEventNode.EMAIL;
 import static org.broadinstitute.ddp.json.auth0.Auth0LogEventNode.IP;
@@ -19,15 +21,11 @@ import org.junit.Test;
 
 public class Auth0LogEventServiceTest {
 
-    private static final String AUTH0_LOG_EVENTS_PAYLOAD_TESTDATA_FOLDER = "src/test/resources/auth0-log-event-testdata/";
-    private static final String TESTDATA1 = AUTH0_LOG_EVENTS_PAYLOAD_TESTDATA_FOLDER + "auth0-log-event-testdata1.json";
-    private static final String TESTDATA2 = AUTH0_LOG_EVENTS_PAYLOAD_TESTDATA_FOLDER + "auth0-log-event-testdata2.json";
-
     final Auth0LogEventService auth0LogEventService = new Auth0LogEventService();
 
     @Test
     public void testAuth0LogEventsParse() throws FileNotFoundException {
-        final var logEvents = auth0LogEventService.parseAuth0LogEvents(readJSONFromFile(TESTDATA1).toString());
+        final var logEvents = auth0LogEventService.parseAuth0LogEvents(readJSONFromFile(AUTH0_LOG_EVENT_TESTDATA1).toString());
 
         assertEquals(2, logEvents.size());
 
@@ -43,7 +41,7 @@ public class Auth0LogEventServiceTest {
 
     @Test
     public void testOneAuth0LogEventParse() throws FileNotFoundException {
-        final var logEvents = auth0LogEventService.parseAuth0LogEvents(readJSONFromFile(TESTDATA2).toString());
+        final var logEvents = auth0LogEventService.parseAuth0LogEvents(readJSONFromFile(AUTH0_LOG_EVENT_TESTDATA2).toString());
 
         assertEquals(1, logEvents.size());
 

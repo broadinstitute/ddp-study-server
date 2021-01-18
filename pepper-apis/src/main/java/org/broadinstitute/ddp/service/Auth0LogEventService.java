@@ -1,5 +1,6 @@
 package org.broadinstitute.ddp.service;
 
+import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.broadinstitute.ddp.json.auth0.Auth0LogEventNode.CLIENT_ID;
 import static org.broadinstitute.ddp.json.auth0.Auth0LogEventNode.CONNECTION_ID;
 import static org.broadinstitute.ddp.json.auth0.Auth0LogEventNode.DATA;
@@ -80,23 +81,34 @@ public class Auth0LogEventService {
     }
 
     public void logAuth0LogEvent(final Auth0LogEvent logEvent) {
-        LOG.debug(
-                "AUTH0-LOG-EVENT[{}]: type:{}, date:{}, log_id:{}\n"
-                        + "\tclient_id:{}, connection_id:{}, user_id:{}\n"
-                        + "\tuser_agent:{}\n"
-                        + "\tip:{}, email:{}\n"
-                        + "\tdata: {}",
-                logEvent.getTenant(),
-                logEvent.getType(),
-                logEvent.getDate(),
-                logEvent.getLogId(),
-                logEvent.getClientId(),
-                logEvent.getConnectionId(),
-                logEvent.getUserId(),
-                logEvent.getUserAgent(),
-                logEvent.getIp(),
-                logEvent.getEmail(),
-                logEvent.getData());
+        if (LOG.isDebugEnabled() || LOG.isTraceEnabled()) {
+            LOG.debug(
+                    "AUTH0-LOG-EVENT[{}]: type:{} ({}), date:{}, log_id:{}\n"
+                            + "\tclient_id:{}, connection_id:{}, user_id:{}\n"
+                            + "\tuser_agent:{}\n"
+                            + "\tip:{}, email:{}\n"
+                            + "\tdata: {}",
+                    logEvent.getTenant(),
+                    logEvent.getType(),
+                    getTypeDescription(logEvent),
+                    logEvent.getDate(),
+                    logEvent.getLogId(),
+                    logEvent.getClientId(),
+                    logEvent.getConnectionId(),
+                    logEvent.getUserId(),
+                    logEvent.getUserAgent(),
+                    logEvent.getIp(),
+                    logEvent.getEmail(),
+                    logEvent.getData());
+        } else {
+            LOG.info("AUTH0-LOG-EVENT[{}]: type:{} ({}), date:{}, user_id:{}, log_id:{}",
+                    logEvent.getTenant(),
+                    logEvent.getType(),
+                    getTypeDescription(logEvent),
+                    logEvent.getDate(),
+                    logEvent.getUserId(),
+                    logEvent.getLogId());
+        }
     }
 
     /**
@@ -105,5 +117,13 @@ public class Auth0LogEventService {
     public void persistAuth0LogEvent(final Handle handle, final Auth0LogEvent logEvent) {
         final var auth0LogEventDao = handle.attach(Auth0LogEventDao.class);
         auth0LogEventDao.insertAuth0LogEvent(logEvent);
+    }
+
+    private String getTypeDescription(final Auth0LogEvent logEvent) {
+        if (logEvent.getAuth0LogEventCode() != null) {
+            return isNotBlank(logEvent.getAuth0LogEventCode().getDescription())
+                    ? logEvent.getAuth0LogEventCode().getDescription() : logEvent.getAuth0LogEventCode().getTitle();
+        }
+        return null;
     }
 }
