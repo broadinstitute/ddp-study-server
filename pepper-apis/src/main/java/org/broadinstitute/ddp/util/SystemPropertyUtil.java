@@ -3,7 +3,7 @@ package org.broadinstitute.ddp.util;
 /**
  * Contains helper methods to read System.properties values.
  */
-public class SystemUtil {
+public class SystemPropertyUtil {
 
     /**
      * Read System.property of boolean type.
@@ -13,7 +13,7 @@ public class SystemUtil {
      * @return boolean true, in case if value=='true' (case insensitive), otherwise false
      *      (even if any other value, not equals true or false)
      */
-    public static boolean readSystemProperty(String name, boolean defaultValue) {
+    public static boolean readProperty(String name, boolean defaultValue) {
         String value = System.getProperty(name);
         return value == null ? defaultValue : Boolean.parseBoolean(value);
     }

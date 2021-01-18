@@ -23,7 +23,7 @@ import org.broadinstitute.ddp.json.auth0.Auth0LogEvent;
 import org.broadinstitute.ddp.json.errors.ApiError;
 import org.broadinstitute.ddp.service.Auth0LogEventService;
 import org.broadinstitute.ddp.util.ResponseUtil;
-import org.broadinstitute.ddp.util.SystemUtil;
+import org.broadinstitute.ddp.util.SystemPropertyUtil;
 import org.slf4j.Logger;
 import spark.Request;
 import spark.Response;
@@ -109,7 +109,7 @@ public class Auth0LogEventRoute implements Route {
     }
 
     private boolean isCheckToken() {
-        return !SystemUtil.readSystemProperty(SYSTEM_PROPERTY_AUTH0_LOG_EVENT_TOKEN_CHECK_DISABLE,
+        return !SystemPropertyUtil.readProperty(SYSTEM_PROPERTY_AUTH0_LOG_EVENT_TOKEN_CHECK_DISABLE,
                 DEFAULT_AUTH0_LOG_EVENT_TOKEN_CHECK_DISABLE)
                 && config.hasPath(AUTH0_LOG_EVENT_BEARER_TOKEN);
     }
