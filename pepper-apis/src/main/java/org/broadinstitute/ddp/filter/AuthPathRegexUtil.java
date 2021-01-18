@@ -57,8 +57,7 @@ public class AuthPathRegexUtil {
     }
 
     public boolean isGovernedParticipantsRoute(String path) {
-        return GOVERNED_PARTICIPANTS_REGEX.matcher(path).matches()
-                || (USER_ROUTE_REGEX.matcher(path).matches());
+        return GOVERNED_PARTICIPANTS_REGEX.matcher(path).matches();
     }
 
     public boolean isGovernedStudyParticipantsRoute(String path) {

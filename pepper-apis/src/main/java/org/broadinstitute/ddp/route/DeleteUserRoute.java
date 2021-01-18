@@ -49,7 +49,6 @@ public class DeleteUserRoute implements Route {
             UserDao userDao = handle.attach(UserDao.class);
 
             // Only the proxy user is allowed to delete one of their managed user
-            // We have this check on the filter level but better to double check
             UserGovernanceDao userGovernanceDao = handle.attach(UserGovernanceDao.class);
             if (userGovernanceDao.findActiveGovernancesByProxyGuid(operatorGuid)
                     .noneMatch(gov -> userGuid.equals(gov.getGovernedUserGuid()))) {
