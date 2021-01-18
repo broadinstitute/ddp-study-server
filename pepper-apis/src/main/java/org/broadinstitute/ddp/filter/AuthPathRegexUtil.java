@@ -26,6 +26,9 @@ public class AuthPathRegexUtil {
     private static final Pattern USER_STUDY_PARTICIPANTS_ROUTE_REGEX = Pattern.compile(
             BASE_USER_REGEX + GUID_PATTERN + "\\/studies\\/" + GUID_PATTERN + "\\/participants");
 
+    private static final Pattern USER_ROUTE_REGEX = Pattern.compile(
+            BASE_USER_REGEX + GUID_PATTERN);
+
     private static final Pattern PROFILE_ROUTE_REGEX = Pattern.compile(BASE_USER_REGEX + GUID_PATTERN + "\\/profile");
 
     private static final Pattern PROFILE_SUB_PATH_ROUTE_REGEX = Pattern.compile(PROFILE_ROUTE_REGEX + "\\/.*");
@@ -54,7 +57,8 @@ public class AuthPathRegexUtil {
     }
 
     public boolean isGovernedParticipantsRoute(String path) {
-        return GOVERNED_PARTICIPANTS_REGEX.matcher(path).matches();
+        return GOVERNED_PARTICIPANTS_REGEX.matcher(path).matches()
+                || (USER_ROUTE_REGEX.matcher(path).matches());
     }
 
     public boolean isGovernedStudyParticipantsRoute(String path) {

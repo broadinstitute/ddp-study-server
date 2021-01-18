@@ -140,3 +140,10 @@ deleteKitRequestById() ::= <<
     WHERE
         kit_request_id=?
 >>
+
+deleteKitRequestByParticipantId() ::= <<
+    DELETE
+    FROM
+        kit_request
+    WHERE participant_user_id = :participantId
+>>

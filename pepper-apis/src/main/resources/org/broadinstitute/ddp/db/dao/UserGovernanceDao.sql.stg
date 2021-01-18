@@ -50,3 +50,8 @@ queryGovernancesByStudyGuid() ::= <<
 <select_all_governances_with_granted_studies()>
 where s.guid = :studyGuid
 >>
+
+queryGovernancesByParticipantGuid() ::= <<
+<select_all_governances_with_granted_studies()>
+where participant.guid = :participantGuid
+>>

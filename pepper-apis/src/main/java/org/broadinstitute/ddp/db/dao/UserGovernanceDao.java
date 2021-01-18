@@ -127,6 +127,13 @@ public interface UserGovernanceDao extends SqlObject {
     }
 
     @UseStringTemplateSqlLocator
+    @SqlQuery("queryGovernancesByParticipantGuid")
+    @RegisterConstructorMapper(Governance.class)
+    @RegisterConstructorMapper(GrantedStudy.class)
+    @UseRowReducer(GovernanceWithStudiesReducer.class)
+    Stream<Governance> findGovernancesByParticipantGuid(@Bind("participantGuid") String participantGuid);
+
+    @UseStringTemplateSqlLocator
     @SqlQuery("queryGovernancesByParticipantAndStudyIds")
     @RegisterConstructorMapper(Governance.class)
     @RegisterConstructorMapper(GrantedStudy.class)

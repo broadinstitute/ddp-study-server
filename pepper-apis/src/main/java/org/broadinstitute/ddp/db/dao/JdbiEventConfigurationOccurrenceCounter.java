@@ -56,6 +56,13 @@ public interface JdbiEventConfigurationOccurrenceCounter extends SqlObject {
             @Bind("participantUserId") long participantUserId
     );
 
+    @SqlUpdate(
+            "delete from event_configuration_occurrence_counter"
+                    + " where participant_user_id = :participantId")
+    int deleteAllByParticipantId(
+            @Bind("participantId") long participantId
+    );
+
     @SqlUpdate("delete from event_configuration_occurrence_counter")
     int deleteAll();
 

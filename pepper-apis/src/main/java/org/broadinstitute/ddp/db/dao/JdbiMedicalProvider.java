@@ -105,6 +105,9 @@ public interface JdbiMedicalProvider extends SqlObject {
     @SqlUpdate("delete from user_medical_provider where user_medical_provider_id = :id")
     int deleteById(@Bind("id") long id);
 
+    @SqlUpdate("delete from user_medical_provider where user_id = :userId")
+    int deleteByUserId(@Bind("userId") Long userId);
+
     @SqlQuery("SELECT "
             + "     ump.user_medical_provider_id, "
             + "     ump.user_medical_provider_guid, "
