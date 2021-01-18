@@ -1470,8 +1470,9 @@ Question.Text:
         enum:
           - NONE
           - DRUG
-          - INCLUDED
           - CANCER
+          - INCLUDED
+          - INSTITUTION
       suggestions:
         description: 'If the suggestionType is INCLUDED, then this is the list of suggestions to use'
         type: array

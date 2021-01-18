@@ -31,6 +31,7 @@ import org.broadinstitute.ddp.model.copy.CopyConfiguration;
 import org.broadinstitute.ddp.model.copy.CopyConfigurationPair;
 import org.broadinstitute.ddp.model.copy.CopyLocation;
 import org.broadinstitute.ddp.model.copy.CopyLocationType;
+import org.broadinstitute.ddp.model.copy.CopyPreviousInstanceFilter;
 import org.broadinstitute.ddp.model.dsm.DsmNotificationEventType;
 import org.broadinstitute.ddp.model.event.ActivityStatusChangeTrigger;
 import org.broadinstitute.ddp.model.event.DsmNotificationTrigger;
@@ -221,14 +222,19 @@ public class EventBuilder {
             List<Config> pairs = List.copyOf(actionCfg.getConfigList("copyConfigPairs"));
             boolean copyFromPreviousInstance = actionCfg.hasPath("copyFromPreviousInstance")
                     && actionCfg.getBoolean("copyFromPreviousInstance");
+            List<String> previousInstanceQuestionStableIds = new ArrayList<>();
             if (copyFromPreviousInstance) {
                 String triggerType = triggerCfg.getString("type");
                 if (!triggerType.equals(EventTriggerType.ACTIVITY_STATUS.name())) {
                     throw new DDPException("When copying from previous instance,"
                             + " COPY_ANSWER should be paired with ACTIVITY_STATUS trigger");
                 }
+                if (actionCfg.hasPath("previousInstanceQuestionStableIds")) {
+                    previousInstanceQuestionStableIds = actionCfg.getStringList("previousInstanceQuestionStableIds");
+                }
             }
-            CopyConfiguration config = buildCopyConfiguration(studyDto.getId(), copyFromPreviousInstance, pairs);
+            CopyConfiguration config = buildCopyConfiguration(
+                    studyDto.getId(), copyFromPreviousInstance, previousInstanceQuestionStableIds, pairs);
             return actionDao.insertCopyAnswerAction(config);
         } else if (EventActionType.CREATE_INVITATION.name().equals(type)) {
             boolean markExistingAsVoided = actionCfg.getBoolean("markExistingAsVoided");
@@ -251,14 +257,21 @@ public class EventBuilder {
         }
     }
 
-    private CopyConfiguration buildCopyConfiguration(long studyId, boolean copyFromPreviousInstance, List<Config> pairsCfgList) {
+    private CopyConfiguration buildCopyConfiguration(long studyId, boolean copyFromPreviousInstance,
+                                                     List<String> previousInstanceQuestionStableIds,
+                                                     List<Config> pairsCfgList) {
+        List<CopyPreviousInstanceFilter> filters = new ArrayList<>();
+        for (var stableId : previousInstanceQuestionStableIds) {
+            var location = new CopyAnswerLocation(stableId);
+            filters.add(new CopyPreviousInstanceFilter(location));
+        }
         List<CopyConfigurationPair> pairs = new ArrayList<>();
         for (var pairCfg : pairsCfgList) {
             CopyLocation source = buildCopyLocation(pairCfg.getConfig("source"));
             CopyLocation target = buildCopyLocation(pairCfg.getConfig("target"));
             pairs.add(new CopyConfigurationPair(source, target));
         }
-        return new CopyConfiguration(studyId, copyFromPreviousInstance, pairs);
+        return new CopyConfiguration(studyId, copyFromPreviousInstance, filters, pairs);
     }
 
     private CopyLocation buildCopyLocation(Config locationCfg) {
@@ -342,8 +355,10 @@ public class EventBuilder {
             String activityCode = actionCfg.getString(ACTIVITY_CODE_FIELD);
             return String.format("%s/%s", type, activityCode);
         } else if (EventActionType.COPY_ANSWER.name().equals(type)) {
+            int numFilters = actionCfg.hasPath("previousInstanceQuestionStableIds")
+                    ? actionCfg.getStringList("previousInstanceQuestionStableIds").size() : 0;
             int numPairs = actionCfg.getConfigList("copyConfigPairs").size();
-            return String.format("%s/%d copy pairs", type, numPairs);
+            return String.format("%s/%d filters/%d pairs", type, numFilters, numPairs);
         } else if (EventActionType.CREATE_INVITATION.name().equals(type)) {
             boolean markExistingAsVoided = actionCfg.getBoolean("markExistingAsVoided");
             String contactEmailQuestionStableId = actionCfg.getString("contactEmailQuestionStableId");

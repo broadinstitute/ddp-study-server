@@ -129,6 +129,11 @@
         headerText = '';
         headerLogo = '##ASSETS_BUCKET_URL##/mpc/project-logo.png';
         studyColor = 'rgb(24, 130, 194)';
+    } else if (study_guid === 'cmi-esc') {
+        registerUrl = '##ESC_BASE_URL##/count-me-in';
+        headerText = '';
+        headerLogo = '##ASSETS_BUCKET_URL##/esc/project-logo.png';
+        studyColor = '#3785BF';
     } else {
         console.log('No configuration for ' + study_guid + ', will use defaults');
     }

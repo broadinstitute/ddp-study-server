@@ -109,3 +109,18 @@ clients:
       ##LOCALHOST_ORIGINS##
     client_metadata:
       study: cmi-mpc
+
+  - name: esc-angular-client
+    app_type: spa
+    callbacks:
+      - '##ESC_BASE_URL##/login-landing'
+      ##LOCALHOST_CALLBACKS##
+    allowed_logout_urls:
+      - '##ESC_BASE_URL##'
+      - '##ESC_BASE_URL##/session-expired'
+      ##LOCALHOST_LOGOUTS##
+    web_origins:
+      - '##ESC_BASE_URL##'
+      ##LOCALHOST_ORIGINS##
+    client_metadata:
+      study: cmi-esc
