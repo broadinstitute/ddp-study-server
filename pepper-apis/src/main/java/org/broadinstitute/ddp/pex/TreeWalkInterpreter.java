@@ -6,6 +6,7 @@ import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -19,6 +20,7 @@ import org.antlr.v4.runtime.tree.TerminalNode;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.db.ActivityDefStore;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
+import org.broadinstitute.ddp.db.dao.AnswerCachedDao;
 import org.broadinstitute.ddp.db.dao.AnswerDao;
 import org.broadinstitute.ddp.db.dao.InvitationDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
@@ -29,9 +31,14 @@ import org.broadinstitute.ddp.db.dao.UserGovernanceDao;
 import org.broadinstitute.ddp.db.dao.UserProfileDao;
 import org.broadinstitute.ddp.db.dto.ActivityDto;
 import org.broadinstitute.ddp.db.dto.UserActivityInstanceSummary;
+import org.broadinstitute.ddp.model.activity.definition.question.CompositeQuestionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
 import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
+import org.broadinstitute.ddp.model.activity.instance.answer.CompositeAnswer;
+import org.broadinstitute.ddp.model.activity.instance.answer.DateAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.DateValue;
 import org.broadinstitute.ddp.model.activity.instance.answer.PicklistAnswer;
+import org.broadinstitute.ddp.model.activity.instance.answer.SelectedPicklistOption;
 import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
 import org.broadinstitute.ddp.model.activity.types.EventTriggerType;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
@@ -394,7 +401,16 @@ public class TreeWalkInterpreter implements PexInterpreter {
         String studyGuid = extractString(ctx.study().STR());
         String activityCode = extractString(ctx.form().STR());
         String stableId = extractString(ctx.question().STR());
-        return applyAnswerPredicate(ictx, userGuid, studyGuid, activityCode, stableId, LATEST, ctx.predicate());
+        return applyAnswerPredicate(ictx, userGuid, studyGuid, activityCode, stableId, null, LATEST, ctx.predicate());
+    }
+
+    private Object evalDefaultLatestChildAnswerQuery(InterpreterContext ictx, PexParser.DefaultLatestChildAnswerQueryContext ctx) {
+        String userGuid = getUserGuidByUserType(ictx, ctx.USER_TYPE());
+        String studyGuid = extractString(ctx.study().STR());
+        String activityCode = extractString(ctx.form().STR());
+        String stableId = extractString(ctx.question().STR());
+        String childStableId = extractString(ctx.child().STR());
+        return applyAnswerPredicate(ictx, userGuid, studyGuid, activityCode, stableId, childStableId, LATEST, ctx.predicate());
     }
 
     private Object evalAnswerQuery(InterpreterContext ictx, AnswerQueryContext ctx) {
@@ -403,12 +419,22 @@ public class TreeWalkInterpreter implements PexInterpreter {
         String activityCode = extractString(ctx.form().STR());
         String type = ctx.instance().INSTANCE_TYPE().getText();
         String stableId = extractString(ctx.question().STR());
-        return applyAnswerPredicate(ictx, userGuid, studyGuid, activityCode, stableId, type, ctx.predicate());
+        return applyAnswerPredicate(ictx, userGuid, studyGuid, activityCode, stableId, null, type, ctx.predicate());
     }
 
-    private Object applyAnswerPredicate(InterpreterContext ictx, String userGuid, String studyGuid, String activityCode, String stableId,
-                                        String instanceType, PredicateContext predicateCtx) {
+    private Object evalChildAnswerQuery(InterpreterContext ictx, PexParser.ChildAnswerQueryContext ctx) {
+        String userGuid = getUserGuidByUserType(ictx, ctx.USER_TYPE());
+        String studyGuid = extractString(ctx.study().STR());
+        String activityCode = extractString(ctx.form().STR());
+        String type = ctx.instance().INSTANCE_TYPE().getText();
+        String stableId = extractString(ctx.question().STR());
+        String childStableId = extractString(ctx.child().STR());
+        return applyAnswerPredicate(ictx, userGuid, studyGuid, activityCode, stableId, childStableId, type, ctx.predicate());
+    }
 
+    private Object applyAnswerPredicate(InterpreterContext ictx, String userGuid, String studyGuid, String activityCode,
+                                        String stableId, String childStableId,
+                                        String instanceType, PredicateContext predicateCtx) {
         long studyId = new JdbiUmbrellaStudyCached(ictx.getHandle())
                 .getIdByGuid(studyGuid)
                 .orElseThrow(() -> {
@@ -418,42 +444,89 @@ public class TreeWalkInterpreter implements PexInterpreter {
 
         QuestionType questionType;
         if (ictx.getActivityInstanceSummary() != null) {
-            questionType = ictx.getActivityInstanceSummary().getLatestActivityInstance(activityCode)
-                    .map(instanceDto -> ActivityDefStore.getInstance().findActivityDef(ictx.getHandle(), studyGuid, instanceDto)
-                            .orElseGet(() -> null))
-                    .map(activityDef -> activityDef.getQuestionByStableId(stableId))
-                    .map(questionDef -> questionDef.getQuestionType())
+            questionType = ictx.getActivityInstanceSummary()
+                    .getLatestActivityInstance(activityCode)
+                    .flatMap(instanceDto -> ActivityDefStore.getInstance()
+                            .findActivityDef(ictx.getHandle(), studyGuid, instanceDto))
+                    .map(def -> def.getQuestionByStableId(stableId))
+                    .map(question -> {
+                        QuestionType type = null;
+                        if (childStableId == null) {
+                            type = question.getQuestionType();
+                        } else if (question.getQuestionType() == QuestionType.COMPOSITE) {
+                            type = ((CompositeQuestionDef) question)
+                                    .getChildren().stream()
+                                    .filter(child -> child.getStableId().equals(childStableId))
+                                    .map(QuestionDef::getQuestionType)
+                                    .findFirst()
+                                    .orElse(null);
+                        }
+                        return type;
+                    })
                     .orElseThrow(() -> {
                         String msg = String.format(
-                                "Cannot find question %s in form activity def with activity code %s for user %s in study %s",
-                                stableId, activityCode, userGuid, studyGuid);
+                                "Cannot find question %s%s in form activity def with activity code %s for user %s in study %s",
+                                stableId, childStableId != null ? " (child " + childStableId + ")" : "",
+                                activityCode, userGuid, studyGuid);
                         throw new PexFetchException(new NoSuchElementException(msg));
                     });
         } else {
-            questionType = fetcher.findQuestionType(ictx, userGuid, studyGuid, activityCode, stableId).orElseThrow(() -> {
+            String stableIdToLookup = childStableId != null ? childStableId : stableId;
+            questionType = fetcher.findQuestionType(ictx, userGuid, studyGuid, activityCode, stableIdToLookup).orElseThrow(() -> {
                 String msg = String.format(
-                        "Cannot find question %s in form %s for user %s and study %s",
-                        stableId, activityCode, userGuid, studyGuid);
+                        "Cannot find question %s%s in form %s for user %s and study %s",
+                        stableId, childStableId != null ? " (child " + childStableId + ")" : "",
+                        activityCode, userGuid, studyGuid);
                 return new PexFetchException(new NoSuchElementException(msg));
             });
         }
 
         String instanceGuid = instanceType.equals(LATEST) ? null : ictx.getActivityInstanceGuid();
 
-        switch (questionType) {
-            case BOOLEAN:
-                return applyBoolAnswerPredicate(ictx, predicateCtx, userGuid, studyId, activityCode, instanceGuid, stableId);
-            case TEXT:
-                return applyTextAnswerPredicate(ictx, predicateCtx, userGuid, studyId, activityCode, instanceGuid, stableId);
-            case PICKLIST:
-                return applyPicklistAnswerPredicate(ictx, predicateCtx, userGuid, studyId, activityCode, instanceGuid, stableId);
-            case DATE:
-                return applyDateAnswerPredicate(ictx, predicateCtx, userGuid, studyId, activityCode, instanceGuid, stableId);
-            case NUMERIC:
-                return applyNumericAnswerPredicate(ictx, predicateCtx, userGuid, studyId, activityCode, instanceGuid, stableId);
-            default:
-                throw new PexUnsupportedException("Question " + stableId + " with type "
-                        + questionType + " is currently not supported");
+        if (childStableId == null) {
+            switch (questionType) {
+                case BOOLEAN:
+                    return applyBoolAnswerPredicate(ictx, predicateCtx, userGuid, studyId, activityCode, instanceGuid, stableId);
+                case TEXT:
+                    return applyTextAnswerPredicate(ictx, predicateCtx, userGuid, studyId, activityCode, instanceGuid, stableId);
+                case PICKLIST:
+                    return applyPicklistAnswerPredicate(ictx, predicateCtx, userGuid, studyId, activityCode, instanceGuid, stableId);
+                case DATE:
+                    return applyDateAnswerPredicate(ictx, predicateCtx, userGuid, studyId, activityCode, instanceGuid, stableId);
+                case NUMERIC:
+                    return applyNumericAnswerPredicate(ictx, predicateCtx, userGuid, studyId, activityCode, instanceGuid, stableId);
+                default:
+                    throw new PexUnsupportedException("Question " + stableId + " with type "
+                            + questionType + " is currently not supported");
+            }
+        } else {
+            var answerDao = new AnswerCachedDao(ictx.getHandle());
+            Optional<Answer> compositeAnswer;
+            if (instanceGuid == null) {
+                compositeAnswer = answerDao.findAnswerByLatestInstanceAndQuestionStableId(userGuid, studyId, stableId);
+            } else {
+                compositeAnswer = answerDao.findAnswerByInstanceGuidAndQuestionStableId(instanceGuid, stableId);
+            }
+            List<Answer> childAnswers = compositeAnswer.stream()
+                    .map(ans -> (CompositeAnswer) ans)
+                    .flatMap(parent -> parent.getValue().stream())
+                    .flatMap(row -> row.getValues().stream())
+                    .filter(child -> child != null && child.getQuestionStableId().equals(childStableId))
+                    .collect(Collectors.toList());
+            switch (questionType) {
+                case TEXT:
+                    return applyChildTextAnswerPredicate(ictx, predicateCtx, userGuid, childAnswers);
+                case PICKLIST:
+                    return applyChildPicklistAnswerPredicate(ictx, predicateCtx, userGuid, childAnswers);
+                case DATE:
+                    return applyChildDateAnswerPredicate(ictx, predicateCtx, userGuid, childAnswers);
+                case NUMERIC:
+                    return applyChildNumericAnswerPredicate(ictx, predicateCtx, userGuid, childAnswers);
+                case BOOLEAN: // Boolean child question type is not supported right now.
+                default:
+                    throw new PexUnsupportedException("Child question " + stableId + " with type "
+                            + questionType + " is currently not supported");
+            }
         }
     }
 
@@ -543,6 +616,26 @@ public class TreeWalkInterpreter implements PexInterpreter {
         }
     }
 
+    private Object applyChildDateAnswerPredicate(InterpreterContext ictx, PredicateContext predicateCtx,
+                                                 String userGuid, List<Answer> childAnswers) {
+        if (predicateCtx instanceof HasDatePredicateContext) {
+            return childAnswers.stream()
+                    .map(child -> ((DateAnswer) child).getValue())
+                    .anyMatch(Objects::nonNull);
+        } else if (predicateCtx instanceof AgeAtLeastPredicateContext) {
+            AgeAtLeastPredicateContext predCtx = (AgeAtLeastPredicateContext) predicateCtx;
+            long minimumAge = extractLong(predCtx.INT());
+            ChronoUnit timeUnit = ChronoUnit.valueOf(predCtx.TIMEUNIT().getText());
+            return childAnswers.stream()
+                    .map(child -> ((DateAnswer) child).getValue())
+                    .anyMatch(dateValue -> isOldEnough(Optional.ofNullable(dateValue), timeUnit, minimumAge));
+        } else if (predicateCtx instanceof PexParser.ValueQueryContext) {
+            throw new PexUnsupportedException("Getting date answer value of child question is currently not supported");
+        } else {
+            throw new PexUnsupportedException("Invalid predicate used on date answer query: " + predicateCtx.getText());
+        }
+    }
+
     private Object applyTextAnswerPredicate(InterpreterContext ictx, PredicateContext predicateCtx,
                                             String userGuid, long studyId, String activityCode, String instanceGuid, String stableId) {
         if (predicateCtx instanceof PexParser.HasTextPredicateContext) {
@@ -560,6 +653,19 @@ public class TreeWalkInterpreter implements PexInterpreter {
             } else {
                 return value;
             }
+        } else {
+            throw new PexUnsupportedException("Invalid predicate used on text answer query: " + predicateCtx.getText());
+        }
+    }
+
+    private Object applyChildTextAnswerPredicate(InterpreterContext ictx, PredicateContext predicateCtx,
+                                                 String userGuid, List<Answer> childAnswers) {
+        if (predicateCtx instanceof PexParser.HasTextPredicateContext) {
+            return childAnswers.stream()
+                    .map(child -> ((TextAnswer) child).getValue())
+                    .anyMatch(StringUtils::isNotBlank);
+        } else if (predicateCtx instanceof PexParser.ValueQueryContext) {
+            throw new PexUnsupportedException("Getting text answer value for child question is currently not supported");
         } else {
             throw new PexUnsupportedException("Invalid predicate used on text answer query: " + predicateCtx.getText());
         }
@@ -610,6 +716,30 @@ public class TreeWalkInterpreter implements PexInterpreter {
         }
     }
 
+    private Object applyChildPicklistAnswerPredicate(InterpreterContext ictx, PredicateContext predicateCtx,
+                                                     String userGuid, List<Answer> childAnswers) {
+        if (predicateCtx instanceof HasOptionPredicateContext) {
+            String optionStableId = extractString(((HasOptionPredicateContext) predicateCtx).STR());
+            return childAnswers.stream()
+                    .flatMap(child -> ((PicklistAnswer) child).getValue().stream())
+                    .map(SelectedPicklistOption::getStableId)
+                    .anyMatch(optionStableId::equals);
+        } else if (predicateCtx instanceof HasAnyOptionPredicateContext) {
+            List<String> optionStableIds = ((HasAnyOptionPredicateContext) predicateCtx).STR()
+                    .stream()
+                    .map(this::extractString)
+                    .collect(Collectors.toList());
+            return childAnswers.stream()
+                    .flatMap(child -> ((PicklistAnswer) child).getValue().stream())
+                    .map(SelectedPicklistOption::getStableId)
+                    .anyMatch(optionStableIds::contains);
+        } else if (predicateCtx instanceof PexParser.ValueQueryContext) {
+            throw new PexUnsupportedException("Getting picklist answer value of child question is currently not supported");
+        } else {
+            throw new PexUnsupportedException("Invalid predicate used on picklist answer set query: " + predicateCtx.getText());
+        }
+    }
+
     private Object applyNumericAnswerPredicate(InterpreterContext ictx, PredicateContext predicateCtx,
                                                String userGuid, long studyId, String activityCode, String instanceGuid, String stableId) {
         if (predicateCtx instanceof PexParser.ValueQueryContext) {
@@ -622,6 +752,15 @@ public class TreeWalkInterpreter implements PexInterpreter {
             } else {
                 return value;
             }
+        } else {
+            throw new PexUnsupportedException("Invalid predicate used on numeric answer set query: " + predicateCtx.getText());
+        }
+    }
+
+    private Object applyChildNumericAnswerPredicate(InterpreterContext ictx, PredicateContext predicateCtx,
+                                                    String userGuid, List<Answer> childAnswers) {
+        if (predicateCtx instanceof PexParser.ValueQueryContext) {
+            throw new PexUnsupportedException("Getting numeric answer value of child question is currently not supported");
         } else {
             throw new PexUnsupportedException("Invalid predicate used on numeric answer set query: " + predicateCtx.getText());
         }
@@ -801,8 +940,18 @@ public class TreeWalkInterpreter implements PexInterpreter {
         }
 
         @Override
+        public Object visitChildAnswerQuery(PexParser.ChildAnswerQueryContext ctx) {
+            return interpreter.evalChildAnswerQuery(ictx, ctx);
+        }
+
+        @Override
         public Object visitDefaultLatestAnswerQuery(PexParser.DefaultLatestAnswerQueryContext ctx) {
             return interpreter.evalDefaultLatestAnswerQuery(ictx, ctx);
+        }
+
+        @Override
+        public Object visitDefaultLatestChildAnswerQuery(PexParser.DefaultLatestChildAnswerQueryContext ctx) {
+            return interpreter.evalDefaultLatestChildAnswerQuery(ictx, ctx);
         }
 
         @Override
