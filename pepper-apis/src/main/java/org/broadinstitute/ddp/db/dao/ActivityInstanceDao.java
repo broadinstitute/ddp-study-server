@@ -256,14 +256,14 @@ public interface ActivityInstanceDao extends SqlObject {
     }
 
     @SqlQuery("select distinct sub.variable_name"
-            + "from activity_instance_substitution as sub"
-            + "join activity_instance as ai on ai.activity_instance_id = sub.activity_instance_id"
-            + "join (select rev.start_date, rev.end_date"
-            + "        from activity_version as ver"
-            + "        join revision as rev on rev.revision_id = ver.revision_id"
-            + "       where ver.study_activity_id = :activityId and ver.activity_version_id = :versionId"
-            + "     ) as ver on ver.start_date <= ai.created_at and (ver.end_date is null or ai.created_at < ver.end_date)"
-            + "where ai.study_activity_id = :activityId")
+            + "  from activity_instance_substitution as sub"
+            + "  join activity_instance as ai on ai.activity_instance_id = sub.activity_instance_id"
+            + "  join (select rev.start_date, rev.end_date"
+            + "          from activity_version as ver"
+            + "          join revision as rev on rev.revision_id = ver.revision_id"
+            + "         where ver.study_activity_id = :activityId and ver.activity_version_id = :versionId"
+            + "       ) as ver on ver.start_date <= ai.created_at and (ver.end_date is null or ai.created_at < ver.end_date)"
+            + " where ai.study_activity_id = :activityId")
     List<String> findSubstitutionNamesSeenAcrossUsersByActivityAndVersion(
             @Bind("activityId") long activityId, @Bind("versionId") long versionId);
 

@@ -229,7 +229,7 @@ public class DataExporter {
      */
     public void computeMaxInstancesSeen(Handle handle, List<ActivityExtract> activities) {
         var instanceDao = handle.attach(ActivityInstanceDao.class);
-        for (var activity : activities) {
+        for (ActivityExtract activity : activities) {
             long activityId = activity.getDefinition().getActivityId();
             long versionId = activity.getVersionDto().getId();
             Integer maxInstancesSeen = activity.getDefinition().getMaxInstancesPerUser();
@@ -250,7 +250,7 @@ public class DataExporter {
      */
     public void computeActivityAttributesSeen(Handle handle, List<ActivityExtract> activities) {
         var instanceDao = handle.attach(ActivityInstanceDao.class);
-        for (var activity : activities) {
+        for (ActivityExtract activity : activities) {
             long activityId = activity.getDefinition().getActivityId();
             long versionId = activity.getVersionDto().getId();
             List<String> names = instanceDao
@@ -843,7 +843,7 @@ public class DataExporter {
 
                 // We're only exposing a few substitutions as "attributes" on the activity instances.
                 Map<String, String> subs = participant.getActivityInstanceSubstitutions(instance.getId());
-                for (var name : ActivityAttributesCollector.EXPOSED_ATTRIBUTES) {
+                for (String name : ActivityAttributesCollector.EXPOSED_ATTRIBUTES) {
                     if (subs.containsKey(name)) {
                         activityInstanceRecord.putAttribute(name, subs.get(name));
                     }
@@ -1110,7 +1110,7 @@ public class DataExporter {
         List<String> headers = new LinkedList<>();
         headers.addAll(participantMetaFmt.headers());
 
-        Map<String, Integer> normalizedMaxInstanceCounts = new HashMap<>();
+        Map<String, Integer> activityTagToNormalizedMaxInstanceCounts = new HashMap<>();
         Map<String, ActivityResponseCollector> responseCollectors = new HashMap<>();
         Map<String, ActivityAttributesCollector> attributesCollectors = new HashMap<>();
         for (ActivityExtract activity : activities) {
@@ -1124,7 +1124,7 @@ public class DataExporter {
             ActivityResponseCollector responseCollector = new ActivityResponseCollector(activity.getDefinition());
             ActivityAttributesCollector attributesCollector = new ActivityAttributesCollector(activity.getAttributesSeen());
 
-            normalizedMaxInstanceCounts.put(activity.getTag(), maxInstances);
+            activityTagToNormalizedMaxInstanceCounts.put(activity.getTag(), maxInstances);
             responseCollectors.put(activity.getTag(), responseCollector);
             attributesCollectors.put(activity.getTag(), attributesCollector);
 
@@ -1153,7 +1153,7 @@ public class DataExporter {
                 ComponentDataSupplier supplier = new ComponentDataSupplier(pt.getUser().getAddress(), pt.getProviders());
                 for (ActivityExtract activity : activities) {
                     String activityTag = activity.getTag();
-                    int maxInstances = normalizedMaxInstanceCounts.get(activityTag);
+                    int maxInstances = activityTagToNormalizedMaxInstanceCounts.get(activityTag);
                     ActivityResponseCollector responseCollector = responseCollectors.get(activityTag);
                     ActivityAttributesCollector attributesCollector = attributesCollectors.get(activityTag);
 
