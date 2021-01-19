@@ -16,11 +16,13 @@
             <column name="log_id" type="varchar(200)">
                 <constraints nullable="false"/>
             </column>
-            <column name="date" type="datetime(6)">
+            <column name="auth0_log_event_created_at" type="datetime(6)">
                 <constraints nullable="false"/>
             </column>
-            <column name="type" type="varchar(100)">
-                <constraints nullable="false"/>
+            <column name="auth0_log_event_code_id" type="bigint">
+                <constraints nullable="false"
+                             references="auth0_log_event_code(auth0_log_event_code_id)"
+                             foreignKeyName="auth0_log_event_code_id_fk"/>
             </column>
             <column name="client_id" type="varchar(200)">
                 <constraints nullable="true"/>
@@ -28,7 +30,7 @@
             <column name="connection_id" type="varchar(200)">
                 <constraints nullable="true"/>
             </column>
-            <column name="user_id" type="varchar(200)">
+            <column name="auth0_log_event_user_id" type="varchar(200)">
                 <constraints nullable="true"/>
             </column>
             <column name="user_agent" type="varchar(1000)">
@@ -52,9 +54,6 @@
         </createIndex>
         <createIndex tableName="auth0_log_event" indexName="auth0_log_event_log_id_idx">
             <column name="log_id" type="varchar(200)"/>
-        </createIndex>
-        <createIndex tableName="auth0_log_event" indexName="auth0_log_event_type_idx">
-            <column name="type" type="varchar(100)"/>
         </createIndex>
         <createIndex tableName="auth0_log_event" indexName="auth0_log_event_email_idx">
             <column name="email" type="varchar(200)"/>

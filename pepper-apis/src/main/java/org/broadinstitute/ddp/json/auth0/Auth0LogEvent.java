@@ -136,10 +136,14 @@ public class Auth0LogEvent {
 
     public static class Auth0LogEventCodeDto {
 
+        private final Long id;
+        private final String code;
         private final String title;
         private final String description;
 
-        public Auth0LogEventCodeDto(String title, String description) {
+        public Auth0LogEventCodeDto(Long id, String code, String title, String description) {
+            this.id = id;
+            this.code = code;
             this.title = title;
             this.description = description;
         }
@@ -155,7 +159,11 @@ public class Auth0LogEvent {
         public static class Auth0LogEventCodeDtoMapper implements RowMapper<Auth0LogEventCodeDto> {
             @Override
             public Auth0LogEventCodeDto map(ResultSet rs, StatementContext ctx) throws SQLException {
-                return new Auth0LogEventCodeDto(rs.getString(1), rs.getString(2));
+                return new Auth0LogEventCodeDto(
+                        rs.getLong("auth0_log_event_code_id"),
+                        rs.getString("code"),
+                        rs.getString("title"),
+                        rs.getString("description"));
             }
         }
     }

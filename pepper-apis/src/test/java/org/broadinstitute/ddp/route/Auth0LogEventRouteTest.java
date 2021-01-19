@@ -11,7 +11,6 @@ import static org.broadinstitute.ddp.constants.ErrorCodes.DATA_PERSIST_ERROR;
 import static org.broadinstitute.ddp.constants.ErrorCodes.MISSING_BODY;
 import static org.broadinstitute.ddp.constants.ErrorCodes.REQUIRED_PARAMETER_MISSING;
 import static org.broadinstitute.ddp.route.Auth0LogEventRoute.QUERY_PARAM_TENANT;
-import static org.broadinstitute.ddp.route.Auth0LogEventRoute.SYSTEM_PROPERTY_AUTH0_LOG_EVENT_TOKEN_CHECK_DISABLE;
 import static org.broadinstitute.ddp.util.TestUtil.readJSONFromFile;
 import static org.hamcrest.Matchers.equalTo;
 
@@ -34,8 +33,6 @@ public class Auth0LogEventRouteTest extends IntegrationTestSuite.TestCase {
 
     @BeforeClass
     public static void setup() {
-        // disable token check
-        System.setProperty(SYSTEM_PROPERTY_AUTH0_LOG_EVENT_TOKEN_CHECK_DISABLE, Boolean.TRUE.toString());
         // create negative (without params) and positive (with params) urls
         urlNoParams = RouteTestUtil.getTestingBaseUrl() + API.AUTH0_LOG_EVENT;
         urlWithParams = urlNoParams + MANDATORY_URL_PARAMS;

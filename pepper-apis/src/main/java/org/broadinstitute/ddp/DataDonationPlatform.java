@@ -1,6 +1,7 @@
 package org.broadinstitute.ddp;
 
 import static com.google.common.net.HttpHeaders.X_FORWARDED_FOR;
+import static org.broadinstitute.ddp.constants.ConfigFile.PrivateApisTokens.AUTH0_LOG_EVENT_BEARER_TOKEN;
 import static org.broadinstitute.ddp.filter.Exclusions.afterWithExclusion;
 import static org.broadinstitute.ddp.filter.Exclusions.beforeWithExclusion;
 import static org.broadinstitute.ddp.filter.WhiteListFilter.whitelist;
@@ -45,6 +46,7 @@ import org.broadinstitute.ddp.db.SectionBlockDao;
 import org.broadinstitute.ddp.db.StudyActivityDao;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.filter.AddDDPAuthLoggingFilter;
+import org.broadinstitute.ddp.filter.Auth0LogEventCheckTokenFilter;
 import org.broadinstitute.ddp.filter.DsmAuthFilter;
 import org.broadinstitute.ddp.filter.HttpHeaderMDCFilter;
 import org.broadinstitute.ddp.filter.MDCAttributeRemovalFilter;
@@ -240,6 +242,7 @@ public class DataDonationPlatform {
 
         int requestThreadTimeout = cfg.getInt(ConfigFile.THREAD_TIMEOUT);
         String healthcheckPassword = cfg.getString(ConfigFile.HEALTHCHECK_PASSWORD);
+        String auth0LogEventBearerToken = cfg.hasPath(AUTH0_LOG_EVENT_BEARER_TOKEN) ? cfg.getString(AUTH0_LOG_EVENT_BEARER_TOKEN) : null;
 
         // app engine's port env var wins
         int configFilePort = cfg.getInt(ConfigFile.PORT);
@@ -322,6 +325,8 @@ public class DataDonationPlatform {
                 API.CHECK_IRB_PASSWORD,
                 API.AUTH0_LOG_EVENT);
 
+        before(API.AUTH0_LOG_EVENT, new Auth0LogEventCheckTokenFilter(auth0LogEventBearerToken));
+
         // Internal routes
         get(API.HEALTH_CHECK, new HealthCheckRoute(healthcheckPassword), responseSerializer);
         get(API.DEPLOYED_VERSION, new GetDeployedAppVersionRoute(), responseSerializer);
@@ -337,7 +342,7 @@ public class DataDonationPlatform {
         post(API.REGISTRATION, new UserRegistrationRoute(interpreter), responseSerializer);
         post(API.TEMP_USERS, new CreateTemporaryUserRoute(), responseSerializer);
 
-        post(API.AUTH0_LOG_EVENT, new Auth0LogEventRoute(cfg), responseSerializer);
+        post(API.AUTH0_LOG_EVENT, new Auth0LogEventRoute(), responseSerializer);
 
         // Admin APIs
         before(API.ADMIN_BASE + "/*", new StudyAdminAuthFilter());

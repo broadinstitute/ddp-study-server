@@ -18,8 +18,11 @@ public interface JdbiAuth0LogEvent extends SqlObject {
      * Insert Auth0 log event
      */
     @SqlUpdate("insert into auth0_log_event "
-            + "(tenant,type,date,log_id,client_id,connection_id,user_id,user_agent,ip,email,data) "
-            + "values(:tenant,:type,:date,:logId,:clientId,:connectionId,:userId,:userAgent,:ip,:email,:data)"
+            + "(tenant,auth0_log_event_code_id,auth0_log_event_created_at,log_id,client_id,connection_id,"
+            + "auth0_log_event_user_id,user_agent,ip,email,data) "
+            + "values(:tenant,"
+            + "(select auth0_log_event_code_id from auth0_log_event_code where code = :type),"
+            + ":date,:logId,:clientId,:connectionId,:userId,:userAgent,:ip,:email,:data)"
     )
     @GetGeneratedKeys
     long insertAuth0LogEvent(
@@ -36,7 +39,7 @@ public interface JdbiAuth0LogEvent extends SqlObject {
             @Bind("data") String data
     );
 
-    @SqlQuery("select c.title, c.description from auth0_log_event_code c where c.code=:code")
+    @SqlQuery("select c.* from auth0_log_event_code c where c.code=:code")
     @RegisterRowMapper(Auth0LogEvent.Auth0LogEventCodeDto.Auth0LogEventCodeDtoMapper.class)
     Optional<Auth0LogEvent.Auth0LogEventCodeDto> findByCode(@Bind("code") String code);
 }
