@@ -358,6 +358,9 @@ commands:
       config_branch:
         type: string
         default: *github_dispatch_config_branch
+      use_current_branch_name:
+        type: boolean
+        default: false
     steps:
       - run:
           name: Get dispatch.yaml file
@@ -369,6 +372,9 @@ commands:
             FILE_PATH="<< parameters.config_file_path >>/${ENVIRONMENT}/dispatch.yaml"
             FILE_URL="${API_BASE_URL}${API_BASE_PATH}${FILE_PATH}"
             BRANCH="<< parameters.config_branch >>"
+            if [[ '<< parameters.use_current_branch_name >>' == 'true' ]]; then
+              BRANCH="${CIRCLE_BRANCH}"
+            fi
             FULL_URL="${FILE_URL}?ref=${BRANCH}"
             curl \
               -H 'Accept:application/vnd.github.v3.raw' \
@@ -859,7 +865,8 @@ jobs:
       - deploy-jar:
           jar_base_name: DataDonationPlatform
           deploy_config_file_dir: ../output-config
-      - update-dispatch-rules
+      - update-dispatch-rules:
+          use_current_branch_name: true
 
   deploy-docs-job:
     executor:
