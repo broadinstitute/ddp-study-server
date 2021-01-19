@@ -510,6 +510,84 @@ Block.Component:
           minimum: 1
           nullable: true
           description: the number to label this block, `null` if it shouldn't be numbered
+Block.Activity:
+  allOf:
+    - $ref: '../pepper.yml#/components/schemas/Block'
+    - type: object
+      required:
+        - displayNumber
+        - renderHint
+        - activityCode
+        - allowMultiple
+      properties:
+        blockType:
+          type: string
+          default: ACTIVITY
+          enum:
+            - ACTIVITY
+        activityCode:
+          type: string
+        addButtonText:
+          type: string
+          nullable: true
+        allowMultiple:
+          type: boolean
+        renderHint:
+          type: string
+          description: |
+            give client an indication of how to display the the child activity instance. EMBEDDED suggests
+            to display the body of the activity instance contents in web page, MODAL suggests to display in
+            separate modal dialog.
+          enum:
+            - EMBEDDED
+            - MODAL
+        displayNumber:
+          type: integer
+          minimum: 1
+          nullable: true
+          description: 'the number to label this block, `null` if it shouldn''t be numbered'
+Block.ActivityInstance:
+  allOf:
+    - $ref: '../pepper.yml#/components/schemas/Block'
+    - type: object
+      required:
+        - instanceGuid
+      properties:
+        blockType:
+          type: string
+          default: ACTIVITY_INSTANCE
+          enum:
+            - ACTIVITY_INSTANCE
+        instanceGuid:
+          type: string
+        readonly:
+          type: boolean
+          description: |
+            whether the activity instance is editable.
+        canDelete:
+          type: boolean
+          description: |
+            whether the activity instance can be deleted.
+        label:
+          type: string
+          nullable: true
+        secondaryLabel:
+          type: string
+          nullable: true
+        secondaryLabelSourceStableId:
+          type: string
+          nullable: true
+          description: |
+            the question stable id for answer that would provide the value for the
+            secondary label. Can be used by client to determine value of `secondaryLabel`
+        addButtonText:
+          type: string
+          nullable: true
+        displayNumber:
+          type: integer
+          minimum: 1
+          nullable: true
+          description: 'the number to label this block, `null` if it shouldn''t be numbered'
 Block.Conditional:
   allOf:
     - $ref: '../pepper.yml#/components/schemas/Block'
@@ -1495,6 +1573,10 @@ Section:
       type: array
       items:
         $ref: '../pepper.yml#/components/schemas/Block'
+    hideProgressIndicator:
+      type: boolean
+      default: false
+      nullable: true
 Study.Summary:
   type: object
   required:
