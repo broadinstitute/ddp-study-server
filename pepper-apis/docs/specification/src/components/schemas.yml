@@ -541,6 +541,10 @@ Block.Activity:
           enum:
             - EMBEDDED
             - MODAL
+        instances:
+          type: array
+          items:
+            $ref: '../pepper.yml#/components/schemas/Block.ActivityInstance'
         displayNumber:
           type: integer
           minimum: 1
@@ -568,21 +572,18 @@ Block.ActivityInstance:
           type: boolean
           description: |
             whether the activity instance can be deleted.
-        label:
+        title:
           type: string
           nullable: true
-        secondaryLabel:
+        subtitle:
           type: string
           nullable: true
-        secondaryLabelSourceStableId:
+        subtitleSourceStableId:
           type: string
           nullable: true
           description: |
             the question stable id for answer that would provide the value for the
-            secondary label. Can be used by client to determine value of `secondaryLabel`
-        addButtonText:
-          type: string
-          nullable: true
+            subtitle. Can be used by client to determine value of `subtitle`
         displayNumber:
           type: integer
           minimum: 1
