@@ -15,10 +15,18 @@ public class StudyContactRequest {
     @SerializedName("attachment")
     private final Attachment attachment;
 
-    public StudyContactRequest(String captchaToken, Map<String, String> data, Attachment attachment) {
+    @SerializedName("clientId")
+    private final String clientId;
+
+    @SerializedName("domain")
+    private final String domain;
+
+    public StudyContactRequest(String captchaToken, Map<String, String> data, Attachment attachment, String clientId, String domain) {
         this.captchaToken = captchaToken;
         this.data = data;
         this.attachment = attachment;
+        this.clientId = clientId;
+        this.domain = domain;
     }
 
     public String getCaptchaToken() {
@@ -31,5 +39,13 @@ public class StudyContactRequest {
 
     public Attachment getAttachment() {
         return attachment;
+    }
+
+    public String getClientId() {
+        return clientId;
+    }
+
+    public String getDomain() {
+        return domain;
     }
 }
