@@ -221,6 +221,8 @@ public class DataExporter {
 
     /**
      * Find and set the max number of instances seen per participant across the study for each given activity extract.
+     * Activities that are defined with only one instance per participant will not be computed so the counts might not
+     * be totally accurate. Otherwise, this will find the current number of instances for each activity.
      *
      * @param handle     the database handle
      * @param activities the list of activities to look at
@@ -230,9 +232,12 @@ public class DataExporter {
         for (var activity : activities) {
             long activityId = activity.getDefinition().getActivityId();
             long versionId = activity.getVersionDto().getId();
-            int maxInstancesSeen = instanceDao
-                    .findMaxInstancesSeenPerUserByActivityAndVersion(activityId, versionId)
-                    .orElse(0);
+            Integer maxInstancesSeen = activity.getDefinition().getMaxInstancesPerUser();
+            if (maxInstancesSeen == null || maxInstancesSeen > 1) {
+                maxInstancesSeen = instanceDao
+                        .findMaxInstancesSeenPerUserByActivityAndVersion(activityId, versionId)
+                        .orElse(0);
+            }
             activity.setMaxInstancesSeen(maxInstancesSeen);
         }
     }
