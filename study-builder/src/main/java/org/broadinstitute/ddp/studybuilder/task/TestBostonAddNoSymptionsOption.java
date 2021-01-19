@@ -2,7 +2,6 @@ package org.broadinstitute.ddp.studybuilder.task;
 
 import java.io.File;
 import java.nio.file.Path;
-import java.util.Arrays;
 import java.util.List;
 
 import com.google.gson.Gson;
@@ -97,7 +96,7 @@ public class TestBostonAddNoSymptionsOption implements CustomTask {
             // add the option to the question
             if (questionDef.getStableId().equalsIgnoreCase(symptomsQuestionDto.getStableId())) {
                 PicklistQuestionDef plQuestionDef = (PicklistQuestionDef) questionDef;
-                plQuestionDao.insertOption(questionDef.getQuestionId(),newOption,plQuestionDef.getAllPicklistOptions().size() + 1,revisionId);
+                plQuestionDao.insertOption(questionDef.getQuestionId(),newOption,(plQuestionDef.getAllPicklistOptions().size() * 10) + 10,revisionId);
             }
         });
 
