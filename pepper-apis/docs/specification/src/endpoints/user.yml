@@ -1,0 +1,24 @@
+parameters:
+  - in: path
+    name: user
+    required: true
+    description: "the user's unique identifier"
+    schema:
+      type: string
+
+delete:
+  operationId: deleteUser
+  description: |
+    Remove user.
+
+    Some restrictions apply:
+    _Only the proxy user is allowed to delete one of their managed user._
+    _The user to be deleted cannot have an Auth0 account._
+    _The user cannot yet have reached the ENROLLED status._
+  tags:
+    - Operator & Participant
+  responses:
+    204:
+      description: The user was successfully deleted
+    default:
+      $ref: '../pepper.yml#/components/responses/ErrorResponse'
