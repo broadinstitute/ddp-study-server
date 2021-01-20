@@ -206,7 +206,7 @@ public interface DsmKitRequestDao extends SqlObject {
     @UseStringTemplateSqlLocator
     void deleteKitRequest(Long id);
 
-    @SqlUpdate("findKitRequestIdsByParticipantId")
+    @SqlQuery("findKitRequestIdsByParticipantId")
     @UseStringTemplateSqlLocator
     List<Long> findKitRequestIdsByParticipantId(@Bind("participantId") Long participantId);
 }

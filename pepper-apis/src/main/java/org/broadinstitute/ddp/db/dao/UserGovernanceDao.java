@@ -82,6 +82,10 @@ public interface UserGovernanceDao extends SqlObject {
         return getUserGovernanceSql().deleteAllGovernancesByOperatorUserId(proxyUserId);
     }
 
+    default int deleteAllGovernancesForParticipant(long userId) {
+        return getUserGovernanceSql().deleteAllGovernancesByParticipantUserId(userId);
+    }
+
     @UseStringTemplateSqlLocator
     @SqlQuery("queryGovernancesWithStudiesById")
     @RegisterConstructorMapper(Governance.class)

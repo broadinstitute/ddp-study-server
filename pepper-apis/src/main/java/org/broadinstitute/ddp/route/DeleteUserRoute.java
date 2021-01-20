@@ -21,7 +21,7 @@ import spark.Request;
 import spark.Response;
 import spark.Route;
 
-import java.util.Collections;
+import java.io.IOException;
 
 import static org.broadinstitute.ddp.constants.RouteConstants.PathParam.USER_GUID;
 
@@ -35,7 +35,7 @@ public class DeleteUserRoute implements Route {
     }
 
     @Override
-    public Object handle(Request request, Response response) {
+    public Object handle(Request request, Response response) throws IOException {
         String userGuid = request.params(USER_GUID);
         DDPAuth ddpAuth = RouteUtil.getDDPAuth(request);
         String operatorGuid = ddpAuth.getOperator();
@@ -107,7 +107,7 @@ public class DeleteUserRoute implements Route {
             }
 
             LOG.info("Deleting user with GUID: {}", userGuid);
-            userService.deleteUser(handle, user.getId());
+            userService.deleteUser(handle, user);
             LOG.info("User with GUID: {} deleted", userGuid);
             response.status(HttpStatus.SC_NO_CONTENT);
             return "";
