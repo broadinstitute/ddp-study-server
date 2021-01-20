@@ -340,7 +340,13 @@
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
-            <version>2.23.4</version>
+            <version>3.6.28</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-inline</artifactId>
+            <version>3.6.28</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -657,7 +663,8 @@
                     <environmentVariables>
                         <PUBSUB_EMULATOR_HOST>localhost:8442</PUBSUB_EMULATOR_HOST>
                         <JAVA_HOME>${java.home}</JAVA_HOME>
-                        <GAE_INSTANCE>test-hostname</GAE_INSTANCE>
+                        <GAE_INSTANCE>test-GAE-instance</GAE_INSTANCE>
+                        <GAE_SERVICE>test-GAE-service</GAE_SERVICE>
                     </environmentVariables>
                 </configuration>
             </plugin>

@@ -49,7 +49,7 @@ public class SlackAppenderTest {
             slackAppender.waitForClearToQueue(3000);
 
             mockServerClient.verify(request().withPath("/mock_slack_test").withBody(JsonBody.json(
-                    new Gson().toJson(new SlackAppender.SlackMessagePayload("*Hi there*\n ``````",
+                    new Gson().toJson(new SlackAppender.SlackMessagePayload("[test-GAE-service] *Hi there*\n ``````",
                             "SlackChannel",
                             "Pepper",
                             ":nerd_face:")))));
