@@ -9,7 +9,7 @@ public interface Auth0LogEventDao extends SqlObject {
     @CreateSqlObject
     JdbiAuth0LogEvent getJdbiAuth0LogEvent();
 
-    default long insertAuth0LogEvent(final Auth0LogEvent logEvent) {
+    default long insertAuth0LogEvent(Auth0LogEvent logEvent) {
         long id = getJdbiAuth0LogEvent().insertAuth0LogEvent(
                 logEvent.getTenant(),
                 logEvent.getType(),
@@ -22,7 +22,7 @@ public interface Auth0LogEventDao extends SqlObject {
                 logEvent.getIp(),
                 logEvent.getEmail(),
                 logEvent.getData());
-        final var auth0LogEventCodeDto = getJdbiAuth0LogEvent().findByCode(logEvent.getType());
+        var auth0LogEventCodeDto = getJdbiAuth0LogEvent().findAuth0LogEventCodeByType(logEvent.getType());
         if (auth0LogEventCodeDto.isPresent()) {
             logEvent.setAuth0LogEventCode(auth0LogEventCodeDto.get());
         }

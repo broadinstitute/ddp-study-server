@@ -73,14 +73,14 @@ public class Auth0LogEventService {
     public List<Map<String, JsonElement>> parseAuth0LogEvents(String logEventsJson) {
         var rootNode = new Gson().fromJson(logEventsJson, JsonObject.class);
         var logsNode = rootNode.getAsJsonArray(LOGS.nodeName());
-        final List<Map<String, JsonElement>> logEvents = new ArrayList<>();
-        for (final var node : logsNode) {
+        List<Map<String, JsonElement>> logEvents = new ArrayList<>();
+        for (var node : logsNode) {
             logEvents.add(GsonRecursiveReader.readValues(node, AUTH0_LOG_EVENT_NODE_NAMES));
         }
         return logEvents;
     }
 
-    public void logAuth0LogEvent(final Auth0LogEvent logEvent) {
+    public void logAuth0LogEvent(Auth0LogEvent logEvent) {
         if (LOG.isDebugEnabled() || LOG.isTraceEnabled()) {
             LOG.debug(
                     "AUTH0-LOG-EVENT[{}]: type:{} ({}), date:{}, log_id:{}\n"
@@ -114,12 +114,12 @@ public class Auth0LogEventService {
     /**
      * Save log event and tenant data to DB table 'auth0-log-event'
      */
-    public void persistAuth0LogEvent(final Handle handle, final Auth0LogEvent logEvent) {
-        final var auth0LogEventDao = handle.attach(Auth0LogEventDao.class);
+    public void persistAuth0LogEvent(Handle handle, Auth0LogEvent logEvent) {
+        var auth0LogEventDao = handle.attach(Auth0LogEventDao.class);
         auth0LogEventDao.insertAuth0LogEvent(logEvent);
     }
 
-    private String getTypeDescription(final Auth0LogEvent logEvent) {
+    private String getTypeDescription(Auth0LogEvent logEvent) {
         if (logEvent.getAuth0LogEventCode() != null) {
             return isNotBlank(logEvent.getAuth0LogEventCode().getDescription())
                     ? logEvent.getAuth0LogEventCode().getDescription() : logEvent.getAuth0LogEventCode().getTitle();

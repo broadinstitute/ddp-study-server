@@ -6,13 +6,13 @@
         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
 
 
-    <changeSet author="evgeniipr" id="20210113-create-auth0-log-event-code-table">
+    <changeSet author="evgeniipr" id="20210120-create-auth0-log-event-code-table">
         <createTable tableName="auth0_log_event_code">
             <column name="auth0_log_event_code_id" type="bigint" autoIncrement="true" startWith="1">
                 <constraints primaryKey="true" primaryKeyName="auth0_log_event_code_pk"/>
             </column>
             <column name="code" type="varchar(100)" >
-                <constraints nullable="false"/>
+                <constraints nullable="false" unique="true" uniqueConstraintName="auth0_log_event_code_code_uk" />
             </column>
             <column name="title" type="varchar(200)">
                 <constraints nullable="false"/>
@@ -22,13 +22,9 @@
             </column>
         </createTable>
 
-        <createIndex tableName="auth0_log_event_code" indexName="auth0_log_event_code_code_idx">
-            <column name="code" type="varchar(100)"/>
-        </createIndex>
-
     </changeSet>
 
-    <changeSet author="evgeniipr" id="20201112-migrate-to-i18n-activity-detail">
+    <changeSet author="evgeniipr" id="20210120-insert-auth0-log-event-codes">
         <sql>
 insert into auth0_log_event_code (code, title, description)
 values

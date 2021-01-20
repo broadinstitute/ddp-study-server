@@ -38,11 +38,11 @@ public class Auth0LogEventRoute implements Route {
         String tenant = readTenant(request);
         checkBody(request);
 
-        final var auth0LogEventService = new Auth0LogEventService();
+        var auth0LogEventService = new Auth0LogEventService();
 
-        final var logEvents = auth0LogEventService.parseAuth0LogEvents(request.body());
-        for (final var logEvent : logEvents) {
-            final var logEventObject = Auth0LogEvent.createInstance(logEvent, tenant);
+        var logEvents = auth0LogEventService.parseAuth0LogEvents(request.body());
+        for (var logEvent : logEvents) {
+            var logEventObject = Auth0LogEvent.createInstance(logEvent, tenant);
             persistLogEvent(auth0LogEventService, logEventObject);
             auth0LogEventService.logAuth0LogEvent(logEventObject);
         }
@@ -51,7 +51,7 @@ public class Auth0LogEventRoute implements Route {
         return "";
     }
 
-    private String readTenant(final Request request) {
+    private String readTenant(Request request) {
         String tenant = request.queryParams(QUERY_PARAM_TENANT);
         if (tenant == null) {
             haltError(SC_BAD_REQUEST, REQUIRED_PARAMETER_MISSING, "Parameter not specified: " + QUERY_PARAM_TENANT);
@@ -59,13 +59,13 @@ public class Auth0LogEventRoute implements Route {
         return tenant;
     }
 
-    private void checkBody(final Request request) {
+    private void checkBody(Request request) {
         if (StringUtils.isBlank(request.body())) {
             haltError(SC_BAD_REQUEST, MISSING_BODY, "Body not specified");
         }
     }
 
-    private void persistLogEvent(final Auth0LogEventService auth0LogEventService, final Auth0LogEvent logEventObject) {
+    private void persistLogEvent(Auth0LogEventService auth0LogEventService, Auth0LogEvent logEventObject) {
         try {
             TransactionWrapper.useTxn(handle -> auth0LogEventService.persistAuth0LogEvent(handle, logEventObject));
         } catch (Exception e) {

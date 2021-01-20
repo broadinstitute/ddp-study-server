@@ -39,7 +39,7 @@ public interface JdbiAuth0LogEvent extends SqlObject {
             @Bind("data") String data
     );
 
-    @SqlQuery("select c.* from auth0_log_event_code c where c.code=:code")
+    @SqlQuery("select c.* from auth0_log_event_code c where c.code=:type")
     @RegisterRowMapper(Auth0LogEvent.Auth0LogEventCodeDto.Auth0LogEventCodeDtoMapper.class)
-    Optional<Auth0LogEvent.Auth0LogEventCodeDto> findByCode(@Bind("code") String code);
+    Optional<Auth0LogEvent.Auth0LogEventCodeDto> findAuth0LogEventCodeByType(@Bind("type") String type);
 }

@@ -25,27 +25,33 @@ public class Auth0LogEventServiceTest {
 
     @Test
     public void testAuth0LogEventsParse() throws FileNotFoundException {
-        final var logEvents = auth0LogEventService.parseAuth0LogEvents(readJSONFromFile(AUTH0_LOG_EVENT_TESTDATA1).toString());
+        var logEvents = auth0LogEventService.parseAuth0LogEvents(readJSONFromFile(AUTH0_LOG_EVENT_TESTDATA1).toString());
 
         assertEquals(2, logEvents.size());
 
-        final var logEvent = logEvents.get(0);
+        var logEvent = logEvents.get(0);
 
         assertEquals("s", logEvent.get(TYPE.nodeName()).getAsString());
         assertEquals("auth0|XXX_user_id_XXX", logEvent.get(USER_ID.nodeName()).getAsString());
         assertEquals("XXX_client_id_XXX", logEvent.get(CLIENT_ID.nodeName()).getAsString());
         assertEquals("test_name@datadonationplatform.org", logEvent.get(USER_NAME.nodeName()).getAsString());
+        assertEquals("test_name@datadonationplatform.org", resolveStringValue(EMAIL, logEvent));
 
+        logEvent = logEvents.get(1);
+
+        assertEquals("sapi", logEvent.get(TYPE.nodeName()).getAsString());
+        assertEquals("auth0|XXX_user_id_XXX", logEvent.get(USER_ID.nodeName()).getAsString());
+        assertEquals("XXX_client_id_XXX_2", logEvent.get(CLIENT_ID.nodeName()).getAsString());
         assertEquals("test_name@datadonationplatform.org", resolveStringValue(EMAIL, logEvent));
     }
 
     @Test
     public void testOneAuth0LogEventParse() throws FileNotFoundException {
-        final var logEvents = auth0LogEventService.parseAuth0LogEvents(readJSONFromFile(AUTH0_LOG_EVENT_TESTDATA2).toString());
+        var logEvents = auth0LogEventService.parseAuth0LogEvents(readJSONFromFile(AUTH0_LOG_EVENT_TESTDATA2).toString());
 
         assertEquals(1, logEvents.size());
 
-        final var logEvent = logEvents.get(0);
+        var logEvent = logEvents.get(0);
 
         assertEquals("seccft", logEvent.get(TYPE.nodeName()).getAsString());
         assertEquals("XXX_client_id_XXX", logEvent.get(CLIENT_ID.nodeName()).getAsString());
