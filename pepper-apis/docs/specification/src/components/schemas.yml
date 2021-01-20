@@ -490,10 +490,6 @@ Block:
       type: string
     shown:
       type: boolean
-    hideProgressIndicator:
-      type: boolean
-      default: false
-      nullable: true
 Block.Component:
   allOf:
     - $ref: '../pepper.yml#/components/schemas/Block'
@@ -1578,6 +1574,10 @@ Section:
       type: array
       items:
         $ref: '../pepper.yml#/components/schemas/Block'
+    hideProgressIndicator:
+      type: boolean
+      default: false
+      nullable: true
 Study.Summary:
   type: object
   required:
