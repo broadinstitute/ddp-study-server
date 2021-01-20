@@ -12,13 +12,27 @@ delete:
     Remove user.
 
     Some restrictions apply:
-    _Only the proxy user is allowed to delete one of their managed user._
-    _The user to be deleted cannot have an Auth0 account._
-    _The user cannot yet have reached the ENROLLED status._
+
+    * _Only the proxy user is allowed to delete one of their managed user._
+    * _The user to be deleted cannot have an Auth0 account._
+    * _The user cannot yet have reached the ENROLLED status._
+    * _The user shouldn't have any kit request._
   tags:
     - Operator & Participant
   responses:
     204:
       description: The user was successfully deleted
+    404:
+      description: The user has not been found
+      content:
+        application/json:
+          schema:
+            $ref: '../pepper.yml#/components/schemas/Error'
+    422:
+      description: The user cannot be deleted
+      content:
+        application/json:
+          schema:
+            $ref: '../pepper.yml#/components/schemas/Error'
     default:
       $ref: '../pepper.yml#/components/responses/ErrorResponse'

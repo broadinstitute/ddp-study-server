@@ -49,8 +49,6 @@ public class UserService {
         JdbiMailAddress mailAddressDao = handle.attach(JdbiMailAddress.class);
         mailAddressDao.deleteDefaultAddressByParticipantId(userId);
         mailAddressDao.deleteAddressByParticipantId(userId);
-        // Removing kit requests
-        handle.attach(DsmKitRequestDao.class).deleteKitRequestsByParticipantId(userId);
         // Removing all the answers and activity instances
         ActivityInstanceDao instanceDao = handle.attach(ActivityInstanceDao.class);
         Set<Long> instanceIds = instanceDao.findAllInstanceIdsByUserIds(Collections.singleton(userId));

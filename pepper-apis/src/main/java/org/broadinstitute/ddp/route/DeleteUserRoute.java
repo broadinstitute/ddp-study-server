@@ -1,8 +1,10 @@
 package org.broadinstitute.ddp.route;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.http.HttpStatus;
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.db.TransactionWrapper;
+import org.broadinstitute.ddp.db.dao.DsmKitRequestDao;
 import org.broadinstitute.ddp.db.dao.JdbiUserStudyEnrollment;
 import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dao.UserGovernanceDao;
@@ -18,6 +20,8 @@ import org.slf4j.LoggerFactory;
 import spark.Request;
 import spark.Response;
 import spark.Route;
+
+import java.util.Collections;
 
 import static org.broadinstitute.ddp.constants.RouteConstants.PathParam.USER_GUID;
 
@@ -36,7 +40,7 @@ public class DeleteUserRoute implements Route {
         DDPAuth ddpAuth = RouteUtil.getDDPAuth(request);
         String operatorGuid = ddpAuth.getOperator();
 
-        LOG.info("Trying to delete user with GUID: {}", userGuid);
+        LOG.info("Trying to delete user with GUID: {}, operator GUID: {}", userGuid, operatorGuid);
 
         if (userGuid.equals(operatorGuid)) {
             String message = "Users cannot delete themselves";
@@ -88,6 +92,15 @@ public class DeleteUserRoute implements Route {
                     enrollment -> EnrollmentStatusType.ENROLLED.equals(enrollment.getEnrollmentStatus()))) {
                 String message = "User with guid '" + userGuid
                         + "' has at least one enrollment completed. Deleting of such users is not supported.";
+                throw ResponseUtil.haltError(response, HttpStatus.SC_UNPROCESSABLE_ENTITY,
+                        new ApiError(ErrorCodes.OPERATION_NOT_ALLOWED,
+                                message));
+            }
+
+            // The user shouldn't have any kit request
+            if (CollectionUtils.isNotEmpty(handle.attach(DsmKitRequestDao.class).findKitRequestIdsByParticipantId(user.getId()))) {
+                String message = "User with guid '" + userGuid
+                        + "' has a kit request. Deleting of such users is not supported.";
                 throw ResponseUtil.haltError(response, HttpStatus.SC_UNPROCESSABLE_ENTITY,
                         new ApiError(ErrorCodes.OPERATION_NOT_ALLOWED,
                                 message));
