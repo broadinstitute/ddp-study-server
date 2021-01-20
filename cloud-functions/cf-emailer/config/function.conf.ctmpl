@@ -1,0 +1,24 @@
+# This is the configuration file for cloud function cf-emailer
+
+{{with $environment := env "ENVIRONMENT"}}
+{{with $version := env "VERSION"}}
+{{with $study := env "STUDY_KEY"}}
+{{with $response := vault (printf "secret/pepper/%s/%s/%s/conf" $environment $version $study)}}
+{{with $conf := $response.Data}}
+{{with $cf := $conf.cloudFunctions}}
+{{with $emails := $conf.emails }}
+{
+    "sendgridApiKey": "{{$conf.sendgridApiKey}}",
+    "sendgridFromName": "{{$conf.sendgridFromName}}",
+    "sendgridFromEmail": "{{$conf.sendgridFromEmail}}",
+    "sendgridToEmail": "{{$conf.sendgridFromEmail}}",
+    "emailTemplate": "{{$emails.dar_form}}",
+    "gcpProject": "{{$cf.gcpProject}}"
+}
+{{end}}
+{{end}}
+{{end}}
+{{end}}
+{{end}}
+{{end}}
+{{end}}
