@@ -128,7 +128,7 @@ public class StackdriverMetricsTracker {
 
                 Map<String, String> resourceLabels = new HashMap<>();
                 resourceLabels.put("project_id", metricMetadata.getProjectName().getProject());
-                resourceLabels.put("node_id", HostUtil.getHostName());
+                resourceLabels.put("node_id", HostUtil.getGAEInstanceOrHostName());
                 resourceLabels.put("location", "us-central1-a");
                 resourceLabels.put("namespace", "org.datadonationplatform");
                 MonitoredResource resource = MonitoredResource.newBuilder()
