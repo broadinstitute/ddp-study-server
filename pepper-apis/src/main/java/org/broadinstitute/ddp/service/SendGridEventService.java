@@ -64,7 +64,7 @@ public class SendGridEventService {
     }
 
     private Gson createGson() {
-        GsonBuilder builder = new GsonBuilder();
+        var builder = new GsonBuilder();
         builder.registerTypeAdapter(Instant.class, new SendGridEventTypeAdapter());
         return builder.create();
     }

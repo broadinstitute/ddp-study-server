@@ -1,5 +1,6 @@
 package org.broadinstitute.ddp.json.sendgrid;
 
+import javax.validation.constraints.NotEmpty;
 import java.time.Instant;
 
 
@@ -7,28 +8,43 @@ import com.google.gson.annotations.SerializedName;
 
 public class SendGridEvent {
 
+    @NotEmpty
     @SerializedName("email")
     private final String email;
+
+    @NotEmpty
     @SerializedName("timestamp")
     private final Instant timestamp;
+
+    @NotEmpty
     @SerializedName("event")
     private final String eventType;
+
     @SerializedName("url")
     private final String url;
+
     @SerializedName("id")
     private final String ip;
+
+    @NotEmpty
     @SerializedName("sg_event_id")
     private final String sgEventId;
+
     @SerializedName("sg_message_id")
     private final String sgMessageId;
+
     @SerializedName("response")
     private final String response;
+
     @SerializedName("reason")
     private final String reason;
+
     @SerializedName("status")
     private final String status;
+
     @SerializedName("attempt")
     private final int attempt;
+
     @SerializedName("smtp-id")
     private final String smtpId;
 
