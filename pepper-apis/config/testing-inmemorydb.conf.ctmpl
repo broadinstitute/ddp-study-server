@@ -59,6 +59,11 @@
         "backendTestClientName": "{{$testingAuth.backendTestClientName}}",
         "backendTestClientName2": "{{$testingAuth.backendTestClientName2}}"
     },
+	"privateApisTokens" : {
+	{{if $conf.Data.privateApisTokens.auth0LogEventBearerToken}}
+		"auth0LogEventBearerToken" : "{{$privateApisTokens.auth0LogEventBearerToken}}"
+    {{end}}
+	},
     "googleGeocodingApiKey": "{{$testingConf.Data.geocodingKey}}",
     "jcacheConfigurationFile": "src/test/resources/redisson-test-jcache.yaml",
     "redisServerAddress":"redis://127.0.0.1:6379",
