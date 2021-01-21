@@ -60,8 +60,8 @@
         "backendTestClientName2": "{{$testingAuth.backendTestClientName2}}"
     },
 	"privateApisTokens" : {
-	{{if $conf.Data.privateApisTokens.auth0LogEventBearerToken}}
-		"auth0LogEventBearerToken" : "{{$privateApisTokens.auth0LogEventBearerToken}}"
+	{{if $testingAuth.auth0LogEventBearerToken}}
+		"auth0LogEventBearerToken" : "{{$testingAuth.auth0LogEventBearerToken}}"
     {{end}}
 	},
     "googleGeocodingApiKey": "{{$testingConf.Data.geocodingKey}}",
