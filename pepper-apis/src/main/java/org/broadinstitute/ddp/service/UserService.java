@@ -103,6 +103,8 @@ public class UserService {
                     ElasticSearchIndexType.PARTICIPANTS);
             String indexParticipantStructured = ElasticsearchServiceUtil.getIndexForStudy(handle, studyDto,
                     ElasticSearchIndexType.PARTICIPANTS_STRUCTURED);
+            String indexUsers = ElasticsearchServiceUtil.getIndexForStudy(handle, studyDto,
+                    ElasticSearchIndexType.USERS);
 
             bulkRequest.add(new DeleteRequest()
                     .index(indexParticipant)
@@ -113,6 +115,11 @@ public class UserService {
                     .index(indexParticipantStructured)
                     .type(REQUEST_TYPE)
                     .id(userGuid));
+
+            bulkRequest.add(new DeleteRequest()
+                    .index(indexUsers)
+                    .type(REQUEST_TYPE)
+                    .id(userGuid));
         }
 
         BulkResponse bulkResponse = esClient.bulk(bulkRequest, RequestOptions.DEFAULT);
@@ -120,8 +127,11 @@ public class UserService {
         if (bulkResponse.hasFailures()) {
             LOG.error(bulkResponse.buildFailureMessage());
         }
-        userGovernances.stream().map(Governance::getProxyUserGuid)
-                .forEach(proxyGuid -> handle.attach(DataExportDao.class).queueDataSync(proxyGuid));
+
+        DataExportDao dataExportDao = handle.attach(DataExportDao.class);
+
+        userGovernances.forEach(governance -> governance.getGrantedStudies().forEach(
+                gs -> dataExportDao.queueDataSync(governance.getProxyUserGuid(), gs.getStudyGuid())));
 
         LOG.info("User with id={} was successfully deleted", userId);
     }
