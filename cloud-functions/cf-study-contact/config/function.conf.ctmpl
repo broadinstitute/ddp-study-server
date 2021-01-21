@@ -1,0 +1,22 @@
+# This is the configuration file for cloud function cf-study-contact
+
+{{with $environment := env "ENVIRONMENT"}}
+{{with $version := env "VERSION"}}
+{{with $study := env "STUDY_KEY"}}
+{{with $response := vault (printf "secret/pepper/%s/%s/%s/conf" $environment $version $study)}}
+{{with $auth0 := index $response.Data "auth0"}}
+{{with $cf := index $response.Data "cloudFunctions"}}
+{
+    "captchaKey": "{{$cf.captchaKey}}",
+    "gcpProject": "{{$cf.gcpProject}}",
+    "bucketName": "{{$cf.bucketName}}",
+    "bucketFolder": "{{$cf.bucketFolder}}",
+    "auth0Domain": "{{$auth0.domain}}",
+    "auth0ClientId": "{{$auth0.clientId}}"
+}
+{{end}}
+{{end}}
+{{end}}
+{{end}}
+{{end}}
+{{end}}

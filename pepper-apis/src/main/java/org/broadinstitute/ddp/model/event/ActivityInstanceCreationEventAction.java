@@ -128,6 +128,9 @@ public class ActivityInstanceCreationEventAction extends EventAction {
             if (StringUtils.isNotBlank(dsmSignal.getKitRequestId())) {
                 builder.setKitRequestId(dsmSignal.getKitRequestId());
             }
+            if (dsmSignal.getKitReasonType() != null) {
+                builder.setKitReasonType(dsmSignal.getKitReasonType());
+            }
             if (dsmSignal.getDsmEventType() == DsmNotificationEventType.TEST_RESULT) {
                 TestResult result = dsmSignal.getTestResult();
                 if (result != null) {

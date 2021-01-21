@@ -23,6 +23,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpHeaders;
 import org.apache.http.entity.ContentType;
 import org.broadinstitute.ddp.constants.ConfigFile;
+import org.broadinstitute.ddp.environment.HostUtil;
 import org.broadinstitute.ddp.thread.ThreadFactory;
 import org.broadinstitute.ddp.thread.ThreadPriorities;
 import org.broadinstitute.ddp.util.ConfigManager;
@@ -45,9 +46,11 @@ public class SlackAppender<E> extends AppenderBase<ILoggingEvent> {
 
     private static final String TITLE = "$TITLE$";
 
+    private static final String SERVICE = "$SERVICE$";
+
     private static final String STACK_TRACE = "$STACK_TRACE$";
 
-    private static final String MESSAGE = "*" + TITLE  +  "*\n ```" + STACK_TRACE + "```";
+    private static final String MESSAGE = "[" + SERVICE + "] *" + TITLE  +  "*\n ```" + STACK_TRACE + "```";
 
     private boolean canLog = true;
 
@@ -198,7 +201,8 @@ public class SlackAppender<E> extends AppenderBase<ILoggingEvent> {
                     String exceptionMessage = getExceptionMessage(e);
                     String stackTrace = getStringifiedStackTrace(e);
 
-                    String message = MESSAGE.replace(TITLE, exceptionMessage);
+                    String message = MESSAGE.replace(SERVICE, HostUtil.getGAEServiceName());
+                    message = message.replace(TITLE, exceptionMessage);
                     message = message.replace(STACK_TRACE, stackTrace);
 
                     SlackMessagePayload messagePayload = new SlackMessagePayload(message, channel, "Pepper",

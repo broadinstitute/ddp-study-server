@@ -99,3 +99,5 @@ checkstyle-result.xml
 # tcell config
 tcell/*.config
 tcell/logs/
+/cloud-functions/cf-emailer/target/
+/cloud-functions/cf-study-contact/target/
