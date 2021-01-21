@@ -18,8 +18,8 @@ public interface JdbiAuth0LogEvent extends SqlObject {
      * Insert Auth0 log event
      */
     @SqlUpdate("insert into auth0_log_event "
-            + "(tenant,auth0_log_event_code_id,auth0_log_event_created_at,log_id,client_id,connection_id,"
-            + "auth0_log_event_user_id,user_agent,ip,email,data) "
+            + "(tenant,auth0_log_event_code_id,created_at,log_id,client_id,connection_id,"
+            + "auth0_user_id,user_agent,ip,email,data) "
             + "values(:tenant,"
             + "(select auth0_log_event_code_id from auth0_log_event_code where code = :type),"
             + ":date,:logId,:clientId,:connectionId,:userId,:userAgent,:ip,:email,:data)"

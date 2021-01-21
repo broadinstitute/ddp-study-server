@@ -16,7 +16,7 @@
             <column name="log_id" type="varchar(200)">
                 <constraints nullable="false"/>
             </column>
-            <column name="auth0_log_event_created_at" type="datetime(6)">
+            <column name="created_at" type="datetime(6)">
                 <constraints nullable="false"/>
             </column>
             <column name="auth0_log_event_code_id" type="bigint">
@@ -30,7 +30,7 @@
             <column name="connection_id" type="varchar(200)">
                 <constraints nullable="true"/>
             </column>
-            <column name="auth0_log_event_user_id" type="varchar(200)">
+            <column name="auth0_user_id" type="varchar(200)">
                 <constraints nullable="true"/>
             </column>
             <column name="user_agent" type="varchar(1000)">
@@ -51,6 +51,9 @@
                              constraintName="auth0_log_event_tenant_log_id_uk"/>
         <createIndex tableName="auth0_log_event" indexName="auth0_log_event_tenant_idx">
             <column name="tenant"/>
+        </createIndex>
+        <createIndex tableName="auth0_log_event" indexName="auth0_log_event_created_at_idx">
+            <column name="created_at"/>
         </createIndex>
         <createIndex tableName="auth0_log_event" indexName="auth0_log_event_log_id_idx">
             <column name="log_id"/>

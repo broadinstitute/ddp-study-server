@@ -83,10 +83,10 @@ public class Auth0LogEventService {
     public void logAuth0LogEvent(Auth0LogEvent logEvent) {
         if (LOG.isDebugEnabled() || LOG.isTraceEnabled()) {
             LOG.debug(
-                    "AUTH0-LOG-EVENT[{}]: type:{} ({}), date:{}, log_id:{}\n"
-                            + "\tclient_id:{}, connection_id:{}, user_id:{}\n"
-                            + "\tuser_agent:{}\n"
-                            + "\tip:{}, email:{}\n"
+                    "AUTH0-LOG-EVENT[{}]: type={} ({}), date={}, log_id={}\n"
+                            + "\tclient_id={}, connection_id={}, user_id={}\n"
+                            + "\tuser_agent={}\n"
+                            + "\tip={}, email={}\n"
                             + "\tdata: {}",
                     logEvent.getTenant(),
                     logEvent.getType(),
@@ -101,7 +101,7 @@ public class Auth0LogEventService {
                     logEvent.getEmail(),
                     logEvent.getData());
         } else {
-            LOG.info("AUTH0-LOG-EVENT[{}]: type:{} ({}), date:{}, user_id:{}, log_id:{}",
+            LOG.info("AUTH0-LOG-EVENT[{}]: type={} ({}), date={}, user_id={}, log_id={}",
                     logEvent.getTenant(),
                     logEvent.getType(),
                     getTypeDescription(logEvent),
