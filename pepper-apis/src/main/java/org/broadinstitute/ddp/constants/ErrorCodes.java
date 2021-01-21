@@ -9,6 +9,7 @@ public class ErrorCodes {
     public static final String BAD_PAYLOAD = "BAD_PAYLOAD";
     public static final String NOT_FOUND = "NOT_FOUND";
     public static final String SERVER_ERROR = "SERVER_ERROR";
+    public static final String DATA_PERSIST_ERROR = "DATA_PERSIST_ERROR";
 
     public static final String SIGNUP_REQUIRED = "SIGNUP_REQUIRED";
     public static final String NOT_SUPPORTED = "NOT_SUPPORTED";

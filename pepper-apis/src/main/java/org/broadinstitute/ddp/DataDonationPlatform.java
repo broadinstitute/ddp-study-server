@@ -133,6 +133,7 @@ import org.broadinstitute.ddp.route.PutTempMailingAddressRoute;
 import org.broadinstitute.ddp.route.ReceiveDsmNotificationRoute;
 import org.broadinstitute.ddp.route.SendEmailRoute;
 import org.broadinstitute.ddp.route.SendExitNotificationRoute;
+import org.broadinstitute.ddp.route.SendGridEventRoute;
 import org.broadinstitute.ddp.route.SetParticipantDefaultMailAddressRoute;
 import org.broadinstitute.ddp.route.UpdateMailAddressRoute;
 import org.broadinstitute.ddp.route.UpdateUserEmailRoute;
@@ -327,6 +328,8 @@ public class DataDonationPlatform {
 
         post(API.REGISTRATION, new UserRegistrationRoute(interpreter), responseSerializer);
         post(API.TEMP_USERS, new CreateTemporaryUserRoute(), responseSerializer);
+
+        post(API.SEND_GRID_EVENT, new SendGridEventRoute(), responseSerializer);
 
         // Admin APIs
         before(API.ADMIN_BASE + "/*", new StudyAdminAuthFilter());
