@@ -32,6 +32,11 @@
         "dsmClientId": "{{$auth0.dsmClientId}}",
         "dsmClientSecret": "{{$auth0.dsmClientSecret}}"
     },
+    "auth0LogEvents" : {
+	{{if $conf.Data.auth0LogEvents.token}}
+		"token" : "{{$conf.Data.auth0LogEvents.token}}"
+    {{end}}
+	},
     "slack": {
         "hook": "{{$slack.hook}}",
         "channel": "{{$slack.channel}}",

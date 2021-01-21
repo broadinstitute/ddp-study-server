@@ -32,10 +32,10 @@ public class Auth0LogEventCheckTokenFilter implements Filter {
 
     private static final Logger LOG = getLogger(Auth0LogEventCheckTokenFilter.class);
 
-    private final String cfgParamAuth0LogEventApiBearerToken;
+    private final String cfgParamAuth0LogEventsToken;
 
-    public Auth0LogEventCheckTokenFilter(String cfgParamAuth0LogEventApiBearerToken) {
-        this.cfgParamAuth0LogEventApiBearerToken = cfgParamAuth0LogEventApiBearerToken;
+    public Auth0LogEventCheckTokenFilter(String cfgParamAuth0LogEventsToken) {
+        this.cfgParamAuth0LogEventsToken = cfgParamAuth0LogEventsToken;
     }
 
     @Override
@@ -49,14 +49,14 @@ public class Auth0LogEventCheckTokenFilter implements Filter {
             if (authorizationToken == null) {
                 haltError(SC_BAD_REQUEST, REQUIRED_HEADER_MISSING, "Header not specified: " + AUTHORIZATION);
             }
-            if (!addBearerPrefixToToken(cfgParamAuth0LogEventApiBearerToken).equals(authorizationToken)) {
+            if (!addBearerPrefixToToken(cfgParamAuth0LogEventsToken).equals(authorizationToken)) {
                 haltError(SC_UNAUTHORIZED, INVALID_TOKEN, "Invalid authorization token");
             }
         }
     }
 
     private boolean isCheckToken() {
-        return isNotBlank(cfgParamAuth0LogEventApiBearerToken);
+        return isNotBlank(cfgParamAuth0LogEventsToken);
     }
 
     private String addBearerPrefixToToken(String token) {

@@ -1,7 +1,7 @@
 package org.broadinstitute.ddp;
 
 import static com.google.common.net.HttpHeaders.X_FORWARDED_FOR;
-import static org.broadinstitute.ddp.constants.ConfigFile.PrivateApisTokens.AUTH0_LOG_EVENT_BEARER_TOKEN;
+import static org.broadinstitute.ddp.constants.ConfigFile.Auth0LogEvents.AUTH0_LOG_EVENTS_TOKEN;
 import static org.broadinstitute.ddp.filter.Exclusions.afterWithExclusion;
 import static org.broadinstitute.ddp.filter.Exclusions.beforeWithExclusion;
 import static org.broadinstitute.ddp.filter.WhiteListFilter.whitelist;
@@ -242,7 +242,7 @@ public class DataDonationPlatform {
 
         int requestThreadTimeout = cfg.getInt(ConfigFile.THREAD_TIMEOUT);
         String healthcheckPassword = cfg.getString(ConfigFile.HEALTHCHECK_PASSWORD);
-        String auth0LogEventBearerToken = cfg.hasPath(AUTH0_LOG_EVENT_BEARER_TOKEN) ? cfg.getString(AUTH0_LOG_EVENT_BEARER_TOKEN) : null;
+        String auth0LogEventsToken = cfg.hasPath(AUTH0_LOG_EVENTS_TOKEN) ? cfg.getString(AUTH0_LOG_EVENTS_TOKEN) : null;
 
         // app engine's port env var wins
         int configFilePort = cfg.getInt(ConfigFile.PORT);
@@ -325,7 +325,7 @@ public class DataDonationPlatform {
                 API.CHECK_IRB_PASSWORD,
                 API.AUTH0_LOG_EVENT);
 
-        before(API.AUTH0_LOG_EVENT, new Auth0LogEventCheckTokenFilter(auth0LogEventBearerToken));
+        before(API.AUTH0_LOG_EVENT, new Auth0LogEventCheckTokenFilter(auth0LogEventsToken));
 
         // Internal routes
         get(API.HEALTH_CHECK, new HealthCheckRoute(healthcheckPassword), responseSerializer);

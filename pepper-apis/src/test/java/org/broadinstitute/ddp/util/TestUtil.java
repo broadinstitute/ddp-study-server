@@ -79,7 +79,7 @@ public class TestUtil {
         );
     }
 
-    public static JsonElement readJSONFromFile(String fileName) throws FileNotFoundException {
+    public static JsonElement readJsonObjectFromFile(String fileName) throws FileNotFoundException {
         return new Gson().fromJson(new FileReader(new File(fileName)), JsonObject.class);
     }
 }

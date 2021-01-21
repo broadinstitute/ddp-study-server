@@ -11,7 +11,7 @@ import static org.broadinstitute.ddp.constants.ErrorCodes.DATA_PERSIST_ERROR;
 import static org.broadinstitute.ddp.constants.ErrorCodes.MISSING_BODY;
 import static org.broadinstitute.ddp.constants.ErrorCodes.REQUIRED_PARAMETER_MISSING;
 import static org.broadinstitute.ddp.route.Auth0LogEventRoute.QUERY_PARAM_TENANT;
-import static org.broadinstitute.ddp.util.TestUtil.readJSONFromFile;
+import static org.broadinstitute.ddp.util.TestUtil.readJsonObjectFromFile;
 import static org.hamcrest.Matchers.equalTo;
 
 import java.io.FileNotFoundException;
@@ -41,7 +41,7 @@ public class Auth0LogEventRouteTest extends IntegrationTestSuite.TestCase {
     @Test
     public void testAuth0LogEventPositive() throws FileNotFoundException {
         given()
-                .body(readJSONFromFile(AUTH0_LOG_EVENT_TESTDATA1).toString())
+                .body(readJsonObjectFromFile(AUTH0_LOG_EVENT_TESTDATA1).toString())
                 .when().post(urlWithParams)
                 .then().assertThat()
                 .statusCode(SC_OK);
@@ -50,7 +50,7 @@ public class Auth0LogEventRouteTest extends IntegrationTestSuite.TestCase {
     @Test
     public void testAuth0LogEventNegativeDueNotSpecifiedTenantParam() throws FileNotFoundException {
         given()
-                .body(readJSONFromFile(AUTH0_LOG_EVENT_TESTDATA1).toString())
+                .body(readJsonObjectFromFile(AUTH0_LOG_EVENT_TESTDATA1).toString())
                 .when().post(urlNoParams)
                 .then().assertThat()
                 .statusCode(SC_BAD_REQUEST)
@@ -71,7 +71,7 @@ public class Auth0LogEventRouteTest extends IntegrationTestSuite.TestCase {
     @Test
     public void testAuth0LogEventNegativeDueBodyContainsNoType() throws FileNotFoundException {
         given()
-                .body(readJSONFromFile(AUTH0_LOG_EVENT_TESTDATA_NEGATIVE1).toString())
+                .body(readJsonObjectFromFile(AUTH0_LOG_EVENT_TESTDATA_NEGATIVE1).toString())
                 .when().post(urlWithParams)
                 .then().assertThat()
                 .statusCode(SC_INTERNAL_SERVER_ERROR)

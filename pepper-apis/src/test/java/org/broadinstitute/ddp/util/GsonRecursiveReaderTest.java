@@ -1,6 +1,6 @@
 package org.broadinstitute.ddp.util;
 
-import static org.broadinstitute.ddp.util.TestUtil.readJSONFromFile;
+import static org.broadinstitute.ddp.util.TestUtil.readJsonObjectFromFile;
 import static org.junit.Assert.assertEquals;
 
 import java.io.FileNotFoundException;
@@ -21,7 +21,7 @@ public class GsonRecursiveReaderTest {
     @Test
     public void testJsonRecursiveReading() throws FileNotFoundException {
         final Map<String, JsonElement> values =
-                GsonRecursiveReader.readValues(readJSONFromFile(TEST_JSON), List.of("title", "name", "hOffset"));
+                GsonRecursiveReader.readValues(readJsonObjectFromFile(TEST_JSON), List.of("title", "name", "hOffset"));
         assertEquals("Sample Component", values.get("title").getAsString());
         assertEquals("win1", values.get("name").getAsString());
         assertEquals("150", values.get("hOffset").getAsString());
