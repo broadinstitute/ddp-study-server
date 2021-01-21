@@ -95,37 +95,39 @@ public class UserService {
 
         // Cleaning up the elasticsearch data
         RestHighLevelClient esClient = ElasticsearchServiceUtil.getElasticsearchClient(ConfigManager.getInstance().getConfig());
-        BulkRequest bulkRequest = new BulkRequest().timeout("2m");
-        for (String studyGuid : studyGuids) {
-            StudyDto studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(studyGuid);
+        if (esClient != null) {
+            BulkRequest bulkRequest = new BulkRequest().timeout("2m");
+            for (String studyGuid : studyGuids) {
+                StudyDto studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(studyGuid);
 
-            String indexParticipant = ElasticsearchServiceUtil.getIndexForStudy(handle, studyDto,
-                    ElasticSearchIndexType.PARTICIPANTS);
-            String indexParticipantStructured = ElasticsearchServiceUtil.getIndexForStudy(handle, studyDto,
-                    ElasticSearchIndexType.PARTICIPANTS_STRUCTURED);
-            String indexUsers = ElasticsearchServiceUtil.getIndexForStudy(handle, studyDto,
-                    ElasticSearchIndexType.USERS);
+                String indexParticipant = ElasticsearchServiceUtil.getIndexForStudy(handle, studyDto,
+                        ElasticSearchIndexType.PARTICIPANTS);
+                String indexParticipantStructured = ElasticsearchServiceUtil.getIndexForStudy(handle, studyDto,
+                        ElasticSearchIndexType.PARTICIPANTS_STRUCTURED);
+                String indexUsers = ElasticsearchServiceUtil.getIndexForStudy(handle, studyDto,
+                        ElasticSearchIndexType.USERS);
 
-            bulkRequest.add(new DeleteRequest()
-                    .index(indexParticipant)
-                    .type(REQUEST_TYPE)
-                    .id(userGuid));
+                bulkRequest.add(new DeleteRequest()
+                        .index(indexParticipant)
+                        .type(REQUEST_TYPE)
+                        .id(userGuid));
 
-            bulkRequest.add(new DeleteRequest()
-                    .index(indexParticipantStructured)
-                    .type(REQUEST_TYPE)
-                    .id(userGuid));
+                bulkRequest.add(new DeleteRequest()
+                        .index(indexParticipantStructured)
+                        .type(REQUEST_TYPE)
+                        .id(userGuid));
 
-            bulkRequest.add(new DeleteRequest()
-                    .index(indexUsers)
-                    .type(REQUEST_TYPE)
-                    .id(userGuid));
-        }
+                bulkRequest.add(new DeleteRequest()
+                        .index(indexUsers)
+                        .type(REQUEST_TYPE)
+                        .id(userGuid));
+            }
 
-        BulkResponse bulkResponse = esClient.bulk(bulkRequest, RequestOptions.DEFAULT);
+            BulkResponse bulkResponse = esClient.bulk(bulkRequest, RequestOptions.DEFAULT);
 
-        if (bulkResponse.hasFailures()) {
-            LOG.error(bulkResponse.buildFailureMessage());
+            if (bulkResponse.hasFailures()) {
+                LOG.error(bulkResponse.buildFailureMessage());
+            }
         }
 
         DataExportDao dataExportDao = handle.attach(DataExportDao.class);

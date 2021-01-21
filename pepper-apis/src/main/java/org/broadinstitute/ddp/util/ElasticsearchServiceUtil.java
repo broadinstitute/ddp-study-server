@@ -44,6 +44,10 @@ public final class ElasticsearchServiceUtil {
     }
 
     public static synchronized RestHighLevelClient getElasticsearchClient(Config cfg) throws MalformedURLException {
+        String urlStr = cfg.getString(ConfigFile.ELASTICSEARCH_URL);
+        if (StringUtils.isBlank(urlStr)) {
+            return null;
+        }
         String userName = cfg.getString(ConfigFile.ELASTICSEARCH_USERNAME);
         String password = cfg.getString(ConfigFile.ELASTICSEARCH_PASSWORD);
 
@@ -51,7 +55,7 @@ public final class ElasticsearchServiceUtil {
         credentialsProvider.setCredentials(AuthScope.ANY,
                 new UsernamePasswordCredentials(userName, password));
 
-        URL url = new URL(cfg.getString(ConfigFile.ELASTICSEARCH_URL));
+        URL url = new URL(urlStr);
         LOG.info("Using Elasticsearch client URL: {}", url);
 
         String proxy = ConfigUtil.getStrIfPresent(cfg, ConfigFile.ELASTICSEARCH_PROXY);

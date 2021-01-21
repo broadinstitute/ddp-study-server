@@ -52,6 +52,11 @@ public class DeleteUserRoute implements Route {
         return TransactionWrapper.withTxn(handle -> {
             UserDao userDao = handle.attach(UserDao.class);
 
+            User user = userDao.findUserByGuid(userGuid)
+                    .orElseThrow(() -> ResponseUtil.haltError(response, HttpStatus.SC_NOT_FOUND,
+                            new ApiError(ErrorCodes.USER_NOT_FOUND,
+                                    "User with guid '" + userGuid + "' was not found")));
+
             // Only the proxy user is allowed to delete one of their managed user
             UserGovernanceDao userGovernanceDao = handle.attach(UserGovernanceDao.class);
             if (userGovernanceDao.findActiveGovernancesByProxyGuid(operatorGuid)
@@ -72,11 +77,6 @@ public class DeleteUserRoute implements Route {
                         new ApiError(ErrorCodes.OPERATION_NOT_ALLOWED,
                                 message));
             }
-
-            User user = userDao.findUserByGuid(userGuid)
-                    .orElseThrow(() -> ResponseUtil.haltError(response, HttpStatus.SC_NOT_FOUND,
-                            new ApiError(ErrorCodes.USER_NOT_FOUND,
-                                    "User with guid '" + userGuid + "' was not found")));
 
             // The user to be deleted cannot have an Auth0 account
             if (user.getAuth0UserId() != null) {
