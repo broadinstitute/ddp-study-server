@@ -16,6 +16,7 @@ import static spark.Spark.port;
 import static spark.Spark.stop;
 import static spark.Spark.threadPool;
 
+import java.net.MalformedURLException;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
@@ -160,10 +161,12 @@ import org.broadinstitute.ddp.service.WorkflowService;
 import org.broadinstitute.ddp.transformers.NullableJsonTransformer;
 import org.broadinstitute.ddp.transformers.SimpleJsonTransformer;
 import org.broadinstitute.ddp.util.ConfigManager;
+import org.broadinstitute.ddp.util.ElasticsearchServiceUtil;
 import org.broadinstitute.ddp.util.LiquibaseUtil;
 import org.broadinstitute.ddp.util.LogbackConfigurationPrinter;
 import org.broadinstitute.ddp.util.ResponseUtil;
 import org.broadinstitute.ddp.util.RouteUtil;
+import org.elasticsearch.client.RestHighLevelClient;
 import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
 import org.slf4j.Logger;
@@ -233,7 +236,7 @@ public class DataDonationPlatform {
         }
     }
 
-    private static void start() {
+    private static void start() throws MalformedURLException {
         LogbackConfigurationPrinter.printLoggingConfiguration();
         Config cfg = ConfigManager.getInstance().getConfig();
         int maxConnections = cfg.getInt(ConfigFile.NUM_POOLED_CONNECTIONS);
@@ -379,7 +382,8 @@ public class DataDonationPlatform {
         post(API.USER_PROFILE, new AddProfileRoute(), responseSerializer);
         patch(API.USER_PROFILE, new PatchProfileRoute(), responseSerializer);
 
-        delete(API.USER_SPECIFIC, new DeleteUserRoute(new UserService()), responseSerializer);
+        RestHighLevelClient esClient = ElasticsearchServiceUtil.getElasticsearchClient(cfg);
+        delete(API.USER_SPECIFIC, new DeleteUserRoute(new UserService(esClient)), responseSerializer);
 
         // User mailing address routes
         AddressService addressService = new AddressService(cfg.getString(ConfigFile.EASY_POST_API_KEY),

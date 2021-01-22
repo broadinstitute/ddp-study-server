@@ -15,6 +15,7 @@ import org.broadinstitute.ddp.security.DDPAuth;
 import org.broadinstitute.ddp.service.UserService;
 import org.broadinstitute.ddp.util.ResponseUtil;
 import org.broadinstitute.ddp.util.RouteUtil;
+import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import spark.Request;
@@ -51,66 +52,92 @@ public class DeleteUserRoute implements Route {
 
         return TransactionWrapper.withTxn(handle -> {
             UserDao userDao = handle.attach(UserDao.class);
-
             User user = userDao.findUserByGuid(userGuid)
                     .orElseThrow(() -> ResponseUtil.haltError(response, HttpStatus.SC_NOT_FOUND,
                             new ApiError(ErrorCodes.USER_NOT_FOUND,
                                     "User with guid '" + userGuid + "' was not found")));
-
-            // Only the proxy user is allowed to delete one of their managed user
-            UserGovernanceDao userGovernanceDao = handle.attach(UserGovernanceDao.class);
-            if (userGovernanceDao.findActiveGovernancesByProxyGuid(operatorGuid)
-                    .noneMatch(gov -> userGuid.equals(gov.getGovernedUserGuid()))) {
-                String message = "User with guid '" + userGuid
-                        + "' is not governed by current user.";
-                throw ResponseUtil.haltError(response, HttpStatus.SC_UNAUTHORIZED,
-                        new ApiError(ErrorCodes.OPERATION_NOT_ALLOWED,
-                                message));
+            CheckError err = checkLimits(handle, user, operatorGuid);
+            if (err != null) {
+                throw ResponseUtil.haltError(response, err.getStatus(), err.getError());
             }
-
-            // The user shouldn't be governed by others
-            if (userGovernanceDao.findGovernancesByParticipantGuid(userGuid)
-                    .anyMatch(gov -> !operatorGuid.equals(gov.getProxyUserGuid()))) {
-                String message = "User with guid '" + userGuid
-                        + "' is also governed by another user.";
-                throw ResponseUtil.haltError(response, HttpStatus.SC_UNPROCESSABLE_ENTITY,
-                        new ApiError(ErrorCodes.OPERATION_NOT_ALLOWED,
-                                message));
-            }
-
-            // The user to be deleted cannot have an Auth0 account
-            if (user.getAuth0UserId() != null) {
-                String message = "User with guid '" + userGuid
-                        + "' has auth0 account associated. Deleting of such users is not supported.";
-                throw ResponseUtil.haltError(response, HttpStatus.SC_UNPROCESSABLE_ENTITY,
-                        new ApiError(ErrorCodes.OPERATION_NOT_ALLOWED,
-                                message));
-            }
-
-            // The user cannot yet have reached the ENROLLED status
-            if (handle.attach(JdbiUserStudyEnrollment.class).findByUserGuid(userGuid).stream().anyMatch(
-                    enrollment -> EnrollmentStatusType.ENROLLED.equals(enrollment.getEnrollmentStatus()))) {
-                String message = "User with guid '" + userGuid
-                        + "' has at least one enrollment completed. Deleting of such users is not supported.";
-                throw ResponseUtil.haltError(response, HttpStatus.SC_UNPROCESSABLE_ENTITY,
-                        new ApiError(ErrorCodes.OPERATION_NOT_ALLOWED,
-                                message));
-            }
-
-            // The user shouldn't have any kit request
-            if (CollectionUtils.isNotEmpty(handle.attach(DsmKitRequestDao.class).findKitRequestIdsByParticipantId(user.getId()))) {
-                String message = "User with guid '" + userGuid
-                        + "' has a kit request. Deleting of such users is not supported.";
-                throw ResponseUtil.haltError(response, HttpStatus.SC_UNPROCESSABLE_ENTITY,
-                        new ApiError(ErrorCodes.OPERATION_NOT_ALLOWED,
-                                message));
-            }
-
             LOG.info("Deleting user with GUID: {}", userGuid);
             userService.deleteUser(handle, user);
             LOG.info("User with GUID: {} deleted", userGuid);
             response.status(HttpStatus.SC_NO_CONTENT);
             return "";
         });
+    }
+
+    CheckError checkLimits(Handle handle, User user, String operatorGuid) {
+        String userGuid = user.getGuid();
+
+        // Only the proxy user is allowed to delete one of their managed user
+        UserGovernanceDao userGovernanceDao = handle.attach(UserGovernanceDao.class);
+        if (userGovernanceDao.findActiveGovernancesByProxyGuid(operatorGuid)
+                .noneMatch(gov -> userGuid.equals(gov.getGovernedUserGuid()))) {
+            String message = "User with guid '" + userGuid
+                    + "' is not governed by current user.";
+            return new CheckError(HttpStatus.SC_UNAUTHORIZED,
+                    new ApiError(ErrorCodes.OPERATION_NOT_ALLOWED,
+                            message));
+        }
+
+        // The user shouldn't be governed by others
+        if (userGovernanceDao.findGovernancesByParticipantGuid(userGuid)
+                .anyMatch(gov -> !operatorGuid.equals(gov.getProxyUserGuid()))) {
+            String message = "User with guid '" + userGuid
+                    + "' is also governed by another user.";
+            return new CheckError(HttpStatus.SC_UNPROCESSABLE_ENTITY,
+                    new ApiError(ErrorCodes.OPERATION_NOT_ALLOWED,
+                            message));
+        }
+
+        // The user to be deleted cannot have an Auth0 account
+        if (user.getAuth0UserId() != null) {
+            String message = "User with guid '" + userGuid
+                    + "' has auth0 account associated. Deleting of such users is not supported.";
+            return new CheckError(HttpStatus.SC_UNPROCESSABLE_ENTITY,
+                    new ApiError(ErrorCodes.OPERATION_NOT_ALLOWED,
+                            message));
+        }
+
+        // The user cannot yet have reached the ENROLLED status
+        if (handle.attach(JdbiUserStudyEnrollment.class).findByUserGuid(userGuid).stream().anyMatch(
+                enrollment -> EnrollmentStatusType.ENROLLED.equals(enrollment.getEnrollmentStatus()))) {
+            String message = "User with guid '" + userGuid
+                    + "' has at least one enrollment completed. Deleting of such users is not supported.";
+            return new CheckError(HttpStatus.SC_UNPROCESSABLE_ENTITY,
+                    new ApiError(ErrorCodes.OPERATION_NOT_ALLOWED,
+                            message));
+        }
+
+        // The user shouldn't have any kit request
+        if (CollectionUtils.isNotEmpty(handle.attach(DsmKitRequestDao.class).findKitRequestIdsByParticipantId(user.getId()))) {
+            String message = "User with guid '" + userGuid
+                    + "' has a kit request. Deleting of such users is not supported.";
+            return new CheckError(HttpStatus.SC_UNPROCESSABLE_ENTITY,
+                    new ApiError(ErrorCodes.OPERATION_NOT_ALLOWED,
+                            message));
+        }
+
+        return null;
+    }
+
+    static class CheckError {
+        private final int status;
+        private final ApiError error;
+
+        public CheckError(int status, ApiError error) {
+            this.status = status;
+            this.error = error;
+        }
+
+        public int getStatus() {
+            return status;
+        }
+
+        public ApiError getError() {
+            return error;
+        }
     }
 }

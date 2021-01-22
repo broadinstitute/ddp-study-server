@@ -1,9 +1,5 @@
 package org.broadinstitute.ddp.route;
 
-import io.restassured.response.Response;
-import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.ddp.constants.ConfigFile;
-import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.DsmKitRequestDao;
@@ -20,13 +16,15 @@ import org.broadinstitute.ddp.model.dsm.KitType;
 import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
 import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.service.DsmAddressValidationStatus;
-import org.broadinstitute.ddp.util.ConfigManager;
+import org.broadinstitute.ddp.service.UserService;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
+import org.elasticsearch.client.RestHighLevelClient;
 import org.jdbi.v3.core.Handle;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -35,13 +33,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static io.restassured.RestAssured.given;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.mockito.Mockito.mock;
 
 public class DeleteUserRouteTest extends IntegrationTestSuite.TestCase {
 
-    private static String token;
-    private static String url;
     private static TestDataSetupUtil.GeneratedTestData testData;
 
     private static User userNonGoverned;
@@ -56,24 +55,17 @@ public class DeleteUserRouteTest extends IntegrationTestSuite.TestCase {
     private static final List<User> usersToDelete = new ArrayList<>();
     private static final Map<User, List<Long>> governancesToDelete = new HashMap<>();
 
-    private static String esUrl;
+    private static DeleteUserRoute route;
+    private static UserService userService;
 
     @BeforeClass
     public static void setup() throws Exception {
-        // TODO: Currently there is no way to mock the ES client, so overriding for this test only
-        ConfigManager configManager = ConfigManager.getInstance();
-        esUrl = configManager.getConfig().hasPath(ConfigFile.ELASTICSEARCH_URL)
-                ? configManager.getConfig().getString(ConfigFile.ELASTICSEARCH_URL) : null;
-        if (StringUtils.isNotBlank(esUrl)) {
-            configManager.overrideValue(ConfigFile.ELASTICSEARCH_URL, "");
-        }
-        String endpoint = RouteConstants.API.USER_SPECIFIC
-                .replace(RouteConstants.PathParam.USER_GUID, "{userGuid}");
-        url = RouteTestUtil.getTestingBaseUrl() + endpoint;
+        RestHighLevelClient esClientMock = mock(RestHighLevelClient.class);
+        userService = new UserService(esClientMock);
+        route = new DeleteUserRoute(userService);
 
         TransactionWrapper.useTxn(handle -> {
             testData = TestDataSetupUtil.generateBasicUserTestData(handle);
-            token = testData.getTestingUser().getToken();
 
             userNonGoverned = createUser(handle, testData.getTestingStudy(), null, false,
                     false);
@@ -109,66 +101,63 @@ public class DeleteUserRouteTest extends IntegrationTestSuite.TestCase {
             handle.attach(JdbiUser.class).deleteAllByGuids(usersToDelete.stream().map(User::getGuid).collect(Collectors.toSet()));
             usersToDelete.clear();
         });
-        if (StringUtils.isNotBlank(esUrl)) {
-            ConfigManager.getInstance().overrideValue(ConfigFile.ELASTICSEARCH_URL, esUrl);
-        }
-    }
-
-    @Test
-    public void notFound() {
-        postRequest("E49KNOTFOUNDNOTFOUND")
-                .then().assertThat()
-                .statusCode(404);
     }
 
     @Test
     public void nonGoverned() {
-        postRequest(userNonGoverned.getGuid())
-                .then().assertThat()
-                .statusCode(401);
+        TransactionWrapper.useTxn(handle -> {
+            DeleteUserRoute.CheckError err = route.checkLimits(handle, userNonGoverned, testData.getUserGuid());
+            assertNotNull(err);
+            assertEquals(401, err.getStatus());
+        });
     }
 
     @Test
     public void multiGoverned() {
-        postRequest(userMultiGoverned.getGuid())
-                .then().assertThat()
-                .statusCode(422);
+        TransactionWrapper.useTxn(handle -> {
+            DeleteUserRoute.CheckError err = route.checkLimits(handle, userMultiGoverned, testData.getUserGuid());
+            assertNotNull(err);
+            assertEquals(422, err.getStatus());
+        });
     }
 
     @Test
     public void withAccount() {
-        postRequest(userWithAccount.getGuid())
-                .then().assertThat()
-                .statusCode(422);
+        TransactionWrapper.useTxn(handle -> {
+            DeleteUserRoute.CheckError err = route.checkLimits(handle, userWithAccount, testData.getUserGuid());
+            assertNotNull(err);
+            assertEquals(422, err.getStatus());
+        });
     }
 
     @Test
     public void enrolled() {
-        postRequest(userEnrolled.getGuid())
-                .then().assertThat()
-                .statusCode(422);
+        TransactionWrapper.useTxn(handle -> {
+            DeleteUserRoute.CheckError err = route.checkLimits(handle, userEnrolled, testData.getUserGuid());
+            assertNotNull(err);
+            assertEquals(422, err.getStatus());
+        });
     }
 
     @Test
     public void withKit() {
-        postRequest(userWithKit.getGuid())
-                .then().assertThat()
-                .statusCode(422);
+        TransactionWrapper.useTxn(handle -> {
+            DeleteUserRoute.CheckError err = route.checkLimits(handle, userWithKit, testData.getUserGuid());
+            assertNotNull(err);
+            assertEquals(422, err.getStatus());
+        });
     }
 
     @Test
-    public void normal() {
-        postRequest(userNormal.getGuid())
-                .then().assertThat()
-                .statusCode(204);
+    public void normal() throws IOException {
+        TransactionWrapper.useTxn(handle -> {
+            DeleteUserRoute.CheckError err = route.checkLimits(handle, userNormal, testData.getUserGuid());
+            assertNull(err);
+            userService.deleteUser(handle, userNormal);
+            assertFalse(handle.attach(UserDao.class).findUserById(userNormal.getId()).isPresent());
+        });
         usersToDelete.remove(userNormal);
         governancesToDelete.remove(userNormal);
-    }
-
-    private Response postRequest(String userGuid) {
-        return given().auth().oauth2(token)
-                .pathParam("userGuid", userGuid)
-                .when().delete(url);
     }
 
     private static User createUser(Handle handle, StudyDto study, String auth0Account, boolean enrolled,

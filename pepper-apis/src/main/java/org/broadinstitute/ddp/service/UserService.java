@@ -19,7 +19,6 @@ import org.broadinstitute.ddp.elastic.ElasticSearchIndexType;
 import org.broadinstitute.ddp.model.governance.Governance;
 import org.broadinstitute.ddp.model.governance.GrantedStudy;
 import org.broadinstitute.ddp.model.user.User;
-import org.broadinstitute.ddp.util.ConfigManager;
 import org.broadinstitute.ddp.util.ElasticsearchServiceUtil;
 import org.elasticsearch.action.bulk.BulkRequest;
 import org.elasticsearch.action.bulk.BulkResponse;
@@ -46,7 +45,10 @@ public class UserService {
 
     private static final String REQUEST_TYPE = "_doc";
 
-    public UserService() {
+    private final RestHighLevelClient esClient;
+
+    public UserService(RestHighLevelClient esClient) {
+        this.esClient = esClient;
     }
 
     /**
@@ -94,7 +96,6 @@ public class UserService {
         handle.attach(JdbiUser.class).deleteAllByIds(Collections.singleton(userId));
 
         // Cleaning up the elasticsearch data
-        RestHighLevelClient esClient = ElasticsearchServiceUtil.getElasticsearchClient(ConfigManager.getInstance().getConfig());
         if (esClient != null) {
             BulkRequest bulkRequest = new BulkRequest().timeout("2m");
             for (String studyGuid : studyGuids) {
@@ -125,7 +126,7 @@ public class UserService {
 
             BulkResponse bulkResponse = esClient.bulk(bulkRequest, RequestOptions.DEFAULT);
 
-            if (bulkResponse.hasFailures()) {
+            if (bulkResponse != null && bulkResponse.hasFailures()) {
                 LOG.error(bulkResponse.buildFailureMessage());
             }
         }
