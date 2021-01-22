@@ -538,19 +538,25 @@ Block.Activity:
         allowMultiple:
           type: boolean
           description: |
-            indicates whether this activity allows for multiple instances to be created. If value is true, client is expected
+            Indicates whether this activity allows for multiple instances to be created. If value is true, client is expected
             to provide UI mechanism (e.g., button) that will call [createActivity](#operation/createActivity) and new activity instance
             can be retrieved via [getActivitySummary](#operation/getActivitySummary)
         renderHint:
           type: string
           description: |
-            give client an indication of how to display the the child activity instance. EMBEDDED suggests
+            Give client an indication of how to display the the child activity instance. EMBEDDED suggests
             to display the body of the activity instance contents in web page, MODAL suggests to display in
             separate modal dialog.
           enum:
             - EMBEDDED
             - MODAL
         instances:
+          description: |
+            Summaries of instances of containing activity. Each item in the array is equivalent to summary that can be retrieved
+            using [getActivitySummary](#operation/getActivitySummary).
+            These summary objects contain metadata (`canDelete`, `readOnly`) that indicate what operations are available to operate on the instance.
+            The full activity instance can be retrieved using [getActivity](#operation/getActivity) with the provided `instanceGuid` or
+            deleted using [deleteActivity](#operation/deleteActivity).
           type: array
           items:
             $ref: '../pepper.yml#/components/schemas/Activity.Summary'
