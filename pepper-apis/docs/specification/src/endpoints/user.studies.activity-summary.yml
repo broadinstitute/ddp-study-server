@@ -1,0 +1,36 @@
+get:
+  operationId: getActivitySummary
+  tags:
+    - Activities
+  summary: fetch a summary of an activity
+  description: |
+    Returns a summary for an activity instance.
+  parameters:
+    - in: path
+      name: user
+      required: true
+      description: the participant's guid
+      schema:
+        type: string
+    - in: path
+      name: study
+      required: true
+      description: the study's unique identifier
+      schema:
+        type: string
+    - in: path
+      name: instance
+      required: true
+      description: the activity instance guid
+      schema:
+        type: string
+  responses:
+    200:
+      $ref: '../pepper.yml#/components/responses/ActivitySummaryResponse'
+    401:
+      description: missing credentials or temporary user is invalid
+    404:
+      $ref: '../pepper.yml#/components/responses/ActivityDetailNotFoundResponse'
+    default:
+      $ref: '../pepper.yml#/components/responses/ErrorResponse'
+

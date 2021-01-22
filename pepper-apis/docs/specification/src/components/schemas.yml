@@ -205,6 +205,7 @@ Activity.Summary:
     - numQuestionsAnswered
     - isFollowup
     - isHidden
+    - canDelete
   properties:
     activityCode:
       description: the source activity for this instance
@@ -254,6 +255,10 @@ Activity.Summary:
       description: false if the activity can be modified
       example: false
       type: boolean
+    canDelete:
+      type: boolean
+      description: |
+        whether the activity instance can be deleted.
     statusCode:
       $ref: "../pepper.yml#/components/schemas/ActivityInstanceStatusType"
       example: IN_PROGRESS
@@ -532,6 +537,10 @@ Block.Activity:
           nullable: true
         allowMultiple:
           type: boolean
+          description: |
+            indicates whether this activity allows for multiple instances to be created. If value is true, client is expected
+            to provide UI mechanism (e.g., button) that will call [createActivity](#operation/createActivity) and new activity instance
+            can be retrieved via [getActivitySummary](#operation/getActivitySummary)
         renderHint:
           type: string
           description: |
@@ -544,46 +553,7 @@ Block.Activity:
         instances:
           type: array
           items:
-            $ref: '../pepper.yml#/components/schemas/Block.ActivityInstance'
-        displayNumber:
-          type: integer
-          minimum: 1
-          nullable: true
-          description: 'the number to label this block, `null` if it shouldn''t be numbered'
-Block.ActivityInstance:
-  allOf:
-    - $ref: '../pepper.yml#/components/schemas/Block'
-    - type: object
-      required:
-        - instanceGuid
-      properties:
-        blockType:
-          type: string
-          default: ACTIVITY_INSTANCE
-          enum:
-            - ACTIVITY_INSTANCE
-        instanceGuid:
-          type: string
-        readonly:
-          type: boolean
-          description: |
-            whether the activity instance is editable.
-        canDelete:
-          type: boolean
-          description: |
-            whether the activity instance can be deleted.
-        title:
-          type: string
-          nullable: true
-        subtitle:
-          type: string
-          nullable: true
-        subtitleSourceStableId:
-          type: string
-          nullable: true
-          description: |
-            the question stable id for answer that would provide the value for the
-            subtitle. Can be used by client to determine value of `subtitle`
+            $ref: '../pepper.yml#/components/schemas/Activity.Summary'
         displayNumber:
           type: integer
           minimum: 1

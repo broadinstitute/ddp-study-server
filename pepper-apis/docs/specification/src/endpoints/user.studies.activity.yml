@@ -99,3 +99,21 @@ patch:
                       - ACTIVITY_NOT_FOUND
     default:
       $ref: '../pepper.yml#/components/responses/ErrorResponse'
+delete:
+  operationId: deleteActivity
+  tags:
+    - Activities
+  summary: delete an activity instance
+  description: |
+    Deletes the specified activity. Restrictions TBD.
+  responses:
+    204:
+      description: The activity was succesfully deleted
+    401:
+      description: missing credentials or temporary user is invalid
+    404:
+      $ref: '../pepper.yml#/components/responses/ActivityDetailNotFoundResponse'
+    403:
+      $ref: '../pepper.yml#/components/responses/ActivityDeleteNotAllowedResponse'
+    default:
+      $ref: '../pepper.yml#/components/responses/ErrorResponse'
