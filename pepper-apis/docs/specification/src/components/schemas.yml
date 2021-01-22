@@ -535,6 +535,9 @@ Block.Activity:
         addButtonText:
           type: string
           nullable: true
+          description: |
+            Suggested text for button that would allow creation of additional activity instances via [createActivity](#operation/createActivity).
+            Value only relevant if `allowMultiple` is set to `true`.
         allowMultiple:
           type: boolean
           description: |
