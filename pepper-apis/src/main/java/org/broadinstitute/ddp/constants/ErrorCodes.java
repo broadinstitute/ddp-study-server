@@ -20,6 +20,7 @@ public class ErrorCodes {
     public static final String MALFORMED_REDIRECT_URL = "MALFORMED_REDIRECT_URL";
     public static final String MALFORMED_DRUG_QUERY = "MALFORMED_DRUG_QUERY";
     public static final String MALFORMED_CANCER_QUERY = "MALFORMED_CANCER_QUERY";
+    public static final String REQUIRED_HEADER_MISSING = "REQUIRED_HEADER_MISSING";
 
     public static final String NO_SUCH_ELEMENT = "NO_SUCH_ELEMENT";
     public static final String UNEXPECTED_NUMBER_OF_ELEMENTS = "UNEXPECTED_NUMBER_OF_ELEMENTS";
@@ -68,6 +69,8 @@ public class ErrorCodes {
     public static final String MISSING_DRUG_QUERY_LIMIT = "MISSING_DRUG_QUERY_LIMIT";
     public static final String PASSWORD_RESET_LINK_EXPIRED = "PASSWORD_RESET_LINK_EXPIRED";
 
+    public static final String INVALID_PAYLOAD_SIGNATURE = "INVALID_PAYLOAD_SIGNATURE";
+    public static final String SIGNATURE_VERIFICATION_ERROR = "SIGNATURE_VERIFICATION_ERROR";
     public static final String INVALID_TOKEN = "INVALID_TOKEN";
     public static final String INVALID_AUTH0_USER_CREDENTIALS = "INVALID_AUTH0_USER_CREDENTIALS";
     public static final String USER_NOT_FOUND_IN_AUTH0 = "USER_NOT_FOUND_IN_AUTH0";

@@ -187,4 +187,8 @@ public class ConfigFile {
         // The proxy URL to use for all outgoing SendGrid requests.
         public static final String PROXY = "sendgrid.proxy";
     }
+
+    public static class SendGridEvents {
+        public static final String SENGRID_EVENTS_VERIFICATION_KEY = "sendGridEvents.verificationKey";
+    }
 }

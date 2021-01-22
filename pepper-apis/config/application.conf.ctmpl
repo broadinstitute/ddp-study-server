@@ -32,6 +32,11 @@
         "dsmClientId": "{{$auth0.dsmClientId}}",
         "dsmClientSecret": "{{$auth0.dsmClientSecret}}"
     },
+    "sendGridEvents" : {
+	{{if $conf.Data.sendGridEvents.verificationKey}}
+		"verificationKey" : "{{$conf.Data.sendGridEvents.verificationKey}}"
+    {{end}}
+	},
     "slack": {
         "hook": "{{$slack.hook}}",
         "channel": "{{$slack.channel}}",

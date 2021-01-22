@@ -28,7 +28,7 @@ public class SendGridEventRouteTest extends IntegrationTestSuite.TestCase {
 
     @BeforeClass
     public static void setup() {
-        url = RouteTestUtil.getTestingBaseUrl() + RouteConstants.API.SEND_GRID_EVENT;
+        url = RouteTestUtil.getTestingBaseUrl() + RouteConstants.API.SENDGRID_EVENT;
     }
 
     @Test

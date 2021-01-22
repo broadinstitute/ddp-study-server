@@ -58,6 +58,9 @@
         "backendTestClientName": "{{$testingAuth.backendTestClientName}}",
         "backendTestClientName2": "{{$testingAuth.backendTestClientName2}}"
     },
+	"sendGridEvents": {
+      "verificationKey": ""
+    },
     "googleGeocodingApiKey": "{{$testingConf.Data.geocodingKey}}",
     "jcacheConfigurationFile": "src/test/resources/redisson-test-jcache.yaml",
     "redisServerAddress":"redis://127.0.0.1:6379",

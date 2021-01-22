@@ -1,6 +1,7 @@
 package org.broadinstitute.ddp;
 
 import static com.google.common.net.HttpHeaders.X_FORWARDED_FOR;
+import static org.broadinstitute.ddp.constants.ConfigFile.SendGridEvents.SENGRID_EVENTS_VERIFICATION_KEY;
 import static org.broadinstitute.ddp.filter.Exclusions.afterWithExclusion;
 import static org.broadinstitute.ddp.filter.Exclusions.beforeWithExclusion;
 import static org.broadinstitute.ddp.filter.WhiteListFilter.whitelist;
@@ -21,6 +22,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
@@ -49,6 +51,7 @@ import org.broadinstitute.ddp.filter.HttpHeaderMDCFilter;
 import org.broadinstitute.ddp.filter.MDCAttributeRemovalFilter;
 import org.broadinstitute.ddp.filter.MDCLogBreadCrumbFilter;
 import org.broadinstitute.ddp.filter.RateLimitFilter;
+import org.broadinstitute.ddp.filter.SendGridEventVerificationFilter;
 import org.broadinstitute.ddp.filter.StudyAdminAuthFilter;
 import org.broadinstitute.ddp.filter.StudyLanguageContentLanguageSettingFilter;
 import org.broadinstitute.ddp.filter.StudyLanguageResolutionFilter;
@@ -239,6 +242,8 @@ public class DataDonationPlatform {
 
         int requestThreadTimeout = cfg.getInt(ConfigFile.THREAD_TIMEOUT);
         String healthcheckPassword = cfg.getString(ConfigFile.HEALTHCHECK_PASSWORD);
+        String sendGridEventsVerificationKey = cfg.hasPath(SENGRID_EVENTS_VERIFICATION_KEY)
+                ? cfg.getString(SENGRID_EVENTS_VERIFICATION_KEY) : null;
 
         // app engine's port env var wins
         int configFilePort = cfg.getInt(ConfigFile.PORT);
@@ -322,6 +327,8 @@ public class DataDonationPlatform {
         get(API.DEPLOYED_VERSION, new GetDeployedAppVersionRoute(), responseSerializer);
         get(API.INTERNAL_ERROR, new ErrorRoute(), responseSerializer);
 
+        before(API.SENDGRID_EVENT, new SendGridEventVerificationFilter(sendGridEventsVerificationKey));
+
         if (cfg.getBoolean(ConfigFile.RESTRICT_REGISTER_ROUTE)) {
             whitelist(API.REGISTRATION, cfg.getStringList(ConfigFile.AUTH0_IP_WHITE_LIST));
         }
@@ -329,7 +336,7 @@ public class DataDonationPlatform {
         post(API.REGISTRATION, new UserRegistrationRoute(interpreter), responseSerializer);
         post(API.TEMP_USERS, new CreateTemporaryUserRoute(), responseSerializer);
 
-        post(API.SEND_GRID_EVENT, new SendGridEventRoute(), responseSerializer);
+        post(API.SENDGRID_EVENT, new SendGridEventRoute(), responseSerializer);
 
         // Admin APIs
         before(API.ADMIN_BASE + "/*", new StudyAdminAuthFilter());
