@@ -5,6 +5,7 @@ import static org.broadinstitute.ddp.constants.ConfigFile.Auth0LogEvents.AUTH0_L
 import static org.broadinstitute.ddp.filter.Exclusions.afterWithExclusion;
 import static org.broadinstitute.ddp.filter.Exclusions.beforeWithExclusion;
 import static org.broadinstitute.ddp.filter.WhiteListFilter.whitelist;
+import static org.broadinstitute.ddp.util.ConfigUtil.getBoolIfPresent;
 import static spark.Spark.after;
 import static spark.Spark.afterAfter;
 import static spark.Spark.awaitInitialization;
@@ -335,7 +336,7 @@ public class DataDonationPlatform {
         if (cfg.getBoolean(ConfigFile.RESTRICT_REGISTER_ROUTE)) {
             whitelist(API.REGISTRATION, cfg.getStringList(ConfigFile.AUTH0_IP_WHITE_LIST));
         }
-        if (cfg.getBoolean(ConfigFile.RESTRICT_AUTH0_LOG_EVENT_ROUTE)) {
+        if (getBoolIfPresent(cfg, ConfigFile.RESTRICT_AUTH0_LOG_EVENT_ROUTE, false)) {
             whitelist(API.AUTH0_LOG_EVENT, cfg.getStringList(ConfigFile.AUTH0_IP_WHITE_LIST));
         }
 

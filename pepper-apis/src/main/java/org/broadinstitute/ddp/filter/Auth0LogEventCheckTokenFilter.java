@@ -22,9 +22,9 @@ import spark.Response;
  *
  * <p>Header ("Authorization") with authorization token can be (optionally) specified in
  * Auth0 Custom Webhook definition.<br>
- * If config parameter 'privateApisTokens.auth0LogEventBearerToken' is specified and not empty
+ * If config parameter 'auth0LogEvents.token' is specified and not empty
  * then it contains a token which should be compared with token in header 'Authorization'
- * (in a format: 'Bearer ' + 'privateApisTokens.auth0LogEventBearerToken').
+ * (in a format: 'Bearer ' + 'auth0LogEvents.token').
  * If token check is enabled and specified in config then the same token should be specified in
  * Auth0 Custom Webhook settings (with prefix 'Bearer ').
  */
