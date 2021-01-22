@@ -43,7 +43,7 @@ public class Auth0LogEventCheckTokenFilter implements Filter {
         checkAuthorizationToken(request);
     }
 
-    private void checkAuthorizationToken(final Request request) {
+    private void checkAuthorizationToken(Request request) {
         if (isCheckToken()) {
             String authorizationToken = request.headers(AUTHORIZATION);
             if (authorizationToken == null) {
