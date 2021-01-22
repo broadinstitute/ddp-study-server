@@ -591,11 +591,6 @@ Block.Conditional:
               - $ref: '../pepper.yml#/components/schemas/Block.Component'
               - $ref: '../pepper.yml#/components/schemas/Block.Question'
               - $ref: '../pepper.yml#/components/schemas/Block.Content'
-        displayNumber:
-          type: integer
-          minimum: 1
-          nullable: true
-          description: the number to label this block, `null` if it shouldn't be numbered
 Block.Grouped:
   allOf:
     - $ref: '../pepper.yml#/components/schemas/Block'
