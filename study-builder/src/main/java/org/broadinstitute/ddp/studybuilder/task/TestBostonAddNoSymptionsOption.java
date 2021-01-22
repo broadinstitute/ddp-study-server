@@ -38,6 +38,7 @@ public class TestBostonAddNoSymptionsOption implements CustomTask {
     private Config cfg;
     private Config varsCfg;
     private Config dataCfg;
+
     @Override
     public void init(Path cfgPath, Config studyCfg, Config varsCfg) {
         this.cfgPath = cfgPath;
@@ -69,7 +70,7 @@ public class TestBostonAddNoSymptionsOption implements CustomTask {
                 .orElseThrow(() -> new DDPException("Could not find id for activity " + activityCode + " and study id " + studyGuid));
 
         ActivityDef currActivityDef = activityDao.findDefByDtoAndVersion(activityDto, currentActivityVerDto);
-        FormActivityDef currFormActivityDef = (FormActivityDef)currActivityDef;
+        FormActivityDef currFormActivityDef = (FormActivityDef) currActivityDef;
 
         PicklistQuestionDao plQuestionDao = handle.attach(PicklistQuestionDao.class);
         JdbiQuestion jdbiQuestion = handle.attach(JdbiQuestion.class);
@@ -92,11 +93,12 @@ public class TestBostonAddNoSymptionsOption implements CustomTask {
 
         long revisionId = versionDto.getRevId();
 
-         formBlockDef.getQuestions().forEach(questionDef -> {
+        formBlockDef.getQuestions().forEach(questionDef -> {
             // add the option to the question
             if (questionDef.getStableId().equalsIgnoreCase(symptomsQuestionDto.getStableId())) {
                 PicklistQuestionDef plQuestionDef = (PicklistQuestionDef) questionDef;
-                plQuestionDao.insertOption(questionDef.getQuestionId(),newOption,(plQuestionDef.getAllPicklistOptions().size() * 10) + 10,revisionId);
+                plQuestionDao.insertOption(questionDef.getQuestionId(), newOption,
+                        (plQuestionDef.getAllPicklistOptions().size() * 10) + 10, revisionId);
             }
         });
 
