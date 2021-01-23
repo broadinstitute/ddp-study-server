@@ -9,6 +9,7 @@ public class ErrorCodes {
     public static final String BAD_PAYLOAD = "BAD_PAYLOAD";
     public static final String NOT_FOUND = "NOT_FOUND";
     public static final String SERVER_ERROR = "SERVER_ERROR";
+    public static final String DATA_PERSIST_ERROR = "DATA_PERSIST_ERROR";
 
     public static final String SIGNUP_REQUIRED = "SIGNUP_REQUIRED";
     public static final String NOT_SUPPORTED = "NOT_SUPPORTED";
@@ -19,6 +20,7 @@ public class ErrorCodes {
     public static final String MALFORMED_REDIRECT_URL = "MALFORMED_REDIRECT_URL";
     public static final String MALFORMED_DRUG_QUERY = "MALFORMED_DRUG_QUERY";
     public static final String MALFORMED_CANCER_QUERY = "MALFORMED_CANCER_QUERY";
+    public static final String REQUIRED_HEADER_MISSING = "REQUIRED_HEADER_MISSING";
 
     public static final String NO_SUCH_ELEMENT = "NO_SUCH_ELEMENT";
     public static final String UNEXPECTED_NUMBER_OF_ELEMENTS = "UNEXPECTED_NUMBER_OF_ELEMENTS";
