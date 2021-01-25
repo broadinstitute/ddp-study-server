@@ -74,7 +74,7 @@ public class AttachmentLoadedFunction implements BackgroundFunction<AttachmentLo
         logger.info(String.format("%s triggered with EventID: %s. File %s created in bucket %s",
                 context.eventType(), context.eventId(), filename, bucketName));
 
-        Pattern pattern = Pattern.compile("([^/]+/[A-Z0-9]{10}).pdf");
+        Pattern pattern = Pattern.compile("([A-Z0-9]{10}).pdf");
         if (!pattern.matcher(filename).matches()) {
             logger.info("Filename pattern does not match, skipping");
             return;
