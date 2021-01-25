@@ -304,6 +304,7 @@ public class ReceiveDsmNotificationRouteTest extends DsmRouteTest {
             Map<String, String> substitutions = instanceDao.findSubstitutions(instance.getId());
             assertFalse(substitutions.isEmpty());
             assertEquals("kit-2", substitutions.get(I18nTemplateConstants.Snapshot.KIT_REQUEST_ID));
+            assertEquals(KitReasonType.REPLACEMENT.name(), substitutions.get(I18nTemplateConstants.Snapshot.KIT_REASON_TYPE));
             assertEquals("should be result of second request and should normalize result code",
                     "POSITIVE", substitutions.get(I18nTemplateConstants.Snapshot.TEST_RESULT_CODE));
             assertEquals(result2.getTimeCompleted().toString(),

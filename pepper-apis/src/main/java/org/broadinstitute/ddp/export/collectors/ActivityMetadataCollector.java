@@ -65,6 +65,14 @@ public class ActivityMetadataCollector {
                 activityTag + "_completed_at");
     }
 
+    public List<String> headers(String activityTag, int instanceNumber) {
+        return Arrays.asList(activityTag + "_" + instanceNumber,
+                activityTag + "_" + instanceNumber + "_status",
+                activityTag + "_" + instanceNumber + "_created_at",
+                activityTag + "_" + instanceNumber + "_updated_at",
+                activityTag + "_" + instanceNumber + "_completed_at");
+    }
+
     public List<String> format(ActivityResponse instance) {
         Instant createdAtMillis = Instant.ofEpochMilli(instance.getCreatedAt());
 

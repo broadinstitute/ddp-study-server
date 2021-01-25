@@ -68,7 +68,7 @@ public class ESCConsentVersion2 implements CustomTask {
 
     @Override
     public void run(Handle handle) {
-        //creates version: 2 for CONSENT and FOLLOWUPCONSENT activities.
+        //creates version: 2 for CONSENT activity.
 
         LanguageStore.init(handle);
         User adminUser = handle.attach(UserDao.class).findUserByGuid(cfg.getString("adminUser.guid")).get();
@@ -82,10 +82,6 @@ public class ESCConsentVersion2 implements CustomTask {
         LOG.info("Adding new pdf version for consent");
         builder.insertPdfConfig(handle, dataCfg.getConfig("consentPdfV2"));
         addNewConsentDataSourceToReleasePdf(handle, studyDto.getId(), dataCfg.getString("releasePdfName"), activityCode, versionTag);
-
-        activityCode = dataCfg.getString("activityCode.followupconsent");
-        LOG.info("Changing version of {} to {} with timestamp={}", activityCode, versionTag, timestamp);
-        revisionConsent("followupconsent", handle, adminUser.getId(), studyDto, activityCode, versionTag, timestamp.toEpochMilli());
     }
 
     private void revisionConsent(String key, Handle handle, long adminUserId, StudyDto studyDto,

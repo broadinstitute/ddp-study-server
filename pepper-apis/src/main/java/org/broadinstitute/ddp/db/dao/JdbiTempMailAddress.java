@@ -31,4 +31,8 @@ public interface JdbiTempMailAddress extends SqlObject {
     @UseStringTemplateSqlLocator
     int deleteTempAddressByActivityInstanceGuid(@Bind("activityInstanceGuid") String activityInstanceGuid);
 
+    @SqlUpdate("deleteTempAddressByParticipantId")
+    @UseStringTemplateSqlLocator
+    int deleteTempAddressByParticipantId(@Bind("participantId") Long participantId);
+
 }

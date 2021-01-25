@@ -32,6 +32,8 @@ public class RouteConstants {
         public static final String TEMP_USERS = BASE + "/temporary-users";
         public static final String ACTIVITY_INSTANCE_STATUS_TYPE_LIST = BASE + "/activity-instance-status-types";
 
+        public static final String AUTH0_LOG_EVENT = BASE + "/auth0-log-event";
+
         public static final String ADMIN_BASE = BASE + "/admin";
         public static final String ADMIN_STUDY_PARTICIPANTS =
                 fmt(ADMIN_BASE + "/studies/%s/participants", PathParam.STUDY_GUID);
