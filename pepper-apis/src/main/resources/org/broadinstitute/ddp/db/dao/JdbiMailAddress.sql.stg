@@ -239,3 +239,14 @@ deleteAddressByGuid() ::= <<
     DELETE FROM mailing_address where address_guid=?
 >>
 
+deleteDefaultAddressByParticipantId() ::= <<
+    DELETE
+    FROM default_mailing_address
+    WHERE participant_user_id = :participantId
+>>
+
+deleteAddressByParticipantId() ::= <<
+    DELETE
+    FROM mailing_address
+    WHERE participant_user_id = :participantId
+>>

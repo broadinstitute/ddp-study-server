@@ -110,6 +110,7 @@ public class ConfigFile {
     public static final String SEND_METRICS = "sendMetrics";
 
     public static final String RESTRICT_REGISTER_ROUTE = "restrictRegisterRoute";
+    public static final String RESTRICT_AUTH0_LOG_EVENT_ROUTE = "restrictAuth0LogEventRoute";
 
     /**
      * Google API key for geocoding
@@ -186,5 +187,9 @@ public class ConfigFile {
         public static final String FROM_EMAIL = "sendgrid.fromEmail";
         // The proxy URL to use for all outgoing SendGrid requests.
         public static final String PROXY = "sendgrid.proxy";
+    }
+
+    public static class Auth0LogEvents {
+        public static final String AUTH0_LOG_EVENTS_TOKEN = "auth0LogEvents.token";
     }
 }

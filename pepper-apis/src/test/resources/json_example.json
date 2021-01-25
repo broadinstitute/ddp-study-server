@@ -1,0 +1,23 @@
+{"component": {
+    "window": {
+        "title": "Sample Component",
+        "name": "win1",
+        "width": 500,
+        "height": 500
+    },
+    "image": { 
+        "src": "test.png",
+        "name": "img1",
+        "hOffset": 150,
+        "vOffset": 250,
+        "alignment": "center"
+    },
+    "text": {
+        "data": "Sample text",
+        "size": 36,
+		"hOffset": 300,
+        "vOffset": 400,
+        "style": "bold",
+        "name": "text1"
+    }
+}}    

@@ -53,6 +53,14 @@ public class ConfigUtil {
     }
 
     /**
+     * Get value as boolean if the key is present and value is not null.
+     * If key not present then return a default value.
+     */
+    public static boolean getBoolIfPresent(Config cfg, String key, boolean defaultValue) {
+        return cfg.hasPath(key) ? cfg.getBoolean(key) : defaultValue;
+    }
+
+    /**
      * Get and parse value as an Instant if the key is present and value is not null.
      * Value should be a string with format as specified by {@code DateTimeFormatter.ISO_INSTANT}.
      */
