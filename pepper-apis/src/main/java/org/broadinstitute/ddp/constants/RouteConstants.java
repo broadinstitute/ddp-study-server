@@ -33,6 +33,7 @@ public class RouteConstants {
         public static final String ACTIVITY_INSTANCE_STATUS_TYPE_LIST = BASE + "/activity-instance-status-types";
 
         public static final String SENDGRID_EVENT = BASE + "/sendgrid-event";
+        public static final String AUTH0_LOG_EVENT = BASE + "/auth0-log-event";
 
         public static final String ADMIN_BASE = BASE + "/admin";
         public static final String ADMIN_STUDY_PARTICIPANTS =

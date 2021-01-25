@@ -110,6 +110,7 @@ public class ConfigFile {
     public static final String SEND_METRICS = "sendMetrics";
 
     public static final String RESTRICT_REGISTER_ROUTE = "restrictRegisterRoute";
+    public static final String RESTRICT_AUTH0_LOG_EVENT_ROUTE = "restrictAuth0LogEventRoute";
 
     /**
      * Google API key for geocoding
@@ -190,5 +191,9 @@ public class ConfigFile {
 
     public static class SendGridEvents {
         public static final String SENGRID_EVENTS_VERIFICATION_KEY = "sendGridEvents.verificationKey";
+    }
+
+    public static class Auth0LogEvents {
+        public static final String AUTH0_LOG_EVENTS_TOKEN = "auth0LogEvents.token";
     }
 }

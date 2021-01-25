@@ -1,0 +1,25 @@
+{
+  "logs": [
+    {
+      "log_id": "90020210111005041875000023772152891902441117559912661090",
+      "data": {
+        "date": "2021-01-11T00:50:40.292Z",
+        "type": "seccft",
+        "description": "",
+        "connection_id": "",
+        "client_id": "XXX_client_id_XXX",
+        "client_name": "dsm",
+        "ip": "107.178.2.3",
+        "user_agent": "okhttp/3.7.0",
+        "hostname": "ddp-dev.auth0.com",
+        "audience": "https://dsm.datadonationplatform.org",
+        "scope": null,
+        "auth0_client": {
+          "name": "auth0-java",
+          "version": "1.0.0"
+        },
+        "log_id": "90020210111005041875000023772152891902441117559912661090"
+      }
+    }
+  ]
+}
