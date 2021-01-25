@@ -30,6 +30,7 @@
     "dsmJwtSigner": "org.broadinstitute.kdux",
     "dbInstanceId": "ddp-dev",
     "restrictRegisterRoute": false,
+    "restrictAuth0LogEventRoute": false,
     "auth0": {
         "domain": "{{$auth0.domain}}",
         "domain2": "{{$auth0.domain2}}",
@@ -57,6 +58,9 @@
         "backendTestSecret2": "{{$testingAuth.backendTestSecret2}}",
         "backendTestClientName": "{{$testingAuth.backendTestClientName}}",
         "backendTestClientName2": "{{$testingAuth.backendTestClientName2}}"
+    },
+	"auth0LogEvents": {
+      "token": ""
     },
     "googleGeocodingApiKey": "{{$testingConf.Data.geocodingKey}}",
     "jcacheConfigurationFile": "src/test/resources/redisson-test-jcache.yaml",
