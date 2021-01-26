@@ -6,7 +6,10 @@ import static org.apache.http.HttpStatus.SC_OK;
 import static org.broadinstitute.ddp.constants.ErrorCodes.DATA_PERSIST_ERROR;
 import static org.broadinstitute.ddp.constants.ErrorCodes.MISSING_BODY;
 import static org.broadinstitute.ddp.constants.ErrorCodes.REQUIRED_PARAMETER_MISSING;
+import static org.broadinstitute.ddp.service.Auth0LogEventService.AUTH0_LOG_EVENT_TITLE;
 import static org.slf4j.LoggerFactory.getLogger;
+
+import java.sql.SQLIntegrityConstraintViolationException;
 
 
 import org.apache.commons.lang3.StringUtils;
@@ -30,6 +33,8 @@ public class Auth0LogEventRoute implements Route {
 
     private static final Logger LOG = getLogger(Auth0LogEventRoute.class);
 
+    private static final String TENANT_LOG_ID_UNIQUE_KEY = "auth0_log_event_tenant_log_id_uk";
+
     /** Mandatory parameter in the log event URL. Specifies name of auth0 tenant */
     public static final String QUERY_PARAM_TENANT = "tenant";
 
@@ -43,8 +48,9 @@ public class Auth0LogEventRoute implements Route {
         var logEvents = auth0LogEventService.parseAuth0LogEvents(request.body());
         for (var logEvent : logEvents) {
             var logEventObject = Auth0LogEvent.createInstance(logEvent, tenant);
-            persistLogEvent(auth0LogEventService, logEventObject);
-            auth0LogEventService.logAuth0LogEvent(logEventObject);
+            if (persistLogEvent(auth0LogEventService, logEventObject)) {
+                auth0LogEventService.logAuth0LogEvent(logEventObject);
+            }
         }
 
         response.status(SC_OK);
@@ -65,12 +71,25 @@ public class Auth0LogEventRoute implements Route {
         }
     }
 
-    private void persistLogEvent(Auth0LogEventService auth0LogEventService, Auth0LogEvent logEventObject) {
+    private boolean persistLogEvent(Auth0LogEventService auth0LogEventService, Auth0LogEvent logEventObject) {
         try {
             TransactionWrapper.useTxn(handle -> auth0LogEventService.persistAuth0LogEvent(handle, logEventObject));
         } catch (Exception e) {
+            if (isConstraintViolationForLogId(e)) {
+                LOG.warn(AUTH0_LOG_EVENT_TITLE + " failed. Duplicated LOG_ID=" + logEventObject.getLogId());
+                return false;
+            }
             haltError(SC_INTERNAL_SERVER_ERROR, DATA_PERSIST_ERROR, e.getMessage());
         }
+        return true;
+    }
+
+    /**
+     * When trying to persist an event with already existing LOG_ID then ignore it.
+     */
+    private boolean isConstraintViolationForLogId(Exception e) {
+        return e.getCause() instanceof SQLIntegrityConstraintViolationException
+                && e.getMessage().contains(TENANT_LOG_ID_UNIQUE_KEY);
     }
 
     private void haltError(int status, String code, String msg) {
