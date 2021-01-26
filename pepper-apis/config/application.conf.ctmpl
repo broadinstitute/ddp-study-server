@@ -32,11 +32,6 @@
         "dsmClientId": "{{$auth0.dsmClientId}}",
         "dsmClientSecret": "{{$auth0.dsmClientSecret}}"
     },
-    "sendGridEvents" : {
-	{{if $conf.Data.sendGridEvents.verificationKey}}
-		"verificationKey" : "{{$conf.Data.sendGridEvents.verificationKey}}"
-    {{end}}
-	},
     "auth0LogEvents" : {
 	{{if $conf.Data.auth0LogEvents.token}}
 		"token" : "{{$conf.Data.auth0LogEvents.token}}"
@@ -89,6 +84,9 @@
     {{end}}
         "fromName": "{{$conf.Data.sendgrid.fromName}}",
         "fromEmail": "{{$conf.Data.sendgrid.fromEmail}}"
+	{{if $conf.Data.sendgrid.eventsVerificationKey}}
+		"eventsVerificationKey" : "{{$conf.Data.sendgrid.eventsVerificationKey}}"
+    {{end}}
     },
     "sendgridToken": "{{$conf.Data.sendgridToken}}",
     {{if eq $environment "dev"}}

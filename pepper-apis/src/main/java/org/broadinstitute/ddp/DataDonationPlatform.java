@@ -2,7 +2,7 @@ package org.broadinstitute.ddp;
 
 import static com.google.common.net.HttpHeaders.X_FORWARDED_FOR;
 import static org.broadinstitute.ddp.constants.ConfigFile.Auth0LogEvents.AUTH0_LOG_EVENTS_TOKEN;
-import static org.broadinstitute.ddp.constants.ConfigFile.SendGridEvents.SENGRID_EVENTS_VERIFICATION_KEY;
+import static org.broadinstitute.ddp.constants.ConfigFile.Sendgrid.EVENTS_VERIFICATION_KEY;
 import static org.broadinstitute.ddp.filter.Exclusions.afterWithExclusion;
 import static org.broadinstitute.ddp.filter.Exclusions.beforeWithExclusion;
 import static org.broadinstitute.ddp.filter.WhiteListFilter.whitelist;
@@ -247,8 +247,8 @@ public class DataDonationPlatform {
 
         int requestThreadTimeout = cfg.getInt(ConfigFile.THREAD_TIMEOUT);
         String healthcheckPassword = cfg.getString(ConfigFile.HEALTHCHECK_PASSWORD);
-        String sendGridEventsVerificationKey = cfg.hasPath(SENGRID_EVENTS_VERIFICATION_KEY)
-                ? cfg.getString(SENGRID_EVENTS_VERIFICATION_KEY) : null;
+        String sendGridEventsVerificationKey = cfg.hasPath(EVENTS_VERIFICATION_KEY)
+                ? cfg.getString(EVENTS_VERIFICATION_KEY) : null;
         String auth0LogEventsToken = cfg.hasPath(AUTH0_LOG_EVENTS_TOKEN) ? cfg.getString(AUTH0_LOG_EVENTS_TOKEN) : null;
 
         // app engine's port env var wins

@@ -59,9 +59,6 @@
         "backendTestClientName": "{{$testingAuth.backendTestClientName}}",
         "backendTestClientName2": "{{$testingAuth.backendTestClientName2}}"
     },
-	"sendGridEvents": {
-      "verificationKey": ""
-    },
 	"auth0LogEvents": {
       "token": ""
     },
@@ -114,7 +111,8 @@
     "sendgrid": {
         "proxy": null,
         "fromName": "Pepper Local",
-        "fromEmail": "noreply@datadonationplatform.org"
+        "fromEmail": "noreply@datadonationplatform.org",
+		"eventsVerificationKey": ""
     },
     "rateLimit": {
         "apiLimitBurst": 100,

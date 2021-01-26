@@ -26,7 +26,7 @@ import spark.Response;
 
 /**
  * A filter that verifies SendGrid event message.<br>
- * If config parameter 'sendGridEvents.verificationKey' is specified and not empty
+ * If config parameter 'sendgrid.eventsVerificationKey' is specified and not empty
  * then it contains a public key which should be used to verify a SendGrid event:
  * in such case the event should contain two headers:<br>
  * 'X-Twilio-Email-Event-Webhook-Signature'<br>
