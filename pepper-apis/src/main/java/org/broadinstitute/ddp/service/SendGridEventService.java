@@ -2,14 +2,11 @@ package org.broadinstitute.ddp.service;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import java.time.Instant;
-
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.broadinstitute.ddp.db.dao.SendGridEventDao;
 import org.broadinstitute.ddp.json.sendgrid.SendGridEvent;
-import org.broadinstitute.ddp.json.sendgrid.SendGridEventTypeAdapter;
 import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
 
@@ -64,8 +61,6 @@ public class SendGridEventService {
     }
 
     private Gson createGson() {
-        var builder = new GsonBuilder();
-        builder.registerTypeAdapter(Instant.class, new SendGridEventTypeAdapter());
-        return builder.create();
+        return new GsonBuilder().create();
     }
 }

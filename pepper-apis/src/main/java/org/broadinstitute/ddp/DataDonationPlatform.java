@@ -162,6 +162,7 @@ import org.broadinstitute.ddp.service.MedicalRecordService;
 import org.broadinstitute.ddp.service.PdfBucketService;
 import org.broadinstitute.ddp.service.PdfGenerationService;
 import org.broadinstitute.ddp.service.PdfService;
+import org.broadinstitute.ddp.service.SendGridEventService;
 import org.broadinstitute.ddp.service.WorkflowService;
 import org.broadinstitute.ddp.transformers.NullableJsonTransformer;
 import org.broadinstitute.ddp.transformers.SimpleJsonTransformer;
@@ -350,7 +351,7 @@ public class DataDonationPlatform {
         post(API.REGISTRATION, new UserRegistrationRoute(interpreter), responseSerializer);
         post(API.TEMP_USERS, new CreateTemporaryUserRoute(), responseSerializer);
 
-        post(API.SENDGRID_EVENT, new SendGridEventRoute(), responseSerializer);
+        post(API.SENDGRID_EVENT, new SendGridEventRoute(new SendGridEventService()), responseSerializer);
         post(API.AUTH0_LOG_EVENT, new Auth0LogEventRoute(), responseSerializer);
 
         // Admin APIs

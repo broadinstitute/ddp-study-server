@@ -1,6 +1,6 @@
 [
   {
-      "email":"example1@test.com",
+      "email":"example1@datadonationplatform.org",
       "timestamp":1513299569,
       "pool": {
             "name": "new_MY_test",
@@ -13,7 +13,7 @@
       "sg_message_id":"14c5d75ce93.dfd.64b469.filter0001.16648.5515E0B88.000000000000000000000"
   },
   {
-      "email":"example2@test.com",
+      "email":"example2@datadonationplatform.org",
       "timestamp":1513399569,
       "smtp-id":"<14c5d75ce93.dfd.64b469@ismtpd-555>",
       "event":"dropped",
@@ -24,7 +24,7 @@
       "status":"5.0.0"
   },
   {
-      "email":"example3@test.com",
+      "email":"example3@datadonationplatform.org",
       "timestamp":1513499569,
       "smtp-id":"<14c5d75ce93.dfd.64b469@ismtpd-555>",
       "event":"delivered",
@@ -34,7 +34,7 @@
       "response":"250 OK"
   },
   {
-      "email":"example4@test.com",
+      "email":"example4@datadonationplatform.org",
       "timestamp":1513599569,
       "smtp-id":"<14c5d75ce93.dfd.64b469@ismtpd-555>",
       "event":"deferred",
@@ -45,7 +45,7 @@
       "attempt":"5"
   },
   {
-      "email":"example5@test.com",
+      "email":"example5@datadonationplatform.org",
       "timestamp":1513699569,
       "smtp-id":"<14c5d75ce93.dfd.64b469@ismtpd-555>",
       "event":"open",
@@ -56,7 +56,7 @@
       "ip":"255.255.255.255"
   },
   {
-      "email":"example6@test.com",
+      "email":"example6@datadonationplatform.org",
       "timestamp":1513799569,
       "smtp-id":"<14c5d75ce93.dfd.64b469@ismtpd-555>",
       "event":"bounce",
@@ -68,7 +68,7 @@
       "type":"bounce"
   },
   {
-      "email":"example7@test.com",
+      "email":"example7@datadonationplatform.org",
       "timestamp":1513899569,
       "smtp-id":"<14c5d75ce93.dfd.64b469@ismtpd-555>",
       "event":"bounce",
@@ -80,7 +80,7 @@
       "type":"blocked"
   },
   {
-      "email":"example8@test.com",
+      "email":"example8@datadonationplatform.org",
       "timestamp":1513999569,
       "smtp-id":"<14c5d75ce93.dfd.64b469@ismtpd-555>",
       "event":"click",
@@ -92,7 +92,7 @@
       "url":"http://www.sendgrid.com/"
   },
   {
-      "email":"example9@test.com",
+      "email":"example9@datadonationplatform.org",
       "timestamp":1514099569,
       "smtp-id":"<14c5d75ce93.dfd.64b469@ismtpd-555>",
       "event":"spamreport",
@@ -101,7 +101,7 @@
       "sg_message_id":"14c5d75ce93.dfd.64b469.filter0001.16648.5515E0B88.0"
   },
   {
-      "email":"example10@test.com",
+      "email":"example10@datadonationplatform.org",
       "timestamp":1514199569,
       "smtp-id":"<14c5d75ce93.dfd.64b469@ismtpd-555>",
       "event":"unsubscribe",
@@ -110,7 +110,7 @@
       "sg_message_id":"14c5d75ce93.dfd.64b469.filter0001.16648.5515E0B88.0"
   },
   {
-      "email":"example11@test.com",
+      "email":"example11@datadonationplatform.org",
       "timestamp":1514299569,
       "smtp-id":"<14c5d75ce93.dfd.64b469@ismtpd-555>",
       "event":"group_unsubscribe",
@@ -123,7 +123,7 @@
       "asm_group_id":10
   },
   {
-      "email":"example12@test.com",
+      "email":"example12@datadonationplatform.org",
       "timestamp":1514399569,
       "smtp-id":"<14c5d75ce93.dfd.64b469@ismtpd-555>",
       "event":"group_resubscribe",

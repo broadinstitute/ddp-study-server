@@ -3,8 +3,9 @@ package org.broadinstitute.ddp.json.sendgrid;
 import javax.validation.constraints.NotEmpty;
 import java.time.Instant;
 
-
+import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.annotations.SerializedName;
+import org.broadinstitute.ddp.transformers.UnixTimestampToInstantAdapter;
 
 public class SendGridEvent {
 
@@ -13,6 +14,7 @@ public class SendGridEvent {
     private final String email;
 
     @NotEmpty
+    @JsonAdapter(UnixTimestampToInstantAdapter.class)
     @SerializedName("timestamp")
     private final Instant timestamp;
 

@@ -20,13 +20,13 @@ public class SendGridEventServiceTest {
         assertEquals(12, sendGridEvents.length);
 
         var sendGridEvent = sendGridEvents[0];
-        assertEquals("example1@test.com", sendGridEvent.getEmail());
+        assertEquals("example1@datadonationplatform.org", sendGridEvent.getEmail());
         assertEquals("2017-12-15T00:59:29Z", String.valueOf(sendGridEvent.getTimestamp()));
         assertEquals("processed", sendGridEvent.getEventType());
         assertEquals("rbtnWrG1DVDGGGFHFyun0A==", sendGridEvent.getSgEventId());
 
         sendGridEvent = sendGridEvents[1];
-        assertEquals("example2@test.com", sendGridEvent.getEmail());
+        assertEquals("example2@datadonationplatform.org", sendGridEvent.getEmail());
         assertEquals("2017-12-16T04:46:09Z", String.valueOf(sendGridEvent.getTimestamp()));
         assertEquals("dropped", sendGridEvent.getEventType());
         assertEquals("zmzJhfJgAfUSOW80yEbPyw==", sendGridEvent.getSgEventId());

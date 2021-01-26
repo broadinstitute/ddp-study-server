@@ -25,8 +25,8 @@ public class SendGridEventRoute implements Route {
 
     private final SendGridEventService sendGridEventService;
 
-    public SendGridEventRoute() {
-        this.sendGridEventService = new SendGridEventService();
+    public SendGridEventRoute(final SendGridEventService sendGridEventService) {
+        this.sendGridEventService = sendGridEventService;
     }
 
     @Override
@@ -45,18 +45,18 @@ public class SendGridEventRoute implements Route {
         try {
             TransactionWrapper.useTxn(handle -> sendGridEventService.persistLogEvents(handle, sendGridEvents));
         } catch (Exception e) {
-            haltError(SC_INTERNAL_SERVER_ERROR, DATA_PERSIST_ERROR, e.getMessage());
+            haltError(SC_INTERNAL_SERVER_ERROR, DATA_PERSIST_ERROR, "Error saving auth0 event", e);
         }
     }
 
     private void checkBody(Request request) {
         if (StringUtils.isBlank(request.body())) {
-            haltError(SC_BAD_REQUEST, MISSING_BODY, "Body not specified");
+            haltError(SC_BAD_REQUEST, MISSING_BODY, "Body not specified", null);
         }
     }
 
-    private void haltError(int status, String code, String msg) {
-        LOG.warn(msg);
+    private void haltError(int status, String code, String msg, Exception e) {
+        LOG.warn(msg + (e != null ? ' ' + e.getMessage() : ""));
         throw ResponseUtil.haltError(status, new ApiError(code, msg));
     }
 }
