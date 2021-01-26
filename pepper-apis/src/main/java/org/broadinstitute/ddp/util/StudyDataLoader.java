@@ -464,7 +464,7 @@ public class StudyDataLoader {
                 throw new Exception("Could not parse required completedAt value for " + activityCode
                         + " survey, value is " + ddpCompleted);
             }
-            ddpCompletedAt = instant.toEpochMilli();
+            ddpCompletedAt = instant.toEpochMilli() + 1;
             if (ddpCompletedAt < ddpCreatedAt) {
                 throw new Exception("Invalid ddpCreatedAt - ddpCompletedAt dates. created date : " + ddpCreated
                         + " is greater than ddpCompleted/Submitted date:: " + ddpCompleted + " in activity: " + activityCode
