@@ -45,6 +45,8 @@ public class Auth0LogEventService {
 
     private static final Logger LOG = getLogger(Auth0LogEventService.class);
 
+    public static final String AUTH0_LOG_EVENT_TITLE = "SAVE Auth0LogEvent";
+
     /**
      * List of Auth0 Log Event JSON node names which to read (recursively)
      */
@@ -82,8 +84,7 @@ public class Auth0LogEventService {
 
     public void logAuth0LogEvent(Auth0LogEvent logEvent) {
         if (LOG.isDebugEnabled() || LOG.isTraceEnabled()) {
-            LOG.debug(
-                    "AUTH0-LOG-EVENT[{}]: type={} ({}), date={}, log_id={}\n"
+            LOG.debug(AUTH0_LOG_EVENT_TITLE + "[{}]: type={} ({}), date={}, log_id={}\n"
                             + "\tclient_id={}, connection_id={}, user_id={}\n"
                             + "\tuser_agent={}\n"
                             + "\tip={}, email={}\n"
@@ -101,7 +102,7 @@ public class Auth0LogEventService {
                     logEvent.getEmail(),
                     logEvent.getData());
         } else {
-            LOG.info("AUTH0-LOG-EVENT[{}]: type={} ({}), date={}, user_id={}, log_id={}",
+            LOG.info(AUTH0_LOG_EVENT_TITLE + "[{}]: type={} ({}), date={}, user_id={}, log_id={}",
                     logEvent.getTenant(),
                     logEvent.getType(),
                     getTypeDescription(logEvent),
@@ -114,9 +115,9 @@ public class Auth0LogEventService {
     /**
      * Save log event and tenant data to DB table 'auth0-log-event'
      */
-    public void persistAuth0LogEvent(Handle handle, Auth0LogEvent logEvent) {
+    public Long persistAuth0LogEvent(Handle handle, Auth0LogEvent logEvent) {
         var auth0LogEventDao = handle.attach(Auth0LogEventDao.class);
-        auth0LogEventDao.insertAuth0LogEvent(logEvent);
+        return auth0LogEventDao.insertAuth0LogEvent(logEvent);
     }
 
     private String getTypeDescription(Auth0LogEvent logEvent) {

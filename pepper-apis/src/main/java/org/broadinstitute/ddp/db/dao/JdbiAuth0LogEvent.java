@@ -39,6 +39,9 @@ public interface JdbiAuth0LogEvent extends SqlObject {
             @Bind("data") String data
     );
 
+    @SqlQuery("select log_id from auth0_log_event where log_id = :logId")
+    String findAuth0LogEventByLogId(@Bind("logId") String logId);
+
     @SqlQuery("select c.* from auth0_log_event_code c where c.code=:type")
     @RegisterRowMapper(Auth0LogEvent.Auth0LogEventCodeDto.Auth0LogEventCodeDtoMapper.class)
     Optional<Auth0LogEvent.Auth0LogEventCodeDto> findAuth0LogEventCodeByType(@Bind("type") String type);

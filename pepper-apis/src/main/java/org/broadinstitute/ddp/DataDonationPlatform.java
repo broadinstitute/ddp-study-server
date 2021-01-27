@@ -154,6 +154,7 @@ import org.broadinstitute.ddp.security.JWTConverter;
 import org.broadinstitute.ddp.service.ActivityInstanceService;
 import org.broadinstitute.ddp.service.ActivityValidationService;
 import org.broadinstitute.ddp.service.AddressService;
+import org.broadinstitute.ddp.service.Auth0LogEventService;
 import org.broadinstitute.ddp.service.CancerService;
 import org.broadinstitute.ddp.service.ConsentService;
 import org.broadinstitute.ddp.service.FormActivityService;
@@ -348,7 +349,7 @@ public class DataDonationPlatform {
         post(API.REGISTRATION, new UserRegistrationRoute(interpreter), responseSerializer);
         post(API.TEMP_USERS, new CreateTemporaryUserRoute(), responseSerializer);
 
-        post(API.AUTH0_LOG_EVENT, new Auth0LogEventRoute(), responseSerializer);
+        post(API.AUTH0_LOG_EVENT, new Auth0LogEventRoute(new Auth0LogEventService()), responseSerializer);
 
         // Admin APIs
         before(API.ADMIN_BASE + "/*", new StudyAdminAuthFilter());
