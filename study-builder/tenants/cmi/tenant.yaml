@@ -24,6 +24,7 @@ emailTemplates:
       {% elsif client.client_metadata.study == "cmi-mbc" %} Metastatic Breast Cancer Project
       {% elsif client.client_metadata.study == "CMI-OSTEO" %} Osteosarcoma Project
       {% elsif client.client_metadata.study == "cmi-mpc" %} Metastatic Prostate Cancer Project
+      {% elsif client.client_metadata.study == "cmi-esc" %} Esophageal and Stomach Cancer Project
       {% endif %} Password Reset
     urlLifetimeInSeconds: 432000
     syntax: liquid
