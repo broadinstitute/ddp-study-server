@@ -192,4 +192,11 @@ public class ConfigFile {
     public static class Auth0LogEvents {
         public static final String AUTH0_LOG_EVENTS_TOKEN = "auth0LogEvents.token";
     }
+
+    public static class FileUploads {
+        public static final String UPLOADS_BUCKET = "fileUploads.uploadsBucket";
+        public static final String MAX_FILE_SIZE_BYTES = "fileUploads.maxFileSizeBytes";
+        public static final String MAX_SIGNED_URL_MINS = "fileUploads.maxSignedUrlMins";
+        public static final String SIGNER_SERVICE_ACCOUNT = "fileUploads.signerServiceAccount";
+    }
 }

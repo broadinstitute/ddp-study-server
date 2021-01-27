@@ -53,6 +53,12 @@
     "restrictAuth0LogEventRoute": {{$conf.Data.restrictAuth0LogEventRoute}},
     "requireDefaultGcpCredentials": {{$conf.Data.requireDefaultGcpCredentials}},
     "googleProjectId": "{{$conf.Data.googleProjectId}}",
+    "fileUploads": {
+        "uploadsBucket": "{{$conf.Data.fileUploads.uploadsBucket}}",
+        "maxFileSizeBytes": {{$conf.Data.fileUploads.maxFileSizeBytes}},
+        "maxSignedUrlMins": {{$conf.Data.fileUploads.maxSignedUrlMins}},
+        "signerServiceAccount": {{$conf.Data.fileUploads.signerServiceAccount | toJSONPretty}}
+    },
     "pdfArchiveBucket": "{{$conf.Data.pdfArchiveBucket}}",
     "pdfArchiveUseFilesystem": false,
     "pubsub": {
