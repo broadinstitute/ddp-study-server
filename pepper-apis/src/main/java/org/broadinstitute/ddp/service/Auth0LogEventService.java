@@ -115,9 +115,15 @@ public class Auth0LogEventService {
     /**
      * Save log event and tenant data to DB table 'auth0-log-event'
      */
-    public Long persistAuth0LogEvent(Handle handle, Auth0LogEvent logEvent) {
+    public boolean persistAuth0LogEvent(Handle handle, Auth0LogEvent logEvent) {
         var auth0LogEventDao = handle.attach(Auth0LogEventDao.class);
-        return auth0LogEventDao.insertAuth0LogEvent(logEvent);
+        if (auth0LogEventDao.checkIfSameEventAlreadyPersisted(logEvent)) {
+            LOG.warn(AUTH0_LOG_EVENT_TITLE + " failed. Event with such log_id already was saved. LOG_ID=" + logEvent.getLogId());
+            return false;
+        } else {
+            auth0LogEventDao.insertAuth0LogEvent(logEvent);
+            return true;
+        }
     }
 
     private String getTypeDescription(Auth0LogEvent logEvent) {

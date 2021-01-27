@@ -1,6 +1,5 @@
 package org.broadinstitute.ddp.db.dao;
 
-import static org.broadinstitute.ddp.service.Auth0LogEventService.AUTH0_LOG_EVENT_TITLE;
 import static org.slf4j.LoggerFactory.getLogger;
 
 
@@ -25,28 +24,30 @@ public interface Auth0LogEventDao extends SqlObject {
      * @param logEvent event which to persist
      * @return Long inserted auth0 log event ID (or null if insert not occured - because of such event already persisted before)
      */
-    default Long insertAuth0LogEvent(Auth0LogEvent logEvent) {
-        if (getJdbiAuth0LogEvent().findAuth0LogEventByLogId(logEvent.getLogId()) != null) {
-            LOG.warn(AUTH0_LOG_EVENT_TITLE + " failed. Event with such log_id already was saved. LOG_ID=" + logEvent.getLogId());
-            return null;
-        } else {
-            long id = getJdbiAuth0LogEvent().insertAuth0LogEvent(
-                    logEvent.getTenant(),
-                    logEvent.getType(),
-                    logEvent.getDate(),
-                    logEvent.getLogId(),
-                    logEvent.getClientId(),
-                    logEvent.getConnectionId(),
-                    logEvent.getUserId(),
-                    logEvent.getUserAgent(),
-                    logEvent.getIp(),
-                    logEvent.getEmail(),
-                    logEvent.getData());
-            var auth0LogEventCodeDto = getJdbiAuth0LogEvent().findAuth0LogEventCodeByType(logEvent.getType());
-            if (auth0LogEventCodeDto.isPresent()) {
-                logEvent.setAuth0LogEventCode(auth0LogEventCodeDto.get());
-            }
-            return id;
+    default void insertAuth0LogEvent(Auth0LogEvent logEvent) {
+        getJdbiAuth0LogEvent().insertAuth0LogEvent(
+                logEvent.getTenant(),
+                logEvent.getType(),
+                logEvent.getDate(),
+                logEvent.getLogId(),
+                logEvent.getClientId(),
+                logEvent.getConnectionId(),
+                logEvent.getUserId(),
+                logEvent.getUserAgent(),
+                logEvent.getIp(),
+                logEvent.getEmail(),
+                logEvent.getData());
+        var auth0LogEventCodeDto = getJdbiAuth0LogEvent().findAuth0LogEventCodeByType(logEvent.getType());
+        if (auth0LogEventCodeDto.isPresent()) {
+            logEvent.setAuth0LogEventCode(auth0LogEventCodeDto.get());
         }
+    }
+
+    /**
+     * Check if auth0_log_event with same log_id+tenant already exist in DB
+     * @return boolean true, if already exist, otherwise false
+     */
+    default boolean checkIfSameEventAlreadyPersisted(Auth0LogEvent logEvent) {
+        return getJdbiAuth0LogEvent().findAuth0LogEventByTenantAndLogId(logEvent.getTenant(), logEvent.getLogId()) != null;
     }
 }

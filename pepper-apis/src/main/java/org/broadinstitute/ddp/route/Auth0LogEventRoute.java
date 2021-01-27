@@ -69,7 +69,7 @@ public class Auth0LogEventRoute implements Route {
     private void persistLogEvent(Auth0LogEventService auth0LogEventService, Auth0LogEvent logEventObject) {
         try {
             TransactionWrapper.useTxn(handle -> {
-                if (auth0LogEventService.persistAuth0LogEvent(handle, logEventObject) != null) {
+                if (auth0LogEventService.persistAuth0LogEvent(handle, logEventObject)) {
                     auth0LogEventService.logAuth0LogEvent(logEventObject);
                 }
             });
