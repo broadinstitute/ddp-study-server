@@ -56,7 +56,11 @@ public class SendGridEventRoute implements Route {
     }
 
     private void haltError(int status, String code, String msg, Exception e) {
-        LOG.warn(msg + (e != null ? ' ' + e.getMessage() : ""));
+        if (e != null) {
+            LOG.warn(msg, e);
+        } else {
+            LOG.warn(msg);
+        }
         throw ResponseUtil.haltError(status, new ApiError(code, msg));
     }
 }

@@ -29,6 +29,6 @@ public class UnixTimestampToInstantAdapter extends TypeAdapter<Instant> {
             in.nextNull();
             return null;
         }
-        return Instant.ofEpochSecond(in.nextInt());
+        return Instant.ofEpochSecond(in.nextLong());
     }
 }
