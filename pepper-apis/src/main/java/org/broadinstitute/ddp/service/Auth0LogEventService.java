@@ -113,7 +113,11 @@ public class Auth0LogEventService {
     }
 
     /**
-     * Save log event and tenant data to DB table 'auth0-log-event'
+     * Check if auth0 log event exist: if not then insert it, also find code details info and
+     * save to {@link Auth0LogEvent} object (in order to use it in logging).<br>
+     * If such event (with same log_id) already exist in DB then do nothing and
+     * just log warn message.
+     * @return boolean true, in case of new event inserted, false - if such event already exist in DB
      */
     public boolean persistAuth0LogEvent(Handle handle, Auth0LogEvent logEvent) {
         var auth0LogEventDao = handle.attach(Auth0LogEventDao.class);
