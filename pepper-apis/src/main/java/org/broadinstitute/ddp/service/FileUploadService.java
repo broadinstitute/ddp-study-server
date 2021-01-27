@@ -23,12 +23,17 @@ import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.files.FileUpload;
 import org.broadinstitute.ddp.util.ConfigUtil;
 import org.broadinstitute.ddp.util.GoogleBucketUtil;
+import org.broadinstitute.ddp.util.GoogleCredentialUtil;
 import org.broadinstitute.ddp.util.GuidUtils;
 import org.jdbi.v3.core.Handle;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class FileUploadService {
 
     public static final String DEFAULT_MIME_TYPE = "application/octet-stream";
+
+    private static final Logger LOG = LoggerFactory.getLogger(FileUploadService.class);
 
     private final ServiceAccountSigner signer;
     private final Storage storage;
@@ -47,10 +52,11 @@ public class FileUploadService {
         }
 
         GoogleCredentials bucketCredentials;
-        try {
-            bucketCredentials = GoogleCredentials.getApplicationDefault();
-        } catch (IOException e) {
-            throw new DDPException("Could not get bucket credentials", e);
+        boolean ensureDefault = cfg.getBoolean(ConfigFile.REQUIRE_DEFAULT_GCP_CREDENTIALS);
+        bucketCredentials = GoogleCredentialUtil.initCredentials(ensureDefault);
+        if (bucketCredentials == null) {
+            LOG.error("Could not get bucket credentials, defaulting to signer credentials");
+            bucketCredentials = signerCredentials;
         }
 
         String projectId = cfg.getString(ConfigFile.GOOGLE_PROJECT_ID);

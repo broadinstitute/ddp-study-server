@@ -4,11 +4,11 @@
 {{with $environment := env "ENVIRONMENT"}}
 {{with $version := env "VERSION"}}
 {{with $gae := env "GAE"}}
-{{with $conf := vault (printf "secret/pepper/%s/%s/conf" $environment $version)}}
 {{with $testingConf := vault (printf "secret/pepper/%s/%s/testing" $environment $version)}}
 {{with $auth0 := index $testingConf.Data "auth0"}}
 {{with $testingAuth := index $testingConf.Data "auth0"}}
-{{with $elasticsearchConf := vault (printf "secret/pepper/%s/%s/elasticsearch" $environment $version)}}
+{{with $conf := vault (printf "secret/pepper/%s/%s/conf" $environment $version)}}
+{{with $fileUploads := index $conf.Data "fileUploads"}}
 
 {
     {{if eq $gae "true"}}
@@ -96,7 +96,7 @@
         "uploadsBucket": "ddp-local-file-uploads",
         "maxFileSizeBytes": 2000000,
         "maxSignedUrlMins": 5,
-        "signerServiceAccount": {{$conf.Data.fileUploads.signerServiceAccount | toJSONPretty}}
+        "signerServiceAccount": {{$fileUploads.signerServiceAccount | toJSONPretty}}
     },
     "pdfArchiveBucket": "pepper-pdf-dev",
     "pdfArchiveUseFilesystem": true,

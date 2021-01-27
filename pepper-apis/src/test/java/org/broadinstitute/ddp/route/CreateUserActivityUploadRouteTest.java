@@ -92,7 +92,6 @@ public class CreateUserActivityUploadRouteTest extends IntegrationTestSuite.Test
                 .body(payload, ObjectMapperType.GSON)
                 .when().post(url)
                 .then().assertThat()
-                .log().all()
                 .statusCode(201).contentType(ContentType.JSON)
                 .body("uploadGuid", not(isEmptyOrNullString()))
                 .body("uploadUrl", not(isEmptyOrNullString()))
