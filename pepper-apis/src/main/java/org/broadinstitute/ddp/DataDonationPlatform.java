@@ -2,6 +2,7 @@ package org.broadinstitute.ddp;
 
 import static com.google.common.net.HttpHeaders.X_FORWARDED_FOR;
 import static org.broadinstitute.ddp.constants.ConfigFile.Auth0LogEvents.AUTH0_LOG_EVENTS_TOKEN;
+import static org.broadinstitute.ddp.constants.ConfigFile.Sendgrid.EVENTS_VERIFICATION_KEY;
 import static org.broadinstitute.ddp.filter.Exclusions.afterWithExclusion;
 import static org.broadinstitute.ddp.filter.Exclusions.beforeWithExclusion;
 import static org.broadinstitute.ddp.filter.WhiteListFilter.whitelist;
@@ -54,6 +55,7 @@ import org.broadinstitute.ddp.filter.HttpHeaderMDCFilter;
 import org.broadinstitute.ddp.filter.MDCAttributeRemovalFilter;
 import org.broadinstitute.ddp.filter.MDCLogBreadCrumbFilter;
 import org.broadinstitute.ddp.filter.RateLimitFilter;
+import org.broadinstitute.ddp.filter.SendGridEventVerificationFilter;
 import org.broadinstitute.ddp.filter.StudyAdminAuthFilter;
 import org.broadinstitute.ddp.filter.StudyLanguageContentLanguageSettingFilter;
 import org.broadinstitute.ddp.filter.StudyLanguageResolutionFilter;
@@ -140,6 +142,7 @@ import org.broadinstitute.ddp.route.PutTempMailingAddressRoute;
 import org.broadinstitute.ddp.route.ReceiveDsmNotificationRoute;
 import org.broadinstitute.ddp.route.SendEmailRoute;
 import org.broadinstitute.ddp.route.SendExitNotificationRoute;
+import org.broadinstitute.ddp.route.SendGridEventRoute;
 import org.broadinstitute.ddp.route.SetParticipantDefaultMailAddressRoute;
 import org.broadinstitute.ddp.route.UpdateMailAddressRoute;
 import org.broadinstitute.ddp.route.UpdateUserEmailRoute;
@@ -162,6 +165,7 @@ import org.broadinstitute.ddp.service.MedicalRecordService;
 import org.broadinstitute.ddp.service.PdfBucketService;
 import org.broadinstitute.ddp.service.PdfGenerationService;
 import org.broadinstitute.ddp.service.PdfService;
+import org.broadinstitute.ddp.service.SendGridEventService;
 import org.broadinstitute.ddp.service.UserService;
 import org.broadinstitute.ddp.service.WorkflowService;
 import org.broadinstitute.ddp.transformers.NullableJsonTransformer;
@@ -249,6 +253,8 @@ public class DataDonationPlatform {
 
         int requestThreadTimeout = cfg.getInt(ConfigFile.THREAD_TIMEOUT);
         String healthcheckPassword = cfg.getString(ConfigFile.HEALTHCHECK_PASSWORD);
+        String sendGridEventsVerificationKey = cfg.hasPath(EVENTS_VERIFICATION_KEY)
+                ? cfg.getString(EVENTS_VERIFICATION_KEY) : null;
         String auth0LogEventsToken = cfg.hasPath(AUTH0_LOG_EVENTS_TOKEN) ? cfg.getString(AUTH0_LOG_EVENTS_TOKEN) : null;
 
         // app engine's port env var wins
@@ -339,6 +345,8 @@ public class DataDonationPlatform {
         get(API.DEPLOYED_VERSION, new GetDeployedAppVersionRoute(), responseSerializer);
         get(API.INTERNAL_ERROR, new ErrorRoute(), responseSerializer);
 
+        before(API.SENDGRID_EVENT, new SendGridEventVerificationFilter(sendGridEventsVerificationKey));
+
         if (cfg.getBoolean(ConfigFile.RESTRICT_REGISTER_ROUTE)) {
             whitelist(API.REGISTRATION, cfg.getStringList(ConfigFile.AUTH0_IP_WHITE_LIST));
         }
@@ -349,6 +357,7 @@ public class DataDonationPlatform {
         post(API.REGISTRATION, new UserRegistrationRoute(interpreter), responseSerializer);
         post(API.TEMP_USERS, new CreateTemporaryUserRoute(), responseSerializer);
 
+        post(API.SENDGRID_EVENT, new SendGridEventRoute(new SendGridEventService()), responseSerializer);
         post(API.AUTH0_LOG_EVENT, new Auth0LogEventRoute(new Auth0LogEventService()), responseSerializer);
 
         // Admin APIs

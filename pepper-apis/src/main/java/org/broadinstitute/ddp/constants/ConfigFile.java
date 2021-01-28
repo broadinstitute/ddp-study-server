@@ -187,6 +187,7 @@ public class ConfigFile {
         public static final String FROM_EMAIL = "sendgrid.fromEmail";
         // The proxy URL to use for all outgoing SendGrid requests.
         public static final String PROXY = "sendgrid.proxy";
+        public static final String EVENTS_VERIFICATION_KEY = "sendgrid.eventsVerificationKey";
     }
 
     public static class Auth0LogEvents {

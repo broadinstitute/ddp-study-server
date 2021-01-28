@@ -3,10 +3,10 @@ package org.broadinstitute.ddp.util;
 import java.io.IOException;
 import java.util.Map;
 
-import com.sendgrid.Email;
-import com.sendgrid.Mail;
+import com.sendgrid.helpers.mail.objects.Email;
+import com.sendgrid.helpers.mail.Mail;
 import com.sendgrid.Method;
-import com.sendgrid.Personalization;
+import com.sendgrid.helpers.mail.objects.Personalization;
 import com.sendgrid.Request;
 import com.sendgrid.Response;
 import com.sendgrid.SendGrid;
