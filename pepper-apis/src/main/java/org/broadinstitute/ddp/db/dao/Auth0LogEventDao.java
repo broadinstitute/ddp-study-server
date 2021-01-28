@@ -9,8 +9,12 @@ public interface Auth0LogEventDao extends SqlObject {
     @CreateSqlObject
     JdbiAuth0LogEvent getJdbiAuth0LogEvent();
 
-    default long insertAuth0LogEvent(Auth0LogEvent logEvent) {
-        long id = getJdbiAuth0LogEvent().insertAuth0LogEvent(
+    /**
+     * Insert Auth0 log event.
+     * Fetch event type details.
+     */
+    default void insertAuth0LogEvent(Auth0LogEvent logEvent) {
+        getJdbiAuth0LogEvent().insertAuth0LogEvent(
                 logEvent.getTenant(),
                 logEvent.getType(),
                 logEvent.getDate(),
@@ -26,6 +30,13 @@ public interface Auth0LogEventDao extends SqlObject {
         if (auth0LogEventCodeDto.isPresent()) {
             logEvent.setAuth0LogEventCode(auth0LogEventCodeDto.get());
         }
-        return id;
+    }
+
+    /**
+     * Check if auth0_log_event with same log_id+tenant already exist in DB
+     * @return boolean true, if already exist, otherwise false
+     */
+    default boolean checkIfSameEventAlreadyPersisted(Auth0LogEvent logEvent) {
+        return getJdbiAuth0LogEvent().findAuth0LogIdByTenantAndLogId(logEvent.getTenant(), logEvent.getLogId()) != null;
     }
 }

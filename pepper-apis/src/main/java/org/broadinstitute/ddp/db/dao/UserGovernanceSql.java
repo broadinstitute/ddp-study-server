@@ -37,6 +37,9 @@ public interface UserGovernanceSql extends SqlObject {
     @SqlUpdate("delete from user_governance where operator_user_id = :operatorUserId")
     int deleteAllGovernancesByOperatorUserId(@Bind("operatorUserId") long operatorUserId);
 
+    @SqlUpdate("delete from user_governance where participant_user_id = :participantUserId")
+    int deleteAllGovernancesByParticipantUserId(@Bind("participantUserId") long participantUserId);
+
     @SqlUpdate("delete from user_study_governance where user_governance_id in ("
             + "        select user_governance_id from user_governance where operator_user_id = :operatorUserId)")
     int deleteAllStudyGovernancesByOperatorUserId(@Bind("operatorUserId") long operatorUserId);

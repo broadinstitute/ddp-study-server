@@ -10,7 +10,6 @@
     "captchaKey": "{{$cf.captchaKey}}",
     "gcpProject": "{{$cf.gcpProject}}",
     "bucketName": "{{$cf.bucketName}}",
-    "bucketFolder": "{{$cf.bucketFolder}}",
     "auth0Domain": "{{$auth0.domain}}",
     "auth0ClientId": "{{$auth0.clientId}}"
 }

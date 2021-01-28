@@ -114,3 +114,10 @@ deleteTempAddressByActivityInstanceGuid() ::= <<
                 ai.activity_instance_guid=:activityInstanceGuid)
 >>
 
+deleteTempAddressByParticipantId() ::= <<
+        DELETE FROM
+            temp_mailing_address
+        WHERE
+            participant_user_id = :participantId
+>>
+

@@ -19,6 +19,7 @@ import static spark.Spark.port;
 import static spark.Spark.stop;
 import static spark.Spark.threadPool;
 
+import java.net.MalformedURLException;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
@@ -81,6 +82,7 @@ import org.broadinstitute.ddp.route.CreateTemporaryUserRoute;
 import org.broadinstitute.ddp.route.DeleteMailAddressRoute;
 import org.broadinstitute.ddp.route.DeleteMedicalProviderRoute;
 import org.broadinstitute.ddp.route.DeleteTempMailingAddressRoute;
+import org.broadinstitute.ddp.route.DeleteUserRoute;
 import org.broadinstitute.ddp.route.DsmExitUserRoute;
 import org.broadinstitute.ddp.route.DsmTriggerOnDemandActivityRoute;
 import org.broadinstitute.ddp.route.ErrorRoute;
@@ -155,6 +157,7 @@ import org.broadinstitute.ddp.security.JWTConverter;
 import org.broadinstitute.ddp.service.ActivityInstanceService;
 import org.broadinstitute.ddp.service.ActivityValidationService;
 import org.broadinstitute.ddp.service.AddressService;
+import org.broadinstitute.ddp.service.Auth0LogEventService;
 import org.broadinstitute.ddp.service.CancerService;
 import org.broadinstitute.ddp.service.ConsentService;
 import org.broadinstitute.ddp.service.FormActivityService;
@@ -163,14 +166,17 @@ import org.broadinstitute.ddp.service.PdfBucketService;
 import org.broadinstitute.ddp.service.PdfGenerationService;
 import org.broadinstitute.ddp.service.PdfService;
 import org.broadinstitute.ddp.service.SendGridEventService;
+import org.broadinstitute.ddp.service.UserService;
 import org.broadinstitute.ddp.service.WorkflowService;
 import org.broadinstitute.ddp.transformers.NullableJsonTransformer;
 import org.broadinstitute.ddp.transformers.SimpleJsonTransformer;
 import org.broadinstitute.ddp.util.ConfigManager;
+import org.broadinstitute.ddp.util.ElasticsearchServiceUtil;
 import org.broadinstitute.ddp.util.LiquibaseUtil;
 import org.broadinstitute.ddp.util.LogbackConfigurationPrinter;
 import org.broadinstitute.ddp.util.ResponseUtil;
 import org.broadinstitute.ddp.util.RouteUtil;
+import org.elasticsearch.client.RestHighLevelClient;
 import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
 import org.slf4j.Logger;
@@ -240,7 +246,7 @@ public class DataDonationPlatform {
         }
     }
 
-    private static void start() {
+    private static void start() throws MalformedURLException {
         LogbackConfigurationPrinter.printLoggingConfiguration();
         Config cfg = ConfigManager.getInstance().getConfig();
         int maxConnections = cfg.getInt(ConfigFile.NUM_POOLED_CONNECTIONS);
@@ -352,7 +358,7 @@ public class DataDonationPlatform {
         post(API.TEMP_USERS, new CreateTemporaryUserRoute(), responseSerializer);
 
         post(API.SENDGRID_EVENT, new SendGridEventRoute(new SendGridEventService()), responseSerializer);
-        post(API.AUTH0_LOG_EVENT, new Auth0LogEventRoute(), responseSerializer);
+        post(API.AUTH0_LOG_EVENT, new Auth0LogEventRoute(new Auth0LogEventService()), responseSerializer);
 
         // Admin APIs
         before(API.ADMIN_BASE + "/*", new StudyAdminAuthFilter());
@@ -402,6 +408,9 @@ public class DataDonationPlatform {
         get(API.USER_PROFILE, new GetProfileRoute(), responseSerializer);
         post(API.USER_PROFILE, new AddProfileRoute(), responseSerializer);
         patch(API.USER_PROFILE, new PatchProfileRoute(), responseSerializer);
+
+        RestHighLevelClient esClient = ElasticsearchServiceUtil.getElasticsearchClient(cfg);
+        delete(API.USER_SPECIFIC, new DeleteUserRoute(new UserService(esClient)), responseSerializer);
 
         // User mailing address routes
         AddressService addressService = new AddressService(cfg.getString(ConfigFile.EASY_POST_API_KEY),

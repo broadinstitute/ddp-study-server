@@ -86,4 +86,12 @@ public interface JdbiMailAddress extends SqlObject {
     @UseStringTemplateSqlLocator
     int unsetDefaultAddressForParticipant(@Bind("guid") String mailAddressGuid);
 
+    @SqlUpdate("deleteAddressByParticipantId")
+    @UseStringTemplateSqlLocator
+    boolean deleteAddressByParticipantId(@Bind("participantId") Long participantId);
+
+    @SqlUpdate("deleteDefaultAddressByParticipantId")
+    @UseStringTemplateSqlLocator
+    boolean deleteDefaultAddressByParticipantId(@Bind("participantId") Long participantId);
+
 }
