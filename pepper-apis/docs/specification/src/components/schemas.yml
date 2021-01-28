@@ -520,7 +520,6 @@ Block.Activity:
     - $ref: '../pepper.yml#/components/schemas/Block'
     - type: object
       required:
-        - displayNumber
         - renderHint
         - activityCode
         - allowMultiple
@@ -563,11 +562,6 @@ Block.Activity:
           type: array
           items:
             $ref: '../pepper.yml#/components/schemas/Activity.Summary'
-        displayNumber:
-          type: integer
-          minimum: 1
-          nullable: true
-          description: 'the number to label this block, `null` if it shouldn''t be numbered'
 Block.Conditional:
   allOf:
     - $ref: '../pepper.yml#/components/schemas/Block'
