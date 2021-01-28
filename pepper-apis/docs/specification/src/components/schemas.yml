@@ -129,10 +129,10 @@ Activity:
     guid:
       type: string
       description: unique identifier for this instance of the activity
-    parentActivityInstanceGuid:
+    parentInstanceGuid:
       type: string
       nullable: true
-      description: guid for the parent activity in case this is a child activity
+      description: guid for the parent activity instance in case this is a child activity instance
     statusCode:
       $ref: "../pepper.yml#/components/schemas/ActivityInstanceStatusType"
       example: IN_PROGRESS
@@ -247,8 +247,8 @@ Activity.Summary:
     instanceGuid:
       example: 6B03213FD0
       type: string
-    parentActivityInstanceGuid:
-      description: In the case the activity instance being created is a child activity, need to specify the parent instance with their guid.
+    parentInstanceGuid:
+      description: guid for the parent activity instance in case this is a child activity instance
       type: string
       nullable: true
     numQuestions:
