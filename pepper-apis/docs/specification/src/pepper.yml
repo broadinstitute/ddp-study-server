@@ -101,7 +101,7 @@ paths:
   /user/{user}/studies/{study}/activities/{instance}:
     $ref: 'endpoints/user.studies.activity.yml'
   /user/{user}/studies/{study}/activities/{instance}/summary:
-    $ref: 'endpoints/user.studies.activity-summary.yml'
+    $ref: 'endpoints/user.studies.activity.summary.yml'
   /user/{user}/studies/{study}/activities/{instance}/answers:
     $ref: 'endpoints/user.studies.activity.answers.yml'
   /user/{user}/studies/{study}/consents:
