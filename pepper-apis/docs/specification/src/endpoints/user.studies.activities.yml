@@ -47,7 +47,7 @@ post:
               example: ABCDEFGH12
             parentActivityInstanceGuid:
               description: |
-                in case the activity instance being created is a child activity, need to specify the parent instance with their guid.
+                in the case the activity instance being created is a child activity, need to specify the parent instance with their guid.
               type: string
               example: ABCDEFGH12
   responses:
