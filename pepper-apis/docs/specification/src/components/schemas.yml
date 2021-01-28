@@ -324,6 +324,15 @@ Answer.Boolean:
       properties:
         value:
           type: boolean
+Answer.File:
+  allOf:
+    - $ref: '../pepper.yml#/components/schemas/Answer'
+    - type: object
+      required:
+        - value
+      properties:
+        value:
+          $ref: '../pepper.yml#/components/schemas/FileInfo'
 Answer.Numeric:
   allOf:
     - $ref: '../pepper.yml#/components/schemas/Answer'
@@ -392,6 +401,20 @@ DateValue:
       type: integer
       nullable: true
       minimum: 0
+FileInfo:
+  type: object
+  nullable: true
+  description: Description of the file uploaded, can be `null` if upload has been cleared.
+  required:
+    - fileName
+    - fileSize
+  properties:
+    fileName:
+      type: string
+      description: Name of the file
+    fileSize:
+      type: integer
+      description: Size of the file in bytes
 AnswerSubmission:
   type: object
   discriminator:
@@ -440,6 +463,17 @@ AnswerSubmission.Date:
       properties:
         value:
           $ref: '../pepper.yml#/components/schemas/DateValue'
+AnswerSubmission.File:
+  allOf:
+    - $ref: '../pepper.yml#/components/schemas/AnswerSubmission'
+    - type: object
+      required:
+        - value
+      properties:
+        value:
+          type: string
+          nullable: true
+          description: File upload guid provided by server when upload URL was requested. A `null` value clears the upload.
 AnswerSubmission.Numeric.Integer:
   allOf:
     - $ref: '../pepper.yml#/components/schemas/AnswerSubmission'
@@ -888,6 +922,7 @@ Error.ActivityAnswersPatchBadPayload:
           type: string
           enum:
             - BAD_PAYLOAD
+            - FILE_ERROR
             - INVALID_REQUEST
             - NO_SUCH_ELEMENT
             - REQUIRED_PARAMETER_MISSING
@@ -1373,6 +1408,22 @@ Question.Date:
         type: array
         items:
           $ref: '../pepper.yml#/components/schemas/Answer.Date'
+Question.File:
+  allOf:
+    - $ref: '../pepper.yml#/components/schemas/Question'
+    - type: object
+      required:
+        - answers
+      properties:
+        questionType:
+          type: string
+          default: FILE
+          enum:
+            - FILE
+        answers:
+          type: array
+          items:
+            $ref: '../pepper.yml#/components/schemas/Answer.File'
 Question.Numeric:
   allOf:
   - $ref: '../pepper.yml#/components/schemas/Question'

@@ -39,7 +39,6 @@ import org.broadinstitute.ddp.model.activity.types.DateRenderMode;
 import org.broadinstitute.ddp.model.activity.types.NumericType;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
 import org.broadinstitute.ddp.model.activity.types.TextInputType;
-import org.broadinstitute.ddp.model.files.FileUploadStatus;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
 import org.broadinstitute.ddp.util.TestFormActivity;
 import org.jdbi.v3.core.Handle;
@@ -226,7 +225,7 @@ public class AnswerDaoTest extends TxnAwareBaseTest {
             var fileDao = handle.attach(FileUploadDao.class);
             var upload = fileDao.createAuthorized("guid", "blob", "mime", "file",
                     123, testData.getUserId(), testData.getUserId());
-            fileDao.updateStatus(upload.getId(), FileUploadStatus.UPLOADED);
+            fileDao.markUploaded(upload.getId(), Instant.now());
             var info = fileDao.findFileInfoByGuid(upload.getGuid()).get();
 
             var answerDao = daoBuilder.buildDao(handle);

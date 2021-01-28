@@ -56,8 +56,8 @@
             <column name="created_at" type="datetime(6)">
                 <constraints nullable="false"/>
             </column>
-            <column name="is_replaced" type="boolean">
-                <constraints nullable="false"/>
+            <column name="uploaded_at" type="datetime(6)">
+                <constraints nullable="true"/>
             </column>
         </createTable>
     </changeSet>

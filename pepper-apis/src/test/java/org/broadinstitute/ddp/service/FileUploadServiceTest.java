@@ -17,7 +17,9 @@ import static org.mockito.Mockito.spy;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 
+import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.HttpMethod;
 import org.broadinstitute.ddp.TxnAwareBaseTest;
 import org.broadinstitute.ddp.db.TransactionWrapper;
@@ -30,6 +32,7 @@ import org.jdbi.v3.core.Handle;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.mockito.Mockito;
 
 public class FileUploadServiceTest extends TxnAwareBaseTest {
 
@@ -59,7 +62,7 @@ public class FileUploadServiceTest extends TxnAwareBaseTest {
     public void testAuthorizeUpload() throws MalformedURLException {
         var now = Instant.now();
         var dummyUpload = new FileUpload(1, "guid", "blob", "mime", "file", 123, 1, 1,
-                FileUploadStatus.AUTHORIZED, now, now, false);
+                FileUploadStatus.AUTHORIZED, now, now, null);
         var dummyUrl = new URL("https://datadonationplatform.org");
         var expectedMime = FileUploadService.DEFAULT_MIME_TYPE;
         var expectedMethod = HttpMethod.POST;
@@ -96,5 +99,89 @@ public class FileUploadServiceTest extends TxnAwareBaseTest {
         assertTrue("should hit size limit", result.isExceededSize());
         assertNull(result.getFileUpload());
         assertNull(result.getSignedUrl());
+    }
+
+    @Test
+    public void testCheckAndSetUploadStatus() {
+        var now = Instant.now();
+        var blobMock = mock(Blob.class);
+        var serviceSpy = spy(new FileUploadService(null, null, "bucket", 123, 5));
+
+        doReturn(blobMock).when(serviceSpy).fetchBlob("blob");
+        doReturn(true).when(blobMock).exists();
+        doReturn(100L).when(blobMock).getSize();
+        doReturn(now.toEpochMilli()).when(blobMock).getCreateTime();
+
+        TransactionWrapper.useTxn(handle -> {
+            long userId = testData.getUserId();
+            var fileDao = handle.attach(FileUploadDao.class);
+            var upload = fileDao.createAuthorized("guid", "blob", "mime", "file", 100, userId, userId);
+
+            var result = serviceSpy.checkAndSetUploadStatus(handle, userId, upload);
+            assertNotNull(result);
+            assertEquals(FileUploadService.CheckResult.OK, result);
+
+            var actual = fileDao.findById(upload.getId()).orElse(null);
+            assertEquals(FileUploadStatus.UPLOADED, actual.getStatus());
+            assertEquals("should match at millis precision",
+                    now.truncatedTo(ChronoUnit.MILLIS), actual.getUploadedAt());
+
+            handle.rollback();
+        });
+    }
+
+    @Test
+    public void testCheckAndSetUploadStatus_alreadyUploadedFilesAreNotCheckedAgain() {
+        TransactionWrapper.useTxn(handle -> {
+            long userId = testData.getUserId();
+            var fileDao = handle.attach(FileUploadDao.class);
+            var upload = fileDao.createAuthorized("guid", "blob", "mime", "file", 100, userId, userId);
+
+            fileDao.markUploaded(upload.getId(), Instant.now());
+            upload = fileDao.findById(upload.getId()).get();
+
+            var service = new FileUploadService(null, null, "bucket", 123, 5);
+            var result = service.checkAndSetUploadStatus(handle, userId, upload);
+            assertEquals(FileUploadService.CheckResult.OK, result);
+
+            handle.rollback();
+        });
+    }
+
+    @Test
+    public void testCheckAndSetUploadStatus_error() {
+        var now = Instant.now();
+        var blobMock = mock(Blob.class);
+        var serviceSpy = spy(new FileUploadService(null, null, "bucket", 123, 5));
+        doReturn(blobMock).when(serviceSpy).fetchBlob("blob");
+
+        TransactionWrapper.useTxn(handle -> {
+            long userId = testData.getUserId();
+            var fileDao = handle.attach(FileUploadDao.class);
+            var upload = fileDao.createAuthorized("guid", "blob", "mime", "file", 100, userId, userId);
+
+            var result = serviceSpy.checkAndSetUploadStatus(handle, userId + 1, upload);
+            assertEquals(FileUploadService.CheckResult.OWNER_MISMATCH, result);
+
+            Mockito.reset(blobMock);
+            doReturn(false).when(blobMock).exists();
+            result = serviceSpy.checkAndSetUploadStatus(handle, userId, upload);
+            assertEquals(FileUploadService.CheckResult.NOT_UPLOADED, result);
+
+            Mockito.reset(blobMock);
+            doReturn(true).when(blobMock).exists();
+            doReturn(null).when(blobMock).getCreateTime();
+            result = serviceSpy.checkAndSetUploadStatus(handle, userId, upload);
+            assertEquals(FileUploadService.CheckResult.NOT_UPLOADED, result);
+
+            Mockito.reset(blobMock);
+            doReturn(true).when(blobMock).exists();
+            doReturn(now.toEpochMilli()).when(blobMock).getCreateTime();
+            doReturn(upload.getFileSize() + 1).when(blobMock).getSize();
+            result = serviceSpy.checkAndSetUploadStatus(handle, userId, upload);
+            assertEquals(FileUploadService.CheckResult.SIZE_MISMATCH, result);
+
+            handle.rollback();
+        });
     }
 }
