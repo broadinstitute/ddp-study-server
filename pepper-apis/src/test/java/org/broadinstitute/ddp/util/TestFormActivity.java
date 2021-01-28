@@ -15,6 +15,7 @@ import org.broadinstitute.ddp.model.activity.definition.question.AgreementQuesti
 import org.broadinstitute.ddp.model.activity.definition.question.BoolQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.CompositeQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.DateQuestionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.FileQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.NumericQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistOptionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistQuestionDef;
@@ -42,6 +43,7 @@ public class TestFormActivity {
     private BoolQuestionDef boolQuestion;
     private CompositeQuestionDef compositeQuestion;
     private DateQuestionDef dateFullQuestion;
+    private FileQuestionDef fileQuestion;
     private NumericQuestionDef numericIntQuestion;
     private PicklistQuestionDef picklistSingleListQuestion;
     private PicklistQuestionDef picklistMultiListQuestion;
@@ -75,6 +77,10 @@ public class TestFormActivity {
         return dateFullQuestion;
     }
 
+    public FileQuestionDef getFileQuestion() {
+        return fileQuestion;
+    }
+
     public NumericQuestionDef getNumericIntQuestion() {
         return numericIntQuestion;
     }
@@ -97,6 +103,7 @@ public class TestFormActivity {
         private boolean withAgreementQuestion = false;
         private boolean withBoolQuestion = false;
         private boolean withDateFullQuestion = false;
+        private boolean withFileQuestion = false;
         private boolean withNumericIntQuestion = false;
         private boolean withTextQuestion = false;
         private List<PicklistOptionDef> picklistSingleListOptions = null;
@@ -138,6 +145,11 @@ public class TestFormActivity {
 
         public Builder withDateFullQuestion(boolean include) {
             this.withDateFullQuestion = include;
+            return this;
+        }
+
+        public Builder withFileQuestion(boolean include) {
+            this.withFileQuestion = include;
             return this;
         }
 
@@ -225,6 +237,14 @@ public class TestFormActivity {
             }
             if (!dateBlocks.isEmpty()) {
                 builder.addSection(new FormSectionDef(null, dateBlocks));
+            }
+
+            if (withFileQuestion) {
+                var question = FileQuestionDef
+                        .builder("FILE" + Instant.now().toEpochMilli(), Template.text("file prompt"))
+                        .build();
+                result.fileQuestion = question;
+                builder.addSection(new FormSectionDef(null, List.of(new QuestionBlockDef(question))));
             }
 
             if (withNumericIntQuestion) {

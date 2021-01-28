@@ -16,6 +16,7 @@ import org.broadinstitute.ddp.db.dto.AgreementQuestionDto;
 import org.broadinstitute.ddp.db.dto.BooleanQuestionDto;
 import org.broadinstitute.ddp.db.dto.CompositeQuestionDto;
 import org.broadinstitute.ddp.db.dto.DateQuestionDto;
+import org.broadinstitute.ddp.db.dto.FileQuestionDto;
 import org.broadinstitute.ddp.db.dto.NumericQuestionDto;
 import org.broadinstitute.ddp.db.dto.PicklistQuestionDto;
 import org.broadinstitute.ddp.db.dto.QuestionDto;
@@ -154,6 +155,7 @@ public interface JdbiQuestion extends SqlObject {
     @RegisterConstructorMapper(AgreementQuestionDto.class)
     @RegisterConstructorMapper(BooleanQuestionDto.class)
     @RegisterConstructorMapper(DateQuestionDto.class)
+    @RegisterConstructorMapper(FileQuestionDto.class)
     @RegisterConstructorMapper(NumericQuestionDto.class)
     @RegisterConstructorMapper(PicklistQuestionDto.class)
     @RegisterConstructorMapper(TextQuestionDto.class)
@@ -183,6 +185,9 @@ public interface JdbiQuestion extends SqlObject {
                     break;
                 case DATE:
                     questionDto = view.getRow(DateQuestionDto.class);
+                    break;
+                case FILE:
+                    questionDto = view.getRow(FileQuestionDto.class);
                     break;
                 case NUMERIC:
                     questionDto = view.getRow(NumericQuestionDto.class);

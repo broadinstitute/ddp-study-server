@@ -11,6 +11,9 @@ select ans.answer_id,
        da.year   as da_year,
        da.month  as da_month,
        da.day    as da_day,
+       fd.file_upload_id as fa_upload_id,
+       fd.file_name      as fa_file_name,
+       fd.file_size      as fa_file_size,
        nt.numeric_type_code as na_numeric_type,
        na.int_value         as na_int_value,
        po.picklist_option_stable_id as pa_option_stable_id,
@@ -45,6 +48,8 @@ select ans.answer_id,
   left join boolean_answer as ba on ba.answer_id = ans.answer_id
   left join text_answer as ta on ta.answer_id = ans.answer_id
   left join date_answer as da on da.answer_id = ans.answer_id
+  left join file_answer as fa on fa.answer_id = ans.answer_id
+  left join file_upload as fd on fd.file_upload_id = fa.file_upload_id
   left join numeric_answer as na on na.answer_id = ans.answer_id
   left join picklist_option__answer as pa on pa.answer_id = ans.answer_id
   left join picklist_option as po on po.picklist_option_id = pa.picklist_option_id
