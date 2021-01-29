@@ -51,6 +51,7 @@ import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceStatusDao;
 import org.broadinstitute.ddp.db.dao.AnswerDao;
+import org.broadinstitute.ddp.db.dao.EventDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
 import org.broadinstitute.ddp.db.dao.JdbiClient;
@@ -70,7 +71,7 @@ import org.slf4j.LoggerFactory;
 public class StudyDataLoaderMain {
 
     private static final Logger LOG = LoggerFactory.getLogger(StudyDataLoaderMain.class);
-    private static final String DATA_GC_ID = "broad-ddp-mbc";
+    private static final String DATA_GC_ID = "broad-ddp-gec";
     private static final String DEFAULT_MIGRATION_REPORT_PATH = "/tmp/migration_reports";
     private static final String USAGE = "StudyDataLoaderMain [-h, --help] [OPTIONS] study-guid";
     private static List<String> altPidUserList;
@@ -88,6 +89,8 @@ public class StudyDataLoaderMain {
     private Long auth0TenantId = null;
     private List<String> failedList = null;
     private List<String> skippedList = null;
+    private List<String> followupList =  new ArrayList<>();
+    private String[] dups = {};
 
     public static void main(String[] args) throws Exception {
         initDbConnection();
@@ -412,6 +415,8 @@ public class StudyDataLoaderMain {
         migrationRunReport = new ArrayList<>();
         failedList = new ArrayList<>();
         skippedList = new ArrayList<>();
+
+        disableStudyEvents(studyGuid);
         processParticipant(studyGuid, surveyDataMap, mappingData, dataLoader, null, addressService, olcService);
 
         try {
@@ -425,14 +430,32 @@ public class StudyDataLoaderMain {
         }
     }
 
+    private void disableStudyEvents(String studyGuid) {
+        TransactionWrapper.useTxn(handle -> {
+            JdbiUmbrellaStudy jdbiUmbrellaStudy = handle.attach(JdbiUmbrellaStudy.class);
+            long studyId = jdbiUmbrellaStudy.findByStudyGuid(studyGuid).getId();
+            EventDao eventDao = handle.attach(EventDao.class);
+            eventDao.enableAllStudyEvents(studyId, false);
+            LOG.info("Disabled events for study : {} ", studyGuid);
+        });
+    }
+
     private PreProcessedData preProcessAddressAndEmailVerification(Config cfg, StudyDataLoader dataLoader) throws Exception {
         Bucket bucket = getGoogleBucket();
         if (dataLoader == null) {
             dataLoader = new StudyDataLoader(cfg);
         }
+        int consentCount = 0;
+        int aboutyouCount = 0;
+        int releaseCount = 0;
+        int followupConsentCount = 0;
+
         StudyDataLoader studyDataLoader = dataLoader;
         List<String> existingAuth0Emails = new ArrayList<>();
+        List<String> submittedAboutyouNoConsent = new ArrayList<>();
+        List<String> submittedConsentNoRelease = new ArrayList<>();
         Map<String, String> userEmailMap = new HashMap<>();
+        Map<String, String> dupUserEmailMap = new HashMap<>();
         Map<String, MailAddress> userAddressMap = new HashMap<>();
         final OLCService olcService = new OLCService(cfg.getString(ConfigFile.GEOCODING_API_KEY));
         final AddressService addressService = new AddressService(cfg.getString(ConfigFile.EASY_POST_API_KEY),
@@ -473,9 +496,23 @@ public class StudyDataLoaderMain {
             String email = datstatData.getAsJsonObject().get("datstat_email").getAsString();
             userEmailMap.put(altpid, email.toLowerCase());
 
-            String phoneNumber = null;
+            Boolean hasAboutYou = false;
+            Boolean hasConsent = false;
+            Boolean hasRelease = false;
+            Boolean hasFollowup = false;
+
+            JsonElement aboutyouSurvey = surveyDataMap.get("aboutyousurvey");
+            hasAboutYou = aboutyouSurvey != null && !aboutyouSurvey.isJsonNull();
+            JsonElement consentSurvey = surveyDataMap.get("consentsurvey");
+            hasConsent = (consentSurvey != null && !consentSurvey.isJsonNull());
             JsonElement releaseSurvey = surveyDataMap.get("releasesurvey");
-            if (releaseSurvey != null && !releaseSurvey.isJsonNull()) {
+            hasRelease = releaseSurvey != null && !releaseSurvey.isJsonNull();
+            JsonElement followupConsentSurvey = surveyDataMap.get("followupconsentsurvey");
+            hasFollowup = (followupConsentSurvey != null && !followupConsentSurvey.isJsonNull());
+
+            String phoneNumber = null;
+            if (hasRelease) {
+                releaseCount++;
                 JsonElement phoneNumberEl = releaseSurvey.getAsJsonObject().get("phone_number");
                 if (phoneNumberEl != null && !phoneNumberEl.isJsonNull()) {
                     phoneNumber = phoneNumberEl.getAsString();
@@ -486,6 +523,25 @@ public class StudyDataLoaderMain {
                 MailAddress address = studyDataLoader.getUserAddress(handle, datstatData, phoneNum, olcService, addressService);
                 userAddressMap.put(altpid, address);
             });
+
+            if (hasAboutYou) {
+                aboutyouCount++;
+                JsonElement statusEl = aboutyouSurvey.getAsJsonObject().get("datstat.submissionstatus");
+                if (statusEl.getAsString().equals("1") && !hasConsent) {
+                    submittedAboutyouNoConsent.add(altpid);
+                }
+            }
+
+            if (hasConsent) {
+                consentCount++;
+                JsonElement statusEl = consentSurvey.getAsJsonObject().get("datstat.submissionstatus");
+                if (statusEl.getAsString().equals("1") && !hasRelease) {
+                    submittedConsentNoRelease.add(altpid);
+                }
+            }
+            if (hasFollowup) {
+                followupConsentCount++;
+            }
         }
 
         //make auth0call to verify if User account already exists by Email
@@ -497,7 +553,23 @@ public class StudyDataLoaderMain {
         } else {
             LOG.info("NO existing emails found.");
         }
+        if (!dupUserEmailMap.isEmpty()) {
+            LOG.warn("Found {} DUP emails \n ", dupUserEmailMap.size());
+            dupUserEmailMap.forEach((k, v) -> System.out.println(k + " - " + v));
+        } else {
+            LOG.info("NO DUP emails found.");
+        }
+
+        LOG.debug("All Emails: {}", Arrays.toString(emails.toArray()));
+
+        LOG.warn("Found {} AboutYou Completed but NO Consent Altpids \n{} ", submittedAboutyouNoConsent.size(),
+                Arrays.toString(submittedAboutyouNoConsent.toArray()));
+        LOG.warn("Found {} CONSENT Completed but NO RELEASE Altpids \n{} ", submittedAboutyouNoConsent.size(),
+                Arrays.toString(submittedAboutyouNoConsent.toArray()));
+
         LOG.info("Apltpid Map size: {} ", altpidBucketDataMap.size());
+        LOG.info("Aboutyou count: {}  consent count: {} release  count: {}   followupconsent count: {}", aboutyouCount, consentCount,
+                releaseCount, followupConsentCount);
 
         return new PreProcessedData(userEmailMap, userAddressMap, existingAuth0Emails, altpidBucketDataMap);
     }
@@ -521,6 +593,7 @@ public class StudyDataLoaderMain {
         migrationRunReport = new ArrayList<>();
         skippedList = new ArrayList<>();
         failedList = new ArrayList<>();
+        List<String> dupsList = List.of(dups);
 
         PreProcessedData preProcessedData;
         if (StringUtils.isNotEmpty(preProcessFileName)) {
@@ -528,6 +601,8 @@ public class StudyDataLoaderMain {
             preProcessedData = new Gson().fromJson(new FileReader(preProcessFileName), PreProcessedData.class);
             LOG.info("using pre-processed data from {}", preProcessFileName);
         } else {
+            //disable events before loading data.
+            disableStudyEvents(studyGuid);
             //load it now
             preProcessedData = preProcessAddressAndEmailVerification(cfg, dataLoader);
             LOG.info("loaded pre-processed data. {} ", new Date());
@@ -547,6 +622,10 @@ public class StudyDataLoaderMain {
 
         Map<String, Map> altpidBucketDataMap = preProcessedData.getAltpidBucketDataMap();
         for (String altpid : altpidBucketDataMap.keySet()) {
+            if (dupsList.contains(altpid)) {
+                LOG.warn("Dup participant: {} skipping", altpid);
+                continue;
+            }
             Map<String, JsonElement> surveyDataMap = altpidBucketDataMap.get(altpid);
 
             JsonElement datstatData = surveyDataMap.get("datstatparticipantdata");
@@ -589,6 +668,7 @@ public class StudyDataLoaderMain {
         } else {
             LOG.info("NO skipped Altpids...");
         }
+        LOG.info("Altpids {} has followup: {}  ", followupList.size(), Arrays.toString(followupList.toArray()));
     }
 
     private void processParticipant(String studyGuid, Map<String, JsonElement> sourceData,
@@ -806,6 +886,7 @@ public class StudyDataLoaderMain {
                     }
 
                     if (hasFollowupConsents) {
+                        followupList.add(altpid);
                         String activityCode = mappingData.get("followupconsentsurvey").getAsJsonObject().get("activity_code").getAsString();
                         //can have multiple followupconsent instances
                         JsonArray followupConsents = sourceData.get("followupconsentsurvey").getAsJsonArray();
@@ -824,7 +905,7 @@ public class StudyDataLoaderMain {
                         }
                     }
 
-                    JsonElement ddpExitedDt = datstatParticipantData.getAsJsonObject().get("ddp_exited_dt");
+                    JsonElement ddpExitedDt = datstatParticipantData.getAsJsonObject().get("ddp_exited");
                     if (ddpExitedDt != null && !ddpExitedDt.isJsonNull()) {
                         dataLoader.addUserStudyExit(handle, ddpExitedDt.getAsString(), userGuid, studyGuid);
                     }
@@ -949,7 +1030,7 @@ public class StudyDataLoaderMain {
         BufferedWriter writer;
         if (StringUtils.isBlank(reportFileName)) {
             String dateTime = LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
-            String fileName = dateTime.concat("-MBCprojectPepperMigration.csv");
+            String fileName = dateTime.concat("-ESCprojectPepperMigration.csv");
             File directory = new File(DEFAULT_MIGRATION_REPORT_PATH);
             if (!directory.exists()) {
                 directory.mkdir();

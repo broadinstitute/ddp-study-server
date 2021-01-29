@@ -1,9 +1,12 @@
 package org.broadinstitute.ddp.util;
 
+import static org.broadinstitute.ddp.constants.NotificationTemplateVariables.BASE_WEB_URL;
 import static org.broadinstitute.ddp.constants.NotificationTemplateVariables.DDP_BASE_WEB_URL;
 import static org.broadinstitute.ddp.constants.NotificationTemplateVariables.DDP_LINK;
 import static org.broadinstitute.ddp.constants.NotificationTemplateVariables.DDP_PARTICIPANT_FIRST_NAME;
 import static org.broadinstitute.ddp.constants.NotificationTemplateVariables.DDP_PARTICIPANT_LAST_NAME;
+import static org.broadinstitute.ddp.constants.NotificationTemplateVariables.LINK;
+import static org.broadinstitute.ddp.constants.NotificationTemplateVariables.SALUTATION;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -23,6 +26,21 @@ public class DdpParticipantSendGridEmailPersonalization {
 
     public DdpParticipantSendGridEmailPersonalization setLinkValue(String urlValue) {
         keyToValue.put(DDP_LINK, urlValue);
+        return this;
+    }
+
+    public DdpParticipantSendGridEmailPersonalization setDynamicSalutation(String name) {
+        keyToValue.put(SALUTATION, name);
+        return this;
+    }
+
+    public DdpParticipantSendGridEmailPersonalization setDynamicLinkValue(String urlValue) {
+        keyToValue.put(LINK, urlValue);
+        return this;
+    }
+
+    public DdpParticipantSendGridEmailPersonalization setDynamicBaseWebUrl(String baseWebUrl) {
+        keyToValue.put(BASE_WEB_URL, baseWebUrl);
         return this;
     }
 

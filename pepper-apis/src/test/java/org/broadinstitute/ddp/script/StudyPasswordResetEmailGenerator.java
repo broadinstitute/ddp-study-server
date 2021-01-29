@@ -144,9 +144,11 @@ public class StudyPasswordResetEmailGenerator {
                 String resetLinkWithStudyParam = addParamToUrlString(originalAuth0ResetLink, "study", studyGuid);
 
                 Map<String, String> templateSubstitutions = new DdpParticipantSendGridEmailPersonalization()
-                        .setLinkValue(resetLinkWithStudyParam)
-                        .setParticipantFirstName(profile.getFirstName())
-                        .setBaseWebUrl(redirectUrlAfterPasswordReset)
+                        .setDynamicLinkValue(resetLinkWithStudyParam)
+                        //.setLinkValue(resetLinkWithStudyParam)
+                        //.setParticipantFirstName(profile.getFirstName())
+                        .setDynamicSalutation(profile.getFirstName())
+                        .setDynamicBaseWebUrl(redirectUrlAfterPasswordReset)
                         .toMap();
 
                 sendEmailMessage(fromEmailName, fromEmailAddress, emailSubject, sendgridTemplateId, sendGridApiKey,

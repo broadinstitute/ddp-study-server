@@ -99,10 +99,12 @@ public class StudyDataLoader {
     private static final String DEFAULT_PREFERRED_LANGUAGE_CODE = "en";
     private static final String DATSTAT_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss'Z'";
     private static final int DSM_DEFAULT_ON_DEMAND_TRIGGER_ID = -2;
+    private static final String DSM_DEFAULT_BIOPSY_GUID = "1";
     Map<String, List<String>> sourceDataSurveyQs;
     Map<String, String> altNames;
     Map<String, String> dkAltNames;
     Map<Integer, String> yesNoDkLookup;
+    Map<Integer, String> yesNoUnsureLookup;
     Map<Integer, Boolean> booleanValueLookup;
     Auth0ManagementClient mgmtClient;
     Map<String, List<String>> datStatEnumLookup;
@@ -131,6 +133,12 @@ public class StudyDataLoader {
         yesNoDkLookup.put(1, "YES");
         yesNoDkLookup.put(2, "DK");
 
+        //some lookup codes/values
+        yesNoUnsureLookup = new HashMap<>();
+        yesNoUnsureLookup.put(0, "NO");
+        yesNoUnsureLookup.put(1, "YES");
+        yesNoUnsureLookup.put(2, "UNSURE");
+
         booleanValueLookup = new HashMap<>();
         booleanValueLookup.put(0, false);
         booleanValueLookup.put(1, true);
@@ -138,32 +146,21 @@ public class StudyDataLoader {
         dkAltNames = new HashMap<>();
         dkAltNames.put("dk", "Don't know");
 
-        // altNames maps from the name in the mapping to the name in the export file
+        // altNames maps from the name in the mapping to the name in the export file, pepperName, gen2Name
         altNames = new HashMap<>();
         altNames.put("SOUTH_EAST_ASIAN", "southeast_asian_indian");
         altNames.put("BLACK", "black_african_american");
         altNames.put("PREFER_NOT_ANSWER", "prefer_no_answer");
         altNames.put("NATIVE_HAWAIIAN", "hawaiian");
 
-        //MPC THERAPIES options entries
-        altNames.put("xtandi", "xtandi_enzalutamide");
-        altNames.put("zytiga", "zytiga_abiraterone");
-        altNames.put("docetaxel", "docetaxel_taxotere");
-        altNames.put("taxol", "paclitaxel_taxol");
-        altNames.put("jevtana", "jevtana_cabazitaxel");
-        altNames.put("opdivo", "opdivo_nivolumab");
-        altNames.put("yervoy", "yervoy_ipilumimab");
-        altNames.put("tecentriq", "tecentriq_aztezolizumab");
-        altNames.put("lynparza", "lynparza_olaparib");
-        altNames.put("rubraca", "rubraca_rucaparib");
-        altNames.put("TAXOTERE", "docetaxel_taxotere");
-        altNames.put("PARAPLATIN", "carboplatin");
-        altNames.put("ETOPOPHOS", "etoposide");
-        altNames.put("NOVANTRONE", "mitoxantrone");
-        altNames.put("EMCYT", "estramustine");
-        altNames.put("FIRMAGON", "degareliz");
-        altNames.put("OTHER_YES", "other_therapy");
-        altNames.put("CLINICAL_TRIAL", "exp_clinical_trial");
+        //ESC THERAPIES options entries
+        altNames.put("GASTRIC_STOMACH", "gastric");
+        altNames.put("ABDOMINAL_CAVITY", "abdomen");
+        altNames.put("CHEMOTHERAPY", "chemo");
+        altNames.put("RADIATION", "rt");
+        altNames.put("IMMUNOTHERAPY", "immuno");
+        altNames.put("NOTHERAPY", "no_therapy");
+        altNames.put("CLINICAL_TRIAL", "exp");
 
         altNames.put("affected", "effected");
 
@@ -289,6 +286,24 @@ public class StudyDataLoader {
         optionList.add(0, null);
         optionList.add(1, "YES");
         datStatEnumLookup.put("diagnosis_date_estimated", optionList);
+
+        //esc cancer_type
+        optionList = new ArrayList<>();
+        optionList.add(0, null);
+        optionList.add(1, "SQUAMOUS_CELL_CARCINOMA");
+        optionList.add(2, "ADENOCARCINOMA");
+        optionList.add(3, "UNSURE");
+        datStatEnumLookup.put("diagnosis_type", optionList);
+
+        //esc barretts_timing
+        optionList = new ArrayList<>();
+        optionList.add(0, null);
+        optionList.add(1, "ONE_YEAR");
+        optionList.add(2, "ONE_TO_TWO_YEARS");
+        optionList.add(3, "THREE_TO_FIVE_YEARS");
+        optionList.add(4, "FIVEPLUS_YEARS");
+        optionList.add(5, "UNSURE");
+        datStatEnumLookup.put("barretts_timing", optionList);
     }
 
     void loadMailingListData(Handle handle, JsonElement data, String studyCode) {
@@ -723,7 +738,18 @@ public class StudyDataLoader {
 
     private void updateUserStudyEnrollment(Handle handle, JsonElement surveyData, String userGuid, String studyGuid) throws Exception {
         BaseSurvey baseSurvey = getBaseSurvey(surveyData);
-        if (InstanceStatusType.COMPLETE.name().equalsIgnoreCase(baseSurvey.getSurveyStatus())) {
+        String surveyCurrentStatus = baseSurvey.getSurveyStatus();
+        if (StringUtils.isBlank(baseSurvey.getSurveyStatus())) {
+            Integer datstatSubmissionStatus = getIntegerValueFromElement(surveyData, "datstat.submissionstatus");
+            if (datstatSubmissionStatus != null) {
+                if (datstatSubmissionStatus == 1) {
+                    surveyCurrentStatus = "COMPLETE";
+                }
+            } else {
+                LOG.error("Cannot determine survey status for userr:  {}", userGuid);
+            }
+        }
+        if (InstanceStatusType.COMPLETE.name().equalsIgnoreCase(surveyCurrentStatus)) {
             long updatedAt;
             if (baseSurvey.getDdpFirstCompleted() != null) {
                 Instant instant;
@@ -743,6 +769,7 @@ public class StudyDataLoader {
                 updatedAt = instant.toEpochMilli();
             }
 
+            LOG.info("updating user  status to : {} for user: {}", EnrollmentStatusType.ENROLLED, userGuid);
             handle.attach(JdbiUserStudyEnrollment.class).changeUserStudyEnrollmentStatus(userGuid, studyGuid,
                     EnrollmentStatusType.ENROLLED, updatedAt);
         }
@@ -986,6 +1013,7 @@ public class StudyDataLoader {
                                           boolean useExistingAuth0Users) throws Exception {
 
         String emailAddress = data.getAsJsonObject().get("datstat_email").getAsString();
+        String shortId = data.getAsJsonObject().get("ddp_participant_shortid").getAsString();
         String userAction = "created";
         User newAuth0User = null;
 
@@ -1022,7 +1050,7 @@ public class StudyDataLoader {
         long createdAtMillis = createdAtDate.toInstant(ZoneOffset.UTC).toEpochMilli();
         long updatedAtMillis = lastModifiedDate.toInstant(ZoneOffset.UTC).toEpochMilli();
 
-        String shortId = data.getAsJsonObject().get("ddp_participant_shortid").getAsString();
+        //String shortId = data.getAsJsonObject().get("ddp_participant_shortid").getAsString();
         String altpid = data.getAsJsonObject().get("datstat_altpid").getAsString();
 
         long userId = userDao.insertMigrationUser(auth0UserId, userGuid, clientDto.getId(), userHruid,
@@ -1053,7 +1081,11 @@ public class StudyDataLoader {
                                JdbiLanguageCode jdbiLanguageCode,
                                UserProfileDao profileDao) {
 
-        Boolean isDoNotContact = getBooleanValueFromElement(data, "ddp_do_not_contact");
+        Boolean isDoNotContact = false;
+        String doNotContact = getStringValueFromElement(data, "ddp_do_not_contact");
+        if (doNotContact != null && doNotContact.equals("1")) {
+            isDoNotContact = true;
+        }
         Long languageCodeId = jdbiLanguageCode.getLanguageCodeId(DEFAULT_PREFERRED_LANGUAGE_CODE);
 
         UserProfile profile = new UserProfile.Builder(user.getUserId())
@@ -1165,7 +1197,7 @@ public class StudyDataLoader {
         String ddpLastSubmitted = getStringValueFromElement(surveyData, "ddp_lastsubmitted");
         String ddpLastUpdated = getStringValueFromElement(surveyData, "ddp_lastupdated");
         String surveyVersion = getStringValueFromElement(surveyData, "surveyversion");
-        String activityVersion = getStringValueFromElement(surveyData, "consent_version");
+        String activityVersion = getStringValueFromElement(surveyData, "ddp_survey_version");
         String surveyStatus = getStringValueFromElement(surveyData, "survey_status");
         Integer datstatSubmissionStatus = getIntegerValueFromElement(surveyData, "datstat.submissionstatus");
 
@@ -1234,6 +1266,7 @@ public class StudyDataLoader {
 
             handle.attach(JdbiUserStudyEnrollment.class).terminateStudyEnrollment(participantGuid, studyGuid,
                     exitAt.toEpochSecond(ZoneOffset.UTC) * MILLIS_PER_SECOND);
+            LOG.info("Exited user: {}", participantGuid);
         }
     }
 
@@ -1382,7 +1415,7 @@ public class StudyDataLoader {
                     selectedPicklistOptions = getPicklistOptionsForSourceStrs(mapElement, sourceDataElement, questionName, surveyName);
                     break;
                 case "integer":
-                    //"currently_medicated": 1 //0/1/2 for N/Y/Dk
+                    //"currently_medicated": 1 //0/1/2 for N/Y/Dk and Y/N/Unsure
                     selectedPicklistOptions = getPicklistOptionsForSourceNumbers(mapElement, sourceDataElement, questionName, surveyName);
                     break;
                 default:
@@ -1412,10 +1445,10 @@ public class StudyDataLoader {
             return selectedPicklistOptions;
         }
 
-        //Get the option value using either datStatEnumLookup or yesNoDkLookup
+        //Get the option value using either datStatEnumLookup or yesNoDkLookup/yesNoUnsureLookup
         boolean foundValue = false;
         String val = null;
-        if (("medicalsurvey".equals(surveyName) || "consentsurvey".equals(surveyName))
+        if (("medicalsurvey".equals(surveyName) || "consentsurvey".equals(surveyName) || "aboutyousurvey".equals(surveyName))
                 && datStatEnumLookup.get(questionName) != null && datStatEnumLookup.get(questionName).get(value.getAsInt()) != null) {
             foundValue = true;
             val = datStatEnumLookup.get(questionName).get(value.getAsInt());
@@ -1432,10 +1465,13 @@ public class StudyDataLoader {
             for (JsonElement option : options) {
                 JsonObject optionObject = option.getAsJsonObject();
                 JsonElement optionNameEl = optionObject.get("stable_id");
+                if (optionNameEl == null) {
+                    optionNameEl = optionObject.get("name");
+                }
 
                 //Find out if this is the selected option
                 if (optionNameEl != null && optionNameEl.getAsString() != null
-                        && !optionNameEl.getAsString().isEmpty() && val.equals(optionNameEl.getAsString())) {
+                        && !optionNameEl.getAsString().isEmpty() && val.equalsIgnoreCase(optionNameEl.getAsString())) {
                     JsonElement specifyKeyElement = optionObject.get("text");
 
                     //If we find the specify field, set foundSpecify to true and include the specify value
@@ -1448,7 +1484,8 @@ public class StudyDataLoader {
                             otherTextKey = specifyKeyElement.getAsString();
                         } else {
                             //Otherwise, the name of the key is [optionName].[valueAssociatedWithTextInMapping]
-                            otherTextKey = questionName + "." + optionNameEl.getAsString() + "." + specifyKeyElement.getAsString();
+                            //otherTextKey = questionName + "." + optionNameEl.getAsString() + "." + specifyKeyElement.getAsString();
+                            otherTextKey = questionName + "." + specifyKeyElement.getAsString();
                         }
 
                         selectedPicklistOptions.add(new SelectedPicklistOption(val,
@@ -1684,7 +1721,7 @@ public class StudyDataLoader {
 
         valueEl = sourceDataElement.getAsJsonObject().get(questionName);
         String stableId = getStringValueFromElement(mapElement, "stable_id");
-        LOG.info("Processing text question " + questionName + " with stable id " + stableId);
+        LOG.debug("Processing text question " + questionName + " with stable id " + stableId);
 
         if (valueEl != null && !valueEl.isJsonNull()) {
             answerGuid = answerTextQuestion(stableId, participantGuid, instanceGuid, valueEl.getAsString(), answerDao);
@@ -1704,7 +1741,7 @@ public class StudyDataLoader {
             return null;
         }
         String stableId = getStringValueFromElement(mapElement, "stable_id");
-        LOG.info("Processing agreement question " + questionName + " with stable id " + stableId);
+        LOG.debug("Processing agreement question " + questionName + " with stable id " + stableId);
 
         if (stableId == null) {
             return null;
@@ -2104,7 +2141,14 @@ public class StudyDataLoader {
 
     private DateValue parseDate(String dateValue, String fmt) throws ParseException {
         SimpleDateFormat dateFormat = new SimpleDateFormat(fmt);
-        Date consentDOB = dateFormat.parse(dateValue);
+        Date consentDOB = null;
+        try {
+            consentDOB = dateFormat.parse(dateValue);
+        } catch (ParseException e) {
+            LOG.warn(" Parse exception for consent dob: {} with format: {} . Trying with format: dd-MMM-yy",
+                    dateValue, dateFormat);
+            consentDOB = new SimpleDateFormat("dd-MMM-yy").parse(dateValue);
+        }
         GregorianCalendar gregorianCalendar = new GregorianCalendar();
         gregorianCalendar.setTime(consentDOB);
         return new DateValue(gregorianCalendar.get(Calendar.YEAR),

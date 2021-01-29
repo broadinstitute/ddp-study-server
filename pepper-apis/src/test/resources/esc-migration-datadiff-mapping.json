@@ -1,0 +1,487 @@
+{
+  "study": {
+    "name": "ESC",
+    "survey": [
+      {
+        "name": "aboutyousurvey",
+        "data": [
+          {
+            "source_field_name": "diagnosis_date_month",
+            "target_field_name": "DIAGNOSIS_DATE_MONTH",
+            "source_field_type": "Integer"
+          },
+          {
+            "source_field_name": "diagnosis_date_year",
+            "target_field_name": "DIAGNOSIS_DATE_YEAR",
+            "source_field_type": "Integer"
+          },
+          {
+            "source_field_name": "diagnosis_site",
+            "target_field_name": "CANCER_LOCATION",
+            "source_field_type": "Picklist",
+            "options": [
+              "esophagus", "ge_junction", "gastric", "unsure"
+            ]
+          },
+          {
+            "source_field_name": "diagnosis_type",
+            "target_field_name": "CANCER_TYPE",
+            "source_field_type": "Integer"
+          },
+          {
+            "source_field_name": "active_cancer",
+            "target_field_name": "ACTIVE_CANCER",
+            "source_field_type": "YesNoUnsure"
+          },
+          {
+            "source_field_name": "active_site",
+            "target_field_name": "CANCER_CURRENT_LOCATION",
+            "source_field_type": "Picklist",
+            "options": [
+              "esophagus", "ge_junction", "gastric", "abdomen", "lymph_node", "bone", "liver", "lung","brain", "other", "unsure"
+            ]
+          },
+          {
+            "source_field_name": "active_site.other.other_text",
+            "target_field_name": "CANCER_CURRENT_LOCATION_OTHER_DETAILS"
+          },
+          {
+            "source_field_name": "active_site.unsure.unsure_text",
+            "target_field_name": "CANCER_CURRENT_LOCATION_UNSURE_DETAILS"
+          },
+
+          {
+            "source_field_name": "barretts",
+            "target_field_name": "BARRETTS_ESOPHAGUS",
+            "source_field_type": "YesNoUnsure"
+          },
+          {
+            "source_field_name": "barretts.unsure_text",
+            "target_field_name": "BARRETTS_ESOPHAGUS_UNSURE_DETAILS"
+          },
+
+          {
+            "source_field_name": "barretts_timing",
+            "target_field_name": "BARRETTS_ESOPHAGUS_YEARS",
+            "source_field_type": "Integer"
+          },
+          {
+            "source_field_name": "barretts_timing.unsure_text",
+            "target_field_name": "BARRETTS_ESOPHAGUS_YEARS_UNSURE_DETAILS"
+          },
+          {
+            "source_field_name": "removal_surgery",
+            "target_field_name": "HAD_SURGERY",
+            "source_field_type": "YesNoUnsure"
+          },
+          {
+            "source_field_name": "removal_surgery.unsure_text",
+            "target_field_name": "HAD_SURGERY_UNSURE_DETAILS"
+          },
+          {
+            "source_field_name": "pre_surgery",
+            "target_field_name": "PRE_THERAPIES",
+            "source_field_type": "Picklist",
+            "options": [
+              "chemo", "rt", "immuno", "no_therapy", "unsure"
+            ]
+          },
+          {
+            "source_field_name": "pre_surgery.unsure.unsure_text",
+            "target_field_name": "PRE_THERAPIES_UNSURE_DETAILS"
+          },
+          {
+            "source_field_name": "post_surgery",
+            "target_field_name": "HAD_POST_THERAPIES",
+            "source_field_type": "YesNoUnsure"
+          },
+          {
+            "source_field_name": "post_surgery.unsure_text",
+            "target_field_name": "HAD_POST_THERAPIES_UNSURE_DETAILS"
+          },
+          {
+            "source_field_name": "anytime_therapy",
+            "target_field_name": "THERAPIES",
+            "source_field_type": "Picklist",
+            "options": [
+              "folfox", "capox", "ecf", "eox", "ecx", "platinol_eloxatin", "taxol_paraplatin", "platinol_camptosar",
+              "taxotere_platinol_5fu", "taxotere_eloxatin_5fu", "taxotere_paraplatin_5fu", "taxol", "taxotere",
+              "cyramza", "cyramza_taxol", "keytruda", "opdivo", "yervoy", "herceptin", "car_tcell", "exp",
+              "other", "unsure"
+            ]
+          },
+          {
+            "source_field_name": "anytime_therapy.other.other_text",
+            "target_field_name": "THERAPIES_OTHER_DETAILS"
+          },
+          {
+            "source_field_name": "anytime_therapy.unsure.unsure_text",
+            "target_field_name": "THERAPIES_UNSURE_DETAILS"
+          },
+          {
+            "source_field_name": "other_cancer",
+            "target_field_name": "OTHER_CANCERS",
+            "source_field_type": "YesNoUnsure"
+          },
+          {
+            "source_field_name": "other_cancer.unsure_text",
+            "target_field_name": "OTHER_CANCERS_UNSURE_DETAILS"
+          },
+          {
+            "source_field_name": "metastatic",
+            "target_field_name": "DIAGNOSED_STAGEIV_ESC",
+            "source_field_type": "YesNoUnsure"
+          },
+          {
+            "source_field_name": "metastatic.unsure_text",
+            "target_field_name": "DIAGNOSED_STAGEIV_ESC_UNSURE_DETAILS"
+          },
+          {
+            "source_field_name": "anytime_her2",
+            "target_field_name": "HER2_POSITIVE",
+            "source_field_type": "YesNoUnsure"
+          },
+          {
+            "source_field_name": "anytime_her2.unsure_text",
+            "target_field_name": "HER2_POSITIVE_UNSURE_DETAILS"
+          },
+          {
+            "source_field_name": "progression_stop",
+            "target_field_name": "PROGRESSION_STOPPED",
+            "source_field_type": "YesNoUnsure"
+          },
+          {
+            "source_field_name": "progression_stop.unsure_text",
+            "target_field_name": "PROGRESSION_STOPPED_UNSURE_DETAILS"
+          },
+          {
+            "source_field_name": "progression_therapy",
+            "target_field_name": "PROGRESSION_STOPPED_THERAPIES",
+            "source_field_type": "Picklist",
+            "options": [
+              "folfox", "capox", "ecf", "eox", "ecx", "platinol_eloxatin", "taxol_paraplatin", "platinol_camptosar",
+              "taxotere_platinol_5fu", "taxotere_eloxatin_5fu", "taxotere_paraplatin_5fu", "taxol", "taxotere",
+              "cyramza", "cyramza_taxol", "keytruda", "opdivo", "yervoy", "herceptin", "car_tcell", "exp",
+              "other", "unsure"
+            ]
+          },
+          {
+            "source_field_name": "progression_therapy.other.other_text",
+            "target_field_name": "PROGRESSION_STOPPED_THERAPIES_OTHER_DETAILS"
+          },
+          {
+            "source_field_name": "progression_therapy.unsure.unsure_text",
+            "target_field_name": "PROGRESSION_STOPPED_THERAPIES_UNSURE_DETAILS"
+          },
+
+          {
+            "source_field_name": "ned",
+            "target_field_name": "HAVE_THERAPIES_WORKED",
+            "source_field_type": "YesNoUnsure"
+          },
+          {
+            "source_field_name": "ned.unsure_text",
+            "target_field_name": "HAVE_THERAPIES_WORKED_UNSURE_DETAILS"
+          },
+          {
+            "source_field_name": "ned_therapy",
+            "target_field_name": "WORKED_THERAPIES",
+            "source_field_type": "Picklist",
+            "options": [
+              "folfox", "capox", "ecf", "eox", "ecx", "platinol_eloxatin", "taxol_paraplatin", "platinol_camptosar",
+              "taxotere_platinol_5fu", "taxotere_eloxatin_5fu", "taxotere_paraplatin_5fu", "taxol", "taxotere",
+              "cyramza", "cyramza_taxol", "keytruda", "opdivo", "yervoy", "herceptin", "car_tcell", "exp",
+              "other", "unsure"
+            ]
+          },
+          {
+            "source_field_name": "ned_therapy.other.other_text",
+            "target_field_name": "WORKED_THERAPIES_OTHER_DETAILS"
+          },
+          {
+            "source_field_name": "ned_therapy.unsure.unsure_text",
+            "target_field_name": "WORKED_THERAPIES_UNSURE_DETAILS"
+          },
+          {
+            "source_field_name": "ned_therapy_more_info",
+            "target_field_name": "WORKED_THERAPIES_COMMENTS"
+          },
+          {
+            "source_field_name": "anything_else",
+            "target_field_name": "OTHER_COMMENTS"
+          },
+          {
+            "source_field_name": "birth_year",
+            "target_field_name": "BIRTH_YEAR",
+            "source_field_type": "Integer"
+          },
+          {
+            "source_field_name": "country",
+            "target_field_name": "COUNTRY"
+          },
+          {
+            "source_field_name": "postal_code",
+            "target_field_name": "POSTAL_CODE"
+          },
+          {
+            "source_field_name": "hispanic_latino_spanish",
+            "target_field_name": "HISPANIC",
+            "source_field_type": "YesNoUnsure"
+          },
+          {
+            "source_field_name": "hispanic_latino_spanish.unsure_text",
+            "target_field_name": "HISPANIC_UNSURE_DETAILS"
+          },
+
+          {
+            "source_field_name": "race",
+            "target_field_name": "RACE",
+            "source_field_type": "Picklist",
+            "options": [
+              "american_indian", "japanese", "chinese", "other_east_asian","southeast_asian_indian", "black_african_american",
+              "hawaiian", "white", "prefer_no_answer", "other"
+            ]
+          },
+          {
+            "source_field_name": "race.other.text",
+            "target_field_name": "RACE_OTHER_DETAILS"
+          },
+          {
+            "source_field_name": "how_hear",
+            "target_field_name": "HEARD_FROM"
+          },
+          {
+            "source_field_name": "datstat.submissionstatus",
+            "target_field_name": "ABOUTYOU_v1_status",
+            "source_field_type": "Status"
+          },
+          {
+            "source_field_name": "ddp_created",
+            "target_field_name": "ABOUTYOU_v1_created_at",
+            "source_field_type": "Date",
+            "source_field_format": "yyyy-MM-dd'T'HH:mm:ss'Z'"
+          },
+          {
+            "source_field_name": "ddp_lastupdated",
+            "target_field_name": "ABOUTYOU_v1_updated_at",
+            "source_field_type": "Date",
+            "source_field_format": "yyyy-MM-dd'T'HH:mm:ss'Z'"
+          },
+          {
+            "source_field_name": "ddp_firstcompleted",
+            "target_field_name": "ABOUTYOU_v1_completed_at",
+            "source_field_type": "Date",
+            "source_field_format": "yyyy-MM-dd'T'HH:mm:ss'Z'"
+          }
+        ]
+      },
+      {
+        "name": "consentsurvey",
+        "version": "v1",
+        "data": [
+          {
+            "source_field_name": "datstat.submissionstatus",
+            "target_field_name": "CONSENT_v1_status",
+            "source_field_type": "Status"
+          },
+          {
+            "source_field_name": "ddp_created",
+            "target_field_name": "CONSENT_v1_created_at",
+            "source_field_type": "Date",
+            "source_field_format": "yyyy-MM-dd'T'HH:mm:ss'Z'"
+          },
+          {
+            "source_field_name": "ddp_lastupdated",
+            "target_field_name": "CONSENT_v1_updated_at",
+            "source_field_type": "Date",
+            "source_field_format": "yyyy-MM-dd'T'HH:mm:ss'Z'"
+          },
+          {
+            "source_field_name": "consent_blood",
+            "target_field_name": "CONSENT_BLOOD",
+            "source_field_type": "Boolean"
+          },
+          {
+            "source_field_name": "consent_tissue",
+            "target_field_name": "CONSENT_TISSUE",
+            "source_field_type": "Boolean"
+          },
+          {
+            "source_field_name": "consent_dob",
+            "target_field_name": "CONSENT_DOB",
+            "source_field_type": "Date",
+            "source_field_format": "yyyy-MM-dd'T'HH:mm:ss",
+            "target_field_format": "MM/dd/yy"
+          },
+          {
+            "source_field_name": "fullname",
+            "target_field_name": "CONSENT_FULLNAME"
+          }
+        ]
+      },
+      {
+        "name": "consentsurvey",
+        "version": "v2",
+        "data": [
+          {
+            "source_field_name": "datstat.submissionstatus",
+            "target_field_name": "CONSENT_v2_status",
+            "source_field_type": "Status"
+          },
+          {
+            "source_field_name": "ddp_created",
+            "target_field_name": "CONSENT_v2_created_at",
+            "source_field_type": "Date",
+            "source_field_format": "yyyy-MM-dd'T'HH:mm:ss'Z'"
+          },
+          {
+            "source_field_name": "ddp_lastupdated",
+            "target_field_name": "CONSENT_v2_updated_at",
+            "source_field_type": "Date",
+            "source_field_format": "yyyy-MM-dd'T'HH:mm:ss'Z'"
+          },
+          {
+            "source_field_name": "consent_blood",
+            "target_field_name": "CONSENT_v2_BLOOD",
+            "source_field_type": "Boolean"
+          },
+          {
+            "source_field_name": "consent_tissue",
+            "target_field_name": "CONSENT_v2_TISSUE",
+            "source_field_type": "Boolean"
+          },
+          {
+            "source_field_name": "consent_dob",
+            "target_field_name": "CONSENT_v2_DOB",
+            "source_field_type": "Date",
+            "source_field_format": "yyyy-MM-dd'T'HH:mm:ss",
+            "target_field_format": "MM/dd/yy"
+          },
+          {
+            "source_field_name": "fullname",
+            "target_field_name": "CONSENT_v2_FULLNAME"
+          }
+        ]
+      },
+      {
+        "name": "releasesurvey",
+        "data": [
+          {
+            "source_field_name": "datstat.submissionstatus",
+            "target_field_name": "RELEASE_v1_status",
+            "source_field_type": "Status"
+          },
+          {
+            "source_field_name": "ddp_created",
+            "target_field_name": "RELEASE_v1_created_at",
+            "source_field_type": "Date",
+            "source_field_format": "yyyy-MM-dd'T'HH:mm:ss'Z'"
+          },
+          {
+            "source_field_name": "ddp_lastupdated",
+            "target_field_name": "RELEASE_v1_updated_at",
+            "source_field_type": "Date",
+            "source_field_format": "yyyy-MM-dd'T'HH:mm:ss'Z'"
+          },
+          {
+            "source_field_name": "ddp_firstcompleted",
+            "target_field_name": "RELEASE_v1_completed_at",
+            "source_field_type": "Date",
+            "source_field_format": "yyyy-MM-dd'T'HH:mm:ss'Z'"
+          }
+        ]
+      },
+      {
+        "name": "followupsurvey",
+        "data": [
+          {
+            "source_field_name": "datstat.submissionstatus",
+            "target_field_name": "FOLLOWUPCONSENT_v1_status",
+            "source_field_type": "Status"
+          },
+          {
+            "source_field_name": "ddp_created",
+            "target_field_name": "FOLLOWUPCONSENT_v1_created_at",
+            "source_field_type": "Date",
+            "source_field_format": "yyyy-MM-dd'T'HH:mm:ss'Z'"
+          },
+          {
+            "source_field_name": "ddp_lastupdated",
+            "target_field_name": "FOLLOWUPCONSENT_v1_updated_at",
+            "source_field_type": "Date",
+            "source_field_format": "yyyy-MM-dd'T'HH:mm:ss'Z'"
+          },
+          {
+            "source_field_name": "ddp_firstcompleted",
+            "target_field_name": "FOLLOWUPCONSENT_v1_completed_at",
+            "source_field_type": "Date",
+            "source_field_format": "yyyy-MM-dd'T'HH:mm:ss'Z'"
+          }
+        ]
+      }
+    ],
+    "datstatparticipantdata": {
+      "data": [
+        {
+          "source_field_name": "ddp_participant_shortid",
+          "target_field_name": "legacy_shortid"
+        },
+        {
+          "source_field_name": "datstat_altpid",
+          "target_field_name": "legacy_altpid"
+        },
+        {
+          "source_field_name": "ddp_do_not_contact",
+          "target_field_name": "do_not_contact",
+          "source_field_type": "Boolean"
+        },
+        {
+          "source_field_name": "datstat_altpid",
+          "target_field_name": "legacy_altpid"
+        },
+        {
+          "source_field_name": "datstat_email",
+          "target_field_name": "email"
+        },
+        {
+          "source_field_name": "ddp_created",
+          "target_field_name": "created_at",
+          "source_field_type": "Date",
+          "source_field_format": "yyyy-MM-dd'T'HH:mm:ss'Z'"
+        },
+        {
+          "source_field_name": "ddp_street1",
+          "target_field_name": "ADDRESS_STREET1"
+        },
+        {
+          "source_field_name": "ddp_street2",
+          "target_field_name": "ADDRESS_STREET2"
+        },
+        {
+          "source_field_name": "ddp_city",
+          "target_field_name": "ADDRESS_CITY"
+        },
+        {
+          "source_field_name": "ddp_state",
+          "target_field_name": "ADDRESS_STATE"
+        },
+        {
+          "source_field_name": "ddp_country",
+          "target_field_name": "COUNTRY"
+        },
+        {
+          "source_field_name": "ddp_postal_code",
+          "target_field_name": "POSTAL_CODE"
+        },
+        {
+          "source_field_name": "datstat_firstname",
+          "target_field_name": "first_name"
+        },
+        {
+          "source_field_name": "datstat_lastname",
+          "target_field_name": "last_name"
+        }
+      ]
+    }
+  }
+}

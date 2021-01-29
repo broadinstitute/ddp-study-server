@@ -51,10 +51,10 @@ public class MigratedDataReconcileCli {
 
     private static final String USAGE = "MigratedDataReconcileCli [-h, --help] [OPTIONS]";
     private static final Logger LOG = LoggerFactory.getLogger(MigratedDataReconcileCli.class);
-    private static final String DATA_GC_ID = "broad-ddp-angio";
+    private static final String DATA_GC_ID = "broad-ddp-gec";
     private static final String DEFAULT_DATA_TYPE = "String";
     private static final DateFormat DEFAULT_TARGET_DATE_FMT = new SimpleDateFormat("MM/dd/yy HH:mm:ss");
-    private static final Instant CONSENT_V2_DATE = Instant.parse("2019-05-15T00:00:00Z");
+    private static final Instant CONSENT_V2_DATE = Instant.parse("2019-05-28T00:00:00Z");
     CSVPrinter csvPrinter = null;
     Map<String, String> altNames;
     Map<String, String> stateCodesMap;
@@ -62,6 +62,8 @@ public class MigratedDataReconcileCli {
     Map<Integer, Boolean> booleanValueLookup;
     Map<Integer, String> statusValueLookup;
     Set<String> dkSet;
+    Map<String, List<String>> datStatEnumLookup = new HashMap<>();
+    Map<String, Map<String, Integer>> datStatEnumLookupMap = new HashMap<>();
     private List<String> skipFields = new ArrayList<>();
     private String serviceAccountFile = null;
     private String googleBucketName = null;
@@ -115,9 +117,9 @@ public class MigratedDataReconcileCli {
         String mappingFileName = cmd.getOptionValue("mappingfile");
 
         yesNoDkLookup = new HashMap<>();
-        yesNoDkLookup.put(0, ""); //TODO for 0: support NO, null, empty
+        yesNoDkLookup.put(0, "NO"); //TODO for 0: support NO, null, empty
         yesNoDkLookup.put(1, "YES");
-        yesNoDkLookup.put(2, "DK");
+        yesNoDkLookup.put(2, "UNSURE");
 
         booleanValueLookup = new HashMap<>();
         booleanValueLookup.put(0, false);
@@ -129,9 +131,9 @@ public class MigratedDataReconcileCli {
         statusValueLookup.put(5, "TERMINATED");
 
         dkSet = new HashSet<>();
-        dkSet.add("dk");
-        dkSet.add("DK");
-        dkSet.add("Don't know");
+        dkSet.add("unsure");
+        dkSet.add("UNSURE");
+        dkSet.add("Unsure");
 
         altNames = new HashMap<>();
         altNames.put("SOUTH_EAST_ASIAN", "southeast_asian_indian");
@@ -139,24 +141,29 @@ public class MigratedDataReconcileCli {
         altNames.put("PREFER_NOT_ANSWER", "prefer_no_answer");
         altNames.put("NATIVE_HAWAIIAN", "hawaiian");
 
-        //MPC THERAPIES group options entries
-        altNames.put("XTANDI", "xtandi_enzalutamide");
-        altNames.put("ZYTIGA", "zytiga_abiraterone");
-        altNames.put("TAXOL", "paclitaxel_taxol");
-        altNames.put("JEVTANA", "jevtana_cabazitaxel");
-        altNames.put("OPDIVO", "opdivo_nivolumab");
-        altNames.put("YERVOY", "yervoy_ipilumimab");
-        altNames.put("TECENTRIQ", "tecentriq_aztezolizumab");
-        altNames.put("LYNPARZA", "lynparza_olaparib");
-        altNames.put("RUBRACA", "rubraca_rucaparib");
-        altNames.put("TAXOTERE", "docetaxel_taxotere");
-        altNames.put("PARAPLATIN", "carboplatin");
-        altNames.put("ETOPOPHOS", "etoposide");
-        altNames.put("NOVANTRONE", "mitoxantrone");
-        altNames.put("EMCYT", "estramustine");
-        altNames.put("FIRMAGON", "degareliz");
-        altNames.put("OTHER_YES", "other_therapy");
-        altNames.put("CLINICAL_TRIAL", "exp_clinical_trial");
+        //ESC THERAPIES options entries
+        altNames.put("GASTRIC_STOMACH", "gastric");
+        altNames.put("ABDOMINAL_CAVITY", "abdomen");
+        altNames.put("CHEMOTHERAPY", "chemo");
+        altNames.put("RADIATION", "rt");
+        altNames.put("IMMUNOTHERAPY", "immuno");
+        altNames.put("NOTHERAPY", "no_therapy");
+        altNames.put("CLINICAL_TRIAL", "exp");
+
+        Map<String, Integer> lookupMap = new HashMap<>();
+        lookupMap.put("SQUAMOUS_CELL_CARCINOMA", 1);
+        lookupMap.put("ADENOCARCINOMA", 2);
+        lookupMap.put("UNSURE", 3);
+        datStatEnumLookupMap.put("diagnosis_type", lookupMap);
+
+        //esc cancer_type
+        lookupMap = new HashMap<>();
+        lookupMap.put("ONE_YEAR", 1);
+        lookupMap.put("ONE_TO_TWO_YEARS", 2);
+        lookupMap.put("THREE_TO_FIVE_YEARS", 3);
+        lookupMap.put("FIVEPLUS_YEARS", 4);
+        lookupMap.put("UNSURE", 5);
+        datStatEnumLookupMap.put("barretts_timing", lookupMap);
 
         initStateCodes();
 
@@ -165,6 +172,7 @@ public class MigratedDataReconcileCli {
         skipFields.add("ddp_postal_code"); //During address validation zip is corrected / changed
         skipFields.add("postal_code");
         skipFields.add("street1"); //During address validation street is changed to ST ; road to RD .. so on
+        skipFields.add("ddp_do_not_contact");
 
         if (hasGoogleBucket) {
             LOG.info("Comparing data export content to google bucket participant files. {}", new Date());
@@ -374,12 +382,23 @@ public class MigratedDataReconcileCli {
                         continue;
                     }
 
+                    Integer targetFieldVal = null;
                     if (altNames.containsKey(targetFieldValue)) {
                         targetFieldValue = altNames.get(targetFieldValue);
+                    } else if (datStatEnumLookupMap.containsKey(sourceFieldName)) {
+                        Map<String, Integer> lookupMap  = datStatEnumLookupMap.get(sourceFieldName);
+                        if (lookupMap.containsKey(targetFieldValue)) {
+                            targetFieldVal = lookupMap.get(targetFieldValue);
+                        }
                     }
                     //convert to integer and compare values
                     int sourceFieldIntValue = Integer.parseInt(sourceFieldValue);
-                    int targetFieldIntValue = Integer.parseInt(targetFieldValue);
+                    int targetFieldIntValue; // = targetFieldVal;
+                    if (targetFieldVal == null) {
+                        targetFieldIntValue = Integer.parseInt(targetFieldValue);
+                    } else {
+                        targetFieldIntValue = targetFieldVal;
+                    }
 
                     if (sourceFieldIntValue == targetFieldIntValue) {
                         //printRecord(csvRecord.get("legacy_altpid"), csvRecord.get("participant_guid"),
@@ -452,7 +471,7 @@ public class MigratedDataReconcileCli {
 
                     break;
 
-                case "YesNoDk":
+                case "YesNoUnsure":
                     sourceFieldValue = getStringValueFromElement(sourceDataEl, sourceFieldName);
                     String altSourceValue = sourceFieldValue;
                     if (StringUtils.isNotBlank(sourceFieldValue)) {
@@ -531,7 +550,7 @@ public class MigratedDataReconcileCli {
             String optionName;
             selectedOptionsStr = null;
             for (JsonElement optionEl : options) {
-                String option = optionEl.getAsString();
+                String option = optionEl.getAsString().toLowerCase();
                 optionName = sourceFieldName.concat(".").concat(option);
                 //is the option selected
                 JsonElement sourceDataOptionEl = dataElement.getAsJsonObject().get(optionName);
@@ -683,6 +702,9 @@ public class MigratedDataReconcileCli {
     }
 
     private String getStringValueFromElement(JsonElement element, String key) {
+        if (element == null) {
+            return null;
+        }
         String value = null;
         JsonElement keyEl = element.getAsJsonObject().get(key);
         if (keyEl != null && !keyEl.isJsonNull()) {
@@ -726,6 +748,9 @@ public class MigratedDataReconcileCli {
         }
 
         String institutionsStr = getSourceMedicalProviders(releaseDataElement, physicianType);
+        if (institutionsStr == null) {
+            institutionsStr = "";
+        }
 
         if (physicianType) {
             String physicians = csvRecord.get("PHYSICIAN");
@@ -893,26 +918,59 @@ public class MigratedDataReconcileCli {
                 "ABOUTYOU_v1_completed_at",
                 "DIAGNOSIS_DATE_MONTH",
                 "DIAGNOSIS_DATE_YEAR",
-                "DIAGNOSED_ADVANCED_METASTATIC",
-                "LOCAL_TREATMENT",
-                "PROSTATECTOMY",
-                "CURRENT_CANCER_LOC",
-                "CURRENT_CANCER_LOC_OTHER_DETAILS",
+                "CANCER_LOCATION",
+                "CANCER_LOCATION_UNSURE_DETAILS",
+                "CANCER_TYPE",
+                "CANCER_TYPE_UNSURE_DETAILS",
+                "ACTIVE_CANCER",
+                "ACTIVE_CANCER_UNSURE_DETAILS",
+                "CANCER_CURRENT_LOCATION",
+                "CANCER_CURRENT_LOCATION_ABDOMINAL_CAVITY_DETAILS",
+                "CANCER_CURRENT_LOCATION_OTHER_DETAILS",
+                "CANCER_CURRENT_LOCATION_UNSURE_DETAILS",
+                "BARRETTS_ESOPHAGUS",
+                "BARRETTS_ESOPHAGUS_UNSURE_DETAILS",
+                "BARRETTS_ESOPHAGUS_YEARS",
+                "BARRETTS_ESOPHAGUS_YEARS_UNSURE_DETAILS",
+                "HAD_SURGERY",
+                "HAD_SURGERY_UNSURE_DETAILS",
+                "PRE_THERAPIES",
+                "PRE_THERAPIES_UNSURE_DETAILS",
+                "HAD_POST_THERAPIES",
+                "HAD_POST_THERAPIES_UNSURE_DETAILS",
                 "THERAPIES",
                 "THERAPIES_CLINICAL_TRIAL_DETAILS",
-                "THERAPIES_OTHER_YES_DETAILS",
-                "ADDITIONAL_MEDICATIONS",
+                "THERAPIES_OTHER_DETAILS",
+                "THERAPIES_UNSURE_DETAILS",
                 "OTHER_CANCERS",
-                "OTHER_CANCER_NAMES",
-                "FAMILY_HISTORY",
-                "HEARD_FROM",
-                "HISPANIC",
+                "OTHER_CANCERS_UNSURE_DETAILS",
+                "OTHER_CANCERS_LIST",
+                "DIAGNOSED_STAGEIV_ESC",
+                "DIAGNOSED_STAGEIV_ESC_UNSURE_DETAILS",
+                "HER2_POSITIVE",
+                "HER2_POSITIVE_UNSURE_DETAILS",
+                "PROGRESSION_STOPPED",
+                "PROGRESSION_STOPPED_UNSURE_DETAILS",
+                "PROGRESSION_STOPPED_THERAPIES",
+                "PROGRESSION_STOPPED_THERAPIES_CLINICAL_TRIAL_DETAILS",
+                "PROGRESSION_STOPPED_THERAPIES_OTHER_DETAILS",
+                "PROGRESSION_STOPPED_THERAPIES_UNSURE_DETAILS",
+                "HAVE_THERAPIES_WORKED",
+                "HAVE_THERAPIES_WORKED_UNSURE_DETAILS",
+                "WORKED_THERAPIES",
+                "WORKED_THERAPIES_CLINICAL_TRIAL_DETAILS",
+                "WORKED_THERAPIES_OTHER_DETAILS",
+                "WORKED_THERAPIES_UNSURE_DETAILS",
+                "WORKED_THERAPIES_COMMENTS",
                 "OTHER_COMMENTS",
                 "BIRTH_YEAR",
                 "COUNTRY",
                 "POSTAL_CODE",
+                "HISPANIC",
+                "HISPANIC_UNSURE_DETAILS",
                 "RACE",
                 "RACE_OTHER_DETAILS",
+                "HEARD_FROM",
                 "CONSENT_v1",
                 "CONSENT_v1_status",
                 "CONSENT_v1_created_at",
