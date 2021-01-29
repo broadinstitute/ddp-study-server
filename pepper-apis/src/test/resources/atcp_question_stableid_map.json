@@ -2006,7 +2006,13 @@
           }
         ],
         "legacy_fields": [
-          "datstat.submissionid", "datstat.sessionid", "datstat.submissionstatus"
+          "datstat.submissionid",
+          "datstat.sessionid",
+          "datstat.submissionstatus",
+          "participant_death_age",
+          "participant_death_date",
+          "participant_death_cause",
+          "participant_death_cause_notes"
         ]
       },
       {
@@ -2391,7 +2397,24 @@
           }
         ],
         "legacy_fields": [
-          "portal_user_id"
+          "portal_user_id",
+          "eligibility",
+          "participant_death_age",
+          "participant_death_date",
+          "participant_death_cause",
+          "participant_death_cause_notes",
+          "genome_study_has_sibling",
+          "genome_study_spit_kit_barcode",
+          "genome_study_kit_tracking_number",
+          "genome_study_date_shipped",
+          "genome_study_kit_received_participant",
+          "genome_study_date_sequenced",
+          "genome_study_date_completed",
+          "genome_study_previous_spitkit_notes",
+          "reconsent_date_needed",
+          "reconsent_date_entered",
+          "reconsent_name",
+          "reconsent_relationship"
         ]
       },
       {

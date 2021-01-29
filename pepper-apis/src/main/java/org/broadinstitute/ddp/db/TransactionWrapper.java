@@ -71,7 +71,8 @@ public class TransactionWrapper {
     public enum DB {
 
         APIS(ConfigFile.DB_URL, ConfigFile.NUM_POOLED_CONNECTIONS),
-        HOUSEKEEPING(ConfigFile.HOUSEKEEPING_DB_URL, ConfigFile.HOUSEKEEPING_NUM_POOLED_CONNECTIONS);
+        HOUSEKEEPING(ConfigFile.HOUSEKEEPING_DB_URL, ConfigFile.HOUSEKEEPING_NUM_POOLED_CONNECTIONS),
+        DSM(ConfigFile.DSM_DB_URL, ConfigFile.NUM_POOLED_CONNECTIONS);
 
         private final String dbUrlConfigKey;
         private final String poolSizeConfigKey;

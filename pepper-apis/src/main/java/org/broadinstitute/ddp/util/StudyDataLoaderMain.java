@@ -9,6 +9,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
+import com.google.gson.JsonNull;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
@@ -328,10 +329,12 @@ public class StudyDataLoaderMain {
         Config sqlConfig = ConfigFactory.parseResources(ConfigFile.SQL_CONF);
 
         String dbUrl = cfg.getString(ConfigFile.DB_URL);
+        String dsmDbUrl = cfg.getString(ConfigFile.DSM_DB_URL);
         LOG.info("Initializing db pool for " + dbUrl);
         int maxConnections = cfg.getInt(ConfigFile.NUM_POOLED_CONNECTIONS);
         TransactionWrapper.reset();
-        TransactionWrapper.init(new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.APIS, maxConnections, dbUrl));
+        TransactionWrapper.init(new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.APIS, maxConnections, dbUrl),
+                new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.DSM, maxConnections, dsmDbUrl));
         TransactionWrapper.useTxn(TransactionWrapper.DB.APIS, LanguageStore::init);
         DBUtils.loadDaoSqlCommands(sqlConfig);
     }
@@ -518,7 +521,7 @@ public class StudyDataLoaderMain {
                 }
             }
             final String phoneNum = phoneNumber;
-            TransactionWrapper.useTxn(handle -> {
+            TransactionWrapper.useTxn(TransactionWrapper.DB.APIS, handle -> {
                 MailAddress address = studyDataLoader.getUserAddress(handle, datstatData, phoneNum, olcService, addressService);
                 userAddressMap.put(altpid, address);
             });
@@ -746,7 +749,7 @@ public class StudyDataLoaderMain {
         Integer registrationType = datstatParticipantData.getAsJsonObject().get("registration_type").getAsInt();
         LOG.info("loading participant: {} email: {} ", altpid, emailAddress);
 
-        TransactionWrapper.useTxn(handle -> {
+        TransactionWrapper.useTxn(TransactionWrapper.DB.APIS, handle -> {
             String userGuid = null;
             String operatorUserGuid = null;
             Boolean hasAboutYou = false;
@@ -1004,12 +1007,14 @@ public class StudyDataLoaderMain {
                                 .findAllByUserGuidAndActivityCode(userGuid, "MEDICAL_HISTORY", studyId);
                         JsonElement medicalhistorysurvey = sourceData.get("medicalhistorysurvey");
                         if (medicalhistorysurvey != null) {
-                            String lastUpdatedAt = sourceData.get("medicalhistorysurvey").getAsJsonObject().get("datstat.enddatetime").getAsString();
-                            long lastUpdatedAtEpochi = LocalDateTime.parse(lastUpdatedAt, DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss"))
+                            String lastUpdatedAt = sourceData.get("medicalhistorysurvey").getAsJsonObject()
+                                    .get("datstat.enddatetime").getAsString();
+                            long lastUpdatedAtEpochi = LocalDateTime.parse(lastUpdatedAt, DateTimeFormatter
+                                    .ofPattern("yyyy-MM-dd'T'HH:mm:ss"))
                                     .toInstant(ZoneOffset.UTC).toEpochMilli();
                             activityInstanceStatusDao
                                     .insertStatus(activityInstanceDtoList.get(0).getId(), InstanceStatusType.COMPLETE,
-                                            lastUpdatedAtEpochi+1, userGuid);
+                                            lastUpdatedAtEpochi + 1, userGuid);
                         }
 
                         Long studyActivityId = jdbiActivity.findIdByStudyIdAndCode(studyId, "FEEDING").get();
@@ -1129,6 +1134,20 @@ public class StudyDataLoaderMain {
                         dataLoader.addUserStudyExit(handle, ddpExitedDt.getAsString(), userGuid, studyGuid);
                     }
 
+                    TransactionWrapper.useTxn(TransactionWrapper.DB.DSM, handleDsm -> {
+                        Map<String, String> dsmData = DSMData.extractData(datstatParticipantData);
+                        for (Map.Entry<String, String> entry : dsmData.entrySet()) {
+                            handleDsm.createUpdate("insert into ddp_participant_data(ddp_participant_id, field_type_id, "
+                                    + " ddp_instance_id, data, last_changed, changed_by) "
+                                    + "values (:participantId, :fieldType, (select ddp_instance_id from "
+                                    + "ddp_instance where instance_name='atcp'), :jsonData, now(), 'SYSTEM')")
+                                    .bind("participantId", altpid)
+                                    .bind("fieldType", entry.getKey())
+                                    .bind("jsonData", entry.getValue())
+                                    .execute();
+                        }
+                    });
+
                     isSuccess = true;
                 } else {
                     skippedList.add(altpid);
@@ -1209,7 +1228,7 @@ public class StudyDataLoaderMain {
                 //not a mailing data .. continue to next file.
             }
             String data = new String(file.getContent());
-            TransactionWrapper.withTxn(handle -> {
+            TransactionWrapper.withTxn(TransactionWrapper.DB.APIS, handle -> {
                 try {
                     JsonElement dataEl = new Gson().fromJson(data, new TypeToken<JsonObject>() {
                     }.getType());
@@ -1233,7 +1252,7 @@ public class StudyDataLoaderMain {
     }
 
     private void deleteEmailAccount(Config cfg, String email) {
-        TransactionWrapper.useTxn(handle -> {
+        TransactionWrapper.useTxn(TransactionWrapper.DB.APIS, handle -> {
             try {
                 Auth0Util.deleteUserFromAuth0(handle, cfg, email);
                 LOG.info("Deleted auth0 email : " + email);
@@ -1321,5 +1340,74 @@ public class StudyDataLoaderMain {
             return altpidBucketDataMap;
         }
 
+
+    }
+
+    @SuppressWarnings("unused")
+    private static class DSMData {
+
+        static Map<String, List<String>> data;
+
+        static {
+            data = Map.of(
+                    "AT_GROUP_ELIGIBILITY", List.of(
+                            "ELIGIBILITY",
+                            "PARTICIPANT_DEATH_AGE",
+                            "PARTICIPANT_DEATH_DATE",
+                            "PARTICIPANT_DEATH_CAUSE",
+                            "PARTICIPANT_DEATH_CAUSE_NOTES"),
+                    "AT_GROUP_GENOME_STUDY", List.of(
+                            "GENOME_STUDY_CPT_ID",
+                            "GENOME_STUDY_CONSENT",
+                            "GENOME_STUDY_DATE_CONSENTED",
+                            "GENOME_STUDY_HAS_SIBLING",
+                            "GENOME_STUDY_STATUS",
+                            "GENOME_STUDY_SPIT_KIT_BARCODE",
+                            "GENOME_STUDY_KIT_TRACKING_NUMBER",
+                            "GENOME_STUDY_DATE_SHIPPED",
+                            "GENOME_STUDY_KIT_RECEIVED_PARTICIPANT",
+                            "GENOME_STUDY_DATE_RECEIVED",
+                            "GENOME_STUDY_DATE_SEQUENCED",
+                            "GENOME_STUDY_DATE_COMPLETED",
+                            "GENOME_STUDY_PREVIOUS_SPITKIT_NOTES"),
+                    "AT_GROUP_MISCELLANEOUS", List.of(
+                            "REGISTRATION_TYPE",
+                            "REGISTRATION_STATUS",
+                            "HAS_UPDATED_MEDICAL_HISTORY"),
+                    "AT_GROUP_RE-CONSENT", List.of(
+                            "RECONSENT_DATE_NEEDED",
+                            "RECONSENT_DATE_ENTERED",
+                            "RECONSENT_NAME",
+                            "RECONSENT_RELATIONSHIP")
+            );
+        }
+
+        static Map<String, String> extractData(JsonElement el) {
+            Map<String, String> result = new HashMap<>();
+            for (Map.Entry<String, List<String>> entry : data.entrySet()) {
+                StringBuilder json = new StringBuilder();
+                json.append("{");
+                boolean first = true;
+                for (String field : entry.getValue()) {
+                    var value = el.getAsJsonObject().get(field.toLowerCase());
+                    if (value != null && !(value instanceof JsonNull)) {
+                        if (!first) {
+                            json.append(",");
+                        }
+                        first = false;
+                        json.append("\"")
+                                .append(field)
+                                .append("\":\"")
+                                .append(value.getAsString())
+                                .append("\"");
+                    }
+                }
+                json.append("}");
+                if (!first) {
+                    result.put(entry.getKey(), json.toString());
+                }
+            }
+            return result;
+        }
     }
 }

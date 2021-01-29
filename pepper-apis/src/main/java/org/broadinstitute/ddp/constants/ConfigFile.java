@@ -93,6 +93,8 @@ public class ConfigFile {
 
     public static final String SENDGRID_API_KEY = "sendgridToken";
     public static final String HOUSEKEEPING_DB_URL = "housekeepingDbUrl";
+    public static final String DSM_DB_URL = "dsmDbUrl";
+
     public static final String HOUSEKEEPING_NUM_POOLED_CONNECTIONS = "housekeepingMaxConnections";
     public static final String BACKEND_AUTH0_TEST_CLIENT_ID = "backendTestClientId";
     public static final String BACKEND_AUTH0_TEST_SECRET = "backendTestSecret";
