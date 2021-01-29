@@ -113,7 +113,7 @@ delete:
       description: missing credentials or temporary user is invalid
     404:
       $ref: '../pepper.yml#/components/responses/ActivityDetailNotFoundResponse'
-    403:
+    422:
       $ref: '../pepper.yml#/components/responses/ActivityDeleteNotAllowedResponse'
     default:
       $ref: '../pepper.yml#/components/responses/ErrorResponse'
