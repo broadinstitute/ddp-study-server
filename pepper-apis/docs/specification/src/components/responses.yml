@@ -104,7 +104,7 @@ ActivitySummaryResponse:
     application/json:
       schema:
         $ref: '../pepper.yml#/components/schemas/Activity.Summary'
-ActivityDetailNotFoundResponse:
+ActivityInstanceNotFoundResponse:
   description: the requested activity instance for user and study does not exist
   content:
     application/json:
