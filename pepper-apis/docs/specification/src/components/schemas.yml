@@ -404,7 +404,9 @@ DateValue:
 FileInfo:
   type: object
   nullable: true
-  description: Description of the file uploaded, can be `null` if upload has been cleared.
+  description: |
+    Description of the file uploaded. This can be `null` if no uploaded file
+    is assigned or associated with the answer.
   required:
     - fileName
     - fileSize
@@ -473,7 +475,10 @@ AnswerSubmission.File:
         value:
           type: string
           nullable: true
-          description: File upload guid provided by server when upload URL was requested. A `null` value clears the upload.
+          description: |
+            File upload guid provided by server when upload URL was requested.
+            A `null` value will unselect and unassign the uploaded file from
+            this answer if a file upload was previously assigned.
 AnswerSubmission.Numeric.Integer:
   allOf:
     - $ref: '../pepper.yml#/components/schemas/AnswerSubmission'
