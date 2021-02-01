@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+
+    <changeSet author="evgeniipr" id="20210120-create-sendgrid-event-table">
+        <createTable tableName="sendgrid_event">
+            <column name="sendgrid_event_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="sendgrid_event_pk"/>
+            </column>
+            <column name="email" type="varchar(200)" >
+                <constraints nullable="false" />
+            </column>
+            <column name="timestamp" type="datetime(6)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="event_type" type="varchar(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="url" type="varchar(1000)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="ip" type="varchar(100)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="sg_event_id" type="varchar(100)">
+                <constraints nullable="false" unique="true" uniqueConstraintName="sendgrid_event_sg_event_id_uk" />
+            </column>
+            <column name="sg_message_id" type="varchar(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="response" type="varchar(10000)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="reason" type="varchar(2000)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="status" type="varchar(100)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="attempt" type="int">
+                <constraints nullable="true"/>
+            </column>
+        </createTable>
+
+        <createIndex tableName="sendgrid_event" indexName="sendgrid_event_timestamp_idx">
+            <column name="timestamp"/>
+        </createIndex>
+        <createIndex tableName="sendgrid_event" indexName="sendgrid_event_email_idx">
+            <column name="email"/>
+        </createIndex>
+        <createIndex tableName="sendgrid_event" indexName="sendgrid_event_type_idx">
+            <column name="event_type"/>
+        </createIndex>
+
+    </changeSet>
+
+</databaseChangeLog>
+

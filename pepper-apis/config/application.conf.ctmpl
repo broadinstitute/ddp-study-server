@@ -84,6 +84,9 @@
     {{end}}
         "fromName": "{{$conf.Data.sendgrid.fromName}}",
         "fromEmail": "{{$conf.Data.sendgrid.fromEmail}}"
+	{{if $conf.Data.sendgrid.eventsVerificationKey}}
+		"eventsVerificationKey" : "{{$conf.Data.sendgrid.eventsVerificationKey}}"
+    {{end}}
     },
     "sendgridToken": "{{$conf.Data.sendgridToken}}",
     {{if eq $environment "dev"}}

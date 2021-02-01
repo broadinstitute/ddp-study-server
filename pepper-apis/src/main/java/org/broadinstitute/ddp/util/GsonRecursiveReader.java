@@ -16,7 +16,7 @@ import com.google.gson.JsonObject;
  * Main method: {@link #readValues(JsonElement, List)}<br>
  * Example:
  * <pre>
- *   var result = GsonRecursiveReader.getValues(rootElem, List.of("log_id", "date", "type"));
+ *   var result = GsonRecursiveReader.readValues(rootElem, List.of("log_id", "date", "type"));
  * </pre>
  * The result will contain map with elements found by names (specified by list of strings).
  * Each name searched recursively: if it is not found at top level then try to find it deeper etc..

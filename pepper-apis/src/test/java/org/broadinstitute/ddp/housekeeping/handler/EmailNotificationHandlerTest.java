@@ -36,8 +36,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import com.sendgrid.Email;
-import com.sendgrid.Mail;
+import com.sendgrid.helpers.mail.objects.Email;
+import com.sendgrid.helpers.mail.Mail;
 import org.broadinstitute.ddp.TxnAwareBaseTest;
 import org.broadinstitute.ddp.client.ApiResult;
 import org.broadinstitute.ddp.client.SendGridClient;

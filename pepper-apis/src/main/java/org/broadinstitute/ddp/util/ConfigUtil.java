@@ -1,12 +1,19 @@
 package org.broadinstitute.ddp.util;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 import java.time.Instant;
 
+
 import com.typesafe.config.Config;
+import com.typesafe.config.ConfigException;
 import com.typesafe.config.ConfigRenderOptions;
 import org.broadinstitute.ddp.constants.ConfigFile;
+import org.slf4j.Logger;
 
 public class ConfigUtil {
+
+    private static final Logger LOG = getLogger(ConfigUtil.class);
 
     /**
      * Returns the sendgrid templates used for testing.  Don't call this
@@ -57,7 +64,13 @@ public class ConfigUtil {
      * If key not present then return a default value.
      */
     public static boolean getBoolIfPresent(Config cfg, String key, boolean defaultValue) {
-        return cfg.hasPath(key) ? cfg.getBoolean(key) : defaultValue;
+        try {
+            return cfg.hasPath(key) ? cfg.getBoolean(key) : defaultValue;
+        } catch (ConfigException e) {
+            String value = e instanceof ConfigException.WrongType ? "=" + cfg.getValue(key) : "";
+            LOG.error("Error during reading config key: " + key + value, e);
+            return defaultValue;
+        }
     }
 
     /**
