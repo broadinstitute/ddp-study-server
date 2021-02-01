@@ -37,7 +37,6 @@ public class StudyContactFunction implements HttpFunction {
 
     private final String captchaKey;
     private final String bucketName;
-    private final String bucketFolder;
     private final String auth0Domain;
     private final String auth0ClientId;
 
@@ -52,7 +51,6 @@ public class StudyContactFunction implements HttpFunction {
         captchaKey = cfg.getString("captchaKey");
         String gcpProject = cfg.getString("gcpProject");
         bucketName = cfg.getString("bucketName");
-        bucketFolder = cfg.getString("bucketFolder");
         auth0Domain = cfg.getString("auth0Domain");
         auth0ClientId = cfg.getString("auth0ClientId");
 
@@ -92,8 +90,8 @@ public class StudyContactFunction implements HttpFunction {
             } else {
                 String guid = generateGuid();
                 String filename = req.getAttachment().getName();
-                String metadataPath = String.format("%s/%s.metadata", bucketFolder, guid);
-                String filePath = String.format("%s/%s.pdf", bucketFolder, guid);
+                String metadataPath = String.format("%s.metadata", guid);
+                String filePath = String.format("%s.pdf", guid);
 
                 Map<String, String> metadata = req.getData();
                 if (metadata.size() > 50) {

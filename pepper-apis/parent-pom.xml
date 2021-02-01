@@ -110,7 +110,7 @@
             <!-- https://mvnrepository.com/artifact/com.sendgrid/sendgrid-java -->
             <groupId>com.sendgrid</groupId>
             <artifactId>sendgrid-java</artifactId>
-            <version>4.3.0</version>
+            <version>4.7.1</version>
         </dependency>
 
         <dependency>

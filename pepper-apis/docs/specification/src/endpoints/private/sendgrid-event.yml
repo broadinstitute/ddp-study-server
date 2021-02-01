@@ -1,0 +1,58 @@
+post:
+  operationId: postSendGridEvents
+  tags:
+    - Admin
+  summary: post SendGrid events 
+  description: Post SendGrid events (it could be fired by SendGrid)
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+  responses:
+    200:
+      description: SendGrid events are saved
+    400:
+      description: invalid request or body
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '../../pepper.yml#/components/schemas/Error'
+              - type: object
+                properties:
+                  code:
+                    type: string
+                    enum:
+                      - MISSING_BODY
+    401:
+      description: signature verification error
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '../../pepper.yml#/components/schemas/Error'
+              - type: object
+                properties:
+                  code:
+                    type: string
+                    enum:
+                      - INVALID_PAYLOAD_SIGNATURE
+                      - SIGNATURE_VERIFICATION_ERROR
+						
+    500:
+      description: error during data persisting on server side
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '../../pepper.yml#/components/schemas/Error'
+              - type: object
+                properties:
+                  code:
+                    type: string
+                    enum:
+                      - DATA_PERSIST_ERROR
+    default:
+      $ref: '../../pepper.yml#/components/responses/ErrorResponse'

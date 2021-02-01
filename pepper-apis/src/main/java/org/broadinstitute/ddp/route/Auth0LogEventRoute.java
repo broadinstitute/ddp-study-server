@@ -6,6 +6,7 @@ import static org.apache.http.HttpStatus.SC_OK;
 import static org.broadinstitute.ddp.constants.ErrorCodes.DATA_PERSIST_ERROR;
 import static org.broadinstitute.ddp.constants.ErrorCodes.MISSING_BODY;
 import static org.broadinstitute.ddp.constants.ErrorCodes.REQUIRED_PARAMETER_MISSING;
+import static org.broadinstitute.ddp.json.auth0.Auth0LogEvent.createInstance;
 import static org.slf4j.LoggerFactory.getLogger;
 
 
@@ -33,20 +34,20 @@ public class Auth0LogEventRoute implements Route {
     /** Mandatory parameter in the log event URL. Specifies name of auth0 tenant */
     public static final String QUERY_PARAM_TENANT = "tenant";
 
+    private final Auth0LogEventService auth0LogEventService;
+
+    public Auth0LogEventRoute(final Auth0LogEventService auth0LogEventService) {
+        this.auth0LogEventService = auth0LogEventService;
+    }
+
     @Override
     public Object handle(Request request, Response response) throws Exception {
         String tenant = readTenant(request);
         checkBody(request);
-
-        var auth0LogEventService = new Auth0LogEventService();
-
         var logEvents = auth0LogEventService.parseAuth0LogEvents(request.body());
         for (var logEvent : logEvents) {
-            var logEventObject = Auth0LogEvent.createInstance(logEvent, tenant);
-            persistLogEvent(auth0LogEventService, logEventObject);
-            auth0LogEventService.logAuth0LogEvent(logEventObject);
+            persistLogEvent(auth0LogEventService, createInstance(logEvent, tenant));
         }
-
         response.status(SC_OK);
         return "";
     }
@@ -67,7 +68,11 @@ public class Auth0LogEventRoute implements Route {
 
     private void persistLogEvent(Auth0LogEventService auth0LogEventService, Auth0LogEvent logEventObject) {
         try {
-            TransactionWrapper.useTxn(handle -> auth0LogEventService.persistAuth0LogEvent(handle, logEventObject));
+            TransactionWrapper.useTxn(handle -> {
+                if (auth0LogEventService.persistAuth0LogEvent(handle, logEventObject)) {
+                    auth0LogEventService.logAuth0LogEvent(logEventObject);
+                }
+            });
         } catch (Exception e) {
             haltError(SC_INTERNAL_SERVER_ERROR, DATA_PERSIST_ERROR, e.getMessage());
         }
