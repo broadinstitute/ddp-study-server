@@ -45,6 +45,11 @@ post:
               description: activity to create a new instance from
               type: string
               example: ABCDEFGH12
+            parentInstanceGuid:
+              description: |
+                in the case the activity instance being created is a child activity, need to specify the parent instance with their guid.
+              type: string
+              example: ABCDEFGH12
   responses:
       200:
         description: successfully created a new instance of the specified activity
