@@ -159,6 +159,12 @@ public interface JdbiUserStudyEnrollment extends SqlObject {
     int deleteByUserGuidStudyGuid(@Bind("userGuid") String userGuid,
                                   @Bind("studyGuid") String studyGuid);
 
+    @SqlUpdate(
+            "delete from user_study_enrollment where "
+                    + " user_id = :userId"
+    )
+    int deleteByUserId(@Bind("userId") Long userId);
+
     @SqlQuery(
             "select est.enrollment_status_type_code from user_study_enrollment uste, enrollment_status_type est where"
                     + " uste.enrollment_status_type_id = est.enrollment_status_type_id"

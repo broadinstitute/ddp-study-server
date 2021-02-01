@@ -336,10 +336,18 @@ public interface AnswerDao extends SqlObject {
             @Bind("questionStableId") String questionStableId);
 
     @UseStringTemplateSqlLocator
-    @SqlQuery("findAnswerByLatestInstanceAndQuestionStableId")
+    @SqlQuery("findAnswerByUserIdLatestInstanceAndQuestionStableId")
     @UseRowReducer(AnswerWithValueReducer.class)
     Optional<Answer> findAnswerByLatestInstanceAndQuestionStableId(
             @Bind("userId") long userId,
+            @Bind("studyId") long studyId,
+            @Bind("questionStableId") String questionStableId);
+
+    @UseStringTemplateSqlLocator
+    @SqlQuery("findAnswerByUserGuidLatestInstanceAndQuestionStableId")
+    @UseRowReducer(AnswerWithValueReducer.class)
+    Optional<Answer> findAnswerByLatestInstanceAndQuestionStableId(
+            @Bind("userGuid") String userGuid,
             @Bind("studyId") long studyId,
             @Bind("questionStableId") String questionStableId);
 

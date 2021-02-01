@@ -1,9 +1,12 @@
 package org.broadinstitute.ddp;
 
 import static com.google.common.net.HttpHeaders.X_FORWARDED_FOR;
+import static org.broadinstitute.ddp.constants.ConfigFile.Auth0LogEvents.AUTH0_LOG_EVENTS_TOKEN;
+import static org.broadinstitute.ddp.constants.ConfigFile.Sendgrid.EVENTS_VERIFICATION_KEY;
 import static org.broadinstitute.ddp.filter.Exclusions.afterWithExclusion;
 import static org.broadinstitute.ddp.filter.Exclusions.beforeWithExclusion;
 import static org.broadinstitute.ddp.filter.WhiteListFilter.whitelist;
+import static org.broadinstitute.ddp.util.ConfigUtil.getBoolIfPresent;
 import static spark.Spark.after;
 import static spark.Spark.afterAfter;
 import static spark.Spark.awaitInitialization;
@@ -16,6 +19,7 @@ import static spark.Spark.port;
 import static spark.Spark.stop;
 import static spark.Spark.threadPool;
 
+import java.net.MalformedURLException;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
@@ -45,11 +49,13 @@ import org.broadinstitute.ddp.db.SectionBlockDao;
 import org.broadinstitute.ddp.db.StudyActivityDao;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.filter.AddDDPAuthLoggingFilter;
+import org.broadinstitute.ddp.filter.Auth0LogEventCheckTokenFilter;
 import org.broadinstitute.ddp.filter.DsmAuthFilter;
 import org.broadinstitute.ddp.filter.HttpHeaderMDCFilter;
 import org.broadinstitute.ddp.filter.MDCAttributeRemovalFilter;
 import org.broadinstitute.ddp.filter.MDCLogBreadCrumbFilter;
 import org.broadinstitute.ddp.filter.RateLimitFilter;
+import org.broadinstitute.ddp.filter.SendGridEventVerificationFilter;
 import org.broadinstitute.ddp.filter.StudyAdminAuthFilter;
 import org.broadinstitute.ddp.filter.StudyLanguageContentLanguageSettingFilter;
 import org.broadinstitute.ddp.filter.StudyLanguageResolutionFilter;
@@ -76,6 +82,7 @@ import org.broadinstitute.ddp.route.CreateTemporaryUserRoute;
 import org.broadinstitute.ddp.route.DeleteMailAddressRoute;
 import org.broadinstitute.ddp.route.DeleteMedicalProviderRoute;
 import org.broadinstitute.ddp.route.DeleteTempMailingAddressRoute;
+import org.broadinstitute.ddp.route.DeleteUserRoute;
 import org.broadinstitute.ddp.route.DsmExitUserRoute;
 import org.broadinstitute.ddp.route.DsmTriggerOnDemandActivityRoute;
 import org.broadinstitute.ddp.route.ErrorRoute;
@@ -135,6 +142,7 @@ import org.broadinstitute.ddp.route.PutTempMailingAddressRoute;
 import org.broadinstitute.ddp.route.ReceiveDsmNotificationRoute;
 import org.broadinstitute.ddp.route.SendEmailRoute;
 import org.broadinstitute.ddp.route.SendExitNotificationRoute;
+import org.broadinstitute.ddp.route.SendGridEventRoute;
 import org.broadinstitute.ddp.route.SetParticipantDefaultMailAddressRoute;
 import org.broadinstitute.ddp.route.UpdateMailAddressRoute;
 import org.broadinstitute.ddp.route.UpdateUserEmailRoute;
@@ -149,6 +157,7 @@ import org.broadinstitute.ddp.security.JWTConverter;
 import org.broadinstitute.ddp.service.ActivityInstanceService;
 import org.broadinstitute.ddp.service.ActivityValidationService;
 import org.broadinstitute.ddp.service.AddressService;
+import org.broadinstitute.ddp.service.Auth0LogEventService;
 import org.broadinstitute.ddp.service.CancerService;
 import org.broadinstitute.ddp.service.ConsentService;
 import org.broadinstitute.ddp.service.FormActivityService;
@@ -156,14 +165,18 @@ import org.broadinstitute.ddp.service.MedicalRecordService;
 import org.broadinstitute.ddp.service.PdfBucketService;
 import org.broadinstitute.ddp.service.PdfGenerationService;
 import org.broadinstitute.ddp.service.PdfService;
+import org.broadinstitute.ddp.service.SendGridEventService;
+import org.broadinstitute.ddp.service.UserService;
 import org.broadinstitute.ddp.service.WorkflowService;
 import org.broadinstitute.ddp.transformers.NullableJsonTransformer;
 import org.broadinstitute.ddp.transformers.SimpleJsonTransformer;
 import org.broadinstitute.ddp.util.ConfigManager;
+import org.broadinstitute.ddp.util.ElasticsearchServiceUtil;
 import org.broadinstitute.ddp.util.LiquibaseUtil;
 import org.broadinstitute.ddp.util.LogbackConfigurationPrinter;
 import org.broadinstitute.ddp.util.ResponseUtil;
 import org.broadinstitute.ddp.util.RouteUtil;
+import org.elasticsearch.client.RestHighLevelClient;
 import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
 import org.slf4j.Logger;
@@ -233,13 +246,16 @@ public class DataDonationPlatform {
         }
     }
 
-    private static void start() {
+    private static void start() throws MalformedURLException {
         LogbackConfigurationPrinter.printLoggingConfiguration();
         Config cfg = ConfigManager.getInstance().getConfig();
         int maxConnections = cfg.getInt(ConfigFile.NUM_POOLED_CONNECTIONS);
 
         int requestThreadTimeout = cfg.getInt(ConfigFile.THREAD_TIMEOUT);
         String healthcheckPassword = cfg.getString(ConfigFile.HEALTHCHECK_PASSWORD);
+        String sendGridEventsVerificationKey = cfg.hasPath(EVENTS_VERIFICATION_KEY)
+                ? cfg.getString(EVENTS_VERIFICATION_KEY) : null;
+        String auth0LogEventsToken = cfg.hasPath(AUTH0_LOG_EVENTS_TOKEN) ? cfg.getString(AUTH0_LOG_EVENTS_TOKEN) : null;
 
         // app engine's port env var wins
         int configFilePort = cfg.getInt(ConfigFile.PORT);
@@ -322,22 +338,27 @@ public class DataDonationPlatform {
                 API.CHECK_IRB_PASSWORD,
                 API.AUTH0_LOG_EVENT);
 
+        before(API.AUTH0_LOG_EVENT, new Auth0LogEventCheckTokenFilter(auth0LogEventsToken));
+
         // Internal routes
         get(API.HEALTH_CHECK, new HealthCheckRoute(healthcheckPassword), responseSerializer);
         get(API.DEPLOYED_VERSION, new GetDeployedAppVersionRoute(), responseSerializer);
         get(API.INTERNAL_ERROR, new ErrorRoute(), responseSerializer);
 
+        before(API.SENDGRID_EVENT, new SendGridEventVerificationFilter(sendGridEventsVerificationKey));
+
         if (cfg.getBoolean(ConfigFile.RESTRICT_REGISTER_ROUTE)) {
             whitelist(API.REGISTRATION, cfg.getStringList(ConfigFile.AUTH0_IP_WHITE_LIST));
         }
-        if (cfg.getBoolean(ConfigFile.RESTRICT_AUTH0_LOG_EVENT_ROUTE)) {
+        if (getBoolIfPresent(cfg, ConfigFile.RESTRICT_AUTH0_LOG_EVENT_ROUTE, false)) {
             whitelist(API.AUTH0_LOG_EVENT, cfg.getStringList(ConfigFile.AUTH0_IP_WHITE_LIST));
         }
 
         post(API.REGISTRATION, new UserRegistrationRoute(interpreter), responseSerializer);
         post(API.TEMP_USERS, new CreateTemporaryUserRoute(), responseSerializer);
 
-        post(API.AUTH0_LOG_EVENT, new Auth0LogEventRoute(cfg), responseSerializer);
+        post(API.SENDGRID_EVENT, new SendGridEventRoute(new SendGridEventService()), responseSerializer);
+        post(API.AUTH0_LOG_EVENT, new Auth0LogEventRoute(new Auth0LogEventService()), responseSerializer);
 
         // Admin APIs
         before(API.ADMIN_BASE + "/*", new StudyAdminAuthFilter());
@@ -387,6 +408,9 @@ public class DataDonationPlatform {
         get(API.USER_PROFILE, new GetProfileRoute(), responseSerializer);
         post(API.USER_PROFILE, new AddProfileRoute(), responseSerializer);
         patch(API.USER_PROFILE, new PatchProfileRoute(), responseSerializer);
+
+        RestHighLevelClient esClient = ElasticsearchServiceUtil.getElasticsearchClient(cfg);
+        delete(API.USER_SPECIFIC, new DeleteUserRoute(new UserService(esClient)), responseSerializer);
 
         // User mailing address routes
         AddressService addressService = new AddressService(cfg.getString(ConfigFile.EASY_POST_API_KEY),

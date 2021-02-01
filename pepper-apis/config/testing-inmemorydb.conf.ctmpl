@@ -59,6 +59,9 @@
         "backendTestClientName": "{{$testingAuth.backendTestClientName}}",
         "backendTestClientName2": "{{$testingAuth.backendTestClientName2}}"
     },
+	"auth0LogEvents": {
+      "token": ""
+    },
     "googleGeocodingApiKey": "{{$testingConf.Data.geocodingKey}}",
     "jcacheConfigurationFile": "src/test/resources/redisson-test-jcache.yaml",
     "redisServerAddress":"redis://127.0.0.1:6379",
@@ -108,7 +111,8 @@
     "sendgrid": {
         "proxy": null,
         "fromName": "Pepper Local",
-        "fromEmail": "noreply@datadonationplatform.org"
+        "fromEmail": "noreply@datadonationplatform.org",
+		"eventsVerificationKey": ""
     },
     "rateLimit": {
         "apiLimitBurst": 100,

@@ -82,6 +82,10 @@ public interface UserGovernanceDao extends SqlObject {
         return getUserGovernanceSql().deleteAllGovernancesByOperatorUserId(proxyUserId);
     }
 
+    default int deleteAllGovernancesForParticipant(long userId) {
+        return getUserGovernanceSql().deleteAllGovernancesByParticipantUserId(userId);
+    }
+
     @UseStringTemplateSqlLocator
     @SqlQuery("queryGovernancesWithStudiesById")
     @RegisterConstructorMapper(Governance.class)
@@ -125,6 +129,13 @@ public interface UserGovernanceDao extends SqlObject {
     default Stream<Governance> findActiveGovernancesByParticipantAndStudyGuids(String participantGuid, String studyGuid) {
         return findGovernancesByParticipantAndStudyGuids(participantGuid, studyGuid).filter(Governance::isActive);
     }
+
+    @UseStringTemplateSqlLocator
+    @SqlQuery("queryGovernancesByParticipantGuid")
+    @RegisterConstructorMapper(Governance.class)
+    @RegisterConstructorMapper(GrantedStudy.class)
+    @UseRowReducer(GovernanceWithStudiesReducer.class)
+    Stream<Governance> findGovernancesByParticipantGuid(@Bind("participantGuid") String participantGuid);
 
     @UseStringTemplateSqlLocator
     @SqlQuery("queryGovernancesByParticipantAndStudyIds")

@@ -36,7 +36,7 @@
                 "rules": 701
               },
               "user_id": "auth0|XXX_user_id_XXX",
-              "user_name": "test_name@broadinstitute.org",
+              "user_name": "test_name@datadonationplatform.org",
               "elapsedTime": 3745
             }
           ],
@@ -50,7 +50,7 @@
         },
         "hostname": "login-dev.joincountmein.org",
         "user_id": "auth0|XXX_user_id_XXX",
-        "user_name": "test_name@broadinstitute.org",
+        "user_name": "test_name@datadonationplatform.org",
         "strategy": "auth0",
         "strategy_type": "database",
         "log_id": "90020210109193422350000813516550845677722180126643322962"
@@ -96,7 +96,7 @@
             "statusCode": 200,
             "body": {
               "created_at": "2020-12-16T14:08:02.908Z",
-              "email": "test_name@broadinstitute.org",
+              "email": "test_name@datadonationplatform.org",
               "email_verified": false,
               "identities": [
                 {
@@ -106,7 +106,7 @@
                   "isSocial": false
                 }
               ],
-              "name": "test_name@broadinstitute.org",
+              "name": "test_name@datadonationplatform.org",
               "nickname": "test_name",
               "updated_at": "2021-01-09T19:34:18.532Z",
               "user_id": "auth0|XXX_user_id_XXX",

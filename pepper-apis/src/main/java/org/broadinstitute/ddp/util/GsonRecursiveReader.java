@@ -2,6 +2,7 @@ package org.broadinstitute.ddp.util;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -15,7 +16,7 @@ import com.google.gson.JsonObject;
  * Main method: {@link #readValues(JsonElement, List)}<br>
  * Example:
  * <pre>
- *   var result = GsonRecursiveReader.getValues(rootElem, List.of("log_id", "date", "type"));
+ *   var result = GsonRecursiveReader.readValues(rootElem, List.of("log_id", "date", "type"));
  * </pre>
  * The result will contain map with elements found by names (specified by list of strings).
  * Each name searched recursively: if it is not found at top level then try to find it deeper etc..
@@ -33,21 +34,32 @@ public class GsonRecursiveReader {
      * @param names    list of elements' names which to search for
      * @return {@code Map<String, JsonElement>} map with detected node values
      */
-    public static Map<String, JsonElement> readValues(final JsonElement rootNode, final List<String> names) {
-        final Map<String, JsonElement> results = new HashMap<>();
+    public static Map<String, JsonElement> readValues(JsonElement rootNode, List<String> names) {
+        Map<String, JsonElement> results = new HashMap<>();
         if (names != null && names.size() > 0) {
-            final List<String> yetNotReadNames = new ArrayList<>(names);
+            final List<String> yetNotReadNames = new LinkedList<>(names);
             getValuesRecursively(rootNode, yetNotReadNames, results);
         }
         return results;
     }
 
-    private static void readValues(
-            final Map.Entry<String, JsonElement> entry,
-            final List<String> yetNotReadNames,
-            final Map<String, JsonElement> results) {
-        final List<String> foundNames = new ArrayList<>();
-        for (String name : yetNotReadNames) {
+    private static void getValuesRecursively(JsonElement node, List<String> yetNotReadNames, Map<String, JsonElement> results) {
+        if (node instanceof JsonArray) {
+            getValuesFromArray((JsonArray) node, yetNotReadNames, results);
+        } else if (node instanceof JsonObject) {
+            for (var entry : ((JsonObject) node).entrySet()) {
+                getEntryValueIfFoundInReadNames(entry, yetNotReadNames, results);
+            }
+            for (var entry : ((JsonObject) node).entrySet()) {
+                getValuesRecursively(entry.getValue(), yetNotReadNames, results);
+            }
+        }
+    }
+
+    private static void getEntryValueIfFoundInReadNames(Map.Entry<String, JsonElement> entry, List<String> yetNotReadNames,
+                                                        Map<String, JsonElement> results) {
+        var foundNames = new ArrayList<>();
+        for (var name : yetNotReadNames) {
             if (entry.getKey().equals(name)) {
                 foundNames.add(name);
                 results.put(name, entry.getValue());
@@ -56,30 +68,8 @@ public class GsonRecursiveReader {
         yetNotReadNames.removeAll(foundNames);
     }
 
-    private static void getValuesRecursively(
-            final JsonElement node,
-            final List<String> yetNotReadNames,
-            final Map<String, JsonElement> results) {
-        if (node instanceof JsonArray) {
-            readArray((JsonArray) node, yetNotReadNames, results);
-        } else if (node instanceof JsonObject) {
-            for (Map.Entry<String, JsonElement> entry : ((JsonObject) node).entrySet()) {
-                if (entry.getValue() instanceof JsonArray) {
-                    readArray((JsonArray) entry.getValue(), yetNotReadNames, results);
-                }
-                readValues(entry, yetNotReadNames, results);
-                if (entry.getValue() instanceof JsonObject) {
-                    getValuesRecursively(entry.getValue(), yetNotReadNames, results);
-                }
-            }
-        }
-    }
-
-    private static void readArray(
-            final JsonArray nodeArray,
-            final List<String> yetNotReadNames,
-            final Map<String, JsonElement> results) {
-        for (JsonElement node : nodeArray) {
+    private static void getValuesFromArray(JsonArray nodeArray, List<String> yetNotReadNames, Map<String, JsonElement> results) {
+        for (var node : nodeArray) {
             getValuesRecursively(node, yetNotReadNames, results);
         }
     }

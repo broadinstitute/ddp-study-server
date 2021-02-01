@@ -25,7 +25,9 @@ query
   | USER_TYPE '.' study '.' form '.' instance '.' formInstancePredicate                     # FormInstanceQuery
   | USER_TYPE '.' study '.' form '.' question '.' questionPredicate                         # QuestionQuery
   | USER_TYPE '.' study '.' form '.' question '.' 'answers' '.' predicate                   # DefaultLatestAnswerQuery
+  | USER_TYPE '.' study '.' form '.' question '.' child '.' 'answers' '.' predicate         # DefaultLatestChildAnswerQuery
   | USER_TYPE '.' study '.' form '.' instance '.' question '.' 'answers' '.' predicate      # AnswerQuery
+  | USER_TYPE '.' study '.' form '.' instance '.' question '.' child '.' 'answers' '.' predicate # ChildAnswerQuery
   | USER_TYPE '.' 'profile' '.' profileDataQuery                                            # ProfileQuery
   | USER_TYPE '.' 'event' '.' 'kit' '.' kitEventQuery                                       # EventKitQuery
   | USER_TYPE '.' 'event' '.' 'testResult' '.' testResultQuery                              # EventTestResultQuery
@@ -35,6 +37,7 @@ study : 'studies' '[' STR ']' ;
 form : 'forms' '[' STR ']' ;
 instance : 'instances' '[' INSTANCE_TYPE ']' ;
 question : 'questions' '[' STR ']' ;
+child : 'children' '[' STR ']';
 
 // Predicates operating on study-level data
 studyPredicate

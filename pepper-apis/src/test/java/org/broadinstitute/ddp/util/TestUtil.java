@@ -12,6 +12,7 @@ import java.util.stream.Stream;
 
 
 import com.google.gson.Gson;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import io.restassured.builder.RequestSpecBuilder;
@@ -79,7 +80,11 @@ public class TestUtil {
         );
     }
 
-    public static JsonElement readJSONFromFile(String fileName) throws FileNotFoundException {
+    public static JsonElement readJsonArrayFromFile(String fileName) throws FileNotFoundException {
+        return new Gson().fromJson(new FileReader(new File(fileName)), JsonArray.class);
+    }
+
+    public static JsonElement readJsonObjectFromFile(String fileName) throws FileNotFoundException {
         return new Gson().fromJson(new FileReader(new File(fileName)), JsonObject.class);
     }
 }

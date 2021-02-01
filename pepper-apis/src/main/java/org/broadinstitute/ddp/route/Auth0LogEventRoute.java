@@ -1,25 +1,18 @@
 package org.broadinstitute.ddp.route;
 
-import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
-import static org.apache.http.HttpStatus.SC_UNAUTHORIZED;
-import static org.broadinstitute.ddp.constants.ConfigFile.Auth0LogEventApi.AUTH0_LOG_EVENT_API;
-import static org.broadinstitute.ddp.constants.ConfigFile.Auth0LogEventApi.BEARER_TOKEN;
-import static org.broadinstitute.ddp.constants.ConfigFile.Auth0LogEventApi.TOKEN_CHECK_ENABLED;
-import static org.broadinstitute.ddp.constants.ErrorCodes.INVALID_TOKEN;
-import static org.broadinstitute.ddp.constants.ErrorCodes.MALFORMED_HEADER;
+import static org.apache.http.HttpStatus.SC_INTERNAL_SERVER_ERROR;
+import static org.apache.http.HttpStatus.SC_OK;
+import static org.broadinstitute.ddp.constants.ErrorCodes.DATA_PERSIST_ERROR;
+import static org.broadinstitute.ddp.constants.ErrorCodes.MISSING_BODY;
 import static org.broadinstitute.ddp.constants.ErrorCodes.REQUIRED_PARAMETER_MISSING;
-import static org.broadinstitute.ddp.constants.RouteConstants.Header.AUTHORIZATION;
-import static org.broadinstitute.ddp.constants.RouteConstants.Header.BEARER;
+import static org.broadinstitute.ddp.json.auth0.Auth0LogEvent.createInstance;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import java.util.List;
-import java.util.Map;
 
-
-import com.google.gson.JsonElement;
-import com.typesafe.config.Config;
-import org.apache.http.HttpStatus;
+import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.ddp.db.TransactionWrapper;
+import org.broadinstitute.ddp.json.auth0.Auth0LogEvent;
 import org.broadinstitute.ddp.json.errors.ApiError;
 import org.broadinstitute.ddp.service.Auth0LogEventService;
 import org.broadinstitute.ddp.util.ResponseUtil;
@@ -33,49 +26,33 @@ import spark.Route;
  *
  * <p>JSON (sent in payload) is parsed and auth0 log events are extracted from it.
  * Then log events are logged and persisted into table 'auth0_log_event'.
- *
- * <p>Header ("Authorization") with authorization token can be (optionally) specified in
- * Auth0 Custom Webhook definition.<br>
- * If config parameter 'auth0LogEventApi.tokenCheckEnabled' is true then a token
- * which is passed in the REST header 'Authorization' will be compared with
- * 'Bearer ' + 'auth0LogEventApi.bearerToken'.
- * On the other side in Auth0 Custom Webhook in "Authorization token" the same token
- * (with prefix 'Bearer') should be specified.<br>
- * If config section 'auth0LogEventApi' not specified or 'auth0LogEventApi.tokenCheckEnabled' is false,
- * then token is not checked.
  */
 public class Auth0LogEventRoute implements Route {
 
     private static final Logger LOG = getLogger(Auth0LogEventRoute.class);
 
     /** Mandatory parameter in the log event URL. Specifies name of auth0 tenant */
-    static final String QUERY_PARAM_TENANT = "tenant";
+    public static final String QUERY_PARAM_TENANT = "tenant";
 
-    private final String auth0LogEventApiBearerToken;
+    private final Auth0LogEventService auth0LogEventService;
 
-    public Auth0LogEventRoute(final Config config) {
-        auth0LogEventApiBearerToken = config.hasPath(AUTH0_LOG_EVENT_API) && config.getBoolean(TOKEN_CHECK_ENABLED)
-                ? config.getString(BEARER_TOKEN) : null;
+    public Auth0LogEventRoute(final Auth0LogEventService auth0LogEventService) {
+        this.auth0LogEventService = auth0LogEventService;
     }
 
     @Override
     public Object handle(Request request, Response response) throws Exception {
         String tenant = readTenant(request);
-        checkAuthorizationToken(request);
-
-        final Auth0LogEventService auth0LogEventService = new Auth0LogEventService();
-
-        final List<Map<String, JsonElement>> logEvents = auth0LogEventService.parseAuth0LogEvents(request.body());
+        checkBody(request);
+        var logEvents = auth0LogEventService.parseAuth0LogEvents(request.body());
         for (var logEvent : logEvents) {
-            auth0LogEventService.logAuth0LogEvent(logEvent, tenant);
-            auth0LogEventService.persistAuth0LogEvent(logEvent, tenant);
+            persistLogEvent(auth0LogEventService, createInstance(logEvent, tenant));
         }
-
-        response.status(HttpStatus.SC_OK);
+        response.status(SC_OK);
         return "";
     }
 
-    private String readTenant(final Request request) {
+    private String readTenant(Request request) {
         String tenant = request.queryParams(QUERY_PARAM_TENANT);
         if (tenant == null) {
             haltError(SC_BAD_REQUEST, REQUIRED_PARAMETER_MISSING, "Parameter not specified: " + QUERY_PARAM_TENANT);
@@ -83,20 +60,22 @@ public class Auth0LogEventRoute implements Route {
         return tenant;
     }
 
-    private void checkAuthorizationToken(final Request request) {
-        if (isNotBlank(auth0LogEventApiBearerToken)) {
-            String authorizationToken = request.headers(AUTHORIZATION);
-            if (authorizationToken == null) {
-                haltError(SC_BAD_REQUEST, MALFORMED_HEADER, "Header not specified: " + AUTHORIZATION);
-            }
-            if (!addBearerPrefixToToken(auth0LogEventApiBearerToken).equals(authorizationToken)) {
-                haltError(SC_UNAUTHORIZED, INVALID_TOKEN, "Invalid authorization token");
-            }
+    private void checkBody(Request request) {
+        if (StringUtils.isBlank(request.body())) {
+            haltError(SC_BAD_REQUEST, MISSING_BODY, "Body not specified");
         }
     }
 
-    private String addBearerPrefixToToken(String token) {
-        return BEARER + token;
+    private void persistLogEvent(Auth0LogEventService auth0LogEventService, Auth0LogEvent logEventObject) {
+        try {
+            TransactionWrapper.useTxn(handle -> {
+                if (auth0LogEventService.persistAuth0LogEvent(handle, logEventObject)) {
+                    auth0LogEventService.logAuth0LogEvent(logEventObject);
+                }
+            });
+        } catch (Exception e) {
+            haltError(SC_INTERNAL_SERVER_ERROR, DATA_PERSIST_ERROR, e.getMessage());
+        }
     }
 
     private void haltError(int status, String code, String msg) {

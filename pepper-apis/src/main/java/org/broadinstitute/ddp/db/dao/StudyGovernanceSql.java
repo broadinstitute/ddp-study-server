@@ -45,6 +45,9 @@ public interface StudyGovernanceSql extends SqlObject {
     @SqlUpdate("delete from age_up_candidate where age_up_candidate_id in (<ids>)")
     int deleteAgeUpCandidateByIds(@BindList(value = "ids", onEmpty = EmptyHandling.NULL) Set<Long> candidateIds);
 
+    @SqlUpdate("delete from age_up_candidate where participant_user_id = :participantId")
+    int deleteAgeUpCandidateByParticipantId(@Bind("participantId") Long participantId);
+
     @SqlUpdate("update age_up_candidate set initiated_preparation = :initiated where age_up_candidate_id in (<ids>)")
     int updateAgeUpCandidateInitiatedPrepByIds(
             @Bind("initiated") boolean initiatedPreparation,

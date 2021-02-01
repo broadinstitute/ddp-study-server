@@ -105,9 +105,8 @@ where ai.activity_instance_guid = :instanceGuid
 <all_answers_order_by()>
 >>
 
-findAnswerByLatestInstanceAndQuestionStableId() ::= <<
+findAnswerByUserIdLatestInstanceAndQuestionStableId() ::= <<
 <all_answers_select()>
- join study_activity as act on act.study_activity_id = ai.study_activity_id
 where ai.participant_id = :userId
   and qsc.umbrella_study_id = :studyId
   and qsc.stable_id = :questionStableId
@@ -115,6 +114,19 @@ where ai.participant_id = :userId
       select max(created_at)
         from activity_instance
        where participant_id = ai.participant_id
-         and study_activity_id = act.study_activity_id)
+         and study_activity_id = ai.study_activity_id)
+<all_answers_order_by()>
+>>
+
+findAnswerByUserGuidLatestInstanceAndQuestionStableId() ::= <<
+<all_answers_select()>
+where u.guid = :userGuid
+  and qsc.umbrella_study_id = :studyId
+  and qsc.stable_id = :questionStableId
+  and ai.created_at = (
+      select max(created_at)
+        from activity_instance
+       where participant_id = ai.participant_id
+         and study_activity_id = ai.study_activity_id)
 <all_answers_order_by()>
 >>

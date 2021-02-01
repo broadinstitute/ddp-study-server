@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.ddp.model.dsm.KitReasonType;
 import org.broadinstitute.ddp.model.dsm.TestResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,6 +28,7 @@ public class RenderValueProvider {
     private ZoneId participantTimeZone;
     private LocalDate date;
     private String kitRequestId;
+    private KitReasonType kitReasonType;
     private String testResultCode;
     private Instant testResultTimeCompleted;
     private Integer activityInstanceNumber;
@@ -188,6 +190,9 @@ public class RenderValueProvider {
         if (kitRequestId != null) {
             snapshot.put(I18nTemplateConstants.Snapshot.KIT_REQUEST_ID, kitRequestId);
         }
+        if (kitReasonType != null) {
+            snapshot.put(I18nTemplateConstants.Snapshot.KIT_REASON_TYPE, kitReasonType.name());
+        }
         if (testResultCode != null) {
             snapshot.put(I18nTemplateConstants.Snapshot.TEST_RESULT_CODE, testResultCode);
         }
@@ -236,6 +241,11 @@ public class RenderValueProvider {
 
         public Builder setKitRequestId(String kitRequestId) {
             provider.kitRequestId = kitRequestId;
+            return this;
+        }
+
+        public Builder setKitReasonType(KitReasonType kitReasonType) {
+            provider.kitReasonType = kitReasonType;
             return this;
         }
 
@@ -290,6 +300,11 @@ public class RenderValueProvider {
                 provider.kitRequestId = value;
             }
 
+            value = snapshot.get(I18nTemplateConstants.Snapshot.KIT_REASON_TYPE);
+            if (value != null) {
+                provider.kitReasonType = KitReasonType.valueOf(value);
+            }
+
             value = snapshot.get(I18nTemplateConstants.Snapshot.TEST_RESULT_CODE);
             if (value != null) {
                 provider.testResultCode = value;
@@ -312,6 +327,7 @@ public class RenderValueProvider {
             copy.participantTimeZone = provider.participantTimeZone;
             copy.date = provider.date;
             copy.kitRequestId = provider.kitRequestId;
+            copy.kitReasonType = provider.kitReasonType;
             copy.testResultCode = provider.testResultCode;
             copy.testResultTimeCompleted = provider.testResultTimeCompleted;
             copy.activityInstanceNumber = provider.activityInstanceNumber;

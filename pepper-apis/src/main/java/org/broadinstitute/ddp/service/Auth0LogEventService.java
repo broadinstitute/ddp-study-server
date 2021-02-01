@@ -1,5 +1,6 @@
 package org.broadinstitute.ddp.service;
 
+import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.broadinstitute.ddp.json.auth0.Auth0LogEventNode.CLIENT_ID;
 import static org.broadinstitute.ddp.json.auth0.Auth0LogEventNode.CONNECTION_ID;
 import static org.broadinstitute.ddp.json.auth0.Auth0LogEventNode.DATA;
@@ -12,8 +13,6 @@ import static org.broadinstitute.ddp.json.auth0.Auth0LogEventNode.TYPE;
 import static org.broadinstitute.ddp.json.auth0.Auth0LogEventNode.USER_AGENT;
 import static org.broadinstitute.ddp.json.auth0.Auth0LogEventNode.USER_ID;
 import static org.broadinstitute.ddp.json.auth0.Auth0LogEventNode.USER_NAME;
-import static org.broadinstitute.ddp.json.auth0.Auth0LogEventNode.resolveDateTimeValue;
-import static org.broadinstitute.ddp.json.auth0.Auth0LogEventNode.resolveStringValue;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.util.ArrayList;
@@ -24,9 +23,10 @@ import java.util.Map;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.Auth0LogEventDao;
+import org.broadinstitute.ddp.json.auth0.Auth0LogEvent;
 import org.broadinstitute.ddp.util.GsonRecursiveReader;
+import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
 
 /**
@@ -43,7 +43,9 @@ import org.slf4j.Logger;
  */
 public class Auth0LogEventService {
 
-    private final Logger log = getLogger(this.getClass());
+    private static final Logger LOG = getLogger(Auth0LogEventService.class);
+
+    public static final String AUTH0_LOG_EVENT_TITLE = "SAVE Auth0LogEvent";
 
     /**
      * List of Auth0 Log Event JSON node names which to read (recursively)
@@ -73,40 +75,66 @@ public class Auth0LogEventService {
     public List<Map<String, JsonElement>> parseAuth0LogEvents(String logEventsJson) {
         var rootNode = new Gson().fromJson(logEventsJson, JsonObject.class);
         var logsNode = rootNode.getAsJsonArray(LOGS.nodeName());
-        final List<Map<String, JsonElement>> logEvents = new ArrayList<>();
-        for (JsonElement node : logsNode) {
+        List<Map<String, JsonElement>> logEvents = new ArrayList<>();
+        for (var node : logsNode) {
             logEvents.add(GsonRecursiveReader.readValues(node, AUTH0_LOG_EVENT_NODE_NAMES));
         }
         return logEvents;
     }
 
-    public void logAuth0LogEvent(final Map<String, JsonElement> logEvent, String tenant) {
-        log.info(
-                "AUTH0-LOG-EVENT[{}]: type:{}, date:{}, log_id:{}\n"
-                        + "\tclient_id:{}, connection_id:{}, user_id:{}\n"
-                        + "\tuser_agent:{}\n"
-                        + "\tip:{}, email:{}\n"
-                        + "\tdata: {}",
-                tenant,
-                resolveStringValue(TYPE, logEvent),
-                resolveDateTimeValue(DATE, logEvent),
-                resolveStringValue(LOG_ID, logEvent),
-                resolveStringValue(CLIENT_ID, logEvent),
-                resolveStringValue(CONNECTION_ID, logEvent),
-                resolveStringValue(USER_ID, logEvent),
-                resolveStringValue(USER_AGENT, logEvent),
-                resolveStringValue(IP, logEvent),
-                resolveStringValue(EMAIL, logEvent),
-                resolveStringValue(DATA, logEvent));
+    public void logAuth0LogEvent(Auth0LogEvent logEvent) {
+        if (LOG.isDebugEnabled() || LOG.isTraceEnabled()) {
+            LOG.debug(AUTH0_LOG_EVENT_TITLE + "[{}]: type={} ({}), date={}, log_id={}\n"
+                            + "\tclient_id={}, connection_id={}, user_id={}\n"
+                            + "\tuser_agent={}\n"
+                            + "\tip={}, email={}\n"
+                            + "\tdata: {}",
+                    logEvent.getTenant(),
+                    logEvent.getType(),
+                    getTypeDescription(logEvent),
+                    logEvent.getDate(),
+                    logEvent.getLogId(),
+                    logEvent.getClientId(),
+                    logEvent.getConnectionId(),
+                    logEvent.getUserId(),
+                    logEvent.getUserAgent(),
+                    logEvent.getIp(),
+                    logEvent.getEmail(),
+                    logEvent.getData());
+        } else {
+            LOG.info(AUTH0_LOG_EVENT_TITLE + "[{}]: type={} ({}), date={}, user_id={}, log_id={}",
+                    logEvent.getTenant(),
+                    logEvent.getType(),
+                    getTypeDescription(logEvent),
+                    logEvent.getDate(),
+                    logEvent.getUserId(),
+                    logEvent.getLogId());
+        }
     }
 
     /**
-     * Save log event and tenant data to DB table 'auth0-log-event'
+     * Check if auth0 log event exist: if not then insert it, also find code details info and
+     * save to {@link Auth0LogEvent} object (in order to use it in logging).<br>
+     * If such event (with same log_id) already exist in DB then do nothing and
+     * just log warn message.
+     * @return boolean true, in case of new event inserted, false - if such event already exist in DB
      */
-    public void persistAuth0LogEvent(final Map<String, JsonElement> logEvent, String tenant) {
-        TransactionWrapper.useTxn(handle -> {
-            Auth0LogEventDao auth0LogEventDao = handle.attach(Auth0LogEventDao.class);
-            auth0LogEventDao.insertAuth0LogEvent(logEvent, tenant);
-        });
+    public boolean persistAuth0LogEvent(Handle handle, Auth0LogEvent logEvent) {
+        var auth0LogEventDao = handle.attach(Auth0LogEventDao.class);
+        if (auth0LogEventDao.checkIfSameEventAlreadyPersisted(logEvent)) {
+            LOG.warn(AUTH0_LOG_EVENT_TITLE + " failed. Event with such log_id already was saved. LOG_ID=" + logEvent.getLogId());
+            return false;
+        } else {
+            auth0LogEventDao.insertAuth0LogEvent(logEvent);
+            return true;
+        }
+    }
+
+    private String getTypeDescription(Auth0LogEvent logEvent) {
+        if (logEvent.getAuth0LogEventCode() != null) {
+            return isNotBlank(logEvent.getAuth0LogEventCode().getDescription())
+                    ? logEvent.getAuth0LogEventCode().getDescription() : logEvent.getAuth0LogEventCode().getTitle();
+        }
+        return null;
     }
 }

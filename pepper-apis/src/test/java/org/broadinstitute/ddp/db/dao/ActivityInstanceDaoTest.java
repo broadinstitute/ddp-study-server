@@ -7,8 +7,10 @@ import static org.junit.Assert.assertTrue;
 
 import java.time.Instant;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -201,6 +203,56 @@ public class ActivityInstanceDaoTest extends TxnAwareBaseTest {
                 var result = stream.collect(Collectors.toList());
                 assertTrue("should return empty list", result.isEmpty());
             }
+        });
+    }
+
+    @Test
+    public void testFindMaxInstancesSeenPerUserByActivityAndVersion() {
+        TransactionWrapper.useTxn(handle -> {
+            ActivityInstanceDao dao = handle.attach(ActivityInstanceDao.class);
+            TestFormActivity act = TestFormActivity.builder()
+                    .build(handle, testData.getUserId(), testData.getStudyGuid());
+            long activityId = act.getDef().getActivityId();
+            long versionId = act.getVersionDto().getId();
+
+            assertTrue("no instances so should be empty",
+                    dao.findMaxInstancesSeenPerUserByActivityAndVersion(activityId, versionId).isEmpty());
+
+            dao.insertInstance(activityId, testData.getUserGuid());
+            dao.insertInstance(activityId, testData.getUserGuid());
+
+            assertEquals(Integer.valueOf(2),
+                    dao.findMaxInstancesSeenPerUserByActivityAndVersion(activityId, versionId).orElse(0));
+
+            handle.rollback();
+        });
+    }
+
+    @Test
+    public void testFindSubstitutionNamesSeenAcrossUsersByActivityAndVersion() {
+        TransactionWrapper.useTxn(handle -> {
+            ActivityInstanceDao dao = handle.attach(ActivityInstanceDao.class);
+            TestFormActivity act = TestFormActivity.builder()
+                    .build(handle, testData.getUserId(), testData.getStudyGuid());
+            long activityId = act.getDef().getActivityId();
+            long versionId = act.getVersionDto().getId();
+
+            ActivityInstanceDto instanceDto = dao.insertInstance(activityId, testData.getUserGuid());
+            assertTrue("should not have any substitutions yet",
+                    dao.findSubstitutionNamesSeenAcrossUsersByActivityAndVersion(activityId, versionId).isEmpty());
+
+            Map<String, String> substitutions = new HashMap<>();
+            substitutions.put("foo", "1");
+            substitutions.put("bar", "2");
+            dao.saveSubstitutions(instanceDto.getId(), substitutions);
+
+            List<String> actualNames = dao
+                    .findSubstitutionNamesSeenAcrossUsersByActivityAndVersion(activityId, versionId);
+            assertEquals(2, actualNames.size());
+            assertTrue(actualNames.contains("foo"));
+            assertTrue(actualNames.contains("bar"));
+
+            handle.rollback();
         });
     }
 }

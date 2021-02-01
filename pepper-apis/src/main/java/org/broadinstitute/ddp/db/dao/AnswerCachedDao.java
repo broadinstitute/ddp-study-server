@@ -169,6 +169,11 @@ public class AnswerCachedDao extends SQLObjectWrapper<AnswerDao> implements Answ
         return delegate.findAnswerByLatestInstanceAndQuestionStableId(userId, studyId, questionStableId);
     }
 
+    @Override
+    public Optional<Answer> findAnswerByLatestInstanceAndQuestionStableId(String userGuid, long studyId, String questionStableId) {
+        return delegate.findAnswerByLatestInstanceAndQuestionStableId(userGuid, studyId, questionStableId);
+    }
+
     private void addToCache(Answer answer) {
         if (!isNullCache(idToAnswerCache)) {
             try {
@@ -198,15 +203,20 @@ public class AnswerCachedDao extends SQLObjectWrapper<AnswerDao> implements Answ
     }
 
     private void removeFromCache(Long id) {
-        if (!isNullCache(idToAnswerCache)) {
+        if (!isNullCache(idToAnswerCache) && id != null) {
             Answer answerFromCache = idToAnswerCache.remove(id);
             String cacheKey = buildKey(answerFromCache);
             if (cacheKey != null) {
                 activityInstanceGuidAndQuestionKeyToAnswerIdCache.remove(cacheKey);
             }
             if (answerFromCache instanceof CompositeAnswer) {
-                ((CompositeAnswer)answerFromCache).getValue().forEach(
-                        row -> row.getValues().forEach(val -> removeFromCache(val.getAnswerId())));
+                ((CompositeAnswer) answerFromCache).getValue().forEach(row ->
+                        row.getValues().forEach(val -> {
+                            if (val != null) {
+                                removeFromCache(val.getAnswerId());
+                            }
+                        })
+                );
             }
         }
     }
