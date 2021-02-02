@@ -96,6 +96,8 @@
     "pubsub": {
         "enableHousekeepingTasks": false,
         "housekeepingTasksSubscription": "local-housekeeping-tasks-sub",
+        "dsmTasksSubscription": "local-dsm-to-dss-tasks-sub",
+        "dsmTasksResultTopic": "local-dss-to-dsm-results"
     },
     "studyExportBucket": "ddp-dev-study-exports-testing",
     "schedules": {

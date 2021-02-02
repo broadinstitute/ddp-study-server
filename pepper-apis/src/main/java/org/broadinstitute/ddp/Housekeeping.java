@@ -15,6 +15,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
+
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutureCallback;
 import com.google.api.core.ApiFutures;
@@ -52,6 +53,8 @@ import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.db.housekeeping.dao.JdbiEvent;
 import org.broadinstitute.ddp.db.housekeeping.dao.JdbiMessage;
 import org.broadinstitute.ddp.event.HousekeepingTaskReceiver;
+import org.broadinstitute.ddp.event.dsmtask.api.DsmTaskPubSubConnectionCreator;
+import org.broadinstitute.ddp.event.dsmtask.impl.DsmTaskProcessorFactoryImpl;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.exception.MessageBuilderException;
 import org.broadinstitute.ddp.exception.NoSendableEmailAddressException;
@@ -170,6 +173,8 @@ public class Housekeeping {
     private static Scheduler scheduler;
     private static Subscriber taskSubscriber;
 
+    private static DsmTaskPubSubConnectionCreator dsmTaskPubSubConnectionCreator;
+
     public static void setAfterHandler(AfterHandlerCallback afterHandler) {
         synchronized (afterHandlerGuard) {
             afterHandling = afterHandler;
@@ -220,6 +225,14 @@ public class Housekeeping {
         setupTaskReceiver(cfg, pubSubProject);
 
         final PubSubConnectionManager pubsubConnectionManager = new PubSubConnectionManager(usePubSubEmulator);
+
+        dsmTaskPubSubConnectionCreator = new DsmTaskPubSubConnectionCreator(
+                pubsubConnectionManager,
+                pubSubProject,
+                cfg.getString(ConfigFile.PUBSUB_DSM_TASKS_SUB),
+                cfg.getString(ConfigFile.PUBSUB_DSM_TASKS_RESULT_TOPIC),
+                new DsmTaskProcessorFactoryImpl());
+
         TransactionWrapper.useTxn(TransactionWrapper.DB.APIS, handle -> {
             JdbiMessageDestination messageDestinationDao = handle.attach(JdbiMessageDestination.class);
             for (String topicName : messageDestinationDao.getAllTopics()) {
@@ -447,6 +460,11 @@ public class Housekeeping {
         if (scheduler != null) {
             JobScheduler.shutdownScheduler(scheduler, true);
         }
+
+        if (dsmTaskPubSubConnectionCreator != null) {
+            dsmTaskPubSubConnectionCreator.destroy();
+        }
+
         LOG.info("Housekeeping is shutting down");
     }
 
