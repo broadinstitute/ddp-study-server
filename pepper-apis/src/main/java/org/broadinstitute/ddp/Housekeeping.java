@@ -232,6 +232,7 @@ public class Housekeeping {
                 cfg.getString(ConfigFile.PUBSUB_DSM_TASKS_SUB),
                 cfg.getString(ConfigFile.PUBSUB_DSM_TASKS_RESULT_TOPIC),
                 new DsmTaskProcessorFactoryImpl());
+        dsmTaskPubSubConnectionCreator.create();
 
         TransactionWrapper.useTxn(TransactionWrapper.DB.APIS, handle -> {
             JdbiMessageDestination messageDestinationDao = handle.attach(JdbiMessageDestination.class);

@@ -1,35 +1,63 @@
 package org.broadinstitute.ddp.event.dsmtask.impl.updateprofile;
 
+import static org.broadinstitute.ddp.event.dsmtask.api.DsmTaskConstants.LOG_PREFIX_DSM_TASK;
+import static org.slf4j.LoggerFactory.getLogger;
+
+
 import com.auth0.client.mgmt.ManagementAPI;
+import com.auth0.exception.Auth0Exception;
+import com.auth0.json.mgmt.users.User;
+import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.db.TransactionWrapper;
+import org.broadinstitute.ddp.db.TransactionWrapper.DB;
 import org.broadinstitute.ddp.db.dao.DataExportDao;
 import org.broadinstitute.ddp.db.dao.JdbiUser;
 import org.broadinstitute.ddp.db.dto.UserDto;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.json.auth0.Auth0CallResponse;
+import org.broadinstitute.ddp.json.errors.ApiError;
 import org.broadinstitute.ddp.util.Auth0Util;
 import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class UpdateEmailHandler {
 
-    private static final Logger LOG = LoggerFactory.getLogger(UpdateEmailHandler.class);
+    private static final Logger LOG = getLogger(UpdateEmailHandler.class);
 
     public void doIt(String userGuid, String email) {
-        TransactionWrapper.useTxn(handle -> {
-            updateEmail(handle, userGuid, email);
-        });
+        TransactionWrapper.useTxn(DB.APIS, handle -> updateEmail(handle, userGuid, email));
     }
 
-    private void  updateEmail(Handle handle, String userGuid, String email) {
+    private void updateEmail(Handle handle, String userGuid, String email) {
         UserDto userDto = handle.attach(JdbiUser.class).findByUserGuid(userGuid);
         validateUserForLoginDataUpdateEligibility(userDto);
-
-        LOG.info("Attempting to change the email of the user {}", userGuid);
+        LOG.info(LOG_PREFIX_DSM_TASK + "attempting to change the email of the user {}", userGuid);
         ManagementAPI mgmtAPI = Auth0Util.getManagementApiInstanceForUser(userDto.getUserGuid(), handle);
-        Auth0CallResponse status = Auth0Util.updateUserEmail(mgmtAPI, userDto, email);
 
+        User auth0User = getUserDataFromAuth0(mgmtAPI, userDto.getAuth0UserId());
+        if (!auth0User.getEmail().equals(email)) {
+            updateEmailInAuth0(handle, mgmtAPI, userDto, email, userGuid);
+        } else {
+            LOG.info(LOG_PREFIX_DSM_TASK, "did not change email {}, because it is equal to current", email);
+        }
+    }
+
+    private void validateUserForLoginDataUpdateEligibility(UserDto userDto) {
+        String errMsg = null;
+        if (userDto == null) {
+            errMsg = "User " + userDto.getUserGuid() + " does not exist in Pepper";
+            LOG.error(errMsg);
+        }
+        if (userDto.getAuth0UserId() == null) {
+            errMsg = "User " + userDto.getUserGuid() + " is not associated with the Auth0 user " + userDto.getAuth0UserId();
+        }
+        if (errMsg != null) {
+            throw new DDPException(errMsg);
+        }
+    }
+
+    private void updateEmailInAuth0(Handle handle, ManagementAPI mgmtAPI, UserDto userDto, String email, String userGuid) {
+        Auth0CallResponse status = Auth0Util.updateUserEmail(mgmtAPI, userDto, email);
         String errMsg = null;
         switch (status.getAuth0Status()) {
             case SUCCESS:
@@ -59,17 +87,13 @@ public class UpdateEmailHandler {
         }
     }
 
-    private void validateUserForLoginDataUpdateEligibility(UserDto userDto) {
-        String errMsg = null;
-        if (userDto == null) {
-            errMsg = "User " + userDto.getUserGuid() + " does not exist in Pepper";
-            LOG.error(errMsg);
-        }
-        if (userDto.getAuth0UserId() == null) {
-            errMsg = "User " + userDto.getUserGuid() + " is not associated with the Auth0 user " + userDto.getAuth0UserId();
-        }
-        if (errMsg != null) {
-            throw new DDPException(errMsg);
+    private User getUserDataFromAuth0(ManagementAPI mgmtAPI, String userGuid) {
+        try {
+            return mgmtAPI.users().get(userGuid, null).execute();
+        } catch (Auth0Exception e) {
+            ApiError err = new ApiError(ErrorCodes.USER_NOT_FOUND_IN_AUTH0, String.format(
+                    "Auth0User not found for user %s ", userGuid));
+            throw new DDPException(err.getMessage(), e);
         }
     }
 }

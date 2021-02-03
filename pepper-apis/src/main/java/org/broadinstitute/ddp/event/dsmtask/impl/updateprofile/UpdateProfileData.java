@@ -4,7 +4,7 @@ import com.google.gson.annotations.SerializedName;
 
 public class UpdateProfileData {
 
-    @SerializedName("event")
+    @SerializedName("email")
     private final String email;
     @SerializedName("firstName")
     private final String firstName;

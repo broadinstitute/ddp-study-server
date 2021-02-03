@@ -7,6 +7,10 @@ public abstract class DsmTaskProcessorFactoryAbstract implements DsmTaskProcesso
 
     protected final Map<String, DsmTaskDescriptor> dsmTaskDescriptors = new HashMap<>();
 
+    public DsmTaskProcessorFactoryAbstract() {
+        registerDsmTaskProcessors();
+    }
+
     protected  void registerDsmTaskProcessors(
             String dsmTaskType,
             DsmTaskProcessor dsmTaskProcessor,
