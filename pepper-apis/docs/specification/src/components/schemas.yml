@@ -1555,10 +1555,6 @@ Section:
       type: array
       items:
         $ref: '../pepper.yml#/components/schemas/Block'
-    hideProgressIndicator:
-      type: boolean
-      default: false
-      nullable: true
 Study.Summary:
   type: object
   required:
