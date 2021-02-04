@@ -1,5 +1,9 @@
 package org.broadinstitute.ddp.event.dsmtask.api;
 
+/**
+ * Data which fetched from DsmTask pubsub message
+ * published by DSM to pubsub topic "dsm-to-dss-tasks"
+ */
 public class DsmTaskData {
 
     public static final String ATTR_TASK_TYPE = "taskType";

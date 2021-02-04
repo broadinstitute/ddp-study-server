@@ -2,6 +2,10 @@ package org.broadinstitute.ddp.event.dsmtask.impl.updateprofile;
 
 import com.google.gson.annotations.SerializedName;
 
+/**
+ * Data which could be edited ina user's profile
+ * by DsmTask of type 'UPDATE_PROFILE'
+ */
 public class UpdateProfileData {
 
     @SerializedName("email")

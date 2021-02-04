@@ -1,5 +1,8 @@
 package org.broadinstitute.ddp.event.dsmtask.api;
 
+/**
+ * Data which put to pubsub message published by DSS to pubsub topic "dss-to-dsm-results".
+ */
 public class DsmTaskResultData {
 
     public static final String ATTR_TASK_MESSAGE_ID = "taskMessageId";

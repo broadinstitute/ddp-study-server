@@ -19,13 +19,14 @@ import org.broadinstitute.ddp.housekeeping.PubSubConnectionManager;
 import org.slf4j.Logger;
 
 /**
- * Create DSM Task Subscriber (reading messages from subscription "dsm-to-dss-tasks-sub")
+ * Creates DSM Task Subscriber (reading messages from subscription "dsm-to-dss-tasks-sub")
  * and DSM Task result Publisher (publishing results to topic "dss-to-dsm-results").
  *
  * <p>Creates {@link DsmTaskReceiver} which receives messages with DSM tasks, parses it and
- * run corresponding {@link DsmTaskProcessor} which does needed actions according to
- * DSM task 'taskType'. After doing an action it is called {@link DsmTaskResultSender}
- * which sends result to registered Publisher (to topic "dss-to-dsm-results").
+ * runs corresponding {@link DsmTaskProcessor} which does needed actions according to
+ * DSM task 'taskType' (each processor implemented to a specific 'taskType').
+ * After doing an action it is called the {@link DsmTaskResultSender}
+ * which sends result to topic "dss-to-dsm-results".
  */
 public class DsmTaskPubSubConnectionCreator {
 

@@ -18,8 +18,17 @@ import org.broadinstitute.ddp.util.GsonUtil;
 import org.slf4j.Logger;
 
 /**
- * Receive and process DsmTask messages (published by DSM to
- * topic ".
+ * Receive and process DsmTask messages which are published by DSM to
+ * topic "dsm-to-dss-tasks" and fetched by subscriber registered by
+ * {@link DsmTaskPubSubConnectionCreator}.
+ *
+ * <p>When DsmTask is received it is processed by a {@link DsmTaskProcessor}
+ * which detected by a message attribute 'taskType' (from
+ * factory {@link DsmTaskProcessorFactory}.
+ *
+ * <p>After task is processed the result is sent back to DSM by
+ * publishing result message to topic "dss-to-dsm-results".
+ * The result message sending delegated to {@link DsmTaskResultSender}
  */
 public class DsmTaskReceiver implements MessageReceiver {
 
@@ -77,7 +86,7 @@ public class DsmTaskReceiver implements MessageReceiver {
             return null;
         }
         if (participantGuid == null || userId == null) {
-            LOG.error(errorMsg("Some attributes are not specified in pubsub message [id={},taskType={}]:"
+            LOG.error(errorMsg("Some attributes are not specified in the pubsub message [id={},taskType={}]:"
                     + " participantGuid={}, userId={}"), messageId, taskType, participantGuid, userId);
             consumer.ack();
             return null;
@@ -87,7 +96,7 @@ public class DsmTaskReceiver implements MessageReceiver {
         if (payloadClass != null) {
             var payloadObject = gson.fromJson(data, payloadClass);
             if (payloadObject == null) {
-                LOG.error(errorMsg("Empty payload in pubsub message [id={},taskType={}]"), taskType, messageId);
+                LOG.error(errorMsg("Empty payload in the pubsub message [id={},taskType={}]"), taskType, messageId);
                 consumer.ack();
                 return null;
             }

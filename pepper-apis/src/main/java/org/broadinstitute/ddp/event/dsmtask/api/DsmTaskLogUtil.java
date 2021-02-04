@@ -1,5 +1,8 @@
 package org.broadinstitute.ddp.event.dsmtask.api;
 
+/**
+ * Adds a prefix to log messages in DsmTask API.
+ */
 public class DsmTaskLogUtil {
 
     private static final String LOG_PREFIX_DSM_TASK = "DSM_TASK";
