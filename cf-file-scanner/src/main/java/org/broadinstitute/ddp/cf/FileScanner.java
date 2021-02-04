@@ -21,19 +21,15 @@ import com.google.cloud.storage.StorageOptions;
 import com.google.protobuf.ByteString;
 import com.google.pubsub.v1.ProjectTopicName;
 import com.google.pubsub.v1.PubsubMessage;
-import com.typesafe.config.Config;
-import com.typesafe.config.ConfigFactory;
 
 public class FileScanner implements BackgroundFunction<FileScanner.Message> {
 
     private static final Logger logger = Logger.getLogger(FileScanner.class.getName());
 
-    private static final String APP_CONF = "./application.conf";
-    private static final String ENV_CONF_FILE = "config.file";
-    private static final String CFG_REFRESH_TIME = "refreshTime";
-    private static final String CFG_REFRESH_UNIT = "refreshUnit";
-    private static final String CFG_GCP_PROJECT_ID = "gcpProjectId";
-    private static final String CFG_RESULT_TOPIC = "resultTopic";
+    private static final String ENV_GCP_PROJECT = "GCP_PROJECT";
+    private static final String ENV_RESULT_TOPIC = "RESULT_TOPIC";
+    private static final String ENV_REFRESH_TIME = "REFRESH_TIME";
+    private static final String ENV_REFRESH_UNIT = "REFRESH_UNIT";
 
     private static final String ATTR_BUCKET_ID = "bucketId";
     private static final String ATTR_OBJECT_ID = "objectId";
@@ -52,22 +48,15 @@ public class FileScanner implements BackgroundFunction<FileScanner.Message> {
 
     // This is ran once on cold start.
     static {
-        Config cfg;
-        if (System.getenv(ENV_CONF_FILE) != null) {
-            cfg = ConfigFactory.load();
-        } else {
-            cfg = ConfigFactory.parseFile(new File(APP_CONF));
-        }
-
-        TimeUnit unit = TimeUnit.valueOf(cfg.getString(CFG_REFRESH_UNIT));
+        TimeUnit unit = TimeUnit.valueOf(getEnvOrThrow(ENV_REFRESH_UNIT));
         if (unit == TimeUnit.MICROSECONDS || unit == TimeUnit.NANOSECONDS) {
             throw new RuntimeException("Refresh time unit is too granular: " + unit);
         }
-        long refreshTime = cfg.getLong(CFG_REFRESH_TIME);
+        long refreshTime = Long.parseLong(getEnvOrThrow(ENV_REFRESH_TIME));
         refreshMillis = unit.toMillis(refreshTime);
 
-        String gcpProjectId = cfg.getString(CFG_GCP_PROJECT_ID);
-        String resultTopic = cfg.getString(CFG_RESULT_TOPIC);
+        String gcpProjectId = getEnvOrThrow(ENV_GCP_PROJECT);
+        String resultTopic = getEnvOrThrow(ENV_RESULT_TOPIC);
         try {
             storage = StorageOptions.newBuilder()
                     .setCredentials(GoogleCredentials.getApplicationDefault())
@@ -86,6 +75,14 @@ public class FileScanner implements BackgroundFunction<FileScanner.Message> {
 
         // Pre-load the database files.
         checkDatabaseFiles();
+    }
+
+    private static String getEnvOrThrow(String name) {
+        String value = System.getenv(name);
+        if (value == null || value.isBlank()) {
+            throw new RuntimeException("Missing environment variable: " + name);
+        }
+        return value;
     }
 
     // This method needs to be thread-safe since it uses shared global state and is used in `accept()`.

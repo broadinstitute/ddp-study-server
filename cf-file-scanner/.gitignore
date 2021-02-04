@@ -1,7 +1,8 @@
 # Do not check into git anything that's generated.
 
 *.iml
-application.conf
+*.env
+env.yaml
 
 .idea/
 build/
@@ -9,4 +10,4 @@ clamav/
 target/
 
 config/
-!config/example.conf
+!config/example.env

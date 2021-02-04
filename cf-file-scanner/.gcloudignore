@@ -4,8 +4,10 @@
 *.sh
 *.iml
 *.swp
+*.env
 .gcloudignore
 .gitignore
+env.yaml
 
 .idea/
 build/

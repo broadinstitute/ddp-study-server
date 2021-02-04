@@ -29,22 +29,24 @@ as a starting point to see how that bundle is built.
 ## Project layout
 
 ```
-build/              - This is where the clamav tarball go. Ignored during deploy.
-clamav/             - This is where clamav binaries go.
-config/             - Put your config file in here. Ignored during deploy.
-src/                - Project source.
-application.conf    - Main config file. This will be rendered during deploy.
-freshclam.conf      - Config file that freshclam needs in order to run.
-pom.xml             - Project POM file.
+build/          - This is where the clamav tarball go. Ignored during deploy.
+clamav/         - This is where clamav binaries go.
+config/         - Put your config file in here. Ignored during deploy.
+src/            - Project source.
+env.yaml        - Env vars file. This will be rendered during deploy.
+freshclam.conf  - Config file that freshclam needs in order to run.
+pom.xml         - Project POM file.
 ```
 
 ## Configuration
 
-This CF requires a configuration file in order to run.
+This CF is configured via environment variables.
 
-* See `config/example.conf` for an example.
-* For local development, you may want to create your own `config/local.conf`.
-* For deployment, config file is rendered as `application.conf` from Secret Manager.
+* See `config/example.env` for specification of the env vars.
+* For local development, you may want to create your own `config/local.env`.
+  * And then you can use it like so: `$ source config/local.env`.
+* For deployment, env vars file is rendered as `env.yaml` from Secret Manager.
+  * Deploys use YAML format for simplicity.
 
 ## Setup and deployment
 

@@ -17,9 +17,10 @@ SA_ACCT="cf-file-scanner@$PROJECT_ID.iam.gserviceaccount.com"
 
 ./build-clamav.sh
 
-echo 'Rendering config file...'
-gcloud --project=$PROJECT_ID secrets versions access latest \
-  --secret=$SECRET_ID > application.conf
+echo 'Rendering env vars file...'
+gcloud --project=$PROJECT_ID \
+  secrets versions access latest \
+  --secret=$SECRET_ID > env.yaml
 
 echo 'Uploading function...'
 echo 'Note: it might take a few minutes to upload clamav binaries.'
@@ -33,4 +34,5 @@ gcloud --project=$PROJECT_ID functions deploy $CF_NAME \
   --runtime java11 \
   --memory 2048MB \
   --timeout 5m \
-  --retry
+  --retry \
+  --env-vars-file env.yaml
