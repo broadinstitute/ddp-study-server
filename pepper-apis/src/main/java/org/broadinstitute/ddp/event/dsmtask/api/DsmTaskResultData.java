@@ -32,7 +32,8 @@ public class DsmTaskResultData {
     }
 
     public String toString() {
-        return "resultType=" + dsmTaskResultPayload.resultType + "; errorMessage=" + dsmTaskResultPayload.errorMessage;
+        return dsmTaskResultPayload.resultType + (dsmTaskResultPayload.errorMessage != null
+                ? '(' + dsmTaskResultPayload.errorMessage + ')' : "");
     }
 
 

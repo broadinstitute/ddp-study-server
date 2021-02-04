@@ -58,10 +58,14 @@ public class DsmTaskPubSubConnectionCreator {
     }
 
     public void create() {
-        createDsmTaskResultPubSubTopicPublisher();
-        dsmTaskResultSender = new DsmTaskResultSender(dsmTaskResultPublisher);
-        dsmTaskReceiver = new DsmTaskReceiver(projectSubscriptionName, dsmTaskProcessorFactory, dsmTaskResultSender);
-        createDsmTaskPubSubTopicSubscriber();
+        try {
+            createDsmTaskResultPubSubTopicPublisher();
+            dsmTaskResultSender = new DsmTaskResultSender(dsmTaskResultPublisher);
+            dsmTaskReceiver = new DsmTaskReceiver(projectSubscriptionName, dsmTaskProcessorFactory, dsmTaskResultSender);
+            createDsmTaskPubSubTopicSubscriber();
+        } catch (Exception e) {
+            LOG.error(errorMsg("Failed to create DsmTask pubsub connection"), e);
+        }
     }
 
     public void destroy() {
@@ -73,7 +77,7 @@ public class DsmTaskPubSubConnectionCreator {
                 dsmTaskResultPublisher.shutdown();
                 dsmTaskResultPublisher.awaitTermination(1, TimeUnit.MINUTES);
             } catch (Exception e) {
-                LOG.error(errorMsg("Failed to shutdown DsmTask Result publisher"), e);
+                LOG.error(errorMsg("Failed to shutdown DsmTask pubsub connection"), e);
             }
         }
     }
@@ -88,8 +92,8 @@ public class DsmTaskPubSubConnectionCreator {
         try {
             dsmTaskSubscriber.startAsync().awaitRunning(SUBSCRIBER_AWAIT_RUNNING_TIMEOUT, TimeUnit.SECONDS);
         } catch (TimeoutException e) {
-            throw new DDPException(errorMsg("Could not start subscriber for subscription"
-                    + projectSubscriptionName.getSubscription()), e);
+            throw new DDPException("Could not start subscriber for subscription"
+                    + projectSubscriptionName.getSubscription(), e);
         }
         LOG.info(infoMsg("Subscriber to subscription {} is STARTED"), projectSubscriptionName);
     }
@@ -98,8 +102,8 @@ public class DsmTaskPubSubConnectionCreator {
         try {
             dsmTaskResultPublisher = pubSubConnectionManager.getOrCreatePublisher(dsmTaskResultProjectTopicName);
         } catch (IOException e) {
-            throw new DDPException(errorMsg("Could not create publisher for topic "
-                    + dsmTaskResultProjectTopicName.getTopic()), e);
+            throw new DDPException("Could not create publisher for topic "
+                    + dsmTaskResultProjectTopicName.getTopic(), e);
         }
     }
 }

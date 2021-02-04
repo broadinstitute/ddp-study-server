@@ -38,7 +38,7 @@ public class UpdateEmailHandler {
         if (!auth0User.getEmail().equals(email)) {
             updateEmailInAuth0(handle, mgmtAPI, userDto, email, userGuid);
         } else {
-            LOG.info(infoMsg("Email {} is not updated, because it is equal to current"), email);
+            LOG.info(infoMsg("Email {} is not updated because it is equal to current email"), email);
         }
     }
 
@@ -46,7 +46,6 @@ public class UpdateEmailHandler {
         String errMsg = null;
         if (userDto == null) {
             errMsg = "User " + userDto.getUserGuid() + " does not exist in Pepper";
-            LOG.error(errMsg);
         }
         if (userDto.getAuth0UserId() == null) {
             errMsg = "User " + userDto.getUserGuid() + " is not associated with the Auth0 user " + userDto.getAuth0UserId();
@@ -62,7 +61,7 @@ public class UpdateEmailHandler {
         switch (status.getAuth0Status()) {
             case SUCCESS:
                 handle.attach(DataExportDao.class).queueDataSync(userDto.getUserId(), true);
-                LOG.info("The email of the user {} was successfuly changed", userGuid);
+                LOG.info("The email of the user {} was successfully changed", userGuid);
                 break;
             case INVALID_TOKEN:
                 errMsg = "The provided Auth0 token is invalid";

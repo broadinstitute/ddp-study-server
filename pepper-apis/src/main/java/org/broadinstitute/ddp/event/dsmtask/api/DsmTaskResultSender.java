@@ -48,7 +48,7 @@ public class DsmTaskResultSender {
                             ApiException apiException = ((ApiException) e);
                             statusCode = apiException.getStatusCode().getCode().toString();
                         }
-                        String msg = errorMsg("failed to send DsmTask response [" + dsmTaskResultData + "]");
+                        String msg = errorMsg("failed to send DsmTask response \"" + dsmTaskResultData + "\"");
                         if (statusCode != null) {
                             msg += ", statusCode=" + statusCode;
                         }
@@ -57,7 +57,7 @@ public class DsmTaskResultSender {
 
                     @Override
                     public void onSuccess(String messageId) {
-                        LOG.info(infoMsg("Result [{}] successfully published to pubsub topic={}. MessageId={}"),
+                        LOG.info(infoMsg("Result \"{}\" successfully published to pubsub topic={}. MessageId={}"),
                                 dsmTaskResultData, publisher.getTopicName(), messageId);
                     }
                 },

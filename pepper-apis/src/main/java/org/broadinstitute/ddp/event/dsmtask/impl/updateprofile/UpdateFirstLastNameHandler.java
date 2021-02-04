@@ -25,11 +25,11 @@ public class UpdateFirstLastNameHandler {
         var profileDao = handle.attach(UserProfileDao.class);
         UserProfile profile = profileDao.findProfileByUserGuid(userGuid).orElse(null);
         if (profile == null) {
-            throw new DDPException("Profile not found for user with guid: " + userGuid);
+            throw new DDPException("Profile not found for user with guid=" + userGuid);
         }
         if (StringUtils.compare(profile.getFirstName(), firstName) == 0
                 && StringUtils.compare(profile.getLastName(), lastName) == 0) {
-            LOG.info(infoMsg("firstName={}, lastName={} not updated, because it is equal to current"),
+            LOG.info(infoMsg("firstName={} and lastName={} are not updated because it is equal to current values"),
                     firstName, lastName);
         } else {
             var builder = new UserProfile.Builder(profile);

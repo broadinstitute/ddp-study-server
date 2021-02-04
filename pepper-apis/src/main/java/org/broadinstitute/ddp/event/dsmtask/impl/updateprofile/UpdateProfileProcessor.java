@@ -1,12 +1,7 @@
 package org.broadinstitute.ddp.event.dsmtask.impl.updateprofile;
 
-import static org.broadinstitute.ddp.event.dsmtask.api.DsmTaskResultData.DsmTaskResultType.ERROR;
-import static org.broadinstitute.ddp.event.dsmtask.api.DsmTaskResultData.DsmTaskResultType.SUCCESS;
-
-
 import org.broadinstitute.ddp.event.dsmtask.api.DsmTaskData;
-import org.broadinstitute.ddp.event.dsmtask.api.DsmTaskProcessor;
-import org.broadinstitute.ddp.event.dsmtask.api.DsmTaskResultData;
+import org.broadinstitute.ddp.event.dsmtask.api.DsmTaskProcessorAbstract;
 
 /**
  * Processes Dsm Task of taskType='UPDATE_PROFILE'.
@@ -19,21 +14,17 @@ import org.broadinstitute.ddp.event.dsmtask.api.DsmTaskResultData;
  * </ul>
  * NOTE: if any data (passed from Dsm) is null then it not updated.
  */
-public class UpdateProfileProcessor implements DsmTaskProcessor {
+public class UpdateProfileProcessor extends DsmTaskProcessorAbstract {
 
     public static final String TASK_TYPE__UPDATE_PROFILE = "UPDATE_PROFILE";
 
     @Override
-    public DsmTaskResultData processDsmTask(DsmTaskData dsmTaskData) {
+    public void doIt(DsmTaskData dsmTaskData) {
         UpdateProfileData updateProfileData = (UpdateProfileData)dsmTaskData.getPayloadObject();
-        try {
-            updateEmail(dsmTaskData.getParticipantGuid(), updateProfileData.getEmail());
-            updateFirstLastName(dsmTaskData.getParticipantGuid(),
-                    updateProfileData.getFirstName(), updateProfileData.getLastName());
-        } catch (Exception e) {
-            return new DsmTaskResultData(ERROR, e.getMessage(), dsmTaskData);
-        }
-        return new DsmTaskResultData(SUCCESS, dsmTaskData);
+
+        updateEmail(dsmTaskData.getParticipantGuid(), updateProfileData.getEmail());
+
+        updateFirstLastName(dsmTaskData.getParticipantGuid(), updateProfileData.getFirstName(), updateProfileData.getLastName());
     }
 
     private void updateEmail(String userGuid, String email) {

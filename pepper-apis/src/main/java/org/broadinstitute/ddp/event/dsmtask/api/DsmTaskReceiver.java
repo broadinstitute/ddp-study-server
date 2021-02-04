@@ -43,13 +43,19 @@ public class DsmTaskReceiver implements MessageReceiver {
     public void receiveMessage(PubsubMessage message, AckReplyConsumer consumer) {
         DsmTaskData dsmTaskData = parseMessage(message, consumer);
         if (dsmTaskData != null) {
-            LOG.info(infoMsg("processing started: taskType={}, participantId={}, userId={}, data={}"),
-                    dsmTaskData.getTaskType(), dsmTaskData.getParticipantGuid(), dsmTaskData.getUserId(), dsmTaskData.getPayload());
-            DsmTaskResultData dsmTaskResultData = dsmTaskProcessorFactory.getDsmTaskDescriptors(dsmTaskData.getTaskType())
-                    .getDsmTaskProcessor().processDsmTask(dsmTaskData);
-            sendResponse(dsmTaskResultData);
+            sendResponse(processDsmTask(dsmTaskData));
             consumer.ack();
         }
+    }
+
+    private DsmTaskResultData processDsmTask(DsmTaskData dsmTaskData) {
+        LOG.info(infoMsg("Task processing STARTED: taskType={}, participantId={}, userId={}, data={}"),
+                dsmTaskData.getTaskType(), dsmTaskData.getParticipantGuid(), dsmTaskData.getUserId(), dsmTaskData.getPayload());
+        DsmTaskResultData dsmTaskResultData = dsmTaskProcessorFactory.getDsmTaskDescriptors(dsmTaskData.getTaskType())
+                .getDsmTaskProcessor().processDsmTask(dsmTaskData);
+        LOG.info(infoMsg("Task processing COMPLETED: taskType={}, dsmTaskResultData={}"),
+                dsmTaskData.getTaskType(), dsmTaskResultData);
+        return dsmTaskResultData;
     }
 
     private DsmTaskData parseMessage(PubsubMessage message, AckReplyConsumer consumer) {
