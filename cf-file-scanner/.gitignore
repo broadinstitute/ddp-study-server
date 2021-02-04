@@ -1,0 +1,12 @@
+# Do not check into git anything that's generated.
+
+*.iml
+application.conf
+
+.idea/
+build/
+clamav/
+target/
+
+config/
+!config/example.conf

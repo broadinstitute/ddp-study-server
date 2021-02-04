@@ -1,0 +1,14 @@
+# These are things we don't want uploaded to gcloud on deploy.
+
+*.md
+*.sh
+*.iml
+*.swp
+.gcloudignore
+.gitignore
+
+.idea/
+build/
+config/
+target/
+src/test/
