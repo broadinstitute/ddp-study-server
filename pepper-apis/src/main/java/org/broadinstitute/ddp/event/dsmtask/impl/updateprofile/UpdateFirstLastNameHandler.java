@@ -1,6 +1,6 @@
 package org.broadinstitute.ddp.event.dsmtask.impl.updateprofile;
 
-import static org.broadinstitute.ddp.event.dsmtask.api.DsmTaskConstants.LOG_PREFIX_DSM_TASK;
+import static org.broadinstitute.ddp.event.dsmtask.api.DsmTaskLogUtil.infoMsg;
 import static org.slf4j.LoggerFactory.getLogger;
 
 
@@ -29,7 +29,7 @@ public class UpdateFirstLastNameHandler {
         }
         if (StringUtils.compare(profile.getFirstName(), firstName) == 0
                 && StringUtils.compare(profile.getLastName(), lastName) == 0) {
-            LOG.info(LOG_PREFIX_DSM_TASK, "did not change firstName={} or lastName={}, because it is equal to current",
+            LOG.info(infoMsg("firstName={}, lastName={} not updated, because it is equal to current"),
                     firstName, lastName);
         } else {
             var builder = new UserProfile.Builder(profile);

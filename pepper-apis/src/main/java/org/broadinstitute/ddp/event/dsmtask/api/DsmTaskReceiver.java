@@ -1,11 +1,11 @@
 package org.broadinstitute.ddp.event.dsmtask.api;
 
-import static org.broadinstitute.ddp.event.dsmtask.api.DsmTaskData.ATTR_PARTICIPANT_ID;
+import static org.broadinstitute.ddp.event.dsmtask.api.DsmTaskData.ATTR_PARTICIPANT_GUID;
 import static org.broadinstitute.ddp.event.dsmtask.api.DsmTaskData.ATTR_STUDY_GUID;
 import static org.broadinstitute.ddp.event.dsmtask.api.DsmTaskData.ATTR_TASK_TYPE;
 import static org.broadinstitute.ddp.event.dsmtask.api.DsmTaskData.ATTR_USER_ID;
-import static org.broadinstitute.ddp.event.dsmtask.api.DsmTaskConstants.LOG_PREFIX_DSM_TASK;
-import static org.broadinstitute.ddp.event.dsmtask.api.DsmTaskConstants.LOG_PREFIX_DSM_TASK_ERROR;
+import static org.broadinstitute.ddp.event.dsmtask.api.DsmTaskLogUtil.errorMsg;
+import static org.broadinstitute.ddp.event.dsmtask.api.DsmTaskLogUtil.infoMsg;
 import static org.slf4j.LoggerFactory.getLogger;
 
 
@@ -18,7 +18,8 @@ import org.broadinstitute.ddp.util.GsonUtil;
 import org.slf4j.Logger;
 
 /**
- * Receive and process Dsm task messages.
+ * Receive and process DsmTask messages (published by DSM to
+ * topic ".
  */
 public class DsmTaskReceiver implements MessageReceiver {
 
@@ -42,8 +43,8 @@ public class DsmTaskReceiver implements MessageReceiver {
     public void receiveMessage(PubsubMessage message, AckReplyConsumer consumer) {
         DsmTaskData dsmTaskData = parseMessage(message, consumer);
         if (dsmTaskData != null) {
-            LOG.info(LOG_PREFIX_DSM_TASK + "processing started: taskType={}, participantId={}, userId={}, data={}",
-                    dsmTaskData.getTaskType(), dsmTaskData.getParticipantId(), dsmTaskData.getUserId(), dsmTaskData.getPayload());
+            LOG.info(infoMsg("processing started: taskType={}, participantId={}, userId={}, data={}"),
+                    dsmTaskData.getTaskType(), dsmTaskData.getParticipantGuid(), dsmTaskData.getUserId(), dsmTaskData.getPayload());
             DsmTaskResultData dsmTaskResultData = dsmTaskProcessorFactory.getDsmTaskDescriptors(dsmTaskData.getTaskType())
                     .getDsmTaskProcessor().processDsmTask(dsmTaskData);
             sendResponse(dsmTaskResultData);
@@ -54,24 +55,24 @@ public class DsmTaskReceiver implements MessageReceiver {
     private DsmTaskData parseMessage(PubsubMessage message, AckReplyConsumer consumer) {
         String messageId = message.getMessageId();
         String taskType = message.getAttributesOrDefault(ATTR_TASK_TYPE, null);
-        String participantId = message.getAttributesOrDefault(ATTR_PARTICIPANT_ID, null);
+        String participantGuid = message.getAttributesOrDefault(ATTR_PARTICIPANT_GUID, null);
         String userId = message.getAttributesOrDefault(ATTR_USER_ID, null);
         String studyGuid = message.getAttributesOrDefault(ATTR_STUDY_GUID, null);
         String data = message.getData() != null ? message.getData().toStringUtf8() : null;
 
-        LOG.info(LOG_PREFIX_DSM_TASK
-                + "pubsub message received[subscription={}, id={}]: taskType={}, participantId={}, userId={}, studyGuid={}, data={}",
-                projectSubscriptionName, messageId, taskType, participantId, userId, studyGuid, data);
+        LOG.info(infoMsg("Pubsub message received[subscription={}, id={}]: taskType={}, participantGuid={}, userId={}, "
+                        + "studyGuid={}, data={}"),
+                projectSubscriptionName, messageId, taskType, participantGuid, userId, studyGuid, data);
 
         DsmTaskProcessorFactory.DsmTaskDescriptor dsmTaskDescriptor = dsmTaskProcessorFactory.getDsmTaskDescriptors(taskType);
         if (dsmTaskDescriptor == null) {
-            LOG.error(LOG_PREFIX_DSM_TASK_ERROR + "pubsub message [id={}] has unknown taskType={}", messageId, taskType);
+            LOG.error(errorMsg("Pubsub message [id={}] has unknown taskType={}"), messageId, taskType);
             consumer.ack();
             return null;
         }
-        if (participantId == null || userId == null) {
-            LOG.error(LOG_PREFIX_DSM_TASK_ERROR + "Some pubsub message [id={},taskType={}] attributes not specified:"
-                    + " participantId={}, userId={}", messageId, taskType, participantId, userId);
+        if (participantGuid == null || userId == null) {
+            LOG.error(errorMsg("Some attributes are not specified in pubsub message [id={},taskType={}]:"
+                    + " participantGuid={}, userId={}"), messageId, taskType, participantGuid, userId);
             consumer.ack();
             return null;
         }
@@ -80,14 +81,13 @@ public class DsmTaskReceiver implements MessageReceiver {
         if (payloadClass != null) {
             var payloadObject = gson.fromJson(data, payloadClass);
             if (payloadObject == null) {
-                LOG.error(LOG_PREFIX_DSM_TASK_ERROR + "DsmTask pubsub message [id={},taskType={}] payload should not be empty",
-                        taskType, messageId);
+                LOG.error(errorMsg("Empty payload in pubsub message [id={},taskType={}]"), taskType, messageId);
                 consumer.ack();
                 return null;
             }
-            return new DsmTaskData(messageId, taskType, participantId, userId, studyGuid, data, payloadObject);
+            return new DsmTaskData(messageId, taskType, participantGuid, userId, studyGuid, data, payloadObject);
         }
-        return new DsmTaskData(messageId, taskType, participantId, userId, studyGuid);
+        return new DsmTaskData(messageId, taskType, participantGuid, userId, studyGuid);
     }
 
     private void sendResponse(DsmTaskResultData dsmTaskResultData) {

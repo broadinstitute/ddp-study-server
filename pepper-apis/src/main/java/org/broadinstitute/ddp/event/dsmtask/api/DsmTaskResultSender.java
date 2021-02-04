@@ -1,11 +1,11 @@
 package org.broadinstitute.ddp.event.dsmtask.api;
 
-import static org.broadinstitute.ddp.event.dsmtask.api.DsmTaskConstants.LOG_PREFIX_DSM_TASK;
-import static org.broadinstitute.ddp.event.dsmtask.api.DsmTaskConstants.LOG_PREFIX_DSM_TASK_ERROR;
-import static org.broadinstitute.ddp.event.dsmtask.api.DsmTaskData.ATTR_PARTICIPANT_ID;
+import static org.broadinstitute.ddp.event.dsmtask.api.DsmTaskData.ATTR_PARTICIPANT_GUID;
 import static org.broadinstitute.ddp.event.dsmtask.api.DsmTaskData.ATTR_STUDY_GUID;
 import static org.broadinstitute.ddp.event.dsmtask.api.DsmTaskData.ATTR_TASK_TYPE;
 import static org.broadinstitute.ddp.event.dsmtask.api.DsmTaskData.ATTR_USER_ID;
+import static org.broadinstitute.ddp.event.dsmtask.api.DsmTaskLogUtil.errorMsg;
+import static org.broadinstitute.ddp.event.dsmtask.api.DsmTaskLogUtil.infoMsg;
 import static org.broadinstitute.ddp.event.dsmtask.api.DsmTaskResultData.ATTR_TASK_MESSAGE_ID;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -48,7 +48,7 @@ public class DsmTaskResultSender {
                             ApiException apiException = ((ApiException) e);
                             statusCode = apiException.getStatusCode().getCode().toString();
                         }
-                        String msg = LOG_PREFIX_DSM_TASK_ERROR + "failed to send DsmTask response [" + dsmTaskResultData + "]";
+                        String msg = errorMsg("failed to send DsmTask response [" + dsmTaskResultData + "]");
                         if (statusCode != null) {
                             msg += ", statusCode=" + statusCode;
                         }
@@ -57,7 +57,8 @@ public class DsmTaskResultSender {
 
                     @Override
                     public void onSuccess(String messageId) {
-                        LOG.info(LOG_PREFIX_DSM_TASK + " result [{}] successfully published. MessageId={}", dsmTaskResultData, messageId);
+                        LOG.info(infoMsg("Result [{}] successfully published to pubsub topic={}. MessageId={}"),
+                                dsmTaskResultData, publisher.getTopicName(), messageId);
                     }
                 },
                 MoreExecutors.directExecutor()
@@ -65,12 +66,12 @@ public class DsmTaskResultSender {
     }
 
     private PubsubMessage createPubSubMessage(DsmTaskResultData dsmTaskResultData) {
-        var messageJson = gson.toJson(dsmTaskResultData);
+        var messageJson = gson.toJson(dsmTaskResultData.getDsmTaskResultPayload());
         PubsubMessage.Builder messageBuilder = PubsubMessage.newBuilder()
                 .setData(ByteString.copyFromUtf8(messageJson))
                 .putAttributes(ATTR_TASK_MESSAGE_ID, dsmTaskResultData.getDsmTaskData().getMessageId())
                 .putAttributes(ATTR_TASK_TYPE, dsmTaskResultData.getDsmTaskData().getTaskType())
-                .putAttributes(ATTR_PARTICIPANT_ID, dsmTaskResultData.getDsmTaskData().getParticipantId())
+                .putAttributes(ATTR_PARTICIPANT_GUID, dsmTaskResultData.getDsmTaskData().getParticipantGuid())
                 .putAttributes(ATTR_USER_ID, dsmTaskResultData.getDsmTaskData().getUserId())
                 .putAttributes(ATTR_STUDY_GUID, dsmTaskResultData.getDsmTaskData().getStudyGuid());
         return messageBuilder.build();

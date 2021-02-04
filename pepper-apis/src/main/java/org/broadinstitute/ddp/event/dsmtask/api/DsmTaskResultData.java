@@ -1,7 +1,5 @@
 package org.broadinstitute.ddp.event.dsmtask.api;
 
-import com.google.gson.annotations.SerializedName;
-
 public class DsmTaskResultData {
 
     public static final String ATTR_TASK_MESSAGE_ID = "taskMessageId";
@@ -11,10 +9,7 @@ public class DsmTaskResultData {
         ERROR
     }
 
-    @SerializedName("resultType")
-    private final DsmTaskResultType resultType;
-    @SerializedName("errorMessage")
-    private final String errorMessage;
+    private final DsmTaskResultPayload dsmTaskResultPayload;
 
     private final DsmTaskData dsmTaskData;
 
@@ -24,17 +19,12 @@ public class DsmTaskResultData {
     }
 
     public DsmTaskResultData(DsmTaskResultType resultType, String errorMessage, DsmTaskData dsmTaskData) {
-        this.resultType = resultType;
-        this.errorMessage = errorMessage;
+        this.dsmTaskResultPayload = new DsmTaskResultPayload(resultType, errorMessage);
         this.dsmTaskData = dsmTaskData;
     }
 
-    public DsmTaskResultType getResultType() {
-        return resultType;
-    }
-
-    public String getErrorMessage() {
-        return errorMessage;
+    public DsmTaskResultPayload getDsmTaskResultPayload() {
+        return dsmTaskResultPayload;
     }
 
     public DsmTaskData getDsmTaskData() {
@@ -42,6 +32,26 @@ public class DsmTaskResultData {
     }
 
     public String toString() {
-        return "resultType=" + resultType + "; errorMessage=" + errorMessage;
+        return "resultType=" + dsmTaskResultPayload.resultType + "; errorMessage=" + dsmTaskResultPayload.errorMessage;
+    }
+
+
+    public static class DsmTaskResultPayload {
+
+        private final DsmTaskResultType resultType;
+        private final String errorMessage;
+
+        public DsmTaskResultPayload(DsmTaskResultType resultType, String errorMessage) {
+            this.resultType = resultType;
+            this.errorMessage = errorMessage;
+        }
+
+        public DsmTaskResultType getResultType() {
+            return resultType;
+        }
+
+        public String getErrorMessage() {
+            return errorMessage;
+        }
     }
 }

@@ -1,7 +1,7 @@
 package org.broadinstitute.ddp.event.dsmtask.api;
 
-import static org.broadinstitute.ddp.event.dsmtask.api.DsmTaskConstants.LOG_PREFIX_DSM_TASK;
-import static org.broadinstitute.ddp.event.dsmtask.api.DsmTaskConstants.LOG_PREFIX_DSM_TASK_ERROR;
+import static org.broadinstitute.ddp.event.dsmtask.api.DsmTaskLogUtil.errorMsg;
+import static org.broadinstitute.ddp.event.dsmtask.api.DsmTaskLogUtil.infoMsg;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
@@ -73,7 +73,7 @@ public class DsmTaskPubSubConnectionCreator {
                 dsmTaskResultPublisher.shutdown();
                 dsmTaskResultPublisher.awaitTermination(1, TimeUnit.MINUTES);
             } catch (Exception e) {
-                LOG.error(LOG_PREFIX_DSM_TASK_ERROR + "failed to shutdown DsmTask Result publisher", e);
+                LOG.error(errorMsg("Failed to shutdown DsmTask Result publisher"), e);
             }
         }
     }
@@ -88,17 +88,18 @@ public class DsmTaskPubSubConnectionCreator {
         try {
             dsmTaskSubscriber.startAsync().awaitRunning(SUBSCRIBER_AWAIT_RUNNING_TIMEOUT, TimeUnit.SECONDS);
         } catch (TimeoutException e) {
-            throw new DDPException(LOG_PREFIX_DSM_TASK_ERROR + "could not start DSM tasks subscriber", e);
+            throw new DDPException(errorMsg("Could not start subscriber for subscription"
+                    + projectSubscriptionName.getSubscription()), e);
         }
-        LOG.info(LOG_PREFIX_DSM_TASK + "subscriber to subscription {} is STARTED", projectSubscriptionName);
+        LOG.info(infoMsg("Subscriber to subscription {} is STARTED"), projectSubscriptionName);
     }
 
     public void createDsmTaskResultPubSubTopicPublisher() {
         try {
             dsmTaskResultPublisher = pubSubConnectionManager.getOrCreatePublisher(dsmTaskResultProjectTopicName);
         } catch (IOException e) {
-            throw new DDPException(LOG_PREFIX_DSM_TASK_ERROR + "could not create publisher for topic="
-                    + dsmTaskResultProjectTopicName.getTopic(), e);
+            throw new DDPException(errorMsg("Could not create publisher for topic "
+                    + dsmTaskResultProjectTopicName.getTopic()), e);
         }
     }
 }

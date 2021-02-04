@@ -27,8 +27,8 @@ public class UpdateProfileProcessor implements DsmTaskProcessor {
     public DsmTaskResultData processDsmTask(DsmTaskData dsmTaskData) {
         UpdateProfileData updateProfileData = (UpdateProfileData)dsmTaskData.getPayloadObject();
         try {
-            updateEmail(dsmTaskData.getUserId(), updateProfileData.getEmail());
-            updateFirstLastName(dsmTaskData.getUserId(),
+            updateEmail(dsmTaskData.getParticipantGuid(), updateProfileData.getEmail());
+            updateFirstLastName(dsmTaskData.getParticipantGuid(),
                     updateProfileData.getFirstName(), updateProfileData.getLastName());
         } catch (Exception e) {
             return new DsmTaskResultData(ERROR, e.getMessage(), dsmTaskData);

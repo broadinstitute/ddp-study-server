@@ -1,6 +1,6 @@
 package org.broadinstitute.ddp.event.dsmtask.impl.updateprofile;
 
-import static org.broadinstitute.ddp.event.dsmtask.api.DsmTaskConstants.LOG_PREFIX_DSM_TASK;
+import static org.broadinstitute.ddp.event.dsmtask.api.DsmTaskLogUtil.infoMsg;
 import static org.slf4j.LoggerFactory.getLogger;
 
 
@@ -31,14 +31,14 @@ public class UpdateEmailHandler {
     private void updateEmail(Handle handle, String userGuid, String email) {
         UserDto userDto = handle.attach(JdbiUser.class).findByUserGuid(userGuid);
         validateUserForLoginDataUpdateEligibility(userDto);
-        LOG.info(LOG_PREFIX_DSM_TASK + "attempting to change the email of the user {}", userGuid);
+        LOG.info(infoMsg("Attempting to change the email of the user {}"), userGuid);
         ManagementAPI mgmtAPI = Auth0Util.getManagementApiInstanceForUser(userDto.getUserGuid(), handle);
 
         User auth0User = getUserDataFromAuth0(mgmtAPI, userDto.getAuth0UserId());
         if (!auth0User.getEmail().equals(email)) {
             updateEmailInAuth0(handle, mgmtAPI, userDto, email, userGuid);
         } else {
-            LOG.info(LOG_PREFIX_DSM_TASK, "did not change email {}, because it is equal to current", email);
+            LOG.info(infoMsg("Email {} is not updated, because it is equal to current"), email);
         }
     }
 
