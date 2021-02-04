@@ -49,7 +49,10 @@ This CF requires a configuration file in order to run.
 ## Setup and deployment
 
 * Create `cf-file-scanner` secret in Secret Manager.
-* Set up the necessary buckets and pubsub topics in gcloud.
+* Create new `cf-file-scanner` service account.
+* Set up the upload bucket and inbound/outbound pubsub topics.
+* Assign `Storage Object Viewer` for the SA on the upload bucket.
+* Assign `Pub/Sub Publisher` for the SA on the result topic.
 * Use the `init-bucket-event.sh` to setup GCS notification.
 * Deploy using `deploy.sh`.
 

@@ -10,7 +10,6 @@
 
 set -e
 
-echo ''
 echo '=> Updating Ubuntu...'
 apt-get update
 
@@ -30,20 +29,20 @@ echo '=> Preparing staging area...'
 mkdir /staging
 cd /staging
 
-echo ''
 echo '=> Copying over binaries and shared library objects...'
 cp /usr/bin/clamscan .
 cp /usr/bin/freshclam .
 cp /usr/lib/x86_64-linux-gnu/*.so* .
 cp /lib/x86_64-linux-gnu/*.so* .
 
-echo ''
 echo '=> Removing pre-installed libraries from staging area...'
 rm $prev_usr_lib
 rm $prev_lib
 
-echo ''
 echo '=> Removing duplicate library objects...'
+# Library objects are often symlinks to actual versioned lib files. However,
+# when we do a copy, the symlinks get resolved and we copy over the actual
+# underlying files. This means we end up with a lot of duplicate object files.
 # We (mostly) only use the objects with single-number versions, so delete the
 # other ones to minimize size of bundle. Start with the triple-numbers.
 rm lib*.so.*.*.*
@@ -59,16 +58,13 @@ rm libkrb*.so.*.*
 # Remove duplicate LLVM. Not sure why but clamav doesn't use the not-numbered one.
 rm libLLVM-*.so
 
-echo ''
 echo '=> Packaging clamav bundle...'
 tar cvzf clamav.tar.gz *
 
-echo ''
 echo '=> Moving bundle artifact into /build...'
 if [[ ! -d /build ]]; then
   mkdir /build
 fi
 mv clamav.tar.gz /build
 
-echo ''
-echo '=> Done!'
+echo '=> Finished building clamav bundle.'

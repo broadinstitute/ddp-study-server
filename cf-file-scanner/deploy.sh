@@ -13,6 +13,7 @@ PROJECT_ID="$1"
 SECRET_ID='cf-file-scanner'
 TOPIC_NAME='cf-file-scanner'
 CF_NAME='cf-file-scanner'
+SA_ACCT="cf-file-scanner@$PROJECT_ID.iam.gserviceaccount.com"
 
 ./build-clamav.sh
 
@@ -27,7 +28,9 @@ echo ''
 gcloud --project=$PROJECT_ID functions deploy $CF_NAME \
   --entry-point org.broadinstitute.ddp.cf.FileScanner \
   --trigger-topic $TOPIC_NAME \
+  --service-account $SA_ACCT \
   --region us-central1 \
   --runtime java11 \
   --memory 2048MB \
-  --timeout 9m
+  --timeout 5m \
+  --retry

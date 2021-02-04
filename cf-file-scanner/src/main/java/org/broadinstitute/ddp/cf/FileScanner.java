@@ -203,6 +203,9 @@ public class FileScanner implements BackgroundFunction<FileScanner.Message> {
             return;
         }
 
+        Instant createdAt = Instant.ofEpochMilli(blob.getCreateTime());
+        logger.info("Found file that was created at: " + createdAt.toString());
+
         // Ensure database is up-to-date before scanning.
         checkDatabaseFiles();
 
