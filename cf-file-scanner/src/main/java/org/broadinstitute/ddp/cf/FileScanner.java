@@ -2,6 +2,9 @@ package org.broadinstitute.ddp.cf;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.channels.Channels;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.HashMap;
@@ -18,6 +21,7 @@ import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.BlobId;
 import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageOptions;
+import com.google.common.io.ByteStreams;
 import com.google.protobuf.ByteString;
 import com.google.pubsub.v1.ProjectTopicName;
 import com.google.pubsub.v1.PubsubMessage;
@@ -99,7 +103,15 @@ public class FileScanner implements BackgroundFunction<FileScanner.Message> {
         }
     }
 
-    private static CommandResult runCommand(boolean withInput, byte[] input, String... command) {
+    /**
+     * Run a shell command.
+     *
+     * @param withInput whether to provide input to command
+     * @param input     if provided, we'll take ownership of this input stream and close it when done
+     * @param command   command and its arguments
+     * @return output and exit status code of command
+     */
+    private static CommandResult runCommand(boolean withInput, InputStream input, String... command) {
         var builder = new ProcessBuilder(command);
         builder.environment().put("LD_LIBRARY_PATH", BIN_DIR);
         builder.redirectErrorStream(true);
@@ -113,12 +125,16 @@ public class FileScanner implements BackgroundFunction<FileScanner.Message> {
         }
 
         if (withInput && input != null) {
-            try {
-                process.getOutputStream().write(input);
-                process.getOutputStream().flush();
-                process.getOutputStream().close();
+            try (OutputStream out = process.getOutputStream()) {
+                ByteStreams.copy(input, out);
+                out.flush();
             } catch (IOException e) {
                 throw new RuntimeException("Error writing input to command: " + command[0], e);
+            }
+            try {
+                input.close();
+            } catch (IOException e) {
+                throw new RuntimeException("Error closing input content stream for command: " + command[0], e);
             }
         }
 
@@ -139,6 +155,9 @@ public class FileScanner implements BackgroundFunction<FileScanner.Message> {
         return new CommandResult(output, exitCode);
     }
 
+    /**
+     * Refresh the virus signature database files.
+     */
     private static void runFreshclam() {
         long start = System.currentTimeMillis();
         CommandResult result = runCommand(false, null,
@@ -158,7 +177,13 @@ public class FileScanner implements BackgroundFunction<FileScanner.Message> {
         }
     }
 
-    private static ScanResult runClamscan(byte[] content) {
+    /**
+     * Run a scan on the content input.
+     *
+     * @param content we'll take ownership of this input stream and close it at the end
+     * @return whether clean or infected
+     */
+    private static ScanResult runClamscan(InputStream content) {
         CommandResult result = runCommand(true, content,
                 CLAMSCAN_BIN,
                 "--database=" + DB_DIR,
@@ -190,24 +215,24 @@ public class FileScanner implements BackgroundFunction<FileScanner.Message> {
             return;
         }
 
-        BlobId blobId = BlobId.of(bucketName, fileName);
-        logger.info("Looking up file: " + blobId.toString());
-        Blob blob = storage.get(blobId);
+        logger.info("Looking up file: bucket=" + bucketName + " name=" + fileName);
+        Blob blob = storage.get(bucketName, fileName);
         if (blob == null || !blob.exists()) {
-            logger.severe("Could not find file: " + blobId.toString());
+            logger.severe("Could not find file: bucket=" + bucketName + " name=" + fileName);
             // This might be a duplicate (due to pubsub at-least-once delivery), in which case the
             // file might have already been moved. Exit gracefully so we don't incur a cold start.
             return;
         }
 
+        BlobId blobId = blob.getBlobId();
         Instant createdAt = Instant.ofEpochMilli(blob.getCreateTime());
-        logger.info("Found file that was created at: " + createdAt.toString());
+        logger.info("Found file that was created at " + createdAt.toString());
 
         // Ensure database is up-to-date before scanning.
         checkDatabaseFiles();
 
         logger.info("Scanning file: " + blobId.toString());
-        ScanResult result = runClamscan(blob.getContent());
+        ScanResult result = runClamscan(Channels.newInputStream(blob.reader()));
 
         String data = message.getData() != null ? message.getData() : "";
         var resultMessage = PubsubMessage.newBuilder()
