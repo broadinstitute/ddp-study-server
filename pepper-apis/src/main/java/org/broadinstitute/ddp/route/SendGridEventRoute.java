@@ -34,7 +34,7 @@ public class SendGridEventRoute implements Route {
         checkBody(request);
         var sendGridEvents = sendGridEventService.parseSendGridEvents(request.body());
         if (sendGridEvents.length > 0) {
-            sendGridEventService.logSendGridEvents(sendGridEvents);
+            sendGridEventService.logSendGridEvents(sendGridEvents, request.body());
             persistLogEvent(sendGridEvents);
         }
         response.status(SC_OK);

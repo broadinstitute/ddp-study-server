@@ -24,7 +24,8 @@ public class SendGridEventService {
         return gson.fromJson(sendGridEventsJson, SendGridEvent[].class);
     }
 
-    public void logSendGridEvents(SendGridEvent[] sendGridEvents) {
+    public void logSendGridEvents(SendGridEvent[] sendGridEvents, String sendGridEventsJson) {
+        LOG.info("SendGrid-EVENT-PAYLOAD: " + sendGridEventsJson);  // temporary for events investigation purposes (TODO: to be removed)
         for (var event : sendGridEvents) {
             if (LOG.isDebugEnabled() || LOG.isTraceEnabled()) {
                 LOG.debug("SendGrid-EVENT[{}]: email={}, timestamp={}, sg_event_id={}, reason={}, status={},\n"
