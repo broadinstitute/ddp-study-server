@@ -471,17 +471,16 @@ public class DataDonationPlatform {
 
         // User activity answers routes
         FormActivityService formService = new FormActivityService(interpreter);
+        var fileUploadService = FileUploadService.fromConfig(cfg);
 
         patch(API.USER_ACTIVITY_ANSWERS,
-                new PatchFormAnswersRoute(formService, activityValidationService, interpreter),
+                new PatchFormAnswersRoute(formService, activityValidationService, fileUploadService, interpreter),
                 responseSerializer);
         put(
                 API.USER_ACTIVITY_ANSWERS,
                 new PutFormAnswersRoute(workflowService, activityValidationService, formInstanceDao, interpreter),
                 responseSerializer
         );
-
-        var fileUploadService = FileUploadService.fromConfig(cfg);
         post(API.USER_ACTIVITY_UPLOADS, new CreateUserActivityUploadRoute(fileUploadService), responseSerializer);
 
         // User study invitations

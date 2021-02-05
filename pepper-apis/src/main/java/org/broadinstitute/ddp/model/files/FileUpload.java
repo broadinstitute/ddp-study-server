@@ -18,7 +18,7 @@ public class FileUpload {
     private final FileUploadStatus status;
     private final Instant statusChangedAt;
     private final Instant createdAt;
-    private final boolean isReplaced;
+    private final Instant uploadedAt;
 
     @JdbiConstructor
     public FileUpload(@ColumnName("file_upload_id") long id,
@@ -32,7 +32,7 @@ public class FileUpload {
                       @ColumnName("status") FileUploadStatus status,
                       @ColumnName("status_changed_at") Instant statusChangedAt,
                       @ColumnName("created_at") Instant createdAt,
-                      @ColumnName("is_replaced") boolean isReplaced) {
+                      @ColumnName("uploaded_at") Instant uploadedAt) {
         this.id = id;
         this.guid = guid;
         this.blobName = blobName;
@@ -44,7 +44,7 @@ public class FileUpload {
         this.status = status;
         this.statusChangedAt = statusChangedAt;
         this.createdAt = createdAt;
-        this.isReplaced = isReplaced;
+        this.uploadedAt = uploadedAt;
     }
 
     /**
@@ -125,9 +125,9 @@ public class FileUpload {
     }
 
     /**
-     * Whether this file upload has been replaced by another upload. Replaced uploads should be removed.
+     * Returns timestamp of when file was finished uploading, null if not yet uploaded.
      */
-    public boolean isReplaced() {
-        return isReplaced;
+    public Instant getUploadedAt() {
+        return uploadedAt;
     }
 }

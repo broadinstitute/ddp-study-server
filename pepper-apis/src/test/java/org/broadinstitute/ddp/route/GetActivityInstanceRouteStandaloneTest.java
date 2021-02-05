@@ -43,6 +43,7 @@ import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dao.AnswerDao;
 import org.broadinstitute.ddp.db.dao.AuthDao;
+import org.broadinstitute.ddp.db.dao.FileUploadDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
 import org.broadinstitute.ddp.db.dao.JdbiQuestion;
@@ -62,6 +63,7 @@ import org.broadinstitute.ddp.model.activity.definition.i18n.Translation;
 import org.broadinstitute.ddp.model.activity.definition.question.AgreementQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.CompositeQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.DateQuestionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.FileQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistGroupDef;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistOptionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistQuestionDef;
@@ -74,6 +76,7 @@ import org.broadinstitute.ddp.model.activity.definition.validation.LengthRuleDef
 import org.broadinstitute.ddp.model.activity.definition.validation.RequiredRuleDef;
 import org.broadinstitute.ddp.model.activity.instance.ActivityInstance;
 import org.broadinstitute.ddp.model.activity.instance.answer.CompositeAnswer;
+import org.broadinstitute.ddp.model.activity.instance.answer.FileAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
 import org.broadinstitute.ddp.model.activity.types.ActivityType;
@@ -89,8 +92,10 @@ import org.broadinstitute.ddp.model.activity.types.RuleType;
 import org.broadinstitute.ddp.model.activity.types.SuggestionType;
 import org.broadinstitute.ddp.model.activity.types.TemplateType;
 import org.broadinstitute.ddp.model.activity.types.TextInputType;
+import org.broadinstitute.ddp.model.files.FileUpload;
 import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
 import org.broadinstitute.ddp.model.user.UserProfile;
+import org.broadinstitute.ddp.util.GuidUtils;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
 import org.broadinstitute.ddp.util.TestUtil;
 import org.jdbi.v3.core.Handle;
@@ -117,6 +122,7 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
     private static TextQuestionDef txt1;
     private static TextQuestionDef txt2;
     private static CompositeQuestionDef comp1;
+    private static FileUpload upload;
 
     @BeforeClass
     public static void setup() throws Exception {
@@ -231,12 +237,18 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
                 .build();
         var compSection = new FormSectionDef(null, List.of(new QuestionBlockDef(comp1)));
 
+        FileQuestionDef file1 = FileQuestionDef
+                .builder("FILE" + System.currentTimeMillis(), Template.text("file"))
+                .build();
+        var fileSection = new FormSectionDef(null, List.of(new QuestionBlockDef(file1)));
+
         activityCode = "ACT_ROUTE_ACT" + Instant.now().toEpochMilli();
         activity = FormActivityDef.generalFormBuilder(activityCode, "v1", testData.getStudyGuid())
                 .addName(new Translation("en", "activity " + activityCode))
                 .addSections(Arrays.asList(dateSection, textSection, plistSection, textSection2, agreementSection, contentSection))
                 .addSection(iconSection)
                 .addSection(compSection)
+                .addSection(fileSection)
                 .build();
         activityVersionDto = handle.attach(ActivityDao.class).insertActivity(
                 activity, RevisionMetadata.now(testData.getUserId(), "add " + activityCode)
@@ -253,6 +265,14 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
         var compAnswer = new CompositeAnswer(null, comp1.getStableId(), null);
         compAnswer.addRowOfChildAnswers(new TextAnswer(null, comp1.getChildren().get(0).getStableId(), null, "comp child"));
         answerDao.createAnswer(testData.getUserId(), instanceDto.getId(), compAnswer);
+
+        var fileDao = handle.attach(FileUploadDao.class);
+        upload = fileDao.createAuthorized(GuidUtils.randomFileUploadGuid(), "blob", "application/pdf", "file.pdf",
+                123, testData.getUserId(), testData.getUserId());
+        fileDao.markUploaded(upload.getId(), Instant.now());
+        var fileAnswer = new FileAnswer(null, file1.getStableId(), null,
+                fileDao.findFileInfoByGuid(upload.getGuid()).get());
+        answerDao.createAnswer(testData.getUserId(), instanceDto.getId(), fileAnswer);
     }
 
     private static Template newTemplate() {
@@ -267,6 +287,8 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
     public static void cleanup() {
         TransactionWrapper.useTxn(handle -> {
             handle.attach(ActivityInstanceDao.class).deleteAllByIds(Set.of(instanceDto.getId()));
+            handle.attach(AnswerDao.class).deleteAllByInstanceIds(Set.of(instanceDto.getId()));
+            handle.attach(FileUploadDao.class).deleteById(upload.getId());
         });
     }
 
@@ -794,6 +816,18 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
                 .body("answers.size()", equalTo(1))
                 .body("children.size()", equalTo(1))
                 .body("children[0].answers.size()", equalTo(0));
+    }
+
+    @Test
+    public void testFileQuestionAndAnswer() {
+        testFor200AndExtractResponse()
+                .then().assertThat()
+                .log().all()
+                .root("sections[8].blocks[0].question")
+                .body("questionType", equalTo(QuestionType.FILE.name()))
+                .body("answers.size()", equalTo(1))
+                .body("answers[0].value.fileName", equalTo("file.pdf"))
+                .body("answers[0].value.fileSize", equalTo(123));
     }
 
     private Response testFor200AndExtractResponse() {
