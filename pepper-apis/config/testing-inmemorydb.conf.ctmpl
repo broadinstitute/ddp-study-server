@@ -95,8 +95,11 @@
     "fileUploads": {
         "uploadsBucket": "ddp-local-file-uploads",
         "scannedBucket": "ddp-local-file-scanned",
+        "quarantineBucket": "ddp-local-file-quarantine",
         "maxFileSizeBytes": 2000000,
         "maxSignedUrlMins": 5,
+        "enableScanResultHandler": false,
+        "scanResultSubscription": "cf-file-scan-result-local-hkeep-sub",
         "signerServiceAccount": {{$fileUploads.signerServiceAccount | toJSONPretty}}
     },
     "pdfArchiveBucket": "pepper-pdf-dev",
