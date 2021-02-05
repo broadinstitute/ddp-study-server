@@ -5,7 +5,7 @@ import static org.broadinstitute.ddp.constants.ConfigFile.Auth0LogEvents.AUTH0_L
 import static org.broadinstitute.ddp.constants.ConfigFile.Sendgrid.EVENTS_VERIFICATION_KEY;
 import static org.broadinstitute.ddp.filter.Exclusions.afterWithExclusion;
 import static org.broadinstitute.ddp.filter.Exclusions.beforeWithExclusion;
-import static org.broadinstitute.ddp.filter.WhiteListFilter.whitelist;
+import static org.broadinstitute.ddp.filter.AllowListFilter.allowlist;
 import static org.broadinstitute.ddp.util.ConfigUtil.getBoolIfPresent;
 import static spark.Spark.after;
 import static spark.Spark.afterAfter;
@@ -348,10 +348,10 @@ public class DataDonationPlatform {
         before(API.SENDGRID_EVENT, new SendGridEventVerificationFilter(sendGridEventsVerificationKey));
 
         if (cfg.getBoolean(ConfigFile.RESTRICT_REGISTER_ROUTE)) {
-            whitelist(API.REGISTRATION, cfg.getStringList(ConfigFile.AUTH0_IP_WHITE_LIST));
+            allowlist(API.REGISTRATION, cfg.getStringList(ConfigFile.AUTH0_IP_ALLOW_LIST));
         }
         if (getBoolIfPresent(cfg, ConfigFile.RESTRICT_AUTH0_LOG_EVENT_ROUTE, false)) {
-            whitelist(API.AUTH0_LOG_EVENT, cfg.getStringList(ConfigFile.AUTH0_IP_WHITE_LIST));
+            allowlist(API.AUTH0_LOG_EVENT, cfg.getStringList(ConfigFile.AUTH0_IP_ALLOW_LIST));
         }
 
         post(API.REGISTRATION, new UserRegistrationRoute(interpreter), responseSerializer);
@@ -391,11 +391,11 @@ public class DataDonationPlatform {
 
         // User route filter
         before(API.USER_ALL, new UserAuthCheckFilter()
-                .addTempUserWhitelist(HttpMethod.get, API.USER_PROFILE)
-                .addTempUserWhitelist(HttpMethod.get, API.USER_STUDY_WORKFLOW)
-                .addTempUserWhitelist(HttpMethod.get, API.USER_ACTIVITIES_INSTANCE)
-                .addTempUserWhitelist(HttpMethod.patch, API.USER_ACTIVITY_ANSWERS)
-                .addTempUserWhitelist(HttpMethod.put, API.USER_ACTIVITY_ANSWERS)
+                .addTempUserAllowlist(HttpMethod.get, API.USER_PROFILE)
+                .addTempUserAllowlist(HttpMethod.get, API.USER_STUDY_WORKFLOW)
+                .addTempUserAllowlist(HttpMethod.get, API.USER_ACTIVITIES_INSTANCE)
+                .addTempUserAllowlist(HttpMethod.patch, API.USER_ACTIVITY_ANSWERS)
+                .addTempUserAllowlist(HttpMethod.put, API.USER_ACTIVITY_ANSWERS)
         );
         patch(API.UPDATE_USER_PASSWORD, new UpdateUserPasswordRoute(), responseSerializer);
         patch(API.UPDATE_USER_EMAIL, new UpdateUserEmailRoute(), responseSerializer);

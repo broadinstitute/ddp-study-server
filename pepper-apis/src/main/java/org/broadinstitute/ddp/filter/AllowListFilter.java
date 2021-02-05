@@ -14,12 +14,12 @@ import spark.Filter;
 import spark.Request;
 import spark.Response;
 
-public class WhiteListFilter implements Filter {
-    private static final Logger LOG = LoggerFactory.getLogger(WhiteListFilter.class);
+public class AllowListFilter implements Filter {
+    private static final Logger LOG = LoggerFactory.getLogger(AllowListFilter.class);
     private Set<String> ipSet;
 
-    public static void whitelist(String path, Collection<String> ips) {
-        WhiteListFilter filter = new WhiteListFilter(ips);
+    public static void allowlist(String path, Collection<String> ips) {
+        AllowListFilter filter = new AllowListFilter(ips);
         before(path, (request, response) -> {
             filter.handle(request, response);
         });
@@ -31,7 +31,7 @@ public class WhiteListFilter implements Filter {
      *
      * @param ips  Collection of IPs to allow
      */
-    public WhiteListFilter(Collection<String> ips) {
+    public AllowListFilter(Collection<String> ips) {
         this.ipSet = (ips instanceof Set) ? (Set<String>) ips : Set.copyOf(ips);
     }
 
