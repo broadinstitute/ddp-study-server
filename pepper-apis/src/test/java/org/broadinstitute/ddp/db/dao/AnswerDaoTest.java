@@ -28,6 +28,7 @@ import org.broadinstitute.ddp.model.activity.instance.answer.BoolAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.CompositeAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.DateAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.DateValue;
+import org.broadinstitute.ddp.model.activity.instance.answer.FileAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.NumericAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.NumericIntegerAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.PicklistAnswer;
@@ -205,6 +206,50 @@ public class AnswerDaoTest extends TxnAwareBaseTest {
 
             assertEquals(created.getAnswerGuid(), updated.getAnswerGuid());
             assertEquals(new DateValue(2020, 4, null), updated.getValue());
+
+            answerDao.deleteAnswer(created.getAnswerId());
+            assertFalse(answerDao.findAnswerById(created.getAnswerId()).isPresent());
+
+            handle.rollback();
+        });
+    }
+
+    @Test
+    public void testCreateUpdateDelete_file() {
+        TransactionWrapper.useTxn(handle -> {
+            TestFormActivity act = TestFormActivity.builder()
+                    .withFileQuestion(true)
+                    .build(handle, testData.getUserId(), testData.getStudyGuid());
+            long instanceId = createInstance(handle, act.getDef().getActivityId()).getId();
+
+            var fileDao = handle.attach(FileUploadDao.class);
+            var upload = fileDao.createAuthorized("guid", "blob", "mime", "file",
+                    123, testData.getUserId(), testData.getUserId());
+            fileDao.markUploaded(upload.getId(), Instant.now());
+            var info = fileDao.findFileInfoByGuid(upload.getGuid()).get();
+
+            var answerDao = daoBuilder.buildDao(handle);
+            var created = new FileAnswer(null, act.getFileQuestion().getStableId(), null, info);
+            answerDao.createAnswer(testData.getUserId(), instanceId, created);
+
+            assertTrue(created.getAnswerId() > 0);
+            assertEquals(QuestionType.FILE, created.getQuestionType());
+            assertNotNull(created.getValue());
+
+            var updated = new FileAnswer(null, act.getFileQuestion().getStableId(), null, info);
+            answerDao.updateAnswer(testData.getUserId(), created.getAnswerId(), updated);
+
+            assertEquals(created.getAnswerId(), updated.getAnswerId());
+            var queried = answerDao.findAnswerById(updated.getAnswerId()).orElse(null);
+            assertNotNull(queried);
+            assertEquals(created.getAnswerGuid(), queried.getAnswerGuid());
+            assertEquals(QuestionType.FILE, queried.getQuestionType());
+            assertNotNull(queried.getValue());
+
+            var queriedInfo = ((FileAnswer) queried).getValue();
+            assertEquals(info.getUploadId(), queriedInfo.getUploadId());
+            assertEquals(info.getFileName(), queriedInfo.getFileName());
+            assertEquals(info.getFileSize(), queriedInfo.getFileSize());
 
             answerDao.deleteAnswer(created.getAnswerId());
             assertFalse(answerDao.findAnswerById(created.getAnswerId()).isPresent());

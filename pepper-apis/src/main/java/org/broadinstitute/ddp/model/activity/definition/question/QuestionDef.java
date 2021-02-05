@@ -4,7 +4,6 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-
 import javax.annotation.Nullable;
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
@@ -263,6 +262,8 @@ public abstract class QuestionDef {
                     return ctx.deserialize(elem, TextQuestionDef.class);
                 case DATE:
                     return ctx.deserialize(elem, DateQuestionDef.class);
+                case FILE:
+                    return ctx.deserialize(elem, FileQuestionDef.class);
                 case NUMERIC:
                     return ctx.deserialize(elem, NumericQuestionDef.class);
                 case PICKLIST:

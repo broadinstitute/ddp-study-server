@@ -16,6 +16,7 @@ import org.broadinstitute.ddp.json.CreateUserActivityUploadResponse;
 import org.broadinstitute.ddp.json.errors.ApiError;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
 import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
+import org.broadinstitute.ddp.model.activity.types.QuestionType;
 import org.broadinstitute.ddp.model.files.FileUpload;
 import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.security.DDPAuth;
@@ -86,8 +87,11 @@ public class CreateUserActivityUploadRoute extends ValidatedJsonInputRoute<Creat
                 String msg = "Could not find question with stable id " + questionStableId;
                 LOG.warn(msg);
                 throw ResponseUtil.haltError(response, 404, new ApiError(ErrorCodes.QUESTION_NOT_FOUND, msg));
+            } else if (questionDef.getQuestionType() != QuestionType.FILE) {
+                String msg = "Question " + questionStableId + " does not support file uploads";
+                LOG.warn(msg);
+                throw ResponseUtil.haltError(response, 422, new ApiError(ErrorCodes.NOT_SUPPORTED, msg));
             }
-            // todo: check question type is FILE or halt
 
             boolean isQuestionReadOnly = QuestionUtil.isReadonly(handle, questionDef, instanceDto);
             if (!isStudyAdmin && isQuestionReadOnly) {

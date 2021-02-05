@@ -34,6 +34,7 @@ import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceStatusDao;
 import org.broadinstitute.ddp.db.dao.AnswerCachedDao;
 import org.broadinstitute.ddp.db.dao.DataExportDao;
+import org.broadinstitute.ddp.db.dao.FileUploadDao;
 import org.broadinstitute.ddp.db.dao.JdbiQuestionCached;
 import org.broadinstitute.ddp.db.dao.QuestionCachedDao;
 import org.broadinstitute.ddp.db.dao.UserDao;
@@ -64,6 +65,8 @@ import org.broadinstitute.ddp.model.activity.instance.answer.BoolAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.CompositeAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.DateAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.DateValue;
+import org.broadinstitute.ddp.model.activity.instance.answer.FileAnswer;
+import org.broadinstitute.ddp.model.activity.instance.answer.FileInfo;
 import org.broadinstitute.ddp.model.activity.instance.answer.NumericAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.NumericIntegerAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.PicklistAnswer;
@@ -83,6 +86,7 @@ import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.pex.PexInterpreter;
 import org.broadinstitute.ddp.security.DDPAuth;
 import org.broadinstitute.ddp.service.ActivityValidationService;
+import org.broadinstitute.ddp.service.FileUploadService;
 import org.broadinstitute.ddp.service.FormActivityService;
 import org.broadinstitute.ddp.util.ActivityInstanceUtil;
 import org.broadinstitute.ddp.util.GsonPojoValidator;
@@ -105,17 +109,20 @@ public class PatchFormAnswersRoute implements Route {
     private GsonPojoValidator checker;
     private FormActivityService formService;
     private ActivityValidationService actValidationService;
+    private FileUploadService fileService;
     private PexInterpreter interpreter;
 
     public PatchFormAnswersRoute(
             FormActivityService formService,
             ActivityValidationService actValidationService,
+            FileUploadService fileService,
             PexInterpreter interpreter
     ) {
         this.gson = new Gson();
         this.checker = new GsonPojoValidator();
         this.formService = formService;
         this.actValidationService = actValidationService;
+        this.fileService = fileService;
         this.interpreter = interpreter;
     }
 
@@ -238,6 +245,9 @@ public class PatchFormAnswersRoute implements Route {
 
                     // Run constraint checks before processing validation rules.
                     checkAnswerConstraints(response, answer);
+                    if (answer.getQuestionType() == QuestionType.FILE && answer.getValue() != null) {
+                        checkAndPrepareFile(handle, response, instanceDto, (FileAnswer) answer);
+                    }
 
                     List<Rule> failures = validateAnswer(answer, instanceGuid, question);
                     if (!failures.isEmpty()) {
@@ -401,6 +411,8 @@ public class PatchFormAnswersRoute implements Route {
                 return convertTextAnswer(stableId, guid, instanceGuid, value);
             case DATE:
                 return convertDateAnswer(stableId, guid, instanceGuid, value);
+            case FILE:
+                return convertFileAnswer(handle, response, stableId, guid, instanceGuid, value);
             case NUMERIC:
                 return convertNumericAnswer(handle, (NumericQuestionDto) questionDto, guid, instanceGuid, value);
             case AGREEMENT:
@@ -489,6 +501,25 @@ public class PatchFormAnswersRoute implements Route {
         } else {
             LOG.info("Provided answer value for question stable id {} and with "
                     + "answer guid {} is not an object", stableId, guid);
+            return null;
+        }
+    }
+
+    private FileAnswer convertFileAnswer(Handle handle, Response response, String stableId, String guid,
+                                         String instanceGuid, JsonElement value) {
+        boolean isNull = (value == null || value.isJsonNull());
+        if (isNull || (value.isJsonPrimitive() && value.getAsJsonPrimitive().isString())) {
+            FileInfo info = null;
+            if (!isNull) {
+                String uploadGuid = value.getAsString();
+                info = handle.attach(FileUploadDao.class).findFileInfoByGuid(uploadGuid).orElse(null);
+                if (info == null) {
+                    throw ResponseUtil.haltError(response, 400, new ApiError(ErrorCodes.FILE_ERROR,
+                            "Could not find file upload with guid " + uploadGuid));
+                }
+            }
+            return new FileAnswer(null, stableId, guid, info, instanceGuid);
+        } else {
             return null;
         }
     }
@@ -615,6 +646,30 @@ public class PatchFormAnswersRoute implements Route {
                 LOG.warn(msg);
                 throw ResponseUtil.haltError(response, 400, new ApiError(ErrorCodes.BAD_PAYLOAD, msg));
             }
+        }
+    }
+
+    private void checkAndPrepareFile(Handle handle, Response response, ActivityInstanceDto instanceDto, FileAnswer answer) {
+        long participantId = instanceDto.getParticipantId();
+        long uploadId = answer.getValue().getUploadId();
+        var upload = handle.attach(FileUploadDao.class).findById(uploadId)
+                .orElseThrow(() -> new DDPException("Could not find file upload with id " + uploadId));
+        var checkResult = fileService.checkAndSetUploadStatus(handle, participantId, upload);
+        switch (checkResult) {
+            case NOT_UPLOADED:
+                throw ResponseUtil.haltError(response, 400, new ApiError(ErrorCodes.FILE_ERROR,
+                        "File has not been uploaded yet"));
+            case OWNER_MISMATCH:
+                throw ResponseUtil.haltError(response, 400, new ApiError(ErrorCodes.FILE_ERROR,
+                        "File is not assignable to participant"));
+            case SIZE_MISMATCH:
+                throw ResponseUtil.haltError(response, 400, new ApiError(ErrorCodes.FILE_ERROR,
+                        "File uploaded size does not match expected size"));
+            case OK:
+                LOG.info("File upload {} is uploaded and assignable to participant", upload.getGuid());
+                break;
+            default:
+                throw new DDPException("Unhandled file check result: " + checkResult);
         }
     }
 

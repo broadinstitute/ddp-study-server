@@ -39,6 +39,7 @@ public class CreateUserActivityUploadRouteTest extends IntegrationTestSuite.Test
 
             act = TestFormActivity.builder()
                     .withTextQuestion(true)
+                    .withFileQuestion(true)
                     .build(handle, testData.getUserId(), testData.getStudyGuid());
             instanceDto = handle.attach(ActivityInstanceDao.class)
                     .insertInstance(act.getDef().getActivityId(), testData.getUserGuid());
@@ -63,12 +64,24 @@ public class CreateUserActivityUploadRouteTest extends IntegrationTestSuite.Test
     }
 
     @Test
+    public void testNotFileQuestion() {
+        String wrongStableId = act.getTextQuestion().getStableId();
+        var payload = new CreateUserActivityUploadPayload(wrongStableId, "file.pdf", 123, "application/pdf", false);
+        given().auth().oauth2(token)
+                .body(payload, ObjectMapperType.GSON)
+                .when().post(url)
+                .then().assertThat()
+                .statusCode(422).contentType(ContentType.JSON)
+                .body("code", equalTo(ErrorCodes.NOT_SUPPORTED));
+    }
+
+    @Test
     public void testInstanceReadOnly() {
         TransactionWrapper.useTxn(handle -> assertEquals(1,
                 handle.attach(JdbiActivityInstance.class)
                         .updateIsReadonlyByGuid(true, instanceDto.getGuid())));
         try {
-            String stableId = act.getTextQuestion().getStableId();
+            String stableId = act.getFileQuestion().getStableId();
             var payload = new CreateUserActivityUploadPayload(stableId, "file.pdf", 123, "application/pdf", false);
             given().auth().oauth2(token)
                     .body(payload, ObjectMapperType.GSON)
@@ -85,7 +98,7 @@ public class CreateUserActivityUploadRouteTest extends IntegrationTestSuite.Test
 
     @Test
     public void testUploadAuthorized() {
-        String stableId = act.getTextQuestion().getStableId();
+        String stableId = act.getFileQuestion().getStableId();
         var payload = new CreateUserActivityUploadPayload(stableId, "file.pdf", 123, "application/pdf", false);
 
         String uploadGuid = given().auth().oauth2(token)

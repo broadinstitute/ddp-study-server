@@ -5,12 +5,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import com.google.auth.ServiceAccountSigner;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.auth.oauth2.ServiceAccountCredentials;
+import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.BlobId;
 import com.google.cloud.storage.BlobInfo;
 import com.google.cloud.storage.HttpMethod;
@@ -21,6 +23,7 @@ import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.db.dao.FileUploadDao;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.files.FileUpload;
+import org.broadinstitute.ddp.model.files.FileUploadStatus;
 import org.broadinstitute.ddp.util.ConfigUtil;
 import org.broadinstitute.ddp.util.GoogleBucketUtil;
 import org.broadinstitute.ddp.util.GoogleCredentialUtil;
@@ -86,6 +89,19 @@ public class FileUploadService {
         return maxFileSizeBytes;
     }
 
+    /**
+     * Authorize a file upload by creating a file record and generating a signed URL.
+     *
+     * @param handle            the database handle
+     * @param operatorUserId    the operator who instantiated this request
+     * @param participantUserId the participant who will own the file
+     * @param blobPrefix        a prefix to prepend to blob name, e.g. for organizational purposes
+     * @param mimeType          the user-reported mime type
+     * @param fileName          the user-reported name for the file
+     * @param fileSize          the user-reported file size
+     * @param resumable         whether to allow resumable upload
+     * @return authorization result
+     */
     public AuthorizeResult authorizeUpload(Handle handle, long operatorUserId, long participantUserId,
                                            String blobPrefix, String mimeType,
                                            String fileName, int fileSize, boolean resumable) {
@@ -115,6 +131,69 @@ public class FileUploadService {
                 Storage.SignUrlOption.withV4Signature(),
                 Storage.SignUrlOption.httpMethod(method),
                 Storage.SignUrlOption.withExtHeaders(headers));
+    }
+
+    /**
+     * Determine if file meets criteria, and update its status appropriately. E.g. file must be uploaded, matches
+     * reported file size, and belong to the participant. Files already marked uploaded will not be checked again.
+     *
+     * @param handle            the database handle
+     * @param participantUserId the participant who this upload will be assigned to
+     * @param upload            the file upload
+     * @return check result
+     */
+    public CheckResult checkAndSetUploadStatus(Handle handle, long participantUserId, FileUpload upload) {
+        if (participantUserId != upload.getParticipantUserId()) {
+            return CheckResult.OWNER_MISMATCH;
+        }
+
+        if (upload.getStatus() == FileUploadStatus.AUTHORIZED) {
+            // File upload haven't been checked yet, do it now.
+            Blob blob = fetchBlob(upload.getBlobName());
+            boolean exists = (blob != null && blob.exists());
+            Long size = blob == null ? null : blob.getSize();
+
+            if (!exists || blob.getCreateTime() == null) {
+                return CheckResult.NOT_UPLOADED;
+            }
+
+            if (size == null || size != upload.getFileSize()) {
+                return CheckResult.SIZE_MISMATCH;
+            }
+
+            var uploadTime = Instant.ofEpochMilli(blob.getCreateTime());
+            handle.attach(FileUploadDao.class).markUploaded(upload.getId(), uploadTime);
+            LOG.info("Marked file upload {} as uploaded with time {}", upload.getGuid(), uploadTime);
+        } else {
+            LOG.info("File upload {} was already marked uploaded at {} with status {}",
+                    upload.getGuid(), upload.getUploadedAt(), upload.getStatus());
+        }
+
+        return CheckResult.OK;
+    }
+
+    @VisibleForTesting
+    Blob fetchBlob(String blobName) {
+        return storage.get(BlobId.of(bucketName, blobName));
+    }
+
+    public enum CheckResult {
+        /**
+         * File hasn't been uploaded yet.
+         */
+        NOT_UPLOADED,
+        /**
+         * File does not belong to participant.
+         */
+        OWNER_MISMATCH,
+        /**
+         * File size does not match up.
+         */
+        SIZE_MISMATCH,
+        /**
+         * No issues found.
+         */
+        OK,
     }
 
     public static class AuthorizeResult {
