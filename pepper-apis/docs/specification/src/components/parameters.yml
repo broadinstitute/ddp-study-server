@@ -12,3 +12,10 @@ userGuid:
   description: the user's guid
   schema:
     type: string
+instanceGuid:
+  in: path
+  name: instance
+  required: true
+  description: the activity instance guid
+  schema:
+    type: string
