@@ -9,9 +9,11 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 
+import com.google.api.gax.core.ExecutorProvider;
 import com.google.api.gax.core.InstantiatingExecutorProvider;
 import com.google.cloud.pubsub.v1.Publisher;
 import com.google.cloud.pubsub.v1.Subscriber;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.google.pubsub.v1.ProjectSubscriptionName;
 import com.google.pubsub.v1.ProjectTopicName;
 import org.broadinstitute.ddp.exception.DDPException;
@@ -32,12 +34,15 @@ public class DsmTaskPubSubConnectionCreator {
 
     private static final Logger LOG = getLogger(DsmTaskPubSubConnectionCreator.class);
 
-    private static final long SUBSCRIBER_AWAIT_RUNNING_TIMEOUT = 30L;
+    public static final int DEFAULT_SUBSCRIBER_AWAIT_RUNNING_TIMEOUT_SEC = 30;
+    public static final int SUBSCRIBER_FAILURE_LISTENER_THREAD_COUNT = 4;
+    public static final int PUBLISHER_AWAIT_TERMINATION_TIMEOUT_MIN = 1;
 
     private final PubSubConnectionManager pubSubConnectionManager;
     private final ProjectSubscriptionName projectSubscriptionName;
     private final ProjectTopicName dsmTaskResultProjectTopicName;
     private final DsmTaskProcessorFactory dsmTaskProcessorFactory;
+    private final int subscriberAwaitRunningTimeout;
 
     private DsmTaskReceiver dsmTaskReceiver;
     private DsmTaskResultSender dsmTaskResultSender;
@@ -51,10 +56,12 @@ public class DsmTaskPubSubConnectionCreator {
             String projectId,
             String subscription,
             String dsmTaskResultPubSubTopic,
+            int subscriberAwaitRunningTimeout,
             DsmTaskProcessorFactory dsmTaskProcessorFactory) {
         this.pubSubConnectionManager = pubSubConnectionManager;
         projectSubscriptionName = ProjectSubscriptionName.of(projectId, subscription);
         dsmTaskResultProjectTopicName = ProjectTopicName.of(projectId, dsmTaskResultPubSubTopic);
+        this.subscriberAwaitRunningTimeout = subscriberAwaitRunningTimeout;
         this.dsmTaskProcessorFactory = dsmTaskProcessorFactory;
     }
 
@@ -70,13 +77,13 @@ public class DsmTaskPubSubConnectionCreator {
     }
 
     public void destroy() {
-        if (dsmTaskSubscriber != null) {
+        if (dsmTaskSubscriber != null && dsmTaskSubscriber.isRunning()) {
             dsmTaskSubscriber.stopAsync();
         }
         if (dsmTaskResultPublisher != null) {
             try {
                 dsmTaskResultPublisher.shutdown();
-                dsmTaskResultPublisher.awaitTermination(1, TimeUnit.MINUTES);
+                dsmTaskResultPublisher.awaitTermination(PUBLISHER_AWAIT_TERMINATION_TIMEOUT_MIN, TimeUnit.MINUTES);
             } catch (Exception e) {
                 LOG.error(errorMsg("Failed to shutdown DsmTask pubsub connection"), e);
             }
@@ -84,15 +91,35 @@ public class DsmTaskPubSubConnectionCreator {
     }
 
     private void createDsmTaskPubSubTopicSubscriber() {
-        dsmTaskSubscriber = pubSubConnectionManager.subscribeBuilder(projectSubscriptionName, dsmTaskReceiver)
-                .setParallelPullCount(1)
-                .setExecutorProvider(InstantiatingExecutorProvider.newBuilder()
-                        .setExecutorThreadCount(1)
-                        .build())
-                .build();
         try {
-            dsmTaskSubscriber.startAsync().awaitRunning(SUBSCRIBER_AWAIT_RUNNING_TIMEOUT, TimeUnit.SECONDS);
+            // Provides an executor service for processing messages.
+            ExecutorProvider executorProvider =
+                    InstantiatingExecutorProvider.newBuilder().setExecutorThreadCount(SUBSCRIBER_FAILURE_LISTENER_THREAD_COUNT).build();
+
+            dsmTaskSubscriber = pubSubConnectionManager.subscribeBuilder(projectSubscriptionName, dsmTaskReceiver)
+                    .setParallelPullCount(1)
+                    .setExecutorProvider(InstantiatingExecutorProvider.newBuilder()
+                            .setExecutorThreadCount(1)
+                            .build())
+                    .build();
+
+            // Listen for unrecoverable failures. Rebuild a subscriber and restart subscribing
+            // when the current subscriber encounters permanent errors.
+            dsmTaskSubscriber.addListener(
+                    new Subscriber.Listener() {
+                        public void failed(Subscriber.State from, Throwable failure) {
+                            System.out.println(failure.getStackTrace());
+                            if (!executorProvider.getExecutor().isShutdown()) {
+                                createDsmTaskPubSubTopicSubscriber();
+                            }
+                        }
+                    },
+                    MoreExecutors.directExecutor());
+
+            dsmTaskSubscriber.startAsync().awaitRunning(subscriberAwaitRunningTimeout, TimeUnit.SECONDS);
         } catch (TimeoutException e) {
+            // Shut down the subscriber after specified timeout (default=30s). Stop receiving messages.
+            dsmTaskSubscriber.stopAsync();
             throw new DDPException("Could not start subscriber for subscription"
                     + projectSubscriptionName.getSubscription(), e);
         }

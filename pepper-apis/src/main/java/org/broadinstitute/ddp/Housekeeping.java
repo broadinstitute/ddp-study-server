@@ -1,5 +1,8 @@
 package org.broadinstitute.ddp;
 
+import static org.broadinstitute.ddp.constants.ConfigFile.PUBSUB_DSM_TASKS_SUBSCRIBER_AWAIT_RUNNING_TIMEOUT;
+import static org.broadinstitute.ddp.event.dsmtask.api.DsmTaskPubSubConnectionCreator.DEFAULT_SUBSCRIBER_AWAIT_RUNNING_TIMEOUT_SEC;
+
 import java.io.IOException;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -231,6 +234,8 @@ public class Housekeeping {
                 pubSubProject,
                 cfg.getString(ConfigFile.PUBSUB_DSM_TASKS_SUB),
                 cfg.getString(ConfigFile.PUBSUB_DSM_TASKS_RESULT_TOPIC),
+                ConfigUtil.getIntIfPresent(cfg, PUBSUB_DSM_TASKS_SUBSCRIBER_AWAIT_RUNNING_TIMEOUT,
+                        DEFAULT_SUBSCRIBER_AWAIT_RUNNING_TIMEOUT_SEC),
                 new DsmTaskProcessorFactoryImpl());
         dsmTaskPubSubConnectionCreator.create();
 

@@ -59,7 +59,8 @@
         "enableHousekeepingTasks": {{$conf.Data.pubsub.enableHousekeepingTasks}},
         "housekeepingTasksSubscription": "{{$conf.Data.pubsub.housekeepingTasksSubscription}}",
         "dsmTasksSubscription": "{{$conf.Data.pubsub.dsmTasksSubscription}}",
-        "dsmTasksResultTopic": "{{$conf.Data.pubsub.dsmTasksResultTopic}}"
+        "dsmTasksResultTopic": "{{$conf.Data.pubsub.dsmTasksResultTopic}}",
+        "dsmTaskSubscriberAwaitRunningTimeout": "{{$conf.Data.pubsub.dsmTaskSubscriberAwaitRunningTimeout}}"
     },
     "studyExportBucket": "{{$conf.Data.studyExportBucket}}",
     "schedules": {

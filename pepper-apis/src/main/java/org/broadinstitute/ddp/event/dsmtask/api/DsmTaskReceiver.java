@@ -52,18 +52,19 @@ public class DsmTaskReceiver implements MessageReceiver {
     public void receiveMessage(PubsubMessage message, AckReplyConsumer consumer) {
         DsmTaskData dsmTaskData = parseMessage(message, consumer);
         if (dsmTaskData != null) {
-            sendResponse(processDsmTask(dsmTaskData));
-            consumer.ack();
+            DsmTaskResultData dsmTaskResultData = processDsmTask(dsmTaskData);
+            if (dsmTaskResultData.isNeedsToRetry()) {
+                consumer.nack();
+            } else {
+                consumer.ack();
+                sendResponse(dsmTaskResultData);
+            }
         }
     }
 
     private DsmTaskResultData processDsmTask(DsmTaskData dsmTaskData) {
-        LOG.info(infoMsg("Task processing STARTED: taskType={}, participantId={}, userId={}, data={}"),
-                dsmTaskData.getTaskType(), dsmTaskData.getParticipantGuid(), dsmTaskData.getUserId(), dsmTaskData.getPayload());
         DsmTaskResultData dsmTaskResultData = dsmTaskProcessorFactory.getDsmTaskDescriptors(dsmTaskData.getTaskType())
                 .getDsmTaskProcessor().processDsmTask(dsmTaskData);
-        LOG.info(infoMsg("Task processing COMPLETED: taskType={}, dsmTaskResultData={}"),
-                dsmTaskData.getTaskType(), dsmTaskResultData);
         return dsmTaskResultData;
     }
 

@@ -19,7 +19,7 @@ public class UpdateProfileProcessor extends DsmTaskProcessorAbstract {
     public static final String TASK_TYPE__UPDATE_PROFILE = "UPDATE_PROFILE";
 
     @Override
-    public void doIt(DsmTaskData dsmTaskData) {
+    public void handleTask(DsmTaskData dsmTaskData) {
         UpdateProfileData updateProfileData = (UpdateProfileData)dsmTaskData.getPayloadObject();
 
         updateEmail(dsmTaskData.getParticipantGuid(), updateProfileData.getEmail());
@@ -29,13 +29,13 @@ public class UpdateProfileProcessor extends DsmTaskProcessorAbstract {
 
     private void updateEmail(String userGuid, String email) {
         if (email != null) {
-            new UpdateEmailHandler().doIt(userGuid, email);
+            new UpdateEmailHandler().updateEmail(userGuid, email);
         }
     }
 
     private void updateFirstLastName(String userGuid, String firstName, String lastName) {
         if (firstName != null || lastName != null) {
-            new UpdateFirstLastNameHandler().doIt(userGuid, firstName, lastName);
+            new UpdateFirstLastNameHandler().updateFirstLastName(userGuid, firstName, lastName);
         }
     }
 }

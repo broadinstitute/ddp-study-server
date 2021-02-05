@@ -12,18 +12,21 @@ public class DsmTaskResultData {
         ERROR
     }
 
+    private final boolean needsToRetry;
+
     private final DsmTaskResultPayload dsmTaskResultPayload;
 
     private final DsmTaskData dsmTaskData;
 
 
     public DsmTaskResultData(DsmTaskResultType resultType, DsmTaskData dsmTaskData) {
-        this(resultType, null, dsmTaskData);
+        this(resultType, null, dsmTaskData, false);
     }
 
-    public DsmTaskResultData(DsmTaskResultType resultType, String errorMessage, DsmTaskData dsmTaskData) {
+    public DsmTaskResultData(DsmTaskResultType resultType, String errorMessage, DsmTaskData dsmTaskData, boolean needsToRetry) {
         this.dsmTaskResultPayload = new DsmTaskResultPayload(resultType, errorMessage);
         this.dsmTaskData = dsmTaskData;
+        this.needsToRetry = needsToRetry;
     }
 
     public DsmTaskResultPayload getDsmTaskResultPayload() {
@@ -34,9 +37,13 @@ public class DsmTaskResultData {
         return dsmTaskData;
     }
 
+    public boolean isNeedsToRetry() {
+        return needsToRetry;
+    }
+
     public String toString() {
         return dsmTaskResultPayload.resultType + (dsmTaskResultPayload.errorMessage != null
-                ? '(' + dsmTaskResultPayload.errorMessage + ')' : "");
+                ? " [" + dsmTaskResultPayload.errorMessage + "]" : "");
     }
 
 

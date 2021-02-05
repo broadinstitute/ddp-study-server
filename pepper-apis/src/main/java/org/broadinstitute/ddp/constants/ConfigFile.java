@@ -102,6 +102,7 @@ public class ConfigFile {
     public static final String PUBSUB_HKEEP_TASKS_SUB = "pubsub.housekeepingTasksSubscription";
     public static final String PUBSUB_DSM_TASKS_SUB = "pubsub.dsmTasksSubscription";
     public static final String PUBSUB_DSM_TASKS_RESULT_TOPIC = "pubsub.dsmTasksResultTopic";
+    public static final String PUBSUB_DSM_TASKS_SUBSCRIBER_AWAIT_RUNNING_TIMEOUT = "pubsub.dsmTaskSubscriberAwaitRunningTimeout";
     public static final String SLACK_HOOK = "slack.hook";
     public static final String SLACK_CHANNEL = "slack.channel";
     public static final String SLACK_QUEUE_SIZE = "slack.queueSize";

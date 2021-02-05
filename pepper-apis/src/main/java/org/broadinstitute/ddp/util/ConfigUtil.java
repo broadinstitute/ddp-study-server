@@ -46,6 +46,20 @@ public class ConfigUtil {
     }
 
     /**
+     * Get value as integer if the key is present and value is not null.
+     * If key not present then return a default value.
+     */
+    public static int getIntIfPresent(Config cfg, String key, int defaultValue) {
+        try {
+            return cfg.hasPath(key) ? cfg.getInt(key) : defaultValue;
+        } catch (ConfigException e) {
+            String value = e instanceof ConfigException.WrongType ? "=" + cfg.getValue(key) : "";
+            LOG.error("Error during reading config key: " + key + value, e);
+            return defaultValue;
+        }
+    }
+
+    /**
      * Get value as long if the key is present and value is not null.
      */
     public static Long getLongIfPresent(Config cfg, String key) {

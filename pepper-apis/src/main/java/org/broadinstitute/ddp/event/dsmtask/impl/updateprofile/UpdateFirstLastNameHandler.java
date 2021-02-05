@@ -1,45 +1,22 @@
 package org.broadinstitute.ddp.event.dsmtask.impl.updateprofile;
 
-import static org.broadinstitute.ddp.event.dsmtask.api.DsmTaskLogUtil.infoMsg;
-import static org.slf4j.LoggerFactory.getLogger;
-
-
-import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.TransactionWrapper.DB;
 import org.broadinstitute.ddp.db.dao.UserProfileDao;
-import org.broadinstitute.ddp.exception.DDPException;
-import org.broadinstitute.ddp.model.user.UserProfile;
+import org.broadinstitute.ddp.event.dsmtask.api.DsmTaskException;
 import org.jdbi.v3.core.Handle;
-import org.slf4j.Logger;
 
 public class UpdateFirstLastNameHandler {
 
-    private static final Logger LOG = getLogger(UpdateFirstLastNameHandler.class);
-
-    public void doIt(String userGuid, String firstName, String lastName) {
+    public void updateFirstLastName(String userGuid, String firstName, String lastName) {
         TransactionWrapper.useTxn(DB.APIS, handle -> updateFirstLastName(handle, userGuid, firstName, lastName));
     }
 
     private void updateFirstLastName(Handle handle, String userGuid, String firstName, String lastName) {
         var profileDao = handle.attach(UserProfileDao.class);
-        UserProfile profile = profileDao.findProfileByUserGuid(userGuid).orElse(null);
-        if (profile == null) {
-            throw new DDPException("Profile not found for user with guid=" + userGuid);
-        }
-        if (StringUtils.compare(profile.getFirstName(), firstName) == 0
-                && StringUtils.compare(profile.getLastName(), lastName) == 0) {
-            LOG.info(infoMsg("firstName={} and lastName={} are not updated because it is equal to current values"),
-                    firstName, lastName);
-        } else {
-            var builder = new UserProfile.Builder(profile);
-            if (firstName != null) {
-                builder.setFirstName(firstName);
-            }
-            if (lastName != null) {
-                builder.setLastName(lastName);
-            }
-            profileDao.updateProfile(builder.build());
+        int count = profileDao.getUserProfileSql().updateFirstAndLastNameByUserGuid(userGuid, firstName, lastName);
+        if (count == 0) {
+            throw new DsmTaskException("User profile is not found for guid=" + userGuid);
         }
     }
 }

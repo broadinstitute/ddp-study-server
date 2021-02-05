@@ -48,7 +48,7 @@ public class DsmTaskResultSender {
                             ApiException apiException = ((ApiException) e);
                             statusCode = apiException.getStatusCode().getCode().toString();
                         }
-                        String msg = errorMsg("failed to send DsmTask response \"" + dsmTaskResultData + "\"");
+                        String msg = errorMsg("Failed to send DsmTask response \"" + dsmTaskResultData + "\"");
                         if (statusCode != null) {
                             msg += ", statusCode=" + statusCode;
                         }
