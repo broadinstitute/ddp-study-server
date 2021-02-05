@@ -7,7 +7,8 @@
 {{with $testingConf := vault (printf "secret/pepper/%s/%s/testing" $environment $version)}}
 {{with $auth0 := index $testingConf.Data "auth0"}}
 {{with $testingAuth := index $testingConf.Data "auth0"}}
-{{with $elasticsearchConf := vault (printf "secret/pepper/%s/%s/elasticsearch" $environment $version)}}
+{{with $conf := vault (printf "secret/pepper/%s/%s/conf" $environment $version)}}
+{{with $fileUploads := index $conf.Data "fileUploads"}}
 
 {
     {{if eq $gae "true"}}
@@ -91,6 +92,12 @@
     "sendMetrics": false,
     "requireDefaultGcpCredentials": false,
     "googleProjectId": "broad-ddp-dev",
+    "fileUploads": {
+        "uploadsBucket": "ddp-local-file-uploads",
+        "maxFileSizeBytes": 2000000,
+        "maxSignedUrlMins": 5,
+        "signerServiceAccount": {{$fileUploads.signerServiceAccount | toJSONPretty}}
+    },
     "pdfArchiveBucket": "pepper-pdf-dev",
     "pdfArchiveUseFilesystem": true,
     "pubsub": {
@@ -182,6 +189,7 @@
     }
 }
 
+{{end}}
 {{end}}
 {{end}}
 {{end}}

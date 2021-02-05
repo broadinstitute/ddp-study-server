@@ -1054,6 +1054,18 @@ Error.UserStudyActivityNotFound:
             - ACTIVITY_NOT_FOUND
             - STUDY_NOT_FOUND
             - USER_NOT_FOUND
+Error.UserStudyActivityQuestionNotFound:
+  allOf:
+    - $ref: '../pepper.yml#/components/schemas/Error'
+    - type: object
+      properties:
+        code:
+          type: string
+          enum:
+            - ACTIVITY_NOT_FOUND
+            - QUESTION_NOT_FOUND
+            - STUDY_NOT_FOUND
+            - USER_NOT_FOUND
 Image:
   type: object
   required:
