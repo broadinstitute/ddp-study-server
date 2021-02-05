@@ -11,7 +11,6 @@ import org.broadinstitute.ddp.db.dao.DataExportDao;
 import org.broadinstitute.ddp.db.dao.JdbiUser;
 import org.broadinstitute.ddp.db.dto.UserDto;
 import org.broadinstitute.ddp.event.dsmtask.api.DsmTaskException;
-import org.broadinstitute.ddp.json.auth0.Auth0CallResponse;
 import org.broadinstitute.ddp.util.Auth0Util;
 import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
