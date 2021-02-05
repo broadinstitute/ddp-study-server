@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
 # This script will create a bundle of binaries and shared objects necessary for
-# running clamav scanner. This should be ran inside a fresh image of Ubuntu
+# running clamav scanner. This should be run inside a fresh image of Ubuntu
 # 18.04, which is the image that Cloud Functions use by default for the Java 11
 # runtime.
 #
