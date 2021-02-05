@@ -1,11 +1,10 @@
 package org.broadinstitute.ddp.db.dao;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-
-import java.time.Instant;
 
 import org.broadinstitute.ddp.TxnAwareBaseTest;
 import org.broadinstitute.ddp.db.TransactionWrapper;
@@ -52,18 +51,17 @@ public class FileUploadDaoTest extends TxnAwareBaseTest {
     }
 
     @Test
-    public void testMarkUploaded() {
+    public void testMarkVerified() {
         TransactionWrapper.useTxn(handle -> {
             var dao = handle.attach(FileUploadDao.class);
 
             long userId = testData.getUserId();
             FileUpload upload = dao.createAuthorized("guid", "blob", "mime", "file", 123, userId, userId);
-            assertNull(upload.getUploadedAt());
+            assertFalse(upload.isVerified());
 
-            var now = Instant.now();
-            dao.markUploaded(upload.getId(), now);
+            dao.markVerified(upload.getId());
             FileUpload actual = dao.findById(upload.getId()).orElse(null);
-            assertEquals(now, actual.getUploadedAt());
+            assertTrue(actual.isVerified());
 
             handle.rollback();
         });
