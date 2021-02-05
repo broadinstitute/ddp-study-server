@@ -14,6 +14,16 @@ public class UpdateFirstLastNameHandler {
 
     private void updateFirstLastName(Handle handle, String userGuid, String firstName, String lastName) {
         var profileDao = handle.attach(UserProfileDao.class);
+        var profile = profileDao.findProfileByUserGuid(userGuid).orElse(null);
+        if (profile == null) {
+            throw new DsmTaskException("User profile is not found for guid=" + userGuid);
+        }
+        if (firstName == null) {
+            firstName = profile.getFirstName();
+        }
+        if (lastName == null) {
+            lastName = profile.getLastName();
+        }
         int count = profileDao.getUserProfileSql().updateFirstAndLastNameByUserGuid(userGuid, firstName, lastName);
         if (count == 0) {
             throw new DsmTaskException("User profile is not found for guid=" + userGuid);
