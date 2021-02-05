@@ -25,13 +25,13 @@ public class UpdateEmailHandler {
     }
 
     private void updateEmail(Handle handle, String userGuid, String email) {
-        UserDto userDto = handle.attach(JdbiUser.class).findByUserGuid(userGuid);
+        var userDto = handle.attach(JdbiUser.class).findByUserGuid(userGuid);
         if (userDto == null) {
             throw new DsmTaskException("User profile is not found for guid=" + userGuid);
         }
         validateUserForLoginDataUpdateEligibility(userDto);
         LOG.info(infoMsg("Attempting to change the email of the user {}"), userGuid);
-        ManagementAPI mgmtAPI = Auth0Util.getManagementApiInstanceForUser(userDto.getUserGuid(), handle);
+        var mgmtAPI = Auth0Util.getManagementApiInstanceForUser(userDto.getUserGuid(), handle);
         updateEmailInAuth0(handle, mgmtAPI, userDto, email, userGuid);
     }
 
@@ -49,7 +49,7 @@ public class UpdateEmailHandler {
     }
 
     private void updateEmailInAuth0(Handle handle, ManagementAPI mgmtAPI, UserDto userDto, String email, String userGuid) {
-        Auth0CallResponse status = Auth0Util.updateUserEmail(mgmtAPI, userDto, email);
+        var status = Auth0Util.updateUserEmail(mgmtAPI, userDto, email);
         String errMsg = null;
         switch (status.getAuth0Status()) {
             case SUCCESS:

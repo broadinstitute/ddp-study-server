@@ -93,7 +93,7 @@ public class DsmTaskPubSubConnectionCreator {
     private void createDsmTaskPubSubTopicSubscriber() {
         try {
             // Provides an executor service for processing messages.
-            ExecutorProvider executorProvider =
+            var executorProvider =
                     InstantiatingExecutorProvider.newBuilder().setExecutorThreadCount(SUBSCRIBER_FAILURE_LISTENER_THREAD_COUNT).build();
 
             dsmTaskSubscriber = pubSubConnectionManager.subscribeBuilder(projectSubscriptionName, dsmTaskReceiver)

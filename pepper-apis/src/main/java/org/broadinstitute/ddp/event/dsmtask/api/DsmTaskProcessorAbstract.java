@@ -32,7 +32,7 @@ public abstract class DsmTaskProcessorAbstract implements DsmTaskProcessor {
             return new DsmTaskResultData(ERROR, e.getMessage(), dsmTaskData, false);
         }
 
-        DsmTaskResultData dsmTaskResultData = new DsmTaskResultData(SUCCESS, dsmTaskData);
+        var dsmTaskResultData = new DsmTaskResultData(SUCCESS, dsmTaskData);
 
         LOG.info(infoMsg("Task processing COMPLETED: taskType={}, dsmTaskResultData={}"),
                 dsmTaskData.getTaskType(), dsmTaskResultData);

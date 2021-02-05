@@ -50,9 +50,9 @@ public class DsmTaskReceiver implements MessageReceiver {
 
     @Override
     public void receiveMessage(PubsubMessage message, AckReplyConsumer consumer) {
-        DsmTaskData dsmTaskData = parseMessage(message, consumer);
+        var dsmTaskData = parseMessage(message, consumer);
         if (dsmTaskData != null) {
-            DsmTaskResultData dsmTaskResultData = processDsmTask(dsmTaskData);
+            var dsmTaskResultData = processDsmTask(dsmTaskData);
             if (dsmTaskResultData.isNeedsToRetry()) {
                 consumer.nack();
             } else {
@@ -63,7 +63,7 @@ public class DsmTaskReceiver implements MessageReceiver {
     }
 
     private DsmTaskResultData processDsmTask(DsmTaskData dsmTaskData) {
-        DsmTaskResultData dsmTaskResultData = dsmTaskProcessorFactory.getDsmTaskDescriptors(dsmTaskData.getTaskType())
+        var dsmTaskResultData = dsmTaskProcessorFactory.getDsmTaskDescriptors(dsmTaskData.getTaskType())
                 .getDsmTaskProcessor().processDsmTask(dsmTaskData);
         return dsmTaskResultData;
     }

@@ -20,7 +20,7 @@ public class UpdateProfileProcessor extends DsmTaskProcessorAbstract {
 
     @Override
     public void handleTask(DsmTaskData dsmTaskData) {
-        UpdateProfileData updateProfileData = (UpdateProfileData)dsmTaskData.getPayloadObject();
+        var updateProfileData = (UpdateProfileData)dsmTaskData.getPayloadObject();
 
         updateEmail(dsmTaskData.getParticipantGuid(), updateProfileData.getEmail());
 
