@@ -4,13 +4,13 @@
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
                    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
 
-    <changeSet author="yufeng" id="20210126-file-upload-status-table">
-        <createTable tableName="file_upload_status">
-            <column name="file_upload_status_id" type="bigint" autoIncrement="true" startWith="1">
-                <constraints primaryKey="true" primaryKeyName="file_upload_status_pk"/>
+    <changeSet author="yufeng" id="20210126-file-scan-result-table">
+        <createTable tableName="file_scan_result">
+            <column name="file_scan_result_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="file_scan_result_pk"/>
             </column>
-            <column name="file_upload_status_code" type="varchar(20)">
-                <constraints nullable="false" unique="true" uniqueConstraintName="file_upload_status_code_uk"/>
+            <column name="file_scan_result_code" type="varchar(20)">
+                <constraints nullable="false" unique="true" uniqueConstraintName="file_scan_result_code_uk"/>
             </column>
         </createTable>
     </changeSet>
@@ -23,16 +23,16 @@
             <column name="file_upload_guid" type="varchar(20)">
                 <constraints nullable="false" unique="true" uniqueConstraintName="file_upload_guid_uk"/>
             </column>
-            <column name="blob_name" type="varchar(300)">
+            <column name="blob_name" type="varchar(1024)">
                 <constraints nullable="false"/>
             </column>
-            <column name="mime_type" type="varchar(50)">
+            <column name="mime_type" type="varchar(255)">
                 <constraints nullable="false"/>
             </column>
-            <column name="file_name" type="varchar(100)">
+            <column name="file_name" type="varchar(255)">
                 <constraints nullable="false"/>
             </column>
-            <column name="file_size" type="int">
+            <column name="file_size" type="bigint">
                 <constraints nullable="false"/>
             </column>
             <column name="operator_user_id" type="bigint">
@@ -45,12 +45,7 @@
                              references="user(user_id)"
                              foreignKeyName="file_upload_participant_user_fk"/>
             </column>
-            <column name="status_id" type="bigint">
-                <constraints nullable="false"
-                             references="file_upload_status(file_upload_status_id)"
-                             foreignKeyName="file_upload_file_upload_status_fk"/>
-            </column>
-            <column name="status_changed_at" type="datetime(6)">
+            <column name="is_verified" type="boolean">
                 <constraints nullable="false"/>
             </column>
             <column name="created_at" type="datetime(6)">
@@ -58,6 +53,14 @@
             </column>
             <column name="uploaded_at" type="datetime(6)">
                 <constraints nullable="true"/>
+            </column>
+            <column name="scanned_at" type="datetime(6)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="scan_result_id" type="bigint">
+                <constraints nullable="true"
+                             references="file_scan_result(file_scan_result_id)"
+                             foreignKeyName="file_upload_file_scan_result_fk"/>
             </column>
         </createTable>
     </changeSet>

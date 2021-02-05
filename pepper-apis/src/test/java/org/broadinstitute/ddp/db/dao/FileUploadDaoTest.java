@@ -2,6 +2,7 @@ package org.broadinstitute.ddp.db.dao;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.time.Instant;
@@ -10,7 +11,6 @@ import org.broadinstitute.ddp.TxnAwareBaseTest;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.model.activity.instance.answer.FileInfo;
 import org.broadinstitute.ddp.model.files.FileUpload;
-import org.broadinstitute.ddp.model.files.FileUploadStatus;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -42,9 +42,10 @@ public class FileUploadDaoTest extends TxnAwareBaseTest {
             actual = dao.findByGuid(upload.getGuid()).orElse(null);
             assertNotNull(actual);
             assertEquals(upload.getGuid(), actual.getGuid());
-            assertEquals(FileUploadStatus.AUTHORIZED, actual.getStatus());
-            assertEquals("first status equals creation time",
-                    actual.getCreatedAt(), actual.getStatusChangedAt());
+            assertNotNull(actual.getCreatedAt());
+            assertNull("should not be marked uploaded yet", actual.getUploadedAt());
+            assertNull("should not be scanned yet", actual.getScannedAt());
+            assertNull(actual.getScanResult());
 
             handle.rollback();
         });
@@ -57,12 +58,11 @@ public class FileUploadDaoTest extends TxnAwareBaseTest {
 
             long userId = testData.getUserId();
             FileUpload upload = dao.createAuthorized("guid", "blob", "mime", "file", 123, userId, userId);
-            assertEquals(FileUploadStatus.AUTHORIZED, upload.getStatus());
+            assertNull(upload.getUploadedAt());
 
             var now = Instant.now();
             dao.markUploaded(upload.getId(), now);
             FileUpload actual = dao.findById(upload.getId()).orElse(null);
-            assertEquals(FileUploadStatus.UPLOADED, actual.getStatus());
             assertEquals(now, actual.getUploadedAt());
 
             handle.rollback();

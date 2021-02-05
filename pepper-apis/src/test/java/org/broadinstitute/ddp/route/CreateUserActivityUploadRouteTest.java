@@ -5,6 +5,7 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.isEmptyOrNullString;
 import static org.hamcrest.Matchers.not;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 
 import io.restassured.http.ContentType;
@@ -17,7 +18,6 @@ import org.broadinstitute.ddp.db.dao.FileUploadDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.json.CreateUserActivityUploadPayload;
-import org.broadinstitute.ddp.model.files.FileUploadStatus;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
 import org.broadinstitute.ddp.util.TestFormActivity;
 import org.junit.BeforeClass;
@@ -116,7 +116,7 @@ public class CreateUserActivityUploadRouteTest extends IntegrationTestSuite.Test
             assertEquals("file.pdf", actual.getFileName());
             assertEquals(123, actual.getFileSize());
             assertEquals("application/pdf", actual.getMimeType());
-            assertEquals(FileUploadStatus.AUTHORIZED, actual.getStatus());
+            assertFalse(actual.isVerified());
         });
     }
 }

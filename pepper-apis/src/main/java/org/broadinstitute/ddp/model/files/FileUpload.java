@@ -15,10 +15,11 @@ public class FileUpload {
     private final long fileSize;
     private final long operatorUserId;
     private final long participantUserId;
-    private final FileUploadStatus status;
-    private final Instant statusChangedAt;
+    private final boolean isVerified;
     private final Instant createdAt;
     private final Instant uploadedAt;
+    private final Instant scannedAt;
+    private final FileScanResult scanResult;
 
     @JdbiConstructor
     public FileUpload(@ColumnName("file_upload_id") long id,
@@ -29,10 +30,11 @@ public class FileUpload {
                       @ColumnName("file_size") long fileSize,
                       @ColumnName("operator_user_id") long operatorUserId,
                       @ColumnName("participant_user_id") long participantUserId,
-                      @ColumnName("status") FileUploadStatus status,
-                      @ColumnName("status_changed_at") Instant statusChangedAt,
+                      @ColumnName("is_verified") boolean isVerified,
                       @ColumnName("created_at") Instant createdAt,
-                      @ColumnName("uploaded_at") Instant uploadedAt) {
+                      @ColumnName("uploaded_at") Instant uploadedAt,
+                      @ColumnName("scanned_at") Instant scannedAt,
+                      @ColumnName("scan_result") FileScanResult scanResult) {
         this.id = id;
         this.guid = guid;
         this.blobName = blobName;
@@ -41,10 +43,11 @@ public class FileUpload {
         this.fileSize = fileSize;
         this.operatorUserId = operatorUserId;
         this.participantUserId = participantUserId;
-        this.status = status;
-        this.statusChangedAt = statusChangedAt;
+        this.isVerified = isVerified;
         this.createdAt = createdAt;
         this.uploadedAt = uploadedAt;
+        this.scannedAt = scannedAt;
+        this.scanResult = scanResult;
     }
 
     /**
@@ -104,17 +107,12 @@ public class FileUpload {
     }
 
     /**
-     * Returns current status of the file upload.
+     * Returns whether file upload is verified, i.e. if file upload meets criteria such as being uploaded, matches
+     * reported file size, etc. Note that currently verification is only performed when user attempts to assign a file
+     * upload with an answer.
      */
-    public FileUploadStatus getStatus() {
-        return status;
-    }
-
-    /**
-     * Returns timestamp of the latest status change.
-     */
-    public Instant getStatusChangedAt() {
-        return statusChangedAt;
+    public boolean isVerified() {
+        return isVerified;
     }
 
     /**
@@ -129,5 +127,19 @@ public class FileUpload {
      */
     public Instant getUploadedAt() {
         return uploadedAt;
+    }
+
+    /**
+     * Returns timestamp of when file was scanned, null if not yet finished scanning.
+     */
+    public Instant getScannedAt() {
+        return scannedAt;
+    }
+
+    /**
+     * Returns scan result of the file upload, null if not yet finished scanning.
+     */
+    public FileScanResult getScanResult() {
+        return scanResult;
     }
 }
