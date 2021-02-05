@@ -79,6 +79,7 @@ import org.broadinstitute.ddp.route.CheckIrbPasswordRoute;
 import org.broadinstitute.ddp.route.CreateActivityInstanceRoute;
 import org.broadinstitute.ddp.route.CreateMailAddressRoute;
 import org.broadinstitute.ddp.route.CreateTemporaryUserRoute;
+import org.broadinstitute.ddp.route.CreateUserActivityUploadRoute;
 import org.broadinstitute.ddp.route.DeleteMailAddressRoute;
 import org.broadinstitute.ddp.route.DeleteMedicalProviderRoute;
 import org.broadinstitute.ddp.route.DeleteTempMailingAddressRoute;
@@ -160,6 +161,7 @@ import org.broadinstitute.ddp.service.AddressService;
 import org.broadinstitute.ddp.service.Auth0LogEventService;
 import org.broadinstitute.ddp.service.CancerService;
 import org.broadinstitute.ddp.service.ConsentService;
+import org.broadinstitute.ddp.service.FileUploadService;
 import org.broadinstitute.ddp.service.FormActivityService;
 import org.broadinstitute.ddp.service.MedicalRecordService;
 import org.broadinstitute.ddp.service.PdfBucketService;
@@ -478,6 +480,9 @@ public class DataDonationPlatform {
                 new PutFormAnswersRoute(workflowService, activityValidationService, formInstanceDao, interpreter),
                 responseSerializer
         );
+
+        var fileUploadService = FileUploadService.fromConfig(cfg);
+        post(API.USER_ACTIVITY_UPLOADS, new CreateUserActivityUploadRoute(fileUploadService), responseSerializer);
 
         // User study invitations
         get(API.USER_STUDY_INVITES, new ListUserStudyInvitationsRoute(), jsonSerializer);

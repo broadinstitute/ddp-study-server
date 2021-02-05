@@ -1,0 +1,104 @@
+parameters:
+  - $ref: '../pepper.yml#/components/parameters/studyGuid'
+  - $ref: '../pepper.yml#/components/parameters/userGuid'
+  - $ref: '../pepper.yml#/components/parameters/instanceGuid'
+
+post:
+  operationId: postActivityUploads
+  tags:
+    - Activities
+  summary: create an authorized file upload
+  description: |
+    Request for a new URL for file upload. Link is accessible for limited
+    period of time (e.g. 5 mins). Resumable uploads are supported. With
+    information in response body, client will be able to upload the file
+    directly to a Google Bucket. If resumable=true is specified in request,
+    client will assume responsibility for creating the session URI with
+    provided URL in addition to follow up requests that contain the file
+    contents (see [documentation][doc]).
+
+    **Study Admins**
+
+    Activity file upload is not supported if activity instance/question is
+    read-only or otherwise inaccessible, unless operator is a study admin.
+
+    **Temporary Users**
+
+    This API endpoint does not allow access by temporary users.
+
+    [doc]: https://cloud.google.com/storage/docs/performing-resumable-uploads
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          required:
+            - questionStableId
+            - fileName
+            - fileSize
+            - resumable
+          properties:
+            questionStableId:
+              type: string
+              description: The question identifier
+            fileName:
+              type: string
+              maxLength: 100
+              description: Name of file to be uploaded
+            fileSize:
+              type: integer
+              description: Size of the file, in bytes (subject to a limit such as 2MB)
+            mimeType:
+              type: string
+              default: application/octet-stream
+              description: MIME type, if not specified will default to `application/octet-stream`
+            resumable:
+              type: boolean
+              description: Whether URL should support resumable upload
+  responses:
+    201:
+      description: authorized file upload
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - uploadGuid
+              - uploadUrl
+            properties:
+              uploadGuid:
+                type: string
+                description: Unique identifier for file upload
+              uploadUrl:
+                type: string
+                description: Signed URL which can be used to upload file contents
+    400:
+      description: invalid request or bad inputs
+      content:
+        application/json:
+          schema:
+            $ref: '../pepper.yml#/components/schemas/Error.BadPayload'
+    404:
+      description: user, study, instance or question is not found
+      content:
+        application/json:
+          schema:
+            $ref: '../pepper.yml#/components/schemas/Error.UserStudyActivityQuestionNotFound'
+    422:
+      description: file upload is not allowed or not supported
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '../pepper.yml#/components/schemas/Error'
+              - type: object
+                properties:
+                  code:
+                    type: string
+                    enum:
+                      - ACTIVITY_INSTANCE_IS_READONLY
+                      - QUESTION_IS_READONLY
+                      - NOT_SUPPORTED
+    default:
+      $ref: '../pepper.yml#/components/responses/ErrorResponse'
