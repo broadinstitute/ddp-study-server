@@ -31,10 +31,10 @@ public class UserAuthCheckFilter implements Filter {
     private static final Logger LOG = LoggerFactory.getLogger(UserAuthCheckFilter.class);
     private static final AuthPathRegexUtil pathMatcher = new AuthPathRegexUtil();
 
-    private final List<WhitelistEntry> tempUserWhitelist = new ArrayList<>();
+    private final List<AllowlistEntry> tempUserAllowlist = new ArrayList<>();
 
     /**
-     * Add a route to the whitelist that enables temporary user access. If the route endpoint path has path parameters,
+     * Add a route to the allowlist that enables temporary user access. If the route endpoint path has path parameters,
      * it should be using SparkJava's colon syntax (see {@link PathParam}). These path parameters will be converted to
      * regex in order to match the whole path to incoming requests.
      *
@@ -42,13 +42,13 @@ public class UserAuthCheckFilter implements Filter {
      * @param endpoint the endpoint path, using path-param colon syntax as needed
      * @return this filter itself, for method chaining
      */
-    public UserAuthCheckFilter addTempUserWhitelist(HttpMethod method, String endpoint) {
+    public UserAuthCheckFilter addTempUserAllowlist(HttpMethod method, String endpoint) {
         String methodName = method.name().toUpperCase();
         String pathRegex = endpoint
                 .replaceAll(PathParam.USER_GUID, ".+")
                 .replaceAll(PathParam.STUDY_GUID, ".+")
                 .replaceAll(PathParam.INSTANCE_GUID, ".+");
-        tempUserWhitelist.add(new WhitelistEntry(methodName, pathRegex));
+        tempUserAllowlist.add(new AllowlistEntry(methodName, pathRegex));
         return this;
     }
 
@@ -106,18 +106,18 @@ public class UserAuthCheckFilter implements Filter {
 
         LOG.info("Attempting to check temporary user with guid '{}' for request '{} {}'", tempUserGuid, requestedMethod, requestedPath);
 
-        boolean inWhitelist = false;
-        for (WhitelistEntry entry : tempUserWhitelist) {
+        boolean inAllowlist = false;
+        for (AllowlistEntry entry : tempUserAllowlist) {
             if (entry.allows(requestedMethod, requestedPath)) {
-                inWhitelist = true;
+                inAllowlist = true;
                 break;
             }
         }
 
-        if (!inWhitelist) {
-            LOG.warn("Request '{} {}' is not in temp-user whitelist", requestedMethod, requestedPath);
+        if (!inAllowlist) {
+            LOG.warn("Request '{} {}' is not in temp-user allowlist", requestedMethod, requestedPath);
             throw ResponseUtil.haltError(HttpStatus.SC_UNAUTHORIZED,
-                    new ApiError(ErrorCodes.AUTH_CANNOT_BE_DETERMINED, "Request is not in temp-user whitelist"));
+                    new ApiError(ErrorCodes.AUTH_CANNOT_BE_DETERMINED, "Request is not in temp-user allowlist"));
         }
 
         UserDto tempUser = TransactionWrapper.withTxn(handle ->
@@ -129,7 +129,7 @@ public class UserAuthCheckFilter implements Filter {
             canAccess = false;
         } else if (!tempUser.isTemporary()) {
             LOG.warn("User with guid '{}' is not a temporary user but is used to access"
-                    + " temp-user whitelisted path without a token", tempUserGuid);
+                    + " temp-user allowlisted path without a token", tempUserGuid);
             canAccess = false;
         } else if (tempUser.isExpired()) {
             LOG.warn("Temporary user with guid '{}' had already expired at time {}ms", tempUserGuid, tempUser.getExpiresAtMillis());
@@ -142,11 +142,11 @@ public class UserAuthCheckFilter implements Filter {
         }
     }
 
-    private class WhitelistEntry {
+    private class AllowlistEntry {
         private final String method;
         private final String pathRegex;
 
-        WhitelistEntry(String method, String pathRegex) {
+        AllowlistEntry(String method, String pathRegex) {
             this.method = method;
             this.pathRegex = pathRegex;
         }

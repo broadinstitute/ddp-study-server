@@ -1,6 +1,6 @@
 package org.broadinstitute.ddp.filter;
 
-import static org.broadinstitute.ddp.filter.WhiteListFilter.whitelist;
+import static org.broadinstitute.ddp.filter.AllowListFilter.allowlist;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static spark.Spark.awaitInitialization;
@@ -24,7 +24,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 
-public class WhitelistFilterTest {
+public class AllowlistFilterTest {
     static int PORT = 6666;
     public static final String ALLOWED = "/allowed";
     public static final String NOT_ALLOWED = "/notallowed";
@@ -40,10 +40,10 @@ public class WhitelistFilterTest {
             } catch (UnknownHostException e) {
                 throw new RuntimeException(e);
             }
-            whitelist(ALLOWED, List.of(thisIp, "127.0.0.1", "55.444.555.555"));
+            allowlist(ALLOWED, List.of(thisIp, "127.0.0.1", "55.444.555.555"));
             get(ALLOWED, (req, res) -> "Welcome to Fantasy Island!");
 
-            whitelist(NOT_ALLOWED, List.of("55.444.555.555"));
+            allowlist(NOT_ALLOWED, List.of("55.444.555.555"));
             get("/notallowed", (req, res) -> "Intruder!");
 
             get(DONT_CARE, (req, res) -> "Aloha my friend!");

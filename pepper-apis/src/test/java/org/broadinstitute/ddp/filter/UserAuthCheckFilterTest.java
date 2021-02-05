@@ -57,7 +57,7 @@ public class UserAuthCheckFilterTest extends IntegrationTestSuite.TestCase {
     }
 
     @Test
-    public void testAuthUser_canAccessBothAuthAndWhitelistRoutes() {
+    public void testAuthUser_canAccessBothAuthAndAllowlistRoutes() {
         String profileUrl = makeUrl(API.USER_PROFILE
                 .replace(PathParam.USER_GUID, testData.getUserGuid()));
         String previousName = TransactionWrapper.withTxn(handle -> handle.attach(UserProfileDao.class)
@@ -73,7 +73,7 @@ public class UserAuthCheckFilterTest extends IntegrationTestSuite.TestCase {
                     .then().assertThat()
                     .statusCode(HttpStatus.SC_OK);
 
-            // Can use a whitelisted route
+            // Can use an allowed route
             given().auth().oauth2(testData.getTestingUser().getToken())
                     .when().get(profileUrl)
                     .then().assertThat()
@@ -86,7 +86,7 @@ public class UserAuthCheckFilterTest extends IntegrationTestSuite.TestCase {
     }
 
     @Test
-    public void testTempUser_accessRouteNotInWhitelist_denied() throws Exception {
+    public void testTempUser_accessRouteNotInAllowlist_denied() throws Exception {
         User tempUser = createTempUserAndDeferCleanup();
         String profileUrl = makeUrl(API.USER_PROFILE
                 .replace(PathParam.USER_GUID, tempUser.getGuid()));
@@ -98,7 +98,7 @@ public class UserAuthCheckFilterTest extends IntegrationTestSuite.TestCase {
         String bodyToString = EntityUtils.toString(entity);
         ApiError error = gson.fromJson(bodyToString, ApiError.class);
         Assert.assertEquals(ErrorCodes.AUTH_CANNOT_BE_DETERMINED, error.getCode());
-        Assert.assertEquals("Request is not in temp-user whitelist", error.getMessage());
+        Assert.assertEquals("Request is not in temp-user allowlist", error.getMessage());
     }
 
     @Test
