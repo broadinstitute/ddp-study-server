@@ -21,7 +21,6 @@ import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.BlobId;
 import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageOptions;
-import com.google.common.io.ByteStreams;
 import com.google.protobuf.ByteString;
 import com.google.pubsub.v1.ProjectTopicName;
 import com.google.pubsub.v1.PubsubMessage;
@@ -44,6 +43,7 @@ public class FileScanner implements BackgroundFunction<FileScanner.Message> {
     private static final String CLAMSCAN_BIN = "./clamav/clamscan";
     private static final String BIN_DIR = "./clamav";
     private static final String DB_DIR = "/tmp/clamav-db";
+    private static final int BUFFER_SIZE = 64 * 1024; // 64 KB
 
     private static final long refreshMillis;
     private static final Storage storage;
@@ -126,7 +126,14 @@ public class FileScanner implements BackgroundFunction<FileScanner.Message> {
 
         if (withInput && input != null) {
             try (OutputStream out = process.getOutputStream()) {
-                ByteStreams.copy(input, out);
+                byte[] buffer = new byte[BUFFER_SIZE];
+                while (true) {
+                    int read = input.read(buffer);
+                    if (read < 0) {
+                        break;
+                    }
+                    out.write(buffer, 0, read);
+                }
                 out.flush();
             } catch (IOException e) {
                 throw new RuntimeException("Error writing input to command: " + command[0], e);
@@ -244,7 +251,7 @@ public class FileScanner implements BackgroundFunction<FileScanner.Message> {
         try {
             String msgId = publisher.publish(resultMessage).get();
             logger.info("Published scan result with messageId: " + msgId);
-        } catch (InterruptedException|ExecutionException e) {
+        } catch (InterruptedException | ExecutionException e) {
             throw new RuntimeException("Error publishing scan result for file: " + blobId.toString(), e);
         }
     }
