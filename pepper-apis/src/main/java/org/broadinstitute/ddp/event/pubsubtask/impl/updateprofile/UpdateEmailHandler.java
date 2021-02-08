@@ -1,6 +1,6 @@
-package org.broadinstitute.ddp.event.dsmtask.impl.updateprofile;
+package org.broadinstitute.ddp.event.pubsubtask.impl.updateprofile;
 
-import static org.broadinstitute.ddp.event.dsmtask.api.DsmTaskLogUtil.infoMsg;
+import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskLogUtil.infoMsg;
 import static org.slf4j.LoggerFactory.getLogger;
 
 
@@ -10,7 +10,8 @@ import org.broadinstitute.ddp.db.TransactionWrapper.DB;
 import org.broadinstitute.ddp.db.dao.DataExportDao;
 import org.broadinstitute.ddp.db.dao.JdbiUser;
 import org.broadinstitute.ddp.db.dto.UserDto;
-import org.broadinstitute.ddp.event.dsmtask.api.DsmTaskException;
+import org.broadinstitute.ddp.event.pubsubtask.api.PubSubTask;
+import org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskException;
 import org.broadinstitute.ddp.util.Auth0Util;
 import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
@@ -19,19 +20,24 @@ public class UpdateEmailHandler {
 
     private static final Logger LOG = getLogger(UpdateEmailHandler.class);
 
-    public void updateEmail(String userGuid, String email) {
-        TransactionWrapper.useTxn(DB.APIS, handle -> updateEmail(handle, userGuid, email));
+    private static final String FIELD_EMAIL = "email";
+
+    public void updateEmail(String userGuid, PubSubTask.PayloadMap payloadMap) {
+        TransactionWrapper.useTxn(DB.APIS, handle -> updateEmail(handle, userGuid, payloadMap));
     }
 
-    private void updateEmail(Handle handle, String userGuid, String email) {
-        var userDto = handle.attach(JdbiUser.class).findByUserGuid(userGuid);
-        if (userDto == null) {
-            throw new DsmTaskException("User profile is not found for guid=" + userGuid);
+    private void updateEmail(Handle handle, String userGuid, PubSubTask.PayloadMap payloadMap) {
+        if (payloadMap.getMap().containsKey(FIELD_EMAIL)) {
+            String email = payloadMap.getMap().get(FIELD_EMAIL);
+            var userDto = handle.attach(JdbiUser.class).findByUserGuid(userGuid);
+            if (userDto == null) {
+                throw new PubSubTaskException("User profile is not found for guid=" + userGuid);
+            }
+            validateUserForLoginDataUpdateEligibility(userDto);
+            LOG.info(infoMsg("Attempting to change the email of the user {}"), userGuid);
+            var mgmtAPI = Auth0Util.getManagementApiInstanceForUser(userDto.getUserGuid(), handle);
+            updateEmailInAuth0(handle, mgmtAPI, userDto, email, userGuid);
         }
-        validateUserForLoginDataUpdateEligibility(userDto);
-        LOG.info(infoMsg("Attempting to change the email of the user {}"), userGuid);
-        var mgmtAPI = Auth0Util.getManagementApiInstanceForUser(userDto.getUserGuid(), handle);
-        updateEmailInAuth0(handle, mgmtAPI, userDto, email, userGuid);
     }
 
     private void validateUserForLoginDataUpdateEligibility(UserDto userDto) {
@@ -43,7 +49,7 @@ public class UpdateEmailHandler {
             errMsg = "User " + userDto.getUserGuid() + " is not associated with the Auth0 user " + userDto.getAuth0UserId();
         }
         if (errMsg != null) {
-            throw new DsmTaskException(errMsg);
+            throw new PubSubTaskException(errMsg);
         }
     }
 
@@ -69,12 +75,12 @@ public class UpdateEmailHandler {
                 if (status.getErrorMessage() != null) {
                     errMsg = errMsg + " Auth0 message: " + status.getErrorMessage();
                 }
-                throw new DsmTaskException(errMsg, true);
+                throw new PubSubTaskException(errMsg, true);
             default:
                 errMsg = "The returned Auth0 call status is unknown - something completely unexpected happened";
         }
         if (errMsg != null) {
-            throw new DsmTaskException(errMsg);
+            throw new PubSubTaskException(errMsg);
         }
     }
 }

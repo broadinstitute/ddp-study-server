@@ -1,7 +1,7 @@
 package org.broadinstitute.ddp;
 
-import static org.broadinstitute.ddp.constants.ConfigFile.PUBSUB_DSM_TASKS_SUBSCRIBER_AWAIT_RUNNING_TIMEOUT;
-import static org.broadinstitute.ddp.event.dsmtask.api.DsmTaskPubSubConnectionCreator.DEFAULT_SUBSCRIBER_AWAIT_RUNNING_TIMEOUT_SEC;
+import static org.broadinstitute.ddp.constants.ConfigFile.PUBSUB_TASKS_SUBSCRIBER_AWAIT_RUNNING_TIMEOUT;
+import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskConnectionService.DEFAULT_SUBSCRIBER_AWAIT_RUNNING_TIMEOUT_SEC;
 
 import java.io.IOException;
 import java.time.Instant;
@@ -56,8 +56,8 @@ import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.db.housekeeping.dao.JdbiEvent;
 import org.broadinstitute.ddp.db.housekeeping.dao.JdbiMessage;
 import org.broadinstitute.ddp.event.HousekeepingTaskReceiver;
-import org.broadinstitute.ddp.event.dsmtask.api.DsmTaskPubSubConnectionCreator;
-import org.broadinstitute.ddp.event.dsmtask.impl.DsmTaskProcessorFactoryImpl;
+import org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskConnectionService;
+import org.broadinstitute.ddp.event.pubsubtask.impl.PubSubTaskProcessorFactoryImpl;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.exception.MessageBuilderException;
 import org.broadinstitute.ddp.exception.NoSendableEmailAddressException;
@@ -176,7 +176,7 @@ public class Housekeeping {
     private static Scheduler scheduler;
     private static Subscriber taskSubscriber;
 
-    private static DsmTaskPubSubConnectionCreator dsmTaskPubSubConnectionCreator;
+    private static PubSubTaskConnectionService pubSubTaskConnectionService;
 
     public static void setAfterHandler(AfterHandlerCallback afterHandler) {
         synchronized (afterHandlerGuard) {
@@ -229,15 +229,15 @@ public class Housekeeping {
 
         final PubSubConnectionManager pubsubConnectionManager = new PubSubConnectionManager(usePubSubEmulator);
 
-        dsmTaskPubSubConnectionCreator = new DsmTaskPubSubConnectionCreator(
+        pubSubTaskConnectionService = new PubSubTaskConnectionService(
                 pubsubConnectionManager,
                 pubSubProject,
-                cfg.getString(ConfigFile.PUBSUB_DSM_TASKS_SUB),
-                cfg.getString(ConfigFile.PUBSUB_DSM_TASKS_RESULT_TOPIC),
-                ConfigUtil.getIntIfPresent(cfg, PUBSUB_DSM_TASKS_SUBSCRIBER_AWAIT_RUNNING_TIMEOUT,
+                cfg.getString(ConfigFile.PUBSUB_TASKS_SUB),
+                cfg.getString(ConfigFile.PUBSUB_TASKS_RESULT_TOPIC),
+                ConfigUtil.getIntIfPresent(cfg, PUBSUB_TASKS_SUBSCRIBER_AWAIT_RUNNING_TIMEOUT,
                         DEFAULT_SUBSCRIBER_AWAIT_RUNNING_TIMEOUT_SEC),
-                new DsmTaskProcessorFactoryImpl());
-        dsmTaskPubSubConnectionCreator.create();
+                new PubSubTaskProcessorFactoryImpl());
+        pubSubTaskConnectionService.create();
 
         TransactionWrapper.useTxn(TransactionWrapper.DB.APIS, handle -> {
             JdbiMessageDestination messageDestinationDao = handle.attach(JdbiMessageDestination.class);
@@ -467,8 +467,8 @@ public class Housekeeping {
             JobScheduler.shutdownScheduler(scheduler, true);
         }
 
-        if (dsmTaskPubSubConnectionCreator != null) {
-            dsmTaskPubSubConnectionCreator.destroy();
+        if (pubSubTaskConnectionService != null) {
+            pubSubTaskConnectionService.destroy();
         }
 
         LOG.info("Housekeeping is shutting down");

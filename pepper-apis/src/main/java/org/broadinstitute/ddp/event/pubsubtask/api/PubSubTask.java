@@ -1,10 +1,14 @@
-package org.broadinstitute.ddp.event.dsmtask.api;
+package org.broadinstitute.ddp.event.pubsubtask.api;
+
+import java.util.Map;
 
 /**
- * Data which fetched from DsmTask pubsub message
- * published by DSM to pubsub topic "dsm-to-dss-tasks"
+ * Data extracted from PubSubTask message
+ * (published to incoming subscription specified by config parameter ""pubsub.pubSubTasksSubscription").
+ *
+ * <p>Data is fetched from pubsub message attributes and from message payload (JSON foc).
  */
-public class DsmTaskData {
+public class PubSubTask {
 
     public static final String ATTR_TASK_TYPE = "taskType";
     public static final String ATTR_PARTICIPANT_GUID = "participantGuid";
@@ -16,21 +20,21 @@ public class DsmTaskData {
     private final String participantGuid;
     private final String userId;
     private final String studyGuid;
-    private final String payload;
+
+    private final String payloadJson;
+    private final PayloadMap payloadMap;
     private final Object payloadObject;
 
-    public DsmTaskData(String messageId, String taskType, String participantGuid, String userId, String studyGuid) {
-        this(messageId, taskType, participantGuid, userId, studyGuid, null, null);
-    }
 
-    public DsmTaskData(String messageId, String taskType, String participantGuid, String userId, String studyGuid,
-                       String payload, Object payloadObject) {
+    public PubSubTask(String messageId, String taskType, String participantGuid, String userId, String studyGuid,
+                      String payloadJson, PayloadMap payloadMap, Object payloadObject) {
         this.messageId = messageId;
         this.taskType = taskType;
         this.participantGuid = participantGuid;
         this.userId = userId;
         this.studyGuid = studyGuid;
-        this.payload = payload;
+        this.payloadJson = payloadJson;
+        this.payloadMap = payloadMap;
         this.payloadObject = payloadObject;
     }
 
@@ -54,11 +58,28 @@ public class DsmTaskData {
         return studyGuid;
     }
 
-    public String getPayload() {
-        return payload;
+    public String getPayloadJson() {
+        return payloadJson;
+    }
+
+    public PayloadMap getPayloadMap() {
+        return payloadMap;
     }
 
     public Object getPayloadObject() {
         return payloadObject;
+    }
+
+
+    public static class PayloadMap {
+        private Map<String, String> map;
+
+        public Map<String, String> getMap() {
+            return map;
+        }
+
+        public void setMap(Map<String, String> map) {
+            this.map = map;
+        }
     }
 }
