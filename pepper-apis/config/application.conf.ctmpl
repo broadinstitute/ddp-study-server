@@ -19,18 +19,18 @@
     "port": {{$conf.Data.port}},
     "doLiquibase": {{$conf.Data.doLiquibase}},
     "threadTimeout": {{$conf.Data.threadTimeout}},
-    "auth0IpAllowList": [
-    {{range $i, $ip := $conf.Data.auth0.auth0IpAllowList}}
-        {{if $i}},{{end}}"{{ $ip }}"
-    {{end}}
-    ],
     "auth0": {
         "domain": "{{$auth0.domain}}",
         "managementApiSecret": "{{$auth0.managementApiSecret}}",
         "managementApiClientId": "{{$auth0.managementApiClientId}}",
         "encryptionSecret": "{{$auth0.encryptionSecret}}",
         "dsmClientId": "{{$auth0.dsmClientId}}",
-        "dsmClientSecret": "{{$auth0.dsmClientSecret}}"
+        "dsmClientSecret": "{{$auth0.dsmClientSecret}}",
+        "ipAllowList": [
+            {{range $i, $ip := $conf.Data.auth0.ipAllowList}}
+                {{if $i}},{{end}}"{{ $ip }}"
+            {{end}}
+            ]
     },
     "auth0LogEvents" : {
 	{{if $conf.Data.auth0LogEvents.token}}
