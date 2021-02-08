@@ -185,8 +185,7 @@ public class PatchFormAnswersRouteStandaloneTest {
     public static void doSuiteTearDown() {
         TransactionWrapper.useTxn(handle -> {
             var fileDao = handle.attach(FileUploadDao.class);
-            fileDao.deleteById(upload1.getId());
-            fileDao.deleteById(upload2.getId());
+            fileDao.deleteByIds(Set.of(upload1.getId(), upload2.getId()));
         });
         IntegrationTestSuite.tearDown();
     }

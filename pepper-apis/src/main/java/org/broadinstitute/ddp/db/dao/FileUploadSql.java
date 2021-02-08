@@ -5,6 +5,8 @@ import java.time.Instant;
 import org.broadinstitute.ddp.model.files.FileScanResult;
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.customizer.Bind;
+import org.jdbi.v3.sqlobject.customizer.BindList;
+import org.jdbi.v3.sqlobject.customizer.BindList.EmptyHandling;
 import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 
@@ -40,6 +42,6 @@ public interface FileUploadSql extends SqlObject {
             @Bind("scannedAt") Instant scannedAt,
             @Bind("scanResult") FileScanResult scanResult);
 
-    @SqlUpdate("delete from file_upload where file_upload_id = :id")
-    int delete(@Bind("id") long fileUploadId);
+    @SqlUpdate("delete from file_upload where file_upload_id in (<ids>)")
+    int bulkDelete(@BindList(value = "ids", onEmpty = EmptyHandling.NULL) Iterable<Long> fileUploadIds);
 }

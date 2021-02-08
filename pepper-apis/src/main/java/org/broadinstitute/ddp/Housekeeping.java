@@ -77,6 +77,7 @@ import org.broadinstitute.ddp.housekeeping.schedule.CheckKitsJob;
 import org.broadinstitute.ddp.housekeeping.schedule.DataSyncJob;
 import org.broadinstitute.ddp.housekeeping.schedule.DatabaseBackupCheckJob;
 import org.broadinstitute.ddp.housekeeping.schedule.DatabaseBackupJob;
+import org.broadinstitute.ddp.housekeeping.schedule.FileUploadCleanupJob;
 import org.broadinstitute.ddp.housekeeping.schedule.OnDemandExportJob;
 import org.broadinstitute.ddp.housekeeping.schedule.StudyDataExportJob;
 import org.broadinstitute.ddp.housekeeping.schedule.TemporaryUserCleanupJob;
@@ -478,6 +479,7 @@ public class Housekeeping {
                     DataSyncJob.register(scheduler, cfg);
                     DatabaseBackupJob.register(scheduler, cfg);
                     DatabaseBackupCheckJob.register(scheduler, cfg);
+                    FileUploadCleanupJob.register(scheduler, cfg);
                     TemporaryUserCleanupJob.register(scheduler, cfg);
                     StudyDataExportJob.register(scheduler, cfg);
                 }

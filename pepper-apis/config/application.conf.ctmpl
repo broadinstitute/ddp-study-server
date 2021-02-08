@@ -59,6 +59,9 @@
         "quarantineBucket": "{{$conf.Data.fileUploads.quarantineBucket}}",
         "maxFileSizeBytes": {{$conf.Data.fileUploads.maxFileSizeBytes}},
         "maxSignedUrlMins": {{$conf.Data.fileUploads.maxSignedUrlMins}},
+        "removalExpireTime": {{$conf.Data.fileUploads.removalExpireTime}},
+        "removalExpireUnit": "{{$conf.Data.fileUploads.removalExpireUnit}}", // Java TimeUnit, up to MILLISECONDS granularity.
+        "removalBatchSize": {{$conf.Data.fileUploads.removalBatchSize}},
         "enableScanResultHandler": {{$conf.Data.fileUploads.enableScanResultHandler}},
         "scanResultSubscription": "{{$conf.Data.fileUploads.scanResultSubscription}}",
         "signerServiceAccount": {{$conf.Data.fileUploads.signerServiceAccount | toJSONPretty}}
@@ -77,6 +80,7 @@
         "drugLoader": "{{$conf.Data.schedules.drugLoader}}",
         "cancerLoader": "{{$conf.Data.schedules.cancerLoader}}",
         "studyExport": "{{$conf.Data.schedules.studyExport}}",
+        "fileUploadCleanup": "{{$conf.Data.schedules.fileUploadCleanup}}",
         "tempUserCleanup": "{{$conf.Data.schedules.tempUserCleanup}}"
     },
     "preferredSourceIPHeader":"X-AppEngine-User-IP",

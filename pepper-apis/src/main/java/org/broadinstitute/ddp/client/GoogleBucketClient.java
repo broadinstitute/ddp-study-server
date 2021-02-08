@@ -1,8 +1,16 @@
 package org.broadinstitute.ddp.client;
 
+import java.net.URL;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
+
 import com.google.auth.Credentials;
+import com.google.auth.ServiceAccountSigner;
 import com.google.cloud.storage.Blob;
+import com.google.cloud.storage.BlobId;
+import com.google.cloud.storage.BlobInfo;
 import com.google.cloud.storage.Bucket;
+import com.google.cloud.storage.HttpMethod;
 import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageOptions;
 import org.broadinstitute.ddp.exception.DDPException;
@@ -23,6 +31,18 @@ public class GoogleBucketClient {
 
     public GoogleBucketClient(Storage storage) {
         this.storage = storage;
+    }
+
+    public URL generateSignedUrl(ServiceAccountSigner signer,
+                                 String bucketName, String blobName,
+                                 long expirationTime, TimeUnit timeUnit,
+                                 HttpMethod method, Map<String, String> headers) {
+        BlobInfo blobInfo = BlobInfo.newBuilder(BlobId.of(bucketName, blobName)).build();
+        return storage.signUrl(blobInfo, expirationTime, timeUnit,
+                Storage.SignUrlOption.signWith(signer),
+                Storage.SignUrlOption.withV4Signature(),
+                Storage.SignUrlOption.httpMethod(method),
+                Storage.SignUrlOption.withExtHeaders(headers));
     }
 
     public Bucket getBucket(String bucketName) {
