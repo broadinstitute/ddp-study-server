@@ -76,7 +76,7 @@ public class BulkWithdrawCLI {
                 for (String hruid : hruids) {
                     LOG.info("Withdrawing {}", hruid);
                     User participant = userDao.findUserByHruid(hruid).get();
-                    enrollmentDao.insert(participant.getGuid(), studyGuid, EnrollmentStatusType.EXITED_AFTER_ENROLLMENT, now.toEpochMilli());
+                    enrollmentDao.changeUserStudyEnrollmentStatus(participant.getGuid(), studyGuid, EnrollmentStatusType.EXITED_AFTER_ENROLLMENT, now.toEpochMilli());
                     dsmWithdrawStmt.setLong(1, instanceId);
                     dsmWithdrawStmt.setString(2, participant.getGuid());
                     dsmWithdrawStmt.setLong(3, now.toEpochMilli());
