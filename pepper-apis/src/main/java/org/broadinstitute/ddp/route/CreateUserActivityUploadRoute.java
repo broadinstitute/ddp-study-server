@@ -117,7 +117,7 @@ public class CreateUserActivityUploadRoute extends ValidatedJsonInputRoute<Creat
 
         FileUpload upload = result.getFileUpload();
         LOG.info("Authorized file upload with id={} for bucket={} blobName={}",
-                upload.getId(), service.getBucketName(), upload.getBlobName());
+                upload.getId(), service.getUploadsBucket(), upload.getBlobName());
 
         response.status(HttpStatus.SC_CREATED);
         return new CreateUserActivityUploadResponse(upload.getGuid(), result.getSignedUrl().toString());

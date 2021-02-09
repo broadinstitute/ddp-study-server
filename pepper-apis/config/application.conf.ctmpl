@@ -55,6 +55,7 @@
     "googleProjectId": "{{$conf.Data.googleProjectId}}",
     "fileUploads": {
         "uploadsBucket": "{{$conf.Data.fileUploads.uploadsBucket}}",
+        "scannedBucket": "{{$conf.Data.fileUploads.scannedBucket}}",
         "maxFileSizeBytes": {{$conf.Data.fileUploads.maxFileSizeBytes}},
         "maxSignedUrlMins": {{$conf.Data.fileUploads.maxSignedUrlMins}},
         "signerServiceAccount": {{$conf.Data.fileUploads.signerServiceAccount | toJSONPretty}}

@@ -350,8 +350,8 @@ public class PatchFormAnswersRouteStandaloneTest {
         var fileDao = handle.attach(FileUploadDao.class);
         upload1 = fileDao.createAuthorized(GuidUtils.randomFileUploadGuid(), "blob1", "text/plain", "file.txt", 123, userId, userId);
         upload2 = fileDao.createAuthorized(GuidUtils.randomFileUploadGuid(), "blob2", "application/pdf", "file.pdf", 456, userId, userId);
-        fileDao.markUploaded(upload1.getId(), Instant.now());
-        fileDao.markUploaded(upload2.getId(), Instant.now());
+        fileDao.markVerified(upload1.getId());
+        fileDao.markVerified(upload2.getId());
     }
 
     private static Template newTemplate() {

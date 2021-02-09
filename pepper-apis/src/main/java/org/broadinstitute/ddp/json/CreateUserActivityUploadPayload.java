@@ -13,21 +13,22 @@ public class CreateUserActivityUploadPayload {
     private String questionStableId;
 
     @NotBlank
-    @Size(max = 100)
+    @Size(max = 255)
     @SerializedName("fileName")
     private String fileName;
 
     @Positive
     @SerializedName("fileSize")
-    private int fileSize;
+    private long fileSize;
 
+    @Size(max = 255)
     @SerializedName("mimeType")
     private String mimeType;
 
     @SerializedName("resumable")
     private boolean resumable;
 
-    public CreateUserActivityUploadPayload(String questionStableId, String fileName, int fileSize, String mimeType, boolean resumable) {
+    public CreateUserActivityUploadPayload(String questionStableId, String fileName, long fileSize, String mimeType, boolean resumable) {
         this.questionStableId = questionStableId;
         this.fileName = fileName;
         this.fileSize = fileSize;
@@ -43,7 +44,7 @@ public class CreateUserActivityUploadPayload {
         return fileName;
     }
 
-    public int getFileSize() {
+    public long getFileSize() {
         return fileSize;
     }
 
