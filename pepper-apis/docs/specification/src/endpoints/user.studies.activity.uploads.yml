@@ -44,13 +44,15 @@ post:
               description: The question identifier
             fileName:
               type: string
-              maxLength: 100
+              maxLength: 255
               description: Name of file to be uploaded
             fileSize:
               type: integer
+              minimum: 1
               description: Size of the file, in bytes (subject to a limit such as 2MB)
             mimeType:
               type: string
+              maxLength: 255
               default: application/octet-stream
               description: MIME type, if not specified will default to `application/octet-stream`
             resumable:

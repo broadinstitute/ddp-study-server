@@ -225,7 +225,7 @@ public class AnswerDaoTest extends TxnAwareBaseTest {
             var fileDao = handle.attach(FileUploadDao.class);
             var upload = fileDao.createAuthorized("guid", "blob", "mime", "file",
                     123, testData.getUserId(), testData.getUserId());
-            fileDao.markUploaded(upload.getId(), Instant.now());
+            fileDao.markVerified(upload.getId());
             var info = fileDao.findFileInfoByGuid(upload.getGuid()).get();
 
             var answerDao = daoBuilder.buildDao(handle);

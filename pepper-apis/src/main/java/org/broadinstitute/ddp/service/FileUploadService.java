@@ -5,8 +5,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.time.Instant;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 import com.google.auth.ServiceAccountSigner;
@@ -22,8 +22,8 @@ import com.typesafe.config.Config;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.db.dao.FileUploadDao;
 import org.broadinstitute.ddp.exception.DDPException;
+import org.broadinstitute.ddp.model.files.FileScanResult;
 import org.broadinstitute.ddp.model.files.FileUpload;
-import org.broadinstitute.ddp.model.files.FileUploadStatus;
 import org.broadinstitute.ddp.util.ConfigUtil;
 import org.broadinstitute.ddp.util.GoogleBucketUtil;
 import org.broadinstitute.ddp.util.GoogleCredentialUtil;
@@ -40,8 +40,9 @@ public class FileUploadService {
 
     private final ServiceAccountSigner signer;
     private final Storage storage;
-    private final String bucketName;
-    private final int maxFileSizeBytes;
+    private final String uploadsBucket;
+    private final String scannedBucket;
+    private final long maxFileSizeBytes;
     private final int maxSignedUrlMins;
 
     public static FileUploadService fromConfig(Config cfg) {
@@ -68,24 +69,27 @@ public class FileUploadService {
         return new FileUploadService(
                 signerCredentials, storage,
                 cfg.getString(ConfigFile.FileUploads.UPLOADS_BUCKET),
-                cfg.getInt(ConfigFile.FileUploads.MAX_FILE_SIZE_BYTES),
+                cfg.getString(ConfigFile.FileUploads.SCANNED_BUCKET),
+                cfg.getLong(ConfigFile.FileUploads.MAX_FILE_SIZE_BYTES),
                 cfg.getInt(ConfigFile.FileUploads.MAX_SIGNED_URL_MINS));
     }
 
-    public FileUploadService(ServiceAccountSigner signer, Storage storage, String bucketName,
-                             int maxFileSizeBytes, int maxSignedUrlMins) {
+    public FileUploadService(ServiceAccountSigner signer, Storage storage,
+                             String uploadsBucket, String scannedBucket,
+                             long maxFileSizeBytes, int maxSignedUrlMins) {
         this.signer = signer;
         this.storage = storage;
-        this.bucketName = bucketName;
+        this.uploadsBucket = uploadsBucket;
+        this.scannedBucket = scannedBucket;
         this.maxFileSizeBytes = maxFileSizeBytes;
         this.maxSignedUrlMins = maxSignedUrlMins;
     }
 
-    public String getBucketName() {
-        return bucketName;
+    public String getUploadsBucket() {
+        return uploadsBucket;
     }
 
-    public int getMaxFileSizeBytes() {
+    public long getMaxFileSizeBytes() {
         return maxFileSizeBytes;
     }
 
@@ -104,7 +108,7 @@ public class FileUploadService {
      */
     public AuthorizeResult authorizeUpload(Handle handle, long operatorUserId, long participantUserId,
                                            String blobPrefix, String mimeType,
-                                           String fileName, int fileSize, boolean resumable) {
+                                           String fileName, long fileSize, boolean resumable) {
         if (fileSize > maxFileSizeBytes) {
             return new AuthorizeResult(true, null, null);
         }
@@ -124,7 +128,7 @@ public class FileUploadService {
 
     @VisibleForTesting
     URL generateSignedUrl(String blobName, String mimeType, HttpMethod method) {
-        BlobInfo blobInfo = BlobInfo.newBuilder(BlobId.of(bucketName, blobName)).build();
+        BlobInfo blobInfo = BlobInfo.newBuilder(BlobId.of(uploadsBucket, blobName)).build();
         Map<String, String> headers = Map.of("Content-Type", mimeType);
         return storage.signUrl(blobInfo, maxSignedUrlMins, TimeUnit.MINUTES,
                 Storage.SignUrlOption.signWith(signer),
@@ -133,51 +137,70 @@ public class FileUploadService {
                 Storage.SignUrlOption.withExtHeaders(headers));
     }
 
+    // Convenience helper to lock file upload before verifying.
+    public Optional<VerifyResult> verifyUpload(Handle handle, long participantUserId, long uploadId) {
+        return handle.attach(FileUploadDao.class)
+                .findAndLockById(uploadId)
+                .map(upload -> verifyUpload(handle, participantUserId, upload));
+    }
+
     /**
      * Determine if file meets criteria, and update its status appropriately. E.g. file must be uploaded, matches
-     * reported file size, and belong to the participant. Files already marked uploaded will not be checked again.
+     * reported file size, and belong to the participant. Files already verified will not be checked again.
+     *
+     * <p>File upload should be "locked" to ensure its status doesn't change midway or file gets moved to a different
+     * bucket. Since the file upload is locked, caller should commit transaction as soon as possible to unblock other
+     * transactions waiting on the file upload row.
      *
      * @param handle            the database handle
      * @param participantUserId the participant who this upload will be assigned to
      * @param upload            the file upload
      * @return check result
      */
-    public CheckResult checkAndSetUploadStatus(Handle handle, long participantUserId, FileUpload upload) {
+    public VerifyResult verifyUpload(Handle handle, long participantUserId, FileUpload upload) {
         if (participantUserId != upload.getParticipantUserId()) {
-            return CheckResult.OWNER_MISMATCH;
+            return VerifyResult.OWNER_MISMATCH;
         }
 
-        if (upload.getStatus() == FileUploadStatus.AUTHORIZED) {
-            // File upload haven't been checked yet, do it now.
-            Blob blob = fetchBlob(upload.getBlobName());
+        if (!upload.isVerified()) {
+            // File scan usually finish within a minute of upload, and verification call from user should happen
+            // relatively quick right after the upload, so it might be rare for it to be scanned already. But let's
+            // check for this condition anyways.
+            if (upload.getScannedAt() != null && upload.getScanResult() == FileScanResult.INFECTED) {
+                return VerifyResult.QUARANTINED;
+            }
+
+            Blob blob = fetchBlob(upload.getBlobName(), upload.getScanResult());
             boolean exists = (blob != null && blob.exists());
             Long size = blob == null ? null : blob.getSize();
 
             if (!exists || blob.getCreateTime() == null) {
-                return CheckResult.NOT_UPLOADED;
+                return VerifyResult.NOT_UPLOADED;
             }
 
             if (size == null || size != upload.getFileSize()) {
-                return CheckResult.SIZE_MISMATCH;
+                return VerifyResult.SIZE_MISMATCH;
             }
 
-            var uploadTime = Instant.ofEpochMilli(blob.getCreateTime());
-            handle.attach(FileUploadDao.class).markUploaded(upload.getId(), uploadTime);
-            LOG.info("Marked file upload {} as uploaded with time {}", upload.getGuid(), uploadTime);
+            handle.attach(FileUploadDao.class).markVerified(upload.getId());
+            LOG.info("File upload {} is now marked as verified", upload.getGuid());
         } else {
-            LOG.info("File upload {} was already marked uploaded at {} with status {}",
-                    upload.getGuid(), upload.getUploadedAt(), upload.getStatus());
+            LOG.info("File upload {} was already verified", upload.getGuid());
         }
 
-        return CheckResult.OK;
+        return VerifyResult.OK;
     }
 
     @VisibleForTesting
-    Blob fetchBlob(String blobName) {
+    Blob fetchBlob(String blobName, FileScanResult scanResult) {
+        String bucketName = uploadsBucket;
+        if (scanResult == FileScanResult.CLEAN) {
+            bucketName = scannedBucket;
+        }
         return storage.get(BlobId.of(bucketName, blobName));
     }
 
-    public enum CheckResult {
+    public enum VerifyResult {
         /**
          * File hasn't been uploaded yet.
          */
@@ -186,6 +209,10 @@ public class FileUploadService {
          * File does not belong to participant.
          */
         OWNER_MISMATCH,
+        /**
+         * File was scanned already and found to be infected.
+         */
+        QUARANTINED,
         /**
          * File size does not match up.
          */

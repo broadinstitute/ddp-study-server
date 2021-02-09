@@ -246,7 +246,7 @@ public class PatchFormAnswersRoute implements Route {
                     // Run constraint checks before processing validation rules.
                     checkAnswerConstraints(response, answer);
                     if (answer.getQuestionType() == QuestionType.FILE && answer.getValue() != null) {
-                        checkAndPrepareFile(handle, response, instanceDto, (FileAnswer) answer);
+                        verifyFileUpload(handle, response, instanceDto, (FileAnswer) answer);
                     }
 
                     List<Rule> failures = validateAnswer(answer, instanceGuid, question);
@@ -649,27 +649,31 @@ public class PatchFormAnswersRoute implements Route {
         }
     }
 
-    private void checkAndPrepareFile(Handle handle, Response response, ActivityInstanceDto instanceDto, FileAnswer answer) {
+    private void verifyFileUpload(Handle handle, Response response, ActivityInstanceDto instanceDto, FileAnswer answer) {
         long participantId = instanceDto.getParticipantId();
         long uploadId = answer.getValue().getUploadId();
-        var upload = handle.attach(FileUploadDao.class).findById(uploadId)
+
+        var verifyResult = fileService.verifyUpload(handle, participantId, uploadId)
                 .orElseThrow(() -> new DDPException("Could not find file upload with id " + uploadId));
-        var checkResult = fileService.checkAndSetUploadStatus(handle, participantId, upload);
-        switch (checkResult) {
+
+        switch (verifyResult) {
             case NOT_UPLOADED:
                 throw ResponseUtil.haltError(response, 400, new ApiError(ErrorCodes.FILE_ERROR,
                         "File has not been uploaded yet"));
             case OWNER_MISMATCH:
                 throw ResponseUtil.haltError(response, 400, new ApiError(ErrorCodes.FILE_ERROR,
                         "File is not assignable to participant"));
+            case QUARANTINED:
+                throw ResponseUtil.haltError(response, 400, new ApiError(ErrorCodes.FILE_ERROR,
+                        "File is infected and cannot be assigned"));
             case SIZE_MISMATCH:
                 throw ResponseUtil.haltError(response, 400, new ApiError(ErrorCodes.FILE_ERROR,
                         "File uploaded size does not match expected size"));
             case OK:
-                LOG.info("File upload {} is uploaded and assignable to participant", upload.getGuid());
+                LOG.info("File upload with id {} is uploaded and assignable to participant", uploadId);
                 break;
             default:
-                throw new DDPException("Unhandled file check result: " + checkResult);
+                throw new DDPException("Unhandled file check result: " + verifyResult);
         }
     }
 
