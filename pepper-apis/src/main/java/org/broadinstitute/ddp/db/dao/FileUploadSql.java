@@ -2,6 +2,7 @@ package org.broadinstitute.ddp.db.dao;
 
 import java.time.Instant;
 
+import org.broadinstitute.ddp.model.files.FileScanResult;
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
@@ -30,10 +31,14 @@ public interface FileUploadSql extends SqlObject {
             @Bind("id") long fileUploadId,
             @Bind("verified") boolean isVerified);
 
-    @SqlUpdate("update file_upload set uploaded_at = :uploadTime where file_upload_id = :id")
-    int updateUploadedAt(
+    @SqlUpdate("update file_upload set uploaded_at = :uploadedAt, scanned_at = :scannedAt, scan_result_id = ("
+            + " select file_scan_result_id from file_scan_result where file_scan_result_code = :scanResult)"
+            + "  where file_upload_id = :id")
+    int updateStatus(
             @Bind("id") long fileUploadId,
-            @Bind("uploadTime") Instant uploadTime);
+            @Bind("uploadedAt") Instant uploadedAt,
+            @Bind("scannedAt") Instant scannedAt,
+            @Bind("scanResult") FileScanResult scanResult);
 
     @SqlUpdate("delete from file_upload where file_upload_id = :id")
     int delete(@Bind("id") long fileUploadId);

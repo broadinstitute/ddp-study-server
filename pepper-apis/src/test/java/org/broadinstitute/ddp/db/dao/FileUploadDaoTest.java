@@ -6,9 +6,12 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import java.time.Instant;
+
 import org.broadinstitute.ddp.TxnAwareBaseTest;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.model.activity.instance.answer.FileInfo;
+import org.broadinstitute.ddp.model.files.FileScanResult;
 import org.broadinstitute.ddp.model.files.FileUpload;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
 import org.junit.BeforeClass;
@@ -62,6 +65,28 @@ public class FileUploadDaoTest extends TxnAwareBaseTest {
             dao.markVerified(upload.getId());
             FileUpload actual = dao.findById(upload.getId()).orElse(null);
             assertTrue(actual.isVerified());
+
+            handle.rollback();
+        });
+    }
+
+    @Test
+    public void testUpdateStatus() {
+        TransactionWrapper.useTxn(handle -> {
+            var dao = handle.attach(FileUploadDao.class);
+
+            long userId = testData.getUserId();
+            FileUpload upload = dao.createAuthorized("guid", "blob", "mime", "file", 123, userId, userId);
+            assertNull(upload.getUploadedAt());
+            assertNull(upload.getScannedAt());
+            assertNull(upload.getScanResult());
+
+            var now = Instant.now();
+            dao.updateStatus(upload.getId(), now, now, FileScanResult.CLEAN);
+            FileUpload actual = dao.findById(upload.getId()).orElse(null);
+            assertEquals(now, actual.getUploadedAt());
+            assertEquals(now, actual.getScannedAt());
+            assertEquals(FileScanResult.CLEAN, actual.getScanResult());
 
             handle.rollback();
         });

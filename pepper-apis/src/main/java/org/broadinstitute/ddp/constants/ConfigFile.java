@@ -195,10 +195,14 @@ public class ConfigFile {
     }
 
     public static class FileUploads {
-        public static final String UPLOADS_BUCKET = "fileUploads.uploadsBucket";
-        public static final String SCANNED_BUCKET = "fileUploads.scannedBucket";
-        public static final String MAX_FILE_SIZE_BYTES = "fileUploads.maxFileSizeBytes";
-        public static final String MAX_SIGNED_URL_MINS = "fileUploads.maxSignedUrlMins";
-        public static final String SIGNER_SERVICE_ACCOUNT = "fileUploads.signerServiceAccount";
+        private static final String prefix = "fileUploads.";
+        public static final String UPLOADS_BUCKET = prefix + "uploadsBucket";
+        public static final String SCANNED_BUCKET = prefix + "scannedBucket";
+        public static final String QUARANTINE_BUCKET = prefix + "quarantineBucket";
+        public static final String MAX_FILE_SIZE_BYTES = prefix + "maxFileSizeBytes";
+        public static final String MAX_SIGNED_URL_MINS = prefix + "maxSignedUrlMins";
+        public static final String ENABLE_SCAN_RESULT_HANDLER = prefix + "enableScanResultHandler";
+        public static final String SCAN_RESULT_SUBSCRIPTION = prefix + "scanResultSubscription";
+        public static final String SIGNER_SERVICE_ACCOUNT = prefix + "signerServiceAccount";
     }
 }
