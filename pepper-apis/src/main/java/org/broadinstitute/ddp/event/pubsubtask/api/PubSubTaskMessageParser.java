@@ -9,12 +9,11 @@ import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskLogUtil.erro
 import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskLogUtil.infoMsg;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import java.util.Map;
-
 
 import com.google.gson.Gson;
 import com.google.pubsub.v1.ProjectSubscriptionName;
 import com.google.pubsub.v1.PubsubMessage;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.util.GsonUtil;
 import org.slf4j.Logger;
 
@@ -57,10 +56,6 @@ public class PubSubTaskMessageParser {
 
         String errorMessage = null;
         Object payloadObject = null;
-        PubSubTask.PayloadMap payloadMap = new PubSubTask.PayloadMap();
-        if (pubSubTaskDescriptor.isPayloadConvertibleToMap()) {
-            payloadMap.setMap(gson.fromJson(payloadJson, Map.class));
-        }
 
         if (pubSubTaskDescriptor == null) {
             errorMessage = format(errorMsg("Pubsub message [id=%s] has unknown taskType=%s"), messageId, taskType);
@@ -76,12 +71,12 @@ public class PubSubTaskMessageParser {
             }
         }
 
-        if (payloadObject == null && payloadMap.getMap() == null) {
+        if (StringUtils.isBlank(payloadJson)) {
             errorMessage = format(errorMsg("Empty payload in the pubsub message [id=%s,taskType=%s]"), messageId, taskType);
         }
 
         return new PubSubTaskMessageParseResult(
-                new PubSubTask(messageId, taskType, participantGuid, userId, studyGuid, payloadJson, payloadMap, payloadObject),
+                new PubSubTask(messageId, taskType, participantGuid, userId, studyGuid, payloadJson, payloadObject),
                 errorMessage);
     }
 

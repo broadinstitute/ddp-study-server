@@ -14,9 +14,8 @@ public abstract class PubSubTaskProcessorFactoryAbstract implements PubSubTaskPr
     protected  void registerPubSubTaskProcessors(
             String pubSubTaskType,
             PubSubTaskProcessor pubSubTaskProcessor,
-            Class<?> payloadClass,
-            boolean payloadConvertibleToMap) {
-        pubSubTaskDescriptors.put(pubSubTaskType, new PubSubTaskDescriptor(pubSubTaskProcessor, payloadClass, payloadConvertibleToMap));
+            Class<?> payloadClass) {
+        pubSubTaskDescriptors.put(pubSubTaskType, new PubSubTaskDescriptor(pubSubTaskProcessor, payloadClass));
     }
 
     protected abstract void registerPubSubTaskProcessors();

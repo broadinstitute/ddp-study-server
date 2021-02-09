@@ -3,6 +3,8 @@ package org.broadinstitute.ddp.event.pubsubtask.impl.updateprofile;
 import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskLogUtil.infoMsg;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import java.util.Map;
+
 
 import com.auth0.client.mgmt.ManagementAPI;
 import org.broadinstitute.ddp.db.TransactionWrapper;
@@ -10,7 +12,6 @@ import org.broadinstitute.ddp.db.TransactionWrapper.DB;
 import org.broadinstitute.ddp.db.dao.DataExportDao;
 import org.broadinstitute.ddp.db.dao.JdbiUser;
 import org.broadinstitute.ddp.db.dto.UserDto;
-import org.broadinstitute.ddp.event.pubsubtask.api.PubSubTask;
 import org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskException;
 import org.broadinstitute.ddp.util.Auth0Util;
 import org.jdbi.v3.core.Handle;
@@ -22,13 +23,13 @@ public class UpdateEmailHandler {
 
     private static final String FIELD_EMAIL = "email";
 
-    public void updateEmail(String userGuid, PubSubTask.PayloadMap payloadMap) {
-        TransactionWrapper.useTxn(DB.APIS, handle -> updateEmail(handle, userGuid, payloadMap));
+    public void updateEmail(String userGuid, Map<String, String> payload) {
+        TransactionWrapper.useTxn(DB.APIS, handle -> updateEmail(handle, userGuid, payload));
     }
 
-    private void updateEmail(Handle handle, String userGuid, PubSubTask.PayloadMap payloadMap) {
-        if (payloadMap.getMap().containsKey(FIELD_EMAIL)) {
-            String email = payloadMap.getMap().get(FIELD_EMAIL);
+    private void updateEmail(Handle handle, String userGuid, Map<String, String> payload) {
+        if (payload.containsKey(FIELD_EMAIL)) {
+            String email = payload.get(FIELD_EMAIL);
             var userDto = handle.attach(JdbiUser.class).findByUserGuid(userGuid);
             if (userDto == null) {
                 throw new PubSubTaskException("User profile is not found for guid=" + userGuid);

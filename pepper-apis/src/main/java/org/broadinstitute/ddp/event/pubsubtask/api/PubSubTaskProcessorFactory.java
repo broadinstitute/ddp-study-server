@@ -14,12 +14,10 @@ public interface PubSubTaskProcessorFactory {
     class PubSubTaskDescriptor {
         private final PubSubTaskProcessor pubSubTaskProcessor;
         private final Class<?> payloadClass;
-        private final boolean payloadConvertibleToMap;
 
-        public PubSubTaskDescriptor(PubSubTaskProcessor pubSubTaskProcessor, Class<?> payloadClass, boolean payloadConvertibleToMap) {
+        public PubSubTaskDescriptor(PubSubTaskProcessor pubSubTaskProcessor, Class<?> payloadClass) {
             this.pubSubTaskProcessor = pubSubTaskProcessor;
             this.payloadClass = payloadClass;
-            this.payloadConvertibleToMap = payloadConvertibleToMap;
         }
 
         public PubSubTaskProcessor getPubSubTaskProcessor() {
@@ -28,10 +26,6 @@ public interface PubSubTaskProcessorFactory {
 
         public Class<?> getPayloadClass() {
             return payloadClass;
-        }
-
-        public boolean isPayloadConvertibleToMap() {
-            return payloadConvertibleToMap;
         }
     }
 }

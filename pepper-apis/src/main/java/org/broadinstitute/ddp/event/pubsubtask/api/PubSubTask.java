@@ -1,10 +1,8 @@
 package org.broadinstitute.ddp.event.pubsubtask.api;
 
-import java.util.Map;
-
 /**
  * Data extracted from PubSubTask message
- * (published to pubsub topic which DSS subscribed to - subscription isspecified by
+ * (published to pubsub topic which DSS subscribed to - subscription is specified by
  * config parameter "pubsub.pubSubTasksSubscription").
  *
  * <p>Data is fetched from pubsub message attributes and from message payload (JSON foc).
@@ -23,7 +21,6 @@ public class PubSubTask {
     private final String studyGuid;
 
     private final String payloadJson;
-    private final PayloadMap payloadMap;
     private final Object payloadObject;
 
 
@@ -38,22 +35,18 @@ public class PubSubTask {
      *               (so, it's a userID known on client side).
      * @param studyGuid - study GUID (for example 'Osteo').
      * @param payloadJson - raw string with payload JSON doc.
-     * @param payloadMap - if payload is set of name=value pairs then it is saved to this Map; if to convert to a Map -
-     *                   is specified by a parameter 'payloadConvertibleToMap' in method
-     *     {@link PubSubTaskProcessorFactoryAbstract#registerPubSubTaskProcessors(String, PubSubTaskProcessor, Class, boolean)}.
      * @param payloadObject - if payload class is not null, then contains parsed payload data;
      *                      payload class is specified by parameter 'payloadClass' in method
-     *     {@link PubSubTaskProcessorFactoryAbstract#registerPubSubTaskProcessors(String, PubSubTaskProcessor, Class, boolean)}.
+     *     {@link PubSubTaskProcessorFactoryAbstract#registerPubSubTaskProcessors(String, PubSubTaskProcessor, Class)}.
      */
     public PubSubTask(String messageId, String taskType, String participantGuid, String userId, String studyGuid,
-                      String payloadJson, PayloadMap payloadMap, Object payloadObject) {
+                      String payloadJson, Object payloadObject) {
         this.messageId = messageId;
         this.taskType = taskType;
         this.participantGuid = participantGuid;
         this.userId = userId;
         this.studyGuid = studyGuid;
         this.payloadJson = payloadJson;
-        this.payloadMap = payloadMap;
         this.payloadObject = payloadObject;
     }
 
@@ -81,24 +74,7 @@ public class PubSubTask {
         return payloadJson;
     }
 
-    public PayloadMap getPayloadMap() {
-        return payloadMap;
-    }
-
     public Object getPayloadObject() {
         return payloadObject;
-    }
-
-
-    public static class PayloadMap {
-        private Map<String, String> map;
-
-        public Map<String, String> getMap() {
-            return map;
-        }
-
-        public void setMap(Map<String, String> map) {
-            this.map = map;
-        }
     }
 }

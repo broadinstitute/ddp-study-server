@@ -8,6 +8,8 @@ import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskResult.PubSu
 import static org.slf4j.LoggerFactory.getLogger;
 
 
+import com.google.gson.Gson;
+import org.broadinstitute.ddp.util.GsonUtil;
 import org.slf4j.Logger;
 
 /**
@@ -17,6 +19,8 @@ import org.slf4j.Logger;
 public abstract class PubSubTaskProcessorAbstract implements PubSubTaskProcessor {
 
     protected static final Logger LOG = getLogger(PubSubTaskProcessorAbstract.class);
+
+    protected final Gson gson = GsonUtil.standardGson();
 
     @Override
     public PubSubTaskProcessorResult processPubSubTask(PubSubTask pubSubTask) {

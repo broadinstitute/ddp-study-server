@@ -25,9 +25,13 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
+import java.util.Map;
 
+
+import com.google.gson.Gson;
 import com.google.pubsub.v1.ProjectSubscriptionName;
 import com.google.pubsub.v1.PubsubMessage;
+import org.broadinstitute.ddp.util.GsonUtil;
 import org.junit.Test;
 
 public class PubSubTaskCustomMessageTest {
@@ -38,10 +42,11 @@ public class PubSubTaskCustomMessageTest {
     private PubSubTaskMessageParser taskMessageParser;
     private PubSubTaskResultMessageCreator resultMessageCreator;
 
+    private final Gson gson = GsonUtil.standardGson();
 
     /**
-     * Verify that if processor registered with payloadClass=null and payloadConvertibleToMap=true
-     * then payload data will be copied to the payloadMap.
+     * Verify that if processor registered with payloadClass=null, parse message,
+     * check that payload can be converted to a map and properties fetched from it.
      * Create result pubsub message (successful one) out of the parsed {@link PubSubTask}
      */
     @Test
@@ -55,9 +60,11 @@ public class PubSubTaskCustomMessageTest {
         assertEquals(TEST_PARTICIPANT_GUID, parseResult.getPubSubTask().getParticipantGuid());
         assertEquals(TEST_USER_ID, parseResult.getPubSubTask().getUserId());
         assertEquals(TEST_STUDY_GUID, parseResult.getPubSubTask().getStudyGuid());
-        assertEquals(TEST_EMAIL, parseResult.getPubSubTask().getPayloadMap().getMap().get(EMAIL));
-        assertEquals(TEST_EDUCATION, parseResult.getPubSubTask().getPayloadMap().getMap().get(EDUCATION));
-        assertEquals(TEST_MARITAL_STATUS, parseResult.getPubSubTask().getPayloadMap().getMap().get(MARITAL_STATUS));
+
+        Map<String, String> payload = gson.fromJson(parseResult.getPubSubTask().getPayloadJson(), Map.class);
+        assertEquals(TEST_EMAIL, payload.get(EMAIL));
+        assertEquals(TEST_EDUCATION, payload.get(EDUCATION));
+        assertEquals(TEST_MARITAL_STATUS, payload.get(MARITAL_STATUS));
         assertNull(parseResult.getPubSubTask().getPayloadObject());
 
         PubSubTaskResult result = new PubSubTaskResult(SUCCESS, null, parseResult.getPubSubTask());
@@ -149,14 +156,12 @@ public class PubSubTaskCustomMessageTest {
             registerPubSubTaskProcessors(
                     TestProcessor1.TEST_TASK_1,
                     new TestProcessor1(),
-                    null,
-                    true
+                    null
             );
             registerPubSubTaskProcessors(
                     TestProcessor2.TEST_TASK_2,
                     new TestProcessor2(),
-                    TestPayload2.class,
-                    true
+                    TestPayload2.class
             );
         }
     }

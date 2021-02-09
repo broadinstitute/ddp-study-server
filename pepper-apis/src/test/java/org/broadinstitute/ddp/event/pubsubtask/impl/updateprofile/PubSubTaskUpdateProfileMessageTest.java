@@ -18,11 +18,15 @@ import static org.broadinstitute.ddp.event.pubsubtask.impl.updateprofile.UpdateP
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
+import java.util.Map;
 
+
+import com.google.gson.Gson;
 import com.google.pubsub.v1.ProjectSubscriptionName;
 import org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskMessageParser;
 import org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskProcessorFactory;
 import org.broadinstitute.ddp.event.pubsubtask.impl.PubSubTaskProcessorFactoryImpl;
+import org.broadinstitute.ddp.util.GsonUtil;
 import org.junit.Test;
 
 public class PubSubTaskUpdateProfileMessageTest {
@@ -31,6 +35,8 @@ public class PubSubTaskUpdateProfileMessageTest {
             ProjectSubscriptionName.of(PROJECT_ID, PUBSUB_SUBSCRIPTION);
     private PubSubTaskProcessorFactory testFactory;
     private PubSubTaskMessageParser messageParser;
+
+    private final Gson gson = GsonUtil.standardGson();
 
 
     @Test
@@ -59,19 +65,21 @@ public class PubSubTaskUpdateProfileMessageTest {
         var message = buildMessage(TASK_TYPE__UPDATE_PROFILE,
                 format("{'%s':'%s', '%s':'%s', '%s':'%s'}",
                         EMAIL, TEST_EMAIL, FIRST_NAME, TEST_FIRST_NAME, LAST_NAME, TEST_LAST_NAME), buildValidMessage);
-        var result = messageParser.parseMessage(message);
+        var parseResult = messageParser.parseMessage(message);
 
         if (buildValidMessage) {
-            assertEquals(TEST_PARTICIPANT_GUID, result.getPubSubTask().getParticipantGuid());
-            assertEquals(TEST_USER_ID, result.getPubSubTask().getUserId());
-            assertEquals(TEST_STUDY_GUID, result.getPubSubTask().getStudyGuid());
+            assertEquals(TEST_PARTICIPANT_GUID, parseResult.getPubSubTask().getParticipantGuid());
+            assertEquals(TEST_USER_ID, parseResult.getPubSubTask().getUserId());
+            assertEquals(TEST_STUDY_GUID, parseResult.getPubSubTask().getStudyGuid());
         }
-        assertEquals(TEST_EMAIL, result.getPubSubTask().getPayloadMap().getMap().get(EMAIL));
-        assertEquals(TEST_FIRST_NAME, result.getPubSubTask().getPayloadMap().getMap().get(FIRST_NAME));
-        assertEquals(TEST_LAST_NAME, result.getPubSubTask().getPayloadMap().getMap().get(LAST_NAME));
-        assertNull(result.getPubSubTask().getPayloadObject());
 
-        return result;
+        Map<String, String> payload = gson.fromJson(parseResult.getPubSubTask().getPayloadJson(), Map.class);
+        assertEquals(TEST_EMAIL, payload.get(EMAIL));
+        assertEquals(TEST_FIRST_NAME, payload.get(FIRST_NAME));
+        assertEquals(TEST_LAST_NAME, payload.get(LAST_NAME));
+        assertNull(parseResult.getPubSubTask().getPayloadObject());
+
+        return parseResult;
     }
 
     private void init() {

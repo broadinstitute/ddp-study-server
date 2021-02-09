@@ -17,8 +17,7 @@ public class PubSubTaskProcessorFactoryImpl extends PubSubTaskProcessorFactoryAb
         registerPubSubTaskProcessors(
                 TASK_TYPE__UPDATE_PROFILE,
                 new UpdateProfileProcessor(),
-                null,
-                true
+                null
         );
     }
 }

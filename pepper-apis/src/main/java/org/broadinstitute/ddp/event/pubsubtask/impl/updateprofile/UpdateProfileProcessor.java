@@ -1,8 +1,10 @@
 package org.broadinstitute.ddp.event.pubsubtask.impl.updateprofile;
 
+import java.util.Map;
 
 import org.broadinstitute.ddp.event.pubsubtask.api.PubSubTask;
 import org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskProcessorAbstract;
+
 
 /**
  * Processes PubSubTask of taskType='UPDATE_PROFILE'.
@@ -22,16 +24,9 @@ public class UpdateProfileProcessor extends PubSubTaskProcessorAbstract {
 
     @Override
     public void handleTask(PubSubTask pubSubTask) {
-        updateEmail(pubSubTask.getParticipantGuid(), pubSubTask.getPayloadMap());
+        Map<String, String> payload = gson.fromJson(pubSubTask.getPayloadJson(), Map.class);
 
-        updateFirstLastName(pubSubTask.getParticipantGuid(), pubSubTask.getPayloadMap());
-    }
-
-    private void updateEmail(String userGuid, PubSubTask.PayloadMap payloadMap) {
-        new UpdateEmailHandler().updateEmail(userGuid, payloadMap);
-    }
-
-    private void updateFirstLastName(String userGuid, PubSubTask.PayloadMap payloadMap) {
-        new UpdateFirstLastNameHandler().updateFirstLastName(userGuid, payloadMap);
+        new UpdateEmailHandler().updateEmail(pubSubTask.getParticipantGuid(), payload);
+        new UpdateFirstLastNameHandler().updateFirstLastName(pubSubTask.getParticipantGuid(), payload);
     }
 }
