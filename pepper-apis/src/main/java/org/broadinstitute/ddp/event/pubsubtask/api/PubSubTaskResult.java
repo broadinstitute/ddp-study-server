@@ -21,7 +21,7 @@ public class PubSubTaskResult {
     private final PubSubTask pubSubTask;
 
     public PubSubTaskResult(PubSubTaskResultType resultType, String errorMessage, PubSubTask pubSubTask) {
-        this.pubSubTaskResultPayload = new PubSubTaskResultPayload(resultType, errorMessage, pubSubTask.getPayloadJson());
+        this.pubSubTaskResultPayload = new PubSubTaskResultPayload(resultType, errorMessage);
         this.pubSubTask = pubSubTask;
     }
 
@@ -51,12 +51,10 @@ public class PubSubTaskResult {
 
         private final PubSubTaskResultType resultType;
         private final String errorMessage;
-        private final String taskPayload;
 
-        public PubSubTaskResultPayload(PubSubTaskResultType resultType, String errorMessage, String taskPayload) {
+        public PubSubTaskResultPayload(PubSubTaskResultType resultType, String errorMessage) {
             this.resultType = resultType;
             this.errorMessage = errorMessage;
-            this.taskPayload = taskPayload;
         }
 
         public PubSubTaskResultType getResultType() {
@@ -65,10 +63,6 @@ public class PubSubTaskResult {
 
         public String getErrorMessage() {
             return errorMessage;
-        }
-
-        public String getTaskPayload() {
-            return taskPayload;
         }
     }
 }

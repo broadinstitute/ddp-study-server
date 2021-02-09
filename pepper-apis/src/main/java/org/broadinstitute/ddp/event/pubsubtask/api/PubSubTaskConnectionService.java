@@ -109,7 +109,7 @@ public class PubSubTaskConnectionService {
             pubSubTaskSubscriber.addListener(
                     new Subscriber.Listener() {
                         public void failed(Subscriber.State from, Throwable failure) {
-                            LOG.info(errorMsg("Unrecoverable failure happened during subscribing to subscription "
+                            LOG.error(errorMsg("Unrecoverable failure happened during subscribing to subscription "
                                     + projectSubscriptionName), failure);
                             if (!executorProvider.getExecutor().isShutdown()) {
                                 createPubSubTaskSubscriber();

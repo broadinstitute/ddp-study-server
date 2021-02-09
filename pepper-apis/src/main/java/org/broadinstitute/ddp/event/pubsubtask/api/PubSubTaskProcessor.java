@@ -2,15 +2,15 @@ package org.broadinstitute.ddp.event.pubsubtask.api;
 
 /**
  * Interface defining a processor which should do actions
- * in response to PubSubTask
- * (read from PubSubTask subscription defining by config param "pubsub.pubSubTasksSubscription").
+ * in response to PubSubTask published to special pubsub topic
+ * (DSS subscribed to this topic and dubscription configured by config param "pubsub.pubSubTasksSubscription").
  */
 @FunctionalInterface
 public interface PubSubTaskProcessor {
 
     PubSubTaskProcessorResult processPubSubTask(PubSubTask pubSubTask);
 
-    public static class PubSubTaskProcessorResult {
+    class PubSubTaskProcessorResult {
 
         private final PubSubTaskResult pubSubTaskResult;
         private final boolean needsToRetry;
@@ -20,7 +20,7 @@ public interface PubSubTaskProcessor {
             this.needsToRetry = needsToRetry;
         }
 
-        public PubSubTaskResult getPubSubTaskResultMessage() {
+        public PubSubTaskResult getPubSubTaskResult() {
             return pubSubTaskResult;
         }
 

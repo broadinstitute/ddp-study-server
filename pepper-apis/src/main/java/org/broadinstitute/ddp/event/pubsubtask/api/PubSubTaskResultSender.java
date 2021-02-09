@@ -1,12 +1,7 @@
 package org.broadinstitute.ddp.event.pubsubtask.api;
 
-import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTask.ATTR_PARTICIPANT_GUID;
-import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTask.ATTR_STUDY_GUID;
-import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTask.ATTR_TASK_TYPE;
-import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTask.ATTR_USER_ID;
 import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskLogUtil.errorMsg;
 import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskLogUtil.infoMsg;
-import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskResult.ATTR_TASK_MESSAGE_ID;
 import static org.slf4j.LoggerFactory.getLogger;
 
 
@@ -16,10 +11,6 @@ import com.google.api.core.ApiFutures;
 import com.google.api.gax.rpc.ApiException;
 import com.google.cloud.pubsub.v1.Publisher;
 import com.google.common.util.concurrent.MoreExecutors;
-import com.google.gson.Gson;
-import com.google.protobuf.ByteString;
-import com.google.pubsub.v1.PubsubMessage;
-import org.broadinstitute.ddp.util.GsonUtil;
 import org.slf4j.Logger;
 
 /**
@@ -32,7 +23,7 @@ public class PubSubTaskResultSender {
     private static final Logger LOG = getLogger(PubSubTaskResultSender.class);
 
     private final Publisher publisher;
-    private final Gson gson = GsonUtil.standardGson();
+    private final PubSubTaskResultMessageCreator messageCreator = new PubSubTaskResultMessageCreator();
 
     public PubSubTaskResultSender(Publisher publisher) {
         this.publisher = publisher;
@@ -40,7 +31,7 @@ public class PubSubTaskResultSender {
 
     public void sendPubSubTaskResult(PubSubTaskResult pubSubTaskResult) {
 
-        ApiFuture<String> publishResult = publisher.publish(createPubSubMessage(pubSubTaskResult));
+        ApiFuture<String> publishResult = publisher.publish(messageCreator.createPubSubMessage(pubSubTaskResult));
 
         ApiFutures.addCallback(
                 publishResult,
@@ -68,17 +59,5 @@ public class PubSubTaskResultSender {
                 },
                 MoreExecutors.directExecutor()
         );
-    }
-
-    private PubsubMessage createPubSubMessage(PubSubTaskResult pubSubTaskResult) {
-        var messageJson = gson.toJson(pubSubTaskResult.getPubSubTaskResultPayload());
-        PubsubMessage.Builder messageBuilder = PubsubMessage.newBuilder()
-                .setData(ByteString.copyFromUtf8(messageJson))
-                .putAttributes(ATTR_TASK_MESSAGE_ID, pubSubTaskResult.getPubSubTaskMessage().getMessageId())
-                .putAttributes(ATTR_TASK_TYPE, pubSubTaskResult.getPubSubTaskMessage().getTaskType())
-                .putAttributes(ATTR_PARTICIPANT_GUID, pubSubTaskResult.getPubSubTaskMessage().getParticipantGuid())
-                .putAttributes(ATTR_USER_ID, pubSubTaskResult.getPubSubTaskMessage().getUserId())
-                .putAttributes(ATTR_STUDY_GUID, pubSubTaskResult.getPubSubTaskMessage().getStudyGuid());
-        return messageBuilder.build();
     }
 }

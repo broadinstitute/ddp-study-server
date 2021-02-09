@@ -12,7 +12,6 @@ import static org.slf4j.LoggerFactory.getLogger;
 import java.util.Map;
 
 
-import com.google.cloud.pubsub.v1.AckReplyConsumer;
 import com.google.gson.Gson;
 import com.google.pubsub.v1.ProjectSubscriptionName;
 import com.google.pubsub.v1.PubsubMessage;
@@ -42,7 +41,7 @@ public class PubSubTaskMessageParser {
         this.pubSubTaskProcessorFactory = pubSubTaskProcessorFactory;
     }
 
-    public PubSubTaskMessageParseResult parseMessage(PubsubMessage message, AckReplyConsumer consumer) {
+    public PubSubTaskMessageParseResult parseMessage(PubsubMessage message) {
         String messageId = message.getMessageId();
         String taskType = message.getAttributesOrDefault(ATTR_TASK_TYPE, null);
         String participantGuid = message.getAttributesOrDefault(ATTR_PARTICIPANT_GUID, null);
@@ -64,10 +63,10 @@ public class PubSubTaskMessageParser {
         }
 
         if (pubSubTaskDescriptor == null) {
-            errorMessage = format(errorMsg("Pubsub message [id={}] has unknown taskType={}"), messageId, taskType);
+            errorMessage = format(errorMsg("Pubsub message [id=%s] has unknown taskType=%s"), messageId, taskType);
         } else  if (participantGuid == null || userId == null) {
-            errorMessage = format(errorMsg("Some attributes are not specified in the pubsub message [id={},taskType={}]:"
-                    + " participantGuid={}, userId={}"), messageId, taskType, participantGuid, userId);
+            errorMessage = format(errorMsg("Some attributes are not specified in the pubsub message [id=%s,taskType=%s]:"
+                    + " participantGuid=%s, userId=%s"), messageId, taskType, participantGuid, userId);
         }
 
         if (errorMessage == null) {
@@ -77,8 +76,8 @@ public class PubSubTaskMessageParser {
             }
         }
 
-        if (payloadObject == null && payloadMap == null) {
-            errorMessage = format(errorMsg("Empty payload in the pubsub message [id={},taskType={}]"), taskType, messageId);
+        if (payloadObject == null && payloadMap.getMap() == null) {
+            errorMessage = format(errorMsg("Empty payload in the pubsub message [id=%s,taskType=%s]"), messageId, taskType);
         }
 
         return new PubSubTaskMessageParseResult(
@@ -101,7 +100,7 @@ public class PubSubTaskMessageParser {
             this.errorMessage = errorMessage;
         }
 
-        public PubSubTask getPubSubTaskMessage() {
+        public PubSubTask getPubSubTask() {
             return pubSubTask;
         }
 

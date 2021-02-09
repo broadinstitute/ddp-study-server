@@ -46,8 +46,8 @@ public abstract class PubSubTaskProcessorAbstract implements PubSubTaskProcessor
         var pubSubTaskProcessorResult = new PubSubTaskProcessorResult(
                 new PubSubTaskResult(pubSubTaskResultType, errorMessage, pubSubTask), needsToRetry);
 
-        LOG.info(infoMsg("Task processing COMPLETED: taskType={}, pubSubTaskResultMessage={}"),
-                pubSubTask.getTaskType(), pubSubTaskProcessorResult.getPubSubTaskResultMessage());
+        LOG.info(infoMsg("Task processing COMPLETED: taskType={}, pubSubTaskResult={}"),
+                pubSubTask.getTaskType(), pubSubTaskProcessorResult.getPubSubTaskResult());
 
         return pubSubTaskProcessorResult;
     }

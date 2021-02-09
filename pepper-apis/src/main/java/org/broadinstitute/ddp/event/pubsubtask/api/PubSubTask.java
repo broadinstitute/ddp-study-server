@@ -4,7 +4,8 @@ import java.util.Map;
 
 /**
  * Data extracted from PubSubTask message
- * (published to incoming subscription specified by config parameter ""pubsub.pubSubTasksSubscription").
+ * (published to pubsub topic which DSS subscribed to - subscription isspecified by
+ * config parameter "pubsub.pubSubTasksSubscription").
  *
  * <p>Data is fetched from pubsub message attributes and from message payload (JSON foc).
  */
@@ -26,6 +27,24 @@ public class PubSubTask {
     private final Object payloadObject;
 
 
+    /**
+     * Put the data extracted from PubSubTask message
+     * @param messageId - ID of a message
+     * @param taskType - type of a task (known type is 'UPDATE_PROFILE'), it can be added new types/processors which
+     *                 should be regsitered via {@link PubSubTaskProcessorFactory} and the factory implementation
+     *                 to be passed as a parameter to {@link PubSubTaskConnectionService} constructor.
+     * @param participantGuid - GUID of a user (equivalent to DB user.guid).
+     * @param userId - ID of a user (it's not used on DSS side but just needs to be returned in {@link PubSubTaskResult}
+     *               (so, it's a userID known on client side).
+     * @param studyGuid - study GUID (for example 'Osteo').
+     * @param payloadJson - raw string with payload JSON doc.
+     * @param payloadMap - if payload is set of name=value pairs then it is saved to this Map; if to convert to a Map -
+     *                   is specified by a parameter 'payloadConvertibleToMap' in method
+     *     {@link PubSubTaskProcessorFactoryAbstract#registerPubSubTaskProcessors(String, PubSubTaskProcessor, Class, boolean)}.
+     * @param payloadObject - if payload class is not null, then contains parsed payload data;
+     *                      payload class is specified by parameter 'payloadClass' in method
+     *     {@link PubSubTaskProcessorFactoryAbstract#registerPubSubTaskProcessors(String, PubSubTaskProcessor, Class, boolean)}.
+     */
     public PubSubTask(String messageId, String taskType, String participantGuid, String userId, String studyGuid,
                       String payloadJson, PayloadMap payloadMap, Object payloadObject) {
         this.messageId = messageId;

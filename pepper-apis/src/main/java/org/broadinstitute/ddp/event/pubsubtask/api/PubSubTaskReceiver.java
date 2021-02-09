@@ -37,18 +37,18 @@ public class PubSubTaskReceiver implements MessageReceiver {
 
     @Override
     public void receiveMessage(PubsubMessage message, AckReplyConsumer consumer) {
-        var pubSubTaskMessageParserResult = pubSubTaskMessageParser.parseMessage(message, consumer);
+        var pubSubTaskMessageParserResult = pubSubTaskMessageParser.parseMessage(message);
         if (pubSubTaskMessageParserResult.getErrorMessage() != null) {
             consumer.ack();
             sendResponse(new PubSubTaskResult(
-                    ERROR, pubSubTaskMessageParserResult.getErrorMessage(), pubSubTaskMessageParserResult.getPubSubTaskMessage()));
+                    ERROR, pubSubTaskMessageParserResult.getErrorMessage(), pubSubTaskMessageParserResult.getPubSubTask()));
         } else {
-            var pubSubTaskResultMessage = processPubSubTask(pubSubTaskMessageParserResult.getPubSubTaskMessage());
+            var pubSubTaskResultMessage = processPubSubTask(pubSubTaskMessageParserResult.getPubSubTask());
             if (pubSubTaskResultMessage.isNeedsToRetry()) {
                 consumer.nack();
             } else {
                 consumer.ack();
-                sendResponse(pubSubTaskResultMessage.getPubSubTaskResultMessage());
+                sendResponse(pubSubTaskResultMessage.getPubSubTaskResult());
             }
         }
     }
