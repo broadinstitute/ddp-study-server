@@ -40,8 +40,8 @@ public class FileScanResultReceiverTest {
         var mockDao = mock(FileUploadDao.class);
         var mockBlob = mock(Blob.class);
         var now = Instant.now().truncatedTo(ChronoUnit.MILLIS);
-        var upload = new FileUpload(1L, "guid", "blob", "mime", "name",
-                123L, 1L, 1L, true, now, null, null, null);
+        var upload = new FileUpload(1L, "guid", 1L, 1L, 1L, "blob", "mime", "name",
+                123L, true, now, null, null, null);
         var msg = PubsubMessage.newBuilder()
                 .setMessageId("foo")
                 .putAttributes(ATTR_BUCKET_ID, "uploads")

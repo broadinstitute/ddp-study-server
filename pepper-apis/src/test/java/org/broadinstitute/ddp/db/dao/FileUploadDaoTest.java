@@ -21,10 +21,14 @@ import org.testcontainers.shaded.org.apache.commons.lang.StringUtils;
 public class FileUploadDaoTest extends TxnAwareBaseTest {
 
     private static TestDataSetupUtil.GeneratedTestData testData;
+    private static long studyId;
+    private static long userId;
 
     @BeforeClass
     public static void setup() {
         testData = TransactionWrapper.withTxn(TestDataSetupUtil::generateBasicUserTestData);
+        studyId = testData.getStudyId();
+        userId = testData.getUserId();
     }
 
     @Test
@@ -32,8 +36,7 @@ public class FileUploadDaoTest extends TxnAwareBaseTest {
         TransactionWrapper.useTxn(handle -> {
             var dao = handle.attach(FileUploadDao.class);
 
-            long userId = testData.getUserId();
-            FileUpload upload = dao.createAuthorized("guid", "blob", "mime", "file", 123, userId, userId);
+            FileUpload upload = dao.createAuthorized("guid", studyId, userId, userId, "blob", "mime", "file", 123L);
             assertTrue(upload.getId() > 0);
             assertTrue(StringUtils.isNotBlank(upload.getGuid()));
 
@@ -58,8 +61,7 @@ public class FileUploadDaoTest extends TxnAwareBaseTest {
         TransactionWrapper.useTxn(handle -> {
             var dao = handle.attach(FileUploadDao.class);
 
-            long userId = testData.getUserId();
-            FileUpload upload = dao.createAuthorized("guid", "blob", "mime", "file", 123, userId, userId);
+            FileUpload upload = dao.createAuthorized("guid", studyId, userId, userId, "blob", "mime", "file", 123L);
             assertFalse(upload.isVerified());
 
             dao.markVerified(upload.getId());
@@ -75,8 +77,7 @@ public class FileUploadDaoTest extends TxnAwareBaseTest {
         TransactionWrapper.useTxn(handle -> {
             var dao = handle.attach(FileUploadDao.class);
 
-            long userId = testData.getUserId();
-            FileUpload upload = dao.createAuthorized("guid", "blob", "mime", "file", 123, userId, userId);
+            FileUpload upload = dao.createAuthorized("guid", studyId, userId, userId, "blob", "mime", "file", 123L);
             assertNull(upload.getUploadedAt());
             assertNull(upload.getScannedAt());
             assertNull(upload.getScanResult());
@@ -97,8 +98,7 @@ public class FileUploadDaoTest extends TxnAwareBaseTest {
         TransactionWrapper.useTxn(handle -> {
             var dao = handle.attach(FileUploadDao.class);
 
-            long userId = testData.getUserId();
-            FileUpload upload = dao.createAuthorized("guid", "blob", "mime", "file", 123, userId, userId);
+            FileUpload upload = dao.createAuthorized("guid", studyId, userId, userId, "blob", "mime", "file", 123L);
 
             FileInfo actual = dao.findFileInfoByGuid(upload.getGuid()).orElse(null);
             assertNotNull(actual);

@@ -39,6 +39,7 @@ import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.db.ActivityDefStore;
 import org.broadinstitute.ddp.db.DaoException;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
+import org.broadinstitute.ddp.db.dao.FileUploadDao;
 import org.broadinstitute.ddp.db.dao.FormActivityDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiActivityVersion;
@@ -65,6 +66,7 @@ import org.broadinstitute.ddp.export.json.structured.ComponentQuestionRecord;
 import org.broadinstitute.ddp.export.json.structured.CompositeQuestionRecord;
 import org.broadinstitute.ddp.export.json.structured.DateQuestionRecord;
 import org.broadinstitute.ddp.export.json.structured.DsmComputedRecord;
+import org.broadinstitute.ddp.export.json.structured.FileRecord;
 import org.broadinstitute.ddp.export.json.structured.ParticipantProfile;
 import org.broadinstitute.ddp.export.json.structured.ParticipantRecord;
 import org.broadinstitute.ddp.export.json.structured.PdfConfigRecord;
@@ -92,6 +94,8 @@ import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
 import org.broadinstitute.ddp.model.activity.instance.answer.AnswerRow;
 import org.broadinstitute.ddp.model.activity.instance.answer.CompositeAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.DateValue;
+import org.broadinstitute.ddp.model.activity.instance.answer.FileAnswer;
+import org.broadinstitute.ddp.model.activity.instance.answer.FileInfo;
 import org.broadinstitute.ddp.model.activity.instance.answer.PicklistAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.SelectedPicklistOption;
 import org.broadinstitute.ddp.model.activity.types.ActivityType;
@@ -112,6 +116,7 @@ import org.broadinstitute.ddp.model.user.UserProfile;
 import org.broadinstitute.ddp.pex.PexInterpreter;
 import org.broadinstitute.ddp.pex.TreeWalkInterpreter;
 import org.broadinstitute.ddp.service.ConsentService;
+import org.broadinstitute.ddp.service.FileUploadService;
 import org.broadinstitute.ddp.service.MedicalRecordService;
 import org.broadinstitute.ddp.service.OLCService;
 import org.broadinstitute.ddp.service.PdfService;
@@ -143,6 +148,7 @@ public class DataExporter {
     private final Gson gson;
     private final Set<String> componentNames;
     private final PdfService pdfService;
+    private final FileUploadService fileService;
     private final RestHighLevelClient esClient;
 
     public static String makeExportCSVFilename(String studyGuid, Instant timestamp) {
@@ -172,6 +178,7 @@ public class DataExporter {
         this.cfg = cfg;
         this.gson = new GsonBuilder().serializeNulls().create();
         this.pdfService = new PdfService();
+        this.fileService = FileUploadService.fromConfig(cfg);
         try {
             this.esClient = ElasticsearchServiceUtil.getElasticsearchClient(cfg);
         } catch (MalformedURLException e) {
@@ -645,6 +652,7 @@ public class DataExporter {
                 .findPolicyByStudyId(studyDto.getId()).orElse(null);
 
         enrichWithDSMEventDates(handle, medicalRecordService, governancePolicy, studyDto.getId(), participants);
+        enrichWithFileRecords(handle, fileService, studyDto.getId(), participants);
 
         StudyExtract studyExtract = new StudyExtract(activities,
                 studyPdfConfigs,
@@ -709,6 +717,24 @@ public class DataExporter {
             participant.setDateOfDiagnosis(diagnosisDate);
             participant.setDateOfMajority(dateOfMajority);
         });
+    }
+
+    private void enrichWithFileRecords(Handle handle, FileUploadService fileService, long studyId, List<Participant> participants) {
+        var uploadDao = handle.attach(FileUploadDao.class);
+        Map<Long, List<FileRecord>> participantIdToFiles = new HashMap<>();
+        Set<Long> participantIds = participants.stream().map(p -> p.getUser().getId()).collect(Collectors.toSet());
+        try (var stream = uploadDao.findVerifiedAndAssignedUploadsForParticipants(studyId, participantIds)) {
+            stream.forEach(upload -> {
+                long key = upload.getParticipantUserId();
+                String bucket = fileService.getBucketForUpload(upload);
+                FileRecord record = new FileRecord(bucket, upload);
+                participantIdToFiles.computeIfAbsent(key, id -> new ArrayList<>()).add(record);
+            });
+        }
+        for (var participant : participants) {
+            long key = participant.getUser().getId();
+            participant.addAllFiles(participantIdToFiles.get(key));
+        }
     }
 
     /**
@@ -894,7 +920,8 @@ public class DataExporter {
                 participantUser.getAddress(),
                 dsmComputedRecord,
                 proxies,
-                participant.getInvitations()
+                participant.getInvitations(),
+                participant.getFiles()
         );
         return gson.toJson(participantRecord);
     }
@@ -1050,6 +1077,10 @@ public class DataExporter {
         if (type == QuestionType.DATE) {
             DateValue value = (DateValue) answer.getValue();
             return new DateQuestionRecord(question.getStableId(), value);
+        } else if (answer.getQuestionType() == QuestionType.FILE) {
+            FileInfo info = ((FileAnswer) answer).getValue();
+            String uploadGuid = info != null ? info.getUploadGuid() : null;
+            return new SimpleQuestionRecord(type, question.getStableId(), uploadGuid);
         } else if (answer.getQuestionType() == QuestionType.PICKLIST) {
             List<SelectedPicklistOption> selected = ((PicklistAnswer) answer).getValue();
             return new PicklistQuestionRecord(question.getStableId(), selected);

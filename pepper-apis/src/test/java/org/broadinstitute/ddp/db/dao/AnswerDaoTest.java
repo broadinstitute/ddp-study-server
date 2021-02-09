@@ -223,8 +223,9 @@ public class AnswerDaoTest extends TxnAwareBaseTest {
             long instanceId = createInstance(handle, act.getDef().getActivityId()).getId();
 
             var fileDao = handle.attach(FileUploadDao.class);
-            var upload = fileDao.createAuthorized("guid", "blob", "mime", "file",
-                    123, testData.getUserId(), testData.getUserId());
+            var upload = fileDao.createAuthorized("guid",
+                    testData.getStudyId(), testData.getUserId(), testData.getUserId(),
+                    "blob", "mime", "file", 123L);
             fileDao.markVerified(upload.getId());
             var info = fileDao.findFileInfoByGuid(upload.getGuid()).get();
 

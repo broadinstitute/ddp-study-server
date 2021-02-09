@@ -37,10 +37,14 @@ import org.mockito.Mockito;
 public class FileUploadServiceTest extends TxnAwareBaseTest {
 
     private static TestDataSetupUtil.GeneratedTestData testData;
+    private static long studyId;
+    private static long userId;
 
     @BeforeClass
     public static void setup() {
         testData = TransactionWrapper.withTxn(TestDataSetupUtil::generateBasicUserTestData);
+        studyId = testData.getStudyId();
+        userId = testData.getUserId();
     }
 
     @Test
@@ -48,7 +52,7 @@ public class FileUploadServiceTest extends TxnAwareBaseTest {
     public void testTryAuthorize() {
         var service = FileUploadService.fromConfig(ConfigManager.getInstance().getConfig());
         var result = TransactionWrapper.withTxn(handle -> service
-                .authorizeUpload(handle, testData.getUserId(), testData.getUserId(),
+                .authorizeUpload(handle, studyId, userId, userId,
                         "prefix", "application/pdf", "filename.pdf", 50000, false));
 
         var guid = result.getFileUpload().getGuid();
@@ -61,7 +65,7 @@ public class FileUploadServiceTest extends TxnAwareBaseTest {
     @Test
     public void testAuthorizeUpload() throws MalformedURLException {
         var now = Instant.now();
-        var dummyUpload = new FileUpload(1, "guid", "blob", "mime", "file", 123, 1, 1, false, now, null, null, null);
+        var dummyUpload = new FileUpload(1L, "guid", 1L, 1L, 1L, "blob", "mime", "file", 123, false, now, null, null, null);
         var dummyUrl = new URL("https://datadonationplatform.org");
         var expectedMime = FileUploadService.DEFAULT_MIME_TYPE;
         var expectedMethod = HttpMethod.POST;
@@ -73,11 +77,11 @@ public class FileUploadServiceTest extends TxnAwareBaseTest {
 
         doReturn(mockDao).when(mockHandle).attach(FileUploadDao.class);
         doReturn(dummyUpload).when(mockDao)
-                .createAuthorized(any(), any(), any(), any(), anyLong(), anyLong(), anyLong());
+                .createAuthorized(any(), anyLong(), anyLong(), anyLong(), any(), any(), any(), anyLong());
         doReturn(dummyUrl).when(mockClient).generateSignedUrl(any(), eq("uploads"), startsWith("prefix/"),
                 anyLong(), any(), eq(expectedMethod), argThat(map -> expectedMime.equals(map.get("Content-Type"))));
 
-        var result = service.authorizeUpload(mockHandle, 1, 1, "prefix", null, "file", 123, true);
+        var result = service.authorizeUpload(mockHandle, 1L, 1L, 1L, "prefix", null, "file", 123, true);
 
         assertNotNull(result);
         assertFalse(result.isExceededSize());
@@ -94,7 +98,7 @@ public class FileUploadServiceTest extends TxnAwareBaseTest {
     @Test
     public void testAuthorizeUpload_exceededSize() {
         var service = new FileUploadService(null, null, "uploads", "scanned", "quarantine", 123, 5, 1L, null, 1);
-        var result = service.authorizeUpload(null, 1, 1, "prefix", "mime", "file", 1024, false);
+        var result = service.authorizeUpload(null, 1L, 1L, 1L, "prefix", "mime", "file", 1024, false);
         assertNotNull(result);
         assertTrue("should hit size limit", result.isExceededSize());
         assertNull(result.getFileUpload());
@@ -115,12 +119,11 @@ public class FileUploadServiceTest extends TxnAwareBaseTest {
         doReturn(mockBlob).when(mockClient).getBlob("uploads", "blob");
 
         TransactionWrapper.useTxn(handle -> {
-            long userId = testData.getUserId();
             var fileDao = handle.attach(FileUploadDao.class);
-            var upload = fileDao.createAuthorized("guid", "blob", "mime", "file", size, userId, userId);
+            var upload = fileDao.createAuthorized("guid", studyId, userId, userId, "blob", "mime", "file", size);
             assertFalse(upload.isVerified());
 
-            var result = service.verifyUpload(handle, userId, upload);
+            var result = service.verifyUpload(handle, studyId, userId, upload);
             assertNotNull(result);
             assertEquals(FileUploadService.VerifyResult.OK, result);
 
@@ -134,15 +137,14 @@ public class FileUploadServiceTest extends TxnAwareBaseTest {
     @Test
     public void testVerifyUpload_alreadyVerifiedFilesAreNotCheckedAgain() {
         TransactionWrapper.useTxn(handle -> {
-            long userId = testData.getUserId();
             var fileDao = handle.attach(FileUploadDao.class);
-            var upload = fileDao.createAuthorized("guid", "blob", "mime", "file", 100, userId, userId);
+            var upload = fileDao.createAuthorized("guid", studyId, userId, userId, "blob", "mime", "file", 100);
 
             fileDao.markVerified(upload.getId());
             upload = fileDao.findById(upload.getId()).get();
 
             var service = new FileUploadService(null, null, "uploads", "scanned", "quarantine", 123, 5, 1L, null, 1);
-            var result = service.verifyUpload(handle, userId, upload);
+            var result = service.verifyUpload(handle, studyId, userId, upload);
             assertEquals(FileUploadService.VerifyResult.OK, result);
 
             handle.rollback();
@@ -158,37 +160,41 @@ public class FileUploadServiceTest extends TxnAwareBaseTest {
         doReturn(mockBlob).when(mockClient).getBlob("uploads", "blob");
 
         TransactionWrapper.useTxn(handle -> {
-            long userId = testData.getUserId();
             var fileDao = handle.attach(FileUploadDao.class);
-            var upload = fileDao.createAuthorized("guid", "blob", "mime", "file", 100, userId, userId);
+            var upload = fileDao.createAuthorized("guid", studyId, userId, userId, "blob", "mime", "file", 100);
 
-            var result = service.verifyUpload(handle, userId + 1, upload);
+            var result = service.verifyUpload(handle, studyId, userId + 1, upload);
+            assertEquals(FileUploadService.VerifyResult.OWNER_MISMATCH, result);
+
+            result = service.verifyUpload(handle, studyId + 1, userId, upload);
             assertEquals(FileUploadService.VerifyResult.OWNER_MISMATCH, result);
 
             Mockito.reset(mockBlob);
             doReturn(false).when(mockBlob).exists();
-            result = service.verifyUpload(handle, userId, upload);
+            result = service.verifyUpload(handle, studyId, userId, upload);
             assertEquals(FileUploadService.VerifyResult.NOT_UPLOADED, result);
 
             Mockito.reset(mockBlob);
             doReturn(true).when(mockBlob).exists();
             doReturn(null).when(mockBlob).getCreateTime();
-            result = service.verifyUpload(handle, userId, upload);
+            result = service.verifyUpload(handle, studyId, userId, upload);
             assertEquals(FileUploadService.VerifyResult.NOT_UPLOADED, result);
 
             Mockito.reset(mockBlob);
             doReturn(true).when(mockBlob).exists();
             doReturn(now.toEpochMilli()).when(mockBlob).getCreateTime();
             doReturn(upload.getFileSize() + 1).when(mockBlob).getSize();
-            result = service.verifyUpload(handle, userId, upload);
+            result = service.verifyUpload(handle, studyId, userId, upload);
             assertEquals(FileUploadService.VerifyResult.SIZE_MISMATCH, result);
 
             var quarantinedUpload = new FileUpload(
-                    upload.getId(), upload.getGuid(), upload.getBlobName(), upload.getMimeType(),
-                    upload.getFileName(), upload.getFileSize(), upload.getOperatorUserId(),
-                    upload.getParticipantUserId(), false, upload.getCreatedAt(), null,
+                    upload.getId(), upload.getGuid(),
+                    upload.getStudyId(), upload.getOperatorUserId(), upload.getParticipantUserId(),
+                    upload.getBlobName(), upload.getMimeType(),
+                    upload.getFileName(), upload.getFileSize(),
+                    false, upload.getCreatedAt(), null,
                     Instant.now(), FileScanResult.INFECTED);
-            result = service.verifyUpload(handle, userId, quarantinedUpload);
+            result = service.verifyUpload(handle, studyId, userId, quarantinedUpload);
             assertEquals(FileUploadService.VerifyResult.QUARANTINED, result);
 
             handle.rollback();
@@ -205,9 +211,8 @@ public class FileUploadServiceTest extends TxnAwareBaseTest {
         doReturn(mockBlob).when(mockClient).getBlob("uploads", "blob");
 
         TransactionWrapper.useTxn(handle -> {
-            long userId = testData.getUserId();
             var fileDao = handle.attach(FileUploadDao.class);
-            var upload = fileDao.createAuthorized("guid", "blob", "mime", "file", 100, userId, userId);
+            var upload = fileDao.createAuthorized("guid", studyId, userId, userId, "blob", "mime", "file", 100);
             assertFalse(upload.isVerified());
 
             Instant createdAt = Instant.parse("2021-01-01T00:00:00Z");

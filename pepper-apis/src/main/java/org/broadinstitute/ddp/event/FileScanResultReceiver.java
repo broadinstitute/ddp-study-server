@@ -10,6 +10,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.pubsub.v1.PubsubMessage;
 import org.broadinstitute.ddp.client.GoogleBucketClient;
 import org.broadinstitute.ddp.db.TransactionWrapper;
+import org.broadinstitute.ddp.db.dao.DataExportDao;
 import org.broadinstitute.ddp.db.dao.FileUploadDao;
 import org.broadinstitute.ddp.model.files.FileScanResult;
 import org.broadinstitute.ddp.model.files.FileUpload;
@@ -145,6 +146,8 @@ public class FileScanResultReceiver implements MessageReceiver {
 
         Instant uploadedAt = Instant.ofEpochMilli(blob.getCreateTime());
         uploadDao.updateStatus(upload.getId(), uploadedAt, scannedAt, scanResult);
+        handle.attach(DataExportDao.class)
+                .queueDataSync(upload.getParticipantUserId(), upload.getStudyId());
         LOG.info("Finished processing file scan result for file upload {}", uploadGuid);
 
         return true;

@@ -9,12 +9,13 @@ public class FileUpload {
 
     private final long id;
     private final String guid;
+    private final long studyId;
+    private final long operatorUserId;
+    private final long participantUserId;
     private final String blobName;
     private final String mimeType;
     private final String fileName;
     private final long fileSize;
-    private final long operatorUserId;
-    private final long participantUserId;
     private final boolean isVerified;
     private final Instant createdAt;
     private final Instant uploadedAt;
@@ -24,12 +25,13 @@ public class FileUpload {
     @JdbiConstructor
     public FileUpload(@ColumnName("file_upload_id") long id,
                       @ColumnName("file_upload_guid") String guid,
+                      @ColumnName("study_id") long studyId,
+                      @ColumnName("operator_user_id") long operatorUserId,
+                      @ColumnName("participant_user_id") long participantUserId,
                       @ColumnName("blob_name") String blobName,
                       @ColumnName("mime_type") String mimeType,
                       @ColumnName("file_name") String fileName,
                       @ColumnName("file_size") long fileSize,
-                      @ColumnName("operator_user_id") long operatorUserId,
-                      @ColumnName("participant_user_id") long participantUserId,
                       @ColumnName("is_verified") boolean isVerified,
                       @ColumnName("created_at") Instant createdAt,
                       @ColumnName("uploaded_at") Instant uploadedAt,
@@ -37,12 +39,13 @@ public class FileUpload {
                       @ColumnName("scan_result") FileScanResult scanResult) {
         this.id = id;
         this.guid = guid;
+        this.studyId = studyId;
+        this.operatorUserId = operatorUserId;
+        this.participantUserId = participantUserId;
         this.blobName = blobName;
         this.mimeType = mimeType;
         this.fileName = fileName;
         this.fileSize = fileSize;
-        this.operatorUserId = operatorUserId;
-        this.participantUserId = participantUserId;
         this.isVerified = isVerified;
         this.createdAt = createdAt;
         this.uploadedAt = uploadedAt;
@@ -62,6 +65,27 @@ public class FileUpload {
      */
     public String getGuid() {
         return guid;
+    }
+
+    /**
+     * Returns identifier of the study.
+     */
+    public long getStudyId() {
+        return studyId;
+    }
+
+    /**
+     * Returns identifier of operator that initiated this file upload.
+     */
+    public long getOperatorUserId() {
+        return operatorUserId;
+    }
+
+    /**
+     * Returns identifier of participant that this file upload is for, e.g. the user that owns this file upload.
+     */
+    public long getParticipantUserId() {
+        return participantUserId;
     }
 
     /**
@@ -90,20 +114,6 @@ public class FileUpload {
      */
     public long getFileSize() {
         return fileSize;
-    }
-
-    /**
-     * Returns identifier of operator that initiated this file upload.
-     */
-    public long getOperatorUserId() {
-        return operatorUserId;
-    }
-
-    /**
-     * Returns identifier of participant that this file upload is for, e.g. the user that owns this file upload.
-     */
-    public long getParticipantUserId() {
-        return participantUserId;
     }
 
     /**

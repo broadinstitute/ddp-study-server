@@ -287,6 +287,46 @@
             }
           }
         },
+        "files": {
+          "properties": {
+            "guid": {
+              "type": "keyword"
+            },
+            "bucket": {
+              "type": "text"
+            },
+            "blobName": {
+              "type": "text"
+            },
+            "fileName": {
+              "type": "text"
+            },
+            "fileSize": {
+              "type": "long"
+            },
+            "mimeType": {
+              "type": "text"
+            },
+            "authorizedAt": {
+              "type": "date",
+              "ignore_malformed": false,
+              "format": "strict_date_time||strict_date_time_no_millis||epoch_millis"
+            },
+            "uploadedAt": {
+              "type": "date",
+              "ignore_malformed": false,
+              "format": "strict_date_time||strict_date_time_no_millis||epoch_millis"
+            },
+            "scannedAt": {
+              "type": "date",
+              "ignore_malformed": false,
+              "format": "strict_date_time||strict_date_time_no_millis||epoch_millis"
+            },
+            "scanResult": {
+              "type": "keyword"
+            }
+          }
+        },
         "dsm": {
           "properties": {
             "dateOfBirth": {
