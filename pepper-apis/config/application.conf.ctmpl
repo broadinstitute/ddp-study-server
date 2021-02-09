@@ -56,8 +56,11 @@
     "fileUploads": {
         "uploadsBucket": "{{$conf.Data.fileUploads.uploadsBucket}}",
         "scannedBucket": "{{$conf.Data.fileUploads.scannedBucket}}",
+        "quarantineBucket": "{{$conf.Data.fileUploads.quarantineBucket}}",
         "maxFileSizeBytes": {{$conf.Data.fileUploads.maxFileSizeBytes}},
         "maxSignedUrlMins": {{$conf.Data.fileUploads.maxSignedUrlMins}},
+        "enableScanResultHandler": {{$conf.Data.fileUploads.enableScanResultHandler}},
+        "scanResultSubscription": "{{$conf.Data.fileUploads.scanResultSubscription}}",
         "signerServiceAccount": {{$conf.Data.fileUploads.signerServiceAccount | toJSONPretty}}
     },
     "pdfArchiveBucket": "{{$conf.Data.pdfArchiveBucket}}",
