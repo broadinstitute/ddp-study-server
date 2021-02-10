@@ -5,27 +5,28 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
+import java.util.ArrayDeque;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import com.google.auth.ServiceAccountSigner;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.auth.oauth2.ServiceAccountCredentials;
 import com.google.cloud.storage.Blob;
-import com.google.cloud.storage.BlobId;
-import com.google.cloud.storage.BlobInfo;
 import com.google.cloud.storage.HttpMethod;
-import com.google.cloud.storage.Storage;
-import com.google.common.annotations.VisibleForTesting;
 import com.typesafe.config.Config;
+import org.broadinstitute.ddp.client.GoogleBucketClient;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.db.dao.FileUploadDao;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.files.FileScanResult;
 import org.broadinstitute.ddp.model.files.FileUpload;
 import org.broadinstitute.ddp.util.ConfigUtil;
-import org.broadinstitute.ddp.util.GoogleBucketUtil;
 import org.broadinstitute.ddp.util.GoogleCredentialUtil;
 import org.broadinstitute.ddp.util.GuidUtils;
 import org.jdbi.v3.core.Handle;
@@ -35,15 +36,20 @@ import org.slf4j.LoggerFactory;
 public class FileUploadService {
 
     public static final String DEFAULT_MIME_TYPE = "application/octet-stream";
+    public static final int DEFAULT_BATCH_SIZE = 100;
 
     private static final Logger LOG = LoggerFactory.getLogger(FileUploadService.class);
 
     private final ServiceAccountSigner signer;
-    private final Storage storage;
+    private final GoogleBucketClient storageClient;
     private final String uploadsBucket;
     private final String scannedBucket;
+    private final String quarantineBucket;
     private final long maxFileSizeBytes;
     private final int maxSignedUrlMins;
+    private final long removalExpireTime;
+    private final TimeUnit removalExpireUnit;
+    private final int removalBatchSize;
 
     public static FileUploadService fromConfig(Config cfg) {
         String signerJson = ConfigUtil.toJson(cfg.getConfig(ConfigFile.FileUploads.SIGNER_SERVICE_ACCOUNT));
@@ -64,25 +70,38 @@ public class FileUploadService {
         }
 
         String projectId = cfg.getString(ConfigFile.GOOGLE_PROJECT_ID);
-        Storage storage = GoogleBucketUtil.getStorage(bucketCredentials, projectId);
+        int removalBatchSize = cfg.getInt(ConfigFile.FileUploads.REMOVAL_BATCH_SIZE);
+        long removalExpireTime = cfg.getLong(ConfigFile.FileUploads.REMOVAL_EXPIRE_TIME);
+        TimeUnit removalExpireUnit = TimeUnit.valueOf(cfg.getString(ConfigFile.FileUploads.REMOVAL_EXPIRE_UNIT));
 
         return new FileUploadService(
-                signerCredentials, storage,
+                signerCredentials,
+                new GoogleBucketClient(projectId, bucketCredentials),
                 cfg.getString(ConfigFile.FileUploads.UPLOADS_BUCKET),
                 cfg.getString(ConfigFile.FileUploads.SCANNED_BUCKET),
+                cfg.getString(ConfigFile.FileUploads.QUARANTINE_BUCKET),
                 cfg.getLong(ConfigFile.FileUploads.MAX_FILE_SIZE_BYTES),
-                cfg.getInt(ConfigFile.FileUploads.MAX_SIGNED_URL_MINS));
+                cfg.getInt(ConfigFile.FileUploads.MAX_SIGNED_URL_MINS),
+                removalExpireTime, removalExpireUnit, removalBatchSize);
     }
 
-    public FileUploadService(ServiceAccountSigner signer, Storage storage,
-                             String uploadsBucket, String scannedBucket,
-                             long maxFileSizeBytes, int maxSignedUrlMins) {
+    public FileUploadService(ServiceAccountSigner signer, GoogleBucketClient storageClient,
+                             String uploadsBucket, String scannedBucket, String quarantineBucket,
+                             long maxFileSizeBytes, int maxSignedUrlMins,
+                             long removalExpireTime, TimeUnit removalExpireUnit, int removalBatchSize) {
         this.signer = signer;
-        this.storage = storage;
+        this.storageClient = storageClient;
         this.uploadsBucket = uploadsBucket;
         this.scannedBucket = scannedBucket;
+        this.quarantineBucket = quarantineBucket;
         this.maxFileSizeBytes = maxFileSizeBytes;
         this.maxSignedUrlMins = maxSignedUrlMins;
+        this.removalExpireTime = removalExpireTime;
+        this.removalExpireUnit = removalExpireUnit;
+        this.removalBatchSize = removalBatchSize;
+        if (removalExpireUnit == TimeUnit.MICROSECONDS || removalExpireUnit == TimeUnit.NANOSECONDS) {
+            throw new IllegalArgumentException("Granularity of time unit is not supported: " + removalExpireUnit);
+        }
     }
 
     public String getUploadsBucket() {
@@ -121,20 +140,13 @@ public class FileUploadService {
 
         FileUpload upload = handle.attach(FileUploadDao.class).createAuthorized(
                 uploadGuid, blobName, mimeType, fileName, fileSize, operatorUserId, participantUserId);
-        URL signedURL = generateSignedUrl(blobName, mimeType, method);
+        Map<String, String> headers = Map.of("Content-Type", mimeType);
+        URL signedURL = storageClient.generateSignedUrl(
+                signer, uploadsBucket, blobName,
+                maxSignedUrlMins, TimeUnit.MINUTES,
+                method, headers);
 
         return new AuthorizeResult(false, upload, signedURL);
-    }
-
-    @VisibleForTesting
-    URL generateSignedUrl(String blobName, String mimeType, HttpMethod method) {
-        BlobInfo blobInfo = BlobInfo.newBuilder(BlobId.of(uploadsBucket, blobName)).build();
-        Map<String, String> headers = Map.of("Content-Type", mimeType);
-        return storage.signUrl(blobInfo, maxSignedUrlMins, TimeUnit.MINUTES,
-                Storage.SignUrlOption.signWith(signer),
-                Storage.SignUrlOption.withV4Signature(),
-                Storage.SignUrlOption.httpMethod(method),
-                Storage.SignUrlOption.withExtHeaders(headers));
     }
 
     // Convenience helper to lock file upload before verifying.
@@ -191,13 +203,79 @@ public class FileUploadService {
         return VerifyResult.OK;
     }
 
-    @VisibleForTesting
-    Blob fetchBlob(String blobName, FileScanResult scanResult) {
-        String bucketName = uploadsBucket;
+    private Blob fetchBlob(String blobName, FileScanResult scanResult) {
+        String bucketName;
         if (scanResult == FileScanResult.CLEAN) {
             bucketName = scannedBucket;
+        } else if (scanResult == FileScanResult.INFECTED) {
+            bucketName = quarantineBucket;
+        } else {
+            bucketName = uploadsBucket;
         }
-        return storage.get(BlobId.of(bucketName, blobName));
+        return storageClient.getBlob(bucketName, blobName);
+    }
+
+    // Convenience helper to run removal using the service's configured settings.
+    public int removeUnusedUploads(Handle handle) {
+        LOG.info("Starting removal of unused file uploads older than {} {}", removalExpireTime, removalExpireUnit);
+        long duration = removalExpireUnit.toMillis(removalExpireTime);
+        Instant olderThanTimestamp = Instant.now().minusMillis(duration);
+        return removeUnusedUploads(handle, olderThanTimestamp, removalBatchSize);
+    }
+
+    /**
+     * Remove file uploads that are older than the given timestamp and is not used. And unused file upload is one that
+     * is either not verified or is not assigned/associated with any file answers.
+     *
+     * @param handle             the database handle
+     * @param olderThanTimestamp look for authorized uploads older than this timestamp
+     * @param removalBatchSize   optional, will use the default batch size if not provided
+     * @return number of file uploads removed
+     */
+    public int removeUnusedUploads(Handle handle, Instant olderThanTimestamp, Integer removalBatchSize) {
+        var uploadDao = handle.attach(FileUploadDao.class);
+        Set<Long> uploadIdsToDelete = new HashSet<>();
+        int offset = 0;
+
+        int batchSize = removalBatchSize != null ? removalBatchSize : DEFAULT_BATCH_SIZE;
+        while (true) {
+            ArrayDeque<FileUpload> queue;
+            try (var stream = uploadDao.findUnverifiedOrUnassignedUploads(olderThanTimestamp, offset, batchSize)) {
+                queue = stream.collect(Collectors.toCollection(ArrayDeque::new));
+            }
+            if (queue.isEmpty()) {
+                break;
+            }
+
+            int numFound = queue.size();
+            while (!queue.isEmpty()) {
+                FileUpload upload = queue.remove();
+                Blob blob = fetchBlob(upload.getBlobName(), upload.getScanResult());
+                if (blob != null && blob.exists()) {
+                    try {
+                        storageClient.deleteBlob(blob);
+                        LOG.info("Deleted blob {} for unused file upload {}", blob.getBlobId(), upload.getGuid());
+                    } catch (Exception e) {
+                        LOG.error("Unable to delete blob file {}, skipping removal of unused file upload {}",
+                                upload.getBlobName(), upload.getGuid());
+                        continue;
+                    }
+                } else if (upload.getUploadedAt() != null) {
+                    LOG.error("Unable to locate blob file {}, skipping removal of unused file upload {}",
+                            upload.getBlobName(), upload.getGuid());
+                    continue;
+                } else {
+                    // Nothing to do. Actual file is not uploaded to bucket.
+                }
+                uploadIdsToDelete.add(upload.getId());
+            }
+
+            offset += numFound;
+        }
+
+        uploadDao.deleteByIds(uploadIdsToDelete);
+        LOG.info("Removed {} unused file uploads", uploadIdsToDelete.size());
+        return uploadIdsToDelete.size();
     }
 
     public enum VerifyResult {
