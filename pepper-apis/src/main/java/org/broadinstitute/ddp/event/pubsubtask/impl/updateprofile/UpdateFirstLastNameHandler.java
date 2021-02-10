@@ -8,6 +8,7 @@ import java.util.Properties;
 
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.TransactionWrapper.DB;
+import org.broadinstitute.ddp.db.dao.DataExportDao;
 import org.broadinstitute.ddp.db.dao.UserProfileDao;
 import org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskException;
 import org.jdbi.v3.core.Handle;
@@ -27,7 +28,9 @@ public class UpdateFirstLastNameHandler {
         String firstName = detectFieldValueForUpdate(payload, FIELD_FIRST_NAME, profile.getFirstName());
         String lastName = detectFieldValueForUpdate(payload, FIELD_LAST_NAME, profile.getLastName());
         int count = profileDao.getUserProfileSql().updateFirstAndLastNameByUserGuid(userGuid, firstName, lastName);
-        if (count == 0) {
+        if (count > 0) {
+            handle.attach(DataExportDao.class).queueDataSync(userGuid);
+        } else {
             throw new PubSubTaskException("User profile is not found for guid=" + userGuid);
         }
     }
