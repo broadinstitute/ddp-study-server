@@ -98,6 +98,9 @@
         "quarantineBucket": "ddp-local-file-quarantine",
         "maxFileSizeBytes": 2000000,
         "maxSignedUrlMins": 5,
+        "removalExpireTime": 1,
+        "removalExpireUnit": "DAYS",
+        "removalBatchSize": 100,
         "enableScanResultHandler": false,
         "scanResultSubscription": "cf-file-scan-result-local-hkeep-sub",
         "signerServiceAccount": {{$fileUploads.signerServiceAccount | toJSONPretty}}
@@ -116,6 +119,7 @@
         "drugLoader": "0 0 8,20 ? * * *",
         "cancerLoader": "0 0 8,20 ? * * *",
         "studyExport": "0 0 9 ? * * *",
+        "fileUploadCleanup": "0 0 5 ? * * *",
         "tempUserCleanup": "0 30 5 ? * * *"
     },
     "housekeepingMaxConnections": 50,

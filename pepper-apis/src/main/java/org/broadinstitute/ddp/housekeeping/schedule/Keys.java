@@ -14,7 +14,9 @@ public class Keys {
 
     public static class Cleanup {
         public static final JobKey TempUserJob = JobKey.jobKey("temp-user", "cleanup");
+        public static final JobKey FileUploadJob = JobKey.jobKey("file-upload", "cleanup");
         public static final TriggerKey TempUserTrigger = TriggerKey.triggerKey("temp-user", "cleanup");
+        public static final TriggerKey FileUploadTrigger = TriggerKey.triggerKey("file-upload", "cleanup");
     }
 
     public static class DbBackups {

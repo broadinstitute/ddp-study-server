@@ -62,6 +62,7 @@ public class ConfigFile {
     public static final String DB_BACKUP_SCHEDULE = "schedules.dbBackup";
     public static final String DB_BACKUP_CHECK_SCHEDULE = "schedules.dbBackupCheck";
     public static final String STUDY_EXPORT_SCHEDULE = "schedules.studyExport";
+    public static final String FILE_UPLOAD_CLEANUP_SCHEDULE = "schedules.fileUploadCleanup";
     public static final String TEMP_USER_CLEANUP_SCHEDULE = "schedules.tempUserCleanup";
 
     // database instance names
@@ -201,6 +202,9 @@ public class ConfigFile {
         public static final String QUARANTINE_BUCKET = prefix + "quarantineBucket";
         public static final String MAX_FILE_SIZE_BYTES = prefix + "maxFileSizeBytes";
         public static final String MAX_SIGNED_URL_MINS = prefix + "maxSignedUrlMins";
+        public static final String REMOVAL_EXPIRE_TIME = prefix + "removalExpireTime";
+        public static final String REMOVAL_EXPIRE_UNIT = prefix + "removalExpireUnit";
+        public static final String REMOVAL_BATCH_SIZE = prefix + "removalBatchSize";
         public static final String ENABLE_SCAN_RESULT_HANDLER = prefix + "enableScanResultHandler";
         public static final String SCAN_RESULT_SUBSCRIPTION = prefix + "scanResultSubscription";
         public static final String SIGNER_SERVICE_ACCOUNT = prefix + "signerServiceAccount";

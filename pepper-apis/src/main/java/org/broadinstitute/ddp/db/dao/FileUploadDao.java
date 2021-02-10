@@ -1,7 +1,10 @@
 package org.broadinstitute.ddp.db.dao;
 
 import java.time.Instant;
+import java.util.Collection;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Stream;
 
 import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.model.activity.instance.answer.FileInfo;
@@ -38,7 +41,13 @@ public interface FileUploadDao extends SqlObject {
     }
 
     default void deleteById(long fileUploadId) {
-        DBUtils.checkDelete(1, getFileUploadSql().delete(fileUploadId));
+        deleteByIds(Set.of(fileUploadId));
+    }
+
+    default void deleteByIds(Collection<Long> fileUploadIds) {
+        if (fileUploadIds != null && !fileUploadIds.isEmpty()) {
+            DBUtils.checkDelete(fileUploadIds.size(), getFileUploadSql().bulkDelete(fileUploadIds));
+        }
     }
 
     @SqlQuery("select f.*, (select file_scan_result_code from file_scan_result"
@@ -68,6 +77,18 @@ public interface FileUploadDao extends SqlObject {
             + " where f.file_upload_guid = :guid for update")
     @RegisterConstructorMapper(FileUpload.class)
     Optional<FileUpload> findAndLockByGuid(@Bind("guid") String fileUploadGuid);
+
+    @SqlQuery("select f.*, (select file_scan_result_code from file_scan_result"
+            + "       where file_scan_result_id = f.scan_result_id) as scan_result"
+            + "  from file_upload as f"
+            + " where f.created_at < :ts"
+            + "   and (f.is_verified is false or f.file_upload_id not in (select file_upload_id from file_answer))"
+            + " order by f.file_upload_id limit :limit offset :offset")
+    @RegisterConstructorMapper(FileUpload.class)
+    Stream<FileUpload> findUnverifiedOrUnassignedUploads(
+            @Bind("ts") Instant olderThanTimestamp,
+            @Bind("offset") int offset,
+            @Bind("limit") int limit);
 
     @SqlQuery("select file_upload_id, file_name, file_size"
             + "  from file_upload where file_upload_guid = :guid")
