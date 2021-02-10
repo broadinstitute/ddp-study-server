@@ -12,6 +12,9 @@ import org.broadinstitute.ddp.event.pubsubtask.api.PubSubTask;
 import org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskDataReaderAbstract;
 import org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskException;
 
+/**
+ * Reader/validator specific for taskType='UPDATE_PROFILE'
+ */
 public class UpdateProfileDataReader extends PubSubTaskDataReaderAbstract {
 
     @Override
