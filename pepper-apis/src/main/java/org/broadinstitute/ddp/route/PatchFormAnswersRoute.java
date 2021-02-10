@@ -651,9 +651,10 @@ public class PatchFormAnswersRoute implements Route {
 
     private void verifyFileUpload(Handle handle, Response response, ActivityInstanceDto instanceDto, FileAnswer answer) {
         long participantId = instanceDto.getParticipantId();
+        long studyId = instanceDto.getStudyId();
         long uploadId = answer.getValue().getUploadId();
 
-        var verifyResult = fileService.verifyUpload(handle, participantId, uploadId)
+        var verifyResult = fileService.verifyUpload(handle, studyId, participantId, uploadId)
                 .orElseThrow(() -> new DDPException("Could not find file upload with id " + uploadId));
 
         switch (verifyResult) {

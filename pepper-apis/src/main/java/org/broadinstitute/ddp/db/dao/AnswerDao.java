@@ -432,6 +432,7 @@ public interface AnswerDao extends SqlObject {
                     Long fileUploadId = view.getColumn("fa_upload_id", Long.class);
                     if (fileUploadId != null) {
                         info = new FileInfo(fileUploadId,
+                                view.getColumn("fa_upload_guid", String.class),
                                 view.getColumn("fa_file_name", String.class),
                                 view.getColumn("fa_file_size", Long.class));
                     }

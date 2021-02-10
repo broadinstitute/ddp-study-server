@@ -346,9 +346,12 @@ public class PatchFormAnswersRouteStandaloneTest {
         assertNotNull(activity.getActivityId());
 
         long userId = testData.getUserId();
+        long studyId = testData.getStudyId();
         var fileDao = handle.attach(FileUploadDao.class);
-        upload1 = fileDao.createAuthorized(GuidUtils.randomFileUploadGuid(), "blob1", "text/plain", "file.txt", 123, userId, userId);
-        upload2 = fileDao.createAuthorized(GuidUtils.randomFileUploadGuid(), "blob2", "application/pdf", "file.pdf", 456, userId, userId);
+        upload1 = fileDao.createAuthorized(GuidUtils.randomFileUploadGuid(),
+                studyId, userId, userId, "blob1", "text/plain", "file.txt", 123L);
+        upload2 = fileDao.createAuthorized(GuidUtils.randomFileUploadGuid(),
+                studyId, userId, userId, "blob2", "application/pdf", "file.pdf", 456L);
         fileDao.markVerified(upload1.getId());
         fileDao.markVerified(upload2.getId());
     }

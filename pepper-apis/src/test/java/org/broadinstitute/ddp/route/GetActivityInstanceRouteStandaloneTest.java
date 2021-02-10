@@ -267,8 +267,10 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
         answerDao.createAnswer(testData.getUserId(), instanceDto.getId(), compAnswer);
 
         var fileDao = handle.attach(FileUploadDao.class);
-        upload = fileDao.createAuthorized(GuidUtils.randomFileUploadGuid(), "blob", "application/pdf", "file.pdf",
-                123, testData.getUserId(), testData.getUserId());
+        long userId = testData.getUserId();
+        long studyId = testData.getStudyId();
+        upload = fileDao.createAuthorized(GuidUtils.randomFileUploadGuid(),
+                studyId, userId, userId, "blob", "application/pdf", "file.pdf", 123L);
         fileDao.markVerified(upload.getId());
         var fileAnswer = new FileAnswer(null, file1.getStableId(), null,
                 fileDao.findFileInfoByGuid(upload.getGuid()).get());

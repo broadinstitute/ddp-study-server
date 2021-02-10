@@ -113,9 +113,26 @@ public class FileUploadService {
     }
 
     /**
+     * Get name of bucket that hosts the given file upload.
+     *
+     * @param upload the file upload
+     * @return the bucket name
+     */
+    public String getBucketForUpload(FileUpload upload) {
+        if (upload.getScanResult() == FileScanResult.CLEAN) {
+            return scannedBucket;
+        } else if (upload.getScanResult() == FileScanResult.INFECTED) {
+            return quarantineBucket;
+        } else {
+            return uploadsBucket;
+        }
+    }
+
+    /**
      * Authorize a file upload by creating a file record and generating a signed URL.
      *
      * @param handle            the database handle
+     * @param studyId           the study to authorize upload for
      * @param operatorUserId    the operator who instantiated this request
      * @param participantUserId the participant who will own the file
      * @param blobPrefix        a prefix to prepend to blob name, e.g. for organizational purposes
@@ -125,7 +142,7 @@ public class FileUploadService {
      * @param resumable         whether to allow resumable upload
      * @return authorization result
      */
-    public AuthorizeResult authorizeUpload(Handle handle, long operatorUserId, long participantUserId,
+    public AuthorizeResult authorizeUpload(Handle handle, long studyId, long operatorUserId, long participantUserId,
                                            String blobPrefix, String mimeType,
                                            String fileName, long fileSize, boolean resumable) {
         if (fileSize > maxFileSizeBytes) {
@@ -139,7 +156,8 @@ public class FileUploadService {
         String blobName = blobPrefix + uploadGuid;
 
         FileUpload upload = handle.attach(FileUploadDao.class).createAuthorized(
-                uploadGuid, blobName, mimeType, fileName, fileSize, operatorUserId, participantUserId);
+                uploadGuid, studyId, operatorUserId, participantUserId,
+                blobName, mimeType, fileName, fileSize);
         Map<String, String> headers = Map.of("Content-Type", mimeType);
         URL signedURL = storageClient.generateSignedUrl(
                 signer, uploadsBucket, blobName,
@@ -150,10 +168,10 @@ public class FileUploadService {
     }
 
     // Convenience helper to lock file upload before verifying.
-    public Optional<VerifyResult> verifyUpload(Handle handle, long participantUserId, long uploadId) {
+    public Optional<VerifyResult> verifyUpload(Handle handle, long studyId, long participantUserId, long uploadId) {
         return handle.attach(FileUploadDao.class)
                 .findAndLockById(uploadId)
-                .map(upload -> verifyUpload(handle, participantUserId, upload));
+                .map(upload -> verifyUpload(handle, studyId, participantUserId, upload));
     }
 
     /**
@@ -165,12 +183,13 @@ public class FileUploadService {
      * transactions waiting on the file upload row.
      *
      * @param handle            the database handle
+     * @param studyId           the study that participant is in
      * @param participantUserId the participant who this upload will be assigned to
      * @param upload            the file upload
      * @return check result
      */
-    public VerifyResult verifyUpload(Handle handle, long participantUserId, FileUpload upload) {
-        if (participantUserId != upload.getParticipantUserId()) {
+    public VerifyResult verifyUpload(Handle handle, long studyId, long participantUserId, FileUpload upload) {
+        if (studyId != upload.getStudyId() || participantUserId != upload.getParticipantUserId()) {
             return VerifyResult.OWNER_MISMATCH;
         }
 
@@ -182,7 +201,8 @@ public class FileUploadService {
                 return VerifyResult.QUARANTINED;
             }
 
-            Blob blob = fetchBlob(upload.getBlobName(), upload.getScanResult());
+            String bucket = getBucketForUpload(upload);
+            Blob blob = storageClient.getBlob(bucket, upload.getBlobName());
             boolean exists = (blob != null && blob.exists());
             Long size = blob == null ? null : blob.getSize();
 
@@ -201,18 +221,6 @@ public class FileUploadService {
         }
 
         return VerifyResult.OK;
-    }
-
-    private Blob fetchBlob(String blobName, FileScanResult scanResult) {
-        String bucketName;
-        if (scanResult == FileScanResult.CLEAN) {
-            bucketName = scannedBucket;
-        } else if (scanResult == FileScanResult.INFECTED) {
-            bucketName = quarantineBucket;
-        } else {
-            bucketName = uploadsBucket;
-        }
-        return storageClient.getBlob(bucketName, blobName);
     }
 
     // Convenience helper to run removal using the service's configured settings.
@@ -250,19 +258,20 @@ public class FileUploadService {
             int numFound = queue.size();
             while (!queue.isEmpty()) {
                 FileUpload upload = queue.remove();
-                Blob blob = fetchBlob(upload.getBlobName(), upload.getScanResult());
+                String bucket = getBucketForUpload(upload);
+                Blob blob = storageClient.getBlob(bucket, upload.getBlobName());
                 if (blob != null && blob.exists()) {
                     try {
                         storageClient.deleteBlob(blob);
                         LOG.info("Deleted blob {} for unused file upload {}", blob.getBlobId(), upload.getGuid());
                     } catch (Exception e) {
-                        LOG.error("Unable to delete blob file {}, skipping removal of unused file upload {}",
-                                upload.getBlobName(), upload.getGuid());
+                        LOG.error("Unable to delete file {} from bucket {}, skipping removal of unused file upload {}",
+                                upload.getBlobName(), bucket, upload.getGuid());
                         continue;
                     }
                 } else if (upload.getUploadedAt() != null) {
-                    LOG.error("Unable to locate blob file {}, skipping removal of unused file upload {}",
-                            upload.getBlobName(), upload.getGuid());
+                    LOG.error("Unable to locate file {} in bucket {}, skipping removal of unused file upload {}",
+                            upload.getBlobName(), bucket, upload.getGuid());
                     continue;
                 } else {
                     // Nothing to do. Actual file is not uploaded to bucket.
@@ -284,7 +293,7 @@ public class FileUploadService {
          */
         NOT_UPLOADED,
         /**
-         * File does not belong to participant.
+         * File does not belong to participant or the study.
          */
         OWNER_MISMATCH,
         /**

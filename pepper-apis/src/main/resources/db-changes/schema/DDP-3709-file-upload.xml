@@ -23,6 +23,21 @@
             <column name="file_upload_guid" type="varchar(20)">
                 <constraints nullable="false" unique="true" uniqueConstraintName="file_upload_guid_uk"/>
             </column>
+            <column name="study_id" type="bigint">
+                <constraints nullable="false"
+                             references="umbrella_study(umbrella_study_id)"
+                             foreignKeyName="file_upload_study_fk"/>
+            </column>
+            <column name="operator_user_id" type="bigint">
+                <constraints nullable="false"
+                             references="user(user_id)"
+                             foreignKeyName="file_upload_operator_user_fk"/>
+            </column>
+            <column name="participant_user_id" type="bigint">
+                <constraints nullable="false"
+                             references="user(user_id)"
+                             foreignKeyName="file_upload_participant_user_fk"/>
+            </column>
             <column name="blob_name" type="varchar(1024)">
                 <constraints nullable="false"/>
             </column>
@@ -34,16 +49,6 @@
             </column>
             <column name="file_size" type="bigint">
                 <constraints nullable="false"/>
-            </column>
-            <column name="operator_user_id" type="bigint">
-                <constraints nullable="false"
-                             references="user(user_id)"
-                             foreignKeyName="file_upload_operator_user_fk"/>
-            </column>
-            <column name="participant_user_id" type="bigint">
-                <constraints nullable="false"
-                             references="user(user_id)"
-                             foreignKeyName="file_upload_participant_user_fk"/>
             </column>
             <column name="is_verified" type="boolean">
                 <constraints nullable="false"/>

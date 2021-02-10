@@ -14,6 +14,8 @@ import org.jdbi.v3.sqlobject.CreateSqlObject;
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
+import org.jdbi.v3.sqlobject.customizer.BindList;
+import org.jdbi.v3.sqlobject.customizer.BindList.EmptyHandling;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 
 public interface FileUploadDao extends SqlObject {
@@ -21,15 +23,15 @@ public interface FileUploadDao extends SqlObject {
     @CreateSqlObject
     FileUploadSql getFileUploadSql();
 
-    default FileUpload createAuthorized(String guid, String blobName, String mimeType, String fileName,
-                                        long fileSize, long operatorUserId, long participantUserId) {
+    default FileUpload createAuthorized(String guid, long studyId, long operatorUserId, long participantUserId,
+                                        String blobName, String mimeType, String fileName, long fileSize) {
         Instant now = Instant.now();
         long id = getFileUploadSql().insert(
-                guid, blobName, mimeType, fileName, fileSize,
-                operatorUserId, participantUserId, now);
+                guid, studyId, operatorUserId, participantUserId,
+                blobName, mimeType, fileName, fileSize, now);
         return new FileUpload(
-                id, guid, blobName, mimeType, fileName, fileSize,
-                operatorUserId, participantUserId, false, now, null, null, null);
+                id, guid, studyId, operatorUserId, participantUserId,
+                blobName, mimeType, fileName, fileSize, false, now, null, null, null);
     }
 
     default void markVerified(long fileUploadId) {
@@ -90,7 +92,20 @@ public interface FileUploadDao extends SqlObject {
             @Bind("offset") int offset,
             @Bind("limit") int limit);
 
-    @SqlQuery("select file_upload_id, file_name, file_size"
+    @SqlQuery("select f.*, (select file_scan_result_code from file_scan_result"
+            + "       where file_scan_result_id = f.scan_result_id) as scan_result"
+            + "  from file_upload as f"
+            + " where f.is_verified is true"
+            + "   and f.file_upload_id in (select file_upload_id from file_answer)"
+            + "   and f.participant_user_id in (<userIds>)"
+            + "   and f.study_id = :studyId"
+            + " order by f.participant_user_id, f.file_upload_id")
+    @RegisterConstructorMapper(FileUpload.class)
+    Stream<FileUpload> findVerifiedAndAssignedUploadsForParticipants(
+            @Bind("studyId") long studyId,
+            @BindList(value = "userIds", onEmpty = EmptyHandling.NULL) Iterable<Long> participantUserIds);
+
+    @SqlQuery("select file_upload_id, file_upload_guid, file_name, file_size"
             + "  from file_upload where file_upload_guid = :guid")
     @RegisterConstructorMapper(FileInfo.class)
     Optional<FileInfo> findFileInfoByGuid(@Bind("guid") String fileUploadGuid);

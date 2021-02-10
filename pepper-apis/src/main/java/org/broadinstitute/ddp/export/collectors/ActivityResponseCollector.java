@@ -24,6 +24,7 @@ import org.broadinstitute.ddp.model.activity.definition.question.AgreementQuesti
 import org.broadinstitute.ddp.model.activity.definition.question.BoolQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.CompositeQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.DateQuestionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.FileQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.NumericQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
@@ -35,6 +36,7 @@ import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
 import org.broadinstitute.ddp.model.activity.instance.answer.BoolAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.CompositeAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.DateAnswer;
+import org.broadinstitute.ddp.model.activity.instance.answer.FileAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.NumericAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.PicklistAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
@@ -52,6 +54,7 @@ public class ActivityResponseCollector {
     private BoolQuestionFormatStrategy boolFmt = new BoolQuestionFormatStrategy();
     private TextQuestionFormatStrategy textFmt = new TextQuestionFormatStrategy();
     private DateQuestionFormatStrategy dateFmt = new DateQuestionFormatStrategy();
+    private FileQuestionFormatStrategy fileFmt = new FileQuestionFormatStrategy();
     private NumericQuestionFormatStrategy numericFmt = new NumericQuestionFormatStrategy();
     private PicklistQuestionFormatStrategy picklistFmt = new PicklistQuestionFormatStrategy();
     private CompositeQuestionFormatStrategy compositeFmt = new CompositeQuestionFormatStrategy();
@@ -208,6 +211,9 @@ public class ActivityResponseCollector {
             case DATE:
                 currProps.putAll(dateFmt.mappings((DateQuestionDef) questionDef));
                 break;
+            case FILE:
+                currProps.putAll(fileFmt.mappings((FileQuestionDef) questionDef));
+                break;
             case NUMERIC:
                 currProps.putAll(numericFmt.mappings((NumericQuestionDef) questionDef));
                 break;
@@ -240,6 +246,9 @@ public class ActivityResponseCollector {
                 break;
             case DATE:
                 questions.add(dateFmt.questionDef((DateQuestionDef) questionDef));
+                break;
+            case FILE:
+                questions.add(fileFmt.questionDef((FileQuestionDef) questionDef));
                 break;
             case NUMERIC:
                 questions.add(numericFmt.questionDef((NumericQuestionDef) questionDef));
@@ -382,6 +391,9 @@ public class ActivityResponseCollector {
             case DATE:
                 headers.addAll(dateFmt.headers((DateQuestionDef) questionDef));
                 break;
+            case FILE:
+                headers.addAll(fileFmt.headers((FileQuestionDef) questionDef));
+                break;
             case NUMERIC:
                 headers.addAll(numericFmt.headers((NumericQuestionDef) questionDef));
                 break;
@@ -490,6 +502,9 @@ public class ActivityResponseCollector {
                 break;
             case DATE:
                 record.putAll(dateFmt.collect((DateQuestionDef) question, (DateAnswer) answer));
+                break;
+            case FILE:
+                record.putAll(fileFmt.collect((FileQuestionDef) question, (FileAnswer) answer));
                 break;
             case NUMERIC:
                 record.putAll(numericFmt.collect((NumericQuestionDef) question, (NumericAnswer) answer));
