@@ -122,7 +122,7 @@ commands:
             develop)
               DEPLOY_ENV=dev
             ;;
-			DDP-5235-housekeeping-dsm-pubsub-connection-draft)
+            DDP-5235-housekeeping-dsm-pubsub-connection-draft)
               DEPLOY_ENV=dev
             ;;
             test)
