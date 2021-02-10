@@ -9,6 +9,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 
 import com.google.gson.Gson;
+import org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskDataReader.PubSubTaskPayloadData;
 import org.broadinstitute.ddp.util.GsonUtil;
 import org.slf4j.Logger;
 
@@ -23,26 +24,22 @@ public abstract class PubSubTaskProcessorAbstract implements PubSubTaskProcessor
     protected final Gson gson = GsonUtil.standardGson();
 
     @Override
-    public PubSubTaskProcessorResult processPubSubTask(PubSubTask pubSubTask) {
+    public PubSubTaskProcessorResult processPubSubTask(PubSubTask pubSubTask, PubSubTaskPayloadData payloadData) {
         boolean needsToRetry = false;
         PubSubTaskResult.PubSubTaskResultType pubSubTaskResultType = SUCCESS;
         String errorMessage = null;
         try {
-            LOG.info(infoMsg("Task processing STARTED: taskType={}, participantId={}, userId={}, data={}"),
-                    pubSubTask.getTaskType(), pubSubTask.getParticipantGuid(),
-                    pubSubTask.getUserId(), pubSubTask.getPayloadJson());
+            LOG.info(infoMsg("Task processing STARTED: taskType={}, data={}"), pubSubTask.getTaskType(), pubSubTask.getPayloadJson());
 
-            handleTask(pubSubTask);
+            handleTask(pubSubTask, payloadData);
 
         } catch (PubSubTaskException e) {
-            LOG.warn(errorMsg(format("Task processing FAILED, will retry: tastType=%s, participantGuid=%s",
-                    pubSubTask.getTaskType(), pubSubTask.getParticipantGuid())));
+            LOG.warn(errorMsg(format("Task processing FAILED, will retry: tastType=%s", pubSubTask.getTaskType())));
             needsToRetry = e.isNeedsToRetry();
             pubSubTaskResultType = ERROR;
             errorMessage = e.getMessage();
         } catch (Exception e) {
-            LOG.error(errorMsg(format("Task processing FAILED: tastType=%s, participantGuid=%s",
-                    pubSubTask.getTaskType(), pubSubTask.getParticipantGuid())), e);
+            LOG.error(errorMsg(format("Task processing FAILED: tastType=%s", pubSubTask.getTaskType())), e);
             pubSubTaskResultType = ERROR;
             errorMessage = e.getMessage();
         }
@@ -56,5 +53,5 @@ public abstract class PubSubTaskProcessorAbstract implements PubSubTaskProcessor
         return pubSubTaskProcessorResult;
     }
 
-    protected abstract void handleTask(PubSubTask pubSubTask);
+    protected abstract void handleTask(PubSubTask pubSubTask, PubSubTaskPayloadData payloadData);
 }

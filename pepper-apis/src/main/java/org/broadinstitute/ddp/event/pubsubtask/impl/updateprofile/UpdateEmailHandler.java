@@ -1,9 +1,10 @@
 package org.broadinstitute.ddp.event.pubsubtask.impl.updateprofile;
 
 import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskLogUtil.infoMsg;
+import static org.broadinstitute.ddp.event.pubsubtask.impl.updateprofile.UpdateProfileConstants.FIELD_EMAIL;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import java.util.Map;
+import java.util.Properties;
 
 
 import com.auth0.client.mgmt.ManagementAPI;
@@ -21,15 +22,13 @@ public class UpdateEmailHandler {
 
     private static final Logger LOG = getLogger(UpdateEmailHandler.class);
 
-    private static final String FIELD_EMAIL = "email";
-
-    public void updateEmail(String userGuid, Map<String, String> payload) {
+    public void updateEmail(String userGuid, Properties payload) {
         TransactionWrapper.useTxn(DB.APIS, handle -> updateEmail(handle, userGuid, payload));
     }
 
-    private void updateEmail(Handle handle, String userGuid, Map<String, String> payload) {
+    private void updateEmail(Handle handle, String userGuid, Properties payload) {
         if (payload.containsKey(FIELD_EMAIL)) {
-            String email = payload.get(FIELD_EMAIL);
+            String email = payload.getProperty(FIELD_EMAIL);
             var userDto = handle.attach(JdbiUser.class).findByUserGuid(userGuid);
             if (userDto == null) {
                 throw new PubSubTaskException("User profile is not found for guid=" + userGuid);

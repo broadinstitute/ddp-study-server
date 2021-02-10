@@ -18,7 +18,7 @@ import org.slf4j.Logger;
  * to outgoing topic (name specified in Config parameter
  * "pubsub.pubSubTasksResultTopic").
  */
-public class PubSubTaskResultSender {
+public class PubSubTaskResultSender implements ResultSender {
 
     private static final Logger LOG = getLogger(PubSubTaskResultSender.class);
 
@@ -29,6 +29,7 @@ public class PubSubTaskResultSender {
         this.publisher = publisher;
     }
 
+    @Override
     public void sendPubSubTaskResult(PubSubTaskResult pubSubTaskResult) {
 
         ApiFuture<String> publishResult = publisher.publish(messageCreator.createPubSubMessage(pubSubTaskResult));

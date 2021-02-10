@@ -13,15 +13,24 @@ public interface PubSubTaskProcessorFactory {
      */
     class PubSubTaskDescriptor {
         private final PubSubTaskProcessor pubSubTaskProcessor;
+        private final PubSubTaskDataReader pubSubTaskDataReader;
         private final Class<?> payloadClass;
 
-        public PubSubTaskDescriptor(PubSubTaskProcessor pubSubTaskProcessor, Class<?> payloadClass) {
+        public PubSubTaskDescriptor(
+                PubSubTaskProcessor pubSubTaskProcessor,
+                PubSubTaskDataReader pubSubTaskDataReader,
+                Class<?> payloadClass) {
             this.pubSubTaskProcessor = pubSubTaskProcessor;
+            this.pubSubTaskDataReader = pubSubTaskDataReader;
             this.payloadClass = payloadClass;
         }
 
         public PubSubTaskProcessor getPubSubTaskProcessor() {
             return pubSubTaskProcessor;
+        }
+
+        public PubSubTaskDataReader getPubSubTaskDataReader() {
+            return pubSubTaskDataReader;
         }
 
         public Class<?> getPayloadClass() {

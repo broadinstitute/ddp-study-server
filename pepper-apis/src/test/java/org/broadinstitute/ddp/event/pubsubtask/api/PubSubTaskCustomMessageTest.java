@@ -15,22 +15,22 @@ import static org.broadinstitute.ddp.event.pubsubtask.PubSubTaskTestUtil.TEST_PA
 import static org.broadinstitute.ddp.event.pubsubtask.PubSubTaskTestUtil.TEST_STUDY_GUID;
 import static org.broadinstitute.ddp.event.pubsubtask.PubSubTaskTestUtil.TEST_USER_ID;
 import static org.broadinstitute.ddp.event.pubsubtask.PubSubTaskTestUtil.buildMessage;
-import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTask.ATTR_PARTICIPANT_GUID;
-import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTask.ATTR_STUDY_GUID;
-import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTask.ATTR_USER_ID;
 import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskResult.ATTR_TASK_MESSAGE_ID;
 import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskResult.PubSubTaskResultType.ERROR;
 import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskResult.PubSubTaskResultType.SUCCESS;
+import static org.broadinstitute.ddp.event.pubsubtask.impl.updateprofile.UpdateProfileConstants.ATTR_PARTICIPANT_GUID;
+import static org.broadinstitute.ddp.event.pubsubtask.impl.updateprofile.UpdateProfileConstants.ATTR_STUDY_GUID;
+import static org.broadinstitute.ddp.event.pubsubtask.impl.updateprofile.UpdateProfileConstants.ATTR_USER_ID;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
 
-import java.util.Map;
+import java.util.Properties;
 
 
 import com.google.gson.Gson;
 import com.google.pubsub.v1.ProjectSubscriptionName;
 import com.google.pubsub.v1.PubsubMessage;
+import org.broadinstitute.ddp.event.pubsubtask.PubSubTaskTestUtil;
+import org.broadinstitute.ddp.event.pubsubtask.PubSubTaskTestUtil.TestAckReplyConsumer;
 import org.broadinstitute.ddp.util.GsonUtil;
 import org.junit.Test;
 
@@ -39,8 +39,9 @@ public class PubSubTaskCustomMessageTest {
     private final ProjectSubscriptionName projectSubscriptionName =
             ProjectSubscriptionName.of(PROJECT_ID, PUBSUB_SUBSCRIPTION);
     private PubSubTaskProcessorFactory testFactory;
-    private PubSubTaskMessageParser taskMessageParser;
+    private PubSubTaskReceiver pubSubTaskReceiver;
     private PubSubTaskResultMessageCreator resultMessageCreator;
+    private PubSubTaskTestUtil.TestResultSender testResultSender;
 
     private final Gson gson = GsonUtil.standardGson();
 
@@ -55,19 +56,23 @@ public class PubSubTaskCustomMessageTest {
         var message = buildMessage(TestProcessor1.TEST_TASK_1,
                 format("{'%s':'%s', '%s':'%s', '%s':'%s'}",
                         EMAIL, TEST_EMAIL, EDUCATION, TEST_EDUCATION, MARITAL_STATUS, TEST_MARITAL_STATUS), true);
-        var parseResult = taskMessageParser.parseMessage(message);
+        pubSubTaskReceiver.receiveMessage(message, new TestAckReplyConsumer());
 
-        assertEquals(TEST_PARTICIPANT_GUID, parseResult.getPubSubTask().getParticipantGuid());
-        assertEquals(TEST_USER_ID, parseResult.getPubSubTask().getUserId());
-        assertEquals(TEST_STUDY_GUID, parseResult.getPubSubTask().getStudyGuid());
+        PubSubTask pubSubTask = testResultSender.getPubSubTaskResult().getPubSubTask();
 
-        Map<String, String> payload = gson.fromJson(parseResult.getPubSubTask().getPayloadJson(), Map.class);
+        assertEquals("{'email':'test@broadinstitute.org', 'education':'University', 'maritalStatus':'Married'}",
+                pubSubTask.getPayloadJson());
+
+        assertEquals(TEST_PARTICIPANT_GUID, pubSubTask.getAttributes().get(ATTR_PARTICIPANT_GUID));
+        assertEquals(TEST_USER_ID, pubSubTask.getAttributes().get(ATTR_USER_ID));
+        assertEquals(TEST_STUDY_GUID, pubSubTask.getAttributes().get(ATTR_STUDY_GUID));
+
+        Properties payload = gson.fromJson(pubSubTask.getPayloadJson(), Properties.class);
         assertEquals(TEST_EMAIL, payload.get(EMAIL));
         assertEquals(TEST_EDUCATION, payload.get(EDUCATION));
         assertEquals(TEST_MARITAL_STATUS, payload.get(MARITAL_STATUS));
-        assertNull(parseResult.getPubSubTask().getPayloadObject());
 
-        PubSubTaskResult result = new PubSubTaskResult(SUCCESS, null, parseResult.getPubSubTask());
+        PubSubTaskResult result = new PubSubTaskResult(SUCCESS, null, pubSubTask);
         PubsubMessage resultMessage = resultMessageCreator.createPubSubMessage(result);
 
         assertEquals(TEST_MESSAGE_ID, resultMessage.getAttributesOrDefault(ATTR_TASK_MESSAGE_ID, null));
@@ -86,17 +91,15 @@ public class PubSubTaskCustomMessageTest {
         init();
         var message = buildMessage(TestProcessor2.TEST_TASK_2,
                 format("{'%s':'%s', '%s':'%s'}", EMAIL, TEST_EMAIL, EDUCATION, TEST_EDUCATION), true);
-        var parseResult = taskMessageParser.parseMessage(message);
+        pubSubTaskReceiver.receiveMessage(message, new TestAckReplyConsumer());
 
-        assertEquals(TEST_PARTICIPANT_GUID, parseResult.getPubSubTask().getParticipantGuid());
-        assertEquals(TEST_USER_ID, parseResult.getPubSubTask().getUserId());
-        assertEquals(TEST_STUDY_GUID, parseResult.getPubSubTask().getStudyGuid());
-        assertNotNull(parseResult.getPubSubTask().getPayloadObject());
-        TestPayload2 payload = (TestPayload2) parseResult.getPubSubTask().getPayloadObject();
-        assertEquals(TEST_EMAIL, payload.getEmail());
-        assertEquals(TEST_EDUCATION, payload.getEducation());
+        PubSubTask pubSubTask = testResultSender.getPubSubTaskResult().getPubSubTask();
 
-        PubSubTaskResult result = new PubSubTaskResult(ERROR, "Custom error occured", parseResult.getPubSubTask());
+        assertEquals(TEST_PARTICIPANT_GUID, pubSubTask.getAttributes().get(ATTR_PARTICIPANT_GUID));
+        assertEquals(TEST_USER_ID, pubSubTask.getAttributes().get(ATTR_USER_ID));
+        assertEquals(TEST_STUDY_GUID, pubSubTask.getAttributes().get(ATTR_STUDY_GUID));
+
+        PubSubTaskResult result = new PubSubTaskResult(ERROR, "Custom error occured", pubSubTask);
         PubsubMessage resultMessage = resultMessageCreator.createPubSubMessage(result);
         assertEquals("{\"resultType\":\"ERROR\",\"errorMessage\":\"Custom error occured\"}",
                 resultMessage.getData().toStringUtf8());
@@ -104,7 +107,8 @@ public class PubSubTaskCustomMessageTest {
 
     private void init() {
         testFactory = new TestFactory();
-        taskMessageParser = new PubSubTaskMessageParser(projectSubscriptionName, testFactory);
+        testResultSender = new PubSubTaskTestUtil.TestResultSender();
+        pubSubTaskReceiver = new PubSubTaskReceiver(projectSubscriptionName, testFactory, testResultSender);
         resultMessageCreator = new PubSubTaskResultMessageCreator();
     }
 
@@ -113,7 +117,7 @@ public class PubSubTaskCustomMessageTest {
         static final String TEST_TASK_1 = "TEST_TASK_1";
 
         @Override
-        protected void handleTask(PubSubTask pubSubTask) {
+        protected void handleTask(PubSubTask pubSubTask, PubSubTaskDataReader.PubSubTaskPayloadData payloadData) {
         }
     }
 
@@ -122,7 +126,7 @@ public class PubSubTaskCustomMessageTest {
         static final String TEST_TASK_2 = "TEST_TASK_2";
 
         @Override
-        protected void handleTask(PubSubTask pubSubTask) {
+        protected void handleTask(PubSubTask pubSubTask, PubSubTaskDataReader.PubSubTaskPayloadData payloadData) {
         }
     }
 
@@ -150,17 +154,26 @@ public class PubSubTaskCustomMessageTest {
         }
     }
 
+    class TestDataReader extends PubSubTaskDataReaderAbstract {
+        @Override
+        public PubSubTaskPayloadData readTaskData(PubSubTask pubSubTask, Class<?> payloadClass) {
+            return super.readTaskData(pubSubTask, payloadClass);
+        }
+    }
+
     class TestFactory extends PubSubTaskProcessorFactoryAbstract {
         @Override
         protected void registerPubSubTaskProcessors() {
             registerPubSubTaskProcessors(
                     TestProcessor1.TEST_TASK_1,
                     new TestProcessor1(),
+                    new TestDataReader(),
                     null
             );
             registerPubSubTaskProcessors(
                     TestProcessor2.TEST_TASK_2,
                     new TestProcessor2(),
+                    new TestDataReader(),
                     TestPayload2.class
             );
         }

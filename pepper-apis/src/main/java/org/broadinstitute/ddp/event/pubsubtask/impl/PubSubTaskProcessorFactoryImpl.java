@@ -1,10 +1,11 @@
 package org.broadinstitute.ddp.event.pubsubtask.impl;
 
-import static org.broadinstitute.ddp.event.pubsubtask.impl.updateprofile.UpdateProfileProcessor.TASK_TYPE__UPDATE_PROFILE;
+import static org.broadinstitute.ddp.event.pubsubtask.impl.updateprofile.UpdateProfileConstants.TASK_TYPE__UPDATE_PROFILE;
 
 
 import org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskProcessorFactory;
 import org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskProcessorFactoryAbstract;
+import org.broadinstitute.ddp.event.pubsubtask.impl.updateprofile.UpdateProfileDataReader;
 import org.broadinstitute.ddp.event.pubsubtask.impl.updateprofile.UpdateProfileProcessor;
 
 /**
@@ -17,6 +18,7 @@ public class PubSubTaskProcessorFactoryImpl extends PubSubTaskProcessorFactoryAb
         registerPubSubTaskProcessors(
                 TASK_TYPE__UPDATE_PROFILE,
                 new UpdateProfileProcessor(),
+                new UpdateProfileDataReader(),
                 null
         );
     }

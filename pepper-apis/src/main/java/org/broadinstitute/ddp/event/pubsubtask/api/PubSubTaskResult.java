@@ -29,7 +29,7 @@ public class PubSubTaskResult {
         return pubSubTaskResultPayload;
     }
 
-    public PubSubTask getPubSubTaskMessage() {
+    public PubSubTask getPubSubTask() {
         return pubSubTask;
     }
 

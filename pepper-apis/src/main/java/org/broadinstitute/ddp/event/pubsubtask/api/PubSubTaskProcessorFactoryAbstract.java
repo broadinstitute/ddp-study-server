@@ -14,8 +14,10 @@ public abstract class PubSubTaskProcessorFactoryAbstract implements PubSubTaskPr
     protected  void registerPubSubTaskProcessors(
             String pubSubTaskType,
             PubSubTaskProcessor pubSubTaskProcessor,
+            PubSubTaskDataReader pubSubTaskDataReader,
             Class<?> payloadClass) {
-        pubSubTaskDescriptors.put(pubSubTaskType, new PubSubTaskDescriptor(pubSubTaskProcessor, payloadClass));
+        pubSubTaskDescriptors.put(pubSubTaskType,
+                new PubSubTaskDescriptor(pubSubTaskProcessor, pubSubTaskDataReader, payloadClass));
     }
 
     protected abstract void registerPubSubTaskProcessors();

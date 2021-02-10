@@ -1,13 +1,22 @@
 package org.broadinstitute.ddp.event.pubsubtask;
 
-import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTask.ATTR_PARTICIPANT_GUID;
-import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTask.ATTR_STUDY_GUID;
 import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTask.ATTR_TASK_TYPE;
-import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTask.ATTR_USER_ID;
+import static org.broadinstitute.ddp.event.pubsubtask.impl.updateprofile.UpdateProfileConstants.ATTR_PARTICIPANT_GUID;
+import static org.broadinstitute.ddp.event.pubsubtask.impl.updateprofile.UpdateProfileConstants.ATTR_STUDY_GUID;
+import static org.broadinstitute.ddp.event.pubsubtask.impl.updateprofile.UpdateProfileConstants.ATTR_USER_ID;
+import static org.broadinstitute.ddp.event.pubsubtask.impl.updateprofile.UpdateProfileConstants.TASK_TYPE__UPDATE_PROFILE;
 
 
+import com.google.cloud.pubsub.v1.AckReplyConsumer;
 import com.google.protobuf.ByteString;
 import com.google.pubsub.v1.PubsubMessage;
+import org.broadinstitute.ddp.event.pubsubtask.api.PubSubTask;
+import org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskDataReader;
+import org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskProcessorAbstract;
+import org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskProcessorFactoryAbstract;
+import org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskResult;
+import org.broadinstitute.ddp.event.pubsubtask.api.ResultSender;
+import org.broadinstitute.ddp.event.pubsubtask.impl.updateprofile.UpdateProfileDataReader;
 
 public class PubSubTaskTestUtil {
 
@@ -44,5 +53,49 @@ public class PubSubTaskTestUtil {
                     .putAttributes(ATTR_STUDY_GUID, TEST_STUDY_GUID);
         }
         return messageBuilder.build();
+    }
+
+    public static class TestAckReplyConsumer implements AckReplyConsumer {
+
+        @Override
+        public void ack() {
+        }
+
+        @Override
+        public void nack() {
+        }
+    }
+
+    public static class TestResultSender implements ResultSender {
+        private PubSubTaskResult pubSubTaskResult;
+
+        @Override
+        public void sendPubSubTaskResult(PubSubTaskResult pubSubTaskResult) {
+            this.pubSubTaskResult = pubSubTaskResult;
+        }
+
+        public PubSubTaskResult getPubSubTaskResult() {
+            return pubSubTaskResult;
+        }
+    }
+
+    public static class TestTaskProcessorFactory extends PubSubTaskProcessorFactoryAbstract {
+
+        @Override
+        protected void registerPubSubTaskProcessors() {
+            registerPubSubTaskProcessors(
+                    TASK_TYPE__UPDATE_PROFILE,
+                    new TestUpdateProfileProcessor(),
+                    new UpdateProfileDataReader(),
+                    null
+            );
+        }
+
+        class TestUpdateProfileProcessor extends PubSubTaskProcessorAbstract {
+
+            @Override
+            protected void handleTask(PubSubTask pubSubTask, PubSubTaskDataReader.PubSubTaskPayloadData payloadData) {
+            }
+        }
     }
 }

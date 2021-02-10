@@ -1,8 +1,10 @@
 package org.broadinstitute.ddp.event.pubsubtask.impl.updateprofile;
 
-import java.util.Map;
+import static org.broadinstitute.ddp.event.pubsubtask.impl.updateprofile.UpdateProfileConstants.ATTR_PARTICIPANT_GUID;
+
 
 import org.broadinstitute.ddp.event.pubsubtask.api.PubSubTask;
+import org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskDataReader;
 import org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskProcessorAbstract;
 
 
@@ -19,14 +21,10 @@ import org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskProcessorAbstract;
  */
 public class UpdateProfileProcessor extends PubSubTaskProcessorAbstract {
 
-    public static final String TASK_TYPE__UPDATE_PROFILE = "UPDATE_PROFILE";
-
-
     @Override
-    public void handleTask(PubSubTask pubSubTask) {
-        Map<String, String> payload = gson.fromJson(pubSubTask.getPayloadJson(), Map.class);
-
-        new UpdateEmailHandler().updateEmail(pubSubTask.getParticipantGuid(), payload);
-        new UpdateFirstLastNameHandler().updateFirstLastName(pubSubTask.getParticipantGuid(), payload);
+    public void handleTask(PubSubTask pubSubTask, PubSubTaskDataReader.PubSubTaskPayloadData payloadData) {
+        var userGuid = pubSubTask.getAttributes().get(ATTR_PARTICIPANT_GUID);
+        new UpdateEmailHandler().updateEmail(userGuid, payloadData.getProperties());
+        new UpdateFirstLastNameHandler().updateFirstLastName(userGuid, payloadData.getProperties());
     }
 }

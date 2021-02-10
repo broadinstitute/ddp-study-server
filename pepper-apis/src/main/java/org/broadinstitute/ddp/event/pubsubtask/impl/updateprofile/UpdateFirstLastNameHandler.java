@@ -1,6 +1,9 @@
 package org.broadinstitute.ddp.event.pubsubtask.impl.updateprofile;
 
-import java.util.Map;
+import static org.broadinstitute.ddp.event.pubsubtask.impl.updateprofile.UpdateProfileConstants.FIELD_FIRST_NAME;
+import static org.broadinstitute.ddp.event.pubsubtask.impl.updateprofile.UpdateProfileConstants.FIELD_LAST_NAME;
+
+import java.util.Properties;
 
 
 import org.broadinstitute.ddp.db.TransactionWrapper;
@@ -11,14 +14,11 @@ import org.jdbi.v3.core.Handle;
 
 public class UpdateFirstLastNameHandler {
 
-    private static final String FIELD_FIRST_NAME = "firstName";
-    private static final String FIELD_LAST_NAME = "lastName";
-
-    public void updateFirstLastName(String userGuid, Map<String, String> payload) {
+    public void updateFirstLastName(String userGuid, Properties payload) {
         TransactionWrapper.useTxn(DB.APIS, handle -> updateFirstLastName(handle, userGuid, payload));
     }
 
-    private void updateFirstLastName(Handle handle, String userGuid, Map<String, String> payload) {
+    private void updateFirstLastName(Handle handle, String userGuid, Properties payload) {
         var profileDao = handle.attach(UserProfileDao.class);
         var profile = profileDao.findProfileByUserGuid(userGuid).orElse(null);
         if (profile == null) {
@@ -32,7 +32,7 @@ public class UpdateFirstLastNameHandler {
         }
     }
 
-    private String detectFieldValueForUpdate(Map<String, String> payload, String fieldName, String currentValue) {
-        return payload.containsKey(fieldName) ? payload.get(fieldName) : currentValue;
+    private String detectFieldValueForUpdate(Properties payload, String fieldName, String currentValue) {
+        return payload.containsKey(fieldName) ? payload.getProperty(fieldName) : currentValue;
     }
 }
