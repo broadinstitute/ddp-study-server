@@ -57,6 +57,7 @@ import org.broadinstitute.ddp.db.housekeeping.dao.JdbiEvent;
 import org.broadinstitute.ddp.db.housekeeping.dao.JdbiMessage;
 import org.broadinstitute.ddp.event.HousekeepingTaskReceiver;
 import org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskConnectionService;
+import org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskException;
 import org.broadinstitute.ddp.event.pubsubtask.impl.PubSubTaskProcessorFactoryImpl;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.exception.MessageBuilderException;
@@ -237,7 +238,11 @@ public class Housekeeping {
                 ConfigUtil.getIntIfPresent(cfg, PUBSUB_TASKS_SUBSCRIBER_AWAIT_RUNNING_TIMEOUT,
                         DEFAULT_SUBSCRIBER_AWAIT_RUNNING_TIMEOUT_SEC),
                 new PubSubTaskProcessorFactoryImpl());
-        pubSubTaskConnectionService.create();
+        try {
+            pubSubTaskConnectionService.create();
+        } catch (PubSubTaskException e) {
+            LOG.error("Failed to init PubSubTask API", e);
+        }
 
         TransactionWrapper.useTxn(TransactionWrapper.DB.APIS, handle -> {
             JdbiMessageDestination messageDestinationDao = handle.attach(JdbiMessageDestination.class);
@@ -468,7 +473,11 @@ public class Housekeeping {
         }
 
         if (pubSubTaskConnectionService != null) {
-            pubSubTaskConnectionService.destroy();
+            try {
+                pubSubTaskConnectionService.destroy();
+            } catch (PubSubTaskException e) {
+                LOG.error("Failed to shutdown PubSubTask API", e);
+            }
         }
 
         LOG.info("Housekeeping is shutting down");

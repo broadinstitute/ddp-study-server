@@ -73,7 +73,7 @@ public class PubSubTaskConnectionService {
             pubSubTaskReceiver = new PubSubTaskReceiver(projectSubscriptionName, pubSubTaskProcessorFactory, pubSubTaskResultSender);
             createPubSubTaskSubscriber();
         } catch (Exception e) {
-            LOG.error(errorMsg("Failed to create PubSubTask connection"), e);
+            throw new PubSubTaskException(errorMsg("Failed to create PubSubTask connection"), e);
         }
     }
 
@@ -86,7 +86,7 @@ public class PubSubTaskConnectionService {
                 pubSubTaskResultPublisher.shutdown();
                 pubSubTaskResultPublisher.awaitTermination(PUBLISHER_AWAIT_TERMINATION_TIMEOUT_MIN, TimeUnit.MINUTES);
             } catch (Exception e) {
-                LOG.error(errorMsg("Failed to shutdown PubSubTask connection"), e);
+                throw new PubSubTaskException(errorMsg("Failed to shutdown PubSubTask connection"), e);
             }
         }
     }
