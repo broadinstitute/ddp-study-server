@@ -22,6 +22,7 @@ import com.google.cloud.pubsub.v1.AckReplyConsumer;
 import com.google.cloud.storage.Blob;
 import com.google.pubsub.v1.PubsubMessage;
 import org.broadinstitute.ddp.client.GoogleBucketClient;
+import org.broadinstitute.ddp.db.dao.DataExportDao;
 import org.broadinstitute.ddp.db.dao.FileUploadDao;
 import org.broadinstitute.ddp.model.files.FileScanResult;
 import org.broadinstitute.ddp.model.files.FileUpload;
@@ -37,7 +38,8 @@ public class FileScanResultReceiverTest {
         var mockReply = mock(AckReplyConsumer.class);
         var mockStorage = mock(GoogleBucketClient.class);
         var mockHandle = mock(Handle.class);
-        var mockDao = mock(FileUploadDao.class);
+        var mockFileDao = mock(FileUploadDao.class);
+        var mockExportDao = mock(DataExportDao.class);
         var mockBlob = mock(Blob.class);
         var now = Instant.now().truncatedTo(ChronoUnit.MILLIS);
         var upload = new FileUpload(1L, "guid", 1L, 1L, 1L, "blob", "mime", "name",
@@ -54,8 +56,9 @@ public class FileScanResultReceiverTest {
         doReturn("foo/bar/guid").when(mockBlob).getName();
         doReturn(now.toEpochMilli()).when(mockBlob).getCreateTime();
         doReturn(mockBlob).when(mockStorage).getBlob(any(), any());
-        doReturn(mockDao).when(mockHandle).attach(FileUploadDao.class);
-        doReturn(Optional.of(upload)).when(mockDao).findAndLockByGuid(any());
+        doReturn(mockFileDao).when(mockHandle).attach(FileUploadDao.class);
+        doReturn(Optional.of(upload)).when(mockFileDao).findAndLockByGuid(any());
+        doReturn(mockExportDao).when(mockHandle).attach(DataExportDao.class);
 
         var receiverSpy = spy(new FileScanResultReceiver(mockStorage, "uploads", "scanned", "quarantine"));
         doAnswer(invocation -> ((HandleCallback) invocation.getArgument(0)).withHandle(mockHandle))
@@ -67,7 +70,8 @@ public class FileScanResultReceiverTest {
         // Do asserts.
         verify(mockStorage).getBlob("uploads", "foo/bar/guid");
         verify(mockStorage).moveBlob(any(), eq("scanned"), eq("foo/bar/guid"));
-        verify(mockDao).findAndLockByGuid("guid");
+        verify(mockFileDao).findAndLockByGuid("guid");
+        verify(mockExportDao, times(1)).queueDataSync(1L, 1L);
         verify(mockReply, times(1)).ack();
         verify(mockReply, never()).nack();
     }
