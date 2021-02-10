@@ -2,6 +2,9 @@ package org.broadinstitute.ddp.event.pubsubtask.impl.updateprofile;
 
 import org.broadinstitute.ddp.event.pubsubtask.api.PubSubTask;
 
+/**
+ * Constants specific for taskType='UPDATE_PROFILE'
+ */
 public class UpdateProfileConstants {
 
     /**
