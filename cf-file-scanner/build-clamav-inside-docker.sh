@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 #
 # This script will create a bundle of binaries and shared objects necessary for
-# running clamav scanner. This should be run inside a fresh image of Ubuntu
-# 18.04, which is the image that Cloud Functions use by default for the Java 11
-# runtime.
+# running clamav scanner. This should be run inside a fresh docker image of
+# Ubuntu 18.04, which is the image that Cloud Functions use by default for the
+# Java 11 runtime. This script also assumes that we're running as `root`, which
+# should be the case if running inside docker.
 #
 # The final tarball will be located in the `/build` directory, so you can run
 # docker with a mount point to grab the bundle.
@@ -11,7 +12,7 @@
 set -e
 
 echo '=> Updating Ubuntu...'
-apt-get update
+apt-get update -y
 
 echo ''
 echo '=> Saving list of pre-installed standard libraries...'
