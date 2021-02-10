@@ -7,29 +7,29 @@ import org.broadinstitute.ddp.exception.DDPException;
  */
 public class PubSubTaskException extends DDPException {
 
-    private final boolean needsToRetry;
+    private final boolean shouldRetry;
     private final PubSubTask pubSubTask;
 
     public PubSubTaskException(String message) {
         this(message, null, false);
     }
 
-    public PubSubTaskException(String message, boolean needsToRetry) {
-        this(message, null, needsToRetry);
+    public PubSubTaskException(String message, boolean shouldRetry) {
+        this(message, null, shouldRetry);
     }
 
     public PubSubTaskException(String message, PubSubTask pubSubTask) {
         this(message, pubSubTask, false);
     }
 
-    public PubSubTaskException(String message, PubSubTask pubSubTask, boolean needsToRetry) {
+    public PubSubTaskException(String message, PubSubTask pubSubTask, boolean shouldRetry) {
         super(message);
         this.pubSubTask = pubSubTask;
-        this.needsToRetry = needsToRetry;
+        this.shouldRetry = shouldRetry;
     }
 
-    public boolean isNeedsToRetry() {
-        return needsToRetry;
+    public boolean isShouldRetry() {
+        return shouldRetry;
     }
 
     public PubSubTask getPubSubTask() {

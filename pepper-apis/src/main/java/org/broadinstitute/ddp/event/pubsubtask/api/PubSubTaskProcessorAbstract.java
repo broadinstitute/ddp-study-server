@@ -9,7 +9,6 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 
 import com.google.gson.Gson;
-import org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskDataReader.PubSubTaskPayloadData;
 import org.broadinstitute.ddp.util.GsonUtil;
 import org.slf4j.Logger;
 
@@ -24,18 +23,18 @@ public abstract class PubSubTaskProcessorAbstract implements PubSubTaskProcessor
     protected final Gson gson = GsonUtil.standardGson();
 
     @Override
-    public PubSubTaskProcessorResult processPubSubTask(PubSubTask pubSubTask, PubSubTaskPayloadData payloadData) {
-        boolean needsToRetry = false;
+    public PubSubTaskProcessorResult processPubSubTask(PubSubTask pubSubTask) {
+        boolean shouldRetry = false;
         PubSubTaskResult.PubSubTaskResultType pubSubTaskResultType = SUCCESS;
         String errorMessage = null;
         try {
             LOG.info(infoMsg("Task processing STARTED: taskType={}, data={}"), pubSubTask.getTaskType(), pubSubTask.getPayloadJson());
 
-            handleTask(pubSubTask, payloadData);
+            handleTask(pubSubTask);
 
         } catch (PubSubTaskException e) {
             LOG.warn(errorMsg(format("Task processing FAILED, will retry: tastType=%s", pubSubTask.getTaskType())));
-            needsToRetry = e.isNeedsToRetry();
+            shouldRetry = e.isShouldRetry();
             pubSubTaskResultType = ERROR;
             errorMessage = e.getMessage();
         } catch (Exception e) {
@@ -45,7 +44,7 @@ public abstract class PubSubTaskProcessorAbstract implements PubSubTaskProcessor
         }
 
         var pubSubTaskProcessorResult = new PubSubTaskProcessorResult(
-                new PubSubTaskResult(pubSubTaskResultType, errorMessage, pubSubTask), needsToRetry);
+                new PubSubTaskResult(pubSubTaskResultType, errorMessage, pubSubTask), shouldRetry);
 
         LOG.info(infoMsg("Task processing COMPLETED: taskType={}, pubSubTaskResult={}"),
                 pubSubTask.getTaskType(), pubSubTaskProcessorResult.getPubSubTaskResult());
@@ -53,5 +52,5 @@ public abstract class PubSubTaskProcessorAbstract implements PubSubTaskProcessor
         return pubSubTaskProcessorResult;
     }
 
-    protected abstract void handleTask(PubSubTask pubSubTask, PubSubTaskPayloadData payloadData);
+    protected abstract void handleTask(PubSubTask pubSubTask);
 }

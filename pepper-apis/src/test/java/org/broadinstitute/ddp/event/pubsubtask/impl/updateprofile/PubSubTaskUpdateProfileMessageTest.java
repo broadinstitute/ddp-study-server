@@ -67,6 +67,7 @@ public class PubSubTaskUpdateProfileMessageTest {
 
         pubSubTaskReceiver.receiveMessage(message, new TestAckReplyConsumer());
 
+        assertEquals(4, testResultSender.getPubSubTaskResult().getPubSubTask().getAttributes().size());
         assertEquals("", testResultSender.getPubSubTaskResult().getPubSubTask().getPayloadJson());
         assertEquals(ERROR, testResultSender.getPubSubTaskResult().getPubSubTaskResultPayload().getResultType());
         assertEquals("PUBSUB_TASK error: Empty payload",

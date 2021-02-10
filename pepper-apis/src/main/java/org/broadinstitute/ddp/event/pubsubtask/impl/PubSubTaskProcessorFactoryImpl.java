@@ -5,7 +5,6 @@ import static org.broadinstitute.ddp.event.pubsubtask.impl.updateprofile.UpdateP
 
 import org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskProcessorFactory;
 import org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskProcessorFactoryAbstract;
-import org.broadinstitute.ddp.event.pubsubtask.impl.updateprofile.UpdateProfileDataReader;
 import org.broadinstitute.ddp.event.pubsubtask.impl.updateprofile.UpdateProfileProcessor;
 
 /**
@@ -17,9 +16,7 @@ public class PubSubTaskProcessorFactoryImpl extends PubSubTaskProcessorFactoryAb
     protected void registerPubSubTaskProcessors() {
         registerPubSubTaskProcessors(
                 TASK_TYPE__UPDATE_PROFILE,
-                new UpdateProfileProcessor(),
-                new UpdateProfileDataReader(),
-                null
+                new UpdateProfileProcessor()
         );
     }
 }

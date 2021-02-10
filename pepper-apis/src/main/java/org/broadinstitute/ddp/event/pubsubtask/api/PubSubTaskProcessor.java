@@ -1,7 +1,5 @@
 package org.broadinstitute.ddp.event.pubsubtask.api;
 
-import org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskDataReader.PubSubTaskPayloadData;
-
 /**
  * Interface defining a processor which should do actions
  * in response to PubSubTask published to special pubsub topic
@@ -10,7 +8,7 @@ import org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskDataReader.PubSubTa
 @FunctionalInterface
 public interface PubSubTaskProcessor {
 
-    PubSubTaskProcessorResult processPubSubTask(PubSubTask pubSubTask, PubSubTaskPayloadData payloadData);
+    PubSubTaskProcessorResult processPubSubTask(PubSubTask pubSubTask);
 
     /**
      * Result of {@link PubSubTask} processing.
@@ -18,19 +16,19 @@ public interface PubSubTaskProcessor {
     class PubSubTaskProcessorResult {
 
         private final PubSubTaskResult pubSubTaskResult;
-        private final boolean needsToRetry;
+        private final boolean shouldRetry;
 
-        public PubSubTaskProcessorResult(PubSubTaskResult pubSubTaskResult, boolean needsToRetry) {
+        public PubSubTaskProcessorResult(PubSubTaskResult pubSubTaskResult, boolean shouldRetry) {
             this.pubSubTaskResult = pubSubTaskResult;
-            this.needsToRetry = needsToRetry;
+            this.shouldRetry = shouldRetry;
         }
 
         public PubSubTaskResult getPubSubTaskResult() {
             return pubSubTaskResult;
         }
 
-        public boolean isNeedsToRetry() {
-            return needsToRetry;
+        public boolean isShouldRetry() {
+            return shouldRetry;
         }
     }
 }

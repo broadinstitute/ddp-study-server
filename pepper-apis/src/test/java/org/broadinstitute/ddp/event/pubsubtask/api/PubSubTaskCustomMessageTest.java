@@ -117,7 +117,7 @@ public class PubSubTaskCustomMessageTest {
         static final String TEST_TASK_1 = "TEST_TASK_1";
 
         @Override
-        protected void handleTask(PubSubTask pubSubTask, PubSubTaskDataReader.PubSubTaskPayloadData payloadData) {
+        protected void handleTask(PubSubTask pubSubTask) {
         }
     }
 
@@ -126,7 +126,7 @@ public class PubSubTaskCustomMessageTest {
         static final String TEST_TASK_2 = "TEST_TASK_2";
 
         @Override
-        protected void handleTask(PubSubTask pubSubTask, PubSubTaskDataReader.PubSubTaskPayloadData payloadData) {
+        protected void handleTask(PubSubTask pubSubTask) {
         }
     }
 
@@ -154,27 +154,16 @@ public class PubSubTaskCustomMessageTest {
         }
     }
 
-    class TestDataReader extends PubSubTaskDataReaderAbstract {
-        @Override
-        public PubSubTaskPayloadData readTaskData(PubSubTask pubSubTask, Class<?> payloadClass) {
-            return super.readTaskData(pubSubTask, payloadClass);
-        }
-    }
-
     class TestFactory extends PubSubTaskProcessorFactoryAbstract {
         @Override
         protected void registerPubSubTaskProcessors() {
             registerPubSubTaskProcessors(
                     TestProcessor1.TEST_TASK_1,
-                    new TestProcessor1(),
-                    new TestDataReader(),
-                    null
+                    new TestProcessor1()
             );
             registerPubSubTaskProcessors(
                     TestProcessor2.TEST_TASK_2,
-                    new TestProcessor2(),
-                    new TestDataReader(),
-                    TestPayload2.class
+                    new TestProcessor2()
             );
         }
     }

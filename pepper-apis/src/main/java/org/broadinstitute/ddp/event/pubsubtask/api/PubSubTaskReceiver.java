@@ -12,7 +12,6 @@ import com.google.cloud.pubsub.v1.AckReplyConsumer;
 import com.google.cloud.pubsub.v1.MessageReceiver;
 import com.google.pubsub.v1.ProjectSubscriptionName;
 import com.google.pubsub.v1.PubsubMessage;
-import org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskDataReader.PubSubTaskPayloadData;
 import org.slf4j.Logger;
 
 /**
@@ -49,7 +48,7 @@ public class PubSubTaskReceiver implements MessageReceiver {
         try {
             var pubSubTask = parseMessage(message);
             var pubSubTaskResultMessage = processPubSubTask(pubSubTask);
-            if (pubSubTaskResultMessage.isNeedsToRetry()) {
+            if (pubSubTaskResultMessage.isShouldRetry()) {
                 consumer.nack();
             } else {
                 consumer.ack();
@@ -62,10 +61,8 @@ public class PubSubTaskReceiver implements MessageReceiver {
     }
 
     private PubSubTaskProcessor.PubSubTaskProcessorResult processPubSubTask(PubSubTask pubSubTask) {
-        var pubSubTaskDescriptor = pubSubTaskProcessorFactory.getPubSubTaskDescriptors(pubSubTask.getTaskType());
-        var pubSubDataReader = pubSubTaskDescriptor.getPubSubTaskDataReader();
-        PubSubTaskPayloadData payloadData = pubSubDataReader.readTaskData(pubSubTask, pubSubTaskDescriptor.getPayloadClass());
-        return pubSubTaskDescriptor.getPubSubTaskProcessor().processPubSubTask(pubSubTask, payloadData);
+        return pubSubTaskProcessorFactory.getPubSubTaskDescriptors(pubSubTask.getTaskType())
+                .getPubSubTaskProcessor().processPubSubTask(pubSubTask);
     }
 
     private PubSubTask parseMessage(PubsubMessage message) {

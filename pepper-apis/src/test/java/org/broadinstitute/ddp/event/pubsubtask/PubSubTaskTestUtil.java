@@ -11,12 +11,10 @@ import com.google.cloud.pubsub.v1.AckReplyConsumer;
 import com.google.protobuf.ByteString;
 import com.google.pubsub.v1.PubsubMessage;
 import org.broadinstitute.ddp.event.pubsubtask.api.PubSubTask;
-import org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskDataReader;
-import org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskProcessorAbstract;
 import org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskProcessorFactoryAbstract;
 import org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskResult;
 import org.broadinstitute.ddp.event.pubsubtask.api.ResultSender;
-import org.broadinstitute.ddp.event.pubsubtask.impl.updateprofile.UpdateProfileDataReader;
+import org.broadinstitute.ddp.event.pubsubtask.impl.updateprofile.UpdateProfileProcessor;
 
 public class PubSubTaskTestUtil {
 
@@ -85,16 +83,14 @@ public class PubSubTaskTestUtil {
         protected void registerPubSubTaskProcessors() {
             registerPubSubTaskProcessors(
                     TASK_TYPE__UPDATE_PROFILE,
-                    new TestUpdateProfileProcessor(),
-                    new UpdateProfileDataReader(),
-                    null
+                    new TestUpdateProfileProcessor()
             );
         }
 
-        class TestUpdateProfileProcessor extends PubSubTaskProcessorAbstract {
+        class TestUpdateProfileProcessor extends UpdateProfileProcessor {
 
             @Override
-            protected void handleTask(PubSubTask pubSubTask, PubSubTaskDataReader.PubSubTaskPayloadData payloadData) {
+            protected void updateData(PubSubTask pubSubTask) {
             }
         }
     }
