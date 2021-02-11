@@ -65,7 +65,7 @@ public class PubSubTaskReceiver implements MessageReceiver {
     }
 
     private PubSubTaskResult processPubSubTask(PubSubTask pubSubTask) {
-        return pubSubTaskProcessorFactory.getPubSubTaskDescriptors(pubSubTask.getTaskType())
+        return pubSubTaskProcessorFactory.getPubSubTaskDescriptor(pubSubTask.getTaskType())
                 .getPubSubTaskProcessor().processPubSubTask(pubSubTask);
     }
 
@@ -79,7 +79,7 @@ public class PubSubTaskReceiver implements MessageReceiver {
         LOG.info(infoMsg("PubSubTask message received[subscription={}, id={}]: {}}"),
                 projectSubscriptionName, messageId, pubSubTask);
 
-        var pubSubTaskDescriptor = pubSubTaskProcessorFactory.getPubSubTaskDescriptors(taskType);
+        var pubSubTaskDescriptor = pubSubTaskProcessorFactory.getPubSubTaskDescriptor(taskType);
         if (pubSubTaskDescriptor == null) {
             throw new PubSubTaskException(format("PubSubTask message [id=%s] has unknown taskType=%s", messageId, taskType),
                     pubSubTask);

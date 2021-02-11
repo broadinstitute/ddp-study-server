@@ -27,7 +27,7 @@ public abstract class PubSubTaskProcessorFactoryAbstract implements PubSubTaskPr
     protected abstract void registerPubSubTaskProcessors();
 
     @Override
-    public PubSubTaskDescriptor getPubSubTaskDescriptors(String pubSubTaskType) {
+    public PubSubTaskDescriptor getPubSubTaskDescriptor(String pubSubTaskType) {
         return pubSubTaskDescriptors.get(pubSubTaskType);
     }
 }

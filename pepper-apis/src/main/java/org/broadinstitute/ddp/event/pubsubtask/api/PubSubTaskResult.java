@@ -33,6 +33,7 @@ public class PubSubTaskResult {
         return pubSubTask;
     }
 
+    @Override
     public String toString() {
         return pubSubTaskResultPayload.resultType + (pubSubTaskResultPayload.errorMessage != null
                 ? ": " + pubSubTaskResultPayload.errorMessage : "");

@@ -93,16 +93,13 @@ public class PubSubTaskConnectionService {
 
     private void createPubSubTaskSubscriber() {
         try {
-            // Provides an executor service for processing messages.
             var executorProvider =
                     InstantiatingExecutorProvider.newBuilder().setExecutorThreadCount(SUBSCRIBER_FAILURE_LISTENER_THREAD_COUNT).build();
 
             pubSubTaskSubscriber = pubSubConnectionManager.subscribeBuilder(projectSubscriptionName, pubSubTaskReceiver)
-                    .setExecutorProvider(executorProvider)
+                    .setSystemExecutorProvider(executorProvider)
                     .build();
 
-            // Listen for unrecoverable failures. Rebuild a subscriber and restart subscribing
-            // when the current subscriber encounters permanent errors.
             pubSubTaskSubscriber.addListener(
                     new Subscriber.Listener() {
                         public void failed(Subscriber.State from, Throwable failure) {
@@ -117,7 +114,6 @@ public class PubSubTaskConnectionService {
 
             pubSubTaskSubscriber.startAsync().awaitRunning(subscriberAwaitRunningTimeout, TimeUnit.SECONDS);
         } catch (TimeoutException e) {
-            // Shut down the subscriber after specified timeout (default=30s). Stop receiving messages.
             pubSubTaskSubscriber.stopAsync();
             throw new DDPException("Could not start subscriber for subscription"
                     + projectSubscriptionName.getSubscription(), e);

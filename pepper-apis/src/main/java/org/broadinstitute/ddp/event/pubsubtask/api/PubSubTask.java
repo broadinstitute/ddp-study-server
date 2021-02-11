@@ -7,7 +7,7 @@ import java.util.Map;
  * (published to pubsub topic which DSS subscribed to - subscription is specified by
  * config parameter "pubsub.pubSubTasksSubscription").
  *
- * <p>Data is fetched from pubsub message attributes and from message payload (JSON foc).
+ * <p>Data is fetched from pubsub message attributes and from message payload (JSON doc).
  */
 public class PubSubTask {
 
@@ -51,6 +51,7 @@ public class PubSubTask {
         return payloadJson;
     }
 
+    @Override
     public String toString() {
         return "taskType=" + taskType + ", messageId=" + messageId + ", attr=" + attributes + ", payload={" + payloadJson + "}";
     }

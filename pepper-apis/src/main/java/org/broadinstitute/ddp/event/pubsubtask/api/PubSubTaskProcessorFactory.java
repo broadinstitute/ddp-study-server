@@ -6,7 +6,7 @@ package org.broadinstitute.ddp.event.pubsubtask.api;
  */
 public interface PubSubTaskProcessorFactory {
 
-    PubSubTaskDescriptor getPubSubTaskDescriptors(String pubSubTaskType);
+    PubSubTaskDescriptor getPubSubTaskDescriptor(String pubSubTaskType);
 
     /**
      * Holds data which necessary for {@link PubSubTask} processing
