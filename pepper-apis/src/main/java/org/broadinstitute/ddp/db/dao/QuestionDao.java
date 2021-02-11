@@ -1042,9 +1042,6 @@ public interface QuestionDao extends SqlObject {
      * @param revisionId the revision to use, will be shared by all created data
      */
     default void insertQuestion(long activityId, PicklistQuestionDef picklist, long revisionId) {
-        if (picklist.hasNumOptionsSelectedRule()) {
-            throw new UnsupportedOperationException("NUM_OPTIONS_SELECTED validation rule currently not supported");
-        }
 
         if (picklist.getGroups().isEmpty() && picklist.getPicklistOptions().isEmpty()) {
             throw new IllegalStateException(String.format(
