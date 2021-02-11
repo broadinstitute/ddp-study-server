@@ -39,6 +39,14 @@ public class ConfigUtil {
     }
 
     /**
+     * Get value as integer if the key is present and value is not null.
+     * If key not present then return a default value.
+     */
+    public static int getIntOrElse(Config cfg, String key, int defaultValue) {
+        return cfg.hasPath(key) ? cfg.getInt(key) : defaultValue;
+    }
+
+    /**
      * Get value as long if the key is present and value is not null.
      */
     public static Long getLongIfPresent(Config cfg, String key) {

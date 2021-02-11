@@ -1,5 +1,8 @@
 package org.broadinstitute.ddp;
 
+import static org.broadinstitute.ddp.constants.ConfigFile.PUBSUB_TASKS_SUBSCRIBER_AWAIT_RUNNING_TIMEOUT;
+import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskConnectionService.DEFAULT_SUBSCRIBER_AWAIT_RUNNING_TIMEOUT_SEC;
+
 import java.io.IOException;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -14,6 +17,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+
 
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutureCallback;
@@ -52,6 +56,9 @@ import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.db.housekeeping.dao.JdbiEvent;
 import org.broadinstitute.ddp.db.housekeeping.dao.JdbiMessage;
 import org.broadinstitute.ddp.event.HousekeepingTaskReceiver;
+import org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskConnectionService;
+import org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskException;
+import org.broadinstitute.ddp.event.pubsubtask.impl.PubSubTaskProcessorFactoryImpl;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.exception.MessageBuilderException;
 import org.broadinstitute.ddp.exception.NoSendableEmailAddressException;
@@ -170,6 +177,8 @@ public class Housekeeping {
     private static Scheduler scheduler;
     private static Subscriber taskSubscriber;
 
+    private static PubSubTaskConnectionService pubSubTaskConnectionService;
+
     public static void setAfterHandler(AfterHandlerCallback afterHandler) {
         synchronized (afterHandlerGuard) {
             afterHandling = afterHandler;
@@ -220,6 +229,21 @@ public class Housekeeping {
         setupTaskReceiver(cfg, pubSubProject);
 
         final PubSubConnectionManager pubsubConnectionManager = new PubSubConnectionManager(usePubSubEmulator);
+
+        pubSubTaskConnectionService = new PubSubTaskConnectionService(
+                pubsubConnectionManager,
+                pubSubProject,
+                cfg.getString(ConfigFile.PUBSUB_TASKS_SUB),
+                cfg.getString(ConfigFile.PUBSUB_TASKS_RESULT_TOPIC),
+                ConfigUtil.getIntOrElse(cfg, PUBSUB_TASKS_SUBSCRIBER_AWAIT_RUNNING_TIMEOUT,
+                        DEFAULT_SUBSCRIBER_AWAIT_RUNNING_TIMEOUT_SEC),
+                new PubSubTaskProcessorFactoryImpl());
+        try {
+            pubSubTaskConnectionService.create();
+        } catch (PubSubTaskException e) {
+            LOG.error("Failed to init PubSubTask API", e);
+        }
+
         TransactionWrapper.useTxn(TransactionWrapper.DB.APIS, handle -> {
             JdbiMessageDestination messageDestinationDao = handle.attach(JdbiMessageDestination.class);
             for (String topicName : messageDestinationDao.getAllTopics()) {
@@ -447,6 +471,15 @@ public class Housekeeping {
         if (scheduler != null) {
             JobScheduler.shutdownScheduler(scheduler, true);
         }
+
+        if (pubSubTaskConnectionService != null) {
+            try {
+                pubSubTaskConnectionService.destroy();
+            } catch (PubSubTaskException e) {
+                LOG.error("Failed to shutdown PubSubTask API", e);
+            }
+        }
+
         LOG.info("Housekeeping is shutting down");
     }
 
