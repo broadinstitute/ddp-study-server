@@ -57,7 +57,7 @@ post:
               description: MIME type, if not specified will default to `application/octet-stream`
             resumable:
               type: boolean
-              description: Whether URL should support resumable upload
+              description: Whether URL should support resumable uploads
   responses:
     201:
       description: authorized file upload
