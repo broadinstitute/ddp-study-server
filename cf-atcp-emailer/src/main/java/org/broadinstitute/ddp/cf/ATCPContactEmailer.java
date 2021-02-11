@@ -109,16 +109,20 @@ public class ATCPContactEmailer implements BackgroundFunction<ATCPContactEmailer
             throw new RuntimeException("Unexpected file scan result: " + scanResult, e);
         }
 
+        Blob contentBlob = storage.get(bucketName, filename);
+        Blob metadataBlob = storage.get(bucketName, FILENAME_PATTERN.matcher(filename).replaceAll("$1.metadata"));
+        BlobId contentBlobId = contentBlob.getBlobId();
+        BlobId metadataBlobId = metadataBlob.getBlobId();
+
         if (result == ScanResult.INFECTED) {
-            throw new RuntimeException(String.format(
-                    "File is infected! Will not send ATCP DAR email! (bucket=%s file=%s)", bucketName, filename));
+            // Delete the original file and report the incident.
+            storage.delete(contentBlobId);
+            String msg = String.format(
+                    "File %s is infected! Will not send ATCP DAR email! See metadata file %s for details.",
+                    contentBlobId, metadataBlobId);
+            throw new RuntimeException(msg);
         }
 
-        BlobId contentBlobId = BlobId.of(bucketName, filename);
-        Blob contentBlob = storage.get(contentBlobId);
-        BlobId metadataBlobId = BlobId.of(bucketName, FILENAME_PATTERN.matcher(filename)
-                .replaceAll("$1.metadata"));
-        Blob metadataBlob = storage.get(metadataBlobId);
         Map<String, String> metadata = metadataBlob.getMetadata();
         String originalFilename = metadata.get("meta_filename");
 
