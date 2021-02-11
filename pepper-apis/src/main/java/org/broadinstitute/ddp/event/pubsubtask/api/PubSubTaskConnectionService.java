@@ -5,14 +5,16 @@ import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskLogUtil.info
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 
+import com.google.api.gax.core.ExecutorProvider;
 import com.google.api.gax.core.InstantiatingExecutorProvider;
 import com.google.cloud.pubsub.v1.Publisher;
 import com.google.cloud.pubsub.v1.Subscriber;
-import com.google.common.util.concurrent.MoreExecutors;
 import com.google.pubsub.v1.ProjectSubscriptionName;
 import com.google.pubsub.v1.ProjectTopicName;
 import org.broadinstitute.ddp.exception.DDPException;
@@ -71,7 +73,13 @@ public class PubSubTaskConnectionService {
             createPubSubTaskResultPublisher();
             pubSubTaskResultSender = new PubSubTaskResultSender(pubSubTaskResultPublisher);
             pubSubTaskReceiver = new PubSubTaskReceiver(projectSubscriptionName, pubSubTaskProcessorFactory, pubSubTaskResultSender);
-            createPubSubTaskSubscriber();
+
+            var executorProvider =
+                    InstantiatingExecutorProvider.newBuilder().setExecutorThreadCount(SUBSCRIBER_FAILURE_LISTENER_THREAD_COUNT).build();
+            var callbackExecutor = Executors.newSingleThreadExecutor();
+
+            createPubSubTaskSubscriber(executorProvider, callbackExecutor);
+
         } catch (Exception e) {
             throw new PubSubTaskException(errorMsg("Failed to create PubSubTask connection"), e);
         }
@@ -91,12 +99,10 @@ public class PubSubTaskConnectionService {
         }
     }
 
-    private void createPubSubTaskSubscriber() {
+    private void createPubSubTaskSubscriber(ExecutorProvider executorProvider, ExecutorService callbackExecutor) {
         try {
-            var executorProvider =
-                    InstantiatingExecutorProvider.newBuilder().setExecutorThreadCount(SUBSCRIBER_FAILURE_LISTENER_THREAD_COUNT).build();
-
             pubSubTaskSubscriber = pubSubConnectionManager.subscribeBuilder(projectSubscriptionName, pubSubTaskReceiver)
+                    .setExecutorProvider(executorProvider)
                     .setSystemExecutorProvider(executorProvider)
                     .build();
 
@@ -106,11 +112,11 @@ public class PubSubTaskConnectionService {
                             LOG.error(errorMsg("Unrecoverable failure happened during subscribing to subscription "
                                     + projectSubscriptionName), failure);
                             if (!executorProvider.getExecutor().isShutdown()) {
-                                createPubSubTaskSubscriber();
+                                createPubSubTaskSubscriber(executorProvider, callbackExecutor);
                             }
                         }
                     },
-                    MoreExecutors.directExecutor());
+                    callbackExecutor);
 
             pubSubTaskSubscriber.startAsync().awaitRunning(subscriberAwaitRunningTimeout, TimeUnit.SECONDS);
         } catch (TimeoutException e) {
