@@ -8,27 +8,5 @@ package org.broadinstitute.ddp.event.pubsubtask.api;
 @FunctionalInterface
 public interface PubSubTaskProcessor {
 
-    PubSubTaskProcessorResult processPubSubTask(PubSubTask pubSubTask);
-
-    /**
-     * Result of {@link PubSubTask} processing.
-     */
-    class PubSubTaskProcessorResult {
-
-        private final PubSubTaskResult pubSubTaskResult;
-        private final boolean shouldRetry;
-
-        public PubSubTaskProcessorResult(PubSubTaskResult pubSubTaskResult, boolean shouldRetry) {
-            this.pubSubTaskResult = pubSubTaskResult;
-            this.shouldRetry = shouldRetry;
-        }
-
-        public PubSubTaskResult getPubSubTaskResult() {
-            return pubSubTaskResult;
-        }
-
-        public boolean isShouldRetry() {
-            return shouldRetry;
-        }
-    }
+    PubSubTaskResult processPubSubTask(PubSubTask pubSubTask);
 }

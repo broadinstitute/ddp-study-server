@@ -56,7 +56,8 @@ public class PubSubTaskUpdateProfileMessageTest {
         assertEquals("{'email':'test@broadinstitute.org', 'firstName':'Lorenzo', 'lastName':'Montana'}",
                 testResultSender.getPubSubTaskResult().getPubSubTask().getPayloadJson());
         assertEquals(ERROR, testResultSender.getPubSubTaskResult().getPubSubTaskResultPayload().getResultType());
-        assertEquals("PUBSUB_TASK error: Some attributes are not specified: participantGuid=null, userId=null",
+        assertEquals("Error processing taskType=UPDATE_PROFILE - some attributes are not specified: "
+                        + "participantGuid=null, userId=null",
                 testResultSender.getPubSubTaskResult().getPubSubTaskResultPayload().getErrorMessage());
     }
 
@@ -70,7 +71,7 @@ public class PubSubTaskUpdateProfileMessageTest {
         assertEquals(4, testResultSender.getPubSubTaskResult().getPubSubTask().getAttributes().size());
         assertEquals("", testResultSender.getPubSubTaskResult().getPubSubTask().getPayloadJson());
         assertEquals(ERROR, testResultSender.getPubSubTaskResult().getPubSubTaskResultPayload().getResultType());
-        assertEquals("PUBSUB_TASK error: Empty payload",
+        assertEquals("Error processing taskType=%s: empty payload",
                 testResultSender.getPubSubTaskResult().getPubSubTaskResultPayload().getErrorMessage());
     }
 

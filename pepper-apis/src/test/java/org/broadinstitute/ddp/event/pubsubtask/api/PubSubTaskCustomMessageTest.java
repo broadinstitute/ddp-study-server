@@ -157,11 +157,11 @@ public class PubSubTaskCustomMessageTest {
     class TestFactory extends PubSubTaskProcessorFactoryAbstract {
         @Override
         protected void registerPubSubTaskProcessors() {
-            registerPubSubTaskProcessors(
+            registerPubSubTaskProcessor(
                     TestProcessor1.TEST_TASK_1,
                     new TestProcessor1()
             );
-            registerPubSubTaskProcessors(
+            registerPubSubTaskProcessor(
                     TestProcessor2.TEST_TASK_2,
                     new TestProcessor2()
             );

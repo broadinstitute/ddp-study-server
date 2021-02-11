@@ -81,7 +81,7 @@ public class PubSubTaskTestUtil {
 
         @Override
         protected void registerPubSubTaskProcessors() {
-            registerPubSubTaskProcessors(
+            registerPubSubTaskProcessor(
                     TASK_TYPE__UPDATE_PROFILE,
                     new TestUpdateProfileProcessor()
             );

@@ -1,5 +1,6 @@
 package org.broadinstitute.ddp.event.pubsubtask.api;
 
+import static java.lang.String.format;
 import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskLogUtil.errorMsg;
 import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskLogUtil.infoMsg;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -11,10 +12,11 @@ import com.google.api.core.ApiFutures;
 import com.google.api.gax.rpc.ApiException;
 import com.google.cloud.pubsub.v1.Publisher;
 import com.google.common.util.concurrent.MoreExecutors;
+import com.google.pubsub.v1.PubsubMessage;
 import org.slf4j.Logger;
 
 /**
- * Builds PubSubTaskResult-message and publishes it
+ * Builds {@link PubSubTaskResult}-message and publishes it
  * to outgoing topic (name specified in Config parameter
  * "pubsub.pubSubTasksResultTopic").
  */
@@ -32,7 +34,12 @@ public class PubSubTaskResultSender implements ResultSender {
     @Override
     public void sendPubSubTaskResult(PubSubTaskResult pubSubTaskResult) {
 
-        ApiFuture<String> publishResult = publisher.publish(messageCreator.createPubSubMessage(pubSubTaskResult));
+        PubsubMessage pubSubMessage = messageCreator.createPubSubMessage(pubSubTaskResult);
+
+        LOG.info(format(infoMsg("Publish PubSubTaskResult message to topic=%s: result={%s}, pubSubTask={%s}"),
+                publisher.getTopicName(), pubSubTaskResult, pubSubTaskResult.getPubSubTask()));
+
+        ApiFuture<String> publishResult = publisher.publish(pubSubMessage);
 
         ApiFutures.addCallback(
                 publishResult,

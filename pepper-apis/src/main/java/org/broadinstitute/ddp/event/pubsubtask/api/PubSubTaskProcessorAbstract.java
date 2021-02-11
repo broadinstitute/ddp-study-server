@@ -3,7 +3,6 @@ package org.broadinstitute.ddp.event.pubsubtask.api;
 import static java.lang.String.format;
 import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskLogUtil.errorMsg;
 import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskLogUtil.infoMsg;
-import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskResult.PubSubTaskResultType.ERROR;
 import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskResult.PubSubTaskResultType.SUCCESS;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -11,6 +10,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 import com.google.gson.Gson;
 import org.broadinstitute.ddp.util.GsonUtil;
 import org.slf4j.Logger;
+
 
 /**
  * Abstract implementation of processor which processes PubSubTask.
@@ -23,33 +23,29 @@ public abstract class PubSubTaskProcessorAbstract implements PubSubTaskProcessor
     protected final Gson gson = GsonUtil.standardGson();
 
     @Override
-    public PubSubTaskProcessorResult processPubSubTask(PubSubTask pubSubTask) {
-        boolean shouldRetry = false;
+    public PubSubTaskResult processPubSubTask(PubSubTask pubSubTask) {
         PubSubTaskResult.PubSubTaskResultType pubSubTaskResultType = SUCCESS;
         String errorMessage = null;
         try {
-            LOG.info(infoMsg("Task processing STARTED: taskType={}, data={}"), pubSubTask.getTaskType(), pubSubTask.getPayloadJson());
+            LOG.info(infoMsg("PubSubTask processing STARTED: {}"), pubSubTask);
 
             handleTask(pubSubTask);
 
         } catch (PubSubTaskException e) {
-            LOG.warn(errorMsg(format("Task processing FAILED, will retry: tastType=%s", pubSubTask.getTaskType())));
-            shouldRetry = e.isShouldRetry();
-            pubSubTaskResultType = ERROR;
-            errorMessage = e.getMessage();
-        } catch (Exception e) {
-            LOG.error(errorMsg(format("Task processing FAILED: tastType=%s", pubSubTask.getTaskType())), e);
-            pubSubTaskResultType = ERROR;
+            if (!e.isShouldRetry()) {
+                throw e;
+            } else {
+                LOG.warn(errorMsg(format("PubSubTask processing FAILED, will retry: taskType=%s", pubSubTask.getTaskType())));
+            }
             errorMessage = e.getMessage();
         }
 
-        var pubSubTaskProcessorResult = new PubSubTaskProcessorResult(
-                new PubSubTaskResult(pubSubTaskResultType, errorMessage, pubSubTask), shouldRetry);
+        var pubSubTaskResult = new PubSubTaskResult(pubSubTaskResultType, errorMessage, pubSubTask);
 
-        LOG.info(infoMsg("Task processing COMPLETED: taskType={}, pubSubTaskResult={}"),
-                pubSubTask.getTaskType(), pubSubTaskProcessorResult.getPubSubTaskResult());
+        LOG.info(infoMsg("PubSubTask processing COMPLETED: taskType={}, pubSubTaskResult={}"),
+                pubSubTask.getTaskType(), pubSubTaskResult);
 
-        return pubSubTaskProcessorResult;
+        return pubSubTaskResult;
     }
 
     protected abstract void handleTask(PubSubTask pubSubTask);

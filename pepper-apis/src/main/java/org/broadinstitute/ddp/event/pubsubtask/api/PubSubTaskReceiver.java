@@ -23,7 +23,7 @@ import org.slf4j.Logger;
  * which selected by a message attribute 'taskType' (from
  * factory {@link PubSubTaskProcessorFactory}.
  *
- * <p>After task is processed the result is published to the results topic
+ * <p>After a task is processed the result of processing is published to the results topic
  * defined by config param "pubsub.pubSubTasksResultTopic".
  * The result message published to the topic by {@link PubSubTaskResultSender}
  */
@@ -45,22 +45,26 @@ public class PubSubTaskReceiver implements MessageReceiver {
 
     @Override
     public void receiveMessage(PubsubMessage message, AckReplyConsumer consumer) {
+        PubSubTask pubSubTask = null;
         try {
-            var pubSubTask = parseMessage(message);
-            var pubSubTaskResultMessage = processPubSubTask(pubSubTask);
-            if (pubSubTaskResultMessage.isShouldRetry()) {
+            pubSubTask = parseMessage(message);
+            var pubSubTaskResult = processPubSubTask(pubSubTask);
+            if (pubSubTaskResult.getPubSubTaskResultPayload().getResultType() == ERROR) {
                 consumer.nack();
             } else {
                 consumer.ack();
-                sendResponse(pubSubTaskResultMessage.getPubSubTaskResult());
+                sendResponse(pubSubTaskResult);
             }
-        } catch (PubSubTaskException e) {
+        } catch (Exception e) {
             consumer.ack();
-            sendResponse(new PubSubTaskResult(ERROR, e.getMessage(), e.getPubSubTask()));
+            LOG.error(errorMsg(e.getMessage()), e);
+            if (pubSubTask != null) {
+                sendResponse(new PubSubTaskResult(ERROR, e.getMessage(), pubSubTask));
+            }
         }
     }
 
-    private PubSubTaskProcessor.PubSubTaskProcessorResult processPubSubTask(PubSubTask pubSubTask) {
+    private PubSubTaskResult processPubSubTask(PubSubTask pubSubTask) {
         return pubSubTaskProcessorFactory.getPubSubTaskDescriptors(pubSubTask.getTaskType())
                 .getPubSubTaskProcessor().processPubSubTask(pubSubTask);
     }
@@ -70,15 +74,14 @@ public class PubSubTaskReceiver implements MessageReceiver {
         String taskType = message.getAttributesOrDefault(ATTR_TASK_TYPE, null);
         String payloadJson = message.getData() != null ? message.getData().toStringUtf8() : null;
 
-        LOG.info(infoMsg("Pubsub task message received[subscription={}, id={}]: taskType={}, data={}"),
-                projectSubscriptionName, messageId, taskType, payloadJson);
-
         PubSubTask pubSubTask = new PubSubTask(messageId, taskType, message.getAttributesMap(), payloadJson);
+
+        LOG.info(infoMsg("PubSubTask message received[subscription={}, id={}]: {}}"),
+                projectSubscriptionName, messageId, pubSubTask);
 
         var pubSubTaskDescriptor = pubSubTaskProcessorFactory.getPubSubTaskDescriptors(taskType);
         if (pubSubTaskDescriptor == null) {
-            throw new PubSubTaskException(
-                    format(errorMsg("Pubsub message [id=%s] has unknown taskType=%s"), messageId, taskType),
+            throw new PubSubTaskException(format("PubSubTask message [id=%s] has unknown taskType=%s", messageId, taskType),
                     pubSubTask);
         }
 

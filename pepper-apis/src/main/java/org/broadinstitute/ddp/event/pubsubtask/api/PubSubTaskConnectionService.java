@@ -26,10 +26,10 @@ import org.slf4j.Logger;
  * (publishing results to topic defined by config param "pubsub.pubSubTasksResultTopic").
  *
  * <p>Creates {@link PubSubTaskReceiver} which process PubSubTask-messages (coming from PubSubTask subscription):
- * parses it and runs corresponding {@link PubSubTaskProcessor} which does needed actions according to
+ * parses it and runs corresponding {@link PubSubTaskProcessor} which executes needed actions according to
  * PubSubTask 'taskType' (each processor implemented for a specific 'taskType').
  * After doing an action it is called the {@link PubSubTaskResultSender}
- * which sends result to topic with PubSubTask results.
+ * which sends result to a topic "pubsub.pubSubTasksResultTopic".
  */
 public class PubSubTaskConnectionService {
 

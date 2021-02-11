@@ -7,7 +7,6 @@ import static org.slf4j.LoggerFactory.getLogger;
 import java.util.Properties;
 
 
-import com.auth0.client.mgmt.ManagementAPI;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.TransactionWrapper.DB;
 import org.broadinstitute.ddp.db.dao.DataExportDao;
@@ -34,9 +33,10 @@ public class UpdateEmailHandler {
                 throw new PubSubTaskException("User profile is not found for guid=" + userGuid);
             }
             validateUserForLoginDataUpdateEligibility(userDto);
+
             LOG.info(infoMsg("Attempting to change the email of the user {}"), userGuid);
-            var mgmtAPI = Auth0Util.getManagementApiInstanceForUser(userDto.getUserGuid(), handle);
-            updateEmailInAuth0(handle, mgmtAPI, userDto, email, userGuid);
+
+            updateEmailInAuth0(handle, userDto, email, userGuid);
         }
     }
 
@@ -53,13 +53,17 @@ public class UpdateEmailHandler {
         }
     }
 
-    private void updateEmailInAuth0(Handle handle, ManagementAPI mgmtAPI, UserDto userDto, String email, String userGuid) {
+    /**
+     * NOTE: Similar logic is implemented in class UpdateUserEmailRoute.java
+     */
+    private void updateEmailInAuth0(Handle handle, UserDto userDto, String email, String userGuid) {
+        var mgmtAPI = Auth0Util.getManagementApiInstanceForUser(userDto.getUserGuid(), handle);
         var status = Auth0Util.updateUserEmail(mgmtAPI, userDto, email);
         String errMsg = null;
         switch (status.getAuth0Status()) {
             case SUCCESS:
                 handle.attach(DataExportDao.class).queueDataSync(userDto.getUserId(), true);
-                LOG.info("The email of the user {} was successfully changed", userGuid);
+                LOG.info(infoMsg("The email of the user {} was successfully changed"), userGuid);
                 break;
             case INVALID_TOKEN:
                 errMsg = "The provided Auth0 token is invalid";

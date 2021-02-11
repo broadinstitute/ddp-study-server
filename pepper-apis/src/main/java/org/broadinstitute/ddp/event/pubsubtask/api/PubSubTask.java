@@ -22,8 +22,8 @@ public class PubSubTask {
     /**
      * Put the data extracted from PubSubTask message
      * @param messageId - ID of a message
-     * @param taskType - type of a task (known type is 'UPDATE_PROFILE'), it can be added new types/processors which
-     *                 should be regsitered via {@link PubSubTaskProcessorFactory} and the factory implementation
+     * @param taskType - type of a task: one of known types is 'UPDATE_PROFILE' and it can be added new types/processors which
+     *                 should be registered via {@link PubSubTaskProcessorFactory} and the factory implementation
      *                 to be passed as a parameter to {@link PubSubTaskConnectionService} constructor.
      * @param attributes  - pub sub message attributes
      * @param payloadJson - raw string with payload JSON doc.
@@ -49,5 +49,9 @@ public class PubSubTask {
 
     public String getPayloadJson() {
         return payloadJson;
+    }
+
+    public String toString() {
+        return "taskType=" + taskType + ", messageId=" + messageId + ", attr=" + attributes + ", payload={" + payloadJson + "}";
     }
 }

@@ -1,10 +1,8 @@
 package org.broadinstitute.ddp.event.pubsubtask.impl.updateprofile;
 
 import static java.lang.String.format;
-import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskLogUtil.errorMsg;
 import static org.broadinstitute.ddp.event.pubsubtask.impl.updateprofile.UpdateProfileConstants.ATTR_PARTICIPANT_GUID;
 import static org.broadinstitute.ddp.event.pubsubtask.impl.updateprofile.UpdateProfileConstants.ATTR_USER_ID;
-
 
 import java.util.Properties;
 
@@ -38,11 +36,11 @@ public class UpdateProfileProcessor extends PubSubTaskProcessorAbstract {
         String participantGuid = pubSubTask.getAttributes().get(ATTR_PARTICIPANT_GUID);
         String userId = pubSubTask.getAttributes().get(ATTR_USER_ID);
         if (participantGuid == null || userId == null) {
-            throw new PubSubTaskException(format(errorMsg("Some attributes are not specified: participantGuid=%s, userId=%s"),
-                    participantGuid, userId), pubSubTask);
+            throw new PubSubTaskException(format("Error processing taskType=%s - some attributes are not specified: "
+                            + "participantGuid=%s, userId=%s", pubSubTask.getTaskType(), participantGuid, userId), pubSubTask);
         }
         if (StringUtils.isBlank(pubSubTask.getPayloadJson())) {
-            throw new PubSubTaskException(errorMsg("Empty payload"), pubSubTask);
+            throw new PubSubTaskException("Error processing taskType=%s: empty payload", pubSubTask);
         }
     }
 

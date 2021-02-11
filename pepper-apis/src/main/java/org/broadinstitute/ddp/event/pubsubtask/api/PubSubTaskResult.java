@@ -35,7 +35,7 @@ public class PubSubTaskResult {
 
     public String toString() {
         return pubSubTaskResultPayload.resultType + (pubSubTaskResultPayload.errorMessage != null
-                ? " [" + pubSubTaskResultPayload.errorMessage + "]" : "");
+                ? ": " + pubSubTaskResultPayload.errorMessage : "");
     }
 
 
