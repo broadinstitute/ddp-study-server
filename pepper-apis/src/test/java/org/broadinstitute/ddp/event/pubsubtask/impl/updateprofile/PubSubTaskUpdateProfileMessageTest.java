@@ -41,7 +41,7 @@ public class PubSubTaskUpdateProfileMessageTest {
     public void testUpdateProfileValidMessageParser() {
         buildMessageAndAssert(true);
 
-        assertEquals("{'email':'test@broadinstitute.org', 'firstName':'Lorenzo', 'lastName':'Montana'}",
+        assertEquals("{'email':'test@datadonationplatform.org', 'firstName':'Lorenzo', 'lastName':'Montana'}",
                 testResultSender.getPubSubTaskResult().getPubSubTask().getPayloadJson());
         Map<String, String> payload = gson.fromJson(testResultSender.getPubSubTaskResult().getPubSubTask().getPayloadJson(), Map.class);
         assertEquals(TEST_EMAIL, payload.get(EMAIL));
@@ -53,7 +53,7 @@ public class PubSubTaskUpdateProfileMessageTest {
     public void testUpdateProfileInvalidMessageParser() {
         buildMessageAndAssert(false);
 
-        assertEquals("{'email':'test@broadinstitute.org', 'firstName':'Lorenzo', 'lastName':'Montana'}",
+        assertEquals("{'email':'test@datadonationplatform.org', 'firstName':'Lorenzo', 'lastName':'Montana'}",
                 testResultSender.getPubSubTaskResult().getPubSubTask().getPayloadJson());
         assertEquals(ERROR, testResultSender.getPubSubTaskResult().getPubSubTaskResultPayload().getResultType());
         assertEquals("Error processing taskType=UPDATE_PROFILE - some attributes are not specified: "

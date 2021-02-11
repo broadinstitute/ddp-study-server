@@ -235,7 +235,7 @@ public class Housekeeping {
                 pubSubProject,
                 cfg.getString(ConfigFile.PUBSUB_TASKS_SUB),
                 cfg.getString(ConfigFile.PUBSUB_TASKS_RESULT_TOPIC),
-                ConfigUtil.getIntIfPresent(cfg, PUBSUB_TASKS_SUBSCRIBER_AWAIT_RUNNING_TIMEOUT,
+                ConfigUtil.getIntOrElse(cfg, PUBSUB_TASKS_SUBSCRIBER_AWAIT_RUNNING_TIMEOUT,
                         DEFAULT_SUBSCRIBER_AWAIT_RUNNING_TIMEOUT_SEC),
                 new PubSubTaskProcessorFactoryImpl());
         try {

@@ -98,10 +98,7 @@ public class PubSubTaskConnectionService {
                     InstantiatingExecutorProvider.newBuilder().setExecutorThreadCount(SUBSCRIBER_FAILURE_LISTENER_THREAD_COUNT).build();
 
             pubSubTaskSubscriber = pubSubConnectionManager.subscribeBuilder(projectSubscriptionName, pubSubTaskReceiver)
-                    .setParallelPullCount(1)
-                    .setExecutorProvider(InstantiatingExecutorProvider.newBuilder()
-                            .setExecutorThreadCount(1)
-                            .build())
+                    .setExecutorProvider(executorProvider)
                     .build();
 
             // Listen for unrecoverable failures. Rebuild a subscriber and restart subscribing

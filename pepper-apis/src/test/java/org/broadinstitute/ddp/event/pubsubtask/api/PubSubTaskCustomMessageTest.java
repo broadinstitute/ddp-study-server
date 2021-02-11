@@ -60,7 +60,7 @@ public class PubSubTaskCustomMessageTest {
 
         PubSubTask pubSubTask = testResultSender.getPubSubTaskResult().getPubSubTask();
 
-        assertEquals("{'email':'test@broadinstitute.org', 'education':'University', 'maritalStatus':'Married'}",
+        assertEquals("{'email':'test@datadonationplatform.org', 'education':'University', 'maritalStatus':'Married'}",
                 pubSubTask.getPayloadJson());
 
         assertEquals(TEST_PARTICIPANT_GUID, pubSubTask.getAttributes().get(ATTR_PARTICIPANT_GUID));

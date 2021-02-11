@@ -32,7 +32,7 @@ public class PubSubTaskTestUtil {
     public static final String FIRST_NAME = "firstName";
     public static final String LAST_NAME = "lastName";
 
-    public static final String TEST_EMAIL = "test@broadinstitute.org";
+    public static final String TEST_EMAIL = "test@datadonationplatform.org";
     public static final String TEST_EDUCATION = "University";
     public static final String TEST_MARITAL_STATUS = "Married";
     public static final String TEST_FIRST_NAME = "Lorenzo";

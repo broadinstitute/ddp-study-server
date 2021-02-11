@@ -6,7 +6,6 @@ import static org.broadinstitute.ddp.constants.ConfigFile.Sendgrid.EVENTS_VERIFI
 import static org.broadinstitute.ddp.filter.Exclusions.afterWithExclusion;
 import static org.broadinstitute.ddp.filter.Exclusions.beforeWithExclusion;
 import static org.broadinstitute.ddp.filter.WhiteListFilter.whitelist;
-import static org.broadinstitute.ddp.util.ConfigUtil.getBoolIfPresent;
 import static spark.Spark.after;
 import static spark.Spark.afterAfter;
 import static spark.Spark.awaitInitialization;
@@ -171,6 +170,7 @@ import org.broadinstitute.ddp.service.WorkflowService;
 import org.broadinstitute.ddp.transformers.NullableJsonTransformer;
 import org.broadinstitute.ddp.transformers.SimpleJsonTransformer;
 import org.broadinstitute.ddp.util.ConfigManager;
+import org.broadinstitute.ddp.util.ConfigUtil;
 import org.broadinstitute.ddp.util.ElasticsearchServiceUtil;
 import org.broadinstitute.ddp.util.LiquibaseUtil;
 import org.broadinstitute.ddp.util.LogbackConfigurationPrinter;
@@ -350,7 +350,7 @@ public class DataDonationPlatform {
         if (cfg.getBoolean(ConfigFile.RESTRICT_REGISTER_ROUTE)) {
             whitelist(API.REGISTRATION, cfg.getStringList(ConfigFile.AUTH0_IP_WHITE_LIST));
         }
-        if (getBoolIfPresent(cfg, ConfigFile.RESTRICT_AUTH0_LOG_EVENT_ROUTE, false)) {
+        if (ConfigUtil.getBoolOrElse(cfg, ConfigFile.RESTRICT_AUTH0_LOG_EVENT_ROUTE, false)) {
             whitelist(API.AUTH0_LOG_EVENT, cfg.getStringList(ConfigFile.AUTH0_IP_WHITE_LIST));
         }
 

@@ -1,13 +1,13 @@
 package org.broadinstitute.ddp.event.pubsubtask.impl.updateprofile;
 
 import static java.lang.String.format;
+import static org.apache.commons.lang.StringUtils.isBlank;
 import static org.broadinstitute.ddp.event.pubsubtask.impl.updateprofile.UpdateProfileConstants.ATTR_PARTICIPANT_GUID;
 import static org.broadinstitute.ddp.event.pubsubtask.impl.updateprofile.UpdateProfileConstants.ATTR_USER_ID;
 
 import java.util.Properties;
 
 
-import org.apache.commons.lang.StringUtils;
 import org.broadinstitute.ddp.event.pubsubtask.api.PubSubTask;
 import org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskException;
 import org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskProcessorAbstract;
@@ -35,11 +35,11 @@ public class UpdateProfileProcessor extends PubSubTaskProcessorAbstract {
     protected void validateTaskData(PubSubTask pubSubTask) {
         String participantGuid = pubSubTask.getAttributes().get(ATTR_PARTICIPANT_GUID);
         String userId = pubSubTask.getAttributes().get(ATTR_USER_ID);
-        if (participantGuid == null || userId == null) {
+        if (isBlank(participantGuid) || isBlank(userId)) {
             throw new PubSubTaskException(format("Error processing taskType=%s - some attributes are not specified: "
                             + "participantGuid=%s, userId=%s", pubSubTask.getTaskType(), participantGuid, userId), pubSubTask);
         }
-        if (StringUtils.isBlank(pubSubTask.getPayloadJson())) {
+        if (isBlank(pubSubTask.getPayloadJson())) {
             throw new PubSubTaskException("Error processing taskType=%s: empty payload", pubSubTask);
         }
     }
@@ -47,8 +47,10 @@ public class UpdateProfileProcessor extends PubSubTaskProcessorAbstract {
     protected void updateData(PubSubTask pubSubTask) {
         Properties properties = gson.fromJson(pubSubTask.getPayloadJson(), Properties.class);
 
-        var userGuid = pubSubTask.getAttributes().get(ATTR_PARTICIPANT_GUID);
-        new UpdateEmailHandler().updateEmail(userGuid, properties);
-        new UpdateFirstLastNameHandler().updateFirstLastName(userGuid, properties);
+        var participantGuid = pubSubTask.getAttributes().get(ATTR_PARTICIPANT_GUID);
+
+        new UpdateEmailHandler().updateEmail(participantGuid, properties);
+
+        new UpdateFirstLastNameHandler().updateFirstLastName(participantGuid, properties);
     }
 }
