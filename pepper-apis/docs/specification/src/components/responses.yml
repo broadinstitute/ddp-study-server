@@ -98,7 +98,13 @@ ActivityDetailResponse:
     application/json:
       schema:
         $ref: '../pepper.yml#/components/schemas/Activity'
-ActivityDetailNotFoundResponse:
+ActivitySummaryResponse:
+  description: the requested activity instance exists, and was successfully retrieved
+  content:
+    application/json:
+      schema:
+        $ref: '../pepper.yml#/components/schemas/Activity.Summary'
+ActivityInstanceNotFoundResponse:
   description: the requested activity instance for user and study does not exist
   content:
     application/json:
@@ -232,11 +238,17 @@ PrequalifierResponse:
       schema:
         $ref: '../pepper.yml#/components/schemas/PrequalifierModel'
 ActivityNotFoundErrorResponse:
-  description: "the requested activity was not"
+  description: the requested activity was not found
   content:
     application/json:
       schema:
         $ref: '../pepper.yml#/components/schemas/Error.ActivityNotFound'
+ActivityDeleteNotAllowedResponse:
+  description: the activity cannot be deleted
+  content:
+    application/json:
+      schema:
+        $ref: '../pepper.yml#/components/schemas/Error.OperationNotAllowed'
 ProfileGetErrorResponse:
   description: failed to fetch the requested profile
   content:
