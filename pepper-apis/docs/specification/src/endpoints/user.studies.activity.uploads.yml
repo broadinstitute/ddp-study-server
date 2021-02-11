@@ -60,7 +60,7 @@ post:
               description: Whether URL should support resumable uploads
   responses:
     201:
-      description: authorized file upload
+      description: Successfully authorized file upload
       content:
         application/json:
           schema:
@@ -76,19 +76,27 @@ post:
                 type: string
                 description: Signed URL which can be used to upload file contents
     400:
-      description: invalid request or bad inputs
+      description: |
+        Invalid request or bad inputs, such as missing properties in payload or
+        exceeding length limits for certain string properties. See error message in
+        response payload for more details.
       content:
         application/json:
           schema:
             $ref: '../pepper.yml#/components/schemas/Error.BadPayload'
     404:
-      description: user, study, instance or question is not found
+      description: Either user, study, instance or question is not found
       content:
         application/json:
           schema:
             $ref: '../pepper.yml#/components/schemas/Error.UserStudyActivityQuestionNotFound'
     422:
-      description: file upload is not allowed or not supported
+      description: |
+        Authorizing file upload is not allowed if instance or question is
+        read-only. Attempting to request file upload for a question that is
+        not of the `FILE` type, or if the requested file size exceeds the
+        limit, is not supported. See error message in response payload for
+        more details.
       content:
         application/json:
           schema:

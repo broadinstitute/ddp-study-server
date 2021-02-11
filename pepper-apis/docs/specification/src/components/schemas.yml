@@ -489,9 +489,9 @@ AnswerSubmission.File:
           type: string
           nullable: true
           description: |
-            File upload guid provided by server when upload URL was requested.
-            A `null` value will unselect and unassign the uploaded file from
-            this answer if a file upload was previously assigned.
+            File upload guid provided by server when upload URL was requested. If this
+            answer currently has a file upload assigned, then submitting a `null` value
+            will unassign it and the uploaded file will subsequently get deleted.
 AnswerSubmission.Numeric.Integer:
   allOf:
     - $ref: '../pepper.yml#/components/schemas/AnswerSubmission'

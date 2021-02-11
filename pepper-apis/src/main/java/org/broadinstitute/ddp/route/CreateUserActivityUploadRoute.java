@@ -78,7 +78,8 @@ public class CreateUserActivityUploadRoute extends ValidatedJsonInputRoute<Creat
             if (!isStudyAdmin && isInstanceReadOnly) {
                 String msg = "Activity instance " + instanceGuid + " is read-only, no file upload will be authorized";
                 LOG.warn(msg);
-                throw ResponseUtil.haltError(response, 422, new ApiError(ErrorCodes.ACTIVITY_INSTANCE_IS_READONLY, msg));
+                throw ResponseUtil.haltError(response, HttpStatus.SC_UNPROCESSABLE_ENTITY,
+                        new ApiError(ErrorCodes.ACTIVITY_INSTANCE_IS_READONLY, msg));
             }
 
             String questionStableId = payload.getQuestionStableId();
@@ -86,18 +87,19 @@ public class CreateUserActivityUploadRoute extends ValidatedJsonInputRoute<Creat
             if (questionDef == null) {
                 String msg = "Could not find question with stable id " + questionStableId;
                 LOG.warn(msg);
-                throw ResponseUtil.haltError(response, 404, new ApiError(ErrorCodes.QUESTION_NOT_FOUND, msg));
+                throw ResponseUtil.haltError(response, HttpStatus.SC_NOT_FOUND, new ApiError(ErrorCodes.QUESTION_NOT_FOUND, msg));
             } else if (questionDef.getQuestionType() != QuestionType.FILE) {
                 String msg = "Question " + questionStableId + " does not support file uploads";
                 LOG.warn(msg);
-                throw ResponseUtil.haltError(response, 422, new ApiError(ErrorCodes.NOT_SUPPORTED, msg));
+                throw ResponseUtil.haltError(response, HttpStatus.SC_UNPROCESSABLE_ENTITY, new ApiError(ErrorCodes.NOT_SUPPORTED, msg));
             }
 
             boolean isQuestionReadOnly = QuestionUtil.isReadonly(handle, questionDef, instanceDto);
             if (!isStudyAdmin && isQuestionReadOnly) {
                 String msg = "Question " + questionStableId + " is read-only, no file upload will be authorized";
                 LOG.warn(msg);
-                throw ResponseUtil.haltError(response, 422, new ApiError(ErrorCodes.QUESTION_IS_READONLY, msg));
+                throw ResponseUtil.haltError(response, HttpStatus.SC_UNPROCESSABLE_ENTITY,
+                        new ApiError(ErrorCodes.QUESTION_IS_READONLY, msg));
             }
 
             User operatorUser = handle.attach(UserDao.class).findUserByGuid(operatorGuid)
@@ -112,7 +114,7 @@ public class CreateUserActivityUploadRoute extends ValidatedJsonInputRoute<Creat
         if (result.isExceededSize()) {
             String msg = "File size exceeded maximum of " + service.getMaxFileSizeBytes() + " bytes";
             LOG.warn(msg);
-            throw ResponseUtil.haltError(response, 422, new ApiError(ErrorCodes.NOT_SUPPORTED, msg));
+            throw ResponseUtil.haltError(response, HttpStatus.SC_UNPROCESSABLE_ENTITY, new ApiError(ErrorCodes.NOT_SUPPORTED, msg));
         }
 
         FileUpload upload = result.getFileUpload();
