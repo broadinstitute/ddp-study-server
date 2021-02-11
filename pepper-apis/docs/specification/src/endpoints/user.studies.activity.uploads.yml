@@ -49,7 +49,7 @@ post:
             fileSize:
               type: integer
               minimum: 1
-              description: Size of the file, in bytes (subject to a limit such as 2MB)
+              description: Size of the file, in bytes. The server may limit the maximum size of uploaded files.
             mimeType:
               type: string
               maxLength: 255
