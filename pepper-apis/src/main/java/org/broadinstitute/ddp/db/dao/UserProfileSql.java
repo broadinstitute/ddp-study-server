@@ -73,6 +73,13 @@ public interface UserProfileSql extends SqlObject {
     @SqlUpdate("update user_profile set last_name = :lastName where user_id = :userId")
     int updateLastName(@Bind("userId") long userId, @Bind("lastName") String lastName);
 
+    @SqlUpdate("update user_profile up join user u on u.user_id=up.user_id"
+               + " set up.first_name=:firstName, up.last_name=:lastName"
+               + " where u.guid=:userGuid")
+    int updateFirstAndLastNameByUserGuid(@Bind("userGuid") String userGuid,
+                                         @Bind("firstName") String firstName,
+                                         @Bind("lastName") String lastName);
+
     @SqlUpdate("update user_profile set do_not_contact = :doNotContact where user_id = :userId")
     int updateDoNotContact(@Bind("userId") long userId, @Bind("doNotContact") Boolean doNotContact);
 
