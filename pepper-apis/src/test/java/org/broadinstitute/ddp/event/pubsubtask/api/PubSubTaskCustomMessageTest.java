@@ -22,15 +22,16 @@ import static org.broadinstitute.ddp.event.pubsubtask.impl.updateprofile.UpdateP
 import static org.broadinstitute.ddp.event.pubsubtask.impl.updateprofile.UpdateProfileConstants.ATTR_STUDY_GUID;
 import static org.broadinstitute.ddp.event.pubsubtask.impl.updateprofile.UpdateProfileConstants.ATTR_USER_ID;
 import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.mock;
 
 import java.util.Properties;
 
 
+import com.google.cloud.pubsub.v1.AckReplyConsumer;
 import com.google.gson.Gson;
 import com.google.pubsub.v1.ProjectSubscriptionName;
 import com.google.pubsub.v1.PubsubMessage;
 import org.broadinstitute.ddp.event.pubsubtask.PubSubTaskTestUtil;
-import org.broadinstitute.ddp.event.pubsubtask.PubSubTaskTestUtil.TestAckReplyConsumer;
 import org.broadinstitute.ddp.util.GsonUtil;
 import org.junit.Test;
 
@@ -56,7 +57,7 @@ public class PubSubTaskCustomMessageTest {
         var message = buildMessage(TestProcessor1.TEST_TASK_1,
                 format("{'%s':'%s', '%s':'%s', '%s':'%s'}",
                         EMAIL, TEST_EMAIL, EDUCATION, TEST_EDUCATION, MARITAL_STATUS, TEST_MARITAL_STATUS), true);
-        pubSubTaskReceiver.receiveMessage(message, new TestAckReplyConsumer());
+        pubSubTaskReceiver.receiveMessage(message, mock(AckReplyConsumer.class));
 
         PubSubTask pubSubTask = testResultSender.getPubSubTaskResult().getPubSubTask();
 
@@ -91,7 +92,7 @@ public class PubSubTaskCustomMessageTest {
         init();
         var message = buildMessage(TestProcessor2.TEST_TASK_2,
                 format("{'%s':'%s', '%s':'%s'}", EMAIL, TEST_EMAIL, EDUCATION, TEST_EDUCATION), true);
-        pubSubTaskReceiver.receiveMessage(message, new TestAckReplyConsumer());
+        pubSubTaskReceiver.receiveMessage(message, mock(AckReplyConsumer.class));
 
         PubSubTask pubSubTask = testResultSender.getPubSubTaskResult().getPubSubTask();
 

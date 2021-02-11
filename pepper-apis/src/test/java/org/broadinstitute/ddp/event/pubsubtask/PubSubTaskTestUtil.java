@@ -7,7 +7,6 @@ import static org.broadinstitute.ddp.event.pubsubtask.impl.updateprofile.UpdateP
 import static org.broadinstitute.ddp.event.pubsubtask.impl.updateprofile.UpdateProfileConstants.TASK_TYPE__UPDATE_PROFILE;
 
 
-import com.google.cloud.pubsub.v1.AckReplyConsumer;
 import com.google.protobuf.ByteString;
 import com.google.pubsub.v1.PubsubMessage;
 import org.broadinstitute.ddp.event.pubsubtask.api.PubSubTask;
@@ -51,17 +50,6 @@ public class PubSubTaskTestUtil {
                     .putAttributes(ATTR_STUDY_GUID, TEST_STUDY_GUID);
         }
         return messageBuilder.build();
-    }
-
-    public static class TestAckReplyConsumer implements AckReplyConsumer {
-
-        @Override
-        public void ack() {
-        }
-
-        @Override
-        public void nack() {
-        }
     }
 
     public static class TestResultSender implements ResultSender {

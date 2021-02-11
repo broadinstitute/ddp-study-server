@@ -14,14 +14,15 @@ import static org.broadinstitute.ddp.event.pubsubtask.PubSubTaskTestUtil.buildMe
 import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskResult.PubSubTaskResultType.ERROR;
 import static org.broadinstitute.ddp.event.pubsubtask.impl.updateprofile.UpdateProfileConstants.TASK_TYPE__UPDATE_PROFILE;
 import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.mock;
 
 import java.util.Map;
 
 
+import com.google.cloud.pubsub.v1.AckReplyConsumer;
 import com.google.gson.Gson;
 import com.google.pubsub.v1.ProjectSubscriptionName;
 import org.broadinstitute.ddp.event.pubsubtask.PubSubTaskTestUtil;
-import org.broadinstitute.ddp.event.pubsubtask.PubSubTaskTestUtil.TestAckReplyConsumer;
 import org.broadinstitute.ddp.event.pubsubtask.PubSubTaskTestUtil.TestResultSender;
 import org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskReceiver;
 import org.broadinstitute.ddp.util.GsonUtil;
@@ -66,7 +67,7 @@ public class PubSubTaskUpdateProfileMessageTest {
         init();
         var message = buildMessage(TASK_TYPE__UPDATE_PROFILE, "", true);
 
-        pubSubTaskReceiver.receiveMessage(message, new TestAckReplyConsumer());
+        pubSubTaskReceiver.receiveMessage(message, mock(AckReplyConsumer.class));
 
         assertEquals(4, testResultSender.getPubSubTaskResult().getPubSubTask().getAttributes().size());
         assertEquals("", testResultSender.getPubSubTaskResult().getPubSubTask().getPayloadJson());
@@ -80,7 +81,7 @@ public class PubSubTaskUpdateProfileMessageTest {
         var message = buildMessage(TASK_TYPE__UPDATE_PROFILE,
                 format("{'%s':'%s', '%s':'%s', '%s':'%s'}",
                         EMAIL, TEST_EMAIL, FIRST_NAME, TEST_FIRST_NAME, LAST_NAME, TEST_LAST_NAME), buildValidMessage);
-        pubSubTaskReceiver.receiveMessage(message, new TestAckReplyConsumer());
+        pubSubTaskReceiver.receiveMessage(message, mock(AckReplyConsumer.class));
     }
 
     private void init() {
