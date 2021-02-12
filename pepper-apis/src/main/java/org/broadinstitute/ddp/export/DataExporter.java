@@ -723,7 +723,7 @@ public class DataExporter {
         var uploadDao = handle.attach(FileUploadDao.class);
         Map<Long, List<FileRecord>> participantIdToFiles = new HashMap<>();
         Set<Long> participantIds = participants.stream().map(p -> p.getUser().getId()).collect(Collectors.toSet());
-        try (var stream = uploadDao.findVerifiedAndAssignedUploadsForParticipants(studyId, participantIds)) {
+        try (var stream = uploadDao.findVerifiedAndAssociatedUploadsForParticipants(studyId, participantIds)) {
             stream.forEach(upload -> {
                 long key = upload.getParticipantUserId();
                 String bucket = fileService.getBucketForUpload(upload);

@@ -184,7 +184,7 @@ public class FileUploadService {
      *
      * @param handle            the database handle
      * @param studyId           the study that participant is in
-     * @param participantUserId the participant who this upload will be assigned to
+     * @param participantUserId the participant who this upload will be associated to
      * @param upload            the file upload
      * @return check result
      */
@@ -233,7 +233,7 @@ public class FileUploadService {
 
     /**
      * Remove file uploads that are older than the given timestamp and is not used. And unused file upload is one that
-     * is either not verified or is not assigned/associated with any file answers.
+     * is either not verified or is not associated with any file answers.
      *
      * @param handle             the database handle
      * @param olderThanTimestamp look for authorized uploads older than this timestamp
@@ -248,7 +248,7 @@ public class FileUploadService {
         int batchSize = removalBatchSize != null ? removalBatchSize : DEFAULT_BATCH_SIZE;
         while (true) {
             ArrayDeque<FileUpload> queue;
-            try (var stream = uploadDao.findUnverifiedOrUnassignedUploads(olderThanTimestamp, offset, batchSize)) {
+            try (var stream = uploadDao.findUnverifiedOrUnassociatedUploads(olderThanTimestamp, offset, batchSize)) {
                 queue = stream.collect(Collectors.toCollection(ArrayDeque::new));
             }
             if (queue.isEmpty()) {

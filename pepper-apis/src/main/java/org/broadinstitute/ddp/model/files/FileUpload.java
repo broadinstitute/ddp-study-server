@@ -118,8 +118,8 @@ public class FileUpload {
 
     /**
      * Returns whether file upload is verified, i.e. if file upload meets criteria such as being uploaded, matches
-     * reported file size, etc. Note that currently verification is only performed when user attempts to assign a file
-     * upload with an answer.
+     * reported file size, etc. Note that currently verification is only performed when user attempts to associate a
+     * file upload with an answer.
      */
     public boolean isVerified() {
         return isVerified;

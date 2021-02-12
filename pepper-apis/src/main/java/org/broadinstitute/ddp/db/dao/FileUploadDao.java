@@ -87,7 +87,7 @@ public interface FileUploadDao extends SqlObject {
             + "   and (f.is_verified is false or f.file_upload_id not in (select file_upload_id from file_answer))"
             + " order by f.file_upload_id limit :limit offset :offset")
     @RegisterConstructorMapper(FileUpload.class)
-    Stream<FileUpload> findUnverifiedOrUnassignedUploads(
+    Stream<FileUpload> findUnverifiedOrUnassociatedUploads(
             @Bind("ts") Instant olderThanTimestamp,
             @Bind("offset") int offset,
             @Bind("limit") int limit);
@@ -101,7 +101,7 @@ public interface FileUploadDao extends SqlObject {
             + "   and f.study_id = :studyId"
             + " order by f.participant_user_id, f.file_upload_id")
     @RegisterConstructorMapper(FileUpload.class)
-    Stream<FileUpload> findVerifiedAndAssignedUploadsForParticipants(
+    Stream<FileUpload> findVerifiedAndAssociatedUploadsForParticipants(
             @Bind("studyId") long studyId,
             @BindList(value = "userIds", onEmpty = EmptyHandling.NULL) Iterable<Long> participantUserIds);
 

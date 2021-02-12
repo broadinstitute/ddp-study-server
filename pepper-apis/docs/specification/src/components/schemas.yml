@@ -419,7 +419,7 @@ FileInfo:
   nullable: true
   description: |
     Description of the file uploaded. This can be `null` if no uploaded file
-    is assigned or associated with the answer.
+    is associated with the answer.
   required:
     - fileName
     - fileSize
@@ -490,8 +490,8 @@ AnswerSubmission.File:
           nullable: true
           description: |
             File upload guid provided by server when upload URL was requested. If this
-            answer currently has a file upload assigned, then submitting a `null` value
-            will unassign it and the uploaded file will subsequently get deleted.
+            answer is currently associated with a file upload, then submitting a `null`
+            value will unassociate it and the uploaded file will subsequently get deleted.
 AnswerSubmission.Numeric.Integer:
   allOf:
     - $ref: '../pepper.yml#/components/schemas/AnswerSubmission'

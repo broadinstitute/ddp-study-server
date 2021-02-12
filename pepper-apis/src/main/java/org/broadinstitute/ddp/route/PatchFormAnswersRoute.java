@@ -663,15 +663,15 @@ public class PatchFormAnswersRoute implements Route {
                         "File has not been uploaded yet"));
             case OWNER_MISMATCH:
                 throw ResponseUtil.haltError(response, 400, new ApiError(ErrorCodes.FILE_ERROR,
-                        "File is not assignable to participant"));
+                        "File is not owned by participant and cannot be associated with answer"));
             case QUARANTINED:
                 throw ResponseUtil.haltError(response, 400, new ApiError(ErrorCodes.FILE_ERROR,
-                        "File is infected and cannot be assigned"));
+                        "File is infected and cannot be associated with answer"));
             case SIZE_MISMATCH:
                 throw ResponseUtil.haltError(response, 400, new ApiError(ErrorCodes.FILE_ERROR,
                         "File uploaded size does not match expected size"));
             case OK:
-                LOG.info("File upload with id {} is uploaded and assignable to participant", uploadId);
+                LOG.info("File upload with id {} is uploaded and can be associated with participant's answer", uploadId);
                 break;
             default:
                 throw new DDPException("Unhandled file check result: " + verifyResult);
