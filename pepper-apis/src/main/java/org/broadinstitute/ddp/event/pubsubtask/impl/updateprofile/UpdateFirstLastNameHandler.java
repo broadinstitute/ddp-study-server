@@ -1,5 +1,6 @@
 package org.broadinstitute.ddp.event.pubsubtask.impl.updateprofile;
 
+import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskException.Severity.WARN;
 import static org.broadinstitute.ddp.event.pubsubtask.impl.updateprofile.UpdateProfileConstants.FIELD_FIRST_NAME;
 import static org.broadinstitute.ddp.event.pubsubtask.impl.updateprofile.UpdateProfileConstants.FIELD_LAST_NAME;
 
@@ -40,7 +41,7 @@ public class UpdateFirstLastNameHandler {
     }
 
     private void throwUserNotFoundException(String userGuid) {
-        throw new PubSubTaskException("User profile is not found for guid=" + userGuid);
+        throw new PubSubTaskException("User profile is not found for guid=" + userGuid, WARN);
     }
 
     private void syncToElastic(Handle handle, String userGuid) {

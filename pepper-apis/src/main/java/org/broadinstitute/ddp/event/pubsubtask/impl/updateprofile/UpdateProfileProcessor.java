@@ -2,6 +2,7 @@ package org.broadinstitute.ddp.event.pubsubtask.impl.updateprofile;
 
 import static java.lang.String.format;
 import static org.apache.commons.lang.StringUtils.isBlank;
+import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskException.Severity.WARN;
 import static org.broadinstitute.ddp.event.pubsubtask.impl.updateprofile.UpdateProfileConstants.ATTR_PARTICIPANT_GUID;
 import static org.broadinstitute.ddp.event.pubsubtask.impl.updateprofile.UpdateProfileConstants.ATTR_USER_ID;
 
@@ -37,10 +38,10 @@ public class UpdateProfileProcessor extends PubSubTaskProcessorAbstract {
         String userId = pubSubTask.getAttributes().get(ATTR_USER_ID);
         if (isBlank(participantGuid) || isBlank(userId)) {
             throw new PubSubTaskException(format("Error processing taskType=%s - some attributes are not specified: "
-                            + "participantGuid=%s, userId=%s", pubSubTask.getTaskType(), participantGuid, userId), pubSubTask);
+                            + "participantGuid=%s, userId=%s", pubSubTask.getTaskType(), participantGuid, userId), WARN);
         }
         if (isBlank(pubSubTask.getPayloadJson())) {
-            throw new PubSubTaskException("Error processing taskType=%s: empty payload", pubSubTask);
+            throw new PubSubTaskException("Error processing taskType=%s: empty payload", WARN);
         }
     }
 

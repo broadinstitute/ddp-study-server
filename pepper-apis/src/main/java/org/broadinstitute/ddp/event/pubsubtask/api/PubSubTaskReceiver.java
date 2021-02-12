@@ -2,6 +2,7 @@ package org.broadinstitute.ddp.event.pubsubtask.api;
 
 import static java.lang.String.format;
 import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTask.ATTR_TASK_TYPE;
+import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskException.Severity.WARN;
 import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskLogUtil.errorMsg;
 import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskLogUtil.infoMsg;
 import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskResult.PubSubTaskResultType.ERROR;
@@ -75,7 +76,7 @@ public class PubSubTaskReceiver implements MessageReceiver {
         var pubSubTaskDescriptor = pubSubTaskProcessorFactory.getPubSubTaskDescriptor(taskType);
         if (pubSubTaskDescriptor == null) {
             throw new PubSubTaskException(format("PubSubTask message [id=%s] has unknown taskType=%s", messageId, taskType),
-                    pubSubTask);
+                    WARN, pubSubTask);
         }
 
         return pubSubTask;
@@ -100,7 +101,13 @@ public class PubSubTaskReceiver implements MessageReceiver {
             consumer.nack();
         } else {
             consumer.ack();
-            LOG.error(errorMsg(e.getMessage()), e);
+
+            if (e instanceof PubSubTaskException && ((PubSubTaskException)e).getSeverity() == WARN) {
+                LOG.warn(errorMsg(e.getMessage()));
+            } else {
+                LOG.error(errorMsg(e.getMessage()), e);
+            }
+
             if (e instanceof DDPException) {
                 sendResponse(new PubSubTaskResult(ERROR, e.getMessage(),
                         e instanceof PubSubTaskException && ((PubSubTaskException) e).getPubSubTask() != null
