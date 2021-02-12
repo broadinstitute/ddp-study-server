@@ -38,5 +38,10 @@ public class FileRecord {
         this.uploadedAt = upload.getUploadedAt() != null ? upload.getUploadedAt().toString() : null;
         this.scannedAt = upload.getScannedAt() != null ? upload.getScannedAt().toString() : null;
         this.scanResult = upload.getScanResult();
+        // For extra security, do not export file location if file doesn't have a clean scan result.
+        if (this.scanResult != FileScanResult.CLEAN) {
+            this.bucket = null;
+            this.blobName = null;
+        }
     }
 }

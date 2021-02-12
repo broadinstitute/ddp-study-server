@@ -571,7 +571,8 @@ public class DataExporterTest extends TxnAwareBaseTest {
         assertEquals(1, result.size());
         String actualJson = result.get(TEST_USER_GUID);
         assertTrue(actualJson.contains("invite123"));
-        assertTrue(actualJson.contains("file1") && actualJson.contains("blob1") && actualJson.contains("file.pdf"));
+        assertTrue("should export file with no file location", actualJson.contains("file1")
+                && actualJson.contains("\"bucket\":null") && actualJson.contains("\"blobName\":null"));
 
         // Check kit-related attributes.
         assertTrue(actualJson.contains("\"attributes\""));
@@ -753,7 +754,7 @@ public class DataExporterTest extends TxnAwareBaseTest {
                         Instant.ofEpochMilli(timestamp + 1),
                         Instant.ofEpochMilli(timestamp + 2),
                         Instant.ofEpochMilli(timestamp + 3),
-                        FileScanResult.CLEAN))));
+                        FileScanResult.INFECTED))));
 
                 Map<String, String> substitutions = Map.of(
                         I18nTemplateConstants.Snapshot.KIT_REQUEST_ID, "kit-1",
