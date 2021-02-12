@@ -72,7 +72,7 @@ public class JdbiActivityTest extends TxnAwareBaseTest {
         List<FormSectionDef> sections = Collections.emptyList();
         Template readonlyHint = Template.html("Please contact your organization");
         FormActivityDef form = new FormActivityDef(
-                FormType.GENERAL, activityCode, "v1", studyGuid, 1, 1, false,
+                FormType.GENERAL, null, activityCode, "v1", studyGuid, 1, 1, false,
                 names, titles, subtitles, descriptions, summaries,
                 readonlyHint, null, sections, null, null, null, false, false
         );

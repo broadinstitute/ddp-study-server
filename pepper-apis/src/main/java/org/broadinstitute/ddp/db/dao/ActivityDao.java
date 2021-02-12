@@ -45,17 +45,23 @@ public interface ActivityDao extends SqlObject {
     ActivitySql getActivitySql();
 
 
+    // Convenience helper for inserting activity without any nested activities.
+    default ActivityVersionDto insertActivity(FormActivityDef form, RevisionMetadata meta) {
+        return insertActivity(form, List.of(), meta);
+    }
+
     /**
      * Convenience method to create new form activity by inserting all its related data. A new revision will be created
      * from given metadata and used for insertions.
      *
-     * @param form the form activity definition
-     * @param meta the revision metadata
+     * @param form        the form activity definition
+     * @param nestedForms the list of nested activity definitions that the activity references
+     * @param meta        the revision metadata
      * @return activity version info
      */
-    default ActivityVersionDto insertActivity(FormActivityDef form, RevisionMetadata meta) {
+    default ActivityVersionDto insertActivity(FormActivityDef form, List<FormActivityDef> nestedForms, RevisionMetadata meta) {
         long revId = getJdbiRevision().insertStart(meta.getTimestamp(), meta.getUserId(), meta.getReason());
-        getFormActivityDao().insertActivity(form, revId);
+        getFormActivityDao().insertActivity(form, nestedForms, revId);
         return new ActivityVersionDto(form.getVersionId(), form.getActivityId(), form.getVersionTag(),
                 revId, meta.getTimestamp(), null);
     }

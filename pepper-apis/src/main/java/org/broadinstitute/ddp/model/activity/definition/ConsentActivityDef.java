@@ -66,6 +66,7 @@ public final class ConsentActivityDef extends FormActivityDef {
     ) {
         super(
                 FormType.CONSENT,
+                null,   // Currently, consents are not allowed to be nested activities.
                 activityCode,
                 versionTag,
                 studyGuid,
@@ -136,6 +137,11 @@ public final class ConsentActivityDef extends FormActivityDef {
         @Override
         protected Builder self() {
             return this;
+        }
+
+        @Override
+        public Builder setParentActivityCode(String parentActivityCode) {
+            throw new UnsupportedOperationException("Setting parent activity for consents is currently not allowed");
         }
 
         private Builder setConsentedExpr(String consentedExpr) {

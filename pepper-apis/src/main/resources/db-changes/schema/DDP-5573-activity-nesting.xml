@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="yufeng" id="20210212-activity-nesting-table">
+        <createTable tableName="activity_nesting">
+            <column name="activity_nesting_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="activity_nesting_pk"/>
+            </column>
+            <column name="parent_activity_id" type="bigint">
+                <constraints nullable="false"
+                             references="study_activity(study_activity_id)"
+                             foreignKeyName="activity_nesting_parent_activity_fk"/>
+            </column>
+            <column name="nested_activity_id" type="bigint">
+                <constraints nullable="false"
+                             references="study_activity(study_activity_id)"
+                             foreignKeyName="activity_nesting_nested_activity_fk"/>
+            </column>
+        </createTable>
+        <addUniqueConstraint tableName="activity_nesting"
+                             columnNames="parent_activity_id, nested_activity_id"
+                             constraintName="activity_nesting_parent_nested_uk"/>
+    </changeSet>
+
+</databaseChangeLog>

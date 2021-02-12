@@ -586,6 +586,33 @@ public class FormActivityDaoTest extends TxnAwareBaseTest {
     }
 
     @Test
+    public void testInsertActivity_nestedActivities() {
+        TransactionWrapper.useTxn(handle -> {
+            long millis = Instant.now().toEpochMilli();
+            String actCode = "ACT" + millis;
+            String nestedActCode = "NESTED_ACT" + millis;
+            var parent = FormActivityDef.generalFormBuilder(actCode, "v1", testData.getStudyGuid())
+                    .addName(new Translation("en", "parent activity"))
+                    .build();
+            var child = FormActivityDef.generalFormBuilder(nestedActCode, "v1", testData.getStudyGuid())
+                    .addName(new Translation("en", "nested activity"))
+                    .setParentActivityCode(actCode)
+                    .build();
+            long revId = handle.attach(JdbiRevision.class).insert(testData.getUserId(), millis, null, "testing");
+
+            handle.attach(FormActivityDao.class).insertActivity(parent, List.of(child), revId);
+            assertNotNull(parent.getActivityId());
+            assertNotNull(child.getActivityId());
+
+            Optional<Long> optParentActId = handle.attach(ActivitySql.class).findParentActivityId(child.getActivityId());
+            assertTrue("child activity should be associated with parent activity",
+                    optParentActId.isPresent() && optParentActId.get().equals(parent.getActivityId()));
+
+            handle.rollback();
+        });
+    }
+
+    @Test
     public void testFindDefByDtoAndVersion() {
         TransactionWrapper.useTxn(handle -> {
             FormSectionDef intro = new FormSectionDef(null, Arrays.asList(new ContentBlockDef(Template.text("intro"))));

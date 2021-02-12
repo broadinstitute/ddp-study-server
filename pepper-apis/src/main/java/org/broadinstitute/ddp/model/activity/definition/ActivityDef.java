@@ -31,6 +31,9 @@ public abstract class ActivityDef {
     @SerializedName("studyGuid")
     protected String studyGuid;
 
+    @SerializedName("parentActivityCode")
+    protected String parentActivityCode;
+
     @NotBlank
     @SerializedName("activityCode")
     protected String activityCode;
@@ -102,6 +105,7 @@ public abstract class ActivityDef {
 
     ActivityDef(
             ActivityType activityType,
+            String parentActivityCode,
             String activityCode,
             String versionTag,
             String studyGuid,
@@ -118,6 +122,7 @@ public abstract class ActivityDef {
             boolean hideExistingInstancesOnCreation
     ) {
         this.activityType = MiscUtil.checkNonNull(activityType, "activityType");
+        this.parentActivityCode = parentActivityCode;
         this.activityCode = MiscUtil.checkNotBlank(activityCode, "activityCode");
         this.versionTag = MiscUtil.checkNotBlank(versionTag, "versionTag");
         this.studyGuid = MiscUtil.checkNotBlank(studyGuid, "studyGuid");
@@ -158,6 +163,10 @@ public abstract class ActivityDef {
 
     public String getStudyGuid() {
         return studyGuid;
+    }
+
+    public String getParentActivityCode() {
+        return parentActivityCode;
     }
 
     public String getActivityCode() {
@@ -264,6 +273,7 @@ public abstract class ActivityDef {
      */
     protected abstract static class AbstractActivityBuilder<T extends AbstractActivityBuilder<T>> {
 
+        protected String parentActivityCode;
         protected String activityCode;
         protected String versionTag;
         protected String studyGuid;
@@ -309,6 +319,11 @@ public abstract class ActivityDef {
             activity.isFollowup = isFollowup;
             activity.hideExistingInstancesOnCreation = hideExistingInstancesOnCreation;
             activity.translatedSecondNames.addAll(secondNames);
+        }
+
+        public T setParentActivityCode(String parentActivityCode) {
+            this.parentActivityCode = parentActivityCode;
+            return self();
         }
 
         public T setActivityCode(String activityCode) {

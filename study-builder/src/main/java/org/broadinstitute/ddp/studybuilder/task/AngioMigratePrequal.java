@@ -118,7 +118,7 @@ public class AngioMigratePrequal implements CustomTask {
 
         Instant timestamp = ConfigUtil.getInstantIfPresent(cfg, "activityTimestamp");
         Config definition = activityBuilder.readDefinitionConfig(dataCfg.getString("prequalActivityFilepath"));
-        activityBuilder.insertActivity(handle, definition, timestamp);
+        activityBuilder.insertActivity(handle, definition, List.of(), timestamp);
     }
 
     private void addPrequalWorkflowTransitions(Handle handle, StudyDto studyDto) {
