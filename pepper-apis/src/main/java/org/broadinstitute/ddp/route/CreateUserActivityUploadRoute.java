@@ -114,7 +114,7 @@ public class CreateUserActivityUploadRoute extends ValidatedJsonInputRoute<Creat
         if (result.isExceededSize()) {
             String msg = "File size exceeded maximum of " + service.getMaxFileSizeBytes() + " bytes";
             LOG.warn(msg);
-            throw ResponseUtil.haltError(response, HttpStatus.SC_UNPROCESSABLE_ENTITY, new ApiError(ErrorCodes.NOT_SUPPORTED, msg));
+            throw ResponseUtil.haltError(response, HttpStatus.SC_BAD_REQUEST, new ApiError(ErrorCodes.BAD_PAYLOAD, msg));
         }
 
         FileUpload upload = result.getFileUpload();

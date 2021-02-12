@@ -64,6 +64,19 @@ public class CreateUserActivityUploadRouteTest extends IntegrationTestSuite.Test
     }
 
     @Test
+    public void testFileSizeExceeded() {
+        String stableId = act.getFileQuestion().getStableId();
+        long largeFileSize = Long.MAX_VALUE;
+        var payload = new CreateUserActivityUploadPayload(stableId, "file.pdf", largeFileSize, "application/pdf", false);
+        given().auth().oauth2(token)
+                .body(payload, ObjectMapperType.GSON)
+                .when().post(url)
+                .then().assertThat()
+                .statusCode(400).contentType(ContentType.JSON)
+                .body("code", equalTo(ErrorCodes.BAD_PAYLOAD));
+    }
+
+    @Test
     public void testNotFileQuestion() {
         String wrongStableId = act.getTextQuestion().getStableId();
         var payload = new CreateUserActivityUploadPayload(wrongStableId, "file.pdf", 123, "application/pdf", false);
