@@ -121,7 +121,7 @@ public class PubSubTaskCustomMessageTest {
         }
 
         @Override
-        protected void setResultCustomData(PubSubTask pubSubTask, PubSubTaskResult pubSubTaskResult) {
+        protected void addCustomDataToResult(PubSubTask pubSubTask, PubSubTaskResult pubSubTaskResult) {
         }
     }
 
@@ -134,7 +134,7 @@ public class PubSubTaskCustomMessageTest {
         }
 
         @Override
-        protected void setResultCustomData(PubSubTask pubSubTask, PubSubTaskResult pubSubTaskResult) {
+        protected void addCustomDataToResult(PubSubTask pubSubTask, PubSubTaskResult pubSubTaskResult) {
         }
     }
 

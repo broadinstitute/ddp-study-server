@@ -47,13 +47,22 @@ public abstract class PubSubTaskProcessorAbstract implements PubSubTaskProcessor
         LOG.info(infoMsg("PubSubTask processing COMPLETED: taskType={}, pubSubTaskResult={}"),
                 pubSubTask.getTaskType(), pubSubTaskResult);
 
-        setResultCustomData(pubSubTask, pubSubTaskResult);
-
+        addCustomDataToResult(pubSubTask, pubSubTaskResult);
         return pubSubTaskResult;
     }
 
     protected abstract void handleTask(PubSubTask pubSubTask);
 
-    protected void setResultCustomData(PubSubTask pubSubTask, PubSubTaskResult pubSubTaskResult) {
+    /**
+     * This method should be overridden in case if it needs to add to result attributes or
+     * payload some custom data (specific for a task type).
+     * By default in a {@link PubSubTaskResult}:
+     * <pre>
+     * - copied all attributes from {@link PubSubTask};
+     * - added attribute 'taskMessageId' containing ID of PubSubTask message;
+     * - created payload containing resultType and errorMessage (for result type ERROR).
+     * </pre>
+     */
+    protected void addCustomDataToResult(PubSubTask pubSubTask, PubSubTaskResult pubSubTaskResult) {
     }
 }
