@@ -12,6 +12,7 @@ import com.google.cloud.pubsub.v1.AckReplyConsumer;
 import com.google.cloud.pubsub.v1.MessageReceiver;
 import com.google.pubsub.v1.ProjectSubscriptionName;
 import com.google.pubsub.v1.PubsubMessage;
+import org.broadinstitute.ddp.exception.DDPException;
 import org.slf4j.Logger;
 
 /**
@@ -49,7 +50,7 @@ public class PubSubTaskReceiver implements MessageReceiver {
         try {
             pubSubTask = parseMessage(message);
             var pubSubTaskResult = processPubSubTask(pubSubTask);
-            if (pubSubTaskResult.getPubSubTaskResultPayload().getResultType() == ERROR) {
+            if (pubSubTaskResult.getResultType() == ERROR) {
                 consumer.nack();
             } else {
                 consumer.ack();
@@ -58,8 +59,10 @@ public class PubSubTaskReceiver implements MessageReceiver {
         } catch (Exception e) {
             consumer.ack();
             LOG.error(errorMsg(e.getMessage()), e);
-            if (pubSubTask != null) {
-                sendResponse(new PubSubTaskResult(ERROR, e.getMessage(), pubSubTask));
+            if (e instanceof DDPException) {
+                sendResponse(new PubSubTaskResult(ERROR, e.getMessage(),
+                        e instanceof PubSubTaskException && ((PubSubTaskException) e).getPubSubTask() != null
+                                ? ((PubSubTaskException) e).getPubSubTask() : pubSubTask));
             }
         }
     }

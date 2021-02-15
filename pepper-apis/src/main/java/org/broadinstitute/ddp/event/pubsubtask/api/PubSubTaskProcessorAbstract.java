@@ -3,6 +3,7 @@ package org.broadinstitute.ddp.event.pubsubtask.api;
 import static java.lang.String.format;
 import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskLogUtil.errorMsg;
 import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskLogUtil.infoMsg;
+import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskResult.PubSubTaskResultType.ERROR;
 import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskResult.PubSubTaskResultType.SUCCESS;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -37,6 +38,7 @@ public abstract class PubSubTaskProcessorAbstract implements PubSubTaskProcessor
             } else {
                 LOG.warn(errorMsg(format("PubSubTask processing FAILED, will retry: taskType=%s", pubSubTask.getTaskType())));
             }
+            pubSubTaskResultType = ERROR;
             errorMessage = e.getMessage();
         }
 
@@ -45,8 +47,13 @@ public abstract class PubSubTaskProcessorAbstract implements PubSubTaskProcessor
         LOG.info(infoMsg("PubSubTask processing COMPLETED: taskType={}, pubSubTaskResult={}"),
                 pubSubTask.getTaskType(), pubSubTaskResult);
 
+        setResultCustomData(pubSubTask, pubSubTaskResult);
+
         return pubSubTaskResult;
     }
 
     protected abstract void handleTask(PubSubTask pubSubTask);
+
+    protected void setResultCustomData(PubSubTask pubSubTask, PubSubTaskResult pubSubTaskResult) {
+    }
 }
