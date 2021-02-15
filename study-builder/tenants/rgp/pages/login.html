@@ -1,330 +1,2282 @@
 <!DOCTYPE html>
 <html>
-<head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0"
+    />
+
     <title>Rare Genomes Project</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
-    <link href="https://fonts.googleapis.com/css?family=Roboto:400,300,300italic,400italic,700,700italic|Source+Serif+Pro:600&display=swap" rel="stylesheet" type="text/css">
-</head>
-<body>
 
-<!--[if IE 8]>
-<script src="//cdnjs.cloudflare.com/ajax/libs/ie8/0.2.5/ie8.js"></script>
-<![endif]-->
+    <link rel="preconnect" href="https://fonts.gstatic.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,300;0,400;0,500;1,500&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css"
+      integrity="sha384-B0vP5xmATw1+K9KRQjQERJvTumQW0nPEzvF6L/Z6nronJ3oUOFUFpCjEUQouq2+l"
+      crossorigin="anonymous"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.3.0/font/bootstrap-icons.css"
+    />
 
-<!--[if lte IE 9]>
-<script src="https://cdn.auth0.com/js/base64.js"></script>
-<script src="https://cdn.auth0.com/js/es5-shim.min.js"></script>
-<![endif]-->
+    <style>
+      /*
+       * Transitions
+       */
+      .nav-link {
+        transition: color 0.3s ease-in-out, background-color 0.3s ease-in-out;
+      }
 
-<script src="https://cdn.auth0.com/js/lock/11.28.0/lock.min.js"></script>
+      body {
+        display: flex;
+        flex-flow: column nowrap;
 
-<style type="text/css">
-    body {
+        height: 100vh;
+
+        background-color: #f5f5f5;
+
         font-family: 'Roboto', sans-serif;
-    }
+        font-weight: 400;
+        font-style: normal;
+      }
 
-    .auth0-lock.auth0-lock .auth0-lock-overlay {
+      a {
+        cursor: pointer;
+      }
+
+      a:hover {
+        text-decoration: none;
+      }
+
+      .mt-25 {
+        margin-top: 25px;
+      }
+
+      .mt-50 {
+        margin-top: 50px;
+      }
+
+      .btn-icon {
+        display: flex;
+        align-items: center;
+      }
+
+      .btn-icon svg {
+        margin-right: 0.255em;
+      }
+
+      .path {
+        display: none;
+      }
+
+      .path--visible {
+        display: block;
+      }
+
+      .fixed {
+        width: 100vw;
+
+        position: fixed;
+        top: 0;
+        left: 0;
+
+        z-index: 100;
+      }
+
+      .banner {
+        padding: 21px 1rem;
+
+        background-color: #0ea7b5;
+      }
+
+      .banner__text {
+        margin: 0;
+
+        font-size: 1.1rem;
+        line-height: 1.1;
+        font-weight: 500;
+        text-align: center;
+        color: #fff;
+      }
+
+      .banner__link {
+        color: #0c457d;
+      }
+
+      .banner__link:hover {
+        color: #e8702a;
+      }
+
+      .header {
+        background-color: transparent;
+      }
+
+      .header--white {
+        background-color: #ffffff;
+        box-shadow: 3px 3px 10px rgb(0, 0, 0, 0.1);
+
+        transition: none;
+      }
+
+      .header--white .navbar-brand {
+        background-image: url('https://storage.googleapis.com/ddp-rgp-assets/images/rgp-logo.svg');
+      }
+
+      .header--white .nav-link {
+        color: #0c457d;
+      }
+
+      .header--white .nav-link-get-started {
+        color: #e8702a;
+      }
+
+      .header--white .navbar-toggle .bar {
+        background-color: #e8702a;
+      }
+
+      .navbar {
+        padding: 20px 50px;
+      }
+
+      .navbar-brand {
+        width: 117px;
+        height: 50px;
+
+        margin: 0;
+        margin-right: auto;
+
+        background-image: url('https://storage.googleapis.com/ddp-rgp-assets/images/rgp-logo-inverted.svg');
+        background-repeat: no-repeat;
+        background-position: center;
+        background-size: cover;
+      }
+
+      .navbar-toggle {
+        display: none;
+
+        padding: 9px 10px;
+
+        position: absolute;
+        top: 23px;
+        right: 15px;
+
+        background-color: transparent;
+        border: 1px solid transparent;
+      }
+
+      .navbar-toggle .bar {
+        display: block;
+
+        width: 22px;
+        height: 2px;
+
+        background-color: #fff;
+      }
+
+      .navbar-toggle .bar:not(:last-child) {
+        margin-bottom: 4px;
+      }
+
+      .navbar-nav {
+        margin-left: auto;
+      }
+
+      .nav-item:not(:last-child) {
+        margin-right: 40px;
+      }
+
+      .nav-item-auth {
+        position: relative;
+      }
+
+      .dropdown-menu {
+        min-width: 160px;
+
+        padding: 5px 0;
+
+        border: 1px solid rgba(0, 0, 0, 0.15);
+        border-radius: 0;
+        box-shadow: 0 8px 16px 0 rgba(0, 0, 0, 0.2);
+        background-color: #fff;
+      }
+
+      .dropdown-item {
+        padding: 10px 20px;
+
+        font-size: 0.95rem;
+        white-space: nowrap;
+        color: #000;
+        cursor: pointer;
+      }
+
+      .dropdown-item:hover {
+        background-color: #f1f1f1;
+
+        color: #000;
+      }
+
+      .nav-link {
+        padding: 0 !important;
+
+        border: none;
+        outline: none;
+        box-shadow: none !important;
+
+        font-size: 1.1rem;
+        font-weight: 500;
+        color: #fff;
+      }
+
+      .nav-link:hover {
+        color: #0ea7b5;
+      }
+
+      .nav-link-auth {
+        position: absolute;
+        right: 0;
+        bottom: -18px;
+
+        font-size: 15px;
+        font-weight: 400;
+      }
+
+      .page-header__background {
+        padding-top: 61px;
+
+        color: #fff;
+      }
+
+      .page-header__background--orange {
+        background-color: #e8702a;
+      }
+
+      .page-header__title {
+        margin: 104px 0 25px;
+
+        font-family: 'Roboto', sans-serif;
+        font-size: 2.2rem;
+        font-weight: 300;
+      }
+
+      .page-layout {
+        padding: 0 100px 1px;
+      }
+
+      .row.page-layout {
+        margin: 0;
+      }
+
+      .wrapper {
+        margin: 0 100px;
+
+        background-color: #fff;
+      }
+
+      .container {
+        margin-top: 50px;
+        margin-bottom: 75px;
+        padding-bottom: 100px;
+      }
+
+      .paragraph {
+        padding-bottom: 10px;
+
+        font-size: 1rem;
+        line-height: 1.5rem;
+        font-weight: 300;
+      }
+
+      .md-input-wrapper {
+        margin: 1em 0;
+        padding-bottom: 6px;
+
+        position: relative;
+      }
+
+      .md-input {
+        display: block;
+
+        width: 100%;
+
+        padding: 0;
+        padding-bottom: 2px;
+
+        border: none;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+
+        transition: border-color 0.4s cubic-bezier(0.25, 0.8, 0.25, 1),
+          border-size 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+      }
+
+      .md-input-error {
+        border-color: #f44336;
+      }
+
+      .md-input::placeholder {
+        color: transparent;
+      }
+
+      .md-input:focus {
+        outline: none;
+
+        border-bottom: 2px solid #19457d;
+      }
+
+      .md-input-error:focus {
+        border-color: #f44336;
+      }
+
+      .md-input:focus ~ .md-input-label,
+      .md-input:not(:placeholder-shown) ~ .md-input-label {
+        transform: translateY(-1.35em) scale(0.75);
+
+        color: #19457d;
+      }
+
+      .md-input-error ~ .md-input-label,
+      .md-input-error:focus ~ .md-input-label,
+      .md-input-error:not(:placeholder-shown) ~ .md-input-label {
+        color: #f44336;
+      }
+
+      .md-input-label {
+        position: absolute;
+        top: 0;
+        left: 0;
+
+        font-weight: 400;
+        font-size: 1rem;
+
+        cursor: text;
+        transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1),
+          top 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+        transform-origin: left;
+        transform: translate3d(0, 0, 0);
+      }
+
+      .md-input-error ~ .md-input-helper-text {
+        color: #f44336;
+      }
+
+      .md-input-helper-text {
+        font-size: 75%;
+      }
+
+      .md-input-helper-text--error {
+        display: none;
+      }
+
+      .md-input-error ~ .md-input-helper-text--error {
+        display: block;
+      }
+
+      .comment-link {
+        display: block;
+
+        color: #337ab7;
+        text-decoration: none;
+        font-size: 0.85rem;
+        font-style: italic;
+      }
+
+      .comment-link:hover {
+        color: #23527c;
+      }
+
+      .button {
+        min-width: 88px;
+
+        margin: 0;
+        padding: 8px 20px;
+
+        box-shadow: 0 3px 1px -2px rgb(0, 0, 0, 0.2),
+          0 2px 2px 0 rgb(0, 0, 0, 0.14), 0 1px 5px 0 rgb(0, 0, 0, 0.12);
+        border-radius: 999px;
+        border: none;
+
+        white-space: nowrap;
+        font-weight: 500;
+        text-align: center;
+        line-height: 36px;
+
+        cursor: pointer;
+      }
+
+      .button-primary {
+        background-color: #19457d;
+
+        color: #ffffff;
+      }
+
+      .form-footer {
+        display: flex;
+
+        margin-top: 50px;
+      }
+
+      .form-footer--sign-up {
+        justify-content: space-between;
+      }
+
+      .form-footer--password-reset {
+        justify-content: flex-end;
+      }
+
+      .footer {
+        display: flex;
+        align-items: flex-start;
+
+        margin-top: auto;
+        padding: 50px 100px;
+
+        background-color: #f5f5f5;
+      }
+
+      .footer__logo {
+        width: 117px;
+        height: 50px;
+
+        margin-right: 10rem;
+      }
+
+      .footer__links-list {
+        display: flex;
+        align-items: center;
+
+        margin: 0;
+        padding: 0;
+
+        list-style: none;
+      }
+
+      .footer__links-list li:not(:last-child) {
+        margin-right: 40px;
+      }
+
+      .footer__links-list li a {
+        color: #0c457d;
+        font-size: 1rem;
+        font-weight: 500;
+      }
+
+      .footer__links-list li a:hover {
+        color: #0ea7b5;
+      }
+
+      .footer__contacts {
+        display: flex;
+        align-items: flex-start;
+
+        margin-top: 2rem;
+      }
+
+      .footer__contacts-side {
+        flex: 1;
+      }
+
+      .footer__contacts-side p {
+        margin: 0;
+
+        font-size: 1rem;
+        font-weight: 300;
+      }
+
+      .footer__contacts-side p a,
+      .footer__contacts-side p a:visited,
+      .footer__contacts-side p a:hover {
+        color: #000000;
+      }
+
+      @media only screen and (max-width: 1240px) {
+        .nav-item:not(:last-child) {
+          margin-right: 20px;
+        }
+
+        .nav-link {
+          font-size: 1rem;
+        }
+      }
+
+      @media only screen and (max-width: 1200px) {
+        .wrapper {
+          margin: 0 50px;
+        }
+
+        .footer {
+          padding: 50px;
+        }
+      }
+
+      @media only screen and (max-width: 1024px) {
+        html {
+          font-size: 15px;
+        }
+
+        .navbar-brand {
+          width: 90px;
+          background-size: contain;
+        }
+
+        .nav-link {
+          font-size: 0.9rem;
+        }
+
+        .page-layout {
+          padding: 0 50px;
+        }
+      }
+
+      @media only screen and (max-width: 992px) {
+        .navbar {
+          padding: 15px;
+        }
+
+        .navbar-toggle {
+          display: block;
+        }
+
+        .navbar-collapse {
+          margin: 15px -15px -15px -15px;
+
+          background-color: white;
+          box-shadow: 0 3px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .navbar-nav {
+          padding: 24px 15px;
+        }
+
+        .nav-item:not(:last-child) {
+          margin-right: 0;
+          margin-bottom: 14px;
+        }
+
+        .nav-item {
+          display: flex;
+          justify-content: flex-end;
+        }
+
+        .nav-item-auth {
+          flex-flow: column nowrap;
+          align-items: flex-end;
+        }
+
+        .dropdown {
+          display: flex;
+          flex-flow: column nowrap;
+          align-items: flex-end;
+        }
+
+        .dropdown-menu {
+          margin-top: 8px;
+          padding: 0;
+
+          border: none;
+          box-shadow: none;
+        }
+
+        .dropdown-item {
+          padding: 3px 13px 3px 0;
+
+          color: #337ab7;
+          text-align: right;
+          font-weight: 300;
+          font-size: 1rem;
+        }
+
+        .dropdown-item:hover {
+          background-color: transparent;
+
+          color: #337ab7;
+        }
+
+        .nav-link {
+          color: #0c457d;
+          font-size: 1rem;
+        }
+
+        .nav-link-get-started {
+          color: #e8702a;
+        }
+
+        .nav-link-auth {
+          margin-top: 12px;
+
+          position: static;
+
+          font-weight: 500;
+        }
+
+        .footer {
+          flex-flow: column nowrap;
+        }
+
+        .footer__links-list {
+          margin-top: 2rem;
+        }
+      }
+
+      @media only screen and (max-width: 768px) {
+        .page-layout {
+          padding: 0 35px;
+
+          text-align: center;
+        }
+
+        .wrapper {
+          margin: 0 35px;
+        }
+
+        .footer {
+          padding: 50px 35px;
+        }
+      }
+
+      @media only screen and (max-width: 660px) {
+        .footer__links-list {
+          flex-flow: column nowrap;
+          align-items: flex-start;
+
+          margin-top: 1.5rem;
+        }
+
+        .footer__links-list li:not(:last-child) {
+          margin-right: 0;
+          margin-bottom: 1rem;
+        }
+
+        .footer__contacts {
+          flex-flow: column nowrap;
+
+          margin-top: 1.5rem;
+        }
+      }
+
+      @media only screen and (max-width: 600px) {
+        .form-footer {
+          margin-top: 10px;
+        }
+
+        .form-footer--sign-up {
+          flex-direction: column-reverse;
+          align-items: flex-start;
+        }
+
+        .form-footer--sign-up button {
+          margin-left: auto;
+        }
+      }
+
+      @media only screen and (max-width: 450px) {
+        .page-layout {
+          padding: 0;
+        }
+
+        .page-header__background {
+          margin-top: 0;
+          padding: 50px 0 0;
+        }
+
+        .page-header__title {
+          padding: 20px 0 0;
+
+          font-size: 2rem;
+        }
+
+        .wrapper {
+          margin: 0;
+        }
+
+        .form-footer--sign-up div {
+          width: 100%;
+
+          margin-top: 14px;
+
+          text-align: center;
+        }
+
+        .footer {
+          padding: 25px 20px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!--[if IE 8]>
+      <script src="//cdnjs.cloudflare.com/ajax/libs/ie8/0.2.5/ie8.js"></script>
+    <![endif]-->
+
+    <!--[if lte IE 9]>
+      <script src="https://cdn.auth0.com/js/base64.js"></script>
+      <script src="https://cdn.auth0.com/js/es5-shim.min.js"></script>
+    <![endif]-->
+
+    <div class="fixed">
+      <section class="banner">
+        <p class="banner__text">
+          <span data-translate="banner.text">
+            For updates on how COVID-19 is impacting our study, please click
+          </span>
+          <a class="banner__link" data-translate="banner.link">here.</a>
+        </p>
+      </section>
+
+      <header class="header" id="page-header">
+        <nav class="navbar navbar-expand-lg">
+          <button
+            type="button"
+            class="navbar-toggle"
+            data-toggle="collapse"
+            data-target="#navbarToggle"
+            aria-controls="navbarToggle"
+            aria-expanded="false"
+            aria-label="Toggle mobile navigation"
+          >
+            <span class="bar"></span>
+            <span class="bar"></span>
+            <span class="bar"></span>
+          </button>
+
+          <a
+            href="https://rgp.dev.datadonationplatform.org"
+            class="navbar-brand"
+          ></a>
+
+          <div class="collapse navbar-collapse" id="navbarToggle">
+            <ul class="navbar-nav">
+              <li class="nav-item">
+                <div class="dropdown">
+                  <button
+                    type="button"
+                    class="btn btn-link dropdown-toggle nav-link"
+                    id="forFamiliesDropdownBtn"
+                    aria-expanded="false"
+                    data-toggle="dropdown"
+                    data-translate="header.links.forFamilies.text"
+                  >
+                    For Families
+                  </button>
+
+                  <ul
+                    class="dropdown-menu"
+                    aria-labelledby="forFamiliesDropdownBtn"
+                  >
+                    <li>
+                      <a
+                        href="#"
+                        class="dropdown-item"
+                        data-translate="header.links.forFamilies.item1"
+                      >
+                        Eligibility Criteria
+                      </a>
+                    </li>
+                    <li>
+                      <a
+                        href="#"
+                        class="dropdown-item"
+                        data-translate="header.links.forFamilies.item2"
+                      >
+                        Getting Started
+                      </a>
+                    </li>
+                    <li>
+                      <a
+                        href="#"
+                        class="dropdown-item"
+                        data-translate="header.links.forFamilies.item3"
+                      >
+                        Privacy & Data Use
+                      </a>
+                    </li>
+                    <li>
+                      <a
+                        href="#"
+                        class="dropdown-item"
+                        data-translate="header.links.forFamilies.item4"
+                      >
+                        For Your Physician
+                      </a>
+                    </li>
+                  </ul>
+                </div>
+              </li>
+
+              <li class="nav-item">
+                <div class="dropdown">
+                  <button
+                    type="button"
+                    class="btn btn-link dropdown-toggle nav-link"
+                    id="forResearchersDropdownBtn"
+                    aria-expanded="false"
+                    data-toggle="dropdown"
+                    data-translate="header.links.forResearchers.text"
+                  >
+                    For Researchers
+                  </button>
+
+                  <ul
+                    class="dropdown-menu"
+                    aria-labelledby="forResearchersDropdownBtn"
+                  >
+                    <li>
+                      <a
+                        href="#"
+                        class="dropdown-item"
+                        data-translate="header.links.forResearchers.item1"
+                      >
+                        Data Access
+                      </a>
+                    </li>
+                  </ul>
+                </div>
+              </li>
+
+              <li class="nav-item">
+                <div class="dropdown">
+                  <button
+                    type="button"
+                    class="btn btn-link dropdown-toggle nav-link"
+                    id="specialtyProjectsDropdownBtn"
+                    aria-expanded="false"
+                    data-toggle="dropdown"
+                    data-translate="header.links.specialtyProjects.text"
+                  >
+                    Specialty Projects
+                  </button>
+
+                  <ul
+                    class="dropdown-menu"
+                    aria-labelledby="specialtyProjectsDropdownBtn"
+                  >
+                    <li>
+                      <a
+                        href="#"
+                        class="dropdown-item"
+                        data-translate="header.links.specialtyProjects.item1"
+                      >
+                        LGMD
+                      </a>
+                    </li>
+                    <li>
+                      <a
+                        href="#"
+                        class="dropdown-item"
+                        data-translate="header.links.specialtyProjects.item2"
+                      >
+                        Craniofacial
+                      </a>
+                    </li>
+                  </ul>
+                </div>
+              </li>
+
+              <li class="nav-item">
+                <a
+                  href="#"
+                  class="nav-link"
+                  data-translate="header.links.aboutUs.text"
+                  >About Us</a
+                >
+              </li>
+
+              <li class="nav-item">
+                <a
+                  href="#"
+                  class="nav-link"
+                  data-translate="header.links.faqs.text"
+                  >FAQs</a
+                >
+              </li>
+
+              <li class="nav-item">
+                <div class="dropdown">
+                  <button
+                    type="button"
+                    class="btn btn-link dropdown-toggle nav-link btn-icon"
+                    id="languageListDropdownBtn"
+                    data-toggle="dropdown"
+                    aria-expanded="false"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="20"
+                      height="20"
+                      class="bi bi-globe"
+                      viewBox="0 0 16 16"
+                      fill="currentColor"
+                    >
+                      <path
+                        d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8zm7.5-6.923c-.67.204-1.335.82-1.887 1.855A7.97 7.97 0 0 0 5.145 4H7.5V1.077zM4.09 4a9.267 9.267 0 0 1 .64-1.539 6.7 6.7 0 0 1 .597-.933A7.025 7.025 0 0 0 2.255 4H4.09zm-.582 3.5c.03-.877.138-1.718.312-2.5H1.674a6.958 6.958 0 0 0-.656 2.5h2.49zM4.847 5a12.5 12.5 0 0 0-.338 2.5H7.5V5H4.847zM8.5 5v2.5h2.99a12.495 12.495 0 0 0-.337-2.5H8.5zM4.51 8.5a12.5 12.5 0 0 0 .337 2.5H7.5V8.5H4.51zm3.99 0V11h2.653c.187-.765.306-1.608.338-2.5H8.5zM5.145 12c.138.386.295.744.468 1.068.552 1.035 1.218 1.65 1.887 1.855V12H5.145zm.182 2.472a6.696 6.696 0 0 1-.597-.933A9.268 9.268 0 0 1 4.09 12H2.255a7.024 7.024 0 0 0 3.072 2.472zM3.82 11a13.652 13.652 0 0 1-.312-2.5h-2.49c.062.89.291 1.733.656 2.5H3.82zm6.853 3.472A7.024 7.024 0 0 0 13.745 12H11.91a9.27 9.27 0 0 1-.64 1.539 6.688 6.688 0 0 1-.597.933zM8.5 12v2.923c.67-.204 1.335-.82 1.887-1.855.173-.324.33-.682.468-1.068H8.5zm3.68-1h2.146c.365-.767.594-1.61.656-2.5h-2.49a13.65 13.65 0 0 1-.312 2.5zm2.802-3.5a6.959 6.959 0 0 0-.656-2.5H12.18c.174.782.282 1.623.312 2.5h2.49zM11.27 2.461c.247.464.462.98.64 1.539h1.835a7.024 7.024 0 0 0-3.072-2.472c.218.284.418.598.597.933zM10.855 4a7.966 7.966 0 0 0-.468-1.068C9.835 1.897 9.17 1.282 8.5 1.077V4h2.355z"
+                      />
+                    </svg>
+                    <span id="current-language">English</span>
+                  </button>
+
+                  <ul
+                    class="dropdown-menu"
+                    aria-labelledby="languageListDropdownBtn"
+                  >
+                    <li>
+                      <button
+                        type="button"
+                        class="dropdown-item"
+                        data-change-language="en"
+                        data-translate="languages.en"
+                      >
+                        English
+                      </button>
+                    </li>
+                    <li>
+                      <button
+                        type="button"
+                        class="dropdown-item"
+                        data-change-language="es"
+                        data-translate="languages.es"
+                      >
+                        Español
+                      </button>
+                    </li>
+                  </ul>
+                </div>
+              </li>
+
+              <li class="nav-item nav-item-auth">
+                <a
+                  href="#"
+                  class="nav-link nav-link-get-started"
+                  data-translate="header.links.getStarted.text"
+                >
+                  Get Started
+                </a>
+                <a
+                  href="#"
+                  class="nav-link nav-link-auth"
+                  data-translate="header.links.signIn.text"
+                  >Sign In</a
+                >
+              </li>
+            </ul>
+          </div>
+        </nav>
+      </header>
+    </div>
+
+    <div class="path" id="path__signup">
+      <section class="page-header">
+        <div class="page-header__background page-header__background--orange">
+          <div class="row page-layout">
+            <div
+              class="col-lg-9 offset-lg-1 col-md-10 offset-md-1 col-sm-12 col-xs-12"
+            >
+              <h1 class="page-header__title" data-translate="signUp.header">
+                Create an account
+              </h1>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="wrapper row">
+        <div
+          class="container col-lg-9 offset-lg-1 col-md-10 offset-md-1 col-sm-12 col-xs-12"
+        >
+          <p class="paragraph" data-translate="signUp.form.intro">
+            Please create an account to begin your application questionnaire.
+          </p>
+
+          <form id="signUpForm">
+            <div class="row mt-25">
+              <div class="col">
+                <div class="md-input-wrapper">
+                  <input
+                    type="email"
+                    class="md-input"
+                    id="signUpEmail"
+                    placeholder="email"
+                  />
+                  <label
+                    for="signUpEmail"
+                    class="md-input-label"
+                    data-translate="signUp.form.fields.email.label"
+                    >Email address *</label
+                  >
+                  <span
+                    class="md-input-helper-text md-input-helper-text--error"
+                    data-translate="signUp.form.fields.email.errors.emailNotValid"
+                  >
+                    Please enter a valid email address
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div class="row mt-25">
+              <div class="col">
+                <div class="md-input-wrapper">
+                  <input
+                    type="password"
+                    class="md-input"
+                    id="signUpPassword"
+                    placeholder="password"
+                  />
+                  <label
+                    for="signUpPassword"
+                    class="md-input-label"
+                    data-translate="signUp.form.fields.password.label"
+                  >
+                    Password *
+                  </label>
+                  <span
+                    class="md-input-helper-text"
+                    data-translate="signUp.form.fields.password.hint"
+                  >
+                    Password must be at least 8 characters long and contain at
+                    least one number, one upper case letter, and one lower case
+                    letter.
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <footer class="form-footer form-footer--sign-up">
+              <div>
+                <a
+                  href="#"
+                  class="comment-link"
+                  data-translate="signUp.form.links.signIn"
+                  data-change-path="path__signin"
+                  >Already have an account? Sign in here</a
+                >
+
+                <a
+                  href="#"
+                  class="comment-link"
+                  data-translate="signUp.form.links.forgotPassword"
+                  data-change-path="path__password-reset"
+                  >Forgot your password?</a
+                >
+              </div>
+
+              <button
+                type="submit"
+                class="button button-primary"
+                id="signUpSubmit"
+                data-translate="signUp.form.submit"
+              >
+                Submit
+              </button>
+            </footer>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <div class="path" id="path__signin">
+      <section class="page-header">
+        <div class="page-header__background page-header__background--orange">
+          <div class="row page-layout">
+            <div
+              class="col-lg-9 offset-lg-1 col-md-10 offset-md-1 col-sm-12 col-xs-12"
+            >
+              <h1 class="page-header__title" data-translate="signIn.header">
+                Sign In
+              </h1>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="wrapper row">
+        <div
+          class="container col-lg-9 offset-lg-1 col-md-10 offset-md-1 col-sm-12 col-xs-12"
+        >
+          <p class="paragraph" data-translate="signIn.form.intro">
+            Welcome back! Please sign in to your account.
+          </p>
+
+          <form id="signInForm">
+            <div class="row mt-25">
+              <div class="col">
+                <div class="md-input-wrapper">
+                  <input
+                    type="email"
+                    class="md-input"
+                    id="signInEmail"
+                    placeholder="email"
+                  />
+                  <label
+                    for="signInEmail"
+                    class="md-input-label"
+                    data-translate="signIn.form.fields.email.label"
+                    >Email address *</label
+                  >
+                  <span
+                    class="md-input-helper-text md-input-helper-text--error"
+                    data-translate="signIn.form.fields.email.errors.emailNotValid"
+                  >
+                    Please enter a valid email address
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div class="row mt-25">
+              <div class="col">
+                <div class="md-input-wrapper">
+                  <input
+                    type="password"
+                    class="md-input"
+                    id="signInPassword"
+                    placeholder="password"
+                  />
+                  <label
+                    for="signInPassword"
+                    class="md-input-label"
+                    data-translate="signIn.form.fields.password.label"
+                  >
+                    Password *
+                  </label>
+                  <span
+                    class="md-input-helper-text md-input-helper-text--error"
+                    data-translate="signIn.form.fields.password.errors.required"
+                  >
+                    Please enter your password
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <footer class="form-footer form-footer--sign-up">
+              <div>
+                <a
+                  href="#"
+                  class="comment-link"
+                  data-translate="signIn.form.links.dontHaveAnAccount"
+                  >Don't have an account? Learn about how to get started</a
+                >
+
+                <a
+                  href="#"
+                  class="comment-link"
+                  data-translate="signIn.form.links.forgotPassword"
+                  data-change-path="path__password-reset"
+                  >Forgot your password?</a
+                >
+              </div>
+
+              <button
+                type="submit"
+                class="button button-primary"
+                id="signInSubmit"
+                data-translate="signIn.form.submit"
+              >
+                Submit
+              </button>
+            </footer>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <div class="path path--visible" id="path__password-reset">
+      <section class="page-header">
+        <div class="page-header__background page-header__background--orange">
+          <div class="row page-layout">
+            <div
+              class="col-lg-9 offset-lg-1 col-md-10 offset-md-1 col-sm-12 col-xs-12"
+            >
+              <h1
+                class="page-header__title"
+                data-translate="passwordReset.header"
+              >
+                Forgot Password?
+              </h1>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="wrapper row">
+        <div
+          class="container col-lg-9 offset-lg-1 col-md-10 offset-md-1 col-sm-12 col-xs-12"
+        >
+          <p class="paragraph" data-translate="passwordReset.form.intro">
+            Please enter your email address and we will send you password reset
+            instructions.
+          </p>
+
+          <form id="passwordResetForm">
+            <div class="row mt-25">
+              <div class="col">
+                <div class="md-input-wrapper">
+                  <input
+                    type="email"
+                    class="md-input"
+                    id="passwordResetEmail"
+                    placeholder="email"
+                  />
+                  <label
+                    for="passwordResetEmail"
+                    class="md-input-label"
+                    data-translate="passwordReset.form.fields.email.label"
+                    >Email address *</label
+                  >
+                  <span
+                    class="md-input-helper-text md-input-helper-text--error"
+                    data-translate="passwordReset.form.fields.email.errors.emailNotValid"
+                  >
+                    Please enter a valid email address
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <footer class="form-footer form-footer--password-reset">
+              <button
+                type="submit"
+                class="button button-primary"
+                id="passwordResetSubmit"
+                data-translate="passwordReset.form.submit"
+              >
+                Submit
+              </button>
+            </footer>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <footer class="footer">
+      <img
+        src="https://storage.googleapis.com/ddp-rgp-assets/images/rgp-logo.svg"
+        class="footer__logo"
+      />
+
+      <div class="footer__info">
+        <ul class="footer__links-list">
+          <li>
+            <a href="#" data-translate="footer.links.home">Home</a>
+          </li>
+
+          <li>
+            <a href="#" data-translate="footer.links.aboutUs">About Us</a>
+          </li>
+
+          <li>
+            <a href="#" data-translate="footer.links.signIn">Sign In</a>
+          </li>
+
+          <li>
+            <a href="#" data-translate="footer.links.apply">Apply</a>
+          </li>
+
+          <li>
+            <a href="#" data-translate="footer.links.backToTop">Back to Top</a>
+          </li>
+        </ul>
+
+        <div class="footer__contacts">
+          <div class="footer__contacts-side">
+            <p data-translate="footer.contactUs">Contact Us:</p>
+            <p>
+              <a href="mailto:raregenomes@broadinstitute.org">
+                raregenomes@broadinstitute.org
+              </a>
+            </p>
+            <p>
+              <a href="tel:617-714-7395">617-714-7395</a>
+            </p>
+            <p>
+              <a href="https://www.facebook.com/RareGenomesProject/">
+                <img
+                  src="https://storage.googleapis.com/ddp-rgp-assets/images/facebook.svg"
+                  alt="Facebook Rare Genomes Project"
+                  height="15px"
+                />
+              </a>
+            </p>
+          </div>
+
+          <div class="footer__contacts-side">
+            <p>&nbsp;</p>
+            <p>Broad Institute of MIT and Harvard</p>
+            <p>415 Main Street, Cambridge, MA 02142 United States</p>
+          </div>
+        </div>
+      </div>
+    </footer>
+
+    <script
+      src="https://code.jquery.com/jquery-3.5.1.slim.min.js"
+      integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj"
+      crossorigin="anonymous"
+    ></script>
+    <script src="https://cdn.jsdelivr.net/npm/lodash@4.17.20/lodash.min.js"></script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js"
+      integrity="sha384-Piv4xVNRyMGpqkS2by6br4gNJ7DXjqk09RmUpJ8jgGtD7zP9yug3goQfGII0yAns"
+      crossorigin="anonymous"
+    ></script>
+
+    <script>
+      /**
+       * Global declarations
+       */
+      var Validators = {
+        isEmail: function (value) {
+          var regex = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+
+          return regex.test(value);
+        },
+        isLength: function (length, value) {
+          return value.toString().length >= length;
+        },
+        hasNumber: function (value) {
+          return /\d/.test(value);
+        },
+        hasUppercaseChar: function (value) {
+          return /[A-Z]/.test(value);
+        },
+        hasLowercaseChar: function (value) {
+          return /[a-z]/.test(value);
+        },
+        isRequired: function (value) {
+          return !!value.toString().length;
+        },
+      };
+    </script>
+
+    <script>
+      /**
+       * I18n scripts
+       */
+
+      /*
+       * Supported languages
+       */
+      var languages = {
+        en: 'English',
+        es: 'Español',
+      };
+
+      /**
+       * English dictionary
+       */
+      var EN_DICTIONARY = {
+        languages: languages,
+        banner: {
+          text:
+            'For updates on how COVID-19 is impacting our study, please click',
+          link: 'here.',
+        },
+        header: {
+          links: {
+            forFamilies: {
+              text: 'For Families',
+              item1: 'Eligibility Criteria',
+              item2: 'Getting Started',
+              item3: 'Privacy & Data Use',
+              item4: 'For Your Physician',
+            },
+            forResearchers: {
+              text: 'For Researchers',
+              item1: 'Data Access',
+            },
+            specialtyProjects: {
+              text: 'Specialty Projects',
+              item1: 'LGMD',
+              item2: 'Craniofacial',
+            },
+            aboutUs: {
+              text: 'About Us',
+            },
+            faqs: {
+              text: 'FAQs',
+            },
+            getStarted: {
+              text: 'Get Started',
+            },
+            signIn: {
+              text: 'Sign In',
+            },
+          },
+        },
+        footer: {
+          links: {
+            home: 'Home',
+            aboutUs: 'About Us',
+            signIn: 'Sign In',
+            apply: 'Apply',
+            backToTop: 'Back to Top',
+          },
+          contactUs: 'Contact Us:',
+        },
+        signUp: {
+          header: 'Create an account',
+          form: {
+            intro:
+              'Please create an account to begin your application questionnaire',
+            fields: {
+              email: {
+                label: 'Email address *',
+                errors: {
+                  emailNotValid: 'Please enter a valid email address',
+                },
+              },
+              password: {
+                label: 'Password *',
+                hint:
+                  'Password must be at least 8 characters long and contain at least one number, one upper case letter, and one lower case letter.',
+              },
+            },
+            submit: 'Submit',
+            links: {
+              signIn: 'Already have an account? Sign in here',
+              forgotPassword: 'Forgot your password?',
+            },
+          },
+        },
+        signIn: {
+          header: 'Sign In',
+          form: {
+            intro: 'Welcome back! Please sign in to your account.',
+            fields: {
+              email: {
+                label: 'Email address *',
+                errors: {
+                  emailNotValid: 'Please enter a valid email address',
+                },
+              },
+              password: {
+                label: 'Password *',
+                errors: {
+                  required: 'Please enter your password',
+                },
+              },
+            },
+            submit: 'Submit',
+            links: {
+              dontHaveAnAccount:
+                "Don't have an account? Learn about how to get started",
+              forgotPassword: 'Forgot your password?',
+            },
+          },
+        },
+        passwordReset: {
+          header: 'Forgot Password?',
+          form: {
+            intro:
+              'Please enter your email address and we will send you password reset instructions.',
+            fields: {
+              email: {
+                label: 'Email address *',
+                errors: {
+                  emailNotValid: 'Please enter a valid email address',
+                },
+              },
+            },
+            submit: 'Submit',
+          },
+        },
+      };
+
+      /**
+       * Spanish dictionary
+       */
+      var ES_DICTIONARY = {
+        languages: languages,
+        banner: {
+          text:
+            '[ES] For updates on how COVID-19 is impacting our study, please click',
+          link: '[ES] here.',
+        },
+        header: {
+          links: {
+            forFamilies: {
+              text: '[ES] For Families',
+              item1: '[ES] Eligibility Criteria',
+              item2: '[ES] Getting Started',
+              item3: '[ES] Privacy & Data Use',
+              item4: '[ES] For Your Physician',
+            },
+            forResearchers: {
+              text: '[ES] For Researchers',
+              item1: '[ES] Data Access',
+            },
+            specialtyProjects: {
+              text: '[ES] Specialty Projects',
+              item1: '[ES] LGMD',
+              item2: '[ES] Craniofacial',
+            },
+            aboutUs: {
+              text: '[ES] About Us',
+            },
+            faqs: {
+              text: '[ES] FAQs',
+            },
+            getStarted: {
+              text: '[ES] Get Started',
+            },
+            signIn: {
+              text: '[ES] Sign In',
+            },
+          },
+        },
+        footer: {
+          links: {
+            home: '[ES] Home',
+            aboutUs: '[ES] About Us',
+            signIn: '[ES] Sign In',
+            apply: '[ES] Apply',
+            backToTop: '[ES] Back to Top',
+          },
+          contactUs: '[ES] Contact Us:',
+        },
+        signUp: {
+          header: '[ES] Create an account',
+          form: {
+            intro:
+              '[ES] Please create an account to begin your application questionnaire',
+            fields: {
+              email: {
+                label: '[ES] Email address *',
+                errors: {
+                  emailNotValid: '[ES] Please enter a valid email address',
+                },
+              },
+              password: {
+                label: '[ES] Password *',
+                hint:
+                  '[ES] Password must be at least 8 characters long and contain at least one number, one upper case letter, and one lower case letter.',
+              },
+            },
+            submit: '[ES] Submit',
+            links: {
+              signIn: '[ES] Already have an account? Sign in here',
+              forgotPassword: '[ES] Forgot your password?',
+            },
+          },
+        },
+        signIn: {
+          header: '[ES] Sign In',
+          form: {
+            intro: '[ES] Welcome back! Please sign in to your account.',
+            fields: {
+              email: {
+                label: '[ES] Email address *',
+                errors: {
+                  emailNotValid: '[ES] Please enter a valid email address',
+                },
+              },
+              password: {
+                label: '[ES] Password *',
+                errors: {
+                  required: '[ES] Please enter your password',
+                },
+              },
+            },
+            submit: '[ES] Submit',
+            links: {
+              dontHaveAnAccount:
+                "[ES] Don't have an account? Learn about how to get started",
+              forgotPassword: '[ES] Forgot your password?',
+            },
+          },
+        },
+        passwordReset: {
+          header: '[ES] Forgot Password?',
+          form: {
+            intro:
+              '[ES] Please enter your email address and we will send you password reset instructions.',
+            fields: {
+              email: {
+                label: '[ES] Email address *',
+                errors: {
+                  emailNotValid: '[ES] Please enter a valid email address',
+                },
+              },
+            },
+            submit: '[ES] Submit',
+          },
+        },
+      };
+
+      /**
+       * Map of dictionaries for supported locales
+       */
+      var DICTIONARY = {
+        en: EN_DICTIONARY,
+        es: ES_DICTIONARY,
+      };
+
+      $(document).ready(function () {
+        var currentLanguageEl = $('#current-language');
+        var defaultLocale = 'en';
+        var currentLocale = defaultLocale;
+
+        /**
+         * Language switcher listener
+         */
+        $('[data-change-language]').click(function () {
+          var selectedLocale = $(this).data('change-language');
+
+          if (currentLocale !== selectedLocale) {
+            currentLocale = selectedLocale;
+            translatePage(selectedLocale);
+          }
+        });
+
+        /**
+         * Function to translate whole document
+         */
+        function translatePage(locale) {
+          var localeDictionary = DICTIONARY[locale];
+
+          currentLanguageEl.text(localeDictionary.languages[locale]);
+
+          $('[data-translate]').each(function (i, el) {
+            var translateKey = el.dataset.translate;
+            var translation = _.get(
+              localeDictionary,
+              translateKey,
+              _.get(DICTIONARY[defaultLocale], translateKey),
+            );
+
+            el.textContent = translation;
+          });
+        }
+      });
+    </script>
+
+    <script>
+      $(document).ready(function () {
+        /**
+         * UI elements references
+         */
+        var headerEl = $('#page-header');
+
+        toggleHeaderClass();
+
+        /**
+         * Window scroll listener for header
+         */
+        $(window).scroll(toggleHeaderClass);
+
+        /**
+         * Listener for any clicks.
+         * Once an element with "data-change-path" attribute is clicked
+         * we hide current path ("page" so to say) and show new path
+         * depending on where the attribute points to
+         */
+        $(document).on('click', function (e) {
+          var visiblePathClass = 'path--visible';
+          var path = e.target.dataset.changePath;
+
+          if (!path) {
+            return;
+          }
+
+          $('.' + visiblePathClass).removeClass(visiblePathClass);
+          $('#' + path).addClass(visiblePathClass);
+        });
+
+        function toggleHeaderClass() {
+          var scrollThreshold = 80;
+          var shouldSetHeaderClass = $(window).scrollTop() > scrollThreshold;
+
+          headerEl.toggleClass('header--white', shouldSetHeaderClass);
+        }
+      });
+    </script>
+
+    <script>
+      /**
+       * Sign up form scripts
+       */
+      $(document).ready(function () {
+        var emailInputEl = $('#signUpEmail');
+        var passwordInputEl = $('#signUpPassword');
+        var signUpForm = $('#signUpForm');
+
+        emailInputEl.on('change', validateEmail);
+        emailInputEl.on('input', function () {
+          if (emailInputEl.data('touched')) {
+            validateEmail();
+          }
+        });
+
+        passwordInputEl.on('change', validatePassword);
+        passwordInputEl.on('input', function () {
+          if (passwordInputEl.data('touched')) {
+            validatePassword();
+          }
+        });
+
+        signUpForm.on('submit', function (e) {
+          e.preventDefault();
+
+          var isEmailValid = validateEmail();
+          var isPasswordValid = validatePassword();
+          var isFormValid = isEmailValid && isPasswordValid;
+
+          if (!isFormValid) {
+            return;
+          }
+
+          var email = emailInputEl.val();
+          var password = passwordInputEl.val();
+
+          auth0SignUp(email, password);
+        });
+
+        function validateEmail() {
+          var enteredEmail = emailInputEl.val();
+          var isValid = Validators.isEmail(enteredEmail);
+
+          emailInputEl.data('touched', true);
+          emailInputEl.toggleClass('md-input-error', !isValid);
+
+          return isValid;
+        }
+
+        function validatePassword() {
+          var enteredPassword = passwordInputEl.val();
+          var isValid =
+            Validators.isLength(8, enteredPassword) &&
+            Validators.hasNumber(enteredPassword) &&
+            Validators.hasLowercaseChar(enteredPassword) &&
+            Validators.hasUppercaseChar(enteredPassword);
+
+          passwordInputEl.data('touched', true);
+          passwordInputEl.toggleClass('md-input-error', !isValid);
+
+          return isValid;
+        }
+
+        function auth0SignUp(email, password) {
+          console.log({ email, password });
+        }
+      });
+    </script>
+
+    <script>
+      /**
+       * Sign in scripts
+       */
+      $(document).ready(function () {
+        var emailInputEl = $('#signInEmail');
+        var passwordInputEl = $('#signInPassword');
+        var signInForm = $('#signInForm');
+
+        emailInputEl.on('change', validateEmail);
+        emailInputEl.on('input', function () {
+          if (emailInputEl.data('touched')) {
+            validateEmail();
+          }
+        });
+
+        passwordInputEl.on('change', validatePassword);
+        passwordInputEl.on('input', function () {
+          if (passwordInputEl.data('touched')) {
+            validatePassword();
+          }
+        });
+
+        signInForm.on('submit', function (e) {
+          e.preventDefault();
+
+          var isEmailValid = validateEmail();
+          var isPasswordValid = validatePassword();
+          var isFormValid = isEmailValid && isPasswordValid;
+
+          if (!isFormValid) {
+            return;
+          }
+
+          var email = emailInputEl.val();
+          var password = passwordInputEl.val();
+
+          auth0SignIn(email, password);
+        });
+
+        function validateEmail() {
+          var enteredEmail = emailInputEl.val();
+          var isValid = Validators.isEmail(enteredEmail);
+
+          emailInputEl.data('touched', true);
+          emailInputEl.toggleClass('md-input-error', !isValid);
+
+          return isValid;
+        }
+
+        function validatePassword() {
+          var enteredPassword = passwordInputEl.val();
+          var isValid = Validators.isRequired(enteredPassword);
+
+          passwordInputEl.data('touched', true);
+          passwordInputEl.toggleClass('md-input-error', !isValid);
+
+          return isValid;
+        }
+
+        function auth0SignIn(email, password) {
+          console.log({ email, password });
+        }
+      });
+    </script>
+
+    <script>
+      /**
+       * Password reset scripts
+       */
+      $(document).ready(function () {
+        var emailInputEl = $('#passwordResetEmail');
+        var passwordResetForm = $('#passwordResetForm');
+
+        emailInputEl.on('change', validateEmail);
+        emailInputEl.on('input', function () {
+          if (emailInputEl.data('touched')) {
+            validateEmail();
+          }
+        });
+
+        passwordResetForm.on('submit', function (e) {
+          e.preventDefault();
+
+          var isFormValid = validateEmail();
+
+          if (!isFormValid) {
+            return;
+          }
+
+          var email = emailInputEl.val();
+
+          auth0SendResetPasswordInstructions(email);
+        });
+
+        function validateEmail() {
+          var enteredEmail = emailInputEl.val();
+          var isValid = Validators.isEmail(enteredEmail);
+
+          emailInputEl.data('touched', true);
+          emailInputEl.toggleClass('md-input-error', !isValid);
+
+          return isValid;
+        }
+
+        function auth0SendResetPasswordInstructions(email) {
+          console.log({ email });
+        }
+      });
+    </script>
+
+    <!-- <script src="https://cdn.auth0.com/js/lock/11.28.0/lock.min.js"></script> -->
+
+    <!-- <style type="text/css">
+      body {
+        font-family: 'Roboto', sans-serif;
+      }
+
+      .auth0-lock.auth0-lock .auth0-lock-overlay {
         background: radial-gradient(#ffffff, #f3f3f2, #f3f3f2);
         background-image: radial-gradient(#ffffff, #f3f3f2, #f3f3f2);
         background-color: #fff;
-    }
+      }
 
-    .auth0-lock.auth0-lock.auth0-lock-opened .auth0-lock-widget {
+      .auth0-lock.auth0-lock.auth0-lock-opened .auth0-lock-widget {
         box-shadow: 0 0 40px 4px #888888;
-    }
+      }
 
-    .auth0-lock-content {
-        padding-top:10px !important;
-    }
+      .auth0-lock-content {
+        padding-top: 10px !important;
+      }
 
-    .auth0-lock.auth0-lock .auth0-lock-form p {
-        text-align:left;
-    }
+      .auth0-lock.auth0-lock .auth0-lock-form p {
+        text-align: left;
+      }
 
-    a:link {
+      a:link {
         text-decoration: underline !important;
-    }
-</style>
+      }
+    </style> -->
 
-<script>
-    // Decode utf8 characters properly
-    var config = JSON.parse(decodeURIComponent(escape(window.atob('@@config@@'))));
-    config.extraParams = config.extraParams || {};
+    <!-- <script>
+      console.log('Test deployment');
 
-    var mode = config.extraParams.mode;
-    var languageCode = config.extraParams.language;
-    var study_guid = config.extraParams.study_guid;
-    var studyColor = '#e8702a';
-    var headerLogo = 'https://storage.googleapis.com/ddp-rgp-assets/images/rgp-logo.svg';
+      // Decode utf8 characters properly
+      var config = JSON.parse(
+        decodeURIComponent(escape(window.atob('@@config@@'))),
+      );
+      config.extraParams = config.extraParams || {};
 
-    var authLoc = Math.max(config.callbackURL.indexOf('/auth'), config.callbackURL.indexOf('/login-landing'));
-    var mainUrl = authLoc === -1 ? config.callbackURL : config.callbackURL.substring(0,authLoc);
-    var loginUrl = mainUrl + '/login-landing/login';
-    var registerUrl = mainUrl + '/how-it-works';
+      var mode = config.extraParams.mode;
+      var languageCode = config.extraParams.language;
+      var study_guid = config.extraParams.study_guid;
+      var studyColor = '#e8702a';
+      var headerLogo =
+        'https://storage.googleapis.com/ddp-rgp-assets/images/rgp-logo.svg';
 
-    var connection = config.connection;
-    var showPasswordRecentText = false;
-    var doNotShowRegLink = false;
+      var authLoc = Math.max(
+        config.callbackURL.indexOf('/auth'),
+        config.callbackURL.indexOf('/login-landing'),
+      );
+      var mainUrl =
+        authLoc === -1
+          ? config.callbackURL
+          : config.callbackURL.substring(0, authLoc);
+      var loginUrl = mainUrl + '/login-landing/login';
+      var registerUrl = mainUrl + '/how-it-works';
 
-    var dictionaries = {};
-    dictionaries['en'] = {
+      var connection = config.connection;
+      var showPasswordRecentText = false;
+      var doNotShowRegLink = false;
+
+      var dictionaries = {};
+      dictionaries['en'] = {
         emailInputPlaceholder: 'Email address *',
         passwordInputPlaceholder: 'Password *',
         signupTitle: 'Create an account',
-        databaseSignUpInstructions: 'Please create an account to begin your application questionnaire.',
+        databaseSignUpInstructions:
+          'Please create an account to begin your application questionnaire.',
         signUpTerms: '',
         alreadyRegisteredInner: 'If you have already registered, sign in here.',
         loginTitle: 'Sign In',
-        databaseEnterpriseLoginInstructions: 'Welcome back! Please sign in to your account.',
+        databaseEnterpriseLoginInstructions:
+          'Welcome back! Please sign in to your account.',
         loginLinkText: 'Already have an account? Sign in here',
         forgotPasswordAction: 'Forgot your password?',
-        signupLinkText: 'Don\'t have an account?  Learn about how to get started',
+        signupLinkText:
+          "Don't have an account?  Learn about how to get started",
         userExists: 'If you have already registered, sign in here.',
         forgotPasswordTitle: 'Forgot Password?',
-        forgotPasswordInstructions: 'Please enter your email address and we will send you password reset instructions.',
-        passwordMessage: 'Password must be at least 8 characters long and contain at least one number, one upper case letter, and one lower case letter',
-        successForgotPassword: 'Thank you.  Please check your email for reset instructions.',
-        resetPasswordInnerText: 'Password reset successfully.  Please sign in with your new password.',
-    };
+        forgotPasswordInstructions:
+          'Please enter your email address and we will send you password reset instructions.',
+        passwordMessage:
+          'Password must be at least 8 characters long and contain at least one number, one upper case letter, and one lower case letter',
+        successForgotPassword:
+          'Thank you.  Please check your email for reset instructions.',
+        resetPasswordInnerText:
+          'Password reset successfully.  Please sign in with your new password.',
+      };
 
-    dictionaries['es'] = {
+      dictionaries['es'] = {
         emailInputPlaceholder: '[es]Email address *',
         passwordInputPlaceholder: '[es]Password *',
         signupTitle: '[es]Create an account',
-        databaseSignUpInstructions: '[es]Please create an account to begin your application questionnaire.',
+        databaseSignUpInstructions:
+          '[es]Please create an account to begin your application questionnaire.',
         signUpTerms: '',
-        alreadyRegisteredInner: '[es]If you have already registered, sign in here.',
+        alreadyRegisteredInner:
+          '[es]If you have already registered, sign in here.',
         loginTitle: '[es]Sign In',
-        databaseEnterpriseLoginInstructions: '[es]Welcome back! Please sign in to your account.',
+        databaseEnterpriseLoginInstructions:
+          '[es]Welcome back! Please sign in to your account.',
         loginLinkText: '[es]Already have an account? Sign in here',
         forgotPasswordAction: '[es]Forgot your password?',
-        signupLinkText: '[es]Don\'t have an account?  Learn about how to get started',
+        signupLinkText:
+          "[es]Don't have an account?  Learn about how to get started",
         userExists: '[es]If you have already registered, sign in here.',
         forgotPasswordTitle: '[es]Forgot Password?',
-        forgotPasswordInstructions: '[es]Please enter your email address and we will send you password reset instructions.',
-        passwordMessage: '[es]Password must be at least 8 characters long and contain at least one number, one upper case letter, and one lower case letter',
-        successForgotPassword: '[es]Thank you.  Please check your email for reset instructions.',
-        resetPasswordInnerText: '[es]Password reset successfully.  Please sign in with your new password.',
-    };
+        forgotPasswordInstructions:
+          '[es]Please enter your email address and we will send you password reset instructions.',
+        passwordMessage:
+          '[es]Password must be at least 8 characters long and contain at least one number, one upper case letter, and one lower case letter',
+        successForgotPassword:
+          '[es]Thank you.  Please check your email for reset instructions.',
+        resetPasswordInnerText:
+          '[es]Password reset successfully.  Please sign in with your new password.',
+      };
 
-    var languageDictionary = dictionaries[languageCode];
-    languageDictionary.displayNames = {
+      var languageDictionary = dictionaries[languageCode];
+      languageDictionary.displayNames = {
         en: 'English',
-        es: 'Español'
-    };
-    languageDictionary.error = languageDictionary.error || {};
-    languageDictionary.error.signUp = languageDictionary.error.signUp || {};
-    languageDictionary.error.signUp.user_exists = languageDictionary.userExists;
-    languageDictionary.success = languageDictionary.success || {};
-    languageDictionary.success.forgotPassword = languageDictionary.successForgotPassword;
-    languageDictionary.title = mode === 'login' ? languageDictionary.loginTitle : languageDictionary.signupTitle;
+        es: 'Español',
+      };
+      languageDictionary.error = languageDictionary.error || {};
+      languageDictionary.error.signUp = languageDictionary.error.signUp || {};
+      languageDictionary.error.signUp.user_exists =
+        languageDictionary.userExists;
+      languageDictionary.success = languageDictionary.success || {};
+      languageDictionary.success.forgotPassword =
+        languageDictionary.successForgotPassword;
+      languageDictionary.title =
+        mode === 'login'
+          ? languageDictionary.loginTitle
+          : languageDictionary.signupTitle;
 
+      var loginHint = config.extraParams.login_hint;
 
-    var loginHint = config.extraParams.login_hint;
-
-    var realOptions = {
+      var realOptions = {
         avatar: null,
         auth: {
-            redirectUrl: config.callbackURL,
-            responseType: (config.internalOptions || {}).response_type ||
-            config.callbackOnLocationHash ? 'token' : 'code',
-            params: config.internalOptions
+          redirectUrl: config.callbackURL,
+          responseType:
+            (config.internalOptions || {}).response_type ||
+            config.callbackOnLocationHash
+              ? 'token'
+              : 'code',
+          params: config.internalOptions,
         },
-        assetsUrl:  config.assetsUrl,
+        assetsUrl: config.assetsUrl,
         allowedConnections: connection ? [connection] : null,
         rememberLastLogin: false,
         language: languageCode,
         languageDictionary: languageDictionary,
         theme: {
-            logo:            headerLogo,
-            primaryColor:    studyColor
+          logo: headerLogo,
+          primaryColor: studyColor,
         },
         prefill: loginHint ? { email: loginHint, username: loginHint } : null,
         closable: false,
         configurationBaseUrl: config.clientConfigurationBaseUrl,
         overrides: {
-            __tenant: config.auth0Tenant,
-            __token_issuer: '##LOGIN_DOMAIN##'}
-    };
-    var options = {allowForgotPassword:true};
-    if (mode === 'signup') {
+          __tenant: config.auth0Tenant,
+          __token_issuer: '##LOGIN_DOMAIN##',
+        },
+      };
+      var options = { allowForgotPassword: true };
+      if (mode === 'signup') {
         options.allowSignUp = true;
         options.allowLogin = false;
-    }
-    else if (mode === 'login') {
+      } else if (mode === 'login') {
         options.allowSignUp = false;
         options.allowLogin = true;
-    }
-    else {
+      } else {
         options.allowSignUp = true;
         options.allowLogin = true;
-    }
+      }
 
-    if (config.extraParams.showPasswordReset) {
+      if (config.extraParams.showPasswordReset) {
         options.allowSignUp = false;
         options.allowLogin = false;
-    }
+      }
 
-    if (config.extraParams.show_password_reset) {
+      if (config.extraParams.show_password_reset) {
         options.initialScreen = 'forgotPassword';
-    }
-    if (config.extraParams.user_email) {
-        realOptions.prefill = {email: config.extraParams.user_email, username: config.extraParams.user_email};
-    }
+      }
+      if (config.extraParams.user_email) {
+        realOptions.prefill = {
+          email: config.extraParams.user_email,
+          username: config.extraParams.user_email,
+        };
+      }
 
-    if (config.extraParams.password_was_reset) {
+      if (config.extraParams.password_was_reset) {
         showPasswordRecentText = true;
-    }
+      }
 
-    var lock = new Auth0Lock(config.clientID, config.auth0Domain, realOptions);
+      var lock = new Auth0Lock(
+        config.clientID,
+        config.auth0Domain,
+        realOptions,
+      );
 
-    function addHelp() {
+      function addHelp() {
         // we use setInterval because auth0's on() methods for display
         // do not account for all the display modes and they appear to fire
         // before animations complete, not after
-        setInterval(function() {
-            if (document.getElementsByClassName('auth0-global-message').length > 0) {
-                if (languageDictionary.error.signUp.user_exists.toUpperCase() === document.getElementsByClassName('auth0-global-message')[0].children[0].children[0].innerText.toUpperCase()) {
-                    if (!document.getElementById('ddp-already-registered')) {
-                        var auth0GlobalMessage = document.getElementsByClassName('auth0-global-message')[0].children[0].children[0];
+        setInterval(function () {
+          if (
+            document.getElementsByClassName('auth0-global-message').length > 0
+          ) {
+            if (
+              languageDictionary.error.signUp.user_exists.toUpperCase() ===
+              document
+                .getElementsByClassName('auth0-global-message')[0]
+                .children[0].children[0].innerText.toUpperCase()
+            ) {
+              if (!document.getElementById('ddp-already-registered')) {
+                var auth0GlobalMessage = document.getElementsByClassName(
+                  'auth0-global-message',
+                )[0].children[0].children[0];
 
-                        console.log('parent: ' + auth0GlobalMessage.parentElement);
-                        auth0GlobalMessage.parentElement.removeChild(auth0GlobalMessage);
+                console.log('parent: ' + auth0GlobalMessage.parentElement);
+                auth0GlobalMessage.parentElement.removeChild(
+                  auth0GlobalMessage,
+                );
 
-                        var alreadyRegistered = document.createElement('a');
-                        alreadyRegistered.setAttribute('href', loginUrl);
-                        alreadyRegistered.setAttribute('style','color:black');
-                        alreadyRegistered.setAttribute('id','ddp-already-registered');
-                        alreadyRegistered.innerText = languageDictionary.alreadyRegisteredInner;
-                        document.getElementsByClassName('auth0-global-message')[0].children[0].appendChild(alreadyRegistered);
-
-                    }
-                }
+                var alreadyRegistered = document.createElement('a');
+                alreadyRegistered.setAttribute('href', loginUrl);
+                alreadyRegistered.setAttribute('style', 'color:black');
+                alreadyRegistered.setAttribute('id', 'ddp-already-registered');
+                alreadyRegistered.innerText =
+                  languageDictionary.alreadyRegisteredInner;
+                document
+                  .getElementsByClassName('auth0-global-message')[0]
+                  .children[0].appendChild(alreadyRegistered);
+              }
             }
+          }
 
-            if (!document.getElementById('ddp-header')) {
-                // tweak the header
-                var header = document.createElement('div');
-                header.innerHTML = '<div id="ddp-header" style="display:flex;flex-direction:row;justify-content: flex-start;align-items:center;"' +
-                    '><img class="auth0-lock-header-logo" src="' + headerLogo + '"/></div></div>';
-                var auth0LockHeader = document.getElementsByClassName('auth0-lock-header-logo')[0];
+          if (!document.getElementById('ddp-header')) {
+            // tweak the header
+            var header = document.createElement('div');
+            header.innerHTML =
+              '<div id="ddp-header" style="display:flex;flex-direction:row;justify-content: flex-start;align-items:center;"' +
+              '><img class="auth0-lock-header-logo" src="' +
+              headerLogo +
+              '"/></div></div>';
+            var auth0LockHeader = document.getElementsByClassName(
+              'auth0-lock-header-logo',
+            )[0];
 
-                if (auth0LockHeader) {
-                    console.log('parent' + auth0LockHeader.parentElement);
-                    auth0LockHeader.parentElement.removeChild(auth0LockHeader);
-                    var headerWelcome = document.getElementsByClassName('auth0-lock-header-welcome')[0];
-                    headerWelcome.insertBefore(header,(headerWelcome.hasChildNodes())
-                        ? headerWelcome.childNodes[0]
-                        : null);
-                    //document.getElementsByClassName('auth0-lock-header-welcome')[0].prepend(header);
-                }
-
+            if (auth0LockHeader) {
+              console.log('parent' + auth0LockHeader.parentElement);
+              auth0LockHeader.parentElement.removeChild(auth0LockHeader);
+              var headerWelcome = document.getElementsByClassName(
+                'auth0-lock-header-welcome',
+              )[0];
+              headerWelcome.insertBefore(
+                header,
+                headerWelcome.hasChildNodes()
+                  ? headerWelcome.childNodes[0]
+                  : null,
+              );
+              //document.getElementsByClassName('auth0-lock-header-welcome')[0].prepend(header);
             }
-            if (!document.getElementById('ddp-help') ) {
-                var lockForm = document.getElementsByClassName('auth0-lock-form');
-                var showSignUpHelp = document.getElementsByClassName('auth0-lock-last-login-pane').length === 0;
+          }
+          if (!document.getElementById('ddp-help')) {
+            var lockForm = document.getElementsByClassName('auth0-lock-form');
+            var showSignUpHelp =
+              document.getElementsByClassName('auth0-lock-last-login-pane')
+                .length === 0;
 
-                if (mode === 'login' && !doNotShowRegLink) {
-                    // navigate back to registration
-                    var registerMessageWrapper = document.createElement("p");
-                    registerMessageWrapper.setAttribute('class','auth0-lock-alternative');
-                    registerMessageWrapper.setAttribute('id','ddp-reg');
-                    registerMessageWrapper.setAttribute('style','margin-top:0;font-size: small;text-align: left;');
+            if (mode === 'login' && !doNotShowRegLink) {
+              // navigate back to registration
+              var registerMessageWrapper = document.createElement('p');
+              registerMessageWrapper.setAttribute(
+                'class',
+                'auth0-lock-alternative',
+              );
+              registerMessageWrapper.setAttribute('id', 'ddp-reg');
+              registerMessageWrapper.setAttribute(
+                'style',
+                'margin-top:0;font-size: small;text-align: left;',
+              );
 
-                    if (showSignUpHelp) {
-                        var registerMessage = document.createElement('p');
-                        registerMessage.setAttribute('style','margin-bottom:0;');
-                        registerMessage.innerHTML =  "<a class='auth0-lock-alternative-link' href='"
-                            + registerUrl + "'>" + languageDictionary.signupLinkText + "</a>.";
-                        registerMessageWrapper.appendChild(registerMessage);
-
-                        if (lockForm) {
-                            lockForm[0].appendChild(registerMessageWrapper);
-                        }
-                    }
-                }
-
-                var helpWrapper = document.createElement('div');
-                helpWrapper.setAttribute('id','ddp-help');
-
-                if (mode === 'signup') {
-                    helpWrapper.setAttribute('style','display:flex;flex-direction:row;align-items:center;margin-top:5px;flex-wrap:none;');
-                    var help = '<p style="text-align:left;margin-bottom:0;">' + languageDictionary.passwordMessage + '.</p>';
-                    helpWrapper.innerHTML = help;
-                }
+              if (showSignUpHelp) {
+                var registerMessage = document.createElement('p');
+                registerMessage.setAttribute('style', 'margin-bottom:0;');
+                registerMessage.innerHTML =
+                  "<a class='auth0-lock-alternative-link' href='" +
+                  registerUrl +
+                  "'>" +
+                  languageDictionary.signupLinkText +
+                  '</a>.';
+                registerMessageWrapper.appendChild(registerMessage);
 
                 if (lockForm) {
-                    lockForm[0].appendChild(helpWrapper);
+                  lockForm[0].appendChild(registerMessageWrapper);
                 }
-
-                if (mode === 'signup' || options.allowSignUp) {
-                    console.log('appending sign in with existing account');
-                    var loginLink = document.createElement('a');
-                    loginLink.setAttribute('class', 'auth0-lock-alternative-link sign-in-here-link');
-                    loginLink.setAttribute('href', loginUrl);
-                    loginLink.innerText = languageDictionary.loginLinkText;
-                    var switchToLogin = document.createElement('p');
-                    switchToLogin.setAttribute('class','auth0-lock-alternative sign-in-here');
-                    switchToLogin.appendChild(loginLink);
-                    helpWrapper.parentElement.appendChild(switchToLogin);
-                }
-
-                if (showPasswordRecentText) {
-                    if (!document.getElementById('ddp-pwd')) {
-                        var resetPasswordWrapper = document.createElement("p");
-                        resetPasswordWrapper.setAttribute('class','auth0-lock-alternative');
-                        resetPasswordWrapper.setAttribute('id','ddp-pwd');
-                        resetPasswordWrapper.setAttribute('style','margin-top:0px;');
-
-                        var resetPasswordText = document.createElement("div");
-                        resetPasswordText.innerText = languageDictionary.resetPasswordInnerText;
-
-                        resetPasswordWrapper.appendChild(resetPasswordText);
-                        document.getElementsByClassName('auth0-lock-content')[0].prepend(resetPasswordWrapper);
-                    }
-                }
+              }
             }
-        },200);
-    };
 
-    lock.on('show',function() {
+            var helpWrapper = document.createElement('div');
+            helpWrapper.setAttribute('id', 'ddp-help');
+
+            if (mode === 'signup') {
+              helpWrapper.setAttribute(
+                'style',
+                'display:flex;flex-direction:row;align-items:center;margin-top:5px;flex-wrap:none;',
+              );
+              var help =
+                '<p style="text-align:left;margin-bottom:0;">' +
+                languageDictionary.passwordMessage +
+                '.</p>';
+              helpWrapper.innerHTML = help;
+            }
+
+            if (lockForm) {
+              lockForm[0].appendChild(helpWrapper);
+            }
+
+            if (mode === 'signup' || options.allowSignUp) {
+              console.log('appending sign in with existing account');
+              var loginLink = document.createElement('a');
+              loginLink.setAttribute(
+                'class',
+                'auth0-lock-alternative-link sign-in-here-link',
+              );
+              loginLink.setAttribute('href', loginUrl);
+              loginLink.innerText = languageDictionary.loginLinkText;
+              var switchToLogin = document.createElement('p');
+              switchToLogin.setAttribute(
+                'class',
+                'auth0-lock-alternative sign-in-here',
+              );
+              switchToLogin.appendChild(loginLink);
+              helpWrapper.parentElement.appendChild(switchToLogin);
+            }
+
+            if (showPasswordRecentText) {
+              if (!document.getElementById('ddp-pwd')) {
+                var resetPasswordWrapper = document.createElement('p');
+                resetPasswordWrapper.setAttribute(
+                  'class',
+                  'auth0-lock-alternative',
+                );
+                resetPasswordWrapper.setAttribute('id', 'ddp-pwd');
+                resetPasswordWrapper.setAttribute('style', 'margin-top:0px;');
+
+                var resetPasswordText = document.createElement('div');
+                resetPasswordText.innerText =
+                  languageDictionary.resetPasswordInnerText;
+
+                resetPasswordWrapper.appendChild(resetPasswordText);
+                document
+                  .getElementsByClassName('auth0-lock-content')[0]
+                  .prepend(resetPasswordWrapper);
+              }
+            }
+          }
+        }, 200);
+      }
+
+      lock.on('show', function () {
         addHelp();
 
-        if(realOptions.prefill && realOptions.prefill.email){
-            var getInputElement = function(name) {
-                return document.getElementsByName(name)[0];
-            };
-            var setFocus = function(theElement) {
-                theElement.focus();
-                return true;
-            };
-            var getElementWithFocus = function() {
-                return document.querySelector(':focus');
-            };
-            var intervalId = setInterval(function() {
-                var pwdElement = getInputElement('password');
-                var emailElement = getInputElement('email');
-                if(pwdElement && emailElement && emailElement.value.trim()){
-                    setFocus(pwdElement);
-                    var elementWithFocus = getElementWithFocus();
-                    if(elementWithFocus && elementWithFocus.name && pwdElement.name === elementWithFocus.name){
-                        clearInterval(intervalId);
-                    }
-                }
-            }, 200);
+        if (realOptions.prefill && realOptions.prefill.email) {
+          var getInputElement = function (name) {
+            return document.getElementsByName(name)[0];
+          };
+          var setFocus = function (theElement) {
+            theElement.focus();
+            return true;
+          };
+          var getElementWithFocus = function () {
+            return document.querySelector(':focus');
+          };
+          var intervalId = setInterval(function () {
+            var pwdElement = getInputElement('password');
+            var emailElement = getInputElement('email');
+            if (pwdElement && emailElement && emailElement.value.trim()) {
+              setFocus(pwdElement);
+              var elementWithFocus = getElementWithFocus();
+              if (
+                elementWithFocus &&
+                elementWithFocus.name &&
+                pwdElement.name === elementWithFocus.name
+              ) {
+                clearInterval(intervalId);
+              }
+            }
+          }, 200);
         }
+      });
 
-    });
+      lock.on('forgot_password ready', function () {});
 
-    lock.on('forgot_password ready', function() {
-    });
+      console.log('auth mode: ' + mode);
+      console.log('study_guid: ' + study_guid);
 
-    console.log('auth mode: ' + mode);
-    console.log('study_guid: ' + study_guid);
-
-    lock.show(options);
-</script>
-</body>
+      lock.show(options);
+    </script> -->
+  </body>
 </html>
