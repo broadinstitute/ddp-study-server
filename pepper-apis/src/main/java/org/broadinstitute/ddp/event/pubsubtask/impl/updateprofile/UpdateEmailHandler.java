@@ -1,5 +1,7 @@
 package org.broadinstitute.ddp.event.pubsubtask.impl.updateprofile;
 
+import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskException.Severity.ERROR;
+import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskException.Severity.WARN;
 import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskLogUtil.infoMsg;
 import static org.broadinstitute.ddp.event.pubsubtask.impl.updateprofile.UpdateProfileConstants.FIELD_EMAIL;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -30,7 +32,7 @@ public class UpdateEmailHandler {
             String email = payload.getProperty(FIELD_EMAIL);
             var userDto = handle.attach(JdbiUser.class).findByUserGuid(userGuid);
             if (userDto == null) {
-                throw new PubSubTaskException("User profile is not found for guid=" + userGuid);
+                throw new PubSubTaskException("User profile is not found for guid=" + userGuid, WARN);
             }
             validateUserForLoginDataUpdateEligibility(userDto);
 
@@ -49,7 +51,7 @@ public class UpdateEmailHandler {
             errMsg = "User " + userDto.getUserGuid() + " is not associated with the Auth0 user " + userDto.getAuth0UserId();
         }
         if (errMsg != null) {
-            throw new PubSubTaskException(errMsg);
+            throw new PubSubTaskException(errMsg, WARN);
         }
     }
 
@@ -79,12 +81,12 @@ public class UpdateEmailHandler {
                 if (status.getErrorMessage() != null) {
                     errMsg = errMsg + " Auth0 message: " + status.getErrorMessage();
                 }
-                throw new PubSubTaskException(errMsg, true);
+                throw new PubSubTaskException(errMsg, ERROR, true);
             default:
                 errMsg = "The returned Auth0 call status is unknown - something completely unexpected happened";
         }
         if (errMsg != null) {
-            throw new PubSubTaskException(errMsg);
+            throw new PubSubTaskException(errMsg, WARN);
         }
     }
 }
