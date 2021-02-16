@@ -107,7 +107,7 @@ public class PubSubTaskReceiver implements MessageReceiver {
     private void handleRetriableErrors(AckReplyConsumer consumer, PubSubTask pubSubTask, Exception e) {
         long count = retryMessageCounters.incrementAndGet(pubSubTask.getMessageId());
         if (count <= RETRY_MESSAGE_MAX_COUNT) {
-            LOG.warn(errorMsg(format("PubSubTask processing FAILED, will retry (try=%d/%d): taskType=%s, msgId=%s, errorMessage=%s",
+            LOG.warn(errorMsg(format("PubSubTask processing FAILED, will retry (try=%d/%d): taskType=%s, messageId=%s, ErrorMessage: %s",
                     count, RETRY_MESSAGE_MAX_COUNT, pubSubTask.getTaskType(), pubSubTask.getMessageId(), e.getMessage())));
             consumer.nack();
         } else {
