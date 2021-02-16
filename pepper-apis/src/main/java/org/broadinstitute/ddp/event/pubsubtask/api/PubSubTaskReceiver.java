@@ -11,9 +11,9 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import com.google.cloud.pubsub.v1.AckReplyConsumer;
 import com.google.cloud.pubsub.v1.MessageReceiver;
+import com.google.common.util.concurrent.AtomicLongMap;
 import com.google.pubsub.v1.ProjectSubscriptionName;
 import com.google.pubsub.v1.PubsubMessage;
-import org.broadinstitute.ddp.exception.DDPException;
 import org.slf4j.Logger;
 
 /**
@@ -32,6 +32,10 @@ import org.slf4j.Logger;
 public class PubSubTaskReceiver implements MessageReceiver {
 
     private static final Logger LOG = getLogger(PubSubTaskReceiver.class);
+
+    private static final int RETRY_MESSAGE_MAX_COUNT = 5;
+
+    private final AtomicLongMap<String> retryMessageCounters = AtomicLongMap.create();
 
     private final ProjectSubscriptionName projectSubscriptionName;
     private final PubSubTaskProcessorFactory pubSubTaskProcessorFactory;
@@ -70,12 +74,11 @@ public class PubSubTaskReceiver implements MessageReceiver {
 
         PubSubTask pubSubTask = new PubSubTask(messageId, taskType, message.getAttributesMap(), payloadJson);
 
-        LOG.info(infoMsg("PubSubTask message received[subscription={}, id={}]: {}}"),
-                projectSubscriptionName, messageId, pubSubTask);
+        LOG.info(infoMsg("PubSubTask message received[subscription={}]: {}}"), projectSubscriptionName, pubSubTask);
 
         var pubSubTaskDescriptor = pubSubTaskProcessorFactory.getPubSubTaskDescriptor(taskType);
         if (pubSubTaskDescriptor == null) {
-            throw new PubSubTaskException(format("PubSubTask message [id=%s] has unknown taskType=%s", messageId, taskType),
+            throw new PubSubTaskException(format("PubSubTask has unknown taskType=%s", taskType),
                     WARN, pubSubTask);
         }
 
@@ -90,30 +93,42 @@ public class PubSubTaskReceiver implements MessageReceiver {
      * </pre>
      * If exception is PubSubException and shouldRetry==true then call nack() - ask service
      * to retry message sending.
-     * If exception is DDPException (or it's subclass, like PubSubTaskException) then
-     * it should be sent a result ERROR message to result topic (such message should
-     * contain errorMessage = e.getMessage()).
-     * Other types of exceptions are logged but no any task result sent to result topic.
+     * If exception is PubSubTaskException having severity WARN then log it with WARN level.
+     * Publish info about the error in a response topic.
      */
     private void handlePubSubTaskProcessingException(AckReplyConsumer consumer, PubSubTask pubSubTask, Exception e) {
         if (e instanceof PubSubTaskException && ((PubSubTaskException)e).isShouldRetry()) {
-            LOG.warn(errorMsg(format("PubSubTask processing FAILED, will retry: taskType=%s", pubSubTask.getTaskType())));
+            handleRetriableErrors(consumer, pubSubTask, e);
+        } else {
+            handleNonRetriableErrors(consumer, pubSubTask, e);
+        }
+    }
+
+    private void handleRetriableErrors(AckReplyConsumer consumer, PubSubTask pubSubTask, Exception e) {
+        long count = retryMessageCounters.incrementAndGet(pubSubTask.getMessageId());
+        if (count <= RETRY_MESSAGE_MAX_COUNT) {
+            LOG.warn(errorMsg(format("PubSubTask processing FAILED, will retry (try=%d/%d): taskType=%s, msgId=%s, errorMessage=%s",
+                    count, RETRY_MESSAGE_MAX_COUNT, pubSubTask.getTaskType(), pubSubTask.getMessageId(), e.getMessage())));
             consumer.nack();
         } else {
-            consumer.ack();
-
-            if (e instanceof PubSubTaskException && ((PubSubTaskException)e).getSeverity() == WARN) {
-                LOG.warn(errorMsg(e.getMessage()));
-            } else {
-                LOG.error(errorMsg(e.getMessage()), e);
-            }
-
-            if (e instanceof DDPException) {
-                sendResponse(new PubSubTaskResult(ERROR, e.getMessage(),
-                        e instanceof PubSubTaskException && ((PubSubTaskException) e).getPubSubTask() != null
-                                ? ((PubSubTaskException) e).getPubSubTask() : pubSubTask));
-            }
+            handleNonRetriableErrors(consumer, pubSubTask, e);
         }
+    }
+
+    private void handleNonRetriableErrors(AckReplyConsumer consumer, PubSubTask pubSubTask, Exception e) {
+        consumer.ack();
+
+        String msg = format(errorMsg("Error processing PubSubTask: taskType=%s, messageId=%s, ErrorMessage: %s"),
+                pubSubTask.getTaskType(), pubSubTask.getMessageId(), e.getMessage());
+        if (e instanceof PubSubTaskException && ((PubSubTaskException)e).getSeverity() == WARN) {
+            LOG.warn(msg);
+        } else {
+            LOG.error(msg, e);
+        }
+
+        sendResponse(new PubSubTaskResult(ERROR, e.getMessage(),
+                e instanceof PubSubTaskException && ((PubSubTaskException) e).getPubSubTask() != null
+                        ? ((PubSubTaskException) e).getPubSubTask() : pubSubTask));
     }
 
     private void sendResponse(PubSubTaskResult pubSubTaskResult) {
