@@ -23,7 +23,7 @@ select q.question_id,
   left join int_range_validation as irv on irv.validation_id = v.validation_id
   left join length_validation as lv on lv.validation_id = v.validation_id
   left join num_options_selected_validation as nosv on nosv.validation_id = v.validation_id
-  left join regex_validation as rv on rv.validation_id = rv.validation_id
+  left join regex_validation as rv on rv.validation_id = v.validation_id
 >>
 
 getAllActiveValidations() ::= <<
