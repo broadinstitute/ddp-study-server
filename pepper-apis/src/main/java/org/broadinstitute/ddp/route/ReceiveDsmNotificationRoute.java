@@ -71,8 +71,16 @@ public class ReceiveDsmNotificationRoute extends ValidatedJsonInputRoute<DsmNoti
                     .getEnrollmentStatusByUserAndStudyIds(user.getId(), studyDto.getId())
                     .orElse(null);
             if (status != EnrollmentStatusType.ENROLLED) {
-                LOG.error("User {} with status {} is not enrolled in study {}, will not process DSM notification event {}",
+                String msg = String.format(
+                        "User %s with status %s is not enrolled in study %s, will not process DSM notification event %s",
                         userGuid, status == null ? "<null>" : status, studyGuid, payload.getEventType());
+                if (status == EnrollmentStatusType.EXITED_AFTER_ENROLLMENT) {
+                    // Receiving kit notifications for withdrawn participants can occur during normal operations, let's log as a warning.
+                    LOG.warn(msg);
+                } else {
+                    // Status is unusual, for example receiving a kit when participant status is still only registered, let's report it.
+                    LOG.error(msg);
+                }
                 var err = new ApiError(ErrorCodes.UNSATISFIED_PRECONDITION,
                         "User " + userGuid + " is not enrolled in study " + studyGuid);
                 throw ResponseUtil.haltError(response, HttpStatus.SC_INTERNAL_SERVER_ERROR, err);
