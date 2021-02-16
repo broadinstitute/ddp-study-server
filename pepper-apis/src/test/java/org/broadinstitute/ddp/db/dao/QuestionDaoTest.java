@@ -30,6 +30,7 @@ import org.broadinstitute.ddp.db.dto.AgreementQuestionDto;
 import org.broadinstitute.ddp.db.dto.BooleanQuestionDto;
 import org.broadinstitute.ddp.db.dto.CompositeQuestionDto;
 import org.broadinstitute.ddp.db.dto.DateQuestionDto;
+import org.broadinstitute.ddp.db.dto.FileQuestionDto;
 import org.broadinstitute.ddp.db.dto.NumericQuestionDto;
 import org.broadinstitute.ddp.db.dto.PicklistQuestionDto;
 import org.broadinstitute.ddp.db.dto.QuestionDto;
@@ -46,6 +47,7 @@ import org.broadinstitute.ddp.model.activity.definition.question.BoolQuestionDef
 import org.broadinstitute.ddp.model.activity.definition.question.CompositeQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.DatePicklistDef;
 import org.broadinstitute.ddp.model.activity.definition.question.DateQuestionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.FileQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.NumericQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistGroupDef;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistOptionDef;
@@ -1429,6 +1431,31 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
             assertFalse(dateQ.getDisplayCalendar());
             assertEquals(expected.length, dateQ.getFields().size());
             assertArrayEquals(expected, dateQ.getFields().toArray());
+
+            handle.rollback();
+        });
+    }
+
+    @Test
+    public void testGetFileQuestion() {
+        TransactionWrapper.useTxn(handle -> {
+            FileQuestionDef questionDef = FileQuestionDef.builder(sid, prompt).build();
+            FormActivityDef form = buildSingleSectionForm(testData.getStudyGuid(), questionDef);
+
+            ActivityVersionDto version1 = handle.attach(ActivityDao.class)
+                    .insertActivity(form, RevisionMetadata.now(testData.getUserId(), "test"));
+            ActivityInstanceDto instanceDto = TestDataSetupUtil
+                    .generateTestFormActivityInstanceForUser(handle, version1.getActivityId(), testData.getUserGuid());
+
+            FileQuestionDto questionDto = (FileQuestionDto) handle.attach(JdbiQuestion.class)
+                    .findQuestionDtoById(questionDef.getQuestionId()).get();
+
+            Question actual = handle.attach(QuestionDao.class)
+                    .getQuestionByActivityInstanceAndDto(questionDto, instanceDto.getGuid(),
+                            LanguageStore.getDefault().getId());
+            assertEquals(QuestionType.FILE, actual.getQuestionType());
+            assertEquals(sid, actual.getStableId());
+            assertEquals(prompt.getTemplateId(), (Long) actual.getPromptTemplateId());
 
             handle.rollback();
         });

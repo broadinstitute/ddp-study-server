@@ -10,6 +10,7 @@ public final class GuidUtils {
     public static final int USER_HRUID_RANDOM_PART_LENGTH = 5;
     public static final int USER_GUID_LENGTH = 20;
     public static final int STANDARD_GUID_LENGTH = 10;
+    public static final int FILE_UPLOAD_GUID_LENGTH = 20;
     public static final char[] UPPER_ALPHA_NUMERIC = "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890".toCharArray();
     public static final char[] UPPER_ALPHA_NUMERIC_EXCLUDING_CONFUSING_CHAR = "ABCDEFGHJKLMNPQRTUVWXYZ2346789".toCharArray();
     public static final char[] ALPHA_NUMERIC = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ".toCharArray();
@@ -70,6 +71,13 @@ public final class GuidUtils {
      */
     public static String randomUUID() {
         return UUID.randomUUID().toString();
+    }
+
+    /**
+     * Returns a random identifier for file uploads.
+     */
+    public static String randomFileUploadGuid() {
+        return NanoIdUtils.randomNanoId(NanoIdUtils.DEFAULT_NUMBER_GENERATOR, ALPHA_NUMERIC, FILE_UPLOAD_GUID_LENGTH);
     }
 
     /**

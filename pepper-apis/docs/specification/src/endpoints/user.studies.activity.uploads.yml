@@ -1,0 +1,112 @@
+parameters:
+  - $ref: '../pepper.yml#/components/parameters/studyGuid'
+  - $ref: '../pepper.yml#/components/parameters/userGuid'
+  - $ref: '../pepper.yml#/components/parameters/instanceGuid'
+
+post:
+  operationId: postActivityUploads
+  tags:
+    - Activities
+  summary: create an authorized file upload
+  description: |
+    Request for a new URL for file upload. Link is accessible for limited
+    period of time (e.g. 5 mins). Resumable uploads are supported. With
+    information in response body, client will be able to upload the file
+    directly to a Google Bucket. If resumable=true is specified in request,
+    client will assume responsibility for creating the session URI with
+    provided URL in addition to follow up requests that contain the file
+    contents (see [documentation][doc]).
+
+    **Study Admins**
+
+    Activity file upload is not supported if activity instance/question is
+    read-only or otherwise inaccessible, unless operator is a study admin.
+
+    **Temporary Users**
+
+    This API endpoint does not allow access by temporary users.
+
+    [doc]: https://cloud.google.com/storage/docs/performing-resumable-uploads
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          required:
+            - questionStableId
+            - fileName
+            - fileSize
+            - resumable
+          properties:
+            questionStableId:
+              type: string
+              description: The question identifier
+            fileName:
+              type: string
+              maxLength: 255
+              description: Name of file to be uploaded
+            fileSize:
+              type: integer
+              minimum: 1
+              description: Size of the file, in bytes. The server may limit the maximum size of uploaded files.
+            mimeType:
+              type: string
+              maxLength: 255
+              default: application/octet-stream
+              description: MIME type, if not specified will default to `application/octet-stream`
+            resumable:
+              type: boolean
+              description: Whether URL should support resumable uploads
+  responses:
+    201:
+      description: Successfully authorized file upload
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - uploadGuid
+              - uploadUrl
+            properties:
+              uploadGuid:
+                type: string
+                description: Unique identifier for file upload
+              uploadUrl:
+                type: string
+                description: Signed URL which can be used to upload file contents
+    400:
+      description: |
+        Invalid request or bad inputs, such as missing properties in payload,
+        exceeding file size limit, or exceeding length limits for certain string
+        properties. See error message in response payload for more details.
+      content:
+        application/json:
+          schema:
+            $ref: '../pepper.yml#/components/schemas/Error.BadPayload'
+    404:
+      description: Either user, study, instance or question is not found
+      content:
+        application/json:
+          schema:
+            $ref: '../pepper.yml#/components/schemas/Error.UserStudyActivityQuestionNotFound'
+    422:
+      description: |
+        Authorizing file upload is not allowed if instance or question is read-only.
+        And attempting to request file upload for a question that is not of the `FILE`
+        type is not supported. See error message in response payload for more details.
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '../pepper.yml#/components/schemas/Error'
+              - type: object
+                properties:
+                  code:
+                    type: string
+                    enum:
+                      - ACTIVITY_INSTANCE_IS_READONLY
+                      - QUESTION_IS_READONLY
+                      - NOT_SUPPORTED
+    default:
+      $ref: '../pepper.yml#/components/responses/ErrorResponse'

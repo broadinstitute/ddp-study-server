@@ -82,6 +82,17 @@ public class QuestionDefTest {
     }
 
     @Test
+    public void testDeserialize_file() {
+        String json = "{\"questionType\":\"FILE\",\"stableId\":\"abc\"}";
+
+        QuestionDef actual = gson.fromJson(json, QuestionDef.class);
+        assertNotNull(actual);
+        assertEquals(QuestionType.FILE, actual.getQuestionType());
+        assertEquals("abc", actual.getStableId());
+        assertTrue(actual instanceof FileQuestionDef);
+    }
+
+    @Test
     public void testDeserialize_picklist() {
         String json = "{\"questionType\":\"PICKLIST\",\"stableId\":\"abc\"}";
 

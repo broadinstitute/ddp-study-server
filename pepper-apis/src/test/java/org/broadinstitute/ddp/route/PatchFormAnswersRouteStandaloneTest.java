@@ -52,6 +52,7 @@ import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceStatusDao;
 import org.broadinstitute.ddp.db.dao.AnswerCachedDao;
 import org.broadinstitute.ddp.db.dao.AuthDao;
+import org.broadinstitute.ddp.db.dao.FileUploadDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
 import org.broadinstitute.ddp.db.dao.JdbiActivityInstanceStatusType;
@@ -75,6 +76,7 @@ import org.broadinstitute.ddp.model.activity.definition.question.AgreementQuesti
 import org.broadinstitute.ddp.model.activity.definition.question.BoolQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.CompositeQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.DateQuestionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.FileQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.NumericQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistOptionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistQuestionDef;
@@ -91,6 +93,7 @@ import org.broadinstitute.ddp.model.activity.instance.answer.BoolAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.CompositeAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.DateAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.DateValue;
+import org.broadinstitute.ddp.model.activity.instance.answer.FileAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.NumericAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.PicklistAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.SelectedPicklistOption;
@@ -107,6 +110,8 @@ import org.broadinstitute.ddp.model.activity.types.QuestionType;
 import org.broadinstitute.ddp.model.activity.types.RuleType;
 import org.broadinstitute.ddp.model.activity.types.TemplateType;
 import org.broadinstitute.ddp.model.activity.types.TextInputType;
+import org.broadinstitute.ddp.model.files.FileUpload;
+import org.broadinstitute.ddp.util.GuidUtils;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
 import org.broadinstitute.ddp.util.TestUtil;
 import org.eclipse.jetty.http.HttpStatus;
@@ -159,6 +164,10 @@ public class PatchFormAnswersRouteStandaloneTest {
     private static String plistMulti_option2_sid;
     private static String plistMulti_opt3_exclusive_sid;
 
+    private static FileQuestionDef fileQuestion;
+    private static FileUpload upload1;
+    private static FileUpload upload2;
+
     private static Map<QuestionType, List<String>> answerGuidsToDelete;
 
     public PatchFormAnswersRouteStandaloneTest(Integer runNumber) {
@@ -174,6 +183,10 @@ public class PatchFormAnswersRouteStandaloneTest {
 
     @AfterClass
     public static void doSuiteTearDown() {
+        TransactionWrapper.useTxn(handle -> {
+            var fileDao = handle.attach(FileUploadDao.class);
+            fileDao.deleteByIds(Set.of(upload1.getId(), upload2.getId()));
+        });
         IntegrationTestSuite.tearDown();
     }
 
@@ -314,6 +327,9 @@ public class PatchFormAnswersRouteStandaloneTest {
                 .build();
         FormSectionDef numericSection = new FormSectionDef(null, TestUtil.wrapQuestions(numericQuestionDef, n2, n3));
 
+        fileQuestion = FileQuestionDef.builder("FILE" + timestamp, Template.text("file")).build();
+        var fileSection = new FormSectionDef(null, TestUtil.wrapQuestions(fileQuestion));
+
         String code = "PATCH_ANS_ACT_" + timestamp;
         activity = FormActivityDef.generalFormBuilder(code, "v1", testData.getStudyGuid())
                 .addName(new Translation("en", "activity " + code))
@@ -321,13 +337,23 @@ public class PatchFormAnswersRouteStandaloneTest {
                         Arrays.asList(
                                 boolSection, textSection, textSection2, textSection3, plistSection,
                                 dateSection, compositeSection, essayTextSection, agreementSection,
-                                numericSection
+                                numericSection, fileSection
                         )
                 )
                 .build();
         activityVersionDto = handle.attach(ActivityDao.class).insertActivity(activity, RevisionMetadata.now(testData.getUserId(),
                 "add " + code));
         assertNotNull(activity.getActivityId());
+
+        long userId = testData.getUserId();
+        long studyId = testData.getStudyId();
+        var fileDao = handle.attach(FileUploadDao.class);
+        upload1 = fileDao.createAuthorized(GuidUtils.randomFileUploadGuid(),
+                studyId, userId, userId, "blob1", "text/plain", "file.txt", 123L);
+        upload2 = fileDao.createAuthorized(GuidUtils.randomFileUploadGuid(),
+                studyId, userId, userId, "blob2", "application/pdf", "file.pdf", 456L);
+        fileDao.markVerified(upload1.getId());
+        fileDao.markVerified(upload2.getId());
     }
 
     private static Template newTemplate() {
@@ -1465,6 +1491,84 @@ public class PatchFormAnswersRouteStandaloneTest {
                 .and().extract().path("answers[0].answerGuid");
 
         answerGuidsToDelete.get(QuestionType.AGREEMENT).add(answerGuid);
+    }
+
+    @Test
+    public void testPatch_fileAnswer_createAndUpdate() {
+        var stableId = fileQuestion.getStableId();
+        var submission = new AnswerSubmission(stableId, null, gson.toJsonTree(upload1.getGuid()));
+        var data = new PatchAnswerPayload(List.of(submission));
+        String guid = givenAnswerPatchRequest(instanceGuid, data)
+                .then().assertThat()
+                .statusCode(200).contentType(ContentType.JSON)
+                .body("answers.size()", equalTo(1))
+                .body("answers[0].stableId", equalTo(stableId))
+                .body("answers[0].answerGuid", not(isEmptyOrNullString()))
+                .and().extract().path("answers[0].answerGuid");
+        answerGuidsToDelete.get(QuestionType.FILE).add(guid);
+        var answer = (FileAnswer) TransactionWrapper.withTxn(handle ->
+                new AnswerCachedDao(handle).findAnswerByGuid(guid).get());
+
+        assertNotNull(answer);
+        assertEquals(guid, answer.getAnswerGuid());
+        assertEquals(stableId, answer.getQuestionStableId());
+        assertEquals(QuestionType.FILE, answer.getQuestionType());
+        assertEquals(upload1.getFileName(), answer.getValue().getFileName());
+        assertEquals(upload1.getFileSize(), answer.getValue().getFileSize());
+
+        submission = new AnswerSubmission(stableId, guid, gson.toJsonTree(upload2.getGuid()));
+        data = new PatchAnswerPayload(List.of(submission));
+        String nextGuid = givenAnswerPatchRequest(instanceGuid, data)
+                .then().assertThat()
+                .statusCode(200).contentType(ContentType.JSON)
+                .and().extract().path("answers[0].answerGuid");
+
+        assertEquals(guid, nextGuid);
+        answer = (FileAnswer) TransactionWrapper.withTxn(handle ->
+                new AnswerCachedDao(handle).findAnswerByGuid(guid).get());
+        assertEquals(upload2.getFileName(), answer.getValue().getFileName());
+    }
+
+    @Test
+    public void testPatch_fileAnswer_canCreateNullValue_andClearValueBySendingNull() {
+        var stableId = fileQuestion.getStableId();
+        var data = new PatchAnswerPayload(List.of(new AnswerSubmission(stableId, null, null)));
+        String guid = givenAnswerPatchRequest(instanceGuid, data)
+                .then().assertThat()
+                .statusCode(200).contentType(ContentType.JSON)
+                .body("answers[0].answerGuid", not(isEmptyOrNullString()))
+                .and().extract().path("answers[0].answerGuid");
+        answerGuidsToDelete.get(QuestionType.FILE).add(guid);
+        var answer = (FileAnswer) TransactionWrapper.withTxn(handle ->
+                new AnswerCachedDao(handle).findAnswerByGuid(guid).get());
+        assertNull("created answer should have null for value", answer.getValue());
+
+        // Set a value then clear it.
+        data = new PatchAnswerPayload(List.of(new AnswerSubmission(stableId, guid, gson.toJsonTree(upload1.getGuid()))));
+        givenAnswerPatchRequest(instanceGuid, data)
+                .then().assertThat().statusCode(200);
+        answer = (FileAnswer) TransactionWrapper.withTxn(handle ->
+                new AnswerCachedDao(handle).findAnswerByGuid(guid).get());
+        assertNotNull(answer.getValue());
+        assertEquals(upload1.getFileName(), answer.getValue().getFileName());
+
+        data = new PatchAnswerPayload(List.of(new AnswerSubmission(stableId, guid, null)));
+        givenAnswerPatchRequest(instanceGuid, data)
+                .then().assertThat().statusCode(200);
+        answer = (FileAnswer) TransactionWrapper.withTxn(handle ->
+                new AnswerCachedDao(handle).findAnswerByGuid(guid).get());
+        assertNull("answer value should be cleared", answer.getValue());
+    }
+
+    @Test
+    public void testPatch_fileAnswer_fileNotFound() {
+        var stableId = fileQuestion.getStableId();
+        var data = new PatchAnswerPayload(List.of(new AnswerSubmission(stableId, null, gson.toJsonTree("foobar"))));
+        givenAnswerPatchRequest(instanceGuid, data)
+                .then().assertThat()
+                .statusCode(400).contentType(ContentType.JSON)
+                .body("code", equalTo(ErrorCodes.FILE_ERROR))
+                .body("message", containsString("Could not find file"));
     }
 
     @Test

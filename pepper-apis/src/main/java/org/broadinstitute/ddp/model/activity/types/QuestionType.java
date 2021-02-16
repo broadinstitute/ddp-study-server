@@ -8,6 +8,7 @@ public enum QuestionType {
     BOOLEAN,
     COMPOSITE,
     DATE,
+    FILE,
     NUMERIC,
     PICKLIST,
     TEXT
