@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 import org.broadinstitute.ddp.db.dto.EnrollmentStatusDto;
 import org.broadinstitute.ddp.db.dto.InvitationDto;
 import org.broadinstitute.ddp.db.dto.MedicalProviderDto;
+import org.broadinstitute.ddp.export.json.structured.FileRecord;
 import org.broadinstitute.ddp.model.activity.instance.ActivityResponse;
 import org.broadinstitute.ddp.model.activity.instance.answer.DateValue;
 import org.broadinstitute.ddp.model.user.User;
@@ -32,12 +33,14 @@ public class Participant {
     private LocalDate birthDate;
     private DateValue dateOfDiagnosis;
     private List<InvitationDto> invitations;
+    private List<FileRecord> files;
 
     public Participant(EnrollmentStatusDto status, User user) {
         this.status = status;
         this.user = user;
         this.providers = new ArrayList<>();
         this.invitations = new ArrayList<>();
+        this.files = new ArrayList<>();
         this.responses = new HashMap<>();
         this.activityInstanceSubstitutions = new HashMap<>();
     }
@@ -115,5 +118,15 @@ public class Participant {
 
     public void addInvitation(InvitationDto invitationDto) {
         this.invitations.add(invitationDto);
+    }
+
+    public List<FileRecord> getFiles() {
+        return files;
+    }
+
+    public void addAllFiles(List<FileRecord> files) {
+        if (files != null) {
+            this.files.addAll(files);
+        }
     }
 }

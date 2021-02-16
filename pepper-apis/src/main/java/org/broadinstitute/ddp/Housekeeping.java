@@ -12,18 +12,24 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 
 
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutureCallback;
 import com.google.api.core.ApiFutures;
+import com.google.api.core.ApiService;
+import com.google.api.gax.core.ExecutorProvider;
 import com.google.api.gax.core.InstantiatingExecutorProvider;
 import com.google.api.gax.rpc.ApiException;
+import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.pubsub.v1.AckReplyConsumer;
 import com.google.cloud.pubsub.v1.MessageReceiver;
 import com.google.cloud.pubsub.v1.Publisher;
@@ -37,6 +43,7 @@ import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.cache.LanguageStore;
+import org.broadinstitute.ddp.client.GoogleBucketClient;
 import org.broadinstitute.ddp.client.SendGridClient;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.constants.RouteConstants;
@@ -55,6 +62,7 @@ import org.broadinstitute.ddp.db.dto.QueuedEventDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.db.housekeeping.dao.JdbiEvent;
 import org.broadinstitute.ddp.db.housekeeping.dao.JdbiMessage;
+import org.broadinstitute.ddp.event.FileScanResultReceiver;
 import org.broadinstitute.ddp.event.HousekeepingTaskReceiver;
 import org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskConnectionService;
 import org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskException;
@@ -76,6 +84,7 @@ import org.broadinstitute.ddp.housekeeping.schedule.CheckKitsJob;
 import org.broadinstitute.ddp.housekeeping.schedule.DataSyncJob;
 import org.broadinstitute.ddp.housekeeping.schedule.DatabaseBackupCheckJob;
 import org.broadinstitute.ddp.housekeeping.schedule.DatabaseBackupJob;
+import org.broadinstitute.ddp.housekeeping.schedule.FileUploadCleanupJob;
 import org.broadinstitute.ddp.housekeeping.schedule.OnDemandExportJob;
 import org.broadinstitute.ddp.housekeeping.schedule.StudyDataExportJob;
 import org.broadinstitute.ddp.housekeeping.schedule.TemporaryUserCleanupJob;
@@ -97,6 +106,7 @@ import org.broadinstitute.ddp.service.PdfGenerationService;
 import org.broadinstitute.ddp.service.PdfService;
 import org.broadinstitute.ddp.util.ConfigManager;
 import org.broadinstitute.ddp.util.ConfigUtil;
+import org.broadinstitute.ddp.util.GoogleCredentialUtil;
 import org.broadinstitute.ddp.util.LiquibaseUtil;
 import org.broadinstitute.ddp.util.LogbackConfigurationPrinter;
 import org.jdbi.v3.core.Handle;
@@ -176,6 +186,7 @@ public class Housekeeping {
 
     private static Scheduler scheduler;
     private static Subscriber taskSubscriber;
+    private static Subscriber fileScanResultSubscriber;
 
     private static PubSubTaskConnectionService pubSubTaskConnectionService;
 
@@ -227,6 +238,7 @@ public class Housekeeping {
 
         setupScheduler(cfg);
         setupTaskReceiver(cfg, pubSubProject);
+        setupFileScanResultReceiver(cfg, pubSubProject);
 
         final PubSubConnectionManager pubsubConnectionManager = new PubSubConnectionManager(usePubSubEmulator);
 
@@ -465,6 +477,9 @@ public class Housekeeping {
             }
         }
         pubsubConnectionManager.close();
+        if (fileScanResultSubscriber != null) {
+            fileScanResultSubscriber.stopAsync();
+        }
         if (taskSubscriber != null) {
             taskSubscriber.stopAsync();
         }
@@ -497,6 +512,7 @@ public class Housekeeping {
                     DataSyncJob.register(scheduler, cfg);
                     DatabaseBackupJob.register(scheduler, cfg);
                     DatabaseBackupCheckJob.register(scheduler, cfg);
+                    FileUploadCleanupJob.register(scheduler, cfg);
                     TemporaryUserCleanupJob.register(scheduler, cfg);
                     StudyDataExportJob.register(scheduler, cfg);
                 }
@@ -536,6 +552,83 @@ public class Housekeeping {
         } else {
             LOG.warn("Housekeeping tasks is not enabled");
         }
+    }
+
+    private static void setupFileScanResultReceiver(Config cfg, String projectId) {
+        boolean enabled = cfg.getBoolean(ConfigFile.FileUploads.ENABLE_SCAN_RESULT_HANDLER);
+        if (!enabled) {
+            LOG.warn("File scan result handler is not enabled");
+            return;
+        }
+
+        var subName = ProjectSubscriptionName.of(projectId,
+                cfg.getString(ConfigFile.FileUploads.SCAN_RESULT_SUBSCRIPTION));
+
+        boolean ensureDefault = cfg.getBoolean(ConfigFile.REQUIRE_DEFAULT_GCP_CREDENTIALS);
+        GoogleCredentials credentials = GoogleCredentialUtil.initCredentials(ensureDefault);
+        if (credentials == null) {
+            throw new DDPException("Could not get bucket credentials");
+        }
+
+        var storageClient = new GoogleBucketClient(projectId, credentials);
+        var receiver = new FileScanResultReceiver(storageClient,
+                cfg.getString(ConfigFile.FileUploads.UPLOADS_BUCKET),
+                cfg.getString(ConfigFile.FileUploads.SCANNED_BUCKET),
+                cfg.getString(ConfigFile.FileUploads.QUARANTINE_BUCKET));
+
+        // This is the default thread factory, just setting a custom name here.
+        ThreadFactory threadFactory = runnable -> {
+            Thread thread = new Thread(runnable);
+            thread.setName("file-scan-result-subscriber-1");
+            thread.setDaemon(true);
+            return thread;
+        };
+
+        // For now, handle messages one at a time so we don't overwhelm resources.
+        ExecutorProvider executorProvider = InstantiatingExecutorProvider.newBuilder()
+                .setThreadFactory(threadFactory)
+                .setExecutorThreadCount(1)
+                .build();
+
+        ExecutorService callbackExecutor = Executors.newSingleThreadExecutor();
+        Subscriber.Builder builder = Subscriber.newBuilder(subName, receiver)
+                .setSystemExecutorProvider(executorProvider)
+                .setExecutorProvider(executorProvider)
+                .setParallelPullCount(1);
+
+        startNewSubscriberWithRecovery(subName, builder, executorProvider, callbackExecutor, subscriber -> {
+            LOG.info("Started file scan result subscriber to subscription {}", subName);
+            fileScanResultSubscriber = subscriber;
+        });
+    }
+
+    private static void startNewSubscriberWithRecovery(ProjectSubscriptionName subscription,
+                                                       Subscriber.Builder builder,
+                                                       ExecutorProvider executorProvider,
+                                                       ExecutorService callbackExecutor,
+                                                       Consumer<Subscriber> consumer) {
+        Subscriber newSubscriber = builder.build();
+
+        // Add handler that recursively calls back in here to renew subscriber.
+        newSubscriber.addListener(new ApiService.Listener() {
+            @Override
+            public void failed(ApiService.State from, Throwable failure) {
+                LOG.error("Subscriber to subscription {} encountered unrecoverable failure from {}"
+                        + ", rebuilding subscriber", subscription, from, failure);
+                if (!executorProvider.getExecutor().isShutdown()) {
+                    startNewSubscriberWithRecovery(subscription, builder, executorProvider, callbackExecutor, consumer);
+                }
+            }
+        }, callbackExecutor);
+
+        try {
+            newSubscriber.startAsync().awaitRunning(30L, TimeUnit.SECONDS);
+        } catch (TimeoutException e) {
+            throw new DDPException("Could not start subscriber to subscription " + subscription, e);
+        }
+
+        // All set, pass new subscriber downstream.
+        consumer.accept(newSubscriber);
     }
 
     private static void respondToGAEStartHook(String envPort) {
