@@ -58,6 +58,9 @@
     "pubsub": {
         "enableHousekeepingTasks": {{$conf.Data.pubsub.enableHousekeepingTasks}},
         "housekeepingTasksSubscription": "{{$conf.Data.pubsub.housekeepingTasksSubscription}}",
+        "pubSubTasksSubscription": "{{$conf.Data.pubsub.pubSubTasksSubscription}}",
+        "pubSubTasksResultTopic": "{{$conf.Data.pubsub.pubSubTasksResultTopic}}",
+        "pubSubTaskSubscriberAwaitRunningTimeout": "{{$conf.Data.pubsub.pubSubTaskSubscriberAwaitRunningTimeout}}"
     },
     "studyExportBucket": "{{$conf.Data.studyExportBucket}}",
     "schedules": {

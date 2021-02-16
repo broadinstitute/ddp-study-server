@@ -15,7 +15,6 @@ import org.broadinstitute.ddp.model.activity.definition.validation.RuleDef;
 import org.broadinstitute.ddp.model.activity.types.PicklistRenderMode;
 import org.broadinstitute.ddp.model.activity.types.PicklistSelectMode;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
-import org.broadinstitute.ddp.model.activity.types.RuleType;
 import org.broadinstitute.ddp.util.MiscUtil;
 
 public final class PicklistQuestionDef extends QuestionDef {
@@ -132,10 +131,6 @@ public final class PicklistQuestionDef extends QuestionDef {
         Stream<PicklistOptionDef> groupOptions =
                 getGroups().stream().flatMap(group -> group.getOptions().stream());
         return Stream.concat(nestedOptsIncluded, groupOptions).collect(toList());
-    }
-
-    public boolean hasNumOptionsSelectedRule() {
-        return validations.stream().anyMatch(rule -> rule.getRuleType() == RuleType.NUM_OPTIONS_SELECTED);
     }
 
     public static final class Builder extends AbstractQuestionBuilder<Builder> {
