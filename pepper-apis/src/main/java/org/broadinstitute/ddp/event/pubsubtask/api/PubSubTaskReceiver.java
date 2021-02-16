@@ -50,20 +50,10 @@ public class PubSubTaskReceiver implements MessageReceiver {
         try {
             pubSubTask = parseMessage(message);
             var pubSubTaskResult = processPubSubTask(pubSubTask);
-            if (pubSubTaskResult.getResultType() == ERROR) {
-                consumer.nack();
-            } else {
-                consumer.ack();
-                sendResponse(pubSubTaskResult);
-            }
-        } catch (Exception e) {
             consumer.ack();
-            LOG.error(errorMsg(e.getMessage()), e);
-            if (e instanceof DDPException) {
-                sendResponse(new PubSubTaskResult(ERROR, e.getMessage(),
-                        e instanceof PubSubTaskException && ((PubSubTaskException) e).getPubSubTask() != null
-                                ? ((PubSubTaskException) e).getPubSubTask() : pubSubTask));
-            }
+            sendResponse(pubSubTaskResult);
+        } catch (Exception e) {
+            handlePubSubTaskProcessingException(consumer, pubSubTask, e);
         }
     }
 
@@ -89,6 +79,34 @@ public class PubSubTaskReceiver implements MessageReceiver {
         }
 
         return pubSubTask;
+    }
+
+    /**
+     * Handle an exception which could happen during:
+     * <pre>
+     * - PubSubTask message parsing;
+     * - PubSubTask processing.
+     * </pre>
+     * If exception is PubSubException and shouldRetry==true then call nack() - ask service
+     * to retry message sending.
+     * If exception is DDPException (or it's subclass, like PubSubTaskException) then
+     * it should be sent a result ERROR message to result topic (such message should
+     * contain errorMessage = e.getMessage()).
+     * Other types of exceptions are logged but no any task result sent to result topic.
+     */
+    private void handlePubSubTaskProcessingException(AckReplyConsumer consumer, PubSubTask pubSubTask, Exception e) {
+        if (e instanceof PubSubTaskException && ((PubSubTaskException)e).isShouldRetry()) {
+            LOG.warn(errorMsg(format("PubSubTask processing FAILED, will retry: taskType=%s", pubSubTask.getTaskType())));
+            consumer.nack();
+        } else {
+            consumer.ack();
+            LOG.error(errorMsg(e.getMessage()), e);
+            if (e instanceof DDPException) {
+                sendResponse(new PubSubTaskResult(ERROR, e.getMessage(),
+                        e instanceof PubSubTaskException && ((PubSubTaskException) e).getPubSubTask() != null
+                                ? ((PubSubTaskException) e).getPubSubTask() : pubSubTask));
+            }
+        }
     }
 
     private void sendResponse(PubSubTaskResult pubSubTaskResult) {

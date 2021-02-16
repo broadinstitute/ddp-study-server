@@ -62,7 +62,7 @@ public class UpdateEmailHandler {
         String errMsg = null;
         switch (status.getAuth0Status()) {
             case SUCCESS:
-                handle.attach(DataExportDao.class).queueDataSync(userDto.getUserId(), true);
+                syncToElastic(handle, userDto.getUserId());
                 LOG.info(infoMsg("The email of the user {} was successfully changed"), userGuid);
                 break;
             case INVALID_TOKEN:
@@ -86,5 +86,9 @@ public class UpdateEmailHandler {
         if (errMsg != null) {
             throw new PubSubTaskException(errMsg);
         }
+    }
+
+    private void syncToElastic(Handle handle, long userId) {
+        handle.attach(DataExportDao.class).queueDataSync(userId, true);
     }
 }
