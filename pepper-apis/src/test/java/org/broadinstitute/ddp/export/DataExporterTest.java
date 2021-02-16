@@ -7,6 +7,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
 
 import java.io.IOException;
 import java.io.StringReader;
@@ -47,6 +48,7 @@ import org.broadinstitute.ddp.db.dto.InvitationDto;
 import org.broadinstitute.ddp.db.dto.MedicalProviderDto;
 import org.broadinstitute.ddp.export.collectors.ActivityAttributesCollector;
 import org.broadinstitute.ddp.export.collectors.ActivityResponseCollector;
+import org.broadinstitute.ddp.export.json.structured.FileRecord;
 import org.broadinstitute.ddp.model.activity.definition.ActivityDef;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
 import org.broadinstitute.ddp.model.activity.definition.FormSectionDef;
@@ -57,6 +59,7 @@ import org.broadinstitute.ddp.model.activity.definition.i18n.Translation;
 import org.broadinstitute.ddp.model.activity.definition.question.BoolQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.CompositeQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.DateQuestionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.FileQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.NumericQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistOptionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistQuestionDef;
@@ -67,6 +70,8 @@ import org.broadinstitute.ddp.model.activity.instance.FormResponse;
 import org.broadinstitute.ddp.model.activity.instance.answer.BoolAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.DateAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.DateValue;
+import org.broadinstitute.ddp.model.activity.instance.answer.FileAnswer;
+import org.broadinstitute.ddp.model.activity.instance.answer.FileInfo;
 import org.broadinstitute.ddp.model.activity.instance.answer.NumericIntegerAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
@@ -82,6 +87,8 @@ import org.broadinstitute.ddp.model.activity.types.TemplateType;
 import org.broadinstitute.ddp.model.activity.types.TextInputType;
 import org.broadinstitute.ddp.model.address.MailAddress;
 import org.broadinstitute.ddp.model.dsm.KitReasonType;
+import org.broadinstitute.ddp.model.files.FileScanResult;
+import org.broadinstitute.ddp.model.files.FileUpload;
 import org.broadinstitute.ddp.model.governance.AgeOfMajorityRule;
 import org.broadinstitute.ddp.model.governance.GovernancePolicy;
 import org.broadinstitute.ddp.model.invitation.InvitationType;
@@ -132,16 +139,16 @@ public class DataExporterTest extends TxnAwareBaseTest {
 
     @Before
     public void setupTest() {
-        mockMedicalRecordService = Mockito.mock(MedicalRecordService.class);
+        mockMedicalRecordService = mock(MedicalRecordService.class);
         Mockito.when(mockMedicalRecordService.getDateOfBirth(Mockito.any(Handle.class),
                 Mockito.anyLong(), Mockito.anyLong())).thenReturn(Optional.of(testBirthdate));
         Mockito.when(mockMedicalRecordService.fetchBloodAndTissueConsents(Mockito.any(Handle.class),
                 Mockito.anyLong(), Mockito.anyString(), Mockito.any(), Mockito.anyLong(), Mockito.anyString()))
                 .thenReturn(new MedicalRecordService.ParticipantConsents(true, true));
 
-        AgeOfMajorityRule ageOfMajorityRule = Mockito.mock(AgeOfMajorityRule.class);
+        AgeOfMajorityRule ageOfMajorityRule = mock(AgeOfMajorityRule.class);
 
-        mockGovernancePolicy = Mockito.mock(GovernancePolicy.class);
+        mockGovernancePolicy = mock(GovernancePolicy.class);
         Mockito.when(mockGovernancePolicy.getApplicableAgeOfMajorityRule(Mockito.any(Handle.class),
                 Mockito.any(PexInterpreter.class),
                 Mockito.anyString())).thenReturn(Optional.of(ageOfMajorityRule));
@@ -337,6 +344,10 @@ public class DataExporterTest extends TxnAwareBaseTest {
                     .addFields(DateFieldType.YEAR, DateFieldType.MONTH, DateFieldType.DAY)
                     .build();
 
+            FileQuestionDef fileDef = FileQuestionDef
+                    .builder("TEST_FILEQ", Template.text("file prompt"))
+                    .build();
+
             TextQuestionDef textDef = TextQuestionDef.builder().setStableId("TEST_TEXTQ")
                     .setInputType(TextInputType.TEXT)
                     .setPrompt(new Template(TemplateType.TEXT, null, "text prompt"))
@@ -370,9 +381,9 @@ public class DataExporterTest extends TxnAwareBaseTest {
             String activityCode = "TEST_ACT";
             FormActivityDef def = FormActivityDef.generalFormBuilder(activityCode, "v1", testData.getStudyGuid())
                     .addName(new Translation("en", "test activity"))
-                    .addSection(new FormSectionDef(null, TestUtil.wrapQuestions(textDef, picklistDef, dateDef, numericDef, compQ)))
+                    .addSection(new FormSectionDef(null, TestUtil.wrapQuestions(
+                            textDef, picklistDef, dateDef, fileDef, numericDef, compQ)))
                     .build();
-
 
             ActivityVersionDto versioDto = handle.attach(ActivityDao.class)
                     .insertActivity(def, RevisionMetadata.now(testData.getUserId(), "test"));
@@ -406,6 +417,9 @@ public class DataExporterTest extends TxnAwareBaseTest {
 
             //check Date Question
             Assert.assertTrue(esDoc.contains("{\"stableId\":\"TEST_DATEQ\",\"questionType\":\"DATE\",\"questionText\":\"date prompt\"}"));
+
+            //check File Question
+            Assert.assertTrue(esDoc.contains("{\"stableId\":\"TEST_FILEQ\",\"questionType\":\"FILE\",\"questionText\":\"file prompt\"}"));
 
             //check Numeric Question
             Assert.assertTrue(esDoc.contains("{\"stableId\":\"TEST_NUMERICQ\","
@@ -454,13 +468,13 @@ public class DataExporterTest extends TxnAwareBaseTest {
         List<String> headers = Arrays.asList("participant_guid", "participant_hruid", "legacy_altpid", "legacy_shortid",
                 "first_name", "last_name", "email", "do_not_contact", "created_at", "status", "status_timestamp",
                 "ACT_v1", "ACT_v1_status", "ACT_v1_created_at", "ACT_v1_updated_at", "ACT_v1_completed_at",
-                "Q_BIRTHDAY_DAY", "Q_BIRTHDAY_MONTH", "Q_BIRTHDAY_YEAR", "Q_BOOL", "Q_TEXT", "Q_NUMERIC",
+                "Q_BIRTHDAY_DAY", "Q_BIRTHDAY_MONTH", "Q_BIRTHDAY_YEAR", "Q_BOOL", "Q_TEXT", "Q_NUMERIC", "Q_FILE",
                 "ADDRESS_FULLNAME", "ADDRESS_STREET1", "ADDRESS_STREET2", "ADDRESS_CITY", "ADDRESS_STATE",
                 "ADDRESS_ZIP", "ADDRESS_COUNTRY", "ADDRESS_PHONE", "ADDRESS_PLUSCODE", "ADDRESS_STATUS", "PHYSICIAN");
 
         List<String> answers = Arrays.asList(TEST_USER_GUID, "blah-hruid", "blah-legacy-altpid", "blah-shortid",
                 "first-foo", "last-bar", "test@datadonationplatform.org", "true", "10/18/2018 20:18:01", "ENROLLED", "10/18/2018 20:18:01",
-                "", "", "", "", "", "", "", "",
+                "", "", "", "", "", "", "", "", "",
                 "", "", "", "", "", "", "", "", "", "", "", "", "", "");
 
         Map<String, String> expected = IntStream.range(0, Math.min(headers.size(), answers.size()))
@@ -474,8 +488,8 @@ public class DataExporterTest extends TxnAwareBaseTest {
 
         for (String key : results.keySet()) {
             if (expected.get(key).equals("")) {
-                // Why are we null checking instead of "" checking? Because stupid streams have a stupid bug, where you can't fold null
-                // into a map collector. Its not part of the production code anyway. Stupid Streams!
+                // Why are we null checking instead of "" checking? Because streams have a bug, where you can't fold null
+                // into a map collector. This is only for testing.
                 assertNull(results.get(key));
             } else {
                 assertEquals(expected.get(key), results.get(key));
@@ -494,14 +508,14 @@ public class DataExporterTest extends TxnAwareBaseTest {
         List<String> headers = Arrays.asList("participant_guid", "participant_hruid", "legacy_altpid", "legacy_shortid",
                 "first_name", "last_name", "email", "do_not_contact", "created_at", "status", "status_timestamp",
                 "ACT_v1", "ACT_v1_status", "ACT_v1_created_at", "ACT_v1_updated_at", "ACT_v1_completed_at",
-                "Q_BIRTHDAY_DAY", "Q_BIRTHDAY_MONTH", "Q_BIRTHDAY_YEAR", "Q_BOOL", "Q_TEXT", "Q_NUMERIC",
+                "Q_BIRTHDAY_DAY", "Q_BIRTHDAY_MONTH", "Q_BIRTHDAY_YEAR", "Q_BOOL", "Q_TEXT", "Q_NUMERIC", "Q_FILE",
                 "ADDRESS_FULLNAME", "ADDRESS_STREET1", "ADDRESS_STREET2", "ADDRESS_CITY", "ADDRESS_STATE",
                 "ADDRESS_ZIP", "ADDRESS_COUNTRY", "ADDRESS_PHONE", "ADDRESS_STATUS", "PHYSICIAN", "ADDRESS_PLUSCODE");
         List<String> answers = Arrays.asList(TEST_USER_GUID, "blah-hruid", "blah-legacy-altpid", "blah-shortid",
                 "first-foo", "last-bar", "test@datadonationplatform.org", "true", "10/18/2018 20:18:01",
                 "ENROLLED", "10/18/2018 20:18:01",
                 "instance-guid-xyz", "COMPLETE", "10/18/2018 20:18:01", "10/18/2018 20:18:21", "10/18/2018 20:18:11",
-                "16", "05", "1978", "true", "john smith", "25",
+                "16", "05", "1978", "true", "john smith", "25", "file1",
                 "foo bar", "85 Main St", "Apt 2", "Boston", "MA", "02115", "US", "6171112233", "INVALID",
                 "dr. a;inst a;boston;ma", "87JC9WFP+HV", "");
 
@@ -555,14 +569,17 @@ public class DataExporterTest extends TxnAwareBaseTest {
                 )
         );
         assertEquals(1, result.size());
-        assertTrue(result.get(TEST_USER_GUID).contains("invite123"));
+        String actualJson = result.get(TEST_USER_GUID);
+        assertTrue(actualJson.contains("invite123"));
+        assertTrue("should export file with no file location", actualJson.contains("file1")
+                && actualJson.contains("\"bucket\":null") && actualJson.contains("\"blobName\":null"));
 
         // Check kit-related attributes.
-        assertTrue(result.get(TEST_USER_GUID).contains("\"attributes\""));
-        assertTrue(result.get(TEST_USER_GUID).contains("\"DDP_KIT_REQUEST_ID\":\"kit-1\""));
-        assertTrue(result.get(TEST_USER_GUID).contains("\"DDP_KIT_REASON_TYPE\":\"NORMAL\""));
-        assertTrue(result.get(TEST_USER_GUID).contains("\"DDP_TEST_RESULT_CODE\":\"NEGATIVE\""));
-        assertTrue(result.get(TEST_USER_GUID).contains("\"DDP_TEST_RESULT_TIME_COMPLETED\":\"2018-10-18T20:18:01Z\""));
+        assertTrue(actualJson.contains("\"attributes\""));
+        assertTrue(actualJson.contains("\"DDP_KIT_REQUEST_ID\":\"kit-1\""));
+        assertTrue(actualJson.contains("\"DDP_KIT_REASON_TYPE\":\"NORMAL\""));
+        assertTrue(actualJson.contains("\"DDP_TEST_RESULT_CODE\":\"NEGATIVE\""));
+        assertTrue(actualJson.contains("\"DDP_TEST_RESULT_TIME_COMPLETED\":\"2018-10-18T20:18:01Z\""));
     }
 
     @Test
@@ -605,13 +622,13 @@ public class DataExporterTest extends TxnAwareBaseTest {
                 // First set of activity columns.
                 "ACT_v1", "ACT_v1_status", "ACT_v1_created_at", "ACT_v1_updated_at", "ACT_v1_completed_at",
                 "DDP_KIT_REASON_TYPE", "DDP_KIT_REQUEST_ID", "DDP_TEST_RESULT_CODE", "DDP_TEST_RESULT_TIME_COMPLETED",
-                "Q_BIRTHDAY_DAY", "Q_BIRTHDAY_MONTH", "Q_BIRTHDAY_YEAR", "Q_BOOL", "Q_TEXT", "Q_NUMERIC",
+                "Q_BIRTHDAY_DAY", "Q_BIRTHDAY_MONTH", "Q_BIRTHDAY_YEAR", "Q_BOOL", "Q_TEXT", "Q_NUMERIC", "Q_FILE",
                 "ADDRESS_FULLNAME", "ADDRESS_STREET1", "ADDRESS_STREET2", "ADDRESS_CITY", "ADDRESS_STATE",
                 "ADDRESS_ZIP", "ADDRESS_COUNTRY", "ADDRESS_PHONE", "ADDRESS_PLUSCODE", "ADDRESS_STATUS", "PHYSICIAN",
                 // Second set of activity columns.
                 "ACT_v1_2", "ACT_v1_2_status", "ACT_v1_2_created_at", "ACT_v1_2_updated_at", "ACT_v1_2_completed_at",
                 "DDP_KIT_REASON_TYPE", "DDP_KIT_REQUEST_ID", "DDP_TEST_RESULT_CODE", "DDP_TEST_RESULT_TIME_COMPLETED",
-                "Q_BIRTHDAY_DAY", "Q_BIRTHDAY_MONTH", "Q_BIRTHDAY_YEAR", "Q_BOOL", "Q_TEXT", "Q_NUMERIC",
+                "Q_BIRTHDAY_DAY", "Q_BIRTHDAY_MONTH", "Q_BIRTHDAY_YEAR", "Q_BOOL", "Q_TEXT", "Q_NUMERIC", "Q_FILE",
                 "ADDRESS_FULLNAME", "ADDRESS_STREET1", "ADDRESS_STREET2", "ADDRESS_CITY", "ADDRESS_STATE",
                 "ADDRESS_ZIP", "ADDRESS_COUNTRY", "ADDRESS_PHONE", "ADDRESS_PLUSCODE", "ADDRESS_STATUS", "PHYSICIAN"};
         String[] actual = iter.next();
@@ -624,13 +641,13 @@ public class DataExporterTest extends TxnAwareBaseTest {
                 // First set of activity values.
                 "instance-guid-xyz", "COMPLETE", "10/18/2018 20:18:01", "10/18/2018 20:18:21", "10/18/2018 20:18:11",
                 "NORMAL", "kit-1", "NEGATIVE", "2018-10-18T20:18:01Z",
-                "16", "05", "1978", "true", "john smith", "25",
+                "16", "05", "1978", "true", "john smith", "25", "file1",
                 "foo bar", "85 Main St", "Apt 2", "Boston", "MA", "02115", "US", "6171112233",
                 "87JC9WFP+HV", "INVALID", "dr. a;inst a;boston;ma",
                 // Second set of activity values, which should be all empty.
                 "", "", "", "", "",         // Empty instance metadata.
                 "", "", "", "",             // Empty attributes.
-                "", "", "", "", "", "",     // Empty question answers/responses.
+                "", "", "", "", "", "", "", // Empty question answers/responses.
                 "", "", "", "", "", "", "", "",
                 "", "", ""};
         actual = iter.next();
@@ -650,7 +667,7 @@ public class DataExporterTest extends TxnAwareBaseTest {
                 "participant_guid", "participant_hruid", "legacy_altpid", "legacy_shortid",
                 "first_name", "last_name", "email", "do_not_contact", "created_at", "status", "status_timestamp",
                 "ACT_v1", "ACT_v1_status", "ACT_v1_created_at", "ACT_v1_updated_at", "ACT_v1_completed_at",
-                "Q_BIRTHDAY_DAY", "Q_BIRTHDAY_MONTH", "Q_BIRTHDAY_YEAR", "Q_BOOL", "Q_TEXT", "Q_NUMERIC",
+                "Q_BIRTHDAY_DAY", "Q_BIRTHDAY_MONTH", "Q_BIRTHDAY_YEAR", "Q_BOOL", "Q_TEXT", "Q_NUMERIC", "Q_FILE",
                 "ADDRESS_FULLNAME", "ADDRESS_STREET1", "ADDRESS_STREET2", "ADDRESS_CITY", "ADDRESS_STATE",
                 "ADDRESS_ZIP", "ADDRESS_COUNTRY", "ADDRESS_PHONE", "ADDRESS_PLUSCODE", "ADDRESS_STATUS", "PHYSICIAN"};
 
@@ -691,6 +708,9 @@ public class DataExporterTest extends TxnAwareBaseTest {
                                     .build()),
                             new QuestionBlockDef(NumericQuestionDef
                                     .builder(NumericType.INTEGER, "Q_NUMERIC", Template.text("numeric prompt"))
+                                    .build()),
+                            new QuestionBlockDef(FileQuestionDef
+                                    .builder("Q_FILE", Template.text("file prompt"))
                                     .build()))))
                     .addSection(new FormSectionDef(null, Arrays.asList(
                             new MailingAddressComponentDef(null, null),
@@ -726,7 +746,15 @@ public class DataExporterTest extends TxnAwareBaseTest {
                 instance.putAnswer(new TextAnswer(2L, "Q_TEXT", "guid", "john smith"));
                 instance.putAnswer(new NumericIntegerAnswer(3L, "Q_NUMERIC", "guid", 25L));
                 instance.putAnswer(new DateAnswer(4L, "Q_BIRTHDAY", "guid", new DateValue(1978, 5, 16)));
+                instance.putAnswer(new FileAnswer(5L, "Q_FILE", "guid", new FileInfo(1L, "file1", "file.pdf", 123L)));
                 participant.addResponse(instance);
+
+                participant.addAllFiles(List.of(new FileRecord("uploads", new FileUpload(
+                        1L, "file1", 1L, 1L, 1L, "blob1", "application/pdf", "file.pdf", 123L, true,
+                        Instant.ofEpochMilli(timestamp + 1),
+                        Instant.ofEpochMilli(timestamp + 2),
+                        Instant.ofEpochMilli(timestamp + 3),
+                        FileScanResult.INFECTED))));
 
                 Map<String, String> substitutions = Map.of(
                         I18nTemplateConstants.Snapshot.KIT_REQUEST_ID, "kit-1",

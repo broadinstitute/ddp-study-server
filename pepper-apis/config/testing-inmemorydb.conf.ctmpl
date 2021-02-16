@@ -7,7 +7,8 @@
 {{with $testingConf := vault (printf "secret/pepper/%s/%s/testing" $environment $version)}}
 {{with $auth0 := index $testingConf.Data "auth0"}}
 {{with $testingAuth := index $testingConf.Data "auth0"}}
-{{with $elasticsearchConf := vault (printf "secret/pepper/%s/%s/elasticsearch" $environment $version)}}
+{{with $conf := vault (printf "secret/pepper/%s/%s/conf" $environment $version)}}
+{{with $fileUploads := index $conf.Data "fileUploads"}}
 
 {
     {{if eq $gae "true"}}
@@ -91,11 +92,27 @@
     "sendMetrics": false,
     "requireDefaultGcpCredentials": false,
     "googleProjectId": "broad-ddp-dev",
+    "fileUploads": {
+        "uploadsBucket": "ddp-local-file-uploads",
+        "scannedBucket": "ddp-local-file-scanned",
+        "quarantineBucket": "ddp-local-file-quarantine",
+        "maxFileSizeBytes": 2000000,
+        "maxSignedUrlMins": 5,
+        "removalExpireTime": 1,
+        "removalExpireUnit": "DAYS",
+        "removalBatchSize": 100,
+        "enableScanResultHandler": false,
+        "scanResultSubscription": "cf-file-scan-result-local-hkeep-sub",
+        "signerServiceAccount": {{$fileUploads.signerServiceAccount | toJSONPretty}}
+    },
     "pdfArchiveBucket": "pepper-pdf-dev",
     "pdfArchiveUseFilesystem": true,
     "pubsub": {
         "enableHousekeepingTasks": false,
         "housekeepingTasksSubscription": "local-housekeeping-tasks-sub",
+        "pubSubTasksSubscription": "local-dsm-to-dss-tasks-sub",
+        "pubSubTasksResultTopic": "local-dss-to-dsm-results",
+        "pubSubTaskSubscriberAwaitRunningTimeout": 30
     },
     "studyExportBucket": "ddp-dev-study-exports-testing",
     "schedules": {
@@ -105,6 +122,7 @@
         "drugLoader": "0 0 8,20 ? * * *",
         "cancerLoader": "0 0 8,20 ? * * *",
         "studyExport": "0 0 9 ? * * *",
+        "fileUploadCleanup": "0 0 5 ? * * *",
         "tempUserCleanup": "0 30 5 ? * * *"
     },
     "housekeepingMaxConnections": 50,
@@ -183,6 +201,7 @@
     }
 }
 
+{{end}}
 {{end}}
 {{end}}
 {{end}}

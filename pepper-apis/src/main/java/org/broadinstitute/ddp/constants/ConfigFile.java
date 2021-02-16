@@ -62,6 +62,7 @@ public class ConfigFile {
     public static final String DB_BACKUP_SCHEDULE = "schedules.dbBackup";
     public static final String DB_BACKUP_CHECK_SCHEDULE = "schedules.dbBackupCheck";
     public static final String STUDY_EXPORT_SCHEDULE = "schedules.studyExport";
+    public static final String FILE_UPLOAD_CLEANUP_SCHEDULE = "schedules.fileUploadCleanup";
     public static final String TEMP_USER_CLEANUP_SCHEDULE = "schedules.tempUserCleanup";
 
     // database instance names
@@ -100,6 +101,9 @@ public class ConfigFile {
     public static final String BACKEND_AUTH0_TEST_CLIENT_NAME2 = "backendTestClientName2";
     public static final String PUBSUB_ENABLE_HKEEP_TASKS = "pubsub.enableHousekeepingTasks";
     public static final String PUBSUB_HKEEP_TASKS_SUB = "pubsub.housekeepingTasksSubscription";
+    public static final String PUBSUB_TASKS_SUB = "pubsub.pubSubTasksSubscription";
+    public static final String PUBSUB_TASKS_RESULT_TOPIC = "pubsub.pubSubTasksResultTopic";
+    public static final String PUBSUB_TASKS_SUBSCRIBER_AWAIT_RUNNING_TIMEOUT = "pubsub.pubSubTaskSubscriberAwaitRunningTimeout";
     public static final String SLACK_HOOK = "slack.hook";
     public static final String SLACK_CHANNEL = "slack.channel";
     public static final String SLACK_QUEUE_SIZE = "slack.queueSize";
@@ -192,5 +196,20 @@ public class ConfigFile {
 
     public static class Auth0LogEvents {
         public static final String AUTH0_LOG_EVENTS_TOKEN = "auth0LogEvents.token";
+    }
+
+    public static class FileUploads {
+        private static final String prefix = "fileUploads.";
+        public static final String UPLOADS_BUCKET = prefix + "uploadsBucket";
+        public static final String SCANNED_BUCKET = prefix + "scannedBucket";
+        public static final String QUARANTINE_BUCKET = prefix + "quarantineBucket";
+        public static final String MAX_FILE_SIZE_BYTES = prefix + "maxFileSizeBytes";
+        public static final String MAX_SIGNED_URL_MINS = prefix + "maxSignedUrlMins";
+        public static final String REMOVAL_EXPIRE_TIME = prefix + "removalExpireTime";
+        public static final String REMOVAL_EXPIRE_UNIT = prefix + "removalExpireUnit";
+        public static final String REMOVAL_BATCH_SIZE = prefix + "removalBatchSize";
+        public static final String ENABLE_SCAN_RESULT_HANDLER = prefix + "enableScanResultHandler";
+        public static final String SCAN_RESULT_SUBSCRIPTION = prefix + "scanResultSubscription";
+        public static final String SIGNER_SERVICE_ACCOUNT = prefix + "signerServiceAccount";
     }
 }

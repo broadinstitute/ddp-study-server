@@ -26,6 +26,8 @@ import org.broadinstitute.ddp.model.activity.instance.answer.BoolAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.CompositeAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.DateAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.DateValue;
+import org.broadinstitute.ddp.model.activity.instance.answer.FileAnswer;
+import org.broadinstitute.ddp.model.activity.instance.answer.FileInfo;
 import org.broadinstitute.ddp.model.activity.instance.answer.NumericAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.NumericIntegerAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.PicklistAnswer;
@@ -107,6 +109,8 @@ public interface AnswerDao extends SqlObject {
         } else if (type == QuestionType.DATE) {
             DateValue value = ((DateAnswer) answer).getValue();
             DBUtils.checkInsert(1, answerSql.insertDateValue(answerId, value));
+        } else if (type == QuestionType.FILE) {
+            createAnswerFileValue(answerId, (FileAnswer) answer);
         } else if (type == QuestionType.NUMERIC) {
             NumericAnswer ans = (NumericAnswer) answer;
             if (ans.getNumericType() != NumericType.INTEGER) {
@@ -126,6 +130,12 @@ public interface AnswerDao extends SqlObject {
         } else {
             throw new DaoException("Unhandled answer type " + type);
         }
+    }
+
+    private void createAnswerFileValue(long answerId, FileAnswer answer) {
+        FileInfo info = answer.getValue();
+        Long uploadId = info == null ? null : info.getUploadId();
+        DBUtils.checkInsert(1, getAnswerSql().insertFileValue(answerId, uploadId));
     }
 
     private void createAnswerCompositeValue(long operatorId, long instanceId, long answerId, CompositeAnswer answer) {
@@ -175,6 +185,8 @@ public interface AnswerDao extends SqlObject {
         } else if (type == QuestionType.DATE) {
             DateValue value = ((DateAnswer) newAnswer).getValue();
             DBUtils.checkInsert(1, answerSql.updateDateValueById(answerId, value));
+        } else if (type == QuestionType.FILE) {
+            updateAnswerFileValue(answerId, (FileAnswer) newAnswer);
         } else if (type == QuestionType.NUMERIC) {
             NumericAnswer ans = (NumericAnswer) newAnswer;
             if (ans.getNumericType() != NumericType.INTEGER) {
@@ -194,6 +206,12 @@ public interface AnswerDao extends SqlObject {
         } else {
             throw new DaoException("Unhandled answer type " + type);
         }
+    }
+
+    private void updateAnswerFileValue(long answerId, FileAnswer newAnswer) {
+        FileInfo info = newAnswer.getValue();
+        Long uploadId = info == null ? null : info.getUploadId();
+        DBUtils.checkUpdate(1, getAnswerSql().updateFileValue(answerId, uploadId));
     }
 
     private void updateAnswerCompositeValue(long operatorId, long answerId, CompositeAnswer newAnswer) {
@@ -408,6 +426,17 @@ public interface AnswerDao extends SqlObject {
                             view.getColumn("da_month", Integer.class),
                             view.getColumn("da_day", Integer.class),
                             actInstanceGuid);
+                    break;
+                case FILE:
+                    FileInfo info = null;
+                    Long fileUploadId = view.getColumn("fa_upload_id", Long.class);
+                    if (fileUploadId != null) {
+                        info = new FileInfo(fileUploadId,
+                                view.getColumn("fa_upload_guid", String.class),
+                                view.getColumn("fa_file_name", String.class),
+                                view.getColumn("fa_file_size", Long.class));
+                    }
+                    answer = new FileAnswer(answerId, questionStableId, answerGuid, info, actInstanceGuid);
                     break;
                 case NUMERIC:
                     var numericType = NumericType.valueOf(view.getColumn("na_numeric_type", String.class));

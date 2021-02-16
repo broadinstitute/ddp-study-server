@@ -6,7 +6,6 @@ import static org.broadinstitute.ddp.constants.ConfigFile.Sendgrid.EVENTS_VERIFI
 import static org.broadinstitute.ddp.filter.Exclusions.afterWithExclusion;
 import static org.broadinstitute.ddp.filter.Exclusions.beforeWithExclusion;
 import static org.broadinstitute.ddp.filter.WhiteListFilter.whitelist;
-import static org.broadinstitute.ddp.util.ConfigUtil.getBoolIfPresent;
 import static spark.Spark.after;
 import static spark.Spark.afterAfter;
 import static spark.Spark.awaitInitialization;
@@ -79,6 +78,7 @@ import org.broadinstitute.ddp.route.CheckIrbPasswordRoute;
 import org.broadinstitute.ddp.route.CreateActivityInstanceRoute;
 import org.broadinstitute.ddp.route.CreateMailAddressRoute;
 import org.broadinstitute.ddp.route.CreateTemporaryUserRoute;
+import org.broadinstitute.ddp.route.CreateUserActivityUploadRoute;
 import org.broadinstitute.ddp.route.DeleteMailAddressRoute;
 import org.broadinstitute.ddp.route.DeleteMedicalProviderRoute;
 import org.broadinstitute.ddp.route.DeleteTempMailingAddressRoute;
@@ -160,6 +160,7 @@ import org.broadinstitute.ddp.service.AddressService;
 import org.broadinstitute.ddp.service.Auth0LogEventService;
 import org.broadinstitute.ddp.service.CancerService;
 import org.broadinstitute.ddp.service.ConsentService;
+import org.broadinstitute.ddp.service.FileUploadService;
 import org.broadinstitute.ddp.service.FormActivityService;
 import org.broadinstitute.ddp.service.MedicalRecordService;
 import org.broadinstitute.ddp.service.PdfBucketService;
@@ -171,6 +172,7 @@ import org.broadinstitute.ddp.service.WorkflowService;
 import org.broadinstitute.ddp.transformers.NullableJsonTransformer;
 import org.broadinstitute.ddp.transformers.SimpleJsonTransformer;
 import org.broadinstitute.ddp.util.ConfigManager;
+import org.broadinstitute.ddp.util.ConfigUtil;
 import org.broadinstitute.ddp.util.ElasticsearchServiceUtil;
 import org.broadinstitute.ddp.util.LiquibaseUtil;
 import org.broadinstitute.ddp.util.LogbackConfigurationPrinter;
@@ -350,7 +352,7 @@ public class DataDonationPlatform {
         if (cfg.getBoolean(ConfigFile.RESTRICT_REGISTER_ROUTE)) {
             whitelist(API.REGISTRATION, cfg.getStringList(ConfigFile.AUTH0_IP_WHITE_LIST));
         }
-        if (getBoolIfPresent(cfg, ConfigFile.RESTRICT_AUTH0_LOG_EVENT_ROUTE, false)) {
+        if (ConfigUtil.getBoolOrElse(cfg, ConfigFile.RESTRICT_AUTH0_LOG_EVENT_ROUTE, false)) {
             whitelist(API.AUTH0_LOG_EVENT, cfg.getStringList(ConfigFile.AUTH0_IP_WHITE_LIST));
         }
 
@@ -469,15 +471,17 @@ public class DataDonationPlatform {
 
         // User activity answers routes
         FormActivityService formService = new FormActivityService(interpreter);
+        var fileUploadService = FileUploadService.fromConfig(cfg);
 
         patch(API.USER_ACTIVITY_ANSWERS,
-                new PatchFormAnswersRoute(formService, activityValidationService, interpreter),
+                new PatchFormAnswersRoute(formService, activityValidationService, fileUploadService, interpreter),
                 responseSerializer);
         put(
                 API.USER_ACTIVITY_ANSWERS,
                 new PutFormAnswersRoute(workflowService, activityValidationService, formInstanceDao, interpreter),
                 responseSerializer
         );
+        post(API.USER_ACTIVITY_UPLOADS, new CreateUserActivityUploadRoute(fileUploadService), responseSerializer);
 
         // User study invitations
         get(API.USER_STUDY_INVITES, new ListUserStudyInvitationsRoute(), jsonSerializer);
