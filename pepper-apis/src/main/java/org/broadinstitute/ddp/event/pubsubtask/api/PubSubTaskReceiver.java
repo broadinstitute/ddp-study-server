@@ -2,9 +2,9 @@ package org.broadinstitute.ddp.event.pubsubtask.api;
 
 import static java.lang.String.format;
 import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTask.ATTR_TASK_TYPE;
+import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskException.Severity.WARN;
 import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskLogUtil.errorMsg;
 import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskLogUtil.infoMsg;
-import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskResult.PubSubTaskResultType.ERROR;
 import static org.slf4j.LoggerFactory.getLogger;
 
 
@@ -49,7 +49,7 @@ public class PubSubTaskReceiver implements MessageReceiver {
         try {
             pubSubTask = parseMessage(message);
             var pubSubTaskResult = processPubSubTask(pubSubTask);
-            if (pubSubTaskResult.getPubSubTaskResultPayload().getResultType() == ERROR) {
+            if (pubSubTaskResult.getPubSubTaskResultPayload().getResultType() == PubSubTaskResult.PubSubTaskResultType.ERROR) {
                 consumer.nack();
             } else {
                 consumer.ack();
@@ -57,9 +57,15 @@ public class PubSubTaskReceiver implements MessageReceiver {
             }
         } catch (Exception e) {
             consumer.ack();
-            LOG.error(errorMsg(e.getMessage()), e);
+
+            if (e instanceof PubSubTaskException && ((PubSubTaskException)e).getSeverity() == WARN) {
+                LOG.warn(errorMsg(e.getMessage()));
+            } else {
+                LOG.error(errorMsg(e.getMessage()), e);
+            }
+
             if (pubSubTask != null) {
-                sendResponse(new PubSubTaskResult(ERROR, e.getMessage(), pubSubTask));
+                sendResponse(new PubSubTaskResult(PubSubTaskResult.PubSubTaskResultType.ERROR, e.getMessage(), pubSubTask));
             }
         }
     }
@@ -81,8 +87,7 @@ public class PubSubTaskReceiver implements MessageReceiver {
 
         var pubSubTaskDescriptor = pubSubTaskProcessorFactory.getPubSubTaskDescriptor(taskType);
         if (pubSubTaskDescriptor == null) {
-            throw new PubSubTaskException(format("PubSubTask message [id=%s] has unknown taskType=%s", messageId, taskType),
-                    pubSubTask);
+            throw new PubSubTaskException(format("PubSubTask message [id=%s] has unknown taskType=%s", messageId, taskType), WARN);
         }
 
         return pubSubTask;

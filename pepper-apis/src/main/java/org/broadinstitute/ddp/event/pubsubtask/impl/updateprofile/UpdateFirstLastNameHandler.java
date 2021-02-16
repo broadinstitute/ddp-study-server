@@ -1,5 +1,6 @@
 package org.broadinstitute.ddp.event.pubsubtask.impl.updateprofile;
 
+import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskException.Severity.WARN;
 import static org.broadinstitute.ddp.event.pubsubtask.impl.updateprofile.UpdateProfileConstants.FIELD_FIRST_NAME;
 import static org.broadinstitute.ddp.event.pubsubtask.impl.updateprofile.UpdateProfileConstants.FIELD_LAST_NAME;
 
@@ -23,7 +24,7 @@ public class UpdateFirstLastNameHandler {
         var profileDao = handle.attach(UserProfileDao.class);
         var profile = profileDao.findProfileByUserGuid(userGuid).orElse(null);
         if (profile == null) {
-            throw new PubSubTaskException("User profile is not found for guid=" + userGuid);
+            throw new PubSubTaskException("User profile is not found for guid=" + userGuid, WARN);
         }
         String firstName = detectFieldValueForUpdate(payload, FIELD_FIRST_NAME, profile.getFirstName());
         String lastName = detectFieldValueForUpdate(payload, FIELD_LAST_NAME, profile.getLastName());
@@ -31,7 +32,7 @@ public class UpdateFirstLastNameHandler {
         if (count > 0) {
             handle.attach(DataExportDao.class).queueDataSync(userGuid);
         } else {
-            throw new PubSubTaskException("User profile is not found for guid=" + userGuid);
+            throw new PubSubTaskException("User profile is not found for guid=" + userGuid, WARN);
         }
     }
 
