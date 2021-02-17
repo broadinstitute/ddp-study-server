@@ -25,7 +25,6 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import org.apache.http.HttpStatus;
@@ -306,7 +305,8 @@ public class DataDonationPlatform {
         ActivityInstanceDao activityInstanceDao = new ActivityInstanceDao(formInstanceDao);
 
         PexInterpreter interpreter = new TreeWalkInterpreter();
-        final ActivityInstanceService actInstService = new ActivityInstanceService(activityInstanceDao, interpreter);
+        I18nContentRenderer i18nContentRenderer = new I18nContentRenderer();
+        final ActivityInstanceService actInstService = new ActivityInstanceService(activityInstanceDao, interpreter, i18nContentRenderer);
         final ActivityValidationService activityValidationService = new ActivityValidationService();
 
         var jsonSerializer = new NullableJsonTransformer();
@@ -442,7 +442,6 @@ public class DataDonationPlatform {
         WorkflowService workflowService = new WorkflowService(interpreter);
         get(API.USER_STUDY_WORKFLOW, new GetWorkflowRoute(workflowService), responseSerializer);
 
-        I18nContentRenderer i18nContentRenderer = new I18nContentRenderer();
         // User study announcements
         get(API.USER_STUDY_ANNOUNCEMENTS, new GetUserAnnouncementsRoute(i18nContentRenderer), responseSerializer);
 
@@ -460,7 +459,7 @@ public class DataDonationPlatform {
         get(API.ACTIVITY_INSTANCE_STATUS_TYPE_LIST, new GetActivityInstanceStatusTypeListRoute(), responseSerializer);
 
         // User activity instance routes
-        get(API.USER_ACTIVITIES, new UserActivityInstanceListRoute(activityInstanceDao), responseSerializer);
+        get(API.USER_ACTIVITIES, new UserActivityInstanceListRoute(actInstService), responseSerializer);
         post(API.USER_ACTIVITIES, new CreateActivityInstanceRoute(), responseSerializer);
         get(
                 API.USER_ACTIVITIES_INSTANCE,

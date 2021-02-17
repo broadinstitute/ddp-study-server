@@ -14,6 +14,7 @@ import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.DaoException;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceCreationValidation;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
+import org.broadinstitute.ddp.db.dto.ActivityInstanceSummaryDto;
 import org.broadinstitute.ddp.model.activity.instance.ActivityResponse;
 import org.broadinstitute.ddp.model.activity.instance.FormResponse;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
@@ -276,6 +277,13 @@ public interface ActivityInstanceDao extends SqlObject {
     @UseRowReducer(BulkFindSubstitutionsReducer.class)
     Stream<SubstitutionsWrapper> bulkFindSubstitutions(
             @BindList(value = "instanceIds", onEmpty = EmptyHandling.NULL) Set<Long> instanceIds);
+
+    @UseStringTemplateSqlLocator
+    @SqlQuery("findAllSortedInstanceSummariesByUserAndStudyGuids")
+    @RegisterConstructorMapper(ActivityInstanceSummaryDto.class)
+    List<ActivityInstanceSummaryDto> findAllSortedInstanceSummaries(
+            @Bind("userGuid") String userGuid,
+            @Bind("studyGuid") String studyGuid);
 
     @UseStringTemplateSqlLocator
     @SqlQuery("queryBaseResponsesByInstanceId")
