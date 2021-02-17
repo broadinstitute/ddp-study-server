@@ -391,7 +391,7 @@ public class PatchFormAnswersRouteStandaloneTest {
     public void refresh() {
         TransactionWrapper.useTxn(handle -> {
             instanceDto = handle.attach(ActivityInstanceDao.class)
-                    .insertInstance(activity.getActivityId(), userGuid);
+                    .insertInstance(activity.getActivityId(), userGuid, userGuid, parentInstanceDto.getId());
             instanceGuid = instanceDto.getGuid();
             url = urlTemplate.replace("{instanceGuid}", instanceGuid);
         });

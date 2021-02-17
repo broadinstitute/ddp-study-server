@@ -19,6 +19,7 @@ import org.broadinstitute.ddp.db.dao.JdbiWorkflowState;
 import org.broadinstitute.ddp.db.dao.PdfDao;
 import org.broadinstitute.ddp.db.dao.TemplateDao;
 import org.broadinstitute.ddp.db.dao.WorkflowDao;
+import org.broadinstitute.ddp.db.dto.ActivityDto;
 import org.broadinstitute.ddp.db.dto.SendgridEmailEventActionDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.exception.DDPException;
@@ -202,8 +203,19 @@ public class EventBuilder {
             return actionDao.insertPdfGenerationAction(pdfId);
         } else if (EventActionType.ACTIVITY_INSTANCE_CREATION.name().equals(type)) {
             String activityCode = actionCfg.getString(ACTIVITY_CODE_FIELD);
-            long activityId = ActivityBuilder.findActivityId(handle, studyDto.getId(), activityCode);
-            return actionDao.insertInstanceCreationAction(activityId);
+            ActivityDto activityDto = handle.attach(JdbiActivity.class)
+                    .findActivityByStudyIdAndCode(studyDto.getId(), activityCode)
+                    .orElseThrow(() -> new DDPException("Could not find activity " + activityCode));
+            if (activityDto.getParentActivityCode() != null) {
+                if (!triggerCfg.getString("type").equals(EventTriggerType.ACTIVITY_STATUS.name())) {
+                    throw new DDPException("Currently only ACTIVITY_STATUS trigger is allowed"
+                            + " when target activity is a child nested activity");
+                } else if (!triggerCfg.getString("activityCode").equals(activityDto.getParentActivityCode())) {
+                    throw new DDPException("Activity for ACTIVITY_STATUS trigger must be the parent activity"
+                            + " when target activity is a child nested activity");
+                }
+            }
+            return actionDao.insertInstanceCreationAction(activityDto.getActivityId());
         } else if (EventActionType.ANNOUNCEMENT.name().equals(type)) {
             Template tmpl = BuilderUtils.parseAndValidateTemplate(actionCfg, "msgTemplate");
 

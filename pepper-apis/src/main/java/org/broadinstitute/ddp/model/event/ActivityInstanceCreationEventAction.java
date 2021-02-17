@@ -14,6 +14,7 @@ import org.broadinstitute.ddp.db.dao.QueuedEventDao;
 import org.broadinstitute.ddp.db.dto.ActivityDto;
 import org.broadinstitute.ddp.db.dto.EventConfigurationDto;
 import org.broadinstitute.ddp.exception.DDPException;
+import org.broadinstitute.ddp.model.activity.types.EventTriggerType;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.broadinstitute.ddp.model.dsm.DsmNotificationEventType;
 import org.broadinstitute.ddp.model.dsm.TestResult;
@@ -48,7 +49,9 @@ public class ActivityInstanceCreationEventAction extends EventAction {
                 throw new DDPException("ActivityInstance creation with delaySeconds > 0 are currently only supported "
                         + "as asynchronous events. Please set dispatch_to_housekeeping to true");
             } else {
-                //insert queued event
+                //insert queued event after checking nested activity and signal
+                ActivityDto activityDto = handle.attach(JdbiActivity.class).queryActivityById(studyActivityId);
+                checkSignalIfNestedTargetActivity(activityDto, signal);
                 QueuedEventDao queuedEventDao = handle.attach(QueuedEventDao.class);
                 long queuedEventId = queuedEventDao.insertActivityInstanceCreation(eventConfiguration.getEventConfigurationId(),
                         postAfter,
@@ -69,6 +72,7 @@ public class ActivityInstanceCreationEventAction extends EventAction {
         JdbiActivity jdbiActivity = handle.attach(JdbiActivity.class);
 
         ActivityDto activityDto = jdbiActivity.queryActivityById(studyActivityId);
+        checkSignalIfNestedTargetActivity(activityDto, signal);
 
         // Checking if the maximum number of activities of this type is hit
         LOG.info("Checking if the maximum number of activities (n = {}) for the study activity (id = {}) is hit",
@@ -96,6 +100,11 @@ public class ActivityInstanceCreationEventAction extends EventAction {
                     true, Set.of(studyActivityId));
         }
 
+        Long parentInstanceId = null;
+        if (signal.getEventTriggerType() == EventTriggerType.ACTIVITY_STATUS) {
+            parentInstanceId = ((ActivityInstanceStatusChangeSignal) signal).getActivityInstanceIdThatChanged();
+        }
+
         // All fine, creating an activity instance
         String activityInstanceGuid = jdbiActivityInstance.generateUniqueGuid();
         long newActivityInstanceId = jdbiActivityInstance.insert(
@@ -104,7 +113,8 @@ public class ActivityInstanceCreationEventAction extends EventAction {
                 activityInstanceGuid,
                 null,
                 Instant.now().toEpochMilli(),
-                null
+                null,
+                parentInstanceId
         );
         // Using the low-level facility to avoid infinite recursion
         jdbiActivityInstanceStatus.insert(
@@ -154,6 +164,18 @@ public class ActivityInstanceCreationEventAction extends EventAction {
                 studyActivityId,
                 signal.getStudyId(),
                 InstanceStatusType.CREATED));
+    }
+
+    private void checkSignalIfNestedTargetActivity(ActivityDto activityDto, EventSignal signal) {
+        if (activityDto.getParentActivityId() != null) {
+            if (signal.getEventTriggerType() != EventTriggerType.ACTIVITY_STATUS) {
+                throw new DDPException("ActivityInstance creation action is not paired with ACTIVITY_STATUS trigger");
+            }
+            ActivityInstanceStatusChangeSignal statusSignal = (ActivityInstanceStatusChangeSignal) signal;
+            if (statusSignal.getActivityIdThatChanged() != activityDto.getParentActivityId()) {
+                throw new DDPException("ActivityInstance creation action parent activity does not match trigger");
+            }
+        }
     }
 
     public long getStudyActivityId() {

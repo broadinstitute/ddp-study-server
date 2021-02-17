@@ -54,14 +54,16 @@ public interface JdbiActivityInstance extends SqlObject {
     String getActivityInstanceGuid(@Bind("activityInstanceId") long activityInstanceId);
 
     @SqlUpdate("insert into activity_instance (study_activity_id,participant_id,activity_instance_guid,is_readonly,"
-            + "created_at,ondemand_trigger_id) values(:activityId,:participantId,:guid,:isReadOnly,:createdAt,:triggerId)")
+            + "created_at,ondemand_trigger_id,parent_instance_id) values(:activityId,:participantId,:guid,:isReadOnly,"
+            + ":createdAt,:triggerId,:parentInstanceId)")
     @GetGeneratedKeys
     long insert(@Bind("activityId") long activityId,
                 @Bind("participantId") long participantId,
                 @Bind("guid") String instanceGuid,
                 @Bind("isReadOnly") Boolean isReadOnly,
                 @Bind("createdAt") long createdAtMillis,
-                @Bind("triggerId") Long onDemandTriggerId);
+                @Bind("triggerId") Long onDemandTriggerId,
+                @Bind("parentInstanceId") Long parentInstanceId);
 
     @SqlUpdate("insert into activity_instance (study_activity_id,participant_id,activity_instance_guid,is_readonly,"
             + "created_at, legacy_submissionid,legacy_sessionid,legacy_version) values(:activityId,:participantId,:guid,"

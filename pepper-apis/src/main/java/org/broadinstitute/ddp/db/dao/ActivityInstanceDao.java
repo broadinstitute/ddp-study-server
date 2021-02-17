@@ -68,7 +68,7 @@ public interface ActivityInstanceDao extends SqlObject {
      */
     default ActivityInstanceDto insertInstance(long activityId, String userGuid) {
         long millis = Instant.now().toEpochMilli();
-        return insertInstance(activityId, userGuid, userGuid, InstanceStatusType.CREATED, null, millis);
+        return insertInstance(activityId, userGuid, userGuid, InstanceStatusType.CREATED, null, millis, null);
     }
 
     /**
@@ -80,25 +80,40 @@ public interface ActivityInstanceDao extends SqlObject {
                                                InstanceStatusType initialStatus,
                                                Boolean isReadOnly) {
         long millis = Instant.now().toEpochMilli();
-        return insertInstance(activityId, operatorGuid, participantGuid, initialStatus, isReadOnly, millis);
+        return insertInstance(activityId, operatorGuid, participantGuid, initialStatus, isReadOnly, millis, null);
+    }
+
+    /**
+     * Convenience method to create new activity instance at the current time, CREATED status, and potentially a parent instance.
+     */
+    default ActivityInstanceDto insertInstance(long activityId,
+                                               String operatorGuid,
+                                               String participantGuid,
+                                               Long parentInstanceId) {
+        long millis = Instant.now().toEpochMilli();
+        var initialStatus = InstanceStatusType.CREATED;
+        Boolean isReadOnly = null;
+        return insertInstance(activityId, operatorGuid, participantGuid, initialStatus, isReadOnly, millis, parentInstanceId);
     }
 
     /**
      * Creates a new activity instance of the given activity for the given participant, on behalf of the given operator. Guid is generated
      * internally.
      *
-     * @param activityId      the associated activity
-     * @param operatorGuid    the user that created this instance
-     * @param participantGuid the user this instance is for
-     * @param initialStatus   the starting status
-     * @param isReadOnly      whether read only or not
-     * @param createdAtMillis the creation timestamp in milliseconds
+     * @param activityId       the associated activity
+     * @param operatorGuid     the user that created this instance
+     * @param participantGuid  the user this instance is for
+     * @param initialStatus    the starting status
+     * @param isReadOnly       whether read only or not
+     * @param createdAtMillis  the creation timestamp in milliseconds
+     * @param parentInstanceId the parent instance id, if necessary
      * @return newly created activity instance
      */
     default ActivityInstanceDto insertInstance(long activityId, String operatorGuid, String participantGuid,
                                                InstanceStatusType initialStatus, Boolean isReadOnly,
-                                               long createdAtMillis) {
-        return insertInstance(activityId, operatorGuid, participantGuid, initialStatus, isReadOnly, createdAtMillis, null);
+                                               long createdAtMillis, Long parentInstanceId) {
+        return insertInstance(activityId, operatorGuid, participantGuid, initialStatus, isReadOnly,
+                createdAtMillis, null, parentInstanceId);
     }
 
     /**
@@ -111,18 +126,19 @@ public interface ActivityInstanceDao extends SqlObject {
      * @param isReadOnly        whether readonly or not
      * @param createdAtMillis   the creation timestamp in milliseconds
      * @param onDemandTriggerId the trigger request id, if from on-demand request
+     * @param parentInstanceId  the parent instance id, if necessary
      * @return newly created activity instance
      */
     default ActivityInstanceDto insertInstance(long activityId, String operatorGuid, String participantGuid,
                                                InstanceStatusType initialStatus, Boolean isReadOnly,
-                                               long createdAtMillis, Long onDemandTriggerId) {
+                                               long createdAtMillis, Long onDemandTriggerId, Long parentInstanceId) {
         JdbiActivityInstance jdbiInstance = getJdbiActivityInstance();
         ActivityInstanceStatusDao statusDao = getActivityInstanceStatusDao();
 
         String instanceGuid = jdbiInstance.generateUniqueGuid();
         long participantId = getJdbiUser().getUserIdByGuid(participantGuid);
         long instanceId = jdbiInstance.insert(activityId, participantId, instanceGuid, isReadOnly,
-                createdAtMillis, onDemandTriggerId);
+                createdAtMillis, onDemandTriggerId, parentInstanceId);
         statusDao.insertStatus(instanceId, initialStatus, createdAtMillis, operatorGuid);
 
         return jdbiInstance.getByActivityInstanceId(instanceId).orElseThrow(() ->

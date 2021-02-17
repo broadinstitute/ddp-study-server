@@ -865,7 +865,7 @@ public class PutFormAnswersRouteStandaloneTest extends IntegrationTestSuite.Test
 
     private ActivityInstanceDto insertNewInstanceAndDeferCleanup(Handle handle, long activityId) {
         ActivityInstanceDto dto = handle.attach(ActivityInstanceDao.class)
-                .insertInstance(activityId, user.getUserGuid());
+                .insertInstance(activityId, user.getUserGuid(), user.getUserGuid(), parentInstanceDto.getId());
         instanceGuidsToDelete.add(dto.getGuid());
         return dto;
     }

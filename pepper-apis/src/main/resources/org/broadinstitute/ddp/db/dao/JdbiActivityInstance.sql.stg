@@ -14,6 +14,10 @@ select ai.activity_instance_id,
        act.allow_unauthenticated,
        act.study_activity_code,
        act_type.activity_type_code as activity_type,
+       aip.activity_instance_id as parent_instance_id,
+       aip.activity_instance_guid as parent_instance_guid,
+       actp.study_activity_id as parent_activity_id,
+       actp.study_activity_code as parent_activity_code,
        ai.section_index,
        (select aist.activity_instance_status_type_code
           from activity_instance_status as ais
@@ -25,6 +29,8 @@ select ai.activity_instance_id,
   from activity_instance as ai
   join study_activity as act on ai.study_activity_id = act.study_activity_id
   join activity_type as act_type on act_type.activity_type_id = act.activity_type_id
+  left join activity_instance as aip on ai.parent_instance_id = aip.activity_instance_id
+  left join study_activity as actp on aip.study_activity_id = actp.study_activity_id
 >>
 
 queryByGuid() ::= <<

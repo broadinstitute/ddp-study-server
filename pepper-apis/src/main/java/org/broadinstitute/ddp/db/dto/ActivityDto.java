@@ -10,6 +10,8 @@ public class ActivityDto {
     private final long activityId;
     private final long activityTypeId;
     private final long studyId;
+    private final Long parentActivityId;
+    private final String parentActivityCode;
     private final int displayOrder;
     private final boolean writeOnce;
     private final boolean instantiateUponRegistration;
@@ -29,6 +31,8 @@ public class ActivityDto {
             @ColumnName("activity_type_id") long activityTypeId,
             @ColumnName("study_id") long studyId,
             @ColumnName("study_activity_code") String activityCode,
+            @ColumnName("parent_activity_id") Long parentActivityId,
+            @ColumnName("parent_activity_code") String parentActivityCode,
             @ColumnName("display_order") int displayOrder,
             @ColumnName("is_write_once") boolean writeOnce,
             @ColumnName("instantiate_upon_registration") boolean instantiateUponRegistration,
@@ -45,6 +49,8 @@ public class ActivityDto {
         this.activityTypeId = activityTypeId;
         this.studyId = studyId;
         this.activityCode = activityCode;
+        this.parentActivityId = parentActivityId;
+        this.parentActivityCode = parentActivityCode;
         this.displayOrder = displayOrder;
         this.writeOnce = writeOnce;
         this.instantiateUponRegistration = instantiateUponRegistration;
@@ -76,6 +82,14 @@ public class ActivityDto {
 
     public void setActivityCode(String activityCode) {
         this.activityCode = activityCode;
+    }
+
+    public Long getParentActivityId() {
+        return parentActivityId;
+    }
+
+    public String getParentActivityCode() {
+        return parentActivityCode;
     }
 
     public int getDisplayOrder() {
@@ -135,6 +149,8 @@ public class ActivityDto {
                 && activityTypeId == that.activityTypeId
                 && studyId == that.studyId
                 && Objects.equals(activityCode, that.activityCode)
+                && Objects.equals(parentActivityId, that.parentActivityId)
+                && Objects.equals(parentActivityCode, that.parentActivityCode)
                 && displayOrder == that.displayOrder
                 && writeOnce == that.writeOnce
                 && instantiateUponRegistration == that.instantiateUponRegistration
@@ -155,6 +171,8 @@ public class ActivityDto {
                 activityTypeId,
                 studyId,
                 activityCode,
+                parentActivityId,
+                parentActivityCode,
                 displayOrder,
                 writeOnce,
                 instantiateUponRegistration,

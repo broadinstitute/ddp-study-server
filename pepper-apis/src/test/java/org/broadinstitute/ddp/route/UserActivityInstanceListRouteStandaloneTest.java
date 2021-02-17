@@ -69,6 +69,7 @@ public class UserActivityInstanceListRouteStandaloneTest extends IntegrationTest
     private static FormActivityDef prequal;
     private static FormActivityDef nestedAct;
     private static ActivityVersionDto versionDto;
+    private static long parentInstanceId;
     private static String prequal1Guid;
     private static String userGuid;
     private static String token;
@@ -127,6 +128,7 @@ public class UserActivityInstanceListRouteStandaloneTest extends IntegrationTest
         assertNotNull(prequal.getActivityId());
         ActivityInstanceDto instanceDto = handle.attach(ActivityInstanceDao.class)
                 .insertInstance(prequal.getActivityId(), userGuid);
+        parentInstanceId = instanceDto.getId();
         prequal1Guid = instanceDto.getGuid();
 
         handle.attach(ActivityInstanceDao.class).saveSubstitutions(instanceDto.getId(), Map.of(
@@ -405,7 +407,7 @@ public class UserActivityInstanceListRouteStandaloneTest extends IntegrationTest
     public void testChildNestedActivityInstanceSummariesAreNotReturned() {
         ActivityInstanceDto nestedInstanceDto = TransactionWrapper.withTxn(handle -> handle
                 .attach(ActivityInstanceDao.class)
-                .insertInstance(nestedAct.getActivityId(), userGuid));
+                .insertInstance(nestedAct.getActivityId(), userGuid, userGuid, parentInstanceId));
         try {
             String body = given().auth().oauth2(token)
                     .when().get(url)

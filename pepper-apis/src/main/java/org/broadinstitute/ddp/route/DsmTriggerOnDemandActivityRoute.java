@@ -93,7 +93,7 @@ public class DsmTriggerOnDemandActivityRoute extends ValidatedJsonInputRoute<Tri
                 instanceDao.bulkUpdateIsHiddenByActivityIds(user.getId(), true, Set.of(activityDto.getActivityId()));
             }
             ActivityInstanceDto instanceDto = instanceDao.insertInstance(activityDto.getActivityId(), participantGuid, participantGuid,
-                            InstanceStatusType.CREATED, null, Instant.now().toEpochMilli(), payload.getTriggerId());
+                            InstanceStatusType.CREATED, null, Instant.now().toEpochMilli(), payload.getTriggerId(), null);
 
             if (instanceDto == null || StringUtils.isBlank(instanceDto.getGuid())) {
                 ApiError err = new ApiError(ErrorCodes.SERVER_ERROR, String.format(

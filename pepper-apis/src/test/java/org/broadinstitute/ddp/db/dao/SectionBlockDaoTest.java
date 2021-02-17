@@ -213,7 +213,7 @@ public class SectionBlockDaoTest extends TxnAwareBaseTest {
             dao.disableBlock(contentDef.getBlockId(), meta);
 
             String instanceGuid = instanceDao.insertInstance(form.getActivityId(), testData.getUserGuid(), testData.getUserGuid(),
-                    InstanceStatusType.CREATED, false, version2.getRevStart()).getGuid();
+                    InstanceStatusType.CREATED, false, version2.getRevStart(), null).getGuid();
             List<FormBlockDto> blocks = jdbiSectionBlock.findOrderedFormBlockDtosForSection(sectionId, instanceGuid);
             assertTrue(blocks.isEmpty());
             assertFalse(jdbiBlockContent.findActiveDtoByBlockId(contentDef.getBlockId()).isPresent());
@@ -242,7 +242,7 @@ public class SectionBlockDaoTest extends TxnAwareBaseTest {
             dao.disableBlock(question.getBlockId(), meta);
 
             String instanceGuid = instanceDao.insertInstance(form.getActivityId(), testData.getUserGuid(), testData.getUserGuid(),
-                    InstanceStatusType.CREATED, false, version2.getRevStart()).getGuid();
+                    InstanceStatusType.CREATED, false, version2.getRevStart(), null).getGuid();
             List<FormBlockDto> blocks = jdbiSectionBlock.findOrderedFormBlockDtosForSection(sectionId, instanceGuid);
             assertTrue(blocks.isEmpty());
             assertFalse(jdbiBlockQuestion.getActiveTypedQuestionId(question.getBlockId()).isPresent());

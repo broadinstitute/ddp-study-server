@@ -265,7 +265,7 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
 
         ActivityInstanceDao instanceDao = handle.attach(ActivityInstanceDao.class);
         parentInstanceDto = instanceDao.insertInstance(parentActivity.getActivityId(), userGuid);
-        instanceDto = instanceDao.insertInstance(activity.getActivityId(), userGuid);
+        instanceDto = instanceDao.insertInstance(activity.getActivityId(), userGuid, userGuid, parentInstanceDto.getId());
 
         AnswerDao answerDao = handle.attach(AnswerDao.class);
         answerDao.createAnswer(testData.getUserId(), instanceDto.getId(),
