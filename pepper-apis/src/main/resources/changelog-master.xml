@@ -248,4 +248,7 @@
     <include file="db-changes/schema/DDP-5442-auth0-log-event-code.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/DDP-5442-auth0-log-event.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/DDP-5045-sendgrid-event.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/DDP-3709-file-upload.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/seed/DDP-3709-file-scan-result.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/DDP-3709-file-question-and-answer.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>

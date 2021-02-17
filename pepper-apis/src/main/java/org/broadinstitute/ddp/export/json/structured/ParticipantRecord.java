@@ -27,6 +27,8 @@ public class ParticipantRecord {
     private List<ActivityInstanceRecord> activityInstanceRecords;
     @SerializedName("invitations")
     private List<InvitationRecord> invitations;
+    @SerializedName("files")
+    private List<FileRecord> files;
     @SerializedName("dsm")
     private DsmComputedRecord dsmComputedRecord;
     @SerializedName("proxies")
@@ -41,7 +43,8 @@ public class ParticipantRecord {
             MailAddress mailAddress,
             DsmComputedRecord dsmComputedRecord,
             List<String> proxies,
-            List<InvitationDto> invitations
+            List<InvitationDto> invitations,
+            List<FileRecord> files
     ) {
         this.status = enrollmentStatus;
         this.statusTimestamp = enrollmentStatusTimestamp;
@@ -62,5 +65,6 @@ public class ParticipantRecord {
         this.invitations = invitations.stream()
                 .map(InvitationRecord::new)
                 .collect(Collectors.toList());
+        this.files = files;
     }
 }
