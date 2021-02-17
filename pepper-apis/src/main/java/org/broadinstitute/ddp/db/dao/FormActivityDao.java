@@ -86,6 +86,9 @@ public interface FormActivityDao extends SqlObject {
         if (activity.getParentActivityCode() != null) {
             throw new IllegalArgumentException("Nested activity must be created alongside their parent activity");
         }
+        if (activity.isCreateOnParentCreation()) {
+            throw new IllegalArgumentException("createOnParentCreation can only be set on nested child activities");
+        }
 
         nestedActivities = ListUtils.defaultIfNull(nestedActivities, List.of());
         for (var nested : nestedActivities) {
@@ -132,7 +135,8 @@ public interface FormActivityDao extends SqlObject {
         long activityId = jdbiActivity.insertActivity(activityTypeId, studyId, activity.getActivityCode(),
                 activity.getMaxInstancesPerUser(), activity.getDisplayOrder(), activity.isWriteOnce(), activity.getEditTimeoutSec(),
                 activity.isOndemandTriggerAllowed(), activity.isExcludeFromDisplay(), activity.isExcludeStatusIconFromDisplay(),
-                activity.isAllowUnauthenticated(), activity.isFollowup(), activity.isHideInstances());
+                activity.isAllowUnauthenticated(), activity.isFollowup(), activity.isHideInstances(),
+                activity.isCreateOnParentCreation());
         activity.setActivityId(activityId);
 
         long versionId = jdbiVersion.insert(activity.getActivityId(), activity.getVersionTag(), revisionId);
@@ -223,6 +227,7 @@ public interface FormActivityDao extends SqlObject {
                 .setExcludeFromDisplay(activityDto.shouldExcludeFromDisplay())
                 .setExcludeStatusIconFromDisplay(activityDto.shouldExcludeStatusIconFromDisplay())
                 .setHideInstances(activityDto.isHideExistingInstancesOnCreation())
+                .setCreateOnParentCreation(activityDto.isCreateOnParentCreation())
                 .setIsFollowup(activityDto.isFollowup());
 
         List<Translation> names = new ArrayList<>();

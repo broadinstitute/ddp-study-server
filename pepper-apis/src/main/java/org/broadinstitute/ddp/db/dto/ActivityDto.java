@@ -23,6 +23,7 @@ public class ActivityDto {
     private final boolean isFollowup;
     private final boolean excludeStatusIconFromDisplay;
     private final boolean hideExistingInstancesOnCreation;
+    private final boolean createOnParentCreation;
     private String activityCode;
 
     @JdbiConstructor
@@ -43,7 +44,8 @@ public class ActivityDto {
             @ColumnName("allow_unauthenticated") boolean allowUnauthenticated,
             @ColumnName("is_followup") boolean isFollowup,
             @ColumnName("exclude_status_icon_from_display") boolean excludeStatusIconFromDisplay,
-            @ColumnName("hide_existing_instances_on_creation") boolean hideExistingInstancesOnCreation
+            @ColumnName("hide_existing_instances_on_creation") boolean hideExistingInstancesOnCreation,
+            @ColumnName("create_on_parent_creation") boolean createOnParentCreation
     ) {
         this.activityId = activityId;
         this.activityTypeId = activityTypeId;
@@ -62,6 +64,7 @@ public class ActivityDto {
         this.isFollowup = isFollowup;
         this.excludeStatusIconFromDisplay = excludeStatusIconFromDisplay;
         this.hideExistingInstancesOnCreation = hideExistingInstancesOnCreation;
+        this.createOnParentCreation = createOnParentCreation;
     }
 
     public long getActivityId() {
@@ -136,6 +139,10 @@ public class ActivityDto {
         return hideExistingInstancesOnCreation;
     }
 
+    public boolean isCreateOnParentCreation() {
+        return createOnParentCreation;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {
@@ -161,7 +168,8 @@ public class ActivityDto {
                 && allowUnauthenticated == that.allowUnauthenticated
                 && isFollowup == that.isFollowup
                 && excludeStatusIconFromDisplay == that.excludeStatusIconFromDisplay
-                && hideExistingInstancesOnCreation == that.hideExistingInstancesOnCreation;
+                && hideExistingInstancesOnCreation == that.hideExistingInstancesOnCreation
+                && createOnParentCreation == that.createOnParentCreation;
     }
 
     @Override
@@ -183,6 +191,7 @@ public class ActivityDto {
                 allowUnauthenticated,
                 isFollowup,
                 excludeStatusIconFromDisplay,
-                hideExistingInstancesOnCreation);
+                hideExistingInstancesOnCreation,
+                createOnParentCreation);
     }
 }

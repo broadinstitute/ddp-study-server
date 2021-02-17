@@ -114,7 +114,10 @@ public class ActivityInstanceCreationEventAction extends EventAction {
                 null,
                 Instant.now().toEpochMilli(),
                 null,
-                parentInstanceId
+                parentInstanceId,
+                null,
+                null,
+                null
         );
         // Using the low-level facility to avoid infinite recursion
         jdbiActivityInstanceStatus.insert(

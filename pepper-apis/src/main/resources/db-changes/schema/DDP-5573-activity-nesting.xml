@@ -11,6 +11,9 @@
                              references="study_activity(study_activity_id)"
                              foreignKeyName="activity_parent_activity_fk"/>
             </column>
+            <column name="create_on_parent_creation" type="boolean" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
         </addColumn>
     </changeSet>
 

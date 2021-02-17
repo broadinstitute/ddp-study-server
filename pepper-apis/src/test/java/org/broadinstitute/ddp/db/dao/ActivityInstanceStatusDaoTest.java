@@ -214,7 +214,7 @@ public class ActivityInstanceStatusDaoTest extends TxnAwareBaseTest {
         JdbiActivityInstance jdbiInstance = handle.attach(JdbiActivityInstance.class);
         String instanceGuid = jdbiInstance.generateUniqueGuid();
         long millis = Instant.now().toEpochMilli();
-        long instanceId = jdbiInstance.insert(activityId, participantId, instanceGuid, false, millis, null, null);
+        long instanceId = jdbiInstance.insert(activityId, participantId, instanceGuid, false, millis, null, null, null, null, null);
         Optional<ActivityInstanceDto> dto = jdbiInstance.getByActivityInstanceId(instanceId);
 
         assertTrue(dto.isPresent());

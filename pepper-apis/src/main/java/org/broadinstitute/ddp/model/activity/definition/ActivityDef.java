@@ -69,6 +69,9 @@ public abstract class ActivityDef {
     @SerializedName("hideExistingInstancesOnCreation")
     protected boolean hideExistingInstancesOnCreation;
 
+    @SerializedName("createOnParentCreation")
+    protected boolean createOnParentCreation;
+
     @NotEmpty
     @SerializedName("translatedNames")
     protected List<@Valid @NotNull Translation> translatedNames;
@@ -266,6 +269,10 @@ public abstract class ActivityDef {
         return hideExistingInstancesOnCreation;
     }
 
+    public boolean isCreateOnParentCreation() {
+        return createOnParentCreation;
+    }
+
     /**
      * Builder that helps construct common elements of an activity definition.
      *
@@ -296,6 +303,7 @@ public abstract class ActivityDef {
         protected Template readonlyHintTemplate;
         protected boolean isFollowup;
         protected boolean hideExistingInstancesOnCreation;
+        protected boolean createOnParentCreation;
 
         /**
          * Returns the subclass builder instance to enable method chaining.
@@ -319,6 +327,7 @@ public abstract class ActivityDef {
             activity.isFollowup = isFollowup;
             activity.hideExistingInstancesOnCreation = hideExistingInstancesOnCreation;
             activity.translatedSecondNames.addAll(secondNames);
+            activity.createOnParentCreation = createOnParentCreation;
         }
 
         public T setParentActivityCode(String parentActivityCode) {
@@ -493,6 +502,11 @@ public abstract class ActivityDef {
 
         public T setHideInstances(boolean hideExistingInstancesOnCreation) {
             this.hideExistingInstancesOnCreation = hideExistingInstancesOnCreation;
+            return self();
+        }
+
+        public T setCreateOnParentCreation(boolean createOnParentCreation) {
+            this.createOnParentCreation = createOnParentCreation;
             return self();
         }
     }

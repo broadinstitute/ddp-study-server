@@ -28,10 +28,11 @@ public interface JdbiActivity extends SqlObject {
             + " (activity_type_id,study_id,study_activity_code,max_instances_per_user,display_order,"
             + "is_write_once, instantiate_upon_registration,edit_timeout_sec,allow_ondemand_trigger,"
             + "exclude_from_display, exclude_status_icon_from_display, allow_unauthenticated, "
-            + "is_followup, hide_existing_instances_on_creation)"
+            + "is_followup, hide_existing_instances_on_creation, create_on_parent_creation)"
             + " values(:activityTypeId,:studyId,:activityCode,"
             + ":maxInstancesPerUser,:displayOrder,:writeOnce,0,:editTimeoutSec,:allowOndemandTrigger,"
-            + ":excludeFromDisplay, :excludeStatusIconFromDisplay, :allowUnauthenticated, :isFollowup, :hideExistingInstancesOnCreation)")
+            + ":excludeFromDisplay, :excludeStatusIconFromDisplay, :allowUnauthenticated, :isFollowup, :hideExistingInstancesOnCreation,"
+            + ":createOnParentCreation)")
     @GetGeneratedKeys()
     long insertActivity(
             @Bind("activityTypeId") long activityTypeId,
@@ -46,7 +47,8 @@ public interface JdbiActivity extends SqlObject {
             @Bind("excludeStatusIconFromDisplay") boolean excludeStatusIconFromDisplay,
             @Bind("allowUnauthenticated") boolean allowUnauthenticated,
             @Bind("isFollowup") boolean isFollowup,
-            @Bind("hideExistingInstancesOnCreation") boolean hideExistingInstancesOnCreation
+            @Bind("hideExistingInstancesOnCreation") boolean hideExistingInstancesOnCreation,
+            @Bind("createOnParentCreation") boolean createOnParentCreation
     );
 
     @SqlUpdate("update study_activity"
@@ -132,6 +134,11 @@ public interface JdbiActivity extends SqlObject {
             + " where act.study_activity_id = :id")
     @RegisterConstructorMapper(ActivityDto.class)
     ActivityDto queryActivityById(@Bind("id") long studyActivityId);
+
+    @SqlQuery("select study_activity_id from study_activity"
+            + " where parent_activity_id = :parentActId"
+            + "   and create_on_parent_creation is true")
+    List<Long> findChildActivityIdsThatNeedCreation(@Bind("parentActId") long parentActivityId);
 
     @SqlUpdate("update study_activity set parent_activity_id = :parentActId where study_activity_id = :id")
     int updateParentActivityId(@Bind("id") long studyActivityId, @Bind("parentActId") long parentActivityId);

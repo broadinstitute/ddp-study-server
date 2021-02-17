@@ -53,9 +53,12 @@ public interface JdbiActivityInstance extends SqlObject {
             + "activity_instance_id = :activityInstanceId")
     String getActivityInstanceGuid(@Bind("activityInstanceId") long activityInstanceId);
 
-    @SqlUpdate("insert into activity_instance (study_activity_id,participant_id,activity_instance_guid,is_readonly,"
-            + "created_at,ondemand_trigger_id,parent_instance_id) values(:activityId,:participantId,:guid,:isReadOnly,"
-            + ":createdAt,:triggerId,:parentInstanceId)")
+    @SqlUpdate("insert into activity_instance (study_activity_id, participant_id, activity_instance_guid,"
+            + "        is_readonly, created_at, ondemand_trigger_id, parent_instance_id,"
+            + "        legacy_submissionid, legacy_sessionid, legacy_version)"
+            + " values (:activityId, :participantId, :guid,"
+            + "        :isReadOnly, :createdAt, :triggerId, :parentInstanceId,"
+            + "        :submissionId, :sessionId, :legacyVersion)")
     @GetGeneratedKeys
     long insert(@Bind("activityId") long activityId,
                 @Bind("participantId") long participantId,
@@ -63,20 +66,10 @@ public interface JdbiActivityInstance extends SqlObject {
                 @Bind("isReadOnly") Boolean isReadOnly,
                 @Bind("createdAt") long createdAtMillis,
                 @Bind("triggerId") Long onDemandTriggerId,
-                @Bind("parentInstanceId") Long parentInstanceId);
-
-    @SqlUpdate("insert into activity_instance (study_activity_id,participant_id,activity_instance_guid,is_readonly,"
-            + "created_at, legacy_submissionid,legacy_sessionid,legacy_version) values(:activityId,:participantId,:guid,"
-            + ":isReadOnly,:createdAt,:submissionId,:sessionId,:legacyVersion)")
-    @GetGeneratedKeys
-    long insertLegacyInstance(@Bind("activityId") long activityId,
-                              @Bind("participantId") long participantId,
-                              @Bind("guid") String activityInstanceGuid,
-                              @Bind("isReadOnly") Boolean isReadOnly,
-                              @Bind("createdAt") long createdAtMillis,
-                              @Bind("submissionId") Long submissionId,
-                              @Bind("sessionId") String sessionId,
-                              @Bind("legacyVersion") String legacyVersion);
+                @Bind("parentInstanceId") Long parentInstanceId,
+                @Bind("submissionId") Long submissionId,
+                @Bind("sessionId") String sessionId,
+                @Bind("legacyVersion") String legacyVersion);
 
     @SqlUpdate("delete from activity_instance where activity_instance_id = :id")
     int delete(@Bind long id);
