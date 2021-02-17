@@ -14,7 +14,8 @@ import org.junit.runners.Suite;
         GetDsmDrugSuggestionsRouteTest.class,
         PatchFormAnswersRouteStandaloneTest.class,
         PutFormAnswersRouteStandaloneTest.class,
-        GetActivityInstanceRouteStandaloneTest.class
+        GetActivityInstanceRouteStandaloneTest.class,
+        UserActivityInstanceListRouteStandaloneTest.class
 })
 public class ServerInSameProcessIntegrationTestSuite extends IntegrationTestSuite {
 }

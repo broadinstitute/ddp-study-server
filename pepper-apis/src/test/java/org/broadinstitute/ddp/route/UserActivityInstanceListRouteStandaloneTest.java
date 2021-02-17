@@ -63,7 +63,7 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-public class UserActivityInstanceListRouteTest extends IntegrationTestSuite.TestCase {
+public class UserActivityInstanceListRouteStandaloneTest extends IntegrationTestSuite.TestCaseWithCacheEnabled {
 
     private static TestDataSetupUtil.GeneratedTestData testData;
     private static FormActivityDef prequal;
