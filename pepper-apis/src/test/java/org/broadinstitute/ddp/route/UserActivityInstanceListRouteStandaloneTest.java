@@ -67,6 +67,7 @@ public class UserActivityInstanceListRouteStandaloneTest extends IntegrationTest
 
     private static TestDataSetupUtil.GeneratedTestData testData;
     private static FormActivityDef prequal;
+    private static FormActivityDef nestedAct;
     private static ActivityVersionDto versionDto;
     private static String prequal1Guid;
     private static String userGuid;
@@ -110,12 +111,17 @@ public class UserActivityInstanceListRouteStandaloneTest extends IntegrationTest
                 testData.getStudyGuid(), code, toggleQuestionStableId);
         toggledBlock.setShownExpr(expr);
 
+        nestedAct = FormActivityDef.generalFormBuilder(code + "_NESTED", "v1", testData.getStudyGuid())
+                .addName(new Translation("en", "nested activity"))
+                .setParentActivityCode(code)
+                .build();
+
         prequal = FormActivityDef.formBuilder(FormType.PREQUALIFIER, code, "v1", testData.getStudyGuid())
                 .addName(new Translation("en", "Test prequal"))
                 .addSummary(new SummaryTranslation("en", "$ddp.testResultTimeCompleted(\"MM/dd/uuuu\")", InstanceStatusType.CREATED))
                 .addSection(new FormSectionDef(null, Arrays.asList(controlBlock, toggledBlock)))
                 .build();
-        versionDto = handle.attach(ActivityDao.class).insertActivity(prequal,
+        versionDto = handle.attach(ActivityDao.class).insertActivity(prequal, List.of(nestedAct),
                 RevisionMetadata.now(testData.getUserId(), "add " + code));
 
         assertNotNull(prequal.getActivityId());
@@ -392,6 +398,29 @@ public class UserActivityInstanceListRouteStandaloneTest extends IntegrationTest
                         .bulkUpdateIsHiddenByActivityIds(testData.getUserId(), false, Set.of(prequal.getActivityId()));
                 handle.attach(AuthDao.class).removeAdminFromAllStudies(testData.getUserId());
             });
+        }
+    }
+
+    @Test
+    public void testChildNestedActivityInstanceSummariesAreNotReturned() {
+        ActivityInstanceDto nestedInstanceDto = TransactionWrapper.withTxn(handle -> handle
+                .attach(ActivityInstanceDao.class)
+                .insertInstance(nestedAct.getActivityId(), userGuid));
+        try {
+            String body = given().auth().oauth2(token)
+                    .when().get(url)
+                    .then().assertThat()
+                    .statusCode(200).contentType(ContentType.JSON)
+                    .and().extract().body().asString();
+
+            ActivityInstanceSummary[] activities = gson.fromJson(body, ActivityInstanceSummary[].class);
+
+            assertEquals("should only have parent instance", 1, activities.length);
+            assertNotEquals(nestedInstanceDto.getGuid(), activities[0].getActivityInstanceGuid());
+        } finally {
+            TransactionWrapper.useTxn(handle -> handle
+                    .attach(ActivityInstanceDao.class)
+                    .deleteByInstanceGuid(nestedInstanceDto.getGuid()));
         }
     }
 }

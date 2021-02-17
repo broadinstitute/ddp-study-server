@@ -279,9 +279,9 @@ public interface ActivityInstanceDao extends SqlObject {
             @BindList(value = "instanceIds", onEmpty = EmptyHandling.NULL) Set<Long> instanceIds);
 
     @UseStringTemplateSqlLocator
-    @SqlQuery("findAllSortedInstanceSummariesByUserAndStudyGuids")
+    @SqlQuery("findNonNestedSortedInstanceSummariesByUserAndStudyGuids")
     @RegisterConstructorMapper(ActivityInstanceSummaryDto.class)
-    List<ActivityInstanceSummaryDto> findAllSortedInstanceSummaries(
+    List<ActivityInstanceSummaryDto> findNonNestedSortedInstanceSummaries(
             @Bind("userGuid") String userGuid,
             @Bind("studyGuid") String studyGuid);
 
