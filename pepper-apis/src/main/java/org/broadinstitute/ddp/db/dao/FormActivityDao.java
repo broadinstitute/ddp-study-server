@@ -57,9 +57,6 @@ public interface FormActivityDao extends SqlObject {
     @CreateSqlObject
     TemplateDao getTemplateDao();
 
-    @CreateSqlObject
-    ActivitySql getActivitySql();
-
 
     // Convenience helper for inserting activity without any nested activities.
     default void insertActivity(FormActivityDef activity, long revisionId) {
@@ -107,9 +104,9 @@ public interface FormActivityDao extends SqlObject {
                     nested.getActivityCode(), nested.getActivityId(), activity.getActivityCode());
         }
         insertSingleActivity(activity, revisionId);
-        var activitySql = getActivitySql();
+        var jdbiActivity = getJdbiActivity();
         for (var nested : nestedActivities) {
-            DBUtils.checkInsert(1, activitySql.insertActivityNesting(activity.getActivityId(), nested.getActivityId()));
+            DBUtils.checkUpdate(1, jdbiActivity.updateParentActivityId(nested.getActivityId(), activity.getActivityId()));
         }
     }
 

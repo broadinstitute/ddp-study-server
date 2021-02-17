@@ -604,9 +604,9 @@ public class FormActivityDaoTest extends TxnAwareBaseTest {
             assertNotNull(parent.getActivityId());
             assertNotNull(child.getActivityId());
 
-            Optional<Long> optParentActId = handle.attach(ActivitySql.class).findParentActivityId(child.getActivityId());
+            ActivityDto childDto = handle.attach(JdbiActivity.class).queryActivityById(child.getActivityId());
             assertTrue("child activity should be associated with parent activity",
-                    optParentActId.isPresent() && optParentActId.get().equals(parent.getActivityId()));
+                    childDto.getParentActivityId() != null && childDto.getParentActivityId().equals(parent.getActivityId()));
 
             handle.rollback();
         });

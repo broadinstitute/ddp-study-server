@@ -252,5 +252,4 @@
     <include file="db-changes/seed/DDP-3709-file-scan-result.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/DDP-3709-file-question-and-answer.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/DDP-5573-activity-nesting.xml" relativeToChangelogFile="true"/>
-    <include file="db-changes/schema/DDP-5573-activity-instance-parent.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>

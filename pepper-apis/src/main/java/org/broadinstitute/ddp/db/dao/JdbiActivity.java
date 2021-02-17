@@ -104,38 +104,37 @@ public interface JdbiActivity extends SqlObject {
     @SqlQuery("select study_activity_id from study_activity where study_id = :studyId and study_activity_code = :code")
     Optional<Long> findIdByStudyIdAndCode(@Bind("studyId") long studyId, @Bind("code") String activityCode);
 
-    @SqlQuery("select act.*, p.parent_activity_id, actp.study_activity_code as parent_activity_code"
+    @SqlQuery("select act.*, (select study_activity_code from study_activity"
+            + "       where study_activity_id = act.parent_activity_id) as parent_activity_code"
             + "  from study_activity as act"
-            + "  left join activity_nesting as p on p.nested_activity_id = act.study_activity_id"
-            + "  left join study_activity as actp on p.parent_activity_id = actp.study_activity_id"
             + " where act.study_id = :studyId and act.study_activity_code = :code")
     @RegisterConstructorMapper(ActivityDto.class)
     Optional<ActivityDto> findActivityByStudyIdAndCode(@Bind("studyId") long studyId, @Bind("code") String activityCode);
 
-    @SqlQuery("select act.*, p.parent_activity_id, actp.study_activity_code as parent_activity_code"
+    @SqlQuery("select act.*, (select study_activity_code from study_activity"
+            + "       where study_activity_id = act.parent_activity_id) as parent_activity_code"
             + "  from study_activity as act"
-            + "  left join activity_nesting as p on p.nested_activity_id = act.study_activity_id"
-            + "  left join study_activity as actp on p.parent_activity_id = actp.study_activity_id"
             + " where act.study_id = (select umbrella_study_id from umbrella_study where guid = :studyGuid)"
             + "   and act.study_activity_code = :code")
     @RegisterConstructorMapper(ActivityDto.class)
     Optional<ActivityDto> findActivityByStudyGuidAndCode(@Bind("studyGuid") String studyGuid, @Bind("code") String activityCode);
 
-    @SqlQuery("select act.*, p.parent_activity_id, actp.study_activity_code as parent_activity_code"
+    @SqlQuery("select act.*, (select study_activity_code from study_activity"
+            + "       where study_activity_id = act.parent_activity_id) as parent_activity_code"
             + "  from study_activity as act"
-            + "  left join activity_nesting as p on p.nested_activity_id = act.study_activity_id"
-            + "  left join study_activity as actp on p.parent_activity_id = actp.study_activity_id"
             + " where act.study_id = :studyId order by act.display_order asc")
     @RegisterConstructorMapper(ActivityDto.class)
     List<ActivityDto> findOrderedDtosByStudyId(@Bind("studyId") long studyId);
 
-    @SqlQuery("select act.*, p.parent_activity_id, actp.study_activity_code as parent_activity_code"
+    @SqlQuery("select act.*, (select study_activity_code from study_activity"
+            + "       where study_activity_id = act.parent_activity_id) as parent_activity_code"
             + "  from study_activity as act"
-            + "  left join activity_nesting as p on p.nested_activity_id = act.study_activity_id"
-            + "  left join study_activity as actp on p.parent_activity_id = actp.study_activity_id"
             + " where act.study_activity_id = :id")
     @RegisterConstructorMapper(ActivityDto.class)
     ActivityDto queryActivityById(@Bind("id") long studyActivityId);
+
+    @SqlUpdate("update study_activity set parent_activity_id = :parentActId where study_activity_id = :id")
+    int updateParentActivityId(@Bind("id") long studyActivityId, @Bind("parentActId") long parentActivityId);
 
     @SqlUpdate("update study_activity set edit_timeout_sec = :editTimeoutSec where study_id = :studyId and study_activity_code = :code")
     int updateEditTimeoutSecByCode(Long editTimeoutSec, String code, long studyId);

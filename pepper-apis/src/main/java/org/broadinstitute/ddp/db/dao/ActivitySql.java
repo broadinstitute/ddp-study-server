@@ -1,11 +1,8 @@
 package org.broadinstitute.ddp.db.dao;
 
-import java.util.Optional;
-
 import org.broadinstitute.ddp.model.study.ActivityMappingType;
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.customizer.Bind;
-import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 
 public interface ActivitySql extends SqlObject {
@@ -20,12 +17,4 @@ public interface ActivitySql extends SqlObject {
             @Bind("type") ActivityMappingType type,
             @Bind("activityId") long activityId,
             @Bind("subActivityStableId") String subActivityStableId);
-
-    @SqlUpdate("insert into activity_nesting (parent_activity_id, nested_activity_id) values (:parentId, :nestedId)")
-    int insertActivityNesting(
-            @Bind("parentId") long parentActivityId,
-            @Bind("nestedId") long nestedActivityId);
-
-    @SqlQuery("select parent_activity_id from activity_nesting where nested_activity_id = :nestedId")
-    Optional<Long> findParentActivityId(@Bind("nestedId") long nestedActivityId);
 }
