@@ -26,6 +26,18 @@ emailTemplates:
     urlLifetimeInSeconds: 432000
     syntax: liquid
     enabled: true
+  - template: verify_email
+    body: ./emails/verify_email.html
+    from: Rare Genomes Project <##STUDY_EMAIL##>
+    subject: >-
+      {% if user.user_metadata.language == "es" %}
+      [es] Confirm your Rare Genomes Project Account
+      {% else %}
+      Confirm your Rare Genomes Project Account
+      {% endif %}
+    urlLifetimeInSeconds: 432000
+    syntax: liquid
+    enabled: true
 
 # NOTE: client names must match what's in Auth0's dashboard, otherwise deploy
 # will create new clients. Everytime deploy happens, client configurations here
