@@ -424,6 +424,11 @@
         font-weight: 400;
       }
 
+      .form-feedback--primary {
+        color: #0c457d;
+        font-weight: 500;
+      }
+
       .comment-link {
         display: block;
 
@@ -1259,6 +1264,12 @@
               </div>
             </div>
 
+            <p
+              class="form-feedback form-feedback--primary"
+              id="passwordResetFormFeedback"
+              data-translate="passwordReset.form.feedback"
+            ></p>
+
             <footer class="form-footer form-footer--password-reset">
               <button
                 type="submit"
@@ -1643,6 +1654,8 @@
                 },
               },
             },
+            feedback:
+              'Thank you. Please check your email for reset instructions.',
             submit: 'Submit',
           },
         },
@@ -1773,6 +1786,8 @@
                 },
               },
             },
+            feedback:
+              '[es] Thank you. Please check your email for reset instructions.',
             submit: '[es] Submit',
           },
         },
@@ -2089,6 +2104,7 @@
       $(document).ready(function () {
         var emailInputEl = $('#passwordResetEmail');
         var passwordResetForm = $('#passwordResetForm');
+        var passwordResetFormFeedbackEl = $('#passwordResetFormFeedback');
 
         emailInputEl.on('change', validateEmail);
         emailInputEl.on('input', function () {
@@ -2122,411 +2138,25 @@
         }
 
         function auth0SendResetPasswordInstructions(email) {
-          console.log({ email });
+          passwordResetFormFeedbackEl.removeClass('form-feedback--shown');
+
+          webAuth.changePassword(
+            {
+              connection: 'Username-Password-Authentication',
+              email: email,
+            },
+            function (err) {
+              if (err) {
+                console.log('Password reset error:', err);
+
+                return;
+              }
+
+              passwordResetFormFeedbackEl.addClass('form-feedback--shown');
+            },
+          );
         }
       });
     </script>
-
-    <!-- <script src="https://cdn.auth0.com/js/lock/11.28.0/lock.min.js"></script> -->
-
-    <!-- <style type="text/css">
-      body {
-        font-family: 'Roboto', sans-serif;
-      }
-
-      .auth0-lock.auth0-lock .auth0-lock-overlay {
-        background: radial-gradient(#ffffff, #f3f3f2, #f3f3f2);
-        background-image: radial-gradient(#ffffff, #f3f3f2, #f3f3f2);
-        background-color: #fff;
-      }
-
-      .auth0-lock.auth0-lock.auth0-lock-opened .auth0-lock-widget {
-        box-shadow: 0 0 40px 4px #888888;
-      }
-
-      .auth0-lock-content {
-        padding-top: 10px !important;
-      }
-
-      .auth0-lock.auth0-lock .auth0-lock-form p {
-        text-align: left;
-      }
-
-      a:link {
-        text-decoration: underline !important;
-      }
-    </style> -->
-
-    <!-- <script>
-      console.log('Test deployment');
-
-      // Decode utf8 characters properly
-      var config = JSON.parse(
-        decodeURIComponent(escape(window.atob('@@config@@'))),
-      );
-      config.extraParams = config.extraParams || {};
-
-      var mode = config.extraParams.mode;
-      var languageCode = config.extraParams.language;
-      var study_guid = config.extraParams.study_guid;
-      var studyColor = '#e8702a';
-      var headerLogo =
-        'https://storage.googleapis.com/ddp-rgp-assets/images/rgp-logo.svg';
-
-      var authLoc = Math.max(
-        config.callbackURL.indexOf('/auth'),
-        config.callbackURL.indexOf('/login-landing'),
-      );
-      var mainUrl =
-        authLoc === -1
-          ? config.callbackURL
-          : config.callbackURL.substring(0, authLoc);
-      var loginUrl = mainUrl + '/login-landing/login';
-      var registerUrl = mainUrl + '/how-it-works';
-
-      var connection = config.connection;
-      var showPasswordRecentText = false;
-      var doNotShowRegLink = false;
-
-      var dictionaries = {};
-      dictionaries['en'] = {
-        emailInputPlaceholder: 'Email address *',
-        passwordInputPlaceholder: 'Password *',
-        signupTitle: 'Create an account',
-        databaseSignUpInstructions:
-          'Please create an account to begin your application questionnaire.',
-        signUpTerms: '',
-        alreadyRegisteredInner: 'If you have already registered, sign in here.',
-        loginTitle: 'Sign In',
-        databaseEnterpriseLoginInstructions:
-          'Welcome back! Please sign in to your account.',
-        loginLinkText: 'Already have an account? Sign in here',
-        forgotPasswordAction: 'Forgot your password?',
-        signupLinkText:
-          "Don't have an account?  Learn about how to get started",
-        userExists: 'If you have already registered, sign in here.',
-        forgotPasswordTitle: 'Forgot Password?',
-        forgotPasswordInstructions:
-          'Please enter your email address and we will send you password reset instructions.',
-        passwordMessage:
-          'Password must be at least 8 characters long and contain at least one number, one upper case letter, and one lower case letter',
-        successForgotPassword:
-          'Thank you.  Please check your email for reset instructions.',
-        resetPasswordInnerText:
-          'Password reset successfully.  Please sign in with your new password.',
-      };
-
-      dictionaries['es'] = {
-        emailInputPlaceholder: '[es]Email address *',
-        passwordInputPlaceholder: '[es]Password *',
-        signupTitle: '[es]Create an account',
-        databaseSignUpInstructions:
-          '[es]Please create an account to begin your application questionnaire.',
-        signUpTerms: '',
-        alreadyRegisteredInner:
-          '[es]If you have already registered, sign in here.',
-        loginTitle: '[es]Sign In',
-        databaseEnterpriseLoginInstructions:
-          '[es]Welcome back! Please sign in to your account.',
-        loginLinkText: '[es]Already have an account? Sign in here',
-        forgotPasswordAction: '[es]Forgot your password?',
-        signupLinkText:
-          "[es]Don't have an account?  Learn about how to get started",
-        userExists: '[es]If you have already registered, sign in here.',
-        forgotPasswordTitle: '[es]Forgot Password?',
-        forgotPasswordInstructions:
-          '[es]Please enter your email address and we will send you password reset instructions.',
-        passwordMessage:
-          '[es]Password must be at least 8 characters long and contain at least one number, one upper case letter, and one lower case letter',
-        successForgotPassword:
-          '[es]Thank you.  Please check your email for reset instructions.',
-        resetPasswordInnerText:
-          '[es]Password reset successfully.  Please sign in with your new password.',
-      };
-
-      var languageDictionary = dictionaries[languageCode];
-      languageDictionary.displayNames = {
-        en: 'English',
-        es: 'Español',
-      };
-      languageDictionary.error = languageDictionary.error || {};
-      languageDictionary.error.signUp = languageDictionary.error.signUp || {};
-      languageDictionary.error.signUp.user_exists =
-        languageDictionary.userExists;
-      languageDictionary.success = languageDictionary.success || {};
-      languageDictionary.success.forgotPassword =
-        languageDictionary.successForgotPassword;
-      languageDictionary.title =
-        mode === 'login'
-          ? languageDictionary.loginTitle
-          : languageDictionary.signupTitle;
-
-      var loginHint = config.extraParams.login_hint;
-
-      var realOptions = {
-        avatar: null,
-        auth: {
-          redirectUrl: config.callbackURL,
-          responseType:
-            (config.internalOptions || {}).response_type ||
-            config.callbackOnLocationHash
-              ? 'token'
-              : 'code',
-          params: config.internalOptions,
-        },
-        assetsUrl: config.assetsUrl,
-        allowedConnections: connection ? [connection] : null,
-        rememberLastLogin: false,
-        language: languageCode,
-        languageDictionary: languageDictionary,
-        theme: {
-          logo: headerLogo,
-          primaryColor: studyColor,
-        },
-        prefill: loginHint ? { email: loginHint, username: loginHint } : null,
-        closable: false,
-        configurationBaseUrl: config.clientConfigurationBaseUrl,
-        overrides: {
-          __tenant: config.auth0Tenant,
-          __token_issuer: '##LOGIN_DOMAIN##',
-        },
-      };
-      var options = { allowForgotPassword: true };
-      if (mode === 'signup') {
-        options.allowSignUp = true;
-        options.allowLogin = false;
-      } else if (mode === 'login') {
-        options.allowSignUp = false;
-        options.allowLogin = true;
-      } else {
-        options.allowSignUp = true;
-        options.allowLogin = true;
-      }
-
-      if (config.extraParams.showPasswordReset) {
-        options.allowSignUp = false;
-        options.allowLogin = false;
-      }
-
-      if (config.extraParams.show_password_reset) {
-        options.initialScreen = 'forgotPassword';
-      }
-      if (config.extraParams.user_email) {
-        realOptions.prefill = {
-          email: config.extraParams.user_email,
-          username: config.extraParams.user_email,
-        };
-      }
-
-      if (config.extraParams.password_was_reset) {
-        showPasswordRecentText = true;
-      }
-
-      var lock = new Auth0Lock(
-        config.clientID,
-        config.auth0Domain,
-        realOptions,
-      );
-
-      function addHelp() {
-        // we use setInterval because auth0's on() methods for display
-        // do not account for all the display modes and they appear to fire
-        // before animations complete, not after
-        setInterval(function () {
-          if (
-            document.getElementsByClassName('auth0-global-message').length > 0
-          ) {
-            if (
-              languageDictionary.error.signUp.user_exists.toUpperCase() ===
-              document
-                .getElementsByClassName('auth0-global-message')[0]
-                .children[0].children[0].innerText.toUpperCase()
-            ) {
-              if (!document.getElementById('ddp-already-registered')) {
-                var auth0GlobalMessage = document.getElementsByClassName(
-                  'auth0-global-message',
-                )[0].children[0].children[0];
-
-                console.log('parent: ' + auth0GlobalMessage.parentElement);
-                auth0GlobalMessage.parentElement.removeChild(
-                  auth0GlobalMessage,
-                );
-
-                var alreadyRegistered = document.createElement('a');
-                alreadyRegistered.setAttribute('href', loginUrl);
-                alreadyRegistered.setAttribute('style', 'color:black');
-                alreadyRegistered.setAttribute('id', 'ddp-already-registered');
-                alreadyRegistered.innerText =
-                  languageDictionary.alreadyRegisteredInner;
-                document
-                  .getElementsByClassName('auth0-global-message')[0]
-                  .children[0].appendChild(alreadyRegistered);
-              }
-            }
-          }
-
-          if (!document.getElementById('ddp-header')) {
-            // tweak the header
-            var header = document.createElement('div');
-            header.innerHTML =
-              '<div id="ddp-header" style="display:flex;flex-direction:row;justify-content: flex-start;align-items:center;"' +
-              '><img class="auth0-lock-header-logo" src="' +
-              headerLogo +
-              '"/></div></div>';
-            var auth0LockHeader = document.getElementsByClassName(
-              'auth0-lock-header-logo',
-            )[0];
-
-            if (auth0LockHeader) {
-              console.log('parent' + auth0LockHeader.parentElement);
-              auth0LockHeader.parentElement.removeChild(auth0LockHeader);
-              var headerWelcome = document.getElementsByClassName(
-                'auth0-lock-header-welcome',
-              )[0];
-              headerWelcome.insertBefore(
-                header,
-                headerWelcome.hasChildNodes()
-                  ? headerWelcome.childNodes[0]
-                  : null,
-              );
-              //document.getElementsByClassName('auth0-lock-header-welcome')[0].prepend(header);
-            }
-          }
-          if (!document.getElementById('ddp-help')) {
-            var lockForm = document.getElementsByClassName('auth0-lock-form');
-            var showSignUpHelp =
-              document.getElementsByClassName('auth0-lock-last-login-pane')
-                .length === 0;
-
-            if (mode === 'login' && !doNotShowRegLink) {
-              // navigate back to registration
-              var registerMessageWrapper = document.createElement('p');
-              registerMessageWrapper.setAttribute(
-                'class',
-                'auth0-lock-alternative',
-              );
-              registerMessageWrapper.setAttribute('id', 'ddp-reg');
-              registerMessageWrapper.setAttribute(
-                'style',
-                'margin-top:0;font-size: small;text-align: left;',
-              );
-
-              if (showSignUpHelp) {
-                var registerMessage = document.createElement('p');
-                registerMessage.setAttribute('style', 'margin-bottom:0;');
-                registerMessage.innerHTML =
-                  "<a class='auth0-lock-alternative-link' href='" +
-                  registerUrl +
-                  "'>" +
-                  languageDictionary.signupLinkText +
-                  '</a>.';
-                registerMessageWrapper.appendChild(registerMessage);
-
-                if (lockForm) {
-                  lockForm[0].appendChild(registerMessageWrapper);
-                }
-              }
-            }
-
-            var helpWrapper = document.createElement('div');
-            helpWrapper.setAttribute('id', 'ddp-help');
-
-            if (mode === 'signup') {
-              helpWrapper.setAttribute(
-                'style',
-                'display:flex;flex-direction:row;align-items:center;margin-top:5px;flex-wrap:none;',
-              );
-              var help =
-                '<p style="text-align:left;margin-bottom:0;">' +
-                languageDictionary.passwordMessage +
-                '.</p>';
-              helpWrapper.innerHTML = help;
-            }
-
-            if (lockForm) {
-              lockForm[0].appendChild(helpWrapper);
-            }
-
-            if (mode === 'signup' || options.allowSignUp) {
-              console.log('appending sign in with existing account');
-              var loginLink = document.createElement('a');
-              loginLink.setAttribute(
-                'class',
-                'auth0-lock-alternative-link sign-in-here-link',
-              );
-              loginLink.setAttribute('href', loginUrl);
-              loginLink.innerText = languageDictionary.loginLinkText;
-              var switchToLogin = document.createElement('p');
-              switchToLogin.setAttribute(
-                'class',
-                'auth0-lock-alternative sign-in-here',
-              );
-              switchToLogin.appendChild(loginLink);
-              helpWrapper.parentElement.appendChild(switchToLogin);
-            }
-
-            if (showPasswordRecentText) {
-              if (!document.getElementById('ddp-pwd')) {
-                var resetPasswordWrapper = document.createElement('p');
-                resetPasswordWrapper.setAttribute(
-                  'class',
-                  'auth0-lock-alternative',
-                );
-                resetPasswordWrapper.setAttribute('id', 'ddp-pwd');
-                resetPasswordWrapper.setAttribute('style', 'margin-top:0px;');
-
-                var resetPasswordText = document.createElement('div');
-                resetPasswordText.innerText =
-                  languageDictionary.resetPasswordInnerText;
-
-                resetPasswordWrapper.appendChild(resetPasswordText);
-                document
-                  .getElementsByClassName('auth0-lock-content')[0]
-                  .prepend(resetPasswordWrapper);
-              }
-            }
-          }
-        }, 200);
-      }
-
-      lock.on('show', function () {
-        addHelp();
-
-        if (realOptions.prefill && realOptions.prefill.email) {
-          var getInputElement = function (name) {
-            return document.getElementsByName(name)[0];
-          };
-          var setFocus = function (theElement) {
-            theElement.focus();
-            return true;
-          };
-          var getElementWithFocus = function () {
-            return document.querySelector(':focus');
-          };
-          var intervalId = setInterval(function () {
-            var pwdElement = getInputElement('password');
-            var emailElement = getInputElement('email');
-            if (pwdElement && emailElement && emailElement.value.trim()) {
-              setFocus(pwdElement);
-              var elementWithFocus = getElementWithFocus();
-              if (
-                elementWithFocus &&
-                elementWithFocus.name &&
-                pwdElement.name === elementWithFocus.name
-              ) {
-                clearInterval(intervalId);
-              }
-            }
-          }, 200);
-        }
-      });
-
-      lock.on('forgot_password ready', function () {});
-
-      console.log('auth mode: ' + mode);
-      console.log('study_guid: ' + study_guid);
-
-      lock.show(options);
-    </script> -->
   </body>
 </html>
