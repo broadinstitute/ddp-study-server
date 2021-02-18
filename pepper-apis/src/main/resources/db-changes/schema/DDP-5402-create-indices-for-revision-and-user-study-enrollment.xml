@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="evgeniipr" id="20210218-create-user-study-enrollment-valid-to-index">
+        <createIndex tableName="user_study_enrollment" indexName="user_study_enrollment_valid_to_idx">
+            <column name="valid_to" type="bigint"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet author="evgeniipr" id="20210218-create-revision-start-date-end-date-indices">
+        <createIndex tableName="revision" indexName="revision_start_date_idx">
+            <column name="start_date" type="bigint"/>
+        </createIndex>
+        <createIndex tableName="revision" indexName="revision_end_date_idx">
+            <column name="end_date" type="bigint"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>
