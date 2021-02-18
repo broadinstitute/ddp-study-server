@@ -33,7 +33,7 @@ public class PubSubTaskReceiver implements MessageReceiver {
 
     private static final Logger LOG = getLogger(PubSubTaskReceiver.class);
 
-    private static final int RETRY_MESSAGE_MAX_COUNT = 5;
+    private static final int MAX_NUMBER_OF_ATTEMPTS_FOR_RETRIABLE_ERROR = 5;
 
     private final AtomicLongMap<String> retryMessageCounters = AtomicLongMap.create();
 
@@ -106,9 +106,10 @@ public class PubSubTaskReceiver implements MessageReceiver {
 
     private void handleRetriableErrors(AckReplyConsumer consumer, PubSubTask pubSubTask, Exception e) {
         long count = retryMessageCounters.incrementAndGet(pubSubTask.getMessageId());
-        if (count <= RETRY_MESSAGE_MAX_COUNT) {
+        if (count < MAX_NUMBER_OF_ATTEMPTS_FOR_RETRIABLE_ERROR) {
             LOG.warn(errorMsg(format("PubSubTask processing FAILED, will retry (try=%d/%d): taskType=%s, messageId=%s, ErrorMessage: %s",
-                    count, RETRY_MESSAGE_MAX_COUNT, pubSubTask.getTaskType(), pubSubTask.getMessageId(), e.getMessage())));
+                    count, MAX_NUMBER_OF_ATTEMPTS_FOR_RETRIABLE_ERROR, pubSubTask.getTaskType(),
+                    pubSubTask.getMessageId(), e.getMessage())));
             consumer.nack();
         } else {
             handleNonRetriableErrors(consumer, pubSubTask, e);

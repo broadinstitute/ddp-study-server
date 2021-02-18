@@ -9,12 +9,6 @@ import java.util.stream.Collectors;
  */
 public class GsonCreateUtil {
 
-    public static String createJsonIgnoreNulls(String name1, Object value1) {
-        Map<String, Object> map = new HashMap<>();
-        map.put(name1, value1);
-        return  GsonUtil.standardGson().toJson(excludeNullValues(map));
-    }
-
     public static String createJsonIgnoreNulls(String name1, Object value1, String name2, Object value2) {
         Map<String, Object> map = new HashMap<>();
         map.put(name1, value1);
