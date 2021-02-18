@@ -132,7 +132,7 @@ public class ConfigFile {
     public static final String DSM_JWT_SIGNER = "dsmJwtSigner";
     public static final String USE_DISPOSABLE_TEST_DB = "useDisposableTestDbs";
 
-    public static final String AUTH0_IP_WHITE_LIST = "auth0IpWhiteList";
+    public static final String AUTH0_IP_ALLOW_LIST = "auth0.ipAllowList";
     public static final String PREFERRED_SOURCE_IP_HEADER = "preferredSourceIPHeader";
 
     public static final String JCACHE_CONFIGURATION_FILE = "jcacheConfigurationFile";

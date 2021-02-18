@@ -50,9 +50,9 @@ public class HtmlConverter {
         }
         
         Document doc = Jsoup.parseBodyFragment(htmlFragment);
-        Whitelist whitelist = Whitelist.simpleText()
+        Whitelist allowlist = Whitelist.simpleText()
                 .addTags("ins");
-        Cleaner cleaner = new Cleaner(whitelist);
+        Cleaner cleaner = new Cleaner(allowlist);
         doc = cleaner.clean(doc);
         return doc.body().html();
     }
