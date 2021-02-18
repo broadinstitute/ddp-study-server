@@ -56,10 +56,9 @@ public class PubSubTaskUpdateProfileMessageTest {
 
         assertEquals("{'email':'test@datadonationplatform.org', 'firstName':'Lorenzo', 'lastName':'Montana'}",
                 testResultSender.getPubSubTaskResult().getPubSubTask().getPayloadJson());
-        assertEquals(ERROR, testResultSender.getPubSubTaskResult().getPubSubTaskResultPayload().getResultType());
-        assertEquals("Error processing taskType=UPDATE_PROFILE - some attributes are not specified: "
-                        + "participantGuid=null, userId=null",
-                testResultSender.getPubSubTaskResult().getPubSubTaskResultPayload().getErrorMessage());
+        assertEquals(ERROR, testResultSender.getPubSubTaskResult().getResultType());
+        assertEquals("Error processing task - some attributes are not specified: participantGuid=null, userId=null",
+                testResultSender.getPubSubTaskResult().getErrorMessage());
     }
 
     @Test
@@ -71,9 +70,9 @@ public class PubSubTaskUpdateProfileMessageTest {
 
         assertEquals(4, testResultSender.getPubSubTaskResult().getPubSubTask().getAttributes().size());
         assertEquals("", testResultSender.getPubSubTaskResult().getPubSubTask().getPayloadJson());
-        assertEquals(ERROR, testResultSender.getPubSubTaskResult().getPubSubTaskResultPayload().getResultType());
-        assertEquals("Error processing taskType=%s: empty payload",
-                testResultSender.getPubSubTaskResult().getPubSubTaskResultPayload().getErrorMessage());
+        assertEquals(ERROR, testResultSender.getPubSubTaskResult().getResultType());
+        assertEquals("Error processing task - empty payload",
+                testResultSender.getPubSubTaskResult().getErrorMessage());
     }
 
     private void buildMessageAndAssert(boolean buildValidMessage) {
