@@ -22,6 +22,7 @@ import org.broadinstitute.ddp.db.dto.AgreementQuestionDto;
 import org.broadinstitute.ddp.db.dto.BooleanQuestionDto;
 import org.broadinstitute.ddp.db.dto.CompositeQuestionDto;
 import org.broadinstitute.ddp.db.dto.DateQuestionDto;
+import org.broadinstitute.ddp.db.dto.FileQuestionDto;
 import org.broadinstitute.ddp.db.dto.FormBlockDto;
 import org.broadinstitute.ddp.db.dto.NumericQuestionDto;
 import org.broadinstitute.ddp.db.dto.PicklistGroupDto;
@@ -37,6 +38,7 @@ import org.broadinstitute.ddp.model.activity.definition.question.BoolQuestionDef
 import org.broadinstitute.ddp.model.activity.definition.question.CompositeQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.DatePicklistDef;
 import org.broadinstitute.ddp.model.activity.definition.question.DateQuestionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.FileQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.NumericQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistGroupDef;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistOptionDef;
@@ -50,6 +52,7 @@ import org.broadinstitute.ddp.model.activity.instance.answer.AgreementAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.BoolAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.CompositeAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.DateAnswer;
+import org.broadinstitute.ddp.model.activity.instance.answer.FileAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.NumericAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.PicklistAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
@@ -58,6 +61,7 @@ import org.broadinstitute.ddp.model.activity.instance.question.BoolQuestion;
 import org.broadinstitute.ddp.model.activity.instance.question.CompositeQuestion;
 import org.broadinstitute.ddp.model.activity.instance.question.DatePicklistQuestion;
 import org.broadinstitute.ddp.model.activity.instance.question.DateQuestion;
+import org.broadinstitute.ddp.model.activity.instance.question.FileQuestion;
 import org.broadinstitute.ddp.model.activity.instance.question.NumericQuestion;
 import org.broadinstitute.ddp.model.activity.instance.question.PicklistGroup;
 import org.broadinstitute.ddp.model.activity.instance.question.PicklistOption;
@@ -336,6 +340,9 @@ public interface QuestionDao extends SqlObject {
             case DATE:
                 question = getDateQuestion((DateQuestionDto) dto, activityInstanceGuid, answerIds, untypedRules);
                 break;
+            case FILE:
+                question = getFileQuestion((FileQuestionDto) dto, activityInstanceGuid, answerIds, untypedRules);
+                break;
             case NUMERIC:
                 question = getNumericQuestion((NumericQuestionDto) dto, activityInstanceGuid, answerIds, untypedRules);
                 break;
@@ -581,6 +588,42 @@ public interface QuestionDao extends SqlObject {
     }
 
     /**
+     * Build a file question.
+     *
+     * @param dto                  the question dto
+     * @param activityInstanceGuid the activity instance guid
+     * @param answerIds            list of base answer ids to question (may be empty)
+     * @param untypedRules         list of untyped validations for question (may be empty)
+     * @return file question object
+     */
+    default Question getFileQuestion(FileQuestionDto dto, String activityInstanceGuid,
+                                     List<Long> answerIds, List<Rule> untypedRules) {
+        AnswerDao answerDao = getAnswerDao();
+        List<FileAnswer> answers = answerIds.stream()
+                .map(answerId -> (FileAnswer) answerDao.findAnswerById(answerId)
+                        .orElseThrow(() -> new DaoException("Could not find file answer with id " + answerId)))
+                .collect(toList());
+
+        List<Rule<FileAnswer>> rules = untypedRules.stream()
+                .map(rule -> (Rule<FileAnswer>) rule)
+                .collect(toList());
+
+        boolean isReadonly = QuestionUtil.isReadonly(getHandle(), dto, activityInstanceGuid);
+
+        return new FileQuestion(
+                dto.getStableId(),
+                dto.getPromptTemplateId(),
+                dto.isRestricted(),
+                dto.isDeprecated(),
+                isReadonly,
+                dto.getTooltipTemplateId(),
+                dto.getAdditionalInfoHeaderTemplateId(),
+                dto.getAdditionalInfoFooterTemplateId(),
+                answers,
+                rules);
+    }
+
+    /**
      * Build a numeric question.
      *
      * @param dto                  the question dto
@@ -729,6 +772,9 @@ public interface QuestionDao extends SqlObject {
             case DATE:
                 insertQuestion(activityId, (DateQuestionDef) question, revisionId);
                 break;
+            case FILE:
+                insertQuestion(activityId, (FileQuestionDef) question, revisionId);
+                break;
             case NUMERIC:
                 insertQuestion(activityId, (NumericQuestionDef) question, revisionId);
                 break;
@@ -765,6 +811,9 @@ public interface QuestionDao extends SqlObject {
                 break;
             case DATE:
                 disableDateQuestion(qid.getId(), meta);
+                break;
+            case FILE:
+                disableFileQuestion(qid.getId(), meta);
                 break;
             case NUMERIC:
                 disableNumericQuestion(qid.getId(), meta);
@@ -1013,6 +1062,17 @@ public interface QuestionDao extends SqlObject {
     }
 
     /**
+     * Create new file question by inserting common data and file question specific data.
+     *
+     * @param activityId   the associated activity
+     * @param fileQuestion the file question definition, without generated things like ids
+     * @param revisionId   the revision to use, will be shared by all created data
+     */
+    default void insertQuestion(long activityId, FileQuestionDef fileQuestion, long revisionId) {
+        insertBaseQuestion(activityId, fileQuestion, revisionId);
+    }
+
+    /**
      * Create new numeric question by inserting common data and numeric specific data.
      *
      * @param activityId  the associated activity
@@ -1177,6 +1237,21 @@ public interface QuestionDao extends SqlObject {
     }
 
     /**
+     * End currently active file question by terminating common data and file specific data.
+     *
+     * @param questionId the question id
+     * @param meta       the revision metadata used for terminating data
+     */
+    default void disableFileQuestion(long questionId, RevisionMetadata meta) {
+        QuestionDto dto = getJdbiQuestion().findQuestionDtoById(questionId).orElse(null);
+        FileQuestionDto questionDto = dto == null ? null : (FileQuestionDto) dto;
+        if (questionDto == null || questionDto.getRevisionEnd() != null) {
+            throw new NoSuchElementException("Cannot find active file question with id " + questionId);
+        }
+        disableBaseQuestion(questionDto, meta);
+    }
+
+    /**
      * End currently active numeric question by terminating common data and numeric specific data.
      *
      * @param questionId the question id
@@ -1325,6 +1400,10 @@ public interface QuestionDao extends SqlObject {
                     break;
                 case DATE:
                     questionDef = buildDateQuestionDef((DateQuestionDto) questionDto, ruleDefs, templates);
+                    questionDefs.put(questionId, questionDef);
+                    break;
+                case FILE:
+                    questionDef = buildFileQuestionDef((FileQuestionDto) questionDto, ruleDefs, templates);
                     questionDefs.put(questionId, questionDef);
                     break;
                 case NUMERIC:
@@ -1479,6 +1558,15 @@ public interface QuestionDao extends SqlObject {
                 .addFields(dto.getFields());
         configureBaseQuestionDef(builder, dto, ruleDefs, templates);
 
+        return builder.build();
+    }
+
+    private FileQuestionDef buildFileQuestionDef(FileQuestionDto dto,
+                                                 List<RuleDef> ruleDefs,
+                                                 Map<Long, Template> templates) {
+        Template prompt = templates.get(dto.getPromptTemplateId());
+        var builder = FileQuestionDef.builder(dto.getStableId(), prompt);
+        configureBaseQuestionDef(builder, dto, ruleDefs, templates);
         return builder.build();
     }
 

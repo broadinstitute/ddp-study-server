@@ -5,6 +5,7 @@ import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.db.dto.QuestionDto;
+import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.jdbi.v3.core.Handle;
 
@@ -37,6 +38,32 @@ public class QuestionUtil {
         // If it is not the first instance - block editing
         var instanceDao = handle.attach(ActivityInstanceDao.class);
         Long previousInstanceId = instanceDao.findMostRecentInstanceBeforeCurrent(activityInstanceDto.getId())
+                .orElse(null);
+        return previousInstanceId != null;
+    }
+
+    /**
+     * Check if a question is read-only. This is an alternative version that might be faster depending on what data is available.
+     *
+     * @param handle the database handle
+     * @param questionDef the question definition
+     * @param instanceDto the activity instance dto
+     * @return true if read-only, otherwise false
+     */
+    public static boolean isReadonly(Handle handle, QuestionDef questionDef, ActivityInstanceDto instanceDto) {
+        boolean isWriteOnce = questionDef.isWriteOnce();
+        if (!isWriteOnce) {
+            return false;
+        }
+
+        InstanceStatusType statusType = instanceDto.getStatusType();
+        if (InstanceStatusType.COMPLETE.equals(statusType)) {
+            return true;
+        }
+
+        // If it is not the first instance - block editing
+        Long previousInstanceId = handle.attach(ActivityInstanceDao.class)
+                .findMostRecentInstanceBeforeCurrent(instanceDto.getId())
                 .orElse(null);
         return previousInstanceId != null;
     }

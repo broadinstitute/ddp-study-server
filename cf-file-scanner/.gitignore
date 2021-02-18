@@ -1,0 +1,13 @@
+# Do not check into git anything that's generated.
+
+*.iml
+*.env
+env.yaml
+
+.idea/
+build/
+clamav/
+target/
+
+config/
+!config/example.env

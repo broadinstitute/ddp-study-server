@@ -71,6 +71,7 @@ import org.slf4j.LoggerFactory;
         InvitationCheckStatusRouteTest.class,
         CreateActivityInstanceRouteTest.class,
         CreateTemporaryUserRouteTest.class,
+        CreateUserActivityUploadRouteTest.class,
         DeleteMedicalProviderRouteTest.class,
         DsmTriggerOnDemandActivityRouteTest.class,
         EmbeddedComponentActivityInstanceTest.class,
