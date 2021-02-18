@@ -62,7 +62,8 @@ public interface JdbiActivity extends SqlObject {
             + "        allow_unauthenticated = :allowUnauthenticated,"
             + "        is_followup = :isFollowup,"
             + "        exclude_status_icon_from_display = :excludeStatusIconFromDisplay,"
-            + "        hide_existing_instances_on_creation = :hideExistingInstancesOnCreation"
+            + "        hide_existing_instances_on_creation = :hideExistingInstancesOnCreation,"
+            + "        create_on_parent_creation = :createOnParentCreation"
             + "  where study_activity_id = :activityId")
     int updateActivity(
             @Bind("activityId") long activityId,
@@ -76,7 +77,8 @@ public interface JdbiActivity extends SqlObject {
             @Bind("allowUnauthenticated") boolean allowUnauthenticated,
             @Bind("isFollowup") boolean isFollowup,
             @Bind("excludeStatusIconFromDisplay") boolean excludeStatusIconFromDisplay,
-            @Bind("hideExistingInstancesOnCreation") boolean hideExistingInstancesOnCreation
+            @Bind("hideExistingInstancesOnCreation") boolean hideExistingInstancesOnCreation,
+            @Bind("createOnParentCreation") boolean createOnParentCreation
     );
 
     @SqlUpdate("insert into form_activity(study_activity_id,form_type_id) values(?,?)")

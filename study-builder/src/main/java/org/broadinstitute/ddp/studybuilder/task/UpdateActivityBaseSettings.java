@@ -78,6 +78,8 @@ public class UpdateActivityBaseSettings implements CustomTask {
                 currentDto.getActivityTypeId(),
                 currentDto.getStudyId(),
                 currentDto.getActivityCode(),
+                currentDto.getParentActivityId(),
+                currentDto.getParentActivityCode(),
                 definition.getInt("displayOrder"),
                 definition.getBoolean("writeOnce"),
                 false,  // instantiate_upon_registration not supported anymore!
@@ -88,7 +90,8 @@ public class UpdateActivityBaseSettings implements CustomTask {
                 definition.getBoolean("allowUnauthenticated"),
                 definition.getBoolean("isFollowup"),
                 definition.getBoolean("excludeStatusIconFromDisplay"),
-                definition.getBoolean("hideExistingInstancesOnCreation"));
+                definition.getBoolean("hideExistingInstancesOnCreation"),
+                ConfigUtil.getBoolOrElse(definition, "createOnParentCreation", false));
         if (!currentDto.equals(latestDto)) {
             jdbiActivity.updateActivity(
                     latestDto.getActivityId(),
@@ -102,7 +105,8 @@ public class UpdateActivityBaseSettings implements CustomTask {
                     latestDto.isUnauthenticatedAllowed(),
                     latestDto.isFollowup(),
                     latestDto.shouldExcludeStatusIconFromDisplay(),
-                    latestDto.isHideExistingInstancesOnCreation());
+                    latestDto.isHideExistingInstancesOnCreation(),
+                    latestDto.isCreateOnParentCreation());
             LOG.info("Updated basic settings");
         } else {
             LOG.info("No changes to basic settings");
