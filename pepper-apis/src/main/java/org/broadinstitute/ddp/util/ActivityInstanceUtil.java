@@ -2,14 +2,46 @@ package org.broadinstitute.ddp.util;
 
 import java.time.Instant;
 
+import org.broadinstitute.ddp.db.ActivityDefStore;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
 import org.broadinstitute.ddp.db.dto.ActivityDto;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
+import org.broadinstitute.ddp.db.dto.ActivityVersionDto;
+import org.broadinstitute.ddp.exception.DDPException;
+import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.jdbi.v3.core.Handle;
 
 public class ActivityInstanceUtil {
+
+    /**
+     * Convenience helper to extract activity definition from the activity store.
+     */
+    public static FormActivityDef getActivityDef(Handle handle, ActivityDefStore activityStore,
+                                           ActivityInstanceDto instanceDto, String studyGuid) {
+        long activityId = instanceDto.getActivityId();
+        String instanceGuid = instanceDto.getGuid();
+        ActivityDto activityDto = activityStore.findActivityDto(handle, activityId)
+                .orElseThrow(() -> new DDPException("Could not find activity dto for instance " + instanceGuid));
+        ActivityVersionDto versionDto = activityStore
+                .findVersionDto(handle, activityId, instanceDto.getCreatedAtMillis())
+                .orElseThrow(() -> new DDPException("Could not find activity version for instance " + instanceGuid));
+        return activityStore.findActivityDef(handle, studyGuid, activityDto, versionDto)
+                .orElseThrow(() -> new DDPException("Could not find activity definition for instance " + instanceGuid));
+    }
+
+    /**
+     * Convenience helper to check read-only status of instance given the activity definition and instance dto.
+     */
+    public static boolean isInstanceReadOnly(FormActivityDef activityDef, ActivityInstanceDto instanceDto) {
+        return ActivityInstanceUtil.isReadonly(
+                activityDef.getEditTimeoutSec(),
+                instanceDto.getCreatedAtMillis(),
+                instanceDto.getStatusType().name(),
+                activityDef.isWriteOnce(),
+                instanceDto.getReadonly());
+    }
 
     /**
      * Checks if an activity instance is read-only

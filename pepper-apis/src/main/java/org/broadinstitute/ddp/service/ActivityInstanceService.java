@@ -82,7 +82,7 @@ public class ActivityInstanceService {
         }
 
         if (ActivityType.FORMS.equals(inst.getActivityType())) {
-            ((FormInstance) inst).updateBlockStatuses(handle, interpreter, userGuid, operatorGuid, actInstanceGuid);
+            ((FormInstance) inst).updateBlockStatuses(handle, interpreter, userGuid, operatorGuid, actInstanceGuid, null);
         }
 
         return Optional.of(inst);

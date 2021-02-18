@@ -37,6 +37,7 @@ import org.broadinstitute.ddp.db.ActivityDefStore;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
+import org.broadinstitute.ddp.db.dao.ActivityInstanceStatusDao;
 import org.broadinstitute.ddp.db.dao.AnswerDao;
 import org.broadinstitute.ddp.db.dao.AuthDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
@@ -72,6 +73,7 @@ import org.broadinstitute.ddp.model.activity.instance.answer.CompositeAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
 import org.broadinstitute.ddp.model.activity.types.FormType;
+import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
 import org.broadinstitute.ddp.model.activity.types.TemplateType;
 import org.broadinstitute.ddp.model.activity.types.TextInputType;
@@ -259,6 +261,71 @@ public class PutFormAnswersRouteStandaloneTest extends IntegrationTestSuite.Test
                 assertEquals(1, jdbiTrans.deleteById(transitionId));
             }
             transitionIdsToDelete.clear();
+        });
+    }
+
+    @Test
+    public void testParentActivity_parentReadOnlyPreventsChildPut() {
+        ActivityInstanceDto instanceDto = TransactionWrapper.withTxn(handle -> {
+            assertEquals(1, handle.attach(JdbiActivityInstance.class)
+                    .updateIsReadonlyByGuid(true, parentInstanceDto.getGuid()));
+            return insertNewInstanceAndDeferCleanup(handle, form.getActivityId());
+        });
+        try {
+            given().auth().oauth2(token)
+                    .pathParam("instanceGuid", instanceDto.getGuid())
+                    .when().put(urlTemplate).then().assertThat()
+                    .statusCode(422).contentType(ContentType.JSON)
+                    .body("code", equalTo(ErrorCodes.ACTIVITY_INSTANCE_IS_READONLY))
+                    .body("message", containsString("Parent activity instance"))
+                    .body("message", containsString("read-only"));
+        } finally {
+            TransactionWrapper.useTxn(handle -> assertEquals(1, handle.attach(JdbiActivityInstance.class)
+                    .updateIsReadonlyByGuid(null, parentInstanceDto.getGuid())));
+        }
+    }
+
+    @Test
+    public void testParentActivity_parentPutChecksChildComplete() {
+        TransactionWrapper.useTxn(handle -> {
+            // Make it so that child activity have a required question that's not answered yet.
+            long exprId = conditionalBlock.getNested().get(0).getShownExprId();
+            assertEquals(1, handle.attach(JdbiExpression.class).updateById(exprId, "true"));
+            insertNewInstanceAndDeferCleanup(handle, form.getActivityId());
+        });
+        try {
+            given().auth().oauth2(token)
+                    .pathParam("instanceGuid", parentInstanceDto.getGuid())
+                    .when().put(urlTemplate).then().assertThat()
+                    .statusCode(422).contentType(ContentType.JSON)
+                    .body("code", equalTo(ErrorCodes.QUESTION_REQUIREMENTS_NOT_MET));
+        } finally {
+            TransactionWrapper.useTxn(handle -> {
+                long exprId = conditionalBlock.getNested().get(0).getShownExprId();
+                assertEquals(1, handle.attach(JdbiExpression.class).updateById(exprId, "false"));
+            });
+        }
+    }
+
+    @Test
+    public void testParentActivity_childPutUpdatesParentStatusToInProgress() {
+        ActivityInstanceDto instanceDto = TransactionWrapper.withTxn(handle -> {
+            var instanceStatusDao = handle.attach(ActivityInstanceStatusDao.class);
+            instanceStatusDao.deleteAllByInstanceGuid(parentInstanceDto.getGuid());
+            instanceStatusDao.insertStatus(parentInstanceDto.getGuid(), InstanceStatusType.CREATED,
+                    Instant.now().toEpochMilli(), testData.getUserGuid());
+            return insertNewInstanceAndDeferCleanup(handle, form.getActivityId());
+        });
+
+        given().auth().oauth2(token)
+                .pathParam("instanceGuid", instanceDto.getGuid())
+                .when().put(urlTemplate).then().assertThat()
+                .statusCode(200);
+
+        TransactionWrapper.useTxn(handle -> {
+            ActivityInstanceDto actualParentInstanceDto = handle.attach(JdbiActivityInstance.class)
+                    .getByActivityInstanceGuid(parentInstanceDto.getGuid()).get();
+            assertEquals(InstanceStatusType.IN_PROGRESS, actualParentInstanceDto.getStatusType());
         });
     }
 

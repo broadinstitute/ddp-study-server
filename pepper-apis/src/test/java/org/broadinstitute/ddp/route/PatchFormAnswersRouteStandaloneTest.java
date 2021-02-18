@@ -427,6 +427,49 @@ public class PatchFormAnswersRouteStandaloneTest {
     }
 
     @Test
+    public void testParentActivity_parentReadOnlyPreventsChildPatch() {
+        TransactionWrapper.useTxn(handle -> assertEquals(1, handle.attach(JdbiActivityInstance.class)
+                .updateIsReadonlyByGuid(true, parentInstanceDto.getGuid())));
+        try {
+            AnswerSubmission submission = new AnswerSubmission(numericIntegerSid, null, gson.toJsonTree(10));
+            PatchAnswerPayload data = new PatchAnswerPayload(List.of(submission));
+            givenAnswerPatchRequest(instanceGuid, data)
+                    .then().assertThat()
+                    .statusCode(422).contentType(ContentType.JSON)
+                    .body("code", equalTo(ErrorCodes.ACTIVITY_INSTANCE_IS_READONLY))
+                    .body("message", containsString("Parent activity instance"))
+                    .body("message", containsString("read-only"));
+        } finally {
+            TransactionWrapper.useTxn(handle -> assertEquals(1, handle.attach(JdbiActivityInstance.class)
+                    .updateIsReadonlyByGuid(null, parentInstanceDto.getGuid())));
+        }
+    }
+
+    @Test
+    public void testParentActivity_childPatchUpdatesParentStatusToInProgress() {
+        TransactionWrapper.useTxn(handle -> {
+            var instanceStatusDao = handle.attach(ActivityInstanceStatusDao.class);
+            instanceStatusDao.deleteAllByInstanceGuid(parentInstanceDto.getGuid());
+            instanceStatusDao.insertStatus(parentInstanceDto.getGuid(), InstanceStatusType.CREATED,
+                    Instant.now().toEpochMilli(), testData.getUserGuid());
+        });
+
+        AnswerSubmission submission = new AnswerSubmission(numericIntegerSid, null, gson.toJsonTree(10));
+        PatchAnswerPayload data = new PatchAnswerPayload(List.of(submission));
+        String guid = givenAnswerPatchRequest(instanceGuid, data)
+                .then().assertThat()
+                .statusCode(200).contentType(ContentType.JSON)
+                .and().extract().path("answers[0].answerGuid");
+        answerGuidsToDelete.get(QuestionType.PICKLIST).add(guid);
+
+        TransactionWrapper.useTxn(handle -> {
+            ActivityInstanceDto actualParentInstanceDto = handle.attach(JdbiActivityInstance.class)
+                    .getByActivityInstanceGuid(parentInstanceDto.getGuid()).get();
+            assertEquals(InstanceStatusType.IN_PROGRESS, actualParentInstanceDto.getStatusType());
+        });
+    }
+
+    @Test
     public void testPatch_activityNotFound() throws Exception {
         String testUrl = urlTemplate.replace("{instanceGuid}", "not-an-instance-guid");
         Request request = RouteTestUtil.buildAuthorizedPatchRequest(token, testUrl, null);
