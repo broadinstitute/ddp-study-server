@@ -24,19 +24,27 @@ public class UpdateFirstLastNameHandler {
         var profileDao = handle.attach(UserProfileDao.class);
         var profile = profileDao.findProfileByUserGuid(userGuid).orElse(null);
         if (profile == null) {
-            throw new PubSubTaskException("User profile is not found for guid=" + userGuid, WARN);
+            throwUserNotFoundException(userGuid);
         }
         String firstName = detectFieldValueForUpdate(payload, FIELD_FIRST_NAME, profile.getFirstName());
         String lastName = detectFieldValueForUpdate(payload, FIELD_LAST_NAME, profile.getLastName());
         int count = profileDao.getUserProfileSql().updateFirstAndLastNameByUserGuid(userGuid, firstName, lastName);
         if (count > 0) {
-            handle.attach(DataExportDao.class).queueDataSync(userGuid);
+            syncToElastic(handle, userGuid);
         } else {
-            throw new PubSubTaskException("User profile is not found for guid=" + userGuid, WARN);
+            throwUserNotFoundException(userGuid);
         }
     }
 
     private String detectFieldValueForUpdate(Properties payload, String fieldName, String currentValue) {
         return payload.containsKey(fieldName) ? payload.getProperty(fieldName) : currentValue;
+    }
+
+    private void throwUserNotFoundException(String userGuid) {
+        throw new PubSubTaskException("User profile is not found for guid=" + userGuid, WARN);
+    }
+
+    private void syncToElastic(Handle handle, String userGuid) {
+        handle.attach(DataExportDao.class).queueDataSync(userGuid);
     }
 }

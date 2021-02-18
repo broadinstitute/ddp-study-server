@@ -37,11 +37,11 @@ public class UpdateProfileProcessor extends PubSubTaskProcessorAbstract {
         String participantGuid = pubSubTask.getAttributes().get(ATTR_PARTICIPANT_GUID);
         String userId = pubSubTask.getAttributes().get(ATTR_USER_ID);
         if (isBlank(participantGuid) || isBlank(userId)) {
-            throw new PubSubTaskException(format("Error processing taskType=%s - some attributes are not specified: "
-                            + "participantGuid=%s, userId=%s", pubSubTask.getTaskType(), participantGuid, userId), WARN);
+            throw new PubSubTaskException(format("Error processing task - some attributes are not specified: "
+                            + "participantGuid=%s, userId=%s", participantGuid, userId), WARN);
         }
         if (isBlank(pubSubTask.getPayloadJson())) {
-            throw new PubSubTaskException("Error processing taskType=%s: empty payload", WARN);
+            throw new PubSubTaskException("Error processing task - empty payload", WARN);
         }
     }
 
