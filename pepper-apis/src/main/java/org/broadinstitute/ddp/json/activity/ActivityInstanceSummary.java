@@ -63,7 +63,6 @@ public class ActivityInstanceSummary implements TranslatedSummary {
 
     private transient long activityInstanceId;
     private transient String isoLanguageCode;
-    private transient String activityTypeName;
     private transient boolean excludeFromDisplay;
     private transient boolean isInstanceHidden;
     private transient String activitySecondName;
@@ -91,7 +90,6 @@ public class ActivityInstanceSummary implements TranslatedSummary {
             String iconBase64,
             Boolean readonly,
             String isoLanguageCode,
-            String activityTypeName,
             boolean excludeFromDisplay,
             boolean isInstanceHidden,
             long createdAt,
@@ -117,7 +115,6 @@ public class ActivityInstanceSummary implements TranslatedSummary {
         this.iconBase64 = iconBase64;
         this.readonly = readonly;
         this.isoLanguageCode = isoLanguageCode;
-        this.activityTypeName = activityTypeName;
         this.excludeFromDisplay = excludeFromDisplay;
         this.isInstanceHidden = isInstanceHidden;
         this.isHidden = isInstanceHidden || excludeFromDisplay;
@@ -200,10 +197,6 @@ public class ActivityInstanceSummary implements TranslatedSummary {
     @Override
     public String getIsoLanguageCode() {
         return isoLanguageCode;
-    }
-
-    public String getActivityTypeName() {
-        return activityTypeName;
     }
 
     public long getCreatedAt() {

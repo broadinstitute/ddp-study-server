@@ -27,6 +27,7 @@ import org.apache.http.util.EntityUtils;
 import org.broadinstitute.ddp.constants.RouteConstants.API;
 import org.broadinstitute.ddp.constants.RouteConstants.PathParam;
 import org.broadinstitute.ddp.content.I18nTemplateConstants;
+import org.broadinstitute.ddp.db.ActivityDefStore;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.ActivityI18nDao;
@@ -62,7 +63,7 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-public class UserActivityInstanceListRouteTest extends IntegrationTestSuite.TestCase {
+public class UserActivityInstanceListRouteStandaloneTest extends IntegrationTestSuite.TestCaseWithCacheEnabled {
 
     private static TestDataSetupUtil.GeneratedTestData testData;
     private static FormActivityDef prequal;
@@ -209,6 +210,7 @@ public class UserActivityInstanceListRouteTest extends IntegrationTestSuite.Test
                 .updateIsReadonlyByGuid(null, firstActivityInstanceGuid));
         TransactionWrapper.withTxn(handle -> handle.attach(JdbiActivity.class)
                 .updateEditTimeoutSecByCode(1L, firstActivityCode, testData.getStudyId()));
+        ActivityDefStore.getInstance().clear();
         TimeUnit.SECONDS.sleep(1L);
         Assert.assertEquals(1L, userActivitiesCounter.get().longValue());
 
@@ -224,6 +226,8 @@ public class UserActivityInstanceListRouteTest extends IntegrationTestSuite.Test
         TransactionWrapper.withTxn(handle -> handle.attach(JdbiActivityInstance.class)
                 .updateIsReadonlyByGuid(false, firstActivityInstanceGuid));
         Assert.assertEquals(0L, userActivitiesCounter.get().longValue());
+
+        ActivityDefStore.getInstance().clear();
     }
 
     @Test
@@ -286,6 +290,7 @@ public class UserActivityInstanceListRouteTest extends IntegrationTestSuite.Test
                     .insertInstance(prequal.getActivityId(), userGuid)
                     .getGuid();
         });
+        ActivityDefStore.getInstance().clear();
         try {
             List<ActivityInstanceSummary> userActivities = getUserActivities();
             Assert.assertEquals(2, userActivities.size());
@@ -306,6 +311,7 @@ public class UserActivityInstanceListRouteTest extends IntegrationTestSuite.Test
                 handle.attach(ActivityInstanceDao.class).deleteByInstanceGuid(prequal2Guid);
                 handle.attach(ActivityI18nDao.class).updateDetails(List.of(oldDetails.get()));
             });
+            ActivityDefStore.getInstance().clear();
         }
     }
 
@@ -322,6 +328,7 @@ public class UserActivityInstanceListRouteTest extends IntegrationTestSuite.Test
     public void test_whenActivityIsExcludeFromDisplay_activityInstancesAreNotReturned() {
         TransactionWrapper.useTxn(handle -> assertEquals(1, handle.attach(JdbiActivity.class)
                 .updateExcludeFromDisplayById(prequal.getActivityId(), true)));
+        ActivityDefStore.getInstance().clear();
 
         String body = given().auth().oauth2(token)
                 .when().get(url)
@@ -337,6 +344,7 @@ public class UserActivityInstanceListRouteTest extends IntegrationTestSuite.Test
         } finally {
             TransactionWrapper.useTxn(handle -> assertEquals(1, handle.attach(JdbiActivity.class)
                     .updateExcludeFromDisplayById(prequal.getActivityId(), false)));
+            ActivityDefStore.getInstance().clear();
         }
     }
 

@@ -103,7 +103,7 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite.TestCase {
+public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite.TestCaseWithCacheEnabled {
 
     public static final String TEXT_QUESTION_STABLE_ID = "TEXT_Q";
     private static TestDataSetupUtil.GeneratedTestData testData;

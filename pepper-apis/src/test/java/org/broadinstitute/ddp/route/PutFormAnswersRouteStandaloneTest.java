@@ -91,8 +91,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import spark.HaltException;
 
-
-public class PutFormAnswersRouteStandaloneTest {
+public class PutFormAnswersRouteStandaloneTest extends IntegrationTestSuite.TestCaseWithCacheEnabled {
 
     private static ActivityVersionDto activityVersionDto;
     private static TestDataSetupUtil.GeneratedTestData testData;
@@ -110,10 +109,8 @@ public class PutFormAnswersRouteStandaloneTest {
     //allow tests to add something unique to cleanup
     private List<Consumer<Handle>> testCleanupTasks = new ArrayList<>();
 
-
     @BeforeClass
     public static void setup() {
-        IntegrationTestSuite.setup(false);
         TransactionWrapper.useTxn(handle -> {
             testData = TestDataSetupUtil.generateBasicUserTestData(handle);
             user = testData.getTestingUser();

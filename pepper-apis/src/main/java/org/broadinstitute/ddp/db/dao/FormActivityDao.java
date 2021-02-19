@@ -201,6 +201,7 @@ public interface FormActivityDao extends SqlObject {
         builder.addTitles(titles);
         builder.addSubtitles(subtitles);
         builder.addDescriptions(descriptions);
+        builder.addSummaries(getActivityI18nDao().findSummariesByActivityId(activityDto.getActivityId()));
 
         List<Long> orderedSectionIds = getJdbiFormActivityFormSection()
                 .findOrderedSectionIdsByActivityIdAndTimestamp(activityDto.getActivityId(), revisionStart);

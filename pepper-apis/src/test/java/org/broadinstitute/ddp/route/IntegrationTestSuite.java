@@ -97,10 +97,8 @@ import org.slf4j.LoggerFactory;
         PatchMedicalProviderRouteTest.class,
         PostMedicalProviderRouteTest.class,
         ProfileRouteTest.class,
-        PutFormAnswersRouteStandaloneTest.class,
         JoinMailingListRouteTest.class,
         AdminUpdateInvitationDetailsRouteTest.class,
-        UserActivityInstanceListRouteTest.class,
         UserAuthCheckFilterTest.class,
         UserRegistrationRouteTest.class,
         DsmAuthFilterTest.class,
@@ -373,7 +371,6 @@ public class IntegrationTestSuite {
         public static void doSuiteTearDown() {
             IntegrationTestSuite.tearDown();
         }
-
     }
 
     /**
