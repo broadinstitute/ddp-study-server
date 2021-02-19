@@ -12,6 +12,7 @@ import com.google.api.core.ApiFutures;
 import com.google.api.gax.rpc.ApiException;
 import com.google.cloud.pubsub.v1.Publisher;
 import com.google.common.util.concurrent.MoreExecutors;
+import com.google.protobuf.ByteString;
 import com.google.pubsub.v1.PubsubMessage;
 import org.slf4j.Logger;
 
@@ -25,7 +26,6 @@ public class PubSubTaskResultSender implements ResultSender {
     private static final Logger LOG = getLogger(PubSubTaskResultSender.class);
 
     private final Publisher publisher;
-    private final PubSubTaskResultMessageCreator messageCreator = new PubSubTaskResultMessageCreator();
 
     public PubSubTaskResultSender(Publisher publisher) {
         this.publisher = publisher;
@@ -34,7 +34,7 @@ public class PubSubTaskResultSender implements ResultSender {
     @Override
     public void sendPubSubTaskResult(PubSubTaskResult pubSubTaskResult) {
 
-        PubsubMessage pubSubMessage = messageCreator.createPubSubMessage(pubSubTaskResult);
+        PubsubMessage pubSubMessage = createPubSubMessage(pubSubTaskResult);
 
         LOG.info(format(infoMsg("Publish PubSubTaskResult message to topic=%s: result={%s}, pubSubTask={%s}"),
                 publisher.getTopicName(), pubSubTaskResult, pubSubTaskResult.getPubSubTask()));
@@ -67,5 +67,14 @@ public class PubSubTaskResultSender implements ResultSender {
                 },
                 MoreExecutors.directExecutor()
         );
+    }
+
+    public static PubsubMessage createPubSubMessage(PubSubTaskResult pubSubTaskResult) {
+        var messageBuilder = PubsubMessage.newBuilder();
+        if (pubSubTaskResult.getJsonPayload() != null) {
+            messageBuilder.setData(ByteString.copyFromUtf8(pubSubTaskResult.getJsonPayload()));
+        }
+        messageBuilder.putAllAttributes(pubSubTaskResult.getAttributes());
+        return messageBuilder.build();
     }
 }

@@ -18,6 +18,7 @@ import static org.broadinstitute.ddp.event.pubsubtask.PubSubTaskTestUtil.buildMe
 import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskResult.ATTR_TASK_MESSAGE_ID;
 import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskResult.PubSubTaskResultType.ERROR;
 import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskResult.PubSubTaskResultType.SUCCESS;
+import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskResultSender.createPubSubMessage;
 import static org.broadinstitute.ddp.event.pubsubtask.impl.updateprofile.UpdateProfileConstants.ATTR_PARTICIPANT_GUID;
 import static org.broadinstitute.ddp.event.pubsubtask.impl.updateprofile.UpdateProfileConstants.ATTR_STUDY_GUID;
 import static org.broadinstitute.ddp.event.pubsubtask.impl.updateprofile.UpdateProfileConstants.ATTR_USER_ID;
@@ -41,7 +42,6 @@ public class PubSubTaskCustomMessageTest {
             ProjectSubscriptionName.of(PROJECT_ID, PUBSUB_SUBSCRIPTION);
     private PubSubTaskProcessorFactory testFactory;
     private PubSubTaskReceiver pubSubTaskReceiver;
-    private PubSubTaskResultMessageCreator resultMessageCreator;
     private PubSubTaskTestUtil.TestResultSender testResultSender;
 
     private final Gson gson = GsonUtil.standardGson();
@@ -73,14 +73,14 @@ public class PubSubTaskCustomMessageTest {
         assertEquals(TEST_EDUCATION, payload.get(EDUCATION));
         assertEquals(TEST_MARITAL_STATUS, payload.get(MARITAL_STATUS));
 
-        PubSubTaskResult result = new PubSubTaskResult(SUCCESS, null, pubSubTask);
-        PubsubMessage resultMessage = resultMessageCreator.createPubSubMessage(result);
+        PubSubTaskResult pubSubTaskResult = new PubSubTaskResult(SUCCESS, null, pubSubTask);
+        PubsubMessage resultMessage = createPubSubMessage(pubSubTaskResult);
 
         assertEquals(TEST_MESSAGE_ID, resultMessage.getAttributesOrDefault(ATTR_TASK_MESSAGE_ID, null));
         assertEquals(TEST_PARTICIPANT_GUID, resultMessage.getAttributesOrDefault(ATTR_PARTICIPANT_GUID, null));
         assertEquals(TEST_USER_ID, resultMessage.getAttributesOrDefault(ATTR_USER_ID, null));
         assertEquals(TEST_STUDY_GUID, resultMessage.getAttributesOrDefault(ATTR_STUDY_GUID, null));
-        assertEquals("{\"resultType\":\"SUCCESS\",\"errorMessage\":null}", resultMessage.getData().toStringUtf8());
+        assertEquals("{\"resultType\":\"SUCCESS\"}", resultMessage.getData().toStringUtf8());
     }
 
     /**
@@ -100,9 +100,9 @@ public class PubSubTaskCustomMessageTest {
         assertEquals(TEST_USER_ID, pubSubTask.getAttributes().get(ATTR_USER_ID));
         assertEquals(TEST_STUDY_GUID, pubSubTask.getAttributes().get(ATTR_STUDY_GUID));
 
-        PubSubTaskResult result = new PubSubTaskResult(ERROR, "Custom error occured", pubSubTask);
-        PubsubMessage resultMessage = resultMessageCreator.createPubSubMessage(result);
-        assertEquals("{\"resultType\":\"ERROR\",\"errorMessage\":\"Custom error occured\"}",
+        PubSubTaskResult pubSubTaskResult = new PubSubTaskResult(ERROR, "Custom error occured", pubSubTask);
+        PubsubMessage resultMessage = createPubSubMessage(pubSubTaskResult);
+        assertEquals("{\"errorMessage\":\"Custom error occured\",\"resultType\":\"ERROR\"}",
                 resultMessage.getData().toStringUtf8());
     }
 
@@ -110,7 +110,6 @@ public class PubSubTaskCustomMessageTest {
         testFactory = new TestFactory();
         testResultSender = new PubSubTaskTestUtil.TestResultSender();
         pubSubTaskReceiver = new PubSubTaskReceiver(projectSubscriptionName, testFactory, testResultSender);
-        resultMessageCreator = new PubSubTaskResultMessageCreator();
     }
 
     class TestProcessor1 extends PubSubTaskProcessorAbstract {
@@ -120,6 +119,10 @@ public class PubSubTaskCustomMessageTest {
         @Override
         protected void handleTask(PubSubTask pubSubTask) {
         }
+
+        @Override
+        protected void addCustomDataToResult(PubSubTask pubSubTask, PubSubTaskResult pubSubTaskResult) {
+        }
     }
 
     class TestProcessor2 extends PubSubTaskProcessorAbstract {
@@ -128,6 +131,10 @@ public class PubSubTaskCustomMessageTest {
 
         @Override
         protected void handleTask(PubSubTask pubSubTask) {
+        }
+
+        @Override
+        protected void addCustomDataToResult(PubSubTask pubSubTask, PubSubTaskResult pubSubTaskResult) {
         }
     }
 
