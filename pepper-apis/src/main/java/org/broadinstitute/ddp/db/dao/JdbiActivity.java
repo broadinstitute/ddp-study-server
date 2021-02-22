@@ -28,12 +28,12 @@ public interface JdbiActivity extends SqlObject {
             + " (activity_type_id,study_id,study_activity_code,max_instances_per_user,display_order,"
             + "is_write_once, instantiate_upon_registration,edit_timeout_sec,allow_ondemand_trigger,"
             + "exclude_from_display, exclude_status_icon_from_display, allow_unauthenticated, "
-            + "is_followup, hide_existing_instances_on_creation, create_on_parent_creation)"
+            + "is_followup, hide_existing_instances_on_creation, create_on_parent_creation, can_delete_instances)"
             + " values((select activity_type_id from activity_type where activity_type_code = :activityType),"
             + ":studyId,:activityCode,"
             + ":maxInstancesPerUser,:displayOrder,:writeOnce,0,:editTimeoutSec,:allowOndemandTrigger,"
             + ":excludeFromDisplay, :excludeStatusIconFromDisplay, :allowUnauthenticated, :isFollowup, :hideExistingInstancesOnCreation,"
-            + ":createOnParentCreation)")
+            + ":createOnParentCreation, :canDeleteInstances)")
     @GetGeneratedKeys()
     long insertActivity(
             @Bind("activityType") ActivityType activityType,
@@ -49,7 +49,8 @@ public interface JdbiActivity extends SqlObject {
             @Bind("allowUnauthenticated") boolean allowUnauthenticated,
             @Bind("isFollowup") boolean isFollowup,
             @Bind("hideExistingInstancesOnCreation") boolean hideExistingInstancesOnCreation,
-            @Bind("createOnParentCreation") boolean createOnParentCreation
+            @Bind("createOnParentCreation") boolean createOnParentCreation,
+            @Bind("canDeleteInstances") boolean canDeleteInstances
     );
 
     @SqlUpdate("update study_activity"
