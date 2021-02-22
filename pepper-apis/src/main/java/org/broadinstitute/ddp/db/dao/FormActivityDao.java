@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.apache.commons.collections4.ListUtils;
 import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.DaoException;
 import org.broadinstitute.ddp.db.dto.ActivityDto;
@@ -22,8 +23,12 @@ import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
 import org.broadinstitute.ddp.model.activity.types.FormType;
 import org.jdbi.v3.sqlobject.CreateSqlObject;
 import org.jdbi.v3.sqlobject.SqlObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public interface FormActivityDao extends SqlObject {
+
+    Logger LOG = LoggerFactory.getLogger(FormActivityDao.class);
 
     @CreateSqlObject
     JdbiUmbrellaStudy getJdbiUmbrellaStudy();
@@ -52,24 +57,72 @@ public interface FormActivityDao extends SqlObject {
     @CreateSqlObject
     TemplateDao getTemplateDao();
 
+
+    // Convenience helper for inserting activity without any nested activities.
+    default void insertActivity(FormActivityDef activity, long revisionId) {
+        insertActivity(activity, List.of(), revisionId);
+    }
+
     /**
-     * Create new form activity by inserting all related data for activity definition. Use this to create the first version of an activity.
+     * Create new top-level activity by inserting all related data for activity definition. Use this to create the first
+     * version of an activity. Any child activities that the activity references (such as in a "nested activity block")
+     * need to be passed in the list of nested activity definitions.
      *
      * <p>See {@link ActivityDao#insertActivity(FormActivityDef, RevisionMetadata)} for a more convenient way for
-     * inserting, and {@link ConsentActivityDao#insertActivity(ConsentActivityDef, long)} specifically for consent activities. Changing
-     * content should be done with the appropriate add/disable methods.
+     * inserting, and {@link ConsentActivityDao#insertActivity(ConsentActivityDef, long)} specifically for consent
+     * activities. Changing content should be done with the appropriate add/disable methods.
      *
-     * @param activity   the activity to create, without generated things like ids
-     * @param revisionId the revision to use, will be shared for all created data
+     * @param activity         the activity to create, without generated things like ids
+     * @param nestedActivities the list of nested activities to created, that the activity references.
+     * @param revisionId       the revision to use, will be shared for all created data
      */
-    default void insertActivity(FormActivityDef activity, long revisionId) {
+    default void insertActivity(FormActivityDef activity, List<FormActivityDef> nestedActivities, long revisionId) {
         if (activity.getActivityId() != null) {
             throw new IllegalStateException("Activity id already set to " + activity.getActivityId());
         }
         if (!DBUtils.matchesCodePattern(activity.getActivityCode())) {
             throw new IllegalStateException("Requires non-null activity code that follows accepted naming pattern");
         }
+        if (activity.getParentActivityCode() != null) {
+            throw new IllegalArgumentException("Nested activity must be created alongside their parent activity");
+        }
+        if (activity.isCreateOnParentCreation()) {
+            throw new IllegalArgumentException("createOnParentCreation can only be set on nested child activities");
+        }
 
+        nestedActivities = ListUtils.defaultIfNull(nestedActivities, List.of());
+        for (var nested : nestedActivities) {
+            if (!activity.getActivityCode().equals(nested.getParentActivityCode())) {
+                throw new IllegalArgumentException("Nested activity " + nested.getActivityCode()
+                        + " is not defined to have activity " + activity.getActivityCode() + " as parent");
+            } else if (nested.getFormType() != FormType.GENERAL) {
+                throw new IllegalArgumentException("Currently only general form types are allowed to be nested activities");
+            }
+        }
+
+        // First create nested activities, then establish parent-child link at the end after parent has been created.
+        for (var nested : nestedActivities) {
+            insertSingleActivity(nested, revisionId);
+            LOG.info("Inserted nested activity {} with id {} for parent activity {}",
+                    nested.getActivityCode(), nested.getActivityId(), activity.getActivityCode());
+        }
+        insertSingleActivity(activity, revisionId);
+        var jdbiActivity = getJdbiActivity();
+        for (var nested : nestedActivities) {
+            DBUtils.checkUpdate(1, jdbiActivity.updateParentActivityId(nested.getActivityId(), activity.getActivityId()));
+        }
+    }
+
+    /**
+     * Create the full activity from its definition. If activity has nested activity blocks that references child
+     * activities, those child activities are expected to be already created. If we're creating a nested activity, this
+     * does not handle creating the link between this activity and its parent activity -- the caller is expected to
+     * establish that connection.
+     *
+     * @param activity   the activity to create
+     * @param revisionId the revision id
+     */
+    private void insertSingleActivity(FormActivityDef activity, long revisionId) {
         JdbiActivity jdbiActivity = getJdbiActivity();
         JdbiActivityVersion jdbiVersion = getJdbiActivityVersion();
         ActivityI18nDao activityI18nDao = getActivityI18nDao();
@@ -82,7 +135,8 @@ public interface FormActivityDao extends SqlObject {
         long activityId = jdbiActivity.insertActivity(activityTypeId, studyId, activity.getActivityCode(),
                 activity.getMaxInstancesPerUser(), activity.getDisplayOrder(), activity.isWriteOnce(), activity.getEditTimeoutSec(),
                 activity.isOndemandTriggerAllowed(), activity.isExcludeFromDisplay(), activity.isExcludeStatusIconFromDisplay(),
-                activity.isAllowUnauthenticated(), activity.isFollowup(), activity.isHideInstances());
+                activity.isAllowUnauthenticated(), activity.isFollowup(), activity.isHideInstances(),
+                activity.isCreateOnParentCreation());
         activity.setActivityId(activityId);
 
         long versionId = jdbiVersion.insert(activity.getActivityId(), activity.getVersionTag(), revisionId);
@@ -173,6 +227,7 @@ public interface FormActivityDao extends SqlObject {
                 .setExcludeFromDisplay(activityDto.shouldExcludeFromDisplay())
                 .setExcludeStatusIconFromDisplay(activityDto.shouldExcludeStatusIconFromDisplay())
                 .setHideInstances(activityDto.isHideExistingInstancesOnCreation())
+                .setCreateOnParentCreation(activityDto.isCreateOnParentCreation())
                 .setIsFollowup(activityDto.isFollowup());
 
         List<Translation> names = new ArrayList<>();

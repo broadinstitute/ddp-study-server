@@ -300,7 +300,7 @@ public class GetDsmTriggeredInstancesRouteTest extends DsmRouteTest {
         ActivityInstanceDto instanceDto = handle.attach(ActivityInstanceDao.class)
                 .insertInstance(activity.getActivityId(),
                         generatedTestData.getUserGuid(), generatedTestData.getUserGuid(),
-                        status, false, createdAtMillis, triggerId);
+                        status, false, createdAtMillis, triggerId, null);
         assertNotNull(instanceDto);
         assertNotNull(instanceDto.getGuid());
         instanceGuidsToDelete.add(instanceDto.getGuid());

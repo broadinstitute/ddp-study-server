@@ -135,8 +135,10 @@ public class PatchFormAnswersRouteStandaloneTest {
     private static String urlTemplate;
     private static String url;
 
+    private static FormActivityDef parentActivity;
     private static FormActivityDef activity;
     private static ActivityVersionDto activityVersionDto;
+    private static ActivityInstanceDto parentInstanceDto;
     private static ActivityInstanceDto instanceDto;
     private static String instanceGuid;
     private static String boolStableId;
@@ -186,6 +188,7 @@ public class PatchFormAnswersRouteStandaloneTest {
         TransactionWrapper.useTxn(handle -> {
             var fileDao = handle.attach(FileUploadDao.class);
             fileDao.deleteByIds(Set.of(upload1.getId(), upload2.getId()));
+            handle.attach(ActivityInstanceDao.class).deleteByInstanceGuid(parentInstanceDto.getGuid());
         });
         IntegrationTestSuite.tearDown();
     }
@@ -330,9 +333,15 @@ public class PatchFormAnswersRouteStandaloneTest {
         fileQuestion = FileQuestionDef.builder("FILE" + timestamp, Template.text("file")).build();
         var fileSection = new FormSectionDef(null, TestUtil.wrapQuestions(fileQuestion));
 
+        String parentActCode = "PATCH_ANS_PARENT_" + timestamp;
+        parentActivity = FormActivityDef.generalFormBuilder(parentActCode, "v1", testData.getStudyGuid())
+                .addName(new Translation("en", "parent activity " + parentActCode))
+                .build();
+
         String code = "PATCH_ANS_ACT_" + timestamp;
         activity = FormActivityDef.generalFormBuilder(code, "v1", testData.getStudyGuid())
                 .addName(new Translation("en", "activity " + code))
+                .setParentActivityCode(parentActCode)
                 .addSections(
                         Arrays.asList(
                                 boolSection, textSection, textSection2, textSection3, plistSection,
@@ -341,9 +350,11 @@ public class PatchFormAnswersRouteStandaloneTest {
                         )
                 )
                 .build();
-        activityVersionDto = handle.attach(ActivityDao.class).insertActivity(activity, RevisionMetadata.now(testData.getUserId(),
-                "add " + code));
-        assertNotNull(activity.getActivityId());
+        activityVersionDto = handle.attach(ActivityDao.class)
+                .insertActivity(parentActivity, List.of(activity),
+                        RevisionMetadata.now(testData.getUserId(), "add " + code));
+        parentInstanceDto = handle.attach(ActivityInstanceDao.class)
+                .insertInstance(parentActivity.getActivityId(), userGuid);
 
         long userId = testData.getUserId();
         long studyId = testData.getStudyId();
@@ -380,7 +391,7 @@ public class PatchFormAnswersRouteStandaloneTest {
     public void refresh() {
         TransactionWrapper.useTxn(handle -> {
             instanceDto = handle.attach(ActivityInstanceDao.class)
-                    .insertInstance(activity.getActivityId(), userGuid);
+                    .insertInstance(activity.getActivityId(), userGuid, userGuid, parentInstanceDto.getId());
             instanceGuid = instanceDto.getGuid();
             url = urlTemplate.replace("{instanceGuid}", instanceGuid);
         });

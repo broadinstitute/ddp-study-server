@@ -11,6 +11,10 @@ public class ActivityInstanceSummaryDto {
     private long studyId;
     private long activityId;
     private String activityCode;
+    private Long parentInstanceId;
+    private String parentInstanceGuid;
+    private Long parentActivityId;
+    private String parentActivityCode;
     private long participantId;
     private long createdAtMillis;
     private Boolean isReadonly;
@@ -24,6 +28,10 @@ public class ActivityInstanceSummaryDto {
             @ColumnName("study_id") long studyId,
             @ColumnName("study_activity_id") long activityId,
             @ColumnName("study_activity_code") String activityCode,
+            @ColumnName("parent_instance_id") Long parentInstanceId,
+            @ColumnName("parent_instance_guid") String parentInstanceGuid,
+            @ColumnName("parent_activity_id") Long parentActivityId,
+            @ColumnName("parent_activity_code") String parentActivityCode,
             @ColumnName("participant_id") long participantId,
             @ColumnName("created_at") long createdAtMillis,
             @ColumnName("is_readonly") Boolean isReadonly,
@@ -34,6 +42,10 @@ public class ActivityInstanceSummaryDto {
         this.studyId = studyId;
         this.activityId = activityId;
         this.activityCode = activityCode;
+        this.parentInstanceId = parentInstanceId;
+        this.parentInstanceGuid = parentInstanceGuid;
+        this.parentActivityId = parentActivityId;
+        this.parentActivityCode = parentActivityCode;
         this.participantId = participantId;
         this.createdAtMillis = createdAtMillis;
         this.isReadonly = isReadonly;
@@ -59,6 +71,22 @@ public class ActivityInstanceSummaryDto {
 
     public String getActivityCode() {
         return activityCode;
+    }
+
+    public Long getParentInstanceId() {
+        return parentInstanceId;
+    }
+
+    public String getParentInstanceGuid() {
+        return parentInstanceGuid;
+    }
+
+    public Long getParentActivityId() {
+        return parentActivityId;
+    }
+
+    public String getParentActivityCode() {
+        return parentActivityCode;
     }
 
     public long getParticipantId() {

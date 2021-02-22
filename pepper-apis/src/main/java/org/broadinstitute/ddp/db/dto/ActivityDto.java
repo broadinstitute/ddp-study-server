@@ -10,6 +10,8 @@ public class ActivityDto {
     private final long activityId;
     private final long activityTypeId;
     private final long studyId;
+    private final Long parentActivityId;
+    private final String parentActivityCode;
     private final int displayOrder;
     private final boolean writeOnce;
     private final boolean instantiateUponRegistration;
@@ -21,6 +23,7 @@ public class ActivityDto {
     private final boolean isFollowup;
     private final boolean excludeStatusIconFromDisplay;
     private final boolean hideExistingInstancesOnCreation;
+    private final boolean createOnParentCreation;
     private String activityCode;
 
     @JdbiConstructor
@@ -29,6 +32,8 @@ public class ActivityDto {
             @ColumnName("activity_type_id") long activityTypeId,
             @ColumnName("study_id") long studyId,
             @ColumnName("study_activity_code") String activityCode,
+            @ColumnName("parent_activity_id") Long parentActivityId,
+            @ColumnName("parent_activity_code") String parentActivityCode,
             @ColumnName("display_order") int displayOrder,
             @ColumnName("is_write_once") boolean writeOnce,
             @ColumnName("instantiate_upon_registration") boolean instantiateUponRegistration,
@@ -39,12 +44,15 @@ public class ActivityDto {
             @ColumnName("allow_unauthenticated") boolean allowUnauthenticated,
             @ColumnName("is_followup") boolean isFollowup,
             @ColumnName("exclude_status_icon_from_display") boolean excludeStatusIconFromDisplay,
-            @ColumnName("hide_existing_instances_on_creation") boolean hideExistingInstancesOnCreation
+            @ColumnName("hide_existing_instances_on_creation") boolean hideExistingInstancesOnCreation,
+            @ColumnName("create_on_parent_creation") boolean createOnParentCreation
     ) {
         this.activityId = activityId;
         this.activityTypeId = activityTypeId;
         this.studyId = studyId;
         this.activityCode = activityCode;
+        this.parentActivityId = parentActivityId;
+        this.parentActivityCode = parentActivityCode;
         this.displayOrder = displayOrder;
         this.writeOnce = writeOnce;
         this.instantiateUponRegistration = instantiateUponRegistration;
@@ -56,6 +64,7 @@ public class ActivityDto {
         this.isFollowup = isFollowup;
         this.excludeStatusIconFromDisplay = excludeStatusIconFromDisplay;
         this.hideExistingInstancesOnCreation = hideExistingInstancesOnCreation;
+        this.createOnParentCreation = createOnParentCreation;
     }
 
     public long getActivityId() {
@@ -76,6 +85,14 @@ public class ActivityDto {
 
     public void setActivityCode(String activityCode) {
         this.activityCode = activityCode;
+    }
+
+    public Long getParentActivityId() {
+        return parentActivityId;
+    }
+
+    public String getParentActivityCode() {
+        return parentActivityCode;
     }
 
     public int getDisplayOrder() {
@@ -122,6 +139,10 @@ public class ActivityDto {
         return hideExistingInstancesOnCreation;
     }
 
+    public boolean isCreateOnParentCreation() {
+        return createOnParentCreation;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {
@@ -135,6 +156,8 @@ public class ActivityDto {
                 && activityTypeId == that.activityTypeId
                 && studyId == that.studyId
                 && Objects.equals(activityCode, that.activityCode)
+                && Objects.equals(parentActivityId, that.parentActivityId)
+                && Objects.equals(parentActivityCode, that.parentActivityCode)
                 && displayOrder == that.displayOrder
                 && writeOnce == that.writeOnce
                 && instantiateUponRegistration == that.instantiateUponRegistration
@@ -145,7 +168,8 @@ public class ActivityDto {
                 && allowUnauthenticated == that.allowUnauthenticated
                 && isFollowup == that.isFollowup
                 && excludeStatusIconFromDisplay == that.excludeStatusIconFromDisplay
-                && hideExistingInstancesOnCreation == that.hideExistingInstancesOnCreation;
+                && hideExistingInstancesOnCreation == that.hideExistingInstancesOnCreation
+                && createOnParentCreation == that.createOnParentCreation;
     }
 
     @Override
@@ -155,6 +179,8 @@ public class ActivityDto {
                 activityTypeId,
                 studyId,
                 activityCode,
+                parentActivityId,
+                parentActivityCode,
                 displayOrder,
                 writeOnce,
                 instantiateUponRegistration,
@@ -165,6 +191,7 @@ public class ActivityDto {
                 allowUnauthenticated,
                 isFollowup,
                 excludeStatusIconFromDisplay,
-                hideExistingInstancesOnCreation);
+                hideExistingInstancesOnCreation,
+                createOnParentCreation);
     }
 }

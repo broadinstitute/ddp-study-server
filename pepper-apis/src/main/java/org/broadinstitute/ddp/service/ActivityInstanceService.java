@@ -115,7 +115,7 @@ public class ActivityInstanceService {
 
     /**
      * Find list of activity instance summaries for user and study. List will be sorted by activity display order
-     * (ascending) and instance creation time (descending).
+     * (ascending) and instance creation time (descending). Child nested activity instances will not be returned.
      *
      * <p>The instance summaries will be translated to the user's preferred language, or falls back to study's default
      * language if preferred language is not available. If study doesn't have a default language, English will be used
@@ -128,7 +128,7 @@ public class ActivityInstanceService {
      * @param userGuid          GUID of the user to get activity instance summaries for
      * @param studyGuid         GUID of the study to get activity instance summaries for
      * @param preferredLangCode The desired translation language
-     * @return Sorted list of activity instance summaries for the user/study
+     * @return Sorted list of top-level activity instance summaries for the user/study
      */
     public List<ActivityInstanceSummary> listTranslatedInstanceSummaries(Handle handle,
                                                                          String userGuid,
@@ -136,7 +136,7 @@ public class ActivityInstanceService {
                                                                          String preferredLangCode) {
         List<ActivityInstanceSummaryDto> summaryDtos = handle
                 .attach(org.broadinstitute.ddp.db.dao.ActivityInstanceDao.class)
-                .findAllSortedInstanceSummaries(userGuid, studyGuid);
+                .findNonNestedSortedInstanceSummaries(userGuid, studyGuid);
         if (summaryDtos.isEmpty()) {
             return new ArrayList<>();
         }

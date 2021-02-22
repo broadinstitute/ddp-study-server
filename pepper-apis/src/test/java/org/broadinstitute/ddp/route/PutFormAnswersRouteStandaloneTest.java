@@ -96,6 +96,7 @@ public class PutFormAnswersRouteStandaloneTest extends IntegrationTestSuite.Test
     private static ActivityVersionDto activityVersionDto;
     private static TestDataSetupUtil.GeneratedTestData testData;
     private static Auth0Util.TestingUser user;
+    private static FormActivityDef parentForm;
     private static FormActivityDef form;
     private static ConditionalBlockDef conditionalBlock;
     private static long studyId;
@@ -103,6 +104,7 @@ public class PutFormAnswersRouteStandaloneTest extends IntegrationTestSuite.Test
     private static String token;
     private static String urlTemplate;
     private static FormActivityDef compositeQuestionForm;
+    private static ActivityInstanceDto parentInstanceDto;
 
     private List<String> instanceGuidsToDelete = new ArrayList<>();
     private List<Long> transitionIdsToDelete = new ArrayList<>();
@@ -152,15 +154,24 @@ public class PutFormAnswersRouteStandaloneTest extends IntegrationTestSuite.Test
                 .addValidation(new LengthRuleDef(null, 0, 1000))
                 .addValidation(allowSaveTrueLengthRuleDef)
                 .build();
+
+        String parentActCode = "PUT_STATUS_PARENT" + Instant.now().toEpochMilli();
+        parentForm = FormActivityDef.generalFormBuilder(parentActCode, "v1", studyGuid)
+                .addName(new Translation("en", "parent test activity"))
+                .build();
+
         String code = "PUT_STATUS_ACT" + Instant.now().toEpochMilli();
         FormActivityDef form = FormActivityDef.generalFormBuilder(code, "v1", studyGuid)
                 .addName(new Translation("en", "test activity"))
+                .setParentActivityCode(parentActCode)
                 .addSubtitle(new Translation("en", "subtitle of activity"))
                 .addSection(new FormSectionDef(null, TestUtil.wrapQuestions(question)))
                 .addSection(new FormSectionDef(null, Collections.singletonList(conditionalBlock)))
                 .setSnapshotSubstitutionsOnSubmit(true)
                 .build();
-        handle.attach(ActivityDao.class).insertActivity(form, RevisionMetadata.now(userId, "test"));
+        handle.attach(ActivityDao.class).insertActivity(parentForm, List.of(form), RevisionMetadata.now(userId, "test"));
+        parentInstanceDto = handle.attach(ActivityInstanceDao.class)
+                .insertInstance(parentForm.getActivityId(), user.getUserGuid());
         return form;
     }
 
@@ -854,7 +865,7 @@ public class PutFormAnswersRouteStandaloneTest extends IntegrationTestSuite.Test
 
     private ActivityInstanceDto insertNewInstanceAndDeferCleanup(Handle handle, long activityId) {
         ActivityInstanceDto dto = handle.attach(ActivityInstanceDao.class)
-                .insertInstance(activityId, user.getUserGuid());
+                .insertInstance(activityId, user.getUserGuid(), user.getUserGuid(), parentInstanceDto.getId());
         instanceGuidsToDelete.add(dto.getGuid());
         return dto;
     }

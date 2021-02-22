@@ -118,7 +118,7 @@ public class AngioMigratePrequal implements CustomTask {
 
         Instant timestamp = ConfigUtil.getInstantIfPresent(cfg, "activityTimestamp");
         Config definition = activityBuilder.readDefinitionConfig(dataCfg.getString("prequalActivityFilepath"));
-        activityBuilder.insertActivity(handle, definition, timestamp);
+        activityBuilder.insertActivity(handle, definition, List.of(), timestamp);
     }
 
     private void addPrequalWorkflowTransitions(Handle handle, StudyDto studyDto) {
@@ -212,7 +212,7 @@ public class AngioMigratePrequal implements CustomTask {
 
             // Safe to use higher-level DAO since there should not be any side-effects with creation of prequal instance.
             ActivityInstanceDto instance = instanceDao.insertInstance(prequalActId, adminUser.getUserGuid(), user.userGuid,
-                    InstanceStatusType.CREATED, null, now);
+                    InstanceStatusType.CREATED, null, now, null);
 
             TextAnswer firstNameAnswer = new TextAnswer(null, Q_FIRST_NAME, null, user.firstName);
             answerDao.createAnswer(user.userId, instance.getId(), firstNameAnswer);

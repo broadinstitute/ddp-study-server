@@ -231,7 +231,7 @@ public class DsmTriggerOnDemandActivityRouteTest extends DsmRouteTest {
     private ActivityInstanceDto insertInstanceAndDeferCleanup(Handle handle, Long triggerId) {
         long nowMillis = Instant.now().toEpochMilli();
         ActivityInstanceDto instanceDto = handle.attach(ActivityInstanceDao.class)
-                .insertInstance(activity.getActivityId(), userGuid, userGuid, CREATED, false, nowMillis, triggerId);
+                .insertInstance(activity.getActivityId(), userGuid, userGuid, CREATED, false, nowMillis, triggerId, null);
         assertNotNull(instanceDto);
         assertNotNull(instanceDto.getGuid());
         instanceGuidsToDelete.add(instanceDto.getGuid());

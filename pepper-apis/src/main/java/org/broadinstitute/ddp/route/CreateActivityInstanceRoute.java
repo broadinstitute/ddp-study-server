@@ -12,7 +12,6 @@ import org.broadinstitute.ddp.db.dto.ActivityInstanceCreationValidation;
 import org.broadinstitute.ddp.json.ActivityInstanceCreationPayload;
 import org.broadinstitute.ddp.json.ActivityInstanceCreationResponse;
 import org.broadinstitute.ddp.json.errors.ApiError;
-import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.broadinstitute.ddp.util.ResponseUtil;
 import org.broadinstitute.ddp.util.RouteUtil;
 import org.broadinstitute.ddp.util.ValidatedJsonInputRoute;
@@ -68,8 +67,9 @@ public class CreateActivityInstanceRoute extends ValidatedJsonInputRoute<Activit
                 activityInstanceDao.bulkUpdateIsHiddenByActivityIds(participantId, true, Set.of(studyActivityId));
             }
 
+            Long parentInstanceId = null;
             String instanceGuid = activityInstanceDao
-                    .insertInstance(studyActivityId, operatorGuid, participantGuid, InstanceStatusType.CREATED, null)
+                    .insertInstance(studyActivityId, operatorGuid, participantGuid, parentInstanceId)
                     .getGuid();
             handle.attach(DataExportDao.class).queueDataSync(participantGuid, studyGuid);
             LOG.info("Created activity instance {} for activity {} and user {}",

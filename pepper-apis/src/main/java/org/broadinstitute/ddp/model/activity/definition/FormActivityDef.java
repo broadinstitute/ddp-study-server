@@ -80,6 +80,7 @@ public class FormActivityDef extends ActivityDef {
 
     public FormActivityDef(
             FormType formType,
+            String parentActivityCode,
             String activityCode,
             String versionTag,
             String studyGuid,
@@ -102,6 +103,7 @@ public class FormActivityDef extends ActivityDef {
     ) {
         super(
                 ActivityType.FORMS,
+                parentActivityCode,
                 activityCode,
                 versionTag,
                 studyGuid,
@@ -283,6 +285,7 @@ public class FormActivityDef extends ActivityDef {
         public FormActivityDef build() {
             FormActivityDef form = new FormActivityDef(
                     formType,
+                    parentActivityCode,
                     activityCode,
                     versionTag,
                     studyGuid,

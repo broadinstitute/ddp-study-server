@@ -200,7 +200,7 @@ public class ActivityInstanceDaoTest extends TxnAwareBaseTest {
 
     private String insertNewInstance(Handle handle, long activityId, String userGuid, long createdAt) {
         return handle.attach(org.broadinstitute.ddp.db.dao.ActivityInstanceDao.class)
-                .insertInstance(activityId, userGuid, userGuid, InstanceStatusType.CREATED, false, createdAt)
+                .insertInstance(activityId, userGuid, userGuid, InstanceStatusType.CREATED, false, createdAt, null)
                 .getGuid();
     }
 

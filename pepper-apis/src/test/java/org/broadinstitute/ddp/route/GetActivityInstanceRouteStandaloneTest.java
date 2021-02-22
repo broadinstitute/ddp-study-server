@@ -107,8 +107,10 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
 
     public static final String TEXT_QUESTION_STABLE_ID = "TEXT_Q";
     private static TestDataSetupUtil.GeneratedTestData testData;
+    private static FormActivityDef parentActivity;
     private static FormActivityDef activity;
     private static ActivityVersionDto activityVersionDto;
+    private static ActivityInstanceDto parentInstanceDto;
     private static ActivityInstanceDto instanceDto;
     private static String userGuid;
     private static String token;
@@ -242,20 +244,28 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
                 .build();
         var fileSection = new FormSectionDef(null, List.of(new QuestionBlockDef(file1)));
 
+        String parentActCode = "ACT_ROUTE_PARENT" + Instant.now().toEpochMilli();
+        parentActivity = FormActivityDef.generalFormBuilder(parentActCode, "v1", testData.getStudyGuid())
+                .addName(new Translation("en", "parent activity " + parentActCode))
+                .build();
         activityCode = "ACT_ROUTE_ACT" + Instant.now().toEpochMilli();
         activity = FormActivityDef.generalFormBuilder(activityCode, "v1", testData.getStudyGuid())
                 .addName(new Translation("en", "activity " + activityCode))
+                .setParentActivityCode(parentActCode)
                 .addSections(Arrays.asList(dateSection, textSection, plistSection, textSection2, agreementSection, contentSection))
                 .addSection(iconSection)
                 .addSection(compSection)
                 .addSection(fileSection)
                 .build();
         activityVersionDto = handle.attach(ActivityDao.class).insertActivity(
-                activity, RevisionMetadata.now(testData.getUserId(), "add " + activityCode)
+                parentActivity, List.of(activity), RevisionMetadata.now(testData.getUserId(), "add " + activityCode)
         );
         assertNotNull(activity.getActivityId());
         activityId = activity.getActivityId();
-        instanceDto = handle.attach(ActivityInstanceDao.class).insertInstance(activity.getActivityId(), userGuid);
+
+        ActivityInstanceDao instanceDao = handle.attach(ActivityInstanceDao.class);
+        parentInstanceDto = instanceDao.insertInstance(parentActivity.getActivityId(), userGuid);
+        instanceDto = instanceDao.insertInstance(activity.getActivityId(), userGuid, userGuid, parentInstanceDto.getId());
 
         AnswerDao answerDao = handle.attach(AnswerDao.class);
         answerDao.createAnswer(testData.getUserId(), instanceDto.getId(),
@@ -378,6 +388,15 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
                 handle.attach(JdbiActivity.class).updateAllowUnauthenticatedById(instanceDto.getActivityId(), false);
             });
         }
+    }
+
+    @Test
+    public void testGet_parentActivity() {
+        given().auth().oauth2(token)
+                .pathParam("instanceGuid", parentInstanceDto.getGuid())
+                .when().get(url).then().assertThat()
+                .statusCode(200).contentType(ContentType.JSON)
+                .body("activityCode", equalTo(parentActivity.getActivityCode()));
     }
 
     @Test
