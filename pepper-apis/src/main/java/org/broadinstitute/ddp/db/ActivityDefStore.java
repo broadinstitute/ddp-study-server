@@ -1,6 +1,7 @@
 package org.broadinstitute.ddp.db;
 
 import java.sql.Blob;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -190,6 +191,9 @@ public class ActivityDefStore {
                         children = ((ConditionalBlockDef) block).getNested();
                     } else if (block.getBlockType() == BlockType.GROUP) {
                         children = ((GroupBlockDef) block).getNested();
+                    } else if (block.getBlockType() == BlockType.ACTIVITY) {
+                        // Questions within the nested activity itself are not considered.
+                        children = new ArrayList<>();
                     } else {
                         throw new DDPException("Unhandled container block type " + block.getBlockType());
                     }
