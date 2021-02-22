@@ -13,6 +13,9 @@ public class ActivityInstanceSummary implements TranslatedSummary {
     @SerializedName("instanceGuid")
     private String activityInstanceGuid;
 
+    @SerializedName("parentInstanceGuid")
+    private String parentInstanceGuid;
+
     @SerializedName("activityName")
     private String activityName;
 
@@ -266,5 +269,13 @@ public class ActivityInstanceSummary implements TranslatedSummary {
 
     public void setPreviousInstanceGuid(String previousInstanceGuid) {
         this.previousInstanceGuid = previousInstanceGuid;
+    }
+
+    public String getParentInstanceGuid() {
+        return parentInstanceGuid;
+    }
+
+    public void setParentInstanceGuid(String parentInstanceGuid) {
+        this.parentInstanceGuid = parentInstanceGuid;
     }
 }

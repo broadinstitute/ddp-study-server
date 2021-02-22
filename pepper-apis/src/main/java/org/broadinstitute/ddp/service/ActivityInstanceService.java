@@ -363,6 +363,7 @@ public class ActivityInstanceService {
                     versionDto.getRevStart());
             summary.setInstanceNumber(summaryDto.getInstanceNumber());
             summary.setPreviousInstanceGuid(summaryDto.getPreviousInstanceGuid());
+            summary.setParentInstanceGuid(summaryDto.getParentInstanceGuid());
             summaries.add(summary);
         }
 

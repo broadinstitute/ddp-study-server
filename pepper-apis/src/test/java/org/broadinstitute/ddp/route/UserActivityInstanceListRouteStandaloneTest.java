@@ -4,6 +4,7 @@ import static io.restassured.RestAssured.given;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.time.Instant;
@@ -174,6 +175,7 @@ public class UserActivityInstanceListRouteStandaloneTest extends IntegrationTest
         boolean hasReadonlyActivities = false;
         assertEquals(userActivities.size(), 1);
         ActivityInstanceSummary userActivity = userActivities.get(0);
+        assertNull(userActivity.getParentInstanceGuid());
         assertEquals(userActivity.getNumQuestionsAnswered(), 1);
         assertEquals(userActivity.getNumQuestions(), 2);
         if (ActivityType.FORMS.name().equals(userActivity.getActivityType())) {
