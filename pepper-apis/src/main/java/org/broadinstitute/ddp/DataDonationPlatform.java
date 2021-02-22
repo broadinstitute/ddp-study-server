@@ -87,6 +87,7 @@ import org.broadinstitute.ddp.route.DsmTriggerOnDemandActivityRoute;
 import org.broadinstitute.ddp.route.ErrorRoute;
 import org.broadinstitute.ddp.route.GetActivityInstanceRoute;
 import org.broadinstitute.ddp.route.GetActivityInstanceStatusTypeListRoute;
+import org.broadinstitute.ddp.route.GetActivityInstanceSummaryRoute;
 import org.broadinstitute.ddp.route.GetCancerSuggestionsRoute;
 import org.broadinstitute.ddp.route.GetConsentSummariesRoute;
 import org.broadinstitute.ddp.route.GetConsentSummaryRoute;
@@ -467,6 +468,7 @@ public class DataDonationPlatform {
                 responseSerializer
         );
         patch(API.USER_ACTIVITIES_INSTANCE, new PatchActivityInstanceRoute(activityInstanceDao), responseSerializer);
+        get(API.USER_ACTIVITY_SUMMARY, new GetActivityInstanceSummaryRoute(actInstService), responseSerializer);
 
         // User activity answers routes
         FormActivityService formService = new FormActivityService(interpreter);

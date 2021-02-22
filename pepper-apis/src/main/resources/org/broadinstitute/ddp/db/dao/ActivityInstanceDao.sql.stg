@@ -120,3 +120,11 @@ findNestedSortedInstanceSummariesByUserStudyGuidsAndParentInstanceId() ::= <<
    and ai.parent_instance_id = :parentInstanceId
  order by act.display_order asc, ai.created_at asc
 >>
+
+findSortedInstanceSummariesByUserStudyActivityGuids() ::= <<
+<select_all_latest_instance_summaries()>
+ where u.guid = :userGuid
+   and s.guid = :studyGuid
+   and act.study_activity_code = :activityCode
+ order by ai.created_at asc
+>>

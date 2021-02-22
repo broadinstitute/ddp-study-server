@@ -58,8 +58,6 @@ public class UserActivityInstanceListRoute implements Route {
             List<ActivityInstanceSummary> summaries = service.listTranslatedInstanceSummaries(
                     handle, userGuid, studyGuid, preferredUserLanguage.getIsoCode()
             );
-            // IMPORTANT: do numbering before filtering so each instance is assigned their correct number.
-            service.performInstanceNumbering(summaries);
             if (!isStudyAdmin) {
                 // Study admins are allowed to view all the data, so if they're NOT admin then do filtering.
                 summaries = filterActivityInstancesFromDisplay(summaries);
