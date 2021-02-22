@@ -2,6 +2,11 @@ group ActivityInstanceDao;
 
 queryActivityInstanceCreationValidation() ::= <<
 select act.study_activity_id,
+       act.parent_activity_id,
+       (select study_activity_code
+          from study_activity
+         where study_activity_id = act.parent_activity_id
+       ) as parent_activity_code,
        act.hide_existing_instances_on_creation,
        act.max_instances_per_user,
        (select count(1)
