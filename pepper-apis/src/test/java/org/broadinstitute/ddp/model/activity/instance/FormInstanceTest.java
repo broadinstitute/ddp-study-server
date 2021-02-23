@@ -512,16 +512,16 @@ public class FormInstanceTest extends TxnAwareBaseTest {
     private FormInstance buildEmptyTestInstance(long participantUserId) {
         return new FormInstance(
                 participantUserId, 1L, 1L, "SOME_CODE", FormType.GENERAL, "SOME_GUID", "name", "subtitle", "CREATED", false,
-                ListStyleHint.NUMBER, null, null, null, Instant.now().toEpochMilli(), null, null, null, false,
-                false, false, 0
+                ListStyleHint.NUMBER, null, null, null, Instant.now().toEpochMilli(), null, null, null,
+                false, false, false, false, 0
         );
     }
 
     private FormInstance buildEmptyTestInstanceWithHtmlInTitleAndSubtitle() {
         return new FormInstance(
                 1L, 1L, 1L, "SOME_CODE", FormType.GENERAL, "SOME_GUID", "<div>title</div>", "<em>subtitle</em>", "CREATED", false,
-                ListStyleHint.NUMBER, null, null, null, Instant.now().toEpochMilli(), null, null, null, false,
-                false, false, 0
+                ListStyleHint.NUMBER, null, null, null, Instant.now().toEpochMilli(), null, null, null,
+                false, false, false, false, 0
         );
     }
 

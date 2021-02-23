@@ -55,6 +55,9 @@ public class ActivityInstanceSummary implements TranslatedSummary {
     @SerializedName("numQuestionsAnswered")
     private int numQuestionsAnswered;
 
+    @SerializedName("canDelete")
+    private boolean canDelete;
+
     @SerializedName("isFollowup")
     private boolean isFollowup;
 
@@ -96,6 +99,7 @@ public class ActivityInstanceSummary implements TranslatedSummary {
             boolean excludeFromDisplay,
             boolean isInstanceHidden,
             long createdAt,
+            boolean canDelete,
             boolean isFollowup,
             String versionTag,
             long versionId,
@@ -122,6 +126,7 @@ public class ActivityInstanceSummary implements TranslatedSummary {
         this.isInstanceHidden = isInstanceHidden;
         this.isHidden = isInstanceHidden || excludeFromDisplay;
         this.createdAt = createdAt;
+        this.canDelete = canDelete;
         this.isFollowup = isFollowup;
         this.versionTag = versionTag;
         this.versionId = versionId;
@@ -204,6 +209,10 @@ public class ActivityInstanceSummary implements TranslatedSummary {
 
     public long getCreatedAt() {
         return createdAt;
+    }
+
+    public boolean canDelete() {
+        return canDelete;
     }
 
     /**

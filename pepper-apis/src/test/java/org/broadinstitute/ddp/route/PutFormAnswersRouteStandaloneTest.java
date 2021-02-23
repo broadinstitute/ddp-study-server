@@ -815,7 +815,7 @@ public class PutFormAnswersRouteStandaloneTest extends IntegrationTestSuite.Test
     public void testCheckAddressRequirements_noRequirements() {
         var mockHandle = mock(Handle.class);
         var form = new FormInstance(1L, 1L, 1L, "", FormType.GENERAL, "", "", "", "CREATED",
-                null, null, null, null, null, 1L, null, null, null, false, false, false, 0);
+                null, null, null, null, null, 1L, null, null, null, false, false, false, false, 0);
         form.addBodySections(List.of(new FormSection(List.of(
                 new ComponentBlock(new MailingAddressComponent(1L, 1L, false, false, false))))));
         new PutFormAnswersRoute(null, null, null, null)
@@ -830,7 +830,7 @@ public class PutFormAnswersRouteStandaloneTest extends IntegrationTestSuite.Test
         doReturn(mockAddrDao).when(mockHandle).attach(JdbiMailAddress.class);
 
         var form = new FormInstance(1L, 1L, 1L, "", FormType.GENERAL, "", "", "", "CREATED",
-                null, null, null, null, null, 1L, null, null, null, false, false, false, 0);
+                null, null, null, null, null, 1L, null, null, null, false, false, false, false, 0);
         form.addBodySections(List.of(new FormSection(List.of(
                 new ComponentBlock(new MailingAddressComponent(1L, 1L, false, true, false))))));
         var route = new PutFormAnswersRoute(null, null, null, null);
@@ -862,7 +862,7 @@ public class PutFormAnswersRouteStandaloneTest extends IntegrationTestSuite.Test
         doReturn(mockAddrDao).when(mockHandle).attach(JdbiMailAddress.class);
 
         var form = new FormInstance(1L, 1L, 1L, "", FormType.GENERAL, "", "", "", "CREATED",
-                null, null, null, null, null, 1L, null, null, null, false, false, false, 0);
+                null, null, null, null, null, 1L, null, null, null, false, false, false, false, 0);
         form.addBodySections(List.of(new FormSection(List.of(
                 new ComponentBlock(new MailingAddressComponent(1L, 1L, false, true, true))))));
         var route = new PutFormAnswersRoute(null, null, null, null);
