@@ -78,6 +78,7 @@ import org.broadinstitute.ddp.route.CreateActivityInstanceRoute;
 import org.broadinstitute.ddp.route.CreateMailAddressRoute;
 import org.broadinstitute.ddp.route.CreateTemporaryUserRoute;
 import org.broadinstitute.ddp.route.CreateUserActivityUploadRoute;
+import org.broadinstitute.ddp.route.DeleteActivityInstanceRoute;
 import org.broadinstitute.ddp.route.DeleteMailAddressRoute;
 import org.broadinstitute.ddp.route.DeleteMedicalProviderRoute;
 import org.broadinstitute.ddp.route.DeleteTempMailingAddressRoute;
@@ -468,6 +469,7 @@ public class DataDonationPlatform {
                 responseSerializer
         );
         patch(API.USER_ACTIVITIES_INSTANCE, new PatchActivityInstanceRoute(activityInstanceDao), responseSerializer);
+        delete(API.USER_ACTIVITIES_INSTANCE, new DeleteActivityInstanceRoute(actInstService), jsonSerializer);
         get(API.USER_ACTIVITY_SUMMARY, new GetActivityInstanceSummaryRoute(actInstService), responseSerializer);
 
         // User activity answers routes
