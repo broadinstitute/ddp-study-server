@@ -3,6 +3,7 @@ package org.broadinstitute.ddp.db.dto;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import org.broadinstitute.ddp.model.user.User;
 
@@ -17,6 +18,10 @@ public class UserActivityInstanceSummary {
 
     public User getParticipantUser() {
         return participantUser;
+    }
+
+    public Stream<ActivityInstanceDto> getInstancesStream() {
+        return activityInstanceDtos.stream();
     }
 
     public Optional<ActivityInstanceDto> getActivityInstanceByGuid(String guid) {
