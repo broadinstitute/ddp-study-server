@@ -362,11 +362,12 @@ public interface ActivityInstanceDao extends SqlObject {
             @Bind("studyGuid") String studyGuid);
 
     @UseStringTemplateSqlLocator
-    @SqlQuery("findNestedSortedInstanceSummariesByUserAndStudyGuids")
+    @SqlQuery("findNestedSortedInstanceSummariesByUserStudyGuidsAndParentInstanceId")
     @RegisterConstructorMapper(ActivityInstanceSummaryDto.class)
     List<ActivityInstanceSummaryDto> findNestedSortedInstanceSummaries(
             @Bind("userGuid") String userGuid,
-            @Bind("studyGuid") String studyGuid);
+            @Bind("studyGuid") String studyGuid,
+            @Bind("parentInstanceId") long parentInstanceId);
 
     @UseStringTemplateSqlLocator
     @SqlQuery("queryBaseResponsesByInstanceId")

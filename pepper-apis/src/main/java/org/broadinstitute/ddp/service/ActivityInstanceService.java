@@ -120,7 +120,7 @@ public class ActivityInstanceService {
                 if (summaryDtos == null) {
                     summaryDtos = handle
                             .attach(org.broadinstitute.ddp.db.dao.ActivityInstanceDao.class)
-                            .findNestedSortedInstanceSummaries(userGuid, studyGuid);
+                            .findNestedSortedInstanceSummaries(userGuid, studyGuid, instance.getInstanceId());
                 }
                 if (studyDefaultLangCode == null) {
                     studyDefaultLangCode = new StudyLanguageCachedDao(handle)
