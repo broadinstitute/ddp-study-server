@@ -1,6 +1,7 @@
 package org.broadinstitute.ddp.model.event;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -65,7 +66,7 @@ public class ActivityInstanceCreationEventActionTest extends TxnAwareBaseTest {
     }
 
     @Test
-    public void testCreatedNestActivityInstance() {
+    public void testCreateNestActivityInstance() {
         TransactionWrapper.useTxn(handle -> {
             var parentAct = FormActivityDef
                     .generalFormBuilder("ACT_PARENT_" + Instant.now().toEpochMilli(), "v1", testData.getStudyGuid())
@@ -92,6 +93,53 @@ public class ActivityInstanceCreationEventActionTest extends TxnAwareBaseTest {
             assertEquals(1, actualInstances.size());
             assertEquals(nestedAct.getActivityId(), (Long) actualInstances.get(0).getActivityId());
             assertEquals((Long) parentInstanceId, actualInstances.get(0).getParentInstanceId());
+
+            handle.rollback();
+        });
+    }
+
+    @Test
+    public void testCreateActivityInstanceWithNestedActivities() {
+        TransactionWrapper.useTxn(handle -> {
+            var act1 = FormActivityDef
+                    .generalFormBuilder("ACT1_" + Instant.now().toEpochMilli(), "v1", testData.getStudyGuid())
+                    .addName(new Translation("en", "1"))
+                    .build();
+            var act2 = FormActivityDef
+                    .generalFormBuilder("ACT2_" + Instant.now().toEpochMilli(), "v1", testData.getStudyGuid())
+                    .addName(new Translation("en", "2"))
+                    .build();
+            var act2Nested = FormActivityDef
+                    .generalFormBuilder("ACT2_NESTED" + Instant.now().toEpochMilli(), "v1", testData.getStudyGuid())
+                    .addName(new Translation("en", "nested"))
+                    .setParentActivityCode(act2.getActivityCode())
+                    .setCreateOnParentCreation(true)
+                    .build();
+            var activityDao = handle.attach(ActivityDao.class);
+            activityDao.insertActivity(act1, RevisionMetadata.now(testData.getUserId(), "test"));
+            activityDao.insertActivity(act2, List.of(act2Nested), RevisionMetadata.now(testData.getUserId(), "test"));
+            long instanceId1 = handle.attach(ActivityInstanceDao.class)
+                    .insertInstance(act1.getActivityId(), testData.getUserGuid()).getId();
+
+            var signal = new ActivityInstanceStatusChangeSignal(
+                    testData.getUserId(), testData.getUserId(), testData.getUserGuid(), testData.getUserGuid(),
+                    instanceId1, act1.getActivityId(), testData.getStudyId(), InstanceStatusType.CREATED);
+            var action = new ActivityInstanceCreationEventAction(null, act2.getActivityId());
+            action.doAction(handle, signal);
+
+            List<ActivityInstanceDto> actualInstances = handle.attach(JdbiActivityInstance.class)
+                    .findAllByUserGuidAndActivityCode(testData.getUserGuid(), act2.getActivityCode(), testData.getStudyId());
+            assertEquals(1, actualInstances.size());
+            ActivityInstanceDto instance2 = actualInstances.get(0);
+            assertEquals(act2.getActivityId(), (Long) instance2.getActivityId());
+            assertNull("top-level should not have a parent", instance2.getParentInstanceId());
+
+            actualInstances = handle.attach(JdbiActivityInstance.class)
+                    .findAllByUserGuidAndActivityCode(testData.getUserGuid(), act2Nested.getActivityCode(), testData.getStudyId());
+            assertEquals(1, actualInstances.size());
+            ActivityInstanceDto nestedInstance = actualInstances.get(0);
+            assertEquals(act2Nested.getActivityId(), (Long) nestedInstance.getActivityId());
+            assertEquals((Long) instance2.getId(), nestedInstance.getParentInstanceId());
 
             handle.rollback();
         });
