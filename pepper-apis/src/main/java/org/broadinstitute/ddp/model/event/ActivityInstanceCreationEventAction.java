@@ -1,6 +1,7 @@
 package org.broadinstitute.ddp.model.event;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -101,7 +102,7 @@ public class ActivityInstanceCreationEventAction extends EventAction {
         }
 
         Long parentInstanceId = null;
-        if (signal.getEventTriggerType() == EventTriggerType.ACTIVITY_STATUS) {
+        if (activityDto.getParentActivityId() != null && signal.getEventTriggerType() == EventTriggerType.ACTIVITY_STATUS) {
             parentInstanceId = ((ActivityInstanceStatusChangeSignal) signal).getActivityInstanceIdThatChanged();
         }
 
@@ -167,6 +168,41 @@ public class ActivityInstanceCreationEventAction extends EventAction {
                 studyActivityId,
                 signal.getStudyId(),
                 InstanceStatusType.CREATED));
+
+        // Create child nested activity instances, if any.
+        List<Long> childActIdsToCreate = handle.attach(JdbiActivity.class)
+                .findChildActivityIdsThatNeedCreation(studyActivityId);
+        for (var childActivityId : childActIdsToCreate) {
+            String childInstanceGuid = jdbiActivityInstance.generateUniqueGuid();
+            long newChildInstanceId = jdbiActivityInstance.insert(
+                    childActivityId,
+                    signal.getParticipantId(),
+                    childInstanceGuid,
+                    null,
+                    Instant.now().toEpochMilli(),
+                    null,
+                    newActivityInstanceId,
+                    null,
+                    null,
+                    null
+            );
+            jdbiActivityInstanceStatus.insert(
+                    newChildInstanceId,
+                    InstanceStatusType.CREATED,
+                    Instant.now().toEpochMilli(),
+                    signal.getParticipantId()
+            );
+            LOG.info("Created child instance {} for parent instance {}", childInstanceGuid, activityInstanceGuid);
+            EventService.getInstance().processAllActionsForEventSignal(handle, new ActivityInstanceStatusChangeSignal(
+                    signal.getOperatorId(),
+                    signal.getParticipantId(),
+                    signal.getParticipantGuid(),
+                    signal.getOperatorGuid(),
+                    newChildInstanceId,
+                    childActivityId,
+                    signal.getStudyId(),
+                    InstanceStatusType.CREATED));
+        }
     }
 
     private void checkSignalIfNestedTargetActivity(ActivityDto activityDto, EventSignal signal) {
