@@ -190,6 +190,21 @@ public class RouteUtil {
         return instanceDto;
     }
 
+    public static ActivityInstanceDto findAccessibleInstanceOrHalt(Response response, Handle handle,
+                                                                   User participantUser, StudyDto studyDto,
+                                                                   String instanceGuid, boolean isOperatorStudyAdmin) {
+        ActivityInstanceDto instanceDto = handle.attach(JdbiActivityInstance.class)
+                .getByActivityInstanceGuid(instanceGuid)
+                .orElseThrow(() -> {
+                    String msg = "Could not find activity instance with guid " + instanceGuid;
+                    return ResponseUtil.haltError(response, 404, new ApiError(ErrorCodes.ACTIVITY_NOT_FOUND, msg));
+                });
+        haltIfError(participantUser, participantUser.getGuid(),
+                studyDto.getGuid(), instanceGuid, studyDto,
+                instanceDto, response, isOperatorStudyAdmin);
+        return instanceDto;
+    }
+
     public static void haltIfError(User user, String participantGuid, String studyGuid, String instanceGuid, StudyDto studyDto,
                                    ActivityInstanceDto instanceDto, Response response, boolean isOperatorStudyAdmin) {
         if (instanceDto.getStudyId() != studyDto.getId() || instanceDto.getParticipantId() != user.getId()) {

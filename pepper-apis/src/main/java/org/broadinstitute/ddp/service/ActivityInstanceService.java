@@ -140,10 +140,10 @@ public class ActivityInstanceService {
                     continue;
                 }
 
+                performInstanceNumbering(nestedSummaryDtos);
                 List<ActivityInstanceSummary> nestedSummaries = buildTranslatedInstanceSummaries(
                         handle, activityStore, false, summaryDtos,
                         studyGuid, isoLangCode, studyDefaultLangCode);
-                performInstanceNumbering(nestedSummaries);
                 nestedSummaries = nestedSummaries.stream()
                         .filter(summary -> !summary.isHidden())
                         .collect(Collectors.toList());
@@ -163,8 +163,8 @@ public class ActivityInstanceService {
      * language if preferred language is not available. If study doesn't have a default language, English will be used
      * as the fallback.
      *
-     * <p>Some computed properties such as instance numbering, question/answer count, or rendered strings will not be
-     * set. Caller is responsible for performing the computations and setting them properly.
+     * <p>Instance numbering will be performed, but other computed properties such as question/answer count, or rendered
+     * strings will not be set. Caller is responsible for performing the computations and setting them properly.
      *
      * @param handle            database handle
      * @param userGuid          GUID of the user to get activity instance summaries for
@@ -192,12 +192,94 @@ public class ActivityInstanceService {
                 .orElse(LanguageConstants.EN_LANGUAGE_CODE);
 
         ActivityDefStore activityStore = ActivityDefStore.getInstance();
+        performInstanceNumbering(summaryDtos);
         return buildTranslatedInstanceSummaries(
                 handle, activityStore, true, summaryDtos,
                 studyGuid, preferredLangCode, studyDefaultLangCode);
     }
 
+    /**
+     * Find a single activity instance summary. Instance numbering will be performed and instance summary will be
+     * translated to the user's preferred language, or fallback to an appropriate language. Caller should set other
+     * computed properties such as question/answer count, etc.
+     *
+     * @param handle            the database handle
+     * @param userGuid          the user guid
+     * @param studyGuid         the study guid
+     * @param activityCode      the activity identifier
+     * @param instanceGuid      the instance guid
+     * @param preferredLangCode the desired language
+     * @return an activity instance summary
+     */
+    public Optional<ActivityInstanceSummary> findTranslatedInstanceSummary(Handle handle,
+                                                                           String userGuid,
+                                                                           String studyGuid,
+                                                                           String activityCode,
+                                                                           String instanceGuid,
+                                                                           String preferredLangCode) {
+        // Find all instance summaries of the same activity so we can figure out numbering.
+        List<ActivityInstanceSummaryDto> summaryDtos = handle
+                .attach(org.broadinstitute.ddp.db.dao.ActivityInstanceDao.class)
+                .findSortedInstanceSummaries(userGuid, studyGuid, activityCode);
+        if (summaryDtos.isEmpty()) {
+            return Optional.empty();
+        }
+
+        performInstanceNumbering(summaryDtos);
+        summaryDtos = summaryDtos.stream()
+                .filter(summary -> summary.getGuid().equals(instanceGuid))
+                .collect(Collectors.toList());
+        if (summaryDtos.isEmpty()) {
+            return Optional.empty();
+        }
+
+        String studyDefaultLangCode = new StudyLanguageCachedDao(handle)
+                .findLanguages(studyGuid)
+                .stream()
+                .filter(StudyLanguage::isDefault)
+                .map(StudyLanguage::getLanguageCode)
+                .findFirst()
+                .orElse(LanguageConstants.EN_LANGUAGE_CODE);
+
+        ActivityDefStore activityStore = ActivityDefStore.getInstance();
+        List<ActivityInstanceSummary> summaries = buildTranslatedInstanceSummaries(
+                handle, activityStore, true, summaryDtos,
+                studyGuid, preferredLangCode, studyDefaultLangCode);
+
+        return Optional.of(summaries.get(0));
+    }
+
+    // Compute and set the instance numbers, as well as previousInstanceGuid, for the given list of activity instance
+    // summaries. This is done in-place by mutating the given summary objects.
+    private void performInstanceNumbering(List<ActivityInstanceSummaryDto> summaryDtos) {
+        Map<String, List<ActivityInstanceSummaryDto>> summariesByActivityCode = summaryDtos.stream()
+                .collect(Collectors.groupingBy(
+                        ActivityInstanceSummaryDto::getActivityCode,
+                        Collectors.toList()));
+        for (List<ActivityInstanceSummaryDto> summariesWithTheSameCode : summariesByActivityCode.values()) {
+            if (summariesWithTheSameCode.isEmpty()) {
+                continue;
+            }
+
+            // Ensure items are sorted in ascending order.
+            summariesWithTheSameCode.sort(Comparator.comparing(ActivityInstanceSummaryDto::getCreatedAtMillis));
+
+            // Number items within each group.
+            int counter = 1;
+            String previousInstanceGuid = null;
+            for (var summary : summariesWithTheSameCode) {
+                if (previousInstanceGuid != null) {
+                    summary.setPreviousInstanceGuid(previousInstanceGuid);
+                }
+                summary.setInstanceNumber(counter);
+                previousInstanceGuid = summary.getGuid();
+                counter++;
+            }
+        }
+    }
+
     // Does the heavy-lifting of translating activity properties and merging into a full activity instance summary.
+    // Activity instance summaries should have been numbered beforehand.
     private List<ActivityInstanceSummary> buildTranslatedInstanceSummaries(Handle handle,
                                                                            ActivityDefStore activityStore,
                                                                            boolean renderIcon,
@@ -279,6 +361,8 @@ public class ActivityInstanceService {
                     versionDto.getVersionTag(),
                     versionDto.getId(),
                     versionDto.getRevStart());
+            summary.setInstanceNumber(summaryDto.getInstanceNumber());
+            summary.setPreviousInstanceGuid(summaryDto.getPreviousInstanceGuid());
             summaries.add(summary);
         }
 
@@ -318,43 +402,6 @@ public class ActivityInstanceService {
                 .map(Translation::getText)
                 .findFirst()
                 .orElse(null);
-    }
-
-    /**
-     * Compute and set the instance numbers, as well as previousInstanceGuid, for the given list of activity instance
-     * summaries. This is done in-place by mutating the given summary objects.
-     *
-     * @param summaries the activity instance summaries
-     */
-    public void performInstanceNumbering(List<ActivityInstanceSummary> summaries) {
-        if (summaries.isEmpty()) {
-            return;
-        }
-
-        // Group summaries by activity code
-        Map<String, List<ActivityInstanceSummary>> summariesByActivityCode = summaries.stream()
-                .collect(Collectors.groupingBy(ActivityInstanceSummary::getActivityCode, Collectors.toList()));
-        for (List<ActivityInstanceSummary> summariesWithTheSameCode : summariesByActivityCode.values()) {
-            // No need to bother with no items
-            if (summariesWithTheSameCode.isEmpty()) {
-                continue;
-            }
-
-            // Sort items by date
-            summariesWithTheSameCode.sort(Comparator.comparing(ActivityInstanceSummary::getCreatedAt));
-
-            // Number items within each group.
-            int counter = 1;
-            String previousInstanceGuid = null;
-            for (var summary : summariesWithTheSameCode) {
-                if (previousInstanceGuid != null) {
-                    summary.setPreviousInstanceGuid(previousInstanceGuid);
-                }
-                summary.setInstanceNumber(counter);
-                previousInstanceGuid = summary.getActivityInstanceGuid();
-                counter++;
-            }
-        }
     }
 
     /**

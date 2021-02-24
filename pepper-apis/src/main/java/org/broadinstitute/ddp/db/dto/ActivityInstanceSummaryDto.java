@@ -21,6 +21,9 @@ public class ActivityInstanceSummaryDto {
     private boolean isHidden;
     private InstanceStatusType statusType;
 
+    private int instanceNumber;
+    private String previousInstanceGuid;
+
     @JdbiConstructor
     public ActivityInstanceSummaryDto(
             @ColumnName("activity_instance_id") long id,
@@ -107,5 +110,21 @@ public class ActivityInstanceSummaryDto {
 
     public InstanceStatusType getStatusType() {
         return statusType;
+    }
+
+    public int getInstanceNumber() {
+        return instanceNumber;
+    }
+
+    public void setInstanceNumber(int instanceNumber) {
+        this.instanceNumber = instanceNumber;
+    }
+
+    public String getPreviousInstanceGuid() {
+        return previousInstanceGuid;
+    }
+
+    public void setPreviousInstanceGuid(String previousInstanceGuid) {
+        this.previousInstanceGuid = previousInstanceGuid;
     }
 }
