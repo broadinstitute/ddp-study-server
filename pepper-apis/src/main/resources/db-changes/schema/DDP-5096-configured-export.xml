@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="charlotte" id="2021-02-24-configured-export">
+        <createTable tableName="configured_export">
+            <column name="configured_export_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="configured_export_pk"/>
+            </column>
+            <column name="study_id" type="bigint">
+                <constraints nullable="false"
+                            references="umbrella_study(umbrella_study_id)"
+                            foreignKeyName="study_id_fk"/>
+            </column>
+            <column name="enabled" type="boolean">
+                <constraints nullable="false"/>
+            </column>
+            <column name="run_schedule" type="varchar(50)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="bucket_type" type="varchar(20)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="bucket_name" type="varchar(90)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="file_path" type="varchar(200)">
+                <constraints nullable="true"/>
+            </column>
+        </createTable>
+
+        <createTable tableName="excluded_participant_field">
+            <column name="excluded_participant_field_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="excluded_participant_field_pk"/>
+            </column>
+            <column name="configured_export_id" type="bigint">
+                <constraints nullable="false"
+                             references="configured_export(configured_export_id)"
+                             foreignKeyName="configured_export_id_fk"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+</databaseChangeLog>
