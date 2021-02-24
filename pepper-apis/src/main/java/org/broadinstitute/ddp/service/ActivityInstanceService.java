@@ -36,9 +36,13 @@ import org.broadinstitute.ddp.model.activity.definition.i18n.SummaryTranslation;
 import org.broadinstitute.ddp.model.activity.definition.i18n.Translation;
 import org.broadinstitute.ddp.model.activity.instance.ActivityInstance;
 import org.broadinstitute.ddp.model.activity.instance.ActivityResponse;
+import org.broadinstitute.ddp.model.activity.instance.FormBlock;
 import org.broadinstitute.ddp.model.activity.instance.FormInstance;
 import org.broadinstitute.ddp.model.activity.instance.FormResponse;
+import org.broadinstitute.ddp.model.activity.instance.FormSection;
+import org.broadinstitute.ddp.model.activity.instance.NestedActivityBlock;
 import org.broadinstitute.ddp.model.activity.types.ActivityType;
+import org.broadinstitute.ddp.model.activity.types.BlockType;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.broadinstitute.ddp.model.study.StudyLanguage;
 import org.broadinstitute.ddp.pex.PexInterpreter;
@@ -62,8 +66,9 @@ public class ActivityInstanceService {
     }
 
     /**
-     * Get an activity instance, translated to given language. If activity is a form, visibility of
-     * blocks will be resolved as well.
+     * Get an activity instance, translated to given language. If activity is a form, visibility of blocks will be
+     * resolved as well. Activity instance summaries for nested activity blocks will not be loaded -- this should be
+     * done by caller separately.
      *
      * @param handle          the jdbi handle
      * @param userGuid        the user guid
@@ -89,28 +94,65 @@ public class ActivityInstanceService {
     }
 
     /**
-     * Get a form instance, translated to given language and with visibility of blocks resolved.
+     * Iterate through the instance and load activity instance summaries for each nested activity block.
      *
-     * @param handle           the jdbi handle
-     * @param userGuid         the user guid
-     * @param formInstanceGuid the form instance guid
-     * @param isoLangCode      the iso language code
-     * @return form instance, if found
-     * @throws DDPException if pex evaluation error
+     * @param handle       the database handle
+     * @param instance     the parent instance
+     * @param studyGuid    the study guid
+     * @param userGuid     the participant guid
+     * @param operatorGuid the operator guid
+     * @param isoLangCode  the preferred language iso code
      */
-    public Optional<FormInstance> getTranslatedForm(Handle handle, String userGuid, String operatorGuid, String formInstanceGuid,
-                                                    String isoLangCode, ContentStyle style) {
-        Function<ActivityInstance, FormInstance> typeChecker = (inst) -> {
-            if (ActivityType.FORMS.equals(inst.getActivityType())) {
-                return (FormInstance) inst;
-            } else {
-                LOG.warn("Expected a form instance but got type {} for guid {} lang code {}",
-                        inst.getActivityType(), formInstanceGuid, isoLangCode);
-                return null;
+    public void loadNestedInstanceSummaries(Handle handle, FormInstance instance, String studyGuid,
+                                            String userGuid, String operatorGuid, String isoLangCode) {
+        ActivityDefStore activityStore = ActivityDefStore.getInstance();
+
+        List<ActivityInstanceSummaryDto> summaryDtos = null;
+        String studyDefaultLangCode = null;
+
+        for (FormSection section : instance.getAllSections()) {
+            for (FormBlock block : section.getBlocks()) {
+                if (block.getBlockType() != BlockType.ACTIVITY) {
+                    continue;
+                }
+
+                // There might not be any nested activity blocks, so we do lazy-loading of data here.
+                if (summaryDtos == null) {
+                    summaryDtos = handle
+                            .attach(org.broadinstitute.ddp.db.dao.ActivityInstanceDao.class)
+                            .findNestedSortedInstanceSummaries(userGuid, studyGuid, instance.getInstanceId());
+                }
+                if (studyDefaultLangCode == null) {
+                    studyDefaultLangCode = new StudyLanguageCachedDao(handle)
+                            .findLanguages(studyGuid)
+                            .stream()
+                            .filter(StudyLanguage::isDefault)
+                            .map(StudyLanguage::getLanguageCode)
+                            .findFirst()
+                            .orElse(LanguageConstants.EN_LANGUAGE_CODE);
+                }
+
+                NestedActivityBlock nestedActBlock = (NestedActivityBlock) block;
+                List<ActivityInstanceSummaryDto> nestedSummaryDtos = summaryDtos.stream()
+                        .filter(summary -> nestedActBlock.getActivityCode().equals(summary.getActivityCode()))
+                        .collect(Collectors.toList());
+                if (nestedSummaryDtos.isEmpty()) {
+                    continue;
+                }
+
+                List<ActivityInstanceSummary> nestedSummaries = buildTranslatedInstanceSummaries(
+                        handle, activityStore, false, summaryDtos,
+                        studyGuid, isoLangCode, studyDefaultLangCode);
+                performInstanceNumbering(nestedSummaries);
+                nestedSummaries = nestedSummaries.stream()
+                        .filter(summary -> !summary.isHidden())
+                        .collect(Collectors.toList());
+                countQuestionsAndAnswers(handle, userGuid, operatorGuid, studyGuid, nestedSummaries);
+                renderInstanceSummaries(handle, instance.getParticipantUserId(), nestedSummaries);
+
+                nestedActBlock.addInstanceSummaries(nestedSummaries);
             }
-        };
-        return getTranslatedActivity(handle, userGuid, operatorGuid, ActivityType.FORMS,
-                formInstanceGuid, isoLangCode, style).map(typeChecker);
+        }
     }
 
     /**
@@ -149,27 +191,32 @@ public class ActivityInstanceService {
                 .findFirst()
                 .orElse(LanguageConstants.EN_LANGUAGE_CODE);
 
-        return buildTranslatedInstanceSummaries(handle, summaryDtos, studyGuid, preferredLangCode, studyDefaultLangCode);
+        ActivityDefStore activityStore = ActivityDefStore.getInstance();
+        return buildTranslatedInstanceSummaries(
+                handle, activityStore, true, summaryDtos,
+                studyGuid, preferredLangCode, studyDefaultLangCode);
     }
 
     // Does the heavy-lifting of translating activity properties and merging into a full activity instance summary.
     private List<ActivityInstanceSummary> buildTranslatedInstanceSummaries(Handle handle,
+                                                                           ActivityDefStore activityStore,
+                                                                           boolean renderIcon,
                                                                            List<ActivityInstanceSummaryDto> summaryDtos,
                                                                            String studyGuid,
                                                                            String preferredLangCode,
                                                                            String studyDefaultLangCode) {
-        ActivityDefStore activityDefStore = ActivityDefStore.getInstance();
-        Map<String, Blob> formTypeAndStatusTypeToIcon = activityDefStore.findActivityStatusIcons(handle, studyGuid);
         List<ActivityInstanceSummary> summaries = new ArrayList<>();
+        Map<String, Blob> formTypeAndStatusTypeToIcon =
+                renderIcon ? activityStore.findActivityStatusIcons(handle, studyGuid) : null;
 
         for (var summaryDto : summaryDtos) {
-            ActivityDto activityDto = activityDefStore
+            ActivityDto activityDto = activityStore
                     .findActivityDto(handle, summaryDto.getActivityId())
                     .orElseThrow(() -> new DDPException("Could not find activity dto for " + summaryDto.getActivityCode()));
-            ActivityVersionDto versionDto = activityDefStore
+            ActivityVersionDto versionDto = activityStore
                     .findVersionDto(handle, activityDto.getActivityId(), summaryDto.getCreatedAtMillis())
                     .orElseThrow(() -> new DDPException("Could not find activity version for instance" + summaryDto.getGuid()));
-            FormActivityDef def = activityDefStore
+            FormActivityDef def = activityStore
                     .findActivityDef(handle, studyGuid, activityDto, versionDto)
                     .orElseThrow(() -> new DDPException("Could not find activity definition for " + summaryDto.getActivityCode()));
 
@@ -190,14 +237,16 @@ public class ActivityInstanceService {
             String activityTypeCode = def.getActivityType().name();
             String formTypeCode = def.getFormType().name();
             String statusTypeCode = summaryDto.getStatusType().name();
-            String iconBase64;
-            try {
-                Blob iconBlob = def.isExcludeStatusIconFromDisplay() ? null
-                        : formTypeAndStatusTypeToIcon.get(formTypeCode + "-" + statusTypeCode);
-                iconBase64 = iconBlob == null ? null
-                        : Base64.getEncoder().encodeToString(iconBlob.getBytes(1, (int) iconBlob.length()));
-            } catch (SQLException e) {
-                throw new DDPException("Error while generating status icon", e);
+            String iconBase64 = null;
+            if (renderIcon) {
+                try {
+                    Blob iconBlob = def.isExcludeStatusIconFromDisplay() ? null
+                            : formTypeAndStatusTypeToIcon.get(formTypeCode + "-" + statusTypeCode);
+                    iconBase64 = iconBlob == null ? null
+                            : Base64.getEncoder().encodeToString(iconBlob.getBytes(1, (int) iconBlob.length()));
+                } catch (SQLException e) {
+                    throw new DDPException("Error while generating status icon", e);
+                }
             }
 
             boolean isReadonly = ActivityInstanceUtil.isReadonly(

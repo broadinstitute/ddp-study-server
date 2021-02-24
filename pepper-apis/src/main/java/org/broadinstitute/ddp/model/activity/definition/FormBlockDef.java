@@ -74,6 +74,8 @@ public abstract class FormBlockDef {
         public FormBlockDef deserialize(JsonElement elem, Type type, JsonDeserializationContext ctx) throws JsonParseException {
             BlockType blockType = parseBlockType(elem);
             switch (blockType) {
+                case ACTIVITY:
+                    return ctx.deserialize(elem, NestedActivityBlockDef.class);
                 case CONTENT:
                     return ctx.deserialize(elem, ContentBlockDef.class);
                 case QUESTION:

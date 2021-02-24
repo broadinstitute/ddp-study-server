@@ -100,45 +100,61 @@ public interface FormActivityDao extends SqlObject {
             }
         }
 
-        // First create nested activities, then establish parent-child link at the end after parent has been created.
+        var jdbiActivity = getJdbiActivity();
+        long studyId = getJdbiActivity().getStudyId(activity.getStudyGuid());
+
+        // First create the base parent.
+        long activityId = insertBaseActivity(studyId, activity);
+
+        // Then create the child activities and link those to the parent.
         for (var nested : nestedActivities) {
-            insertSingleActivity(nested, revisionId);
+            insertBaseActivity(studyId, nested);
+            insertFullActivity(nested, revisionId);
+            DBUtils.checkUpdate(1, jdbiActivity.updateParentActivityId(nested.getActivityId(), activityId));
             LOG.info("Inserted nested activity {} with id {} for parent activity {}",
                     nested.getActivityCode(), nested.getActivityId(), activity.getActivityCode());
         }
-        insertSingleActivity(activity, revisionId);
-        var jdbiActivity = getJdbiActivity();
-        for (var nested : nestedActivities) {
-            DBUtils.checkUpdate(1, jdbiActivity.updateParentActivityId(nested.getActivityId(), activity.getActivityId()));
-        }
+
+        // Finally, finish creating the parent. This way, we can validate nested activity blocks
+        // specified in the parent to ensure it references the correct child activities.
+        insertFullActivity(activity, revisionId);
     }
 
     /**
-     * Create the full activity from its definition. If activity has nested activity blocks that references child
-     * activities, those child activities are expected to be already created. If we're creating a nested activity, this
-     * does not handle creating the link between this activity and its parent activity -- the caller is expected to
-     * establish that connection.
+     * Create the bare minimum of the activity. Use {@code insertFullActivity} to finalize creation of activity.
+     *
+     * @param studyId the study identifier
+     * @param activity the activity to create
+     * @return the newly created base activity id
+     */
+    private long insertBaseActivity(long studyId, FormActivityDef activity) {
+        long activityId = getJdbiActivity().insertActivity(activity.getActivityType(), studyId, activity.getActivityCode(),
+                activity.getMaxInstancesPerUser(), activity.getDisplayOrder(), activity.isWriteOnce(), activity.getEditTimeoutSec(),
+                activity.isOndemandTriggerAllowed(), activity.isExcludeFromDisplay(), activity.isExcludeStatusIconFromDisplay(),
+                activity.isAllowUnauthenticated(), activity.isFollowup(), activity.isHideInstances(),
+                activity.isCreateOnParentCreation());
+        activity.setActivityId(activityId);
+        return activityId;
+    }
+
+    /**
+     * Create the full activity from its definition. This assumes the base activity has already been created. If
+     * activity has nested activity blocks that references child activities, those child activities are expected to be
+     * already created and linked to parent activity already. If we're creating a nested activity, this does not handle
+     * creating the link between this activity and its parent activity -- the caller is expected to establish that
+     * connection.
      *
      * @param activity   the activity to create
      * @param revisionId the revision id
      */
-    private void insertSingleActivity(FormActivityDef activity, long revisionId) {
+    private void insertFullActivity(FormActivityDef activity, long revisionId) {
         JdbiActivity jdbiActivity = getJdbiActivity();
         JdbiActivityVersion jdbiVersion = getJdbiActivityVersion();
         ActivityI18nDao activityI18nDao = getActivityI18nDao();
         SectionBlockDao sectionBlockDao = getSectionBlockDao();
         TemplateDao templateDao = getTemplateDao();
 
-        long activityTypeId = jdbiActivity.getActivityTypeId(activity.getActivityType());
-        long studyId = jdbiActivity.getStudyId(activity.getStudyGuid());
-
-        long activityId = jdbiActivity.insertActivity(activityTypeId, studyId, activity.getActivityCode(),
-                activity.getMaxInstancesPerUser(), activity.getDisplayOrder(), activity.isWriteOnce(), activity.getEditTimeoutSec(),
-                activity.isOndemandTriggerAllowed(), activity.isExcludeFromDisplay(), activity.isExcludeStatusIconFromDisplay(),
-                activity.isAllowUnauthenticated(), activity.isFollowup(), activity.isHideInstances(),
-                activity.isCreateOnParentCreation());
-        activity.setActivityId(activityId);
-
+        long activityId = activity.getActivityId();
         long versionId = jdbiVersion.insert(activity.getActivityId(), activity.getVersionTag(), revisionId);
         activity.setVersionId(versionId);
 

@@ -112,3 +112,11 @@ findNonNestedSortedInstanceSummariesByUserAndStudyGuids() ::= <<
    and actp.study_activity_id is null
  order by act.display_order asc, ai.created_at desc
 >>
+
+findNestedSortedInstanceSummariesByUserStudyGuidsAndParentInstanceId() ::= <<
+<select_all_latest_instance_summaries()>
+ where u.guid = :userGuid
+   and s.guid = :studyGuid
+   and ai.parent_instance_id = :parentInstanceId
+ order by act.display_order asc, ai.created_at asc
+>>

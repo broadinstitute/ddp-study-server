@@ -21,9 +21,11 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.broadinstitute.ddp.db.DaoException;
+import org.broadinstitute.ddp.db.dto.ActivityDto;
 import org.broadinstitute.ddp.db.dto.BlockGroupHeaderDto;
 import org.broadinstitute.ddp.db.dto.FormBlockDto;
 import org.broadinstitute.ddp.db.dto.FormSectionDto;
+import org.broadinstitute.ddp.db.dto.NestedActivityBlockDto;
 import org.broadinstitute.ddp.db.dto.RevisionDto;
 import org.broadinstitute.ddp.db.dto.SectionBlockMembershipDto;
 import org.broadinstitute.ddp.model.activity.definition.ConditionalBlockDef;
@@ -32,6 +34,7 @@ import org.broadinstitute.ddp.model.activity.definition.FormBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.FormSectionDef;
 import org.broadinstitute.ddp.model.activity.definition.GroupBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.MailingAddressComponentDef;
+import org.broadinstitute.ddp.model.activity.definition.NestedActivityBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.PhysicianInstitutionComponentDef;
 import org.broadinstitute.ddp.model.activity.definition.QuestionBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.SectionIcon;
@@ -54,6 +57,9 @@ public interface SectionBlockDao extends SqlObject {
     Logger LOG = LoggerFactory.getLogger(SectionBlockDao.class);
 
     int DISPLAY_ORDER_GAP = 10;
+
+    @CreateSqlObject
+    JdbiActivity getJdbiActivity();
 
     @CreateSqlObject
     JdbiFormActivityFormSection getJdbiFormActivityFormSection();
@@ -236,9 +242,28 @@ public interface SectionBlockDao extends SqlObject {
             insertConditionalBlock(activityId, (ConditionalBlockDef) block, revisionId);
         } else if (BlockType.GROUP.equals(blockType)) {
             insertGroupBlock(activityId, (GroupBlockDef) block, revisionId);
+        } else if (BlockType.ACTIVITY.equals(blockType)) {
+            insertNestedActivityBlock(activityId, (NestedActivityBlockDef) block, revisionId);
         } else {
             throw new DaoException("Unhandled block type " + blockType);
         }
+    }
+
+    private void insertNestedActivityBlock(long parentActivityId, NestedActivityBlockDef block, long revisionId) {
+        ActivityDto nestedActivityDto = getJdbiActivity()
+                .findActivityByParentActivityIdAndActivityCode(parentActivityId, block.getActivityCode())
+                .orElseThrow(() -> new DaoException("Could not find child nested activity " + block.getActivityCode()));
+
+        Long addButtonTemplateId = block.getAddButtonTemplate() == null ? null
+                : getTemplateDao().insertTemplate(block.getAddButtonTemplate(), revisionId);
+
+        getJdbiBlock().insertNestedActivityBlock(
+                block.getBlockId(),
+                nestedActivityDto.getActivityId(),
+                block.getRenderHint(),
+                block.isAllowMultiple(),
+                addButtonTemplateId,
+                revisionId);
     }
 
     /**
@@ -570,9 +595,13 @@ public interface SectionBlockDao extends SqlObject {
         List<FormBlockDto> componentBlockDtos = new ArrayList<>();
         List<FormBlockDto> conditionalBlockDtos = new ArrayList<>();
         List<FormBlockDto> groupBlockDtos = new ArrayList<>();
+        List<FormBlockDto> nestedActivityBlockDtos = new ArrayList<>();
 
         for (var blockDto : blockDtos) {
             switch (blockDto.getType()) {
+                case ACTIVITY:
+                    nestedActivityBlockDtos.add(blockDto);
+                    break;
                 case CONTENT:
                     contentBlockDtos.add(blockDto);
                     break;
@@ -599,6 +628,51 @@ public interface SectionBlockDao extends SqlObject {
         blockDefs.putAll(getComponentDao().collectBlockDefs(componentBlockDtos, timestamp));
         blockDefs.putAll(collectConditionalBlockDefs(conditionalBlockDtos, timestamp));
         blockDefs.putAll(collectGroupBlockDefs(groupBlockDtos, timestamp));
+        blockDefs.putAll(collectNestedActivityBlockDefs(nestedActivityBlockDtos, timestamp));
+
+        return blockDefs;
+    }
+
+    private Map<Long, NestedActivityBlockDef> collectNestedActivityBlockDefs(Collection<FormBlockDto> blockDtos, long timestamp) {
+        if (blockDtos == null || blockDtos.isEmpty()) {
+            return new HashMap<>();
+        }
+
+        Set<Long> blockIds = new HashSet<>();
+        for (var blockDto : blockDtos) {
+            blockIds.add(blockDto.getId());
+        }
+
+        Map<Long, NestedActivityBlockDto> nestedActBlockDtos;
+        try (var stream = getJdbiBlock().findNestedActivityBlockDtos(blockIds, timestamp)) {
+            nestedActBlockDtos = stream.collect(
+                    Collectors.toMap(NestedActivityBlockDto::getBlockId, Function.identity()));
+        }
+
+        Set<Long> templateIds = new HashSet<>();
+        for (var nestedActBlockDto : nestedActBlockDtos.values()) {
+            if (nestedActBlockDto.getAddButtonTemplateId() != null) {
+                templateIds.add(nestedActBlockDto.getAddButtonTemplateId());
+            }
+        }
+        Map<Long, Template> templates = getTemplateDao().collectTemplatesByIds(templateIds);
+
+        Map<Long, NestedActivityBlockDef> blockDefs = new HashMap<>();
+        for (var blockDto : blockDtos) {
+            NestedActivityBlockDto nestedActBlockDto = nestedActBlockDtos.get(blockDto.getId());
+            Template addButtonTemplate = templates.getOrDefault(nestedActBlockDto.getAddButtonTemplateId(), null);
+
+            var blockDef = new NestedActivityBlockDef(
+                    nestedActBlockDto.getNestedActivityCode(),
+                    nestedActBlockDto.getRenderHint(),
+                    nestedActBlockDto.isAllowMultiple(),
+                    addButtonTemplate);
+            blockDef.setBlockId(blockDto.getId());
+            blockDef.setBlockGuid(blockDto.getGuid());
+            blockDef.setShownExpr(blockDto.getShownExpr());
+
+            blockDefs.put(blockDto.getId(), blockDef);
+        }
 
         return blockDefs;
     }

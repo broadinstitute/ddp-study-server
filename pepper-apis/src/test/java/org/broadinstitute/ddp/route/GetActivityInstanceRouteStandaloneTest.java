@@ -57,6 +57,7 @@ import org.broadinstitute.ddp.json.errors.ApiError;
 import org.broadinstitute.ddp.model.activity.definition.ContentBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
 import org.broadinstitute.ddp.model.activity.definition.FormSectionDef;
+import org.broadinstitute.ddp.model.activity.definition.NestedActivityBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.QuestionBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.SectionIcon;
 import org.broadinstitute.ddp.model.activity.definition.i18n.Translation;
@@ -86,6 +87,7 @@ import org.broadinstitute.ddp.model.activity.types.DateRenderMode;
 import org.broadinstitute.ddp.model.activity.types.FormSectionState;
 import org.broadinstitute.ddp.model.activity.types.FormType;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
+import org.broadinstitute.ddp.model.activity.types.NestedActivityRenderHint;
 import org.broadinstitute.ddp.model.activity.types.PicklistRenderMode;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
 import org.broadinstitute.ddp.model.activity.types.RuleType;
@@ -245,10 +247,14 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
         var fileSection = new FormSectionDef(null, List.of(new QuestionBlockDef(file1)));
 
         String parentActCode = "ACT_ROUTE_PARENT" + Instant.now().toEpochMilli();
+        activityCode = "ACT_ROUTE_ACT" + Instant.now().toEpochMilli();
+        var nestedActBlockDef = new NestedActivityBlockDef(
+                activityCode, NestedActivityRenderHint.MODAL, true, Template.text("add button"));
+
         parentActivity = FormActivityDef.generalFormBuilder(parentActCode, "v1", testData.getStudyGuid())
                 .addName(new Translation("en", "parent activity " + parentActCode))
+                .addSection(new FormSectionDef(null, List.of(nestedActBlockDef)))
                 .build();
-        activityCode = "ACT_ROUTE_ACT" + Instant.now().toEpochMilli();
         activity = FormActivityDef.generalFormBuilder(activityCode, "v1", testData.getStudyGuid())
                 .addName(new Translation("en", "activity " + activityCode))
                 .setParentActivityCode(parentActCode)
@@ -391,12 +397,22 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
     }
 
     @Test
-    public void testGet_parentActivity() {
+    public void testGet_parentActivity_nestedActivityBlock() {
         given().auth().oauth2(token)
                 .pathParam("instanceGuid", parentInstanceDto.getGuid())
                 .when().get(url).then().assertThat()
                 .statusCode(200).contentType(ContentType.JSON)
-                .body("activityCode", equalTo(parentActivity.getActivityCode()));
+                .log().all()
+                .body("activityCode", equalTo(parentActivity.getActivityCode()))
+                .root("sections[0].blocks[0]")
+                .body("blockType", equalTo(BlockType.ACTIVITY.name()))
+                .body("activityCode", equalTo(activityCode))
+                .body("renderHint", equalTo(NestedActivityRenderHint.MODAL.name()))
+                .body("allowMultiple", equalTo(true))
+                .body("addButtonText", equalTo("add button"))
+                .body("instances.size()", equalTo(1))
+                .body("instances[0].activityCode", equalTo(activityCode))
+                .body("instances[0].instanceGuid", equalTo(instanceDto.getGuid()));
     }
 
     @Test

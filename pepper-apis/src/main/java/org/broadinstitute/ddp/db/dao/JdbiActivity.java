@@ -29,13 +29,14 @@ public interface JdbiActivity extends SqlObject {
             + "is_write_once, instantiate_upon_registration,edit_timeout_sec,allow_ondemand_trigger,"
             + "exclude_from_display, exclude_status_icon_from_display, allow_unauthenticated, "
             + "is_followup, hide_existing_instances_on_creation, create_on_parent_creation)"
-            + " values(:activityTypeId,:studyId,:activityCode,"
+            + " values((select activity_type_id from activity_type where activity_type_code = :activityType),"
+            + ":studyId,:activityCode,"
             + ":maxInstancesPerUser,:displayOrder,:writeOnce,0,:editTimeoutSec,:allowOndemandTrigger,"
             + ":excludeFromDisplay, :excludeStatusIconFromDisplay, :allowUnauthenticated, :isFollowup, :hideExistingInstancesOnCreation,"
             + ":createOnParentCreation)")
     @GetGeneratedKeys()
     long insertActivity(
-            @Bind("activityTypeId") long activityTypeId,
+            @Bind("activityType") ActivityType activityType,
             @Bind("studyId") long studyId,
             @Bind("activityCode") String activityCode,
             @Bind("maxInstancesPerUser") Integer maxInstancesPerUser,
@@ -122,6 +123,15 @@ public interface JdbiActivity extends SqlObject {
             + "   and act.study_activity_code = :code")
     @RegisterConstructorMapper(ActivityDto.class)
     Optional<ActivityDto> findActivityByStudyGuidAndCode(@Bind("studyGuid") String studyGuid, @Bind("code") String activityCode);
+
+    @SqlQuery("select act.*, (select study_activity_code from study_activity"
+            + "       where study_activity_id = act.parent_activity_id) as parent_activity_code"
+            + "  from study_activity as act"
+            + " where act.parent_activity_id = :parentActId"
+            + "   and act.study_activity_code = :code")
+    @RegisterConstructorMapper(ActivityDto.class)
+    Optional<ActivityDto> findActivityByParentActivityIdAndActivityCode(
+            @Bind("parentActId") long parentActivityId, @Bind("code") String activityCode);
 
     @SqlQuery("select act.*, (select study_activity_code from study_activity"
             + "       where study_activity_id = act.parent_activity_id) as parent_activity_code"

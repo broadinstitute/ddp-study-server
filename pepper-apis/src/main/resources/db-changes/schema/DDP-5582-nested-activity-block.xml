@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="yufeng" id="20210219-nested-activity-render-hint-table">
+        <createTable tableName="nested_activity_render_hint">
+            <column name="nested_activity_render_hint_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="nested_activity_render_hint_pk"/>
+            </column>
+            <column name="nested_activity_render_hint_code" type="varchar(20)">
+                <constraints nullable="false" unique="true" uniqueConstraintName="nested_activity_render_hint_uk"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="20210219-nested-activity-render-hint-types">
+        <insert tableName="nested_activity_render_hint">
+            <column name="nested_activity_render_hint_code" value="EMBEDDED"/>
+        </insert>
+        <insert tableName="nested_activity_render_hint">
+            <column name="nested_activity_render_hint_code" value="MODAL"/>
+        </insert>
+    </changeSet>
+
+    <changeSet author="yufeng" id="20210219-activity-block-type">
+        <insert tableName="block_type">
+            <column name="block_type_code" value="ACTIVITY"/>
+        </insert>
+    </changeSet>
+
+    <changeSet author="yufeng" id="20210219-block-nested-activity-table">
+        <createTable tableName="block_nested_activity">
+            <column name="block_nested_activity_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="block_nested_activity_pk"/>
+            </column>
+            <column name="block_id" type="bigint">
+                <constraints nullable="false"
+                             references="block(block_id)"
+                             foreignKeyName="block_nested_activity_block_fk"/>
+            </column>
+            <column name="nested_activity_id" type="bigint">
+                <constraints nullable="false"
+                             references="study_activity(study_activity_id)"
+                             foreignKeyName="block_nested_activity_activity_fk"/>
+            </column>
+            <column name="render_hint_id" type="bigint">
+                <constraints nullable="false"
+                             references="nested_activity_render_hint(nested_activity_render_hint_id)"
+                             foreignKeyName="block_nested_activity_render_hint_fk"/>
+            </column>
+            <column name="allow_multiple" type="boolean">
+                <constraints nullable="false"/>
+            </column>
+            <column name="add_button_template_id" type="bigint">
+                <constraints nullable="true"
+                             references="template(template_id)"
+                             foreignKeyName="block_nested_activity_add_button_template_fk"/>
+            </column>
+            <column name="revision_id" type="bigint">
+                <constraints nullable="false"
+                             references="revision(revision_id)"
+                             foreignKeyName="block_nested_activity_revision_fk"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+</databaseChangeLog>

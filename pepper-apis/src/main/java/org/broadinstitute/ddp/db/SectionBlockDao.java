@@ -8,6 +8,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 import org.broadinstitute.ddp.db.dao.ComponentDao;
+import org.broadinstitute.ddp.db.dao.JdbiBlock;
 import org.broadinstitute.ddp.db.dao.JdbiBlockContent;
 import org.broadinstitute.ddp.db.dao.JdbiBlockGroupHeader;
 import org.broadinstitute.ddp.db.dao.JdbiBlockNesting;
@@ -16,12 +17,14 @@ import org.broadinstitute.ddp.db.dao.QuestionDao;
 import org.broadinstitute.ddp.db.dto.BlockContentDto;
 import org.broadinstitute.ddp.db.dto.BlockGroupHeaderDto;
 import org.broadinstitute.ddp.db.dto.FormBlockDto;
+import org.broadinstitute.ddp.db.dto.NestedActivityBlockDto;
 import org.broadinstitute.ddp.model.activity.instance.ComponentBlock;
 import org.broadinstitute.ddp.model.activity.instance.ConditionalBlock;
 import org.broadinstitute.ddp.model.activity.instance.ContentBlock;
 import org.broadinstitute.ddp.model.activity.instance.FormBlock;
 import org.broadinstitute.ddp.model.activity.instance.FormComponent;
 import org.broadinstitute.ddp.model.activity.instance.GroupBlock;
+import org.broadinstitute.ddp.model.activity.instance.NestedActivityBlock;
 import org.broadinstitute.ddp.model.activity.instance.QuestionBlock;
 import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
@@ -76,6 +79,17 @@ public class SectionBlockDao {
     private FormBlock getBlockByDto(Handle handle, FormBlockDto dto, String instanceGuid, long langCodeId, boolean includeDeprecated) {
         FormBlock block;
         switch (dto.getType()) {
+            case ACTIVITY:
+                NestedActivityBlockDto nestedActBlockDto = handle.attach(JdbiBlock.class)
+                        .findNestedActivityBlockDto(dto.getId(), instanceGuid)
+                        .orElseThrow(() -> new DaoException(String.format(
+                                "Could not find nested activity block with id %d and instance guid %s", dto.getId(), instanceGuid)));
+                block = new NestedActivityBlock(
+                        nestedActBlockDto.getNestedActivityCode(),
+                        nestedActBlockDto.getRenderHint(),
+                        nestedActBlockDto.isAllowMultiple(),
+                        nestedActBlockDto.getAddButtonTemplateId());
+                break;
             case CONTENT:
                 BlockContentDto blockContentDto = handle.attach(JdbiBlockContent.class)
                         .findDtoByBlockIdAndInstanceGuid(dto.getId(), instanceGuid)

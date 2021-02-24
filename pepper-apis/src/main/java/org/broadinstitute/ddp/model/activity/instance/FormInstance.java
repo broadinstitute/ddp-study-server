@@ -277,6 +277,9 @@ public final class FormInstance extends ActivityInstance {
                         children = ((ConditionalBlock) block).getNested();
                     } else if (block.getBlockType() == BlockType.GROUP) {
                         children = ((GroupBlock) block).getNested();
+                    } else if (block.getBlockType() == BlockType.ACTIVITY) {
+                        // Questions within the nested activity itself are not considered.
+                        children = new ArrayList<>();
                     } else {
                         throw new DDPException("Unhandled container block type " + block.getBlockType());
                     }
