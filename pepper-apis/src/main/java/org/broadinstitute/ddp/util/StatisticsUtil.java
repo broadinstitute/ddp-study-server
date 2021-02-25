@@ -1,5 +1,6 @@
 package org.broadinstitute.ddp.util;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -84,7 +85,10 @@ public class StatisticsUtil {
                 options.add(option);
                 optionByStableId.put(option.getStableId(), option);
             }
-            renderer.bulkRenderAndApply(handle, options, style, langId);
+
+            // As we see above, we're querying the latest question and picklist options,
+            // so we use the current time here to render the latest templates.
+            renderer.bulkRenderAndApply(handle, options, style, langId, Instant.now().toEpochMilli());
             statisticsItems.forEach((item) -> item.getData().put("optionDetails", optionByStableId.get(item.getName())));
         }
 

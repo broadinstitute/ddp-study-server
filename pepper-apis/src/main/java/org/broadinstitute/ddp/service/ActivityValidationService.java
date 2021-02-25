@@ -28,6 +28,7 @@ public class ActivityValidationService {
      * @param interpreter the pex interpreter to evaluate expressions
      * @param userGuid the guid of the user (required by the interpreter)
      * @param activityInstanceGuid the guid of the activity instance to validate
+     * @param instanceCreatedAtMillis the timestamp of when instance was created
      * @param activityId the id of the study activity that should be validated
      * @param languageCodeId the id of the language the error message will be translated to
      */
@@ -37,6 +38,7 @@ public class ActivityValidationService {
             String userGuid,
             String operatorGuid,
             String activityInstanceGuid,
+            long instanceCreatedAtMillis,
             long activityId,
             long languageCodeId
     ) {
@@ -71,7 +73,7 @@ public class ActivityValidationService {
         List<ActivityValidationFailure> validationFailures = new ArrayList<>();
         var renderer = new I18nContentRenderer();
         for (var failed : failedDtos) {
-            String msg = renderer.renderContent(handle, failed.getErrorMessageTemplateId(), languageCodeId);
+            String msg = renderer.renderContent(handle, failed.getErrorMessageTemplateId(), languageCodeId, instanceCreatedAtMillis);
             validationFailures.add(new ActivityValidationFailure(msg, failed.getAffectedQuestionStableIds()));
         }
 

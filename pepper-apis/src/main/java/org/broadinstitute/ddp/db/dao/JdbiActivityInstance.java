@@ -137,16 +137,11 @@ public interface JdbiActivityInstance extends SqlObject {
     @RegisterConstructorMapper(ActivityInstanceDto.class)
     List<ActivityInstanceDto> findAllByUserIdAndStudyId(@Bind("userId") long participantUserId, @Bind("studyId") long studyId);
 
-    @SqlQuery("select ai.activity_instance_guid "
-            + " from activity_instance as ai "
-            + " join user as u on ai.participant_id = u.user_id"
-            + " join study_activity as act on act.study_activity_id = ai.study_activity_id"
-            + " join question as q on q.study_activity_id = act.study_activity_id"
-            + " where q.question_id = :questionId"
-            + " and u.guid = :userGuid"
-            + " order by ai.created_at desc limit 1")
-    Optional<String> findLatestInstanceGuidFromUserGuidAndQuestionId(@Bind("userGuid") String userGuid,
-                                                                     @Bind("questionId") long questionId);
+    @UseStringTemplateSqlLocator
+    @SqlQuery("findLatestInstanceFromUserGuidAndQuestionId")
+    @RegisterConstructorMapper(ActivityInstanceDto.class)
+    Optional<ActivityInstanceDto> findLatestInstanceFromUserGuidAndQuestionId(@Bind("userGuid") String userGuid,
+                                                                              @Bind("questionId") long questionId);
 
     @SqlQuery(
             "select ai.activity_instance_id from user u join activity_instance ai on ai.participant_id = u.user_id"
