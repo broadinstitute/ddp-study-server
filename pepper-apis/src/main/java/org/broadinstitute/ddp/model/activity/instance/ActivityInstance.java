@@ -17,6 +17,9 @@ public class ActivityInstance {
     @SerializedName("guid")
     private String guid;
 
+    @SerializedName("parentInstanceGuid")
+    private String parentInstanceGuid;
+
     @SerializedName("activityCode")
     private String activityCode;
 
@@ -145,5 +148,13 @@ public class ActivityInstance {
      */
     public boolean isHidden() {
         return isHidden;
+    }
+
+    public String getParentInstanceGuid() {
+        return parentInstanceGuid;
+    }
+
+    public void setParentInstanceGuid(String parentInstanceGuid) {
+        this.parentInstanceGuid = parentInstanceGuid;
     }
 }
