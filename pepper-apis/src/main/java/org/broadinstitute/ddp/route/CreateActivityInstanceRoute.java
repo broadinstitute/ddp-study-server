@@ -12,15 +12,18 @@ import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dao.DataExportDao;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceCreationValidation;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
+import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.json.ActivityInstanceCreationPayload;
 import org.broadinstitute.ddp.json.ActivityInstanceCreationResponse;
 import org.broadinstitute.ddp.json.errors.ApiError;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
+import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.security.DDPAuth;
 import org.broadinstitute.ddp.util.ActivityInstanceUtil;
 import org.broadinstitute.ddp.util.ResponseUtil;
 import org.broadinstitute.ddp.util.RouteUtil;
 import org.broadinstitute.ddp.util.ValidatedJsonInputRoute;
+import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import spark.Request;
@@ -61,42 +64,16 @@ public class CreateActivityInstanceRoute extends ValidatedJsonInputRoute<Activit
                     .checkSuitabilityForActivityInstanceCreation(studyId, activityCode, participantGuid)
                     .orElse(null);
             if (validation == null) {
-                var err = new ApiError(ErrorCodes.ACTIVITY_NOT_FOUND,
-                        "Could not find creation validation information for activity " + activityCode);
-                LOG.warn(err.getMessage());
-                throw ResponseUtil.haltError(response, HttpStatus.SC_NOT_FOUND, err);
+                String msg = "Could not find creation validation information for activity " + activityCode;
+                warnAndHalt(response, HttpStatus.SC_NOT_FOUND, ErrorCodes.ACTIVITY_NOT_FOUND, msg);
+                return null;
             }
 
             Long parentInstanceId = null;
             if (validation.getParentActivityCode() != null) {
-                if (StringUtils.isBlank(parentInstanceGuid)) {
-                    String msg = "Creating child nested activity instance requires parent instance guid";
-                    LOG.warn(msg);
-                    throw ResponseUtil.haltError(response, HttpStatus.SC_BAD_REQUEST,
-                            new ApiError(ErrorCodes.BAD_PAYLOAD, msg));
-                }
-
-                ActivityInstanceDto parentInstanceDto = RouteUtil.findAccessibleInstanceOrHalt(
-                        response, handle, found.getUser(), found.getStudyDto(),
-                        parentInstanceGuid, isStudyAdmin);
-
-                if (!validation.getParentActivityCode().equals(parentInstanceDto.getActivityCode())) {
-                    String msg = "Child activity's parent activity does not match provided parent instance's activity";
-                    LOG.warn(msg);
-                    throw ResponseUtil.haltError(response, HttpStatus.SC_BAD_REQUEST,
-                            new ApiError(ErrorCodes.BAD_PAYLOAD, msg));
-                }
-
-                ActivityDefStore activityStore = ActivityDefStore.getInstance();
-                FormActivityDef parentActivity = ActivityInstanceUtil.getActivityDef(handle, activityStore, parentInstanceDto, studyGuid);
-                if (!isStudyAdmin && ActivityInstanceUtil.isInstanceReadOnly(parentActivity, parentInstanceDto)) {
-                    String msg = "Could not create child activity instance, parent instance is read-only";
-                    LOG.warn(msg);
-                    throw ResponseUtil.haltError(response, HttpStatus.SC_UNPROCESSABLE_ENTITY,
-                            new ApiError(ErrorCodes.ACTIVITY_INSTANCE_IS_READONLY, msg));
-                }
-
-                parentInstanceId = parentInstanceDto.getId();
+                parentInstanceId = findAndCheckParentInstance(
+                        handle, response, validation.getParentActivityCode(), parentInstanceGuid,
+                        found.getUser(), found.getStudyDto(), isStudyAdmin);
             }
 
             // check for max instances
@@ -123,4 +100,39 @@ public class CreateActivityInstanceRoute extends ValidatedJsonInputRoute<Activit
         });
     }
 
+    private void warnAndHalt(Response response, int status, String code, String message) {
+        LOG.warn(message);
+        throw ResponseUtil.haltError(response, status, new ApiError(code, message));
+    }
+
+    private Long findAndCheckParentInstance(Handle handle, Response response,
+                                            String expectedParentActivityCode, String parentInstanceGuid,
+                                            User participantUser, StudyDto studyDto, boolean isStudyAdmin) {
+        if (StringUtils.isBlank(parentInstanceGuid)) {
+            String msg = "Creating child nested activity instance requires parent instance guid";
+            warnAndHalt(response, HttpStatus.SC_BAD_REQUEST, ErrorCodes.BAD_PAYLOAD, msg);
+            return null;
+        }
+
+        ActivityInstanceDto parentInstanceDto = RouteUtil.findAccessibleInstanceOrHalt(
+                response, handle, participantUser, studyDto,
+                parentInstanceGuid, isStudyAdmin);
+
+        if (!expectedParentActivityCode.equals(parentInstanceDto.getActivityCode())) {
+            String msg = "Child activity's parent activity does not match provided parent instance's activity";
+            warnAndHalt(response, HttpStatus.SC_BAD_REQUEST, ErrorCodes.BAD_PAYLOAD, msg);
+            return null;
+        }
+
+        ActivityDefStore activityStore = ActivityDefStore.getInstance();
+        FormActivityDef parentActivity = ActivityInstanceUtil
+                .getActivityDef(handle, activityStore, parentInstanceDto, studyDto.getGuid());
+        if (!isStudyAdmin && ActivityInstanceUtil.isInstanceReadOnly(parentActivity, parentInstanceDto)) {
+            String msg = "Could not create child activity instance, parent instance is read-only";
+            warnAndHalt(response, HttpStatus.SC_UNPROCESSABLE_ENTITY, ErrorCodes.ACTIVITY_INSTANCE_IS_READONLY, msg);
+            return null;
+        }
+
+        return parentInstanceDto.getId();
+    }
 }
