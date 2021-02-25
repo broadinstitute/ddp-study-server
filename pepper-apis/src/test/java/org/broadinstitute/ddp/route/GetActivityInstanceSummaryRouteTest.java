@@ -3,6 +3,7 @@ package org.broadinstitute.ddp.route;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertEquals;
 
 import java.time.Instant;
@@ -85,7 +86,8 @@ public class GetActivityInstanceSummaryRouteTest extends IntegrationTestSuite.Te
                 .when().get(url).then().assertThat()
                 .statusCode(200).contentType(ContentType.JSON)
                 .body("activityCode", equalTo(parentActivity.getActivityCode()))
-                .body("instanceGuid", equalTo(parentInstanceDto.getGuid()));
+                .body("instanceGuid", equalTo(parentInstanceDto.getGuid()))
+                .body("parentInstanceGuid", nullValue());
     }
 
     @Test
@@ -95,7 +97,8 @@ public class GetActivityInstanceSummaryRouteTest extends IntegrationTestSuite.Te
                 .when().get(url).then().assertThat()
                 .statusCode(200).contentType(ContentType.JSON)
                 .body("activityCode", equalTo(nestedActivity.getActivityCode()))
-                .body("instanceGuid", equalTo(nestedInstanceDto.getGuid()));
+                .body("instanceGuid", equalTo(nestedInstanceDto.getGuid()))
+                .body("parentInstanceGuid", equalTo(parentInstanceDto.getGuid()));
     }
 
     @Test
@@ -142,6 +145,7 @@ public class GetActivityInstanceSummaryRouteTest extends IntegrationTestSuite.Te
                     .statusCode(200).contentType(ContentType.JSON)
                     .body("activityCode", equalTo(nestedActivity.getActivityCode()))
                     .body("instanceGuid", equalTo(anotherInstanceDto.getGuid()))
+                    .body("parentInstanceGuid", equalTo(parentInstanceDto.getGuid()))
                     .body("activityName", containsString("#2"));
         } finally {
             TransactionWrapper.useTxn(handle -> handle
