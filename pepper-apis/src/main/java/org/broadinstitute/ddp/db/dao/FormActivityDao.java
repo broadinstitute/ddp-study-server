@@ -84,10 +84,13 @@ public interface FormActivityDao extends SqlObject {
             throw new IllegalStateException("Requires non-null activity code that follows accepted naming pattern");
         }
         if (activity.getParentActivityCode() != null) {
-            throw new IllegalArgumentException("Nested activity must be created alongside their parent activity");
+            throw new UnsupportedOperationException("Nested activity must be created alongside their parent activity");
         }
         if (activity.isCreateOnParentCreation()) {
-            throw new IllegalArgumentException("createOnParentCreation can only be set on nested child activities");
+            throw new UnsupportedOperationException("createOnParentCreation can only be set on nested child activities");
+        }
+        if (activity.canDeleteInstances()) {
+            throw new UnsupportedOperationException("canDeleteInstances can only be set on nested child activities");
         }
 
         nestedActivities = ListUtils.defaultIfNull(nestedActivities, List.of());
@@ -132,7 +135,7 @@ public interface FormActivityDao extends SqlObject {
                 activity.getMaxInstancesPerUser(), activity.getDisplayOrder(), activity.isWriteOnce(), activity.getEditTimeoutSec(),
                 activity.isOndemandTriggerAllowed(), activity.isExcludeFromDisplay(), activity.isExcludeStatusIconFromDisplay(),
                 activity.isAllowUnauthenticated(), activity.isFollowup(), activity.isHideInstances(),
-                activity.isCreateOnParentCreation());
+                activity.isCreateOnParentCreation(), activity.canDeleteInstances());
         activity.setActivityId(activityId);
         return activityId;
     }
@@ -244,6 +247,7 @@ public interface FormActivityDao extends SqlObject {
                 .setExcludeStatusIconFromDisplay(activityDto.shouldExcludeStatusIconFromDisplay())
                 .setHideInstances(activityDto.isHideExistingInstancesOnCreation())
                 .setCreateOnParentCreation(activityDto.isCreateOnParentCreation())
+                .setCanDeleteInstances(activityDto.canDeleteInstances())
                 .setIsFollowup(activityDto.isFollowup());
 
         List<Translation> names = new ArrayList<>();

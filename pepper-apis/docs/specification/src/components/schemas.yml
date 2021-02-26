@@ -1135,7 +1135,7 @@ Error.StudyExit:
           enum:
             - OPERATION_NOT_ALLOWED
             - NOT_SUPPORTED
-Error.TooManyInstances:
+Error.CreateActivityInstance:
   allOf:
     - $ref: '../pepper.yml#/components/schemas/Error'
     - type: object
@@ -1143,6 +1143,7 @@ Error.TooManyInstances:
         code:
           type: string
           enum:
+            - ACTIVITY_INSTANCE_IS_READONLY
             - TOO_MANY_INSTANCES
 Error.UserStudyActivityNotFound:
   allOf:
