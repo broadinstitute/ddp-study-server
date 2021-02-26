@@ -4,6 +4,7 @@ import static io.restassured.RestAssured.given;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.time.Instant;
@@ -27,6 +28,7 @@ import org.apache.http.util.EntityUtils;
 import org.broadinstitute.ddp.constants.RouteConstants.API;
 import org.broadinstitute.ddp.constants.RouteConstants.PathParam;
 import org.broadinstitute.ddp.content.I18nTemplateConstants;
+import org.broadinstitute.ddp.db.ActivityDefStore;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.ActivityI18nDao;
@@ -62,11 +64,13 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-public class UserActivityInstanceListRouteTest extends IntegrationTestSuite.TestCase {
+public class UserActivityInstanceListRouteStandaloneTest extends IntegrationTestSuite.TestCaseWithCacheEnabled {
 
     private static TestDataSetupUtil.GeneratedTestData testData;
     private static FormActivityDef prequal;
+    private static FormActivityDef nestedAct;
     private static ActivityVersionDto versionDto;
+    private static long parentInstanceId;
     private static String prequal1Guid;
     private static String userGuid;
     private static String token;
@@ -109,17 +113,23 @@ public class UserActivityInstanceListRouteTest extends IntegrationTestSuite.Test
                 testData.getStudyGuid(), code, toggleQuestionStableId);
         toggledBlock.setShownExpr(expr);
 
+        nestedAct = FormActivityDef.generalFormBuilder(code + "_NESTED", "v1", testData.getStudyGuid())
+                .addName(new Translation("en", "nested activity"))
+                .setParentActivityCode(code)
+                .build();
+
         prequal = FormActivityDef.formBuilder(FormType.PREQUALIFIER, code, "v1", testData.getStudyGuid())
                 .addName(new Translation("en", "Test prequal"))
                 .addSummary(new SummaryTranslation("en", "$ddp.testResultTimeCompleted(\"MM/dd/uuuu\")", InstanceStatusType.CREATED))
                 .addSection(new FormSectionDef(null, Arrays.asList(controlBlock, toggledBlock)))
                 .build();
-        versionDto = handle.attach(ActivityDao.class).insertActivity(prequal,
+        versionDto = handle.attach(ActivityDao.class).insertActivity(prequal, List.of(nestedAct),
                 RevisionMetadata.now(testData.getUserId(), "add " + code));
 
         assertNotNull(prequal.getActivityId());
         ActivityInstanceDto instanceDto = handle.attach(ActivityInstanceDao.class)
                 .insertInstance(prequal.getActivityId(), userGuid);
+        parentInstanceId = instanceDto.getId();
         prequal1Guid = instanceDto.getGuid();
 
         handle.attach(ActivityInstanceDao.class).saveSubstitutions(instanceDto.getId(), Map.of(
@@ -165,6 +175,7 @@ public class UserActivityInstanceListRouteTest extends IntegrationTestSuite.Test
         boolean hasReadonlyActivities = false;
         assertEquals(userActivities.size(), 1);
         ActivityInstanceSummary userActivity = userActivities.get(0);
+        assertNull(userActivity.getParentInstanceGuid());
         assertEquals(userActivity.getNumQuestionsAnswered(), 1);
         assertEquals(userActivity.getNumQuestions(), 2);
         if (ActivityType.FORMS.name().equals(userActivity.getActivityType())) {
@@ -209,6 +220,7 @@ public class UserActivityInstanceListRouteTest extends IntegrationTestSuite.Test
                 .updateIsReadonlyByGuid(null, firstActivityInstanceGuid));
         TransactionWrapper.withTxn(handle -> handle.attach(JdbiActivity.class)
                 .updateEditTimeoutSecByCode(1L, firstActivityCode, testData.getStudyId()));
+        ActivityDefStore.getInstance().clear();
         TimeUnit.SECONDS.sleep(1L);
         Assert.assertEquals(1L, userActivitiesCounter.get().longValue());
 
@@ -224,6 +236,8 @@ public class UserActivityInstanceListRouteTest extends IntegrationTestSuite.Test
         TransactionWrapper.withTxn(handle -> handle.attach(JdbiActivityInstance.class)
                 .updateIsReadonlyByGuid(false, firstActivityInstanceGuid));
         Assert.assertEquals(0L, userActivitiesCounter.get().longValue());
+
+        ActivityDefStore.getInstance().clear();
     }
 
     @Test
@@ -286,6 +300,7 @@ public class UserActivityInstanceListRouteTest extends IntegrationTestSuite.Test
                     .insertInstance(prequal.getActivityId(), userGuid)
                     .getGuid();
         });
+        ActivityDefStore.getInstance().clear();
         try {
             List<ActivityInstanceSummary> userActivities = getUserActivities();
             Assert.assertEquals(2, userActivities.size());
@@ -306,6 +321,7 @@ public class UserActivityInstanceListRouteTest extends IntegrationTestSuite.Test
                 handle.attach(ActivityInstanceDao.class).deleteByInstanceGuid(prequal2Guid);
                 handle.attach(ActivityI18nDao.class).updateDetails(List.of(oldDetails.get()));
             });
+            ActivityDefStore.getInstance().clear();
         }
     }
 
@@ -322,6 +338,7 @@ public class UserActivityInstanceListRouteTest extends IntegrationTestSuite.Test
     public void test_whenActivityIsExcludeFromDisplay_activityInstancesAreNotReturned() {
         TransactionWrapper.useTxn(handle -> assertEquals(1, handle.attach(JdbiActivity.class)
                 .updateExcludeFromDisplayById(prequal.getActivityId(), true)));
+        ActivityDefStore.getInstance().clear();
 
         String body = given().auth().oauth2(token)
                 .when().get(url)
@@ -337,6 +354,7 @@ public class UserActivityInstanceListRouteTest extends IntegrationTestSuite.Test
         } finally {
             TransactionWrapper.useTxn(handle -> assertEquals(1, handle.attach(JdbiActivity.class)
                     .updateExcludeFromDisplayById(prequal.getActivityId(), false)));
+            ActivityDefStore.getInstance().clear();
         }
     }
 
@@ -384,6 +402,29 @@ public class UserActivityInstanceListRouteTest extends IntegrationTestSuite.Test
                         .bulkUpdateIsHiddenByActivityIds(testData.getUserId(), false, Set.of(prequal.getActivityId()));
                 handle.attach(AuthDao.class).removeAdminFromAllStudies(testData.getUserId());
             });
+        }
+    }
+
+    @Test
+    public void testChildNestedActivityInstanceSummariesAreNotReturned() {
+        ActivityInstanceDto nestedInstanceDto = TransactionWrapper.withTxn(handle -> handle
+                .attach(ActivityInstanceDao.class)
+                .insertInstance(nestedAct.getActivityId(), userGuid, userGuid, parentInstanceId));
+        try {
+            String body = given().auth().oauth2(token)
+                    .when().get(url)
+                    .then().assertThat()
+                    .statusCode(200).contentType(ContentType.JSON)
+                    .and().extract().body().asString();
+
+            ActivityInstanceSummary[] activities = gson.fromJson(body, ActivityInstanceSummary[].class);
+
+            assertEquals("should only have parent instance", 1, activities.length);
+            assertNotEquals(nestedInstanceDto.getGuid(), activities[0].getActivityInstanceGuid());
+        } finally {
+            TransactionWrapper.useTxn(handle -> handle
+                    .attach(ActivityInstanceDao.class)
+                    .deleteByInstanceGuid(nestedInstanceDto.getGuid()));
         }
     }
 }

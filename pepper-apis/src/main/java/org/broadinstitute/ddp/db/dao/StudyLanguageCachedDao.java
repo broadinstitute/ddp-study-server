@@ -45,7 +45,9 @@ public class StudyLanguageCachedDao extends SQLObjectWrapper<StudyLanguageDao> i
     @Override
     public long insert(long umbrellaStudyId, long languageCodeId) {
         try {
-            studyIdToLanguageCache.remove(umbrellaStudyId);
+            if (!isNullCache()) {
+                studyIdToLanguageCache.remove(umbrellaStudyId);
+            }
         } catch (RedisException e) {
             LOG.warn("Failed to remove values from Redis caches", e);
             RedisConnectionValidator.doTest();
@@ -55,20 +57,26 @@ public class StudyLanguageCachedDao extends SQLObjectWrapper<StudyLanguageDao> i
 
     @Override
     public long insert(long umbrellaStudyId, long languageCodeId, String name) {
-        studyIdToLanguageCache.remove(umbrellaStudyId);
+        if (!isNullCache()) {
+            studyIdToLanguageCache.remove(umbrellaStudyId);
+        }
         return delegate.insert(umbrellaStudyId, languageCodeId, name);
     }
 
     @Override
     public long insert(String studyGuid, String languageCode, String name) {
-        studyIdToLanguageCache.clear();
-        return insert(studyGuid, languageCode, name);
+        if (!isNullCache()) {
+            studyIdToLanguageCache.clear();
+        }
+        return delegate.insert(studyGuid, languageCode, name);
     }
 
     @Override
     public void deleteStudyLanguageById(long studyLanguageId) {
-        studyIdToLanguageCache.clear();
-        deleteStudyLanguageById(studyLanguageId);
+        if (!isNullCache()) {
+            studyIdToLanguageCache.clear();
+        }
+        delegate.deleteStudyLanguageById(studyLanguageId);
     }
 
     @Override
@@ -76,7 +84,7 @@ public class StudyLanguageCachedDao extends SQLObjectWrapper<StudyLanguageDao> i
         if (!isNullCache()) {
             studyIdToLanguageCache.remove(umbrellaStudyId);
         }
-        return setAsDefaultLanguage(umbrellaStudyId, languageCodeId);
+        return delegate.setAsDefaultLanguage(umbrellaStudyId, languageCodeId);
     }
 
     @Override
@@ -89,7 +97,7 @@ public class StudyLanguageCachedDao extends SQLObjectWrapper<StudyLanguageDao> i
 
     @Override
     public List<StudyLanguage> findLanguages(long umbrellaStudyId) {
-        if (isNullCache(studyIdToLanguageCache)) {
+        if (isNullCache()) {
             return delegate.findLanguages(umbrellaStudyId);
         } else {
             List<StudyLanguage> result = null;
@@ -115,7 +123,7 @@ public class StudyLanguageCachedDao extends SQLObjectWrapper<StudyLanguageDao> i
 
     @Override
     public List<StudyLanguage> findLanguages(String studyGuid) {
-        if (isNullCache(studyIdToLanguageCache)) {
+        if (isNullCache()) {
             return delegate.findLanguages(studyGuid);
         } else {
             Optional<Long> studyIdOpt = new JdbiUmbrellaStudyCached(getHandle()).getIdByGuid(studyGuid);

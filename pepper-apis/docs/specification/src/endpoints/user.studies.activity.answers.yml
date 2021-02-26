@@ -83,6 +83,9 @@ put:
     Indicates to server that user is done with an activity. This API ensures
     any required questions in an activity is answered, and then transitions
     the user's activity instance to an appropriate status (i.e. `COMPLETE`).
+    If activity is a parent instance with nested child instances, then those
+    child instances must have their required questions answered before the
+    parent instance is allowed to be completed.
 
     Completing an activity may also trigger some server-side post-submission
     processes, if any are configured for the activity/study. Activities are

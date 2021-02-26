@@ -605,7 +605,8 @@ Block.Activity:
             using [getActivitySummary](#operation/getActivitySummary).
             These summary objects contain metadata (`canDelete`, `readOnly`) that indicate what operations are available to operate on the instance.
             The full activity instance can be retrieved using [getActivity](#operation/getActivity) with the provided `instanceGuid` or
-            deleted using [deleteActivity](#operation/deleteActivity).
+            deleted using [deleteActivity](#operation/deleteActivity). Note that these summary objects will not contain an `icon`
+            (so the value will be `null` for the `icon` property).
           type: array
           items:
             $ref: '../pepper.yml#/components/schemas/Activity.Summary'

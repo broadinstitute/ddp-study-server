@@ -1,6 +1,5 @@
 package org.broadinstitute.ddp.model.activity.instance;
 
-import javax.validation.constraints.NotNull;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -11,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
+import javax.validation.constraints.NotNull;
 
 import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.annotations.SerializedName;
@@ -21,6 +21,7 @@ import org.broadinstitute.ddp.content.I18nTemplateConstants;
 import org.broadinstitute.ddp.content.RenderValueProvider;
 import org.broadinstitute.ddp.content.Renderable;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
+import org.broadinstitute.ddp.db.dto.UserActivityInstanceSummary;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
 import org.broadinstitute.ddp.model.activity.types.ActivityType;
@@ -258,27 +259,32 @@ public final class FormInstance extends ActivityInstance {
      * Evaluate and update the form's block visibilities, assuming that those are all loaded. If the block does not have
      * a conditional expression (and thus toggle-able), no change will be made to the block.
      *
-     * @param handle       the jdbi handle
-     * @param interpreter  the pex interpreter to evaluate expressions
-     * @param userGuid     the user guid
-     * @param instanceGuid the activity instance guid
+     * @param handle          the jdbi handle
+     * @param interpreter     the pex interpreter to evaluate expressions
+     * @param userGuid        the user guid
+     * @param instanceGuid    the activity instance guid
+     * @param instanceSummary container that holds data about user's instances
      * @throws DDPException if pex evaluation error
      */
-    public void updateBlockStatuses(Handle handle, PexInterpreter interpreter, String userGuid, String operatorGuid, String instanceGuid) {
+    public void updateBlockStatuses(Handle handle, PexInterpreter interpreter, String userGuid, String operatorGuid,
+                                    String instanceGuid, UserActivityInstanceSummary instanceSummary) {
         for (FormSection section : getAllSections()) {
             for (FormBlock block : section.getBlocks()) {
-                updateBlockStatus(handle, interpreter, block, userGuid, operatorGuid, instanceGuid);
+                updateBlockStatus(handle, interpreter, block, userGuid, operatorGuid, instanceGuid, instanceSummary);
                 if (block.getBlockType().isContainerBlock()) {
                     List<FormBlock> children;
                     if (block.getBlockType() == BlockType.CONDITIONAL) {
                         children = ((ConditionalBlock) block).getNested();
                     } else if (block.getBlockType() == BlockType.GROUP) {
                         children = ((GroupBlock) block).getNested();
+                    } else if (block.getBlockType() == BlockType.ACTIVITY) {
+                        // Questions within the nested activity itself are not considered.
+                        children = new ArrayList<>();
                     } else {
                         throw new DDPException("Unhandled container block type " + block.getBlockType());
                     }
                     for (FormBlock child : children) {
-                        updateBlockStatus(handle, interpreter, child, userGuid, operatorGuid, instanceGuid);
+                        updateBlockStatus(handle, interpreter, child, userGuid, operatorGuid, instanceGuid, instanceSummary);
                     }
                 }
             }
@@ -286,10 +292,10 @@ public final class FormInstance extends ActivityInstance {
     }
 
     private void updateBlockStatus(Handle handle, PexInterpreter interpreter, FormBlock block, String userGuid,
-                                   String operatorGuid, String instanceGuid) {
+                                   String operatorGuid, String instanceGuid, UserActivityInstanceSummary instanceSummary) {
         if (block.getShownExpr() != null) {
             try {
-                boolean shown = interpreter.eval(block.getShownExpr(), handle, userGuid, operatorGuid, instanceGuid);
+                boolean shown = interpreter.eval(block.getShownExpr(), handle, userGuid, operatorGuid, instanceGuid, instanceSummary);
                 block.setShown(shown);
             } catch (PexException e) {
                 String msg = String.format("Error evaluating pex expression for form activity instance %s and block %s: `%s`",

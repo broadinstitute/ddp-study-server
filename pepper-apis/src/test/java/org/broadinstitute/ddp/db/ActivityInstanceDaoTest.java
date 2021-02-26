@@ -3,11 +3,9 @@ package org.broadinstitute.ddp.db;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -19,7 +17,6 @@ import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
 import org.broadinstitute.ddp.db.dao.JdbiUser;
 import org.broadinstitute.ddp.json.UserActivity;
-import org.broadinstitute.ddp.json.activity.ActivityInstanceSummary;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
 import org.broadinstitute.ddp.model.activity.definition.i18n.Translation;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
@@ -183,78 +180,6 @@ public class ActivityInstanceDaoTest extends TxnAwareBaseTest {
     }
 
     @Test
-    public void testListActivityInstancesForUser_fallbackToEnglishOK() {
-        TransactionWrapper.useTxn(handle -> {
-            FormActivityDef form = insertNewActivity(handle, userGuid, studyGuid);
-            String instanceGuid = insertNewInstance(handle, form.getActivityId(), userGuid);
-
-            List<ActivityInstanceSummary> summary = dao.listActivityInstancesForUser(handle, userGuid, studyGuid, "xyz");
-            assertNotNull(summary);
-            assertEquals("en", summary.get(0).getIsoLanguageCode());
-            String savedSubtitle = form.getTranslatedSubtitles().get(0).getText();
-            assertNotNull(savedSubtitle);
-            assertEquals(savedSubtitle, summary.get(0).getActivitySubtitle());
-            String title = form.getTranslatedTitles().get(0).getText();
-            assertNotNull(title);
-            assertEquals(title, summary.get(0).getActivityTitle());
-
-            handle.rollback();
-        });
-    }
-
-    @Test
-    public void testListActivityInstancesForUser_noSubtitle_fallbackToEnglishOK() {
-        TransactionWrapper.useTxn(handle -> {
-            FormActivityDef form = insertNewActivityWithoutSubtitle(handle, userGuid, studyGuid);
-            String instanceGuid = insertNewInstance(handle, form.getActivityId(), userGuid);
-
-            List<ActivityInstanceSummary> summary = dao.listActivityInstancesForUser(handle, userGuid, studyGuid, "xyz");
-            assertNotNull(summary);
-            assertEquals("en", summary.get(0).getIsoLanguageCode());
-
-            assertNull(summary.get(0).getActivitySubtitle());
-
-            String originalTitle = form.getTranslatedTitles().get(0).getText();
-            assertNotNull(originalTitle);
-            assertEquals(originalTitle, summary.get(0).getActivityTitle());
-
-            handle.rollback();
-        });
-    }
-
-    @Test
-    public void testListActivityInstancesForUser_PreferredLanguageChosenOK() {
-        TransactionWrapper.useTxn(handle -> {
-            FormActivityDef form = insertNewActivityWithPreferredLang(handle, userGuid, studyGuid);
-            String instanceGuid = insertNewInstance(handle, form.getActivityId(), userGuid);
-            List<ActivityInstanceSummary> summary = dao.listActivityInstancesForUser(handle, userGuid, studyGuid, "ru");
-
-            assertNotNull(summary);
-            assertFalse(summary.isEmpty());
-            assertEquals("ru", summary.get(0).getIsoLanguageCode());
-            assertEquals(instanceGuid, summary.get(0).getActivityInstanceGuid());
-
-            handle.rollback();
-        });
-    }
-
-    @Test
-    public void testListActivityInstancesForUser_fallbackToSecondaryLanguageOK() {
-        TransactionWrapper.useTxn(handle -> {
-            FormActivityDef form = insertNewActivityWithPreferredAndSecondaryLang(handle, userGuid, studyGuid);
-            String instanceGuid = insertNewInstance(handle, form.getActivityId(), userGuid);
-            List<ActivityInstanceSummary> summary = dao.listActivityInstancesForUser(handle, userGuid, studyGuid, "ru");
-
-            assertNotNull(summary);
-            assertFalse(summary.isEmpty());
-            assertEquals("fr", summary.get(0).getIsoLanguageCode());
-            assertEquals(instanceGuid, summary.get(0).getActivityInstanceGuid());
-
-            handle.rollback();
-        });
-    }
-
-    @Test
     public void testGetGuidOfLatestInstanceForUserAndActivities_lastPrequalInstanceGoesFirst() {
         TransactionWrapper.useTxn(handle -> {
             FormActivityDef form = insertNewActivity(handle, userGuid, studyGuid);
@@ -273,56 +198,9 @@ public class ActivityInstanceDaoTest extends TxnAwareBaseTest {
         });
     }
 
-    @Test
-    public void testListActivityInstancesForUser_activityWithLowerDisplayOrderGoesFirst() {
-        TransactionWrapper.useTxn(handle -> {
-            List<String> instanceGuids = new ArrayList<>();
-            for (int i = 5; i > 0; i--) {
-                FormActivityDef form = FormActivityDef.generalFormBuilder("ACT" + Instant.now().toEpochMilli(), "v1", studyGuid)
-                        .addName(new Translation("en", "test activity"))
-                        .setDisplayOrder(i)
-                        .build();
-                handle.attach(ActivityDao.class).insertActivity(form, RevisionMetadata.now(data.getUserId(), "add test activity"));
-                String guid = insertNewInstance(handle, form.getActivityId(), userGuid);
-                instanceGuids.add(guid);
-            }
-            List<ActivityInstanceSummary> summary = dao.listActivityInstancesForUser(handle, userGuid, studyGuid, "en");
-            assertEquals(5, summary.size());
-            assertEquals(
-                    "Activities must be sorted by display_order in ascendent order, this is not the case",
-                    summary.get(0).getActivityInstanceGuid(), instanceGuids.get(instanceGuids.size() - 1)
-            );
-            handle.rollback();
-        });
-    }
-
-    @Test
-    public void testListActivityInstancesForUser_multipleActivitiesAreListedCorrectly() throws InterruptedException {
-        TransactionWrapper.useTxn(handle -> {
-            insertNewInstance(handle, insertNewActivity(handle, userGuid, studyGuid).getActivityId(), userGuid);
-            insertNewInstance(handle, insertNewActivity(handle, userGuid, studyGuid).getActivityId(), userGuid);
-            List<ActivityInstanceSummary> summary = dao.listActivityInstancesForUser(handle, userGuid, studyGuid, "en");
-            assertEquals("Inserted 2 activities for the user/study, but got something different", 2, summary.size());
-            handle.rollback();
-        });
-    }
-
-    @Test
-    public void testRenderActivitySummary_rendersNameEvenWhenThereIsNoSummaryText() {
-        var summaries = List.of(new ActivityInstanceSummary(
-                "activity", 1L, "guid", "name", null, null, null, null, null, "type", "form", "status",
-                null, false, "en", "type", false, false, 1L, false, "version", 1L, 1L));
-        summaries.get(0).setInstanceNumber(2);
-
-        TransactionWrapper.useTxn(handle ->
-                dao.renderActivitySummary(handle, data.getUserId(), summaries));
-
-        assertEquals("name #2", summaries.get(0).getActivityName());
-    }
-
     private String insertNewInstance(Handle handle, long activityId, String userGuid, long createdAt) {
         return handle.attach(org.broadinstitute.ddp.db.dao.ActivityInstanceDao.class)
-                .insertInstance(activityId, userGuid, userGuid, InstanceStatusType.CREATED, false, createdAt)
+                .insertInstance(activityId, userGuid, userGuid, InstanceStatusType.CREATED, false, createdAt, null)
                 .getGuid();
     }
 
@@ -337,16 +215,6 @@ public class ActivityInstanceDaoTest extends TxnAwareBaseTest {
                 .addName(new Translation("en", "activity name"))
                 .addTitle(new Translation("en", "test activity"))
                 .addSubtitle(new Translation("en", "test subtitle"))
-                .build();
-        handle.attach(ActivityDao.class).insertActivity(form, RevisionMetadata.now(data.getUserId(), "add test activity"));
-        assertNotNull(form.getActivityId());
-        return form;
-    }
-
-    private FormActivityDef insertNewActivityWithoutSubtitle(Handle handle, String userGuid, String studyGuid) {
-        FormActivityDef form = FormActivityDef.generalFormBuilder("ACT" + Instant.now().toEpochMilli(), "v1", studyGuid)
-                .addName(new Translation("en", "activity name"))
-                .addTitle(new Translation("en", "test activity"))
                 .build();
         handle.attach(ActivityDao.class).insertActivity(form, RevisionMetadata.now(data.getUserId(), "add test activity"));
         assertNotNull(form.getActivityId());

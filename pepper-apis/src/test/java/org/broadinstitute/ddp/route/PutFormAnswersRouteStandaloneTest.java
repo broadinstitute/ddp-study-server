@@ -37,6 +37,7 @@ import org.broadinstitute.ddp.db.ActivityDefStore;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
+import org.broadinstitute.ddp.db.dao.ActivityInstanceStatusDao;
 import org.broadinstitute.ddp.db.dao.AnswerDao;
 import org.broadinstitute.ddp.db.dao.AuthDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
@@ -72,6 +73,7 @@ import org.broadinstitute.ddp.model.activity.instance.answer.CompositeAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
 import org.broadinstitute.ddp.model.activity.types.FormType;
+import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
 import org.broadinstitute.ddp.model.activity.types.TemplateType;
 import org.broadinstitute.ddp.model.activity.types.TextInputType;
@@ -91,12 +93,12 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import spark.HaltException;
 
-
-public class PutFormAnswersRouteStandaloneTest {
+public class PutFormAnswersRouteStandaloneTest extends IntegrationTestSuite.TestCaseWithCacheEnabled {
 
     private static ActivityVersionDto activityVersionDto;
     private static TestDataSetupUtil.GeneratedTestData testData;
     private static Auth0Util.TestingUser user;
+    private static FormActivityDef parentForm;
     private static FormActivityDef form;
     private static ConditionalBlockDef conditionalBlock;
     private static long studyId;
@@ -104,16 +106,15 @@ public class PutFormAnswersRouteStandaloneTest {
     private static String token;
     private static String urlTemplate;
     private static FormActivityDef compositeQuestionForm;
+    private static ActivityInstanceDto parentInstanceDto;
 
     private List<String> instanceGuidsToDelete = new ArrayList<>();
     private List<Long> transitionIdsToDelete = new ArrayList<>();
     //allow tests to add something unique to cleanup
     private List<Consumer<Handle>> testCleanupTasks = new ArrayList<>();
 
-
     @BeforeClass
     public static void setup() {
-        IntegrationTestSuite.setup(false);
         TransactionWrapper.useTxn(handle -> {
             testData = TestDataSetupUtil.generateBasicUserTestData(handle);
             user = testData.getTestingUser();
@@ -155,15 +156,24 @@ public class PutFormAnswersRouteStandaloneTest {
                 .addValidation(new LengthRuleDef(null, 0, 1000))
                 .addValidation(allowSaveTrueLengthRuleDef)
                 .build();
+
+        String parentActCode = "PUT_STATUS_PARENT" + Instant.now().toEpochMilli();
+        parentForm = FormActivityDef.generalFormBuilder(parentActCode, "v1", studyGuid)
+                .addName(new Translation("en", "parent test activity"))
+                .build();
+
         String code = "PUT_STATUS_ACT" + Instant.now().toEpochMilli();
         FormActivityDef form = FormActivityDef.generalFormBuilder(code, "v1", studyGuid)
                 .addName(new Translation("en", "test activity"))
+                .setParentActivityCode(parentActCode)
                 .addSubtitle(new Translation("en", "subtitle of activity"))
                 .addSection(new FormSectionDef(null, TestUtil.wrapQuestions(question)))
                 .addSection(new FormSectionDef(null, Collections.singletonList(conditionalBlock)))
                 .setSnapshotSubstitutionsOnSubmit(true)
                 .build();
-        handle.attach(ActivityDao.class).insertActivity(form, RevisionMetadata.now(userId, "test"));
+        handle.attach(ActivityDao.class).insertActivity(parentForm, List.of(form), RevisionMetadata.now(userId, "test"));
+        parentInstanceDto = handle.attach(ActivityInstanceDao.class)
+                .insertInstance(parentForm.getActivityId(), user.getUserGuid());
         return form;
     }
 
@@ -251,6 +261,71 @@ public class PutFormAnswersRouteStandaloneTest {
                 assertEquals(1, jdbiTrans.deleteById(transitionId));
             }
             transitionIdsToDelete.clear();
+        });
+    }
+
+    @Test
+    public void testParentActivity_parentReadOnlyPreventsChildPut() {
+        ActivityInstanceDto instanceDto = TransactionWrapper.withTxn(handle -> {
+            assertEquals(1, handle.attach(JdbiActivityInstance.class)
+                    .updateIsReadonlyByGuid(true, parentInstanceDto.getGuid()));
+            return insertNewInstanceAndDeferCleanup(handle, form.getActivityId());
+        });
+        try {
+            given().auth().oauth2(token)
+                    .pathParam("instanceGuid", instanceDto.getGuid())
+                    .when().put(urlTemplate).then().assertThat()
+                    .statusCode(422).contentType(ContentType.JSON)
+                    .body("code", equalTo(ErrorCodes.ACTIVITY_INSTANCE_IS_READONLY))
+                    .body("message", containsString("Parent activity instance"))
+                    .body("message", containsString("read-only"));
+        } finally {
+            TransactionWrapper.useTxn(handle -> assertEquals(1, handle.attach(JdbiActivityInstance.class)
+                    .updateIsReadonlyByGuid(null, parentInstanceDto.getGuid())));
+        }
+    }
+
+    @Test
+    public void testParentActivity_parentPutChecksChildComplete() {
+        TransactionWrapper.useTxn(handle -> {
+            // Make it so that child activity have a required question that's not answered yet.
+            long exprId = conditionalBlock.getNested().get(0).getShownExprId();
+            assertEquals(1, handle.attach(JdbiExpression.class).updateById(exprId, "true"));
+            insertNewInstanceAndDeferCleanup(handle, form.getActivityId());
+        });
+        try {
+            given().auth().oauth2(token)
+                    .pathParam("instanceGuid", parentInstanceDto.getGuid())
+                    .when().put(urlTemplate).then().assertThat()
+                    .statusCode(422).contentType(ContentType.JSON)
+                    .body("code", equalTo(ErrorCodes.QUESTION_REQUIREMENTS_NOT_MET));
+        } finally {
+            TransactionWrapper.useTxn(handle -> {
+                long exprId = conditionalBlock.getNested().get(0).getShownExprId();
+                assertEquals(1, handle.attach(JdbiExpression.class).updateById(exprId, "false"));
+            });
+        }
+    }
+
+    @Test
+    public void testParentActivity_childPutUpdatesParentStatusToInProgress() {
+        ActivityInstanceDto instanceDto = TransactionWrapper.withTxn(handle -> {
+            var instanceStatusDao = handle.attach(ActivityInstanceStatusDao.class);
+            instanceStatusDao.deleteAllByInstanceGuid(parentInstanceDto.getGuid());
+            instanceStatusDao.insertStatus(parentInstanceDto.getGuid(), InstanceStatusType.CREATED,
+                    Instant.now().toEpochMilli(), testData.getUserGuid());
+            return insertNewInstanceAndDeferCleanup(handle, form.getActivityId());
+        });
+
+        given().auth().oauth2(token)
+                .pathParam("instanceGuid", instanceDto.getGuid())
+                .when().put(urlTemplate).then().assertThat()
+                .statusCode(200);
+
+        TransactionWrapper.useTxn(handle -> {
+            ActivityInstanceDto actualParentInstanceDto = handle.attach(JdbiActivityInstance.class)
+                    .getByActivityInstanceGuid(parentInstanceDto.getGuid()).get();
+            assertEquals(InstanceStatusType.IN_PROGRESS, actualParentInstanceDto.getStatusType());
         });
     }
 
@@ -857,7 +932,7 @@ public class PutFormAnswersRouteStandaloneTest {
 
     private ActivityInstanceDto insertNewInstanceAndDeferCleanup(Handle handle, long activityId) {
         ActivityInstanceDto dto = handle.attach(ActivityInstanceDao.class)
-                .insertInstance(activityId, user.getUserGuid());
+                .insertInstance(activityId, user.getUserGuid(), user.getUserGuid(), parentInstanceDto.getId());
         instanceGuidsToDelete.add(dto.getGuid());
         return dto;
     }

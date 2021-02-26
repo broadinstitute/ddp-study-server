@@ -26,6 +26,7 @@ import org.broadinstitute.ddp.model.activity.instance.GroupBlock;
 import org.broadinstitute.ddp.model.activity.instance.QuestionBlock;
 import org.broadinstitute.ddp.model.activity.instance.question.Question;
 import org.broadinstitute.ddp.model.activity.instance.validation.ActivityValidationFailure;
+import org.broadinstitute.ddp.model.activity.types.ActivityType;
 import org.broadinstitute.ddp.model.activity.types.BlockType;
 import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
 import org.broadinstitute.ddp.pex.PexInterpreter;
@@ -90,7 +91,7 @@ public class GetActivityInstanceRoute implements Route {
             Optional<ActivityInstance> inst = actInstService.getTranslatedActivity(
                     handle, userGuid, operatorGuid, instanceDto.getActivityType(), instanceGuid, isoLangCode, style
             );
-            if (!inst.isPresent()) {
+            if (inst.isEmpty()) {
                 String errMsg = String.format(
                         "Unable to find activity instance %s of type '%s' in '%s'",
                         instanceGuid,
@@ -103,6 +104,11 @@ public class GetActivityInstanceRoute implements Route {
             LOG.info("Found a translation to the '{}' language code for the activity instance with GUID {}",
                     isoLangCode, instanceGuid);
             ActivityInstance activityInstance = inst.get();
+            activityInstance.setParentInstanceGuid(instanceDto.getParentInstanceGuid());
+            if (activityInstance.getActivityType() == ActivityType.FORMS) {
+                actInstService.loadNestedInstanceSummaries(
+                        handle, (FormInstance) activityInstance, studyGuid, userGuid, operatorGuid, isoLangCode);
+            }
             // To-do: change this to just "if (enrollmentStatus.get() == EnrollmentStatusType.EXITED_BEFORE_ENROLLMENT)) {...}"
             // when every user registered in the system will become enrolled automatically
             // When it is implemented, the check for the enrollment status presence is not needed

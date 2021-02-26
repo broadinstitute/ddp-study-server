@@ -398,7 +398,7 @@ public class FormInstanceTest extends TxnAwareBaseTest {
 
             block.getNested().get(0).setShown(false);
             block.getNested().get(0).setShownExpr("true");
-            form.updateBlockStatuses(handle, interpreter, userGuid, userGuid, form.getGuid());
+            form.updateBlockStatuses(handle, interpreter, userGuid, userGuid, form.getGuid(), null);
             assertTrue(block.getNested().get(0).isShown());
         });
     }
@@ -412,11 +412,11 @@ public class FormInstanceTest extends TxnAwareBaseTest {
             form.addBodySections(Collections.singletonList(s1));
 
             content.setShown(false);
-            form.updateBlockStatuses(handle, interpreter, userGuid, userGuid, form.getGuid());
+            form.updateBlockStatuses(handle, interpreter, userGuid, userGuid, form.getGuid(), null);
             assertFalse(content.isShown());
 
             content.setShownExpr("true");
-            form.updateBlockStatuses(handle, interpreter, userGuid, userGuid, form.getGuid());
+            form.updateBlockStatuses(handle, interpreter, userGuid, userGuid, form.getGuid(), null);
             assertTrue(content.isShown());
         });
     }
@@ -425,7 +425,7 @@ public class FormInstanceTest extends TxnAwareBaseTest {
     public void testUpdateBlockStatuses_withoutExpr_defaultShown() {
         TransactionWrapper.useTxn(handle -> {
             FormInstance form = buildTestInstance();
-            form.updateBlockStatuses(handle, interpreter, userGuid, userGuid, form.getGuid());
+            form.updateBlockStatuses(handle, interpreter, userGuid, userGuid, form.getGuid(), null);
 
             for (FormSection sect : form.getBodySections()) {
                 for (FormBlock block : sect.getBlocks()) {
@@ -444,10 +444,10 @@ public class FormInstanceTest extends TxnAwareBaseTest {
         TransactionWrapper.useTxn(handle -> {
             FormInstance form = buildTestInstance();
 
-            when(mockInterpreter.eval(anyString(), any(Handle.class), eq(userGuid), eq(userGuid), eq(form.getGuid())))
+            when(mockInterpreter.eval(anyString(), any(Handle.class), eq(userGuid), eq(userGuid), eq(form.getGuid()), any()))
                     .thenReturn(true);
 
-            form.updateBlockStatuses(handle, mockInterpreter, userGuid, userGuid, form.getGuid());
+            form.updateBlockStatuses(handle, mockInterpreter, userGuid, userGuid, form.getGuid(), null);
 
             for (FormSection sect : form.getBodySections()) {
                 for (FormBlock block : sect.getBlocks()) {
@@ -469,10 +469,10 @@ public class FormInstanceTest extends TxnAwareBaseTest {
         TransactionWrapper.useTxn(handle -> {
             FormInstance form = buildTestInstance();
 
-            when(mockInterpreter.eval(anyString(), any(Handle.class), eq(userGuid), eq(userGuid), eq(form.getGuid())))
+            when(mockInterpreter.eval(anyString(), any(Handle.class), eq(userGuid), eq(userGuid), eq(form.getGuid()), any()))
                     .thenThrow(new PexException("testing"));
 
-            form.updateBlockStatuses(handle, mockInterpreter, userGuid, userGuid, form.getGuid());
+            form.updateBlockStatuses(handle, mockInterpreter, userGuid, userGuid, form.getGuid(), null);
             fail("expected exception was not thrown");
         });
     }

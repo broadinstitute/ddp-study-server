@@ -9,11 +9,12 @@ public enum BlockType {
     QUESTION,
 
     // Container blocks.
+    ACTIVITY,
     CONDITIONAL,
     GROUP;
 
     public boolean isContainerBlock() {
-        return Arrays.asList(CONDITIONAL, GROUP).contains(this);
+        return Arrays.asList(ACTIVITY, CONDITIONAL, GROUP).contains(this);
     }
 
     public boolean isQuestionBlock() {

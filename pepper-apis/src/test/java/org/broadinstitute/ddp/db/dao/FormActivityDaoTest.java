@@ -19,6 +19,7 @@ import java.util.Optional;
 import org.broadinstitute.ddp.TxnAwareBaseTest;
 import org.broadinstitute.ddp.content.ContentStyle;
 import org.broadinstitute.ddp.content.HtmlConverter;
+import org.broadinstitute.ddp.content.I18nContentRenderer;
 import org.broadinstitute.ddp.db.FormInstanceDao;
 import org.broadinstitute.ddp.db.SectionBlockDao;
 import org.broadinstitute.ddp.db.TransactionWrapper;
@@ -34,6 +35,7 @@ import org.broadinstitute.ddp.model.activity.definition.FormSectionDef;
 import org.broadinstitute.ddp.model.activity.definition.GroupBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.InstitutionComponentDef;
 import org.broadinstitute.ddp.model.activity.definition.MailingAddressComponentDef;
+import org.broadinstitute.ddp.model.activity.definition.NestedActivityBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.PhysicianComponentDef;
 import org.broadinstitute.ddp.model.activity.definition.PhysicianInstitutionComponentDef;
 import org.broadinstitute.ddp.model.activity.definition.QuestionBlockDef;
@@ -74,6 +76,7 @@ import org.broadinstitute.ddp.model.activity.instance.validation.DateRangeRule;
 import org.broadinstitute.ddp.model.activity.instance.validation.LengthRule;
 import org.broadinstitute.ddp.model.activity.instance.validation.RegexRule;
 import org.broadinstitute.ddp.model.activity.instance.validation.Rule;
+import org.broadinstitute.ddp.model.activity.types.ActivityType;
 import org.broadinstitute.ddp.model.activity.types.BlockType;
 import org.broadinstitute.ddp.model.activity.types.ComponentType;
 import org.broadinstitute.ddp.model.activity.types.DateFieldType;
@@ -82,6 +85,7 @@ import org.broadinstitute.ddp.model.activity.types.FormType;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.broadinstitute.ddp.model.activity.types.InstitutionType;
 import org.broadinstitute.ddp.model.activity.types.ListStyleHint;
+import org.broadinstitute.ddp.model.activity.types.NestedActivityRenderHint;
 import org.broadinstitute.ddp.model.activity.types.PicklistRenderMode;
 import org.broadinstitute.ddp.model.activity.types.PicklistSelectMode;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
@@ -106,7 +110,7 @@ public class FormActivityDaoTest extends TxnAwareBaseTest {
     public static void setup() {
         org.broadinstitute.ddp.db.ActivityInstanceDao actInstDao = new org.broadinstitute.ddp.db.ActivityInstanceDao(
                 FormInstanceDao.fromDaoAndConfig(new SectionBlockDao(), sqlConfig));
-        service = new ActivityInstanceService(actInstDao, new TreeWalkInterpreter());
+        service = new ActivityInstanceService(actInstDao, new TreeWalkInterpreter(), new I18nContentRenderer());
         TransactionWrapper.useTxn(handle -> testData = TestDataSetupUtil.generateBasicUserTestData(handle));
     }
 
@@ -357,7 +361,9 @@ public class FormActivityDaoTest extends TxnAwareBaseTest {
         String instanceGuid = handle.attach(ActivityInstanceDao.class)
                 .insertInstance(form.getActivityId(), userGuid, userGuid, InstanceStatusType.CREATED, false)
                 .getGuid();
-        Optional<FormInstance> inst = service.getTranslatedForm(handle, userGuid, userGuid, instanceGuid, "en", ContentStyle.STANDARD);
+        Optional<FormInstance> inst = service.getTranslatedActivity(
+                handle, userGuid, userGuid, ActivityType.FORMS, instanceGuid, "en", ContentStyle.STANDARD)
+                .map(i -> (FormInstance) i);
         assertTrue(inst.isPresent());
 
         return inst.get();
@@ -579,6 +585,51 @@ public class FormActivityDaoTest extends TxnAwareBaseTest {
             ActivityDto actDto = handle.attach(JdbiActivity.class).queryActivityById(form.getActivityId());
             assertNotNull(actDto);
             assertTrue(actDto.isOndemandTriggerAllowed());
+
+            handle.rollback();
+        });
+    }
+
+    @Test
+    public void testInsertActivity_nestedActivities() {
+        TransactionWrapper.useTxn(handle -> {
+            long startMillis = Instant.now().toEpochMilli();
+            String actCode = "ACT" + startMillis;
+            String nestedActCode = "NESTED_ACT" + startMillis;
+            var child = FormActivityDef.generalFormBuilder(nestedActCode, "v1", testData.getStudyGuid())
+                    .addName(new Translation("en", "nested activity"))
+                    .setParentActivityCode(actCode)
+                    .build();
+            var nestedActBlockDef = new NestedActivityBlockDef(
+                    nestedActCode, NestedActivityRenderHint.EMBEDDED,
+                    true, Template.text("add button"));
+            var parent = FormActivityDef.generalFormBuilder(actCode, "v1", testData.getStudyGuid())
+                    .addName(new Translation("en", "parent activity"))
+                    .addSection(new FormSectionDef(null, List.of(nestedActBlockDef)))
+                    .build();
+            long revId = handle.attach(JdbiRevision.class).insert(testData.getUserId(), startMillis, null, "testing");
+
+            var activityDao = handle.attach(FormActivityDao.class);
+            activityDao.insertActivity(parent, List.of(child), revId);
+            assertNotNull(parent.getActivityId());
+            assertNotNull(child.getActivityId());
+
+            ActivityDto childDto = handle.attach(JdbiActivity.class).queryActivityById(child.getActivityId());
+            assertTrue("child activity should be associated with parent activity",
+                    childDto.getParentActivityId() != null && childDto.getParentActivityId().equals(parent.getActivityId()));
+
+            ActivityDto parentDto = handle.attach(JdbiActivity.class).queryActivityById(parent.getActivityId());
+            FormActivityDef actualParentDef = activityDao.findDefByDtoAndVersion(
+                    parentDto, parent.getVersionTag(), parent.getVersionId(), startMillis);
+            assertEquals(1, actualParentDef.getSections().size());
+            assertEquals(1, actualParentDef.getSections().get(0).getBlocks().size());
+            assertEquals(BlockType.ACTIVITY, actualParentDef.getSections().get(0).getBlocks().get(0).getBlockType());
+
+            var actualBlockDef = (NestedActivityBlockDef) actualParentDef.getSections().get(0).getBlocks().get(0);
+            assertEquals(nestedActCode, actualBlockDef.getActivityCode());
+            assertEquals(NestedActivityRenderHint.EMBEDDED, actualBlockDef.getRenderHint());
+            assertTrue(actualBlockDef.isAllowMultiple());
+            assertNotNull(actualBlockDef.getAddButtonTemplate());
 
             handle.rollback();
         });

@@ -251,5 +251,7 @@
     <include file="db-changes/schema/DDP-3709-file-upload.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/seed/DDP-3709-file-scan-result.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/DDP-3709-file-question-and-answer.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/DDP-5573-activity-nesting.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/DDP-5582-nested-activity-block.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/DDP-5402-create-indices-for-revision-and-user-study-enrollment.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>

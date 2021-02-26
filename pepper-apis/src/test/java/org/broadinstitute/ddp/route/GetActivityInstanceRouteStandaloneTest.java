@@ -57,6 +57,7 @@ import org.broadinstitute.ddp.json.errors.ApiError;
 import org.broadinstitute.ddp.model.activity.definition.ContentBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
 import org.broadinstitute.ddp.model.activity.definition.FormSectionDef;
+import org.broadinstitute.ddp.model.activity.definition.NestedActivityBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.QuestionBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.SectionIcon;
 import org.broadinstitute.ddp.model.activity.definition.i18n.Translation;
@@ -86,6 +87,7 @@ import org.broadinstitute.ddp.model.activity.types.DateRenderMode;
 import org.broadinstitute.ddp.model.activity.types.FormSectionState;
 import org.broadinstitute.ddp.model.activity.types.FormType;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
+import org.broadinstitute.ddp.model.activity.types.NestedActivityRenderHint;
 import org.broadinstitute.ddp.model.activity.types.PicklistRenderMode;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
 import org.broadinstitute.ddp.model.activity.types.RuleType;
@@ -103,12 +105,14 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite.TestCase {
+public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite.TestCaseWithCacheEnabled {
 
     public static final String TEXT_QUESTION_STABLE_ID = "TEXT_Q";
     private static TestDataSetupUtil.GeneratedTestData testData;
+    private static FormActivityDef parentActivity;
     private static FormActivityDef activity;
     private static ActivityVersionDto activityVersionDto;
+    private static ActivityInstanceDto parentInstanceDto;
     private static ActivityInstanceDto instanceDto;
     private static String userGuid;
     private static String token;
@@ -242,20 +246,32 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
                 .build();
         var fileSection = new FormSectionDef(null, List.of(new QuestionBlockDef(file1)));
 
+        String parentActCode = "ACT_ROUTE_PARENT" + Instant.now().toEpochMilli();
         activityCode = "ACT_ROUTE_ACT" + Instant.now().toEpochMilli();
+        var nestedActBlockDef = new NestedActivityBlockDef(
+                activityCode, NestedActivityRenderHint.MODAL, true, Template.text("add button"));
+
+        parentActivity = FormActivityDef.generalFormBuilder(parentActCode, "v1", testData.getStudyGuid())
+                .addName(new Translation("en", "parent activity " + parentActCode))
+                .addSection(new FormSectionDef(null, List.of(nestedActBlockDef)))
+                .build();
         activity = FormActivityDef.generalFormBuilder(activityCode, "v1", testData.getStudyGuid())
                 .addName(new Translation("en", "activity " + activityCode))
+                .setParentActivityCode(parentActCode)
                 .addSections(Arrays.asList(dateSection, textSection, plistSection, textSection2, agreementSection, contentSection))
                 .addSection(iconSection)
                 .addSection(compSection)
                 .addSection(fileSection)
                 .build();
         activityVersionDto = handle.attach(ActivityDao.class).insertActivity(
-                activity, RevisionMetadata.now(testData.getUserId(), "add " + activityCode)
+                parentActivity, List.of(activity), RevisionMetadata.now(testData.getUserId(), "add " + activityCode)
         );
         assertNotNull(activity.getActivityId());
         activityId = activity.getActivityId();
-        instanceDto = handle.attach(ActivityInstanceDao.class).insertInstance(activity.getActivityId(), userGuid);
+
+        ActivityInstanceDao instanceDao = handle.attach(ActivityInstanceDao.class);
+        parentInstanceDto = instanceDao.insertInstance(parentActivity.getActivityId(), userGuid);
+        instanceDto = instanceDao.insertInstance(activity.getActivityId(), userGuid, userGuid, parentInstanceDto.getId());
 
         AnswerDao answerDao = handle.attach(AnswerDao.class);
         answerDao.createAnswer(testData.getUserId(), instanceDto.getId(),
@@ -326,6 +342,7 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
         assertEquals(instanceDto.getGuid(), inst.getGuid());
         assertEquals(activityCode, inst.getActivityCode());
         assertEquals(InstanceStatusType.CREATED, inst.getStatusType());
+        assertEquals(parentInstanceDto.getGuid(), inst.getParentInstanceGuid());
     }
 
     @Test
@@ -378,6 +395,26 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
                 handle.attach(JdbiActivity.class).updateAllowUnauthenticatedById(instanceDto.getActivityId(), false);
             });
         }
+    }
+
+    @Test
+    public void testGet_parentActivity_nestedActivityBlock() {
+        given().auth().oauth2(token)
+                .pathParam("instanceGuid", parentInstanceDto.getGuid())
+                .when().get(url).then().assertThat()
+                .statusCode(200).contentType(ContentType.JSON)
+                .body("activityCode", equalTo(parentActivity.getActivityCode()))
+                .body("guid", equalTo(parentInstanceDto.getGuid()))
+                .body("parentInstanceGuid", nullValue())
+                .root("sections[0].blocks[0]")
+                .body("blockType", equalTo(BlockType.ACTIVITY.name()))
+                .body("activityCode", equalTo(activityCode))
+                .body("renderHint", equalTo(NestedActivityRenderHint.MODAL.name()))
+                .body("allowMultiple", equalTo(true))
+                .body("addButtonText", equalTo("add button"))
+                .body("instances.size()", equalTo(1))
+                .body("instances[0].activityCode", equalTo(activityCode))
+                .body("instances[0].instanceGuid", equalTo(instanceDto.getGuid()));
     }
 
     @Test

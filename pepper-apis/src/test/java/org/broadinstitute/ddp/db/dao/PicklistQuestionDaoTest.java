@@ -329,7 +329,7 @@ public class PicklistQuestionDaoTest extends TxnAwareBaseTest {
             assertFalse(jdbiOption.isCurrentlyActive(question.getQuestionId(), "NESTED_OPT2"));
 
             String instanceGuid2 = instanceDao.insertInstance(activity.getActivityId(), userGuid, userGuid,
-                    InstanceStatusType.CREATED, false, version2.getRevStart()).getGuid();
+                    InstanceStatusType.CREATED, false, version2.getRevStart(), null).getGuid();
             opt = jdbiOption.getByStableId(question.getQuestionId(), "PO2", instanceGuid2);
             assertFalse(opt.isPresent());
             opt = jdbiOption.getByStableId(question.getQuestionId(), "PARENT_OPT", instanceGuid2);
