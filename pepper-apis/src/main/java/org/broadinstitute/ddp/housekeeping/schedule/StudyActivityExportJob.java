@@ -5,8 +5,8 @@ import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 
 public class StudyActivityExportJob implements Job {
-  @Override public void execute(JobExecutionContext context) throws JobExecutionException {
+    @Override public void execute(JobExecutionContext context) throws JobExecutionException {
+        //TODO
+    }
     //TODO
-  }
-  //TODO
 }

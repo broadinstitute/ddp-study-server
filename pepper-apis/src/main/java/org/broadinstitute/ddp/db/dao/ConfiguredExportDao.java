@@ -13,22 +13,22 @@ import java.util.Optional;
 
 public interface ConfiguredExportDao extends SqlObject {
 
-  @CreateSqlObject
-  ConfiguredExportSql getConfiguredExportSql();
+    @CreateSqlObject
+    ConfiguredExportSql getConfiguredExportSql();
 
-  default ConfiguredExport createConfiguredExport(ConfiguredExport configuredExport) {
-    long configuredExportId = getConfiguredExportSql().insertConfiguredExport(configuredExport.getStudyId(),
-      configuredExport.getEnabled(), configuredExport.getRunSchedule(), configuredExport.getBucketType(),
-      configuredExport.getBucketName(), configuredExport.getFilePath());
+    default ConfiguredExport createConfiguredExport(ConfiguredExport configuredExport) {
+        long configuredExportId = getConfiguredExportSql().insertConfiguredExport(configuredExport.getStudyId(),
+                configuredExport.getEnabled(), configuredExport.getRunSchedule(), configuredExport.getBucketType(),
+                configuredExport.getBucketName(), configuredExport.getFilePath());
 
-    return findConfiguredExportByConfiguredExportId(configuredExportId).orElseThrow(() ->
-      new DaoException("Could not find newly created configured export with id " + configuredExportId));
-  }
+        return findConfiguredExportByConfiguredExportId(configuredExportId).orElseThrow(() ->
+          new DaoException("Could not find newly created configured export with id " + configuredExportId));
+    }
 
-  @UseStringTemplateSqlLocator
-  @SqlQuery("findConfiguredExportByConfiguredExportId")
-  @RegisterConstructorMapper(ConfiguredExport.class)
-  Optional<ConfiguredExport> findConfiguredExportByConfiguredExportId(@Bind("configuredExportId") long configuredExportId);
+    @UseStringTemplateSqlLocator
+    @SqlQuery("findConfiguredExportByConfiguredExportId")
+    @RegisterConstructorMapper(ConfiguredExport.class)
+    Optional<ConfiguredExport> findConfiguredExportByConfiguredExportId(@Bind("configuredExportId") long configuredExportId);
 
-  //TODO
+    //TODO
 }
