@@ -31,7 +31,16 @@ post:
   tags:
     - Activities
   summary: create a new instance of an activity
-  description: Given an `activityCode`, the server will create a new instance of the activity for the specified user if the configured conditions for the activity is met.
+  description: |
+    Given an `activityCode`, the server will create a new instance of the activity
+    for the specified user if the configured conditions for the activity is met.
+    When creating instances of child nested activities, request must provide the
+    corresponding parent activity instance.
+
+    **Study Admins**
+
+    Creating child instance is not supported if parent instance is hidden or
+    read-only, unless operator is a study admin.
   requestBody:
     required: true
     content:
@@ -47,7 +56,7 @@ post:
               example: ABCDEFGH12
             parentInstanceGuid:
               description: |
-                in the case the activity instance being created is a child activity, need to specify the parent instance with their guid.
+                In the case the activity instance being created is a child activity, need to specify the parent instance guid.
               type: string
               example: ABCDEFGH12
   responses:
@@ -76,10 +85,10 @@ post:
             schema:
               $ref: '../pepper.yml#/components/schemas/Error.UserStudyActivityNotFound'
       422:
-        description: activity instance failed to be created
+        description: activity instance failed to be created, e.g. too many instances or parent is read-only
         content:
           application/json:
             schema:
-              $ref: '../pepper.yml#/components/schemas/Error.TooManyInstances'
+              $ref: '../pepper.yml#/components/schemas/Error.CreateActivityInstance'
       default:
         $ref: '../pepper.yml#/components/responses/ErrorResponse'
