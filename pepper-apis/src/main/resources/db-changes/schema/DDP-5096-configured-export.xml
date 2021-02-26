@@ -14,7 +14,7 @@
                             references="umbrella_study(umbrella_study_id)"
                             foreignKeyName="study_id_fk"/>
             </column>
-            <column name="enabled" type="boolean">
+            <column name="isEnabled" type="boolean">
                 <constraints nullable="false"/>
             </column>
             <column name="run_schedule" type="varchar(50)">
@@ -40,7 +40,113 @@
                              references="configured_export(configured_export_id)"
                              foreignKeyName="configured_export_id_fk"/>
             </column>
+            <column name="excluded_participant_field" type="varchar(50)">
+                <constraints nullable="false"/>
+            </column>
         </createTable>
+        
+        <createTable tableName="export_activity">
+            <column name="export_activity_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="export_activity_pk"/>
+            </column>
+            <column name="configured_export_id" type="bigint">
+                <constraints nullable="false"
+                             references="configured_export(configured_export_id)"
+                             foreignKeyName="configured_export_id_fk"/>
+            </column>
+        </createTable>
+
+        <createTable tableName="excluded_activity_field">
+            <column name="excluded_activity_field_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="excluded_activity_field_pk"/>
+            </column>
+            <column name="export_activity_id" type="bigint">
+                <constraints nullable="false"
+                             references="export_activity(export_activity_id)"
+                             foreignKeyName="export_activity_id_fk"/>
+            </column>
+            <column name="excluded_activity_field" type="varchar(50)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createTable tableName="excluded_metadata_field">
+            <column name="excluded_metadata_field_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="excluded_metadata_field_pk"/>
+            </column>
+            <column name="export_activity_id" type="bigint">
+                <constraints nullable="false"
+                             references="export_activity(export_activity_id)"
+                             foreignKeyName="export_activity_id_fk"/>
+            </column>
+            <column name="excluded_metadata_field" type="varchar(50)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createTable tableName="export_filter">
+            <column name="export_filter_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="export_filter_id_pk"/>
+            </column>
+            <column name="export_activity_id" type="bigint">
+                <constraints nullable="false"
+                             references="export_activity(export_activity_id)"
+                             foreignKeyName="export_activity_id_fk"/>
+            </column>
+            <column name="export_filter_type_id" type="bigint">
+                <constraints nullable="false"
+                             references="export_filter_type(export_filter_type_id)"
+                             foreignKeyName="export_filter_type_id_fk"/>
+            </column>
+        </createTable>
+
+        <createTable tableName="export_activity_status_filter">
+            <column name="export_activity_status_filter_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="export_activity_status_filter_id_pk"/>
+            </column>
+            <column name="export_filter_id" type="bigint">
+                <constraints nullable="false"
+                             references="export_filter(export_filter_id)"
+                             foreignKeyName="export_activity_id_fk"/>
+            </column>
+            <column name="export_filter_status_type_id" type="bigint">
+                <constraints nullable="false"
+                             references="activity_instance_status_type(activity_instance_status_type_id)"
+                             foreignKeyName="export_filter_status_type_id_fk"/>
+            </column>
+        </createTable>
+
+        <createTable tableName="export_first_field">
+            <column name="export_first_field_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="export_first_field_id_pk"/>
+            </column>
+            <column name="export_activity_id" type="bigint">
+                <constraints nullable="false"
+                             references="export_activity(export_activity_id)"
+                             foreignKeyName="export_activity_id_fk"/>
+            </column>
+            <column name="export_first_field" type="varchar(50)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        
+        
+        <createTable tableName="export_filter_type">
+            <column name="export_filter_type_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="export_filter_type_id_pk"/>
+            </column>
+            <column name="export_filter_type" type="varchar(50)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        
+        <insert tableName="export_filter_type">
+            <column name="export_filter_type" value="ACTIVITY_STATUS"/>
+        </insert>
+
+        <insert tableName="event_trigger">
+            <column name="event_trigger_type" value="EXPORT_COMPLETE"/>
+        </insert>
     </changeSet>
 
 </databaseChangeLog>

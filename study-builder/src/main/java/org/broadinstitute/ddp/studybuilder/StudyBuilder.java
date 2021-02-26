@@ -29,6 +29,8 @@ import org.broadinstitute.ddp.db.dao.StatisticsConfigurationDao;
 import org.broadinstitute.ddp.db.dao.StudyDao;
 import org.broadinstitute.ddp.db.dao.StudyGovernanceDao;
 import org.broadinstitute.ddp.db.dao.StudyLanguageDao;
+import org.broadinstitute.ddp.db.dao.ConfiguredExportDao;
+import org.broadinstitute.ddp.db.dao.ConfiguredExportSql;
 import org.broadinstitute.ddp.db.dto.Auth0TenantDto;
 import org.broadinstitute.ddp.db.dto.ClientDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
@@ -39,6 +41,8 @@ import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.address.OLCPrecision;
 import org.broadinstitute.ddp.model.dsm.KitType;
+import org.broadinstitute.ddp.model.export.ConfiguredExport;
+import org.broadinstitute.ddp.model.export.ExcludedParticipantField;
 import org.broadinstitute.ddp.model.governance.AgeOfMajorityRule;
 import org.broadinstitute.ddp.model.governance.GovernancePolicy;
 import org.broadinstitute.ddp.model.kit.KitRuleType;
@@ -106,6 +110,7 @@ public class StudyBuilder {
         insertSendgrid(handle, studyDto.getId());
         insertKits(handle, studyDto.getId(), adminDto.getUserId());
         insertStatistics(handle, studyDto.getId());
+        insertConfiguredExport(handle, studyDto);
 
         Path dirPath = cfgPath.getParent();
         new ActivityBuilder(dirPath, cfg, varsCfg, studyDto, adminDto.getUserId()).run(handle);
@@ -167,6 +172,7 @@ public class StudyBuilder {
 
         numRows = helper.renamePdfConfigurations(studyDto.getId());
         LOG.info("renamed {} pdf configurations", numRows);
+        //TODO: Invalidate configured export
 
         // Remove the governance policy
         StudyGovernanceDao studyGovernanceDao = handle.attach(StudyGovernanceDao.class);
@@ -402,6 +408,86 @@ public class StudyBuilder {
                     policy.getId(), policy.getShouldCreateGovernedUserExpr().getId(), policy.getAgeOfMajorityRules().size());
         }
     }
+
+  public void insertConfiguredExport(Handle handle, StudyDto studyDto) {
+
+    ConfiguredExportSql sql = handle.attach(ConfiguredExportDao.class).getConfiguredExportSql();
+    if (!cfg.hasPath("export")) {
+      long configuredExportId = sql.insertConfiguredExport(studyDto.getId(), false, null,
+        null, null, null);
+      //TODO: Check that it worked?  Output message?
+      return;
+    }
+
+    Config exportCfg = cfg.getConfig("export");
+    if (!exportCfg.hasPath("isEnabled") || !exportCfg.getBoolean("isEnabled")) {
+      long configuredExportId = sql.insertConfiguredExport(studyDto.getId(), false, null,
+        null, null, null);
+      //TODO: Check that it worked?  Output message?
+      return;
+    }
+
+    if (!exportCfg.hasPath("runSchedule")){
+      throw new DDPException("export.runSchedule must not be null.");
+    } else if (!exportCfg.hasPath("bucketType")) {
+      throw new DDPException("export.bucketType must not be null.");
+    } else if (!exportCfg.hasPath("bucketName")) {
+      throw new DDPException("export.bucketName must not be null.");
+    } else if (!exportCfg.hasPath("filePath")) {
+      throw new DDPException("export.filePath must not be null.");
+    }
+
+
+    String runSchedule = exportCfg.getString("runSchedule");
+    //TODO: Validate runSchedule
+
+    String bucketType = exportCfg.getString("bucketType");
+    //TODO: Validate bucketType
+
+    String bucketName = exportCfg.getString("bucketName");
+    String filePath = exportCfg.getString("filePath");
+
+    //Create initial configured export object
+    ConfiguredExport configuredExport = new ConfiguredExport(studyDto.getId(), true,
+      runSchedule, bucketType, bucketName, filePath);
+    List<ExcludedParticipantField> excludedParticipantFields;
+
+    //If participant specified fields to exclude, create those fields
+    if (exportCfg.hasPath("excludedParticipantFields")) {
+      List<String> excludedFieldNames = exportCfg.getStringList("excludedParticipantFields");
+      if (excludedFieldNames != null && !excludedFieldNames.isEmpty()) {
+        excludedParticipantFields = new ArrayList<>();
+        for (String name : excludedFieldNames) {
+          excludedParticipantFields.add(new ExcludedParticipantField(name));
+        }
+      }
+    }
+
+    //TODO: Create ExcludedParticipantFields
+    //TODO: Create ExportActivity objects
+    //TODO: Create ExcludedActivityFields
+    //TODO: Create ExcludedMetadataFields
+    //TODO: Create ExportFilters
+    //TODO: Create ExportActivityStatusFilters
+    //TODO: Create ExportFirstFields
+
+
+    //TODO: Add configuredExport to database
+    //TODO: Add configuredExportId to excludedParticipantFields
+    //TODO: Add excludedParticipantFields to the database
+    //TODO: Add configuredExportId to exportActivities
+    //TODO: Add exportActivities to the database
+    //TODO: Add export activity ID to excludedActivityFields
+    //TODO: Add excludedActivityFields to the database
+    //TODO: Add export activity ID to excludedMetadataFields
+    //TODO: Add excludedMetadataFields to the database
+    //TODO: Add export activity ID to exportFirstFields
+    //TODO: Add exportFirstFields to the database
+    //TODO: Add export activity ID to exportFilters
+    //TODO: Add exportFilters to the database
+    //TODO: Add export filter ID to exportActivityStatusFilter
+    //TODO: Add exportActivityStatusFilter to the database
+  }
 
     public void insertOrUpdateStudyDetails(Handle handle, long studyId) {
         if (!cfg.hasPath("studyDetails")) {
