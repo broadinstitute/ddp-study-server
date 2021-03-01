@@ -79,6 +79,7 @@ public class SqlConstants {
         public static final String EXCLUDE_STATUS_ICON_FROM_DISPLAY = "exclude_status_icon_from_display";
         public static final String ALLOW_UNAUTHENTICATED = "allow_unauthenticated";
         public static final String IS_FOLLOWUP = "is_followup";
+        public static final String CAN_DELETE_INSTANCES = "can_delete_instances";
     }
 
     public static final class ActivityVersionTable {

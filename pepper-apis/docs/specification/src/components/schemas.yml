@@ -115,6 +115,7 @@ Activity:
     - sections
     - lastUpdatedText
     - lastUpdated
+    - canDelete
     - isFollowup
     - isHidden
     - sectionIndex
@@ -177,6 +178,9 @@ Activity:
       format: date-time
       nullable: true
       description: The date time the activity definition (NOT the instance) was last updated
+    canDelete:
+      type: boolean
+      description: whether the activity instance can be deleted
     isFollowup:
       type: boolean
       description: whether this activity is considered a "follow-up"
@@ -207,9 +211,9 @@ Activity.Summary:
     - readonly
     - numQuestions
     - numQuestionsAnswered
+    - canDelete
     - isFollowup
     - isHidden
-    - canDelete
   properties:
     activityCode:
       description: the source activity for this instance
@@ -263,13 +267,12 @@ Activity.Summary:
       description: false if the activity can be modified
       example: false
       type: boolean
-    canDelete:
-      type: boolean
-      description: |
-        whether the activity instance can be deleted.
     statusCode:
       $ref: "../pepper.yml#/components/schemas/ActivityInstanceStatusType"
       example: IN_PROGRESS
+    canDelete:
+      type: boolean
+      description: whether the activity instance can be deleted
     isFollowup:
       description: true if the activity is generally considered to be an activity that comes after the "main" activities
       type: boolean

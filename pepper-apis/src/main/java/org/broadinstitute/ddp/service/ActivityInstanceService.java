@@ -357,6 +357,7 @@ public class ActivityInstanceService {
                     def.isExcludeFromDisplay(),
                     summaryDto.isHidden(),
                     summaryDto.getCreatedAtMillis(),
+                    def.canDeleteInstances(),
                     def.isFollowup(),
                     versionDto.getVersionTag(),
                     versionDto.getId(),

@@ -11,6 +11,7 @@ import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import java.net.URL;
 import java.time.Instant;
@@ -258,6 +259,7 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
         activity = FormActivityDef.generalFormBuilder(activityCode, "v1", testData.getStudyGuid())
                 .addName(new Translation("en", "activity " + activityCode))
                 .setParentActivityCode(parentActCode)
+                .setCanDeleteInstances(true)
                 .addSections(Arrays.asList(dateSection, textSection, plistSection, textSection2, agreementSection, contentSection))
                 .addSection(iconSection)
                 .addSection(compSection)
@@ -343,6 +345,7 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
         assertEquals(activityCode, inst.getActivityCode());
         assertEquals(InstanceStatusType.CREATED, inst.getStatusType());
         assertEquals(parentInstanceDto.getGuid(), inst.getParentInstanceGuid());
+        assertTrue("child instance should have canDelete true", inst.canDelete());
     }
 
     @Test
@@ -406,6 +409,7 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
                 .body("activityCode", equalTo(parentActivity.getActivityCode()))
                 .body("guid", equalTo(parentInstanceDto.getGuid()))
                 .body("parentInstanceGuid", nullValue())
+                .body("canDelete", equalTo(false))
                 .root("sections[0].blocks[0]")
                 .body("blockType", equalTo(BlockType.ACTIVITY.name()))
                 .body("activityCode", equalTo(activityCode))
@@ -414,7 +418,8 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
                 .body("addButtonText", equalTo("add button"))
                 .body("instances.size()", equalTo(1))
                 .body("instances[0].activityCode", equalTo(activityCode))
-                .body("instances[0].instanceGuid", equalTo(instanceDto.getGuid()));
+                .body("instances[0].instanceGuid", equalTo(instanceDto.getGuid()))
+                .body("instances[0].canDelete", equalTo(true));
     }
 
     @Test

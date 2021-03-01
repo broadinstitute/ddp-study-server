@@ -344,7 +344,7 @@ public class ActivityInstanceServiceTest extends TxnAwareBaseTest {
     public void testRenderInstanceSummaries_rendersNameEvenWhenThereIsNoSummaryText() {
         var summaries = List.of(new ActivityInstanceSummary(
                 "activity", 1L, "guid", "name", null, null, null, null, null, "type", "form", "status",
-                null, false, "en", false, false, 1L, false, "version", 1L, 1L));
+                null, false, "en", false, false, 1L, false, false, "version", 1L, 1L));
         summaries.get(0).setInstanceNumber(2);
 
         TransactionWrapper.useTxn(handle ->

@@ -56,6 +56,7 @@ public class GetActivityInstanceSummaryRouteTest extends IntegrationTestSuite.Te
         nestedActivity = FormActivityDef.generalFormBuilder(activityCode + "_NESTED", "v1", testData.getStudyGuid())
                 .addName(new Translation("en", "nested activity"))
                 .setParentActivityCode(activityCode)
+                .setCanDeleteInstances(true)
                 .build();
         parentActivity = FormActivityDef.generalFormBuilder(activityCode, "v1", testData.getStudyGuid())
                 .addName(new Translation("en", "parent activity"))
@@ -87,7 +88,8 @@ public class GetActivityInstanceSummaryRouteTest extends IntegrationTestSuite.Te
                 .statusCode(200).contentType(ContentType.JSON)
                 .body("activityCode", equalTo(parentActivity.getActivityCode()))
                 .body("instanceGuid", equalTo(parentInstanceDto.getGuid()))
-                .body("parentInstanceGuid", nullValue());
+                .body("parentInstanceGuid", nullValue())
+                .body("canDelete", equalTo(false));
     }
 
     @Test
@@ -98,7 +100,8 @@ public class GetActivityInstanceSummaryRouteTest extends IntegrationTestSuite.Te
                 .statusCode(200).contentType(ContentType.JSON)
                 .body("activityCode", equalTo(nestedActivity.getActivityCode()))
                 .body("instanceGuid", equalTo(nestedInstanceDto.getGuid()))
-                .body("parentInstanceGuid", equalTo(parentInstanceDto.getGuid()));
+                .body("parentInstanceGuid", equalTo(parentInstanceDto.getGuid()))
+                .body("canDelete", equalTo(true));
     }
 
     @Test

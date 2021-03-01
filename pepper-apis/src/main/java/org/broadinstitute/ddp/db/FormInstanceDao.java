@@ -116,6 +116,7 @@ public class FormInstanceDao {
                 boolean isFollowup = rs.getBoolean(StudyActivityTable.IS_FOLLOWUP);
                 boolean isInstanceHidden = rs.getBoolean(ActivityInstanceTable.IS_HIDDEN);
                 boolean excludeFromDisplay = rs.getBoolean(StudyActivityTable.EXCLUDE_FROM_DISPLAY);
+                boolean canDelete = rs.getBoolean(StudyActivityTable.CAN_DELETE_INSTANCES);
                 int sectionIndex = rs.getInt(ActivityInstanceTable.SECTION_INDEX);
 
                 form = new FormInstance(
@@ -137,6 +138,7 @@ public class FormInstanceDao {
                         firstCompletedAt,
                         lastUpdatedTemplateId,
                         lastUpdated,
+                        canDelete,
                         isFollowup,
                         isInstanceHidden,
                         excludeFromDisplay,
