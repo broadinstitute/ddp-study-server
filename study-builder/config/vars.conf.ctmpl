@@ -30,6 +30,15 @@
 
     "emails": {{$conf.emails | toJSONPretty}}
 
+    {{if $conf.export}}
+      , "export": {
+        "enabled": {{$conf.export.enabled}},
+        "schedule": "{{$conf.export.schedule}}",
+        "bucketName": "{{$conf.export.bucketName}}",
+        "filePath": "{{$conf.export.filePath}}"
+      }
+    {{end}}
+
 }
 
 {{end}}

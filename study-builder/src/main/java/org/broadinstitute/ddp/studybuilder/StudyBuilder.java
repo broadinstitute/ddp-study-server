@@ -409,85 +409,85 @@ public class StudyBuilder {
         }
     }
 
-  public void insertConfiguredExport(Handle handle, StudyDto studyDto) {
+    public void insertConfiguredExport(Handle handle, StudyDto studyDto) {
 
-    ConfiguredExportSql sql = handle.attach(ConfiguredExportDao.class).getConfiguredExportSql();
-    if (!cfg.hasPath("export")) {
-      long configuredExportId = sql.insertConfiguredExport(studyDto.getId(), false, null,
-        null, null, null);
-      //TODO: Check that it worked?  Output message?
-      return;
-    }
-
-    Config exportCfg = cfg.getConfig("export");
-    if (!exportCfg.hasPath("isEnabled") || !exportCfg.getBoolean("isEnabled")) {
-      long configuredExportId = sql.insertConfiguredExport(studyDto.getId(), false, null,
-        null, null, null);
-      //TODO: Check that it worked?  Output message?
-      return;
-    }
-
-    if (!exportCfg.hasPath("runSchedule")){
-      throw new DDPException("export.runSchedule must not be null.");
-    } else if (!exportCfg.hasPath("bucketType")) {
-      throw new DDPException("export.bucketType must not be null.");
-    } else if (!exportCfg.hasPath("bucketName")) {
-      throw new DDPException("export.bucketName must not be null.");
-    } else if (!exportCfg.hasPath("filePath")) {
-      throw new DDPException("export.filePath must not be null.");
-    }
-
-
-    String runSchedule = exportCfg.getString("runSchedule");
-    //TODO: Validate runSchedule
-
-    String bucketType = exportCfg.getString("bucketType");
-    //TODO: Validate bucketType
-
-    String bucketName = exportCfg.getString("bucketName");
-    String filePath = exportCfg.getString("filePath");
-
-    //Create initial configured export object
-    ConfiguredExport configuredExport = new ConfiguredExport(studyDto.getId(), true,
-      runSchedule, bucketType, bucketName, filePath);
-    List<ExcludedParticipantField> excludedParticipantFields;
-
-    //If participant specified fields to exclude, create those fields
-    if (exportCfg.hasPath("excludedParticipantFields")) {
-      List<String> excludedFieldNames = exportCfg.getStringList("excludedParticipantFields");
-      if (excludedFieldNames != null && !excludedFieldNames.isEmpty()) {
-        excludedParticipantFields = new ArrayList<>();
-        for (String name : excludedFieldNames) {
-          excludedParticipantFields.add(new ExcludedParticipantField(name));
+        ConfiguredExportSql sql = handle.attach(ConfiguredExportDao.class).getConfiguredExportSql();
+        if (!cfg.hasPath("export")) {
+            long configuredExportId = sql.insertConfiguredExport(studyDto.getId(), false, null,
+                    null, null, null);
+            //TODO: Check that it worked?  Output message?
+            return;
         }
-      }
+
+        Config exportCfg = cfg.getConfig("export");
+        if (!exportCfg.hasPath("isEnabled") || !exportCfg.getBoolean("isEnabled")) {
+            long configuredExportId = sql.insertConfiguredExport(studyDto.getId(), false, null,
+                     null, null, null);
+            //TODO: Check that it worked?  Output message?
+            return;
+        }
+
+        if (!exportCfg.hasPath("runSchedule")) {
+            throw new DDPException("export.runSchedule must not be null.");
+        } else if (!exportCfg.hasPath("bucketType")) {
+            throw new DDPException("export.bucketType must not be null.");
+        } else if (!exportCfg.hasPath("bucketName")) {
+            throw new DDPException("export.bucketName must not be null.");
+        } else if (!exportCfg.hasPath("filePath")) {
+            throw new DDPException("export.filePath must not be null.");
+        }
+
+
+        String runSchedule = exportCfg.getString("runSchedule");
+        //TODO: Validate runSchedule
+
+        String bucketType = exportCfg.getString("bucketType");
+        //TODO: Validate bucketType
+
+        String bucketName = exportCfg.getString("bucketName");
+        String filePath = exportCfg.getString("filePath");
+
+        //Create initial configured export object
+        ConfiguredExport configuredExport = new ConfiguredExport(studyDto.getId(), true,
+                runSchedule, bucketType, bucketName, filePath);
+        List<ExcludedParticipantField> excludedParticipantFields;
+
+        //If participant specified fields to exclude, create those fields
+        if (exportCfg.hasPath("excludedParticipantFields")) {
+            List<String> excludedFieldNames = exportCfg.getStringList("excludedParticipantFields");
+            if (excludedFieldNames != null && !excludedFieldNames.isEmpty()) {
+                excludedParticipantFields = new ArrayList<>();
+                for (String name : excludedFieldNames) {
+                    excludedParticipantFields.add(new ExcludedParticipantField(name));
+                }
+            }
+        }
+
+        //TODO: Create ExcludedParticipantFields
+        //TODO: Create ExportActivity objects
+        //TODO: Create ExcludedActivityFields
+        //TODO: Create ExcludedMetadataFields
+        //TODO: Create ExportFilters
+        //TODO: Create ExportActivityStatusFilters
+        //TODO: Create ExportFirstFields
+
+
+        //TODO: Add configuredExport to database
+        //TODO: Add configuredExportId to excludedParticipantFields
+        //TODO: Add excludedParticipantFields to the database
+        //TODO: Add configuredExportId to exportActivities
+        //TODO: Add exportActivities to the database
+        //TODO: Add export activity ID to excludedActivityFields
+        //TODO: Add excludedActivityFields to the database
+        //TODO: Add export activity ID to excludedMetadataFields
+        //TODO: Add excludedMetadataFields to the database
+        //TODO: Add export activity ID to exportFirstFields
+        //TODO: Add exportFirstFields to the database
+        //TODO: Add export activity ID to exportFilters
+        //TODO: Add exportFilters to the database
+        //TODO: Add export filter ID to exportActivityStatusFilter
+        //TODO: Add exportActivityStatusFilter to the database
     }
-
-    //TODO: Create ExcludedParticipantFields
-    //TODO: Create ExportActivity objects
-    //TODO: Create ExcludedActivityFields
-    //TODO: Create ExcludedMetadataFields
-    //TODO: Create ExportFilters
-    //TODO: Create ExportActivityStatusFilters
-    //TODO: Create ExportFirstFields
-
-
-    //TODO: Add configuredExport to database
-    //TODO: Add configuredExportId to excludedParticipantFields
-    //TODO: Add excludedParticipantFields to the database
-    //TODO: Add configuredExportId to exportActivities
-    //TODO: Add exportActivities to the database
-    //TODO: Add export activity ID to excludedActivityFields
-    //TODO: Add excludedActivityFields to the database
-    //TODO: Add export activity ID to excludedMetadataFields
-    //TODO: Add excludedMetadataFields to the database
-    //TODO: Add export activity ID to exportFirstFields
-    //TODO: Add exportFirstFields to the database
-    //TODO: Add export activity ID to exportFilters
-    //TODO: Add exportFilters to the database
-    //TODO: Add export filter ID to exportActivityStatusFilter
-    //TODO: Add exportActivityStatusFilter to the database
-  }
 
     public void insertOrUpdateStudyDetails(Handle handle, long studyId) {
         if (!cfg.hasPath("studyDetails")) {
