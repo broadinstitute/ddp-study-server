@@ -2,6 +2,7 @@ package org.broadinstitute.ddp.route;
 
 import static io.restassured.RestAssured.given;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -116,6 +117,7 @@ public class UserActivityInstanceListRouteStandaloneTest extends IntegrationTest
         nestedAct = FormActivityDef.generalFormBuilder(code + "_NESTED", "v1", testData.getStudyGuid())
                 .addName(new Translation("en", "nested activity"))
                 .setParentActivityCode(code)
+                .setCanDeleteInstances(true)
                 .build();
 
         prequal = FormActivityDef.formBuilder(FormType.PREQUALIFIER, code, "v1", testData.getStudyGuid())
@@ -196,6 +198,7 @@ public class UserActivityInstanceListRouteStandaloneTest extends IntegrationTest
 
         Assert.assertTrue("Could not find prequal in list of activity instances for test user", hasPrequal);
         Assert.assertFalse(hasReadonlyActivities);
+        assertFalse(userActivity.canDelete());
     }
 
     @Test

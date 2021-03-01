@@ -23,10 +23,12 @@ import org.broadinstitute.ddp.content.I18nTemplateConstants;
 import org.broadinstitute.ddp.content.RenderValueProvider;
 import org.broadinstitute.ddp.db.ActivityDefStore;
 import org.broadinstitute.ddp.db.ActivityInstanceDao;
+import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.dao.FormActivityDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.StudyLanguageCachedDao;
 import org.broadinstitute.ddp.db.dto.ActivityDto;
+import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceSummaryDto;
 import org.broadinstitute.ddp.db.dto.ActivityVersionDto;
 import org.broadinstitute.ddp.exception.DDPException;
@@ -357,6 +359,7 @@ public class ActivityInstanceService {
                     def.isExcludeFromDisplay(),
                     summaryDto.isHidden(),
                     summaryDto.getCreatedAtMillis(),
+                    def.canDeleteInstances(),
                     def.isFollowup(),
                     versionDto.getVersionTag(),
                     versionDto.getId(),
@@ -515,5 +518,19 @@ public class ActivityInstanceService {
                 summary.setActivitySummary(summaryText);
             }
         }
+    }
+
+    /**
+     * Delete the provided activity instance and its associated answer data. Caller is responsible for checking if
+     * instance is eligible to be deleted.
+     *
+     * @param handle      the database handle
+     * @param instanceDto the instance
+     */
+    public void deleteInstance(Handle handle, ActivityInstanceDto instanceDto) {
+        // Note: deal with potential child instances here when we support deleting top-level parent instances.
+        var instanceDao = handle.attach(org.broadinstitute.ddp.db.dao.ActivityInstanceDao.class);
+        int numDeleted = instanceDao.deleteAllByIds(Set.of(instanceDto.getId()));
+        DBUtils.checkDelete(1, numDeleted);
     }
 }
