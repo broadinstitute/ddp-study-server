@@ -86,7 +86,9 @@ delete:
     - Activities
   summary: delete an activity instance
   description: |
-    Deletes the specified activity. Restrictions TBD.
+    Deletes the specified activity. Deletion is only allowed if activity is
+    configured to allow deleting instances. This is specified by the activity's
+    `canDelete` property.
   responses:
     204:
       description: The activity was successfully deleted
