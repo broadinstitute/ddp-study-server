@@ -24,6 +24,7 @@ public class ActivityDto {
     private final boolean excludeStatusIconFromDisplay;
     private final boolean hideExistingInstancesOnCreation;
     private final boolean createOnParentCreation;
+    private final boolean canDeleteInstances;
     private String activityCode;
 
     @JdbiConstructor
@@ -45,7 +46,8 @@ public class ActivityDto {
             @ColumnName("is_followup") boolean isFollowup,
             @ColumnName("exclude_status_icon_from_display") boolean excludeStatusIconFromDisplay,
             @ColumnName("hide_existing_instances_on_creation") boolean hideExistingInstancesOnCreation,
-            @ColumnName("create_on_parent_creation") boolean createOnParentCreation
+            @ColumnName("create_on_parent_creation") boolean createOnParentCreation,
+            @ColumnName("can_delete_instances") boolean canDeleteInstances
     ) {
         this.activityId = activityId;
         this.activityTypeId = activityTypeId;
@@ -65,6 +67,7 @@ public class ActivityDto {
         this.excludeStatusIconFromDisplay = excludeStatusIconFromDisplay;
         this.hideExistingInstancesOnCreation = hideExistingInstancesOnCreation;
         this.createOnParentCreation = createOnParentCreation;
+        this.canDeleteInstances = canDeleteInstances;
     }
 
     public long getActivityId() {
@@ -143,6 +146,10 @@ public class ActivityDto {
         return createOnParentCreation;
     }
 
+    public boolean canDeleteInstances() {
+        return canDeleteInstances;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {
@@ -169,7 +176,8 @@ public class ActivityDto {
                 && isFollowup == that.isFollowup
                 && excludeStatusIconFromDisplay == that.excludeStatusIconFromDisplay
                 && hideExistingInstancesOnCreation == that.hideExistingInstancesOnCreation
-                && createOnParentCreation == that.createOnParentCreation;
+                && createOnParentCreation == that.createOnParentCreation
+                && canDeleteInstances == that.canDeleteInstances;
     }
 
     @Override
@@ -192,6 +200,7 @@ public class ActivityDto {
                 isFollowup,
                 excludeStatusIconFromDisplay,
                 hideExistingInstancesOnCreation,
-                createOnParentCreation);
+                createOnParentCreation,
+                canDeleteInstances);
     }
 }

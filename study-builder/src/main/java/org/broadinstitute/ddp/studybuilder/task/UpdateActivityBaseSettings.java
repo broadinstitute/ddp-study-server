@@ -91,8 +91,13 @@ public class UpdateActivityBaseSettings implements CustomTask {
                 definition.getBoolean("isFollowup"),
                 definition.getBoolean("excludeStatusIconFromDisplay"),
                 definition.getBoolean("hideExistingInstancesOnCreation"),
-                ConfigUtil.getBoolOrElse(definition, "createOnParentCreation", false));
+                ConfigUtil.getBoolOrElse(definition, "createOnParentCreation", false),
+                ConfigUtil.getBoolOrElse(definition, "canDeleteInstances", false));
         if (!currentDto.equals(latestDto)) {
+            if (currentDto.canDeleteInstances() != latestDto.canDeleteInstances()) {
+                throw new UnsupportedOperationException("Updating `canDeleteInstances` setting is currently not supported"
+                        + " to prevent accidental updates of this property and allowing undesired deletion of data");
+            }
             jdbiActivity.updateActivity(
                     latestDto.getActivityId(),
                     latestDto.getDisplayOrder(),
