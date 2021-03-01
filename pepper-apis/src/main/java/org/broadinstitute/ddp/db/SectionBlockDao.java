@@ -7,13 +7,14 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+
 import org.broadinstitute.ddp.db.dao.ComponentDao;
 import org.broadinstitute.ddp.db.dao.JdbiBlock;
 import org.broadinstitute.ddp.db.dao.JdbiBlockContent;
 import org.broadinstitute.ddp.db.dao.JdbiBlockGroupHeader;
 import org.broadinstitute.ddp.db.dao.JdbiBlockNesting;
 import org.broadinstitute.ddp.db.dao.JdbiFormSectionBlock;
-import org.broadinstitute.ddp.db.dao.QuestionDao;
+import org.broadinstitute.ddp.db.dao.QuestionCachedDao;
 import org.broadinstitute.ddp.db.dto.BlockContentDto;
 import org.broadinstitute.ddp.db.dto.BlockGroupHeaderDto;
 import org.broadinstitute.ddp.db.dto.FormBlockDto;
@@ -27,12 +28,8 @@ import org.broadinstitute.ddp.model.activity.instance.GroupBlock;
 import org.broadinstitute.ddp.model.activity.instance.NestedActivityBlock;
 import org.broadinstitute.ddp.model.activity.instance.QuestionBlock;
 import org.jdbi.v3.core.Handle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class SectionBlockDao {
-
-    private static final Logger LOG = LoggerFactory.getLogger(SectionBlockDao.class);
 
     /**
      * Find and build all blocks for given sections, respecting the display order of blocks within each section.
@@ -98,7 +95,7 @@ public class SectionBlockDao {
                 block = new ContentBlock(blockContentDto.getTitleTemplateId(), blockContentDto.getBodyTemplateId());
                 break;
             case QUESTION:
-                block = handle.attach(QuestionDao.class).getQuestionByBlockId(dto.getId(), instanceGuid, includeDeprecated, langCodeId)
+                block = new QuestionCachedDao(handle).getQuestionByBlockId(dto.getId(), instanceGuid, includeDeprecated, langCodeId)
                         .map(QuestionBlock::new)
                         .orElse(null);
                 break;
@@ -108,7 +105,7 @@ public class SectionBlockDao {
                 block = new ComponentBlock(formComponent);
                 break;
             case CONDITIONAL:
-                block = handle.attach(QuestionDao.class)
+                block = new QuestionCachedDao(handle)
                         .getControlQuestionByBlockId(dto.getId(), instanceGuid, includeDeprecated, langCodeId)
                         .map(control -> {
                             List<FormBlock> nested = handle.attach(JdbiBlockNesting.class)
