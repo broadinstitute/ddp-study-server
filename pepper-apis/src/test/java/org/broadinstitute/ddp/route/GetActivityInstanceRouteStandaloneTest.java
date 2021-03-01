@@ -342,6 +342,7 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
         assertEquals(instanceDto.getGuid(), inst.getGuid());
         assertEquals(activityCode, inst.getActivityCode());
         assertEquals(InstanceStatusType.CREATED, inst.getStatusType());
+        assertEquals(parentInstanceDto.getGuid(), inst.getParentInstanceGuid());
     }
 
     @Test
@@ -402,8 +403,9 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
                 .pathParam("instanceGuid", parentInstanceDto.getGuid())
                 .when().get(url).then().assertThat()
                 .statusCode(200).contentType(ContentType.JSON)
-                .log().all()
                 .body("activityCode", equalTo(parentActivity.getActivityCode()))
+                .body("guid", equalTo(parentInstanceDto.getGuid()))
+                .body("parentInstanceGuid", nullValue())
                 .root("sections[0].blocks[0]")
                 .body("blockType", equalTo(BlockType.ACTIVITY.name()))
                 .body("activityCode", equalTo(activityCode))

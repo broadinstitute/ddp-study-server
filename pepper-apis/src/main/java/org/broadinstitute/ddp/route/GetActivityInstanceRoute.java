@@ -104,6 +104,7 @@ public class GetActivityInstanceRoute implements Route {
             LOG.info("Found a translation to the '{}' language code for the activity instance with GUID {}",
                     isoLangCode, instanceGuid);
             ActivityInstance activityInstance = inst.get();
+            activityInstance.setParentInstanceGuid(instanceDto.getParentInstanceGuid());
             if (activityInstance.getActivityType() == ActivityType.FORMS) {
                 actInstService.loadNestedInstanceSummaries(
                         handle, (FormInstance) activityInstance, studyGuid, userGuid, operatorGuid, isoLangCode);

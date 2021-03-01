@@ -15,6 +15,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Supplier;
 
 import org.broadinstitute.ddp.TxnAwareBaseTest;
 import org.broadinstitute.ddp.content.ContentStyle;
@@ -599,6 +600,8 @@ public class FormActivityDaoTest extends TxnAwareBaseTest {
             var child = FormActivityDef.generalFormBuilder(nestedActCode, "v1", testData.getStudyGuid())
                     .addName(new Translation("en", "nested activity"))
                     .setParentActivityCode(actCode)
+                    .setCreateOnParentCreation(true)
+                    .setCanDeleteInstances(true)
                     .build();
             var nestedActBlockDef = new NestedActivityBlockDef(
                     nestedActCode, NestedActivityRenderHint.EMBEDDED,
@@ -617,6 +620,8 @@ public class FormActivityDaoTest extends TxnAwareBaseTest {
             ActivityDto childDto = handle.attach(JdbiActivity.class).queryActivityById(child.getActivityId());
             assertTrue("child activity should be associated with parent activity",
                     childDto.getParentActivityId() != null && childDto.getParentActivityId().equals(parent.getActivityId()));
+            assertTrue(childDto.isCreateOnParentCreation());
+            assertTrue(childDto.canDeleteInstances());
 
             ActivityDto parentDto = handle.attach(JdbiActivity.class).queryActivityById(parent.getActivityId());
             FormActivityDef actualParentDef = activityDao.findDefByDtoAndVersion(
@@ -632,6 +637,39 @@ public class FormActivityDaoTest extends TxnAwareBaseTest {
             assertNotNull(actualBlockDef.getAddButtonTemplate());
 
             handle.rollback();
+        });
+    }
+
+    @Test
+    public void testInsertActivity_unsupportedConfigurations() {
+        TransactionWrapper.useTxn(handle -> {
+            long startMillis = Instant.now().toEpochMilli();
+            String activityCode = "ACT" + startMillis;
+            long revId = handle.attach(JdbiRevision.class).insert(testData.getUserId(), startMillis, null, "testing");
+            var activityDao = handle.attach(FormActivityDao.class);
+            Supplier<FormActivityDef.FormBuilder> newBuilder = () -> FormActivityDef
+                    .generalFormBuilder(activityCode, "v1", testData.getStudyGuid())
+                    .addName(new Translation("en", "parent activity"));
+
+            try {
+                var parent = newBuilder.get().setCreateOnParentCreation(true).build();
+                activityDao.insertActivity(parent, revId);
+                fail("expected exception not thrown");
+            } catch (Exception e) {
+                assertTrue(e instanceof UnsupportedOperationException);
+                assertTrue(e.getMessage().contains("createOnParentCreation"));
+                assertTrue(e.getMessage().contains("child activities"));
+            }
+
+            try {
+                var parent = newBuilder.get().setCanDeleteInstances(true).build();
+                activityDao.insertActivity(parent, revId);
+                fail("expected exception not thrown");
+            } catch (Exception e) {
+                assertTrue(e instanceof UnsupportedOperationException);
+                assertTrue(e.getMessage().contains("canDeleteInstances"));
+                assertTrue(e.getMessage().contains("child activities"));
+            }
         });
     }
 
