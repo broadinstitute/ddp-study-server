@@ -20,35 +20,38 @@ public interface ConfiguredExportSql extends SqlObject {
 
     @GetGeneratedKeys
     @SqlUpdate("insert into excluded_participant_field (configured_export_id, excluded_participant_field)"
-            + " select configured_export_id, :excludedParticipantField "
+            + " select configured_export_id, :excludedParticipantField from configured_export"
             + " where study_id = :studyId")
     long insertExcludedParticipantFieldByStudyId(
                                 @Bind("excludedParticipantField") String excludedParticipantField,
                                 @Bind("studyId") long studyId);
 
     @GetGeneratedKeys
-    @SqlUpdate("insert into export_activity (configured_export_id, study_activity_id, is_incremental) "
-            + " select configured_export_id ")
-    long insertExportActivityByStudyIdAndActivityCode(
+    @SqlUpdate("insert into export_activity (study_activity_id, is_incremental) "
+            + " select study_activity_id, :isIncremental from study_activity"
+            + " where study_activity_code = :activityCode")
+    long insertExportActivityByStudyActivityIdAndCode(
                                 @Bind("studyActivityId") long studyActivityId,
                                 @Bind("isIncremental") boolean isIncremental,
-                                @Bind("studyId") long studyId);
+                                @Bind("activityCode") String activityCode);
 
     @GetGeneratedKeys
     @SqlUpdate("insert into excluded_activity_field (export_activity_id, excluded_activity_field) "
-            + " select export_activity_id, :excludedActivityField from export_activity "
-            +  " where study_id = :studyId")
-    long insertExcludedActivityFieldByActivityCode(
+            + " :exportActivityId, :excludedActivityField")
+    long insertExcludedActivityFieldByActivityId(
                                 @Bind("excludedActivityField") String excludedActivityField,
-                                @Bind("studyId") long studyId);
+                                @Bind("exportActivityId") long exportActivityId);
 
     @GetGeneratedKeys
     @SqlUpdate("insert into excluded_metadata_field (export_activity_id, excluded_metadata_field) "
-            + " select export_activity_id, :excludedMetadataField from export_activity "
-            +  " where study_id = :studyId")
-    long insertExcludedMetadataFieldByStudyId(
+            + " :exportActivityId, :excludedMetadataField")
+    long insertExcludedMetadataFieldByActivityId(
                                 @Bind("excludedMetadataField") String excludedMetadataField,
-                                @Bind("studyId") long studyId);
+                                @Bind("exportActivityId") long exportActivityId);
 
-    //TODO
+    //TODO: ExportActivityStatusFilter
+
+    //TODO: ExportFilter
+
+    //TODO: ExportFirstField
 }

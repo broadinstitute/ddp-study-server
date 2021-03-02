@@ -4,7 +4,7 @@
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
                    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
 
-    <changeSet author="charlotte" id="2021-02-25-configured-exports">
+    <changeSet author="charlotte" id="2021-02-25-configured-export-tables">
         <createTable tableName="configured_export">
             <column name="configured_export_id" type="bigint" autoIncrement="true" startWith="1">
                 <constraints primaryKey="true" primaryKeyName="configured_export_pk"/>
@@ -49,10 +49,13 @@
             <column name="export_activity_id" type="bigint" autoIncrement="true" startWith="1">
                 <constraints primaryKey="true" primaryKeyName="export_activity_pk"/>
             </column>
-            <column name="configured_export_id" type="bigint">
+            <column name="study_activity_id" type="bigint">
                 <constraints nullable="false"
-                             references="configured_export(configured_export_id)"
-                             foreignKeyName="export_activity_configured_export_id_fk"/>
+                             references="study_activity(study_activity_id)"
+                             foreignKeyName="export_activity_study_activity_id_fk"/>
+            </column>
+            <column name="is_incremental" type="boolean">
+                <constraints nullable="false"/>
             </column>
         </createTable>
 
