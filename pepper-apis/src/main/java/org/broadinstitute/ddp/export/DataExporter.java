@@ -861,6 +861,7 @@ public class DataExporter {
                         instance.getActivityVersionTag(),
                         instance.getActivityCode(),
                         instance.getGuid(),
+                        instance.getParentInstanceGuid(),
                         lastStatus.getType(),
                         instance.getCreatedAt(),
                         instance.getFirstCompletedAt(),
