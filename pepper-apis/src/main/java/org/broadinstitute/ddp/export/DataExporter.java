@@ -437,6 +437,7 @@ public class DataExporter {
             activityDefinitions.put("activityCode", activity.getDefinition().getActivityCode());
             activityDefinitions.put("activityName", activityName);
             activityDefinitions.put("activityVersion", activity.getDefinition().getVersionTag());
+            activityDefinitions.put("parentActivityCode", activity.getDefinition().getParentActivityCode());
             activityDefinitions.putAll(formatter.questionDefinitions());
 
             allActivityDefs.put(activity.getTag(), activityDefinitions);
