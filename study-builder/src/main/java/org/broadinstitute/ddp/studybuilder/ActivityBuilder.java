@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 import com.google.gson.Gson;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import com.typesafe.config.ConfigResolveOptions;
 import org.apache.commons.io.IOUtils;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
@@ -132,6 +133,7 @@ public class ActivityBuilder {
         }
         for (Config activityCfg : activitiesCfg.getConfigList("activities")) {
             Config definitionCfg = readDefinitionConfig(activityCfg.getString("filepath"));
+            String jsonFromDefinition = ConfigUtil.toJson(definitionCfg);
             ActivityDef def = gson.fromJson(ConfigUtil.toJson(definitionCfg), ActivityDef.class);
             validateDefinition(def);
             List<ActivityDef> nestedDefs = loadNestedActivities(activityCfg);
@@ -317,7 +319,11 @@ public class ActivityBuilder {
             throw new DDPException("Activity definition file is missing: " + file);
         }
 
-        Config definition = ConfigFactory.parseFile(file).resolveWith(varsCfg);
+        Config definition = ConfigFactory.parseFile(file)
+                // going to resolve first the external global variables that might be used in this configuration
+                // using setAllowUnresolved so we can do a second pass that will allow us to resolve variables
+                // within the configuration
+                .resolveWith(varsCfg, ConfigResolveOptions.defaults().setAllowUnresolved(true));
         if (definition.isEmpty()) {
             throw new DDPException("Activity definition file is empty: " + file);
         }
