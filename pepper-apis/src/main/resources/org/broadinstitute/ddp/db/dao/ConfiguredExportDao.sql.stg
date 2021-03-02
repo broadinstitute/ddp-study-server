@@ -1,0 +1,41 @@
+group ConfiguredExportDao;
+
+findConfiguredExportById() ::= <<
+select * from configured_export
+where configured_export_id = :id
+>>
+
+findExcludedParticipantFieldById() ::= <<
+select * from excluded_participant_field
+where excluded_participant_field_id = :id
+>>
+
+findExportActivityById() ::= <<
+select * from export_activity
+where export_activity_id = :id
+>>
+
+findExcludedActivityFieldById() ::= <<
+select * from excluded_activity_field
+where excluded_activity_field_id = :id
+>>
+
+findExcludedMetadataFieldById() ::= <<
+select * from excluded_metadata_field
+where excluded_metadata_field_id = :id
+>>
+
+findFirstFieldById() ::= <<
+select * from export_first_field
+where export_first_field_id = :id
+>>
+
+findFilterById() ::= <<
+select * from export_filter
+where export_filter_id = :id
+>>
+
+findStatusFilterById() ::= <<
+select * from export_activity_status_filter
+where export_activity_status_filter_id = :id
+>>

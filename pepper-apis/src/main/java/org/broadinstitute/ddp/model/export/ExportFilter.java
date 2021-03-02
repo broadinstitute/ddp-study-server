@@ -8,6 +8,7 @@ public class ExportFilter {
     private long id;
     private long exportActivityId;
     private long filterTypeId;
+    private String filterType;
 
     @JdbiConstructor
     public ExportFilter(@ColumnName("export_filter_id") long id,
@@ -18,9 +19,9 @@ public class ExportFilter {
         this.filterTypeId = filterTypeId;
     }
 
-    public ExportFilter(long exportActivityId, long filterTypeId) {
+    public ExportFilter(long exportActivityId, String filterType) {
         this.exportActivityId = exportActivityId;
-        this.filterTypeId = filterTypeId;
+        this.filterType = filterType;
     }
 
     public long getId() {
@@ -33,5 +34,9 @@ public class ExportFilter {
 
     public long getFilterTypeId() {
         return filterTypeId;
+    }
+
+    public String getFilterType() {
+        return filterType;
     }
 }

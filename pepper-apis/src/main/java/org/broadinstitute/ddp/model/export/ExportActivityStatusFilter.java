@@ -7,6 +7,7 @@ public class ExportActivityStatusFilter {
     private long id;
     private long filterId;
     private long statusTypeId;
+    private String statusType;
 
     @JdbiConstructor
     public ExportActivityStatusFilter(@ColumnName("export_activity_status_filter_id") long id,
@@ -17,13 +18,13 @@ public class ExportActivityStatusFilter {
         this.statusTypeId = statusTypeId;
     }
 
-    public ExportActivityStatusFilter(long filterId, long statusTypeId) {
+    public ExportActivityStatusFilter(long filterId, String statusType) {
         this.filterId = filterId;
-        this.statusTypeId = statusTypeId;
+        this.statusType = statusType;
     }
 
-    public ExportActivityStatusFilter(long statusTypeId) {
-        this.statusTypeId = statusTypeId;
+    public ExportActivityStatusFilter(String statusType) {
+        this.statusType = statusType;
     }
 
     public long getId() {
@@ -40,5 +41,9 @@ public class ExportActivityStatusFilter {
 
     public long getStatusTypeId() {
         return statusTypeId;
+    }
+
+    public String getStatusType() {
+        return statusType;
     }
 }

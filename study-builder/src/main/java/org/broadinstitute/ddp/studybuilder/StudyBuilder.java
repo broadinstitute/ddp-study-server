@@ -9,6 +9,7 @@ import java.util.Set;
 import com.typesafe.config.Config;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.db.DBUtils;
+import org.broadinstitute.ddp.db.dao.ConfiguredExportDao;
 import org.broadinstitute.ddp.db.dao.EventDao;
 import org.broadinstitute.ddp.db.dao.JdbiAuth0Tenant;
 import org.broadinstitute.ddp.db.dao.JdbiClient;
@@ -29,7 +30,6 @@ import org.broadinstitute.ddp.db.dao.StatisticsConfigurationDao;
 import org.broadinstitute.ddp.db.dao.StudyDao;
 import org.broadinstitute.ddp.db.dao.StudyGovernanceDao;
 import org.broadinstitute.ddp.db.dao.StudyLanguageDao;
-import org.broadinstitute.ddp.db.dao.ConfiguredExportDao;
 import org.broadinstitute.ddp.db.dto.Auth0TenantDto;
 import org.broadinstitute.ddp.db.dto.ClientDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
@@ -41,8 +41,13 @@ import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.address.OLCPrecision;
 import org.broadinstitute.ddp.model.dsm.KitType;
 import org.broadinstitute.ddp.model.export.ConfiguredExport;
+import org.broadinstitute.ddp.model.export.ExcludedActivityField;
+import org.broadinstitute.ddp.model.export.ExcludedMetadataField;
 import org.broadinstitute.ddp.model.export.ExcludedParticipantField;
 import org.broadinstitute.ddp.model.export.ExportActivity;
+import org.broadinstitute.ddp.model.export.ExportActivityStatusFilter;
+import org.broadinstitute.ddp.model.export.ExportFilter;
+import org.broadinstitute.ddp.model.export.ExportFirstField;
 import org.broadinstitute.ddp.model.governance.AgeOfMajorityRule;
 import org.broadinstitute.ddp.model.governance.GovernancePolicy;
 import org.broadinstitute.ddp.model.kit.KitRuleType;
@@ -409,35 +414,24 @@ public class StudyBuilder {
         }
     }
 
-    public void insertConfiguredExport(Handle handle, StudyDto studyDto) {
+    private void insertConfiguredExport(Handle handle, StudyDto studyDto) {
         ConfiguredExportDao dao = handle.attach(ConfiguredExportDao.class);
 
-        if (!cfg.hasPath("export")) {
-            //TODO: TEMP
-            System.out.println("CFG DOES NOT HAVE EXPORT");
+        Config exportCfg = cfg.hasPath("export") ? cfg.getConfig("export") : null;
+
+        //If export isn't explicitly enabled, disable it
+        if (exportCfg == null || !exportCfg.hasPath("isEnabled") || !exportCfg.getBoolean("isEnabled")) {
             dao.createConfiguredExport(new ConfiguredExport(studyDto.getId(), false, null,
-              null, null, null));
-            //TODO: Check that it worked?  Output message?
+                    null, null, null));
+            LOG.info("Configured export for study has been disabled");
             return;
         }
-
-        Config exportCfg = cfg.getConfig("export");
-        if (!exportCfg.hasPath("isEnabled") || !exportCfg.getBoolean("isEnabled")) {
-            //TODO: TEMP
-            System.out.println("ISENABLED IS MISSING OR FALSE");
-            dao.createConfiguredExport(new ConfiguredExport(studyDto.getId(), false, null,
-              null, null, null));
-            //TODO: Check that it worked?  Output message?
-            return;
-        }
-
-        //TODO
-        System.out.println("ENABLED");
-
-        //TODO: Validation
 
         String runSchedule = exportCfg.getString("runSchedule");
         String bucketType = exportCfg.getString("bucketType");
+        if (!"STANDARD".equals(bucketType) && !"NONCRED".equals(bucketType)) {
+            throw new DDPException("Cannot create configured export with invalid bucket type " + bucketType);
+        }
         String bucketName = exportCfg.getString("bucketName");
         String filePath = exportCfg.getString("filePath");
 
@@ -446,8 +440,17 @@ public class StudyBuilder {
                 runSchedule, bucketType, bucketName, filePath);
         configuredExport = dao.createConfiguredExport(configuredExport);
         long exportId = configuredExport.getId();
-        //TODO: Check that it worked?  Output message?
 
+        int numExcludedParticipantFields = insertExcludedParticipantFields(dao, exportCfg, exportId);
+        int numActivities = insertExportActivities(dao, exportCfg);
+
+        LOG.info("Created configured export with id={}, runSchedule={}, bucketType={}, bucketName={}, filePath={}, {} excluded "
+                + "participant fields, and {} activities", exportId, runSchedule, bucketType, bucketName, filePath,
+                numExcludedParticipantFields, numActivities);
+    }
+
+    private int insertExcludedParticipantFields(ConfiguredExportDao dao, Config exportCfg, long exportId) {
+        int numExcludedParticipantFields = 0;
 
         //If participant specified fields to exclude, create those fields
         if (exportCfg.hasPath("excludedParticipantFields")) {
@@ -456,24 +459,90 @@ public class StudyBuilder {
                 for (String name : excludedFieldNames) {
                     ExcludedParticipantField field = new ExcludedParticipantField(exportId, name);
                     dao.createExcludedParticipantField(field);
+                    numExcludedParticipantFields++;
                 }
             }
-            //TODO: Check that it worked?  Output message?
         }
+        return numExcludedParticipantFields;
+    }
+
+    private int insertExportActivities(ConfiguredExportDao dao, Config exportCfg) {
+        int numActivities = 0;
 
         //Create objects for activities to export and add to database
         for (Config activityConfig : exportCfg.getConfigList("activities")) {
-            boolean isIncremental = activityConfig.getBoolean("isIncremental");
-            String activityCode = activityConfig.getString("activityCode");
-            ExportActivity activity = new ExportActivity(activityCode, isIncremental);
-            //TODO: Add to database and get ID
-            //TODO: ExcludedActivityFields
-            //TODO: ExcludedMetadataFields
-            //TODO: ExportFirstFields
-            //TODO: filters
-        }
+            long exportActivityId = insertExportActivityRow(dao, activityConfig);
+            numActivities++;
 
-        //TODO: Add configured export to database
+            insertExcludedActivityFields(dao, activityConfig, exportActivityId);
+            insertExcludedMetadataFields(dao, activityConfig, exportActivityId);
+            insertExportFirstFields(dao, activityConfig, exportActivityId);
+            insertExportFilters(dao, activityConfig, exportActivityId);
+        }
+        return numActivities;
+    }
+
+    private long insertExportActivityRow(ConfiguredExportDao dao, Config activityConfig) {
+        boolean isIncremental = activityConfig.getBoolean("isIncremental");
+        String activityCode = activityConfig.getString("activityCode");
+        ExportActivity activity = new ExportActivity(activityCode, isIncremental);
+        activity = dao.createExportActivity(activity);
+        return activity.getId();
+    }
+
+    private void insertExportFilters(ConfiguredExportDao dao, Config activityConfig, long exportActivityId) {
+        if (activityConfig.hasPath("filters")) {
+            for (Config filterConfig : activityConfig.getConfigList("filters")) {
+                String filterType = filterConfig.getString("type");
+                ExportFilter filter = new ExportFilter(exportActivityId, filterType);
+                filter = dao.createExportFilter(filter);
+                long filterId = filter.getId();
+
+                if (filterType.equals("ACTIVITY_STATUS")) {
+                    String statusType = filterConfig.getString("statusType");
+                    ExportActivityStatusFilter statusFilter = new ExportActivityStatusFilter(filterId, statusType);
+                    dao.createExportActivityStatusFilter(statusFilter);
+                } else {
+                    throw new DDPException("Cannot create filter with invalid type: " + filterType);
+                }
+            }
+        }
+    }
+
+    private void insertExportFirstFields(ConfiguredExportDao dao, Config activityConfig, long exportActivityId) {
+        if (activityConfig.hasPath("exportFirstFields")) {
+            List<String> exportFirstFieldNames = activityConfig.getStringList("exportFirstFields");
+            if (exportFirstFieldNames != null && !exportFirstFieldNames.isEmpty()) {
+                for (String name : exportFirstFieldNames) {
+                    ExportFirstField field = new ExportFirstField(exportActivityId, name);
+                    dao.createExportFirstField(field);
+                }
+            }
+        }
+    }
+
+    private void insertExcludedMetadataFields(ConfiguredExportDao dao, Config activityConfig, long exportActivityId) {
+        if (activityConfig.hasPath("excludeMetadataFields")) {
+            List<String> excludedMetadataFieldNames = activityConfig.getStringList("excludeMetadataFields");
+            if (excludedMetadataFieldNames != null && !excludedMetadataFieldNames.isEmpty()) {
+                for (String name : excludedMetadataFieldNames) {
+                    ExcludedMetadataField field = new ExcludedMetadataField(exportActivityId, name);
+                    dao.createExcludedMetadataField(field);
+                }
+            }
+        }
+    }
+
+    private void insertExcludedActivityFields(ConfiguredExportDao dao, Config activityConfig, long exportActivityId) {
+        if (activityConfig.hasPath("excludeActivityFields")) {
+            List<String> excludedActivityFieldNames = activityConfig.getStringList("excludeActivityFields");
+            if (excludedActivityFieldNames != null && !excludedActivityFieldNames.isEmpty()) {
+                for (String name : excludedActivityFieldNames) {
+                    ExcludedActivityField field = new ExcludedActivityField(exportActivityId, name);
+                    dao.createExcludedActivityField(field);
+                }
+            }
+        }
     }
 
     public void insertOrUpdateStudyDetails(Handle handle, long studyId) {

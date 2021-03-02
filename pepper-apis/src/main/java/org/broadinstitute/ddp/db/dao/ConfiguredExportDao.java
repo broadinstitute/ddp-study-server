@@ -1,14 +1,16 @@
 package org.broadinstitute.ddp.db.dao;
 
+import java.util.Optional;
+
 import org.broadinstitute.ddp.db.DaoException;
 import org.broadinstitute.ddp.model.export.ConfiguredExport;
-import org.broadinstitute.ddp.model.export.ExcludedMetadataField;
 import org.broadinstitute.ddp.model.export.ExcludedActivityField;
+import org.broadinstitute.ddp.model.export.ExcludedMetadataField;
 import org.broadinstitute.ddp.model.export.ExcludedParticipantField;
 import org.broadinstitute.ddp.model.export.ExportActivity;
-import org.broadinstitute.ddp.model.export.ExportFirstField;
-import org.broadinstitute.ddp.model.export.ExportFilter;
 import org.broadinstitute.ddp.model.export.ExportActivityStatusFilter;
+import org.broadinstitute.ddp.model.export.ExportFilter;
+import org.broadinstitute.ddp.model.export.ExportFirstField;
 import org.jdbi.v3.sqlobject.CreateSqlObject;
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
@@ -16,7 +18,6 @@ import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.stringtemplate4.UseStringTemplateSqlLocator;
 
-import java.util.Optional;
 
 public interface ConfiguredExportDao extends SqlObject {
 
@@ -28,13 +29,13 @@ public interface ConfiguredExportDao extends SqlObject {
                 configuredExport.getEnabled(), configuredExport.getRunSchedule(), configuredExport.getBucketType(),
                 configuredExport.getBucketName(), configuredExport.getFilePath());
 
-        return findConfiguredExportByConfiguredExportId(configuredExportId).orElseThrow(() ->
+        return findConfiguredExportById(configuredExportId).orElseThrow(() ->
           new DaoException("Could not find newly created configured export with id " + configuredExportId));
     }
 
     default ExcludedParticipantField createExcludedParticipantField(ExcludedParticipantField field) {
         long excludedParticipantFieldId = getConfiguredExportSql()
-          .insertExcludedParticipantFieldByStudyId(field.getExcludedParticipantField(), field.getConfiguredExportId());
+                .insertExcludedParticipantFieldByStudyId(field.getConfiguredExportId(), field.getExcludedParticipantField());
 
         return findExcludedParticipantFieldById(excludedParticipantFieldId).orElseThrow(() ->
           new DaoException("Could not find newly created excluded participant field with id " + excludedParticipantFieldId));
@@ -42,8 +43,8 @@ public interface ConfiguredExportDao extends SqlObject {
 
     default ExportActivity createExportActivity(ExportActivity activity) {
         long exportActivityId = getConfiguredExportSql()
-          .insertExportActivityByStudyActivityIdAndCode(activity.getStudyActivityId(), activity.isIncremental(),
-            activity.getActivityCode());
+                .insertExportActivityByStudyActivityIdAndCode(activity.getStudyActivityId(), activity.isIncremental(),
+                  activity.getActivityCode());
 
         return findExportActivityById(exportActivityId).orElseThrow(() ->
           new DaoException("Could not find newly created export activity with id " + exportActivityId));
@@ -51,33 +52,48 @@ public interface ConfiguredExportDao extends SqlObject {
 
     default ExcludedActivityField createExcludedActivityField(ExcludedActivityField field) {
         long excludedActivityFieldId = getConfiguredExportSql()
-          .insertExcludedActivityFieldByActivityId(field.getExcludedActivityField(), field.getExportActivityId());
+                .insertExcludedActivityFieldByActivityId(field.getExportActivityId(), field.getExcludedActivityField());
 
         return findExcludedActivityFieldById(excludedActivityFieldId).orElseThrow(() ->
           new DaoException("Could not find newly created excluded activity field with id " + excludedActivityFieldId));
-        //TODO
     }
 
     default ExcludedMetadataField createExcludedMetadataField(ExcludedMetadataField field) {
-        //TODO
+        long excludedMetadataFieldId = getConfiguredExportSql()
+                .insertExcludedMetadataFieldByActivityId(field.getExportActivityId(), field.getExcludedMetadataField());
+
+        return findExcludedMetadataFieldById(excludedMetadataFieldId).orElseThrow(() ->
+          new DaoException("Could not find newly created excluded metadata field with id " + excludedMetadataFieldId));
     }
 
     default ExportFirstField createExportFirstField(ExportFirstField field) {
-        //TODO
+        long exportFirstFieldId = getConfiguredExportSql()
+                .insertExportFirstFieldByActivityId(field.getActivityId(), field.getFirstField());
+
+        return findFirstFieldById(exportFirstFieldId).orElseThrow(() ->
+          new DaoException("Could not find newly created excluded metadata field with id " + exportFirstFieldId));
     }
 
-    default ExportFilter createExportFilter(ExportFilter field) {
-        //TODO
+    default ExportFilter createExportFilter(ExportFilter filter) {
+        long exportFilterId = getConfiguredExportSql()
+                .insertExportFilterByActivityId(filter.getExportActivityId(), filter.getFilterType());
+
+        return findFilterById(exportFilterId).orElseThrow(() ->
+          new DaoException("Could not find newly created export filter with id " + exportFilterId));
     }
 
-    default ExportActivityStatusFilter createExportActivityStatusFilter(ExportActivityStatusFilter field) {
-        //TODO
+    default ExportActivityStatusFilter createExportActivityStatusFilter(ExportActivityStatusFilter filter) {
+        long exportActivityStatusFilterId = getConfiguredExportSql()
+                .insertExportActivityStatusFilterByExportFilterId(filter.getFilterId(), filter.getStatusType());
+
+        return findActivityStatusFilterById(exportActivityStatusFilterId).orElseThrow(() ->
+          new DaoException("Could not find newly created export activity status filter with id " + exportActivityStatusFilterId));
     }
 
     @UseStringTemplateSqlLocator
-    @SqlQuery("findConfiguredExportByConfiguredExportId")
+    @SqlQuery("findConfiguredExportById")
     @RegisterConstructorMapper(ConfiguredExport.class)
-    Optional<ConfiguredExport> findConfiguredExportByConfiguredExportId(@Bind("configuredExportId") long configuredExportId);
+    Optional<ConfiguredExport> findConfiguredExportById(@Bind("id") long id);
 
     @UseStringTemplateSqlLocator
     @SqlQuery("findExcludedParticipantFieldById")
