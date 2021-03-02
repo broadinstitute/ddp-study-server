@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
@@ -230,7 +231,7 @@ public class BrainRename implements CustomTask {
                 .collect(Collectors.toSet());
         LOG.info("Found {} announcement event message templates", messageTemplateIds.size());
 
-        List<Translation> translations = streamTemplateVariables(messageTemplateIds)
+        List<Translation> translations = streamTemplateVariables(messageTemplateIds, Instant.now().toEpochMilli())
                 .flatMap(variable -> variable.getTranslations().stream())
                 .collect(Collectors.toList());
         LOG.info("Found {} announcement event template variable translations to update in-place", translations.size());
@@ -310,8 +311,8 @@ public class BrainRename implements CustomTask {
         ActivityVersionDto newVersionDto = activityDao.changeVersion(activityId, versionTag, meta);
         LOG.info("Created new revision {} of activity {}", newVersionDto.getVersionTag(), activityCode);
 
-        if (activityCfg.getBoolean("editSubtitles")) {
-            updateActivitySubtitlesInPlace(activityId, activityCode);
+        if (activityCfg.getBoolean("editSubtitle")) {
+            updateActivitySubtitleInPlace(activityId, activityCode);
         }
         if (activityCfg.getBoolean("editStatusSummaries")) {
             List<Edit> edits = parseEdits(activityCfg, "statusSummaryEdits");
@@ -322,7 +323,7 @@ public class BrainRename implements CustomTask {
         }
         if (activityCfg.getBoolean("editActivityValidations")) {
             List<Edit> edits = parseEdits(activityCfg, "activityValidationEdits");
-            updateActivityValidationsInPlace(activityId, activityCode, edits);
+            updateActivityValidationsInPlace(activityId, activityCode, currentVersionDto, edits);
         }
 
         Map<String, VariableEdit> varEdits = parseVariableEdits(activityCfg, "variableEdits");
@@ -369,14 +370,13 @@ public class BrainRename implements CustomTask {
                 .findDefByDtoAndVersion(activityDto, versionDto);
     }
 
-    private List<TemplateVariable> findActivityValidationVariables(long activityId) {
+    private List<TemplateVariable> findActivityValidationVariables(long activityId, long timestamp) {
         List<Long> validationMessageIds = jdbiValidation._findByActivityId(activityId)
                 .stream()
                 .map(ActivityValidationDto::getErrorMessageTemplateId)
                 .collect(Collectors.toList());
         return templateDao
-                // .loadTemplatesByIdsAndTimestamp(validationMessageIds, Instant.now().toEpochMilli())
-                .loadTemplatesByIds(validationMessageIds)
+                .loadTemplatesByIdsAndTimestamp(validationMessageIds, timestamp)
                 .flatMap(template -> template.getVariables().stream())
                 .collect(Collectors.toList());
     }
@@ -397,7 +397,7 @@ public class BrainRename implements CustomTask {
         }
     }
 
-    private void updateActivitySubtitlesInPlace(long activityId, String activityCode) {
+    private void updateActivitySubtitleInPlace(long activityId, String activityCode) {
         ActivityI18nDetail i18nDetail = activityI18nDao
                 .findDetailsByActivityIdAndTimestamp(activityId, Instant.now().toEpochMilli())
                 .iterator().next();
@@ -445,8 +445,8 @@ public class BrainRename implements CustomTask {
         LOG.info("Updated read-only hint for activity {}", activity.getActivityCode());
     }
 
-    private void updateActivityValidationsInPlace(long activityId, String activityCode, List<Edit> edits) {
-        List<TemplateVariable> validationVariables = findActivityValidationVariables(activityId);
+    private void updateActivityValidationsInPlace(long activityId, String activityCode, ActivityVersionDto versionDto, List<Edit> edits) {
+        List<TemplateVariable> validationVariables = findActivityValidationVariables(activityId, versionDto.getRevStart());
         for (var variable : validationVariables) {
             Translation sub = extractSingleTranslation(variable);
             String newText = replaceNameAndEmail(sub.getText());
@@ -458,10 +458,9 @@ public class BrainRename implements CustomTask {
         LOG.info("Updated {} complex validations for activity {}", validationVariables.size(), activityCode);
     }
 
-    private Stream<TemplateVariable> streamTemplateVariables(Iterable<Long> templateIds) {
+    private Stream<TemplateVariable> streamTemplateVariables(Iterable<Long> templateIds, long timestamp) {
         return templateDao
-                // .loadTemplatesByIdsAndTimestamp(validationMessageIds, Instant.now().toEpochMilli())
-                .loadTemplatesByIds(templateIds)
+                .loadTemplatesByIdsAndTimestamp(templateIds, timestamp)
                 .flatMap(template -> template.getVariables().stream());
     }
 
@@ -476,9 +475,9 @@ public class BrainRename implements CustomTask {
         }
 
         Stream<Template> contentTemplates = templateDao
-                // .loadTemplatesByIdsAndTimestamp(templateIdsToLookup, versionDto.getRevStart())
-                .loadTemplatesByIds(templateIdsToLookup);
+                .loadTemplatesByIdsAndTimestamp(templateIdsToLookup, versionDto.getRevStart());
         return Stream.concat(contentTemplates, templates.stream())
+                .filter(Objects::nonNull)
                 .flatMap(template -> template.getVariables().stream());
     }
 
