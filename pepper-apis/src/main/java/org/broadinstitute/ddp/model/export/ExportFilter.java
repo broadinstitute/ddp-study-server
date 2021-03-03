@@ -13,7 +13,7 @@ public class ExportFilter {
     @JdbiConstructor
     public ExportFilter(@ColumnName("export_filter_id") long id,
                         @ColumnName("export_activity_id") long exportActivityId,
-                        @ColumnName("export_status_filter_type_id") long filterTypeId) {
+                        @ColumnName("export_filter_type_id") long filterTypeId) {
         this.id = id;
         this.exportActivityId = exportActivityId;
         this.filterTypeId = filterTypeId;

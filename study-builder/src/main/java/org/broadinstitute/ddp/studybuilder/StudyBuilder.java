@@ -115,10 +115,11 @@ public class StudyBuilder {
         insertSendgrid(handle, studyDto.getId());
         insertKits(handle, studyDto.getId(), adminDto.getUserId());
         insertStatistics(handle, studyDto.getId());
-        insertConfiguredExport(handle, studyDto);
 
         Path dirPath = cfgPath.getParent();
         new ActivityBuilder(dirPath, cfg, varsCfg, studyDto, adminDto.getUserId()).run(handle);
+        insertConfiguredExport(handle, studyDto);
+
         new PdfBuilder(dirPath, cfg, studyDto, adminDto.getUserId()).run(handle);
 
         if (doWorkflow) {
@@ -416,7 +417,6 @@ public class StudyBuilder {
 
     private void insertConfiguredExport(Handle handle, StudyDto studyDto) {
         ConfiguredExportDao dao = handle.attach(ConfiguredExportDao.class);
-
         Config exportCfg = cfg.hasPath("export") ? cfg.getConfig("export") : null;
 
         //If export isn't explicitly enabled, disable it
@@ -442,7 +442,7 @@ public class StudyBuilder {
         long exportId = configuredExport.getId();
 
         int numExcludedParticipantFields = insertExcludedParticipantFields(dao, exportCfg, exportId);
-        int numActivities = insertExportActivities(dao, exportCfg);
+        int numActivities = insertExportActivities(exportId, dao, exportCfg, studyDto.getId());
 
         LOG.info("Created configured export with id={}, runSchedule={}, bucketType={}, bucketName={}, filePath={}, {} excluded "
                 + "participant fields, and {} activities", exportId, runSchedule, bucketType, bucketName, filePath,
@@ -466,12 +466,12 @@ public class StudyBuilder {
         return numExcludedParticipantFields;
     }
 
-    private int insertExportActivities(ConfiguredExportDao dao, Config exportCfg) {
+    private int insertExportActivities(long configuredExportId, ConfiguredExportDao dao, Config exportCfg, long studyId) {
         int numActivities = 0;
 
         //Create objects for activities to export and add to database
         for (Config activityConfig : exportCfg.getConfigList("activities")) {
-            long exportActivityId = insertExportActivityRow(dao, activityConfig);
+            long exportActivityId = insertExportActivityRow(configuredExportId, dao, activityConfig, studyId);
             numActivities++;
 
             insertExcludedActivityFields(dao, activityConfig, exportActivityId);
@@ -482,10 +482,10 @@ public class StudyBuilder {
         return numActivities;
     }
 
-    private long insertExportActivityRow(ConfiguredExportDao dao, Config activityConfig) {
+    private long insertExportActivityRow(long configuredExportId, ConfiguredExportDao dao, Config activityConfig, long studyId) {
         boolean isIncremental = activityConfig.getBoolean("isIncremental");
         String activityCode = activityConfig.getString("activityCode");
-        ExportActivity activity = new ExportActivity(activityCode, isIncremental);
+        ExportActivity activity = new ExportActivity(configuredExportId, activityCode, isIncremental, studyId);
         activity = dao.createExportActivity(activity);
         return activity.getId();
     }
@@ -499,9 +499,11 @@ public class StudyBuilder {
                 long filterId = filter.getId();
 
                 if (filterType.equals("ACTIVITY_STATUS")) {
-                    String statusType = filterConfig.getString("statusType");
-                    ExportActivityStatusFilter statusFilter = new ExportActivityStatusFilter(filterId, statusType);
-                    dao.createExportActivityStatusFilter(statusFilter);
+                    List<String> statusTypes = filterConfig.getStringList("statusType");
+                    for (String statusType : statusTypes) {
+                        ExportActivityStatusFilter statusFilter = new ExportActivityStatusFilter(filterId, statusType);
+                        dao.createExportActivityStatusFilter(statusFilter);
+                    }
                 } else {
                     throw new DDPException("Cannot create filter with invalid type: " + filterType);
                 }

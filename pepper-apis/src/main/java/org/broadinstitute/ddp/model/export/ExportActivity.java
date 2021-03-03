@@ -5,27 +5,28 @@ import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
 
 public class ExportActivity {
     private long id;
-    private long studyActivityId;
-    private boolean isIncremental;
+    private long configuredExportId;
     private String activityCode;
+    private long activityId;
+    private boolean isIncremental;
+    private long studyId;
 
     @JdbiConstructor
     public ExportActivity(@ColumnName("export_activity_id") long id,
-                          @ColumnName("study_activity_id") long studyActivityId,
+                          @ColumnName("configured_export_id") long configuredExportId,
+                          @ColumnName("activity_id") long activityId,
                           @ColumnName("is_incremental") boolean isIncremental) {
         this.id = id;
-        this.studyActivityId = studyActivityId;
+        this.configuredExportId = configuredExportId;
+        this.activityId = activityId;
         this.isIncremental = isIncremental;
     }
 
-    public ExportActivity(long studyActivityId, boolean isIncremental) {
-        this.studyActivityId = studyActivityId;
-        this.isIncremental = isIncremental;
-    }
-
-    public ExportActivity(String activityCode, boolean isIncremental) {
+    public ExportActivity(long configuredExportId, String activityCode, boolean isIncremental, long studyId) {
+        this.configuredExportId = configuredExportId;
         this.activityCode = activityCode;
         this.isIncremental = isIncremental;
+        this.studyId = studyId;
     }
 
     public String getActivityCode() {
@@ -36,16 +37,16 @@ public class ExportActivity {
         return id;
     }
 
-    public long getStudyActivityId() {
-        return studyActivityId;
-    }
-
-    public void setStudyActivityId(long studyActivityId) {
-        this.studyActivityId = studyActivityId;
-    }
-
     public boolean isIncremental() {
         return isIncremental;
+    }
+
+    public long getConfiguredExportId() {
+        return configuredExportId;
+    }
+
+    public long getStudyId() {
+        return studyId;
     }
 }
 

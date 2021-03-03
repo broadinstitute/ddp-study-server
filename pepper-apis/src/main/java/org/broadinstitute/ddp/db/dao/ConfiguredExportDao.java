@@ -33,45 +33,45 @@ public interface ConfiguredExportDao extends SqlObject {
           new DaoException("Could not find newly created configured export with id " + configuredExportId));
     }
 
-    default ExcludedParticipantField createExcludedParticipantField(ExcludedParticipantField field) {
+    default void createExcludedParticipantField(ExcludedParticipantField field) {
         long excludedParticipantFieldId = getConfiguredExportSql()
                 .insertExcludedParticipantFieldByStudyId(field.getConfiguredExportId(), field.getExcludedParticipantField());
 
-        return findExcludedParticipantFieldById(excludedParticipantFieldId).orElseThrow(() ->
-          new DaoException("Could not find newly created excluded participant field with id " + excludedParticipantFieldId));
+        findExcludedParticipantFieldById(excludedParticipantFieldId).orElseThrow(() ->
+                new DaoException("Could not find newly created excluded participant field with id " + excludedParticipantFieldId));
     }
 
     default ExportActivity createExportActivity(ExportActivity activity) {
         long exportActivityId = getConfiguredExportSql()
-                .insertExportActivityByStudyActivityIdAndCode(activity.getStudyActivityId(), activity.isIncremental(),
-                  activity.getActivityCode());
+                .insertExportActivity(activity.getConfiguredExportId(), activity.getActivityCode(),
+                        activity.getStudyId(), activity.isIncremental());
 
         return findExportActivityById(exportActivityId).orElseThrow(() ->
           new DaoException("Could not find newly created export activity with id " + exportActivityId));
     }
 
-    default ExcludedActivityField createExcludedActivityField(ExcludedActivityField field) {
+    default void createExcludedActivityField(ExcludedActivityField field) {
         long excludedActivityFieldId = getConfiguredExportSql()
                 .insertExcludedActivityFieldByActivityId(field.getExportActivityId(), field.getExcludedActivityField());
 
-        return findExcludedActivityFieldById(excludedActivityFieldId).orElseThrow(() ->
-          new DaoException("Could not find newly created excluded activity field with id " + excludedActivityFieldId));
+        findExcludedActivityFieldById(excludedActivityFieldId).orElseThrow(() ->
+                new DaoException("Could not find newly created excluded activity field with id " + excludedActivityFieldId));
     }
 
-    default ExcludedMetadataField createExcludedMetadataField(ExcludedMetadataField field) {
+    default void createExcludedMetadataField(ExcludedMetadataField field) {
         long excludedMetadataFieldId = getConfiguredExportSql()
                 .insertExcludedMetadataFieldByActivityId(field.getExportActivityId(), field.getExcludedMetadataField());
 
-        return findExcludedMetadataFieldById(excludedMetadataFieldId).orElseThrow(() ->
-          new DaoException("Could not find newly created excluded metadata field with id " + excludedMetadataFieldId));
+        findExcludedMetadataFieldById(excludedMetadataFieldId).orElseThrow(() ->
+                new DaoException("Could not find newly created excluded metadata field with id " + excludedMetadataFieldId));
     }
 
-    default ExportFirstField createExportFirstField(ExportFirstField field) {
+    default void createExportFirstField(ExportFirstField field) {
         long exportFirstFieldId = getConfiguredExportSql()
                 .insertExportFirstFieldByActivityId(field.getActivityId(), field.getFirstField());
 
-        return findFirstFieldById(exportFirstFieldId).orElseThrow(() ->
-          new DaoException("Could not find newly created excluded metadata field with id " + exportFirstFieldId));
+        findFirstFieldById(exportFirstFieldId).orElseThrow(() ->
+                new DaoException("Could not find newly created excluded metadata field with id " + exportFirstFieldId));
     }
 
     default ExportFilter createExportFilter(ExportFilter filter) {
@@ -82,12 +82,12 @@ public interface ConfiguredExportDao extends SqlObject {
           new DaoException("Could not find newly created export filter with id " + exportFilterId));
     }
 
-    default ExportActivityStatusFilter createExportActivityStatusFilter(ExportActivityStatusFilter filter) {
+    default void createExportActivityStatusFilter(ExportActivityStatusFilter filter) {
         long exportActivityStatusFilterId = getConfiguredExportSql()
                 .insertExportActivityStatusFilterByExportFilterId(filter.getFilterId(), filter.getStatusType());
 
-        return findActivityStatusFilterById(exportActivityStatusFilterId).orElseThrow(() ->
-          new DaoException("Could not find newly created export activity status filter with id " + exportActivityStatusFilterId));
+        findActivityStatusFilterById(exportActivityStatusFilterId).orElseThrow(() ->
+                new DaoException("Could not find newly created export activity status filter with id " + exportActivityStatusFilterId));
     }
 
     @UseStringTemplateSqlLocator

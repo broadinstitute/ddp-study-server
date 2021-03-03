@@ -26,13 +26,14 @@ public interface ConfiguredExportSql extends SqlObject {
                                 @Bind("studyId") long studyId, @Bind("excludedParticipantField") String excludedParticipantField);
 
     @GetGeneratedKeys
-    @SqlUpdate("insert into export_activity (study_activity_id, is_incremental) values"
-            + " ((select study_activity_id from study_activity"
-            + " where study_activity_code = :activityCode), :isIncremental)")
-    long insertExportActivityByStudyActivityIdAndCode(
-                                @Bind("studyActivityId") long studyActivityId,
-                                @Bind("isIncremental") boolean isIncremental,
-                                @Bind("activityCode") String activityCode);
+    @SqlUpdate("insert into export_activity (configured_export_id, activity_id, is_incremental) values"
+            + " (:configuredExportId, (select study_activity_id from study_activity "
+            + "where study_id=:studyId and study_activity_code=:activityCode), :isIncremental)")
+    long insertExportActivity(
+            @Bind("configuredExportId") long configuredExportId,
+            @Bind("activityCode") String activityCode,
+            @Bind("studyId") long studyId,
+            @Bind("isIncremental") boolean isIncremental);
 
     @GetGeneratedKeys
     @SqlUpdate("insert into excluded_activity_field (export_activity_id, excluded_activity_field) values"
