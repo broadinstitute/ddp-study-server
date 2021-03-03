@@ -137,7 +137,7 @@ public class BrainConsentVersion2 implements CustomTask {
                 dobDto.getId(), ageRangeValidation.getId(), ageRangeValidation.getRevisionId(), ageRangeValidation.getRuleType());
 
         UpdateTemplatesInPlace updateTemplatesTask = new UpdateTemplatesInPlace();
-        updateTemplatesTask.traverseActivity(handle, activityCode, definition, activity);
+        updateTemplatesTask.traverseActivity(handle, activityCode, definition, activity, versionDto.getRevStart());
         LOG.info("updated variables for styling changes");
 
         //update brain_consent_s3_election_agree listHintStyle to NONE

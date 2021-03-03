@@ -3,6 +3,7 @@ package org.broadinstitute.ddp.studybuilder.task;
 import static org.broadinstitute.ddp.studybuilder.BuilderUtils.parseAndValidateTemplate;
 
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -105,9 +106,10 @@ public class UpdateTemplatesInPlace implements CustomTask {
             return;
         }
 
+        long timestamp = Instant.now().toEpochMilli();
         Config settingsCfg = studyCfg.getConfig("settings");
         Long inviteErrorTemplateId = settings.getInviteErrorTemplateId();
-        extractAndCompare(handle, "", inviteErrorTemplateId, settingsCfg, "inviteErrorTemplate");
+        extractAndCompare(handle, "", inviteErrorTemplateId, timestamp, settingsCfg, "inviteErrorTemplate");
     }
 
     // Note: This currently assumes study has only one config per kit type.
@@ -144,10 +146,13 @@ public class UpdateTemplatesInPlace implements CustomTask {
             }
             if (zipCodeRule != null) {
                 long ruleId = zipCodeRule.getId();
+                long timestamp = Instant.now().toEpochMilli();
                 Config latestRuleCfg = latestZipCodeRules.get(kitType);
                 String prefix = String.format("kit %s zipCodeRule %d", kitType, ruleId);
-                extractAndCompare(handle, prefix, zipCodeRule.getErrorMessageTemplateId(), latestRuleCfg, "errorMessageTemplate");
-                extractAndCompare(handle, prefix, zipCodeRule.getWarningMessageTemplateId(), latestRuleCfg, "warningMessageTemplate");
+                extractAndCompare(handle, prefix, zipCodeRule.getErrorMessageTemplateId(),
+                        timestamp, latestRuleCfg, "errorMessageTemplate");
+                extractAndCompare(handle, prefix, zipCodeRule.getWarningMessageTemplateId(),
+                        timestamp, latestRuleCfg, "warningMessageTemplate");
             }
         }
     }
@@ -172,8 +177,9 @@ public class UpdateTemplatesInPlace implements CustomTask {
                 String eventKey = hashEvent(handle, eventConfig);
                 Config eventCfg = latestAnnouncementEvents.get(eventKey);
 
+                long timestamp = Instant.now().toEpochMilli();
                 long templateId = ((AnnouncementEventAction) eventConfig.getEventAction()).getMessageTemplateId();
-                Template current = templateDao.loadTemplateById(templateId);
+                Template current = templateDao.loadTemplateByIdAndTimestamp(templateId, timestamp);
                 Template latest = parseAndValidateTemplate(eventCfg, "action.msgTemplate");
 
                 String tag = String.format("event %s announcementMessageTemplate %d", eventKey, templateId);
@@ -211,11 +217,11 @@ public class UpdateTemplatesInPlace implements CustomTask {
             ActivityVersionDto versionDto = jdbiActVersion.findByActivityCodeAndVersionTag(studyId, activityCode, versionTag).get();
             FormActivityDef activity = (FormActivityDef) activityDao.findDefByDtoAndVersion(activityDto, versionDto);
 
-            traverseActivity(handle, activityCode, definition, activity);
+            traverseActivity(handle, activityCode, definition, activity, versionDto.getRevStart());
         }
     }
 
-    void traverseActivity(Handle handle, String activityCode, Config definition, FormActivityDef activity) {
+    void traverseActivity(Handle handle, String activityCode, Config definition, FormActivityDef activity, long timestamp) {
         LOG.info("Comparing templates in activity {}...", activityCode);
 
         extractAndCompare(handle, "", activity.getLastUpdatedTextTemplate(), definition, "lastUpdatedTextTemplate");
@@ -235,11 +241,11 @@ public class UpdateTemplatesInPlace implements CustomTask {
         }
 
         for (int i = 0; i < sections.size(); i++) {
-            traverseSection(handle, i + 1, sectionCfgs.get(i), sections.get(i));
+            traverseSection(handle, i + 1, sectionCfgs.get(i), sections.get(i), timestamp);
         }
     }
 
-    private void traverseSection(Handle handle, int sectionNum, Config sectionCfg, FormSectionDef section) {
+    private void traverseSection(Handle handle, int sectionNum, Config sectionCfg, FormSectionDef section, long timestamp) {
         String prefix = String.format("section %d", sectionNum);
         extractAndCompare(handle, prefix, section.getNameTemplate(), sectionCfg, "nameTemplate");
 
@@ -250,24 +256,25 @@ public class UpdateTemplatesInPlace implements CustomTask {
         }
 
         for (int i = 0; i < blocks.size(); i++) {
-            traverseBlock(handle, sectionNum, i + 1, null, blockCfgs.get(i), blocks.get(i));
+            traverseBlock(handle, sectionNum, i + 1, null, blockCfgs.get(i), blocks.get(i), timestamp);
         }
     }
 
-    private void traverseBlock(Handle handle, int sectionNum, int blockNum, Integer nestedNum, Config blockCfg, FormBlockDef block) {
+    private void traverseBlock(Handle handle, int sectionNum, int blockNum, Integer nestedNum,
+                               Config blockCfg, FormBlockDef block, long timestamp) {
         switch (block.getBlockType()) {
             case CONTENT:
-                traverseContent(handle, sectionNum, blockNum, nestedNum, blockCfg, (ContentBlockDef) block);
+                traverseContent(handle, sectionNum, blockNum, nestedNum, blockCfg, (ContentBlockDef) block, timestamp);
                 break;
             case QUESTION:
-                traverseQuestion(handle, blockCfg.getConfig("question"), ((QuestionBlockDef) block).getQuestion());
+                traverseQuestion(handle, blockCfg.getConfig("question"), ((QuestionBlockDef) block).getQuestion(), timestamp);
                 break;
             case COMPONENT:
                 traverseComponent(handle, sectionNum, blockNum, nestedNum, blockCfg, (ComponentBlockDef) block);
                 break;
             case CONDITIONAL:
                 ConditionalBlockDef condBlock = (ConditionalBlockDef) block;
-                traverseQuestion(handle, blockCfg.getConfig("control"), condBlock.getControl());
+                traverseQuestion(handle, blockCfg.getConfig("control"), condBlock.getControl(), timestamp);
 
                 List<FormBlockDef> condNested = condBlock.getNested();
                 List<Config> condNestedCfgs = List.copyOf(blockCfg.getConfigList("nested"));
@@ -277,7 +284,7 @@ public class UpdateTemplatesInPlace implements CustomTask {
                 }
 
                 for (int i = 0; i < condNested.size(); i++) {
-                    traverseBlock(handle, sectionNum, blockNum, i + 1, condNestedCfgs.get(i), condNested.get(i));
+                    traverseBlock(handle, sectionNum, blockNum, i + 1, condNestedCfgs.get(i), condNested.get(i), timestamp);
                 }
 
                 break;
@@ -295,7 +302,7 @@ public class UpdateTemplatesInPlace implements CustomTask {
                 }
 
                 for (int i = 0; i < groupNested.size(); i++) {
-                    traverseBlock(handle, sectionNum, blockNum, i + 1, groupNestedCfgs.get(i), groupNested.get(i));
+                    traverseBlock(handle, sectionNum, blockNum, i + 1, groupNestedCfgs.get(i), groupNested.get(i), timestamp);
                 }
 
                 break;
@@ -305,12 +312,13 @@ public class UpdateTemplatesInPlace implements CustomTask {
     }
 
     // Note: for now, we're querying the content block templates here.
-    private void traverseContent(Handle handle, int sectionNum, int blockNum, Integer nestedNum, Config blockCfg, ContentBlockDef block) {
+    private void traverseContent(Handle handle, int sectionNum, int blockNum, Integer nestedNum,
+                                 Config blockCfg, ContentBlockDef block, long timestamp) {
         String type = block.getBlockType().name();
         String prefix = String.format("section %d block %d%s %s",
                 sectionNum, blockNum, nestedNum == null ? "" : " nested " + nestedNum, type);
-        extractAndCompare(handle, prefix, block.getTitleTemplateId(), blockCfg, "titleTemplate");
-        extractAndCompare(handle, prefix, block.getBodyTemplateId(), blockCfg, "bodyTemplate");
+        extractAndCompare(handle, prefix, block.getTitleTemplateId(), timestamp, blockCfg, "titleTemplate");
+        extractAndCompare(handle, prefix, block.getBodyTemplateId(), timestamp, blockCfg, "bodyTemplate");
     }
 
     private void traverseComponent(Handle handle, int sectionNum, int blockNum, Integer nestNum, Config blockCfg, ComponentBlockDef block) {
@@ -337,7 +345,7 @@ public class UpdateTemplatesInPlace implements CustomTask {
         }
     }
 
-    private void traverseQuestion(Handle handle, Config questionCfg, QuestionDef question) {
+    private void traverseQuestion(Handle handle, Config questionCfg, QuestionDef question, long timestamp) {
         String prefix = String.format("question %s", question.getStableId());
 
         extractAndCompare(handle, prefix, question.getPromptTemplate(), questionCfg, "promptTemplate");
@@ -372,13 +380,13 @@ public class UpdateTemplatesInPlace implements CustomTask {
                 extractAndCompare(handle, prefix, textQuestion.getMismatchMessageTemplate(), questionCfg, "mismatchMessageTemplate");
                 break;
             case COMPOSITE:
-                traverseCompositeQuestion(handle, questionCfg, (CompositeQuestionDef) question);
+                traverseCompositeQuestion(handle, questionCfg, (CompositeQuestionDef) question, timestamp);
                 break;
             default:
                 throw new DDPException("Unhandled question type: " + question.getQuestionType());
         }
 
-        traverseQuestionValidations(handle, questionCfg, question);
+        traverseQuestionValidations(handle, questionCfg, question, timestamp);
     }
 
     private void traversePicklistQuestion(Handle handle, Config questionCfg, PicklistQuestionDef question) {
@@ -424,7 +432,7 @@ public class UpdateTemplatesInPlace implements CustomTask {
         }
     }
 
-    private void traverseCompositeQuestion(Handle handle, Config questionCfg, CompositeQuestionDef question) {
+    private void traverseCompositeQuestion(Handle handle, Config questionCfg, CompositeQuestionDef question, long timestamp) {
         String prefix = String.format("question %s", question.getStableId());
 
         extractAndCompare(handle, prefix, question.getAddButtonTemplate(), questionCfg, "addButtonTemplate");
@@ -437,11 +445,11 @@ public class UpdateTemplatesInPlace implements CustomTask {
         }
 
         for (int i = 0; i < children.size(); i++) {
-            traverseQuestion(handle, childrenCfgs.get(i), children.get(i));
+            traverseQuestion(handle, childrenCfgs.get(i), children.get(i), timestamp);
         }
     }
 
-    private void traverseQuestionValidations(Handle handle, Config questionCfg, QuestionDef question) {
+    private void traverseQuestionValidations(Handle handle, Config questionCfg, QuestionDef question, long timestamp) {
         String questionStableId = question.getStableId();
 
         List<RuleDef> rules = question.getValidations();
@@ -454,13 +462,13 @@ public class UpdateTemplatesInPlace implements CustomTask {
             RuleDef rule = rules.get(i);
             Config ruleCfg = ruleCfgs.get(i);
             String prefix = String.format("question %s rule %s", questionStableId, rule.getRuleType().name());
-            extractAndCompare(handle, prefix, rule.getHintTemplateId(), ruleCfg, "hintTemplate");
+            extractAndCompare(handle, prefix, rule.getHintTemplateId(), timestamp, ruleCfg, "hintTemplate");
         }
     }
 
-    private void extractAndCompare(Handle handle, String prefix, Long currentTemplateId, Config cfg, String key) {
+    private void extractAndCompare(Handle handle, String prefix, Long currentTemplateId, long timestamp, Config cfg, String key) {
         if (currentTemplateId != null) {
-            Template current = handle.attach(TemplateDao.class).loadTemplateById(currentTemplateId);
+            Template current = handle.attach(TemplateDao.class).loadTemplateByIdAndTimestamp(currentTemplateId, timestamp);
             extractAndCompare(handle, prefix, current, cfg, key);
         }
     }

@@ -179,23 +179,24 @@ public interface TemplateDao extends SqlObject {
     @RegisterRowMapper(TextAndVarCountMapper.class)
     Map<Long, TextAndVarCount> findAllTextAndVarCountsByIds(@BindList("templateIds") Set<Long> templateIds);
 
-    default Template loadTemplateById(long templateId) {
-        try (var stream = loadTemplatesByIds(Set.of(templateId))) {
+    default Template loadTemplateByIdAndTimestamp(long templateId, long timestamp) {
+        try (var stream = loadTemplatesByIdsAndTimestamp(Set.of(templateId), timestamp)) {
             return stream.findFirst().orElse(null);
         }
     }
 
     @UseStringTemplateSqlLocator
-    @SqlQuery("queryTemplatesByIds")
+    @SqlQuery("queryTemplatesByIdsAndTimestamp")
     @RegisterConstructorMapper(Template.class)
     @RegisterConstructorMapper(TemplateVariable.class)
     @RegisterConstructorMapper(Translation.class)
     @UseRowReducer(TemplateReducer.class)
-    Stream<Template> loadTemplatesByIds(
-            @BindList(value = "templateIds", onEmpty = EmptyHandling.NULL) Iterable<Long> templateIds);
+    Stream<Template> loadTemplatesByIdsAndTimestamp(
+            @BindList(value = "templateIds", onEmpty = EmptyHandling.NULL) Iterable<Long> templateIds,
+            @Bind("timestamp") long timestamp);
 
-    default Map<Long, Template> collectTemplatesByIds(Iterable<Long> templateIds) {
-        try (var stream = loadTemplatesByIds(templateIds)) {
+    default Map<Long, Template> collectTemplatesByIdsAndTimestamp(Iterable<Long> templateIds, long timestamp) {
+        try (var stream = loadTemplatesByIdsAndTimestamp(templateIds, timestamp)) {
             return stream.collect(Collectors.toMap(Template::getTemplateId, Function.identity()));
         }
     }
@@ -247,7 +248,8 @@ public interface TemplateDao extends SqlObject {
         }
     }
 
-    default Map<Long, Map<String, String>> findAllTranslatedVariablesByIds(Set<Long> templateIds, long langCodeId, Long defaultLangCodeId) {
+    default Map<Long, Map<String, String>> findAllTranslatedVariablesByIds(Set<Long> templateIds, long langCodeId,
+                                                                           Long defaultLangCodeId, long timestamp) {
         String query = StringTemplateSqlLocator
                 .findStringTemplate(TemplateDao.class, "queryAllTranslatedVariablesByTemplateIdsAndLangId")
                 .render();
@@ -255,6 +257,7 @@ public interface TemplateDao extends SqlObject {
                 .bindList("templateIds", new ArrayList<>(templateIds))
                 .bind("langCodeId", langCodeId)
                 .bind("defaultLangCodeId", defaultLangCodeId)
+                .bind("timestamp", timestamp)
                 .reduceRows(new HashMap<>(), (accumulator, row) -> {
                     long key = row.getColumn(TemplateTable.ID, Long.class);
                     Map<String, String> vars = accumulator.computeIfAbsent(key, k -> new HashMap<>());
