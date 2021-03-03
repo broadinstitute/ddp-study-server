@@ -57,7 +57,7 @@ public class JdbiQuestionValidationCached extends SQLObjectWrapper<JdbiQuestionV
         } else {
             List<RuleDto> validations = null;
             try {
-                validations = questionIdToValidationsCache.get(questionDto.getId());
+                validations = questionIdToValidationsCache.get(questionDto.getActivityId());
             } catch (RedisException e) {
                 LOG.warn("Failed to retrieve value from Redis cache: " + questionIdToValidationsCache.getName() + " key lookedup:"
                         + questionDto.getId() + "Will try to retrieve from database", e);
@@ -65,7 +65,7 @@ public class JdbiQuestionValidationCached extends SQLObjectWrapper<JdbiQuestionV
             }
             if (validations == null) {
                 Map<Long, List<RuleDto>> data = cacheActivityValidations(questionDto.getActivityId());
-                validations = data.get(questionDto.getId());
+                validations = data.get(questionDto.getActivityId());
             }
             return validations == null ? new ArrayList<>() : validations;
         }

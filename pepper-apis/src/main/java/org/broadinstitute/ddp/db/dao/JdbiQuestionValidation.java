@@ -61,7 +61,7 @@ public interface JdbiQuestionValidation extends SqlObject {
         Map<Long, List<RuleDto>> questionIdToRuleDtos = new HashMap<>();
         try (var stream = getAllActiveValidationDtosForActivity(activityId)) {
             stream.forEach(ruleDto -> questionIdToRuleDtos
-                    .computeIfAbsent(ruleDto.getQuestionId(), k -> new ArrayList<>())
+                    .computeIfAbsent(activityId, k -> new ArrayList<>())
                     .add(ruleDto));
         }
         return questionIdToRuleDtos;

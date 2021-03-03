@@ -140,15 +140,9 @@ public interface ValidationDao extends SqlObject {
         I18nContentRenderer i18nContentRenderer = new I18nContentRenderer();
 
         for (RuleDto ruleDto : ruleDtos) {
-            String correctionHint = null;
-            if (ruleDto.getHintTemplateId() != null) {
-                correctionHint = i18nContentRenderer.renderContent(getHandle(), ruleDto.getHintTemplateId(), langCodeId);
+            if (ruleDto.getQuestionId() == questionDto.getId()) {
+                addRule(ruleDto, rules, langCodeId, i18nContentRenderer);
             }
-            String message = getJdbiI18nValidationMsgTrans().getValidationMessage(
-                    getJdbiValidationType().getTypeId(ruleDto.getRuleType()),
-                    langCodeId
-            );
-            rules.add(getValidationRule(ruleDto, message, correctionHint));
         }
 
         rules.sort((lhs, rhs) -> {
@@ -164,6 +158,18 @@ public interface ValidationDao extends SqlObject {
         LOG.info("Found {} validations for question id {} using language code id {}",
                 rules.size(), questionDto.getId(), langCodeId);
         return rules;
+    }
+
+    private void addRule(RuleDto ruleDto, List<Rule> rules, long langCodeId, I18nContentRenderer i18nContentRenderer) {
+        String correctionHint = null;
+        if (ruleDto.getHintTemplateId() != null) {
+            correctionHint = i18nContentRenderer.renderContent(getHandle(), ruleDto.getHintTemplateId(), langCodeId);
+        }
+        String message = getJdbiI18nValidationMsgTrans().getValidationMessage(
+                getJdbiValidationType().getTypeId(ruleDto.getRuleType()),
+                langCodeId
+        );
+        rules.add(getValidationRule(ruleDto, message, correctionHint));
     }
 
     private Rule getValidationRule(RuleDto dto, String message, String hint) {
