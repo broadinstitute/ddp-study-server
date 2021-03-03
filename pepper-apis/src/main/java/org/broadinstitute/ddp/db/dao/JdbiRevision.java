@@ -38,6 +38,16 @@ public interface JdbiRevision extends SqlObject {
     }
 
     /**
+     * Create a copy of the revision with only the start date and no end date.
+     */
+    @GetGeneratedKeys
+    @SqlUpdate("insert into revision ("
+            + "        start_date, changed_by_user_id, change_reason, end_date, terminated_by_user_id, terminated_reason)"
+            + " select start_date, changed_by_user_id, change_reason, null, null, null"
+            + "   from revision where revision_id = :revisionId")
+    long copyStart(@Bind("revisionId") long revisionIdToCopy);
+
+    /**
      * Create a copy of given revision and terminate it by setting the end date.
      */
     @UseStringTemplateSqlLocator

@@ -216,7 +216,7 @@ public class PatchFormAnswersRoute implements Route {
                     // @TODO might be able to get rid of this query and a bunch of *CachedDao classes
                     // if can figure out how to create Rule objects from RuleDef
                     Question question = questionDao.getQuestionByActivityInstanceAndDto(questionDto,
-                            instanceGuid, false, preferredUserLangDto.getId());
+                            instanceGuid, instanceDto.getCreatedAtMillis(), false, preferredUserLangDto.getId());
 
                     if (!isStudyAdmin && question.isReadonly()) {
                         String msg = "Question with stable id " + questionStableId + " is read-only, cannot update question";
@@ -754,7 +754,8 @@ public class PatchFormAnswersRoute implements Route {
             Handle handle, String participantGuid, String operatorGuid, ActivityInstanceDto instanceDto, long languageCodeId
     ) {
         return actValidationService.validate(
-                handle, interpreter, participantGuid, operatorGuid, instanceDto.getGuid(), instanceDto.getActivityId(), languageCodeId
+                handle, interpreter, participantGuid, operatorGuid, instanceDto.getGuid(), instanceDto.getCreatedAtMillis(),
+                instanceDto.getActivityId(), languageCodeId
         );
     }
 }

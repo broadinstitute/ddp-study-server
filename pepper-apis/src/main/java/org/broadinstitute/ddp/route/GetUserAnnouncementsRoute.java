@@ -1,5 +1,6 @@
 package org.broadinstitute.ddp.route;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Set;
@@ -7,7 +8,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.http.HttpStatus;
-
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants.PathParam;
 import org.broadinstitute.ddp.content.ContentStyle;
@@ -24,10 +24,8 @@ import org.broadinstitute.ddp.model.user.UserAnnouncement;
 import org.broadinstitute.ddp.security.DDPAuth;
 import org.broadinstitute.ddp.util.ResponseUtil;
 import org.broadinstitute.ddp.util.RouteUtil;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import spark.Request;
 import spark.Response;
 import spark.Route;
@@ -83,8 +81,10 @@ public class GetUserAnnouncementsRoute implements Route {
 
             if (!announcements.isEmpty()) {
                 try {
+                    // Render messages using current time to get latest templates.
+                    long timestamp = Instant.now().toEpochMilli();
                     long langCodeId = preferredUserLanguage.getId();
-                    renderer.bulkRenderAndApply(handle, announcements, style, langCodeId);
+                    renderer.bulkRenderAndApply(handle, announcements, style, langCodeId, timestamp);
                 } catch (NoSuchElementException e) {
                     ApiError err = new ApiError(ErrorCodes.SERVER_ERROR, String.format(
                             "Error while rendering announcement messages for user %s and study %s",

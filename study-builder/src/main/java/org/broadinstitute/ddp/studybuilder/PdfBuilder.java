@@ -162,7 +162,7 @@ public class PdfBuilder {
                 long versionId = pdfDao.insertNewConfigVersion(pdf, templates);
                 pdfId = pdf.getId();
                 LOG.info("Added pdf configuration version for id={} with name={}, filename={}, displayName={}, versionId={}, versionTag={}",
-                        pdfId, pdf.getConfigName(), pdf.getFilename(), pdf.getDisplayName(), pdf.getVersion().getVersionTag());
+                        pdfId, pdf.getConfigName(), pdf.getFilename(), pdf.getDisplayName(), versionId, pdf.getVersion().getVersionTag());
             } else {
                 pdfId = pdfDao.insertNewConfig(pdf, templates);
                 LOG.info("Created pdf configuration with id={}, name={}, filename={}, displayName={}, versionId={}, versionTag={}",

@@ -25,6 +25,14 @@ public interface JdbiSendgridConfiguration extends SqlObject {
             @Bind("defaultSalutation") String defaultSalutation
     );
 
+    @SqlUpdate("update sendgrid_configuration"
+            + "    set from_name = :newName, from_email = :newEmail"
+            + "  where umbrella_study_id = :studyId")
+    int updateFromDetails(
+            @Bind("studyId") long studyId,
+            @Bind("newName") String newFromName,
+            @Bind("newEmail") String newFromEmail);
+
     @SqlQuery(
             "select sc.umbrella_study_id, sc.api_key, sc.from_name, sc.from_email, sc.default_salutation"
                     + " from sendgrid_configuration sc, umbrella_study us"

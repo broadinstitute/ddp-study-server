@@ -181,10 +181,6 @@ public interface JdbiActivity extends SqlObject {
             @Bind("maxInstances") Integer maxInstances
     );
 
-    default List<ActivityValidationDto> findValidationsById(long activityId, long languageCodeId) {
-        return getJdbiActivityValidation()._findByActivityIdTranslated(activityId, languageCodeId);
-    }
-
     default int deleteValidationsByCode(long activityId) {
         return getJdbiActivityValidation()._deleteByActivityId(activityId);
     }

@@ -129,10 +129,11 @@ public interface ValidationDao extends SqlObject {
      * Get all validations for a given question by id and language code.
      *
      * @param questionDto the question dto object
-     * @param langCodeId the language code id
+     * @param langCodeId  the language code id
+     * @param timestamp   the timestamp to pinpoint template variable substitution text revisions
      * @return list of validations corresponding to the question
      */
-    default List<Rule> getValidationRules(QuestionDto questionDto, long langCodeId) {
+    default List<Rule> getValidationRules(QuestionDto questionDto, long langCodeId, long timestamp) {
         List<Rule> rules = new ArrayList<>();
 
         List<RuleDto> ruleDtos = getJdbiQuestionValidation().getAllActiveValidations(questionDto);
@@ -142,7 +143,7 @@ public interface ValidationDao extends SqlObject {
         for (RuleDto ruleDto : ruleDtos) {
             String correctionHint = null;
             if (ruleDto.getHintTemplateId() != null) {
-                correctionHint = i18nContentRenderer.renderContent(getHandle(), ruleDto.getHintTemplateId(), langCodeId);
+                correctionHint = i18nContentRenderer.renderContent(getHandle(), ruleDto.getHintTemplateId(), langCodeId, timestamp);
             }
             String message = getJdbiI18nValidationMsgTrans().getValidationMessage(
                     getJdbiValidationType().getTypeId(ruleDto.getRuleType()),
@@ -412,7 +413,7 @@ public interface ValidationDao extends SqlObject {
             });
         }
 
-        Map<Long, Template> templates = getTemplateDao().collectTemplatesByIds(templateIds);
+        Map<Long, Template> templates = getTemplateDao().collectTemplatesByIdsAndTimestamp(templateIds, timestamp);
         Map<Long, List<RuleDef>> questionIdToRuleDefs = new HashMap<>();
 
         for (var dto : ruleDtos) {

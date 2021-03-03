@@ -292,7 +292,7 @@ public interface FormActivityDao extends SqlObject {
             builder.setLastUpdated(settingDto.getLastUpdated());
             builder.setSnapshotSubstitutionsOnSubmit(settingDto.shouldSnapshotSubstitutionsOnSubmit());
 
-            Map<Long, Template> templates = getTemplateDao().collectTemplatesByIds(settingDto.getTemplateIds());
+            Map<Long, Template> templates = getTemplateDao().collectTemplatesByIdsAndTimestamp(settingDto.getTemplateIds(), revisionStart);
             builder.setLastUpdatedTextTemplate(templates.getOrDefault(settingDto.getLastUpdatedTextTemplateId(), null));
             builder.setReadonlyHintTemplate(templates.getOrDefault(settingDto.getReadonlyHintTemplateId(), null));
 

@@ -82,3 +82,12 @@ queryAllByUserIdAndStudyId() ::= <<
  where ai.participant_id = :userId
    and act.study_id = :studyId
 >>
+
+findLatestInstanceFromUserGuidAndQuestionId() ::= <<
+<select_all_instances()>
+  join question as q on q.study_activity_id = act.study_activity_id
+  join user as u on u.user_id = ai.participant_id
+ where u.guid = :userGuid
+   and q.question_id = :questionId
+ order by ai.created_at desc limit 1
+>>
