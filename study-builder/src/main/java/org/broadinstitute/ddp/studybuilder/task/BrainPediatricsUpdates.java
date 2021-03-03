@@ -97,7 +97,7 @@ public class BrainPediatricsUpdates implements CustomTask {
                 releaseActivityCode, "v1").get();
         FormActivityDef activity = (FormActivityDef) activityDao.findDefByDtoAndVersion(activityDto, versionDto);
         UpdateTemplatesInPlace updateTemplatesTask = new UpdateTemplatesInPlace();
-        updateTemplatesTask.traverseActivity(handle, releaseActivityCode, definition, activity);
+        updateTemplatesTask.traverseActivity(handle, releaseActivityCode, definition, activity, versionDto.getRevStart());
         //update release subtitle
         String newSubtitle = "<p class=\"no-margin sticky__text\"><span>"
                 + " If you have questions about the study or the consent form at any time, please contact us at </span> "

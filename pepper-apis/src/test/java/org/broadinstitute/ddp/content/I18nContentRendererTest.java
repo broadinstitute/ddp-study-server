@@ -49,18 +49,19 @@ public class I18nContentRendererTest extends TxnAwareBaseTest {
             tmpl.addVariable(new TemplateVariable("what_age", Arrays.asList(
                     new Translation("en", "How old are you?"),
                     new Translation("ru", "Сколько вам лет?"))));
-            long revId = jdbiRev.insert(userId, Instant.now().toEpochMilli(), null, "add test template");
+            long timestamp = Instant.now().toEpochMilli();
+            long revId = jdbiRev.insert(userId, timestamp, null, "add test template");
             tmplDao.insertTemplate(tmpl, revId);
             assertNotNull(tmpl.getTemplateId());
 
             long langId = LanguageStore.getDefault().getId();
             String expected = "<em>How old are you?</em>";
-            String actual = renderer.renderContent(handle, tmpl.getTemplateId(), langId);
+            String actual = renderer.renderContent(handle, tmpl.getTemplateId(), langId, timestamp);
             assertEquals(expected, actual);
 
             langId = LanguageStore.get("ru").getId();
             expected = "<em>Сколько вам лет?</em>";
-            actual = renderer.renderContent(handle, tmpl.getTemplateId(), langId);
+            actual = renderer.renderContent(handle, tmpl.getTemplateId(), langId, timestamp);
             assertEquals(expected, actual);
 
             handle.rollback();
@@ -87,7 +88,8 @@ public class I18nContentRendererTest extends TxnAwareBaseTest {
 
             long langId = LanguageStore.getDefault().getId();
             String expected = "<em>Your name is John?</em>";
-            Map<Long, String> actual = renderer.bulkRender(handle, Collections.singleton(tmpl.getTemplateId()), langId, context);
+            Map<Long, String> actual = renderer.bulkRender(handle, Collections.singleton(tmpl.getTemplateId()),
+                    langId, context, Instant.now().toEpochMilli());
             assertEquals(expected, actual.get(tmpl.getTemplateId()));
 
             handle.rollback();
@@ -97,19 +99,19 @@ public class I18nContentRendererTest extends TxnAwareBaseTest {
     @Test
     public void testRenderContentFailureDueToNullTemplateId() {
         thrown.expect(IllegalArgumentException.class);
-        TransactionWrapper.useTxn(handle -> renderer.renderContent(handle, null, 1L));
+        TransactionWrapper.useTxn(handle -> renderer.renderContent(handle, null, 1L, Instant.now().toEpochMilli()));
     }
 
     @Test
     public void testRenderContentFailureDueToNullLanguageCode() {
         thrown.expect(IllegalArgumentException.class);
-        TransactionWrapper.useTxn(handle -> renderer.renderContent(handle, 1L, null));
+        TransactionWrapper.useTxn(handle -> renderer.renderContent(handle, 1L, null, Instant.now().toEpochMilli()));
     }
 
     @Test
     public void testRenderContentFailureDueMussingTemplateText() {
         thrown.expect(NoSuchElementException.class);
         thrown.expectMessage("id 123123123");
-        TransactionWrapper.useTxn(handle -> renderer.renderContent(handle, 123123123L, 1L));
+        TransactionWrapper.useTxn(handle -> renderer.renderContent(handle, 123123123L, 1L, Instant.now().toEpochMilli()));
     }
 }

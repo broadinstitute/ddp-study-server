@@ -7,6 +7,7 @@ import java.util.List;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import org.broadinstitute.ddp.db.dao.JdbiActivityVersion;
+import org.broadinstitute.ddp.db.dao.JdbiRevision;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.JdbiUser;
 import org.broadinstitute.ddp.db.dto.ActivityVersionDto;
@@ -66,7 +67,9 @@ abstract class InsertActivityValidations implements CustomTask {
             }
 
             // Since activity validations wasn't designed with revisions in mind, we use the oldest version here to be safe.
-            long revId = versions.get(0).getRevId();
+            // We make a copy of it here so to ensure we use a revision that has a start date but no end date.
+            ActivityVersionDto oldestVersion = versions.get(0);
+            long revId = handle.attach(JdbiRevision.class).copyStart(oldestVersion.getRevId());
 
             builder.insertValidations(handle, activityId, activityCode, revId, List.copyOf(item.getConfigList("validations")));
         }

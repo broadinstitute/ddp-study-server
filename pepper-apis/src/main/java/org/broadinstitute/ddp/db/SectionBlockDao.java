@@ -32,29 +32,31 @@ import org.jdbi.v3.core.Handle;
 public class SectionBlockDao {
 
     /**
-     * Find and build all blocks for given sections, respecting the display order of blocks within each section.
-     * If there's no blocks for a section, it will be an empty list.
+     * Find and build all blocks for given sections, respecting the display order of blocks within each section. If
+     * there's no blocks for a section, it will be an empty list.
      *
-     * @param handle       the jdbi handle
-     * @param sectionIds   the sections to lookup blocks for
-     * @param instanceGuid the activity instance guid
-     * @param langCodeId   the language code id
+     * @param handle                  the jdbi handle
+     * @param sectionIds              the sections to lookup blocks for
+     * @param instanceGuid            the activity instance guid
+     * @param instanceCreatedAtMillis the timestamp of when instance was created
+     * @param langCodeId              the language code id
      * @return mapping of section id to ordered list of blocks
      */
-    public Map<Long, List<FormBlock>> getBlocksForSections(Handle handle, List<Long> sectionIds, String instanceGuid, long langCodeId) {
-        return getBlocksForSections(handle, sectionIds, instanceGuid, langCodeId, false);
+    public Map<Long, List<FormBlock>> getBlocksForSections(Handle handle, List<Long> sectionIds, String instanceGuid,
+                                                           long instanceCreatedAtMillis, long langCodeId) {
+        return getBlocksForSections(handle, sectionIds, instanceGuid, instanceCreatedAtMillis, langCodeId, false);
     }
 
     // This allows fetching blocks with deprecated questions. Prefer the other method that excludes them.
-    public Map<Long, List<FormBlock>> getBlocksForSections(Handle handle, List<Long> sectionIds, String instanceGuid, long langCodeId,
-                                                           boolean includeDeprecated) {
+    public Map<Long, List<FormBlock>> getBlocksForSections(Handle handle, List<Long> sectionIds, String instanceGuid,
+                                                           long instanceCreatedAtMillis, long langCodeId, boolean includeDeprecated) {
         Map<Long, List<FormBlock>> result = new HashMap<>();
         Map<Long, List<FormBlockDto>> mapping = handle.attach(JdbiFormSectionBlock.class)
                 .findOrderedFormBlockDtosForSections(sectionIds, instanceGuid);
         for (long id : sectionIds) {
             List<FormBlockDto> dtos = mapping.getOrDefault(id, new ArrayList<>());
             List<FormBlock> blocks = dtos.stream()
-                    .map(dto -> getBlockByDto(handle, dto, instanceGuid, langCodeId, includeDeprecated))
+                    .map(dto -> getBlockByDto(handle, dto, instanceGuid, instanceCreatedAtMillis, langCodeId, includeDeprecated))
                     .filter(Objects::nonNull)
                     .collect(Collectors.toList());
             result.put(id, blocks);
@@ -63,17 +65,19 @@ public class SectionBlockDao {
     }
 
     /**
-     * Build the full block from the dto. Blocks with deprecated questions are null-ed out and should be filtered out by caller.
-     * Prefer to exclude deprecated questions unless needed, as in the case of data export.
+     * Build the full block from the dto. Blocks with deprecated questions are null-ed out and should be filtered out by
+     * caller. Prefer to exclude deprecated questions unless needed, as in the case of data export.
      *
-     * @param handle            the jdbi handle
-     * @param dto               the block dto
-     * @param instanceGuid      the activity instance guid
-     * @param langCodeId        the language code id
-     * @param includeDeprecated whether to include deprecated questions or not
+     * @param handle                  the jdbi handle
+     * @param dto                     the block dto
+     * @param instanceGuid            the activity instance guid
+     * @param instanceCreatedAtMillis the timestamp of when instance was created
+     * @param langCodeId              the language code id
+     * @param includeDeprecated       whether to include deprecated questions or not
      * @return the block, or null if contains deprecated question
      */
-    private FormBlock getBlockByDto(Handle handle, FormBlockDto dto, String instanceGuid, long langCodeId, boolean includeDeprecated) {
+    private FormBlock getBlockByDto(Handle handle, FormBlockDto dto, String instanceGuid,
+                                    long instanceCreatedAtMillis, long langCodeId, boolean includeDeprecated) {
         FormBlock block;
         switch (dto.getType()) {
             case ACTIVITY:
@@ -95,7 +99,8 @@ public class SectionBlockDao {
                 block = new ContentBlock(blockContentDto.getTitleTemplateId(), blockContentDto.getBodyTemplateId());
                 break;
             case QUESTION:
-                block = new QuestionCachedDao(handle).getQuestionByBlockId(dto.getId(), instanceGuid, includeDeprecated, langCodeId)
+                block = new QuestionCachedDao(handle).getQuestionByBlockId(dto.getId(), instanceGuid,
+                        instanceCreatedAtMillis, includeDeprecated, langCodeId)
                         .map(QuestionBlock::new)
                         .orElse(null);
                 break;
@@ -106,12 +111,13 @@ public class SectionBlockDao {
                 break;
             case CONDITIONAL:
                 block = new QuestionCachedDao(handle)
-                        .getControlQuestionByBlockId(dto.getId(), instanceGuid, includeDeprecated, langCodeId)
+                        .getControlQuestionByBlockId(dto.getId(), instanceGuid, instanceCreatedAtMillis, includeDeprecated, langCodeId)
                         .map(control -> {
                             List<FormBlock> nested = handle.attach(JdbiBlockNesting.class)
                                     .findOrderedNestedFormBlockDtos(dto.getId(), instanceGuid)
                                     .stream()
-                                    .map(nestedDto -> getBlockByDto(handle, nestedDto, instanceGuid, langCodeId, includeDeprecated))
+                                    .map(nestedDto -> getBlockByDto(handle, nestedDto, instanceGuid,
+                                            instanceCreatedAtMillis, langCodeId, includeDeprecated))
                                     .filter(Objects::nonNull)
                                     .collect(Collectors.toList());
                             ConditionalBlock condBlock = new ConditionalBlock(control);
@@ -127,7 +133,8 @@ public class SectionBlockDao {
                 List<FormBlock> children = handle.attach(JdbiBlockNesting.class)
                         .findOrderedNestedFormBlockDtos(dto.getId(), instanceGuid)
                         .stream()
-                        .map(nestedDto -> getBlockByDto(handle, nestedDto, instanceGuid, langCodeId, includeDeprecated))
+                        .map(nestedDto -> getBlockByDto(handle, nestedDto, instanceGuid,
+                                instanceCreatedAtMillis, langCodeId, includeDeprecated))
                         .filter(Objects::nonNull)
                         .collect(Collectors.toList());
                 GroupBlock groupBlock = new GroupBlock(headerDto.getListStyleHint(), headerDto.getPresentationHint(),

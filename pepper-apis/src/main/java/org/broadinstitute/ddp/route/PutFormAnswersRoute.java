@@ -148,8 +148,8 @@ public class PutFormAnswersRoute implements Route {
                     // checkAddressRequirements(handle, userGuid, form);
 
                     List<ActivityValidationFailure> validationFailures = actValidationService.validate(
-                            handle, interpreter, userGuid, operatorGuid, instanceGuid, form.getActivityId(),
-                            preferredUserLangDto.getId());
+                            handle, interpreter, userGuid, operatorGuid, instanceGuid, form.getCreatedAtMillis(),
+                            form.getActivityId(), preferredUserLangDto.getId());
                     if (!validationFailures.isEmpty()) {
                         String msg = "Activity validation failed";
                         List<String> validationErrorSummaries = validationFailures
