@@ -544,7 +544,7 @@ public interface SectionBlockDao extends SqlObject {
                 templateIds.add(nameTemplateId);
             }
         }
-        Map<Long, Template> templates = getTemplateDao().collectTemplatesByIds(templateIds);
+        Map<Long, Template> templates = getTemplateDao().collectTemplatesByIdsAndTimestamp(templateIds, timestamp);
 
         Map<Long, FormSectionDef> sectionDefs = new HashMap<>();
         for (var sectionDto : sectionDtos) {
@@ -660,7 +660,7 @@ public interface SectionBlockDao extends SqlObject {
                 templateIds.add(titleTemplateId);
             }
         }
-        Map<Long, Template> templates = getTemplateDao().collectTemplatesByIds(templateIds);
+        Map<Long, Template> templates = getTemplateDao().collectTemplatesByIdsAndTimestamp(templateIds, timestamp);
 
         Map<Long, GroupBlockDef> blockDefs = new HashMap<>();
         for (var blockDto : blockDtos) {

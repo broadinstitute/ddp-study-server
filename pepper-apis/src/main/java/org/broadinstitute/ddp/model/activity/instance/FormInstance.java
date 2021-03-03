@@ -205,7 +205,7 @@ public final class FormInstance extends ActivityInstance {
 
         Map<String, Object> context = new HashMap<>();
         context.put(I18nTemplateConstants.DDP, valueProvider);
-        Map<Long, String> rendered = renderer.bulkRender(handle, templateIds, langCodeId, context);
+        Map<Long, String> rendered = renderer.bulkRender(handle, templateIds, langCodeId, context, getCreatedAtMillis());
         Renderable.Provider<String> provider = rendered::get;
 
         for (FormSection section : allSections) {
@@ -213,7 +213,7 @@ public final class FormInstance extends ActivityInstance {
         }
 
         if (readonlyHintTemplateId != null) {
-            readonlyHint = renderer.renderContent(handle, readonlyHintTemplateId, langCodeId);
+            readonlyHint = renderer.renderContent(handle, readonlyHintTemplateId, langCodeId, getCreatedAtMillis());
             // Strip down HTML tags if the plain text is requested
             if (style == ContentStyle.BASIC) {
                 readonlyHint = HtmlConverter.getPlainText(readonlyHint);
@@ -230,7 +230,8 @@ public final class FormInstance extends ActivityInstance {
             // Intentionally converting to a date here for display purposes
             LocalDate lastUpdatedDate = activityDefinitionLastUpdated == null ? null : activityDefinitionLastUpdated.toLocalDate();
             varNameToValueMap.put(I18nTemplateConstants.LAST_UPDATED, lastUpdatedDate);
-            activityDefinitionLastUpdatedText = renderer.renderContent(handle, lastUpdatedTextTemplateId, langCodeId, varNameToValueMap);
+            activityDefinitionLastUpdatedText = renderer.renderContent(handle,
+                    lastUpdatedTextTemplateId, langCodeId, varNameToValueMap, getCreatedAtMillis());
 
             if (style == ContentStyle.BASIC) {
                 activityDefinitionLastUpdatedText = HtmlConverter.getPlainText(activityDefinitionLastUpdatedText);

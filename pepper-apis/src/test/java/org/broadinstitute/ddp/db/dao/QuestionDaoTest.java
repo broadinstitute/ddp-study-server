@@ -717,7 +717,7 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
         List<Long> answers = new ArrayList<>(Arrays.asList(answer.getAnswerId()));
 
         return new GetGenericQuestionData(form, version1.getActivityId(),
-                activityInstanceDto.getGuid(), question, answers);
+                activityInstanceDto.getGuid(), activityInstanceDto.getCreatedAtMillis(), question, answers);
     }
 
     @Test
@@ -728,7 +728,8 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
             long blockId = genericQuestionData.getForm().getSections().get(0).getBlocks().get(0).getBlockId();
 
             Optional<Question> questionOptional = handle.attach(QuestionDao.class)
-                    .getQuestionByBlockId(blockId, genericQuestionData.getActivityInstanceGuid(), langCodeId);
+                    .getQuestionByBlockId(blockId, genericQuestionData.getActivityInstanceGuid(),
+                            genericQuestionData.getInstanceCreatedAtMillis(), langCodeId);
 
             assertNotNull(questionOptional.orElse(null));
             assertEquals(questionOptional.get().getQuestionType(), QuestionType.TEXT);
@@ -751,7 +752,8 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
             thrown.expectMessage("No question found for block " + blockId
                     + " and activity instance " + genericQuestionData.getActivityInstanceGuid());
             handle.attach(QuestionDao.class)
-                    .getQuestionByBlockId(blockId, genericQuestionData.getActivityInstanceGuid(), false, langCodeId);
+                    .getQuestionByBlockId(blockId, genericQuestionData.getActivityInstanceGuid(),
+                            genericQuestionData.getInstanceCreatedAtMillis(), false, langCodeId);
 
             handle.rollback();
         });
@@ -773,12 +775,13 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
             long blockId = form.getSections().get(0).getBlocks().get(0).getBlockId();
 
             Optional<Question> questionOptional = handle.attach(QuestionDao.class)
-                    .getQuestionByBlockId(blockId, activityInstanceDto.getGuid(), langCodeId);
+                    .getQuestionByBlockId(blockId, activityInstanceDto.getGuid(), activityInstanceDto.getCreatedAtMillis(), langCodeId);
 
             assertFalse(questionOptional.isPresent());
 
             questionOptional = handle.attach(QuestionDao.class)
-                    .getQuestionByBlockId(blockId, activityInstanceDto.getGuid(), true, langCodeId);
+                    .getQuestionByBlockId(blockId, activityInstanceDto.getGuid(),
+                            activityInstanceDto.getCreatedAtMillis(), true, langCodeId);
 
             assertTrue(questionOptional.isPresent());
 
@@ -794,6 +797,7 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
             Question question1 = handle.attach(QuestionDao.class)
                     .getQuestionByIdAndActivityInstanceGuid(genericQuestionData.getQuestion().getQuestionId(),
                             genericQuestionData.getActivityInstanceGuid(),
+                            genericQuestionData.getInstanceCreatedAtMillis(),
                             langCodeId);
 
             assertEquals(question1.getQuestionType(), QuestionType.TEXT);
@@ -813,6 +817,7 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
             Question question1 = handle.attach(QuestionDao.class)
                     .getQuestionByIdAndActivityInstanceGuid(genericQuestionData.getQuestion().getQuestionId(),
                             genericQuestionData.getActivityInstanceGuid(),
+                            genericQuestionData.getInstanceCreatedAtMillis(),
                             false,
                             langCodeId);
 
@@ -836,6 +841,7 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
             Question question1 = handle.attach(QuestionDao.class)
                     .getQuestionByActivityInstanceAndDto(questionDto,
                             genericQuestionData.getActivityInstanceGuid(),
+                            genericQuestionData.getInstanceCreatedAtMillis(),
                             langCodeId);
 
             assertEquals(question1.getQuestionType(), QuestionType.TEXT);
@@ -858,6 +864,7 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
             Question question1 = handle.attach(QuestionDao.class)
                     .getQuestionByActivityInstanceAndDto(questionDto,
                             genericQuestionData.getActivityInstanceGuid(),
+                            genericQuestionData.getInstanceCreatedAtMillis(),
                             false,
                             langCodeId);
 
@@ -880,6 +887,7 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
             handle.attach(QuestionDao.class)
                     .getQuestionByActivityInstanceAndDto(null,
                             genericQuestionData.getActivityInstanceGuid(),
+                            genericQuestionData.getInstanceCreatedAtMillis(),
                             false,
                             langCodeId);
 
@@ -929,14 +937,16 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
                     .generateTestFormActivityInstanceForUser(handle, version1.getActivityId(), testData.getUserGuid());
 
             Optional<Question> res = handle.attach(QuestionDao.class)
-                    .getControlQuestionByBlockId(block.getBlockId(), activityInstanceDto.getGuid(), langCodeId);
+                    .getControlQuestionByBlockId(block.getBlockId(), activityInstanceDto.getGuid(),
+                            activityInstanceDto.getCreatedAtMillis(), langCodeId);
 
             assertTrue(res.isPresent());
             assertEquals(control.getQuestionId(), (Long) res.get().getQuestionId());
 
             assertEquals(1, handle.attach(JdbiQuestion.class).updateIsDeprecatedById(control.getQuestionId(), true));
             res = handle.attach(QuestionDao.class)
-                    .getControlQuestionByBlockId(block.getBlockId(), activityInstanceDto.getGuid(), langCodeId);
+                    .getControlQuestionByBlockId(block.getBlockId(), activityInstanceDto.getGuid(),
+                            activityInstanceDto.getCreatedAtMillis(), langCodeId);
             assertFalse(res.isPresent());
 
             handle.rollback();
@@ -966,7 +976,8 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
             thrown.expectMessage("No control question found for block " + block.getBlockId()
                     + " and activity instance " + activityInstanceDto.getGuid());
             handle.attach(QuestionDao.class)
-                    .getControlQuestionByBlockId(block.getBlockId(), activityInstanceDto.getGuid(), langCodeId);
+                    .getControlQuestionByBlockId(block.getBlockId(), activityInstanceDto.getGuid(),
+                            activityInstanceDto.getCreatedAtMillis(), langCodeId);
 
             handle.rollback();
         });
@@ -981,7 +992,7 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
                     .findQuestionDtoById(genericQuestionData.getQuestion().getQuestionId()).get();
 
             Question question1 = handle.attach(QuestionDao.class).getQuestionByActivityInstanceAndDto(questionDto,
-                    genericQuestionData.getActivityInstanceGuid(), true, langCodeId);
+                    genericQuestionData.getActivityInstanceGuid(), genericQuestionData.getInstanceCreatedAtMillis(), true, langCodeId);
 
             assertEquals(question1.getQuestionType(), QuestionType.TEXT);
 
@@ -1132,15 +1143,15 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
                     .addSection(new FormSectionDef(null, Collections.singletonList(block)))
                     .build();
             handle.attach(ActivityDao.class).insertActivity(form, RevisionMetadata.now(testData.getUserId(), "test"));
-            String instanceGuid = TestDataSetupUtil
-                    .generateTestFormActivityInstanceForUser(handle, form.getActivityId(), testData.getUserGuid())
-                    .getGuid();
+            var instanceDto = TestDataSetupUtil
+                    .generateTestFormActivityInstanceForUser(handle, form.getActivityId(), testData.getUserGuid());
+            String instanceGuid = instanceDto.getGuid();
             QuestionDao[] daos = {new QuestionCachedDao(handle), handle.attach(QuestionDao.class)};
             Question question = null;
 
             for (QuestionDao dao : daos) {
                 CacheService.getInstance().resetAllCaches();
-                question = dao.getQuestionByBlockId(block.getBlockId(), instanceGuid, langCodeId).get();
+                question = dao.getQuestionByBlockId(block.getBlockId(), instanceGuid, instanceDto.getCreatedAtMillis(), langCodeId).get();
                 assertEquals(QuestionType.PICKLIST, question.getQuestionType());
                 assertEquals(prompt.getTemplateId(), (Long) question.getPromptTemplateId());
                 assertEquals(sid, question.getStableId());
@@ -1217,12 +1228,12 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
                     .addSection(new FormSectionDef(null, Collections.singletonList(block)))
                     .build();
             handle.attach(ActivityDao.class).insertActivity(form, RevisionMetadata.now(testData.getUserId(), "test"));
-            String instanceGuid = TestDataSetupUtil
-                    .generateTestFormActivityInstanceForUser(handle, form.getActivityId(), testData.getUserGuid())
-                    .getGuid();
+            var instanceDto = TestDataSetupUtil
+                    .generateTestFormActivityInstanceForUser(handle, form.getActivityId(), testData.getUserGuid());
+            String instanceGuid = instanceDto.getGuid();
 
             Question question = handle.attach(QuestionDao.class)
-                    .getQuestionByBlockId(block.getBlockId(), instanceGuid, langCodeId).get();
+                    .getQuestionByBlockId(block.getBlockId(), instanceGuid, instanceDto.getCreatedAtMillis(), langCodeId).get();
             assertEquals(QuestionType.TEXT, question.getQuestionType());
             assertEquals(prompt.getTemplateId(), (Long) question.getPromptTemplateId());
             assertEquals(sid, question.getStableId());
@@ -1252,12 +1263,12 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
                     .addSection(new FormSectionDef(null, Collections.singletonList(block)))
                     .build();
             handle.attach(ActivityDao.class).insertActivity(form, RevisionMetadata.now(testData.getUserId(), "test"));
-            String instanceGuid = TestDataSetupUtil
-                    .generateTestFormActivityInstanceForUser(handle, form.getActivityId(), testData.getUserGuid())
-                    .getGuid();
+            var instanceDto = TestDataSetupUtil
+                    .generateTestFormActivityInstanceForUser(handle, form.getActivityId(), testData.getUserGuid());
+            String instanceGuid = instanceDto.getGuid();
 
             Question question = handle.attach(QuestionDao.class)
-                    .getQuestionByBlockId(block.getBlockId(), instanceGuid, langCodeId).get();
+                    .getQuestionByBlockId(block.getBlockId(), instanceGuid, instanceDto.getCreatedAtMillis(), langCodeId).get();
             assertEquals(QuestionType.TEXT, question.getQuestionType());
             assertEquals(prompt.getTemplateId(), (Long) question.getPromptTemplateId());
             assertEquals(sid, question.getStableId());
@@ -1458,6 +1469,7 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
 
             Question actual = handle.attach(QuestionDao.class)
                     .getQuestionByActivityInstanceAndDto(questionDto, instanceDto.getGuid(),
+                            instanceDto.getCreatedAtMillis(),
                             LanguageStore.getDefault().getId());
             assertEquals(QuestionType.NUMERIC, actual.getQuestionType());
             assertEquals(sid, actual.getStableId());
@@ -1589,6 +1601,7 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
             Question question = handle.attach(QuestionDao.class).getCompositeQuestion(
                     (CompositeQuestionDto) questionDto,
                     activityInstanceDto.getGuid(),
+                    activityInstanceDto.getCreatedAtMillis(),
                     List.of(ans.getAnswerId()),
                     Collections.emptyList(),
                     langCodeId);
@@ -1660,14 +1673,16 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
         private FormActivityDef form;
         private long activityId;
         private String activityInstanceGuid;
+        private long instanceCreatedAtMillis;
         private TextQuestionDef question;
         private List<Long> answerIds;
 
         public GetGenericQuestionData(FormActivityDef form, long activityId, String activityInstanceGuid,
-                                      TextQuestionDef question, List<Long> answerIds) {
+                                      long instanceCreatedAtMillis, TextQuestionDef question, List<Long> answerIds) {
             this.form = form;
             this.activityId = activityId;
             this.activityInstanceGuid = activityInstanceGuid;
+            this.instanceCreatedAtMillis = instanceCreatedAtMillis;
             this.question = question;
             this.answerIds = answerIds;
         }
@@ -1682,6 +1697,10 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
 
         public String getActivityInstanceGuid() {
             return activityInstanceGuid;
+        }
+
+        public long getInstanceCreatedAtMillis() {
+            return instanceCreatedAtMillis;
         }
 
         public TextQuestionDef getQuestion() {

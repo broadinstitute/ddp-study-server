@@ -18,6 +18,7 @@ import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dao.JdbiQuestion;
 import org.broadinstitute.ddp.db.dao.JdbiUser;
+import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.model.activity.definition.ConditionalBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.ContentBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
@@ -79,10 +80,12 @@ public class SectionBlockDaoTest extends TxnAwareBaseTest {
             FormSectionDef body3 = new FormSectionDef("s3", Collections.emptyList());
 
             FormActivityDef form = insertDummyActivity(handle, intro, closing, userGuid, studyGuid, body1, body2, body3);
-            String instanceGuid = insertNewInstance(handle, form.getActivityId(), userGuid);
+            var instanceDto = insertNewInstance(handle, form.getActivityId(), userGuid);
+            String instanceGuid = instanceDto.getGuid();
 
             List<Long> sectionIds = extractSectionIds(intro, closing, body1, body2, body3);
-            Map<Long, List<FormBlock>> mapping = dao.getBlocksForSections(handle, sectionIds, instanceGuid, langCodeId);
+            Map<Long, List<FormBlock>> mapping = dao.getBlocksForSections(handle, sectionIds, instanceGuid,
+                    instanceDto.getCreatedAtMillis(), langCodeId);
             assertEquals(sectionIds.size(), mapping.size());
 
             List<FormBlock> blocks = mapping.get(intro.getSectionId());
@@ -128,10 +131,12 @@ public class SectionBlockDaoTest extends TxnAwareBaseTest {
 
             FormSectionDef s1 = new FormSectionDef("s1", Collections.singletonList(block));
             FormActivityDef form = insertDummyActivity(handle, null, null, userGuid, studyGuid, s1);
-            String instanceGuid = insertNewInstance(handle, form.getActivityId(), userGuid);
+            var instanceDto = insertNewInstance(handle, form.getActivityId(), userGuid);
+            String instanceGuid = instanceDto.getGuid();
 
             List<Long> sectionIds = extractSectionIds(s1);
-            Map<Long, List<FormBlock>> mapping = dao.getBlocksForSections(handle, sectionIds, instanceGuid, langCodeId);
+            Map<Long, List<FormBlock>> mapping = dao.getBlocksForSections(handle, sectionIds, instanceGuid,
+                    instanceDto.getCreatedAtMillis(), langCodeId);
             assertEquals(sectionIds.size(), mapping.size());
 
             List<FormBlock> blocks = mapping.get(s1.getSectionId());
@@ -164,10 +169,12 @@ public class SectionBlockDaoTest extends TxnAwareBaseTest {
 
             FormSectionDef s1 = new FormSectionDef("s1", Collections.singletonList(block));
             FormActivityDef form = insertDummyActivity(handle, null, null, userGuid, studyGuid, s1);
-            String instanceGuid = insertNewInstance(handle, form.getActivityId(), userGuid);
+            var instanceDto = insertNewInstance(handle, form.getActivityId(), userGuid);
+            String instanceGuid = instanceDto.getGuid();
 
             List<Long> sectionIds = extractSectionIds(s1);
-            Map<Long, List<FormBlock>> mapping = dao.getBlocksForSections(handle, sectionIds, instanceGuid, langCodeId);
+            Map<Long, List<FormBlock>> mapping = dao.getBlocksForSections(handle, sectionIds, instanceGuid,
+                    instanceDto.getCreatedAtMillis(), langCodeId);
             assertEquals(sectionIds.size(), mapping.size());
 
             List<FormBlock> blocks = mapping.get(s1.getSectionId());
@@ -193,10 +200,12 @@ public class SectionBlockDaoTest extends TxnAwareBaseTest {
             FormSectionDef body = new FormSectionDef("s1", Collections.singletonList(new QuestionBlockDef(question)));
 
             FormActivityDef form = insertDummyActivity(handle, null, null, userGuid, studyGuid, body);
-            String instanceGuid = insertNewInstance(handle, form.getActivityId(), userGuid);
+            var instanceDto = insertNewInstance(handle, form.getActivityId(), userGuid);
+            String instanceGuid = instanceDto.getGuid();
 
             List<Long> sectionIds = extractSectionIds(body);
-            Map<Long, List<FormBlock>> mapping = dao.getBlocksForSections(handle, sectionIds, instanceGuid, langCodeId);
+            Map<Long, List<FormBlock>> mapping = dao.getBlocksForSections(handle, sectionIds, instanceGuid,
+                    instanceDto.getCreatedAtMillis(), langCodeId);
             assertEquals(sectionIds.size(), mapping.size());
 
             List<FormBlock> blocks = mapping.get(body.getSectionId());
@@ -205,7 +214,7 @@ public class SectionBlockDaoTest extends TxnAwareBaseTest {
             assertEquals(BlockType.QUESTION, blocks.get(0).getBlockType());
 
             assertEquals(1, handle.attach(JdbiQuestion.class).updateIsDeprecatedById(question.getQuestionId(), true));
-            mapping = dao.getBlocksForSections(handle, sectionIds, instanceGuid, langCodeId);
+            mapping = dao.getBlocksForSections(handle, sectionIds, instanceGuid, instanceDto.getCreatedAtMillis(), langCodeId);
             assertEquals(sectionIds.size(), mapping.size());
 
             blocks = mapping.get(body.getSectionId());
@@ -225,10 +234,12 @@ public class SectionBlockDaoTest extends TxnAwareBaseTest {
             FormSectionDef body = new FormSectionDef("s1", Collections.singletonList(block));
 
             FormActivityDef form = insertDummyActivity(handle, null, null, userGuid, studyGuid, body);
-            String instanceGuid = insertNewInstance(handle, form.getActivityId(), userGuid);
+            var instanceDto = insertNewInstance(handle, form.getActivityId(), userGuid);
+            String instanceGuid = instanceDto.getGuid();
 
             List<Long> sectionIds = extractSectionIds(body);
-            Map<Long, List<FormBlock>> mapping = dao.getBlocksForSections(handle, sectionIds, instanceGuid, langCodeId);
+            Map<Long, List<FormBlock>> mapping = dao.getBlocksForSections(handle, sectionIds, instanceGuid,
+                    instanceDto.getCreatedAtMillis(), langCodeId);
             assertEquals(sectionIds.size(), mapping.size());
 
             List<FormBlock> blocks = mapping.get(body.getSectionId());
@@ -237,7 +248,7 @@ public class SectionBlockDaoTest extends TxnAwareBaseTest {
             assertEquals(BlockType.CONDITIONAL, blocks.get(0).getBlockType());
 
             assertEquals(1, handle.attach(JdbiQuestion.class).updateIsDeprecatedById(control.getQuestionId(), true));
-            mapping = dao.getBlocksForSections(handle, sectionIds, instanceGuid, langCodeId);
+            mapping = dao.getBlocksForSections(handle, sectionIds, instanceGuid, instanceDto.getCreatedAtMillis(), langCodeId);
             assertEquals(sectionIds.size(), mapping.size());
 
             blocks = mapping.get(body.getSectionId());
@@ -258,10 +269,12 @@ public class SectionBlockDaoTest extends TxnAwareBaseTest {
             FormSectionDef body = new FormSectionDef("s1", Collections.singletonList(block));
 
             FormActivityDef form = insertDummyActivity(handle, null, null, userGuid, studyGuid, body);
-            String instanceGuid = insertNewInstance(handle, form.getActivityId(), userGuid);
+            var instanceDto = insertNewInstance(handle, form.getActivityId(), userGuid);
+            String instanceGuid = instanceDto.getGuid();
 
             List<Long> sectionIds = extractSectionIds(body);
-            Map<Long, List<FormBlock>> mapping = dao.getBlocksForSections(handle, sectionIds, instanceGuid, langCodeId);
+            Map<Long, List<FormBlock>> mapping = dao.getBlocksForSections(handle, sectionIds, instanceGuid,
+                    instanceDto.getCreatedAtMillis(), langCodeId);
             assertEquals(sectionIds.size(), mapping.size());
 
             List<FormBlock> blocks = mapping.get(body.getSectionId());
@@ -274,7 +287,7 @@ public class SectionBlockDaoTest extends TxnAwareBaseTest {
             assertEquals(BlockType.QUESTION, cond.getNested().get(0).getBlockType());
 
             assertEquals(1, handle.attach(JdbiQuestion.class).updateIsDeprecatedById(nested.getQuestionId(), true));
-            mapping = dao.getBlocksForSections(handle, sectionIds, instanceGuid, langCodeId);
+            mapping = dao.getBlocksForSections(handle, sectionIds, instanceGuid, instanceDto.getCreatedAtMillis(), langCodeId);
             assertEquals(sectionIds.size(), mapping.size());
 
             blocks = mapping.get(body.getSectionId());
@@ -299,10 +312,12 @@ public class SectionBlockDaoTest extends TxnAwareBaseTest {
             FormSectionDef body = new FormSectionDef("s1", Collections.singletonList(block));
 
             FormActivityDef form = insertDummyActivity(handle, null, null, userGuid, studyGuid, body);
-            String instanceGuid = insertNewInstance(handle, form.getActivityId(), userGuid);
+            var instanceDto = insertNewInstance(handle, form.getActivityId(), userGuid);
+            String instanceGuid = instanceDto.getGuid();
 
             List<Long> sectionIds = extractSectionIds(body);
-            Map<Long, List<FormBlock>> mapping = dao.getBlocksForSections(handle, sectionIds, instanceGuid, langCodeId);
+            Map<Long, List<FormBlock>> mapping = dao.getBlocksForSections(handle, sectionIds, instanceGuid,
+                    instanceDto.getCreatedAtMillis(), langCodeId);
             assertEquals(sectionIds.size(), mapping.size());
 
             List<FormBlock> blocks = mapping.get(body.getSectionId());
@@ -315,7 +330,7 @@ public class SectionBlockDaoTest extends TxnAwareBaseTest {
             assertEquals(BlockType.QUESTION, group.getNested().get(0).getBlockType());
 
             assertEquals(1, handle.attach(JdbiQuestion.class).updateIsDeprecatedById(nested.getQuestionId(), true));
-            mapping = dao.getBlocksForSections(handle, sectionIds, instanceGuid, langCodeId);
+            mapping = dao.getBlocksForSections(handle, sectionIds, instanceGuid, instanceDto.getCreatedAtMillis(), langCodeId);
             assertEquals(sectionIds.size(), mapping.size());
 
             blocks = mapping.get(body.getSectionId());
@@ -330,10 +345,9 @@ public class SectionBlockDaoTest extends TxnAwareBaseTest {
         });
     }
 
-    private String insertNewInstance(Handle handle, long activityId, String userGuid) {
+    private ActivityInstanceDto insertNewInstance(Handle handle, long activityId, String userGuid) {
         return handle.attach(ActivityInstanceDao.class)
-                .insertInstance(activityId, userGuid, userGuid, InstanceStatusType.CREATED, false)
-                .getGuid();
+                .insertInstance(activityId, userGuid, userGuid, InstanceStatusType.CREATED, false);
     }
 
     private FormActivityDef insertDummyActivity(Handle handle, FormSectionDef intro, FormSectionDef closing,

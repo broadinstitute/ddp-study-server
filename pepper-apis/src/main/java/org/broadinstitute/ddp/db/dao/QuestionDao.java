@@ -161,27 +161,31 @@ public interface QuestionDao extends SqlObject {
     /**
      * Get the non-deprecated question for a given block.
      *
-     * @param blockId              the block id
-     * @param activityInstanceGuid the form instance guid
+     * @param blockId                 the block id
+     * @param activityInstanceGuid    the form instance guid
+     * @param instanceCreatedAtMillis the timestamp of when instance was created
      * @return single question, if it's not deprecated
      */
     default Optional<Question> getQuestionByBlockId(long blockId,
                                                     String activityInstanceGuid,
+                                                    long instanceCreatedAtMillis,
                                                     long langCodeId) {
-        return getQuestionByBlockId(blockId, activityInstanceGuid, false, langCodeId);
+        return getQuestionByBlockId(blockId, activityInstanceGuid, instanceCreatedAtMillis, false, langCodeId);
     }
 
 
     /**
      * Get the question for a given block. Toggle if okay with deprecated questions.
      *
-     * @param blockId              the block id
-     * @param activityInstanceGuid the form instance guid
-     * @param includeDeprecated    flag indicating whether or nto to include deprecated questions
+     * @param blockId                 the block id
+     * @param activityInstanceGuid    the form instance guid
+     * @param instanceCreatedAtMillis the timestamp of when instance was created
+     * @param includeDeprecated       flag indicating whether or nto to include deprecated questions
      * @return single question, if it's not deprecated
      */
     default Optional<Question> getQuestionByBlockId(long blockId,
                                                     String activityInstanceGuid,
+                                                    long instanceCreatedAtMillis,
                                                     boolean includeDeprecated,
                                                     long langCodeId) {
         QuestionDto dto = getJdbiBlockQuestion()
@@ -195,33 +199,37 @@ public interface QuestionDao extends SqlObject {
             return Optional.empty();
         } else {
             // Use of() instead of ofNullable() since it should be non-null.
-            return Optional.of(getQuestionByActivityInstanceAndDto(dto, activityInstanceGuid, langCodeId));
+            return Optional.of(getQuestionByActivityInstanceAndDto(dto, activityInstanceGuid, instanceCreatedAtMillis, langCodeId));
         }
     }
 
     /**
      * Get the non-deprecated control question for a conditional block.
      *
-     * @param blockId              the block id
-     * @param activityInstanceGuid the form instance guid
+     * @param blockId                 the block id
+     * @param activityInstanceGuid    the form instance guid
+     * @param instanceCreatedAtMillis the timestamp of when instance was created
      * @return control question, if it's not deprecated
      */
     default Optional<Question> getControlQuestionByBlockId(long blockId,
                                                            String activityInstanceGuid,
+                                                           long instanceCreatedAtMillis,
                                                            long langCodeId) {
-        return getControlQuestionByBlockId(blockId, activityInstanceGuid, false, langCodeId);
+        return getControlQuestionByBlockId(blockId, activityInstanceGuid, instanceCreatedAtMillis, false, langCodeId);
     }
 
     /**
      * Get the control question for a conditional block. This allows fetching deprecated control questions. Prefer the
      * other method that excludes them.
      *
-     * @param blockId              the block id
-     * @param activityInstanceGuid the form instance guid
+     * @param blockId                 the block id
+     * @param activityInstanceGuid    the form instance guid
+     * @param instanceCreatedAtMillis the timestamp of when instance was created
      * @return control question
      */
     default Optional<Question> getControlQuestionByBlockId(long blockId,
                                                            String activityInstanceGuid,
+                                                           long instanceCreatedAtMillis,
                                                            boolean includeDeprecated,
                                                            long langCodeId) {
         QuestionDto questionDto = getHandle().attach(JdbiBlockConditionalControl.class)
@@ -234,37 +242,43 @@ public interface QuestionDao extends SqlObject {
                     questionDto.getId(), blockId, activityInstanceGuid);
             return Optional.empty();
         } else {
-            return Optional.of(getQuestionByActivityInstanceAndDto(questionDto, activityInstanceGuid, true, langCodeId));
+            return Optional.of(getQuestionByActivityInstanceAndDto(questionDto, activityInstanceGuid,
+                    instanceCreatedAtMillis, true, langCodeId));
         }
     }
 
     /**
      * Get a question for a given id. Gets answers as well if it has any.
      *
-     * @param questionId           the block id
-     * @param activityInstanceGuid the form instance guid
+     * @param questionId              the block id
+     * @param activityInstanceGuid    the form instance guid
+     * @param instanceCreatedAtMillis the timestamp of when instance was created
      * @return single question
      */
-    default Question getQuestionByIdAndActivityInstanceGuid(long questionId, String activityInstanceGuid, long langCodeId) {
-        return getQuestionByIdAndActivityInstanceGuid(questionId, activityInstanceGuid, true, langCodeId);
+    default Question getQuestionByIdAndActivityInstanceGuid(long questionId, String activityInstanceGuid,
+                                                            long instanceCreatedAtMillis, long langCodeId) {
+        return getQuestionByIdAndActivityInstanceGuid(questionId, activityInstanceGuid, instanceCreatedAtMillis, true, langCodeId);
     }
 
     /**
      * Get a question for a given id. Toggle get answers as well if it has any.
      *
-     * @param questionId           the block id
-     * @param activityInstanceGuid the form instance guid
+     * @param questionId              the block id
+     * @param activityInstanceGuid    the form instance guid
+     * @param instanceCreatedAtMillis the timestamp of when instance was created
      * @return single question
      */
     default Question getQuestionByIdAndActivityInstanceGuid(
             long questionId,
             String activityInstanceGuid,
+            long instanceCreatedAtMillis,
             boolean retrieveAnswers,
             long langCodeId
     ) {
         return getJdbiQuestion().findQuestionDtoById(questionId)
                 .filter(dto -> dto.getRevisionEnd() == null)
-                .map(dto -> getQuestionByActivityInstanceAndDto(dto, activityInstanceGuid, retrieveAnswers, langCodeId))
+                .map(dto -> getQuestionByActivityInstanceAndDto(dto, activityInstanceGuid,
+                        instanceCreatedAtMillis, retrieveAnswers, langCodeId))
                 .orElseThrow(() -> new DaoException(String.format("No question found with id %d", questionId)));
     }
 
@@ -281,32 +295,37 @@ public interface QuestionDao extends SqlObject {
                                                          boolean retrieveAnswers,
                                                          long langCodeId) {
         return getHandle().attach(JdbiActivityInstance.class)
-                .findLatestInstanceGuidFromUserGuidAndQuestionId(userGuid, dto.getId())
-                .map(instanceGuid -> getQuestionByActivityInstanceAndDto(dto, instanceGuid, retrieveAnswers, langCodeId))
+                .findLatestInstanceFromUserGuidAndQuestionId(userGuid, dto.getId())
+                .map(instanceDto -> getQuestionByActivityInstanceAndDto(dto, instanceDto.getGuid(),
+                        instanceDto.getCreatedAtMillis(), retrieveAnswers, langCodeId))
                 .orElseThrow(null);
     }
 
     /**
      * Get question by activity instance and dto. Gets answers as well if it has any.
      *
-     * @param dto                  question dto
-     * @param activityInstanceGuid the form instance guid
+     * @param dto                     question dto
+     * @param activityInstanceGuid    the form instance guid
+     * @param instanceCreatedAtMillis the timestamp of when instance was created
      * @return single question
      */
-    default Question getQuestionByActivityInstanceAndDto(QuestionDto dto, String activityInstanceGuid, long langCodeId) {
-        return getQuestionByActivityInstanceAndDto(dto, activityInstanceGuid, true, langCodeId);
+    default Question getQuestionByActivityInstanceAndDto(QuestionDto dto, String activityInstanceGuid,
+                                                         long instanceCreatedAtMillis, long langCodeId) {
+        return getQuestionByActivityInstanceAndDto(dto, activityInstanceGuid, instanceCreatedAtMillis, true, langCodeId);
     }
 
     /**
      * Get question by activity instance and dto. Toggles getting answers as well if it has any.
      *
-     * @param dto                  question dto
-     * @param activityInstanceGuid the form instance guid
-     * @param retrieveAnswers      flag indicating whether to get answers for question
+     * @param dto                     question dto
+     * @param activityInstanceGuid    the form instance guid
+     * @param instanceCreatedAtMillis the timestamp of when instance was created
+     * @param retrieveAnswers         flag indicating whether to get answers for question
      * @return single question
      */
     default Question getQuestionByActivityInstanceAndDto(QuestionDto dto,
                                                          String activityInstanceGuid,
+                                                         long instanceCreatedAtMillis,
                                                          boolean retrieveAnswers,
                                                          long langCodeId) {
         if (dto == null) {
@@ -319,7 +338,7 @@ public interface QuestionDao extends SqlObject {
                     .findAnswerIdsByInstanceGuidAndQuestionId(activityInstanceGuid, dto.getId()));
         }
 
-        List<Rule> untypedRules = getValidationDao().getValidationRules(dto, langCodeId);
+        List<Rule> untypedRules = getValidationDao().getValidationRules(dto, langCodeId, instanceCreatedAtMillis);
 
         Question question;
 
@@ -344,7 +363,7 @@ public interface QuestionDao extends SqlObject {
                 break;
             case COMPOSITE:
                 question = getCompositeQuestion((CompositeQuestionDto) dto,
-                        activityInstanceGuid, answerIds, untypedRules, langCodeId);
+                        activityInstanceGuid, instanceCreatedAtMillis, answerIds, untypedRules, langCodeId);
                 break;
             default:
                 throw new DaoException("Unknown question type: " + dto.getType());
@@ -653,14 +672,16 @@ public interface QuestionDao extends SqlObject {
     /**
      * Build a composite question.
      *
-     * @param dto                  the question dto
-     * @param activityInstanceGuid the activity instance guid
-     * @param answerIds            list of base answer ids to question (may be empty)
-     * @param untypedRules         list of untyped validations for question (may be empty)
+     * @param dto                     the question dto
+     * @param activityInstanceGuid    the activity instance guid
+     * @param instanceCreatedAtMillis the timestamp of when instance was created
+     * @param answerIds               list of base answer ids to question (may be empty)
+     * @param untypedRules            list of untyped validations for question (may be empty)
      * @return composite question object
      */
     default CompositeQuestion getCompositeQuestion(CompositeQuestionDto dto,
                                                    String activityInstanceGuid,
+                                                   long instanceCreatedAtMillis,
                                                    List<Long> answerIds,
                                                    List<Rule> untypedRules,
                                                    long langCodeId) {
@@ -670,7 +691,8 @@ public interface QuestionDao extends SqlObject {
         try (var stream = jdbiQuestion.findQuestionDtosByIds(childIds)) {
             childQuestions = stream
                     .map(childQuestionDto ->
-                            getQuestionByActivityInstanceAndDto(childQuestionDto, activityInstanceGuid, false, langCodeId))
+                            getQuestionByActivityInstanceAndDto(childQuestionDto, activityInstanceGuid,
+                                    instanceCreatedAtMillis, false, langCodeId))
                     .collect(toList());
         }
 
@@ -1307,7 +1329,7 @@ public interface QuestionDao extends SqlObject {
         for (var questionDto : questionDtos) {
             templateIds.addAll(questionDto.getTemplateIds());
         }
-        Map<Long, Template> templates = getTemplateDao().collectTemplatesByIds(templateIds);
+        Map<Long, Template> templates = getTemplateDao().collectTemplatesByIdsAndTimestamp(templateIds, timestamp);
 
         Map<Long, QuestionDef> questionDefs = new HashMap<>();
         List<PicklistQuestionDto> picklistDtos = new ArrayList<>();
@@ -1374,7 +1396,7 @@ public interface QuestionDao extends SqlObject {
         for (var container : questionIdToContainer.values()) {
             templateIds.addAll(container.getTemplateIds());
         }
-        Map<Long, Template> picklistTemplates = getTemplateDao().collectTemplatesByIds(templateIds);
+        Map<Long, Template> picklistTemplates = getTemplateDao().collectTemplatesByIdsAndTimestamp(templateIds, timestamp);
         templates.putAll(picklistTemplates);
 
         Map<Long, PicklistQuestionDef> picklistDefs = new HashMap<>();

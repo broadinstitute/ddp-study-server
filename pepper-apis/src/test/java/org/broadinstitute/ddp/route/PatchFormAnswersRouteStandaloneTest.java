@@ -788,6 +788,7 @@ public class PatchFormAnswersRouteStandaloneTest {
             assertTrue(optCompQuestion.isPresent());
             Question compositeQuestionWithAnswers = handle.attach(QuestionDao.class)
                     .getQuestionByIdAndActivityInstanceGuid(optCompQuestion.get().getId(), instanceGuid,
+                            instanceDto.getCreatedAtMillis(),
                             LanguageStore.getDefault().getId());
             assertTrue(compositeQuestionWithAnswers instanceof CompositeQuestion);
             List<CompositeAnswer> savedCompositeAnswers = ((CompositeQuestion) compositeQuestionWithAnswers).getAnswers();

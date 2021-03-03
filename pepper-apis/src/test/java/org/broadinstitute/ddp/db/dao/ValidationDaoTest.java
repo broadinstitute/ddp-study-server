@@ -80,7 +80,8 @@ public class ValidationDaoTest extends TxnAwareBaseTest {
                     -1L, -1L,
                     -1, false, false, false, false, -1, -1, null
             );
-            List<Rule> validations = handle.attach(ValidationDao.class).getValidationRules(nonExistingQuestionDto, enLangId);
+            List<Rule> validations = handle.attach(ValidationDao.class)
+                    .getValidationRules(nonExistingQuestionDto, enLangId, Instant.now().toEpochMilli());
             assertEquals(0, validations.size());
         });
     }
@@ -92,7 +93,7 @@ public class ValidationDaoTest extends TxnAwareBaseTest {
             var form = insertDummyActivity(handle, userGuid, studyGuid, question);
 
             List<Rule> validations = handle.attach(ValidationDao.class)
-                    .getValidationRules(buildQuestionDto(form, question), -1);
+                    .getValidationRules(buildQuestionDto(form, question), -1, Instant.now().toEpochMilli());
             assertEquals(0, validations.size());
 
             handle.rollback();
@@ -106,7 +107,7 @@ public class ValidationDaoTest extends TxnAwareBaseTest {
             var form = insertDummyActivity(handle, userGuid, studyGuid, question);
 
             List<Rule> validations = handle.attach(ValidationDao.class)
-                    .getValidationRules(buildQuestionDto(form, question), enLangId);
+                    .getValidationRules(buildQuestionDto(form, question), enLangId, Instant.now().toEpochMilli());
             assertEquals(1, validations.size());
             Rule rule = validations.get(0);
             assertEquals(RuleType.REQUIRED, rule.getRuleType());
@@ -132,7 +133,7 @@ public class ValidationDaoTest extends TxnAwareBaseTest {
             var form = insertDummyActivity(handle, userGuid, studyGuid, question);
 
             List<Rule> validations = handle.attach(ValidationDao.class)
-                    .getValidationRules(buildQuestionDto(form, question), enLangId);
+                    .getValidationRules(buildQuestionDto(form, question), enLangId, Instant.now().toEpochMilli());
             assertEquals(1, validations.size());
             Rule rule = validations.get(0);
             assertEquals(RuleType.AGE_RANGE, rule.getRuleType());
@@ -155,7 +156,7 @@ public class ValidationDaoTest extends TxnAwareBaseTest {
             var form = insertDummyActivity(handle, userGuid, studyGuid, question);
 
             List<Rule> validations = handle.attach(ValidationDao.class)
-                    .getValidationRules(buildQuestionDto(form, question), enLangId);
+                    .getValidationRules(buildQuestionDto(form, question), enLangId, Instant.now().toEpochMilli());
             assertEquals(3, validations.size());
 
             assertEquals(RuleType.REQUIRED, validations.get(0).getRuleType());
@@ -181,7 +182,7 @@ public class ValidationDaoTest extends TxnAwareBaseTest {
             var form = insertDummyActivity(handle, userGuid, studyGuid, question);
 
             List<Rule> validations = handle.attach(ValidationDao.class)
-                    .getValidationRules(buildQuestionDto(form, question), enLangId);
+                    .getValidationRules(buildQuestionDto(form, question), enLangId, Instant.now().toEpochMilli());
             assertEquals(ruleDefs.size(), validations.size());
             assertEquals(ruleDefs.size(), validations.stream().filter(Rule::getAllowSave).count());
             assertEquals(0, validations.stream().filter(validation -> !validation.getAllowSave()).count());
@@ -206,7 +207,7 @@ public class ValidationDaoTest extends TxnAwareBaseTest {
             var form = insertDummyActivity(handle, userGuid, studyGuid, question);
 
             List<Rule> validations = handle.attach(ValidationDao.class)
-                    .getValidationRules(buildQuestionDto(form, question), enLangId);
+                    .getValidationRules(buildQuestionDto(form, question), enLangId, Instant.now().toEpochMilli());
             assertEquals(ruleDefs.size(), validations.size());
             assertEquals(ruleDefs.size(), validations.stream().filter(Rule::getAllowSave).count());
             assertEquals(0, validations.stream().filter(validation -> !validation.getAllowSave()).count());

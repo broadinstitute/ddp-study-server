@@ -125,7 +125,8 @@ public class GetActivityInstanceRoute implements Route {
             Handle handle, ActivityInstance activityInstance, String userGuid, String operatorGuid, long languageCodeId
     ) {
         List<ActivityValidationFailure> validationFailures = actValidationService.validate(
-                handle, interpreter, userGuid, operatorGuid, activityInstance.getGuid(), activityInstance.getActivityId(), languageCodeId
+                handle, interpreter, userGuid, operatorGuid, activityInstance.getGuid(), activityInstance.getCreatedAtMillis(),
+                activityInstance.getActivityId(), languageCodeId
         );
         if (validationFailures.isEmpty()) {
             return activityInstance;
