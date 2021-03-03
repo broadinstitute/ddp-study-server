@@ -4,6 +4,7 @@ import java.io.File;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -25,6 +26,7 @@ import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiActivityValidation;
 import org.broadinstitute.ddp.db.dao.JdbiActivityVersion;
 import org.broadinstitute.ddp.db.dao.JdbiClient;
+import org.broadinstitute.ddp.db.dao.JdbiRevision;
 import org.broadinstitute.ddp.db.dao.JdbiSendgridConfiguration;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.JdbiUser;
@@ -114,6 +116,7 @@ public class BrainRename implements CustomTask {
     private JdbiActivityVersion jdbiVersion;
     private JdbiActivityValidation jdbiValidation;
     private JdbiVariableSubstitution jdbiSubstitution;
+    private JdbiRevision jdbiRevision;
     private StudyDto studyDto;
     private UserDto adminUser;
 
@@ -170,6 +173,7 @@ public class BrainRename implements CustomTask {
         this.jdbiVersion = handle.attach(JdbiActivityVersion.class);
         this.jdbiValidation = handle.attach(JdbiActivityValidation.class);
         this.jdbiSubstitution = handle.attach(JdbiVariableSubstitution.class);
+        this.jdbiRevision = handle.attach(JdbiRevision.class);
 
         renameProjectContactInfo();
         renameAnnouncementEventMessages();
@@ -336,17 +340,29 @@ public class BrainRename implements CustomTask {
                     Translation sub = extractSingleTranslation(variable);
                     VariableEdit varEdit = varEdits.get(variable.getName());
                     String newText = varEdit.apply(sub.getText());
-
-                    long variableId = variable.getId().get();
-                    jdbiSubstitution.insert(sub.getLanguageCode(), newText, newVersionDto.getRevId(), variableId);
-                    LOG.info("Revisioned translation for template variable: ${}", variable.getName());
-
+                    revisionTranslation(variable, sub, meta, newText, newVersionDto.getRevId());
                     count.getAndIncrement();
                 });
 
         LOG.info("Renamed {} variable translations for activity {}", count.get(), activityCode);
 
         return new RevisionResult(activity, currentVersionDto, newVersionDto, meta);
+    }
+
+    private void revisionTranslation(TemplateVariable variable, Translation translation,
+                                     RevisionMetadata meta, String newText, long newRevisionId) {
+        // Terminate the current translation text.
+        long translationId = translation.getId().get();
+        long currentRevisionId = translation.getRevisionId().get();
+        long terminatedRevisionId = jdbiRevision.copyAndTerminate(currentRevisionId, meta);
+        long[] newRevId = new long[] {terminatedRevisionId};
+        int[] updated = jdbiSubstitution.bulkUpdateRevisionIdsBySubIds(List.of(translationId), newRevId);
+        DBUtils.checkUpdate(1, Arrays.stream(updated).sum());
+
+        // Add new version of translation text.
+        long variableId = variable.getId().get();
+        jdbiSubstitution.insert(translation.getLanguageCode(), newText, newRevisionId, variableId);
+        LOG.info("Revisioned translation for template variable: ${}", variable.getName());
     }
 
     private RevisionMetadata makeActivityRevMetadata(String activityCode, String newVersionTag) {
