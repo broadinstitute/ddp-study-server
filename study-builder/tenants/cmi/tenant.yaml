@@ -20,7 +20,7 @@ emailTemplates:
     resultUrl: '##SERVER_BASE_URL##/pepper/v1/post-password-reset?clientId={{ application.clientID }}'
     subject: >-
       {% if client.client_metadata.study == "ANGIO" %} Angiosarcoma Project
-      {% elsif client.client_metadata.study == "cmi-brain" %} Brain Cancer Project
+      {% elsif client.client_metadata.study == "cmi-brain" %} Brain Tumor Project
       {% elsif client.client_metadata.study == "cmi-mbc" %} Metastatic Breast Cancer Project
       {% elsif client.client_metadata.study == "CMI-OSTEO" %} Osteosarcoma Project
       {% elsif client.client_metadata.study == "cmi-mpc" %} Metastatic Prostate Cancer Project

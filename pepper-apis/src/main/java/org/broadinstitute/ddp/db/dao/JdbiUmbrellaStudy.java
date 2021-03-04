@@ -118,6 +118,14 @@ public interface JdbiUmbrellaStudy extends SqlObject {
     boolean updateWebBaseUrl(@Bind("studyGuid") String studyGuid,
                              @Bind("webBaseUrl") String webBaseUrl);
 
+    @SqlUpdate("update umbrella_study"
+            + "    set study_email = :newEmail, web_base_url = :newUrl"
+            + "  where umbrella_study_id = :studyId")
+    int updateEmailAndWebUrl(
+            @Bind("studyId") long studyId,
+            @Bind("newEmail") String newStudyEmail,
+            @Bind("newUrl") String newBaseWebUrl);
+
     @SqlQuery("select umbrella_guid from umbrella u join umbrella_study us on u.umbrella_id=us.umbrella_id where us.guid = :studyGuid")
     String getUmbrellaGuidForStudyGuid(@Bind("studyGuid") String studyGuid);
 }
