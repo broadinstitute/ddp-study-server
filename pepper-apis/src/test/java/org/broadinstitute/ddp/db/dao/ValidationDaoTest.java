@@ -1,5 +1,7 @@
 package org.broadinstitute.ddp.db.dao;
 
+import static org.broadinstitute.ddp.model.activity.types.QuestionType.DATE;
+import static org.broadinstitute.ddp.model.activity.types.QuestionType.TEXT;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -76,7 +78,7 @@ public class ValidationDaoTest extends TxnAwareBaseTest {
     public void testGetActiveValidations_questionNotFound() {
         TransactionWrapper.useTxn(handle -> {
             var nonExistingQuestionDto = new QuestionDto(
-                    QuestionType.TEXT, -1, "stuff", -1,
+                    TEXT, -1, "stuff", -1,
                     -1L, -1L,
                     -1, false, false, false, false, -1, -1, null
             );
@@ -244,14 +246,22 @@ public class ValidationDaoTest extends TxnAwareBaseTest {
             Map<Long, List<RuleDto>> validations =
                     handle.attach(JdbiQuestionValidation.class).getAllActiveValidationsForActivity(form.getActivityId());
 
-            assertEquals(2, validations.size());
-            assertNotNull(validations.get(dateQuestionDef.getQuestionId()));
-            assertNotNull(validations.get(textQuestionDef.getQuestionId()));
-            assertEquals(dateRuleDefs.size(), validations.get(dateQuestionDef.getQuestionId()).size());
-            assertEquals(textRuleDefs.size(), validations.get(textQuestionDef.getQuestionId()).size());
+            List<Rule> dateQuestionRules =
+                    new ValidationCachedDao(handle).getValidationRules(creaQuestionDto(DATE, dateQuestionDef.getQuestionId()), enLangId);
+            List<Rule> textQuestionRules =
+                    new ValidationCachedDao(handle).getValidationRules(creaQuestionDto(TEXT, textQuestionDef.getQuestionId()), enLangId);
+
+            assertEquals(1, validations.size());
+            assertEquals(dateRuleDefs.size(), dateQuestionRules.size());
+            assertEquals(textRuleDefs.size(), textQuestionRules.size());
+            assertEquals(validations.get(form.getActivityId()).size(), dateQuestionRules.size() + textQuestionRules.size());
 
             handle.rollback();
         });
+    }
+
+    private QuestionDto creaQuestionDto(QuestionType questionType, long questionId) {
+        return new QuestionDto(questionType, questionId, "q1", 1L, 1L, 1L, 1L, false, false, false, false, 1L, 1L, 1L);
     }
 
     private FormActivityDef insertDummyActivity(Handle handle, String userGuid, String studyGuid, QuestionDef... question) {
