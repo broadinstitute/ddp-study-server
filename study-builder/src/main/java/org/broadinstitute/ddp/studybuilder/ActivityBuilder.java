@@ -133,7 +133,6 @@ public class ActivityBuilder {
         }
         for (Config activityCfg : activitiesCfg.getConfigList("activities")) {
             Config definitionCfg = readDefinitionConfig(activityCfg.getString("filepath"));
-            String jsonFromDefinition = ConfigUtil.toJson(definitionCfg);
             ActivityDef def = gson.fromJson(ConfigUtil.toJson(definitionCfg), ActivityDef.class);
             validateDefinition(def);
             List<ActivityDef> nestedDefs = loadNestedActivities(activityCfg);
