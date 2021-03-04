@@ -144,7 +144,7 @@ public class ActivityInstanceService {
 
                 performInstanceNumbering(nestedSummaryDtos);
                 List<ActivityInstanceSummary> nestedSummaries = buildTranslatedInstanceSummaries(
-                        handle, activityStore, false, summaryDtos,
+                        handle, activityStore, false, nestedSummaryDtos,
                         studyGuid, isoLangCode, studyDefaultLangCode);
                 nestedSummaries = nestedSummaries.stream()
                         .filter(summary -> !summary.isHidden())
