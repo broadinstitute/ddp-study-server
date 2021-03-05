@@ -7,7 +7,7 @@ public class ExcludedMetadataField {
 
     private long id;
     private long exportActivityId;
-    private String excludedMetadataField;
+    private final String excludedMetadataField;
 
     @JdbiConstructor
     public ExcludedMetadataField(@ColumnName("excluded_metadata_field_id") long id,
@@ -31,12 +31,8 @@ public class ExcludedMetadataField {
         return id;
     }
 
-    public long getExportActivityId() {
+    public long getActivityId() {
         return exportActivityId;
-    }
-
-    public void setExportActivityId(long exportActivityId) {
-        this.exportActivityId = exportActivityId;
     }
 
     public String getExcludedMetadataField() {

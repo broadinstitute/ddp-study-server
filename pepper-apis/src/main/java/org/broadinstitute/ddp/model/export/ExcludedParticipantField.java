@@ -6,7 +6,7 @@ import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
 public class ExcludedParticipantField {
     private long id;
     private long configuredExportId;
-    private String excludedParticipantField;
+    private final String excludedParticipantField;
 
     @JdbiConstructor
     public ExcludedParticipantField(@ColumnName("excluded_participant_field_id") long id,
@@ -30,12 +30,8 @@ public class ExcludedParticipantField {
         return id;
     }
 
-    public long getConfiguredExportId() {
+    public long getExportId() {
         return configuredExportId;
-    }
-
-    public void setConfiguredExportId(long configuredExportId) {
-        this.configuredExportId = configuredExportId;
     }
 
     public String getExcludedParticipantField() {

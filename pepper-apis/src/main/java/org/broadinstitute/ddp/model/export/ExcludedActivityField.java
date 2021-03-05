@@ -7,7 +7,7 @@ public class ExcludedActivityField {
 
     private long id;
     private long exportActivityId;
-    private String excludedActivityField;
+    private final String excludedActivityField;
 
     @JdbiConstructor
     public ExcludedActivityField(@ColumnName("excluded_activity_field_id") long id,
@@ -31,12 +31,8 @@ public class ExcludedActivityField {
         return id;
     }
 
-    public long getExportActivityId() {
+    public long getActivityId() {
         return exportActivityId;
-    }
-
-    public void setExportActivityId(long exportActivityId) {
-        this.exportActivityId = exportActivityId;
     }
 
     public String getExcludedActivityField() {

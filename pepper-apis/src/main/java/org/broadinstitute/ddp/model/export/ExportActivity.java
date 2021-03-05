@@ -41,7 +41,7 @@ public class ExportActivity {
         return isIncremental;
     }
 
-    public long getConfiguredExportId() {
+    public long getExportId() {
         return configuredExportId;
     }
 
