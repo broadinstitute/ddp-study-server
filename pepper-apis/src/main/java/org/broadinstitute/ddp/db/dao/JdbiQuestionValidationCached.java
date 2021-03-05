@@ -18,13 +18,13 @@ import org.slf4j.LoggerFactory;
 
 public class JdbiQuestionValidationCached extends SQLObjectWrapper<JdbiQuestionValidation> implements JdbiQuestionValidation {
     private static final Logger LOG = LoggerFactory.getLogger(JdbiQuestionValidationCached.class);
-    private static RLocalCachedMap<Long, List<RuleDto>> questionIdToValidationsCache;
+    private static RLocalCachedMap<Long, Map<Long, List<RuleDto>>> activityIdToValidationsCache;
 
     private void initializeCaching() {
-        if (questionIdToValidationsCache == null) {
+        if (activityIdToValidationsCache == null) {
             synchronized (this.getClass()) {
-                if (questionIdToValidationsCache == null) {
-                    questionIdToValidationsCache = CacheService.getInstance()
+                if (activityIdToValidationsCache == null) {
+                    activityIdToValidationsCache = CacheService.getInstance()
                             .getOrCreateLocalCache("questionIdToValidationsCache", 10000);
                 }
             }
@@ -37,7 +37,7 @@ public class JdbiQuestionValidationCached extends SQLObjectWrapper<JdbiQuestionV
     }
 
     private boolean isNullCache() {
-        return isNullCache(questionIdToValidationsCache);
+        return isNullCache(activityIdToValidationsCache);
     }
 
     @Override
@@ -55,18 +55,18 @@ public class JdbiQuestionValidationCached extends SQLObjectWrapper<JdbiQuestionV
         if (isNullCache()) {
             return delegate.getAllActiveValidations(questionDto);
         } else {
-            List<RuleDto> validations = null;
+            Map<Long, List<RuleDto>> questionIdToValidations = null;
             try {
-                validations = questionIdToValidationsCache.get(questionDto.getActivityId());
+                questionIdToValidations = activityIdToValidationsCache.get(questionDto.getActivityId());
             } catch (RedisException e) {
-                LOG.warn("Failed to retrieve value from Redis cache: " + questionIdToValidationsCache.getName() + " key lookedup:"
+                LOG.warn("Failed to retrieve value from Redis cache: " + activityIdToValidationsCache.getName() + " key lookedup:"
                         + questionDto.getId() + "Will try to retrieve from database", e);
                 RedisConnectionValidator.doTest();
             }
-            if (validations == null) {
-                Map<Long, List<RuleDto>> data = cacheActivityValidations(questionDto.getActivityId());
-                validations = data.get(questionDto.getActivityId());
+            if (questionIdToValidations == null) {
+                questionIdToValidations = cacheActivityValidations(questionDto.getActivityId());
             }
+            List<RuleDto> validations = questionIdToValidations.get(questionDto.getId());
             return validations == null ? new ArrayList<>() : validations;
         }
     }
@@ -74,9 +74,9 @@ public class JdbiQuestionValidationCached extends SQLObjectWrapper<JdbiQuestionV
     private Map<Long, List<RuleDto>> cacheActivityValidations(Long activityId) {
         Map<Long, List<RuleDto>> dataToCache = delegate.getAllActiveValidationsForActivity(activityId);
         try {
-            questionIdToValidationsCache.putAllAsync(dataToCache);
+            activityIdToValidationsCache.putAllAsync(Map.of(activityId, dataToCache));
         } catch (RedisException e) {
-            LOG.warn("Failed to cache data to Redis: " + questionIdToValidationsCache.getName() + " to key" + activityId, e);
+            LOG.warn("Failed to cache data to Redis: " + activityIdToValidationsCache.getName() + " to key" + activityId, e);
             RedisConnectionValidator.doTest();
         }
 
