@@ -96,29 +96,29 @@ public class BrainRename implements CustomTask {
     private static final String PDF_DATA_FILE = "patches/rename-pdfs.conf";
     private static final String ARROW = "->";
 
-    private Path cfgPath;
-    private Config studyCfg;
-    private Config varsCfg;
-    private Config renameDataCfg;
-    private Config activityDataCfg;
-    private Config genderDataCfg;
-    private Config pdfDataCfg;
-    private Gson gson;
-    private GsonPojoValidator validator;
+    protected Path cfgPath;
+    protected Config studyCfg;
+    protected Config varsCfg;
+    protected Config renameDataCfg;
+    protected Config activityDataCfg;
+    protected Config genderDataCfg;
+    protected Config pdfDataCfg;
+    protected Gson gson;
+    protected GsonPojoValidator validator;
 
     // Task should be ran once, so we set some shared objects here.
-    private Handle handle;
-    private ActivityDao activityDao;
-    private ActivityI18nDao activityI18nDao;
-    private TemplateDao templateDao;
-    private QuestionDao questionDao;
-    private JdbiActivity jdbiActivity;
-    private JdbiActivityVersion jdbiVersion;
-    private JdbiActivityValidation jdbiValidation;
-    private JdbiVariableSubstitution jdbiSubstitution;
-    private JdbiRevision jdbiRevision;
-    private StudyDto studyDto;
-    private UserDto adminUser;
+    protected Handle handle;
+    protected ActivityDao activityDao;
+    protected ActivityI18nDao activityI18nDao;
+    protected TemplateDao templateDao;
+    protected QuestionDao questionDao;
+    protected JdbiActivity jdbiActivity;
+    protected JdbiActivityVersion jdbiVersion;
+    protected JdbiActivityValidation jdbiValidation;
+    protected JdbiVariableSubstitution jdbiSubstitution;
+    protected JdbiRevision jdbiRevision;
+    protected StudyDto studyDto;
+    protected UserDto adminUser;
 
     private static String replaceNameAndEmail(String text) {
         return text.replace("Brain Cancer Project", "Brain Tumor Project")
@@ -349,7 +349,7 @@ public class BrainRename implements CustomTask {
         return new RevisionResult(activity, currentVersionDto, newVersionDto, meta);
     }
 
-    private void revisionTranslation(TemplateVariable variable, Translation translation,
+    protected void revisionTranslation(TemplateVariable variable, Translation translation,
                                      RevisionMetadata meta, String newText, long newRevisionId) {
         // Terminate the current translation text.
         long translationId = translation.getId().get();
@@ -365,19 +365,19 @@ public class BrainRename implements CustomTask {
         LOG.info("Revisioned translation for template variable: ${}", variable.getName());
     }
 
-    private RevisionMetadata makeActivityRevMetadata(String activityCode, String newVersionTag) {
+    protected RevisionMetadata makeActivityRevMetadata(String activityCode, String newVersionTag) {
         String reason = String.format(
                 "Update activity with studyGuid=%s activityCode=%s to versionTag=%s",
                 studyDto.getGuid(), activityCode, newVersionTag);
         return RevisionMetadata.now(adminUser.getUserId(), reason);
     }
 
-    private ActivityVersionDto findActivityLatestVersion(long activityId) {
+    protected ActivityVersionDto findActivityLatestVersion(long activityId) {
         return jdbiVersion.getActiveVersion(activityId)
                 .orElseThrow(() -> new DDPException("Could not find active version for activity " + activityId));
     }
 
-    private FormActivityDef findActivityDef(String activityCode, String versionTag) {
+    protected FormActivityDef findActivityDef(String activityCode, String versionTag) {
         ActivityDto activityDto = jdbiActivity
                 .findActivityByStudyIdAndCode(studyDto.getId(), activityCode).get();
         ActivityVersionDto versionDto = jdbiVersion
@@ -397,14 +397,14 @@ public class BrainRename implements CustomTask {
                 .collect(Collectors.toList());
     }
 
-    private Translation extractSingleTranslation(TemplateVariable variable) {
+    protected Translation extractSingleTranslation(TemplateVariable variable) {
         if (variable.getTranslations().size() != 1) {
             throw new DDPException("Variable should only have one translation: $" + variable.getName());
         }
         return variable.getTranslations().get(0);
     }
 
-    private void updateTranslationInPlace(Translation sub, String newText) {
+    protected void updateTranslationInPlace(Translation sub, String newText) {
         long substitutionId = sub.getId().get();
         long currentRevisionId = sub.getRevisionId().get();
         boolean updated = jdbiSubstitution.update(substitutionId, currentRevisionId, sub.getLanguageCode(), newText);
@@ -480,7 +480,7 @@ public class BrainRename implements CustomTask {
                 .flatMap(template -> template.getVariables().stream());
     }
 
-    private Stream<TemplateVariable> streamActivityVariables(FormActivityDef activity, ActivityVersionDto versionDto) {
+    protected Stream<TemplateVariable> streamActivityVariables(FormActivityDef activity, ActivityVersionDto versionDto) {
         List<Template> templates = new ArrayList<>();
         Set<Long> templateIdsToLookup = new HashSet<>();
 
@@ -630,7 +630,7 @@ public class BrainRename implements CustomTask {
                 .collect(Collectors.toList());
     }
 
-    private static class VariableEdit {
+    static class VariableEdit {
         private String variableName;
         private List<Edit> edits;
 
@@ -655,7 +655,7 @@ public class BrainRename implements CustomTask {
         }
     }
 
-    private static class Edit {
+    static class Edit {
         private String oldSnippet;
         private String newSnippet;
 
@@ -670,7 +670,7 @@ public class BrainRename implements CustomTask {
         }
     }
 
-    private static class RevisionResult {
+    static class RevisionResult {
         private FormActivityDef activity;
         private ActivityVersionDto currentVersionDto;
         private ActivityVersionDto newVersionDto;
