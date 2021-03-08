@@ -33,7 +33,7 @@ public interface ConfiguredExportDao extends SqlObject {
     }
 
     default ExcludedParticipantField createExcludedParticipantField(ExcludedParticipantField field) {
-        long fieldId = insertExcludedParticipantFieldByStudyId(field.getExportId(),
+        long fieldId = insertExcludedParticipantFieldByExportId(field.getExportId(),
                 field.getExcludedParticipantField());
 
         return findExcludedParticipantFieldById(fieldId).orElseThrow(() ->
@@ -116,10 +116,9 @@ public interface ConfiguredExportDao extends SqlObject {
 
     @GetGeneratedKeys
     @SqlUpdate("insert into excluded_participant_field (configured_export_id, excluded_participant_field) values"
-            + " ((select configured_export_id from configured_export"
-            + " where study_id = :studyId), :excludedParticipantField)")
-    long insertExcludedParticipantFieldByStudyId(
-            @Bind("studyId") long studyId, @Bind("excludedParticipantField") String excludedParticipantField);
+            + " (:exportId, :excludedParticipantField)")
+    long insertExcludedParticipantFieldByExportId(
+            @Bind("exportId") long exportId, @Bind("excludedParticipantField") String excludedParticipantField);
 
     @GetGeneratedKeys
     @SqlUpdate("insert into export_activity (configured_export_id, activity_id, is_incremental) values"
@@ -183,7 +182,7 @@ public interface ConfiguredExportDao extends SqlObject {
 
     @SqlQuery("select * from excluded_participant_field where configured_export_id = :id")
     @RegisterConstructorMapper(ExcludedParticipantField.class)
-    Optional<List<ExcludedParticipantField>> findExcludedParticipantFieldsByExportId(@Bind("id") long id);
+    List<ExcludedParticipantField> findExcludedParticipantFieldsByExportId(@Bind("id") long id);
 
     @SqlQuery("select * from export_activity where export_activity_id = :id")
     @RegisterConstructorMapper(ExportActivity.class)
@@ -191,7 +190,7 @@ public interface ConfiguredExportDao extends SqlObject {
 
     @SqlQuery("select * from export_activity where configured_export_id = :exportId")
     @RegisterConstructorMapper(ExportActivity.class)
-    Optional<List<ExportActivity>> findActivitiesByExportId(@Bind("exportId") long exportId);
+    List<ExportActivity> findActivitiesByExportId(@Bind("exportId") long exportId);
 
     @SqlQuery("select * from excluded_activity_field where excluded_activity_field_id = :id")
     @RegisterConstructorMapper(ExcludedActivityField.class)
@@ -199,7 +198,7 @@ public interface ConfiguredExportDao extends SqlObject {
 
     @SqlQuery("select * from excluded_activity_field where export_activity_id = :id")
     @RegisterConstructorMapper(ExcludedActivityField.class)
-    Optional<List<ExcludedActivityField>> findExcludedActivityFieldByActivityIds(@Bind("id") long id);
+    List<ExcludedActivityField> findExcludedActivityFieldByActivityIds(@Bind("id") long id);
 
     @SqlQuery("select * from excluded_metadata_field where excluded_metadata_field_id = :id")
     @RegisterConstructorMapper(ExcludedMetadataField.class)
@@ -207,7 +206,7 @@ public interface ConfiguredExportDao extends SqlObject {
 
     @SqlQuery("select * from excluded_metadata_field where export_activity_id = :id")
     @RegisterConstructorMapper(ExcludedMetadataField.class)
-    Optional<List<ExcludedMetadataField>> findExcludedMetadataFieldsByActivityId(@Bind("id") long id);
+    List<ExcludedMetadataField> findExcludedMetadataFieldsByActivityId(@Bind("id") long id);
 
     @SqlQuery("select * from export_first_field where export_first_field_id = :id")
     @RegisterConstructorMapper(ExportFirstField.class)
@@ -215,24 +214,30 @@ public interface ConfiguredExportDao extends SqlObject {
 
     @SqlQuery("select * from export_first_field where export_activity_id = :id")
     @RegisterConstructorMapper(ExportFirstField.class)
-    Optional<List<ExportFirstField>> findFirstFieldsByActivityId(@Bind("id") long id);
+    List<ExportFirstField> findFirstFieldsByActivityId(@Bind("id") long id);
 
     @SqlQuery("select * from export_filter where export_filter_id = :id")
     @RegisterConstructorMapper(ExportFilter.class)
     Optional<ExportFilter> findFilterById(@Bind("id") long id);
 
-    @SqlQuery("select * from export_filter where export_activity_id")
+    @SqlQuery("select * from export_filter where export_activity_id = :activityId")
     @RegisterConstructorMapper(ExportFilter.class)
-    Optional<List<ExportFilter>> findFiltersByActivityId(@Bind("activityId") long activityId);
+    List<ExportFilter> findFiltersByActivityId(@Bind("activityId") long activityId);
 
     @SqlQuery("select * from export_activity_status_filter where export_activity_status_filter_id = :id")
     @RegisterConstructorMapper(ExportActivityStatusFilter.class)
     Optional<ExportActivityStatusFilter> findActivityStatusFilterById(@Bind("id") long id);
 
-    @SqlQuery("select * from export_activity_status_filter where filter_id = :id")
+    @SqlQuery("select * from export_activity_status_filter where export_filter_id = :id")
     @RegisterConstructorMapper(ExportActivityStatusFilter.class)
-    Optional<List<ExportActivityStatusFilter>> findActivityStatusFiltersByFilterId(@Bind("id") long id);
+    List<ExportActivityStatusFilter> findActivityStatusFiltersByFilterId(@Bind("id") long id);
 
+    @SqlQuery("select activity_instance_status_type_id from activity_instance_status_type "
+            + "where activity_instance_status_type_code = :code")
+    Optional<Long> getActivityStatusIDByCode(@Bind("code") String code);
+
+    @SqlQuery("select export_filter_type_id from export_filter_type where export_filter_type = :type")
+    Optional<Long> getExportFilterTypeIdFromType(@Bind("type") String type);
 
     // Delete
     @SqlUpdate("delete from configured_export where configured_export_id = :id")

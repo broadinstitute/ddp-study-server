@@ -1,6 +1,7 @@
 package org.broadinstitute.ddp.db.dao;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.util.List;
@@ -22,10 +23,15 @@ import org.junit.Test;
 
 public class ConfiguredExportDaoTest extends TxnAwareBaseTest {
     private static TestDataSetupUtil.GeneratedTestData testData;
+    private static String consentCode;
 
     @BeforeClass
     public static void setup() {
-        testData = TransactionWrapper.withTxn(TestDataSetupUtil::generateBasicUserTestData);
+        TransactionWrapper.useTxn(handle -> {
+            testData = TestDataSetupUtil.generateBasicUserTestData(handle);
+            TestDataSetupUtil.addTestConsent(handle, testData);
+            consentCode = testData.getConsentActivityCode();
+        });
     }
 
     @Test
@@ -47,7 +53,7 @@ public class ConfiguredExportDaoTest extends TxnAwareBaseTest {
             long excludedFieldId2 = testExcludedParticipantField(dao, exportId, "LAST_NAME");
 
             //Test export activity
-            long activityId = testExportActivity(dao, exportId, studyId);
+            long activityId = testExportActivity(dao, exportId, studyId, consentCode, testData.getConsentActivityId());
 
             //Test excluded activity field
             long activityFieldId = testExcludedActivityField(dao, activityId);
@@ -66,8 +72,7 @@ public class ConfiguredExportDaoTest extends TxnAwareBaseTest {
 
             //Test finding everything based on study Id
             testRetrieval(dao, studyId, exportId, excludedFieldId, excludedFieldId2, activityId, activityFieldId, metadataFieldId,
-                    firstFieldId,
-                    filterId, activityStatusFilterId);
+                    firstFieldId, filterId, activityStatusFilterId);
 
             dao.deleteFullConfiguredExportByStudyId(studyId);
         });
@@ -80,60 +85,54 @@ public class ConfiguredExportDaoTest extends TxnAwareBaseTest {
         assertTrue(export.isPresent());
         assertEquals(export.get().getId(), exportId);
 
-        Optional<List<ExcludedParticipantField>> excludedParticipantFields = dao.findExcludedParticipantFieldsByExportId(exportId);
-        assertTrue(excludedParticipantFields.isPresent());
-        List<ExcludedParticipantField> participantFields = excludedParticipantFields.get();
-        assertEquals(2, participantFields.size());
-        assertTrue(participantFields.stream().anyMatch(field -> field.getId() == excludedFieldId));
-        assertTrue(participantFields.stream().anyMatch(field -> field.getId() == excludedFieldId2));
+        List<ExcludedParticipantField> excludedParticipantFields = dao.findExcludedParticipantFieldsByExportId(exportId);
+        assertNotNull(excludedParticipantFields);
+        assertEquals(2, excludedParticipantFields.size());
+        assertTrue(excludedParticipantFields.stream().anyMatch(field -> field.getId() == excludedFieldId));
+        assertTrue(excludedParticipantFields.stream().anyMatch(field -> field.getId() == excludedFieldId2));
 
-        Optional<List<ExportActivity>> exportActivities = dao.findActivitiesByExportId(exportId);
-        assertTrue(exportActivities.isPresent());
-        List<ExportActivity> activities = exportActivities.get();
+        List<ExportActivity> activities = dao.findActivitiesByExportId(exportId);
+        assertNotNull(activities);
         assertEquals(1, activities.size());
         assertEquals(activityId, activities.get(0).getId());
 
-        Optional<List<ExcludedActivityField>> excludedActivityFields = dao.findExcludedActivityFieldByActivityIds(activityId);
-        assertTrue(excludedActivityFields.isPresent());
-        List<ExcludedActivityField> activityFields = excludedActivityFields.get();
+        List<ExcludedActivityField> activityFields = dao.findExcludedActivityFieldByActivityIds(activityId);
+        assertNotNull(activityFields);
         assertEquals(1, activityFields.size());
         assertEquals(activityFieldId, activityFields.get(0).getId());
 
-        Optional<List<ExcludedMetadataField>> excludedMetadataFields = dao.findExcludedMetadataFieldsByActivityId(activityId);
-        assertTrue(excludedMetadataFields.isPresent());
-        List<ExcludedMetadataField> metadataFields = excludedMetadataFields.get();
+        List<ExcludedMetadataField> metadataFields = dao.findExcludedMetadataFieldsByActivityId(activityId);
+        assertNotNull(metadataFields);
         assertEquals(1, metadataFields.size());
         assertEquals(metadataFieldId, metadataFields.get(0).getId());
 
-        Optional<List<ExportFirstField>> exportFirstFields = dao.findFirstFieldsByActivityId(activityId);
-        assertTrue(exportFirstFields.isPresent());
-        List<ExportFirstField> firstFields = exportFirstFields.get();
+        List<ExportFirstField> firstFields = dao.findFirstFieldsByActivityId(activityId);
+        assertNotNull(firstFields);
         assertEquals(1, firstFields.size());
         assertEquals(firstFieldId, firstFields.get(0).getId());
 
-        Optional<List<ExportFilter>> exportFilters = dao.findFiltersByActivityId(activityId);
-        assertTrue(exportFilters.isPresent());
-        List<ExportFilter> filters = exportFilters.get();
+        List<ExportFilter> filters = dao.findFiltersByActivityId(activityId);
+        assertNotNull(filters);
         assertEquals(1, filters.size());
         assertEquals(filterId, filters.get(0).getId());
 
-
-        Optional<List<ExportActivityStatusFilter>> exportActivityStatusFilters = dao.findActivityStatusFiltersByFilterId(filterId);
-        assertTrue(exportActivityStatusFilters.isPresent());
-        List<ExportActivityStatusFilter> activityStatusFilters = exportActivityStatusFilters.get();
+        List<ExportActivityStatusFilter> activityStatusFilters = dao.findActivityStatusFiltersByFilterId(filterId);
+        assertNotNull(activityStatusFilters);
         assertEquals(1, activityStatusFilters.size());
         assertEquals(activityStatusFilterId, activityStatusFilters.get(0).getId());
     }
 
-
     private long testExportActivityStatusFilter(ConfiguredExportDao dao, long filterId) {
-        ExportActivityStatusFilter filterA = new ExportActivityStatusFilter(filterId, "COMPLETED");
+        ExportActivityStatusFilter filterA = new ExportActivityStatusFilter(filterId, "COMPLETE");
         long statusFilterId = dao.createExportActivityStatusFilter(filterA).getId();
         Optional<ExportActivityStatusFilter> opt = dao.findActivityStatusFilterById(statusFilterId);
         assertTrue(opt.isPresent());
         ExportActivityStatusFilter filterB = opt.get();
         assertEquals(filterA.getFilterId(), filterB.getFilterId());
-        assertEquals(filterA.getStatusType(), filterB.getStatusType());
+        Optional<Long> typeId = dao.getActivityStatusIDByCode(filterA.getStatusType());
+        assertTrue(typeId.isPresent());
+        long expectedFilterStatusTypeId = typeId.get();
+        assertEquals(expectedFilterStatusTypeId, filterB.getStatusTypeId());
         return statusFilterId;
     }
 
@@ -144,7 +143,11 @@ public class ConfiguredExportDaoTest extends TxnAwareBaseTest {
         assertTrue(opt.isPresent());
         ExportFilter filterB = opt.get();
         assertEquals(filterA.getExportActivityId(), filterB.getExportActivityId());
-        assertEquals(filterA.getFilterType(), filterB.getFilterType());
+
+        Optional<Long> typeId = dao.getExportFilterTypeIdFromType(filterA.getFilterType());
+        assertTrue(typeId.isPresent());
+        long expectedFilterTypeId = typeId.get();
+        assertEquals(expectedFilterTypeId, filterB.getFilterTypeId());
         return filterId;
     }
 
@@ -181,15 +184,15 @@ public class ConfiguredExportDaoTest extends TxnAwareBaseTest {
         return fieldId;
     }
 
-    private long testExportActivity(ConfiguredExportDao dao, long exportId, long studyId) {
-        ExportActivity fieldA = new ExportActivity(exportId, "ENROLLMENT", true, studyId);
+    private long testExportActivity(ConfiguredExportDao dao, long exportId, long studyId, String activityCode, long studyActivityId) {
+        ExportActivity fieldA = new ExportActivity(exportId, activityCode, true, studyId);
         long activityId = dao.createExportActivity(fieldA).getId();
         Optional<ExportActivity> opt = dao.findActivityById(activityId);
         assertTrue(opt.isPresent());
         ExportActivity fieldB = opt.get();
         assertEquals(fieldA.getExportId(), fieldB.getExportId());
-        assertEquals(fieldA.getActivityCode(), fieldB.getActivityCode());
-        assertEquals(fieldA.getStudyId(), fieldB.getStudyId());
+        assertEquals(studyActivityId, fieldB.getActivityId());
+        assertEquals(fieldA.isIncremental(), fieldB.isIncremental());
         return activityId;
     }
 

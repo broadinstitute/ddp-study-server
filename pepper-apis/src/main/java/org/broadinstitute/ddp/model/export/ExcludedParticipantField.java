@@ -22,10 +22,6 @@ public class ExcludedParticipantField {
         this.excludedParticipantField = excludedParticipantField;
     }
 
-    public ExcludedParticipantField(String excludedParticipantField) {
-        this.excludedParticipantField = excludedParticipantField;
-    }
-
     public long getId() {
         return id;
     }

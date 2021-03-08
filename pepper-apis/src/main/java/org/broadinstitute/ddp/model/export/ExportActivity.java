@@ -48,5 +48,9 @@ public class ExportActivity {
     public long getStudyId() {
         return studyId;
     }
+
+    public long getActivityId() {
+        return activityId;
+    }
 }
 
