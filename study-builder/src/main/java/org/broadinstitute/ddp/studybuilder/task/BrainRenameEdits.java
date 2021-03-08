@@ -11,11 +11,15 @@ import java.util.function.Function;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.ActivityI18nDao;
+import org.broadinstitute.ddp.db.dao.EventDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiActivityValidation;
 import org.broadinstitute.ddp.db.dao.JdbiActivityVersion;
+import org.broadinstitute.ddp.db.dao.JdbiEventConfiguration;
 import org.broadinstitute.ddp.db.dao.JdbiRevision;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.JdbiUser;
@@ -32,6 +36,11 @@ import org.broadinstitute.ddp.model.activity.definition.i18n.Translation;
 import org.broadinstitute.ddp.model.activity.definition.template.TemplateVariable;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
 import org.broadinstitute.ddp.model.activity.types.BlockType;
+import org.broadinstitute.ddp.model.activity.types.EventActionType;
+import org.broadinstitute.ddp.model.activity.types.EventTriggerType;
+import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
+import org.broadinstitute.ddp.model.event.ActivityStatusChangeTrigger;
+import org.broadinstitute.ddp.model.event.EventConfiguration;
 import org.broadinstitute.ddp.studybuilder.ActivityBuilder;
 import org.broadinstitute.ddp.util.GsonPojoValidator;
 import org.broadinstitute.ddp.util.GsonUtil;
@@ -88,6 +97,8 @@ public class BrainRenameEdits extends BrainRename {
         terminateAboutYouQuestions();
         editPostConsentTitle(activityDataCfg.getConfig("postConsent"));
         editPostConsentTitle(activityDataCfg.getConfig("childPostConsent"));
+        updateSelfActivityDisplayOrders();
+        disableConsentEmailEvent();
 
         LOG.info("Brain Tumor Project additional edits finished");
     }
@@ -240,5 +251,49 @@ public class BrainRenameEdits extends BrainRename {
                 i18nDetail.getRevisionId());
         activityI18nDao.updateDetails(List.of(newI18nDetail));
         LOG.info("Updated title for activity {}", activityCode);
+    }
+
+    private void updateSelfActivityDisplayOrders() {
+        Config activityCfg = activityDataCfg.getConfig("aboutYou");
+        String activityCode = activityCfg.getString("activityCode");
+        long aboutYouActivityId = ActivityBuilder.findActivityId(handle, studyDto.getId(), activityCode);
+
+        int displayOrder = activityCfg.getInt("newDisplayOrder");
+        DBUtils.checkUpdate(1, jdbiActivity.updateDisplayOrderById(aboutYouActivityId, displayOrder));
+        LOG.info("Updated display order for activity {} to {}", activityCode, displayOrder);
+
+        activityCfg = activityDataCfg.getConfig("postConsent");
+        activityCode = activityCfg.getString("activityCode");
+        long postConsentActivityId = ActivityBuilder.findActivityId(handle, studyDto.getId(), activityCode);
+
+        displayOrder = activityCfg.getInt("newDisplayOrder");
+        DBUtils.checkUpdate(1, jdbiActivity.updateDisplayOrderById(postConsentActivityId, displayOrder));
+        LOG.info("Updated display order for activity {} to {}", activityCode, displayOrder);
+    }
+
+    private void disableConsentEmailEvent() {
+        Config activityCfg = activityDataCfg.getConfig("selfConsent");
+        String activityCode = activityCfg.getString("activityCode");
+        long consentActivityId = ActivityBuilder.findActivityId(handle, studyDto.getId(), activityCode);
+
+        // Find the (CONSENT, CREATED -> EMAIL) event that's a duplicate of the "participant welcome" email.
+        // The one we're looking for is the event without a cancel expression (those are the consent reminders).
+        EventConfiguration consentCreatedEmailEvent = handle.attach(EventDao.class)
+                .getAllEventConfigurationsByStudyId(studyDto.getId())
+                .stream()
+                .filter(event -> event.getEventTriggerType() == EventTriggerType.ACTIVITY_STATUS)
+                .filter(event -> event.getEventActionType() == EventActionType.NOTIFICATION)
+                .filter(event -> StringUtils.isBlank(event.getCancelExpression()))
+                .filter(event -> {
+                    ActivityStatusChangeTrigger trigger = (ActivityStatusChangeTrigger) event.getEventTrigger();
+                    return trigger.getStudyActivityId() == consentActivityId
+                            && trigger.getInstanceStatusType() == InstanceStatusType.CREATED;
+                })
+                .findFirst()
+                .orElseThrow(() -> new DDPException("Could not find CONSENT CREATED email event"));
+
+        long eventId = consentCreatedEmailEvent.getEventConfigurationId();
+        DBUtils.checkUpdate(1, handle.attach(JdbiEventConfiguration.class).updateIsActiveById(eventId, false));
+        LOG.info("Disabled consent-created email event with id={}", eventId);
     }
 }
