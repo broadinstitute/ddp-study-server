@@ -21,6 +21,9 @@
         "activityName": {
           "type": "text"
         },
+        "parentActivityCode": {
+          "type": "keyword"
+        },
         "questions": {
           "properties": {
             "stableId": {

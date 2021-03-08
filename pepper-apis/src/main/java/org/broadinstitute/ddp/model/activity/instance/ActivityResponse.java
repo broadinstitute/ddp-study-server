@@ -18,7 +18,8 @@ public abstract class ActivityResponse {
     protected Boolean isReadonly;
     protected long createdAt;
     protected Long firstCompletedAt;
-
+    protected Long parentInstanceId;
+    protected String parentInstanceGuid;
     protected long activityId;
     protected String activityCode;
     protected String activityVersionTag;
@@ -28,6 +29,7 @@ public abstract class ActivityResponse {
 
     ActivityResponse(ActivityType type,
                      long id, String guid, long participantId, Boolean isReadonly, long createdAt, Long firstCompletedAt,
+                     Long parentInstanceId, String parentInstanceGuid,
                      long activityId, String activityCode, String activityVersionTag,
                      ActivityInstanceStatusDto latestStatus) {
         this.type = type;
@@ -37,6 +39,8 @@ public abstract class ActivityResponse {
         this.isReadonly = isReadonly;
         this.createdAt = createdAt;
         this.firstCompletedAt = firstCompletedAt;
+        this.parentInstanceId = parentInstanceId;
+        this.parentInstanceGuid = parentInstanceGuid;
         this.activityId = activityId;
         this.activityCode = activityCode;
         this.activityVersionTag = activityVersionTag;
@@ -78,6 +82,14 @@ public abstract class ActivityResponse {
 
     public Long getFirstCompletedAt() {
         return firstCompletedAt;
+    }
+
+    public Long getParentInstanceId() {
+        return parentInstanceId;
+    }
+
+    public String getParentInstanceGuid() {
+        return parentInstanceGuid;
     }
 
     public long getActivityId() {
