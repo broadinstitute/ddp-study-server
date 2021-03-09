@@ -6,6 +6,7 @@ import java.util.Optional;
 
 import com.google.gson.annotations.SerializedName;
 
+import org.broadinstitute.ddp.export.json.structured.StudyWorkflowStatus;
 import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
 
 import org.slf4j.Logger;
@@ -26,6 +27,8 @@ public class ParticipantStatusTrackingInfo {
     private TissueRecord tissueRecord;
     @SerializedName("kits")
     private List<Kit> kits;
+    @SerializedName("workflows")
+    private List<StudyWorkflowStatus> workflows = new ArrayList<>();
 
     private transient String userGuid;
 
@@ -56,7 +59,8 @@ public class ParticipantStatusTrackingInfo {
     public ParticipantStatusTrackingInfo(
             ParticipantStatus dsmParticipantStatus,
             EnrollmentStatusType enrollmentStatusType,
-            String userGuid
+            String userGuid,
+            List<StudyWorkflowStatus> workflows
     ) {
         this.userGuid = userGuid;
         this.medicalRecord = new MedicalRecord(
@@ -103,6 +107,7 @@ public class ParticipantStatusTrackingInfo {
         }
 
         this.kits = kits;
+        this.workflows = workflows;
     }
 
     public String getUserGuid() {
@@ -218,4 +223,5 @@ public class ParticipantStatusTrackingInfo {
             return status;
         }
     }
+
 }

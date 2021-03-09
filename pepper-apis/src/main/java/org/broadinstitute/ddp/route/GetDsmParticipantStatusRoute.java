@@ -1,16 +1,23 @@
 package org.broadinstitute.ddp.route;
 
+import java.util.List;
+
 import org.apache.http.entity.ContentType;
 import org.broadinstitute.ddp.client.DsmClient;
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.JdbiUserStudyEnrollment;
+import org.broadinstitute.ddp.export.DataExporter;
+import org.broadinstitute.ddp.export.json.structured.StudyWorkflowStatus;
 import org.broadinstitute.ddp.json.errors.ApiError;
 import org.broadinstitute.ddp.model.dsm.ParticipantStatusTrackingInfo;
+import org.broadinstitute.ddp.model.study.Participant;
 import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
+import org.broadinstitute.ddp.util.ElasticsearchServiceUtil;
 import org.broadinstitute.ddp.util.ResponseUtil;
 import org.broadinstitute.ddp.util.RouteUtil;
+import org.elasticsearch.client.RestHighLevelClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import spark.Request;
@@ -25,9 +32,11 @@ public class GetDsmParticipantStatusRoute implements Route {
     private static final Logger LOG = LoggerFactory.getLogger(GetDsmParticipantStatusRoute.class);
 
     private final DsmClient dsm;
+    private final RestHighLevelClient esClient;
 
-    public GetDsmParticipantStatusRoute(DsmClient dsmClient) {
+    public GetDsmParticipantStatusRoute(DsmClient dsmClient, RestHighLevelClient esClient) {
         this.dsm = dsmClient;
+        this.esClient = esClient;
     }
 
     /**
@@ -65,7 +74,10 @@ public class GetDsmParticipantStatusRoute implements Route {
         LOG.info("DSM call completed, study={} and participant={}, status={}", studyGuid, userGuid, result.getStatusCode());
 
         if (result.getStatusCode() == 200) {
-            return new ParticipantStatusTrackingInfo(result.getBody(), status, userGuid);
+            // todo arz figure this part out
+            List<StudyWorkflowStatus> workflows = ElasticsearchServiceUtil.queryByStudyParticipant(esClient, umbrellaGuid, studyGuid, userGuid));
+            ParticipantStatusTrackingInfo statusInfo = new ParticipantStatusTrackingInfo(result.getBody(), status, userGuid, workflows);
+            return statusInfo;
         } else if (result.getStatusCode() == 404) {
             String errMsg = "Participant " + userGuid + " or study " + studyGuid + " not found";
             LOG.warn(errMsg);
@@ -80,4 +92,6 @@ public class GetDsmParticipantStatusRoute implements Route {
             throw ResponseUtil.haltError(500, new ApiError(ErrorCodes.SERVER_ERROR, errMsg));
         }
     }
+
+
 }

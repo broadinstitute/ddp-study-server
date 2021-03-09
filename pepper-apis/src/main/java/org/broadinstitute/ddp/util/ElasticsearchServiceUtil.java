@@ -19,9 +19,15 @@ import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.elastic.ElasticSearchIndexType;
+import org.elasticsearch.action.search.SearchRequest;
+import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestClientBuilder;
 import org.elasticsearch.client.RestHighLevelClient;
+import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.search.builder.SearchSourceBuilder;
+import org.elasticsearch.search.sort.SortOrder;
 import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,6 +48,24 @@ public final class ElasticsearchServiceUtil {
 
         return String.join(".", type, umbrella, studyGuid);
     }
+
+    // todo arz figure out how to return a particular object (or whole value?) for a ptp
+    public static SearchResponse queryByStudyParticipant(RestHighLevelClient esClient,
+                                                  String umbrellaGuid, String studyGuid, String participantGuid) {
+        String index = "participants_structured." + umbrellaGuid + "." + studyGuid;
+        SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+        SearchRequest searchRequest = new SearchRequest(index);
+
+        searchSourceBuilder.query(QueryBuilders.matchQuery(".profile.guid", participantGuid));
+
+        searchRequest.source(searchSourceBuilder);
+
+        SearchResponse response = esClient.search(searchRequest, RequestOptions.DEFAULT);
+
+        return response;
+    }
+
+
 
     public static synchronized RestHighLevelClient getElasticsearchClient(Config cfg) throws MalformedURLException {
         String userName = cfg.getString(ConfigFile.ELASTICSEARCH_USERNAME);
