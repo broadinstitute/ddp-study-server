@@ -83,7 +83,7 @@ public class UpdateActivityTemplatesInPlace implements CustomTask {
                 FormActivityDef activity = (FormActivityDef) activityDao.findDefByDtoAndVersion(activityDto, versionDto);
 
                 var updateTask = new UpdateTemplatesInPlace();
-                updateTask.traverseActivity(handle, activityCode, definition, activity);
+                updateTask.traverseActivity(handle, activityCode, definition, activity, versionDto.getRevStart());
                 found = true;
                 break;
             }

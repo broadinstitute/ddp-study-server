@@ -183,8 +183,8 @@ public class FormInstanceDao {
 
         Map<Long, FormSection> sections = handle.attach(org.broadinstitute.ddp.db.dao.SectionBlockDao.class)
                 .findAllInstanceSectionsById(sectionIds);
-        Map<Long, List<FormBlock>> blockMap = sectionBlockDao.getBlocksForSections(handle, sectionIds, form.getGuid(), langCodeId,
-                includeDeprecated);
+        Map<Long, List<FormBlock>> blockMap = sectionBlockDao.getBlocksForSections(handle, sectionIds, form.getGuid(),
+                form.getCreatedAtMillis(), langCodeId, includeDeprecated);
 
         List<FormSection> bodySections = new ArrayList<>();
         for (long id : bodyIds) {

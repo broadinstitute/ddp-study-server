@@ -221,6 +221,15 @@ public class JdbiUmbrellaStudyCached extends SQLObjectWrapper<JdbiUmbrellaStudy>
         return modified;
     }
 
+    @Override
+    public int updateEmailAndWebUrl(long studyId, String newStudyEmail, String newBaseWebUrl) {
+        int numUpdated = delegate.updateEmailAndWebUrl(studyId, newStudyEmail, newBaseWebUrl);
+        if (numUpdated > 0) {
+            notifyModelUpdated(ModelChangeType.STUDY, studyId);
+        }
+        return numUpdated;
+    }
+
     private void addToCacheAsync(StudyDto dto) {
         if (dto != null) {
             try {

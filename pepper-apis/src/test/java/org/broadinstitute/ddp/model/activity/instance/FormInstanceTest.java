@@ -102,7 +102,7 @@ public class FormInstanceTest extends TxnAwareBaseTest {
         fixture.put(2L, "<p>this is body</p>");
 
         I18nContentRenderer mockRenderer = mock(I18nContentRenderer.class);
-        when(mockRenderer.bulkRender(any(), anySet(), anyLong(), any())).thenReturn(fixture);
+        when(mockRenderer.bulkRender(any(), anySet(), anyLong(), any(), anyLong())).thenReturn(fixture);
 
         ContentBlock content = new ContentBlock(1L, 2L);
         FormSection s1 = new FormSection(Collections.singletonList(content));
@@ -121,7 +121,7 @@ public class FormInstanceTest extends TxnAwareBaseTest {
         fixture.put(2L, "<p>this is body</p>");
 
         I18nContentRenderer mockRenderer = mock(I18nContentRenderer.class);
-        when(mockRenderer.bulkRender(any(), anySet(), anyLong(), any())).thenReturn(fixture);
+        when(mockRenderer.bulkRender(any(), anySet(), anyLong(), any(), anyLong())).thenReturn(fixture);
 
         ContentBlock content = new ContentBlock(1L, 2L);
         FormSection s1 = new FormSection(Collections.singletonList(content));
@@ -142,7 +142,7 @@ public class FormInstanceTest extends TxnAwareBaseTest {
         fixture.put(2L, "this is bold prompt");
 
         I18nContentRenderer mockRenderer = mock(I18nContentRenderer.class);
-        when(mockRenderer.bulkRender(any(), anySet(), anyLong(), any())).thenReturn(fixture);
+        when(mockRenderer.bulkRender(any(), anySet(), anyLong(), any(), anyLong())).thenReturn(fixture);
 
         Question question = new TextQuestion("sid", 1, null, Collections.emptyList(), Collections.emptyList(),
                 TextInputType.TEXT);
@@ -162,7 +162,7 @@ public class FormInstanceTest extends TxnAwareBaseTest {
         fixture.put(1L, "this is <b>bold</b> prompt");
 
         I18nContentRenderer mockRenderer = mock(I18nContentRenderer.class);
-        when(mockRenderer.bulkRender(any(), anySet(), anyLong(), any())).thenReturn(fixture);
+        when(mockRenderer.bulkRender(any(), anySet(), anyLong(), any(), anyLong())).thenReturn(fixture);
 
         Question question = new TextQuestion("sid", 1, null, Collections.emptyList(), Collections.emptyList(),
                 TextInputType.TEXT);
@@ -183,7 +183,7 @@ public class FormInstanceTest extends TxnAwareBaseTest {
         fixture.put(1L, "this is <strong>bold</strong> section name");
 
         I18nContentRenderer mockRenderer = mock(I18nContentRenderer.class);
-        when(mockRenderer.bulkRender(any(), anySet(), anyLong(), any())).thenReturn(fixture);
+        when(mockRenderer.bulkRender(any(), anySet(), anyLong(), any(), anyLong())).thenReturn(fixture);
 
         FormSection s1 = new FormSection(1L);
         FormInstance form = buildEmptyTestInstance();
@@ -199,7 +199,7 @@ public class FormInstanceTest extends TxnAwareBaseTest {
         fixture.put(1L, "this is <strong>bold</strong> section name");
 
         I18nContentRenderer mockRenderer = mock(I18nContentRenderer.class);
-        when(mockRenderer.bulkRender(any(), anySet(), anyLong(), any())).thenReturn(fixture);
+        when(mockRenderer.bulkRender(any(), anySet(), anyLong(), any(), anyLong())).thenReturn(fixture);
 
         FormSection s1 = new FormSection(1L);
         FormInstance form = buildEmptyTestInstance();
@@ -217,7 +217,7 @@ public class FormInstanceTest extends TxnAwareBaseTest {
             handle.attach(UserProfileSql.class).upsertLastName(testData.getUserId(), "bar");
 
             I18nContentRenderer mockRenderer = mock(I18nContentRenderer.class);
-            doReturn(Collections.emptyMap()).when(mockRenderer).bulkRender(any(), any(), anyLong(), any());
+            doReturn(Collections.emptyMap()).when(mockRenderer).bulkRender(any(), anySet(), anyLong(), any(), anyLong());
             doReturn(handle.attach(UserProfileDao.class)).when(mockHandle).attach(UserProfileDao.class);
 
             FormInstance form = buildEmptyTestInstance(testData.getUserId());
@@ -232,7 +232,7 @@ public class FormInstanceTest extends TxnAwareBaseTest {
                 assertEquals("foo", snaphost.get(I18nTemplateConstants.Snapshot.PARTICIPANT_FIRST_NAME));
                 assertEquals("bar", snaphost.get(I18nTemplateConstants.Snapshot.PARTICIPANT_LAST_NAME));
                 return true;
-            }));
+            }), anyLong());
 
             handle.rollback();
         });

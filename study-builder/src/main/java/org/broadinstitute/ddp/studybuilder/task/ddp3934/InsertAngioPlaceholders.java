@@ -2,6 +2,7 @@ package org.broadinstitute.ddp.studybuilder.task.ddp3934;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -10,6 +11,8 @@ import java.util.ResourceBundle;
 import java.util.stream.Collectors;
 
 import com.typesafe.config.Config;
+import org.broadinstitute.ddp.db.dao.JdbiActivity;
+import org.broadinstitute.ddp.db.dao.JdbiActivityVersion;
 import org.broadinstitute.ddp.db.dao.JdbiDateQuestion;
 import org.broadinstitute.ddp.db.dao.JdbiQuestion;
 import org.broadinstitute.ddp.db.dao.JdbiTemplate;
@@ -17,6 +20,7 @@ import org.broadinstitute.ddp.db.dao.JdbiTemplateVariable;
 import org.broadinstitute.ddp.db.dao.JdbiTextQuestion;
 import org.broadinstitute.ddp.db.dao.JdbiVariableSubstitution;
 import org.broadinstitute.ddp.db.dao.TemplateDao;
+import org.broadinstitute.ddp.db.dto.ActivityVersionDto;
 import org.broadinstitute.ddp.db.dto.DateQuestionDto;
 import org.broadinstitute.ddp.db.dto.TextQuestionDto;
 import org.broadinstitute.ddp.exception.DDPException;
@@ -153,6 +157,16 @@ public class InsertAngioPlaceholders implements CustomTask {
             String activityCode = currentActivity.getActivityCode();
             String studyGuid = currentActivity.getStudyGuid();
 
+            long timestamp = handle.attach(JdbiActivity.class)
+                    .findActivityByStudyGuidAndCode(studyGuid, activityCode)
+                    .stream()
+                    .flatMap(activityDto -> handle.attach(JdbiActivityVersion.class)
+                            .findAllVersionsInAscendingOrder(activityDto.getActivityId())
+                            .stream())
+                    .max(Comparator.comparing(ActivityVersionDto::getRevStart))
+                    .map(ActivityVersionDto::getRevStart)
+                    .orElseThrow(() -> new DDPException("Could not find latest version for activity " + activityCode));
+
             LOG.info("updating placeholders for activity {}", currentActivity.getActivityCode());
             List<QuestionMetadata> questions = handle.attach(QuestionMetadataDao.class)
                     .getQuestionsWithPlaceholders(studyGuid, activityCode)
@@ -204,12 +218,12 @@ public class InsertAngioPlaceholders implements CustomTask {
                 if (question.placeholderTemplateId != null) {
                     // If the question already has a placeholder it was using, clear out any variables
                     // or substitutions tied to it.
-                    Template existingTemplate = templateDao.loadTemplateById(question.placeholderTemplateId);
+                    Template existingTemplate = templateDao.loadTemplateByIdAndTimestamp(question.placeholderTemplateId, timestamp);
                     
                     String templateCode = existingTemplate.getTemplateCode();
                     long templateId = existingTemplate.getTemplateId().longValue();
                     
-                    boolean result = clearTemplate(handle, templateId);
+                    boolean result = clearTemplate(handle, templateId, timestamp);
                     if (result == false) {
                         String message = String.format("failed to clear placeholder for question %s (%d)",
                                                         question.stableIdentifier,
@@ -232,7 +246,7 @@ public class InsertAngioPlaceholders implements CustomTask {
                                                                             activeRevisionId);
                 }
 
-                Template template =  templateDao.loadTemplateById(targetTemplateId);
+                Template template =  templateDao.loadTemplateByIdAndTimestamp(targetTemplateId, timestamp);
                 boolean result = templateDao.getJdbiTemplate().update(template.getTemplateId(),
                                                                         template.getTemplateCode(),
                                                                         template.getTemplateType(),
@@ -295,14 +309,14 @@ public class InsertAngioPlaceholders implements CustomTask {
         return bundle;
     }
 
-    private boolean clearTemplate(Handle handle, long templateId) {
+    private boolean clearTemplate(Handle handle, long templateId, long timestamp) {
         TemplateDao templateDao = handle.attach(TemplateDao.class);
 
         JdbiTemplate jdbiTemplate = templateDao.getJdbiTemplate();
         JdbiTemplateVariable jdbiTemplateVariable = templateDao.getJdbiTemplateVariable();
         JdbiVariableSubstitution jdbiVariableSubstitution = templateDao.getJdbiVariableSubstitution();
 
-        Template template = templateDao.loadTemplateById(templateId);
+        Template template = templateDao.loadTemplateByIdAndTimestamp(templateId, timestamp);
         if (template == null) {
             String msg = String.format("no template with id %d found",
                     templateId);

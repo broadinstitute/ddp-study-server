@@ -111,12 +111,13 @@ public class I18nContentRenderer {
      * @param handle            JDBC connection
      * @param contentTemplateId Id of the template to render
      * @param languageCodeId    Language to fetch translations for
+     * @param timestamp         the timestamp to pinpoint template variable substitution text revisions
      * @return A string containting the template rendered into html
      * @throws IllegalArgumentException Thrown when one of the method arguments is null
      * @throws NoSuchElementException   Thrown when a db search returns no element
      */
-    public String renderContent(Handle handle, Long contentTemplateId, Long languageCodeId) {
-        return renderContent(handle, contentTemplateId, languageCodeId, getDefaultLanguageId(handle));
+    public String renderContent(Handle handle, Long contentTemplateId, Long languageCodeId, long timestamp) {
+        return renderContent(handle, contentTemplateId, languageCodeId, getDefaultLanguageId(handle), timestamp);
     }
 
     /**
@@ -127,17 +128,18 @@ public class I18nContentRenderer {
      * @param templateId        Id of the template to render
      * @param languageCodeId    The language to look for
      * @param varNameToValueMap Map of variable names to values to be applied to template
+     * @param timestamp         the timestamp to pinpoint template variable substitution text revisions
      * @return the rendered template
      * @throws IllegalArgumentException Thrown when one of the method arguments is null
      * @throws NoSuchElementException   Thrown when a db search returns no element
      */
     public String renderContent(Handle handle, Long templateId, Long languageCodeId,
-                                Map<String, ?> varNameToValueMap) {
+                                Map<String, ?> varNameToValueMap, long timestamp) {
         Map<String, String> varNameToString = new HashMap<>();
         for (Map.Entry<String, ?> entry : varNameToValueMap.entrySet()) {
             varNameToString.put(entry.getKey(), convertToString(entry.getValue()));
         }
-        return render(handle, templateId, languageCodeId, getDefaultLanguageId(handle), varNameToString);
+        return render(handle, templateId, languageCodeId, getDefaultLanguageId(handle), varNameToString, timestamp);
     }
 
     /**
@@ -147,16 +149,17 @@ public class I18nContentRenderer {
      * @param contentTemplateId     Id of the template to render
      * @param languageCodeId        Language to fetch translations for
      * @param defaultLanguageCodeId The fallback language if no translations are found for the languageCodeId
+     * @param timestamp             the timestamp to pinpoint template variable substitution text revisions
      * @return A string containing the template rendered into html
      * @throws IllegalArgumentException Thrown when one of the method arguments is null
      * @throws NoSuchElementException   Thrown when a db search returns no element
      */
-    public String renderContent(Handle handle, Long contentTemplateId, Long languageCodeId, Long defaultLanguageCodeId) {
-        return render(handle, contentTemplateId, languageCodeId, defaultLanguageCodeId, Collections.emptyMap());
+    public String renderContent(Handle handle, Long contentTemplateId, Long languageCodeId, Long defaultLanguageCodeId, long timestamp) {
+        return render(handle, contentTemplateId, languageCodeId, defaultLanguageCodeId, Collections.emptyMap(), timestamp);
     }
 
     private String render(Handle handle, Long contentTemplateId, Long languageCodeId, Long defaultLanguageCodeId,
-                          Map<String, String> varNameToValueMap) {
+                          Map<String, String> varNameToValueMap, long timestamp) {
 
         if (contentTemplateId == null) {
             throw new IllegalArgumentException("contentTemplateId cannot be null");
@@ -181,7 +184,7 @@ public class I18nContentRenderer {
         for (Long langCodeId : languageCodeIds) {
             LOG.info("Fetching translations for the variables with templateId " + contentTemplateId);
             translatedTemplateVariables = templateDao
-                    .findAllTranslatedVariablesByIds(Set.of(contentTemplateId), langCodeId, null)
+                    .findAllTranslatedVariablesByIds(Set.of(contentTemplateId), langCodeId, null, timestamp)
                     .getOrDefault(contentTemplateId, new HashMap<>());
             int translatedTemplateVariablesCount = translatedTemplateVariables.size();
             if (templateVariableCount == translatedTemplateVariablesCount) {
@@ -220,11 +223,12 @@ public class I18nContentRenderer {
      * @param handle      the database handle
      * @param templateIds the set of template ids
      * @param langCodeId  the language code id
-     * @param context     the additional context containing variable substitutions to use
+     * @param timestamp   the timestamp to pinpoint template variable substitution text revisions
      * @return mapping of template id to its rendered template string
      * @throws NoSuchElementException when any one of the templates is not found
      */
-    public Map<Long, String> bulkRender(Handle handle, Set<Long> templateIds, long langCodeId, Map<String, Object> context) {
+    public Map<Long, String> bulkRender(Handle handle, Set<Long> templateIds, long langCodeId,
+                                        Map<String, Object> context, long timestamp) {
         if (templateIds == null || templateIds.isEmpty()) {
             return new HashMap<>();
         }
@@ -232,7 +236,7 @@ public class I18nContentRenderer {
         TemplateDao tmplDao = handle.attach(TemplateDao.class);
         Map<Long, TemplateDao.TextAndVarCount> templateData = tmplDao.findAllTextAndVarCountsByIds(templateIds);
         Map<Long, Map<String, String>> variables = tmplDao
-                .findAllTranslatedVariablesByIds(templateIds, langCodeId, getDefaultLanguageId(handle));
+                .findAllTranslatedVariablesByIds(templateIds, langCodeId, getDefaultLanguageId(handle), timestamp);
         Map<Long, String> rendered = new HashMap<>(templateIds.size());
 
         for (long templateId : templateIds) {
@@ -257,8 +261,8 @@ public class I18nContentRenderer {
         return rendered;
     }
 
-    public Map<Long, String> bulkRender(Handle handle, Set<Long> templateIds, long langCodeId) {
-        return bulkRender(handle, templateIds, langCodeId, Collections.emptyMap());
+    public Map<Long, String> bulkRender(Handle handle, Set<Long> templateIds, long langCodeId, long timestamp) {
+        return bulkRender(handle, templateIds, langCodeId, Collections.emptyMap(), timestamp);
     }
 
     /**
@@ -268,16 +272,18 @@ public class I18nContentRenderer {
      * @param renderables the collection of things to render
      * @param style       the content style to format rendered templates
      * @param langCodeId  the language code id
+     * @param timestamp   the timestamp to pinpoint template variable substitution text revisions
      * @param <T>         the type of object that needs rendering
      */
-    public <T extends Renderable> void bulkRenderAndApply(Handle handle, Collection<T> renderables, ContentStyle style, long langCodeId) {
+    public <T extends Renderable> void bulkRenderAndApply(Handle handle, Collection<T> renderables,
+                                                          ContentStyle style, long langCodeId, long timestamp) {
         Set<Long> templateIds = new HashSet<>();
 
         for (Renderable renderable : renderables) {
             renderable.registerTemplateIds(templateIds::add);
         }
 
-        Map<Long, String> rendered = bulkRender(handle, templateIds, langCodeId);
+        Map<Long, String> rendered = bulkRender(handle, templateIds, langCodeId, timestamp);
         Renderable.Provider<String> provider = rendered::get;
 
         for (Renderable renderable : renderables) {

@@ -2,6 +2,7 @@ package org.broadinstitute.ddp.route;
 
 import static org.broadinstitute.ddp.json.invitation.InvitationCheckStatusPayload.QUALIFICATION_ZIP_CODE;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -151,7 +152,10 @@ public class InvitationCheckStatusRoute extends ValidatedJsonInputRoute<Invitati
                             .findFirst()
                             .orElse(null);
                     if (errorTmplId != null) {
-                        msg = handle.attach(TemplateDao.class).loadTemplateById(errorTmplId).render(langCode);
+                        // Query using the current time to get the latest template.
+                        msg = handle.attach(TemplateDao.class)
+                                .loadTemplateByIdAndTimestamp(errorTmplId, Instant.now().toEpochMilli())
+                                .render(langCode);
                     }
                     return new ApiError(ErrorCodes.INVALID_INVITATION_QUALIFICATIONS, msg);
                 }
@@ -181,8 +185,9 @@ public class InvitationCheckStatusRoute extends ValidatedJsonInputRoute<Invitati
                 .map(StudySettings::getInviteErrorTemplateId)
                 .orElse(null);
         if (inviteErrorTmplId != null) {
+            // Query using the current time to get the latest template.
             return handle.attach(TemplateDao.class)
-                    .loadTemplateById(inviteErrorTmplId)
+                    .loadTemplateByIdAndTimestamp(inviteErrorTmplId, Instant.now().toEpochMilli())
                     .render(langCode);
         } else {
             return DEFAULT_INVITE_ERROR_MSG;

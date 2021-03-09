@@ -42,6 +42,9 @@ public interface JdbiEventConfiguration extends SqlObject {
             @Bind("maxOccurrences") Integer maxOccurrences
     );
 
+    @SqlUpdate("update event_configuration set is_active = :isActive where event_configuration_id = :id")
+    int updateIsActiveById(@Bind("id") long eventConfigurationId, @Bind("isActive") boolean isActive);
+
     @SqlQuery("select umbrella_study_id from event_configuration where event_configuration_id = :eventConfigurationId")
     long getUmbrellaStudyIdByConfigurationId(@Bind("eventConfigurationId") long eventConfigurationId);
 

@@ -56,9 +56,8 @@ public class TemplateDaoTest extends TxnAwareBaseTest {
             assertEquals((Long) revId, jdbiTmpl.getRevisionIdIfActive(tmpl.getTemplateId()).get());
             assertEquals(2, jdbiSub.getActiveRevisionIdsByTemplateId(tmpl.getTemplateId()).size());
 
-
             //load template
-            Template loadedTmpl = dao.loadTemplateById(tmpl.getTemplateId());
+            Template loadedTmpl = dao.loadTemplateByIdAndTimestamp(tmpl.getTemplateId(), millis);
             assertNotNull(loadedTmpl.getTemplateId());
             assertNotNull(loadedTmpl.getTemplateCode());
             assertEquals(tmpl.getTemplateCode(), loadedTmpl.getTemplateCode());

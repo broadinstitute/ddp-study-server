@@ -162,6 +162,9 @@ public interface JdbiActivity extends SqlObject {
     @SqlUpdate("update study_activity set is_write_once = :isWriteOnce where study_activity_id = :id")
     int updateWriteOnceById(@Bind("id") long studyActivityId, @Bind("isWriteOnce") boolean isWriteOnce);
 
+    @SqlUpdate("update study_activity set display_order = :displayOrder where study_activity_id = :id")
+    int updateDisplayOrderById(@Bind("id") long studyActivityId, @Bind("displayOrder") int displayOrder);
+
     @SqlUpdate("update study_activity set instantiate_upon_registration = :autoInstantiate"
             + " where study_activity_id = :studyActivityId")
     int updateAutoInstantiateById(long studyActivityId, boolean autoInstantiate);
@@ -180,10 +183,6 @@ public interface JdbiActivity extends SqlObject {
             @Bind("studyActivityId") long studyActivityId,
             @Bind("maxInstances") Integer maxInstances
     );
-
-    default List<ActivityValidationDto> findValidationsById(long activityId, long languageCodeId) {
-        return getJdbiActivityValidation()._findByActivityIdTranslated(activityId, languageCodeId);
-    }
 
     default int deleteValidationsByCode(long activityId) {
         return getJdbiActivityValidation()._deleteByActivityId(activityId);
