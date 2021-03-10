@@ -60,7 +60,7 @@ public class StudyBuilderCli {
         options.addOption(null, "only-activity", true, "only run activity setup for given activity code");
         options.addOption(null, "only-workflow", false, "only run workflow setup");
         options.addOption(null, "only-events", false, "only run events setup");
-        options.addOption(null, "only-labeled-events", true, "only run events in given list");
+        options.addOption(null, "only-labeled-events", true, "only run events in comma-separated list of labels");
         options.addOption(null, "only-update-pdfs", false, "only run pdf template updates (deprecated)");
         options.addOption(null, "no-workflow", false, "do not run workflow setup");
         options.addOption(null, "no-events", false, "do not run events setup");
