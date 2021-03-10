@@ -40,7 +40,7 @@ public interface EventDao extends SqlObject {
                 .collect(Collectors.toList());
     }
 
-    default Optional<EventConfiguration> getAllEventConfigurationsByStudyIdAndLabel(long studyId, String label) {
+    default Optional<EventConfiguration> getEventConfigurationByStudyIdAndLabel(long studyId, String label) {
         if (label == null) {
             throw new DDPException("label argument cannot be null");
         }

@@ -111,7 +111,7 @@ public class EventBuilder {
 
        List<String> existingCfgLabelsInDb = eventCfgsToLoad.stream()
                 .map(eventCfg -> handle.attach(EventDao.class)
-                        .getAllEventConfigurationsByStudyIdAndLabel(studyDto.getId(), eventCfg.getString("label")))
+                        .getEventConfigurationByStudyIdAndLabel(studyDto.getId(), eventCfg.getString("label")))
                 .filter(existingCfg -> existingCfg.isPresent())
                 .map(presentCfg -> presentCfg.get().getLabel())
                 .collect(toList());
