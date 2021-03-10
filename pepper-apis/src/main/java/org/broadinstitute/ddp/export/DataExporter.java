@@ -140,6 +140,8 @@ public class DataExporter {
 
     private static final Logger LOG = LoggerFactory.getLogger(DataExporter.class);
     private static final String REQUEST_TYPE = "_doc";
+    public static final String RGP_GUID = "RGP";
+    private static final String RGP_ACTIVITY = "ENROLLMENT";
 
     // A cache for user auth0 emails, storing (auth0UserId -> email).
     private static Map<String, String> emailStore = new HashMap<>();
@@ -192,6 +194,55 @@ public class DataExporter {
     }
 
     /**
+     * Extract all versions of an activity for a study
+     * @param handle the database handle
+     * @param activityDto the activity
+     * @param studyGuid the study guid
+     * @return list of extracts, in ascending order by version
+     */
+    private List<ActivityExtract> extractVersionsOfActivity(Handle handle, ActivityDto activityDto, String studyGuid) {
+        JdbiActivityVersion jdbiActivityVersion = handle.attach(JdbiActivityVersion.class);
+        FormActivityDao formActivityDao = handle.attach(FormActivityDao.class);
+        ActivityDefStore store = ActivityDefStore.getInstance();
+        List<ActivityExtract> activities = new ArrayList<>();
+
+        String activityCode = activityDto.getActivityCode();
+        List<ActivityVersionDto> versionDtos = jdbiActivityVersion.findAllVersionsInAscendingOrder(activityDto.getActivityId());
+        for (ActivityVersionDto versionDto : versionDtos) {
+            // Only supports form activities for now.
+            FormActivityDef def = store.getActivityDef(studyGuid, activityCode, versionDto.getVersionTag());
+            if (def == null) {
+                def = formActivityDao.findDefByDtoAndVersion(activityDto, versionDto);
+                store.setActivityDef(studyGuid, activityCode, versionDto.getVersionTag(), def);
+            }
+            activities.add(new ActivityExtract(def, versionDto));
+        }
+
+        return activities;
+    }
+
+    /**
+     * Extracts all versions of RGP's enrollment activity
+     * @param handle the database handle
+     * @return list of extracts
+     */
+    public List<ActivityExtract> extractRGPEnrollmentActivity(Handle handle) {
+        JdbiActivity jdbiActivity = handle.attach(JdbiActivity.class);
+
+        Optional<ActivityDto> activityDtoOptional = jdbiActivity.findActivityByStudyGuidAndCode(RGP_GUID, RGP_ACTIVITY);
+        if (activityDtoOptional.isEmpty()) {
+            LOG.error("RGP enrollment activity DTO not found");
+            return null;
+        }
+        ActivityDto activityDto = activityDtoOptional.get();
+        List<ActivityExtract> activities = extractVersionsOfActivity(handle, activityDto, RGP_GUID);
+
+        LOG.info("RGP export found {} versions of enrollment activity", activities.size());
+
+        return activities;
+    }
+
+    /**
      * Extract all the activities for a study, including the different versions of each activity.
      *
      * @param handle   the database handle
@@ -200,25 +251,11 @@ public class DataExporter {
      */
     public List<ActivityExtract> extractActivities(Handle handle, StudyDto studyDto) {
         JdbiActivity jdbiActivity = handle.attach(JdbiActivity.class);
-        JdbiActivityVersion jdbiActivityVersion = handle.attach(JdbiActivityVersion.class);
-        FormActivityDao formActivityDao = handle.attach(FormActivityDao.class);
-
-        ActivityDefStore store = ActivityDefStore.getInstance();
         List<ActivityExtract> activities = new ArrayList<>();
         String studyGuid = studyDto.getGuid();
 
         for (ActivityDto activityDto : jdbiActivity.findOrderedDtosByStudyId(studyDto.getId())) {
-            String activityCode = activityDto.getActivityCode();
-            List<ActivityVersionDto> versionDtos = jdbiActivityVersion.findAllVersionsInAscendingOrder(activityDto.getActivityId());
-            for (ActivityVersionDto versionDto : versionDtos) {
-                // Only supports form activities for now.
-                FormActivityDef def = store.getActivityDef(studyGuid, activityCode, versionDto.getVersionTag());
-                if (def == null) {
-                    def = formActivityDao.findDefByDtoAndVersion(activityDto, versionDto);
-                    store.setActivityDef(studyGuid, activityCode, versionDto.getVersionTag(), def);
-                }
-                activities.add(new ActivityExtract(def, versionDto));
-            }
+            activities.addAll(extractVersionsOfActivity(handle, activityDto, studyGuid));
         }
 
         LOG.info("[export] found {} activities for study {}", activities.size(), studyGuid);

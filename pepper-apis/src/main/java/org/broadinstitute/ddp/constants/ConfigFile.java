@@ -49,6 +49,9 @@ public class ConfigFile {
     // Google Storage bucket name to use for study export
     public static final String STUDY_EXPORT_BUCKET = "studyExportBucket";
 
+    // Google Storage bucket name to use for RGP export
+    public static final String RGP_EXPORT_BUCKET = "rgpExportBucket";
+
     // Google Storage bucket name to use for generated PDFs
     public static final String PDF_ARCHIVE_BUCKET = "pdfArchiveBucket";
 
@@ -62,6 +65,7 @@ public class ConfigFile {
     public static final String DB_BACKUP_SCHEDULE = "schedules.dbBackup";
     public static final String DB_BACKUP_CHECK_SCHEDULE = "schedules.dbBackupCheck";
     public static final String STUDY_EXPORT_SCHEDULE = "schedules.studyExport";
+    public static final String RGP_EXPORT_SCHEDULE = "schedules.rgpExport";
     public static final String FILE_UPLOAD_CLEANUP_SCHEDULE = "schedules.fileUploadCleanup";
     public static final String TEMP_USER_CLEANUP_SCHEDULE = "schedules.tempUserCleanup";
 

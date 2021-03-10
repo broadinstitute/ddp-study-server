@@ -13,6 +13,7 @@ import org.broadinstitute.ddp.export.DataExporter;
 import org.broadinstitute.ddp.model.user.User;
 
 public class ParticipantMetadataFormatter {
+    //TODO: Create RGP version
 
     public Map<String, String> records(EnrollmentStatusDto statusDto, User user) {
         List<String> headers = headers();

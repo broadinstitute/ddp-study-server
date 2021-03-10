@@ -58,6 +58,19 @@ public class DataExportCoordinator {
         return this;
     }
 
+    public boolean exportRGP(StudyDto rgpDto) {
+        //TODO: Handle other RGP-export-specific things like specific fields, field order, etc.
+        List<ActivityExtract> activityExtracts = withAPIsTxn(handle -> exporter.extractRGPEnrollmentActivity(handle));
+
+        withAPIsTxn(handle -> {
+            exporter.computeMaxInstancesSeen(handle, activityExtracts);
+            exporter.computeActivityAttributesSeen(handle, activityExtracts);
+            return null;
+        });
+
+        return runCsvExports(rgpDto, activityExtracts, true);
+    }
+
     public boolean export(StudyDto studyDto) {
         boolean success = true;
         if (indices.isEmpty() && csvBucket == null) {
@@ -89,7 +102,7 @@ public class DataExportCoordinator {
                 exporter.computeActivityAttributesSeen(handle, activities);
                 return null;
             });
-            boolean runSuccess = runCsvExports(studyDto, activities);
+            boolean runSuccess = runCsvExports(studyDto, activities, false);
             success = success && runSuccess;
         }
 
@@ -167,13 +180,13 @@ public class DataExportCoordinator {
         return success;
     }
 
-    private boolean runCsvExports(StudyDto studyDto, List<ActivityExtract> activities) {
+    private boolean runCsvExports(StudyDto studyDto, List<ActivityExtract> activities, boolean isRGP) {
         String studyGuid = studyDto.getGuid();
         try {
             LOG.info("Running csv export for study {}", studyGuid);
             long start = Instant.now().toEpochMilli();
             var iterator = new PaginatedParticipantIterator(studyDto, batchSize);
-            exportStudyToGoogleBucket(studyDto, exporter, csvBucket, activities, iterator);
+            exportStudyToGoogleBucket(studyDto, exporter, csvBucket, activities, iterator, isRGP);
             long elapsed = Instant.now().toEpochMilli() - start;
             LOG.info("Finished csv export for study {} in {}s", studyGuid, elapsed / 1000);
             return true;
@@ -185,17 +198,19 @@ public class DataExportCoordinator {
 
     boolean exportStudyToGoogleBucket(StudyDto studyDto, DataExporter exporter, Bucket bucket,
                                       List<ActivityExtract> activities,
-                                      Iterator<Participant> participants) {
+                                      Iterator<Participant> participants, boolean isRGP) {
         try (
                 PipedOutputStream outputStream = new PipedOutputStream();
                 Writer csvWriter = new OutputStreamWriter(outputStream, StandardCharsets.UTF_8);
                 PipedInputStream csvInputStream = new PipedInputStream(outputStream, READER_BUFFER_SIZE_IN_BYTES);
         ) {
             // Running the DataExporter in separate thread
+            //TODO: Pass isRGP to buildExportToCsvRunnable
             Runnable csvExportRunnable = buildExportToCsvRunnable(studyDto, exporter, csvWriter, activities, participants);
             Thread csvExportThread = new Thread(csvExportRunnable);
             csvExportThread.start();
 
+            //TODO: Pass isRGP to buildExportBlobFilename
             String fileName = buildExportBlobFilename(studyDto);
 
             // Google writing happens on this thread
