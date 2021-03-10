@@ -21,7 +21,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
-
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutureCallback;
 import com.google.api.core.ApiFutures;
@@ -86,6 +85,7 @@ import org.broadinstitute.ddp.housekeeping.schedule.DatabaseBackupCheckJob;
 import org.broadinstitute.ddp.housekeeping.schedule.DatabaseBackupJob;
 import org.broadinstitute.ddp.housekeeping.schedule.FileUploadCleanupJob;
 import org.broadinstitute.ddp.housekeeping.schedule.OnDemandExportJob;
+import org.broadinstitute.ddp.housekeeping.schedule.RGPDataExportJob;
 import org.broadinstitute.ddp.housekeeping.schedule.StudyDataExportJob;
 import org.broadinstitute.ddp.housekeeping.schedule.TemporaryUserCleanupJob;
 import org.broadinstitute.ddp.model.activity.types.EventActionType;
@@ -515,6 +515,7 @@ public class Housekeeping {
                     FileUploadCleanupJob.register(scheduler, cfg);
                     TemporaryUserCleanupJob.register(scheduler, cfg);
                     StudyDataExportJob.register(scheduler, cfg);
+                    RGPDataExportJob.register(scheduler, cfg);
                 }
                 // Setup jobs needed for housekeeping-tasks if that's enabled.
                 if (cfg.getBoolean(ConfigFile.PUBSUB_ENABLE_HKEEP_TASKS)) {

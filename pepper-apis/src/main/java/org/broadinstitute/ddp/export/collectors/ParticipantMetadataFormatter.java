@@ -14,8 +14,8 @@ import org.broadinstitute.ddp.model.user.User;
 
 public class ParticipantMetadataFormatter {
 
-    public Map<String, String> records(EnrollmentStatusDto statusDto, User user) {
-        List<String> headers = headers();
+    public Map<String, String> records(EnrollmentStatusDto statusDto, User user, List<String> exclude) {
+        List<String> headers = headers(exclude);
         List<String> values = format(statusDto, user);
         Map<String, String> records = new LinkedHashMap<>();
 
@@ -26,7 +26,7 @@ public class ParticipantMetadataFormatter {
         return records;
     }
 
-    public Map<String, Object> mappings() {
+    public Map<String, Object> mappings(List<String> exclude) {
         String timestampFormats = MappingUtil.appendISOTimestampFormats(DataExporter.TIMESTAMP_PATTERN);
         Map<String, Object> props = new LinkedHashMap<>();
         props.put("participant_guid", MappingUtil.newKeywordType());
@@ -40,18 +40,28 @@ public class ParticipantMetadataFormatter {
         props.put("created_at", MappingUtil.newDateType(timestampFormats, false));
         props.put("status", MappingUtil.newKeywordType());
         props.put("status_timestamp", MappingUtil.newDateType(timestampFormats, false));
+        if (exclude != null) {
+            for (String s : exclude) {
+                props.remove(s);
+            }
+        }
         return props;
     }
 
-    public List<String> headers() {
-        return Arrays.asList(
+    public List<String> headers(List<String> exclude) {
+        List<String> headers = Arrays.asList(
                 "participant_guid", "participant_hruid",
                 "legacy_altpid", "legacy_shortid",
                 "first_name", "last_name", "email", "do_not_contact", "created_at",
                 "status", "status_timestamp");
+        if (exclude != null) {
+            headers.removeAll(exclude);
+        }
+        return headers;
     }
 
     public List<String> format(EnrollmentStatusDto statusDto, User user) {
+        //TODO: Does this need to change?
         Instant createdAtMillis = Instant.ofEpochMilli(user.getCreatedAt());
         Instant statusMillis = Instant.ofEpochMilli(statusDto.getValidFromMillis());
         Boolean doNotContact = user.hasProfile() ? user.getProfile().getDoNotContact() : null;

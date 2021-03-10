@@ -45,8 +45,14 @@ public class ActivityExtract {
         return attributesSeen;
     }
 
-    public void addAttributesSeen(List<String> attributesSeen) {
+    public void addAttributesSeen(List<String> names, List<String> firstFields, List<String> attributesSeen) {
         if (attributesSeen != null) {
+            if (names != null) {
+                attributesSeen.removeAll(names);
+            }
+            if (firstFields != null) {
+                attributesSeen.removeAll(firstFields);
+            }
             this.attributesSeen.addAll(attributesSeen);
         }
     }
