@@ -9,12 +9,13 @@ import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 public interface JdbiEventConfiguration extends SqlObject {
 
     @SqlUpdate("insert into event_configuration"
-            + "(event_trigger_id,event_action_id,umbrella_study_id,created_at,is_active,max_occurrences_per_user,"
+            + "(label,event_trigger_id,event_action_id,umbrella_study_id,created_at,is_active,max_occurrences_per_user,"
             + "post_delay_seconds,precondition_expression_id,cancel_expression_id, dispatch_to_housekeeping, execution_order) "
-            + " values(:triggerId,:actionId,:studyId,:createdAt,true,:maxOccurrencesPerUser,:postDelay,:preconditionId,"
+            + " values(:label,:triggerId,:actionId,:studyId,:createdAt,true,:maxOccurrencesPerUser,:postDelay,:preconditionId,"
             + ":cancelId, :dispatchToHousekeeping, :executionOrder)")
     @GetGeneratedKeys
     long insert(
+            @Bind("label")String label,
             @Bind("triggerId") long eventTriggerId,
             @Bind("actionId") long eventActionId,
             @Bind("studyId") long studyId,

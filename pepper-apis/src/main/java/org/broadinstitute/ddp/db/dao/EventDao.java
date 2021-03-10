@@ -12,6 +12,7 @@ import org.broadinstitute.ddp.db.dto.NotificationTemplateSubstitutionDto;
 import org.broadinstitute.ddp.db.dto.QueuedEventDto;
 import org.broadinstitute.ddp.db.dto.QueuedNotificationDto;
 import org.broadinstitute.ddp.db.dto.QueuedPdfGenerationDto;
+import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.activity.types.EventActionType;
 import org.broadinstitute.ddp.model.activity.types.EventTriggerType;
 import org.broadinstitute.ddp.model.event.EventConfiguration;
@@ -37,6 +38,16 @@ public interface EventDao extends SqlObject {
         return getEventConfigurationDtosByStudyId(studyId).stream()
                 .map(dto -> new EventConfiguration(dto))
                 .collect(Collectors.toList());
+    }
+
+    default Optional<EventConfiguration> getAllEventConfigurationsByStudyIdAndLabel(long studyId, String label) {
+        if (label == null) {
+            throw new DDPException("label argument cannot be null");
+        }
+        return getEventConfigurationDtosByStudyId(studyId).stream()
+                .map(dto -> new EventConfiguration(dto))
+                .filter(cfg -> label.equals(cfg.getLabel()))
+                .findFirst();
     }
 
     default List<EventConfiguration> getAllEventConfigurationsByStudyIdAndTriggerType(long studyId,
