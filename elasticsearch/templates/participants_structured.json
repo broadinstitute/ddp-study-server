@@ -178,6 +178,9 @@
             "guid": {
               "type": "keyword"
             },
+            "parentInstanceGuid": {
+              "type": "keyword"
+            },
             "status": {
               "type": "keyword"
             },

@@ -235,6 +235,7 @@ public interface FormActivityDao extends SqlObject {
 
         FormActivityDef.FormBuilder builder = FormActivityDef
                 .formBuilder(type, activityDto.getActivityCode(), versionTag, studyGuid)
+                .setParentActivityCode(activityDto.getParentActivityCode())
                 .setActivityId(activityDto.getActivityId())
                 .setVersionId(versionId)
                 .setMaxInstancesPerUser(activityDto.getMaxInstancesPerUser())
