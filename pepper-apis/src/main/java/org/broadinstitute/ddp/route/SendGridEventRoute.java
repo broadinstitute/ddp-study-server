@@ -7,7 +7,6 @@ import static org.broadinstitute.ddp.constants.ErrorCodes.DATA_PERSIST_ERROR;
 import static org.broadinstitute.ddp.constants.ErrorCodes.MISSING_BODY;
 import static org.slf4j.LoggerFactory.getLogger;
 
-
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.json.errors.ApiError;
@@ -45,7 +44,7 @@ public class SendGridEventRoute implements Route {
         try {
             TransactionWrapper.useTxn(handle -> sendGridEventService.persistLogEvents(handle, sendGridEvents));
         } catch (Exception e) {
-            haltError(SC_INTERNAL_SERVER_ERROR, DATA_PERSIST_ERROR, "Error saving auth0 event", e);
+            haltError(SC_INTERNAL_SERVER_ERROR, DATA_PERSIST_ERROR, "Error saving sendgrid event", e);
         }
     }
 
