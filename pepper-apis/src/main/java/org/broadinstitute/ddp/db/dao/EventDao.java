@@ -45,8 +45,8 @@ public interface EventDao extends SqlObject {
             throw new DDPException("label argument cannot be null");
         }
         return getEventConfigurationDtosByStudyId(studyId).stream()
-                .map(dto -> new EventConfiguration(dto))
                 .filter(cfg -> label.equals(cfg.getLabel()))
+                .map(dto -> new EventConfiguration(dto))
                 .findFirst();
     }
 
