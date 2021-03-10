@@ -17,6 +17,7 @@ import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.exception.DDPException;
@@ -59,6 +60,7 @@ public class StudyBuilderCli {
         options.addOption(null, "only-activity", true, "only run activity setup for given activity code");
         options.addOption(null, "only-workflow", false, "only run workflow setup");
         options.addOption(null, "only-events", false, "only run events setup");
+        options.addOption(null, "only-labeled-events", true, "only run events in given list");
         options.addOption(null, "only-update-pdfs", false, "only run pdf template updates (deprecated)");
         options.addOption(null, "no-workflow", false, "do not run workflow setup");
         options.addOption(null, "no-events", false, "do not run events setup");
@@ -148,6 +150,13 @@ public class StudyBuilderCli {
         } else if (cmd.hasOption("only-events")) {
             log("executing events setup...");
             execute(builder::runEvents, isDryRun);
+            log("done");
+            return;
+        } else if (cmd.hasOption("only-labeled-events")) {
+            log("executing events setup...");
+            String eventLabelsArg = cmd.getOptionValue("only-labeled-events");
+            String[] eventLabels = eventLabelsArg == null ? new String[0] : eventLabelsArg.split("\\s*,\\s*");
+            execute(handle -> builder.runLabeledEvents(handle, eventLabels), isDryRun);
             log("done");
             return;
         } else if (cmd.hasOption("only-update-pdfs")) {
