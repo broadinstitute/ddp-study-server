@@ -20,7 +20,7 @@ public class ActivityMetadataCollector {
     private static final Logger LOG = LoggerFactory.getLogger(ActivityMetadataCollector.class);
 
     public List<String> emptyRow(boolean hasParent) {
-        List<String> row = Arrays.asList("", "", "", "", "");
+        List<String> row = new ArrayList<>(Arrays.asList("", "", "", "", ""));
         if (hasParent) {
             row.add("");
         }
