@@ -256,4 +256,5 @@
     <include file="db-changes/schema/DDP-5402-create-indices-for-revision-and-user-study-enrollment.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/DDP-5604-activity-can-delete-instances.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/DDP-5679-add-event-configuration-label.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/DDP-5045-sendgrid-event-message-id-nullable.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>
