@@ -97,16 +97,16 @@ public class EventBuilder {
         List<Config> allLabeledCfgs = cfg.getConfigList("events").stream()
                 .filter(eventCfg -> eventCfg.hasPath("label") && eventCfg.getString("label") != null)
                 .collect(toList());
-       List<String> allCfgLabels = allLabeledCfgs.stream().map(cfg -> cfg.getString("label")).collect(toList());
+       Set<String> allCfgLabels = allLabeledCfgs.stream().map(cfg -> cfg.getString("label")).collect(toSet());
        Set<String> notFoundEventLabels = eventLabelsToLoad.stream().filter(eventName -> !allCfgLabels.contains(eventName)).collect(toSet());
        if (!notFoundEventLabels.isEmpty()) {
            throw new DDPException("Could not find events " + String.join(", ", notFoundEventLabels));
        }
-       if (allCfgLabels.size() > eventLabelsToLoad.size()) {
+       if (allLabeledCfgs.size() > allCfgLabels.size()) {
            throw new DDPException("Found duplicate names in event configuration entries");
        }
        List<Config> eventCfgsToLoad = allLabeledCfgs.stream()
-                   .filter(cfg -> allCfgLabels.contains(cfg.getString("label")))
+                   .filter(cfg -> eventLabelsToLoad.contains(cfg.getString("label")))
                    .collect(toList());
 
        List<String> existingCfgLabelsInDb = eventCfgsToLoad.stream()
