@@ -152,7 +152,7 @@ public class StudyBuilderCli {
             log("done");
             return;
         } else if (cmd.hasOption("only-labeled-events")) {
-            log("executing events setup...");
+            log("executing labeled events setup...");
             String eventLabelsArg = cmd.getOptionValue("only-labeled-events");
             String[] eventLabels = eventLabelsArg == null ? new String[0] : eventLabelsArg.split("\\s*,\\s*");
             execute(handle -> builder.runLabeledEvents(handle, eventLabels), isDryRun);
