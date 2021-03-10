@@ -701,7 +701,7 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
             long actionId = handle.attach(EventActionDao.class)
                     .insertNotificationAction(new SendgridEmailEventActionDto("abc", "en", false));
             return handle.attach(JdbiEventConfiguration.class)
-                    .insert(triggerId, actionId, testStudy.getId(), Instant.now().toEpochMilli(), null, null, null, null, true, 1);
+                    .insert(null, triggerId, actionId, testStudy.getId(), Instant.now().toEpochMilli(), null, null, null, null, true, 1);
         });
 
         User tempUser = TransactionWrapper.withTxn(handle ->
@@ -899,7 +899,7 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
                         .insertStaticTrigger(EventTriggerType.GOVERNED_USER_REGISTERED);
                 long actionId = handle.attach(EventActionDao.class)
                         .insertStaticAction(EventActionType.USER_ENROLLED);
-                handle.attach(JdbiEventConfiguration.class).insert(triggerId, actionId, testStudy.get().getId(),
+                handle.attach(JdbiEventConfiguration.class).insert(null, triggerId, actionId, testStudy.get().getId(),
                         Instant.now().toEpochMilli(), null, 0, null, null, false, 1);
             });
 

@@ -191,7 +191,7 @@ public class CreateInvitationEventActionTest extends TxnAwareBaseTest {
             // setup downstream event
             long triggerId = handle.attach(EventTriggerDao.class).insertStaticTrigger(EventTriggerType.INVITATION_CREATED);
             long actionId = handle.attach(EventActionDao.class).insertMarkActivitiesReadOnlyAction(Set.of(activity.getActivityId()));
-            handle.attach(JdbiEventConfiguration.class).insert(triggerId, actionId, testData.getStudyId(),
+            handle.attach(JdbiEventConfiguration.class).insert(null, triggerId, actionId, testData.getStudyId(),
                     Instant.now().toEpochMilli(), null, null, null, null, false, 1);
 
             var signal = new EventSignal(testData.getUserId(), testData.getUserId(), testData.getUserGuid(),
