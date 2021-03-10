@@ -104,7 +104,7 @@ public class JoinMailingListRouteTest extends IntegrationTestSuite.TestCase {
         long emailActionId = eventActionDao.insertNotificationAction(eventAction);
 
         long eventTriggerId = eventTriggerDao.insertMailingListTrigger();
-        insertedEventConfigId = jdbiEventConfig.insert(eventTriggerId, emailActionId, testData.getStudyId(),
+        insertedEventConfigId = jdbiEventConfig.insert(null, eventTriggerId, emailActionId, testData.getStudyId(),
                 Instant.now().toEpochMilli(), null, null, null,
                 null, true, 1);
 

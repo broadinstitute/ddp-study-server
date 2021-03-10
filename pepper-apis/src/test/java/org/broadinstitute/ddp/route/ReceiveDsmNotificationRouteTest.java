@@ -96,7 +96,7 @@ public class ReceiveDsmNotificationRouteTest extends DsmRouteTest {
         long actionId = handle.attach(EventActionDao.class).insertNotificationAction(
                 new SendgridEmailEventActionDto(sendgridTemplateGuid, "en", false));
         return handle.attach(JdbiEventConfiguration.class).insert(
-                triggerId, actionId, generatedTestData.getStudyId(),
+                null, triggerId, actionId, generatedTestData.getStudyId(),
                 Instant.now().toEpochMilli(), 1, null, null, null, true, 1);
     }
 
@@ -265,7 +265,7 @@ public class ReceiveDsmNotificationRouteTest extends DsmRouteTest {
             Expression cancelExpr = handle.attach(JdbiExpression.class).insertExpression(
                     "!user.event.kit.isReason(\"REPLACEMENT\")");
             handle.attach(JdbiEventConfiguration.class).insert(
-                    triggerId, actionId, testData.getStudyId(),
+                    null, triggerId, actionId, testData.getStudyId(),
                     Instant.now().toEpochMilli(), 1, null, null, cancelExpr.getId(), false, 1);
         });
 

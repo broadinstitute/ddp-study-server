@@ -6,6 +6,7 @@ group EventDao;
 eventConfigurationLookup() ::= <<
 SELECT
      ec.event_configuration_id,
+     ec.label,
      ett.event_trigger_type_code event_trigger_type,
      eat.event_action_type_code event_action_type,
      ec.post_delay_seconds,
