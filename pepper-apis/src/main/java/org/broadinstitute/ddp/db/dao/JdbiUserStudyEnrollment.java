@@ -44,6 +44,30 @@ public interface JdbiUserStudyEnrollment extends SqlObject {
             @Bind("offset") int offset,
             @Bind("limit") int limit);
 
+    //TODO: findUserIdsForRGPUsersWithCompletedENrollmentStudyBySTudyIdANdLimit
+    //SELECT * FROM findUserIdsByStudyIdAndLimit WHERE
+    //(SELECT activity_instance_id FROM activity_instance WHERE participant_id = )
+
+    // TODO: findRGPUserIdsToExport
+    @SqlQuery("select user_id"
+            + " from user_study_enrollment"
+            +   " where study_id = :studyId"
+            +   " and valid_to is null"
+            +   " and (select (select activity_instance_status_type from activity_instance_status_type_code) = 'COMPLETE'))" //TODO:
+            //TODO: select * from activity_instance_status_type where activity_instance_status_type_code = COMPLETE
+            //TODO:
+            //TODO: activity_instance_status.activity_instance_status_type_code = COMPLETE
+            //TODO: activity_instance_status.activity_instance_status_type_id = activity_instance_status.activity_instance
+            // Enrollment
+            // activity status is complete:
+            // activity_instance_status
+            +   " and "//TODO: Haven't already exported
+            +   " order by user_study_enrollment_id"
+            +   " limit :limit offset :offset")
+    Set<Long> findRGPUserIdsToExport(@Bind("studyId") long studyId,
+                                     @Bind("offset") int offset,
+                                     @Bind("limit") int limit);
+
     default List<EnrollmentStatusDto> findByStudyGuid(String studyGuid) {
         return findByStudyGuidAfterOrEqualToInstant(studyGuid, 0);
     }

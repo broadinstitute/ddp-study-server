@@ -740,7 +740,7 @@ public class DataExporterTest extends TxnAwareBaseTest {
             ActivityVersionDto nestedVersionDto = new ActivityVersionDto(2L, 2L, "v1", 2L, timestamp, null);
             activities = List.of(new ActivityExtract(def, versionDto), new ActivityExtract(nestedDef, nestedVersionDto));
             activities.get(0).setMaxInstancesSeen(1);
-            activities.get(0).addAttributesSeen(ActivityAttributesCollector.EXPOSED_ATTRIBUTES);
+            activities.get(0).addAttributesSeen(names, firstFields, ActivityAttributesCollector.EXPOSED_ATTRIBUTES);
 
             EnrollmentStatusDto status = new EnrollmentStatusDto(1L, 1L, "user", 1L, testData.getStudyGuid(),
                     EnrollmentStatusType.ENROLLED, timestamp, null);

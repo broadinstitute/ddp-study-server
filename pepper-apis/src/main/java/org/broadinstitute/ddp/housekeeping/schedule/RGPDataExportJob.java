@@ -124,6 +124,8 @@ public class RGPDataExportJob implements Job {
 
         try {
             boolean success = coordinator.exportRGP(rgpDto);
+            //TODO: Make sure we only export surveys completed since last run
+            //TODO: Send email
             if (success) {
                 new StackdriverMetricsTracker(StackdriverCustomMetric.RGP_EXPORTS,
                         "RGP", PointsReducerFactory.buildSumReducer())

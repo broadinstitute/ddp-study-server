@@ -76,6 +76,19 @@
         "pubSubTaskSubscriberAwaitRunningTimeout": "{{$conf.Data.pubsub.pubSubTaskSubscriberAwaitRunningTimeout}}"
     },
     "studyExportBucket": "{{$conf.Data.studyExportBucket}}",
+    "rgpExport": {
+        "bucketName": "{{$conf.Data.rgpExport.bucketName}}",
+        "bucketDir": "{{$conf.Data.rgpExport.bucketDir}}",
+        "excludedParticipantFields": [{{range $index, $val := $conf.Data.rgpExport.excludedParticipantFields}}
+            {{if ne $index 0}},{{end}}"{{.}}"
+        {{end}}],
+        "excludedActivityFields": [{{range $index, $val := $conf.Data.rgpExport.excludedActivityFields}}
+            {{if ne $index 0}},{{end}}"{{.}}"
+        {{end}}],
+        "firstFields": [{{range $index, $val := $conf.Data.rgpExport.firstFields}}
+            {{if ne $index 0}},{{end}}"{{.}}"
+        {{end}}]
+    },
     "schedules": {
         "checkAgeUp": "{{$conf.Data.schedules.checkAgeUp}}",
         "dbBackup": "{{$conf.Data.schedules.dbBackup}}",
@@ -84,7 +97,8 @@
         "cancerLoader": "{{$conf.Data.schedules.cancerLoader}}",
         "studyExport": "{{$conf.Data.schedules.studyExport}}",
         "fileUploadCleanup": "{{$conf.Data.schedules.fileUploadCleanup}}",
-        "tempUserCleanup": "{{$conf.Data.schedules.tempUserCleanup}}"
+        "tempUserCleanup": "{{$conf.Data.schedules.tempUserCleanup}}",
+        "rgpExport": "{{$conf.Data.schedules.rgpExport}}"
     },
     "preferredSourceIPHeader":"X-AppEngine-User-IP",
     "nginx": {

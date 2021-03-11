@@ -38,6 +38,7 @@ public class DataExportCoordinator {
     private int batchSize = DEFAULT_BATCH_SIZE;
     private Set<ElasticSearchIndexType> indices = new HashSet<>();
     private Bucket csvBucket;
+    private boolean isRGP;
 
     public DataExportCoordinator(DataExporter exporter) {
         this.exporter = exporter;
@@ -59,16 +60,16 @@ public class DataExportCoordinator {
     }
 
     public boolean exportRGP(StudyDto rgpDto) {
-        //TODO: Handle other RGP-export-specific things like specific fields, field order, etc.
+        this.isRGP = true;
         List<ActivityExtract> activityExtracts = withAPIsTxn(handle -> exporter.extractRGPEnrollmentActivity(handle));
 
         withAPIsTxn(handle -> {
             exporter.computeMaxInstancesSeen(handle, activityExtracts);
-            exporter.computeActivityAttributesSeen(handle, activityExtracts);
+            exporter.computeActivityAttributesSeen(handle, activityExtracts, true);
             return null;
         });
 
-        return runCsvExports(rgpDto, activityExtracts, true);
+        return runCsvExports(rgpDto, activityExtracts);
     }
 
     public boolean export(StudyDto studyDto) {
@@ -99,10 +100,10 @@ public class DataExportCoordinator {
         if (csvBucket != null) {
             withAPIsTxn(handle -> {
                 exporter.computeMaxInstancesSeen(handle, activities);
-                exporter.computeActivityAttributesSeen(handle, activities);
+                exporter.computeActivityAttributesSeen(handle, activities, false);
                 return null;
             });
-            boolean runSuccess = runCsvExports(studyDto, activities, false);
+            boolean runSuccess = runCsvExports(studyDto, activities);
             success = success && runSuccess;
         }
 
@@ -132,8 +133,16 @@ public class DataExportCoordinator {
         int fetched = 0;
         while (true) {
             int offset = fetched;
-            Set<Long> batch = withAPIsTxn(handle -> handle.attach(JdbiUserStudyEnrollment.class)
-                    .findUserIdsByStudyIdAndLimit(studyDto.getId(), offset, batchSize));
+            Set<Long> batch;
+            if (isRGP) {
+
+                batch = withAPIsTxn(handle -> handle.attach(JdbiUserStudyEnrollment.class)
+                        .findRGPUserIdsToExport(studyDto.getId(), offset, batchSize));
+                //TODO: Set last completion date
+            } else {
+                batch = withAPIsTxn(handle -> handle.attach(JdbiUserStudyEnrollment.class)
+                        .findUserIdsByStudyIdAndLimit(studyDto.getId(), offset, batchSize));
+            }
             int fetchedSize = batch.size();
             if (fetchedSize == 0) {
                 break;
@@ -143,6 +152,7 @@ public class DataExportCoordinator {
                 boolean batchSuccess = true;
                 List<Participant> participants = exporter.extractParticipantDataSetByIds(handle, studyDto, batch);
                 LOG.info("Extracted {} participants for study {}", participants.size(), studyDto.getGuid());
+                //TODO: For RGP export, set last completion date
                 if (indices.contains(ElasticSearchIndexType.PARTICIPANTS_STRUCTURED)) {
                     try {
                         exporter.exportToElasticsearch(handle, studyDto, activities, participants, true);
@@ -180,13 +190,13 @@ public class DataExportCoordinator {
         return success;
     }
 
-    private boolean runCsvExports(StudyDto studyDto, List<ActivityExtract> activities, boolean isRGP) {
+    private boolean runCsvExports(StudyDto studyDto, List<ActivityExtract> activities) {
         String studyGuid = studyDto.getGuid();
         try {
             LOG.info("Running csv export for study {}", studyGuid);
             long start = Instant.now().toEpochMilli();
-            var iterator = new PaginatedParticipantIterator(studyDto, batchSize);
-            exportStudyToGoogleBucket(studyDto, exporter, csvBucket, activities, iterator, isRGP);
+            var iterator = new PaginatedParticipantIterator(studyDto, batchSize); //TODO: DOes this actually get the participants?
+            exportStudyToGoogleBucket(studyDto, exporter, csvBucket, activities, iterator);
             long elapsed = Instant.now().toEpochMilli() - start;
             LOG.info("Finished csv export for study {} in {}s", studyGuid, elapsed / 1000);
             return true;
@@ -198,19 +208,17 @@ public class DataExportCoordinator {
 
     boolean exportStudyToGoogleBucket(StudyDto studyDto, DataExporter exporter, Bucket bucket,
                                       List<ActivityExtract> activities,
-                                      Iterator<Participant> participants, boolean isRGP) {
+                                      Iterator<Participant> participants) {
         try (
                 PipedOutputStream outputStream = new PipedOutputStream();
                 Writer csvWriter = new OutputStreamWriter(outputStream, StandardCharsets.UTF_8);
                 PipedInputStream csvInputStream = new PipedInputStream(outputStream, READER_BUFFER_SIZE_IN_BYTES);
         ) {
             // Running the DataExporter in separate thread
-            //TODO: Pass isRGP to buildExportToCsvRunnable
             Runnable csvExportRunnable = buildExportToCsvRunnable(studyDto, exporter, csvWriter, activities, participants);
             Thread csvExportThread = new Thread(csvExportRunnable);
             csvExportThread.start();
 
-            //TODO: Pass isRGP to buildExportBlobFilename
             String fileName = buildExportBlobFilename(studyDto);
 
             // Google writing happens on this thread
@@ -225,7 +233,7 @@ public class DataExportCoordinator {
                                       Iterator<Participant> participants) {
         return () -> {
             try {
-                int total = exporter.exportDataSetAsCsv(studyDto, activities, participants, csvOutputWriter);
+                int total = exporter.exportDataSetAsCsv(studyDto, activities, participants, csvOutputWriter, isRGP);
                 LOG.info("Written {} participants to csv export for study {}", total, studyDto.getGuid());
                 // closing here is important! Can't wait until the try block calls close
                 csvOutputWriter.close();
@@ -242,7 +250,11 @@ public class DataExportCoordinator {
     }
 
     private String buildExportBlobFilename(StudyDto study) {
-        return String.format("%s/%s", study.getName(), DataExporter.makeExportCSVFilename(study.getGuid(), Instant.now()));
+        if (isRGP) {
+            return exporter.makeRGPExportCSVFileName(Instant.now());
+        } else {
+            return String.format("%s/%s", study.getName(), DataExporter.makeExportCSVFilename(study.getGuid(), Instant.now()));
+        }
     }
 
     <R, X extends Exception> R withAPIsTxn(HandleCallback<R, X> callback) throws X {
@@ -266,7 +278,7 @@ public class DataExportCoordinator {
         }
 
         @Override
-        public boolean hasNext() {
+        public boolean hasNext() { //TODO: THis is where we pick the participants
             if (exhausted) {
                 return false;
             }

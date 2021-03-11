@@ -140,7 +140,7 @@ public class DataExporter {
 
     private static final Logger LOG = LoggerFactory.getLogger(DataExporter.class);
     private static final String REQUEST_TYPE = "_doc";
-    public static final String RGP_GUID = "RGP";
+    private static final String RGP_GUID = "RGP";
     private static final String RGP_ACTIVITY = "ENROLLMENT";
 
     // A cache for user auth0 emails, storing (auth0UserId -> email).
@@ -154,8 +154,16 @@ public class DataExporter {
     private final RestHighLevelClient esClient;
 
     public static String makeExportCSVFilename(String studyGuid, Instant timestamp) {
+        return String.format("%s_%s.csv", studyGuid, makeDateTimeString(timestamp));
+    }
+
+    public String makeRGPExportCSVFileName(Instant timestamp) {
+        return String.format("%s/%s.csv", cfg.getString(ConfigFile.RGP_BUCKET_DIR), makeDateTimeString(timestamp));
+    }
+
+    private static String makeDateTimeString(Instant timestamp) {
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmssX").withZone(ZoneOffset.UTC);
-        return String.format("%s_%s.csv", studyGuid, fmt.format(timestamp));
+        return fmt.format(timestamp);
     }
 
     public static void clearCachedAuth0Emails() {
@@ -292,14 +300,20 @@ public class DataExporter {
      * @param handle     the database handle
      * @param activities the list of activities to look at
      */
-    public void computeActivityAttributesSeen(Handle handle, List<ActivityExtract> activities) {
+    public void computeActivityAttributesSeen(Handle handle, List<ActivityExtract> activities, boolean isRGP) {
         var instanceDao = handle.attach(ActivityInstanceDao.class);
         for (ActivityExtract activity : activities) {
             long activityId = activity.getDefinition().getActivityId();
             long versionId = activity.getVersionDto().getId();
             List<String> names = instanceDao
                     .findSubstitutionNamesSeenAcrossUsersByActivityAndVersion(activityId, versionId);
-            activity.addAttributesSeen(names);
+            List<String> firstFields = null;
+            List<String> excludedFields = null;
+            if (isRGP) {
+                firstFields = cfg.getStringList(ConfigFile.RGP_FIRST_FIELDS);
+                excludedFields = cfg.getStringList(ConfigFile.RGP_EXCLUDED_ACTIVITY_FIELDS);
+            }
+            activity.addAttributesSeen(names, firstFields, excludedFields);
         }
     }
 
@@ -308,6 +322,8 @@ public class DataExporter {
     }
 
     public List<Participant> extractParticipantDataSetByIds(Handle handle, StudyDto studyDto, Set<Long> userIds) {
+        // TODO: Somehow we need to remove ineligible participants: probably remove participants who haven't completed enrollment survey
+        //  here and deal with the already-exported participants separately?
         Stream<Participant> resultset = null;
         try {
             if (userIds == null) {
@@ -830,7 +846,7 @@ public class DataExporter {
         }
 
         Map<String, String> recordForParticipant = new LinkedHashMap<>();
-        recordForParticipant.putAll(participantMetaFmt.records(extract.getStatus(), extract.getUser()));
+        recordForParticipant.putAll(participantMetaFmt.records(extract.getStatus(), extract.getUser(), null));
 
         ComponentDataSupplier supplier = new ComponentDataSupplier(extract.getUser().getAddress(), extract.getProviders());
         for (ActivityExtract activity : activities) {
@@ -1160,8 +1176,8 @@ public class DataExporter {
         List<ActivityExtract> activities = extractActivities(handle, studyDto);
         List<Participant> dataset = extractParticipantDataSet(handle, studyDto);
         computeMaxInstancesSeen(handle, activities);
-        computeActivityAttributesSeen(handle, activities);
-        return exportDataSetAsCsv(studyDto, activities, dataset.iterator(), output);
+        computeActivityAttributesSeen(handle, activities, false);
+        return exportDataSetAsCsv(studyDto, activities, dataset.iterator(), output, false);
     }
 
     /**
@@ -1174,12 +1190,20 @@ public class DataExporter {
      * @throws IOException if error while writing
      */
     public int exportDataSetAsCsv(StudyDto studyDto, List<ActivityExtract> activities, Iterator<Participant> participants,
-                                  Writer output) throws IOException {
+                                  Writer output, boolean isRGP) throws IOException {
+        //TODO: RGP Other changes?
+        //TODO: For RGP, export only completed surveys & only surveys completed since last run
         ParticipantMetadataFormatter participantMetaFmt = new ParticipantMetadataFormatter();
         ActivityMetadataCollector activityMetadataCollector = new ActivityMetadataCollector();
 
         List<String> headers = new LinkedList<>();
-        headers.addAll(participantMetaFmt.headers());
+        List<String> exclude = null;
+        if (isRGP) {
+            exclude = new ArrayList<>(cfg.getStringList(ConfigFile.RGP_EXCLUDED_PARTICIPANT_FIELDS));
+        }
+
+        headers.addAll(participantMetaFmt.headers(exclude));
+
 
         Map<String, Integer> activityTagToNormalizedMaxInstanceCounts = new HashMap<>();
         Map<String, ActivityResponseCollector> responseCollectors = new HashMap<>();
@@ -1192,7 +1216,7 @@ public class DataExporter {
                 maxInstances = 1;
             }
 
-            ActivityResponseCollector responseCollector = new ActivityResponseCollector(activity.getDefinition());
+            ActivityResponseCollector responseCollector = new ActivityResponseCollector(activity.getDefinition()); //TODO: ?
             ActivityAttributesCollector attributesCollector = new ActivityAttributesCollector(activity.getAttributesSeen());
 
             activityTagToNormalizedMaxInstanceCounts.put(activity.getTag(), maxInstances);
@@ -1218,6 +1242,7 @@ public class DataExporter {
 
         int numWritten = 0;
         while (participants.hasNext()) {
+            //TODO: For RGP, make sure participant has completed their enrollment survey & we haven't already exported their data
             Participant pt = participants.next();
             List<String> row = new LinkedList<>();
             try {
@@ -1282,7 +1307,7 @@ public class DataExporter {
         Map<String, Object> mappings = new LinkedHashMap<>();
 
         ParticipantMetadataFormatter participantMetaFmt = new ParticipantMetadataFormatter();
-        mappings.putAll(participantMetaFmt.mappings());
+        mappings.putAll(participantMetaFmt.mappings(null));
 
         ActivityMetadataCollector activityMetaColl = new ActivityMetadataCollector();
 

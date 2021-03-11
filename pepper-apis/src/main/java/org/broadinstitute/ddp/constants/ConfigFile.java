@@ -49,14 +49,18 @@ public class ConfigFile {
     // Google Storage bucket name to use for study export
     public static final String STUDY_EXPORT_BUCKET = "studyExportBucket";
 
-    // Google Storage bucket name to use for RGP export
-    public static final String RGP_EXPORT_BUCKET = "rgpExportBucket";
-
     // Google Storage bucket name to use for generated PDFs
     public static final String PDF_ARCHIVE_BUCKET = "pdfArchiveBucket";
 
     // whether to use local filesystem for pdf archiving or not
     public static final String PDF_ARCHIVE_USE_FILESYSTEM = "pdfArchiveUseFilesystem";
+
+    // RGP Export fields
+    public static final String RGP_EXPORT_BUCKET = "rgpExport.bucketName";
+    public static final String RGP_BUCKET_DIR = "rgpExport.bucketDir";
+    public static final String RGP_EXCLUDED_PARTICIPANT_FIELDS = "rgpExport.excludedParticipantFields";
+    public static final String RGP_EXCLUDED_ACTIVITY_FIELDS = "rgpExport.excludedActivityFields";
+    public static final String RGP_FIRST_FIELDS = "rgpExport.firstFields";
 
     // the cron schedule for different jobs
     public static final String CHECK_AGE_UP_SCHEDULE = "schedules.checkAgeUp";
