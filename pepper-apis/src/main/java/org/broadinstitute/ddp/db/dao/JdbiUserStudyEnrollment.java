@@ -44,29 +44,20 @@ public interface JdbiUserStudyEnrollment extends SqlObject {
             @Bind("offset") int offset,
             @Bind("limit") int limit);
 
-    //TODO: findUserIdsForRGPUsersWithCompletedENrollmentStudyBySTudyIdANdLimit
-    //SELECT * FROM findUserIdsByStudyIdAndLimit WHERE
-    //(SELECT activity_instance_id FROM activity_instance WHERE participant_id = )
-
-    // TODO: findRGPUserIdsToExport
-    @SqlQuery("select user_id"
-            + " from user_study_enrollment"
-            +   " where study_id = :studyId"
-            +   " and valid_to is null"
-            +   " and (select (select activity_instance_status_type from activity_instance_status_type_code) = 'COMPLETE'))" //TODO:
-            //TODO: select * from activity_instance_status_type where activity_instance_status_type_code = COMPLETE
-            //TODO:
-            //TODO: activity_instance_status.activity_instance_status_type_code = COMPLETE
-            //TODO: activity_instance_status.activity_instance_status_type_id = activity_instance_status.activity_instance
-            // Enrollment
-            // activity status is complete:
-            // activity_instance_status
-            +   " and "//TODO: Haven't already exported
-            +   " order by user_study_enrollment_id"
-            +   " limit :limit offset :offset")
+    @SqlQuery("SELECT DISTINCT usen.user_id FROM user_study_enrollment AS usen "
+            + "JOIN study_activity AS sa ON sa.study_id = usen.study_id "
+            + "JOIN activity_instance AS aci ON usen.user_id = aci.participant_id "
+            + "JOIN activity_instance_status AS ais ON aci.activity_instance_id = ais.activity_instance_id "
+            + "JOIN activity_instance_status_type AS aist ON aist.activity_instance_status_type_id = ais.activity_instance_status_type_id "
+            + "WHERE usen.study_id = :studyId AND aist.activity_instance_status_type_code=:statusType "
+            + "AND aci.first_completed_at>:lastCompletion AND usen.valid_to IS NULL AND sa.study_activity_code=:activityCode "
+            + "ORDER BY user_id LIMIT :limit OFFSET :offset")
     Set<Long> findRGPUserIdsToExport(@Bind("studyId") long studyId,
-                                     @Bind("offset") int offset,
-                                     @Bind("limit") int limit);
+                                     @Bind("statusType") String statusType,
+                                     @Bind("lastCompletion") long lastCompletion,
+                                     @Bind("activityCode") String activityCode,
+                                     @Bind("limit") long limit,
+                                     @Bind("offset") long offset);
 
     default List<EnrollmentStatusDto> findByStudyGuid(String studyGuid) {
         return findByStudyGuidAfterOrEqualToInstant(studyGuid, 0);
