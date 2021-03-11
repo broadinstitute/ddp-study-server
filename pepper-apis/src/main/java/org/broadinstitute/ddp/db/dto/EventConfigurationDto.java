@@ -26,6 +26,7 @@ public class EventConfigurationDto {
     private String cancelExpression;
     private Integer maxOccurrencesPerUser;
     private int executionOrder;
+    private String label;
     private String gcpTopic; // FIXME should not be a base field of EventAction
 
     /**
@@ -101,6 +102,7 @@ public class EventConfigurationDto {
     // No sub-table
 
     public EventConfigurationDto(long eventConfigurationId,
+                                 String label,
                                  EventTriggerType eventTriggerType,
                                  EventActionType eventActionType,
                                  int postDelaySeconds,
@@ -128,6 +130,7 @@ public class EventConfigurationDto {
                                  String contactEmailQuestionStableId,
                                  Boolean markExistingInvitationsAsVoided) {
         this.eventConfigurationId = eventConfigurationId;
+        this.label = label;
         this.eventTriggerType = eventTriggerType;
         this.eventActionType = eventActionType;
         this.postDelaySeconds = postDelaySeconds;
@@ -158,6 +161,10 @@ public class EventConfigurationDto {
 
     public long getEventConfigurationId() {
         return eventConfigurationId;
+    }
+
+    public String getLabel() {
+        return label;
     }
 
     public EventTriggerType getEventTriggerType() {

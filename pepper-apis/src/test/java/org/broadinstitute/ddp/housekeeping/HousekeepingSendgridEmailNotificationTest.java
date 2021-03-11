@@ -109,7 +109,7 @@ public class HousekeepingSendgridEmailNotificationTest extends HousekeepingTest 
             long eventTriggerId = eventTriggerDao.insertBaseTrigger(EventTriggerType.ACTIVITY_STATUS);
             activityStatusTriggerDao.insert(eventTriggerId, testActivity.getActivityId(), COMPLETE);
 
-            insertedEventConfigId = eventConfigDao.insert(eventTriggerId, testEmailActionId, generatedTestData
+            insertedEventConfigId = eventConfigDao.insert(null, eventTriggerId, testEmailActionId, generatedTestData
                             .getStudyId(), Instant.now().toEpochMilli(), 1, null, trueExpressionId,
                     falseExpressionId, true, 1);
             assertThat(testEmailActionId, notNullValue());

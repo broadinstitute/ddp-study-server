@@ -682,7 +682,7 @@ public class TestDataSetupUtil {
                 InstanceStatusType.COMPLETE);
 
         generatedTestData.setEnrollmentConfigurationId(handle.attach(JdbiEventConfiguration.class).insert(
-                generatedTestData.getEnrollmentEventTriggerId(),
+                null, generatedTestData.getEnrollmentEventTriggerId(),
                 generatedTestData.getEnrollmentActionId(),
                 generatedTestData.getStudyId(),
                 Instant.now().toEpochMilli(),

@@ -175,7 +175,7 @@ public class NotificationEventActionTest extends TxnAwareBaseTest {
                                                               NotificationType notificationType, NotificationServiceType serviceType,
                                                               Long linkedActivityId) {
         long eventConfigurationId = insertInvitationEmailEventConfiguration(handle, triggerType);
-        return new EventConfigurationDto(eventConfigurationId, triggerType, EventActionType.NOTIFICATION, 0, true,
+        return new EventConfigurationDto(eventConfigurationId, "EMAIL_EVENT", triggerType, EventActionType.NOTIFICATION, 0, true,
                 null, null, null, 1, MessageDestination.PARTICIPANT_NOTIFICATION.name(),
                 null, null, null, null, null, null, null, null,
                 notificationType, serviceType, linkedActivityId,
@@ -186,7 +186,7 @@ public class NotificationEventActionTest extends TxnAwareBaseTest {
         long triggerId = handle.attach(EventTriggerDao.class).insertStaticTrigger(staticTriggerType);
         long actionId = handle.attach(EventActionDao.class).insertInvitationEmailNotificationAction(
                 new SendgridEmailEventActionDto("dummy-template-key", "en", false));
-        return handle.attach(JdbiEventConfiguration.class).insert(triggerId, actionId, testData.getStudyId(),
+        return handle.attach(JdbiEventConfiguration.class).insert(null, triggerId, actionId, testData.getStudyId(),
                 Instant.now().toEpochMilli(), null, 0, null, null, true, 1);
     }
 

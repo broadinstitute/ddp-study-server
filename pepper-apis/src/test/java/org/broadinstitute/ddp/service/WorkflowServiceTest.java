@@ -432,7 +432,7 @@ public class WorkflowServiceTest extends TxnAwareBaseTest {
             long actionId = eventActionDao.insertInstanceCreationAction(triggeredFormActivity.getActivityId());
             JdbiEventConfiguration jdbiEventConfig = handle.attach(JdbiEventConfiguration.class);
             long eventConfigurationId = jdbiEventConfig.insert(
-                    triggerId, actionId, testData.getStudyId(), Instant.now().toEpochMilli(), 1, 0, null, null, false, 1
+                    null, triggerId, actionId, testData.getStudyId(), Instant.now().toEpochMilli(), 1, 0, null, null, false, 1
             );
 
             service.suggestNextState(
