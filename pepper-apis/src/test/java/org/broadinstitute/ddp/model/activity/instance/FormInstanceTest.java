@@ -11,9 +11,11 @@ import static org.mockito.ArgumentMatchers.anySet;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doCallRealMethod;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -236,6 +238,35 @@ public class FormInstanceTest extends TxnAwareBaseTest {
 
             handle.rollback();
         });
+    }
+
+    @Test
+    public void testRenderContent_answerSubstitutions() {
+        Map<Long, String> fixture = new HashMap<>();
+        fixture.put(1L, "some template");
+
+        var spyRenderer = spy(I18nContentRenderer.class);
+        doReturn(fixture).when(spyRenderer).bulkRender(any(), anySet(), anyLong(), any(), anyLong());
+        doCallRealMethod().when(spyRenderer).renderToString(any(), any());
+
+        String title = "$ddp.answer(\"Q_TITLE\",\"fallback\")";
+        String subtitle = "$ddp.answer(\"Q_SUBTITLE\",\"fallback\")";
+        var form = new FormInstance(1L, 1L, 1L, "ACT", FormType.GENERAL, "guid",
+                title, subtitle, "CREATED", null, ListStyleHint.NONE, null,
+                111L, 112L, 1L, null, null, null, false, false, false, false, 0);
+
+        var body = new FormSection(List.of(
+                new QuestionBlock(new TextQuestion("Q_TITLE", 1L, null, List.of(
+                        new TextAnswer(null, "Q_TITLE", null, "title-answer")),
+                        List.of(), TextInputType.TEXT)),
+                new QuestionBlock(new TextQuestion("Q_SUBTITLE", 1L, null, List.of(
+                        new TextAnswer(null, "Q_SUBTITLE", null, "subtitle-answer")),
+                        List.of(), TextInputType.TEXT))));
+        form.addBodySections(List.of(body));
+
+        form.renderContent(mockHandle, spyRenderer, 1L, ContentStyle.BASIC);
+        assertEquals("title-answer", form.getTitle());
+        assertEquals("subtitle-answer", form.getSubtitle());
     }
 
     @Test

@@ -7,8 +7,22 @@ import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.ddp.exception.DDPException;
+import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
+import org.broadinstitute.ddp.model.activity.definition.question.PicklistOptionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.PicklistQuestionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
+import org.broadinstitute.ddp.model.activity.instance.FormInstance;
+import org.broadinstitute.ddp.model.activity.instance.FormResponse;
+import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
+import org.broadinstitute.ddp.model.activity.instance.answer.PicklistAnswer;
+import org.broadinstitute.ddp.model.activity.instance.question.PicklistOption;
+import org.broadinstitute.ddp.model.activity.instance.question.PicklistQuestion;
+import org.broadinstitute.ddp.model.activity.instance.question.Question;
 import org.broadinstitute.ddp.model.dsm.KitReasonType;
 import org.broadinstitute.ddp.model.dsm.TestResult;
 import org.slf4j.Logger;
@@ -32,6 +46,13 @@ public class RenderValueProvider {
     private String testResultCode;
     private Instant testResultTimeCompleted;
     private Integer activityInstanceNumber;
+
+    // To minimize database round-trips, we lookup answers using existing objects that should have the answer objects.
+    // Depending on what's available for the provider, we'll use either response + activity or the instance object.
+    private FormResponse formResponse;
+    private FormActivityDef formActivity;
+    private String isoLangCode;
+    private FormInstance formInstance;
 
     private RenderValueProvider() {
         // Use builder.
@@ -166,6 +187,72 @@ public class RenderValueProvider {
         }
     }
 
+    /**
+     * Returns the answer for the question, or the fallback value if no answer. Need to assign the appropriate form
+     * object(s) beforehand as sources for looking up answers, otherwise no substitution will be performed.
+     *
+     * <p>Because common case is displaying the answer within content, this substitution will by default renders the
+     * "user-friendly" view of the answer. For example, if answer is a picklist, then the picklist option text will be
+     * rendered rather than the option stable id.
+     *
+     * @param questionStableId the question stable id
+     * @param fallbackValue    the fallback value
+     * @return answer string representation if available, otherwise null
+     */
+    public String answer(String questionStableId, String fallbackValue) {
+        if (formResponse != null) {
+            Answer answer = formResponse.getAnswer(questionStableId);
+            if (answer == null) {
+                // No answer response for this question yet, so use fallback.
+                return fallbackValue;
+            }
+            switch (answer.getQuestionType()) {
+                case PICKLIST:
+                    QuestionDef questionDef = formActivity.getQuestionByStableId(questionStableId);
+                    Map<String, PicklistOptionDef> options = ((PicklistQuestionDef) questionDef)
+                            .getAllPicklistOptions().stream()
+                            .collect(Collectors.toMap(PicklistOptionDef::getStableId, Function.identity()));
+                    return ((PicklistAnswer) answer).getValue().stream()
+                            .map(selected -> options.get(selected.getStableId())
+                                    .getOptionLabelTemplate()
+                                    .render(isoLangCode))
+                            .collect(Collectors.joining(","));
+                case COMPOSITE: // Fall-through
+                case FILE:
+                    // Have not decided what composite or file answers will look like yet.
+                    throw new DDPException("Rendering answer type " + answer.getQuestionType() + " is currently not supported");
+                default:
+                    // Everything else will get turned into a string.
+                    return answer.getValue().toString();
+            }
+        } else if (formInstance != null) {
+            Question question = formInstance.getQuestionByStableId(questionStableId);
+            Answer answer = question != null && question.isAnswered()
+                    ? (Answer) question.getAnswers().get(0) : null;
+            if (answer == null) {
+                return fallbackValue;
+            }
+            switch (answer.getQuestionType()) {
+                case PICKLIST:
+                    Map<String, String> options = ((PicklistQuestion) question)
+                            .streamAllPicklistOptions()
+                            .collect(Collectors.toMap(PicklistOption::getStableId, PicklistOption::getOptionLabel));
+                    return ((PicklistAnswer) answer).getValue().stream()
+                            .map(selected -> options.get(selected.getStableId()))
+                            .collect(Collectors.joining(","));
+                case COMPOSITE: // Fall-through
+                case FILE:
+                    throw new DDPException("Rendering answer type " + answer.getQuestionType() + " is currently not supported");
+                default:
+                    return answer.getValue().toString();
+            }
+        } else {
+            // No objects to use to lookup answers. Returning null here will keep this part of the template untouched,
+            // in case we want to come back and do a second round of rendering.
+            return null;
+        }
+    }
+
     // Get provided values as a map to save as snapshot. Should not be called within templates.
     public Map<String, String> getSnapshot() {
         var snapshot = new HashMap<String, String>();
@@ -264,6 +351,18 @@ public class RenderValueProvider {
             return this;
         }
 
+        public Builder withFormResponse(FormResponse formResponse, FormActivityDef formActivity, String isoLangCode) {
+            provider.formResponse = formResponse;
+            provider.formActivity = formActivity;
+            provider.isoLangCode = isoLangCode;
+            return this;
+        }
+
+        public Builder withFormInstance(FormInstance formInstance) {
+            provider.formInstance = formInstance;
+            return this;
+        }
+
         public Builder withSnapshot(Map<String, String> snapshot) {
             String value = snapshot.get(I18nTemplateConstants.Snapshot.PARTICIPANT_GUID);
             if (value != null) {
@@ -331,6 +430,10 @@ public class RenderValueProvider {
             copy.testResultCode = provider.testResultCode;
             copy.testResultTimeCompleted = provider.testResultTimeCompleted;
             copy.activityInstanceNumber = provider.activityInstanceNumber;
+            copy.formResponse = provider.formResponse;
+            copy.formActivity = provider.formActivity;
+            copy.isoLangCode = provider.isoLangCode;
+            copy.formInstance = provider.formInstance;
             return copy;
         }
     }
