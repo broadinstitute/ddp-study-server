@@ -1,14 +1,20 @@
 package org.broadinstitute.ddp.studybuilder;
 
+import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toSet;
+
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import com.typesafe.config.Config;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.db.dao.EventActionDao;
+import org.broadinstitute.ddp.db.dao.EventDao;
 import org.broadinstitute.ddp.db.dao.EventTriggerDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiEventConfiguration;
@@ -70,6 +76,10 @@ public class EventBuilder {
         insertEvents(handle);
     }
 
+    void run(Handle handle, String[] labels) {
+        insertLabeledEvents(handle, labels);
+    }
+
     private void insertEvents(Handle handle) {
         if (!cfg.hasPath("events")) {
             return;
@@ -79,9 +89,46 @@ public class EventBuilder {
         }
     }
 
+    private void insertLabeledEvents(Handle handle, String[] eventLabelArray) {
+        if (!cfg.hasPath("events")) {
+            return;
+        }
+        Set<String> eventLabelsToLoad = new HashSet<>(Arrays.asList(eventLabelArray));
+        List<Config> allLabeledCfgs = cfg.getConfigList("events").stream()
+                .filter(eventCfg -> eventCfg.hasPath("label") && eventCfg.getString("label") != null)
+                .collect(toList());
+        Set<String> allCfgLabels = allLabeledCfgs.stream().map(cfg -> cfg.getString("label")).collect(toSet());
+        Set<String> notFoundEventLabels =
+                eventLabelsToLoad.stream().filter(eventName -> !allCfgLabels.contains(eventName)).collect(toSet());
+        if (!notFoundEventLabels.isEmpty()) {
+            throw new DDPException("Could not find events " + String.join(", ", notFoundEventLabels));
+        }
+        if (allLabeledCfgs.size() > allCfgLabels.size()) {
+            throw new DDPException("Found duplicate names in event configuration entries");
+        }
+        List<Config> eventCfgsToLoad = allLabeledCfgs.stream()
+                .filter(cfg -> eventLabelsToLoad.contains(cfg.getString("label")))
+                .collect(toList());
+
+        List<String> existingCfgLabelsInDb = eventCfgsToLoad.stream()
+                .map(eventCfg -> handle.attach(EventDao.class)
+                        .getEventConfigurationByStudyIdAndLabel(studyDto.getId(), eventCfg.getString("label")))
+                .filter(existingCfg -> existingCfg.isPresent())
+                .map(presentCfg -> presentCfg.get().getLabel())
+                .collect(toList());
+
+        if (!existingCfgLabelsInDb.isEmpty()) {
+            LOG.warn("Events with following labels already exist" + StringUtils.join(", ", existingCfgLabelsInDb));
+            return;
+        }
+
+        eventCfgsToLoad.forEach(eventCfg -> insertEvent(handle, eventCfg));
+    }
+
     public void insertEvent(Handle handle, Config eventCfg) {
         Config triggerCfg = eventCfg.getConfig("trigger");
         Config actionCfg = eventCfg.getConfig("action");
+        String label = eventCfg.hasPath("label") ? eventCfg.getString("label") : null;
 
         long triggerId = insertEventTrigger(handle, triggerCfg);
         long actionId = insertEventAction(handle, actionCfg, triggerCfg);
@@ -92,7 +139,7 @@ public class EventBuilder {
         Integer maxOccurrencesPerUser = ConfigUtil.getIntIfPresent(eventCfg, "maxOccurrencesPerUser");
         Integer delaySeconds = ConfigUtil.getIntIfPresent(eventCfg, "delaySeconds");
 
-        long eventId = handle.attach(JdbiEventConfiguration.class).insert(triggerId, actionId, studyDto.getId(),
+        long eventId = handle.attach(JdbiEventConfiguration.class).insert(label, triggerId, actionId, studyDto.getId(),
                 Instant.now().toEpochMilli(), maxOccurrencesPerUser, delaySeconds, preconditionExprId, cancelExprId,
                 eventCfg.getBoolean("dispatchToHousekeeping"), eventCfg.getInt("order"));
         LOG.info("Created event with id={}, trigger={}, action={}", eventId, triggerAsStr(triggerCfg), actionAsStr(actionCfg));
@@ -256,13 +303,13 @@ public class EventBuilder {
             Set<Long> activityIds = actionCfg.getStringList("activityCodes")
                     .stream()
                     .map(activtyCode -> ActivityBuilder.findActivityId(handle, studyDto.getId(), activtyCode))
-                    .collect(Collectors.toSet());
+                    .collect(toSet());
             return actionDao.insertHideActivitiesAction(activityIds);
         } else if (EventActionType.MARK_ACTIVITIES_READ_ONLY.name().equals(type)) {
             Set<Long> activityIds = actionCfg.getStringList("activityCodes")
                     .stream()
                     .map(activtyCode -> ActivityBuilder.findActivityId(handle, studyDto.getId(), activtyCode))
-                    .collect(Collectors.toSet());
+                    .collect(toSet());
             return actionDao.insertMarkActivitiesReadOnlyAction(activityIds);
         } else {
             return actionDao.insertStaticAction(EventActionType.valueOf(type));

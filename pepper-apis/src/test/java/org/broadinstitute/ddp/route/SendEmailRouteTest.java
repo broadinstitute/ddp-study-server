@@ -228,7 +228,7 @@ public class SendEmailRouteTest extends IntegrationTestSuite.TestCase {
             throw new Exception("Unsupported key type");
         }
 
-        return handle.attach(JdbiEventConfiguration.class).insert(eventTriggerId, emailActionId, testData.getStudyId(),
+        return handle.attach(JdbiEventConfiguration.class).insert(null, eventTriggerId, emailActionId, testData.getStudyId(),
                 Instant.now().toEpochMilli(), null, null, trueExpressionId,
                 falseExpressionId, true, 1);
     }

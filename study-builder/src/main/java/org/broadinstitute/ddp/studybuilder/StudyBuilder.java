@@ -138,6 +138,13 @@ public class StudyBuilder {
         new EventBuilder(cfg, studyDto, adminDto.getUserId()).run(handle);
     }
 
+    public void runLabeledEvents(Handle handle, String[] labels) {
+        StudyDto studyDto = getStudy(handle);
+        UserDto adminDto = getAdminUser(handle);
+        new EventBuilder(cfg, studyDto, adminDto.getUserId()).run(handle, labels);
+    }
+
+
     public void runUpdatePdfTemplates(Handle handle) {
         StudyDto studyDto = getStudy(handle);
         Path dirPath = cfgPath.getParent();
