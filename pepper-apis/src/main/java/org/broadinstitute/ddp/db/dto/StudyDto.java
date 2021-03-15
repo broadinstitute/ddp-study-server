@@ -20,6 +20,7 @@ public class StudyDto implements Serializable {
     private String studyEmail;
     private String recaptchaSiteKey;
     private boolean dataExportEnabled;
+    private long rgpExportLastCompleted;
 
     @JdbiConstructor
     public StudyDto(@ColumnName("umbrella_study_id") long id,
@@ -33,7 +34,8 @@ public class StudyDto implements Serializable {
                     @ColumnName("share_participant_location") boolean shareParticipantLocation,
                     @ColumnName("study_email") String studyEmail,
                     @ColumnName("recaptcha_site_key") String recaptchaSiteKey,
-                    @ColumnName("enable_data_export") boolean dataExportEnabled) {
+                    @ColumnName("enable_data_export") boolean dataExportEnabled,
+                    @ColumnName("rgp_export_last_completed") long rgpExportLastCompleted) {
         this.id = id;
         this.guid = guid;
         this.name = name;
@@ -46,6 +48,7 @@ public class StudyDto implements Serializable {
         this.studyEmail = studyEmail;
         this.recaptchaSiteKey = recaptchaSiteKey;
         this.dataExportEnabled = dataExportEnabled;
+        this.rgpExportLastCompleted = rgpExportLastCompleted;
     }
 
     public long getId() {
@@ -98,5 +101,13 @@ public class StudyDto implements Serializable {
 
     public void setRecaptchaSiteKey(String key) {
         this.recaptchaSiteKey = key;
+    }
+
+    public void setRgpExportLastCompleted(long rgpExportLastCompleted) {
+        this.rgpExportLastCompleted = rgpExportLastCompleted;
+    }
+
+    public long getRgpExportLastCompleted() {
+        return this.rgpExportLastCompleted;
     }
 }

@@ -1,5 +1,7 @@
 package org.broadinstitute.ddp.export;
 
+import static org.broadinstitute.ddp.export.DataExportCoordinator.RGP_ACTIVITY;
+import static org.broadinstitute.ddp.export.DataExportCoordinator.RGP_GUID;
 import static org.broadinstitute.ddp.model.activity.types.ComponentType.MAILING_ADDRESS;
 
 import java.io.BufferedWriter;
@@ -140,8 +142,6 @@ public class DataExporter {
 
     private static final Logger LOG = LoggerFactory.getLogger(DataExporter.class);
     private static final String REQUEST_TYPE = "_doc";
-    private static final String RGP_GUID = "RGP";
-    private static final String RGP_ACTIVITY = "ENROLLMENT";
 
     // A cache for user auth0 emails, storing (auth0UserId -> email).
     private static Map<String, String> emailStore = new HashMap<>();
@@ -322,8 +322,6 @@ public class DataExporter {
     }
 
     public List<Participant> extractParticipantDataSetByIds(Handle handle, StudyDto studyDto, Set<Long> userIds) {
-        // TODO: Somehow we need to remove ineligible participants: probably remove participants who haven't completed enrollment survey
-        //  here and deal with the already-exported participants separately?
         Stream<Participant> resultset = null;
         try {
             if (userIds == null) {
@@ -1191,18 +1189,15 @@ public class DataExporter {
      */
     public int exportDataSetAsCsv(StudyDto studyDto, List<ActivityExtract> activities, Iterator<Participant> participants,
                                   Writer output, boolean isRGP) throws IOException {
-        //TODO: RGP Other changes?
-        //TODO: For RGP, export only completed surveys & only surveys completed since last run
         ParticipantMetadataFormatter participantMetaFmt = new ParticipantMetadataFormatter();
         ActivityMetadataCollector activityMetadataCollector = new ActivityMetadataCollector();
 
-        List<String> headers = new LinkedList<>();
         List<String> exclude = null;
         if (isRGP) {
             exclude = new ArrayList<>(cfg.getStringList(ConfigFile.RGP_EXCLUDED_PARTICIPANT_FIELDS));
         }
 
-        headers.addAll(participantMetaFmt.headers(exclude));
+        List<String> headers = new LinkedList<>(participantMetaFmt.headers(exclude));
 
 
         Map<String, Integer> activityTagToNormalizedMaxInstanceCounts = new HashMap<>();
@@ -1216,7 +1211,8 @@ public class DataExporter {
                 maxInstances = 1;
             }
 
-            ActivityResponseCollector responseCollector = new ActivityResponseCollector(activity.getDefinition()); //TODO: ?
+            ActivityResponseCollector responseCollector = new ActivityResponseCollector(activity.getDefinition()); //TODO: get the
+            // correct fields in the correct order
             ActivityAttributesCollector attributesCollector = new ActivityAttributesCollector(activity.getAttributesSeen());
 
             activityTagToNormalizedMaxInstanceCounts.put(activity.getTag(), maxInstances);
@@ -1242,11 +1238,10 @@ public class DataExporter {
 
         int numWritten = 0;
         while (participants.hasNext()) {
-            //TODO: For RGP, make sure participant has completed their enrollment survey & we haven't already exported their data
             Participant pt = participants.next();
-            List<String> row = new LinkedList<>();
+            List<String> row;
             try {
-                row.addAll(participantMetaFmt.format(pt.getStatus(), pt.getUser()));
+                row = new LinkedList<>(participantMetaFmt.format(pt.getStatus(), pt.getUser()));
                 ComponentDataSupplier supplier = new ComponentDataSupplier(pt.getUser().getAddress(), pt.getProviders());
                 for (ActivityExtract activity : activities) {
                     String activityTag = activity.getTag();

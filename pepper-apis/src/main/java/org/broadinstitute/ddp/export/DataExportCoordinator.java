@@ -13,6 +13,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 import java.util.Set;
 
 import com.google.cloud.storage.Blob;
@@ -31,8 +32,11 @@ public class DataExportCoordinator {
 
     public static final int DEFAULT_BATCH_SIZE = 100;
     public static final int READER_BUFFER_SIZE_IN_BYTES = 10 * 1024;
+    public static final String RGP_GUID = "RGP";
+    public static final String RGP_ACTIVITY = "ENROLLMENT";
 
     private static final Logger LOG = LoggerFactory.getLogger(DataExportCoordinator.class);
+    private static final String RGP_EXPORT_STATUS = "COMPLETE";
 
     private DataExporter exporter;
     private int batchSize = DEFAULT_BATCH_SIZE;
@@ -133,16 +137,8 @@ public class DataExportCoordinator {
         int fetched = 0;
         while (true) {
             int offset = fetched;
-            Set<Long> batch;
-            if (isRGP) {
-
-                batch = withAPIsTxn(handle -> handle.attach(JdbiUserStudyEnrollment.class)
-                        .findRGPUserIdsToExport(studyDto.getId(), offset, batchSize));
-                //TODO: Set last completion date
-            } else {
-                batch = withAPIsTxn(handle -> handle.attach(JdbiUserStudyEnrollment.class)
-                        .findUserIdsByStudyIdAndLimit(studyDto.getId(), offset, batchSize));
-            }
+            Set<Long> batch = withAPIsTxn(handle -> handle.attach(JdbiUserStudyEnrollment.class)
+                    .findUserIdsByStudyIdAndLimit(studyDto.getId(), offset, batchSize));
             int fetchedSize = batch.size();
             if (fetchedSize == 0) {
                 break;
@@ -152,7 +148,6 @@ public class DataExportCoordinator {
                 boolean batchSuccess = true;
                 List<Participant> participants = exporter.extractParticipantDataSetByIds(handle, studyDto, batch);
                 LOG.info("Extracted {} participants for study {}", participants.size(), studyDto.getGuid());
-                //TODO: For RGP export, set last completion date
                 if (indices.contains(ElasticSearchIndexType.PARTICIPANTS_STRUCTURED)) {
                     try {
                         exporter.exportToElasticsearch(handle, studyDto, activities, participants, true);
@@ -195,8 +190,18 @@ public class DataExportCoordinator {
         try {
             LOG.info("Running csv export for study {}", studyGuid);
             long start = Instant.now().toEpochMilli();
-            var iterator = new PaginatedParticipantIterator(studyDto, batchSize); //TODO: DOes this actually get the participants?
+            long lastCompleted = studyDto.getRgpExportLastCompleted();
+            var iterator = new PaginatedParticipantIterator(studyDto, batchSize, lastCompleted);
             exportStudyToGoogleBucket(studyDto, exporter, csvBucket, activities, iterator);
+
+            if (isRGP) {
+                // For RGP export, keep track of the most recent survey completion time so we know where to start for next export
+                Optional<Long> optionalLastCompletionTime = withAPIsTxn(handle -> handle.attach(JdbiUserStudyEnrollment.class)
+                                .getLastRGPCompletionDate(studyDto.getId(), RGP_EXPORT_STATUS, RGP_ACTIVITY));
+                long lastCompletionTime = optionalLastCompletionTime.orElseThrow();
+                studyDto.setRgpExportLastCompleted(lastCompletionTime);
+            }
+
             long elapsed = Instant.now().toEpochMilli() - start;
             LOG.info("Finished csv export for study {} in {}s", studyGuid, elapsed / 1000);
             return true;
@@ -250,10 +255,11 @@ public class DataExportCoordinator {
     }
 
     private String buildExportBlobFilename(StudyDto study) {
+        Instant now = Instant.now();
         if (isRGP) {
-            return exporter.makeRGPExportCSVFileName(Instant.now());
+            return exporter.makeRGPExportCSVFileName(now);
         } else {
-            return String.format("%s/%s", study.getName(), DataExporter.makeExportCSVFilename(study.getGuid(), Instant.now()));
+            return String.format("%s/%s", study.getName(), DataExporter.makeExportCSVFilename(study.getGuid(), now));
         }
     }
 
@@ -268,17 +274,19 @@ public class DataExportCoordinator {
         private int fetched;
         private boolean exhausted;
         private ArrayDeque<Participant> currentBatch;
+        private long rgpLastCompletion;
 
-        public PaginatedParticipantIterator(StudyDto studyDto, int batchSize) {
+        public PaginatedParticipantIterator(StudyDto studyDto, int batchSize, long rgpLastCompletion) {
             this.studyDto = studyDto;
             this.batchSize = batchSize;
             this.fetched = 0;
             this.exhausted = false;
             this.currentBatch = null;
+            this.rgpLastCompletion = rgpLastCompletion;
         }
 
         @Override
-        public boolean hasNext() { //TODO: THis is where we pick the participants
+        public boolean hasNext() {
             if (exhausted) {
                 return false;
             }
@@ -286,8 +294,15 @@ public class DataExportCoordinator {
             if (currentBatch == null) {
                 int offset = fetched;
                 currentBatch = withAPIsTxn(handle -> {
-                    Set<Long> userIds = handle.attach(JdbiUserStudyEnrollment.class)
-                            .findUserIdsByStudyIdAndLimit(studyDto.getId(), offset, batchSize);
+                    JdbiUserStudyEnrollment enrollment = handle.attach(JdbiUserStudyEnrollment.class);
+                    Set<Long> userIds;
+                    if (isRGP) {
+                        userIds = enrollment.findRGPUserIdsToExport(studyDto.getId(), RGP_EXPORT_STATUS, rgpLastCompletion,
+                                RGP_ACTIVITY, batchSize, offset);
+                    } else {
+                        userIds = enrollment.findUserIdsByStudyIdAndLimit(studyDto.getId(), offset, batchSize);
+                    }
+
                     List<Participant> extract = exporter.extractParticipantDataSetByIds(handle, studyDto, userIds);
                     return new ArrayDeque<>(extract);
                 });
