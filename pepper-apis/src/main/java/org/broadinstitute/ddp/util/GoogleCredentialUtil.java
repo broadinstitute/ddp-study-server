@@ -1,13 +1,8 @@
 package org.broadinstitute.ddp.util;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 
 import com.google.auth.oauth2.GoogleCredentials;
-import com.google.cloud.secretmanager.v1.AccessSecretVersionResponse;
-import com.google.cloud.secretmanager.v1.SecretManagerServiceClient;
-import com.google.cloud.secretmanager.v1.SecretVersionName;
-import lombok.NonNull;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,7 +10,6 @@ import org.slf4j.LoggerFactory;
 public class GoogleCredentialUtil {
 
     private static final Logger LOG = LoggerFactory.getLogger(GoogleCredentialUtil.class);
-    private static final String RGP_CREDENTIALS_NAME = "rgp-bucket-credentials";
 
     /**
      * Initialize credentials that can be used with Google services. In deployed environment, this is available in the hosted environment.
@@ -38,21 +32,6 @@ public class GoogleCredentialUtil {
                 LOG.error("Failed to initialize Google credentials using default strategy, no credentials will be used", e);
                 return null;
             }
-        }
-    }
-
-    public static GoogleCredentials initRGPCredentials(@NonNull String googleCloudId) {
-        try (SecretManagerServiceClient client = SecretManagerServiceClient.create()) {
-            SecretVersionName secretVersionName = SecretVersionName.of(googleCloudId, RGP_CREDENTIALS_NAME, "latest");
-
-            AccessSecretVersionResponse response = client.accessSecretVersion(secretVersionName);
-            byte[] payload = response.getPayload().getData().asReadOnlyByteBuffer().array();
-            GoogleCredentials credentials = GoogleCredentials.fromStream(new ByteArrayInputStream(payload));
-            LOG.debug("Using Google credentials loaded from secret manager");
-            return credentials;
-        } catch (IOException e) {
-            LOG.error("Failed to initialize Google credentials using default strategy, no credentials will be used", e);
-            return null;
         }
     }
 }

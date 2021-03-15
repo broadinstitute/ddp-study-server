@@ -4,6 +4,7 @@ import java.net.URL;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import com.google.api.gax.paging.Page;
 import com.google.auth.Credentials;
 import com.google.auth.ServiceAccountSigner;
 import com.google.cloud.storage.Blob;
@@ -47,6 +48,14 @@ public class GoogleBucketClient {
 
     public Bucket getBucket(String bucketName) {
         return storage.get(bucketName);
+    }
+
+    public Bucket getRGPBucket(String bucketName) {
+        Page<Blob> blobs = storage.list(bucketName, Storage.BlobListOption.currentDirectory(), Storage.BlobListOption.prefix(""));
+        for (Blob blob : blobs.iterateAll()) {
+            return storage.get(blob.getBlobId().getBucket());
+        }
+        throw new DDPException("Failed to get RGP bucket from blobs");
     }
 
     public Blob getBlob(String bucketName, String fileName) {

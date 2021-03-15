@@ -20,6 +20,7 @@ import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.Bucket;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.JdbiUserStudyEnrollment;
+import org.broadinstitute.ddp.db.dao.RgpExportDao;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.elastic.ElasticSearchIndexType;
 import org.broadinstitute.ddp.exception.DDPException;
@@ -65,6 +66,21 @@ public class DataExportCoordinator {
 
     public boolean exportRGP(StudyDto rgpDto) {
         this.isRGP = true;
+
+        //Find out whether there is anything to export
+        boolean needExport = withAPIsTxn(handle -> {
+            RgpExportDao rgpExportDao = handle.attach(RgpExportDao.class);
+            long lastCompleted = rgpExportDao.getLastCompleted(rgpDto.getId());
+            JdbiUserStudyEnrollment enrollment = handle.attach(JdbiUserStudyEnrollment.class);
+            return enrollment.needRGPExport(rgpDto.getId(), RGP_EXPORT_STATUS, lastCompleted, RGP_ACTIVITY);
+        });
+
+        if (!needExport) {
+            LOG.info("Skipping RGP export: nothing to export");
+            return true;
+        }
+
+        // Proceed with the export
         List<ActivityExtract> activityExtracts = withAPIsTxn(handle -> exporter.extractRGPEnrollmentActivity(handle));
 
         withAPIsTxn(handle -> {
@@ -190,17 +206,23 @@ public class DataExportCoordinator {
         try {
             LOG.info("Running csv export for study {}", studyGuid);
             long start = Instant.now().toEpochMilli();
-            long lastCompleted = studyDto.getRgpExportLastCompleted();
-            var iterator = new PaginatedParticipantIterator(studyDto, batchSize, lastCompleted);
-            exportStudyToGoogleBucket(studyDto, exporter, csvBucket, activities, iterator);
+            boolean success = withAPIsTxn(handle -> {
+                RgpExportDao rgpExportDao = handle.attach(RgpExportDao.class);
 
-            if (isRGP) {
-                // For RGP export, keep track of the most recent survey completion time so we know where to start for next export
-                Optional<Long> optionalLastCompletionTime = withAPIsTxn(handle -> handle.attach(JdbiUserStudyEnrollment.class)
-                                .getLastRGPCompletionDate(studyDto.getId(), RGP_EXPORT_STATUS, RGP_ACTIVITY));
-                long lastCompletionTime = optionalLastCompletionTime.orElseThrow();
-                studyDto.setRgpExportLastCompleted(lastCompletionTime);
-            }
+                long lastCompleted = rgpExportDao.getLastCompleted(studyDto.getId());
+                var iterator = new PaginatedParticipantIterator(studyDto, batchSize, lastCompleted);
+                exportStudyToGoogleBucket(studyDto, exporter, csvBucket, activities, iterator);
+
+                if (isRGP) {
+                    // For RGP export, keep track of the most recent survey completion time so we know where to start for next export
+                    JdbiUserStudyEnrollment enrollment = handle.attach(JdbiUserStudyEnrollment.class);
+                    Optional<Long> optionalLastCompletionTime = enrollment.getLastRGPCompletionDate(studyDto.getId(), RGP_EXPORT_STATUS,
+                            RGP_ACTIVITY);
+                    long lastCompletionTime = optionalLastCompletionTime.orElse((long)0);
+                    rgpExportDao.updateLastCompleted(lastCompletionTime, studyDto.getId());
+                }
+                return true;
+            });
 
             long elapsed = Instant.now().toEpochMilli() - start;
             LOG.info("Finished csv export for study {} in {}s", studyGuid, elapsed / 1000);

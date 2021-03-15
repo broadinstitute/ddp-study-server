@@ -844,7 +844,7 @@ public class DataExporter {
         }
 
         Map<String, String> recordForParticipant = new LinkedHashMap<>();
-        recordForParticipant.putAll(participantMetaFmt.records(extract.getStatus(), extract.getUser(), null));
+        recordForParticipant.putAll(participantMetaFmt.records(extract.getStatus(), extract.getUser()));
 
         ComponentDataSupplier supplier = new ComponentDataSupplier(extract.getUser().getAddress(), extract.getProviders());
         for (ActivityExtract activity : activities) {
@@ -1189,16 +1189,18 @@ public class DataExporter {
      */
     public int exportDataSetAsCsv(StudyDto studyDto, List<ActivityExtract> activities, Iterator<Participant> participants,
                                   Writer output, boolean isRGP) throws IOException {
-        ParticipantMetadataFormatter participantMetaFmt = new ParticipantMetadataFormatter();
-        ActivityMetadataCollector activityMetadataCollector = new ActivityMetadataCollector();
+        ParticipantMetadataFormatter participantMetaFmt;
 
-        List<String> exclude = null;
         if (isRGP) {
-            exclude = new ArrayList<>(cfg.getStringList(ConfigFile.RGP_EXCLUDED_PARTICIPANT_FIELDS));
+            List<String> excludedFields = new ArrayList<>(cfg.getStringList(ConfigFile.RGP_EXCLUDED_PARTICIPANT_FIELDS));
+            participantMetaFmt = new ParticipantMetadataFormatter(excludedFields);
+        } else {
+            participantMetaFmt = new ParticipantMetadataFormatter();
         }
 
-        List<String> headers = new LinkedList<>(participantMetaFmt.headers(exclude));
+        ActivityMetadataCollector activityMetadataCollector = new ActivityMetadataCollector();
 
+        List<String> headers = new LinkedList<>(participantMetaFmt.headers());
 
         Map<String, Integer> activityTagToNormalizedMaxInstanceCounts = new HashMap<>();
         Map<String, ActivityResponseCollector> responseCollectors = new HashMap<>();
@@ -1302,7 +1304,7 @@ public class DataExporter {
         Map<String, Object> mappings = new LinkedHashMap<>();
 
         ParticipantMetadataFormatter participantMetaFmt = new ParticipantMetadataFormatter();
-        mappings.putAll(participantMetaFmt.mappings(null));
+        mappings.putAll(participantMetaFmt.mappings());
 
         ActivityMetadataCollector activityMetaColl = new ActivityMetadataCollector();
 

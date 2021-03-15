@@ -44,6 +44,23 @@ public interface JdbiUserStudyEnrollment extends SqlObject {
             @Bind("offset") int offset,
             @Bind("limit") int limit);
 
+    @SqlQuery("SELECT CASE WHEN ( "
+            + "SELECT COUNT(user_id) FROM ( "
+            + "SELECT user_id FROM user_study_enrollment AS usen  "
+            + "JOIN study_activity AS sa ON sa.study_id = usen.study_id  "
+            + "JOIN activity_instance AS aci ON usen.user_id = aci.participant_id  "
+            + "JOIN activity_instance_status AS ais ON aci.activity_instance_id = ais.activity_instance_id  "
+            + "JOIN activity_instance_status_type AS aist ON aist.activity_instance_status_type_id = ais" 
+            + ".activity_instance_status_type_id  "
+            + "WHERE usen.study_id = :studyId AND aist.activity_instance_status_type_code=:statusType "
+            + "AND aci.first_completed_at>:lastCompletion AND usen.valid_to IS NULL AND sa.study_activity_code=:activityCode) as ids "
+            + ") "
+            + "> 1 THEN true ELSE false END")
+    boolean needRGPExport(@Bind("studyId") long studyId,
+                                    @Bind("statusType") String statusType,
+                                    @Bind("lastCompletion") long lastCompletion,
+                                    @Bind("activityCode") String activityCode);
+
     @SqlQuery("SELECT usen.user_id FROM user_study_enrollment AS usen "
             + "JOIN study_activity AS sa ON sa.study_id = usen.study_id "
             + "JOIN activity_instance AS aci ON usen.user_id = aci.participant_id "

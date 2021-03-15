@@ -49,7 +49,7 @@ public class RGPDataExportJob implements Job {
 
     public static void register(Scheduler scheduler, Config cfg) throws SchedulerException {
         // Test that we can initialize the credentials.
-        GoogleCredentialUtil.initRGPCredentials(cfg.getString(ConfigFile.GOOGLE_PROJECT_ID));
+        GoogleCredentialUtil.initCredentials(true);
 
         exporter = new DataExporter(cfg);
         JobDetail job = JobBuilder.newJob(RGPDataExportJob.class)
@@ -97,7 +97,7 @@ public class RGPDataExportJob implements Job {
         Config cfg = ConfigManager.getInstance().getConfig();
 
         String gcpProjectId = cfg.getString(ConfigFile.GOOGLE_PROJECT_ID);
-        GoogleCredentials credentials = GoogleCredentialUtil.initRGPCredentials(gcpProjectId);
+        GoogleCredentials credentials = GoogleCredentialUtil.initCredentials(true);
         if (credentials == null) {
             LOG.error("No Google credentials are provided, skipping job {}", getKey());
             return;
@@ -105,14 +105,14 @@ public class RGPDataExportJob implements Job {
 
         String bucketName = cfg.getString(ConfigFile.RGP_EXPORT_BUCKET);
         var bucketClient = new GoogleBucketClient(gcpProjectId, credentials);
-        Bucket bucket = bucketClient.getBucket(bucketName);
+        Bucket bucket = bucketClient.getRGPBucket(bucketName);
         if (bucket == null) {
             LOG.error("Could not find google bucket {}, skipping job {}", bucketName, getKey());
             return;
         }
 
         StudyDto rgpDto = TransactionWrapper.withTxn(TransactionWrapper.DB.APIS,
-                handle -> handle.attach(JdbiUmbrellaStudy.class)).findByStudyGuid("RGP");
+                handle -> handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid("RGP"));
         LOG.info("Found RGP study for data export");
 
         // Invalidate the caches for a fresh export
@@ -125,6 +125,9 @@ public class RGPDataExportJob implements Job {
         try {
             boolean success = coordinator.exportRGP(rgpDto);
             //TODO: Make sure we only export surveys completed since last run
+            //TODO: Make sure we only export relevant survey fields
+            //TODO: Make sure we only export relevant participant fields
+            //TODO: Make sure FirstFields are first
             //TODO: Send email
             if (success) {
                 new StackdriverMetricsTracker(StackdriverCustomMetric.RGP_EXPORTS,
