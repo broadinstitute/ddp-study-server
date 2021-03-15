@@ -29,13 +29,15 @@ public class WorkflowBuilder {
     }
 
     void run(Handle handle) {
-        insertTransitions(handle);
+        updateWorkflow(handle);
     }
 
-    private void insertTransitions(Handle handle) {
+    private void updateWorkflow(Handle handle) {
         if (!cfg.hasPath("workflowTransitions")) {
             return;
         }
+        int deletionCount = handle.attach(WorkflowDao.class).deleteStudyWorkflow(studyDto.getId());
+        LOG.info("Deleted {} workflow transitions PEX expressions", deletionCount);
         for (Config transitionCfg : cfg.getConfigList("workflowTransitions")) {
             insertTransitionSet(handle, transitionCfg);
         }
@@ -55,7 +57,6 @@ public class WorkflowBuilder {
             transitions.add(new WorkflowTransition(studyDto.getId(), fromState, toState, expr, order));
             order++;
         }
-
         workflowDao.insertTransitions(transitions);
         LOG.info("Created {} workflow transitions for state={}", transitions.size(), stateAsStr(fromCfg));
     }

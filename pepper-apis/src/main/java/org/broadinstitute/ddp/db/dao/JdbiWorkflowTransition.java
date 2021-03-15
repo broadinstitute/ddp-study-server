@@ -1,8 +1,11 @@
 package org.broadinstitute.ddp.db.dao;
 
+import java.util.List;
+
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
+import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 
 public interface JdbiWorkflowTransition extends SqlObject {
@@ -22,4 +25,10 @@ public interface JdbiWorkflowTransition extends SqlObject {
 
     @SqlUpdate("delete from workflow_transition where workflow_transition_id = :transitionId")
     int deleteById(@Bind("transitionId") long transitionId);
+
+    @SqlUpdate("delete from workflow_transition where umbrella_study_id=:studyId")
+    int deleteAllForStudy(@Bind("studyId") long studyId);
+
+    @SqlQuery("select precondition_expression_id from workflow_transition where umbrella_study_id=:studyId")
+    List<Long> findAllExpressionIdsForStudy(@Bind("studyId") long studyId);
 }
