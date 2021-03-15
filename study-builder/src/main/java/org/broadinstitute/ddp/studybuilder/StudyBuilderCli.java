@@ -58,6 +58,7 @@ public class StudyBuilderCli {
         options.addOption(null, "dry-run", false, "run study setup or custom task without saving");
         options.addOption(null, "only-activity", true, "only run activity setup for given activity code");
         options.addOption(null, "only-workflow", false, "only run workflow setup");
+        options.addOption(null, "only-update-workflow", false, "recreate workflow from configuration file");
         options.addOption(null, "only-events", false, "only run events setup");
         options.addOption(null, "only-labeled-events", true, "only run events in comma-separated list of labels");
         options.addOption(null, "only-update-pdfs", false, "only run pdf template updates (deprecated)");
@@ -144,6 +145,11 @@ public class StudyBuilderCli {
         } else if (cmd.hasOption("only-workflow")) {
             log("executing workflow setup...");
             execute(builder::runWorkflow, isDryRun);
+            log("done");
+            return;
+        } else if (cmd.hasOption("only-update-workflow")) {
+            log("executing workflow setup...");
+            execute(builder::updateWorkflow, isDryRun);
             log("done");
             return;
         } else if (cmd.hasOption("only-events")) {

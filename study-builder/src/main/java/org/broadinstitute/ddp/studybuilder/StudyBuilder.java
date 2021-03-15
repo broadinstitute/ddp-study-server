@@ -132,6 +132,11 @@ public class StudyBuilder {
         new WorkflowBuilder(cfg, studyDto).run(handle);
     }
 
+    public void updateWorkflow(Handle handle) {
+        StudyDto studyDto = getStudy(handle);
+        new WorkflowBuilder(cfg, studyDto).runUpdate(handle);
+    }
+
     public void runEvents(Handle handle) {
         StudyDto studyDto = getStudy(handle);
         UserDto adminDto = getAdminUser(handle);
