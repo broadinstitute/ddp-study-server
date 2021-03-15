@@ -148,7 +148,7 @@ public class StudyBuilderCli {
             log("done");
             return;
         } else if (cmd.hasOption("only-update-workflow")) {
-            log("executing workflow setup...");
+            log("executing update of workflow...");
             execute(builder::updateWorkflow, isDryRun);
             log("done");
             return;
