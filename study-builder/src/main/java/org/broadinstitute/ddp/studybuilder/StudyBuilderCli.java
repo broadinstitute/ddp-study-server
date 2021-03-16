@@ -60,7 +60,7 @@ public class StudyBuilderCli {
         options.addOption(null, "dry-run", false, "run study setup or custom task without saving");
         options.addOption(null, "only-activity", true, "only run activity setup for given activity code");
         options.addOption(null, "only-workflow", false, "only run workflow setup");
-        options.addOption(null, "only-update-workflow", false, "recreate workflow from configuration file");
+        options.addOption(null, "only-recreate-workflow", false, "recreate workflow from configuration file");
         options.addOption(null, "only-events", false, "only run events setup");
         options.addOption(null, "only-labeled-events", true, "only run events in comma-separated list of labels");
         options.addOption(null, "only-update-pdfs", false, "only run pdf template updates (deprecated)");
@@ -149,7 +149,7 @@ public class StudyBuilderCli {
             execute(builder::runWorkflow, isDryRun);
             log("done");
             return;
-        } else if (cmd.hasOption("only-update-workflow")) {
+        } else if (cmd.hasOption("only-recreate-workflow")) {
             if (studyHasPatch(cfgPath) && !promptForConfirmation("There are patches for this study. Have you checked that workflow DOES "
                     + "NOT refer to any activities added in patches for this study?")) {
                 return;
