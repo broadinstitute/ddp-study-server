@@ -1643,8 +1643,9 @@ Study.WorkflowState:
   type: object
   description: A state within a workflow
   properties:
-    name: string
-    description: the name of the state, such as "Accepted" or "Scheduled"
+    name:
+      type: string
+      description: the name of the state, such as "Accepted" or "Scheduled"
 Study.Summary:
   type: object
   required:
