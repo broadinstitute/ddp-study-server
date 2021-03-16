@@ -29,6 +29,7 @@ public interface JdbiWorkflowTransition extends SqlObject {
     @SqlUpdate("delete from workflow_transition where umbrella_study_id=:studyId")
     int deleteAllForStudy(@Bind("studyId") long studyId);
 
-    @SqlQuery("select precondition_expression_id from workflow_transition where umbrella_study_id=:studyId")
+    @SqlQuery("select precondition_expression_id from workflow_transition"
+            + " where umbrella_study_id=:studyId and precondition_expression_id is not null")
     List<Long> findAllExpressionIdsForStudy(@Bind("studyId") long studyId);
 }
