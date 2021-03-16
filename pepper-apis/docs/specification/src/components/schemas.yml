@@ -1628,6 +1628,23 @@ Section:
       type: array
       items:
         $ref: '../pepper.yml#/components/schemas/Block'
+Study.Workflow:
+  type: object
+  properties:
+    name:
+      type: string
+      description: the name of the worklflow, for example "DEVICE_REGISTRATION"
+    states:
+      type: array
+      description: List of allowed states for this workflow
+      items:
+        $ref: '../pepper.yml#/components/schemas/Study.WorkflowState'
+Study.WorkflowState:
+  type: object
+  description: A state within a workflow
+  properties:
+    name: string
+    description: the name of the state, such as "Accepted" or "Scheduled"
 Study.Summary:
   type: object
   required:
@@ -2166,6 +2183,19 @@ ParticipantStatusTrackingInfo:
       minItems: 0
       items:
         $ref: '../pepper.yml#/components/schemas/ParticipantStatusTrackingInfo.Kit'
+    workflows:
+      type: array
+      items:
+        $ref: '../pepper.yml#/components/schemas/ParticipantStatusTrackingInfo.Workflow'
+ParticipantStatusTrackingInfo.Workflow:
+  type: object
+  properties:
+    workflow:
+      type: string
+      description: The name of the workflow
+    status:
+      type: string
+      description: The current state in the workflow
 ParticipantStatusTrackingInfo.Record:
   type: object
   required:
