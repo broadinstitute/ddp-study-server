@@ -26,6 +26,8 @@ public class ParticipantStatusTrackingInfo {
     private TissueRecord tissueRecord;
     @SerializedName("kits")
     private List<Kit> kits;
+    @SerializedName("workflows")
+    private List<Workflow> workflows;
 
     private transient String userGuid;
 
@@ -51,6 +53,15 @@ public class ParticipantStatusTrackingInfo {
             LOG.error("Something completely unexpected happened with ", entityName);
             return RecordStatus.UNKNOWN;
         }
+    }
+
+    public ParticipantStatusTrackingInfo(ParticipantStatus dsmParticipantStatus,
+                                         List<Workflow> workflows,
+                                         EnrollmentStatusType enrollmentStatusType,
+                                         String userGuid
+    ) {
+        this(dsmParticipantStatus, enrollmentStatusType, userGuid);
+        this.workflows = workflows;
     }
 
     public ParticipantStatusTrackingInfo(
@@ -119,6 +130,10 @@ public class ParticipantStatusTrackingInfo {
 
     public TissueRecord getTissueRecord() {
         return tissueRecord;
+    }
+
+    public List<Workflow> getWorkflows() {
+        return workflows;
     }
 
     public static class Record {
@@ -216,6 +231,26 @@ public class ParticipantStatusTrackingInfo {
 
         public RecordStatus getStatus() {
             return status;
+        }
+    }
+
+    public static class Workflow {
+        @SerializedName("workflow")
+        protected String workflow;
+        @SerializedName("status")
+        protected String status;
+
+        public Workflow(String workflow, String status) {
+            this.workflow = workflow;
+            this.status = status;
+        }
+
+        public String getStatus() {
+            return status;
+        }
+
+        public String getWorkflow() {
+            return workflow;
         }
     }
 }
