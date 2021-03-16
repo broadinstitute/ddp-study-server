@@ -37,7 +37,7 @@ public class WorkflowBuilder {
             return;
         }
         int deletionCount = handle.attach(WorkflowDao.class).deleteStudyWorkflow(studyDto.getId());
-        LOG.info("Deleted {} workflow transitions PEX expressions", deletionCount);
+        LOG.info("Deleted {} workflow transitions", deletionCount);
         insertWorkflow(handle);
     }
 
