@@ -1,5 +1,7 @@
 package org.broadinstitute.ddp.studybuilder;
 
+import static org.broadinstitute.ddp.studybuilder.StudyPatcher.LOG_FILENAME;
+
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -148,6 +150,10 @@ public class StudyBuilderCli {
             log("done");
             return;
         } else if (cmd.hasOption("only-update-workflow")) {
+            if (studyHasPatch(cfgPath) && !promptForConfirmation("There are patches for this study. Have you checked that workflow DOES "
+                    + "NOT refer to any activities added in patches for this study?")) {
+                return;
+            }
             log("executing update of workflow...");
             execute(builder::updateWorkflow, isDryRun);
             log("done");
@@ -203,6 +209,26 @@ public class StudyBuilderCli {
         execute(builder::run, isDryRun);
         log("done");
     }
+
+    private boolean studyHasPatch(Path cfgPath) {
+        return cfgPath.getParent().resolve(LOG_FILENAME).toFile().exists();
+    }
+
+    private boolean promptForConfirmation(String prompt) {
+        System.out.println(prompt);
+        System.out.println("Type YES to proceed:");
+        Scanner scanner = new Scanner(System.in);
+        String input = scanner.nextLine().trim();
+
+        if (!"YES".equals(input)) {
+            System.out.println("Did not type YES. Quitting.");
+            return false;
+        } else {
+            return true;
+        }
+    }
+
+
 
     private void log(String fmt, Object... args) {
         System.out.println("[builder] " + String.format(fmt, args));
