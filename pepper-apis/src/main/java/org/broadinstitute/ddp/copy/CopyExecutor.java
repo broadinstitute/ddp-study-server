@@ -61,6 +61,9 @@ public class CopyExecutor {
             if (source.getType() == CopyLocationType.ANSWER && target.getType() == CopyLocationType.ANSWER) {
                 String sourceStableId = ((CopyAnswerLocation) source).getQuestionStableId();
                 QuestionDto sourceQuestion = questionDtosByStableId.get(sourceStableId);
+                if (sourceQuestion == null) {
+                    continue; // Question might have been removed from activity, so we skip it.
+                }
                 FormResponse sourceInstance = responsesById.get(sourceQuestion.getActivityId());
 
                 String targetStableId = ((CopyAnswerLocation) target).getQuestionStableId();
@@ -71,6 +74,9 @@ public class CopyExecutor {
             } else if (source.getType() == CopyLocationType.ANSWER) {
                 String sourceStableId = ((CopyAnswerLocation) source).getQuestionStableId();
                 QuestionDto sourceQuestion = questionDtosByStableId.get(sourceStableId);
+                if (sourceQuestion == null) {
+                    continue;
+                }
                 FormResponse sourceInstance = responsesById.get(sourceQuestion.getActivityId());
 
                 ansToProfileCopier.copy(sourceInstance, sourceQuestion, target.getType());

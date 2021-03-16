@@ -8,9 +8,11 @@ import java.util.List;
 
 import org.broadinstitute.ddp.TxnAwareBaseTest;
 import org.broadinstitute.ddp.db.TransactionWrapper;
+import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dao.AnswerDao;
 import org.broadinstitute.ddp.db.dao.CopyConfigurationDao;
+import org.broadinstitute.ddp.db.dao.QuestionDao;
 import org.broadinstitute.ddp.db.dao.UserProfileDao;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.model.activity.definition.question.NumericQuestionDef;
@@ -20,6 +22,7 @@ import org.broadinstitute.ddp.model.activity.instance.answer.BoolAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.CompositeAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.NumericIntegerAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
+import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
 import org.broadinstitute.ddp.model.activity.types.NumericType;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
 import org.broadinstitute.ddp.model.copy.CopyAnswerLocation;
@@ -42,6 +45,57 @@ public class CopyExecutorTest extends TxnAwareBaseTest {
     @BeforeClass
     public static void setup() {
         testData = TransactionWrapper.withTxn(TestDataSetupUtil::generateBasicUserTestData);
+    }
+
+    @Test
+    public void testExecute_questionNotFoundIsSkipped() {
+        TransactionWrapper.useTxn(handle -> {
+            var activityDao = handle.attach(ActivityDao.class);
+            var questionDao = handle.attach(QuestionDao.class);
+
+            TestFormActivity act1 = TestFormActivity.builder()
+                    .withTextQuestion(true)
+                    .withBoolQuestion(true)
+                    .build(handle, testData.getUserId(), testData.getStudyGuid());
+            TestFormActivity act2 = TestFormActivity.builder()
+                    .withTextQuestion(true)
+                    .withBoolQuestion(true)
+                    .build(handle, testData.getUserId(), testData.getStudyGuid());
+
+            var config = new CopyConfiguration(testData.getStudyId(), false, List.of(
+                    new CopyConfigurationPair(
+                            new CopyAnswerLocation(act1.getTextQuestion().getStableId()),
+                            new CopyAnswerLocation(act2.getTextQuestion().getStableId())),
+                    new CopyConfigurationPair(
+                            new CopyAnswerLocation(act1.getBoolQuestion().getStableId()),
+                            new CopyAnswerLocation(act2.getBoolQuestion().getStableId()))));
+            config = handle.attach(CopyConfigurationDao.class).createCopyConfig(config);
+
+            var meta = RevisionMetadata.now(testData.getUserId(), "remove question");
+            activityDao.changeVersion(act1.getDef().getActivityId(), "v2", meta);
+            questionDao.disableBoolQuestion(act1.getBoolQuestion().getQuestionId(), meta);
+
+            meta = RevisionMetadata.now(testData.getUserId(), "remove question");
+            activityDao.changeVersion(act2.getDef().getActivityId(), "v2", meta);
+            questionDao.disableBoolQuestion(act2.getBoolQuestion().getQuestionId(), meta);
+
+            long instance1Id = createInstance(handle, act1.getDef().getActivityId()).getId();
+            long instance2Id = createInstance(handle, act2.getDef().getActivityId()).getId();
+            var answer = new TextAnswer(null, act1.getTextQuestion().getStableId(), null, "source-text");
+            handle.attach(AnswerDao.class).createAnswer(testData.getUserId(), instance1Id, answer);
+
+            new CopyExecutor().execute(handle, testData.getUserId(), testData.getUserId(), config);
+
+            Answer actual = handle.attach(AnswerDao.class)
+                    .findAnswerByInstanceIdAndQuestionStableId(instance2Id, act2.getTextQuestion().getStableId())
+                    .orElse(null);
+            assertNotNull(actual);
+            assertNotNull(actual.getAnswerGuid());
+            assertEquals("copying should success even though a question referenced by copy config has been deprecated",
+                    "source-text", ((TextAnswer) actual).getValue());
+
+            handle.rollback();
+        });
     }
 
     @Test
