@@ -103,15 +103,16 @@ public class FormInstanceTest extends TxnAwareBaseTest {
         fixture.put(1L, "<p>this is title</p>");
         fixture.put(2L, "<p>this is body</p>");
 
-        I18nContentRenderer mockRenderer = mock(I18nContentRenderer.class);
-        when(mockRenderer.bulkRender(any(), anySet(), anyLong(), any(), anyLong())).thenReturn(fixture);
+        I18nContentRenderer spyRenderer = spy(I18nContentRenderer.class);
+        doReturn(fixture).when(spyRenderer).bulkRender(any(), anySet(), anyLong(), any(), anyLong());
+        doCallRealMethod().when(spyRenderer).renderToString(anyString(), any());
 
         ContentBlock content = new ContentBlock(1L, 2L);
         FormSection s1 = new FormSection(Collections.singletonList(content));
         FormInstance form = buildEmptyTestInstance();
         form.addBodySections(Collections.singletonList(s1));
 
-        form.renderContent(mockHandle, mockRenderer, 1L, ContentStyle.STANDARD);
+        form.renderContent(mockHandle, spyRenderer, 1L, ContentStyle.STANDARD);
         assertEquals(fixture.get(1L), content.getTitle());
         assertEquals(fixture.get(2L), content.getBody());
     }
@@ -122,15 +123,16 @@ public class FormInstanceTest extends TxnAwareBaseTest {
         fixture.put(1L, "<p>this is title</p>");
         fixture.put(2L, "<p>this is body</p>");
 
-        I18nContentRenderer mockRenderer = mock(I18nContentRenderer.class);
-        when(mockRenderer.bulkRender(any(), anySet(), anyLong(), any(), anyLong())).thenReturn(fixture);
+        I18nContentRenderer spyRenderer = spy(I18nContentRenderer.class);
+        doReturn(fixture).when(spyRenderer).bulkRender(any(), anySet(), anyLong(), any(), anyLong());
+        doCallRealMethod().when(spyRenderer).renderToString(anyString(), any());
 
         ContentBlock content = new ContentBlock(1L, 2L);
         FormSection s1 = new FormSection(Collections.singletonList(content));
         FormInstance form = buildEmptyTestInstanceWithHtmlInTitleAndSubtitle();
         form.addBodySections(Collections.singletonList(s1));
 
-        form.renderContent(mockHandle, mockRenderer, 1L, ContentStyle.BASIC);
+        form.renderContent(mockHandle, spyRenderer, 1L, ContentStyle.BASIC);
         assertEquals("title", form.getTitle());
         assertEquals("subtitle", form.getSubtitle());
         assertEquals("this is title", content.getTitle());
@@ -143,8 +145,9 @@ public class FormInstanceTest extends TxnAwareBaseTest {
         fixture.put(1L, "this is <strong>bold</strong> prompt");
         fixture.put(2L, "this is bold prompt");
 
-        I18nContentRenderer mockRenderer = mock(I18nContentRenderer.class);
-        when(mockRenderer.bulkRender(any(), anySet(), anyLong(), any(), anyLong())).thenReturn(fixture);
+        I18nContentRenderer spyRenderer = spy(I18nContentRenderer.class);
+        doReturn(fixture).when(spyRenderer).bulkRender(any(), anySet(), anyLong(), any(), anyLong());
+        doCallRealMethod().when(spyRenderer).renderToString(anyString(), any());
 
         Question question = new TextQuestion("sid", 1, null, Collections.emptyList(), Collections.emptyList(),
                 TextInputType.TEXT);
@@ -153,7 +156,7 @@ public class FormInstanceTest extends TxnAwareBaseTest {
         FormInstance form = buildEmptyTestInstance();
         form.addBodySections(Collections.singletonList(s1));
 
-        form.renderContent(mockHandle, mockRenderer, 1L, ContentStyle.STANDARD);
+        form.renderContent(mockHandle, spyRenderer, 1L, ContentStyle.STANDARD);
         assertTrue(HtmlConverter.hasSameValue(fixture.get(1L), question.getPrompt()));
         assertEquals(fixture.get(2L), question.getTextPrompt());
     }
@@ -163,8 +166,9 @@ public class FormInstanceTest extends TxnAwareBaseTest {
         Map<Long, String> fixture = new HashMap<>();
         fixture.put(1L, "this is <b>bold</b> prompt");
 
-        I18nContentRenderer mockRenderer = mock(I18nContentRenderer.class);
-        when(mockRenderer.bulkRender(any(), anySet(), anyLong(), any(), anyLong())).thenReturn(fixture);
+        I18nContentRenderer spyRenderer = spy(I18nContentRenderer.class);
+        doReturn(fixture).when(spyRenderer).bulkRender(any(), anySet(), anyLong(), any(), anyLong());
+        doCallRealMethod().when(spyRenderer).renderToString(anyString(), any());
 
         Question question = new TextQuestion("sid", 1, null, Collections.emptyList(), Collections.emptyList(),
                 TextInputType.TEXT);
@@ -173,7 +177,7 @@ public class FormInstanceTest extends TxnAwareBaseTest {
         FormInstance form = buildEmptyTestInstance();
         form.addBodySections(Collections.singletonList(s1));
 
-        form.renderContent(mockHandle, mockRenderer, 1L, ContentStyle.BASIC);
+        form.renderContent(mockHandle, spyRenderer, 1L, ContentStyle.BASIC);
 
         assertTrue(HtmlConverter.hasSameValue(fixture.get(1L), question.getPrompt()));
         assertEquals("this is bold prompt", question.getTextPrompt());
@@ -184,14 +188,15 @@ public class FormInstanceTest extends TxnAwareBaseTest {
         Map<Long, String> fixture = new HashMap<>();
         fixture.put(1L, "this is <strong>bold</strong> section name");
 
-        I18nContentRenderer mockRenderer = mock(I18nContentRenderer.class);
-        when(mockRenderer.bulkRender(any(), anySet(), anyLong(), any(), anyLong())).thenReturn(fixture);
+        I18nContentRenderer spyRenderer = spy(I18nContentRenderer.class);
+        doReturn(fixture).when(spyRenderer).bulkRender(any(), anySet(), anyLong(), any(), anyLong());
+        doCallRealMethod().when(spyRenderer).renderToString(anyString(), any());
 
         FormSection s1 = new FormSection(1L);
         FormInstance form = buildEmptyTestInstance();
         form.addBodySections(Collections.singletonList(s1));
 
-        form.renderContent(mockHandle, mockRenderer, 1L, ContentStyle.STANDARD);
+        form.renderContent(mockHandle, spyRenderer, 1L, ContentStyle.STANDARD);
         assertEquals(fixture.get(1L), s1.getName());
     }
 
@@ -200,14 +205,15 @@ public class FormInstanceTest extends TxnAwareBaseTest {
         Map<Long, String> fixture = new HashMap<>();
         fixture.put(1L, "this is <strong>bold</strong> section name");
 
-        I18nContentRenderer mockRenderer = mock(I18nContentRenderer.class);
-        when(mockRenderer.bulkRender(any(), anySet(), anyLong(), any(), anyLong())).thenReturn(fixture);
+        I18nContentRenderer spyRenderer = spy(I18nContentRenderer.class);
+        doReturn(fixture).when(spyRenderer).bulkRender(any(), anySet(), anyLong(), any(), anyLong());
+        doCallRealMethod().when(spyRenderer).renderToString(anyString(), any());
 
         FormSection s1 = new FormSection(1L);
         FormInstance form = buildEmptyTestInstance();
         form.addBodySections(Collections.singletonList(s1));
 
-        form.renderContent(mockHandle, mockRenderer, 1L, ContentStyle.BASIC);
+        form.renderContent(mockHandle, spyRenderer, 1L, ContentStyle.BASIC);
         assertEquals("this is bold section name", s1.getName());
     }
 
@@ -218,14 +224,15 @@ public class FormInstanceTest extends TxnAwareBaseTest {
             handle.attach(UserProfileSql.class).upsertFirstName(testData.getUserId(), "foo");
             handle.attach(UserProfileSql.class).upsertLastName(testData.getUserId(), "bar");
 
-            I18nContentRenderer mockRenderer = mock(I18nContentRenderer.class);
-            doReturn(Collections.emptyMap()).when(mockRenderer).bulkRender(any(), anySet(), anyLong(), any(), anyLong());
+            I18nContentRenderer spyRenderer = spy(I18nContentRenderer.class);
+            doReturn(Collections.emptyMap()).when(spyRenderer).bulkRender(any(), anySet(), anyLong(), any(), anyLong());
+            doCallRealMethod().when(spyRenderer).renderToString(anyString(), any());
             doReturn(handle.attach(UserProfileDao.class)).when(mockHandle).attach(UserProfileDao.class);
 
             FormInstance form = buildEmptyTestInstance(testData.getUserId());
-            form.renderContent(mockHandle, mockRenderer, 1L, ContentStyle.BASIC);
+            form.renderContent(mockHandle, spyRenderer, 1L, ContentStyle.BASIC);
 
-            verify(mockRenderer, times(1)).bulkRender(any(), anySet(), anyLong(), argThat(context -> {
+            verify(spyRenderer, times(1)).bulkRender(any(), anySet(), anyLong(), argThat(context -> {
                 assertNotNull(context);
                 assertNotNull(context.get(I18nTemplateConstants.DDP));
                 RenderValueProvider provider = (RenderValueProvider) context.get(I18nTemplateConstants.DDP);
@@ -247,7 +254,7 @@ public class FormInstanceTest extends TxnAwareBaseTest {
 
         var spyRenderer = spy(I18nContentRenderer.class);
         doReturn(fixture).when(spyRenderer).bulkRender(any(), anySet(), anyLong(), any(), anyLong());
-        doCallRealMethod().when(spyRenderer).renderToString(any(), any());
+        doCallRealMethod().when(spyRenderer).renderToString(anyString(), any());
 
         String title = "$ddp.answer(\"Q_TITLE\",\"fallback\")";
         String subtitle = "$ddp.answer(\"Q_SUBTITLE\",\"fallback\")";
