@@ -316,7 +316,7 @@ public class EventBuilder {
         }
     }
 
-    private CopyConfiguration buildCopyConfiguration(long studyId, boolean copyFromPreviousInstance,
+    public CopyConfiguration buildCopyConfiguration(long studyId, boolean copyFromPreviousInstance,
                                                      List<String> previousInstanceQuestionStableIds,
                                                      List<Config> pairsCfgList) {
         List<CopyPreviousInstanceFilter> filters = new ArrayList<>();

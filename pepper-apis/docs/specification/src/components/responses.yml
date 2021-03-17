@@ -316,6 +316,14 @@ StudyDetailResponse:
     application/json:
       schema:
         $ref: '../pepper.yml#/components/schemas/Study.Detail'
+StudyWorkflowsResponse:
+  description: workflows and allowed statuses for a study
+  content:
+    application/json:
+      schema:
+        type: array
+        items:
+          $ref: '../pepper.yml#/components/schemas/Study.Workflow'
 StudySummaryResponse:
   description: summary information for a list of studies
   content:
@@ -369,7 +377,7 @@ JoinMailingListBadPayloadError:
   content:
     application/json:
       schema:
-          $ref: '../pepper.yml#/components/schemas/Error.BadPayload'
+        $ref: '../pepper.yml#/components/schemas/Error.BadPayload'
 InstitutionSuggestion:
   description: a list of institution suggestions
   content:
