@@ -4,10 +4,13 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.when;
 
+import java.io.IOException;
 import java.util.List;
 
 import com.google.gson.Gson;
@@ -23,6 +26,12 @@ import org.broadinstitute.ddp.model.dsm.ParticipantStatusTrackingInfo;
 import org.broadinstitute.ddp.model.dsm.ParticipantStatusTrackingInfo.RecordStatus;
 import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
+import org.elasticsearch.action.get.GetRequest;
+import org.elasticsearch.action.get.GetResponse;
+import org.elasticsearch.client.RequestOptions;
+import org.elasticsearch.client.RestHighLevelClient;
+import org.elasticsearch.common.bytes.BytesArray;
+import org.elasticsearch.index.get.GetResult;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -37,6 +46,7 @@ public class GetDsmParticipantStatusRouteTest extends IntegrationTestSuite.TestC
 
     private DsmClient mockDsm;
     private GetDsmParticipantStatusRoute route;
+    private RestHighLevelClient mockESClient;
 
     @BeforeClass
     public static void setup() {
@@ -55,16 +65,23 @@ public class GetDsmParticipantStatusRouteTest extends IntegrationTestSuite.TestC
     @Before
     public void init() {
         mockDsm = mock(DsmClient.class);
-        route = new GetDsmParticipantStatusRoute(mockDsm);
+        mockESClient = mock(RestHighLevelClient.class);
+        route = new GetDsmParticipantStatusRoute(mockDsm, mockESClient);
     }
 
     @Test
-    public void testProcess_returnStatusInfo() {
+    public void testProcess_returnStatusInfo() throws IOException {
         var expected = new ParticipantStatus(1L, 2L, 3L, 4L, 5L, List.of(
                 new ParticipantStatus.Sample("a", "BLOOD", 6L, 7L, 8L, "tracking9", "carrier10")));
+        GetResponse getResponse = new GetResponse(new GetResult("index", "id", "id01", 0,
+                1, 1, true,
+                new BytesArray("{\"workflows\":[{\"workflow\":\"ACCEPTANCE_STATUS\",\"status\":\"ACCEPTED\"}]}"),
+                null));
 
         when(mockDsm.getParticipantStatus(testData.getStudyGuid(), testData.getUserGuid(), "token"))
                 .thenReturn(ApiResult.ok(200, expected));
+        when(mockESClient.get(any(GetRequest.class), eq(RequestOptions.DEFAULT)))
+                .thenReturn(getResponse);
 
         ParticipantStatusTrackingInfo actual = route.process(testData.getStudyGuid(), testData.getUserGuid(), "token");
 
@@ -76,6 +93,10 @@ public class GetDsmParticipantStatusRouteTest extends IntegrationTestSuite.TestC
         assertEquals(RecordStatus.RECEIVED, actual.getTissueRecord().getStatus());
         assertEquals(expected.getTissueRequestedEpochTimeSec(), actual.getTissueRecord().getRequestedAt());
         assertEquals(expected.getTissueReceivedEpochTimeSec(), actual.getTissueRecord().getReceivedBackAt());
+        assertNotNull(actual.getWorkflows());
+        assertEquals(1, actual.getWorkflows().size());
+        assertEquals("ACCEPTANCE_STATUS", actual.getWorkflows().get(0).getWorkflow());
+        assertEquals("ACCEPTED", actual.getWorkflows().get(0).getStatus());
     }
 
     @Test
