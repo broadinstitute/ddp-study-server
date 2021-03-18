@@ -19,9 +19,11 @@ public class EventConfiguration {
     private boolean dispatchToHousekeeping;
     private Integer postDelaySeconds;
     private int executionOrder;
+    private String label;
 
     public EventConfiguration(EventConfigurationDto dto) {
         this.eventConfigurationId = dto.getEventConfigurationId();
+        this.label = dto.getLabel();
         this.eventActionType = dto.getEventActionType();
         this.eventTriggerType = dto.getEventTriggerType();
         this.preconditionExpression = dto.getPreconditionExpression();
@@ -129,6 +131,10 @@ public class EventConfiguration {
 
     public long getEventConfigurationId() {
         return eventConfigurationId;
+    }
+
+    public String getLabel() {
+        return label;
     }
 
     public EventActionType getEventActionType() {
