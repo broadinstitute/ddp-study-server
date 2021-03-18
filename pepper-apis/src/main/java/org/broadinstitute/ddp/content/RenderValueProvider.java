@@ -201,55 +201,63 @@ public class RenderValueProvider {
      */
     public String answer(String questionStableId, String fallbackValue) {
         if (formResponse != null) {
-            Answer answer = formResponse.getAnswer(questionStableId);
-            if (answer == null) {
-                // No answer response for this question yet, so use fallback.
-                return fallbackValue;
-            }
-            switch (answer.getQuestionType()) {
-                case PICKLIST:
-                    QuestionDef questionDef = formActivity.getQuestionByStableId(questionStableId);
-                    Map<String, PicklistOptionDef> options = ((PicklistQuestionDef) questionDef)
-                            .getAllPicklistOptions().stream()
-                            .collect(Collectors.toMap(PicklistOptionDef::getStableId, Function.identity()));
-                    return ((PicklistAnswer) answer).getValue().stream()
-                            .map(selected -> options.get(selected.getStableId())
-                                    .getOptionLabelTemplate()
-                                    .render(isoLangCode))
-                            .collect(Collectors.joining(","));
-                case COMPOSITE: // Fall-through
-                case FILE:
-                    // Have not decided what composite or file answers will look like yet.
-                    throw new DDPException("Rendering answer type " + answer.getQuestionType() + " is currently not supported");
-                default:
-                    // Everything else will get turned into a string.
-                    return answer.getValue().toString();
-            }
+            return renderAnswerUsingFormResponse(questionStableId, fallbackValue);
         } else if (formInstance != null) {
-            Question question = formInstance.getQuestionByStableId(questionStableId);
-            Answer answer = question != null && question.isAnswered()
-                    ? (Answer) question.getAnswers().get(0) : null;
-            if (answer == null) {
-                return fallbackValue;
-            }
-            switch (answer.getQuestionType()) {
-                case PICKLIST:
-                    Map<String, String> options = ((PicklistQuestion) question)
-                            .streamAllPicklistOptions()
-                            .collect(Collectors.toMap(PicklistOption::getStableId, PicklistOption::getOptionLabel));
-                    return ((PicklistAnswer) answer).getValue().stream()
-                            .map(selected -> options.get(selected.getStableId()))
-                            .collect(Collectors.joining(","));
-                case COMPOSITE: // Fall-through
-                case FILE:
-                    throw new DDPException("Rendering answer type " + answer.getQuestionType() + " is currently not supported");
-                default:
-                    return answer.getValue().toString();
-            }
+            return renderAnswerUsingFormInstance(questionStableId, fallbackValue);
         } else {
             // No objects to use to lookup answers. Returning null here will keep this part of the template untouched,
             // in case we want to come back and do a second round of rendering.
             return null;
+        }
+    }
+
+    private String renderAnswerUsingFormResponse(String questionStableId, String fallbackValue) {
+        Answer answer = formResponse.getAnswer(questionStableId);
+        if (answer == null) {
+            // No answer response for this question yet, so use fallback.
+            return fallbackValue;
+        }
+        switch (answer.getQuestionType()) {
+            case PICKLIST:
+                QuestionDef questionDef = formActivity.getQuestionByStableId(questionStableId);
+                Map<String, PicklistOptionDef> options = ((PicklistQuestionDef) questionDef)
+                        .getAllPicklistOptions().stream()
+                        .collect(Collectors.toMap(PicklistOptionDef::getStableId, Function.identity()));
+                return ((PicklistAnswer) answer).getValue().stream()
+                        .map(selected -> options.get(selected.getStableId())
+                                .getOptionLabelTemplate()
+                                .render(isoLangCode))
+                        .collect(Collectors.joining(","));
+            case COMPOSITE: // Fall-through
+            case FILE:
+                // Have not decided what composite or file answers will look like yet.
+                throw new DDPException("Rendering answer type " + answer.getQuestionType() + " is currently not supported");
+            default:
+                // Everything else will get turned into a string.
+                return answer.getValue().toString();
+        }
+    }
+
+    private String renderAnswerUsingFormInstance(String questionStableId, String fallbackValue) {
+        Question question = formInstance.getQuestionByStableId(questionStableId);
+        Answer answer = question != null && question.isAnswered()
+                ? (Answer) question.getAnswers().get(0) : null;
+        if (answer == null) {
+            return fallbackValue;
+        }
+        switch (answer.getQuestionType()) {
+            case PICKLIST:
+                Map<String, String> options = ((PicklistQuestion) question)
+                        .streamAllPicklistOptions()
+                        .collect(Collectors.toMap(PicklistOption::getStableId, PicklistOption::getOptionLabel));
+                return ((PicklistAnswer) answer).getValue().stream()
+                        .map(selected -> options.get(selected.getStableId()))
+                        .collect(Collectors.joining(","));
+            case COMPOSITE: // Fall-through
+            case FILE:
+                throw new DDPException("Rendering answer type " + answer.getQuestionType() + " is currently not supported");
+            default:
+                return answer.getValue().toString();
         }
     }
 
