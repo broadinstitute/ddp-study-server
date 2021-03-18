@@ -2,7 +2,7 @@
   "prequal_name": "Join Us",
   "prequal_title": "Join Us",
   "prequal_self_describe": "How will you be participating in the RARE-X Data Collection Platform?",
-  "prequal_self_describe_p": "If you have already a RARE-X account, please click \"Log-in\" on the top right. If you are registering for the first time, please continue with the questions below to create an account.",
+  "prequal_self_describe_p": "If you already have a RARE-X account, please log in <a href=\"/login-redirect\">HERE</a>.<br/>If you are registering for the first time, please continue with the questions below to create an account.",
   "prequal_first_name": "First Name",
   "prequal_last_name": "Last Name",
   "prequal_child_diagnosed": "I'm a parent/legal guardian of someone who has A-T.",
