@@ -64,6 +64,13 @@ public interface WorkflowDao extends SqlObject {
         }
     }
 
+    default int deleteStudyWorkflow(long studyId) {
+        List<Long> expressionIds = getJdbiWorkflowTransition().findAllExpressionIdsForStudy(studyId);
+        int transitionsDeletedCount = getJdbiWorkflowTransition().deleteAllForStudy(studyId);
+        expressionIds.stream().forEach(getJdbiExpression()::deleteById);
+        return transitionsDeletedCount;
+    }
+
     default Optional<Long> findWorkflowStateId(WorkflowState state) {
         if (state.getType() == StateType.ACTIVITY) {
             long activityId = ((ActivityState) state).getActivityId();

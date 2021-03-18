@@ -1,5 +1,7 @@
 package org.broadinstitute.ddp.studybuilder;
 
+import static org.broadinstitute.ddp.studybuilder.StudyPatcher.LOG_FILENAME;
+
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -58,6 +60,7 @@ public class StudyBuilderCli {
         options.addOption(null, "dry-run", false, "run study setup or custom task without saving");
         options.addOption(null, "only-activity", true, "only run activity setup for given activity code");
         options.addOption(null, "only-workflow", false, "only run workflow setup");
+        options.addOption(null, "only-recreate-workflow", false, "recreate workflow from configuration file");
         options.addOption(null, "only-events", false, "only run events setup");
         options.addOption(null, "only-labeled-events", true, "only run events in comma-separated list of labels");
         options.addOption(null, "only-update-pdfs", false, "only run pdf template updates (deprecated)");
@@ -146,6 +149,15 @@ public class StudyBuilderCli {
             execute(builder::runWorkflow, isDryRun);
             log("done");
             return;
+        } else if (cmd.hasOption("only-recreate-workflow")) {
+            if (studyHasPatch(cfgPath) && !promptForConfirmation("There are patches for this study. Have you checked that workflow DOES "
+                    + "NOT refer to any activities added in patches for this study?")) {
+                return;
+            }
+            log("executing update of workflow...");
+            execute(builder::updateWorkflow, isDryRun);
+            log("done");
+            return;
         } else if (cmd.hasOption("only-events")) {
             log("executing events setup...");
             execute(builder::runEvents, isDryRun);
@@ -197,6 +209,26 @@ public class StudyBuilderCli {
         execute(builder::run, isDryRun);
         log("done");
     }
+
+    private boolean studyHasPatch(Path cfgPath) {
+        return cfgPath.getParent().resolve(LOG_FILENAME).toFile().exists();
+    }
+
+    private boolean promptForConfirmation(String prompt) {
+        System.out.println(prompt);
+        System.out.println("Type YES to proceed:");
+        Scanner scanner = new Scanner(System.in);
+        String input = scanner.nextLine().trim();
+
+        if (!"YES".equals(input)) {
+            System.out.println("Did not type YES. Quitting.");
+            return false;
+        } else {
+            return true;
+        }
+    }
+
+
 
     private void log(String fmt, Object... args) {
         System.out.println("[builder] " + String.format(fmt, args));

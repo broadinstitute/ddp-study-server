@@ -17,7 +17,7 @@ import org.jdbi.v3.core.Handle;
  */
 public class StudyPatcher {
 
-    private static final String LOG_FILENAME = "patch-log.conf";
+    public static final String LOG_FILENAME = "patch-log.conf";
     private static final String PATCHES_KEY = "patches";
 
     private Path cfgPath;

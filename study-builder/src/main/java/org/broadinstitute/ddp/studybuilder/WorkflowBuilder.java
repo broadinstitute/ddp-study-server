@@ -29,13 +29,23 @@ public class WorkflowBuilder {
     }
 
     void run(Handle handle) {
-        insertTransitions(handle);
+        insertWorkflow(handle);
     }
 
-    private void insertTransitions(Handle handle) {
+    void runUpdate(Handle handle) {
         if (!cfg.hasPath("workflowTransitions")) {
             return;
         }
+        int deletionCount = handle.attach(WorkflowDao.class).deleteStudyWorkflow(studyDto.getId());
+        LOG.info("Deleted {} workflow transitions", deletionCount);
+        insertWorkflow(handle);
+    }
+
+    private void insertWorkflow(Handle handle) {
+        if (!cfg.hasPath("workflowTransitions")) {
+            return;
+        }
+
         for (Config transitionCfg : cfg.getConfigList("workflowTransitions")) {
             insertTransitionSet(handle, transitionCfg);
         }
@@ -55,7 +65,6 @@ public class WorkflowBuilder {
             transitions.add(new WorkflowTransition(studyDto.getId(), fromState, toState, expr, order));
             order++;
         }
-
         workflowDao.insertTransitions(transitions);
         LOG.info("Created {} workflow transitions for state={}", transitions.size(), stateAsStr(fromCfg));
     }
