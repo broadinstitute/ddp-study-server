@@ -213,7 +213,7 @@ public class RenderValueProvider {
 
     private String renderAnswerUsingFormResponse(String questionStableId, String fallbackValue) {
         Answer answer = formResponse.getAnswer(questionStableId);
-        if (answer == null) {
+        if (answer == null || answer.isEmpty()) {
             // No answer response for this question yet, so use fallback.
             return fallbackValue;
         }
@@ -242,7 +242,7 @@ public class RenderValueProvider {
         Question question = formInstance.getQuestionByStableId(questionStableId);
         Answer answer = question != null && question.isAnswered()
                 ? (Answer) question.getAnswers().get(0) : null;
-        if (answer == null) {
+        if (answer == null || answer.isEmpty()) {
             return fallbackValue;
         }
         switch (answer.getQuestionType()) {
@@ -359,6 +359,9 @@ public class RenderValueProvider {
             return this;
         }
 
+        /**
+         * If caller has a FormResponse object available, then use this.
+         */
         public Builder withFormResponse(FormResponse formResponse, FormActivityDef formActivity, String isoLangCode) {
             provider.formResponse = formResponse;
             provider.formActivity = formActivity;
@@ -366,6 +369,9 @@ public class RenderValueProvider {
             return this;
         }
 
+        /**
+         * If caller has a FormInstance object available, then use this.
+         */
         public Builder withFormInstance(FormInstance formInstance) {
             provider.formInstance = formInstance;
             return this;
