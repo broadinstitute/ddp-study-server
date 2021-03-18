@@ -75,12 +75,6 @@
   "parental_assent_parent_last_name_validation_hint": "Last name cannot be emtpy",
   "parental_assent_parent_last_name_exp": "Your complete legal given (first) name at birth",
 
-  "demographics_name": "General Information Survey",
-  "demographics_title": "General Information Survey",
-  "demographics_summary_created": "Please answer the General Information Survey.",
-  "demographics_summary_in_progress": "Please finish answering the General Information Survey.",
-  "demographics_summary_complete": "Thank you for answering the General Information Survey.",
-  "demographics_intro": "Please complete the following information regarding the enrolled patient:",
   "general_information_name": "General Information Survey",
   "general_information_title": "General Information Survey",
   "general_information_summary_created": "Please answer the General Information Survey.",
@@ -526,8 +520,8 @@
   "medical_neuropathy_issue_moderate": "Moderate. Sensory ataxia or motor impairment",
   "medical_neuropathy_issue_severe": "Severe. Reliant on mobility aids primarily due to neuropathy",
 
-  "neuro_name": "General Neuro/Development Survey",
-  "neuro_title": "General Neuro/Development Survey",
+  "neuro_name": "Health and Development Survey",
+  "neuro_title": "Health and Development Survey",
   "neuro_summary_created": "Please fill out the Neurodevelopment Survey.",
   "neuro_summary_in_progress": "Almost done. Please finish the Neurodevelopment Survey.",
   "neuro_summary_complete": "Thank you for answering the Neurodevelopment Survey.",
@@ -811,8 +805,8 @@
 
 
 
-  "data_sharing_name": "Data Sharing Interest Survey",
-  "data_sharing_title": "Data Sharing Interest Survey",
+  "data_sharing_name": "Data Sharing Survey",
+  "data_sharing_title": "Data Sharing Survey",
   "data_sharing_summary_created": "Please fill out the Data Sharing Agreement. This is your chance to choose who can see and analyze your data from the Data Collection Program and other data sources.",
   "data_sharing_summary_in_progress": "Not quite done yet. Please finish filling out the Data Sharing Agreement.",
   "data_sharing_summary_complete": "Thank you for completing the Data Sharing Agreement.",
