@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.function.Consumer;
+import java.util.stream.Stream;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 
@@ -11,6 +12,7 @@ import com.google.gson.annotations.SerializedName;
 import org.broadinstitute.ddp.content.ContentStyle;
 import org.broadinstitute.ddp.content.HtmlConverter;
 import org.broadinstitute.ddp.json.activity.ActivityInstanceSummary;
+import org.broadinstitute.ddp.model.activity.instance.question.Question;
 import org.broadinstitute.ddp.model.activity.types.BlockType;
 import org.broadinstitute.ddp.model.activity.types.NestedActivityRenderHint;
 import org.broadinstitute.ddp.util.MiscUtil;
@@ -74,6 +76,12 @@ public final class NestedActivityBlock extends FormBlock {
         if (instanceSummaries != null) {
             this.instanceSummaries.addAll(instanceSummaries);
         }
+    }
+
+    @Override
+    public Stream<Question> streamQuestions() {
+        // Questions within the nested activity itself are not considered.
+        return Stream.empty();
     }
 
     @Override

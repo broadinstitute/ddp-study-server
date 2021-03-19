@@ -2,11 +2,13 @@ package org.broadinstitute.ddp.model.activity.instance;
 
 import java.util.NoSuchElementException;
 import java.util.function.Consumer;
+import java.util.stream.Stream;
 import javax.validation.constraints.NotNull;
 
 import com.google.gson.annotations.SerializedName;
 import org.broadinstitute.ddp.content.ContentStyle;
 import org.broadinstitute.ddp.content.HtmlConverter;
+import org.broadinstitute.ddp.model.activity.instance.question.Question;
 import org.broadinstitute.ddp.model.activity.types.BlockType;
 
 public final class ContentBlock extends FormBlock {
@@ -47,6 +49,11 @@ public final class ContentBlock extends FormBlock {
 
     public long getBodyTemplateId() {
         return bodyTemplateId;
+    }
+
+    @Override
+    public Stream<Question> streamQuestions() {
+        return Stream.empty();
     }
 
     @Override

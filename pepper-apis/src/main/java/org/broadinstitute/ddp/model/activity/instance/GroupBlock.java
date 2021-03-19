@@ -4,11 +4,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.function.Consumer;
+import java.util.stream.Stream;
 import javax.validation.constraints.NotNull;
 
 import com.google.gson.annotations.SerializedName;
 import org.broadinstitute.ddp.content.ContentStyle;
 import org.broadinstitute.ddp.content.HtmlConverter;
+import org.broadinstitute.ddp.model.activity.instance.question.Question;
 import org.broadinstitute.ddp.model.activity.types.BlockType;
 import org.broadinstitute.ddp.model.activity.types.ListStyleHint;
 import org.broadinstitute.ddp.model.activity.types.PresentationHint;
@@ -63,6 +65,11 @@ public final class GroupBlock extends FormBlock {
 
     public List<FormBlock> getNested() {
         return nested;
+    }
+
+    @Override
+    public Stream<Question> streamQuestions() {
+        return nested.stream().flatMap(FormBlock::streamQuestions);
     }
 
     @Override
