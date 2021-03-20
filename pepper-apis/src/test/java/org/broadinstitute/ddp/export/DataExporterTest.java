@@ -114,8 +114,6 @@ import org.slf4j.LoggerFactory;
 
 public class DataExporterTest extends TxnAwareBaseTest {
 
-    //TODO: Add tests
-
     private static final Logger LOG = LoggerFactory.getLogger(DataExporterTest.class);
 
     private static TestDataSetupUtil.GeneratedTestData testData;
@@ -742,7 +740,7 @@ public class DataExporterTest extends TxnAwareBaseTest {
             ActivityVersionDto nestedVersionDto = new ActivityVersionDto(2L, 2L, "v1", 2L, timestamp, null);
             activities = List.of(new ActivityExtract(def, versionDto), new ActivityExtract(nestedDef, nestedVersionDto));
             activities.get(0).setMaxInstancesSeen(1);
-            activities.get(0).addAttributesSeen(null, null, ActivityAttributesCollector.EXPOSED_ATTRIBUTES);
+            activities.get(0).addAttributesSeen(ActivityAttributesCollector.EXPOSED_ATTRIBUTES);
 
             EnrollmentStatusDto status = new EnrollmentStatusDto(1L, 1L, "user", 1L, testData.getStudyGuid(),
                     EnrollmentStatusType.ENROLLED, timestamp, null);

@@ -49,6 +49,8 @@ public class ActivityResponseCollector {
     private List<String> responseHeaders = null;
     private List<String> deprecatedHeaders = null;
     private List<String> allHeaders = null;
+    private List<String> firstFields = null;
+    private List<String> excludedFields = null;
 
     private AgreementQuestionFormatStrategy agreementFmt = new AgreementQuestionFormatStrategy();
     private BoolQuestionFormatStrategy boolFmt = new BoolQuestionFormatStrategy();
@@ -63,6 +65,12 @@ public class ActivityResponseCollector {
 
     public ActivityResponseCollector(ActivityDef definition) {
         this.definition = definition;
+    }
+
+    public ActivityResponseCollector(ActivityDef definition, List<String> firstFields, List<String> excludedFields) {
+        this.definition = definition;
+        this.firstFields = firstFields;
+        this.excludedFields = excludedFields;
     }
 
     public List<String> emptyRow() {
@@ -334,6 +342,14 @@ public class ActivityResponseCollector {
             if (definition.getActivityType() == ActivityType.FORMS) {
                 flattenHeadersByOrderedDepthTraversal((FormActivityDef) definition);
             }
+            if (excludedFields != null) {
+                responseHeaders.removeAll(excludedFields);
+            }
+            if (firstFields != null) {
+                responseHeaders.removeAll(firstFields);
+                responseHeaders.addAll(0, firstFields);
+            }
+
             allHeaders = new LinkedList<>();
             allHeaders.addAll(responseHeaders);
             allHeaders.addAll(deprecatedHeaders);

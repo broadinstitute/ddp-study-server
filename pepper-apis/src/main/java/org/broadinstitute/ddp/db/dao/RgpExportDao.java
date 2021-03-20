@@ -47,6 +47,4 @@ public interface RgpExportDao extends SqlObject {
 
     @SqlUpdate("update rgp_export set rgp_export_last_completed = :lastCompleted where umbrella_study_id = :studyId")
     int updateLastCompletedByStudyId(@Bind("lastCompleted") long lastCompleted, @Bind("studyId") long studyId);
-
-
 }

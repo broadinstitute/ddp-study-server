@@ -307,13 +307,7 @@ public class DataExporter {
             long versionId = activity.getVersionDto().getId();
             List<String> names = instanceDao
                     .findSubstitutionNamesSeenAcrossUsersByActivityAndVersion(activityId, versionId);
-            List<String> firstFields = null;
-            List<String> excludedFields = null;
-            if (isRGP) {
-                firstFields = cfg.getStringList(ConfigFile.RGP_FIRST_FIELDS);
-                excludedFields = cfg.getStringList(ConfigFile.RGP_EXCLUDED_ACTIVITY_FIELDS);
-            }
-            activity.addAttributesSeen(names, firstFields, excludedFields);
+            activity.addAttributesSeen(names);
         }
     }
 
@@ -1213,9 +1207,16 @@ public class DataExporter {
                 maxInstances = 1;
             }
 
-            ActivityResponseCollector responseCollector = new ActivityResponseCollector(activity.getDefinition()); //TODO: get the
-            // correct fields in the correct order
-            ActivityAttributesCollector attributesCollector = new ActivityAttributesCollector(activity.getAttributesSeen());
+            List<String> firstFields = null;
+            List<String> excludedFields = null;
+            if (isRGP) {
+                firstFields = cfg.getStringList(ConfigFile.RGP_FIRST_FIELDS);
+                excludedFields = cfg.getStringList(ConfigFile.RGP_EXCLUDED_ACTIVITY_FIELDS);
+            }
+            ActivityResponseCollector responseCollector = new ActivityResponseCollector(activity.getDefinition(), firstFields,
+                    excludedFields);
+            ActivityAttributesCollector attributesCollector;
+            attributesCollector = new ActivityAttributesCollector(activity.getAttributesSeen(firstFields, excludedFields));
 
             activityTagToNormalizedMaxInstanceCounts.put(activity.getTag(), maxInstances);
             responseCollectors.put(activity.getTag(), responseCollector);
@@ -1224,12 +1225,15 @@ public class DataExporter {
             boolean hasParent = StringUtils.isNotBlank(activity.getDefinition().getParentActivityCode());
             for (var i = 1; i <= maxInstances; i++) {
                 List<String> activityMetadataColumns;
-                if (i == 1) {
-                    activityMetadataColumns = activityMetadataCollector.headers(activity.getTag(), hasParent);
-                } else {
-                    activityMetadataColumns = activityMetadataCollector.headers(activity.getTag(), hasParent, i);
+
+                if (!isRGP) {
+                    if (i == 1) {
+                        activityMetadataColumns = activityMetadataCollector.headers(activity.getTag(), hasParent);
+                    } else {
+                        activityMetadataColumns = activityMetadataCollector.headers(activity.getTag(), hasParent, i);
+                    }
+                    headers.addAll(activityMetadataColumns);
                 }
-                headers.addAll(activityMetadataColumns);
                 headers.addAll(attributesCollector.headers());
                 headers.addAll(responseCollector.getHeaders());
             }
@@ -1258,7 +1262,9 @@ public class DataExporter {
                     int numInstancesProcessed = 0;
                     for (var instance : instances) {
                         Map<String, String> subs = pt.getActivityInstanceSubstitutions(instance.getId());
-                        row.addAll(activityMetadataCollector.format(instance));
+                        if (!isRGP) {
+                            row.addAll(activityMetadataCollector.format(instance));
+                        }
                         row.addAll(attributesCollector.format(subs));
                         row.addAll(responseCollector.format(instance, supplier, ""));
                         numInstancesProcessed++;
@@ -1266,7 +1272,9 @@ public class DataExporter {
 
                     boolean hasParent = StringUtils.isNotBlank(activity.getDefinition().getParentActivityCode());
                     while (numInstancesProcessed < maxInstances) {
-                        row.addAll(activityMetadataCollector.emptyRow(hasParent));
+                        if (!isRGP) {
+                            row.addAll(activityMetadataCollector.emptyRow(hasParent));
+                        }
                         row.addAll(attributesCollector.emptyRow());
                         row.addAll(responseCollector.emptyRow());
                         numInstancesProcessed++;

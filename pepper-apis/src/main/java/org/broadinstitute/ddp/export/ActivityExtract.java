@@ -41,18 +41,21 @@ public class ActivityExtract {
         this.maxInstancesSeen = maxInstancesSeen;
     }
 
-    public List<String> getAttributesSeen() {
+    public List<String> getAttributesSeen(List<String> firstFields, List<String> excluded) {
+        if (firstFields != null && !firstFields.isEmpty()) {
+            this.attributesSeen.removeAll(firstFields);
+            this.attributesSeen.addAll(0, firstFields);
+        }
+
+        if (excluded != null && !excluded.isEmpty()) {
+            this.attributesSeen.removeAll(excluded);
+        }
+
         return attributesSeen;
     }
 
-    public void addAttributesSeen(List<String> names, List<String> firstFields, List<String> attributesSeen) {
+    public void addAttributesSeen(List<String> attributesSeen) {
         if (attributesSeen != null) {
-            if (names != null) {
-                attributesSeen.removeAll(names);
-            }
-            if (firstFields != null) {
-                attributesSeen.removeAll(firstFields);
-            }
             this.attributesSeen.addAll(attributesSeen);
         }
     }
