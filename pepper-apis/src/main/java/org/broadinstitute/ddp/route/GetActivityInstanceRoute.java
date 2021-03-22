@@ -33,6 +33,7 @@ import org.broadinstitute.ddp.pex.PexInterpreter;
 import org.broadinstitute.ddp.security.DDPAuth;
 import org.broadinstitute.ddp.service.ActivityInstanceService;
 import org.broadinstitute.ddp.service.ActivityValidationService;
+import org.broadinstitute.ddp.service.actvityinstanceassembler.ActivityInstanceAssembleService;
 import org.broadinstitute.ddp.util.RouteUtil;
 import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
@@ -86,11 +87,24 @@ public class GetActivityInstanceRoute implements Route {
             LanguageDto preferredUserLanguage = RouteUtil.getUserLanguage(request);
             String isoLangCode = preferredUserLanguage.getIsoCode();
 
-
             LOG.info("Attempting to find a translation for the following language: {}", isoLangCode);
-            Optional<ActivityInstance> inst = actInstService.getTranslatedActivity(
-                    handle, userGuid, operatorGuid, instanceDto.getActivityType(), instanceGuid, isoLangCode, style
+
+            Optional<ActivityInstance> inst = new ActivityInstanceAssembleService().assembleActivityInstance(
+                    handle,
+                    isoLangCode,
+                    style,
+                    studyGuid,
+                    userGuid,
+                    operatorGuid,
+                    instanceDto
             );
+
+            if (inst.isEmpty()) {
+                inst = actInstService.getTranslatedActivity(
+                        handle, userGuid, operatorGuid, instanceDto.getActivityType(), instanceGuid, isoLangCode, style
+                );
+            }
+
             if (inst.isEmpty()) {
                 String errMsg = String.format(
                         "Unable to find activity instance %s of type '%s' in '%s'",
