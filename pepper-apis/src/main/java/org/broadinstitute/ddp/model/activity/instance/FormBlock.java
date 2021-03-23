@@ -1,9 +1,11 @@
 package org.broadinstitute.ddp.model.activity.instance;
 
+import java.util.stream.Stream;
 import javax.validation.constraints.NotNull;
 
 import com.google.gson.annotations.SerializedName;
 import org.broadinstitute.ddp.content.Renderable;
+import org.broadinstitute.ddp.model.activity.instance.question.Question;
 import org.broadinstitute.ddp.model.activity.types.BlockType;
 import org.broadinstitute.ddp.util.MiscUtil;
 
@@ -25,6 +27,11 @@ public abstract class FormBlock implements Renderable {
     FormBlock(BlockType type) {
         this.blockType = MiscUtil.checkNonNull(type, "type");
     }
+
+    /**
+     * Return a stream of all questions contained in this block.
+     */
+    public abstract Stream<Question> streamQuestions();
 
     /**
      * Has the user completed what's required for this block?

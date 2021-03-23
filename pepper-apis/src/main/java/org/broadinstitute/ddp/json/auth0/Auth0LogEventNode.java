@@ -116,7 +116,7 @@ public enum Auth0LogEventNode {
                 case E_MAIL:
                 case STR:
                 default:
-                    return value.getAsString();
+                    return value.isJsonNull() ? null : value.getAsString();
             }
         }
         return null;

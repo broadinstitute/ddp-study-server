@@ -2,11 +2,15 @@ tenant:
   default_directory: Username-Password-Authentication
 
 rules:
+  - name: Force email verification
+    script: ../force-email-verification.js
+    enabled: true
+    order: 1
   - name: Register User in Pepper
     script: ../register-user-in-pepper.js
     stage: login_success
     enabled: true
-    order: 1
+    order: 2
 
 pages:
   - name: login

@@ -1,6 +1,7 @@
 package org.broadinstitute.ddp.route;
 
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.constants.RouteConstants;
@@ -9,6 +10,7 @@ import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.db.dto.LanguageDto;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.json.activity.ActivityInstanceSummary;
+import org.broadinstitute.ddp.model.activity.instance.FormResponse;
 import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.security.DDPAuth;
 import org.broadinstitute.ddp.service.ActivityInstanceService;
@@ -55,8 +57,9 @@ public class GetActivityInstanceSummaryRoute implements Route {
                     .orElseThrow(() -> new DDPException("Could not find translated summary for activity instance " + instanceGuid));
 
             List<ActivityInstanceSummary> summaries = List.of(summary);
-            service.countQuestionsAndAnswers(handle, participantGuid, operatorGuid, studyGuid, summaries);
-            service.renderInstanceSummaries(handle, participantUser.getId(), summaries);
+            Map<String, FormResponse> responses = service.countQuestionsAndAnswers(
+                    handle, participantGuid, operatorGuid, studyGuid, summaries);
+            service.renderInstanceSummaries(handle, participantUser.getId(), studyGuid, summaries, responses);
 
             return summaries.get(0);
         });
