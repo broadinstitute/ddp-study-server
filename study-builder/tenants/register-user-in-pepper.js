@@ -11,6 +11,10 @@ function (user, context, callback) {
     user.app_metadata = user.app_metadata || {};
     user.app_metadata.pepper_user_guids = user.app_metadata.pepper_user_guids || {};
 
+    // Use of the m2mClients list below should be considered legacy behavior, and
+    // may be removed at any time. Any new clients should set the key 'skipPepperRegistration'
+    // to the value of 'true' in their client metadata if the Pepper registration process
+    // is not required.
     var m2mClients = ['dsm', 'Count Me In (Salt CMS)'];
     var skipPepperRegistration = context.clientMetadata.skipPepperRegistration || 'false'
     if ((skipPepperRegistration === 'true') || (m2mClients.includes(context.clientName))) {
