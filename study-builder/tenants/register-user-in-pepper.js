@@ -16,9 +16,15 @@ function (user, context, callback) {
     // to the value of 'true' in their client metadata if the Pepper registration process
     // is not required.
     var m2mClients = ['dsm', 'Count Me In (Salt CMS)'];
-    var skipPepperRegistration = context.clientMetadata.skipPepperRegistration || 'false'
-    if ((skipPepperRegistration === 'true') || (m2mClients.includes(context.clientName))) {
-        console.log('skipping Pepper registration for client \'' + context.clientName + '\'');
+
+    // The new flag is opt-in. If no value is defined, the legacy behavior will be used.
+    // If the value is non-null, then assume the client has opted in.
+    var skipPepperRegistration = context.clientMetadata.skipPepperRegistration || null
+    if ((skipPepperRegistration === null) && (m2mClients.includes(context.clientName))) {
+        console.log('skipping Pepper registration for legacy client \'' + context.clientName + '\'');
+        return callback(null, user, context);
+    } else if (skipPepperRegistration === 'true') {
+        console.log('skipping Pepper registration for \'' + context.clientName + '\'');
         return callback(null, user, context);
     }
 
