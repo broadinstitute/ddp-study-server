@@ -883,6 +883,8 @@
   "legacy_willing_answer_more": "Are you willing to answer more questions about the passing of your loved one?",
   "legacy_willing_answer_more_yes": "Yes",
   "legacy_willing_answer_more_no": "No",
+  "legacy_diagnosis_explanation": "You will have an opportunity to list all the diagnoses later in the surveys.",
+  "legacy_primary_diagnosis": "What was the patient's primary diagnosis? *",
 
   "family_member_survey_name": "Family Member Survey",
   "family_member_alive": "Is your loved one alive?",
