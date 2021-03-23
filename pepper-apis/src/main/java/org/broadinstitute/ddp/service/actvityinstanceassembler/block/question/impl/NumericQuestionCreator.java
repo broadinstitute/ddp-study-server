@@ -7,11 +7,6 @@ import org.broadinstitute.ddp.service.actvityinstanceassembler.ActivityInstanceA
 import org.broadinstitute.ddp.service.actvityinstanceassembler.ElementCreator;
 import org.broadinstitute.ddp.service.actvityinstanceassembler.block.question.QuestionCreator;
 
-import static org.broadinstitute.ddp.service.actvityinstanceassembler.RenderTemplateUtil.renderTemplate;
-import static org.broadinstitute.ddp.service.actvityinstanceassembler.block.question.QuestionUtil.getAdditionalInfoFooterTemplateId;
-import static org.broadinstitute.ddp.service.actvityinstanceassembler.block.question.QuestionUtil.getAdditionalInfoHeaderTemplateId;
-import static org.broadinstitute.ddp.service.actvityinstanceassembler.block.question.QuestionUtil.getPromptTemplateId;
-import static org.broadinstitute.ddp.service.actvityinstanceassembler.block.question.QuestionUtil.getTooltipTemplateId;
 import static org.broadinstitute.ddp.service.actvityinstanceassembler.block.question.QuestionUtil.isReadOnly;
 
 /**
@@ -24,30 +19,19 @@ public class NumericQuestionCreator extends ElementCreator {
     }
 
     public NumericQuestion createNumericQuestion(QuestionCreator questionCreator, NumericQuestionDef questionDef) {
-        NumericQuestion numericQuestion = constructNumericQuestion(questionCreator, questionDef);
-        render(numericQuestion, questionDef);
-        return numericQuestion;
-    }
-
-    private NumericQuestion constructNumericQuestion(QuestionCreator questionCreator, NumericQuestionDef questionDef) {
         return new NumericQuestion(
                 questionDef.getStableId(),
-                getPromptTemplateId(questionDef),
-                questionDef.getPlaceholderTemplate() != null
-                        ? questionDef.getPlaceholderTemplate().getTemplateId() : null,
+                getTemplateId(questionDef.getPromptTemplate()),
+                getTemplateId(questionDef.getPlaceholderTemplate()),
                 questionDef.isRestricted(),
                 questionDef.isDeprecated(),
                 isReadOnly(context, questionDef),
-                getTooltipTemplateId(questionDef),
-                getAdditionalInfoHeaderTemplateId(questionDef),
-                getAdditionalInfoFooterTemplateId(questionDef),
+                getTemplateId(questionDef.getTooltipTemplate()),
+                getTemplateId(questionDef.getAdditionalInfoHeaderTemplate()),
+                getTemplateId(questionDef.getAdditionalInfoFooterTemplate()),
                 questionCreator.getAnswers(NumericAnswer.class, questionDef.getStableId()),
                 questionCreator.getValidationRules(questionDef),
                 questionDef.getNumericType()
         );
-    }
-
-    private void render(NumericQuestion numericQuestion, NumericQuestionDef questionDef) {
-        renderTemplate(questionDef.getPlaceholderTemplate(), numericQuestion, context);
     }
 }

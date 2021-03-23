@@ -5,6 +5,7 @@ import org.broadinstitute.ddp.model.activity.instance.question.PicklistGroup;
 import org.broadinstitute.ddp.service.actvityinstanceassembler.ActivityInstanceAssembleService;
 import org.broadinstitute.ddp.service.actvityinstanceassembler.ElementCreator;
 
+
 /**
  * Creates {@link PicklistGroup}
  */
@@ -17,7 +18,7 @@ public class PicklistGroupCreator extends ElementCreator {
     public PicklistGroup createPicklistOption(PicklistGroupDef picklistGroupDef) {
         return new PicklistGroup(
              picklistGroupDef.getStableId(),
-             picklistGroupDef.getNameTemplate() != null ? picklistGroupDef.getNameTemplate().getTemplateId() : null
+                getTemplateId(picklistGroupDef.getNameTemplate())
         );
     }
 }

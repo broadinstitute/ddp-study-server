@@ -7,10 +7,6 @@ import org.broadinstitute.ddp.service.actvityinstanceassembler.ActivityInstanceA
 import org.broadinstitute.ddp.service.actvityinstanceassembler.ElementCreator;
 import org.broadinstitute.ddp.service.actvityinstanceassembler.block.question.QuestionCreator;
 
-import static org.broadinstitute.ddp.service.actvityinstanceassembler.block.question.QuestionUtil.getAdditionalInfoFooterTemplateId;
-import static org.broadinstitute.ddp.service.actvityinstanceassembler.block.question.QuestionUtil.getAdditionalInfoHeaderTemplateId;
-import static org.broadinstitute.ddp.service.actvityinstanceassembler.block.question.QuestionUtil.getPromptTemplateId;
-import static org.broadinstitute.ddp.service.actvityinstanceassembler.block.question.QuestionUtil.getTooltipTemplateId;
 import static org.broadinstitute.ddp.service.actvityinstanceassembler.block.question.QuestionUtil.isReadOnly;
 
 /**
@@ -25,13 +21,13 @@ public class AgreementQuestionCreator extends ElementCreator {
     public AgreementQuestion createAgreementQuestion(QuestionCreator questionCreator, AgreementQuestionDef questionDef) {
         return new AgreementQuestion(
                 questionDef.getStableId(),
-                getPromptTemplateId(questionDef),
+                getTemplateId(questionDef.getPromptTemplate()),
                 questionDef.isRestricted(),
                 questionDef.isDeprecated(),
                 isReadOnly(context, questionDef),
-                getTooltipTemplateId(questionDef),
-                getAdditionalInfoHeaderTemplateId(questionDef),
-                getAdditionalInfoFooterTemplateId(questionDef),
+                getTemplateId(questionDef.getTooltipTemplate()),
+                getTemplateId(questionDef.getAdditionalInfoHeaderTemplate()),
+                getTemplateId(questionDef.getAdditionalInfoFooterTemplate()),
                 questionCreator.getAnswers(AgreementAnswer.class, questionDef.getStableId()),
                 questionCreator.getValidationRules(questionDef)
         );

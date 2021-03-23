@@ -7,11 +7,6 @@ import org.broadinstitute.ddp.service.actvityinstanceassembler.ActivityInstanceA
 import org.broadinstitute.ddp.service.actvityinstanceassembler.ElementCreator;
 import org.broadinstitute.ddp.service.actvityinstanceassembler.block.question.QuestionCreator;
 
-import static org.broadinstitute.ddp.service.actvityinstanceassembler.RenderTemplateUtil.renderTemplate;
-import static org.broadinstitute.ddp.service.actvityinstanceassembler.block.question.QuestionUtil.getAdditionalInfoFooterTemplateId;
-import static org.broadinstitute.ddp.service.actvityinstanceassembler.block.question.QuestionUtil.getAdditionalInfoHeaderTemplateId;
-import static org.broadinstitute.ddp.service.actvityinstanceassembler.block.question.QuestionUtil.getPromptTemplateId;
-import static org.broadinstitute.ddp.service.actvityinstanceassembler.block.question.QuestionUtil.getTooltipTemplateId;
 import static org.broadinstitute.ddp.service.actvityinstanceassembler.block.question.QuestionUtil.isReadOnly;
 
 /**
@@ -24,32 +19,21 @@ public class DateQuestionCreator extends ElementCreator {
     }
 
     public DateQuestion createDateQuestion(QuestionCreator questionCreator, DateQuestionDef questionDef) {
-        DateQuestion dateQuestion = constructDateQuestion(questionCreator, questionDef);
-        render(dateQuestion, questionDef);
-        return dateQuestion;
-    }
-
-    private DateQuestion constructDateQuestion(QuestionCreator questionCreator, DateQuestionDef questionDef) {
         return new DateQuestion(
                 questionDef.getStableId(),
-                getPromptTemplateId(questionDef),
+                getTemplateId(questionDef.getPromptTemplate()),
                 questionDef.isRestricted(),
                 questionDef.isDeprecated(),
                 isReadOnly(context, questionDef),
-                getTooltipTemplateId(questionDef),
-                getAdditionalInfoHeaderTemplateId(questionDef),
-                getAdditionalInfoFooterTemplateId(questionDef),
+                getTemplateId(questionDef.getTooltipTemplate()),
+                getTemplateId(questionDef.getAdditionalInfoHeaderTemplate()),
+                getTemplateId(questionDef.getAdditionalInfoFooterTemplate()),
                 questionCreator.getAnswers(DateAnswer.class, questionDef.getStableId()),
                 questionCreator.getValidationRules(questionDef),
                 questionDef.getRenderMode(),
                 questionDef.isDisplayCalendar(),
                 questionDef.getFields(),
-                questionDef.getPlaceholderTemplate() != null
-                        ? questionDef.getPlaceholderTemplate().getTemplateId() : null
+                getTemplateId(questionDef.getPlaceholderTemplate())
         );
-    }
-
-    private void render(DateQuestion dateQuestion, DateQuestionDef questionDef) {
-        renderTemplate(questionDef.getPlaceholderTemplate(), dateQuestion, context);
     }
 }

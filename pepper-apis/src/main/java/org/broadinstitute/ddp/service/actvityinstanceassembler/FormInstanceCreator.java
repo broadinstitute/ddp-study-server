@@ -1,10 +1,13 @@
 package org.broadinstitute.ddp.service.actvityinstanceassembler;
 
 
+import org.broadinstitute.ddp.content.ContentStyle;
+import org.broadinstitute.ddp.content.HtmlConverter;
 import org.broadinstitute.ddp.db.dao.ActivityI18nDao;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
 import org.broadinstitute.ddp.model.activity.definition.i18n.ActivityI18nDetail;
+import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.activity.instance.FormInstance;
 
 import java.util.Optional;
@@ -23,6 +26,7 @@ public class FormInstanceCreator extends ElementCreator {
         FormInstance formInstance = constructFormInstance(activityI18nDetail);
         addChildren(formInstance);
         updateBlockStatuses(formInstance);
+        render(formInstance);
         return formInstance;
     }
 
@@ -42,12 +46,12 @@ public class FormInstanceCreator extends ElementCreator {
                 instanceDto.getStatusType() != null ? instanceDto.getStatusType().name() : null,
                 instanceDto.getReadonly(),
                 formActivityDef.getListStyleHint(),
-                formActivityDef.getReadonlyHintTemplate() != null ? formActivityDef.getReadonlyHintTemplate().getTemplateId() : null,
+                getTemplateId(formActivityDef.getReadonlyHintTemplate()),
                 formActivityDef.getIntroduction() != null ? formActivityDef.getIntroduction().getSectionId() : null,
                 formActivityDef.getClosing() != null ? formActivityDef.getClosing().getSectionId() : null,
                 instanceDto.getCreatedAtMillis(),
                 instanceDto.getFirstCompletedAt(),
-                formActivityDef.getLastUpdatedTextTemplate() != null ? formActivityDef.getLastUpdatedTextTemplate().getTemplateId() : null,
+                getTemplateId(formActivityDef.getLastUpdatedTextTemplate()),
                 formActivityDef.getLastUpdated(),
                 formActivityDef.canDeleteInstances(),
                 formActivityDef.isFollowup(),
@@ -85,7 +89,18 @@ public class FormInstanceCreator extends ElementCreator {
                 null);
     }
 
-    private void render(FormInstance formInstance, FormActivityDef formActivityDef) {
-        // TODO
+    private void render(FormInstance formInstance) {
+        formInstance.setReadonlyHint(renderTemplate(context.getFormActivityDef().getReadonlyHintTemplate()));
+        formInstance.setActivityDefinitionLastUpdatedText(renderTemplate(context.getFormActivityDef().getLastUpdatedTextTemplate()));
+    }
+
+    private String renderTemplate(Template template) {
+        String renderedString = template != null ? template.render(context.getIsoLangCode()) : null;
+        if (renderedString != null) {
+            if (context.getStyle() == ContentStyle.BASIC) {
+                renderedString = HtmlConverter.getPlainText(renderedString);
+            }
+        }
+        return renderedString;
     }
 }

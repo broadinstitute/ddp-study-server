@@ -11,11 +11,6 @@ import org.broadinstitute.ddp.service.actvityinstanceassembler.block.question.Qu
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.broadinstitute.ddp.service.actvityinstanceassembler.RenderTemplateUtil.renderTemplate;
-import static org.broadinstitute.ddp.service.actvityinstanceassembler.block.question.QuestionUtil.getAdditionalInfoFooterTemplateId;
-import static org.broadinstitute.ddp.service.actvityinstanceassembler.block.question.QuestionUtil.getAdditionalInfoHeaderTemplateId;
-import static org.broadinstitute.ddp.service.actvityinstanceassembler.block.question.QuestionUtil.getPromptTemplateId;
-import static org.broadinstitute.ddp.service.actvityinstanceassembler.block.question.QuestionUtil.getTooltipTemplateId;
 import static org.broadinstitute.ddp.service.actvityinstanceassembler.block.question.QuestionUtil.isReadOnly;
 
 /**
@@ -28,28 +23,20 @@ public class CompositeQuestionCreator extends ElementCreator {
     }
 
     public CompositeQuestion createCompositeQuestion(QuestionCreator questionCreator, CompositeQuestionDef questionDef) {
-        CompositeQuestion compositeQuestion = constructCompositeQuestion(questionCreator, questionDef);
-        render(compositeQuestion, questionDef);
-        return compositeQuestion;
-    }
-
-    private CompositeQuestion constructCompositeQuestion(QuestionCreator questionCreator, CompositeQuestionDef questionDef) {
         return new CompositeQuestion(
                 questionDef.getStableId(),
-                getPromptTemplateId(questionDef),
+                getTemplateId(questionDef.getPromptTemplate()),
                 questionDef.isRestricted(),
                 questionDef.isDeprecated(),
                 isReadOnly(context, questionDef),
-                getTooltipTemplateId(questionDef),
-                getAdditionalInfoHeaderTemplateId(questionDef),
-                getAdditionalInfoFooterTemplateId(questionDef),
+                getTemplateId(questionDef.getTooltipTemplate()),
+                getTemplateId(questionDef.getAdditionalInfoHeaderTemplate()),
+                getTemplateId(questionDef.getAdditionalInfoFooterTemplate()),
                 questionCreator.getValidationRules(questionDef),
                 questionDef.isAllowMultiple(),
                 questionDef.isUnwrapOnExport(),
-                questionDef.getAddButtonTemplate() != null
-                        ? questionDef.getAddButtonTemplate().getTemplateId() : null,
-                questionDef.getAdditionalItemTemplate() != null
-                        ? questionDef.getAdditionalItemTemplate().getTemplateId() : null,
+                getTemplateId(questionDef.getAddButtonTemplate()),
+                getTemplateId(questionDef.getAdditionalItemTemplate()),
                 getChildQuestions(questionDef),
                 questionDef.getChildOrientation(),
                 questionCreator.getAnswers(CompositeAnswer.class, questionDef.getStableId())
@@ -63,10 +50,5 @@ public class CompositeQuestionCreator extends ElementCreator {
             questionDef.getChildren().forEach(q -> childQuestions.add(questionCreator.createQuestion(q)));
         }
         return childQuestions;
-    }
-
-    private void render(CompositeQuestion compositeQuestion, CompositeQuestionDef questionDef) {
-        renderTemplate(questionDef.getAddButtonTemplate(), compositeQuestion, context);
-        renderTemplate(questionDef.getAdditionalItemTemplate(), compositeQuestion, context);
     }
 }

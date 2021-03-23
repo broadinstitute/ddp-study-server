@@ -150,6 +150,10 @@ public final class FormInstance extends ActivityInstance {
         return readonlyHint;
     }
 
+    public void setReadonlyHint(String readonlyHint) {
+        this.readonlyHint = readonlyHint;
+    }
+
     public Long getIntroductionSectionId() {
         return introductionSectionId;
     }
@@ -176,6 +180,10 @@ public final class FormInstance extends ActivityInstance {
 
     public String getActivityDefinitionLastUpdatedText() {
         return activityDefinitionLastUpdatedText;
+    }
+
+    public void setActivityDefinitionLastUpdatedText(String activityDefinitionLastUpdatedText) {
+        this.activityDefinitionLastUpdatedText = activityDefinitionLastUpdatedText;
     }
 
     public LocalDateTime getActivityDefinitionLastUpdated() {

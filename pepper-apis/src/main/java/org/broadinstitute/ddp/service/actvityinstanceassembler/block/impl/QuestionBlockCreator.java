@@ -19,6 +19,4 @@ public class QuestionBlockCreator extends ElementCreator {
     public QuestionBlock createQuestionBlock(QuestionBlockDef questionBlockDef) {
         return new QuestionBlock(new QuestionCreator(context).createQuestion(questionBlockDef.getQuestion()));
     }
-
-
 }

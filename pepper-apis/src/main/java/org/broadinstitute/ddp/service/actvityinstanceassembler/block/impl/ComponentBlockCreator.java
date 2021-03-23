@@ -1,6 +1,5 @@
 package org.broadinstitute.ddp.service.actvityinstanceassembler.block.impl;
 
-
 import org.broadinstitute.ddp.model.activity.definition.ComponentBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.MailingAddressComponentDef;
 import org.broadinstitute.ddp.model.activity.instance.ComponentBlock;
@@ -38,9 +37,5 @@ public class ComponentBlockCreator extends ElementCreator {
         }
 
         return new ComponentBlock(formComponent);
-    }
-
-    private void render() {
-
     }
 }

@@ -27,8 +27,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static org.broadinstitute.ddp.service.actvityinstanceassembler.RenderTemplateUtil.renderTemplate;
-
 /**
  * Creates {@link Question}
  */
@@ -40,7 +38,7 @@ public class QuestionCreator extends ElementCreator {
 
     public Question createQuestion(QuestionDef questionDef) {
         Question question = constructQuestion(questionDef);
-        render(question, questionDef);
+        applyRenderedTemplates(question);
         return question;
     }
 
@@ -85,12 +83,5 @@ public class QuestionCreator extends ElementCreator {
                 .collect(Collectors.toList());
         }
         return answers;
-    }
-
-    private void render(Question question, QuestionDef questionDef) {
-        renderTemplate(questionDef.getAdditionalInfoHeaderTemplate(), question, context);
-        renderTemplate(questionDef.getAdditionalInfoFooterTemplate(), question, context);
-        renderTemplate(questionDef.getTooltipTemplate(), question, context);
-        renderTemplate(questionDef.getPromptTemplate(), question, context);
     }
 }

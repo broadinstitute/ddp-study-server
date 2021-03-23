@@ -21,20 +21,16 @@ public class PicklistOptionCreator extends ElementCreator {
         return createPicklistOption(picklistOptionDef, false);
     }
 
-    private PicklistOption createPicklistOption(PicklistOptionDef picklistOptionDef, boolean isNested) {
+    public PicklistOption createPicklistOption(PicklistOptionDef picklistOptionDef, boolean isNested) {
         return new PicklistOption(
-            picklistOptionDef.getStableId(),
-            picklistOptionDef.getOptionLabelTemplate() != null
-                    ? picklistOptionDef.getOptionLabelTemplate().getTemplateId() : null,
-            picklistOptionDef.getTooltipTemplate() != null
-                    ? picklistOptionDef.getTooltipTemplate().getTemplateId() : null,
-            picklistOptionDef.getDetailLabelTemplate() != null
-                    ? picklistOptionDef.getDetailLabelTemplate().getTemplateId() : null,
-            picklistOptionDef.isDetailsAllowed(),
-            picklistOptionDef.isExclusive(),
-            isNested ? null : (picklistOptionDef.getNestedOptionsLabelTemplate() != null
-                    ? picklistOptionDef.getNestedOptionsLabelTemplate().getTemplateId() : null),
-            isNested ? null : createNestedPicklistOptions(picklistOptionDef.getNestedOptions())
+                picklistOptionDef.getStableId(),
+                getTemplateId(picklistOptionDef.getOptionLabelTemplate()),
+                getTemplateId(picklistOptionDef.getTooltipTemplate()),
+                getTemplateId(picklistOptionDef.getDetailLabelTemplate()),
+                picklistOptionDef.isDetailsAllowed(),
+                picklistOptionDef.isExclusive(),
+                isNested ? null : (getTemplateId(picklistOptionDef.getNestedOptionsLabelTemplate())),
+                isNested ? null : createNestedPicklistOptions(picklistOptionDef.getNestedOptions())
         );
     }
 

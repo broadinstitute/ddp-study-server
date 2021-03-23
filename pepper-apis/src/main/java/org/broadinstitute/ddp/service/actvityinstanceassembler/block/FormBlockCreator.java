@@ -30,7 +30,8 @@ public class FormBlockCreator extends ElementCreator {
     public FormBlock createBlock(FormBlockDef formBlockDef) {
         FormBlock formBlock = constructFormBlock(formBlockDef);
         copyCommonFields(formBlock, formBlockDef);
-        return  formBlock;
+        applyRenderedTemplates(formBlock);
+        return formBlock;
     }
 
     private FormBlock constructFormBlock(FormBlockDef formBlockDef) {

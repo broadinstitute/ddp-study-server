@@ -13,7 +13,6 @@ import org.broadinstitute.ddp.model.activity.instance.PhysicianInstitutionCompon
 import org.broadinstitute.ddp.service.actvityinstanceassembler.ActivityInstanceAssembleService;
 import org.broadinstitute.ddp.service.actvityinstanceassembler.ElementCreator;
 
-import static org.broadinstitute.ddp.service.actvityinstanceassembler.RenderTemplateUtil.renderTemplate;
 
 /**
  * Creates {@link InstitutionComponent}, {@link PhysicianComponent}
@@ -26,21 +25,17 @@ class PhysicianInstitutionComponentBlockCreator extends ElementCreator {
     }
 
     public PhysicianComponent createPhysicianComponent(ComponentBlockDef componentBlockDef) {
-        PhysicianComponent physicianComponent = new PhysicianComponent(
+        return new PhysicianComponent(
                 createInstitutionPhysicianComponentDto((PhysicianComponentDef)componentBlockDef),
                 componentBlockDef.shouldHideNumber()
         );
-        render(physicianComponent, (PhysicianComponentDef)componentBlockDef);
-        return physicianComponent;
     }
 
     public InstitutionComponent createInstitutionComponent(ComponentBlockDef componentBlockDef) {
-        InstitutionComponent institutionComponent = new InstitutionComponent(
+        return new InstitutionComponent(
                 createInstitutionPhysicianComponentDto((InstitutionComponentDef)componentBlockDef),
                 componentBlockDef.shouldHideNumber()
         );
-        render(institutionComponent, (InstitutionComponentDef)componentBlockDef);
-        return institutionComponent;
     }
 
     private InstitutionPhysicianComponentDto createInstitutionPhysicianComponentDto(
@@ -53,25 +48,12 @@ class PhysicianInstitutionComponentBlockCreator extends ElementCreator {
                         physicianInstitutionComponentDef.getRevisionId()
                 ),
                 physicianInstitutionComponentDef.getInstitutionType(),
-                physicianInstitutionComponentDef.getTitleTemplate() != null
-                        ? physicianInstitutionComponentDef.getTitleTemplate().getTemplateId() : null,
-                physicianInstitutionComponentDef.getSubtitleTemplate() != null
-                        ? physicianInstitutionComponentDef.getSubtitleTemplate().getTemplateId() : null,
-                physicianInstitutionComponentDef.getAddButtonTemplate() != null
-                        ? physicianInstitutionComponentDef.getAddButtonTemplate().getTemplateId() : null,
+                getTemplateId(physicianInstitutionComponentDef.getTitleTemplate()),
+                getTemplateId(physicianInstitutionComponentDef.getSubtitleTemplate()),
+                getTemplateId(physicianInstitutionComponentDef.getAddButtonTemplate()),
                 physicianInstitutionComponentDef.allowMultiple(),
                 physicianInstitutionComponentDef.showFields(),
                 physicianInstitutionComponentDef.isRequired()
         );
-    }
-
-    private void render(PhysicianInstitutionComponent physicianInstitutionComponent,
-                        PhysicianInstitutionComponentDef physicianInstitutionComponentDef) {
-        renderTemplate(physicianInstitutionComponentDef.getTitleTemplate(),
-                physicianInstitutionComponentDef.getTitleTemplate().getTemplateId(), physicianInstitutionComponent, context);
-        renderTemplate(physicianInstitutionComponentDef.getSubtitleTemplate(),
-                physicianInstitutionComponentDef.getSubtitleTemplate().getTemplateId(), physicianInstitutionComponent, context);
-        renderTemplate(physicianInstitutionComponentDef.getAddButtonTemplate(),
-                physicianInstitutionComponentDef.getAddButtonTemplate().getTemplateId(), physicianInstitutionComponent, context);
     }
 }

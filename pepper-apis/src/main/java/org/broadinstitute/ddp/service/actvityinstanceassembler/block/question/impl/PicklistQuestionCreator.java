@@ -12,11 +12,6 @@ import org.broadinstitute.ddp.service.actvityinstanceassembler.block.question.Qu
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.broadinstitute.ddp.service.actvityinstanceassembler.RenderTemplateUtil.renderTemplate;
-import static org.broadinstitute.ddp.service.actvityinstanceassembler.block.question.QuestionUtil.getAdditionalInfoFooterTemplateId;
-import static org.broadinstitute.ddp.service.actvityinstanceassembler.block.question.QuestionUtil.getAdditionalInfoHeaderTemplateId;
-import static org.broadinstitute.ddp.service.actvityinstanceassembler.block.question.QuestionUtil.getPromptTemplateId;
-import static org.broadinstitute.ddp.service.actvityinstanceassembler.block.question.QuestionUtil.getTooltipTemplateId;
 import static org.broadinstitute.ddp.service.actvityinstanceassembler.block.question.QuestionUtil.isReadOnly;
 
 /**
@@ -29,27 +24,20 @@ public class PicklistQuestionCreator extends ElementCreator {
     }
 
     public PicklistQuestion createPicklistQuestion(QuestionCreator questionCreator, PicklistQuestionDef questionDef) {
-        PicklistQuestion picklistQuestion = constructPicklistQuestion(questionCreator, questionDef);
-        render(picklistQuestion, questionDef);
-        return picklistQuestion;
-    }
-
-    private PicklistQuestion constructPicklistQuestion(QuestionCreator questionCreator, PicklistQuestionDef questionDef) {
         return new PicklistQuestion(
                 questionDef.getStableId(),
-                getPromptTemplateId(questionDef),
+                getTemplateId(questionDef.getPromptTemplate()),
                 questionDef.isRestricted(),
                 questionDef.isDeprecated(),
                 isReadOnly(context, questionDef),
-                getTooltipTemplateId(questionDef),
-                getAdditionalInfoHeaderTemplateId(questionDef),
-                getAdditionalInfoFooterTemplateId(questionDef),
+                getTemplateId(questionDef.getTooltipTemplate()),
+                getTemplateId(questionDef.getAdditionalInfoHeaderTemplate()),
+                getTemplateId(questionDef.getAdditionalInfoFooterTemplate()),
                 questionCreator.getAnswers(PicklistAnswer.class, questionDef.getStableId()),
                 questionCreator.getValidationRules(questionDef),
                 questionDef.getSelectMode(),
                 questionDef.getRenderMode(),
-                questionDef.getPicklistLabelTemplate() != null
-                        ? questionDef.getPicklistLabelTemplate().getTemplateId() : null,
+                getTemplateId(questionDef.getPicklistLabelTemplate()),
                 createPickListOptions(questionDef),
                 createPickListGroups(questionDef)
         );
@@ -72,9 +60,5 @@ public class PicklistQuestionCreator extends ElementCreator {
             questionDef.getGroups().forEach(pg -> picklistGroups.add(picklistGroupCreator.createPicklistOption(pg)));
         }
         return picklistGroups;
-    }
-
-    private void render(PicklistQuestion picklistQuestion, PicklistQuestionDef questionDef) {
-        renderTemplate(questionDef.getPicklistLabelTemplate(), picklistQuestion, context);
     }
 }

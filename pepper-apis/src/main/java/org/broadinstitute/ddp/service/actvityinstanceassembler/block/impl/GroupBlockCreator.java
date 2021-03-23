@@ -7,7 +7,6 @@ import org.broadinstitute.ddp.service.actvityinstanceassembler.ActivityInstanceA
 import org.broadinstitute.ddp.service.actvityinstanceassembler.ElementCreator;
 import org.broadinstitute.ddp.service.actvityinstanceassembler.block.FormBlockCreator;
 
-import static org.broadinstitute.ddp.service.actvityinstanceassembler.RenderTemplateUtil.renderTemplate;
 
 /**
  * Creates {@link GroupBlock}
@@ -21,7 +20,6 @@ public class GroupBlockCreator extends ElementCreator {
     public GroupBlock createGroupBlock(GroupBlockDef groupBlockDef) {
         GroupBlock groupBlock = constructComponentBlock(groupBlockDef);
         addChildren(groupBlock, groupBlockDef);
-        render(groupBlock, groupBlockDef);
         return groupBlock;
     }
 
@@ -29,7 +27,7 @@ public class GroupBlockCreator extends ElementCreator {
         return new GroupBlock(
                 groupBlockDef.getListStyleHint(),
                 groupBlockDef.getPresentationHint(),
-                groupBlockDef.getTitleTemplate() != null ? groupBlockDef.getTitleTemplate().getTemplateId() : null
+                getTemplateId(groupBlockDef.getTitleTemplate())
         );
     }
 
@@ -38,9 +36,5 @@ public class GroupBlockCreator extends ElementCreator {
             groupBlockDef.getNested().forEach(b ->
                     groupBlock.getNested().add(new FormBlockCreator(context).createBlock(b)));
         }
-    }
-
-    private void render(GroupBlock groupBlock, GroupBlockDef groupBlockDef) {
-        renderTemplate(groupBlockDef.getTitleTemplate(), groupBlock.getTitleTemplateId(), groupBlock, context);
     }
 }

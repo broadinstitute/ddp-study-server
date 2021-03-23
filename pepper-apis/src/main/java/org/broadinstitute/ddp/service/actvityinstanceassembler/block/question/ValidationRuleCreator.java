@@ -64,7 +64,7 @@ public class ValidationRuleCreator extends ElementCreator {
         return RegexRule.of(
                 ruleDef.getRuleId(),
                 resolveRuleMessage(ruleDef),
-                ruleDef.getHintTemplate() !=  null ? ruleDef.getHintTemplate().render(context.getIsoLangCode()) : null,
+                getHintTitle(ruleDef),
                 ruleDef.getAllowSave(),
                 ruleDef.getPattern()
         );
@@ -74,7 +74,7 @@ public class ValidationRuleCreator extends ElementCreator {
         return LengthRule.of(
                 ruleDef.getRuleId(),
                 resolveRuleMessage(ruleDef),
-                ruleDef.getHintTemplate() !=  null ? ruleDef.getHintTemplate().render(context.getIsoLangCode()) : null,
+                getHintTitle(ruleDef),
                 ruleDef.getAllowSave(),
                 ruleDef.getMin(),
                 ruleDef.getMax()
@@ -85,7 +85,7 @@ public class ValidationRuleCreator extends ElementCreator {
         return new CompleteRule(
                 ruleDef.getRuleId(),
                 resolveRuleMessage(ruleDef),
-                ruleDef.getHintTemplate() !=  null ? ruleDef.getHintTemplate().render(context.getIsoLangCode()) : null,
+                getHintTitle(ruleDef),
                 ruleDef.getAllowSave()
         );
     }
@@ -94,7 +94,7 @@ public class ValidationRuleCreator extends ElementCreator {
         return new RequiredRule(
                 ruleDef.getRuleId(),
                 resolveRuleMessage(ruleDef),
-                ruleDef.getHintTemplate() !=  null ? ruleDef.getHintTemplate().render(context.getIsoLangCode()) : null,
+                getHintTitle(ruleDef),
                 ruleDef.getAllowSave()
         );
     }
@@ -103,7 +103,7 @@ public class ValidationRuleCreator extends ElementCreator {
         return AgeRangeRule.of(
                 ruleDef.getRuleId(),
                 resolveRuleMessage(ruleDef),
-                ruleDef.getHintTemplate() !=  null ? ruleDef.getHintTemplate().render(context.getIsoLangCode()) : null,
+                getHintTitle(ruleDef),
                 ruleDef.getAllowSave(),
                 ruleDef.getMinAge(),
                 ruleDef.getMaxAge()
@@ -114,7 +114,7 @@ public class ValidationRuleCreator extends ElementCreator {
         return IntRangeRule.of(
                 ruleDef.getRuleId(),
                 resolveRuleMessage(ruleDef),
-                ruleDef.getHintTemplate() !=  null ? ruleDef.getHintTemplate().render(context.getIsoLangCode()) : null,
+                getHintTitle(ruleDef),
                 ruleDef.getAllowSave(),
                 ruleDef.getMin(),
                 ruleDef.getMax()
@@ -125,7 +125,7 @@ public class ValidationRuleCreator extends ElementCreator {
         return DateRangeRule.of(
                 ruleDef.getRuleId(),
                 resolveRuleMessage(ruleDef),
-                ruleDef.getHintTemplate() !=  null ? ruleDef.getHintTemplate().render(context.getIsoLangCode()) : null,
+                getHintTitle(ruleDef),
                 ruleDef.getAllowSave(),
                 ruleDef.getStartDate(),
                 ruleDef.getEndDate()
@@ -137,7 +137,7 @@ public class ValidationRuleCreator extends ElementCreator {
                 ruleDef.getRuleType(),
                 ruleDef.getRuleId(),
                 resolveRuleMessage(ruleDef),
-                ruleDef.getHintTemplate() !=  null ? ruleDef.getHintTemplate().render(context.getIsoLangCode()) : null,
+                getHintTitle(ruleDef),
                 ruleDef.getAllowSave()
         );
     }
@@ -146,7 +146,7 @@ public class ValidationRuleCreator extends ElementCreator {
         return NumOptionsSelectedRule.of(
                 ruleDef.getRuleId(),
                 resolveRuleMessage(ruleDef),
-                ruleDef.getHintTemplate() !=  null ? ruleDef.getHintTemplate().render(context.getIsoLangCode()) : null,
+                getHintTitle(ruleDef),
                 ruleDef.getAllowSave(),
                 ruleDef.getMin(),
                 ruleDef.getMax()
@@ -159,5 +159,9 @@ public class ValidationRuleCreator extends ElementCreator {
                 validationDao.getJdbiValidationType().getTypeId(ruleDef.getRuleType()),
                 context.getLangCodeId()
         );
+    }
+
+    private String getHintTitle(RuleDef ruleDef) {
+        return ruleDef.getHintTemplate() !=  null ? ruleDef.getHintTemplate().render(context.getIsoLangCode()) : null;
     }
 }

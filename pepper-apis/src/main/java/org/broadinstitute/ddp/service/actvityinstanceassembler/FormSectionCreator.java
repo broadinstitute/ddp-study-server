@@ -5,8 +5,6 @@ import org.broadinstitute.ddp.model.activity.definition.FormSectionDef;
 import org.broadinstitute.ddp.model.activity.instance.FormSection;
 import org.broadinstitute.ddp.service.actvityinstanceassembler.block.FormBlockCreator;
 
-import static org.broadinstitute.ddp.service.actvityinstanceassembler.RenderTemplateUtil.renderTemplate;
-
 /**
  * Creates {@link FormSection}
  */
@@ -20,17 +18,14 @@ public class FormSectionCreator extends ElementCreator {
         if (formSectionDef != null) {
             FormSection formSection = constructFormSection(formSectionDef);
             addChildren(formSection, formSectionDef);
-            render(formSection, formSectionDef);
+            applyRenderedTemplates(formSection);
             return formSection;
         }
         return null;
     }
 
     private FormSection constructFormSection(FormSectionDef formSectionDef) {
-        FormSection formSection = new FormSection(
-                formSectionDef.getNameTemplate() != null ? formSectionDef.getNameTemplate().getTemplateId() : null
-        );
-        return formSection;
+        return new FormSection(getTemplateId(formSectionDef.getNameTemplate()));
     }
 
     private void addChildren(FormSection formSection, FormSectionDef formSectionDef) {
@@ -39,9 +34,5 @@ public class FormSectionCreator extends ElementCreator {
 
         FormBlockCreator formBlockCreator = new FormBlockCreator(context);
         formSectionDef.getBlocks().forEach(b -> formSection.getBlocks().add(formBlockCreator.createBlock(b)));
-    }
-
-    private void render(FormSection formSection, FormSectionDef formSectionDef) {
-        renderTemplate(formSectionDef.getNameTemplate(), formSection, context);
     }
 }
