@@ -19,7 +19,7 @@ function (user, context, callback) {
 
     // The new flag is opt-in. If no value is defined, the legacy behavior will be used.
     // If the value is non-null, then assume the client has opted in.
-    var skipPepperRegistration = context.clientMetadata.skipPepperRegistration || null
+    var skipPepperRegistration = context.clientMetadata.skipPepperRegistration || null;
     if ((skipPepperRegistration === null) && (m2mClients.includes(context.clientName))) {
         console.log('skipping Pepper registration for legacy client \'' + context.clientName + '\'');
         return callback(null, user, context);
