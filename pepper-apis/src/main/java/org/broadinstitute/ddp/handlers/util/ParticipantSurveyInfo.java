@@ -1,0 +1,30 @@
+package org.broadinstitute.ddp.handlers.util;
+
+import lombok.Data;
+import lombok.NonNull;
+import org.broadinstitute.ddp.util.DeliveryAddress;
+
+@Data
+public class ParticipantSurveyInfo
+{
+    public ParticipantSurveyInfo() {
+    }
+
+    private String participantId;
+    private String shortId;
+    private String legacyShortId;
+    private String survey;
+    private String followUpInstance;
+    private Long surveyQueued;
+    private String surveyStatus;
+    private Long triggerId;
+
+    public ParticipantSurveyInfo(@NonNull String participantId, @NonNull String survey, @NonNull String followUpInstance, @NonNull Long surveyQueued,
+                                 @NonNull Long triggerId) {
+        this.participantId = participantId;
+        this.survey = survey;
+        this.followUpInstance = followUpInstance;
+        this.surveyQueued = surveyQueued;
+        this.triggerId = triggerId;
+    }
+}

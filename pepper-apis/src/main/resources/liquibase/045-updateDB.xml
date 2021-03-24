@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+    <changeSet author="andrew" id="DDP-5672-longitudinal-wait">
+        <addColumn tableName="ddp_kit_request_settings">
+            <!-- if set, longitudinal kits should not be sent out unless a previous kit for the ptp has come back within at most this many days -->
+            <column name="longitudinal_max_wait_days" type="int"/>
+        </addColumn>
+        <addColumn tableName="ddp_kit_request">
+            <!-- time at which an order was transmitted to an external system -->
+            <column name="order_transmitted_at" type="datetime(6)"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="andrew" author="DDP-5672-backfill">
+        <!--
+            set approximate order date for tbos gbf orders.  if null, set a bogus date
+            so that new code does not accidentally re-order the kit.
+         -->
+        <sql>
+            update ddp_kit_request_settings set longitudinal_max_wait_days=30 where external_shipper='gbf'
+        </sql>
+        <sql>
+            update ddp_kit_request set order_transmitted_at = ifnull(from_unixtime(external_order_date/1000),'1970-01-01')
+            where
+            ddp_instance_id = (select i.ddp_instance_id from ddp_instance i where i.instance_name = 'testboston')
+            and
+            kit_type_id in
+            (select sub.kit_type_id
+            from
+            ddp_kit_request_settings ks,
+            sub_kits_settings sub,
+            ddp_instance i
+            where
+            i.instance_name = 'testboston'
+            and
+            i.ddp_instance_id = ks.ddp_instance_id
+            and
+            ks.ddp_kit_request_settings_id = sub.ddp_kit_request_settings_id
+            and
+            ks.external_shipper = 'gbf')
+            and
+            order_transmitted_at is null
+        </sql>
+    </changeSet>
+</databaseChangeLog>

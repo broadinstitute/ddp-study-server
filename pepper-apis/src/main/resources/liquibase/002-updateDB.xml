@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+    <changeSet author="diane" id="05082018">
+        <createTable tableName="drug_list">
+            <column autoIncrement="true" name="drug_id" type="INT">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="display_name" type="VARCHAR(200)"/>
+            <column name="generic_name" type="VARCHAR(100)"/>
+            <column name="brand_name" type="VARCHAR(100)"/>
+            <column name="chemocat2" type="VARCHAR(50)"/>
+            <column name="chemo_type" type="VARCHAR(1)"/>
+            <column name="study_drug" type="TINYINT(1)"/>
+            <column name="treatment_type" type="VARCHAR(1)"/>
+            <column name="chemotherapy" type="VARCHAR(1)"/>
+            <column name="active" type="TINYINT(1)"/>
+            <column name="date_created" type="BIGINT"/>
+            <column name="date_updated" type="BIGINT"/>
+        </createTable>
+    </changeSet>
+</databaseChangeLog>

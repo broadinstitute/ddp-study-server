@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+    <changeSet id="DDP-3730_tissueFields" author="pegah">
+        <addColumn tableName="ddp_tissue">
+            <column name="tumor_percentage" type="VARCHAR(100)" afterColumn="sent_gp"></column>
+        </addColumn>
+        <addColumn tableName="ddp_tissue">
+            <column name="tissue_sequence" type="VARCHAR(100)" afterColumn="sent_gp"></column>
+        </addColumn>
+    </changeSet>
+    <changeSet id="DDP-3851_materialsReceived" author="pegah">
+        <addColumn tableName="ddp_tissue">
+            <column name="uss_count" type="INT(11)" afterColumn="count_received"></column>
+        </addColumn>
+        <addColumn tableName="ddp_tissue">
+            <column name="blocks_count" type="INT(11)" afterColumn="count_received"></column>
+        </addColumn>
+        <addColumn tableName="ddp_tissue">
+            <column name="scrolls_count" type="INT(11)" afterColumn="count_received"></column>
+        </addColumn>
+        <addColumn tableName="ddp_tissue">
+            <column name="h_e_count" type="INT(11)" afterColumn="count_received"></column>
+        </addColumn>
+    </changeSet>
+    <changeSet id="t.collaboratorSampleIdUnique" author="pegah">
+        <addUniqueConstraint tableName="ddp_tissue" columnNames="collaborator_sample_id"></addUniqueConstraint>
+    </changeSet>
+    <changeSet id="05112019_nullCollaboratorSampleId" author="pegah">
+        <sql>UPDATE ddp_tissue set collaborator_sample_id = NULL WHERE tissue_id &lt;&gt; 0 AND tissue_id in
+            (SELECT tissue_id FROM (SELECT * from ddp_tissue) as something
+            WHERE something.collaborator_sample_id = '');
+        </sql>
+    </changeSet>
+    <changeSet id="02122019_MrUnableObtainText" author="pegah">
+        <addColumn tableName="ddp_medical_record">
+            <column name="unable_obtain_text" type="VARCHAR(1000)" afterColumn="unable_obtain"></column>
+        </addColumn>
+    </changeSet>
+    <changeSet id="DDP-3730_realmId" author="pegah">
+        <addColumn tableName="view_filters">
+            <column name="ddp_realm_id" type="VARCHAR(1000)" afterColumn="ddp_group_id" defaultValue="NULL"></column>
+        </addColumn>
+    </changeSet>
+</databaseChangeLog>

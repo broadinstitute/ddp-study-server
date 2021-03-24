@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+       http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+    <changeSet author="pegah" id="DDP-3302_03132019_tissue">
+        <addColumn tableName="ddp_tissue">
+            <column defaultValue="NULL" name="first_sm_id" type="VARCHAR(45)" afterColumn="sm_id">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+        <addColumn tableName="ddp_tissue">
+            <column name="additional_tissue_value" defaultValue="NULL" type="VARCHAR(1000)"
+                    afterColumn="sent_gp"></column>
+        </addColumn>
+
+        <addColumn tableName="ddp_tissue">
+            <column defaultValue="NULL" name="expected_return" type="VARCHAR(45)" beforeColumn="h_e">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+        <addColumn tableName="ddp_tissue">
+            <column defaultValue="NULL" name="return_date" type="VARCHAR(45)" afterColumn="expected_return">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+        <addColumn tableName="ddp_tissue">
+            <column defaultValue="NULL" name="return_fedex_id" type="VARCHAR(45)" afterColumn="expected_return">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+    </changeSet>
+    <changeSet author="pegah" id="DDP-3274_03042019">
+        <addColumn tableName="ddp_onc_history_detail">
+            <column defaultValue="NULL" name="tissue_problem_option" type="VARCHAR(45)"
+                    afterColumn="tissue_problem_text">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+        <addColumn tableName="ddp_onc_history_detail">
+            <column defaultValue="NULL" name="destruction_policy" type="VARCHAR(45)"
+                    afterColumn="tissue_problem_option">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+    </changeSet>
+    <changeSet id="DDP-3302_03042019_TissueSettingsNewTable" author="pegah">
+        <createTable tableName="tissue_settings">
+            <column autoIncrement="true" name="tissue_settings_id" type="int(11)">
+                <constraints primaryKey="true"></constraints>
+            </column>
+            <column name="ddp_instance_id" type="int(11)">
+                <constraints nullable="false"></constraints>
+            </column>
+            <column name="column_name" type="VARCHAR(45)">
+                <constraints nullable="false"></constraints>
+            </column>
+            <column name="column_display" type="VARCHAR(45)">
+                <constraints nullable="false"></constraints>
+            </column>
+            <column name="deleted" type="tinyint(1)"></column>
+        </createTable>
+    </changeSet>
+</databaseChangeLog>
+
+        <!--run this sql manually in db-->
+        <!--<changeSet id="DDP-3302_03062019_AngioAdditionalField" author="pegah">-->
+        <!--<insert tableName="tissue_settings">-->
+        <!--<column name="ddp_instance_id" type="int(11)"-->
+        <!--valueComputed="(SELECT ddp_instance_id from ddp_instance where instance_name like 'Angio')"/>-->
+        <!--<column name="column_name" type="VARCHAR(45)" value="consult1"/>-->
+        <!--<column name="column_display" type="VARCHAR(45)" value="Consult ID 1"/>-->
+        <!--<column name="deleted" type="tinyint(1)" value="0"/>-->
+        <!--</insert>-->
+        <!--<insert tableName="tissue_settings">-->
+        <!--<column name="ddp_instance_id" type="int(11)"-->
+        <!--valueComputed="(SELECT ddp_instance_id from ddp_instance where instance_name like 'Angio')"/>-->
+        <!--<column name="column_name" type="VARCHAR(45)" value="consult2"/>-->
+        <!--<column name="column_display" type="VARCHAR(45)" value="Consult ID 2"/>-->
+        <!--<column name="deleted" type="tinyint(1)" value="0"/>-->
+        <!--</insert>-->
+        <!--<insert tableName="tissue_settings">-->
+        <!--<column name="ddp_instance_id" type="int(11)"-->
+        <!--valueComputed="(SELECT ddp_instance_id from ddp_instance where instance_name like 'Angio')"/>-->
+        <!--<column name="column_name" type="VARCHAR(45)" value="consult3"/>-->
+        <!--<column name="column_display" type="VARCHAR(45)" value="Consult ID 3"/>-->
+        <!--<column name="deleted" type="tinyint(1)" value="0"/>-->
+        <!--</insert>-->
+        <!--</changeSet>-->
+        <!--<changeSet id="DDP-3302_03122019_sqlQueries" author="pegah">-->
+
+        <!--<sql>update  ddp_onc_history_detail-->
+        <!--set `tissue_problem_option` = 'other'-->
+        <!--Where onc_history_detail_id in-->
+        <!--(SELECT onc_history_detail_id FROM (SELECT * from ddp_onc_history_detail) as oncDetail-->
+        <!--Where oncDetail.unable_obtain = 1);</sql>-->
+        <!--<sql>update  ddp_onc_history_detail-->
+        <!--set `tissue_problem_option` = 'other'-->
+        <!--Where onc_history_detail_id in-->
+        <!--(SELECT onc_history_detail_id FROM (SELECT * from ddp_onc_history_detail) as oncDetail-->
+        <!--Where oncDetail.tissue_problem = 1);</sql>-->
+        <!--<sql>update  ddp_onc_history_detail-->
+        <!--set `notes` = concat( COALESCE(`notes`,''),  concat(' PROBLEM WITH TISSUE: ',ddp_onc_history_detail.tissue_problem_text))-->
+        <!--Where onc_history_detail_id in-->
+        <!--(SELECT onc_history_detail_id FROM (SELECT * from ddp_onc_history_detail) as oncDetail-->
+        <!--Where oncDetail.tissue_problem_text is not null);</sql>-->
+        <!--</changeSet>-->
