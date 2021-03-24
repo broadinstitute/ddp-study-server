@@ -18,11 +18,6 @@ findDetailsByActivityIdAndTimestamp() ::= <<
    and (rev.end_date is null or :timestamp \< rev.end_date)
 >>
 
-findDetailByLanguageCodeIdAndActivityId() ::= <<
-<select_all_i18n_details()>
-where i18n.language_code_id = :languageCodeId and i18n.study_activity_id = :activityId
->>
-
 select_all_i18n_summaries() ::= <<
 select i18n.i18n_study_activity_summary_trans_id,
        i18n.study_activity_id,

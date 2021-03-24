@@ -1,19 +1,5 @@
 package org.broadinstitute.ddp.service;
 
-import java.sql.Blob;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.ddp.constants.LanguageConstants;
@@ -34,7 +20,6 @@ import org.broadinstitute.ddp.db.dto.ActivityVersionDto;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.json.activity.ActivityInstanceSummary;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
-import org.broadinstitute.ddp.model.activity.definition.i18n.SummaryTranslation;
 import org.broadinstitute.ddp.model.activity.definition.i18n.Translation;
 import org.broadinstitute.ddp.model.activity.instance.ActivityInstance;
 import org.broadinstitute.ddp.model.activity.instance.ActivityResponse;
@@ -45,13 +30,31 @@ import org.broadinstitute.ddp.model.activity.instance.FormSection;
 import org.broadinstitute.ddp.model.activity.instance.NestedActivityBlock;
 import org.broadinstitute.ddp.model.activity.types.ActivityType;
 import org.broadinstitute.ddp.model.activity.types.BlockType;
-import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.broadinstitute.ddp.model.study.StudyLanguage;
 import org.broadinstitute.ddp.pex.PexInterpreter;
+import org.broadinstitute.ddp.service.actvityinstancebuilder.ActivityInstanceFromActivityDefStoreBuilder;
 import org.broadinstitute.ddp.util.ActivityInstanceUtil;
 import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.sql.Blob;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import static org.broadinstitute.ddp.util.TranslationUtil.extractOptionalActivitySummary;
+import static org.broadinstitute.ddp.util.TranslationUtil.extractOptionalActivityTranslation;
+import static org.broadinstitute.ddp.util.TranslationUtil.extractTranslatedActivityName;
 
 public class ActivityInstanceService {
 
@@ -374,41 +377,6 @@ public class ActivityInstanceService {
         return summaries;
     }
 
-    private Translation extractTranslatedActivityName(FormActivityDef def, String preferredLangCode, String studyDefaultLangCode) {
-        Translation preferredName = null;
-        Translation studyDefaultName = null;
-        for (var name : def.getTranslatedNames()) {
-            if (name.getLanguageCode().equals(studyDefaultLangCode)) {
-                studyDefaultName = name;
-            }
-            if (name.getLanguageCode().equals(preferredLangCode)) {
-                preferredName = name;
-            }
-        }
-        if (preferredName == null && studyDefaultName == null) {
-            throw new DDPException("Could not find name for activity " + def.getActivityCode());
-        }
-        return preferredName != null ? preferredName : studyDefaultName;
-    }
-
-    private String extractOptionalActivityTranslation(List<Translation> translations, String isoLangCode) {
-        return translations.stream()
-                .filter(trans -> trans.getLanguageCode().equals(isoLangCode))
-                .map(Translation::getText)
-                .findFirst()
-                .orElse(null);
-    }
-
-    private String extractOptionalActivitySummary(List<SummaryTranslation> summaryTranslations,
-                                                  InstanceStatusType statusType,
-                                                  String isoLangCode) {
-        return summaryTranslations.stream()
-                .filter(trans -> trans.getStatusType().equals(statusType) && trans.getLanguageCode().equals(isoLangCode))
-                .map(Translation::getText)
-                .findFirst()
-                .orElse(null);
-    }
-
     /**
      * Iterate through list of activity summaries and count up how many questions are answered.
      *
@@ -559,5 +527,28 @@ public class ActivityInstanceService {
         var instanceDao = handle.attach(org.broadinstitute.ddp.db.dao.ActivityInstanceDao.class);
         int numDeleted = instanceDao.deleteAllByIds(Set.of(instanceDto.getId()));
         DBUtils.checkDelete(1, numDeleted);
+    }
+
+    /**
+     * Build {@link ActivityInstance} from data cached stored in {@link ActivityDefStore}.
+     * Some of data (answers, rule messages) are queried from DB.
+     */
+    public Optional<ActivityInstance> buildInstanceFromActivityDefStore(
+            Handle handle,
+            String isoLangCode,
+            ContentStyle style,
+            String studyGuid,
+            String userGuid,
+            String operatorGuid,
+            ActivityInstanceDto instanceDto) {
+        return new ActivityInstanceFromActivityDefStoreBuilder().buildActivityInstance(
+                handle,
+                isoLangCode,
+                style,
+                studyGuid,
+                userGuid,
+                operatorGuid,
+                instanceDto
+        );
     }
 }

@@ -33,7 +33,6 @@ import org.broadinstitute.ddp.pex.PexInterpreter;
 import org.broadinstitute.ddp.security.DDPAuth;
 import org.broadinstitute.ddp.service.ActivityInstanceService;
 import org.broadinstitute.ddp.service.ActivityValidationService;
-import org.broadinstitute.ddp.service.actvityinstanceassembler.ActivityInstanceAssembleService;
 import org.broadinstitute.ddp.util.RouteUtil;
 import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
@@ -45,7 +44,6 @@ import spark.Route;
 public class GetActivityInstanceRoute implements Route {
 
     private static final Logger LOG = LoggerFactory.getLogger(GetActivityInstanceRoute.class);
-    private static final String DEFAULT_ISO_LANGUAGE_CODE = "en";
 
     private ActivityInstanceService actInstService;
     private ActivityValidationService actValidationService;
@@ -88,22 +86,8 @@ public class GetActivityInstanceRoute implements Route {
             String isoLangCode = preferredUserLanguage.getIsoCode();
 
             LOG.info("Attempting to find a translation for the following language: {}", isoLangCode);
-
-            Optional<ActivityInstance> inst = new ActivityInstanceAssembleService().assembleActivityInstance(
-                    handle,
-                    isoLangCode,
-                    style,
-                    studyGuid,
-                    userGuid,
-                    operatorGuid,
-                    instanceDto
-            );
-
-            if (inst.isEmpty()) {
-                inst = actInstService.getTranslatedActivity(
-                        handle, userGuid, operatorGuid, instanceDto.getActivityType(), instanceGuid, isoLangCode, style
-                );
-            }
+            Optional<ActivityInstance> inst = getActivityInstance(
+                    userGuid, studyGuid, instanceGuid, operatorGuid, handle, instanceDto, style, isoLangCode);
 
             if (inst.isEmpty()) {
                 String errMsg = String.format(
@@ -139,6 +123,27 @@ public class GetActivityInstanceRoute implements Route {
                 null, 1);
 
         return result;
+    }
+
+    private Optional<ActivityInstance> getActivityInstance(
+            String userGuid,
+            String studyGuid,
+            String instanceGuid,
+            String operatorGuid,
+            Handle handle,
+            ActivityInstanceDto instanceDto,
+            ContentStyle style,
+            String isoLangCode) {
+
+        Optional<ActivityInstance> inst = actInstService.buildInstanceFromActivityDefStore(
+                handle, isoLangCode, style, studyGuid, userGuid, operatorGuid, instanceDto
+        );
+        if (inst.isEmpty()) {
+            inst = actInstService.getTranslatedActivity(
+                    handle, userGuid, operatorGuid, instanceDto.getActivityType(), instanceGuid, isoLangCode, style
+            );
+        }
+        return inst;
     }
 
     private ActivityInstance validateActivityInstance(
