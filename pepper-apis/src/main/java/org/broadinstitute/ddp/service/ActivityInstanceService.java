@@ -509,6 +509,9 @@ public class ActivityInstanceService {
             if (StringUtils.isNotBlank(summary.getActivitySubtitle())) {
                 summary.setActivitySubtitle(renderer.renderToString(summary.getActivitySubtitle(), context));
             }
+            if (StringUtils.isNotBlank(summary.getActivityDescription())) {
+                summary.setActivityDescription(renderer.renderToString(summary.getActivityDescription(), context));
+            }
             if (StringUtils.isNotBlank(summary.getActivitySummary())) {
                 summary.setActivitySummary(renderer.renderToString(summary.getActivitySummary(), context));
             }

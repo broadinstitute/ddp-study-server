@@ -178,6 +178,10 @@ public class ActivityInstanceSummary implements TranslatedSummary {
         return activityDescription;
     }
 
+    public void setActivityDescription(String activityDescription) {
+        this.activityDescription = activityDescription;
+    }
+
     public String getActivitySummary() {
         return activitySummary;
     }

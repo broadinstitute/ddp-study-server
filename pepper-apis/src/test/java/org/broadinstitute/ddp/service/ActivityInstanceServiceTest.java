@@ -365,18 +365,21 @@ public class ActivityInstanceServiceTest extends TxnAwareBaseTest {
     }
 
     @Test
-    public void testRenderInstanceSummaries_rendersAnswerIntoTitleAndSubtitle() {
-        String title = "$ddp.answer(\"Q1\",\"text\") $ddp.answer(\"non-existing\", \"the-fallback\")";
-        String subtitle = "$ddp.answer(\"Q2\",\"picklist\")";
+    public void testRenderInstanceSummaries_rendersAnswer() {
+        String name = "Name: $ddp.answer(\"Q2\",\"picklist\")";
+        String title = "Title: $ddp.answer(\"Q1\",\"text\") $ddp.answer(\"non-existing\", \"the-fallback\")";
+        String subtitle = "Subtitle: $ddp.answer(\"Q2\",\"picklist\")";
+        String description = "Description: $ddp.answer(\"Q2\",\"picklist\")";
+        String summary = "Summary: $ddp.answer(\"Q2\",\"picklist\")";
         String activityCode = "ACT" + Instant.now().toEpochMilli();
         var summaries = List.of(new ActivityInstanceSummary(
-                activityCode, 1L, "guid", "name", null, title, subtitle, null, null, "type", "form", "status",
+                activityCode, 1L, "guid", name, null, title, subtitle, description, summary, "type", "form", "status",
                 null, false, "en", false, false, 1L, false, false, "v1", 1L, 1L));
         summaries.get(0).setInstanceNumber(2);
 
         var response = new FormResponse(1L, "guid", 1L, null, 1L, 1L, null, null, 1L, activityCode, "v1",
                 new ActivityInstanceStatusDto(1L, 1L, 1L, 1L, InstanceStatusType.CREATED));
-        response.putAnswer(new TextAnswer(1L, "Q1", "guid1", "some-name"));
+        response.putAnswer(new TextAnswer(1L, "Q1", "guid1", "some-text"));
         response.putAnswer(new PicklistAnswer(2L, "Q2", "guid2", List.of(new SelectedPicklistOption("AUNT"))));
 
         var optionAunt = Template.text("$aunt");
@@ -397,8 +400,10 @@ public class ActivityInstanceServiceTest extends TxnAwareBaseTest {
         TransactionWrapper.useTxn(handle -> service.renderInstanceSummaries(
                 handle, testData.getUserId(), "study", summaries, Map.of("guid", response)));
 
-        assertEquals("name #2", summaries.get(0).getActivityName());
-        assertEquals("some-name the-fallback", summaries.get(0).getActivityTitle());
-        assertEquals("My Aunt", summaries.get(0).getActivitySubtitle());
+        assertEquals("Name: My Aunt #2", summaries.get(0).getActivityName());
+        assertEquals("Title: some-text the-fallback", summaries.get(0).getActivityTitle());
+        assertEquals("Subtitle: My Aunt", summaries.get(0).getActivitySubtitle());
+        assertEquals("Description: My Aunt", summaries.get(0).getActivityDescription());
+        assertEquals("Summary: My Aunt", summaries.get(0).getActivitySummary());
     }
 }
