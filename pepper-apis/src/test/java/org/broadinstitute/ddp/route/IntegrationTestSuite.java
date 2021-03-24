@@ -313,7 +313,7 @@ public class IntegrationTestSuite {
             try {
                 // todo arz parameterize/environment-ize debug port
                 JavaProcessSpawner.spawnMainInSeparateProcess(DataDonationPlatform.class,
-                        IntegrationTestSuite.class, bootTimeoutSeconds, null, serverArgs);
+                        IntegrationTestSuite.class, bootTimeoutSeconds);
             } catch (IOException e) {
                 LOG.error("App starter failed.", e);
             }
