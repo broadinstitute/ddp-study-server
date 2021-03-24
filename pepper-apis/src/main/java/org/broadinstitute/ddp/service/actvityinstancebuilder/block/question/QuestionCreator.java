@@ -17,6 +17,7 @@ import org.broadinstitute.ddp.service.actvityinstancebuilder.ElementCreator;
 import org.broadinstitute.ddp.service.actvityinstancebuilder.block.question.impl.AgreementQuestionCreator;
 import org.broadinstitute.ddp.service.actvityinstancebuilder.block.question.impl.BoolQuestionCreator;
 import org.broadinstitute.ddp.service.actvityinstancebuilder.block.question.impl.CompositeQuestionCreator;
+import org.broadinstitute.ddp.service.actvityinstancebuilder.block.question.impl.DatePickListQuestionCreator;
 import org.broadinstitute.ddp.service.actvityinstancebuilder.block.question.impl.DateQuestionCreator;
 import org.broadinstitute.ddp.service.actvityinstancebuilder.block.question.impl.FileQuestionCreator;
 import org.broadinstitute.ddp.service.actvityinstancebuilder.block.question.impl.NumericQuestionCreator;
@@ -26,6 +27,8 @@ import org.broadinstitute.ddp.service.actvityinstancebuilder.block.question.impl
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import static org.broadinstitute.ddp.model.activity.types.DateRenderMode.PICKLIST;
 
 /**
  * Creates {@link Question}
@@ -45,7 +48,10 @@ public class QuestionCreator extends ElementCreator {
     private Question constructQuestion(QuestionDef questionDef) {
         switch (questionDef.getQuestionType()) {
             case DATE:
-                return new DateQuestionCreator(context).createDateQuestion(this, (DateQuestionDef) questionDef);
+                return ((DateQuestionDef) questionDef).getRenderMode() == PICKLIST
+                        ?
+                        new DatePickListQuestionCreator(context).createDatePickListQuestion(this, (DateQuestionDef) questionDef) :
+                        new DateQuestionCreator(context).createDateQuestion(this, (DateQuestionDef) questionDef);
             case BOOLEAN:
                 return new BoolQuestionCreator(context).createBoolQuestion(this, (BoolQuestionDef) questionDef);
             case TEXT:
@@ -78,9 +84,9 @@ public class QuestionCreator extends ElementCreator {
         List<T> answers = new ArrayList<>();
         if (context.getAnswers() != null) {
             answers = context.getAnswers().stream()
-                .filter(a -> a.getClass().isAssignableFrom(type) && questionStableId.equals(a.getQuestionStableId()))
-                .map(type::cast)
-                .collect(Collectors.toList());
+                    .filter(a -> a.getClass().isAssignableFrom(type) && questionStableId.equals(a.getQuestionStableId()))
+                    .map(type::cast)
+                    .collect(Collectors.toList());
         }
         return answers;
     }

@@ -28,6 +28,7 @@ public class ActivityInstanceDto {
     private Long firstCompletedAt;
     private boolean allowUnauthenticated;
     private int sectionIndex;
+    private Long editTimeoutSec;
 
     @JdbiConstructor
     public ActivityInstanceDto(
@@ -49,7 +50,8 @@ public class ActivityInstanceDto {
             @ColumnName("activity_type") ActivityType activityType,
             @ColumnName("ondemand_trigger_id") Long onDemandTriggerId,
             @ColumnName("allow_unauthenticated") boolean allowUnauthenticated,
-            @ColumnName("section_index") int sectionIndex
+            @ColumnName("section_index") int sectionIndex,
+            @ColumnName("edit_timeout_sec") Long editTimeoutSec
     ) {
         this.id = id;
         this.guid = guid;
@@ -70,6 +72,7 @@ public class ActivityInstanceDto {
         this.onDemandTriggerId = onDemandTriggerId;
         this.allowUnauthenticated = allowUnauthenticated;
         this.sectionIndex = sectionIndex;
+        this.editTimeoutSec = editTimeoutSec;
     }
 
     public long getId() {
@@ -154,5 +157,9 @@ public class ActivityInstanceDto {
 
     public int getSectionIndex() {
         return sectionIndex;
+    }
+
+    public Long getEditTimeoutSec() {
+        return editTimeoutSec;
     }
 }

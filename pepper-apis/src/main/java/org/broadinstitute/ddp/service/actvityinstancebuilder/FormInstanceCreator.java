@@ -7,6 +7,7 @@ import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.activity.instance.FormInstance;
+import org.broadinstitute.ddp.util.ActivityInstanceUtil;
 
 import static org.broadinstitute.ddp.util.TranslationUtil.extractOptionalActivityTranslation;
 
@@ -23,6 +24,7 @@ public class FormInstanceCreator extends ElementCreator {
         FormInstance formInstance = constructFormInstance();
         addChildren(formInstance);
         updateBlockStatuses(formInstance);
+        formInstance.setDisplayNumbers();
         render(formInstance);
         return formInstance;
     }
@@ -34,6 +36,13 @@ public class FormInstanceCreator extends ElementCreator {
         String title = extractOptionalActivityTranslation(formActivityDef.getTranslatedTitles(), context.getIsoLangCode());
         String subtitle = extractOptionalActivityTranslation(formActivityDef.getTranslatedSubtitles(), context.getIsoLangCode());
 
+        boolean readonly = ActivityInstanceUtil.isReadonly(
+                context.getActivityInstanceDto().getEditTimeoutSec(),
+                context.getActivityInstanceDto().getCreatedAtMillis(),
+                context.getActivityInstanceDto().getStatusType().name(),
+                formActivityDef.isWriteOnce(),
+                context.getActivityInstanceDto().getReadonly());
+
         FormInstance formInstance = new FormInstance(
                 instanceDto.getParticipantId(),
                 instanceDto.getId(),
@@ -44,7 +53,7 @@ public class FormInstanceCreator extends ElementCreator {
                 title,
                 subtitle,
                 instanceDto.getStatusType() != null ? instanceDto.getStatusType().name() : null,
-                instanceDto.getReadonly(),
+                readonly,
                 formActivityDef.getListStyleHint(),
                 getTemplateId(formActivityDef.getReadonlyHintTemplate()),
                 formActivityDef.getIntroduction() != null ? formActivityDef.getIntroduction().getSectionId() : null,

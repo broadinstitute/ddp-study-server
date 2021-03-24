@@ -24,6 +24,9 @@ import org.broadinstitute.ddp.model.activity.instance.validation.Rule;
 import org.broadinstitute.ddp.service.actvityinstancebuilder.ActivityInstanceFromActivityDefStoreBuilder;
 import org.broadinstitute.ddp.service.actvityinstancebuilder.ElementCreator;
 
+import java.time.LocalDate;
+import java.time.ZoneOffset;
+
 /**
  * Creates {@link Rule}
  */
@@ -128,7 +131,7 @@ public class ValidationRuleCreator extends ElementCreator {
                 getHintTitle(ruleDef),
                 ruleDef.getAllowSave(),
                 ruleDef.getStartDate(),
-                ruleDef.getEndDate()
+                ruleDef.isUseTodayAsEnd() ? LocalDate.now(ZoneOffset.UTC) : ruleDef.getEndDate()
         );
     }
 

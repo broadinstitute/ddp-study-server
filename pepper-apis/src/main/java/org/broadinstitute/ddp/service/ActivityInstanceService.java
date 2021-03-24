@@ -542,13 +542,7 @@ public class ActivityInstanceService {
             String operatorGuid,
             ActivityInstanceDto instanceDto) {
         return new ActivityInstanceFromActivityDefStoreBuilder().buildActivityInstance(
-                handle,
-                isoLangCode,
-                style,
-                studyGuid,
-                userGuid,
-                operatorGuid,
-                instanceDto
+                handle, isoLangCode, style, studyGuid, userGuid, operatorGuid, instanceDto
         );
     }
 }
