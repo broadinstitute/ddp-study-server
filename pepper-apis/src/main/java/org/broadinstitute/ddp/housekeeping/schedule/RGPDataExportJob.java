@@ -123,8 +123,7 @@ public class RGPDataExportJob implements Job {
                 .includeCsv(bucket);
 
         try {
-            boolean success = coordinator.exportRGP(rgpDto);
-            //TODO: Send email
+            boolean success = coordinator.exportRGP(rgpDto, cfg);
             if (success) {
                 new StackdriverMetricsTracker(StackdriverCustomMetric.RGP_EXPORTS,
                         "RGP", PointsReducerFactory.buildSumReducer())

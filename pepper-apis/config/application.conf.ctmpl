@@ -87,6 +87,35 @@
         "tempUserCleanup": "{{$conf.Data.schedules.tempUserCleanup}}",
         "rgpExport": "{{$conf.Data.schedules.rgpExport}}"
     },
+    "rgpExport": {
+      "bucketDir": "{{$conf.Data.rgpExport.bucketDir}}",
+      "bucketName": "{{$conf.Data.rgpExport.bucketName}}",
+      "excludedActivityFields": [
+       {{range $i, $field := $conf.Data.rgpExport.excludedActivityFields}}
+           {{if $i}},{{end}}"{{ $field }}"
+       {{end}}
+      ],
+      "excludedParticipantFields": [
+        {{range $i, $field := $conf.Data.rgpExport.excludedParticipantFields}}
+            {{if $i}},{{end}}"{{ $field }}"
+        {{end}}
+      ],
+      "firstFields": [
+        {{range $i, $field := $conf.Data.rgpExport.firstFields}}
+            {{if $i}},{{end}}"{{ $field }}"
+        {{end}}
+      ],
+      "email": {
+        "toName": "{{$conf.Data.rgpExport.email.toName}}",
+        "toEmail": "{{$conf.Data.rgpExport.email.toEmail}}",
+        "successSubject": "{{$conf.Data.rgpExport.email.successSubject}}",
+        "skipSubject": "{{$conf.Data.rgpExport.email.skipSubject}}",
+        "errorSubject": "{{$conf.Data.rgpExport.email.errorSubject}}",
+        "successContent": "{{$conf.Data.rgpExport.email.successContent}}",
+        "skipContent": "{{$conf.Data.rgpExport.email.skipContent}}",
+        "errorContent": "{{$conf.Data.rgpExport.email.errorContent}}"
+      }
+    },
     "preferredSourceIPHeader":"X-AppEngine-User-IP",
     "nginx": {
         "apiLimitBurst": {{$conf.Data.nginx.apiLimitBurst}},

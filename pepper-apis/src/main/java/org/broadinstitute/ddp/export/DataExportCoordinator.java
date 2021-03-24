@@ -18,6 +18,12 @@ import java.util.Set;
 
 import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.Bucket;
+import com.sendgrid.helpers.mail.Mail;
+import com.sendgrid.helpers.mail.objects.Content;
+import com.sendgrid.helpers.mail.objects.Email;
+import com.typesafe.config.Config;
+import org.broadinstitute.ddp.client.ApiResult;
+import org.broadinstitute.ddp.client.SendGridClient;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.JdbiUserStudyEnrollment;
 import org.broadinstitute.ddp.db.dao.RgpExportDao;
@@ -64,8 +70,11 @@ public class DataExportCoordinator {
         return this;
     }
 
-    public boolean exportRGP(StudyDto rgpDto) {
+    public boolean exportRGP(StudyDto rgpDto, Config cfg) {
         this.isRGP = true;
+
+        String sendGridToken = cfg.getString("sendgridToken");
+        SendGridClient client = new SendGridClient(sendGridToken);
 
         //Find out whether there is anything to export
         boolean needExport = withAPIsTxn(handle -> {
@@ -77,6 +86,7 @@ public class DataExportCoordinator {
 
         if (!needExport) {
             LOG.info("Skipping RGP export: nothing to export");
+            ApiResult res = client.sendMail(createNotificationEmail(false, true, cfg));
             return true;
         }
 
@@ -89,7 +99,43 @@ public class DataExportCoordinator {
             return null;
         });
 
-        return runCsvExports(rgpDto, activityExtracts);
+        boolean runSuccess = runCsvExports(rgpDto, activityExtracts);
+
+        if (!runSuccess) {
+            ApiResult res = client.sendMail(createNotificationEmail(true, false, cfg));
+            return false;
+        }
+
+        ApiResult res = client.sendMail(createNotificationEmail(false, false, cfg));
+        if (res.hasThrown()) {
+            LOG.error("Error while sending RGP export email notification", res.getThrown());
+            return false;
+        }
+
+        return true;
+    }
+
+    private Mail createNotificationEmail(boolean isFailure, boolean isSkip, Config cfg) {
+        String fromName = cfg.getString("sendgrid.fromName");
+        String fromEmail = cfg.getString("sendgrid.fromEmail");
+        String toEmail = cfg.getString("rgpExport.email.toEmail");
+        String toName = cfg.getString("rgpExport.email.toName");
+        String subject;
+        String content;
+
+        if (isFailure) {
+            subject = cfg.getString("rgpExport.email.errorSubject");
+            content = cfg.getString("rgpExport.email.errorContent");
+        } else if (isSkip) {
+            subject = cfg.getString("rgpExport.email.skipSubject");
+            content = cfg.getString("rgpExport.email.skipContent");
+        } else {
+            subject = cfg.getString("rgpExport.email.successSubject");
+            content = cfg.getString("rgpExport.email.successContent");
+        }
+
+        return new Mail(new Email(fromEmail, fromName), subject, new Email(toEmail, toName), new Content("text/plain",
+                content));
     }
 
     public boolean export(StudyDto studyDto) {

@@ -13,7 +13,7 @@ import org.broadinstitute.ddp.export.DataExporter;
 import org.broadinstitute.ddp.model.user.User;
 
 public class ParticipantMetadataFormatter {
-    private List<String> exclude;
+    private List<String> exclude = new ArrayList<>();
 
     public ParticipantMetadataFormatter() {}
 
