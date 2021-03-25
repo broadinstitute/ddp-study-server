@@ -1,31 +1,31 @@
 package org.broadinstitute.ddp.service.actvityinstancebuilder;
 
+import static org.broadinstitute.ddp.model.activity.types.ActivityType.FORMS;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+
 import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.content.ContentStyle;
 import org.broadinstitute.ddp.content.I18nContentRenderer;
 import org.broadinstitute.ddp.db.ActivityDefStore;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
+import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
 import org.broadinstitute.ddp.model.activity.definition.FormBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.FormSectionDef;
 import org.broadinstitute.ddp.model.activity.instance.ActivityInstance;
 import org.broadinstitute.ddp.model.activity.instance.FormInstance;
 import org.broadinstitute.ddp.model.activity.instance.FormResponse;
-import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
 import org.broadinstitute.ddp.pex.PexInterpreter;
 import org.broadinstitute.ddp.pex.TreeWalkInterpreter;
 import org.broadinstitute.ddp.service.actvityinstancebuilder.block.FormBlockCreator;
 import org.broadinstitute.ddp.service.actvityinstancebuilder.block.question.QuestionCreator;
 import org.broadinstitute.ddp.service.actvityinstancebuilder.block.question.ValidationRuleCreator;
+import org.broadinstitute.ddp.util.TemplateRenderUtil;
 import org.jdbi.v3.core.Handle;
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-
-import static org.broadinstitute.ddp.model.activity.types.ActivityType.FORMS;
 
 /**
  * A builder providing a creation of {@link ActivityInstance} an alternative way:
@@ -34,7 +34,7 @@ import static org.broadinstitute.ddp.model.activity.types.ActivityType.FORMS;
  * of data from DB (answers, validation messages).
  *
  * <p>Main method of this class is
- * {@link #buildActivityInstance(Handle, String, ContentStyle, String, String, String, ActivityInstanceDto)}
+ * {@link #buildActivityInstance(Handle, String, String, String, String, ContentStyle, String)}
  * In this method executed the following steps:
  * <ul>
  *     <li>find activity data in {@link ActivityDefStore} by study guid and activity instance dto;</li>
@@ -71,32 +71,33 @@ import static org.broadinstitute.ddp.model.activity.types.ActivityType.FORMS;
  * {@link ElementCreator} (so it's no need to pass multiple parameters to each creator constructor -
  * only one parameter {@link Context} is passed.
  */
-public class ActivityInstanceFromActivityDefStoreBuilder {
+public class ActivityInstanceFromDefinitionBuilder {
 
     public Optional<ActivityInstance> buildActivityInstance(
             Handle handle,
-            String isoLangCode,
-            ContentStyle style,
-            String studyGuid,
             String userGuid,
             String operatorGuid,
-            ActivityInstanceDto instanceDto) {
-        Optional<FormActivityDef> formActivityDef = ActivityDefStore.getInstance().findActivityDef(handle, studyGuid, instanceDto);
+            String studyGuid,
+            String instanceGuid,
+            ContentStyle style,
+            String isoLangCode
+    ) {
+        var formResponse = getFormResponse(handle, instanceGuid);
+        Optional<FormActivityDef> formActivityDef = ActivityDefStore.getInstance().findActivityDef(
+                handle, studyGuid, formResponse.getActivityId(), formResponse.getCreatedAt(), formResponse.getActivityCode());
         if (formActivityDef.isPresent() && formActivityDef.get().getActivityType() == FORMS) {
-            List<Answer> answers = getAnswers(handle, instanceDto.getGuid());
-            ActivityInstance activityInstance = new FormInstanceCreator(
-                    new Context(handle, isoLangCode, style, userGuid, operatorGuid, formActivityDef.get(), instanceDto, answers)
+            var activityInstance = new FormInstanceCreator(
+                    new Context(handle, userGuid, operatorGuid, isoLangCode, style, formActivityDef.get(), formResponse)
             ).createFormInstance();
             return Optional.of(activityInstance);
         }
         return Optional.empty();
     }
 
-    private List<Answer> getAnswers(Handle handle, String activityInstGuid) {
-        FormResponse formResponse = handle.attach(ActivityInstanceDao.class)
+    private FormResponse getFormResponse(Handle handle, String activityInstGuid) {
+        return handle.attach(ActivityInstanceDao.class)
                 .findFormResponseWithAnswersByInstanceGuid(activityInstGuid)
-                .orElse(null);
-        return formResponse != null ? formResponse.getAnswers() : null;
+                .orElseThrow(() -> new DDPException("Error reading form activity by guid=" + activityInstGuid));
     }
 
     /**
@@ -104,38 +105,38 @@ public class ActivityInstanceFromActivityDefStoreBuilder {
      */
     public static class Context {
         private final Handle handle;
-        private final String isoLangCode;
-        private final  ContentStyle style;
         private final String userGuid;
         private final String operatorGuid;
         private final long langCodeId;
+        private final String isoLangCode;
+        private final  ContentStyle style;
         private final FormActivityDef formActivityDef;
-        private final ActivityInstanceDto activityInstanceDto;
-        private final List<Answer> answers;
+        private final FormResponse formResponse;
 
         private final PexInterpreter interpreter = new TreeWalkInterpreter();
         private final I18nContentRenderer i18nContentRenderer = new I18nContentRenderer();
+        private final Map<String, Object> rendererInitialContext;
 
         private Map<Long, String> renderedTemplates = new HashMap<>();
 
         public Context(
                 Handle handle,
-                String isoLangCode,
-                ContentStyle style,
                 String userGuid,
                 String operatorGuid,
+                String isoLangCode,
+                ContentStyle style,
                 FormActivityDef formActivityDef,
-                ActivityInstanceDto activityInstanceDto,
-                List<Answer> answers) {
+                FormResponse formResponse) {
             this.handle = handle;
-            this.isoLangCode = isoLangCode;
-            this.style = style;
             this.userGuid = userGuid;
             this.operatorGuid = operatorGuid;
+            this.isoLangCode = isoLangCode;
+            this.style = style;
             this.langCodeId = LanguageStore.get(isoLangCode).getId();
             this.formActivityDef = formActivityDef;
-            this.activityInstanceDto = activityInstanceDto;
-            this.answers = answers;
+            this.formResponse = formResponse;
+            this.rendererInitialContext = TemplateRenderUtil.createRendererInitialContext(handle,
+                    formResponse.getParticipantId(), formResponse.getId(), formActivityDef.getLastUpdated());
         }
 
         public Handle getHandle() {
@@ -166,12 +167,8 @@ public class ActivityInstanceFromActivityDefStoreBuilder {
             return formActivityDef;
         }
 
-        public ActivityInstanceDto getActivityInstanceDto() {
-            return activityInstanceDto;
-        }
-
-        public List<Answer> getAnswers() {
-            return answers;
+        public FormResponse getFormResponse() {
+            return formResponse;
         }
 
         public PexInterpreter getInterpreter() {
@@ -180,6 +177,10 @@ public class ActivityInstanceFromActivityDefStoreBuilder {
 
         public I18nContentRenderer getI18nContentRenderer() {
             return i18nContentRenderer;
+        }
+
+        public Map<String, Object> getRendererInitialContext() {
+            return rendererInitialContext;
         }
 
         public Map<Long, String> getRenderedTemplates() {

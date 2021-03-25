@@ -9,7 +9,7 @@ import org.broadinstitute.ddp.model.activity.definition.GroupBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.NestedActivityBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.QuestionBlockDef;
 import org.broadinstitute.ddp.model.activity.instance.FormBlock;
-import org.broadinstitute.ddp.service.actvityinstancebuilder.ActivityInstanceFromActivityDefStoreBuilder;
+import org.broadinstitute.ddp.service.actvityinstancebuilder.ActivityInstanceFromDefinitionBuilder;
 import org.broadinstitute.ddp.service.actvityinstancebuilder.ElementCreator;
 import org.broadinstitute.ddp.service.actvityinstancebuilder.block.impl.ComponentBlockCreator;
 import org.broadinstitute.ddp.service.actvityinstancebuilder.block.impl.ConditionalBlockCreator;
@@ -23,14 +23,13 @@ import org.broadinstitute.ddp.service.actvityinstancebuilder.block.impl.Question
  */
 public class FormBlockCreator extends ElementCreator {
 
-    public FormBlockCreator(ActivityInstanceFromActivityDefStoreBuilder.Context context) {
+    public FormBlockCreator(ActivityInstanceFromDefinitionBuilder.Context context) {
         super(context);
     }
 
     public FormBlock createBlock(FormBlockDef formBlockDef) {
-        FormBlock formBlock = constructFormBlock(formBlockDef);
+        var formBlock = constructFormBlock(formBlockDef);
         copyCommonFields(formBlock, formBlockDef);
-        applyRenderedTemplates(formBlock);
         return formBlock;
     }
 

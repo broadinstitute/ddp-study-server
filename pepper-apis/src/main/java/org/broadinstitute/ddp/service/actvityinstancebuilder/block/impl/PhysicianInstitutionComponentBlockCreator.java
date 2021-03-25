@@ -10,7 +10,7 @@ import org.broadinstitute.ddp.model.activity.definition.PhysicianInstitutionComp
 import org.broadinstitute.ddp.model.activity.instance.InstitutionComponent;
 import org.broadinstitute.ddp.model.activity.instance.PhysicianComponent;
 import org.broadinstitute.ddp.model.activity.instance.PhysicianInstitutionComponent;
-import org.broadinstitute.ddp.service.actvityinstancebuilder.ActivityInstanceFromActivityDefStoreBuilder;
+import org.broadinstitute.ddp.service.actvityinstancebuilder.ActivityInstanceFromDefinitionBuilder;
 import org.broadinstitute.ddp.service.actvityinstancebuilder.ElementCreator;
 
 
@@ -20,7 +20,7 @@ import org.broadinstitute.ddp.service.actvityinstancebuilder.ElementCreator;
  */
 class PhysicianInstitutionComponentBlockCreator extends ElementCreator {
 
-    public PhysicianInstitutionComponentBlockCreator(ActivityInstanceFromActivityDefStoreBuilder.Context context) {
+    public PhysicianInstitutionComponentBlockCreator(ActivityInstanceFromDefinitionBuilder.Context context) {
         super(context);
     }
 
@@ -48,9 +48,9 @@ class PhysicianInstitutionComponentBlockCreator extends ElementCreator {
                         physicianInstitutionComponentDef.getRevisionId()
                 ),
                 physicianInstitutionComponentDef.getInstitutionType(),
-                getTemplateId(physicianInstitutionComponentDef.getTitleTemplate()),
-                getTemplateId(physicianInstitutionComponentDef.getSubtitleTemplate()),
-                getTemplateId(physicianInstitutionComponentDef.getAddButtonTemplate()),
+                renderTemplateIfDefined(physicianInstitutionComponentDef.getTitleTemplate()),
+                renderTemplateIfDefined(physicianInstitutionComponentDef.getSubtitleTemplate()),
+                renderTemplateIfDefined(physicianInstitutionComponentDef.getAddButtonTemplate()),
                 physicianInstitutionComponentDef.allowMultiple(),
                 physicianInstitutionComponentDef.showFields(),
                 physicianInstitutionComponentDef.isRequired()

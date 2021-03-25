@@ -198,6 +198,14 @@ public final class FormInstance extends ActivityInstance {
         this.sectionIndex = sectionIndex;
     }
 
+    public Long getReadonlyHintTemplateId() {
+        return readonlyHintTemplateId;
+    }
+
+    public Long getLastUpdatedTextTemplateId() {
+        return lastUpdatedTextTemplateId;
+    }
+
     public Question getQuestionByStableId(String stableId) {
         if (stableIdToQuestion == null) {
             stableIdToQuestion = getAllSections().stream()

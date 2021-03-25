@@ -1,5 +1,23 @@
 package org.broadinstitute.ddp.service;
 
+import static org.broadinstitute.ddp.util.TranslationUtil.extractOptionalActivitySummary;
+import static org.broadinstitute.ddp.util.TranslationUtil.extractOptionalActivityTranslation;
+import static org.broadinstitute.ddp.util.TranslationUtil.extractTranslatedActivityName;
+
+import java.sql.Blob;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.ddp.constants.LanguageConstants;
@@ -32,29 +50,11 @@ import org.broadinstitute.ddp.model.activity.types.ActivityType;
 import org.broadinstitute.ddp.model.activity.types.BlockType;
 import org.broadinstitute.ddp.model.study.StudyLanguage;
 import org.broadinstitute.ddp.pex.PexInterpreter;
-import org.broadinstitute.ddp.service.actvityinstancebuilder.ActivityInstanceFromActivityDefStoreBuilder;
+import org.broadinstitute.ddp.service.actvityinstancebuilder.ActivityInstanceFromDefinitionBuilder;
 import org.broadinstitute.ddp.util.ActivityInstanceUtil;
 import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.sql.Blob;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-import static org.broadinstitute.ddp.util.TranslationUtil.extractOptionalActivitySummary;
-import static org.broadinstitute.ddp.util.TranslationUtil.extractOptionalActivityTranslation;
-import static org.broadinstitute.ddp.util.TranslationUtil.extractTranslatedActivityName;
 
 public class ActivityInstanceService {
 
@@ -536,16 +536,16 @@ public class ActivityInstanceService {
      * Build {@link ActivityInstance} from data cached stored in {@link ActivityDefStore}.
      * Some of data (answers, rule messages) are queried from DB.
      */
-    public Optional<ActivityInstance> buildInstanceFromActivityDefStore(
+    public Optional<ActivityInstance> buildInstanceFromDefinition(
             Handle handle,
-            String isoLangCode,
-            ContentStyle style,
-            String studyGuid,
             String userGuid,
             String operatorGuid,
-            ActivityInstanceDto instanceDto) {
-        return new ActivityInstanceFromActivityDefStoreBuilder().buildActivityInstance(
-                handle, isoLangCode, style, studyGuid, userGuid, operatorGuid, instanceDto
+            String studyGuid,
+            String instanceGuid,
+            ContentStyle style,
+            String isoLangCode) {
+        return new ActivityInstanceFromDefinitionBuilder().buildActivityInstance(
+                handle, userGuid, operatorGuid, studyGuid, instanceGuid, style, isoLangCode
         );
     }
 }

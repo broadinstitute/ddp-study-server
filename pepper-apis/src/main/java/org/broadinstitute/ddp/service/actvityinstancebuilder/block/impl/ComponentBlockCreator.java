@@ -4,7 +4,7 @@ import org.broadinstitute.ddp.model.activity.definition.ComponentBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.MailingAddressComponentDef;
 import org.broadinstitute.ddp.model.activity.instance.ComponentBlock;
 import org.broadinstitute.ddp.model.activity.instance.FormComponent;
-import org.broadinstitute.ddp.service.actvityinstancebuilder.ActivityInstanceFromActivityDefStoreBuilder;
+import org.broadinstitute.ddp.service.actvityinstancebuilder.ActivityInstanceFromDefinitionBuilder;
 import org.broadinstitute.ddp.service.actvityinstancebuilder.ElementCreator;
 
 /**
@@ -12,7 +12,7 @@ import org.broadinstitute.ddp.service.actvityinstancebuilder.ElementCreator;
  */
 public class ComponentBlockCreator extends ElementCreator {
 
-    public ComponentBlockCreator(ActivityInstanceFromActivityDefStoreBuilder.Context context) {
+    public ComponentBlockCreator(ActivityInstanceFromDefinitionBuilder.Context context) {
         super(context);
     }
 

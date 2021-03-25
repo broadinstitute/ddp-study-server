@@ -1,42 +1,41 @@
 package org.broadinstitute.ddp.service.actvityinstancebuilder.block.question.impl;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.broadinstitute.ddp.model.activity.definition.question.CompositeQuestionDef;
 import org.broadinstitute.ddp.model.activity.instance.answer.CompositeAnswer;
 import org.broadinstitute.ddp.model.activity.instance.question.CompositeQuestion;
 import org.broadinstitute.ddp.model.activity.instance.question.Question;
-import org.broadinstitute.ddp.service.actvityinstancebuilder.ActivityInstanceFromActivityDefStoreBuilder;
+import org.broadinstitute.ddp.service.actvityinstancebuilder.ActivityInstanceFromDefinitionBuilder;
 import org.broadinstitute.ddp.service.actvityinstancebuilder.ElementCreator;
 import org.broadinstitute.ddp.service.actvityinstancebuilder.block.question.QuestionCreator;
-
-import java.util.ArrayList;
-import java.util.List;
-
-import static org.broadinstitute.ddp.service.actvityinstancebuilder.block.question.QuestionUtil.isReadOnly;
+import org.broadinstitute.ddp.util.QuestionUtil;
 
 /**
  * Creates {@link CompositeQuestion}
  */
 public class CompositeQuestionCreator extends ElementCreator {
 
-    public CompositeQuestionCreator(ActivityInstanceFromActivityDefStoreBuilder.Context context) {
+    public CompositeQuestionCreator(ActivityInstanceFromDefinitionBuilder.Context context) {
         super(context);
     }
 
     public CompositeQuestion createCompositeQuestion(QuestionCreator questionCreator, CompositeQuestionDef questionDef) {
         return new CompositeQuestion(
                 questionDef.getStableId(),
-                getTemplateId(questionDef.getPromptTemplate()),
+                renderTemplateIfDefined(questionDef.getPromptTemplate()),
                 questionDef.isRestricted(),
                 questionDef.isDeprecated(),
-                isReadOnly(context, questionDef),
-                getTemplateId(questionDef.getTooltipTemplate()),
-                getTemplateId(questionDef.getAdditionalInfoHeaderTemplate()),
-                getTemplateId(questionDef.getAdditionalInfoFooterTemplate()),
+                QuestionUtil.isReadOnly(context.getFormResponse(), questionDef),
+                renderTemplateIfDefined(questionDef.getTooltipTemplate()),
+                renderTemplateIfDefined(questionDef.getAdditionalInfoHeaderTemplate()),
+                renderTemplateIfDefined(questionDef.getAdditionalInfoFooterTemplate()),
                 questionCreator.getValidationRules(questionDef),
                 questionDef.isAllowMultiple(),
                 questionDef.isUnwrapOnExport(),
-                getTemplateId(questionDef.getAddButtonTemplate()),
-                getTemplateId(questionDef.getAdditionalItemTemplate()),
+                renderTemplateIfDefined(questionDef.getAddButtonTemplate()),
+                renderTemplateIfDefined(questionDef.getAdditionalItemTemplate()),
                 getChildQuestions(questionDef),
                 questionDef.getChildOrientation(),
                 questionCreator.getAnswers(CompositeAnswer.class, questionDef.getStableId())

@@ -6,6 +6,7 @@ import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.db.dto.QuestionDto;
 import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
+import org.broadinstitute.ddp.model.activity.instance.FormResponse;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.jdbi.v3.core.Handle;
 
@@ -66,5 +67,12 @@ public class QuestionUtil {
                 .findMostRecentInstanceBeforeCurrent(instanceDto.getId())
                 .orElse(null);
         return previousInstanceId != null;
+    }
+
+    public static boolean isReadOnly(FormResponse formResponse, QuestionDef questionDef) {
+        if (!questionDef.isWriteOnce()) {
+            return false;
+        }
+        return formResponse.getReadonly() != null ? formResponse.getReadonly() : false;
     }
 }

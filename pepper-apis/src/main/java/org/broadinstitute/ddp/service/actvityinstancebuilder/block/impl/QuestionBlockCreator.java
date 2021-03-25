@@ -3,7 +3,7 @@ package org.broadinstitute.ddp.service.actvityinstancebuilder.block.impl;
 
 import org.broadinstitute.ddp.model.activity.definition.QuestionBlockDef;
 import org.broadinstitute.ddp.model.activity.instance.QuestionBlock;
-import org.broadinstitute.ddp.service.actvityinstancebuilder.ActivityInstanceFromActivityDefStoreBuilder;
+import org.broadinstitute.ddp.service.actvityinstancebuilder.ActivityInstanceFromDefinitionBuilder;
 import org.broadinstitute.ddp.service.actvityinstancebuilder.ElementCreator;
 import org.broadinstitute.ddp.service.actvityinstancebuilder.block.question.QuestionCreator;
 
@@ -12,7 +12,7 @@ import org.broadinstitute.ddp.service.actvityinstancebuilder.block.question.Ques
  */
 public class QuestionBlockCreator extends ElementCreator {
 
-    public QuestionBlockCreator(ActivityInstanceFromActivityDefStoreBuilder.Context context) {
+    public QuestionBlockCreator(ActivityInstanceFromDefinitionBuilder.Context context) {
         super(context);
     }
 

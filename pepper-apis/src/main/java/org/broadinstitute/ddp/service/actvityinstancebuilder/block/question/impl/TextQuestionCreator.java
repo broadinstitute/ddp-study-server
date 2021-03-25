@@ -3,40 +3,39 @@ package org.broadinstitute.ddp.service.actvityinstancebuilder.block.question.imp
 import org.broadinstitute.ddp.model.activity.definition.question.TextQuestionDef;
 import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
 import org.broadinstitute.ddp.model.activity.instance.question.TextQuestion;
-import org.broadinstitute.ddp.service.actvityinstancebuilder.ActivityInstanceFromActivityDefStoreBuilder;
+import org.broadinstitute.ddp.service.actvityinstancebuilder.ActivityInstanceFromDefinitionBuilder;
 import org.broadinstitute.ddp.service.actvityinstancebuilder.ElementCreator;
 import org.broadinstitute.ddp.service.actvityinstancebuilder.block.question.QuestionCreator;
-
-import static org.broadinstitute.ddp.service.actvityinstancebuilder.block.question.QuestionUtil.isReadOnly;
+import org.broadinstitute.ddp.util.QuestionUtil;
 
 /**
  * Creates {@link TextQuestion}
  */
 public class TextQuestionCreator extends ElementCreator {
 
-    public TextQuestionCreator(ActivityInstanceFromActivityDefStoreBuilder.Context context) {
+    public TextQuestionCreator(ActivityInstanceFromDefinitionBuilder.Context context) {
         super(context);
     }
 
     public TextQuestion createTextQuestion(QuestionCreator questionCreator, TextQuestionDef questionDef) {
         return new TextQuestion(
                 questionDef.getStableId(),
-                getTemplateId(questionDef.getPromptTemplate()),
-                getTemplateId(questionDef.getPlaceholderTemplate()),
+                renderTemplateIfDefined(questionDef.getPromptTemplate()),
+                renderTemplateIfDefined(questionDef.getPlaceholderTemplate()),
                 questionDef.isRestricted(),
                 questionDef.isDeprecated(),
-                isReadOnly(context, questionDef),
-                getTemplateId(questionDef.getTooltipTemplate()),
-                getTemplateId(questionDef.getAdditionalInfoHeaderTemplate()),
-                getTemplateId(questionDef.getAdditionalInfoFooterTemplate()),
+                QuestionUtil.isReadOnly(context.getFormResponse(), questionDef),
+                renderTemplateIfDefined(questionDef.getTooltipTemplate()),
+                renderTemplateIfDefined(questionDef.getAdditionalInfoHeaderTemplate()),
+                renderTemplateIfDefined(questionDef.getAdditionalInfoFooterTemplate()),
                 questionCreator.getAnswers(TextAnswer.class, questionDef.getStableId()),
                 questionCreator.getValidationRules(questionDef),
                 questionDef.getInputType(),
                 questionDef.getSuggestionType(),
                 questionDef.getSuggestions(),
                 questionDef.isConfirmEntry(),
-                getTemplateId(questionDef.getConfirmPromptTemplate()),
-                getTemplateId(questionDef.getMismatchMessageTemplate())
+                renderTemplateIfDefined(questionDef.getConfirmPromptTemplate()),
+                renderTemplateIfDefined(questionDef.getMismatchMessageTemplate())
         );
     }
 }

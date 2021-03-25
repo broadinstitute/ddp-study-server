@@ -149,6 +149,12 @@ public class ActivityDefStore {
                 .map(version -> getActivityDef(studyGuid, instanceDto.getActivityCode(), version.getVersionTag()));
     }
 
+    public Optional<FormActivityDef> findActivityDef(Handle handle, String studyGuid, long activityId, long createdAtMillis,
+                                                     String activityCode) {
+        return findVersionDto(handle, activityId, createdAtMillis)
+                .map(version -> getActivityDef(studyGuid, activityCode, version.getVersionTag()));
+    }
+
     public FormActivityDef getActivityDef(String studyGuid, String activityCode, String versionTag) {
         synchronized (lockVar) {
             return activityDefMap.get(studyGuid + activityCode + versionTag);

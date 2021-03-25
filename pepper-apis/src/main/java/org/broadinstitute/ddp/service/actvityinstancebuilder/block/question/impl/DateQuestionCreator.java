@@ -3,37 +3,36 @@ package org.broadinstitute.ddp.service.actvityinstancebuilder.block.question.imp
 import org.broadinstitute.ddp.model.activity.definition.question.DateQuestionDef;
 import org.broadinstitute.ddp.model.activity.instance.answer.DateAnswer;
 import org.broadinstitute.ddp.model.activity.instance.question.DateQuestion;
-import org.broadinstitute.ddp.service.actvityinstancebuilder.ActivityInstanceFromActivityDefStoreBuilder;
+import org.broadinstitute.ddp.service.actvityinstancebuilder.ActivityInstanceFromDefinitionBuilder;
 import org.broadinstitute.ddp.service.actvityinstancebuilder.ElementCreator;
 import org.broadinstitute.ddp.service.actvityinstancebuilder.block.question.QuestionCreator;
-
-import static org.broadinstitute.ddp.service.actvityinstancebuilder.block.question.QuestionUtil.isReadOnly;
+import org.broadinstitute.ddp.util.QuestionUtil;
 
 /**
  * Creates {@link DateQuestion}
  */
 public class DateQuestionCreator extends ElementCreator {
 
-    public DateQuestionCreator(ActivityInstanceFromActivityDefStoreBuilder.Context context) {
+    public DateQuestionCreator(ActivityInstanceFromDefinitionBuilder.Context context) {
         super(context);
     }
 
     public DateQuestion createDateQuestion(QuestionCreator questionCreator, DateQuestionDef questionDef) {
         return new DateQuestion(
                 questionDef.getStableId(),
-                getTemplateId(questionDef.getPromptTemplate()),
+                renderTemplateIfDefined(questionDef.getPromptTemplate()),
                 questionDef.isRestricted(),
                 questionDef.isDeprecated(),
-                isReadOnly(context, questionDef),
-                getTemplateId(questionDef.getTooltipTemplate()),
-                getTemplateId(questionDef.getAdditionalInfoHeaderTemplate()),
-                getTemplateId(questionDef.getAdditionalInfoFooterTemplate()),
+                QuestionUtil.isReadOnly(context.getFormResponse(), questionDef),
+                renderTemplateIfDefined(questionDef.getTooltipTemplate()),
+                renderTemplateIfDefined(questionDef.getAdditionalInfoHeaderTemplate()),
+                renderTemplateIfDefined(questionDef.getAdditionalInfoFooterTemplate()),
                 questionCreator.getAnswers(DateAnswer.class, questionDef.getStableId()),
                 questionCreator.getValidationRules(questionDef),
                 questionDef.getRenderMode(),
                 questionDef.isDisplayCalendar(),
                 questionDef.getFields(),
-                getTemplateId(questionDef.getPlaceholderTemplate())
+                renderTemplateIfDefined(questionDef.getPlaceholderTemplate())
         );
     }
 }

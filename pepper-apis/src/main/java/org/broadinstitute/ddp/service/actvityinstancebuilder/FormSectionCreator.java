@@ -10,29 +10,28 @@ import org.broadinstitute.ddp.service.actvityinstancebuilder.block.FormBlockCrea
  */
 public class FormSectionCreator extends ElementCreator {
 
-    public FormSectionCreator(ActivityInstanceFromActivityDefStoreBuilder.Context context) {
+    public FormSectionCreator(ActivityInstanceFromDefinitionBuilder.Context context) {
         super(context);
     }
 
     public FormSection createSection(FormSectionDef formSectionDef) {
         if (formSectionDef != null) {
-            FormSection formSection = constructFormSection(formSectionDef);
+            var formSection = constructFormSection(formSectionDef);
             addChildren(formSection, formSectionDef);
-            applyRenderedTemplates(formSection);
             return formSection;
         }
         return null;
     }
 
     private FormSection constructFormSection(FormSectionDef formSectionDef) {
-        return new FormSection(getTemplateId(formSectionDef.getNameTemplate()));
+        return new FormSection(renderTemplateIfDefined(formSectionDef.getNameTemplate()));
     }
 
     private void addChildren(FormSection formSection, FormSectionDef formSectionDef) {
-        SectionIconCreator sectionIconCreator = new SectionIconCreator(context);
+        var sectionIconCreator = new SectionIconCreator(context);
         formSectionDef.getIcons().forEach(i -> formSection.getIcons().add(sectionIconCreator.createSectionIcon(i)));
 
-        FormBlockCreator formBlockCreator = new FormBlockCreator(context);
+        var formBlockCreator = new FormBlockCreator(context);
         formSectionDef.getBlocks().forEach(b -> formSection.getBlocks().add(formBlockCreator.createBlock(b)));
     }
 }

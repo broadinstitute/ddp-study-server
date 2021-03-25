@@ -8,23 +8,17 @@ import org.broadinstitute.ddp.model.activity.definition.SectionIcon;
  */
 public class SectionIconCreator extends ElementCreator {
 
-    public SectionIconCreator(ActivityInstanceFromActivityDefStoreBuilder.Context context) {
+    public SectionIconCreator(ActivityInstanceFromDefinitionBuilder.Context context) {
         super(context);
     }
 
     public SectionIcon createSectionIcon(SectionIcon sectionIconDef) {
-        SectionIcon sectionIcon = constructSectionIcon(sectionIconDef);
-        return sectionIcon;
-    }
-
-    private SectionIcon constructSectionIcon(SectionIcon sectionIconDef) {
-        SectionIcon sectionIcon = new SectionIcon(
+        return new SectionIcon(
                 sectionIconDef.getIconId(),
                 sectionIconDef.getSectionId(),
                 sectionIconDef.getState(),
                 sectionIconDef.getHeight(),
                 sectionIconDef.getWidth()
         );
-        return sectionIcon;
     }
 }

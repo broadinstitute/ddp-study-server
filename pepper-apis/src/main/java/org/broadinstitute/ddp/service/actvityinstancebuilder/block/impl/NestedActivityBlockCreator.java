@@ -3,7 +3,7 @@ package org.broadinstitute.ddp.service.actvityinstancebuilder.block.impl;
 
 import org.broadinstitute.ddp.model.activity.definition.NestedActivityBlockDef;
 import org.broadinstitute.ddp.model.activity.instance.NestedActivityBlock;
-import org.broadinstitute.ddp.service.actvityinstancebuilder.ActivityInstanceFromActivityDefStoreBuilder;
+import org.broadinstitute.ddp.service.actvityinstancebuilder.ActivityInstanceFromDefinitionBuilder;
 import org.broadinstitute.ddp.service.actvityinstancebuilder.ElementCreator;
 
 /**
@@ -12,7 +12,7 @@ import org.broadinstitute.ddp.service.actvityinstancebuilder.ElementCreator;
  */
 public class NestedActivityBlockCreator extends ElementCreator {
 
-    public NestedActivityBlockCreator(ActivityInstanceFromActivityDefStoreBuilder.Context context) {
+    public NestedActivityBlockCreator(ActivityInstanceFromDefinitionBuilder.Context context) {
         super(context);
     }
 
@@ -21,7 +21,7 @@ public class NestedActivityBlockCreator extends ElementCreator {
                 nestedActivityBlockDef.getActivityCode(),
                 nestedActivityBlockDef.getRenderHint(),
                 nestedActivityBlockDef.isAllowMultiple(),
-                getTemplateId(nestedActivityBlockDef.getAddButtonTemplate())
+                renderTemplateIfDefined(nestedActivityBlockDef.getAddButtonTemplate())
         );
     }
 }

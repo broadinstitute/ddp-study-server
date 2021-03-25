@@ -1,29 +1,25 @@
 package org.broadinstitute.ddp.service.actvityinstancebuilder;
 
 
-import org.broadinstitute.ddp.content.Renderable;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
 
 /**
  * Abstract creator class
  */
-public class ElementCreator {
+public abstract class ElementCreator {
 
-    protected final ActivityInstanceFromActivityDefStoreBuilder.Context context;
+    protected final ActivityInstanceFromDefinitionBuilder.Context context;
 
-    public ElementCreator(ActivityInstanceFromActivityDefStoreBuilder.Context context) {
+    public ElementCreator(ActivityInstanceFromDefinitionBuilder.Context context) {
         this.context = context;
     }
 
-    protected Long getTemplateId(Template template) {
+    protected Long renderTemplateIfDefined(Template template) {
         if (template != null) {
-            context.getRenderedTemplates().put(template.getTemplateId(), template.render(context.getIsoLangCode()));
+            context.getRenderedTemplates().put(template.getTemplateId(), template.render(
+                    context.getIsoLangCode(), context.getI18nContentRenderer(), context.getRendererInitialContext()));
             return template.getTemplateId();
         }
         return null;
-    }
-
-    protected void applyRenderedTemplates(Renderable renderable) {
-        renderable.applyRenderedTemplates(context.getRenderedTemplates()::get, context.getStyle());
     }
 }

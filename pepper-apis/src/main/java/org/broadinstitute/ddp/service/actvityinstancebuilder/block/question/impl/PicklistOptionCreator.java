@@ -1,19 +1,19 @@
 package org.broadinstitute.ddp.service.actvityinstancebuilder.block.question.impl;
 
-import org.broadinstitute.ddp.model.activity.definition.question.PicklistOptionDef;
-import org.broadinstitute.ddp.model.activity.instance.question.PicklistOption;
-import org.broadinstitute.ddp.service.actvityinstancebuilder.ActivityInstanceFromActivityDefStoreBuilder;
-import org.broadinstitute.ddp.service.actvityinstancebuilder.ElementCreator;
-
 import java.util.ArrayList;
 import java.util.List;
+
+import org.broadinstitute.ddp.model.activity.definition.question.PicklistOptionDef;
+import org.broadinstitute.ddp.model.activity.instance.question.PicklistOption;
+import org.broadinstitute.ddp.service.actvityinstancebuilder.ActivityInstanceFromDefinitionBuilder;
+import org.broadinstitute.ddp.service.actvityinstancebuilder.ElementCreator;
 
 /**
  * Creates {@link PicklistOption}
  */
 public class PicklistOptionCreator extends ElementCreator {
 
-    public PicklistOptionCreator(ActivityInstanceFromActivityDefStoreBuilder.Context context) {
+    public PicklistOptionCreator(ActivityInstanceFromDefinitionBuilder.Context context) {
         super(context);
     }
 
@@ -24,12 +24,12 @@ public class PicklistOptionCreator extends ElementCreator {
     public PicklistOption createPicklistOption(PicklistOptionDef picklistOptionDef, boolean isNested) {
         return new PicklistOption(
                 picklistOptionDef.getStableId(),
-                getTemplateId(picklistOptionDef.getOptionLabelTemplate()),
-                getTemplateId(picklistOptionDef.getTooltipTemplate()),
-                getTemplateId(picklistOptionDef.getDetailLabelTemplate()),
+                renderTemplateIfDefined(picklistOptionDef.getOptionLabelTemplate()),
+                renderTemplateIfDefined(picklistOptionDef.getTooltipTemplate()),
+                renderTemplateIfDefined(picklistOptionDef.getDetailLabelTemplate()),
                 picklistOptionDef.isDetailsAllowed(),
                 picklistOptionDef.isExclusive(),
-                isNested ? null : (getTemplateId(picklistOptionDef.getNestedOptionsLabelTemplate())),
+                isNested ? null : (renderTemplateIfDefined(picklistOptionDef.getNestedOptionsLabelTemplate())),
                 isNested ? null : createNestedPicklistOptions(picklistOptionDef.getNestedOptions())
         );
     }

@@ -1,5 +1,11 @@
 package org.broadinstitute.ddp.service.actvityinstancebuilder.block.question;
 
+import static org.broadinstitute.ddp.model.activity.types.DateRenderMode.PICKLIST;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import org.broadinstitute.ddp.model.activity.definition.question.AgreementQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.BoolQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.CompositeQuestionDef;
@@ -12,7 +18,7 @@ import org.broadinstitute.ddp.model.activity.definition.question.TextQuestionDef
 import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
 import org.broadinstitute.ddp.model.activity.instance.question.Question;
 import org.broadinstitute.ddp.model.activity.instance.validation.Rule;
-import org.broadinstitute.ddp.service.actvityinstancebuilder.ActivityInstanceFromActivityDefStoreBuilder;
+import org.broadinstitute.ddp.service.actvityinstancebuilder.ActivityInstanceFromDefinitionBuilder;
 import org.broadinstitute.ddp.service.actvityinstancebuilder.ElementCreator;
 import org.broadinstitute.ddp.service.actvityinstancebuilder.block.question.impl.AgreementQuestionCreator;
 import org.broadinstitute.ddp.service.actvityinstancebuilder.block.question.impl.BoolQuestionCreator;
@@ -24,28 +30,16 @@ import org.broadinstitute.ddp.service.actvityinstancebuilder.block.question.impl
 import org.broadinstitute.ddp.service.actvityinstancebuilder.block.question.impl.PicklistQuestionCreator;
 import org.broadinstitute.ddp.service.actvityinstancebuilder.block.question.impl.TextQuestionCreator;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collectors;
-
-import static org.broadinstitute.ddp.model.activity.types.DateRenderMode.PICKLIST;
-
 /**
  * Creates {@link Question}
  */
 public class QuestionCreator extends ElementCreator {
 
-    public QuestionCreator(ActivityInstanceFromActivityDefStoreBuilder.Context context) {
+    public QuestionCreator(ActivityInstanceFromDefinitionBuilder.Context context) {
         super(context);
     }
 
     public Question createQuestion(QuestionDef questionDef) {
-        Question question = constructQuestion(questionDef);
-        applyRenderedTemplates(question);
-        return question;
-    }
-
-    private Question constructQuestion(QuestionDef questionDef) {
         switch (questionDef.getQuestionType()) {
             case DATE:
                 return ((DateQuestionDef) questionDef).getRenderMode() == PICKLIST
@@ -72,7 +66,7 @@ public class QuestionCreator extends ElementCreator {
     }
 
     public <T extends Answer> List<Rule<T>> getValidationRules(QuestionDef questionDef) {
-        ValidationRuleCreator validationRuleCreator = new ValidationRuleCreator(context);
+        var validationRuleCreator = new ValidationRuleCreator(context);
         List<Rule<T>> validationRules = new ArrayList<>();
         if (questionDef.getValidations() != null) {
             questionDef.getValidations().forEach(v -> validationRules.add(validationRuleCreator.createRule(v)));
@@ -82,8 +76,8 @@ public class QuestionCreator extends ElementCreator {
 
     public <T extends Answer> List<T> getAnswers(Class<T> type, String questionStableId) {
         List<T> answers = new ArrayList<>();
-        if (context.getAnswers() != null) {
-            answers = context.getAnswers().stream()
+        if (context.getFormResponse().getAnswers() != null) {
+            answers = context.getFormResponse().getAnswers().stream()
                     .filter(a -> a.getClass().isAssignableFrom(type) && questionStableId.equals(a.getQuestionStableId()))
                     .map(type::cast)
                     .collect(Collectors.toList());

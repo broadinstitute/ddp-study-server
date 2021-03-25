@@ -87,7 +87,7 @@ public class GetActivityInstanceRoute implements Route {
 
             LOG.info("Attempting to find a translation for the following language: {}", isoLangCode);
             Optional<ActivityInstance> inst = getActivityInstance(
-                    userGuid, studyGuid, instanceGuid, operatorGuid, handle, instanceDto, style, isoLangCode);
+                    handle, userGuid, operatorGuid, studyGuid, instanceGuid, instanceDto.getActivityType(), style, isoLangCode);
 
             if (inst.isEmpty()) {
                 String errMsg = String.format(
@@ -126,21 +126,21 @@ public class GetActivityInstanceRoute implements Route {
     }
 
     private Optional<ActivityInstance> getActivityInstance(
+            Handle handle,
             String userGuid,
+            String operatorGuid,
             String studyGuid,
             String instanceGuid,
-            String operatorGuid,
-            Handle handle,
-            ActivityInstanceDto instanceDto,
+            ActivityType activityType,
             ContentStyle style,
             String isoLangCode) {
 
-        Optional<ActivityInstance> inst = actInstService.buildInstanceFromActivityDefStore(
-                handle, isoLangCode, style, studyGuid, userGuid, operatorGuid, instanceDto
+        Optional<ActivityInstance> inst = actInstService.buildInstanceFromDefinition(
+                handle, userGuid, operatorGuid, studyGuid, instanceGuid, style, isoLangCode
         );
         if (inst.isEmpty()) {
             inst = actInstService.getTranslatedActivity(
-                    handle, userGuid, operatorGuid, instanceDto.getActivityType(), instanceGuid, isoLangCode, style
+                    handle, userGuid, operatorGuid, activityType, instanceGuid, isoLangCode, style
             );
         }
         return inst;

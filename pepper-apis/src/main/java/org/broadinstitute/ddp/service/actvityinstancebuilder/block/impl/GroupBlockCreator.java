@@ -3,7 +3,7 @@ package org.broadinstitute.ddp.service.actvityinstancebuilder.block.impl;
 
 import org.broadinstitute.ddp.model.activity.definition.GroupBlockDef;
 import org.broadinstitute.ddp.model.activity.instance.GroupBlock;
-import org.broadinstitute.ddp.service.actvityinstancebuilder.ActivityInstanceFromActivityDefStoreBuilder;
+import org.broadinstitute.ddp.service.actvityinstancebuilder.ActivityInstanceFromDefinitionBuilder;
 import org.broadinstitute.ddp.service.actvityinstancebuilder.ElementCreator;
 import org.broadinstitute.ddp.service.actvityinstancebuilder.block.FormBlockCreator;
 
@@ -13,12 +13,12 @@ import org.broadinstitute.ddp.service.actvityinstancebuilder.block.FormBlockCrea
  */
 public class GroupBlockCreator extends ElementCreator {
 
-    public GroupBlockCreator(ActivityInstanceFromActivityDefStoreBuilder.Context context) {
+    public GroupBlockCreator(ActivityInstanceFromDefinitionBuilder.Context context) {
         super(context);
     }
 
     public GroupBlock createGroupBlock(GroupBlockDef groupBlockDef) {
-        GroupBlock groupBlock = constructComponentBlock(groupBlockDef);
+        var groupBlock = constructComponentBlock(groupBlockDef);
         addChildren(groupBlock, groupBlockDef);
         return groupBlock;
     }
@@ -27,14 +27,15 @@ public class GroupBlockCreator extends ElementCreator {
         return new GroupBlock(
                 groupBlockDef.getListStyleHint(),
                 groupBlockDef.getPresentationHint(),
-                getTemplateId(groupBlockDef.getTitleTemplate())
+                renderTemplateIfDefined(groupBlockDef.getTitleTemplate())
         );
     }
 
     private void addChildren(GroupBlock groupBlock, GroupBlockDef groupBlockDef) {
         if (groupBlockDef.getNested() != null) {
+            var blockCreator = new FormBlockCreator(context);
             groupBlockDef.getNested().forEach(b ->
-                    groupBlock.getNested().add(new FormBlockCreator(context).createBlock(b)));
+                    groupBlock.getNested().add(blockCreator.createBlock(b)));
         }
     }
 }

@@ -1,5 +1,8 @@
 package org.broadinstitute.ddp.service.actvityinstancebuilder.block.question;
 
+import java.time.LocalDate;
+import java.time.ZoneOffset;
+
 import org.broadinstitute.ddp.db.dao.ValidationDao;
 import org.broadinstitute.ddp.model.activity.definition.validation.AgeRangeRuleDef;
 import org.broadinstitute.ddp.model.activity.definition.validation.CompleteRuleDef;
@@ -21,18 +24,15 @@ import org.broadinstitute.ddp.model.activity.instance.validation.NumOptionsSelec
 import org.broadinstitute.ddp.model.activity.instance.validation.RegexRule;
 import org.broadinstitute.ddp.model.activity.instance.validation.RequiredRule;
 import org.broadinstitute.ddp.model.activity.instance.validation.Rule;
-import org.broadinstitute.ddp.service.actvityinstancebuilder.ActivityInstanceFromActivityDefStoreBuilder;
+import org.broadinstitute.ddp.service.actvityinstancebuilder.ActivityInstanceFromDefinitionBuilder;
 import org.broadinstitute.ddp.service.actvityinstancebuilder.ElementCreator;
-
-import java.time.LocalDate;
-import java.time.ZoneOffset;
 
 /**
  * Creates {@link Rule}
  */
 public class ValidationRuleCreator extends ElementCreator {
 
-    public ValidationRuleCreator(ActivityInstanceFromActivityDefStoreBuilder.Context context) {
+    public ValidationRuleCreator(ActivityInstanceFromDefinitionBuilder.Context context) {
         super(context);
     }
 
@@ -157,7 +157,7 @@ public class ValidationRuleCreator extends ElementCreator {
     }
 
     private String resolveRuleMessage(RuleDef ruleDef) {
-        ValidationDao validationDao = context.getHandle().attach(ValidationDao.class);
+        var validationDao = context.getHandle().attach(ValidationDao.class);
         return validationDao.getJdbiI18nValidationMsgTrans().getValidationMessage(
                 validationDao.getJdbiValidationType().getTypeId(ruleDef.getRuleType()),
                 context.getLangCodeId()
