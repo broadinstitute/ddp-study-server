@@ -12,7 +12,7 @@ import org.broadinstitute.ddp.util.ActivityInstanceUtil;
 /**
  * Creates {@link FormInstance}
  */
-public class FormInstanceCreator extends ElementCreator {
+public class FormInstanceCreator extends AbstractCreator {
 
     public FormInstanceCreator(ActivityInstanceFromDefinitionBuilder.Context context) {
         super(context);
@@ -71,7 +71,7 @@ public class FormInstanceCreator extends ElementCreator {
 
     private void addChildren(FormInstance formInstance) {
         var formActivityDef = context.getFormActivityDef();
-        var formSectionCreator = new FormSectionCreator(context);
+        var formSectionCreator = context.getFormSectionCreator();
         formInstance.setIntroduction(formSectionCreator.createSection(formActivityDef.getIntroduction()));
         formInstance.setClosing(formSectionCreator.createSection(formActivityDef.getClosing()));
         formActivityDef.getSections().forEach(s -> {

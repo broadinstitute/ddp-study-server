@@ -3,6 +3,7 @@ package org.broadinstitute.ddp.util;
 import java.time.Instant;
 
 import org.broadinstitute.ddp.db.ActivityDefStore;
+import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
 import org.broadinstitute.ddp.db.dto.ActivityDto;
@@ -10,6 +11,8 @@ import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.db.dto.ActivityVersionDto;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
+import org.broadinstitute.ddp.model.activity.instance.ActivityInstance;
+import org.broadinstitute.ddp.model.activity.instance.FormResponse;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.jdbi.v3.core.Handle;
 
@@ -29,6 +32,25 @@ public class ActivityInstanceUtil {
                 .orElseThrow(() -> new DDPException("Could not find activity version for instance " + instanceGuid));
         return activityStore.findActivityDef(handle, studyGuid, activityDto, versionDto)
                 .orElseThrow(() -> new DDPException("Could not find activity definition for instance " + instanceGuid));
+    }
+
+    /**
+     * Get {@link FormResponse} by {@link ActivityInstance#getGuid()}
+     */
+    public static FormResponse getFormResponse(Handle handle, String activityInstGuid) {
+        return handle.attach(ActivityInstanceDao.class)
+                .findFormResponseWithAnswersByInstanceGuid(activityInstGuid)
+                .orElseThrow(() -> new DDPException("Error reading form activity by guid=" + activityInstGuid));
+    }
+
+    /**
+     * Find most recent {@link ActivityInstance} befora a current one. Returns ID of a found instance
+     * or null if such not exists.
+     */
+    public static Long getPreviousInstanceId(Handle handle, long instanceId) {
+        return handle.attach(ActivityInstanceDao.class)
+                .findMostRecentInstanceBeforeCurrent(instanceId)
+                .orElse(null);
     }
 
     /**

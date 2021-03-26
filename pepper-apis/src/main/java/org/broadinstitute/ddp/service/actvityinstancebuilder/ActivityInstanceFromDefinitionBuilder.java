@@ -10,9 +10,6 @@ import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.content.ContentStyle;
 import org.broadinstitute.ddp.content.I18nContentRenderer;
 import org.broadinstitute.ddp.db.ActivityDefStore;
-import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
-import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
-import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
 import org.broadinstitute.ddp.model.activity.definition.FormBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.FormSectionDef;
@@ -24,6 +21,7 @@ import org.broadinstitute.ddp.pex.TreeWalkInterpreter;
 import org.broadinstitute.ddp.service.actvityinstancebuilder.block.FormBlockCreator;
 import org.broadinstitute.ddp.service.actvityinstancebuilder.block.question.QuestionCreator;
 import org.broadinstitute.ddp.service.actvityinstancebuilder.block.question.ValidationRuleCreator;
+import org.broadinstitute.ddp.util.ActivityInstanceUtil;
 import org.broadinstitute.ddp.util.TemplateRenderUtil;
 import org.jdbi.v3.core.Handle;
 
@@ -37,16 +35,16 @@ import org.jdbi.v3.core.Handle;
  * {@link #buildActivityInstance(Handle, String, String, String, String, ContentStyle, String)}
  * In this method executed the following steps:
  * <ul>
- *     <li>find activity data in {@link ActivityDefStore} by study guid and activity instance dto;</li>
+ *     <li>find {@link FormResponse} by activityInstanceGuid (this object creates answers list);</li>
+ *     <li>find activity data in {@link ActivityDefStore} by study guid and activity ID;</li>
  *     <li>if data is found then:<br>
- *        - get answers from DB;<br>
  *        - run the process of {@link ActivityInstance} building.
  *     </li>
  * </ul>
  *
  * <p><b>Activity instance building steps:</b>
  * <ul>
- *     <li>create {@link FormInstance} (via constructor, setting data from {@link ActivityInstanceDto});</li>
+ *     <li>create {@link FormInstance} (via constructor, setting data from {@link FormResponse});</li>
  *     <li>iterate through {@link FormActivityDef#getAllSections()} and add sections to the {@link FormInstance};</li>
  *     <li>in each {@link FormSectionDef} iterate through {@link FormSectionDef#getBlocks()} and add
  *       blocks to an added {@link FormInstance} section;</li>
@@ -56,7 +54,7 @@ import org.jdbi.v3.core.Handle;
  *     <li>for each of added question find answers and add to the question.</li>
  * </ul>
  *
- * <p>For each element type a creator is implemented (an instance of interface {@link ElementCreator}).
+ * <p>For each element type a creator is implemented (an instance of interface {@link AbstractCreator}).
  * <br> Creators hierarchy:
  * <pre>
  *   {@link FormInstanceCreator}
@@ -68,7 +66,7 @@ import org.jdbi.v3.core.Handle;
  * </pre>
  *
  * <p>NOTE: it is defined a class {@link Context} used to pass the basic parameters to each
- * {@link ElementCreator} (so it's no need to pass multiple parameters to each creator constructor -
+ * {@link AbstractCreator} (so it's no need to pass multiple parameters to each creator constructor -
  * only one parameter {@link Context} is passed.
  */
 public class ActivityInstanceFromDefinitionBuilder {
@@ -82,7 +80,7 @@ public class ActivityInstanceFromDefinitionBuilder {
             ContentStyle style,
             String isoLangCode
     ) {
-        var formResponse = getFormResponse(handle, instanceGuid);
+        var formResponse = ActivityInstanceUtil.getFormResponse(handle, instanceGuid);
         Optional<FormActivityDef> formActivityDef = ActivityDefStore.getInstance().findActivityDef(
                 handle, studyGuid, formResponse.getActivityId(), formResponse.getCreatedAt(), formResponse.getActivityCode());
         if (formActivityDef.isPresent() && formActivityDef.get().getActivityType() == FORMS) {
@@ -94,16 +92,11 @@ public class ActivityInstanceFromDefinitionBuilder {
         return Optional.empty();
     }
 
-    private FormResponse getFormResponse(Handle handle, String activityInstGuid) {
-        return handle.attach(ActivityInstanceDao.class)
-                .findFormResponseWithAnswersByInstanceGuid(activityInstGuid)
-                .orElseThrow(() -> new DDPException("Error reading form activity by guid=" + activityInstGuid));
-    }
-
     /**
      * Aggregates objects which needs on all steps of {@link ActivityInstance} building.
      */
     public static class Context {
+
         private final Handle handle;
         private final String userGuid;
         private final String operatorGuid;
@@ -113,9 +106,16 @@ public class ActivityInstanceFromDefinitionBuilder {
         private final FormActivityDef formActivityDef;
         private final FormResponse formResponse;
 
+        private final FormSectionCreator formSectionCreator;
+        private final SectionIconCreator sectionIconCreator;
+        private final FormBlockCreator formBlockCreator;
+        private final QuestionCreator questionCreator;
+
         private final PexInterpreter interpreter = new TreeWalkInterpreter();
         private final I18nContentRenderer i18nContentRenderer = new I18nContentRenderer();
         private final Map<String, Object> rendererInitialContext;
+
+        private final Long previousInstanceId;
 
         private Map<Long, String> renderedTemplates = new HashMap<>();
 
@@ -135,8 +135,16 @@ public class ActivityInstanceFromDefinitionBuilder {
             this.langCodeId = LanguageStore.get(isoLangCode).getId();
             this.formActivityDef = formActivityDef;
             this.formResponse = formResponse;
+
             this.rendererInitialContext = TemplateRenderUtil.createRendererInitialContext(handle,
                     formResponse.getParticipantId(), formResponse.getId(), formActivityDef.getLastUpdated());
+
+            this.previousInstanceId = ActivityInstanceUtil.getPreviousInstanceId(handle, formResponse.getId());
+
+            formSectionCreator = new FormSectionCreator(this);
+            sectionIconCreator = new SectionIconCreator(this);
+            formBlockCreator = new FormBlockCreator(this);
+            questionCreator = new QuestionCreator(this);
         }
 
         public Handle getHandle() {
@@ -185,6 +193,26 @@ public class ActivityInstanceFromDefinitionBuilder {
 
         public Map<Long, String> getRenderedTemplates() {
             return renderedTemplates;
+        }
+
+        public Long getPreviousInstanceId() {
+            return previousInstanceId;
+        }
+
+        public FormSectionCreator getFormSectionCreator() {
+            return formSectionCreator;
+        }
+
+        public SectionIconCreator getSectionIconCreator() {
+            return sectionIconCreator;
+        }
+
+        public FormBlockCreator getFormBlockCreator() {
+            return formBlockCreator;
+        }
+
+        public QuestionCreator getQuestionCreator() {
+            return questionCreator;
         }
     }
 }

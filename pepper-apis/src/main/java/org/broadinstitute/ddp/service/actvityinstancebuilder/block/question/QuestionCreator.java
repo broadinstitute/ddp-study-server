@@ -18,25 +18,22 @@ import org.broadinstitute.ddp.model.activity.definition.question.TextQuestionDef
 import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
 import org.broadinstitute.ddp.model.activity.instance.question.Question;
 import org.broadinstitute.ddp.model.activity.instance.validation.Rule;
+import org.broadinstitute.ddp.service.actvityinstancebuilder.AbstractCreator;
 import org.broadinstitute.ddp.service.actvityinstancebuilder.ActivityInstanceFromDefinitionBuilder;
-import org.broadinstitute.ddp.service.actvityinstancebuilder.ElementCreator;
-import org.broadinstitute.ddp.service.actvityinstancebuilder.block.question.impl.AgreementQuestionCreator;
-import org.broadinstitute.ddp.service.actvityinstancebuilder.block.question.impl.BoolQuestionCreator;
-import org.broadinstitute.ddp.service.actvityinstancebuilder.block.question.impl.CompositeQuestionCreator;
-import org.broadinstitute.ddp.service.actvityinstancebuilder.block.question.impl.DatePickListQuestionCreator;
-import org.broadinstitute.ddp.service.actvityinstancebuilder.block.question.impl.DateQuestionCreator;
-import org.broadinstitute.ddp.service.actvityinstancebuilder.block.question.impl.FileQuestionCreator;
-import org.broadinstitute.ddp.service.actvityinstancebuilder.block.question.impl.NumericQuestionCreator;
-import org.broadinstitute.ddp.service.actvityinstancebuilder.block.question.impl.PicklistQuestionCreator;
-import org.broadinstitute.ddp.service.actvityinstancebuilder.block.question.impl.TextQuestionCreator;
+import org.broadinstitute.ddp.util.CollectionMiscUtil;
 
 /**
  * Creates {@link Question}
  */
-public class QuestionCreator extends ElementCreator {
+public class QuestionCreator extends AbstractCreator {
+
+    private final QuestionCreatorHelper questionCreatorHelper;
+    private final ValidationRuleCreator validationRuleCreator;
 
     public QuestionCreator(ActivityInstanceFromDefinitionBuilder.Context context) {
         super(context);
+        validationRuleCreator = new ValidationRuleCreator(context);
+        questionCreatorHelper = new QuestionCreatorHelper(context);
     }
 
     public Question createQuestion(QuestionDef questionDef) {
@@ -44,37 +41,33 @@ public class QuestionCreator extends ElementCreator {
             case DATE:
                 return ((DateQuestionDef) questionDef).getRenderMode() == PICKLIST
                         ?
-                        new DatePickListQuestionCreator(context).createDatePickListQuestion(this, (DateQuestionDef) questionDef) :
-                        new DateQuestionCreator(context).createDateQuestion(this, (DateQuestionDef) questionDef);
+                        questionCreatorHelper.createDatePickListQuestion((DateQuestionDef) questionDef) :
+                        questionCreatorHelper.createDateQuestion((DateQuestionDef) questionDef);
             case BOOLEAN:
-                return new BoolQuestionCreator(context).createBoolQuestion(this, (BoolQuestionDef) questionDef);
+                return questionCreatorHelper.createBoolQuestion((BoolQuestionDef) questionDef);
             case TEXT:
-                return new TextQuestionCreator(context).createTextQuestion(this, (TextQuestionDef) questionDef);
+                return questionCreatorHelper.createTextQuestion((TextQuestionDef) questionDef);
             case NUMERIC:
-                return new NumericQuestionCreator(context).createNumericQuestion(this, (NumericQuestionDef) questionDef);
+                return questionCreatorHelper.createNumericQuestion((NumericQuestionDef) questionDef);
             case PICKLIST:
-                return new PicklistQuestionCreator(context).createPicklistQuestion(this, (PicklistQuestionDef) questionDef);
+                return questionCreatorHelper.createPicklistQuestion((PicklistQuestionDef) questionDef);
             case AGREEMENT:
-                return new AgreementQuestionCreator(context).createAgreementQuestion(this, (AgreementQuestionDef) questionDef);
+                return questionCreatorHelper.createAgreementQuestion((AgreementQuestionDef) questionDef);
             case COMPOSITE:
-                return new CompositeQuestionCreator(context).createCompositeQuestion(this, (CompositeQuestionDef) questionDef);
+                return questionCreatorHelper.createCompositeQuestion((CompositeQuestionDef) questionDef);
             case FILE:
-                return new FileQuestionCreator(context).constructFileQuestion(this, (FileQuestionDef) questionDef);
+                return questionCreatorHelper.constructFileQuestion((FileQuestionDef) questionDef);
             default:
                 throw new IllegalStateException("Unexpected value: " + questionDef.getQuestionType());
         }
     }
 
-    public <T extends Answer> List<Rule<T>> getValidationRules(QuestionDef questionDef) {
-        var validationRuleCreator = new ValidationRuleCreator(context);
-        List<Rule<T>> validationRules = new ArrayList<>();
-        if (questionDef.getValidations() != null) {
-            questionDef.getValidations().forEach(v -> validationRules.add(validationRuleCreator.createRule(v)));
-        }
-        return validationRules;
+    <T extends Answer> List<Rule<T>> getValidationRules(QuestionDef questionDef) {
+        return CollectionMiscUtil.createListFromAnotherList(questionDef.getValidations(),
+                (ruleDef) -> validationRuleCreator.createRule(ruleDef));
     }
 
-    public <T extends Answer> List<T> getAnswers(Class<T> type, String questionStableId) {
+    <T extends Answer> List<T> getAnswers(Class<T> type, String questionStableId) {
         List<T> answers = new ArrayList<>();
         if (context.getFormResponse().getAnswers() != null) {
             answers = context.getFormResponse().getAnswers().stream()

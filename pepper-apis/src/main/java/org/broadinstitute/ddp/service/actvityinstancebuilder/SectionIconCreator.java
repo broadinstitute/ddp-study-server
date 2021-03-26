@@ -6,7 +6,7 @@ import org.broadinstitute.ddp.model.activity.definition.SectionIcon;
 /**
  * Creates {@link SectionIcon}
  */
-public class SectionIconCreator extends ElementCreator {
+public class SectionIconCreator extends AbstractCreator {
 
     public SectionIconCreator(ActivityInstanceFromDefinitionBuilder.Context context) {
         super(context);

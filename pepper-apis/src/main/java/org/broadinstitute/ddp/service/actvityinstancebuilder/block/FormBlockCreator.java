@@ -1,6 +1,5 @@
 package org.broadinstitute.ddp.service.actvityinstancebuilder.block;
 
-
 import org.broadinstitute.ddp.model.activity.definition.ComponentBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.ConditionalBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.ContentBlockDef;
@@ -9,22 +8,19 @@ import org.broadinstitute.ddp.model.activity.definition.GroupBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.NestedActivityBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.QuestionBlockDef;
 import org.broadinstitute.ddp.model.activity.instance.FormBlock;
+import org.broadinstitute.ddp.service.actvityinstancebuilder.AbstractCreator;
 import org.broadinstitute.ddp.service.actvityinstancebuilder.ActivityInstanceFromDefinitionBuilder;
-import org.broadinstitute.ddp.service.actvityinstancebuilder.ElementCreator;
-import org.broadinstitute.ddp.service.actvityinstancebuilder.block.impl.ComponentBlockCreator;
-import org.broadinstitute.ddp.service.actvityinstancebuilder.block.impl.ConditionalBlockCreator;
-import org.broadinstitute.ddp.service.actvityinstancebuilder.block.impl.ContentBlockCreator;
-import org.broadinstitute.ddp.service.actvityinstancebuilder.block.impl.GroupBlockCreator;
-import org.broadinstitute.ddp.service.actvityinstancebuilder.block.impl.NestedActivityBlockCreator;
-import org.broadinstitute.ddp.service.actvityinstancebuilder.block.impl.QuestionBlockCreator;
 
 /**
  * Creates {@link FormBlock}
  */
-public class FormBlockCreator extends ElementCreator {
+public class FormBlockCreator extends AbstractCreator {
+
+    private final FormBlockCreatorHelper formBlockCreatorHelper;
 
     public FormBlockCreator(ActivityInstanceFromDefinitionBuilder.Context context) {
         super(context);
+        formBlockCreatorHelper = new FormBlockCreatorHelper(context);
     }
 
     public FormBlock createBlock(FormBlockDef formBlockDef) {
@@ -36,17 +32,17 @@ public class FormBlockCreator extends ElementCreator {
     private FormBlock constructFormBlock(FormBlockDef formBlockDef) {
         switch (formBlockDef.getBlockType()) {
             case GROUP:
-                return new GroupBlockCreator(context).createGroupBlock((GroupBlockDef) formBlockDef);
+                return formBlockCreatorHelper.createGroupBlock((GroupBlockDef) formBlockDef);
             case CONTENT:
-                return new ContentBlockCreator(context).createContentBlock((ContentBlockDef) formBlockDef);
+                return formBlockCreatorHelper.createContentBlock((ContentBlockDef) formBlockDef);
             case COMPONENT:
-                return new ComponentBlockCreator(context).createComponentBlock((ComponentBlockDef)formBlockDef);
+                return formBlockCreatorHelper.createComponentBlock((ComponentBlockDef)formBlockDef);
             case ACTIVITY:
-                return new NestedActivityBlockCreator(context).createNestedActivityBlock((NestedActivityBlockDef) formBlockDef);
+                return formBlockCreatorHelper.createNestedActivityBlock((NestedActivityBlockDef) formBlockDef);
             case QUESTION:
-                return new QuestionBlockCreator(context).createQuestionBlock((QuestionBlockDef) formBlockDef);
+                return formBlockCreatorHelper.createQuestionBlock((QuestionBlockDef) formBlockDef);
             case CONDITIONAL:
-                return new ConditionalBlockCreator(context).createConditionalBlock((ConditionalBlockDef) formBlockDef);
+                return formBlockCreatorHelper.createConditionalBlock((ConditionalBlockDef) formBlockDef);
             default:
                 throw new IllegalStateException("Unexpected value: " + formBlockDef.getBlockType());
         }

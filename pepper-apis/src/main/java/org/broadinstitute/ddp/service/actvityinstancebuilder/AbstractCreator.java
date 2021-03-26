@@ -2,15 +2,16 @@ package org.broadinstitute.ddp.service.actvityinstancebuilder;
 
 
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
+import org.broadinstitute.ddp.model.activity.instance.ActivityInstance;
 
 /**
- * Abstract creator class
+ * Base class extended by {@link ActivityInstance} creators.
  */
-public abstract class ElementCreator {
+public abstract class AbstractCreator {
 
     protected final ActivityInstanceFromDefinitionBuilder.Context context;
 
-    public ElementCreator(ActivityInstanceFromDefinitionBuilder.Context context) {
+    public AbstractCreator(ActivityInstanceFromDefinitionBuilder.Context context) {
         this.context = context;
     }
 

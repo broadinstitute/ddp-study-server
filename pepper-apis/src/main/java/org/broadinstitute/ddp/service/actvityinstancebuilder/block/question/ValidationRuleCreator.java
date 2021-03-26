@@ -24,13 +24,13 @@ import org.broadinstitute.ddp.model.activity.instance.validation.NumOptionsSelec
 import org.broadinstitute.ddp.model.activity.instance.validation.RegexRule;
 import org.broadinstitute.ddp.model.activity.instance.validation.RequiredRule;
 import org.broadinstitute.ddp.model.activity.instance.validation.Rule;
+import org.broadinstitute.ddp.service.actvityinstancebuilder.AbstractCreator;
 import org.broadinstitute.ddp.service.actvityinstancebuilder.ActivityInstanceFromDefinitionBuilder;
-import org.broadinstitute.ddp.service.actvityinstancebuilder.ElementCreator;
 
 /**
  * Creates {@link Rule}
  */
-public class ValidationRuleCreator extends ElementCreator {
+public class ValidationRuleCreator extends AbstractCreator {
 
     public ValidationRuleCreator(ActivityInstanceFromDefinitionBuilder.Context context) {
         super(context);
