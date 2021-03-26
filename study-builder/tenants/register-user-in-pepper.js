@@ -11,8 +11,20 @@ function (user, context, callback) {
     user.app_metadata = user.app_metadata || {};
     user.app_metadata.pepper_user_guids = user.app_metadata.pepper_user_guids || {};
 
+    // Use of the m2mClients list below should be considered legacy behavior, and
+    // may be removed at any time. Any new clients should set the key 'skipPepperRegistration'
+    // to the value of 'true' in their client metadata if the Pepper registration process
+    // is not required.
     var m2mClients = ['dsm', 'Count Me In (Salt CMS)'];
-    if (m2mClients.includes(context.clientName)) {
+
+    // The new flag is opt-in. If no value is defined, the legacy behavior will be used.
+    // If the value is non-null, then assume the client has opted in.
+    var skipPepperRegistration = context.clientMetadata.skipPepperRegistration || null;
+    if ((skipPepperRegistration === null) && (m2mClients.includes(context.clientName))) {
+        console.log('skipping Pepper registration for legacy client \'' + context.clientName + '\'');
+        return callback(null, user, context);
+    } else if (skipPepperRegistration === 'true') {
+        console.log('skipping Pepper registration for \'' + context.clientName + '\'');
         return callback(null, user, context);
     }
 

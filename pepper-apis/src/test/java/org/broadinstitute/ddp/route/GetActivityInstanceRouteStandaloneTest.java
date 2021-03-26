@@ -252,9 +252,12 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
         var nestedActBlockDef = new NestedActivityBlockDef(
                 activityCode, NestedActivityRenderHint.MODAL, true, Template.text("add button"));
 
+        var parentQuestion = TextQuestionDef.builder(TextInputType.TEXT, parentActCode + "_Q1", Template.text("q1")).build();
         parentActivity = FormActivityDef.generalFormBuilder(parentActCode, "v1", testData.getStudyGuid())
                 .addName(new Translation("en", "parent activity " + parentActCode))
+                .addSubtitle(new Translation("en", "$ddp.answer(\"" + parentQuestion.getStableId() + "\",\"fallback\")"))
                 .addSection(new FormSectionDef(null, List.of(nestedActBlockDef)))
+                .addSection(new FormSectionDef(null, List.of(new QuestionBlockDef(parentQuestion))))
                 .build();
         activity = FormActivityDef.generalFormBuilder(activityCode, "v1", testData.getStudyGuid())
                 .addName(new Translation("en", "activity " + activityCode))
@@ -276,6 +279,9 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
         instanceDto = instanceDao.insertInstance(activity.getActivityId(), userGuid, userGuid, parentInstanceDto.getId());
 
         AnswerDao answerDao = handle.attach(AnswerDao.class);
+        answerDao.createAnswer(testData.getUserId(), parentInstanceDto.getId(),
+                new TextAnswer(null, parentQuestion.getStableId(), null, "parent-subtitle-answer"));
+
         answerDao.createAnswer(testData.getUserId(), instanceDto.getId(),
                 new TextAnswer(null, txt1.getStableId(), null, "valid answer"));
         answeredQuestionDto = handle.attach(JdbiQuestion.class).findQuestionDtoById(txt1.getQuestionId()).get();
@@ -410,6 +416,7 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
                 .body("guid", equalTo(parentInstanceDto.getGuid()))
                 .body("parentInstanceGuid", nullValue())
                 .body("canDelete", equalTo(false))
+                .body("subtitle", equalTo("parent-subtitle-answer"))
                 .root("sections[0].blocks[0]")
                 .body("blockType", equalTo(BlockType.ACTIVITY.name()))
                 .body("activityCode", equalTo(activityCode))

@@ -3,6 +3,7 @@ package org.broadinstitute.ddp.route;
 import static org.broadinstitute.ddp.util.ResponseUtil.halt400ErrorResponse;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
@@ -11,6 +12,7 @@ import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dto.LanguageDto;
 import org.broadinstitute.ddp.json.activity.ActivityInstanceSummary;
+import org.broadinstitute.ddp.model.activity.instance.FormResponse;
 import org.broadinstitute.ddp.security.DDPAuth;
 import org.broadinstitute.ddp.service.ActivityInstanceService;
 import org.broadinstitute.ddp.util.RouteUtil;
@@ -62,8 +64,9 @@ public class UserActivityInstanceListRoute implements Route {
                 // Study admins are allowed to view all the data, so if they're NOT admin then do filtering.
                 summaries = filterActivityInstancesFromDisplay(summaries);
             }
-            service.countQuestionsAndAnswers(handle, userGuid, operatorGuid, studyGuid, summaries);
-            service.renderInstanceSummaries(handle, found.getUser().getId(), summaries);
+            Map<String, FormResponse> responses = service.countQuestionsAndAnswers(
+                    handle, userGuid, operatorGuid, studyGuid, summaries);
+            service.renderInstanceSummaries(handle, found.getUser().getId(), studyGuid, summaries, responses);
             return summaries;
         });
     }

@@ -1,10 +1,12 @@
 package org.broadinstitute.ddp.model.activity.instance;
 
 import java.util.function.Consumer;
+import java.util.stream.Stream;
 import javax.validation.constraints.NotNull;
 
 import com.google.gson.annotations.SerializedName;
 import org.broadinstitute.ddp.content.ContentStyle;
+import org.broadinstitute.ddp.model.activity.instance.question.Question;
 import org.broadinstitute.ddp.model.activity.types.BlockType;
 import org.broadinstitute.ddp.util.MiscUtil;
 
@@ -27,6 +29,11 @@ public class ComponentBlock extends FormBlock implements Numberable  {
         MiscUtil.checkNonNull(formComponent, "formComponent");
         this.formComponent = formComponent;
         this.hideDisplayNumber = formComponent.hideDisplayNumber;
+    }
+
+    @Override
+    public Stream<Question> streamQuestions() {
+        return Stream.empty();
     }
 
     @Override

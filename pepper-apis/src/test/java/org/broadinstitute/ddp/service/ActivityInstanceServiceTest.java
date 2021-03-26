@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.broadinstitute.ddp.TxnAwareBaseTest;
@@ -20,6 +21,7 @@ import org.broadinstitute.ddp.constants.LanguageConstants;
 import org.broadinstitute.ddp.content.ContentStyle;
 import org.broadinstitute.ddp.content.I18nContentRenderer;
 import org.broadinstitute.ddp.content.I18nTemplateConstants;
+import org.broadinstitute.ddp.db.ActivityDefStore;
 import org.broadinstitute.ddp.db.FormInstanceDao;
 import org.broadinstitute.ddp.db.SectionBlockDao;
 import org.broadinstitute.ddp.db.TransactionWrapper;
@@ -27,19 +29,28 @@ import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dao.JdbiUser;
 import org.broadinstitute.ddp.db.dao.StudyLanguageCachedDao;
+import org.broadinstitute.ddp.db.dto.ActivityInstanceStatusDto;
 import org.broadinstitute.ddp.json.activity.ActivityInstanceSummary;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
 import org.broadinstitute.ddp.model.activity.definition.FormSectionDef;
+import org.broadinstitute.ddp.model.activity.definition.QuestionBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.i18n.SummaryTranslation;
 import org.broadinstitute.ddp.model.activity.definition.i18n.Translation;
+import org.broadinstitute.ddp.model.activity.definition.question.PicklistOptionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.PicklistQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.activity.definition.template.TemplateVariable;
 import org.broadinstitute.ddp.model.activity.instance.ActivityInstance;
 import org.broadinstitute.ddp.model.activity.instance.FormInstance;
+import org.broadinstitute.ddp.model.activity.instance.FormResponse;
+import org.broadinstitute.ddp.model.activity.instance.answer.PicklistAnswer;
+import org.broadinstitute.ddp.model.activity.instance.answer.SelectedPicklistOption;
+import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
 import org.broadinstitute.ddp.model.activity.types.ActivityType;
 import org.broadinstitute.ddp.model.activity.types.FormType;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
+import org.broadinstitute.ddp.model.activity.types.PicklistRenderMode;
 import org.broadinstitute.ddp.model.activity.types.TemplateType;
 import org.broadinstitute.ddp.pex.PexInterpreter;
 import org.broadinstitute.ddp.pex.TreeWalkInterpreter;
@@ -348,8 +359,51 @@ public class ActivityInstanceServiceTest extends TxnAwareBaseTest {
         summaries.get(0).setInstanceNumber(2);
 
         TransactionWrapper.useTxn(handle ->
-                service.renderInstanceSummaries(handle, testData.getUserId(), summaries));
+                service.renderInstanceSummaries(handle, testData.getUserId(), "study", summaries, Map.of()));
 
         assertEquals("name #2", summaries.get(0).getActivityName());
+    }
+
+    @Test
+    public void testRenderInstanceSummaries_rendersAnswer() {
+        String name = "Name: $ddp.answer(\"Q2\",\"picklist\")";
+        String title = "Title: $ddp.answer(\"Q1\",\"text\") $ddp.answer(\"non-existing\", \"the-fallback\")";
+        String subtitle = "Subtitle: $ddp.answer(\"Q2\",\"picklist\")";
+        String description = "Description: $ddp.answer(\"Q2\",\"picklist\")";
+        String summary = "Summary: $ddp.answer(\"Q2\",\"picklist\")";
+        String activityCode = "ACT" + Instant.now().toEpochMilli();
+        var summaries = List.of(new ActivityInstanceSummary(
+                activityCode, 1L, "guid", name, null, title, subtitle, description, summary, "type", "form", "status",
+                null, false, "en", false, false, 1L, false, false, "v1", 1L, 1L));
+        summaries.get(0).setInstanceNumber(2);
+
+        var response = new FormResponse(1L, "guid", 1L, null, 1L, 1L, null, null, 1L, activityCode, "v1",
+                new ActivityInstanceStatusDto(1L, 1L, 1L, 1L, InstanceStatusType.CREATED));
+        response.putAnswer(new TextAnswer(1L, "Q1", "guid1", "some-text"));
+        response.putAnswer(new PicklistAnswer(2L, "Q2", "guid2", List.of(new SelectedPicklistOption("AUNT"))));
+
+        var optionAunt = Template.text("$aunt");
+        optionAunt.addVariable(TemplateVariable.single("aunt", "en", "My Aunt"));
+        var optionUncle = Template.text("$uncle");
+        optionUncle.addVariable(TemplateVariable.single("uncle", "en", "Should not use this one!"));
+        var activity = FormActivityDef.generalFormBuilder(activityCode, "v1", "study")
+                .addName(new Translation("en", "dummy activity"))
+                // No need to add definition for text question since that's not needed for use-friendly display.
+                .addSection(new FormSectionDef(null, List.of(new QuestionBlockDef(
+                        PicklistQuestionDef.buildSingleSelect(PicklistRenderMode.LIST, "Q2", Template.text("picklist"))
+                        .addOption(new PicklistOptionDef("AUNT", optionAunt))
+                        .addOption(new PicklistOptionDef("UNCLE", optionUncle))
+                        .build()))))
+                .build();
+
+        ActivityDefStore.getInstance().setActivityDef("study", activityCode, "v1", activity);
+        TransactionWrapper.useTxn(handle -> service.renderInstanceSummaries(
+                handle, testData.getUserId(), "study", summaries, Map.of("guid", response)));
+
+        assertEquals("Name: My Aunt #2", summaries.get(0).getActivityName());
+        assertEquals("Title: some-text the-fallback", summaries.get(0).getActivityTitle());
+        assertEquals("Subtitle: My Aunt", summaries.get(0).getActivitySubtitle());
+        assertEquals("Description: My Aunt", summaries.get(0).getActivityDescription());
+        assertEquals("Summary: My Aunt", summaries.get(0).getActivitySummary());
     }
 }
