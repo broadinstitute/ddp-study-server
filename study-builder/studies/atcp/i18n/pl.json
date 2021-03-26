@@ -540,7 +540,7 @@
   "feeding_help_time_prompt": "Jak często inni pomagają Ci skończyć posiłki ze względu na czas?",
   "feeding_help_concern_prompt": "Jak często inni pomagają Ci skończyć posiłki ze względu na obawy, że nie przyjmujesz wystarczającej ilości jedzenia lub picia?",
   "feeding_poor_appetite_prompt": "Jak często masz słaby apetyt (nie jesteś głodny), co ogranicza spożycie?",
-  "feeding_madication_prompt": "Jak często samodzielnie zażywasz leki doustnie?",
+  "feeding_medication_prompt": "Jak często samodzielnie zażywasz leki doustnie?",
   "feed_pa_self_feed_fork_prompt": "Jak często $ddp.participantFirstName() samodzielnie je widelcem?",
   "feed_pa_self_feed_spoon_prompt": "Jak często $ddp.participantFirstName() samodzielnie nakłada jedzenie i je łyżką?",
   "feed_pa_eat_with_fingers_prompt": "Jak często $ddp.participantFirstName() je palcami?",
@@ -552,5 +552,22 @@
   "feed_pa_help_time_prompt": "Jak często inni pomagają $ddp.participantFirstName() skończyć posiłki ze względu na czas?",
   "feed_pa_help_concern_prompt": "Jak często inni pomagają $ddp.participantFirstName() skończyć posiłki ze względu obawy, że nie przyjmuje on/ona wystarczającej ilości jedzenia lub picia?",
   "feed_pa_poor_appetite_prompt": "Jak często $ddp.participantFirstName() ma słaby apetyt (nie jest głodny/a), co ogranicza spożycie?",
-  "feed_pa_madication_prompt": "Jak często $ddp.participantFirstName() samodzielnie zażywa leki doustnie?"
+  "feed_pa_medication_prompt": "Jak często $ddp.participantFirstName() samodzielnie zażywa leki doustnie?",
+
+  "blood_type_name": "Ankieta dotycząca grupy krwi",
+  "blood_type_title": "Ankieta dotycząca grupy krwi",
+  "blood_type_summary_created": "Ankieta dotycząca grupy krwi",
+  "blood_type_summary_in_progress": "Ankieta dotycząca grupy krwi",
+  "blood_type_summary_complete": "TBD",
+  "blood_type_q1": "Jaka jest Pana(-i) grupa krwi?",
+  "blood_type_q1_governed": "Jaką grupę krwi ma $ddp.participantFirstName()?",
+  "blood_type_q2": "Czy Pana(-i) grupa krwi jest + (dodatnia) czy - (ujemna)?",
+  "blood_type_q2_governed": "Czy jego/jej grupa krwi jest + (dodatnia) czy - (ujemna)?",
+  "blood_type_a": "A",
+  "blood_type_b": "B",
+  "blood_type_ab": "AB",
+  "blood_type_o": "O",
+  "blood_type_dk": "Nie wiem",
+  "blood_type_rh_pos": "+ (dodatnia)",
+  "blood_type_rh_neg": "- (ujemna)"
 }

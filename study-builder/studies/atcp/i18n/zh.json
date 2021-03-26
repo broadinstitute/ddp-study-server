@@ -540,7 +540,7 @@
   "feeding_help_time_prompt": "别人因为时间的关系而帮您用完餐的频度如何？",
   "feeding_help_concern_prompt": "别人因为担心您无法吃饱喝足而帮您用完餐的频度如何？",
   "feeding_poor_appetite_prompt": "您因为胃口不好（不饿）而吃得不多的频度如何？",
-  "feeding_madication_prompt": "您自行口服药物的频度如何？",
+  "feeding_medication_prompt": "您自行口服药物的频度如何？",
   "feed_pa_self_feed_fork_prompt": "$ddp.participantFirstName() 用叉子自主进食的频度如何？",
   "feed_pa_self_feed_spoon_prompt": "$ddp.participantFirstName() 用勺子舀食物和自主进食的频度如何？",
   "feed_pa_eat_with_fingers_prompt": "$ddp.participantFirstName() 用手指吃食物的频度如何？",
@@ -552,5 +552,22 @@
   "feed_pa_help_time_prompt": "别人因为时间的关系而帮 $ddp.participantFirstName() 用完餐的频度如何？",
   "feed_pa_help_concern_prompt": "别人因为担心 $ddp.participantFirstName() 无法吃饱喝足而帮他/他用完餐的频度如何？",
   "feed_pa_poor_appetite_prompt": "$ddp.participantFirstName() 因为胃口不好（不饿）而吃得不多的频度如何？",
-  "feed_pa_madication_prompt": "$ddp.participantFirstName() 自行口服药物的频度如何？"
+  "feed_pa_medication_prompt": "$ddp.participantFirstName() 自行口服药物的频度如何？",
+
+  "blood_type_name": "血型调查",
+  "blood_type_title": "血型调查",
+  "blood_type_summary_created": "血型调查",
+  "blood_type_summary_in_progress": "血型调查",
+  "blood_type_summary_complete": "TBD",
+  "blood_type_q1": "您的血型是什么？",
+  "blood_type_q1_governed": "$ddp.participantFirstName() 的血型是什么？",
+  "blood_type_q2": "您的血型是 +（阳性）还是 -（阴性）？",
+  "blood_type_q2_governed": "他们的血型是 +（阳性）还是 -（阴性）？",
+  "blood_type_a": "A",
+  "blood_type_b": "B",
+  "blood_type_ab": "AB",
+  "blood_type_o": "O",
+  "blood_type_dk": "我不确定",
+  "blood_type_rh_pos": "+ (阳性)",
+  "blood_type_rh_neg": "- (阴性)"
 }

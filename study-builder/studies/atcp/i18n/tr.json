@@ -541,7 +541,7 @@
   "feeding_help_time_prompt": "Zaman sınırlamasından dolayı, yemek yemenize ne sıklıkla başkaları yardımcı olur?",
   "feeding_help_concern_prompt": "Yeterli yemek yemeyeceğinize veya içecek içmeyeceğinize dair endişeleri nedeniyle, yemek yemenize ne sıklıkla başkaları yardımcı olur?",
   "feeding_poor_appetite_prompt": "Ne sıklıkla yemek yemenizi sınırlayan bir iştahsızlık çekersiniz (aç hissetmeme)?",
-  "feeding_madication_prompt": "Ne sıklıkla ağızdan kendi kendinize ilaç alırsınız?",
+  "feeding_medication_prompt": "Ne sıklıkla ağızdan kendi kendinize ilaç alırsınız?",
   "feed_pa_self_feed_fork_prompt": "$ddp.participantFirstName() ne sıklıkla çatal kullanarak kendi kendine yemek yer?",
   "feed_pa_self_feed_spoon_prompt": "$ddp.participantFirstName() ne sıklıkla kaşık kullanarak kendi kendine yemek yer?",
   "feed_pa_eat_with_fingers_prompt": "$ddp.participantFirstName() ne sıklıkla elleriyle yemek yer?",
@@ -553,5 +553,22 @@
   "feed_pa_help_time_prompt": "Zaman sınırlamasından dolayı $ddp.participantFirstName() adlı kişinin yemek yemesine ne sıklıkla başkaları yardımcı olur?",
   "feed_pa_help_concern_prompt": "Yeterli yemek yemeyeceğine veya içecek içmeyeceğine dair endişeleri nedeniyle, $ddp.participantFirstName() adlı kişinin yemek yemesine ne sıklıkla başkaları yardımcı olur?",
   "feed_pa_poor_appetite_prompt": "$ddp.participantFirstName() ne sıklıkla yemek yemesini sınırlayan bir iştahsızlık çeker (aç hissetmeme)?",
-  "feed_pa_madication_prompt": "$ddp.participantFirstName() adlı kişi ne sıklıkla kendi kendine ağızdan ilaç alır?"
+  "feed_pa_medication_prompt": "$ddp.participantFirstName() adlı kişi ne sıklıkla kendi kendine ağızdan ilaç alır?",
+
+  "blood_type_name": "Kan Grubu Anketi",
+  "blood_type_title": "Kan Grubu Anketi",
+  "blood_type_summary_created": "Kan Grubu Anketi",
+  "blood_type_summary_in_progress": "Kan Grubu Anketi",
+  "blood_type_summary_complete": "TBD",
+  "blood_type_q1": "Kan grubunuz nedir?",
+  "blood_type_q1_governed": "$ddp.participantFirstName()’ın kan grubu nedir?",
+  "blood_type_q2": "Kan grubunuz + (pozitif) mi yoksa - (negatif) mi?",
+  "blood_type_q2_governed": "Kan grubu + (pozitif) mi yoksa - (negatif) mi?",
+  "blood_type_a": "A",
+  "blood_type_b": "B",
+  "blood_type_ab": "AB",
+  "blood_type_o": "O",
+  "blood_type_dk": "Emin değilim",
+  "blood_type_rh_pos": "+ (pozitif)",
+  "blood_type_rh_neg": "- (negatif)"
 }
