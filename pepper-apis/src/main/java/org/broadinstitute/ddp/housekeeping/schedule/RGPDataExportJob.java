@@ -119,7 +119,7 @@ public class RGPDataExportJob implements Job {
         ActivityDefStore.getInstance().clear();
         DataExporter.clearCachedAuth0Emails();
 
-        var coordinator = new DataExportCoordinator(exporter)
+        var coordinator = new DataExportCoordinator(exporter, cfg)
                 .includeCsv(bucket);
 
         try {

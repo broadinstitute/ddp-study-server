@@ -1,7 +1,5 @@
 package org.broadinstitute.ddp.export;
 
-import static org.broadinstitute.ddp.export.DataExportCoordinator.RGP_ACTIVITY;
-import static org.broadinstitute.ddp.export.DataExportCoordinator.RGP_GUID;
 import static org.broadinstitute.ddp.model.activity.types.ComponentType.MAILING_ADDRESS;
 
 import java.io.BufferedWriter;
@@ -152,6 +150,8 @@ public class DataExporter {
     private final PdfService pdfService;
     private final FileUploadService fileService;
     private final RestHighLevelClient esClient;
+    private final String rgpGuid;
+    private final String rgpActivity;
 
     public static String makeExportCSVFilename(String studyGuid, Instant timestamp) {
         return String.format("%s_%s.csv", studyGuid, makeDateTimeString(timestamp));
@@ -199,6 +199,9 @@ public class DataExporter {
         componentNames.add("INITIAL_BIOPSY");
         componentNames.add("INSTITUTION");
         componentNames.add("PHYSICIAN");
+
+        this.rgpActivity = cfg.getString(ConfigFile.RGP_ACTIVITY);
+        this.rgpGuid = cfg.getString(ConfigFile.RGP_GUID);
     }
 
     /**
@@ -237,13 +240,13 @@ public class DataExporter {
     public List<ActivityExtract> extractRGPEnrollmentActivity(Handle handle) {
         JdbiActivity jdbiActivity = handle.attach(JdbiActivity.class);
 
-        Optional<ActivityDto> activityDtoOptional = jdbiActivity.findActivityByStudyGuidAndCode(RGP_GUID, RGP_ACTIVITY);
+        Optional<ActivityDto> activityDtoOptional = jdbiActivity.findActivityByStudyGuidAndCode(rgpGuid, rgpActivity);
         if (activityDtoOptional.isEmpty()) {
             LOG.error("RGP enrollment activity DTO not found");
             return null;
         }
         ActivityDto activityDto = activityDtoOptional.get();
-        List<ActivityExtract> activities = extractVersionsOfActivity(handle, activityDto, RGP_GUID);
+        List<ActivityExtract> activities = extractVersionsOfActivity(handle, activityDto, rgpGuid);
 
         LOG.info("RGP export found {} versions of enrollment activity", activities.size());
 

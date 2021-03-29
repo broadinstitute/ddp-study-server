@@ -61,6 +61,9 @@ public class ConfigFile {
     public static final String RGP_EXCLUDED_PARTICIPANT_FIELDS = "rgpExport.excludedParticipantFields";
     public static final String RGP_EXCLUDED_ACTIVITY_FIELDS = "rgpExport.excludedActivityFields";
     public static final String RGP_FIRST_FIELDS = "rgpExport.firstFields";
+    public static final String RGP_GUID = "rgpExport.guid";
+    public static final String RGP_ACTIVITY = "rgpExport.activity";
+    public static final String RGP_EXPORT_STATUS = "rgpExport.status";
 
     // the cron schedule for different jobs
     public static final String CHECK_AGE_UP_SCHEDULE = "schedules.checkAgeUp";

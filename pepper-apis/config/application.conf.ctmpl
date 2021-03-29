@@ -90,6 +90,9 @@
     "rgpExport": {
       "bucketDir": "{{$conf.Data.rgpExport.bucketDir}}",
       "bucketName": "{{$conf.Data.rgpExport.bucketName}}",
+      "guid": "{{$conf.Data.rgpExport.guid}}",
+      "activity": "{{$conf.Data.rgpExport.activity}}",
+      "status": "{{$conf.Data.rgpExport.status}}",
       "excludedActivityFields": [
        {{range $i, $field := $conf.Data.rgpExport.excludedActivityFields}}
            {{if $i}},{{end}}"{{ $field }}"

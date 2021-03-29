@@ -24,6 +24,7 @@ import com.sendgrid.helpers.mail.objects.Email;
 import com.typesafe.config.Config;
 import org.broadinstitute.ddp.client.ApiResult;
 import org.broadinstitute.ddp.client.SendGridClient;
+import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.JdbiUserStudyEnrollment;
 import org.broadinstitute.ddp.db.dao.RgpExportDao;
@@ -39,20 +40,24 @@ public class DataExportCoordinator {
 
     public static final int DEFAULT_BATCH_SIZE = 100;
     public static final int READER_BUFFER_SIZE_IN_BYTES = 10 * 1024;
-    public static final String RGP_GUID = "RGP";
-    public static final String RGP_ACTIVITY = "ENROLLMENT";
 
     private static final Logger LOG = LoggerFactory.getLogger(DataExportCoordinator.class);
-    private static final String RGP_EXPORT_STATUS = "COMPLETE";
 
     private DataExporter exporter;
     private int batchSize = DEFAULT_BATCH_SIZE;
     private Set<ElasticSearchIndexType> indices = new HashSet<>();
     private Bucket csvBucket;
     private boolean isRGP;
+    private String rgpActivity;
+    private String rgpExportStatus;
 
     public DataExportCoordinator(DataExporter exporter) {
         this.exporter = exporter;
+    }
+
+    public DataExportCoordinator(DataExporter exporter, Config cfg) {
+        this.rgpActivity = cfg.getString(ConfigFile.RGP_ACTIVITY);
+        this.rgpExportStatus = cfg.getString(ConfigFile.RGP_EXPORT_STATUS);
     }
 
     public DataExportCoordinator withBatchSize(int batchSize) {
@@ -81,7 +86,7 @@ public class DataExportCoordinator {
             RgpExportDao rgpExportDao = handle.attach(RgpExportDao.class);
             long lastCompleted = rgpExportDao.getLastCompleted(rgpDto.getId());
             JdbiUserStudyEnrollment enrollment = handle.attach(JdbiUserStudyEnrollment.class);
-            return enrollment.needRGPExport(rgpDto.getId(), RGP_EXPORT_STATUS, lastCompleted, RGP_ACTIVITY);
+            return enrollment.needRGPExport(rgpDto.getId(), rgpExportStatus, lastCompleted, rgpActivity);
         });
 
         if (!needExport) {
@@ -262,8 +267,8 @@ public class DataExportCoordinator {
                 if (isRGP) {
                     // For RGP export, keep track of the most recent survey completion time so we know where to start for next export
                     JdbiUserStudyEnrollment enrollment = handle.attach(JdbiUserStudyEnrollment.class);
-                    Optional<Long> optionalLastCompletionTime = enrollment.getLastRGPCompletionDate(studyDto.getId(), RGP_EXPORT_STATUS,
-                            RGP_ACTIVITY);
+                    Optional<Long> optionalLastCompletionTime = enrollment.getLastRGPCompletionDate(studyDto.getId(), rgpExportStatus,
+                            rgpActivity);
                     long lastCompletionTime = optionalLastCompletionTime.orElse((long)0);
                     rgpExportDao.updateLastCompleted(lastCompletionTime, studyDto.getId());
                 }
@@ -365,8 +370,8 @@ public class DataExportCoordinator {
                     JdbiUserStudyEnrollment enrollment = handle.attach(JdbiUserStudyEnrollment.class);
                     Set<Long> userIds;
                     if (isRGP) {
-                        userIds = enrollment.findRGPUserIdsToExport(studyDto.getId(), RGP_EXPORT_STATUS, rgpLastCompletion,
-                                RGP_ACTIVITY, batchSize, offset);
+                        userIds = enrollment.findRGPUserIdsToExport(studyDto.getId(), rgpExportStatus, rgpLastCompletion,
+                                rgpActivity, batchSize, offset);
                     } else {
                         userIds = enrollment.findUserIdsByStudyIdAndLimit(studyDto.getId(), offset, batchSize);
                     }
