@@ -37,7 +37,7 @@ public final class FormResponse extends ActivityResponse {
                         @ColumnName("activity_code") String activityCode,
                         @ColumnName("activity_version_tag") String activityVersionTag,
                         @ColumnName("is_hidden") Boolean isHidden,
-                        @ColumnName("sectionIndex") Integer sectionIndex,
+                        @ColumnName("section_index") Integer sectionIndex,
                         @Nested ActivityInstanceStatusDto latestStatus) {
         super(ActivityType.FORMS, id, guid, participantId, isReadonly, createdAt, firstCompletedAt,
                 parentInstanceId, parentInstanceGuid, activityId, activityCode, activityVersionTag, isHidden, sectionIndex,
