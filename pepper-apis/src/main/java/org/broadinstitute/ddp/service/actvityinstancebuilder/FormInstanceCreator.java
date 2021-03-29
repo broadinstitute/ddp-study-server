@@ -1,6 +1,7 @@
 package org.broadinstitute.ddp.service.actvityinstancebuilder;
 
 
+import static org.broadinstitute.ddp.service.actvityinstancebuilder.TemplateHandler.addAndRenderTemplate;
 import static org.broadinstitute.ddp.util.TemplateRenderUtil.toPlainText;
 import static org.broadinstitute.ddp.util.TranslationUtil.extractOptionalActivityTranslation;
 
@@ -12,27 +13,23 @@ import org.broadinstitute.ddp.util.ActivityInstanceUtil;
 /**
  * Creates {@link FormInstance}
  */
-public class FormInstanceCreator extends AbstractCreator {
+public class FormInstanceCreator {
 
-    public FormInstanceCreator(ActivityInstanceFromDefinitionBuilder.Context context) {
-        super(context);
-    }
-
-    public FormInstance createFormInstance() {
-        var formInstance = constructFormInstance();
-        addChildren(formInstance);
+    public FormInstance createFormInstance(Context ctx) {
+        var formInstance = constructFormInstance(ctx);
+        addChildren(ctx, formInstance);
         formInstance.setDisplayNumbers();
-        renderContent(formInstance, context.getRenderedTemplates()::get, context.getStyle());
-        updateBlockStatuses(formInstance);
+        renderContent(formInstance, ctx.getRenderedTemplates()::get, ctx.getStyle());
+        updateBlockStatuses(ctx, formInstance);
         return formInstance;
     }
 
-    private FormInstance constructFormInstance() {
-        var formActivityDef = context.getFormActivityDef();
-        var formResponse = context.getFormResponse();
+    private FormInstance constructFormInstance(Context ctx) {
+        var formActivityDef = ctx.getFormActivityDef();
+        var formResponse = ctx.getFormResponse();
 
-        var title = extractOptionalActivityTranslation(formActivityDef.getTranslatedTitles(), context.getIsoLangCode());
-        var subtitle = extractOptionalActivityTranslation(formActivityDef.getTranslatedSubtitles(), context.getIsoLangCode());
+        var title = extractOptionalActivityTranslation(formActivityDef.getTranslatedTitles(), ctx.getIsoLangCode());
+        var subtitle = extractOptionalActivityTranslation(formActivityDef.getTranslatedSubtitles(), ctx.getIsoLangCode());
 
         boolean readonly = ActivityInstanceUtil.isReadonly(
                 formActivityDef.getEditTimeoutSec(),
@@ -53,12 +50,12 @@ public class FormInstanceCreator extends AbstractCreator {
                 formResponse.getLatestStatus() != null ? formResponse.getLatestStatus().getType().name() : null,
                 readonly,
                 formActivityDef.getListStyleHint(),
-                renderTemplateIfDefined(formActivityDef.getReadonlyHintTemplate()),
+                addAndRenderTemplate(ctx, formActivityDef.getReadonlyHintTemplate()),
                 formActivityDef.getIntroduction() != null ? formActivityDef.getIntroduction().getSectionId() : null,
                 formActivityDef.getClosing() != null ? formActivityDef.getClosing().getSectionId() : null,
                 formResponse.getCreatedAt(),
                 formResponse.getFirstCompletedAt(),
-                renderTemplateIfDefined(formActivityDef.getLastUpdatedTextTemplate()),
+                addAndRenderTemplate(ctx, formActivityDef.getLastUpdatedTextTemplate()),
                 formActivityDef.getLastUpdated(),
                 formActivityDef.canDeleteInstances(),
                 formActivityDef.isFollowup(),
@@ -69,23 +66,23 @@ public class FormInstanceCreator extends AbstractCreator {
         return formInstance;
     }
 
-    private void addChildren(FormInstance formInstance) {
-        var formActivityDef = context.getFormActivityDef();
-        var formSectionCreator = context.getFormSectionCreator();
-        formInstance.setIntroduction(formSectionCreator.createSection(formActivityDef.getIntroduction()));
-        formInstance.setClosing(formSectionCreator.createSection(formActivityDef.getClosing()));
+    private void addChildren(Context ctx, FormInstance formInstance) {
+        var formActivityDef = ctx.getFormActivityDef();
+        var formSectionCreator = ctx.creators().getFormSectionCreator();
+        formInstance.setIntroduction(formSectionCreator.createSection(ctx, formActivityDef.getIntroduction()));
+        formInstance.setClosing(formSectionCreator.createSection(ctx, formActivityDef.getClosing()));
         formActivityDef.getSections().forEach(s -> {
-            formInstance.getBodySections().add(formSectionCreator.createSection(s));
+            formInstance.getBodySections().add(formSectionCreator.createSection(ctx, s));
         });
     }
 
-    private void updateBlockStatuses(FormInstance formInstance) {
+    private void updateBlockStatuses(Context ctx, FormInstance formInstance) {
         formInstance.updateBlockStatuses(
-                context.getHandle(),
-                context.getInterpreter(),
-                context.getUserGuid(),
-                context.getOperatorGuid(),
-                context.getFormResponse().getGuid(),
+                ctx.getHandle(),
+                ctx.getInterpreter(),
+                ctx.getUserGuid(),
+                ctx.getOperatorGuid(),
+                ctx.getFormResponse().getGuid(),
                 null);
     }
 

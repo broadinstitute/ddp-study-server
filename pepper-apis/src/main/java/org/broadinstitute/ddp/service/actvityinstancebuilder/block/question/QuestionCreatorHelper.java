@@ -1,5 +1,6 @@
 package org.broadinstitute.ddp.service.actvityinstancebuilder.block.question;
 
+import static org.broadinstitute.ddp.service.actvityinstancebuilder.TemplateHandler.addAndRenderTemplate;
 import static org.broadinstitute.ddp.util.QuestionUtil.isReadOnly;
 
 import org.broadinstitute.ddp.model.activity.definition.question.AgreementQuestionDef;
@@ -27,89 +28,83 @@ import org.broadinstitute.ddp.model.activity.instance.question.FileQuestion;
 import org.broadinstitute.ddp.model.activity.instance.question.NumericQuestion;
 import org.broadinstitute.ddp.model.activity.instance.question.PicklistQuestion;
 import org.broadinstitute.ddp.model.activity.instance.question.TextQuestion;
-import org.broadinstitute.ddp.service.actvityinstancebuilder.AbstractCreator;
-import org.broadinstitute.ddp.service.actvityinstancebuilder.ActivityInstanceFromDefinitionBuilder;
+import org.broadinstitute.ddp.service.actvityinstancebuilder.Context;
 import org.broadinstitute.ddp.util.CollectionMiscUtil;
 
-public class QuestionCreatorHelper extends AbstractCreator {
+public class QuestionCreatorHelper {
 
-    private final PicklistCreatorHelper picklistCreatorHelper;
-
-    public QuestionCreatorHelper(ActivityInstanceFromDefinitionBuilder.Context context) {
-        super(context);
-        this.picklistCreatorHelper = new PicklistCreatorHelper(context);
-    }
-
-    AgreementQuestion createAgreementQuestion(AgreementQuestionDef questionDef) {
+    AgreementQuestion createAgreementQuestion(Context ctx, AgreementQuestionDef questionDef) {
         return new AgreementQuestion(
                 questionDef.getStableId(),
-                renderTemplateIfDefined(questionDef.getPromptTemplate()),
+                addAndRenderTemplate(ctx, questionDef.getPromptTemplate()),
                 questionDef.isRestricted(),
                 questionDef.isDeprecated(),
-                isReadOnly(questionDef, context.getFormResponse().getLatestStatus().getType(), context.getPreviousInstanceId()),
-                renderTemplateIfDefined(questionDef.getTooltipTemplate()),
-                renderTemplateIfDefined(questionDef.getAdditionalInfoHeaderTemplate()),
-                renderTemplateIfDefined(questionDef.getAdditionalInfoFooterTemplate()),
-                context.getQuestionCreator().getAnswers(AgreementAnswer.class, questionDef.getStableId()),
-                context.getQuestionCreator().getValidationRules(questionDef)
+                isReadOnly(questionDef, ctx.getFormResponse().getLatestStatus().getType(), ctx.getPreviousInstanceId()),
+                addAndRenderTemplate(ctx, questionDef.getTooltipTemplate()),
+                addAndRenderTemplate(ctx, questionDef.getAdditionalInfoHeaderTemplate()),
+                addAndRenderTemplate(ctx, questionDef.getAdditionalInfoFooterTemplate()),
+                ctx.creators().getQuestionCreator().getAnswers(ctx, AgreementAnswer.class, questionDef.getStableId()),
+                ctx.creators().getQuestionCreator().getValidationRules(ctx, questionDef)
         );
     }
 
-    BoolQuestion createBoolQuestion(BoolQuestionDef questionDef) {
+    BoolQuestion createBoolQuestion(Context ctx, BoolQuestionDef questionDef) {
         return new BoolQuestion(
                 questionDef.getStableId(),
-                renderTemplateIfDefined(questionDef.getPromptTemplate()),
+                addAndRenderTemplate(ctx, questionDef.getPromptTemplate()),
                 questionDef.isRestricted(),
                 questionDef.isDeprecated(),
-                isReadOnly(questionDef, context.getFormResponse().getLatestStatus().getType(), context.getPreviousInstanceId()),
-                renderTemplateIfDefined(questionDef.getTooltipTemplate()),
-                renderTemplateIfDefined(questionDef.getAdditionalInfoHeaderTemplate()),
-                renderTemplateIfDefined(questionDef.getAdditionalInfoFooterTemplate()),
-                context.getQuestionCreator().getAnswers(BoolAnswer.class, questionDef.getStableId()),
-                context.getQuestionCreator().getValidationRules(questionDef),
-                renderTemplateIfDefined(questionDef.getTrueTemplate()),
-                renderTemplateIfDefined(questionDef.getFalseTemplate())
+                isReadOnly(questionDef, ctx.getFormResponse().getLatestStatus().getType(), ctx.getPreviousInstanceId()),
+                addAndRenderTemplate(ctx, questionDef.getTooltipTemplate()),
+                addAndRenderTemplate(ctx, questionDef.getAdditionalInfoHeaderTemplate()),
+                addAndRenderTemplate(ctx, questionDef.getAdditionalInfoFooterTemplate()),
+                ctx.creators().getQuestionCreator().getAnswers(ctx, BoolAnswer.class, questionDef.getStableId()),
+                ctx.creators().getQuestionCreator().getValidationRules(ctx, questionDef),
+                addAndRenderTemplate(ctx, questionDef.getTrueTemplate()),
+                addAndRenderTemplate(ctx, questionDef.getFalseTemplate())
         );
     }
 
-    CompositeQuestion createCompositeQuestion(CompositeQuestionDef questionDef) {
+    CompositeQuestion createCompositeQuestion(Context ctx, CompositeQuestionDef questionDef) {
+        QuestionCreator questionCreator = ctx.creators().getQuestionCreator();
         return new CompositeQuestion(
                 questionDef.getStableId(),
-                renderTemplateIfDefined(questionDef.getPromptTemplate()),
+                addAndRenderTemplate(ctx, questionDef.getPromptTemplate()),
                 questionDef.isRestricted(),
                 questionDef.isDeprecated(),
-                isReadOnly(questionDef, context.getFormResponse().getLatestStatus().getType(), context.getPreviousInstanceId()),
-                renderTemplateIfDefined(questionDef.getTooltipTemplate()),
-                renderTemplateIfDefined(questionDef.getAdditionalInfoHeaderTemplate()),
-                renderTemplateIfDefined(questionDef.getAdditionalInfoFooterTemplate()),
-                context.getQuestionCreator().getValidationRules(questionDef),
+                isReadOnly(questionDef, ctx.getFormResponse().getLatestStatus().getType(), ctx.getPreviousInstanceId()),
+                addAndRenderTemplate(ctx, questionDef.getTooltipTemplate()),
+                addAndRenderTemplate(ctx, questionDef.getAdditionalInfoHeaderTemplate()),
+                addAndRenderTemplate(ctx, questionDef.getAdditionalInfoFooterTemplate()),
+                questionCreator.getValidationRules(ctx, questionDef),
                 questionDef.isAllowMultiple(),
                 questionDef.isUnwrapOnExport(),
-                renderTemplateIfDefined(questionDef.getAddButtonTemplate()),
-                renderTemplateIfDefined(questionDef.getAdditionalItemTemplate()),
+                addAndRenderTemplate(ctx, questionDef.getAddButtonTemplate()),
+                addAndRenderTemplate(ctx, questionDef.getAdditionalItemTemplate()),
                 CollectionMiscUtil.createListFromAnotherList(questionDef.getChildren(),
-                        (childQuestionDef) -> context.getQuestionCreator().createQuestion(childQuestionDef)),
+                        (childQuestionDef) -> questionCreator.createQuestion(ctx, childQuestionDef)),
                 questionDef.getChildOrientation(),
-                context.getQuestionCreator().getAnswers(CompositeAnswer.class, questionDef.getStableId())
+                questionCreator.getAnswers(ctx, CompositeAnswer.class, questionDef.getStableId())
         );
     }
 
-    DatePicklistQuestion createDatePickListQuestion(DateQuestionDef questionDef) {
+    DatePicklistQuestion createDatePickListQuestion(Context ctx, DateQuestionDef questionDef) {
+        QuestionCreator questionCreator = ctx.creators().getQuestionCreator();
         return new DatePicklistQuestion(
                 questionDef.getStableId(),
-                renderTemplateIfDefined(questionDef.getPromptTemplate()),
+                addAndRenderTemplate(ctx, questionDef.getPromptTemplate()),
                 questionDef.isRestricted(),
                 questionDef.isDeprecated(),
-                isReadOnly(questionDef, context.getFormResponse().getLatestStatus().getType(), context.getPreviousInstanceId()),
-                renderTemplateIfDefined(questionDef.getTooltipTemplate()),
-                renderTemplateIfDefined(questionDef.getAdditionalInfoHeaderTemplate()),
-                renderTemplateIfDefined(questionDef.getAdditionalInfoFooterTemplate()),
-                context.getQuestionCreator().getAnswers(DateAnswer.class, questionDef.getStableId()),
-                context.getQuestionCreator().getValidationRules(questionDef),
+                isReadOnly(questionDef, ctx.getFormResponse().getLatestStatus().getType(), ctx.getPreviousInstanceId()),
+                addAndRenderTemplate(ctx, questionDef.getTooltipTemplate()),
+                addAndRenderTemplate(ctx, questionDef.getAdditionalInfoHeaderTemplate()),
+                addAndRenderTemplate(ctx, questionDef.getAdditionalInfoFooterTemplate()),
+                questionCreator.getAnswers(ctx, DateAnswer.class, questionDef.getStableId()),
+                questionCreator.getValidationRules(ctx, questionDef),
                 questionDef.getRenderMode(),
                 questionDef.isDisplayCalendar(),
                 questionDef.getFields(),
-                renderTemplateIfDefined(questionDef.getPlaceholderTemplate()),
+                addAndRenderTemplate(ctx, questionDef.getPlaceholderTemplate()),
                 questionDef.getPicklistDef().getUseMonthNames(),
                 questionDef.getPicklistDef().getStartYear(),
                 questionDef.getPicklistDef().getEndYear(),
@@ -117,98 +112,103 @@ public class QuestionCreatorHelper extends AbstractCreator {
         );
     }
 
-    DateQuestion createDateQuestion(DateQuestionDef questionDef) {
+    DateQuestion createDateQuestion(Context ctx, DateQuestionDef questionDef) {
+        QuestionCreator questionCreator = ctx.creators().getQuestionCreator();
         return new DateQuestion(
                 questionDef.getStableId(),
-                renderTemplateIfDefined(questionDef.getPromptTemplate()),
+                addAndRenderTemplate(ctx, questionDef.getPromptTemplate()),
                 questionDef.isRestricted(),
                 questionDef.isDeprecated(),
-                isReadOnly(questionDef, context.getFormResponse().getLatestStatus().getType(), context.getPreviousInstanceId()),
-                renderTemplateIfDefined(questionDef.getTooltipTemplate()),
-                renderTemplateIfDefined(questionDef.getAdditionalInfoHeaderTemplate()),
-                renderTemplateIfDefined(questionDef.getAdditionalInfoFooterTemplate()),
-                context.getQuestionCreator().getAnswers(DateAnswer.class, questionDef.getStableId()),
-                context.getQuestionCreator().getValidationRules(questionDef),
+                isReadOnly(questionDef, ctx.getFormResponse().getLatestStatus().getType(), ctx.getPreviousInstanceId()),
+                addAndRenderTemplate(ctx, questionDef.getTooltipTemplate()),
+                addAndRenderTemplate(ctx, questionDef.getAdditionalInfoHeaderTemplate()),
+                addAndRenderTemplate(ctx, questionDef.getAdditionalInfoFooterTemplate()),
+                questionCreator.getAnswers(ctx, DateAnswer.class, questionDef.getStableId()),
+                questionCreator.getValidationRules(ctx, questionDef),
                 questionDef.getRenderMode(),
                 questionDef.isDisplayCalendar(),
                 questionDef.getFields(),
-                renderTemplateIfDefined(questionDef.getPlaceholderTemplate())
+                addAndRenderTemplate(ctx, questionDef.getPlaceholderTemplate())
         );
     }
 
-    FileQuestion constructFileQuestion(FileQuestionDef questionDef) {
+    FileQuestion constructFileQuestion(Context ctx, FileQuestionDef questionDef) {
+        QuestionCreator questionCreator = ctx.creators().getQuestionCreator();
         return new FileQuestion(
                 questionDef.getStableId(),
-                renderTemplateIfDefined(questionDef.getPromptTemplate()),
+                addAndRenderTemplate(ctx, questionDef.getPromptTemplate()),
                 questionDef.isRestricted(),
                 questionDef.isDeprecated(),
-                isReadOnly(questionDef, context.getFormResponse().getLatestStatus().getType(), context.getPreviousInstanceId()),
-                renderTemplateIfDefined(questionDef.getTooltipTemplate()),
-                renderTemplateIfDefined(questionDef.getAdditionalInfoHeaderTemplate()),
-                renderTemplateIfDefined(questionDef.getAdditionalInfoFooterTemplate()),
-                context.getQuestionCreator().getAnswers(FileAnswer.class, questionDef.getStableId()),
-                context.getQuestionCreator().getValidationRules(questionDef)
+                isReadOnly(questionDef, ctx.getFormResponse().getLatestStatus().getType(), ctx.getPreviousInstanceId()),
+                addAndRenderTemplate(ctx, questionDef.getTooltipTemplate()),
+                addAndRenderTemplate(ctx, questionDef.getAdditionalInfoHeaderTemplate()),
+                addAndRenderTemplate(ctx, questionDef.getAdditionalInfoFooterTemplate()),
+                questionCreator.getAnswers(ctx, FileAnswer.class, questionDef.getStableId()),
+                questionCreator.getValidationRules(ctx, questionDef)
         );
     }
 
-    NumericQuestion createNumericQuestion(NumericQuestionDef questionDef) {
+    NumericQuestion createNumericQuestion(Context ctx, NumericQuestionDef questionDef) {
+        QuestionCreator questionCreator = ctx.creators().getQuestionCreator();
         return new NumericQuestion(
                 questionDef.getStableId(),
-                renderTemplateIfDefined(questionDef.getPromptTemplate()),
-                renderTemplateIfDefined(questionDef.getPlaceholderTemplate()),
+                addAndRenderTemplate(ctx, questionDef.getPromptTemplate()),
+                addAndRenderTemplate(ctx, questionDef.getPlaceholderTemplate()),
                 questionDef.isRestricted(),
                 questionDef.isDeprecated(),
-                isReadOnly(questionDef, context.getFormResponse().getLatestStatus().getType(), context.getPreviousInstanceId()),
-                renderTemplateIfDefined(questionDef.getTooltipTemplate()),
-                renderTemplateIfDefined(questionDef.getAdditionalInfoHeaderTemplate()),
-                renderTemplateIfDefined(questionDef.getAdditionalInfoFooterTemplate()),
-                context.getQuestionCreator().getAnswers(NumericAnswer.class, questionDef.getStableId()),
-                context.getQuestionCreator().getValidationRules(questionDef),
+                isReadOnly(questionDef, ctx.getFormResponse().getLatestStatus().getType(), ctx.getPreviousInstanceId()),
+                addAndRenderTemplate(ctx, questionDef.getTooltipTemplate()),
+                addAndRenderTemplate(ctx, questionDef.getAdditionalInfoHeaderTemplate()),
+                addAndRenderTemplate(ctx, questionDef.getAdditionalInfoFooterTemplate()),
+                questionCreator.getAnswers(ctx, NumericAnswer.class, questionDef.getStableId()),
+                questionCreator.getValidationRules(ctx, questionDef),
                 questionDef.getNumericType()
         );
     }
 
-    PicklistQuestion createPicklistQuestion(PicklistQuestionDef questionDef) {
+    PicklistQuestion createPicklistQuestion(Context ctx, PicklistQuestionDef questionDef) {
+        QuestionCreator questionCreator = ctx.creators().getQuestionCreator();
         return new PicklistQuestion(
                 questionDef.getStableId(),
-                renderTemplateIfDefined(questionDef.getPromptTemplate()),
+                addAndRenderTemplate(ctx, questionDef.getPromptTemplate()),
                 questionDef.isRestricted(),
                 questionDef.isDeprecated(),
-                isReadOnly(questionDef, context.getFormResponse().getLatestStatus().getType(), context.getPreviousInstanceId()),
-                renderTemplateIfDefined(questionDef.getTooltipTemplate()),
-                renderTemplateIfDefined(questionDef.getAdditionalInfoHeaderTemplate()),
-                renderTemplateIfDefined(questionDef.getAdditionalInfoFooterTemplate()),
-                context.getQuestionCreator().getAnswers(PicklistAnswer.class, questionDef.getStableId()),
-                context.getQuestionCreator().getValidationRules(questionDef),
+                isReadOnly(questionDef, ctx.getFormResponse().getLatestStatus().getType(), ctx.getPreviousInstanceId()),
+                addAndRenderTemplate(ctx, questionDef.getTooltipTemplate()),
+                addAndRenderTemplate(ctx, questionDef.getAdditionalInfoHeaderTemplate()),
+                addAndRenderTemplate(ctx, questionDef.getAdditionalInfoFooterTemplate()),
+                questionCreator.getAnswers(ctx, PicklistAnswer.class, questionDef.getStableId()),
+                questionCreator.getValidationRules(ctx, questionDef),
                 questionDef.getSelectMode(),
                 questionDef.getRenderMode(),
-                renderTemplateIfDefined(questionDef.getPicklistLabelTemplate()),
+                addAndRenderTemplate(ctx, questionDef.getPicklistLabelTemplate()),
                 CollectionMiscUtil.createListFromAnotherList(questionDef.getAllPicklistOptions(),
-                        (picklistOptionDef) -> picklistCreatorHelper.createPicklistOption(picklistOptionDef)),
+                        (picklistOptionDef) -> ctx.creators().getPicklistCreatorHelper().createPicklistOption(ctx, picklistOptionDef)),
                 CollectionMiscUtil.createListFromAnotherList(questionDef.getGroups(),
-                        (picklistGroupDef) -> picklistCreatorHelper.createPicklistOption(picklistGroupDef))
+                        (picklistGroupDef) -> ctx.creators().getPicklistCreatorHelper().createPicklistOption(ctx, picklistGroupDef))
         );
     }
 
-    TextQuestion createTextQuestion(TextQuestionDef questionDef) {
+    TextQuestion createTextQuestion(Context ctx, TextQuestionDef questionDef) {
+        QuestionCreator questionCreator = ctx.creators().getQuestionCreator();
         return new TextQuestion(
                 questionDef.getStableId(),
-                renderTemplateIfDefined(questionDef.getPromptTemplate()),
-                renderTemplateIfDefined(questionDef.getPlaceholderTemplate()),
+                addAndRenderTemplate(ctx, questionDef.getPromptTemplate()),
+                addAndRenderTemplate(ctx, questionDef.getPlaceholderTemplate()),
                 questionDef.isRestricted(),
                 questionDef.isDeprecated(),
-                isReadOnly(questionDef, context.getFormResponse().getLatestStatus().getType(), context.getPreviousInstanceId()),
-                renderTemplateIfDefined(questionDef.getTooltipTemplate()),
-                renderTemplateIfDefined(questionDef.getAdditionalInfoHeaderTemplate()),
-                renderTemplateIfDefined(questionDef.getAdditionalInfoFooterTemplate()),
-                context.getQuestionCreator().getAnswers(TextAnswer.class, questionDef.getStableId()),
-                context.getQuestionCreator().getValidationRules(questionDef),
+                isReadOnly(questionDef, ctx.getFormResponse().getLatestStatus().getType(), ctx.getPreviousInstanceId()),
+                addAndRenderTemplate(ctx, questionDef.getTooltipTemplate()),
+                addAndRenderTemplate(ctx, questionDef.getAdditionalInfoHeaderTemplate()),
+                addAndRenderTemplate(ctx, questionDef.getAdditionalInfoFooterTemplate()),
+                questionCreator.getAnswers(ctx, TextAnswer.class, questionDef.getStableId()),
+                questionCreator.getValidationRules(ctx, questionDef),
                 questionDef.getInputType(),
                 questionDef.getSuggestionType(),
                 questionDef.getSuggestions(),
                 questionDef.isConfirmEntry(),
-                renderTemplateIfDefined(questionDef.getConfirmPromptTemplate()),
-                renderTemplateIfDefined(questionDef.getMismatchMessageTemplate())
+                addAndRenderTemplate(ctx, questionDef.getConfirmPromptTemplate()),
+                addAndRenderTemplate(ctx, questionDef.getMismatchMessageTemplate())
         );
     }
 }

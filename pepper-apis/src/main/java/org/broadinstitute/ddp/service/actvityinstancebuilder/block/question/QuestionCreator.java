@@ -18,59 +18,50 @@ import org.broadinstitute.ddp.model.activity.definition.question.TextQuestionDef
 import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
 import org.broadinstitute.ddp.model.activity.instance.question.Question;
 import org.broadinstitute.ddp.model.activity.instance.validation.Rule;
-import org.broadinstitute.ddp.service.actvityinstancebuilder.AbstractCreator;
-import org.broadinstitute.ddp.service.actvityinstancebuilder.ActivityInstanceFromDefinitionBuilder;
+import org.broadinstitute.ddp.service.actvityinstancebuilder.Context;
 import org.broadinstitute.ddp.util.CollectionMiscUtil;
 
 /**
  * Creates {@link Question}
  */
-public class QuestionCreator extends AbstractCreator {
+public class QuestionCreator {
 
-    private final QuestionCreatorHelper questionCreatorHelper;
-    private final ValidationRuleCreator validationRuleCreator;
-
-    public QuestionCreator(ActivityInstanceFromDefinitionBuilder.Context context) {
-        super(context);
-        validationRuleCreator = new ValidationRuleCreator(context);
-        questionCreatorHelper = new QuestionCreatorHelper(context);
-    }
-
-    public Question createQuestion(QuestionDef questionDef) {
+    public Question createQuestion(Context ctx, QuestionDef questionDef) {
+        QuestionCreatorHelper creatorHelper = ctx.creators().getQuestionCreatorHelper();
         switch (questionDef.getQuestionType()) {
             case DATE:
                 return ((DateQuestionDef) questionDef).getRenderMode() == PICKLIST
                         ?
-                        questionCreatorHelper.createDatePickListQuestion((DateQuestionDef) questionDef) :
-                        questionCreatorHelper.createDateQuestion((DateQuestionDef) questionDef);
+                        creatorHelper.createDatePickListQuestion(ctx, (DateQuestionDef) questionDef) :
+                        creatorHelper.createDateQuestion(ctx, (DateQuestionDef) questionDef);
             case BOOLEAN:
-                return questionCreatorHelper.createBoolQuestion((BoolQuestionDef) questionDef);
+                return creatorHelper.createBoolQuestion(ctx, (BoolQuestionDef) questionDef);
             case TEXT:
-                return questionCreatorHelper.createTextQuestion((TextQuestionDef) questionDef);
+                return creatorHelper.createTextQuestion(ctx, (TextQuestionDef) questionDef);
             case NUMERIC:
-                return questionCreatorHelper.createNumericQuestion((NumericQuestionDef) questionDef);
+                return creatorHelper.createNumericQuestion(ctx, (NumericQuestionDef) questionDef);
             case PICKLIST:
-                return questionCreatorHelper.createPicklistQuestion((PicklistQuestionDef) questionDef);
+                return creatorHelper.createPicklistQuestion(ctx, (PicklistQuestionDef) questionDef);
             case AGREEMENT:
-                return questionCreatorHelper.createAgreementQuestion((AgreementQuestionDef) questionDef);
+                return creatorHelper.createAgreementQuestion(ctx, (AgreementQuestionDef) questionDef);
             case COMPOSITE:
-                return questionCreatorHelper.createCompositeQuestion((CompositeQuestionDef) questionDef);
+                return creatorHelper.createCompositeQuestion(ctx, (CompositeQuestionDef) questionDef);
             case FILE:
-                return questionCreatorHelper.constructFileQuestion((FileQuestionDef) questionDef);
+                return creatorHelper.constructFileQuestion(ctx, (FileQuestionDef) questionDef);
             default:
                 throw new IllegalStateException("Unexpected value: " + questionDef.getQuestionType());
         }
     }
 
-    <T extends Answer> List<Rule<T>> getValidationRules(QuestionDef questionDef) {
+    <T extends Answer> List<Rule<T>> getValidationRules(Context ctx, QuestionDef questionDef) {
         return CollectionMiscUtil.createListFromAnotherList(questionDef.getValidations(),
-                (ruleDef) -> validationRuleCreator.createRule(ruleDef));
+                (ruleDef) -> ctx.creators().getValidationRuleCreator().createRule(ctx, ruleDef));
     }
 
-    <T extends Answer> List<T> getAnswers(Class<T> type, String questionStableId) {
+    <T extends Answer> List<T> getAnswers(Context ctx, Class<T> type, String questionStableId) {
         List<T> answers = new ArrayList<>();
-        if (context.getFormResponse().getAnswers() != null) {
-            answers = context.getFormResponse().getAnswers().stream()
+        if (ctx.getFormResponse().getAnswers() != null) {
+            answers = ctx.getFormResponse().getAnswers().stream()
                     .filter(a -> a.getClass().isAssignableFrom(type) && questionStableId.equals(a.getQuestionStableId()))
                     .map(type::cast)
                     .collect(Collectors.toList());

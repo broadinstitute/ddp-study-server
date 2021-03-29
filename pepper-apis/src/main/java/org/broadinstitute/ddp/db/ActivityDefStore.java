@@ -152,12 +152,28 @@ public class ActivityDefStore {
     public Optional<FormActivityDef> findActivityDef(Handle handle, String studyGuid, long activityId, long createdAtMillis,
                                                      String activityCode) {
         return findVersionDto(handle, activityId, createdAtMillis)
-                .map(version -> getActivityDef(studyGuid, activityCode, version.getVersionTag()));
+                .map(version -> getOrCreateIfAbsentActivityDef(handle, studyGuid, activityCode, version));
     }
 
     public FormActivityDef getActivityDef(String studyGuid, String activityCode, String versionTag) {
         synchronized (lockVar) {
             return activityDefMap.get(studyGuid + activityCode + versionTag);
+        }
+    }
+
+    public FormActivityDef getOrCreateIfAbsentActivityDef(Handle handle, String studyGuid,
+                                                          String activityCode, ActivityVersionDto versionDto) {
+        synchronized (lockVar) {
+            String key = studyGuid + activityCode + versionDto.getVersionTag();
+            FormActivityDef def = activityDefMap.get(key);
+            if (def == null) {
+                Optional<ActivityDto> activityDto = findActivityDto(handle, versionDto.getActivityId());
+                if (activityDto.isPresent()) {
+                    def = handle.attach(FormActivityDao.class).findDefByDtoAndVersion(activityDto.get(), versionDto);
+                    activityDefMap.put(key, def);
+                }
+            }
+            return def;
         }
     }
 

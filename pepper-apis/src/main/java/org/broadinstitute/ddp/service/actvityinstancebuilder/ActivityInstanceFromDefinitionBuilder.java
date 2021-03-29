@@ -2,13 +2,9 @@ package org.broadinstitute.ddp.service.actvityinstancebuilder;
 
 import static org.broadinstitute.ddp.model.activity.types.ActivityType.FORMS;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Optional;
 
-import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.content.ContentStyle;
-import org.broadinstitute.ddp.content.I18nContentRenderer;
 import org.broadinstitute.ddp.db.ActivityDefStore;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
 import org.broadinstitute.ddp.model.activity.definition.FormBlockDef;
@@ -16,14 +12,13 @@ import org.broadinstitute.ddp.model.activity.definition.FormSectionDef;
 import org.broadinstitute.ddp.model.activity.instance.ActivityInstance;
 import org.broadinstitute.ddp.model.activity.instance.FormInstance;
 import org.broadinstitute.ddp.model.activity.instance.FormResponse;
-import org.broadinstitute.ddp.pex.PexInterpreter;
-import org.broadinstitute.ddp.pex.TreeWalkInterpreter;
 import org.broadinstitute.ddp.service.actvityinstancebuilder.block.FormBlockCreator;
 import org.broadinstitute.ddp.service.actvityinstancebuilder.block.question.QuestionCreator;
 import org.broadinstitute.ddp.service.actvityinstancebuilder.block.question.ValidationRuleCreator;
 import org.broadinstitute.ddp.util.ActivityInstanceUtil;
-import org.broadinstitute.ddp.util.TemplateRenderUtil;
 import org.jdbi.v3.core.Handle;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A builder providing a creation of {@link ActivityInstance} an alternative way:
@@ -54,7 +49,7 @@ import org.jdbi.v3.core.Handle;
  *     <li>for each of added question find answers and add to the question.</li>
  * </ul>
  *
- * <p>For each element type a creator is implemented (an instance of interface {@link AbstractCreator}).
+ * <p>For each of {@link ActivityInstance} elements a creator is implemented.
  * <br> Creators hierarchy:
  * <pre>
  *   {@link FormInstanceCreator}
@@ -66,10 +61,12 @@ import org.jdbi.v3.core.Handle;
  * </pre>
  *
  * <p>NOTE: it is defined a class {@link Context} used to pass the basic parameters to each
- * {@link AbstractCreator} (so it's no need to pass multiple parameters to each creator constructor -
+ * creator (so it's no need to pass multiple parameters to each creator constructor -
  * only one parameter {@link Context} is passed.
  */
 public class ActivityInstanceFromDefinitionBuilder {
+
+    private static final Logger LOG = LoggerFactory.getLogger(ActivityInstanceFromDefinitionBuilder.class);
 
     public Optional<ActivityInstance> buildActivityInstance(
             Handle handle,
@@ -80,139 +77,19 @@ public class ActivityInstanceFromDefinitionBuilder {
             ContentStyle style,
             String isoLangCode
     ) {
+        LOG.info("Start ActivityInstance building from definition (ActivityDefStore). StudyGuid={}, instanceGuid={}",
+                studyGuid, instanceGuid);
         var formResponse = ActivityInstanceUtil.getFormResponse(handle, instanceGuid);
         Optional<FormActivityDef> formActivityDef = ActivityDefStore.getInstance().findActivityDef(
                 handle, studyGuid, formResponse.getActivityId(), formResponse.getCreatedAt(), formResponse.getActivityCode());
         if (formActivityDef.isPresent() && formActivityDef.get().getActivityType() == FORMS) {
-            var activityInstance = new FormInstanceCreator(
+            var activityInstance = new FormInstanceCreator().createFormInstance(
                     new Context(handle, userGuid, operatorGuid, isoLangCode, style, formActivityDef.get(), formResponse)
-            ).createFormInstance();
+            );
+            LOG.info("ActivityInstance built from definition SUCCESSFULLY.");
             return Optional.of(activityInstance);
         }
+        LOG.warn("ActivityInstance building from definition FAILED.");
         return Optional.empty();
-    }
-
-    /**
-     * Aggregates objects which needs on all steps of {@link ActivityInstance} building.
-     */
-    public static class Context {
-
-        private final Handle handle;
-        private final String userGuid;
-        private final String operatorGuid;
-        private final long langCodeId;
-        private final String isoLangCode;
-        private final  ContentStyle style;
-        private final FormActivityDef formActivityDef;
-        private final FormResponse formResponse;
-
-        private final FormSectionCreator formSectionCreator;
-        private final SectionIconCreator sectionIconCreator;
-        private final FormBlockCreator formBlockCreator;
-        private final QuestionCreator questionCreator;
-
-        private final PexInterpreter interpreter = new TreeWalkInterpreter();
-        private final I18nContentRenderer i18nContentRenderer = new I18nContentRenderer();
-        private final Map<String, Object> rendererInitialContext;
-
-        private final Long previousInstanceId;
-
-        private Map<Long, String> renderedTemplates = new HashMap<>();
-
-        public Context(
-                Handle handle,
-                String userGuid,
-                String operatorGuid,
-                String isoLangCode,
-                ContentStyle style,
-                FormActivityDef formActivityDef,
-                FormResponse formResponse) {
-            this.handle = handle;
-            this.userGuid = userGuid;
-            this.operatorGuid = operatorGuid;
-            this.isoLangCode = isoLangCode;
-            this.style = style;
-            this.langCodeId = LanguageStore.get(isoLangCode).getId();
-            this.formActivityDef = formActivityDef;
-            this.formResponse = formResponse;
-
-            this.rendererInitialContext = TemplateRenderUtil.createRendererInitialContext(handle,
-                    formResponse.getParticipantId(), formResponse.getId(), formActivityDef.getLastUpdated());
-
-            this.previousInstanceId = ActivityInstanceUtil.getPreviousInstanceId(handle, formResponse.getId());
-
-            formSectionCreator = new FormSectionCreator(this);
-            sectionIconCreator = new SectionIconCreator(this);
-            formBlockCreator = new FormBlockCreator(this);
-            questionCreator = new QuestionCreator(this);
-        }
-
-        public Handle getHandle() {
-            return handle;
-        }
-
-        public String getIsoLangCode() {
-            return isoLangCode;
-        }
-
-        public ContentStyle getStyle() {
-            return style;
-        }
-
-        public long getLangCodeId() {
-            return langCodeId;
-        }
-
-        public String getUserGuid() {
-            return userGuid;
-        }
-
-        public String getOperatorGuid() {
-            return operatorGuid;
-        }
-
-        public FormActivityDef getFormActivityDef() {
-            return formActivityDef;
-        }
-
-        public FormResponse getFormResponse() {
-            return formResponse;
-        }
-
-        public PexInterpreter getInterpreter() {
-            return interpreter;
-        }
-
-        public I18nContentRenderer getI18nContentRenderer() {
-            return i18nContentRenderer;
-        }
-
-        public Map<String, Object> getRendererInitialContext() {
-            return rendererInitialContext;
-        }
-
-        public Map<Long, String> getRenderedTemplates() {
-            return renderedTemplates;
-        }
-
-        public Long getPreviousInstanceId() {
-            return previousInstanceId;
-        }
-
-        public FormSectionCreator getFormSectionCreator() {
-            return formSectionCreator;
-        }
-
-        public SectionIconCreator getSectionIconCreator() {
-            return sectionIconCreator;
-        }
-
-        public FormBlockCreator getFormBlockCreator() {
-            return formBlockCreator;
-        }
-
-        public QuestionCreator getQuestionCreator() {
-            return questionCreator;
-        }
     }
 }

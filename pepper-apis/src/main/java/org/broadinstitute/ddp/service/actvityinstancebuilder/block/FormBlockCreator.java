@@ -8,41 +8,34 @@ import org.broadinstitute.ddp.model.activity.definition.GroupBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.NestedActivityBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.QuestionBlockDef;
 import org.broadinstitute.ddp.model.activity.instance.FormBlock;
-import org.broadinstitute.ddp.service.actvityinstancebuilder.AbstractCreator;
-import org.broadinstitute.ddp.service.actvityinstancebuilder.ActivityInstanceFromDefinitionBuilder;
+import org.broadinstitute.ddp.service.actvityinstancebuilder.Context;
 
 /**
  * Creates {@link FormBlock}
  */
-public class FormBlockCreator extends AbstractCreator {
+public class FormBlockCreator {
 
-    private final FormBlockCreatorHelper formBlockCreatorHelper;
-
-    public FormBlockCreator(ActivityInstanceFromDefinitionBuilder.Context context) {
-        super(context);
-        formBlockCreatorHelper = new FormBlockCreatorHelper(context);
-    }
-
-    public FormBlock createBlock(FormBlockDef formBlockDef) {
-        var formBlock = constructFormBlock(formBlockDef);
+    public FormBlock createBlock(Context ctx, FormBlockDef formBlockDef) {
+        var formBlock = constructFormBlock(ctx, formBlockDef);
         copyCommonFields(formBlock, formBlockDef);
         return formBlock;
     }
 
-    private FormBlock constructFormBlock(FormBlockDef formBlockDef) {
+    private FormBlock constructFormBlock(Context ctx, FormBlockDef formBlockDef) {
+        FormBlockCreatorHelper creatorHelper = ctx.creators().getFormBlockCreatorHelper();
         switch (formBlockDef.getBlockType()) {
             case GROUP:
-                return formBlockCreatorHelper.createGroupBlock((GroupBlockDef) formBlockDef);
+                return creatorHelper.createGroupBlock(ctx, (GroupBlockDef) formBlockDef);
             case CONTENT:
-                return formBlockCreatorHelper.createContentBlock((ContentBlockDef) formBlockDef);
+                return creatorHelper.createContentBlock(ctx, (ContentBlockDef) formBlockDef);
             case COMPONENT:
-                return formBlockCreatorHelper.createComponentBlock((ComponentBlockDef)formBlockDef);
+                return creatorHelper.createComponentBlock(ctx, (ComponentBlockDef)formBlockDef);
             case ACTIVITY:
-                return formBlockCreatorHelper.createNestedActivityBlock((NestedActivityBlockDef) formBlockDef);
+                return creatorHelper.createNestedActivityBlock(ctx, (NestedActivityBlockDef) formBlockDef);
             case QUESTION:
-                return formBlockCreatorHelper.createQuestionBlock((QuestionBlockDef) formBlockDef);
+                return creatorHelper.createQuestionBlock(ctx, (QuestionBlockDef) formBlockDef);
             case CONDITIONAL:
-                return formBlockCreatorHelper.createConditionalBlock((ConditionalBlockDef) formBlockDef);
+                return creatorHelper.createConditionalBlock(ctx, (ConditionalBlockDef) formBlockDef);
             default:
                 throw new IllegalStateException("Unexpected value: " + formBlockDef.getBlockType());
         }

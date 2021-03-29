@@ -1,5 +1,7 @@
 package org.broadinstitute.ddp.service.actvityinstancebuilder.block;
 
+import static org.broadinstitute.ddp.service.actvityinstancebuilder.TemplateHandler.addAndRenderTemplate;
+
 import org.broadinstitute.ddp.db.dto.ComponentDto;
 import org.broadinstitute.ddp.db.dto.InstitutionPhysicianComponentDto;
 import org.broadinstitute.ddp.model.activity.definition.ComponentBlockDef;
@@ -22,37 +24,32 @@ import org.broadinstitute.ddp.model.activity.instance.MailingAddressComponent;
 import org.broadinstitute.ddp.model.activity.instance.NestedActivityBlock;
 import org.broadinstitute.ddp.model.activity.instance.PhysicianComponent;
 import org.broadinstitute.ddp.model.activity.instance.QuestionBlock;
-import org.broadinstitute.ddp.service.actvityinstancebuilder.AbstractCreator;
-import org.broadinstitute.ddp.service.actvityinstancebuilder.ActivityInstanceFromDefinitionBuilder;
+import org.broadinstitute.ddp.service.actvityinstancebuilder.Context;
 import org.broadinstitute.ddp.util.CollectionMiscUtil;
 
-public class FormBlockCreatorHelper extends AbstractCreator {
+public class FormBlockCreatorHelper {
 
-    public FormBlockCreatorHelper(ActivityInstanceFromDefinitionBuilder.Context context) {
-        super(context);
-    }
-
-    ComponentBlock createComponentBlock(ComponentBlockDef componentBlockDef) {
+    ComponentBlock createComponentBlock(Context ctx, ComponentBlockDef componentBlockDef) {
         FormComponent formComponent = null;
 
         switch (componentBlockDef.getComponentType()) {
             case PHYSICIAN:
                 formComponent = new PhysicianComponent(
-                        createInstitutionPhysicianComponentDto((PhysicianComponentDef) componentBlockDef),
+                        createInstitutionPhysicianComponentDto(ctx, (PhysicianComponentDef) componentBlockDef),
                         componentBlockDef.shouldHideNumber()
                 );
                 break;
             case INSTITUTION:
                 formComponent = new InstitutionComponent(
-                        createInstitutionPhysicianComponentDto((InstitutionComponentDef) componentBlockDef),
+                        createInstitutionPhysicianComponentDto(ctx, (InstitutionComponentDef) componentBlockDef),
                         componentBlockDef.shouldHideNumber()
                 );
                 break;
             case MAILING_ADDRESS:
                 MailingAddressComponentDef mailingAddressComponentDef = (MailingAddressComponentDef) componentBlockDef;
                 formComponent = new MailingAddressComponent(
-                        renderTemplateIfDefined(mailingAddressComponentDef.getTitleTemplate()),
-                        renderTemplateIfDefined(mailingAddressComponentDef.getSubtitleTemplate()),
+                        addAndRenderTemplate(ctx, mailingAddressComponentDef.getTitleTemplate()),
+                        addAndRenderTemplate(ctx, mailingAddressComponentDef.getSubtitleTemplate()),
                         mailingAddressComponentDef.shouldHideNumber(),
                         mailingAddressComponentDef.shouldRequireVerified(),
                         mailingAddressComponentDef.shouldRequirePhone()
@@ -65,49 +62,50 @@ public class FormBlockCreatorHelper extends AbstractCreator {
         return new ComponentBlock(formComponent);
     }
 
-    ConditionalBlock createConditionalBlock(ConditionalBlockDef conditionalBlockDef) {
+    ConditionalBlock createConditionalBlock(Context ctx, ConditionalBlockDef conditionalBlockDef) {
         ConditionalBlock conditionalBlock = new ConditionalBlock(
-                context.getQuestionCreator().createQuestion(conditionalBlockDef.getControl())
+                ctx.creators().getQuestionCreator().createQuestion(ctx, conditionalBlockDef.getControl())
         );
         conditionalBlock.getNested().addAll(
                 CollectionMiscUtil.createListFromAnotherList(conditionalBlockDef.getNested(),
-                    (formBlockDef) -> context.getFormBlockCreator().createBlock(formBlockDef)));
+                    (formBlockDef) -> ctx.creators().getFormBlockCreator().createBlock(ctx, formBlockDef)));
         return conditionalBlock;
     }
 
-    ContentBlock createContentBlock(ContentBlockDef contentBlockDef) {
+    ContentBlock createContentBlock(Context ctx, ContentBlockDef contentBlockDef) {
         return new ContentBlock(
-                renderTemplateIfDefined(contentBlockDef.getTitleTemplate()),
-                renderTemplateIfDefined(contentBlockDef.getBodyTemplate())
+                addAndRenderTemplate(ctx, contentBlockDef.getTitleTemplate()),
+                addAndRenderTemplate(ctx, contentBlockDef.getBodyTemplate())
         );
     }
 
-    GroupBlock createGroupBlock(GroupBlockDef groupBlockDef) {
+    GroupBlock createGroupBlock(Context ctx, GroupBlockDef groupBlockDef) {
         GroupBlock groupBlock = new GroupBlock(
                 groupBlockDef.getListStyleHint(),
                 groupBlockDef.getPresentationHint(),
-                renderTemplateIfDefined(groupBlockDef.getTitleTemplate())
+                addAndRenderTemplate(ctx, groupBlockDef.getTitleTemplate())
         );
         groupBlock.getNested().addAll(
                 CollectionMiscUtil.createListFromAnotherList(groupBlockDef.getNested(),
-                        (formBlockDef) -> context.getFormBlockCreator().createBlock(formBlockDef)));
+                        (formBlockDef) -> ctx.creators().getFormBlockCreator().createBlock(ctx, formBlockDef)));
         return groupBlock;
     }
 
-    NestedActivityBlock createNestedActivityBlock(NestedActivityBlockDef nestedActivityBlockDef) {
+    NestedActivityBlock createNestedActivityBlock(Context ctx, NestedActivityBlockDef nestedActivityBlockDef) {
         return new NestedActivityBlock(
                 nestedActivityBlockDef.getActivityCode(),
                 nestedActivityBlockDef.getRenderHint(),
                 nestedActivityBlockDef.isAllowMultiple(),
-                renderTemplateIfDefined(nestedActivityBlockDef.getAddButtonTemplate())
+                addAndRenderTemplate(ctx, nestedActivityBlockDef.getAddButtonTemplate())
         );
     }
 
-    QuestionBlock createQuestionBlock(QuestionBlockDef questionBlockDef) {
-        return new QuestionBlock(context.getQuestionCreator().createQuestion(questionBlockDef.getQuestion()));
+    QuestionBlock createQuestionBlock(Context ctx, QuestionBlockDef questionBlockDef) {
+        return new QuestionBlock(ctx.creators().getQuestionCreator().createQuestion(ctx, questionBlockDef.getQuestion()));
     }
 
     private InstitutionPhysicianComponentDto createInstitutionPhysicianComponentDto(
+            Context ctx,
             PhysicianInstitutionComponentDef physicianInstitutionComponentDef) {
         return new InstitutionPhysicianComponentDto(
                 new ComponentDto(
@@ -117,9 +115,9 @@ public class FormBlockCreatorHelper extends AbstractCreator {
                         physicianInstitutionComponentDef.getRevisionId()
                 ),
                 physicianInstitutionComponentDef.getInstitutionType(),
-                renderTemplateIfDefined(physicianInstitutionComponentDef.getTitleTemplate()),
-                renderTemplateIfDefined(physicianInstitutionComponentDef.getSubtitleTemplate()),
-                renderTemplateIfDefined(physicianInstitutionComponentDef.getAddButtonTemplate()),
+                addAndRenderTemplate(ctx, physicianInstitutionComponentDef.getTitleTemplate()),
+                addAndRenderTemplate(ctx, physicianInstitutionComponentDef.getSubtitleTemplate()),
+                addAndRenderTemplate(ctx, physicianInstitutionComponentDef.getAddButtonTemplate()),
                 physicianInstitutionComponentDef.allowMultiple(),
                 physicianInstitutionComponentDef.showFields(),
                 physicianInstitutionComponentDef.isRequired()

@@ -24,147 +24,142 @@ import org.broadinstitute.ddp.model.activity.instance.validation.NumOptionsSelec
 import org.broadinstitute.ddp.model.activity.instance.validation.RegexRule;
 import org.broadinstitute.ddp.model.activity.instance.validation.RequiredRule;
 import org.broadinstitute.ddp.model.activity.instance.validation.Rule;
-import org.broadinstitute.ddp.service.actvityinstancebuilder.AbstractCreator;
-import org.broadinstitute.ddp.service.actvityinstancebuilder.ActivityInstanceFromDefinitionBuilder;
+import org.broadinstitute.ddp.service.actvityinstancebuilder.Context;
 
 /**
  * Creates {@link Rule}
  */
-public class ValidationRuleCreator extends AbstractCreator {
+public class ValidationRuleCreator {
 
-    public ValidationRuleCreator(ActivityInstanceFromDefinitionBuilder.Context context) {
-        super(context);
-    }
-
-    public Rule createRule(RuleDef ruleDef) {
+    public Rule createRule(Context ctx, RuleDef ruleDef) {
         switch (ruleDef.getRuleType()) {
             case REGEX:
-                return createRegExpRule((RegexRuleDef) ruleDef);
+                return createRegExpRule(ctx, (RegexRuleDef) ruleDef);
             case LENGTH:
-                return createLengthRule((LengthRuleDef) ruleDef);
+                return createLengthRule(ctx, (LengthRuleDef) ruleDef);
             case COMPLETE:
-                return createCompleteRule((CompleteRuleDef) ruleDef);
+                return createCompleteRule(ctx, (CompleteRuleDef) ruleDef);
             case REQUIRED:
-                return createRequiredRule((RequiredRuleDef) ruleDef);
+                return createRequiredRule(ctx, (RequiredRuleDef) ruleDef);
             case AGE_RANGE:
-                return createAgeRangeRule((AgeRangeRuleDef) ruleDef);
+                return createAgeRangeRule(ctx, (AgeRangeRuleDef) ruleDef);
             case INT_RANGE:
-                return createIntRangeRule((IntRangeRuleDef) ruleDef);
+                return createIntRangeRule(ctx, (IntRangeRuleDef) ruleDef);
             case DATE_RANGE:
-                return createDateRangeRule((DateRangeRuleDef) ruleDef);
+                return createDateRangeRule(ctx, (DateRangeRuleDef) ruleDef);
             case DAY_REQUIRED:      // fall through
             case MONTH_REQUIRED:    // fall through
             case YEAR_REQUIRED:
-                return createDateFieldRequiredRule((DateFieldRequiredRuleDef) ruleDef);
+                return createDateFieldRequiredRule(ctx, (DateFieldRequiredRuleDef) ruleDef);
             case NUM_OPTIONS_SELECTED:
-                return createNumOptionsSelectedRule((NumOptionsSelectedRuleDef) ruleDef);
+                return createNumOptionsSelectedRule(ctx, (NumOptionsSelectedRuleDef) ruleDef);
             default:
                 throw new IllegalStateException("Unexpected value: " + ruleDef.getRuleType());
         }
     }
 
-    private RegexRule createRegExpRule(RegexRuleDef ruleDef) {
+    private RegexRule createRegExpRule(Context ctx, RegexRuleDef ruleDef) {
         return RegexRule.of(
                 ruleDef.getRuleId(),
-                resolveRuleMessage(ruleDef),
-                getHintTitle(ruleDef),
+                resolveRuleMessage(ctx, ruleDef),
+                getHintTitle(ctx, ruleDef),
                 ruleDef.getAllowSave(),
                 ruleDef.getPattern()
         );
     }
 
-    private LengthRule createLengthRule(LengthRuleDef ruleDef) {
+    private LengthRule createLengthRule(Context ctx, LengthRuleDef ruleDef) {
         return LengthRule.of(
                 ruleDef.getRuleId(),
-                resolveRuleMessage(ruleDef),
-                getHintTitle(ruleDef),
+                resolveRuleMessage(ctx, ruleDef),
+                getHintTitle(ctx, ruleDef),
                 ruleDef.getAllowSave(),
                 ruleDef.getMin(),
                 ruleDef.getMax()
         );
     }
 
-    private CompleteRule createCompleteRule(CompleteRuleDef ruleDef) {
+    private CompleteRule createCompleteRule(Context ctx, CompleteRuleDef ruleDef) {
         return new CompleteRule(
                 ruleDef.getRuleId(),
-                resolveRuleMessage(ruleDef),
-                getHintTitle(ruleDef),
+                resolveRuleMessage(ctx, ruleDef),
+                getHintTitle(ctx, ruleDef),
                 ruleDef.getAllowSave()
         );
     }
 
-    private RequiredRule createRequiredRule(RequiredRuleDef ruleDef) {
+    private RequiredRule createRequiredRule(Context ctx, RequiredRuleDef ruleDef) {
         return new RequiredRule(
                 ruleDef.getRuleId(),
-                resolveRuleMessage(ruleDef),
-                getHintTitle(ruleDef),
+                resolveRuleMessage(ctx, ruleDef),
+                getHintTitle(ctx, ruleDef),
                 ruleDef.getAllowSave()
         );
     }
 
-    private AgeRangeRule createAgeRangeRule(AgeRangeRuleDef ruleDef) {
+    private AgeRangeRule createAgeRangeRule(Context ctx, AgeRangeRuleDef ruleDef) {
         return AgeRangeRule.of(
                 ruleDef.getRuleId(),
-                resolveRuleMessage(ruleDef),
-                getHintTitle(ruleDef),
+                resolveRuleMessage(ctx, ruleDef),
+                getHintTitle(ctx, ruleDef),
                 ruleDef.getAllowSave(),
                 ruleDef.getMinAge(),
                 ruleDef.getMaxAge()
         );
     }
 
-    private IntRangeRule createIntRangeRule(IntRangeRuleDef ruleDef) {
+    private IntRangeRule createIntRangeRule(Context ctx, IntRangeRuleDef ruleDef) {
         return IntRangeRule.of(
                 ruleDef.getRuleId(),
-                resolveRuleMessage(ruleDef),
-                getHintTitle(ruleDef),
+                resolveRuleMessage(ctx, ruleDef),
+                getHintTitle(ctx, ruleDef),
                 ruleDef.getAllowSave(),
                 ruleDef.getMin(),
                 ruleDef.getMax()
         );
     }
 
-    private DateRangeRule createDateRangeRule(DateRangeRuleDef ruleDef) {
+    private DateRangeRule createDateRangeRule(Context ctx, DateRangeRuleDef ruleDef) {
         return DateRangeRule.of(
                 ruleDef.getRuleId(),
-                resolveRuleMessage(ruleDef),
-                getHintTitle(ruleDef),
+                resolveRuleMessage(ctx, ruleDef),
+                getHintTitle(ctx, ruleDef),
                 ruleDef.getAllowSave(),
                 ruleDef.getStartDate(),
                 ruleDef.isUseTodayAsEnd() ? LocalDate.now(ZoneOffset.UTC) : ruleDef.getEndDate()
         );
     }
 
-    private DateFieldRequiredRule createDateFieldRequiredRule(DateFieldRequiredRuleDef ruleDef) {
+    private DateFieldRequiredRule createDateFieldRequiredRule(Context ctx, DateFieldRequiredRuleDef ruleDef) {
         return DateFieldRequiredRule.of(
                 ruleDef.getRuleType(),
                 ruleDef.getRuleId(),
-                resolveRuleMessage(ruleDef),
-                getHintTitle(ruleDef),
+                resolveRuleMessage(ctx, ruleDef),
+                getHintTitle(ctx, ruleDef),
                 ruleDef.getAllowSave()
         );
     }
 
-    private NumOptionsSelectedRule createNumOptionsSelectedRule(NumOptionsSelectedRuleDef ruleDef) {
+    private NumOptionsSelectedRule createNumOptionsSelectedRule(Context ctx, NumOptionsSelectedRuleDef ruleDef) {
         return NumOptionsSelectedRule.of(
                 ruleDef.getRuleId(),
-                resolveRuleMessage(ruleDef),
-                getHintTitle(ruleDef),
+                resolveRuleMessage(ctx, ruleDef),
+                getHintTitle(ctx, ruleDef),
                 ruleDef.getAllowSave(),
                 ruleDef.getMin(),
                 ruleDef.getMax()
         );
     }
 
-    private String resolveRuleMessage(RuleDef ruleDef) {
-        var validationDao = context.getHandle().attach(ValidationDao.class);
+    private String resolveRuleMessage(Context ctx, RuleDef ruleDef) {
+        var validationDao = ctx.getHandle().attach(ValidationDao.class);
         return validationDao.getJdbiI18nValidationMsgTrans().getValidationMessage(
                 validationDao.getJdbiValidationType().getTypeId(ruleDef.getRuleType()),
-                context.getLangCodeId()
+                ctx.getLangCodeId()
         );
     }
 
-    private String getHintTitle(RuleDef ruleDef) {
-        return ruleDef.getHintTemplate() !=  null ? ruleDef.getHintTemplate().render(context.getIsoLangCode()) : null;
+    private String getHintTitle(Context ctx, RuleDef ruleDef) {
+        return ruleDef.getHintTemplate() !=  null ? ruleDef.getHintTemplate().render(ctx.getIsoLangCode()) : null;
     }
 }
