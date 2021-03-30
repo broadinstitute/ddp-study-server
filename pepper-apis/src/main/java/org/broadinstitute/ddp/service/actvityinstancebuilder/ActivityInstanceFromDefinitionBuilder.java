@@ -80,11 +80,23 @@ public class ActivityInstanceFromDefinitionBuilder {
         LOG.info("Start ActivityInstance building from definition (ActivityDefStore). StudyGuid={}, instanceGuid={}",
                 studyGuid, instanceGuid);
         var formResponse = ActivityInstanceUtil.getFormResponse(handle, instanceGuid);
-        Optional<FormActivityDef> formActivityDef = ActivityDefStore.getInstance().findActivityDef(
-                handle, studyGuid, formResponse.getActivityId(), formResponse.getCreatedAt(), formResponse.getActivityCode());
-        if (formActivityDef.isPresent() && formActivityDef.get().getActivityType() == FORMS) {
+        FormActivityDef formActivityDef = ActivityInstanceUtil.getActivityDef(
+                handle,
+                ActivityDefStore.getInstance(),
+                studyGuid,
+                formResponse.getActivityId(),
+                instanceGuid,
+                formResponse.getCreatedAt());
+        if (formActivityDef != null && formActivityDef.getActivityType() == FORMS) {
             var activityInstance = new FormInstanceCreator().createFormInstance(
-                    new Context(handle, userGuid, operatorGuid, isoLangCode, style, formActivityDef.get(), formResponse)
+                    new Context(
+                            handle,
+                            userGuid,
+                            operatorGuid,
+                            isoLangCode,
+                            style,
+                            formActivityDef,
+                            formResponse)
             );
             LOG.info("ActivityInstance built from definition SUCCESSFULLY.");
             return Optional.of(activityInstance);

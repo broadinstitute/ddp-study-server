@@ -23,12 +23,16 @@ public class ActivityInstanceUtil {
      */
     public static FormActivityDef getActivityDef(Handle handle, ActivityDefStore activityStore,
                                            ActivityInstanceDto instanceDto, String studyGuid) {
-        long activityId = instanceDto.getActivityId();
-        String instanceGuid = instanceDto.getGuid();
+        return getActivityDef(handle, activityStore, studyGuid, instanceDto.getActivityId(),
+                instanceDto.getGuid(), instanceDto.getCreatedAtMillis());
+    }
+
+    public static FormActivityDef getActivityDef(Handle handle, ActivityDefStore activityStore,
+                                    String studyGuid, long activityId, String instanceGuid, long createdAtMillis) {
         ActivityDto activityDto = activityStore.findActivityDto(handle, activityId)
                 .orElseThrow(() -> new DDPException("Could not find activity dto for instance " + instanceGuid));
         ActivityVersionDto versionDto = activityStore
-                .findVersionDto(handle, activityId, instanceDto.getCreatedAtMillis())
+                .findVersionDto(handle, activityId, createdAtMillis)
                 .orElseThrow(() -> new DDPException("Could not find activity version for instance " + instanceGuid));
         return activityStore.findActivityDef(handle, studyGuid, activityDto, versionDto)
                 .orElseThrow(() -> new DDPException("Could not find activity definition for instance " + instanceGuid));
@@ -44,7 +48,7 @@ public class ActivityInstanceUtil {
     }
 
     /**
-     * Find most recent {@link ActivityInstance} befora a current one. Returns ID of a found instance
+     * Find most recent {@link ActivityInstance} before a current one. Returns ID of a found instance
      * or null if such not exists.
      */
     public static Long getPreviousInstanceId(Handle handle, long instanceId) {

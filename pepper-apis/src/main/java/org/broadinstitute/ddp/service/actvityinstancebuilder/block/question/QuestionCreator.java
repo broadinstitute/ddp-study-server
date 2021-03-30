@@ -4,7 +4,6 @@ import static org.broadinstitute.ddp.model.activity.types.DateRenderMode.PICKLIS
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import org.broadinstitute.ddp.model.activity.definition.question.AgreementQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.BoolQuestionDef;
@@ -58,13 +57,11 @@ public class QuestionCreator {
                 (ruleDef) -> ctx.creators().getValidationRuleCreator().createRule(ctx, ruleDef));
     }
 
-    <T extends Answer> List<T> getAnswers(Context ctx, Class<T> type, String questionStableId) {
+    <T extends Answer> List<T> getAnswers(Context ctx, String questionStableId) {
         List<T> answers = new ArrayList<>();
-        if (ctx.getFormResponse().getAnswers() != null) {
-            answers = ctx.getFormResponse().getAnswers().stream()
-                    .filter(a -> a.getClass().isAssignableFrom(type) && questionStableId.equals(a.getQuestionStableId()))
-                    .map(type::cast)
-                    .collect(Collectors.toList());
+        T answer = (T)ctx.getFormResponse().getAnswer(questionStableId);
+        if (answer != null) {
+            answers.add(answer);
         }
         return answers;
     }

@@ -3,7 +3,7 @@ package org.broadinstitute.ddp.service.actvityinstancebuilder.block.question;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 
-import org.broadinstitute.ddp.db.dao.ValidationDao;
+import org.broadinstitute.ddp.db.ActivityDefStore;
 import org.broadinstitute.ddp.model.activity.definition.validation.AgeRangeRuleDef;
 import org.broadinstitute.ddp.model.activity.definition.validation.CompleteRuleDef;
 import org.broadinstitute.ddp.model.activity.definition.validation.DateFieldRequiredRuleDef;
@@ -152,11 +152,8 @@ public class ValidationRuleCreator {
     }
 
     private String resolveRuleMessage(Context ctx, RuleDef ruleDef) {
-        var validationDao = ctx.getHandle().attach(ValidationDao.class);
-        return validationDao.getJdbiI18nValidationMsgTrans().getValidationMessage(
-                validationDao.getJdbiValidationType().getTypeId(ruleDef.getRuleType()),
-                ctx.getLangCodeId()
-        );
+        return ActivityDefStore.getInstance().findValidationRuleMessageMap(ctx.getHandle(),
+                ruleDef.getRuleType(), ctx.getLangCodeId());
     }
 
     private String getHintTitle(Context ctx, RuleDef ruleDef) {

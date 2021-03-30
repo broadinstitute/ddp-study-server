@@ -11,14 +11,6 @@ import org.broadinstitute.ddp.model.activity.definition.question.FileQuestionDef
 import org.broadinstitute.ddp.model.activity.definition.question.NumericQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.TextQuestionDef;
-import org.broadinstitute.ddp.model.activity.instance.answer.AgreementAnswer;
-import org.broadinstitute.ddp.model.activity.instance.answer.BoolAnswer;
-import org.broadinstitute.ddp.model.activity.instance.answer.CompositeAnswer;
-import org.broadinstitute.ddp.model.activity.instance.answer.DateAnswer;
-import org.broadinstitute.ddp.model.activity.instance.answer.FileAnswer;
-import org.broadinstitute.ddp.model.activity.instance.answer.NumericAnswer;
-import org.broadinstitute.ddp.model.activity.instance.answer.PicklistAnswer;
-import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
 import org.broadinstitute.ddp.model.activity.instance.question.AgreementQuestion;
 import org.broadinstitute.ddp.model.activity.instance.question.BoolQuestion;
 import org.broadinstitute.ddp.model.activity.instance.question.CompositeQuestion;
@@ -43,7 +35,7 @@ public class QuestionCreatorHelper {
                 addAndRenderTemplate(ctx, questionDef.getTooltipTemplate()),
                 addAndRenderTemplate(ctx, questionDef.getAdditionalInfoHeaderTemplate()),
                 addAndRenderTemplate(ctx, questionDef.getAdditionalInfoFooterTemplate()),
-                ctx.creators().getQuestionCreator().getAnswers(ctx, AgreementAnswer.class, questionDef.getStableId()),
+                ctx.creators().getQuestionCreator().getAnswers(ctx, questionDef.getStableId()),
                 ctx.creators().getQuestionCreator().getValidationRules(ctx, questionDef)
         );
     }
@@ -58,7 +50,7 @@ public class QuestionCreatorHelper {
                 addAndRenderTemplate(ctx, questionDef.getTooltipTemplate()),
                 addAndRenderTemplate(ctx, questionDef.getAdditionalInfoHeaderTemplate()),
                 addAndRenderTemplate(ctx, questionDef.getAdditionalInfoFooterTemplate()),
-                ctx.creators().getQuestionCreator().getAnswers(ctx, BoolAnswer.class, questionDef.getStableId()),
+                ctx.creators().getQuestionCreator().getAnswers(ctx, questionDef.getStableId()),
                 ctx.creators().getQuestionCreator().getValidationRules(ctx, questionDef),
                 addAndRenderTemplate(ctx, questionDef.getTrueTemplate()),
                 addAndRenderTemplate(ctx, questionDef.getFalseTemplate())
@@ -84,7 +76,7 @@ public class QuestionCreatorHelper {
                 CollectionMiscUtil.createListFromAnotherList(questionDef.getChildren(),
                         (childQuestionDef) -> questionCreator.createQuestion(ctx, childQuestionDef)),
                 questionDef.getChildOrientation(),
-                questionCreator.getAnswers(ctx, CompositeAnswer.class, questionDef.getStableId())
+                questionCreator.getAnswers(ctx, questionDef.getStableId())
         );
     }
 
@@ -99,7 +91,7 @@ public class QuestionCreatorHelper {
                 addAndRenderTemplate(ctx, questionDef.getTooltipTemplate()),
                 addAndRenderTemplate(ctx, questionDef.getAdditionalInfoHeaderTemplate()),
                 addAndRenderTemplate(ctx, questionDef.getAdditionalInfoFooterTemplate()),
-                questionCreator.getAnswers(ctx, DateAnswer.class, questionDef.getStableId()),
+                questionCreator.getAnswers(ctx, questionDef.getStableId()),
                 questionCreator.getValidationRules(ctx, questionDef),
                 questionDef.getRenderMode(),
                 questionDef.isDisplayCalendar(),
@@ -123,7 +115,7 @@ public class QuestionCreatorHelper {
                 addAndRenderTemplate(ctx, questionDef.getTooltipTemplate()),
                 addAndRenderTemplate(ctx, questionDef.getAdditionalInfoHeaderTemplate()),
                 addAndRenderTemplate(ctx, questionDef.getAdditionalInfoFooterTemplate()),
-                questionCreator.getAnswers(ctx, DateAnswer.class, questionDef.getStableId()),
+                questionCreator.getAnswers(ctx, questionDef.getStableId()),
                 questionCreator.getValidationRules(ctx, questionDef),
                 questionDef.getRenderMode(),
                 questionDef.isDisplayCalendar(),
@@ -143,7 +135,7 @@ public class QuestionCreatorHelper {
                 addAndRenderTemplate(ctx, questionDef.getTooltipTemplate()),
                 addAndRenderTemplate(ctx, questionDef.getAdditionalInfoHeaderTemplate()),
                 addAndRenderTemplate(ctx, questionDef.getAdditionalInfoFooterTemplate()),
-                questionCreator.getAnswers(ctx, FileAnswer.class, questionDef.getStableId()),
+                questionCreator.getAnswers(ctx, questionDef.getStableId()),
                 questionCreator.getValidationRules(ctx, questionDef)
         );
     }
@@ -160,7 +152,7 @@ public class QuestionCreatorHelper {
                 addAndRenderTemplate(ctx, questionDef.getTooltipTemplate()),
                 addAndRenderTemplate(ctx, questionDef.getAdditionalInfoHeaderTemplate()),
                 addAndRenderTemplate(ctx, questionDef.getAdditionalInfoFooterTemplate()),
-                questionCreator.getAnswers(ctx, NumericAnswer.class, questionDef.getStableId()),
+                questionCreator.getAnswers(ctx, questionDef.getStableId()),
                 questionCreator.getValidationRules(ctx, questionDef),
                 questionDef.getNumericType()
         );
@@ -177,7 +169,7 @@ public class QuestionCreatorHelper {
                 addAndRenderTemplate(ctx, questionDef.getTooltipTemplate()),
                 addAndRenderTemplate(ctx, questionDef.getAdditionalInfoHeaderTemplate()),
                 addAndRenderTemplate(ctx, questionDef.getAdditionalInfoFooterTemplate()),
-                questionCreator.getAnswers(ctx, PicklistAnswer.class, questionDef.getStableId()),
+                questionCreator.getAnswers(ctx, questionDef.getStableId()),
                 questionCreator.getValidationRules(ctx, questionDef),
                 questionDef.getSelectMode(),
                 questionDef.getRenderMode(),
@@ -201,7 +193,7 @@ public class QuestionCreatorHelper {
                 addAndRenderTemplate(ctx, questionDef.getTooltipTemplate()),
                 addAndRenderTemplate(ctx, questionDef.getAdditionalInfoHeaderTemplate()),
                 addAndRenderTemplate(ctx, questionDef.getAdditionalInfoFooterTemplate()),
-                questionCreator.getAnswers(ctx, TextAnswer.class, questionDef.getStableId()),
+                questionCreator.getAnswers(ctx, questionDef.getStableId()),
                 questionCreator.getValidationRules(ctx, questionDef),
                 questionDef.getInputType(),
                 questionDef.getSuggestionType(),

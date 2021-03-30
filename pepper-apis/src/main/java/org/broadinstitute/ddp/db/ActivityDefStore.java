@@ -15,6 +15,7 @@ import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiActivityValidation;
 import org.broadinstitute.ddp.db.dao.JdbiActivityVersion;
 import org.broadinstitute.ddp.db.dao.JdbiFormTypeActivityInstanceStatusType;
+import org.broadinstitute.ddp.db.dao.ValidationDao;
 import org.broadinstitute.ddp.db.dto.ActivityDto;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.db.dto.ActivityValidationDto;
@@ -31,6 +32,7 @@ import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
 import org.broadinstitute.ddp.model.activity.instance.FormResponse;
 import org.broadinstitute.ddp.model.activity.types.BlockType;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
+import org.broadinstitute.ddp.model.activity.types.RuleType;
 import org.broadinstitute.ddp.pex.PexException;
 import org.broadinstitute.ddp.pex.TreeWalkInterpreter;
 import org.jdbi.v3.core.Handle;
@@ -46,6 +48,7 @@ public class ActivityDefStore {
     private Map<Long, List<ActivityVersionDto>> versionDtoListMap;
     private Map<Long, List<ActivityValidationDto>> validationDtoListMap;
     private Map<String, Map<String, Blob>> studyActivityStatusIconBlobs;
+    private Map<String, String> validationRuleMessageMap;
 
     public static ActivityDefStore getInstance() {
         if (instance == null) {
@@ -65,6 +68,7 @@ public class ActivityDefStore {
         versionDtoListMap = new HashMap<>();
         validationDtoListMap = new HashMap<>();
         studyActivityStatusIconBlobs = new HashMap<>();
+        validationRuleMessageMap = new HashMap<>();
     }
 
     public void clear() {
@@ -74,6 +78,7 @@ public class ActivityDefStore {
             versionDtoListMap.clear();
             validationDtoListMap.clear();
             studyActivityStatusIconBlobs.clear();
+            validationRuleMessageMap.clear();
         }
     }
 
@@ -149,37 +154,24 @@ public class ActivityDefStore {
                 .map(version -> getActivityDef(studyGuid, instanceDto.getActivityCode(), version.getVersionTag()));
     }
 
-    public Optional<FormActivityDef> findActivityDef(Handle handle, String studyGuid, long activityId, long createdAtMillis,
-                                                     String activityCode) {
-        return findVersionDto(handle, activityId, createdAtMillis)
-                .map(version -> getOrCreateIfAbsentActivityDef(handle, studyGuid, activityCode, version));
-    }
-
     public FormActivityDef getActivityDef(String studyGuid, String activityCode, String versionTag) {
         synchronized (lockVar) {
             return activityDefMap.get(studyGuid + activityCode + versionTag);
         }
     }
 
-    public FormActivityDef getOrCreateIfAbsentActivityDef(Handle handle, String studyGuid,
-                                                          String activityCode, ActivityVersionDto versionDto) {
-        synchronized (lockVar) {
-            String key = studyGuid + activityCode + versionDto.getVersionTag();
-            FormActivityDef def = activityDefMap.get(key);
-            if (def == null) {
-                Optional<ActivityDto> activityDto = findActivityDto(handle, versionDto.getActivityId());
-                if (activityDto.isPresent()) {
-                    def = handle.attach(FormActivityDao.class).findDefByDtoAndVersion(activityDto.get(), versionDto);
-                    activityDefMap.put(key, def);
-                }
-            }
-            return def;
-        }
-    }
-
     public void setActivityDef(String studyGuid, String activityCode, String versionTag, FormActivityDef activityDef) {
         synchronized (lockVar) {
             activityDefMap.put(studyGuid + activityCode + versionTag, activityDef);
+        }
+    }
+
+    public String findValidationRuleMessageMap(Handle handle, RuleType ruleType, long langCodeId) {
+        synchronized (lockVar) {
+            var validationDao = handle.attach(ValidationDao.class);
+            return validationRuleMessageMap.computeIfAbsent(ruleType.name() + langCodeId, message ->
+                    validationDao.getJdbiI18nValidationMsgTrans().getValidationMessage(
+                        validationDao.getJdbiValidationType().getTypeId(ruleType), langCodeId));
         }
     }
 
