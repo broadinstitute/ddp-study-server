@@ -63,7 +63,7 @@
   "parental_consent_child_lastname": "Your child’s complete legal family (last) name*",
   "parental_consent_child_lastname_validation_hint": "Child's last name cannot be empty",
   "parental_consent_child_lastname_exp": "Your child’s complete legal family (last) name at birth",
-  "parental_consent_child_middlename": "Your MIDDLE/SECOND or ADDITIONAL (if you have one) name",
+  "parental_consent_child_middlename": "Your child's middle/second or additional (if your child has one) name",
   "parental_consent_child_middlename_exp": "Your child’s complete middle/second or additional name",
   "parental_consent_date_signed": "Date Signed",
   "parental_consent_parent_first_name": "Your complete legal first (given) name*",
@@ -72,6 +72,8 @@
   "parental_consent_parent_last_name": "Your complete legal last (family) name*",
   "parental_consent_parent_last_name_validation_hint": "Last name cannot be emtpy",
   "parental_consent_parent_last_name_exp": "Your complete legal last (family) name at birth",
+  "parental_consent_parent_middle_name": "Your middle/second or additional (if you have one) name",
+  "parental_consent_parent_middle_name_exp": "Your complete middle/second or additional name",
 
   "parental_assent_child_firstname": "Your child’s complete legal first (given) name*",
   "parental_assent_child_firstname_validation_hint": "Child's first name cannot be empty",
