@@ -152,7 +152,7 @@ public class ValidationRuleCreator {
     }
 
     private String resolveRuleMessage(Context ctx, RuleDef ruleDef) {
-        return ActivityDefStore.getInstance().findValidationRuleMessageMap(ctx.getHandle(),
+        return ActivityDefStore.getInstance().findValidationRuleMessage(ctx.getHandle(),
                 ruleDef.getRuleType(), ctx.getLangCodeId());
     }
 

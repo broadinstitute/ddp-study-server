@@ -37,6 +37,16 @@ import org.broadinstitute.ddp.pex.PexException;
 import org.broadinstitute.ddp.pex.TreeWalkInterpreter;
 import org.jdbi.v3.core.Handle;
 
+/**
+ * Caches activity data (only static data, instance data or data connected to users are not cached here).
+ * NOTE: for user-level caching and instance data caching the http session attributes or http requests attributes
+ * could be used.
+ *
+ * <p>Cached data stored in non-concurrent hash maps and access to them is synchronized.
+ *
+ * <p>All methods which start with prefix 'find' first check data in a corresponding map and if it is found there -
+ * returns data, if not: reads data from DB, saves to the map, and returns data.
+ */
 public class ActivityDefStore {
 
     private static ActivityDefStore instance;
@@ -166,7 +176,7 @@ public class ActivityDefStore {
         }
     }
 
-    public String findValidationRuleMessageMap(Handle handle, RuleType ruleType, long langCodeId) {
+    public String findValidationRuleMessage(Handle handle, RuleType ruleType, long langCodeId) {
         synchronized (lockVar) {
             var validationDao = handle.attach(ValidationDao.class);
             return validationRuleMessageMap.computeIfAbsent(ruleType.name() + langCodeId, message ->

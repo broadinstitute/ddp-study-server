@@ -6,6 +6,7 @@ import java.util.Optional;
 
 import org.broadinstitute.ddp.content.ContentStyle;
 import org.broadinstitute.ddp.db.ActivityDefStore;
+import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
 import org.broadinstitute.ddp.model.activity.definition.FormBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.FormSectionDef;
@@ -23,8 +24,9 @@ import org.slf4j.LoggerFactory;
 /**
  * A builder providing a creation of {@link ActivityInstance} an alternative way:
  * instead of building it by fetching all data from DB
- * it gets most of study data from {@link ActivityDefStore} and then fetch rest
- * of data from DB (answers, validation messages).
+ * it gets study data from {@link ActivityDefStore} and then fetches instance data
+ * from DB: answers, validation messages.. Btw, validation messages saved then to
+ * {@link ActivityDefStore} cache.
  *
  * <p>Main method of this class is
  * {@link #buildActivityInstance(Handle, String, String, String, String, ContentStyle, String)}
@@ -60,14 +62,20 @@ import org.slf4j.LoggerFactory;
  *           {@link ValidationRuleCreator}
  * </pre>
  *
- * <p>NOTE: it is defined a class {@link Context} used to pass the basic parameters to each
+ * <p>NOTE: it is defined a class {@link Context} which used to pass the basic parameters to each
  * creator (so it's no need to pass multiple parameters to each creator constructor -
  * only one parameter {@link Context} is passed.
+ * Also it holds a reference to {@link CreatorFactory} which creates all Creator-objects
+ * providing {@link ActivityInstance} building.
  */
 public class ActivityInstanceFromDefinitionBuilder {
 
     private static final Logger LOG = LoggerFactory.getLogger(ActivityInstanceFromDefinitionBuilder.class);
 
+    /**
+     * Build {@link ActivityInstance} from {@link ActivityDefStore} + some instance data (like
+     * answers) are fetched from DB.
+     */
     public Optional<ActivityInstance> buildActivityInstance(
             Handle handle,
             String userGuid,
@@ -87,7 +95,7 @@ public class ActivityInstanceFromDefinitionBuilder {
                 formResponse.getActivityId(),
                 instanceGuid,
                 formResponse.getCreatedAt());
-        if (formActivityDef != null && formActivityDef.getActivityType() == FORMS) {
+        if (formActivityDef.getActivityType() == FORMS) {
             var activityInstance = new FormInstanceCreator().createFormInstance(
                     new Context(
                             handle,
@@ -100,8 +108,9 @@ public class ActivityInstanceFromDefinitionBuilder {
             );
             LOG.info("ActivityInstance built from definition SUCCESSFULLY.");
             return Optional.of(activityInstance);
+        } else {
+            throw new DDPException("Wrong activity type " + formActivityDef.getActivityType() + ". "
+                    + "Only activity of type " + FORMS + " is supported by ActivityInstanceFromDefinitionBuilder");
         }
-        LOG.warn("ActivityInstance building from definition FAILED.");
-        return Optional.empty();
     }
 }

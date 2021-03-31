@@ -44,20 +44,10 @@ public final class FormResponse extends ActivityResponse {
                 latestStatus);
     }
 
-    /**
-     * Get list of answers.
-     * @deprecated An answer can be looked up by questionStableId instead of streaming it.
-     *       The choice of using a List of answers was a legacy design decision -
-     *       there should only be one answer per question.
-     */
-    @Deprecated
     public List<Answer> getAnswers() {
         return new ArrayList<>(answers.values());
     }
 
-    /**
-     * Get answer.
-     */
     public Answer getAnswer(String questionStableId) {
         return answers.get(questionStableId);
     }
