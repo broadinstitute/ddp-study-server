@@ -1,6 +1,6 @@
 package org.broadinstitute.ddp.service.actvityinstancebuilder.block;
 
-import static org.broadinstitute.ddp.service.actvityinstancebuilder.TemplateHandler.addAndRenderTemplate;
+import static org.broadinstitute.ddp.service.actvityinstancebuilder.util.TemplateHandler.addAndRenderTemplate;
 
 import org.broadinstitute.ddp.db.dto.ComponentDto;
 import org.broadinstitute.ddp.db.dto.InstitutionPhysicianComponentDto;
@@ -24,12 +24,12 @@ import org.broadinstitute.ddp.model.activity.instance.MailingAddressComponent;
 import org.broadinstitute.ddp.model.activity.instance.NestedActivityBlock;
 import org.broadinstitute.ddp.model.activity.instance.PhysicianComponent;
 import org.broadinstitute.ddp.model.activity.instance.QuestionBlock;
-import org.broadinstitute.ddp.service.actvityinstancebuilder.Context;
+import org.broadinstitute.ddp.service.actvityinstancebuilder.AIBuilderContext;
 import org.broadinstitute.ddp.util.CollectionMiscUtil;
 
 public class FormBlockCreatorHelper {
 
-    ComponentBlock createComponentBlock(Context ctx, ComponentBlockDef componentBlockDef) {
+    ComponentBlock createComponentBlock(AIBuilderContext ctx, ComponentBlockDef componentBlockDef) {
         FormComponent formComponent = null;
 
         switch (componentBlockDef.getComponentType()) {
@@ -62,7 +62,7 @@ public class FormBlockCreatorHelper {
         return new ComponentBlock(formComponent);
     }
 
-    ConditionalBlock createConditionalBlock(Context ctx, ConditionalBlockDef conditionalBlockDef) {
+    ConditionalBlock createConditionalBlock(AIBuilderContext ctx, ConditionalBlockDef conditionalBlockDef) {
         ConditionalBlock conditionalBlock = new ConditionalBlock(
                 ctx.creators().getQuestionCreator().createQuestion(ctx, conditionalBlockDef.getControl())
         );
@@ -72,14 +72,14 @@ public class FormBlockCreatorHelper {
         return conditionalBlock;
     }
 
-    ContentBlock createContentBlock(Context ctx, ContentBlockDef contentBlockDef) {
+    ContentBlock createContentBlock(AIBuilderContext ctx, ContentBlockDef contentBlockDef) {
         return new ContentBlock(
                 addAndRenderTemplate(ctx, contentBlockDef.getTitleTemplate()),
                 addAndRenderTemplate(ctx, contentBlockDef.getBodyTemplate())
         );
     }
 
-    GroupBlock createGroupBlock(Context ctx, GroupBlockDef groupBlockDef) {
+    GroupBlock createGroupBlock(AIBuilderContext ctx, GroupBlockDef groupBlockDef) {
         GroupBlock groupBlock = new GroupBlock(
                 groupBlockDef.getListStyleHint(),
                 groupBlockDef.getPresentationHint(),
@@ -91,7 +91,7 @@ public class FormBlockCreatorHelper {
         return groupBlock;
     }
 
-    NestedActivityBlock createNestedActivityBlock(Context ctx, NestedActivityBlockDef nestedActivityBlockDef) {
+    NestedActivityBlock createNestedActivityBlock(AIBuilderContext ctx, NestedActivityBlockDef nestedActivityBlockDef) {
         return new NestedActivityBlock(
                 nestedActivityBlockDef.getActivityCode(),
                 nestedActivityBlockDef.getRenderHint(),
@@ -100,12 +100,12 @@ public class FormBlockCreatorHelper {
         );
     }
 
-    QuestionBlock createQuestionBlock(Context ctx, QuestionBlockDef questionBlockDef) {
+    QuestionBlock createQuestionBlock(AIBuilderContext ctx, QuestionBlockDef questionBlockDef) {
         return new QuestionBlock(ctx.creators().getQuestionCreator().createQuestion(ctx, questionBlockDef.getQuestion()));
     }
 
     private InstitutionPhysicianComponentDto createInstitutionPhysicianComponentDto(
-            Context ctx,
+            AIBuilderContext ctx,
             PhysicianInstitutionComponentDef physicianInstitutionComponentDef) {
         return new InstitutionPhysicianComponentDto(
                 new ComponentDto(

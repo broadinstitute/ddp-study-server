@@ -62,10 +62,10 @@ import org.slf4j.LoggerFactory;
  *           {@link ValidationRuleCreator}
  * </pre>
  *
- * <p>NOTE: it is defined a class {@link Context} which used to pass the basic parameters to each
+ * <p>NOTE: it is defined a class {@link AIBuilderContext} which used to pass the basic parameters to each
  * creator (so it's no need to pass multiple parameters to each creator constructor -
- * only one parameter {@link Context} is passed.
- * Also it holds a reference to {@link CreatorFactory} which creates all Creator-objects
+ * only one parameter {@link AIBuilderContext} is passed.
+ * Also it holds a reference to {@link AICreatorsFactory} which creates all Creator-objects
  * providing {@link ActivityInstance} building.
  */
 public class ActivityInstanceFromDefinitionBuilder {
@@ -97,7 +97,7 @@ public class ActivityInstanceFromDefinitionBuilder {
                 formResponse.getCreatedAt());
         if (formActivityDef.getActivityType() == FORMS) {
             var activityInstance = new FormInstanceCreator().createFormInstance(
-                    new Context(
+                    new AIBuilderContext(
                             handle,
                             userGuid,
                             operatorGuid,

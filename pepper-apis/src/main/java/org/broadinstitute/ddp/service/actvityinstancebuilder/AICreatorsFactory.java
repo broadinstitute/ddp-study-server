@@ -12,7 +12,7 @@ import org.broadinstitute.ddp.service.actvityinstancebuilder.block.question.Vali
  * Creates instances of Creator-classes providing {@link ActivityInstance} building.
  * The Creators constructed once at the beginning of the building process.
  */
-public class CreatorFactory {
+public class AICreatorsFactory {
 
     private final FormSectionCreator formSectionCreator = new FormSectionCreator();
     private final SectionIconCreator sectionIconCreator = new SectionIconCreator();

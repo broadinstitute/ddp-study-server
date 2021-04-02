@@ -24,14 +24,14 @@ import org.broadinstitute.ddp.model.activity.instance.validation.NumOptionsSelec
 import org.broadinstitute.ddp.model.activity.instance.validation.RegexRule;
 import org.broadinstitute.ddp.model.activity.instance.validation.RequiredRule;
 import org.broadinstitute.ddp.model.activity.instance.validation.Rule;
-import org.broadinstitute.ddp.service.actvityinstancebuilder.Context;
+import org.broadinstitute.ddp.service.actvityinstancebuilder.AIBuilderContext;
 
 /**
  * Creates {@link Rule}
  */
 public class ValidationRuleCreator {
 
-    public Rule createRule(Context ctx, RuleDef ruleDef) {
+    public Rule createRule(AIBuilderContext ctx, RuleDef ruleDef) {
         switch (ruleDef.getRuleType()) {
             case REGEX:
                 return createRegExpRule(ctx, (RegexRuleDef) ruleDef);
@@ -58,7 +58,7 @@ public class ValidationRuleCreator {
         }
     }
 
-    private RegexRule createRegExpRule(Context ctx, RegexRuleDef ruleDef) {
+    private RegexRule createRegExpRule(AIBuilderContext ctx, RegexRuleDef ruleDef) {
         return RegexRule.of(
                 ruleDef.getRuleId(),
                 resolveRuleMessage(ctx, ruleDef),
@@ -68,7 +68,7 @@ public class ValidationRuleCreator {
         );
     }
 
-    private LengthRule createLengthRule(Context ctx, LengthRuleDef ruleDef) {
+    private LengthRule createLengthRule(AIBuilderContext ctx, LengthRuleDef ruleDef) {
         return LengthRule.of(
                 ruleDef.getRuleId(),
                 resolveRuleMessage(ctx, ruleDef),
@@ -79,7 +79,7 @@ public class ValidationRuleCreator {
         );
     }
 
-    private CompleteRule createCompleteRule(Context ctx, CompleteRuleDef ruleDef) {
+    private CompleteRule createCompleteRule(AIBuilderContext ctx, CompleteRuleDef ruleDef) {
         return new CompleteRule(
                 ruleDef.getRuleId(),
                 resolveRuleMessage(ctx, ruleDef),
@@ -88,7 +88,7 @@ public class ValidationRuleCreator {
         );
     }
 
-    private RequiredRule createRequiredRule(Context ctx, RequiredRuleDef ruleDef) {
+    private RequiredRule createRequiredRule(AIBuilderContext ctx, RequiredRuleDef ruleDef) {
         return new RequiredRule(
                 ruleDef.getRuleId(),
                 resolveRuleMessage(ctx, ruleDef),
@@ -97,7 +97,7 @@ public class ValidationRuleCreator {
         );
     }
 
-    private AgeRangeRule createAgeRangeRule(Context ctx, AgeRangeRuleDef ruleDef) {
+    private AgeRangeRule createAgeRangeRule(AIBuilderContext ctx, AgeRangeRuleDef ruleDef) {
         return AgeRangeRule.of(
                 ruleDef.getRuleId(),
                 resolveRuleMessage(ctx, ruleDef),
@@ -108,7 +108,7 @@ public class ValidationRuleCreator {
         );
     }
 
-    private IntRangeRule createIntRangeRule(Context ctx, IntRangeRuleDef ruleDef) {
+    private IntRangeRule createIntRangeRule(AIBuilderContext ctx, IntRangeRuleDef ruleDef) {
         return IntRangeRule.of(
                 ruleDef.getRuleId(),
                 resolveRuleMessage(ctx, ruleDef),
@@ -119,7 +119,7 @@ public class ValidationRuleCreator {
         );
     }
 
-    private DateRangeRule createDateRangeRule(Context ctx, DateRangeRuleDef ruleDef) {
+    private DateRangeRule createDateRangeRule(AIBuilderContext ctx, DateRangeRuleDef ruleDef) {
         return DateRangeRule.of(
                 ruleDef.getRuleId(),
                 resolveRuleMessage(ctx, ruleDef),
@@ -130,7 +130,7 @@ public class ValidationRuleCreator {
         );
     }
 
-    private DateFieldRequiredRule createDateFieldRequiredRule(Context ctx, DateFieldRequiredRuleDef ruleDef) {
+    private DateFieldRequiredRule createDateFieldRequiredRule(AIBuilderContext ctx, DateFieldRequiredRuleDef ruleDef) {
         return DateFieldRequiredRule.of(
                 ruleDef.getRuleType(),
                 ruleDef.getRuleId(),
@@ -140,7 +140,7 @@ public class ValidationRuleCreator {
         );
     }
 
-    private NumOptionsSelectedRule createNumOptionsSelectedRule(Context ctx, NumOptionsSelectedRuleDef ruleDef) {
+    private NumOptionsSelectedRule createNumOptionsSelectedRule(AIBuilderContext ctx, NumOptionsSelectedRuleDef ruleDef) {
         return NumOptionsSelectedRule.of(
                 ruleDef.getRuleId(),
                 resolveRuleMessage(ctx, ruleDef),
@@ -151,7 +151,7 @@ public class ValidationRuleCreator {
         );
     }
 
-    private String resolveRuleMessage(Context ctx, RuleDef ruleDef) {
+    private String resolveRuleMessage(AIBuilderContext ctx, RuleDef ruleDef) {
         return ActivityDefStore.getInstance().findValidationRuleMessage(
                 ctx.getHandle(),
                 ruleDef.getRuleType(),
@@ -160,7 +160,7 @@ public class ValidationRuleCreator {
                 ctx.getFormResponse().getCreatedAt());
     }
 
-    private String getHintTitle(Context ctx, RuleDef ruleDef) {
+    private String getHintTitle(AIBuilderContext ctx, RuleDef ruleDef) {
         return ruleDef.getHintTemplate() !=  null ? ruleDef.getHintTemplate().render(ctx.getIsoLangCode()) : null;
     }
 }

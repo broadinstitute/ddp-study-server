@@ -1,5 +1,6 @@
 package org.broadinstitute.ddp.service.actvityinstancebuilder;
 
+import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -16,9 +17,9 @@ import org.jdbi.v3.core.Handle;
 
 /**
  * Aggregates objects which needs on all steps of {@link ActivityInstance} building.
- * {@link Context} created at the beginning of the building process.
+ * {@link AIBuilderContext} created at the beginning of the building process.
  */
-public class Context {
+public class AIBuilderContext {
 
     private final Handle handle;
     private final String userGuid;
@@ -31,17 +32,18 @@ public class Context {
 
     private final PexInterpreter interpreter = new TreeWalkInterpreter();
     private final I18nContentRenderer i18nContentRenderer = new I18nContentRenderer();
-    private final Map<String, Object> rendererInitialContext;
+    private final Map<String, Object> rendererInitialContext = new HashMap<>();
 
     private final Long previousInstanceId;
 
     private Map<Long, String> renderedTemplates = new HashMap<>();
     private Map<String, String> commonSnapshot;
     private Map<String, String> snapshot;
+    private LocalDate lastUpdatedDate;
 
-    private final CreatorFactory creatorFactory;
+    private final AICreatorsFactory creatorFactory;
 
-    public Context(
+    public AIBuilderContext(
             Handle handle,
             String userGuid,
             String operatorGuid,
@@ -58,11 +60,9 @@ public class Context {
         this.formActivityDef = formActivityDef;
         this.formResponse = formResponse;
 
-        this.rendererInitialContext = TemplateHandler.createRendererInitialContext(this);
-
         this.previousInstanceId = ActivityInstanceUtil.getPreviousInstanceId(handle, formResponse.getId());
 
-        creatorFactory = new CreatorFactory();
+        creatorFactory = new AICreatorsFactory();
     }
 
     public Handle getHandle() {
@@ -133,7 +133,15 @@ public class Context {
         this.snapshot = snapshot;
     }
 
-    public CreatorFactory creators() {
+    public LocalDate getLastUpdatedDate() {
+        return lastUpdatedDate;
+    }
+
+    public void setLastUpdatedDate(LocalDate lastUpdatedDate) {
+        this.lastUpdatedDate = lastUpdatedDate;
+    }
+
+    public AICreatorsFactory creators() {
         return creatorFactory;
     }
 }

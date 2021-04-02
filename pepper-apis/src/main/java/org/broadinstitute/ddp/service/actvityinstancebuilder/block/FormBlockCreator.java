@@ -8,20 +8,20 @@ import org.broadinstitute.ddp.model.activity.definition.GroupBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.NestedActivityBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.QuestionBlockDef;
 import org.broadinstitute.ddp.model.activity.instance.FormBlock;
-import org.broadinstitute.ddp.service.actvityinstancebuilder.Context;
+import org.broadinstitute.ddp.service.actvityinstancebuilder.AIBuilderContext;
 
 /**
  * Creates {@link FormBlock}
  */
 public class FormBlockCreator {
 
-    public FormBlock createBlock(Context ctx, FormBlockDef formBlockDef) {
+    public FormBlock createBlock(AIBuilderContext ctx, FormBlockDef formBlockDef) {
         var formBlock = constructFormBlock(ctx, formBlockDef);
         copyCommonFields(formBlock, formBlockDef);
         return formBlock;
     }
 
-    private FormBlock constructFormBlock(Context ctx, FormBlockDef formBlockDef) {
+    private FormBlock constructFormBlock(AIBuilderContext ctx, FormBlockDef formBlockDef) {
         FormBlockCreatorHelper creatorHelper = ctx.creators().getFormBlockCreatorHelper();
         switch (formBlockDef.getBlockType()) {
             case GROUP:

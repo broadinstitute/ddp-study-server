@@ -1,6 +1,6 @@
 package org.broadinstitute.ddp.service.actvityinstancebuilder.block.question;
 
-import static org.broadinstitute.ddp.service.actvityinstancebuilder.TemplateHandler.addAndRenderTemplate;
+import static org.broadinstitute.ddp.service.actvityinstancebuilder.util.TemplateHandler.addAndRenderTemplate;
 import static org.broadinstitute.ddp.util.QuestionUtil.isReadOnly;
 
 import java.util.List;
@@ -24,12 +24,12 @@ import org.broadinstitute.ddp.model.activity.instance.question.PicklistGroup;
 import org.broadinstitute.ddp.model.activity.instance.question.PicklistOption;
 import org.broadinstitute.ddp.model.activity.instance.question.PicklistQuestion;
 import org.broadinstitute.ddp.model.activity.instance.question.TextQuestion;
-import org.broadinstitute.ddp.service.actvityinstancebuilder.Context;
+import org.broadinstitute.ddp.service.actvityinstancebuilder.AIBuilderContext;
 import org.broadinstitute.ddp.util.CollectionMiscUtil;
 
 public class QuestionCreatorHelper {
 
-    AgreementQuestion createAgreementQuestion(Context ctx, AgreementQuestionDef questionDef) {
+    AgreementQuestion createAgreementQuestion(AIBuilderContext ctx, AgreementQuestionDef questionDef) {
         return new AgreementQuestion(
                 questionDef.getStableId(),
                 addAndRenderTemplate(ctx, questionDef.getPromptTemplate()),
@@ -44,7 +44,7 @@ public class QuestionCreatorHelper {
         );
     }
 
-    BoolQuestion createBoolQuestion(Context ctx, BoolQuestionDef questionDef) {
+    BoolQuestion createBoolQuestion(AIBuilderContext ctx, BoolQuestionDef questionDef) {
         return new BoolQuestion(
                 questionDef.getStableId(),
                 addAndRenderTemplate(ctx, questionDef.getPromptTemplate()),
@@ -61,7 +61,7 @@ public class QuestionCreatorHelper {
         );
     }
 
-    CompositeQuestion createCompositeQuestion(Context ctx, CompositeQuestionDef questionDef) {
+    CompositeQuestion createCompositeQuestion(AIBuilderContext ctx, CompositeQuestionDef questionDef) {
         QuestionCreator questionCreator = ctx.creators().getQuestionCreator();
         return new CompositeQuestion(
                 questionDef.getStableId(),
@@ -84,7 +84,7 @@ public class QuestionCreatorHelper {
         );
     }
 
-    DatePicklistQuestion createDatePickListQuestion(Context ctx, DateQuestionDef questionDef) {
+    DatePicklistQuestion createDatePickListQuestion(AIBuilderContext ctx, DateQuestionDef questionDef) {
         QuestionCreator questionCreator = ctx.creators().getQuestionCreator();
         return new DatePicklistQuestion(
                 questionDef.getStableId(),
@@ -108,7 +108,7 @@ public class QuestionCreatorHelper {
         );
     }
 
-    DateQuestion createDateQuestion(Context ctx, DateQuestionDef questionDef) {
+    DateQuestion createDateQuestion(AIBuilderContext ctx, DateQuestionDef questionDef) {
         QuestionCreator questionCreator = ctx.creators().getQuestionCreator();
         return new DateQuestion(
                 questionDef.getStableId(),
@@ -128,7 +128,7 @@ public class QuestionCreatorHelper {
         );
     }
 
-    FileQuestion constructFileQuestion(Context ctx, FileQuestionDef questionDef) {
+    FileQuestion constructFileQuestion(AIBuilderContext ctx, FileQuestionDef questionDef) {
         QuestionCreator questionCreator = ctx.creators().getQuestionCreator();
         return new FileQuestion(
                 questionDef.getStableId(),
@@ -144,7 +144,7 @@ public class QuestionCreatorHelper {
         );
     }
 
-    NumericQuestion createNumericQuestion(Context ctx, NumericQuestionDef questionDef) {
+    NumericQuestion createNumericQuestion(AIBuilderContext ctx, NumericQuestionDef questionDef) {
         QuestionCreator questionCreator = ctx.creators().getQuestionCreator();
         return new NumericQuestion(
                 questionDef.getStableId(),
@@ -162,7 +162,7 @@ public class QuestionCreatorHelper {
         );
     }
 
-    PicklistQuestion createPicklistQuestion(Context ctx, PicklistQuestionDef questionDef) {
+    PicklistQuestion createPicklistQuestion(AIBuilderContext ctx, PicklistQuestionDef questionDef) {
         QuestionCreator questionCreator = ctx.creators().getQuestionCreator();
 
         List<PicklistGroup> picklistGroups = CollectionMiscUtil.createListFromAnotherList(questionDef.getGroups(),
@@ -191,7 +191,7 @@ public class QuestionCreatorHelper {
         );
     }
 
-    TextQuestion createTextQuestion(Context ctx, TextQuestionDef questionDef) {
+    TextQuestion createTextQuestion(AIBuilderContext ctx, TextQuestionDef questionDef) {
         QuestionCreator questionCreator = ctx.creators().getQuestionCreator();
         return new TextQuestion(
                 questionDef.getStableId(),

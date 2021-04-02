@@ -1,13 +1,15 @@
 package org.broadinstitute.ddp.service.actvityinstancebuilder;
 
 
-import static org.broadinstitute.ddp.service.actvityinstancebuilder.TemplateHandler.addAndRenderTemplate;
+import static org.broadinstitute.ddp.service.actvityinstancebuilder.util.TemplateHandler.addAndRenderTemplate;
 import static org.broadinstitute.ddp.util.TemplateRenderUtil.toPlainText;
 import static org.broadinstitute.ddp.util.TranslationUtil.extractOptionalActivityTranslation;
 
 import org.broadinstitute.ddp.content.ContentStyle;
 import org.broadinstitute.ddp.content.Renderable;
 import org.broadinstitute.ddp.model.activity.instance.FormInstance;
+import org.broadinstitute.ddp.service.actvityinstancebuilder.util.RendererInitialContextHandler;
+import org.broadinstitute.ddp.service.actvityinstancebuilder.util.TemplateHandler;
 import org.broadinstitute.ddp.util.ActivityInstanceUtil;
 
 /**
@@ -15,17 +17,19 @@ import org.broadinstitute.ddp.util.ActivityInstanceUtil;
  */
 public class FormInstanceCreator {
 
-    public FormInstance createFormInstance(Context ctx) {
+    public FormInstance createFormInstance(AIBuilderContext ctx) {
+        RendererInitialContextHandler.createRendererInitialContext(ctx);
         var formInstance = constructFormInstance(ctx);
         addChildren(ctx, formInstance);
         renderContent(formInstance, ctx.getRenderedTemplates()::get, ctx.getStyle());
+        RendererInitialContextHandler.addInstanceToRendererInitialContext(ctx, formInstance);
         renderTitleAndSubtitle(ctx, formInstance);
         formInstance.setDisplayNumbers();
         updateBlockStatuses(ctx, formInstance);
         return formInstance;
     }
 
-    private FormInstance constructFormInstance(Context ctx) {
+    private FormInstance constructFormInstance(AIBuilderContext ctx) {
         var formActivityDef = ctx.getFormActivityDef();
         var formResponse = ctx.getFormResponse();
 
@@ -65,7 +69,7 @@ public class FormInstanceCreator {
         return formInstance;
     }
 
-    private void addChildren(Context ctx, FormInstance formInstance) {
+    private void addChildren(AIBuilderContext ctx, FormInstance formInstance) {
         var formActivityDef = ctx.getFormActivityDef();
         var formSectionCreator = ctx.creators().getFormSectionCreator();
         formInstance.setIntroduction(formSectionCreator.createSection(ctx, formActivityDef.getIntroduction()));
@@ -75,15 +79,14 @@ public class FormInstanceCreator {
         });
     }
 
-    private void renderTitleAndSubtitle(Context ctx, FormInstance formInstance) {
-        TemplateHandler.addInstanceToRendererInitialContext(ctx, formInstance);
+    private void renderTitleAndSubtitle(AIBuilderContext ctx, FormInstance formInstance) {
         var title = extractOptionalActivityTranslation(ctx.getFormActivityDef().getTranslatedTitles(), ctx.getIsoLangCode());
         var subtitle = extractOptionalActivityTranslation(ctx.getFormActivityDef().getTranslatedSubtitles(), ctx.getIsoLangCode());
         formInstance.setTitle(TemplateHandler.renderTemplate(ctx, title));
         formInstance.setSubtitle(TemplateHandler.renderTemplate(ctx, subtitle));
     }
 
-    private void updateBlockStatuses(Context ctx, FormInstance formInstance) {
+    private void updateBlockStatuses(AIBuilderContext ctx, FormInstance formInstance) {
         formInstance.updateBlockStatuses(
                 ctx.getHandle(),
                 ctx.getInterpreter(),

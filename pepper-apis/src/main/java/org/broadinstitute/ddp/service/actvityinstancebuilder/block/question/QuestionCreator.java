@@ -17,7 +17,7 @@ import org.broadinstitute.ddp.model.activity.definition.question.TextQuestionDef
 import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
 import org.broadinstitute.ddp.model.activity.instance.question.Question;
 import org.broadinstitute.ddp.model.activity.instance.validation.Rule;
-import org.broadinstitute.ddp.service.actvityinstancebuilder.Context;
+import org.broadinstitute.ddp.service.actvityinstancebuilder.AIBuilderContext;
 import org.broadinstitute.ddp.util.CollectionMiscUtil;
 
 /**
@@ -25,7 +25,7 @@ import org.broadinstitute.ddp.util.CollectionMiscUtil;
  */
 public class QuestionCreator {
 
-    public Question createQuestion(Context ctx, QuestionDef questionDef) {
+    public Question createQuestion(AIBuilderContext ctx, QuestionDef questionDef) {
         QuestionCreatorHelper creatorHelper = ctx.creators().getQuestionCreatorHelper();
         Question question;
         switch (questionDef.getQuestionType()) {
@@ -64,12 +64,12 @@ public class QuestionCreator {
         return question;
     }
 
-    <T extends Answer> List<Rule<T>> getValidationRules(Context ctx, QuestionDef questionDef) {
+    <T extends Answer> List<Rule<T>> getValidationRules(AIBuilderContext ctx, QuestionDef questionDef) {
         return CollectionMiscUtil.createListFromAnotherList(questionDef.getValidations(),
                 (ruleDef) -> ctx.creators().getValidationRuleCreator().createRule(ctx, ruleDef));
     }
 
-    <T extends Answer> List<T> getAnswers(Context ctx, String questionStableId) {
+    <T extends Answer> List<T> getAnswers(AIBuilderContext ctx, String questionStableId) {
         List<T> answers = new ArrayList<>();
         T answer = (T)ctx.getFormResponse().getAnswer(questionStableId);
         if (answer != null) {
