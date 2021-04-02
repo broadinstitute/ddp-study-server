@@ -1,5 +1,8 @@
 group KitScheduleDao;
 
+/**
+ * Users with COMPLETED status are not included here, so we don't create additional kits for them.
+ */
 select_all_pending_records() ::= <<
 select usen.study_id,
        (select guid from umbrella_study where umbrella_study_id = usen.study_id) as study_guid,

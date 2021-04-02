@@ -1,5 +1,9 @@
 package org.broadinstitute.ddp.route;
 
+import static org.broadinstitute.ddp.constants.RouteConstants.PathParam.USER_GUID;
+
+import java.io.IOException;
+
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.http.HttpStatus;
 import org.broadinstitute.ddp.constants.ErrorCodes;
@@ -9,7 +13,6 @@ import org.broadinstitute.ddp.db.dao.JdbiUserStudyEnrollment;
 import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dao.UserGovernanceDao;
 import org.broadinstitute.ddp.json.errors.ApiError;
-import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
 import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.security.DDPAuth;
 import org.broadinstitute.ddp.service.UserService;
@@ -21,10 +24,6 @@ import org.slf4j.LoggerFactory;
 import spark.Request;
 import spark.Response;
 import spark.Route;
-
-import java.io.IOException;
-
-import static org.broadinstitute.ddp.constants.RouteConstants.PathParam.USER_GUID;
 
 public class DeleteUserRoute implements Route {
     private static final Logger LOG = LoggerFactory.getLogger(DeleteUserRoute.class);
@@ -103,7 +102,7 @@ public class DeleteUserRoute implements Route {
 
         // The user cannot yet have reached the ENROLLED status
         if (handle.attach(JdbiUserStudyEnrollment.class).findByUserGuid(userGuid).stream().anyMatch(
-                enrollment -> EnrollmentStatusType.ENROLLED.equals(enrollment.getEnrollmentStatus()))) {
+                enrollment -> enrollment.getEnrollmentStatus().isEnrolled())) {
             String message = "User with guid '" + userGuid
                     + "' has at least one enrollment completed. Deleting of such users is not supported.";
             return new CheckError(HttpStatus.SC_UNPROCESSABLE_ENTITY,

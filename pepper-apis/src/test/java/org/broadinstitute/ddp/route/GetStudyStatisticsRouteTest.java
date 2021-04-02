@@ -156,7 +156,7 @@ public class GetStudyStatisticsRouteTest extends IntegrationTestSuite.TestCase {
         userStudyEnrollment.changeUserStudyEnrollmentStatus(
                 user2Guid,
                 testData.getStudyGuid(),
-                EnrollmentStatusType.ENROLLED);
+                EnrollmentStatusType.COMPLETED);
 
         // Configuring study statistics
         StatisticsConfigurationDao statConfigDao = handle.attach(StatisticsConfigurationDao.class);

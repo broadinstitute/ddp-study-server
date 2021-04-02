@@ -4,6 +4,8 @@ group KitCheckService;
  * Get user and address info of all participants enrolled in given study and has not received a kit of given type yet.
  * This returns list based on batch size. Callers will need to apply more filtering criteria, such as pex expressions
  * and geographic limitations from kit configuration information to narrow the list.
+ *
+ * Users with COMPLETED status are not included here, so we don't create any new kits for them.
  */
 queryAddressInfoForEnrolledUsersWithoutKits() ::= <<
 select user.user_id,
