@@ -58,10 +58,10 @@ public interface MedicalProviderDao extends SqlObject {
         Optional<EnrollmentStatusType> enrollmentStatus = getJdbiUserStudyEnrollment()
                 .getEnrollmentStatusByUserAndStudyIds(userId, studyId);
         if (enrollmentStatus.isPresent()
-                && enrollmentStatus.get() == EnrollmentStatusType.ENROLLED
+                && enrollmentStatus.get().isEnrolled()
                 && !medicalProviderDto.isBlank()) {
             getJdbiUserStudyEnrollment()
-                    .changeUserStudyEnrollmentStatus(userId, studyId, EnrollmentStatusType.ENROLLED);
+                    .changeUserStudyEnrollmentStatus(userId, studyId, enrollmentStatus.get());
 
             int numQueued = getHandle().attach(EventDao.class).addMedicalUpdateTriggeredEventsToQueue(studyId, userId);
             LOG.info("Queued {} medical-update events for participantId={} studyId={}", numQueued, userId, studyId);

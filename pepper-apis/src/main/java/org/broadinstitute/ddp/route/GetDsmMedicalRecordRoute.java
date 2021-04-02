@@ -67,8 +67,8 @@ public class GetDsmMedicalRecordRoute implements Route {
             // look for the participant by guid or legacy altpid
             DsmStudyParticipantDao dsmStudyParticipantDao = handle.attach(DsmStudyParticipantDao.class);
             DsmStudyParticipant dsmParticipant = dsmStudyParticipantDao
-                    .findStudyParticipant(userGuidOrAltpid, studyGuid,
-                            Arrays.asList(EnrollmentStatusType.ENROLLED, EnrollmentStatusType.EXITED_AFTER_ENROLLMENT))
+                    .findStudyParticipant(userGuidOrAltpid, studyGuid, Arrays.asList(
+                            EnrollmentStatusType.ENROLLED, EnrollmentStatusType.COMPLETED, EnrollmentStatusType.EXITED_AFTER_ENROLLMENT))
                     .orElse(null);
             if (dsmParticipant == null) {
                 throw ResponseUtil.haltError(response, HttpStatus.SC_NOT_FOUND, new ApiError(ErrorCodes.NOT_FOUND,

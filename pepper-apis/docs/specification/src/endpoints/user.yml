@@ -15,7 +15,7 @@ delete:
 
     * _Only the proxy user is allowed to delete one of their managed user._
     * _The user to be deleted cannot have an Auth0 account._
-    * _The user cannot yet have reached the ENROLLED status._
+    * _The user cannot yet have reached an enrolled status._
     * _The user shouldn't have any kit request._
   tags:
     - Operator & Participant
