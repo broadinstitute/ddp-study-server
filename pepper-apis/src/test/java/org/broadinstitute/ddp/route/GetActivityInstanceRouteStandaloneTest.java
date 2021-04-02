@@ -597,6 +597,7 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
                 activity.getStudyGuid())
         );
 
+        ActivityDefStore.getInstance().clearCachedActivityData();
         TransactionWrapper.withTxn(handle -> handle.attach(JdbiActivity.class).updateEditTimeoutSecByCode(
                 1L, activity.getActivityCode(), optStudyId.get())
         );

@@ -3,6 +3,8 @@ package org.broadinstitute.ddp.service.actvityinstancebuilder.block.question;
 import static org.broadinstitute.ddp.service.actvityinstancebuilder.TemplateHandler.addAndRenderTemplate;
 import static org.broadinstitute.ddp.util.QuestionUtil.isReadOnly;
 
+import java.util.List;
+
 import org.broadinstitute.ddp.model.activity.definition.question.AgreementQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.BoolQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.CompositeQuestionDef;
@@ -18,6 +20,8 @@ import org.broadinstitute.ddp.model.activity.instance.question.DatePicklistQuest
 import org.broadinstitute.ddp.model.activity.instance.question.DateQuestion;
 import org.broadinstitute.ddp.model.activity.instance.question.FileQuestion;
 import org.broadinstitute.ddp.model.activity.instance.question.NumericQuestion;
+import org.broadinstitute.ddp.model.activity.instance.question.PicklistGroup;
+import org.broadinstitute.ddp.model.activity.instance.question.PicklistOption;
 import org.broadinstitute.ddp.model.activity.instance.question.PicklistQuestion;
 import org.broadinstitute.ddp.model.activity.instance.question.TextQuestion;
 import org.broadinstitute.ddp.service.actvityinstancebuilder.Context;
@@ -160,6 +164,14 @@ public class QuestionCreatorHelper {
 
     PicklistQuestion createPicklistQuestion(Context ctx, PicklistQuestionDef questionDef) {
         QuestionCreator questionCreator = ctx.creators().getQuestionCreator();
+
+        List<PicklistGroup> picklistGroups = CollectionMiscUtil.createListFromAnotherList(questionDef.getGroups(),
+                (picklistGroupDef) -> ctx.creators().getPicklistCreatorHelper().createPicklistGroup(ctx, picklistGroupDef));
+
+        List<PicklistOption> picklistOptions = CollectionMiscUtil.createListFromAnotherList(questionDef.getAllPicklistOptions(),
+                (picklistOptionDef) ->
+                        ctx.creators().getPicklistCreatorHelper().createPicklistOption(ctx, picklistOptionDef, questionDef.getGroups()));
+
         return new PicklistQuestion(
                 questionDef.getStableId(),
                 addAndRenderTemplate(ctx, questionDef.getPromptTemplate()),
@@ -174,10 +186,8 @@ public class QuestionCreatorHelper {
                 questionDef.getSelectMode(),
                 questionDef.getRenderMode(),
                 addAndRenderTemplate(ctx, questionDef.getPicklistLabelTemplate()),
-                CollectionMiscUtil.createListFromAnotherList(questionDef.getAllPicklistOptions(),
-                        (picklistOptionDef) -> ctx.creators().getPicklistCreatorHelper().createPicklistOption(ctx, picklistOptionDef)),
-                CollectionMiscUtil.createListFromAnotherList(questionDef.getGroups(),
-                        (picklistGroupDef) -> ctx.creators().getPicklistCreatorHelper().createPicklistOption(ctx, picklistGroupDef))
+                picklistOptions,
+                picklistGroups
         );
     }
 

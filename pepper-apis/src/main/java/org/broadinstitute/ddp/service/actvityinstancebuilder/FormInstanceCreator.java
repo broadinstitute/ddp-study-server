@@ -18,8 +18,9 @@ public class FormInstanceCreator {
     public FormInstance createFormInstance(Context ctx) {
         var formInstance = constructFormInstance(ctx);
         addChildren(ctx, formInstance);
-        formInstance.setDisplayNumbers();
         renderContent(formInstance, ctx.getRenderedTemplates()::get, ctx.getStyle());
+        renderTitleAndSubtitle(ctx, formInstance);
+        formInstance.setDisplayNumbers();
         updateBlockStatuses(ctx, formInstance);
         return formInstance;
     }
@@ -27,9 +28,6 @@ public class FormInstanceCreator {
     private FormInstance constructFormInstance(Context ctx) {
         var formActivityDef = ctx.getFormActivityDef();
         var formResponse = ctx.getFormResponse();
-
-        var title = extractOptionalActivityTranslation(formActivityDef.getTranslatedTitles(), ctx.getIsoLangCode());
-        var subtitle = extractOptionalActivityTranslation(formActivityDef.getTranslatedSubtitles(), ctx.getIsoLangCode());
 
         boolean readonly = ActivityInstanceUtil.isReadonly(
                 formActivityDef.getEditTimeoutSec(),
@@ -45,8 +43,8 @@ public class FormInstanceCreator {
                 formResponse.getActivityCode(),
                 formActivityDef.getFormType(),
                 formResponse.getGuid(),
-                title,
-                subtitle,
+                null,       // 'title' is rendered and assigned after FormInstance creation completed
+                null,     // 'subTitle' is rendered and assigned after FormInstance creation completed
                 formResponse.getLatestStatus() != null ? formResponse.getLatestStatus().getType().name() : null,
                 readonly,
                 formActivityDef.getListStyleHint(),
@@ -63,6 +61,7 @@ public class FormInstanceCreator {
                 formActivityDef.isExcludeFromDisplay(),
                 formResponse.getSectionIndex()
         );
+
         return formInstance;
     }
 
@@ -74,6 +73,14 @@ public class FormInstanceCreator {
         formActivityDef.getSections().forEach(s -> {
             formInstance.getBodySections().add(formSectionCreator.createSection(ctx, s));
         });
+    }
+
+    private void renderTitleAndSubtitle(Context ctx, FormInstance formInstance) {
+        TemplateHandler.addInstanceToRendererInitialContext(ctx, formInstance);
+        var title = extractOptionalActivityTranslation(ctx.getFormActivityDef().getTranslatedTitles(), ctx.getIsoLangCode());
+        var subtitle = extractOptionalActivityTranslation(ctx.getFormActivityDef().getTranslatedSubtitles(), ctx.getIsoLangCode());
+        formInstance.setTitle(TemplateHandler.renderTemplate(ctx, title));
+        formInstance.setSubtitle(TemplateHandler.renderTemplate(ctx, subtitle));
     }
 
     private void updateBlockStatuses(Context ctx, FormInstance formInstance) {

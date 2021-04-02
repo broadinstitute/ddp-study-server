@@ -152,8 +152,12 @@ public class ValidationRuleCreator {
     }
 
     private String resolveRuleMessage(Context ctx, RuleDef ruleDef) {
-        return ActivityDefStore.getInstance().findValidationRuleMessage(ctx.getHandle(),
-                ruleDef.getRuleType(), ctx.getLangCodeId());
+        return ActivityDefStore.getInstance().findValidationRuleMessage(
+                ctx.getHandle(),
+                ruleDef.getRuleType(),
+                ruleDef.getHintTemplateId(),
+                ctx.getLangCodeId(),
+                ctx.getFormResponse().getCreatedAt());
     }
 
     private String getHintTitle(Context ctx, RuleDef ruleDef) {

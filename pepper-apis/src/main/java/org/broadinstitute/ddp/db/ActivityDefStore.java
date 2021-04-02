@@ -7,8 +7,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
+import org.broadinstitute.ddp.content.I18nContentRenderer;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dao.FormActivityDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
@@ -59,6 +61,8 @@ public class ActivityDefStore {
     private Map<Long, List<ActivityValidationDto>> validationDtoListMap;
     private Map<String, Map<String, Blob>> studyActivityStatusIconBlobs;
     private Map<String, String> validationRuleMessageMap;
+
+    private static final I18nContentRenderer i18nContentRenderer = new I18nContentRenderer();
 
     public static ActivityDefStore getInstance() {
         if (instance == null) {
@@ -118,7 +122,9 @@ public class ActivityDefStore {
     }
 
     public boolean clearCachedActivityValidationDtos(long activityId) {
-        return validationDtoListMap.remove(activityId) != null;
+        synchronized (lockVar) {
+            return validationDtoListMap.remove(activityId) != null;
+        }
     }
 
     public Optional<ActivityDto> findActivityDto(Handle handle, long activityId) {
@@ -176,12 +182,34 @@ public class ActivityDefStore {
         }
     }
 
-    public String findValidationRuleMessage(Handle handle, RuleType ruleType, long langCodeId) {
+    @VisibleForTesting
+    public void clearCachedActivityData() {
         synchronized (lockVar) {
-            var validationDao = handle.attach(ValidationDao.class);
+            activityDtoMap.clear();
+            activityDefMap.clear();
+        }
+    }
+
+    public String findValidationRuleMessage(
+            Handle handle, RuleType ruleType, Long hintTemplateId, long langCodeId, long timestamp) {
+        synchronized (lockVar) {
             return validationRuleMessageMap.computeIfAbsent(ruleType.name() + langCodeId, message ->
-                    validationDao.getJdbiI18nValidationMsgTrans().getValidationMessage(
-                        validationDao.getJdbiValidationType().getTypeId(ruleType), langCodeId));
+                    detectValidationRuleMessage(handle, ruleType, hintTemplateId, langCodeId, timestamp));
+        }
+    }
+
+    private String detectValidationRuleMessage(
+            Handle handle, RuleType ruleType, Long hintTemplateId, long langCodeId, long timestamp) {
+        String correctionHint = null;
+        if (hintTemplateId != null) {
+            correctionHint = i18nContentRenderer.renderContent(handle, hintTemplateId, langCodeId, timestamp);
+        }
+        if (correctionHint != null) {
+            return correctionHint;
+        } else {
+            var validationDao = handle.attach(ValidationDao.class);
+            return validationDao.getJdbiI18nValidationMsgTrans().getValidationMessage(
+                    validationDao.getJdbiValidationType().getTypeId(ruleType), langCodeId);
         }
     }
 

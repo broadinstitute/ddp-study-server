@@ -8,6 +8,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.time.StopWatch;
 import org.broadinstitute.ddp.analytics.GoogleAnalyticsMetrics;
 import org.broadinstitute.ddp.analytics.GoogleAnalyticsMetricsTracker;
 import org.broadinstitute.ddp.constants.RouteConstants.PathParam;
@@ -64,6 +65,9 @@ public class GetActivityInstanceRoute implements Route {
         String userGuid = request.params(PathParam.USER_GUID);
         String studyGuid = request.params(PathParam.STUDY_GUID);
         String instanceGuid = request.params(PathParam.INSTANCE_GUID);
+
+        StopWatch watch = new StopWatch();
+        watch.start();
 
         DDPAuth ddpAuth = RouteUtil.getDDPAuth(request);
         String operatorGuid = StringUtils.defaultIfBlank(ddpAuth.getOperator(), userGuid);
@@ -122,6 +126,9 @@ public class GetActivityInstanceRoute implements Route {
                 GoogleAnalyticsMetrics.EVENT_ACTION_ACTIVITY_INSTANCE, GoogleAnalyticsMetrics.EVENT_LABEL_ACTIVITY_INSTANCE,
                 null, 1);
 
+        watch.stop();
+        LOG.info("ActivityInstance reading TOTAL time: " + watch.getTime());
+
         return result;
     }
 
@@ -135,14 +142,16 @@ public class GetActivityInstanceRoute implements Route {
             ContentStyle style,
             String isoLangCode) {
 
+        StopWatch watch = new StopWatch();
+        watch.start();
+
         Optional<ActivityInstance> inst = actInstService.buildInstanceFromDefinition(
                 handle, userGuid, operatorGuid, studyGuid, instanceGuid, style, isoLangCode
         );
-        if (inst.isEmpty()) {
-            inst = actInstService.getTranslatedActivity(
-                    handle, userGuid, operatorGuid, activityType, instanceGuid, isoLangCode, style
-            );
-        }
+
+        watch.stop();
+        LOG.info("ActivityInstance reading time: " + watch.getTime());
+
         return inst;
     }
 

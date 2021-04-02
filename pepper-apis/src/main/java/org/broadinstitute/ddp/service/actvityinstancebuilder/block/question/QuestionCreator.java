@@ -27,29 +27,41 @@ public class QuestionCreator {
 
     public Question createQuestion(Context ctx, QuestionDef questionDef) {
         QuestionCreatorHelper creatorHelper = ctx.creators().getQuestionCreatorHelper();
+        Question question;
         switch (questionDef.getQuestionType()) {
             case DATE:
-                return ((DateQuestionDef) questionDef).getRenderMode() == PICKLIST
+                question = ((DateQuestionDef) questionDef).getRenderMode() == PICKLIST
                         ?
                         creatorHelper.createDatePickListQuestion(ctx, (DateQuestionDef) questionDef) :
                         creatorHelper.createDateQuestion(ctx, (DateQuestionDef) questionDef);
+                break;
             case BOOLEAN:
-                return creatorHelper.createBoolQuestion(ctx, (BoolQuestionDef) questionDef);
+                question = creatorHelper.createBoolQuestion(ctx, (BoolQuestionDef) questionDef);
+                break;
             case TEXT:
-                return creatorHelper.createTextQuestion(ctx, (TextQuestionDef) questionDef);
+                question = creatorHelper.createTextQuestion(ctx, (TextQuestionDef) questionDef);
+                break;
             case NUMERIC:
-                return creatorHelper.createNumericQuestion(ctx, (NumericQuestionDef) questionDef);
+                question = creatorHelper.createNumericQuestion(ctx, (NumericQuestionDef) questionDef);
+                break;
             case PICKLIST:
-                return creatorHelper.createPicklistQuestion(ctx, (PicklistQuestionDef) questionDef);
+                question = creatorHelper.createPicklistQuestion(ctx, (PicklistQuestionDef) questionDef);
+                break;
             case AGREEMENT:
-                return creatorHelper.createAgreementQuestion(ctx, (AgreementQuestionDef) questionDef);
+                question = creatorHelper.createAgreementQuestion(ctx, (AgreementQuestionDef) questionDef);
+                break;
             case COMPOSITE:
-                return creatorHelper.createCompositeQuestion(ctx, (CompositeQuestionDef) questionDef);
+                question = creatorHelper.createCompositeQuestion(ctx, (CompositeQuestionDef) questionDef);
+                break;
             case FILE:
-                return creatorHelper.constructFileQuestion(ctx, (FileQuestionDef) questionDef);
+                question = creatorHelper.constructFileQuestion(ctx, (FileQuestionDef) questionDef);
+                break;
             default:
                 throw new IllegalStateException("Unexpected value: " + questionDef.getQuestionType());
         }
+        question.setQuestionId(questionDef.getQuestionId());
+        question.shouldHideQuestionNumber(questionDef.shouldHideNumber());
+        return question;
     }
 
     <T extends Answer> List<Rule<T>> getValidationRules(Context ctx, QuestionDef questionDef) {

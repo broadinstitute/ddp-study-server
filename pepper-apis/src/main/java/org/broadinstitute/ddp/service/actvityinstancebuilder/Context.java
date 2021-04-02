@@ -12,7 +12,6 @@ import org.broadinstitute.ddp.model.activity.instance.FormResponse;
 import org.broadinstitute.ddp.pex.PexInterpreter;
 import org.broadinstitute.ddp.pex.TreeWalkInterpreter;
 import org.broadinstitute.ddp.util.ActivityInstanceUtil;
-import org.broadinstitute.ddp.util.TemplateRenderUtil;
 import org.jdbi.v3.core.Handle;
 
 /**
@@ -37,6 +36,8 @@ public class Context {
     private final Long previousInstanceId;
 
     private Map<Long, String> renderedTemplates = new HashMap<>();
+    private Map<String, String> commonSnapshot;
+    private Map<String, String> snapshot;
 
     private final CreatorFactory creatorFactory;
 
@@ -57,8 +58,7 @@ public class Context {
         this.formActivityDef = formActivityDef;
         this.formResponse = formResponse;
 
-        this.rendererInitialContext = TemplateRenderUtil.createRendererInitialContext(handle,
-                formResponse.getParticipantId(), formResponse.getId(), formActivityDef.getLastUpdated());
+        this.rendererInitialContext = TemplateHandler.createRendererInitialContext(this);
 
         this.previousInstanceId = ActivityInstanceUtil.getPreviousInstanceId(handle, formResponse.getId());
 
@@ -115,6 +115,22 @@ public class Context {
 
     public Long getPreviousInstanceId() {
         return previousInstanceId;
+    }
+
+    public Map<String, String> getCommonSnapshot() {
+        return commonSnapshot;
+    }
+
+    public void setCommonSnapshot(Map<String, String> commonSnapshot) {
+        this.commonSnapshot = commonSnapshot;
+    }
+
+    public Map<String, String> getSnapshot() {
+        return snapshot;
+    }
+
+    public void setSnapshot(Map<String, String> snapshot) {
+        this.snapshot = snapshot;
     }
 
     public CreatorFactory creators() {
