@@ -13,7 +13,6 @@ import org.broadinstitute.ddp.db.dao.EventDao;
 import org.broadinstitute.ddp.db.dao.JdbiUserStudyEnrollment;
 import org.broadinstitute.ddp.json.errors.ApiError;
 import org.broadinstitute.ddp.model.address.MailAddress;
-import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
 import org.broadinstitute.ddp.service.AddressService;
 import org.broadinstitute.ddp.util.ResponseUtil;
 import org.broadinstitute.ddp.util.RouteUtil;
@@ -49,7 +48,7 @@ public class UpdateMailAddressRoute extends ValidatedMailAddressInputRoute {
                 EventDao eventDao = handle.attach(EventDao.class);
                 handle.attach(JdbiUserStudyEnrollment.class)
                         .getAllLatestEnrollmentsForUser(participantGuid).stream()
-                        .filter(enrollmentStatusDto -> enrollmentStatusDto.getEnrollmentStatus() == EnrollmentStatusType.ENROLLED)
+                        .filter(enrollmentStatusDto -> enrollmentStatusDto.getEnrollmentStatus().isEnrolled())
                         .forEach(enrollmentStatusDto -> {
                             int numQueued = eventDao.addMedicalUpdateTriggeredEventsToQueue(
                                     enrollmentStatusDto.getStudyId(), enrollmentStatusDto.getUserId());

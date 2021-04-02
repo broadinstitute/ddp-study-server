@@ -147,7 +147,7 @@ public abstract class DsmPdfRoute implements Route {
                     return ResponseUtil.haltError(response, HttpStatus.SC_INTERNAL_SERVER_ERROR, err);
                 });
 
-        if (enrollmentStatusType != EnrollmentStatusType.ENROLLED) {
+        if (!enrollmentStatusType.isEnrolled()) {
             String msg = "User " + user.getGuid() + " was not enrolled in study " + studyDto.getGuid();
             ApiError err = new ApiError(ErrorCodes.UNSATISFIED_PRECONDITION, msg);
             LOG.error(err.getMessage());
