@@ -356,6 +356,24 @@ public class ReceiveDsmNotificationRouteTest extends DsmRouteTest {
         }
     }
 
+    @Test
+    public void testEvents_canStillReceiveEvents_whenEnrollmentStatusIsCompleted() {
+        TransactionWrapper.useTxn(handle -> TestDataSetupUtil
+                .setUserEnrollmentStatus(handle, testData, EnrollmentStatusType.COMPLETED));
+
+        var payload = new DsmNotificationPayload(TEST_RESULT.name(), "kit-1", KitReasonType.NORMAL);
+        var result = new TestResult("NEGATIVE", Instant.now(), false);
+        payload.setEventData(GsonUtil.standardGson().toJsonTree(result));
+
+        given().auth().oauth2(dsmClientAccessToken)
+                .pathParam("study", testData.getStudyGuid())
+                .pathParam("user", testData.getUserGuid())
+                .body(payload, ObjectMapperType.GSON)
+                .when().post(urlTemplate)
+                .then().assertThat()
+                .statusCode(200);
+    }
+
     private boolean checkIfNotificationQueued() {
         return TransactionWrapper.withTxn(handle -> {
             var eventDao = handle.attach(EventDao.class);
