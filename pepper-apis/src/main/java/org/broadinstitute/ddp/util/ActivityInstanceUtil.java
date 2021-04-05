@@ -1,6 +1,7 @@
 package org.broadinstitute.ddp.util;
 
 import java.time.Instant;
+import java.util.Optional;
 
 import org.broadinstitute.ddp.db.ActivityDefStore;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
@@ -41,10 +42,9 @@ public class ActivityInstanceUtil {
     /**
      * Get {@link FormResponse} by {@link ActivityInstance#getGuid()}
      */
-    public static FormResponse getFormResponse(Handle handle, String activityInstGuid) {
+    public static Optional<FormResponse> getFormResponse(Handle handle, String activityInstGuid) {
         return handle.attach(ActivityInstanceDao.class)
-                .findFormResponseWithAnswersByInstanceGuid(activityInstGuid)
-                .orElseThrow(() -> new DDPException("Error reading form activity by guid=" + activityInstGuid));
+                .findFormResponseWithAnswersByInstanceGuid(activityInstGuid);
     }
 
     /**

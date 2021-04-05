@@ -88,29 +88,34 @@ public class ActivityInstanceFromDefinitionBuilder {
         LOG.info("Start ActivityInstance building from definition (ActivityDefStore). StudyGuid={}, instanceGuid={}",
                 studyGuid, instanceGuid);
         var formResponse = ActivityInstanceUtil.getFormResponse(handle, instanceGuid);
-        FormActivityDef formActivityDef = ActivityInstanceUtil.getActivityDef(
-                handle,
-                ActivityDefStore.getInstance(),
-                studyGuid,
-                formResponse.getActivityId(),
-                instanceGuid,
-                formResponse.getCreatedAt());
-        if (formActivityDef.getActivityType() == FORMS) {
-            var activityInstance = new FormInstanceCreator().createFormInstance(
-                    new AIBuilderContext(
-                            handle,
-                            userGuid,
-                            operatorGuid,
-                            isoLangCode,
-                            style,
-                            formActivityDef,
-                            formResponse)
-            );
-            LOG.info("ActivityInstance built from definition SUCCESSFULLY.");
-            return Optional.of(activityInstance);
+        if (formResponse.isEmpty()) {
+            LOG.warn("Error reading form activity by guid=" + instanceGuid);
+            return Optional.empty();
         } else {
-            throw new DDPException("Wrong activity type " + formActivityDef.getActivityType() + ". "
-                    + "Only activity of type " + FORMS + " is supported by ActivityInstanceFromDefinitionBuilder");
+            FormActivityDef formActivityDef = ActivityInstanceUtil.getActivityDef(
+                    handle,
+                    ActivityDefStore.getInstance(),
+                    studyGuid,
+                    formResponse.get().getActivityId(),
+                    instanceGuid,
+                    formResponse.get().getCreatedAt());
+            if (formActivityDef.getActivityType() == FORMS) {
+                var activityInstance = new FormInstanceCreator().createFormInstance(
+                        new AIBuilderContext(
+                                handle,
+                                userGuid,
+                                operatorGuid,
+                                isoLangCode,
+                                style,
+                                formActivityDef,
+                                formResponse.get())
+                );
+                LOG.info("ActivityInstance built from definition SUCCESSFULLY.");
+                return Optional.of(activityInstance);
+            } else {
+                throw new DDPException("Wrong activity type " + formActivityDef.getActivityType() + ". "
+                        + "Only activity of type " + FORMS + " is supported by ActivityInstanceFromDefinitionBuilder");
+            }
         }
     }
 }

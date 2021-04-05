@@ -53,12 +53,9 @@ import org.broadinstitute.ddp.pex.PexInterpreter;
 import org.broadinstitute.ddp.service.actvityinstancebuilder.ActivityInstanceFromDefinitionBuilder;
 import org.broadinstitute.ddp.util.ActivityInstanceUtil;
 import org.jdbi.v3.core.Handle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
 
 public class ActivityInstanceService {
-
-    private static final Logger LOG = LoggerFactory.getLogger(ActivityInstanceService.class);
 
     private final ActivityInstanceDao actInstanceDao;
     private final PexInterpreter interpreter;

@@ -148,11 +148,7 @@ public class GetActivityInstanceRoute implements Route {
         Optional<ActivityInstance> inst = actInstService.buildInstanceFromDefinition(
                 handle, userGuid, operatorGuid, studyGuid, instanceGuid, style, isoLangCode
         );
-        if (1 == 1 || inst.isEmpty()) {
-            inst = actInstService.getTranslatedActivity(
-                    handle, userGuid, operatorGuid, activityType, instanceGuid, isoLangCode, style
-            );
-        }
+
         watch.stop();
         LOG.debug("ActivityInstance reading time: " + watch.getTime());
 

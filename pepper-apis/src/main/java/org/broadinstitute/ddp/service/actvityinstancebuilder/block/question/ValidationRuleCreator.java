@@ -91,8 +91,8 @@ public class ValidationRuleCreator {
     private RequiredRule createRequiredRule(AIBuilderContext ctx, RequiredRuleDef ruleDef) {
         return new RequiredRule(
                 ruleDef.getRuleId(),
-                resolveRuleMessage(ctx, ruleDef),
                 getHintTitle(ctx, ruleDef),
+                resolveRuleMessage(ctx, ruleDef),
                 ruleDef.getAllowSave()
         );
     }
