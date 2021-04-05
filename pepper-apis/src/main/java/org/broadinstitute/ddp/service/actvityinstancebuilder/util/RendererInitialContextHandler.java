@@ -45,7 +45,6 @@ public class RendererInitialContextHandler {
         LocalDate lastUpdatedDate = ctx.getFormActivityDef().getLastUpdated() == null
                 ? null : ctx.getFormActivityDef().getLastUpdated().toLocalDate();
         context.put(I18nTemplateConstants.LAST_UPDATED, I18nContentRenderer.convertToString(lastUpdatedDate));
-        ctx.setLastUpdatedDate(lastUpdatedDate);
 
         ctx.getRendererInitialContext().putAll(context);
     }
@@ -58,6 +57,5 @@ public class RendererInitialContextHandler {
                 (RenderValueProvider) ctx.getRendererInitialContext().get(I18nTemplateConstants.DDP))
                 .withFormInstance(formInstance)
                 .build());
-        ctx.getRendererInitialContext().put(I18nTemplateConstants.LAST_UPDATED, ctx.getLastUpdatedDate());
     }
 }

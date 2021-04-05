@@ -1,6 +1,5 @@
 package org.broadinstitute.ddp.service.actvityinstancebuilder;
 
-import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -18,6 +17,9 @@ import org.jdbi.v3.core.Handle;
 /**
  * Aggregates objects which needs on all steps of {@link ActivityInstance} building.
  * {@link AIBuilderContext} created at the beginning of the building process.
+ *
+ * <p>Contains a reference to {@link AICreatorsFactory} where created all instances
+ * of Creator-classes used to create {@link ActivityInstance}
  */
 public class AIBuilderContext {
 
@@ -37,11 +39,8 @@ public class AIBuilderContext {
     private final Long previousInstanceId;
 
     private Map<Long, String> renderedTemplates = new HashMap<>();
-    private Map<String, String> commonSnapshot;
-    private Map<String, String> snapshot;
-    private LocalDate lastUpdatedDate;
 
-    private final AICreatorsFactory creatorFactory;
+    private final AICreatorsFactory creatorsFactory;
 
     public AIBuilderContext(
             Handle handle,
@@ -62,7 +61,7 @@ public class AIBuilderContext {
 
         this.previousInstanceId = ActivityInstanceUtil.getPreviousInstanceId(handle, formResponse.getId());
 
-        creatorFactory = new AICreatorsFactory();
+        creatorsFactory = new AICreatorsFactory();
     }
 
     public Handle getHandle() {
@@ -117,15 +116,7 @@ public class AIBuilderContext {
         return previousInstanceId;
     }
 
-    public LocalDate getLastUpdatedDate() {
-        return lastUpdatedDate;
-    }
-
-    public void setLastUpdatedDate(LocalDate lastUpdatedDate) {
-        this.lastUpdatedDate = lastUpdatedDate;
-    }
-
     public AICreatorsFactory creators() {
-        return creatorFactory;
+        return creatorsFactory;
     }
 }
