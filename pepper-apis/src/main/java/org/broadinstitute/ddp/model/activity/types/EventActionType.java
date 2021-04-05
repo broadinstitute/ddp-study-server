@@ -5,6 +5,7 @@ public enum EventActionType {
     ANNOUNCEMENT(false),
     COPY_ANSWER(false),
     CREATE_INVITATION(false),
+    ENROLLMENT_COMPLETED(true),
     HIDE_ACTIVITIES(false),
     MARK_ACTIVITIES_READ_ONLY(false),
     NOTIFICATION(false),

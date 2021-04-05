@@ -55,7 +55,7 @@ public class EventConfigurationDto {
     /* USER_NOT_IN_STUDY */
     // No sub-table
 
-    /* USER_REGISTERED */
+    /* USER_REGISTERED, USER_FIRST_ENROLLED */
     // No sub-table
 
     /* EXIT_REQUEST */
@@ -84,7 +84,7 @@ public class EventConfigurationDto {
     /* ACTIVITY_INSTANCE_CREATION */
     private Long activityInstanceCreationStudyActivityId;
 
-    /* USER_ENROLLED */
+    /* USER_ENROLLED, ENROLLMENT_COMPLETED */
     // No sub-table
 
     /* COPY_ANSWER */

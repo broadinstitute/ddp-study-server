@@ -61,6 +61,8 @@ public class EventConfiguration {
                 // No sub-tables
             case REACHED_AOM_PREP:
                 // No sub-tables
+            case USER_FIRST_ENROLLED:
+                // No sub-tables
             case USER_NOT_IN_STUDY:
                 // No sub-tables
             case USER_REGISTERED:
@@ -80,6 +82,9 @@ public class EventConfiguration {
                 break;
             case NOTIFICATION:
                 eventAction = new NotificationEventAction(this, dto);
+                break;
+            case ENROLLMENT_COMPLETED:
+                eventAction = new EnrollmentCompletedEventAction(this, dto);
                 break;
             case USER_ENROLLED:
                 eventAction = new EnrollUserEventAction(this, dto);

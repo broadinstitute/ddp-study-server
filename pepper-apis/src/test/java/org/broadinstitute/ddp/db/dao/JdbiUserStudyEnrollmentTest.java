@@ -1,6 +1,8 @@
 package org.broadinstitute.ddp.db.dao;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -10,6 +12,7 @@ import java.util.Optional;
 import org.broadinstitute.ddp.TxnAwareBaseTest;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dto.EnrollmentStatusDto;
+import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
 import org.jdbi.v3.core.Handle;
@@ -154,6 +157,41 @@ public class JdbiUserStudyEnrollmentTest extends TxnAwareBaseTest {
                     handle.rollback();
                 }
         );
+    }
+
+    @Test
+    public void testFindFirstEnrolledAtMillis() {
+        TransactionWrapper.useTxn(handle -> {
+            StudyDto newStudy = TestDataSetupUtil.generateTestStudy(handle, cfg);
+            var jdbiEnrollment = handle.attach(JdbiUserStudyEnrollment.class);
+            Long firstEnrolled = jdbiEnrollment
+                    .findFirstEnrolledAtMillis(newStudy.getId(), testData.getUserId())
+                    .orElse(null);
+            assertNull("should not be enrolled yet", firstEnrolled);
+
+            var now = Instant.now().toEpochMilli();
+            jdbiEnrollment.changeUserStudyEnrollmentStatus(
+                    testData.getUserGuid(),
+                    newStudy.getGuid(),
+                    EnrollmentStatusType.ENROLLED,
+                    now);
+            firstEnrolled = jdbiEnrollment
+                    .findFirstEnrolledAtMillis(newStudy.getId(), testData.getUserId())
+                    .orElse(null);
+            assertNotNull("should be enrolled", firstEnrolled);
+            assertEquals("should be the expected time", (Long) now, firstEnrolled);
+
+            jdbiEnrollment.changeUserStudyEnrollmentStatus(
+                    testData.getUserGuid(),
+                    testData.getStudyGuid(),
+                    EnrollmentStatusType.ENROLLED);
+            firstEnrolled = jdbiEnrollment
+                    .findFirstEnrolledAtMillis(newStudy.getId(), testData.getUserId())
+                    .orElse(null);
+            assertEquals("should still be the expected time", (Long) now, firstEnrolled);
+
+            handle.rollback();
+        });
     }
 
     private void assertLedgerRowValid(EnrollmentStatusType expectedEnrollmentStatusType,

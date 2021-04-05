@@ -44,6 +44,15 @@ public interface JdbiUserStudyEnrollment extends SqlObject {
             @Bind("offset") int offset,
             @Bind("limit") int limit);
 
+    @SqlQuery("select min(usen.valid_from)"
+            + "  from user_study_enrollment as usen"
+            + "  join enrollment_status_type as est on est.enrollment_status_type_id = usen.enrollment_status_type_id"
+            + " where usen.study_id = :studyId"
+            + "   and usen.user_id = :userId"
+            + "   and est.enrollment_status_type_code = 'ENROLLED'"
+            + " group by usen.user_id")
+    Optional<Long> findFirstEnrolledAtMillis(@Bind("studyId") long studyId, @Bind("userId") long participantUserId);
+
     default List<EnrollmentStatusDto> findByStudyGuid(String studyGuid) {
         return findByStudyGuidAfterOrEqualToInstant(studyGuid, 0);
     }
@@ -231,7 +240,7 @@ public interface JdbiUserStudyEnrollment extends SqlObject {
      * @param updateTime              the time that we want to record the status was updated at
      * @return the id of the new enrollment status
      */
-    private long changeUserStudyEnrollmentStatus(
+    private long updateEnrollmentStatus(
             String userGuid,
             String studyGuid,
             EnrollmentStatusType newEnrollmentStatus,
@@ -278,7 +287,7 @@ public interface JdbiUserStudyEnrollment extends SqlObject {
             currentEnrollmentStatus = optionalCurrentEnrollmentStatus.get();
         }
 
-        return changeUserStudyEnrollmentStatus(userGuid,
+        return updateEnrollmentStatus(userGuid,
                 studyGuid,
                 newEnrollmentStatus,
                 currentEnrollmentStatus,
@@ -358,7 +367,7 @@ public interface JdbiUserStudyEnrollment extends SqlObject {
         if (timestamp == null) {
             timestamp = Instant.now().toEpochMilli();
         }
-        changeUserStudyEnrollmentStatus(userGuid,
+        updateEnrollmentStatus(userGuid,
                 studyGuid,
                 newEnrollmentStatus,
                 currentEnrollmentStatus,

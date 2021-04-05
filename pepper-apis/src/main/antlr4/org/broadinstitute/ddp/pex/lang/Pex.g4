@@ -43,7 +43,8 @@ child : 'children' '[' STR ']';
 studyPredicate
   : 'hasAgedUp' '(' ')'  # HasAgedUpPredicate
   | 'hasInvitation' '(' STR ')'   # HasInvitationPredicate
-  | 'isGovernedParticipant' '(' ')' #IsGovernedParticipantQuery
+  | 'isGovernedParticipant' '(' ')' # IsGovernedParticipantQuery
+  | 'isEnrollmentStatus' '(' STR ')' # IsEnrollmentStatusPredicate
   ;
 
 // Form predicate functions that operate on a single piece of data

@@ -13,6 +13,7 @@ public enum EventTriggerType {
     MEDICAL_UPDATE(true),
     REACHED_AOM(true),
     REACHED_AOM_PREP(true),
+    USER_FIRST_ENROLLED(true),
     USER_NOT_IN_STUDY(true),
     USER_REGISTERED(true),
     WORKFLOW_STATE(false);
