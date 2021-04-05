@@ -24,13 +24,14 @@ import org.broadinstitute.ddp.model.activity.instance.MailingAddressComponent;
 import org.broadinstitute.ddp.model.activity.instance.NestedActivityBlock;
 import org.broadinstitute.ddp.model.activity.instance.PhysicianComponent;
 import org.broadinstitute.ddp.model.activity.instance.QuestionBlock;
+import org.broadinstitute.ddp.model.activity.instance.question.Question;
 import org.broadinstitute.ddp.service.actvityinstancebuilder.AIBuilderContext;
 import org.broadinstitute.ddp.util.CollectionMiscUtil;
 
 public class FormBlockCreatorHelper {
 
     ComponentBlock createComponentBlock(AIBuilderContext ctx, ComponentBlockDef componentBlockDef) {
-        FormComponent formComponent = null;
+        FormComponent formComponent;
 
         switch (componentBlockDef.getComponentType()) {
             case PHYSICIAN:
@@ -63,12 +64,13 @@ public class FormBlockCreatorHelper {
     }
 
     ConditionalBlock createConditionalBlock(AIBuilderContext ctx, ConditionalBlockDef conditionalBlockDef) {
-        ConditionalBlock conditionalBlock = new ConditionalBlock(
-                ctx.creators().getQuestionCreator().createQuestion(ctx, conditionalBlockDef.getControl())
-        );
-        conditionalBlock.getNested().addAll(
-                CollectionMiscUtil.createListFromAnotherList(conditionalBlockDef.getNested(),
-                    (formBlockDef) -> ctx.creators().getFormBlockCreator().createBlock(ctx, formBlockDef)));
+        Question question = ctx.creators().getQuestionCreator().createQuestion(ctx, conditionalBlockDef.getControl());
+        ConditionalBlock conditionalBlock = question == null ? null : new ConditionalBlock(question);
+        if (conditionalBlock != null) {
+            conditionalBlock.getNested().addAll(
+                    CollectionMiscUtil.createListFromAnotherList(conditionalBlockDef.getNested(),
+                            (formBlockDef) -> ctx.creators().getFormBlockCreator().createBlock(ctx, formBlockDef)));
+        }
         return conditionalBlock;
     }
 
@@ -101,7 +103,8 @@ public class FormBlockCreatorHelper {
     }
 
     QuestionBlock createQuestionBlock(AIBuilderContext ctx, QuestionBlockDef questionBlockDef) {
-        return new QuestionBlock(ctx.creators().getQuestionCreator().createQuestion(ctx, questionBlockDef.getQuestion()));
+        Question question = ctx.creators().getQuestionCreator().createQuestion(ctx, questionBlockDef.getQuestion());
+        return question == null ? null : new QuestionBlock(question);
     }
 
     private InstitutionPhysicianComponentDto createInstitutionPhysicianComponentDto(

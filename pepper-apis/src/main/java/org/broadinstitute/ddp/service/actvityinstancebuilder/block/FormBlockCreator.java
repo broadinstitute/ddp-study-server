@@ -42,8 +42,10 @@ public class FormBlockCreator {
     }
 
     private void copyCommonFields(FormBlock formBlock, FormBlockDef formBlockDef) {
-        formBlock.setBlockId(formBlockDef.getBlockId());
-        formBlock.setGuid(formBlockDef.getBlockGuid());
-        formBlock.setShownExpr(formBlockDef.getShownExpr());
+        if (formBlock != null) {
+            formBlock.setBlockId(formBlockDef.getBlockId());
+            formBlock.setGuid(formBlockDef.getBlockGuid());
+            formBlock.setShownExpr(formBlockDef.getShownExpr());
+        }
     }
 }

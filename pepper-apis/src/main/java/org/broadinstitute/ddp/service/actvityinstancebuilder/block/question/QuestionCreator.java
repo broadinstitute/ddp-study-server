@@ -26,42 +26,49 @@ import org.broadinstitute.ddp.util.CollectionMiscUtil;
 public class QuestionCreator {
 
     public Question createQuestion(AIBuilderContext ctx, QuestionDef questionDef) {
-        QuestionCreatorHelper creatorHelper = ctx.creators().getQuestionCreatorHelper();
-        Question question;
-        switch (questionDef.getQuestionType()) {
-            case DATE:
-                question = ((DateQuestionDef) questionDef).getRenderMode() == PICKLIST
-                        ?
-                        creatorHelper.createDatePickListQuestion(ctx, (DateQuestionDef) questionDef) :
-                        creatorHelper.createDateQuestion(ctx, (DateQuestionDef) questionDef);
-                break;
-            case BOOLEAN:
-                question = creatorHelper.createBoolQuestion(ctx, (BoolQuestionDef) questionDef);
-                break;
-            case TEXT:
-                question = creatorHelper.createTextQuestion(ctx, (TextQuestionDef) questionDef);
-                break;
-            case NUMERIC:
-                question = creatorHelper.createNumericQuestion(ctx, (NumericQuestionDef) questionDef);
-                break;
-            case PICKLIST:
-                question = creatorHelper.createPicklistQuestion(ctx, (PicklistQuestionDef) questionDef);
-                break;
-            case AGREEMENT:
-                question = creatorHelper.createAgreementQuestion(ctx, (AgreementQuestionDef) questionDef);
-                break;
-            case COMPOSITE:
-                question = creatorHelper.createCompositeQuestion(ctx, (CompositeQuestionDef) questionDef);
-                break;
-            case FILE:
-                question = creatorHelper.constructFileQuestion(ctx, (FileQuestionDef) questionDef);
-                break;
-            default:
-                throw new IllegalStateException("Unexpected value: " + questionDef.getQuestionType());
+        if (canBeCreated(questionDef)) {
+            QuestionCreatorHelper creatorHelper = ctx.creators().getQuestionCreatorHelper();
+            Question question;
+            switch (questionDef.getQuestionType()) {
+                case DATE:
+                    question = ((DateQuestionDef) questionDef).getRenderMode() == PICKLIST
+                            ?
+                            creatorHelper.createDatePickListQuestion(ctx, (DateQuestionDef) questionDef) :
+                            creatorHelper.createDateQuestion(ctx, (DateQuestionDef) questionDef);
+                    break;
+                case BOOLEAN:
+                    question = creatorHelper.createBoolQuestion(ctx, (BoolQuestionDef) questionDef);
+                    break;
+                case TEXT:
+                    question = creatorHelper.createTextQuestion(ctx, (TextQuestionDef) questionDef);
+                    break;
+                case NUMERIC:
+                    question = creatorHelper.createNumericQuestion(ctx, (NumericQuestionDef) questionDef);
+                    break;
+                case PICKLIST:
+                    question = creatorHelper.createPicklistQuestion(ctx, (PicklistQuestionDef) questionDef);
+                    break;
+                case AGREEMENT:
+                    question = creatorHelper.createAgreementQuestion(ctx, (AgreementQuestionDef) questionDef);
+                    break;
+                case COMPOSITE:
+                    question = creatorHelper.createCompositeQuestion(ctx, (CompositeQuestionDef) questionDef);
+                    break;
+                case FILE:
+                    question = creatorHelper.constructFileQuestion(ctx, (FileQuestionDef) questionDef);
+                    break;
+                default:
+                    throw new IllegalStateException("Unexpected value: " + questionDef.getQuestionType());
+            }
+            question.setQuestionId(questionDef.getQuestionId());
+            question.shouldHideQuestionNumber(questionDef.shouldHideNumber());
+            return question;
         }
-        question.setQuestionId(questionDef.getQuestionId());
-        question.shouldHideQuestionNumber(questionDef.shouldHideNumber());
-        return question;
+        return null;
+    }
+
+    private boolean canBeCreated(QuestionDef questionDef) {
+        return questionDef != null && !questionDef.isDeprecated();
     }
 
     <T extends Answer> List<Rule<T>> getValidationRules(AIBuilderContext ctx, QuestionDef questionDef) {

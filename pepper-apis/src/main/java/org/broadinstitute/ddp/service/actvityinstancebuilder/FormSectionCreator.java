@@ -22,6 +22,11 @@ public class FormSectionCreator {
 
     private void addChildren(AIBuilderContext ctx, FormSection formSection, FormSectionDef formSectionDef) {
         formSectionDef.getIcons().forEach(i -> formSection.getIcons().add(ctx.creators().getSectionIconCreator().createSectionIcon(i)));
-        formSectionDef.getBlocks().forEach(b -> formSection.getBlocks().add(ctx.creators().getFormBlockCreator().createBlock(ctx, b)));
+        formSectionDef.getBlocks().forEach(b -> {
+            var block = ctx.creators().getFormBlockCreator().createBlock(ctx, b);
+            if (block != null) {
+                formSection.getBlocks().add(block);
+            }
+        });
     }
 }

@@ -17,7 +17,12 @@ public class CollectionMiscUtil {
     public static <S, T> List<T> createListFromAnotherList(List<S> srcElemList, Function<S, T> srcToTgtTransformer) {
         List<T> tgtElemList = new ArrayList<>();
         if (srcElemList != null) {
-            srcElemList.forEach(srcElem -> tgtElemList.add(srcToTgtTransformer.apply(srcElem)));
+            srcElemList.forEach(srcElem -> {
+                var elem = srcToTgtTransformer.apply(srcElem);
+                if (elem != null) {
+                    tgtElemList.add(elem);
+                }
+            });
         }
         return tgtElemList;
     }
