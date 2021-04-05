@@ -127,7 +127,7 @@ public class GetActivityInstanceRoute implements Route {
                 null, 1);
 
         watch.stop();
-        LOG.info("ActivityInstance reading TOTAL time: " + watch.getTime());
+        LOG.debug("ActivityInstance reading TOTAL time: " + watch.getTime());
 
         return result;
     }
@@ -148,9 +148,13 @@ public class GetActivityInstanceRoute implements Route {
         Optional<ActivityInstance> inst = actInstService.buildInstanceFromDefinition(
                 handle, userGuid, operatorGuid, studyGuid, instanceGuid, style, isoLangCode
         );
-
+        if (1 == 1 || inst.isEmpty()) {
+            inst = actInstService.getTranslatedActivity(
+                    handle, userGuid, operatorGuid, activityType, instanceGuid, isoLangCode, style
+            );
+        }
         watch.stop();
-        LOG.info("ActivityInstance reading time: " + watch.getTime());
+        LOG.debug("ActivityInstance reading time: " + watch.getTime());
 
         return inst;
     }

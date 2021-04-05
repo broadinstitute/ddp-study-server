@@ -83,7 +83,12 @@ public class ActivityInstanceService {
      * @param style           the content style to use for converting content
      * @return activity instance, if found
      * @throws DDPException if pex evaluation error
+     *
+     * @deprecated Thus method should be removed as soon as
+     *  {@link #buildInstanceFromDefinition(Handle, String, String, String, String, ContentStyle, String)} is carefully tested
+     *  (all code which utilized by this method (and not used in other places) should be removed also)
      */
+    @Deprecated
     public Optional<ActivityInstance> getTranslatedActivity(Handle handle, String userGuid, String operatorGuid, ActivityType actType,
                                                             String actInstanceGuid, String isoLangCode, ContentStyle style) {
         ActivityInstance inst = actInstanceDao.getTranslatedActivityByTypeAndGuid(handle, actType, actInstanceGuid, isoLangCode, style);
