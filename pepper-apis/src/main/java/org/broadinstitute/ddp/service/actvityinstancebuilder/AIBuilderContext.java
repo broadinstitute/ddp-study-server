@@ -117,22 +117,6 @@ public class AIBuilderContext {
         return previousInstanceId;
     }
 
-    public Map<String, String> getCommonSnapshot() {
-        return commonSnapshot;
-    }
-
-    public void setCommonSnapshot(Map<String, String> commonSnapshot) {
-        this.commonSnapshot = commonSnapshot;
-    }
-
-    public Map<String, String> getSnapshot() {
-        return snapshot;
-    }
-
-    public void setSnapshot(Map<String, String> snapshot) {
-        this.snapshot = snapshot;
-    }
-
     public LocalDate getLastUpdatedDate() {
         return lastUpdatedDate;
     }

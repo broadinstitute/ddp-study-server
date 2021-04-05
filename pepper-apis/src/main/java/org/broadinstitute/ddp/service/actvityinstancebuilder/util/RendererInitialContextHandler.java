@@ -32,11 +32,9 @@ public class RendererInitialContextHandler {
         Map<String, String> commonSnapshot = I18nContentRenderer
                 .newValueProviderBuilder(ctx.getHandle(), ctx.getFormResponse().getParticipantId())
                 .build().getSnapshot();
-        ctx.setCommonSnapshot(commonSnapshot);
 
         Map<String, String> snapshot = ctx.getHandle().attach(ActivityInstanceDao.class).findSubstitutions(
                 ctx.getFormResponse().getId());
-        ctx.setSnapshot(snapshot);
 
         Map<String, Object> context = new HashMap<>();
         context.put(I18nTemplateConstants.DDP, new RenderValueProvider.Builder()
@@ -56,10 +54,9 @@ public class RendererInitialContextHandler {
      * Rebuild renderer initial context by adding to already existing data the generated {@link FormInstance}
      */
     public static void addInstanceToRendererInitialContext(AIBuilderContext ctx, FormInstance formInstance) {
-        ctx.getRendererInitialContext().put(I18nTemplateConstants.DDP, new RenderValueProvider.Builder()
+        ctx.getRendererInitialContext().put(I18nTemplateConstants.DDP, new RenderValueProvider.Builder(
+                (RenderValueProvider) ctx.getRendererInitialContext().get(I18nTemplateConstants.DDP))
                 .withFormInstance(formInstance)
-                .withSnapshot(ctx.getCommonSnapshot())
-                .withSnapshot(ctx.getSnapshot())
                 .build());
         ctx.getRendererInitialContext().put(I18nTemplateConstants.LAST_UPDATED, ctx.getLastUpdatedDate());
     }
