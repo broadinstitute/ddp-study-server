@@ -345,6 +345,12 @@ public class ActivityInstanceService {
                     def.isWriteOnce(),
                     summaryDto.getReadonly());
 
+            boolean isFirstInstance = StringUtils.isBlank(summaryDto.getPreviousInstanceGuid());
+            boolean canDelete = ActivityInstanceUtil.computeCanDelete(
+                    def.canDeleteInstances(),
+                    def.getCanDeleteFirstInstance(),
+                    isFirstInstance);
+
             var summary = new ActivityInstanceSummary(
                     def.getActivityCode(),
                     summaryDto.getId(),
@@ -364,7 +370,7 @@ public class ActivityInstanceService {
                     def.isExcludeFromDisplay(),
                     summaryDto.isHidden(),
                     summaryDto.getCreatedAtMillis(),
-                    def.canDeleteInstances(),
+                    canDelete,
                     def.isFollowup(),
                     versionDto.getVersionTag(),
                     versionDto.getId(),

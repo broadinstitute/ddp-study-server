@@ -28,12 +28,13 @@ public interface JdbiActivity extends SqlObject {
             + " (activity_type_id,study_id,study_activity_code,max_instances_per_user,display_order,"
             + "is_write_once, instantiate_upon_registration,edit_timeout_sec,allow_ondemand_trigger,"
             + "exclude_from_display, exclude_status_icon_from_display, allow_unauthenticated, "
-            + "is_followup, hide_existing_instances_on_creation, create_on_parent_creation, can_delete_instances)"
+            + "is_followup, hide_existing_instances_on_creation, create_on_parent_creation, "
+            + "can_delete_instances, can_delete_first_instance)"
             + " values((select activity_type_id from activity_type where activity_type_code = :activityType),"
             + ":studyId,:activityCode,"
             + ":maxInstancesPerUser,:displayOrder,:writeOnce,0,:editTimeoutSec,:allowOndemandTrigger,"
             + ":excludeFromDisplay, :excludeStatusIconFromDisplay, :allowUnauthenticated, :isFollowup, :hideExistingInstancesOnCreation,"
-            + ":createOnParentCreation, :canDeleteInstances)")
+            + ":createOnParentCreation, :canDeleteInstances, :canDeleteFirstInstance)")
     @GetGeneratedKeys()
     long insertActivity(
             @Bind("activityType") ActivityType activityType,
@@ -50,7 +51,8 @@ public interface JdbiActivity extends SqlObject {
             @Bind("isFollowup") boolean isFollowup,
             @Bind("hideExistingInstancesOnCreation") boolean hideExistingInstancesOnCreation,
             @Bind("createOnParentCreation") boolean createOnParentCreation,
-            @Bind("canDeleteInstances") boolean canDeleteInstances
+            @Bind("canDeleteInstances") boolean canDeleteInstances,
+            @Bind("canDeleteFirstInstance") Boolean canDeleteFirstInstance
     );
 
     @SqlUpdate("update study_activity"
@@ -65,7 +67,9 @@ public interface JdbiActivity extends SqlObject {
             + "        is_followup = :isFollowup,"
             + "        exclude_status_icon_from_display = :excludeStatusIconFromDisplay,"
             + "        hide_existing_instances_on_creation = :hideExistingInstancesOnCreation,"
-            + "        create_on_parent_creation = :createOnParentCreation"
+            + "        create_on_parent_creation = :createOnParentCreation,"
+            + "        can_delete_instances = :canDeleteInstances,"
+            + "        can_delete_first_instance = :canDeleteFirstInstance"
             + "  where study_activity_id = :activityId")
     int updateActivity(
             @Bind("activityId") long activityId,
@@ -80,7 +84,9 @@ public interface JdbiActivity extends SqlObject {
             @Bind("isFollowup") boolean isFollowup,
             @Bind("excludeStatusIconFromDisplay") boolean excludeStatusIconFromDisplay,
             @Bind("hideExistingInstancesOnCreation") boolean hideExistingInstancesOnCreation,
-            @Bind("createOnParentCreation") boolean createOnParentCreation
+            @Bind("createOnParentCreation") boolean createOnParentCreation,
+            @Bind("canDeleteInstances") boolean canDeleteInstances,
+            @Bind("canDeleteFirstInstance") Boolean canDeleteFirstInstance
     );
 
     @SqlUpdate("insert into form_activity(study_activity_id,form_type_id) values(?,?)")

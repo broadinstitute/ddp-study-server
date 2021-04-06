@@ -25,6 +25,7 @@ public class ActivityDto {
     private final boolean hideExistingInstancesOnCreation;
     private final boolean createOnParentCreation;
     private final boolean canDeleteInstances;
+    private final Boolean canDeleteFirstInstance;
     private String activityCode;
 
     @JdbiConstructor
@@ -47,7 +48,8 @@ public class ActivityDto {
             @ColumnName("exclude_status_icon_from_display") boolean excludeStatusIconFromDisplay,
             @ColumnName("hide_existing_instances_on_creation") boolean hideExistingInstancesOnCreation,
             @ColumnName("create_on_parent_creation") boolean createOnParentCreation,
-            @ColumnName("can_delete_instances") boolean canDeleteInstances
+            @ColumnName("can_delete_instances") boolean canDeleteInstances,
+            @ColumnName("can_delete_first_instance") Boolean canDeleteFirstInstance
     ) {
         this.activityId = activityId;
         this.activityTypeId = activityTypeId;
@@ -68,6 +70,7 @@ public class ActivityDto {
         this.hideExistingInstancesOnCreation = hideExistingInstancesOnCreation;
         this.createOnParentCreation = createOnParentCreation;
         this.canDeleteInstances = canDeleteInstances;
+        this.canDeleteFirstInstance = canDeleteFirstInstance;
     }
 
     public long getActivityId() {
@@ -150,6 +153,10 @@ public class ActivityDto {
         return canDeleteInstances;
     }
 
+    public Boolean getCanDeleteFirstInstance() {
+        return canDeleteFirstInstance;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {
@@ -177,7 +184,8 @@ public class ActivityDto {
                 && excludeStatusIconFromDisplay == that.excludeStatusIconFromDisplay
                 && hideExistingInstancesOnCreation == that.hideExistingInstancesOnCreation
                 && createOnParentCreation == that.createOnParentCreation
-                && canDeleteInstances == that.canDeleteInstances;
+                && canDeleteInstances == that.canDeleteInstances
+                && Objects.equals(canDeleteFirstInstance, that.canDeleteFirstInstance);
     }
 
     @Override
@@ -201,6 +209,7 @@ public class ActivityDto {
                 excludeStatusIconFromDisplay,
                 hideExistingInstancesOnCreation,
                 createOnParentCreation,
-                canDeleteInstances);
+                canDeleteInstances,
+                canDeleteFirstInstance);
     }
 }
