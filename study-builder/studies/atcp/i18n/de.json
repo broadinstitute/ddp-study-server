@@ -561,7 +561,7 @@
   "blood_type_a": "A",
   "blood_type_b": "B",
   "blood_type_ab": "AB",
-  "blood_type_o": "O",
+  "blood_type_o": "0",
   "blood_type_dk": "Ich bin mir nicht sicher",
   "blood_type_rh_pos": "+ (positiv)",
   "blood_type_rh_neg": "- (negativ)"
