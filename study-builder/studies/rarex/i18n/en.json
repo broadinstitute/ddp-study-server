@@ -260,6 +260,9 @@
   "h_d_answer_according_to_you": "For the following questions, please answer according to you. You do not have to have an official diagnosis. You will be able to give more details about your answers in later surveys.",
   "h_d_patient_answer_according_to_you": "For the following questions, please answer according to you. There does not have to be an official diagnosis. You will be able to give more details about the patient's answers in later surveys.",
 
+  "h_d_diagnoses": "Please list all conditions/diagnoses/genetic diagnoses if known. If the patient is undiagnosed, please list undiagnosed",
+  "h_d_additional_diagnosis": "Another diagnosis",
+  "h_d_add_diagnosis": "+ Add another diagnosis",
   "h_d_genetic_tested": "Did you have genetic testing?",
   "h_d_parent_genetic_tested": "Did the patient have genetic testing?",
   "h_d_genetic_test_reason": "What was the reason for your genetic testing?",
@@ -583,16 +586,42 @@
   "data_sharing_summary_in_progress": "Not quite done yet. Please finish filling out the Data Sharing Agreement.",
   "data_sharing_summary_complete": "Thank you for completing the Data Sharing Agreement.",
   "data_sharing_intro": "Data Sharing Interest Survey",
-  "data_sharing_section_first_intro": "",
-  "data_sharing_share_data_with": "Who would you like to share your data with?",
-  "data_sharing_all_below": "All of the below",
-  "data_sharing_anyone_wanting": "Anyone wanting to study data associated with rare disease.",
-  "data_sharing_researchers_documented_proof": "All researchers with documented proof of professional standing in the research community.",
-  "data_sharing_researchers_known_to_conduct": "Researchers who are known to conduct research on the rare disease that you are afflicted with.",
-  "data_sharing_researchers_have_studies_reviewed": "Only researchers that have had their studies reviewed by an Institutional Review Board (IRB) based on ethical and scientific principles.",
-  "data_sharing_data_repositories": "Data repositories operated by other organizations may have access to your de-identified information.",
-  "data_sharing_commercial_companies": "Commercial companies",
-  "data_sharing_certain_organizations": "Certain qualified patient organizations.",
+
+
+  "ds_your_choises_title": "Your Choices for Sharing Your DeIdentified Data for Research",
+  "ds_text1": "You have agreed to share your data for research. Researchers include a wide variety of people who study data for a scientific purpose. Researchers who might use your data include those associated with a university, a healthcare system, or a pharmaceutical (drug) company. These researchers may be developing drugs, medical devices, or non-drug treatments (including behavior treatments, diets, etc.). Also, researchers who might use your data include qualified “citizen scientists.” Citizen scientists have been trained in data use and are part of a patient, academic, or other organization.",
+  "ds_title_type_of_research": "Type of research",
+  "ds_text2": "You choose the <b>type of research</b> you would like your data to be used for.",
+  "ds_text3": "You must choose <b>one</b> of the following two types of research:",
+
+  "ds_patient_your_choises_title": "Your Choices for Sharing Patient DeIdentified Data for Research",
+  "ds_patient_text1": "As a legally authorized representative of a patient with a rare disease, you have agreed to share the patient’s data for research. Researchers include a wide variety of people who study data for a scientific purpose. Researchers who might use the patient’s data include those associated with a university, a healthcare system, or a pharmaceutical (drug) company. These researchers may be developing drugs, medical devices, or non-drug treatments (including behavior treatments, diets, etc.). Also, researchers who might use the patient’s data include qualified “citizen scientists.” Citizen scientists have been trained in data use and are part of a patient, academic, or other organization.",
+  "ds_patient_text2": "You choose the <b>type of research</b> you would like the patient’s data to be used for.",
+
+  "ds_other_limits": "Other Limits on Research - Optional",
+  "ds_o_text1": "If you choose just Health/Medical/Biomedical Research, your data may be used for fewer types of research studies than if you choose General Research.",
+  "ds_o_text2": "If you choose just Health/Medical/Biomedical Research, your data may <i>only</i> be used to learn more about a health condition, its cause, symptoms, progression, and treatments. (Research described in section 1.a above)",
+  "ds_o_text3": "Your data will <b><i>not</i></b> be used for other kinds of studies not related to health described in section 1.b above.",
+  "ds_o_text4": "You do <i>not</i> have to put any additional limits on how your data is used for research. If this is your choice, you can stop now and go to the end of this form.",
+  "ds_o_text5": "But if you would like, you may choose to further <b><i>limit</i></b> how your data is accessed and used for research. You can select <i>one or both</i> of the options below.",
+
+  "ds_patient_o_text1": "If you choose just Health/Medical/Biomedical Research, the patient’s data may be used for fewer types of research studies than if you choose General Research.",
+  "ds_patient_o_text2": "If you choose just Health/Medical/Biomedical Research, the patient’s data may <i>only</i> be used to learn more about a health condition, its cause, symptoms, progression, and treatments. (Research described in section 1.a above)",
+  "ds_patient_o_text3": "The patient’s data will <b><i>not</i></b> be used for other kinds of studies not related to health described in section 1.b above.",
+  "ds_patient_o_text4": "You do <i>not</i> have to put any additional limits on how the patient’s data is used for research. If this is your choice, you can stop now and go to the end of this form.",
+  "ds_patient_o_text5": "But if you would like, you may choose to further <b><i>limit</i></b> how the patient’s",
+
+  "ds_limit_non_commercial": "Research solely for non-commercial purposes.",
+  "ds_limit_irb": "Only research that has been approved by an Institutional Review Board (IRB).",
+
+  "ds_limit_non_commercial_exp": "If you choose this limit, it means your data may <b>NOT</b> be used by any researcher to do studies to develop a drug, treatment, or device that might later be sold to make a profit. For example, if you choose this limitation, a drug development company (biotech or pharmaceutical) would not be allowed to access or use your data for research to develop a drug, treatment, or device that they will sell.",
+  "ds_limit_irb_exp": "If you choose this limit, it means that only researchers that have had their studies reviewed by an Institutional Review Board (IRB) may access your data for their research. An IRB is a type of committee that reviews research studies and methods to make sure they are not harmful to people. Most of the people who are on an IRB have professional expertise to be able to review the research. The IRB has scientists and nonscientists as part of the committee. When you make this choice, a researcher must present written proof of the IRB’s approval, or proof of exemption, of their study before they can access your data for their research.",
+  "ds_patient_limit_non_commercial_exp": "If you choose this limit, it means the patient’ data may <b>NOT</b> be used by any researcher to do studies to develop a drug, treatment, or device that might later be sold to make a profit. For example, if you choose this limitation, a drug development company (biotech or pharmaceutical) would not be allowed to access or use the patient’s data for research to develop a drug, treatment, or device that they will sell.",
+  "ds_patient_limit_irb_exp": "If you choose this limit, it means that only researchers that have had their studies reviewed by an Institutional Review Board (IRB) may access the patient’s data for their research. An IRB is a type of committee that reviews research studies and methods to make sure they are not harmful to people. Most of the people who are on an IRB have professional expertise to be able to review the research. The IRB has scientists and nonscientists as part of the committee. When you make this choice, a researcher must present written proof of the IRB’s approval, or proof of exemption, of their study before they can access the patient’s data for their research.",
+
+  "ds_general_research": "<b>General Research</b> This is the broadest type of research. When you choose General Research researchers may use your data for:<br/><p class="secondary-text">a. <b>Health/Medical/Biomedical Research</b><br>Researchers can access and use your data to learn more about a health condition, its causes, symptoms, progression and treatments. This type of research could include research on any health condition, even if it is not a rare disease.<br/><br/>and</p><br/><br/><p class="secondary-text">b. <b>Other kinds</b> of studies that are not related to health such as <ul><li>Research on age, race, and ethnicity</li><li>Research studying traits such as how long people live or how easily they may get sick</li><li>Research about genetic traits of different populations</li><li>Studies to develop survey questions to improve research</li></ul>or",
+  "ds_h_m_b_research": "<b>Health/Medical/Biomedical Research</b> This type of research is narrower than type 1, General Research.",
+
   "data_sharing_biospecimen_intro": "Biospecimen(s)",
   "data_sharing_biospecimen_data_connection_samples": "Do you know if there are biological samples that you have given for research purposes?",
   "data_sharing_biospecimen_data_connection_samples_yes": "Yes",
