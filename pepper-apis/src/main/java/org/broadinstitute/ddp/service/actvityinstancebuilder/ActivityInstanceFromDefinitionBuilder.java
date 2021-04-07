@@ -85,7 +85,7 @@ public class ActivityInstanceFromDefinitionBuilder {
             ContentStyle style,
             String isoLangCode
     ) {
-        LOG.info("Start ActivityInstance building from definition (ActivityDefStore). StudyGuid={}, instanceGuid={}",
+        LOG.debug("Start ActivityInstance building from definition (ActivityDefStore). StudyGuid={}, instanceGuid={}",
                 studyGuid, instanceGuid);
         var formResponse = ActivityInstanceUtil.getFormResponse(handle, instanceGuid);
         if (formResponse.isEmpty()) {
@@ -110,7 +110,7 @@ public class ActivityInstanceFromDefinitionBuilder {
                                 formActivityDef,
                                 formResponse.get())
                 );
-                LOG.info("ActivityInstance built from definition SUCCESSFULLY.");
+                LOG.debug("ActivityInstance built from definition SUCCESSFULLY.");
                 return Optional.of(activityInstance);
             } else {
                 throw new DDPException("Wrong activity type " + formActivityDef.getActivityType() + ". "

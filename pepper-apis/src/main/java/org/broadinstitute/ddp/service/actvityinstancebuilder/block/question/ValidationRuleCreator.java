@@ -61,7 +61,7 @@ public class ValidationRuleCreator {
     private RegexRule createRegExpRule(AIBuilderContext ctx, RegexRuleDef ruleDef) {
         return RegexRule.of(
                 ruleDef.getRuleId(),
-                resolveRuleMessage(ctx, ruleDef),
+                findRuleMessage(ctx, ruleDef),
                 getHintTitle(ctx, ruleDef),
                 ruleDef.getAllowSave(),
                 ruleDef.getPattern()
@@ -71,7 +71,7 @@ public class ValidationRuleCreator {
     private LengthRule createLengthRule(AIBuilderContext ctx, LengthRuleDef ruleDef) {
         return LengthRule.of(
                 ruleDef.getRuleId(),
-                resolveRuleMessage(ctx, ruleDef),
+                findRuleMessage(ctx, ruleDef),
                 getHintTitle(ctx, ruleDef),
                 ruleDef.getAllowSave(),
                 ruleDef.getMin(),
@@ -82,7 +82,7 @@ public class ValidationRuleCreator {
     private CompleteRule createCompleteRule(AIBuilderContext ctx, CompleteRuleDef ruleDef) {
         return new CompleteRule(
                 ruleDef.getRuleId(),
-                resolveRuleMessage(ctx, ruleDef),
+                findRuleMessage(ctx, ruleDef),
                 getHintTitle(ctx, ruleDef),
                 ruleDef.getAllowSave()
         );
@@ -92,7 +92,7 @@ public class ValidationRuleCreator {
         return new RequiredRule(
                 ruleDef.getRuleId(),
                 getHintTitle(ctx, ruleDef),
-                resolveRuleMessage(ctx, ruleDef),
+                findRuleMessage(ctx, ruleDef),
                 ruleDef.getAllowSave()
         );
     }
@@ -100,7 +100,7 @@ public class ValidationRuleCreator {
     private AgeRangeRule createAgeRangeRule(AIBuilderContext ctx, AgeRangeRuleDef ruleDef) {
         return AgeRangeRule.of(
                 ruleDef.getRuleId(),
-                resolveRuleMessage(ctx, ruleDef),
+                findRuleMessage(ctx, ruleDef),
                 getHintTitle(ctx, ruleDef),
                 ruleDef.getAllowSave(),
                 ruleDef.getMinAge(),
@@ -111,7 +111,7 @@ public class ValidationRuleCreator {
     private IntRangeRule createIntRangeRule(AIBuilderContext ctx, IntRangeRuleDef ruleDef) {
         return IntRangeRule.of(
                 ruleDef.getRuleId(),
-                resolveRuleMessage(ctx, ruleDef),
+                findRuleMessage(ctx, ruleDef),
                 getHintTitle(ctx, ruleDef),
                 ruleDef.getAllowSave(),
                 ruleDef.getMin(),
@@ -122,7 +122,7 @@ public class ValidationRuleCreator {
     private DateRangeRule createDateRangeRule(AIBuilderContext ctx, DateRangeRuleDef ruleDef) {
         return DateRangeRule.of(
                 ruleDef.getRuleId(),
-                resolveRuleMessage(ctx, ruleDef),
+                findRuleMessage(ctx, ruleDef),
                 getHintTitle(ctx, ruleDef),
                 ruleDef.getAllowSave(),
                 ruleDef.getStartDate(),
@@ -134,7 +134,7 @@ public class ValidationRuleCreator {
         return DateFieldRequiredRule.of(
                 ruleDef.getRuleType(),
                 ruleDef.getRuleId(),
-                resolveRuleMessage(ctx, ruleDef),
+                findRuleMessage(ctx, ruleDef),
                 getHintTitle(ctx, ruleDef),
                 ruleDef.getAllowSave()
         );
@@ -143,7 +143,7 @@ public class ValidationRuleCreator {
     private NumOptionsSelectedRule createNumOptionsSelectedRule(AIBuilderContext ctx, NumOptionsSelectedRuleDef ruleDef) {
         return NumOptionsSelectedRule.of(
                 ruleDef.getRuleId(),
-                resolveRuleMessage(ctx, ruleDef),
+                findRuleMessage(ctx, ruleDef),
                 getHintTitle(ctx, ruleDef),
                 ruleDef.getAllowSave(),
                 ruleDef.getMin(),
@@ -151,7 +151,7 @@ public class ValidationRuleCreator {
         );
     }
 
-    private String resolveRuleMessage(AIBuilderContext ctx, RuleDef ruleDef) {
+    private String findRuleMessage(AIBuilderContext ctx, RuleDef ruleDef) {
         return ActivityDefStore.getInstance().findValidationRuleMessage(
                 ctx.getHandle(),
                 ruleDef.getRuleType(),

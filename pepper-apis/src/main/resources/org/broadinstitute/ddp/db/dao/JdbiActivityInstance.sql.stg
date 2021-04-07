@@ -14,12 +14,10 @@ select ai.activity_instance_id,
        act.allow_unauthenticated,
        act.study_activity_code,
        act_type.activity_type_code as activity_type,
-       act.edit_timeout_sec,
        aip.activity_instance_id as parent_instance_id,
        aip.activity_instance_guid as parent_instance_guid,
        actp.study_activity_id as parent_activity_id,
        actp.study_activity_code as parent_activity_code,
-       ai.section_index,
        (select aist.activity_instance_status_type_code
           from activity_instance_status as ais
           join activity_instance_status_type as aist on ais.activity_instance_status_type_id = aist.activity_instance_status_type_id

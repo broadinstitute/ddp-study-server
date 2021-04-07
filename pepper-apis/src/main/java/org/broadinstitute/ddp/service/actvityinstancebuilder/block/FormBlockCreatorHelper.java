@@ -115,7 +115,7 @@ public class FormBlockCreatorHelper {
                         physicianInstitutionComponentDef.getBlockId(),
                         physicianInstitutionComponentDef.getComponentType(),
                         physicianInstitutionComponentDef.shouldHideNumber(),
-                        physicianInstitutionComponentDef.getRevisionId()
+                        physicianInstitutionComponentDef.getComponentRevisionId()
                 ),
                 physicianInstitutionComponentDef.getInstitutionType(),
                 addAndRenderTemplate(ctx, physicianInstitutionComponentDef.getTitleTemplate()),

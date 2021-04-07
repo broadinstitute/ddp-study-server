@@ -91,7 +91,7 @@ public class GetActivityInstanceRoute implements Route {
 
             LOG.info("Attempting to find a translation for the following language: {}", isoLangCode);
             Optional<ActivityInstance> inst = getActivityInstance(
-                    handle, userGuid, operatorGuid, studyGuid, instanceGuid, instanceDto.getActivityType(), style, isoLangCode);
+                    handle, userGuid, operatorGuid, studyGuid, instanceGuid, style, isoLangCode);
 
             if (inst.isEmpty()) {
                 String errMsg = String.format(
@@ -138,7 +138,6 @@ public class GetActivityInstanceRoute implements Route {
             String operatorGuid,
             String studyGuid,
             String instanceGuid,
-            ActivityType activityType,
             ContentStyle style,
             String isoLangCode) {
 
