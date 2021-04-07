@@ -146,7 +146,7 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
     }
 
     private static void setupActivityAndInstance(Handle handle) throws Exception {
-        placeholderTemplate = newTemplate();
+        //------------- create SECTION[0] ---------
         DateQuestionDef d1 = DateQuestionDef.builder(DateRenderMode.TEXT, "DATE_TEXT_Q", newTemplate())
                 .addFields(DateFieldType.MONTH)
                 .addValidation(new RequiredRuleDef(newTemplate()))
@@ -163,8 +163,13 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
                 .addFields(DateFieldType.YEAR, DateFieldType.MONTH, DateFieldType.DAY)
                 .addValidation(new DateRangeRuleDef(newTemplate("Pi Day to today"), LocalDate.of(2018, 3, 14), null, true))
                 .build();
-        FormSectionDef dateSection = new FormSectionDef(null, TestUtil.wrapQuestions(d1, d2, d3));
+        TextQuestionDef t4 = TextQuestionDef.builder(TextInputType.TEXT, "TEXT_Q_DISABLED", newTemplate())
+                .setDeprecated(true)
+                .build();
+        FormSectionDef dateSection = new FormSectionDef(null, TestUtil.wrapQuestions(d1, d2, d3, t4));
 
+        //------------- create SECTION[1] ---------
+        placeholderTemplate = newTemplate();
         txt1 = TextQuestionDef.builder(TextInputType.TEXT, TEXT_QUESTION_STABLE_ID, newTemplate())
                 .setPlaceholderTemplate(placeholderTemplate)
                 .addValidation(new LengthRuleDef(newTemplate(), 5, 300))
@@ -177,8 +182,12 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
         TextQuestionDef txt3 = TextQuestionDef.builder(TextInputType.TEXT, "TEXT_WITH_SPECIAL_VARS", txt3Tmpl)
                 .setTooltip(Template.text("some helper text"))
                 .build();
-        FormSectionDef textSection = new FormSectionDef(null, TestUtil.wrapQuestions(txt1, txt2, txt3));
+        TextQuestionDef txt4 = TextQuestionDef.builder(TextInputType.TEXT, "TEXT_Q1_DISABLED", newTemplate())
+                .setDeprecated(true)
+                .build();
+        FormSectionDef textSection = new FormSectionDef(null, TestUtil.wrapQuestions(txt1, txt2, txt3, txt4));
 
+        //------------- create SECTION[2] ---------
         PicklistQuestionDef p1 = PicklistQuestionDef
                 .buildSingleSelect(PicklistRenderMode.LIST, "PL_NO_OTHER", newTemplate())
                 .addOption(new PicklistOptionDef("PL_NO_OTHER_OPT_1", newTemplate()))
@@ -197,8 +206,12 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
                         new PicklistOptionDef("G2_OPT2", newTemplate()))))
                 .addOption(new PicklistOptionDef("OPT1", newTemplate()))
                 .build();
-        FormSectionDef plistSection = new FormSectionDef(null, TestUtil.wrapQuestions(p1, p2, p3));
+        TextQuestionDef t5 = TextQuestionDef.builder(TextInputType.TEXT, "TEXT_Q3_DISABLED", newTemplate())
+                .setDeprecated(true)
+                .build();
+        FormSectionDef plistSection = new FormSectionDef(null, TestUtil.wrapQuestions(p1, p2, p3, t5));
 
+        //------------- create SECTION[3] ---------
         essayQuestionStableId = "PATCH_TEXT_Q2";
         TextQuestionDef t2 = TextQuestionDef.builder(
                 TextInputType.ESSAY,
@@ -207,6 +220,7 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
         ).build();
         FormSectionDef textSection2 = new FormSectionDef(null, TestUtil.wrapQuestions(t2));
 
+        //------------- create SECTION[4] ---------
         AgreementQuestionDef a1 = new AgreementQuestionDef("AGREEMENT_Q",
                 false,
                 newTemplate("I agree with the preceding text"),
@@ -218,6 +232,7 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
                 false);
         FormSectionDef agreementSection = new FormSectionDef(null, TestUtil.wrapQuestions(a1));
 
+        //------------- create SECTION[5] ---------
         Template contentTitle = new Template(TemplateType.HTML, null, "<p>hello title</p>");
         Template contentBody = new Template(TemplateType.HTML, null, "<p>hello body</p>");
         ContentBlockDef contentDef = new ContentBlockDef(contentTitle, contentBody);
@@ -225,6 +240,7 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
                 "<p>$ddp.participantFirstName()<br/>$ddp.participantLastName()<br/>$ddp.date(\"MM-dd-uuuu\")</p>"));
         FormSectionDef contentSection = new FormSectionDef(null, List.of(contentDef, content2));
 
+        //------------- create SECTION[6] ---------
         Template nameTmpl = Template.text("icon section");
         SectionIcon icon1 = new SectionIcon(FormSectionState.COMPLETE, 100, 100);
         icon1.putSource("1x", new URL("https://dev.ddp.org/icon1_1x.png"));
@@ -233,6 +249,7 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
         icon2.putSource("2x", new URL("https://dev.ddp.org/icon2_2x.png"));
         FormSectionDef iconSection = new FormSectionDef(null, nameTmpl, Arrays.asList(icon1, icon2), Collections.emptyList());
 
+        //------------- create SECTION[7] ---------
         comp1 = CompositeQuestionDef.builder()
                 .setStableId("comp" + System.currentTimeMillis())
                 .setPrompt(Template.text("composite"))
@@ -242,11 +259,14 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
                 .build();
         var compSection = new FormSectionDef(null, List.of(new QuestionBlockDef(comp1)));
 
+        //------------- create SECTION[8] ---------
         FileQuestionDef file1 = FileQuestionDef
                 .builder("FILE" + System.currentTimeMillis(), Template.text("file"))
                 .build();
         var fileSection = new FormSectionDef(null, List.of(new QuestionBlockDef(file1)));
 
+
+        //------------- create STUDY ACTIVITY ---------
         String parentActCode = "ACT_ROUTE_PARENT" + Instant.now().toEpochMilli();
         activityCode = "ACT_ROUTE_ACT" + Instant.now().toEpochMilli();
         var nestedActBlockDef = new NestedActivityBlockDef(
@@ -274,10 +294,14 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
         assertNotNull(activity.getActivityId());
         activityId = activity.getActivityId();
 
+
+        //------------ create ACTIVITY INSTANCE ----------
         ActivityInstanceDao instanceDao = handle.attach(ActivityInstanceDao.class);
         parentInstanceDto = instanceDao.insertInstance(parentActivity.getActivityId(), userGuid);
         instanceDto = instanceDao.insertInstance(activity.getActivityId(), userGuid, userGuid, parentInstanceDto.getId());
 
+
+        //------------- create ANSWERS ---------------
         AnswerDao answerDao = handle.attach(AnswerDao.class);
         answerDao.createAnswer(testData.getUserId(), parentInstanceDto.getId(),
                 new TextAnswer(null, parentQuestion.getStableId(), null, "parent-subtitle-answer"));
@@ -597,6 +621,7 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
                 activity.getStudyGuid())
         );
 
+        ActivityDefStore.getInstance().clearCachedActivityData();
         TransactionWrapper.withTxn(handle -> handle.attach(JdbiActivity.class).updateEditTimeoutSecByCode(
                 1L, activity.getActivityCode(), optStudyId.get())
         );
@@ -879,6 +904,20 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
                 .body("answers.size()", equalTo(1))
                 .body("answers[0].value.fileName", equalTo("file.pdf"))
                 .body("answers[0].value.fileSize", equalTo(123));
+    }
+
+    /**
+     * To DB were added 3 deprecated questions: in each section - 1 deprecated question.
+     * Verify that these questions (and blocks enclosing it) are not included into
+     * rendered sections.
+     */
+    @Test
+    public void testThatBlocksWithDeprecatedQuestionsNotAddedToSections() {
+        testFor200()
+                .body("sections.size()", equalTo(activity.getSections().size()))
+                .body("sections[0].blocks.size()", equalTo(3))
+                .body("sections[1].blocks.size()", equalTo(3))
+                .body("sections[2].blocks.size()", equalTo(3));
     }
 
     private Response testFor200AndExtractResponse() {

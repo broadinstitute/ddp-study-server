@@ -103,7 +103,7 @@ public final class FormInstance extends ActivityInstance {
             int sectionIndex
     ) {
         super(participantUserId, instanceId, activityId, ActivityType.FORMS, guid, title, subtitle, statusTypeCode, readonly, activityCode,
-                createdAtMillis, firstCompletedAt, canDelete, isFollowup, isInstanceHidden, excludeFromDisplay);
+                createdAtMillis, firstCompletedAt, canDelete, isFollowup, excludeFromDisplay, isInstanceHidden);
         this.formType = MiscUtil.checkNonNull(formType, "formType");
         if (listStyleHint != null) {
             this.listStyleHint = listStyleHint;
@@ -150,6 +150,10 @@ public final class FormInstance extends ActivityInstance {
         return readonlyHint;
     }
 
+    public void setReadonlyHint(String readonlyHint) {
+        this.readonlyHint = readonlyHint;
+    }
+
     public Long getIntroductionSectionId() {
         return introductionSectionId;
     }
@@ -178,6 +182,10 @@ public final class FormInstance extends ActivityInstance {
         return activityDefinitionLastUpdatedText;
     }
 
+    public void setActivityDefinitionLastUpdatedText(String activityDefinitionLastUpdatedText) {
+        this.activityDefinitionLastUpdatedText = activityDefinitionLastUpdatedText;
+    }
+
     public LocalDateTime getActivityDefinitionLastUpdated() {
         return activityDefinitionLastUpdated;
     }
@@ -188,6 +196,14 @@ public final class FormInstance extends ActivityInstance {
 
     public void setSectionIndex(int sectionIndex) {
         this.sectionIndex = sectionIndex;
+    }
+
+    public Long getReadonlyHintTemplateId() {
+        return readonlyHintTemplateId;
+    }
+
+    public Long getLastUpdatedTextTemplateId() {
+        return lastUpdatedTextTemplateId;
     }
 
     public Question getQuestionByStableId(String stableId) {

@@ -85,8 +85,8 @@ public class ActivityInstanceServiceTest extends TxnAwareBaseTest {
         TransactionWrapper.useTxn(handle -> {
             String instanceGuid = setupActivityAndInstance(handle);
 
-            Optional<ActivityInstance> inst = service.getTranslatedActivity(handle,
-                    testData.getUserGuid(), testData.getUserGuid(), ActivityType.FORMS, instanceGuid, "en", ContentStyle.STANDARD);
+            Optional<ActivityInstance> inst =
+                    service.buildInstanceFromDefinition(handle, userGuid, userGuid, studyGuid, instanceGuid, ContentStyle.STANDARD, "en");
             assertTrue(inst.isPresent());
             assertEquals(inst.get().getActivityType(), ActivityType.FORMS);
             assertEquals(inst.get().getGuid(), instanceGuid);
@@ -98,8 +98,8 @@ public class ActivityInstanceServiceTest extends TxnAwareBaseTest {
     @Test
     public void getTranslatedActivity_notFound() {
         TransactionWrapper.useTxn(handle -> {
-            Optional<ActivityInstance> inst = service.getTranslatedActivity(handle,
-                    testData.getUserGuid(), testData.getUserGuid(), ActivityType.FORMS, "random guid", "en", ContentStyle.STANDARD);
+            Optional<ActivityInstance> inst =
+                    service.buildInstanceFromDefinition(handle, userGuid, userGuid, studyGuid, "random guid", ContentStyle.STANDARD, "en");
             assertNotNull(inst);
             assertFalse(inst.isPresent());
         });
@@ -110,9 +110,8 @@ public class ActivityInstanceServiceTest extends TxnAwareBaseTest {
         TransactionWrapper.useTxn(handle -> {
             String instanceGuid = setupActivityAndInstance(handle);
 
-            Optional<FormInstance> inst = service.getTranslatedActivity(handle, testData.getUserGuid(),
-                    testData.getUserGuid(), ActivityType.FORMS, instanceGuid, "en",
-                    ContentStyle.STANDARD).map(i -> (FormInstance) i);
+            Optional<FormInstance> inst = service.buildInstanceFromDefinition(handle, userGuid, userGuid, studyGuid, instanceGuid,
+                            ContentStyle.STANDARD, "en").map(i -> (FormInstance) i);
             assertTrue(inst.isPresent());
             assertEquals(inst.get().getActivityType(), ActivityType.FORMS);
             assertEquals(inst.get().getGuid(), instanceGuid);
@@ -135,9 +134,8 @@ public class ActivityInstanceServiceTest extends TxnAwareBaseTest {
     @Test
     public void getTranslatedForm_notFound() {
         TransactionWrapper.useTxn(handle -> {
-            Optional<FormInstance> inst = service.getTranslatedActivity(handle, testData.getUserGuid(), testData.getUserGuid(),
-                    ActivityType.FORMS, "random guid", "en",
-                    ContentStyle.STANDARD).map(i -> (FormInstance) i);
+            Optional<FormInstance> inst = service.buildInstanceFromDefinition(handle, userGuid, userGuid, studyGuid, "random guid",
+                    ContentStyle.STANDARD, "en").map(i -> (FormInstance) i);
             assertNotNull(inst);
             assertFalse(inst.isPresent());
         });
@@ -377,7 +375,7 @@ public class ActivityInstanceServiceTest extends TxnAwareBaseTest {
                 null, false, "en", false, false, 1L, false, false, "v1", 1L, 1L));
         summaries.get(0).setInstanceNumber(2);
 
-        var response = new FormResponse(1L, "guid", 1L, null, 1L, 1L, null, null, 1L, activityCode, "v1",
+        var response = new FormResponse(1L, "guid", 1L, null, 1L, 1L, null, null, 1L, activityCode, "v1", false, 0,
                 new ActivityInstanceStatusDto(1L, 1L, 1L, 1L, InstanceStatusType.CREATED));
         response.putAnswer(new TextAnswer(1L, "Q1", "guid1", "some-text"));
         response.putAnswer(new PicklistAnswer(2L, "Q2", "guid2", List.of(new SelectedPicklistOption("AUNT"))));

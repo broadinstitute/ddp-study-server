@@ -579,6 +579,10 @@ public interface SectionBlockDao extends SqlObject {
             sectionDef.setSectionId(sectionDto.getId());
             sectionDef.setNameTemplate(templates.getOrDefault(sectionDto.getNameTemplateId(), null));
 
+            Collection<SectionIcon> sectionIcons = getFormSectionIconDao().findAllBySectionId(sectionDto.getId());
+            for (SectionIcon sectionIcon : sectionIcons) {
+                sectionDef.getIcons().add(sectionIcon);
+            }
             sectionDefs.put(sectionDto.getId(), sectionDef);
         }
 

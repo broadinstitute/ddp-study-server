@@ -23,6 +23,8 @@ public abstract class ActivityResponse {
     protected long activityId;
     protected String activityCode;
     protected String activityVersionTag;
+    protected Boolean isHidden;
+    protected Integer sectionIndex;
 
     // Most of the time we just need data about the latest status.
     protected ActivityInstanceStatusDto latestStatus;
@@ -30,7 +32,7 @@ public abstract class ActivityResponse {
     ActivityResponse(ActivityType type,
                      long id, String guid, long participantId, Boolean isReadonly, long createdAt, Long firstCompletedAt,
                      Long parentInstanceId, String parentInstanceGuid,
-                     long activityId, String activityCode, String activityVersionTag,
+                     long activityId, String activityCode, String activityVersionTag, Boolean isHidden, Integer sectionIndex,
                      ActivityInstanceStatusDto latestStatus) {
         this.type = type;
         this.id = id;
@@ -45,6 +47,8 @@ public abstract class ActivityResponse {
         this.activityCode = activityCode;
         this.activityVersionTag = activityVersionTag;
         this.latestStatus = latestStatus;
+        this.isHidden = isHidden;
+        this.sectionIndex = sectionIndex;
     }
 
     public ActivityType getType() {
@@ -110,5 +114,13 @@ public abstract class ActivityResponse {
 
     public String getActivityTag() {
         return ActivityDef.getTag(activityCode, activityVersionTag);
+    }
+
+    public Boolean getHidden() {
+        return isHidden;
+    }
+
+    public Integer getSectionIndex() {
+        return sectionIndex;
     }
 }
