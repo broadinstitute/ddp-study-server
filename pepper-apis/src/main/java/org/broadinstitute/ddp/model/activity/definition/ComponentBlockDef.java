@@ -26,6 +26,8 @@ public abstract class ComponentBlockDef extends FormBlockDef {
     @SerializedName("hideNumber")
     private boolean hideNumber;
 
+    private transient long componentRevisionId;
+
     public ComponentBlockDef(ComponentType componentType) {
         super(BlockType.COMPONENT);
         this.componentType = componentType;
@@ -41,6 +43,14 @@ public abstract class ComponentBlockDef extends FormBlockDef {
 
     public void setHideNumber(boolean hideNumber) {
         this.hideNumber = hideNumber;
+    }
+
+    public long getComponentRevisionId() {
+        return componentRevisionId;
+    }
+
+    public void setComponentRevisionId(long componentRevisionId) {
+        this.componentRevisionId = componentRevisionId;
     }
 
     @Override
