@@ -60,10 +60,12 @@ public class DeleteActivityInstanceRoute implements Route {
                     activityDef.getCanDeleteFirstInstance(),
                     isFirstInstance);
 
-            if (!activityDef.canDeleteInstances()) {
+            if (!canDelete && !activityDef.canDeleteInstances()) {
                 throwNotAllowed(response, "Activity does not allow deleting instances");
-            } else if (!canDelete) {
+            } else if (!canDelete && isFirstInstance) {
                 throwNotAllowed(response, "Activity does not allow deleting the first instance");
+            } else if (!canDelete) {
+                throwNotAllowed(response, "Activity instance is not allowed to be deleted");
             } else if (instanceDto.getParentActivityCode() == null) {
                 throwNotAllowed(response, "Deleting non-nested activity instances is not supported");
             }
