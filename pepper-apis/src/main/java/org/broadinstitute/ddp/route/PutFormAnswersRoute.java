@@ -1,7 +1,10 @@
 package org.broadinstitute.ddp.route;
 
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -34,9 +37,12 @@ import org.broadinstitute.ddp.json.errors.ApiError;
 import org.broadinstitute.ddp.json.workflow.WorkflowResponse;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
 import org.broadinstitute.ddp.model.activity.instance.ComponentBlock;
+import org.broadinstitute.ddp.model.activity.instance.FormBlock;
 import org.broadinstitute.ddp.model.activity.instance.FormComponent;
 import org.broadinstitute.ddp.model.activity.instance.FormInstance;
+import org.broadinstitute.ddp.model.activity.instance.FormSection;
 import org.broadinstitute.ddp.model.activity.instance.MailingAddressComponent;
+import org.broadinstitute.ddp.model.activity.instance.NestedActivityBlock;
 import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
 import org.broadinstitute.ddp.model.activity.instance.validation.ActivityValidationFailure;
 import org.broadinstitute.ddp.model.activity.types.BlockType;
@@ -140,8 +146,8 @@ public class PutFormAnswersRoute implements Route {
 
                     if (parentInstanceDto == null) {
                         checkChildInstancesCompleteness(
-                                response, handle, userGuid, operatorGuid,
-                                instanceGuid, preferredUserLangDto, instanceSummary);
+                                response, handle, userGuid, operatorGuid, instanceGuid,
+                                form, preferredUserLangDto, instanceSummary);
                     }
 
                     // FIXME: address doesn't get saved until this PUT call finishes, so we couldn't check address here.
@@ -242,29 +248,43 @@ public class PutFormAnswersRoute implements Route {
         return form;
     }
 
+    // For a parent instance, check if there are any child instances that are not hidden and if those are complete.
     private void checkChildInstancesCompleteness(Response response,
                                                  Handle handle,
                                                  String userGuid,
                                                  String operatorGuid,
                                                  String instanceGuid,
+                                                 FormInstance form,
                                                  LanguageDto preferredLangDto,
                                                  UserActivityInstanceSummary instanceSummary) {
-        // For a parent instance, check if there are any child instances and if those are complete.
-        List<ActivityInstanceDto> childInstances = instanceSummary.getInstancesStream()
+        Map<String, List<ActivityInstanceDto>> childInstances = new HashMap<>();
+        instanceSummary.getInstancesStream()
                 .filter(instance -> instanceGuid.equals(instance.getParentInstanceGuid()))
-                .collect(Collectors.toList());
-        for (var childInstanceDto : childInstances) {
-            if (childInstanceDto.getStatusType() != InstanceStatusType.COMPLETE) {
-                // Child instance is not finished but it might not have required questions, so check it.
-                FormInstance childForm = loadFormInstance(
-                        response, handle, userGuid, operatorGuid,
-                        childInstanceDto.getGuid(), preferredLangDto, instanceSummary);
-                if (!childForm.isComplete()) {
-                    String msg = "Status for instance " + instanceGuid + " cannot be set to COMPLETE because the"
-                            + " question requirements are not met for child instance " + childInstanceDto.getGuid();
-                    LOG.info(msg);
-                    throw ResponseUtil.haltError(response, 422,
-                            new ApiError(ErrorCodes.QUESTION_REQUIREMENTS_NOT_MET, msg));
+                .forEach(instance -> childInstances
+                        .computeIfAbsent(instance.getActivityCode(), key -> new ArrayList<>())
+                        .add(instance));
+        for (FormSection section : form.getAllSections()) {
+            for (FormBlock block : section.getBlocks()) {
+                if (block.getBlockType() != BlockType.ACTIVITY || !block.isShown()) {
+                    continue;
+                }
+                var nestedActivityBlock = (NestedActivityBlock) block;
+                List<ActivityInstanceDto> childInstanceDtos = childInstances
+                        .getOrDefault(nestedActivityBlock.getActivityCode(), new ArrayList<>());
+                for (var childInstanceDto : childInstanceDtos) {
+                    if (childInstanceDto.getStatusType() != InstanceStatusType.COMPLETE) {
+                        // Child instance is not finished but it might not have required questions, so check it.
+                        FormInstance childForm = loadFormInstance(
+                                response, handle, userGuid, operatorGuid,
+                                childInstanceDto.getGuid(), preferredLangDto, instanceSummary);
+                        if (!childForm.isComplete()) {
+                            String msg = "Status for instance " + instanceGuid + " cannot be set to COMPLETE because the"
+                                    + " question requirements are not met for child instance " + childInstanceDto.getGuid();
+                            LOG.info(msg);
+                            throw ResponseUtil.haltError(response, 422,
+                                    new ApiError(ErrorCodes.QUESTION_REQUIREMENTS_NOT_MET, msg));
+                        }
+                    }
                 }
             }
         }
