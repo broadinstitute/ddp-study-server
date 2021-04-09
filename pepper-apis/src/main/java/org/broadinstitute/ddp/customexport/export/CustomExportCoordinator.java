@@ -14,6 +14,7 @@ import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -25,6 +26,7 @@ import com.google.cloud.storage.Bucket;
 import com.sendgrid.helpers.mail.Mail;
 import com.sendgrid.helpers.mail.objects.Content;
 import com.sendgrid.helpers.mail.objects.Email;
+import com.sendgrid.helpers.mail.objects.Personalization;
 import com.typesafe.config.Config;
 import org.broadinstitute.ddp.client.ApiResult;
 import org.broadinstitute.ddp.client.SendGridClient;
@@ -47,6 +49,7 @@ public class CustomExportCoordinator {
     private final String customActivity;
     private final String customExportStatus;
     private final Config exportCfg;
+    private String fullFileName;
 
     public CustomExportCoordinator(Config exportCfg) {
         this.exportCfg = exportCfg;
@@ -113,26 +116,59 @@ public class CustomExportCoordinator {
     private Mail createNotificationEmail(boolean isFailure, boolean isSkip) {
         Config cfg = exportCfg.getConfig(CustomExportConfigFile.EMAIL);
         String subject;
-        String content;
+        Email fromEmail = new Email(cfg.getString(CustomExportConfigFile.EMAIL_FROM_EMAIL),
+                cfg.getString(CustomExportConfigFile.EMAIL_FROM_NAME));
+        Email toEmail = new Email(cfg.getString(CustomExportConfigFile.EMAIL_TO_EMAIL),
+                cfg.getString(CustomExportConfigFile.EMAIL_TO_NAME));
+
+        List<Content> content = new ArrayList<>();
 
         if (isFailure) {
             subject = cfg.getString(CustomExportConfigFile.EMAIL_ERROR_SUBJECT);
-            content = cfg.getString(CustomExportConfigFile.EMAIL_ERROR_CONTENT);
+            content.add(new Content("text/plain", cfg.getString(CustomExportConfigFile.EMAIL_ERROR_CONTENT)));
         } else if (isSkip) {
             subject = cfg.getString(CustomExportConfigFile.EMAIL_SKIP_SUBJECT);
-            content = cfg.getString(CustomExportConfigFile.EMAIL_SKIP_CONTENT);
+            content.add(new Content("text/plain", cfg.getString(CustomExportConfigFile.EMAIL_SKIP_CONTENT)));
         } else {
             subject = cfg.getString(CustomExportConfigFile.EMAIL_SUCCESS_SUBJECT);
-            content = cfg.getString(CustomExportConfigFile.EMAIL_SUCCESS_CONTENT);
+            String fileUrl =
+                    "https://console.cloud.google.com/storage/browser/" + exportCfg.getString(CustomExportConfigFile.BUCKET_NAME)
+                            + "/" + exportCfg.getString(CustomExportConfigFile.FILE_PATH);
+            addSuccessContent(content, cfg.getString(CustomExportConfigFile.EMAIL_SUCCESS_CONTENT), fileUrl);
         }
 
-        String fromName = cfg.getString(CustomExportConfigFile.EMAIL_FROM_NAME);
-        String fromEmail = cfg.getString(CustomExportConfigFile.EMAIL_FROM_EMAIL);
-        String toName = cfg.getString(CustomExportConfigFile.EMAIL_TO_NAME);
-        String toEmail = cfg.getString(CustomExportConfigFile.EMAIL_TO_EMAIL);
+        return createMail(subject, fromEmail, toEmail, content);
+    }
 
-        return new Mail(new Email(fromEmail, fromName), subject, new Email(toEmail, toName), new Content("text/plain",
-                content));
+    private void addSuccessContent(List<Content> content, String fullContent, String fileUrl) {
+        Content linkContent = new Content("text/html", "<a href=\"" + fileUrl + "\">" + fileUrl + "</a>");
+        if (!fullContent.contains("{{bucketLink}}")) {
+            content.add(new Content("text/plain", fullContent));
+            content.add(linkContent);
+        } else {
+            int startLinkIndex = fullContent.indexOf("{{bucketLink}}");
+            int endLinkIndex = startLinkIndex + "{{bucketLink}}".length();
+            if (startLinkIndex > 0) {
+                content.add(new Content("text/plain", fullContent.substring(0, startLinkIndex)));
+            }
+            content.add(linkContent);
+            if (endLinkIndex < fullContent.length()) {
+                content.add(new Content("text/plain", fullContent.substring(endLinkIndex)));
+            }
+        }
+    }
+
+    private Mail createMail(String subject, Email fromEmail, Email toEmail, List<Content> content) {
+        Mail mail = new Mail();
+        mail.setFrom(fromEmail);
+        mail.setSubject(subject);
+        Personalization p = new Personalization();
+        p.addTo(toEmail);
+        mail.addPersonalization(p);
+        for (Content c : content) {
+            mail.addContent(c);
+        }
+        return mail;
     }
 
 
@@ -183,11 +219,11 @@ public class CustomExportCoordinator {
             Thread csvExportThread = new Thread(csvExportRunnable);
             csvExportThread.start();
 
-            String fileName = buildExportBlobFilename(exportCfg.getString(CustomExportConfigFile.FILE_PATH),
+            buildExportBlobFilename(exportCfg.getString(CustomExportConfigFile.FILE_PATH),
                     exportCfg.getString(CustomExportConfigFile.BASE_FILE_NAME));
 
             // Google writing happens on this thread
-            saveToGoogleBucket(csvInputStream, fileName, studyDto.getGuid(), bucket);
+            saveToGoogleBucket(csvInputStream, fullFileName, studyDto.getGuid(), bucket);
         } catch (IOException e) {
             throw new DDPException(e);
         }
@@ -208,13 +244,13 @@ public class CustomExportCoordinator {
         };
     }
 
-    private String buildExportBlobFilename(String filePath, String baseFileName) {
+    private void buildExportBlobFilename(String filePath, String baseFileName) {
         Instant now = Instant.now();
         String fileName = makeExportCSVFilename(baseFileName, now);
         if (filePath != null && !filePath.isEmpty()) {
-            return String.format("%s/%s", filePath, fileName);
+            fullFileName =  String.format("%s/%s", filePath, fileName);
         } else {
-            return String.format("%s", fileName);
+            fullFileName = String.format("%s", fileName);
         }
     }
 
