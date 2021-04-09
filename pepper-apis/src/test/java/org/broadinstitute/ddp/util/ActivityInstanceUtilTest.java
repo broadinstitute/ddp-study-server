@@ -1,5 +1,8 @@
 package org.broadinstitute.ddp.util;
 
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
 import java.util.concurrent.TimeUnit;
 
 import org.broadinstitute.ddp.TxnAwareBaseTest;
@@ -45,7 +48,7 @@ public class ActivityInstanceUtilTest extends TxnAwareBaseTest {
                     TimeUnit.SECONDS.sleep(1L);
 
                     // ActivityInstanceUtil.isReadonly() evaluated to true but "isReadonly" flag overrides it
-                    Assert.assertFalse(ActivityInstanceUtil.isReadonly(handle, instanceDto.getGuid()));
+                    assertFalse(ActivityInstanceUtil.isReadonly(handle, instanceDto.getGuid()));
                     handle.rollback();
                 }
         );
@@ -69,5 +72,20 @@ public class ActivityInstanceUtilTest extends TxnAwareBaseTest {
                     handle.rollback();
                 }
         );
+    }
+
+    @Test
+    public void testComputeCanDelete() {
+        boolean actual = ActivityInstanceUtil.computeCanDelete(false, true, true);
+        assertFalse("should not allow delete since canDeleteInstances is false", actual);
+
+        actual = ActivityInstanceUtil.computeCanDelete(true, null, false);
+        assertTrue("not first instance so can delete", actual);
+
+        actual = ActivityInstanceUtil.computeCanDelete(true, null, true);
+        assertTrue("is first instance but since canDeleteFirstInstance is not set it should default to allow", actual);
+
+        actual = ActivityInstanceUtil.computeCanDelete(true, false, true);
+        assertFalse("is first instance and canDeleteFirstInstance is false", actual);
     }
 }

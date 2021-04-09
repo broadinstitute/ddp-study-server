@@ -92,6 +92,9 @@ public interface FormActivityDao extends SqlObject {
         if (activity.canDeleteInstances()) {
             throw new UnsupportedOperationException("canDeleteInstances can only be set on nested child activities");
         }
+        if (activity.getCanDeleteFirstInstance() != null) {
+            throw new UnsupportedOperationException("canDeleteFirstInstance can only be set on nested child activities");
+        }
 
         nestedActivities = ListUtils.defaultIfNull(nestedActivities, List.of());
         for (var nested : nestedActivities) {
@@ -135,7 +138,7 @@ public interface FormActivityDao extends SqlObject {
                 activity.getMaxInstancesPerUser(), activity.getDisplayOrder(), activity.isWriteOnce(), activity.getEditTimeoutSec(),
                 activity.isOndemandTriggerAllowed(), activity.isExcludeFromDisplay(), activity.isExcludeStatusIconFromDisplay(),
                 activity.isAllowUnauthenticated(), activity.isFollowup(), activity.isHideInstances(),
-                activity.isCreateOnParentCreation(), activity.canDeleteInstances());
+                activity.isCreateOnParentCreation(), activity.canDeleteInstances(), activity.getCanDeleteFirstInstance());
         activity.setActivityId(activityId);
         return activityId;
     }
@@ -249,6 +252,7 @@ public interface FormActivityDao extends SqlObject {
                 .setHideInstances(activityDto.isHideExistingInstancesOnCreation())
                 .setCreateOnParentCreation(activityDto.isCreateOnParentCreation())
                 .setCanDeleteInstances(activityDto.canDeleteInstances())
+                .setCanDeleteFirstInstance(activityDto.getCanDeleteFirstInstance())
                 .setIsFollowup(activityDto.isFollowup());
 
         List<Translation> names = new ArrayList<>();
