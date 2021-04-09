@@ -50,12 +50,13 @@ public class GoogleBucketClient {
         return storage.get(bucketName);
     }
 
-    public Bucket getRGPBucket(String bucketName) {
+    public Bucket getBucketFromBlob(String bucketName) {
         Page<Blob> blobs = storage.list(bucketName, Storage.BlobListOption.currentDirectory(), Storage.BlobListOption.prefix(""));
+        //noinspection LoopStatementThatDoesntLoop: This is necessary due to atypical access constraints
         for (Blob blob : blobs.iterateAll()) {
             return storage.get(blob.getBlobId().getBucket());
         }
-        throw new DDPException("Failed to get RGP bucket from blobs");
+        throw new DDPException("Failed to get bucket " + bucketName + " from blob");
     }
 
     public Blob getBlob(String bucketName, String fileName) {

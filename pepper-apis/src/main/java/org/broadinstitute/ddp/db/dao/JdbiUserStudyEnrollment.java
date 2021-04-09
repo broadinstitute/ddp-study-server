@@ -44,49 +44,6 @@ public interface JdbiUserStudyEnrollment extends SqlObject {
             @Bind("offset") int offset,
             @Bind("limit") int limit);
 
-    @SqlQuery("SELECT CASE WHEN ( "
-            + "SELECT COUNT(user_id) FROM ( "
-            + "SELECT user_id FROM user_study_enrollment AS usen  "
-            + "JOIN study_activity AS sa ON sa.study_id = usen.study_id  "
-            + "JOIN activity_instance AS aci ON usen.user_id = aci.participant_id  "
-            + "JOIN activity_instance_status AS ais ON aci.activity_instance_id = ais.activity_instance_id  "
-            + "JOIN activity_instance_status_type AS aist ON aist.activity_instance_status_type_id = ais" 
-            + ".activity_instance_status_type_id  "
-            + "WHERE usen.study_id = :studyId AND aist.activity_instance_status_type_code=:statusType "
-            + "AND aci.first_completed_at>:lastCompletion AND usen.valid_to IS NULL AND sa.study_activity_code=:activityCode) as ids "
-            + ") "
-            + "> 1 THEN true ELSE false END")
-    boolean needRGPExport(@Bind("studyId") long studyId,
-                                    @Bind("statusType") String statusType,
-                                    @Bind("lastCompletion") long lastCompletion,
-                                    @Bind("activityCode") String activityCode);
-
-    @SqlQuery("SELECT usen.user_id FROM user_study_enrollment AS usen "
-            + "JOIN study_activity AS sa ON sa.study_id = usen.study_id "
-            + "JOIN activity_instance AS aci ON usen.user_id = aci.participant_id "
-            + "JOIN activity_instance_status AS ais ON aci.activity_instance_id = ais.activity_instance_id "
-            + "JOIN activity_instance_status_type AS aist ON aist.activity_instance_status_type_id = ais.activity_instance_status_type_id "
-            + "WHERE usen.study_id = :studyId AND aist.activity_instance_status_type_code=:statusType "
-            + "AND aci.first_completed_at>:lastCompletion AND usen.valid_to IS NULL AND sa.study_activity_code=:activityCode "
-            + "GROUP BY usen.user_id ORDER BY MAX(aci.first_completed_at) DESC LIMIT :limit OFFSET :offset")
-    Set<Long> findRGPUserIdsToExport(@Bind("studyId") long studyId,
-                                     @Bind("statusType") String statusType,
-                                     @Bind("lastCompletion") long lastCompletion,
-                                     @Bind("activityCode") String activityCode,
-                                     @Bind("limit") long limit,
-                                     @Bind("offset") long offset);
-
-    @SqlQuery("SELECT MAX(aci.first_completed_at) FROM activity_instance AS aci "
-            + "JOIN user_study_enrollment AS usen ON aci.participant_id = usen.user_id "
-            + "JOIN study_activity AS sa ON aci.study_activity_id = sa.study_activity_id "
-            + "JOIN activity_instance_status AS ais ON aci.activity_instance_id = ais.activity_instance_id "
-            + "JOIN activity_instance_status_type AS aist ON aist.activity_instance_status_type_id = ais.activity_instance_status_type_id "
-            + "WHERE  sa.study_id = :studyId AND aist.activity_instance_status_type_code = :statusType  "
-            + "AND sa.study_activity_code=:activityCode AND usen.valid_to IS NULL")
-    Optional<Long> getLastRGPCompletionDate(@Bind("studyId") long studyId,
-                                  @Bind("statusType") String statusType,
-                                  @Bind("activityCode") String activityCode);
-
     default List<EnrollmentStatusDto> findByStudyGuid(String studyGuid) {
         return findByStudyGuidAfterOrEqualToInstant(studyGuid, 0);
     }

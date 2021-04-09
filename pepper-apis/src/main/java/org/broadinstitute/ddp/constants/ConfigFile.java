@@ -55,15 +55,8 @@ public class ConfigFile {
     // whether to use local filesystem for pdf archiving or not
     public static final String PDF_ARCHIVE_USE_FILESYSTEM = "pdfArchiveUseFilesystem";
 
-    // RGP Export fields
-    public static final String RGP_EXPORT_BUCKET = "rgpExport.bucketName";
-    public static final String RGP_BUCKET_DIR = "rgpExport.bucketDir";
-    public static final String RGP_EXCLUDED_PARTICIPANT_FIELDS = "rgpExport.excludedParticipantFields";
-    public static final String RGP_EXCLUDED_ACTIVITY_FIELDS = "rgpExport.excludedActivityFields";
-    public static final String RGP_FIRST_FIELDS = "rgpExport.firstFields";
-    public static final String RGP_GUID = "rgpExport.guid";
-    public static final String RGP_ACTIVITY = "rgpExport.activity";
-    public static final String RGP_EXPORT_STATUS = "rgpExport.status";
+    // config file for custom export job
+    public static final String CUSTOM_EXPORT_CONFIG_SECRET = "custom-export";
 
     // the cron schedule for different jobs
     public static final String CHECK_AGE_UP_SCHEDULE = "schedules.checkAgeUp";
@@ -72,7 +65,7 @@ public class ConfigFile {
     public static final String DB_BACKUP_SCHEDULE = "schedules.dbBackup";
     public static final String DB_BACKUP_CHECK_SCHEDULE = "schedules.dbBackupCheck";
     public static final String STUDY_EXPORT_SCHEDULE = "schedules.studyExport";
-    public static final String RGP_EXPORT_SCHEDULE = "schedules.rgpExport";
+    public static final String CUSTOM_EXPORT_SCHEDULE = "schedules.customExport";
     public static final String FILE_UPLOAD_CLEANUP_SCHEDULE = "schedules.fileUploadCleanup";
     public static final String TEMP_USER_CLEANUP_SCHEDULE = "schedules.tempUserCleanup";
 

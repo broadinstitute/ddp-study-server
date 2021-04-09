@@ -28,8 +28,8 @@ public class Keys {
         public static final JobKey DataExportJob = JobKey.jobKey("data", "export");
         public static final JobKey OnDemandJob = JobKey.jobKey("on-demand", "export");
         public static final JobKey SyncJob = JobKey.jobKey("sync", "export");
-        public static final JobKey RGPExportJob = JobKey.jobKey("rgp", "export");
-        public static final TriggerKey RGPExportTrigger = TriggerKey.triggerKey("rgp", "export");
+        public static final JobKey CustomExportJob = JobKey.jobKey("custom", "export");
+        public static final TriggerKey CustomExportTrigger = TriggerKey.triggerKey("custom", "export");
         public static final TriggerKey DataExportTrigger = TriggerKey.triggerKey("data", "export");
         public static final TriggerKey SyncTrigger = TriggerKey.triggerKey("sync", "export");
     }

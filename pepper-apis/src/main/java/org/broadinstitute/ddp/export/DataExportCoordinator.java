@@ -1,5 +1,10 @@
 package org.broadinstitute.ddp.export;
 
+import static org.broadinstitute.ddp.export.ExportUtil.DEFAULT_BATCH_SIZE;
+import static org.broadinstitute.ddp.export.ExportUtil.READER_BUFFER_SIZE_IN_BYTES;
+import static org.broadinstitute.ddp.export.ExportUtil.makeExportCSVFilename;
+import static org.broadinstitute.ddp.export.ExportUtil.withAPIsTxn;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
@@ -13,51 +18,29 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.Optional;
 import java.util.Set;
 
 import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.Bucket;
-import com.sendgrid.helpers.mail.Mail;
-import com.sendgrid.helpers.mail.objects.Content;
-import com.sendgrid.helpers.mail.objects.Email;
-import com.typesafe.config.Config;
-import org.broadinstitute.ddp.client.ApiResult;
-import org.broadinstitute.ddp.client.SendGridClient;
-import org.broadinstitute.ddp.constants.ConfigFile;
-import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.JdbiUserStudyEnrollment;
-import org.broadinstitute.ddp.db.dao.RgpExportDao;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.elastic.ElasticSearchIndexType;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.study.Participant;
-import org.jdbi.v3.core.HandleCallback;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class DataExportCoordinator {
 
-    public static final int DEFAULT_BATCH_SIZE = 100;
-    public static final int READER_BUFFER_SIZE_IN_BYTES = 10 * 1024;
-
     private static final Logger LOG = LoggerFactory.getLogger(DataExportCoordinator.class);
 
-    private DataExporter exporter;
+    private final DataExporter exporter;
     private int batchSize = DEFAULT_BATCH_SIZE;
-    private Set<ElasticSearchIndexType> indices = new HashSet<>();
+    private final Set<ElasticSearchIndexType> indices = new HashSet<>();
     private Bucket csvBucket;
-    private boolean isRGP;
-    private String rgpActivity;
-    private String rgpExportStatus;
 
     public DataExportCoordinator(DataExporter exporter) {
         this.exporter = exporter;
-    }
-
-    public DataExportCoordinator(DataExporter exporter, Config cfg) {
-        this.rgpActivity = cfg.getString(ConfigFile.RGP_ACTIVITY);
-        this.rgpExportStatus = cfg.getString(ConfigFile.RGP_EXPORT_STATUS);
     }
 
     public DataExportCoordinator withBatchSize(int batchSize) {
@@ -73,74 +56,6 @@ public class DataExportCoordinator {
     public DataExportCoordinator includeCsv(Bucket csvBucket) {
         this.csvBucket = csvBucket;
         return this;
-    }
-
-    public boolean exportRGP(StudyDto rgpDto, Config cfg) {
-        this.isRGP = true;
-
-        String sendGridToken = cfg.getString("sendgridToken");
-        SendGridClient client = new SendGridClient(sendGridToken);
-
-        //Find out whether there is anything to export
-        boolean needExport = withAPIsTxn(handle -> {
-            RgpExportDao rgpExportDao = handle.attach(RgpExportDao.class);
-            long lastCompleted = rgpExportDao.getLastCompleted(rgpDto.getId());
-            JdbiUserStudyEnrollment enrollment = handle.attach(JdbiUserStudyEnrollment.class);
-            return enrollment.needRGPExport(rgpDto.getId(), rgpExportStatus, lastCompleted, rgpActivity);
-        });
-
-        if (!needExport) {
-            LOG.info("Skipping RGP export: nothing to export");
-            ApiResult res = client.sendMail(createNotificationEmail(false, true, cfg));
-            return true;
-        }
-
-        // Proceed with the export
-        List<ActivityExtract> activityExtracts = withAPIsTxn(handle -> exporter.extractRGPEnrollmentActivity(handle));
-
-        withAPIsTxn(handle -> {
-            exporter.computeMaxInstancesSeen(handle, activityExtracts);
-            exporter.computeActivityAttributesSeen(handle, activityExtracts, true);
-            return null;
-        });
-
-        boolean runSuccess = runCsvExports(rgpDto, activityExtracts);
-
-        if (!runSuccess) {
-            ApiResult res = client.sendMail(createNotificationEmail(true, false, cfg));
-            return false;
-        }
-
-        ApiResult res = client.sendMail(createNotificationEmail(false, false, cfg));
-        if (res.hasThrown()) {
-            LOG.error("Error while sending RGP export email notification", res.getThrown());
-            return false;
-        }
-
-        return true;
-    }
-
-    private Mail createNotificationEmail(boolean isFailure, boolean isSkip, Config cfg) {
-        String fromName = cfg.getString("sendgrid.fromName");
-        String fromEmail = cfg.getString("sendgrid.fromEmail");
-        String toEmail = cfg.getString("rgpExport.email.toEmail");
-        String toName = cfg.getString("rgpExport.email.toName");
-        String subject;
-        String content;
-
-        if (isFailure) {
-            subject = cfg.getString("rgpExport.email.errorSubject");
-            content = cfg.getString("rgpExport.email.errorContent");
-        } else if (isSkip) {
-            subject = cfg.getString("rgpExport.email.skipSubject");
-            content = cfg.getString("rgpExport.email.skipContent");
-        } else {
-            subject = cfg.getString("rgpExport.email.successSubject");
-            content = cfg.getString("rgpExport.email.successContent");
-        }
-
-        return new Mail(new Email(fromEmail, fromName), subject, new Email(toEmail, toName), new Content("text/plain",
-                content));
     }
 
     public boolean export(StudyDto studyDto) {
@@ -170,8 +85,8 @@ public class DataExportCoordinator {
 
         if (csvBucket != null) {
             withAPIsTxn(handle -> {
-                exporter.computeMaxInstancesSeen(handle, activities);
-                exporter.computeActivityAttributesSeen(handle, activities, false);
+                ExportUtil.computeMaxInstancesSeen(handle, activities);
+                ExportUtil.computeActivityAttributesSeen(handle, activities);
                 return null;
             });
             boolean runSuccess = runCsvExports(studyDto, activities);
@@ -213,7 +128,7 @@ public class DataExportCoordinator {
 
             boolean runSuccess = withAPIsTxn(handle -> {
                 boolean batchSuccess = true;
-                List<Participant> participants = exporter.extractParticipantDataSetByIds(handle, studyDto, batch);
+                List<Participant> participants = DataExporter.extractParticipantDataSetByIds(handle, studyDto, batch);
                 LOG.info("Extracted {} participants for study {}", participants.size(), studyDto.getGuid());
                 if (indices.contains(ElasticSearchIndexType.PARTICIPANTS_STRUCTURED)) {
                     try {
@@ -257,24 +172,8 @@ public class DataExportCoordinator {
         try {
             LOG.info("Running csv export for study {}", studyGuid);
             long start = Instant.now().toEpochMilli();
-            boolean success = withAPIsTxn(handle -> {
-                RgpExportDao rgpExportDao = handle.attach(RgpExportDao.class);
-
-                long lastCompleted = rgpExportDao.getLastCompleted(studyDto.getId());
-                var iterator = new PaginatedParticipantIterator(studyDto, batchSize, lastCompleted);
-                exportStudyToGoogleBucket(studyDto, exporter, csvBucket, activities, iterator);
-
-                if (isRGP) {
-                    // For RGP export, keep track of the most recent survey completion time so we know where to start for next export
-                    JdbiUserStudyEnrollment enrollment = handle.attach(JdbiUserStudyEnrollment.class);
-                    Optional<Long> optionalLastCompletionTime = enrollment.getLastRGPCompletionDate(studyDto.getId(), rgpExportStatus,
-                            rgpActivity);
-                    long lastCompletionTime = optionalLastCompletionTime.orElse((long)0);
-                    rgpExportDao.updateLastCompleted(lastCompletionTime, studyDto.getId());
-                }
-                return true;
-            });
-
+            var iterator = new PaginatedParticipantIterator(studyDto, batchSize);
+            exportStudyToGoogleBucket(studyDto, exporter, csvBucket, activities, iterator);
             long elapsed = Instant.now().toEpochMilli() - start;
             LOG.info("Finished csv export for study {} in {}s", studyGuid, elapsed / 1000);
             return true;
@@ -290,7 +189,7 @@ public class DataExportCoordinator {
         try (
                 PipedOutputStream outputStream = new PipedOutputStream();
                 Writer csvWriter = new OutputStreamWriter(outputStream, StandardCharsets.UTF_8);
-                PipedInputStream csvInputStream = new PipedInputStream(outputStream, READER_BUFFER_SIZE_IN_BYTES);
+                PipedInputStream csvInputStream = new PipedInputStream(outputStream, READER_BUFFER_SIZE_IN_BYTES)
         ) {
             // Running the DataExporter in separate thread
             Runnable csvExportRunnable = buildExportToCsvRunnable(studyDto, exporter, csvWriter, activities, participants);
@@ -311,7 +210,7 @@ public class DataExportCoordinator {
                                       Iterator<Participant> participants) {
         return () -> {
             try {
-                int total = exporter.exportDataSetAsCsv(studyDto, activities, participants, csvOutputWriter, isRGP);
+                int total = exporter.exportDataSetAsCsv(studyDto, activities, participants, csvOutputWriter);
                 LOG.info("Written {} participants to csv export for study {}", total, studyDto.getGuid());
                 // closing here is important! Can't wait until the try block calls close
                 csvOutputWriter.close();
@@ -329,33 +228,24 @@ public class DataExportCoordinator {
 
     private String buildExportBlobFilename(StudyDto study) {
         Instant now = Instant.now();
-        if (isRGP) {
-            return exporter.makeRGPExportCSVFileName(now);
-        } else {
-            return String.format("%s/%s", study.getName(), DataExporter.makeExportCSVFilename(study.getGuid(), now));
-        }
-    }
+        return String.format("%s/%s", study.getName(), makeExportCSVFilename(study.getGuid(), now));
 
-    <R, X extends Exception> R withAPIsTxn(HandleCallback<R, X> callback) throws X {
-        return TransactionWrapper.withTxn(TransactionWrapper.DB.APIS, callback);
     }
 
     private class PaginatedParticipantIterator implements Iterator<Participant> {
 
-        private StudyDto studyDto;
-        private int batchSize;
+        private final StudyDto studyDto;
+        private final int batchSize;
         private int fetched;
         private boolean exhausted;
         private ArrayDeque<Participant> currentBatch;
-        private long rgpLastCompletion;
 
-        public PaginatedParticipantIterator(StudyDto studyDto, int batchSize, long rgpLastCompletion) {
+        PaginatedParticipantIterator(StudyDto studyDto, int batchSize) {
             this.studyDto = studyDto;
             this.batchSize = batchSize;
             this.fetched = 0;
             this.exhausted = false;
             this.currentBatch = null;
-            this.rgpLastCompletion = rgpLastCompletion;
         }
 
         @Override
@@ -367,16 +257,9 @@ public class DataExportCoordinator {
             if (currentBatch == null) {
                 int offset = fetched;
                 currentBatch = withAPIsTxn(handle -> {
-                    JdbiUserStudyEnrollment enrollment = handle.attach(JdbiUserStudyEnrollment.class);
-                    Set<Long> userIds;
-                    if (isRGP) {
-                        userIds = enrollment.findRGPUserIdsToExport(studyDto.getId(), rgpExportStatus, rgpLastCompletion,
-                                rgpActivity, batchSize, offset);
-                    } else {
-                        userIds = enrollment.findUserIdsByStudyIdAndLimit(studyDto.getId(), offset, batchSize);
-                    }
-
-                    List<Participant> extract = exporter.extractParticipantDataSetByIds(handle, studyDto, userIds);
+                    Set<Long> userIds = handle.attach(JdbiUserStudyEnrollment.class)
+                            .findUserIdsByStudyIdAndLimit(studyDto.getId(), offset, batchSize);
+                    List<Participant> extract = DataExporter.extractParticipantDataSetByIds(handle, studyDto, userIds);
                     return new ArrayDeque<>(extract);
                 });
                 fetched += currentBatch.size();

@@ -6,14 +6,10 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 import org.broadinstitute.ddp.TxnAwareBaseTest;
 import org.broadinstitute.ddp.db.TransactionWrapper;
-import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.db.dto.EnrollmentStatusDto;
-import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
-import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
 import org.jdbi.v3.core.Handle;
@@ -26,8 +22,6 @@ public class JdbiUserStudyEnrollmentTest extends TxnAwareBaseTest {
 
     private static TestDataSetupUtil.GeneratedTestData testData;
     private static long userStudyEnrollmentId;
-    private static FormActivityDef activityDef;
-    private static ActivityInstanceDto instanceDto;
 
     private static void setStatus(Handle handle, EnrollmentStatusType status, long timestamp) {
         handle.attach(JdbiUserStudyEnrollment.class).changeUserStudyEnrollmentStatus(
@@ -54,85 +48,6 @@ public class JdbiUserStudyEnrollmentTest extends TxnAwareBaseTest {
                             testData.getStudyGuid(),
                             EnrollmentStatusType.ENROLLED
                     );
-                    activityDef = TestDataSetupUtil.generateTestFormActivityForUser(
-                            handle, testData.getUserGuid(), testData.getStudyGuid()
-                    );
-                    instanceDto = TestDataSetupUtil.generateTestFormActivityInstanceForUser(
-                            handle, activityDef.getActivityId(), testData.getUserGuid()
-                    );
-
-                }
-        );
-    }
-
-    @Test
-    public void testFindRGPUserIdsToExport() {
-        TransactionWrapper.useTxn(
-                handle -> {
-                    JdbiUserStudyEnrollment enrollment = handle.attach(JdbiUserStudyEnrollment.class);
-                    Set<Long> ids = enrollment.findRGPUserIdsToExport(
-                            testData.getStudyId(), "COMPLETE",
-                            Instant.now().toEpochMilli(), instanceDto.getActivityCode(), 50, 0);
-
-                    // Make sure we don't export incomplete surveys
-                    Assert.assertNotNull(ids);
-                    Assert.assertEquals(0, ids.size());
-
-
-                    // Make sure we don't export already exported surveys
-                    long time = Instant.now().toEpochMilli();
-                    handle.attach(ActivityInstanceStatusDao.class).insertStatus(instanceDto.getId(), InstanceStatusType.COMPLETE, time,
-                            testData.getTestingUser().getUserGuid());
-                    ids = enrollment.findRGPUserIdsToExport(testData.getStudyId(), "COMPLETE", time,
-                            instanceDto.getActivityCode(), 50, 0);
-
-                    Assert.assertNotNull(ids);
-                    Assert.assertEquals(0, ids.size());
-
-                    //Make sure we export recently completed surveys
-                    ids = enrollment.findRGPUserIdsToExport(testData.getStudyId(), "COMPLETE", 0,
-                            instanceDto.getActivityCode(), 50, 0);
-
-                    Assert.assertNotNull(ids);
-                    Assert.assertEquals(1, ids.size());
-
-                    handle.rollback();
-                }
-        );
-    }
-
-
-    @Test
-    public void testNeedRGPExport() {
-        TransactionWrapper.useTxn(
-                handle -> {
-                    JdbiUserStudyEnrollment enrollment = handle.attach(JdbiUserStudyEnrollment.class);
-                    boolean needExport = enrollment.needRGPExport(
-                            testData.getStudyId(), "COMPLETE", Instant.now().toEpochMilli(), instanceDto.getActivityCode());
-                    Assert.assertFalse(needExport);
-                    handle.rollback();
-                }
-        );
-    }
-
-    @Test
-    public void testGetRGPLastCompletionDate() {
-        TransactionWrapper.useTxn(
-                handle -> {
-                    Optional<Long> date = handle.attach(JdbiUserStudyEnrollment.class).getLastRGPCompletionDate(
-                            testData.getStudyId(), "COMPLETE", instanceDto.getActivityCode());
-                    Assert.assertTrue(date.isEmpty());
-
-                    long time = Instant.now().toEpochMilli();
-                    handle.attach(ActivityInstanceStatusDao.class).insertStatus(instanceDto.getId(), InstanceStatusType.COMPLETE, time,
-                            testData.getTestingUser().getUserGuid());
-                    date = handle.attach(JdbiUserStudyEnrollment.class).getLastRGPCompletionDate(testData.getStudyId(), "COMPLETE",
-                            instanceDto.getActivityCode());
-                    Assert.assertTrue(date.isPresent());
-                    long realDate = date.get();
-                    Assert.assertEquals(time, realDate);
-
-                    handle.rollback();
                 }
         );
     }
