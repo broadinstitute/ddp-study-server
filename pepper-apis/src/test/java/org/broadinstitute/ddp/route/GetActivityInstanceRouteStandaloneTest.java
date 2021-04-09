@@ -10,8 +10,8 @@ import static org.hamcrest.Matchers.isEmptyOrNullString;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
 
 import java.net.URL;
 import java.time.Instant;
@@ -115,6 +115,7 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
     private static ActivityVersionDto activityVersionDto;
     private static ActivityInstanceDto parentInstanceDto;
     private static ActivityInstanceDto instanceDto;
+    private static ActivityInstanceDto instanceDto2;
     private static String userGuid;
     private static String token;
     private static String url;
@@ -270,7 +271,7 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
         String parentActCode = "ACT_ROUTE_PARENT" + Instant.now().toEpochMilli();
         activityCode = "ACT_ROUTE_ACT" + Instant.now().toEpochMilli();
         var nestedActBlockDef = new NestedActivityBlockDef(
-                activityCode, NestedActivityRenderHint.MODAL, true, Template.text("add button"));
+                activityCode, NestedActivityRenderHint.EMBEDDED, true, Template.text("add button"));
 
         var parentQuestion = TextQuestionDef.builder(TextInputType.TEXT, parentActCode + "_Q1", Template.text("q1")).build();
         parentActivity = FormActivityDef.generalFormBuilder(parentActCode, "v1", testData.getStudyGuid())
@@ -283,6 +284,7 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
                 .addName(new Translation("en", "activity " + activityCode))
                 .setParentActivityCode(parentActCode)
                 .setCanDeleteInstances(true)
+                .setCanDeleteFirstInstance(false)
                 .addSections(Arrays.asList(dateSection, textSection, plistSection, textSection2, agreementSection, contentSection))
                 .addSection(iconSection)
                 .addSection(compSection)
@@ -299,6 +301,7 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
         ActivityInstanceDao instanceDao = handle.attach(ActivityInstanceDao.class);
         parentInstanceDto = instanceDao.insertInstance(parentActivity.getActivityId(), userGuid);
         instanceDto = instanceDao.insertInstance(activity.getActivityId(), userGuid, userGuid, parentInstanceDto.getId());
+        instanceDto2 = instanceDao.insertInstance(activity.getActivityId(), userGuid, userGuid, parentInstanceDto.getId());
 
 
         //------------- create ANSWERS ---------------
@@ -336,6 +339,7 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
     @AfterClass
     public static void cleanup() {
         TransactionWrapper.useTxn(handle -> {
+            handle.attach(ActivityInstanceDao.class).deleteAllByIds(Set.of(instanceDto2.getId()));
             handle.attach(ActivityInstanceDao.class).deleteAllByIds(Set.of(instanceDto.getId()));
             handle.attach(AnswerDao.class).deleteAllByInstanceIds(Set.of(instanceDto.getId()));
             handle.attach(FileUploadDao.class).deleteById(upload.getId());
@@ -375,7 +379,7 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
         assertEquals(activityCode, inst.getActivityCode());
         assertEquals(InstanceStatusType.CREATED, inst.getStatusType());
         assertEquals(parentInstanceDto.getGuid(), inst.getParentInstanceGuid());
-        assertTrue("child instance should have canDelete true", inst.canDelete());
+        assertFalse("first child instance should have canDelete false", inst.canDelete());
     }
 
     @Test
@@ -444,13 +448,15 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
                 .root("sections[0].blocks[0]")
                 .body("blockType", equalTo(BlockType.ACTIVITY.name()))
                 .body("activityCode", equalTo(activityCode))
-                .body("renderHint", equalTo(NestedActivityRenderHint.MODAL.name()))
+                .body("renderHint", equalTo(NestedActivityRenderHint.EMBEDDED.name()))
                 .body("allowMultiple", equalTo(true))
                 .body("addButtonText", equalTo("add button"))
-                .body("instances.size()", equalTo(1))
+                .body("instances.size()", equalTo(2))
                 .body("instances[0].activityCode", equalTo(activityCode))
                 .body("instances[0].instanceGuid", equalTo(instanceDto.getGuid()))
-                .body("instances[0].canDelete", equalTo(true));
+                .body("instances[0].canDelete", equalTo(false))
+                .body("instances[1].instanceGuid", equalTo(instanceDto2.getGuid()))
+                .body("instances[1].canDelete", equalTo(true));
     }
 
     @Test
@@ -819,7 +825,7 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
 
     @Test
     public void test_whenIsHidden_thenNotFound() {
-        TransactionWrapper.useTxn(handle -> assertEquals(1, handle.attach(ActivityInstanceDao.class)
+        TransactionWrapper.useTxn(handle -> assertEquals(2, handle.attach(ActivityInstanceDao.class)
                 .bulkUpdateIsHiddenByActivityIds(testData.getUserId(), true, Set.of(activity.getActivityId()))));
         try {
             given().auth().oauth2(token)
@@ -829,7 +835,7 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
                     .body("code", equalTo(ErrorCodes.ACTIVITY_NOT_FOUND))
                     .body("message", containsString("is hidden"));
         } finally {
-            TransactionWrapper.useTxn(handle -> assertEquals(1, handle.attach(ActivityInstanceDao.class)
+            TransactionWrapper.useTxn(handle -> assertEquals(2, handle.attach(ActivityInstanceDao.class)
                     .bulkUpdateIsHiddenByActivityIds(testData.getUserId(), false, Set.of(activity.getActivityId()))));
         }
     }
@@ -837,7 +843,7 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
     @Test
     public void testStudyAdmin_canRetrieveInstances() {
         TransactionWrapper.useTxn(handle -> {
-            assertEquals(1, handle.attach(ActivityInstanceDao.class)
+            assertEquals(2, handle.attach(ActivityInstanceDao.class)
                     .bulkUpdateIsHiddenByActivityIds(testData.getUserId(), true, Set.of(activity.getActivityId())));
             handle.attach(AuthDao.class).assignStudyAdmin(testData.getUserId(), testData.getStudyId());
         });
@@ -851,7 +857,7 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
                     .body("isHidden", equalTo(true));
         } finally {
             TransactionWrapper.useTxn(handle -> {
-                assertEquals(1, handle.attach(ActivityInstanceDao.class)
+                assertEquals(2, handle.attach(ActivityInstanceDao.class)
                         .bulkUpdateIsHiddenByActivityIds(testData.getUserId(), false, Set.of(activity.getActivityId())));
                 handle.attach(AuthDao.class).removeAdminFromAllStudies(testData.getUserId());
             });
