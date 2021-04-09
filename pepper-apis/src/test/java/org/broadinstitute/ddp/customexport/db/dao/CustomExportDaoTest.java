@@ -10,6 +10,7 @@ import org.broadinstitute.ddp.db.dao.ActivityInstanceStatusDao;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
+import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
 import org.junit.Assert;
 import org.junit.Before;
@@ -32,6 +33,7 @@ public class CustomExportDaoTest extends TxnAwareBaseTest {
                     instanceDto = TestDataSetupUtil.generateTestFormActivityInstanceForUser(
                             handle, activityDef.getActivityId(), testData.getUserGuid()
                     );
+                    TestDataSetupUtil.setUserEnrollmentStatus(handle, testData, EnrollmentStatusType.REGISTERED);
                 }
         );
     }
