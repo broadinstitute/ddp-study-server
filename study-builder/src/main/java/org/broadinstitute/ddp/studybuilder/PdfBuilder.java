@@ -11,13 +11,14 @@ import java.util.Optional;
 
 import com.typesafe.config.Config;
 import org.apache.commons.io.IOUtils;
+import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.db.dao.JdbiActivityVersion;
-import org.broadinstitute.ddp.db.dao.JdbiLanguageCode;
 import org.broadinstitute.ddp.db.dao.JdbiPdfTemplates;
 import org.broadinstitute.ddp.db.dao.JdbiRevision;
 import org.broadinstitute.ddp.db.dao.JdbiStudyPdfMapping;
 import org.broadinstitute.ddp.db.dao.PdfDao;
 import org.broadinstitute.ddp.db.dto.ActivityVersionDto;
+import org.broadinstitute.ddp.db.dto.LanguageDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.db.dto.pdf.PdfTemplateDto;
 import org.broadinstitute.ddp.exception.DDPException;
@@ -53,8 +54,6 @@ public class PdfBuilder {
     private Config cfg;
     private StudyDto studyDto;
     private long adminUserId;
-    private Long defaultLanguageCodeId;
-    private String defaultLanguageCode = "en";
 
     public PdfBuilder(Path dirPath, Config cfg, StudyDto studyDto, long adminUserId) {
         this.dirPath = dirPath;
@@ -141,9 +140,6 @@ public class PdfBuilder {
         if (!cfg.hasPath("pdfs")) {
             return;
         }
-
-        defaultLanguageCodeId = handle.attach(JdbiLanguageCode.class).getLanguageCodeId(defaultLanguageCode);
-
         for (Config pdfCfg : cfg.getConfigList("pdfs")) {
             insertPdfConfig(handle, pdfCfg);
         }
@@ -274,15 +270,14 @@ public class PdfBuilder {
             throw new DDPException(e);
         }
 
-        Long languageCodeId;
+        Long languageCodeId = LanguageStore.getDefault().getId();
         String languageCode = ConfigUtil.getStrIfPresent(fileCfg, "language");
         if (languageCode != null) {
-            languageCodeId = handle.attach(JdbiLanguageCode.class).getLanguageCodeId(languageCode);
-            if (languageCodeId == null) {
+            LanguageDto languageDto =  LanguageStore.get(languageCode);
+            if (languageDto == null) {
                 throw new DDPException("Invalid PDF language code: " + languageCode);
             }
-        } else {
-            languageCodeId = defaultLanguageCodeId;
+            languageCodeId = languageDto.getId();
         }
 
         String type = fileCfg.getString("type");
