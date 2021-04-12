@@ -129,4 +129,22 @@ public class ActivityInstanceUtil {
         long millisDiff = Instant.now().toEpochMilli() - createdAtMillis;
         return editTimeoutSec != null && millisDiff >= (editTimeoutSec * 1000L);
     }
+
+    /**
+     * An activity instance can be deleted if the definition allows deleting instances. And if it's the first instance,
+     * definition need to allow deleting the first instance as well.
+     *
+     * @param canDeleteInstance      whether instances can be deleted, based on activity definition
+     * @param canDeleteFirstInstance whether the first instance can be deleted, based on activity definition, will
+     *                               default to true if not set
+     * @param isFirstInstance        whether the instance is the first one or not
+     * @return true if activity instance can be deleted
+     */
+    public static boolean computeCanDelete(boolean canDeleteInstance, Boolean canDeleteFirstInstance, boolean isFirstInstance) {
+        boolean canDelete = canDeleteInstance;
+        if (canDeleteInstance && isFirstInstance) {
+            canDelete = canDeleteFirstInstance != null ? canDeleteFirstInstance : true;
+        }
+        return canDelete;
+    }
 }
