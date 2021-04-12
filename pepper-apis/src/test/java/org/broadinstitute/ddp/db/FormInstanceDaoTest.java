@@ -8,10 +8,12 @@ import static org.junit.Assert.assertTrue;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Function;
 
 import org.broadinstitute.ddp.TxnAwareBaseTest;
 import org.broadinstitute.ddp.content.ContentStyle;
+import org.broadinstitute.ddp.content.I18nContentRenderer;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dao.JdbiUser;
@@ -19,10 +21,15 @@ import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
 import org.broadinstitute.ddp.model.activity.definition.i18n.Translation;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.activity.definition.template.TemplateVariable;
+import org.broadinstitute.ddp.model.activity.instance.ActivityInstance;
 import org.broadinstitute.ddp.model.activity.instance.FormInstance;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
 import org.broadinstitute.ddp.model.activity.types.FormType;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
+import org.broadinstitute.ddp.pex.PexInterpreter;
+import org.broadinstitute.ddp.pex.TreeWalkInterpreter;
+import org.broadinstitute.ddp.service.ActivityInstanceService;
+import org.broadinstitute.ddp.service.actvityinstancebuilder.context.AIBuilderCustomizationFlags;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
 import org.jdbi.v3.core.Handle;
 import org.junit.BeforeClass;
@@ -35,11 +42,16 @@ public class FormInstanceDaoTest extends TxnAwareBaseTest {
     private static String studyGuid;
 
     private static FormInstanceDao dao;
+    private static ActivityInstanceService activityInstanceService;
 
     @BeforeClass
     public static void setup() {
         SectionBlockDao sectionBlockDao = new SectionBlockDao();
         dao = FormInstanceDao.fromDaoAndConfig(sectionBlockDao, sqlConfig);
+        PexInterpreter interpreter = new TreeWalkInterpreter();
+        I18nContentRenderer i18nContentRenderer = new I18nContentRenderer();
+        activityInstanceService = new ActivityInstanceService(
+                new org.broadinstitute.ddp.db.ActivityInstanceDao(dao), interpreter, i18nContentRenderer);
         TransactionWrapper.useTxn(handle -> {
             data = TestDataSetupUtil.generateBasicUserTestData(handle);
             userGuid = data.getTestingUser().getUserGuid();
@@ -70,11 +82,18 @@ public class FormInstanceDaoTest extends TxnAwareBaseTest {
         TransactionWrapper.useTxn(handle -> {
             FormActivityDef formDef = insertDummyActivity(handle, userGuid, studyGuid);
             String instanceGuid = insertNewInstance(handle, formDef.getActivityId(), userGuid);
-            FormInstance enInst = dao.getBaseFormByGuid(handle, instanceGuid, "en");
-            assertNotNull(enInst);
-            testTranslation(formDef, FormActivityDef::getTranslatedSubtitles, enInst.getSubtitle(),  "en");
-            FormInstance ruInst = dao.getBaseFormByGuid(handle, instanceGuid, "ru");
-            testTranslation(formDef, FormActivityDef::getTranslatedSubtitles, ruInst.getSubtitle(),  "ru");
+
+            Optional<ActivityInstance> enInst = activityInstanceService.buildInstanceFromDefinition(
+                    handle, userGuid, userGuid, studyGuid, instanceGuid, "en", null,
+                    AIBuilderCustomizationFlags.create().setCreateFormInstance(true).setRenderFormTitleSubtitle(true));
+            assertNotNull(enInst.get());
+            testTranslation(formDef, FormActivityDef::getTranslatedSubtitles, enInst.get().getSubtitle(), "en");
+
+            Optional<ActivityInstance> ruInst = activityInstanceService.buildInstanceFromDefinition(
+                    handle, userGuid, userGuid, studyGuid, instanceGuid, "ru", null,
+                    AIBuilderCustomizationFlags.create().setCreateFormInstance(true).setRenderFormTitleSubtitle(true));
+            assertNotNull(ruInst.get());
+            testTranslation(formDef, FormActivityDef::getTranslatedSubtitles, ruInst.get().getSubtitle(), "ru");
             handle.rollback();
         });
     }
@@ -84,12 +103,17 @@ public class FormInstanceDaoTest extends TxnAwareBaseTest {
         TransactionWrapper.useTxn(handle -> {
             FormActivityDef formDef = insertDummyActivityWithoutSubtitle(handle, userGuid, studyGuid);
             String instanceGuid = insertNewInstance(handle, formDef.getActivityId(), userGuid);
-            FormInstance enInst = dao.getBaseFormByGuid(handle, instanceGuid, "en");
+            Optional<ActivityInstance> enInst = activityInstanceService.buildInstanceFromDefinition(
+                    handle, userGuid, userGuid, studyGuid, instanceGuid, "en", null,
+                    AIBuilderCustomizationFlags.create().setCreateFormInstance(true).setRenderFormTitleSubtitle(true));
             assertNotNull(enInst);
-            assertNull(enInst.getSubtitle());
-            testTranslation(formDef, FormActivityDef::getTranslatedTitles, enInst.getTitle(),  "en");
-            FormInstance ruInst = dao.getBaseFormByGuid(handle, instanceGuid, "ru");
-            testTranslation(formDef, FormActivityDef::getTranslatedTitles, ruInst.getTitle(),  "ru");
+            assertNull(enInst.get().getSubtitle());
+            testTranslation(formDef, FormActivityDef::getTranslatedTitles, enInst.get().getTitle(), "en");
+
+            Optional<ActivityInstance> ruInst = activityInstanceService.buildInstanceFromDefinition(
+                    handle, userGuid, userGuid, studyGuid, instanceGuid, "ru", null,
+                    AIBuilderCustomizationFlags.create().setCreateFormInstance(true).setRenderFormTitleSubtitle(true));
+            testTranslation(formDef, FormActivityDef::getTranslatedTitles, ruInst.get().getTitle(), "ru");
             handle.rollback();
         });
     }
@@ -109,7 +133,7 @@ public class FormInstanceDaoTest extends TxnAwareBaseTest {
     private void testTranslation(
             FormActivityDef form,
             Function<FormActivityDef,
-            List<Translation>> formDefListMethod,
+                    List<Translation>> formDefListMethod,
             String expectedValue,
             String languageCode
     ) {

@@ -24,7 +24,7 @@ import org.broadinstitute.ddp.model.activity.instance.validation.NumOptionsSelec
 import org.broadinstitute.ddp.model.activity.instance.validation.RegexRule;
 import org.broadinstitute.ddp.model.activity.instance.validation.RequiredRule;
 import org.broadinstitute.ddp.model.activity.instance.validation.Rule;
-import org.broadinstitute.ddp.service.actvityinstancebuilder.AIBuilderContext;
+import org.broadinstitute.ddp.service.actvityinstancebuilder.context.AIBuilderContext;
 
 /**
  * Creates {@link Rule}

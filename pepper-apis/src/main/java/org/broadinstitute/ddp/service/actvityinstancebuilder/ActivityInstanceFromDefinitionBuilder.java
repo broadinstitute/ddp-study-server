@@ -4,7 +4,6 @@ import static org.broadinstitute.ddp.model.activity.types.ActivityType.FORMS;
 
 import java.util.Optional;
 
-import org.broadinstitute.ddp.content.ContentStyle;
 import org.broadinstitute.ddp.db.ActivityDefStore;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
@@ -16,6 +15,10 @@ import org.broadinstitute.ddp.model.activity.instance.FormResponse;
 import org.broadinstitute.ddp.service.actvityinstancebuilder.block.FormBlockCreator;
 import org.broadinstitute.ddp.service.actvityinstancebuilder.block.question.QuestionCreator;
 import org.broadinstitute.ddp.service.actvityinstancebuilder.block.question.ValidationRuleCreator;
+import org.broadinstitute.ddp.service.actvityinstancebuilder.context.AIBuilderContext;
+import org.broadinstitute.ddp.service.actvityinstancebuilder.context.AIBuilderCustomizationFlags;
+import org.broadinstitute.ddp.service.actvityinstancebuilder.context.AIBuilderExtraParams;
+import org.broadinstitute.ddp.service.actvityinstancebuilder.context.AICreatorsFactory;
 import org.broadinstitute.ddp.util.ActivityInstanceUtil;
 import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
@@ -29,7 +32,8 @@ import org.slf4j.LoggerFactory;
  * {@link ActivityDefStore} cache.
  *
  * <p>Main method of this class is
- * {@link #buildActivityInstance(Handle, String, String, String, String, ContentStyle, String)}
+ * {@link #buildActivityInstance(Handle, String, String, String, String, String,
+ *      AIBuilderExtraParams, AIBuilderCustomizationFlags)}
  * In this method executed the following steps:
  * <ul>
  *     <li>find {@link FormResponse} by activityInstanceGuid (this object creates answers list);</li>
@@ -82,17 +86,29 @@ public class ActivityInstanceFromDefinitionBuilder {
             String operatorGuid,
             String studyGuid,
             String instanceGuid,
-            ContentStyle style,
-            String isoLangCode
+            String isoLangCode,
+            AIBuilderExtraParams aiBuilderExtraParams,
+            AIBuilderCustomizationFlags aiBuilderCustomizationFlags
     ) {
+        if (userGuid == null || studyGuid == null || instanceGuid == null || isoLangCode == null) {
+            throw new IllegalArgumentException("None of these parameters should be null: userGuid, studyGuid, instanceGuid, isoLangCode");
+        }
+        if (aiBuilderCustomizationFlags == null) {
+            throw new IllegalArgumentException("Parameter aiBuilderCustomizationFlags should not be null");
+        }
+        if (aiBuilderCustomizationFlags.isRenderContent() && aiBuilderExtraParams.getStyle() == null) {
+            throw new IllegalArgumentException("If content should be rendered then parameter 'style' cannot be null");
+        }
+
         LOG.debug("Start ActivityInstance building from definition (ActivityDefStore). StudyGuid={}, instanceGuid={}",
                 studyGuid, instanceGuid);
+
         var formResponse = ActivityInstanceUtil.getFormResponse(handle, instanceGuid);
         if (formResponse.isEmpty()) {
-            LOG.warn("Error reading form activity by guid=" + instanceGuid);
+            LOG.debug("Error reading form activity by guid=" + instanceGuid);
             return Optional.empty();
         } else {
-            FormActivityDef formActivityDef = ActivityInstanceUtil.getActivityDef(
+            var formActivityDef = ActivityInstanceUtil.getActivityDef(
                     handle,
                     ActivityDefStore.getInstance(),
                     studyGuid,
@@ -106,9 +122,10 @@ public class ActivityInstanceFromDefinitionBuilder {
                                 userGuid,
                                 operatorGuid,
                                 isoLangCode,
-                                style,
                                 formActivityDef,
-                                formResponse.get())
+                                formResponse.get(),
+                                aiBuilderExtraParams,
+                                aiBuilderCustomizationFlags)
                 );
                 LOG.debug("ActivityInstance built from definition SUCCESSFULLY.");
                 return Optional.of(activityInstance);

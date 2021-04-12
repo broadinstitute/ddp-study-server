@@ -1,6 +1,8 @@
-package org.broadinstitute.ddp.service.actvityinstancebuilder;
+package org.broadinstitute.ddp.service.actvityinstancebuilder.context;
 
 import org.broadinstitute.ddp.model.activity.instance.ActivityInstance;
+import org.broadinstitute.ddp.service.actvityinstancebuilder.FormSectionCreator;
+import org.broadinstitute.ddp.service.actvityinstancebuilder.SectionIconCreator;
 import org.broadinstitute.ddp.service.actvityinstancebuilder.block.FormBlockCreator;
 import org.broadinstitute.ddp.service.actvityinstancebuilder.block.FormBlockCreatorHelper;
 import org.broadinstitute.ddp.service.actvityinstancebuilder.block.question.PicklistCreatorHelper;

@@ -8,24 +8,54 @@ import static org.broadinstitute.ddp.util.TranslationUtil.extractOptionalActivit
 import org.broadinstitute.ddp.content.ContentStyle;
 import org.broadinstitute.ddp.content.Renderable;
 import org.broadinstitute.ddp.model.activity.instance.FormInstance;
+import org.broadinstitute.ddp.model.activity.instance.FormSection;
+import org.broadinstitute.ddp.service.actvityinstancebuilder.context.AIBuilderContext;
+import org.broadinstitute.ddp.service.actvityinstancebuilder.context.AIBuilderCustomizationFlags;
 import org.broadinstitute.ddp.service.actvityinstancebuilder.util.RendererInitialContextHandler;
 import org.broadinstitute.ddp.service.actvityinstancebuilder.util.TemplateHandler;
 import org.broadinstitute.ddp.util.ActivityInstanceUtil;
 
 /**
- * Creates {@link FormInstance}
+ * Creates {@link FormInstance}, it's child elements ({@link FormSection}-s),
+ * renders contents, updates block statuses, etc.
+ *
+ * <p>NOTE: it is possible to specify which steps of {@link FormInstance} building to execute -
+ * this can be done with using of {@link AIBuilderCustomizationFlags}.<br>
+ * For example, it could be excluded rendering step
+ * by setting {@link AIBuilderCustomizationFlags#setRenderContent(boolean)} to false.<br>
+ * or, it could initially disabled all steps (by call static creator: {@link AIBuilderCustomizationFlags#create()}
+ * and then enabled only {@link FormInstance} creation - by setting
+ * {@link AIBuilderCustomizationFlags#setCreateFormInstance(boolean)} (boolean)} to true.<br>
+ *
+ * @see AIBuilderCustomizationFlags
  */
 public class FormInstanceCreator {
 
     public FormInstance createFormInstance(AIBuilderContext ctx) {
         RendererInitialContextHandler.createRendererInitialContext(ctx);
-        var formInstance = constructFormInstance(ctx);
-        addChildren(ctx, formInstance);
-        renderContent(formInstance, ctx.getRenderedTemplates()::get, ctx.getStyle());
-        RendererInitialContextHandler.addInstanceToRendererInitialContext(ctx, formInstance);
-        renderTitleAndSubtitle(ctx, formInstance);
-        formInstance.setDisplayNumbers();
-        updateBlockStatuses(ctx, formInstance);
+
+        FormInstance formInstance = null;
+
+        if (ctx.getAiBuilderCustomizationParams().isCreateFormInstance()) {
+            formInstance = constructFormInstance(ctx);
+        }
+        if (ctx.getAiBuilderCustomizationParams().isAddChildren()) {
+            addChildren(ctx, formInstance);
+        }
+        if (ctx.getAiBuilderCustomizationParams().isRenderContent()) {
+            renderContent(formInstance, ctx.getRenderedTemplates()::get, ctx.getAiBuilderExtraParams().getStyle());
+        }
+        if (ctx.getAiBuilderCustomizationParams().isRenderFormTitleSubtitle()) {
+            RendererInitialContextHandler.addInstanceToRendererInitialContext(ctx, formInstance);
+            renderTitleAndSubtitle(ctx, formInstance);
+        }
+        if (ctx.getAiBuilderCustomizationParams().isSetDisplayNumbers()) {
+            formInstance.setDisplayNumbers();
+        }
+        if (ctx.getAiBuilderCustomizationParams().isUpdateBlockStatuses()) {
+            updateBlockStatuses(ctx, formInstance);
+        }
+
         return formInstance;
     }
 
@@ -93,7 +123,7 @@ public class FormInstanceCreator {
                 ctx.getUserGuid(),
                 ctx.getOperatorGuid(),
                 ctx.getFormResponse().getGuid(),
-                null);
+                ctx.getAiBuilderExtraParams().getInstanceSummary());
     }
 
     private void renderContent(FormInstance formInstance, Renderable.Provider<String> rendered, ContentStyle style) {

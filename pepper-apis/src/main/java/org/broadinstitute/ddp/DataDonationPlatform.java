@@ -481,7 +481,7 @@ public class DataDonationPlatform {
                 responseSerializer);
         put(
                 API.USER_ACTIVITY_ANSWERS,
-                new PutFormAnswersRoute(workflowService, activityValidationService, formInstanceDao, interpreter),
+                new PutFormAnswersRoute(workflowService, actInstService, activityValidationService, formInstanceDao, interpreter),
                 responseSerializer
         );
         post(API.USER_ACTIVITY_UPLOADS, new CreateUserActivityUploadRoute(fileUploadService), responseSerializer);

@@ -2,7 +2,7 @@ package org.broadinstitute.ddp.service.actvityinstancebuilder.util;
 
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.activity.instance.ActivityInstance;
-import org.broadinstitute.ddp.service.actvityinstancebuilder.AIBuilderContext;
+import org.broadinstitute.ddp.service.actvityinstancebuilder.context.AIBuilderContext;
 
 public class TemplateHandler {
 

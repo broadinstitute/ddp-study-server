@@ -262,6 +262,7 @@ public class PutFormAnswersRouteStandaloneTest extends IntegrationTestSuite.Test
             }
             transitionIdsToDelete.clear();
         });
+        ActivityDefStore.getInstance().clear();
     }
 
     @Test
@@ -293,6 +294,7 @@ public class PutFormAnswersRouteStandaloneTest extends IntegrationTestSuite.Test
             assertEquals(1, handle.attach(JdbiExpression.class).updateById(exprId, "true"));
             insertNewInstanceAndDeferCleanup(handle, form.getActivityId());
         });
+        ActivityDefStore.getInstance().clear();
         try {
             given().auth().oauth2(token)
                     .pathParam("instanceGuid", parentInstanceDto.getGuid())
@@ -420,7 +422,7 @@ public class PutFormAnswersRouteStandaloneTest extends IntegrationTestSuite.Test
     }
 
     @Test
-    public void testSetStatusToCompleteForActivityInstanceWithIncompleteAnswers_Failure() {
+    public void testSetStatusToCompleteForActivityInstanceWithIncompleteAnswers_Failure() { //
         ActivityInstanceDto instanceDto = TransactionWrapper.withTxn(handle -> {
             long questionId = ((QuestionBlockDef) form.getSections().get(0).getBlocks().get(0)).getQuestion().getQuestionId();
             long revId = handle.attach(JdbiRevision.class).insertStart(Instant.now().toEpochMilli(), user.getUserId(), "make required");
@@ -474,6 +476,8 @@ public class PutFormAnswersRouteStandaloneTest extends IntegrationTestSuite.Test
             long exprId = conditionalBlock.getNested().get(0).getShownExprId();
             assertEquals(1, handle.attach(JdbiExpression.class).updateById(exprId, "true"));
         });
+
+        ActivityDefStore.getInstance().clear();
 
         given().auth().oauth2(token)
                 .pathParam("instanceGuid", instanceDto.getGuid())
@@ -596,7 +600,8 @@ public class PutFormAnswersRouteStandaloneTest extends IntegrationTestSuite.Test
         ActivityInstanceDto instanceDto = TransactionWrapper.withTxn(handle -> {
             long questionId =
                     ((QuestionBlockDef) compositeQuestionForm.getSections().get(0).getBlocks().get(0)).getQuestion().getQuestionId();
-            long revId = handle.attach(JdbiRevision.class).insertStart(Instant.now().toEpochMilli(), user.getUserId(), "make required");
+            long currTime = Instant.now().toEpochMilli() - 1000;
+            long revId = handle.attach(JdbiRevision.class).insertStart(currTime, user.getUserId(), "make required");
             handle.attach(QuestionDao.class).addRequiredRule(questionId, new RequiredRuleDef(null), revId);
             return insertNewInstanceAndDeferCleanup(handle, compositeQuestionForm.getActivityId());
         });
@@ -686,7 +691,8 @@ public class PutFormAnswersRouteStandaloneTest extends IntegrationTestSuite.Test
                     (CompositeQuestionDef) ((QuestionBlockDef) compositeQuestionForm.getSections().get(0).getBlocks().get(0)).getQuestion();
             //making second question required
             QuestionDef childQuestionToMakeRequired = questionDef.getChildren().get(1);
-            long revId = handle.attach(JdbiRevision.class).insertStart(Instant.now().toEpochMilli(), user.getUserId(), "make required");
+            long currTime = Instant.now().toEpochMilli() - 1000;
+            long revId = handle.attach(JdbiRevision.class).insertStart(currTime, user.getUserId(), "make required");
             handle.attach(QuestionDao.class).addRequiredRule(childQuestionToMakeRequired.getQuestionId(), new RequiredRuleDef(null), revId);
 
             ActivityInstanceDto newInstanceDto = insertNewInstanceAndDeferCleanup(handle, compositeQuestionForm.getActivityId());
@@ -705,7 +711,6 @@ public class PutFormAnswersRouteStandaloneTest extends IntegrationTestSuite.Test
                 .when().put(urlTemplate).then().assertThat()
                 .statusCode(422).contentType(ContentType.JSON)
                 .body("code", equalTo(ErrorCodes.QUESTION_REQUIREMENTS_NOT_MET));
-
     }
 
     @Test
@@ -725,6 +730,8 @@ public class PutFormAnswersRouteStandaloneTest extends IntegrationTestSuite.Test
 
         ActivityInstanceDto instanceDto = TransactionWrapper.withTxn(handle ->
                 insertNewInstanceAndDeferCleanup(handle, form.getActivityId()));
+
+        ActivityDefStore.getInstance().clear();
 
         given().auth().oauth2(token)
                 .pathParam("instanceGuid", instanceDto.getGuid())
@@ -818,7 +825,7 @@ public class PutFormAnswersRouteStandaloneTest extends IntegrationTestSuite.Test
                 null, null, null, null, null, 1L, null, null, null, false, false, false, false, 0);
         form.addBodySections(List.of(new FormSection(List.of(
                 new ComponentBlock(new MailingAddressComponent(1L, 1L, false, false, false))))));
-        new PutFormAnswersRoute(null, null, null, null)
+        new PutFormAnswersRoute(null, null, null, null, null)
                 .checkAddressRequirements(mockHandle, "", form);
         // all good!
     }
@@ -833,7 +840,7 @@ public class PutFormAnswersRouteStandaloneTest extends IntegrationTestSuite.Test
                 null, null, null, null, null, 1L, null, null, null, false, false, false, false, 0);
         form.addBodySections(List.of(new FormSection(List.of(
                 new ComponentBlock(new MailingAddressComponent(1L, 1L, false, true, false))))));
-        var route = new PutFormAnswersRoute(null, null, null, null);
+        var route = new PutFormAnswersRoute(null, null, null, null, null);
 
         var addr = new MailAddress("", "", "", "", "", "", "", "", "", "",
                 DsmAddressValidationStatus.DSM_INVALID_ADDRESS_STATUS, true);
@@ -865,7 +872,7 @@ public class PutFormAnswersRouteStandaloneTest extends IntegrationTestSuite.Test
                 null, null, null, null, null, 1L, null, null, null, false, false, false, false, 0);
         form.addBodySections(List.of(new FormSection(List.of(
                 new ComponentBlock(new MailingAddressComponent(1L, 1L, false, true, true))))));
-        var route = new PutFormAnswersRoute(null, null, null, null);
+        var route = new PutFormAnswersRoute(null, null, null, null, null);
 
         var addr = new MailAddress("", "", "", "", "", "", "", "", "", "",
                 DsmAddressValidationStatus.DSM_EASYPOST_SUGGESTED_ADDRESS_STATUS, true);
@@ -950,7 +957,7 @@ public class PutFormAnswersRouteStandaloneTest extends IntegrationTestSuite.Test
     }
 
     @Test
-    public void testStudyAdmin_hiddenInstance() {
+    public void testStudyAdmin_hiddenInstance() { //
         ActivityInstanceDto instanceDto = TransactionWrapper.withTxn(handle -> {
             ActivityInstanceDto dto = insertNewInstanceAndDeferCleanup(handle, form.getActivityId());
             assertEquals(1, handle.attach(ActivityInstanceDao.class)

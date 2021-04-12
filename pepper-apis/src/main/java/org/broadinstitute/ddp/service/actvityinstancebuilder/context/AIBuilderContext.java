@@ -1,10 +1,9 @@
-package org.broadinstitute.ddp.service.actvityinstancebuilder;
+package org.broadinstitute.ddp.service.actvityinstancebuilder.context;
 
 import java.util.HashMap;
 import java.util.Map;
 
 import org.broadinstitute.ddp.cache.LanguageStore;
-import org.broadinstitute.ddp.content.ContentStyle;
 import org.broadinstitute.ddp.content.I18nContentRenderer;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
 import org.broadinstitute.ddp.model.activity.instance.ActivityInstance;
@@ -28,9 +27,11 @@ public class AIBuilderContext {
     private final String operatorGuid;
     private final long langCodeId;
     private final String isoLangCode;
-    private final ContentStyle style;
     private final FormActivityDef formActivityDef;
     private final FormResponse formResponse;
+
+    private final AIBuilderExtraParams aiBuilderExtraParams;
+    private final AIBuilderCustomizationFlags aiBuilderCustomizationFlags;
 
     private final PexInterpreter interpreter = new TreeWalkInterpreter();
     private final I18nContentRenderer i18nContentRenderer = new I18nContentRenderer();
@@ -47,17 +48,20 @@ public class AIBuilderContext {
             String userGuid,
             String operatorGuid,
             String isoLangCode,
-            ContentStyle style,
             FormActivityDef formActivityDef,
-            FormResponse formResponse) {
+            FormResponse formResponse,
+            AIBuilderExtraParams aiBuilderExtraParams,
+            AIBuilderCustomizationFlags aiBuilderCustomizationFlags) {
         this.handle = handle;
         this.userGuid = userGuid;
-        this.operatorGuid = operatorGuid;
+        this.operatorGuid = operatorGuid == null ? userGuid : operatorGuid;
         this.isoLangCode = isoLangCode;
-        this.style = style;
         this.langCodeId = LanguageStore.get(isoLangCode).getId();
         this.formActivityDef = formActivityDef;
         this.formResponse = formResponse;
+
+        this.aiBuilderExtraParams = aiBuilderExtraParams == null ? AIBuilderExtraParams.create() : aiBuilderExtraParams;
+        this.aiBuilderCustomizationFlags = aiBuilderCustomizationFlags;
 
         this.previousInstanceId = ActivityInstanceUtil.getPreviousInstanceId(handle, formResponse.getId());
 
@@ -70,10 +74,6 @@ public class AIBuilderContext {
 
     public String getIsoLangCode() {
         return isoLangCode;
-    }
-
-    public ContentStyle getStyle() {
-        return style;
     }
 
     public long getLangCodeId() {
@@ -118,5 +118,13 @@ public class AIBuilderContext {
 
     public AICreatorsFactory creators() {
         return creatorsFactory;
+    }
+
+    public AIBuilderExtraParams getAiBuilderExtraParams() {
+        return aiBuilderExtraParams;
+    }
+
+    public AIBuilderCustomizationFlags getAiBuilderCustomizationParams() {
+        return aiBuilderCustomizationFlags;
     }
 }

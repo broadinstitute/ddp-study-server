@@ -5,6 +5,7 @@ import static org.broadinstitute.ddp.service.actvityinstancebuilder.util.Templat
 
 import org.broadinstitute.ddp.model.activity.definition.FormSectionDef;
 import org.broadinstitute.ddp.model.activity.instance.FormSection;
+import org.broadinstitute.ddp.service.actvityinstancebuilder.context.AIBuilderContext;
 
 /**
  * Creates {@link FormSection}
