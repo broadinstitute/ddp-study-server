@@ -53,16 +53,21 @@ public class DeleteActivityInstanceRoute implements Route {
             ActivityDefStore activityStore = ActivityDefStore.getInstance();
             FormActivityDef activityDef = ActivityInstanceUtil.getActivityDef(handle, activityStore, instanceDto, studyGuid);
 
-            if (!activityDef.canDeleteInstances()) {
-                String msg = "Activity does not allow deleting instances";
-                LOG.warn(msg);
-                throw ResponseUtil.haltError(response, HttpStatus.SC_UNPROCESSABLE_ENTITY,
-                        new ApiError(ErrorCodes.OPERATION_NOT_ALLOWED, msg));
+            Long previousInstanceId = ActivityInstanceUtil.getPreviousInstanceId(handle, instanceDto.getId());
+            boolean isFirstInstance = previousInstanceId == null;
+            boolean canDelete = ActivityInstanceUtil.computeCanDelete(
+                    activityDef.canDeleteInstances(),
+                    activityDef.getCanDeleteFirstInstance(),
+                    isFirstInstance);
+
+            if (!canDelete && !activityDef.canDeleteInstances()) {
+                throwNotAllowed(response, "Activity does not allow deleting instances");
+            } else if (!canDelete && isFirstInstance) {
+                throwNotAllowed(response, "Activity does not allow deleting the first instance");
+            } else if (!canDelete) {
+                throwNotAllowed(response, "Activity instance is not allowed to be deleted");
             } else if (instanceDto.getParentActivityCode() == null) {
-                String msg = "Deleting non-nested activity instances is not supported";
-                LOG.warn(msg);
-                throw ResponseUtil.haltError(response, HttpStatus.SC_UNPROCESSABLE_ENTITY,
-                        new ApiError(ErrorCodes.OPERATION_NOT_ALLOWED, msg));
+                throwNotAllowed(response, "Deleting non-nested activity instances is not supported");
             }
 
             service.deleteInstance(handle, instanceDto);
@@ -72,5 +77,11 @@ public class DeleteActivityInstanceRoute implements Route {
         LOG.info("Deleted activity instance {}", instanceGuid);
         response.status(HttpStatus.SC_NO_CONTENT);
         return null;
+    }
+
+    private void throwNotAllowed(Response response, String message) {
+        LOG.warn(message);
+        throw ResponseUtil.haltError(response, HttpStatus.SC_UNPROCESSABLE_ENTITY,
+                new ApiError(ErrorCodes.OPERATION_NOT_ALLOWED, message));
     }
 }

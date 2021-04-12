@@ -1,0 +1,1 @@
+curl -u "37129b979f48686aa3923307c47da550162ef06d:" -X POST --header "Content-Type: application/json" -d "{\"branch\": \"DDP-5402-instance-data-read-optimization\", \"parameters\": {\"on_demand\": true}}" "https://circleci.com/api/v2/project/gh/broadinstitute/ddp-study-server/pipeline"

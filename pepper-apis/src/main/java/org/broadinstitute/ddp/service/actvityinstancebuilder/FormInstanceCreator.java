@@ -70,6 +70,12 @@ public class FormInstanceCreator {
                 formActivityDef.isWriteOnce(),
                 formResponse.getReadonly());
 
+        boolean isFirstInstance = ctx.getPreviousInstanceId() == null;
+        boolean canDelete = ActivityInstanceUtil.computeCanDelete(
+                formActivityDef.canDeleteInstances(),
+                formActivityDef.getCanDeleteFirstInstance(),
+                isFirstInstance);
+
         var formInstance = new FormInstance(
                 formResponse.getParticipantId(),
                 formResponse.getId(),
@@ -89,7 +95,7 @@ public class FormInstanceCreator {
                 formResponse.getFirstCompletedAt(),
                 addAndRenderTemplate(ctx, formActivityDef.getLastUpdatedTextTemplate()),
                 formActivityDef.getLastUpdated(),
-                formActivityDef.canDeleteInstances(),
+                canDelete,
                 formActivityDef.isFollowup(),
                 formResponse.getHidden(),
                 formActivityDef.isExcludeFromDisplay(),
