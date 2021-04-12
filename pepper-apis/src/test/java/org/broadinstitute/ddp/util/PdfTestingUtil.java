@@ -32,6 +32,7 @@ import com.itextpdf.layout.property.TextAlignment;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import org.apache.commons.io.IOUtils;
+import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
@@ -278,6 +279,10 @@ public final class PdfTestingUtil {
             CustomTemplate customTemplate = new CustomTemplate(testPdfBytes);
             customTemplate.getSubstitutions().addAll(pdfInfo.getCustomPdfSubstitutions());
 
+            //add spanish language template
+            CustomTemplate customTemplateSpanish = new CustomTemplate(testPdfBytes, LanguageStore.get("es").getId());
+            customTemplateSpanish.getSubstitutions().addAll(pdfInfo.getCustomPdfSubstitutions());
+
             PhysicianInstitutionTemplate institutionTemplate = new PhysicianInstitutionTemplate(
                     testPdfBytes, InstitutionType.INSTITUTION,
                     NAME_FIELD_NAME, INSTITUTION_FIELD_NAME, CITY_FIELD_NAME, STATE_FIELD_NAME);
@@ -363,6 +368,7 @@ public final class PdfTestingUtil {
 
 
             //adding extra physician row to make sure can reuse single input stream to render the templates for multiple dtos
+            //extra physician is a additional page in generated pdf.
             fieldPostFix = "_1";
             Map<String, String> physicianValues = pdfInfo.getExpectedValuesByInstitutionType().get(InstitutionType.PHYSICIAN);
             String institutionName = TestMedicalProviderData.INSTITUTION_NAME;
@@ -410,6 +416,7 @@ public final class PdfTestingUtil {
             templates.add(biopsyTemplate);
             templates.add(customTemplate);
             templates.add(addressTemplate);
+            templates.add(customTemplateSpanish);
 
             PdfDao pdfDao = handle.attach(PdfDao.class);
             pdfInfo.setConfigurationId(pdfDao.insertNewConfig(config, templates));

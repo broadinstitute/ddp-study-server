@@ -23,7 +23,7 @@ public final class MailingAddressTemplate extends PdfTemplate {
     private String phonePlaceholder;
 
     public MailingAddressTemplate(PdfTemplateDto dto, MailingAddressTemplateDto templateDto) {
-        super(dto.getId(), MAILING_ADDRESS, dto.getBlob());
+        super(dto.getId(), MAILING_ADDRESS, dto.getBlob(), dto.getLanguageCodeId());
         if (dto.getType() != MAILING_ADDRESS) {
             throw new IllegalArgumentException("mismatched pdf template type " + dto.getType());
         }
@@ -42,8 +42,9 @@ public final class MailingAddressTemplate extends PdfTemplate {
     public MailingAddressTemplate(byte[] rawBytes, String firstNamePlaceholder, String lastNamePlaceholder,
                                   String proxyFirstNamePlaceholder, String proxyLastNamePlaceholder,
                                   String streetPlaceholder, String cityPlaceholder, String statePlaceholder,
-                                  String zipPlaceholder, String countryPlaceholder, String phonePlaceholder) {
-        super(MAILING_ADDRESS, rawBytes);
+                                  String zipPlaceholder, String countryPlaceholder, String phonePlaceholder,
+                                  Long languageCodeId) {
+        super(MAILING_ADDRESS, rawBytes, languageCodeId);
         this.firstNamePlaceholder = firstNamePlaceholder;
         this.lastNamePlaceholder = lastNamePlaceholder;
         this.proxyFirstNamePlaceholder = proxyFirstNamePlaceholder;
@@ -54,6 +55,16 @@ public final class MailingAddressTemplate extends PdfTemplate {
         this.zipPlaceholder = zipPlaceholder;
         this.countryPlaceholder = countryPlaceholder;
         this.phonePlaceholder = phonePlaceholder;
+    }
+
+    public MailingAddressTemplate(byte[] rawBytes, String firstNamePlaceholder, String lastNamePlaceholder,
+                                  String proxyFirstNamePlaceholder, String proxyLastNamePlaceholder,
+                                  String streetPlaceholder, String cityPlaceholder, String statePlaceholder,
+                                  String zipPlaceholder, String countryPlaceholder, String phonePlaceholder) {
+        this(rawBytes, firstNamePlaceholder, lastNamePlaceholder,
+                proxyFirstNamePlaceholder, proxyLastNamePlaceholder,
+                streetPlaceholder, cityPlaceholder, statePlaceholder,
+                zipPlaceholder, countryPlaceholder, phonePlaceholder, null);
     }
 
     public String getFirstNamePlaceholder() {

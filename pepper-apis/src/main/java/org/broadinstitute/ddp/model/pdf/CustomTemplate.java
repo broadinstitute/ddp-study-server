@@ -12,7 +12,7 @@ public final class CustomTemplate extends PdfTemplate {
     private List<PdfSubstitution> substitutions = new ArrayList<>();
 
     public CustomTemplate(PdfTemplateDto dto) {
-        super(dto.getId(), CUSTOM, dto.getBlob());
+        super(dto.getId(), CUSTOM, dto.getBlob(), dto.getLanguageCodeId());
         if (dto.getType() != CUSTOM) {
             throw new IllegalArgumentException("mismatched pdf template type " + dto.getType());
         }
@@ -20,6 +20,10 @@ public final class CustomTemplate extends PdfTemplate {
 
     public CustomTemplate(byte[] rawBytes) {
         super(CUSTOM, rawBytes);
+    }
+
+    public CustomTemplate(byte[] rawBytes, Long languageCodeId) {
+        super(CUSTOM, rawBytes, languageCodeId);
     }
 
     public List<PdfSubstitution> getSubstitutions() {

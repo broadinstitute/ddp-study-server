@@ -16,7 +16,7 @@ public interface JdbiPdfTemplates extends SqlObject {
     int updatePdfBaseTemplate(@Bind("id") long id, @Bind("template") byte[] template);
 
     // study-builder
-    @SqlQuery("select pbt.pdf_base_template_id, pbt.template, ptt.pdf_template_type_code"
+    @SqlQuery("select pbt.pdf_base_template_id, pbt.template, pbt.language_code_id, ptt.pdf_template_type_code"
             + " from pdf_base_template as pbt"
             + " join pdf_template_type as ptt on ptt.pdf_template_type_id = pbt.pdf_template_type_id"
             + " join pdf_physician_institution_template as ppit on ppit.pdf_base_template_id = pbt.pdf_base_template_id"
@@ -30,7 +30,7 @@ public interface JdbiPdfTemplates extends SqlObject {
             @Bind("studyGuid") String studyGuid, @Bind("instType") String instType);
 
     // study-builder
-    @SqlQuery("select pbt.pdf_base_template_id, pbt.template, ptt.pdf_template_type_code"
+    @SqlQuery("select pbt.pdf_base_template_id, pbt.template, pbt.language_code_id, ptt.pdf_template_type_code"
             + " from pdf_base_template as pbt"
             + " join pdf_template_type as ptt on ptt.pdf_template_type_id = pbt.pdf_template_type_id"
             + " join pdf_custom_template as pct on pct.pdf_base_template_id = pbt.pdf_base_template_id"
@@ -44,7 +44,7 @@ public interface JdbiPdfTemplates extends SqlObject {
     Optional<PdfTemplateDto> getCustomPdfTemplateByStudyAndType(@Bind("studyGuid") String studyGuid, @Bind("mapType") String mapType);
 
     // study-builder
-    @SqlQuery("select pbt.pdf_base_template_id, pbt.template, ptt.pdf_template_type_code"
+    @SqlQuery("select pbt.pdf_base_template_id, pbt.template, pbt.language_code_id, ptt.pdf_template_type_code"
             + " from pdf_base_template as pbt"
             + " join pdf_template_type as ptt on ptt.pdf_template_type_id = pbt.pdf_template_type_id"
             + " join pdf_mailing_address_template as pat on pat.pdf_base_template_id = pbt.pdf_base_template_id"

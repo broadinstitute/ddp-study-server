@@ -283,6 +283,7 @@ public class PdfGenerationServiceTest extends TxnAwareBaseTest {
                                 handle));
         PdfDocument sourceDoc = new PdfDocument(new PdfReader(docStream),
                 new PdfWriter(new ByteArrayOutputStream()));
+        assertEquals(sourceDoc.getNumberOfPages(), 6); //spanish custom template/page ignored
         PdfAcroForm form = PdfAcroForm.getAcroForm(sourceDoc, true);
         form.setGenerateAppearance(true);
         Map<String, PdfFormField> fields = form.getFormFields();

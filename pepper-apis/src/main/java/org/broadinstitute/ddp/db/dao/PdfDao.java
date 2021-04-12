@@ -75,7 +75,12 @@ public interface PdfDao extends SqlObject {
 
     default long insertTemplate(PdfTemplate template) {
         PdfSql pdfSql = getPdfSql();
-        long templateId = pdfSql.insertBaseTemplate(template.getRawBytes(), template.getType());
+        long templateId;
+        if (template.getLanguageCodeId() != null) {
+            templateId = pdfSql.insertBaseTemplate(template.getRawBytes(), template.getType(), template.getLanguageCodeId());
+        } else {
+            templateId = pdfSql.insertBaseTemplate(template.getRawBytes(), template.getType());
+        }
         template.setId(templateId);
         switch (template.getType()) {
             case MAILING_ADDRESS:
@@ -343,6 +348,10 @@ public interface PdfDao extends SqlObject {
     @UseStringTemplateSqlLocator
     @SqlQuery("findTemplateIdsByVersionId")
     List<Long> findTemplateIdsByVersionId(@Bind("versionId") long versionId);
+
+    @UseStringTemplateSqlLocator
+    @SqlQuery("findTemplateIdsByVersionIdAndLanguageCodeId")
+    List<Long> findTemplateIdsByVersionIdAndLanguageCodeId(@Bind("versionId") long versionId, @Bind("languageCodeId") long languageCodeId);
 
     default Optional<PdfTemplate> findFullTemplateByTemplateId(long templateId) {
         Optional<PdfTemplate> optionalTemplate = findBaseTemplateByTemplateId(templateId);
