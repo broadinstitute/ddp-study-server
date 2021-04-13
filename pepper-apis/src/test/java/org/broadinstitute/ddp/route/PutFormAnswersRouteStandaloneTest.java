@@ -452,7 +452,7 @@ public class PutFormAnswersRouteStandaloneTest extends IntegrationTestSuite.Test
         }
     }
 
-    @Test  //
+    @Test
     public void testSetStatusToCompleteForActivityInstanceWithIncompleteAnswers_Failure() {
         ActivityInstanceDto instanceDto = TransactionWrapper.withTxn(handle -> {
             long questionId = ((QuestionBlockDef) form.getSections().get(0).getBlocks().get(0)).getQuestion().getQuestionId();
@@ -984,7 +984,7 @@ public class PutFormAnswersRouteStandaloneTest extends IntegrationTestSuite.Test
         assertEquals(1, handle.attach(JdbiWorkflowTransition.class).updateIsActiveById(transition.getId(), false));
     }
 
-    @Test //
+    @Test
     public void testStudyAdmin_hiddenInstance() {
         ActivityInstanceDto instanceDto = TransactionWrapper.withTxn(handle -> {
             ActivityInstanceDto dto = insertNewInstanceAndDeferCleanup(handle, form.getActivityId());

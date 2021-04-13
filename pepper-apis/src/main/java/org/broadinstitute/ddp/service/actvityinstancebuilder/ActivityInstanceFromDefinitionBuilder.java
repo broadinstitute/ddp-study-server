@@ -177,6 +177,7 @@ public class ActivityInstanceFromDefinitionBuilder {
                 context.setFailedMessage("Cannot build ActivityInstance of type other than FORMS");
                 context.setFailedStep(BUILD_FORM_INSTANCE);
             } else {
+                RendererInitialContextHandler.createRendererInitialContext(context);
                 var formInstance = context.creators().getFormInstanceCreator().createFormInstance(context);
                 context.setFormInstance(formInstance);
 
@@ -189,7 +190,7 @@ public class ActivityInstanceFromDefinitionBuilder {
     public ActivityInstanceFromDefinitionBuilder buildFormChildren() {
         if (checkStep(BUILD_FORM_INSTANCE, BUILD_FORM_CHILDREN)) {
 
-            context.creators().getFormInstanceCreator().addChildren(context);
+            context.creators().getFormInstanceCreatorHelper().addChildren(context);
 
             context.setBuildStep(BUILD_FORM_CHILDREN);
         }
@@ -200,7 +201,7 @@ public class ActivityInstanceFromDefinitionBuilder {
         if (checkStep(BUILD_FORM_INSTANCE, RENDER_FORM_TITLES)) {
 
             RendererInitialContextHandler.addInstanceToRendererInitialContext(context, context.getFormInstance());
-            context.creators().getFormInstanceCreator().renderTitleAndSubtitle(context);
+            context.creators().getFormInstanceCreatorHelper().renderTitleAndSubtitle(context);
 
             context.setBuildStep(RENDER_FORM_TITLES);
         }
@@ -210,7 +211,7 @@ public class ActivityInstanceFromDefinitionBuilder {
     public ActivityInstanceFromDefinitionBuilder renderContent() {
         if (checkStep(BUILD_FORM_CHILDREN, RENDER_CONTENT)) {
 
-            context.creators().getFormInstanceCreator().renderContent(context, context.getRenderedTemplates()::get);
+            context.creators().getFormInstanceCreatorHelper().renderContent(context, context.getRenderedTemplates()::get);
 
             context.setBuildStep(RENDER_CONTENT);
         }
@@ -220,7 +221,7 @@ public class ActivityInstanceFromDefinitionBuilder {
     public ActivityInstanceFromDefinitionBuilder updateBlockStatuses() {
         if (checkStep(BUILD_FORM_CHILDREN, UPDATE_BLOCK_STATUSES)) {
 
-            context.creators().getFormInstanceCreator().updateBlockStatuses(context);
+            context.creators().getFormInstanceCreatorHelper().updateBlockStatuses(context);
 
             context.setBuildStep(UPDATE_BLOCK_STATUSES);
         }

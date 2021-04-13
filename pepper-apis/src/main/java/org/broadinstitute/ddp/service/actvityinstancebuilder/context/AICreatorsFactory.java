@@ -2,6 +2,7 @@ package org.broadinstitute.ddp.service.actvityinstancebuilder.context;
 
 import org.broadinstitute.ddp.model.activity.instance.ActivityInstance;
 import org.broadinstitute.ddp.service.actvityinstancebuilder.FormInstanceCreator;
+import org.broadinstitute.ddp.service.actvityinstancebuilder.FormInstanceCreatorHelper;
 import org.broadinstitute.ddp.service.actvityinstancebuilder.FormSectionCreator;
 import org.broadinstitute.ddp.service.actvityinstancebuilder.SectionIconCreator;
 import org.broadinstitute.ddp.service.actvityinstancebuilder.block.FormBlockCreator;
@@ -23,6 +24,7 @@ public class AICreatorsFactory {
     private final FormBlockCreator formBlockCreator = new FormBlockCreator();
     private final QuestionCreator questionCreator = new QuestionCreator();
 
+    private final FormInstanceCreatorHelper formInstanceCreatorHelper = new FormInstanceCreatorHelper();
     private final FormBlockCreatorHelper formBlockCreatorHelper = new FormBlockCreatorHelper();
     private final PicklistCreatorHelper picklistCreatorHelper = new PicklistCreatorHelper();
     private final QuestionCreatorHelper questionCreatorHelper = new QuestionCreatorHelper();
@@ -46,6 +48,10 @@ public class AICreatorsFactory {
 
     public QuestionCreator getQuestionCreator() {
         return questionCreator;
+    }
+
+    public FormInstanceCreatorHelper getFormInstanceCreatorHelper() {
+        return formInstanceCreatorHelper;
     }
 
     public FormBlockCreatorHelper getFormBlockCreatorHelper() {
