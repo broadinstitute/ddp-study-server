@@ -148,7 +148,7 @@ public class PdfGenerationService {
             //use study default language if exists
             StudyLanguageDao studyLanguageDao = handle.attach(StudyLanguageDao.class);
             List<Long> defaultLanguages = studyLanguageDao.getStudyLanguageSql().selectDefaultLanguageCodeId(configuration.getStudyId());
-            if (org.apache.commons.collections4.CollectionUtils.isNotEmpty(defaultLanguages)) {
+            if (!defaultLanguages.isEmpty()) {
                 languageId = defaultLanguages.get(0);
             } else {
                 //fallback to "en" as default
