@@ -22,9 +22,9 @@ emailTemplates:
     from: Prion <##STUDY_EMAIL##>
     resultUrl: '##SERVER_BASE_URL##/pepper/v1/post-password-reset?clientId={{ application.clientID }}'
     subject: >-
-      {% if user.user_metadata.language == "es" %} (es)Password Change Request
-      {% elsif user.user_metadata.language = "he" %} (he)Password Change Request
-      {% elsif user.user_metadata.language = "zh" %} (zh)Password Change Request
+      {% if user.user_metadata.language == "es" %} Solicitud de cambio de contraseña
+      {% elsif user.user_metadata.language == "he" %} בקשה להחלפת סיסמה
+      {% elsif user.user_metadata.language == "zh" %} 密码变更请求
       {% else %} Password Change Request {% endif %}
     urlLifetimeInSeconds: 432000
     syntax: liquid
