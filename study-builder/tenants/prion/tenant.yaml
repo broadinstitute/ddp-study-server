@@ -1,5 +1,6 @@
 tenant:
   default_directory: Username-Password-Authentication
+  picture_url: '##BASE_URL##/assets/images/project-logo-dark.svg'
 
 rules:
   - name: Register User in Pepper
