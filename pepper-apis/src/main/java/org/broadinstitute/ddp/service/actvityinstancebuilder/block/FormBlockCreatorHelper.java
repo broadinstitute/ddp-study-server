@@ -25,7 +25,7 @@ import org.broadinstitute.ddp.model.activity.instance.NestedActivityBlock;
 import org.broadinstitute.ddp.model.activity.instance.PhysicianComponent;
 import org.broadinstitute.ddp.model.activity.instance.QuestionBlock;
 import org.broadinstitute.ddp.model.activity.instance.question.Question;
-import org.broadinstitute.ddp.service.actvityinstancebuilder.AIBuilderContext;
+import org.broadinstitute.ddp.service.actvityinstancebuilder.context.AIBuilderContext;
 import org.broadinstitute.ddp.util.CollectionMiscUtil;
 
 public class FormBlockCreatorHelper {

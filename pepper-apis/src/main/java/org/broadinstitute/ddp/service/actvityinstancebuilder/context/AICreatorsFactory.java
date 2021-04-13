@@ -1,6 +1,9 @@
-package org.broadinstitute.ddp.service.actvityinstancebuilder;
+package org.broadinstitute.ddp.service.actvityinstancebuilder.context;
 
 import org.broadinstitute.ddp.model.activity.instance.ActivityInstance;
+import org.broadinstitute.ddp.service.actvityinstancebuilder.FormInstanceCreator;
+import org.broadinstitute.ddp.service.actvityinstancebuilder.FormSectionCreator;
+import org.broadinstitute.ddp.service.actvityinstancebuilder.SectionIconCreator;
 import org.broadinstitute.ddp.service.actvityinstancebuilder.block.FormBlockCreator;
 import org.broadinstitute.ddp.service.actvityinstancebuilder.block.FormBlockCreatorHelper;
 import org.broadinstitute.ddp.service.actvityinstancebuilder.block.question.PicklistCreatorHelper;
@@ -14,6 +17,7 @@ import org.broadinstitute.ddp.service.actvityinstancebuilder.block.question.Vali
  */
 public class AICreatorsFactory {
 
+    private final FormInstanceCreator formInstanceCreator = new FormInstanceCreator();
     private final FormSectionCreator formSectionCreator = new FormSectionCreator();
     private final SectionIconCreator sectionIconCreator = new SectionIconCreator();
     private final FormBlockCreator formBlockCreator = new FormBlockCreator();
@@ -23,6 +27,10 @@ public class AICreatorsFactory {
     private final PicklistCreatorHelper picklistCreatorHelper = new PicklistCreatorHelper();
     private final QuestionCreatorHelper questionCreatorHelper = new QuestionCreatorHelper();
     private final ValidationRuleCreator validationRuleCreator = new ValidationRuleCreator();
+
+    public FormInstanceCreator getFormInstanceCreator() {
+        return formInstanceCreator;
+    }
 
     public FormSectionCreator getFormSectionCreator() {
         return formSectionCreator;
