@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Optional;
 
 import com.typesafe.config.Config;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.IOUtils;
 import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.db.dao.JdbiActivityVersion;
@@ -17,6 +18,7 @@ import org.broadinstitute.ddp.db.dao.JdbiPdfTemplates;
 import org.broadinstitute.ddp.db.dao.JdbiRevision;
 import org.broadinstitute.ddp.db.dao.JdbiStudyPdfMapping;
 import org.broadinstitute.ddp.db.dao.PdfDao;
+import org.broadinstitute.ddp.db.dao.StudyLanguageDao;
 import org.broadinstitute.ddp.db.dto.ActivityVersionDto;
 import org.broadinstitute.ddp.db.dto.LanguageDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
@@ -270,7 +272,7 @@ public class PdfBuilder {
             throw new DDPException(e);
         }
 
-        Long languageCodeId = LanguageStore.getDefault().getId();
+        long languageCodeId;
         String languageCode = ConfigUtil.getStrIfPresent(fileCfg, "language");
         if (languageCode != null) {
             LanguageDto languageDto =  LanguageStore.get(languageCode);
@@ -278,6 +280,16 @@ public class PdfBuilder {
                 throw new DDPException("Invalid PDF language code: " + languageCode);
             }
             languageCodeId = languageDto.getId();
+        } else {
+            //use study default language if exists
+            StudyLanguageDao studyLanguageDao = handle.attach(StudyLanguageDao.class);
+            List<Long> defaultLanguages = studyLanguageDao.getStudyLanguageSql().selectDefaultLanguageCodeId(studyDto.getId());
+            if (CollectionUtils.isNotEmpty(defaultLanguages)) {
+                languageCodeId = defaultLanguages.get(0);
+            } else {
+                //fallback to "en" as default
+                languageCodeId = LanguageStore.getDefault().getId();
+            }
         }
 
         String type = fileCfg.getString("type");
@@ -296,7 +308,7 @@ public class PdfBuilder {
         }
     }
 
-    private PdfTemplate buildMailingAddressTemplate(Config fileCfg, byte[] rawBytes, Long languageCodeId) {
+    private PdfTemplate buildMailingAddressTemplate(Config fileCfg, byte[] rawBytes, long languageCodeId) {
         return new MailingAddressTemplate(
                 rawBytes,
                 ConfigUtil.getStrIfPresent(fileCfg, "fields.firstName"),
@@ -312,7 +324,7 @@ public class PdfBuilder {
                 languageCodeId);
     }
 
-    private PdfTemplate buildProviderTemplate(Config fileCfg, InstitutionType type, byte[] rawBytes, Long languageCodeId) {
+    private PdfTemplate buildProviderTemplate(Config fileCfg, InstitutionType type, byte[] rawBytes, long languageCodeId) {
         return new PhysicianInstitutionTemplate(
                 rawBytes,
                 type,
@@ -326,7 +338,7 @@ public class PdfBuilder {
                 languageCodeId);
     }
 
-    private PdfTemplate buildCustomTemplate(Handle handle, Config fileCfg, byte[] rawBytes, Long languageCodeId) {
+    private PdfTemplate buildCustomTemplate(Handle handle, Config fileCfg, byte[] rawBytes, long languageCodeId) {
         CustomTemplate template = new CustomTemplate(rawBytes, languageCodeId);
         for (Config subCfg : fileCfg.getConfigList("substitutions")) {
             String type = subCfg.getString("type");

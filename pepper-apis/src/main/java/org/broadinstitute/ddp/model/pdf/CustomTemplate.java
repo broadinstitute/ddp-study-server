@@ -5,6 +5,7 @@ import static org.broadinstitute.ddp.model.pdf.PdfTemplateType.CUSTOM;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.db.dto.pdf.PdfTemplateDto;
 
 public final class CustomTemplate extends PdfTemplate {
@@ -19,11 +20,11 @@ public final class CustomTemplate extends PdfTemplate {
     }
 
     public CustomTemplate(byte[] rawBytes) {
-        super(CUSTOM, rawBytes);
+        super(CUSTOM, rawBytes, LanguageStore.getDefault().getId());
     }
 
     public CustomTemplate(byte[] rawBytes, Long languageCodeId) {
-        super(CUSTOM, rawBytes, languageCodeId);
+        super(CUSTOM, rawBytes, (languageCodeId == null ? LanguageStore.getDefault().getId() : languageCodeId));
     }
 
     public List<PdfSubstitution> getSubstitutions() {

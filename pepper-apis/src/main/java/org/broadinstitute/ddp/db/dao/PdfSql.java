@@ -51,12 +51,6 @@ public interface PdfSql extends SqlObject {
 
     @GetGeneratedKeys
     @SqlUpdate("insert into pdf_base_template (template, pdf_template_type_id, language_code_id)"
-            + " values (:blob, (select pdf_template_type_id from pdf_template_type where pdf_template_type_code = :type),"
-            + " (select language_code_id from language_code where iso_language_code = 'en'))")
-    long insertBaseTemplate(@Bind("blob") byte[] blob, @Bind("type") PdfTemplateType type);
-
-    @GetGeneratedKeys
-    @SqlUpdate("insert into pdf_base_template (template, pdf_template_type_id, language_code_id)"
             + " values (:blob, (select pdf_template_type_id from pdf_template_type where pdf_template_type_code = :type), :languageCodeId)")
     long insertBaseTemplate(@Bind("blob") byte[] blob, @Bind("type") PdfTemplateType type, @Bind("languageCodeId") long languageCodeId);
 

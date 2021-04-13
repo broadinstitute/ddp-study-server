@@ -34,6 +34,7 @@ import org.broadinstitute.ddp.client.Auth0ManagementClient;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dao.ParticipantDao;
 import org.broadinstitute.ddp.db.dao.PdfDao;
+import org.broadinstitute.ddp.db.dao.StudyLanguageDao;
 import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dao.UserGovernanceDao;
 import org.broadinstitute.ddp.db.dao.UserProfileDao;
@@ -144,8 +145,15 @@ public class PdfGenerationService {
             languageId = participant.getUser().getProfile().getPreferredLangId();
         }
         if (languageId == null) {
-            //use default 'en'
-            languageId = LanguageStore.getDefault().getId();
+            //use study default language if exists
+            StudyLanguageDao studyLanguageDao = handle.attach(StudyLanguageDao.class);
+            List<Long> defaultLanguages = studyLanguageDao.getStudyLanguageSql().selectDefaultLanguageCodeId(configuration.getStudyId());
+            if (org.apache.commons.collections4.CollectionUtils.isNotEmpty(defaultLanguages)) {
+                languageId = defaultLanguages.get(0);
+            } else {
+                //fallback to "en" as default
+                languageId = LanguageStore.getDefault().getId();
+            }
         }
 
         //filter template list by languageId

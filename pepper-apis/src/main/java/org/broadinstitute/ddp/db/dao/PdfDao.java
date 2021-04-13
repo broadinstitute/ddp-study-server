@@ -75,12 +75,7 @@ public interface PdfDao extends SqlObject {
 
     default long insertTemplate(PdfTemplate template) {
         PdfSql pdfSql = getPdfSql();
-        long templateId;
-        if (template.getLanguageCodeId() != null) {
-            templateId = pdfSql.insertBaseTemplate(template.getRawBytes(), template.getType(), template.getLanguageCodeId());
-        } else {
-            templateId = pdfSql.insertBaseTemplate(template.getRawBytes(), template.getType());
-        }
+        long templateId = pdfSql.insertBaseTemplate(template.getRawBytes(), template.getType(), template.getLanguageCodeId());
         template.setId(templateId);
         switch (template.getType()) {
             case MAILING_ADDRESS:

@@ -2,6 +2,7 @@ package org.broadinstitute.ddp.model.pdf;
 
 import static org.broadinstitute.ddp.model.pdf.PdfTemplateType.PHYSICIAN_INSTITUTION;
 
+import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.db.dto.pdf.PdfTemplateDto;
 import org.broadinstitute.ddp.db.dto.pdf.PhysicianInstitutionTemplateDto;
 import org.broadinstitute.ddp.model.activity.types.InstitutionType;
@@ -37,7 +38,7 @@ public final class PhysicianInstitutionTemplate extends PdfTemplate {
                                         String cityPlaceholder, String statePlaceholder,
                                         String streetPlaceholder, String zipPlaceholder, String phonePlaceholder,
                                         Long languageCodeId) {
-        super(PHYSICIAN_INSTITUTION, rawBytes, languageCodeId);
+        super(PHYSICIAN_INSTITUTION, rawBytes, (languageCodeId == null ? LanguageStore.getDefault().getId() : languageCodeId));
         this.physicianNamePlaceholder = physicianNamePlaceholder;
         this.institutionNamePlaceholder = institutionNamePlaceholder;
         this.cityPlaceholder = cityPlaceholder;

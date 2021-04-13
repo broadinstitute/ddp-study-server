@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.db.dto.pdf.MailingAddressTemplateDto;
 import org.broadinstitute.ddp.db.dto.pdf.PdfTemplateDto;
 
@@ -44,7 +45,7 @@ public final class MailingAddressTemplate extends PdfTemplate {
                                   String streetPlaceholder, String cityPlaceholder, String statePlaceholder,
                                   String zipPlaceholder, String countryPlaceholder, String phonePlaceholder,
                                   Long languageCodeId) {
-        super(MAILING_ADDRESS, rawBytes, languageCodeId);
+        super(MAILING_ADDRESS, rawBytes, (languageCodeId == null ? LanguageStore.getDefault().getId() : languageCodeId));
         this.firstNamePlaceholder = firstNamePlaceholder;
         this.lastNamePlaceholder = lastNamePlaceholder;
         this.proxyFirstNamePlaceholder = proxyFirstNamePlaceholder;
