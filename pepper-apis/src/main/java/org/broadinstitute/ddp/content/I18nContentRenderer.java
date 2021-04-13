@@ -306,12 +306,12 @@ public class I18nContentRenderer {
         return result;
     }
 
-    private String convertToString(Object obj) {
+    public static String convertToString(Object obj) {
         //todo can make this conversion a little more sophisticated, e.g. different date formats for different locales or langCodes
         if (obj instanceof LocalDate) {
             return DateTimeFormatter.ofPattern("MMMM dd, yyyy").format((LocalDate) obj);
         } else {
-            return obj.toString();
+            return obj != null ? obj.toString() : null;
         }
     }
 }

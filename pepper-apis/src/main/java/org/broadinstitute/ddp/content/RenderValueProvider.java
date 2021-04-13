@@ -300,6 +300,10 @@ public class RenderValueProvider {
     public static final class Builder {
         private RenderValueProvider provider;
 
+        public Builder(RenderValueProvider provider) {
+            this.provider = cloneProvider(provider);
+        }
+
         public Builder() {
             provider = new RenderValueProvider();
         }
@@ -432,6 +436,10 @@ public class RenderValueProvider {
         }
 
         public RenderValueProvider build() {
+            return cloneProvider(provider);
+        }
+
+        private RenderValueProvider cloneProvider(RenderValueProvider provider) {
             RenderValueProvider copy = new RenderValueProvider();
             copy.participantGuid = provider.participantGuid;
             copy.participantFirstName = provider.participantFirstName;

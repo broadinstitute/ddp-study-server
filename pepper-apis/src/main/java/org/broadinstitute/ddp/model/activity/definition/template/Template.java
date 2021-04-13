@@ -111,14 +111,19 @@ public class Template {
     }
 
     public String render(String languageCode) {
+        return render(languageCode, new I18nContentRenderer(), null);
+    }
+
+    public String render(String languageCode, I18nContentRenderer renderer, Map<String, Object> initialContext) {
         Map<String, Object> variablesTxt = new HashMap<>();
+        if (initialContext != null) {
+            variablesTxt.putAll(initialContext);
+        }
         for (TemplateVariable variable : getVariables()) {
             Optional<Translation> translation = variable.getTranslation(languageCode);
             variablesTxt.put(variable.getName(), translation.isPresent() ? translation.get().getText() : null);
         }
 
-        I18nContentRenderer renderer = new I18nContentRenderer();
         return renderer.renderToString(getTemplateText(), variablesTxt);
     }
-
 }

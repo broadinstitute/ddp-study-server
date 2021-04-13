@@ -1,5 +1,9 @@
 package org.broadinstitute.ddp.service;
 
+import static org.broadinstitute.ddp.util.TranslationUtil.extractOptionalActivitySummary;
+import static org.broadinstitute.ddp.util.TranslationUtil.extractOptionalActivityTranslation;
+import static org.broadinstitute.ddp.util.TranslationUtil.extractTranslatedActivityName;
+
 import java.sql.Blob;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -34,7 +38,6 @@ import org.broadinstitute.ddp.db.dto.ActivityVersionDto;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.json.activity.ActivityInstanceSummary;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
-import org.broadinstitute.ddp.model.activity.definition.i18n.SummaryTranslation;
 import org.broadinstitute.ddp.model.activity.definition.i18n.Translation;
 import org.broadinstitute.ddp.model.activity.instance.ActivityInstance;
 import org.broadinstitute.ddp.model.activity.instance.ActivityResponse;
@@ -45,17 +48,14 @@ import org.broadinstitute.ddp.model.activity.instance.FormSection;
 import org.broadinstitute.ddp.model.activity.instance.NestedActivityBlock;
 import org.broadinstitute.ddp.model.activity.types.ActivityType;
 import org.broadinstitute.ddp.model.activity.types.BlockType;
-import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.broadinstitute.ddp.model.study.StudyLanguage;
 import org.broadinstitute.ddp.pex.PexInterpreter;
+import org.broadinstitute.ddp.service.actvityinstancebuilder.ActivityInstanceFromDefinitionBuilder;
 import org.broadinstitute.ddp.util.ActivityInstanceUtil;
 import org.jdbi.v3.core.Handle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
 
 public class ActivityInstanceService {
-
-    private static final Logger LOG = LoggerFactory.getLogger(ActivityInstanceService.class);
 
     private final ActivityInstanceDao actInstanceDao;
     private final PexInterpreter interpreter;
@@ -80,7 +80,11 @@ public class ActivityInstanceService {
      * @param style           the content style to use for converting content
      * @return activity instance, if found
      * @throws DDPException if pex evaluation error
+     * @deprecated Thus method should be removed as soon as
+     * {@link #buildInstanceFromDefinition(Handle, String, String, String, String, ContentStyle, String)} is carefully tested
+     *     (all code which utilized by this method (and not used in other places) should be removed also)
      */
+    @Deprecated
     public Optional<ActivityInstance> getTranslatedActivity(Handle handle, String userGuid, String operatorGuid, ActivityType actType,
                                                             String actInstanceGuid, String isoLangCode, ContentStyle style) {
         ActivityInstance inst = actInstanceDao.getTranslatedActivityByTypeAndGuid(handle, actType, actInstanceGuid, isoLangCode, style);
@@ -341,6 +345,12 @@ public class ActivityInstanceService {
                     def.isWriteOnce(),
                     summaryDto.getReadonly());
 
+            boolean isFirstInstance = StringUtils.isBlank(summaryDto.getPreviousInstanceGuid());
+            boolean canDelete = ActivityInstanceUtil.computeCanDelete(
+                    def.canDeleteInstances(),
+                    def.getCanDeleteFirstInstance(),
+                    isFirstInstance);
+
             var summary = new ActivityInstanceSummary(
                     def.getActivityCode(),
                     summaryDto.getId(),
@@ -360,7 +370,7 @@ public class ActivityInstanceService {
                     def.isExcludeFromDisplay(),
                     summaryDto.isHidden(),
                     summaryDto.getCreatedAtMillis(),
-                    def.canDeleteInstances(),
+                    canDelete,
                     def.isFollowup(),
                     versionDto.getVersionTag(),
                     versionDto.getId(),
@@ -372,41 +382,6 @@ public class ActivityInstanceService {
         }
 
         return summaries;
-    }
-
-    private Translation extractTranslatedActivityName(FormActivityDef def, String preferredLangCode, String studyDefaultLangCode) {
-        Translation preferredName = null;
-        Translation studyDefaultName = null;
-        for (var name : def.getTranslatedNames()) {
-            if (name.getLanguageCode().equals(studyDefaultLangCode)) {
-                studyDefaultName = name;
-            }
-            if (name.getLanguageCode().equals(preferredLangCode)) {
-                preferredName = name;
-            }
-        }
-        if (preferredName == null && studyDefaultName == null) {
-            throw new DDPException("Could not find name for activity " + def.getActivityCode());
-        }
-        return preferredName != null ? preferredName : studyDefaultName;
-    }
-
-    private String extractOptionalActivityTranslation(List<Translation> translations, String isoLangCode) {
-        return translations.stream()
-                .filter(trans -> trans.getLanguageCode().equals(isoLangCode))
-                .map(Translation::getText)
-                .findFirst()
-                .orElse(null);
-    }
-
-    private String extractOptionalActivitySummary(List<SummaryTranslation> summaryTranslations,
-                                                  InstanceStatusType statusType,
-                                                  String isoLangCode) {
-        return summaryTranslations.stream()
-                .filter(trans -> trans.getStatusType().equals(statusType) && trans.getLanguageCode().equals(isoLangCode))
-                .map(Translation::getText)
-                .findFirst()
-                .orElse(null);
     }
 
     /**
@@ -562,5 +537,22 @@ public class ActivityInstanceService {
         var instanceDao = handle.attach(org.broadinstitute.ddp.db.dao.ActivityInstanceDao.class);
         int numDeleted = instanceDao.deleteAllByIds(Set.of(instanceDto.getId()));
         DBUtils.checkDelete(1, numDeleted);
+    }
+
+    /**
+     * Build {@link ActivityInstance} from data cached stored in {@link ActivityDefStore}.
+     * Some of data (answers, rule messages) are queried from DB.
+     */
+    public Optional<ActivityInstance> buildInstanceFromDefinition(
+            Handle handle,
+            String userGuid,
+            String operatorGuid,
+            String studyGuid,
+            String instanceGuid,
+            ContentStyle style,
+            String isoLangCode) {
+        return new ActivityInstanceFromDefinitionBuilder().buildActivityInstance(
+                handle, userGuid, operatorGuid, studyGuid, instanceGuid, style, isoLangCode
+        );
     }
 }
