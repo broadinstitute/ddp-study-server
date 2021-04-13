@@ -67,26 +67,6 @@ public class SlackAppender<E> extends AppenderBase<ILoggingEvent> {
                       String slackChannel,
                       Integer queueSize,
                       Integer intervalInMillis) {
-        httpClient = HttpClient.newHttpClient();
-        try {
-            this.slackHookUrl = new URI(slackHookUrl);
-        } catch (URISyntaxException e) {
-            throw new IllegalArgumentException("Could not parse " + slackHookUrl);
-        }
-
-        this.channel = slackChannel;
-        if (queueSize != null) {
-            this.queueSize = queueSize;
-        } else {
-            this.queueSize = 10;
-        }
-
-        if (intervalInMillis != null) {
-            this.intervalInMillis = intervalInMillis;
-        } else {
-            this.intervalInMillis = 60000;
-        }
-
         if (StringUtils.isBlank(slackHookUrl)) {
             LOG.warn("No logs will go to slack.");
             canLog = false;
@@ -96,6 +76,26 @@ public class SlackAppender<E> extends AppenderBase<ILoggingEvent> {
             canLog = false;
         }
         if (canLog) {
+            httpClient = HttpClient.newHttpClient();
+            try {
+                this.slackHookUrl = new URI(slackHookUrl);
+            } catch (URISyntaxException e) {
+                throw new IllegalArgumentException("Could not parse " + slackHookUrl);
+            }
+
+            this.channel = slackChannel;
+            if (queueSize != null) {
+                this.queueSize = queueSize;
+            } else {
+                this.queueSize = 10;
+            }
+
+            if (intervalInMillis != null) {
+                this.intervalInMillis = intervalInMillis;
+            } else {
+                this.intervalInMillis = 60000;
+            }
+
             LOG.info("At most {} slack alerts will be sent to {} every {} ms", queueSize, slackChannel, intervalInMillis);
             executorService = new ScheduledThreadPoolExecutor(1,
                     new ThreadFactory("SlackAppender", ThreadPriorities.SLACK_PRIORITY));
@@ -112,12 +112,13 @@ public class SlackAppender<E> extends AppenderBase<ILoggingEvent> {
      * Constructor used by deployments via logback.xml
      */
     public SlackAppender() {
-        Config cfg = ConfigManager.getInstance().getConfig();
         String slackHook = null;
         String slackChannel = null;
         Integer configQueueSize = null;
         Integer configIntervalInMillis = null;
-        if (cfg != null) {
+        ConfigManager manager = ConfigManager.getInstance();
+        if (manager != null && manager.getConfig() != null) {
+            Config cfg = manager.getConfig();
             if (cfg.hasPath(ConfigFile.SLACK_HOOK)) {
                 slackHook = cfg.getString(ConfigFile.SLACK_HOOK);
             }
@@ -132,8 +133,6 @@ public class SlackAppender<E> extends AppenderBase<ILoggingEvent> {
             }
             init(slackHook, slackChannel, configQueueSize, configIntervalInMillis);
         }
-
-
     }
 
     /**
