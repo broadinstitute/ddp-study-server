@@ -76,6 +76,7 @@ order by rev.start_date desc,
 selectBaseTemplates() ::= <<
 select base.pdf_base_template_id    as template_id,
        base.template                as template_blob,
+       base.language_code_id        as language_code_id,
        ttype.pdf_template_type_code as template_type,
        taddr.pdf_base_template_id   as m_template_id,
        taddr.first_name_placeholder as m_first_name_placeholder,
@@ -119,6 +120,15 @@ findTemplateIdsByVersionId() ::= <<
     select pvt.pdf_base_template_id
     from pdf_version_template as pvt
     where pvt.pdf_document_version_id = :versionId
+    order by pvt.template_order asc
+>>
+
+findTemplateIdsByVersionIdAndLanguageCodeId() ::= <<
+    select pvt.pdf_base_template_id
+    from pdf_version_template as pvt
+    join pdf_base_template as pbt on pbt.pdf_base_template_id = pvt.pdf_base_template_id
+    where pvt.pdf_document_version_id = :versionId
+    and language_code_id = :languageCodeId
     order by pvt.template_order asc
 >>
 

@@ -11,3 +11,4 @@ target/
 
 config/
 !config/example.env
+!freshclam.conf
