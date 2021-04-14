@@ -10,13 +10,17 @@ import java.util.List;
 import java.util.Optional;
 
 import com.typesafe.config.Config;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.IOUtils;
+import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.db.dao.JdbiActivityVersion;
 import org.broadinstitute.ddp.db.dao.JdbiPdfTemplates;
 import org.broadinstitute.ddp.db.dao.JdbiRevision;
 import org.broadinstitute.ddp.db.dao.JdbiStudyPdfMapping;
 import org.broadinstitute.ddp.db.dao.PdfDao;
+import org.broadinstitute.ddp.db.dao.StudyLanguageDao;
 import org.broadinstitute.ddp.db.dto.ActivityVersionDto;
+import org.broadinstitute.ddp.db.dto.LanguageDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.db.dto.pdf.PdfTemplateDto;
 import org.broadinstitute.ddp.exception.DDPException;
@@ -268,23 +272,43 @@ public class PdfBuilder {
             throw new DDPException(e);
         }
 
+        long languageCodeId;
+        String languageCode = ConfigUtil.getStrIfPresent(fileCfg, "language");
+        if (languageCode != null) {
+            LanguageDto languageDto =  LanguageStore.get(languageCode);
+            if (languageDto == null) {
+                throw new DDPException("Invalid PDF language code: " + languageCode);
+            }
+            languageCodeId = languageDto.getId();
+        } else {
+            //use study default language if exists
+            StudyLanguageDao studyLanguageDao = handle.attach(StudyLanguageDao.class);
+            List<Long> defaultLanguages = studyLanguageDao.getStudyLanguageSql().selectDefaultLanguageCodeId(studyDto.getId());
+            if (CollectionUtils.isNotEmpty(defaultLanguages)) {
+                languageCodeId = defaultLanguages.get(0);
+            } else {
+                //fallback to "en" as default
+                languageCodeId = LanguageStore.getDefault().getId();
+            }
+        }
+
         String type = fileCfg.getString("type");
         if (PdfTemplateType.CUSTOM.name().equals(type)) {
-            return buildCustomTemplate(handle, fileCfg, rawBytes);
+            return buildCustomTemplate(handle, fileCfg, rawBytes, languageCodeId);
         } else if (PdfTemplateType.MAILING_ADDRESS.name().equals(type)) {
-            return buildMailingAddressTemplate(fileCfg, rawBytes);
+            return buildMailingAddressTemplate(fileCfg, rawBytes, languageCodeId);
         } else if (InstitutionType.PHYSICIAN.name().equals(type)) {
-            return buildProviderTemplate(fileCfg, InstitutionType.PHYSICIAN, rawBytes);
+            return buildProviderTemplate(fileCfg, InstitutionType.PHYSICIAN, rawBytes, languageCodeId);
         } else if (InstitutionType.INITIAL_BIOPSY.name().equals(type)) {
-            return buildProviderTemplate(fileCfg, InstitutionType.INITIAL_BIOPSY, rawBytes);
+            return buildProviderTemplate(fileCfg, InstitutionType.INITIAL_BIOPSY, rawBytes, languageCodeId);
         } else if (InstitutionType.INSTITUTION.name().equals(type)) {
-            return buildProviderTemplate(fileCfg, InstitutionType.INSTITUTION, rawBytes);
+            return buildProviderTemplate(fileCfg, InstitutionType.INSTITUTION, rawBytes, languageCodeId);
         } else {
             throw new DDPException("Unsupported pdf template file type " + type);
         }
     }
 
-    private PdfTemplate buildMailingAddressTemplate(Config fileCfg, byte[] rawBytes) {
+    private PdfTemplate buildMailingAddressTemplate(Config fileCfg, byte[] rawBytes, long languageCodeId) {
         return new MailingAddressTemplate(
                 rawBytes,
                 ConfigUtil.getStrIfPresent(fileCfg, "fields.firstName"),
@@ -296,10 +320,11 @@ public class PdfBuilder {
                 fileCfg.getString("fields.state"),
                 fileCfg.getString("fields.zip"),
                 ConfigUtil.getStrIfPresent(fileCfg, "fields.country"),
-                fileCfg.getString("fields.phone"));
+                fileCfg.getString("fields.phone"),
+                languageCodeId);
     }
 
-    private PdfTemplate buildProviderTemplate(Config fileCfg, InstitutionType type, byte[] rawBytes) {
+    private PdfTemplate buildProviderTemplate(Config fileCfg, InstitutionType type, byte[] rawBytes, long languageCodeId) {
         return new PhysicianInstitutionTemplate(
                 rawBytes,
                 type,
@@ -309,11 +334,12 @@ public class PdfBuilder {
                 fileCfg.getString("fields.state"),
                 ConfigUtil.getStrIfPresent(fileCfg, "fields.street"),
                 ConfigUtil.getStrIfPresent(fileCfg, "fields.zip"),
-                ConfigUtil.getStrIfPresent(fileCfg, "fields.phone"));
+                ConfigUtil.getStrIfPresent(fileCfg, "fields.phone"),
+                languageCodeId);
     }
 
-    private PdfTemplate buildCustomTemplate(Handle handle, Config fileCfg, byte[] rawBytes) {
-        CustomTemplate template = new CustomTemplate(rawBytes);
+    private PdfTemplate buildCustomTemplate(Handle handle, Config fileCfg, byte[] rawBytes, long languageCodeId) {
+        CustomTemplate template = new CustomTemplate(rawBytes, languageCodeId);
         for (Config subCfg : fileCfg.getConfigList("substitutions")) {
             String type = subCfg.getString("type");
             String field = subCfg.getString("field");
