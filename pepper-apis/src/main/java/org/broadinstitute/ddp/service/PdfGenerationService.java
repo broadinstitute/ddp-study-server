@@ -29,10 +29,12 @@ import com.itextpdf.kernel.pdf.PdfReader;
 import com.itextpdf.kernel.pdf.PdfWriter;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.client.Auth0ManagementClient;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dao.ParticipantDao;
 import org.broadinstitute.ddp.db.dao.PdfDao;
+import org.broadinstitute.ddp.db.dao.StudyLanguageDao;
 import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dao.UserGovernanceDao;
 import org.broadinstitute.ddp.db.dao.UserProfileDao;
@@ -138,6 +140,25 @@ public class PdfGenerationService {
                                        Handle handle) throws IOException {
         Participant participant = loadParticipantData(handle, configuration, userGuid);
         Map<Long, ActivityResponse> instances = loadActivityInstanceData(handle, configuration, participant);
+        Long languageId = null;
+        if (participant.getUser().getProfile() != null) {
+            languageId = participant.getUser().getProfile().getPreferredLangId();
+        }
+        if (languageId == null) {
+            //use study default language if exists
+            StudyLanguageDao studyLanguageDao = handle.attach(StudyLanguageDao.class);
+            List<Long> defaultLanguages = studyLanguageDao.getStudyLanguageSql().selectDefaultLanguageCodeId(configuration.getStudyId());
+            if (!defaultLanguages.isEmpty()) {
+                languageId = defaultLanguages.get(0);
+            } else {
+                //fallback to "en" as default
+                languageId = LanguageStore.getDefault().getId();
+            }
+        }
+
+        //filter template list by languageId
+        List<Long> templateIds = handle.attach(PdfDao.class)
+                .findTemplateIdsByVersionIdAndLanguageCodeId(configuration.getVersion().getId(), languageId);
 
         List<String> errors = new ArrayList<>();
         try (
@@ -145,9 +166,9 @@ public class PdfGenerationService {
                 PdfWriter pdfWriter = new PdfWriter(renderedStream);
                 PdfDocument mergedDoc = new PdfDocument(pdfWriter)) {
             int counter = 0;
-            for (int pdfOrderIndex = 0; pdfOrderIndex < configuration.getTemplateIds().size(); pdfOrderIndex++) {
+            for (int pdfOrderIndex = 0; pdfOrderIndex < templateIds.size(); pdfOrderIndex++) {
                 byte[] pdf;
-                long templateId = configuration.getTemplateIds().get(pdfOrderIndex);
+                long templateId = templateIds.get(pdfOrderIndex);
                 PdfTemplate template = handle.attach(PdfDao.class)
                         .findFullTemplateByTemplateId(templateId)
                         .orElseThrow(() -> new DDPException("Could not find template with id:" + templateId));
@@ -226,6 +247,11 @@ public class PdfGenerationService {
             participant = new Participant(null, handle.attach(UserDao.class)
                     .findUserByGuid(userGuid)
                     .orElseThrow(() -> new DDPException("Could not find participant user data for pdf generation with guid=" + userGuid)));
+            UserProfileDao userProfileDao = handle.attach(UserProfileDao.class);
+            Optional<UserProfile>  profileOpt = userProfileDao.findProfileByUserGuid(userGuid);
+            if (profileOpt.isPresent()) {
+                participant.getUser().setProfile(profileOpt.get());
+            }
         }
 
         if (hasEmailSource) {
