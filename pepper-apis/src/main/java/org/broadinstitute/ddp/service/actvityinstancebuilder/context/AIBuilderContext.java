@@ -50,8 +50,12 @@ public class AIBuilderContext {
     public AIBuilderContext(Handle handle, AIBuilderParams params) {
         this.handle = handle;
         this.params = params;
+
         LanguageDto languageDto = LanguageStore.get(params.getIsoLangCode());
-        this.langCodeId = languageDto != null ? languageDto.getId() : 0;
+        if (languageDto == null) {
+            throw new IllegalStateException("Invalid language specified: " + params.getIsoLangCode());
+        }
+        this.langCodeId = languageDto.getId();
     }
 
     public AIBuildStep getBuildStep() {
