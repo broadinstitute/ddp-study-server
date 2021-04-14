@@ -6,6 +6,8 @@ import java.util.Optional;
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
+import org.jdbi.v3.sqlobject.customizer.BindMethods;
+import org.jdbi.v3.sqlobject.statement.SqlBatch;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 
@@ -90,6 +92,22 @@ public interface JdbiMailingList extends SqlObject {
             @Bind("languageCodeId") Long languageCodeId
     );
 
+    /**
+     * Bulk insert mailing list entries for a study but only if email is not already in the list.
+     *
+     * @param entries list of entries to insert
+     * @return array of insert counts, where each element is 1 if email was added and weren't on the list before, or 0
+     *         if they are already on the list. Any other value indicates an error and is the number of rows updated.
+     */
+    @SqlBatch("insert into study_mailing_list (first_name, last_name, email, umbrella_study_id, umbrella_id, info, date_created)"
+            + "select :dto.getFirstName, :dto.getLastName, :dto.getEmail, s.umbrella_study_id, :dto.getUmbrellaId,"
+            + "       :dto.getInfo, :dto.getDateCreatedMillis"
+            + "  from umbrella_study as s"
+            + " where s.guid = :dto.getStudyGuid"
+            + "   and not exists (select 1 from study_mailing_list ls"
+            + "       where ls.email = :dto.getEmail and ls.umbrella_study_id = s.umbrella_study_id)")
+    int[] bulkInsertIfNotStoredAlready(@BindMethods("dto") Iterable<MailingListEntryDto> entries);
+
     @SqlUpdate("delete from study_mailing_list where study_mailing_list_id = :id")
     int deleteById(@Bind("id") long id);
 
@@ -144,7 +162,7 @@ public interface JdbiMailingList extends SqlObject {
         private String lastName;
         private String email;
         private String info;
-        private String studyCode;
+        private String studyGuid;
         private Long umbrellaId;
         private long dateCreatedMillis;
         private Long languageCodeId;
@@ -154,7 +172,7 @@ public interface JdbiMailingList extends SqlObject {
                 String firstName,
                 String lastName,
                 String email,
-                String studyCode,
+                String studyGuid,
                 Long umbrellaId,
                 String info,
                 long dateCreatedMillis,
@@ -164,7 +182,7 @@ public interface JdbiMailingList extends SqlObject {
             this.firstName = firstName;
             this.lastName = lastName;
             this.email = email;
-            this.studyCode = studyCode;
+            this.studyGuid = studyGuid;
             this.umbrellaId = umbrellaId;
             this.info = info;
             this.dateCreatedMillis = dateCreatedMillis;
@@ -188,8 +206,8 @@ public interface JdbiMailingList extends SqlObject {
             return info;
         }
 
-        public String getStudyCode() {
-            return studyCode;
+        public String getStudyGuid() {
+            return studyGuid;
         }
 
         public Long getUmbrellaId() {
