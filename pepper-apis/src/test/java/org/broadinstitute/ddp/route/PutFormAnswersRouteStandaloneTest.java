@@ -54,6 +54,7 @@ import org.broadinstitute.ddp.db.dto.ActivityVersionDto;
 import org.broadinstitute.ddp.model.activity.definition.ConditionalBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
 import org.broadinstitute.ddp.model.activity.definition.FormSectionDef;
+import org.broadinstitute.ddp.model.activity.definition.NestedActivityBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.QuestionBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.i18n.Translation;
 import org.broadinstitute.ddp.model.activity.definition.question.BoolQuestionDef;
@@ -74,6 +75,7 @@ import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
 import org.broadinstitute.ddp.model.activity.types.FormType;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
+import org.broadinstitute.ddp.model.activity.types.NestedActivityRenderHint;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
 import org.broadinstitute.ddp.model.activity.types.TemplateType;
 import org.broadinstitute.ddp.model.activity.types.TextInputType;
@@ -107,6 +109,8 @@ public class PutFormAnswersRouteStandaloneTest extends IntegrationTestSuite.Test
     private static String urlTemplate;
     private static FormActivityDef compositeQuestionForm;
     private static ActivityInstanceDto parentInstanceDto;
+    private static ActivityInstanceDto nestedToggleableInstanceDto;
+    private static NestedActivityBlockDef nestedToggleableBlock;
 
     private List<String> instanceGuidsToDelete = new ArrayList<>();
     private List<Long> transitionIdsToDelete = new ArrayList<>();
@@ -158,12 +162,10 @@ public class PutFormAnswersRouteStandaloneTest extends IntegrationTestSuite.Test
                 .build();
 
         String parentActCode = "PUT_STATUS_PARENT" + Instant.now().toEpochMilli();
-        parentForm = FormActivityDef.generalFormBuilder(parentActCode, "v1", studyGuid)
-                .addName(new Translation("en", "parent test activity"))
-                .build();
+        String nestedActCode = "PUT_STATUS_ACT" + Instant.now().toEpochMilli();
+        String nestedToggleableActCode = nestedActCode + "_hidden";
 
-        String code = "PUT_STATUS_ACT" + Instant.now().toEpochMilli();
-        FormActivityDef form = FormActivityDef.generalFormBuilder(code, "v1", studyGuid)
+        FormActivityDef form = FormActivityDef.generalFormBuilder(nestedActCode, "v1", studyGuid)
                 .addName(new Translation("en", "test activity"))
                 .setParentActivityCode(parentActCode)
                 .addSubtitle(new Translation("en", "subtitle of activity"))
@@ -171,9 +173,29 @@ public class PutFormAnswersRouteStandaloneTest extends IntegrationTestSuite.Test
                 .addSection(new FormSectionDef(null, Collections.singletonList(conditionalBlock)))
                 .setSnapshotSubstitutionsOnSubmit(true)
                 .build();
-        handle.attach(ActivityDao.class).insertActivity(parentForm, List.of(form), RevisionMetadata.now(userId, "test"));
+        FormActivityDef toggleable = FormActivityDef.generalFormBuilder(nestedToggleableActCode, "v1", studyGuid)
+                .addName(new Translation("en", "another nested activity that can be hidden and has required question"))
+                .setParentActivityCode(parentActCode)
+                .addSection(new FormSectionDef(null, TestUtil.wrapQuestions(TextQuestionDef
+                        .builder(TextInputType.TEXT, nestedToggleableActCode + "_q", Template.text("required"))
+                        .addValidations(List.of(new RequiredRuleDef(null)))
+                        .build())))
+                .build();
+
+        nestedToggleableBlock = new NestedActivityBlockDef(nestedToggleableActCode, NestedActivityRenderHint.EMBEDDED, true, null);
+        nestedToggleableBlock.setShownExpr("true"); // start with shown, toggle later in tests
+        parentForm = FormActivityDef.generalFormBuilder(parentActCode, "v1", studyGuid)
+                .addName(new Translation("en", "parent test activity"))
+                .addSection(new FormSectionDef(null, List.of(
+                        new NestedActivityBlockDef(nestedActCode, NestedActivityRenderHint.EMBEDDED, true, null),
+                        nestedToggleableBlock)))
+                .build();
+
+        handle.attach(ActivityDao.class).insertActivity(parentForm, List.of(form, toggleable), RevisionMetadata.now(userId, "test"));
         parentInstanceDto = handle.attach(ActivityInstanceDao.class)
                 .insertInstance(parentForm.getActivityId(), user.getUserGuid());
+        nestedToggleableInstanceDto = handle.attach(ActivityInstanceDao.class)
+                .insertInstance(toggleable.getActivityId(), user.getUserGuid(), user.getUserGuid(), parentInstanceDto.getId());
         return form;
     }
 
@@ -287,22 +309,30 @@ public class PutFormAnswersRouteStandaloneTest extends IntegrationTestSuite.Test
 
     @Test
     public void testParentActivity_parentPutChecksChildComplete() {
+        // Nested toggleable child activity starts off as shown,
+        // so there's a required question not answered yet.
+        given().auth().oauth2(token)
+                .pathParam("instanceGuid", parentInstanceDto.getGuid())
+                .when().put(urlTemplate).then().assertThat()
+                .statusCode(422).contentType(ContentType.JSON)
+                .body("code", equalTo(ErrorCodes.QUESTION_REQUIREMENTS_NOT_MET))
+                .body("message", containsString("child instance"));
+
+        // Now hide the nested activity.
         TransactionWrapper.useTxn(handle -> {
-            // Make it so that child activity have a required question that's not answered yet.
-            long exprId = conditionalBlock.getNested().get(0).getShownExprId();
-            assertEquals(1, handle.attach(JdbiExpression.class).updateById(exprId, "true"));
-            insertNewInstanceAndDeferCleanup(handle, form.getActivityId());
+            long exprId = nestedToggleableBlock.getShownExprId();
+            assertEquals(1, handle.attach(JdbiExpression.class).updateById(exprId, "false"));
         });
+
         try {
             given().auth().oauth2(token)
                     .pathParam("instanceGuid", parentInstanceDto.getGuid())
                     .when().put(urlTemplate).then().assertThat()
-                    .statusCode(422).contentType(ContentType.JSON)
-                    .body("code", equalTo(ErrorCodes.QUESTION_REQUIREMENTS_NOT_MET));
+                    .statusCode(200);
         } finally {
             TransactionWrapper.useTxn(handle -> {
-                long exprId = conditionalBlock.getNested().get(0).getShownExprId();
-                assertEquals(1, handle.attach(JdbiExpression.class).updateById(exprId, "false"));
+                long exprId = nestedToggleableBlock.getShownExprId();
+                assertEquals(1, handle.attach(JdbiExpression.class).updateById(exprId, "true"));
             });
         }
     }

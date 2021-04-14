@@ -162,12 +162,24 @@ public class ActivityInstanceSummary implements TranslatedSummary {
         return activityTitle;
     }
 
+    public void setActivityTitle(String activityTitle) {
+        this.activityTitle = activityTitle;
+    }
+
     public String getActivitySubtitle() {
         return activitySubtitle;
     }
 
+    public void setActivitySubtitle(String activitySubtitle) {
+        this.activitySubtitle = activitySubtitle;
+    }
+
     public String getActivityDescription() {
         return activityDescription;
+    }
+
+    public void setActivityDescription(String activityDescription) {
+        this.activityDescription = activityDescription;
     }
 
     public String getActivitySummary() {

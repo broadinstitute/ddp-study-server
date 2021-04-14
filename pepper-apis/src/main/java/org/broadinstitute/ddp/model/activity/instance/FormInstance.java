@@ -10,10 +10,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import javax.validation.constraints.NotNull;
 
 import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.annotations.SerializedName;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.content.ContentStyle;
 import org.broadinstitute.ddp.content.HtmlConverter;
 import org.broadinstitute.ddp.content.I18nContentRenderer;
@@ -24,6 +27,7 @@ import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dto.UserActivityInstanceSummary;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
+import org.broadinstitute.ddp.model.activity.instance.question.Question;
 import org.broadinstitute.ddp.model.activity.types.ActivityType;
 import org.broadinstitute.ddp.model.activity.types.BlockType;
 import org.broadinstitute.ddp.model.activity.types.FormType;
@@ -64,11 +68,14 @@ public final class FormInstance extends ActivityInstance {
     @SerializedName("lastUpdatedText")
     private String activityDefinitionLastUpdatedText;
 
+    @SerializedName("sectionIndex")
+    private int sectionIndex;
+
     private transient Long introductionSectionId;
     private transient Long closingSectionId;
     private transient Long readonlyHintTemplateId;
     private transient Long lastUpdatedTextTemplateId;
-    private int sectionIndex;
+    private transient Map<String, Question> stableIdToQuestion;
 
     public FormInstance(
             long participantUserId,
@@ -96,7 +103,7 @@ public final class FormInstance extends ActivityInstance {
             int sectionIndex
     ) {
         super(participantUserId, instanceId, activityId, ActivityType.FORMS, guid, title, subtitle, statusTypeCode, readonly, activityCode,
-                createdAtMillis, firstCompletedAt, canDelete, isFollowup, isInstanceHidden, excludeFromDisplay);
+                createdAtMillis, firstCompletedAt, canDelete, isFollowup, excludeFromDisplay, isInstanceHidden);
         this.formType = MiscUtil.checkNonNull(formType, "formType");
         if (listStyleHint != null) {
             this.listStyleHint = listStyleHint;
@@ -143,6 +150,10 @@ public final class FormInstance extends ActivityInstance {
         return readonlyHint;
     }
 
+    public void setReadonlyHint(String readonlyHint) {
+        this.readonlyHint = readonlyHint;
+    }
+
     public Long getIntroductionSectionId() {
         return introductionSectionId;
     }
@@ -171,6 +182,10 @@ public final class FormInstance extends ActivityInstance {
         return activityDefinitionLastUpdatedText;
     }
 
+    public void setActivityDefinitionLastUpdatedText(String activityDefinitionLastUpdatedText) {
+        this.activityDefinitionLastUpdatedText = activityDefinitionLastUpdatedText;
+    }
+
     public LocalDateTime getActivityDefinitionLastUpdated() {
         return activityDefinitionLastUpdated;
     }
@@ -181,6 +196,24 @@ public final class FormInstance extends ActivityInstance {
 
     public void setSectionIndex(int sectionIndex) {
         this.sectionIndex = sectionIndex;
+    }
+
+    public Long getReadonlyHintTemplateId() {
+        return readonlyHintTemplateId;
+    }
+
+    public Long getLastUpdatedTextTemplateId() {
+        return lastUpdatedTextTemplateId;
+    }
+
+    public Question getQuestionByStableId(String stableId) {
+        if (stableIdToQuestion == null) {
+            stableIdToQuestion = getAllSections().stream()
+                    .flatMap(section -> section.getBlocks().stream())
+                    .flatMap(FormBlock::streamQuestions)
+                    .collect(Collectors.toMap(Question::getStableId, Function.identity()));
+        }
+        return stableIdToQuestion.get(stableId);
     }
 
     /**
@@ -202,16 +235,33 @@ public final class FormInstance extends ActivityInstance {
             section.registerTemplateIds(consumer);
         }
 
+        Map<String, String> commonSnapshot = I18nContentRenderer
+                .newValueProviderBuilder(handle, getParticipantUserId())
+                .build().getSnapshot();
         Map<String, String> snapshot = handle.attach(ActivityInstanceDao.class).findSubstitutions(getInstanceId());
-        RenderValueProvider valueProvider = I18nContentRenderer.newValueProvider(handle, getParticipantUserId(), snapshot);
-
         Map<String, Object> context = new HashMap<>();
-        context.put(I18nTemplateConstants.DDP, valueProvider);
+        context.put(I18nTemplateConstants.DDP, new RenderValueProvider.Builder()
+                .withSnapshot(commonSnapshot)
+                .withSnapshot(snapshot)
+                .build());
+
         Map<Long, String> rendered = renderer.bulkRender(handle, templateIds, langCodeId, context, getCreatedAtMillis());
         Renderable.Provider<String> provider = rendered::get;
-
         for (FormSection section : allSections) {
             section.applyRenderedTemplates(provider, style);
+        }
+
+        // Render other properties like title and subtitle.
+        context.put(I18nTemplateConstants.DDP, new RenderValueProvider.Builder()
+                .withFormInstance(this)
+                .withSnapshot(commonSnapshot)
+                .withSnapshot(snapshot)
+                .build());
+        if (StringUtils.isNotBlank(title)) {
+            title = renderer.renderToString(title, context);
+        }
+        if (StringUtils.isNotBlank(subtitle)) {
+            subtitle = renderer.renderToString(subtitle, context);
         }
 
         if (readonlyHintTemplateId != null) {

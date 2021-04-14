@@ -1,5 +1,9 @@
 package org.broadinstitute.ddp.service;
 
+import static org.broadinstitute.ddp.util.TranslationUtil.extractOptionalActivitySummary;
+import static org.broadinstitute.ddp.util.TranslationUtil.extractOptionalActivityTranslation;
+import static org.broadinstitute.ddp.util.TranslationUtil.extractTranslatedActivityName;
+
 import java.sql.Blob;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -34,7 +38,6 @@ import org.broadinstitute.ddp.db.dto.ActivityVersionDto;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.json.activity.ActivityInstanceSummary;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
-import org.broadinstitute.ddp.model.activity.definition.i18n.SummaryTranslation;
 import org.broadinstitute.ddp.model.activity.definition.i18n.Translation;
 import org.broadinstitute.ddp.model.activity.instance.ActivityInstance;
 import org.broadinstitute.ddp.model.activity.instance.ActivityResponse;
@@ -45,17 +48,14 @@ import org.broadinstitute.ddp.model.activity.instance.FormSection;
 import org.broadinstitute.ddp.model.activity.instance.NestedActivityBlock;
 import org.broadinstitute.ddp.model.activity.types.ActivityType;
 import org.broadinstitute.ddp.model.activity.types.BlockType;
-import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.broadinstitute.ddp.model.study.StudyLanguage;
 import org.broadinstitute.ddp.pex.PexInterpreter;
+import org.broadinstitute.ddp.service.actvityinstancebuilder.ActivityInstanceFromDefinitionBuilder;
 import org.broadinstitute.ddp.util.ActivityInstanceUtil;
 import org.jdbi.v3.core.Handle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
 
 public class ActivityInstanceService {
-
-    private static final Logger LOG = LoggerFactory.getLogger(ActivityInstanceService.class);
 
     private final ActivityInstanceDao actInstanceDao;
     private final PexInterpreter interpreter;
@@ -80,7 +80,11 @@ public class ActivityInstanceService {
      * @param style           the content style to use for converting content
      * @return activity instance, if found
      * @throws DDPException if pex evaluation error
+     * @deprecated Thus method should be removed as soon as
+     * {@link #buildInstanceFromDefinition(Handle, String, String, String, String, ContentStyle, String)} is carefully tested
+     *     (all code which utilized by this method (and not used in other places) should be removed also)
      */
+    @Deprecated
     public Optional<ActivityInstance> getTranslatedActivity(Handle handle, String userGuid, String operatorGuid, ActivityType actType,
                                                             String actInstanceGuid, String isoLangCode, ContentStyle style) {
         ActivityInstance inst = actInstanceDao.getTranslatedActivityByTypeAndGuid(handle, actType, actInstanceGuid, isoLangCode, style);
@@ -149,8 +153,9 @@ public class ActivityInstanceService {
                 nestedSummaries = nestedSummaries.stream()
                         .filter(summary -> !summary.isHidden())
                         .collect(Collectors.toList());
-                countQuestionsAndAnswers(handle, userGuid, operatorGuid, studyGuid, nestedSummaries);
-                renderInstanceSummaries(handle, instance.getParticipantUserId(), nestedSummaries);
+                Map<String, FormResponse> nestedResponses = countQuestionsAndAnswers(
+                        handle, userGuid, operatorGuid, studyGuid, nestedSummaries);
+                renderInstanceSummaries(handle, instance.getParticipantUserId(), studyGuid, nestedSummaries, nestedResponses);
 
                 nestedActBlock.addInstanceSummaries(nestedSummaries);
             }
@@ -340,6 +345,12 @@ public class ActivityInstanceService {
                     def.isWriteOnce(),
                     summaryDto.getReadonly());
 
+            boolean isFirstInstance = StringUtils.isBlank(summaryDto.getPreviousInstanceGuid());
+            boolean canDelete = ActivityInstanceUtil.computeCanDelete(
+                    def.canDeleteInstances(),
+                    def.getCanDeleteFirstInstance(),
+                    isFirstInstance);
+
             var summary = new ActivityInstanceSummary(
                     def.getActivityCode(),
                     summaryDto.getId(),
@@ -359,7 +370,7 @@ public class ActivityInstanceService {
                     def.isExcludeFromDisplay(),
                     summaryDto.isHidden(),
                     summaryDto.getCreatedAtMillis(),
-                    def.canDeleteInstances(),
+                    canDelete,
                     def.isFollowup(),
                     versionDto.getVersionTag(),
                     versionDto.getId(),
@@ -373,41 +384,6 @@ public class ActivityInstanceService {
         return summaries;
     }
 
-    private Translation extractTranslatedActivityName(FormActivityDef def, String preferredLangCode, String studyDefaultLangCode) {
-        Translation preferredName = null;
-        Translation studyDefaultName = null;
-        for (var name : def.getTranslatedNames()) {
-            if (name.getLanguageCode().equals(studyDefaultLangCode)) {
-                studyDefaultName = name;
-            }
-            if (name.getLanguageCode().equals(preferredLangCode)) {
-                preferredName = name;
-            }
-        }
-        if (preferredName == null && studyDefaultName == null) {
-            throw new DDPException("Could not find name for activity " + def.getActivityCode());
-        }
-        return preferredName != null ? preferredName : studyDefaultName;
-    }
-
-    private String extractOptionalActivityTranslation(List<Translation> translations, String isoLangCode) {
-        return translations.stream()
-                .filter(trans -> trans.getLanguageCode().equals(isoLangCode))
-                .map(Translation::getText)
-                .findFirst()
-                .orElse(null);
-    }
-
-    private String extractOptionalActivitySummary(List<SummaryTranslation> summaryTranslations,
-                                                  InstanceStatusType statusType,
-                                                  String isoLangCode) {
-        return summaryTranslations.stream()
-                .filter(trans -> trans.getStatusType().equals(statusType) && trans.getLanguageCode().equals(isoLangCode))
-                .map(Translation::getText)
-                .findFirst()
-                .orElse(null);
-    }
-
     /**
      * Iterate through list of activity summaries and count up how many questions are answered.
      *
@@ -415,11 +391,12 @@ public class ActivityInstanceService {
      * @param userGuid  the user guid
      * @param studyGuid the study guid
      * @param summaries the list of activity summaries
+     * @return mapping of instance guid to object containing answer responses used for counting
      */
-    public void countQuestionsAndAnswers(Handle handle, String userGuid, String operatorGuid, String studyGuid,
-                                         List<ActivityInstanceSummary> summaries) {
+    public Map<String, FormResponse> countQuestionsAndAnswers(Handle handle, String userGuid, String operatorGuid, String studyGuid,
+                                                              List<ActivityInstanceSummary> summaries) {
         if (summaries.isEmpty()) {
-            return;
+            return new HashMap<>();
         }
 
         ActivityDefStore activityDefStore = ActivityDefStore.getInstance();
@@ -436,19 +413,7 @@ public class ActivityInstanceService {
 
         for (var summary : summaries) {
             if (ActivityType.valueOf(summary.getActivityType()) == ActivityType.FORMS) {
-                String activityCode = summary.getActivityCode();
-                String versionTag = summary.getVersionTag();
-                long versionId = summary.getVersionId();
-                long revisionStart = summary.getRevisionStart();
-
-                FormActivityDef formActivityDef = activityDefStore.getActivityDef(studyGuid, activityCode, versionTag);
-                if (formActivityDef == null) {
-                    ActivityDto activityDto = handle.attach(JdbiActivity.class)
-                            .findActivityByStudyGuidAndCode(studyGuid, activityCode).get();
-                    formActivityDef = handle.attach(FormActivityDao.class)
-                            .findDefByDtoAndVersion(activityDto, versionTag, versionId, revisionStart);
-                    activityDefStore.setActivityDef(studyGuid, activityCode, versionTag, formActivityDef);
-                }
+                FormActivityDef formActivityDef = getDefinitionForSummary(handle, activityDefStore, studyGuid, summary);
 
                 Pair<Integer, Integer> questionAndAnswerCounts = activityDefStore.countQuestionsAndAnswers(
                         handle, userGuid, operatorGuid, formActivityDef, summary.getActivityInstanceGuid(), instanceResponses);
@@ -457,6 +422,27 @@ public class ActivityInstanceService {
                 summary.setNumQuestionsAnswered(questionAndAnswerCounts.getRight());
             }
         }
+
+        return instanceResponses;
+    }
+
+    private FormActivityDef getDefinitionForSummary(Handle handle, ActivityDefStore activityDefStore,
+                                                    String studyGuid, ActivityInstanceSummary summary) {
+        String activityCode = summary.getActivityCode();
+        String versionTag = summary.getVersionTag();
+        long versionId = summary.getVersionId();
+        long revisionStart = summary.getRevisionStart();
+
+        FormActivityDef formActivityDef = activityDefStore.getActivityDef(studyGuid, activityCode, versionTag);
+        if (formActivityDef == null) {
+            ActivityDto activityDto = handle.attach(JdbiActivity.class)
+                    .findActivityByStudyGuidAndCode(studyGuid, activityCode).get();
+            formActivityDef = handle.attach(FormActivityDao.class)
+                    .findDefByDtoAndVersion(activityDto, versionTag, versionId, revisionStart);
+            activityDefStore.setActivityDef(studyGuid, activityCode, versionTag, formActivityDef);
+        }
+
+        return formActivityDef;
     }
 
     /**
@@ -466,11 +452,15 @@ public class ActivityInstanceService {
      * will be used to render the name, otherwise " #N" will be appended to the original name (where N is the instance
      * number).
      *
-     * @param handle    the database handle
-     * @param userId    the user who owns the activity instances
-     * @param summaries the list of summaries
+     * @param handle            the database handle
+     * @param userId            the user who owns the activity instances
+     * @param studyGuid         the study guid
+     * @param summaries         the list of summaries
+     * @param instanceResponses the mapping of instance guid to answer response objects
      */
-    public void renderInstanceSummaries(Handle handle, long userId, List<ActivityInstanceSummary> summaries) {
+    public void renderInstanceSummaries(Handle handle, long userId, String studyGuid,
+                                        List<ActivityInstanceSummary> summaries,
+                                        Map<String, FormResponse> instanceResponses) {
         if (summaries.isEmpty()) {
             return;
         }
@@ -480,18 +470,25 @@ public class ActivityInstanceService {
                 .collect(Collectors.toSet());
         var instanceDao = handle.attach(org.broadinstitute.ddp.db.dao.ActivityInstanceDao.class);
         Map<Long, Map<String, String>> substitutions;
-        try (var substitionStream = instanceDao.bulkFindSubstitutions(instanceIds)) {
-            substitutions = substitionStream
+        try (var substitutionStream = instanceDao.bulkFindSubstitutions(instanceIds)) {
+            substitutions = substitutionStream
                     .collect(Collectors.toMap(wrapper -> wrapper.getActivityInstanceId(), wrapper -> wrapper.unwrap()));
         }
         var sharedSnapshot = I18nContentRenderer
                 .newValueProviderBuilder(handle, userId)
                 .build().getSnapshot();
 
+        ActivityDefStore activityDefStore = ActivityDefStore.getInstance();
+
         for (var summary : summaries) {
+            FormResponse formResponse = instanceResponses.get(summary.getActivityInstanceGuid());
+            FormActivityDef formActivityDef = formResponse == null ? null
+                    : getDefinitionForSummary(handle, activityDefStore, studyGuid, summary);
+
             Map<String, String> subs = substitutions.getOrDefault(summary.getActivityInstanceId(), new HashMap<>());
             var provider = new RenderValueProvider.Builder()
                     .setActivityInstanceNumber(summary.getInstanceNumber())
+                    .withFormResponse(formResponse, formActivityDef, summary.getIsoLanguageCode())
                     .withSnapshot(sharedSnapshot)
                     .withSnapshot(subs)
                     .build();
@@ -512,10 +509,18 @@ public class ActivityInstanceService {
             }
             summary.setActivityName(nameText);
 
-            // Render the summary.
+            // Render other properties.
+            if (StringUtils.isNotBlank(summary.getActivityTitle())) {
+                summary.setActivityTitle(renderer.renderToString(summary.getActivityTitle(), context));
+            }
+            if (StringUtils.isNotBlank(summary.getActivitySubtitle())) {
+                summary.setActivitySubtitle(renderer.renderToString(summary.getActivitySubtitle(), context));
+            }
+            if (StringUtils.isNotBlank(summary.getActivityDescription())) {
+                summary.setActivityDescription(renderer.renderToString(summary.getActivityDescription(), context));
+            }
             if (StringUtils.isNotBlank(summary.getActivitySummary())) {
-                String summaryText = renderer.renderToString(summary.getActivitySummary(), context);
-                summary.setActivitySummary(summaryText);
+                summary.setActivitySummary(renderer.renderToString(summary.getActivitySummary(), context));
             }
         }
     }
@@ -532,5 +537,22 @@ public class ActivityInstanceService {
         var instanceDao = handle.attach(org.broadinstitute.ddp.db.dao.ActivityInstanceDao.class);
         int numDeleted = instanceDao.deleteAllByIds(Set.of(instanceDto.getId()));
         DBUtils.checkDelete(1, numDeleted);
+    }
+
+    /**
+     * Build {@link ActivityInstance} from data cached stored in {@link ActivityDefStore}.
+     * Some of data (answers, rule messages) are queried from DB.
+     */
+    public Optional<ActivityInstance> buildInstanceFromDefinition(
+            Handle handle,
+            String userGuid,
+            String operatorGuid,
+            String studyGuid,
+            String instanceGuid,
+            ContentStyle style,
+            String isoLangCode) {
+        return new ActivityInstanceFromDefinitionBuilder().buildActivityInstance(
+                handle, userGuid, operatorGuid, studyGuid, instanceGuid, style, isoLangCode
+        );
     }
 }

@@ -92,7 +92,8 @@ public class UpdateActivityBaseSettings implements CustomTask {
                 definition.getBoolean("excludeStatusIconFromDisplay"),
                 definition.getBoolean("hideExistingInstancesOnCreation"),
                 ConfigUtil.getBoolOrElse(definition, "createOnParentCreation", false),
-                ConfigUtil.getBoolOrElse(definition, "canDeleteInstances", false));
+                ConfigUtil.getBoolOrElse(definition, "canDeleteInstances", false),
+                ConfigUtil.getBoolIfPresent(definition, "canDeleteFirstInstance"));
         if (!currentDto.equals(latestDto)) {
             if (currentDto.canDeleteInstances() != latestDto.canDeleteInstances()) {
                 throw new UnsupportedOperationException("Updating `canDeleteInstances` setting is currently not supported"
@@ -111,7 +112,9 @@ public class UpdateActivityBaseSettings implements CustomTask {
                     latestDto.isFollowup(),
                     latestDto.shouldExcludeStatusIconFromDisplay(),
                     latestDto.isHideExistingInstancesOnCreation(),
-                    latestDto.isCreateOnParentCreation());
+                    latestDto.isCreateOnParentCreation(),
+                    latestDto.canDeleteInstances(),
+                    latestDto.getCanDeleteFirstInstance());
             LOG.info("Updated basic settings");
         } else {
             LOG.info("No changes to basic settings");

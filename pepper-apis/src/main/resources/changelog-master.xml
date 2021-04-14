@@ -257,4 +257,7 @@
     <include file="db-changes/schema/DDP-5604-activity-can-delete-instances.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/DDP-5679-add-event-configuration-label.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/DDP-5045-sendgrid-event-message-id-nullable.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/seed/DDP-5749-completed-status.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/DDP-5771-nested-activity-can-delete-first-instance.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/DDP-5822-add-pdf-base-template-language.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>

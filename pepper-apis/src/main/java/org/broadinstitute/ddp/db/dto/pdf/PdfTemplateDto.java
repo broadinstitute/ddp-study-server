@@ -8,14 +8,17 @@ public class PdfTemplateDto {
 
     private long id;
     private byte[] blob;
+    private long languageCodeId;
     private PdfTemplateType type;
 
     @JdbiConstructor
     public PdfTemplateDto(@ColumnName("template_id") long id,
                           @ColumnName("template_blob") byte[] blob,
+                          @ColumnName("language_code_id") long languageCodeId,
                           @ColumnName("template_type") PdfTemplateType type) {
         this.id = id;
         this.blob = blob;
+        this.languageCodeId = languageCodeId;
         this.type = type;
     }
 
@@ -25,6 +28,10 @@ public class PdfTemplateDto {
 
     public byte[] getBlob() {
         return blob;
+    }
+
+    public long getLanguageCodeId() {
+        return languageCodeId;
     }
 
     public PdfTemplateType getType() {
