@@ -29,7 +29,6 @@ select q.question_id,
 getAllActiveValidations() ::= <<
 <select_all_question_rule_dtos()>
  where q.question_id = :questionId and rev.end_date is null
- order by v.validation_id
 >>
 
 getAllActiveValidationDtosForActivity() ::= <<

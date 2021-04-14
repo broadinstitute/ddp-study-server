@@ -3,12 +3,14 @@ package org.broadinstitute.ddp.db.dao;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.broadinstitute.ddp.TxnAwareBaseTest;
 import org.broadinstitute.ddp.cache.LanguageStore;
@@ -160,8 +162,11 @@ public class ValidationDaoTest extends TxnAwareBaseTest {
             assertEquals(3, validations.size());
 
             assertEquals(RuleType.REQUIRED, validations.get(0).getRuleType());
-            assertEquals(RuleType.REGEX, validations.get(1).getRuleType());
-            assertEquals(RuleType.LENGTH, validations.get(2).getRuleType());
+            List<RuleType> otherRules = validations.stream().skip(1)
+                    .map(Rule::getRuleType).collect(Collectors.toList());
+            assertEquals(2, otherRules.size());
+            assertTrue(otherRules.contains(RuleType.REGEX));
+            assertTrue(otherRules.contains(RuleType.LENGTH));
 
             handle.rollback();
         });
