@@ -22,6 +22,8 @@ public class AIBuilderParams {
 
     private UserActivityInstanceSummary instanceSummary;
 
+    private boolean disableTemplatesRendering;
+
     public static AIBuilderParams createParams(String userGuid, String studyGuid, String instanceGuid) {
         return new AIBuilderParams(userGuid, studyGuid, instanceGuid);
     }
@@ -77,6 +79,15 @@ public class AIBuilderParams {
 
     public AIBuilderParams setInstanceSummary(UserActivityInstanceSummary instanceSummary) {
         this.instanceSummary = instanceSummary;
+        return this;
+    }
+
+    public boolean isDisableTemplatesRendering() {
+        return disableTemplatesRendering;
+    }
+
+    public AIBuilderParams setDisableTemplatesRendering(boolean disableTemplatesRendering) {
+        this.disableTemplatesRendering = disableTemplatesRendering;
         return this;
     }
 }

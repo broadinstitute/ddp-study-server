@@ -15,8 +15,10 @@ public class TemplateHandler {
      */
     public static Long addAndRenderTemplate(AIBuilderContext ctx, Template template) {
         if (template != null) {
-            ctx.getRenderedTemplates().put(template.getTemplateId(), template.render(
-                    ctx.getIsoLangCode(), ctx.getI18nContentRenderer(), ctx.getRendererInitialContext()));
+            if (!ctx.getParams().isDisableTemplatesRendering()) {
+                ctx.getRenderedTemplates().put(template.getTemplateId(), template.render(
+                        ctx.getIsoLangCode(), ctx.getI18nContentRenderer(), ctx.getRendererInitialContext()));
+            }
             return template.getTemplateId();
         }
         return null;

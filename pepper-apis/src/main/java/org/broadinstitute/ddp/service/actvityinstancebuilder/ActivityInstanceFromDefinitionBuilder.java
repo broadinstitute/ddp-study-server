@@ -14,7 +14,9 @@ import static org.broadinstitute.ddp.service.actvityinstancebuilder.context.AIBu
 import static org.broadinstitute.ddp.service.actvityinstancebuilder.context.AIBuildStep.START_BUILD;
 import static org.broadinstitute.ddp.service.actvityinstancebuilder.context.AIBuildStep.UPDATE_BLOCK_STATUSES;
 
+import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.db.ActivityDefStore;
+import org.broadinstitute.ddp.db.dto.LanguageDto;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
 import org.broadinstitute.ddp.model.activity.definition.FormBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.FormSectionDef;
@@ -115,7 +117,14 @@ public class ActivityInstanceFromDefinitionBuilder {
             context.getParams().setOperatorGuid(context.getParams().getUserGuid());
         }
 
-        context.setBuildStep(CHECK_PARAMS);
+        LanguageDto languageDto = LanguageStore.get(context.getParams().getIsoLangCode());
+        if (languageDto == null) {
+            context.setFailedMessage("Unknown language code: " + context.getParams().getIsoLangCode());
+            context.setFailedStep(CHECK_PARAMS);
+        } else {
+            context.setBuildStep(CHECK_PARAMS);
+        }
+
         return this;
     }
 
@@ -210,10 +219,15 @@ public class ActivityInstanceFromDefinitionBuilder {
 
     public ActivityInstanceFromDefinitionBuilder renderContent() {
         if (checkStep(BUILD_FORM_CHILDREN, RENDER_CONTENT)) {
+            if (context.getParams().isDisableTemplatesRendering()) {
+                context.setFailedMessage("Cannot render content because templates rendering is disabled by parameter"
+                        + " disableTemplatesRendering");
+                context.setFailedStep(RENDER_CONTENT);
+            } else {
+                context.creators().getFormInstanceCreatorHelper().renderContent(context, context.getRenderedTemplates()::get);
 
-            context.creators().getFormInstanceCreatorHelper().renderContent(context, context.getRenderedTemplates()::get);
-
-            context.setBuildStep(RENDER_CONTENT);
+                context.setBuildStep(RENDER_CONTENT);
+            }
         }
         return this;
     }

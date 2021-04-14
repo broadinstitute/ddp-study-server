@@ -6,6 +6,7 @@ import java.util.Map;
 import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.content.ContentStyle;
 import org.broadinstitute.ddp.content.I18nContentRenderer;
+import org.broadinstitute.ddp.db.dto.LanguageDto;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
 import org.broadinstitute.ddp.model.activity.instance.ActivityInstance;
 import org.broadinstitute.ddp.model.activity.instance.FormInstance;
@@ -49,7 +50,8 @@ public class AIBuilderContext {
     public AIBuilderContext(Handle handle, AIBuilderParams params) {
         this.handle = handle;
         this.params = params;
-        this.langCodeId = LanguageStore.get(params.getIsoLangCode()).getId();
+        LanguageDto languageDto = LanguageStore.get(params.getIsoLangCode());
+        this.langCodeId = languageDto != null ? languageDto.getId() : 0;
     }
 
     public AIBuildStep getBuildStep() {

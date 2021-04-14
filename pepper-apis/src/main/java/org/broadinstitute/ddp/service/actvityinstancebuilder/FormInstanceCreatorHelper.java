@@ -38,7 +38,7 @@ public class FormInstanceCreatorHelper {
                 ctx.getUserGuid(),
                 ctx.getOperatorGuid(),
                 ctx.getFormResponse().getGuid(),
-                null);
+                ctx.getParams().getInstanceSummary());
     }
 
     public void renderContent(AIBuilderContext ctx, Renderable.Provider<String> rendered) {

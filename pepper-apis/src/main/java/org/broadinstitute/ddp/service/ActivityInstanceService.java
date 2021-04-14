@@ -87,7 +87,7 @@ public class ActivityInstanceService {
      * @return activity instance, if found
      * @throws DDPException if pex evaluation error
      * @deprecated Thus method should be removed as soon as
-     *     @link #buildInstanceFromDefinition(Handle, String, String, String, String, ContentStyle, String)} is carefully tested
+     *     {@link #buildInstanceFromDefinition(Handle, String, String, String, String, ContentStyle, String)} is carefully tested
      *     (all code which utilized by this method (and not used in other places) should be removed also)
      */
     @Deprecated
@@ -616,7 +616,8 @@ public class ActivityInstanceService {
                 createParams(userGuid, studyGuid, instanceGuid)
                         .setOperatorGuid(operatorGuid)
                         .setIsoLangCode(isoLangCode)
-                        .setInstanceSummary(instanceSummary))
+                        .setInstanceSummary(instanceSummary)
+                        .setDisableTemplatesRendering(true))
                 .checkParams()
                     .readFormInstanceData()
                     .readActivityDef()
