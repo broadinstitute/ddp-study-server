@@ -456,7 +456,8 @@ public class PutFormAnswersRouteStandaloneTest extends IntegrationTestSuite.Test
     public void testSetStatusToCompleteForActivityInstanceWithIncompleteAnswers_Failure() {
         ActivityInstanceDto instanceDto = TransactionWrapper.withTxn(handle -> {
             long questionId = ((QuestionBlockDef) form.getSections().get(0).getBlocks().get(0)).getQuestion().getQuestionId();
-            long revId = handle.attach(JdbiRevision.class).insertStart(Instant.now().toEpochMilli(), user.getUserId(), "make required");
+            long revId = handle.attach(JdbiRevision.class).insertStart(Instant.now().toEpochMilli() - 10000,
+                    user.getUserId(), "make required");
             handle.attach(QuestionDao.class).addRequiredRule(questionId, new RequiredRuleDef(null), revId);
             return insertNewInstanceAndDeferCleanup(handle, form.getActivityId());
         });
