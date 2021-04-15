@@ -140,8 +140,8 @@ public class ActivityInstanceFromDefinitionBuilderTest extends ActivityInstanceS
                         .getContext();
 
             } catch (IllegalStateException e) {
-                assertEquals("Incorrect last step before step=READ_ACTIVITY_DEF of ActivityInstance building: " +
-                        "last step=CHECK_PARAMS, but required lastStep=READ_FORM_INSTANCE", e.getMessage());
+                assertEquals("Incorrect last step before step=READ_ACTIVITY_DEF of ActivityInstance building: "
+                        + "last step=CHECK_PARAMS, but required lastStep=READ_FORM_INSTANCE", e.getMessage());
             }
 
             handle.rollback();
@@ -174,8 +174,8 @@ public class ActivityInstanceFromDefinitionBuilderTest extends ActivityInstanceS
                         .getContext();
 
             } catch (IllegalStateException e) {
-                assertEquals("Incorrect last step before step=READ_ACTIVITY_DEF of ActivityInstance building: " +
-                        "last step=INIT, but required lastStep=READ_FORM_INSTANCE", e.getMessage());
+                assertEquals("Incorrect last step before step=READ_ACTIVITY_DEF of ActivityInstance building: "
+                        + "last step=INIT, but required lastStep=READ_FORM_INSTANCE", e.getMessage());
             }
 
             handle.rollback();
