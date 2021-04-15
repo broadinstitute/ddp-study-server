@@ -36,7 +36,10 @@ public class TransactionWrapper {
     // https://bugs.mysql.com/bug.php?id=91112
     // Note 03/10/2020: Release of fixed Java connector is imminent and this might no longer be necessary
     static {
-        TimeZone.setDefault(TimeZone.getTimeZone(ConfigManager.getInstance().getConfig().getString(ConfigFile.DEFAULT_TIMEZONE)));
+        ConfigManager manager = ConfigManager.getInstance();
+        if (manager != null && manager.getConfig() != null) {
+            TimeZone.setDefault(TimeZone.getTimeZone(manager.getConfig().getString(ConfigFile.DEFAULT_TIMEZONE)));
+        }
     }
 
     private static final Logger LOG = LoggerFactory.getLogger(TransactionWrapper.class);

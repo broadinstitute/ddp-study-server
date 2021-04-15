@@ -12,16 +12,19 @@ public abstract class PdfTemplate {
     private long id;
     private PdfTemplateType type;
     private byte[] rawBytes;
+    private long languageCodeId;
 
-    PdfTemplate(long id, PdfTemplateType type, byte[] rawBytes) {
+    PdfTemplate(long id, PdfTemplateType type, byte[] rawBytes, long languageCodeId) {
         this.id = id;
         this.type = type;
         this.rawBytes = rawBytes;
+        this.languageCodeId = languageCodeId;
     }
 
-    PdfTemplate(PdfTemplateType type, byte[] rawBytes) {
+    PdfTemplate(PdfTemplateType type, byte[] rawBytes, long languageCodeId) {
         this.type = type;
         this.rawBytes = rawBytes;
+        this.languageCodeId = languageCodeId;
     }
 
     public long getId() {
@@ -38,6 +41,10 @@ public abstract class PdfTemplate {
 
     public byte[] getRawBytes() {
         return rawBytes;
+    }
+
+    public long getLanguageCodeId() {
+        return languageCodeId;
     }
 
     /**
