@@ -1,6 +1,8 @@
 package org.broadinstitute.ddp.service.actvityinstancebuilder.context;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.broadinstitute.ddp.cache.LanguageStore;
@@ -24,6 +26,7 @@ import org.jdbi.v3.core.Handle;
  */
 public class AIBuilderContext {
 
+    private List<AIBuildStep> passedBuildSteps = new ArrayList<>();
     private AIBuildStep buildStep;
     private AIBuildStep failedStep;
     private String failedMessage;
@@ -60,6 +63,15 @@ public class AIBuilderContext {
 
     public void setBuildStep(AIBuildStep buildStep) {
         this.buildStep = buildStep;
+        passedBuildSteps.add(buildStep);
+    }
+
+    public List<AIBuildStep> getPassedBuildSteps() {
+        return passedBuildSteps;
+    }
+
+    public boolean isBuildStepPassed(AIBuildStep buildStep) {
+        return passedBuildSteps.contains(buildStep);
     }
 
     public AIBuildStep getFailedStep() {
@@ -118,24 +130,27 @@ public class AIBuilderContext {
         return formActivityDef;
     }
 
-    public void setFormActivityDef(FormActivityDef formActivityDef) {
+    public AIBuilderContext setFormActivityDef(FormActivityDef formActivityDef) {
         this.formActivityDef = formActivityDef;
+        return this;
     }
 
     public FormResponse getFormResponse() {
         return formResponse;
     }
 
-    public void setFormResponse(FormResponse formResponse) {
+    public AIBuilderContext setFormResponse(FormResponse formResponse) {
         this.formResponse = formResponse;
+        return this;
     }
 
     public FormInstance getFormInstance() {
         return formInstance;
     }
 
-    public void setFormInstance(FormInstance formInstance) {
+    public AIBuilderContext setFormInstance(FormInstance formInstance) {
         this.formInstance = formInstance;
+        return this;
     }
 
     public PexInterpreter getInterpreter() {
@@ -158,8 +173,9 @@ public class AIBuilderContext {
         return previousInstanceId;
     }
 
-    public void setPreviousInstanceId(Long previousInstanceId) {
+    public AIBuilderContext setPreviousInstanceId(Long previousInstanceId) {
         this.previousInstanceId = previousInstanceId;
+        return this;
     }
 
     public AICreatorsFactory creators() {

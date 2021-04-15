@@ -121,10 +121,9 @@ public class ActivityInstanceFromDefinitionBuilder {
         if (languageDto == null) {
             context.setFailedMessage("Unknown language code: " + context.getParams().getIsoLangCode());
             context.setFailedStep(CHECK_PARAMS);
-        } else {
-            context.setBuildStep(CHECK_PARAMS);
         }
 
+        context.setBuildStep(CHECK_PARAMS);
         return this;
     }
 
@@ -219,6 +218,9 @@ public class ActivityInstanceFromDefinitionBuilder {
 
     public ActivityInstanceFromDefinitionBuilder renderContent() {
         if (checkStep(BUILD_FORM_CHILDREN, RENDER_CONTENT)) {
+            if (context.getParams().getStyle() == null) {
+                throw new IllegalStateException("RenderContent() cannot be executed because ContentStyle parameter is not set");
+            }
             if (context.getParams().isDisableTemplatesRendering()) {
                 context.setFailedMessage("Cannot render content because templates rendering is disabled by parameter"
                         + " disableTemplatesRendering");
