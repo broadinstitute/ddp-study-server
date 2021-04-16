@@ -119,8 +119,7 @@ public class ActivityInstanceFromDefinitionBuilder {
 
         LanguageDto languageDto = LanguageStore.get(context.getParams().getIsoLangCode());
         if (languageDto == null) {
-            context.setFailedMessage("Unknown language code: " + context.getParams().getIsoLangCode());
-            context.setFailedStep(CHECK_PARAMS);
+            throw new IllegalArgumentException("Unknown language code: " + context.getParams().getIsoLangCode());
         }
 
         context.setBuildStep(CHECK_PARAMS);

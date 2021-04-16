@@ -71,9 +71,12 @@ public class FormInstanceDaoTest extends TxnAwareBaseTest {
         TransactionWrapper.useTxn(handle -> {
             FormActivityDef form = insertDummyActivity(handle, userGuid, studyGuid);
             String instanceGuid = insertNewInstance(handle, form.getActivityId(), userGuid);
-            Optional<ActivityInstance> inst = activityInstanceService.buildInstanceFromDefinition(handle, userGuid, userGuid, studyGuid,
-                    instanceGuid, ContentStyle.STANDARD, "xyz");
-            assertTrue(inst.isEmpty());
+            try {
+                Optional<ActivityInstance> inst = activityInstanceService.buildInstanceFromDefinition(handle, userGuid, userGuid, studyGuid,
+                        instanceGuid, ContentStyle.STANDARD, "xyz");
+            } catch (IllegalArgumentException e) {
+                assertEquals("Unknown language code: xyz", e.getMessage());
+            }
             handle.rollback();
         });
     }

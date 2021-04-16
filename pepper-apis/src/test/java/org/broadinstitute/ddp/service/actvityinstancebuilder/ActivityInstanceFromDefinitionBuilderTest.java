@@ -4,7 +4,6 @@ import static org.broadinstitute.ddp.service.actvityinstancebuilder.context.AIBu
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import org.broadinstitute.ddp.content.ContentStyle;
@@ -194,26 +193,21 @@ public class ActivityInstanceFromDefinitionBuilderTest extends ActivityInstanceS
     public void testAIBuilderWithUnknownLangCodeNOK() {
         TransactionWrapper.useTxn(handle -> {
             String instanceGuid = setupActivityAndInstance(handle);
-            var context = new ActivityInstanceFromDefinitionBuilder(handle,
-                    createParams(userGuid, studyGuid, instanceGuid)
-                            .setIsoLangCode(INVALID_LANG_CODE)
-                            .setStyle(CONTENT_STYLE))
-                    .checkParams()
-                    .readFormInstanceData()
-                    .readActivityDef()
-                    .startBuild()
-                    .buildFormInstance()
-                    .endBuild()
-                    .getContext();
-
-            assertEquals(2, context.getPassedBuildSteps().size());
-            assertTrue(context.isBuildStepPassed(AIBuildStep.CHECK_PARAMS));
-            assertEquals(AIBuildStep.CHECK_PARAMS, context.getBuildStep());
-
-            assertEquals(AIBuildStep.CHECK_PARAMS, context.getFailedStep());
-            assertEquals("Unknown language code: abc", context.getFailedMessage());
-
-            assertNull(context.getFormInstance());
+            try {
+                var context = new ActivityInstanceFromDefinitionBuilder(handle,
+                        createParams(userGuid, studyGuid, instanceGuid)
+                                .setIsoLangCode(INVALID_LANG_CODE)
+                                .setStyle(CONTENT_STYLE))
+                        .checkParams()
+                        .readFormInstanceData()
+                        .readActivityDef()
+                        .startBuild()
+                        .buildFormInstance()
+                        .endBuild()
+                        .getContext();
+            } catch (IllegalArgumentException e) {
+                assertEquals("Unknown language code: abc", e.getMessage());
+            }
 
             handle.rollback();
         });
