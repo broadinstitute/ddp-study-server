@@ -69,7 +69,8 @@ public class CustomExporter {
      * @param studyGuid the study guid
      * @return list of extracts, in ascending order by version
      */
-    private List<ActivityExtract> extractVersionsOfActivity(Handle handle, ActivityDto activityDto, String studyGuid) {
+    private List<ActivityExtract> extractVersionsOfActivity(Handle handle, ActivityDto activityDto, String studyGuid,
+                                                            List<String> excludedVersions) {
         JdbiActivityVersion jdbiActivityVersion = handle.attach(JdbiActivityVersion.class);
         FormActivityDao formActivityDao = handle.attach(FormActivityDao.class);
         ActivityDefStore store = ActivityDefStore.getInstance();
@@ -77,6 +78,10 @@ public class CustomExporter {
 
         String activityCode = activityDto.getActivityCode();
         List<ActivityVersionDto> versionDtos = jdbiActivityVersion.findAllVersionsInAscendingOrder(activityDto.getActivityId());
+        if (excludedVersions != null) {
+            versionDtos = versionDtos.stream().filter(v -> !excludedVersions.contains(v.getVersionTag())).collect(Collectors.toList());
+        }
+
         for (ActivityVersionDto versionDto : versionDtos) {
             // Only supports form activities for now.
             FormActivityDef def = store.getActivityDef(studyGuid, activityCode, versionDto.getVersionTag());
@@ -104,7 +109,8 @@ public class CustomExporter {
             return null;
         }
         ActivityDto activityDto = activityDtoOptional.get();
-        List<ActivityExtract> activities = extractVersionsOfActivity(handle, activityDto, customGuid);
+        List<ActivityExtract> activities = extractVersionsOfActivity(handle, activityDto, customGuid,
+                cfg.getStringList(CustomExportConfigFile.EXCLUDED_ACTIVITY_VERSIONS));
 
         LOG.info("Custom export found {} versions of activity {}", activities.size(), customActivity);
 

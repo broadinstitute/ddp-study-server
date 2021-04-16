@@ -9,6 +9,7 @@ public class CustomExportConfigFile {
     public static final String STUDY_GUID = "guid";
     public static final String ACTIVITY = "activity";
     public static final String STATUS = "status";
+    public static final String EXCLUDED_ACTIVITY_VERSIONS = "excludedActivityVersions";
     public static final String EXCLUDED_ACTIVITY_FIELDS = "excludedActivityFields";
     public static final String EXCLUDED_PARTICIPANT_FIELDS = "excludedParticipantFields";
     public static final String FIRST_FIELDS = "firstFields";
