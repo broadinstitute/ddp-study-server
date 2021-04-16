@@ -3,9 +3,9 @@ package org.broadinstitute.ddp;
 import static com.google.common.net.HttpHeaders.X_FORWARDED_FOR;
 import static org.broadinstitute.ddp.constants.ConfigFile.Auth0LogEvents.AUTH0_LOG_EVENTS_TOKEN;
 import static org.broadinstitute.ddp.constants.ConfigFile.Sendgrid.EVENTS_VERIFICATION_KEY;
+import static org.broadinstitute.ddp.filter.AllowListFilter.allowlist;
 import static org.broadinstitute.ddp.filter.Exclusions.afterWithExclusion;
 import static org.broadinstitute.ddp.filter.Exclusions.beforeWithExclusion;
-import static org.broadinstitute.ddp.filter.AllowListFilter.allowlist;
 import static spark.Spark.after;
 import static spark.Spark.afterAfter;
 import static spark.Spark.awaitInitialization;
@@ -481,7 +481,7 @@ public class DataDonationPlatform {
                 responseSerializer);
         put(
                 API.USER_ACTIVITY_ANSWERS,
-                new PutFormAnswersRoute(workflowService, activityValidationService, formInstanceDao, interpreter),
+                new PutFormAnswersRoute(workflowService, actInstService, activityValidationService, formInstanceDao, interpreter),
                 responseSerializer
         );
         post(API.USER_ACTIVITY_UPLOADS, new CreateUserActivityUploadRoute(fileUploadService), responseSerializer);

@@ -8,7 +8,7 @@ import org.broadinstitute.ddp.model.activity.definition.GroupBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.NestedActivityBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.QuestionBlockDef;
 import org.broadinstitute.ddp.model.activity.instance.FormBlock;
-import org.broadinstitute.ddp.service.actvityinstancebuilder.AIBuilderContext;
+import org.broadinstitute.ddp.service.actvityinstancebuilder.context.AIBuilderContext;
 
 /**
  * Creates {@link FormBlock}

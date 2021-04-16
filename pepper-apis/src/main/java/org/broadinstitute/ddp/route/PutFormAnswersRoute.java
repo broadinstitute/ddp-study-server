@@ -36,6 +36,7 @@ import org.broadinstitute.ddp.json.PutAnswersResponse;
 import org.broadinstitute.ddp.json.errors.ApiError;
 import org.broadinstitute.ddp.json.workflow.WorkflowResponse;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
+import org.broadinstitute.ddp.model.activity.instance.ActivityInstance;
 import org.broadinstitute.ddp.model.activity.instance.ComponentBlock;
 import org.broadinstitute.ddp.model.activity.instance.FormBlock;
 import org.broadinstitute.ddp.model.activity.instance.FormComponent;
@@ -54,6 +55,7 @@ import org.broadinstitute.ddp.model.workflow.ActivityState;
 import org.broadinstitute.ddp.model.workflow.WorkflowState;
 import org.broadinstitute.ddp.pex.PexInterpreter;
 import org.broadinstitute.ddp.security.DDPAuth;
+import org.broadinstitute.ddp.service.ActivityInstanceService;
 import org.broadinstitute.ddp.service.ActivityValidationService;
 import org.broadinstitute.ddp.service.DsmAddressValidationStatus;
 import org.broadinstitute.ddp.service.WorkflowService;
@@ -72,17 +74,20 @@ public class PutFormAnswersRoute implements Route {
     private static final Logger LOG = LoggerFactory.getLogger(PutFormAnswersRoute.class);
 
     private final WorkflowService workflowService;
+    private final ActivityInstanceService actInstService;
     private final ActivityValidationService actValidationService;
     private final FormInstanceDao formInstanceDao;
     private final PexInterpreter interpreter;
 
     public PutFormAnswersRoute(
             WorkflowService workflowService,
+            ActivityInstanceService actInstService,
             ActivityValidationService actValidationService,
             FormInstanceDao formInstanceDao,
             PexInterpreter interpreter
     ) {
         this.workflowService = workflowService;
+        this.actInstService = actInstService;
         this.actValidationService = actValidationService;
         this.formInstanceDao = formInstanceDao;
         this.interpreter = interpreter;
@@ -137,7 +142,7 @@ public class PutFormAnswersRoute implements Route {
 
                     FormInstance form = loadFormInstance(
                             response, handle, userGuid, operatorGuid,
-                            instanceGuid, preferredUserLangDto, instanceSummary);
+                            studyGuid, instanceGuid, preferredUserLangDto, instanceSummary);
                     if (!form.isComplete()) {
                         String msg = "The status cannot be set to COMPLETE because the question requirements are not met";
                         LOG.info(msg);
@@ -146,7 +151,7 @@ public class PutFormAnswersRoute implements Route {
 
                     if (parentInstanceDto == null) {
                         checkChildInstancesCompleteness(
-                                response, handle, userGuid, operatorGuid, instanceGuid,
+                                response, handle, userGuid, operatorGuid, studyGuid, instanceGuid,
                                 form, preferredUserLangDto, instanceSummary);
                     }
 
@@ -231,21 +236,21 @@ public class PutFormAnswersRoute implements Route {
                                           Handle handle,
                                           String userGuid,
                                           String operatorGuid,
+                                          String studyGuid,
                                           String instanceGuid,
                                           LanguageDto preferredLangDto,
                                           UserActivityInstanceSummary instanceSummary) {
         long langCodeId = preferredLangDto.getId();
         String isoLangCode = preferredLangDto.getIsoCode();
-        FormInstance form = formInstanceDao.getBaseFormByGuid(handle, instanceGuid, isoLangCode);
-        if (form == null) {
+        Optional<ActivityInstance> activityInstance = actInstService.buildInstanceFromDefinition(
+                handle, userGuid, operatorGuid, studyGuid, instanceGuid, isoLangCode, instanceSummary);
+        if (activityInstance.isEmpty()) {
             String msg = String.format("Could not find activity instance %s for user %s using language %s",
                     instanceGuid, userGuid, isoLangCode);
             LOG.warn(msg);
             throw ResponseUtil.haltError(response, 404, new ApiError(ErrorCodes.ACTIVITY_NOT_FOUND, msg));
         }
-        formInstanceDao.loadAllSectionsForForm(handle, form, langCodeId);
-        form.updateBlockStatuses(handle, interpreter, userGuid, operatorGuid, instanceGuid, instanceSummary);
-        return form;
+        return (FormInstance) activityInstance.get();
     }
 
     // For a parent instance, check if there are any child instances that are not hidden and if those are complete.
@@ -253,6 +258,7 @@ public class PutFormAnswersRoute implements Route {
                                                  Handle handle,
                                                  String userGuid,
                                                  String operatorGuid,
+                                                 String studyGuid,
                                                  String instanceGuid,
                                                  FormInstance form,
                                                  LanguageDto preferredLangDto,
@@ -275,7 +281,7 @@ public class PutFormAnswersRoute implements Route {
                     if (childInstanceDto.getStatusType() != InstanceStatusType.COMPLETE) {
                         // Child instance is not finished but it might not have required questions, so check it.
                         FormInstance childForm = loadFormInstance(
-                                response, handle, userGuid, operatorGuid,
+                                response, handle, userGuid, operatorGuid, studyGuid,
                                 childInstanceDto.getGuid(), preferredLangDto, instanceSummary);
                         if (!childForm.isComplete()) {
                             String msg = "Status for instance " + instanceGuid + " cannot be set to COMPLETE because the"
