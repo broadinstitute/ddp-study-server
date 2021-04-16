@@ -12,18 +12,17 @@ import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.customexport.constants.CustomExportConfigFile;
 import org.broadinstitute.ddp.customexport.export.CustomExportCoordinator;
 import org.broadinstitute.ddp.customexport.export.CustomExporter;
-import org.broadinstitute.ddp.util.SecretUtil;
 import org.broadinstitute.ddp.db.ActivityDefStore;
 import org.broadinstitute.ddp.db.TransactionWrapper;
-import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
+import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudyCached;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.housekeeping.schedule.Keys;
 import org.broadinstitute.ddp.monitoring.PointsReducerFactory;
 import org.broadinstitute.ddp.monitoring.StackdriverCustomMetric;
 import org.broadinstitute.ddp.monitoring.StackdriverMetricsTracker;
-import org.broadinstitute.ddp.util.ConfigManager;
 import org.broadinstitute.ddp.util.ConfigUtil;
 import org.broadinstitute.ddp.util.GoogleCredentialUtil;
+import org.broadinstitute.ddp.util.SecretUtil;
 import org.quartz.CronScheduleBuilder;
 import org.quartz.DisallowConcurrentExecution;
 import org.quartz.Job;
@@ -41,6 +40,8 @@ import org.slf4j.LoggerFactory;
 
 @DisallowConcurrentExecution
 public class CustomExportJob implements Job {
+    private static Config cfg;
+    private static Config exportCfg;
 
     private static final Logger LOG = LoggerFactory.getLogger(CustomExportJob.class);
 
@@ -50,7 +51,19 @@ public class CustomExportJob implements Job {
 
     public static void register(Scheduler scheduler, Config cfg) throws SchedulerException {
         // Test that we can initialize the credentials.
+
+
+        String schedule = ConfigUtil.getStrIfPresent(cfg, ConfigFile.CUSTOM_EXPORT_SCHEDULE);
+        if (schedule == null || schedule.equalsIgnoreCase("off")) {
+            LOG.warn("Job {} is set to be turned off: not scheduled", getKey());
+            return;
+        }
+
         GoogleCredentialUtil.initCredentials(true);
+        CustomExportJob.cfg = cfg;
+        exportCfg = SecretUtil.getConfigFromSecret(cfg.getString(ConfigFile.GOOGLE_PROJECT_ID),
+                ConfigFile.CUSTOM_EXPORT_CONFIG_SECRET);
+
 
         JobDetail job = JobBuilder.newJob(CustomExportJob.class)
                 .withIdentity(getKey())
@@ -59,12 +72,6 @@ public class CustomExportJob implements Job {
                 .build();
         scheduler.addJob(job, true);
         LOG.info("Added job {} to scheduler", getKey());
-
-        String schedule = ConfigUtil.getStrIfPresent(cfg, ConfigFile.CUSTOM_EXPORT_SCHEDULE);
-        if (schedule == null || schedule.equalsIgnoreCase("off")) {
-            LOG.warn("Job {} is set to be turned off, no trigger added", getKey());
-            return;
-        }
 
         Trigger trigger = TriggerBuilder.newTrigger()
                 .withIdentity(Keys.Export.CustomExportTrigger)
@@ -94,8 +101,6 @@ public class CustomExportJob implements Job {
     }
 
     private void runExport() {
-        Config cfg = ConfigManager.getInstance().getConfig();
-        Config exportCfg = SecretUtil.getConfigFromSecret(cfg, ConfigFile.CUSTOM_EXPORT_CONFIG_SECRET);
         String gcpProjectId = cfg.getString(ConfigFile.GOOGLE_PROJECT_ID);
         GoogleCredentials credentials = GoogleCredentialUtil.initCredentials(true);
         if (credentials == null) {
@@ -105,16 +110,17 @@ public class CustomExportJob implements Job {
 
         var bucketClient = new GoogleBucketClient(gcpProjectId, credentials);
         String bucketName = exportCfg.getString(CustomExportConfigFile.BUCKET_NAME);
-        Bucket bucket = bucketClient.getBucketFromBlob(bucketName);
+        Bucket bucket = bucketClient.getBucket(bucketName);
         if (bucket == null) {
             LOG.error("Could not find google bucket {}, skipping job {}", bucketName, getKey());
             return;
         }
 
-        String studyGuid = exportCfg.getString(CustomExportConfigFile.GUID);
+        String studyGuid = exportCfg.getString(CustomExportConfigFile.STUDY_GUID);
+
 
         StudyDto customDto = TransactionWrapper.withTxn(TransactionWrapper.DB.APIS,
-                handle -> handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(studyGuid));
+                handle -> new JdbiUmbrellaStudyCached(handle).findByStudyGuid(studyGuid));
         LOG.info("Found custom study for data export");
 
         // Invalidate the caches for a fresh export

@@ -1,7 +1,6 @@
 package org.broadinstitute.ddp.export;
 
 import static org.broadinstitute.ddp.export.ExportUtil.extractParticipantsFromResultSet;
-import static org.broadinstitute.ddp.export.ExportUtil.makeExportCSVFilename;
 import static org.broadinstitute.ddp.model.activity.types.ComponentType.MAILING_ADDRESS;
 
 import java.io.BufferedWriter;
@@ -149,6 +148,11 @@ public class DataExporter {
     private final PdfService pdfService;
     private final FileUploadService fileService;
     private final RestHighLevelClient esClient;
+
+    public static String makeExportCSVFilename(String studyGuid, Instant timestamp) {
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmssX").withZone(ZoneOffset.UTC);
+        return String.format("%s_%s.csv", studyGuid, fmt.format(timestamp));
+    }
 
     public static void evictCachedAuth0Emails(Set<String> auth0UserIds) {
         if (CollectionUtils.isNotEmpty(auth0UserIds)) {
@@ -497,7 +501,7 @@ public class DataExporter {
                         user.setEmail(email);
                     }
                 })
-                .collect(Collectors.toMap(user -> user.getGuid(), user -> user));
+                .collect(Collectors.toMap(User::getGuid, user -> user));
 
         if (!usersMissingEmails.isEmpty()) {
             ExportUtil.fetchAndCacheAuth0Emails(handle, studyDto.getGuid(), usersMissingEmails.keySet(), emailStore)

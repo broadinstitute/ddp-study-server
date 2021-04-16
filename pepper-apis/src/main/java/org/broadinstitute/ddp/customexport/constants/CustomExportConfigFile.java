@@ -6,7 +6,7 @@ public class CustomExportConfigFile {
     public static final String BUCKET_NAME = "bucketName";
     public static final String FILE_PATH = "filePath";
     public static final String BASE_FILE_NAME = "baseFileName"; // The main file name, not including the time stamp or the extension
-    public static final String GUID = "guid";
+    public static final String STUDY_GUID = "guid";
     public static final String ACTIVITY = "activity";
     public static final String STATUS = "status";
     public static final String EXCLUDED_ACTIVITY_FIELDS = "excludedActivityFields";

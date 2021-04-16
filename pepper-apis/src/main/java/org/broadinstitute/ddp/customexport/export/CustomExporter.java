@@ -15,7 +15,6 @@ import java.util.stream.Collectors;
 
 import com.opencsv.CSVWriter;
 import com.typesafe.config.Config;
-import org.apache.commons.lang.StringUtils;
 import org.broadinstitute.ddp.customexport.constants.CustomExportConfigFile;
 import org.broadinstitute.ddp.db.ActivityDefStore;
 import org.broadinstitute.ddp.db.dao.FormActivityDao;
@@ -51,7 +50,7 @@ public class CustomExporter {
     public CustomExporter(Config cfg) {
         this.cfg = cfg;
         this.customActivity = cfg.getString(CustomExportConfigFile.ACTIVITY);
-        this.customGuid = cfg.getString(CustomExportConfigFile.GUID);
+        this.customGuid = cfg.getString(CustomExportConfigFile.STUDY_GUID);
     }
 
 
@@ -101,13 +100,13 @@ public class CustomExporter {
 
         Optional<ActivityDto> activityDtoOptional = jdbiActivity.findActivityByStudyGuidAndCode(customGuid, customActivity);
         if (activityDtoOptional.isEmpty()) {
-            LOG.error("Custom enrollment activity DTO not found");
+            LOG.error("Activity {} DTO not found for custom export", customActivity);
             return null;
         }
         ActivityDto activityDto = activityDtoOptional.get();
         List<ActivityExtract> activities = extractVersionsOfActivity(handle, activityDto, customGuid);
 
-        LOG.info("Custom export found {} versions of enrollment activity", activities.size());
+        LOG.info("Custom export found {} versions of activity {}", activities.size(), customActivity);
 
         return activities;
     }
@@ -191,7 +190,6 @@ public class CustomExporter {
                         numInstancesProcessed++;
                     }
 
-                    boolean hasParent = StringUtils.isNotBlank(activity.getDefinition().getParentActivityCode());
                     while (numInstancesProcessed < maxInstances) {
                         row.addAll(attributesCollector.emptyRow());
                         row.addAll(responseCollector.emptyRow());

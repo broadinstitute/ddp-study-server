@@ -2,7 +2,6 @@ package org.broadinstitute.ddp.customexport.export;
 
 import static org.broadinstitute.ddp.export.ExportUtil.DEFAULT_BATCH_SIZE;
 import static org.broadinstitute.ddp.export.ExportUtil.READER_BUFFER_SIZE_IN_BYTES;
-import static org.broadinstitute.ddp.export.ExportUtil.makeExportCSVFilename;
 import static org.broadinstitute.ddp.export.ExportUtil.withAPIsTxn;
 
 import java.io.IOException;
@@ -13,6 +12,8 @@ import java.io.PipedOutputStream;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -44,7 +45,7 @@ public class CustomExportCoordinator {
 
     private static final Logger LOG = LoggerFactory.getLogger(CustomExportCoordinator.class);
 
-    private CustomExporter exporter;
+    private final CustomExporter exporter;
     private Bucket csvBucket;
     private final String customActivity;
     private final String customExportStatus;
@@ -71,43 +72,62 @@ public class CustomExportCoordinator {
         //Find out whether there is anything to export
         boolean needExport = withAPIsTxn(handle -> {
             CustomExportDao customExportDao = handle.attach(CustomExportDao.class);
-            long lastCompleted = customExportDao.getLastCompleted(customDto.getId());
-            return customExportDao.needCustomExport(customDto.getId(), customExportStatus, lastCompleted, customActivity);
+            Instant lastCompleted = customExportDao.getLastCompleted(customDto.getId());
+            return customExportDao.needCustomExport(customDto.getId(), customExportStatus, lastCompleted.toEpochMilli(), customActivity);
         });
 
         if (!needExport) {
             LOG.info("Skipping custom export: nothing to export");
             ApiResult res = client.sendMail(createNotificationEmail(false, true));
             if (res.hasThrown()) {
-                LOG.error("Sending notification email for study " + customDto.getGuid() + " with skipped custom export failed",
+                LOG.error("Sending notification email for study {} with skipped custom export failed", customDto.getGuid(),
                         res.getThrown());
+            } else if (res.hasError()) {
+                LOG.error("Sending notification email for study {} with skipped custom export failed", customDto.getGuid(),
+                        res.getError());
+            } else if (res.hasFailure()) {
+                LOG.error("Sending notification email for study {} with skipped custom export failed with status code {}",
+                        customDto.getGuid(), res.getStatusCode());
             }
             return true;
         }
 
         // Proceed with the export
-        List<ActivityExtract> activityExtracts = withAPIsTxn(handle -> exporter.extractCustomActivity(handle));
+        List<ActivityExtract> activityExtracts =
+                withAPIsTxn(handle -> {
+                    List<ActivityExtract> extracts = exporter.extractCustomActivity(handle);
+                    ExportUtil.computeMaxInstancesSeen(handle, extracts);
+                    ExportUtil.computeActivityAttributesSeen(handle, extracts);
+                    return extracts;
+                });
 
-        withAPIsTxn(handle -> {
-            ExportUtil.computeMaxInstancesSeen(handle, activityExtracts);
-            ExportUtil.computeActivityAttributesSeen(handle, activityExtracts);
-            return null;
-        });
         boolean runSuccess = runCsvExports(customDto, activityExtracts);
 
         if (!runSuccess) {
             ApiResult res = client.sendMail(createNotificationEmail(true, false));
             if (res.hasThrown()) {
-                LOG.error("Sending notification email for study " + customDto.getGuid() + " with failed custom export failed",
+                LOG.error("Sending notification email for study {} with failed custom export failed", customDto.getGuid(),
                         res.getThrown());
+            } else if (res.hasError()) {
+                LOG.error("Sending notification email for study {} with failed custom export failed", customDto.getGuid(),
+                        res.getError());
+            } else if (res.hasFailure()) {
+                LOG.error("Sending notification email for study {} with failed custom export failed with status code {}",
+                        customDto.getGuid(), res.getStatusCode());
             }
             return false;
         }
 
         ApiResult res = client.sendMail(createNotificationEmail(false, false));
         if (res.hasThrown()) {
-            LOG.error("Error while sending custom export email notification", res.getThrown());
+            LOG.error("Sending notification email for study {} with successful custom export failed", customDto.getGuid(), res.getThrown());
             return false;
+        } else if (res.hasError()) {
+            LOG.error("Sending notification email for study {} with successful custom export failed", customDto.getGuid(),
+                    res.getError());
+        } else if (res.hasFailure()) {
+            LOG.error("Sending notification email for study {} with successful custom export failed with status code {}",
+                    customDto.getGuid(), res.getStatusCode());
         }
 
         return true;
@@ -177,10 +197,10 @@ public class CustomExportCoordinator {
         try {
             LOG.info("Running csv export for study {}", studyGuid);
             long start = Instant.now().toEpochMilli();
-            boolean success = withAPIsTxn(handle -> {
+            withAPIsTxn(handle -> {
                 CustomExportDao customExportDao = handle.attach(CustomExportDao.class);
 
-                long lastCompleted = customExportDao.getLastCompleted(studyDto.getId());
+                long lastCompleted = customExportDao.getLastCompleted(studyDto.getId()).toEpochMilli();
                 var iterator = new CustomExportPaginatedParticipantIterator(studyDto, DEFAULT_BATCH_SIZE, lastCompleted);
                 exportStudyToGoogleBucket(studyDto, exporter, csvBucket, activities, iterator);
 
@@ -188,14 +208,10 @@ public class CustomExportCoordinator {
                 Optional<Long> optionalLastCompletionTime = customExportDao.getLastCustomCompletionDate(
                         studyDto.getId(), customExportStatus, customActivity);
                 long lastCompletionTime = optionalLastCompletionTime.orElse((long)0);
-                customExportDao.updateLastCompleted(lastCompletionTime, studyDto.getId());
+                customExportDao.updateLastCompleted(Instant.ofEpochMilli(lastCompletionTime), studyDto.getId());
 
                 return true;
             });
-
-            if (!success) {
-                LOG.error("Error while running csv export for study {}", studyGuid);
-            }
 
             long elapsed = Instant.now().toEpochMilli() - start;
             LOG.info("Finished csv export for study {} in {}s", studyGuid, elapsed / 1000);
@@ -252,6 +268,11 @@ public class CustomExportCoordinator {
         } else {
             fullFileName = String.format("%s", fileName);
         }
+    }
+
+    private static String makeExportCSVFilename(String baseFileName, Instant timestamp) {
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmssX").withZone(ZoneOffset.UTC);
+        return String.format("%s%s.csv", fmt.format(timestamp), baseFileName);
     }
 
     private void saveToGoogleBucket(InputStream csvInputStream, String fileName, String studyGuid, Bucket bucket) {

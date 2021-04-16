@@ -11,13 +11,12 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
-import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.exception.DDPException;
 
 public class SecretUtil {
-    public static Config getConfigFromSecret(Config mainCfg, String secretName) {
+    public static Config getConfigFromSecret(String googleProjectId, String secretName) {
         try (SecretManagerServiceClient client = SecretManagerServiceClient.create()) {
-            SecretVersionName versionName = SecretVersionName.of(mainCfg.getString(ConfigFile.GOOGLE_PROJECT_ID), secretName, "latest");
+            SecretVersionName versionName = SecretVersionName.of(googleProjectId, secretName, "latest");
             AccessSecretVersionResponse response = client.accessSecretVersion(versionName);
             String secret = response.getPayload().getData().toStringUtf8();
             secret = secret.replaceAll("\n", "");

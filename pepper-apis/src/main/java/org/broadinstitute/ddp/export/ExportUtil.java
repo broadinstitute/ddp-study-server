@@ -1,8 +1,5 @@
 package org.broadinstitute.ddp.export;
 
-import java.time.Instant;
-import java.time.ZoneOffset;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -32,13 +29,7 @@ public class ExportUtil {
         return TransactionWrapper.withTxn(TransactionWrapper.DB.APIS, callback);
     }
 
-    public static String makeExportCSVFilename(String baseFileName, Instant timestamp) {
-        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmssX").withZone(ZoneOffset.UTC);
-        return String.format("%s%s.csv", fmt.format(timestamp), baseFileName);
-    }
-
-
-    public static Map<String, String> fetchAndCacheAuth0Emails(Handle handle, String studyGuid,
+    static Map<String, String> fetchAndCacheAuth0Emails(Handle handle, String studyGuid,
                                                                Set<String> auth0UserIds, Map<String, String> emailStore) {
         var mgmtClient = Auth0ManagementClient.forStudy(handle, studyGuid);
         Map<String, String> emailResults = new Auth0Util(mgmtClient.getDomain())

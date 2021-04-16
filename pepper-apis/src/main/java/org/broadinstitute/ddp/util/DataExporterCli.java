@@ -33,7 +33,6 @@ import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.export.ActivityExtract;
 import org.broadinstitute.ddp.export.DataExporter;
-import org.broadinstitute.ddp.export.ExportUtil;
 import org.broadinstitute.ddp.model.study.Participant;
 
 /**
@@ -122,7 +121,7 @@ public class DataExporterCli {
                 throw new Exception("Specific GUIDs option is only available for the ES export. We're deprecating CSV shortly");
             }
             runExport(studyGuid,
-                    filename.orElse(ExportUtil.makeExportCSVFilename(studyGuid, Instant.now())));
+                    filename.orElse(DataExporter.makeExportCSVFilename(studyGuid, Instant.now())));
         } else if (elasticExport) {
             Set<String> specificGuids = null;
             if (hasSpecificGuids) {

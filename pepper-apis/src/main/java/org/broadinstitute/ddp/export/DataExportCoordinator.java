@@ -2,7 +2,6 @@ package org.broadinstitute.ddp.export;
 
 import static org.broadinstitute.ddp.export.ExportUtil.DEFAULT_BATCH_SIZE;
 import static org.broadinstitute.ddp.export.ExportUtil.READER_BUFFER_SIZE_IN_BYTES;
-import static org.broadinstitute.ddp.export.ExportUtil.makeExportCSVFilename;
 import static org.broadinstitute.ddp.export.ExportUtil.withAPIsTxn;
 
 import java.io.IOException;
@@ -228,7 +227,7 @@ public class DataExportCoordinator {
 
     private String buildExportBlobFilename(StudyDto study) {
         Instant now = Instant.now();
-        return String.format("%s/%s", study.getName(), makeExportCSVFilename(study.getGuid(), now));
+        return String.format("%s/%s", study.getName(), DataExporter.makeExportCSVFilename(study.getGuid(), now));
 
     }
 
