@@ -34,7 +34,7 @@ public class AIBuilderContext {
     private final Handle handle;
     private final AIBuilderParams params;
 
-    private final long langCodeId;
+    private final LanguageDto languageDto;
 
     private FormActivityDef formActivityDef;
     private FormResponse formResponse;
@@ -53,8 +53,7 @@ public class AIBuilderContext {
     public AIBuilderContext(Handle handle, AIBuilderParams params) {
         this.handle = handle;
         this.params = params;
-        LanguageDto languageDto = LanguageStore.get(params.getIsoLangCode());
-        this.langCodeId = languageDto != null ? languageDto.getId() : 0;
+        this.languageDto = LanguageStore.get(params.getIsoLangCode());
     }
 
     public AIBuildStep getBuildStep() {
@@ -122,8 +121,8 @@ public class AIBuilderContext {
         return params.getStyle();
     }
 
-    public long getLangCodeId() {
-        return langCodeId;
+    public LanguageDto getLanguageDto() {
+        return languageDto;
     }
 
     public FormActivityDef getFormActivityDef() {

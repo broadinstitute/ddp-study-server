@@ -156,7 +156,7 @@ public class ValidationRuleCreator {
                 ctx.getHandle(),
                 ruleDef.getRuleType(),
                 ruleDef.getHintTemplateId(),
-                ctx.getLangCodeId(),
+                ctx.getLanguageDto().getId(),
                 ctx.getFormResponse().getCreatedAt());
     }
 
