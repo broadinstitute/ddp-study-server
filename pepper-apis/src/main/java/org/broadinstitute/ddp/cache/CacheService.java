@@ -60,9 +60,10 @@ public class CacheService {
 
     private CacheService() {
         boolean cachingDisabled = System.getProperty("cachingDisabled", "false").toLowerCase().equals("true");
-        boolean configFileSet = ConfigManager.getInstance().getConfig().hasPath(ConfigFile.JCACHE_CONFIGURATION_FILE);
+        ConfigManager manager = ConfigManager.getInstance();
+        boolean configFileSet = manager != null && manager.getConfig().hasPath(ConfigFile.JCACHE_CONFIGURATION_FILE);
         if (configFileSet && !cachingDisabled) {
-            String configFileName = ConfigManager.getInstance().getConfig().getString(ConfigFile.JCACHE_CONFIGURATION_FILE);
+            String configFileName = manager.getConfig().getString(ConfigFile.JCACHE_CONFIGURATION_FILE);
             Path redissonConfigPath = Paths.get(configFileName);
             if (!redissonConfigPath.toFile().exists()) {
                 throw new DDPException("Path for configuration file: " + redissonConfigPath + " could not be found");
