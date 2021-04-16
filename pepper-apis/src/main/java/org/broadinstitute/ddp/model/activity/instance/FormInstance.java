@@ -34,6 +34,9 @@ import org.broadinstitute.ddp.model.activity.types.FormType;
 import org.broadinstitute.ddp.model.activity.types.ListStyleHint;
 import org.broadinstitute.ddp.pex.PexException;
 import org.broadinstitute.ddp.pex.PexInterpreter;
+import org.broadinstitute.ddp.service.ActivityInstanceService;
+import org.broadinstitute.ddp.service.actvityinstancebuilder.ActivityInstanceFromDefinitionBuilder;
+import org.broadinstitute.ddp.service.actvityinstancebuilder.FormInstanceCreatorHelper;
 import org.broadinstitute.ddp.transformers.LocalDateTimeAdapter;
 import org.broadinstitute.ddp.util.MiscUtil;
 import org.jdbi.v3.core.Handle;
@@ -224,7 +227,11 @@ public final class FormInstance extends ActivityInstance {
      * @param renderer   the template renderer
      * @param langCodeId the language code id to translate templates to
      * @param style      the content style to use for converting content
+     * @deprecated This method not needed once
+     *     {@link ActivityInstanceService#buildInstanceFromDefinition(Handle, String, String, String, String, ContentStyle, String)}
+     *     will be carefully tested - after that this method can be removed (before that it should be removed from unit tests)
      */
+    @Deprecated
     public void renderContent(Handle handle, I18nContentRenderer renderer, long langCodeId, ContentStyle style) {
         Set<Long> templateIds = new HashSet<>();
         Consumer<Long> consumer = templateIds::add;
@@ -311,6 +318,10 @@ public final class FormInstance extends ActivityInstance {
      * Evaluate and update the form's block visibilities, assuming that those are all loaded. If the block does not have
      * a conditional expression (and thus toggle-able), no change will be made to the block.
      *
+     * <p>TODO: this method is used only in {@link ActivityInstanceFromDefinitionBuilder} and better to move it to
+     *     {@link FormInstanceCreatorHelper}. And it needs to be removed from unit tests -
+     *     {@link ActivityInstanceFromDefinitionBuilder} will be used there instead.
+     *
      * @param handle          the jdbi handle
      * @param interpreter     the pex interpreter to evaluate expressions
      * @param userGuid        the user guid
@@ -360,9 +371,15 @@ public final class FormInstance extends ActivityInstance {
     /**
      * Sets the display number for the blocks in order,
      * starting at startingNumber
+     *
+     * <p>TODO: this method is used only in {@link ActivityInstanceFromDefinitionBuilder} and better to move it to
+     *    {@link FormInstanceCreatorHelper}. And it needs to be removed from unit tests -
+     *    {@link ActivityInstanceFromDefinitionBuilder} will be used there instead.
+     *
      * @param blocks the blocks to number
      * @param startingNumber the number at which to start
      * @return the ending number
+     *
      */
     private int setNumberables(List<FormBlock> blocks, int startingNumber) {
         for (FormBlock formBlock : blocks) {

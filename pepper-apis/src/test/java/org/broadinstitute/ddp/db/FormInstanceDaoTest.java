@@ -8,10 +8,12 @@ import static org.junit.Assert.assertTrue;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Function;
 
 import org.broadinstitute.ddp.TxnAwareBaseTest;
 import org.broadinstitute.ddp.content.ContentStyle;
+import org.broadinstitute.ddp.content.I18nContentRenderer;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dao.JdbiUser;
@@ -19,10 +21,14 @@ import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
 import org.broadinstitute.ddp.model.activity.definition.i18n.Translation;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.activity.definition.template.TemplateVariable;
+import org.broadinstitute.ddp.model.activity.instance.ActivityInstance;
 import org.broadinstitute.ddp.model.activity.instance.FormInstance;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
 import org.broadinstitute.ddp.model.activity.types.FormType;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
+import org.broadinstitute.ddp.pex.PexInterpreter;
+import org.broadinstitute.ddp.pex.TreeWalkInterpreter;
+import org.broadinstitute.ddp.service.ActivityInstanceService;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
 import org.jdbi.v3.core.Handle;
 import org.junit.BeforeClass;
@@ -34,12 +40,17 @@ public class FormInstanceDaoTest extends TxnAwareBaseTest {
     private static String userGuid;
     private static String studyGuid;
 
+    private static ActivityInstanceService activityInstanceService;
     private static FormInstanceDao dao;
 
     @BeforeClass
     public static void setup() {
         SectionBlockDao sectionBlockDao = new SectionBlockDao();
         dao = FormInstanceDao.fromDaoAndConfig(sectionBlockDao, sqlConfig);
+        org.broadinstitute.ddp.db.ActivityInstanceDao activityInstanceDao = new org.broadinstitute.ddp.db.ActivityInstanceDao(dao);
+        PexInterpreter interpreter = new TreeWalkInterpreter();
+        I18nContentRenderer i18nContentRenderer = new I18nContentRenderer();
+        activityInstanceService = new ActivityInstanceService(activityInstanceDao, interpreter, i18nContentRenderer);
         TransactionWrapper.useTxn(handle -> {
             data = TestDataSetupUtil.generateBasicUserTestData(handle);
             userGuid = data.getTestingUser().getUserGuid();
@@ -49,9 +60,10 @@ public class FormInstanceDaoTest extends TxnAwareBaseTest {
 
     @Test
     public void testGetTranslatedFormByGuid_activityNotFound() {
-        FormInstance form = TransactionWrapper.withTxn(
-                handle -> dao.getTranslatedFormByGuid(handle, "not-an-activity", "en", ContentStyle.STANDARD));
-        assertNull(form);
+        Optional<ActivityInstance> inst = TransactionWrapper.withTxn(
+                handle -> activityInstanceService.buildInstanceFromDefinition(handle, userGuid, userGuid, studyGuid,
+                        "not-an-activity", ContentStyle.STANDARD, "en"));
+        assertTrue(inst.isEmpty());
     }
 
     @Test
@@ -59,8 +71,9 @@ public class FormInstanceDaoTest extends TxnAwareBaseTest {
         TransactionWrapper.useTxn(handle -> {
             FormActivityDef form = insertDummyActivity(handle, userGuid, studyGuid);
             String instanceGuid = insertNewInstance(handle, form.getActivityId(), userGuid);
-            FormInstance inst = dao.getTranslatedFormByGuid(handle, instanceGuid, "xyz", ContentStyle.STANDARD);
-            assertNull(inst);
+            Optional<ActivityInstance> inst = activityInstanceService.buildInstanceFromDefinition(handle, userGuid, userGuid, studyGuid,
+                    instanceGuid, ContentStyle.STANDARD, "xyz");
+            assertTrue(inst.isEmpty());
             handle.rollback();
         });
     }
@@ -70,11 +83,13 @@ public class FormInstanceDaoTest extends TxnAwareBaseTest {
         TransactionWrapper.useTxn(handle -> {
             FormActivityDef formDef = insertDummyActivity(handle, userGuid, studyGuid);
             String instanceGuid = insertNewInstance(handle, formDef.getActivityId(), userGuid);
-            FormInstance enInst = dao.getBaseFormByGuid(handle, instanceGuid, "en");
-            assertNotNull(enInst);
-            testTranslation(formDef, FormActivityDef::getTranslatedSubtitles, enInst.getSubtitle(),  "en");
-            FormInstance ruInst = dao.getBaseFormByGuid(handle, instanceGuid, "ru");
-            testTranslation(formDef, FormActivityDef::getTranslatedSubtitles, ruInst.getSubtitle(),  "ru");
+            Optional<ActivityInstance> enInst = activityInstanceService.buildInstanceFromDefinition(handle, userGuid, userGuid, studyGuid,
+                    instanceGuid, ContentStyle.STANDARD, "en");
+            assertTrue(enInst.isPresent());
+            testTranslation(formDef, FormActivityDef::getTranslatedSubtitles, enInst.get().getSubtitle(),  "en");
+            Optional<ActivityInstance> ruInst = activityInstanceService.buildInstanceFromDefinition(handle, userGuid, userGuid, studyGuid,
+                    instanceGuid, ContentStyle.STANDARD, "ru");
+            testTranslation(formDef, FormActivityDef::getTranslatedSubtitles, ruInst.get().getSubtitle(),  "ru");
             handle.rollback();
         });
     }
@@ -84,12 +99,14 @@ public class FormInstanceDaoTest extends TxnAwareBaseTest {
         TransactionWrapper.useTxn(handle -> {
             FormActivityDef formDef = insertDummyActivityWithoutSubtitle(handle, userGuid, studyGuid);
             String instanceGuid = insertNewInstance(handle, formDef.getActivityId(), userGuid);
-            FormInstance enInst = dao.getBaseFormByGuid(handle, instanceGuid, "en");
-            assertNotNull(enInst);
-            assertNull(enInst.getSubtitle());
-            testTranslation(formDef, FormActivityDef::getTranslatedTitles, enInst.getTitle(),  "en");
-            FormInstance ruInst = dao.getBaseFormByGuid(handle, instanceGuid, "ru");
-            testTranslation(formDef, FormActivityDef::getTranslatedTitles, ruInst.getTitle(),  "ru");
+            Optional<ActivityInstance> enInst = activityInstanceService.buildInstanceFromDefinition(handle, userGuid, userGuid, studyGuid,
+                    instanceGuid, ContentStyle.STANDARD, "en");
+            assertTrue(enInst.isPresent());
+            assertNull(enInst.get().getSubtitle());
+            testTranslation(formDef, FormActivityDef::getTranslatedTitles, enInst.get().getTitle(),  "en");
+            Optional<ActivityInstance> ruInst = activityInstanceService.buildInstanceFromDefinition(handle, userGuid, userGuid, studyGuid,
+                    instanceGuid, ContentStyle.STANDARD, "ru");
+            testTranslation(formDef, FormActivityDef::getTranslatedTitles, ruInst.get().getTitle(),  "ru");
             handle.rollback();
         });
     }
@@ -99,9 +116,10 @@ public class FormInstanceDaoTest extends TxnAwareBaseTest {
         TransactionWrapper.useTxn(handle -> {
             FormActivityDef formDef = insertDummyActivity(handle, userGuid, studyGuid);
             String instanceGuid = insertNewInstance(handle, formDef.getActivityId(), userGuid);
-            FormInstance enInst = dao.getTranslatedFormByGuid(handle, instanceGuid, "en", ContentStyle.STANDARD);
-            assertNotNull(enInst);
-            assertEquals("Please contact your organization for details", enInst.getReadonlyHint());
+            Optional<ActivityInstance> enInst = activityInstanceService.buildInstanceFromDefinition(handle, userGuid, userGuid, studyGuid,
+                    instanceGuid, ContentStyle.STANDARD, "en");
+            assertTrue(enInst.isPresent());
+            assertEquals("Please contact your organization for details", ((FormInstance)enInst.get()).getReadonlyHint());
             handle.rollback();
         });
     }
@@ -125,13 +143,15 @@ public class FormInstanceDaoTest extends TxnAwareBaseTest {
         TransactionWrapper.useTxn(handle -> {
             FormActivityDef form = insertDummyActivity(handle, userGuid, studyGuid);
             String instanceGuid = insertNewInstance(handle, form.getActivityId(), userGuid);
-
-            FormInstance inst = dao.getTranslatedFormByGuid(handle, instanceGuid, "en", ContentStyle.STANDARD);
+            Optional<ActivityInstance> inst = activityInstanceService.buildInstanceFromDefinition(handle, userGuid, userGuid, studyGuid,
+                    instanceGuid, ContentStyle.STANDARD, "en");
             assertNotNull(form);
-            assertEquals(FormType.GENERAL, inst.getFormType());
-            assertEquals("test activity", inst.getTitle());
-            assertEquals(instanceGuid, inst.getGuid());
-            assertEquals(InstanceStatusType.CREATED, inst.getStatusType());
+            assertTrue(inst.isPresent());
+            FormInstance form1 = (FormInstance)inst.get();
+            assertEquals(FormType.GENERAL, form1.getFormType());
+            assertEquals("test activity", form1.getTitle());
+            assertEquals(instanceGuid, form1.getGuid());
+            assertEquals(InstanceStatusType.CREATED, form1.getStatusType());
             assertTrue(form.getSections().isEmpty());
 
             handle.rollback();

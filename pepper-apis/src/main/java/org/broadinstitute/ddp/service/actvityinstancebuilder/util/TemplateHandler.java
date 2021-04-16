@@ -2,7 +2,7 @@ package org.broadinstitute.ddp.service.actvityinstancebuilder.util;
 
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.activity.instance.ActivityInstance;
-import org.broadinstitute.ddp.service.actvityinstancebuilder.AIBuilderContext;
+import org.broadinstitute.ddp.service.actvityinstancebuilder.context.AIBuilderContext;
 
 public class TemplateHandler {
 
@@ -15,8 +15,10 @@ public class TemplateHandler {
      */
     public static Long addAndRenderTemplate(AIBuilderContext ctx, Template template) {
         if (template != null) {
-            ctx.getRenderedTemplates().put(template.getTemplateId(), template.render(
-                    ctx.getIsoLangCode(), ctx.getI18nContentRenderer(), ctx.getRendererInitialContext()));
+            if (!ctx.getParams().isDisableTemplatesRendering()) {
+                ctx.getRenderedTemplates().put(template.getTemplateId(), template.render(
+                        ctx.getIsoLangCode(), ctx.getI18nContentRenderer(), ctx.getRendererInitialContext()));
+            }
             return template.getTemplateId();
         }
         return null;
