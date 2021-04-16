@@ -142,6 +142,8 @@ public class CustomExportCoordinator {
                 cfg.getString(CustomExportConfigFile.EMAIL_TO_NAME));
 
         List<Content> content = new ArrayList<>();
+        String fileUrl = "https://console.cloud.google.com/storage/browser/" + exportCfg.getString(CustomExportConfigFile.BUCKET_NAME)
+                + "/" + exportCfg.getString(CustomExportConfigFile.FILE_PATH);
 
         if (isFailure) {
             subject = cfg.getString(CustomExportConfigFile.EMAIL_ERROR_SUBJECT);
@@ -151,13 +153,10 @@ public class CustomExportCoordinator {
             content.add(new Content("text/plain", cfg.getString(CustomExportConfigFile.EMAIL_SKIP_CONTENT)));
         } else {
             subject = cfg.getString(CustomExportConfigFile.EMAIL_SUCCESS_SUBJECT);
-            String fileUrl =
-                    "https://console.cloud.google.com/storage/browser/" + exportCfg.getString(CustomExportConfigFile.BUCKET_NAME)
-                            + "/" + exportCfg.getString(CustomExportConfigFile.FILE_PATH);
             addSuccessContent(content, cfg.getString(CustomExportConfigFile.EMAIL_SUCCESS_CONTENT), fileUrl);
         }
 
-        return createMail(subject, fromEmail, toEmail, content);
+        return createMail(subject, fromEmail, toEmail, content, fileUrl);
     }
 
     private void addSuccessContent(List<Content> content, String fullContent, String fileUrl) {
@@ -178,13 +177,14 @@ public class CustomExportCoordinator {
         }
     }
 
-    private Mail createMail(String subject, Email fromEmail, Email toEmail, List<Content> content) {
+    private Mail createMail(String subject, Email fromEmail, Email toEmail, List<Content> content, String fileUrl) {
         Mail mail = new Mail();
         mail.setFrom(fromEmail);
         mail.setSubject(subject);
         Personalization p = new Personalization();
         p.addTo(toEmail);
         mail.addPersonalization(p);
+        p.addSubstitution("{{bucketLink}}", "<a href=\"" + fileUrl + "\">" + fileUrl + "</a>");
         for (Content c : content) {
             mail.addContent(c);
         }
