@@ -7,6 +7,16 @@ import org.broadinstitute.ddp.service.actvityinstancebuilder.factory.TemplateRen
 import org.jdbi.v3.core.Handle;
 
 
+/**
+ * AI builder main factory: it contains other factories (constructing all components of AI builder module).
+ * Also it provides {@link ActivityInstanceFromDefinitionBuilder} creation - via static methods:
+ * <ul>
+ * <li>{@link #createAIBuilder(Handle, AIBuilderParams)} - this version utilizes a default implementation of
+ *    the factory class - {@link AIBuilderFactory}</li>
+ * <li>{@link #createAIBuilder(AIBuilderFactory, Handle, AIBuilderParams)} - this method allows to specify
+ *    custom version of factory class (rewriting any parts of AI builder code).</li>
+ * </ul>
+ */
 public class AIBuilderFactory {
 
     public static ActivityInstanceFromDefinitionBuilder createAIBuilder(

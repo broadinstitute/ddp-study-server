@@ -4,6 +4,9 @@ import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.activity.instance.ActivityInstance;
 import org.broadinstitute.ddp.service.actvityinstancebuilder.context.AIBuilderContext;
 
+/**
+ * The factory implementing the code responsible for the {@link Template}'s rendering
+ */
 public class TemplateRenderFactory {
 
     /**
