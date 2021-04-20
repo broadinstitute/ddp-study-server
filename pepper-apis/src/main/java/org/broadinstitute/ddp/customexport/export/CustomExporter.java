@@ -95,6 +95,12 @@ public class CustomExporter {
         return activities;
     }
 
+    private List<ActivityExtract> extractChildActivities(Handle handle, long parentActivityId, String studyGuid) {
+        //TODO: Figure out how to handle this: we basically want to add all the child fields to the data for the parent activity with
+        // some sort of prefix indicating the child activity.  We sort of just want to add to the activity extract or something?
+        return null;
+    }
+
     /**
      * Extracts all versions of custom export's activity
      * @param handle the database handle
