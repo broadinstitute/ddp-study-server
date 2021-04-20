@@ -27,9 +27,9 @@ import org.slf4j.LoggerFactory;
 /**
  * A helper for reading contents of data files. This encapsulates complexity of working with buckets versus filesystem.
  */
-class SourceFileReader {
+class FileReader {
 
-    private static final Logger LOG = LoggerFactory.getLogger(SourceFileReader.class);
+    private static final Logger LOG = LoggerFactory.getLogger(FileReader.class);
 
     private final boolean useBucket;
     private final String mailingListFilePrefix;
@@ -41,7 +41,7 @@ class SourceFileReader {
     private Storage storage;
     private String localDir;
 
-    SourceFileReader(Config cfg, boolean useBucket) {
+    FileReader(Config cfg, boolean useBucket) {
         this.useBucket = useBucket;
         this.mailingListFilePrefix = cfg.getString(LoaderConfigFile.SOURCE_MAILING_LIST_FILE_PREFIX);
         this.participantFilePrefix = cfg.getString(LoaderConfigFile.SOURCE_PARTICIPANT_FILE_PREFIX);

@@ -9,32 +9,25 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import com.typesafe.config.Config;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.AnswerDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
 import org.broadinstitute.ddp.db.dao.JdbiActivityInstanceStatus;
-import org.broadinstitute.ddp.db.dao.JdbiClient;
 import org.broadinstitute.ddp.db.dao.JdbiMailingList;
-import org.broadinstitute.ddp.db.dao.JdbiUserStudyEnrollment;
-import org.broadinstitute.ddp.db.dao.UserDao;
-import org.broadinstitute.ddp.db.dao.UserProfileDao;
 import org.broadinstitute.ddp.db.dto.ActivityDto;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
-import org.broadinstitute.ddp.db.dto.ClientDto;
 import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
-import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
 import org.broadinstitute.ddp.model.user.User;
-import org.broadinstitute.ddp.model.user.UserProfile;
 import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,21 +38,17 @@ class DataLoader {
 
     private final Config cfg;
     private final String studyGuid;
-    private final SourceFileReader fileReader;
+    private final FileReader fileReader;
     private final Gson gson;
     private Mapping mapping;
-    private ClientDto clientDto;
+    private UserLoader userLoader;
     private Map<String, Long> activityCodeToId = new HashMap<>();
 
-    DataLoader(Config cfg, SourceFileReader fileReader) {
+    DataLoader(Config cfg, FileReader fileReader) {
         this.cfg = cfg;
         this.studyGuid = cfg.getString(LoaderConfigFile.STUDY_GUID);
         this.fileReader = fileReader;
         this.gson = new Gson();
-    }
-
-    public String getStudyGuid() {
-        return studyGuid;
     }
 
     public void processMailingListFiles() {
@@ -118,20 +107,10 @@ class DataLoader {
         LOG.info("Using mapping file: {}", path);
     }
 
-    private void initAuth0Client() {
-        String auth0Domain = cfg.getString(LoaderConfigFile.AUTH0_DOMAIN);
-        String auth0ClientId = cfg.getString(LoaderConfigFile.AUTH0_CLIENT_ID);
-        clientDto = TransactionWrapper.withTxn(handle -> handle
-                .attach(JdbiClient.class)
-                .getClientByAuth0ClientAndDomain(auth0ClientId, auth0Domain)
-                .orElseThrow(() -> new LoaderException("Could not load client " + auth0ClientId)));
-        LOG.info("Using auth0 client: id={}, tenantId={}, domain={}, clientId={}",
-                clientDto.getId(), clientDto.getAuth0TenantId(), clientDto.getAuth0Domain(), clientDto.getAuth0ClientId());
-    }
-
-    public void processParticipantFiles() {
+    public Report processParticipantFiles() {
         initMappingFile();
-        initAuth0Client();
+        var report = new Report();
+        userLoader = new UserLoader(cfg);
 
         Set<String> filenames = fileReader.listParticipantFiles();
         LOG.info("Found {} participant files", filenames.size());
@@ -141,61 +120,69 @@ class DataLoader {
         for (var filename : filenames) {
             LOG.info("({}/{}) Working on participant file: {}", count, total, filename);
             var data = gson.fromJson(fileReader.readContent(filename), ParticipantFile.class);
-            TransactionWrapper.useTxn(handle -> processParticipant(handle, data));
+            var row = report.newRow();
+            TransactionWrapper.useTxn(handle -> processParticipant(handle, data, row));
+            try {
+                // Auth0 has rate limit, so add in some buffer.
+                TimeUnit.SECONDS.sleep(1L);
+            } catch (InterruptedException e) {
+                throw new LoaderException(e);
+            }
             count++;
         }
+
+        return report;
     }
 
-    private void processParticipant(Handle handle, ParticipantFile data) {
+    private void processParticipant(Handle handle, ParticipantFile data, Report.Row row) {
         String padding = "  ";
 
         var participant = data.getParticipantWrapper();
-        LOG.info(padding + "[user] altpid={}, shortid={}, email={}, surveys={}",
-                participant.getAltPid(), participant.getShortId(),
-                participant.getEmail(), data.getNumSurveys());
+        String email = userLoader.getOrGenerateDummyEmail(participant);
+        String altPid = participant.getAltPid();
+        String shortId = participant.getShortId();
+        row.init(altPid, shortId, email);
+        LOG.info(padding + "[user] altpid={}, shortid={}, surveys={}", altPid, shortId, data.getNumSurveys());
 
-        // todo: deal with auth0 account
-        User user = createLegacyUser(handle, participant);
+        User user = userLoader.findUserByAltPid(handle, altPid);
+        if (user != null) {
+            LOG.warn(padding + "- User has already been loaded, skipping: userGuid={}", user.getGuid());
+            row.setUserGuid(user.getGuid());
+            row.setUserHruid(user.getHruid());
+            row.setExistingUser(true);
+            row.setSkipped(true);
+            return;
+        }
+
+        String auth0Connection = cfg.getString(LoaderConfigFile.AUTH0_CONNECTION);
+        String auth0UserId = userLoader.findAuth0UserIdByEmail(auth0Connection, email);
+        if (auth0UserId != null && !auth0UserId.isBlank()) {
+            LOG.warn(padding + "- Auth0 account already exists, skipping: email={}, auth0UserId={}", email, auth0UserId);
+            row.setAuth0UserId(auth0UserId);
+            row.setExistInAuth0(true);
+            row.setSkipped(true);
+            return;
+        }
+
+        auth0UserId = userLoader.createAuth0Account(auth0Connection, email);
+        LOG.info(padding + "- Created auth0 account: email={}, auth0UserId={}", email, auth0UserId);
+        row.setAuth0UserId(auth0UserId);
+
+        String languageCode = mapping.getParticipant().getDefaultLanguage();
+        user = userLoader.createLegacyUser(handle, participant, auth0UserId, languageCode);
         LOG.info(padding + "- Created migration user: id={}, guid={}, hruid={}",
                 user.getId(), user.getGuid(), user.getHruid());
+        row.setUserGuid(user.getGuid());
+        row.setUserHruid(user.getHruid());
 
-        long registeredAt = participant.getCreated().toEpochMilli();
-        handle.attach(JdbiUserStudyEnrollment.class).changeUserStudyEnrollmentStatus(
-                user.getGuid(), studyGuid, EnrollmentStatusType.REGISTERED, registeredAt);
+        userLoader.registerUserInStudy(handle, studyGuid, user.getGuid(), participant);
         LOG.info(padding + "- Registered user {} in study {}", user.getGuid(), studyGuid);
 
         for (var activityMapping : mapping.getActivities()) {
             processActivity(handle, user, activityMapping, data);
         }
-    }
 
-    private User createLegacyUser(Handle handle, ParticipantWrapper participant) {
-        String auth0UserId = "fake|" + System.currentTimeMillis();
-
-        String legacyShortId = participant.getShortId();
-        String legacyAltPid = participant.getAltPid();
-        Instant createdAt = participant.getCreated();
-        long createdAtMillis = createdAt.toEpochMilli();
-
-        var userDao = handle.attach(UserDao.class);
-        String userGuid = DBUtils.uniqueUserGuid(handle);
-        String userHruid = DBUtils.uniqueUserHruid(handle);
-        long userId = userDao.getUserSql().insertByClientIdOrAuth0Ids(
-                true, clientDto.getId(), null, null, auth0UserId,
-                userGuid, userHruid, legacyAltPid, legacyShortId, false,
-                createdAtMillis, createdAtMillis, null);
-
-        var participantMapping = mapping.getParticipant();
-        var langDto = LanguageStore.get(participantMapping.getDefaultLanguage());
-        var profile = new UserProfile.Builder(userId)
-                .setFirstName(participant.getFirstName())
-                .setLastName(participant.getLastName())
-                .setPreferredLangId(langDto.getId())
-                .build();
-        handle.attach(UserProfileDao.class).createProfile(profile);
-
-        return userDao.findUserById(userId).orElseThrow(() ->
-                new LoaderException("Could not find newly created user with altpid" + legacyAltPid));
+        row.setSuccess(true);
     }
 
     private void processActivity(Handle handle, User user, MappingActivity activity, ParticipantFile data) {
