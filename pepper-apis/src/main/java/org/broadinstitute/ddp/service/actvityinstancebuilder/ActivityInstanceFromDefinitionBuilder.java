@@ -14,6 +14,8 @@ import static org.broadinstitute.ddp.service.actvityinstancebuilder.context.AIBu
 import static org.broadinstitute.ddp.service.actvityinstancebuilder.context.AIBuildStep.START_BUILD;
 import static org.broadinstitute.ddp.service.actvityinstancebuilder.context.AIBuildStep.UPDATE_BLOCK_STATUSES;
 
+import java.util.Optional;
+
 import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.db.ActivityDefStore;
 import org.broadinstitute.ddp.db.dto.LanguageDto;
@@ -29,8 +31,10 @@ import org.broadinstitute.ddp.service.actvityinstancebuilder.block.question.Vali
 import org.broadinstitute.ddp.service.actvityinstancebuilder.context.AIBuildStep;
 import org.broadinstitute.ddp.service.actvityinstancebuilder.context.AIBuilderContext;
 import org.broadinstitute.ddp.service.actvityinstancebuilder.context.AIBuilderParams;
-import org.broadinstitute.ddp.service.actvityinstancebuilder.context.AICreatorsFactory;
-import org.broadinstitute.ddp.service.actvityinstancebuilder.util.RendererInitialContextHandler;
+import org.broadinstitute.ddp.service.actvityinstancebuilder.factory.AICreatorsFactory;
+import org.broadinstitute.ddp.service.actvityinstancebuilder.form.FormInstanceCreator;
+import org.broadinstitute.ddp.service.actvityinstancebuilder.form.FormSectionCreator;
+import org.broadinstitute.ddp.service.actvityinstancebuilder.form.SectionIconCreator;
 import org.broadinstitute.ddp.util.ActivityInstanceUtil;
 import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
@@ -95,8 +99,8 @@ public class ActivityInstanceFromDefinitionBuilder {
 
     private final AIBuilderContext context;
 
-    public ActivityInstanceFromDefinitionBuilder(Handle handle, AIBuilderParams params) {
-        context = new AIBuilderContext(handle, params);
+    ActivityInstanceFromDefinitionBuilder(AIBuilderFactory aiBuilderFactory, Handle handle, AIBuilderParams params) {
+        context = new AIBuilderContext(aiBuilderFactory, handle, params);
         context.setBuildStep(INIT);
     }
 
@@ -128,13 +132,18 @@ public class ActivityInstanceFromDefinitionBuilder {
     }
 
     public ActivityInstanceFromDefinitionBuilder readFormInstanceData() {
+        return readFormInstanceData(null);
+    }
+
+    public ActivityInstanceFromDefinitionBuilder readFormInstanceData(FormResponse existingFormResponse) {
         if (checkStep(CHECK_PARAMS, READ_FORM_INSTANCE)) {
 
-            var formResponse = ActivityInstanceUtil.getFormResponse(context.getHandle(), context.getInstanceGuid());
+            var formResponse = existingFormResponse != null
+                    ? Optional.of(existingFormResponse) :
+                    ActivityInstanceUtil.getFormResponse(context.getHandle(), context.getInstanceGuid());
             if (formResponse.isPresent()) {
                 context.setFormResponse(formResponse.get());
-                var previousInstanceId = ActivityInstanceUtil.getPreviousInstanceId(context.getHandle(), formResponse.get().getId());
-                context.setPreviousInstanceId(previousInstanceId);
+                readPreviousInstanceId(formResponse);
             } else {
                 context.setFailedMessage("Form instance data fetching failed");
                 context.setFailedStep(READ_FORM_INSTANCE);
@@ -146,19 +155,24 @@ public class ActivityInstanceFromDefinitionBuilder {
     }
 
     public ActivityInstanceFromDefinitionBuilder readActivityDef() {
+        return readActivityDef(null);
+    }
+
+    public ActivityInstanceFromDefinitionBuilder readActivityDef(FormActivityDef existingFormActivityDef) {
         if (checkStep(READ_FORM_INSTANCE, READ_ACTIVITY_DEF)) {
 
             if (context.getFormResponse() == null) {
                 context.setFailedMessage("FormInstance data not fetched");
                 context.setFailedStep(READ_ACTIVITY_DEF);
             } else {
-                FormActivityDef formActivityDef = ActivityInstanceUtil.getActivityDef(
-                        context.getHandle(),
-                        ActivityDefStore.getInstance(),
-                        context.getStudyGuid(),
-                        context.getFormResponse().getActivityId(),
-                        context.getInstanceGuid(),
-                        context.getFormResponse().getCreatedAt());
+                FormActivityDef formActivityDef = existingFormActivityDef != null ? existingFormActivityDef :
+                        ActivityInstanceUtil.getActivityDef(
+                                context.getHandle(),
+                                ActivityDefStore.getInstance(),
+                                context.getStudyGuid(),
+                                context.getFormResponse().getActivityId(),
+                                context.getInstanceGuid(),
+                                context.getFormResponse().getCreatedAt());
                 context.setFormActivityDef(formActivityDef);
 
                 context.setBuildStep(READ_ACTIVITY_DEF);
@@ -185,8 +199,9 @@ public class ActivityInstanceFromDefinitionBuilder {
                 context.setFailedMessage("Cannot build ActivityInstance of type other than FORMS");
                 context.setFailedStep(BUILD_FORM_INSTANCE);
             } else {
-                RendererInitialContextHandler.createRendererInitialContext(context);
-                var formInstance = context.creators().getFormInstanceCreator().createFormInstance(context);
+                context.getAiBuilderFactory().getAIContentRendererFactory().createRendererInitialContext(context);
+                var formInstance = context.getAiBuilderFactory().getAICreatorsFactory()
+                        .getFormInstanceCreator().createFormInstance(context);
                 context.setFormInstance(formInstance);
 
                 context.setBuildStep(BUILD_FORM_INSTANCE);
@@ -198,7 +213,7 @@ public class ActivityInstanceFromDefinitionBuilder {
     public ActivityInstanceFromDefinitionBuilder buildFormChildren() {
         if (checkStep(BUILD_FORM_INSTANCE, BUILD_FORM_CHILDREN)) {
 
-            context.creators().getFormInstanceCreatorHelper().addChildren(context);
+            context.getAiBuilderFactory().getAICreatorsFactory().getFormInstanceCreatorHelper().addChildren(context);
 
             context.setBuildStep(BUILD_FORM_CHILDREN);
         }
@@ -208,8 +223,9 @@ public class ActivityInstanceFromDefinitionBuilder {
     public ActivityInstanceFromDefinitionBuilder renderFormTitles() {
         if (checkStep(BUILD_FORM_INSTANCE, RENDER_FORM_TITLES)) {
 
-            RendererInitialContextHandler.addInstanceToRendererInitialContext(context, context.getFormInstance());
-            context.creators().getFormInstanceCreatorHelper().renderTitleAndSubtitle(context);
+            context.getAiBuilderFactory().getAIContentRendererFactory().addInstanceToRendererInitialContext(
+                    context, context.getFormInstance());
+            context.getAiBuilderFactory().getAICreatorsFactory().getFormInstanceCreatorHelper().renderTitleAndSubtitle(context);
 
             context.setBuildStep(RENDER_FORM_TITLES);
         }
@@ -226,7 +242,8 @@ public class ActivityInstanceFromDefinitionBuilder {
                         + " disableTemplatesRendering");
                 context.setFailedStep(RENDER_CONTENT);
             } else {
-                context.creators().getFormInstanceCreatorHelper().renderContent(context, context.getRenderedTemplates()::get);
+                context.getAiBuilderFactory().getAICreatorsFactory().getFormInstanceCreatorHelper().renderContent(
+                        context, context.getRenderedTemplates()::get);
 
                 context.setBuildStep(RENDER_CONTENT);
             }
@@ -237,7 +254,7 @@ public class ActivityInstanceFromDefinitionBuilder {
     public ActivityInstanceFromDefinitionBuilder updateBlockStatuses() {
         if (checkStep(BUILD_FORM_CHILDREN, UPDATE_BLOCK_STATUSES)) {
 
-            context.creators().getFormInstanceCreatorHelper().updateBlockStatuses(context);
+            context.getAiBuilderFactory().getAICreatorsFactory().getFormInstanceCreatorHelper().updateBlockStatuses(context);
 
             context.setBuildStep(UPDATE_BLOCK_STATUSES);
         }
@@ -277,5 +294,13 @@ public class ActivityInstanceFromDefinitionBuilder {
                     + "last step=" + getBuildStep() + ", but required lastStep=" + expectedMinimalStep);
         }
         return true;
+    }
+
+    private void readPreviousInstanceId(Optional<FormResponse> formResponse) {
+        if (context.getParams().isReadPreviousInstanceId()) {
+            context.setPreviousInstanceId(
+                    ActivityInstanceUtil.getPreviousInstanceId(context.getHandle(), formResponse.get().getId())
+            );
+        }
     }
 }

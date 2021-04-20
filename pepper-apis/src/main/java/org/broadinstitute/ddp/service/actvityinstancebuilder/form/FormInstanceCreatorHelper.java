@@ -1,4 +1,4 @@
-package org.broadinstitute.ddp.service.actvityinstancebuilder;
+package org.broadinstitute.ddp.service.actvityinstancebuilder.form;
 
 
 import static org.broadinstitute.ddp.util.TemplateRenderUtil.toPlainText;
@@ -7,7 +7,6 @@ import static org.broadinstitute.ddp.util.TranslationUtil.extractOptionalActivit
 import org.broadinstitute.ddp.content.Renderable;
 import org.broadinstitute.ddp.model.activity.instance.FormInstance;
 import org.broadinstitute.ddp.service.actvityinstancebuilder.context.AIBuilderContext;
-import org.broadinstitute.ddp.service.actvityinstancebuilder.util.TemplateHandler;
 
 /**
  * Creates methods used during {@link FormInstance} building process.
@@ -16,7 +15,7 @@ public class FormInstanceCreatorHelper {
 
     public void addChildren(AIBuilderContext ctx) {
         var formActivityDef = ctx.getFormActivityDef();
-        var formSectionCreator = ctx.creators().getFormSectionCreator();
+        var formSectionCreator = ctx.getAiBuilderFactory().getAICreatorsFactory().getFormSectionCreator();
         ctx.getFormInstance().setIntroduction(formSectionCreator.createSection(ctx, formActivityDef.getIntroduction()));
         ctx.getFormInstance().setClosing(formSectionCreator.createSection(ctx, formActivityDef.getClosing()));
         formActivityDef.getSections().forEach(s -> {
@@ -27,8 +26,8 @@ public class FormInstanceCreatorHelper {
     public void renderTitleAndSubtitle(AIBuilderContext ctx) {
         var title = extractOptionalActivityTranslation(ctx.getFormActivityDef().getTranslatedTitles(), ctx.getIsoLangCode());
         var subtitle = extractOptionalActivityTranslation(ctx.getFormActivityDef().getTranslatedSubtitles(), ctx.getIsoLangCode());
-        ctx.getFormInstance().setTitle(TemplateHandler.renderTemplate(ctx, title));
-        ctx.getFormInstance().setSubtitle(TemplateHandler.renderTemplate(ctx, subtitle));
+        ctx.getFormInstance().setTitle(ctx.getAiBuilderFactory().getTemplateRenderFactory().renderTemplate(ctx, title));
+        ctx.getFormInstance().setSubtitle(ctx.getAiBuilderFactory().getTemplateRenderFactory().renderTemplate(ctx, subtitle));
     }
 
     public void updateBlockStatuses(AIBuilderContext ctx) {

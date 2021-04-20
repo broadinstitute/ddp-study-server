@@ -1,7 +1,5 @@
 package org.broadinstitute.ddp.service.actvityinstancebuilder.block;
 
-import static org.broadinstitute.ddp.service.actvityinstancebuilder.util.TemplateHandler.addAndRenderTemplate;
-
 import org.broadinstitute.ddp.db.dto.ComponentDto;
 import org.broadinstitute.ddp.db.dto.InstitutionPhysicianComponentDto;
 import org.broadinstitute.ddp.model.activity.definition.ComponentBlockDef;
@@ -49,8 +47,10 @@ public class FormBlockCreatorHelper {
             case MAILING_ADDRESS:
                 MailingAddressComponentDef mailingAddressComponentDef = (MailingAddressComponentDef) componentBlockDef;
                 formComponent = new MailingAddressComponent(
-                        addAndRenderTemplate(ctx, mailingAddressComponentDef.getTitleTemplate()),
-                        addAndRenderTemplate(ctx, mailingAddressComponentDef.getSubtitleTemplate()),
+                        ctx.getAiBuilderFactory().getTemplateRenderFactory().renderTemplate(
+                                ctx, mailingAddressComponentDef.getTitleTemplate()),
+                        ctx.getAiBuilderFactory().getTemplateRenderFactory().renderTemplate(
+                                ctx, mailingAddressComponentDef.getSubtitleTemplate()),
                         mailingAddressComponentDef.shouldHideNumber(),
                         mailingAddressComponentDef.shouldRequireVerified(),
                         mailingAddressComponentDef.shouldRequirePhone()
@@ -64,20 +64,22 @@ public class FormBlockCreatorHelper {
     }
 
     ConditionalBlock createConditionalBlock(AIBuilderContext ctx, ConditionalBlockDef conditionalBlockDef) {
-        Question question = ctx.creators().getQuestionCreator().createQuestion(ctx, conditionalBlockDef.getControl());
+        Question question = ctx.getAiBuilderFactory().getAICreatorsFactory().getQuestionCreator().createQuestion(
+                ctx, conditionalBlockDef.getControl());
         ConditionalBlock conditionalBlock = question == null ? null : new ConditionalBlock(question);
         if (conditionalBlock != null) {
             conditionalBlock.getNested().addAll(
                     CollectionMiscUtil.createListFromAnotherList(conditionalBlockDef.getNested(),
-                            (formBlockDef) -> ctx.creators().getFormBlockCreator().createBlock(ctx, formBlockDef)));
+                            (formBlockDef) -> ctx.getAiBuilderFactory().getAICreatorsFactory().getFormBlockCreator()
+                                    .createBlock(ctx, formBlockDef)));
         }
         return conditionalBlock;
     }
 
     ContentBlock createContentBlock(AIBuilderContext ctx, ContentBlockDef contentBlockDef) {
         return new ContentBlock(
-                addAndRenderTemplate(ctx, contentBlockDef.getTitleTemplate()),
-                addAndRenderTemplate(ctx, contentBlockDef.getBodyTemplate())
+                ctx.getAiBuilderFactory().getTemplateRenderFactory().renderTemplate(ctx, contentBlockDef.getTitleTemplate()),
+                ctx.getAiBuilderFactory().getTemplateRenderFactory().renderTemplate(ctx, contentBlockDef.getBodyTemplate())
         );
     }
 
@@ -85,11 +87,13 @@ public class FormBlockCreatorHelper {
         GroupBlock groupBlock = new GroupBlock(
                 groupBlockDef.getListStyleHint(),
                 groupBlockDef.getPresentationHint(),
-                addAndRenderTemplate(ctx, groupBlockDef.getTitleTemplate())
+                ctx.getAiBuilderFactory().getTemplateRenderFactory().renderTemplate(
+                        ctx, groupBlockDef.getTitleTemplate())
         );
         groupBlock.getNested().addAll(
                 CollectionMiscUtil.createListFromAnotherList(groupBlockDef.getNested(),
-                        (formBlockDef) -> ctx.creators().getFormBlockCreator().createBlock(ctx, formBlockDef)));
+                        (formBlockDef) -> ctx.getAiBuilderFactory().getAICreatorsFactory().getFormBlockCreator()
+                                .createBlock(ctx, formBlockDef)));
         return groupBlock;
     }
 
@@ -98,12 +102,14 @@ public class FormBlockCreatorHelper {
                 nestedActivityBlockDef.getActivityCode(),
                 nestedActivityBlockDef.getRenderHint(),
                 nestedActivityBlockDef.isAllowMultiple(),
-                addAndRenderTemplate(ctx, nestedActivityBlockDef.getAddButtonTemplate())
+                ctx.getAiBuilderFactory().getTemplateRenderFactory().renderTemplate(
+                        ctx, nestedActivityBlockDef.getAddButtonTemplate())
         );
     }
 
     QuestionBlock createQuestionBlock(AIBuilderContext ctx, QuestionBlockDef questionBlockDef) {
-        Question question = ctx.creators().getQuestionCreator().createQuestion(ctx, questionBlockDef.getQuestion());
+        Question question = ctx.getAiBuilderFactory().getAICreatorsFactory().getQuestionCreator()
+                .createQuestion(ctx, questionBlockDef.getQuestion());
         return question == null ? null : new QuestionBlock(question);
     }
 
@@ -118,9 +124,12 @@ public class FormBlockCreatorHelper {
                         physicianInstitutionComponentDef.getComponentRevisionId()
                 ),
                 physicianInstitutionComponentDef.getInstitutionType(),
-                addAndRenderTemplate(ctx, physicianInstitutionComponentDef.getTitleTemplate()),
-                addAndRenderTemplate(ctx, physicianInstitutionComponentDef.getSubtitleTemplate()),
-                addAndRenderTemplate(ctx, physicianInstitutionComponentDef.getAddButtonTemplate()),
+                ctx.getAiBuilderFactory().getTemplateRenderFactory().renderTemplate(
+                        ctx, physicianInstitutionComponentDef.getTitleTemplate()),
+                ctx.getAiBuilderFactory().getTemplateRenderFactory().renderTemplate(
+                        ctx, physicianInstitutionComponentDef.getSubtitleTemplate()),
+                ctx.getAiBuilderFactory().getTemplateRenderFactory().renderTemplate(
+                        ctx, physicianInstitutionComponentDef.getAddButtonTemplate()),
                 physicianInstitutionComponentDef.allowMultiple(),
                 physicianInstitutionComponentDef.showFields(),
                 physicianInstitutionComponentDef.isRequired()

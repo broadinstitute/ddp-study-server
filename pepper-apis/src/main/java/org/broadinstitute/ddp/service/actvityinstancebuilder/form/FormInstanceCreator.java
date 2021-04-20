@@ -1,7 +1,5 @@
-package org.broadinstitute.ddp.service.actvityinstancebuilder;
+package org.broadinstitute.ddp.service.actvityinstancebuilder.form;
 
-
-import static org.broadinstitute.ddp.service.actvityinstancebuilder.util.TemplateHandler.addAndRenderTemplate;
 
 import org.broadinstitute.ddp.model.activity.instance.FormInstance;
 import org.broadinstitute.ddp.service.actvityinstancebuilder.context.AIBuilderContext;
@@ -41,12 +39,14 @@ public class FormInstanceCreator {
                 formResponse.getLatestStatus() != null ? formResponse.getLatestStatus().getType().name() : null,
                 readonly,
                 formActivityDef.getListStyleHint(),
-                addAndRenderTemplate(ctx, formActivityDef.getReadonlyHintTemplate()),
+                ctx.getAiBuilderFactory().getTemplateRenderFactory().renderTemplate(
+                        ctx, formActivityDef.getReadonlyHintTemplate()),
                 formActivityDef.getIntroduction() != null ? formActivityDef.getIntroduction().getSectionId() : null,
                 formActivityDef.getClosing() != null ? formActivityDef.getClosing().getSectionId() : null,
                 formResponse.getCreatedAt(),
                 formResponse.getFirstCompletedAt(),
-                addAndRenderTemplate(ctx, formActivityDef.getLastUpdatedTextTemplate()),
+                ctx.getAiBuilderFactory().getTemplateRenderFactory().renderTemplate(
+                        ctx, formActivityDef.getLastUpdatedTextTemplate()),
                 formActivityDef.getLastUpdated(),
                 canDelete,
                 formActivityDef.isFollowup(),

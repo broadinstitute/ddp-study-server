@@ -1,16 +1,16 @@
-package org.broadinstitute.ddp.service.actvityinstancebuilder.context;
+package org.broadinstitute.ddp.service.actvityinstancebuilder.factory;
 
 import org.broadinstitute.ddp.model.activity.instance.ActivityInstance;
-import org.broadinstitute.ddp.service.actvityinstancebuilder.FormInstanceCreator;
-import org.broadinstitute.ddp.service.actvityinstancebuilder.FormInstanceCreatorHelper;
-import org.broadinstitute.ddp.service.actvityinstancebuilder.FormSectionCreator;
-import org.broadinstitute.ddp.service.actvityinstancebuilder.SectionIconCreator;
 import org.broadinstitute.ddp.service.actvityinstancebuilder.block.FormBlockCreator;
 import org.broadinstitute.ddp.service.actvityinstancebuilder.block.FormBlockCreatorHelper;
 import org.broadinstitute.ddp.service.actvityinstancebuilder.block.question.PicklistCreatorHelper;
 import org.broadinstitute.ddp.service.actvityinstancebuilder.block.question.QuestionCreator;
 import org.broadinstitute.ddp.service.actvityinstancebuilder.block.question.QuestionCreatorHelper;
 import org.broadinstitute.ddp.service.actvityinstancebuilder.block.question.ValidationRuleCreator;
+import org.broadinstitute.ddp.service.actvityinstancebuilder.form.FormInstanceCreator;
+import org.broadinstitute.ddp.service.actvityinstancebuilder.form.FormInstanceCreatorHelper;
+import org.broadinstitute.ddp.service.actvityinstancebuilder.form.FormSectionCreator;
+import org.broadinstitute.ddp.service.actvityinstancebuilder.form.SectionIconCreator;
 
 /**
  * Creates instances of Creator-classes providing {@link ActivityInstance} building.

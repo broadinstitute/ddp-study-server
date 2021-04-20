@@ -36,7 +36,7 @@ import org.broadinstitute.ddp.pex.PexException;
 import org.broadinstitute.ddp.pex.PexInterpreter;
 import org.broadinstitute.ddp.service.ActivityInstanceService;
 import org.broadinstitute.ddp.service.actvityinstancebuilder.ActivityInstanceFromDefinitionBuilder;
-import org.broadinstitute.ddp.service.actvityinstancebuilder.FormInstanceCreatorHelper;
+import org.broadinstitute.ddp.service.actvityinstancebuilder.form.FormInstanceCreatorHelper;
 import org.broadinstitute.ddp.transformers.LocalDateTimeAdapter;
 import org.broadinstitute.ddp.util.MiscUtil;
 import org.jdbi.v3.core.Handle;

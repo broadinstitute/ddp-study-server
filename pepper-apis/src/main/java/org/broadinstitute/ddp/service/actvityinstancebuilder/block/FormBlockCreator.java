@@ -22,7 +22,7 @@ public class FormBlockCreator {
     }
 
     private FormBlock constructFormBlock(AIBuilderContext ctx, FormBlockDef formBlockDef) {
-        FormBlockCreatorHelper creatorHelper = ctx.creators().getFormBlockCreatorHelper();
+        FormBlockCreatorHelper creatorHelper = ctx.getAiBuilderFactory().getAICreatorsFactory().getFormBlockCreatorHelper();
         switch (formBlockDef.getBlockType()) {
             case GROUP:
                 return creatorHelper.createGroupBlock(ctx, (GroupBlockDef) formBlockDef);

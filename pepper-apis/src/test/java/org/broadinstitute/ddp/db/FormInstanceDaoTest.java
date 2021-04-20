@@ -41,13 +41,10 @@ public class FormInstanceDaoTest extends TxnAwareBaseTest {
     private static String studyGuid;
 
     private static ActivityInstanceService activityInstanceService;
-    private static FormInstanceDao dao;
 
     @BeforeClass
     public static void setup() {
-        SectionBlockDao sectionBlockDao = new SectionBlockDao();
-        dao = FormInstanceDao.fromDaoAndConfig(sectionBlockDao, sqlConfig);
-        org.broadinstitute.ddp.db.ActivityInstanceDao activityInstanceDao = new org.broadinstitute.ddp.db.ActivityInstanceDao(dao);
+        org.broadinstitute.ddp.db.ActivityInstanceDao activityInstanceDao = new org.broadinstitute.ddp.db.ActivityInstanceDao();
         PexInterpreter interpreter = new TreeWalkInterpreter();
         I18nContentRenderer i18nContentRenderer = new I18nContentRenderer();
         activityInstanceService = new ActivityInstanceService(activityInstanceDao, interpreter, i18nContentRenderer);

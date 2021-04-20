@@ -10,6 +10,8 @@ import java.util.Optional;
 import org.broadinstitute.ddp.constants.SqlConstants;
 import org.broadinstitute.ddp.db.dto.FormBlockDto;
 import org.broadinstitute.ddp.db.dto.SectionBlockMembershipDto;
+import org.broadinstitute.ddp.model.activity.instance.ActivityInstance;
+import org.broadinstitute.ddp.service.actvityinstancebuilder.ActivityInstanceFromDefinitionBuilder;
 import org.jdbi.v3.core.statement.Query;
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
@@ -64,6 +66,9 @@ public interface JdbiFormSectionBlock extends SqlObject {
      * @param sectionIds   the list of section ids to get blocks for
      * @param instanceGuid the activity instance guid to narrow down the revision
      * @return mapping of section id to list of block data
+     *
+     * @deprecated Not used anywhere except tests. It was used for {@link ActivityInstance} reading until
+     *    {@link ActivityInstanceFromDefinitionBuilder} was implemented
      */
     default Map<Long, List<FormBlockDto>> findOrderedFormBlockDtosForSections(List<Long> sectionIds, String instanceGuid) {
         String query = StringTemplateSqlLocator
@@ -86,6 +91,13 @@ public interface JdbiFormSectionBlock extends SqlObject {
                 });
     }
 
+    /**
+     * Find ordered {@link FormBlockDto}.
+     *
+     * @deprecated Not used anywhere except tests. It was used for {@link ActivityInstance} reading until
+     *    {@link ActivityInstanceFromDefinitionBuilder} was implemented
+     */
+    @Deprecated
     default List<FormBlockDto> findOrderedFormBlockDtosForSection(long sectionId, String instanceGuid) {
         return findOrderedFormBlockDtosForSections(Collections.singletonList(sectionId), instanceGuid)
                 .getOrDefault(sectionId, new ArrayList<>());

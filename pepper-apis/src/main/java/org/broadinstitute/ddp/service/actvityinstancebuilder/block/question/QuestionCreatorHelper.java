@@ -1,6 +1,5 @@
 package org.broadinstitute.ddp.service.actvityinstancebuilder.block.question;
 
-import static org.broadinstitute.ddp.service.actvityinstancebuilder.util.TemplateHandler.addAndRenderTemplate;
 import static org.broadinstitute.ddp.util.QuestionUtil.isReadOnly;
 
 import java.util.List;
@@ -32,51 +31,67 @@ public class QuestionCreatorHelper {
     AgreementQuestion createAgreementQuestion(AIBuilderContext ctx, AgreementQuestionDef questionDef) {
         return new AgreementQuestion(
                 questionDef.getStableId(),
-                addAndRenderTemplate(ctx, questionDef.getPromptTemplate()),
+                ctx.getAiBuilderFactory().getTemplateRenderFactory().renderTemplate(
+                        ctx, questionDef.getPromptTemplate()),
                 questionDef.isRestricted(),
                 questionDef.isDeprecated(),
                 isReadOnly(questionDef, ctx.getFormResponse().getLatestStatus().getType(), ctx.getPreviousInstanceId()),
-                addAndRenderTemplate(ctx, questionDef.getTooltipTemplate()),
-                addAndRenderTemplate(ctx, questionDef.getAdditionalInfoHeaderTemplate()),
-                addAndRenderTemplate(ctx, questionDef.getAdditionalInfoFooterTemplate()),
-                ctx.creators().getQuestionCreator().getAnswers(ctx, questionDef.getStableId()),
-                ctx.creators().getQuestionCreator().getValidationRules(ctx, questionDef)
+                ctx.getAiBuilderFactory().getTemplateRenderFactory().renderTemplate(
+                        ctx, questionDef.getTooltipTemplate()),
+                ctx.getAiBuilderFactory().getTemplateRenderFactory().renderTemplate(
+                        ctx, questionDef.getAdditionalInfoHeaderTemplate()),
+                ctx.getAiBuilderFactory().getTemplateRenderFactory().renderTemplate(
+                        ctx, questionDef.getAdditionalInfoFooterTemplate()),
+                ctx.getAiBuilderFactory().getAICreatorsFactory().getQuestionCreator().getAnswers(ctx, questionDef.getStableId()),
+                ctx.getAiBuilderFactory().getAICreatorsFactory().getQuestionCreator().getValidationRules(ctx, questionDef)
         );
     }
 
     BoolQuestion createBoolQuestion(AIBuilderContext ctx, BoolQuestionDef questionDef) {
         return new BoolQuestion(
                 questionDef.getStableId(),
-                addAndRenderTemplate(ctx, questionDef.getPromptTemplate()),
+                ctx.getAiBuilderFactory().getTemplateRenderFactory().renderTemplate(
+                        ctx, questionDef.getPromptTemplate()),
                 questionDef.isRestricted(),
                 questionDef.isDeprecated(),
                 isReadOnly(questionDef, ctx.getFormResponse().getLatestStatus().getType(), ctx.getPreviousInstanceId()),
-                addAndRenderTemplate(ctx, questionDef.getTooltipTemplate()),
-                addAndRenderTemplate(ctx, questionDef.getAdditionalInfoHeaderTemplate()),
-                addAndRenderTemplate(ctx, questionDef.getAdditionalInfoFooterTemplate()),
-                ctx.creators().getQuestionCreator().getAnswers(ctx, questionDef.getStableId()),
-                ctx.creators().getQuestionCreator().getValidationRules(ctx, questionDef),
-                addAndRenderTemplate(ctx, questionDef.getTrueTemplate()),
-                addAndRenderTemplate(ctx, questionDef.getFalseTemplate())
+                ctx.getAiBuilderFactory().getTemplateRenderFactory().renderTemplate(
+                        ctx, questionDef.getTooltipTemplate()),
+                ctx.getAiBuilderFactory().getTemplateRenderFactory().renderTemplate(
+                        ctx, questionDef.getAdditionalInfoHeaderTemplate()),
+                ctx.getAiBuilderFactory().getTemplateRenderFactory().renderTemplate(
+                        ctx, questionDef.getAdditionalInfoFooterTemplate()),
+                ctx.getAiBuilderFactory().getAICreatorsFactory().getQuestionCreator().getAnswers(ctx, questionDef.getStableId()),
+                ctx.getAiBuilderFactory().getAICreatorsFactory().getQuestionCreator().getValidationRules(ctx, questionDef),
+                ctx.getAiBuilderFactory().getTemplateRenderFactory().renderTemplate(
+                        ctx, questionDef.getTrueTemplate()),
+                ctx.getAiBuilderFactory().getTemplateRenderFactory().renderTemplate(
+                        ctx, questionDef.getFalseTemplate())
         );
     }
 
     CompositeQuestion createCompositeQuestion(AIBuilderContext ctx, CompositeQuestionDef questionDef) {
-        QuestionCreator questionCreator = ctx.creators().getQuestionCreator();
+        QuestionCreator questionCreator = ctx.getAiBuilderFactory().getAICreatorsFactory().getQuestionCreator();
         return new CompositeQuestion(
                 questionDef.getStableId(),
-                addAndRenderTemplate(ctx, questionDef.getPromptTemplate()),
+                ctx.getAiBuilderFactory().getTemplateRenderFactory().renderTemplate(
+                        ctx, questionDef.getPromptTemplate()),
                 questionDef.isRestricted(),
                 questionDef.isDeprecated(),
                 isReadOnly(questionDef, ctx.getFormResponse().getLatestStatus().getType(), ctx.getPreviousInstanceId()),
-                addAndRenderTemplate(ctx, questionDef.getTooltipTemplate()),
-                addAndRenderTemplate(ctx, questionDef.getAdditionalInfoHeaderTemplate()),
-                addAndRenderTemplate(ctx, questionDef.getAdditionalInfoFooterTemplate()),
+                ctx.getAiBuilderFactory().getTemplateRenderFactory().renderTemplate(
+                        ctx, questionDef.getTooltipTemplate()),
+                ctx.getAiBuilderFactory().getTemplateRenderFactory().renderTemplate(
+                        ctx, questionDef.getAdditionalInfoHeaderTemplate()),
+                ctx.getAiBuilderFactory().getTemplateRenderFactory().renderTemplate(
+                        ctx, questionDef.getAdditionalInfoFooterTemplate()),
                 questionCreator.getValidationRules(ctx, questionDef),
                 questionDef.isAllowMultiple(),
                 questionDef.isUnwrapOnExport(),
-                addAndRenderTemplate(ctx, questionDef.getAddButtonTemplate()),
-                addAndRenderTemplate(ctx, questionDef.getAdditionalItemTemplate()),
+                ctx.getAiBuilderFactory().getTemplateRenderFactory().renderTemplate(
+                        ctx, questionDef.getAddButtonTemplate()),
+                ctx.getAiBuilderFactory().getTemplateRenderFactory().renderTemplate(
+                        ctx, questionDef.getAdditionalItemTemplate()),
                 CollectionMiscUtil.createListFromAnotherList(questionDef.getChildren(),
                         (childQuestionDef) -> questionCreator.createQuestion(ctx, childQuestionDef)),
                 questionDef.getChildOrientation(),
@@ -85,22 +100,27 @@ public class QuestionCreatorHelper {
     }
 
     DatePicklistQuestion createDatePickListQuestion(AIBuilderContext ctx, DateQuestionDef questionDef) {
-        QuestionCreator questionCreator = ctx.creators().getQuestionCreator();
+        QuestionCreator questionCreator = ctx.getAiBuilderFactory().getAICreatorsFactory().getQuestionCreator();
         return new DatePicklistQuestion(
                 questionDef.getStableId(),
-                addAndRenderTemplate(ctx, questionDef.getPromptTemplate()),
+                ctx.getAiBuilderFactory().getTemplateRenderFactory().renderTemplate(
+                        ctx, questionDef.getPromptTemplate()),
                 questionDef.isRestricted(),
                 questionDef.isDeprecated(),
                 isReadOnly(questionDef, ctx.getFormResponse().getLatestStatus().getType(), ctx.getPreviousInstanceId()),
-                addAndRenderTemplate(ctx, questionDef.getTooltipTemplate()),
-                addAndRenderTemplate(ctx, questionDef.getAdditionalInfoHeaderTemplate()),
-                addAndRenderTemplate(ctx, questionDef.getAdditionalInfoFooterTemplate()),
+                ctx.getAiBuilderFactory().getTemplateRenderFactory().renderTemplate(
+                        ctx, questionDef.getTooltipTemplate()),
+                ctx.getAiBuilderFactory().getTemplateRenderFactory().renderTemplate(
+                        ctx, questionDef.getAdditionalInfoHeaderTemplate()),
+                ctx.getAiBuilderFactory().getTemplateRenderFactory().renderTemplate(
+                        ctx, questionDef.getAdditionalInfoFooterTemplate()),
                 questionCreator.getAnswers(ctx, questionDef.getStableId()),
                 questionCreator.getValidationRules(ctx, questionDef),
                 questionDef.getRenderMode(),
                 questionDef.isDisplayCalendar(),
                 questionDef.getFields(),
-                addAndRenderTemplate(ctx, questionDef.getPlaceholderTemplate()),
+                ctx.getAiBuilderFactory().getTemplateRenderFactory().renderTemplate(
+                        ctx, questionDef.getPlaceholderTemplate()),
                 questionDef.getPicklistDef().getUseMonthNames(),
                 questionDef.getPicklistDef().getStartYear(),
                 questionDef.getPicklistDef().getEndYear(),
@@ -109,53 +129,67 @@ public class QuestionCreatorHelper {
     }
 
     DateQuestion createDateQuestion(AIBuilderContext ctx, DateQuestionDef questionDef) {
-        QuestionCreator questionCreator = ctx.creators().getQuestionCreator();
+        QuestionCreator questionCreator = ctx.getAiBuilderFactory().getAICreatorsFactory().getQuestionCreator();
         return new DateQuestion(
                 questionDef.getStableId(),
-                addAndRenderTemplate(ctx, questionDef.getPromptTemplate()),
+                ctx.getAiBuilderFactory().getTemplateRenderFactory().renderTemplate(
+                        ctx, questionDef.getPromptTemplate()),
                 questionDef.isRestricted(),
                 questionDef.isDeprecated(),
                 isReadOnly(questionDef, ctx.getFormResponse().getLatestStatus().getType(), ctx.getPreviousInstanceId()),
-                addAndRenderTemplate(ctx, questionDef.getTooltipTemplate()),
-                addAndRenderTemplate(ctx, questionDef.getAdditionalInfoHeaderTemplate()),
-                addAndRenderTemplate(ctx, questionDef.getAdditionalInfoFooterTemplate()),
+                ctx.getAiBuilderFactory().getTemplateRenderFactory().renderTemplate(
+                        ctx, questionDef.getTooltipTemplate()),
+                ctx.getAiBuilderFactory().getTemplateRenderFactory().renderTemplate(
+                        ctx, questionDef.getAdditionalInfoHeaderTemplate()),
+                ctx.getAiBuilderFactory().getTemplateRenderFactory().renderTemplate(
+                        ctx, questionDef.getAdditionalInfoFooterTemplate()),
                 questionCreator.getAnswers(ctx, questionDef.getStableId()),
                 questionCreator.getValidationRules(ctx, questionDef),
                 questionDef.getRenderMode(),
                 questionDef.isDisplayCalendar(),
                 questionDef.getFields(),
-                addAndRenderTemplate(ctx, questionDef.getPlaceholderTemplate())
+                ctx.getAiBuilderFactory().getTemplateRenderFactory().renderTemplate(
+                        ctx, questionDef.getPlaceholderTemplate())
         );
     }
 
     FileQuestion constructFileQuestion(AIBuilderContext ctx, FileQuestionDef questionDef) {
-        QuestionCreator questionCreator = ctx.creators().getQuestionCreator();
+        QuestionCreator questionCreator = ctx.getAiBuilderFactory().getAICreatorsFactory().getQuestionCreator();
         return new FileQuestion(
                 questionDef.getStableId(),
-                addAndRenderTemplate(ctx, questionDef.getPromptTemplate()),
+                ctx.getAiBuilderFactory().getTemplateRenderFactory().renderTemplate(
+                        ctx, questionDef.getPromptTemplate()),
                 questionDef.isRestricted(),
                 questionDef.isDeprecated(),
                 isReadOnly(questionDef, ctx.getFormResponse().getLatestStatus().getType(), ctx.getPreviousInstanceId()),
-                addAndRenderTemplate(ctx, questionDef.getTooltipTemplate()),
-                addAndRenderTemplate(ctx, questionDef.getAdditionalInfoHeaderTemplate()),
-                addAndRenderTemplate(ctx, questionDef.getAdditionalInfoFooterTemplate()),
+                ctx.getAiBuilderFactory().getTemplateRenderFactory().renderTemplate(
+                        ctx, questionDef.getTooltipTemplate()),
+                ctx.getAiBuilderFactory().getTemplateRenderFactory().renderTemplate(
+                        ctx, questionDef.getAdditionalInfoHeaderTemplate()),
+                ctx.getAiBuilderFactory().getTemplateRenderFactory().renderTemplate(
+                        ctx, questionDef.getAdditionalInfoFooterTemplate()),
                 questionCreator.getAnswers(ctx, questionDef.getStableId()),
                 questionCreator.getValidationRules(ctx, questionDef)
         );
     }
 
     NumericQuestion createNumericQuestion(AIBuilderContext ctx, NumericQuestionDef questionDef) {
-        QuestionCreator questionCreator = ctx.creators().getQuestionCreator();
+        QuestionCreator questionCreator = ctx.getAiBuilderFactory().getAICreatorsFactory().getQuestionCreator();
         return new NumericQuestion(
                 questionDef.getStableId(),
-                addAndRenderTemplate(ctx, questionDef.getPromptTemplate()),
-                addAndRenderTemplate(ctx, questionDef.getPlaceholderTemplate()),
+                ctx.getAiBuilderFactory().getTemplateRenderFactory().renderTemplate(
+                        ctx, questionDef.getPromptTemplate()),
+                ctx.getAiBuilderFactory().getTemplateRenderFactory().renderTemplate(
+                        ctx, questionDef.getPlaceholderTemplate()),
                 questionDef.isRestricted(),
                 questionDef.isDeprecated(),
                 isReadOnly(questionDef, ctx.getFormResponse().getLatestStatus().getType(), ctx.getPreviousInstanceId()),
-                addAndRenderTemplate(ctx, questionDef.getTooltipTemplate()),
-                addAndRenderTemplate(ctx, questionDef.getAdditionalInfoHeaderTemplate()),
-                addAndRenderTemplate(ctx, questionDef.getAdditionalInfoFooterTemplate()),
+                ctx.getAiBuilderFactory().getTemplateRenderFactory().renderTemplate(
+                        ctx, questionDef.getTooltipTemplate()),
+                ctx.getAiBuilderFactory().getTemplateRenderFactory().renderTemplate(
+                        ctx, questionDef.getAdditionalInfoHeaderTemplate()),
+                ctx.getAiBuilderFactory().getTemplateRenderFactory().renderTemplate(
+                        ctx, questionDef.getAdditionalInfoFooterTemplate()),
                 questionCreator.getAnswers(ctx, questionDef.getStableId()),
                 questionCreator.getValidationRules(ctx, questionDef),
                 questionDef.getNumericType()
@@ -163,54 +197,68 @@ public class QuestionCreatorHelper {
     }
 
     PicklistQuestion createPicklistQuestion(AIBuilderContext ctx, PicklistQuestionDef questionDef) {
-        QuestionCreator questionCreator = ctx.creators().getQuestionCreator();
+        QuestionCreator questionCreator = ctx.getAiBuilderFactory().getAICreatorsFactory().getQuestionCreator();
 
         List<PicklistGroup> picklistGroups = CollectionMiscUtil.createListFromAnotherList(questionDef.getGroups(),
-                (picklistGroupDef) -> ctx.creators().getPicklistCreatorHelper().createPicklistGroup(ctx, picklistGroupDef));
+                (picklistGroupDef) -> ctx.getAiBuilderFactory().getAICreatorsFactory().getPicklistCreatorHelper()
+                        .createPicklistGroup(ctx, picklistGroupDef));
 
         List<PicklistOption> picklistOptions = CollectionMiscUtil.createListFromAnotherList(questionDef.getAllPicklistOptions(),
                 (picklistOptionDef) ->
-                        ctx.creators().getPicklistCreatorHelper().createPicklistOption(ctx, picklistOptionDef, questionDef.getGroups()));
+                        ctx.getAiBuilderFactory().getAICreatorsFactory().getPicklistCreatorHelper()
+                                .createPicklistOption(ctx, picklistOptionDef, questionDef.getGroups()));
 
         return new PicklistQuestion(
                 questionDef.getStableId(),
-                addAndRenderTemplate(ctx, questionDef.getPromptTemplate()),
+                ctx.getAiBuilderFactory().getTemplateRenderFactory().renderTemplate(
+                        ctx, questionDef.getPromptTemplate()),
                 questionDef.isRestricted(),
                 questionDef.isDeprecated(),
                 isReadOnly(questionDef, ctx.getFormResponse().getLatestStatus().getType(), ctx.getPreviousInstanceId()),
-                addAndRenderTemplate(ctx, questionDef.getTooltipTemplate()),
-                addAndRenderTemplate(ctx, questionDef.getAdditionalInfoHeaderTemplate()),
-                addAndRenderTemplate(ctx, questionDef.getAdditionalInfoFooterTemplate()),
+                ctx.getAiBuilderFactory().getTemplateRenderFactory().renderTemplate(
+                        ctx, questionDef.getTooltipTemplate()),
+                ctx.getAiBuilderFactory().getTemplateRenderFactory().renderTemplate(
+                        ctx, questionDef.getAdditionalInfoHeaderTemplate()),
+                ctx.getAiBuilderFactory().getTemplateRenderFactory().renderTemplate(
+                        ctx, questionDef.getAdditionalInfoFooterTemplate()),
                 questionCreator.getAnswers(ctx, questionDef.getStableId()),
                 questionCreator.getValidationRules(ctx, questionDef),
                 questionDef.getSelectMode(),
                 questionDef.getRenderMode(),
-                addAndRenderTemplate(ctx, questionDef.getPicklistLabelTemplate()),
+                ctx.getAiBuilderFactory().getTemplateRenderFactory().renderTemplate(
+                        ctx, questionDef.getPicklistLabelTemplate()),
                 picklistOptions,
                 picklistGroups
         );
     }
 
     TextQuestion createTextQuestion(AIBuilderContext ctx, TextQuestionDef questionDef) {
-        QuestionCreator questionCreator = ctx.creators().getQuestionCreator();
+        QuestionCreator questionCreator = ctx.getAiBuilderFactory().getAICreatorsFactory().getQuestionCreator();
         return new TextQuestion(
                 questionDef.getStableId(),
-                addAndRenderTemplate(ctx, questionDef.getPromptTemplate()),
-                addAndRenderTemplate(ctx, questionDef.getPlaceholderTemplate()),
+                ctx.getAiBuilderFactory().getTemplateRenderFactory().renderTemplate(
+                        ctx, questionDef.getPromptTemplate()),
+                ctx.getAiBuilderFactory().getTemplateRenderFactory().renderTemplate(
+                        ctx, questionDef.getPlaceholderTemplate()),
                 questionDef.isRestricted(),
                 questionDef.isDeprecated(),
                 isReadOnly(questionDef, ctx.getFormResponse().getLatestStatus().getType(), ctx.getPreviousInstanceId()),
-                addAndRenderTemplate(ctx, questionDef.getTooltipTemplate()),
-                addAndRenderTemplate(ctx, questionDef.getAdditionalInfoHeaderTemplate()),
-                addAndRenderTemplate(ctx, questionDef.getAdditionalInfoFooterTemplate()),
+                ctx.getAiBuilderFactory().getTemplateRenderFactory().renderTemplate(
+                        ctx, questionDef.getTooltipTemplate()),
+                ctx.getAiBuilderFactory().getTemplateRenderFactory().renderTemplate(
+                        ctx, questionDef.getAdditionalInfoHeaderTemplate()),
+                ctx.getAiBuilderFactory().getTemplateRenderFactory().renderTemplate(
+                        ctx, questionDef.getAdditionalInfoFooterTemplate()),
                 questionCreator.getAnswers(ctx, questionDef.getStableId()),
                 questionCreator.getValidationRules(ctx, questionDef),
                 questionDef.getInputType(),
                 questionDef.getSuggestionType(),
                 questionDef.getSuggestions(),
                 questionDef.isConfirmEntry(),
-                addAndRenderTemplate(ctx, questionDef.getConfirmPromptTemplate()),
-                addAndRenderTemplate(ctx, questionDef.getMismatchMessageTemplate())
+                ctx.getAiBuilderFactory().getTemplateRenderFactory().renderTemplate(
+                        ctx, questionDef.getConfirmPromptTemplate()),
+                ctx.getAiBuilderFactory().getTemplateRenderFactory().renderTemplate(
+                        ctx, questionDef.getMismatchMessageTemplate())
         );
     }
 }

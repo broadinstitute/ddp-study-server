@@ -15,6 +15,8 @@ import org.broadinstitute.ddp.model.activity.instance.FormInstance;
 import org.broadinstitute.ddp.model.activity.instance.FormResponse;
 import org.broadinstitute.ddp.pex.PexInterpreter;
 import org.broadinstitute.ddp.pex.TreeWalkInterpreter;
+import org.broadinstitute.ddp.service.actvityinstancebuilder.AIBuilderFactory;
+import org.broadinstitute.ddp.service.actvityinstancebuilder.factory.AICreatorsFactory;
 import org.jdbi.v3.core.Handle;
 
 /**
@@ -31,6 +33,7 @@ public class AIBuilderContext {
     private AIBuildStep failedStep;
     private String failedMessage;
 
+    private final AIBuilderFactory aiBuilderFactory;
     private final Handle handle;
     private final AIBuilderParams params;
 
@@ -48,9 +51,9 @@ public class AIBuilderContext {
 
     private Map<Long, String> renderedTemplates = new HashMap<>();
 
-    private final AICreatorsFactory creatorsFactory = new AICreatorsFactory();
 
-    public AIBuilderContext(Handle handle, AIBuilderParams params) {
+    public AIBuilderContext(AIBuilderFactory aiBuilderFactory, Handle handle, AIBuilderParams params) {
+        this.aiBuilderFactory = aiBuilderFactory;
         this.handle = handle;
         this.params = params;
         this.languageDto = LanguageStore.get(params.getIsoLangCode());
@@ -91,6 +94,10 @@ public class AIBuilderContext {
 
     public AIBuilderParams getParams() {
         return params;
+    }
+
+    public AIBuilderFactory getAiBuilderFactory() {
+        return aiBuilderFactory;
     }
 
     public Handle getHandle() {
@@ -175,9 +182,5 @@ public class AIBuilderContext {
     public AIBuilderContext setPreviousInstanceId(Long previousInstanceId) {
         this.previousInstanceId = previousInstanceId;
         return this;
-    }
-
-    public AICreatorsFactory creators() {
-        return creatorsFactory;
     }
 }
