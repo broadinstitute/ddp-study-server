@@ -1,4 +1,4 @@
-package org.broadinstitute.ddp.service.actvityinstancebuilder.util;
+package org.broadinstitute.ddp.service.actvityinstancebuilder.factory;
 
 import java.time.LocalDate;
 import java.util.HashMap;
@@ -11,11 +11,13 @@ import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.model.activity.instance.FormInstance;
 import org.broadinstitute.ddp.service.actvityinstancebuilder.context.AIBuilderContext;
 
+
 /**
+ * Default content renderer context initialization methods.
  * Provides creation of renderer context (for a template engine) and populates it with
  * data which needs during templates rendering.
  */
-public class RendererInitialContextHandler {
+public class AIContentRendererFactory {
 
     /**
      * Creates renderer initial context and popualtes it with common data.
@@ -28,7 +30,7 @@ public class RendererInitialContextHandler {
      *     <li>form activity last updated date (if previous version exists).</li>
      * </ul>
      */
-    public static void createRendererInitialContext(AIBuilderContext ctx) {
+    public void createRendererInitialContext(AIBuilderContext ctx) {
         Map<String, String> commonSnapshot = I18nContentRenderer
                 .newValueProviderBuilder(ctx.getHandle(), ctx.getFormResponse().getParticipantId())
                 .build().getSnapshot();
@@ -42,9 +44,7 @@ public class RendererInitialContextHandler {
                 .withSnapshot(snapshot)
                 .build());
 
-        LocalDate lastUpdatedDate = ctx.getFormActivityDef().getLastUpdated() == null
-                ? null : ctx.getFormActivityDef().getLastUpdated().toLocalDate();
-        context.put(I18nTemplateConstants.LAST_UPDATED, I18nContentRenderer.convertToString(lastUpdatedDate));
+        putLastUpdatedToRenderContext(ctx, context);
 
         ctx.getRendererInitialContext().putAll(context);
     }
@@ -52,10 +52,16 @@ public class RendererInitialContextHandler {
     /**
      * Rebuild renderer initial context by adding to already existing data the generated {@link FormInstance}
      */
-    public static void addInstanceToRendererInitialContext(AIBuilderContext ctx, FormInstance formInstance) {
+    public void addInstanceToRendererInitialContext(AIBuilderContext ctx, FormInstance formInstance) {
         ctx.getRendererInitialContext().put(I18nTemplateConstants.DDP, new RenderValueProvider.Builder(
                 (RenderValueProvider) ctx.getRendererInitialContext().get(I18nTemplateConstants.DDP))
                 .withFormInstance(formInstance)
                 .build());
+    }
+
+    protected void putLastUpdatedToRenderContext(AIBuilderContext ctx, Map<String, Object> context) {
+        LocalDate lastUpdatedDate = ctx.getFormActivityDef().getLastUpdated() == null
+                ? null : ctx.getFormActivityDef().getLastUpdated().toLocalDate();
+        context.put(I18nTemplateConstants.LAST_UPDATED, I18nContentRenderer.convertToString(lastUpdatedDate));
     }
 }

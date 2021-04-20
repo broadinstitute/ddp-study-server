@@ -1,10 +1,10 @@
-package org.broadinstitute.ddp.service.actvityinstancebuilder.util;
+package org.broadinstitute.ddp.service.actvityinstancebuilder.factory;
 
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.activity.instance.ActivityInstance;
 import org.broadinstitute.ddp.service.actvityinstancebuilder.context.AIBuilderContext;
 
-public class TemplateHandler {
+public class TemplateRenderFactory {
 
     /**
      * Add to {@link AIBuilderContext#getRenderedTemplates()} map a key/value pair: templateId/rendered template string.
@@ -13,7 +13,7 @@ public class TemplateHandler {
      * @param template added and rendered template
      * @return Long templateID
      */
-    public static Long addAndRenderTemplate(AIBuilderContext ctx, Template template) {
+    public Long renderTemplate(AIBuilderContext ctx, Template template) {
         if (template != null) {
             if (!ctx.getParams().isDisableTemplatesRendering()) {
                 ctx.getRenderedTemplates().put(template.getTemplateId(), template.render(
@@ -33,11 +33,10 @@ public class TemplateHandler {
      * @return String rendered (processed by a template engine); if no expression detected or 'templateText' is
      *     null then returned a value of 'templateText'
      */
-    public static String renderTemplate(AIBuilderContext ctx, String templateText) {
+    public String renderTemplate(AIBuilderContext ctx, String templateText) {
         if (templateText != null) {
             return ctx.getI18nContentRenderer().renderToString(templateText, ctx.getRendererInitialContext());
         }
         return null;
     }
-
 }
