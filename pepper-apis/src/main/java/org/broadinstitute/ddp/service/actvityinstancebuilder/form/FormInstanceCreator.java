@@ -39,13 +39,13 @@ public class FormInstanceCreator {
                 formResponse.getLatestStatus() != null ? formResponse.getLatestStatus().getType().name() : null,
                 readonly,
                 formActivityDef.getListStyleHint(),
-                ctx.getAiBuilderFactory().getTemplateRenderFactory().renderTemplate(
+                ctx.getAIBuilderFactory().getTemplateRenderFactory().renderTemplate(
                         ctx, formActivityDef.getReadonlyHintTemplate()),
                 formActivityDef.getIntroduction() != null ? formActivityDef.getIntroduction().getSectionId() : null,
                 formActivityDef.getClosing() != null ? formActivityDef.getClosing().getSectionId() : null,
                 formResponse.getCreatedAt(),
                 formResponse.getFirstCompletedAt(),
-                ctx.getAiBuilderFactory().getTemplateRenderFactory().renderTemplate(
+                ctx.getAIBuilderFactory().getTemplateRenderFactory().renderTemplate(
                         ctx, formActivityDef.getLastUpdatedTextTemplate()),
                 formActivityDef.getLastUpdated(),
                 canDelete,

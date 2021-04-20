@@ -16,7 +16,7 @@ public class PicklistCreatorHelper {
     public PicklistGroup createPicklistGroup(AIBuilderContext ctx, PicklistGroupDef picklistGroupDef) {
         return new PicklistGroup(
                 picklistGroupDef.getStableId(),
-                ctx.getAiBuilderFactory().getTemplateRenderFactory().renderTemplate(
+                ctx.getAIBuilderFactory().getTemplateRenderFactory().renderTemplate(
                         ctx, picklistGroupDef.getNameTemplate())
         );
     }
@@ -30,15 +30,15 @@ public class PicklistCreatorHelper {
                                                List<PicklistGroupDef> picklistGroupDefs, boolean isNested) {
         PicklistOption picklistOption = new PicklistOption(
                 picklistOptionDef.getStableId(),
-                ctx.getAiBuilderFactory().getTemplateRenderFactory().renderTemplate(
+                ctx.getAIBuilderFactory().getTemplateRenderFactory().renderTemplate(
                         ctx, picklistOptionDef.getOptionLabelTemplate()),
-                ctx.getAiBuilderFactory().getTemplateRenderFactory().renderTemplate(
+                ctx.getAIBuilderFactory().getTemplateRenderFactory().renderTemplate(
                         ctx, picklistOptionDef.getTooltipTemplate()),
-                ctx.getAiBuilderFactory().getTemplateRenderFactory().renderTemplate(
+                ctx.getAIBuilderFactory().getTemplateRenderFactory().renderTemplate(
                         ctx, picklistOptionDef.getDetailLabelTemplate()),
                 picklistOptionDef.isDetailsAllowed(),
                 picklistOptionDef.isExclusive(),
-                isNested ? null : ctx.getAiBuilderFactory().getTemplateRenderFactory().renderTemplate(
+                isNested ? null : ctx.getAIBuilderFactory().getTemplateRenderFactory().renderTemplate(
                         ctx, picklistOptionDef.getNestedOptionsLabelTemplate()),
                 isNested ? null :
                     CollectionMiscUtil.createListFromAnotherList(picklistOptionDef.getNestedOptions(),

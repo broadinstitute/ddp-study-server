@@ -15,7 +15,7 @@ public class FormInstanceCreatorHelper {
 
     public void addChildren(AIBuilderContext ctx) {
         var formActivityDef = ctx.getFormActivityDef();
-        var formSectionCreator = ctx.getAiBuilderFactory().getAICreatorsFactory().getFormSectionCreator();
+        var formSectionCreator = ctx.getAIBuilderFactory().getAICreatorsFactory().getFormSectionCreator();
         ctx.getFormInstance().setIntroduction(formSectionCreator.createSection(ctx, formActivityDef.getIntroduction()));
         ctx.getFormInstance().setClosing(formSectionCreator.createSection(ctx, formActivityDef.getClosing()));
         formActivityDef.getSections().forEach(s -> {
@@ -26,8 +26,8 @@ public class FormInstanceCreatorHelper {
     public void renderTitleAndSubtitle(AIBuilderContext ctx) {
         var title = extractOptionalActivityTranslation(ctx.getFormActivityDef().getTranslatedTitles(), ctx.getIsoLangCode());
         var subtitle = extractOptionalActivityTranslation(ctx.getFormActivityDef().getTranslatedSubtitles(), ctx.getIsoLangCode());
-        ctx.getFormInstance().setTitle(ctx.getAiBuilderFactory().getTemplateRenderFactory().renderTemplate(ctx, title));
-        ctx.getFormInstance().setSubtitle(ctx.getAiBuilderFactory().getTemplateRenderFactory().renderTemplate(ctx, subtitle));
+        ctx.getFormInstance().setTitle(ctx.getAIBuilderFactory().getTemplateRenderFactory().renderTemplate(ctx, title));
+        ctx.getFormInstance().setSubtitle(ctx.getAIBuilderFactory().getTemplateRenderFactory().renderTemplate(ctx, subtitle));
     }
 
     public void updateBlockStatuses(AIBuilderContext ctx) {

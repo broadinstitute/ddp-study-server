@@ -96,7 +96,7 @@ public class AIBuilderContext {
         return params;
     }
 
-    public AIBuilderFactory getAiBuilderFactory() {
+    public AIBuilderFactory getAIBuilderFactory() {
         return aiBuilderFactory;
     }
 

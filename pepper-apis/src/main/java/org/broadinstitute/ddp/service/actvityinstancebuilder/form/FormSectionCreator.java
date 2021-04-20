@@ -12,7 +12,7 @@ public class FormSectionCreator {
 
     public FormSection createSection(AIBuilderContext ctx, FormSectionDef formSectionDef) {
         if (formSectionDef != null) {
-            var formSection = new FormSection(ctx.getAiBuilderFactory().getTemplateRenderFactory().renderTemplate(
+            var formSection = new FormSection(ctx.getAIBuilderFactory().getTemplateRenderFactory().renderTemplate(
                     ctx, formSectionDef.getNameTemplate()));
             addChildren(ctx, formSection, formSectionDef);
             return formSection;
@@ -29,9 +29,9 @@ public class FormSectionCreator {
      */
     private void addChildren(AIBuilderContext ctx, FormSection formSection, FormSectionDef formSectionDef) {
         formSectionDef.getIcons().forEach(i -> formSection.getIcons().add(
-                ctx.getAiBuilderFactory().getAICreatorsFactory().getSectionIconCreator().createSectionIcon(i)));
+                ctx.getAIBuilderFactory().getAICreatorsFactory().getSectionIconCreator().createSectionIcon(i)));
         formSectionDef.getBlocks().forEach(b -> {
-            var block = ctx.getAiBuilderFactory().getAICreatorsFactory().getFormBlockCreator().createBlock(ctx, b);
+            var block = ctx.getAIBuilderFactory().getAICreatorsFactory().getFormBlockCreator().createBlock(ctx, b);
             if (block != null) {
                 formSection.getBlocks().add(block);
             }

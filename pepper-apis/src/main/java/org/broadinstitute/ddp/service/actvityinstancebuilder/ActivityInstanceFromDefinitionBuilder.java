@@ -199,8 +199,8 @@ public class ActivityInstanceFromDefinitionBuilder {
                 context.setFailedMessage("Cannot build ActivityInstance of type other than FORMS");
                 context.setFailedStep(BUILD_FORM_INSTANCE);
             } else {
-                context.getAiBuilderFactory().getAIContentRendererFactory().createRendererInitialContext(context);
-                var formInstance = context.getAiBuilderFactory().getAICreatorsFactory()
+                context.getAIBuilderFactory().getAIContentRendererFactory().createRendererInitialContext(context);
+                var formInstance = context.getAIBuilderFactory().getAICreatorsFactory()
                         .getFormInstanceCreator().createFormInstance(context);
                 context.setFormInstance(formInstance);
 
@@ -213,7 +213,7 @@ public class ActivityInstanceFromDefinitionBuilder {
     public ActivityInstanceFromDefinitionBuilder buildFormChildren() {
         if (checkStep(BUILD_FORM_INSTANCE, BUILD_FORM_CHILDREN)) {
 
-            context.getAiBuilderFactory().getAICreatorsFactory().getFormInstanceCreatorHelper().addChildren(context);
+            context.getAIBuilderFactory().getAICreatorsFactory().getFormInstanceCreatorHelper().addChildren(context);
 
             context.setBuildStep(BUILD_FORM_CHILDREN);
         }
@@ -223,9 +223,9 @@ public class ActivityInstanceFromDefinitionBuilder {
     public ActivityInstanceFromDefinitionBuilder renderFormTitles() {
         if (checkStep(BUILD_FORM_INSTANCE, RENDER_FORM_TITLES)) {
 
-            context.getAiBuilderFactory().getAIContentRendererFactory().addInstanceToRendererInitialContext(
+            context.getAIBuilderFactory().getAIContentRendererFactory().addInstanceToRendererInitialContext(
                     context, context.getFormInstance());
-            context.getAiBuilderFactory().getAICreatorsFactory().getFormInstanceCreatorHelper().renderTitleAndSubtitle(context);
+            context.getAIBuilderFactory().getAICreatorsFactory().getFormInstanceCreatorHelper().renderTitleAndSubtitle(context);
 
             context.setBuildStep(RENDER_FORM_TITLES);
         }
@@ -242,7 +242,7 @@ public class ActivityInstanceFromDefinitionBuilder {
                         + " disableTemplatesRendering");
                 context.setFailedStep(RENDER_CONTENT);
             } else {
-                context.getAiBuilderFactory().getAICreatorsFactory().getFormInstanceCreatorHelper().renderContent(
+                context.getAIBuilderFactory().getAICreatorsFactory().getFormInstanceCreatorHelper().renderContent(
                         context, context.getRenderedTemplates()::get);
 
                 context.setBuildStep(RENDER_CONTENT);
@@ -254,7 +254,7 @@ public class ActivityInstanceFromDefinitionBuilder {
     public ActivityInstanceFromDefinitionBuilder updateBlockStatuses() {
         if (checkStep(BUILD_FORM_CHILDREN, UPDATE_BLOCK_STATUSES)) {
 
-            context.getAiBuilderFactory().getAICreatorsFactory().getFormInstanceCreatorHelper().updateBlockStatuses(context);
+            context.getAIBuilderFactory().getAICreatorsFactory().getFormInstanceCreatorHelper().updateBlockStatuses(context);
 
             context.setBuildStep(UPDATE_BLOCK_STATUSES);
         }
