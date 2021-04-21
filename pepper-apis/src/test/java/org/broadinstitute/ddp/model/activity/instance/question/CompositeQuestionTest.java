@@ -31,7 +31,7 @@ public class CompositeQuestionTest {
         rendered.put(3L, "this is <em>additional item</em> label");
         rendered.put(4L, "<p>child prompt</p>");
 
-        TextQuestion child = new TextQuestion("child", 4, null, emptyList(), emptyList(), TextInputType.TEXT);
+        TextQuestion child = new TextQuestion("child", 4, null, null, emptyList(), emptyList(), TextInputType.TEXT);
         CompositeQuestion parent = new CompositeQuestion("parent", 1L, emptyList(), false, 2L, 3L, singletonList(child), emptyList());
         parent.applyRenderedTemplates(rendered::get, ContentStyle.STANDARD);
 
@@ -50,7 +50,7 @@ public class CompositeQuestionTest {
         rendered.put(3L, "this is <em>additional item</em> label");
         rendered.put(4L, "<p>child prompt</p>");
 
-        TextQuestion child = new TextQuestion("child", 4, null, emptyList(), emptyList(), TextInputType.TEXT);
+        TextQuestion child = new TextQuestion("child", 4, null, null, emptyList(), emptyList(), TextInputType.TEXT);
         CompositeQuestion parent = new CompositeQuestion("parent", 1L, emptyList(), false, 2L, 3L, singletonList(child), emptyList());
         parent.applyRenderedTemplates(rendered::get, ContentStyle.BASIC);
 
@@ -63,14 +63,14 @@ public class CompositeQuestionTest {
 
     @Test
     public void testIsComplete_childQuestionNotRequired() {
-        TextQuestion child = new TextQuestion("child", 4, null, emptyList(), new ArrayList<>(), TextInputType.TEXT);
+        TextQuestion child = new TextQuestion("child", 4, null, null, emptyList(), new ArrayList<>(), TextInputType.TEXT);
         CompositeQuestion parent = new CompositeQuestion("parent", 1L, emptyList(), false, 2L, 3L, singletonList(child), emptyList());
         assertTrue(parent.passesDeferredValidations());
     }
 
     @Test
     public void testIsComplete_childQuestionRequired_noAnswers() {
-        TextQuestion child = new TextQuestion("child", 4, null, emptyList(), new ArrayList<>(), TextInputType.TEXT);
+        TextQuestion child = new TextQuestion("child", 4, null, null, emptyList(), new ArrayList<>(), TextInputType.TEXT);
         child.getValidations().add(new RequiredRule<>("child required", null, false));
         CompositeQuestion parent = new CompositeQuestion("parent", 1L, emptyList(), false, 2L, 3L, singletonList(child), emptyList());
         assertFalse(parent.passesDeferredValidations());
@@ -78,9 +78,9 @@ public class CompositeQuestionTest {
 
     @Test
     public void testIsComplete_childQuestionRequired_noAnswerForChild() {
-        TextQuestion child1 = new TextQuestion("child1", 4, null, emptyList(), new ArrayList<>(), TextInputType.TEXT);
+        TextQuestion child1 = new TextQuestion("child1", 4, null, null, emptyList(), new ArrayList<>(), TextInputType.TEXT);
         child1.getValidations().add(new RequiredRule<>("child1 required", null, false));
-        TextQuestion child2 = new TextQuestion("child2", 4, null, emptyList(), new ArrayList<>(), TextInputType.TEXT);
+        TextQuestion child2 = new TextQuestion("child2", 4, null, null, emptyList(), new ArrayList<>(), TextInputType.TEXT);
         child2.getValidations().add(new RequiredRule<>("child2 required", null, false));
         CompositeQuestion parent = new CompositeQuestion("parent", 1L, emptyList(), false, 2L, 3L,
                 Arrays.asList(child1, child2), new ArrayList<>());
@@ -96,9 +96,9 @@ public class CompositeQuestionTest {
 
     @Test
     public void testIsComplete_childQuestionRequired_notAllRowsAnsweredForChild() {
-        TextQuestion child1 = new TextQuestion("child1", 4, null, emptyList(), new ArrayList<>(), TextInputType.TEXT);
+        TextQuestion child1 = new TextQuestion("child1", 4, null, null, emptyList(), new ArrayList<>(), TextInputType.TEXT);
         child1.getValidations().add(new RequiredRule<>("child1 required", null, false));
-        TextQuestion child2 = new TextQuestion("child2", 4, null, emptyList(), new ArrayList<>(), TextInputType.TEXT);
+        TextQuestion child2 = new TextQuestion("child2", 4, null, null, emptyList(), new ArrayList<>(), TextInputType.TEXT);
         child2.getValidations().add(new RequiredRule<>("child2 required", null, false));
         CompositeQuestion parent = new CompositeQuestion("parent", 1L, emptyList(), false, 2L, 3L,
                 Arrays.asList(child1, child2), new ArrayList<>());
@@ -117,9 +117,9 @@ public class CompositeQuestionTest {
 
     @Test
     public void testIsComplete_childQuestionRequired_allRowsAnswered() {
-        TextQuestion child1 = new TextQuestion("child1", 4, null, emptyList(), new ArrayList<>(), TextInputType.TEXT);
+        TextQuestion child1 = new TextQuestion("child1", 4, null, null, emptyList(), new ArrayList<>(), TextInputType.TEXT);
         child1.getValidations().add(new RequiredRule<>("child1 required", null, false));
-        TextQuestion child2 = new TextQuestion("child2", 4, null, emptyList(), new ArrayList<>(), TextInputType.TEXT);
+        TextQuestion child2 = new TextQuestion("child2", 4, null, null, emptyList(), new ArrayList<>(), TextInputType.TEXT);
         child2.getValidations().add(new RequiredRule<>("child2 required", null, false));
         CompositeQuestion parent = new CompositeQuestion("parent", 1L, emptyList(), false, 2L, 3L,
                 Arrays.asList(child1, child2), new ArrayList<>());
@@ -140,9 +140,9 @@ public class CompositeQuestionTest {
 
     @Test
     public void testIsComplete_onlyRequiredChildIsChecked() {
-        TextQuestion child1 = new TextQuestion("child1", 4, null, emptyList(), new ArrayList<>(), TextInputType.TEXT);
+        TextQuestion child1 = new TextQuestion("child1", 4, null, null, emptyList(), new ArrayList<>(), TextInputType.TEXT);
         child1.getValidations().add(new RequiredRule<>("child1 required", null, false));
-        TextQuestion child2 = new TextQuestion("child2", 4, null, emptyList(), new ArrayList<>(), TextInputType.TEXT);
+        TextQuestion child2 = new TextQuestion("child2", 4, null, null, emptyList(), new ArrayList<>(), TextInputType.TEXT);
         CompositeQuestion parent = new CompositeQuestion("parent", 1L, emptyList(), false, 2L, 3L,
                 Arrays.asList(child1, child2), new ArrayList<>());
 
@@ -158,7 +158,7 @@ public class CompositeQuestionTest {
 
     @Test
     public void testIsComplete_allowSaveIsChecked() {
-        TextQuestion child1 = new TextQuestion("child1", 4, null, emptyList(), new ArrayList<>(), TextInputType.TEXT);
+        TextQuestion child1 = new TextQuestion("child1", 4, null, null, emptyList(), new ArrayList<>(), TextInputType.TEXT);
         child1.getValidations().add(LengthRule.of("length", null, true, 100, null));
         CompositeQuestion parent = new CompositeQuestion("parent", 1L, emptyList(), false, 2L, 3L,
                 singletonList(child1), new ArrayList<>());

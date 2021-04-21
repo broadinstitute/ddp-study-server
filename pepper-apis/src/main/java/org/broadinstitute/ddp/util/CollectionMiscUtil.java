@@ -2,8 +2,14 @@ package org.broadinstitute.ddp.util;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
+
+/**
+ * General-purpose utility methods used to work with collections
+ */
 public class CollectionMiscUtil {
 
     /**
@@ -25,5 +31,32 @@ public class CollectionMiscUtil {
             });
         }
         return tgtElemList;
+    }
+
+    /**
+     * Add specified values to a specified set: only non-null values are added
+     * @param valuesSet set where to add values
+     * @param values values list
+     */
+    public static <T> Set<T> addNonNullsToSet(Set<T> valuesSet, T... values) {
+        for (T value : values) {
+            if (value != null) {
+                valuesSet.add(value);
+            }
+        }
+        return valuesSet;
+    }
+
+    /**
+     * Consume non-null values (from a specified list) by a specified consumer
+     * @param consumer consumer which consumes values
+     * @param values values list
+     */
+    public static <T> void consumeNonNulls(Consumer<T> consumer, T... values) {
+        for (T value : values) {
+            if (value != null) {
+                consumer.accept(value);
+            }
+        }
     }
 }

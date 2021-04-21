@@ -197,6 +197,7 @@ public class QuestionCreatorHelper {
                 questionDef.getStableId(),
                 addAndRenderTemplate(ctx, questionDef.getPromptTemplate()),
                 addAndRenderTemplate(ctx, questionDef.getPlaceholderTemplate()),
+                addAndRenderTemplate(ctx, questionDef.getConfirmPlaceholderTemplate()),
                 questionDef.isRestricted(),
                 questionDef.isDeprecated(),
                 isReadOnly(questionDef, ctx.getFormResponse().getLatestStatus().getType(), ctx.getPreviousInstanceId()),

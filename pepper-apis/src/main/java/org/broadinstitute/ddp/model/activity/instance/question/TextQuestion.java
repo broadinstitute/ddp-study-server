@@ -1,8 +1,10 @@
 package org.broadinstitute.ddp.model.activity.instance.question;
 
+import static org.broadinstitute.ddp.util.CollectionMiscUtil.consumeNonNulls;
+import static org.broadinstitute.ddp.util.TemplateRenderUtil.applyRenderedTemplate;
+
 import java.lang.reflect.Type;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.function.Consumer;
 import javax.validation.constraints.NotNull;
@@ -15,7 +17,6 @@ import com.google.gson.JsonSerializer;
 import com.google.gson.annotations.SerializedName;
 import org.apache.commons.collections4.CollectionUtils;
 import org.broadinstitute.ddp.content.ContentStyle;
-import org.broadinstitute.ddp.content.HtmlConverter;
 import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
 import org.broadinstitute.ddp.model.activity.instance.validation.Rule;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
@@ -36,6 +37,9 @@ public class TextQuestion extends Question<TextAnswer> {
     @SerializedName("placeholderText")
     private String placeholderText;
 
+    @SerializedName("confirmPlaceholderText")
+    private String confirmPlaceholderText;
+
     @SerializedName("suggestions")
     private List<String> suggestions;
 
@@ -49,10 +53,11 @@ public class TextQuestion extends Question<TextAnswer> {
     private String mismatchMessage;
 
     private transient Long placeholderTemplateId;
+    private transient Long confirmPlaceholderTemplateId;
     private transient Long confirmPromptTemplateId;
     private transient Long mismatchMessageTemplateId;
 
-    public TextQuestion(String stableId, long promptTemplateId, Long placeholderTemplateId,
+    public TextQuestion(String stableId, long promptTemplateId, Long placeholderTemplateId, Long confirmPlaceholderTemplateId,
                         boolean isRestricted, boolean isDeprecated, Boolean readonly, Long tooltipTemplateId,
                         Long additionalInfoHeaderTemplateId, Long additionalInfoFooterTemplateId, List<TextAnswer> answers,
                         List<Rule<TextAnswer>> validations, TextInputType inputType, SuggestionType suggestionType,
@@ -69,9 +74,10 @@ public class TextQuestion extends Question<TextAnswer> {
                 additionalInfoFooterTemplateId,
                 answers,
                 validations);
-        
+
         this.inputType = MiscUtil.checkNonNull(inputType, "inputType");
         this.placeholderTemplateId = placeholderTemplateId;
+        this.confirmPlaceholderTemplateId = confirmPlaceholderTemplateId;
         this.confirmEntry = confirmEntry;
         this.confirmPromptTemplateId = confirmPromptTemplateId;
         this.mismatchMessageTemplateId = mismatchMessageTemplateId;
@@ -82,34 +88,12 @@ public class TextQuestion extends Question<TextAnswer> {
         }
     }
 
-    public TextQuestion(String stableId, long promptTemplateId, Long placeholderTemplateId, List<TextAnswer> answers,
-                        List<Rule<TextAnswer>> validations, TextInputType inputType, SuggestionType suggestionType,
-                        List<String> suggestions, boolean confirmEntry,
-                        Long confirmPromptTemplateId, Long mismatchMessageTemplateId) {
-        this(stableId,
-                promptTemplateId,
-                placeholderTemplateId,
-                false,
-                false,
-                false,
-                null,
-                null,
-                null,
-                answers,
-                validations,
-                inputType,
-                suggestionType,
-                suggestions,
-                confirmEntry,
-                confirmPromptTemplateId,
-                mismatchMessageTemplateId);
-    }
-
-    public TextQuestion(String stableId, long promptTemplateId, Long placeholderTemplateId,
+    public TextQuestion(String stableId, long promptTemplateId, Long placeholderTemplateId, Long confirmPlaceholderTemplateId,
                         List<TextAnswer> answers, List<Rule<TextAnswer>> validations, TextInputType inputType) {
         this(stableId,
                 promptTemplateId,
                 placeholderTemplateId,
+                confirmPlaceholderTemplateId,
                 false,
                 false,
                 false,
@@ -130,53 +114,20 @@ public class TextQuestion extends Question<TextAnswer> {
     public void registerTemplateIds(Consumer<Long> registry) {
         super.registerTemplateIds(registry);
         // only generate the placeholder template id if it's present
-        if (placeholderTemplateId != null) {
-            registry.accept(placeholderTemplateId);
-        }
-        if (confirmPromptTemplateId != null) {
-            registry.accept(confirmPromptTemplateId);
-        }
-        if (mismatchMessageTemplateId != null) {
-            registry.accept(mismatchMessageTemplateId);
-        }
+        consumeNonNulls(registry,
+                placeholderTemplateId,
+                confirmPlaceholderTemplateId,
+                confirmPromptTemplateId,
+                mismatchMessageTemplateId);
     }
 
     @Override
     public void applyRenderedTemplates(Provider<String> rendered, ContentStyle style) {
         super.applyRenderedTemplates(rendered, style);
-        if (placeholderTemplateId != null) {
-            placeholderText = rendered.get(placeholderTemplateId);
-            if (placeholderText == null) {
-                throw new NoSuchElementException("No rendered template found for placeholder with id "
-                        + placeholderTemplateId);
-            }
-            if (style == ContentStyle.BASIC) {
-                placeholderText = HtmlConverter.getPlainText(placeholderText);
-            }
-        } // else a no-op since placeholder is optional
-
-        if (confirmPromptTemplateId != null) {
-            confirmPrompt = rendered.get(confirmPromptTemplateId);
-            if (confirmPrompt == null) {
-                throw new NoSuchElementException("No rendered template found for confirm prompt with id "
-                        + confirmPromptTemplateId);
-            }
-            if (style == ContentStyle.BASIC) {
-                confirmPrompt = HtmlConverter.getPlainText(confirmPrompt);
-            }
-        }
-
-        if (mismatchMessageTemplateId != null) {
-            mismatchMessage = rendered.get(mismatchMessageTemplateId);
-            if (mismatchMessage == null) {
-                throw new NoSuchElementException("No rendered template found for mismatch message with id "
-                        + mismatchMessageTemplateId);
-            }
-            if (style == ContentStyle.BASIC) {
-                mismatchMessage = HtmlConverter.getPlainText(mismatchMessage);
-            }
-        }
-
+        placeholderText = applyRenderedTemplate(placeholderTemplateId, placeholderText, rendered, style);
+        confirmPlaceholderText = applyRenderedTemplate(confirmPlaceholderTemplateId, confirmPlaceholderText, rendered, style);
+        confirmPrompt = applyRenderedTemplate(confirmPromptTemplateId, confirmPrompt, rendered, style);
+        mismatchMessage = applyRenderedTemplate(mismatchMessageTemplateId, mismatchMessage, rendered, style);
     }
 
     public TextInputType getInputType() {

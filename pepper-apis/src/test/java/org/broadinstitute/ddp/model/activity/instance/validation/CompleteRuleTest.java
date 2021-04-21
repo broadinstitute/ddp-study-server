@@ -63,7 +63,7 @@ public class CompleteRuleTest {
         assertTrue(ruleBool.validate(boolQ, new BoolAnswer(1L, "q", "a", true)));
 
         CompleteRule<TextAnswer> ruleText = new CompleteRule<>("msg", null, false);
-        TextQuestion textQ = new TextQuestion("sid", 1L, 2L, emptyList(), emptyList(), TextInputType.TEXT);
+        TextQuestion textQ = new TextQuestion("sid", 1L, 2L, 3L, emptyList(), emptyList(), TextInputType.TEXT);
         assertFalse(ruleText.validate(textQ, null));
         assertTrue(ruleText.validate(textQ, new TextAnswer(1L, "q", "a", null)));
         assertTrue(ruleText.validate(textQ, new TextAnswer(1L, "q", "a", "text")));

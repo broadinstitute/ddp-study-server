@@ -67,7 +67,7 @@ public class RequiredRuleTest {
 
     @Test
     public void testValidate_textAnswer() {
-        TextQuestion unused = new TextQuestion("sid", 1L, 2L, emptyList(), emptyList(), TextInputType.TEXT);
+        TextQuestion unused = new TextQuestion("sid", 1L, 2L, 3L, emptyList(), emptyList(), TextInputType.TEXT);
         RequiredRule<TextAnswer> rule = new RequiredRule<>("msg", null, false);
         assertFalse(rule.validate(unused, null));
         assertFalse(rule.validate(unused, new TextAnswer(1L, "q", "a", null)));
