@@ -1,11 +1,15 @@
 package org.broadinstitute.ddp.service;
 
+import static java.util.stream.Collectors.toList;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
+import java.util.function.Function;
 
 import org.broadinstitute.ddp.TxnAwareBaseTest;
 import org.broadinstitute.ddp.content.I18nContentRenderer;
@@ -126,6 +130,56 @@ public class ActivityInstanceServiceTestAbstract extends TxnAwareBaseTest {
     protected FormActivityDef insertNewActivityWithStudyDefaultLang(Handle handle, String userGuid, String studyGuid) {
         FormActivityDef form = FormActivityDef.generalFormBuilder("ACT" + Instant.now().toEpochMilli(), "v1", studyGuid)
                 .addName(new Translation("fr", "activité de test"))
+                .build();
+        long userId = handle.attach(JdbiUser.class).getUserIdByGuid(userGuid);
+        handle.attach(ActivityDao.class).insertActivity(form, RevisionMetadata.now(userId, "add test activity"));
+        assertNotNull(form.getActivityId());
+        return form;
+    }
+
+    protected FormActivityDef insertDummyActivity(Handle handle, String userGuid, String studyGuid) {
+        Template template = Template.html("$contact_your_organization");
+        TemplateVariable templateVariable = TemplateVariable.single(
+                "contact_your_organization",
+                "en",
+                "Please contact your organization for details"
+        );
+        template.addVariable(templateVariable);
+        FormActivityDef form = FormActivityDef.generalFormBuilder("ACT" + Instant.now().toEpochMilli(), "v1", studyGuid)
+                .addName(new Translation("en", "activity name"))
+                .addName(new Translation("ru", "activity name"))
+                .addTitle(new Translation("en", "test activity"))
+                .addTitle(new Translation("ru", "тестовая деятельность"))
+                .addSubtitle(new Translation("en", "test subtitle"))
+                .addSubtitle(new Translation("ru", "тестовый субтитр"))
+                .setReadonlyHintTemplate(template)
+                .build();
+        long userId = handle.attach(JdbiUser.class).getUserIdByGuid(userGuid);
+        handle.attach(ActivityDao.class).insertActivity(form, RevisionMetadata.now(userId, "add test activity"));
+        assertNotNull(form.getActivityId());
+        return form;
+    }
+
+    protected void testTranslation(
+            FormActivityDef form,
+            Function<FormActivityDef,
+                    List<Translation>> formDefListMethod,
+            String expectedValue,
+            String languageCode
+    ) {
+        List<Translation> translations =
+                formDefListMethod.apply(form).stream().filter(st -> st.getLanguageCode().equals(languageCode)).collect(toList());
+        assertEquals(1, translations.size());
+        assertNotNull(expectedValue);
+        assertEquals(translations.get(0).getText(), expectedValue);
+    }
+
+    protected FormActivityDef insertDummyActivityWithoutSubtitle(Handle handle, String userGuid, String studyGuid) {
+        FormActivityDef form = FormActivityDef.generalFormBuilder("ACT" + Instant.now().toEpochMilli(), "v1", studyGuid)
+                .addName(new Translation("en", "activity name"))
+                .addName(new Translation("ru", "activity name"))
+                .addTitle(new Translation("en", "test activity"))
+                .addTitle(new Translation("ru", "тестовая деятельность"))
                 .build();
         long userId = handle.attach(JdbiUser.class).getUserIdByGuid(userGuid);
         handle.attach(ActivityDao.class).insertActivity(form, RevisionMetadata.now(userId, "add test activity"));
