@@ -37,7 +37,7 @@ public class AIBuilderTest {
 
         assertEquals(12, ctx.getPassedBuildSteps().size());
 
-        assertEquals(3, ctx.getFormInstance().getBodySections().get(0).getBlocks().size());
+        assertEquals(4, ctx.getFormInstance().getBodySections().get(0).getBlocks().size());
 
         assertEquals(FORM_TITLE, ctx.getFormInstance().getTitle());
         assertEquals(FORM_SUBTITLE, ctx.getFormInstance().getSubtitle());
@@ -80,7 +80,7 @@ public class AIBuilderTest {
     public void testAIBuilderExcludedDeprecatedQuestion() {
         var ctx = buildActivityInstance(createFormActivityDefWithOneDeprecatedQuestion());
 
-        assertEquals(2, ctx.getFormInstance().getBodySections().get(0).getBlocks().size());
+        assertEquals(3, ctx.getFormInstance().getBodySections().get(0).getBlocks().size());
     }
 
     @Test

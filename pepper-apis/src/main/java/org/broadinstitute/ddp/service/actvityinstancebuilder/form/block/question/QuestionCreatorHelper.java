@@ -1,4 +1,4 @@
-package org.broadinstitute.ddp.service.actvityinstancebuilder.block.question;
+package org.broadinstitute.ddp.service.actvityinstancebuilder.form.block.question;
 
 import static org.broadinstitute.ddp.util.QuestionUtil.isReadOnly;
 

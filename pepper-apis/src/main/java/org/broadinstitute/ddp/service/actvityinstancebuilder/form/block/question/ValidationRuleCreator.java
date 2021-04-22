@@ -1,4 +1,4 @@
-package org.broadinstitute.ddp.service.actvityinstancebuilder.block.question;
+package org.broadinstitute.ddp.service.actvityinstancebuilder.form.block.question;
 
 import java.time.LocalDate;
 import java.time.ZoneOffset;
@@ -157,7 +157,8 @@ public class ValidationRuleCreator {
                 ruleDef.getRuleType(),
                 ruleDef.getHintTemplateId(),
                 ctx.getLanguageDto().getId(),
-                ctx.getFormResponse().getCreatedAt());
+                ctx.getFormResponse().getCreatedAt(),
+                ctx.getAIBuilderFactory().getValidationRuleService()::detectValidationRuleMessage);
     }
 
     private String getHintTitle(AIBuilderContext ctx, RuleDef ruleDef) {

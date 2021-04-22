@@ -1,16 +1,16 @@
-package org.broadinstitute.ddp.service.actvityinstancebuilder.factory;
+package org.broadinstitute.ddp.service.actvityinstancebuilder;
 
 import org.broadinstitute.ddp.model.activity.instance.ActivityInstance;
-import org.broadinstitute.ddp.service.actvityinstancebuilder.block.FormBlockCreator;
-import org.broadinstitute.ddp.service.actvityinstancebuilder.block.FormBlockCreatorHelper;
-import org.broadinstitute.ddp.service.actvityinstancebuilder.block.question.PicklistCreatorHelper;
-import org.broadinstitute.ddp.service.actvityinstancebuilder.block.question.QuestionCreator;
-import org.broadinstitute.ddp.service.actvityinstancebuilder.block.question.QuestionCreatorHelper;
-import org.broadinstitute.ddp.service.actvityinstancebuilder.block.question.ValidationRuleCreator;
 import org.broadinstitute.ddp.service.actvityinstancebuilder.form.FormInstanceCreator;
 import org.broadinstitute.ddp.service.actvityinstancebuilder.form.FormInstanceCreatorHelper;
 import org.broadinstitute.ddp.service.actvityinstancebuilder.form.FormSectionCreator;
 import org.broadinstitute.ddp.service.actvityinstancebuilder.form.SectionIconCreator;
+import org.broadinstitute.ddp.service.actvityinstancebuilder.form.block.FormBlockCreator;
+import org.broadinstitute.ddp.service.actvityinstancebuilder.form.block.FormBlockCreatorHelper;
+import org.broadinstitute.ddp.service.actvityinstancebuilder.form.block.question.PicklistCreatorHelper;
+import org.broadinstitute.ddp.service.actvityinstancebuilder.form.block.question.QuestionCreator;
+import org.broadinstitute.ddp.service.actvityinstancebuilder.form.block.question.QuestionCreatorHelper;
+import org.broadinstitute.ddp.service.actvityinstancebuilder.form.block.question.ValidationRuleCreator;
 
 /**
  * Creates instances of Creator-classes providing {@link ActivityInstance} building.

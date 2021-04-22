@@ -16,7 +16,7 @@ import org.broadinstitute.ddp.model.activity.instance.FormResponse;
 import org.broadinstitute.ddp.pex.PexInterpreter;
 import org.broadinstitute.ddp.pex.TreeWalkInterpreter;
 import org.broadinstitute.ddp.service.actvityinstancebuilder.AIBuilderFactory;
-import org.broadinstitute.ddp.service.actvityinstancebuilder.factory.AICreatorsFactory;
+import org.broadinstitute.ddp.service.actvityinstancebuilder.AICreatorsFactory;
 import org.jdbi.v3.core.Handle;
 
 /**

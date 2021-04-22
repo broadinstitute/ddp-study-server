@@ -2,6 +2,8 @@ package org.broadinstitute.ddp.service.actvityinstancebuilder;
 
 import static org.broadinstitute.ddp.model.activity.types.InstanceStatusType.COMPLETE;
 
+import java.time.Instant;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -16,13 +18,33 @@ import org.broadinstitute.ddp.model.activity.definition.i18n.Translation;
 import org.broadinstitute.ddp.model.activity.definition.question.BoolQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.TextQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
+import org.broadinstitute.ddp.model.activity.definition.validation.RequiredRuleDef;
+import org.broadinstitute.ddp.model.activity.instance.ContentBlock;
+import org.broadinstitute.ddp.model.activity.instance.FormInstance;
 import org.broadinstitute.ddp.model.activity.instance.FormResponse;
+import org.broadinstitute.ddp.model.activity.instance.FormSection;
+import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
 import org.broadinstitute.ddp.model.activity.types.FormType;
 import org.broadinstitute.ddp.model.activity.types.ListStyleHint;
 import org.broadinstitute.ddp.model.activity.types.TemplateType;
 import org.broadinstitute.ddp.model.activity.types.TextInputType;
 
-public class FormInstanceTestUtil {
+public class AIBuilderTestUtil {
+
+    public static String CONTROL_BLOCK_GUID = "CONTROL";
+    public static String TOGGLED_BLOC_GUID = "TOGGLED";
+
+    public static final long Q_ID_1 = 1L;
+    public static final long Q_ID_2 = 2L;
+    public static final long Q_ID_3 = 3L;
+
+    public static final String Q_STABLE_ID_1 = "q_st_1";
+    public static final String Q_STABLE_ID_2 = "q_st_2";
+    public static final String Q_STABLE_ID_3 = "q_st_3";
+
+    public static final String ANSWER_1_TEXT = "title-answer";
+    public static final String ANSWER_3_TEXT = "subTitle-answer";
+
 
     public static FormSectionDef createFormSectionDef(String sectionCode) {
         return new FormSectionDef(sectionCode, Collections.emptyList());
@@ -40,8 +62,8 @@ public class FormInstanceTestUtil {
     }
 
     public static QuestionBlockDef createQuestionBoolBlockDef(long questionId, String stableId,
-                                            boolean deprecated,
-                                          long textId, String text, long yesId, String yesText, long noId, String noText) {
+                            boolean deprecated, long textId, String text, long yesId, String yesText,
+                            long noId, String noText, boolean required) {
         QuestionBlockDef questionBlockDef = new QuestionBlockDef(BoolQuestionDef
                 .builder(stableId,
                         new Template(textId, TemplateType.TEXT, null, text, 1),
@@ -50,11 +72,24 @@ public class FormInstanceTestUtil {
                 .setDeprecated(deprecated)
                 .setQuestionId(questionId)
                 .build());
+        if (required) {
+            long templateId = 105L;
+            RequiredRuleDef ruleDef = new RequiredRuleDef(
+                    new Template(templateId, TemplateType.TEXT, null, "Required answer", 1));
+            ruleDef.setHintTemplateId(templateId);
+            questionBlockDef.getQuestion().getValidations().add(ruleDef);
+
+        }
         return questionBlockDef;
     }
 
-    public static ContentBlockDef createContentBlockDef(long templateId, String templateCode, String text) {
-        return new ContentBlockDef(new Template(templateId, TemplateType.TEXT, templateCode, text, 1));
+    public static ContentBlockDef createContentBlockDef(
+            long titleTemplateId, String titleTemplateCode, String title,
+            long bodyTemplateId, String bodyTemplateCode, String bodyText) {
+        return new ContentBlockDef(
+            new Template(titleTemplateId, TemplateType.TEXT, titleTemplateCode, title, 1),
+            new Template(bodyTemplateId, TemplateType.TEXT, bodyTemplateCode, bodyText, 1)
+        );
     }
 
     public static FormSectionDef createSectionWithConditionalBlockDef(
@@ -130,7 +165,7 @@ public class FormInstanceTestUtil {
                 null,
                 new Template(3L, TemplateType.TEXT, "s1b1", readOnlyHint, 1),
                 intro,
-                List.of(bodySection),
+                bodySection == null ? Collections.emptyList() : List.of(bodySection),
                 null,
                 null,
                 null,
@@ -138,7 +173,7 @@ public class FormInstanceTestUtil {
     }
 
     public static FormResponse createFormResponse(String instanceGuid, long createdAt, long updatedAt) {
-        return new FormResponse(1L, instanceGuid, 1L, false,
+        FormResponse formResponse = new FormResponse(1L, instanceGuid, 1L, false,
                 createdAt,
                 updatedAt,
                 null,
@@ -149,5 +184,33 @@ public class FormInstanceTestUtil {
                 false,
                 0,
                 new ActivityInstanceStatusDto(1L, 1L, 1L, updatedAt, COMPLETE));
+        formResponse.putAnswer(new TextAnswer(Q_ID_1, Q_STABLE_ID_1, "guid1", ANSWER_1_TEXT));
+        formResponse.putAnswer(new TextAnswer(Q_ID_3, Q_STABLE_ID_3, "guid3", ANSWER_3_TEXT));
+        return formResponse;
     }
+
+    public static FormInstance createTestInstance() {
+        ContentBlock controlBlock = new ContentBlock(1);
+        controlBlock.setGuid(CONTROL_BLOCK_GUID);
+
+        ContentBlock toggledBlock = new ContentBlock(2);
+        toggledBlock.setGuid(TOGGLED_BLOC_GUID);
+        toggledBlock.setShownExpr("true");
+
+        FormSection section = new FormSection(Arrays.asList(controlBlock, toggledBlock));
+
+        FormInstance form = createEmptyTestInstance();
+        form.addBodySections(Collections.singletonList(section));
+
+        return form;
+    }
+
+    public static FormInstance createEmptyTestInstance() {
+        return new FormInstance(
+                1L, 1L, 1L, "SOME_CODE", FormType.GENERAL, "SOME_GUID", "name", "subtitle", "CREATED", false,
+                ListStyleHint.NUMBER, null, null, null, Instant.now().toEpochMilli(), null, null, null,
+                false, false, false, false, 0
+        );
+    }
+
 }

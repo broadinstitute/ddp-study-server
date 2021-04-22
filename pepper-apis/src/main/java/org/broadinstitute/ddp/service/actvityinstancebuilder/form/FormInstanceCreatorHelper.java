@@ -18,9 +18,11 @@ public class FormInstanceCreatorHelper {
         var formSectionCreator = ctx.getAIBuilderFactory().getAICreatorsFactory().getFormSectionCreator();
         ctx.getFormInstance().setIntroduction(formSectionCreator.createSection(ctx, formActivityDef.getIntroduction()));
         ctx.getFormInstance().setClosing(formSectionCreator.createSection(ctx, formActivityDef.getClosing()));
-        formActivityDef.getSections().forEach(s -> {
-            ctx.getFormInstance().getBodySections().add(formSectionCreator.createSection(ctx, s));
-        });
+        if (formActivityDef.getSections() != null) {
+            formActivityDef.getSections().forEach(s -> {
+                ctx.getFormInstance().getBodySections().add(formSectionCreator.createSection(ctx, s));
+            });
+        }
     }
 
     public void renderTitleAndSubtitle(AIBuilderContext ctx) {
@@ -31,8 +33,9 @@ public class FormInstanceCreatorHelper {
     }
 
     public void updateBlockStatuses(AIBuilderContext ctx) {
-        ctx.getFormInstance().updateBlockStatuses(
+        ctx.getAIBuilderFactory().getUpdateBlockStatusFactory().updateBlockStatuses(
                 ctx.getHandle(),
+                ctx.getFormInstance(),
                 ctx.getInterpreter(),
                 ctx.getUserGuid(),
                 ctx.getOperatorGuid(),

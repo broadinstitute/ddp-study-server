@@ -17,7 +17,6 @@ import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiActivityValidation;
 import org.broadinstitute.ddp.db.dao.JdbiActivityVersion;
 import org.broadinstitute.ddp.db.dao.JdbiFormTypeActivityInstanceStatusType;
-import org.broadinstitute.ddp.db.dao.ValidationDao;
 import org.broadinstitute.ddp.db.dto.ActivityDto;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.db.dto.ActivityValidationDto;
@@ -37,6 +36,7 @@ import org.broadinstitute.ddp.model.activity.types.QuestionType;
 import org.broadinstitute.ddp.model.activity.types.RuleType;
 import org.broadinstitute.ddp.pex.PexException;
 import org.broadinstitute.ddp.pex.TreeWalkInterpreter;
+import org.broadinstitute.ddp.service.actvityinstancebuilder.service.ValidationRuleService;
 import org.jdbi.v3.core.Handle;
 
 /**
@@ -191,25 +191,11 @@ public class ActivityDefStore {
     }
 
     public String findValidationRuleMessage(
-            Handle handle, RuleType ruleType, Long hintTemplateId, long langCodeId, long timestamp) {
+            Handle handle, RuleType ruleType, Long hintTemplateId, long langCodeId, long timestamp,
+            ValidationRuleService.ValidationRuleMessageDetector validationRuleMessageDetector) {
         synchronized (lockVar) {
             return validationRuleMessageMap.computeIfAbsent(ruleType.name() + langCodeId, message ->
-                    detectValidationRuleMessage(handle, ruleType, hintTemplateId, langCodeId, timestamp));
-        }
-    }
-
-    private String detectValidationRuleMessage(
-            Handle handle, RuleType ruleType, Long hintTemplateId, long langCodeId, long timestamp) {
-        String correctionHint = null;
-        if (hintTemplateId != null) {
-            correctionHint = i18nContentRenderer.renderContent(handle, hintTemplateId, langCodeId, timestamp);
-        }
-        if (correctionHint != null) {
-            return correctionHint;
-        } else {
-            var validationDao = handle.attach(ValidationDao.class);
-            return validationDao.getJdbiI18nValidationMsgTrans().getValidationMessage(
-                    validationDao.getJdbiValidationType().getTypeId(ruleType), langCodeId);
+                    validationRuleMessageDetector.detectValidationRuleMessage(handle, ruleType, hintTemplateId, langCodeId, timestamp));
         }
     }
 

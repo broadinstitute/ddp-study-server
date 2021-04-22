@@ -1,4 +1,4 @@
-package org.broadinstitute.ddp.service.actvityinstancebuilder.factory;
+package org.broadinstitute.ddp.service.actvityinstancebuilder.service;
 
 import java.time.LocalDate;
 import java.util.HashMap;
@@ -17,7 +17,7 @@ import org.broadinstitute.ddp.service.actvityinstancebuilder.context.AIBuilderCo
  * Provides creation of renderer context (for a template engine) and populates it with
  * data which needs during templates rendering.
  */
-public class AIContentRendererFactory {
+public class AIContentRendererService {
 
     /**
      * Creates renderer initial context and popualtes it with common data.

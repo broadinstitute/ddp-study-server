@@ -25,16 +25,15 @@ import org.broadinstitute.ddp.model.activity.definition.FormSectionDef;
 import org.broadinstitute.ddp.model.activity.instance.ActivityInstance;
 import org.broadinstitute.ddp.model.activity.instance.FormInstance;
 import org.broadinstitute.ddp.model.activity.instance.FormResponse;
-import org.broadinstitute.ddp.service.actvityinstancebuilder.block.FormBlockCreator;
-import org.broadinstitute.ddp.service.actvityinstancebuilder.block.question.QuestionCreator;
-import org.broadinstitute.ddp.service.actvityinstancebuilder.block.question.ValidationRuleCreator;
 import org.broadinstitute.ddp.service.actvityinstancebuilder.context.AIBuildStep;
 import org.broadinstitute.ddp.service.actvityinstancebuilder.context.AIBuilderContext;
 import org.broadinstitute.ddp.service.actvityinstancebuilder.context.AIBuilderParams;
-import org.broadinstitute.ddp.service.actvityinstancebuilder.factory.AICreatorsFactory;
 import org.broadinstitute.ddp.service.actvityinstancebuilder.form.FormInstanceCreator;
 import org.broadinstitute.ddp.service.actvityinstancebuilder.form.FormSectionCreator;
 import org.broadinstitute.ddp.service.actvityinstancebuilder.form.SectionIconCreator;
+import org.broadinstitute.ddp.service.actvityinstancebuilder.form.block.FormBlockCreator;
+import org.broadinstitute.ddp.service.actvityinstancebuilder.form.block.question.QuestionCreator;
+import org.broadinstitute.ddp.service.actvityinstancebuilder.form.block.question.ValidationRuleCreator;
 import org.broadinstitute.ddp.util.ActivityInstanceUtil;
 import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
@@ -45,11 +44,15 @@ import org.slf4j.LoggerFactory;
  * Instead of building it by fetching all data from DB
  * it gets study data from {@link ActivityDefStore} and fetches instance data
  * from DB: answers, validation messages.. Btw, validation messages saved then to
- * {@link ActivityDefStore} cache.
+ * {@link ActivityDefStore} cache for further reusing.
+ *
+ *<p>NOTE: it needs to use {@link AIBuilderFactory#createAIBuilder(AIBuilderFactory, Handle, AIBuilderParams)}
+ * or {@link AIBuilderFactory#createAIBuilder(Handle, AIBuilderParams)} in order to create an
+ * instance of {@link ActivityInstanceFromDefinitionBuilder}.
  *
  * <p><b>AI builder usage example:</b>
  * <pre>
- *     var activityInstance = new ActivityInstanceFromDefinitionBuilder(handle,
+ *     var activityInstance = AIBuilderFactory.createAIBuilder(handle,
  *        createParams(userGuid,studyGuid,instanceGuid).setStyle(style))
  *        .checkParams()
  *          .readFormInstanceData()
@@ -264,7 +267,7 @@ public class ActivityInstanceFromDefinitionBuilder {
     public ActivityInstanceFromDefinitionBuilder setDisplayNumbers() {
         if (checkStep(BUILD_FORM_CHILDREN, SET_DISPLAY_NUMBERS)) {
 
-            context.getFormInstance().setDisplayNumbers();
+            context.getAIBuilderFactory().getSetDisplayNumbersFactory().setDisplayNumbers(context.getFormInstance());
 
             context.setBuildStep(SET_DISPLAY_NUMBERS);
         }
