@@ -16,7 +16,7 @@ public class PicklistCreatorHelper {
     public PicklistGroup createPicklistGroup(AIBuilderContext ctx, PicklistGroupDef picklistGroupDef) {
         return new PicklistGroup(
                 picklistGroupDef.getStableId(),
-                ctx.getAIBuilderFactory().getTemplateRenderFactory().renderTemplate(
+                ctx.getAIBuilderFactory().getTemplateRenderHelper().renderTemplate(
                         ctx, picklistGroupDef.getNameTemplate())
         );
     }
@@ -30,15 +30,15 @@ public class PicklistCreatorHelper {
                                                List<PicklistGroupDef> picklistGroupDefs, boolean isNested) {
         PicklistOption picklistOption = new PicklistOption(
                 picklistOptionDef.getStableId(),
-                ctx.getAIBuilderFactory().getTemplateRenderFactory().renderTemplate(
+                ctx.getAIBuilderFactory().getTemplateRenderHelper().renderTemplate(
                         ctx, picklistOptionDef.getOptionLabelTemplate()),
-                ctx.getAIBuilderFactory().getTemplateRenderFactory().renderTemplate(
+                ctx.getAIBuilderFactory().getTemplateRenderHelper().renderTemplate(
                         ctx, picklistOptionDef.getTooltipTemplate()),
-                ctx.getAIBuilderFactory().getTemplateRenderFactory().renderTemplate(
+                ctx.getAIBuilderFactory().getTemplateRenderHelper().renderTemplate(
                         ctx, picklistOptionDef.getDetailLabelTemplate()),
                 picklistOptionDef.isDetailsAllowed(),
                 picklistOptionDef.isExclusive(),
-                isNested ? null : ctx.getAIBuilderFactory().getTemplateRenderFactory().renderTemplate(
+                isNested ? null : ctx.getAIBuilderFactory().getTemplateRenderHelper().renderTemplate(
                         ctx, picklistOptionDef.getNestedOptionsLabelTemplate()),
                 isNested ? null :
                     CollectionMiscUtil.createListFromAnotherList(picklistOptionDef.getNestedOptions(),

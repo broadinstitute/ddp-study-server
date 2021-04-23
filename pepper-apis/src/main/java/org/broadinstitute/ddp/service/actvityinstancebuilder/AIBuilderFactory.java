@@ -1,17 +1,25 @@
 package org.broadinstitute.ddp.service.actvityinstancebuilder;
 
+import org.broadinstitute.ddp.model.activity.instance.ActivityInstance;
 import org.broadinstitute.ddp.service.actvityinstancebuilder.context.AIBuilderParams;
-import org.broadinstitute.ddp.service.actvityinstancebuilder.service.AIContentRendererService;
-import org.broadinstitute.ddp.service.actvityinstancebuilder.service.SetDisplayNumbersService;
-import org.broadinstitute.ddp.service.actvityinstancebuilder.service.TemplateRenderService;
-import org.broadinstitute.ddp.service.actvityinstancebuilder.service.UpdateBlockStatusesService;
-import org.broadinstitute.ddp.service.actvityinstancebuilder.service.ValidationRuleService;
+import org.broadinstitute.ddp.service.actvityinstancebuilder.form.FormInstanceCreator;
+import org.broadinstitute.ddp.service.actvityinstancebuilder.form.FormInstanceCreatorHelper;
+import org.broadinstitute.ddp.service.actvityinstancebuilder.form.FormSectionCreator;
+import org.broadinstitute.ddp.service.actvityinstancebuilder.form.SectionIconCreator;
+import org.broadinstitute.ddp.service.actvityinstancebuilder.form.block.FormBlockCreator;
+import org.broadinstitute.ddp.service.actvityinstancebuilder.form.block.FormBlockCreatorHelper;
+import org.broadinstitute.ddp.service.actvityinstancebuilder.form.block.question.PicklistCreatorHelper;
+import org.broadinstitute.ddp.service.actvityinstancebuilder.form.block.question.QuestionCreator;
+import org.broadinstitute.ddp.service.actvityinstancebuilder.form.block.question.QuestionCreatorHelper;
+import org.broadinstitute.ddp.service.actvityinstancebuilder.form.block.question.ValidationRuleCreator;
 import org.jdbi.v3.core.Handle;
 
 
 /**
- * AI builder main factory: it contains references to other factories
- * (constructing all components of ActivityInstance builder module).
+ * AI builder main factory: through this factory it is possible to get instances
+ * of all classes (creators, helpers, etc) participating in {@link ActivityInstance} building.
+ * It is possible to customize any of these classes via the factory setter methods (for example it is
+ * helpful in test cases).
  * Also it provides {@link ActivityInstanceFromDefinitionBuilder} creation - via static methods:
  * <ul>
  * <li>{@link #createAIBuilder(Handle, AIBuilderParams)} - this version utilizes a default implementation of
@@ -57,69 +65,120 @@ public class AIBuilderFactory {
     }
 
 
-    private AICreatorsFactory aiCreatorsFactory = new AICreatorsFactory();
+    private TemplateRenderHelper templateRenderHelper = new TemplateRenderHelper();
 
-    private AIContentRendererService aiContentRendererService = new AIContentRendererService();
-    private TemplateRenderService templateRenderService = new TemplateRenderService();
-    private UpdateBlockStatusesService updateBlockStatusesService = new UpdateBlockStatusesService();
-    private SetDisplayNumbersService setDisplayNumbersService = new SetDisplayNumbersService();
-    private ValidationRuleService validationRuleService = new ValidationRuleService();
+    private FormInstanceCreator formInstanceCreator = new FormInstanceCreator();
+    private FormSectionCreator formSectionCreator = new FormSectionCreator();
+    private SectionIconCreator sectionIconCreator = new SectionIconCreator();
+    private FormBlockCreator formBlockCreator = new FormBlockCreator();
+    private QuestionCreator questionCreator = new QuestionCreator();
+
+    private FormInstanceCreatorHelper formInstanceCreatorHelper = new FormInstanceCreatorHelper();
+    private FormBlockCreatorHelper formBlockCreatorHelper = new FormBlockCreatorHelper();
+    private PicklistCreatorHelper picklistCreatorHelper = new PicklistCreatorHelper();
+    private QuestionCreatorHelper questionCreatorHelper = new QuestionCreatorHelper();
+    private ValidationRuleCreator validationRuleCreator = new ValidationRuleCreator();
 
 
     private AIBuilderFactory() {
     }
 
-    public AICreatorsFactory getAICreatorsFactory() {
-        return aiCreatorsFactory;
+    public TemplateRenderHelper getTemplateRenderHelper() {
+        return templateRenderHelper;
     }
 
-    public AIBuilderFactory setAICreatorsFactory(AICreatorsFactory aiCreatorsFactory) {
-        this.aiCreatorsFactory = aiCreatorsFactory;
+    public AIBuilderFactory setTemplateRenderHelper(TemplateRenderHelper templateRenderHelper) {
+        this.templateRenderHelper = templateRenderHelper;
         return this;
     }
 
-    public AIContentRendererService getAIContentRendererFactory() {
-        return aiContentRendererService;
+    public FormInstanceCreator getFormInstanceCreator() {
+        return formInstanceCreator;
     }
 
-    public AIBuilderFactory setAIContentRendererFactory(AIContentRendererService aiContentRendererService) {
-        this.aiContentRendererService = aiContentRendererService;
+    public AIBuilderFactory setFormInstanceCreator(FormInstanceCreator formInstanceCreator) {
+        this.formInstanceCreator = formInstanceCreator;
         return this;
     }
 
-    public TemplateRenderService getTemplateRenderFactory() {
-        return templateRenderService;
+    public FormSectionCreator getFormSectionCreator() {
+        return formSectionCreator;
     }
 
-    public AIBuilderFactory setTemplateRenderFactory(TemplateRenderService templateRenderService) {
-        this.templateRenderService = templateRenderService;
+    public AIBuilderFactory setFormSectionCreator(FormSectionCreator formSectionCreator) {
+        this.formSectionCreator = formSectionCreator;
         return this;
     }
 
-    public UpdateBlockStatusesService getUpdateBlockStatusFactory() {
-        return updateBlockStatusesService;
+    public SectionIconCreator getSectionIconCreator() {
+        return sectionIconCreator;
     }
 
-    public AIBuilderFactory setUpdateBlockStatusFactory(UpdateBlockStatusesService updateBlockStatusesService) {
-        this.updateBlockStatusesService = updateBlockStatusesService;
+    public AIBuilderFactory setSectionIconCreator(SectionIconCreator sectionIconCreator) {
+        this.sectionIconCreator = sectionIconCreator;
         return this;
     }
 
-    public SetDisplayNumbersService getSetDisplayNumbersFactory() {
-        return setDisplayNumbersService;
+    public FormBlockCreator getFormBlockCreator() {
+        return formBlockCreator;
     }
 
-    public AIBuilderFactory setSetDisplayNumbersFactory(SetDisplayNumbersService setDisplayNumbersService) {
-        this.setDisplayNumbersService = setDisplayNumbersService;
+    public AIBuilderFactory setFormBlockCreator(FormBlockCreator formBlockCreator) {
+        this.formBlockCreator = formBlockCreator;
         return this;
     }
 
-    public ValidationRuleService getValidationRuleService() {
-        return validationRuleService;
+    public QuestionCreator getQuestionCreator() {
+        return questionCreator;
     }
 
-    public AIBuilderFactory setValidationRuleService(ValidationRuleService validationRuleService) {
-        this.validationRuleService = validationRuleService;
+    public AIBuilderFactory setQuestionCreator(QuestionCreator questionCreator) {
+        this.questionCreator = questionCreator;
+        return this;
+    }
+
+    public FormInstanceCreatorHelper getFormInstanceCreatorHelper() {
+        return formInstanceCreatorHelper;
+    }
+
+    public AIBuilderFactory setFormInstanceCreatorHelper(FormInstanceCreatorHelper formInstanceCreatorHelper) {
+        this.formInstanceCreatorHelper = formInstanceCreatorHelper;
+        return this;
+    }
+
+    public FormBlockCreatorHelper getFormBlockCreatorHelper() {
+        return formBlockCreatorHelper;
+    }
+
+    public AIBuilderFactory setFormBlockCreatorHelper(FormBlockCreatorHelper formBlockCreatorHelper) {
+        this.formBlockCreatorHelper = formBlockCreatorHelper;
+        return this;
+    }
+
+    public PicklistCreatorHelper getPicklistCreatorHelper() {
+        return picklistCreatorHelper;
+    }
+
+    public AIBuilderFactory setPicklistCreatorHelper(PicklistCreatorHelper picklistCreatorHelper) {
+        this.picklistCreatorHelper = picklistCreatorHelper;
+        return this;
+    }
+
+    public QuestionCreatorHelper getQuestionCreatorHelper() {
+        return questionCreatorHelper;
+    }
+
+    public AIBuilderFactory setQuestionCreatorHelper(QuestionCreatorHelper questionCreatorHelper) {
+        this.questionCreatorHelper = questionCreatorHelper;
+        return this;
+    }
+
+    public ValidationRuleCreator getValidationRuleCreator() {
+        return validationRuleCreator;
+    }
+
+    public AIBuilderFactory setValidationRuleCreator(ValidationRuleCreator validationRuleCreator) {
+        this.validationRuleCreator = validationRuleCreator;
         return this;
     }
 }

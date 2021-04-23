@@ -36,7 +36,7 @@ import org.broadinstitute.ddp.model.activity.types.QuestionType;
 import org.broadinstitute.ddp.model.activity.types.RuleType;
 import org.broadinstitute.ddp.pex.PexException;
 import org.broadinstitute.ddp.pex.TreeWalkInterpreter;
-import org.broadinstitute.ddp.service.actvityinstancebuilder.service.ValidationRuleService;
+import org.broadinstitute.ddp.service.actvityinstancebuilder.form.block.question.ValidationRuleCreator;
 import org.jdbi.v3.core.Handle;
 
 /**
@@ -192,7 +192,7 @@ public class ActivityDefStore {
 
     public String findValidationRuleMessage(
             Handle handle, RuleType ruleType, Long hintTemplateId, long langCodeId, long timestamp,
-            ValidationRuleService.ValidationRuleMessageDetector validationRuleMessageDetector) {
+            ValidationRuleCreator.ValidationRuleMessageDetector validationRuleMessageDetector) {
         synchronized (lockVar) {
             return validationRuleMessageMap.computeIfAbsent(ruleType.name() + langCodeId, message ->
                     validationRuleMessageDetector.detectValidationRuleMessage(handle, ruleType, hintTemplateId, langCodeId, timestamp));

@@ -29,7 +29,6 @@ import org.broadinstitute.ddp.model.activity.definition.FormSectionDef;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.activity.types.TemplateType;
 import org.broadinstitute.ddp.service.actvityinstancebuilder.context.AIBuilderContext;
-import org.broadinstitute.ddp.service.actvityinstancebuilder.service.AIContentRendererService;
 
 public class AIBuilderTestHelper {
 
@@ -84,7 +83,7 @@ public class AIBuilderTestHelper {
     public static AIBuilderContext buildActivityInstance(FormActivityDef formActivityDef, ContentStyle style,
                                                          boolean disableTemplatesRendering) {
         return AIBuilderFactory.createAIBuilder(
-                AIBuilderFactory.createAIBuilderFactory().setAIContentRendererFactory(new AIContentRendererServiceTest()),
+                AIBuilderFactory.createAIBuilderFactory().setTemplateRenderHelper(new TemplateRenderHelperTest()),
                 null,
                 createParams(USER_GUID, STUDY_GUID, INSTANCE_GUID)
                         .setIsoLangCode(LANG_CODE)
@@ -186,7 +185,7 @@ public class AIBuilderTestHelper {
                 FORM_TITLE, FORM_SUBTITLE, FORM_READONLY_HINT, intro, bodySection);
     }
 
-    static class AIContentRendererServiceTest extends AIContentRendererService {
+    static class TemplateRenderHelperTest extends TemplateRenderHelper {
 
         @Override
         public void createRendererInitialContext(AIBuilderContext ctx) {

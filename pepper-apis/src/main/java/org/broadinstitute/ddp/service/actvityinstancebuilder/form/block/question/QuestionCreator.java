@@ -27,7 +27,7 @@ public class QuestionCreator {
 
     public Question createQuestion(AIBuilderContext ctx, QuestionDef questionDef) {
         if (canBeCreated(questionDef)) {
-            QuestionCreatorHelper creatorHelper = ctx.getAIBuilderFactory().getAICreatorsFactory().getQuestionCreatorHelper();
+            QuestionCreatorHelper creatorHelper = ctx.getAIBuilderFactory().getQuestionCreatorHelper();
             Question question;
             switch (questionDef.getQuestionType()) {
                 case DATE:
@@ -73,7 +73,7 @@ public class QuestionCreator {
 
     <T extends Answer> List<Rule<T>> getValidationRules(AIBuilderContext ctx, QuestionDef questionDef) {
         return CollectionMiscUtil.createListFromAnotherList(questionDef.getValidations(),
-                (ruleDef) -> ctx.getAIBuilderFactory().getAICreatorsFactory().getValidationRuleCreator().createRule(ctx, ruleDef));
+                (ruleDef) -> ctx.getAIBuilderFactory().getValidationRuleCreator().createRule(ctx, ruleDef));
     }
 
     <T extends Answer> List<T> getAnswers(AIBuilderContext ctx, String questionStableId) {

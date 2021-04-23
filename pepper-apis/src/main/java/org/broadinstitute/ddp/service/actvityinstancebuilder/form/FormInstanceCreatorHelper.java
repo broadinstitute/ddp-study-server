@@ -1,54 +1,130 @@
 package org.broadinstitute.ddp.service.actvityinstancebuilder.form;
 
 
-import static org.broadinstitute.ddp.util.TemplateRenderUtil.toPlainText;
-import static org.broadinstitute.ddp.util.TranslationUtil.extractOptionalActivityTranslation;
+import java.util.ArrayList;
+import java.util.List;
 
-import org.broadinstitute.ddp.content.Renderable;
+import org.broadinstitute.ddp.db.dto.UserActivityInstanceSummary;
+import org.broadinstitute.ddp.exception.DDPException;
+import org.broadinstitute.ddp.model.activity.instance.ConditionalBlock;
+import org.broadinstitute.ddp.model.activity.instance.FormBlock;
 import org.broadinstitute.ddp.model.activity.instance.FormInstance;
-import org.broadinstitute.ddp.service.actvityinstancebuilder.context.AIBuilderContext;
+import org.broadinstitute.ddp.model.activity.instance.FormSection;
+import org.broadinstitute.ddp.model.activity.instance.GroupBlock;
+import org.broadinstitute.ddp.model.activity.instance.Numberable;
+import org.broadinstitute.ddp.model.activity.types.BlockType;
+import org.broadinstitute.ddp.pex.PexException;
+import org.broadinstitute.ddp.pex.PexInterpreter;
+import org.broadinstitute.ddp.service.actvityinstancebuilder.ActivityInstanceFromDefinitionBuilder;
+import org.jdbi.v3.core.Handle;
 
 /**
  * Creates methods used during {@link FormInstance} building process.
  */
 public class FormInstanceCreatorHelper {
 
-    public void addChildren(AIBuilderContext ctx) {
-        var formActivityDef = ctx.getFormActivityDef();
-        var formSectionCreator = ctx.getAIBuilderFactory().getAICreatorsFactory().getFormSectionCreator();
-        ctx.getFormInstance().setIntroduction(formSectionCreator.createSection(ctx, formActivityDef.getIntroduction()));
-        ctx.getFormInstance().setClosing(formSectionCreator.createSection(ctx, formActivityDef.getClosing()));
-        if (formActivityDef.getSections() != null) {
-            formActivityDef.getSections().forEach(s -> {
-                ctx.getFormInstance().getBodySections().add(formSectionCreator.createSection(ctx, s));
-            });
+    /**
+     * Evaluate and update the form's block visibilities, assuming that those are all loaded. If the block does not have
+     * a conditional expression (and thus toggle-able), no change will be made to the block.
+     *
+     * <p>TODO: this method is used only in {@link ActivityInstanceFromDefinitionBuilder} and better to move it to
+     *     {@link FormInstanceCreatorHelper}. And it needs to be removed from unit tests -
+     *     {@link ActivityInstanceFromDefinitionBuilder} will be used there instead.
+     *
+     * @param handle          the jdbi handle
+     * @param interpreter     the pex interpreter to evaluate expressions
+     * @param userGuid        the user guid
+     * @param instanceGuid    the activity instance guid
+     * @param instanceSummary container that holds data about user's instances
+     * @throws DDPException if pex evaluation error
+     */
+    public void updateBlockStatuses(Handle handle, FormInstance formInstance, PexInterpreter interpreter,
+                                    String userGuid, String operatorGuid,
+                                    String instanceGuid, UserActivityInstanceSummary instanceSummary) {
+        for (FormSection section : formInstance.getAllSections()) {
+            for (FormBlock block : section.getBlocks()) {
+                updateBlockStatus(handle, formInstance, interpreter, block, userGuid, operatorGuid, instanceGuid, instanceSummary);
+                if (block.getBlockType().isContainerBlock()) {
+                    List<FormBlock> children;
+                    if (block.getBlockType() == BlockType.CONDITIONAL) {
+                        children = ((ConditionalBlock) block).getNested();
+                    } else if (block.getBlockType() == BlockType.GROUP) {
+                        children = ((GroupBlock) block).getNested();
+                    } else if (block.getBlockType() == BlockType.ACTIVITY) {
+                        // Questions within the nested activity itself are not considered.
+                        children = new ArrayList<>();
+                    } else {
+                        throw new DDPException("Unhandled container block type " + block.getBlockType());
+                    }
+                    for (FormBlock child : children) {
+                        updateBlockStatus(handle, formInstance, interpreter, child, userGuid, operatorGuid, instanceGuid, instanceSummary);
+                    }
+                }
+            }
         }
     }
 
-    public void renderTitleAndSubtitle(AIBuilderContext ctx) {
-        var title = extractOptionalActivityTranslation(ctx.getFormActivityDef().getTranslatedTitles(), ctx.getIsoLangCode());
-        var subtitle = extractOptionalActivityTranslation(ctx.getFormActivityDef().getTranslatedSubtitles(), ctx.getIsoLangCode());
-        ctx.getFormInstance().setTitle(ctx.getAIBuilderFactory().getTemplateRenderFactory().renderTemplate(ctx, title));
-        ctx.getFormInstance().setSubtitle(ctx.getAIBuilderFactory().getTemplateRenderFactory().renderTemplate(ctx, subtitle));
+    /**
+     * Walks through the sections and blocks in order and
+     * sets the {@link Numberable} fields accordingly.
+     * @return the maximum display number used
+     */
+    public int setDisplayNumbers(FormInstance formInstance) {
+        int startingNumber = 1;
+        if (formInstance.getIntroduction() != null) {
+            startingNumber = setNumberables(formInstance.getIntroduction().getBlocks(), startingNumber);
+
+        }
+        if (formInstance.getBodySections() != null) {
+            for (FormSection bodySection : formInstance.getBodySections()) {
+                startingNumber = setNumberables(bodySection.getBlocks(), startingNumber);
+            }
+        }
+        if (formInstance.getClosing() != null) {
+            startingNumber = setNumberables(formInstance.getClosing().getBlocks(), startingNumber);
+        }
+        return startingNumber;
     }
 
-    public void updateBlockStatuses(AIBuilderContext ctx) {
-        ctx.getAIBuilderFactory().getUpdateBlockStatusFactory().updateBlockStatuses(
-                ctx.getHandle(),
-                ctx.getFormInstance(),
-                ctx.getInterpreter(),
-                ctx.getUserGuid(),
-                ctx.getOperatorGuid(),
-                ctx.getFormResponse().getGuid(),
-                ctx.getParams().getInstanceSummary());
+    /**
+     * Sets the display number for the blocks in order,
+     * starting at startingNumber
+     *
+     * <p>TODO: this method is used only in {@link ActivityInstanceFromDefinitionBuilder} and better to move it to
+     *    {@link FormInstanceCreatorHelper}. And it needs to be removed from unit tests -
+     *    {@link ActivityInstanceFromDefinitionBuilder} will be used there instead.
+     *
+     * @param blocks the blocks to number
+     * @param startingNumber the number at which to start
+     * @return the ending number
+     *
+     */
+    private int setNumberables(List<FormBlock> blocks, int startingNumber) {
+        for (FormBlock formBlock : blocks) {
+            if (formBlock instanceof Numberable) {
+                Numberable numberable = (Numberable)formBlock;
+                if (numberable.shouldHideNumber()) {
+                    numberable.setDisplayNumber(null);
+                } else {
+                    numberable.setDisplayNumber(startingNumber++);
+                }
+            }
+        }
+        return startingNumber;
     }
 
-    public void renderContent(AIBuilderContext ctx, Renderable.Provider<String> rendered) {
-        ctx.getFormInstance().getAllSections().forEach(s ->
-                s.applyRenderedTemplates(rendered, ctx.getStyle()));
-        ctx.getFormInstance().setReadonlyHint(
-                toPlainText(ctx.getFormInstance().getReadonlyHintTemplateId(), rendered, ctx.getStyle()));
-        ctx.getFormInstance().setActivityDefinitionLastUpdatedText(
-                toPlainText(ctx.getFormInstance().getLastUpdatedTextTemplateId(), rendered, ctx.getStyle()));
+    private void updateBlockStatus(Handle handle, FormInstance formInstance, PexInterpreter interpreter,
+                                   FormBlock block, String userGuid,
+                                   String operatorGuid, String instanceGuid, UserActivityInstanceSummary instanceSummary) {
+        if (block.getShownExpr() != null) {
+            try {
+                boolean shown = interpreter.eval(block.getShownExpr(), handle, userGuid, operatorGuid, instanceGuid, instanceSummary);
+                block.setShown(shown);
+            } catch (PexException e) {
+                String msg = String.format("Error evaluating pex expression for form activity instance %s and block %s: `%s`",
+                        formInstance.getGuid(), block.getGuid(), block.getShownExpr());
+                throw new DDPException(msg, e);
+            }
+        }
     }
 }

@@ -93,8 +93,6 @@ import org.slf4j.LoggerFactory;
  * <p>NOTE: it is defined a class {@link AIBuilderContext} which used to pass the basic parameters to each
  * creator (so it's no need to pass multiple parameters to each creator constructor -
  * only one parameter {@link AIBuilderContext} is passed.
- * Also it holds a reference to {@link AICreatorsFactory} which creates all Creator-objects
- * providing {@link ActivityInstance} building.
  */
 public class ActivityInstanceFromDefinitionBuilder {
 
@@ -202,9 +200,8 @@ public class ActivityInstanceFromDefinitionBuilder {
                 context.setFailedMessage("Cannot build ActivityInstance of type other than FORMS");
                 context.setFailedStep(BUILD_FORM_INSTANCE);
             } else {
-                context.getAIBuilderFactory().getAIContentRendererFactory().createRendererInitialContext(context);
-                var formInstance = context.getAIBuilderFactory().getAICreatorsFactory()
-                        .getFormInstanceCreator().createFormInstance(context);
+                context.getAIBuilderFactory().getTemplateRenderHelper().createRendererInitialContext(context);
+                var formInstance = context.getAIBuilderFactory().getFormInstanceCreator().createFormInstance(context);
                 context.setFormInstance(formInstance);
 
                 context.setBuildStep(BUILD_FORM_INSTANCE);
@@ -216,7 +213,7 @@ public class ActivityInstanceFromDefinitionBuilder {
     public ActivityInstanceFromDefinitionBuilder buildFormChildren() {
         if (checkStep(BUILD_FORM_INSTANCE, BUILD_FORM_CHILDREN)) {
 
-            context.getAIBuilderFactory().getAICreatorsFactory().getFormInstanceCreatorHelper().addChildren(context);
+            context.getAIBuilderFactory().getFormInstanceCreator().addChildren(context);
 
             context.setBuildStep(BUILD_FORM_CHILDREN);
         }
@@ -226,9 +223,9 @@ public class ActivityInstanceFromDefinitionBuilder {
     public ActivityInstanceFromDefinitionBuilder renderFormTitles() {
         if (checkStep(BUILD_FORM_INSTANCE, RENDER_FORM_TITLES)) {
 
-            context.getAIBuilderFactory().getAIContentRendererFactory().addInstanceToRendererInitialContext(
+            context.getAIBuilderFactory().getTemplateRenderHelper().addInstanceToRendererInitialContext(
                     context, context.getFormInstance());
-            context.getAIBuilderFactory().getAICreatorsFactory().getFormInstanceCreatorHelper().renderTitleAndSubtitle(context);
+            context.getAIBuilderFactory().getFormInstanceCreator().renderTitleAndSubtitle(context);
 
             context.setBuildStep(RENDER_FORM_TITLES);
         }
@@ -245,7 +242,7 @@ public class ActivityInstanceFromDefinitionBuilder {
                         + " disableTemplatesRendering");
                 context.setFailedStep(RENDER_CONTENT);
             } else {
-                context.getAIBuilderFactory().getAICreatorsFactory().getFormInstanceCreatorHelper().renderContent(
+                context.getAIBuilderFactory().getFormInstanceCreator().renderContent(
                         context, context.getRenderedTemplates()::get);
 
                 context.setBuildStep(RENDER_CONTENT);
@@ -257,7 +254,7 @@ public class ActivityInstanceFromDefinitionBuilder {
     public ActivityInstanceFromDefinitionBuilder updateBlockStatuses() {
         if (checkStep(BUILD_FORM_CHILDREN, UPDATE_BLOCK_STATUSES)) {
 
-            context.getAIBuilderFactory().getAICreatorsFactory().getFormInstanceCreatorHelper().updateBlockStatuses(context);
+            context.getAIBuilderFactory().getFormInstanceCreator().updateBlockStatuses(context);
 
             context.setBuildStep(UPDATE_BLOCK_STATUSES);
         }
@@ -267,7 +264,7 @@ public class ActivityInstanceFromDefinitionBuilder {
     public ActivityInstanceFromDefinitionBuilder setDisplayNumbers() {
         if (checkStep(BUILD_FORM_CHILDREN, SET_DISPLAY_NUMBERS)) {
 
-            context.getAIBuilderFactory().getSetDisplayNumbersFactory().setDisplayNumbers(context.getFormInstance());
+            context.getAIBuilderFactory().getFormInstanceCreatorHelper().setDisplayNumbers(context.getFormInstance());
 
             context.setBuildStep(SET_DISPLAY_NUMBERS);
         }

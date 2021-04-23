@@ -16,15 +16,11 @@ import org.broadinstitute.ddp.model.activity.instance.FormResponse;
 import org.broadinstitute.ddp.pex.PexInterpreter;
 import org.broadinstitute.ddp.pex.TreeWalkInterpreter;
 import org.broadinstitute.ddp.service.actvityinstancebuilder.AIBuilderFactory;
-import org.broadinstitute.ddp.service.actvityinstancebuilder.AICreatorsFactory;
 import org.jdbi.v3.core.Handle;
 
 /**
  * Aggregates objects which needs on all steps of {@link ActivityInstance} building.
  * {@link AIBuilderContext} created at the beginning of the building process.
- *
- * <p>Contains a reference to {@link AICreatorsFactory} where created all instances
- * of Creator-classes used to create {@link ActivityInstance}
  */
 public class AIBuilderContext {
 

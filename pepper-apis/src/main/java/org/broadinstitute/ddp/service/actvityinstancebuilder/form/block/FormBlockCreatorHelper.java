@@ -47,9 +47,9 @@ public class FormBlockCreatorHelper {
             case MAILING_ADDRESS:
                 MailingAddressComponentDef mailingAddressComponentDef = (MailingAddressComponentDef) componentBlockDef;
                 formComponent = new MailingAddressComponent(
-                        ctx.getAIBuilderFactory().getTemplateRenderFactory().renderTemplate(
+                        ctx.getAIBuilderFactory().getTemplateRenderHelper().renderTemplate(
                                 ctx, mailingAddressComponentDef.getTitleTemplate()),
-                        ctx.getAIBuilderFactory().getTemplateRenderFactory().renderTemplate(
+                        ctx.getAIBuilderFactory().getTemplateRenderHelper().renderTemplate(
                                 ctx, mailingAddressComponentDef.getSubtitleTemplate()),
                         mailingAddressComponentDef.shouldHideNumber(),
                         mailingAddressComponentDef.shouldRequireVerified(),
@@ -64,13 +64,13 @@ public class FormBlockCreatorHelper {
     }
 
     ConditionalBlock createConditionalBlock(AIBuilderContext ctx, ConditionalBlockDef conditionalBlockDef) {
-        Question question = ctx.getAIBuilderFactory().getAICreatorsFactory().getQuestionCreator().createQuestion(
+        Question question = ctx.getAIBuilderFactory().getQuestionCreator().createQuestion(
                 ctx, conditionalBlockDef.getControl());
         ConditionalBlock conditionalBlock = question == null ? null : new ConditionalBlock(question);
         if (conditionalBlock != null) {
             conditionalBlock.getNested().addAll(
                     CollectionMiscUtil.createListFromAnotherList(conditionalBlockDef.getNested(),
-                            (formBlockDef) -> ctx.getAIBuilderFactory().getAICreatorsFactory().getFormBlockCreator()
+                            (formBlockDef) -> ctx.getAIBuilderFactory().getFormBlockCreator()
                                     .createBlock(ctx, formBlockDef)));
         }
         return conditionalBlock;
@@ -78,8 +78,8 @@ public class FormBlockCreatorHelper {
 
     ContentBlock createContentBlock(AIBuilderContext ctx, ContentBlockDef contentBlockDef) {
         return new ContentBlock(
-                ctx.getAIBuilderFactory().getTemplateRenderFactory().renderTemplate(ctx, contentBlockDef.getTitleTemplate()),
-                ctx.getAIBuilderFactory().getTemplateRenderFactory().renderTemplate(ctx, contentBlockDef.getBodyTemplate())
+                ctx.getAIBuilderFactory().getTemplateRenderHelper().renderTemplate(ctx, contentBlockDef.getTitleTemplate()),
+                ctx.getAIBuilderFactory().getTemplateRenderHelper().renderTemplate(ctx, contentBlockDef.getBodyTemplate())
         );
     }
 
@@ -87,12 +87,12 @@ public class FormBlockCreatorHelper {
         GroupBlock groupBlock = new GroupBlock(
                 groupBlockDef.getListStyleHint(),
                 groupBlockDef.getPresentationHint(),
-                ctx.getAIBuilderFactory().getTemplateRenderFactory().renderTemplate(
+                ctx.getAIBuilderFactory().getTemplateRenderHelper().renderTemplate(
                         ctx, groupBlockDef.getTitleTemplate())
         );
         groupBlock.getNested().addAll(
                 CollectionMiscUtil.createListFromAnotherList(groupBlockDef.getNested(),
-                        (formBlockDef) -> ctx.getAIBuilderFactory().getAICreatorsFactory().getFormBlockCreator()
+                        (formBlockDef) -> ctx.getAIBuilderFactory().getFormBlockCreator()
                                 .createBlock(ctx, formBlockDef)));
         return groupBlock;
     }
@@ -102,13 +102,13 @@ public class FormBlockCreatorHelper {
                 nestedActivityBlockDef.getActivityCode(),
                 nestedActivityBlockDef.getRenderHint(),
                 nestedActivityBlockDef.isAllowMultiple(),
-                ctx.getAIBuilderFactory().getTemplateRenderFactory().renderTemplate(
+                ctx.getAIBuilderFactory().getTemplateRenderHelper().renderTemplate(
                         ctx, nestedActivityBlockDef.getAddButtonTemplate())
         );
     }
 
     QuestionBlock createQuestionBlock(AIBuilderContext ctx, QuestionBlockDef questionBlockDef) {
-        Question question = ctx.getAIBuilderFactory().getAICreatorsFactory().getQuestionCreator()
+        Question question = ctx.getAIBuilderFactory().getQuestionCreator()
                 .createQuestion(ctx, questionBlockDef.getQuestion());
         return question == null ? null : new QuestionBlock(question);
     }
@@ -124,11 +124,11 @@ public class FormBlockCreatorHelper {
                         physicianInstitutionComponentDef.getComponentRevisionId()
                 ),
                 physicianInstitutionComponentDef.getInstitutionType(),
-                ctx.getAIBuilderFactory().getTemplateRenderFactory().renderTemplate(
+                ctx.getAIBuilderFactory().getTemplateRenderHelper().renderTemplate(
                         ctx, physicianInstitutionComponentDef.getTitleTemplate()),
-                ctx.getAIBuilderFactory().getTemplateRenderFactory().renderTemplate(
+                ctx.getAIBuilderFactory().getTemplateRenderHelper().renderTemplate(
                         ctx, physicianInstitutionComponentDef.getSubtitleTemplate()),
-                ctx.getAIBuilderFactory().getTemplateRenderFactory().renderTemplate(
+                ctx.getAIBuilderFactory().getTemplateRenderHelper().renderTemplate(
                         ctx, physicianInstitutionComponentDef.getAddButtonTemplate()),
                 physicianInstitutionComponentDef.allowMultiple(),
                 physicianInstitutionComponentDef.showFields(),

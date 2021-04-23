@@ -33,7 +33,7 @@ import org.broadinstitute.ddp.model.activity.instance.FormSection;
 import org.broadinstitute.ddp.pex.PexException;
 import org.broadinstitute.ddp.pex.PexInterpreter;
 import org.broadinstitute.ddp.pex.TreeWalkInterpreter;
-import org.broadinstitute.ddp.service.actvityinstancebuilder.service.UpdateBlockStatusesService;
+import org.broadinstitute.ddp.service.actvityinstancebuilder.form.FormInstanceCreatorHelper;
 import org.jdbi.v3.core.Handle;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -45,7 +45,7 @@ public class UpdateBlockStatusesTest extends TxnAwareBaseTest {
 
     private static String userGuid = TestConstants.TEST_USER_GUID;
     private static PexInterpreter interpreter;
-    private static UpdateBlockStatusesService updateBlockStatusesService;
+    private static FormInstanceCreatorHelper formInstanceCreatorHelper;
 
     @Rule
     public ExpectedException thrown = ExpectedException.none();
@@ -54,7 +54,7 @@ public class UpdateBlockStatusesTest extends TxnAwareBaseTest {
     @BeforeClass
     public static void setup() {
         interpreter = new TreeWalkInterpreter();
-        updateBlockStatusesService = new UpdateBlockStatusesService();
+        formInstanceCreatorHelper = new FormInstanceCreatorHelper();
     }
 
     @Before
@@ -80,11 +80,11 @@ public class UpdateBlockStatusesTest extends TxnAwareBaseTest {
             form.addBodySections(Collections.singletonList(s1));
 
             content.setShown(false);
-            updateBlockStatusesService.updateBlockStatuses(handle, form, interpreter, userGuid, userGuid, form.getGuid(), null);
+            formInstanceCreatorHelper.updateBlockStatuses(handle, form, interpreter, userGuid, userGuid, form.getGuid(), null);
             assertFalse(content.isShown());
 
             content.setShownExpr("true");
-            updateBlockStatusesService.updateBlockStatuses(handle, form, interpreter, userGuid, userGuid, form.getGuid(), null);
+            formInstanceCreatorHelper.updateBlockStatuses(handle, form, interpreter, userGuid, userGuid, form.getGuid(), null);
             assertTrue(content.isShown());
         });
     }
@@ -93,7 +93,7 @@ public class UpdateBlockStatusesTest extends TxnAwareBaseTest {
     public void testUpdateBlockStatuses_withoutExpr_defaultShown() {
         TransactionWrapper.useTxn(handle -> {
             FormInstance form = createTestInstance();
-            updateBlockStatusesService.updateBlockStatuses(handle, form, interpreter, userGuid, userGuid, form.getGuid(), null);
+            formInstanceCreatorHelper.updateBlockStatuses(handle, form, interpreter, userGuid, userGuid, form.getGuid(), null);
 
             for (FormSection sect : form.getBodySections()) {
                 for (FormBlock block : sect.getBlocks()) {
@@ -115,7 +115,7 @@ public class UpdateBlockStatusesTest extends TxnAwareBaseTest {
             when(mockInterpreter.eval(anyString(), any(Handle.class), eq(userGuid), eq(userGuid), eq(form.getGuid()), any()))
                     .thenReturn(true);
 
-            updateBlockStatusesService.updateBlockStatuses(handle, form, mockInterpreter, userGuid, userGuid, form.getGuid(), null);
+            formInstanceCreatorHelper.updateBlockStatuses(handle, form, mockInterpreter, userGuid, userGuid, form.getGuid(), null);
 
             for (FormSection sect : form.getBodySections()) {
                 for (FormBlock block : sect.getBlocks()) {
@@ -140,7 +140,7 @@ public class UpdateBlockStatusesTest extends TxnAwareBaseTest {
             when(mockInterpreter.eval(anyString(), any(Handle.class), eq(userGuid), eq(userGuid), eq(form.getGuid()), any()))
                     .thenThrow(new PexException("testing"));
 
-            updateBlockStatusesService.updateBlockStatuses(handle, form, mockInterpreter, userGuid, userGuid, form.getGuid(), null);
+            formInstanceCreatorHelper.updateBlockStatuses(handle, form, mockInterpreter, userGuid, userGuid, form.getGuid(), null);
             fail("expected exception was not thrown");
         });
     }

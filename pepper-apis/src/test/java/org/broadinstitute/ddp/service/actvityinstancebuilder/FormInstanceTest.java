@@ -56,14 +56,14 @@ import org.broadinstitute.ddp.model.activity.instance.question.TextQuestion;
 import org.broadinstitute.ddp.model.activity.instance.validation.RequiredRule;
 import org.broadinstitute.ddp.model.activity.types.BlockType;
 import org.broadinstitute.ddp.model.activity.types.TextInputType;
-import org.broadinstitute.ddp.service.actvityinstancebuilder.service.SetDisplayNumbersService;
+import org.broadinstitute.ddp.service.actvityinstancebuilder.form.FormInstanceCreatorHelper;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 public class FormInstanceTest {
 
-    private SetDisplayNumbersService setDisplayNumbersService = new SetDisplayNumbersService();
+    private FormInstanceCreatorHelper formInstanceCreatorHelper = new FormInstanceCreatorHelper();
 
     @BeforeClass
     public static void setupTest() {
@@ -215,7 +215,7 @@ public class FormInstanceTest {
         expectedNumberForStableId.put(closingQuestionStableId, expectedNumberForStableId.size());
 
         form.setIntroduction(introSection);
-        setDisplayNumbersService.setDisplayNumbers(form);
+        formInstanceCreatorHelper.setDisplayNumbers(form);
         form.setClosing(closingSection);
 
         for (FormSection formSection : form.getBodySections()) {
