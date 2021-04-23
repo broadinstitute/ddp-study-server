@@ -154,4 +154,11 @@ class UserLoader {
         handle.attach(JdbiUserStudyEnrollment.class).changeUserStudyEnrollmentStatus(
                 userGuid, studyGuid, EnrollmentStatusType.REGISTERED, registeredAt);
     }
+
+    public void withdrawUserFromStudy(Handle handle, String studyGuid, String userGuid, ParticipantWrapper participant) {
+        // No timestamp for withdrawal so we use last modified as an approximation.
+        long lastModifiedMillis = participant.getLastModified().toEpochMilli();
+        handle.attach(JdbiUserStudyEnrollment.class).changeUserStudyEnrollmentStatus(
+                userGuid, studyGuid, EnrollmentStatusType.EXITED_BEFORE_ENROLLMENT, lastModifiedMillis);
+    }
 }

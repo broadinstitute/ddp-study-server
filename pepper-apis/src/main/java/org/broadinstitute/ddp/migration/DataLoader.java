@@ -38,6 +38,7 @@ import org.slf4j.LoggerFactory;
 class DataLoader {
 
     private static final Logger LOG = LoggerFactory.getLogger(DataLoader.class);
+    private static final String WITHDREW_REASON_CODE = "WITHDREW";
 
     private final Config cfg;
     private final String studyGuid;
@@ -181,6 +182,13 @@ class DataLoader {
 
         userLoader.registerUserInStudy(handle, studyGuid, user.getGuid(), participant);
         LOG.info(padding + "- Registered user {} in study {}", user.getGuid(), studyGuid);
+
+        String inactiveReason = participant.getInactiveReason();
+        if (inactiveReason != null && inactiveReason.equals(WITHDREW_REASON_CODE)) {
+            userLoader.withdrawUserFromStudy(handle, studyGuid, user.getGuid(), participant);
+            LOG.info(padding + "- User had withdrew so marking as exited from study at {}", participant.getLastModified());
+            row.setWithdrew(true);
+        }
 
         for (var activityMapping : mapping.getActivities()) {
             processActivity(handle, user, activityMapping, data, row);

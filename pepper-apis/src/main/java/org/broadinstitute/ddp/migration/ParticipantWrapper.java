@@ -34,4 +34,13 @@ public class ParticipantWrapper extends ObjectWrapper {
     public String getLastName() {
         return getString("datstat_lastname");
     }
+
+    public String getInactiveReason() {
+        return getString("inactive_reason");
+    }
+
+    public Instant getLastModified() {
+        var value = getString("datstat_lastmodified");
+        return value == null ? null : Instant.parse(value);
+    }
 }

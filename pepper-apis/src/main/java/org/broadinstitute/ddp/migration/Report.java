@@ -38,7 +38,7 @@ class Report {
                     "altpid", "shortid", "email",
                     "auth0_user_id", "user_guid", "user_hruid",
                     "is_existing_user", "is_exist_in_auth0",
-                    "is_blank_instance",
+                    "is_blank_instance", "is_withdrew",
                     "is_skipped", "is_success");
 
             for (var row : rows) {
@@ -52,6 +52,7 @@ class Report {
                         Boolean.toString(row.isExistingUser),
                         Boolean.toString(row.isExistInAuth0),
                         Boolean.toString(row.isBlankInstance),
+                        Boolean.toString(row.isWithdrew),
                         Boolean.toString(row.isSkipped),
                         Boolean.toString(row.isSuccess));
             }
@@ -73,6 +74,7 @@ class Report {
         private boolean isExistingUser;
         private boolean isExistInAuth0;
         private boolean isBlankInstance;
+        private boolean isWithdrew;
         private boolean isSkipped;
         private boolean isSuccess;
 
@@ -104,6 +106,10 @@ class Report {
 
         public void setBlankInstance(boolean blankInstance) {
             isBlankInstance = blankInstance;
+        }
+
+        public void setWithdrew(boolean withdrew) {
+            isWithdrew = withdrew;
         }
 
         public void setSkipped(boolean skipped) {
