@@ -18,13 +18,16 @@ import com.typesafe.config.Config;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.TransactionWrapper;
+import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dao.AnswerDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
 import org.broadinstitute.ddp.db.dao.JdbiActivityInstanceStatus;
+import org.broadinstitute.ddp.db.dao.JdbiActivityVersion;
 import org.broadinstitute.ddp.db.dao.JdbiMailingList;
 import org.broadinstitute.ddp.db.dto.ActivityDto;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
+import org.broadinstitute.ddp.db.dto.ActivityVersionDto;
 import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.broadinstitute.ddp.model.user.User;
@@ -43,6 +46,7 @@ class DataLoader {
     private Mapping mapping;
     private UserLoader userLoader;
     private Map<String, Long> activityCodeToId = new HashMap<>();
+    private Map<Long, ActivityVersionDto> activityIdToLatestVersion = new HashMap<>();
 
     DataLoader(Config cfg, FileReader fileReader) {
         this.cfg = cfg;
@@ -179,13 +183,13 @@ class DataLoader {
         LOG.info(padding + "- Registered user {} in study {}", user.getGuid(), studyGuid);
 
         for (var activityMapping : mapping.getActivities()) {
-            processActivity(handle, user, activityMapping, data);
+            processActivity(handle, user, activityMapping, data, row);
         }
 
         row.setSuccess(true);
     }
 
-    private void processActivity(Handle handle, User user, MappingActivity activity, ParticipantFile data) {
+    private void processActivity(Handle handle, User user, MappingActivity activity, ParticipantFile data, Report.Row row) {
         String padding = "  ";
 
         String sourceSurveyName = activity.getSource();
@@ -197,8 +201,20 @@ class DataLoader {
 
         LOG.info(padding + "[{}] created={}, completed={}, updated={}", sourceSurveyName,
                 survey.getCreated(), survey.getFirstCompleted(), survey.getLastUpdated());
-        var instanceDto = createActivityInstance(handle, user, activity, survey, null);
-        LOG.info(padding + "- Created activity instance with id={}, guid={}", instanceDto.getId(), instanceDto.getGuid());
+        long activityId = getActivityId(handle, activity.getActivityCode());
+        var latestVersionDto = getLatestVersion(handle, activityId);
+        if (survey.getFirstCompleted() == null && survey.getCreated().toEpochMilli() < latestVersionDto.getRevStart()) {
+            // They haven't submitted survey and they're on the old version.
+            // Let's skip their data and create a blank instance of new version for them.
+            var instanceDto = createBlankInstance(handle, user, activityId, survey);
+            LOG.info(padding + "- Survey is not submitted and is an old version");
+            LOG.info(padding + "- Created new blank instance: id={}, guid={}", instanceDto.getId(), instanceDto.getGuid());
+            row.setBlankInstance(true);
+            return;
+        }
+
+        var instanceDto = createMigratedInstance(handle, user, activity, survey, null);
+        LOG.info(padding + "- Created activity instance: id={}, guid={}", instanceDto.getId(), instanceDto.getGuid());
         loadAnswers(handle, user, instanceDto, activity, survey);
 
         for (var nestedMapping : activity.getNestedActivities()) {
@@ -222,7 +238,7 @@ class DataLoader {
         // KEYS means data is in the parent survey itself, so we use the same object for data, including timestamps.
         LOG.info(padding + "[{}] parent={}", nestedActivity.getActivityCode(), parentInstanceDto.getActivityCode());
 
-        var instanceDto = createActivityInstance(handle, user, nestedActivity, parentSurvey, parentInstanceDto.getId());
+        var instanceDto = createMigratedInstance(handle, user, nestedActivity, parentSurvey, parentInstanceDto.getId());
         LOG.info(padding + "- Created nested activity instance with id={}, guid={}", instanceDto.getId(), instanceDto.getGuid());
 
         loadAnswers(handle, user, instanceDto, nestedActivity, parentSurvey);
@@ -240,7 +256,7 @@ class DataLoader {
                 var object = new JsonObject();
                 object.add("ddp_created", new JsonPrimitive(parentSurvey.getCreated().toString()));
                 var survey = new SurveyWrapper(object);
-                var instanceDto = createActivityInstance(handle, user, nestedActivity, survey, parentInstanceDto.getId());
+                var instanceDto = createMigratedInstance(handle, user, nestedActivity, survey, parentInstanceDto.getId());
                 LOG.info(padding + "[{}] parent={}", nestedActivity.getActivityCode(), parentInstanceDto.getActivityCode());
                 LOG.info(padding + "- Created empty nested activity instance with id={}, guid={}",
                         instanceDto.getId(), instanceDto.getGuid());
@@ -252,23 +268,27 @@ class DataLoader {
         for (var nested : nestedList) {
             // Each nested object becomes the survey object to use for pulling out data. Use same timestamps as parent.
             LOG.info(padding + "[{}] parent={} ({})", nestedActivity.getActivityCode(), parentInstanceDto.getActivityCode(), number);
-            var instanceDto = createActivityInstance(handle, user, nestedActivity, parentSurvey, parentInstanceDto.getId());
+            var instanceDto = createMigratedInstance(handle, user, nestedActivity, parentSurvey, parentInstanceDto.getId());
             LOG.info(padding + "- Created nested activity instance with id={}, guid={}", instanceDto.getId(), instanceDto.getGuid());
             loadAnswers(handle, user, instanceDto, nestedActivity, nested);
             number++;
         }
     }
 
-    private ActivityInstanceDto createActivityInstance(Handle handle, User user, MappingActivity activity,
-                                                       SurveyWrapper survey, Long parentInstanceId) {
-        if (!activityCodeToId.containsKey(activity.getActivityCode())) {
-            ActivityDto activityDto = handle.attach(JdbiActivity.class)
-                    .findActivityByStudyGuidAndCode(studyGuid, activity.getActivityCode())
-                    .orElseThrow(() -> new LoaderException("Could not find activity " + activity.getActivityCode()));
-            activityCodeToId.put(activity.getActivityCode(), activityDto.getActivityId());
-        }
+    private ActivityInstanceDto createBlankInstance(Handle handle, User user, long activityId, SurveyWrapper survey) {
+        // We use the higher-level DAO so we create a blank parent instance along with any nested activity instances
+        // it needs. This way, when participant views the new instance, everything will be there.
+        var instanceDao = handle.attach(ActivityInstanceDao.class);
+        return instanceDao.insertInstance(
+                activityId, user, user,
+                survey.getSubmissionId(),
+                survey.getSessionId(),
+                survey.getVersion());
+    }
 
-        long activityId = activityCodeToId.get(activity.getActivityCode());
+    private ActivityInstanceDto createMigratedInstance(Handle handle, User user, MappingActivity activity,
+                                                       SurveyWrapper survey, Long parentInstanceId) {
+        long activityId = getActivityId(handle, activity.getActivityCode());
         long createdAtMillis = survey.getCreated().toEpochMilli();
         Instant completedAt = survey.getFirstCompleted();
         Instant updatedAt = survey.getLastUpdated();
@@ -334,5 +354,25 @@ class DataLoader {
                         question.getTarget(), question.getType());
             }
         }
+    }
+
+    private long getActivityId(Handle handle, String activityCode) {
+        if (!activityCodeToId.containsKey(activityCode)) {
+            ActivityDto activityDto = handle.attach(JdbiActivity.class)
+                    .findActivityByStudyGuidAndCode(studyGuid, activityCode)
+                    .orElseThrow(() -> new LoaderException("Could not find activity " + activityCode));
+            activityCodeToId.put(activityCode, activityDto.getActivityId());
+        }
+        return activityCodeToId.get(activityCode);
+    }
+
+    private ActivityVersionDto getLatestVersion(Handle handle, long activityId) {
+        if (!activityIdToLatestVersion.containsKey(activityId)) {
+            ActivityVersionDto versionDto = handle.attach(JdbiActivityVersion.class)
+                    .getActiveVersion(activityId)
+                    .orElseThrow(() -> new LoaderException("Could not find latest version for activity " + activityId));
+            activityIdToLatestVersion.put(activityId, versionDto);
+        }
+        return activityIdToLatestVersion.get(activityId);
     }
 }

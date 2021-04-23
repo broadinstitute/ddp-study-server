@@ -37,7 +37,9 @@ class Report {
             printer.printRecord(
                     "altpid", "shortid", "email",
                     "auth0_user_id", "user_guid", "user_hruid",
-                    "is_existing_user", "is_exist_in_auth0", "is_skipped", "is_success");
+                    "is_existing_user", "is_exist_in_auth0",
+                    "is_blank_instance",
+                    "is_skipped", "is_success");
 
             for (var row : rows) {
                 printer.printRecord(
@@ -49,6 +51,7 @@ class Report {
                         row.userHruid,
                         Boolean.toString(row.isExistingUser),
                         Boolean.toString(row.isExistInAuth0),
+                        Boolean.toString(row.isBlankInstance),
                         Boolean.toString(row.isSkipped),
                         Boolean.toString(row.isSuccess));
             }
@@ -69,6 +72,7 @@ class Report {
         private String userHruid;
         private boolean isExistingUser;
         private boolean isExistInAuth0;
+        private boolean isBlankInstance;
         private boolean isSkipped;
         private boolean isSuccess;
 
@@ -96,6 +100,10 @@ class Report {
 
         public void setExistInAuth0(boolean existInAuth0) {
             isExistInAuth0 = existInAuth0;
+        }
+
+        public void setBlankInstance(boolean blankInstance) {
+            isBlankInstance = blankInstance;
         }
 
         public void setSkipped(boolean skipped) {
