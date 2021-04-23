@@ -1,6 +1,4 @@
-package org.broadinstitute.ddp.service.actvityinstancebuilder.block.question;
-
-import static org.broadinstitute.ddp.service.actvityinstancebuilder.util.TemplateHandler.addAndRenderTemplate;
+package org.broadinstitute.ddp.service.actvityinstancebuilder.form.block.question;
 
 import java.util.List;
 
@@ -18,7 +16,8 @@ public class PicklistCreatorHelper {
     public PicklistGroup createPicklistGroup(AIBuilderContext ctx, PicklistGroupDef picklistGroupDef) {
         return new PicklistGroup(
                 picklistGroupDef.getStableId(),
-                addAndRenderTemplate(ctx, picklistGroupDef.getNameTemplate())
+                ctx.getAIBuilderFactory().getTemplateRenderHelper().renderTemplate(
+                        ctx, picklistGroupDef.getNameTemplate())
         );
     }
 
@@ -31,12 +30,16 @@ public class PicklistCreatorHelper {
                                                List<PicklistGroupDef> picklistGroupDefs, boolean isNested) {
         PicklistOption picklistOption = new PicklistOption(
                 picklistOptionDef.getStableId(),
-                addAndRenderTemplate(ctx, picklistOptionDef.getOptionLabelTemplate()),
-                addAndRenderTemplate(ctx, picklistOptionDef.getTooltipTemplate()),
-                addAndRenderTemplate(ctx, picklistOptionDef.getDetailLabelTemplate()),
+                ctx.getAIBuilderFactory().getTemplateRenderHelper().renderTemplate(
+                        ctx, picklistOptionDef.getOptionLabelTemplate()),
+                ctx.getAIBuilderFactory().getTemplateRenderHelper().renderTemplate(
+                        ctx, picklistOptionDef.getTooltipTemplate()),
+                ctx.getAIBuilderFactory().getTemplateRenderHelper().renderTemplate(
+                        ctx, picklistOptionDef.getDetailLabelTemplate()),
                 picklistOptionDef.isDetailsAllowed(),
                 picklistOptionDef.isExclusive(),
-                isNested ? null : addAndRenderTemplate(ctx, picklistOptionDef.getNestedOptionsLabelTemplate()),
+                isNested ? null : ctx.getAIBuilderFactory().getTemplateRenderHelper().renderTemplate(
+                        ctx, picklistOptionDef.getNestedOptionsLabelTemplate()),
                 isNested ? null :
                     CollectionMiscUtil.createListFromAnotherList(picklistOptionDef.getNestedOptions(),
                         (nestedPicklistOptionDef) -> createPicklistOption(ctx, nestedPicklistOptionDef,  picklistGroupDefs, true))

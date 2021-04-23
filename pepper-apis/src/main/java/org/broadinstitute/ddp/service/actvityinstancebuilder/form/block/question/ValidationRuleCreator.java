@@ -1,9 +1,11 @@
-package org.broadinstitute.ddp.service.actvityinstancebuilder.block.question;
+package org.broadinstitute.ddp.service.actvityinstancebuilder.form.block.question;
 
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 
+import org.broadinstitute.ddp.content.I18nContentRenderer;
 import org.broadinstitute.ddp.db.ActivityDefStore;
+import org.broadinstitute.ddp.db.dao.ValidationDao;
 import org.broadinstitute.ddp.model.activity.definition.validation.AgeRangeRuleDef;
 import org.broadinstitute.ddp.model.activity.definition.validation.CompleteRuleDef;
 import org.broadinstitute.ddp.model.activity.definition.validation.DateFieldRequiredRuleDef;
@@ -24,12 +26,16 @@ import org.broadinstitute.ddp.model.activity.instance.validation.NumOptionsSelec
 import org.broadinstitute.ddp.model.activity.instance.validation.RegexRule;
 import org.broadinstitute.ddp.model.activity.instance.validation.RequiredRule;
 import org.broadinstitute.ddp.model.activity.instance.validation.Rule;
+import org.broadinstitute.ddp.model.activity.types.RuleType;
 import org.broadinstitute.ddp.service.actvityinstancebuilder.context.AIBuilderContext;
+import org.jdbi.v3.core.Handle;
 
 /**
  * Creates {@link Rule}
  */
 public class ValidationRuleCreator {
+
+    private static final I18nContentRenderer i18nContentRenderer = new I18nContentRenderer();
 
     public Rule createRule(AIBuilderContext ctx, RuleDef ruleDef) {
         switch (ruleDef.getRuleType()) {
@@ -157,10 +163,33 @@ public class ValidationRuleCreator {
                 ruleDef.getRuleType(),
                 ruleDef.getHintTemplateId(),
                 ctx.getLanguageDto().getId(),
-                ctx.getFormResponse().getCreatedAt());
+                ctx.getFormResponse().getCreatedAt(),
+                ctx.getAIBuilderFactory().getValidationRuleCreator()::detectValidationRuleMessage);
     }
 
     private String getHintTitle(AIBuilderContext ctx, RuleDef ruleDef) {
         return ruleDef.getHintTemplate() !=  null ? ruleDef.getHintTemplate().render(ctx.getIsoLangCode()) : null;
+    }
+
+    public String detectValidationRuleMessage(
+            Handle handle, RuleType ruleType, Long hintTemplateId, long langCodeId, long timestamp) {
+        String correctionHint = null;
+        if (hintTemplateId != null) {
+            correctionHint = i18nContentRenderer.renderContent(handle, hintTemplateId, langCodeId, timestamp);
+        }
+        if (correctionHint != null) {
+            return correctionHint;
+        } else {
+            var validationDao = handle.attach(ValidationDao.class);
+            return validationDao.getJdbiI18nValidationMsgTrans().getValidationMessage(
+                    validationDao.getJdbiValidationType().getTypeId(ruleType), langCodeId);
+        }
+    }
+
+    @FunctionalInterface
+    public interface ValidationRuleMessageDetector {
+
+        String detectValidationRuleMessage(
+                Handle handle, RuleType ruleType, Long hintTemplateId, long langCodeId, long timestamp);
     }
 }

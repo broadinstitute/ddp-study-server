@@ -22,6 +22,7 @@ public class AIBuilderParams {
 
     private UserActivityInstanceSummary instanceSummary;
 
+    private boolean readPreviousInstanceId;
     private boolean disableTemplatesRendering;
 
     public static AIBuilderParams createParams(String userGuid, String studyGuid, String instanceGuid) {
@@ -88,6 +89,15 @@ public class AIBuilderParams {
 
     public AIBuilderParams setDisableTemplatesRendering(boolean disableTemplatesRendering) {
         this.disableTemplatesRendering = disableTemplatesRendering;
+        return this;
+    }
+
+    public boolean isReadPreviousInstanceId() {
+        return readPreviousInstanceId;
+    }
+
+    public AIBuilderParams setReadPreviousInstanceId(boolean readPreviousInstanceId) {
+        this.readPreviousInstanceId = readPreviousInstanceId;
         return this;
     }
 }
