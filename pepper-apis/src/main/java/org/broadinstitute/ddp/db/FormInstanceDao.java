@@ -24,11 +24,18 @@ import org.broadinstitute.ddp.model.activity.instance.FormInstance;
 import org.broadinstitute.ddp.model.activity.instance.FormSection;
 import org.broadinstitute.ddp.model.activity.types.FormType;
 import org.broadinstitute.ddp.model.activity.types.ListStyleHint;
+import org.broadinstitute.ddp.service.actvityinstancebuilder.ActivityInstanceFromDefinitionBuilder;
 import org.broadinstitute.ddp.util.ActivityInstanceUtil;
 import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * {@link FormInstance} DB access.
+ *
+ * @deprecated as soon as all methods of this class will be removed this class could be removed either
+ *     because {@link ActivityInstanceFromDefinitionBuilder} is used instead
+ */
 public class FormInstanceDao {
 
     private static final Logger LOG = LoggerFactory.getLogger(FormInstanceDao.class);
@@ -55,12 +62,20 @@ public class FormInstanceDao {
      * @param isoLangCode  the language iso code
      * @param style        the content style to use for converting content
      * @return form activity instance, or null if not found
+     *
+     * @deprecated - can be removed because {@link ActivityInstanceFromDefinitionBuilder} is used instead of this approach method.
      */
+    @Deprecated
     public FormInstance getTranslatedFormByGuid(Handle handle, String instanceGuid, String isoLangCode, ContentStyle style) {
         return getTranslatedFormByGuid(handle, instanceGuid, isoLangCode, style, false);
     }
 
-    // This allows fetching form with deprecated questions. Prefer the other method that excludes them.
+    /**
+     * This allows fetching form with deprecated questions. Prefer the other method that excludes them.
+     *
+     * @deprecated - can be removed because {@link ActivityInstanceFromDefinitionBuilder} is used instead of this approach method.
+     */
+    @Deprecated
     public FormInstance getTranslatedFormByGuid(Handle handle, String instanceGuid, String isoLangCode, ContentStyle style,
                                                 boolean includeDeprecated) {
         FormInstance form = getBaseFormByGuid(handle, instanceGuid, isoLangCode);
@@ -80,7 +95,10 @@ public class FormInstanceDao {
      * @param instanceGuid the form instance guid
      * @param isoLangCode  the language iso code
      * @return form activity instance with only the basic properties, or null if not found
+     *
+     * @deprecated - can be removed because {@link ActivityInstanceFromDefinitionBuilder} is used instead of this approach method.
      */
+    @Deprecated
     public FormInstance getBaseFormByGuid(Handle handle, String instanceGuid, String isoLangCode) {
         FormInstance form = null;
         try (PreparedStatement stmt = handle.getConnection().prepareStatement(formActivityByGuidQuery)) {
@@ -164,12 +182,20 @@ public class FormInstanceDao {
      * @param handle     the jdbi handle
      * @param form       the form activity instance
      * @param langCodeId the language code id
+     *
+     * @deprecated - can be removed because {@link ActivityInstanceFromDefinitionBuilder} is used instead of this approach method.
      */
+    @Deprecated
     public void loadAllSectionsForForm(Handle handle, FormInstance form, long langCodeId) {
         loadAllSectionsForForm(handle, form, langCodeId, false);
     }
 
-    // This allows fetching sections with deprecated questions. Prefer the other method that excludes them.
+    /**
+     * This allows fetching sections with deprecated questions. Prefer the other method that excludes them.
+     *
+     * @deprecated - can be removed because {@link ActivityInstanceFromDefinitionBuilder} is used instead of this approach method.
+     */
+    @Deprecated
     public void loadAllSectionsForForm(Handle handle, FormInstance form, long langCodeId, boolean includeDeprecated) {
         List<Long> bodyIds = handle.attach(JdbiFormActivityFormSection.class).getOrderedBodySectionIds(form.getGuid());
 

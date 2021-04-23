@@ -39,16 +39,19 @@ emailTemplates:
 clients:
   - name: prion-angular-client
     app_type: spa
-    callbacks:
-      - '##BASE_URL##/login-landing'
+    callbacks: [
+      '##BASE_URL##/login-landing'
       ##LOCALHOST_CALLBACKS##
-    allowed_logout_urls:
-      - '##BASE_URL##'
-      - '##BASE_URL##/session-expired'
+    ]
+    allowed_logout_urls: [
+      '##BASE_URL##',
+      '##BASE_URL##/session-expired'
       ##LOCALHOST_LOGOUTS##
-    web_origins:
-      - '##BASE_URL##'
+    ]
+    web_origins: [
+      '##BASE_URL##'
       ##LOCALHOST_ORIGINS##
+    ]
     client_metadata:
       study: PRION
     jwt_configuration:
