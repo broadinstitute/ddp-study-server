@@ -36,9 +36,7 @@ public class ActivityInstanceDaoTest extends TxnAwareBaseTest {
 
     @BeforeClass
     public static void setup() {
-        SectionBlockDao sectionBlockDao = new SectionBlockDao();
-        FormInstanceDao formInstanceDao = FormInstanceDao.fromDaoAndConfig(sectionBlockDao, sqlConfig);
-        dao = new ActivityInstanceDao(formInstanceDao);
+        dao = new ActivityInstanceDao();
         TransactionWrapper.useTxn(handle -> {
             data = TestDataSetupUtil.generateBasicUserTestData(handle);
             userGuid = data.getTestingUser().getUserGuid();

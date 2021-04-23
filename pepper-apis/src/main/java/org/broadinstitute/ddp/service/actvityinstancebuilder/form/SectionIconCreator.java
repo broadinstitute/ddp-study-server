@@ -1,4 +1,4 @@
-package org.broadinstitute.ddp.service.actvityinstancebuilder;
+package org.broadinstitute.ddp.service.actvityinstancebuilder.form;
 
 
 import org.broadinstitute.ddp.model.activity.definition.SectionIcon;

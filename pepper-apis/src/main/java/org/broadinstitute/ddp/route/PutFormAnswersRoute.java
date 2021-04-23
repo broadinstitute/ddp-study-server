@@ -17,7 +17,6 @@ import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants.PathParam;
 import org.broadinstitute.ddp.content.I18nContentRenderer;
 import org.broadinstitute.ddp.db.ActivityDefStore;
-import org.broadinstitute.ddp.db.FormInstanceDao;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceStatusDao;
@@ -76,20 +75,17 @@ public class PutFormAnswersRoute implements Route {
     private final WorkflowService workflowService;
     private final ActivityInstanceService actInstService;
     private final ActivityValidationService actValidationService;
-    private final FormInstanceDao formInstanceDao;
     private final PexInterpreter interpreter;
 
     public PutFormAnswersRoute(
             WorkflowService workflowService,
             ActivityInstanceService actInstService,
             ActivityValidationService actValidationService,
-            FormInstanceDao formInstanceDao,
             PexInterpreter interpreter
     ) {
         this.workflowService = workflowService;
         this.actInstService = actInstService;
         this.actValidationService = actValidationService;
-        this.formInstanceDao = formInstanceDao;
         this.interpreter = interpreter;
     }
 

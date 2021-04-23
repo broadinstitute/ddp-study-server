@@ -15,14 +15,12 @@ import org.broadinstitute.ddp.model.activity.instance.FormInstance;
 import org.broadinstitute.ddp.model.activity.instance.FormResponse;
 import org.broadinstitute.ddp.pex.PexInterpreter;
 import org.broadinstitute.ddp.pex.TreeWalkInterpreter;
+import org.broadinstitute.ddp.service.actvityinstancebuilder.AIBuilderFactory;
 import org.jdbi.v3.core.Handle;
 
 /**
  * Aggregates objects which needs on all steps of {@link ActivityInstance} building.
  * {@link AIBuilderContext} created at the beginning of the building process.
- *
- * <p>Contains a reference to {@link AICreatorsFactory} where created all instances
- * of Creator-classes used to create {@link ActivityInstance}
  */
 public class AIBuilderContext {
 
@@ -31,6 +29,7 @@ public class AIBuilderContext {
     private AIBuildStep failedStep;
     private String failedMessage;
 
+    private final AIBuilderFactory aiBuilderFactory;
     private final Handle handle;
     private final AIBuilderParams params;
 
@@ -48,9 +47,9 @@ public class AIBuilderContext {
 
     private Map<Long, String> renderedTemplates = new HashMap<>();
 
-    private final AICreatorsFactory creatorsFactory = new AICreatorsFactory();
 
-    public AIBuilderContext(Handle handle, AIBuilderParams params) {
+    public AIBuilderContext(AIBuilderFactory aiBuilderFactory, Handle handle, AIBuilderParams params) {
+        this.aiBuilderFactory = aiBuilderFactory;
         this.handle = handle;
         this.params = params;
         this.languageDto = LanguageStore.get(params.getIsoLangCode());
@@ -91,6 +90,10 @@ public class AIBuilderContext {
 
     public AIBuilderParams getParams() {
         return params;
+    }
+
+    public AIBuilderFactory getAIBuilderFactory() {
+        return aiBuilderFactory;
     }
 
     public Handle getHandle() {
@@ -175,9 +178,5 @@ public class AIBuilderContext {
     public AIBuilderContext setPreviousInstanceId(Long previousInstanceId) {
         this.previousInstanceId = previousInstanceId;
         return this;
-    }
-
-    public AICreatorsFactory creators() {
-        return creatorsFactory;
     }
 }
