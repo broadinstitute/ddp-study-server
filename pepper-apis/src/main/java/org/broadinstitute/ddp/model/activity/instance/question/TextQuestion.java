@@ -124,10 +124,14 @@ public class TextQuestion extends Question<TextAnswer> {
     @Override
     public void applyRenderedTemplates(Provider<String> rendered, ContentStyle style) {
         super.applyRenderedTemplates(rendered, style);
-        placeholderText = applyRenderedTemplate(placeholderTemplateId, placeholderText, rendered, style);
-        confirmPlaceholderText = applyRenderedTemplate(confirmPlaceholderTemplateId, confirmPlaceholderText, rendered, style);
-        confirmPrompt = applyRenderedTemplate(confirmPromptTemplateId, confirmPrompt, rendered, style);
-        mismatchMessage = applyRenderedTemplate(mismatchMessageTemplateId, mismatchMessage, rendered, style);
+        placeholderText = applyRenderedTemplate("placeholder",
+                placeholderTemplateId, placeholderText, rendered, style);
+        confirmPlaceholderText = applyRenderedTemplate("confirm placeholder",
+                confirmPlaceholderTemplateId, confirmPlaceholderText, rendered, style);
+        confirmPrompt = applyRenderedTemplate("confirm prompt",
+                confirmPromptTemplateId, confirmPrompt, rendered, style);
+        mismatchMessage = applyRenderedTemplate("mismatch message",
+                mismatchMessageTemplateId, mismatchMessage, rendered, style);
     }
 
     public TextInputType getInputType() {

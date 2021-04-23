@@ -33,13 +33,11 @@ public interface JdbiTextQuestion extends SqlObject {
             + "INNER JOIN suggestion_type AS s_type ON s_type.suggestion_type_code = :suggestionType "
             + "SET tq.input_type_id = i_type.text_question_input_type_id, "
             + "     tq.suggestion_type_id = s_type.suggestion_type_id, "
-            + "     tq.placeholder_template_id = :placeholderTemplateId, "
-            + "     tq.confirm_placeholder_template_id = :confirmPlaceholderTemplateId "
+            + "     tq.placeholder_template_id = :placeholderTemplateId "
             + "WHERE tq.question_id = :questionId")
     boolean update(@Bind("questionId") long questionId,
                    @Bind("inputType") TextInputType inputType,
                    @Bind("suggestionType") SuggestionType suggestionType,
-                   @Bind("placeholderTemplateId") Long placeholderTemplateId,
-                   @Bind("confirmPlaceholderTemplateId") Long confirmPlaceholderTemplateId);
+                   @Bind("placeholderTemplateId") Long placeholderTemplateId);
 
 }
