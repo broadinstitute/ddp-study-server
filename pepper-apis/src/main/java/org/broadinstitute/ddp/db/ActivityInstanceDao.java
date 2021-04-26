@@ -1,7 +1,5 @@
 package org.broadinstitute.ddp.db;
 
-import static org.broadinstitute.ddp.model.activity.types.ActivityType.FORMS;
-
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -15,16 +13,12 @@ import org.broadinstitute.ddp.constants.SqlConstants;
 import org.broadinstitute.ddp.constants.SqlConstants.ActivityInstanceTable;
 import org.broadinstitute.ddp.constants.SqlConstants.LanguageCodeTable;
 import org.broadinstitute.ddp.constants.SqlFile.ActivityInstanceSql;
-import org.broadinstitute.ddp.content.ContentStyle;
 import org.broadinstitute.ddp.db.dao.FormActivityDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
 import org.broadinstitute.ddp.db.dto.ActivityDto;
-import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.json.UserActivity;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
-import org.broadinstitute.ddp.model.activity.instance.ActivityInstance;
-import org.broadinstitute.ddp.model.activity.types.ActivityType;
 import org.broadinstitute.ddp.util.I18nUtil;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.JdbiException;
@@ -39,17 +33,6 @@ public class ActivityInstanceDao {
     private static String TRANSLATED_SUMMARY_BY_GUID_QUERY;
     private static String INSTANCE_ID_BY_GUID_QUERY;
     private static String SECTIONS_SIZE_FOR_ACTIVITY_INSTANCE;
-
-    private final FormInstanceDao formInstanceDao;
-
-    /**
-     * Instantiate ActivityInstanceDao object.
-     */
-    public ActivityInstanceDao(
-            FormInstanceDao formInstanceDao
-    ) {
-        this.formInstanceDao = formInstanceDao;
-    }
 
     /**
      * Given {@code sqlConfig}, load relevant SQL queries.
@@ -124,30 +107,6 @@ public class ActivityInstanceDao {
             throw new DaoException("Could not find summary for instance guid " + activityInstanceGuid
                     + " iso lang " + preferredLanguageCode, e);
         }
-    }
-
-    /**
-     * Get specific activity instance, translated to given language.
-     *
-     * @param handle               the jdbi handle
-     * @param activityType         the corresponding activity type
-     * @param activityInstanceGuid the activity instance guid
-     * @param isoLangCode          the language iso code
-     * @param style                the content style to use for converting content
-     * @return activity instance, or null if not found
-     */
-    public ActivityInstance getTranslatedActivityByTypeAndGuid(Handle handle, ActivityType activityType, String activityInstanceGuid,
-                                                               String isoLangCode, ContentStyle style) {
-        return getTranslatedActivityByTypeAndGuid(handle, activityType, activityInstanceGuid, isoLangCode, style, false);
-    }
-
-    // This allows fetching activity with deprecated questions, i.e. for data export purposes. Prefer the other method that excludes them.
-    public ActivityInstance getTranslatedActivityByTypeAndGuid(Handle handle, ActivityType activityType, String activityInstanceGuid,
-                                                               String isoLangCode, ContentStyle style, boolean includeDeprecated) {
-        if (activityType == FORMS) {
-            return formInstanceDao.getTranslatedFormByGuid(handle, activityInstanceGuid, isoLangCode, style, includeDeprecated);
-        }
-        throw new DDPException("Unhandled activity type " + activityType);
     }
 
     /**

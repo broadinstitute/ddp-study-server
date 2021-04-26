@@ -1,4 +1,4 @@
-package org.broadinstitute.ddp.service.actvityinstancebuilder.block;
+package org.broadinstitute.ddp.service.actvityinstancebuilder.form.block;
 
 import org.broadinstitute.ddp.model.activity.definition.ComponentBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.ConditionalBlockDef;
@@ -22,7 +22,7 @@ public class FormBlockCreator {
     }
 
     private FormBlock constructFormBlock(AIBuilderContext ctx, FormBlockDef formBlockDef) {
-        FormBlockCreatorHelper creatorHelper = ctx.creators().getFormBlockCreatorHelper();
+        FormBlockCreatorHelper creatorHelper = ctx.getAIBuilderFactory().getFormBlockCreatorHelper();
         switch (formBlockDef.getBlockType()) {
             case GROUP:
                 return creatorHelper.createGroupBlock(ctx, (GroupBlockDef) formBlockDef);
