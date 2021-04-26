@@ -1,5 +1,6 @@
 package org.broadinstitute.ddp.service;
 
+import static org.broadinstitute.ddp.service.actvityinstancebuilder.context.AIBuilderParams.createParams;
 import static org.broadinstitute.ddp.util.TranslationUtil.extractOptionalActivitySummary;
 import static org.broadinstitute.ddp.util.TranslationUtil.extractOptionalActivityTranslation;
 import static org.broadinstitute.ddp.util.TranslationUtil.extractTranslatedActivityName;
@@ -35,6 +36,7 @@ import org.broadinstitute.ddp.db.dto.ActivityDto;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceSummaryDto;
 import org.broadinstitute.ddp.db.dto.ActivityVersionDto;
+import org.broadinstitute.ddp.db.dto.UserActivityInstanceSummary;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.json.activity.ActivityInstanceSummary;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
@@ -50,12 +52,16 @@ import org.broadinstitute.ddp.model.activity.types.ActivityType;
 import org.broadinstitute.ddp.model.activity.types.BlockType;
 import org.broadinstitute.ddp.model.study.StudyLanguage;
 import org.broadinstitute.ddp.pex.PexInterpreter;
-import org.broadinstitute.ddp.service.actvityinstancebuilder.ActivityInstanceFromDefinitionBuilder;
+import org.broadinstitute.ddp.service.actvityinstancebuilder.AIBuilderFactory;
 import org.broadinstitute.ddp.util.ActivityInstanceUtil;
 import org.jdbi.v3.core.Handle;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 public class ActivityInstanceService {
+
+    private static final Logger LOG = LoggerFactory.getLogger(ActivityInstanceService.class);
 
     private final ActivityInstanceDao actInstanceDao;
     private final PexInterpreter interpreter;
@@ -65,38 +71,6 @@ public class ActivityInstanceService {
         this.actInstanceDao = actInstanceDao;
         this.interpreter = interpreter;
         this.renderer = renderer;
-    }
-
-    /**
-     * Get an activity instance, translated to given language. If activity is a form, visibility of blocks will be
-     * resolved as well. Activity instance summaries for nested activity blocks will not be loaded -- this should be
-     * done by caller separately.
-     *
-     * @param handle          the jdbi handle
-     * @param userGuid        the user guid
-     * @param actType         the activity type
-     * @param actInstanceGuid the activity instance guid
-     * @param isoLangCode     the iso language code
-     * @param style           the content style to use for converting content
-     * @return activity instance, if found
-     * @throws DDPException if pex evaluation error
-     * @deprecated Thus method should be removed as soon as
-     * {@link #buildInstanceFromDefinition(Handle, String, String, String, String, ContentStyle, String)} is carefully tested
-     *     (all code which utilized by this method (and not used in other places) should be removed also)
-     */
-    @Deprecated
-    public Optional<ActivityInstance> getTranslatedActivity(Handle handle, String userGuid, String operatorGuid, ActivityType actType,
-                                                            String actInstanceGuid, String isoLangCode, ContentStyle style) {
-        ActivityInstance inst = actInstanceDao.getTranslatedActivityByTypeAndGuid(handle, actType, actInstanceGuid, isoLangCode, style);
-        if (inst == null) {
-            return Optional.empty();
-        }
-
-        if (ActivityType.FORMS.equals(inst.getActivityType())) {
-            ((FormInstance) inst).updateBlockStatuses(handle, interpreter, userGuid, operatorGuid, actInstanceGuid, null);
-        }
-
-        return Optional.of(inst);
     }
 
     /**
@@ -542,6 +516,15 @@ public class ActivityInstanceService {
     /**
      * Build {@link ActivityInstance} from data cached stored in {@link ActivityDefStore}.
      * Some of data (answers, rule messages) are queried from DB.
+     * This method provide full building and rendering of {@link FormInstance}:
+     * <pre>
+     * - create form;
+     * - add children;
+     * - render form title/subtitle;
+     * - render content;
+     * - set display numbers;
+     * - update block statuses.
+     * </pre>
      */
     public Optional<ActivityInstance> buildInstanceFromDefinition(
             Handle handle,
@@ -551,8 +534,72 @@ public class ActivityInstanceService {
             String instanceGuid,
             ContentStyle style,
             String isoLangCode) {
-        return new ActivityInstanceFromDefinitionBuilder().buildActivityInstance(
-                handle, userGuid, operatorGuid, studyGuid, instanceGuid, style, isoLangCode
-        );
+
+        var context = AIBuilderFactory.createAIBuilder(handle,
+                createParams(userGuid, studyGuid, instanceGuid)
+                        .setOperatorGuid(operatorGuid)
+                        .setIsoLangCode(isoLangCode)
+                        .setStyle(style))
+                .checkParams()
+                    .readFormInstanceData()
+                    .readActivityDef()
+                .startBuild()
+                    .buildFormInstance()
+                    .buildFormChildren()
+                    .renderFormTitles()
+                    .renderContent()
+                    .setDisplayNumbers()
+                    .updateBlockStatuses()
+                .endBuild()
+                    .getContext();
+
+        if (context.getFailedStep() != null) {
+            LOG.warn("ActivityInstance build failed: {}, step={}", context.getFailedMessage(), context.getFailedStep());
+        }
+        return Optional.ofNullable(context.getFormInstance());
+    }
+
+    /**
+     * Build {@link ActivityInstance} from data cached stored in {@link ActivityDefStore}.
+     * Some of data (answers, rule messages) are queried from DB.
+     * This method provide partial building and rendering of {@link FormInstance}, plus it passes 'instanceSummary'.<br>
+     * The following building steps executed:
+     * <pre>
+     * - create form;
+     * - add children;
+     * - render form title/subtitle;
+     * - update block statuses.
+     * </pre>
+     */
+    public Optional<ActivityInstance> buildInstanceFromDefinition(
+            Handle handle,
+            String userGuid,
+            String operatorGuid,
+            String studyGuid,
+            String instanceGuid,
+            String isoLangCode,
+            UserActivityInstanceSummary instanceSummary) {
+
+        var context = AIBuilderFactory.createAIBuilder(handle,
+                createParams(userGuid, studyGuid, instanceGuid)
+                        .setOperatorGuid(operatorGuid)
+                        .setIsoLangCode(isoLangCode)
+                        .setInstanceSummary(instanceSummary)
+                        .setDisableTemplatesRendering(true))
+                .checkParams()
+                    .readFormInstanceData()
+                    .readActivityDef()
+                .startBuild()
+                    .buildFormInstance()
+                    .buildFormChildren()
+                    .renderFormTitles()
+                    .updateBlockStatuses()
+                .endBuild()
+                    .getContext();
+
+        if (context.getFailedStep() != null) {
+            LOG.warn("ActivityInstance build failed: {}, step={}", context.getFailedMessage(), context.getFailedStep());
+        }
+        return Optional.ofNullable(context.getFormInstance());
     }
 }

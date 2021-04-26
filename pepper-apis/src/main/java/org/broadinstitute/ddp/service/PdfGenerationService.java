@@ -7,6 +7,7 @@ import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -141,10 +142,21 @@ public class PdfGenerationService {
         Participant participant = loadParticipantData(handle, configuration, userGuid);
         Map<Long, ActivityResponse> instances = loadActivityInstanceData(handle, configuration, participant);
         Long languageId = null;
+        List<Long> templateIds = Collections.emptyList();
         if (participant.getUser().getProfile() != null) {
             languageId = participant.getUser().getProfile().getPreferredLangId();
+            if (languageId != null) {
+                //make sure pdf templates exist for this language else fallback to study default language
+                templateIds = handle.attach(PdfDao.class)
+                        .findTemplateIdsByVersionIdAndLanguageCodeId(configuration.getVersion().getId(), languageId);
+                if (templateIds.isEmpty()) {
+                    LOG.warn("User : {} has language {} as preferred language but NO PDF templates found for the language. " 
+                            + "Using study default language ", userGuid, participant.getUser().getProfile().getPreferredLangCode());
+                }
+            }
         }
-        if (languageId == null) {
+
+        if (languageId == null || templateIds.isEmpty()) {
             //use study default language if exists
             StudyLanguageDao studyLanguageDao = handle.attach(StudyLanguageDao.class);
             List<Long> defaultLanguages = studyLanguageDao.getStudyLanguageSql().selectDefaultLanguageCodeId(configuration.getStudyId());
@@ -154,11 +166,12 @@ public class PdfGenerationService {
                 //fallback to "en" as default
                 languageId = LanguageStore.getDefault().getId();
             }
+            templateIds = handle.attach(PdfDao.class)
+                    .findTemplateIdsByVersionIdAndLanguageCodeId(configuration.getVersion().getId(), languageId);
+            if (templateIds.isEmpty()) {
+                throw new DDPException("NO PDF templates found for study " + configuration.getStudyGuid());
+            }
         }
-
-        //filter template list by languageId
-        List<Long> templateIds = handle.attach(PdfDao.class)
-                .findTemplateIdsByVersionIdAndLanguageCodeId(configuration.getVersion().getId(), languageId);
 
         List<String> errors = new ArrayList<>();
         try (
