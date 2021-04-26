@@ -318,11 +318,24 @@ public class ActivityBuilder {
             throw new DDPException("Activity definition file is missing: " + file);
         }
 
+        Config definition = ConfigFactory.parseFile(file).resolveWith(varsCfg);
+        if (definition.isEmpty()) {
+            throw new DDPException("Activity definition file is empty: " + file);
+        }
+        return definition;
+    }
+
+    public Config readDefinitionConfig(String filepath, boolean allowUnresolved) {
+        File file = dirPath.resolve(filepath).toFile();
+        if (!file.exists()) {
+            throw new DDPException("Activity definition file is missing: " + file);
+        }
+
         Config definition = ConfigFactory.parseFile(file)
                 // going to resolve first the external global variables that might be used in this configuration
-                // using setAllowUnresolved so we can do a second pass that will allow us to resolve variables
+                // using setAllowUnresolved = true so we can do a second pass that will allow us to resolve variables
                 // within the configuration
-                .resolveWith(varsCfg, ConfigResolveOptions.defaults().setAllowUnresolved(true));
+                .resolveWith(varsCfg, ConfigResolveOptions.defaults().setAllowUnresolved(allowUnresolved));
         if (definition.isEmpty()) {
             throw new DDPException("Activity definition file is empty: " + file);
         }
