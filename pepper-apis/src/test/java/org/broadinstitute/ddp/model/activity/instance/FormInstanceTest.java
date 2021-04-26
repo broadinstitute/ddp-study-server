@@ -149,7 +149,7 @@ public class FormInstanceTest extends TxnAwareBaseTest {
         doReturn(fixture).when(spyRenderer).bulkRender(any(), anySet(), anyLong(), any(), anyLong());
         doCallRealMethod().when(spyRenderer).renderToString(anyString(), any());
 
-        Question question = new TextQuestion("sid", 1, null, null, Collections.emptyList(), Collections.emptyList(),
+        Question question = new TextQuestion("sid", 1, null, Collections.emptyList(), Collections.emptyList(),
                 TextInputType.TEXT);
         QuestionBlock block = new QuestionBlock(question);
         FormSection s1 = new FormSection(Collections.singletonList(block));
@@ -170,7 +170,7 @@ public class FormInstanceTest extends TxnAwareBaseTest {
         doReturn(fixture).when(spyRenderer).bulkRender(any(), anySet(), anyLong(), any(), anyLong());
         doCallRealMethod().when(spyRenderer).renderToString(anyString(), any());
 
-        Question question = new TextQuestion("sid", 1, null, null, Collections.emptyList(), Collections.emptyList(),
+        Question question = new TextQuestion("sid", 1, null, Collections.emptyList(), Collections.emptyList(),
                 TextInputType.TEXT);
         QuestionBlock block = new QuestionBlock(question);
         FormSection s1 = new FormSection(Collections.singletonList(block));
@@ -263,10 +263,10 @@ public class FormInstanceTest extends TxnAwareBaseTest {
                 111L, 112L, 1L, null, null, null, false, false, false, false, 0);
 
         var body = new FormSection(List.of(
-                new QuestionBlock(new TextQuestion("Q_TITLE", 1L, null, null, List.of(
+                new QuestionBlock(new TextQuestion("Q_TITLE", 1L, null, List.of(
                         new TextAnswer(null, "Q_TITLE", null, "title-answer")),
                         List.of(), TextInputType.TEXT)),
-                new QuestionBlock(new TextQuestion("Q_SUBTITLE", 1L, null, null, List.of(
+                new QuestionBlock(new TextQuestion("Q_SUBTITLE", 1L, null, List.of(
                         new TextAnswer(null, "Q_SUBTITLE", null, "subtitle-answer")),
                         List.of(), TextInputType.TEXT))));
         form.addBodySections(List.of(body));
@@ -523,9 +523,9 @@ public class FormInstanceTest extends TxnAwareBaseTest {
         var q2 = new QuestionBlock(new BoolQuestion("b2", 1L,
                 List.of(new BoolAnswer(2L, "b2", "2", false)), List.of(), 2L, 3L));
         q2.setShown(false);
-        var cond1 = new ConditionalBlock(new TextQuestion("t1", 1L, null, null,
+        var cond1 = new ConditionalBlock(new TextQuestion("t1", 1L, null,
                 List.of(new TextAnswer(3L, "t1", "3", "cond1")), List.of(), TextInputType.TEXT));
-        var nest1 = new QuestionBlock(new TextQuestion("t2", 1L, null, null,
+        var nest1 = new QuestionBlock(new TextQuestion("t2", 1L, null,
                 List.of(new TextAnswer(4L, "t2", "4", "nest1")), List.of(), TextInputType.TEXT));
         cond1.getNested().add(nest1);
         cond1.setShown(false);

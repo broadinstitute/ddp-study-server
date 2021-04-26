@@ -88,12 +88,12 @@ public class TextQuestion extends Question<TextAnswer> {
         }
     }
 
-    public TextQuestion(String stableId, long promptTemplateId, Long placeholderTemplateId, Long confirmPlaceholderTemplateId,
+    public TextQuestion(String stableId, long promptTemplateId, Long placeholderTemplateId,
                         List<TextAnswer> answers, List<Rule<TextAnswer>> validations, TextInputType inputType) {
         this(stableId,
                 promptTemplateId,
                 placeholderTemplateId,
-                confirmPlaceholderTemplateId,
+                null,
                 false,
                 false,
                 false,

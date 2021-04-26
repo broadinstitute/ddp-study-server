@@ -23,7 +23,7 @@ public class RegexRuleTest {
 
     @BeforeClass
     public static void setup() {
-        unused = new TextQuestion("sid", 1L, 2L, 3L, emptyList(), emptyList(), TextInputType.TEXT);
+        unused = new TextQuestion("sid", 1L, 2L, emptyList(), emptyList(), TextInputType.TEXT);
     }
 
     @Test
