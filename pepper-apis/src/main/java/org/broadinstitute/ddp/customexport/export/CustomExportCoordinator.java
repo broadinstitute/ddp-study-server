@@ -95,7 +95,7 @@ public class CustomExportCoordinator {
         // Proceed with the export
         List<ActivityExtract> activityExtracts =
                 withAPIsTxn(handle -> {
-                    List<ActivityExtract> extracts = exporter.extractCustomActivity(handle);
+                    List<ActivityExtract> extracts = exporter.extractActivity(handle);
                     ExportUtil.computeMaxInstancesSeen(handle, extracts);
                     ExportUtil.computeActivityAttributesSeen(handle, extracts);
                     return extracts;

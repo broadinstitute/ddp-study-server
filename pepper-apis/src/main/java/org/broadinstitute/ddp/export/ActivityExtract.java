@@ -15,10 +15,17 @@ public class ActivityExtract {
     private ActivityVersionDto versionDto;
     private Integer maxInstancesSeen;
     private List<String> attributesSeen = new ArrayList<>();
+    private List<ActivityExtract> childExtracts;
 
     public ActivityExtract(ActivityDef definition, ActivityVersionDto versionDto) {
         this.definition = definition;
         this.versionDto = versionDto;
+    }
+
+    public ActivityExtract(ActivityDef definition, ActivityVersionDto versionDto, List<ActivityExtract> childExtracts) {
+        this.definition = definition;
+        this.versionDto = versionDto;
+        this.childExtracts = childExtracts;
     }
 
     public ActivityDef getDefinition() {
@@ -35,6 +42,10 @@ public class ActivityExtract {
 
     public Integer getMaxInstancesSeen() {
         return maxInstancesSeen;
+    }
+
+    public List<ActivityExtract> getChildExtracts() {
+        return childExtracts;
     }
 
     public void setMaxInstancesSeen(Integer maxInstancesSeen) {
