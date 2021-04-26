@@ -126,7 +126,9 @@ class UserLoader {
 
         var userDao = handle.attach(UserDao.class);
         String userGuid = DBUtils.uniqueUserGuid(handle);
-        String userHruid = DBUtils.uniqueUserHruid(handle);
+        // Per RGP's request, legacy short ids will be migrated as HRUIDs. Since hruids so far are generated
+        // alphanumerics, this shouldn't cause any conflicts since legacy ones are just numbers.
+        String userHruid = legacyShortId;
         long userId = userDao.getUserSql().insertByClientIdOrAuth0Ids(
                 true, clientDto.getId(), null, null, auth0UserId,
                 userGuid, userHruid, legacyAltPid, legacyShortId, false,
@@ -134,7 +136,7 @@ class UserLoader {
 
         String lastName = participant.getLastName();
         if (lastName != null && lastName.equals(participant.getEmail())) {
-            lastName = ""; // Some studies collect first name but not last name, so clear this if it was set to email.
+            lastName = ""; // RGP collects first name but not last name, so clear this if it was set to email.
         }
 
         var langDto = LanguageStore.get(languageCode);
