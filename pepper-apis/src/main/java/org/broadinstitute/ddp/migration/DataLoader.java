@@ -127,11 +127,13 @@ class DataLoader {
             var data = gson.fromJson(fileReader.readContent(filename), ParticipantFile.class);
             var row = report.newRow();
             TransactionWrapper.useTxn(handle -> processParticipant(handle, data, row));
-            try {
-                // Auth0 has rate limit, so add in some buffer.
-                TimeUnit.SECONDS.sleep(1L);
-            } catch (InterruptedException e) {
-                throw new LoaderException(e);
+            if (!row.isExistingUser()) {
+                try {
+                    // Auth0 has rate limit, so add in some buffer.
+                    TimeUnit.SECONDS.sleep(1L);
+                } catch (InterruptedException e) {
+                    throw new LoaderException(e);
+                }
             }
             count++;
         }
@@ -357,9 +359,6 @@ class DataLoader {
                 LOG.info(padding + "[{}] type={}, source={}, answerId={}, answerGuid={}",
                         question.getTarget(), question.getType(), question.getSource(),
                         answer.getAnswerId(), answer.getAnswerGuid());
-            } else {
-                LOG.info(padding + "[{}] type: {}, no source",
-                        question.getTarget(), question.getType());
             }
         }
     }

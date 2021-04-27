@@ -96,6 +96,10 @@ class Report {
             this.userHruid = userHruid;
         }
 
+        public boolean isExistingUser() {
+            return isExistingUser;
+        }
+
         public void setExistingUser(boolean existingUser) {
             isExistingUser = existingUser;
         }
