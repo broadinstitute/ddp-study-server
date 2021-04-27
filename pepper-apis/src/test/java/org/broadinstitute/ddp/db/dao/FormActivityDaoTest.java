@@ -186,6 +186,7 @@ public class FormActivityDaoTest extends TxnAwareBaseTest {
         Template prompt = new Template(TemplateType.TEXT, "prompt", "text question");
 
         Template header = new Template(TemplateType.TEXT, "header", "info header");
+        Template confirmPlaceholder = new Template(TemplateType.TEXT, "confirmPlaceholder", "info header confirm");
         Template footer = new Template(TemplateType.TEXT, "footer", "info footer");
 
         Template lengthHint = new Template(TemplateType.TEXT, "lenVal", "length hint");
@@ -200,6 +201,7 @@ public class FormActivityDaoTest extends TxnAwareBaseTest {
                 false,
                 prompt,
                 header,
+                confirmPlaceholder,
                 footer,
                 null,
                 rules,
