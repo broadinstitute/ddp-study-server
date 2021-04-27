@@ -37,7 +37,7 @@ public class ActivityInstanceFromDefinitionBuilderTest extends ActivityInstanceS
     public void testAIBuilderWithAllStepsExecutedOK() {
         TransactionWrapper.useTxn(handle -> {
             String instanceGuid = setupActivityAndInstance(handle);
-            var context = new ActivityInstanceFromDefinitionBuilder(handle,
+            var context = AIBuilderFactory.createAIBuilder(handle,
 
                     createParams(userGuid, studyGuid, instanceGuid)
                             .setIsoLangCode(VALID_LANG_CODE)
@@ -84,7 +84,7 @@ public class ActivityInstanceFromDefinitionBuilderTest extends ActivityInstanceS
     public void testAIBuilderWithAllNotAllStepsExecutedOK() {
         TransactionWrapper.useTxn(handle -> {
             String instanceGuid = setupActivityAndInstance(handle);
-            var context = new ActivityInstanceFromDefinitionBuilder(handle,
+            var context = AIBuilderFactory.createAIBuilder(handle,
                     createParams(userGuid, studyGuid, instanceGuid)
                             .setIsoLangCode(VALID_LANG_CODE))
                     .checkParams()
@@ -126,7 +126,7 @@ public class ActivityInstanceFromDefinitionBuilderTest extends ActivityInstanceS
         TransactionWrapper.useTxn(handle -> {
             String instanceGuid = setupActivityAndInstance(handle);
             try {
-                new ActivityInstanceFromDefinitionBuilder(handle,
+                AIBuilderFactory.createAIBuilder(handle,
                         createParams(userGuid, studyGuid, instanceGuid)
                                 .setIsoLangCode(VALID_LANG_CODE)
                                 .setStyle(CONTENT_STYLE))
@@ -161,7 +161,7 @@ public class ActivityInstanceFromDefinitionBuilderTest extends ActivityInstanceS
         TransactionWrapper.useTxn(handle -> {
             String instanceGuid = setupActivityAndInstance(handle);
             try {
-                new ActivityInstanceFromDefinitionBuilder(handle,
+                AIBuilderFactory.createAIBuilder(handle,
                         createParams(userGuid, studyGuid, instanceGuid)
                                 .setIsoLangCode(VALID_LANG_CODE)
                                 .setStyle(CONTENT_STYLE))
@@ -194,7 +194,7 @@ public class ActivityInstanceFromDefinitionBuilderTest extends ActivityInstanceS
     public void testAIBuilderWithUnknownLangCodeNOK() {
         TransactionWrapper.useTxn(handle -> {
             String instanceGuid = setupActivityAndInstance(handle);
-            var context = new ActivityInstanceFromDefinitionBuilder(handle,
+            var context = AIBuilderFactory.createAIBuilder(handle,
                     createParams(userGuid, studyGuid, instanceGuid)
                             .setIsoLangCode(INVALID_LANG_CODE)
                             .setStyle(CONTENT_STYLE))
@@ -233,7 +233,7 @@ public class ActivityInstanceFromDefinitionBuilderTest extends ActivityInstanceS
         TransactionWrapper.useTxn(handle -> {
             String instanceGuid = setupActivityAndInstance(handle);
             try {
-                var context = new ActivityInstanceFromDefinitionBuilder(handle,
+                var context = AIBuilderFactory.createAIBuilder(handle,
                         createParams(userGuid, studyGuid, instanceGuid)
                                 .setIsoLangCode(VALID_LANG_CODE))
                         .checkParams()
