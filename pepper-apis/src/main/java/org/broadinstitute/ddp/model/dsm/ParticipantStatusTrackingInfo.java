@@ -1,13 +1,11 @@
 package org.broadinstitute.ddp.model.dsm;
 
+import com.google.gson.annotations.SerializedName;
+import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
+
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
-
-import com.google.gson.annotations.SerializedName;
-import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 // All epoch timestamps are expressed in seconds
 public class ParticipantStatusTrackingInfo {
@@ -16,102 +14,92 @@ public class ParticipantStatusTrackingInfo {
         INELIGIBLE, PENDING, SENT, RECEIVED, DELIVERED, UNKNOWN
     }
 
-    private static final Logger LOG = LoggerFactory.getLogger(ParticipantStatus.class);
-
     @SerializedName("medicalRecords")
-    private MedicalRecord medicalRecord;
+    private List<MedicalRecord> medicalRecords;
     @SerializedName("tissue")
-    private TissueRecord tissueRecord;
+    private List<TissueRecord> tissueRecords;
     @SerializedName("kits")
     private List<Kit> kits;
     @SerializedName("workflows")
-    private List<Workflow> workflows;
+    private List<ParticipantStatusES.Workflow> workflows;
 
-    private transient String userGuid;
+    private final transient String userGuid;
 
     private RecordStatus figureOutMedicalRecordStatus(
-            String userGuid,
-            String entityName,
             EnrollmentStatusType enrollmentStatusType,
-            Long requested,
-            Long received
+            String requested,
+            String received
     ) {
         // Is it possible? Should we check for it here?
         if (!enrollmentStatusType.isEnrolled()) {
             return RecordStatus.INELIGIBLE;
-        } else if (requested == null && received == null) {
+        } else if (StringUtils.isBlank(requested) && StringUtils.isBlank(received)) {
             return RecordStatus.PENDING;
-        } else if (requested != null && received == null) {
+        } else if (StringUtils.isNotBlank(requested) && StringUtils.isBlank(received)) {
             return RecordStatus.SENT;
-        } else if (requested != null && received != null) {
+        } else { // received is not blank
             return RecordStatus.RECEIVED;
-        } else if (requested == null && received != null) {
-            return RecordStatus.RECEIVED;
-        } else {
-            LOG.error("Something completely unexpected happened with ", entityName);
-            return RecordStatus.UNKNOWN;
         }
     }
 
-    public ParticipantStatusTrackingInfo(ParticipantStatus dsmParticipantStatus,
-                                         List<Workflow> workflows,
-                                         EnrollmentStatusType enrollmentStatusType,
-                                         String userGuid
-    ) {
-        this(dsmParticipantStatus, enrollmentStatusType, userGuid);
-        this.workflows = workflows;
-    }
-
-    public ParticipantStatusTrackingInfo(
-            ParticipantStatus dsmParticipantStatus,
-            EnrollmentStatusType enrollmentStatusType,
-            String userGuid
-    ) {
+    public ParticipantStatusTrackingInfo(ParticipantStatusES statusES, EnrollmentStatusType enrollmentStatusType,
+                                         String userGuid) {
         this.userGuid = userGuid;
-        this.medicalRecord = new MedicalRecord(
-                figureOutMedicalRecordStatus(
-                        userGuid,
-                        "medical record",
-                        enrollmentStatusType,
-                        dsmParticipantStatus.getMrRequestedEpochTimeSec(),
-                        dsmParticipantStatus.getMrReceivedEpochTimeSec()
-                ),
-                dsmParticipantStatus.getMrRequestedEpochTimeSec(),
-                dsmParticipantStatus.getMrReceivedEpochTimeSec()
-        );
-        this.tissueRecord = new TissueRecord(
-                figureOutMedicalRecordStatus(
-                        userGuid,
-                        "tissue record",
-                        enrollmentStatusType,
-                        dsmParticipantStatus.getTissueRequestedEpochTimeSec(),
-                        dsmParticipantStatus.getTissueReceivedEpochTimeSec()
-                ),
-                dsmParticipantStatus.getTissueRequestedEpochTimeSec(),
-                dsmParticipantStatus.getTissueReceivedEpochTimeSec()
-        );
-
-        List<ParticipantStatus.Sample> samples = dsmParticipantStatus.getSamples();
-        samples = Optional.ofNullable(samples)
-                .orElse(new ArrayList<ParticipantStatus.Sample>());
-
-        List<Kit> kits = new ArrayList<Kit>();
-        for (ParticipantStatus.Sample sample: samples) {
-            kits.add(
-                    new Kit(
-                            sample,
-                            Kit.figureOutStatus(
-                                    userGuid,
-                                    enrollmentStatusType,
-                                    sample.getDeliveredEpochTimeSec(),
-                                    sample.getReceivedEpochTimeSec(),
-                                    sample.getTrackingId()
+        if (statusES != null) {
+            this.workflows = statusES.getWorkflows();
+            if (statusES.getSamples() != null) {
+                for (ParticipantStatusES.Sample sample : statusES.getSamples()) {
+                    if (this.kits == null) {
+                        this.kits = new ArrayList<>();
+                    }
+                    kits.add(
+                            new Kit(
+                                    sample,
+                                    Kit.figureOutStatus(
+                                            enrollmentStatusType,
+                                            sample.getDelivered(),
+                                            sample.getReceived()
+                                    )
                             )
-                    )
-            );
-        }
+                    );
+                }
+            }
 
-        this.kits = kits;
+            if (statusES.getMedicalRecords() != null) {
+                for (ParticipantStatusES.MedicalRecord medicalRecord : statusES.getMedicalRecords()) {
+                    if (this.medicalRecords == null) {
+                        this.medicalRecords = new ArrayList<>();
+                    }
+                    medicalRecords.add(new MedicalRecord(
+                            figureOutMedicalRecordStatus(
+                                    enrollmentStatusType,
+                                    medicalRecord.getRequested(),
+                                    medicalRecord.getReceived()
+                            ),
+                            medicalRecord.getRequested(),
+                            medicalRecord.getReceived()
+                    ));
+                }
+            }
+
+            if (statusES.getTissueRecords() != null) {
+                for (ParticipantStatusES.TissueRecord tissueRecord : statusES.getTissueRecords()) {
+                    if (this.tissueRecords == null) {
+                        this.tissueRecords = new ArrayList<>();
+                    }
+                    this.tissueRecords = new ArrayList<>();
+                    tissueRecords.add(new TissueRecord(
+                            figureOutMedicalRecordStatus(
+                                    enrollmentStatusType,
+                                    tissueRecord.getRequested(),
+                                    tissueRecord.getReceived()
+                            ),
+                            tissueRecord.getRequested(),
+                            tissueRecord.getReceived()
+                    ));
+                }
+            }
+        }
     }
 
     public String getUserGuid() {
@@ -122,15 +110,15 @@ public class ParticipantStatusTrackingInfo {
         return kits;
     }
 
-    public MedicalRecord getMedicalRecord() {
-        return medicalRecord;
+    public List<MedicalRecord> getMedicalRecords() {
+        return medicalRecords;
     }
 
-    public TissueRecord getTissueRecord() {
-        return tissueRecord;
+    public List<TissueRecord> getTissueRecords() {
+        return tissueRecords;
     }
 
-    public List<Workflow> getWorkflows() {
+    public List<ParticipantStatusES.Workflow> getWorkflows() {
         return workflows;
     }
 
@@ -138,11 +126,11 @@ public class ParticipantStatusTrackingInfo {
         @SerializedName("status")
         protected RecordStatus status;
         @SerializedName("requestedAt")
-        protected Long requestedAt;
+        protected String requestedAt;
         @SerializedName("receivedBackAt")
-        protected Long receivedBackAt;
+        protected String receivedBackAt;
 
-        protected Record(RecordStatus status, Long requestedAt, Long receivedBackAt) {
+        protected Record(RecordStatus status, String requestedAt, String receivedBackAt) {
             this.status = status;
             this.requestedAt = requestedAt;
             this.receivedBackAt = receivedBackAt;
@@ -152,103 +140,101 @@ public class ParticipantStatusTrackingInfo {
             return status;
         }
 
-        public Long getRequestedAt() {
+        public String getRequestedAt() {
             return requestedAt;
         }
 
-        public Long getReceivedBackAt() {
+        public String getReceivedBackAt() {
             return receivedBackAt;
         }
     }
 
     public static class MedicalRecord extends Record {
-        public MedicalRecord(RecordStatus status, Long requestedAt, Long receivedBackAt) {
+        public MedicalRecord(RecordStatus status, String requestedAt, String receivedBackAt) {
             super(status, requestedAt, receivedBackAt);
         }
     }
 
     public static class TissueRecord extends Record {
-        public TissueRecord(RecordStatus status, Long requestedAt, Long receivedBackAt) {
+        public TissueRecord(RecordStatus status, String requestedAt, String receivedBackAt) {
             super(status, requestedAt, receivedBackAt);
         }
     }
 
+    @SuppressWarnings("unused")
     public static class Kit {
         @SerializedName("kitType")
-        private String kitType;
+        private final String kitType;
         @SerializedName("status")
-        private RecordStatus status;
+        private final RecordStatus status;
         // sentAt is NOT NULL since it's guaranteed to be set in Sample by DSM
         @SerializedName("sentAt")
-        private long sentAt;
+        private final String sentAt;
         @SerializedName("deliveredAt")
-        private Long deliveredAt;
+        private final String deliveredAt;
         @SerializedName("receivedBackAt")
-        private Long receivedBackAt;
+        private final String receivedBackAt;
         @SerializedName("trackingId")
-        private String trackingId;
+        private final String trackingId;
         @SerializedName("shipper")
-        private String shipper;
+        private final String shipper;
 
         // We have a constralong that if we receive a kit from DSM, it has been definitely sent
         // As a result, the "sent" is not nullable and we never check its value
         public static RecordStatus figureOutStatus(
-                String userGuid,
                 EnrollmentStatusType enrollmentStatusType,
-                Long delivered,
-                Long received,
-                String trackingId
+                String delivered,
+                String received
         ) {
             // Is it possible? Should we check for it here?
             String entityName = "kit";
             if (!enrollmentStatusType.isEnrolled()) {
                 return RecordStatus.INELIGIBLE;
-            } else if (delivered == null && received == null) {
+            } else if (StringUtils.isBlank(delivered) && StringUtils.isBlank(received)) {
                 return RecordStatus.SENT;
-            } else if (delivered != null && received == null) {
+            } else if (StringUtils.isNotBlank(delivered) && StringUtils.isBlank(received)) {
                 return RecordStatus.DELIVERED;
-            } else if (delivered != null && received != null) {
+            } else { // received != null
                 return RecordStatus.RECEIVED;
-            } else if (delivered == null && received != null) {
-                return RecordStatus.RECEIVED;
-            } else {
-                LOG.error("Something completely unexpected happened with ", entityName);
-                return RecordStatus.UNKNOWN;
             }
         }
 
-        public Kit(ParticipantStatus.Sample sample, RecordStatus status) {
+        public Kit(ParticipantStatusES.Sample sample, RecordStatus status) {
             this.kitType = sample.getKitType();
             this.status = status;
-            this.sentAt = sample.getSentEpochTimeSec();
-            this.deliveredAt = sample.getDeliveredEpochTimeSec();
-            this.receivedBackAt = sample.getReceivedEpochTimeSec();
-            this.trackingId = sample.getTrackingId();
+            this.sentAt = sample.getSent();
+            this.deliveredAt = sample.getDelivered();
+            this.receivedBackAt = sample.getReceived();
+            this.trackingId = sample.getTrackingOut();
             this.shipper = sample.getCarrier();
         }
 
         public RecordStatus getStatus() {
             return status;
         }
-    }
 
-    public static class Workflow {
-        @SerializedName("workflow")
-        protected String workflow;
-        @SerializedName("status")
-        protected String status;
-
-        public Workflow(String workflow, String status) {
-            this.workflow = workflow;
-            this.status = status;
+        public String getKitType() {
+            return kitType;
         }
 
-        public String getStatus() {
-            return status;
+        public String getSentAt() {
+            return sentAt;
         }
 
-        public String getWorkflow() {
-            return workflow;
+        public String getDeliveredAt() {
+            return deliveredAt;
+        }
+
+        public String getReceivedBackAt() {
+            return receivedBackAt;
+        }
+
+        public String getTrackingId() {
+            return trackingId;
+        }
+
+        public String getShipper() {
+            return shipper;
         }
     }
 }

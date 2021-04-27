@@ -2175,9 +2175,15 @@ ParticipantStatusTrackingInfo:
     - kits
   properties:
     medicalRecord:
-      $ref: '../pepper.yml#/components/schemas/ParticipantStatusTrackingInfo.Record'
+      type: array
+      minItems: 0
+      items:
+        $ref: '../pepper.yml#/components/schemas/ParticipantStatusTrackingInfo.Record'
     tissueRecord:
-      $ref: '../pepper.yml#/components/schemas/ParticipantStatusTrackingInfo.Record'
+      type: array
+      minItems: 0
+      items:
+        $ref: '../pepper.yml#/components/schemas/ParticipantStatusTrackingInfo.Record'
     kits:
       type: array
       description: Contains a list of kits sent to the participant
@@ -2186,6 +2192,7 @@ ParticipantStatusTrackingInfo:
         $ref: '../pepper.yml#/components/schemas/ParticipantStatusTrackingInfo.Kit'
     workflows:
       type: array
+      minItems: 0
       items:
         $ref: '../pepper.yml#/components/schemas/ParticipantStatusTrackingInfo.Workflow'
 ParticipantStatusTrackingInfo.Workflow:
@@ -2197,6 +2204,9 @@ ParticipantStatusTrackingInfo.Workflow:
     status:
       type: string
       description: The current state in the workflow
+    date:
+      type: string
+      description: Last change (ISO-8601 date)
 ParticipantStatusTrackingInfo.Record:
   type: object
   required:
@@ -2211,9 +2221,11 @@ ParticipantStatusTrackingInfo.Record:
         - RECEIVED
         - UNKNOWN
     requestedAt:
-      type: integer
+      type: string
+      description: ISO-8601 date
     receivedBackAt:
-      type: integer
+      type: string
+      description: ISO-8601 date
 ParticipantStatusTrackingInfo.Kit:
   type: object
   required:
@@ -2230,9 +2242,14 @@ ParticipantStatusTrackingInfo.Kit:
         - RECEIVED
         - UNKNOWN
     sentAt:
-      type: integer
+      type: string
+      description: ISO-8601 date
     receivedBackAt:
-      type: integer
+      type: string
+      description: ISO-8601 date
+    deliveredAt:
+      type: string
+      description: ISO-8601 date
     trackingId:
       type: string
     shipper:
