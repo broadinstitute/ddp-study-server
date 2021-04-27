@@ -313,16 +313,7 @@ public class ActivityBuilder {
     }
 
     public Config readDefinitionConfig(String filepath) {
-        File file = dirPath.resolve(filepath).toFile();
-        if (!file.exists()) {
-            throw new DDPException("Activity definition file is missing: " + file);
-        }
-
-        Config definition = ConfigFactory.parseFile(file).resolveWith(varsCfg);
-        if (definition.isEmpty()) {
-            throw new DDPException("Activity definition file is empty: " + file);
-        }
-        return definition;
+        return readDefinitionConfig(filepath, true);
     }
 
     public Config readDefinitionConfig(String filepath, boolean allowUnresolved) {
