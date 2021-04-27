@@ -20,5 +20,6 @@ class LoaderConfigFile {
     public static final String SOURCE_LOCAL_DIR = "source.localDir";
     public static final String SOURCE_PROJECT_ID = "source.projectId";
     public static final String SOURCE_BUCKET_NAME = "source.bucketName";
+    public static final String SOURCE_BUCKET_DIR = "source.bucketDir";
     public static final String SOURCE_CREDENTIALS_FILE = "source.credentialsFile";
 }

@@ -38,6 +38,7 @@ class FileReader {
     private final Set<String> participantFiles = new HashSet<>();
     private boolean cached;
     private String bucketName;
+    private String bucketDir;
     private Storage storage;
     private String localDir;
 
@@ -47,6 +48,7 @@ class FileReader {
         this.participantFilePrefix = cfg.getString(LoaderConfigFile.SOURCE_PARTICIPANT_FILE_PREFIX);
         if (useBucket) {
             this.bucketName = cfg.getString(LoaderConfigFile.SOURCE_BUCKET_NAME);
+            this.bucketDir = cfg.getString(LoaderConfigFile.SOURCE_BUCKET_DIR);
             this.storage = initStorageService(cfg);
         } else {
             this.localDir = cfg.getString(LoaderConfigFile.SOURCE_LOCAL_DIR);
@@ -74,7 +76,7 @@ class FileReader {
             if (bucket == null) {
                 throw new LoaderException("Bucket does not exist: " + bucketName);
             } else {
-                LOG.info("Using bucket for source files: gs://{}", bucketName);
+                LOG.info("Using bucket for source files: gs://{}/{}", bucketName, bucketDir);
             }
         } else {
             File folder = new File(localDir);
@@ -89,9 +91,11 @@ class FileReader {
     private Stream<String> streamFilesFromSource() {
         if (useBucket) {
             Bucket bucket = storage.get(bucketName);
-            Spliterator<Blob> iterator = bucket.list().iterateAll().spliterator();
+            var options = Storage.BlobListOption.prefix(bucketDir);
+            Spliterator<Blob> iterator = bucket.list(options).iterateAll().spliterator();
             return StreamSupport
                     .stream(iterator, false)
+                    .filter(blob -> !blob.isDirectory())
                     .map(BlobInfo::getName);
         } else {
             File folder = new File(localDir);
@@ -102,7 +106,8 @@ class FileReader {
     }
 
     private void listAndCacheFilesFromSource() {
-        streamFilesFromSource().forEach(filename -> {
+        streamFilesFromSource().forEach(path -> {
+            String filename = Path.of(path).getFileName().toString();
             if (filename.startsWith(mailingListFilePrefix)) {
                 mailingListFiles.add(filename);
             } else if (filename.startsWith(participantFilePrefix)) {
@@ -128,7 +133,8 @@ class FileReader {
 
     public Reader readContent(String filename) {
         if (useBucket) {
-            Blob blob = storage.get(bucketName, filename);
+            Path path = Path.of(bucketDir, filename);
+            Blob blob = storage.get(bucketName, path.toString());
             return Channels.newReader(blob.reader(), StandardCharsets.UTF_8);
         } else {
             try {
