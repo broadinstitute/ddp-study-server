@@ -1582,6 +1582,9 @@ Question.Text:
       placeholderText:
         type: string
         nullable: true
+      confirmPlaceholderText:
+        type: string
+        nullable: true
       inputType:
         type: string
         enum:

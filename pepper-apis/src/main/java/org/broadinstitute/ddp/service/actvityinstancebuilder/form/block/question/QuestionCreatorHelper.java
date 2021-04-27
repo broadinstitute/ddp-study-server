@@ -240,6 +240,8 @@ public class QuestionCreatorHelper {
                         ctx, questionDef.getPromptTemplate()),
                 ctx.getAIBuilderFactory().getTemplateRenderHelper().renderTemplate(
                         ctx, questionDef.getPlaceholderTemplate()),
+                ctx.getAIBuilderFactory().getTemplateRenderHelper().renderTemplate(
+                        ctx, questionDef.getConfirmPlaceholderTemplate()),
                 questionDef.isRestricted(),
                 questionDef.isDeprecated(),
                 isReadOnly(questionDef, ctx.getFormResponse().getLatestStatus().getType(), ctx.getPreviousInstanceId()),
