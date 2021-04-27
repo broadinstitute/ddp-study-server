@@ -2437,6 +2437,7 @@ ParticipantsLookupResultItem:
 ParticipantsLookupProxyItem:
   description: The proxy if the participant is a govnerned user
   type: object
+  nullable: true
   required:
     - guid
     - hruid
