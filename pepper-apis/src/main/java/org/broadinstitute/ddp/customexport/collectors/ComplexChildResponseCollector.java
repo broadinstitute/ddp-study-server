@@ -24,10 +24,6 @@ public class ComplexChildResponseCollector {
     }
 
     public Map<String, String> format(ActivityResponse childSubInstance, ComponentDataSupplier supplier, String s) {
-        if (s.equals("")) {
-            return null;
-        }
-
         List<String> data = activityResponseCollector.format(childSubInstance, supplier, s);
         List<String> headers = activityResponseCollector.getHeaders();
         Map<String, String> values = new HashMap<>();
