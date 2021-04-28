@@ -159,7 +159,10 @@ public interface JdbiActivity extends SqlObject {
             + "   and create_on_parent_creation is true")
     List<Long> findChildActivityIdsThatNeedCreation(@Bind("parentActId") long parentActivityId);
 
-    @SqlQuery("select * from study_activity where parent_activity_id = :parentActId")
+    @SqlQuery("select act.*, (select study_activity_code from study_activity"
+            + "       where study_activity_id = act.parent_activity_id) as parent_activity_code"
+            + "  from study_activity as act "
+            + "where act.parent_activity_id = :parentActId")
     @RegisterConstructorMapper(ActivityDto.class)
     List<ActivityDto> findChildActivitiesByParentId(@Bind("parentActId") long parentActivityId);
 

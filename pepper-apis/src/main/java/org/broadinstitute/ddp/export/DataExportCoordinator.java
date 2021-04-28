@@ -84,8 +84,8 @@ public class DataExportCoordinator {
 
         if (csvBucket != null) {
             withAPIsTxn(handle -> {
-                ExportUtil.computeMaxInstancesSeen(handle, activities);
-                ExportUtil.computeActivityAttributesSeen(handle, activities);
+                DataExporter.computeMaxInstancesSeen(handle, activities);
+                DataExporter.computeActivityAttributesSeen(handle, activities);
                 return null;
             });
             boolean runSuccess = runCsvExports(studyDto, activities);

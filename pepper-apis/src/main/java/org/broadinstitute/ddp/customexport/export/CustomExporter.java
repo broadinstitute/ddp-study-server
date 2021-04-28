@@ -13,24 +13,28 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import com.google.gson.Gson;
 import com.opencsv.CSVWriter;
 import com.typesafe.config.Config;
-import org.broadinstitute.ddp.customexport.collectors.ParentActivityAttributesCollector;
+import org.broadinstitute.ddp.customexport.CustomActivityExtract;
+import org.broadinstitute.ddp.customexport.collectors.ComplexChildResponseCollector;
 import org.broadinstitute.ddp.customexport.collectors.ParentActivityResponseCollector;
 import org.broadinstitute.ddp.customexport.constants.CustomExportConfigFile;
 import org.broadinstitute.ddp.db.ActivityDefStore;
+import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dao.FormActivityDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiActivityVersion;
 import org.broadinstitute.ddp.db.dto.ActivityDto;
 import org.broadinstitute.ddp.db.dto.ActivityVersionDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
-import org.broadinstitute.ddp.export.ActivityExtract;
+import org.broadinstitute.ddp.export.ActivityResponseMapping;
 import org.broadinstitute.ddp.export.ComponentDataSupplier;
 import org.broadinstitute.ddp.export.ExportUtil;
 import org.broadinstitute.ddp.export.collectors.ActivityAttributesCollector;
 import org.broadinstitute.ddp.export.collectors.ActivityResponseCollector;
 import org.broadinstitute.ddp.export.collectors.ParticipantMetadataFormatter;
+import org.broadinstitute.ddp.model.activity.definition.ActivityDef;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
 import org.broadinstitute.ddp.model.activity.instance.ActivityResponse;
 import org.broadinstitute.ddp.model.study.Participant;
@@ -65,21 +69,62 @@ public class CustomExporter {
     }
 
     /**
+     * Find and set the max number of instances seen per participant across the study for each given activity extract.
+     * Activities that are defined with only one instance per participant will not be computed so the counts might not
+     * be totally accurate. Otherwise, this will find the current number of instances for each activity.
+     *
+     * @param handle     the database handle
+     * @param activities the list of activities to look at
+     */
+    public static void computeMaxInstancesSeen(Handle handle, List<CustomActivityExtract> activities) {
+        var instanceDao = handle.attach(ActivityInstanceDao.class);
+        for (CustomActivityExtract activity : activities) {
+            ExportUtil.computeMaxInstancesSeen(instanceDao, activity);
+            if (activity.getChildExtracts() != null) {
+                for (List<CustomActivityExtract> childActivities : activity.getChildExtracts().values()) {
+                    for (CustomActivityExtract childActivity : childActivities) {
+                        ExportUtil.computeMaxInstancesSeen(instanceDao, childActivity);
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Find and set the attribute names seen across all participants in study for each given activity extract.
+     *
+     * @param handle     the database handle
+     * @param activities the list of activities to look at
+     */
+    public static void computeActivityAttributesSeen(Handle handle, List<CustomActivityExtract> activities) {
+        var instanceDao = handle.attach(ActivityInstanceDao.class);
+        for (CustomActivityExtract activity : activities) {
+            ExportUtil.computeActivityAttributesSeen(instanceDao, activity);
+            if (activity.getChildExtracts() != null) {
+                for (List<CustomActivityExtract> childExtracts: activity.getChildExtracts().values()) {
+                    for (CustomActivityExtract childExtract : childExtracts) {
+                        ExportUtil.computeActivityAttributesSeen(instanceDao, childExtract);
+                    }
+                }
+            }
+        }
+    }
+
+    /**
      * Extract all versions of an activity for a study
      * @param handle the database handle
      * @param activityDto the activity
      * @param studyGuid the study guid
      * @return list of extracts, in ascending order by version
      */
-    private List<ActivityExtract> extractVersionsOfActivity(Handle handle, ActivityDto activityDto, String studyGuid,
-                                                            List<String> excludedVersions) {
+    private List<CustomActivityExtract> extractVersionsOfActivity(Handle handle, ActivityDto activityDto, String studyGuid,
+                                                                  List<String> excludedVersions) {
         JdbiActivityVersion jdbiActivityVersion = handle.attach(JdbiActivityVersion.class);
         FormActivityDao formActivityDao = handle.attach(FormActivityDao.class);
         JdbiActivity jdbiActivity = handle.attach(JdbiActivity.class);
         ActivityDefStore store = ActivityDefStore.getInstance();
-        List<ActivityExtract> activities = new ArrayList<>();
+        List<CustomActivityExtract> activities = new ArrayList<>();
 
-        String activityCode = activityDto.getActivityCode();
         List<ActivityVersionDto> versionDtos = jdbiActivityVersion.findAllVersionsInAscendingOrder(activityDto.getActivityId());
         if (excludedVersions != null) {
             versionDtos = versionDtos.stream().filter(v -> !excludedVersions.contains(v.getVersionTag())).collect(Collectors.toList());
@@ -87,37 +132,42 @@ public class CustomExporter {
 
         for (ActivityVersionDto versionDto : versionDtos) {
             // Only supports form activities for now.
-            String versionTag = versionDto.getVersionTag();
 
             List<ActivityDto> childActivityDtos = jdbiActivity.findChildActivitiesByParentId(activityDto.getActivityId());
-            List<ActivityExtract> childExtracts = new ArrayList<>();
+            Map<String, List<CustomActivityExtract>> childExtracts = new HashMap<>();
 
             if (childActivityDtos != null && !childActivityDtos.isEmpty()) {
                 // Create child activity extracts
                 for (ActivityDto childActivityDto : childActivityDtos) {
                     long childActivityId = childActivityDto.getActivityId();
+                    List<ActivityVersionDto> childVersions = jdbiActivityVersion.findAllVersionsInAscendingOrder(childActivityId);
+                    if (childVersions != null) {
+                        List<CustomActivityExtract> subExtracts = new ArrayList<>();
+                        for (ActivityVersionDto childVersion : childVersions) {
+                            FormActivityDef childFormActivityDef = addDefByVersion(studyGuid, childVersion, childActivityDto,
+                                    formActivityDao, store);
+                            subExtracts.add(new CustomActivityExtract(childFormActivityDef,
+                                    childVersion, canHaveMultiple(childFormActivityDef)));
+                        }
+                        childExtracts.put(childActivityDto.getActivityCode(), subExtracts);
 
-                    Optional<ActivityVersionDto> childVersionDtoOptional =
-                            jdbiActivityVersion.findByActivityIdAndVersionTag(childActivityId, versionTag);
-
-                    if (childVersionDtoOptional.isPresent()) {
-                        ActivityVersionDto childVersionDto = childVersionDtoOptional.get();
-                        FormActivityDef childFormActivityDef = addDefByVersion(studyGuid, childVersionDto, childActivityDto,
-                                formActivityDao, store);
-                        ActivityExtract childExtract = new ActivityExtract(childFormActivityDef, childVersionDto);
-                        childExtracts.add(childExtract);
                     }
                 }
             }
             FormActivityDef def = addDefByVersion(studyGuid, versionDto, activityDto, formActivityDao, store);
-            activities.add(new ActivityExtract(def, versionDto, childExtracts));
+            activities.add(new CustomActivityExtract(def, versionDto, childExtracts, canHaveMultiple(def)));
         }
 
         return activities;
     }
 
+    private boolean canHaveMultiple(FormActivityDef activityDef) {
+        return (activityDef.getMaxInstancesPerUser() == null || activityDef.getMaxInstancesPerUser() > 1)
+                && activityDef.canDeleteInstances();
+    }
+
     private FormActivityDef addDefByVersion(String studyGuid, ActivityVersionDto versionDto, ActivityDto activityDto,
-                                                  FormActivityDao formActivityDao, ActivityDefStore store) {
+                                            FormActivityDao formActivityDao, ActivityDefStore store) {
         String versionTag = versionDto.getVersionTag();
         String activityCode = activityDto.getActivityCode();
         FormActivityDef def = store.getActivityDef(studyGuid, activityCode, versionTag);
@@ -133,7 +183,7 @@ public class CustomExporter {
      * @param handle the database handle
      * @return list of extracts
      */
-    public List<ActivityExtract> extractActivity(Handle handle) {
+    public List<CustomActivityExtract> extractActivity(Handle handle) {
         JdbiActivity jdbiActivity = handle.attach(JdbiActivity.class);
 
         Optional<ActivityDto> activityDtoOptional = jdbiActivity.findActivityByStudyGuidAndCode(customGuid, customActivity);
@@ -142,7 +192,7 @@ public class CustomExporter {
             return null;
         }
         ActivityDto activityDto = activityDtoOptional.get();
-        List<ActivityExtract> activities = extractVersionsOfActivity(handle, activityDto, customGuid,
+        List<CustomActivityExtract> activities = extractVersionsOfActivity(handle, activityDto, customGuid,
                 cfg.getStringList(CustomExportConfigFile.EXCLUDED_ACTIVITY_VERSIONS));
 
         LOG.info("Custom export found {} versions of activity {}", activities.size(), customActivity);
@@ -159,21 +209,18 @@ public class CustomExporter {
      * @return number of participant records written
      * @throws IOException if error while writing
      */
-    public int exportDataSetAsCsv(StudyDto studyDto, List<ActivityExtract> activities, Iterator<Participant> participants,
+    public int exportDataSetAsCsv(StudyDto studyDto, List<CustomActivityExtract> activities, Iterator<Participant> participants,
                                   Writer output) throws IOException {
-        ParticipantMetadataFormatter participantMetaFmt;
-
-
+        List<String> firstFields = cfg.getStringList(CustomExportConfigFile.FIRST_FIELDS);
         List<String> excludedFields = new ArrayList<>(cfg.getStringList(CustomExportConfigFile.EXCLUDED_PARTICIPANT_FIELDS));
-        participantMetaFmt = new ParticipantMetadataFormatter(excludedFields);
-
-
+        ParticipantMetadataFormatter participantMetaFmt = new ParticipantMetadataFormatter(excludedFields);
         List<String> headers = new LinkedList<>(participantMetaFmt.headers());
 
         Map<String, Integer> activityTagToNormalizedMaxInstanceCounts = new HashMap<>();
         Map<String, ParentActivityResponseCollector> responseCollectors = new HashMap<>();
-        Map<String, ParentActivityAttributesCollector> attributesCollectors = new HashMap<>();
-        for (ActivityExtract activity : activities) {
+        Map<String, ActivityAttributesCollector> attributesCollectors = new HashMap<>();
+
+        for (CustomActivityExtract activity : activities) {
             Integer maxInstances = activity.getMaxInstancesSeen();
             if (maxInstances == null || maxInstances < 1) {
                 LOG.warn("Found max instances count {} for activity tag {}, defaulting to 1", maxInstances, activity.getTag());
@@ -181,43 +228,61 @@ public class CustomExporter {
                 maxInstances = 1;
             }
 
-            List<String> firstFields;
-
-            firstFields = cfg.getStringList(CustomExportConfigFile.FIRST_FIELDS);
-            excludedFields = cfg.getStringList(CustomExportConfigFile.EXCLUDED_ACTIVITY_FIELDS);
-
+            // Create attribute and response collectors to use for generating headers
+            ActivityAttributesCollector attributesCollector = new ActivityAttributesCollector(activity
+                    .getAttributesSeen(firstFields, excludedFields));
+            attributesCollectors.put(activity.getTag(), attributesCollector);
             ActivityResponseCollector mainResponseCollector = new ActivityResponseCollector(activity.getDefinition(), firstFields,
                     excludedFields);
-            List<ActivityResponseCollector> childResponseCollectors = new ArrayList<>();
-            for (ActivityExtract childExtract : activity.getChildExtracts()) {
-                childResponseCollectors.add(new ActivityResponseCollector(childExtract.getDefinition()));
+
+            Map<String, List<ActivityResponseCollector>> childResponseCollectors = new HashMap<>();
+            Map<String, List<ComplexChildResponseCollector>> multiChildResponseCollectors =
+                    new HashMap<>(); // For child activities with multiple potential instances, we will put everything in one field
+            Map<String, List<CustomActivityExtract>> childExtracts = activity.getChildExtracts();
+
+            // Construct response collectors for child activities
+            for (String childExtractCode : childExtracts.keySet()) {
+                List<ComplexChildResponseCollector> multiList = new ArrayList<>();
+                List<ActivityResponseCollector> childVersionResponseCollectors = new ArrayList<>();
+
+                for (CustomActivityExtract childExtract : childExtracts.get(childExtractCode)) {
+                    if (childExtract.getCanHaveMultiple()) {
+                        ActivityDef childActivityDefinition = childExtract.getDefinition();
+                        multiList.add(new ComplexChildResponseCollector(childActivityDefinition));
+                    } else {
+                        ActivityDef childActivityDefinition = childExtract.getDefinition();
+                        childVersionResponseCollectors.add(new ActivityResponseCollector(childActivityDefinition));
+                    }
+                }
+                if (!childVersionResponseCollectors.isEmpty()) {
+                    childResponseCollectors.put(childExtractCode, childVersionResponseCollectors);
+                }
+                if (!multiList.isEmpty()) {
+                    multiChildResponseCollectors.put(childExtractCode, multiList);
+                }
             }
             ParentActivityResponseCollector responseCollector = new ParentActivityResponseCollector(mainResponseCollector,
-                    childResponseCollectors);
-
-            ActivityAttributesCollector mainAttributesCollector = new ActivityAttributesCollector(activity
-                    .getAttributesSeen(firstFields, excludedFields));
-            List<ActivityAttributesCollector> childActivityAttributeCollectors = new ArrayList<>();
-            for (ActivityExtract childExtract : activity.getChildExtracts()) {
-                childActivityAttributeCollectors.add(new ActivityAttributesCollector(childExtract
-                        .getAttributesSeen(null, null)));
-            }
-            ParentActivityAttributesCollector attributesCollector = new ParentActivityAttributesCollector(mainAttributesCollector,
-                    childActivityAttributeCollectors);
+                    childResponseCollectors, multiChildResponseCollectors);
 
             activityTagToNormalizedMaxInstanceCounts.put(activity.getTag(), maxInstances);
             responseCollectors.put(activity.getTag(), responseCollector);
-            attributesCollectors.put(activity.getTag(), attributesCollector);
 
             for (var i = 1; i <= maxInstances; i++) {
-                headers.addAll(mainAttributesCollector.headers());
-                for (ActivityAttributesCollector childCollector : attributesCollector.getChildCollectors()) {
-                    headers.addAll(childCollector.headers());
-                }
+                // Add the headers
+                headers.addAll(attributesCollector.headers());
                 headers.addAll(mainResponseCollector.getHeaders());
-                for (ActivityResponseCollector childCollector : responseCollector.getChildCollectors()) {
-                    headers.addAll(childCollector.getHeaders());
+                List<String> singleChildCodes = new ArrayList<>(childResponseCollectors.keySet());
+                singleChildCodes.sort(String::compareTo);
+                // Add headers for child activities that only have a single instance
+                for (String singleChildCode : singleChildCodes) {
+                    List<ActivityResponseCollector> sortedChildResponseCollectors = childResponseCollectors.get(singleChildCode);
+                    for (ActivityResponseCollector sortedChildResponseCollector : sortedChildResponseCollectors) {
+                        headers.addAll(sortedChildResponseCollector.getHeaders());
+                    }
                 }
+
+                // Child activities that can have multiple instances will have all data for a given activity in a single column
+                headers.addAll(multiChildResponseCollectors.keySet());
             }
         }
 
@@ -225,31 +290,56 @@ public class CustomExporter {
         writer.writeNext(headers.toArray(new String[] {}), false);
 
         int numWritten = 0;
+
+        // Write the data to file
         while (participants.hasNext()) {
             Participant pt = participants.next();
             List<String> row;
             try {
                 row = new LinkedList<>(participantMetaFmt.format(pt.getStatus(), pt.getUser()));
                 ComponentDataSupplier supplier = new ComponentDataSupplier(pt.getUser().getAddress(), pt.getProviders());
-                for (ActivityExtract activity : activities) {
+                for (CustomActivityExtract activity : activities) {
                     String activityTag = activity.getTag();
                     int maxInstances = activityTagToNormalizedMaxInstanceCounts.get(activityTag);
                     ParentActivityResponseCollector responseCollector = responseCollectors.get(activityTag);
-                    ParentActivityAttributesCollector attributesCollector = attributesCollectors.get(activityTag);
+                    ActivityAttributesCollector attributesCollector = attributesCollectors.get(activityTag);
 
                     List<ActivityResponse> mainInstances = pt.getResponses(activityTag).stream()
                             .sorted(Comparator.comparing(ActivityResponse::getCreatedAt))
                             .collect(Collectors.toList());
 
-                    Map<ActivityResponse, List<ActivityResponse>> instances = new HashMap<>();
+                    Map<ActivityResponse, List<ActivityResponseMapping>> instances = new HashMap<>();
                     for (ActivityResponse r : mainInstances) {
-                        List<ActivityResponse> childInstances = new ArrayList<>();
-                        for (ActivityExtract childActivity : activity.getChildExtracts()) {
-                            List<ActivityResponse> childSubInstances = pt.getResponses(childActivity.getTag()).stream()
-                                    .sorted(Comparator.comparing(ActivityResponse::getCreatedAt))
-                                    .collect(Collectors.toList());
-                            childInstances.addAll(childSubInstances);
+                        List<ActivityResponseMapping> simpleChildInstances = new ArrayList<>();
+                        List<ActivityResponseMapping> complexChildInstances = new ArrayList<>();
+                        Map<String, List<CustomActivityExtract>> childExtracts = activity.getChildExtracts();
+
+                        for (String childActivityCode : childExtracts.keySet()) {
+                            // Make sure all simple children are added before all complex children
+                            List<ActivityResponse> simpleChildSubInstances = new ArrayList<>();
+                            List<ActivityResponse> complexChildSubInstances = new ArrayList<>();
+                            for (CustomActivityExtract childExtract : childExtracts.get(childActivityCode)) {
+                                List<ActivityResponse> responses = pt.getResponses(childExtract.getTag())
+                                        .stream().sorted(Comparator.comparing(ActivityResponse::getCreatedAt))
+                                        .collect(Collectors.toList());
+                                if (childExtract.getCanHaveMultiple()) {
+                                    complexChildSubInstances.addAll(responses);
+                                } else {
+                                    simpleChildSubInstances.addAll(responses);
+                                }
+                            }
+
+                            if (!simpleChildSubInstances.isEmpty()) {
+                                simpleChildInstances.add(new ActivityResponseMapping(childActivityCode, simpleChildSubInstances));
+                            }
+
+                            if (!complexChildSubInstances.isEmpty()) {
+                                complexChildInstances.add(new ActivityResponseMapping(childActivityCode, complexChildSubInstances));
+                            }
                         }
+
+                        List<ActivityResponseMapping> childInstances = new ArrayList<>(simpleChildInstances);
+                        childInstances.addAll(complexChildInstances);
 
                         instances.put(r, childInstances);
                     }
@@ -257,21 +347,57 @@ public class CustomExporter {
                     int numInstancesProcessed = 0;
                     for (var mainInstance : instances.keySet()) {
                         Map<String, String> subs = pt.getActivityInstanceSubstitutions(mainInstance.getId());
-                        row.addAll(attributesCollector.getMainCollector().format(subs));
+                        row.addAll(attributesCollector.format(subs));
                         row.addAll(responseCollector.getMainCollector().format(mainInstance, supplier, ""));
                         numInstancesProcessed++;
 
-
-                        // TODO: Child instances
+                        List<ActivityResponseMapping> childInstances = instances.get(mainInstance);
+                        for (ActivityResponseMapping childSubInstances : childInstances) {
+                            if (responseCollector.getChildCollectors().containsKey(childSubInstances.getActivityCode())) {
+                                for (ActivityResponse childSubInstance : childSubInstances.getResponses()) {
+                                    List<ActivityResponseCollector> childResponseCollectors =
+                                            responseCollector.getChildCollectors().get(childSubInstances.getActivityCode());
+                                    for (ActivityResponseCollector collector : childResponseCollectors) {
+                                        row.addAll(collector.format(childSubInstance, supplier, ""));
+                                    }
+                                }
+                            } else {
+                                // Complex child
+                                List<ComplexChildResponseCollector> complexChildResponseCollectors =
+                                        responseCollector.getMultiChildCollectors().get(childSubInstances.getActivityCode());
+                                List<Map<String, String>> complexChildValues = new ArrayList<>();
+                                for (ActivityResponse childSubInstance : childSubInstances.getResponses()) {
+                                    for (ComplexChildResponseCollector collector : complexChildResponseCollectors) {
+                                        complexChildValues.add(collector.format(childSubInstance, supplier, ""));
+                                    }
+                                }
+                                row.add(new Gson().toJson(complexChildValues));
+                            }
+                        }
                     }
 
 
                     while (numInstancesProcessed < maxInstances) {
-                        row.addAll(attributesCollector.getMainCollector().emptyRow());
+                        row.addAll(attributesCollector.emptyRow());
                         row.addAll(responseCollector.getMainCollector().emptyRow());
-                        numInstancesProcessed++;
 
-                        // TODO: Child instances
+                        Map<String, List<ActivityResponseCollector>> childResponseCollectors = responseCollector.getChildCollectors();
+                        for (List<ActivityResponseCollector> responseCollectorList : childResponseCollectors.values()) {
+                            for (ActivityResponseCollector collector : responseCollectorList) {
+                                row.addAll(collector.emptyRow());
+                            }
+                        }
+
+                        Map<String, List<ComplexChildResponseCollector>> complexChildResponseCollectors =
+                                responseCollector.getMultiChildCollectors();
+                        for (List<ComplexChildResponseCollector> complexChildResponseCollectorList :
+                                complexChildResponseCollectors.values()) {
+                            for (int i = 0; i < complexChildResponseCollectorList.size(); i++) {
+                                row.add("");
+                            }
+                        }
+
+                        numInstancesProcessed++;
                     }
                 }
             } catch (Exception e) {

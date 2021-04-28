@@ -38,6 +38,7 @@ import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.db.ActivityDefStore;
 import org.broadinstitute.ddp.db.DaoException;
+import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dao.FileUploadDao;
 import org.broadinstitute.ddp.db.dao.FormActivityDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
@@ -218,6 +219,34 @@ public class DataExporter {
         LOG.info("[export] found {} activities for study {}", activities.size(), studyGuid);
 
         return activities;
+    }
+
+    /**
+     * Find and set the max number of instances seen per participant across the study for each given activity extract.
+     * Activities that are defined with only one instance per participant will not be computed so the counts might not
+     * be totally accurate. Otherwise, this will find the current number of instances for each activity.
+     *
+     * @param handle     the database handle
+     * @param activities the list of activities to look at
+     */
+    public static void computeMaxInstancesSeen(Handle handle, List<ActivityExtract> activities) {
+        var instanceDao = handle.attach(ActivityInstanceDao.class);
+        for (ActivityExtract activity : activities) {
+            ExportUtil.computeMaxInstancesSeen(instanceDao, activity);
+        }
+    }
+
+    /**
+     * Find and set the attribute names seen across all participants in study for each given activity extract.
+     *
+     * @param handle     the database handle
+     * @param activities the list of activities to look at
+     */
+    public static void computeActivityAttributesSeen(Handle handle, List<ActivityExtract> activities) {
+        var instanceDao = handle.attach(ActivityInstanceDao.class);
+        for (ActivityExtract activity : activities) {
+            ExportUtil.computeActivityAttributesSeen(instanceDao, activity);
+        }
     }
 
     public List<Participant> extractParticipantDataSet(Handle handle, StudyDto studyDto) {
@@ -1026,8 +1055,8 @@ public class DataExporter {
     private int exportCsvToOutput(Handle handle, StudyDto studyDto, Writer output) throws IOException {
         List<ActivityExtract> activities = extractActivities(handle, studyDto);
         List<Participant> dataset = extractParticipantDataSet(handle, studyDto);
-        ExportUtil.computeMaxInstancesSeen(handle, activities);
-        ExportUtil.computeActivityAttributesSeen(handle, activities);
+        computeMaxInstancesSeen(handle, activities);
+        computeActivityAttributesSeen(handle, activities);
         return exportDataSetAsCsv(studyDto, activities, dataset.iterator(), output);
     }
 
@@ -1059,7 +1088,7 @@ public class DataExporter {
             }
 
             ActivityResponseCollector responseCollector = new ActivityResponseCollector(activity.getDefinition());
-            ActivityAttributesCollector attributesCollector = new ActivityAttributesCollector(activity.getAttributesSeen(null, null));
+            ActivityAttributesCollector attributesCollector = new ActivityAttributesCollector(activity.getAttributesSeen());
 
             activityTagToNormalizedMaxInstanceCounts.put(activity.getTag(), maxInstances);
             responseCollectors.put(activity.getTag(), responseCollector);

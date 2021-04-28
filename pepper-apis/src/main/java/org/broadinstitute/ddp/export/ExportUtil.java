@@ -91,47 +91,27 @@ public class ExportUtil {
         return new ArrayList<>(participants.values());
     }
 
-    /**
-     * Find and set the max number of instances seen per participant across the study for each given activity extract.
-     * Activities that are defined with only one instance per participant will not be computed so the counts might not
-     * be totally accurate. Otherwise, this will find the current number of instances for each activity.
-     *
-     * @param handle     the database handle
-     * @param activities the list of activities to look at
-     */
-    public static void computeMaxInstancesSeen(Handle handle, List<ActivityExtract> activities) {
-        var instanceDao = handle.attach(ActivityInstanceDao.class);
-        for (ActivityExtract activity : activities) {
-            long activityId = activity.getDefinition().getActivityId();
-            long versionId = activity.getVersionDto().getId();
-            Integer maxInstancesSeen = activity.getDefinition().getMaxInstancesPerUser();
-            if (maxInstancesSeen == null || maxInstancesSeen > 1) {
-                maxInstancesSeen = instanceDao
-                        .findMaxInstancesSeenPerUserByActivityAndVersion(activityId, versionId)
-                        .orElse(0);
-            }
-            activity.setMaxInstancesSeen(maxInstancesSeen);
-        }
-    }
-
-    /**
-     * Find and set the attribute names seen across all participants in study for each given activity extract.
-     *
-     * @param handle     the database handle
-     * @param activities the list of activities to look at
-     */
-    public static void computeActivityAttributesSeen(Handle handle, List<ActivityExtract> activities) {
-        var instanceDao = handle.attach(ActivityInstanceDao.class);
-        for (ActivityExtract activity : activities) {
-            long activityId = activity.getDefinition().getActivityId();
-            long versionId = activity.getVersionDto().getId();
-            List<String> names = instanceDao
-                    .findSubstitutionNamesSeenAcrossUsersByActivityAndVersion(activityId, versionId);
-            activity.addAttributesSeen(names);
-        }
-    }
-
     public static void clearCachedAuth0Emails(Map<String, String> emailStore) {
         emailStore.clear();
+    }
+
+    public static void computeMaxInstancesSeen(ActivityInstanceDao instanceDao, ActivityExtract activity) {
+        long activityId = activity.getDefinition().getActivityId();
+        long versionId = activity.getVersionDto().getId();
+        Integer maxInstancesSeen = activity.getDefinition().getMaxInstancesPerUser();
+        if (maxInstancesSeen == null || maxInstancesSeen > 1) {
+            maxInstancesSeen = instanceDao
+                    .findMaxInstancesSeenPerUserByActivityAndVersion(activityId, versionId)
+                    .orElse(0);
+        }
+        activity.setMaxInstancesSeen(maxInstancesSeen);
+    }
+
+    public static void computeActivityAttributesSeen(ActivityInstanceDao instanceDao, ActivityExtract activity) {
+        long activityId = activity.getDefinition().getActivityId();
+        long versionId = activity.getVersionDto().getId();
+        List<String> names = instanceDao
+                .findSubstitutionNamesSeenAcrossUsersByActivityAndVersion(activityId, versionId);
+        activity.addAttributesSeen(names);
     }
 }

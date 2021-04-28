@@ -31,12 +31,11 @@ import com.sendgrid.helpers.mail.objects.Personalization;
 import com.typesafe.config.Config;
 import org.broadinstitute.ddp.client.ApiResult;
 import org.broadinstitute.ddp.client.SendGridClient;
+import org.broadinstitute.ddp.customexport.CustomActivityExtract;
 import org.broadinstitute.ddp.customexport.constants.CustomExportConfigFile;
 import org.broadinstitute.ddp.customexport.db.dao.CustomExportDao;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.exception.DDPException;
-import org.broadinstitute.ddp.export.ActivityExtract;
-import org.broadinstitute.ddp.export.ExportUtil;
 import org.broadinstitute.ddp.model.study.Participant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -93,11 +92,11 @@ public class CustomExportCoordinator {
         }
 
         // Proceed with the export
-        List<ActivityExtract> activityExtracts =
+        List<CustomActivityExtract> activityExtracts =
                 withAPIsTxn(handle -> {
-                    List<ActivityExtract> extracts = exporter.extractActivity(handle);
-                    ExportUtil.computeMaxInstancesSeen(handle, extracts);
-                    ExportUtil.computeActivityAttributesSeen(handle, extracts);
+                    List<CustomActivityExtract> extracts = exporter.extractActivity(handle);
+                    CustomExporter.computeMaxInstancesSeen(handle, extracts);
+                    CustomExporter.computeActivityAttributesSeen(handle, extracts);
                     return extracts;
                 });
 
@@ -192,7 +191,7 @@ public class CustomExportCoordinator {
     }
 
 
-    private boolean runCsvExports(StudyDto studyDto, List<ActivityExtract> activities) {
+    private boolean runCsvExports(StudyDto studyDto, List<CustomActivityExtract> activities) {
         String studyGuid = studyDto.getGuid();
         try {
             LOG.info("Running csv export for study {}", studyGuid);
@@ -223,7 +222,7 @@ public class CustomExportCoordinator {
     }
 
     private void exportStudyToGoogleBucket(StudyDto studyDto, CustomExporter exporter, Bucket bucket,
-                                           List<ActivityExtract> activities,
+                                           List<CustomActivityExtract> activities,
                                            Iterator<Participant> participants) {
         try (
                 PipedOutputStream outputStream = new PipedOutputStream();
@@ -246,7 +245,7 @@ public class CustomExportCoordinator {
     }
 
     private Runnable buildExportToCsvRunnable(StudyDto studyDto, CustomExporter exporter, Writer csvOutputWriter,
-                                              List<ActivityExtract> activities,
+                                              List<CustomActivityExtract> activities,
                                               Iterator<Participant> participants) {
         return () -> {
             try {
