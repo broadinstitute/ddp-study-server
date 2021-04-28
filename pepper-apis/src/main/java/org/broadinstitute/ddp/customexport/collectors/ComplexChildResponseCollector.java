@@ -24,8 +24,12 @@ public class ComplexChildResponseCollector {
     }
 
     public Map<String, String> format(ActivityResponse childSubInstance, ComponentDataSupplier supplier, String s) {
-        List<String> data = activityResponseCollector.format(childSubInstance, supplier, s);
         List<String> headers = activityResponseCollector.getHeaders();
+        List<String> data = activityResponseCollector.format(childSubInstance, supplier, s);
+        if (data.stream().allMatch(String::isEmpty)) {
+            return null;
+        }
+
         Map<String, String> values = new HashMap<>();
 
         for (int i = 0; i < data.size(); i++) {
