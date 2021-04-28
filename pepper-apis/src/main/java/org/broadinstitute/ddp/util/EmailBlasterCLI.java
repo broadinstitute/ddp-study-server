@@ -43,7 +43,7 @@ public class EmailBlasterCLI {
 
     private static final Logger LOG = LoggerFactory.getLogger(EmailBlasterCLI.class);
 
-    private static final String USAGE = "EmailBlaster [-h, --help] [OPTIONS]";
+    private static final String USAGE = "EmailBlaster [-h, --help] [OPTIONS] send a sendgrid email blast to a list of participants";
     private static final int DISPLAY_WIDTH = 80;
     private final String sendgridApiKey;
 
