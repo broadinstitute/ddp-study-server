@@ -382,7 +382,7 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
             shouldCreateGoverned = policy.shouldCreateGovernedUser(handle, interpreter, operatorUser.getGuid());
         } catch (Exception e) {
             String msg = "Error while evaluating study governance policy for study " + policy.getStudyGuid();
-            LOG.warn(msg, e);
+            LOG.error(msg, e);
             throw ResponseUtil.haltError(response, HttpStatus.SC_INTERNAL_SERVER_ERROR, new ApiError(ErrorCodes.SERVER_ERROR, msg));
         }
         if (!shouldCreateGoverned) {
@@ -509,7 +509,7 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
             LOG.info("Upgraded temporary user with guid '{}'", tempUserGuid);
         } catch (Exception e) {
             String msg = String.format("Error while upgrading temporary user with guid '%s'", tempUserGuid);
-            LOG.warn(msg, e);
+            LOG.error(msg, e);
             throw ResponseUtil.haltError(response, HttpStatus.SC_INTERNAL_SERVER_ERROR, new ApiError(ErrorCodes.SERVER_ERROR, msg));
         }
         return userDao.findUserByGuid(tempUserGuid).orElseThrow(() -> new DDPException("Could not find user with guid " + tempUserGuid));

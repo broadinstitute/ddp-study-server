@@ -2,8 +2,6 @@ package org.broadinstitute.ddp.route;
 
 import static org.broadinstitute.ddp.util.ResponseUtil.halt400ErrorResponse;
 
-import java.util.Collection;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -11,11 +9,12 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants;
-import org.broadinstitute.ddp.db.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dto.LanguageDto;
 import org.broadinstitute.ddp.json.activity.ActivityInstanceSummary;
+import org.broadinstitute.ddp.model.activity.instance.FormResponse;
 import org.broadinstitute.ddp.security.DDPAuth;
+import org.broadinstitute.ddp.service.ActivityInstanceService;
 import org.broadinstitute.ddp.util.RouteUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,10 +29,10 @@ public class UserActivityInstanceListRoute implements Route {
 
     private static final Logger LOG = LoggerFactory.getLogger(UserActivityInstanceListRoute.class);
 
-    private ActivityInstanceDao activityInstanceDao;
+    private final ActivityInstanceService service;
 
-    public UserActivityInstanceListRoute(ActivityInstanceDao activityInstanceDao) {
-        this.activityInstanceDao = activityInstanceDao;
+    public UserActivityInstanceListRoute(ActivityInstanceService service) {
+        this.service = service;
     }
 
     @Override
@@ -58,47 +57,18 @@ public class UserActivityInstanceListRoute implements Route {
         return TransactionWrapper.withTxn(handle -> {
             var found = RouteUtil.findUserAndStudyOrHalt(handle, userGuid, studyGuid);
             LanguageDto preferredUserLanguage = RouteUtil.getUserLanguage(request);
-            List<ActivityInstanceSummary> summaries = activityInstanceDao.listActivityInstancesForUser(
+            List<ActivityInstanceSummary> summaries = service.listTranslatedInstanceSummaries(
                     handle, userGuid, studyGuid, preferredUserLanguage.getIsoCode()
             );
-            // IMPORTANT: do numbering before filtering so each instance is assigned their correct number.
-            performActivityInstanceNumbering(summaries);
             if (!isStudyAdmin) {
                 // Study admins are allowed to view all the data, so if they're NOT admin then do filtering.
                 summaries = filterActivityInstancesFromDisplay(summaries);
             }
-            activityInstanceDao.countActivitySummaryQuestionsAndAnswers(handle, userGuid, operatorGuid, studyGuid, summaries);
-            activityInstanceDao.renderActivitySummary(handle, found.getUser().getId(), summaries);
+            Map<String, FormResponse> responses = service.countQuestionsAndAnswers(
+                    handle, userGuid, operatorGuid, studyGuid, summaries);
+            service.renderInstanceSummaries(handle, found.getUser().getId(), studyGuid, summaries, responses);
             return summaries;
         });
-    }
-
-    private void performActivityInstanceNumbering(
-            Collection<ActivityInstanceSummary> summaries
-    ) {
-        // Group summaries by activity code
-        Map<String, List<ActivityInstanceSummary>> summariesByActivityCode = summaries
-                .stream()
-                .collect(Collectors.groupingBy(ActivityInstanceSummary::getActivityCode, Collectors.toList()));
-        for (List<ActivityInstanceSummary> summariesWithTheSameCode : summariesByActivityCode.values()) {
-            // No need to bother with no items
-            if (summariesWithTheSameCode.isEmpty()) {
-                continue;
-            }
-            // Sort items by date
-            summariesWithTheSameCode.sort(Comparator.comparing(ActivityInstanceSummary::getCreatedAt));
-            // Number items within each group.
-            int counter = 1;
-            String prevGuid = null;
-            for (var summary : summariesWithTheSameCode) {
-                if (prevGuid != null) {
-                    summary.setPreviousInstanceGuid(prevGuid);
-                }
-                summary.setInstanceNumber(counter);
-                prevGuid = summary.getActivityInstanceGuid();
-                counter++;
-            }
-        }
     }
 
     private List<ActivityInstanceSummary> filterActivityInstancesFromDisplay(List<ActivityInstanceSummary> summaries) {

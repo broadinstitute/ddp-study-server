@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.function.Consumer;
+import java.util.stream.Stream;
 
 import javax.annotation.Nullable;
 import javax.validation.constraints.NotEmpty;
@@ -139,6 +140,12 @@ public final class PicklistQuestion extends Question<PicklistAnswer> {
 
     public Long getPicklistLabelTemplateId() {
         return picklistLabelTemplateId;
+    }
+
+    public Stream<PicklistOption> streamAllPicklistOptions() {
+        return Stream.concat(
+                picklistOptions.stream(),
+                picklistOptions.stream().flatMap(opt -> opt.getNestedOptions().stream()));
     }
 
     @Override

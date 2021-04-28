@@ -5,6 +5,7 @@ import static org.broadinstitute.ddp.service.DsmAddressValidationStatus.DSM_INVA
 import static org.broadinstitute.ddp.service.DsmAddressValidationStatus.DSM_VALID_ADDRESS_STATUS;
 import static org.broadinstitute.ddp.service.OLCService.DEFAULT_OLC_PRECISION;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -370,7 +371,10 @@ public class AddressService {
                             .findFirst()
                             .orElse(null);
                     if (warningTmplId != null) {
-                        msg = handle.attach(TemplateDao.class).loadTemplateById(warningTmplId).render(langCode);
+                        // Query using the current time to get the latest template.
+                        msg = handle.attach(TemplateDao.class)
+                                .loadTemplateByIdAndTimestamp(warningTmplId, Instant.now().toEpochMilli())
+                                .render(langCode);
                     }
                     warns.add(new AddressWarning(AddressWarning.Warn.ZIP_UNSUPPORTED.getCode(), msg));
                     break;

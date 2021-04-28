@@ -4,9 +4,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import org.broadinstitute.ddp.content.I18nContentRenderer;
 import org.broadinstitute.ddp.db.dto.ActivityValidationDto;
-
 import org.jdbi.v3.core.result.LinkedHashMapRowReducer;
 import org.jdbi.v3.core.result.RowView;
 import org.jdbi.v3.sqlobject.CreateSqlObject;
@@ -57,17 +55,6 @@ public interface JdbiActivityValidation extends SqlObject {
             @Bind("expressionText") String expressionText,
             @Bind("errorMessageTemplateId") long errorMessageTemplateId
     );
-
-    default List<ActivityValidationDto> _findByActivityIdTranslated(long activityId, long isoLanguageCode) {
-        List<ActivityValidationDto> validations = _findByActivityId(activityId);
-        I18nContentRenderer i18nContentRenderer = new I18nContentRenderer();
-        validations.forEach(
-                validation -> validation.setErrorMessage(
-                        i18nContentRenderer.renderContent(getHandle(), validation.getErrorMessageTemplateId(), isoLanguageCode)
-                )
-        );
-        return validations;
-    }
 
     @SqlQuery(
             "SELECT sa.study_activity_id AS av_study_activity_id, av.activity_validation_id AS av_activity_validation_id,"

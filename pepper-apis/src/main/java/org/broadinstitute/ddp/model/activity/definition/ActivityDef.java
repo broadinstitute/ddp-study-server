@@ -31,6 +31,9 @@ public abstract class ActivityDef {
     @SerializedName("studyGuid")
     protected String studyGuid;
 
+    @SerializedName("parentActivityCode")
+    protected String parentActivityCode;
+
     @NotBlank
     @SerializedName("activityCode")
     protected String activityCode;
@@ -65,6 +68,15 @@ public abstract class ActivityDef {
 
     @SerializedName("hideExistingInstancesOnCreation")
     protected boolean hideExistingInstancesOnCreation;
+
+    @SerializedName("createOnParentCreation")
+    protected boolean createOnParentCreation;
+
+    @SerializedName("canDeleteInstances")
+    protected boolean canDeleteInstances;
+
+    @SerializedName("canDeleteFirstInstance")
+    protected Boolean canDeleteFirstInstance;
 
     @NotEmpty
     @SerializedName("translatedNames")
@@ -102,6 +114,7 @@ public abstract class ActivityDef {
 
     ActivityDef(
             ActivityType activityType,
+            String parentActivityCode,
             String activityCode,
             String versionTag,
             String studyGuid,
@@ -118,6 +131,7 @@ public abstract class ActivityDef {
             boolean hideExistingInstancesOnCreation
     ) {
         this.activityType = MiscUtil.checkNonNull(activityType, "activityType");
+        this.parentActivityCode = parentActivityCode;
         this.activityCode = MiscUtil.checkNotBlank(activityCode, "activityCode");
         this.versionTag = MiscUtil.checkNotBlank(versionTag, "versionTag");
         this.studyGuid = MiscUtil.checkNotBlank(studyGuid, "studyGuid");
@@ -158,6 +172,10 @@ public abstract class ActivityDef {
 
     public String getStudyGuid() {
         return studyGuid;
+    }
+
+    public String getParentActivityCode() {
+        return parentActivityCode;
     }
 
     public String getActivityCode() {
@@ -257,6 +275,18 @@ public abstract class ActivityDef {
         return hideExistingInstancesOnCreation;
     }
 
+    public boolean isCreateOnParentCreation() {
+        return createOnParentCreation;
+    }
+
+    public boolean canDeleteInstances() {
+        return canDeleteInstances;
+    }
+
+    public Boolean getCanDeleteFirstInstance() {
+        return canDeleteFirstInstance;
+    }
+
     /**
      * Builder that helps construct common elements of an activity definition.
      *
@@ -264,6 +294,7 @@ public abstract class ActivityDef {
      */
     protected abstract static class AbstractActivityBuilder<T extends AbstractActivityBuilder<T>> {
 
+        protected String parentActivityCode;
         protected String activityCode;
         protected String versionTag;
         protected String studyGuid;
@@ -286,6 +317,9 @@ public abstract class ActivityDef {
         protected Template readonlyHintTemplate;
         protected boolean isFollowup;
         protected boolean hideExistingInstancesOnCreation;
+        protected boolean createOnParentCreation;
+        protected boolean canDeleteInstances;
+        protected Boolean canDeleteFirstInstance;
 
         /**
          * Returns the subclass builder instance to enable method chaining.
@@ -309,6 +343,14 @@ public abstract class ActivityDef {
             activity.isFollowup = isFollowup;
             activity.hideExistingInstancesOnCreation = hideExistingInstancesOnCreation;
             activity.translatedSecondNames.addAll(secondNames);
+            activity.createOnParentCreation = createOnParentCreation;
+            activity.canDeleteInstances = canDeleteInstances;
+            activity.canDeleteFirstInstance = canDeleteFirstInstance;
+        }
+
+        public T setParentActivityCode(String parentActivityCode) {
+            this.parentActivityCode = parentActivityCode;
+            return self();
         }
 
         public T setActivityCode(String activityCode) {
@@ -478,6 +520,21 @@ public abstract class ActivityDef {
 
         public T setHideInstances(boolean hideExistingInstancesOnCreation) {
             this.hideExistingInstancesOnCreation = hideExistingInstancesOnCreation;
+            return self();
+        }
+
+        public T setCreateOnParentCreation(boolean createOnParentCreation) {
+            this.createOnParentCreation = createOnParentCreation;
+            return self();
+        }
+
+        public T setCanDeleteInstances(boolean canDeleteInstances) {
+            this.canDeleteInstances = canDeleteInstances;
+            return self();
+        }
+
+        public T setCanDeleteFirstInstance(Boolean canDeleteFirstInstance) {
+            this.canDeleteFirstInstance = canDeleteFirstInstance;
             return self();
         }
     }

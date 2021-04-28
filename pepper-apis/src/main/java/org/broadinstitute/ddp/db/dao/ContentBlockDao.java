@@ -13,6 +13,7 @@ import org.broadinstitute.ddp.db.DaoException;
 import org.broadinstitute.ddp.db.dto.BlockContentDto;
 import org.broadinstitute.ddp.db.dto.FormBlockDto;
 import org.broadinstitute.ddp.model.activity.definition.ContentBlockDef;
+import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
 import org.jdbi.v3.sqlobject.CreateSqlObject;
 import org.jdbi.v3.sqlobject.SqlObject;
@@ -89,11 +90,22 @@ public interface ContentBlockDao extends SqlObject {
             contentDtos = stream.collect(Collectors.toMap(BlockContentDto::getBlockId, Function.identity()));
         }
 
+        Set<Long> templateIds = new HashSet<>();
+        contentDtos.values().forEach(v -> {
+            templateIds.add(v.getBodyTemplateId());
+            if (v.getTitleTemplateId() != null) {
+                templateIds.add(v.getTitleTemplateId());
+            }
+        });
+        Map<Long, Template> templates = getTemplateDao().collectTemplatesByIdsAndTimestamp(templateIds, timestamp);
+
         Map<Long, ContentBlockDef> blockDefs = new HashMap<>();
         for (var blockDto : blockDtos) {
             BlockContentDto contentDto = contentDtos.get(blockDto.getId());
 
-            var blockDef = new ContentBlockDef(null);
+            var blockDef = new ContentBlockDef(
+                    templates.getOrDefault(contentDto.getTitleTemplateId(), null),
+                    templates.getOrDefault(contentDto.getBodyTemplateId(), null));
             blockDef.setTitleTemplateId(contentDto.getTitleTemplateId());
             blockDef.setBodyTemplateId(contentDto.getBodyTemplateId());
             blockDef.setBlockId(blockDto.getId());

@@ -38,9 +38,7 @@ import org.broadinstitute.ddp.db.dao.FileUploadDao;
 import org.broadinstitute.ddp.db.dao.JdbiQuestionCached;
 import org.broadinstitute.ddp.db.dao.QuestionCachedDao;
 import org.broadinstitute.ddp.db.dao.UserDao;
-import org.broadinstitute.ddp.db.dto.ActivityDto;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
-import org.broadinstitute.ddp.db.dto.ActivityVersionDto;
 import org.broadinstitute.ddp.db.dto.AnswerDto;
 import org.broadinstitute.ddp.db.dto.CompositeQuestionDto;
 import org.broadinstitute.ddp.db.dto.LanguageDto;
@@ -143,7 +141,6 @@ public class PatchFormAnswersRoute implements Route {
         PatchAnswerResponse result = TransactionWrapper.withTxn(handle -> {
             UserActivityInstanceSummary instanceSummary = RouteUtil.findUserActivityInstanceSummaryOrHalt(
                     response, handle, participantGuid, studyGuid, instanceGuid, isStudyAdmin);
-
             ActivityInstanceDto instanceDto = instanceSummary.getActivityInstanceByGuid(instanceGuid).get();
 
             if (!ActivityType.FORMS.equals(instanceDto.getActivityType())) {
@@ -152,23 +149,11 @@ public class PatchFormAnswersRoute implements Route {
                 throw ResponseUtil.haltError(response, 400, new ApiError(ErrorCodes.INVALID_REQUEST, msg));
             }
 
-            User operatorUser = handle.attach(UserDao.class).findUserByGuid(operatorGuid)
-                    .orElseThrow(() -> new DDPException("Could not find operator with guid " + operatorGuid));
-
             PatchAnswerPayload payload = parseBodyPayload(request);
             if (payload == null) {
                 String msg = "Unable to process request body";
                 throw ResponseUtil.haltError(response, 400, new ApiError(ErrorCodes.BAD_PAYLOAD, msg));
             }
-
-            ActivityDefStore activityStore = ActivityDefStore.getInstance();
-            ActivityDto activityDto = activityStore.findActivityDto(handle, instanceDto.getActivityId())
-                    .orElseThrow(() -> new DDPException("Could not find activity dto for instance " + instanceGuid));
-            ActivityVersionDto versionDto = activityStore
-                    .findVersionDto(handle, instanceDto.getActivityId(), instanceDto.getCreatedAtMillis())
-                    .orElseThrow(() -> new DDPException("Could not find activity version for instance " + instanceGuid));
-            FormActivityDef formActivityDef = activityStore.findActivityDef(handle, studyGuid, activityDto, versionDto)
-                    .orElseThrow(() -> new DDPException("Could not find activity definition for instance " + instanceGuid));
 
             PatchAnswerResponse res = new PatchAnswerResponse();
             List<AnswerSubmission> submissions = payload.getSubmissions();
@@ -177,26 +162,50 @@ public class PatchFormAnswersRoute implements Route {
                 return res;
             }
 
-            if (!isStudyAdmin && ActivityInstanceUtil.isReadonly(formActivityDef.getEditTimeoutSec(), instanceDto.getCreatedAtMillis(),
-                    instanceDto.getStatusType().name(), formActivityDef.isWriteOnce(), instanceDto.getReadonly())) {
-                String msg = "Activity instance with GUID " + instanceGuid + " is read-only, cannot submit answer(s) for it";
-                LOG.info(msg);
-                throw ResponseUtil.haltError(response, 422, new ApiError(ErrorCodes.ACTIVITY_INSTANCE_IS_READONLY, msg));
+            ActivityDefStore activityStore = ActivityDefStore.getInstance();
+            FormActivityDef activityDef = ActivityInstanceUtil.getActivityDef(handle, activityStore, instanceDto, studyGuid);
+
+            ActivityInstanceDto parentInstanceDto = null;
+            FormActivityDef parentActivityDef = null;
+            String parentInstanceGuid = instanceDto.getParentInstanceGuid();
+            if (parentInstanceGuid != null) {
+                parentInstanceDto = instanceSummary
+                        .getActivityInstanceByGuid(parentInstanceGuid)
+                        .orElseThrow(() -> new DDPException("Could not find parent instance " + parentInstanceGuid));
+                parentActivityDef = ActivityInstanceUtil.getActivityDef(handle, activityStore, parentInstanceDto, studyGuid);
+            }
+
+            if (!isStudyAdmin) {
+                if (parentInstanceDto != null && ActivityInstanceUtil.isInstanceReadOnly(parentActivityDef, parentInstanceDto)) {
+                    String msg = "Parent activity instance with GUID " + parentInstanceDto.getGuid()
+                            + " is read-only, cannot submit answer(s) for child instance " + instanceGuid;
+                    LOG.info(msg);
+                    throw ResponseUtil.haltError(response, 422, new ApiError(ErrorCodes.ACTIVITY_INSTANCE_IS_READONLY, msg));
+                }
+                if (ActivityInstanceUtil.isInstanceReadOnly(activityDef, instanceDto)) {
+                    String msg = "Activity instance with GUID " + instanceGuid + " is read-only, cannot submit answer(s) for it";
+                    LOG.info(msg);
+                    throw ResponseUtil.haltError(response, 422, new ApiError(ErrorCodes.ACTIVITY_INSTANCE_IS_READONLY, msg));
+                }
             }
 
             var answerDao = new AnswerCachedDao(handle);
             var questionDao = new QuestionCachedDao(handle);
             var jdbiQuestion = questionDao.getJdbiQuestion();
 
-            LanguageDto preferredUserLanguage = RouteUtil.getUserLanguage(request);
-            String isoLanguageCode = preferredUserLanguage.getIsoCode();
-            Long languageCodeId = preferredUserLanguage.getId();
+            LanguageDto preferredUserLangDto = RouteUtil.getUserLanguage(request);
+
+            User operatorUser = instanceSummary.getParticipantUser();
+            if (!participantGuid.equals(operatorGuid)) {
+                operatorUser = handle.attach(UserDao.class).findUserByGuid(operatorGuid)
+                        .orElseThrow(() -> new DDPException("Could not find operator with guid " + operatorGuid));
+            }
 
             try {
                 Map<String, List<Rule>> failedRulesByQuestion = new HashMap<>();
                 for (AnswerSubmission submission : submissions) {
                     String questionStableId = extractQuestionStableId(submission, response);
-                    QuestionDef questionDef = formActivityDef.getQuestionByStableId(questionStableId);
+                    QuestionDef questionDef = activityDef.getQuestionByStableId(questionStableId);
 
                     if (questionDef == null) {
                         LOG.warn("Could not find questiondef with id: " + questionStableId);
@@ -207,7 +216,7 @@ public class PatchFormAnswersRoute implements Route {
                     // @TODO might be able to get rid of this query and a bunch of *CachedDao classes
                     // if can figure out how to create Rule objects from RuleDef
                     Question question = questionDao.getQuestionByActivityInstanceAndDto(questionDto,
-                            instanceGuid, false, languageCodeId);
+                            instanceGuid, instanceDto.getCreatedAtMillis(), false, preferredUserLangDto.getId());
 
                     if (!isStudyAdmin && question.isReadonly()) {
                         String msg = "Question with stable id " + questionStableId + " is read-only, cannot update question";
@@ -321,25 +330,29 @@ public class PatchFormAnswersRoute implements Route {
                 throw ResponseUtil.haltError(response, 400, new ApiError(ErrorCodes.REQUIRED_PARAMETER_MISSING, e.getMessage()));
             }
 
-
-            res.setBlockVisibilities(formService.getBlockVisibilities(handle, instanceSummary, formActivityDef, participantGuid,
+            res.setBlockVisibilities(formService.getBlockVisibilities(handle, instanceSummary, activityDef, participantGuid,
                     operatorGuid, instanceGuid));
 
             List<ActivityValidationFailure> failures = getActivityValidationFailures(
-                    handle, participantGuid, operatorGuid, instanceDto, languageCodeId
+                    handle, participantGuid, operatorGuid, instanceDto, preferredUserLangDto.getId()
             );
             if (!failures.isEmpty()) {
                 LOG.info("Activity validation failed, reasons: {}", createValidationFailureSummaries(failures));
                 return enrichPayloadWithValidationFailures(res, failures);
             }
-            handle.attach(ActivityInstanceStatusDao.class).updateOrInsertStatus(instanceDto, InstanceStatusType.IN_PROGRESS,
-                    Instant.now().toEpochMilli(), operatorUser, instanceSummary.getParticipantUser());
 
+            var instanceStatusDao = handle.attach(ActivityInstanceStatusDao.class);
+            instanceStatusDao.updateOrInsertStatus(instanceDto, InstanceStatusType.IN_PROGRESS,
+                    Instant.now().toEpochMilli(), operatorUser, instanceSummary.getParticipantUser());
+            if (parentInstanceDto != null) {
+                instanceStatusDao.updateOrInsertStatus(parentInstanceDto, InstanceStatusType.IN_PROGRESS,
+                        Instant.now().toEpochMilli(), operatorUser, instanceSummary.getParticipantUser());
+            }
             handle.attach(DataExportDao.class).queueDataSync(participantGuid, studyGuid);
 
             GoogleAnalyticsMetricsTracker.getInstance().sendAnalyticsMetrics(studyGuid, GoogleAnalyticsMetrics.EVENT_CATEGORY_PATCH_ANSWERS,
                     GoogleAnalyticsMetrics.EVENT_ACTION_PATCH_ANSWERS, GoogleAnalyticsMetrics.EVENT_LABEL_PATCH_ANSWERS,
-                    activityDto.getActivityCode(), 1);
+                    instanceDto.getActivityCode(), 1);
 
             return res;
         });
@@ -741,7 +754,8 @@ public class PatchFormAnswersRoute implements Route {
             Handle handle, String participantGuid, String operatorGuid, ActivityInstanceDto instanceDto, long languageCodeId
     ) {
         return actValidationService.validate(
-                handle, interpreter, participantGuid, operatorGuid, instanceDto.getGuid(), instanceDto.getActivityId(), languageCodeId
+                handle, interpreter, participantGuid, operatorGuid, instanceDto.getGuid(), instanceDto.getCreatedAtMillis(),
+                instanceDto.getActivityId(), languageCodeId
         );
     }
 }

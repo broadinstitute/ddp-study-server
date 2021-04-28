@@ -18,17 +18,21 @@ public abstract class ActivityResponse {
     protected Boolean isReadonly;
     protected long createdAt;
     protected Long firstCompletedAt;
-
+    protected Long parentInstanceId;
+    protected String parentInstanceGuid;
     protected long activityId;
     protected String activityCode;
     protected String activityVersionTag;
+    protected Boolean isHidden;
+    protected Integer sectionIndex;
 
     // Most of the time we just need data about the latest status.
     protected ActivityInstanceStatusDto latestStatus;
 
     ActivityResponse(ActivityType type,
                      long id, String guid, long participantId, Boolean isReadonly, long createdAt, Long firstCompletedAt,
-                     long activityId, String activityCode, String activityVersionTag,
+                     Long parentInstanceId, String parentInstanceGuid,
+                     long activityId, String activityCode, String activityVersionTag, Boolean isHidden, Integer sectionIndex,
                      ActivityInstanceStatusDto latestStatus) {
         this.type = type;
         this.id = id;
@@ -37,10 +41,14 @@ public abstract class ActivityResponse {
         this.isReadonly = isReadonly;
         this.createdAt = createdAt;
         this.firstCompletedAt = firstCompletedAt;
+        this.parentInstanceId = parentInstanceId;
+        this.parentInstanceGuid = parentInstanceGuid;
         this.activityId = activityId;
         this.activityCode = activityCode;
         this.activityVersionTag = activityVersionTag;
         this.latestStatus = latestStatus;
+        this.isHidden = isHidden;
+        this.sectionIndex = sectionIndex;
     }
 
     public ActivityType getType() {
@@ -80,6 +88,14 @@ public abstract class ActivityResponse {
         return firstCompletedAt;
     }
 
+    public Long getParentInstanceId() {
+        return parentInstanceId;
+    }
+
+    public String getParentInstanceGuid() {
+        return parentInstanceGuid;
+    }
+
     public long getActivityId() {
         return activityId;
     }
@@ -98,5 +114,13 @@ public abstract class ActivityResponse {
 
     public String getActivityTag() {
         return ActivityDef.getTag(activityCode, activityVersionTag);
+    }
+
+    public Boolean getHidden() {
+        return isHidden;
+    }
+
+    public Integer getSectionIndex() {
+        return sectionIndex;
     }
 }

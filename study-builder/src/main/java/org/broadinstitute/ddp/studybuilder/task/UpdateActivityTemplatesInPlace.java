@@ -71,7 +71,7 @@ public class UpdateActivityTemplatesInPlace implements CustomTask {
 
         boolean found = false;
         for (Config activityCfg : studyCfg.getConfigList("activities")) {
-            Config definition = activityBuilder.readDefinitionConfig(activityCfg.getString("filepath"));
+            Config definition = activityBuilder.readDefinitionConfig(activityCfg.getString("filepath"), false);
             String activityCode = definition.getString("activityCode");
             String versionTag = definition.getString("versionTag");
 
@@ -83,7 +83,7 @@ public class UpdateActivityTemplatesInPlace implements CustomTask {
                 FormActivityDef activity = (FormActivityDef) activityDao.findDefByDtoAndVersion(activityDto, versionDto);
 
                 var updateTask = new UpdateTemplatesInPlace();
-                updateTask.traverseActivity(handle, activityCode, definition, activity);
+                updateTask.traverseActivity(handle, activityCode, definition, activity, versionDto.getRevStart());
                 found = true;
                 break;
             }

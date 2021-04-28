@@ -133,6 +133,10 @@ public class PicklistOption implements Renderable {
         return groupStableId;
     }
 
+    public void setGroupStableId(String groupStableId) {
+        this.groupStableId = groupStableId;
+    }
+
     public List<PicklistOption> getNestedOptions() {
         return nestedOptions;
     }

@@ -20,7 +20,7 @@ emailTemplates:
     resultUrl: '##SERVER_BASE_URL##/pepper/v1/post-password-reset?clientId={{ application.clientID }}'
     subject: >-
       {% if client.client_metadata.study == "ANGIO" %} Angiosarcoma Project
-      {% elsif client.client_metadata.study == "cmi-brain" %} Brain Cancer Project
+      {% elsif client.client_metadata.study == "cmi-brain" %} Brain Tumor Project
       {% elsif client.client_metadata.study == "cmi-mbc" %} Metastatic Breast Cancer Project
       {% elsif client.client_metadata.study == "CMI-OSTEO" %} Osteosarcoma Project
       {% elsif client.client_metadata.study == "cmi-mpc" %} Metastatic Prostate Cancer Project
@@ -38,90 +38,108 @@ emailTemplates:
 clients:
   - name: angio-angular-client
     app_type: spa
-    callbacks:
-      - '##ANGIO_BASE_URL##/login-landing'
+    callbacks: [
+      '##ANGIO_BASE_URL##/login-landing'
       ##LOCALHOST_CALLBACKS##
-    allowed_logout_urls:
-      - '##ANGIO_BASE_URL##'
-      - '##ANGIO_BASE_URL##/session-expired'
+    ]
+    allowed_logout_urls: [
+      '##ANGIO_BASE_URL##',
+      '##ANGIO_BASE_URL##/session-expired'
       ##LOCALHOST_LOGOUTS##
-    web_origins:
-      - '##ANGIO_BASE_URL##'
+    ]
+    web_origins: [
+      '##ANGIO_BASE_URL##'
       ##LOCALHOST_ORIGINS##
+    ]
     client_metadata:
       study: ANGIO
 
   - name: brain-angular-client
     app_type: spa
-    callbacks:
-      - '##BRAIN_BASE_URL##/login-landing'
+    callbacks: [
+      '##BRAIN_BASE_URL##/login-landing'
       ##LOCALHOST_CALLBACKS##
-    allowed_logout_urls:
-      - '##BRAIN_BASE_URL##'
-      - '##BRAIN_BASE_URL##/session-expired'
+    ]
+    allowed_logout_urls: [
+      '##BRAIN_BASE_URL##',
+      '##BRAIN_BASE_URL##/session-expired'
       ##LOCALHOST_LOGOUTS##
-    web_origins:
-      - '##BRAIN_BASE_URL##'
+    ]
+    web_origins: [
+      '##BRAIN_BASE_URL##'
       ##LOCALHOST_ORIGINS##
+    ]
     client_metadata:
       study: cmi-brain
 
   - name: mbc-angular-client
     app_type: spa
-    callbacks:
-      - '##MBC_BASE_URL##/login-landing'
+    callbacks: [
+      '##MBC_BASE_URL##/login-landing'
       ##LOCALHOST_CALLBACKS##
-    allowed_logout_urls:
-      - '##MBC_BASE_URL##'
-      - '##MBC_BASE_URL##/session-expired'
+    ]
+    allowed_logout_urls: [
+      '##MBC_BASE_URL##',
+      '##MBC_BASE_URL##/session-expired'
       ##LOCALHOST_LOGOUTS##
-    web_origins:
-      - '##MBC_BASE_URL##'
+    ]
+    web_origins: [
+      '##MBC_BASE_URL##'
       ##LOCALHOST_ORIGINS##
+    ]
     client_metadata:
       study: cmi-mbc
 
   - name: osteo-angular-client
     app_type: spa
-    callbacks:
-      - '##OSTEO_BASE_URL##/login-landing'
+    callbacks: [
+      '##OSTEO_BASE_URL##/login-landing'
       ##LOCALHOST_CALLBACKS##
-    allowed_logout_urls:
-      - '##OSTEO_BASE_URL##'
-      - '##OSTEO_BASE_URL##/session-expired'
+    ]
+    allowed_logout_urls: [
+      '##OSTEO_BASE_URL##',
+      '##OSTEO_BASE_URL##/session-expired'
       ##LOCALHOST_LOGOUTS##
-    web_origins:
-      - '##OSTEO_BASE_URL##'
+    ]
+    web_origins: [
+      '##OSTEO_BASE_URL##'
       ##LOCALHOST_ORIGINS##
+    ]
     client_metadata:
       study: CMI-OSTEO
 
   - name: mpc-angular-client
     app_type: spa
-    callbacks:
-      - '##MPC_BASE_URL##/login-landing'
+    callbacks: [
+      '##MPC_BASE_URL##/login-landing'
       ##LOCALHOST_CALLBACKS##
-    allowed_logout_urls:
-      - '##MPC_BASE_URL##'
-      - '##MPC_BASE_URL##/session-expired'
+    ]
+    allowed_logout_urls: [
+      '##MPC_BASE_URL##',
+      '##MPC_BASE_URL##/session-expired'
       ##LOCALHOST_LOGOUTS##
-    web_origins:
-      - '##MPC_BASE_URL##'
+    ]
+    web_origins: [
+      '##MPC_BASE_URL##'
       ##LOCALHOST_ORIGINS##
+    ]
     client_metadata:
       study: cmi-mpc
 
   - name: esc-angular-client
     app_type: spa
-    callbacks:
-      - '##ESC_BASE_URL##/login-landing'
+    callbacks: [
+      '##ESC_BASE_URL##/login-landing'
       ##LOCALHOST_CALLBACKS##
-    allowed_logout_urls:
-      - '##ESC_BASE_URL##'
-      - '##ESC_BASE_URL##/session-expired'
+    ]
+    allowed_logout_urls: [
+      '##ESC_BASE_URL##',
+      '##ESC_BASE_URL##/session-expired'
       ##LOCALHOST_LOGOUTS##
-    web_origins:
-      - '##ESC_BASE_URL##'
+    ]
+    web_origins: [
+      '##ESC_BASE_URL##'
       ##LOCALHOST_ORIGINS##
+    ]
     client_metadata:
       study: cmi-esc

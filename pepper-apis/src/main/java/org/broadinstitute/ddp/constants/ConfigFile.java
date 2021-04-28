@@ -132,15 +132,11 @@ public class ConfigFile {
     public static final String DSM_JWT_SIGNER = "dsmJwtSigner";
     public static final String USE_DISPOSABLE_TEST_DB = "useDisposableTestDbs";
 
-    public static final String AUTH0_IP_WHITE_LIST = "auth0IpWhiteList";
+    public static final String AUTH0_IP_ALLOW_LIST = "auth0.ipAllowList";
     public static final String PREFERRED_SOURCE_IP_HEADER = "preferredSourceIPHeader";
 
     public static final String JCACHE_CONFIGURATION_FILE = "jcacheConfigurationFile";
     public static final String REDIS_SERVER_ADDRESS = "redisServerAddress";
-
-    public static final class SqlQuery {
-        public static final String FORM_ACTIVITY_BY_GUID = "activities.formActivityByGuidQuery";
-    }
 
     public static final class API_RATE_LIMIT {
         public static final String MAX_QUERIES_PER_SECOND = "rateLimit.apiLimitRate";

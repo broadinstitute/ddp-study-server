@@ -498,11 +498,17 @@
         background-color: #f5f5f5;
       }
 
-      .footer__logo {
+      .footer__logo-link {
         width: 117px;
         height: 50px;
 
         margin-right: 10rem;
+      }
+
+      .footer__logo-img {
+        display: block;
+
+        width: 100%;
       }
 
       .footer__links-list {
@@ -1317,10 +1323,12 @@
     </div>
 
     <footer class="footer">
-      <img
-        src="https://storage.googleapis.com/ddp-rgp-assets/images/rgp-logo.svg"
-        class="footer__logo"
-      />
+      <a href="#" class="footer__logo-link" data-href="/">
+        <img
+          src="https://storage.googleapis.com/ddp-rgp-assets/images/rgp-logo.svg"
+          class="footer__logo-img"
+        />
+      </a>
 
       <div class="footer__info">
         <ul class="footer__links-list">
@@ -1368,7 +1376,10 @@
               <a href="tel:617-714-7395">617-714-7395</a>
             </p>
             <p>
-              <a href="https://www.facebook.com/RareGenomesProject/">
+              <a
+                href="https://www.facebook.com/RareGenomesProject/"
+                target="_blank"
+              >
                 <img
                   src="https://storage.googleapis.com/ddp-rgp-assets/images/facebook.svg"
                   alt="Facebook Rare Genomes Project"

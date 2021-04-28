@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="yufeng" id="20210217-parent-activity">
+        <addColumn tableName="study_activity">
+            <column name="parent_activity_id" type="bigint">
+                <constraints nullable="true"
+                             references="study_activity(study_activity_id)"
+                             foreignKeyName="activity_parent_activity_fk"/>
+            </column>
+            <column name="create_on_parent_creation" type="boolean" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet author="yufeng" id="20210217-activity-instance-parent">
+        <addColumn tableName="activity_instance">
+            <column name="parent_instance_id" type="bigint">
+                <constraints nullable="true"
+                             references="activity_instance(activity_instance_id)"
+                             foreignKeyName="activity_instance_parent_instance_fk"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+</databaseChangeLog>

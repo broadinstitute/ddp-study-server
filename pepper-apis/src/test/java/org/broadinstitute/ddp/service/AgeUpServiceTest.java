@@ -126,7 +126,7 @@ public class AgeUpServiceTest extends TxnAwareBaseTest {
                     .insertStaticTrigger(EventTriggerType.REACHED_AOM);
             long actionId = handle.attach(EventActionDao.class)
                     .insertMarkActivitiesReadOnlyAction(Set.of(instanceDto.getActivityId()));
-            handle.attach(JdbiEventConfiguration.class).insert(triggerId, actionId, testData.getStudyId(),
+            handle.attach(JdbiEventConfiguration.class).insert(null, triggerId, actionId, testData.getStudyId(),
                     Instant.now().toEpochMilli(), null, 0, null, null, false, 1);
 
             GovernancePolicy policy = new GovernancePolicy(1L, testData.getStudyId(), testData.getStudyGuid(), new Expression("true"));
@@ -166,7 +166,7 @@ public class AgeUpServiceTest extends TxnAwareBaseTest {
                     .insertStaticTrigger(EventTriggerType.REACHED_AOM_PREP);
             long actionId = handle.attach(EventActionDao.class)
                     .insertMarkActivitiesReadOnlyAction(Set.of(instanceDto.getActivityId()));
-            handle.attach(JdbiEventConfiguration.class).insert(triggerId, actionId, testData.getStudyId(),
+            handle.attach(JdbiEventConfiguration.class).insert(null, triggerId, actionId, testData.getStudyId(),
                     Instant.now().toEpochMilli(), null, 0, null, null, false, 1);
 
             GovernancePolicy policy = new GovernancePolicy(1L, testData.getStudyId(), testData.getStudyGuid(), new Expression("true"));
@@ -200,7 +200,7 @@ public class AgeUpServiceTest extends TxnAwareBaseTest {
                     .insertStaticTrigger(EventTriggerType.REACHED_AOM_PREP);
             long actionId = handle.attach(EventActionDao.class)
                     .insertInvitationEmailNotificationAction(new SendgridEmailEventActionDto("template", "en", false));
-            handle.attach(JdbiEventConfiguration.class).insert(triggerId, actionId, testData.getStudyId(),
+            handle.attach(JdbiEventConfiguration.class).insert(null, triggerId, actionId, testData.getStudyId(),
                     Instant.now().toEpochMilli(), null, 0, null, null, true, 1);
 
             GovernancePolicy policy = new GovernancePolicy(1L, testData.getStudyId(), testData.getStudyGuid(), new Expression("true"));

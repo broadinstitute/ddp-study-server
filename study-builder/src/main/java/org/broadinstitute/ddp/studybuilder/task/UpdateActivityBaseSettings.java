@@ -78,6 +78,8 @@ public class UpdateActivityBaseSettings implements CustomTask {
                 currentDto.getActivityTypeId(),
                 currentDto.getStudyId(),
                 currentDto.getActivityCode(),
+                currentDto.getParentActivityId(),
+                currentDto.getParentActivityCode(),
                 definition.getInt("displayOrder"),
                 definition.getBoolean("writeOnce"),
                 false,  // instantiate_upon_registration not supported anymore!
@@ -88,8 +90,15 @@ public class UpdateActivityBaseSettings implements CustomTask {
                 definition.getBoolean("allowUnauthenticated"),
                 definition.getBoolean("isFollowup"),
                 definition.getBoolean("excludeStatusIconFromDisplay"),
-                definition.getBoolean("hideExistingInstancesOnCreation"));
+                definition.getBoolean("hideExistingInstancesOnCreation"),
+                ConfigUtil.getBoolOrElse(definition, "createOnParentCreation", false),
+                ConfigUtil.getBoolOrElse(definition, "canDeleteInstances", false),
+                ConfigUtil.getBoolIfPresent(definition, "canDeleteFirstInstance"));
         if (!currentDto.equals(latestDto)) {
+            if (currentDto.canDeleteInstances() != latestDto.canDeleteInstances()) {
+                throw new UnsupportedOperationException("Updating `canDeleteInstances` setting is currently not supported"
+                        + " to prevent accidental updates of this property and allowing undesired deletion of data");
+            }
             jdbiActivity.updateActivity(
                     latestDto.getActivityId(),
                     latestDto.getDisplayOrder(),
@@ -102,7 +111,10 @@ public class UpdateActivityBaseSettings implements CustomTask {
                     latestDto.isUnauthenticatedAllowed(),
                     latestDto.isFollowup(),
                     latestDto.shouldExcludeStatusIconFromDisplay(),
-                    latestDto.isHideExistingInstancesOnCreation());
+                    latestDto.isHideExistingInstancesOnCreation(),
+                    latestDto.isCreateOnParentCreation(),
+                    latestDto.canDeleteInstances(),
+                    latestDto.getCanDeleteFirstInstance());
             LOG.info("Updated basic settings");
         } else {
             LOG.info("No changes to basic settings");

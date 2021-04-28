@@ -139,7 +139,7 @@ public class JdbiUmbrellaStudyCached extends SQLObjectWrapper<JdbiUmbrellaStudy>
         if (val > 0) {
             StudyDto dto = findByStudyGuid(guid);
             if (dto != null) {
-                notifyModelUpdated(ModelChangeType.UMBRELLA, dto.getId());
+                notifyModelUpdated(ModelChangeType.STUDY, dto.getId());
                 removeFromCache(dto);
             }
         }
@@ -164,7 +164,7 @@ public class JdbiUmbrellaStudyCached extends SQLObjectWrapper<JdbiUmbrellaStudy>
         if (val > 0) {
             StudyDto dto = findByStudyGuid(guid);
             if (dto != null) {
-                notifyModelUpdated(ModelChangeType.UMBRELLA, dto.getUmbrellaId());
+                notifyModelUpdated(ModelChangeType.STUDY, dto.getId());
                 removeFromCache(dto);
             }
         }
@@ -190,7 +190,7 @@ public class JdbiUmbrellaStudyCached extends SQLObjectWrapper<JdbiUmbrellaStudy>
                        Long precisionId, boolean shareLocation, String studyEmail, String recaptchaSiteKey) {
         long studyId = delegate.insert(studyName, studyGuid, umbrellaId, webBaseUrl, auth0TenantId, irbPassword, precisionId, shareLocation,
                 studyEmail, recaptchaSiteKey);
-        notifyModelUpdated(ModelChangeType.UMBRELLA, umbrellaId);
+        notifyModelUpdated(ModelChangeType.STUDY, studyId);
         return studyId;
     }
 
@@ -199,7 +199,7 @@ public class JdbiUmbrellaStudyCached extends SQLObjectWrapper<JdbiUmbrellaStudy>
                        boolean shareLocation, String studyEmail, String recaptchaSiteKey) {
         long studyId = delegate.insert(studyName, studyGuid, umbrellaId, webBaseUrl, auth0TenantId, precision, shareLocation,
                 studyEmail, recaptchaSiteKey);
-        notifyModelUpdated(ModelChangeType.UMBRELLA, umbrellaId);
+        notifyModelUpdated(ModelChangeType.STUDY, studyId);
         return studyId;
     }
 
@@ -207,7 +207,7 @@ public class JdbiUmbrellaStudyCached extends SQLObjectWrapper<JdbiUmbrellaStudy>
     public int updateIrbPasswordByGuid(String irbPassword, String studyGuid) {
         int modified = delegate.updateIrbPasswordByGuid(irbPassword, studyGuid);
         if (modified > 0) {
-            notifyModelUpdated(ModelChangeType.UMBRELLA, findByStudyGuid(studyGuid).getUmbrellaId());
+            notifyModelUpdated(ModelChangeType.STUDY, findByStudyGuid(studyGuid).getId());
         }
         return modified;
     }
@@ -216,9 +216,18 @@ public class JdbiUmbrellaStudyCached extends SQLObjectWrapper<JdbiUmbrellaStudy>
     public boolean updateWebBaseUrl(String studyGuid, String webBaseUrl) {
         boolean modified = delegate.updateWebBaseUrl(studyGuid, webBaseUrl);
         if (modified) {
-            notifyModelUpdated(ModelChangeType.UMBRELLA, findByStudyGuid(studyGuid).getUmbrellaId());
+            notifyModelUpdated(ModelChangeType.STUDY, findByStudyGuid(studyGuid).getId());
         }
         return modified;
+    }
+
+    @Override
+    public int updateEmailAndWebUrl(long studyId, String newStudyEmail, String newBaseWebUrl) {
+        int numUpdated = delegate.updateEmailAndWebUrl(studyId, newStudyEmail, newBaseWebUrl);
+        if (numUpdated > 0) {
+            notifyModelUpdated(ModelChangeType.STUDY, studyId);
+        }
+        return numUpdated;
     }
 
     private void addToCacheAsync(StudyDto dto) {

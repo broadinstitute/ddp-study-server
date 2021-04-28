@@ -162,7 +162,7 @@ public class EventServiceTest extends IntegrationTestSuite.TestCase {
                     precondExprId = handle.attach(JdbiExpression.class).getByGuid(TestData.expressionGuid).get().getId();
                     creationExprId = handle.attach(JdbiExpression.class).insertExpression("true").getId();
                     autoInstantiationConfigurationId = jdbiEventConfig.insert(
-                            eventTriggerId,
+                            null, eventTriggerId,
                             activityInstanceCreationEventActionId,
                             umbrellaStudyId,
                             timestamp,
@@ -175,7 +175,7 @@ public class EventServiceTest extends IntegrationTestSuite.TestCase {
                     );
 
                     updateDSMInclusionConfigurationId = jdbiEventConfig.insert(
-                            eventTriggerId,
+                            null, eventTriggerId,
                             dsmInclusionEventActionId,
                             umbrellaStudyId,
                             timestamp,
@@ -188,7 +188,7 @@ public class EventServiceTest extends IntegrationTestSuite.TestCase {
                     );
 
                     announcementConfigId = jdbiEventConfig.insert(
-                            eventTriggerId,
+                            null, eventTriggerId,
                             announcementActionId,
                             umbrellaStudyId,
                             timestamp,

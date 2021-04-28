@@ -147,6 +147,8 @@ public class ActivityResponseCollector {
 
     private void collectBlockDefinitions(List<Object> props, FormBlockDef blockDef) {
         switch (blockDef.getBlockType()) {
+            case ACTIVITY:
+                break;  // Currently not doing anything for nested activities.
             case CONTENT:
                 break;  //nothing to do
             case QUESTION:
@@ -171,6 +173,8 @@ public class ActivityResponseCollector {
 
     private void collectBlockMappings(Map<String, Object> props, Map<String, Object> deprecatedProps, FormBlockDef blockDef) {
         switch (blockDef.getBlockType()) {
+            case ACTIVITY:
+                break;  // Currently not doing anything for nested activities.
             case CONTENT:
                 break;  // nothing to do
             case QUESTION:
@@ -351,6 +355,8 @@ public class ActivityResponseCollector {
 
     private void collectBlockIntoHeaders(FormBlockDef blockDef) {
         switch (blockDef.getBlockType()) {
+            case ACTIVITY:
+                break;  // Currently not doing anything for nested activities.
             case CONTENT:
                 break;  // nothing to do
             case QUESTION:
@@ -463,6 +469,8 @@ public class ActivityResponseCollector {
     private void collectBlockIntoRecord(Map<String, String> record, FormBlockDef block,
                                         FormResponse instance, ComponentDataSupplier supplier) {
         switch (block.getBlockType()) {
+            case ACTIVITY:
+                break;  // Currently not doing anything for nested activities.
             case CONTENT:
                 break;  // nothing to do
             case QUESTION:

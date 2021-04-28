@@ -58,7 +58,10 @@ ActivityAnswersPatchBadPayloadResponse:
       schema:
         $ref: '../pepper.yml#/components/schemas/Error.ActivityAnswersPatchBadPayload'
 ActivityAnswersPatchInvalidResponse:
-  description: activity instance or question is read-only or answer submission failed validation
+  description: |
+    Activity instance or question is read-only or answer submission failed validation.
+    If this is a child nested instance and parent instance is read-only, then
+    answer submission is not allowed and `ACTIVITY_INSTANCE_IS_READONLY` is returned.
   content:
     application/json:
       schema:
@@ -81,7 +84,11 @@ ActivityAnswersPutResponse:
           workflow:
             $ref: '../pepper.yml#/components/schemas/WorkflowNextSuggestion'
 ActivityAnswersPutInvalidResponse:
-  description: activity instance is read-only, required questions not answered yet, or there are validation errors
+  description: |
+    Activity instance is read-only, required questions not answered yet, or there are validation errors.
+    If this is a child nested instance and parent instance is read-only, then `ACTIVITY_INSTANCE_IS_READONLY`
+    will be returned. If this is a parent instance and child instances does not yet meet required questions
+    requirements, then `QUESTION_REQUIREMENTS_NOT_MET` will be returned.
   content:
     application/json:
       schema:
@@ -309,6 +316,14 @@ StudyDetailResponse:
     application/json:
       schema:
         $ref: '../pepper.yml#/components/schemas/Study.Detail'
+StudyWorkflowsResponse:
+  description: workflows and allowed statuses for a study
+  content:
+    application/json:
+      schema:
+        type: array
+        items:
+          $ref: '../pepper.yml#/components/schemas/Study.Workflow'
 StudySummaryResponse:
   description: summary information for a list of studies
   content:
@@ -362,7 +377,7 @@ JoinMailingListBadPayloadError:
   content:
     application/json:
       schema:
-          $ref: '../pepper.yml#/components/schemas/Error.BadPayload'
+        $ref: '../pepper.yml#/components/schemas/Error.BadPayload'
 InstitutionSuggestion:
   description: a list of institution suggestions
   content:

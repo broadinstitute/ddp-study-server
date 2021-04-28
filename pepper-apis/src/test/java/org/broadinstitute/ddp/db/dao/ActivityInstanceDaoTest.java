@@ -74,6 +74,76 @@ public class ActivityInstanceDaoTest extends TxnAwareBaseTest {
     }
 
     @Test
+    public void testInsertWithParentInstance() {
+        TransactionWrapper.useTxn(handle -> {
+            var dao = handle.attach(ActivityInstanceDao.class);
+            var statusDao = handle.attach(ActivityInstanceStatusDao.class);
+            var jdbiInstance = handle.attach(JdbiActivityInstance.class);
+
+            var parentAct = FormActivityDef
+                    .generalFormBuilder("ACT_PARENT_" + Instant.now().toEpochMilli(), "v1", testData.getStudyGuid())
+                    .addName(new Translation("en", "parent"))
+                    .build();
+            var nestedAct = FormActivityDef
+                    .generalFormBuilder("ACT_NESTED_" + Instant.now().toEpochMilli(), "v1", testData.getStudyGuid())
+                    .addName(new Translation("en", "child"))
+                    .setParentActivityCode(parentAct.getActivityCode())
+                    .build();
+            handle.attach(ActivityDao.class).insertActivity(parentAct, List.of(nestedAct),
+                    RevisionMetadata.now(testData.getUserId(), "test activity"));
+            ActivityInstanceDto parentInstanceDto = dao.insertInstance(parentAct.getActivityId(), testData.getUserGuid());
+
+            ActivityInstanceDto nestedInstanceDto = dao.insertInstance(nestedAct.getActivityId(),
+                    testData.getUserGuid(), testData.getUserGuid(), parentInstanceDto.getId());
+            assertTrue(nestedInstanceDto.getId() >= 0);
+            assertNotNull(nestedInstanceDto.getGuid());
+            assertEquals(InstanceStatusType.CREATED, nestedInstanceDto.getStatusType());
+            assertEquals(1, statusDao.getAllStatuses(nestedInstanceDto.getId()).size());
+            assertEquals((Long) parentInstanceDto.getId(), nestedInstanceDto.getParentInstanceId());
+            assertEquals(parentAct.getActivityId(), nestedInstanceDto.getParentActivityId());
+            assertEquals(parentAct.getActivityCode(), nestedInstanceDto.getParentActivityCode());
+
+            ActivityInstanceDto actual = jdbiInstance
+                    .getByActivityInstanceId(nestedInstanceDto.getId()).get();
+            assertEquals(nestedInstanceDto.getGuid(), actual.getGuid());
+
+            handle.rollback();
+        });
+    }
+
+    @Test
+    public void testCreateOnParentCreation() {
+        TransactionWrapper.useTxn(handle -> {
+            var dao = handle.attach(ActivityInstanceDao.class);
+            var jdbiInstance = handle.attach(JdbiActivityInstance.class);
+
+            var parentAct = FormActivityDef
+                    .generalFormBuilder("ACT_PARENT_" + Instant.now().toEpochMilli(), "v1", testData.getStudyGuid())
+                    .addName(new Translation("en", "parent"))
+                    .build();
+            var nestedAct = FormActivityDef
+                    .generalFormBuilder("ACT_NESTED_" + Instant.now().toEpochMilli(), "v1", testData.getStudyGuid())
+                    .addName(new Translation("en", "child"))
+                    .setParentActivityCode(parentAct.getActivityCode())
+                    .setCreateOnParentCreation(true)
+                    .build();
+            handle.attach(ActivityDao.class).insertActivity(parentAct, List.of(nestedAct),
+                    RevisionMetadata.now(testData.getUserId(), "test activity"));
+
+            ActivityInstanceDto parentInstanceDto = dao.insertInstance(parentAct.getActivityId(), testData.getUserGuid());
+            List<ActivityInstanceDto> actualInstances = jdbiInstance.findAllByUserGuidAndActivityCode(
+                    testData.getUserGuid(), nestedAct.getActivityCode(), testData.getStudyId());
+            assertEquals(1, actualInstances.size());
+
+            ActivityInstanceDto nestedInstanceDto = actualInstances.get(0);
+            assertEquals(InstanceStatusType.CREATED, nestedInstanceDto.getStatusType());
+            assertEquals((Long) parentInstanceDto.getId(), nestedInstanceDto.getParentInstanceId());
+
+            handle.rollback();
+        });
+    }
+
+    @Test
     public void testInsertTriggeredInstance() {
         TransactionWrapper.useTxn(handle -> {
             ActivityInstanceDao dao = handle.attach(ActivityInstanceDao.class);
@@ -88,7 +158,7 @@ public class ActivityInstanceDaoTest extends TxnAwareBaseTest {
             assertNotNull(form.getActivityId());
 
             ActivityInstanceDto instanceDto = dao.insertInstance(form.getActivityId(), testData.getUserGuid(),
-                    testData.getUserGuid(), InstanceStatusType.CREATED, false, Instant.now().toEpochMilli(), 123L);
+                    testData.getUserGuid(), InstanceStatusType.CREATED, false, Instant.now().toEpochMilli(), 123L, null);
 
             assertTrue(instanceDto.getId() >= 0);
             assertNotNull(instanceDto.getGuid());
@@ -125,7 +195,7 @@ public class ActivityInstanceDaoTest extends TxnAwareBaseTest {
             assertNotNull(form.getActivityId());
 
             ActivityInstanceDto instanceDto = dao.insertInstance(form.getActivityId(), testData.getUserGuid(),
-                    testData.getUserGuid(), InstanceStatusType.CREATED, false, Instant.now().toEpochMilli(), 123L);
+                    testData.getUserGuid(), InstanceStatusType.CREATED, false, Instant.now().toEpochMilli(), 123L, null);
 
             CompositeAnswer answer = new CompositeAnswer(null, "composite", null);
             answer.addRowOfChildAnswers(new PicklistAnswer(null, "picklist", null,

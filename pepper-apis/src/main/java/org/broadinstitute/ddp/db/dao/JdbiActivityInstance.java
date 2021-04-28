@@ -53,28 +53,23 @@ public interface JdbiActivityInstance extends SqlObject {
             + "activity_instance_id = :activityInstanceId")
     String getActivityInstanceGuid(@Bind("activityInstanceId") long activityInstanceId);
 
-    @SqlUpdate("insert into activity_instance (study_activity_id,participant_id,activity_instance_guid,is_readonly,"
-            + "created_at,ondemand_trigger_id) values(:activityId,:participantId,:guid,:isReadOnly,:createdAt,:triggerId)")
+    @SqlUpdate("insert into activity_instance (study_activity_id, participant_id, activity_instance_guid,"
+            + "        is_readonly, created_at, ondemand_trigger_id, parent_instance_id,"
+            + "        legacy_submissionid, legacy_sessionid, legacy_version)"
+            + " values (:activityId, :participantId, :guid,"
+            + "        :isReadOnly, :createdAt, :triggerId, :parentInstanceId,"
+            + "        :submissionId, :sessionId, :legacyVersion)")
     @GetGeneratedKeys
     long insert(@Bind("activityId") long activityId,
                 @Bind("participantId") long participantId,
                 @Bind("guid") String instanceGuid,
                 @Bind("isReadOnly") Boolean isReadOnly,
                 @Bind("createdAt") long createdAtMillis,
-                @Bind("triggerId") Long onDemandTriggerId);
-
-    @SqlUpdate("insert into activity_instance (study_activity_id,participant_id,activity_instance_guid,is_readonly,"
-            + "created_at, legacy_submissionid,legacy_sessionid,legacy_version) values(:activityId,:participantId,:guid,"
-            + ":isReadOnly,:createdAt,:submissionId,:sessionId,:legacyVersion)")
-    @GetGeneratedKeys
-    long insertLegacyInstance(@Bind("activityId") long activityId,
-                              @Bind("participantId") long participantId,
-                              @Bind("guid") String activityInstanceGuid,
-                              @Bind("isReadOnly") Boolean isReadOnly,
-                              @Bind("createdAt") long createdAtMillis,
-                              @Bind("submissionId") Long submissionId,
-                              @Bind("sessionId") String sessionId,
-                              @Bind("legacyVersion") String legacyVersion);
+                @Bind("triggerId") Long onDemandTriggerId,
+                @Bind("parentInstanceId") Long parentInstanceId,
+                @Bind("submissionId") Long submissionId,
+                @Bind("sessionId") String sessionId,
+                @Bind("legacyVersion") String legacyVersion);
 
     @SqlUpdate("delete from activity_instance where activity_instance_id = :id")
     int delete(@Bind long id);
@@ -142,16 +137,11 @@ public interface JdbiActivityInstance extends SqlObject {
     @RegisterConstructorMapper(ActivityInstanceDto.class)
     List<ActivityInstanceDto> findAllByUserIdAndStudyId(@Bind("userId") long participantUserId, @Bind("studyId") long studyId);
 
-    @SqlQuery("select ai.activity_instance_guid "
-            + " from activity_instance as ai "
-            + " join user as u on ai.participant_id = u.user_id"
-            + " join study_activity as act on act.study_activity_id = ai.study_activity_id"
-            + " join question as q on q.study_activity_id = act.study_activity_id"
-            + " where q.question_id = :questionId"
-            + " and u.guid = :userGuid"
-            + " order by ai.created_at desc limit 1")
-    Optional<String> findLatestInstanceGuidFromUserGuidAndQuestionId(@Bind("userGuid") String userGuid,
-                                                                     @Bind("questionId") long questionId);
+    @UseStringTemplateSqlLocator
+    @SqlQuery("findLatestInstanceFromUserGuidAndQuestionId")
+    @RegisterConstructorMapper(ActivityInstanceDto.class)
+    Optional<ActivityInstanceDto> findLatestInstanceFromUserGuidAndQuestionId(@Bind("userGuid") String userGuid,
+                                                                              @Bind("questionId") long questionId);
 
     @SqlQuery(
             "select ai.activity_instance_id from user u join activity_instance ai on ai.participant_id = u.user_id"

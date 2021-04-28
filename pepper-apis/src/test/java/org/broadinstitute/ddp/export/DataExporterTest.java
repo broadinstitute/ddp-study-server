@@ -470,12 +470,15 @@ public class DataExporterTest extends TxnAwareBaseTest {
                 "ACT_v1", "ACT_v1_status", "ACT_v1_created_at", "ACT_v1_updated_at", "ACT_v1_completed_at",
                 "Q_BIRTHDAY_DAY", "Q_BIRTHDAY_MONTH", "Q_BIRTHDAY_YEAR", "Q_BOOL", "Q_TEXT", "Q_NUMERIC", "Q_FILE",
                 "ADDRESS_FULLNAME", "ADDRESS_STREET1", "ADDRESS_STREET2", "ADDRESS_CITY", "ADDRESS_STATE",
-                "ADDRESS_ZIP", "ADDRESS_COUNTRY", "ADDRESS_PHONE", "ADDRESS_PLUSCODE", "ADDRESS_STATUS", "PHYSICIAN");
+                "ADDRESS_ZIP", "ADDRESS_COUNTRY", "ADDRESS_PHONE", "ADDRESS_PLUSCODE", "ADDRESS_STATUS", "PHYSICIAN",
+                "ACT_NESTED_v1", "ACT_NESTED_v1_parent", "ACT_NESTED_v1_status",
+                "ACT_NESTED_v1_created_at", "ACT_NESTED_v1_updated_at", "ACT_NESTED_v1_completed_at");
 
         List<String> answers = Arrays.asList(TEST_USER_GUID, "blah-hruid", "blah-legacy-altpid", "blah-shortid",
                 "first-foo", "last-bar", "test@datadonationplatform.org", "true", "10/18/2018 20:18:01", "ENROLLED", "10/18/2018 20:18:01",
                 "", "", "", "", "", "", "", "", "",
-                "", "", "", "", "", "", "", "", "", "", "", "", "", "");
+                "", "", "", "", "", "", "", "", "", "", "", "", "", "",
+                "", "", "", "", "", "");
 
         Map<String, String> expected = IntStream.range(0, Math.min(headers.size(), answers.size()))
                 .boxed()
@@ -510,14 +513,18 @@ public class DataExporterTest extends TxnAwareBaseTest {
                 "ACT_v1", "ACT_v1_status", "ACT_v1_created_at", "ACT_v1_updated_at", "ACT_v1_completed_at",
                 "Q_BIRTHDAY_DAY", "Q_BIRTHDAY_MONTH", "Q_BIRTHDAY_YEAR", "Q_BOOL", "Q_TEXT", "Q_NUMERIC", "Q_FILE",
                 "ADDRESS_FULLNAME", "ADDRESS_STREET1", "ADDRESS_STREET2", "ADDRESS_CITY", "ADDRESS_STATE",
-                "ADDRESS_ZIP", "ADDRESS_COUNTRY", "ADDRESS_PHONE", "ADDRESS_STATUS", "PHYSICIAN", "ADDRESS_PLUSCODE");
+                "ADDRESS_ZIP", "ADDRESS_COUNTRY", "ADDRESS_PHONE", "ADDRESS_PLUSCODE", "ADDRESS_STATUS", "PHYSICIAN",
+                "ACT_NESTED_v1", "ACT_NESTED_v1_parent", "ACT_NESTED_v1_status",
+                "ACT_NESTED_v1_created_at", "ACT_NESTED_v1_updated_at", "ACT_NESTED_v1_completed_at");
         List<String> answers = Arrays.asList(TEST_USER_GUID, "blah-hruid", "blah-legacy-altpid", "blah-shortid",
                 "first-foo", "last-bar", "test@datadonationplatform.org", "true", "10/18/2018 20:18:01",
                 "ENROLLED", "10/18/2018 20:18:01",
                 "instance-guid-xyz", "COMPLETE", "10/18/2018 20:18:01", "10/18/2018 20:18:21", "10/18/2018 20:18:11",
                 "16", "05", "1978", "true", "john smith", "25", "file1",
-                "foo bar", "85 Main St", "Apt 2", "Boston", "MA", "02115", "US", "6171112233", "INVALID",
-                "dr. a;inst a;boston;ma", "87JC9WFP+HV", "");
+                "foo bar", "85 Main St", "Apt 2", "Boston", "MA", "02115", "US", "6171112233", "87JC9WFP+HV", "INVALID",
+                "dr. a;inst a;boston;ma",
+                "nested-instance-1", "instance-guid-xyz", "COMPLETE",
+                "10/18/2018 20:18:01", "10/18/2018 20:18:21", "10/18/2018 20:18:11");
 
         Map<String, String> expected = IntStream.range(0, Math.min(headers.size(), answers.size()))
                 .boxed()
@@ -573,6 +580,7 @@ public class DataExporterTest extends TxnAwareBaseTest {
         assertTrue(actualJson.contains("invite123"));
         assertTrue("should export file with no file location", actualJson.contains("file1")
                 && actualJson.contains("\"bucket\":null") && actualJson.contains("\"blobName\":null"));
+        assertTrue(actualJson.contains("\"parentInstanceGuid\":\"instance-guid-xyz\""));
 
         // Check kit-related attributes.
         assertTrue(actualJson.contains("\"attributes\""));
@@ -630,7 +638,10 @@ public class DataExporterTest extends TxnAwareBaseTest {
                 "DDP_KIT_REASON_TYPE", "DDP_KIT_REQUEST_ID", "DDP_TEST_RESULT_CODE", "DDP_TEST_RESULT_TIME_COMPLETED",
                 "Q_BIRTHDAY_DAY", "Q_BIRTHDAY_MONTH", "Q_BIRTHDAY_YEAR", "Q_BOOL", "Q_TEXT", "Q_NUMERIC", "Q_FILE",
                 "ADDRESS_FULLNAME", "ADDRESS_STREET1", "ADDRESS_STREET2", "ADDRESS_CITY", "ADDRESS_STATE",
-                "ADDRESS_ZIP", "ADDRESS_COUNTRY", "ADDRESS_PHONE", "ADDRESS_PLUSCODE", "ADDRESS_STATUS", "PHYSICIAN"};
+                "ADDRESS_ZIP", "ADDRESS_COUNTRY", "ADDRESS_PHONE", "ADDRESS_PLUSCODE", "ADDRESS_STATUS", "PHYSICIAN",
+                // Nested activity columns.
+                "ACT_NESTED_v1", "ACT_NESTED_v1_parent", "ACT_NESTED_v1_status",
+                "ACT_NESTED_v1_created_at", "ACT_NESTED_v1_updated_at", "ACT_NESTED_v1_completed_at"};
         String[] actual = iter.next();
         assertArrayEquals(expected, actual);
 
@@ -649,7 +660,10 @@ public class DataExporterTest extends TxnAwareBaseTest {
                 "", "", "", "",             // Empty attributes.
                 "", "", "", "", "", "", "", // Empty question answers/responses.
                 "", "", "", "", "", "", "", "",
-                "", "", ""};
+                "", "", "",
+                // Nested activity instance values.
+                "nested-instance-1", "instance-guid-xyz", "COMPLETE",
+                "10/18/2018 20:18:01", "10/18/2018 20:18:21", "10/18/2018 20:18:11"};
         actual = iter.next();
         assertArrayEquals(expected, actual);
         assertFalse(iter.hasNext());
@@ -669,7 +683,9 @@ public class DataExporterTest extends TxnAwareBaseTest {
                 "ACT_v1", "ACT_v1_status", "ACT_v1_created_at", "ACT_v1_updated_at", "ACT_v1_completed_at",
                 "Q_BIRTHDAY_DAY", "Q_BIRTHDAY_MONTH", "Q_BIRTHDAY_YEAR", "Q_BOOL", "Q_TEXT", "Q_NUMERIC", "Q_FILE",
                 "ADDRESS_FULLNAME", "ADDRESS_STREET1", "ADDRESS_STREET2", "ADDRESS_CITY", "ADDRESS_STATE",
-                "ADDRESS_ZIP", "ADDRESS_COUNTRY", "ADDRESS_PHONE", "ADDRESS_PLUSCODE", "ADDRESS_STATUS", "PHYSICIAN"};
+                "ADDRESS_ZIP", "ADDRESS_COUNTRY", "ADDRESS_PHONE", "ADDRESS_PLUSCODE", "ADDRESS_STATUS", "PHYSICIAN",
+                "ACT_NESTED_v1", "ACT_NESTED_v1_parent", "ACT_NESTED_v1_status",
+                "ACT_NESTED_v1_created_at", "ACT_NESTED_v1_updated_at", "ACT_NESTED_v1_completed_at"};
 
         assertArrayEquals(expected, actual);
     }
@@ -716,8 +732,13 @@ public class DataExporterTest extends TxnAwareBaseTest {
                             new MailingAddressComponentDef(null, null),
                             new PhysicianComponentDef(true, null, null, null, InstitutionType.PHYSICIAN, true, false))))
                     .build();
+            FormActivityDef nestedDef = FormActivityDef.generalFormBuilder("ACT_NESTED", "v1", testData.getStudyGuid())
+                    .addName(new Translation("en", "nested activity"))
+                    .setParentActivityCode(def.getActivityCode())
+                    .build();
             ActivityVersionDto versionDto = new ActivityVersionDto(1L, 1L, "v1", 1L, timestamp, null);
-            activities = List.of(new ActivityExtract(def, versionDto));
+            ActivityVersionDto nestedVersionDto = new ActivityVersionDto(2L, 2L, "v1", 2L, timestamp, null);
+            activities = List.of(new ActivityExtract(def, versionDto), new ActivityExtract(nestedDef, nestedVersionDto));
             activities.get(0).setMaxInstancesSeen(1);
             activities.get(0).addAttributesSeen(ActivityAttributesCollector.EXPOSED_ATTRIBUTES);
 
@@ -740,7 +761,8 @@ public class DataExporterTest extends TxnAwareBaseTest {
                     testData.getUserId(), testData.getStudyId(),
                     InstitutionType.PHYSICIAN, "inst a", "dr. a", "boston", "ma", null, null, null, null));
             if (!emptyActivity) {
-                FormResponse instance = new FormResponse(1L, "instance-guid-xyz", 1L, false, timestamp, firstCompletedAt, 1L, "ACT", "v1",
+                FormResponse instance = new FormResponse(1L, "instance-guid-xyz", 1L, false, timestamp, firstCompletedAt,
+                        null, null, 1L, "ACT", "v1", false, 0,
                         new ActivityInstanceStatusDto(2L, 1L, 1L, lastUpdatedAt, InstanceStatusType.COMPLETE));
                 instance.putAnswer(new BoolAnswer(1L, "Q_BOOL", "guid", true));
                 instance.putAnswer(new TextAnswer(2L, "Q_TEXT", "guid", "john smith"));
@@ -762,6 +784,13 @@ public class DataExporterTest extends TxnAwareBaseTest {
                         I18nTemplateConstants.Snapshot.TEST_RESULT_CODE, "NEGATIVE",
                         I18nTemplateConstants.Snapshot.TEST_RESULT_TIME_COMPLETED, Instant.ofEpochMilli(timestamp).toString());
                 participant.putActivityInstanceSubstitutions(instance.getId(), substitutions);
+
+                FormResponse nestedResponse = new FormResponse(
+                        2L, "nested-instance-1", 1L, false, timestamp, firstCompletedAt,
+                        instance.getId(), instance.getGuid(),
+                        2L, nestedDef.getActivityCode(), nestedVersionDto.getVersionTag(), false, 0,
+                        new ActivityInstanceStatusDto(3L, 2L, 1L, lastUpdatedAt, InstanceStatusType.COMPLETE));
+                participant.addResponse(nestedResponse);
             }
 
             participants = new ArrayList<>();

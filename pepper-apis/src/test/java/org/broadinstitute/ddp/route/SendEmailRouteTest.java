@@ -82,17 +82,18 @@ public class SendEmailRouteTest extends IntegrationTestSuite.TestCase {
                     int numRows = handle.attach(QueuedEventDao.class)
                             .deleteQueuedEventsByEventConfigurationId(insertedKnownUserEventConfigId);
                     if (numRows != 1) {
-                        Assert.fail("Deleted " + numRows + " queued events for configuration id " + insertedKnownUserEventConfigId);
+                        // Note: tests might run in parallel and other tests might have deleted the event already.
+                        // So we log a message here instead of failing the test.
+                        LOG.error("Deleted " + numRows + " queued events for configuration id " + insertedKnownUserEventConfigId);
                     }
                 }
                 if (insertedUnknownUserEventConfigId != null) {
                     int numRows = handle.attach(QueuedEventDao.class)
                             .deleteQueuedEventsByEventConfigurationId(insertedUnknownUserEventConfigId);
                     if (numRows != 1) {
-                        Assert.fail("Deleted " + numRows + " queued events for configuration id " + insertedUnknownUserEventConfigId);
+                        LOG.error("Deleted " + numRows + " queued events for configuration id " + insertedUnknownUserEventConfigId);
                     }
                 }
-
             });
         } else {
             LOG.warn("Skipping removal of event configuration so that housekeeping will send it.  This may impact "
@@ -228,7 +229,7 @@ public class SendEmailRouteTest extends IntegrationTestSuite.TestCase {
             throw new Exception("Unsupported key type");
         }
 
-        return handle.attach(JdbiEventConfiguration.class).insert(eventTriggerId, emailActionId, testData.getStudyId(),
+        return handle.attach(JdbiEventConfiguration.class).insert(null, eventTriggerId, emailActionId, testData.getStudyId(),
                 Instant.now().toEpochMilli(), null, null, trueExpressionId,
                 falseExpressionId, true, 1);
     }

@@ -190,6 +190,23 @@ public class KitCheckServiceTest extends TxnAwareBaseTest {
     }
 
     @Test
+    public void testCheckForKits_userEnrolled_butIsCompleted() {
+        TransactionWrapper.useTxn(handle -> {
+            enrollTestUser(handle);
+            createTestMailAddress(handle);
+            handle.attach(JdbiUserStudyEnrollment.class)
+                    .changeUserStudyEnrollmentStatus(userGuid, studyGuid, EnrollmentStatusType.COMPLETED);
+
+            int numRecipients = new InjectedKitCheckService(handle)
+                    .checkForInitialKits()
+                    .getTotalNumberOfParticipantsQueuedForKit();
+            assertEquals("should not have any recipients", 0L, numRecipients);
+
+            handle.rollback();
+        });
+    }
+
+    @Test
     public void testCheckForKits_userEnrolled_meetsKitCriteria() {
         TransactionWrapper.useTxn(handle -> {
             enrollTestUser(handle);

@@ -1,15 +1,73 @@
 package org.broadinstitute.ddp.util;
 
 import java.time.Instant;
+import java.util.Optional;
 
+import org.broadinstitute.ddp.db.ActivityDefStore;
+import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
 import org.broadinstitute.ddp.db.dto.ActivityDto;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
+import org.broadinstitute.ddp.db.dto.ActivityVersionDto;
+import org.broadinstitute.ddp.exception.DDPException;
+import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
+import org.broadinstitute.ddp.model.activity.instance.ActivityInstance;
+import org.broadinstitute.ddp.model.activity.instance.FormResponse;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.jdbi.v3.core.Handle;
 
 public class ActivityInstanceUtil {
+
+    /**
+     * Convenience helper to extract activity definition from the activity store.
+     */
+    public static FormActivityDef getActivityDef(Handle handle, ActivityDefStore activityStore,
+                                           ActivityInstanceDto instanceDto, String studyGuid) {
+        return getActivityDef(handle, activityStore, studyGuid, instanceDto.getActivityId(),
+                instanceDto.getGuid(), instanceDto.getCreatedAtMillis());
+    }
+
+    public static FormActivityDef getActivityDef(Handle handle, ActivityDefStore activityStore,
+                                    String studyGuid, long activityId, String instanceGuid, long createdAtMillis) {
+        ActivityDto activityDto = activityStore.findActivityDto(handle, activityId)
+                .orElseThrow(() -> new DDPException("Could not find activity dto for instance " + instanceGuid));
+        ActivityVersionDto versionDto = activityStore
+                .findVersionDto(handle, activityId, createdAtMillis)
+                .orElseThrow(() -> new DDPException("Could not find activity version for instance " + instanceGuid));
+        return activityStore.findActivityDef(handle, studyGuid, activityDto, versionDto)
+                .orElseThrow(() -> new DDPException("Could not find activity definition for instance " + instanceGuid));
+    }
+
+    /**
+     * Get {@link FormResponse} by {@link ActivityInstance#getGuid()}
+     */
+    public static Optional<FormResponse> getFormResponse(Handle handle, String activityInstGuid) {
+        return handle.attach(ActivityInstanceDao.class)
+                .findFormResponseWithAnswersByInstanceGuid(activityInstGuid);
+    }
+
+    /**
+     * Find most recent {@link ActivityInstance} before a current one. Returns ID of a found instance
+     * or null if such not exists.
+     */
+    public static Long getPreviousInstanceId(Handle handle, long instanceId) {
+        return handle.attach(ActivityInstanceDao.class)
+                .findMostRecentInstanceBeforeCurrent(instanceId)
+                .orElse(null);
+    }
+
+    /**
+     * Convenience helper to check read-only status of instance given the activity definition and instance dto.
+     */
+    public static boolean isInstanceReadOnly(FormActivityDef activityDef, ActivityInstanceDto instanceDto) {
+        return ActivityInstanceUtil.isReadonly(
+                activityDef.getEditTimeoutSec(),
+                instanceDto.getCreatedAtMillis(),
+                instanceDto.getStatusType().name(),
+                activityDef.isWriteOnce(),
+                instanceDto.getReadonly());
+    }
 
     /**
      * Checks if an activity instance is read-only
@@ -70,5 +128,23 @@ public class ActivityInstanceUtil {
         // Stale activities also become read-only
         long millisDiff = Instant.now().toEpochMilli() - createdAtMillis;
         return editTimeoutSec != null && millisDiff >= (editTimeoutSec * 1000L);
+    }
+
+    /**
+     * An activity instance can be deleted if the definition allows deleting instances. And if it's the first instance,
+     * definition need to allow deleting the first instance as well.
+     *
+     * @param canDeleteInstance      whether instances can be deleted, based on activity definition
+     * @param canDeleteFirstInstance whether the first instance can be deleted, based on activity definition, will
+     *                               default to true if not set
+     * @param isFirstInstance        whether the instance is the first one or not
+     * @return true if activity instance can be deleted
+     */
+    public static boolean computeCanDelete(boolean canDeleteInstance, Boolean canDeleteFirstInstance, boolean isFirstInstance) {
+        boolean canDelete = canDeleteInstance;
+        if (canDeleteInstance && isFirstInstance) {
+            canDelete = canDeleteFirstInstance != null ? canDeleteFirstInstance : true;
+        }
+        return canDelete;
     }
 }

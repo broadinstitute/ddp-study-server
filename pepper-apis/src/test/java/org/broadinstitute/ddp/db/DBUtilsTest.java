@@ -23,7 +23,7 @@ public class DBUtilsTest extends TxnAwareBaseTest {
 
     @BeforeClass
     public static void setup() {
-        activityInstanceDao = new ActivityInstanceDao(null);
+        activityInstanceDao = new ActivityInstanceDao();
     }
 
     @Test

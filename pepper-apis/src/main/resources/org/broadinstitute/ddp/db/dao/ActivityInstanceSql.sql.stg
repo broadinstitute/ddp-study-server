@@ -8,6 +8,13 @@ select ai.activity_instance_id   as a_instance_id,
        ai.is_readonly            as a_is_readonly,
        ai.created_at             as a_created_at,
        ai.first_completed_at     as a_first_completed_at,
+       ai.parent_instance_id     as a_parent_instance_id,
+       ai.is_hidden              as a_is_hidden,
+       ai.section_index          as a_section_index,
+       (select activity_instance_guid
+          from activity_instance
+         where activity_instance_id = ai.parent_instance_id
+       ) as a_parent_instance_guid,
        act.study_activity_id     as a_activity_id,
        act.study_activity_code   as a_activity_code,
        (select ver.version_tag

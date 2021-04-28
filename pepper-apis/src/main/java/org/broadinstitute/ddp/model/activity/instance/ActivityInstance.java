@@ -17,6 +17,9 @@ public class ActivityInstance {
     @SerializedName("guid")
     private String guid;
 
+    @SerializedName("parentInstanceGuid")
+    private String parentInstanceGuid;
+
     @SerializedName("activityCode")
     private String activityCode;
 
@@ -31,6 +34,9 @@ public class ActivityInstance {
 
     @SerializedName("subtitle")
     protected String subtitle;
+
+    @SerializedName("canDelete")
+    protected boolean canDelete;
 
     @SerializedName("isFollowup")
     private boolean isFollowup;
@@ -50,7 +56,7 @@ public class ActivityInstance {
             long participantUserId,
             long instanceId, long activityId, ActivityType activityType, String guid, String title, String subtitle,
             String statusTypeCode, Boolean readonly, String activityCode, long createdAtMillis, Long firstCompletedAt,
-            boolean isFollowup, boolean excludeFromDisplay, boolean isInstanceHidden
+            boolean canDelete, boolean isFollowup, boolean excludeFromDisplay, boolean isInstanceHidden
     ) {
         this.participantUserId = participantUserId;
         this.instanceId = instanceId;
@@ -64,6 +70,7 @@ public class ActivityInstance {
         this.activityCode = activityCode;
         this.createdAtMillis = createdAtMillis;
         this.firstCompletedAt = firstCompletedAt;
+        this.canDelete = canDelete;
         this.isFollowup = isFollowup;
         this.excludeFromDisplay = excludeFromDisplay;
         this.isInstanceHidden = isInstanceHidden;
@@ -114,8 +121,16 @@ public class ActivityInstance {
         return title;
     }
 
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
     public String getSubtitle() {
         return subtitle;
+    }
+
+    public void setSubtitle(String subtitle) {
+        this.subtitle = subtitle;
     }
 
     public long getCreatedAtMillis() {
@@ -124,6 +139,10 @@ public class ActivityInstance {
 
     public Long getFirstCompletedAt() {
         return firstCompletedAt;
+    }
+
+    public boolean canDelete() {
+        return canDelete;
     }
 
     /**
@@ -145,5 +164,13 @@ public class ActivityInstance {
      */
     public boolean isHidden() {
         return isHidden;
+    }
+
+    public String getParentInstanceGuid() {
+        return parentInstanceGuid;
+    }
+
+    public void setParentInstanceGuid(String parentInstanceGuid) {
+        this.parentInstanceGuid = parentInstanceGuid;
     }
 }

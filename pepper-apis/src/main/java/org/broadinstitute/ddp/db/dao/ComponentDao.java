@@ -181,7 +181,7 @@ public interface ComponentDao extends SqlObject {
         for (var componentDto : componentDtos.values()) {
             templateIds.addAll(componentDto.getTemplateIds());
         }
-        Map<Long, Template> templates = getTemplateDao().collectTemplatesByIds(templateIds);
+        Map<Long, Template> templates = getTemplateDao().collectTemplatesByIdsAndTimestamp(templateIds, timestamp);
 
         Map<Long, ComponentBlockDef> blockDefs = new HashMap<>();
         for (var blockDto : blockDtos) {
@@ -196,6 +196,7 @@ public interface ComponentDao extends SqlObject {
             }
 
             blockDef.setHideNumber(componentDto.shouldHideNumber());
+            blockDef.setComponentRevisionId(componentDto.getRevisionId());
             blockDef.setBlockId(blockDto.getId());
             blockDef.setBlockGuid(blockDto.getGuid());
             blockDef.setShownExpr(blockDto.getShownExpr());

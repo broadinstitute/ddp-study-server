@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="sampath" id="20210412-add-pdf-base-template-language">
+        <addColumn tableName="pdf_base_template">
+            <column name="language_code_id" type="bigint">
+                <constraints references="language_code(language_code_id)"
+                             foreignKeyName="pdf_base_template_language_code_fk"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet author="sampath" id="20210412-backfill-pdf-base-template-language_code">
+    <update tableName="pdf_base_template">
+        <column name="language_code_id"
+                valueComputed="(select language_code_id from language_code where iso_language_code = 'en')"/>
+    </update>
+    </changeSet>
+
+    <changeSet author="sampath" id="20210412-add-pdf-base-template-language-code-notnull">
+        <addNotNullConstraint tableName="pdf_base_template" columnName="language_code_id" columnDataType="bigint"/>
+    </changeSet>
+
+</databaseChangeLog>

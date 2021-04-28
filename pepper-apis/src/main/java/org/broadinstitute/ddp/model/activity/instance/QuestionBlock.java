@@ -1,6 +1,7 @@
 package org.broadinstitute.ddp.model.activity.instance;
 
 import java.util.function.Consumer;
+import java.util.stream.Stream;
 import javax.validation.constraints.NotNull;
 
 import com.google.gson.annotations.SerializedName;
@@ -28,6 +29,11 @@ public class QuestionBlock extends FormBlock implements Numberable {
 
     public Question getQuestion() {
         return question;
+    }
+
+    @Override
+    public Stream<Question> streamQuestions() {
+        return Stream.of(question);
     }
 
     @Override

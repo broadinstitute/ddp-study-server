@@ -108,6 +108,18 @@ public interface CopyConfigurationDao extends SqlObject {
         return locId;
     }
 
+    /**
+     * Add a copy pair to the configuration. Execution order should be set on the pair object beforehand by caller.
+     *
+     * @param studyId  the study id
+     * @param configId the copy configuration id
+     * @param pair     the pair to add
+     * @return id of the added pair
+     */
+    default long addCopyPairToConfig(long studyId, long configId, CopyConfigurationPair pair) {
+        return createCopyPair(studyId, configId, pair);
+    }
+
     default void removeCopyConfig(long configId) {
         CopyConfiguration config = findCopyConfigById(configId)
                 .orElseThrow(() -> new DaoException("Copy configuration with id " + configId + " does not exist"));

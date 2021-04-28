@@ -720,7 +720,8 @@ public class AngioConsentVersion2 implements CustomTask {
 
         @SqlQuery("select ai.*, stat_type.activity_instance_status_type_code as activity_instance_status_type,"
                 + "       act_type.activity_type_code as activity_type, act.allow_unauthenticated, act.study_id,"
-                + "       act.study_activity_code"
+                + "       act.study_activity_code,"
+                + "       null as parent_instance_guid, null as parent_activity_id, null as parent_activity_code"
                 + "  from activity_instance as ai"
                 + "  join activity_instance_status as stat on stat.activity_instance_id = ai.activity_instance_id"
                 + "  join activity_instance_status_type as stat_type"

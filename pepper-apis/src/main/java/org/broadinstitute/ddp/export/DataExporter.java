@@ -437,6 +437,7 @@ public class DataExporter {
             activityDefinitions.put("activityCode", activity.getDefinition().getActivityCode());
             activityDefinitions.put("activityName", activityName);
             activityDefinitions.put("activityVersion", activity.getDefinition().getVersionTag());
+            activityDefinitions.put("parentActivityCode", activity.getDefinition().getParentActivityCode());
             activityDefinitions.putAll(formatter.questionDefinitions());
 
             allActivityDefs.put(activity.getTag(), activityDefinitions);
@@ -810,7 +811,8 @@ public class DataExporter {
                 recordForParticipant.putAll(activityMetadataCollector.records(activity.getTag(), instance));
                 recordForParticipant.putAll(activityResponseCollector.records(instance, supplier, null));
             } else {
-                recordForParticipant.putAll(activityMetadataCollector.emptyRecord(activity.getTag()));
+                boolean hasParent = StringUtils.isNotBlank(activity.getDefinition().getParentActivityCode());
+                recordForParticipant.putAll(activityMetadataCollector.emptyRecord(activity.getTag(), hasParent));
                 recordForParticipant.putAll(activityResponseCollector.emptyRecord(null));
             }
         }
@@ -860,6 +862,7 @@ public class DataExporter {
                         instance.getActivityVersionTag(),
                         instance.getActivityCode(),
                         instance.getGuid(),
+                        instance.getParentInstanceGuid(),
                         lastStatus.getType(),
                         instance.getCreatedAt(),
                         instance.getFirstCompletedAt(),
@@ -1159,12 +1162,13 @@ public class DataExporter {
             responseCollectors.put(activity.getTag(), responseCollector);
             attributesCollectors.put(activity.getTag(), attributesCollector);
 
+            boolean hasParent = StringUtils.isNotBlank(activity.getDefinition().getParentActivityCode());
             for (var i = 1; i <= maxInstances; i++) {
                 List<String> activityMetadataColumns;
                 if (i == 1) {
-                    activityMetadataColumns = activityMetadataCollector.headers(activity.getTag());
+                    activityMetadataColumns = activityMetadataCollector.headers(activity.getTag(), hasParent);
                 } else {
-                    activityMetadataColumns = activityMetadataCollector.headers(activity.getTag(), i);
+                    activityMetadataColumns = activityMetadataCollector.headers(activity.getTag(), hasParent, i);
                 }
                 headers.addAll(activityMetadataColumns);
                 headers.addAll(attributesCollector.headers());
@@ -1201,8 +1205,9 @@ public class DataExporter {
                         numInstancesProcessed++;
                     }
 
+                    boolean hasParent = StringUtils.isNotBlank(activity.getDefinition().getParentActivityCode());
                     while (numInstancesProcessed < maxInstances) {
-                        row.addAll(activityMetadataCollector.emptyRow());
+                        row.addAll(activityMetadataCollector.emptyRow(hasParent));
                         row.addAll(attributesCollector.emptyRow());
                         row.addAll(responseCollector.emptyRow());
                         numInstancesProcessed++;
@@ -1245,7 +1250,8 @@ public class DataExporter {
         ActivityMetadataCollector activityMetaColl = new ActivityMetadataCollector();
 
         for (ActivityExtract activity : activities) {
-            mappings.putAll(activityMetaColl.mappings(activity.getTag()));
+            boolean hasParent = StringUtils.isNotBlank(activity.getDefinition().getParentActivityCode());
+            mappings.putAll(activityMetaColl.mappings(activity.getTag(), hasParent));
 
             ActivityResponseCollector activityRespColl = new ActivityResponseCollector(activity.getDefinition());
             mappings.putAll(activityRespColl.mappings());

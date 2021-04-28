@@ -15,12 +15,12 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Supplier;
 
 import org.broadinstitute.ddp.TxnAwareBaseTest;
 import org.broadinstitute.ddp.content.ContentStyle;
 import org.broadinstitute.ddp.content.HtmlConverter;
-import org.broadinstitute.ddp.db.FormInstanceDao;
-import org.broadinstitute.ddp.db.SectionBlockDao;
+import org.broadinstitute.ddp.content.I18nContentRenderer;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dto.ActivityDto;
 import org.broadinstitute.ddp.db.dto.ActivityVersionDto;
@@ -34,6 +34,7 @@ import org.broadinstitute.ddp.model.activity.definition.FormSectionDef;
 import org.broadinstitute.ddp.model.activity.definition.GroupBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.InstitutionComponentDef;
 import org.broadinstitute.ddp.model.activity.definition.MailingAddressComponentDef;
+import org.broadinstitute.ddp.model.activity.definition.NestedActivityBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.PhysicianComponentDef;
 import org.broadinstitute.ddp.model.activity.definition.PhysicianInstitutionComponentDef;
 import org.broadinstitute.ddp.model.activity.definition.QuestionBlockDef;
@@ -82,6 +83,7 @@ import org.broadinstitute.ddp.model.activity.types.FormType;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.broadinstitute.ddp.model.activity.types.InstitutionType;
 import org.broadinstitute.ddp.model.activity.types.ListStyleHint;
+import org.broadinstitute.ddp.model.activity.types.NestedActivityRenderHint;
 import org.broadinstitute.ddp.model.activity.types.PicklistRenderMode;
 import org.broadinstitute.ddp.model.activity.types.PicklistSelectMode;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
@@ -104,9 +106,8 @@ public class FormActivityDaoTest extends TxnAwareBaseTest {
 
     @BeforeClass
     public static void setup() {
-        org.broadinstitute.ddp.db.ActivityInstanceDao actInstDao = new org.broadinstitute.ddp.db.ActivityInstanceDao(
-                FormInstanceDao.fromDaoAndConfig(new SectionBlockDao(), sqlConfig));
-        service = new ActivityInstanceService(actInstDao, new TreeWalkInterpreter());
+        org.broadinstitute.ddp.db.ActivityInstanceDao actInstDao = new org.broadinstitute.ddp.db.ActivityInstanceDao();
+        service = new ActivityInstanceService(actInstDao, new TreeWalkInterpreter(), new I18nContentRenderer());
         TransactionWrapper.useTxn(handle -> testData = TestDataSetupUtil.generateBasicUserTestData(handle));
     }
 
@@ -118,7 +119,7 @@ public class FormActivityDaoTest extends TxnAwareBaseTest {
         FormActivityDef form = buildSingleBlockForm(testData.getStudyGuid(), "Template Activity", new ContentBlockDef(tmpl));
 
         TransactionWrapper.useTxn(handle -> {
-            FormInstance inst = runInsertAndFetchInstance(handle, form, testData.getUserGuid());
+            FormInstance inst = runInsertAndFetchInstance(handle, form, testData.getUserGuid(), testData.getStudyGuid());
 
             assertEquals("Template Activity", inst.getTitle());
             assertEquals(FormType.GENERAL, inst.getFormType());
@@ -147,19 +148,19 @@ public class FormActivityDaoTest extends TxnAwareBaseTest {
         List<RuleDef> rules = Collections.singletonList(new RequiredRuleDef(reqHint));
 
         BoolQuestionDef boolQuestion = new BoolQuestionDef(DUMMY_QSID,
-                                                            false,
-                                                            prompt,
-                                                            header,
-                                                            footer,
-                                                            rules,
-                                                            yesOpt,
-                                                            noOpt,
-                                                            true,
-                                                            false);
+                false,
+                prompt,
+                header,
+                footer,
+                rules,
+                yesOpt,
+                noOpt,
+                true,
+                false);
         FormActivityDef form = buildSingleBlockForm(testData.getStudyGuid(), "Boolean Activity", new QuestionBlockDef(boolQuestion));
 
         TransactionWrapper.useTxn(handle -> {
-            FormInstance inst = runInsertAndFetchInstance(handle, form, testData.getUserGuid());
+            FormInstance inst = runInsertAndFetchInstance(handle, form, testData.getUserGuid(), testData.getStudyGuid());
 
             assertEquals("Boolean Activity", inst.getTitle());
             BoolQuestion question = unwrapSingleBlockQuestion(inst, BoolQuestion.class);
@@ -185,6 +186,7 @@ public class FormActivityDaoTest extends TxnAwareBaseTest {
         Template prompt = new Template(TemplateType.TEXT, "prompt", "text question");
 
         Template header = new Template(TemplateType.TEXT, "header", "info header");
+        Template confirmPlaceholder = new Template(TemplateType.TEXT, "confirmPlaceholder", "info header confirm");
         Template footer = new Template(TemplateType.TEXT, "footer", "info footer");
 
         Template lengthHint = new Template(TemplateType.TEXT, "lenVal", "length hint");
@@ -196,20 +198,21 @@ public class FormActivityDaoTest extends TxnAwareBaseTest {
                 new RegexRuleDef(regexHint, "abc"));
 
         TextQuestionDef textQuestion = new TextQuestionDef(DUMMY_QSID,
-                                                            false,
-                                                            prompt,
-                                                            header,
-                                                            footer,
-                                                            null,
-                                                            rules,
-                                                            TextInputType.TEXT,
-                                                            true,
-                                                            false);
-        
+                false,
+                prompt,
+                header,
+                confirmPlaceholder,
+                footer,
+                null,
+                rules,
+                TextInputType.TEXT,
+                true,
+                false);
+
         FormActivityDef form = buildSingleBlockForm(testData.getStudyGuid(), "Text Activity", new QuestionBlockDef(textQuestion));
 
         TransactionWrapper.useTxn(handle -> {
-            FormInstance inst = runInsertAndFetchInstance(handle, form, testData.getUserGuid());
+            FormInstance inst = runInsertAndFetchInstance(handle, form, testData.getUserGuid(), testData.getStudyGuid());
 
             assertEquals("Text Activity", inst.getTitle());
             TextQuestion question = unwrapSingleBlockQuestion(inst, TextQuestion.class);
@@ -290,7 +293,7 @@ public class FormActivityDaoTest extends TxnAwareBaseTest {
         FormActivityDef form = buildSingleBlockForm(testData.getStudyGuid(), "dummy activity", block);
 
         TransactionWrapper.useTxn(handle -> {
-            FormInstance inst = runInsertAndFetchInstance(handle, form, testData.getUserGuid());
+            FormInstance inst = runInsertAndFetchInstance(handle, form, testData.getUserGuid(), testData.getStudyGuid());
             ContentBlock actual = (ContentBlock) inst.getBodySections().get(0).getBlocks().get(0);
 
             assertNotNull(actual.getShownExpr());
@@ -346,7 +349,7 @@ public class FormActivityDaoTest extends TxnAwareBaseTest {
         return clazz.cast(questionBlock);
     }
 
-    private FormInstance runInsertAndFetchInstance(Handle handle, FormActivityDef form, String userGuid) {
+    private FormInstance runInsertAndFetchInstance(Handle handle, FormActivityDef form, String userGuid, String studyGuid) {
         long millis = Instant.now().toEpochMilli();
         long userId = handle.attach(JdbiUser.class).getUserIdByGuid(userGuid);
         long revId = handle.attach(JdbiRevision.class).insert(userId, millis, null, "testing");
@@ -357,13 +360,15 @@ public class FormActivityDaoTest extends TxnAwareBaseTest {
         String instanceGuid = handle.attach(ActivityInstanceDao.class)
                 .insertInstance(form.getActivityId(), userGuid, userGuid, InstanceStatusType.CREATED, false)
                 .getGuid();
-        Optional<FormInstance> inst = service.getTranslatedForm(handle, userGuid, userGuid, instanceGuid, "en", ContentStyle.STANDARD);
+        Optional<FormInstance> inst = service.buildInstanceFromDefinition(
+                handle, userGuid, userGuid, studyGuid, instanceGuid, ContentStyle.STANDARD, "en")
+                .map(i -> (FormInstance) i);
         assertTrue(inst.isPresent());
 
         return inst.get();
     }
 
-    private void    runInsertPicklistQuestionTest(boolean allowDetails) {
+    private void runInsertPicklistQuestionTest(boolean allowDetails) {
         TransactionWrapper.useTxn(handle -> {
             Template prompt = new Template(TemplateType.TEXT, "prompt", "picklist question");
             Template label = new Template(TemplateType.TEXT, "label", "picklist label");
@@ -393,7 +398,7 @@ public class FormActivityDaoTest extends TxnAwareBaseTest {
 
             FormActivityDef form = buildSingleBlockForm(testData.getStudyGuid(), "Picklist Activity",
                     new QuestionBlockDef(picklistQuestion));
-            FormInstance inst = runInsertAndFetchInstance(handle, form, testData.getUserGuid());
+            FormInstance inst = runInsertAndFetchInstance(handle, form, testData.getUserGuid(), testData.getStudyGuid());
 
             assertEquals("Picklist Activity", inst.getTitle());
             PicklistQuestion question = unwrapSingleBlockQuestion(inst, PicklistQuestion.class);
@@ -464,20 +469,20 @@ public class FormActivityDaoTest extends TxnAwareBaseTest {
             }
 
             DateQuestionDef dateQuestion = new DateQuestionDef(DUMMY_QSID,
-                                                                true,
-                                                                prompt,
-                                                                header,
-                                                                footer,
-                                                                rules,
-                                                                mode,
-                                                                true,
-                                                                fields,
-                                                                picklistDef,
-                                                                true,
-                                                                false);
+                    true,
+                    prompt,
+                    header,
+                    footer,
+                    rules,
+                    mode,
+                    true,
+                    fields,
+                    picklistDef,
+                    true,
+                    false);
 
             FormActivityDef form = buildSingleBlockForm(testData.getStudyGuid(), "Date Activity", new QuestionBlockDef(dateQuestion));
-            FormInstance inst = runInsertAndFetchInstance(handle, form, testData.getUserGuid());
+            FormInstance inst = runInsertAndFetchInstance(handle, form, testData.getUserGuid(), testData.getStudyGuid());
 
             assertEquals("Date Activity", inst.getTitle());
             DateQuestion question = unwrapSingleBlockQuestion(inst, DateQuestion.class);
@@ -541,7 +546,7 @@ public class FormActivityDaoTest extends TxnAwareBaseTest {
                     .setClosing(new FormSectionDef(null, Collections.singletonList(closingBlock)))
                     .setListStyleHint(ListStyleHint.NUMBER)
                     .build();
-            FormInstance instance = runInsertAndFetchInstance(handle, form, testData.getUserGuid());
+            FormInstance instance = runInsertAndFetchInstance(handle, form, testData.getUserGuid(), testData.getStudyGuid());
 
             assertEquals(ListStyleHint.NUMBER, instance.getListStyleHint());
 
@@ -585,6 +590,88 @@ public class FormActivityDaoTest extends TxnAwareBaseTest {
     }
 
     @Test
+    public void testInsertActivity_nestedActivities() {
+        TransactionWrapper.useTxn(handle -> {
+            long startMillis = Instant.now().toEpochMilli();
+            String actCode = "ACT" + startMillis;
+            String nestedActCode = "NESTED_ACT" + startMillis;
+            var child = FormActivityDef.generalFormBuilder(nestedActCode, "v1", testData.getStudyGuid())
+                    .addName(new Translation("en", "nested activity"))
+                    .setParentActivityCode(actCode)
+                    .setCreateOnParentCreation(true)
+                    .setCanDeleteInstances(true)
+                    .build();
+            var nestedActBlockDef = new NestedActivityBlockDef(
+                    nestedActCode, NestedActivityRenderHint.EMBEDDED,
+                    true, Template.text("add button"));
+            var parent = FormActivityDef.generalFormBuilder(actCode, "v1", testData.getStudyGuid())
+                    .addName(new Translation("en", "parent activity"))
+                    .addSection(new FormSectionDef(null, List.of(nestedActBlockDef)))
+                    .build();
+            long revId = handle.attach(JdbiRevision.class).insert(testData.getUserId(), startMillis, null, "testing");
+
+            var activityDao = handle.attach(FormActivityDao.class);
+            activityDao.insertActivity(parent, List.of(child), revId);
+            assertNotNull(parent.getActivityId());
+            assertNotNull(child.getActivityId());
+
+            ActivityDto childDto = handle.attach(JdbiActivity.class).queryActivityById(child.getActivityId());
+            assertTrue("child activity should be associated with parent activity",
+                    childDto.getParentActivityId() != null && childDto.getParentActivityId().equals(parent.getActivityId()));
+            assertTrue(childDto.isCreateOnParentCreation());
+            assertTrue(childDto.canDeleteInstances());
+
+            ActivityDto parentDto = handle.attach(JdbiActivity.class).queryActivityById(parent.getActivityId());
+            FormActivityDef actualParentDef = activityDao.findDefByDtoAndVersion(
+                    parentDto, parent.getVersionTag(), parent.getVersionId(), startMillis);
+            assertEquals(1, actualParentDef.getSections().size());
+            assertEquals(1, actualParentDef.getSections().get(0).getBlocks().size());
+            assertEquals(BlockType.ACTIVITY, actualParentDef.getSections().get(0).getBlocks().get(0).getBlockType());
+
+            var actualBlockDef = (NestedActivityBlockDef) actualParentDef.getSections().get(0).getBlocks().get(0);
+            assertEquals(nestedActCode, actualBlockDef.getActivityCode());
+            assertEquals(NestedActivityRenderHint.EMBEDDED, actualBlockDef.getRenderHint());
+            assertTrue(actualBlockDef.isAllowMultiple());
+            assertNotNull(actualBlockDef.getAddButtonTemplate());
+
+            handle.rollback();
+        });
+    }
+
+    @Test
+    public void testInsertActivity_unsupportedConfigurations() {
+        TransactionWrapper.useTxn(handle -> {
+            long startMillis = Instant.now().toEpochMilli();
+            String activityCode = "ACT" + startMillis;
+            long revId = handle.attach(JdbiRevision.class).insert(testData.getUserId(), startMillis, null, "testing");
+            var activityDao = handle.attach(FormActivityDao.class);
+            Supplier<FormActivityDef.FormBuilder> newBuilder = () -> FormActivityDef
+                    .generalFormBuilder(activityCode, "v1", testData.getStudyGuid())
+                    .addName(new Translation("en", "parent activity"));
+
+            try {
+                var parent = newBuilder.get().setCreateOnParentCreation(true).build();
+                activityDao.insertActivity(parent, revId);
+                fail("expected exception not thrown");
+            } catch (Exception e) {
+                assertTrue(e instanceof UnsupportedOperationException);
+                assertTrue(e.getMessage().contains("createOnParentCreation"));
+                assertTrue(e.getMessage().contains("child activities"));
+            }
+
+            try {
+                var parent = newBuilder.get().setCanDeleteInstances(true).build();
+                activityDao.insertActivity(parent, revId);
+                fail("expected exception not thrown");
+            } catch (Exception e) {
+                assertTrue(e instanceof UnsupportedOperationException);
+                assertTrue(e.getMessage().contains("canDeleteInstances"));
+                assertTrue(e.getMessage().contains("child activities"));
+            }
+        });
+    }
+
+    @Test
     public void testFindDefByDtoAndVersion() {
         TransactionWrapper.useTxn(handle -> {
             FormSectionDef intro = new FormSectionDef(null, Arrays.asList(new ContentBlockDef(Template.text("intro"))));
@@ -593,27 +680,27 @@ public class FormActivityDaoTest extends TxnAwareBaseTest {
             FormSectionDef questionSection = new FormSectionDef(null, new ArrayList<>());
 
             AgreementQuestionDef agreementDef = new AgreementQuestionDef("AGREEMENT",
-                                                                        true,
-                                                                        Template.text("agreement prompt"),
-                                                                        null,
-                                                                        Template.text("info header"),
-                                                                        Template.text("info footer"),
-                                                                        singletonList(new RequiredRuleDef(null)),
-                                                                        true,
-                                                                        false);
+                    true,
+                    Template.text("agreement prompt"),
+                    null,
+                    Template.text("info header"),
+                    Template.text("info footer"),
+                    singletonList(new RequiredRuleDef(null)),
+                    true,
+                    false);
             questionSection.getBlocks().add(new QuestionBlockDef(agreementDef));
 
             BoolQuestionDef boolDef = BoolQuestionDef.builder()
-                                                    .setStableId("BOOLEAN")
-                                                    .setPrompt(Template.text("bool prompt"))
-                                                    .setTrueTemplate(Template.text("bool yes"))
-                                                    .setFalseTemplate(Template.text("bool no"))
-                                                    .setAdditionalInfoHeader(Template.text("info header"))
-                                                    .setAdditionalInfoFooter(Template.text("info footer"))
-                                                    .setRestricted(true)
-                                                    .setDeprecated(true)
-                                                    .setHideNumber(true)
-                                                    .build();
+                    .setStableId("BOOLEAN")
+                    .setPrompt(Template.text("bool prompt"))
+                    .setTrueTemplate(Template.text("bool yes"))
+                    .setFalseTemplate(Template.text("bool no"))
+                    .setAdditionalInfoHeader(Template.text("info header"))
+                    .setAdditionalInfoFooter(Template.text("info footer"))
+                    .setRestricted(true)
+                    .setDeprecated(true)
+                    .setHideNumber(true)
+                    .build();
             questionSection.getBlocks().add(new QuestionBlockDef(boolDef));
 
             questionSection.getBlocks().add(new QuestionBlockDef(TextQuestionDef

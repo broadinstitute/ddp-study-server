@@ -78,6 +78,17 @@ public interface ActivityInstanceStatusDao extends SqlObject {
     }
 
     /**
+     * Convenience method to insert status when operator/participant users are known.
+     */
+    default ActivityInstanceStatusDto insertStatus(long instanceId, User operator, User participant,
+                                                   InstanceStatusType newStatus, long epochMilliseconds) {
+        ActivityInstanceDto instanceDto = getJdbiActivityInstance().getByActivityInstanceId(instanceId)
+                .orElseThrow(() -> new DaoException("Could not find activity instance with id " + instanceId));
+        updateOrInsertStatus(instanceDto, newStatus, epochMilliseconds, operator, participant);
+        return getCurrentStatus(instanceDto.getId()).orElse(null);
+    }
+
+    /**
      * Inserts status based on given parameters, returns id of status. If the most recent status for this activity
      * is the same status code, it will not update (adding a new row to the db) and will return the most
      * recent status id. Also checks if there are any housekeeping events that should be queued in response to this

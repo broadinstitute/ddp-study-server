@@ -2,6 +2,7 @@ package org.broadinstitute.ddp.model.pdf;
 
 import static org.broadinstitute.ddp.model.pdf.PdfTemplateType.PHYSICIAN_INSTITUTION;
 
+import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.db.dto.pdf.PdfTemplateDto;
 import org.broadinstitute.ddp.db.dto.pdf.PhysicianInstitutionTemplateDto;
 import org.broadinstitute.ddp.model.activity.types.InstitutionType;
@@ -18,7 +19,7 @@ public final class PhysicianInstitutionTemplate extends PdfTemplate {
     private InstitutionType institutionType;
 
     public PhysicianInstitutionTemplate(PdfTemplateDto dto, PhysicianInstitutionTemplateDto templateDto) {
-        super(dto.getId(), PHYSICIAN_INSTITUTION, dto.getBlob());
+        super(dto.getId(), PHYSICIAN_INSTITUTION, dto.getBlob(), dto.getLanguageCodeId());
         if (dto.getType() != PHYSICIAN_INSTITUTION) {
             throw new IllegalArgumentException("mismatched pdf template type " + dto.getType());
         }
@@ -35,8 +36,9 @@ public final class PhysicianInstitutionTemplate extends PdfTemplate {
     public PhysicianInstitutionTemplate(byte[] rawBytes, InstitutionType institutionType,
                                         String physicianNamePlaceholder, String institutionNamePlaceholder,
                                         String cityPlaceholder, String statePlaceholder,
-                                        String streetPlaceholder, String zipPlaceholder, String phonePlaceholder) {
-        super(PHYSICIAN_INSTITUTION, rawBytes);
+                                        String streetPlaceholder, String zipPlaceholder, String phonePlaceholder,
+                                        Long languageCodeId) {
+        super(PHYSICIAN_INSTITUTION, rawBytes, (languageCodeId == null ? LanguageStore.getDefault().getId() : languageCodeId));
         this.physicianNamePlaceholder = physicianNamePlaceholder;
         this.institutionNamePlaceholder = institutionNamePlaceholder;
         this.cityPlaceholder = cityPlaceholder;
@@ -45,6 +47,16 @@ public final class PhysicianInstitutionTemplate extends PdfTemplate {
         this.zipPlaceholder = zipPlaceholder;
         this.phonePlaceholder = phonePlaceholder;
         this.institutionType = institutionType;
+    }
+
+    public PhysicianInstitutionTemplate(byte[] rawBytes, InstitutionType institutionType,
+                                        String physicianNamePlaceholder, String institutionNamePlaceholder,
+                                        String cityPlaceholder, String statePlaceholder,
+                                        String streetPlaceholder, String zipPlaceholder, String phonePlaceholder) {
+
+        this(rawBytes, institutionType, physicianNamePlaceholder,
+                institutionNamePlaceholder, cityPlaceholder, statePlaceholder,
+                streetPlaceholder, zipPlaceholder, phonePlaceholder, null);
     }
 
     public PhysicianInstitutionTemplate(byte[] rawBytes, InstitutionType institutionType,

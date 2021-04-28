@@ -8,6 +8,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.time.StopWatch;
 import org.broadinstitute.ddp.analytics.GoogleAnalyticsMetrics;
 import org.broadinstitute.ddp.analytics.GoogleAnalyticsMetricsTracker;
 import org.broadinstitute.ddp.constants.RouteConstants.PathParam;
@@ -26,6 +27,7 @@ import org.broadinstitute.ddp.model.activity.instance.GroupBlock;
 import org.broadinstitute.ddp.model.activity.instance.QuestionBlock;
 import org.broadinstitute.ddp.model.activity.instance.question.Question;
 import org.broadinstitute.ddp.model.activity.instance.validation.ActivityValidationFailure;
+import org.broadinstitute.ddp.model.activity.types.ActivityType;
 import org.broadinstitute.ddp.model.activity.types.BlockType;
 import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
 import org.broadinstitute.ddp.pex.PexInterpreter;
@@ -43,7 +45,6 @@ import spark.Route;
 public class GetActivityInstanceRoute implements Route {
 
     private static final Logger LOG = LoggerFactory.getLogger(GetActivityInstanceRoute.class);
-    private static final String DEFAULT_ISO_LANGUAGE_CODE = "en";
 
     private ActivityInstanceService actInstService;
     private ActivityValidationService actValidationService;
@@ -65,6 +66,9 @@ public class GetActivityInstanceRoute implements Route {
         String studyGuid = request.params(PathParam.STUDY_GUID);
         String instanceGuid = request.params(PathParam.INSTANCE_GUID);
 
+        StopWatch watch = new StopWatch();
+        watch.start();
+
         DDPAuth ddpAuth = RouteUtil.getDDPAuth(request);
         String operatorGuid = StringUtils.defaultIfBlank(ddpAuth.getOperator(), userGuid);
         boolean isStudyAdmin = ddpAuth.hasAdminAccessToStudy(studyGuid);
@@ -85,12 +89,11 @@ public class GetActivityInstanceRoute implements Route {
             LanguageDto preferredUserLanguage = RouteUtil.getUserLanguage(request);
             String isoLangCode = preferredUserLanguage.getIsoCode();
 
-
             LOG.info("Attempting to find a translation for the following language: {}", isoLangCode);
-            Optional<ActivityInstance> inst = actInstService.getTranslatedActivity(
-                    handle, userGuid, operatorGuid, instanceDto.getActivityType(), instanceGuid, isoLangCode, style
-            );
-            if (!inst.isPresent()) {
+            Optional<ActivityInstance> inst = getActivityInstance(
+                    handle, userGuid, operatorGuid, studyGuid, instanceGuid, style, isoLangCode);
+
+            if (inst.isEmpty()) {
                 String errMsg = String.format(
                         "Unable to find activity instance %s of type '%s' in '%s'",
                         instanceGuid,
@@ -103,6 +106,11 @@ public class GetActivityInstanceRoute implements Route {
             LOG.info("Found a translation to the '{}' language code for the activity instance with GUID {}",
                     isoLangCode, instanceGuid);
             ActivityInstance activityInstance = inst.get();
+            activityInstance.setParentInstanceGuid(instanceDto.getParentInstanceGuid());
+            if (activityInstance.getActivityType() == ActivityType.FORMS) {
+                actInstService.loadNestedInstanceSummaries(
+                        handle, (FormInstance) activityInstance, studyGuid, userGuid, operatorGuid, isoLangCode);
+            }
             // To-do: change this to just "if (enrollmentStatus.get() == EnrollmentStatusType.EXITED_BEFORE_ENROLLMENT)) {...}"
             // when every user registered in the system will become enrolled automatically
             // When it is implemented, the check for the enrollment status presence is not needed
@@ -118,14 +126,40 @@ public class GetActivityInstanceRoute implements Route {
                 GoogleAnalyticsMetrics.EVENT_ACTION_ACTIVITY_INSTANCE, GoogleAnalyticsMetrics.EVENT_LABEL_ACTIVITY_INSTANCE,
                 null, 1);
 
+        watch.stop();
+        LOG.debug("ActivityInstance reading TOTAL time: " + watch.getTime());
+
         return result;
+    }
+
+    private Optional<ActivityInstance> getActivityInstance(
+            Handle handle,
+            String userGuid,
+            String operatorGuid,
+            String studyGuid,
+            String instanceGuid,
+            ContentStyle style,
+            String isoLangCode) {
+
+        StopWatch watch = new StopWatch();
+        watch.start();
+
+        Optional<ActivityInstance> inst = actInstService.buildInstanceFromDefinition(
+                handle, userGuid, operatorGuid, studyGuid, instanceGuid, style, isoLangCode
+        );
+
+        watch.stop();
+        LOG.debug("ActivityInstance reading time: " + watch.getTime());
+
+        return inst;
     }
 
     private ActivityInstance validateActivityInstance(
             Handle handle, ActivityInstance activityInstance, String userGuid, String operatorGuid, long languageCodeId
     ) {
         List<ActivityValidationFailure> validationFailures = actValidationService.validate(
-                handle, interpreter, userGuid, operatorGuid, activityInstance.getGuid(), activityInstance.getActivityId(), languageCodeId
+                handle, interpreter, userGuid, operatorGuid, activityInstance.getGuid(), activityInstance.getCreatedAtMillis(),
+                activityInstance.getActivityId(), languageCodeId
         );
         if (validationFailures.isEmpty()) {
             return activityInstance;

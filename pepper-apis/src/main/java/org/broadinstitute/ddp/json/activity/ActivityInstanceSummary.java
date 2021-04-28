@@ -13,6 +13,9 @@ public class ActivityInstanceSummary implements TranslatedSummary {
     @SerializedName("instanceGuid")
     private String activityInstanceGuid;
 
+    @SerializedName("parentInstanceGuid")
+    private String parentInstanceGuid;
+
     @SerializedName("activityName")
     private String activityName;
 
@@ -52,6 +55,9 @@ public class ActivityInstanceSummary implements TranslatedSummary {
     @SerializedName("numQuestionsAnswered")
     private int numQuestionsAnswered;
 
+    @SerializedName("canDelete")
+    private boolean canDelete;
+
     @SerializedName("isFollowup")
     private boolean isFollowup;
 
@@ -63,7 +69,6 @@ public class ActivityInstanceSummary implements TranslatedSummary {
 
     private transient long activityInstanceId;
     private transient String isoLanguageCode;
-    private transient String activityTypeName;
     private transient boolean excludeFromDisplay;
     private transient boolean isInstanceHidden;
     private transient String activitySecondName;
@@ -91,10 +96,10 @@ public class ActivityInstanceSummary implements TranslatedSummary {
             String iconBase64,
             Boolean readonly,
             String isoLanguageCode,
-            String activityTypeName,
             boolean excludeFromDisplay,
             boolean isInstanceHidden,
             long createdAt,
+            boolean canDelete,
             boolean isFollowup,
             String versionTag,
             long versionId,
@@ -117,11 +122,11 @@ public class ActivityInstanceSummary implements TranslatedSummary {
         this.iconBase64 = iconBase64;
         this.readonly = readonly;
         this.isoLanguageCode = isoLanguageCode;
-        this.activityTypeName = activityTypeName;
         this.excludeFromDisplay = excludeFromDisplay;
         this.isInstanceHidden = isInstanceHidden;
         this.isHidden = isInstanceHidden || excludeFromDisplay;
         this.createdAt = createdAt;
+        this.canDelete = canDelete;
         this.isFollowup = isFollowup;
         this.versionTag = versionTag;
         this.versionId = versionId;
@@ -157,12 +162,24 @@ public class ActivityInstanceSummary implements TranslatedSummary {
         return activityTitle;
     }
 
+    public void setActivityTitle(String activityTitle) {
+        this.activityTitle = activityTitle;
+    }
+
     public String getActivitySubtitle() {
         return activitySubtitle;
     }
 
+    public void setActivitySubtitle(String activitySubtitle) {
+        this.activitySubtitle = activitySubtitle;
+    }
+
     public String getActivityDescription() {
         return activityDescription;
+    }
+
+    public void setActivityDescription(String activityDescription) {
+        this.activityDescription = activityDescription;
     }
 
     public String getActivitySummary() {
@@ -202,12 +219,12 @@ public class ActivityInstanceSummary implements TranslatedSummary {
         return isoLanguageCode;
     }
 
-    public String getActivityTypeName() {
-        return activityTypeName;
-    }
-
     public long getCreatedAt() {
         return createdAt;
+    }
+
+    public boolean canDelete() {
+        return canDelete;
     }
 
     /**
@@ -273,5 +290,13 @@ public class ActivityInstanceSummary implements TranslatedSummary {
 
     public void setPreviousInstanceGuid(String previousInstanceGuid) {
         this.previousInstanceGuid = previousInstanceGuid;
+    }
+
+    public String getParentInstanceGuid() {
+        return parentInstanceGuid;
+    }
+
+    public void setParentInstanceGuid(String parentInstanceGuid) {
+        this.parentInstanceGuid = parentInstanceGuid;
     }
 }

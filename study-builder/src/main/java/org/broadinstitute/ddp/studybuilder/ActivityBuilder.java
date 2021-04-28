@@ -5,12 +5,15 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import com.google.gson.Gson;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import com.typesafe.config.ConfigResolveOptions;
 import org.apache.commons.io.IOUtils;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
@@ -92,7 +95,8 @@ public class ActivityBuilder {
                 LOG.info("Using configuration for activityCode={} with filepath={}", activityCode, activityCfg.getString("filepath"));
                 ActivityDef def = gson.fromJson(ConfigUtil.toJson(definition), ActivityDef.class);
                 validateDefinition(def);
-                insertActivity(handle, def, timestamp);
+                List<ActivityDef> nestedDefs = loadNestedActivities(activityCfg);
+                insertActivity(handle, def, nestedDefs, timestamp);
                 insertActivityMappings(handle, activityCfg, def);
                 found = true;
                 break;
@@ -102,6 +106,20 @@ public class ActivityBuilder {
         if (!found) {
             LOG.error("Unable to find configuration for activityCode={}", activityCode);
         }
+    }
+
+    private List<ActivityDef> loadNestedActivities(Config activityCfg) {
+        List<String> nestedPaths = activityCfg.hasPath("nestedActivities")
+                ? activityCfg.getStringList("nestedActivities")
+                : Collections.emptyList();
+        List<ActivityDef> nestedDefs = new ArrayList<>();
+        for (var nestedPath : nestedPaths) {
+            Config nestedCfg = readDefinitionConfig(nestedPath);
+            ActivityDef nestedDef = gson.fromJson(ConfigUtil.toJson(nestedCfg), ActivityDef.class);
+            validateDefinition(nestedDef);
+            nestedDefs.add(nestedDef);
+        }
+        return nestedDefs;
     }
 
     private void insertActivities(Handle handle) {
@@ -117,44 +135,70 @@ public class ActivityBuilder {
             Config definitionCfg = readDefinitionConfig(activityCfg.getString("filepath"));
             ActivityDef def = gson.fromJson(ConfigUtil.toJson(definitionCfg), ActivityDef.class);
             validateDefinition(def);
-            long activityRevisionId = insertActivity(handle, def, timestamp).getRevId();
+            List<ActivityDef> nestedDefs = loadNestedActivities(activityCfg);
+            long activityRevisionId = insertActivity(handle, def, nestedDefs, timestamp).getRevId();
             insertActivityMappings(handle, activityCfg, def);
             insertActivityValidations(handle, activityCfg, def, activityRevisionId);
         }
     }
 
-    public ActivityVersionDto insertActivity(Handle handle, Config definition, Instant timestamp) {
+    public ActivityVersionDto insertActivity(Handle handle, Config definition, List<Config> nestedCfgs, Instant timestamp) {
         ActivityDef def = gson.fromJson(ConfigUtil.toJson(definition), ActivityDef.class);
         validateDefinition(def);
-        return insertActivity(handle, def, timestamp);
+
+        List<ActivityDef> nestedDefs = new ArrayList<>();
+        for (var nestedCfg : nestedCfgs) {
+            ActivityDef nestedDef = gson.fromJson(ConfigUtil.toJson(nestedCfg), ActivityDef.class);
+            validateDefinition(nestedDef);
+            nestedDefs.add(nestedDef);
+        }
+
+        return insertActivity(handle, def, nestedDefs, timestamp);
     }
 
-    public ActivityVersionDto insertActivity(Handle handle, ActivityDef def, Instant timestamp) {
+    public ActivityVersionDto insertActivity(Handle handle, ActivityDef def,
+                                             List<ActivityDef> nestedDefs, Instant timestamp) {
         long startMillis = (timestamp == null) ? Instant.now().toEpochMilli() : timestamp.toEpochMilli();
         String reason = String.format("Create activity with studyGuid=%s activityCode=%s versionTag=%s",
                 def.getStudyGuid(), def.getActivityCode(), def.getVersionTag());
         RevisionMetadata meta = new RevisionMetadata(startMillis, adminUserId, reason);
 
+        List<FormActivityDef> nestedFormDefs = new ArrayList<>();
+        for (var nestedDef : nestedDefs) {
+            if (nestedDef.getActivityType() != ActivityType.FORMS) {
+                throw new DDPException("Unsupported activity type " + nestedDef.getActivityType()
+                        + " for nested activity " + nestedDef.getActivityCode());
+            } else {
+                nestedFormDefs.add((FormActivityDef) nestedDef);
+            }
+        }
+
         if (def.getActivityType() == ActivityType.FORMS) {
-            return insertFormActivity(handle, (FormActivityDef) def, meta);
+            return insertFormActivity(handle, (FormActivityDef) def, nestedFormDefs, meta);
         } else {
-            throw new DDPException("Unsupported activity type " + def.getActivityType());
+            throw new DDPException("Unsupported activity type " + def.getActivityType()
+                    + " for activity " + def.getActivityCode());
         }
     }
 
-    private ActivityVersionDto insertFormActivity(Handle handle, FormActivityDef def, RevisionMetadata meta) {
+    private ActivityVersionDto insertFormActivity(Handle handle, FormActivityDef def,
+                                                  List<FormActivityDef> nestedDefs, RevisionMetadata meta) {
         ActivityDao activityDao = handle.attach(ActivityDao.class);
 
         ActivityVersionDto versionDto;
         if (def.getFormType() == FormType.CONSENT) {
+            if (!nestedDefs.isEmpty()) {
+                throw new DDPException("Currently consent activities does not support having nested activities");
+            }
             versionDto = activityDao.insertConsent((ConsentActivityDef) def, meta);
         } else {
-            versionDto = activityDao.insertActivity(def, meta);
+            versionDto = activityDao.insertActivity(def, nestedDefs, meta);
         }
 
-        LOG.info("Created activity with id={}, code={}, versionTag={}, revisionId={}, revisionStart={}",
+        LOG.info("Created activity with id={}, code={}, versionTag={}, revisionId={}, revisionStart={}{}",
                 def.getActivityId(), def.getActivityCode(), def.getVersionTag(), versionDto.getRevId(),
-                Instant.ofEpochMilli(versionDto.getRevStart()).toString());
+                Instant.ofEpochMilli(versionDto.getRevStart()).toString(),
+                nestedDefs.isEmpty() ? "" : " (" + nestedDefs.size() + " nested activities)");
         return versionDto;
     }
 
@@ -269,12 +313,20 @@ public class ActivityBuilder {
     }
 
     public Config readDefinitionConfig(String filepath) {
+        return readDefinitionConfig(filepath, true);
+    }
+
+    public Config readDefinitionConfig(String filepath, boolean allowUnresolved) {
         File file = dirPath.resolve(filepath).toFile();
         if (!file.exists()) {
             throw new DDPException("Activity definition file is missing: " + file);
         }
 
-        Config definition = ConfigFactory.parseFile(file).resolveWith(varsCfg);
+        Config definition = ConfigFactory.parseFile(file)
+                // going to resolve first the external global variables that might be used in this configuration
+                // using setAllowUnresolved = true so we can do a second pass that will allow us to resolve variables
+                // within the configuration
+                .resolveWith(varsCfg, ConfigResolveOptions.defaults().setAllowUnresolved(allowUnresolved));
         if (definition.isEmpty()) {
             throw new DDPException("Activity definition file is empty: " + file);
         }

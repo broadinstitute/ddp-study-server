@@ -10,12 +10,13 @@ import java.io.IOException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
+import java.security.Security;
 import java.security.SignatureException;
 import java.security.spec.InvalidKeySpecException;
 
-
 import com.sendgrid.helpers.eventwebhook.EventWebhook;
 import com.sendgrid.helpers.eventwebhook.EventWebhookHeader;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.broadinstitute.ddp.json.errors.ApiError;
 import org.broadinstitute.ddp.util.ResponseUtil;
 import org.slf4j.Logger;
@@ -43,6 +44,20 @@ public class SendGridEventVerificationFilter implements Filter {
 
     public SendGridEventVerificationFilter(String cfgParamSendGridEventsVerificationKey) {
         this.cfgParamSendGridEventsVerificationKey = cfgParamSendGridEventsVerificationKey;
+        registerSecurityProvider();
+    }
+
+    private void registerSecurityProvider() {
+        boolean alreadyRegistered = false;
+        for (var provider : Security.getProviders()) {
+            if (BouncyCastleProvider.PROVIDER_NAME.equals(provider.getName())) {
+                alreadyRegistered = true;
+                break;
+            }
+        }
+        if (!alreadyRegistered) {
+            Security.addProvider(new BouncyCastleProvider());
+        }
     }
 
     @Override

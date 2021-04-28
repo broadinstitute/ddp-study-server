@@ -3,9 +3,9 @@ package org.broadinstitute.ddp;
 import static com.google.common.net.HttpHeaders.X_FORWARDED_FOR;
 import static org.broadinstitute.ddp.constants.ConfigFile.Auth0LogEvents.AUTH0_LOG_EVENTS_TOKEN;
 import static org.broadinstitute.ddp.constants.ConfigFile.Sendgrid.EVENTS_VERIFICATION_KEY;
+import static org.broadinstitute.ddp.filter.AllowListFilter.allowlist;
 import static org.broadinstitute.ddp.filter.Exclusions.afterWithExclusion;
 import static org.broadinstitute.ddp.filter.Exclusions.beforeWithExclusion;
-import static org.broadinstitute.ddp.filter.WhiteListFilter.whitelist;
 import static spark.Spark.after;
 import static spark.Spark.afterAfter;
 import static spark.Spark.awaitInitialization;
@@ -25,7 +25,6 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import org.apache.http.HttpStatus;
@@ -43,8 +42,6 @@ import org.broadinstitute.ddp.db.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.CancerStore;
 import org.broadinstitute.ddp.db.ConsentElectionDao;
 import org.broadinstitute.ddp.db.DBUtils;
-import org.broadinstitute.ddp.db.FormInstanceDao;
-import org.broadinstitute.ddp.db.SectionBlockDao;
 import org.broadinstitute.ddp.db.StudyActivityDao;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.filter.AddDDPAuthLoggingFilter;
@@ -79,6 +76,7 @@ import org.broadinstitute.ddp.route.CreateActivityInstanceRoute;
 import org.broadinstitute.ddp.route.CreateMailAddressRoute;
 import org.broadinstitute.ddp.route.CreateTemporaryUserRoute;
 import org.broadinstitute.ddp.route.CreateUserActivityUploadRoute;
+import org.broadinstitute.ddp.route.DeleteActivityInstanceRoute;
 import org.broadinstitute.ddp.route.DeleteMailAddressRoute;
 import org.broadinstitute.ddp.route.DeleteMedicalProviderRoute;
 import org.broadinstitute.ddp.route.DeleteTempMailingAddressRoute;
@@ -88,6 +86,7 @@ import org.broadinstitute.ddp.route.DsmTriggerOnDemandActivityRoute;
 import org.broadinstitute.ddp.route.ErrorRoute;
 import org.broadinstitute.ddp.route.GetActivityInstanceRoute;
 import org.broadinstitute.ddp.route.GetActivityInstanceStatusTypeListRoute;
+import org.broadinstitute.ddp.route.GetActivityInstanceSummaryRoute;
 import org.broadinstitute.ddp.route.GetCancerSuggestionsRoute;
 import org.broadinstitute.ddp.route.GetConsentSummariesRoute;
 import org.broadinstitute.ddp.route.GetConsentSummaryRoute;
@@ -300,13 +299,11 @@ public class DataDonationPlatform {
         // only once server has fully booted.
         registerAppEngineCallbacks(DEFAULT_BOOT_WAIT_SECS);
 
-        SectionBlockDao sectionBlockDao = new SectionBlockDao();
-
-        FormInstanceDao formInstanceDao = FormInstanceDao.fromDaoAndConfig(sectionBlockDao, sqlConfig);
-        ActivityInstanceDao activityInstanceDao = new ActivityInstanceDao(formInstanceDao);
+        ActivityInstanceDao activityInstanceDao = new ActivityInstanceDao();
 
         PexInterpreter interpreter = new TreeWalkInterpreter();
-        final ActivityInstanceService actInstService = new ActivityInstanceService(activityInstanceDao, interpreter);
+        I18nContentRenderer i18nContentRenderer = new I18nContentRenderer();
+        final ActivityInstanceService actInstService = new ActivityInstanceService(activityInstanceDao, interpreter, i18nContentRenderer);
         final ActivityValidationService activityValidationService = new ActivityValidationService();
 
         var jsonSerializer = new NullableJsonTransformer();
@@ -350,10 +347,10 @@ public class DataDonationPlatform {
         before(API.SENDGRID_EVENT, new SendGridEventVerificationFilter(sendGridEventsVerificationKey));
 
         if (cfg.getBoolean(ConfigFile.RESTRICT_REGISTER_ROUTE)) {
-            whitelist(API.REGISTRATION, cfg.getStringList(ConfigFile.AUTH0_IP_WHITE_LIST));
+            allowlist(API.REGISTRATION, cfg.getStringList(ConfigFile.AUTH0_IP_ALLOW_LIST));
         }
         if (ConfigUtil.getBoolOrElse(cfg, ConfigFile.RESTRICT_AUTH0_LOG_EVENT_ROUTE, false)) {
-            whitelist(API.AUTH0_LOG_EVENT, cfg.getStringList(ConfigFile.AUTH0_IP_WHITE_LIST));
+            allowlist(API.AUTH0_LOG_EVENT, cfg.getStringList(ConfigFile.AUTH0_IP_ALLOW_LIST));
         }
 
         post(API.REGISTRATION, new UserRegistrationRoute(interpreter), responseSerializer);
@@ -393,11 +390,11 @@ public class DataDonationPlatform {
 
         // User route filter
         before(API.USER_ALL, new UserAuthCheckFilter()
-                .addTempUserWhitelist(HttpMethod.get, API.USER_PROFILE)
-                .addTempUserWhitelist(HttpMethod.get, API.USER_STUDY_WORKFLOW)
-                .addTempUserWhitelist(HttpMethod.get, API.USER_ACTIVITIES_INSTANCE)
-                .addTempUserWhitelist(HttpMethod.patch, API.USER_ACTIVITY_ANSWERS)
-                .addTempUserWhitelist(HttpMethod.put, API.USER_ACTIVITY_ANSWERS)
+                .addTempUserAllowlist(HttpMethod.get, API.USER_PROFILE)
+                .addTempUserAllowlist(HttpMethod.get, API.USER_STUDY_WORKFLOW)
+                .addTempUserAllowlist(HttpMethod.get, API.USER_ACTIVITIES_INSTANCE)
+                .addTempUserAllowlist(HttpMethod.patch, API.USER_ACTIVITY_ANSWERS)
+                .addTempUserAllowlist(HttpMethod.put, API.USER_ACTIVITY_ANSWERS)
         );
         patch(API.UPDATE_USER_PASSWORD, new UpdateUserPasswordRoute(), responseSerializer);
         patch(API.UPDATE_USER_EMAIL, new UpdateUserEmailRoute(), responseSerializer);
@@ -442,7 +439,6 @@ public class DataDonationPlatform {
         WorkflowService workflowService = new WorkflowService(interpreter);
         get(API.USER_STUDY_WORKFLOW, new GetWorkflowRoute(workflowService), responseSerializer);
 
-        I18nContentRenderer i18nContentRenderer = new I18nContentRenderer();
         // User study announcements
         get(API.USER_STUDY_ANNOUNCEMENTS, new GetUserAnnouncementsRoute(i18nContentRenderer), responseSerializer);
 
@@ -460,7 +456,7 @@ public class DataDonationPlatform {
         get(API.ACTIVITY_INSTANCE_STATUS_TYPE_LIST, new GetActivityInstanceStatusTypeListRoute(), responseSerializer);
 
         // User activity instance routes
-        get(API.USER_ACTIVITIES, new UserActivityInstanceListRoute(activityInstanceDao), responseSerializer);
+        get(API.USER_ACTIVITIES, new UserActivityInstanceListRoute(actInstService), responseSerializer);
         post(API.USER_ACTIVITIES, new CreateActivityInstanceRoute(), responseSerializer);
         get(
                 API.USER_ACTIVITIES_INSTANCE,
@@ -468,6 +464,8 @@ public class DataDonationPlatform {
                 responseSerializer
         );
         patch(API.USER_ACTIVITIES_INSTANCE, new PatchActivityInstanceRoute(activityInstanceDao), responseSerializer);
+        delete(API.USER_ACTIVITIES_INSTANCE, new DeleteActivityInstanceRoute(actInstService), jsonSerializer);
+        get(API.USER_ACTIVITY_SUMMARY, new GetActivityInstanceSummaryRoute(actInstService), responseSerializer);
 
         // User activity answers routes
         FormActivityService formService = new FormActivityService(interpreter);
@@ -478,7 +476,7 @@ public class DataDonationPlatform {
                 responseSerializer);
         put(
                 API.USER_ACTIVITY_ANSWERS,
-                new PutFormAnswersRoute(workflowService, activityValidationService, formInstanceDao, interpreter),
+                new PutFormAnswersRoute(workflowService, actInstService, activityValidationService, interpreter),
                 responseSerializer
         );
         post(API.USER_ACTIVITY_UPLOADS, new CreateUserActivityUploadRoute(fileUploadService), responseSerializer);
@@ -539,7 +537,7 @@ public class DataDonationPlatform {
         get(API.STUDY_STATISTICS, new GetStudyStatisticsRoute(i18nContentRenderer), responseSerializer);
 
         // Routes calling DSM
-        get(API.PARTICIPANT_STATUS, new GetDsmParticipantStatusRoute(new DsmClient(cfg)), responseSerializer);
+        get(API.PARTICIPANT_STATUS, new GetDsmParticipantStatusRoute(new DsmClient(cfg), esClient), responseSerializer);
 
         boolean runScheduler = cfg.getBoolean(ConfigFile.RUN_SCHEDULER);
         if (runScheduler) {

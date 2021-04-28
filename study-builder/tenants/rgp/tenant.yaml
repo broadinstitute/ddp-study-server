@@ -2,11 +2,15 @@ tenant:
   default_directory: Username-Password-Authentication
 
 rules:
+  - name: Force email verification
+    script: ../force-email-verification.js
+    enabled: true
+    order: 1
   - name: Register User in Pepper
     script: ../register-user-in-pepper.js
     stage: login_success
     enabled: true
-    order: 1
+    order: 2
 
 pages:
   - name: login
@@ -47,16 +51,19 @@ emailTemplates:
 clients:
   - name: rgp-angular-client
     app_type: spa
-    callbacks:
-      - '##BASE_URL##/login-landing'
+    callbacks: [
+      '##BASE_URL##/login-landing'
       ##LOCALHOST_CALLBACKS##
-    allowed_logout_urls:
-      - '##BASE_URL##'
-      - '##BASE_URL##/session-expired'
+    ]
+    allowed_logout_urls: [
+      '##BASE_URL##',
+      '##BASE_URL##/session-expired'
       ##LOCALHOST_LOGOUTS##
-    web_origins:
-      - '##BASE_URL##'
+    ]
+    web_origins: [
+      '##BASE_URL##'
       ##LOCALHOST_ORIGINS##
+    ]
     client_metadata:
       study: RGP
     jwt_configuration:

@@ -62,7 +62,7 @@ public class PdfServiceTest {
         expected.addDataSource(new PdfActivityDataSource(1L, 1L, "act1", 1L, "tag1"));
         PdfVersion fallback = new PdfVersion("fallback", 2L);
 
-        ActivityResponse instance = new FormResponse(1L, "guid", 1L, false, 1L, 1L, 1L, "act1", "tag1", null);
+        ActivityResponse instance = new FormResponse(1L, "guid", 1L, false, 1L, 1L, null, null, 1L, "act1", "tag1", false, 0, null);
 
         PdfDao pdfDao = mock(PdfDao.class);
         when(pdfDao.findOrderedConfigVersionsByConfigId(1L)).thenReturn(Arrays.asList(expected, fallback));
@@ -85,8 +85,8 @@ public class PdfServiceTest {
         expected.addDataSource(new PdfActivityDataSource(2L, 2L, "act2", 2L, "tag2"));
         PdfVersion fallback = new PdfVersion("fallback", 2L);
 
-        ActivityResponse instance1 = new FormResponse(1L, "guid1", 1L, false, 1L, 1L, 1L, "act1", "tag1", null);
-        ActivityResponse instance2 = new FormResponse(2L, "guid2", 1L, false, 2L, 2L, 2L, "act2", "tag2", null);
+        ActivityResponse instance1 = new FormResponse(1L, "guid1", 1L, false, 1L, 1L, null, null, 1L, "act1", "tag1", false, 0, null);
+        ActivityResponse instance2 = new FormResponse(2L, "guid2", 1L, false, 2L, 2L, null, null, 2L, "act2", "tag2", false, 0, null);
 
         PdfDao pdfDao = mock(PdfDao.class);
         when(pdfDao.findOrderedConfigVersionsByConfigId(1L)).thenReturn(Arrays.asList(expected, fallback));
@@ -109,7 +109,7 @@ public class PdfServiceTest {
         expected.addDataSource(new PdfActivityDataSource(2L, 1L, "act1", 2L, "tag2"));
         PdfVersion fallback = new PdfVersion("fallback", 2L);
 
-        ActivityResponse instance = new FormResponse(1L, "guid", 1L, false, 1L, 1L, 1L, "act1", "tag2", null);
+        ActivityResponse instance = new FormResponse(1L, "guid", 1L, false, 1L, 1L, null, null, 1L, "act1", "tag2", false, 0, null);
 
         PdfDao pdfDao = mock(PdfDao.class);
         when(pdfDao.findOrderedConfigVersionsByConfigId(1L)).thenReturn(Arrays.asList(expected, fallback));
@@ -132,7 +132,7 @@ public class PdfServiceTest {
         PdfVersion other = new PdfVersion("other", 2L);
         other.addDataSource(new PdfActivityDataSource(2L, 2L, "act2", 2L, "tag2"));
 
-        ActivityResponse instance = new FormResponse(1L, "guid", 1L, false, 1L, 1L, 3L, "act3", "tag3", null);
+        ActivityResponse instance = new FormResponse(1L, "guid", 1L, false, 1L, 1L, null, null, 3L, "act3", "tag3",  false, 0, null);
 
         PdfDao pdfDao = mock(PdfDao.class);
         when(pdfDao.findOrderedConfigVersionsByConfigId(1L)).thenReturn(Arrays.asList(expected, other));

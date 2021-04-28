@@ -96,7 +96,7 @@ public class ReceiveDsmNotificationRouteTest extends DsmRouteTest {
         long actionId = handle.attach(EventActionDao.class).insertNotificationAction(
                 new SendgridEmailEventActionDto(sendgridTemplateGuid, "en", false));
         return handle.attach(JdbiEventConfiguration.class).insert(
-                triggerId, actionId, generatedTestData.getStudyId(),
+                null, triggerId, actionId, generatedTestData.getStudyId(),
                 Instant.now().toEpochMilli(), 1, null, null, null, true, 1);
     }
 
@@ -265,7 +265,7 @@ public class ReceiveDsmNotificationRouteTest extends DsmRouteTest {
             Expression cancelExpr = handle.attach(JdbiExpression.class).insertExpression(
                     "!user.event.kit.isReason(\"REPLACEMENT\")");
             handle.attach(JdbiEventConfiguration.class).insert(
-                    triggerId, actionId, testData.getStudyId(),
+                    null, triggerId, actionId, testData.getStudyId(),
                     Instant.now().toEpochMilli(), 1, null, null, cancelExpr.getId(), false, 1);
         });
 
@@ -354,6 +354,24 @@ public class ReceiveDsmNotificationRouteTest extends DsmRouteTest {
                 DBUtils.checkDelete(1, handle.attach(KitConfigurationDao.class).deleteConfiguration(kitConfigId.get()));
             });
         }
+    }
+
+    @Test
+    public void testEvents_canStillReceiveEvents_whenEnrollmentStatusIsCompleted() {
+        TransactionWrapper.useTxn(handle -> TestDataSetupUtil
+                .setUserEnrollmentStatus(handle, testData, EnrollmentStatusType.COMPLETED));
+
+        var payload = new DsmNotificationPayload(TEST_RESULT.name(), "kit-1", KitReasonType.NORMAL);
+        var result = new TestResult("NEGATIVE", Instant.now(), false);
+        payload.setEventData(GsonUtil.standardGson().toJsonTree(result));
+
+        given().auth().oauth2(dsmClientAccessToken)
+                .pathParam("study", testData.getStudyGuid())
+                .pathParam("user", testData.getUserGuid())
+                .body(payload, ObjectMapperType.GSON)
+                .when().post(urlTemplate)
+                .then().assertThat()
+                .statusCode(200);
     }
 
     private boolean checkIfNotificationQueued() {

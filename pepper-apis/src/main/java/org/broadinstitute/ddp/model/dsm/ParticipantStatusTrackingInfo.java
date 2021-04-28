@@ -5,9 +5,7 @@ import java.util.List;
 import java.util.Optional;
 
 import com.google.gson.annotations.SerializedName;
-
 import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,6 +24,8 @@ public class ParticipantStatusTrackingInfo {
     private TissueRecord tissueRecord;
     @SerializedName("kits")
     private List<Kit> kits;
+    @SerializedName("workflows")
+    private List<Workflow> workflows;
 
     private transient String userGuid;
 
@@ -37,7 +37,7 @@ public class ParticipantStatusTrackingInfo {
             Long received
     ) {
         // Is it possible? Should we check for it here?
-        if (enrollmentStatusType != EnrollmentStatusType.ENROLLED) {
+        if (!enrollmentStatusType.isEnrolled()) {
             return RecordStatus.INELIGIBLE;
         } else if (requested == null && received == null) {
             return RecordStatus.PENDING;
@@ -51,6 +51,15 @@ public class ParticipantStatusTrackingInfo {
             LOG.error("Something completely unexpected happened with ", entityName);
             return RecordStatus.UNKNOWN;
         }
+    }
+
+    public ParticipantStatusTrackingInfo(ParticipantStatus dsmParticipantStatus,
+                                         List<Workflow> workflows,
+                                         EnrollmentStatusType enrollmentStatusType,
+                                         String userGuid
+    ) {
+        this(dsmParticipantStatus, enrollmentStatusType, userGuid);
+        this.workflows = workflows;
     }
 
     public ParticipantStatusTrackingInfo(
@@ -121,6 +130,10 @@ public class ParticipantStatusTrackingInfo {
         return tissueRecord;
     }
 
+    public List<Workflow> getWorkflows() {
+        return workflows;
+    }
+
     public static class Record {
         @SerializedName("status")
         protected RecordStatus status;
@@ -188,7 +201,7 @@ public class ParticipantStatusTrackingInfo {
         ) {
             // Is it possible? Should we check for it here?
             String entityName = "kit";
-            if (enrollmentStatusType != EnrollmentStatusType.ENROLLED) {
+            if (!enrollmentStatusType.isEnrolled()) {
                 return RecordStatus.INELIGIBLE;
             } else if (delivered == null && received == null) {
                 return RecordStatus.SENT;
@@ -216,6 +229,26 @@ public class ParticipantStatusTrackingInfo {
 
         public RecordStatus getStatus() {
             return status;
+        }
+    }
+
+    public static class Workflow {
+        @SerializedName("workflow")
+        protected String workflow;
+        @SerializedName("status")
+        protected String status;
+
+        public Workflow(String workflow, String status) {
+            this.workflow = workflow;
+            this.status = status;
+        }
+
+        public String getStatus() {
+            return status;
+        }
+
+        public String getWorkflow() {
+            return workflow;
         }
     }
 }

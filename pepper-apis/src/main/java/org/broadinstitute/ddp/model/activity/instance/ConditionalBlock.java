@@ -3,6 +3,7 @@ package org.broadinstitute.ddp.model.activity.instance;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.stream.Stream;
 import javax.validation.constraints.NotNull;
 
 import com.google.gson.annotations.SerializedName;
@@ -37,6 +38,11 @@ public final class ConditionalBlock extends FormBlock implements Numberable {
 
     public List<FormBlock> getNested() {
         return nested;
+    }
+
+    @Override
+    public Stream<Question> streamQuestions() {
+        return Stream.concat(Stream.of(control), nested.stream().flatMap(FormBlock::streamQuestions));
     }
 
     @Override
