@@ -17,6 +17,7 @@ class LoaderConfigFile {
 
     public static final String SOURCE_MAILING_LIST_FILE_PREFIX = "source.mailingListFilePrefix";
     public static final String SOURCE_PARTICIPANT_FILE_PREFIX = "source.participantFilePrefix";
+    public static final String SOURCE_USE_BUCKET = "source.useBucket";
     public static final String SOURCE_LOCAL_DIR = "source.localDir";
     public static final String SOURCE_PROJECT_ID = "source.projectId";
     public static final String SOURCE_BUCKET_NAME = "source.bucketName";

@@ -42,8 +42,8 @@ class FileReader {
     private Storage storage;
     private String localDir;
 
-    FileReader(Config cfg, boolean useBucket) {
-        this.useBucket = useBucket;
+    FileReader(Config cfg) {
+        this.useBucket = cfg.getBoolean(LoaderConfigFile.SOURCE_USE_BUCKET);
         this.mailingListFilePrefix = cfg.getString(LoaderConfigFile.SOURCE_MAILING_LIST_FILE_PREFIX);
         this.participantFilePrefix = cfg.getString(LoaderConfigFile.SOURCE_PARTICIPANT_FILE_PREFIX);
         if (useBucket) {
@@ -99,7 +99,11 @@ class FileReader {
                     .map(BlobInfo::getName);
         } else {
             File folder = new File(localDir);
-            return Stream.of(folder.listFiles())
+            File[] files = folder.listFiles();
+            if (files == null) {
+                throw new LoaderException("Error while list files from load directory: " + localDir);
+            }
+            return Stream.of(files)
                     .filter(File::isFile)
                     .map(File::getName);
         }

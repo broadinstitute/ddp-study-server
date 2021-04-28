@@ -89,7 +89,7 @@ class DataLoader {
             int numInserted = counts[i];
             String email = contacts.get(i).getEmail();
             if (numInserted == 0) {
-                LOG.warn(padding + "Mailing list: already contains contact with email '{}'", email);
+                LOG.warn(padding + "Mailing list: already contains entry with email '{}'", email);
             } else if (numInserted > 1) {
                 LOG.error(padding + "Mailing list: expected to insert 1 row but did {} for email '{}'", numInserted, email);
             }

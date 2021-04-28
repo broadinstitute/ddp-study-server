@@ -21,6 +21,7 @@ import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
 import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.model.user.UserProfile;
 import org.broadinstitute.ddp.util.Auth0Util;
+import org.broadinstitute.ddp.util.ConfigUtil;
 import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -64,8 +65,7 @@ class UserLoader {
     }
 
     public String getOrGenerateDummyEmail(ParticipantWrapper participant) {
-        String dummyEmail = cfg.hasPath(LoaderConfigFile.DUMMY_EMAIL)
-                ? cfg.getString(LoaderConfigFile.DUMMY_EMAIL) : null;
+        String dummyEmail = ConfigUtil.getStrIfPresent(cfg, LoaderConfigFile.DUMMY_EMAIL);
         if (dummyEmail != null && !dummyEmail.isBlank()) {
             String[] parts = dummyEmail.split("@");
             String separator = parts[0].contains("+") ? "." : "+";

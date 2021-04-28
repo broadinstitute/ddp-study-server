@@ -3,6 +3,7 @@ package org.broadinstitute.ddp.migration;
 import java.io.File;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Scanner;
 import java.util.TimeZone;
 
 import com.typesafe.config.Config;
@@ -19,6 +20,7 @@ import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.security.EncryptionKey;
+import org.broadinstitute.ddp.util.ConfigUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,15 +28,16 @@ public class DataLoaderCli {
 
     private static final Logger LOG = LoggerFactory.getLogger(DataLoaderCli.class);
     private static final String USAGE = "DataLoaderCli [-h, --help] [OPTIONS]";
+    private static final String PROD_MARKER = "prod";
 
     public static void main(String[] args) throws Exception {
         var options = new Options();
         options.addOption("h", "help", false, "print this help message");
         options.addOption("c", "config", true, "path to loader config file (required)");
         options.addOption("o", "output", true, "path for output migration report, will use a generated name if not provided");
-        options.addOption(null, "bucket", false, "use bucket for source files");
         options.addOption(null, "mailing-list", false, "load mailing list contacts");
         options.addOption(null, "participants", false, "load participant files");
+        options.addOption(null, "prod-run", false, "must set this flag for production migration run");
 
         CommandLineParser parser = new DefaultParser();
         CommandLine cmd = parser.parse(options, args);
@@ -52,12 +55,34 @@ public class DataLoaderCli {
         }
         Config cfg = ConfigFactory.parseFile(new File(configFilePath));
 
-        boolean useBucket = cmd.hasOption("bucket");
         boolean loadMailingList = cmd.hasOption("mailing-list");
         boolean loadParticipants = cmd.hasOption("participants");
         if (!loadMailingList && !loadParticipants) {
             LOG.info("Nothing to do, exiting...");
             return;
+        }
+
+        boolean isProdRun = cmd.hasOption("prod-run");
+        if (cfg.getString(LoaderConfigFile.DB_URL).contains(PROD_MARKER)) {
+            if (!isProdRun) {
+                LOG.warn("Looks like we're connecting to prod. Must use the `--prod-run` flag!");
+                return;
+            }
+            if (!cfg.getBoolean(LoaderConfigFile.SOURCE_USE_BUCKET)) {
+                LOG.warn("Looks like we're connecting to prod. Must use bucket for source files!");
+                return;
+            }
+            String dummyEmail = ConfigUtil.getStrIfPresent(cfg, LoaderConfigFile.DUMMY_EMAIL);
+            if (dummyEmail != null && !dummyEmail.isBlank()) {
+                LOG.warn("Looks like we're connecting to prod. Cannot set a dummy email for prod run!");
+                return;
+            }
+            System.out.print("Looks like we're connecting to prod. Continue? [y/N] ");
+            Scanner scanner = new Scanner(System.in);
+            String input = scanner.nextLine().trim();
+            if (!"y".equals(input) && !"yes".equalsIgnoreCase(input)) {
+                return;
+            }
         }
 
         initDbConnection(cfg);
@@ -70,7 +95,7 @@ public class DataLoaderCli {
         }
 
         LOG.info("Running data migration for study: {}", studyGuid);
-        var fileReader = new FileReader(cfg, useBucket);
+        var fileReader = new FileReader(cfg);
         var loader = new DataLoader(cfg, fileReader);
 
         Instant start = Instant.now();
