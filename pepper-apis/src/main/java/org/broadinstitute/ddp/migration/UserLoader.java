@@ -1,7 +1,8 @@
 package org.broadinstitute.ddp.migration;
 
 import java.security.SecureRandom;
-import java.time.Instant;
+import java.util.HashMap;
+import java.util.Map;
 
 import com.auth0.exception.Auth0Exception;
 import com.aventrix.jnanoid.jnanoid.NanoIdUtils;
@@ -21,7 +22,6 @@ import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
 import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.model.user.UserProfile;
 import org.broadinstitute.ddp.util.Auth0Util;
-import org.broadinstitute.ddp.util.ConfigUtil;
 import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -64,16 +64,16 @@ class UserLoader {
                 Auth0ManagementClient.forStudy(handle, cfg.getString(LoaderConfigFile.STUDY_GUID)));
     }
 
-    public String getOrGenerateDummyEmail(ParticipantWrapper participant) {
-        String dummyEmail = ConfigUtil.getStrIfPresent(cfg, LoaderConfigFile.DUMMY_EMAIL);
-        if (dummyEmail != null && !dummyEmail.isBlank()) {
-            String[] parts = dummyEmail.split("@");
-            String separator = parts[0].contains("+") ? "." : "+";
-            return String.format("%s%s%s@%s", parts[0], separator, Instant.now().toEpochMilli(), parts[1]);
-        } else {
-            return participant.getEmail();
-        }
-    }
+    // public String getOrGenerateDummyEmail(ParticipantWrapper participant) {
+    //     String dummyEmail = ConfigUtil.getStrIfPresent(cfg, LoaderConfigFile.DUMMY_EMAIL);
+    //     if (dummyEmail != null && !dummyEmail.isBlank()) {
+    //         String[] parts = dummyEmail.split("@");
+    //         String separator = parts[0].contains("+") ? "." : "+";
+    //         return String.format("%s%s%s@%s", parts[0], separator, Instant.now().toEpochMilli(), parts[1]);
+    //     } else {
+    //         return participant.getEmail();
+    //     }
+    // }
 
     public User findUserByAltPid(Handle handle, String altpid) {
         String guid = handle.attach(JdbiUser.class).getUserGuidByAltpid(altpid);
@@ -84,7 +84,7 @@ class UserLoader {
         }
     }
 
-    public String findAuth0UserIdByEmail(String connection, String email) {
+    public com.auth0.json.mgmt.users.User findAuth0UserByEmail(String connection, String email) {
         try {
             var users = auth0Util.getAuth0UsersByEmail(email, mgmtClient.getToken(), connection);
             if (users == null || users.isEmpty()) {
@@ -92,14 +92,14 @@ class UserLoader {
             } else if (users.size() > 1) {
                 throw new LoaderException("More than one auth0 user found for email: " + email);
             } else {
-                return users.get(0).getId();
+                return users.get(0);
             }
         } catch (Auth0Exception e) {
             throw new LoaderException("Error while finding user by email: " + email, e);
         }
     }
 
-    public String createAuth0Account(String connection, String email) {
+    public com.auth0.json.mgmt.users.User createAuth0Account(String connection, String email) {
         String temp = NanoIdUtils.randomNanoId(PW_RANDOMIZER, PW_NUMS, 10);
         temp += NanoIdUtils.randomNanoId(PW_RANDOMIZER, PW_UPPER, 10);
         temp += NanoIdUtils.randomNanoId(PW_RANDOMIZER, PW_LOWER, 10);
@@ -115,7 +115,28 @@ class UserLoader {
             LOG.error("Received auth0 response: status={}", result.getStatusCode(), result.getError());
             throw new LoaderException("Unable to create auth0 account for email: " + email);
         } else {
-            return result.getBody().getId();
+            return result.getBody();
+        }
+    }
+
+    public boolean updateAuth0UserMetadata(com.auth0.json.mgmt.users.User auth0User, String languageCode) {
+        Map<String, Object> metadata = auth0User.getUserMetadata();
+        if (metadata == null) {
+            metadata = new HashMap<>();
+        }
+        if (metadata.containsKey(User.METADATA_LANGUAGE)) {
+            return false;
+        }
+
+        metadata.put(User.METADATA_LANGUAGE, languageCode);
+        var result = mgmtClient.updateUserMetadata(auth0User.getId(), metadata);
+        if (result.hasThrown()) {
+            throw new LoaderException("Error while updating auth0 user metadata for: " + auth0User.getId(), result.getThrown());
+        } else if (result.hasError()) {
+            LOG.error("Received auth0 response: status={}", result.getStatusCode(), result.getError());
+            throw new LoaderException("Unable to update auth0 user metadata for: " + auth0User.getId());
+        } else {
+            return true;
         }
     }
 

@@ -8,7 +8,7 @@ class LoaderConfigFile {
 
     public static final String STUDY_GUID = "studyGuid";
     public static final String MAPPING_FILE = "mappingFile";
-    public static final String DUMMY_EMAIL = "dummyEmail";
+    public static final String CREATE_AUTH0_ACCOUNTS = "createAuth0Accounts";
 
     public static final String AUTH0_DOMAIN = "auth0.domain";
     public static final String AUTH0_CLIENT_ID = "auth0.clientId";

@@ -41,6 +41,7 @@ class DataLoader {
     private static final String WITHDREW_REASON_CODE = "WITHDREW";
 
     private final Config cfg;
+    private final boolean isProdRun;
     private final String studyGuid;
     private final FileReader fileReader;
     private final Gson gson;
@@ -49,8 +50,9 @@ class DataLoader {
     private Map<String, Long> activityCodeToId = new HashMap<>();
     private Map<Long, ActivityVersionDto> activityIdToLatestVersion = new HashMap<>();
 
-    DataLoader(Config cfg, FileReader fileReader) {
+    DataLoader(Config cfg, FileReader fileReader, boolean isProdRun) {
         this.cfg = cfg;
+        this.isProdRun = isProdRun;
         this.studyGuid = cfg.getString(LoaderConfigFile.STUDY_GUID);
         this.fileReader = fileReader;
         this.gson = new Gson();
@@ -85,6 +87,7 @@ class DataLoader {
         int[] counts = handle.attach(JdbiMailingList.class).bulkInsertIfNotStoredAlready(entryDtos);
         DBUtils.checkInsert(contacts.size(), counts.length);
 
+        int totalCount = 0;
         for (int i = 0; i < counts.length; i++) {
             int numInserted = counts[i];
             String email = contacts.get(i).getEmail();
@@ -92,10 +95,12 @@ class DataLoader {
                 LOG.warn(padding + "Mailing list: already contains entry with email '{}'", email);
             } else if (numInserted > 1) {
                 LOG.error(padding + "Mailing list: expected to insert 1 row but did {} for email '{}'", numInserted, email);
+            } else {
+                totalCount++;
             }
         }
 
-        LOG.info(padding + "Mailing list: finished loading contacts");
+        LOG.info(padding + "Mailing list: finished loading {} entries", totalCount);
     }
 
     private void initMappingFile() {
@@ -112,9 +117,8 @@ class DataLoader {
         LOG.info("Using mapping file: {}", path);
     }
 
-    public Report processParticipantFiles() {
+    public void processParticipantFiles(Report report) {
         initMappingFile();
-        var report = new Report();
         userLoader = new UserLoader(cfg);
 
         Set<String> filenames = fileReader.listParticipantFiles();
@@ -129,23 +133,22 @@ class DataLoader {
             TransactionWrapper.useTxn(handle -> processParticipant(handle, data, row));
             if (!row.isExistingUser()) {
                 try {
-                    // Auth0 has rate limit, so add in some buffer.
-                    TimeUnit.SECONDS.sleep(1L);
+                    // Auth0 has rate limits, so add in some buffer.
+                    long timeout = isProdRun ? 250L : 1000L;
+                    TimeUnit.MILLISECONDS.sleep(timeout);
                 } catch (InterruptedException e) {
                     throw new LoaderException(e);
                 }
             }
             count++;
         }
-
-        return report;
     }
 
     private void processParticipant(Handle handle, ParticipantFile data, Report.Row row) {
         String padding = "  ";
 
         var participant = data.getParticipantWrapper();
-        String email = userLoader.getOrGenerateDummyEmail(participant);
+        String email = participant.getEmail();
         String altPid = participant.getAltPid();
         String shortId = participant.getShortId();
         row.init(altPid, shortId, email);
@@ -162,21 +165,31 @@ class DataLoader {
         }
 
         String auth0Connection = cfg.getString(LoaderConfigFile.AUTH0_CONNECTION);
-        String auth0UserId = userLoader.findAuth0UserIdByEmail(auth0Connection, email);
-        if (auth0UserId != null && !auth0UserId.isBlank()) {
-            LOG.warn(padding + "- Auth0 account already exists, skipping: email={}, auth0UserId={}", email, auth0UserId);
-            row.setAuth0UserId(auth0UserId);
+        boolean createAccount = cfg.getBoolean(LoaderConfigFile.CREATE_AUTH0_ACCOUNTS);
+        var auth0User = userLoader.findAuth0UserByEmail(auth0Connection, email);
+        if (auth0User != null && auth0User.getId() != null && !auth0User.getId().isBlank()) {
+            LOG.info(padding + "- Auth0 account exists: email={}, auth0UserId={}", email, auth0User.getId());
+            row.setAuth0UserId(auth0User.getId());
             row.setExistInAuth0(true);
-            row.setSkipped(true);
-            return;
+        } else if (createAccount) {
+            LOG.info(padding + "- Auth0 account doesn't exist but creation flag is enabled");
+            auth0User = userLoader.createAuth0Account(auth0Connection, email);
+            LOG.info(padding + "- Created auth0 account: email={}, auth0UserId={}", email, auth0User.getId());
+            row.setAuth0UserId(auth0User.getId());
+            row.setExistInAuth0(false);
+        } else {
+            throw new LoaderException("Expected auth0 account to exist but could not be found for email: " + email);
         }
 
-        auth0UserId = userLoader.createAuth0Account(auth0Connection, email);
-        LOG.info(padding + "- Created auth0 account: email={}, auth0UserId={}", email, auth0UserId);
-        row.setAuth0UserId(auth0UserId);
-
         String languageCode = mapping.getParticipant().getDefaultLanguage();
-        user = userLoader.createLegacyUser(handle, participant, auth0UserId, languageCode);
+        boolean addedToMetadata = userLoader.updateAuth0UserMetadata(auth0User, languageCode);
+        if (addedToMetadata) {
+            LOG.info(padding + "- Updated auth0 user metadata with language: {}", languageCode);
+        } else {
+            LOG.info(padding + "- Auth0 user metadata already has language set");
+        }
+
+        user = userLoader.createLegacyUser(handle, participant, auth0User.getId(), languageCode);
         LOG.info(padding + "- Created migration user: id={}, guid={}, hruid={}",
                 user.getId(), user.getGuid(), user.getHruid());
         row.setUserGuid(user.getGuid());

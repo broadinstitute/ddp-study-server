@@ -20,7 +20,6 @@ import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.security.EncryptionKey;
-import org.broadinstitute.ddp.util.ConfigUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -72,9 +71,8 @@ public class DataLoaderCli {
                 LOG.warn("Looks like we're connecting to prod. Must use bucket for source files!");
                 return;
             }
-            String dummyEmail = ConfigUtil.getStrIfPresent(cfg, LoaderConfigFile.DUMMY_EMAIL);
-            if (dummyEmail != null && !dummyEmail.isBlank()) {
-                LOG.warn("Looks like we're connecting to prod. Cannot set a dummy email for prod run!");
+            if (cfg.getBoolean(LoaderConfigFile.CREATE_AUTH0_ACCOUNTS)) {
+                LOG.warn("Looks like we're connecting to prod. Cannot do auth0 account creation for prod run!");
                 return;
             }
             System.out.print("Looks like we're connecting to prod. Continue? [y/N] ");
@@ -96,15 +94,21 @@ public class DataLoaderCli {
 
         LOG.info("Running data migration for study: {}", studyGuid);
         var fileReader = new FileReader(cfg);
-        var loader = new DataLoader(cfg, fileReader);
+        var loader = new DataLoader(cfg, fileReader, isProdRun);
 
         Instant start = Instant.now();
         if (loadMailingList) {
             loader.processMailingListFiles();
         }
         if (loadParticipants) {
-            var report = loader.processParticipantFiles();
-            writeReport(studyGuid, outputFilename, report);
+            var report = new Report();
+            try {
+                loader.processParticipantFiles(report);
+                writeReport(studyGuid, outputFilename, report, false);
+            } catch (Exception e) {
+                LOG.info("Error while processing participant files", e);
+                writeReport(studyGuid, outputFilename, report, true);
+            }
         }
 
         Duration elapsed = Duration.between(start, Instant.now());
@@ -132,11 +136,11 @@ public class DataLoaderCli {
         EncryptionKey.setEncryptionKey(cfg.getString(LoaderConfigFile.AUTH0_ENCRYPTION_SECRET));
     }
 
-    private static void writeReport(String studyGuid, String filename, Report report) {
+    private static void writeReport(String studyGuid, String filename, Report report, boolean isPartial) {
         if (filename == null || filename.isBlank()) {
             filename = Report.defaultFilename(studyGuid);
         }
         report.write(filename);
-        LOG.info("Saved migration report to: {}", filename);
+        LOG.info("Saved{}migration report to: {}", isPartial ? " partial " : " ", filename);
     }
 }
