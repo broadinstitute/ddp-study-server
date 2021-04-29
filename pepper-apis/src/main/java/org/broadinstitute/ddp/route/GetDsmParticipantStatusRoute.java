@@ -90,16 +90,17 @@ public class GetDsmParticipantStatusRoute implements Route {
             return getIndexForStudy(handle, studyDto, ElasticSearchIndexType.PARTICIPANTS_STRUCTURED);
         });
 
+        // Limit the data returned from ES so we just grab what we need.
         String[] includes = {"dsm", "samples", "workflows"};
         GetRequest getRequest = new GetRequest(esIndex, "_doc", userGuid);
         getRequest.fetchSourceContext(new FetchSourceContext(true, includes, null));
         GetResponse esResponse = esClient.get(getRequest, RequestOptions.DEFAULT);
-
         String source = esResponse.getSourceAsString();
-        if (source != null && !source.isBlank()) {
-            ParticipantStatusES participantStatus = gson.fromJson(source, ParticipantStatusES.class);
-            return new ParticipantStatusTrackingInfo(participantStatus, status, userGuid);
+        if (source == null || source.isBlank()) {
+            return null;
         }
-        return null;
+
+        ParticipantStatusES participantStatus = gson.fromJson(source, ParticipantStatusES.class);
+        return new ParticipantStatusTrackingInfo(participantStatus, status, userGuid);
     }
 }

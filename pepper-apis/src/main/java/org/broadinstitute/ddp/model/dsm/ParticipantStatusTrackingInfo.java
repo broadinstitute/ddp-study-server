@@ -22,7 +22,7 @@ public class ParticipantStatusTrackingInfo {
 
     @SerializedName("medicalRecord")
     private MedicalRecord medicalRecord;
-    @SerializedName("tissue")
+    @SerializedName("tissueRecord")
     private TissueRecord tissueRecord;
     @SerializedName("kits")
     private List<Kit> kits;
@@ -57,7 +57,7 @@ public class ParticipantStatusTrackingInfo {
     public ParticipantStatusTrackingInfo(ParticipantStatusES statusES, EnrollmentStatusType enrollmentStatusType,
                                          String userGuid) {
         this.userGuid = userGuid;
-        this.workflows = statusES.getWorkflows();
+        this.workflows = statusES.getWorkflows() != null ? statusES.getWorkflows() : new ArrayList<>();
 
         LocalDate minReceived = null;
         LocalDate minRequested = null;
