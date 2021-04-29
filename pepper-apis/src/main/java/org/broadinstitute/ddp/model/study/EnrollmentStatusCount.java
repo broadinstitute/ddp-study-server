@@ -29,7 +29,8 @@ public class EnrollmentStatusCount {
         int registeredCount = 0;
         for (EnrollmentStatusDto enrollment : enrollments) {
             switch (enrollment.getEnrollmentStatus()) {
-                case ENROLLED:
+                case ENROLLED: // fall-through
+                case COMPLETED:
                     ++participantCount;
                     break;
                 case REGISTERED:

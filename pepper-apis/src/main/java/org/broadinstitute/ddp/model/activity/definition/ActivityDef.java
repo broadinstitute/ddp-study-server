@@ -75,6 +75,9 @@ public abstract class ActivityDef {
     @SerializedName("canDeleteInstances")
     protected boolean canDeleteInstances;
 
+    @SerializedName("canDeleteFirstInstance")
+    protected Boolean canDeleteFirstInstance;
+
     @NotEmpty
     @SerializedName("translatedNames")
     protected List<@Valid @NotNull Translation> translatedNames;
@@ -280,6 +283,10 @@ public abstract class ActivityDef {
         return canDeleteInstances;
     }
 
+    public Boolean getCanDeleteFirstInstance() {
+        return canDeleteFirstInstance;
+    }
+
     /**
      * Builder that helps construct common elements of an activity definition.
      *
@@ -312,6 +319,7 @@ public abstract class ActivityDef {
         protected boolean hideExistingInstancesOnCreation;
         protected boolean createOnParentCreation;
         protected boolean canDeleteInstances;
+        protected Boolean canDeleteFirstInstance;
 
         /**
          * Returns the subclass builder instance to enable method chaining.
@@ -337,6 +345,7 @@ public abstract class ActivityDef {
             activity.translatedSecondNames.addAll(secondNames);
             activity.createOnParentCreation = createOnParentCreation;
             activity.canDeleteInstances = canDeleteInstances;
+            activity.canDeleteFirstInstance = canDeleteFirstInstance;
         }
 
         public T setParentActivityCode(String parentActivityCode) {
@@ -521,6 +530,11 @@ public abstract class ActivityDef {
 
         public T setCanDeleteInstances(boolean canDeleteInstances) {
             this.canDeleteInstances = canDeleteInstances;
+            return self();
+        }
+
+        public T setCanDeleteFirstInstance(Boolean canDeleteFirstInstance) {
+            this.canDeleteFirstInstance = canDeleteFirstInstance;
             return self();
         }
     }

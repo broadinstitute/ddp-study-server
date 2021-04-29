@@ -7,8 +7,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
+import org.broadinstitute.ddp.content.I18nContentRenderer;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dao.FormActivityDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
@@ -31,10 +33,22 @@ import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
 import org.broadinstitute.ddp.model.activity.instance.FormResponse;
 import org.broadinstitute.ddp.model.activity.types.BlockType;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
+import org.broadinstitute.ddp.model.activity.types.RuleType;
 import org.broadinstitute.ddp.pex.PexException;
 import org.broadinstitute.ddp.pex.TreeWalkInterpreter;
+import org.broadinstitute.ddp.service.actvityinstancebuilder.form.block.question.ValidationRuleCreator;
 import org.jdbi.v3.core.Handle;
 
+/**
+ * Caches activity data (only static data, instance data or data connected to users are not cached here).
+ * NOTE: for user-level caching and instance data caching the http session attributes or http requests attributes
+ * could be used.
+ *
+ * <p>Cached data stored in non-concurrent hash maps and access to them is synchronized.
+ *
+ * <p>All methods which start with prefix 'find' first check data in a corresponding map and if it is found there -
+ * returns data, if not: reads data from DB, saves to the map, and returns data.
+ */
 public class ActivityDefStore {
 
     private static ActivityDefStore instance;
@@ -46,6 +60,9 @@ public class ActivityDefStore {
     private Map<Long, List<ActivityVersionDto>> versionDtoListMap;
     private Map<Long, List<ActivityValidationDto>> validationDtoListMap;
     private Map<String, Map<String, Blob>> studyActivityStatusIconBlobs;
+    private Map<String, String> validationRuleMessageMap;
+
+    private static final I18nContentRenderer i18nContentRenderer = new I18nContentRenderer();
 
     public static ActivityDefStore getInstance() {
         if (instance == null) {
@@ -65,6 +82,7 @@ public class ActivityDefStore {
         versionDtoListMap = new HashMap<>();
         validationDtoListMap = new HashMap<>();
         studyActivityStatusIconBlobs = new HashMap<>();
+        validationRuleMessageMap = new HashMap<>();
     }
 
     public void clear() {
@@ -74,6 +92,7 @@ public class ActivityDefStore {
             versionDtoListMap.clear();
             validationDtoListMap.clear();
             studyActivityStatusIconBlobs.clear();
+            validationRuleMessageMap.clear();
         }
     }
 
@@ -103,7 +122,9 @@ public class ActivityDefStore {
     }
 
     public boolean clearCachedActivityValidationDtos(long activityId) {
-        return validationDtoListMap.remove(activityId) != null;
+        synchronized (lockVar) {
+            return validationDtoListMap.remove(activityId) != null;
+        }
     }
 
     public Optional<ActivityDto> findActivityDto(Handle handle, long activityId) {
@@ -158,6 +179,23 @@ public class ActivityDefStore {
     public void setActivityDef(String studyGuid, String activityCode, String versionTag, FormActivityDef activityDef) {
         synchronized (lockVar) {
             activityDefMap.put(studyGuid + activityCode + versionTag, activityDef);
+        }
+    }
+
+    @VisibleForTesting
+    public void clearCachedActivityData() {
+        synchronized (lockVar) {
+            activityDtoMap.clear();
+            activityDefMap.clear();
+        }
+    }
+
+    public String findValidationRuleMessage(
+            Handle handle, RuleType ruleType, Long hintTemplateId, long langCodeId, long timestamp,
+            ValidationRuleCreator.ValidationRuleMessageDetector validationRuleMessageDetector) {
+        synchronized (lockVar) {
+            return validationRuleMessageMap.computeIfAbsent(ruleType.name() + langCodeId, message ->
+                    validationRuleMessageDetector.detectValidationRuleMessage(handle, ruleType, hintTemplateId, langCodeId, timestamp));
         }
     }
 

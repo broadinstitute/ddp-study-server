@@ -66,6 +66,22 @@ public interface TemplateDao extends SqlObject {
 
     /**
      * Create new template by inserting all its related data. If template code is not provided, it will be generated.
+     * Template is created only is the {@link Template} object is not null.
+     *
+     * @param template   the template definition, without generated things like ids
+     * @param revisionId the revision to use, will be shared by all created data
+     * @return Long ID of an inserted template, or null - if passed parameter `template` is null
+     */
+    default Long insertTemplateIfNotNull(Template template, long revisionId) {
+        Long templateId = null;
+        if (template != null) {
+            templateId = insertTemplate(template, revisionId);
+        }
+        return templateId;
+    }
+
+    /**
+     * Create new template by inserting all its related data. If template code is not provided, it will be generated.
      *
      * @param template   the template definition, without generated things like ids
      * @param revisionId the revision to use, will be shared by all created data

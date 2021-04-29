@@ -73,7 +73,7 @@ public class GetDsmParticipantInstitutionsRoute implements Route {
 
             List<EnrollmentStatusDto> includedUsers = allUsers.stream()
                     .filter(enrollmentStatusDto ->
-                            enrollmentStatusDto.getEnrollmentStatus() == EnrollmentStatusType.ENROLLED
+                            enrollmentStatusDto.getEnrollmentStatus().isEnrolled()
                                     || enrollmentStatusDto.getEnrollmentStatus() == EnrollmentStatusType.EXITED_AFTER_ENROLLMENT)
                     .collect(Collectors.toList());
 

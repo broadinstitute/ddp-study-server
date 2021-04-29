@@ -76,6 +76,7 @@ public class DeleteActivityInstanceRouteTest extends IntegrationTestSuite.TestCa
                 .addName(new Translation("en", "activity with non-deletable instances"))
                 .setParentActivityCode(activityCode)
                 .setCanDeleteInstances(true)
+                .setCanDeleteFirstInstance(false)
                 .addSection(new FormSectionDef(null, List.of(new QuestionBlockDef(questionDef))))
                 .build();
 
@@ -195,6 +196,8 @@ public class DeleteActivityInstanceRouteTest extends IntegrationTestSuite.TestCa
 
     @Test
     public void testDelete_success() {
+        ActivityInstanceDto firstInstanceDto = TransactionWrapper.withTxn(handle ->
+                createInstanceAndDeferCleanup(handle, deletableChildAct.getActivityId()));
         ActivityInstanceDto instanceDto = TransactionWrapper.withTxn(handle -> {
             var instance = createInstanceAndDeferCleanup(handle, deletableChildAct.getActivityId());
             handle.attach(AnswerDao.class).createAnswer(
@@ -203,6 +206,12 @@ public class DeleteActivityInstanceRouteTest extends IntegrationTestSuite.TestCa
             return instance;
         });
 
+        given().auth().oauth2(token)
+                .pathParam("instanceGuid", firstInstanceDto.getGuid())
+                .when().delete(url).then().assertThat()
+                .statusCode(422).contentType(ContentType.JSON)
+                .body("code", equalTo(ErrorCodes.OPERATION_NOT_ALLOWED))
+                .body("message", containsString("first instance"));
         given().auth().oauth2(token)
                 .pathParam("instanceGuid", instanceDto.getGuid())
                 .when().delete(url).then().assertThat()

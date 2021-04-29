@@ -159,10 +159,12 @@ public class AesUtil {
 
         if (cmd.hasOption('d')) {
             System.out.println(AesUtil.decrypt(cmd.getOptionValue('s'), encryptionSecret));
+            return;
         }
 
         if (cmd.hasOption('e')) {
             System.out.println(AesUtil.encrypt(cmd.getOptionValue('s'), encryptionSecret));
+            return;
         }
 
         initializeDb(cfg);
@@ -204,8 +206,7 @@ public class AesUtil {
                 }
                 return null;
             });
-
-
+            return;
         }
 
         if (cmd.hasOption("convertall")) {
@@ -246,8 +247,6 @@ public class AesUtil {
 
                 return null;
             });
-
-
         }
     }
 

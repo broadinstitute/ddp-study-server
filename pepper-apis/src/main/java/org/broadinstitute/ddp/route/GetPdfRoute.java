@@ -154,7 +154,7 @@ public class GetPdfRoute implements Route {
 
         EnrollmentStatusType currentStatus = statuses.get(0).getEnrollmentStatus();
         boolean hasEnrolledBefore = statuses.stream()
-                .anyMatch(status -> status.getEnrollmentStatus() == EnrollmentStatusType.ENROLLED);
+                .anyMatch(status -> status.getEnrollmentStatus().isEnrolled());
 
         if (currentStatus.isExited() || !hasEnrolledBefore) {
             String msg = "User " + user.getGuid() + " was not enrolled in study " + studyDto.getGuid();

@@ -5,9 +5,7 @@ import java.util.List;
 import java.util.Optional;
 
 import com.google.gson.annotations.SerializedName;
-
 import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,7 +37,7 @@ public class ParticipantStatusTrackingInfo {
             Long received
     ) {
         // Is it possible? Should we check for it here?
-        if (enrollmentStatusType != EnrollmentStatusType.ENROLLED) {
+        if (!enrollmentStatusType.isEnrolled()) {
             return RecordStatus.INELIGIBLE;
         } else if (requested == null && received == null) {
             return RecordStatus.PENDING;
@@ -203,7 +201,7 @@ public class ParticipantStatusTrackingInfo {
         ) {
             // Is it possible? Should we check for it here?
             String entityName = "kit";
-            if (enrollmentStatusType != EnrollmentStatusType.ENROLLED) {
+            if (!enrollmentStatusType.isEnrolled()) {
                 return RecordStatus.INELIGIBLE;
             } else if (delivered == null && received == null) {
                 return RecordStatus.SENT;

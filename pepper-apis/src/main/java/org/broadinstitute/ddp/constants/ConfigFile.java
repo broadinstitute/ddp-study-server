@@ -138,10 +138,6 @@ public class ConfigFile {
     public static final String JCACHE_CONFIGURATION_FILE = "jcacheConfigurationFile";
     public static final String REDIS_SERVER_ADDRESS = "redisServerAddress";
 
-    public static final class SqlQuery {
-        public static final String FORM_ACTIVITY_BY_GUID = "activities.formActivityByGuidQuery";
-    }
-
     public static final class API_RATE_LIMIT {
         public static final String MAX_QUERIES_PER_SECOND = "rateLimit.apiLimitRate";
         public static final String BURST = "rateLimit.apiLimitBurst";

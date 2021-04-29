@@ -70,12 +70,6 @@ public class FormSection implements Renderable {
         return blocks;
     }
 
-    public void addBlocks(List<FormBlock> blocks) {
-        if (blocks != null) {
-            this.blocks.addAll(blocks);
-        }
-    }
-
     @Override
     public void registerTemplateIds(Consumer<Long> registry) {
         if (nameTemplateId != null) {
