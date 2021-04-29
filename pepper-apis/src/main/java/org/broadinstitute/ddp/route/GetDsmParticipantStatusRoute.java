@@ -81,6 +81,7 @@ public class GetDsmParticipantStatusRoute implements Route {
                 LOG.warn(errMsg);
                 throw ResponseUtil.haltError(404, new ApiError(ErrorCodes.NOT_FOUND, errMsg));
             }
+            return info;
         } catch (IOException e) {
             String errMsg = "Something went wrong during fetching the workflow statuses from ES for study "
                     + studyGuid + " and participant " + userGuid + ".";
