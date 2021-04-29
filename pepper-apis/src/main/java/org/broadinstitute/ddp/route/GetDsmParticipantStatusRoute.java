@@ -74,7 +74,13 @@ public class GetDsmParticipantStatusRoute implements Route {
                     throw ResponseUtil.haltError(404, new ApiError(ErrorCodes.NOT_FOUND, errMsg));
                 }));
         try {
-            return getDataFromEs(userGuid, studyGuid, status);
+            var info = getDataFromEs(userGuid, studyGuid, status);
+            if (info == null) {
+                // Somehow it's not found in ES. For backwards-compatibility we return 404.
+                String errMsg = "Participant " + userGuid + " or study " + studyGuid + " not found";
+                LOG.warn(errMsg);
+                throw ResponseUtil.haltError(404, new ApiError(ErrorCodes.NOT_FOUND, errMsg));
+            }
         } catch (IOException e) {
             String errMsg = "Something went wrong during fetching the workflow statuses from ES for study "
                     + studyGuid + " and participant " + userGuid + ".";

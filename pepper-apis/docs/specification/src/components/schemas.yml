@@ -2205,6 +2205,7 @@ ParticipantStatusTrackingInfo.Workflow:
       type: string
       format: date-time
       description: Last changed
+      example: 2021-04-18T14:09:37.123Z
 ParticipantStatusTrackingInfo.Record:
   type: object
   required:
