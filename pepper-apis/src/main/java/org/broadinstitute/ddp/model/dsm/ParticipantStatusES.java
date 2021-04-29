@@ -2,6 +2,7 @@ package org.broadinstitute.ddp.model.dsm;
 
 import com.google.gson.annotations.SerializedName;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @SuppressWarnings("unused")
@@ -90,17 +91,18 @@ public class ParticipantStatusES {
         @SerializedName("medicalRecordId")
         private final Long medicalRecordId;
         @SerializedName("requested")
-        private final String requested;
+        private final LocalDate requested;
         @SerializedName("ddpParticipantId")
         private final String ddpParticipantId;
         @SerializedName("name")
         private final String name;
         @SerializedName("received")
-        private final String received;
+        private final LocalDate received;
         @SerializedName("type")
         private final String type;
 
-        public MedicalRecord(Long medicalRecordId, String requested, String ddpParticipantId, String name, String received, String type) {
+        public MedicalRecord(Long medicalRecordId, LocalDate requested, String ddpParticipantId, String name,
+                             LocalDate received, String type) {
             this.medicalRecordId = medicalRecordId;
             this.requested = requested;
             this.ddpParticipantId = ddpParticipantId;
@@ -113,7 +115,7 @@ public class ParticipantStatusES {
             return medicalRecordId;
         }
 
-        public String getRequested() {
+        public LocalDate getRequested() {
             return requested;
         }
 
@@ -125,7 +127,7 @@ public class ParticipantStatusES {
             return name;
         }
 
-        public String getReceived() {
+        public LocalDate getReceived() {
             return received;
         }
 
@@ -138,11 +140,11 @@ public class ParticipantStatusES {
         @SerializedName("tissueRecordId")
         private final Long tissueRecordId;
         @SerializedName("requested")
-        private final String requested;
+        private final LocalDate requested;
         @SerializedName("received")
-        private final String received;
+        private final LocalDate received;
         @SerializedName("sent")
-        private final String sent;
+        private final LocalDate sent;
         @SerializedName("typePX")
         private final String typePX;
         @SerializedName("locationPX")
@@ -154,7 +156,7 @@ public class ParticipantStatusES {
         @SerializedName("accessionNumber")
         private final String accessionNumber;
 
-        public TissueRecord(Long tissueRecordId, String requested, String received, String sent, String typePX,
+        public TissueRecord(Long tissueRecordId, LocalDate requested, LocalDate received, LocalDate sent, String typePX,
                             String locationPX, String datePX, String histology, String accessionNumber) {
             this.tissueRecordId = tissueRecordId;
             this.requested = requested;
@@ -171,15 +173,15 @@ public class ParticipantStatusES {
             return tissueRecordId;
         }
 
-        public String getRequested() {
+        public LocalDate getRequested() {
             return requested;
         }
 
-        public String getReceived() {
+        public LocalDate getReceived() {
             return received;
         }
 
-        public String getSent() {
+        public LocalDate getSent() {
             return sent;
         }
 
@@ -206,23 +208,23 @@ public class ParticipantStatusES {
 
     public static class Sample {
         @SerializedName("kitRequestId")
-        private String kitRequestId;
+        private final String kitRequestId;
         @SerializedName("kitType")
-        private String kitType;
+        private final String kitType;
         @SerializedName("sent")
-        private String sent;
+        private final LocalDate sent;
         @SerializedName("delivered")
-        private String delivered;
+        private final LocalDate delivered;
         @SerializedName("received")
-        private String received;
+        private final LocalDate received;
         @SerializedName("trackingIn")
-        private String trackingIn;
+        private final String trackingIn;
         @SerializedName("trackingOut")
-        private String trackingOut;
+        private final String trackingOut;
         @SerializedName("carrier")
-        private String carrier;
+        private final String carrier;
 
-        public Sample(String kitRequestId, String kitType, String sent, String delivered, String received,
+        public Sample(String kitRequestId, String kitType, LocalDate sent, LocalDate delivered, LocalDate received,
                       String trackingIn, String trackingOut, String carrier) {
             this.kitRequestId = kitRequestId;
             this.kitType = kitType;
@@ -242,15 +244,15 @@ public class ParticipantStatusES {
             return kitType;
         }
 
-        public String getSent() {
+        public LocalDate getSent() {
             return sent;
         }
 
-        public String getDelivered() {
+        public LocalDate getDelivered() {
             return delivered;
         }
 
-        public String getReceived() {
+        public LocalDate getReceived() {
             return received;
         }
 

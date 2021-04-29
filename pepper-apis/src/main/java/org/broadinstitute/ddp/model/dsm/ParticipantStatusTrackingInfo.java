@@ -1,11 +1,13 @@
 package org.broadinstitute.ddp.model.dsm;
 
 import com.google.gson.annotations.SerializedName;
-import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+
+import static org.broadinstitute.ddp.util.DateTimeUtils.localDateToEpochSeconds;
 
 // All epoch timestamps are expressed in seconds
 public class ParticipantStatusTrackingInfo {
@@ -15,9 +17,9 @@ public class ParticipantStatusTrackingInfo {
     }
 
     @SerializedName("medicalRecords")
-    private List<MedicalRecord> medicalRecords;
+    private MedicalRecord medicalRecords;
     @SerializedName("tissue")
-    private List<TissueRecord> tissueRecords;
+    private TissueRecord tissueRecords;
     @SerializedName("kits")
     private List<Kit> kits;
     @SerializedName("workflows")
@@ -27,15 +29,15 @@ public class ParticipantStatusTrackingInfo {
 
     private RecordStatus figureOutMedicalRecordStatus(
             EnrollmentStatusType enrollmentStatusType,
-            String requested,
-            String received
+            LocalDate requested,
+            LocalDate received
     ) {
         // Is it possible? Should we check for it here?
         if (!enrollmentStatusType.isEnrolled()) {
             return RecordStatus.INELIGIBLE;
-        } else if (StringUtils.isBlank(requested) && StringUtils.isBlank(received)) {
+        } else if (requested == null && received == null) {
             return RecordStatus.PENDING;
-        } else if (StringUtils.isNotBlank(requested) && StringUtils.isBlank(received)) {
+        } else if (requested != null && received == null) {
             return RecordStatus.SENT;
         } else { // received is not blank
             return RecordStatus.RECEIVED;
@@ -66,38 +68,55 @@ public class ParticipantStatusTrackingInfo {
             }
 
             if (statusES.getMedicalRecords() != null) {
+                LocalDate minReceived = null;
+                LocalDate minRequested = null;
                 for (ParticipantStatusES.MedicalRecord medicalRecord : statusES.getMedicalRecords()) {
-                    if (this.medicalRecords == null) {
-                        this.medicalRecords = new ArrayList<>();
+                    if (medicalRecord.getReceived() != null) {
+                        if (minReceived == null || minReceived.compareTo(medicalRecord.getReceived()) > 0) {
+                            minReceived = medicalRecord.getReceived();
+                        }
                     }
-                    medicalRecords.add(new MedicalRecord(
-                            figureOutMedicalRecordStatus(
-                                    enrollmentStatusType,
-                                    medicalRecord.getRequested(),
-                                    medicalRecord.getReceived()
-                            ),
-                            medicalRecord.getRequested(),
-                            medicalRecord.getReceived()
-                    ));
+                    if (medicalRecord.getRequested() != null) {
+                        if (minRequested == null || minRequested.compareTo(medicalRecord.getRequested()) > 0) {
+                            minRequested = medicalRecord.getRequested();
+                        }
+                    }
                 }
+                this.medicalRecords = new MedicalRecord(
+                        figureOutMedicalRecordStatus(
+                                enrollmentStatusType,
+                                minRequested,
+                                minReceived
+                        ),
+                        localDateToEpochSeconds(minRequested),
+                        localDateToEpochSeconds(minReceived)
+                );
             }
 
             if (statusES.getTissueRecords() != null) {
+                LocalDate minReceived = null;
+                LocalDate minRequested = null;
                 for (ParticipantStatusES.TissueRecord tissueRecord : statusES.getTissueRecords()) {
-                    if (this.tissueRecords == null) {
-                        this.tissueRecords = new ArrayList<>();
+                    if (tissueRecord.getReceived() != null) {
+                        if (minReceived == null || minReceived.compareTo(tissueRecord.getReceived()) > 0) {
+                            minReceived = tissueRecord.getReceived();
+                        }
                     }
-                    this.tissueRecords = new ArrayList<>();
-                    tissueRecords.add(new TissueRecord(
-                            figureOutMedicalRecordStatus(
-                                    enrollmentStatusType,
-                                    tissueRecord.getRequested(),
-                                    tissueRecord.getReceived()
-                            ),
-                            tissueRecord.getRequested(),
-                            tissueRecord.getReceived()
-                    ));
+                    if (tissueRecord.getRequested() != null) {
+                        if (minRequested == null || minRequested.compareTo(tissueRecord.getRequested()) > 0) {
+                            minRequested = tissueRecord.getRequested();
+                        }
+                    }
                 }
+                this.tissueRecords = new TissueRecord(
+                        figureOutMedicalRecordStatus(
+                                enrollmentStatusType,
+                                minRequested,
+                                minReceived
+                        ),
+                        localDateToEpochSeconds(minRequested),
+                        localDateToEpochSeconds(minReceived)
+                );
             }
         }
     }
@@ -110,11 +129,11 @@ public class ParticipantStatusTrackingInfo {
         return kits;
     }
 
-    public List<MedicalRecord> getMedicalRecords() {
+    public MedicalRecord getMedicalRecord() {
         return medicalRecords;
     }
 
-    public List<TissueRecord> getTissueRecords() {
+    public TissueRecord getTissueRecord() {
         return tissueRecords;
     }
 
@@ -126,11 +145,11 @@ public class ParticipantStatusTrackingInfo {
         @SerializedName("status")
         protected RecordStatus status;
         @SerializedName("requestedAt")
-        protected String requestedAt;
+        protected Long requestedAt;
         @SerializedName("receivedBackAt")
-        protected String receivedBackAt;
+        protected Long receivedBackAt;
 
-        protected Record(RecordStatus status, String requestedAt, String receivedBackAt) {
+        protected Record(RecordStatus status, Long requestedAt, Long receivedBackAt) {
             this.status = status;
             this.requestedAt = requestedAt;
             this.receivedBackAt = receivedBackAt;
@@ -140,23 +159,23 @@ public class ParticipantStatusTrackingInfo {
             return status;
         }
 
-        public String getRequestedAt() {
+        public Long getRequestedAt() {
             return requestedAt;
         }
 
-        public String getReceivedBackAt() {
+        public Long getReceivedBackAt() {
             return receivedBackAt;
         }
     }
 
     public static class MedicalRecord extends Record {
-        public MedicalRecord(RecordStatus status, String requestedAt, String receivedBackAt) {
+        public MedicalRecord(RecordStatus status, Long requestedAt, Long receivedBackAt) {
             super(status, requestedAt, receivedBackAt);
         }
     }
 
     public static class TissueRecord extends Record {
-        public TissueRecord(RecordStatus status, String requestedAt, String receivedBackAt) {
+        public TissueRecord(RecordStatus status, Long requestedAt, Long receivedBackAt) {
             super(status, requestedAt, receivedBackAt);
         }
     }
@@ -169,11 +188,11 @@ public class ParticipantStatusTrackingInfo {
         private final RecordStatus status;
         // sentAt is NOT NULL since it's guaranteed to be set in Sample by DSM
         @SerializedName("sentAt")
-        private final String sentAt;
+        private final long sentAt;
         @SerializedName("deliveredAt")
-        private final String deliveredAt;
+        private final Long deliveredAt;
         @SerializedName("receivedBackAt")
-        private final String receivedBackAt;
+        private final Long receivedBackAt;
         @SerializedName("trackingId")
         private final String trackingId;
         @SerializedName("shipper")
@@ -183,16 +202,16 @@ public class ParticipantStatusTrackingInfo {
         // As a result, the "sent" is not nullable and we never check its value
         public static RecordStatus figureOutStatus(
                 EnrollmentStatusType enrollmentStatusType,
-                String delivered,
-                String received
+                LocalDate delivered,
+                LocalDate received
         ) {
             // Is it possible? Should we check for it here?
             String entityName = "kit";
             if (!enrollmentStatusType.isEnrolled()) {
                 return RecordStatus.INELIGIBLE;
-            } else if (StringUtils.isBlank(delivered) && StringUtils.isBlank(received)) {
+            } else if (delivered == null && received == null) {
                 return RecordStatus.SENT;
-            } else if (StringUtils.isNotBlank(delivered) && StringUtils.isBlank(received)) {
+            } else if (delivered != null && received == null) {
                 return RecordStatus.DELIVERED;
             } else { // received != null
                 return RecordStatus.RECEIVED;
@@ -202,9 +221,9 @@ public class ParticipantStatusTrackingInfo {
         public Kit(ParticipantStatusES.Sample sample, RecordStatus status) {
             this.kitType = sample.getKitType();
             this.status = status;
-            this.sentAt = sample.getSent();
-            this.deliveredAt = sample.getDelivered();
-            this.receivedBackAt = sample.getReceived();
+            this.sentAt = localDateToEpochSeconds(sample.getSent());
+            this.deliveredAt = localDateToEpochSeconds(sample.getDelivered());
+            this.receivedBackAt = localDateToEpochSeconds(sample.getReceived());
             this.trackingId = sample.getTrackingOut();
             this.shipper = sample.getCarrier();
         }
@@ -217,15 +236,15 @@ public class ParticipantStatusTrackingInfo {
             return kitType;
         }
 
-        public String getSentAt() {
+        public long getSentAt() {
             return sentAt;
         }
 
-        public String getDeliveredAt() {
+        public Long getDeliveredAt() {
             return deliveredAt;
         }
 
-        public String getReceivedBackAt() {
+        public Long getReceivedBackAt() {
             return receivedBackAt;
         }
 

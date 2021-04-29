@@ -42,7 +42,7 @@ public class GetDsmParticipantStatusRoute implements Route {
 
     public GetDsmParticipantStatusRoute(RestHighLevelClient esClient) {
         this.esClient = esClient;
-        this.gson = GsonUtil.standardGson();
+        this.gson = GsonUtil.standardBuilder().setDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ").create();
     }
 
     /**
