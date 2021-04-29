@@ -1,0 +1,21 @@
+{
+  "prequal_name": "Join Us",
+  "prequal_title": "Join Us",
+  "prequal_header": "Prequalifier",
+
+  "consent_name": "Join Us",
+  "consent_title": "Join Us",
+  "consent_header": "Consent",
+
+  "medical_history_name": "Join Us",
+  "medical_history_title": "Join Us",
+  "medical_history_header": "Medical History",
+
+  "rrc_name": "Join Us",
+  "rrc_title": "Join Us",
+  "rrc_header": "Clinical Info Release Request",
+
+  "rrg_name": "Join Us",
+  "rrg_title": "Join Us",
+  "rrg_header": "Genetic Info Release Request",
+}
