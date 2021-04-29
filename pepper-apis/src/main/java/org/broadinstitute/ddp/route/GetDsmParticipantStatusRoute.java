@@ -1,5 +1,9 @@
 package org.broadinstitute.ddp.route;
 
+import static org.broadinstitute.ddp.util.ElasticsearchServiceUtil.getIndexForStudy;
+
+import java.io.IOException;
+
 import com.google.gson.Gson;
 import org.apache.http.entity.ContentType;
 import org.broadinstitute.ddp.constants.ErrorCodes;
@@ -19,15 +23,12 @@ import org.elasticsearch.action.get.GetRequest;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
+import org.elasticsearch.search.fetch.subphase.FetchSourceContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import spark.Request;
 import spark.Response;
 import spark.Route;
-
-import java.io.IOException;
-
-import static org.broadinstitute.ddp.util.ElasticsearchServiceUtil.getIndexForStudy;
 
 /**
  * This route calls DSM and returns the DTO after enriching it with certain information
@@ -37,7 +38,6 @@ public class GetDsmParticipantStatusRoute implements Route {
     private static final Logger LOG = LoggerFactory.getLogger(GetDsmParticipantStatusRoute.class);
 
     private final RestHighLevelClient esClient;
-
     private final Gson gson;
 
     public GetDsmParticipantStatusRoute(RestHighLevelClient esClient) {
@@ -85,18 +85,20 @@ public class GetDsmParticipantStatusRoute implements Route {
 
     private ParticipantStatusTrackingInfo getDataFromEs(String userGuid, String studyGuid,
                                                         EnrollmentStatusType status) throws IOException {
-        if (esClient != null) {
-            String esIndex = TransactionWrapper.withTxn(handle -> {
-                StudyDto studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(studyGuid);
-                return getIndexForStudy(handle, studyDto, ElasticSearchIndexType.PARTICIPANTS_STRUCTURED);
-            });
-            GetRequest getRequest = new GetRequest(esIndex, "_doc", userGuid);
-            GetResponse esResponse = esClient.get(getRequest, RequestOptions.DEFAULT);
-            String source = esResponse.getSourceAsString();
-            if (source != null) {
-                ParticipantStatusES participantStatus = gson.fromJson(source, ParticipantStatusES.class);
-                return new ParticipantStatusTrackingInfo(participantStatus, status, userGuid);
-            }
+        String esIndex = TransactionWrapper.withTxn(handle -> {
+            StudyDto studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(studyGuid);
+            return getIndexForStudy(handle, studyDto, ElasticSearchIndexType.PARTICIPANTS_STRUCTURED);
+        });
+
+        String[] includes = {"dsm", "samples", "workflows"};
+        GetRequest getRequest = new GetRequest(esIndex, "_doc", userGuid);
+        getRequest.fetchSourceContext(new FetchSourceContext(true, includes, null));
+        GetResponse esResponse = esClient.get(getRequest, RequestOptions.DEFAULT);
+
+        String source = esResponse.getSourceAsString();
+        if (source != null && !source.isBlank()) {
+            ParticipantStatusES participantStatus = gson.fromJson(source, ParticipantStatusES.class);
+            return new ParticipantStatusTrackingInfo(participantStatus, status, userGuid);
         }
         return null;
     }

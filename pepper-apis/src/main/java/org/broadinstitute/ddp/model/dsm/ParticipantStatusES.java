@@ -1,11 +1,10 @@
 package org.broadinstitute.ddp.model.dsm;
 
-import com.google.gson.annotations.SerializedName;
-
 import java.time.LocalDate;
 import java.util.List;
 
-@SuppressWarnings("unused")
+import com.google.gson.annotations.SerializedName;
+
 public class ParticipantStatusES {
 
     @SerializedName("dsm")
@@ -40,7 +39,6 @@ public class ParticipantStatusES {
         return workflows;
     }
 
-
     public static class Workflow {
         @SerializedName("workflow")
         protected String workflow;
@@ -54,12 +52,12 @@ public class ParticipantStatusES {
             this.status = status;
         }
 
-        public String getStatus() {
-            return status;
-        }
-
         public String getWorkflow() {
             return workflow;
+        }
+
+        public String getStatus() {
+            return status;
         }
 
         public String getDate() {
@@ -92,20 +90,17 @@ public class ParticipantStatusES {
         private final Long medicalRecordId;
         @SerializedName("requested")
         private final LocalDate requested;
-        @SerializedName("ddpParticipantId")
-        private final String ddpParticipantId;
-        @SerializedName("name")
-        private final String name;
         @SerializedName("received")
         private final LocalDate received;
+        @SerializedName("name")
+        private final String name;
         @SerializedName("type")
         private final String type;
 
-        public MedicalRecord(Long medicalRecordId, LocalDate requested, String ddpParticipantId, String name,
+        public MedicalRecord(Long medicalRecordId, LocalDate requested, String name,
                              LocalDate received, String type) {
             this.medicalRecordId = medicalRecordId;
             this.requested = requested;
-            this.ddpParticipantId = ddpParticipantId;
             this.name = name;
             this.received = received;
             this.type = type;
@@ -119,16 +114,12 @@ public class ParticipantStatusES {
             return requested;
         }
 
-        public String getDdpParticipantId() {
-            return ddpParticipantId;
+        public LocalDate getReceived() {
+            return received;
         }
 
         public String getName() {
             return name;
-        }
-
-        public LocalDate getReceived() {
-            return received;
         }
 
         public String getType() {

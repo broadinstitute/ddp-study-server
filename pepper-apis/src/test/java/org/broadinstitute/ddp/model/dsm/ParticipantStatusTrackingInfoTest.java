@@ -1,21 +1,21 @@
 package org.broadinstitute.ddp.model.dsm;
 
-import org.broadinstitute.ddp.model.dsm.ParticipantStatusTrackingInfo.RecordStatus;
-import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
-import org.junit.Test;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 import java.time.LocalDate;
 import java.util.Collections;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import org.broadinstitute.ddp.model.dsm.ParticipantStatusTrackingInfo.RecordStatus;
+import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
+import org.junit.Test;
 
 public class ParticipantStatusTrackingInfoTest {
 
     @Test
     public void testRecords_notEnrolled_thenIneligible() {
         ParticipantStatusES.MedicalRecord mr = new ParticipantStatusES.MedicalRecord(1L,
-                LocalDate.of(2019, 5, 11), "PARTICIPANTID", "NAME", LocalDate.of(2019, 6, 1), "TYPE");
+                LocalDate.of(2019, 5, 11), "NAME", LocalDate.of(2019, 6, 1), "TYPE");
         ParticipantStatusES.TissueRecord tr = new ParticipantStatusES.TissueRecord(1L, LocalDate.of(2020, 1, 1),
                 LocalDate.of(2020, 2, 23), LocalDate.of(2020, 1, 15), "TYPEPX", "LOCATIONPX", "DATEPX", "H",
                 "A");
@@ -31,7 +31,7 @@ public class ParticipantStatusTrackingInfoTest {
     @Test
     public void testRecords_enrolled_whenNoTimestamps_thenPending() {
         ParticipantStatusES.MedicalRecord mr = new ParticipantStatusES.MedicalRecord(1L,
-                null, "PARTICIPANTID", "NAME", null, "TYPE");
+                null, "NAME", null, "TYPE");
         ParticipantStatusES.TissueRecord tr = new ParticipantStatusES.TissueRecord(1L, null,
                 null, null, "TYPEPX", "LOCATIONPX", "DATEPX", "H",
                 "A");
@@ -47,7 +47,7 @@ public class ParticipantStatusTrackingInfoTest {
     @Test
     public void testRecords_enrolled_whenRequested_thenSent() {
         ParticipantStatusES.MedicalRecord mr = new ParticipantStatusES.MedicalRecord(1L,
-                LocalDate.of(2019, 5, 11), "PARTICIPANTID", "NAME", null, "TYPE");
+                LocalDate.of(2019, 5, 11), "NAME", null, "TYPE");
         ParticipantStatusES.TissueRecord tr = new ParticipantStatusES.TissueRecord(1L, LocalDate.of(2020, 2, 1),
                 null, null, "TYPEPX", "LOCATIONPX", "DATEPX", "H",
                 "A");
@@ -63,7 +63,7 @@ public class ParticipantStatusTrackingInfoTest {
     @Test
     public void testRecords_enrolled_whenRequestedAndReceived_thenReceived() {
         ParticipantStatusES.MedicalRecord mr = new ParticipantStatusES.MedicalRecord(1L,
-                LocalDate.of(2019, 5, 11), "PARTICIPANTID", "NAME", LocalDate.of(2019, 6, 1), "TYPE");
+                LocalDate.of(2019, 5, 11), "NAME", LocalDate.of(2019, 6, 1), "TYPE");
         ParticipantStatusES.TissueRecord tr = new ParticipantStatusES.TissueRecord(1L, LocalDate.of(2020, 2, 1),
                 LocalDate.of(2020, 2, 23), null, "TYPEPX", "LOCATIONPX", "DATEPX", "H",
                 "A");
@@ -79,7 +79,7 @@ public class ParticipantStatusTrackingInfoTest {
     @Test
     public void testRecords_enrolled_whenNotRequestedButReceived_thenReceived() {
         ParticipantStatusES.MedicalRecord mr = new ParticipantStatusES.MedicalRecord(1L,
-                null, "PARTICIPANTID", "NAME", LocalDate.of(2019, 6, 1), "TYPE");
+                null, "NAME", LocalDate.of(2019, 6, 1), "TYPE");
         ParticipantStatusES.TissueRecord tr = new ParticipantStatusES.TissueRecord(1L, null,
                 LocalDate.of(2020, 2, 23), null, "TYPEPX", "LOCATIONPX", "DATEPX", "H",
                 "A");

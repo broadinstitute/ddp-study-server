@@ -1,25 +1,29 @@
 package org.broadinstitute.ddp.model.dsm;
 
-import com.google.gson.annotations.SerializedName;
-import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
+import static org.broadinstitute.ddp.util.DateTimeUtils.localDateToEpochSeconds;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.broadinstitute.ddp.util.DateTimeUtils.localDateToEpochSeconds;
+import com.google.gson.annotations.SerializedName;
+import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 // All epoch timestamps are expressed in seconds
 public class ParticipantStatusTrackingInfo {
+
+    private static final Logger LOG = LoggerFactory.getLogger(ParticipantStatus.class);
 
     public enum RecordStatus {
         INELIGIBLE, PENDING, SENT, RECEIVED, DELIVERED, UNKNOWN
     }
 
-    @SerializedName("medicalRecords")
-    private MedicalRecord medicalRecords;
+    @SerializedName("medicalRecord")
+    private MedicalRecord medicalRecord;
     @SerializedName("tissue")
-    private TissueRecord tissueRecords;
+    private TissueRecord tissueRecord;
     @SerializedName("kits")
     private List<Kit> kits;
     @SerializedName("workflows")
@@ -28,6 +32,7 @@ public class ParticipantStatusTrackingInfo {
     private final transient String userGuid;
 
     private RecordStatus figureOutMedicalRecordStatus(
+            String entityName,
             EnrollmentStatusType enrollmentStatusType,
             LocalDate requested,
             LocalDate received
@@ -39,83 +44,87 @@ public class ParticipantStatusTrackingInfo {
             return RecordStatus.PENDING;
         } else if (requested != null && received == null) {
             return RecordStatus.SENT;
-        } else { // received is not blank
+        } else if (requested != null && received != null) {
             return RecordStatus.RECEIVED;
+        } else if (requested == null && received != null) {
+            return RecordStatus.RECEIVED;
+        } else {
+            LOG.error("Something completely unexpected happened with {}", entityName);
+            return RecordStatus.UNKNOWN;
         }
     }
 
     public ParticipantStatusTrackingInfo(ParticipantStatusES statusES, EnrollmentStatusType enrollmentStatusType,
                                          String userGuid) {
         this.userGuid = userGuid;
-        if (statusES != null) {
-            this.workflows = statusES.getWorkflows();
-            if (statusES.getSamples() != null) {
-                for (ParticipantStatusES.Sample sample : statusES.getSamples()) {
-                    if (this.kits == null) {
-                        this.kits = new ArrayList<>();
+        this.workflows = statusES.getWorkflows();
+
+        LocalDate minReceived = null;
+        LocalDate minRequested = null;
+        if (statusES.getMedicalRecords() != null) {
+            for (ParticipantStatusES.MedicalRecord medicalRecord : statusES.getMedicalRecords()) {
+                if (medicalRecord.getReceived() != null) {
+                    if (minReceived == null || minReceived.compareTo(medicalRecord.getReceived()) > 0) {
+                        minReceived = medicalRecord.getReceived();
                     }
-                    kits.add(
-                            new Kit(
-                                    sample,
-                                    Kit.figureOutStatus(
-                                            enrollmentStatusType,
-                                            sample.getDelivered(),
-                                            sample.getReceived()
-                                    )
-                            )
-                    );
+                }
+                if (medicalRecord.getRequested() != null) {
+                    if (minRequested == null || minRequested.compareTo(medicalRecord.getRequested()) > 0) {
+                        minRequested = medicalRecord.getRequested();
+                    }
                 }
             }
+        }
+        this.medicalRecord = new MedicalRecord(
+                figureOutMedicalRecordStatus(
+                        "medical record",
+                        enrollmentStatusType,
+                        minRequested,
+                        minReceived
+                ),
+                localDateToEpochSeconds(minRequested),
+                localDateToEpochSeconds(minReceived)
+        );
 
-            if (statusES.getMedicalRecords() != null) {
-                LocalDate minReceived = null;
-                LocalDate minRequested = null;
-                for (ParticipantStatusES.MedicalRecord medicalRecord : statusES.getMedicalRecords()) {
-                    if (medicalRecord.getReceived() != null) {
-                        if (minReceived == null || minReceived.compareTo(medicalRecord.getReceived()) > 0) {
-                            minReceived = medicalRecord.getReceived();
-                        }
-                    }
-                    if (medicalRecord.getRequested() != null) {
-                        if (minRequested == null || minRequested.compareTo(medicalRecord.getRequested()) > 0) {
-                            minRequested = medicalRecord.getRequested();
-                        }
+        minReceived = null;
+        minRequested = null;
+        if (statusES.getTissueRecords() != null) {
+            for (ParticipantStatusES.TissueRecord tissueRecord : statusES.getTissueRecords()) {
+                if (tissueRecord.getReceived() != null) {
+                    if (minReceived == null || minReceived.compareTo(tissueRecord.getReceived()) > 0) {
+                        minReceived = tissueRecord.getReceived();
                     }
                 }
-                this.medicalRecords = new MedicalRecord(
-                        figureOutMedicalRecordStatus(
-                                enrollmentStatusType,
-                                minRequested,
-                                minReceived
-                        ),
-                        localDateToEpochSeconds(minRequested),
-                        localDateToEpochSeconds(minReceived)
-                );
+                if (tissueRecord.getRequested() != null) {
+                    if (minRequested == null || minRequested.compareTo(tissueRecord.getRequested()) > 0) {
+                        minRequested = tissueRecord.getRequested();
+                    }
+                }
             }
+        }
+        this.tissueRecord = new TissueRecord(
+                figureOutMedicalRecordStatus(
+                        "tissue record",
+                        enrollmentStatusType,
+                        minRequested,
+                        minReceived
+                ),
+                localDateToEpochSeconds(minRequested),
+                localDateToEpochSeconds(minReceived)
+        );
 
-            if (statusES.getTissueRecords() != null) {
-                LocalDate minReceived = null;
-                LocalDate minRequested = null;
-                for (ParticipantStatusES.TissueRecord tissueRecord : statusES.getTissueRecords()) {
-                    if (tissueRecord.getReceived() != null) {
-                        if (minReceived == null || minReceived.compareTo(tissueRecord.getReceived()) > 0) {
-                            minReceived = tissueRecord.getReceived();
-                        }
-                    }
-                    if (tissueRecord.getRequested() != null) {
-                        if (minRequested == null || minRequested.compareTo(tissueRecord.getRequested()) > 0) {
-                            minRequested = tissueRecord.getRequested();
-                        }
-                    }
-                }
-                this.tissueRecords = new TissueRecord(
-                        figureOutMedicalRecordStatus(
-                                enrollmentStatusType,
-                                minRequested,
-                                minReceived
-                        ),
-                        localDateToEpochSeconds(minRequested),
-                        localDateToEpochSeconds(minReceived)
+        this.kits = new ArrayList<>();
+        if (statusES.getSamples() != null) {
+            for (ParticipantStatusES.Sample sample : statusES.getSamples()) {
+                kits.add(
+                        new Kit(
+                                sample,
+                                Kit.figureOutStatus(
+                                        enrollmentStatusType,
+                                        sample.getDelivered(),
+                                        sample.getReceived()
+                                )
+                        )
                 );
             }
         }
@@ -130,11 +139,11 @@ public class ParticipantStatusTrackingInfo {
     }
 
     public MedicalRecord getMedicalRecord() {
-        return medicalRecords;
+        return medicalRecord;
     }
 
     public TissueRecord getTissueRecord() {
-        return tissueRecords;
+        return tissueRecord;
     }
 
     public List<ParticipantStatusES.Workflow> getWorkflows() {
@@ -180,7 +189,6 @@ public class ParticipantStatusTrackingInfo {
         }
     }
 
-    @SuppressWarnings("unused")
     public static class Kit {
         @SerializedName("kitType")
         private final String kitType;
@@ -206,15 +214,19 @@ public class ParticipantStatusTrackingInfo {
                 LocalDate received
         ) {
             // Is it possible? Should we check for it here?
-            String entityName = "kit";
             if (!enrollmentStatusType.isEnrolled()) {
                 return RecordStatus.INELIGIBLE;
             } else if (delivered == null && received == null) {
                 return RecordStatus.SENT;
             } else if (delivered != null && received == null) {
                 return RecordStatus.DELIVERED;
-            } else { // received != null
+            } else if (delivered != null && received != null) {
                 return RecordStatus.RECEIVED;
+            } else if (delivered == null && received != null) {
+                return RecordStatus.RECEIVED;
+            } else {
+                LOG.error("Something completely unexpected happened with kit");
+                return RecordStatus.UNKNOWN;
             }
         }
 
