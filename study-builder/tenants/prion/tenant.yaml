@@ -45,6 +45,7 @@ clients:
     ]
     allowed_logout_urls: [
       '##BASE_URL##',
+      '##BASE_URL##/error',
       '##BASE_URL##/session-expired'
       ##LOCALHOST_LOGOUTS##
     ]
