@@ -11,7 +11,7 @@
   {{if eq $environment "dev"}}
     {{/* These end up in a yaml inlined list, so the comma in front is needed. */}}
     "LOCALHOST_CALLBACKS": ",http://localhost:4200/auth,http://localhost:4200/login-landing",
-    "LOCALHOST_LOGOUTS": ",http://localhost:4200,http://localhost:4200/session-expired",
+    "LOCALHOST_LOGOUTS": ",http://localhost:4200,http://localhost:4200/error,http://localhost:4200/session-expired",
     "LOCALHOST_ORIGINS": ",http://localhost:4200",
   {{else}}
     {{/* Need to set these as blank, otherwise they won't get substituted and auth0 deploy will complain. */}}

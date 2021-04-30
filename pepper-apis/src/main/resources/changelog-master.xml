@@ -260,4 +260,5 @@
     <include file="db-changes/seed/DDP-5749-completed-status.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/DDP-5771-nested-activity-can-delete-first-instance.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/DDP-5822-add-pdf-base-template-language.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/DDP-5973-add-confirm-placeholder-template-id.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>

@@ -71,7 +71,7 @@ public class UpdateActivityTemplatesInPlace implements CustomTask {
 
         boolean found = false;
         for (Config activityCfg : studyCfg.getConfigList("activities")) {
-            Config definition = activityBuilder.readDefinitionConfig(activityCfg.getString("filepath"));
+            Config definition = activityBuilder.readDefinitionConfig(activityCfg.getString("filepath"), false);
             String activityCode = definition.getString("activityCode");
             String versionTag = definition.getString("versionTag");
 
