@@ -32,15 +32,17 @@ public class ESUsersIndexSearchHelper {
 
     private static final Gson gson = GsonUtil.standardGson();
 
-    private static final ElasticSearchIndexType ES_INDEX_USERS = ElasticSearchIndexType.USERS;
-
     private static final String SOURCE__PROFILE = "profile";
     private static final String SOURCE__GOVERNED_USERS = "governedUsers";
 
+    /**
+     * ElasticSearch "_source" names (to fetch data from index "users")
+     */
     private static final String[] USERS__INDEX__SOURCE = {
             SOURCE__PROFILE,
             SOURCE__GOVERNED_USERS
     };
+
 
     public static Map<String, ESUsersIndexResultRow> searchInUsersIndex(
             RestHighLevelClient esClient,
@@ -49,7 +51,7 @@ public class ESUsersIndexSearchHelper {
             Map<String, String> governedUserToProxy,
             int resultMaxCount
     ) throws IOException {
-        var esIndex = ElasticsearchServiceUtil.detectEsIndex(studyGuid, ES_INDEX_USERS);
+        var esIndex = ElasticsearchServiceUtil.detectEsIndex(studyGuid, ElasticSearchIndexType.USERS);
         var queryBuilder = createESQueryForUsersIndex(mainQuery);
         var searchRequest = prepareSearching(
                 esIndex, USERS__INDEX__SOURCE, queryBuilder, doubleResultMaxCount(resultMaxCount));

@@ -17,8 +17,7 @@ public enum ESParticipantsLookupField {
     PROFILE__EMAIL("profile.email.text", ALL_TYPES),
     STATUS("status", PARTICIPANTS_STRUCTURED),
     INVITATIONS__GUID("invitations.guid", PARTICIPANTS_STRUCTURED),
-    GOVERNED_USERS("governedUsers", USERS),
-    PROXIES("proxies", PARTICIPANTS_STRUCTURED);
+    GOVERNED_USERS("governedUsers", USERS);
 
     private String esField;
     private ESParticipantsLookupIndexType indexType;

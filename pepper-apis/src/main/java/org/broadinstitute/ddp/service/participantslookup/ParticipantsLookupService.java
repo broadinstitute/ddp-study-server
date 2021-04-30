@@ -2,7 +2,7 @@ package org.broadinstitute.ddp.service.participantslookup;
 
 
 /**
- * Abstract layer defining a Pepper participants lookup.
+ * Interface defining a Pepper participants lookup.
  * It can have different implementations (i.e. participants lookup could
  * be done from different sources: DB, ElasticSearch, etc.).
  * Currently supported only searching from Pepper ElasticSearch database.

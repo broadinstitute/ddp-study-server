@@ -33,21 +33,24 @@ public class ESParticipantsStructuredIndexSearchHelper {
 
     private static final Gson gson = GsonUtil.standardGson();
 
-    private static final ElasticSearchIndexType ES_INDEX_PARTICIPANTS_STRUCTURED = ElasticSearchIndexType.PARTICIPANTS_STRUCTURED;
-
     private static final String SOURCE__STATUS = "status";
     private static final String SOURCE__PROFILE = "profile";
     private static final String SOURCE__INVITATIONS = "invitations";
     private static final String SOURCE__PROXIES = "proxies";
 
-    private static final String GUID = "guid";
-
+    /**
+     * ElasticSearch "_source" names (to fetch data from index "participants_structured")
+     */
     private static final String[] PARTICIPANTS_STRUCTURED__INDEX__SOURCE = {
             SOURCE__STATUS,
             SOURCE__PROFILE,
             SOURCE__INVITATIONS,
             SOURCE__PROXIES
     };
+
+    // Field value (to fetch from source 'invitations'
+    private static final String GUID = "guid";
+
 
     public static Map<String, ESParticipantsStructuredIndexResultRow> searchInParticipantsStructuredIndex(
             RestHighLevelClient esClient,
@@ -56,7 +59,7 @@ public class ESParticipantsStructuredIndexSearchHelper {
             Map<String, String> governedUserToProxy,
             int resultMaxCount,
             ParticipantsLookupResult participantsLookupResult) throws IOException {
-        var esIndex = ElasticsearchServiceUtil.detectEsIndex(studyGuid, ES_INDEX_PARTICIPANTS_STRUCTURED);
+        var esIndex = ElasticsearchServiceUtil.detectEsIndex(studyGuid, ElasticSearchIndexType.PARTICIPANTS_STRUCTURED);
         var queryBuilder = createESQueryForParticipantsStructuredIndex(mainQuery, governedUserToProxy);
         var searchRequest = prepareSearching(esIndex, PARTICIPANTS_STRUCTURED__INDEX__SOURCE, queryBuilder, resultMaxCount);
         var response = esClient.search(searchRequest, RequestOptions.DEFAULT);
@@ -112,6 +115,13 @@ public class ESParticipantsStructuredIndexSearchHelper {
         return aggregatedQuery;
     }
 
+    /**
+     * In most cases invitation GUID contains character '-' (at least on the web page it entered with it),
+     * but in DB it can or cannot contain '-' (i.e. it could be stored without '-').
+     * Therefore it is searched by 'query' as it is sent from frontend
+     * and by same 'query' but with '-' removed from it.
+     * This method removes characters '-' from 'query' string (guessing that it is invitationId or it's fragment).
+     */
     private static String normalizeInvitationGuid(String invitationGuid) {
         if (invitationGuid != null) {
             return invitationGuid.replaceAll("-", "");

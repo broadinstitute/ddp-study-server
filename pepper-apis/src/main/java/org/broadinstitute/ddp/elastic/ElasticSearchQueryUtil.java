@@ -8,6 +8,9 @@ import org.elasticsearch.index.query.AbstractQueryBuilder;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 
+/**
+ * Helper methods used to search in ElasticSearch indices
+ */
 public class ElasticSearchQueryUtil {
 
     public static SearchRequest prepareSearching(
