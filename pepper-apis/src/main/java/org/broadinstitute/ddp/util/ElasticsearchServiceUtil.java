@@ -16,6 +16,7 @@ import org.apache.http.client.CredentialsProvider;
 import org.apache.http.impl.NoConnectionReuseStrategy;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.broadinstitute.ddp.constants.ConfigFile;
+import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.elastic.ElasticSearchIndexType;
@@ -30,6 +31,13 @@ public final class ElasticsearchServiceUtil {
 
     private static final Logger LOG = LoggerFactory.getLogger(ElasticsearchServiceUtil.class);
     private static final Map<Integer, RestHighLevelClient> ES_CLIENTS = new HashMap<>();
+
+    public static String detectEsIndex(String studyGuid, ElasticSearchIndexType elasticSearchIndexType) {
+        return TransactionWrapper.withTxn(handle -> {
+            StudyDto studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(studyGuid);
+            return getIndexForStudy(handle, studyDto, elasticSearchIndexType);
+        });
+    }
 
     public static String getIndexForStudy(Handle handle, StudyDto studyDto, ElasticSearchIndexType elasticSearchIndexType) {
         String type = elasticSearchIndexType.getElasticSearchCompatibleLabel();
