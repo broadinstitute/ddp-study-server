@@ -66,6 +66,11 @@ public class JoinMailingListRoute extends ValidatedJsonInputRoute<JoinMailingLis
             }
 
             if (StringUtils.isNotEmpty(languageCode)) {
+                LanguageDto languageDto = LanguageStore.get(languageCode);
+                if (languageDto == null) {
+                    ResponseUtil.haltError(response, 400,
+                            new ApiError(ErrorCodes.BAD_PAYLOAD, "Invalid isoLanguageCode"));
+                }
                 languageCodeId = LanguageStore.get(languageCode).getId();
             } else {
                 //use study default language if exists
