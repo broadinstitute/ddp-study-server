@@ -40,13 +40,43 @@ public interface JdbiMailingList extends SqlObject {
     );
 
     /**
+     * Adds someone to the mailing list for a study if they are not already on it.
+     *
+     * @param firstName    person's first name
+     * @param lastName     person's last name
+     * @param emailAddress person's email address
+     * @param studyGuid    the guid for the study
+     * @param info         comma delimited list of custom info that the subscriber is adding
+     * @param dateCreatedMillis to overwrite data creationg time
+     * @param languageCodeId mailing list user's preferred language
+     * @return 1 if the person was added and weren't on the list before, 0 if they are already on the list.  Any other
+     *         value indicates an error and is the number of rows updated.
+     */
+    @SqlUpdate("insert into study_mailing_list(first_name, last_name, email, umbrella_study_id, "
+            + " umbrella_id, info, date_created, language_code_id) "
+            + "(select :firstName, :lastName, :email, s.umbrella_study_id, NULL, "
+            + " :info, :dateCreatedMillis, :languageCodeId from umbrella_study s "
+            + "where s.guid = :studyGuid and not exists (select 1 from study_mailing_list l where email = :email "
+            + "and umbrella_study_id = s.umbrella_study_id))"
+    )
+    int insertByStudyGuidIfNotStoredAlready(
+            @Bind("firstName") String firstName,
+            @Bind("lastName") String lastName,
+            @Bind("email") String emailAddress,
+            @Bind("studyGuid") String studyGuid,
+            @Bind("info") String info,
+            @Bind("dateCreatedMillis") Long dateCreatedMillis,
+            @Bind("languageCodeId") Long languageCodeId
+    );
+
+    /**
      * Adds someone to the mailing list for a study if they are not already on it
      * Works similar to  insertByStudyGuidIfNotStoredAlready() but uses `umbrellaGuid`
      */
     @SqlUpdate("insert into study_mailing_list(first_name, last_name, email, umbrella_study_id, "
-            + " umbrella_id, info, date_created) "
+            + " umbrella_id, info, date_created, language_code_id) "
             + "(select :firstName, :lastName, :email, NULL, u.umbrella_id, "
-            + " :info, :dateCreatedMillis from umbrella u "
+            + " :info, :dateCreatedMillis, :languageCodeId from umbrella u "
             + "where u.umbrella_guid = :umbrellaGuid and not exists (select 1 from study_mailing_list l where l.email = :email "
             + "and l.umbrella_id = u.umbrella_id))"
     )
@@ -56,7 +86,8 @@ public interface JdbiMailingList extends SqlObject {
             @Bind("email") String emailAddress,
             @Bind("info") String info,
             @Bind("dateCreatedMillis") Long dateCreatedMillis,
-            @Bind("umbrellaGuid") String umbrellaGuid
+            @Bind("umbrellaGuid") String umbrellaGuid,
+            @Bind("languageCodeId") Long languageCodeId
     );
 
     @SqlUpdate("delete from study_mailing_list where study_mailing_list_id = :id")
@@ -77,18 +108,22 @@ public interface JdbiMailingList extends SqlObject {
             + "where sml.email = :email and study.guid = :studyGuid")
     Optional<Long> findIdByEmailAndStudyGuid(@Bind("email") String email, @Bind("studyGuid") String studyGuid);
 
-    @SqlQuery("select l.first_name, l.last_name, l.email, :studyCode as study_code, l.umbrella_id, l.info, l.additional_information,"
-            + " date_created as date_created_millis from study_mailing_list l, umbrella_study s "
-            + " where s.guid = :studyCode and s.umbrella_study_id = l.umbrella_study_id and l.email = :email")
+    @SqlQuery("select l.first_name, l.last_name, l.email, :studyCode as study_code, l.umbrella_id, l.info, l.additional_information,  "
+            + " date_created as date_created_millis, l.language_code_id, lc.iso_language_code as language_code "
+            + " from study_mailing_list l join umbrella_study s on s.umbrella_study_id = l.umbrella_study_id  "
+            + " left join language_code as lc on lc.language_code_id = l.language_code_id"
+            + " where s.guid = :studyCode and l.email = :email")
     @RegisterConstructorMapper(MailingListEntryDto.class)
     Optional<MailingListEntryDto> findByEmailAndStudy(@Bind("email") String emailAddress,
                                                       @Bind("studyCode") String studyCode);
 
     @SqlQuery(
             "select sml.first_name, sml.last_name, sml.email, sml.info, "
-             + "sml.additional_information, NULL as study_code, sml.umbrella_id, sml.date_created as date_created_millis "
-             + "from study_mailing_list sml join umbrella u on sml.umbrella_id = u.umbrella_id "
-             + "where sml.email = :email and u.umbrella_guid = :umbrellaGuid"
+             + "  sml.additional_information, NULL as study_code, sml.umbrella_id, sml.date_created as date_created_millis, "
+             +       "sml.language_code_id, lc.iso_language_code as language_code "
+             + " from study_mailing_list sml join umbrella u on sml.umbrella_id = u.umbrella_id "
+             + " left join language_code as lc on lc.language_code_id = sml.language_code_id "
+             + " where sml.email = :email and u.umbrella_guid = :umbrellaGuid"
     )
     @RegisterConstructorMapper(MailingListEntryDto.class)
     Optional<MailingListEntryDto> findByEmailAndUmbrellaGuid(
@@ -97,8 +132,10 @@ public interface JdbiMailingList extends SqlObject {
     );
 
     @SqlQuery("select l.first_name, l.last_name, l.email, :studyCode as study_code, l.umbrella_id, l.info, l.additional_information,"
-            + " date_created as date_created_millis from study_mailing_list l, umbrella_study s "
-            + " where s.guid = :studyCode and s.umbrella_study_id = l.umbrella_study_id")
+            + " date_created as date_created_millis, l.language_code_id, lc.iso_language_code as language_code "
+            + " from study_mailing_list l join umbrella_study s on s.umbrella_study_id = l.umbrella_study_id "
+            + " left join language_code as lc on lc.language_code_id = l.language_code_id"
+            + " where s.guid = :studyCode")
     @RegisterConstructorMapper(MailingListEntryDto.class)
     List<MailingListEntryDto> findByStudy(@Bind("studyCode") String studyCode);
 
@@ -110,6 +147,8 @@ public interface JdbiMailingList extends SqlObject {
         private String studyCode;
         private Long umbrellaId;
         private long dateCreatedMillis;
+        private Long languageCodeId;
+        private String languageCode;
 
         public MailingListEntryDto(
                 String firstName,
@@ -118,7 +157,9 @@ public interface JdbiMailingList extends SqlObject {
                 String studyCode,
                 Long umbrellaId,
                 String info,
-                long dateCreatedMillis
+                long dateCreatedMillis,
+                Long  languageCodeId,
+                String languageCode
         ) {
             this.firstName = firstName;
             this.lastName = lastName;
@@ -127,6 +168,8 @@ public interface JdbiMailingList extends SqlObject {
             this.umbrellaId = umbrellaId;
             this.info = info;
             this.dateCreatedMillis = dateCreatedMillis;
+            this.languageCodeId = languageCodeId;
+            this.languageCode = languageCode;
         }
 
         public String getFirstName() {
@@ -155,6 +198,14 @@ public interface JdbiMailingList extends SqlObject {
 
         public long getDateCreatedMillis() {
             return dateCreatedMillis;
+        }
+
+        public Long getLanguageCodeId() {
+            return languageCodeId;
+        }
+
+        public String getLanguageCode() {
+            return languageCode;
         }
     }
 }
