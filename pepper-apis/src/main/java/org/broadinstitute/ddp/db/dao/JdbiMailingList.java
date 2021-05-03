@@ -132,7 +132,7 @@ public interface JdbiMailingList extends SqlObject {
     );
 
     @SqlQuery("select l.first_name, l.last_name, l.email, :studyCode as study_code, l.umbrella_id, l.info, l.additional_information,"
-            + " date_created as date_created_millis, language_code_id, lc.iso_language_code as language_code "
+            + " date_created as date_created_millis, l.language_code_id, lc.iso_language_code as language_code "
             + " from study_mailing_list l join umbrella_study s on s.umbrella_study_id = l.umbrella_study_id "
             + " left join language_code as lc on lc.language_code_id = l.language_code_id"
             + " where s.guid = :studyCode")
