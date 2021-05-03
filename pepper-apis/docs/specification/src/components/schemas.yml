@@ -2189,6 +2189,7 @@ ParticipantStatusTrackingInfo:
         $ref: '../pepper.yml#/components/schemas/ParticipantStatusTrackingInfo.Kit'
     workflows:
       type: array
+      minItems: 0
       items:
         $ref: '../pepper.yml#/components/schemas/ParticipantStatusTrackingInfo.Workflow'
 ParticipantStatusTrackingInfo.Workflow:
@@ -2200,6 +2201,11 @@ ParticipantStatusTrackingInfo.Workflow:
     status:
       type: string
       description: The current state in the workflow
+    date:
+      type: string
+      format: date-time
+      description: Last changed
+      example: 2021-04-18T14:09:37.123Z
 ParticipantStatusTrackingInfo.Record:
   type: object
   required:
