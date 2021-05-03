@@ -30,7 +30,7 @@ public class JoinMailingListPayload {
     @SerializedName("umbrellaGuid")
     private String umbrellaGuid;
 
-    @SerializedName("languageCode")
+    @SerializedName("isoLanguageCode")
     private String languageCode;
 
     public JoinMailingListPayload(

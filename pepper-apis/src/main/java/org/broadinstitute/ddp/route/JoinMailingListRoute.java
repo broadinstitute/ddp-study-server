@@ -14,9 +14,12 @@ import org.broadinstitute.ddp.db.DaoException;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.EventDao;
 import org.broadinstitute.ddp.db.dao.JdbiMailingList;
+import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudyCached;
 import org.broadinstitute.ddp.db.dao.QueuedEventDao;
+import org.broadinstitute.ddp.db.dao.StudyLanguageDao;
 import org.broadinstitute.ddp.db.dto.EventConfigurationDto;
 import org.broadinstitute.ddp.db.dto.LanguageDto;
+import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.json.JoinMailingListPayload;
 import org.broadinstitute.ddp.json.errors.ApiError;
 import org.broadinstitute.ddp.util.ResponseUtil;
@@ -64,6 +67,22 @@ public class JoinMailingListRoute extends ValidatedJsonInputRoute<JoinMailingLis
 
             if (StringUtils.isNotEmpty(languageCode)) {
                 languageCodeId = LanguageStore.get(languageCode).getId();
+            } else {
+                //use study default language if exists
+                if (StringUtils.isNotEmpty(payload.getStudyGuid())) {
+                    StudyDto studyDto = new JdbiUmbrellaStudyCached(handle).findByStudyGuid(payload.getStudyGuid());
+                    StudyLanguageDao studyLanguageDao = handle.attach(StudyLanguageDao.class);
+                    List<Long> defaultLanguages = studyLanguageDao.getStudyLanguageSql().selectDefaultLanguageCodeId(studyDto.getId());
+                    if (!defaultLanguages.isEmpty()) {
+                        languageCodeId = defaultLanguages.get(0);
+                    } else {
+                        //fallback to default
+                        languageCodeId = LanguageStore.getDefault().getId();
+                    }
+                } else {
+                    //fallback to default
+                    languageCodeId = LanguageStore.getDefault().getId();
+                }
             }
 
             int rowsInserted = 0;

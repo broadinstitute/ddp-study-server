@@ -61,6 +61,13 @@ JoinMailingListPayload:
       description: The studyGuid of the mailing list the user is interested in (one of umbrellaId OR studyGuid but not both is required)
       example: ANGIO
       type: string
+    isoLanguageCode:
+      description: preferred language code of join mailing list user. If language code is not set, defaults to study default language.
+      type: string
+      nullable: true
+      format: ISO 639-1 standard
+      example: en
+
 ListStyle:
   title: ListStyle
   type: string
