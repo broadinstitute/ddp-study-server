@@ -138,6 +138,12 @@ public interface JdbiActivityInstance extends SqlObject {
     List<ActivityInstanceDto> findAllByUserIdAndStudyId(@Bind("userId") long participantUserId, @Bind("studyId") long studyId);
 
     @UseStringTemplateSqlLocator
+    @SqlQuery("queryAllByUserIds")
+    @RegisterConstructorMapper(ActivityInstanceDto.class)
+    List<ActivityInstanceDto> findAllByUserIds(
+            @BindList(value = "userIds", onEmpty = BindList.EmptyHandling.NULL) Iterable<Long> userIds);
+
+    @UseStringTemplateSqlLocator
     @SqlQuery("findLatestInstanceFromUserGuidAndQuestionId")
     @RegisterConstructorMapper(ActivityInstanceDto.class)
     Optional<ActivityInstanceDto> findLatestInstanceFromUserGuidAndQuestionId(@Bind("userGuid") String userGuid,
