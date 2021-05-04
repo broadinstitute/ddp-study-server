@@ -16,12 +16,14 @@ import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
 import org.broadinstitute.ddp.model.activity.definition.FormSectionDef;
+import org.broadinstitute.ddp.model.activity.definition.NestedActivityBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.QuestionBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.i18n.Translation;
 import org.broadinstitute.ddp.model.activity.definition.question.TextQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
+import org.broadinstitute.ddp.model.activity.types.NestedActivityRenderHint;
 import org.broadinstitute.ddp.model.activity.types.TextInputType;
 import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.model.user.UserProfile;
@@ -33,6 +35,7 @@ import org.junit.Test;
 public class UserDaoTest extends TxnAwareBaseTest {
 
     private static TestDataSetupUtil.GeneratedTestData testData;
+    private static FormActivityDef nestedForm;
     private static FormActivityDef form;
     private static String textSid;
 
@@ -44,14 +47,24 @@ public class UserDaoTest extends TxnAwareBaseTest {
             long now = Instant.now().toEpochMilli();
             textSid = "text" + now;
 
-            form = FormActivityDef.generalFormBuilder("ACT" + now, "v1", testData.getStudyGuid())
+            String activityCode = "ACT" + now;
+            nestedForm = FormActivityDef.generalFormBuilder(activityCode + "NESTED", "v1", testData.getStudyGuid())
+                    .addName(new Translation("en", "dummy nested activity"))
+                    .setParentActivityCode(activityCode)
+                    .setCreateOnParentCreation(true)
+                    .build();
+            form = FormActivityDef.generalFormBuilder(activityCode, "v1", testData.getStudyGuid())
                     .addName(new Translation("en", "dummy activity"))
                     .addSection(new FormSectionDef(null, Arrays.asList(
                             new QuestionBlockDef(TextQuestionDef
                                     .builder(TextInputType.TEXT, textSid, Template.text("text"))
                                     .build()))))
+                    .addSection(new FormSectionDef(null, Arrays.asList(
+                            new NestedActivityBlockDef(
+                                    nestedForm.getActivityCode(), NestedActivityRenderHint.MODAL, false, null))))
                     .build();
-            handle.attach(ActivityDao.class).insertActivity(form, RevisionMetadata.now(testData.getUserId(), "test"));
+            handle.attach(ActivityDao.class).insertActivity(form, Arrays.asList(nestedForm),
+                    RevisionMetadata.now(testData.getUserId(), "test"));
             assertNotNull(form.getActivityId());
         });
     }
@@ -132,9 +145,12 @@ public class UserDaoTest extends TxnAwareBaseTest {
         List<ActivityInstanceDto> instances = handle.attach(JdbiActivityInstance.class)
                 .findAllByUserIdAndStudyId(user.getId(), testData.getStudyId());
 
-        assertEquals(1, instances.size());
+        assertEquals(2, instances.size());
+        var parentInstance = instances.stream()
+                .filter(instance -> instance.getParentInstanceId() == null)
+                .findFirst().get();
         assertTrue(handle.attach(AnswerDao.class)
-                .findAnswerByInstanceIdAndQuestionStableId(instances.get(0).getId(), textSid)
+                .findAnswerByInstanceIdAndQuestionStableId(parentInstance.getId(), textSid)
                 .isPresent());
     }
 }
