@@ -13,7 +13,7 @@ public class ParticipantsLookupResponse {
     @SerializedName("totalCount")
     private int totalCount;
 
-    @SerializedName("participants")
+    @SerializedName("results")
     private List<ParticipantsLookupResultRow> participants;
 
     public ParticipantsLookupResponse(int totalCount, List<ParticipantsLookupResultRow> participants) {
