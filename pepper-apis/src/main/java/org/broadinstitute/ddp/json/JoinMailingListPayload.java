@@ -30,9 +30,19 @@ public class JoinMailingListPayload {
     @SerializedName("umbrellaGuid")
     private String umbrellaGuid;
 
+    @SerializedName("isoLanguageCode")
+    private String languageCode;
+
     public JoinMailingListPayload(
             String firstName, String lastName, String email, String studyGuid,
             List<String> info, String umbrellaGuid
+    ) {
+        this(firstName, lastName, email, studyGuid, info, umbrellaGuid, null);
+    }
+
+    public JoinMailingListPayload(
+            String firstName, String lastName, String email, String studyGuid,
+            List<String> info, String umbrellaGuid, String languageCode
     ) {
         this.firstName = firstName;
         this.lastName = lastName;
@@ -40,6 +50,7 @@ public class JoinMailingListPayload {
         this.studyGuid = studyGuid;
         this.info = info;
         this.umbrellaGuid = umbrellaGuid;
+        this.languageCode = languageCode;
     }
 
     public List<String> getInfo() {
@@ -66,4 +77,7 @@ public class JoinMailingListPayload {
         return umbrellaGuid;
     }
 
+    public String getLanguageCode() {
+        return languageCode;
+    }
 }

@@ -8,16 +8,22 @@ import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
+import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.db.DaoException;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.EventDao;
 import org.broadinstitute.ddp.db.dao.JdbiMailingList;
+import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudyCached;
 import org.broadinstitute.ddp.db.dao.QueuedEventDao;
+import org.broadinstitute.ddp.db.dao.StudyLanguageDao;
 import org.broadinstitute.ddp.db.dto.EventConfigurationDto;
+import org.broadinstitute.ddp.db.dto.LanguageDto;
+import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.json.JoinMailingListPayload;
 import org.broadinstitute.ddp.json.errors.ApiError;
 import org.broadinstitute.ddp.util.ResponseUtil;
+import org.broadinstitute.ddp.util.RouteUtil;
 import org.broadinstitute.ddp.util.ValidatedJsonInputRoute;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,6 +56,39 @@ public class JoinMailingListRoute extends ValidatedJsonInputRoute<JoinMailingLis
             JdbiMailingList jdbiMailingList = handle.attach(JdbiMailingList.class);
 
             String info = payload.getInfo() != null && payload.getInfo().size() > 0 ? String.join(", ", payload.getInfo()) : null;
+            String languageCode = payload.getLanguageCode();
+            Long languageCodeId = null;
+            if (StringUtils.isEmpty(languageCode)) {
+                LanguageDto preferredUserLangDto = RouteUtil.getUserLanguage(request);
+                if (preferredUserLangDto != null) {
+                    languageCode = preferredUserLangDto.getIsoCode();
+                }
+            }
+
+            if (StringUtils.isNotEmpty(languageCode)) {
+                LanguageDto languageDto = LanguageStore.get(languageCode);
+                if (languageDto == null) {
+                    ResponseUtil.haltError(response, 400,
+                            new ApiError(ErrorCodes.BAD_PAYLOAD, "Invalid isoLanguageCode"));
+                }
+                languageCodeId = LanguageStore.get(languageCode).getId();
+            } else {
+                //use study default language if exists
+                if (StringUtils.isNotEmpty(payload.getStudyGuid())) {
+                    StudyDto studyDto = new JdbiUmbrellaStudyCached(handle).findByStudyGuid(payload.getStudyGuid());
+                    StudyLanguageDao studyLanguageDao = handle.attach(StudyLanguageDao.class);
+                    List<Long> defaultLanguages = studyLanguageDao.getStudyLanguageSql().selectDefaultLanguageCodeId(studyDto.getId());
+                    if (!defaultLanguages.isEmpty()) {
+                        languageCodeId = defaultLanguages.get(0);
+                    } else {
+                        //fallback to default
+                        languageCodeId = LanguageStore.getDefault().getId();
+                    }
+                } else {
+                    //fallback to default
+                    languageCodeId = LanguageStore.getDefault().getId();
+                }
+            }
 
             int rowsInserted = 0;
             if (StringUtils.isNotEmpty(payload.getStudyGuid())) {
@@ -59,7 +98,8 @@ public class JoinMailingListRoute extends ValidatedJsonInputRoute<JoinMailingLis
                         payload.getEmailAddress(),
                         payload.getStudyGuid(),
                         info,
-                        Instant.now().toEpochMilli()
+                        Instant.now().toEpochMilli(),
+                        languageCodeId
                 );
             } else if (StringUtils.isNotEmpty(payload.getUmbrellaGuid())) {
                 rowsInserted = jdbiMailingList.insertByUmbrellaGuidIfNotStoredAlready(
@@ -68,7 +108,8 @@ public class JoinMailingListRoute extends ValidatedJsonInputRoute<JoinMailingLis
                         payload.getEmailAddress(),
                         info,
                         Instant.now().toEpochMilli(),
-                        payload.getUmbrellaGuid()
+                        payload.getUmbrellaGuid(),
+                        languageCodeId
                 );
             }
             boolean studyProvidedAndShouldSendEmail =
