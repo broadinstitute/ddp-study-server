@@ -148,7 +148,7 @@ class DataLoader {
         String padding = "  ";
 
         var participant = data.getParticipantWrapper();
-        String email = participant.getEmail();
+        String email = userLoader.getOrGenerateDummyEmail(participant);
         String altPid = participant.getAltPid();
         String shortId = participant.getShortId();
         row.init(altPid, shortId, email);
@@ -291,8 +291,10 @@ class DataLoader {
         for (var nested : nestedList) {
             // Each nested object becomes the survey object to use for pulling out data. Use same timestamps as parent.
             LOG.info(padding + "[{}] parent={} ({})", nestedActivity.getActivityCode(), parentInstanceDto.getActivityCode(), number);
-            var instanceDto = createMigratedInstance(handle, user, nestedActivity, parentSurvey, parentInstanceDto.getId());
-            LOG.info(padding + "- Created nested activity instance with id={}, guid={}", instanceDto.getId(), instanceDto.getGuid());
+            // Nested instances are sorted by creation time, so add a small time shift so things are ordered properly.
+            var instanceDto = createMigratedInstance(handle, user, nestedActivity, parentSurvey, parentInstanceDto.getId(), number);
+            LOG.info(padding + "- Created nested activity instance with id={}, guid={}, created={}",
+                    instanceDto.getId(), instanceDto.getGuid(), Instant.ofEpochMilli(instanceDto.getCreatedAtMillis()));
             loadAnswers(handle, user, instanceDto, nestedActivity, nested);
             number++;
         }
@@ -311,8 +313,13 @@ class DataLoader {
 
     private ActivityInstanceDto createMigratedInstance(Handle handle, User user, MappingActivity activity,
                                                        SurveyWrapper survey, Long parentInstanceId) {
+        return createMigratedInstance(handle, user, activity, survey, parentInstanceId, 0);
+    }
+
+    private ActivityInstanceDto createMigratedInstance(Handle handle, User user, MappingActivity activity,
+                                                       SurveyWrapper survey, Long parentInstanceId, long shiftMillis) {
         long activityId = getActivityId(handle, activity.getActivityCode());
-        long createdAtMillis = survey.getCreated().toEpochMilli();
+        long createdAtMillis = survey.getCreated().toEpochMilli() + shiftMillis;
         Instant completedAt = survey.getFirstCompleted();
         Instant updatedAt = survey.getLastUpdated();
 
@@ -328,7 +335,7 @@ class DataLoader {
 
         if (completedAt != null) {
             boolean addedDelta = false;
-            long completedAtMillis = completedAt.toEpochMilli();
+            long completedAtMillis = completedAt.toEpochMilli() + shiftMillis;
             if (completedAtMillis < createdAtMillis) {
                 throw new LoaderException("ddp_firstcompleted is less than ddp_created");
             } else if (completedAtMillis == createdAtMillis) {
@@ -340,7 +347,7 @@ class DataLoader {
             DBUtils.checkUpdate(1, jdbiInstance.updateFirstCompletedAtIfNotSet(instanceId, completedAtMillis));
             if (updatedAt != null) {
                 // Shift this one too if we shifted the above one, so we don't get into situation where updated < completed.
-                long updatedAtMillis = updatedAt.toEpochMilli() + (addedDelta ? 1 : 0);
+                long updatedAtMillis = updatedAt.toEpochMilli() + (addedDelta ? 1 : 0) + shiftMillis;
                 if (updatedAtMillis < completedAtMillis) {
                     throw new LoaderException("ddp_lastupdated is less than ddp_firstcompleted");
                 } else if (updatedAtMillis > completedAtMillis) {
@@ -348,7 +355,7 @@ class DataLoader {
                 }
             }
         } else if (updatedAt != null) {
-            long updatedAtMillis = updatedAt.toEpochMilli();
+            long updatedAtMillis = updatedAt.toEpochMilli() + shiftMillis;
             if (updatedAtMillis < createdAtMillis) {
                 throw new LoaderException("ddp_lastupdated is less than ddp_created");
             } else if (updatedAtMillis == createdAtMillis) {

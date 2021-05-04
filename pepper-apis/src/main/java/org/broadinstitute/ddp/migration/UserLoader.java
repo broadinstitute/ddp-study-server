@@ -1,6 +1,7 @@
 package org.broadinstitute.ddp.migration;
 
 import java.security.SecureRandom;
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -22,6 +23,7 @@ import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
 import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.model.user.UserProfile;
 import org.broadinstitute.ddp.util.Auth0Util;
+import org.broadinstitute.ddp.util.ConfigUtil;
 import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -64,16 +66,16 @@ class UserLoader {
                 Auth0ManagementClient.forStudy(handle, cfg.getString(LoaderConfigFile.STUDY_GUID)));
     }
 
-    // public String getOrGenerateDummyEmail(ParticipantWrapper participant) {
-    //     String dummyEmail = ConfigUtil.getStrIfPresent(cfg, LoaderConfigFile.DUMMY_EMAIL);
-    //     if (dummyEmail != null && !dummyEmail.isBlank()) {
-    //         String[] parts = dummyEmail.split("@");
-    //         String separator = parts[0].contains("+") ? "." : "+";
-    //         return String.format("%s%s%s@%s", parts[0], separator, Instant.now().toEpochMilli(), parts[1]);
-    //     } else {
-    //         return participant.getEmail();
-    //     }
-    // }
+    public String getOrGenerateDummyEmail(ParticipantWrapper participant) {
+        String dummyEmail = ConfigUtil.getStrIfPresent(cfg, LoaderConfigFile.DUMMY_EMAIL);
+        if (dummyEmail != null && !dummyEmail.isBlank()) {
+            String[] parts = dummyEmail.split("@");
+            String separator = parts[0].contains("+") ? "." : "+";
+            return String.format("%s%s%s@%s", parts[0], separator, Instant.now().toEpochMilli(), parts[1]);
+        } else {
+            return participant.getEmail();
+        }
+    }
 
     public User findUserByAltPid(Handle handle, String altpid) {
         String guid = handle.attach(JdbiUser.class).getUserGuidByAltpid(altpid);

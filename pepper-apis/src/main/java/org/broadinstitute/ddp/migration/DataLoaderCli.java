@@ -20,6 +20,7 @@ import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.security.EncryptionKey;
+import org.broadinstitute.ddp.util.ConfigUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -69,6 +70,10 @@ public class DataLoaderCli {
             }
             if (!cfg.getBoolean(LoaderConfigFile.SOURCE_USE_BUCKET)) {
                 LOG.warn("Looks like we're connecting to prod. Must use bucket for source files!");
+                return;
+            }
+            if (StringUtils.isNotBlank(ConfigUtil.getStrIfPresent(cfg, LoaderConfigFile.DUMMY_EMAIL))) {
+                LOG.warn("Looks like we're connecting to prod. Cannot use dummy emails for prod run!");
                 return;
             }
             if (cfg.getBoolean(LoaderConfigFile.CREATE_AUTH0_ACCOUNTS)) {
