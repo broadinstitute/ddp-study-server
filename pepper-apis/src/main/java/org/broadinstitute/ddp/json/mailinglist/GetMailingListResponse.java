@@ -16,6 +16,8 @@ public class GetMailingListResponse {
     private String info;
     @SerializedName("dateCreated")
     private long dateCreated;
+    @SerializedName("isoLanguageCode")
+    private String languageCode;
 
     public GetMailingListResponse(MailingListEntryDto dto) {
         this.firstName = dto.getFirstName();
@@ -23,6 +25,7 @@ public class GetMailingListResponse {
         this.email = dto.getEmail();
         this.info = dto.getInfo();
         this.dateCreated = dto.getDateCreatedMillis() / 1000L;
+        this.languageCode = dto.getLanguageCode();
     }
 
     public String getEmail() {
