@@ -32,7 +32,6 @@ import org.apache.http.entity.ContentType;
 import org.broadinstitute.ddp.analytics.GoogleAnalyticsMetricsTracker;
 import org.broadinstitute.ddp.cache.CacheService;
 import org.broadinstitute.ddp.cache.LanguageStore;
-import org.broadinstitute.ddp.client.DsmClient;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants;
@@ -42,8 +41,6 @@ import org.broadinstitute.ddp.db.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.CancerStore;
 import org.broadinstitute.ddp.db.ConsentElectionDao;
 import org.broadinstitute.ddp.db.DBUtils;
-import org.broadinstitute.ddp.db.FormInstanceDao;
-import org.broadinstitute.ddp.db.SectionBlockDao;
 import org.broadinstitute.ddp.db.StudyActivityDao;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.filter.AddDDPAuthLoggingFilter;
@@ -301,10 +298,7 @@ public class DataDonationPlatform {
         // only once server has fully booted.
         registerAppEngineCallbacks(DEFAULT_BOOT_WAIT_SECS);
 
-        SectionBlockDao sectionBlockDao = new SectionBlockDao();
-
-        FormInstanceDao formInstanceDao = FormInstanceDao.fromDaoAndConfig(sectionBlockDao, sqlConfig);
-        ActivityInstanceDao activityInstanceDao = new ActivityInstanceDao(formInstanceDao);
+        ActivityInstanceDao activityInstanceDao = new ActivityInstanceDao();
 
         PexInterpreter interpreter = new TreeWalkInterpreter();
         I18nContentRenderer i18nContentRenderer = new I18nContentRenderer();
@@ -481,7 +475,7 @@ public class DataDonationPlatform {
                 responseSerializer);
         put(
                 API.USER_ACTIVITY_ANSWERS,
-                new PutFormAnswersRoute(workflowService, actInstService, activityValidationService, formInstanceDao, interpreter),
+                new PutFormAnswersRoute(workflowService, actInstService, activityValidationService, interpreter),
                 responseSerializer
         );
         post(API.USER_ACTIVITY_UPLOADS, new CreateUserActivityUploadRoute(fileUploadService), responseSerializer);
@@ -542,7 +536,7 @@ public class DataDonationPlatform {
         get(API.STUDY_STATISTICS, new GetStudyStatisticsRoute(i18nContentRenderer), responseSerializer);
 
         // Routes calling DSM
-        get(API.PARTICIPANT_STATUS, new GetDsmParticipantStatusRoute(new DsmClient(cfg), esClient), responseSerializer);
+        get(API.PARTICIPANT_STATUS, new GetDsmParticipantStatusRoute(esClient), responseSerializer);
 
         boolean runScheduler = cfg.getBoolean(ConfigFile.RUN_SCHEDULER);
         if (runScheduler) {

@@ -61,6 +61,13 @@ JoinMailingListPayload:
       description: The studyGuid of the mailing list the user is interested in (one of umbrellaId OR studyGuid but not both is required)
       example: ANGIO
       type: string
+    isoLanguageCode:
+      description: preferred language code of join mailing list user. If language code is not set, defaults to study default language.
+      type: string
+      nullable: true
+      format: ISO 639-1 standard
+      example: en
+
 ListStyle:
   title: ListStyle
   type: string
@@ -1582,6 +1589,9 @@ Question.Text:
       placeholderText:
         type: string
         nullable: true
+      confirmPlaceholderText:
+        type: string
+        nullable: true
       inputType:
         type: string
         enum:
@@ -2186,6 +2196,7 @@ ParticipantStatusTrackingInfo:
         $ref: '../pepper.yml#/components/schemas/ParticipantStatusTrackingInfo.Kit'
     workflows:
       type: array
+      minItems: 0
       items:
         $ref: '../pepper.yml#/components/schemas/ParticipantStatusTrackingInfo.Workflow'
 ParticipantStatusTrackingInfo.Workflow:
@@ -2197,6 +2208,11 @@ ParticipantStatusTrackingInfo.Workflow:
     status:
       type: string
       description: The current state in the workflow
+    date:
+      type: string
+      format: date-time
+      description: Last changed
+      example: 2021-04-18T14:09:37.123Z
 ParticipantStatusTrackingInfo.Record:
   type: object
   required:

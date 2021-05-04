@@ -52,7 +52,7 @@ import org.broadinstitute.ddp.model.activity.types.ActivityType;
 import org.broadinstitute.ddp.model.activity.types.BlockType;
 import org.broadinstitute.ddp.model.study.StudyLanguage;
 import org.broadinstitute.ddp.pex.PexInterpreter;
-import org.broadinstitute.ddp.service.actvityinstancebuilder.ActivityInstanceFromDefinitionBuilder;
+import org.broadinstitute.ddp.service.actvityinstancebuilder.AIBuilderFactory;
 import org.broadinstitute.ddp.util.ActivityInstanceUtil;
 import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
@@ -71,38 +71,6 @@ public class ActivityInstanceService {
         this.actInstanceDao = actInstanceDao;
         this.interpreter = interpreter;
         this.renderer = renderer;
-    }
-
-    /**
-     * Get an activity instance, translated to given language. If activity is a form, visibility of blocks will be
-     * resolved as well. Activity instance summaries for nested activity blocks will not be loaded -- this should be
-     * done by caller separately.
-     *
-     * @param handle          the jdbi handle
-     * @param userGuid        the user guid
-     * @param actType         the activity type
-     * @param actInstanceGuid the activity instance guid
-     * @param isoLangCode     the iso language code
-     * @param style           the content style to use for converting content
-     * @return activity instance, if found
-     * @throws DDPException if pex evaluation error
-     * @deprecated Thus method should be removed as soon as
-     *     {@link #buildInstanceFromDefinition(Handle, String, String, String, String, ContentStyle, String)} is carefully tested
-     *     (all code which utilized by this method (and not used in other places) should be removed also)
-     */
-    @Deprecated
-    public Optional<ActivityInstance> getTranslatedActivity(Handle handle, String userGuid, String operatorGuid, ActivityType actType,
-                                                            String actInstanceGuid, String isoLangCode, ContentStyle style) {
-        ActivityInstance inst = actInstanceDao.getTranslatedActivityByTypeAndGuid(handle, actType, actInstanceGuid, isoLangCode, style);
-        if (inst == null) {
-            return Optional.empty();
-        }
-
-        if (ActivityType.FORMS.equals(inst.getActivityType())) {
-            ((FormInstance) inst).updateBlockStatuses(handle, interpreter, userGuid, operatorGuid, actInstanceGuid, null);
-        }
-
-        return Optional.of(inst);
     }
 
     /**
@@ -567,8 +535,9 @@ public class ActivityInstanceService {
             ContentStyle style,
             String isoLangCode) {
 
-        var context = new ActivityInstanceFromDefinitionBuilder(handle,
+        var context = AIBuilderFactory.createAIBuilder(handle,
                 createParams(userGuid, studyGuid, instanceGuid)
+                        .setReadPreviousInstanceId(true)
                         .setOperatorGuid(operatorGuid)
                         .setIsoLangCode(isoLangCode)
                         .setStyle(style))
@@ -612,8 +581,9 @@ public class ActivityInstanceService {
             String isoLangCode,
             UserActivityInstanceSummary instanceSummary) {
 
-        var context = new ActivityInstanceFromDefinitionBuilder(handle,
+        var context = AIBuilderFactory.createAIBuilder(handle,
                 createParams(userGuid, studyGuid, instanceGuid)
+                        .setReadPreviousInstanceId(true)
                         .setOperatorGuid(operatorGuid)
                         .setIsoLangCode(isoLangCode)
                         .setInstanceSummary(instanceSummary)

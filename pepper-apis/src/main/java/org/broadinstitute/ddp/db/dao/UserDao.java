@@ -1,6 +1,7 @@
 package org.broadinstitute.ddp.db.dao;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -9,6 +10,7 @@ import java.util.stream.Stream;
 
 import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.DaoException;
+import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.model.user.UserProfile;
 import org.jdbi.v3.core.Handle;
@@ -130,20 +132,20 @@ public interface UserDao extends SqlObject {
 
         Set<Long> expiredTempUserIds = findExpiredTemporaryUserIds(now);
         LOG.info("Found {} expired temporary users to delete", expiredTempUserIds.size());
-
         if (expiredTempUserIds.isEmpty()) {
             return 0;
         }
 
-        Set<Long> instanceIds = instanceDao.findAllInstanceIdsByUserIds(expiredTempUserIds);
-        LOG.info("Found {} activity instances to delete", instanceIds.size());
-        int numDeleted = instanceDao.deleteAllByIds(instanceIds);
-        LOG.info("Deleted {} activity instances", numDeleted);
-        if (numDeleted != instanceIds.size()) {
-            throw new DaoException("Could not delete all activity instances for expired temporary users");
+        List<ActivityInstanceDto> instances = instanceDao.findAllInstancesByUserIds(expiredTempUserIds);
+        LOG.info("Found {} activity instances to delete", instances.size());
+        try {
+            instanceDao.deleteInstances(instances);
+            LOG.info("Deleted {} activity instances", instances.size());
+        } catch (Exception e) {
+            throw new DaoException("Could not delete all activity instances for expired temporary users", e);
         }
 
-        numDeleted = getHandle().attach(DataExportDao.class).deleteDataSyncRequestsForUsers(expiredTempUserIds);
+        int numDeleted = getHandle().attach(DataExportDao.class).deleteDataSyncRequestsForUsers(expiredTempUserIds);
         LOG.info("Deleted {} data sync requests", numDeleted);
 
         numDeleted = getHandle().attach(QueuedEventDao.class).deleteQueuedEventsByUserIds(expiredTempUserIds);

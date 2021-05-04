@@ -21,8 +21,6 @@ import org.broadinstitute.ddp.TxnAwareBaseTest;
 import org.broadinstitute.ddp.content.ContentStyle;
 import org.broadinstitute.ddp.content.HtmlConverter;
 import org.broadinstitute.ddp.content.I18nContentRenderer;
-import org.broadinstitute.ddp.db.FormInstanceDao;
-import org.broadinstitute.ddp.db.SectionBlockDao;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dto.ActivityDto;
 import org.broadinstitute.ddp.db.dto.ActivityVersionDto;
@@ -108,8 +106,7 @@ public class FormActivityDaoTest extends TxnAwareBaseTest {
 
     @BeforeClass
     public static void setup() {
-        org.broadinstitute.ddp.db.ActivityInstanceDao actInstDao = new org.broadinstitute.ddp.db.ActivityInstanceDao(
-                FormInstanceDao.fromDaoAndConfig(new SectionBlockDao(), sqlConfig));
+        org.broadinstitute.ddp.db.ActivityInstanceDao actInstDao = new org.broadinstitute.ddp.db.ActivityInstanceDao();
         service = new ActivityInstanceService(actInstDao, new TreeWalkInterpreter(), new I18nContentRenderer());
         TransactionWrapper.useTxn(handle -> testData = TestDataSetupUtil.generateBasicUserTestData(handle));
     }
@@ -189,6 +186,7 @@ public class FormActivityDaoTest extends TxnAwareBaseTest {
         Template prompt = new Template(TemplateType.TEXT, "prompt", "text question");
 
         Template header = new Template(TemplateType.TEXT, "header", "info header");
+        Template confirmPlaceholder = new Template(TemplateType.TEXT, "confirmPlaceholder", "info header confirm");
         Template footer = new Template(TemplateType.TEXT, "footer", "info footer");
 
         Template lengthHint = new Template(TemplateType.TEXT, "lenVal", "length hint");
@@ -203,6 +201,7 @@ public class FormActivityDaoTest extends TxnAwareBaseTest {
                 false,
                 prompt,
                 header,
+                confirmPlaceholder,
                 footer,
                 null,
                 rules,

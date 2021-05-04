@@ -286,4 +286,73 @@ public class ActivityInstanceServiceTest extends ActivityInstanceServiceTestAbst
         assertEquals("Description: My Aunt", summaries.get(0).getActivityDescription());
         assertEquals("Summary: My Aunt", summaries.get(0).getActivitySummary());
     }
+
+
+    @Test
+    public void testGetTranslatedFormByGuid_activityNotFound() {
+        Optional<ActivityInstance> inst = TransactionWrapper.withTxn(
+                handle -> service.buildInstanceFromDefinition(handle, userGuid, userGuid, studyGuid,
+                        "not-an-activity", ContentStyle.STANDARD, "en"));
+        assertTrue(inst.isEmpty());
+    }
+
+    @Test
+    public void testGetTranslatedFormByGuid_isoLangCodeNotFound() {
+        TransactionWrapper.useTxn(handle -> {
+            FormActivityDef form = insertDummyActivity(handle, userGuid, studyGuid);
+            String instanceGuid = insertNewInstance(handle, form.getActivityId(), userGuid);
+            Optional<ActivityInstance> inst = service.buildInstanceFromDefinition(handle, userGuid, userGuid, studyGuid,
+                    instanceGuid, ContentStyle.STANDARD, "xyz");
+            assertTrue(inst.isEmpty());
+            handle.rollback();
+        });
+    }
+
+
+    @Test
+    public void testGetBaseFormByGuid_WithSubtitle() {
+        TransactionWrapper.useTxn(handle -> {
+            FormActivityDef formDef = insertDummyActivity(handle, userGuid, studyGuid);
+            String instanceGuid = insertNewInstance(handle, formDef.getActivityId(), userGuid);
+            Optional<ActivityInstance> enInst = service.buildInstanceFromDefinition(handle, userGuid, userGuid, studyGuid,
+                    instanceGuid, ContentStyle.STANDARD, "en");
+            assertTrue(enInst.isPresent());
+            testTranslation(formDef, FormActivityDef::getTranslatedSubtitles, enInst.get().getSubtitle(),  "en");
+            Optional<ActivityInstance> ruInst = service.buildInstanceFromDefinition(handle, userGuid, userGuid, studyGuid,
+                    instanceGuid, ContentStyle.STANDARD, "ru");
+            testTranslation(formDef, FormActivityDef::getTranslatedSubtitles, ruInst.get().getSubtitle(),  "ru");
+            handle.rollback();
+        });
+    }
+
+    @Test
+    public void testGetBaseFormByGuid_WithoutSubtitle() {
+        TransactionWrapper.useTxn(handle -> {
+            FormActivityDef formDef = insertDummyActivityWithoutSubtitle(handle, userGuid, studyGuid);
+            String instanceGuid = insertNewInstance(handle, formDef.getActivityId(), userGuid);
+            Optional<ActivityInstance> enInst = service.buildInstanceFromDefinition(handle, userGuid, userGuid, studyGuid,
+                    instanceGuid, ContentStyle.STANDARD, "en");
+            assertTrue(enInst.isPresent());
+            assertNull(enInst.get().getSubtitle());
+            testTranslation(formDef, FormActivityDef::getTranslatedTitles, enInst.get().getTitle(),  "en");
+            Optional<ActivityInstance> ruInst = service.buildInstanceFromDefinition(handle, userGuid, userGuid, studyGuid,
+                    instanceGuid, ContentStyle.STANDARD, "ru");
+            testTranslation(formDef, FormActivityDef::getTranslatedTitles, ruInst.get().getTitle(),  "ru");
+            handle.rollback();
+        });
+    }
+
+    @Test
+    public void testGetBaseFormByGuid_ReadonlyHintTemplateRenderedCorrectly() {
+        TransactionWrapper.useTxn(handle -> {
+            FormActivityDef formDef = insertDummyActivity(handle, userGuid, studyGuid);
+            String instanceGuid = insertNewInstance(handle, formDef.getActivityId(), userGuid);
+            Optional<ActivityInstance> enInst = service.buildInstanceFromDefinition(handle, userGuid, userGuid, studyGuid,
+                    instanceGuid, ContentStyle.STANDARD, "en");
+            assertTrue(enInst.isPresent());
+            assertEquals("Please contact your organization for details", ((FormInstance)enInst.get()).getReadonlyHint());
+            handle.rollback();
+        });
+    }
+
 }
