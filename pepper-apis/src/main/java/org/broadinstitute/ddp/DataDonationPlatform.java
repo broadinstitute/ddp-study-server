@@ -209,8 +209,6 @@ public class DataDonationPlatform {
     private static final AtomicBoolean isReady = new AtomicBoolean(false);
     private static final int DEFAULT_BOOT_WAIT_SECS = 30;
 
-    private static final int DEFAULT_PARTICIPANTS_LOOKUP_RESULT_MAX_COUNT = 100;
-
 
     /**
      * Stop the server using the default wait time.
@@ -372,8 +370,8 @@ public class DataDonationPlatform {
         post(API.ADMIN_STUDY_INVITATION_LOOKUP, new AdminLookupInvitationRoute(), jsonSerializer);
         post(API.ADMIN_STUDY_INVITATION_DETAILS, new AdminUpdateInvitationDetailsRoute(), jsonSerializer);
         post(API.ADMIN_STUDY_USER_LOGIN_ACCOUNT, new AdminCreateUserLoginAccountRoute(), jsonSerializer);
-        post(API.ADMIN_STUDY_PARTICIPANTS_LOOKUP, new ParticipantsLookupRoute(
-                new ESParticipantsLookupService(esClient), DEFAULT_PARTICIPANTS_LOOKUP_RESULT_MAX_COUNT), responseSerializer);
+        post(API.ADMIN_STUDY_PARTICIPANTS_LOOKUP,
+                new ParticipantsLookupRoute(new ESParticipantsLookupService(esClient)), responseSerializer);
 
         // These filters work in a tandem:
         // - StudyLanguageResolutionFilter figures out and sets the user language in the attribute store

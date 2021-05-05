@@ -1,12 +1,13 @@
 package org.broadinstitute.ddp.service.participantslookup;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class ParticipantsLookupResult<T> {
 
-    private List<T> resultRows;
+    private List<T> resultRows = new ArrayList<>();
 
-    private long totalCount;
+    private int totalCount;
 
     public List<T> getResultRows() {
         return resultRows;
@@ -16,11 +17,11 @@ public class ParticipantsLookupResult<T> {
         this.resultRows = resultRows;
     }
 
-    public long getTotalCount() {
+    public int getTotalCount() {
         return totalCount;
     }
 
-    public void setTotalCount(long totalCount) {
+    public void setTotalCount(int totalCount) {
         this.totalCount = totalCount;
     }
 }

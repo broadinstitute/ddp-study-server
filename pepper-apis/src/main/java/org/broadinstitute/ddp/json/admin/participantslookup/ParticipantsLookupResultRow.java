@@ -22,6 +22,11 @@ public class ParticipantsLookupResultRow extends ParticipantsLookupResultRowBase
 
     public ParticipantsLookupResultRow(ParticipantsLookupResultRowBase resultRowBase) {
         super(resultRowBase);
+        if (resultRowBase instanceof ParticipantsLookupResultRow) {
+            ParticipantsLookupResultRow resultRow = (ParticipantsLookupResultRow)resultRowBase;
+            invitationId = resultRow.invitationId;
+            status = resultRow.status;
+        }
     }
 
     public ParticipantsLookupResultRowBase getProxy() {

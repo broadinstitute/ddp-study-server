@@ -1,19 +1,14 @@
 package org.broadinstitute.ddp.route;
 
-import static java.util.Collections.emptyList;
-
-import org.apache.commons.lang3.StringUtils;
 import org.apache.http.entity.ContentType;
 import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.elastic.participantslookup.ESParticipantsLookupService;
-import org.broadinstitute.ddp.elastic.participantslookup.ESParticipantsStructuredIndexSearchHelper;
-import org.broadinstitute.ddp.elastic.participantslookup.ESUsersIndexSearchHelper;
+import org.broadinstitute.ddp.elastic.participantslookup.search.ESParticipantsSearch;
+import org.broadinstitute.ddp.elastic.participantslookup.search.ESUsersProxiesSearch;
 import org.broadinstitute.ddp.json.admin.participantslookup.ParticipantsLookupPayload;
 import org.broadinstitute.ddp.json.admin.participantslookup.ParticipantsLookupResponse;
 import org.broadinstitute.ddp.service.participantslookup.ParticipantsLookupService;
 import org.broadinstitute.ddp.util.ValidatedJsonInputRoute;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import spark.Request;
 import spark.Response;
 
@@ -38,19 +33,18 @@ import spark.Response;
  *
  * <p>For more details about search in ElasticSearch DB:
  * @see ESParticipantsLookupService
- * @see ESUsersIndexSearchHelper
- * @see ESParticipantsStructuredIndexSearchHelper
+ * @see ESUsersProxiesSearch
+ * @see ESParticipantsSearch
  */
 public class ParticipantsLookupRoute extends ValidatedJsonInputRoute<ParticipantsLookupPayload> {
 
-    private static final Logger LOG = LoggerFactory.getLogger(ParticipantsLookupRoute.class);
+    private static final int DEFAULT_PARTICIPANTS_LOOKUP_RESULT_MAX_COUNT = 500;
 
     private final ParticipantsLookupService participantsLookupService;
-    private final int resultsMaxCount;
+    private final int resultsMaxCount = DEFAULT_PARTICIPANTS_LOOKUP_RESULT_MAX_COUNT;
 
-    public ParticipantsLookupRoute(ParticipantsLookupService participantsLookupService, int resultsMaxCount) {
+    public ParticipantsLookupRoute(ParticipantsLookupService participantsLookupService) {
         this.participantsLookupService = participantsLookupService;
-        this.resultsMaxCount = resultsMaxCount;
     }
 
     @Override
@@ -60,21 +54,11 @@ public class ParticipantsLookupRoute extends ValidatedJsonInputRoute<Participant
 
         response.type(ContentType.APPLICATION_JSON.getMimeType());
 
-        LOG.info("Started participants lookup (query=\"{}\")", query);
+        var lookupResult = participantsLookupService.lookupParticipants(studyGuid, query, resultsMaxCount);
 
-        var result = new ParticipantsLookupResponse(0, emptyList());
-
-        if (StringUtils.isNotBlank(query)) {
-            var lookupResult = participantsLookupService.lookupParticipants(studyGuid, query, resultsMaxCount);
-            result = new ParticipantsLookupResponse(
-                    Long.valueOf(lookupResult.getTotalCount()).intValue(),
-                    lookupResult.getResultRows()
-            );
-        }
-
-        LOG.info("Finished participants lookup (query=\"{}\"), found {} rows, fetched {} rows",
-                query, result.getTotalCount(), result.getParticipants().size());
-
-        return result;
+        return new ParticipantsLookupResponse(
+                lookupResult.getTotalCount(),
+                lookupResult.getResultRows()
+        );
     }
 }

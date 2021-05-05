@@ -13,19 +13,19 @@ public class ParticipantsLookupResponse {
     @SerializedName("totalCount")
     private int totalCount;
 
-    @SerializedName("participants")
-    private List<ParticipantsLookupResultRow> participants;
+    @SerializedName("results")
+    private List<ParticipantsLookupResultRow> results;
 
-    public ParticipantsLookupResponse(int totalCount, List<ParticipantsLookupResultRow> participants) {
+    public ParticipantsLookupResponse(int totalCount, List<ParticipantsLookupResultRow> results) {
         this.totalCount = totalCount;
-        this.participants = participants;
+        this.results = results;
     }
 
     public int getTotalCount() {
         return totalCount;
     }
 
-    public List<ParticipantsLookupResultRow> getParticipants() {
-        return participants;
+    public List<ParticipantsLookupResultRow> getResults() {
+        return results;
     }
 }

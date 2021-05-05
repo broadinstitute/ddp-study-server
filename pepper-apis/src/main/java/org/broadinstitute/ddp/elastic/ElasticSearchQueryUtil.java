@@ -1,9 +1,13 @@
 package org.broadinstitute.ddp.elastic;
 
-import com.google.gson.JsonElement;
+import java.io.IOException;
+
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.elasticsearch.action.search.SearchRequest;
+import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.client.RequestOptions;
+import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.index.query.AbstractQueryBuilder;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
@@ -12,6 +16,16 @@ import org.elasticsearch.search.builder.SearchSourceBuilder;
  * Helper methods used to search in ElasticSearch indices
  */
 public class ElasticSearchQueryUtil {
+
+    public static SearchResponse search(
+            RestHighLevelClient esClient,
+            String esIndex,
+            String[] fetchSource,
+            AbstractQueryBuilder queryBuilder,
+            int resultMaxCount) throws IOException {
+        var searchRequest = prepareSearching(esIndex, fetchSource, queryBuilder, resultMaxCount);
+        return esClient.search(searchRequest, RequestOptions.DEFAULT);
+    }
 
     public static SearchRequest prepareSearching(
             String esIndex,
@@ -33,8 +47,7 @@ public class ElasticSearchQueryUtil {
         return '*' + query + '*';
     }
 
-    public static JsonElement getJsonElement(SearchHit hit, String nodeName) {
-        JsonObject participantJson = new JsonParser().parse(hit.getSourceAsString()).getAsJsonObject();
-        return participantJson.get(nodeName);
+    public static JsonObject getJsonObject(SearchHit hit) {
+        return new JsonParser().parse(hit.getSourceAsString()).getAsJsonObject();
     }
 }

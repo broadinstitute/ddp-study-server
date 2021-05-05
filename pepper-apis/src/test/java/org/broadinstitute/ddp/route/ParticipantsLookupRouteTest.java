@@ -42,7 +42,7 @@ public class ParticipantsLookupRouteTest extends TxnAwareBaseTest {
         Spark.before(RouteConstants.API.BASE + "/*", new TokenConverterFilter(new JWTConverter()));
         Spark.before(RouteConstants.API.ADMIN_BASE + "/*", new StudyAdminAuthFilter());
         Spark.post(RouteConstants.API.ADMIN_STUDY_PARTICIPANTS_LOOKUP,
-                new ParticipantsLookupRoute(new ParticipantsLookupTestService(), 100), jsonSerializer);
+                new ParticipantsLookupRoute(new ParticipantsLookupTestService()), jsonSerializer);
         Spark.awaitInitialization();
 
         urlTemplate = "http://localhost:" + port + RouteConstants.API.ADMIN_STUDY_PARTICIPANTS_LOOKUP
@@ -97,14 +97,14 @@ public class ParticipantsLookupRouteTest extends TxnAwareBaseTest {
     }
 
 
-    public static class ParticipantsLookupTestService implements ParticipantsLookupService {
+    public static class ParticipantsLookupTestService extends ParticipantsLookupService {
 
         static final String QUERY__EMPTY_RESULT = "empty_result";
         static final String QUERY__SINGLE_RESULT = "single_result";
 
         @Override
-        public ParticipantsLookupResult lookupParticipants(String studyGuid, String query, int resultsMaxCount) {
-            ParticipantsLookupResult participantsLookupResult = new ParticipantsLookupResult();
+        protected void doLookupParticipants(String studyGuid, String query, int resultsMaxCount,
+                                            ParticipantsLookupResult participantsLookupResult) throws Exception {
             if (query.equals(QUERY__EMPTY_RESULT)) {
                 participantsLookupResult.setTotalCount(0);
                 participantsLookupResult.setResultRows(emptyList());
@@ -120,7 +120,6 @@ public class ParticipantsLookupRouteTest extends TxnAwareBaseTest {
                 results.add(row);
                 participantsLookupResult.setResultRows(results);
             }
-            return participantsLookupResult;
         }
     }
 }

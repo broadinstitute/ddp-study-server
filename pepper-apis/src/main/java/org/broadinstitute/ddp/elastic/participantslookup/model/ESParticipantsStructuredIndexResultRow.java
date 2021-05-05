@@ -1,5 +1,8 @@
 package org.broadinstitute.ddp.elastic.participantslookup.model;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.google.gson.annotations.SerializedName;
 import org.broadinstitute.ddp.json.admin.participantslookup.ParticipantsLookupResultRowBase;
 import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
@@ -14,6 +17,9 @@ public class ESParticipantsStructuredIndexResultRow extends ParticipantsLookupRe
 
     @SerializedName("status")
     private EnrollmentStatusType status;
+
+    @SerializedName("proxies")
+    protected List<String> proxies = new ArrayList<>();
 
     public ESParticipantsStructuredIndexResultRow() {}
 
@@ -35,5 +41,13 @@ public class ESParticipantsStructuredIndexResultRow extends ParticipantsLookupRe
 
     public void setStatus(EnrollmentStatusType status) {
         this.status = status;
+    }
+
+    public List<String> getProxies() {
+        return proxies;
+    }
+
+    public void setProxies(List<String> proxies) {
+        this.proxies = proxies;
     }
 }

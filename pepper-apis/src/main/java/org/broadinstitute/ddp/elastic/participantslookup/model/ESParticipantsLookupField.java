@@ -14,8 +14,10 @@ public enum ESParticipantsLookupField {
     PROFILE__HRUID("profile.hruid", ALL_TYPES),
     PROFILE__FIRST_NAME("profile.firstName", ALL_TYPES),
     PROFILE__LAST_NAME("profile.lastName", ALL_TYPES),
-    PROFILE__EMAIL("profile.email.text", ALL_TYPES),
-    STATUS("status", PARTICIPANTS_STRUCTURED),
+    PROFILE__EMAIL_TEXT("profile.email.text", ALL_TYPES),
+    PROFILE__EMAIL("profile.email", ALL_TYPES),
+    PROFILE__LEGACY_ALT_PID("profile.legacyAltPid", ALL_TYPES),
+    PROFILE__LEGACY_SHORT_ID("profile.legacyShortId", ALL_TYPES),
     INVITATIONS__GUID("invitations.guid", PARTICIPANTS_STRUCTURED),
     GOVERNED_USERS("governedUsers", USERS);
 
