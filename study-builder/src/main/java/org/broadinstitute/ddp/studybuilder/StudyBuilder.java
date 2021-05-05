@@ -214,7 +214,7 @@ public class StudyBuilder {
         LOG.info("renamed study with guid={}", renamedStudy.getGuid());
     }
 
-    private Auth0TenantDto getTenantOrInsert(Handle handle) {
+    public Auth0TenantDto getTenantOrInsert(Handle handle) {
         Config tenantCfg = cfg.getConfig("tenant");
         String domain = tenantCfg.getString("domain");
         String mgmtClientId = tenantCfg.getString("mgmtClientId");
@@ -254,7 +254,7 @@ public class StudyBuilder {
         return dto;
     }
 
-    private StudyDto getStudy(Handle handle) {
+    public StudyDto getStudy(Handle handle) {
         Config studyCfg = cfg.getConfig("study");
         String guid = studyCfg.getString("guid");
 
@@ -310,7 +310,7 @@ public class StudyBuilder {
         return dto;
     }
 
-    private List<ClientDto> getClientsOrInsert(Handle handle, Auth0TenantDto tenantDto) {
+    public List<ClientDto> getClientsOrInsert(Handle handle, Auth0TenantDto tenantDto) {
         List<Config> clientsCfg = new ArrayList<>();
         if (cfg.hasPath("client")) {
             clientsCfg.add(cfg.getConfig("client"));
@@ -348,7 +348,7 @@ public class StudyBuilder {
         return clientDtos;
     }
 
-    private void grantClientsAccessToStudy(Handle handle, List<ClientDto> clientDtos, StudyDto studyDto) {
+    public void grantClientsAccessToStudy(Handle handle, List<ClientDto> clientDtos, StudyDto studyDto) {
         JdbiClientUmbrellaStudy jdbiACL = handle.attach(JdbiClientUmbrellaStudy.class);
         for (var clientDto : clientDtos) {
             List<String> studyGuids = jdbiACL.findPermittedStudyGuidsByAuth0ClientIdAndAuth0TenantId(

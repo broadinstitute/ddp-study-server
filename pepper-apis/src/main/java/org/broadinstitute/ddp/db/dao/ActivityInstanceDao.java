@@ -3,6 +3,7 @@ package org.broadinstitute.ddp.db.dao;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -259,6 +260,10 @@ public interface ActivityInstanceDao extends SqlObject {
             @Bind("oldParticipantId") long oldParticipantId,
             @Bind("newParticipantId") long newParticipantId);
 
+    default List<ActivityInstanceDto> findAllInstancesByUserIds(Iterable<Long> userIds) {
+        return getJdbiActivityInstance().findAllByUserIds(userIds);
+    }
+
     @SqlQuery("select activity_instance_id from activity_instance where participant_id in (<userIds>)")
     Set<Long> findAllInstanceIdsByUserIds(@BindList(value = "userIds", onEmpty = BindList.EmptyHandling.NULL) Set<Long> userIds);
 
@@ -319,6 +324,24 @@ public interface ActivityInstanceDao extends SqlObject {
         getAnswerDao().deleteAllByInstanceIds(instanceIds);
         getActivityInstanceStatusDao().deleteAllByInstanceIds(instanceIds);
         return _deleteAllInstancesByIds(instanceIds);
+    }
+
+    default void deleteInstances(Iterable<ActivityInstanceDto> instances) {
+        Set<Long> nestedInstanceIds = new HashSet<>();
+        Set<Long> parentInstanceIds = new HashSet<>();
+        for (var instance : instances) {
+            if (instance.getParentInstanceId() != null) {
+                nestedInstanceIds.add(instance.getId());
+            } else {
+                parentInstanceIds.add(instance.getId());
+            }
+        }
+        if (!nestedInstanceIds.isEmpty()) {
+            DBUtils.checkDelete(nestedInstanceIds.size(), deleteAllByIds(nestedInstanceIds));
+        }
+        if (!parentInstanceIds.isEmpty()) {
+            DBUtils.checkDelete(parentInstanceIds.size(), deleteAllByIds(parentInstanceIds));
+        }
     }
 
     default void saveSubstitutions(long instanceId, Map<String, String> substitutions) {

@@ -21,5 +21,11 @@ get:
   responses:
     200:
       $ref: '../pepper.yml#/components/responses/ParticipantStatusResponse'
+    404:
+      description: participant or study is not found
+      content:
+        application/json:
+          schema:
+            $ref: '../pepper.yml#/components/schemas/Error.NotFound'
     default:
       $ref: '../pepper.yml#/components/responses/ErrorResponse'
