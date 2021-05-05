@@ -76,7 +76,7 @@ public class ParticipantsLookupRouteTest extends TxnAwareBaseTest {
                 .when().post(urlTemplate)
                 .then().assertThat()
                 .statusCode(200).contentType(ContentType.JSON)
-                .body("participants", Matchers.hasSize(0))
+                .body("results", Matchers.hasSize(0))
                 .body("totalCount", equalTo(0));
     }
 
@@ -89,10 +89,10 @@ public class ParticipantsLookupRouteTest extends TxnAwareBaseTest {
                 .when().post(urlTemplate)
                 .then().assertThat()
                 .statusCode(200).contentType(ContentType.JSON)
-                .body("participants", Matchers.hasSize(1))
-                .body("participants[0].firstName", equalTo("Pete"))
-                .body("participants[0].lastName", equalTo("Koolman"))
-                .body("participants[0].guid", equalTo("guid_1"))
+                .body("results", Matchers.hasSize(1))
+                .body("results[0].firstName", equalTo("Pete"))
+                .body("results[0].lastName", equalTo("Koolman"))
+                .body("results[0].guid", equalTo("guid_1"))
                 .body("totalCount", equalTo(1));
     }
 
