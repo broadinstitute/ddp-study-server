@@ -38,7 +38,7 @@ import spark.Response;
  */
 public class ParticipantsLookupRoute extends ValidatedJsonInputRoute<ParticipantsLookupPayload> {
 
-    private static final int DEFAULT_PARTICIPANTS_LOOKUP_RESULT_MAX_COUNT = 100;
+    private static final int DEFAULT_PARTICIPANTS_LOOKUP_RESULT_MAX_COUNT = 500;
 
     private final ParticipantsLookupService participantsLookupService;
     private final int resultsMaxCount = DEFAULT_PARTICIPANTS_LOOKUP_RESULT_MAX_COUNT;
