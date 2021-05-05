@@ -2400,6 +2400,8 @@ ParticipantsLookupResultItem:
   required:
     - guid
     - hruid
+    - legacyAltPid
+    - legacyShortId
     - status
     - firstName
     - lastName
@@ -2413,6 +2415,14 @@ ParticipantsLookupResultItem:
     hruid:
       description: Participant's hruid
       type: string
+    legacyAltPid:
+      description: Participant's legacy altpid, if available
+      type: string
+      nullable: true
+    legacyShortId:
+      description: Participant's legacy short id, if available
+      type: string
+      nullable: true
     status:
       $ref: '../pepper.yml#/components/schemas/EnrollmentStatusType'
     firstName:
