@@ -8,7 +8,7 @@ import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
-import org.elasticsearch.index.query.AbstractQueryBuilder;
+import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 
@@ -21,7 +21,7 @@ public class ElasticSearchQueryUtil {
             RestHighLevelClient esClient,
             String esIndex,
             String[] fetchSource,
-            AbstractQueryBuilder queryBuilder,
+            QueryBuilder queryBuilder,
             int resultMaxCount) throws IOException {
         var searchRequest = prepareSearching(esIndex, fetchSource, queryBuilder, resultMaxCount);
         return esClient.search(searchRequest, RequestOptions.DEFAULT);
@@ -30,12 +30,12 @@ public class ElasticSearchQueryUtil {
     public static SearchRequest prepareSearching(
             String esIndex,
             String[] fetchSource,
-            AbstractQueryBuilder abstractQueryBuilder,
+            QueryBuilder queryBuilder,
             int resultsMaxCount
     ) {
         SearchRequest searchRequest = new SearchRequest(esIndex);
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
-        searchSourceBuilder.query(abstractQueryBuilder);
+        searchSourceBuilder.query(queryBuilder);
         searchSourceBuilder.from(0);
         searchSourceBuilder.size(resultsMaxCount);
         searchSourceBuilder.fetchSource(fetchSource, null);

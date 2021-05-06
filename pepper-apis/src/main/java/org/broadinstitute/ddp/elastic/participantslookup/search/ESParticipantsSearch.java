@@ -1,32 +1,29 @@
 package org.broadinstitute.ddp.elastic.participantslookup.search;
 
-import static org.broadinstitute.ddp.elastic.ElasticSearchQueryUtil.addWildcards;
+import static org.broadinstitute.ddp.elastic.ElasticSearchQueryBuilderUtil.or;
+import static org.broadinstitute.ddp.elastic.ElasticSearchQueryBuilderUtil.orMatch;
+import static org.broadinstitute.ddp.elastic.ElasticSearchQueryBuilderUtil.queryStringQuery;
 import static org.broadinstitute.ddp.elastic.ElasticSearchQueryUtil.getJsonObject;
 import static org.broadinstitute.ddp.elastic.participantslookup.model.ESParticipantsLookupField.INVITATIONS__GUID;
 import static org.broadinstitute.ddp.elastic.participantslookup.model.ESParticipantsLookupField.PROFILE__GUID;
-import static org.broadinstitute.ddp.elastic.participantslookup.model.ESParticipantsLookupField.isQueryFieldForIndex;
 import static org.broadinstitute.ddp.elastic.participantslookup.model.ESParticipantsLookupIndexType.PARTICIPANTS_STRUCTURED;
 
 import java.util.HashMap;
 import java.util.Map;
 
-import org.broadinstitute.ddp.elastic.participantslookup.model.ESParticipantsLookupField;
 import org.broadinstitute.ddp.elastic.participantslookup.model.ESParticipantsStructuredIndexResultRow;
 import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
 import org.broadinstitute.ddp.service.participantslookup.ParticipantsLookupResult;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.RestHighLevelClient;
-import org.elasticsearch.index.query.AbstractQueryBuilder;
-import org.elasticsearch.index.query.BoolQueryBuilder;
-import org.elasticsearch.index.query.Operator;
-import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.index.query.QueryBuilder;
 
 
 /**
  * Search step 2.
  * In index "participants_structured" search participants.
  */
-public class ESParticipantsSearch extends ESSearchBase {
+public class ESParticipantsSearch extends ESSearch {
 
     private final Map<String, String> governedUserToProxy;
     private final ParticipantsLookupResult participantsLookupResult;
@@ -40,36 +37,22 @@ public class ESParticipantsSearch extends ESSearchBase {
         this.participantsLookupResult = participantsLookupResult;
     }
 
-    @Override
-    protected AbstractQueryBuilder createQuery() {
-
-        // find participants by a specified query
-        var queryBuilder = QueryBuilders.queryStringQuery(addWildcards(query)).defaultOperator(Operator.OR);
-        for (var field : ESParticipantsLookupField.values()) {
-            if (isQueryFieldForIndex(field, PARTICIPANTS_STRUCTURED)) {
-                queryBuilder.field(field.getEsField());
-            }
-        }
-
-        // find participants invitations by a specified query
-        var invitationsQueryBuilder = QueryBuilders.queryStringQuery(addWildcards(normalizeInvitationGuid(query)))
-                .field(INVITATIONS__GUID.getEsField());
-
-        BoolQueryBuilder mainQueryBuilder = new BoolQueryBuilder();
-        mainQueryBuilder
-                .should(queryBuilder)
-                .should(invitationsQueryBuilder);
-
+    /**
+     * Create query:
+     * <pre>
+     * - find participants by a specified query;
+     * - find participants invitations by a specified normalized query (removed all '-');
+     * - if proxy users was found in index 'users' then find governedUsers by their GUIDs.
+     * </pre>
+     */
+    public QueryBuilder createQuery() {
+        var queryBuilder = queryLookupFieldsOfIndex(PARTICIPANTS_STRUCTURED, query);
+        var invitationsQueryBuilder = queryStringQuery(INVITATIONS__GUID.getEsField(), normalizeInvitationGuid(query));
         if (governedUserToProxy.size() > 0) {
-            // find all governedUsers for which found proxies in 'users'
-            BoolQueryBuilder governedUsersByGuidQueryBuilder = new BoolQueryBuilder();
-            for (var gu : governedUserToProxy.keySet()) {
-                governedUsersByGuidQueryBuilder.should(QueryBuilders.matchQuery(PROFILE__GUID.getEsField(), gu));
-            }
-            mainQueryBuilder.should(governedUsersByGuidQueryBuilder);
+            return or(queryBuilder, invitationsQueryBuilder, orMatch(PROFILE__GUID.getEsField(), governedUserToProxy.keySet()));
+        } else {
+            return or(queryBuilder, invitationsQueryBuilder);
         }
-
-        return mainQueryBuilder;
     }
 
     /**
@@ -77,8 +60,7 @@ public class ESParticipantsSearch extends ESSearchBase {
      *
      * @param response search response from ElasticSearch
      */
-    @Override
-    protected Map<String, ESParticipantsStructuredIndexResultRow> readResults(SearchResponse response) {
+    public Map<String, ESParticipantsStructuredIndexResultRow> readResults(SearchResponse response) {
         Map<String, ESParticipantsStructuredIndexResultRow> results = new HashMap<>();
 
         for (var hit : response.getHits()) {

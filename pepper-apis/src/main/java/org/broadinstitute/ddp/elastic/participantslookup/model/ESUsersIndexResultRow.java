@@ -4,19 +4,19 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.google.gson.annotations.SerializedName;
-import org.broadinstitute.ddp.json.admin.participantslookup.ParticipantsLookupResultRowBase;
+import org.broadinstitute.ddp.json.admin.participantslookup.ResultRowBase;
 
 /**
  * Result row fetched during reading from ES index "users".
  */
-public class ESUsersIndexResultRow extends ParticipantsLookupResultRowBase {
+public class ESUsersIndexResultRow extends ResultRowBase {
 
     @SerializedName("governedUsers")
     protected List<String> governedUsers = new ArrayList<>();
 
     public ESUsersIndexResultRow() {}
 
-    public ESUsersIndexResultRow(ParticipantsLookupResultRowBase resultRowBase) {
+    public ESUsersIndexResultRow(ResultRowBase resultRowBase) {
         super(resultRowBase);
     }
 

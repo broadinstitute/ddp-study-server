@@ -6,7 +6,7 @@ import static org.broadinstitute.ddp.elastic.participantslookup.model.ESParticip
 
 /**
  * Names of fields in ElasticSearch indices ("users", "participants_structured")
- * by which to search results.<br>
+ * by which to do searching.
  */
 public enum ESParticipantsLookupField {
 
@@ -37,7 +37,7 @@ public enum ESParticipantsLookupField {
         return indexType;
     }
 
-    public static boolean isQueryFieldForIndex(ESParticipantsLookupField field, ESParticipantsLookupIndexType index) {
-        return field.getIndexType() == ALL_TYPES || field.getIndexType() == index;
+    public boolean isQueryFieldForIndex(ESParticipantsLookupIndexType index) {
+        return getIndexType() == ALL_TYPES || getIndexType() == index;
     }
 }
