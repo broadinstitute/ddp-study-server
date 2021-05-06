@@ -15,6 +15,9 @@ import org.broadinstitute.ddp.json.admin.participantslookup.ResultRowBase;
 import org.elasticsearch.client.RestHighLevelClient;
 
 
+/**
+ * Provides merging of data found in index "participants_structured" with proxy data found in index "users".
+ */
 public class ESParticipantsLookupResultsMerger {
 
     private final RestHighLevelClient esClient;

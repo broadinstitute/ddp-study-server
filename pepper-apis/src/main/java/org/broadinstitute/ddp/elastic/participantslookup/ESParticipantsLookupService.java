@@ -84,12 +84,12 @@ public class ESParticipantsLookupService extends ParticipantsLookupService {
                    participantsSearch::readResults
                 );
 
-        ESParticipantsLookupResultsMerger resultsMerger = new ESParticipantsLookupResultsMerger(esClient);
+        var resultsMerger = new ESParticipantsLookupResultsMerger(esClient);
 
         var esResultRows = resultsMerger.mergeResults(
                 proxiesResults, participantsStructuredResults, governedUserToProxy, governedUserToProxyExtraSearch);
 
-        // if any extra-proxies found then fetch their data from index "users", add to proxiesResults, and merge results again
+        // if any extra-proxies found then fetch their data from index "users" and add to esResultRows
         if (governedUserToProxyExtraSearch.size() > 0) {
             resultsMerger.addExtraProxiesToResult(esResultRows, governedUserToProxyExtraSearch, usersEsIndex);
         }
