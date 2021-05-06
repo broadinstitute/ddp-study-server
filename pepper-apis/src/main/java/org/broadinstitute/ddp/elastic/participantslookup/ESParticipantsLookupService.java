@@ -22,23 +22,23 @@ import org.elasticsearch.client.RestHighLevelClient;
  *
  * <p><b>Participants lookup algorithm:</b>
  * <ul>
- *     <li>find in index "users" (detect by current study) a substring 'query' (full-text-search in fields
- *     specified in {@link ESParticipantsLookupField}) and having 'governedUsers' not empty;
+ *     <li>find in index "users" (name of index detected by current study) a substring 'query' (full-text-search in fields
+ *     specified in {@link ESParticipantsLookupField}) and having 'governedUsers' not empty, so search among proxy users only;
  *     collect found rows in Map(Guid, ESUsersIndexResultRow);</li>
- *     <li>add to Map(governedUserGuid, proxyUserGuid) values of 'governedUsers' (key) and 'profile.guid' (value);</li>
- *     <li>find in index "participants_structured" (detect by current study) a substring 'query' (full-text-search in
+ *     <li>add to Map(governedUserGuid, proxyUserGuid) values of 'governedUsers' (key) and proxy's 'profile.guid' (value);</li>
+ *     <li>find in index "participants_structured" (name of index detected by current study) a substring 'query' (full-text-search in
  *     fields specified in {@link ESParticipantsLookupField};</li>
  *     <li>additional query in same index: in invitationId by normalized 'query' - where '-' are removed;</li>
- *     <li>additional query in same index: in guid by all found 'governedUsers';</li>
+ *     <li>additional query in same index: in 'profile.guid' by all 'governedUsers' found in 'users';</li>
  *     <li>all rows found in index "participants_structured" saved to Map(Guid, ESParticipantsStructuredIndexResultRow);</li>
  *     <li>find in proxy users list (found in "users") a proxy of each found "participant": if proxy not found then
  *     add it to Map(String,String) 'governedUserToProxyExtraSearch';</li>
- *     <li>if 'governedUserToProxyExtraSearch' not empty then do extra serach (by list of proxy guids) in 'users' index;</li>
- *     <li>add found extra proxies to the proxies map;</li>
- *     <li>the last step - merge results: go through the Map(Guid, ESParticipantsStructuredIndexResultRow)
- *     add each element (value) to List(ParticipantsLookupResultRow);</li>
+ *     <li>merge results: go through the Map(Guid, ESParticipantsStructuredIndexResultRow)
+ *     add each element (value) to Map(Guid, ParticipantsLookupResultRow);</li>
  *     <li>if processed participant's guid exist in Map(governedUserGuid, proxyUserGuid) then find the corresponding
  *     proxy in Map(Guid, ESUsersIndexResultRow) and set it to 'proxy' element of ParticipantsLookupResultRow.</li>
+ *     <li>if 'governedUserToProxyExtraSearch' not empty then do extra search (by list of proxy guids) in 'users' index;</li>
+ *     <li>add found extra proxies to Map(Guid, ParticipantsLookupResultRow).</li>
  * </ul>
  */
 public class ESParticipantsLookupService extends ParticipantsLookupService {

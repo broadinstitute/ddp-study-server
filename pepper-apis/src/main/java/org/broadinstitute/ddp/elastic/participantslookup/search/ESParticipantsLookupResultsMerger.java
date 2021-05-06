@@ -78,7 +78,7 @@ public class ESParticipantsLookupResultsMerger {
                         proxiesExtraSearch::readResults
                 );
 
-        // add to proxy result found extra proxies (which were not found during search step 1)
+        // add to result found extra proxies (which were not found during search step 1)
         for (var gu : governedUserToProxyExtraSearch.keySet()) {
             results.get(gu).setProxy(proxiesExtraResults.get(governedUserToProxyExtraSearch.get(gu)));
         }

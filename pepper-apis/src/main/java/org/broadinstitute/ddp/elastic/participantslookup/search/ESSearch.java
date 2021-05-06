@@ -19,6 +19,9 @@ import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 
 
+/**
+ * Base class providing participants/users searching in ElasticSearch
+ */
 public abstract class ESSearch<T extends ResultRowBase> {
 
     static final String SOURCE__PROFILE = "profile";
@@ -27,7 +30,7 @@ public abstract class ESSearch<T extends ResultRowBase> {
     static final String SOURCE__INVITATIONS = "invitations";
     static final String SOURCE__PROXIES = "proxies";
 
-    // Field value (to fetch from source 'invitations'
+    // Field value (to fetch from source 'invitations')
     static final String GUID = "guid";
 
 
@@ -63,6 +66,13 @@ public abstract class ESSearch<T extends ResultRowBase> {
         this.esClient = esClient;
     }
 
+    /**
+     * Main class providing searching in ElasticSearch.
+     *
+     * @param queryBuilder method implementing building of {@link QueryBuilder} to be used to search in ElasticSearch
+     * @param resultsReader method implementing search result processing
+     * @return Map with results: key - guid of found record, T - type of record
+     */
     public Map<String, T> search(Supplier<QueryBuilder> queryBuilder, QueryResultsReader resultsReader) throws IOException {
         return resultsReader.readResults(
             ElasticSearchQueryUtil.search(esClient, esIndex, fetchSource, queryBuilder.get(), resultMaxCount)
@@ -93,6 +103,13 @@ public abstract class ESSearch<T extends ResultRowBase> {
         return this;
     }
 
+    /**
+     * Helper method for building {@link QueryBuilder} to search by specified 'query' in list of fields
+     * specified in {@link ESParticipantsLookupField} - taken only fields of a specified 'indexType' (or all index types).
+     * @param indexType type of index
+     * @param query string fragment to do full-text search
+     * @return QueryBuilder - created query
+     */
     public static QueryBuilder queryLookupFieldsOfIndex(ESParticipantsLookupIndexType indexType, String query) {
         var queryBuilder = QueryBuilders.queryStringQuery(addWildcards(query)).defaultOperator(Operator.OR);
         for (var field : ESParticipantsLookupField.values()) {

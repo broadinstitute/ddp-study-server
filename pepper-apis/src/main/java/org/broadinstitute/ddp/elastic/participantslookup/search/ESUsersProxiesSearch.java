@@ -24,9 +24,7 @@ public class ESUsersProxiesSearch extends ESSearch {
 
     protected final Map<String, String> governedUserToProxy;
 
-    public ESUsersProxiesSearch(
-            RestHighLevelClient esClient,
-            Map<String, String> governedUserToProxy) {
+    public ESUsersProxiesSearch(RestHighLevelClient esClient, Map<String, String> governedUserToProxy) {
         super(esClient);
         this.governedUserToProxy = governedUserToProxy;
     }

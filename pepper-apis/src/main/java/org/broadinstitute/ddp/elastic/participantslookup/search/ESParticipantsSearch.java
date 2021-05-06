@@ -28,6 +28,12 @@ public class ESParticipantsSearch extends ESSearch {
     private final Map<String, String> governedUserToProxy;
     private final ParticipantsLookupResult participantsLookupResult;
 
+    /**
+     * Constructor.
+     * @param esClient ElasticSearch client
+     * @param governedUserToProxy map with following data: key=governedUser.guid. value=proxy.guid
+     * @param participantsLookupResult object to store final result (here it needs to set to it detected 'toatlCount'
+     */
     public ESParticipantsSearch(
             RestHighLevelClient esClient,
             Map<String, String> governedUserToProxy,
