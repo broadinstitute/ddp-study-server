@@ -1,24 +1,17 @@
 package org.broadinstitute.ddp.elastic.participantslookup;
 
-import static org.broadinstitute.ddp.elastic.ElasticSearchQueryBuilderUtil.orMatch;
-import static org.broadinstitute.ddp.elastic.participantslookup.model.ESParticipantsLookupField.PROFILE__GUID;
+import static java.util.Arrays.asList;
 import static org.broadinstitute.ddp.elastic.participantslookup.search.ESSearch.PARTICIPANTS_STRUCTURED__INDEX__SOURCE;
 import static org.broadinstitute.ddp.elastic.participantslookup.search.ESSearch.USERS__INDEX__SOURCE;
 
-import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import org.broadinstitute.ddp.elastic.ElasticSearchIndexType;
 import org.broadinstitute.ddp.elastic.participantslookup.model.ESParticipantsLookupField;
-import org.broadinstitute.ddp.elastic.participantslookup.model.ESParticipantsStructuredIndexResultRow;
-import org.broadinstitute.ddp.elastic.participantslookup.model.ESUsersIndexResultRow;
+import org.broadinstitute.ddp.elastic.participantslookup.search.ESParticipantsLookupResultsMerger;
 import org.broadinstitute.ddp.elastic.participantslookup.search.ESParticipantsSearch;
 import org.broadinstitute.ddp.elastic.participantslookup.search.ESUsersProxiesSearch;
-import org.broadinstitute.ddp.json.admin.participantslookup.ParticipantsLookupResultRow;
-import org.broadinstitute.ddp.json.admin.participantslookup.ResultRowBase;
 import org.broadinstitute.ddp.service.participantslookup.ParticipantsLookupResult;
 import org.broadinstitute.ddp.service.participantslookup.ParticipantsLookupService;
 import org.broadinstitute.ddp.util.ElasticsearchServiceUtil;
@@ -91,76 +84,16 @@ public class ESParticipantsLookupService extends ParticipantsLookupService {
                    participantsSearch::readResults
                 );
 
-        var esResultRows = mergeResults(
+        ESParticipantsLookupResultsMerger resultsMerger = new ESParticipantsLookupResultsMerger(esClient);
+
+        var esResultRows = resultsMerger.mergeResults(
                 proxiesResults, participantsStructuredResults, governedUserToProxy, governedUserToProxyExtraSearch);
 
         // if any extra-proxies found then fetch their data from index "users", add to proxiesResults, and merge results again
         if (governedUserToProxyExtraSearch.size() > 0) {
-            esResultRows = reMergeResultsWithExtraFoundProxies(
-                    resultsMaxCount, governedUserToProxy, governedUserToProxyExtraSearch,
-                    usersEsIndex, proxiesResults, participantsStructuredResults);
-
+            resultsMerger.addExtraProxiesToResult(esResultRows, governedUserToProxyExtraSearch, usersEsIndex);
         }
 
-        participantsLookupResult.setResultRows(esResultRows);
-    }
-
-    /**
-     * Merge results found in "users" and "participants_structured".<br>
-     * <b>Algorithm:</b>
-     * <pre>
-     * - go through found "participants":
-     * -- if this participant - a governedUser (child) then try to find in already found proxies (parents)
-     *    the corresponding proxy;
-     * -- if it is found then add proxy data to participant object;
-     * -- if it is not found then add pair governedUserGuid/proxyGuid to a separate map 'governedUserToProxyExtraSearch'
-     *    for proxies extra search in 'users' (and then repeat merge of results with all found proxies).
-     * </pre>
-     */
-    private List<ParticipantsLookupResultRow> mergeResults(
-            Map<String, ESUsersIndexResultRow> usersResults,
-            Map<String, ESParticipantsStructuredIndexResultRow> participantsStructuredResults,
-            Map<String, String> governedUserToProxy,
-            Map<String, String> governedUserToProxyExtraSearch) {
-        List<ParticipantsLookupResultRow> resultList = new ArrayList<>();
-        for (var participant : participantsStructuredResults.values()) {
-            ParticipantsLookupResultRow resultRow = new ParticipantsLookupResultRow(participant);
-            var proxyGuid = governedUserToProxy.get(participant.getGuid());
-            if (proxyGuid != null) {
-                resultRow.setProxy(new ResultRowBase(usersResults.get(proxyGuid)));
-            } else if (participant.getProxies().size() > 0) {
-                governedUserToProxyExtraSearch.put(participant.getGuid(), participant.getProxies().get(0));
-            }
-            resultList.add(resultRow);
-        }
-        return resultList;
-    }
-
-    private List reMergeResultsWithExtraFoundProxies(
-            int resultsMaxCount,
-            Map<String, String> governedUserToProxy,
-            Map<String, String> governedUserToProxyExtraSearch,
-            String usersEsIndex,
-            Map proxiesResults,
-            Map participantsStructuredResults) throws IOException {
-        var proxiesExtraSearch = new ESUsersProxiesSearch(esClient, governedUserToProxyExtraSearch);
-        var proxiesExtraResults = proxiesExtraSearch
-                .setResultMaxCount(resultsMaxCount)
-                .setEsIndex(usersEsIndex)
-                .setFetchSource(USERS__INDEX__SOURCE)
-                .search(
-                    () -> orMatch(PROFILE__GUID.getEsField(), governedUserToProxy.values()),
-                    proxiesExtraSearch::readResults
-                );
-        // add to proxy result found extra proxies (which were not found during search step 1)
-        for (var proxyGuid : proxiesExtraResults.keySet()) {
-            proxiesResults.put(proxyGuid, proxiesExtraResults.get(proxyGuid));
-        }
-        // copy to map governedUser=proxy the found extra proxies
-        governedUserToProxy.putAll(governedUserToProxyExtraSearch);
-        // repeated merge of results
-        var esResultRows = mergeResults(
-                proxiesResults, participantsStructuredResults, governedUserToProxy, governedUserToProxyExtraSearch);
-        return esResultRows;
+        participantsLookupResult.setResultRows(asList(esResultRows.values().toArray()));
     }
 }

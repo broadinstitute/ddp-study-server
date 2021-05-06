@@ -56,7 +56,7 @@ public abstract class ESSearch<T extends ResultRowBase> {
     protected String query;
     protected String esIndex;
     protected String[] fetchSource;
-    protected int resultMaxCount;
+    protected Integer resultMaxCount;
 
 
     public ESSearch(RestHighLevelClient esClient) {
@@ -88,7 +88,7 @@ public abstract class ESSearch<T extends ResultRowBase> {
         return this;
     }
 
-    public ESSearch setResultMaxCount(int resultMaxCount) {
+    public ESSearch setResultMaxCount(Integer resultMaxCount) {
         this.resultMaxCount = resultMaxCount;
         return this;
     }

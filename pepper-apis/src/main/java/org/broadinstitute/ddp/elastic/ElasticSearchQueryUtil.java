@@ -22,7 +22,7 @@ public class ElasticSearchQueryUtil {
             String esIndex,
             String[] fetchSource,
             QueryBuilder queryBuilder,
-            int resultMaxCount) throws IOException {
+            Integer resultMaxCount) throws IOException {
         var searchRequest = prepareSearching(esIndex, fetchSource, queryBuilder, resultMaxCount);
         return esClient.search(searchRequest, RequestOptions.DEFAULT);
     }
@@ -31,13 +31,15 @@ public class ElasticSearchQueryUtil {
             String esIndex,
             String[] fetchSource,
             QueryBuilder queryBuilder,
-            int resultsMaxCount
+            Integer resultsMaxCount
     ) {
         SearchRequest searchRequest = new SearchRequest(esIndex);
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
         searchSourceBuilder.query(queryBuilder);
         searchSourceBuilder.from(0);
-        searchSourceBuilder.size(resultsMaxCount);
+        if (resultsMaxCount != null) {
+            searchSourceBuilder.size(resultsMaxCount);
+        }
         searchSourceBuilder.fetchSource(fetchSource, null);
         searchRequest.source(searchSourceBuilder);
         return searchRequest;
