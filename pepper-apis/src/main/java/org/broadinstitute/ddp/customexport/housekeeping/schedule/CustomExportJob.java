@@ -44,6 +44,7 @@ public class CustomExportJob implements Job {
     private static Config exportCfg;
 
     private static final Logger LOG = LoggerFactory.getLogger(CustomExportJob.class);
+    private static final String EXPORT_SECRET_ID = "custom-export";
 
     private static JobKey getKey() {
         return Keys.Export.CustomExportJob;
@@ -61,8 +62,7 @@ public class CustomExportJob implements Job {
 
         GoogleCredentialUtil.initCredentials(true);
         CustomExportJob.cfg = cfg;
-        exportCfg = SecretUtil.getConfigFromSecret(cfg.getString(ConfigFile.GOOGLE_PROJECT_ID),
-                ConfigFile.CUSTOM_EXPORT_CONFIG_SECRET);
+        exportCfg = SecretUtil.getConfigFromSecret(cfg.getString(ConfigFile.GOOGLE_PROJECT_ID), EXPORT_SECRET_ID);
 
 
         JobDetail job = JobBuilder.newJob(CustomExportJob.class)

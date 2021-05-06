@@ -1,4 +1,4 @@
-package org.broadinstitute.ddp.customexport;
+package org.broadinstitute.ddp.customexport.export;
 
 import java.util.List;
 import java.util.Map;

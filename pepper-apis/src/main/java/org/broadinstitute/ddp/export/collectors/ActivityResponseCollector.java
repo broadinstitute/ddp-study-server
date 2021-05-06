@@ -344,6 +344,7 @@ public class ActivityResponseCollector {
             }
             if (excludedFields != null) {
                 responseHeaders.removeAll(excludedFields);
+                deprecatedHeaders.removeAll(excludedFields);
             }
             if (firstFields != null) {
                 responseHeaders.removeAll(firstFields);

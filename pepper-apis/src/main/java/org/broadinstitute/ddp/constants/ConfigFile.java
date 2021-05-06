@@ -55,9 +55,6 @@ public class ConfigFile {
     // whether to use local filesystem for pdf archiving or not
     public static final String PDF_ARCHIVE_USE_FILESYSTEM = "pdfArchiveUseFilesystem";
 
-    // config file for custom export job
-    public static final String CUSTOM_EXPORT_CONFIG_SECRET = "custom-export";
-
     // the cron schedule for different jobs
     public static final String CHECK_AGE_UP_SCHEDULE = "schedules.checkAgeUp";
     public static final String DRUG_LOADER_SCHEDULE = "schedules.drugLoader";

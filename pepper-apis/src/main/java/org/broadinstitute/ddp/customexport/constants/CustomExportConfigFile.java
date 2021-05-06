@@ -19,11 +19,10 @@ public class CustomExportConfigFile {
     public static final String EMAIL_TO_NAME = "toName";
     public static final String EMAIL_TO_EMAIL = "toEmail";
     public static final String EMAIL_SUCCESS_SUBJECT = "successSubject";
-    public static final String EMAIL_ERROR_SUBJECT = "errorSubject";
     public static final String EMAIL_SKIP_SUBJECT = "skipSubject";
-    public static final String EMAIL_SUCCESS_CONTENT = "successContent";
-    public static final String EMAIL_ERROR_CONTENT = "errorContent";
-    public static final String EMAIL_SKIP_CONTENT = "skipContent";
+    public static final String EMAIL_ERROR_SUBJECT = "errorSubject";
+    public static final String EMAIL_SUCCESS_TEMPLATE_ID = "successTemplateId";
+    public static final String EMAIL_SKIP_TEMPLATE_ID = "skipTemplateId";
+    public static final String EMAIL_ERROR_TEMPLATE_ID = "errorTemplateId";
     public static final String EMAIL_SENDGRID_TOKEN = "sendGridToken";
-
 }

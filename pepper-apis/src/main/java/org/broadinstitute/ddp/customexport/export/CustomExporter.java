@@ -16,7 +16,6 @@ import java.util.stream.Collectors;
 import com.google.gson.Gson;
 import com.opencsv.CSVWriter;
 import com.typesafe.config.Config;
-import org.broadinstitute.ddp.customexport.CustomActivityExtract;
 import org.broadinstitute.ddp.customexport.collectors.ComplexChildResponseCollector;
 import org.broadinstitute.ddp.customexport.collectors.ParentActivityResponseCollector;
 import org.broadinstitute.ddp.customexport.constants.CustomExportConfigFile;

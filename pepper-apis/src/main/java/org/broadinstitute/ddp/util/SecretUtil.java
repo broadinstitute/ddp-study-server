@@ -19,7 +19,6 @@ public class SecretUtil {
             SecretVersionName versionName = SecretVersionName.of(googleProjectId, secretName, "latest");
             AccessSecretVersionResponse response = client.accessSecretVersion(versionName);
             String secret = response.getPayload().getData().toStringUtf8();
-            secret = secret.replaceAll("\n", "");
             JsonElement elem = new JsonParser().parse(secret);
             return ConfigFactory.parseString(new Gson().toJson(elem));
 

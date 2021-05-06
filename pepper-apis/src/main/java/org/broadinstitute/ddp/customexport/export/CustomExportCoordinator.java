@@ -15,28 +15,23 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayDeque;
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
-import java.util.Optional;
-import java.util.Set;
+import java.util.stream.Collectors;
 
 import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.Bucket;
-import com.sendgrid.helpers.mail.Mail;
-import com.sendgrid.helpers.mail.objects.Content;
-import com.sendgrid.helpers.mail.objects.Email;
-import com.sendgrid.helpers.mail.objects.Personalization;
 import com.typesafe.config.Config;
-import org.broadinstitute.ddp.client.ApiResult;
-import org.broadinstitute.ddp.client.SendGridClient;
-import org.broadinstitute.ddp.customexport.CustomActivityExtract;
 import org.broadinstitute.ddp.customexport.constants.CustomExportConfigFile;
 import org.broadinstitute.ddp.customexport.db.dao.CustomExportDao;
+import org.broadinstitute.ddp.customexport.db.dto.CompletedUserDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.study.Participant;
+import org.broadinstitute.ddp.util.SendGridMailUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,6 +45,7 @@ public class CustomExportCoordinator {
     private final String customExportStatus;
     private final Config exportCfg;
     private String fullFileName;
+    private long exportLastCompleted;
 
     public CustomExportCoordinator(Config exportCfg) {
         this.exportCfg = exportCfg;
@@ -64,10 +60,6 @@ public class CustomExportCoordinator {
     }
 
     public boolean exportCustom(StudyDto customDto) {
-        SendGridClient client =
-                new SendGridClient(exportCfg.getConfig(CustomExportConfigFile.EMAIL)
-                        .getString(CustomExportConfigFile.EMAIL_SENDGRID_TOKEN));
-
         //Find out whether there is anything to export
         boolean needExport = withAPIsTxn(handle -> {
             CustomExportDao customExportDao = handle.attach(CustomExportDao.class);
@@ -77,17 +69,7 @@ public class CustomExportCoordinator {
 
         if (!needExport) {
             LOG.info("Skipping custom export: nothing to export");
-            ApiResult res = client.sendMail(createNotificationEmail(false, true));
-            if (res.hasThrown()) {
-                LOG.error("Sending notification email for study {} with skipped custom export failed", customDto.getGuid(),
-                        res.getThrown());
-            } else if (res.hasError()) {
-                LOG.error("Sending notification email for study {} with skipped custom export failed", customDto.getGuid(),
-                        res.getError());
-            } else if (res.hasFailure()) {
-                LOG.error("Sending notification email for study {} with skipped custom export failed with status code {}",
-                        customDto.getGuid(), res.getStatusCode());
-            }
+            sendNotificationEmail(false, true);
             return true;
         }
 
@@ -101,95 +83,40 @@ public class CustomExportCoordinator {
                 });
 
         boolean runSuccess = runCsvExports(customDto, activityExtracts);
-
-        if (!runSuccess) {
-            ApiResult res = client.sendMail(createNotificationEmail(true, false));
-            if (res.hasThrown()) {
-                LOG.error("Sending notification email for study {} with failed custom export failed", customDto.getGuid(),
-                        res.getThrown());
-            } else if (res.hasError()) {
-                LOG.error("Sending notification email for study {} with failed custom export failed", customDto.getGuid(),
-                        res.getError());
-            } else if (res.hasFailure()) {
-                LOG.error("Sending notification email for study {} with failed custom export failed with status code {}",
-                        customDto.getGuid(), res.getStatusCode());
-            }
-            return false;
-        }
-
-        ApiResult res = client.sendMail(createNotificationEmail(false, false));
-        if (res.hasThrown()) {
-            LOG.error("Sending notification email for study {} with successful custom export failed", customDto.getGuid(), res.getThrown());
-            return false;
-        } else if (res.hasError()) {
-            LOG.error("Sending notification email for study {} with successful custom export failed", customDto.getGuid(),
-                    res.getError());
-        } else if (res.hasFailure()) {
-            LOG.error("Sending notification email for study {} with successful custom export failed with status code {}",
-                    customDto.getGuid(), res.getStatusCode());
-        }
-
-        return true;
+        sendNotificationEmail(!runSuccess, false);
+        return runSuccess;
     }
 
-    private Mail createNotificationEmail(boolean isFailure, boolean isSkip) {
+    private void sendNotificationEmail(boolean isFailure, boolean isSkip) {
         Config cfg = exportCfg.getConfig(CustomExportConfigFile.EMAIL);
-        String subject;
-        Email fromEmail = new Email(cfg.getString(CustomExportConfigFile.EMAIL_FROM_EMAIL),
-                cfg.getString(CustomExportConfigFile.EMAIL_FROM_NAME));
-        Email toEmail = new Email(cfg.getString(CustomExportConfigFile.EMAIL_TO_EMAIL),
-                cfg.getString(CustomExportConfigFile.EMAIL_TO_NAME));
 
-        List<Content> content = new ArrayList<>();
-        String fileUrl = "https://console.cloud.google.com/storage/browser/" + exportCfg.getString(CustomExportConfigFile.BUCKET_NAME)
-                + "/" + exportCfg.getString(CustomExportConfigFile.FILE_PATH);
+        String fromName = cfg.getString(CustomExportConfigFile.EMAIL_FROM_NAME);
+        String fromEmailAddress = cfg.getString(CustomExportConfigFile.EMAIL_FROM_EMAIL);
+        String toName = cfg.getString(CustomExportConfigFile.EMAIL_TO_NAME);
+        String toEmailAddress = cfg.getString(CustomExportConfigFile.EMAIL_TO_EMAIL);
+        String sendGridApiKey = cfg.getString(CustomExportConfigFile.EMAIL_SENDGRID_TOKEN);
+        String templateId;
+
+        Map<String, String> templateVarNameToValue = new HashMap<>();
+        String subject;
 
         if (isFailure) {
             subject = cfg.getString(CustomExportConfigFile.EMAIL_ERROR_SUBJECT);
-            content.add(new Content("text/plain", cfg.getString(CustomExportConfigFile.EMAIL_ERROR_CONTENT)));
+            templateId = cfg.getString(CustomExportConfigFile.EMAIL_ERROR_TEMPLATE_ID);
         } else if (isSkip) {
             subject = cfg.getString(CustomExportConfigFile.EMAIL_SKIP_SUBJECT);
-            content.add(new Content("text/plain", cfg.getString(CustomExportConfigFile.EMAIL_SKIP_CONTENT)));
+            templateId = cfg.getString(CustomExportConfigFile.EMAIL_SKIP_TEMPLATE_ID);
         } else {
             subject = cfg.getString(CustomExportConfigFile.EMAIL_SUCCESS_SUBJECT);
-            addSuccessContent(content, cfg.getString(CustomExportConfigFile.EMAIL_SUCCESS_CONTENT), fileUrl);
+            templateId = cfg.getString(CustomExportConfigFile.EMAIL_SUCCESS_TEMPLATE_ID);
+            String fileUrl = "https://console.cloud.google.com/storage/browser/" + exportCfg.getString(CustomExportConfigFile.BUCKET_NAME)
+                    + "/" + exportCfg.getString(CustomExportConfigFile.FILE_PATH);
+            templateVarNameToValue.put("bucketLink", fileUrl);
         }
 
-        return createMail(subject, fromEmail, toEmail, content, fileUrl);
+        SendGridMailUtil.sendDynamicEmailMessage(fromName, fromEmailAddress, toName, toEmailAddress,  subject, templateId,
+                templateVarNameToValue, sendGridApiKey);
     }
-
-    private void addSuccessContent(List<Content> content, String fullContent, String fileUrl) {
-        Content linkContent = new Content("text/html", "<a href=\"" + fileUrl + "\">" + fileUrl + "</a>");
-        if (!fullContent.contains("{{bucketLink}}")) {
-            content.add(new Content("text/plain", fullContent));
-            content.add(linkContent);
-        } else {
-            int startLinkIndex = fullContent.indexOf("{{bucketLink}}");
-            int endLinkIndex = startLinkIndex + "{{bucketLink}}".length();
-            if (startLinkIndex > 0) {
-                content.add(new Content("text/plain", fullContent.substring(0, startLinkIndex)));
-            }
-            content.add(linkContent);
-            if (endLinkIndex < fullContent.length()) {
-                content.add(new Content("text/plain", fullContent.substring(endLinkIndex)));
-            }
-        }
-    }
-
-    private Mail createMail(String subject, Email fromEmail, Email toEmail, List<Content> content, String fileUrl) {
-        Mail mail = new Mail();
-        mail.setFrom(fromEmail);
-        mail.setSubject(subject);
-        Personalization p = new Personalization();
-        p.addTo(toEmail);
-        mail.addPersonalization(p);
-        p.addSubstitution("{{bucketLink}}", "<a href=\"" + fileUrl + "\">" + fileUrl + "</a>");
-        for (Content c : content) {
-            mail.addContent(c);
-        }
-        return mail;
-    }
-
 
     private boolean runCsvExports(StudyDto studyDto, List<CustomActivityExtract> activities) {
         String studyGuid = studyDto.getGuid();
@@ -204,10 +131,7 @@ public class CustomExportCoordinator {
                 exportStudyToGoogleBucket(studyDto, exporter, csvBucket, activities, iterator);
 
                 // For custom export, keep track of the most recent survey completion time so we know where to start for next export
-                Optional<Long> optionalLastCompletionTime = customExportDao.getLastCustomCompletionDate(
-                        studyDto.getId(), customExportStatus, customActivity);
-                long lastCompletionTime = optionalLastCompletionTime.orElse((long)0);
-                customExportDao.updateLastCompleted(Instant.ofEpochMilli(lastCompletionTime), studyDto.getId());
+                customExportDao.updateLastCompleted(exportLastCompleted, studyDto.getId());
 
                 return true;
             });
@@ -308,9 +232,14 @@ public class CustomExportCoordinator {
                 int offset = fetched;
                 currentBatch = withAPIsTxn(handle -> {
                     CustomExportDao export = handle.attach(CustomExportDao.class);
-                    Set<Long> userIds = export.findCustomUserIdsToExport(studyDto.getId(), customExportStatus, customLastCompletion,
+                    List<CompletedUserDto>
+                            userIds = export.findCustomUserIdsToExport(studyDto.getId(), customExportStatus, customLastCompletion,
                             customActivity, batchSize, offset);
-                    List<Participant> extract = CustomExporter.extractParticipantDataSetByIds(handle, studyDto, userIds);
+                    if (offset == 0) {
+                        exportLastCompleted = userIds.get(0).getCompletedTime();
+                    }
+                    List<Participant> extract = CustomExporter.extractParticipantDataSetByIds(handle, studyDto,
+                            userIds.stream().map(CompletedUserDto::getUserId).collect(Collectors.toSet()));
                     return new ArrayDeque<>(extract);
                 });
                 fetched += currentBatch.size();

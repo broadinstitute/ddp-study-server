@@ -1,10 +1,10 @@
 package org.broadinstitute.ddp.customexport.db.dao;
 
 import java.time.Instant;
-import java.util.Optional;
-import java.util.Set;
+import java.util.List;
 
 import org.broadinstitute.ddp.TxnAwareBaseTest;
+import org.broadinstitute.ddp.customexport.db.dto.CompletedUserDto;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceStatusDao;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
@@ -43,7 +43,7 @@ public class CustomExportDaoTest extends TxnAwareBaseTest {
         TransactionWrapper.useTxn(
                 handle -> {
                     CustomExportDao dao = handle.attach(CustomExportDao.class);
-                    Set<Long> ids = dao.findCustomUserIdsToExport(
+                    List<CompletedUserDto> ids = dao.findCustomUserIdsToExport(
                             testData.getStudyId(), "COMPLETE",
                             Instant.now().toEpochMilli(), instanceDto.getActivityCode(), 50, 0);
 
@@ -81,28 +81,6 @@ public class CustomExportDaoTest extends TxnAwareBaseTest {
                     boolean needExport = dao.needCustomExport(testData.getStudyId(), "COMPLETE",
                             Instant.now().toEpochMilli(), instanceDto.getActivityCode());
                     Assert.assertFalse(needExport);
-                    handle.rollback();
-                }
-        );
-    }
-
-    @Test
-    public void testGetCustomLastCompletionDate() {
-        TransactionWrapper.useTxn(
-                handle -> {
-                    CustomExportDao dao = handle.attach(CustomExportDao.class);
-                    Optional<Long> date = dao.getLastCustomCompletionDate(
-                            testData.getStudyId(), "COMPLETE", instanceDto.getActivityCode());
-                    Assert.assertTrue(date.isEmpty());
-
-                    long time = Instant.now().toEpochMilli();
-                    handle.attach(ActivityInstanceStatusDao.class).insertStatus(instanceDto.getId(), InstanceStatusType.COMPLETE, time,
-                            testData.getTestingUser().getUserGuid());
-                    date = dao.getLastCustomCompletionDate(testData.getStudyId(), "COMPLETE", instanceDto.getActivityCode());
-                    Assert.assertTrue(date.isPresent());
-                    long realDate = date.get();
-                    Assert.assertEquals(time, realDate);
-
                     handle.rollback();
                 }
         );
