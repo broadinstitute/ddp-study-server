@@ -235,8 +235,8 @@ public class CustomExportCoordinator {
                     List<CompletedUserDto>
                             userIds = export.findCustomUserIdsToExport(studyDto.getId(), customExportStatus, customLastCompletion,
                             customActivity, batchSize, offset);
-                    if (offset == 0) {
-                        exportLastCompleted = userIds.get(0).getCompletedTime();
+                    if (!userIds.isEmpty()) {
+                        exportLastCompleted = userIds.get(userIds.size() - 1).getCompletedTime();
                     }
                     List<Participant> extract = CustomExporter.extractParticipantDataSetByIds(handle, studyDto,
                             userIds.stream().map(CompletedUserDto::getUserId).collect(Collectors.toSet()));

@@ -73,7 +73,7 @@ public interface CustomExportDao extends SqlObject {
             + "JOIN activity_instance_status_type AS aist ON aist.activity_instance_status_type_id = ais.activity_instance_status_type_id "
             + "WHERE usen.study_id = :studyId AND aist.activity_instance_status_type_code=:statusType "
             + "AND aci.first_completed_at>:lastCompletion AND usen.valid_to IS NULL AND sa.study_activity_code=:activityCode "
-            + "GROUP BY usen.user_id, aci.first_completed_at ORDER BY MAX(aci.first_completed_at) DESC LIMIT :limit OFFSET :offset")
+            + "GROUP BY usen.user_id, aci.first_completed_at ORDER BY MAX(aci.first_completed_at) ASC LIMIT :limit OFFSET :offset")
     @RegisterConstructorMapper(CompletedUserDto.class)
     List<CompletedUserDto> findCustomUserIdsToExport(@Bind("studyId") long studyId,
                                                      @Bind("statusType") String statusType,
