@@ -1,75 +1,68 @@
 package org.broadinstitute.ddp.json.admin.participantslookup;
 
 import com.google.gson.annotations.SerializedName;
+import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
 
 /**
- * Base set of data to be fetched during participants lookup.
+ * One participant lookup result data
  */
-public class ParticipantsLookupResultRowBase {
+public abstract class ParticipantsLookupResultRowBase extends ResultRowBase {
 
-    @SerializedName("guid")
-    protected String guid;
+    @SerializedName("invitationId")
+    protected String invitationId;
 
-    @SerializedName("hruid")
-    protected String hruid;
+    @SerializedName("status")
+    protected EnrollmentStatusType status;
 
-    @SerializedName("firstName")
-    protected String firstName;
+    @SerializedName("legacyAltPid")
+    protected String legacyAltPid;
 
-    @SerializedName("lastName")
-    protected String lastName;
+    @SerializedName("legacyShortId")
+    protected String legacyShortId;
 
-    @SerializedName("email")
-    protected String email;
-
-
-    public ParticipantsLookupResultRowBase() {}
-
-    public ParticipantsLookupResultRowBase(ParticipantsLookupResultRowBase resultRowBase) {
-        this.guid = resultRowBase.getGuid();
-        this.hruid = resultRowBase.getHruid();
-        this.firstName = resultRowBase.getFirstName();
-        this.lastName = resultRowBase.getLastName();
-        this.email = resultRowBase.getEmail();
+    public ParticipantsLookupResultRowBase() {
     }
 
-    public String getGuid() {
-        return guid;
+    public ParticipantsLookupResultRowBase(ResultRowBase resultRowBase) {
+        super(resultRowBase);
+        if (resultRowBase instanceof ParticipantsLookupResultRowBase) {
+            ParticipantsLookupResultRowBase resultRow = (ParticipantsLookupResultRowBase)resultRowBase;
+            invitationId = resultRow.invitationId;
+            status = resultRow.status;
+            legacyAltPid = resultRow.legacyAltPid;
+            legacyShortId = resultRow.legacyShortId;
+        }
     }
 
-    public void setGuid(String guid) {
-        this.guid = guid;
+    public String getInvitationId() {
+        return invitationId;
     }
 
-    public String getHruid() {
-        return hruid;
+    public void setInvitationId(String invitationId) {
+        this.invitationId = invitationId;
     }
 
-    public void setHruid(String hruid) {
-        this.hruid = hruid;
+    public EnrollmentStatusType getStatus() {
+        return status;
     }
 
-    public String getFirstName() {
-        return firstName;
+    public void setStatus(EnrollmentStatusType status) {
+        this.status = status;
     }
 
-    public void setFirstName(String firstName) {
-        this.firstName = firstName;
+    public String getLegacyAltPid() {
+        return legacyAltPid;
     }
 
-    public String getLastName() {
-        return lastName;
+    public void setLegacyAltPid(String legacyAltPid) {
+        this.legacyAltPid = legacyAltPid;
     }
 
-    public void setLastName(String lastName) {
-        this.lastName = lastName;
+    public String getLegacyShortId() {
+        return legacyShortId;
     }
 
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
+    public void setLegacyShortId(String legacyShortId) {
+        this.legacyShortId = legacyShortId;
     }
 }
