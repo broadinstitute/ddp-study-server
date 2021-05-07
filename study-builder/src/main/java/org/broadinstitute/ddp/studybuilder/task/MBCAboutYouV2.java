@@ -97,33 +97,32 @@ public class MBCAboutYouV2 implements CustomTask {
         QuestionDao questionDao = handle.attach(QuestionDao.class);
 
         QuestionDto currRaceDto = jdbiQuestion.findLatestDtoByStudyIdAndQuestionStableId(studyId, "RACE").get();
-        long terminatedRevId = jdbiRevision.copyAndTerminate(currRaceDto.getRevisionId(), meta);
         long currRaceBlockId = helper.findQuestionBlockId(currRaceDto.getId());
         SectionBlockMembershipDto currRaceSectionDto = jdbiFormSectionBlock.getActiveMembershipByBlockId(currRaceBlockId).get();
-        helper.updateFormSectionBlockRevision(currRaceBlockId, terminatedRevId);
+        long terminatedRevId = jdbiRevision.copyAndTerminate(currRaceSectionDto.getRevisionId(), meta);
+        helper.updateFormSectionBlockRevision(currRaceSectionDto.getId(), terminatedRevId);
 
         //disable HISPANIC question
         QuestionDto currHispanicDto = jdbiQuestion.findLatestDtoByStudyIdAndQuestionStableId(studyId, "HISPANIC").get();
         long currHispanicBlockId = helper.findQuestionBlockId(currHispanicDto.getId());
         questionDao.disablePicklistQuestion(currHispanicDto.getId(), meta);
-        helper.updateFormSectionBlockRevision(currHispanicBlockId, terminatedRevId);
+        SectionBlockMembershipDto currHispanicSectionDto = jdbiFormSectionBlock.getActiveMembershipByBlockId(currHispanicBlockId).get();
+        helper.updateFormSectionBlockRevision(currHispanicSectionDto.getId(), terminatedRevId);
 
         //add new RACE (self) question
         SectionBlockDao sectionBlockDao = handle.attach(SectionBlockDao.class);
         FormBlockDef raceDef = gson.fromJson(ConfigUtil.toJson(dataCfg.getConfig("raceQuestion")), FormBlockDef.class);
-        long newV2RevId = jdbiRevision.insertStart(timestamp.toEpochMilli(), adminUser.getId(), "MBC aboutyou version#2");
+        long newV2RevId = activityVersionDto.getRevId();
         sectionBlockDao.insertBlockForSection(activityId, currRaceSectionDto.getSectionId(),
                 currRaceSectionDto.getDisplayOrder(), raceDef, newV2RevId);
 
         //add new GENDER_IDENTITY question
         FormBlockDef genderDef = gson.fromJson(ConfigUtil.toJson(dataCfg.getConfig("genderIdentityQuestion")), FormBlockDef.class);
-        //long newV2RevId = jdbiRevision.insertStart(timestamp.toEpochMilli(), adminUser.getId(), "MBC aboutyou version#2 RACE");
         sectionBlockDao.insertBlockForSection(activityId, currRaceSectionDto.getSectionId(),
                 currRaceSectionDto.getDisplayOrder() + 2, genderDef, newV2RevId);
 
         //add new ASSIGNED_SEX question
         FormBlockDef assignedSexDef = gson.fromJson(ConfigUtil.toJson(dataCfg.getConfig("assignedSexQuestion")), FormBlockDef.class);
-        //long newV2RevId = jdbiRevision.insertStart(timestamp.toEpochMilli(), adminUser.getId(), "postconsent version#2 RACE");
         sectionBlockDao.insertBlockForSection(activityId, currRaceSectionDto.getSectionId(),
                 currRaceSectionDto.getDisplayOrder() + 4, assignedSexDef, newV2RevId);
     }
@@ -132,8 +131,8 @@ public class MBCAboutYouV2 implements CustomTask {
         @SqlQuery("select block_id from block__question where question_id = :questionId")
         int findQuestionBlockId(@Bind("questionId") long questionId);
 
-        @SqlUpdate("update form_section__block set revision_id = :revisionId where block_id = :blockId")
-        int updateFormSectionBlockRevision(@Bind("blockId") long blockId, @Bind("revisionId") long revisionId);
+        @SqlUpdate("update form_section__block set revision_id = :revisionId where form_section__block_id = :formSectionBlockId")
+        int updateFormSectionBlockRevision(@Bind("formSectionBlockId") long formSectionBlockId, @Bind("revisionId") long revisionId);
     }
 
 }
