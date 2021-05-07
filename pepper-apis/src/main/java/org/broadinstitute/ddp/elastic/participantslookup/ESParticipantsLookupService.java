@@ -1,8 +1,12 @@
 package org.broadinstitute.ddp.elastic.participantslookup;
 
+import static com.google.common.collect.ImmutableList.of;
 import static java.util.Arrays.asList;
+import static org.broadinstitute.ddp.elastic.ElasticSearchIndexType.PARTICIPANTS_STRUCTURED;
+import static org.broadinstitute.ddp.elastic.ElasticSearchIndexType.USERS;
 import static org.broadinstitute.ddp.elastic.participantslookup.search.ESSearch.PARTICIPANTS_STRUCTURED__INDEX__SOURCE;
 import static org.broadinstitute.ddp.elastic.participantslookup.search.ESSearch.USERS__INDEX__SOURCE;
+import static org.broadinstitute.ddp.util.ElasticsearchServiceUtil.detectEsIndices;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -14,7 +18,6 @@ import org.broadinstitute.ddp.elastic.participantslookup.search.ESParticipantsSe
 import org.broadinstitute.ddp.elastic.participantslookup.search.ESUsersProxiesSearch;
 import org.broadinstitute.ddp.service.participantslookup.ParticipantsLookupResult;
 import org.broadinstitute.ddp.service.participantslookup.ParticipantsLookupService;
-import org.broadinstitute.ddp.util.ElasticsearchServiceUtil;
 import org.elasticsearch.client.RestHighLevelClient;
 
 /**
@@ -59,8 +62,9 @@ public class ESParticipantsLookupService extends ParticipantsLookupService {
         Map<String, String> governedUserToProxy = new HashMap<>();
         Map<String, String> governedUserToProxyExtraSearch = new HashMap<>();
 
-        var usersEsIndex = ElasticsearchServiceUtil.detectEsIndex(studyGuid, ElasticSearchIndexType.USERS);
-        var participantsEsIndex = ElasticsearchServiceUtil.detectEsIndex(studyGuid, ElasticSearchIndexType.PARTICIPANTS_STRUCTURED);
+        Map<ElasticSearchIndexType, String> indices = detectEsIndices(studyGuid, of(USERS, PARTICIPANTS_STRUCTURED));
+        var usersEsIndex = indices.get(USERS);
+        var participantsEsIndex = indices.get(PARTICIPANTS_STRUCTURED);
 
         var proxiesSearch = new ESUsersProxiesSearch(esClient, governedUserToProxy);
         var proxiesResults = proxiesSearch

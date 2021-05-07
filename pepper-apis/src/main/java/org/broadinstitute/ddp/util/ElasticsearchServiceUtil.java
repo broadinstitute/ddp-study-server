@@ -1,9 +1,12 @@
 package org.broadinstitute.ddp.util;
 
+import static com.google.common.collect.ImmutableList.of;
+
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -17,7 +20,7 @@ import org.apache.http.impl.NoConnectionReuseStrategy;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.db.TransactionWrapper;
-import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
+import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudyCached;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.elastic.ElasticSearchIndexType;
 import org.elasticsearch.client.RestClient;
@@ -30,25 +33,38 @@ import org.slf4j.LoggerFactory;
 public final class ElasticsearchServiceUtil {
 
     private static final Logger LOG = LoggerFactory.getLogger(ElasticsearchServiceUtil.class);
+
     private static final Map<Integer, RestHighLevelClient> ES_CLIENTS = new HashMap<>();
 
-    public static String detectEsIndex(String studyGuid, ElasticSearchIndexType elasticSearchIndexType) {
+
+    public static Map<ElasticSearchIndexType, String> detectEsIndices(
+            String studyGuid, List<ElasticSearchIndexType> elasticSearchIndexTypes) {
         return TransactionWrapper.withTxn(handle -> {
-            StudyDto studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(studyGuid);
-            return getIndexForStudy(handle, studyDto, elasticSearchIndexType);
+            StudyDto studyDto = new JdbiUmbrellaStudyCached(handle).findByStudyGuid(studyGuid);
+            return getIndicesForStudy(handle, studyDto, elasticSearchIndexTypes);
         });
     }
 
     public static String getIndexForStudy(Handle handle, StudyDto studyDto, ElasticSearchIndexType elasticSearchIndexType) {
-        String type = elasticSearchIndexType.getElasticSearchCompatibleLabel();
-        String umbrella = handle.attach(JdbiUmbrellaStudy.class).findUmbrellaGuidForStudyId(studyDto.getId());
-        String studyGuid = studyDto.getGuid().toLowerCase();
+        return getIndicesForStudy(handle, studyDto, of(elasticSearchIndexType)).values().iterator().next();
+    }
 
-        if (StringUtils.isEmpty(umbrella) || StringUtils.isEmpty(studyGuid)) {
-            throw new IllegalStateException("Could not create ES index for study with id: " + studyDto.getId());
+    public static Map<ElasticSearchIndexType, String> getIndicesForStudy(
+            Handle handle, StudyDto studyDto, List<ElasticSearchIndexType> elasticSearchIndexTypes) {
+        Map<ElasticSearchIndexType, String> indices = new HashMap<>();
+
+        for (var elasticSearchIndexType : elasticSearchIndexTypes) {
+            String type = elasticSearchIndexType.getElasticSearchCompatibleLabel();
+            String umbrella = new JdbiUmbrellaStudyCached(handle).findUmbrellaGuidForStudyId(studyDto.getId());
+            String studyGuid = studyDto.getGuid().toLowerCase();
+
+            if (StringUtils.isEmpty(umbrella) || StringUtils.isEmpty(studyGuid)) {
+                throw new IllegalStateException("Could not create ES index for study with id: " + studyDto.getId());
+            }
+            indices.put(elasticSearchIndexType, String.join(".", type, umbrella, studyGuid));
         }
 
-        return String.join(".", type, umbrella, studyGuid);
+        return indices;
     }
 
     public static synchronized RestHighLevelClient getElasticsearchClient(Config cfg) throws MalformedURLException {
