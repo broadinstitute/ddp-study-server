@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="charlotte" id="20210414-custom-export-last-completed">
+        <createTable tableName="custom_export">
+            <column name="study_id" type="bigint">
+                <constraints primaryKey="true" primaryKeyName="study_id_pk"
+                             nullable="false" references="umbrella_study(umbrella_study_id)"
+                             foreignKeyName="custom_export_umbrella_study_id_fk"/>
+            </column>
+            <column name="custom_export_last_completed" type="datetime(6)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+</databaseChangeLog>

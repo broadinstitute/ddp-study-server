@@ -23,19 +23,34 @@ public class SendGridMailUtil {
     public static void sendEmailMessage(String fromName, String fromEmailAddress, String toName, String toEmailAddress, String subject,
                                         String sendGridTemplateId, Map<String, String> templateVarNameToValue, String sendGridApiKey) {
         Mail messageToSend = buildEmailMessage(fromName, fromEmailAddress, toName, toEmailAddress, subject, sendGridTemplateId,
-                templateVarNameToValue);
+                templateVarNameToValue, false);
+
+        submitMailMessage(messageToSend, sendGridApiKey);
+    }
+
+    public static void sendDynamicEmailMessage(String fromName, String fromEmailAddress, String toName, String toEmailAddress,
+                                              String subject, String sendGridTemplateId, Map<String, String> templateVarNameToValue,
+                                               String sendGridApiKey) {
+        Mail messageToSend = buildEmailMessage(fromName, fromEmailAddress, toName, toEmailAddress, subject, sendGridTemplateId,
+                templateVarNameToValue, true);
 
         submitMailMessage(messageToSend, sendGridApiKey);
     }
 
     private static Mail buildEmailMessage(String fromName, String fromEmailAddress, String toName, String toEmailAddress, String subject,
-                                          String sendGridTemplateId, Map<String, String> templateVarNameToValue) {
+                                          String sendGridTemplateId, Map<String, String> templateVarNameToValue,
+                                          boolean dynamicSubstitution) {
         Email fromEmail = new Email(fromEmailAddress, fromName);
         Email toEmail = new Email(toEmailAddress, toName);
 
         Personalization sendGridPersonalization = new Personalization();
-        templateVarNameToValue.forEach(sendGridPersonalization::addSubstitution);
 
+        if (dynamicSubstitution) {
+            templateVarNameToValue.forEach(sendGridPersonalization::addDynamicTemplateData);
+
+        } else {
+            templateVarNameToValue.forEach(sendGridPersonalization::addSubstitution);
+        }
 
         Mail mail = new Mail();
         mail.setFrom(fromEmail);

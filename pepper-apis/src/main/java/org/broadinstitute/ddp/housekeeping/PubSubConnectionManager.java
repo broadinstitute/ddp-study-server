@@ -226,7 +226,7 @@ public class PubSubConnectionManager {
                                                + "(non-emulator) implementation");
         }
         String hostport = System.getenv("PUBSUB_EMULATOR_HOST");
-        return ManagedChannelBuilder.forTarget(hostport).usePlaintext(true).build();
+        return ManagedChannelBuilder.forTarget(hostport).usePlaintext().build();
     }
 
     /**

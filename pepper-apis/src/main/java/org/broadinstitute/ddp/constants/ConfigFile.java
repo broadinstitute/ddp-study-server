@@ -62,6 +62,7 @@ public class ConfigFile {
     public static final String DB_BACKUP_SCHEDULE = "schedules.dbBackup";
     public static final String DB_BACKUP_CHECK_SCHEDULE = "schedules.dbBackupCheck";
     public static final String STUDY_EXPORT_SCHEDULE = "schedules.studyExport";
+    public static final String CUSTOM_EXPORT_SCHEDULE = "schedules.customExport";
     public static final String FILE_UPLOAD_CLEANUP_SCHEDULE = "schedules.fileUploadCleanup";
     public static final String TEMP_USER_CLEANUP_SCHEDULE = "schedules.tempUserCleanup";
 
