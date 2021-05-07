@@ -2,70 +2,53 @@ package org.broadinstitute.ddp.route;
 
 import static io.restassured.RestAssured.given;
 import static java.util.Collections.emptyList;
+import static org.broadinstitute.ddp.constants.RouteConstants.API.ADMIN_STUDY_PARTICIPANTS_LOOKUP;
+import static org.broadinstitute.ddp.constants.RouteConstants.PathParam.STUDY_GUID;
 import static org.hamcrest.Matchers.equalTo;
 
 import java.util.ArrayList;
 
 import io.restassured.http.ContentType;
 import io.restassured.mapper.ObjectMapperType;
-import org.broadinstitute.ddp.TxnAwareBaseTest;
-import org.broadinstitute.ddp.constants.RouteConstants;
-import org.broadinstitute.ddp.db.TransactionWrapper;
-import org.broadinstitute.ddp.db.dao.AuthDao;
-import org.broadinstitute.ddp.db.dao.JdbiClient;
-import org.broadinstitute.ddp.filter.StudyAdminAuthFilter;
-import org.broadinstitute.ddp.filter.TokenConverterFilter;
+import org.broadinstitute.ddp.SparkServerAwareBaseTest;
 import org.broadinstitute.ddp.json.admin.participantslookup.ParticipantsLookupPayload;
 import org.broadinstitute.ddp.json.admin.participantslookup.ParticipantsLookupResultRow;
-import org.broadinstitute.ddp.security.JWTConverter;
 import org.broadinstitute.ddp.service.participantslookup.ParticipantsLookupResult;
 import org.broadinstitute.ddp.service.participantslookup.ParticipantsLookupService;
-import org.broadinstitute.ddp.transformers.NullableJsonTransformer;
-import org.broadinstitute.ddp.util.TestDataSetupUtil;
 import org.hamcrest.Matchers;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import spark.Spark;
 
-public class ParticipantsLookupRouteTest extends TxnAwareBaseTest {
+public class ParticipantsLookupRouteTest extends SparkServerAwareBaseTest {
 
-    private static String urlTemplate;
-    private static TestDataSetupUtil.GeneratedTestData testData;
+    private static SparkServerTestRunner sparkServerTestRunner = new SparkServerTestRunner();
 
     @BeforeClass
-    public static void setupServer() {
-        var jsonSerializer = new NullableJsonTransformer();
-
-        int port = RouteTestUtil.findOpenPortOrDefault(5559);
-        Spark.port(port);
-        Spark.before(RouteConstants.API.BASE + "/*", new TokenConverterFilter(new JWTConverter()));
-        Spark.before(RouteConstants.API.ADMIN_BASE + "/*", new StudyAdminAuthFilter());
-        Spark.post(RouteConstants.API.ADMIN_STUDY_PARTICIPANTS_LOOKUP,
-                new ParticipantsLookupRoute(new ParticipantsLookupTestService()), jsonSerializer);
-        Spark.awaitInitialization();
-
-        urlTemplate = "http://localhost:" + port + RouteConstants.API.ADMIN_STUDY_PARTICIPANTS_LOOKUP
-                .replace(RouteConstants.PathParam.STUDY_GUID, "{study}");
-        TransactionWrapper.useTxn(handle -> {
-            testData = TestDataSetupUtil.generateBasicUserTestData(handle);
-            handle.attach(AuthDao.class).assignStudyAdmin(testData.getUserId(), testData.getStudyId());
-            handle.attach(JdbiClient.class).updateWebPasswordRedirectUrlByAuth0ClientIdAndAuth0Domain(
-                    "http://localhost", testData.getAuth0ClientId(), testData.getTestingClient().getAuth0Domain());
-        });
+    public static void setup() {
+        sparkServerTestRunner.setupSparkServer(
+                ParticipantsLookupRouteTest::mapFiltersBeforeRoutes,
+                ParticipantsLookupRouteTest::mapRoutes,
+                ParticipantsLookupRouteTest::buildUrlTemplate
+        );
     }
 
     @AfterClass
-    public static void tearDownServer() {
-        Spark.stop();
-        Spark.awaitStop();
-
-        TransactionWrapper.useTxn(handle -> {
-            handle.attach(JdbiClient.class).updateWebPasswordRedirectUrlByAuth0ClientIdAndAuth0Domain(
-                    null, testData.getAuth0ClientId(), testData.getTestingClient().getAuth0Domain());
-            handle.attach(AuthDao.class).removeAdminFromAllStudies(testData.getUserId());
-        });
+    public static void tearDown() {
+        sparkServerTestRunner.tearDownSparkServer();
     }
+
+    protected static boolean mapRoutes() {
+        Spark.post(ADMIN_STUDY_PARTICIPANTS_LOOKUP,
+                new ParticipantsLookupRoute(new ParticipantsLookupRouteTest.ParticipantsLookupTestService()), jsonSerializer);
+        return true;
+    }
+
+    protected static String buildUrlTemplate() {
+        return LOCALHOST + port + ADMIN_STUDY_PARTICIPANTS_LOOKUP.replace(STUDY_GUID, PLACEHOLDER__STUDY);
+    }
+
 
     @Test
     public void testQueryWithEmptyResult() {
