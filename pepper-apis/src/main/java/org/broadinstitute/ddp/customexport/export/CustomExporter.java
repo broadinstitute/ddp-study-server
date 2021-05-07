@@ -211,8 +211,9 @@ public class CustomExporter {
     public int exportDataSetAsCsv(StudyDto studyDto, List<CustomActivityExtract> activities, Iterator<Participant> participants,
                                   Writer output) throws IOException {
         List<String> firstFields = cfg.getStringList(CustomExportConfigFile.FIRST_FIELDS);
-        List<String> excludedFields = new ArrayList<>(cfg.getStringList(CustomExportConfigFile.EXCLUDED_PARTICIPANT_FIELDS));
-        ParticipantMetadataFormatter participantMetaFmt = new ParticipantMetadataFormatter(excludedFields);
+        List<String> excludedParticipantFields = new ArrayList<>(cfg.getStringList(CustomExportConfigFile.EXCLUDED_PARTICIPANT_FIELDS));
+        List<String> excludedActivityFields = new ArrayList<>(cfg.getStringList(CustomExportConfigFile.EXCLUDED_ACTIVITY_FIELDS));
+        ParticipantMetadataFormatter participantMetaFmt = new ParticipantMetadataFormatter(excludedParticipantFields);
         List<String> headers = new LinkedList<>(participantMetaFmt.headers());
 
         Map<String, Integer> activityTagToNormalizedMaxInstanceCounts = new HashMap<>();
@@ -229,10 +230,10 @@ public class CustomExporter {
 
             // Create attribute and response collectors to use for generating headers
             ActivityAttributesCollector attributesCollector = new ActivityAttributesCollector(activity
-                    .getAttributesSeen(firstFields, excludedFields));
+                    .getAttributesSeen(firstFields, excludedParticipantFields));
             attributesCollectors.put(activity.getTag(), attributesCollector);
             ActivityResponseCollector mainResponseCollector = new ActivityResponseCollector(activity.getDefinition(), firstFields,
-                    excludedFields);
+                    excludedActivityFields);
 
             Map<String, List<ActivityResponseCollector>> childResponseCollectors = new HashMap<>();
             Map<String, List<ComplexChildResponseCollector>> multiChildResponseCollectors =
