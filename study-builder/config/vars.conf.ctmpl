@@ -11,7 +11,9 @@
         "mgmtClientId": "{{$auth.mgmtClientId}}",
         "mgmtSecret": "{{$auth.mgmtSecret}}",
         "clientId": "{{$auth.clientId}}",
-        "clientSecret": "{{$auth.clientSecret}}"
+        "clientSecret": "{{$auth.clientSecret}}",
+        "adminClientId": "{{$auth.adminClientId}}",
+        "adminClientSecret": "{{$auth.adminClientSecret}}",
     },
     "baseWebUrl": "{{$conf.baseWebUrl}}",
     "passwordRedirectUrl": "{{$conf.passwordRedirectUrl}}",

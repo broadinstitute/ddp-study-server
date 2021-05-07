@@ -210,7 +210,20 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
         TextQuestionDef t5 = TextQuestionDef.builder(TextInputType.TEXT, "TEXT_Q3_DISABLED", newTemplate())
                 .setDeprecated(true)
                 .build();
-        FormSectionDef plistSection = new FormSectionDef(null, TestUtil.wrapQuestions(p1, p2, p3, t5));
+
+        //add picklist nested options question
+        PicklistOptionDef nestedOptionDef1 = new PicklistOptionDef("NESTED_OPT1", new Template(TemplateType.TEXT, null, "nested option 1"));
+        PicklistOptionDef nestedOptionDef2 = new PicklistOptionDef("NESTED_OPT2", new Template(TemplateType.TEXT, null, "nested option 2"));
+        List<PicklistOptionDef> nestedOpts = List.of(nestedOptionDef1, nestedOptionDef2);
+        PicklistOptionDef nestedPLOptionDef = new PicklistOptionDef("PARENT_OPT", new Template(TemplateType.TEXT, null, "parent option1"),
+                new Template(TemplateType.TEXT, null, "nested options Label"), nestedOpts);
+        String stableIdNPL = "PQ_NESTED_OPTS";
+        PicklistQuestionDef nestedPLOptionsQuestion = PicklistQuestionDef.buildSingleSelect(PicklistRenderMode.LIST, stableIdNPL,
+                new Template(TemplateType.TEXT, null, "prompt for Nested PL Question"))
+                .addOption(nestedPLOptionDef)
+                .build();
+
+        FormSectionDef plistSection = new FormSectionDef(null, TestUtil.wrapQuestions(p1, p2, p3, t5, nestedPLOptionsQuestion));
 
         //------------- create SECTION[3] ---------
         essayQuestionStableId = "PATCH_TEXT_Q2";
@@ -482,7 +495,7 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
     public void testGet_picklistQuestion_withGroups() {
         testFor200()
                 .body("sections.size()", equalTo(activity.getSections().size()))
-                .body("sections[2].blocks.size()", equalTo(3))
+                .body("sections[2].blocks.size()", equalTo(4))
                 .root("sections[2].blocks[2].question")
                 .body("stableId", equalTo("PL_GROUPS"))
                 .body("groups.size()", equalTo(2))
@@ -609,7 +622,7 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
                 .body("sections.size()", equalTo(activity.getSections().size()))
                 .body("sections[0].blocks.size()", equalTo(3))
                 .body("sections[1].blocks.size()", equalTo(3))
-                .body("sections[2].blocks.size()", equalTo(3));
+                .body("sections[2].blocks.size()", equalTo(4));
 
         // Check rules are rendered
         resp.then().assertThat()
@@ -923,7 +936,7 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
                 .body("sections.size()", equalTo(activity.getSections().size()))
                 .body("sections[0].blocks.size()", equalTo(3))
                 .body("sections[1].blocks.size()", equalTo(3))
-                .body("sections[2].blocks.size()", equalTo(3));
+                .body("sections[2].blocks.size()", equalTo(4));
     }
 
     private Response testFor200AndExtractResponse() {

@@ -78,15 +78,23 @@ public class UpdateEmailEventTemplates implements CustomTask {
     }
 
     private String hashEvent(Config eventCfg) {
-        return String.format("%s-%d",
+        //use delaySeconds in key to handle emails with same "order" triggered in same event
+        //ex:- reminder emails
+        int delaySeconds = 0;
+        if (eventCfg.hasPath("delaySeconds")) {
+            delaySeconds = eventCfg.getInt("delaySeconds");
+        }
+        return String.format("%s-%d-%d",
                 EventBuilder.triggerAsStr(eventCfg.getConfig("trigger")),
-                eventCfg.getInt("order"));
+                eventCfg.getInt("order"),
+                delaySeconds);
     }
 
     private String hashEvent(Handle handle, EventConfiguration eventConfig) {
-        return String.format("%s-%d",
+        return String.format("%s-%d-%d",
                 EventBuilder.triggerAsStr(handle, eventConfig.getEventTrigger()),
-                eventConfig.getExecutionOrder());
+                eventConfig.getExecutionOrder(),
+                eventConfig.getPostDelaySeconds());
     }
 
     private void compareEmailTemplates(Handle handle, String eventKey, Config actionCfg, EventConfiguration event) {
