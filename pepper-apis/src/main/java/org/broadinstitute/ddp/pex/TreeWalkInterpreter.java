@@ -784,6 +784,13 @@ public class TreeWalkInterpreter implements PexInterpreter {
             } else {
                 return birthDate;
             }
+        } else if (queryCtx instanceof PexParser.ProfileAgeQueryContext) {
+            LocalDate birthDate = profile.getBirthDate();
+            if (birthDate == null) {
+                String msg = String.format("User %s does not have birth date in profile", ictx.getUserGuid());
+                throw new PexFetchException(msg);
+            }
+            return ChronoUnit.YEARS.between(birthDate, LocalDate.now());
         } else {
             throw new PexUnsupportedException("Unhandled profile data query: " + queryCtx.getText());
         }

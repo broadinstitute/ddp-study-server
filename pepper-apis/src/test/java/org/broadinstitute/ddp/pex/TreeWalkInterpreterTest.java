@@ -1211,6 +1211,39 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
     }
 
     @Test
+    public void testEval_profileQuery_age() {
+        TransactionWrapper.useTxn(handle -> {
+            var profileDao = handle.attach(UserProfileDao.class);
+            assertTrue(profileDao.getUserProfileSql().upsertBirthDate(testData.getUserId(), LocalDate.of(2000, 3, 14)));
+
+            String expr = "user.profile.age() >= 21";
+            assertTrue(run(handle, expr));
+
+            expr = "user.profile.age() < 21";
+            assertFalse(run(handle, expr));
+
+            handle.rollback();
+        });
+    }
+
+    @Test
+    public void testEval_profileQuery_age_missingBirthDate() {
+        TransactionWrapper.useTxn(handle -> {
+            var profileDao = handle.attach(UserProfileDao.class);
+            assertTrue(profileDao.getUserProfileSql().upsertBirthDate(testData.getUserId(), null));
+
+            try {
+                run(handle, "user.profile.age()");
+                fail("expected exception not thrown");
+            } catch (PexFetchException e) {
+                assertTrue(e.getMessage().contains("does not have birth date"));
+            }
+
+            handle.rollback();
+        });
+    }
+
+    @Test
     public void testEval_profileQuery_birthDate() {
         TransactionWrapper.useTxn(handle -> {
             var profileDao = handle.attach(UserProfileDao.class);
