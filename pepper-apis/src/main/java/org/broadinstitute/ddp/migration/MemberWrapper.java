@@ -4,15 +4,19 @@ import java.time.Instant;
 
 import com.google.gson.JsonObject;
 
-public class ParticipantWrapper extends ObjectWrapper {
+public class MemberWrapper extends ObjectWrapper {
 
-    ParticipantWrapper(JsonObject inner) {
+    MemberWrapper(JsonObject inner) {
         super(inner);
     }
 
     public Instant getCreated() {
         var value = getString("ddp_created");
         return value == null ? null : Instant.parse(value);
+    }
+
+    public String getFamilyId() {
+        return getString("family_id");
     }
 
     public String getShortId() {

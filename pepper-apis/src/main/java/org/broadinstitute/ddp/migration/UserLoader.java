@@ -66,7 +66,7 @@ class UserLoader {
                 Auth0ManagementClient.forStudy(handle, cfg.getString(LoaderConfigFile.STUDY_GUID)));
     }
 
-    public String getOrGenerateDummyEmail(ParticipantWrapper participant) {
+    public String getOrGenerateDummyEmail(MemberWrapper participant) {
         String dummyEmail = ConfigUtil.getStrIfPresent(cfg, LoaderConfigFile.DUMMY_EMAIL);
         if (dummyEmail != null && !dummyEmail.isBlank()) {
             String[] parts = dummyEmail.split("@");
@@ -142,7 +142,7 @@ class UserLoader {
         }
     }
 
-    public User createLegacyUser(Handle handle, ParticipantWrapper participant, String auth0UserId, String languageCode) {
+    public User createLegacyUser(Handle handle, MemberWrapper participant, String auth0UserId, String languageCode) {
         String legacyAltPid = participant.getAltPid();
         String legacyShortId = participant.getShortId();
         long createdAtMillis = participant.getCreated().toEpochMilli();
@@ -174,13 +174,13 @@ class UserLoader {
                 new LoaderException("Could not find newly created user with altpid" + legacyAltPid));
     }
 
-    public void registerUserInStudy(Handle handle, String studyGuid, String userGuid, ParticipantWrapper participant) {
+    public void registerUserInStudy(Handle handle, String studyGuid, String userGuid, MemberWrapper participant) {
         long registeredAt = participant.getCreated().toEpochMilli();
         handle.attach(JdbiUserStudyEnrollment.class).changeUserStudyEnrollmentStatus(
                 userGuid, studyGuid, EnrollmentStatusType.REGISTERED, registeredAt);
     }
 
-    public void withdrawUserFromStudy(Handle handle, String studyGuid, String userGuid, ParticipantWrapper participant) {
+    public void withdrawUserFromStudy(Handle handle, String studyGuid, String userGuid, MemberWrapper participant) {
         // No timestamp for withdrawal so we use last modified as an approximation.
         long lastModifiedMillis = participant.getLastModified().toEpochMilli();
         handle.attach(JdbiUserStudyEnrollment.class).changeUserStudyEnrollmentStatus(

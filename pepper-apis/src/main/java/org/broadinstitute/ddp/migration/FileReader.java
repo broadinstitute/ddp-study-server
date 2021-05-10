@@ -34,8 +34,10 @@ class FileReader {
     private final boolean useBucket;
     private final String mailingListFilePrefix;
     private final String participantFilePrefix;
+    private final String familyMemberFilePrefix;
     private final Set<String> mailingListFiles = new HashSet<>();
     private final Set<String> participantFiles = new HashSet<>();
+    private final Set<String> familyMemberFiles = new HashSet<>();
     private boolean cached;
     private String bucketName;
     private String bucketDir;
@@ -46,6 +48,7 @@ class FileReader {
         this.useBucket = cfg.getBoolean(LoaderConfigFile.SOURCE_USE_BUCKET);
         this.mailingListFilePrefix = cfg.getString(LoaderConfigFile.SOURCE_MAILING_LIST_FILE_PREFIX);
         this.participantFilePrefix = cfg.getString(LoaderConfigFile.SOURCE_PARTICIPANT_FILE_PREFIX);
+        this.familyMemberFilePrefix = cfg.getString(LoaderConfigFile.SOURCE_FAMILY_MEMBER_FILE_PREFIX);
         if (useBucket) {
             this.bucketName = cfg.getString(LoaderConfigFile.SOURCE_BUCKET_NAME);
             this.bucketDir = cfg.getString(LoaderConfigFile.SOURCE_BUCKET_DIR);
@@ -116,6 +119,8 @@ class FileReader {
                 mailingListFiles.add(filename);
             } else if (filename.startsWith(participantFilePrefix)) {
                 participantFiles.add(filename);
+            } else if (filename.startsWith(familyMemberFilePrefix)) {
+                familyMemberFiles.add(filename);
             }
         });
         cached = true;
@@ -133,6 +138,13 @@ class FileReader {
             listAndCacheFilesFromSource();
         }
         return participantFiles;
+    }
+
+    public Set<String> listFamilyMemberFiles() {
+        if (!cached) {
+            listAndCacheFilesFromSource();
+        }
+        return familyMemberFiles;
     }
 
     public Reader readContent(String filename) {

@@ -25,6 +25,7 @@ import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
 import org.broadinstitute.ddp.db.dao.JdbiActivityInstanceStatus;
 import org.broadinstitute.ddp.db.dao.JdbiActivityVersion;
 import org.broadinstitute.ddp.db.dao.JdbiMailingList;
+import org.broadinstitute.ddp.db.dao.JdbiUser;
 import org.broadinstitute.ddp.db.dto.ActivityDto;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.db.dto.ActivityVersionDto;
@@ -47,8 +48,10 @@ class DataLoader {
     private final Gson gson;
     private Mapping mapping;
     private UserLoader userLoader;
+    private DsmDataLoader dsmLoader;
     private Map<String, Long> activityCodeToId = new HashMap<>();
     private Map<Long, ActivityVersionDto> activityIdToLatestVersion = new HashMap<>();
+    private Map<String, String> familyIdToParticipantGuid = new HashMap<>();
 
     DataLoader(Config cfg, FileReader fileReader, boolean isProdRun) {
         this.cfg = cfg;
@@ -128,7 +131,7 @@ class DataLoader {
         int total = filenames.size();
         for (var filename : filenames) {
             LOG.info("({}/{}) Working on participant file: {}", count, total, filename);
-            var data = gson.fromJson(fileReader.readContent(filename), ParticipantFile.class);
+            var data = gson.fromJson(fileReader.readContent(filename), MemberFile.class);
             var row = report.newRow();
             TransactionWrapper.useTxn(handle -> processParticipant(handle, data, row));
             if (!row.isExistingUser()) {
@@ -144,10 +147,10 @@ class DataLoader {
         }
     }
 
-    private void processParticipant(Handle handle, ParticipantFile data, Report.Row row) {
+    private void processParticipant(Handle handle, MemberFile data, Report.Row row) {
         String padding = "  ";
 
-        var participant = data.getParticipantWrapper();
+        var participant = data.getMemberWrapper();
         String email = userLoader.getOrGenerateDummyEmail(participant);
         String altPid = participant.getAltPid();
         String shortId = participant.getShortId();
@@ -212,7 +215,7 @@ class DataLoader {
         row.setSuccess(true);
     }
 
-    private void processActivity(Handle handle, User user, MappingActivity activity, ParticipantFile data, Report.Row row) {
+    private void processActivity(Handle handle, User user, MappingActivity activity, MemberFile data, Report.Row row) {
         String padding = "  ";
 
         String sourceSurveyName = activity.getSource();
@@ -401,5 +404,75 @@ class DataLoader {
             activityIdToLatestVersion.put(activityId, versionDto);
         }
         return activityIdToLatestVersion.get(activityId);
+    }
+
+    public void processDsmFiles() {
+        dsmLoader = new DsmDataLoader();
+        if (mapping == null) {
+            initMappingFile();
+        }
+
+        Set<String> files = fileReader.listParticipantFiles();
+        LOG.info("Found {} participant files for dsm data", files.size());
+        int count = 1;
+        int total = files.size();
+        for (var filename : files) {
+            LOG.info("({}/{}) Working on participant file for dsm data: {}", count, total, filename);
+            var data = gson.fromJson(fileReader.readContent(filename), MemberFile.class);
+            processParticipantDsmData(data.getMemberWrapper());
+            count++;
+        }
+
+        files = fileReader.listFamilyMemberFiles();
+        LOG.info("Found {} family member files for dsm data", files.size());
+        count = 1;
+        total = files.size();
+        for (var filename : files) {
+            LOG.info("({}/{}) Working on family member file for dsm data: {}", count, total, filename);
+            var data = gson.fromJson(fileReader.readContent(filename), MemberFile.class);
+            DsmDataLoader.useTxn(dsmHandle -> processFamilyMemberDsmData(dsmHandle, data.getMemberWrapper()));
+            count++;
+        }
+    }
+
+    private void processParticipantDsmData(MemberWrapper participant) {
+        String altpid = participant.getAltPid();
+        String familyId = participant.getFamilyId();
+        String guid = TransactionWrapper.withTxn(handle ->
+                handle.attach(JdbiUser.class).getUserGuidByAltpid(altpid));
+        if (StringUtils.isBlank(guid)) {
+            throw new LoaderException("Could not find participant guid for altpid: " + altpid);
+        }
+        DsmDataLoader.useTxn(dsmHandle -> loadDsmData(dsmHandle, guid, mapping, participant));
+        familyIdToParticipantGuid.put(familyId, guid);
+        LOG.info("  Assigned family_id={} to participant_guid={}", familyId, guid);
+    }
+
+    private void processFamilyMemberDsmData(Handle dsmHandle, MemberWrapper member) {
+        String familyId = member.getFamilyId();
+        String guid = familyIdToParticipantGuid.get(familyId);
+        if (StringUtils.isBlank(guid)) {
+            throw new LoaderException("Could not find participant guid for family_id: " + familyId);
+        }
+        loadDsmData(dsmHandle, guid, mapping, member);
+    }
+
+    private void loadDsmData(Handle dsmHandle, String participantGuid, Mapping mapping, MemberWrapper member) {
+        // looks like there's "field_type_id" in dsm, akin to groups in datstat
+        // likely need to refactor dsm_fields to be maps instead of just lists
+
+
+        Map<String, String> data = new HashMap<>();
+        for (var field : mapping.getDsmFields()) {
+            String value = member.getString(field.getSource());
+            if (value != null) {
+                data.put(field.getTarget(), value);
+            }
+        }
+
+        LOG.info("  Member has dsm data with {} field values", data.size());
+        if (!data.isEmpty()) {
+            // insert into table
+        }
     }
 }

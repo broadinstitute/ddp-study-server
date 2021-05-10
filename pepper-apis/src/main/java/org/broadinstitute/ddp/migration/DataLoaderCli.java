@@ -29,6 +29,7 @@ public class DataLoaderCli {
     private static final Logger LOG = LoggerFactory.getLogger(DataLoaderCli.class);
     private static final String USAGE = "DataLoaderCli [-h, --help] [OPTIONS]";
     private static final String PROD_MARKER = "prod";
+    private static final int DB_MAX_CONNECTIONS = 1;
 
     public static void main(String[] args) throws Exception {
         var options = new Options();
@@ -37,6 +38,7 @@ public class DataLoaderCli {
         options.addOption("o", "output", true, "path for output migration report, will use a generated name if not provided");
         options.addOption(null, "mailing-list", false, "load mailing list contacts");
         options.addOption(null, "participants", false, "load participant files");
+        options.addOption(null, "dsm-data", false, "load data into dsm");
         options.addOption(null, "prod-run", false, "must set this flag for production migration run");
 
         CommandLineParser parser = new DefaultParser();
@@ -57,7 +59,8 @@ public class DataLoaderCli {
 
         boolean loadMailingList = cmd.hasOption("mailing-list");
         boolean loadParticipants = cmd.hasOption("participants");
-        if (!loadMailingList && !loadParticipants) {
+        boolean loadDsmData = cmd.hasOption("dsm-data");
+        if (!loadMailingList && !loadParticipants && !loadDsmData) {
             LOG.info("Nothing to do, exiting...");
             return;
         }
@@ -113,7 +116,11 @@ public class DataLoaderCli {
             } catch (Exception e) {
                 LOG.info("Error while processing participant files", e);
                 writeReport(studyGuid, outputFilename, report, true);
+                return;
             }
+        }
+        if (loadDsmData) {
+            loader.processDsmFiles();
         }
 
         Duration elapsed = Duration.between(start, Instant.now());
@@ -124,19 +131,22 @@ public class DataLoaderCli {
 
     private static void initDbConnection(Config cfg) {
         String dbUrl = cfg.getString(LoaderConfigFile.DB_URL);
-        int maxConnections = cfg.getInt(LoaderConfigFile.MAX_CONNECTIONS);
+        String dsmDbUrl = cfg.getString(LoaderConfigFile.DSM_DB_URL);
         TimeZone.setDefault(TimeZone.getTimeZone(cfg.getString(LoaderConfigFile.DEFAULT_TIMEZONE)));
 
         TransactionWrapper.reset();
-        TransactionWrapper.init(new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.APIS, maxConnections, dbUrl));
+        TransactionWrapper.init(new TransactionWrapper.DbConfiguration(
+                TransactionWrapper.DB.APIS, DB_MAX_CONNECTIONS, dbUrl));
         Config sqlConfig = ConfigFactory.parseResources(ConfigFile.SQL_CONF);
         DBUtils.loadDaoSqlCommands(sqlConfig);
-
         LOG.info("Initialized db pool: {}", dbUrl);
+
+        DsmDataLoader.initDatabasePool(dsmDbUrl, DB_MAX_CONNECTIONS);
+        LOG.info("Initialized dsm db pool: {}", dsmDbUrl);
     }
 
     private static void initResources(Config cfg) {
-        CacheService.getInstance(); // Make get instance call to "prime" the service.
+        CacheService.getInstance(); // Make getInstance() call to "prime" the service.
         TransactionWrapper.useTxn(TransactionWrapper.DB.APIS, LanguageStore::init);
         EncryptionKey.setEncryptionKey(cfg.getString(LoaderConfigFile.AUTH0_ENCRYPTION_SECRET));
     }

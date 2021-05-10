@@ -16,6 +16,8 @@ class Mapping {
     private MappingParticipant participant;
     @SerializedName("activities")
     private List<MappingActivity> activities = new ArrayList<>();
+    @SerializedName("dsm_fields")
+    private List<MappingDsmField> dsmFields = new ArrayList<>();
 
     public String getStudyGuid() {
         return studyGuid;
@@ -27,5 +29,9 @@ class Mapping {
 
     public List<MappingActivity> getActivities() {
         return activities;
+    }
+
+    public List<MappingDsmField> getDsmFields() {
+        return dsmFields;
     }
 }

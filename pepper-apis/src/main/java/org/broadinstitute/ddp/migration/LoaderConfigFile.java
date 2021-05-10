@@ -3,7 +3,7 @@ package org.broadinstitute.ddp.migration;
 class LoaderConfigFile {
     // These 3 are needed to setup the database connection.
     public static final String DB_URL = "dbUrl";
-    public static final String MAX_CONNECTIONS = "maxConnections";
+    public static final String DSM_DB_URL = "dsmDbUrl";
     public static final String DEFAULT_TIMEZONE = "defaultTimezone";
 
     public static final String STUDY_GUID = "studyGuid";
@@ -18,6 +18,7 @@ class LoaderConfigFile {
 
     public static final String SOURCE_MAILING_LIST_FILE_PREFIX = "source.mailingListFilePrefix";
     public static final String SOURCE_PARTICIPANT_FILE_PREFIX = "source.participantFilePrefix";
+    public static final String SOURCE_FAMILY_MEMBER_FILE_PREFIX = "source.familyMemberFilePrefix";
     public static final String SOURCE_USE_BUCKET = "source.useBucket";
     public static final String SOURCE_LOCAL_DIR = "source.localDir";
     public static final String SOURCE_PROJECT_ID = "source.projectId";

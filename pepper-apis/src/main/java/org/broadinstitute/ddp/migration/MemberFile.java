@@ -4,17 +4,17 @@ import com.google.gson.JsonObject;
 import com.google.gson.annotations.SerializedName;
 
 /**
- * Represents the migration source file for a single participant.
+ * Represents the migration source file for a single member, either a participant or a family member.
  *
  * <p>This provides wrappers to make it easier to work with the JSON.
  */
-class ParticipantFile {
+class MemberFile {
 
     @SerializedName("user")
     private User user;
 
-    public ParticipantWrapper getParticipantWrapper() {
-        return new ParticipantWrapper(user.participant);
+    public MemberWrapper getMemberWrapper() {
+        return new MemberWrapper(user.participant);
     }
 
     public SurveyWrapper getSurveyWrapper(String name) {
