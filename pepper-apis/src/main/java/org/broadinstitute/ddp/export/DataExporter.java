@@ -1,5 +1,6 @@
 package org.broadinstitute.ddp.export;
 
+import static org.broadinstitute.ddp.export.ExportUtil.extractParticipantsFromResultSet;
 import static org.broadinstitute.ddp.model.activity.types.ComponentType.MAILING_ADDRESS;
 
 import java.io.BufferedWriter;
@@ -34,7 +35,6 @@ import com.typesafe.config.Config;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.broadinstitute.ddp.cache.LanguageStore;
-import org.broadinstitute.ddp.client.Auth0ManagementClient;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.db.ActivityDefStore;
 import org.broadinstitute.ddp.db.DaoException;
@@ -120,7 +120,6 @@ import org.broadinstitute.ddp.service.FileUploadService;
 import org.broadinstitute.ddp.service.MedicalRecordService;
 import org.broadinstitute.ddp.service.OLCService;
 import org.broadinstitute.ddp.service.PdfService;
-import org.broadinstitute.ddp.util.Auth0Util;
 import org.broadinstitute.ddp.util.ElasticsearchServiceUtil;
 import org.elasticsearch.action.bulk.BulkRequest;
 import org.elasticsearch.action.bulk.BulkResponse;
@@ -142,7 +141,7 @@ public class DataExporter {
     private static final String REQUEST_TYPE = "_doc";
 
     // A cache for user auth0 emails, storing (auth0UserId -> email).
-    private static Map<String, String> emailStore = new HashMap<>();
+    private static final Map<String, String> emailStore = new HashMap<>();
 
     private final Config cfg;
     private final Gson gson;
@@ -156,22 +155,10 @@ public class DataExporter {
         return String.format("%s_%s.csv", studyGuid, fmt.format(timestamp));
     }
 
-    public static void clearCachedAuth0Emails() {
-        emailStore.clear();
-    }
-
     public static void evictCachedAuth0Emails(Set<String> auth0UserIds) {
         if (CollectionUtils.isNotEmpty(auth0UserIds)) {
             auth0UserIds.forEach(emailStore::remove);
         }
-    }
-
-    public static Map<String, String> fetchAndCacheAuth0Emails(Handle handle, String studyGuid, Set<String> auth0UserIds) {
-        var mgmtClient = Auth0ManagementClient.forStudy(handle, studyGuid);
-        Map<String, String> emailResults = new Auth0Util(mgmtClient.getDomain())
-                .getUserPassConnEmailsByAuth0UserIds(auth0UserIds, mgmtClient.getToken());
-        emailResults.forEach((auth0UserId, email) -> emailStore.put(auth0UserId, email));
-        return emailResults;
     }
 
     public DataExporter(Config cfg) {
@@ -189,6 +176,14 @@ public class DataExporter {
         componentNames.add("INITIAL_BIOPSY");
         componentNames.add("INSTITUTION");
         componentNames.add("PHYSICIAN");
+    }
+
+    public static void clearCachedAuth0Emails() {
+        ExportUtil.clearCachedAuth0Emails(emailStore);
+    }
+
+    public static void fetchAndCacheAuth0Emails(Handle handle, String studyGuid, Set<String> userIds) {
+        ExportUtil.fetchAndCacheAuth0Emails(handle, studyGuid, userIds, emailStore);
     }
 
     /**
@@ -234,18 +229,10 @@ public class DataExporter {
      * @param handle     the database handle
      * @param activities the list of activities to look at
      */
-    public void computeMaxInstancesSeen(Handle handle, List<ActivityExtract> activities) {
+    public static void computeMaxInstancesSeen(Handle handle, List<ActivityExtract> activities) {
         var instanceDao = handle.attach(ActivityInstanceDao.class);
         for (ActivityExtract activity : activities) {
-            long activityId = activity.getDefinition().getActivityId();
-            long versionId = activity.getVersionDto().getId();
-            Integer maxInstancesSeen = activity.getDefinition().getMaxInstancesPerUser();
-            if (maxInstancesSeen == null || maxInstancesSeen > 1) {
-                maxInstancesSeen = instanceDao
-                        .findMaxInstancesSeenPerUserByActivityAndVersion(activityId, versionId)
-                        .orElse(0);
-            }
-            activity.setMaxInstancesSeen(maxInstancesSeen);
+            ExportUtil.computeMaxInstancesSeen(instanceDao, activity);
         }
     }
 
@@ -255,14 +242,10 @@ public class DataExporter {
      * @param handle     the database handle
      * @param activities the list of activities to look at
      */
-    public void computeActivityAttributesSeen(Handle handle, List<ActivityExtract> activities) {
+    public static void computeActivityAttributesSeen(Handle handle, List<ActivityExtract> activities) {
         var instanceDao = handle.attach(ActivityInstanceDao.class);
         for (ActivityExtract activity : activities) {
-            long activityId = activity.getDefinition().getActivityId();
-            long versionId = activity.getVersionDto().getId();
-            List<String> names = instanceDao
-                    .findSubstitutionNamesSeenAcrossUsersByActivityAndVersion(activityId, versionId);
-            activity.addAttributesSeen(names);
+            ExportUtil.computeActivityAttributesSeen(instanceDao, activity);
         }
     }
 
@@ -270,23 +253,7 @@ public class DataExporter {
         return extractParticipantDataSetByIds(handle, studyDto, null);
     }
 
-    public List<Participant> extractParticipantDataSetByIds(Handle handle, StudyDto studyDto, Set<Long> userIds) {
-        Stream<Participant> resultset = null;
-        try {
-            if (userIds == null) {
-                resultset = handle.attach(ParticipantDao.class).findParticipantsWithFullData(studyDto.getId());
-            } else {
-                resultset = handle.attach(ParticipantDao.class).findParticipantsWithFullDataByUserIds(studyDto.getId(), userIds);
-            }
-            return extractParticipantsFromResultSet(handle, studyDto, resultset);
-        } finally {
-            if (resultset != null) {
-                resultset.close();
-            }
-        }
-    }
-
-    public List<Participant> extractParticipantDataSetByGuids(Handle handle, StudyDto studyDto, Set<String> userGuids) {
+    private List<Participant> extractParticipantDataSetByGuids(Handle handle, StudyDto studyDto, Set<String> userGuids) {
         Stream<Participant> resultset = null;
         try {
             if (userGuids == null) {
@@ -294,7 +261,7 @@ public class DataExporter {
             } else {
                 resultset = handle.attach(ParticipantDao.class).findParticipantsWithFullDataByUserGuids(studyDto.getId(), userGuids);
             }
-            return extractParticipantsFromResultSet(handle, studyDto, resultset);
+            return extractParticipantsFromResultSet(handle, studyDto, resultset, emailStore);
         } finally {
             if (resultset != null) {
                 resultset.close();
@@ -302,40 +269,7 @@ public class DataExporter {
         }
     }
 
-    private List<Participant> extractParticipantsFromResultSet(Handle handle, StudyDto studyDto, Stream<Participant> resultset) {
-        Map<String, String> usersMissingEmails = new HashMap<>();
 
-        var instanceDao = handle.attach(ActivityInstanceDao.class);
-        Map<String, Participant> participants = resultset
-                .peek(pt -> {
-                    String auth0UserId = pt.getUser().getAuth0UserId();
-                    if (StringUtils.isBlank(auth0UserId)) {
-                        return;
-                    }
-                    String email = emailStore.get(auth0UserId);
-                    if (email == null) {
-                        usersMissingEmails.put(auth0UserId, pt.getUser().getGuid());
-                    } else {
-                        pt.getUser().setEmail(email);
-                    }
-
-                    Set<Long> instanceIds = pt.getAllResponses().stream()
-                            .map(ActivityResponse::getId)
-                            .collect(Collectors.toSet());
-                    try (var stream = instanceDao.bulkFindSubstitutions(instanceIds)) {
-                        stream.forEach(wrapper -> pt.putActivityInstanceSubstitutions(
-                                wrapper.getActivityInstanceId(), wrapper.unwrap()));
-                    }
-                })
-                .collect(Collectors.toMap(pt -> pt.getUser().getGuid(), pt -> pt));
-
-        if (!usersMissingEmails.isEmpty()) {
-            fetchAndCacheAuth0Emails(handle, studyDto.getGuid(), usersMissingEmails.keySet())
-                    .forEach((auth0UserId, email) -> participants.get(usersMissingEmails.get(auth0UserId)).getUser().setEmail(email));
-        }
-
-        return new ArrayList<>(participants.values());
-    }
 
     /**
      * Extract all the participants for a study, pooling together all the data associated with the participant.
@@ -496,7 +430,7 @@ public class DataExporter {
                 resultset = handle.attach(ParticipantDao.class)
                         .findParticipantsWithUserProfileByStudyId(studyDto.getId());
             }
-            participants = extractParticipantsFromResultSet(handle, studyDto, resultset);
+            participants = extractParticipantsFromResultSet(handle, studyDto, resultset, emailStore);
         } finally {
             if (resultset != null) {
                 resultset.close();
@@ -596,10 +530,10 @@ public class DataExporter {
                         user.setEmail(email);
                     }
                 })
-                .collect(Collectors.toMap(user -> user.getGuid(), user -> user));
+                .collect(Collectors.toMap(User::getGuid, user -> user));
 
         if (!usersMissingEmails.isEmpty()) {
-            fetchAndCacheAuth0Emails(handle, studyDto.getGuid(), usersMissingEmails.keySet())
+            ExportUtil.fetchAndCacheAuth0Emails(handle, studyDto.getGuid(), usersMissingEmails.keySet(), emailStore)
                     .forEach((auth0UserId, email) -> users.get(usersMissingEmails.get(auth0UserId)).setEmail(email));
         }
 
@@ -755,7 +689,7 @@ public class DataExporter {
         Map<String, String> participantsRecords = new HashMap<>();
         for (Participant extract : participants) {
             try {
-                String elasticSearchDocument = null;
+                String elasticSearchDocument;
                 if (exportStructuredDocument) {
                     elasticSearchDocument = formatParticipantToStructuredJSON(studyExtract,
                             extract,
@@ -792,8 +726,7 @@ public class DataExporter {
             responseCollectors.put(activity.getTag(), formatter);
         }
 
-        Map<String, String> recordForParticipant = new LinkedHashMap<>();
-        recordForParticipant.putAll(participantMetaFmt.records(extract.getStatus(), extract.getUser()));
+        Map<String, String> recordForParticipant = new LinkedHashMap<>(participantMetaFmt.records(extract.getStatus(), extract.getUser()));
 
         ComponentDataSupplier supplier = new ComponentDataSupplier(extract.getUser().getAddress(), extract.getProviders());
         for (ActivityExtract activity : activities) {
@@ -1119,7 +1052,7 @@ public class DataExporter {
      * @return number of participant records written
      * @throws IOException if error while writing
      */
-    public int exportCsvToOutput(Handle handle, StudyDto studyDto, Writer output) throws IOException {
+    private int exportCsvToOutput(Handle handle, StudyDto studyDto, Writer output) throws IOException {
         List<ActivityExtract> activities = extractActivities(handle, studyDto);
         List<Participant> dataset = extractParticipantDataSet(handle, studyDto);
         computeMaxInstancesSeen(handle, activities);
@@ -1141,8 +1074,7 @@ public class DataExporter {
         ParticipantMetadataFormatter participantMetaFmt = new ParticipantMetadataFormatter();
         ActivityMetadataCollector activityMetadataCollector = new ActivityMetadataCollector();
 
-        List<String> headers = new LinkedList<>();
-        headers.addAll(participantMetaFmt.headers());
+        List<String> headers = new LinkedList<>(participantMetaFmt.headers());
 
         Map<String, Integer> activityTagToNormalizedMaxInstanceCounts = new HashMap<>();
         Map<String, ActivityResponseCollector> responseCollectors = new HashMap<>();
@@ -1182,9 +1114,9 @@ public class DataExporter {
         int numWritten = 0;
         while (participants.hasNext()) {
             Participant pt = participants.next();
-            List<String> row = new LinkedList<>();
+            List<String> row;
             try {
-                row.addAll(participantMetaFmt.format(pt.getStatus(), pt.getUser()));
+                row = new LinkedList<>(participantMetaFmt.format(pt.getStatus(), pt.getUser()));
                 ComponentDataSupplier supplier = new ComponentDataSupplier(pt.getUser().getAddress(), pt.getProviders());
                 for (ActivityExtract activity : activities) {
                     String activityTag = activity.getTag();
@@ -1242,10 +1174,9 @@ public class DataExporter {
      * @return mapping of property names to type objects
      */
     public Map<String, Object> exportStudyDataMappings(List<ActivityExtract> activities) {
-        Map<String, Object> mappings = new LinkedHashMap<>();
 
         ParticipantMetadataFormatter participantMetaFmt = new ParticipantMetadataFormatter();
-        mappings.putAll(participantMetaFmt.mappings());
+        Map<String, Object> mappings = new LinkedHashMap<>(participantMetaFmt.mappings());
 
         ActivityMetadataCollector activityMetaColl = new ActivityMetadataCollector();
 
@@ -1258,5 +1189,9 @@ public class DataExporter {
         }
 
         return mappings;
+    }
+
+    static List<Participant> extractParticipantDataSetByIds(Handle handle, StudyDto studyDto, Set<Long> batch) {
+        return ExportUtil.extractParticipantDataSetByIds(handle, studyDto, batch, emailStore);
     }
 }
