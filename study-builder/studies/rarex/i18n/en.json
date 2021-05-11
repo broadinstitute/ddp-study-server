@@ -250,10 +250,10 @@
   "general_information_patient_country_birthplace": "Country/Territory where the patient was born*",
   "general_information_patient_country_birthplace_req_hint": "Country/Territory cannot be empty",
 
-  "general_information_patient_city_birthplace": "Name of the city/municipality where the patient was born*",
+  "general_information_patient_city_birthplace": "City/Municipality where the patient was born*",
   "general_information_patient_city_birthplace_req_hint": "City/Municipality cannot be empty",
 
-  "general_information_patient_state_birthplace": "State where the patient was born*",
+  "general_information_patient_state_birthplace": "State/Province where the patient was born*",
   "general_information_patient_state_birthplace_req_hint": "State cannot be empty",
 
   "general_information_patient_alive": "Is the patient alive?",
