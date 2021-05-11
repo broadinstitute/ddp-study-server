@@ -3,6 +3,10 @@ package org.broadinstitute.ddp.service.participantslookup;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Object returned by {@link ParticipantsLookupService} and containing
+ * results of participants lookup
+ */
 public class ParticipantsLookupResult<T> {
 
     private List<T> resultRows = new ArrayList<>();

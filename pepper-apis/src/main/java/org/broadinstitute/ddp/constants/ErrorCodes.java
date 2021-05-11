@@ -21,6 +21,7 @@ public class ErrorCodes {
     public static final String MALFORMED_REDIRECT_URL = "MALFORMED_REDIRECT_URL";
     public static final String MALFORMED_DRUG_QUERY = "MALFORMED_DRUG_QUERY";
     public static final String MALFORMED_CANCER_QUERY = "MALFORMED_CANCER_QUERY";
+    public static final String MALFORMED_PARTICIPANTS_LOOKUP_QUERY = "MALFORMED_PARTICIPANTS_LOOKUP_QUERY";
     public static final String REQUIRED_HEADER_MISSING = "REQUIRED_HEADER_MISSING";
 
     public static final String NO_SUCH_ELEMENT = "NO_SUCH_ELEMENT";

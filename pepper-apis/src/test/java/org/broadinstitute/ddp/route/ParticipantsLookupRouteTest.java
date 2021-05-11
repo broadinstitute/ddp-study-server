@@ -2,12 +2,18 @@ package org.broadinstitute.ddp.route;
 
 import static io.restassured.RestAssured.given;
 import static java.util.Collections.emptyList;
+import static org.broadinstitute.ddp.constants.ErrorCodes.MALFORMED_PARTICIPANTS_LOOKUP_QUERY;
 import static org.broadinstitute.ddp.constants.RouteConstants.API.ADMIN_STUDY_PARTICIPANTS_LOOKUP;
 import static org.broadinstitute.ddp.constants.RouteConstants.PathParam.STUDY_GUID;
+import static org.broadinstitute.ddp.route.ParticipantsLookupRoute.DEFAULT_PARTICIPANTS_LOOKUP_RESULT_MAX_COUNT;
+import static org.broadinstitute.ddp.route.ParticipantsLookupRouteTest.ParticipantsLookupTestService.QUERY_ELASTIC_SEARCH_STATUS__UNAUTHORIZED;
+import static org.broadinstitute.ddp.service.participantslookup.error.ElasticSearchRestCode.getResponseBodyCodeForElasticSearchError;
+import static org.elasticsearch.rest.RestStatus.UNAUTHORIZED;
 import static org.hamcrest.Matchers.equalTo;
 
 import java.util.ArrayList;
 
+import com.google.common.base.Strings;
 import io.restassured.http.ContentType;
 import io.restassured.mapper.ObjectMapperType;
 import org.broadinstitute.ddp.SparkServerAwareBaseTest;
@@ -15,12 +21,16 @@ import org.broadinstitute.ddp.json.admin.participantslookup.ParticipantsLookupPa
 import org.broadinstitute.ddp.json.admin.participantslookup.ParticipantsLookupResultRow;
 import org.broadinstitute.ddp.service.participantslookup.ParticipantsLookupResult;
 import org.broadinstitute.ddp.service.participantslookup.ParticipantsLookupService;
+import org.elasticsearch.ElasticsearchStatusException;
 import org.hamcrest.Matchers;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import spark.Spark;
 
+/**
+ * Unit tests for testing {@link ParticipantsLookupRoute}
+ */
 public class ParticipantsLookupRouteTest extends SparkServerAwareBaseTest {
 
     private static SparkServerTestRunner sparkServerTestRunner = new SparkServerTestRunner();
@@ -79,11 +89,38 @@ public class ParticipantsLookupRouteTest extends SparkServerAwareBaseTest {
                 .body("totalCount", equalTo(1));
     }
 
+    @Test
+    public void testQueryWithTooLongParameter() {
+        // generate query longer than max count
+        String tooLongQuery = Strings.padEnd("query", DEFAULT_PARTICIPANTS_LOOKUP_RESULT_MAX_COUNT, '#');
+        var payload = new ParticipantsLookupPayload(tooLongQuery);
+        given().auth().oauth2(testData.getTestingUser().getToken())
+                .pathParam("study", testData.getStudyGuid())
+                .body(payload, ObjectMapperType.GSON)
+                .when().post(urlTemplate)
+                .then().assertThat()
+                .statusCode(400)
+                .body(RESPONSE_BODY_PARAM_CODE, equalTo(MALFORMED_PARTICIPANTS_LOOKUP_QUERY));
+    }
+
+    @Test
+    public void testQueryWithElasticSearchUnauthorized() {
+        var payload = new ParticipantsLookupPayload(QUERY_ELASTIC_SEARCH_STATUS__UNAUTHORIZED);
+        given().auth().oauth2(testData.getTestingUser().getToken())
+                .pathParam("study", testData.getStudyGuid())
+                .body(payload, ObjectMapperType.GSON)
+                .when().post(urlTemplate)
+                .then().assertThat()
+                .statusCode(500).contentType(ContentType.JSON)
+                .body(RESPONSE_BODY_PARAM_CODE, equalTo(getResponseBodyCodeForElasticSearchError(UNAUTHORIZED.name())));
+    }
+
 
     public static class ParticipantsLookupTestService extends ParticipantsLookupService {
 
         static final String QUERY__EMPTY_RESULT = "empty_result";
         static final String QUERY__SINGLE_RESULT = "single_result";
+        static final String QUERY_ELASTIC_SEARCH_STATUS__UNAUTHORIZED = "ES_unauthorized";
 
         @Override
         protected void doLookupParticipants(String studyGuid, String query, int resultsMaxCount,
@@ -102,6 +139,8 @@ public class ParticipantsLookupRouteTest extends SparkServerAwareBaseTest {
                 row.setHruid("hruid_1");
                 results.add(row);
                 participantsLookupResult.setResultRows(results);
+            } else if (query.equals(QUERY_ELASTIC_SEARCH_STATUS__UNAUTHORIZED)) {
+                throw new ElasticsearchStatusException("ES unauthorized", UNAUTHORIZED);
             }
         }
     }

@@ -25,6 +25,8 @@ public abstract class SparkServerAwareBaseTest extends TxnAwareBaseTest {
 
     protected static final Logger LOG = LoggerFactory.getLogger(SparkServerAwareBaseTest.class);
 
+    protected static final String RESPONSE_BODY_PARAM_CODE = "code";
+
     protected static final int SPARK_PORT = 5559;
     protected static final String LOCALHOST = "http://localhost:";
     protected static final String PLACEHOLDER__STUDY = "{study}";

@@ -35,7 +35,7 @@ public class ESParticipantsLookupResultsMerger {
      *    the corresponding proxy;
      * -- if it is found then add proxy data to participant object;
      * -- if it is not found then add pair governedUserGuid/proxyGuid to a separate map 'governedUserToProxyExtraSearch'
-     *    for proxies extra search in 'users' (and then repeat merge of results with all found proxies).
+     *    for proxies extra search in 'users' (and then add found proxies to the result).
      * </pre>
      */
     public Map<String, ParticipantsLookupResultRow> mergeResults(
