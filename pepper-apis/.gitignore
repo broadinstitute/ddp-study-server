@@ -25,6 +25,8 @@ surefire-report.html
 config/*.conf
 !config/waf.conf
 output/
-output-config/
+output-config-*/
 output-build-config/
 docker-compose.yaml
+
+dump.rdb

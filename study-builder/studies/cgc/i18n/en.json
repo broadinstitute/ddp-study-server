@@ -1,7 +1,14 @@
 {
   "prequal_name": "Join Us",
-  "prequal_title": "Join Us",
+  "prequal_title": "Join the Cancer Genome Collective!",
   "prequal_header": "Prequalifier",
+  "prequal_self_describe": "If you have or had cancer and have had a genomic test, please consider joining a nationwide movement of patients, doctors, and scientists by sharing your genomic and medical data. Together, we have the power to accelerate cancer research in a way that no one else can.",
+  "prequal_self_describe_exp": "Please check the boxes below if the following statement apply to you:",
+  "prequal_diagnosed": "I have or have had cancer.",
+  "prequal_older_than_21": "I am 21 years old or older.",
+  "prequal_country": "I live in the United States.",
+  "prequal_agreement": "I am interested in participating in donating my data to this research study.",
+  "prequal_validation_hint": "All questions must be checked in order to proceed to registration.",
 
   "consent_name": "Join Us",
   "consent_title": "Join Us",
@@ -17,5 +24,5 @@
 
   "rrg_name": "Join Us",
   "rrg_title": "Join Us",
-  "rrg_header": "Genetic Info Release Request",
+  "rrg_header": "Genetic Info Release Request"
 }
