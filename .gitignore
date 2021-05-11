@@ -106,4 +106,3 @@ tcell/logs/
 # except study-builder configuration files
 *.conf
 !study-builder/**/*.conf
-

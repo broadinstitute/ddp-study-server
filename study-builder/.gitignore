@@ -2,6 +2,4 @@
 .DS_Store
 
 target/
-output-config-*/
-
-dump.rdb
+output-config/
