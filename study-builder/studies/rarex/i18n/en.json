@@ -201,9 +201,9 @@
   "general_information_gender_identity_none_of_above": "None of these describe me, and I’d like to describe myself",
   "general_information_gender_prefer_not_to_answer": "Prefer not to answer",
 
-  "general_information_race": "Race",
+  "general_information_race": "Race *",
   "general_information_race_validation_hint": "Race cannot be empty",
-  "general_information_race_exp": "Choose all that apply and use other, specify to list any other races as needed",
+  "general_information_race_exp": "Select all that apply, and/or select \"Other\" to specify any other races.",
   "general_information_race_american_indian": "American Indian or Alaska Native",
   "general_information_race_asian": "Asian",
   "general_information_race_black_or_african_american": "Black or African-American",
@@ -212,7 +212,8 @@
   "general_information_race_unknown": "Unknown",
   "general_information_race_not_to_answer": "Prefer not to answer",
   "general_information_race_other": "Other",
-  "general_information_race_other_detail": "Other race(s) specify",
+  "general_information_race_other_detail": "Specify other race(s) *",
+  "general_information_race_other_detail_req_hint": "Please specify other race(s)",
 
   "general_information_annual_income": "What is your best estimate of the total income of all family members who live in your house from all sources, before taxes, in the last calendar year?",
   "general_information_patient_annual_income": "What is your best estimate of the total income of all family members who live in the patient's house from all sources, before taxes, in the last calendar year?",
