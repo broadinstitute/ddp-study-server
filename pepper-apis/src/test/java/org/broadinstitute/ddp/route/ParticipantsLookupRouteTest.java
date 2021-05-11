@@ -7,7 +7,6 @@ import static org.broadinstitute.ddp.constants.RouteConstants.API.ADMIN_STUDY_PA
 import static org.broadinstitute.ddp.constants.RouteConstants.PathParam.STUDY_GUID;
 import static org.broadinstitute.ddp.route.ParticipantsLookupRoute.DEFAULT_PARTICIPANTS_LOOKUP_RESULT_MAX_COUNT;
 import static org.broadinstitute.ddp.route.ParticipantsLookupRouteTest.ParticipantsLookupTestService.QUERY_ELASTIC_SEARCH_STATUS__UNAUTHORIZED;
-import static org.broadinstitute.ddp.service.participantslookup.error.ElasticSearchRestCode.getResponseBodyCodeForElasticSearchError;
 import static org.elasticsearch.rest.RestStatus.UNAUTHORIZED;
 import static org.hamcrest.Matchers.equalTo;
 
@@ -112,7 +111,7 @@ public class ParticipantsLookupRouteTest extends SparkServerAwareBaseTest {
                 .when().post(urlTemplate)
                 .then().assertThat()
                 .statusCode(500).contentType(ContentType.JSON)
-                .body(RESPONSE_BODY_PARAM_CODE, equalTo(getResponseBodyCodeForElasticSearchError(UNAUTHORIZED.name())));
+                .body(RESPONSE_BODY_PARAM_CODE, equalTo(UNAUTHORIZED.name()));
     }
 
 

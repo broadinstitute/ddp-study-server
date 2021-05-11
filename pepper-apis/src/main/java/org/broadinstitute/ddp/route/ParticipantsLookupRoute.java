@@ -5,7 +5,6 @@ import static org.apache.http.HttpStatus.SC_INTERNAL_SERVER_ERROR;
 import static org.broadinstitute.ddp.constants.ErrorCodes.INVALID_REQUEST;
 import static org.broadinstitute.ddp.constants.ErrorCodes.MALFORMED_PARTICIPANTS_LOOKUP_QUERY;
 import static org.broadinstitute.ddp.constants.ErrorCodes.MISSING_STUDY_GUID;
-import static org.broadinstitute.ddp.service.participantslookup.error.ElasticSearchRestCode.getResponseBodyCodeForElasticSearchError;
 
 import org.apache.http.entity.ContentType;
 import org.broadinstitute.ddp.constants.RouteConstants;
@@ -88,7 +87,7 @@ public class ParticipantsLookupRoute extends ValidatedJsonInputRoute<Participant
                 break;
             case ELASTIC_SEARCH_STATUS:
                 status = SC_INTERNAL_SERVER_ERROR;
-                code = getResponseBodyCodeForElasticSearchError(e.getRestStatus().name());
+                code = e.getRestStatus().name();
                 break;
             default:
                 throw new DDPException("Unknown participants lookup error type");
