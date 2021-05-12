@@ -28,7 +28,7 @@
   "diagnosis_other": "Other",
 
   "add_participant_name": "Add Participant",
-  "add_participant_prompt_relationship": "Please specify your relationship with the patient",
+  "add_participant_prompt_relationship": "Choose option that best describes your relationship with the patient",
   "add_participant_relationship_select_label": "Choose relationship...",
   "add_participant_relationship_parent": "Parent",
   "add_participant_relationship_guardian": "Guardian",
