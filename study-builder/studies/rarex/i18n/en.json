@@ -717,5 +717,5 @@
   "prompt_enter_age": "Enter age",
 
   "cannot_exceed_length_hint": "Cannot exceed 500 characters",
-  "error_date_cannot_be_in_future": "Date cannot be in future"
+  "error_date_cannot_be_in_future": "Date cannot be in the future"
 }
