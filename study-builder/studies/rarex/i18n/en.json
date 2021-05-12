@@ -67,10 +67,10 @@
   "consent_signature_middle_name_exp": "Your complete middle/second or additional name",
   "consent_signature_date_signed": "Date Signed",
 
-  "lar_consent_child_firstname": "Patient's complete legal given (first) name*",
+  "lar_consent_child_firstname": "Patient's complete legal given (first) name *",
   "lar_consent_child_firstname_validation_hint": "Patient's first name cannot be empty",
   "lar_consent_child_firstname_exp": "Patient's complete legal given (first) name at birth",
-  "lar_consent_child_lastname": "Patient's complete legal family (last) name*",
+  "lar_consent_child_lastname": "Patient's complete legal family (last) name *",
   "lar_consent_child_lastname_validation_hint": "Patient's last name cannot be empty",
   "lar_consent_child_lastname_exp": "Patient's complete legal family (last) name at birth",
   "lar_consent_child_middlename": "Patient's middle/second or additional (if your child has one) name",
