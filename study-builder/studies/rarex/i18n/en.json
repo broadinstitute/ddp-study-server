@@ -653,7 +653,6 @@
   "data_sharing_biospecimen_data_connection_samples_no": "No",
   "data_sharing_biospecimen_samples_located": "Where are the samples located?",
   "data_sharing_biospecimen_samples_located_explain": "If you remember, please list the name of the study, the researcher or the location of the biosample collection",
-  "data_sharing_biospecimen_samples_located_hint": "Text maximum length is 500",
   "data_sharing_biospecimen_data_connection_intro": "Biospecimen(s)",
   "data_sharing_biospecimen_interested": "Are you interested in the collection of biological samples for research (saliva/spit, blood, bodily fluids, etc)? *",
   "data_sharing_biospecimen_interested_yes": "Yes",
@@ -669,7 +668,6 @@
   "data_sharing_other_data_sources_interested_no": "No",
   "data_sharing_other_data_sources_list_of_studies": "If you remember, please list the name of the study/studies, the researcher(s) or the location(s) of the study (studies).",
   "data_sharing_other_data_sources_list_of_studies_req_hint": "This field should not be empty",
-  "data_sharing_other_data_sources_list_of_studies_max_hint": "Text maximum length is 500",
   "data_sharing_known_data_sources_intro": "Patient Community Connections",
   "data_sharing_pags_want_to_share": "Do you want to share your contact information with patient advocacy groups that support your diagnosis(s)?",
   "parent_data_sharing_pags_want_to_share": "Do you want to share the patient's contact information (name/email) with any patient advocacy groups that support your diagnosis(s)?",
@@ -709,7 +707,6 @@
   "family_member_know_cause_yes": "Yes",
   "family_member_know_cause_no": "No",
   "family_member_cause": "What is the cause of your loved one's passing?",
-  "family_member_cause_size_hint": "Text length is 100",
   "family_member_willing_answer_more": "Are you willing to answer more questions about the passing of your loved one?",
   "family_member_willing_answer_more_yes": "Yes",
   "family_member_willing_answer_more_no": "No",
@@ -719,5 +716,6 @@
 
   "prompt_enter_age": "Enter age",
 
+  "cannot_exceed_length_hint": "Cannot exceed 500 characters",
   "error_date_cannot_be_in_future": "Date cannot be in future"
 }
