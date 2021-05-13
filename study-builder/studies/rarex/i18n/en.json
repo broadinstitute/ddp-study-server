@@ -136,9 +136,9 @@
   "general_information_patient_middle_name": "The patient's middle/second or additional (If they have one) name",
   "general_information_patient_middle_name_exp": "The patient's complete middle/second or additional name",
 
-  "general_information_name_different": "Was your name different at birth?",
+  "general_information_name_different": "Was your name different at birth? *",
   "general_information_name_different_exp": "Name change could be for marriage, adoption, personal choice, etc.",
-  "general_information_patient_name_different": "Was the patient’s name different at birth?",
+  "general_information_patient_name_different": "Was the patient’s name different at birth? *",
   "general_information_patient_name_different_exp": "This could be marriage, adoption, personal choice, etc.",
   "general_information_name_different_yes": "Yes",
   "general_information_name_different_no": "No",
@@ -171,8 +171,8 @@
   "general_information_year_of_birth_hint": "Year of birth cannot be empty.",
   "general_information_questions_about_patient": "The following questions are about the patient",
 
-  "general_information_sex_prompt": "What was your biological sex at birth?",
-  "general_information_patient_sex_prompt": "What was the patient's biological sex at birth?",
+  "general_information_sex_prompt": "What was your biological sex at birth? *",
+  "general_information_patient_sex_prompt": "What was the patient's biological sex at birth? *",
   "general_information_sex_label": "Choose...",
   "general_information_sex_male": "Male",
   "general_information_sex_female": "Female",
@@ -191,8 +191,8 @@
   "general_information_ethnicity_other": "Other",
   "general_information_ethnicity_other_details": "Please describe you ethnicity",
 
-  "general_information_gender_identity": "What term best describes your gender identity?",
-  "general_information_patient_gender_identity": "What term best describes the patient's gender identity?",
+  "general_information_gender_identity": "What term best describes your gender identity? *",
+  "general_information_patient_gender_identity": "What term best describes the patient's gender identity? *",
   "general_information_gender_identity_validation_hint": "Gender cannot be empty",
   "general_information_gender_identity_man": "Man",
   "general_information_gender_identity_woman": "Woman",
@@ -219,8 +219,8 @@
   "general_information_race_other_detail": "Specify other race(s) *",
   "general_information_race_other_detail_req_hint": "Please specify other race(s)",
 
-  "general_information_annual_income": "What is your best estimate of the total income of all family members who live in your house from all sources, before taxes, in the last calendar year?",
-  "general_information_patient_annual_income": "What is your best estimate of the total income of all family members who live in the patient's house from all sources, before taxes, in the last calendar year?",
+  "general_information_annual_income": "What is your best estimate of the total income of all family members who live in your house from all sources, before taxes, in the last calendar year? *",
+  "general_information_patient_annual_income": "What is your best estimate of the total income of all family members who live in the patient's house from all sources, before taxes, in the last calendar year? *",
   "general_information_annual_income_validation_hint": "Annual income cannot be empty",
   "general_information_annual_income1": "less than $24,999",
   "general_information_annual_income2": "$25,000-$49,999",
@@ -242,8 +242,8 @@
   "general_information_marital_other": "Other",
   "general_information_marital_other_details": "Please describe your relationship status",
 
-  "general_information_health_insurance_coverage": "Are you covered by health insurance or some other kind of health care plan?",
-  "general_information_patient_health_insurance_coverage": "Is the patient covered by health insurance or some other kind of health care plan?",
+  "general_information_health_insurance_coverage": "Are you covered by health insurance or some other kind of health care plan? *",
+  "general_information_patient_health_insurance_coverage": "Is the patient covered by health insurance or some other kind of health care plan? *",
   "general_information_health_insurance_coverage_validation_hint": "Health insurance cannot be empty",
   "general_information_health_insurance_coverage_exp": "We will not be asking any additional questions about insurance details, this is just to look at insurance coverage in rare disease in general, NOT to track insurance details.",
   "general_information_hic_yes": "Yes",
@@ -653,7 +653,6 @@
   "data_sharing_biospecimen_data_connection_samples_no": "No",
   "data_sharing_biospecimen_samples_located": "Where are the samples located?",
   "data_sharing_biospecimen_samples_located_explain": "If you remember, please list the name of the study, the researcher or the location of the biosample collection",
-  "data_sharing_biospecimen_samples_located_hint": "Text maximum length is 500",
   "data_sharing_biospecimen_data_connection_intro": "Biospecimen(s)",
   "data_sharing_biospecimen_interested": "Are you interested in the collection of biological samples for research (saliva/spit, blood, bodily fluids, etc)? *",
   "data_sharing_biospecimen_interested_yes": "Yes",
@@ -669,7 +668,6 @@
   "data_sharing_other_data_sources_interested_no": "No",
   "data_sharing_other_data_sources_list_of_studies": "If you remember, please list the name of the study/studies, the researcher(s) or the location(s) of the study (studies).",
   "data_sharing_other_data_sources_list_of_studies_req_hint": "This field should not be empty",
-  "data_sharing_other_data_sources_list_of_studies_max_hint": "Text maximum length is 500",
   "data_sharing_known_data_sources_intro": "Patient Community Connections",
   "data_sharing_pags_want_to_share": "Do you want to share your contact information with patient advocacy groups that support your diagnosis(s)?",
   "parent_data_sharing_pags_want_to_share": "Do you want to share the patient's contact information (name/email) with any patient advocacy groups that support your diagnosis(s)?",
@@ -709,7 +707,6 @@
   "family_member_know_cause_yes": "Yes",
   "family_member_know_cause_no": "No",
   "family_member_cause": "What is the cause of your loved one's passing?",
-  "family_member_cause_size_hint": "Text length is 100",
   "family_member_willing_answer_more": "Are you willing to answer more questions about the passing of your loved one?",
   "family_member_willing_answer_more_yes": "Yes",
   "family_member_willing_answer_more_no": "No",
@@ -719,5 +716,6 @@
 
   "prompt_enter_age": "Enter age",
 
-  "error_date_cannot_be_in_future": "Date cannot be in future"
+  "cannot_exceed_length_hint": "Cannot exceed 500 characters",
+  "error_date_cannot_be_in_future": "Date cannot be in the future"
 }
