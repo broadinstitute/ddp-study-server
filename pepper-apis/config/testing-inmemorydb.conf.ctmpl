@@ -123,7 +123,8 @@
         "cancerLoader": "0 0 8,20 ? * * *",
         "studyExport": "0 0 9 ? * * *",
         "fileUploadCleanup": "0 0 5 ? * * *",
-        "tempUserCleanup": "0 30 5 ? * * *"
+        "tempUserCleanup": "0 30 5 ? * * *",
+        "customExport": "0 10 5 ? * * *"
     },
     "housekeepingMaxConnections": 50,
     "sendgrid": {

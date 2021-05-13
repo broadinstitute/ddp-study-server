@@ -84,7 +84,8 @@
         "cancerLoader": "{{$conf.Data.schedules.cancerLoader}}",
         "studyExport": "{{$conf.Data.schedules.studyExport}}",
         "fileUploadCleanup": "{{$conf.Data.schedules.fileUploadCleanup}}",
-        "tempUserCleanup": "{{$conf.Data.schedules.tempUserCleanup}}"
+        "tempUserCleanup": "{{$conf.Data.schedules.tempUserCleanup}}",
+        "customExport": "{{$conf.Data.schedules.customExport}}"
     },
     "preferredSourceIPHeader":"X-AppEngine-User-IP",
     "nginx": {

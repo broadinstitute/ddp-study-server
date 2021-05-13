@@ -2400,3 +2400,91 @@ Statistics:
   type: array
   items:
     $ref: '../pepper.yml#/components/schemas/Statistics.Figure'
+
+EnrollmentStatusType:
+  description: Participant's enrollment status
+  type: string
+  enum:
+    - REGISTERED
+    - ENROLLED
+    - EXITED_BEFORE_ENROLLMENT
+    - EXITED_AFTER_ENROLLMENT
+    - CONSENT_SUSPENDED
+    - COMPLETED
+ParticipantsLookupResultItem:
+  type: object
+  required:
+    - guid
+    - hruid
+    - legacyAltPid
+    - legacyShortId
+    - status
+    - firstName
+    - lastName
+    - email
+    - invitationId
+    - proxy
+  properties:
+    guid:
+      description: Participant's guid
+      type: string
+    hruid:
+      description: Participant's hruid
+      type: string
+    legacyAltPid:
+      description: Participant's legacy altpid, if available
+      type: string
+      nullable: true
+    legacyShortId:
+      description: Participant's legacy short id, if available
+      type: string
+      nullable: true
+    status:
+      $ref: '../pepper.yml#/components/schemas/EnrollmentStatusType'
+    firstName:
+      description: Participant's first name, if available
+      type: string
+      nullable: true
+    lastName:
+      description: Participant's last name, if available
+      type: string
+      nullable: true
+    email:
+      description: Participant's email, if available
+      type: string
+      format: email
+      nullable: true
+    invitationId:
+      description: Participant's invitation code, if available
+      type: string
+      nullable: true
+    proxy:
+      $ref: '../pepper.yml#/components/schemas/ParticipantsLookupProxyItem'
+ParticipantsLookupProxyItem:
+  description: The proxy if the participant is a govnerned user
+  type: object
+  nullable: true
+  required:
+    - guid
+    - hruid
+    - firstName
+    - lastName
+    - email
+  properties:
+    guid:
+      description: The proxy's guid
+      type: string
+    hruid:
+      description: The proxy's hruid
+    firstName:
+      description: The proxy's first name, if available
+      type: string
+      nullable: true
+    lastName:
+      description: The proxy's last name, if available
+      type: string
+      nullable: true
+    email:
+      description: The proxy's email
+      type: string
+      format: email
