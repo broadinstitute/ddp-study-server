@@ -1,9 +1,12 @@
 package org.broadinstitute.ddp.json.admin.participantslookup;
 
+import javax.validation.constraints.Size;
+
 import com.google.gson.annotations.SerializedName;
 
 public class ParticipantsLookupPayload {
 
+    @Size(max = 100)
     @SerializedName("query")
     private String query;
 

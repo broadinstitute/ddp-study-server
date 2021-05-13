@@ -38,11 +38,8 @@ public final class ElasticsearchServiceUtil {
 
 
     public static Map<ElasticSearchIndexType, String> detectEsIndices(
-            String studyGuid, List<ElasticSearchIndexType> elasticSearchIndexTypes) {
-        return TransactionWrapper.withTxn(handle -> {
-            StudyDto studyDto = new JdbiUmbrellaStudyCached(handle).findByStudyGuid(studyGuid);
-            return getIndicesForStudy(handle, studyDto, elasticSearchIndexTypes);
-        });
+            StudyDto studyDto, List<ElasticSearchIndexType> elasticSearchIndexTypes) {
+        return TransactionWrapper.withTxn(handle -> getIndicesForStudy(handle, studyDto, elasticSearchIndexTypes));
     }
 
     public static String getIndexForStudy(Handle handle, StudyDto studyDto, ElasticSearchIndexType elasticSearchIndexType) {

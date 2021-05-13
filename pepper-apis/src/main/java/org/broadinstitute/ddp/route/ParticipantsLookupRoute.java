@@ -1,13 +1,17 @@
 package org.broadinstitute.ddp.route;
 
+import static java.lang.String.format;
 import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
 import static org.apache.http.HttpStatus.SC_INTERNAL_SERVER_ERROR;
+import static org.apache.http.HttpStatus.SC_NOT_FOUND;
 import static org.broadinstitute.ddp.constants.ErrorCodes.INVALID_REQUEST;
-import static org.broadinstitute.ddp.constants.ErrorCodes.MALFORMED_PARTICIPANTS_LOOKUP_QUERY;
-import static org.broadinstitute.ddp.constants.ErrorCodes.MISSING_STUDY_GUID;
+import static org.broadinstitute.ddp.constants.ErrorCodes.STUDY_NOT_FOUND;
 
 import org.apache.http.entity.ContentType;
 import org.broadinstitute.ddp.constants.RouteConstants;
+import org.broadinstitute.ddp.db.TransactionWrapper;
+import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
+import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.json.admin.participantslookup.ParticipantsLookupPayload;
 import org.broadinstitute.ddp.json.admin.participantslookup.ParticipantsLookupResponse;
@@ -62,8 +66,10 @@ public class ParticipantsLookupRoute extends ValidatedJsonInputRoute<Participant
 
         response.type(ContentType.APPLICATION_JSON.getMimeType());
 
+        StudyDto studyDto = readStudyDto(studyGuid);
+
         try {
-            var lookupResult = participantsLookupService.lookupParticipants(studyGuid, query, resultsMaxCount);
+            var lookupResult = participantsLookupService.lookupParticipants(studyDto, query, resultsMaxCount);
             return new ParticipantsLookupResponse(lookupResult.getTotalCount(), lookupResult.getResultRows());
         } catch (ParticipantsLookupException e) {
             handleException(e);
@@ -72,16 +78,20 @@ public class ParticipantsLookupRoute extends ValidatedJsonInputRoute<Participant
         return null;
     }
 
+    private StudyDto readStudyDto(String studyGuid) {
+        return TransactionWrapper.withTxn(handle -> {
+            StudyDto studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(studyGuid);
+            if (studyDto == null) {
+                haltError(SC_NOT_FOUND, STUDY_NOT_FOUND, format("Study with guid=%s not found", studyGuid));
+            }
+            return studyDto;
+        });
+    }
+
     private void handleException(ParticipantsLookupException e) {
-        String code = null;
+        String code;
         int status = SC_BAD_REQUEST;
         switch (e.getErrorType()) {
-            case STUDY_GUID_UNKNOWN:
-                code = MISSING_STUDY_GUID;
-                break;
-            case INVALID_QUERY:
-                code = MALFORMED_PARTICIPANTS_LOOKUP_QUERY;
-                break;
             case INVALID_RESULT_MAX_COUNT:
                 code = INVALID_REQUEST;
                 break;

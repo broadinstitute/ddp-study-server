@@ -6,11 +6,13 @@ import static org.broadinstitute.ddp.elastic.ElasticSearchIndexType.PARTICIPANTS
 import static org.broadinstitute.ddp.elastic.ElasticSearchIndexType.USERS;
 import static org.broadinstitute.ddp.elastic.participantslookup.search.ESSearch.PARTICIPANTS_STRUCTURED__INDEX__SOURCE;
 import static org.broadinstitute.ddp.elastic.participantslookup.search.ESSearch.USERS__INDEX__SOURCE;
+import static org.broadinstitute.ddp.service.participantslookup.error.ParticipantsLookupErrorType.ELASTIC_SEARCH_STATUS;
 import static org.broadinstitute.ddp.util.ElasticsearchServiceUtil.detectEsIndices;
 
 import java.util.HashMap;
 import java.util.Map;
 
+import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.elastic.ElasticSearchIndexType;
 import org.broadinstitute.ddp.elastic.participantslookup.model.ESParticipantsLookupField;
 import org.broadinstitute.ddp.elastic.participantslookup.search.ESParticipantsLookupResultsMerger;
@@ -18,6 +20,8 @@ import org.broadinstitute.ddp.elastic.participantslookup.search.ESParticipantsSe
 import org.broadinstitute.ddp.elastic.participantslookup.search.ESUsersProxiesSearch;
 import org.broadinstitute.ddp.service.participantslookup.ParticipantsLookupResult;
 import org.broadinstitute.ddp.service.participantslookup.ParticipantsLookupService;
+import org.broadinstitute.ddp.service.participantslookup.error.ParticipantsLookupException;
+import org.elasticsearch.ElasticsearchStatusException;
 import org.elasticsearch.client.RestHighLevelClient;
 
 /**
@@ -54,7 +58,7 @@ public class ESParticipantsLookupService extends ParticipantsLookupService {
 
     @Override
     protected void doLookupParticipants(
-            String studyGuid,
+            StudyDto studyDto,
             String query,
             int resultsMaxCount,
             ParticipantsLookupResult participantsLookupResult) throws Exception {
@@ -62,7 +66,7 @@ public class ESParticipantsLookupService extends ParticipantsLookupService {
         Map<String, String> governedUserToProxy = new HashMap<>();
         Map<String, String> governedUserToProxyExtraSearch = new HashMap<>();
 
-        Map<ElasticSearchIndexType, String> indices = detectEsIndices(studyGuid, of(USERS, PARTICIPANTS_STRUCTURED));
+        Map<ElasticSearchIndexType, String> indices = detectEsIndices(studyDto, of(USERS, PARTICIPANTS_STRUCTURED));
         var usersEsIndex = indices.get(USERS);
         var participantsEsIndex = indices.get(PARTICIPANTS_STRUCTURED);
 
@@ -99,5 +103,12 @@ public class ESParticipantsLookupService extends ParticipantsLookupService {
         }
 
         participantsLookupResult.setResultRows(asList(esResultRows.values().toArray()));
+    }
+
+    @Override
+    protected void handleException(Exception e) {
+        if (e instanceof ElasticsearchStatusException) {
+            throw new ParticipantsLookupException(ELASTIC_SEARCH_STATUS, ((ElasticsearchStatusException)e).status(), e.getMessage());
+        }
     }
 }

@@ -2,7 +2,6 @@ package org.broadinstitute.ddp.route;
 
 import static io.restassured.RestAssured.given;
 import static java.util.Collections.emptyList;
-import static org.broadinstitute.ddp.constants.ErrorCodes.MALFORMED_PARTICIPANTS_LOOKUP_QUERY;
 import static org.broadinstitute.ddp.constants.RouteConstants.API.ADMIN_STUDY_PARTICIPANTS_LOOKUP;
 import static org.broadinstitute.ddp.constants.RouteConstants.PathParam.STUDY_GUID;
 import static org.broadinstitute.ddp.route.ParticipantsLookupRoute.DEFAULT_PARTICIPANTS_LOOKUP_RESULT_MAX_COUNT;
@@ -16,11 +15,13 @@ import com.google.common.base.Strings;
 import io.restassured.http.ContentType;
 import io.restassured.mapper.ObjectMapperType;
 import org.broadinstitute.ddp.SparkServerAwareBaseTest;
+import org.broadinstitute.ddp.db.dto.StudyDto;
+import org.broadinstitute.ddp.elastic.participantslookup.ESParticipantsLookupService;
 import org.broadinstitute.ddp.json.admin.participantslookup.ParticipantsLookupPayload;
 import org.broadinstitute.ddp.json.admin.participantslookup.ParticipantsLookupResultRow;
 import org.broadinstitute.ddp.service.participantslookup.ParticipantsLookupResult;
-import org.broadinstitute.ddp.service.participantslookup.ParticipantsLookupService;
 import org.elasticsearch.ElasticsearchStatusException;
+import org.elasticsearch.client.RestHighLevelClient;
 import org.hamcrest.Matchers;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -50,7 +51,7 @@ public class ParticipantsLookupRouteTest extends SparkServerAwareBaseTest {
 
     protected static boolean mapRoutes() {
         Spark.post(ADMIN_STUDY_PARTICIPANTS_LOOKUP,
-                new ParticipantsLookupRoute(new ParticipantsLookupRouteTest.ParticipantsLookupTestService()), jsonSerializer);
+                new ParticipantsLookupRoute(new ParticipantsLookupRouteTest.ParticipantsLookupTestService(null)), jsonSerializer);
         return true;
     }
 
@@ -98,8 +99,7 @@ public class ParticipantsLookupRouteTest extends SparkServerAwareBaseTest {
                 .body(payload, ObjectMapperType.GSON)
                 .when().post(urlTemplate)
                 .then().assertThat()
-                .statusCode(400)
-                .body(RESPONSE_BODY_PARAM_CODE, equalTo(MALFORMED_PARTICIPANTS_LOOKUP_QUERY));
+                .statusCode(422);
     }
 
     @Test
@@ -115,14 +115,18 @@ public class ParticipantsLookupRouteTest extends SparkServerAwareBaseTest {
     }
 
 
-    public static class ParticipantsLookupTestService extends ParticipantsLookupService {
+    public static class ParticipantsLookupTestService extends ESParticipantsLookupService {
 
         static final String QUERY__EMPTY_RESULT = "empty_result";
         static final String QUERY__SINGLE_RESULT = "single_result";
         static final String QUERY_ELASTIC_SEARCH_STATUS__UNAUTHORIZED = "ES_unauthorized";
 
+        public ParticipantsLookupTestService(RestHighLevelClient esClient) {
+            super(esClient);
+        }
+
         @Override
-        protected void doLookupParticipants(String studyGuid, String query, int resultsMaxCount,
+        protected void doLookupParticipants(StudyDto studyDto, String query, int resultsMaxCount,
                                             ParticipantsLookupResult participantsLookupResult) throws Exception {
             if (query.equals(QUERY__EMPTY_RESULT)) {
                 participantsLookupResult.setTotalCount(0);
