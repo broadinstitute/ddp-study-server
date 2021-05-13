@@ -131,8 +131,7 @@ public class MBCAboutYouV2 implements CustomTask {
         sectionBlockDao.insertBlockForSection(activityId, currRaceSectionDto.getSectionId(),
                 currRaceSectionDto.getDisplayOrder() + 4, assignedSexDef, newV2RevId);
 
-        //need to add new citations block to closing
-        // find the activity
+        //Add new citations block to closing
         FormBlockDef citationsDef = gson.fromJson(ConfigUtil.toJson(dataCfg.getConfig("citationsBlock")), FormBlockDef.class);
         ActivityDto activityDto = handle.attach(JdbiActivity.class)
                 .findActivityByStudyGuidAndCode(studyGuid, activityCode)
