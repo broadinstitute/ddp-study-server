@@ -70,15 +70,19 @@ public class PrionMedicalV2 implements CustomTask {
         activityDao.changeVersion(activityId, versionTag, metadata);
         ActivityDto activityDto = activityDao.getJdbiActivity().queryActivityById(activityId);
         SqlHelper helper = handle.attach(SqlHelper.class);
-        int hidden = helper.updateHideExistingInstancesOnCreation(activityId, true);
+        boolean hideExisting = dataCfg.getBoolean("hideExistingInstancesOnCreation");
+        boolean writeOnce = dataCfg.getBoolean("writeOnce");
+        int hidden = helper.updateHideExistingInstancesOnCreation(activityId, hideExisting, writeOnce);
         if (hidden != 1) {
             LOG.error("Updating hide existing instances on creation for activity {} to true returned {} instead of 1",
-                    activityId, hidden);
+                    activityId, hidden); // TODO
         }
     }
 
     private interface SqlHelper extends SqlObject {
-        @SqlUpdate("update study_activity set hide_existing_instances_on_creation = :hide where study_activity_id = :activityId")
-        int updateHideExistingInstancesOnCreation(@Bind("activityId") long activityId, @Bind("hide") boolean hide);
+        @SqlUpdate("update study_activity set hide_existing_instances_on_creation = :hide, is_write_once = :writeOnce where "
+                + "study_activity_id = :activityId")
+        int updateHideExistingInstancesOnCreation(@Bind("activityId") long activityId, @Bind("hide") boolean hide,
+                                                  @Bind("writeOnce") boolean writeOnce);
     }
 }
