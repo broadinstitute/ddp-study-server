@@ -1,0 +1,21 @@
+{
+  "prequal_name": "Prequalifier",
+  "prequal_title": "Prequalifier",
+  "prequal_header": "Prequalifier",
+
+  "consent_name": "Consent",
+  "consent_title": "Consent",
+  "consent_header": "Consent",
+
+  "mini_sleep_log_name": "Mini Sleep Log",
+  "mini_sleep_log_title": "Mini Sleep Log",
+  "mini_sleep_log_header": "Mini Sleep Log",
+
+  "dlmo_name": "Dim Light Melatonin Onset",
+  "dlmo_title": "Dim Light Melatonin Onset",
+  "dlmo_header": "Dim Light Melatonin Onset",
+
+  "pcq_name": "Post Collection Questionnaire",
+  "pcq_title": "Post Collection Questionnaire",
+  "pcq_header": "Genetic Info Release Request"
+}
