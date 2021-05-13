@@ -446,7 +446,7 @@ public class StudyDataLoaderMain {
             }
         }
 
-        setRunEmail(dryRun, surveyDataMap.get("datstatparticipantdata"));
+        setRunEmail(dryRun, surveyDataMap.get("datstatparticipantdata"), new HashMap<>());
         migrationRunReport = new ArrayList<>();
         failedList = new ArrayList<>();
         skippedList = new ArrayList<>();
@@ -585,6 +585,7 @@ public class StudyDataLoaderMain {
                 cfg.getString(ConfigFile.GEOCODING_API_KEY));
 
         Map<String, Map> altpidBucketDataMap = preProcessedData.getAltpidBucketDataMap();
+        Map<String, String> emailCache = new HashMap<>();
         for (String altpid : altpidBucketDataMap.keySet()) {
             Map<String, JsonElement> surveyDataMap = altpidBucketDataMap.get(altpid);
 
@@ -593,7 +594,7 @@ public class StudyDataLoaderMain {
                 continue;
             }
             String email = datstatData.getAsJsonObject().get("datstat_email").getAsString().toLowerCase();
-            setRunEmail(dryRun, datstatData);
+            setRunEmail(dryRun, datstatData, emailCache);
 
             if (!dryRun && preProcessedData.getAuth0ExistingEmails().contains(email)) {
                 LOG.error("Skipped altpid: {} . Email : {} already exists in Auth0. ", altpid, email);
@@ -678,6 +679,7 @@ public class StudyDataLoaderMain {
             return;
         }
         JsonArray hashedPasswordsJsonArray = hashedPasswordsJson.getAsJsonArray();
+        Map<String, String> emailCache = new HashMap<>();
         for (String altpid : altpidBucketDataMap.keySet()) {
             Map<String, JsonElement> surveyDataMap = altpidBucketDataMap.get(altpid);
 
@@ -695,7 +697,7 @@ public class StudyDataLoaderMain {
                 }
             }
             String email = datstatData.getAsJsonObject().get("datstat_email").getAsString().toLowerCase();
-            setRunEmail(dryRun, datstatData);
+            setRunEmail(dryRun, datstatData, emailCache);
 
             //if (!dryRun && preProcessedData.getAuth0ExistingEmails().contains(email)) {
             //    LOG.error("Skipped altpid: {} . Email : {} already exists in Auth0. ", altpid, email);
@@ -1193,12 +1195,15 @@ public class StudyDataLoaderMain {
 
     }
 
-    private void setRunEmail(boolean dryRun, JsonElement datstatData) {
+    private void setRunEmail(boolean dryRun, JsonElement datstatData, Map<String, String> cache) {
         if (dryRun) {
             //update email to generated dry run test email
             String altPid = datstatData.getAsJsonObject().get("datstat_altpid").getAsString();
-            String updatedEmail = generateDryRunEmail();
+            String currentEmail = datstatData.getAsJsonObject().get("datstat_email").getAsString();
+            String updatedEmail = cache.getOrDefault(currentEmail, generateDryRunEmail());
+            cache.put(currentEmail, updatedEmail);
             datstatData.getAsJsonObject().addProperty("datstat_email", updatedEmail);
+            datstatData.getAsJsonObject().addProperty("portal_user_email", updatedEmail);
         }
     }
 
