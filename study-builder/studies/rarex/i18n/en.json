@@ -178,7 +178,8 @@
   "general_information_sex_female": "Female",
   "general_information_sex_intersex": "Intersex",
   "general_information_sex_other": "Other",
-  "general_information_other_sex_details": "Please describe",
+  "general_information_other_sex_details": "Please describe *",
+  "general_information_other_sex_details_hint": "Please describe",
   "general_information_sex_not_to_answer": "Prefer not to answer",
   "general_information_sex_validation_hint": "Sex cannot be empty",
 
@@ -189,7 +190,8 @@
   "general_information_ethnicity_unknown": "Unknown",
   "general_information_ethnicity_not_to_answer": "Prefer not to answer",
   "general_information_ethnicity_other": "Other",
-  "general_information_ethnicity_other_details": "Please describe you ethnicity",
+  "general_information_ethnicity_other_details": "Please describe your ethnicity *",
+  "general_information_ethnicity_other_details_hint": "Please describe your ethnicity",
 
   "general_information_gender_identity": "What term best describes your gender identity? *",
   "general_information_patient_gender_identity": "What term best describes the patient's gender identity? *",
@@ -240,7 +242,8 @@
   "general_information_marital_status_living_with_partner": "Living with partner",
   "general_information_marital_status_prefer_not_to_answer": "Prefer not to answer",
   "general_information_marital_other": "Other",
-  "general_information_marital_other_details": "Please describe your relationship status",
+  "general_information_marital_other_details": "Please describe your relationship status *",
+  "general_information_marital_other_details_hint": "Please describe your relationship status",
 
   "general_information_health_insurance_coverage": "Are you covered by health insurance or some other kind of health care plan? *",
   "general_information_patient_health_insurance_coverage": "Is the patient covered by health insurance or some other kind of health care plan? *",
@@ -389,7 +392,7 @@
 
   "h_d_patient_walk_issues": "Is the patient able to walk without assistance?",
   "h_d_patient_communication": "Is the patient able to communicate (either single syllables, verbal words, or sentences)?",
-  "h_d_patient_development_concerns": "Were there any concerns about the patient's development?",
+  "h_d_patient_development_concerns": "Were there any concerns about the patient's development? *",
   "h_d_patient_development_concerns_age": "How old was the patient when there were first concerns about their development?",
   "h_d_patient_development_concerns_age_exp": "Please indicate months or years",
   "h_d_patient_development_concerns_months": "Enter age in months when there were first concerns",
@@ -438,10 +441,10 @@
   "h_d_concern_abnormal_muscle_tone": "Abnormal motor development or muscle tone - unusually stiff or floppy",
   "h_d_concern_others_told_wrong": "Other people told me something was wrong",
   "h_d_concern_other": "Other",
-  "h_d_walk_issues": "Are you able to walk without assistance?",
-  "h_d_communicate": "Are you able to communicate (either single syllables, verbal words, or sentences)?",
-  "h_d_regression": "Have you noticed any loss of skills/regression/decrease in ability (motor, communication, growth, etc)?",
-  "h_d_pain": "Do you have bodily pain/discomfort?",
+  "h_d_walk_issues": "Are you able to walk without assistance? *",
+  "h_d_communicate": "Are you able to communicate (either single syllables, verbal words, or sentences)? *",
+  "h_d_regression": "Have you noticed any loss of skills/regression/decrease in ability (motor, communication, growth, etc)? *",
+  "h_d_pain": "Do you have bodily pain/discomfort? *",
   "h_d_development_concerns": "Concerns about development, select all that apply.",
 
   "h_d_yes": "Yes",
