@@ -61,6 +61,13 @@ JoinMailingListPayload:
       description: The studyGuid of the mailing list the user is interested in (one of umbrellaId OR studyGuid but not both is required)
       example: ANGIO
       type: string
+    isoLanguageCode:
+      description: preferred language code of join mailing list user. If language code is not set, defaults to study default language.
+      type: string
+      nullable: true
+      format: ISO 639-1 standard
+      example: en
+
 ListStyle:
   title: ListStyle
   type: string
@@ -2189,6 +2196,7 @@ ParticipantStatusTrackingInfo:
         $ref: '../pepper.yml#/components/schemas/ParticipantStatusTrackingInfo.Kit'
     workflows:
       type: array
+      minItems: 0
       items:
         $ref: '../pepper.yml#/components/schemas/ParticipantStatusTrackingInfo.Workflow'
 ParticipantStatusTrackingInfo.Workflow:
@@ -2200,6 +2208,11 @@ ParticipantStatusTrackingInfo.Workflow:
     status:
       type: string
       description: The current state in the workflow
+    date:
+      type: string
+      format: date-time
+      description: Last changed
+      example: 2021-04-18T14:09:37.123Z
 ParticipantStatusTrackingInfo.Record:
   type: object
   required:
@@ -2387,3 +2400,91 @@ Statistics:
   type: array
   items:
     $ref: '../pepper.yml#/components/schemas/Statistics.Figure'
+
+EnrollmentStatusType:
+  description: Participant's enrollment status
+  type: string
+  enum:
+    - REGISTERED
+    - ENROLLED
+    - EXITED_BEFORE_ENROLLMENT
+    - EXITED_AFTER_ENROLLMENT
+    - CONSENT_SUSPENDED
+    - COMPLETED
+ParticipantsLookupResultItem:
+  type: object
+  required:
+    - guid
+    - hruid
+    - legacyAltPid
+    - legacyShortId
+    - status
+    - firstName
+    - lastName
+    - email
+    - invitationId
+    - proxy
+  properties:
+    guid:
+      description: Participant's guid
+      type: string
+    hruid:
+      description: Participant's hruid
+      type: string
+    legacyAltPid:
+      description: Participant's legacy altpid, if available
+      type: string
+      nullable: true
+    legacyShortId:
+      description: Participant's legacy short id, if available
+      type: string
+      nullable: true
+    status:
+      $ref: '../pepper.yml#/components/schemas/EnrollmentStatusType'
+    firstName:
+      description: Participant's first name, if available
+      type: string
+      nullable: true
+    lastName:
+      description: Participant's last name, if available
+      type: string
+      nullable: true
+    email:
+      description: Participant's email, if available
+      type: string
+      format: email
+      nullable: true
+    invitationId:
+      description: Participant's invitation code, if available
+      type: string
+      nullable: true
+    proxy:
+      $ref: '../pepper.yml#/components/schemas/ParticipantsLookupProxyItem'
+ParticipantsLookupProxyItem:
+  description: The proxy if the participant is a govnerned user
+  type: object
+  nullable: true
+  required:
+    - guid
+    - hruid
+    - firstName
+    - lastName
+    - email
+  properties:
+    guid:
+      description: The proxy's guid
+      type: string
+    hruid:
+      description: The proxy's hruid
+    firstName:
+      description: The proxy's first name, if available
+      type: string
+      nullable: true
+    lastName:
+      description: The proxy's last name, if available
+      type: string
+      nullable: true
+    email:
+      description: The proxy's email
+      type: string
+      format: email

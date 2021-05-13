@@ -83,6 +83,10 @@ queryAllByUserIdAndStudyId() ::= <<
    and act.study_id = :studyId
 >>
 
+queryAllByUserIds(userIds) ::= <<
+<select_all_instances()> where ai.participant_id in (<userIds>)
+>>
+
 findLatestInstanceFromUserGuidAndQuestionId() ::= <<
 <select_all_instances()>
   join question as q on q.study_activity_id = act.study_activity_id
