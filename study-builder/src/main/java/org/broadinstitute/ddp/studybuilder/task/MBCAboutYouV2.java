@@ -9,6 +9,7 @@ import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
+import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiFormSectionBlock;
 import org.broadinstitute.ddp.db.dao.JdbiQuestion;
 import org.broadinstitute.ddp.db.dao.JdbiRevision;
@@ -16,12 +17,16 @@ import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.QuestionDao;
 import org.broadinstitute.ddp.db.dao.SectionBlockDao;
 import org.broadinstitute.ddp.db.dao.UserDao;
+import org.broadinstitute.ddp.db.dto.ActivityDto;
 import org.broadinstitute.ddp.db.dto.ActivityVersionDto;
 import org.broadinstitute.ddp.db.dto.QuestionDto;
 import org.broadinstitute.ddp.db.dto.SectionBlockMembershipDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.exception.DDPException;
+import org.broadinstitute.ddp.model.activity.definition.ActivityDef;
+import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
 import org.broadinstitute.ddp.model.activity.definition.FormBlockDef;
+import org.broadinstitute.ddp.model.activity.definition.FormSectionDef;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
 import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.studybuilder.ActivityBuilder;
@@ -125,6 +130,21 @@ public class MBCAboutYouV2 implements CustomTask {
         FormBlockDef assignedSexDef = gson.fromJson(ConfigUtil.toJson(dataCfg.getConfig("assignedSexQuestion")), FormBlockDef.class);
         sectionBlockDao.insertBlockForSection(activityId, currRaceSectionDto.getSectionId(),
                 currRaceSectionDto.getDisplayOrder() + 4, assignedSexDef, newV2RevId);
+
+        //need to add new citations block to closing
+        // find the activity
+        FormBlockDef citationsDef = gson.fromJson(ConfigUtil.toJson(dataCfg.getConfig("citationsBlock")), FormBlockDef.class);
+        ActivityDto activityDto = handle.attach(JdbiActivity.class)
+                .findActivityByStudyGuidAndCode(studyGuid, activityCode)
+                .orElseThrow(() -> new DDPException("Could not find id for activity " + activityCode + " and study id " + studyGuid));
+        ActivityDef currActivityDef = activityDao.findDefByDtoAndVersion(activityDto, activityVersionDto);
+        FormActivityDef formActivityDef = (FormActivityDef) currActivityDef;
+        FormSectionDef closingSectionDef =  formActivityDef.getClosing();
+        sectionBlockDao.insertBlockForSection(activityId, closingSectionDef.getSectionId(),
+                (closingSectionDef.getBlocks().size() * 10) + 10, citationsDef, newV2RevId);
+        LOG.info("Added citations");
+
+
     }
 
     private interface SqlHelper extends SqlObject {
