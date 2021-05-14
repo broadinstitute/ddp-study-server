@@ -33,7 +33,7 @@ public class ParticipantsLookupException extends DDPException {
     }
 
     public  String getExtendedMessage() {
-        return errorCode != null ? format(super.getMessage() + ". ErrorType:%s, restStatus:%s", errorType, errorCode) :
+        return errorCode != null ? format(super.getMessage() + ". ErrorType:%s, errorCode:%s", errorType, errorCode) :
                 format(super.getMessage() + ". ErrorType:%s", errorType);
     }
 }
