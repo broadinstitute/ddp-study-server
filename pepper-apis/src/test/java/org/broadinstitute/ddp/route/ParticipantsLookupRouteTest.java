@@ -2,6 +2,9 @@ package org.broadinstitute.ddp.route;
 
 import static io.restassured.RestAssured.given;
 import static java.util.Collections.emptyList;
+import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
+import static org.apache.http.HttpStatus.SC_INTERNAL_SERVER_ERROR;
+import static org.apache.http.HttpStatus.SC_OK;
 import static org.broadinstitute.ddp.constants.RouteConstants.API.ADMIN_STUDY_PARTICIPANTS_LOOKUP;
 import static org.broadinstitute.ddp.constants.RouteConstants.PathParam.STUDY_GUID;
 import static org.broadinstitute.ddp.route.ParticipantsLookupRoute.DEFAULT_PARTICIPANTS_LOOKUP_RESULT_MAX_COUNT;
@@ -68,7 +71,7 @@ public class ParticipantsLookupRouteTest extends SparkServerAwareBaseTest {
                 .body(payload, ObjectMapperType.GSON)
                 .when().post(urlTemplate)
                 .then().assertThat()
-                .statusCode(200).contentType(ContentType.JSON)
+                .statusCode(SC_OK).contentType(ContentType.JSON)
                 .body("results", Matchers.hasSize(0))
                 .body("totalCount", equalTo(0));
     }
@@ -81,7 +84,7 @@ public class ParticipantsLookupRouteTest extends SparkServerAwareBaseTest {
                 .body(payload, ObjectMapperType.GSON)
                 .when().post(urlTemplate)
                 .then().assertThat()
-                .statusCode(200).contentType(ContentType.JSON)
+                .statusCode(SC_OK).contentType(ContentType.JSON)
                 .body("results", Matchers.hasSize(1))
                 .body("results[0].firstName", equalTo("Pete"))
                 .body("results[0].lastName", equalTo("Koolman"))
@@ -99,7 +102,7 @@ public class ParticipantsLookupRouteTest extends SparkServerAwareBaseTest {
                 .body(payload, ObjectMapperType.GSON)
                 .when().post(urlTemplate)
                 .then().assertThat()
-                .statusCode(422);
+                .statusCode(SC_BAD_REQUEST);
     }
 
     @Test
@@ -110,7 +113,7 @@ public class ParticipantsLookupRouteTest extends SparkServerAwareBaseTest {
                 .body(payload, ObjectMapperType.GSON)
                 .when().post(urlTemplate)
                 .then().assertThat()
-                .statusCode(500).contentType(ContentType.JSON)
+                .statusCode(SC_INTERNAL_SERVER_ERROR).contentType(ContentType.JSON)
                 .body(RESPONSE_BODY_PARAM_CODE, equalTo(UNAUTHORIZED.name()));
     }
 

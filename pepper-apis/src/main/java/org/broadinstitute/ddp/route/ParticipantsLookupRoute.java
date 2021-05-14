@@ -49,6 +49,10 @@ public class ParticipantsLookupRoute extends ValidatedJsonInputRoute<Participant
 
     private static final Logger LOG = LoggerFactory.getLogger(ParticipantsLookupRoute.class);
 
+    /**
+     * It is temporarily specified in this class, but in the future it should be
+     * passed from a client side as a parameter.
+     */
     public static final int DEFAULT_PARTICIPANTS_LOOKUP_RESULT_MAX_COUNT = 500;
 
     private final ParticipantsLookupService participantsLookupService;
@@ -78,6 +82,11 @@ public class ParticipantsLookupRoute extends ValidatedJsonInputRoute<Participant
         return null;
     }
 
+    @Override
+    protected int getValidationErrorStatus() {
+        return SC_BAD_REQUEST;
+    }
+
     private StudyDto readStudyDto(String studyGuid) {
         return TransactionWrapper.withTxn(handle -> {
             StudyDto studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(studyGuid);
@@ -95,9 +104,9 @@ public class ParticipantsLookupRoute extends ValidatedJsonInputRoute<Participant
             case INVALID_RESULT_MAX_COUNT:
                 code = INVALID_REQUEST;
                 break;
-            case ELASTIC_SEARCH_STATUS:
+            case SEARCH_ERROR:
                 status = SC_INTERNAL_SERVER_ERROR;
-                code = e.getRestStatus().name();
+                code = e.getErrorCode();
                 break;
             default:
                 throw new DDPException("Unknown participants lookup error type");

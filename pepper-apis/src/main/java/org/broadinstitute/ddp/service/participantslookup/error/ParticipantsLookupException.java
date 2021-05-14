@@ -3,7 +3,6 @@ package org.broadinstitute.ddp.service.participantslookup.error;
 import static java.lang.String.format;
 
 import org.broadinstitute.ddp.exception.DDPException;
-import org.elasticsearch.rest.RestStatus;
 
 /**
  * Participants lookup exception
@@ -11,30 +10,30 @@ import org.elasticsearch.rest.RestStatus;
 public class ParticipantsLookupException extends DDPException {
 
     private final ParticipantsLookupErrorType errorType;
-    private final RestStatus restStatus;
+    private final String errorCode;
 
     public ParticipantsLookupException(ParticipantsLookupErrorType errorType, String message) {
         super(message);
         this.errorType = errorType;
-        this.restStatus = null;
+        this.errorCode = null;
     }
 
-    public ParticipantsLookupException(ParticipantsLookupErrorType errorType, RestStatus restStatus, String message) {
+    public ParticipantsLookupException(ParticipantsLookupErrorType errorType, String errorCode, String message) {
         super(message);
         this.errorType = errorType;
-        this.restStatus = restStatus;
+        this.errorCode = errorCode;
     }
 
     public ParticipantsLookupErrorType getErrorType() {
         return errorType;
     }
 
-    public RestStatus getRestStatus() {
-        return restStatus;
+    public String getErrorCode() {
+        return errorCode;
     }
 
     public  String getExtendedMessage() {
-        return restStatus != null ? format(super.getMessage() + ". ErrorType:%s, restStatus:%s", errorType, restStatus) :
+        return errorCode != null ? format(super.getMessage() + ". ErrorType:%s, restStatus:%s", errorType, errorCode) :
                 format(super.getMessage() + ". ErrorType:%s", errorType);
     }
 }

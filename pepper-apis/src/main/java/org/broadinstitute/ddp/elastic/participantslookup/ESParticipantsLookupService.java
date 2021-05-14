@@ -6,7 +6,7 @@ import static org.broadinstitute.ddp.elastic.ElasticSearchIndexType.PARTICIPANTS
 import static org.broadinstitute.ddp.elastic.ElasticSearchIndexType.USERS;
 import static org.broadinstitute.ddp.elastic.participantslookup.search.ESSearch.PARTICIPANTS_STRUCTURED__INDEX__SOURCE;
 import static org.broadinstitute.ddp.elastic.participantslookup.search.ESSearch.USERS__INDEX__SOURCE;
-import static org.broadinstitute.ddp.service.participantslookup.error.ParticipantsLookupErrorType.ELASTIC_SEARCH_STATUS;
+import static org.broadinstitute.ddp.service.participantslookup.error.ParticipantsLookupErrorType.SEARCH_ERROR;
 import static org.broadinstitute.ddp.util.ElasticsearchServiceUtil.detectEsIndices;
 
 import java.util.HashMap;
@@ -108,7 +108,7 @@ public class ESParticipantsLookupService extends ParticipantsLookupService {
     @Override
     protected void handleException(Exception e) {
         if (e instanceof ElasticsearchStatusException) {
-            throw new ParticipantsLookupException(ELASTIC_SEARCH_STATUS, ((ElasticsearchStatusException)e).status(), e.getMessage());
+            throw new ParticipantsLookupException(SEARCH_ERROR, ((ElasticsearchStatusException)e).status().name(), e.getMessage());
         }
     }
 }

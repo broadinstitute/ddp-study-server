@@ -5,5 +5,5 @@ package org.broadinstitute.ddp.service.participantslookup.error;
  */
 public enum ParticipantsLookupErrorType {
     INVALID_RESULT_MAX_COUNT,
-    ELASTIC_SEARCH_STATUS
+    SEARCH_ERROR
 }
