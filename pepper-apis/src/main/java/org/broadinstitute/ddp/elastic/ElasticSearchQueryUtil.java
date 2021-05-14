@@ -4,6 +4,7 @@ import java.io.IOException;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import org.apache.commons.lang3.StringUtils;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.RequestOptions;
@@ -51,5 +52,42 @@ public class ElasticSearchQueryUtil {
 
     public static JsonObject getJsonObject(SearchHit hit) {
         return new JsonParser().parse(hit.getSourceAsString()).getAsJsonObject();
+    }
+
+    /**
+     * Escape characters which are part of the ElasticSearch query syntax.
+     */
+    public static String escapeQuerySyntaxCharacters(String s) {
+        if (StringUtils.isEmpty(s)) {
+            return s;
+        } else {
+            var sb = new StringBuilder();
+            for (int i = 0; i < s.length(); i++) {
+                char c = s.charAt(i);
+                if (c == '\\'
+                        || c == '+'
+                        || c == '-'
+                        || c == '!'
+                        || c == '('
+                        || c == ')'
+                        || c == ':'
+                        || c == '^'
+                        || c == '['
+                        || c == ']'
+                        || c == '\"'
+                        || c == '{'
+                        || c == '}'
+                        || c == '~'
+                        || c == '*'
+                        || c == '?'
+                        || c == '|'
+                        || c == '&'
+                        || c == '/') {
+                    sb.append('\\');
+                }
+                sb.append(c);
+            }
+            return sb.toString();
+        }
     }
 }

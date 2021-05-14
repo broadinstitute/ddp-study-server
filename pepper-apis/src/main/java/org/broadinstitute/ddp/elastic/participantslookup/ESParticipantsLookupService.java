@@ -4,6 +4,7 @@ import static com.google.common.collect.ImmutableList.of;
 import static java.util.Arrays.asList;
 import static org.broadinstitute.ddp.elastic.ElasticSearchIndexType.PARTICIPANTS_STRUCTURED;
 import static org.broadinstitute.ddp.elastic.ElasticSearchIndexType.USERS;
+import static org.broadinstitute.ddp.elastic.ElasticSearchQueryUtil.escapeQuerySyntaxCharacters;
 import static org.broadinstitute.ddp.elastic.participantslookup.search.ESSearch.PARTICIPANTS_STRUCTURED__INDEX__SOURCE;
 import static org.broadinstitute.ddp.elastic.participantslookup.search.ESSearch.USERS__INDEX__SOURCE;
 import static org.broadinstitute.ddp.service.participantslookup.error.ParticipantsLookupErrorType.SEARCH_ERROR;
@@ -110,5 +111,10 @@ public class ESParticipantsLookupService extends ParticipantsLookupService {
         if (e instanceof ElasticsearchStatusException) {
             throw new ParticipantsLookupException(SEARCH_ERROR, ((ElasticsearchStatusException)e).status().name(), e.getMessage());
         }
+    }
+
+    @Override
+    protected String preProcessQuery(String query) {
+        return escapeQuerySyntaxCharacters(query);
     }
 }

@@ -43,7 +43,7 @@ public abstract class ParticipantsLookupService {
 
         if (StringUtils.isNotBlank(query)) {
             try {
-                doLookupParticipants(studyDto, query, resultsMaxCount, participantsLookupResult);
+                doLookupParticipants(studyDto, preProcessQuery(query), resultsMaxCount, participantsLookupResult);
             } catch (Exception e) {
                 LOG.error(e.getMessage(), e);
                 handleException(e);
@@ -57,12 +57,29 @@ public abstract class ParticipantsLookupService {
         return participantsLookupResult;
     }
 
+    /**
+     * Run the process of participants lookup.
+     * This method should be overridden in a concrete implementation of the participants lookup service.
+     */
     protected abstract void doLookupParticipants(
             StudyDto studyDto,
             String query,
             int resultsMaxCount,
             ParticipantsLookupResult participantsLookupResult) throws Exception;
 
+    /**
+     * Query string preprocessor. Can be overridden in a concrete implementation of the participants lookup service.
+     * For example, it could require to escape special characters which used in a query syntax.
+     * The default implementation returns the same string.
+     */
+    protected String preProcessQuery(String query) {
+        return query;
+    }
+
+    /**
+     * Custom exception handling. Can be overridden in a concrete implementation of the participants lookup service.
+     * Default implementation does nothing.
+     */
     protected void handleException(Exception e) {
     }
 }
