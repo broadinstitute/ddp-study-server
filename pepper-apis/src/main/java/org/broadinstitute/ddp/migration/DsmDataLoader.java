@@ -1,5 +1,6 @@
 package org.broadinstitute.ddp.migration;
 
+import java.time.Instant;
 import java.util.concurrent.TimeUnit;
 
 import com.zaxxer.hikari.HikariConfig;
@@ -13,12 +14,9 @@ import org.jdbi.v3.sqlobject.SqlObjectPlugin;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class DsmDataLoader {
 
-    private static final Logger LOG = LoggerFactory.getLogger(DsmDataLoader.class);
     private static Jdbi jdbi;
 
     public static void initDatabasePool(String dsmDbUrl, int maxConnections) {
@@ -28,6 +26,7 @@ public class DsmDataLoader {
     }
 
     private static HikariDataSource createDataSource(String dsmDbUrl, int maxConnections) {
+        // Configuration here is taken mostly from Pepper's TransactionWrapper.
         HikariConfig config = new HikariConfig();
         config.setJdbcUrl(dsmDbUrl);
         config.addDataSourceProperty("cachePrepStmts", "true");
@@ -53,18 +52,21 @@ public class DsmDataLoader {
         }
     }
 
-    public void saveData(Handle dsmHandle, String studyGuid, String jsonData) {
+    public long loadData(Handle dsmHandle, String studyGuid, String participantGuid, String jsonData) {
+        return dsmHandle.attach(DsmDao.class).insertParticipantData(
+                studyGuid, participantGuid, jsonData, Instant.now().toEpochMilli());
     }
 
     interface DsmDao extends SqlObject {
         @GetGeneratedKeys
-        @SqlUpdate("")
+        @SqlUpdate("insert into ddp_participant_data"
+                + "        (ddp_participant_id, ddp_instance_id, field_type_id, data, last_changed, changed_by)"
+                + " select :participantGuid, ddp_instance_id, 'RGP_PARTICIPANTS', :json, :lastChanged, 'SYSTEM'"
+                + "   from ddp_instance where study_guid = :studyGuid")
         long insertParticipantData(
                 @Bind("studyGuid") String studyGuid,
                 @Bind("participantGuid") String participantGuid,
                 @Bind("json") String jsonData,
-                @Bind("fieldType") String fieldType,
-                @Bind("lastChanged") long lastChanged,
-                @Bind("lastChangedBy") String lastChangedBy);
+                @Bind("lastChanged") long lastChanged);
     }
 }

@@ -28,8 +28,6 @@ class MappingActivity {
     private NestedType nestedType;
     @SerializedName("nested_list")
     private String nestedList;
-    @SerializedName("nested_create_if_empty_list")
-    private boolean nestedCreateIfEmptyList;
 
     public String getSource() {
         return source;
@@ -53,10 +51,6 @@ class MappingActivity {
 
     public String getNestedList() {
         return nestedList;
-    }
-
-    public boolean isNestedCreateIfEmptyList() {
-        return nestedCreateIfEmptyList;
     }
 
     enum NestedType {

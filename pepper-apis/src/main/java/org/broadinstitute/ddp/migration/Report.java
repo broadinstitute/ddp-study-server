@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
@@ -14,16 +16,26 @@ import org.apache.commons.csv.CSVPrinter;
 class Report {
 
     private List<Row> rows = new ArrayList<>();
+    private boolean isFinished = false;
 
     public static String defaultFilename(String studyGuid) {
-        Instant now = Instant.now().truncatedTo(ChronoUnit.SECONDS);
-        return String.format("%s_migration_%s.csv", studyGuid, now.toString());
+        var now = Instant.now().truncatedTo(ChronoUnit.SECONDS);
+        var fmt = DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmssX").withZone(ZoneOffset.UTC);
+        return String.format("%s_migration_%s.csv", studyGuid.toLowerCase(), fmt.format(now));
     }
 
     public Row newRow() {
         var row = new Row();
         rows.add(row);
         return row;
+    }
+
+    public void finish() {
+        isFinished = true;
+    }
+
+    public boolean isPartial() {
+        return !isFinished;
     }
 
     public void write(String filename) {

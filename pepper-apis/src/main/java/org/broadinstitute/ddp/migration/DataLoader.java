@@ -46,12 +46,12 @@ class DataLoader {
     private final String studyGuid;
     private final FileReader fileReader;
     private final Gson gson;
-    private Mapping mapping;
-    private UserLoader userLoader;
-    private DsmDataLoader dsmLoader;
-    private Map<String, Long> activityCodeToId = new HashMap<>();
-    private Map<Long, ActivityVersionDto> activityIdToLatestVersion = new HashMap<>();
-    private Map<String, String> familyIdToParticipantGuid = new HashMap<>();
+    private final Mapping mapping;
+    private final UserLoader userLoader;
+    private final DsmDataLoader dsmLoader;
+    private final Map<String, Long> activityCodeToId = new HashMap<>();
+    private final Map<Long, ActivityVersionDto> activityIdToLatestVersion = new HashMap<>();
+    private final Map<String, String> familyIdToParticipantGuid = new HashMap<>();
 
     DataLoader(Config cfg, FileReader fileReader, boolean isProdRun) {
         this.cfg = cfg;
@@ -59,9 +59,30 @@ class DataLoader {
         this.studyGuid = cfg.getString(LoaderConfigFile.STUDY_GUID);
         this.fileReader = fileReader;
         this.gson = new Gson();
+        this.mapping = initMappingFile();
+        this.userLoader = new UserLoader(cfg);
+        this.dsmLoader = new DsmDataLoader();
+    }
+
+    private Mapping initMappingFile() {
+        Path path = Path.of(cfg.getString(LoaderConfigFile.MAPPING_FILE));
+        Mapping mapping;
+        try {
+            var reader = Files.newBufferedReader(path);
+            mapping = gson.fromJson(reader, Mapping.class);
+        } catch (IOException e) {
+            throw new LoaderException(e);
+        }
+        if (!studyGuid.equals(mapping.getStudyGuid())) {
+            throw new LoaderException("Mapping file study guid does not match!");
+        }
+        LOG.info("Using mapping file: {}", path);
+        return mapping;
     }
 
     public void processMailingListFiles() {
+        LOG.info("");
+
         Set<String> filenames = fileReader.listMailingListFiles();
         LOG.info("Found {} mailing list files", filenames.size());
 
@@ -84,7 +105,7 @@ class DataLoader {
             entryDtos.add(new JdbiMailingList.MailingListEntryDto(
                     firstName, lastName, contact.getEmail(),
                     studyGuid, null, contact.getInfo(),
-                    contact.getDateCreatedMillis()));
+                    contact.getDateCreatedMillis(), null, null));
         }
 
         int[] counts = handle.attach(JdbiMailingList.class).bulkInsertIfNotStoredAlready(entryDtos);
@@ -106,23 +127,8 @@ class DataLoader {
         LOG.info(padding + "Mailing list: finished loading {} entries", totalCount);
     }
 
-    private void initMappingFile() {
-        Path path = Path.of(cfg.getString(LoaderConfigFile.MAPPING_FILE));
-        try {
-            var reader = Files.newBufferedReader(path);
-            mapping = gson.fromJson(reader, Mapping.class);
-        } catch (IOException e) {
-            throw new LoaderException(e);
-        }
-        if (!studyGuid.equals(mapping.getStudyGuid())) {
-            throw new LoaderException("Mapping file study guid does not match!");
-        }
-        LOG.info("Using mapping file: {}", path);
-    }
-
     public void processParticipantFiles(Report report) {
-        initMappingFile();
-        userLoader = new UserLoader(cfg);
+        LOG.info("");
 
         Set<String> filenames = fileReader.listParticipantFiles();
         LOG.info("Found {} participant files", filenames.size());
@@ -145,6 +151,8 @@ class DataLoader {
             }
             count++;
         }
+
+        report.finish();
     }
 
     private void processParticipant(Handle handle, MemberFile data, Report.Row row) {
@@ -276,17 +284,15 @@ class DataLoader {
 
         List<ObjectWrapper> nestedList = parentSurvey.getObjectList(nestedActivity.getNestedList());
         if (nestedList == null || nestedList.isEmpty()) {
-            if (nestedActivity.isNestedCreateIfEmptyList()) {
-                // We should create an empty nested instance. Since it's empty, we should only have a created timestamp,
-                // so we create a new survey wrapper here. For the actual timestamp, let's use the parent's one.
-                var object = new JsonObject();
-                object.add("ddp_created", new JsonPrimitive(parentSurvey.getCreated().toString()));
-                var survey = new SurveyWrapper(object);
-                var instanceDto = createMigratedInstance(handle, user, nestedActivity, survey, parentInstanceDto.getId());
-                LOG.info(padding + "[{}] parent={}", nestedActivity.getActivityCode(), parentInstanceDto.getActivityCode());
-                LOG.info(padding + "- Created empty nested activity instance with id={}, guid={}",
-                        instanceDto.getId(), instanceDto.getGuid());
-            }
+            // We should create an empty nested instance. Since it's empty, we should only have a created timestamp,
+            // so we create a new survey wrapper here. For the actual timestamp, let's use the parent's one.
+            var object = new JsonObject();
+            object.add("ddp_created", new JsonPrimitive(parentSurvey.getCreated().toString()));
+            var survey = new SurveyWrapper(object);
+            var instanceDto = createMigratedInstance(handle, user, nestedActivity, survey, parentInstanceDto.getId());
+            LOG.info(padding + "[{}] parent={}", nestedActivity.getActivityCode(), parentInstanceDto.getActivityCode());
+            LOG.info(padding + "- Created empty nested activity instance with id={}, guid={}",
+                    instanceDto.getId(), instanceDto.getGuid());
             return;
         }
 
@@ -407,11 +413,7 @@ class DataLoader {
     }
 
     public void processDsmFiles() {
-        dsmLoader = new DsmDataLoader();
-        if (mapping == null) {
-            initMappingFile();
-        }
-
+        LOG.info("");
         Set<String> files = fileReader.listParticipantFiles();
         LOG.info("Found {} participant files for dsm data", files.size());
         int count = 1;
@@ -423,6 +425,7 @@ class DataLoader {
             count++;
         }
 
+        LOG.info("");
         files = fileReader.listFamilyMemberFiles();
         LOG.info("Found {} family member files for dsm data", files.size());
         count = 1;
@@ -441,7 +444,12 @@ class DataLoader {
         String guid = TransactionWrapper.withTxn(handle ->
                 handle.attach(JdbiUser.class).getUserGuidByAltpid(altpid));
         if (StringUtils.isBlank(guid)) {
-            throw new LoaderException("Could not find participant guid for altpid: " + altpid);
+            if (isProdRun) {
+                throw new LoaderException("Could not find participant guid for altpid: " + altpid);
+            } else {
+                LOG.error("  Could not find participant guid for altpid={}, skipping", altpid);
+                return;
+            }
         }
         DsmDataLoader.useTxn(dsmHandle -> loadDsmData(dsmHandle, guid, mapping, participant));
         familyIdToParticipantGuid.put(familyId, guid);
@@ -452,27 +460,39 @@ class DataLoader {
         String familyId = member.getFamilyId();
         String guid = familyIdToParticipantGuid.get(familyId);
         if (StringUtils.isBlank(guid)) {
-            throw new LoaderException("Could not find participant guid for family_id: " + familyId);
+            if (isProdRun) {
+                throw new LoaderException("Could not find participant guid for family_id: " + familyId);
+            } else {
+                LOG.error("  Could not find participant guid for family_id={}, skipping", familyId);
+                return;
+            }
         }
         loadDsmData(dsmHandle, guid, mapping, member);
     }
 
     private void loadDsmData(Handle dsmHandle, String participantGuid, Mapping mapping, MemberWrapper member) {
-        // looks like there's "field_type_id" in dsm, akin to groups in datstat
-        // likely need to refactor dsm_fields to be maps instead of just lists
-
-
         Map<String, String> data = new HashMap<>();
         for (var field : mapping.getDsmFields()) {
-            String value = member.getString(field.getSource());
-            if (value != null) {
-                data.put(field.getTarget(), value);
+            if ("datstat_masterpid".equalsIgnoreCase(field.getSource())) {
+                var obj = member.getObject(field.getSource());
+                if (obj != null) {
+                    String uri = obj.getString("Uri");
+                    String pid = Path.of(uri).getFileName().toString();
+                    data.put(field.getTarget(), pid);
+                }
+            } else {
+                String value = member.getString(field.getSource());
+                if (value != null) {
+                    data.put(field.getTarget(), value);
+                }
             }
         }
 
         LOG.info("  Member has dsm data with {} field values", data.size());
         if (!data.isEmpty()) {
-            // insert into table
+            String json = gson.toJson(data);
+            long id = dsmLoader.loadData(dsmHandle, studyGuid, participantGuid, json);
+            LOG.info("  Inserted member dsm data with id={}", id);
         }
     }
 }

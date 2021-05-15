@@ -112,12 +112,12 @@ public class DataLoaderCli {
             var report = new Report();
             try {
                 loader.processParticipantFiles(report);
-                writeReport(studyGuid, outputFilename, report, false);
             } catch (Exception e) {
                 LOG.info("Error while processing participant files", e);
-                writeReport(studyGuid, outputFilename, report, true);
+                writeReport(studyGuid, outputFilename, report);
                 return;
             }
+            writeReport(studyGuid, outputFilename, report);
         }
         if (loadDsmData) {
             loader.processDsmFiles();
@@ -151,11 +151,11 @@ public class DataLoaderCli {
         EncryptionKey.setEncryptionKey(cfg.getString(LoaderConfigFile.AUTH0_ENCRYPTION_SECRET));
     }
 
-    private static void writeReport(String studyGuid, String filename, Report report, boolean isPartial) {
+    private static void writeReport(String studyGuid, String filename, Report report) {
         if (filename == null || filename.isBlank()) {
             filename = Report.defaultFilename(studyGuid);
         }
         report.write(filename);
-        LOG.info("Saved{}migration report to: {}", isPartial ? " partial " : " ", filename);
+        LOG.info("Saved{}migration report to: {}", report.isPartial() ? " partial " : " ", filename);
     }
 }
