@@ -52,20 +52,20 @@ public class DsmDataLoader {
         }
     }
 
-    public long loadData(Handle dsmHandle, String studyGuid, String participantGuid, String jsonData) {
+    public long loadData(Handle dsmHandle, String studyGuid, String participantAltPid, String jsonData) {
         return dsmHandle.attach(DsmDao.class).insertParticipantData(
-                studyGuid, participantGuid, jsonData, Instant.now().toEpochMilli());
+                studyGuid, participantAltPid, jsonData, Instant.now().toEpochMilli());
     }
 
     interface DsmDao extends SqlObject {
         @GetGeneratedKeys
         @SqlUpdate("insert into ddp_participant_data"
                 + "        (ddp_participant_id, ddp_instance_id, field_type_id, data, last_changed, changed_by)"
-                + " select :participantGuid, ddp_instance_id, 'RGP_PARTICIPANTS', :json, :lastChanged, 'SYSTEM'"
+                + " select :participantAltPid, ddp_instance_id, 'RGP_PARTICIPANTS', :json, :lastChanged, 'SYSTEM'"
                 + "   from ddp_instance where study_guid = :studyGuid")
         long insertParticipantData(
                 @Bind("studyGuid") String studyGuid,
-                @Bind("participantGuid") String participantGuid,
+                @Bind("participantAltPid") String participantAltPid,
                 @Bind("json") String jsonData,
                 @Bind("lastChanged") long lastChanged);
     }

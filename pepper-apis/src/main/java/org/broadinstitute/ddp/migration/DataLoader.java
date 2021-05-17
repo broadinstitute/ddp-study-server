@@ -25,7 +25,6 @@ import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
 import org.broadinstitute.ddp.db.dao.JdbiActivityInstanceStatus;
 import org.broadinstitute.ddp.db.dao.JdbiActivityVersion;
 import org.broadinstitute.ddp.db.dao.JdbiMailingList;
-import org.broadinstitute.ddp.db.dao.JdbiUser;
 import org.broadinstitute.ddp.db.dto.ActivityDto;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.db.dto.ActivityVersionDto;
@@ -51,7 +50,7 @@ class DataLoader {
     private final DsmDataLoader dsmLoader;
     private final Map<String, Long> activityCodeToId = new HashMap<>();
     private final Map<Long, ActivityVersionDto> activityIdToLatestVersion = new HashMap<>();
-    private final Map<String, String> familyIdToParticipantGuid = new HashMap<>();
+    private final Map<String, String> familyIdToParticipantAltPid = new HashMap<>();
 
     DataLoader(Config cfg, FileReader fileReader, boolean isProdRun) {
         this.cfg = cfg;
@@ -439,39 +438,37 @@ class DataLoader {
     }
 
     private void processParticipantDsmData(MemberWrapper participant) {
-        String altpid = participant.getAltPid();
+        String altPid = participant.getAltPid();
         String familyId = participant.getFamilyId();
-        String guid = TransactionWrapper.withTxn(handle ->
-                handle.attach(JdbiUser.class).getUserGuidByAltpid(altpid));
-        if (StringUtils.isBlank(guid)) {
+        if (StringUtils.isBlank(altPid)) {
             if (isProdRun) {
-                throw new LoaderException("Could not find participant guid for altpid: " + altpid);
+                throw new LoaderException("Participant is missing altpid");
             } else {
-                LOG.error("  Could not find participant guid for altpid={}, skipping", altpid);
+                LOG.error("  Participant is missing altpid, skipping");
                 return;
             }
         }
-        DsmDataLoader.useTxn(dsmHandle -> loadDsmData(dsmHandle, guid, mapping, participant));
-        familyIdToParticipantGuid.put(familyId, guid);
-        LOG.info("  Assigned family_id={} to participant_guid={}", familyId, guid);
+        DsmDataLoader.useTxn(dsmHandle -> loadDsmData(dsmHandle, altPid, mapping, participant));
+        familyIdToParticipantAltPid.put(familyId, altPid);
+        LOG.info("  Assigned family_id={} to participant altpid={}", familyId, altPid);
     }
 
     private void processFamilyMemberDsmData(Handle dsmHandle, MemberWrapper member) {
         String familyId = member.getFamilyId();
-        String guid = familyIdToParticipantGuid.get(familyId);
-        if (StringUtils.isBlank(guid)) {
+        String altPid = familyIdToParticipantAltPid.get(familyId);
+        if (StringUtils.isBlank(altPid)) {
             if (isProdRun) {
-                throw new LoaderException("Could not find participant guid for family_id: " + familyId);
+                throw new LoaderException("Could not find participant altpid for family_id: " + familyId);
             } else {
-                LOG.error("  Could not find participant guid for family_id={}, skipping", familyId);
+                LOG.error("  Could not find participant altpid for family_id={}, skipping", familyId);
                 return;
             }
         }
-        LOG.info("  Using participant_guid={}", guid);
-        loadDsmData(dsmHandle, guid, mapping, member);
+        LOG.info("  Using participant altpid={}", altPid);
+        loadDsmData(dsmHandle, altPid, mapping, member);
     }
 
-    private void loadDsmData(Handle dsmHandle, String participantGuid, Mapping mapping, MemberWrapper member) {
+    private void loadDsmData(Handle dsmHandle, String participantAltPid, Mapping mapping, MemberWrapper member) {
         Map<String, String> data = new HashMap<>();
         for (var field : mapping.getDsmFields()) {
             if ("datstat_masterpid".equalsIgnoreCase(field.getSource())) {
@@ -492,7 +489,7 @@ class DataLoader {
         LOG.info("  Member has dsm data with {} field values", data.size());
         if (!data.isEmpty()) {
             String json = gson.toJson(data);
-            long id = dsmLoader.loadData(dsmHandle, studyGuid, participantGuid, json);
+            long id = dsmLoader.loadData(dsmHandle, studyGuid, participantAltPid, json);
             LOG.info("  Inserted member dsm data with id={}", id);
         }
     }
