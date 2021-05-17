@@ -28,6 +28,7 @@
   {{end}}
     "BASE_URL": "{{$conf.baseWebUrl}}",
     "LOGIN_DOMAIN": "{{$conf.auth0.loginDomain}}",
+    "ASSETS_BUCKET": "{{$conf.assetsBucketName}}",
     "SERVER_BASE_URL": "{{$conf.serverBaseUrl}}"
   },
   "AUTH0_ALLOW_DELETE": false,
