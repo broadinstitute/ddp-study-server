@@ -467,6 +467,7 @@ class DataLoader {
                 return;
             }
         }
+        LOG.info("  Using participant_guid={}", guid);
         loadDsmData(dsmHandle, guid, mapping, member);
     }
 
