@@ -1,5 +1,8 @@
 package org.broadinstitute.ddp.util;
 
+import static java.lang.String.format;
+import static org.apache.http.HttpStatus.SC_NOT_FOUND;
+import static org.broadinstitute.ddp.constants.ErrorCodes.STUDY_NOT_FOUND;
 import static org.broadinstitute.ddp.constants.RouteConstants.Header.BEARER;
 
 import java.util.Arrays;
@@ -14,7 +17,9 @@ import org.apache.http.HttpStatus;
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.content.ContentStyle;
+import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
+import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudyCached;
 import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
@@ -223,6 +228,20 @@ public class RouteUtil {
         }
     }
 
+    public static void haltError(int status, String code, String msg) {
+        LOG.warn(msg);
+        throw ResponseUtil.haltError(status, new ApiError(code, msg));
+    }
+
+    public static StudyDto readStudyDto(String studyGuid) {
+        return TransactionWrapper.withTxn(handle -> {
+            var studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(studyGuid);
+            if (studyDto == null) {
+                haltError(SC_NOT_FOUND, STUDY_NOT_FOUND, format("Study with guid=%s not found", studyGuid));
+            }
+            return studyDto;
+        });
+    }
 
     /**
      * Resolve the language to use for request. If study guid is provided, will lookup study's supported languages.

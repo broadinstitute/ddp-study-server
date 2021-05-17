@@ -130,6 +130,7 @@ import org.broadinstitute.ddp.route.JoinMailingListRoute;
 import org.broadinstitute.ddp.route.ListCancersRoute;
 import org.broadinstitute.ddp.route.ListStudyLanguagesRoute;
 import org.broadinstitute.ddp.route.ListUserStudyInvitationsRoute;
+import org.broadinstitute.ddp.route.ParticipantLookupByGuidRoute;
 import org.broadinstitute.ddp.route.ParticipantsLookupRoute;
 import org.broadinstitute.ddp.route.PatchActivityInstanceRoute;
 import org.broadinstitute.ddp.route.PatchFormAnswersRoute;
@@ -371,6 +372,8 @@ public class DataDonationPlatform {
         post(API.ADMIN_STUDY_USER_LOGIN_ACCOUNT, new AdminCreateUserLoginAccountRoute(), jsonSerializer);
         post(API.ADMIN_STUDY_PARTICIPANTS_LOOKUP,
                 new ParticipantsLookupRoute(new ESParticipantsLookupService(esClient)), responseSerializer);
+        get(API.ADMIN_STUDY_PARTICIPANT_LOOKUP_BY_GUID,
+                new ParticipantLookupByGuidRoute(new ESParticipantsLookupService(esClient)), responseSerializer);
 
         // These filters work in a tandem:
         // - StudyLanguageResolutionFilter figures out and sets the user language in the attribute store

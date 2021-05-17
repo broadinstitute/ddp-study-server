@@ -54,7 +54,7 @@ public class ESParticipantsSearch extends ESSearch {
     public QueryBuilder createQuery() {
         var queryBuilder = queryLookupFieldsOfIndex(PARTICIPANTS_STRUCTURED, query);
         var invitationsQueryBuilder = queryStringQuery(INVITATIONS__GUID.getEsField(), normalizeInvitationGuid(query));
-        if (governedUserToProxy.size() > 0) {
+        if (governedUserToProxy != null && governedUserToProxy.size() > 0) {
             return or(queryBuilder, invitationsQueryBuilder, orMatch(PROFILE__GUID.getEsField(), governedUserToProxy.keySet()));
         } else {
             return or(queryBuilder, invitationsQueryBuilder);
@@ -87,8 +87,10 @@ public class ESParticipantsSearch extends ESSearch {
             }
 
             var proxies = gson.fromJson(hitAsJson.get(SOURCE__PROXIES), String[].class);
-            for (var proxyGuid :proxies) {
-                participantResult.getProxies().add(proxyGuid);
+            if (proxies != null) {
+                for (var proxyGuid : proxies) {
+                    participantResult.getProxies().add(proxyGuid);
+                }
             }
 
             results.put(participantResult.getGuid(), participantResult);

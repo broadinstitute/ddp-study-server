@@ -22,6 +22,7 @@ import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.elastic.participantslookup.ESParticipantsLookupService;
 import org.broadinstitute.ddp.json.admin.participantslookup.ParticipantsLookupPayload;
 import org.broadinstitute.ddp.json.admin.participantslookup.ParticipantsLookupResultRow;
+import org.broadinstitute.ddp.service.participantslookup.ParticipantLookupType;
 import org.broadinstitute.ddp.service.participantslookup.ParticipantsLookupResult;
 import org.elasticsearch.ElasticsearchStatusException;
 import org.elasticsearch.client.RestHighLevelClient;
@@ -129,8 +130,12 @@ public class ParticipantsLookupRouteTest extends SparkServerAwareBaseTest {
         }
 
         @Override
-        protected void doLookupParticipants(StudyDto studyDto, String query, int resultsMaxCount,
-                                            ParticipantsLookupResult participantsLookupResult) throws Exception {
+        protected void doLookupParticipants(
+                ParticipantLookupType participantLookupType,
+                StudyDto studyDto,
+                String query,
+                Integer resultsMaxCount,
+                ParticipantsLookupResult participantsLookupResult) throws Exception {
             if (query.equals(QUERY__EMPTY_RESULT)) {
                 participantsLookupResult.setTotalCount(0);
                 participantsLookupResult.setResultRows(emptyList());
