@@ -94,9 +94,15 @@ public class ESParticipantsLookupService extends ParticipantsLookupService {
     }
 
     /**
-     * Participants lookup by `query` (full-text search).
-     *
-     * <p><b>Participants lookup by `query` algorithm:</b>
+     * Participants lookup by `query` (full-text search).<br>
+     * The following steps are executed:
+     * <pre>
+     *     - full-text search of proxies (users index): by specified fields: name, email, guid...;
+     *     - full-text search of participants (participants index): by specified fields: name, email, guid... + detected
+     *       guids of governed users;
+     *     - search of proxies which not found on step 1 (by proxy guids detected from participants).
+     * </pre>
+     * <p><b>Participants lookup algorithm:</b>
      * <ul>
      *     <li>find in index "users" (name of index detected by current study) a substring 'query' (full-text-search in fields
      *     specified in {@link ESParticipantsLookupField}) and having 'governedUsers' not empty, so search among proxy users only;
