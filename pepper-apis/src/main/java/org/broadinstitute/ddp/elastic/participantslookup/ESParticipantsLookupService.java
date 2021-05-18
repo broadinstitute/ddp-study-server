@@ -102,6 +102,7 @@ public class ESParticipantsLookupService extends ParticipantsLookupService {
      *       guids of governed users;
      *     - search of proxies which not found on step 1 (by proxy guids detected from participants).
      * </pre>
+     *
      * <p><b>Participants lookup algorithm:</b>
      * <ul>
      *     <li>find in index "users" (name of index detected by current study) a substring 'query' (full-text-search in fields
