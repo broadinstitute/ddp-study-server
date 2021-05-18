@@ -37,7 +37,7 @@ public abstract class ParticipantsLookupService {
             String query,
             Integer resultsMaxCount) {
 
-        if (resultsMaxCount <= 0) {
+        if (resultsMaxCount != null && resultsMaxCount <= 0) {
             throw new ParticipantsLookupException(INVALID_RESULT_MAX_COUNT, "resultsMaxCount should be greater than 0");
         }
 
@@ -47,7 +47,8 @@ public abstract class ParticipantsLookupService {
 
         if (StringUtils.isNotBlank(query)) {
             try {
-                doLookupParticipants(participantLookupType, studyDto, preProcessQuery(query), resultsMaxCount, participantsLookupResult);
+                doLookupParticipants(
+                        participantLookupType, studyDto, preProcessQuery(query), resultsMaxCount, participantsLookupResult);
             } catch (Exception e) {
                 LOG.error(e.getMessage(), e);
                 handleException(e);

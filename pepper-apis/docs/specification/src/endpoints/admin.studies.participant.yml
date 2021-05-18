@@ -11,8 +11,8 @@ get:
 
     Note: requires study admin ID token.
   parameters:
-    - $ref: '../pepper.yml#/components/parameters/userGuid'
     - $ref: '../pepper.yml#/components/parameters/studyGuid'
+    - $ref: '../pepper.yml#/components/parameters/userGuid'
   responses:
     200:
       description: an object with participant info

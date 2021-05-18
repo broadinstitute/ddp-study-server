@@ -228,19 +228,19 @@ public class RouteUtil {
         }
     }
 
-    public static void haltError(int status, String code, String msg) {
-        LOG.warn(msg);
-        throw ResponseUtil.haltError(status, new ApiError(code, msg));
-    }
-
-    public static StudyDto readStudyDto(String studyGuid) {
+    public static StudyDto readStudyDto(String studyGuid, HaltErrorHolder haltErrorHolder) {
         return TransactionWrapper.withTxn(handle -> {
             var studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(studyGuid);
             if (studyDto == null) {
-                haltError(SC_NOT_FOUND, STUDY_NOT_FOUND, format("Study with guid=%s not found", studyGuid));
+                haltErrorHolder.haltError(SC_NOT_FOUND, STUDY_NOT_FOUND, format("Study with guid=%s not found", studyGuid));
             }
             return studyDto;
         });
+    }
+
+    @FunctionalInterface
+    public interface HaltErrorHolder {
+        void haltError(int status, String code, String msg);
     }
 
     /**

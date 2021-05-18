@@ -7,8 +7,8 @@ import static org.apache.http.HttpStatus.SC_INTERNAL_SERVER_ERROR;
 import static org.apache.http.HttpStatus.SC_OK;
 import static org.broadinstitute.ddp.constants.RouteConstants.API.ADMIN_STUDY_PARTICIPANTS_LOOKUP;
 import static org.broadinstitute.ddp.constants.RouteConstants.PathParam.STUDY_GUID;
-import static org.broadinstitute.ddp.route.ParticipantsLookupRoute.DEFAULT_PARTICIPANTS_LOOKUP_RESULT_MAX_COUNT;
-import static org.broadinstitute.ddp.route.ParticipantsLookupRouteTest.ParticipantsLookupTestService.QUERY_ELASTIC_SEARCH_STATUS__UNAUTHORIZED;
+import static org.broadinstitute.ddp.route.AdminParticipantsLookupRoute.DEFAULT_PARTICIPANTS_LOOKUP_RESULT_MAX_COUNT;
+import static org.broadinstitute.ddp.route.AdminParticipantsLookupRouteTest.ParticipantsLookupTestService.QUERY_ELASTIC_SEARCH_STATUS__UNAUTHORIZED;
 import static org.elasticsearch.rest.RestStatus.UNAUTHORIZED;
 import static org.hamcrest.Matchers.equalTo;
 
@@ -33,18 +33,18 @@ import org.junit.Test;
 import spark.Spark;
 
 /**
- * Unit tests for testing {@link ParticipantsLookupRoute}
+ * Unit tests for testing {@link AdminParticipantsLookupRoute}
  */
-public class ParticipantsLookupRouteTest extends SparkServerAwareBaseTest {
+public class AdminParticipantsLookupRouteTest extends SparkServerAwareBaseTest {
 
     private static SparkServerTestRunner sparkServerTestRunner = new SparkServerTestRunner();
 
     @BeforeClass
     public static void setup() {
         sparkServerTestRunner.setupSparkServer(
-                ParticipantsLookupRouteTest::mapFiltersBeforeRoutes,
-                ParticipantsLookupRouteTest::mapRoutes,
-                ParticipantsLookupRouteTest::buildUrlTemplate
+                AdminParticipantsLookupRouteTest::mapFiltersBeforeRoutes,
+                AdminParticipantsLookupRouteTest::mapRoutes,
+                AdminParticipantsLookupRouteTest::buildUrlTemplate
         );
     }
 
@@ -55,7 +55,7 @@ public class ParticipantsLookupRouteTest extends SparkServerAwareBaseTest {
 
     protected static boolean mapRoutes() {
         Spark.post(ADMIN_STUDY_PARTICIPANTS_LOOKUP,
-                new ParticipantsLookupRoute(new ParticipantsLookupRouteTest.ParticipantsLookupTestService(null)), jsonSerializer);
+                new AdminParticipantsLookupRoute(new AdminParticipantsLookupRouteTest.ParticipantsLookupTestService(null)), jsonSerializer);
         return true;
     }
 
