@@ -10,7 +10,7 @@ import org.broadinstitute.ddp.util.RouteUtil;
 
 public class AdminParticipantsLookupUtil {
 
-    public static void handleParticipantLookupException(ParticipantsLookupException e, RouteUtil.HaltErrorHolder haltErrorHolder) {
+    public static void handleParticipantLookupException(ParticipantsLookupException e, RouteUtil.HaltErrorExecutor haltErrorExecutor) {
         String code;
         int status;
         switch (e.getErrorType()) {
@@ -25,6 +25,6 @@ public class AdminParticipantsLookupUtil {
             default:
                 throw new DDPException("Unknown participants lookup error type");
         }
-        haltErrorHolder.haltError(status, code, e.getExtendedMessage());
+        haltErrorExecutor.haltError(status, code, e.getExtendedMessage());
     }
 }

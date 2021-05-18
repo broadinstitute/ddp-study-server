@@ -228,18 +228,23 @@ public class RouteUtil {
         }
     }
 
-    public static StudyDto readStudyDto(String studyGuid, HaltErrorHolder haltErrorHolder) {
+    public static StudyDto readStudyDto(String studyGuid, HaltErrorExecutor haltErrorExecutor) {
         return TransactionWrapper.withTxn(handle -> {
             var studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(studyGuid);
             if (studyDto == null) {
-                haltErrorHolder.haltError(SC_NOT_FOUND, STUDY_NOT_FOUND, format("Study with guid=%s not found", studyGuid));
+                haltErrorExecutor.haltError(SC_NOT_FOUND, STUDY_NOT_FOUND, format("Study with guid=%s not found", studyGuid));
             }
             return studyDto;
         });
     }
 
+    /**
+     * Define this functional interface in order to be possible to do custom error processing.
+     * Another benefit: call of LOG.error() will be done in that class where an error happened
+     * (so, in error log we can see a correct class name).
+     */
     @FunctionalInterface
-    public interface HaltErrorHolder {
+    public interface HaltErrorExecutor {
         void haltError(int status, String code, String msg);
     }
 
