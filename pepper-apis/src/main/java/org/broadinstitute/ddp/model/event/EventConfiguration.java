@@ -43,6 +43,9 @@ public class EventConfiguration {
             case DSM_NOTIFICATION:
                 eventTrigger = new DsmNotificationTrigger(dto);
                 break;
+            case USER_STATUS_CHANGE:
+                eventTrigger = new UserStatusChangeTrigger(dto);
+                break;
             case CONSENT_SUSPENDED:
                 // No sub-tables
             case GOVERNED_USER_REGISTERED:
@@ -65,9 +68,6 @@ public class EventConfiguration {
                 // No sub-tables
             case USER_REGISTERED:
                 // No sub-tables
-            case USER_STATUS_CHANGE:
-                eventTrigger = new UserStatusChangeTrigger(dto);
-                break;
             case EXIT_REQUEST:
                 // The simple case
                 eventTrigger = new EventTrigger(dto);

@@ -2,6 +2,7 @@ package org.broadinstitute.ddp.model.event;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.doCallRealMethod;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
@@ -73,6 +74,11 @@ public class EnrollmentCompletedEventActionTest extends TxnAwareBaseTest {
 
             verify(actionSpy, times(1)).doActionSynchronously(any(), any());
             verify(actionSpy, never()).queueDelayedEvent(any(), any());
+            verify(actionSpy, times(1)).triggerEvents(any(), argThat(actualSignal -> {
+                assertEquals("should invoke downstream events",
+                        EventTriggerType.USER_STATUS_CHANGE, actualSignal.getEventTriggerType());
+                return true;
+            }));
             assertEquals("should have status changed", EnrollmentStatusType.COMPLETED,
                     handle.attach(JdbiUserStudyEnrollment.class)
                             .getEnrollmentStatusByUserAndStudyGuids(testData.getUserGuid(), newStudy.getGuid())

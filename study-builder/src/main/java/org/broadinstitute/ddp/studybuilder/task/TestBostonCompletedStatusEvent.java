@@ -58,20 +58,20 @@ public class TestBostonCompletedStatusEvent implements CustomTask {
                 .getAllEventConfigurationsByStudyId(studyDto.getId());
 
         EventConfiguration firstEnrolledEvent = events.stream()
-                .filter(event -> event.getEventTriggerType() == EventTriggerType.USER_FIRST_ENROLLED)
+                .filter(event -> event.getEventTriggerType() == EventTriggerType.USER_STATUS_CHANGE)
                 .filter(event -> event.getEventActionType() == EventActionType.ENROLLMENT_COMPLETED)
                 .findFirst().orElse(null);
         if (firstEnrolledEvent == null) {
             Config eventCfg = studyCfg.getConfigList("events").stream()
-                    .filter(event -> "USER_FIRST_ENROLLED".equals(event.getString("trigger.type")))
+                    .filter(event -> "USER_STATUS_CHANGE".equals(event.getString("trigger.type")))
                     .filter(event -> "ENROLLMENT_COMPLETED".equals(event.getString("action.type")))
-                    .findFirst().orElseThrow(() -> new DDPException("Could not find USER_FIRST_ENROLLED event in study config"));
+                    .findFirst().orElseThrow(() -> new DDPException("Could not find USER_STATUS_CHANGE event in study config"));
             eventBuilder.insertEvent(handle, eventCfg);
 
             int delaySeconds = eventCfg.getInt("delaySeconds");
             runBackfill(handle, studyDto, delaySeconds);
         } else {
-            LOG.info("Already has USER_FIRST_ENROLLED event configuration with id {}", firstEnrolledEvent.getEventConfigurationId());
+            LOG.info("Already has USER_STATUS_CHANGE event configuration with id {}", firstEnrolledEvent.getEventConfigurationId());
         }
     }
 
