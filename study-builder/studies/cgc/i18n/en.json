@@ -8,7 +8,6 @@
   "prequal_older_than_21": "I am 21 years old or older.",
   "prequal_country": "I live in the United States.",
   "prequal_agreement": "I am interested in participating in donating my data to this research study.",
-  "prequal_validation_hint": "All questions must be checked in order to proceed to registration.",
 
 
   "consent_name": "Research Consent Form",
@@ -113,10 +112,23 @@
   "medical_history_name": "Join Us",
   "medical_history_title": "Join Us",
   "medical_history_header": "Medical History",
+  "medical_history_cancer_type": "What type(s) of cancer do you have/have you had?",
+  "medical_history_diagnosed_date": "On what date(s) were you diagnosed?",
+  "medical_history_metastatic_cancer": "Do you have metastatic cancer (has the cancer spread to new places in the body)",
+  "medical_history_cancer_surgery": "Have you had surgery related to cancer?",
+  "medical_history_chemotherapy": "Have you had chemotherapy?",
+  "medical_history_radiation": "Have you had radiation?",
+  "medical_history_other_treatments": "Have you had other types of cancer treatment?",
+  "medical_history_genomic_testing": "Have you ever had genomic testing?",
+  "medical_history_genomic_testing_name": "If you have had genomic testing and know the name of your test(s), please enter here:",
+
+
   "rrc_name": "Join Us",
   "rrc_title": "Join Us",
   "rrc_header": "Clinical Info Release Request",
   "rrg_name": "Join Us",
   "rrg_title": "Join Us",
-  "rrg_header": "Genetic Info Release Request"
+  "rrg_header": "Genetic Info Release Request",
+
+  "validation_max_len": "Text maximum length is 500"
 }
