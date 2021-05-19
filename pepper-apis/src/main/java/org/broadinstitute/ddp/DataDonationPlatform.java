@@ -69,6 +69,8 @@ import org.broadinstitute.ddp.route.AddProfileRoute;
 import org.broadinstitute.ddp.route.AdminCreateStudyParticipantRoute;
 import org.broadinstitute.ddp.route.AdminCreateUserLoginAccountRoute;
 import org.broadinstitute.ddp.route.AdminLookupInvitationRoute;
+import org.broadinstitute.ddp.route.AdminParticipantLookupByGuidRoute;
+import org.broadinstitute.ddp.route.AdminParticipantsLookupRoute;
 import org.broadinstitute.ddp.route.AdminUpdateInvitationDetailsRoute;
 import org.broadinstitute.ddp.route.Auth0LogEventRoute;
 import org.broadinstitute.ddp.route.CheckIrbPasswordRoute;
@@ -130,7 +132,6 @@ import org.broadinstitute.ddp.route.JoinMailingListRoute;
 import org.broadinstitute.ddp.route.ListCancersRoute;
 import org.broadinstitute.ddp.route.ListStudyLanguagesRoute;
 import org.broadinstitute.ddp.route.ListUserStudyInvitationsRoute;
-import org.broadinstitute.ddp.route.ParticipantsLookupRoute;
 import org.broadinstitute.ddp.route.PatchActivityInstanceRoute;
 import org.broadinstitute.ddp.route.PatchFormAnswersRoute;
 import org.broadinstitute.ddp.route.PatchMedicalProviderRoute;
@@ -370,7 +371,9 @@ public class DataDonationPlatform {
         post(API.ADMIN_STUDY_INVITATION_DETAILS, new AdminUpdateInvitationDetailsRoute(), jsonSerializer);
         post(API.ADMIN_STUDY_USER_LOGIN_ACCOUNT, new AdminCreateUserLoginAccountRoute(), jsonSerializer);
         post(API.ADMIN_STUDY_PARTICIPANTS_LOOKUP,
-                new ParticipantsLookupRoute(new ESParticipantsLookupService(esClient)), responseSerializer);
+                new AdminParticipantsLookupRoute(new ESParticipantsLookupService(esClient)), responseSerializer);
+        get(API.ADMIN_STUDY_PARTICIPANT_LOOKUP_BY_GUID,
+                new AdminParticipantLookupByGuidRoute(new ESParticipantsLookupService(esClient)), responseSerializer);
 
         // These filters work in a tandem:
         // - StudyLanguageResolutionFilter figures out and sets the user language in the attribute store
