@@ -67,6 +67,7 @@ import org.broadinstitute.ddp.pex.lang.PexParser.QuestionPredicateContext;
 import org.broadinstitute.ddp.pex.lang.PexParser.QuestionQueryContext;
 import org.broadinstitute.ddp.pex.lang.PexParser.StudyPredicateContext;
 import org.broadinstitute.ddp.pex.lang.PexParser.StudyQueryContext;
+import org.broadinstitute.ddp.util.ActivityInstanceUtil;
 import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -446,8 +447,11 @@ public class TreeWalkInterpreter implements PexInterpreter {
         if (ictx.getActivityInstanceSummary() != null) {
             questionType = ictx.getActivityInstanceSummary()
                     .getLatestActivityInstance(activityCode)
-                    .flatMap(instanceDto -> ActivityDefStore.getInstance()
-                            .findActivityDef(ictx.getHandle(), studyGuid, instanceDto))
+                    .map(instanceDto -> ActivityInstanceUtil.getActivityDef(
+                            ictx.getHandle(),
+                            ActivityDefStore.getInstance(),
+                            instanceDto,
+                            studyGuid))
                     .map(def -> def.getQuestionByStableId(stableId))
                     .map(question -> {
                         QuestionType type = null;
@@ -784,6 +788,13 @@ public class TreeWalkInterpreter implements PexInterpreter {
             } else {
                 return birthDate;
             }
+        } else if (queryCtx instanceof PexParser.ProfileAgeQueryContext) {
+            LocalDate birthDate = profile.getBirthDate();
+            if (birthDate == null) {
+                String msg = String.format("User %s does not have birth date in profile", ictx.getUserGuid());
+                throw new PexFetchException(msg);
+            }
+            return ChronoUnit.YEARS.between(birthDate, LocalDate.now());
         } else {
             throw new PexUnsupportedException("Unhandled profile data query: " + queryCtx.getText());
         }

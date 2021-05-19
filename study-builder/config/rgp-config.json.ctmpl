@@ -11,8 +11,8 @@
   {{if eq $environment "dev"}}
     "LOCALHOST_ADMIN_CALLBACKS": ",http://localhost:4200/auth,http://localhost:4200/admin-login-landing",
     "LOCALHOST_CALLBACKS": ",http://localhost:4200/auth,http://localhost:4200/login-landing",
-    "LOCALHOST_ADMIN_LOGOUTS": ",http://localhost:4200,http://localhost:4200/admin-session-expired",
-    "LOCALHOST_LOGOUTS": ",http://localhost:4200,http://localhost:4200/session-expired",
+    "LOCALHOST_ADMIN_LOGOUTS": ",http://localhost:4200,http://localhost:4200/error,http://localhost:4200/admin-session-expired",
+    "LOCALHOST_LOGOUTS": ",http://localhost:4200,http://localhost:4200/error,http://localhost:4200/session-expired",
     "LOCALHOST_ORIGINS": ",http://localhost:4200",
   {{else}}
     "LOCALHOST_ADMIN_CALLBACKS": "",
@@ -28,6 +28,7 @@
   {{end}}
     "BASE_URL": "{{$conf.baseWebUrl}}",
     "LOGIN_DOMAIN": "{{$conf.auth0.loginDomain}}",
+    "ASSETS_BUCKET": "{{$conf.assetsBucketName}}",
     "SERVER_BASE_URL": "{{$conf.serverBaseUrl}}"
   },
   "AUTH0_ALLOW_DELETE": false,

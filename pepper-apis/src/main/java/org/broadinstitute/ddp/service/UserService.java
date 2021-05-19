@@ -1,6 +1,12 @@
 package org.broadinstitute.ddp.service;
 
-import org.broadinstitute.ddp.db.DBUtils;
+import java.io.IOException;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dao.DataExportDao;
 import org.broadinstitute.ddp.db.dao.JdbiEventConfigurationOccurrenceCounter;
@@ -14,6 +20,7 @@ import org.broadinstitute.ddp.db.dao.JdbiUserStudyEnrollment;
 import org.broadinstitute.ddp.db.dao.StudyGovernanceSql;
 import org.broadinstitute.ddp.db.dao.UserGovernanceDao;
 import org.broadinstitute.ddp.db.dao.UserProfileDao;
+import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.elastic.ElasticSearchIndexType;
 import org.broadinstitute.ddp.model.governance.Governance;
@@ -28,13 +35,6 @@ import org.elasticsearch.client.RestHighLevelClient;
 import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * Entry-point for back-end operations related to users.
@@ -73,9 +73,9 @@ public class UserService {
         mailAddressDao.deleteAddressByParticipantId(userId);
         // Removing all the answers and activity instances
         ActivityInstanceDao instanceDao = handle.attach(ActivityInstanceDao.class);
-        Set<Long> instanceIds = instanceDao.findAllInstanceIdsByUserIds(Collections.singleton(userId));
-        LOG.info("Found {} activity instances to delete", instanceIds.size());
-        DBUtils.checkDelete(instanceIds.size(), instanceDao.deleteAllByIds(instanceIds));
+        List<ActivityInstanceDto> instances = instanceDao.findAllInstancesByUserIds(Collections.singleton(userId));
+        LOG.info("Found {} activity instances to delete", instances.size());
+        instanceDao.deleteInstances(instances);
         // Removing counters, events
         handle.attach(JdbiEventConfigurationOccurrenceCounter.class).deleteAllByParticipantId(userId);
         JdbiQueuedEvent queueEvent = handle.attach(JdbiQueuedEvent.class);

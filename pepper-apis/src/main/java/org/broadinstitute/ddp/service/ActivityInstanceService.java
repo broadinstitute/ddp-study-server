@@ -537,6 +537,7 @@ public class ActivityInstanceService {
 
         var context = AIBuilderFactory.createAIBuilder(handle,
                 createParams(userGuid, studyGuid, instanceGuid)
+                        .setReadPreviousInstanceId(true)
                         .setOperatorGuid(operatorGuid)
                         .setIsoLangCode(isoLangCode)
                         .setStyle(style))
@@ -582,6 +583,7 @@ public class ActivityInstanceService {
 
         var context = AIBuilderFactory.createAIBuilder(handle,
                 createParams(userGuid, studyGuid, instanceGuid)
+                        .setReadPreviousInstanceId(true)
                         .setOperatorGuid(operatorGuid)
                         .setIsoLangCode(isoLangCode)
                         .setInstanceSummary(instanceSummary)

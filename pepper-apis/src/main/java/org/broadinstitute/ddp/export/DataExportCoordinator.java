@@ -1,5 +1,9 @@
 package org.broadinstitute.ddp.export;
 
+import static org.broadinstitute.ddp.export.ExportUtil.DEFAULT_BATCH_SIZE;
+import static org.broadinstitute.ddp.export.ExportUtil.READER_BUFFER_SIZE_IN_BYTES;
+import static org.broadinstitute.ddp.export.ExportUtil.withAPIsTxn;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
@@ -17,26 +21,21 @@ import java.util.Set;
 
 import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.Bucket;
-import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.JdbiUserStudyEnrollment;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.elastic.ElasticSearchIndexType;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.study.Participant;
-import org.jdbi.v3.core.HandleCallback;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class DataExportCoordinator {
 
-    public static final int DEFAULT_BATCH_SIZE = 100;
-    public static final int READER_BUFFER_SIZE_IN_BYTES = 10 * 1024;
-
     private static final Logger LOG = LoggerFactory.getLogger(DataExportCoordinator.class);
 
-    private DataExporter exporter;
+    private final DataExporter exporter;
     private int batchSize = DEFAULT_BATCH_SIZE;
-    private Set<ElasticSearchIndexType> indices = new HashSet<>();
+    private final Set<ElasticSearchIndexType> indices = new HashSet<>();
     private Bucket csvBucket;
 
     public DataExportCoordinator(DataExporter exporter) {
@@ -85,8 +84,8 @@ public class DataExportCoordinator {
 
         if (csvBucket != null) {
             withAPIsTxn(handle -> {
-                exporter.computeMaxInstancesSeen(handle, activities);
-                exporter.computeActivityAttributesSeen(handle, activities);
+                DataExporter.computeMaxInstancesSeen(handle, activities);
+                DataExporter.computeActivityAttributesSeen(handle, activities);
                 return null;
             });
             boolean runSuccess = runCsvExports(studyDto, activities);
@@ -128,7 +127,7 @@ public class DataExportCoordinator {
 
             boolean runSuccess = withAPIsTxn(handle -> {
                 boolean batchSuccess = true;
-                List<Participant> participants = exporter.extractParticipantDataSetByIds(handle, studyDto, batch);
+                List<Participant> participants = DataExporter.extractParticipantDataSetByIds(handle, studyDto, batch);
                 LOG.info("Extracted {} participants for study {}", participants.size(), studyDto.getGuid());
                 if (indices.contains(ElasticSearchIndexType.PARTICIPANTS_STRUCTURED)) {
                     try {
@@ -189,7 +188,7 @@ public class DataExportCoordinator {
         try (
                 PipedOutputStream outputStream = new PipedOutputStream();
                 Writer csvWriter = new OutputStreamWriter(outputStream, StandardCharsets.UTF_8);
-                PipedInputStream csvInputStream = new PipedInputStream(outputStream, READER_BUFFER_SIZE_IN_BYTES);
+                PipedInputStream csvInputStream = new PipedInputStream(outputStream, READER_BUFFER_SIZE_IN_BYTES)
         ) {
             // Running the DataExporter in separate thread
             Runnable csvExportRunnable = buildExportToCsvRunnable(studyDto, exporter, csvWriter, activities, participants);
@@ -227,22 +226,20 @@ public class DataExportCoordinator {
     }
 
     private String buildExportBlobFilename(StudyDto study) {
-        return String.format("%s/%s", study.getName(), DataExporter.makeExportCSVFilename(study.getGuid(), Instant.now()));
-    }
+        Instant now = Instant.now();
+        return String.format("%s/%s", study.getName(), DataExporter.makeExportCSVFilename(study.getGuid(), now));
 
-    <R, X extends Exception> R withAPIsTxn(HandleCallback<R, X> callback) throws X {
-        return TransactionWrapper.withTxn(TransactionWrapper.DB.APIS, callback);
     }
 
     private class PaginatedParticipantIterator implements Iterator<Participant> {
 
-        private StudyDto studyDto;
-        private int batchSize;
+        private final StudyDto studyDto;
+        private final int batchSize;
         private int fetched;
         private boolean exhausted;
         private ArrayDeque<Participant> currentBatch;
 
-        public PaginatedParticipantIterator(StudyDto studyDto, int batchSize) {
+        PaginatedParticipantIterator(StudyDto studyDto, int batchSize) {
             this.studyDto = studyDto;
             this.batchSize = batchSize;
             this.fetched = 0;
@@ -261,7 +258,7 @@ public class DataExportCoordinator {
                 currentBatch = withAPIsTxn(handle -> {
                     Set<Long> userIds = handle.attach(JdbiUserStudyEnrollment.class)
                             .findUserIdsByStudyIdAndLimit(studyDto.getId(), offset, batchSize);
-                    List<Participant> extract = exporter.extractParticipantDataSetByIds(handle, studyDto, userIds);
+                    List<Participant> extract = DataExporter.extractParticipantDataSetByIds(handle, studyDto, userIds);
                     return new ArrayDeque<>(extract);
                 });
                 fetched += currentBatch.size();
