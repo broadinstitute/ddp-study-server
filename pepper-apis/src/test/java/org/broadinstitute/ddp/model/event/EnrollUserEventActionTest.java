@@ -17,6 +17,7 @@ import org.broadinstitute.ddp.db.dao.JdbiUserStudyEnrollment;
 import org.broadinstitute.ddp.db.dto.EventConfigurationDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.model.activity.types.EventTriggerType;
+import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -46,11 +47,11 @@ public class EnrollUserEventActionTest extends TxnAwareBaseTest {
             actionSpy.doAction(null, handle, signal);
 
             assertTrue("should be enrolled", handle.attach(JdbiUserStudyEnrollment.class)
-                    .findFirstEnrolledAtMillis(newStudy.getId(), testData.getUserId())
+                    .findFirstStatusMillis(newStudy.getId(), testData.getUserId(), EnrollmentStatusType.ENROLLED)
                     .isPresent());
             verify(actionSpy, times(1)).triggerEvents(any(), argThat(actualSignal -> {
                 assertEquals("should invoke downstream events",
-                        EventTriggerType.USER_FIRST_ENROLLED, actualSignal.getEventTriggerType());
+                        EventTriggerType.USER_STATUS_CHANGE, actualSignal.getEventTriggerType());
                 return true;
             }));
 

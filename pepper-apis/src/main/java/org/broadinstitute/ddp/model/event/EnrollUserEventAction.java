@@ -21,10 +21,9 @@ public class EnrollUserEventAction extends EventAction {
 
     @Override
     public void doAction(PexInterpreter pexInterpreter, Handle handle, EventSignal signal) {
-        JdbiUserStudyEnrollment jdbiUserStudyEnrollment = handle.attach(JdbiUserStudyEnrollment.class);
-
+        var jdbiUserStudyEnrollment = handle.attach(JdbiUserStudyEnrollment.class);
         Long firstEnrolledAtMillis = jdbiUserStudyEnrollment
-                .findFirstEnrolledAtMillis(signal.getStudyId(), signal.getParticipantId())
+                .findFirstStatusMillis(signal.getStudyId(), signal.getParticipantId(), EnrollmentStatusType.ENROLLED)
                 .orElse(null);
 
         jdbiUserStudyEnrollment.changeUserStudyEnrollmentStatus(
@@ -39,14 +38,14 @@ public class EnrollUserEventAction extends EventAction {
             // it means this is the first time the status changed to ENROLLED. Let's run downstream
             // events that hook into this.
             LOG.info("Participant {} is newly enrolled in study {}, triggering events for {}",
-                    signal.getParticipantGuid(), signal.getStudyId(), EventTriggerType.USER_FIRST_ENROLLED);
-            triggerEvents(handle, new EventSignal(
+                    signal.getParticipantGuid(), signal.getStudyId(), EventTriggerType.USER_STATUS_CHANGE);
+            triggerEvents(handle, new UserStatusChangeSignal(
                     signal.getOperatorId(),
                     signal.getParticipantId(),
                     signal.getParticipantGuid(),
                     signal.getOperatorGuid(),
                     signal.getStudyId(),
-                    EventTriggerType.USER_FIRST_ENROLLED));
+                    EnrollmentStatusType.ENROLLED));
         }
     }
 

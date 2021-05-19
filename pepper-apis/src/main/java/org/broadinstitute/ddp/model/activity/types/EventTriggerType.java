@@ -13,9 +13,9 @@ public enum EventTriggerType {
     MEDICAL_UPDATE(true),
     REACHED_AOM(true),
     REACHED_AOM_PREP(true),
-    USER_FIRST_ENROLLED(true),
     USER_NOT_IN_STUDY(true),
     USER_REGISTERED(true),
+    USER_STATUS_CHANGE(false),
     WORKFLOW_STATE(false);
 
     private boolean isStatic;

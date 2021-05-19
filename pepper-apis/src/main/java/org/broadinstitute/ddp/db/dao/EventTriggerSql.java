@@ -2,6 +2,7 @@ package org.broadinstitute.ddp.db.dao;
 
 import org.broadinstitute.ddp.model.activity.types.EventTriggerType;
 import org.broadinstitute.ddp.model.dsm.DsmNotificationEventType;
+import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
@@ -25,4 +26,11 @@ public interface EventTriggerSql extends SqlObject {
             @Bind("triggerId") long triggerId,
             @Bind("dsmEventType") DsmNotificationEventType dsmEventType);
 
+    @SqlUpdate("insert into user_status_change_trigger (event_trigger_id, target_status_type_id)"
+            + " select :triggerId, enrollment_status_type_id"
+            + "   from enrollment_status_type"
+            + "  where enrollment_status_type_code = :targetStatus")
+    int insertUserStatusChangeTrigger(
+            @Bind("triggerId") long triggerId,
+            @Bind("targetStatus") EnrollmentStatusType targetStatusType);
 }

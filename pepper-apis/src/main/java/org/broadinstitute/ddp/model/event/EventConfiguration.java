@@ -61,12 +61,13 @@ public class EventConfiguration {
                 // No sub-tables
             case REACHED_AOM_PREP:
                 // No sub-tables
-            case USER_FIRST_ENROLLED:
-                // No sub-tables
             case USER_NOT_IN_STUDY:
                 // No sub-tables
             case USER_REGISTERED:
                 // No sub-tables
+            case USER_STATUS_CHANGE:
+                eventTrigger = new UserStatusChangeTrigger(dto);
+                break;
             case EXIT_REQUEST:
                 // The simple case
                 eventTrigger = new EventTrigger(dto);

@@ -45,6 +45,7 @@ import org.broadinstitute.ddp.model.event.DsmNotificationTrigger;
 import org.broadinstitute.ddp.model.event.EventTrigger;
 import org.broadinstitute.ddp.model.event.WorkflowStateTrigger;
 import org.broadinstitute.ddp.model.pdf.PdfConfigInfo;
+import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
 import org.broadinstitute.ddp.model.workflow.ActivityState;
 import org.broadinstitute.ddp.model.workflow.StateType;
 import org.broadinstitute.ddp.model.workflow.StaticState;
@@ -158,6 +159,10 @@ public class EventBuilder {
             String dsmEvent = triggerCfg.getString("dsmEvent");
             var dsmEventType = DsmNotificationEventType.valueOf(dsmEvent);
             return triggerDao.insertDsmNotificationTrigger(dsmEventType);
+        } else if (type == EventTriggerType.USER_STATUS_CHANGE)  {
+            String targetStatus = triggerCfg.getString("targetStatus");
+            var targetStatusType = EnrollmentStatusType.valueOf(targetStatus);
+            return triggerDao.insertUserStatusChangeTrigger(targetStatusType);
         } else if (type == EventTriggerType.WORKFLOW_STATE) {
             if (triggerCfg.hasPath(ACTIVITY_CODE_FIELD)) {
                 String activityCode = triggerCfg.getString(ACTIVITY_CODE_FIELD);

@@ -6,11 +6,27 @@
 
     <changeSet author="yufeng" id="20210401-new-enrollment-event-types">
         <insert tableName="event_trigger_type">
-            <column name="event_trigger_type_code" value="USER_FIRST_ENROLLED"/>
+            <column name="event_trigger_type_code" value="USER_STATUS_CHANGE"/>
         </insert>
         <insert tableName="event_action_type">
             <column name="event_action_type_code" value="ENROLLMENT_COMPLETED"/>
         </insert>
+    </changeSet>
+
+    <changeSet author="yufeng" id="20210519-user-status-change-trigger-table">
+        <createTable tableName="user_status_change_trigger">
+            <column name="event_trigger_id" type="bigint">
+                <constraints primaryKey="true"
+                             primaryKeyName="user_status_change_trigger_pk"
+                             foreignKeyName="usct_event_trigger_fk"
+                             references="event_trigger(event_trigger_id)"/>
+            </column>
+            <column name="target_status_type_id" type="bigint">
+                <constraints nullable="false"
+                             foreignKeyName="usct_enrollment_status_type_fk"
+                             references="enrollment_status_type(enrollment_status_type_id)"/>
+            </column>
+        </createTable>
     </changeSet>
 
 </databaseChangeLog>

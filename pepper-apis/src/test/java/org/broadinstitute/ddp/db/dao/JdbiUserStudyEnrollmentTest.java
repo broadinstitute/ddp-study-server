@@ -165,7 +165,7 @@ public class JdbiUserStudyEnrollmentTest extends TxnAwareBaseTest {
             StudyDto newStudy = TestDataSetupUtil.generateTestStudy(handle, cfg);
             var jdbiEnrollment = handle.attach(JdbiUserStudyEnrollment.class);
             Long firstEnrolled = jdbiEnrollment
-                    .findFirstEnrolledAtMillis(newStudy.getId(), testData.getUserId())
+                    .findFirstStatusMillis(newStudy.getId(), testData.getUserId(), EnrollmentStatusType.ENROLLED)
                     .orElse(null);
             assertNull("should not be enrolled yet", firstEnrolled);
 
@@ -176,7 +176,7 @@ public class JdbiUserStudyEnrollmentTest extends TxnAwareBaseTest {
                     EnrollmentStatusType.ENROLLED,
                     now);
             firstEnrolled = jdbiEnrollment
-                    .findFirstEnrolledAtMillis(newStudy.getId(), testData.getUserId())
+                    .findFirstStatusMillis(newStudy.getId(), testData.getUserId(), EnrollmentStatusType.ENROLLED)
                     .orElse(null);
             assertNotNull("should be enrolled", firstEnrolled);
             assertEquals("should be the expected time", (Long) now, firstEnrolled);
@@ -186,7 +186,7 @@ public class JdbiUserStudyEnrollmentTest extends TxnAwareBaseTest {
                     testData.getStudyGuid(),
                     EnrollmentStatusType.ENROLLED);
             firstEnrolled = jdbiEnrollment
-                    .findFirstEnrolledAtMillis(newStudy.getId(), testData.getUserId())
+                    .findFirstStatusMillis(newStudy.getId(), testData.getUserId(), EnrollmentStatusType.ENROLLED)
                     .orElse(null);
             assertEquals("should still be the expected time", (Long) now, firstEnrolled);
 

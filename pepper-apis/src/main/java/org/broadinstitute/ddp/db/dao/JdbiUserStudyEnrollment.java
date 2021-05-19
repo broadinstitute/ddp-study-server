@@ -49,9 +49,11 @@ public interface JdbiUserStudyEnrollment extends SqlObject {
             + "  join enrollment_status_type as est on est.enrollment_status_type_id = usen.enrollment_status_type_id"
             + " where usen.study_id = :studyId"
             + "   and usen.user_id = :userId"
-            + "   and est.enrollment_status_type_code = 'ENROLLED'"
+            + "   and est.enrollment_status_type_code = :statusType"
             + " group by usen.user_id")
-    Optional<Long> findFirstEnrolledAtMillis(@Bind("studyId") long studyId, @Bind("userId") long participantUserId);
+    Optional<Long> findFirstStatusMillis(@Bind("studyId") long studyId,
+                                         @Bind("userId") long participantUserId,
+                                         @Bind("statusType") EnrollmentStatusType statusType);
 
     default List<EnrollmentStatusDto> findByStudyGuid(String studyGuid) {
         return findByStudyGuidAfterOrEqualToInstant(studyGuid, 0);

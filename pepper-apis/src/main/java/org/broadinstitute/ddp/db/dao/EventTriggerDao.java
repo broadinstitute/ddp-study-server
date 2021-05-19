@@ -1,10 +1,13 @@
 package org.broadinstitute.ddp.db.dao;
 
+import java.util.Set;
+
 import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.DaoException;
 import org.broadinstitute.ddp.model.activity.types.EventTriggerType;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.broadinstitute.ddp.model.dsm.DsmNotificationEventType;
+import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
 import org.jdbi.v3.sqlobject.CreateSqlObject;
 
 public interface EventTriggerDao {
@@ -53,6 +56,17 @@ public interface EventTriggerDao {
 
     default long insertUserRegisteredTrigger() {
         return getEventTriggerSql().insertBaseTrigger(EventTriggerType.USER_REGISTERED);
+    }
+
+    default long insertUserStatusChangeTrigger(EnrollmentStatusType targetStatusType) {
+        var supported = Set.of(EnrollmentStatusType.ENROLLED, EnrollmentStatusType.COMPLETED);
+        if (!supported.contains(targetStatusType)) {
+            throw new DaoException("Target status '" + targetStatusType + "' is currently not supported");
+        }
+        var eventTriggerSql = getEventTriggerSql();
+        long triggerId = eventTriggerSql.insertBaseTrigger(EventTriggerType.USER_STATUS_CHANGE);
+        DBUtils.checkInsert(1, eventTriggerSql.insertUserStatusChangeTrigger(triggerId, targetStatusType));
+        return triggerId;
     }
 
     default long insertExitRequestTrigger() {

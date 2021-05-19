@@ -44,7 +44,7 @@ public class EnrollmentCompletedEventActionTest extends TxnAwareBaseTest {
             doCallRealMethod().when(actionSpy).doAction(any(), any(), any());
 
             var signal = new EventSignal(testData.getUserId(), testData.getUserId(), testData.getUserGuid(),
-                    testData.getUserGuid(), newStudy.getId(), EventTriggerType.USER_FIRST_ENROLLED);
+                    testData.getUserGuid(), newStudy.getId(), EventTriggerType.USER_STATUS_CHANGE);
             actionSpy.doAction(null, handle, signal);
 
             verify(actionSpy, never()).doActionSynchronously(any(), any());
@@ -68,7 +68,7 @@ public class EnrollmentCompletedEventActionTest extends TxnAwareBaseTest {
             doCallRealMethod().when(actionSpy).doAction(any(), any(), any());
 
             var signal = new EventSignal(testData.getUserId(), testData.getUserId(), testData.getUserGuid(),
-                    testData.getUserGuid(), newStudy.getId(), EventTriggerType.USER_FIRST_ENROLLED);
+                    testData.getUserGuid(), newStudy.getId(), EventTriggerType.USER_STATUS_CHANGE);
             actionSpy.doAction(null, handle, signal);
 
             verify(actionSpy, times(1)).doActionSynchronously(any(), any());

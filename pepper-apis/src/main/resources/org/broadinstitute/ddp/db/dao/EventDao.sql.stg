@@ -25,6 +25,7 @@ SELECT
      wst.workflow_state_id,
      wst.trigger_automatically,
      dnet.dsm_notification_event_type_code as dsm_notification_event_type,
+     usct_est.enrollment_status_type_code as user_status_change_target_status_type,
      ann_act.message_template_id as announcement_msg_template_id,
      ann_act.is_permanent as announcement_is_permanent,
      ann_act.create_for_proxies as announcement_create_for_proxies,
@@ -55,6 +56,8 @@ LEFT JOIN activity_instance_status_type aist ON ast.activity_instance_status_typ
 LEFT JOIN workflow_state_trigger wst on wst.event_trigger_id = et.event_trigger_id
 LEFT JOIN dsm_notification_trigger dnt ON dnt.dsm_notification_trigger_id = et.event_trigger_id
 LEFT JOIN dsm_notification_event_type dnet ON dnet.dsm_notification_event_type_id = dnt.dsm_notification_event_type_id
+LEFT JOIN user_status_change_trigger as usct on usct.event_trigger_id = et.event_trigger_id
+LEFT JOIN enrollment_status_type as usct_est on usct_est.enrollment_status_type_id = usct.target_status_type_id
 LEFT JOIN user_announcement_event_action as ann_act on ann_act.event_action_id = ea.event_action_id
 LEFT JOIN user_notification_event_action unea on unea.user_notification_event_action_id = ea.event_action_id
 LEFT JOIN user_notification_pdf unpdf on unpdf.user_notification_event_action_id = ea.event_action_id

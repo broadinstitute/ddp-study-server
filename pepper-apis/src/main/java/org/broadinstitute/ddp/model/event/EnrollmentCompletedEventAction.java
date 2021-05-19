@@ -5,8 +5,10 @@ import org.broadinstitute.ddp.db.dao.JdbiUserStudyEnrollment;
 import org.broadinstitute.ddp.db.dao.QueuedEventDao;
 import org.broadinstitute.ddp.db.dto.EventConfigurationDto;
 import org.broadinstitute.ddp.exception.DDPException;
+import org.broadinstitute.ddp.model.activity.types.EventTriggerType;
 import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
 import org.broadinstitute.ddp.pex.PexInterpreter;
+import org.broadinstitute.ddp.service.EventService;
 import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,12 +37,29 @@ public class EnrollmentCompletedEventAction extends EventAction {
     }
 
     public void doActionSynchronously(Handle handle, EventSignal signal) {
-        handle.attach(JdbiUserStudyEnrollment.class).changeUserStudyEnrollmentStatus(
+        var jdbiUserStudyEnrollment = handle.attach(JdbiUserStudyEnrollment.class);
+        Long firstCompletedAtMillis = jdbiUserStudyEnrollment
+                .findFirstStatusMillis(signal.getStudyId(), signal.getParticipantId(), EnrollmentStatusType.COMPLETED)
+                .orElse(null);
+
+        jdbiUserStudyEnrollment.changeUserStudyEnrollmentStatus(
                 signal.getParticipantId(),
                 signal.getStudyId(),
                 EnrollmentStatusType.COMPLETED);
         LOG.info("Changed enrollment status for participant {} in study {} to {}",
                 signal.getParticipantGuid(), signal.getStudyId(), EnrollmentStatusType.COMPLETED);
+
+        if (firstCompletedAtMillis == null) {
+            LOG.info("Participant {} is newly completed in study {}, triggering events for {}",
+                    signal.getParticipantGuid(), signal.getStudyId(), EventTriggerType.USER_STATUS_CHANGE);
+            triggerEvents(handle, new UserStatusChangeSignal(
+                    signal.getOperatorId(),
+                    signal.getParticipantId(),
+                    signal.getParticipantGuid(),
+                    signal.getOperatorGuid(),
+                    signal.getStudyId(),
+                    EnrollmentStatusType.COMPLETED));
+        }
     }
 
     @VisibleForTesting
@@ -50,5 +69,10 @@ public class EnrollmentCompletedEventAction extends EventAction {
                 signal.getOperatorId(),
                 signal.getParticipantId(),
                 eventConfiguration.getPostDelaySeconds());
+    }
+
+    @VisibleForTesting
+    void triggerEvents(Handle handle, EventSignal signal) {
+        EventService.getInstance().processAllActionsForEventSignal(handle, signal);
     }
 }
