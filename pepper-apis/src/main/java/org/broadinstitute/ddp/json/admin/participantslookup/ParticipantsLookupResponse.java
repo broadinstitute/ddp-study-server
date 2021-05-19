@@ -3,10 +3,10 @@ package org.broadinstitute.ddp.json.admin.participantslookup;
 import java.util.List;
 
 import com.google.gson.annotations.SerializedName;
-import org.broadinstitute.ddp.route.ParticipantsLookupRoute;
+import org.broadinstitute.ddp.route.AdminParticipantsLookupRoute;
 
 /**
- * Result of {@link ParticipantsLookupRoute}.
+ * Result of {@link AdminParticipantsLookupRoute}.
  */
 public class ParticipantsLookupResponse {
 

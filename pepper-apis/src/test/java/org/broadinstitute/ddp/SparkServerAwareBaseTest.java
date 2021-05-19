@@ -30,6 +30,7 @@ public abstract class SparkServerAwareBaseTest extends TxnAwareBaseTest {
     protected static final int SPARK_PORT = 5559;
     protected static final String LOCALHOST = "http://localhost:";
     protected static final String PLACEHOLDER__STUDY = "{study}";
+    protected static final String PLACEHOLDER__USER = "{user}";
 
     protected static String urlTemplate;
     protected static TestDataSetupUtil.GeneratedTestData testData;

@@ -19,7 +19,7 @@ import org.slf4j.LoggerFactory;
  */
 public abstract class ParticipantsLookupService {
 
-    private static final Logger LOG = LoggerFactory.getLogger(ParticipantsLookupService.class);
+    protected static final Logger LOG = LoggerFactory.getLogger(ParticipantsLookupService.class);
 
     /**
      * Lookup participants (it can return more than 1 results).
@@ -27,13 +27,24 @@ public abstract class ParticipantsLookupService {
      * than 'resultMaxCount' rows. The real count of rows which are found is saved into result object
      * in {@link ParticipantsLookupResult#getTotalCount()}.
      *
-     * @param studyDto dto with info about a study which participants to search for
-     * @param query string containing a fragment by which to lookup the participants (do a full-text search).
+     * @param participantLookupType type of participants lookup:
+     *              {@link ParticipantLookupType#FULL_TEXT_SEARCH_BY_QUERY_STRING} - search participants and proxy users by
+     *              a specified `query` (substring to do full-text search in a specified fields);
+     *              {@link ParticipantLookupType#BY_PARTICIPANT_GUID} - search by participant's GUID: in successful case
+     *              it should return 1 row
+     * @param studyDto              dto with info about a study which participants to search for
+     * @param query                 string containing a fragment by which to lookup the participants (do a full-text search)
+     * @param resultsMaxCount       max count of result rows which will be fetched (in case of type=FULL_TEXT_SEARCH_BY_QUERY_STRING);
+     *                              in case of type=BY_PARTICIPANT_GUID this parameter is not used).
      * @return ParticipantsLookupResult - an object containing the participants lookup results.
      */
-    public ParticipantsLookupResult lookupParticipants(StudyDto studyDto, String query, int resultsMaxCount) {
+    public ParticipantsLookupResult lookupParticipants(
+            ParticipantLookupType participantLookupType,
+            StudyDto studyDto,
+            String query,
+            Integer resultsMaxCount) {
 
-        if (resultsMaxCount <= 0) {
+        if (resultsMaxCount != null && resultsMaxCount <= 0) {
             throw new ParticipantsLookupException(INVALID_RESULT_MAX_COUNT, "resultsMaxCount should be greater than 0");
         }
 
@@ -43,7 +54,8 @@ public abstract class ParticipantsLookupService {
 
         if (StringUtils.isNotBlank(query)) {
             try {
-                doLookupParticipants(studyDto, preProcessQuery(query), resultsMaxCount, participantsLookupResult);
+                doLookupParticipants(
+                        participantLookupType, studyDto, preProcessQuery(query), resultsMaxCount, participantsLookupResult);
             } catch (Exception e) {
                 LOG.error(e.getMessage(), e);
                 handleException(e);
@@ -62,9 +74,10 @@ public abstract class ParticipantsLookupService {
      * This method should be overridden in a concrete implementation of the participants lookup service.
      */
     protected abstract void doLookupParticipants(
+            ParticipantLookupType participantLookupType,
             StudyDto studyDto,
             String query,
-            int resultsMaxCount,
+            Integer resultsMaxCount,
             ParticipantsLookupResult participantsLookupResult) throws Exception;
 
     /**

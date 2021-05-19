@@ -1,24 +1,18 @@
 package org.broadinstitute.ddp.route;
 
-import static java.lang.String.format;
 import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
-import static org.apache.http.HttpStatus.SC_INTERNAL_SERVER_ERROR;
-import static org.apache.http.HttpStatus.SC_NOT_FOUND;
-import static org.broadinstitute.ddp.constants.ErrorCodes.INVALID_REQUEST;
-import static org.broadinstitute.ddp.constants.ErrorCodes.STUDY_NOT_FOUND;
+import static org.broadinstitute.ddp.route.AdminParticipantsLookupUtil.handleParticipantLookupException;
+import static org.broadinstitute.ddp.service.participantslookup.ParticipantLookupType.FULL_TEXT_SEARCH_BY_QUERY_STRING;
 
 import org.apache.http.entity.ContentType;
 import org.broadinstitute.ddp.constants.RouteConstants;
-import org.broadinstitute.ddp.db.TransactionWrapper;
-import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
-import org.broadinstitute.ddp.db.dto.StudyDto;
-import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.json.admin.participantslookup.ParticipantsLookupPayload;
 import org.broadinstitute.ddp.json.admin.participantslookup.ParticipantsLookupResponse;
 import org.broadinstitute.ddp.json.errors.ApiError;
 import org.broadinstitute.ddp.service.participantslookup.ParticipantsLookupService;
 import org.broadinstitute.ddp.service.participantslookup.error.ParticipantsLookupException;
 import org.broadinstitute.ddp.util.ResponseUtil;
+import org.broadinstitute.ddp.util.RouteUtil;
 import org.broadinstitute.ddp.util.ValidatedJsonInputRoute;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,7 +21,7 @@ import spark.Response;
 
 
 /**
- * Participants lookup route: handles request 'participants-lookup'.<br>
+ * Participants lookup route: handles request POST 'participants-lookup'.<br>
  * The searching delegated to service {@link ParticipantsLookupService} which has implementation
  * searching for participants in Pepper ElasticSearch database (but in future in could be added
  * other types of participants lookup - for example in MySQL DB).
@@ -45,9 +39,9 @@ import spark.Response;
  *     'resultsMaxCount' (and totalCount contains real found count).</li>
  * </ul>
  */
-public class ParticipantsLookupRoute extends ValidatedJsonInputRoute<ParticipantsLookupPayload> {
+public class AdminParticipantsLookupRoute extends ValidatedJsonInputRoute<ParticipantsLookupPayload> {
 
-    private static final Logger LOG = LoggerFactory.getLogger(ParticipantsLookupRoute.class);
+    private static final Logger LOG = LoggerFactory.getLogger(AdminParticipantsLookupRoute.class);
 
     /**
      * It is temporarily specified in this class, but in the future it should be
@@ -59,7 +53,7 @@ public class ParticipantsLookupRoute extends ValidatedJsonInputRoute<Participant
     private final int resultsMaxCount = DEFAULT_PARTICIPANTS_LOOKUP_RESULT_MAX_COUNT;
 
 
-    public ParticipantsLookupRoute(ParticipantsLookupService participantsLookupService) {
+    public AdminParticipantsLookupRoute(ParticipantsLookupService participantsLookupService) {
         this.participantsLookupService = participantsLookupService;
     }
 
@@ -70,13 +64,14 @@ public class ParticipantsLookupRoute extends ValidatedJsonInputRoute<Participant
 
         response.type(ContentType.APPLICATION_JSON.getMimeType());
 
-        StudyDto studyDto = readStudyDto(studyGuid);
+        var studyDto = RouteUtil.readStudyDto(studyGuid, this::haltError);
 
         try {
-            var lookupResult = participantsLookupService.lookupParticipants(studyDto, query, resultsMaxCount);
+            var lookupResult = participantsLookupService.lookupParticipants(
+                    FULL_TEXT_SEARCH_BY_QUERY_STRING, studyDto, query, resultsMaxCount);
             return new ParticipantsLookupResponse(lookupResult.getTotalCount(), lookupResult.getResultRows());
         } catch (ParticipantsLookupException e) {
-            handleException(e);
+            handleParticipantLookupException(e, this::haltError);
         }
 
         return null;
@@ -87,34 +82,7 @@ public class ParticipantsLookupRoute extends ValidatedJsonInputRoute<Participant
         return SC_BAD_REQUEST;
     }
 
-    private StudyDto readStudyDto(String studyGuid) {
-        return TransactionWrapper.withTxn(handle -> {
-            StudyDto studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(studyGuid);
-            if (studyDto == null) {
-                haltError(SC_NOT_FOUND, STUDY_NOT_FOUND, format("Study with guid=%s not found", studyGuid));
-            }
-            return studyDto;
-        });
-    }
-
-    private void handleException(ParticipantsLookupException e) {
-        String code;
-        int status = SC_BAD_REQUEST;
-        switch (e.getErrorType()) {
-            case INVALID_RESULT_MAX_COUNT:
-                code = INVALID_REQUEST;
-                break;
-            case SEARCH_ERROR:
-                status = SC_INTERNAL_SERVER_ERROR;
-                code = e.getErrorCode();
-                break;
-            default:
-                throw new DDPException("Unknown participants lookup error type");
-        }
-        haltError(status, code, e.getExtendedMessage());
-    }
-
-    private void haltError(int status, String code, String msg) {
+    public void haltError(int status, String code, String msg) {
         LOG.warn(msg);
         throw ResponseUtil.haltError(status, new ApiError(code, msg));
     }
