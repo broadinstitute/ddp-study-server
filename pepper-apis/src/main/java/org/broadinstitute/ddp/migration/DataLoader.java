@@ -138,7 +138,17 @@ class DataLoader {
             LOG.info("({}/{}) Working on participant file: {}", count, total, filename);
             var data = gson.fromJson(fileReader.readContent(filename), MemberFile.class);
             var row = report.newRow();
-            TransactionWrapper.useTxn(handle -> processParticipant(handle, data, row));
+
+            try {
+                TransactionWrapper.useTxn(handle -> processParticipant(handle, data, row));
+            } catch (Exception e) {
+                if (isProdRun) {
+                    throw e;
+                } else {
+                    LOG.error("Error while processing participant file, continuing", e);
+                }
+            }
+
             if (!row.isExistingUser()) {
                 try {
                     // Auth0 has rate limits, so add in some buffer.
@@ -148,6 +158,7 @@ class DataLoader {
                     throw new LoaderException(e);
                 }
             }
+
             count++;
         }
 
@@ -384,9 +395,9 @@ class DataLoader {
             Answer answer = question.extractAnswer(survey);
             if (answer != null) {
                 answerDao.createAnswer(user.getId(), instanceDto.getId(), answer);
-                LOG.info(padding + "[{}] type={}, source={}, answerId={}, answerGuid={}",
-                        question.getTarget(), question.getType(), question.getSource(),
-                        answer.getAnswerId(), answer.getAnswerGuid());
+                // LOG.info(padding + "[{}] type={}, source={}, answerId={}, answerGuid={}",
+                //         question.getTarget(), question.getType(), question.getSource(),
+                //         answer.getAnswerId(), answer.getAnswerGuid());
             }
         }
     }
@@ -420,7 +431,15 @@ class DataLoader {
         for (var filename : files) {
             LOG.info("({}/{}) Working on participant file for dsm data: {}", count, total, filename);
             var data = gson.fromJson(fileReader.readContent(filename), MemberFile.class);
-            processParticipantDsmData(data.getMemberWrapper());
+            try {
+                processParticipantDsmData(data.getMemberWrapper());
+            } catch (Exception e) {
+                if (isProdRun) {
+                    throw e;
+                } else {
+                    LOG.error("Error while processing participant file for dsm data, continuing", e);
+                }
+            }
             count++;
         }
 
@@ -432,7 +451,15 @@ class DataLoader {
         for (var filename : files) {
             LOG.info("({}/{}) Working on family member file for dsm data: {}", count, total, filename);
             var data = gson.fromJson(fileReader.readContent(filename), MemberFile.class);
-            DsmDataLoader.useTxn(dsmHandle -> processFamilyMemberDsmData(dsmHandle, data.getMemberWrapper()));
+            try {
+                DsmDataLoader.useTxn(dsmHandle -> processFamilyMemberDsmData(dsmHandle, data.getMemberWrapper()));
+            } catch (Exception e) {
+                if (isProdRun) {
+                    throw e;
+                } else {
+                    LOG.error("Error while processing family member file for dsm data, continuing", e);
+                }
+            }
             count++;
         }
     }
