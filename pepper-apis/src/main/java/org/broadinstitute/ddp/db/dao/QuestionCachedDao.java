@@ -88,6 +88,11 @@ public class QuestionCachedDao extends SQLObjectWrapper<QuestionDao> implements 
     }
 
     @Override
+    public JdbiFileQuestion getJdbiFileQuestion() {
+        return delegate.getJdbiFileQuestion();
+    }
+
+    @Override
     public JdbiBlockQuestion getJdbiBlockQuestion() {
         return delegate.getJdbiBlockQuestion();
     }

@@ -139,6 +139,9 @@ public interface QuestionDao extends SqlObject {
     JdbiNumericQuestion getJdbiNumericQuestion();
 
     @CreateSqlObject
+    JdbiFileQuestion getJdbiFileQuestion();
+
+    @CreateSqlObject
     JdbiBlockQuestion getJdbiBlockQuestion();
 
     @CreateSqlObject
@@ -640,7 +643,9 @@ public interface QuestionDao extends SqlObject {
                 dto.getAdditionalInfoHeaderTemplateId(),
                 dto.getAdditionalInfoFooterTemplateId(),
                 answers,
-                rules);
+                rules,
+                dto.getMaxFileSize(),
+                dto.getMimeTypes());
     }
 
     /**
@@ -1085,6 +1090,14 @@ public interface QuestionDao extends SqlObject {
      */
     default void insertQuestion(long activityId, FileQuestionDef fileQuestion, long revisionId) {
         insertBaseQuestion(activityId, fileQuestion, revisionId);
+
+        JdbiFileQuestion jdbiFileQuestion = getJdbiFileQuestion();
+        jdbiFileQuestion.insert(fileQuestion.getQuestionId(), fileQuestion.getMaxFileSize());
+        List<String> mimeTypes = fileQuestion.getMimeTypes();
+        for (String mimeType : mimeTypes) {
+            long mimeTypeId = jdbiFileQuestion.insertMimeType(mimeType);
+            jdbiFileQuestion.insertFileQuestionMimeType(fileQuestion.getQuestionId(), mimeTypeId);
+        }
     }
 
     /**
@@ -1584,7 +1597,9 @@ public interface QuestionDao extends SqlObject {
                                                  List<RuleDef> ruleDefs,
                                                  Map<Long, Template> templates) {
         Template prompt = templates.get(dto.getPromptTemplateId());
-        var builder = FileQuestionDef.builder(dto.getStableId(), prompt);
+        var builder = FileQuestionDef.builder(dto.getStableId(), prompt)
+                .setMaxFileSize(dto.getMaxFileSize())
+                .setMimeTypes(dto.getMimeTypes());
         configureBaseQuestionDef(builder, dto, ruleDefs, templates);
         return builder.build();
     }

@@ -1,5 +1,7 @@
 package org.broadinstitute.ddp.service;
 
+import static org.broadinstitute.ddp.service.FileUploadService.AuthorizeResultType.FILE_SIZE_EXCEEDS_MAXIMUM;
+import static org.broadinstitute.ddp.service.FileUploadServiceTest.FileUploadSettingsForTest.createFileUploadSettings;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -17,6 +19,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 
 import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.HttpMethod;
@@ -24,6 +27,7 @@ import org.broadinstitute.ddp.TxnAwareBaseTest;
 import org.broadinstitute.ddp.client.GoogleBucketClient;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.FileUploadDao;
+import org.broadinstitute.ddp.interfaces.FileUploadSettings;
 import org.broadinstitute.ddp.model.files.FileScanResult;
 import org.broadinstitute.ddp.model.files.FileUpload;
 import org.broadinstitute.ddp.util.ConfigManager;
@@ -50,9 +54,10 @@ public class FileUploadServiceTest extends TxnAwareBaseTest {
     @Test
     @Ignore("un-ignore to try locally")
     public void testTryAuthorize() {
+        long fileSize = 50000;
         var service = FileUploadService.fromConfig(ConfigManager.getInstance().getConfig());
         var result = TransactionWrapper.withTxn(handle -> service
-                .authorizeUpload(handle, studyId, userId, userId,
+                .authorizeUpload(handle, studyId, userId, userId, createFileUploadSettings(fileSize),
                         "prefix", "application/pdf", "filename.pdf", 50000, false));
 
         var guid = result.getFileUpload().getGuid();
@@ -73,7 +78,7 @@ public class FileUploadServiceTest extends TxnAwareBaseTest {
         var mockHandle = mock(Handle.class);
         var mockDao = mock(FileUploadDao.class);
         var mockClient = mock(GoogleBucketClient.class);
-        var service = new FileUploadService(null, mockClient, "uploads", "scanned", "quarantine", 123, 5, 1L, null, 1);
+        var service = new FileUploadService(null, mockClient, "uploads", "scanned", "quarantine", 5, 1L, null, 1);
 
         doReturn(mockDao).when(mockHandle).attach(FileUploadDao.class);
         doReturn(dummyUpload).when(mockDao)
@@ -81,10 +86,10 @@ public class FileUploadServiceTest extends TxnAwareBaseTest {
         doReturn(dummyUrl).when(mockClient).generateSignedUrl(any(), eq("uploads"), startsWith("prefix/"),
                 anyLong(), any(), eq(expectedMethod), argThat(map -> expectedMime.equals(map.get("Content-Type"))));
 
-        var result = service.authorizeUpload(mockHandle, 1L, 1L, 1L, "prefix", null, "file", 123, true);
+        var result = service.authorizeUpload(mockHandle, 1L, 1L, 1L, createFileUploadSettings(123), "prefix", null, "file", 123, true);
 
         assertNotNull(result);
-        assertFalse(result.isExceededSize());
+        assertFalse(result.getAuthorizeResultType() == FILE_SIZE_EXCEEDS_MAXIMUM);
         assertNotNull(result.getFileUpload());
         assertNotNull(result.getSignedUrl());
 
@@ -97,10 +102,10 @@ public class FileUploadServiceTest extends TxnAwareBaseTest {
 
     @Test
     public void testAuthorizeUpload_exceededSize() {
-        var service = new FileUploadService(null, null, "uploads", "scanned", "quarantine", 123, 5, 1L, null, 1);
-        var result = service.authorizeUpload(null, 1L, 1L, 1L, "prefix", "mime", "file", 1024, false);
+        var service = new FileUploadService(null, null, "uploads", "scanned", "quarantine", 5, 1L, null, 1);
+        var result = service.authorizeUpload(null, 1L, 1L, 1L, createFileUploadSettings(123), "prefix", "mime", "file", 1024, false);
         assertNotNull(result);
-        assertTrue("should hit size limit", result.isExceededSize());
+        assertTrue("should hit size limit", result.getAuthorizeResultType() == FILE_SIZE_EXCEEDS_MAXIMUM);
         assertNull(result.getFileUpload());
         assertNull(result.getSignedUrl());
     }
@@ -110,7 +115,7 @@ public class FileUploadServiceTest extends TxnAwareBaseTest {
         var now = Instant.now();
         var mockBlob = mock(Blob.class);
         var mockClient = mock(GoogleBucketClient.class);
-        var service = new FileUploadService(null, mockClient, "uploads", "scanned", "quarantine", 123, 5, 1L, null, 1);
+        var service = new FileUploadService(null, mockClient, "uploads", "scanned", "quarantine", 5, 1L, null, 1);
 
         long size = 100;
         doReturn(true).when(mockBlob).exists();
@@ -143,7 +148,7 @@ public class FileUploadServiceTest extends TxnAwareBaseTest {
             fileDao.markVerified(upload.getId());
             upload = fileDao.findById(upload.getId()).get();
 
-            var service = new FileUploadService(null, null, "uploads", "scanned", "quarantine", 123, 5, 1L, null, 1);
+            var service = new FileUploadService(null, null, "uploads", "scanned", "quarantine", 5, 1L, null, 1);
             var result = service.verifyUpload(handle, studyId, userId, upload);
             assertEquals(FileUploadService.VerifyResult.OK, result);
 
@@ -156,7 +161,7 @@ public class FileUploadServiceTest extends TxnAwareBaseTest {
         var now = Instant.now();
         var mockBlob = mock(Blob.class);
         var mockClient = mock(GoogleBucketClient.class);
-        var service = new FileUploadService(null, mockClient, "uploads", "scanned", "quarantine", 123, 5, 1L, null, 1);
+        var service = new FileUploadService(null, mockClient, "uploads", "scanned", "quarantine", 5, 1L, null, 1);
         doReturn(mockBlob).when(mockClient).getBlob("uploads", "blob");
 
         TransactionWrapper.useTxn(handle -> {
@@ -205,7 +210,7 @@ public class FileUploadServiceTest extends TxnAwareBaseTest {
     public void testRemoveUnusedUploads() {
         var mockBlob = mock(Blob.class);
         var mockClient = mock(GoogleBucketClient.class);
-        var service = new FileUploadService(null, mockClient, "uploads", "scanned", "quarantine", 123, 5, 1L, null, 1);
+        var service = new FileUploadService(null, mockClient, "uploads", "scanned", "quarantine", 5, 1L, null, 1);
 
         doReturn(true).when(mockBlob).exists();
         doReturn(mockBlob).when(mockClient).getBlob("uploads", "blob");
@@ -228,5 +233,34 @@ public class FileUploadServiceTest extends TxnAwareBaseTest {
 
             handle.rollback();
         });
+    }
+
+    static class FileUploadSettingsForTest implements FileUploadSettings {
+
+        private final long maxFileSize;
+        private final List<String> mimeTypes;
+
+        static FileUploadSettingsForTest createFileUploadSettings(long maxFileSize, List<String> mimeTypes) {
+            return new FileUploadSettingsForTest(maxFileSize, mimeTypes);
+        }
+
+        static FileUploadSettingsForTest createFileUploadSettings(long maxFileSize) {
+            return createFileUploadSettings(maxFileSize, List.of());
+        }
+
+        private FileUploadSettingsForTest(long maxFileSize, List<String> mimeTypes) {
+            this.maxFileSize = maxFileSize;
+            this.mimeTypes = mimeTypes;
+        }
+
+        @Override
+        public long getMaxFileSize() {
+            return maxFileSize;
+        }
+
+        @Override
+        public List<String> getMimeTypes() {
+            return mimeTypes;
+        }
     }
 }

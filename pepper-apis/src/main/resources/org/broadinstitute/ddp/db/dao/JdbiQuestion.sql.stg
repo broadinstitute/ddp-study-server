@@ -89,6 +89,13 @@ select qt.question_type_code as question_type,
          where dqfo.date_question_id = dq.question_id
        ) as date_fields,
 
+       (select group_concat(mt.mime_type separator ',')
+          from mime_type mt
+          join file_question__mime_type fqmt on fqmt.mime_type_id = mt.mime_type_id
+          where fqmt.file_question_id = fq.question_id
+       ) as mime_types,
+       fq.max_file_size,
+
        (select numeric_type_code from numeric_type
          where numeric_type_id = nq.numeric_type_id
        ) as numeric_type,
@@ -132,6 +139,7 @@ select qt.question_type_code as question_type,
   left join picklist_question as pq on pq.question_id = q.question_id
   left join text_question as tq on tq.question_id = q.question_id
   left join composite_question as cq on cq.question_id = q.question_id
+  left join file_question as fq on fq.question_id = q.question_id
 >>
 
 queryQuestionDtosByIds(questionIds) ::= <<

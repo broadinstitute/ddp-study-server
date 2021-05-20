@@ -1,0 +1,13 @@
+group JdbiFileQuestion;
+
+insert() ::= <<
+insert into file_question (question_id, max_file_size) values (:questionId, :maxFileSize)
+>>
+
+insertMimeType() ::= <<
+insert into mime_type (mime_type) values (:mimeType)
+>>
+
+insertFileQuestionMimeType() ::= <<
+insert into file_question__mime_type (file_question_id, mime_type_id) values (:fileQuestionId, :mimeTypeId)
+>>
