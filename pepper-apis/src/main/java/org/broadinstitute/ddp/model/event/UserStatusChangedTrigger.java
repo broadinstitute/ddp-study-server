@@ -15,7 +15,7 @@ public class UserStatusChangedTrigger extends EventTrigger {
     }
 
     public EnrollmentStatusType getTargetStatusType() {
-        return getTargetStatusType();
+        return targetStatusType;
     }
 
     @Override
