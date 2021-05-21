@@ -64,7 +64,7 @@ public final class FileQuestionDef extends QuestionDef implements FileUploadSett
         if (maxFileSize <= 0) {
             return errorMessage + "It should be greater than 0.";
         } else if (maxFileSizeConf != null && maxFileSize > maxFileSizeConf) {
-            return errorMessage + "It should not exceed config value=" + maxFileSizeConf;
+            return errorMessage + "It should not exceed config value=" + maxFileSizeConf + ".";
         }
         return null;
     }

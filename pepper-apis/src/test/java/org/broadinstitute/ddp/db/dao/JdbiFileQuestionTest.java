@@ -70,7 +70,7 @@ public class JdbiFileQuestionTest extends TxnAwareBaseTest {
             createFileQuestionWithInvalidMaxFileSize();
             fail();
         } catch (IllegalArgumentException e) {
-            assertEquals("Illegal size of file maxFileSize: it exceeds maximum allowed size", e.getMessage());
+            assertEquals("Invalid value of maxFileSize=2000001. It should not exceed config value=2000000.", e.getMessage());
         }
     }
 
