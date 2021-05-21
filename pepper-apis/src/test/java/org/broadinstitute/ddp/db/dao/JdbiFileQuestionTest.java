@@ -1,7 +1,9 @@
 package org.broadinstitute.ddp.db.dao;
 
+import static org.broadinstitute.ddp.constants.ConfigFile.FileUploads.MAX_FILE_SIZE_BYTES;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
 
 import java.util.List;
 
@@ -16,6 +18,7 @@ import org.broadinstitute.ddp.model.activity.definition.question.FileQuestionDef
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
 import org.broadinstitute.ddp.model.activity.types.TemplateType;
+import org.broadinstitute.ddp.util.ConfigManager;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
 import org.broadinstitute.ddp.util.TestUtil;
 import org.jdbi.v3.core.Handle;
@@ -30,14 +33,17 @@ public class JdbiFileQuestionTest extends TxnAwareBaseTest {
     private static final String SID_FILE_1 = "FILE_F84700E19899";
     private static final String SID_FILE_2 = "FILE_2F192E9E2C00";
     private static final String SID_FILE_3 = "FILE_647BD81B017D";
+    private static final String SID_FILE_4 = "FILE_234223445553";
 
     private static final long FILE_1_MAX_SIZE = 1000L;
     private static final long FILE_2_MAX_SIZE = 5000L;
     private static final long FILE_3_MAX_SIZE = 5000L;
+    private static final long FILE_4_MAX_SIZE_INVALID = ConfigManager.getInstance().getConfig().getLong(MAX_FILE_SIZE_BYTES) + 1;
 
     private static final List<String> FILE_1_MIME_TYPES = List.of("image/gif", "image/jpeg");
     private static final List<String> FILE_2_MIME_TYPES = List.of("video/mpeg");
     private static final List<String> FILE_3_MIME_TYPES = List.of();
+    private static final List<String> FILE_4_MIME_TYPES = List.of();
 
 
     private static TestDataSetupUtil.GeneratedTestData testData;
@@ -56,6 +62,16 @@ public class JdbiFileQuestionTest extends TxnAwareBaseTest {
             assertDtoData(handle, act, SID_FILE_3, FILE_3_MIME_TYPES, FILE_3_MAX_SIZE);
             handle.rollback();
         });
+    }
+
+    @Test
+    public void testCreateFileQuestionWithInvalidMaxFileSize() {
+        try {
+            createFileQuestionWithInvalidMaxFileSize();
+            fail();
+        } catch (IllegalArgumentException e) {
+            assertEquals("Illegal size of file maxFileSize: it exceeds maximum allowed size", e.getMessage());
+        }
     }
 
     private void assertDtoData(Handle handle, FormActivityDef activity, String stableId,
@@ -98,5 +114,12 @@ public class JdbiFileQuestionTest extends TxnAwareBaseTest {
         handle.attach(ActivityDao.class).insertActivity(form, RevisionMetadata.now(testData.getUserId(), "add file activity"));
         assertNotNull(form.getActivityId());
         return form;
+    }
+
+    private void createFileQuestionWithInvalidMaxFileSize() {
+        FileQuestionDef.builder().setStableId(SID_FILE_4)
+                .setPrompt(new Template(TemplateType.TEXT, null, "f4"))
+                .setMaxFileSize(FILE_4_MAX_SIZE_INVALID).setMimeTypes(FILE_4_MIME_TYPES)
+                .build();
     }
 }

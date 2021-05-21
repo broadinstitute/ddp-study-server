@@ -1,5 +1,7 @@
 package org.broadinstitute.ddp.model.activity.definition.question;
 
+import static org.broadinstitute.ddp.constants.ConfigFile.FileUploads.MAX_FILE_SIZE_BYTES;
+
 import java.util.List;
 import javax.validation.constraints.Positive;
 
@@ -8,6 +10,7 @@ import org.broadinstitute.ddp.interfaces.FileUploadSettings;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.activity.definition.validation.RuleDef;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
+import org.broadinstitute.ddp.util.ConfigManager;
 
 public final class FileQuestionDef extends QuestionDef implements FileUploadSettings {
 
@@ -36,6 +39,9 @@ public final class FileQuestionDef extends QuestionDef implements FileUploadSett
         super(QuestionType.FILE, stableId, isRestricted, promptTemplate,
                 additionalInfoHeaderTemplate, additionalInfoFooterTemplate,
                 validations, hideNumber, writeOnce);
+        if (!isFileMaxSizeValid(maxFileSize)) {
+            throw new IllegalArgumentException("Illegal size of file maxFileSize: it exceeds maximum allowed size");
+        }
         this.maxFileSize = maxFileSize;
         this.mimeTypes = mimeTypes;
     }
@@ -48,6 +54,11 @@ public final class FileQuestionDef extends QuestionDef implements FileUploadSett
     @Override
     public List<String> getMimeTypes() {
         return mimeTypes;
+    }
+
+    private static boolean isFileMaxSizeValid(long maxFileSize) {
+        Long maxFileSizeConf = ConfigManager.getInstance().getConfig().getLong(MAX_FILE_SIZE_BYTES);
+        return maxFileSizeConf == null || maxFileSize <= maxFileSizeConf;
     }
 
     public static final class Builder extends AbstractQuestionBuilder<Builder> {
