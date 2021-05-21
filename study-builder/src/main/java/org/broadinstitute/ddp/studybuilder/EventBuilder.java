@@ -127,7 +127,7 @@ public class EventBuilder {
         eventCfgsToLoad.forEach(eventCfg -> insertEvent(handle, eventCfg));
     }
 
-    public void insertEvent(Handle handle, Config eventCfg) {
+    public long insertEvent(Handle handle, Config eventCfg) {
         Config triggerCfg = eventCfg.getConfig("trigger");
         Config actionCfg = eventCfg.getConfig("action");
         String label = eventCfg.hasPath("label") ? eventCfg.getString("label") : null;
@@ -145,6 +145,8 @@ public class EventBuilder {
                 Instant.now().toEpochMilli(), maxOccurrencesPerUser, delaySeconds, preconditionExprId, cancelExprId,
                 eventCfg.getBoolean("dispatchToHousekeeping"), eventCfg.getInt("order"));
         LOG.info("Created event with id={}, trigger={}, action={}", eventId, triggerAsStr(triggerCfg), actionAsStr(actionCfg));
+
+        return eventId;
     }
 
     private long insertEventTrigger(Handle handle, Config triggerCfg) {

@@ -2,13 +2,12 @@ package org.broadinstitute.ddp.studybuilder.task;
 
 import java.nio.file.Path;
 import java.time.Instant;
-import java.util.Arrays;
 import java.util.List;
 
 import com.typesafe.config.Config;
-import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.dao.EventDao;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
+import org.broadinstitute.ddp.db.dao.QueuedEventDao;
 import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.exception.DDPException;
@@ -21,8 +20,6 @@ import org.broadinstitute.ddp.studybuilder.EventBuilder;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.customizer.Bind;
-import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
-import org.jdbi.v3.sqlobject.statement.SqlBatch;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,6 +55,10 @@ public class TestBostonCompletedStatusEvent implements CustomTask {
         List<EventConfiguration> events = handle.attach(EventDao.class)
                 .getAllEventConfigurationsByStudyId(studyDto.getId());
 
+        Long statusEnrolledEventId = null;
+        Integer delaySeconds = null;
+        boolean doBackfill = false;
+
         var statusEnrolled = events.stream()
                 .filter(event -> event.getEventTriggerType() == EventTriggerType.USER_STATUS_CHANGED)
                 .map(event -> (UserStatusChangedTrigger) event.getEventTrigger())
@@ -69,10 +70,9 @@ public class TestBostonCompletedStatusEvent implements CustomTask {
                     .filter(event -> "ENROLLED".equals(event.getString("trigger.status")))
                     .findFirst().orElseThrow(() ->
                             new DDPException("Could not find (USER_STATUS_CHANGED, ENROLLED) event in study config"));
-            eventBuilder.insertEvent(handle, eventCfg);
-
-            int delaySeconds = eventCfg.getInt("delaySeconds");
-            runBackfill(handle, studyDto, delaySeconds);
+            statusEnrolledEventId = eventBuilder.insertEvent(handle, eventCfg);
+            delaySeconds = eventCfg.getInt("delaySeconds");
+            doBackfill = true;
         } else {
             LOG.info("Already has (USER_STATUS_CHANGED, ENROLLED) event configuration with id {}",
                     statusEnrolled.getEventConfigurationDto().getEventConfigurationId());
@@ -94,25 +94,34 @@ public class TestBostonCompletedStatusEvent implements CustomTask {
             LOG.info("Already has (USER_STATUS_CHANGED, COMPLETED) event configuration with id {}",
                     statusCompleted.getEventConfigurationDto().getEventConfigurationId());
         }
+
+        if (doBackfill) {
+            runBackfill(handle, studyDto, statusEnrolledEventId, delaySeconds);
+        }
     }
 
-    private void runBackfill(Handle handle, StudyDto studyDto, int delaySeconds) {
+    private void runBackfill(Handle handle, StudyDto studyDto, long statusEnrolledEventId, int delaySeconds) {
         var helper = handle.attach(SqlHelper.class);
         long delayMillis = delaySeconds * 1000L;
         long nowMillis = Instant.now().toEpochMilli();
 
-        LOG.info("Starting backfill with delayMillis={} and nowMillis={}", delayMillis, nowMillis);
+        LOG.info("Starting backfill with eventConfigId={}, delayMillis={}, nowMillis={}",
+                statusEnrolledEventId, delayMillis, nowMillis);
 
         List<Long> userIds = helper.findEligibleCompletedUsers(studyDto.getId(), delayMillis, nowMillis);
         LOG.info("Found {} participants that should be marked as COMPLETED", userIds.size());
 
-        int[] counts = helper.terminateCurrentStatus(studyDto.getId(), nowMillis, userIds);
-        DBUtils.checkUpdate(userIds.size(), Arrays.stream(counts).sum());
-        LOG.info("Terminated current status for {} participants", userIds.size());
-
-        long[] rowIds = helper.insertCompletedStatus(studyDto.getId(), nowMillis, userIds);
-        DBUtils.checkInsert(userIds.size(), rowIds.length);
-        LOG.info("Inserted new COMPLETED enrollment status for {} participants", userIds.size());
+        // Idea here is to leverage existing event mechanism to update their status to COMPLETED.
+        // We're using TestBoston's "status changed to ENROLLED" event but with zero delay. This
+        // will effectively trigger the same set of events for the participant as if these events
+        // had existed in the first place. The expected result is that Housekeeping will pick up
+        // on these queued events, then change their status to COMPLETED, and lastly send them the
+        // "you're done" email.
+        var queueDao = handle.attach(QueuedEventDao.class);
+        for (var userId : userIds) {
+            long queuedId = queueDao.addToQueue(statusEnrolledEventId, userId, userId, 0);
+            LOG.info("Queued status change event for participant {} with queued_event_id={}", userId, queuedId);
+        }
 
         LOG.info("Finished backfill");
     }
@@ -136,21 +145,5 @@ public class TestBostonCompletedStatusEvent implements CustomTask {
                 @Bind("studyId") long studyId,
                 @Bind("delayMillis") long delayMillis,
                 @Bind("nowMillis") long nowMillis);
-
-        @SqlBatch("update user_study_enrollment set valid_to = :endMillis"
-                + " where study_id = :studyId and user_id = :userId and valid_to is null")
-        int[] terminateCurrentStatus(
-                @Bind("studyId") long studyId,
-                @Bind("endMillis") long endMillis,
-                @Bind("userId") Iterable<Long> userIds);
-
-        @GetGeneratedKeys
-        @SqlBatch("insert into user_study_enrollment (study_id, user_id, enrollment_status_type_id, valid_from, valid_to)"
-                + "select :studyId, :userId, enrollment_status_type_id, :startMillis, null"
-                + "  from enrollment_status_type where enrollment_status_type_code = 'COMPLETED'")
-        long[] insertCompletedStatus(
-                @Bind("studyId") long studyId,
-                @Bind("startMillis") long startMillis,
-                @Bind("userId") Iterable<Long> userIds);
     }
 }
