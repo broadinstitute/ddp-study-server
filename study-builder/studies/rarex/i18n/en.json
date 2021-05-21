@@ -73,7 +73,7 @@
   "lar_consent_child_lastname": "Patient's complete legal family (last) name *",
   "lar_consent_child_lastname_validation_hint": "Patient's last name cannot be empty",
   "lar_consent_child_lastname_exp": "Patient's complete legal family (last) name at birth",
-  "lar_consent_child_middlename": "Patient's middle/second or additional (if your child has one) name",
+  "lar_consent_child_middlename": "Patient's middle/second or additional (if the patient has one) name",
   "lar_consent_child_middlename_exp": "Patient's complete middle/second or additional name",
 
   "parental_consent_child_firstname": "Your child’s complete legal given (first) name *",
