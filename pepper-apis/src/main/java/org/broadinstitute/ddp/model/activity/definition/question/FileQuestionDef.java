@@ -2,6 +2,7 @@ package org.broadinstitute.ddp.model.activity.definition.question;
 
 import static org.broadinstitute.ddp.constants.ConfigFile.FileUploads.MAX_FILE_SIZE_BYTES;
 
+import java.util.ArrayList;
 import java.util.List;
 import javax.validation.constraints.Positive;
 
@@ -39,11 +40,12 @@ public final class FileQuestionDef extends QuestionDef implements FileUploadSett
         super(QuestionType.FILE, stableId, isRestricted, promptTemplate,
                 additionalInfoHeaderTemplate, additionalInfoFooterTemplate,
                 validations, hideNumber, writeOnce);
-        if (!isFileMaxSizeValid(maxFileSize)) {
-            throw new IllegalArgumentException("Illegal size of file maxFileSize: it exceeds maximum allowed size");
+        String validationError = validateFileMaxSize(maxFileSize);
+        if (validationError != null) {
+            throw new IllegalArgumentException(validationError);
         }
         this.maxFileSize = maxFileSize;
-        this.mimeTypes = mimeTypes;
+        this.mimeTypes = mimeTypes == null ? new ArrayList<>() : mimeTypes;
     }
 
     @Override
@@ -56,9 +58,15 @@ public final class FileQuestionDef extends QuestionDef implements FileUploadSett
         return mimeTypes;
     }
 
-    private static boolean isFileMaxSizeValid(long maxFileSize) {
+    private static String validateFileMaxSize(long maxFileSize) {
         Long maxFileSizeConf = ConfigManager.getInstance().getConfig().getLong(MAX_FILE_SIZE_BYTES);
-        return maxFileSizeConf == null || maxFileSize <= maxFileSizeConf;
+        String errorMessage = "Invalid value of maxFileSize=" + maxFileSize + ". ";
+        if (maxFileSize <= 0) {
+            return errorMessage + "It should be greater than 0.";
+        } else if (maxFileSizeConf != null && maxFileSize > maxFileSizeConf) {
+            return errorMessage + "It should not exceed config value=" + maxFileSizeConf;
+        }
+        return null;
     }
 
     public static final class Builder extends AbstractQuestionBuilder<Builder> {
