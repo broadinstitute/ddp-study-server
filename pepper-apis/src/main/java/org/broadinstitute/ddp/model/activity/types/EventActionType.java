@@ -5,12 +5,12 @@ public enum EventActionType {
     ANNOUNCEMENT(false),
     COPY_ANSWER(false),
     CREATE_INVITATION(false),
-    ENROLLMENT_COMPLETED(true),
     HIDE_ACTIVITIES(false),
     MARK_ACTIVITIES_READ_ONLY(false),
     NOTIFICATION(false),
     PDF_GENERATION(false),
     REVOKE_PROXIES(true),
+    UPDATE_USER_STATUS(false),
     USER_ENROLLED(true);
 
     private boolean isStatic;

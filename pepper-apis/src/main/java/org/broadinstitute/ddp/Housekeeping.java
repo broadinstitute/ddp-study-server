@@ -89,7 +89,7 @@ import org.broadinstitute.ddp.housekeeping.schedule.StudyDataExportJob;
 import org.broadinstitute.ddp.housekeeping.schedule.TemporaryUserCleanupJob;
 import org.broadinstitute.ddp.model.activity.types.EventActionType;
 import org.broadinstitute.ddp.model.event.ActivityInstanceCreationEventAction;
-import org.broadinstitute.ddp.model.event.EnrollmentCompletedEventAction;
+import org.broadinstitute.ddp.model.event.UpdateUserStatusEventAction;
 import org.broadinstitute.ddp.model.event.EventConfiguration;
 import org.broadinstitute.ddp.model.event.EventSignal;
 import org.broadinstitute.ddp.model.study.StudySettings;
@@ -833,13 +833,13 @@ public class Housekeeping {
         var jdbiQueuedEvent = apisHandle.attach(JdbiQueuedEvent.class);
         EventActionType actionType = pendingEvent.getActionType();
         if (actionType == EventActionType.ACTIVITY_INSTANCE_CREATION
-                || actionType == EventActionType.ENROLLMENT_COMPLETED) {
+                || actionType == EventActionType.UPDATE_USER_STATUS) {
             EventConfiguration event = eventDao
                     .getEventConfigurationDtoById(pendingEvent.getEventConfigurationId())
                     .map(EventConfiguration::new)
                     .orElse(null);
             if (event == null) {
-                LOG.error("No event configuration found for ID: {} . skipping queued event : {} ",
+                LOG.error("No event configuration found for id={}, skipping queued event {}",
                         pendingEvent.getEventConfigurationId(), pendingEvent.getQueuedEventId());
                 return true;
             }
@@ -863,7 +863,7 @@ public class Housekeeping {
                 var action = (ActivityInstanceCreationEventAction) event.getEventAction();
                 action.doActionSynchronously(apisHandle, signal);
             } else {
-                var action = (EnrollmentCompletedEventAction) event.getEventAction();
+                var action = (UpdateUserStatusEventAction) event.getEventAction();
                 action.doActionSynchronously(apisHandle, signal);
             }
 

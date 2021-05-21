@@ -58,14 +58,14 @@ public interface EventTriggerDao {
         return getEventTriggerSql().insertBaseTrigger(EventTriggerType.USER_REGISTERED);
     }
 
-    default long insertUserStatusChangeTrigger(EnrollmentStatusType targetStatusType) {
+    default long insertUserStatusChangedTrigger(EnrollmentStatusType targetStatusType) {
         var supported = Set.of(EnrollmentStatusType.ENROLLED, EnrollmentStatusType.COMPLETED);
         if (!supported.contains(targetStatusType)) {
             throw new DaoException("Target status '" + targetStatusType + "' is currently not supported");
         }
         var eventTriggerSql = getEventTriggerSql();
-        long triggerId = eventTriggerSql.insertBaseTrigger(EventTriggerType.USER_STATUS_CHANGE);
-        DBUtils.checkInsert(1, eventTriggerSql.insertUserStatusChangeTrigger(triggerId, targetStatusType));
+        long triggerId = eventTriggerSql.insertBaseTrigger(EventTriggerType.USER_STATUS_CHANGED);
+        DBUtils.checkInsert(1, eventTriggerSql.insertUserStatusChangedTrigger(triggerId, targetStatusType));
         return triggerId;
     }
 

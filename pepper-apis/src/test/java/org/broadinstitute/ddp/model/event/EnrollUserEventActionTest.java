@@ -1,7 +1,6 @@
 package org.broadinstitute.ddp.model.event;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.doCallRealMethod;
@@ -46,12 +45,13 @@ public class EnrollUserEventActionTest extends TxnAwareBaseTest {
                     testData.getUserGuid(), newStudy.getId(), EventTriggerType.USER_REGISTERED);
             actionSpy.doAction(null, handle, signal);
 
-            assertTrue("should be enrolled", handle.attach(JdbiUserStudyEnrollment.class)
-                    .findFirstStatusMillis(newStudy.getId(), testData.getUserId(), EnrollmentStatusType.ENROLLED)
-                    .isPresent());
+            assertEquals("should be enrolled", EnrollmentStatusType.ENROLLED,
+                    handle.attach(JdbiUserStudyEnrollment.class)
+                            .getEnrollmentStatusByUserAndStudyGuids(testData.getUserGuid(), newStudy.getGuid())
+                            .orElse(null));
             verify(actionSpy, times(1)).triggerEvents(any(), argThat(actualSignal -> {
                 assertEquals("should invoke downstream events",
-                        EventTriggerType.USER_STATUS_CHANGE, actualSignal.getEventTriggerType());
+                        EventTriggerType.USER_STATUS_CHANGED, actualSignal.getEventTriggerType());
                 return true;
             }));
 

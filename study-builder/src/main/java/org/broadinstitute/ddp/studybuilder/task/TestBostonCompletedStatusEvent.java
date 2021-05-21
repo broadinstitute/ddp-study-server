@@ -12,9 +12,10 @@ import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.exception.DDPException;
-import org.broadinstitute.ddp.model.activity.types.EventActionType;
 import org.broadinstitute.ddp.model.activity.types.EventTriggerType;
 import org.broadinstitute.ddp.model.event.EventConfiguration;
+import org.broadinstitute.ddp.model.event.UserStatusChangedTrigger;
+import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
 import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.studybuilder.EventBuilder;
 import org.jdbi.v3.core.Handle;
@@ -27,7 +28,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * One-off task to add event for setting enrollment status to COMPLETED and doing necessary data backfill.
+ * One-off task to add event for user enrollment status changes and doing necessary data backfill.
  */
 public class TestBostonCompletedStatusEvent implements CustomTask {
 
@@ -57,21 +58,41 @@ public class TestBostonCompletedStatusEvent implements CustomTask {
         List<EventConfiguration> events = handle.attach(EventDao.class)
                 .getAllEventConfigurationsByStudyId(studyDto.getId());
 
-        EventConfiguration firstEnrolledEvent = events.stream()
-                .filter(event -> event.getEventTriggerType() == EventTriggerType.USER_STATUS_CHANGE)
-                .filter(event -> event.getEventActionType() == EventActionType.ENROLLMENT_COMPLETED)
+        var statusEnrolled = events.stream()
+                .filter(event -> event.getEventTriggerType() == EventTriggerType.USER_STATUS_CHANGED)
+                .map(event -> (UserStatusChangedTrigger) event.getEventTrigger())
+                .filter(trigger -> trigger.getTargetStatusType() == EnrollmentStatusType.ENROLLED)
                 .findFirst().orElse(null);
-        if (firstEnrolledEvent == null) {
+        if (statusEnrolled == null) {
             Config eventCfg = studyCfg.getConfigList("events").stream()
-                    .filter(event -> "USER_STATUS_CHANGE".equals(event.getString("trigger.type")))
-                    .filter(event -> "ENROLLMENT_COMPLETED".equals(event.getString("action.type")))
-                    .findFirst().orElseThrow(() -> new DDPException("Could not find USER_STATUS_CHANGE event in study config"));
+                    .filter(event -> "USER_STATUS_CHANGED".equals(event.getString("trigger.type")))
+                    .filter(event -> "ENROLLED".equals(event.getString("trigger.status")))
+                    .findFirst().orElseThrow(() ->
+                            new DDPException("Could not find (USER_STATUS_CHANGED, ENROLLED) event in study config"));
             eventBuilder.insertEvent(handle, eventCfg);
 
             int delaySeconds = eventCfg.getInt("delaySeconds");
             runBackfill(handle, studyDto, delaySeconds);
         } else {
-            LOG.info("Already has USER_STATUS_CHANGE event configuration with id {}", firstEnrolledEvent.getEventConfigurationId());
+            LOG.info("Already has (USER_STATUS_CHANGED, ENROLLED) event configuration with id {}",
+                    statusEnrolled.getEventConfigurationDto().getEventConfigurationId());
+        }
+
+        var statusCompleted = events.stream()
+                .filter(event -> event.getEventTriggerType() == EventTriggerType.USER_STATUS_CHANGED)
+                .map(event -> (UserStatusChangedTrigger) event.getEventTrigger())
+                .filter(trigger -> trigger.getTargetStatusType() == EnrollmentStatusType.COMPLETED)
+                .findFirst().orElse(null);
+        if (statusCompleted == null) {
+            Config eventCfg = studyCfg.getConfigList("events").stream()
+                    .filter(event -> "USER_STATUS_CHANGED".equals(event.getString("trigger.type")))
+                    .filter(event -> "COMPLETED".equals(event.getString("trigger.status")))
+                    .findFirst().orElseThrow(() ->
+                            new DDPException("Could not find (USER_STATUS_CHANGED, COMPLETED) event in study config"));
+            eventBuilder.insertEvent(handle, eventCfg);
+        } else {
+            LOG.info("Already has (USER_STATUS_CHANGED, COMPLETED) event configuration with id {}",
+                    statusCompleted.getEventConfigurationDto().getEventConfigurationId());
         }
     }
 

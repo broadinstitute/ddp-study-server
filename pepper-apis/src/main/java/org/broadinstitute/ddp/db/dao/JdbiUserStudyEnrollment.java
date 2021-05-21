@@ -44,17 +44,6 @@ public interface JdbiUserStudyEnrollment extends SqlObject {
             @Bind("offset") int offset,
             @Bind("limit") int limit);
 
-    @SqlQuery("select min(usen.valid_from)"
-            + "  from user_study_enrollment as usen"
-            + "  join enrollment_status_type as est on est.enrollment_status_type_id = usen.enrollment_status_type_id"
-            + " where usen.study_id = :studyId"
-            + "   and usen.user_id = :userId"
-            + "   and est.enrollment_status_type_code = :statusType"
-            + " group by usen.user_id")
-    Optional<Long> findFirstStatusMillis(@Bind("studyId") long studyId,
-                                         @Bind("userId") long participantUserId,
-                                         @Bind("statusType") EnrollmentStatusType statusType);
-
     default List<EnrollmentStatusDto> findByStudyGuid(String studyGuid) {
         return findByStudyGuidAfterOrEqualToInstant(studyGuid, 0);
     }

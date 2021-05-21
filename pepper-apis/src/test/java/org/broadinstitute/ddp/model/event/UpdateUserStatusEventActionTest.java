@@ -22,7 +22,7 @@ import org.broadinstitute.ddp.util.TestDataSetupUtil;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-public class EnrollmentCompletedEventActionTest extends TxnAwareBaseTest {
+public class UpdateUserStatusEventActionTest extends TxnAwareBaseTest {
 
     private static TestDataSetupUtil.GeneratedTestData testData;
 
@@ -38,14 +38,14 @@ public class EnrollmentCompletedEventActionTest extends TxnAwareBaseTest {
 
             var event = mock(EventConfiguration.class);
             var eventDto = mock(EventConfigurationDto.class);
-            var actionSpy = spy(new EnrollmentCompletedEventAction(event, eventDto));
+            var actionSpy = spy(new UpdateUserStatusEventAction(event, eventDto));
             doReturn(1000).when(event).getPostDelaySeconds();
             doReturn(true).when(event).dispatchToHousekeeping();
             doReturn(1L).when(actionSpy).queueDelayedEvent(any(), any());
             doCallRealMethod().when(actionSpy).doAction(any(), any(), any());
 
             var signal = new EventSignal(testData.getUserId(), testData.getUserId(), testData.getUserGuid(),
-                    testData.getUserGuid(), newStudy.getId(), EventTriggerType.USER_STATUS_CHANGE);
+                    testData.getUserGuid(), newStudy.getId(), EventTriggerType.USER_STATUS_CHANGED);
             actionSpy.doAction(null, handle, signal);
 
             verify(actionSpy, never()).doActionSynchronously(any(), any());
@@ -62,21 +62,23 @@ public class EnrollmentCompletedEventActionTest extends TxnAwareBaseTest {
 
             var event = mock(EventConfiguration.class);
             var eventDto = mock(EventConfigurationDto.class);
-            var actionSpy = spy(new EnrollmentCompletedEventAction(event, eventDto));
+            doReturn(EnrollmentStatusType.COMPLETED).when(eventDto).getUpdateUserStatusTargetStatusType();
+
+            var actionSpy = spy(new UpdateUserStatusEventAction(event, eventDto));
             doReturn(null).when(event).getPostDelaySeconds();
             doReturn(false).when(event).dispatchToHousekeeping();
             doReturn(1L).when(actionSpy).queueDelayedEvent(any(), any());
             doCallRealMethod().when(actionSpy).doAction(any(), any(), any());
 
             var signal = new EventSignal(testData.getUserId(), testData.getUserId(), testData.getUserGuid(),
-                    testData.getUserGuid(), newStudy.getId(), EventTriggerType.USER_STATUS_CHANGE);
+                    testData.getUserGuid(), newStudy.getId(), EventTriggerType.USER_STATUS_CHANGED);
             actionSpy.doAction(null, handle, signal);
 
             verify(actionSpy, times(1)).doActionSynchronously(any(), any());
             verify(actionSpy, never()).queueDelayedEvent(any(), any());
             verify(actionSpy, times(1)).triggerEvents(any(), argThat(actualSignal -> {
                 assertEquals("should invoke downstream events",
-                        EventTriggerType.USER_STATUS_CHANGE, actualSignal.getEventTriggerType());
+                        EventTriggerType.USER_STATUS_CHANGED, actualSignal.getEventTriggerType());
                 return true;
             }));
             assertEquals("should have status changed", EnrollmentStatusType.COMPLETED,

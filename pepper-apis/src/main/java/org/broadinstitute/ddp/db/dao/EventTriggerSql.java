@@ -26,11 +26,11 @@ public interface EventTriggerSql extends SqlObject {
             @Bind("triggerId") long triggerId,
             @Bind("dsmEventType") DsmNotificationEventType dsmEventType);
 
-    @SqlUpdate("insert into user_status_change_trigger (event_trigger_id, target_status_type_id)"
+    @SqlUpdate("insert into user_status_changed_trigger (event_trigger_id, target_status_type_id)"
             + " select :triggerId, enrollment_status_type_id"
             + "   from enrollment_status_type"
             + "  where enrollment_status_type_code = :targetStatus")
-    int insertUserStatusChangeTrigger(
+    int insertUserStatusChangedTrigger(
             @Bind("triggerId") long triggerId,
             @Bind("targetStatus") EnrollmentStatusType targetStatusType);
 }

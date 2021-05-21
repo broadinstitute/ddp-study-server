@@ -43,8 +43,8 @@ public class EventConfiguration {
             case DSM_NOTIFICATION:
                 eventTrigger = new DsmNotificationTrigger(dto);
                 break;
-            case USER_STATUS_CHANGE:
-                eventTrigger = new UserStatusChangeTrigger(dto);
+            case USER_STATUS_CHANGED:
+                eventTrigger = new UserStatusChangedTrigger(dto);
                 break;
             case CONSENT_SUSPENDED:
                 // No sub-tables
@@ -84,9 +84,6 @@ public class EventConfiguration {
             case NOTIFICATION:
                 eventAction = new NotificationEventAction(this, dto);
                 break;
-            case ENROLLMENT_COMPLETED:
-                eventAction = new EnrollmentCompletedEventAction(this, dto);
-                break;
             case USER_ENROLLED:
                 eventAction = new EnrollUserEventAction(this, dto);
                 break;
@@ -110,6 +107,9 @@ public class EventConfiguration {
                 break;
             case REVOKE_PROXIES:
                 eventAction = new RevokeProxiesEventAction(this, dto);
+                break;
+            case UPDATE_USER_STATUS:
+                eventAction = new UpdateUserStatusEventAction(this, dto);
                 break;
             default:
                 throw new DDPException("Event action type: " + eventActionType.name() + " is not properly configured in "

@@ -60,7 +60,7 @@ public class EventConfigurationDto {
     // No sub-table
 
     /* USER_STATUS_CHANGE */
-    private EnrollmentStatusType userStatusChangeTargetStatusType;
+    private EnrollmentStatusType userStatusChangedTargetStatusType;
 
     /* EXIT_REQUEST */
     // No sub-table
@@ -84,11 +84,10 @@ public class EventConfigurationDto {
     /* PDF_GENERATION */
     private Long pdfGenerationDocumentConfigurationId;
 
-
     /* ACTIVITY_INSTANCE_CREATION */
     private Long activityInstanceCreationStudyActivityId;
 
-    /* USER_ENROLLED, ENROLLMENT_COMPLETED */
+    /* USER_ENROLLED */
     // No sub-table
 
     /* COPY_ANSWER */
@@ -104,6 +103,9 @@ public class EventConfigurationDto {
 
     /* REVOKE_PROXIES */
     // No sub-table
+
+    /* UPDATE_USER_STATUS */
+    EnrollmentStatusType updateUserStatusTargetStatusType;
 
     public EventConfigurationDto(long eventConfigurationId,
                                  String label,
@@ -121,7 +123,8 @@ public class EventConfigurationDto {
                                  Long workflowStateId,
                                  Boolean triggerAutomatically,
                                  DsmNotificationEventType dsmNotificationEventType,
-                                 EnrollmentStatusType userStatusChangeTargetStatusType,
+                                 EnrollmentStatusType userStatusChangedTargetStatusType,
+                                 EnrollmentStatusType updateUserStatusTargetStatusType,
                                  Long announcementMsgTemplateId,
                                  Boolean announcementIsPermanent,
                                  Boolean announcementCreateForProxies,
@@ -150,7 +153,8 @@ public class EventConfigurationDto {
         this.workflowStateId = workflowStateId;
         this.triggerAutomatically = triggerAutomatically;
         this.dsmNotificationEventType = dsmNotificationEventType;
-        this.userStatusChangeTargetStatusType = userStatusChangeTargetStatusType;
+        this.userStatusChangedTargetStatusType = userStatusChangedTargetStatusType;
+        this.updateUserStatusTargetStatusType = updateUserStatusTargetStatusType;
         this.announcementMsgTemplateId = announcementMsgTemplateId;
         this.isAnnouncementPermanent = announcementIsPermanent;
         this.createAnnouncementForProxies = announcementCreateForProxies;
@@ -229,8 +233,12 @@ public class EventConfigurationDto {
         return dsmNotificationEventType;
     }
 
-    public EnrollmentStatusType getUserStatusChangeTargetStatusType() {
-        return userStatusChangeTargetStatusType;
+    public EnrollmentStatusType getUserStatusChangedTargetStatusType() {
+        return userStatusChangedTargetStatusType;
+    }
+
+    public EnrollmentStatusType getUpdateUserStatusTargetStatusType() {
+        return updateUserStatusTargetStatusType;
     }
 
     public Long getAnnouncementMsgTemplateId() {

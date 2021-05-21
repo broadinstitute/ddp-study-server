@@ -5,13 +5,13 @@ import org.broadinstitute.ddp.model.activity.types.EventTriggerType;
 import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
 import org.jdbi.v3.core.Handle;
 
-public class UserStatusChangeTrigger extends EventTrigger {
+public class UserStatusChangedTrigger extends EventTrigger {
 
     private EnrollmentStatusType targetStatusType;
 
-    public UserStatusChangeTrigger(EventConfigurationDto dto) {
+    public UserStatusChangedTrigger(EventConfigurationDto dto) {
         super(dto);
-        this.targetStatusType = dto.getUserStatusChangeTargetStatusType();
+        this.targetStatusType = dto.getUserStatusChangedTargetStatusType();
     }
 
     public EnrollmentStatusType getTargetStatusType() {
@@ -20,8 +20,8 @@ public class UserStatusChangeTrigger extends EventTrigger {
 
     @Override
     public boolean isTriggered(Handle handle, EventSignal eventSignal) {
-        if (eventSignal.getEventTriggerType() == EventTriggerType.USER_STATUS_CHANGE) {
-            var signal = (UserStatusChangeSignal) eventSignal;
+        if (eventSignal.getEventTriggerType() == EventTriggerType.USER_STATUS_CHANGED) {
+            var signal = (UserStatusChangedSignal) eventSignal;
             return signal.getNewStatusType() == targetStatusType;
         } else {
             return false;
