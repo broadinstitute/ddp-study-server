@@ -5,7 +5,7 @@ insert into file_question (question_id, max_file_size) values (:questionId, :max
 >>
 
 insertMimeType() ::= <<
-insert into mime_type (mime_type) values (:mimeType)
+insert into mime_type (mime_type_code) values (:mimeTypeCode)
 >>
 
 insertFileQuestionMimeType() ::= <<

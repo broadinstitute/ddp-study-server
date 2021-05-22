@@ -2,8 +2,10 @@ package org.broadinstitute.ddp.model.activity.definition.question;
 
 import static org.broadinstitute.ddp.constants.ConfigFile.FileUploads.MAX_FILE_SIZE_BYTES;
 
-import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import javax.validation.constraints.Positive;
 
 import com.google.gson.annotations.SerializedName;
@@ -20,7 +22,7 @@ public final class FileQuestionDef extends QuestionDef implements FileUploadSett
     private long maxFileSize;
 
     @SerializedName("mimeTypes")
-    private List<String> mimeTypes;
+    private Set<String> mimeTypes;
 
 
     public static Builder builder() {
@@ -36,7 +38,7 @@ public final class FileQuestionDef extends QuestionDef implements FileUploadSett
     public FileQuestionDef(String stableId, boolean isRestricted, Template promptTemplate,
                            Template additionalInfoHeaderTemplate, Template additionalInfoFooterTemplate,
                            List<RuleDef> validations, boolean hideNumber, boolean writeOnce,
-                           long maxFileSize, List<String> mimeTypes) {
+                           long maxFileSize, Set<String> mimeTypes) {
         super(QuestionType.FILE, stableId, isRestricted, promptTemplate,
                 additionalInfoHeaderTemplate, additionalInfoFooterTemplate,
                 validations, hideNumber, writeOnce);
@@ -45,7 +47,7 @@ public final class FileQuestionDef extends QuestionDef implements FileUploadSett
             throw new IllegalArgumentException(validationError);
         }
         this.maxFileSize = maxFileSize;
-        this.mimeTypes = mimeTypes == null ? new ArrayList<>() : mimeTypes;
+        this.mimeTypes = mimeTypes == null ? new HashSet<>() : mimeTypes;
     }
 
     @Override
@@ -54,7 +56,7 @@ public final class FileQuestionDef extends QuestionDef implements FileUploadSett
     }
 
     @Override
-    public List<String> getMimeTypes() {
+    public Collection<String> getMimeTypes() {
         return mimeTypes;
     }
 
@@ -72,7 +74,7 @@ public final class FileQuestionDef extends QuestionDef implements FileUploadSett
     public static final class Builder extends AbstractQuestionBuilder<Builder> {
 
         private long maxFileSize;
-        private List<String> mimeTypes;
+        private Set<String> mimeTypes;
 
         private Builder() {
             // Use static factories.
@@ -88,7 +90,7 @@ public final class FileQuestionDef extends QuestionDef implements FileUploadSett
             return this;
         }
 
-        public Builder setMimeTypes(List<String> mimeTypes) {
+        public Builder setMimeTypes(Set<String> mimeTypes) {
             this.mimeTypes = mimeTypes;
             return this;
         }

@@ -1506,7 +1506,7 @@ Question.File:
           type: array
           items:
             type: string
-          description: a list of allowed mime-types (if the list if empty then any type allowed)
+          description: a list of allowed mime-types (if the list is empty then any type allowed)
         answers:
           type: array
           items:

@@ -19,6 +19,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.Collection;
 import java.util.List;
 
 import com.google.cloud.storage.Blob;
@@ -238,7 +239,7 @@ public class FileUploadServiceTest extends TxnAwareBaseTest {
     static class FileUploadSettingsForTest implements FileUploadSettings {
 
         private final long maxFileSize;
-        private final List<String> mimeTypes;
+        private final Collection<String> mimeTypes;
 
         static FileUploadSettingsForTest createFileUploadSettings(long maxFileSize, List<String> mimeTypes) {
             return new FileUploadSettingsForTest(maxFileSize, mimeTypes);
@@ -259,7 +260,7 @@ public class FileUploadServiceTest extends TxnAwareBaseTest {
         }
 
         @Override
-        public List<String> getMimeTypes() {
+        public Collection<String> getMimeTypes() {
             return mimeTypes;
         }
     }

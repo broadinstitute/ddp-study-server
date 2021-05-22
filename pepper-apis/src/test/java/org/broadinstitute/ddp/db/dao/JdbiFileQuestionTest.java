@@ -5,7 +5,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 
-import java.util.List;
+import java.util.Collection;
+import java.util.Set;
 
 import org.broadinstitute.ddp.TxnAwareBaseTest;
 import org.broadinstitute.ddp.db.TransactionWrapper;
@@ -18,6 +19,7 @@ import org.broadinstitute.ddp.model.activity.definition.question.FileQuestionDef
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
 import org.broadinstitute.ddp.model.activity.types.TemplateType;
+import org.broadinstitute.ddp.util.CollectionMiscUtil;
 import org.broadinstitute.ddp.util.ConfigManager;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
 import org.broadinstitute.ddp.util.TestUtil;
@@ -40,10 +42,10 @@ public class JdbiFileQuestionTest extends TxnAwareBaseTest {
     private static final long FILE_3_MAX_SIZE = 5000L;
     private static final long FILE_4_MAX_SIZE_INVALID = ConfigManager.getInstance().getConfig().getLong(MAX_FILE_SIZE_BYTES) + 1;
 
-    private static final List<String> FILE_1_MIME_TYPES = List.of("image/gif", "image/jpeg");
-    private static final List<String> FILE_2_MIME_TYPES = List.of("video/mpeg");
-    private static final List<String> FILE_3_MIME_TYPES = List.of();
-    private static final List<String> FILE_4_MIME_TYPES = List.of();
+    private static final Set<String> FILE_1_MIME_TYPES = Set.of("image/gif", "image/jpeg");
+    private static final Set<String> FILE_2_MIME_TYPES = Set.of("video/mpeg");
+    private static final Set<String> FILE_3_MIME_TYPES = Set.of();
+    private static final Set<String> FILE_4_MIME_TYPES = Set.of();
 
 
     private static TestDataSetupUtil.GeneratedTestData testData;
@@ -75,7 +77,7 @@ public class JdbiFileQuestionTest extends TxnAwareBaseTest {
     }
 
     private void assertDtoData(Handle handle, FormActivityDef activity, String stableId,
-                               List<String> mimeTypes, long maxFileSize) {
+                               Collection<String> mimeTypes, long maxFileSize) {
         long questionId = extractQuestion(activity, stableId).getQuestionId();
 
         FileQuestionDto dto = (FileQuestionDto) handle.attach(JdbiQuestion.class)
@@ -84,7 +86,7 @@ public class JdbiFileQuestionTest extends TxnAwareBaseTest {
 
         assertNotNull(dto);
         assertEquals(maxFileSize, dto.getMaxFileSize());
-        assertEquals(mimeTypes, dto.getMimeTypes());
+        assertEquals(mimeTypes, CollectionMiscUtil.toSet(dto.getMimeTypes()));
     }
 
     private FileQuestionDef extractQuestion(FormActivityDef activity, String stableId) {

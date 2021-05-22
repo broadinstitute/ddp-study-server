@@ -76,6 +76,7 @@ import org.broadinstitute.ddp.model.activity.types.PicklistRenderMode;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
 import org.broadinstitute.ddp.model.activity.types.SuggestionType;
 import org.broadinstitute.ddp.model.activity.types.TemplateType;
+import org.broadinstitute.ddp.util.CollectionMiscUtil;
 import org.broadinstitute.ddp.util.QuestionUtil;
 import org.jdbi.v3.sqlobject.CreateSqlObject;
 import org.jdbi.v3.sqlobject.SqlObject;
@@ -1093,7 +1094,7 @@ public interface QuestionDao extends SqlObject {
 
         JdbiFileQuestion jdbiFileQuestion = getJdbiFileQuestion();
         jdbiFileQuestion.insert(fileQuestion.getQuestionId(), fileQuestion.getMaxFileSize());
-        List<String> mimeTypes = fileQuestion.getMimeTypes();
+        Collection<String> mimeTypes = fileQuestion.getMimeTypes();
         for (String mimeType : mimeTypes) {
             long mimeTypeId = jdbiFileQuestion.insertMimeType(mimeType);
             jdbiFileQuestion.insertFileQuestionMimeType(fileQuestion.getQuestionId(), mimeTypeId);
@@ -1599,7 +1600,7 @@ public interface QuestionDao extends SqlObject {
         Template prompt = templates.get(dto.getPromptTemplateId());
         var builder = FileQuestionDef.builder(dto.getStableId(), prompt)
                 .setMaxFileSize(dto.getMaxFileSize())
-                .setMimeTypes(dto.getMimeTypes());
+                .setMimeTypes(CollectionMiscUtil.toSet(dto.getMimeTypes()));
         configureBaseQuestionDef(builder, dto, ruleDefs, templates);
         return builder.build();
     }

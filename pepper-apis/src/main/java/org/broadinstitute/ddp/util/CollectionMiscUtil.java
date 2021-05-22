@@ -1,6 +1,8 @@
 package org.broadinstitute.ddp.util;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -58,5 +60,19 @@ public class CollectionMiscUtil {
                 consumer.accept(value);
             }
         }
+    }
+
+    public static <T> List<T> toList(Collection<T> coll) {
+        if (coll instanceof List) {
+            return (List<T>)coll;
+        }
+        return new ArrayList<>(coll);
+    }
+
+    public static <T> Set<T> toSet(Collection<T> coll) {
+        if (coll instanceof Set) {
+            return (Set<T>)coll;
+        }
+        return new HashSet<>(coll);
     }
 }

@@ -15,7 +15,7 @@ public interface JdbiFileQuestion extends SqlObject {
 
     @SqlUpdate("insertMimeType")
     @GetGeneratedKeys
-    long insertMimeType(@Bind("mimeType") String mimeType);
+    long insertMimeType(@Bind("mimeTypeCode") String mimeTypeCode);
 
     @SqlUpdate("insertFileQuestionMimeType")
     int insertFileQuestionMimeType(@Bind("fileQuestionId") long fileQuestionId, @Bind("mimeTypeId") long mimeTypeId);

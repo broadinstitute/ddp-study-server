@@ -89,7 +89,7 @@ select qt.question_type_code as question_type,
          where dqfo.date_question_id = dq.question_id
        ) as date_fields,
 
-       (select group_concat(mt.mime_type separator ',')
+       (select group_concat(mt.mime_type_code separator ',')
           from mime_type mt
           join file_question__mime_type fqmt on fqmt.mime_type_id = mt.mime_type_id
           where fqmt.file_question_id = fq.question_id
