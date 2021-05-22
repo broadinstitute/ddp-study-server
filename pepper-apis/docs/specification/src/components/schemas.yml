@@ -1492,6 +1492,7 @@ Question.File:
       required:
         - answers
         - maxFileSize
+        - mimeTypes
       properties:
         questionType:
           type: string
@@ -1507,6 +1508,7 @@ Question.File:
           items:
             type: string
           description: a list of allowed mime-types (if the list is empty then any type allowed)
+          minItems: 0
         answers:
           type: array
           items:

@@ -1,6 +1,7 @@
 package org.broadinstitute.ddp.model.activity.instance.question;
 
 import java.util.List;
+import javax.validation.constraints.NotNull;
 
 import com.google.gson.annotations.SerializedName;
 import org.broadinstitute.ddp.model.activity.instance.answer.FileAnswer;
@@ -12,6 +13,7 @@ public final class FileQuestion extends Question<FileAnswer> {
     @SerializedName("maxFileSize")
     private long maxFileSize;
 
+    @NotNull
     @SerializedName("mimeTypes")
     private List<String> mimeTypes;
     
