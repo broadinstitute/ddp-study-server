@@ -23,7 +23,7 @@
                 <constraints nullable="false" primaryKey="true" primaryKeyName="mime_type_pk"/>
             </column>
             <column name="mime_type_code" type="varchar(255)">
-                <constraints nullable="false"/>
+                <constraints nullable="false" unique="true" uniqueConstraintName="mime_type__mime_type_code_uk"/>
             </column>
         </createTable>
     </changeSet>

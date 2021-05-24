@@ -278,6 +278,7 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
         FileQuestionDef file1 = FileQuestionDef
                 .builder("FILE" + System.currentTimeMillis(), Template.text("file"))
                 .setMaxFileSize(DEFAULT_MAX_FILE_SIZE_FOR_TEST)
+                .setMimeTypes(Set.of("image/gif", "image/jpeg"))
                 .build();
         var fileSection = new FormSectionDef(null, List.of(new QuestionBlockDef(file1)));
 

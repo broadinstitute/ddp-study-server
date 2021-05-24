@@ -44,7 +44,7 @@ public class JdbiFileQuestionTest extends TxnAwareBaseTest {
 
     private static final Set<String> FILE_1_MIME_TYPES = Set.of("image/gif", "image/jpeg");
     private static final Set<String> FILE_2_MIME_TYPES = Set.of("video/mpeg");
-    private static final Set<String> FILE_3_MIME_TYPES = Set.of();
+    private static final Set<String> FILE_3_MIME_TYPES = Set.of("video/mpeg");
     private static final Set<String> FILE_4_MIME_TYPES = Set.of();
 
 

@@ -1096,7 +1096,7 @@ public interface QuestionDao extends SqlObject {
         jdbiFileQuestion.insert(fileQuestion.getQuestionId(), fileQuestion.getMaxFileSize());
         Collection<String> mimeTypes = fileQuestion.getMimeTypes();
         for (String mimeType : mimeTypes) {
-            long mimeTypeId = jdbiFileQuestion.insertMimeType(mimeType);
+            long mimeTypeId = findMimeTypeIdOrInsert(mimeType);
             jdbiFileQuestion.insertFileQuestionMimeType(fileQuestion.getQuestionId(), mimeTypeId);
         }
     }
@@ -1732,5 +1732,15 @@ public interface QuestionDao extends SqlObject {
         configureBaseQuestionDef(builder, dto, ruleDefs, templates);
 
         return builder.build();
+    }
+
+    private long findMimeTypeIdOrInsert(String mimeType) {
+        JdbiFileQuestion jdbiFileQuestion = getJdbiFileQuestion();
+        Optional<Long> mimeTypeId = jdbiFileQuestion.findByMimeType(mimeType);
+        if (mimeTypeId.isPresent()) {
+            return mimeTypeId.get();
+        } else {
+            return jdbiFileQuestion.insertMimeType(mimeType);
+        }
     }
 }
