@@ -466,7 +466,6 @@ class DataLoader {
 
     private void processParticipantDsmData(MemberWrapper participant) {
         String altPid = participant.getAltPid();
-        String familyId = participant.getFamilyId();
         if (StringUtils.isBlank(altPid)) {
             if (isProdRun) {
                 throw new LoaderException("Participant is missing altpid");
@@ -475,6 +474,13 @@ class DataLoader {
                 return;
             }
         }
+
+        String familyId = participant.getFamilyId();
+        if (StringUtils.isBlank(familyId)) {
+            LOG.error("  Participant is missing family_id, skipping");
+            return;
+        }
+
         DsmDataLoader.useTxn(dsmHandle -> loadDsmData(dsmHandle, altPid, mapping, participant));
         familyIdToParticipantAltPid.put(familyId, altPid);
         LOG.info("  Assigned family_id={} to participant altpid={}", familyId, altPid);
@@ -482,6 +488,11 @@ class DataLoader {
 
     private void processFamilyMemberDsmData(Handle dsmHandle, MemberWrapper member) {
         String familyId = member.getFamilyId();
+        if (StringUtils.isBlank(familyId)) {
+            LOG.error("  Family member is missing family_id, skipping");
+            return;
+        }
+
         String altPid = familyIdToParticipantAltPid.get(familyId);
         if (StringUtils.isBlank(altPid)) {
             if (isProdRun) {
@@ -491,6 +502,7 @@ class DataLoader {
                 return;
             }
         }
+
         LOG.info("  Using participant altpid={}", altPid);
         loadDsmData(dsmHandle, altPid, mapping, member);
     }
