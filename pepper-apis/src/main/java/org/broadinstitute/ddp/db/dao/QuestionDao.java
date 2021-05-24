@@ -77,6 +77,7 @@ import org.broadinstitute.ddp.model.activity.types.QuestionType;
 import org.broadinstitute.ddp.model.activity.types.SuggestionType;
 import org.broadinstitute.ddp.model.activity.types.TemplateType;
 import org.broadinstitute.ddp.util.CollectionMiscUtil;
+import org.broadinstitute.ddp.util.FileUploadValidator;
 import org.broadinstitute.ddp.util.QuestionUtil;
 import org.jdbi.v3.sqlobject.CreateSqlObject;
 import org.jdbi.v3.sqlobject.SqlObject;
@@ -1085,13 +1086,14 @@ public interface QuestionDao extends SqlObject {
     /**
      * Create new file question by inserting common data and file question specific data.
      *
+     *
      * @param activityId   the associated activity
      * @param fileQuestion the file question definition, without generated things like ids
      * @param revisionId   the revision to use, will be shared by all created data
      */
     default void insertQuestion(long activityId, FileQuestionDef fileQuestion, long revisionId) {
         insertBaseQuestion(activityId, fileQuestion, revisionId);
-
+        FileUploadValidator.validateFileMaxSize(fileQuestion.getMaxFileSize());
         JdbiFileQuestion jdbiFileQuestion = getJdbiFileQuestion();
         jdbiFileQuestion.insert(fileQuestion.getQuestionId(), fileQuestion.getMaxFileSize());
         Collection<String> mimeTypes = fileQuestion.getMimeTypes();
