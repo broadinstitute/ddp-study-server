@@ -43,8 +43,10 @@ import org.broadinstitute.ddp.model.dsm.DsmNotificationEventType;
 import org.broadinstitute.ddp.model.event.ActivityStatusChangeTrigger;
 import org.broadinstitute.ddp.model.event.DsmNotificationTrigger;
 import org.broadinstitute.ddp.model.event.EventTrigger;
+import org.broadinstitute.ddp.model.event.UserStatusChangedTrigger;
 import org.broadinstitute.ddp.model.event.WorkflowStateTrigger;
 import org.broadinstitute.ddp.model.pdf.PdfConfigInfo;
+import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
 import org.broadinstitute.ddp.model.workflow.ActivityState;
 import org.broadinstitute.ddp.model.workflow.StateType;
 import org.broadinstitute.ddp.model.workflow.StaticState;
@@ -125,7 +127,7 @@ public class EventBuilder {
         eventCfgsToLoad.forEach(eventCfg -> insertEvent(handle, eventCfg));
     }
 
-    public void insertEvent(Handle handle, Config eventCfg) {
+    public long insertEvent(Handle handle, Config eventCfg) {
         Config triggerCfg = eventCfg.getConfig("trigger");
         Config actionCfg = eventCfg.getConfig("action");
         String label = eventCfg.hasPath("label") ? eventCfg.getString("label") : null;
@@ -143,6 +145,8 @@ public class EventBuilder {
                 Instant.now().toEpochMilli(), maxOccurrencesPerUser, delaySeconds, preconditionExprId, cancelExprId,
                 eventCfg.getBoolean("dispatchToHousekeeping"), eventCfg.getInt("order"));
         LOG.info("Created event with id={}, trigger={}, action={}", eventId, triggerAsStr(triggerCfg), actionAsStr(actionCfg));
+
+        return eventId;
     }
 
     private long insertEventTrigger(Handle handle, Config triggerCfg) {
@@ -158,6 +162,10 @@ public class EventBuilder {
             String dsmEvent = triggerCfg.getString("dsmEvent");
             var dsmEventType = DsmNotificationEventType.valueOf(dsmEvent);
             return triggerDao.insertDsmNotificationTrigger(dsmEventType);
+        } else if (type == EventTriggerType.USER_STATUS_CHANGED) {
+            String targetStatus = triggerCfg.getString("status");
+            var targetStatusType = EnrollmentStatusType.valueOf(targetStatus);
+            return triggerDao.insertUserStatusChangedTrigger(targetStatusType);
         } else if (type == EventTriggerType.WORKFLOW_STATE) {
             if (triggerCfg.hasPath(ACTIVITY_CODE_FIELD)) {
                 String activityCode = triggerCfg.getString(ACTIVITY_CODE_FIELD);
@@ -311,6 +319,10 @@ public class EventBuilder {
                     .map(activtyCode -> ActivityBuilder.findActivityId(handle, studyDto.getId(), activtyCode))
                     .collect(toSet());
             return actionDao.insertMarkActivitiesReadOnlyAction(activityIds);
+        } else if (EventActionType.UPDATE_USER_STATUS.name().equals(type)) {
+            String targetStatus = actionCfg.getString("status");
+            var targetStatusType = EnrollmentStatusType.valueOf(targetStatus);
+            return actionDao.insertUpdateUserStatusAction(targetStatusType);
         } else {
             return actionDao.insertStaticAction(EventActionType.valueOf(type));
         }
@@ -351,6 +363,9 @@ public class EventBuilder {
         } else if (EventTriggerType.DSM_NOTIFICATION.name().equals(type)) {
             String dsmEvent = triggerCfg.getString("dsmEvent");
             return String.format("%s/%s", type, dsmEvent);
+        } else if (EventTriggerType.USER_STATUS_CHANGED.name().equals(type)) {
+            String targetStatus = triggerCfg.getString("status");
+            return String.format("%s/%s", type, targetStatus);
         } else if (EventTriggerType.WORKFLOW_STATE.name().equals(type)) {
             String detail = null;
             if (triggerCfg.hasPath(ACTIVITY_CODE_FIELD)) {
@@ -377,6 +392,10 @@ public class EventBuilder {
             DsmNotificationTrigger trig = (DsmNotificationTrigger) trigger;
             String dsmEvent = trig.getDsmEventType().name();
             return String.format("%s/%s", type, dsmEvent);
+        } else if (trigger instanceof UserStatusChangedTrigger) {
+            var trig = (UserStatusChangedTrigger) trigger;
+            String targetStatus = trig.getTargetStatusType().name();
+            return String.format("%s/%s", type, targetStatus);
         } else if (trigger instanceof WorkflowStateTrigger) {
             // FIXME: workflow_state trigger is an old feature that's not really used anymore. Fix this later.
             WorkflowStateTrigger trig = (WorkflowStateTrigger) trigger;
@@ -428,6 +447,9 @@ public class EventBuilder {
         } else if (EventActionType.MARK_ACTIVITIES_READ_ONLY.name().equals(type)) {
             List<String> activityCodes = actionCfg.getStringList("activityCodes");
             return String.format("%s/%s", type, String.join(",", activityCodes));
+        } else if (EventActionType.UPDATE_USER_STATUS.name().equals(type))  {
+            String targetStatus = actionCfg.getString("status");
+            return String.format("%s/%s", type, targetStatus);
         } else {
             return type;
         }

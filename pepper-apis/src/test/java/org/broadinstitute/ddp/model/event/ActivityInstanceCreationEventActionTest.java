@@ -54,7 +54,7 @@ public class ActivityInstanceCreationEventActionTest extends TxnAwareBaseTest {
             var action = new ActivityInstanceCreationEventAction(null, nestedAct.getActivityId());
 
             try {
-                action.doAction(handle, signal);
+                action.doActionSynchronously(handle, signal);
                 fail("Expected exception not thrown");
             } catch (Exception e) {
                 assertTrue(e instanceof DDPException);
@@ -86,7 +86,7 @@ public class ActivityInstanceCreationEventActionTest extends TxnAwareBaseTest {
                     testData.getUserId(), testData.getUserId(), testData.getUserGuid(), testData.getUserGuid(),
                     parentInstanceId, parentAct.getActivityId(), testData.getStudyId(), InstanceStatusType.CREATED);
             var action = new ActivityInstanceCreationEventAction(null, nestedAct.getActivityId());
-            action.doAction(handle, signal);
+            action.doActionSynchronously(handle, signal);
 
             List<ActivityInstanceDto> actualInstances = handle.attach(JdbiActivityInstance.class)
                     .findAllByUserGuidAndActivityCode(testData.getUserGuid(), nestedAct.getActivityCode(), testData.getStudyId());
@@ -125,7 +125,7 @@ public class ActivityInstanceCreationEventActionTest extends TxnAwareBaseTest {
                     testData.getUserId(), testData.getUserId(), testData.getUserGuid(), testData.getUserGuid(),
                     instanceId1, act1.getActivityId(), testData.getStudyId(), InstanceStatusType.CREATED);
             var action = new ActivityInstanceCreationEventAction(null, act2.getActivityId());
-            action.doAction(handle, signal);
+            action.doActionSynchronously(handle, signal);
 
             List<ActivityInstanceDto> actualInstances = handle.attach(JdbiActivityInstance.class)
                     .findAllByUserGuidAndActivityCode(testData.getUserGuid(), act2.getActivityCode(), testData.getStudyId());
