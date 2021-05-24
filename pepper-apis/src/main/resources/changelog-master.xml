@@ -264,4 +264,5 @@
     <include file="db-changes/schema/DDP-6032-add-studymailinglist-language.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/DDP-5096-custom-export-last-completed.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/DDP-6115-fix-guam-state-code.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/DDP-5750-new-enrollment-events.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>

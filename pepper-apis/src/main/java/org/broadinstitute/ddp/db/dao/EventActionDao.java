@@ -12,6 +12,7 @@ import org.broadinstitute.ddp.model.activity.types.EventActionType;
 import org.broadinstitute.ddp.model.copy.CopyConfiguration;
 import org.broadinstitute.ddp.model.event.NotificationServiceType;
 import org.broadinstitute.ddp.model.event.NotificationType;
+import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
 import org.jdbi.v3.sqlobject.CreateSqlObject;
 import org.jdbi.v3.sqlobject.SqlObject;
 
@@ -129,6 +130,16 @@ public interface EventActionDao extends SqlObject {
         if (numInserted != 1) {
             throw new DaoException("Could not insert copy event action with copy configuration id " + configId);
         }
+        return actionId;
+    }
+
+    default long insertUpdateUserStatusAction(EnrollmentStatusType targetStatusType) {
+        var supported = Set.of(EnrollmentStatusType.COMPLETED);
+        if (!supported.contains(targetStatusType)) {
+            throw new DaoException("Target status '" + targetStatusType + "' is currently not supported");
+        }
+        long actionId = getJdbiEventAction().insert(null, EventActionType.UPDATE_USER_STATUS);
+        DBUtils.checkInsert(1, getEventActionSql().insertUpdateUserStatusAction(actionId, targetStatusType));
         return actionId;
     }
 

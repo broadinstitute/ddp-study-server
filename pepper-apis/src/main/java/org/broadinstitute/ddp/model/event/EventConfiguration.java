@@ -43,6 +43,9 @@ public class EventConfiguration {
             case DSM_NOTIFICATION:
                 eventTrigger = new DsmNotificationTrigger(dto);
                 break;
+            case USER_STATUS_CHANGED:
+                eventTrigger = new UserStatusChangedTrigger(dto);
+                break;
             case CONSENT_SUSPENDED:
                 // No sub-tables
             case GOVERNED_USER_REGISTERED:
@@ -104,6 +107,9 @@ public class EventConfiguration {
                 break;
             case REVOKE_PROXIES:
                 eventAction = new RevokeProxiesEventAction(this, dto);
+                break;
+            case UPDATE_USER_STATUS:
+                eventAction = new UpdateUserStatusEventAction(this, dto);
                 break;
             default:
                 throw new DDPException("Event action type: " + eventActionType.name() + " is not properly configured in "
