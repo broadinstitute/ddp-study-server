@@ -311,7 +311,7 @@ public class Auth0Util {
     public List<User> getAuth0UsersByEmail(String emailAddress, String mgmtApiToken, String connection) throws Auth0Exception {
         ManagementAPI auth0Mgmt = new ManagementAPI(baseUrl, mgmtApiToken);
         String query = "email:" + emailAddress + " AND identities.connection:" + connection;
-        UserFilter userFilter = new UserFilter().withQuery(query);
+        UserFilter userFilter = new UserFilter().withQuery(query).withSearchEngine("v3");
         return auth0Mgmt.users().list(userFilter).execute().getItems();
     }
 
