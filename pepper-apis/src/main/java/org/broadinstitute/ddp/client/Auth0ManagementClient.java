@@ -9,6 +9,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -210,18 +211,30 @@ public class Auth0ManagementClient {
      * @return result with list of connections, or error response
      */
     public ApiResult<List<Connection>, APIException> listConnections() {
+        int maxPerPage = 50;
+        int pageNum = 0;
         String msg = String.format("Hit rate limit while listing connections for tenant '%s', retrying", baseUrl);
-        return withRetries(msg, () -> {
-            try {
-                mgmtApi.setApiToken(getToken());
-                ConnectionsPage page = mgmtApi.connections().listAll(null).execute();
-                return ApiResult.ok(200, page.getItems());
-            } catch (APIException e) {
-                return ApiResult.err(e.getStatusCode(), e);
-            } catch (Exception e) {
-                return ApiResult.thrown(e);
-            }
-        });
+        Integer currentTotal = maxPerPage;
+        List<Connection> connections = new ArrayList<>();
+        while (currentTotal == maxPerPage) {
+            //keep make API calls with 1 page at a time until current iteration results size is maxPerPage (else no more results)
+            var filter = new ConnectionFilter().withPage(pageNum, maxPerPage);
+            ApiResult<List<Connection>, APIException> apiResult = withRetries(msg, () -> {
+                try {
+                    mgmtApi.setApiToken(getToken());
+                    ConnectionsPage page = mgmtApi.connections().listAll(filter).execute();
+                    return ApiResult.ok(200, page.getItems());
+                } catch (APIException e) {
+                    return ApiResult.err(e.getStatusCode(), e);
+                } catch (Exception e) {
+                    return ApiResult.thrown(e);
+                }
+            });
+            pageNum++;
+            connections.addAll(apiResult.getBody());
+            currentTotal = apiResult.getBody().size();
+        }
+        return ApiResult.ok(200, connections);
     }
 
     /**
