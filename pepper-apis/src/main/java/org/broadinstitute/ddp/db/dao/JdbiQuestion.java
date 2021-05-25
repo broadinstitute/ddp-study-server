@@ -171,6 +171,29 @@ public interface JdbiQuestion extends SqlObject {
         }
     }
 
+
+    @SqlUpdate("insert into file_question (question_id, max_file_size) values (:questionId, :maxFileSize)")
+    int insertFileQuestion(@Bind("questionId") long questionId, @Bind("maxFileSize") long maxFileSize);
+
+    @SqlUpdate("insert into mime_type (mime_type_code) values (:mimeTypeCode)")
+    @GetGeneratedKeys
+    long insertMimeType(@Bind("mimeTypeCode") String mimeTypeCode);
+
+    @SqlUpdate("insert into file_question__mime_type (file_question_id, mime_type_id) values (:fileQuestionId, :mimeTypeId)")
+    int insertFileQuestionMimeType(@Bind("fileQuestionId") long fileQuestionId, @Bind("mimeTypeId") long mimeTypeId);
+
+    @SqlQuery("select mime_type_id from mime_type where mime_type_code = :mime_type_code")
+    Optional<Long> findMimeTypeIdByMimeType(@Bind("mime_type_code") String mimeTypeCode);
+
+    default long findMimeTypeIdOrInsert(String mimeType) {
+        Optional<Long> mimeTypeId = findMimeTypeIdByMimeType(mimeType);
+        if (mimeTypeId.isPresent()) {
+            return mimeTypeId.get();
+        } else {
+            return insertMimeType(mimeType);
+        }
+    }
+
     class QuestionDtoReducer implements LinkedHashMapRowReducer<Long, QuestionDto> {
         @Override
         public void accumulate(Map<Long, QuestionDto> container, RowView view) {
@@ -237,17 +260,4 @@ public interface JdbiQuestion extends SqlObject {
             return new DatePicklistDef(useMonthNames, yearsForward, yearsBack, yearAnchor, firstSelectedYear, allowFutureYears);
         }
     }
-
-    @SqlUpdate("insert into file_question (question_id, max_file_size) values (:questionId, :maxFileSize)")
-    int insertFileQuestion(@Bind("questionId") long questionId, @Bind("maxFileSize") long maxFileSize);
-
-    @SqlUpdate("insert into mime_type (mime_type_code) values (:mimeTypeCode)")
-    @GetGeneratedKeys
-    long insertMimeType(@Bind("mimeTypeCode") String mimeTypeCode);
-
-    @SqlUpdate("insert into file_question__mime_type (file_question_id, mime_type_id) values (:fileQuestionId, :mimeTypeId)")
-    int insertFileQuestionMimeType(@Bind("fileQuestionId") long fileQuestionId, @Bind("mimeTypeId") long mimeTypeId);
-
-    @SqlQuery("select mime_type_id from mime_type where mime_type_code = :mime_type_code")
-    Optional<Long> findByMimeType(@Bind("mime_type_code") String mimeTypeCode);
 }

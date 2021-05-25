@@ -1094,7 +1094,7 @@ public interface QuestionDao extends SqlObject {
         jdbiQuestion.insertFileQuestion(fileQuestion.getQuestionId(), fileQuestion.getMaxFileSize());
         Collection<String> mimeTypes = fileQuestion.getMimeTypes();
         for (String mimeType : mimeTypes) {
-            long mimeTypeId = findMimeTypeIdOrInsert(mimeType);
+            long mimeTypeId = jdbiQuestion.findMimeTypeIdOrInsert(mimeType);
             jdbiQuestion.insertFileQuestionMimeType(fileQuestion.getQuestionId(), mimeTypeId);
         }
     }
@@ -1460,16 +1460,6 @@ public interface QuestionDao extends SqlObject {
         questionDefs.putAll(collectCompositeQuestionDefs(compositeDtos, questionIdToRuleDefs, templates, timestamp));
 
         return questionDefs;
-    }
-
-    default long findMimeTypeIdOrInsert(String mimeType) {
-        JdbiQuestion jdbiQuestion = getJdbiQuestion();
-        Optional<Long> mimeTypeId = jdbiQuestion.findByMimeType(mimeType);
-        if (mimeTypeId.isPresent()) {
-            return mimeTypeId.get();
-        } else {
-            return jdbiQuestion.insertMimeType(mimeType);
-        }
     }
 
     private Map<Long, PicklistQuestionDef> collectPicklistQuestionDefs(Collection<PicklistQuestionDto> picklistDtos,

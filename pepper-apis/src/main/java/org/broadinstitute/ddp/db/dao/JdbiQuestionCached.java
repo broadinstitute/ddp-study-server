@@ -105,8 +105,8 @@ public class JdbiQuestionCached extends SQLObjectWrapper<JdbiQuestion> implement
     }
 
     @Override
-    public Optional<Long> findByMimeType(String mimeTypeCode) {
-        return delegate.findByMimeType(mimeTypeCode);
+    public Optional<Long> findMimeTypeIdByMimeType(String mimeTypeCode) {
+        return delegate.findMimeTypeIdByMimeType(mimeTypeCode);
     }
 
     @Override
