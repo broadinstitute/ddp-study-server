@@ -90,6 +90,26 @@ public class JdbiQuestionCached extends SQLObjectWrapper<JdbiQuestion> implement
     }
 
     @Override
+    public int insertFileQuestion(long questionId, long maxFileSize) {
+        return delegate.insertFileQuestion(questionId, maxFileSize);
+    }
+
+    @Override
+    public long insertMimeType(String mimeTypeCode) {
+        return delegate.insertMimeType(mimeTypeCode);
+    }
+
+    @Override
+    public int insertFileQuestionMimeType(long fileQuestionId, long mimeTypeId) {
+        return delegate.insertFileQuestionMimeType(fileQuestionId, mimeTypeId);
+    }
+
+    @Override
+    public Optional<Long> findMimeTypeIdByMimeType(String mimeTypeCode) {
+        return delegate.findMimeTypeIdByMimeType(mimeTypeCode);
+    }
+
+    @Override
     public Optional<Long> findIdByStableIdAndInstanceGuid(String stableId, String instanceGuid) {
         if (isNullCache(stableIdInstanceGuidToQuestionIdCache)) {
             return delegate.findIdByStableIdAndInstanceGuid(stableId, instanceGuid);
