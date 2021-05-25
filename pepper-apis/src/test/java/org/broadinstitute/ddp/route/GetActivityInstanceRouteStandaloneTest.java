@@ -21,6 +21,7 @@ import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -113,6 +114,13 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
 
     public static final String MIME_TYPE_1 = "image/gif";
     public static final String MIME_TYPE_2 = "image/jpeg";
+
+    private static final Set<String> MIME_TYPES = new LinkedHashSet<>() {
+        {
+            add(MIME_TYPE_1);
+            add(MIME_TYPE_2);
+        }
+    };
 
     private static TestDataSetupUtil.GeneratedTestData testData;
     private static FormActivityDef parentActivity;
@@ -282,7 +290,7 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
         FileQuestionDef file1 = FileQuestionDef
                 .builder("FILE" + System.currentTimeMillis(), Template.text("file"))
                 .setMaxFileSize(DEFAULT_MAX_FILE_SIZE_FOR_TEST)
-                .setMimeTypes(Set.of(MIME_TYPE_1, MIME_TYPE_2))
+                .setMimeTypes(MIME_TYPES)
                 .build();
         var fileSection = new FormSectionDef(null, List.of(new QuestionBlockDef(file1)));
 
