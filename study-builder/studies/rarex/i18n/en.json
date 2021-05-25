@@ -283,7 +283,7 @@
   "h_d_answer_according_to_you": "For the following questions, please answer according to you. You do not have to have an official diagnosis. You will be able to give more details about your answers in later surveys.",
   "h_d_patient_answer_according_to_you": "For the following questions, please answer according to you. There does not have to be an official diagnosis. You will be able to give more details about the patient's answers in later surveys.",
 
-  "h_d_diagnoses": "General health and development questions will be asked in this survey. To help RARE-X identify and prioritize future focused groups of questions, please provide ALL known patient conditions/diagnoses/genetic diagnoses below (one patient condition/diagnosis/genetic diagnosis per line). If the patient is undiagnosed, please list \"undiagnosed\".",
+  "h_d_diagnoses": "General health and development questions were asked in this survey. To help RARE-X identify and prioritize future focused groups of questions, please provide ALL known patient conditions/diagnoses/genetic diagnoses below (one patient condition/diagnosis/genetic diagnosis per line). If the patient is undiagnosed, please list \"undiagnosed\".",
   "h_d_additional_diagnosis": "Another diagnosis",
   "h_d_add_diagnosis": "+ Add another diagnosis",
   "h_d_genetic_tested": "Did you have genetic testing?",
