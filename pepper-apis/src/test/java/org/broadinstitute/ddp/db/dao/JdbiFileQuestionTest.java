@@ -27,7 +27,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 /**
- * Tests {@link JdbiFileQuestion}
+ * Tests file questions DAO
  */
 public class JdbiFileQuestionTest extends TxnAwareBaseTest {
 

@@ -140,9 +140,6 @@ public interface QuestionDao extends SqlObject {
     JdbiNumericQuestion getJdbiNumericQuestion();
 
     @CreateSqlObject
-    JdbiFileQuestion getJdbiFileQuestion();
-
-    @CreateSqlObject
     JdbiBlockQuestion getJdbiBlockQuestion();
 
     @CreateSqlObject
@@ -1093,12 +1090,12 @@ public interface QuestionDao extends SqlObject {
     default void insertQuestion(long activityId, FileQuestionDef fileQuestion, long revisionId) {
         insertBaseQuestion(activityId, fileQuestion, revisionId);
         FileUploadValidator.validateFileMaxSize(fileQuestion.getMaxFileSize());
-        JdbiFileQuestion jdbiFileQuestion = getJdbiFileQuestion();
-        jdbiFileQuestion.insert(fileQuestion.getQuestionId(), fileQuestion.getMaxFileSize());
+        JdbiQuestion jdbiQuestion = getJdbiQuestion();
+        jdbiQuestion.insertFileQuestion(fileQuestion.getQuestionId(), fileQuestion.getMaxFileSize());
         Collection<String> mimeTypes = fileQuestion.getMimeTypes();
         for (String mimeType : mimeTypes) {
             long mimeTypeId = findMimeTypeIdOrInsert(mimeType);
-            jdbiFileQuestion.insertFileQuestionMimeType(fileQuestion.getQuestionId(), mimeTypeId);
+            jdbiQuestion.insertFileQuestionMimeType(fileQuestion.getQuestionId(), mimeTypeId);
         }
     }
 
@@ -1465,6 +1462,16 @@ public interface QuestionDao extends SqlObject {
         return questionDefs;
     }
 
+    default long findMimeTypeIdOrInsert(String mimeType) {
+        JdbiQuestion jdbiQuestion = getJdbiQuestion();
+        Optional<Long> mimeTypeId = jdbiQuestion.findByMimeType(mimeType);
+        if (mimeTypeId.isPresent()) {
+            return mimeTypeId.get();
+        } else {
+            return jdbiQuestion.insertMimeType(mimeType);
+        }
+    }
+
     private Map<Long, PicklistQuestionDef> collectPicklistQuestionDefs(Collection<PicklistQuestionDto> picklistDtos,
                                                                        Map<Long, List<RuleDef>> questionIdToRuleDefs,
                                                                        Map<Long, Template> templates,
@@ -1733,15 +1740,5 @@ public interface QuestionDao extends SqlObject {
         configureBaseQuestionDef(builder, dto, ruleDefs, templates);
 
         return builder.build();
-    }
-
-    private long findMimeTypeIdOrInsert(String mimeType) {
-        JdbiFileQuestion jdbiFileQuestion = getJdbiFileQuestion();
-        Optional<Long> mimeTypeId = jdbiFileQuestion.findByMimeType(mimeType);
-        if (mimeTypeId.isPresent()) {
-            return mimeTypeId.get();
-        } else {
-            return jdbiFileQuestion.insertMimeType(mimeType);
-        }
     }
 }
