@@ -19,7 +19,6 @@ import org.broadinstitute.ddp.model.activity.definition.question.FileQuestionDef
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
 import org.broadinstitute.ddp.model.activity.types.TemplateType;
-import org.broadinstitute.ddp.util.CollectionMiscUtil;
 import org.broadinstitute.ddp.util.ConfigManager;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
 import org.broadinstitute.ddp.util.TestUtil;
@@ -72,7 +71,7 @@ public class JdbiFileQuestionTest extends TxnAwareBaseTest {
             createFileQuestionWithInvalidMaxFileSize();
             fail();
         } catch (IllegalArgumentException e) {
-            assertEquals("Invalid value of maxFileSize=2000001. It should not exceed config value=2000000.", e.getMessage());
+            assertEquals("Invalid value of maxFileSize=2000001. It should not exceed max value=2000000.", e.getMessage());
         }
     }
 
@@ -86,7 +85,7 @@ public class JdbiFileQuestionTest extends TxnAwareBaseTest {
 
         assertNotNull(dto);
         assertEquals(maxFileSize, dto.getMaxFileSize());
-        assertEquals(mimeTypes, CollectionMiscUtil.toSet(dto.getMimeTypes()));
+        assertEquals(mimeTypes, dto.getMimeTypes());
     }
 
     private FileQuestionDef extractQuestion(FormActivityDef activity, String stableId) {

@@ -110,6 +110,10 @@ import org.junit.Test;
 public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite.TestCaseWithCacheEnabled {
 
     public static final String TEXT_QUESTION_STABLE_ID = "TEXT_Q";
+
+    public static final String MIME_TYPE_1 = "image/gif";
+    public static final String MIME_TYPE_2 = "image/jpeg";
+
     private static TestDataSetupUtil.GeneratedTestData testData;
     private static FormActivityDef parentActivity;
     private static FormActivityDef activity;
@@ -278,7 +282,7 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
         FileQuestionDef file1 = FileQuestionDef
                 .builder("FILE" + System.currentTimeMillis(), Template.text("file"))
                 .setMaxFileSize(DEFAULT_MAX_FILE_SIZE_FOR_TEST)
-                .setMimeTypes(Set.of("image/gif", "image/jpeg"))
+                .setMimeTypes(Set.of(MIME_TYPE_1, MIME_TYPE_2))
                 .build();
         var fileSection = new FormSectionDef(null, List.of(new QuestionBlockDef(file1)));
 
@@ -940,6 +944,15 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
                 .body("sections[0].blocks.size()", equalTo(3))
                 .body("sections[1].blocks.size()", equalTo(3))
                 .body("sections[2].blocks.size()", equalTo(4));
+    }
+
+    @Test
+    public void testFileQuestionProperties() {
+        testFor200()
+                .body("sections[8].blocks[0].question.questionType", equalTo(QuestionType.FILE.name()))
+                .body("sections[8].blocks[0].question.maxFileSize", equalTo(Long.valueOf(DEFAULT_MAX_FILE_SIZE_FOR_TEST).intValue()))
+                .body("sections[8].blocks[0].question.mimeTypes[0]", equalTo(MIME_TYPE_1))
+                .body("sections[8].blocks[0].question.mimeTypes[1]", equalTo(MIME_TYPE_2));
     }
 
     private Response testFor200AndExtractResponse() {

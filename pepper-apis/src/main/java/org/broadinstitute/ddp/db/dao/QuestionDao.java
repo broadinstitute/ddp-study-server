@@ -76,7 +76,6 @@ import org.broadinstitute.ddp.model.activity.types.PicklistRenderMode;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
 import org.broadinstitute.ddp.model.activity.types.SuggestionType;
 import org.broadinstitute.ddp.model.activity.types.TemplateType;
-import org.broadinstitute.ddp.util.CollectionMiscUtil;
 import org.broadinstitute.ddp.util.FileUploadValidator;
 import org.broadinstitute.ddp.util.QuestionUtil;
 import org.jdbi.v3.sqlobject.CreateSqlObject;
@@ -1602,7 +1601,7 @@ public interface QuestionDao extends SqlObject {
         Template prompt = templates.get(dto.getPromptTemplateId());
         var builder = FileQuestionDef.builder(dto.getStableId(), prompt)
                 .setMaxFileSize(dto.getMaxFileSize())
-                .setMimeTypes(CollectionMiscUtil.toSet(dto.getMimeTypes()));
+                .setMimeTypes(dto.getMimeTypes());
         configureBaseQuestionDef(builder, dto, ruleDefs, templates);
         return builder.build();
     }

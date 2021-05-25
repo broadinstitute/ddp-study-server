@@ -1,7 +1,6 @@
 package org.broadinstitute.ddp.model.activity.definition.question;
 
-import java.util.Collection;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import javax.validation.constraints.Positive;
@@ -42,7 +41,7 @@ public final class FileQuestionDef extends QuestionDef implements FileUploadSett
                 validations, hideNumber, writeOnce);
         FileUploadValidator.validateFileMaxSize(maxFileSize);
         this.maxFileSize = maxFileSize;
-        this.mimeTypes = mimeTypes == null ? new HashSet<>() : mimeTypes;
+        this.mimeTypes = mimeTypes == null ? new LinkedHashSet<>() : mimeTypes;
     }
 
     @Override
@@ -51,7 +50,7 @@ public final class FileQuestionDef extends QuestionDef implements FileUploadSett
     }
 
     @Override
-    public Collection<String> getMimeTypes() {
+    public Set<String> getMimeTypes() {
         return mimeTypes;
     }
 

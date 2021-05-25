@@ -173,7 +173,7 @@ public class QuestionCreatorHelper {
                 questionCreator.getAnswers(ctx, questionDef.getStableId()),
                 questionCreator.getValidationRules(ctx, questionDef),
                 questionDef.getMaxFileSize(),
-                CollectionMiscUtil.toList(questionDef.getMimeTypes())
+                questionDef.getMimeTypes()
         );
     }
 

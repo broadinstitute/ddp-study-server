@@ -19,7 +19,7 @@ public class FileUploadValidator {
         if (maxFileSize <= 0) {
             errorMessage = errorMessagePrefix + "It should be greater than 0.";
         } else if (maxFileSizeConf != null && maxFileSize > maxFileSizeConf) {
-            errorMessage = errorMessagePrefix + "It should not exceed config value=" + maxFileSizeConf + ".";
+            errorMessage = errorMessagePrefix + "It should not exceed max value=" + maxFileSizeConf + ".";
         }
         if (errorMessage != null) {
             throw new IllegalArgumentException(errorMessage);
