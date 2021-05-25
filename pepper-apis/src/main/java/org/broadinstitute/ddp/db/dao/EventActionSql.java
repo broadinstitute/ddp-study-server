@@ -6,6 +6,7 @@ import java.util.Set;
 import org.broadinstitute.ddp.model.event.NotificationServiceType;
 import org.broadinstitute.ddp.model.event.NotificationTemplate;
 import org.broadinstitute.ddp.model.event.NotificationType;
+import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
@@ -34,6 +35,12 @@ public interface EventActionSql extends SqlObject {
     @GetGeneratedKeys
     @SqlBatch("insert into event_action_target_activity (event_action_id, activity_id) values (:actionId, :activityId)")
     long[] insertTargetActivities(@Bind("actionId") long actionId, @Bind("activityId") Set<Long> targetActivityIds);
+
+    @SqlUpdate("insert into update_user_status_action (event_action_id, target_status_type_id)"
+            + " select :actionId, enrollment_status_type_id"
+            + "   from enrollment_status_type"
+            + "  where enrollment_status_type_code = :targetStatus")
+    int insertUpdateUserStatusAction(@Bind("actionId") long actionId, @Bind("targetStatus") EnrollmentStatusType targetStatusType);
 
     @SqlUpdate("delete from activity_instance_creation_action where activity_instance_creation_action_id = :actionId")
     int deleteActivityInstanceCreationAction(@Bind("actionId") long eventActionId);
