@@ -1491,12 +1491,24 @@ Question.File:
     - type: object
       required:
         - answers
+        - maxFileSize
+        - mimeTypes
       properties:
         questionType:
           type: string
           default: FILE
           enum:
             - FILE
+        maxFileSize:
+          type: integer
+          format: int64
+          description: a max size of uploaded file, in bytes
+        mimeTypes:
+          type: array
+          items:
+            type: string
+          description: a list of allowed mime-types (if the list is empty then any type allowed)
+          minItems: 0
         answers:
           type: array
           items:

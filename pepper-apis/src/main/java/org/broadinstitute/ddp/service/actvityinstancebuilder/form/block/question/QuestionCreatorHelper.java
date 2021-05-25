@@ -171,7 +171,9 @@ public class QuestionCreatorHelper {
                 ctx.getAIBuilderFactory().getTemplateRenderHelper().renderTemplate(
                         ctx, questionDef.getAdditionalInfoFooterTemplate()),
                 questionCreator.getAnswers(ctx, questionDef.getStableId()),
-                questionCreator.getValidationRules(ctx, questionDef)
+                questionCreator.getValidationRules(ctx, questionDef),
+                questionDef.getMaxFileSize(),
+                questionDef.getMimeTypes()
         );
     }
 

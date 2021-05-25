@@ -1,5 +1,8 @@
 package org.broadinstitute.ddp.route;
 
+import static org.broadinstitute.ddp.service.FileUploadService.AuthorizeResultType.FILE_SIZE_EXCEEDS_MAXIMUM;
+import static org.broadinstitute.ddp.service.FileUploadService.AuthorizeResultType.MIME_TYPE_NOT_ALLOWED;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
 import org.broadinstitute.ddp.constants.ErrorCodes;
@@ -15,6 +18,7 @@ import org.broadinstitute.ddp.json.CreateUserActivityUploadPayload;
 import org.broadinstitute.ddp.json.CreateUserActivityUploadResponse;
 import org.broadinstitute.ddp.json.errors.ApiError;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
+import org.broadinstitute.ddp.model.activity.definition.question.FileQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
 import org.broadinstitute.ddp.model.files.FileUpload;
@@ -84,6 +88,7 @@ public class CreateUserActivityUploadRoute extends ValidatedJsonInputRoute<Creat
 
             String questionStableId = payload.getQuestionStableId();
             QuestionDef questionDef = activityDef.getQuestionByStableId(questionStableId);
+            FileQuestionDef fileQuestionDef;
             if (questionDef == null) {
                 String msg = "Could not find question with stable id " + questionStableId;
                 LOG.warn(msg);
@@ -92,6 +97,8 @@ public class CreateUserActivityUploadRoute extends ValidatedJsonInputRoute<Creat
                 String msg = "Question " + questionStableId + " does not support file uploads";
                 LOG.warn(msg);
                 throw ResponseUtil.haltError(response, HttpStatus.SC_UNPROCESSABLE_ENTITY, new ApiError(ErrorCodes.NOT_SUPPORTED, msg));
+            } else {
+                fileQuestionDef = (FileQuestionDef) questionDef;
             }
 
             boolean isQuestionReadOnly = QuestionUtil.isReadonly(handle, questionDef, instanceDto);
@@ -107,12 +114,25 @@ public class CreateUserActivityUploadRoute extends ValidatedJsonInputRoute<Creat
 
             String prefix = String.format("%s/%s/%s", studyGuid, userGuid, instanceDto.getActivityCode());
             return service.authorizeUpload(
-                    handle, instanceDto.getStudyId(), operatorUser.getId(), instanceDto.getParticipantId(), prefix,
-                    payload.getMimeType(), payload.getFileName(), payload.getFileSize(), payload.isResumable());
+                    handle,
+                    instanceDto.getStudyId(),
+                    operatorUser.getId(),
+                    instanceDto.getParticipantId(),
+                    fileQuestionDef,
+                    prefix,
+                    payload.getMimeType(),
+                    payload.getFileName(),
+                    payload.getFileSize(),
+                    payload.isResumable());
         });
 
-        if (result.isExceededSize()) {
-            String msg = "File size exceeded maximum of " + service.getMaxFileSizeBytes() + " bytes";
+        if (result.getAuthorizeResultType() != FileUploadService.AuthorizeResultType.OK) {
+            String msg = null;
+            if (result.getAuthorizeResultType() == FILE_SIZE_EXCEEDS_MAXIMUM) {
+                msg = "File size exceeded maximum of " + result.getFileUploadSettings().getMaxFileSize() + " bytes";
+            } else if (result.getAuthorizeResultType() == MIME_TYPE_NOT_ALLOWED) {
+                msg = "Mime type not belongs to allowed list: " + result.getFileUploadSettings().getMimeTypes();
+            }
             LOG.warn(msg);
             throw ResponseUtil.haltError(response, HttpStatus.SC_BAD_REQUEST, new ApiError(ErrorCodes.BAD_PAYLOAD, msg));
         }

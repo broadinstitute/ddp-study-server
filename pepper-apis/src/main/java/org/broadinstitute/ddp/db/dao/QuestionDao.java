@@ -76,6 +76,7 @@ import org.broadinstitute.ddp.model.activity.types.PicklistRenderMode;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
 import org.broadinstitute.ddp.model.activity.types.SuggestionType;
 import org.broadinstitute.ddp.model.activity.types.TemplateType;
+import org.broadinstitute.ddp.util.FileUploadValidator;
 import org.broadinstitute.ddp.util.QuestionUtil;
 import org.jdbi.v3.sqlobject.CreateSqlObject;
 import org.jdbi.v3.sqlobject.SqlObject;
@@ -640,7 +641,9 @@ public interface QuestionDao extends SqlObject {
                 dto.getAdditionalInfoHeaderTemplateId(),
                 dto.getAdditionalInfoFooterTemplateId(),
                 answers,
-                rules);
+                rules,
+                dto.getMaxFileSize(),
+                dto.getMimeTypes());
     }
 
     /**
@@ -1079,12 +1082,21 @@ public interface QuestionDao extends SqlObject {
     /**
      * Create new file question by inserting common data and file question specific data.
      *
+     *
      * @param activityId   the associated activity
      * @param fileQuestion the file question definition, without generated things like ids
      * @param revisionId   the revision to use, will be shared by all created data
      */
     default void insertQuestion(long activityId, FileQuestionDef fileQuestion, long revisionId) {
         insertBaseQuestion(activityId, fileQuestion, revisionId);
+        FileUploadValidator.validateFileMaxSize(fileQuestion.getMaxFileSize());
+        JdbiQuestion jdbiQuestion = getJdbiQuestion();
+        jdbiQuestion.insertFileQuestion(fileQuestion.getQuestionId(), fileQuestion.getMaxFileSize());
+        Collection<String> mimeTypes = fileQuestion.getMimeTypes();
+        for (String mimeType : mimeTypes) {
+            long mimeTypeId = jdbiQuestion.findMimeTypeIdOrInsert(mimeType);
+            jdbiQuestion.insertFileQuestionMimeType(fileQuestion.getQuestionId(), mimeTypeId);
+        }
     }
 
     /**
@@ -1584,7 +1596,9 @@ public interface QuestionDao extends SqlObject {
                                                  List<RuleDef> ruleDefs,
                                                  Map<Long, Template> templates) {
         Template prompt = templates.get(dto.getPromptTemplateId());
-        var builder = FileQuestionDef.builder(dto.getStableId(), prompt);
+        var builder = FileQuestionDef.builder(dto.getStableId(), prompt)
+                .setMaxFileSize(dto.getMaxFileSize())
+                .setMimeTypes(dto.getMimeTypes());
         configureBaseQuestionDef(builder, dto, ruleDefs, templates);
         return builder.build();
     }

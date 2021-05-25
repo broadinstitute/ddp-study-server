@@ -37,6 +37,8 @@ import org.jdbi.v3.core.Handle;
  */
 public class TestFormActivity {
 
+    public static final long DEFAULT_MAX_FILE_SIZE_FOR_TEST = 1000;
+
     private FormActivityDef def;
     private ActivityVersionDto versionDto;
     private AgreementQuestionDef agreementQuestion;
@@ -242,6 +244,7 @@ public class TestFormActivity {
             if (withFileQuestion) {
                 var question = FileQuestionDef
                         .builder("FILE" + Instant.now().toEpochMilli(), Template.text("file prompt"))
+                        .setMaxFileSize(DEFAULT_MAX_FILE_SIZE_FOR_TEST)
                         .build();
                 result.fileQuestion = question;
                 builder.addSection(new FormSectionDef(null, List.of(new QuestionBlockDef(question))));
