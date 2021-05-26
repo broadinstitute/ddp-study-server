@@ -7,10 +7,17 @@ import static org.broadinstitute.ddp.elastic.ElasticSearchQueryUtil.getJsonObjec
 import static org.broadinstitute.ddp.elastic.participantslookup.model.ESParticipantsLookupField.INVITATIONS__GUID;
 import static org.broadinstitute.ddp.elastic.participantslookup.model.ESParticipantsLookupField.PROFILE__GUID;
 import static org.broadinstitute.ddp.elastic.participantslookup.model.ESParticipantsLookupIndexType.PARTICIPANTS_STRUCTURED;
+import static org.broadinstitute.ddp.elastic.participantslookup.search.ESSearchUtil.GSON;
+import static org.broadinstitute.ddp.elastic.participantslookup.search.ESSearchUtil.GUID;
+import static org.broadinstitute.ddp.elastic.participantslookup.search.ESSearchUtil.SOURCE__INVITATIONS;
+import static org.broadinstitute.ddp.elastic.participantslookup.search.ESSearchUtil.SOURCE__PROFILE;
+import static org.broadinstitute.ddp.elastic.participantslookup.search.ESSearchUtil.SOURCE__PROXIES;
+import static org.broadinstitute.ddp.elastic.participantslookup.search.ESSearchUtil.SOURCE__STATUS;
 
 import java.util.HashMap;
 import java.util.Map;
 
+import org.broadinstitute.ddp.elastic.ElasticSearchQueryExecutor;
 import org.broadinstitute.ddp.elastic.participantslookup.model.ESParticipantsStructuredIndexResultRow;
 import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
 import org.broadinstitute.ddp.service.participantslookup.ParticipantsLookupResult;
@@ -23,7 +30,7 @@ import org.elasticsearch.index.query.QueryBuilder;
  * Search step 2.
  * In index "participants_structured" search participants.
  */
-public class ESParticipantsSearch extends ESSearch {
+public class ESParticipantsSearch extends ElasticSearchQueryExecutor {
 
     private final Map<String, String> governedUserToProxy;
     private final ParticipantsLookupResult participantsLookupResult;
@@ -52,7 +59,7 @@ public class ESParticipantsSearch extends ESSearch {
      * </pre>
      */
     public QueryBuilder createQuery() {
-        var queryBuilder = queryLookupFieldsOfIndex(PARTICIPANTS_STRUCTURED, query);
+        var queryBuilder = ESSearchUtil.queryLookupFieldsOfIndex(PARTICIPANTS_STRUCTURED, query);
         var invitationsQueryBuilder = queryStringQuery(INVITATIONS__GUID.getEsField(), normalizeInvitationGuid(query));
         if (governedUserToProxy != null && governedUserToProxy.size() > 0) {
             return or(queryBuilder, invitationsQueryBuilder, orMatch(PROFILE__GUID.getEsField(), governedUserToProxy.keySet()));
@@ -71,7 +78,7 @@ public class ESParticipantsSearch extends ESSearch {
 
         for (var hit : response.getHits()) {
             var hitAsJson = getJsonObject(hit);
-            var participantResult = gson.fromJson(
+            var participantResult = GSON.fromJson(
                     hitAsJson.get(SOURCE__PROFILE), ESParticipantsStructuredIndexResultRow.class);
 
             var invitations = hitAsJson.get(SOURCE__INVITATIONS);
@@ -86,7 +93,7 @@ public class ESParticipantsSearch extends ESSearch {
                 participantResult.setStatus(EnrollmentStatusType.valueOf(status.getAsString()));
             }
 
-            var proxies = gson.fromJson(hitAsJson.get(SOURCE__PROXIES), String[].class);
+            var proxies = GSON.fromJson(hitAsJson.get(SOURCE__PROXIES), String[].class);
             if (proxies != null) {
                 for (var proxyGuid : proxies) {
                     participantResult.getProxies().add(proxyGuid);

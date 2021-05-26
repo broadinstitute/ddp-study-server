@@ -5,11 +5,15 @@ import static org.broadinstitute.ddp.elastic.ElasticSearchQueryBuilderUtil.notEm
 import static org.broadinstitute.ddp.elastic.ElasticSearchQueryUtil.getJsonObject;
 import static org.broadinstitute.ddp.elastic.participantslookup.model.ESParticipantsLookupField.GOVERNED_USERS;
 import static org.broadinstitute.ddp.elastic.participantslookup.model.ESParticipantsLookupIndexType.USERS;
+import static org.broadinstitute.ddp.elastic.participantslookup.search.ESSearchUtil.GSON;
+import static org.broadinstitute.ddp.elastic.participantslookup.search.ESSearchUtil.SOURCE__GOVERNED_USERS;
+import static org.broadinstitute.ddp.elastic.participantslookup.search.ESSearchUtil.SOURCE__PROFILE;
 
 import java.util.HashMap;
 import java.util.Map;
 
 import com.google.gson.JsonObject;
+import org.broadinstitute.ddp.elastic.ElasticSearchQueryExecutor;
 import org.broadinstitute.ddp.elastic.participantslookup.model.ESUsersIndexResultRow;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.RestHighLevelClient;
@@ -20,7 +24,7 @@ import org.elasticsearch.index.query.QueryBuilder;
  * Search step 1.
  * In index "users" search proxies only.
  */
-public class ESUsersProxiesSearch extends ESSearch {
+public class ESUsersProxiesSearch extends ElasticSearchQueryExecutor {
 
     protected final Map<String, String> governedUserToProxy;
 
@@ -39,7 +43,7 @@ public class ESUsersProxiesSearch extends ESSearch {
      * @return
      */
     public QueryBuilder createQuery() {
-        var queryBuilder = queryLookupFieldsOfIndex(USERS, query);
+        var queryBuilder = ESSearchUtil.queryLookupFieldsOfIndex(USERS, query);
         var governedUsersExistBuilder = notEmptyFieldQuery(GOVERNED_USERS.getEsField());
         return and(queryBuilder, governedUsersExistBuilder);
     }
@@ -48,7 +52,7 @@ public class ESUsersProxiesSearch extends ESSearch {
         Map<String, ESUsersIndexResultRow> resultData = new HashMap<>();
         for (var hit : response.getHits()) {
             var hitAsJson = getJsonObject(hit);
-            var userData = gson.fromJson(hitAsJson.get(SOURCE__PROFILE), ESUsersIndexResultRow.class);
+            var userData = GSON.fromJson(hitAsJson.get(SOURCE__PROFILE), ESUsersIndexResultRow.class);
             readGovernedUserGuids(governedUserToProxy, hitAsJson, userData);
             resultData.put(userData.getGuid(), userData);
         }
@@ -56,7 +60,7 @@ public class ESUsersProxiesSearch extends ESSearch {
     }
 
     private void readGovernedUserGuids(Map<String, String> governedUserToProxy, JsonObject hitAsJson, ESUsersIndexResultRow userData) {
-        var governedUsers = gson.fromJson(hitAsJson.get(SOURCE__GOVERNED_USERS), String[].class);
+        var governedUsers = GSON.fromJson(hitAsJson.get(SOURCE__GOVERNED_USERS), String[].class);
         for (String gu : governedUsers) {
             userData.getGovernedUsers().add(gu);
             if (governedUserToProxy != null) {

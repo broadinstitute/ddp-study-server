@@ -2,8 +2,8 @@ package org.broadinstitute.ddp.elastic.participantslookup.search;
 
 import static org.broadinstitute.ddp.elastic.ElasticSearchQueryBuilderUtil.orMatch;
 import static org.broadinstitute.ddp.elastic.participantslookup.model.ESParticipantsLookupField.PROFILE__GUID;
-import static org.broadinstitute.ddp.elastic.participantslookup.search.ESSearch.PARTICIPANTS_STRUCTURED__INDEX__SOURCE;
-import static org.broadinstitute.ddp.elastic.participantslookup.search.ESSearch.USERS__INDEX__SOURCE;
+import static org.broadinstitute.ddp.elastic.participantslookup.search.ESSearchUtil.PARTICIPANTS_STRUCTURED__INDEX__SOURCE;
+import static org.broadinstitute.ddp.elastic.participantslookup.search.ESSearchUtil.USERS__INDEX__SOURCE;
 
 import java.io.IOException;
 import java.util.HashMap;
