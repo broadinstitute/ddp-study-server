@@ -1,6 +1,7 @@
 package org.broadinstitute.ddp.route;
 
 import static io.restassured.RestAssured.given;
+import static org.broadinstitute.ddp.util.TestFormActivity.DEFAULT_MAX_FILE_SIZE_FOR_TEST;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasItems;
@@ -20,6 +21,7 @@ import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -109,6 +111,17 @@ import org.junit.Test;
 public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite.TestCaseWithCacheEnabled {
 
     public static final String TEXT_QUESTION_STABLE_ID = "TEXT_Q";
+
+    public static final String MIME_TYPE_1 = "image/gif";
+    public static final String MIME_TYPE_2 = "image/jpeg";
+
+    private static final Set<String> MIME_TYPES = new LinkedHashSet<>() {
+        {
+            add(MIME_TYPE_1);
+            add(MIME_TYPE_2);
+        }
+    };
+
     private static TestDataSetupUtil.GeneratedTestData testData;
     private static FormActivityDef parentActivity;
     private static FormActivityDef activity;
@@ -276,6 +289,8 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
         //------------- create SECTION[8] ---------
         FileQuestionDef file1 = FileQuestionDef
                 .builder("FILE" + System.currentTimeMillis(), Template.text("file"))
+                .setMaxFileSize(DEFAULT_MAX_FILE_SIZE_FOR_TEST)
+                .setMimeTypes(MIME_TYPES)
                 .build();
         var fileSection = new FormSectionDef(null, List.of(new QuestionBlockDef(file1)));
 
@@ -937,6 +952,15 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
                 .body("sections[0].blocks.size()", equalTo(3))
                 .body("sections[1].blocks.size()", equalTo(3))
                 .body("sections[2].blocks.size()", equalTo(4));
+    }
+
+    @Test
+    public void testFileQuestionProperties() {
+        testFor200()
+                .body("sections[8].blocks[0].question.questionType", equalTo(QuestionType.FILE.name()))
+                .body("sections[8].blocks[0].question.maxFileSize", equalTo(Long.valueOf(DEFAULT_MAX_FILE_SIZE_FOR_TEST).intValue()))
+                .body("sections[8].blocks[0].question.mimeTypes[0]", equalTo(MIME_TYPE_1))
+                .body("sections[8].blocks[0].question.mimeTypes[1]", equalTo(MIME_TYPE_2));
     }
 
     private Response testFor200AndExtractResponse() {

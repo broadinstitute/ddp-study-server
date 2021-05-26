@@ -1,6 +1,7 @@
 package org.broadinstitute.ddp.export;
 
 import static java.util.stream.Collectors.toList;
+import static org.broadinstitute.ddp.util.TestFormActivity.DEFAULT_MAX_FILE_SIZE_FOR_TEST;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -346,6 +347,7 @@ public class DataExporterTest extends TxnAwareBaseTest {
 
             FileQuestionDef fileDef = FileQuestionDef
                     .builder("TEST_FILEQ", Template.text("file prompt"))
+                    .setMaxFileSize(DEFAULT_MAX_FILE_SIZE_FOR_TEST)
                     .build();
 
             TextQuestionDef textDef = TextQuestionDef.builder().setStableId("TEST_TEXTQ")
@@ -727,6 +729,7 @@ public class DataExporterTest extends TxnAwareBaseTest {
                                     .build()),
                             new QuestionBlockDef(FileQuestionDef
                                     .builder("Q_FILE", Template.text("file prompt"))
+                                    .setMaxFileSize(DEFAULT_MAX_FILE_SIZE_FOR_TEST)
                                     .build()))))
                     .addSection(new FormSectionDef(null, Arrays.asList(
                             new MailingAddressComponentDef(null, null),
