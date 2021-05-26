@@ -9,7 +9,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -163,94 +162,6 @@ public interface QuestionDao extends SqlObject {
     @CreateSqlObject
     AnswerDao getAnswerDao();
 
-    /**
-     * Get the non-deprecated question for a given block.
-     *
-     * @param blockId                 the block id
-     * @param activityInstanceGuid    the form instance guid
-     * @param instanceCreatedAtMillis the timestamp of when instance was created
-     * @return single question, if it's not deprecated
-     */
-    default Optional<Question> getQuestionByBlockId(long blockId,
-                                                    String activityInstanceGuid,
-                                                    long instanceCreatedAtMillis,
-                                                    long langCodeId) {
-        return getQuestionByBlockId(blockId, activityInstanceGuid, instanceCreatedAtMillis, false, langCodeId);
-    }
-
-
-    /**
-     * Get the question for a given block. Toggle if okay with deprecated questions.
-     *
-     * @param blockId                 the block id
-     * @param activityInstanceGuid    the form instance guid
-     * @param instanceCreatedAtMillis the timestamp of when instance was created
-     * @param includeDeprecated       flag indicating whether or nto to include deprecated questions
-     * @return single question, if it's not deprecated
-     */
-    default Optional<Question> getQuestionByBlockId(long blockId,
-                                                    String activityInstanceGuid,
-                                                    long instanceCreatedAtMillis,
-                                                    boolean includeDeprecated,
-                                                    long langCodeId) {
-        QuestionDto dto = getJdbiBlockQuestion()
-                .findQuestionId(blockId, activityInstanceGuid)
-                .flatMap(questionId -> getJdbiQuestion().findQuestionDtoById(questionId))
-                .orElseThrow(() -> new DaoException(String.format(
-                        "No question found for block %d and activity instance %s", blockId, activityInstanceGuid)));
-        if (dto.isDeprecated() && !includeDeprecated) {
-            LOG.info("Question id {} for block id {}, instance guid {} is deprecated",
-                    dto.getId(), blockId, activityInstanceGuid);
-            return Optional.empty();
-        } else {
-            // Use of() instead of ofNullable() since it should be non-null.
-            return Optional.of(getQuestionByActivityInstanceAndDto(dto, activityInstanceGuid, instanceCreatedAtMillis, langCodeId));
-        }
-    }
-
-    /**
-     * Get the non-deprecated control question for a conditional block.
-     *
-     * @param blockId                 the block id
-     * @param activityInstanceGuid    the form instance guid
-     * @param instanceCreatedAtMillis the timestamp of when instance was created
-     * @return control question, if it's not deprecated
-     */
-    default Optional<Question> getControlQuestionByBlockId(long blockId,
-                                                           String activityInstanceGuid,
-                                                           long instanceCreatedAtMillis,
-                                                           long langCodeId) {
-        return getControlQuestionByBlockId(blockId, activityInstanceGuid, instanceCreatedAtMillis, false, langCodeId);
-    }
-
-    /**
-     * Get the control question for a conditional block. This allows fetching deprecated control questions. Prefer the
-     * other method that excludes them.
-     *
-     * @param blockId                 the block id
-     * @param activityInstanceGuid    the form instance guid
-     * @param instanceCreatedAtMillis the timestamp of when instance was created
-     * @return control question
-     */
-    default Optional<Question> getControlQuestionByBlockId(long blockId,
-                                                           String activityInstanceGuid,
-                                                           long instanceCreatedAtMillis,
-                                                           boolean includeDeprecated,
-                                                           long langCodeId) {
-        QuestionDto questionDto = getHandle().attach(JdbiBlockConditionalControl.class)
-                .findControlQuestionId(blockId, activityInstanceGuid)
-                .flatMap(questionId -> getJdbiQuestion().findQuestionDtoById(questionId))
-                .orElseThrow(() -> new DaoException("No control question found for block " + blockId
-                        + " and activity instance " + activityInstanceGuid));
-        if (questionDto.isDeprecated() && !includeDeprecated) {
-            LOG.info("Skipping deprecated control question with id {} for block id {}, instance guid {}",
-                    questionDto.getId(), blockId, activityInstanceGuid);
-            return Optional.empty();
-        } else {
-            return Optional.of(getQuestionByActivityInstanceAndDto(questionDto, activityInstanceGuid,
-                    instanceCreatedAtMillis, true, langCodeId));
-        }
-    }
 
     /**
      * Get a question for a given id. Gets answers as well if it has any.
@@ -285,25 +196,6 @@ public interface QuestionDao extends SqlObject {
                 .map(dto -> getQuestionByActivityInstanceAndDto(dto, activityInstanceGuid,
                         instanceCreatedAtMillis, retrieveAnswers, langCodeId))
                 .orElseThrow(() -> new DaoException(String.format("No question found with id %d", questionId)));
-    }
-
-    /**
-     * Get a question for a given dto and user. Toggle retrieve answers.
-     *
-     * @param dto             the question dto
-     * @param userGuid        the user guid
-     * @param retrieveAnswers flag indicating whether to get answers for question
-     * @return single question
-     */
-    default Question getQuestionByUserGuidAndQuestionDto(QuestionDto dto,
-                                                         String userGuid,
-                                                         boolean retrieveAnswers,
-                                                         long langCodeId) {
-        return getHandle().attach(JdbiActivityInstance.class)
-                .findLatestInstanceFromUserGuidAndQuestionId(userGuid, dto.getId())
-                .map(instanceDto -> getQuestionByActivityInstanceAndDto(dto, instanceDto.getGuid(),
-                        instanceDto.getCreatedAtMillis(), retrieveAnswers, langCodeId))
-                .orElseThrow(null);
     }
 
     /**

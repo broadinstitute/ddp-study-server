@@ -20,7 +20,6 @@ import java.util.Optional;
 import java.util.Set;
 
 import org.broadinstitute.ddp.TxnAwareBaseTest;
-import org.broadinstitute.ddp.cache.CacheService;
 import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.db.DaoException;
 import org.broadinstitute.ddp.db.QuestionStableIdExistsException;
@@ -37,11 +36,8 @@ import org.broadinstitute.ddp.db.dto.PicklistQuestionDto;
 import org.broadinstitute.ddp.db.dto.QuestionDto;
 import org.broadinstitute.ddp.db.dto.TextQuestionDto;
 import org.broadinstitute.ddp.db.dto.validation.RuleDto;
-import org.broadinstitute.ddp.model.activity.definition.ConditionalBlockDef;
-import org.broadinstitute.ddp.model.activity.definition.ContentBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
 import org.broadinstitute.ddp.model.activity.definition.FormSectionDef;
-import org.broadinstitute.ddp.model.activity.definition.QuestionBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.i18n.Translation;
 import org.broadinstitute.ddp.model.activity.definition.question.AgreementQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.BoolQuestionDef;
@@ -730,95 +726,6 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
     }
 
     @Test
-    public void testGetQuestionByBlockId_success() {
-        TransactionWrapper.useTxn(handle -> {
-            GetGenericQuestionData genericQuestionData = genericGetTextQuestionSetUp(handle);
-
-            long blockId = genericQuestionData.getForm().getSections().get(0).getBlocks().get(0).getBlockId();
-
-            Optional<Question> questionOptional = handle.attach(QuestionDao.class)
-                    .getQuestionByBlockId(blockId, genericQuestionData.getActivityInstanceGuid(),
-                            genericQuestionData.getInstanceCreatedAtMillis(), langCodeId);
-
-            assertNotNull(questionOptional.orElse(null));
-            assertEquals(questionOptional.get().getQuestionType(), QuestionType.TEXT);
-
-            TextQuestion textQuestion = (TextQuestion) questionOptional.get();
-            assertEquals(textQuestion.getQuestionId(), (long) genericQuestionData.getQuestion().getQuestionId());
-
-            handle.rollback();
-        });
-    }
-
-    @Test
-    public void testGetQuestionByBlockId_cantGetByBlockId() {
-        TransactionWrapper.useTxn(handle -> {
-            GetGenericQuestionData genericQuestionData = genericGetTextQuestionSetUp(handle);
-
-            long blockId = -1;
-
-            thrown.expect(DaoException.class);
-            thrown.expectMessage("No question found for block " + blockId
-                    + " and activity instance " + genericQuestionData.getActivityInstanceGuid());
-            handle.attach(QuestionDao.class)
-                    .getQuestionByBlockId(blockId, genericQuestionData.getActivityInstanceGuid(),
-                            genericQuestionData.getInstanceCreatedAtMillis(), false, langCodeId);
-
-            handle.rollback();
-        });
-    }
-
-    @Test
-    public void testGetQuestionByBlockId_deprecatedQuestion() {
-        TransactionWrapper.useTxn(handle -> {
-            TextQuestionDef question = TextQuestionDef.builder(TextInputType.TEXT, sid, prompt)
-                    .setDeprecated(true)
-                    .setPlaceholderTemplate(placeholder)
-                    .build();
-            FormActivityDef form = buildSingleSectionForm(testData.getStudyGuid(), question);
-            ActivityVersionDto version1 = handle.attach(ActivityDao.class)
-                    .insertActivity(form, RevisionMetadata.now(testData.getUserId(), "test"));
-            ActivityInstanceDto activityInstanceDto = TestDataSetupUtil
-                    .generateTestFormActivityInstanceForUser(handle, version1.getActivityId(), testData.getUserGuid());
-
-            long blockId = form.getSections().get(0).getBlocks().get(0).getBlockId();
-
-            Optional<Question> questionOptional = handle.attach(QuestionDao.class)
-                    .getQuestionByBlockId(blockId, activityInstanceDto.getGuid(), activityInstanceDto.getCreatedAtMillis(), langCodeId);
-
-            assertFalse(questionOptional.isPresent());
-
-            questionOptional = handle.attach(QuestionDao.class)
-                    .getQuestionByBlockId(blockId, activityInstanceDto.getGuid(),
-                            activityInstanceDto.getCreatedAtMillis(), true, langCodeId);
-
-            assertTrue(questionOptional.isPresent());
-
-            handle.rollback();
-        });
-    }
-
-    @Test
-    public void testGetQuestionByIdNoRetrieveAnswersVar_success() {
-        TransactionWrapper.useTxn(handle -> {
-            GetGenericQuestionData genericQuestionData = genericGetTextQuestionSetUp(handle);
-
-            Question question1 = handle.attach(QuestionDao.class)
-                    .getQuestionByIdAndActivityInstanceGuid(genericQuestionData.getQuestion().getQuestionId(),
-                            genericQuestionData.getActivityInstanceGuid(),
-                            genericQuestionData.getInstanceCreatedAtMillis(),
-                            langCodeId);
-
-            assertEquals(question1.getQuestionType(), QuestionType.TEXT);
-
-            TextQuestion textQuestion = (TextQuestion) question1;
-            assertEquals(textQuestion.getQuestionId(), (long) genericQuestionData.getQuestion().getQuestionId());
-
-            handle.rollback();
-        });
-    }
-
-    @Test
     public void testGetQuestionById_success() {
         TransactionWrapper.useTxn(handle -> {
             GetGenericQuestionData genericQuestionData = genericGetTextQuestionSetUp(handle);
@@ -899,94 +806,6 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
                             genericQuestionData.getInstanceCreatedAtMillis(),
                             false,
                             langCodeId);
-
-            handle.rollback();
-        });
-    }
-
-    @Test
-    public void testGetQuestionByUserGuidAndQuestionDto_success() {
-        TransactionWrapper.useTxn(handle -> {
-            GetGenericQuestionData genericQuestionData = genericGetTextQuestionSetUp(handle);
-
-            QuestionDto questionDto = handle.attach(JdbiQuestion.class)
-                    .findQuestionDtoById(genericQuestionData.getQuestion().getQuestionId()).get();
-
-            Question question1 = handle.attach(QuestionDao.class)
-                    .getQuestionByUserGuidAndQuestionDto(questionDto,
-                            testData.getUserGuid(),
-                            false,
-                            langCodeId);
-
-            assertEquals(question1.getQuestionType(), QuestionType.TEXT);
-
-            TextQuestion textQuestion = (TextQuestion) question1;
-            assertEquals(textQuestion.getQuestionId(), (long) genericQuestionData.getQuestion().getQuestionId());
-
-            handle.rollback();
-        });
-    }
-
-    @Test
-    public void testGetControlQuestionByBlockId_success() {
-        TransactionWrapper.useTxn(handle -> {
-            TextQuestionDef control = TextQuestionDef.builder(TextInputType.TEXT, sid, prompt).build();
-            ConditionalBlockDef block = new ConditionalBlockDef(control);
-            block.addNestedBlock(new ContentBlockDef(Template.text("foobar")));
-
-            FormActivityDef form = FormActivityDef.generalFormBuilder("ACT" + Instant.now().toEpochMilli(),
-                    "v1", testData.getStudyGuid())
-                    .addName(new Translation("en", "activity"))
-                    .addSection(new FormSectionDef(null, Collections.singletonList(block)))
-                    .build();
-
-            ActivityVersionDto version1 = handle.attach(ActivityDao.class)
-                    .insertActivity(form, RevisionMetadata.now(testData.getUserId(), "test"));
-            ActivityInstanceDto activityInstanceDto = TestDataSetupUtil
-                    .generateTestFormActivityInstanceForUser(handle, version1.getActivityId(), testData.getUserGuid());
-
-            Optional<Question> res = handle.attach(QuestionDao.class)
-                    .getControlQuestionByBlockId(block.getBlockId(), activityInstanceDto.getGuid(),
-                            activityInstanceDto.getCreatedAtMillis(), langCodeId);
-
-            assertTrue(res.isPresent());
-            assertEquals(control.getQuestionId(), (Long) res.get().getQuestionId());
-
-            assertEquals(1, handle.attach(JdbiQuestion.class).updateIsDeprecatedById(control.getQuestionId(), true));
-            res = handle.attach(QuestionDao.class)
-                    .getControlQuestionByBlockId(block.getBlockId(), activityInstanceDto.getGuid(),
-                            activityInstanceDto.getCreatedAtMillis(), langCodeId);
-            assertFalse(res.isPresent());
-
-            handle.rollback();
-        });
-    }
-
-    @Test
-    public void testGetControlQuestionByBlockId_noControlQuestionFound() {
-        TransactionWrapper.useTxn(handle -> {
-            TextQuestionDef control = TextQuestionDef.builder(TextInputType.TEXT, sid, prompt).build();
-            ConditionalBlockDef block = new ConditionalBlockDef(control);
-            block.addNestedBlock(new ContentBlockDef(Template.text("foobar")));
-            JdbiBlock jdbiBlock = handle.attach(JdbiBlock.class);
-            block.setBlockGuid(jdbiBlock.generateUniqueGuid());
-            block.setBlockId(jdbiBlock.insert(
-                    handle.attach(JdbiBlockType.class).getTypeId(block.getBlockType()),
-                    block.getBlockGuid()
-            ));
-
-            FormActivityDef form = buildSingleSectionForm(testData.getStudyGuid(), control);
-            ActivityVersionDto version1 = handle.attach(ActivityDao.class)
-                    .insertActivity(form, RevisionMetadata.now(testData.getUserId(), "test"));
-            ActivityInstanceDto activityInstanceDto = TestDataSetupUtil
-                    .generateTestFormActivityInstanceForUser(handle, version1.getActivityId(), testData.getUserGuid());
-
-            thrown.expect(DaoException.class);
-            thrown.expectMessage("No control question found for block " + block.getBlockId()
-                    + " and activity instance " + activityInstanceDto.getGuid());
-            handle.attach(QuestionDao.class)
-                    .getControlQuestionByBlockId(block.getBlockId(), activityInstanceDto.getGuid(),
-                            activityInstanceDto.getCreatedAtMillis(), langCodeId);
 
             handle.rollback();
         });
@@ -1134,60 +953,6 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
     }
 
     @Test
-    public void testGetPicklistQuestion_withGroups() {
-        TransactionWrapper.useTxn(handle -> {
-            PicklistQuestionDef expected = PicklistQuestionDef.buildSingleSelect(PicklistRenderMode.LIST, sid, prompt)
-                    .addGroup(new PicklistGroupDef("G1", Template.text("group 1"), Arrays.asList(
-                            new PicklistOptionDef("G1_O1", Template.text("g1 option 1")),
-                            new PicklistOptionDef("G1_O2", Template.text("g1 option 2")))))
-                    .addGroup(new PicklistGroupDef("G2", Template.text("group 2"), Arrays.asList(
-                            new PicklistOptionDef("G2_O1", Template.text("g2 option 1")),
-                            new PicklistOptionDef("G2_O2", Template.text("g2 option 2")))))
-                    .addOption(new PicklistOptionDef("PO1", Template.text("another option")))
-                    .build();
-            QuestionBlockDef block = new QuestionBlockDef(expected);
-
-            FormActivityDef form = FormActivityDef.generalFormBuilder("ACT" + Instant.now().toEpochMilli(), "v1", testData.getStudyGuid())
-                    .addName(new Translation("en", "test activity"))
-                    .addSection(new FormSectionDef(null, Collections.singletonList(block)))
-                    .build();
-            handle.attach(ActivityDao.class).insertActivity(form, RevisionMetadata.now(testData.getUserId(), "test"));
-            var instanceDto = TestDataSetupUtil
-                    .generateTestFormActivityInstanceForUser(handle, form.getActivityId(), testData.getUserGuid());
-            String instanceGuid = instanceDto.getGuid();
-            QuestionDao[] daos = {new QuestionCachedDao(handle), handle.attach(QuestionDao.class)};
-            Question question = null;
-
-            for (QuestionDao dao : daos) {
-                CacheService.getInstance().resetAllCaches();
-                question = dao.getQuestionByBlockId(block.getBlockId(), instanceGuid, instanceDto.getCreatedAtMillis(), langCodeId).get();
-                assertEquals(QuestionType.PICKLIST, question.getQuestionType());
-                assertEquals(prompt.getTemplateId(), (Long) question.getPromptTemplateId());
-                assertEquals(sid, question.getStableId());
-            }
-
-            PicklistQuestion actual = (PicklistQuestion) question;
-
-            assertEquals(2, actual.getGroups().size());
-            assertEquals("G1", actual.getGroups().get(0).getStableId());
-            assertEquals("G2", actual.getGroups().get(1).getStableId());
-
-            assertEquals(5, actual.getPicklistOptions().size());
-            assertEquals("PO1", actual.getPicklistOptions().get(0).getStableId());
-            assertEquals("G1_O1", actual.getPicklistOptions().get(1).getStableId());
-            assertEquals("G1", actual.getPicklistOptions().get(1).getGroupStableId());
-            assertEquals("G1_O2", actual.getPicklistOptions().get(2).getStableId());
-            assertEquals("G1", actual.getPicklistOptions().get(2).getGroupStableId());
-            assertEquals("G2_O1", actual.getPicklistOptions().get(3).getStableId());
-            assertEquals("G2", actual.getPicklistOptions().get(3).getGroupStableId());
-            assertEquals("G2_O2", actual.getPicklistOptions().get(4).getStableId());
-            assertEquals("G2", actual.getPicklistOptions().get(4).getGroupStableId());
-
-            handle.rollback();
-        });
-    }
-
-    @Test
     public void testGetTextQuestion_success() {
         TransactionWrapper.useTxn(handle -> {
             GetGenericQuestionData genericQuestionData = genericGetTextQuestionSetUp(handle);
@@ -1219,75 +984,6 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
 
             TextAnswer textAnswer = (TextAnswer) textQ.getAnswers().get(0);
             assertEquals("itsAnAnswer", textAnswer.getValue());
-
-            handle.rollback();
-        });
-    }
-
-    @Test
-    public void testGetTextQuestion_withSuggestionType() {
-        TransactionWrapper.useTxn(handle -> {
-            TextQuestionDef expected = TextQuestionDef.builder(TextInputType.TEXT, sid, prompt)
-                    .setSuggestionType(SuggestionType.DRUG)
-                    .build();
-            QuestionBlockDef block = new QuestionBlockDef(expected);
-
-            FormActivityDef form = FormActivityDef.generalFormBuilder("ACT" + Instant.now().toEpochMilli(), "v1", testData.getStudyGuid())
-                    .addName(new Translation("en", "test activity"))
-                    .addSection(new FormSectionDef(null, Collections.singletonList(block)))
-                    .build();
-            handle.attach(ActivityDao.class).insertActivity(form, RevisionMetadata.now(testData.getUserId(), "test"));
-            var instanceDto = TestDataSetupUtil
-                    .generateTestFormActivityInstanceForUser(handle, form.getActivityId(), testData.getUserGuid());
-            String instanceGuid = instanceDto.getGuid();
-
-            Question question = handle.attach(QuestionDao.class)
-                    .getQuestionByBlockId(block.getBlockId(), instanceGuid, instanceDto.getCreatedAtMillis(), langCodeId).get();
-            assertEquals(QuestionType.TEXT, question.getQuestionType());
-            assertEquals(prompt.getTemplateId(), (Long) question.getPromptTemplateId());
-            assertEquals(sid, question.getStableId());
-
-            TextQuestion actual = (TextQuestion) question;
-            assertEquals(TextInputType.TEXT, actual.getInputType());
-            assertEquals(SuggestionType.DRUG, actual.getSuggestionType());
-
-            handle.rollback();
-        });
-    }
-
-    @Test
-    public void testGetTextQuestion_withSuggestion() {
-        List<String> suggestions = new ArrayList<String>();
-        suggestions.add("test type ahead#1");
-        suggestions.add("test type ahead#2");
-        TransactionWrapper.useTxn(handle -> {
-            TextQuestionDef expected = TextQuestionDef.builder(TextInputType.TEXT, sid, prompt)
-                    .setSuggestionType(SuggestionType.INCLUDED)
-                    .addSuggestions(suggestions)
-                    .build();
-            QuestionBlockDef block = new QuestionBlockDef(expected);
-
-            FormActivityDef form = FormActivityDef.generalFormBuilder("ACT" + Instant.now().toEpochMilli(), "v1", testData.getStudyGuid())
-                    .addName(new Translation("en", "test activity"))
-                    .addSection(new FormSectionDef(null, Collections.singletonList(block)))
-                    .build();
-            handle.attach(ActivityDao.class).insertActivity(form, RevisionMetadata.now(testData.getUserId(), "test"));
-            var instanceDto = TestDataSetupUtil
-                    .generateTestFormActivityInstanceForUser(handle, form.getActivityId(), testData.getUserGuid());
-            String instanceGuid = instanceDto.getGuid();
-
-            Question question = handle.attach(QuestionDao.class)
-                    .getQuestionByBlockId(block.getBlockId(), instanceGuid, instanceDto.getCreatedAtMillis(), langCodeId).get();
-            assertEquals(QuestionType.TEXT, question.getQuestionType());
-            assertEquals(prompt.getTemplateId(), (Long) question.getPromptTemplateId());
-            assertEquals(sid, question.getStableId());
-
-            TextQuestion actual = (TextQuestion) question;
-            assertEquals(TextInputType.TEXT, actual.getInputType());
-            assertEquals(SuggestionType.INCLUDED, actual.getSuggestionType());
-            assertNotNull(actual.getSuggestions());
-            assertEquals(2, suggestions.size());
-            assertEquals("test type ahead#2", suggestions.get(1));
 
             handle.rollback();
         });
