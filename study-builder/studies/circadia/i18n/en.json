@@ -4,7 +4,7 @@
   "prequal_header": "Prequalifier",
   "prequal_self_describe": "The following questions will determine if a participant is eligible to participate in the study. ",
 
-  "prequal_atypical_circadian_rhythm_question": "1. What atypical circadian rhythm have you been diagnosed with? ",
+  "prequal_atypical_circadian_rhythm_question": "What atypical circadian rhythm have you been diagnosed with? ",
   "prequal_aspd_answer": "Advanced Sleep Phase Disorder (ASPD)",
   "prequal_dspd_answer": "Delayed Sleep Phase Disorder (DSPD)",
   "prequal_non_24_answer": "Non-24",
@@ -12,40 +12,40 @@
   "prequal_self_suspect_acr": "I suspect I have an atypical circadian rhythm but have not yet been diagnosed.",
   "prequal_none_answer": "None",
 
-  "prequal_crd_symptoms_present_question": "2. Have the symptoms of your circadian rhythm disorder been present for at least three months?",
+  "prequal_crd_symptoms_present_question": "Have the symptoms of your circadian rhythm disorder been present for at least three months?",
   "prequal_yes_answer": "Yes",
   "prequal_no_answer": "No",
   "prequal_unsure_answer": "Unsure",
   "prequal_not_applicable_answer": "Not Applicable, I don’t have a circadian rhythm disorder",
 
-  "prequal_any_of_the_following_question_1": "3. Please indicate if you are any of the following: ",
+  "prequal_age_and_education_question": "Please indicate if you are any of the following: ",
   "prequal_22_and_under_answer": "Aged 22 and under",
   "prequal_current_student_answer": "Current student (includes part-time and full-time higher education)",
   "prequal_none_of_the_above_answer": "None of the above",
 
-  "prequal_any_statements_1_question": "4. Please check any statements that apply to you: ",
+  "prequal_probable_medical_problems_1_question": "Please check any statements that apply to you: ",
   "prequal_tbi_answer": "I have a traumatic brain injury (TBI)",
   "prequal_stroke_answer": "I have had a stroke(s)",
   "prequal_brain_surgery_answer": "I have undergone brain surgery",
   "prequal_seizure_disorder_answer": "I have a diagnosed seizure disorder ",
 
-  "prequal_any_statements_2_question": "5. Please check any statements that apply to you: ",
+  "prequal_child_and_pregnancy_question": "Please check any statements that apply to you: ",
   "prequal_child_lives_with_self_answer": "A child under age 2 lives with me (whether or not I am the parent/guardian)",
   "prequal_child_lives_with_self_part_time_answer": "A child under age 2 lives with me part-time (whether or not I am the parent/guardian)",
   "prequal_self_given_birth_past_year_answer": "I have given birth in the past year (whether or not the child now lives with me)",
   "prequal_self_currently_pregnant_anaswer": "I am currently pregnant",
   "prequal_self_breastfeeding_answer": "I am currently breastfeeding/pumping",
 
-  "prequal_any_of_the_following_2": "6. Do you have any of the following (check all that apply) ",
+  "prequal_probable_medical_problems_2_question": "Do you have any of the following (check all that apply) ",
   "prequal_gingivitis_answer": "Gingivitis",
   "prequal_xerostomia_answer": "Xerostomia",
   "prequal_periodontitis_answer": "Periodontitis",
 
-  "prequal_travel_question": "7. Have you traveled across more than one time zone in the last month?",
+  "prequal_travel_question": "Have you traveled across more than one time zone in the last month?",
 
   "prequal_8th_grade_english_question": "Are you comfortable reading and writing at an 8th grade level in English? ",
 
-  "prequal_visual_problem_question_1": "9. Are you visually impaired or blind or color blind? ",
+  "prequal_visual_problem_question_1": "Are you visually impaired or blind or color blind? ",
   "prequal_visual_problem_question_1_paragraph": "Visual impairments are not fixed with usual means, such as glasses or contacts.",
 
   "prequal_visual_problem_question_2": "please select all that apply:",
@@ -53,7 +53,7 @@
   "prequal_color_blind": "Color Blind",
   "prequal_blind": "Blind",
 
-  "prequal_study_refrain_protocol_question": "10. This study requires refraining from smoking, using nicotine products, and/or consuming alcohol for approximately 48 hours. Would you be able to refrain from consuming these products for approximately 48 hours during the study protocol? ",
+  "prequal_study_refrain_protocol_question": "This study requires refraining from smoking, using nicotine products, and/or consuming alcohol for approximately 48 hours. Would you be able to refrain from consuming these products for approximately 48 hours during the study protocol? ",
 
   "prequal_ineligible_participant_message": "Thank you for your interest in the Circadia Research Study! We appreciate your completion of our screening questionnaire. At this time, you are not eligible to participate. However, we invite you to stay up to date with our research efforts by signing up for our newsletter. We value our community and your efforts in contributing to research. Thank you.",
 
