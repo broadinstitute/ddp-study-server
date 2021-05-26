@@ -1403,7 +1403,9 @@ public class StudyDataLoaderMain {
                         json.append("\"")
                                 .append(field)
                                 .append("\":\"")
-                                .append(value.getAsString())
+                                .append(value.getAsString()
+                                        .replaceAll("(\\r|\\n|\\r\\n)", "\\\\n")
+                                        .replaceAll("\"", "\\\\\""))
                                 .append("\"");
                     }
                 }
