@@ -204,7 +204,7 @@
   "general_information_gender_identity_transgender": "Transgender",
   "general_information_gender_identity_none_of_above": "None of these describe me, and I’d like to describe myself",
   "general_information_gender_prefer_not_to_answer": "Prefer not to answer",
-  "general_information_gender_other_detail": "Other gender specify *",
+  "general_information_gender_other_detail": "Please specify *",
   "general_information_gender_other_detail_req_hint": "Please specify other gender",
 
   "general_information_race": "Race *",
