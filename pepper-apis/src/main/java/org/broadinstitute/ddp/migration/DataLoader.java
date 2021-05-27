@@ -517,6 +517,13 @@ class DataLoader {
                     String pid = Path.of(uri).getFileName().toString();
                     data.put(field.getTarget(), pid);
                 }
+            } else if ("datstat_dateofbirth".equalsIgnoreCase(field.getSource())) {
+                String value = member.getString(field.getSource());
+                if (value != null) {
+                    // Truncate the time portion since DOB is just the date.
+                    value = value.contains("T") ? value.split("T")[0] : value;
+                    data.put(field.getTarget(), value);
+                }
             } else {
                 String value = member.getString(field.getSource());
                 if (value != null) {
