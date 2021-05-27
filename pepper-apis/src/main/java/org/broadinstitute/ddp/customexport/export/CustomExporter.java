@@ -19,6 +19,7 @@ import com.typesafe.config.Config;
 import org.broadinstitute.ddp.customexport.collectors.ComplexChildResponseCollector;
 import org.broadinstitute.ddp.customexport.collectors.ParentActivityResponseCollector;
 import org.broadinstitute.ddp.customexport.constants.CustomExportConfigFile;
+import org.broadinstitute.ddp.customexport.model.CustomExportParticipant;
 import org.broadinstitute.ddp.db.ActivityDefStore;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dao.FormActivityDao;
@@ -27,6 +28,7 @@ import org.broadinstitute.ddp.db.dao.JdbiActivityVersion;
 import org.broadinstitute.ddp.db.dto.ActivityDto;
 import org.broadinstitute.ddp.db.dto.ActivityVersionDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
+import org.broadinstitute.ddp.elastic.ElasticSearchIndexType;
 import org.broadinstitute.ddp.export.ActivityResponseMapping;
 import org.broadinstitute.ddp.export.ComponentDataSupplier;
 import org.broadinstitute.ddp.export.ExportUtil;
@@ -37,6 +39,12 @@ import org.broadinstitute.ddp.model.activity.definition.ActivityDef;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
 import org.broadinstitute.ddp.model.activity.instance.ActivityResponse;
 import org.broadinstitute.ddp.model.study.Participant;
+import org.broadinstitute.ddp.util.ElasticsearchServiceUtil;
+import org.elasticsearch.action.get.GetRequest;
+import org.elasticsearch.action.get.GetResponse;
+import org.elasticsearch.client.RequestOptions;
+import org.elasticsearch.client.RestHighLevelClient;
+import org.elasticsearch.search.fetch.subphase.FetchSourceContext;
 import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,20 +55,46 @@ public class CustomExporter {
 
     // A cache for user auth0 emails, storing (auth0UserId -> email).
     private static final Map<String, String> emailStore = new HashMap<>();
+    private static final String familyIdHeader = "FAMILY_ID";
 
-    private final Config cfg;
+    private final Config mainConfig;
+    private final Config exportConfig;
     private final String customGuid;
     private final String customActivity;
 
-    public CustomExporter(Config cfg) {
-        this.cfg = cfg;
-        this.customActivity = cfg.getString(CustomExportConfigFile.ACTIVITY);
-        this.customGuid = cfg.getString(CustomExportConfigFile.STUDY_GUID);
+    public CustomExporter(Config mainConfig, Config exportConfig) {
+        this.mainConfig = mainConfig;
+        this.exportConfig = exportConfig;
+        this.customActivity = exportConfig.getString(CustomExportConfigFile.ACTIVITY);
+        this.customGuid = exportConfig.getString(CustomExportConfigFile.STUDY_GUID);
     }
 
 
-    static List<Participant> extractParticipantDataSetByIds(Handle handle, StudyDto studyDto, Set<Long> userIds) {
-        return ExportUtil.extractParticipantDataSetByIds(handle, studyDto, userIds, emailStore);
+    public List<CustomExportParticipant> extractParticipantDataSetByIds(Handle handle, StudyDto studyDto, Set<Long> userIds)
+            throws IOException {
+        RestHighLevelClient elasticsearchClient = ElasticsearchServiceUtil.getElasticsearchClient(this.mainConfig);
+        return createCustomParticipantsFrom(ExportUtil.extractParticipantDataSetByIds(handle, studyDto, userIds, emailStore), handle,
+                studyDto, elasticsearchClient);
+    }
+
+    private static List<CustomExportParticipant> createCustomParticipantsFrom(List<Participant> participants, Handle handle,
+                                                                              StudyDto studyDto,
+                                                                              RestHighLevelClient esClient) throws IOException {
+        List<CustomExportParticipant> customExportParticipants = new ArrayList<>();
+        for (Participant p : participants) {
+            String familyId = getFamilyId(handle, studyDto, p.getUser().getGuid(), esClient);
+            customExportParticipants.add(new CustomExportParticipant(familyId, p.getStatus(), p.getUser()));
+        }
+        return customExportParticipants;
+    }
+
+    private static String getFamilyId(Handle handle, StudyDto studyDto, String userGuid, RestHighLevelClient esClient) throws IOException {
+        String esIndex = ElasticsearchServiceUtil.getIndexForStudy(handle, studyDto, ElasticSearchIndexType.PARTICIPANTS_STRUCTURED);
+        GetRequest getRequest = new GetRequest(esIndex, "_doc", userGuid);
+        String[] includes = {"dsm"};
+        getRequest.fetchSourceContext(new FetchSourceContext(true, includes, null));
+        GetResponse esResponse = esClient.get(getRequest, RequestOptions.DEFAULT);
+        return esResponse.getSource().get("FAMILY_ID").toString(); // TODO: Not sure this is really how we would do this...
     }
 
     public static void clearCachedAuth0Emails() {
@@ -192,7 +226,7 @@ public class CustomExporter {
         }
         ActivityDto activityDto = activityDtoOptional.get();
         List<CustomActivityExtract> activities = extractVersionsOfActivity(handle, activityDto, customGuid,
-                cfg.getStringList(CustomExportConfigFile.EXCLUDED_ACTIVITY_VERSIONS));
+                exportConfig.getStringList(CustomExportConfigFile.EXCLUDED_ACTIVITY_VERSIONS));
 
         LOG.info("Custom export found {} versions of activity {}", activities.size(), customActivity);
 
@@ -208,11 +242,12 @@ public class CustomExporter {
      * @return number of participant records written
      * @throws IOException if error while writing
      */
-    public int exportDataSetAsCsv(StudyDto studyDto, List<CustomActivityExtract> activities, Iterator<Participant> participants,
+    public int exportDataSetAsCsv(StudyDto studyDto, List<CustomActivityExtract> activities, Iterator<CustomExportParticipant> participants,
                                   Writer output) throws IOException {
-        List<String> firstFields = cfg.getStringList(CustomExportConfigFile.FIRST_FIELDS);
-        List<String> excludedParticipantFields = new ArrayList<>(cfg.getStringList(CustomExportConfigFile.EXCLUDED_PARTICIPANT_FIELDS));
-        List<String> excludedActivityFields = new ArrayList<>(cfg.getStringList(CustomExportConfigFile.EXCLUDED_ACTIVITY_FIELDS));
+        List<String> firstFields = exportConfig.getStringList(CustomExportConfigFile.FIRST_FIELDS);
+        List<String> excludedParticipantFields = new ArrayList<>(exportConfig
+                .getStringList(CustomExportConfigFile.EXCLUDED_PARTICIPANT_FIELDS));
+        List<String> excludedActivityFields = new ArrayList<>(exportConfig.getStringList(CustomExportConfigFile.EXCLUDED_ACTIVITY_FIELDS));
         ParticipantMetadataFormatter participantMetaFmt = new ParticipantMetadataFormatter(excludedParticipantFields);
         List<String> headers = new LinkedList<>(participantMetaFmt.headers());
 
@@ -270,6 +305,7 @@ public class CustomExporter {
             for (var i = 1; i <= maxInstances; i++) {
                 // Add the headers
                 headers.addAll(attributesCollector.headers());
+                headers.add(familyIdHeader);
                 headers.addAll(mainResponseCollector.getHeaders());
                 List<String> singleChildCodes = new ArrayList<>(childResponseCollectors.keySet());
                 singleChildCodes.sort(String::compareTo);
@@ -293,10 +329,11 @@ public class CustomExporter {
 
         // Write the data to file
         while (participants.hasNext()) {
-            Participant pt = participants.next();
+            CustomExportParticipant pt = participants.next();
             List<String> row;
             try {
                 row = new LinkedList<>(participantMetaFmt.format(pt.getStatus(), pt.getUser()));
+                row.add(pt.getFamilyId());
                 ComponentDataSupplier supplier = new ComponentDataSupplier(pt.getUser().getAddress(), pt.getProviders());
                 for (CustomActivityExtract activity : activities) {
                     String activityTag = activity.getTag();
