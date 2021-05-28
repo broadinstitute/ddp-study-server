@@ -106,12 +106,12 @@
           {
             "source_field_name": "wheelchair_age_start",
             "target_field_name": "BEGIN_WHEELCHAIR_AGE",
-            "source_field_type": "Integer"
+            "source_field_type": "String"
           },
           {
             "source_field_name": "wheelchair_age_depend",
             "target_field_name": "COMPLETELY_WHEELCHAIR_AGE",
-            "source_field_type": "Integer"
+            "source_field_type": "String"
           },
           {
             "source_field_name": "at_symptoms",

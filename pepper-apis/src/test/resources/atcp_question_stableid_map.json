@@ -263,12 +263,12 @@
           },
           {
             "name": "wheelchair_age_start",
-            "type": "Numeric",
+            "type": "string",
             "stable_id": "BEGIN_WHEELCHAIR_AGE"
           },
           {
             "name": "wheelchair_age_depend",
-            "type": "Numeric",
+            "type": "string",
             "stable_id": "COMPLETELY_WHEELCHAIR_AGE"
           },
           {
