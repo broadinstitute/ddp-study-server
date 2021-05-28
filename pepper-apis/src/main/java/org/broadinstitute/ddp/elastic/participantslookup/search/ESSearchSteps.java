@@ -1,20 +1,34 @@
 package org.broadinstitute.ddp.elastic.participantslookup.search;
 
+import static org.broadinstitute.ddp.elastic.ElasticSearchQueryBuilderUtil.and;
+import static org.broadinstitute.ddp.elastic.ElasticSearchQueryBuilderUtil.notEmptyFieldQuery;
+import static org.broadinstitute.ddp.elastic.ElasticSearchQueryBuilderUtil.or;
 import static org.broadinstitute.ddp.elastic.ElasticSearchQueryBuilderUtil.orMatch;
-import static org.broadinstitute.ddp.elastic.participantslookup.model.ESParticipantsLookupField.PROFILE__GUID;
-import static org.broadinstitute.ddp.elastic.participantslookup.search.ESSearch.PARTICIPANTS_STRUCTURED__INDEX__SOURCE;
-import static org.broadinstitute.ddp.elastic.participantslookup.search.ESSearch.USERS__INDEX__SOURCE;
+import static org.broadinstitute.ddp.elastic.ElasticSearchQueryBuilderUtil.queryStringQuery;
+import static org.broadinstitute.ddp.elastic.ElasticSearchQueryUtil.addWildcards;
+import static org.broadinstitute.ddp.elastic.ElasticSearchQueryUtil.normalizeInvitationGuid;
+import static org.broadinstitute.ddp.elastic.participantslookup.model.ESParticipantsLookupData.LookupField.GOVERNED_USERS;
+import static org.broadinstitute.ddp.elastic.participantslookup.model.ESParticipantsLookupData.LookupField.INVITATIONS__GUID;
+import static org.broadinstitute.ddp.elastic.participantslookup.model.ESParticipantsLookupData.LookupField.PROFILE__GUID;
+import static org.broadinstitute.ddp.elastic.participantslookup.model.ESParticipantsLookupData.IndexType.PARTICIPANTS_STRUCTURED;
+import static org.broadinstitute.ddp.elastic.participantslookup.model.ESParticipantsLookupData.IndexType.USERS;
+import static org.broadinstitute.ddp.elastic.participantslookup.model.ESParticipantsLookupData.PARTICIPANTS_STRUCTURED_SOURCES;
+import static org.broadinstitute.ddp.elastic.participantslookup.model.ESParticipantsLookupData.USERS_SOURCES;
 
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.broadinstitute.ddp.elastic.ElasticSearchQueryExecutor;
+import org.broadinstitute.ddp.elastic.participantslookup.model.ESParticipantsLookupData;
 import org.broadinstitute.ddp.elastic.participantslookup.model.ESParticipantsStructuredIndexResultRow;
 import org.broadinstitute.ddp.elastic.participantslookup.model.ESUsersIndexResultRow;
 import org.broadinstitute.ddp.json.admin.participantslookup.ParticipantsLookupResultRow;
 import org.broadinstitute.ddp.json.admin.participantslookup.ResultRowBase;
 import org.broadinstitute.ddp.service.participantslookup.ParticipantsLookupResult;
 import org.elasticsearch.client.RestHighLevelClient;
+import org.elasticsearch.index.query.Operator;
+import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 
 /**
@@ -22,40 +36,51 @@ import org.elasticsearch.index.query.QueryBuilders;
  */
 public class ESSearchSteps {
 
-    private final RestHighLevelClient esClient;
-    private final Integer resultsMaxCount;
+    private final ElasticSearchQueryExecutor elasticSearchQueryExecutor;
 
     public ESSearchSteps(RestHighLevelClient esClient, Integer resultsMaxCount) {
-        this.esClient = esClient;
-        this.resultsMaxCount = resultsMaxCount;
+        this.elasticSearchQueryExecutor = new ElasticSearchQueryExecutor(esClient).setResultMaxCount(resultsMaxCount);
     }
 
     /**
      * Participants lookup step 1 (optional).<br>
      * Full-text search by `query` in 'users' index: search proxies.
-     * In `governedUserToProxy` saved all found proxies (governedUser.guid=proxy.guid).
+     * In `governedUserToProxy` saved all found proxies (governedUser.guid=proxy.guid).<br>
+     * <b>Search steps:</b>
+     * <pre>
+     * - query substring 'query' in all searchable fields of index "users";
+     * - query only proxy-users having not empty 'governedUsers';
+     * - join queries with 'AND'.
+     * </pre>
      */
     public Map<String, ESUsersIndexResultRow> preliminarySearchProxies(
             String query,
             String usersEsIndex,
             Map<String, String> governedUserToProxy
     ) throws IOException {
-        var proxiesSearch = new ESUsersProxiesSearch(esClient, governedUserToProxy);
-        return proxiesSearch
-                .setResultMaxCount(resultsMaxCount)
+        return elasticSearchQueryExecutor
                 .setEsIndex(usersEsIndex)
-                .setFetchSource(USERS__INDEX__SOURCE)
-                .setQuery(query)
+                .setFetchSource(USERS_SOURCES)
                 .search(
-                        proxiesSearch::createQuery,
-                        proxiesSearch::readResults
+                        () -> {
+                            var queryBuilder = queryLookupFieldsOfIndex(USERS, query);
+                            var governedUsersExistBuilder = notEmptyFieldQuery(GOVERNED_USERS.getEsField());
+                            return and(queryBuilder, governedUsersExistBuilder);
+                        },
+                        new ESUsersProxiesResultReader(governedUserToProxy)::readResults
                 );
     }
 
     /**
      * Participants lookup step 2.<br>
      * Full-text search by `query` in 'participants' index: search proxies.
-     * Plus search in governedUser.guid by guids saved in `governedUserToProxy'.
+     * Plus search in governedUser.guid by guids saved in `governedUserToProxy'.<br>
+     * <b>Search steps:</b>
+     * <pre>
+     * - find participants by a specified query;
+     * - find participants invitations by a specified normalized query (removed all '-');
+     * - if proxy users was found in index 'users' then find governedUsers by their GUIDs.
+     * </pre>
      */
     public Map<String, ESParticipantsStructuredIndexResultRow> searchParticipants(
             String query,
@@ -63,15 +88,22 @@ public class ESSearchSteps {
             Map<String, String> governedUserToProxy,
             ParticipantsLookupResult participantsLookupResult
     ) throws IOException {
-        var participantsSearch = new ESParticipantsSearch(esClient, governedUserToProxy, participantsLookupResult);
-        return participantsSearch
-                .setResultMaxCount(resultsMaxCount)
+        return elasticSearchQueryExecutor
                 .setEsIndex(participantsEsIndex)
-                .setFetchSource(PARTICIPANTS_STRUCTURED__INDEX__SOURCE)
-                .setQuery(query)
+                .setFetchSource(PARTICIPANTS_STRUCTURED_SOURCES)
                 .search(
-                        participantsSearch::createQuery,
-                        participantsSearch::readResults
+                        () -> {
+                            var queryBuilder = queryLookupFieldsOfIndex(PARTICIPANTS_STRUCTURED, query);
+                            var invitationsQueryBuilder =
+                                    queryStringQuery(INVITATIONS__GUID.getEsField(), normalizeInvitationGuid(query));
+                            if (governedUserToProxy != null && governedUserToProxy.size() > 0) {
+                                return or(queryBuilder, invitationsQueryBuilder,
+                                        orMatch(PROFILE__GUID.getEsField(), governedUserToProxy.keySet()));
+                            } else {
+                                return or(queryBuilder, invitationsQueryBuilder);
+                            }
+                        },
+                        new ESParticipantsResultReader(participantsLookupResult)::readResults
                 );
     }
 
@@ -83,14 +115,12 @@ public class ESSearchSteps {
             String participantsEsIndex,
             ParticipantsLookupResult participantsLookupResult
     ) throws IOException {
-        var participantsSearch = new ESParticipantsSearch(esClient, null, participantsLookupResult);
-        return participantsSearch
+        return elasticSearchQueryExecutor
                 .setEsIndex(participantsEsIndex)
-                .setFetchSource(PARTICIPANTS_STRUCTURED__INDEX__SOURCE)
-                .setQuery(participantGuid)
+                .setFetchSource(PARTICIPANTS_STRUCTURED_SOURCES)
                 .search(
                         () -> QueryBuilders.matchQuery(PROFILE__GUID.getEsField(), participantGuid),
-                        participantsSearch::readResults
+                        new ESParticipantsResultReader(participantsLookupResult)::readResults
                 );
     }
 
@@ -141,13 +171,12 @@ public class ESSearchSteps {
 
         if (governedUserToProxyExtraSearch.size() > 0) {
 
-            var proxiesExtraSearch = new ESUsersProxiesSearch(esClient, governedUserToProxyExtraSearch);
-            Map<String, ESUsersIndexResultRow> proxiesExtraResults = proxiesExtraSearch
+            Map<String, ESUsersIndexResultRow> proxiesExtraResults = elasticSearchQueryExecutor
                     .setEsIndex(usersEsIndex)
-                    .setFetchSource(USERS__INDEX__SOURCE)
+                    .setFetchSource(USERS_SOURCES)
                     .search(
                             () -> orMatch(PROFILE__GUID.getEsField(), governedUserToProxyExtraSearch.values()),
-                            proxiesExtraSearch::readResults
+                            new ESUsersProxiesResultReader(governedUserToProxyExtraSearch)::readResults
                     );
 
             // add to result found extra proxies (which were not found during search step 1)
@@ -155,5 +184,22 @@ public class ESSearchSteps {
                 results.get(gu).setProxy(proxiesExtraResults.get(governedUserToProxyExtraSearch.get(gu)));
             }
         }
+    }
+
+    /**
+     * Helper method for building {@link QueryBuilder} to search by specified 'query' in list of fields
+     * specified in {@link ESParticipantsLookupData.LookupField} - taken only fields of a specified 'indexType' (or all index types).
+     * @param indexType type of index
+     * @param query string fragment to do full-text search
+     * @return QueryBuilder - created query
+     */
+    private static QueryBuilder queryLookupFieldsOfIndex(ESParticipantsLookupData.IndexType indexType, String query) {
+        var queryBuilder = QueryBuilders.queryStringQuery(addWildcards(query)).defaultOperator(Operator.OR);
+        for (var field : ESParticipantsLookupData.LookupField.values()) {
+            if (field.isQueryFieldForIndex(indexType)) {
+                queryBuilder.field(field.getEsField());
+            }
+        }
+        return queryBuilder;
     }
 }
