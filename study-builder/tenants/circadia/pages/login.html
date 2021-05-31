@@ -68,18 +68,29 @@
         text-align: left;
       }
 
+      .auth0-lock-custom-icon {
+        width: 14px;
+        height: 14px;
+      }
+
+      .auth0-lock-name {
+        padding: 0 !important;
+
+        text-align: center;
+      }
+
       a:link {
         text-decoration: underline !important;
       }
 
       #ddp-header {
-        padding-top: 40px;
+        margin-top: 10px;
       }
 
       #ddp-header .auth0-lock-header-logo {
         max-width: 100%;
-        height: auto;
-        margin-bottom: 5px;
+        height: 60px;
+        margin-bottom: 10px;
       }
     </style>
 
@@ -113,7 +124,7 @@
 
       var mode = config.extraParams.mode;
       var study_guid = config.extraParams.study_guid;
-      var headerLogo = '##BASE_URL##/assets/images/auth0-logo.png';
+      var headerLogo = '##ASSETS_URL##/auth0/logo.png';
       var headerText = '';
       var studyColor = '#0b1245';
       var studyHelpEmail = '##STUDY_EMAIL##';
@@ -132,59 +143,40 @@
       i18n['en'] = {
         error: {
           signUp: {
-            userExists: 'If you have already registered, sign in here.',
+            user_exists: "If you've already registered, sign in here. ",
           },
         },
-        fields: {
-          firstNamePlaceholder: 'First name',
-          lastNamePlaceholder: 'Last name',
-          nonBlankHint: "Can't be blank",
+        // Login title
+        title: 'Log In',
+        // Sign up title
+        signUpTitle: 'Create your account',
+        emailInputPlaceholder: 'Email',
+        passwordInputPlaceholder: 'Password',
+        additionalFields: {
+          firstName: {
+            placeholder: 'First name',
+            nonBlankHint: "First name can't be blank",
+          },
+          lastName: {
+            placeholder: 'Last name',
+            nonBlankHint: "Last name can't be blank",
+          },
         },
-        lastLoginInstructions: 'Last time you signed in with',
         message: {
-          alreadyRegisteredText:
-            'If you have already registered, sign in here.',
-          helpHtml: 'For help, please contact ' + studyHelpEmail + '.',
-          loginLinkText: 'Sign in with existing account.',
+          alreadyRegisteredText: "If you've already registered, sign in here.",
           registerMessageHtml:
             "If you haven't registered yet, please <a class='auth0-lock-alternative-link' href='" +
             registerUrl +
             "'>do so here</a>.",
+          helpHtml: 'For help, please contact ' + studyHelpEmail + '.',
+          loginLinkText: 'Sign in with existing account.',
+          switchToLoginText: 'Already registered? ',
           resetPasswordText:
             'Password reset successfully.  Please sign in with your new password.',
-          switchToLoginText: 'Already registered? ',
         },
-        success: {
-          forgotPassword:
-            'If you have previously registered, please check your email to reset your password.',
-        },
-        title: 'Welcome!',
-        titleLogin: 'Please Sign In',
-        titleSignUp: 'Create your account',
       };
 
-      var title = i18n[language].title;
-
-      if (mode === 'login') {
-        title = i18n[language].titleLogin;
-      } else if (mode === 'signup') {
-        title = i18n[language].titleSignUp;
-      }
-
-      // See: https://auth0.com/docs/libraries/lock/v11/i18n
-      var dictionaryOverrides = {
-        error: {
-          signUp: {
-            user_exists: i18n[language].error.signUp.userExists,
-          },
-        },
-        lastLoginInstructions: i18n[language].lastLoginInstructions,
-        signupTitle: title,
-        success: {
-          forgotPassword: i18n[language].success.forgotPassword,
-        },
-        title: title,
-      };
+      var languageDictionary = i18n[language];
 
       var loginHint = config.extraParams.login_hint;
 
@@ -203,11 +195,10 @@
         allowedConnections: connection ? [connection] : null,
         rememberLastLogin: false,
         language: language,
-        languageDictionary: dictionaryOverrides,
+        languageDictionary: languageDictionary,
         theme: {
           logo: headerLogo,
           primaryColor: studyColor,
-          //primaryColor:    'green'
         },
         prefill: loginHint ? { email: loginHint, username: loginHint } : null,
         closable: false,
@@ -254,21 +245,26 @@
         realOptions.additionalSignUpFields = [
           {
             name: 'first_name',
-            placeholder: i18n[language].fields.firstNamePlaceholder,
+            icon: '##ASSETS_URL##/auth0/name-icon.svg',
+            placeholder:
+              languageDictionary.additionalFields.firstName.placeholder,
             validator: function (input) {
               return {
                 valid: input != null && input.trim().length > 0,
-                hint: i18n[language].fields.nonBlankHint,
+                hint: languageDictionary.additionalFields.firstName
+                  .nonBlankHint,
               };
             },
           },
           {
             name: 'last_name',
-            placeholder: i18n[language].fields.lastNamePlaceholder,
+            icon: '##ASSETS_URL##/auth0/name-icon.svg',
+            placeholder:
+              languageDictionary.additionalFields.lastName.placeholder,
             validator: function (input) {
               return {
                 valid: input != null && input.trim().length > 0,
-                hint: i18n[language].fields.nonBlankHint,
+                hint: languageDictionary.additionalFields.lastName.nonBlankHint,
               };
             },
           },
@@ -290,7 +286,7 @@
             document.getElementsByClassName('auth0-global-message').length > 0
           ) {
             if (
-              dictionaryOverrides.error.signUp.user_exists.toUpperCase() ===
+              languageDictionary.error.signUp.user_exists.toUpperCase() ===
               document
                 .getElementsByClassName('auth0-global-message')[0]
                 .children[0].children[0].innerText.toUpperCase()
@@ -300,7 +296,7 @@
                   'auth0-global-message',
                 )[0].children[0].children[0];
 
-                console.log('parent: ' + auth0GlobalMessage.parentElement);
+                console.log('parent: ', auth0GlobalMessage.parentElement);
                 auth0GlobalMessage.parentElement.removeChild(
                   auth0GlobalMessage,
                 );
@@ -310,7 +306,7 @@
                 alreadyRegistered.setAttribute('style', 'color:black');
                 alreadyRegistered.setAttribute('id', 'ddp-already-registered');
                 alreadyRegistered.innerText =
-                  i18n[language].message.alreadyRegisteredText;
+                  languageDictionary.message.alreadyRegisteredText;
                 document
                   .getElementsByClassName('auth0-global-message')[0]
                   .children[0].appendChild(alreadyRegistered);
@@ -322,7 +318,7 @@
             // tweak the header
             var header = document.createElement('div');
             header.innerHTML =
-              '<div id="ddp-header" style="display:flex;flex-direction:row;justify-content: flex-start;align-items:center;"><img class="auth0-lock-header-logo" src="' +
+              '<div id="ddp-header" style="display:flex;flex-direction:row;justify-content: center;align-items:center;"><img class="auth0-lock-header-logo" src="' +
               headerLogo +
               '"></div>';
             var auth0LockHeader = document.getElementsByClassName(
@@ -330,11 +326,14 @@
             )[0];
 
             if (auth0LockHeader) {
-              console.log('parent' + auth0LockHeader.parentElement);
+              console.log('header parent', auth0LockHeader.parentElement);
+
               auth0LockHeader.parentElement.removeChild(auth0LockHeader);
+
               var headerWelcome = document.getElementsByClassName(
                 'auth0-lock-header-welcome',
               )[0];
+
               headerWelcome.insertBefore(
                 header,
                 headerWelcome.hasChildNodes()
@@ -368,7 +367,7 @@
                 var registerMessage = document.createElement('p');
                 registerMessage.setAttribute('style', 'margin-bottom:0;');
                 registerMessage.innerHTML =
-                  i18n[language].message.registerMessageHtml;
+                  languageDictionary.message.registerMessageHtml;
                 registerMessageWrapper.appendChild(registerMessage);
 
                 if (lockForm) {
@@ -381,11 +380,11 @@
             helpWrapper.setAttribute('id', 'ddp-help');
             helpWrapper.setAttribute(
               'style',
-              'display:flex;flex-direction:row;align-items:center;margin-top:5px;flex-wrap:none;',
+              'display:flex;flex-direction:row;align-items:center;margin-top:10px;flex-wrap:nowrap;',
             );
             var help =
               '<p style="text-align:left;margin-bottom:0;">' +
-              i18n[language].message.helpHtml +
+              languageDictionary.message.helpHtml +
               '</p>';
             helpWrapper.innerHTML = help;
             if (lockForm) {
@@ -397,7 +396,7 @@
               var loginLink = document.createElement('a');
               loginLink.setAttribute('class', 'auth0-lock-alternative-link');
               loginLink.setAttribute('href', loginUrl);
-              loginLink.innerText = i18n[language].message.loginLinkText;
+              loginLink.innerText = languageDictionary.message.loginLinkText;
               var switchToLogin = document.createElement('p');
               switchToLogin.setAttribute('class', 'auth0-lock-alternative');
               switchToLogin.setAttribute(
@@ -405,7 +404,7 @@
                 'text-align:left;margin-top:5px;',
               );
               switchToLogin.innerText =
-                i18n[language].message.switchToLoginText;
+                languageDictionary.message.switchToLoginText;
               switchToLogin.appendChild(loginLink);
               helpWrapper.parentElement.appendChild(switchToLogin);
             }
@@ -422,7 +421,7 @@
 
                 var resetPasswordText = document.createElement('div');
                 resetPasswordText.innerText =
-                  i18n[language].message.resetPasswordText;
+                  languageDictionary.message.resetPasswordText;
 
                 resetPasswordWrapper.appendChild(resetPasswordText);
                 document
