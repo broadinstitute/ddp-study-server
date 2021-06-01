@@ -91,7 +91,7 @@ public class CustomExporter {
     private static String getFamilyId(Handle handle, StudyDto studyDto, String userGuid, RestHighLevelClient esClient) throws IOException {
         String esIndex = ElasticsearchServiceUtil.getIndexForStudy(handle, studyDto, ElasticSearchIndexType.PARTICIPANTS_STRUCTURED);
         GetRequest getRequest = new GetRequest(esIndex, "_doc", userGuid);
-        String[] includes = {"dsm"}; //
+        String[] includes = {"dsm"}; //TESTING TESTING
         getRequest.fetchSourceContext(new FetchSourceContext(true, includes, null));
         GetResponse esResponse = esClient.get(getRequest, RequestOptions.DEFAULT);
         return esResponse.getSource().get("FAMILY_ID").toString(); // TODO: Not sure this is really how we would do this...
