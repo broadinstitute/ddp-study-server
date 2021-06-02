@@ -111,6 +111,10 @@ echo "=> setting up second LB for http-to-https redirects..."
 # mostly just contains frontends with port 80 and same IPs, and no backends.
 # There doesn't seem to be a way to create this using cli interface, so we have
 # to import a YAML file.
+#
+# We're only going to use this http LB for redirecting the study site and not
+# our DSS and DSM backends. HTTP requests might contain credentials, so we want
+# to reject those requests.
 http_lb="$LB_NAME-http"
 
 cat "$DIR/http-lb.tmpl.yaml" \
@@ -173,17 +177,7 @@ for item in "${frontends[@]}"; do
     --target-https-proxy="$proxy_name" \
     --global --ports=443
 
-  # Now create the http frontends.
-
-  echo_run gcloud --project="$PROJECT_ID" \
-    compute target-http-proxies create "$proxy_name-http" \
-    --global --url-map="$http_lb"
-
-  echo_run gcloud --project="$PROJECT_ID" \
-    compute forwarding-rules create "$name-http" \
-    --address="$ip_name" \
-    --target-http-proxy="$proxy_name-http" \
-    --global --ports=80
+  # No http frontends will be created for DSS or DSM.
 done
 
 echo "=> last step: please manually update DNS 'A' records and remove GAE custom domains when ready"
