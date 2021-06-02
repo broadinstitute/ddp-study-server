@@ -519,5 +519,67 @@
 
   "pcq_name": "Post Collection Questionnaire",
   "pcq_title": "Post Collection Questionnaire",
-  "pcq_header": "Genetic Info Release Request"
+  "pcq_header": "Genetic Info Release Request",
+
+  "pcq_bedtime_sleep_earlier_or_later_question": "For your bedtime during the study, did you ever go to sleep earlier/later than the time you entered on the Mini Sleep Log for that night? ",
+  "pcq_bedtime_sleep_earlier_yes": "Yes (I went to sleep earlier)",
+  "pqc_bedtime_sleep_later_yes": "Yes (I went to sleep later)",
+  "pcq_bedtime_sleep_earlier_no": "No",
+  "pcq_bedtime_sleep_earlier_text_field": "If yes, please provide details that you best remember",
+
+  "pcq_waketime_earlier_or_later_question": "For your waketime during the study, did you ever wake up earlier/later than the time you entered on the Mini Sleep Log for that day?",
+  "pcq_waketime_earlier_yes": "Yes (I woke up earlier)",
+  "pcq_waketime_earlier_no": "No (I woke up later)",
+  "pcq_waketime_no": "No",
+  "pcq_waketime_earlier_or_later_text_field": "If yes, please provide details that you best remember",
+
+  "pcq_activity_tracker_off_question": "Did you ever take your activity tracker off and not report it?",
+  "pcq_activity_tracker_yes": "Yes",
+  "pcq_activity_tracker_no": "No",
+
+  "pqc_activity_tracker_problems_question": "Did you have any problems wearing the activity tracker?",
+  "pcq_activity_tracker_problems_yes": "Yes",
+  "pcq_activity_tracker_problems_no": "No",
+  "pcq_activity_tracker_problems_text_field": "If yes, please provide details:",
+
+  "pcq_recreational_drugs_question": "Did you use any recreational drugs during the study? ",
+  "pcq_recreational_drugs_yes": "Yes",
+  "pcq_recreational_drugs_no": "No",
+
+  "pcq_consume_alcohol_question": "Did you consume any alcohol in the 48 hours prior to completing either or both of your DLMO collections? ",
+  "pcq_consume_alcohol_yes": "Yes",
+  "pcq_consume_alcohol_no": "No",
+
+  "pcq_consume_caffeine_question": "Did you consume any caffeine in the 24 hours prior to completing either or both of your DLMO collections?",
+  "pcq_consume_caffeine_yes": "Yes",
+  "pcq_consume_caffeine_no": "No",
+
+  "pcq_consume_nicotine_question": "Did you consume any nicotine products in the 3 hours prior to completing either or both of your DLMO collections?",
+  "pcq_consume_nicotine_yes": "Yes",
+  "pcq_consume_nicotine_no": "No",
+
+  "pcq_protocol_question": "Were there any ways you did not follow the protocol for the study? (This question does not affect your study payment)",
+  "pcq_protocol_yes": "Yes",
+  "pcq_protocol_no": "No",
+  "pcq_protocol_text_field": "If yes, please provide details:",
+
+  "pcq_most_difficult_part_of_study_question": "What was the most difficult part of the study?",
+
+  "pcq_improve_study_question": "How could we improve the study? Please provide any additional comments or feedback here.",
+
+  "pcq_confident_alone_question": "I felt confident completing the dim light melatonin onset collection from the written instructions alone",
+  "pcq_strongly_agree": "Strongly Agree",
+  "pcq_agree": "Agree",
+  "pcq_neither_agree_nor_disagree": "Neither agree nor disagree",
+  "pcq_disagree": "Disagree",
+  "pcq_strongly_disagree": "Strongly Disagree",
+
+  "pcq_confident_instructional_videos_question": "I felt confident completing the dim light melatonin onset collection from the written instructions and instructional videos together",
+
+  "pcq_confident_access_to_research_question": "I felt I had enough resources to successfully complete the dim light melatonin collection (i.e. written instructions, video instructions, access to research coordinators)",
+
+  "pcq_confident_set_one_question": "I felt confident completing the first dim light melatonin collection set (set one of two collections) ",
+
+  "pcq_confident_set_two_question": "I felt confident completing the second dim light melatonin collection set (set two of two collections)"
+
 }
