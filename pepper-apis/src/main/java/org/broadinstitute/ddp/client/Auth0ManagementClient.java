@@ -32,6 +32,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.annotations.SerializedName;
 import org.apache.http.HttpHeaders;
+import org.apache.http.HttpStatus;
 import org.apache.http.entity.ContentType;
 import org.broadinstitute.ddp.db.dao.JdbiAuth0Tenant;
 import org.broadinstitute.ddp.db.dto.Auth0TenantDto;
@@ -67,6 +68,7 @@ public class Auth0ManagementClient {
     private static final int DEFAULT_MAX_RETRIES = 3;
     private static final long DEFAULT_BACKOFF_MILLIS = 500L;
     private static final int MAX_JITTER_MILLIS = 100;
+    private static final int MAX_RESULTS_PER_PAGE = 50;
 
     private final URI baseUrl;
     private final String clientId;
@@ -211,30 +213,32 @@ public class Auth0ManagementClient {
      * @return result with list of connections, or error response
      */
     public ApiResult<List<Connection>, APIException> listConnections() {
-        int maxPerPage = 50;
         int pageNum = 0;
         String msg = String.format("Hit rate limit while listing connections for tenant '%s', retrying", baseUrl);
-        Integer currentTotal = maxPerPage;
+        Integer currentTotal = MAX_RESULTS_PER_PAGE;
         List<Connection> connections = new ArrayList<>();
-        while (currentTotal == maxPerPage) {
+        while (currentTotal == MAX_RESULTS_PER_PAGE) {
             //keep make API calls with 1 page at a time until current iteration results size is maxPerPage (else no more results)
-            var filter = new ConnectionFilter().withPage(pageNum, maxPerPage);
+            var filter = new ConnectionFilter().withPage(pageNum, MAX_RESULTS_PER_PAGE);
             ApiResult<List<Connection>, APIException> apiResult = withRetries(msg, () -> {
                 try {
                     mgmtApi.setApiToken(getToken());
                     ConnectionsPage page = mgmtApi.connections().listAll(filter).execute();
-                    return ApiResult.ok(200, page.getItems());
+                    return ApiResult.ok(HttpStatus.SC_OK, page.getItems());
                 } catch (APIException e) {
                     return ApiResult.err(e.getStatusCode(), e);
                 } catch (Exception e) {
                     return ApiResult.thrown(e);
                 }
             });
+            if (apiResult.hasFailure()) {
+                return apiResult;
+            }
             pageNum++;
             connections.addAll(apiResult.getBody());
             currentTotal = apiResult.getBody().size();
         }
-        return ApiResult.ok(200, connections);
+        return ApiResult.ok(HttpStatus.SC_OK, connections);
     }
 
     /**
