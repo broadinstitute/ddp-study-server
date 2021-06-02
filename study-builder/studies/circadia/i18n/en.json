@@ -341,7 +341,6 @@
   "halq_aspd": "Advanced Sleep Phase Disorder (ASPD)",
   "halq_dspd": "Delayed Sleep Phase Disorder (DSPD)",
   "halq_non_24": "Non-24 Hour",
-  "halq_other": "Other",
   "halq_other_explanation": "Please specify",
   "halq_none": "None",
 
@@ -413,7 +412,6 @@
   "halq_obsessive_compulsive_disorder": "Obsessive Compulsive Disorder",
   "halq_autism": "Autism",
   "halq_post_traumatic_disorder": "Post-Traumatic Stress Disorder",
-  "halq_other": "Other",
 
   "halq_sleep_disorders_question": "Aside from your diagnosed atypical circadian rhythm, have you ever been diagnosed with one of the following sleep disorders? Please select all that apply. ",
   "halq_restless_leg_syndrome": "Restless Leg Syndrome",
@@ -506,7 +504,6 @@
   "halq_hydromorphone": "Hydromorphone (Dilaudid)",
   "halq_fentanyl": "Fentanyl (Duragesic)",
   "halq_otca": "Over the Counter Antihistamines ",
-  "halq_other": "Other",
 
 
   "mini_sleep_log_name": "Mini Sleep Log",
@@ -580,6 +577,125 @@
 
   "pcq_confident_set_one_question": "I felt confident completing the first dim light melatonin collection set (set one of two collections) ",
 
-  "pcq_confident_set_two_question": "I felt confident completing the second dim light melatonin collection set (set two of two collections)"
+  "pcq_confident_set_two_question": "I felt confident completing the second dim light melatonin collection set (set two of two collections)",
+
+  "meq_name": "Morning Evening Questionnaire",
+  "meq_title": "Morning Evening Questionnaire",
+
+  "meq_what_time_get_up_early_question": "Approximately what time would you get up if you were entirely free to plan your day?",
+  "meq_wake_up_interval_1": "5:00 AM–6:30 AM (05:00–06:30 h)",
+  "meq_wake_up_interval_2": "6:30 AM–7:45 AM (06:30–07:45 h)",
+  "meq_wake_up_interval_3": "7:45 AM–9:45 AM (07:45–09:45 h)",
+  "meq_wake_up_interval_4": "9:45 AM–11:00 AM (09:45–11:00 h)",
+  "meq_wake_up_interval_5": "11:00 AM–12 noon (11:00–12:00 h)",
+
+  "meq_what_time_go_to_bed_question": "Approximately what time would you go to bed if you were entirely free to plan your evening?",
+  "meq_go_to_bed_interval_1": "8:00 PM–9:00 PM (20:00–21:00 h)",
+  "meq_go_to_bed_interval_2": "9:00 PM–10:15 PM (21:00–22:15 h)",
+  "meq_go_to_bed_interval_3": "10:15 PM–12:30 AM (22:15–00:30 h)",
+  "meq_go_to_bed_interval_4": "12:30 AM–1:45 AM (00:30–01:45 h)",
+  "meq_go_to_bed_interval_5": "1:45 AM–3:00 AM (01:45–03:00 h)",
+
+  "meq_depend_on_alarm_clock_question": "If you usually have to get up at a specific time in the morning, how much do you depend on an alarm clock?",
+  "meq_not_at_all": "Not at all",
+  "meq_slightly": "Slightly",
+  "meq_somewhat": "Somewhat",
+  "meq_very_much": "Very much",
+
+  "meq_how_easy_waking_up_question": "How easy do you find it to get up in the morning (when you are not awakened unexpectedly)?",
+  "meq_very_difficult": "Very difficult",
+  "meq_somewhat_difficult": "Somewhat difficult",
+  "meq_fairly_easy": "Fairly easy",
+  "meq_very_easy": "Very easy",
+
+  "meq_alert_question": "How alert do you feel during the first half hour after you wake up in the morning?",
+  "meq_not_at_all_alert": "Not at all alert",
+  "meq_slightly_alert": "Slightly alert",
+  "meq_fairly_alert": "Fairly alert",
+  "meq_very_alert": "Very alert",
+
+  "meq_hungry_question": "How hungry do you feel during the first half hour after you wake up?",
+  "meq_not_at_all_hungry": "Not at all hungry",
+  "meq_slightly_hungry": "Slightly hungry",
+  "meq_fairly_hungry": "Fairly hungry",
+  "meq_very_hungry": "Very hungry",
+
+  "meq_first_half_feeling_qustion": "During the first half hour after you wake up in the morning, how do you feel?",
+  "meq_very_tired": "Very tired",
+  "meq_fairly_tired": "Fairly tired",
+  "meq_fairly_refreshed": "Fairly refreshed",
+  "meq_very_refreshed": "Very refreshed",
+
+  "meq_no_commitments_question": "If you had no commitments the next day, what time would you go to bed compared to your usual bedtime?",
+  "meq_seldom_or_never_later": "Seldom or never later",
+  "meq_less_than_1_hour_later": "Less than 1 hour later",
+  "meq_1_2_hours_later": "1-2 hours later",
+  "meq_more_than_2_hours_later": "More than 2 hours later",
+
+  "meq_physical_exercise_7_8_am_question": "You have decided to do physical exercise. A friend suggests that you do this for one hour twice a week, and the best time for him is between 7-8 AM (07-08 h). Bearing in mind nothing but your own internal “clock,” how do you think you would perform?",
+  "meq_good_form": "Would be in good form",
+  "meq_reasonable_form": "Would be in reasonable form",
+  "meq_difficult": "Would find it difficult",
+
+  "meq_at_what_time_feel_tired_question": "At approximately what time in the evening do you feel tired, and, as a result, in need of sleep?",
+  "meq_feel_tired_interval_1": "8:00 PM–9:00 PM (20:00–21:00 h)",
+  "meq_feel_tired_interval_2": "9:00 PM–10:15 PM (21:00–22:15 h)",
+  "meq_feel_tired_interval_3": "10:15 PM–12:45 AM (22:15–00:45 h)",
+  "meq_feel_tired_interval_4": "12:45 AM–2:00 AM (00:45–02:00 h)",
+  "meq_feel_tired_interval_5": "2:00 AM–3:00 AM (02:00–03:00 h)",
+
+  "meq_performance_at_test_question": "You want to be at your peak performance for a test that you know is going to be mentally exhausting and will last two hours. You are entirely free to plan your day. Considering only your “internal clock,” which one of the four testing times would you choose?",
+  "meq_performance_interval_1": "8 AM–10 AM (08–10 h)",
+  "meq_performance_interval_2": "11 AM–1 PM (11–13 h)",
+  "meq_performance_interval_3": "3 PM–5 PM (15–17 h)",
+  "meq_performance_interval_4": "7 PM–9 PM (19–21 h)",
+
+  "meq_go_to_bed_at_11_pm_question": "If you got into bed at 11 PM (23 h), how tired would you be?",
+  "meq_not_at_all_tired": "Not at all tired",
+  "meq_a_little_tired": "A little tired",
+
+  "meq_go_to_bed_later_than_usual_question": "For some reason you have gone to bed several hours later than usual, but there is no need to get up at any particular time the next morning. Which one of the following are you most likely to do?",
+  "meq_wake_up_usual_not_fall_asleep": "Will wake up at usual time, but will not fall back asleep",
+  "meq_wake_up_usual_doze_thereafter": "Will wake up at usual time and will doze thereafter",
+  "meq_wake_up_usual_fall_asleep": "Will wake up at usual time, but will fall asleep again",
+  "meq_later_than_usual": "Will not wake up until later than usual",
+
+  "meq_remain_awake_question": "One night you have to remain awake between 4-6 AM (04-06 h) in order to carry out a night watch. You have no time commitments the next day. Which one of the alternatives would suit you best?",
+  "meq_not_go_to_bed": "Would not go to bed until the watch is over",
+  "meq_take_a_nap": "Would take a nap before and sleep after",
+  "meq_take_a_good_sleep": "Would take a good sleep before and nap after",
+  "meq_sleep_before_watch": "Would sleep only before the watch",
+
+  "meq_physical_work_question": "You have two hours of hard physical work. You are entirely free to plan your day. Considering only your internal “clock,” which of the following times would you choose?",
+  "meq_physical_work_interval_1": "8 AM–10 AM (08–10 h)",
+  "meq_physical_work_interval_2": "11 AM–1 PM (11–13 h)",
+  "meq_physical_work_interval_3": "3 PM–5 PM (15–17 h)",
+  "meq_physical_work_interval_4": "7 PM–9 PM (19–21 h)",
+
+  "meq_physical_exercise_10_11_pm_question": "You have decided to do physical exercise. A friend suggests that you do this for one hour twice a week. The best time for her is between 10-11 PM (22-23 h). Bearing in mind only your internal “clock,” how well do you think you would perform?",
+
+  "meq_work_hours_question": "Suppose you can choose your own work hours. Assume that you work a five-hour day (including breaks), your job is interesting, and you are paid based on your performance. At approximately what time would you choose to begin?",
+  "meq_work_hours_interval_1": "5 hours starting between 4–8 AM (04–08 h)",
+  "meq_work_hours_interval_2": "5 hours starting between 8–9 AM (08–09 h)",
+  "meq_work_hours_interval_3": "5 hours starting between 9 AM–2 PM (09–14 h)",
+  "meq_work_hours_interval_4": "5 hours starting between 2–5 PM (14–17 h)",
+  "meq_work_hours_interval_5": "5 hours starting between 5 PM–4 AM (17–04 h)",
+
+  "meq_feel_best_question": "At approximately what time of day do you usually feel your best?",
+  "meq_feel_best_interval_1": "5–8 AM (05–08 h)",
+  "meq_feel_best_interval_2": "8–10 AM (08–10 h)",
+  "meq_feel_best_interval_3": "10 AM–5 PM (10–17 h)",
+  "meq_feel_best_interval_4": "5–10 PM (17–22 h)",
+  "meq_feel_best_interval_5": "10 PM–5 AM (22–05 h)",
+
+  "meq_morning_evening_types_question": "One hears about “morning types” and “evening types.” Which one of these types do you consider yourself to be?",
+  "meq_morning_type": "Definitely a morning type",
+  "meq_more_morning_type": "Rather more a morning type than an evening type",
+  "meq_more_evening_type": "Rather more an evening type than a morning type",
+  "meq_evening_type": "Definitely an evening type"
+
+
+
+
 
 }
