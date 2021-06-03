@@ -9,35 +9,32 @@ import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 
 import com.google.gson.annotations.SerializedName;
+import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.content.I18nContentRenderer;
 import org.broadinstitute.ddp.model.activity.definition.i18n.Translation;
 import org.broadinstitute.ddp.model.activity.types.TemplateType;
 import org.broadinstitute.ddp.util.MiscUtil;
 import org.jdbi.v3.core.mapper.reflect.ColumnName;
 import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class Template {
 
     public static final String VELOCITY_VAR_PREFIX = "$";
 
-    private static final Logger LOG = LoggerFactory.getLogger(Template.class);
-
     @NotNull
     @SerializedName("templateType")
-    private TemplateType templateType;
+    private final TemplateType templateType;
 
     @SerializedName("templateCode")
     private String templateCode;
 
     @NotNull
     @SerializedName("templateText") 
-    private String templateText;
+    private final String templateText;
 
     @NotNull
     @SerializedName("variables")
-    private Collection<@Valid @NotNull TemplateVariable> variables = new ArrayList<>();
+    private final Collection<@Valid @NotNull TemplateVariable> variables = new ArrayList<>();
 
     private transient Long templateId;
     private transient Long revisionId;
@@ -121,7 +118,10 @@ public class Template {
         }
         for (TemplateVariable variable : getVariables()) {
             Optional<Translation> translation = variable.getTranslation(languageCode);
-            variablesTxt.put(variable.getName(), translation.isPresent() ? translation.get().getText() : null);
+            if (translation.isEmpty()) {
+                translation = variable.getTranslation(LanguageStore.getDefault().getIsoCode());
+            }
+            variablesTxt.put(variable.getName(), translation.<Object>map(Translation::getText).orElse(null));
         }
 
         return renderer.renderToString(getTemplateText(), variablesTxt);
