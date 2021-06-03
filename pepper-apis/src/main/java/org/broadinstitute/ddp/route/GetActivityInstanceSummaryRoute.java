@@ -59,7 +59,7 @@ public class GetActivityInstanceSummaryRoute implements Route {
             List<ActivityInstanceSummary> summaries = List.of(summary);
             Map<String, FormResponse> responses = service.countQuestionsAndAnswers(
                     handle, participantGuid, operatorGuid, studyGuid, summaries);
-            service.renderInstanceSummaries(handle, participantUser.getId(), studyGuid, summaries, responses);
+            service.renderInstanceSummaries(handle, participantUser.getId(), operatorGuid, studyGuid, summaries, responses);
 
             return summaries.get(0);
         });
