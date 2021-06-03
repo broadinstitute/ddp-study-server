@@ -1131,7 +1131,7 @@ public class StudyDataLoaderMain {
                                 mappingData.get("followupsurvey"),
                                 studyDto, userDto, instanceDto, activityInstanceDao.getJdbiActivityInstance(), answerDao);
                     }
-                    JsonElement ddpExitedDt = datstatParticipantData.getAsJsonObject().get("ddp_exited_dt");
+                    JsonElement ddpExitedDt = datstatParticipantData.getAsJsonObject().get("datstat_exitdate");
                     if (ddpExitedDt != null && !ddpExitedDt.isJsonNull()) {
                         dataLoader.addUserStudyExit(handle, ddpExitedDt.getAsString(), userGuid, studyGuid);
                     }
