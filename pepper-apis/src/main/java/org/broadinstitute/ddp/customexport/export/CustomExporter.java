@@ -29,6 +29,7 @@ import org.broadinstitute.ddp.db.dto.ActivityDto;
 import org.broadinstitute.ddp.db.dto.ActivityVersionDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.elastic.ElasticSearchIndexType;
+import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.export.ActivityResponseMapping;
 import org.broadinstitute.ddp.export.ComponentDataSupplier;
 import org.broadinstitute.ddp.export.ExportUtil;
@@ -55,7 +56,7 @@ public class CustomExporter {
 
     // A cache for user auth0 emails, storing (auth0UserId -> email).
     private static final Map<String, String> emailStore = new HashMap<>();
-    private static final String familyIdHeader = "FAMILY_ID";
+    private static final String familyIdHeader = "familyId";
 
     private final Config mainConfig;
     private final Config exportConfig;
@@ -69,8 +70,7 @@ public class CustomExporter {
         this.customGuid = exportConfig.getString(CustomExportConfigFile.STUDY_GUID);
     }
 
-
-    public List<CustomExportParticipant> extractParticipantDataSetByIds(Handle handle, StudyDto studyDto, Set<Long> userIds)
+    List<CustomExportParticipant> extractParticipantDataSetByIds(Handle handle, StudyDto studyDto, Set<Long> userIds)
             throws IOException {
         RestHighLevelClient elasticsearchClient = ElasticsearchServiceUtil.getElasticsearchClient(this.mainConfig);
         return createCustomParticipantsFrom(ExportUtil.extractParticipantDataSetByIds(handle, studyDto, userIds, emailStore), handle,
@@ -79,7 +79,7 @@ public class CustomExporter {
 
     private static List<CustomExportParticipant> createCustomParticipantsFrom(List<Participant> participants, Handle handle,
                                                                               StudyDto studyDto,
-                                                                              RestHighLevelClient esClient) throws IOException {
+                                                                              RestHighLevelClient esClient) {
         List<CustomExportParticipant> customExportParticipants = new ArrayList<>();
         for (Participant p : participants) {
             String familyId = getFamilyId(handle, studyDto, p.getUser().getGuid(), esClient);
@@ -88,13 +88,32 @@ public class CustomExporter {
         return customExportParticipants;
     }
 
-    private static String getFamilyId(Handle handle, StudyDto studyDto, String userGuid, RestHighLevelClient esClient) throws IOException {
+    private static String getFamilyId(Handle handle, StudyDto studyDto, String userGuid, RestHighLevelClient esClient) throws DDPException {
         String esIndex = ElasticsearchServiceUtil.getIndexForStudy(handle, studyDto, ElasticSearchIndexType.PARTICIPANTS_STRUCTURED);
         GetRequest getRequest = new GetRequest(esIndex, "_doc", userGuid);
         String[] includes = {"dsm"};
         getRequest.fetchSourceContext(new FetchSourceContext(true, includes, null));
-        GetResponse esResponse = esClient.get(getRequest, RequestOptions.DEFAULT);
-        return esResponse.getSource().get("FAMILY_ID").toString(); // TODO: Not sure this is really how we would do this...
+        GetResponse esResponse;
+        try {
+            esResponse = esClient.get(getRequest, RequestOptions.DEFAULT);
+        } catch (IOException e) {
+            throw new DDPException("Error getting ElasticSearch client to use to get family ID for user guid " + userGuid, e);
+        }
+        Map<String, Object> source = esResponse.getSource();
+
+        if (source == null) {
+            throw new DDPException("Error reading ElasticSearch source: source is null for user guid " + userGuid);
+        }
+
+        Object sourceElement = source.get("dsm");
+        if (sourceElement == null) {
+            throw new DDPException("Error reading ElasticSearch source: DSM element is null for user guid" + userGuid);
+        } else if (!(sourceElement instanceof Map)) {
+            throw new DDPException("Error reading ElasticSearch source: DSM element is not a map for user guid " + userGuid);
+        }
+
+        Object familyId = ((Map) sourceElement).get(familyIdHeader);
+        return familyId.toString();
     }
 
     public static void clearCachedAuth0Emails() {
