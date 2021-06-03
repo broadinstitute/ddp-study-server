@@ -121,7 +121,8 @@ public class UserActivityInstanceListRouteStandaloneTest extends IntegrationTest
                 .build();
 
         prequal = FormActivityDef.formBuilder(FormType.PREQUALIFIER, code, "v1", testData.getStudyGuid())
-                .addName(new Translation("en", "Test prequal"))
+                .addName(new Translation("en",
+                        "Does $ddp.isGovernedParticipant(\"the child’s father\", \"your father\") have a history of Jewish ancestry?"))
                 .addSummary(new SummaryTranslation("en", "$ddp.testResultTimeCompleted(\"MM/dd/uuuu\")", InstanceStatusType.CREATED))
                 .addSection(new FormSectionDef(null, Arrays.asList(controlBlock, toggledBlock)))
                 .build();
@@ -195,6 +196,7 @@ public class UserActivityInstanceListRouteStandaloneTest extends IntegrationTest
         Assert.assertEquals(InstanceStatusType.CREATED.name(), userActivity.getStatusTypeCode());
         Assert.assertEquals("should be the previous day due to timezone",
                 "09/07/2020", userActivity.getActivitySummary());
+        Assert.assertEquals("Does your father have a history of Jewish ancestry?", userActivity.getActivityName());
 
         Assert.assertTrue("Could not find prequal in list of activity instances for test user", hasPrequal);
         Assert.assertFalse(hasReadonlyActivities);

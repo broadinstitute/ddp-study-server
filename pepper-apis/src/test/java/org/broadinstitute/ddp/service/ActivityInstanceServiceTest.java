@@ -239,7 +239,7 @@ public class ActivityInstanceServiceTest extends ActivityInstanceServiceTestAbst
         summaries.get(0).setInstanceNumber(2);
 
         TransactionWrapper.useTxn(handle ->
-                service.renderInstanceSummaries(handle, testData.getUserId(), "study", summaries, Map.of()));
+                service.renderInstanceSummaries(handle, testData.getUserId(), "operatorGuid", "study", summaries, Map.of()));
 
         assertEquals("name #2", summaries.get(0).getActivityName());
     }
@@ -278,7 +278,7 @@ public class ActivityInstanceServiceTest extends ActivityInstanceServiceTestAbst
 
         ActivityDefStore.getInstance().setActivityDef("study", activityCode, "v1", activity);
         TransactionWrapper.useTxn(handle -> service.renderInstanceSummaries(
-                handle, testData.getUserId(), "study", summaries, Map.of("guid", response)));
+                handle, testData.getUserId(), "operatorGuid", "study", summaries, Map.of("guid", response)));
 
         assertEquals("Name: My Aunt #2", summaries.get(0).getActivityName());
         assertEquals("Title: some-text the-fallback", summaries.get(0).getActivityTitle());
