@@ -360,6 +360,7 @@ public class CustomExporter {
                     ParentActivityResponseCollector responseCollector = responseCollectors.get(activityTag);
                     ActivityAttributesCollector attributesCollector = attributesCollectors.get(activityTag);
 
+                    //TODO: Find out why mainInstances is empty!  That's the bug--figure out where it came from
                     List<ActivityResponse> mainInstances = pt.getResponses(activityTag).stream()
                             .sorted(Comparator.comparing(ActivityResponse::getCreatedAt))
                             .collect(Collectors.toList());
