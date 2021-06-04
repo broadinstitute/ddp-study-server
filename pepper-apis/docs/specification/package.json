@@ -10,12 +10,12 @@
     "speccy": "^0.11.0"
   },
   "scripts": {
-    "start": "npm run generate-bundle && \"$(npm bin)/redoc-cli\" serve --watch build/pepper.yml",
-    "lint": "npm run generate-bundle && \"$(npm bin)/speccy\" lint --rules=\"rules.yml\" build/pepper.yml",
+    "start": "npm run generate-bundle && \"$(npm bin)/redoc-cli\" serve --watch build/pepper.yaml",
+    "lint": "npm run generate-bundle && \"$(npm bin)/speccy\" lint --rules=\"rules.yml\" build/pepper.yaml",
     "generate-bundle": "npx @redocly/openapi-cli bundle --output build/pepper --ext yaml src/pepper.yml",
     "generate-json-bundle": "npx @redocly/openapi-cli bundle --output build/pepper --ext json src/pepper.yml",
     "generate-docs": "\"$(npm bin)/redoc-cli\" bundle --output build/pepper.html src/pepper.yml",
-    "generate-openapi-angular-client": "openapi-generator generate  -i  build/pepper.yml -g typescript-angular -o generated-sources/openapi --additional-properties=\"ngVersion=8.0.0\""
+    "generate-openapi-angular-client": "openapi-generator generate  -i  build/pepper.yaml -g typescript-angular -o generated-sources/openapi --additional-properties=\"ngVersion=8.0.0\""
   },
   "devDependencies": {
     "@openapitools/openapi-generator-cli": "1.0.2-4.2.0"
