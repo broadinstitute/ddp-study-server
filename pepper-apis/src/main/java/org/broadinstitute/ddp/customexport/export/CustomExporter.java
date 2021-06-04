@@ -83,7 +83,7 @@ public class CustomExporter {
         List<CustomExportParticipant> customExportParticipants = new ArrayList<>();
         for (Participant p : participants) {
             String familyId = getFamilyId(handle, studyDto, p.getUser().getGuid(), esClient);
-            customExportParticipants.add(new CustomExportParticipant(familyId, p.getStatus(), p.getUser()));
+            customExportParticipants.add(new CustomExportParticipant(familyId, p));
         }
         return customExportParticipants;
     }
@@ -113,6 +113,9 @@ public class CustomExporter {
         }
 
         Object familyId = ((Map) sourceElement).get(familyIdHeader);
+        if (familyId == null) {
+            throw new DDPException("Error retrieving family ID from ElasticSearch: familyId is not present for user guid " + userGuid);
+        }
         return familyId.toString();
     }
 
@@ -348,11 +351,12 @@ public class CustomExporter {
 
         // Write the data to file
         while (participants.hasNext()) {
-            CustomExportParticipant pt = participants.next();
+            CustomExportParticipant customPt = participants.next();
+            Participant pt = customPt.getParticipant();
             List<String> row;
             try {
                 row = new LinkedList<>(participantMetaFmt.format(pt.getStatus(), pt.getUser()));
-                row.add(pt.getFamilyId());
+                row.add(customPt.getFamilyId());
                 ComponentDataSupplier supplier = new ComponentDataSupplier(pt.getUser().getAddress(), pt.getProviders());
                 for (CustomActivityExtract activity : activities) {
                     String activityTag = activity.getTag();
@@ -360,7 +364,6 @@ public class CustomExporter {
                     ParentActivityResponseCollector responseCollector = responseCollectors.get(activityTag);
                     ActivityAttributesCollector attributesCollector = attributesCollectors.get(activityTag);
 
-                    //TODO: Find out why mainInstances is empty!  That's the bug--figure out where it came from
                     List<ActivityResponse> mainInstances = pt.getResponses(activityTag).stream()
                             .sorted(Comparator.comparing(ActivityResponse::getCreatedAt))
                             .collect(Collectors.toList());
