@@ -28,8 +28,6 @@ references:
       /home/circleci/repo/.circleci
   builds_bucket: &builds_bucket
       ddp-build-artifacts
-  dispatch_secret_id: &dispatch_secret_id
-      app-engine-dispatch
   jar_build_bucket_dir: &jar_build_bucket_dir
       /ddp-study-server-pepper-apis
   housekeeping_test_db: &housekeeping_test_db
@@ -339,25 +337,6 @@ commands:
               gcloud app versions delete --quiet --service "$SERVICE" "$CURRENT_VERSION" --project "broad-ddp-${ENVIRONMENT}"
             done;
             exit 0
-
-  update-dispatch-rules:
-    parameters:
-      dispatch_secret_id:
-        type: string
-        default: *dispatch_secret_id
-    steps:
-      - run:
-          name: Get dispatch.yaml file
-          command: |
-            set -u
-            echo "Reading dispatch file from Secret Manager secret id '<<parameters.dispatch_secret_id>>'"
-            gcloud secrets versions access latest --secret '<<parameters.dispatch_secret_id>>' --project "broad-ddp-${ENVIRONMENT}" > dispatch.yaml
-            cat dispatch.yaml
-      - run:
-          name: Update GAE dispatch config
-          command: |
-            set -u
-            gcloud app deploy --quiet --project "broad-ddp-${ENVIRONMENT}" dispatch.yaml
 
   update-deployment-sheet:
     parameters:
@@ -815,7 +794,6 @@ jobs:
       - deploy-jar:
           jar_base_name: DataDonationPlatform
           deploy_config_file_dir: ../output-config
-      - update-dispatch-rules
 
   deploy-stored-jar-job:
     executor:
@@ -837,7 +815,6 @@ jobs:
       - deploy-jar:
           jar_base_name: DataDonationPlatform
           deploy_config_file_dir: ../output-config
-      - update-dispatch-rules
 
   deploy-docs-job:
     executor:
