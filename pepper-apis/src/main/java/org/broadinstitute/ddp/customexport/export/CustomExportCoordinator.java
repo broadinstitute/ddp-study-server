@@ -230,22 +230,16 @@ public class CustomExportCoordinator {
 
             if (currentBatch == null) {
                 int offset = fetched;
-                try {
-                    currentBatch = withAPIsTxn(handle -> {
-                        CustomExportDao export = handle.attach(CustomExportDao.class);
-                        List<CompletedUserDto>
-                                userIds = export.findCustomUserIdsToExport(studyDto.getId(), customExportStatus, customLastCompletion,
-                                customActivity, batchSize, offset);
-                        if (!userIds.isEmpty()) {
-                            exportLastCompleted = userIds.get(userIds.size() - 1).getCompletedTime();
-                        }
-                        List<CustomExportParticipant> extract = exporter.extractParticipantDataSetByIds(handle, studyDto,
-                                userIds.stream().map(CompletedUserDto::getUserId).collect(Collectors.toSet()));
-                        return new ArrayDeque<>(extract);
-                    });
-                } catch (IOException e) {
-                    throw new DDPException("Error retrieving next participant", e);
-                }
+                currentBatch = withAPIsTxn(handle -> {
+                    List<CompletedUserDto> userIds = handle.attach(CustomExportDao.class).findCustomUserIdsToExport(studyDto.getId(),
+                            customExportStatus, customLastCompletion, customActivity, batchSize, offset);
+                    if (!userIds.isEmpty()) {
+                        exportLastCompleted = userIds.get(userIds.size() - 1).getCompletedTime();
+                    }
+                    List<CustomExportParticipant> extract = exporter.extractParticipantDataSetByIds(handle, studyDto,
+                            userIds.stream().map(CompletedUserDto::getUserId).collect(Collectors.toSet()));
+                    return new ArrayDeque<>(extract);
+                });
                 fetched += currentBatch.size();
                 if (currentBatch.isEmpty()) {
                     currentBatch = null;

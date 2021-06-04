@@ -2,6 +2,7 @@ package org.broadinstitute.ddp.customexport.export;
 
 import java.io.IOException;
 import java.io.Writer;
+import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -58,28 +59,32 @@ public class CustomExporter {
     private static final Map<String, String> emailStore = new HashMap<>();
     private static final String familyIdHeader = "familyId";
 
-    private final Config mainConfig;
     private final Config exportConfig;
     private final String customGuid;
     private final String customActivity;
+    private final RestHighLevelClient elasticsearchClient;
 
-    public CustomExporter(Config mainConfig, Config exportConfig) {
-        this.mainConfig = mainConfig;
+    CustomExporter(Config mainConfig, Config exportConfig) {
         this.exportConfig = exportConfig;
         this.customActivity = exportConfig.getString(CustomExportConfigFile.ACTIVITY);
         this.customGuid = exportConfig.getString(CustomExportConfigFile.STUDY_GUID);
+        try {
+            elasticsearchClient = ElasticsearchServiceUtil.getElasticsearchClient(mainConfig);
+        } catch (MalformedURLException e) {
+            throw new DDPException("Cannot initialize CustomExporter due to error getting ElasticSearch client", e);
+        }
     }
 
-    List<CustomExportParticipant> extractParticipantDataSetByIds(Handle handle, StudyDto studyDto, Set<Long> userIds)
-            throws IOException {
-        RestHighLevelClient elasticsearchClient = ElasticsearchServiceUtil.getElasticsearchClient(this.mainConfig);
-        return createCustomParticipantsFrom(ExportUtil.extractParticipantDataSetByIds(handle, studyDto, userIds, emailStore), handle,
-                studyDto, elasticsearchClient);
+    List<CustomExportParticipant> extractParticipantDataSetByIds(Handle handle, StudyDto studyDto, Set<Long> userIds) {
+        List<Participant> baseParticipants = ExportUtil.extractParticipantDataSetByIds(handle, studyDto, userIds, emailStore);
+        return createCustomParticipantsFrom(baseParticipants, handle, studyDto, elasticsearchClient);
     }
 
     private static List<CustomExportParticipant> createCustomParticipantsFrom(List<Participant> participants, Handle handle,
                                                                               StudyDto studyDto,
                                                                               RestHighLevelClient esClient) {
+
+        // Here, we take the participants we constructed from the database and add the family ID from ElasticSearch
         List<CustomExportParticipant> customExportParticipants = new ArrayList<>();
         for (Participant p : participants) {
             String familyId = getFamilyId(handle, studyDto, p.getUser().getGuid(), esClient);
@@ -91,30 +96,25 @@ public class CustomExporter {
     private static String getFamilyId(Handle handle, StudyDto studyDto, String userGuid, RestHighLevelClient esClient) throws DDPException {
         String esIndex = ElasticsearchServiceUtil.getIndexForStudy(handle, studyDto, ElasticSearchIndexType.PARTICIPANTS_STRUCTURED);
         GetRequest getRequest = new GetRequest(esIndex, "_doc", userGuid);
-        String[] includes = {"dsm"};
+        String[] includes = {"dsm.familyId"};
         getRequest.fetchSourceContext(new FetchSourceContext(true, includes, null));
         GetResponse esResponse;
         try {
             esResponse = esClient.get(getRequest, RequestOptions.DEFAULT);
         } catch (IOException e) {
-            throw new DDPException("Error getting ElasticSearch client to use to get family ID for user guid " + userGuid, e);
+            throw new DDPException("Failed to get family ID for participant with guid " + userGuid + " due to failure of "
+                    + "ElasticSearch get request", e);
         }
         Map<String, Object> source = esResponse.getSource();
 
         if (source == null) {
-            throw new DDPException("Error reading ElasticSearch source: source is null for user guid " + userGuid);
+            throw new DDPException("Failed to get family ID for participant with guid " + userGuid + " because source returned from "
+                    + "ElasticSearch is null");
         }
 
-        Object sourceElement = source.get("dsm");
-        if (sourceElement == null) {
-            throw new DDPException("Error reading ElasticSearch source: DSM element is null for user guid" + userGuid);
-        } else if (!(sourceElement instanceof Map)) {
-            throw new DDPException("Error reading ElasticSearch source: DSM element is not a map for user guid " + userGuid);
-        }
-
-        Object familyId = ((Map) sourceElement).get(familyIdHeader);
+        Object familyId = ((Map)source.get("dsm")).get("familyId");
         if (familyId == null) {
-            throw new DDPException("Error retrieving family ID from ElasticSearch: familyId is not present for user guid " + userGuid);
+            throw new DDPException("Failed to get family ID for participant with guid " + userGuid + " because dsm.familyId is null");
         }
         return familyId.toString();
     }
@@ -131,7 +131,7 @@ public class CustomExporter {
      * @param handle     the database handle
      * @param activities the list of activities to look at
      */
-    public static void computeMaxInstancesSeen(Handle handle, List<CustomActivityExtract> activities) {
+    static void computeMaxInstancesSeen(Handle handle, List<CustomActivityExtract> activities) {
         var instanceDao = handle.attach(ActivityInstanceDao.class);
         for (CustomActivityExtract activity : activities) {
             ExportUtil.computeMaxInstancesSeen(instanceDao, activity);
@@ -151,7 +151,7 @@ public class CustomExporter {
      * @param handle     the database handle
      * @param activities the list of activities to look at
      */
-    public static void computeActivityAttributesSeen(Handle handle, List<CustomActivityExtract> activities) {
+    static void computeActivityAttributesSeen(Handle handle, List<CustomActivityExtract> activities) {
         var instanceDao = handle.attach(ActivityInstanceDao.class);
         for (CustomActivityExtract activity : activities) {
             ExportUtil.computeActivityAttributesSeen(instanceDao, activity);
@@ -238,7 +238,7 @@ public class CustomExporter {
      * @param handle the database handle
      * @return list of extracts
      */
-    public List<CustomActivityExtract> extractActivity(Handle handle) {
+    List<CustomActivityExtract> extractActivity(Handle handle) {
         JdbiActivity jdbiActivity = handle.attach(JdbiActivity.class);
 
         Optional<ActivityDto> activityDtoOptional = jdbiActivity.findActivityByStudyGuidAndCode(customGuid, customActivity);
@@ -264,14 +264,15 @@ public class CustomExporter {
      * @return number of participant records written
      * @throws IOException if error while writing
      */
-    public int exportDataSetAsCsv(StudyDto studyDto, List<CustomActivityExtract> activities, Iterator<CustomExportParticipant> participants,
-                                  Writer output) throws IOException {
+    int exportDataSetAsCsv(StudyDto studyDto, List<CustomActivityExtract> activities, Iterator<CustomExportParticipant> participants,
+                           Writer output) throws IOException {
         List<String> firstFields = exportConfig.getStringList(CustomExportConfigFile.FIRST_FIELDS);
         List<String> excludedParticipantFields = new ArrayList<>(exportConfig
                 .getStringList(CustomExportConfigFile.EXCLUDED_PARTICIPANT_FIELDS));
         List<String> excludedActivityFields = new ArrayList<>(exportConfig.getStringList(CustomExportConfigFile.EXCLUDED_ACTIVITY_FIELDS));
         ParticipantMetadataFormatter participantMetaFmt = new ParticipantMetadataFormatter(excludedParticipantFields);
         List<String> headers = new LinkedList<>(participantMetaFmt.headers());
+        headers.add(familyIdHeader);
 
         Map<String, Integer> activityTagToNormalizedMaxInstanceCounts = new HashMap<>();
         Map<String, ParentActivityResponseCollector> responseCollectors = new HashMap<>();
@@ -327,7 +328,6 @@ public class CustomExporter {
             for (var i = 1; i <= maxInstances; i++) {
                 // Add the headers
                 headers.addAll(attributesCollector.headers());
-                headers.add(familyIdHeader);
                 headers.addAll(mainResponseCollector.getHeaders());
                 List<String> singleChildCodes = new ArrayList<>(childResponseCollectors.keySet());
                 singleChildCodes.sort(String::compareTo);
