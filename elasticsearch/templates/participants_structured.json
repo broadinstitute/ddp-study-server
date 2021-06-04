@@ -330,6 +330,21 @@
             }
           }
         },
+        "workflows": {
+          "properties": {
+            "date": {
+              "type": "date",
+              "ignore_malformed": false,
+              "format": "strict_date_time||strict_date_time_no_millis||epoch_millis"
+            },
+            "status": {
+              "type": "keyword"
+            },
+            "workflow": {
+              "type": "keyword"
+            }
+          }
+        },
         "dsm": {
           "properties": {
             "dateOfBirth": {
@@ -347,6 +362,9 @@
             },
             "diagnosisMonth": {
               "type": "integer"
+            },
+            "familyId": {
+              "type": "long"
             },
             "hasConsentedToBloodDraw": {
               "type": "boolean"
