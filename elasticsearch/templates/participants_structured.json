@@ -330,18 +330,58 @@
             }
           }
         },
-        "workflows": {
+        "samples": {
           "properties": {
-            "date": {
+            "bspCollaboratorParticipantId": {
+              "type": "keyword"
+            },
+            "bspCollaboratorSampleId": {
+              "type": "keyword"
+            },
+            "carrier": {
+              "type": "keyword"
+            },
+            "kitRequestId": {
+              "type": "keyword"
+            },
+            "kitType": {
+              "type": "keyword"
+            },
+            "trackingIn": {
+              "type": "keyword"
+            },
+            "trackingOut": {
+              "type": "keyword"
+            },
+            "sent": {
               "type": "date",
               "ignore_malformed": false,
-              "format": "strict_date_time||strict_date_time_no_millis||epoch_millis"
+              "format": "strict_year_month_day"
+            },
+            "delivered": {
+              "type": "date",
+              "ignore_malformed": false,
+              "format": "strict_year_month_day"
+            },
+            "received": {
+              "type": "date",
+              "ignore_malformed": false,
+              "format": "strict_year_month_day"
+            }
+          }
+        },
+        "workflows": {
+          "properties": {
+            "workflow": {
+              "type": "keyword"
             },
             "status": {
               "type": "keyword"
             },
-            "workflow": {
-              "type": "keyword"
+            "date": {
+              "type": "date",
+              "ignore_malformed": false,
+              "format": "strict_date_time||strict_date_time_no_millis||epoch_millis"
             }
           }
         },
@@ -372,6 +412,29 @@
             "hasConsentedToTissueSample": {
               "type": "boolean"
             },
+            "medicalRecords": {
+              "properties": {
+                "medicalRecordId": {
+                  "type": "keyword"
+                },
+                "name": {
+                  "type": "text"
+                },
+                "type": {
+                  "type": "keyword"
+                },
+                "requested": {
+                  "type": "date",
+                  "ignore_malformed": false,
+                  "format": "strict_year_month_day"
+                },
+                "received": {
+                  "type": "date",
+                  "ignore_malformed": false,
+                  "format": "strict_year_month_day"
+                }
+              }
+            },
             "pdfs": {
               "properties": {
                 "configName":{
@@ -379,6 +442,43 @@
                 },
                 "displayName":{
                   "type": "text"
+                }
+              }
+            },
+            "tissueRecords": {
+              "properties": {
+                "tissueRecordId": {
+                  "type": "keyword"
+                },
+                "accessionNumber": {
+                  "type": "keyword"
+                },
+                "typePX": {
+                  "type": "text"
+                },
+                "locationPX": {
+                  "type": "text"
+                },
+                "datePX": {
+                  "type": "text"
+                },
+                "histology": {
+                  "type": "text"
+                },
+                "requested": {
+                  "type": "date",
+                  "ignore_malformed": false,
+                  "format": "strict_year_month_day"
+                },
+                "received": {
+                  "type": "date",
+                  "ignore_malformed": false,
+                  "format": "strict_year_month_day"
+                },
+                "sent": {
+                  "type": "date",
+                  "ignore_malformed": false,
+                  "format": "strict_year_month_day"
                 }
               }
             }
