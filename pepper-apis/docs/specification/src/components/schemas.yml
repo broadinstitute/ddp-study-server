@@ -296,8 +296,10 @@ Activity.Summary:
     isFollowup:
       description: true if the activity is generally considered to be an activity that comes after the "main" activities
       type: boolean
+      default: false
     isHidden:
       type: boolean
+      default: false
       description: |
         Whether the activity instance is hidden from the participant. When
         true, client should prefer to show some indicator to operator that
