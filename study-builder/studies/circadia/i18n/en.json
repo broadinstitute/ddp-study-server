@@ -53,9 +53,10 @@
   "prequal_color_blind": "Color Blind",
   "prequal_blind": "Blind",
 
-  "prequal_study_refrain_protocol_question": "This study requires refraining from smoking, using nicotine products, and/or consuming alcohol for approximately 48 hours. Would you be able to refrain from consuming these products for approximately 48 hours during the study protocol? ",
+  "prequal_dim_melatonin_before_question": "Have you completed a dim light melatonin onset saliva collection before?",
 
   "prequal_ineligible_participant_message": "Thank you for your interest in the Circadia Research Study! We appreciate your completion of our screening questionnaire. At this time, you are not eligible to participate. However, we invite you to stay up to date with our research efforts by signing up for our newsletter. We value our community and your efforts in contributing to research. Thank you.",
+
 
 
   "consent_name": "Consent",
