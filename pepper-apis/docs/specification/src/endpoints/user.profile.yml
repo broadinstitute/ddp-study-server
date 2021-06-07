@@ -2,6 +2,7 @@ get:
   operationId: getUserProfile
   tags:
     - Operator & Participant
+  summary: Get the profile for a user
   description: |
     return the user's profile
 
@@ -24,7 +25,7 @@ post:
   operationId: createUserProfile
   tags:
     - Operator & Participant
-  description: create a new profile for a user
+  summary: Create a new user profile
   parameters:
     - in: path
       name: user
@@ -45,7 +46,7 @@ patch:
   operationId: updateUserProfile
   tags:
     - Operator & Participant
-  description: update the user's profile
+  summary: Update a user's profile
   parameters:
     - in: path
       name: user

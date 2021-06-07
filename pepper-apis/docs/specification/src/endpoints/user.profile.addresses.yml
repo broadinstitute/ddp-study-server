@@ -8,7 +8,7 @@ parameters:
 
 get:
   operationId: getMailingAddresses
-  description: fetch all saved addresses for a participant
+  summary: Get all the mailing addresses for a participant
   tags:
     - Mailing Address
   responses:
@@ -19,7 +19,7 @@ get:
 
 post:
   operationId: createMailingAddress
-  description: save a new address for a participant
+  summary: Create a new mailing address for a participant
   tags:
     - Mailing Address
   parameters:
