@@ -161,6 +161,8 @@ Activity:
         unstructured text.
     readonly:
       type: boolean
+      default: false
+      description: false if the activity can be modified.
     readonlyHint:
       type: string
       nullable: true
