@@ -33,17 +33,17 @@ JoinMailingListPayload:
     - emailAddress
   properties:
     firstName:
-      description: users first name
+      description: user's first name
       type: string
       example: John
       minLength: 0
     lastName:
-      description: users last name
+      description: user's last name
       type: string
       example: Doe
       minLength: 0
     emailAddress:
-      description: users email address
+      description: user's email address
       type: string
       example: john.doe@example.com
     info:
@@ -1655,7 +1655,7 @@ Study.Workflow:
   properties:
     name:
       type: string
-      description: the name of the worklflow, for example "DEVICE_REGISTRATION"
+      description: the name of the workflow, for example "DEVICE_REGISTRATION"
     states:
       type: array
       description: List of allowed states for this workflow
