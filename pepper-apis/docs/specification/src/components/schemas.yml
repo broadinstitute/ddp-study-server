@@ -189,7 +189,7 @@ Activity:
         will contain unstructured text.
     lastUpdated:
       type: string
-      format: YYYY-MM-DDThhmmss.sss (ISO-8601)
+      format: YYYY-MM-DDThhmmss.sssZ (ISO-8601)
       nullable: true
       description: The date time the activity definition (NOT the instance) was last updated
     canDelete:
@@ -2146,24 +2146,27 @@ Invitation:
       description: the id of the invitation
       type: string
     createdAt:
-      description: timestamp of when invitation was created, in ISO-8601 UTC format
+      description: timestamp of when invitation was created.
       type: string
       example: 2020-05-13T17:58:33.887Z
+      format: YYYY-MM-DDThhmmss.sssZ (ISO-8601)
     voidedAt:
-      description: timestamp of when invitation was voided, making the invitation invalid, in ISO-8601 UTC format
+      description: timestamp of when invitation was voided, making the invitation invalid.
       type: string
       nullable: true
       example: null
     verifiedAt:
-      description: timestamp of when invitation was verified, indicating user has acknowledged receiving the invitation, in ISO-8601 UTC format
+      description: timestamp of when invitation was verified, indicating user has acknowledged receiving the invitation.
       type: string
       nullable: true
       example: 2020-05-13T18:58:33.887Z
+      format: YYYY-MM-DDThhmmss.sssZ (ISO-8601)
     acceptedAt:
-      description: timestamp of when invitation was accepted, in ISO-8601 UTC format
+      description: timestamp of when invitation was accepted.
       type: string
       nullable: true
       example: 2020-05-13T19:58:33.887Z
+      format: YYYY-MM-DDThhmmss.sssZ (ISO-8601)
 
 MedicalProvider:
   type: object
@@ -2252,7 +2255,7 @@ ParticipantStatusTrackingInfo.Workflow:
       description: The current state in the workflow
     date:
       type: string
-      format: YYYY-MM-DDThhmmss.sss (ISO-8601)
+      format: YYYY-MM-DDThhmmss.sssZ (ISO-8601)
       description: Last changed
       example: 2021-04-18T14:09:37.123Z
 ParticipantStatusTrackingInfo.Record:
