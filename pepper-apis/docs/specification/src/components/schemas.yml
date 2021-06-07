@@ -314,12 +314,26 @@ Activity.Summary:
 ###
 Answer:
   type: object
+  discriminator:
+    propertyName: type
+    mapping:
+      AGREEMENT: '#/Answer.Boolean'
+      BOOLEAN: '#/Answer.Boolean'
+      COMPOSITE: '#/Answer.Composite'
+      DATE: '#/Answer.Date'
+      FILE: '#/Answer.File'
+      NUMERIC: '#/Answer.Numeric'
+      PICKLIST: '#/Answer.Picklist'
+      TEXT: '#/Answer.String'
   required:
     - answerGuid
+    - type
   properties:
     answerGuid:
       type: string
       format: guid
+    type:
+      type: string
 Answer.String:
   allOf:
     - $ref: '#/Answer'
@@ -458,17 +472,29 @@ FileInfo:
 AnswerSubmission:
   type: object
   discriminator:
-    propertyName: value
+    propertyName: type
+    mapping:
+      AGREEMENT: '#/AnswerSubmission.Boolean'
+      BOOLEAN: '#/AnswerSubmission.Boolean'
+      COMPOSITE: '#/AnswerSubmission.Composite'
+      DATE: '#/AnswerSubmission.Date'
+      FILE: '#/AnswerSubmission.File'
+      NUMERIC: '#/AnswerSubmission.Numeric.Integer'
+      PICKLIST: '#/AnswerSubmission.Picklist'
+      TEXT: '#/AnswerSubmission.String'
   required:
     - stableId
-    - value
   properties:
     stableId:
       type: string
       description: question identifier that the answer is for
     answerGuid:
       type: string
-      description: the identifier for the answer to update
+      format: guid
+      nullable: true
+      description: the existing answer guid if this is an update
+    type:
+      type: string
 AnswerSubmission.Boolean:
   allOf:
     - $ref: '#/AnswerSubmission'
@@ -556,6 +582,13 @@ Block:
   type: object
   discriminator:
     propertyName: blockType
+    mapping:
+      ACTIVITY: '#/Block.Activity'
+      COMPONENT: '#/Block.Component'
+      CONDITIONAL: '#/Block.Conditional'
+      CONTENT: '#/Block.Content'
+      GROUP: '#/Block.Grouped'
+      QUESTION: '#/Block.Question'
   required:
     - blockType
     - blockGuid
@@ -737,15 +770,15 @@ Component:
   type: object
   discriminator:
     propertyName: componentType
+    mapping:
+      PHYSICIAN: '#/Component.Physician'
+      INSTITUTION: '#/Component.Institution'
+      MAILING_ADDRESS:  '#/Component.MailingAddress'
   required:
     - componentType
   properties:
     componentType:
       type: string
-      enum:
-        - PHYSICIAN
-        - INSTITUTION
-        - MAILING_ADDRESS
     parameters:
       type: object
 Component.Physician:
@@ -1327,6 +1360,15 @@ Question:
   type: object
   discriminator:
     propertyName: questionType
+    mapping:
+      AGREEMENT: '#/Question.Agreement'
+      BOOLEAN: '#/Question.Boolean'
+      COMPOSITE: '#/Question.Composite'
+      DATE: '#/Question.Date'
+      FILE: '#/Question.File'
+      NUMERIC: '#/Question.Numeric'
+      PICKLIST: '#/Question.Picklist'
+      TEXT: '#/Question.Text'
   required:
   - questionType
   - stableId
@@ -1730,6 +1772,18 @@ Validation:
   type: object
   discriminator:
     propertyName: rule
+    mapping:
+      AGE_RANGE: '#/Validation.AgeRange'
+      COMPLETE: '#/Validation.Complete'
+      DATE_RANGE: '#/Validation.DateRange'
+      DAY_REQUIRED: '#/Validation.DayRequired'
+      INT_RANGE: '#/Validation.IntRange'
+      LENGTH: '#/Validation.Length'
+      MONTH_REQUIRED: '#/Validation.MonthRequired'
+      NUM_OPTIONS_SELECTED: '#/Validation.OptionsSelected'
+      REGEX: '#/Validation.RegularExpression'
+      REQUIRED: '#/Validation.Required'
+      YEAR_REQUIRED: '#/Validation.YearRequired'
   required:
     - rule
     - message
@@ -2341,6 +2395,13 @@ WorkflowNextSuggestion:
   type: object
   discriminator:
     propertyName: next
+    mapping:
+      ACTIVITY: '#/WorkflowNextSuggestion.Activity'
+      DASHBOARD: '#/WorkflowNextSuggestion.Static'
+      MAILING_LIST: '#/WorkflowNextSuggestion.Static'
+      PARTICIPANT_LIST: '#/WorkflowNextSuggestion.Static'
+      THANK_YOU: '#/WorkflowNextSuggestion.Static'
+      UNKNOWN: '#/WorkflowNextSuggestion.Static'
   required:
     - next
   properties:
@@ -2353,13 +2414,6 @@ WorkflowNextSuggestion:
         * `THANK_YOU` - Indicates end of workflow and a thank you message should be shown.
         * `PARTICIPANT_LIST` - Indicates the list of governed users.
         * `UNKNOWN` - No suggestions available.
-      enum:
-        - ACTIVITY
-        - DASHBOARD
-        - MAILING_LIST
-        - THANK_YOU
-        - PARTICIPANT_LIST
-        - UNKNOWN
 WorkflowNextSuggestion.Activity:
   allOf:
   - $ref: '#/WorkflowNextSuggestion'
@@ -2387,8 +2441,9 @@ WorkflowNextSuggestion.Static:
         type: string
         enum:
           - DASHBOARD
-          - THANK_YOU
+          - MAILING_LIST
           - PARTICIPANT_LIST
+          - THANK_YOU
           - UNKNOWN
 Statistics.Configuration:
   type: object
