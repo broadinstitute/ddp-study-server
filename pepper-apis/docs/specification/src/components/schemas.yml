@@ -18,13 +18,6 @@ FormType:
     - CONSENT
     - GENERAL
     - PREQUALIFIER
-InstitutionType:
-  title: InstitutionType
-  type: string
-  enum:
-    - INITIAL_BIOPSY
-    - INSTITUTION
-    - PHYSICIAN
 JoinMailingListPayload:
   type: object
   title: JoinMailingListPayload
@@ -1708,24 +1701,6 @@ Section:
       type: array
       items:
         $ref: '#/Block'
-Study.Workflow:
-  type: object
-  properties:
-    name:
-      type: string
-      description: the name of the workflow, for example "DEVICE_REGISTRATION"
-    states:
-      type: array
-      description: List of allowed states for this workflow
-      items:
-        $ref: '#/Study.WorkflowState'
-Study.WorkflowState:
-  type: object
-  description: A state within a workflow
-  properties:
-    name:
-      type: string
-      description: the name of the state, such as "Accepted" or "Scheduled"
 Study.Summary:
   type: object
   required:
@@ -2235,43 +2210,6 @@ MedicalProvider:
       type: string
     state:
       type: string
-### Participant status
-ParticipantStatus:
-  type: object
-  required:
-    - samples
-  properties:
-    mrRequested:
-      type: integer
-    mrReceived:
-      type: integer
-    tissueRequested:
-      type: integer
-    tissueSent:
-      type: integer
-    tissueReceived:
-      type: integer
-    samples:
-      type: array
-      description: Contains a list samples records for the participant
-      minItems: 0
-      items:
-        $ref: '#/ParticipantStatus.Sample'
-ParticipantStatus.Sample:
-  type: object
-  required:
-    - sent
-  properties:
-    kitType:
-      type: string
-    sent:
-      type: integer
-    trackingId:
-      type: string
-    carrier:
-      type: string
-    received:
-      type: integer
 ParticipantStatusTrackingInfo:
   type: object
   required:
