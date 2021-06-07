@@ -46,6 +46,7 @@ JoinMailingListPayload:
     emailAddress:
       description: user's email address
       type: string
+      format: email
       example: john.doe@example.com
     info:
       description: Strings providing context about which umbrella based mailing list the user is interested in. Usually list of diseases
@@ -58,15 +59,17 @@ JoinMailingListPayload:
       description: The umbrella id of the mailing list the user is interested in (one of umbrellaId OR studyGuid but not both is required)
       example: cmi
       type: string
+      format: guid
     studyGuid:
       description: The studyGuid of the mailing list the user is interested in (one of umbrellaId OR studyGuid but not both is required)
       example: ANGIO
       type: string
+      format: guid
     isoLanguageCode:
       description: preferred language code of join mailing list user. If language code is not set, defaults to study default language.
       type: string
       nullable: true
-      format: ISO 639-1 standard
+      format: ISO 639-1
       example: en
 
 ListStyle:
@@ -134,9 +137,11 @@ Activity:
       $ref: '../pepper.yml#/components/schemas/FormType'
     activityCode:
       type: string
+      format: guid
       description: unique identifier of the activity
     guid:
       type: string
+      format: guid
       description: unique identifier for this instance of the activity
     parentInstanceGuid:
       type: string
@@ -226,6 +231,7 @@ Activity.Summary:
       description: the source activity for this instance
       example: ABCDEFGH12
       type: string
+      format: guid
     activityType:
       $ref: "../pepper.yml#/components/schemas/ActivityType"
     activitySubtype:
@@ -249,26 +255,32 @@ Activity.Summary:
       nullable: true
     createdAt:
       type: integer
+      format: int64
       description: The creation timestamp of the activity instance, in milliseconds since `1970-01-01T00:00:00Z` (UNIX time)
     icon:
       description: a Base64 encoded png or jpg image
       example: YW55IGN...BwbGVhc3VyZQ==
       type: string
+      format: base64
       nullable: true
     instanceGuid:
       example: 6B03213FD0
       type: string
+      format: guid
     parentInstanceGuid:
       description: guid for the parent activity instance in case this is a child activity instance
       type: string
+      format: guid
       nullable: true
     numQuestions:
       description: number of questions in this activity
       example: 4
       type: integer
+      minimum: 0
     numQuestionsAnswered:
       description: number of questions that have been answered in this activity
       example: 1
+      minimum: 0
       type: integer
     readonly:
       description: false if the activity can be modified
@@ -291,6 +303,7 @@ Activity.Summary:
     previousInstanceGuid:
       description: GUID of previous instance
       type: string
+      format: guid
 ######
 #
 # Answers
@@ -302,6 +315,7 @@ Answer:
   properties:
     answerGuid:
       type: string
+      format: guid
 Answer.String:
   allOf:
     - $ref: '../pepper.yml#/components/schemas/Answer'
@@ -404,6 +418,7 @@ SelectedOption:
   properties:
     stableId:
       type: string
+      format: guid
     detail:
       type: string
       nullable: true
@@ -439,6 +454,7 @@ FileInfo:
     fileSize:
       type: integer
       description: Size of the file in bytes
+      minimum: 0
 AnswerSubmission:
   type: object
   discriminator:
@@ -549,6 +565,7 @@ Block:
       type: string
     blockGuid:
       type: string
+      format: guid
     shown:
       type: boolean
 Block.Component:
@@ -1676,18 +1693,25 @@ Study.Summary:
   properties:
     studyGuid:
       type: string
+      format: guid
     name:
       type: string
     participantCount:
       type: integer
       minimum: 0
+      description: The total number of consented participants in a study. This is a subset of the registered users.
     registeredCount:
       type: integer
       minimum: 0
+      description: The total number of registered users in a study.
     restricted:
       type: boolean
+      default: false
+      description: |
+        `true` if the study requires an IRB password for access.
     studyEmail:
-        type: string
+      type: string
+      format: email
 Study.Detail:
   allOf:
     - $ref: '../pepper.yml#/components/schemas/Study.Summary'
@@ -2143,6 +2167,7 @@ MedicalProvider:
     medicalProviderGuid:
       type: string
       readOnly: true
+      format: guid
     institutionName:
       type: string
     physicianName:
