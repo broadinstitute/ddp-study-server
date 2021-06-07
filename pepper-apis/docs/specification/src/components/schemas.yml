@@ -6,6 +6,7 @@ ActivityType:
 ActivityInstanceStatusType:
   title: ActivityInstanceStatusType
   type: string
+  example: IN_PROGRESS
   enum:
     - COMPLETE
     - CREATED
@@ -143,7 +144,6 @@ Activity:
       description: guid for the parent activity instance in case this is a child activity instance
     statusCode:
       $ref: "../pepper.yml#/components/schemas/ActivityInstanceStatusType"
-      example: IN_PROGRESS
     title:
       type: string
       description: title of the activity to be displayed
@@ -276,7 +276,6 @@ Activity.Summary:
       type: boolean
     statusCode:
       $ref: "../pepper.yml#/components/schemas/ActivityInstanceStatusType"
-      example: IN_PROGRESS
     canDelete:
       type: boolean
       description: whether the activity instance can be deleted
