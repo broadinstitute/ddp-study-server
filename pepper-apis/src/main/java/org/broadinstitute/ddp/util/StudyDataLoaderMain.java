@@ -1351,9 +1351,26 @@ public class StudyDataLoaderMain {
     @SuppressWarnings("unused")
     private static class DSMData {
 
+        static Map<String, String> statusMapping;
+
         static Map<String, List<String>> data;
 
         static {
+            statusMapping = new HashMap<>();
+            statusMapping.putAll(Map.of(
+                    "0", "NotRegistered",
+                    "1", "Registered",
+                    "2", "ConsentedNeedsAssent",
+                    "3", "Consented",
+                    "4", "SubmittedPhysicianInfo",
+                    "5", "SubmittedMedicalHistory",
+                    "6", "SubmittedGenomeStudyShippingInfo",
+                    "7", "SubmittedEnrollment",
+                    "8", "Enrolled",
+                    "9", "NotEligible"
+            ));
+            statusMapping.put("10", "Duplicate");
+
             data = Map.of(
                     "AT_GROUP_ELIGIBILITY", List.of(
                             "ELIGIBILITY",
@@ -1396,6 +1413,9 @@ public class StudyDataLoaderMain {
                 for (String field : entry.getValue()) {
                     var value = el.getAsJsonObject().get(field.toLowerCase());
                     if (value != null && !(value instanceof JsonNull)) {
+                        String stringValue = field.equals("REGISTRATION_STATUS") ?
+                                statusMapping.getOrDefault(value.getAsString(), value.getAsString()) :
+                                value.getAsString();
                         if (!first) {
                             json.append(",");
                         }
@@ -1403,7 +1423,7 @@ public class StudyDataLoaderMain {
                         json.append("\"")
                                 .append(field)
                                 .append("\":\"")
-                                .append(value.getAsString()
+                                .append(stringValue
                                         .replaceAll("(\\r|\\n|\\r\\n)", "\\\\n")
                                         .replaceAll("\"", "\\\\\""))
                                 .append("\"");
