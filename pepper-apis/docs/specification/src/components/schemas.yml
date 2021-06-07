@@ -189,7 +189,7 @@ Activity:
         will contain unstructured text.
     lastUpdated:
       type: string
-      format: date-time
+      format: YYYY-MM-DDThhmmss.sss (ISO-8601)
       nullable: true
       description: The date time the activity definition (NOT the instance) was last updated
     canDelete:
@@ -1868,10 +1868,12 @@ Validation.DateRange:
           type: string
           description: the minimum date required to be considered valid. This value is inclusive. The date format is a full, extended ISO-8601 Calendar date in the format `YYYY-MM-DD` in the UTC time zone.
           nullable: true
+          format: date
         endDate:
           type: string
           description: the maximum date required to be considered valid. This value is inclusive. The date format is a full, extended ISO-8601 Calendar date in the format `YYYY-MM-DD` in the UTC time zone.
           nullable: true
+          format: date
 Validation.AgeRange:
   allOf:
     - $ref: '../pepper.yml#/components/schemas/Validation'
@@ -2250,7 +2252,7 @@ ParticipantStatusTrackingInfo.Workflow:
       description: The current state in the workflow
     date:
       type: string
-      format: date-time
+      format: YYYY-MM-DDThhmmss.sss (ISO-8601)
       description: Last changed
       example: 2021-04-18T14:09:37.123Z
 ParticipantStatusTrackingInfo.Record:
