@@ -1413,8 +1413,8 @@ public class StudyDataLoaderMain {
                 for (String field : entry.getValue()) {
                     var value = el.getAsJsonObject().get(field.toLowerCase());
                     if (value != null && !(value instanceof JsonNull)) {
-                        String stringValue = field.equals("REGISTRATION_STATUS") ?
-                                statusMapping.getOrDefault(value.getAsString(), value.getAsString()) :
+                        String stringValue = field.equals("REGISTRATION_STATUS")
+                                ? statusMapping.getOrDefault(value.getAsString(), value.getAsString()) :
                                 value.getAsString();
                         if (!first) {
                             json.append(",");
