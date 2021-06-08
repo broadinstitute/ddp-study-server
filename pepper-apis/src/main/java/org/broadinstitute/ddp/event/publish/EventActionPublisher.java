@@ -3,7 +3,7 @@ package org.broadinstitute.ddp.event.publish;
 import org.broadinstitute.ddp.model.activity.types.EventActionType;
 
 /**
- * Interface defining a 'publisher' providing publishing of
+ * Interface defining an abstract 'publisher' for publishing of
  * a specified event to some 'queue' (for example to Google PubSub topic).
  */
 public interface EventActionPublisher {
