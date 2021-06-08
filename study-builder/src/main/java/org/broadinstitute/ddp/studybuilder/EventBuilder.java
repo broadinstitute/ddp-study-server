@@ -323,6 +323,10 @@ public class EventBuilder {
             String targetStatus = actionCfg.getString("status");
             var targetStatusType = EnrollmentStatusType.valueOf(targetStatus);
             return actionDao.insertUpdateUserStatusAction(targetStatusType);
+        } else if (EventActionType.UPDATE_CUSTOM_WORKFLOW.name().equals(type)) {
+            String workflow = actionCfg.getString("workflow");
+            String status = actionCfg.getString("status");
+            return actionDao.insertUpdateCustomWorkflowAction(workflow, status);
         } else {
             return actionDao.insertStaticAction(EventActionType.valueOf(type));
         }
@@ -450,6 +454,10 @@ public class EventBuilder {
         } else if (EventActionType.UPDATE_USER_STATUS.name().equals(type))  {
             String targetStatus = actionCfg.getString("status");
             return String.format("%s/%s", type, targetStatus);
+        } else if (EventActionType.UPDATE_USER_STATUS.name().equals(type))  {
+            String workflow = actionCfg.getString("workflow");
+            String status = actionCfg.getString("status");
+            return String.format("%s/%s/%s", type, workflow, status);
         } else {
             return type;
         }

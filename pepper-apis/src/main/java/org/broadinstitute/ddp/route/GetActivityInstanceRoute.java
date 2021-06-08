@@ -14,8 +14,10 @@ import org.broadinstitute.ddp.analytics.GoogleAnalyticsMetricsTracker;
 import org.broadinstitute.ddp.constants.RouteConstants.PathParam;
 import org.broadinstitute.ddp.content.ContentStyle;
 import org.broadinstitute.ddp.db.TransactionWrapper;
+import org.broadinstitute.ddp.db.dao.EventDao;
 import org.broadinstitute.ddp.db.dao.JdbiUserStudyEnrollment;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
+import org.broadinstitute.ddp.db.dto.EventConfigurationDto;
 import org.broadinstitute.ddp.db.dto.LanguageDto;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.activity.instance.ActivityInstance;
@@ -29,6 +31,7 @@ import org.broadinstitute.ddp.model.activity.instance.question.Question;
 import org.broadinstitute.ddp.model.activity.instance.validation.ActivityValidationFailure;
 import org.broadinstitute.ddp.model.activity.types.ActivityType;
 import org.broadinstitute.ddp.model.activity.types.BlockType;
+import org.broadinstitute.ddp.model.activity.types.EventTriggerType;
 import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
 import org.broadinstitute.ddp.pex.PexInterpreter;
 import org.broadinstitute.ddp.security.DDPAuth;
@@ -77,6 +80,11 @@ public class GetActivityInstanceRoute implements Route {
                 instanceGuid, userGuid, studyGuid, operatorGuid, isStudyAdmin);
 
         ActivityInstance result = TransactionWrapper.withTxn(handle -> {
+            EventDao eventDao = handle.attach(EventDao.class);
+            List<EventConfigurationDto> ed = eventDao.getNotificationConfigsForMailingListByEventType(studyGuid,
+                    EventTriggerType.USER_REGISTERED);
+            System.out.println(ed);
+
             ActivityInstanceDto instanceDto = RouteUtil.findAccessibleInstanceOrHalt(
                     response, handle, userGuid, studyGuid, instanceGuid, isStudyAdmin);
 

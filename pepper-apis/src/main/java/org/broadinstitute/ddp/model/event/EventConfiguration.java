@@ -1,13 +1,21 @@
 package org.broadinstitute.ddp.model.event;
 
+import static java.lang.String.format;
+
 import org.broadinstitute.ddp.db.dto.EventConfigurationDto;
+import org.broadinstitute.ddp.event.publish.pubsub.EventActionPubSubPublisher;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.activity.types.EventActionType;
 import org.broadinstitute.ddp.model.activity.types.EventTriggerType;
 import org.broadinstitute.ddp.pex.PexInterpreter;
 import org.jdbi.v3.core.Handle;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class EventConfiguration {
+
+    private static final Logger LOG = LoggerFactory.getLogger(EventConfiguration.class);
+
     private long eventConfigurationId;
     private EventActionType eventActionType;
     private EventTriggerType eventTriggerType;
@@ -77,46 +85,51 @@ public class EventConfiguration {
                         + "the EventConfiguration ctor");
         }
 
-        switch (eventActionType) {
-            case ACTIVITY_INSTANCE_CREATION:
-                eventAction = new ActivityInstanceCreationEventAction(this, dto);
-                break;
-            case NOTIFICATION:
-                eventAction = new NotificationEventAction(this, dto);
-                break;
-            case USER_ENROLLED:
-                eventAction = new EnrollUserEventAction(this, dto);
-                break;
-            case ANNOUNCEMENT:
-                eventAction = new AnnouncementEventAction(this, dto);
-                break;
-            case CREATE_INVITATION:
-                eventAction = new CreateInvitationEventAction(this, dto);
-                break;
-            case COPY_ANSWER:
-                eventAction = new CopyAnswerEventAction(this, dto);
-                break;
-            case HIDE_ACTIVITIES:
-                eventAction = new HideActivitiesEventAction(this, dto);
-                break;
-            case MARK_ACTIVITIES_READ_ONLY:
-                eventAction = new MarkActivitiesReadOnlyEventAction(this, dto);
-                break;
-            case PDF_GENERATION:
-                eventAction = new PdfGenerationEventAction(this, dto);
-                break;
-            case REVOKE_PROXIES:
-                eventAction = new RevokeProxiesEventAction(this, dto);
-                break;
-            case UPDATE_USER_STATUS:
-                eventAction = new UpdateUserStatusEventAction(this, dto);
-                break;
-            default:
-                throw new DDPException("Event action type: " + eventActionType.name() + " is not properly configured in "
-                        + "the EventConfiguration ctor");
-
+        try {
+            switch (eventActionType) {
+                case ACTIVITY_INSTANCE_CREATION:
+                    eventAction = new ActivityInstanceCreationEventAction(this, dto);
+                    break;
+                case NOTIFICATION:
+                    eventAction = new NotificationEventAction(this, dto);
+                    break;
+                case USER_ENROLLED:
+                    eventAction = new EnrollUserEventAction(this, dto);
+                    break;
+                case ANNOUNCEMENT:
+                    eventAction = new AnnouncementEventAction(this, dto);
+                    break;
+                case CREATE_INVITATION:
+                    eventAction = new CreateInvitationEventAction(this, dto);
+                    break;
+                case COPY_ANSWER:
+                    eventAction = new CopyAnswerEventAction(this, dto);
+                    break;
+                case HIDE_ACTIVITIES:
+                    eventAction = new HideActivitiesEventAction(this, dto);
+                    break;
+                case MARK_ACTIVITIES_READ_ONLY:
+                    eventAction = new MarkActivitiesReadOnlyEventAction(this, dto);
+                    break;
+                case PDF_GENERATION:
+                    eventAction = new PdfGenerationEventAction(this, dto);
+                    break;
+                case REVOKE_PROXIES:
+                    eventAction = new RevokeProxiesEventAction(this, dto);
+                    break;
+                case UPDATE_USER_STATUS:
+                    eventAction = new UpdateUserStatusEventAction(this, dto);
+                    break;
+                case UPDATE_CUSTOM_WORKFLOW:
+                    eventAction = new UpdateCustomWorkflowEventAction(this, dto, new EventActionPubSubPublisher());
+                    break;
+                default:
+                    throw new DDPException("Event action type: " + eventActionType.name() + " is not properly configured in "
+                            + "the EventConfiguration ctor");
+            }
+        } catch (Exception e) {
+            LOG.error(format("Error handle event %s", eventActionType), e);
         }
-
     }
 
     public void doAction(PexInterpreter treeWalkInterpreter, Handle handle, EventSignal eventSignal) {

@@ -45,7 +45,7 @@ public class UpdateUserStatusEventActionTest extends TxnAwareBaseTest {
             doCallRealMethod().when(actionSpy).doAction(any(), any(), any());
 
             var signal = new EventSignal(testData.getUserId(), testData.getUserId(), testData.getUserGuid(),
-                    testData.getUserGuid(), newStudy.getId(), EventTriggerType.USER_STATUS_CHANGED);
+                    testData.getUserGuid(), newStudy.getId(), testData.getStudyGuid(), EventTriggerType.USER_STATUS_CHANGED);
             actionSpy.doAction(null, handle, signal);
 
             verify(actionSpy, never()).doActionSynchronously(any(), any());
@@ -71,7 +71,7 @@ public class UpdateUserStatusEventActionTest extends TxnAwareBaseTest {
             doCallRealMethod().when(actionSpy).doAction(any(), any(), any());
 
             var signal = new EventSignal(testData.getUserId(), testData.getUserId(), testData.getUserGuid(),
-                    testData.getUserGuid(), newStudy.getId(), EventTriggerType.USER_STATUS_CHANGED);
+                    testData.getUserGuid(), newStudy.getId(), testData.getStudyGuid(), EventTriggerType.USER_STATUS_CHANGED);
             actionSpy.doAction(null, handle, signal);
 
             verify(actionSpy, times(1)).doActionSynchronously(any(), any());

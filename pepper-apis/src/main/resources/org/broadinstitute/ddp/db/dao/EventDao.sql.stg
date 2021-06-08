@@ -47,7 +47,9 @@ SELECT
        where question_stable_code_id = ciea.contact_email_question_stable_code_id
      ) as contact_email_question_stable_id,
      ciea.mark_existing_as_voided as mark_existing_invitations_as_voided,
-     eata.activity_id as target_activity_id
+     eata.activity_id as target_activity_id,
+     ucwea.custom_workflow_name,
+     ucwea.custom_workflow_status
 FROM
      event_configuration ec
 JOIN event_trigger et ON ec.event_trigger_id = et.event_trigger_id
@@ -73,6 +75,7 @@ LEFT JOIN activity_instance_creation_action aica ON aica.activity_instance_creat
 LEFT JOIN copy_answer_event_action as cp_answer on cp_answer.event_action_id=ea.event_action_id
 LEFT JOIN create_invitation_event_action as ciea on ciea.event_action_id = ea.event_action_id
 LEFT JOIN event_action_target_activity as eata on eata.event_action_id = ea.event_action_id
+LEFT JOIN update_custom_workflow_event_action as ucwea on ucwea.event_action_id = ea.event_action_id
 >>
 
 getEventConfigurationByEventConfigurationId() ::= <<
