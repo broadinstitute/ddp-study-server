@@ -263,4 +263,7 @@
     <include file="db-changes/schema/DDP-5973-add-confirm-placeholder-template-id.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/DDP-6032-add-studymailinglist-language.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/DDP-5096-custom-export-last-completed.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/DDP-5808-create-file-question-mime-type-tables.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/DDP-6115-fix-guam-state-code.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/DDP-5750-new-enrollment-events.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>

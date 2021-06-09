@@ -43,6 +43,7 @@ import org.broadinstitute.ddp.db.ConsentElectionDao;
 import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.StudyActivityDao;
 import org.broadinstitute.ddp.db.TransactionWrapper;
+import org.broadinstitute.ddp.elastic.participantslookup.ESParticipantsLookupService;
 import org.broadinstitute.ddp.filter.AddDDPAuthLoggingFilter;
 import org.broadinstitute.ddp.filter.Auth0LogEventCheckTokenFilter;
 import org.broadinstitute.ddp.filter.DsmAuthFilter;
@@ -68,6 +69,8 @@ import org.broadinstitute.ddp.route.AddProfileRoute;
 import org.broadinstitute.ddp.route.AdminCreateStudyParticipantRoute;
 import org.broadinstitute.ddp.route.AdminCreateUserLoginAccountRoute;
 import org.broadinstitute.ddp.route.AdminLookupInvitationRoute;
+import org.broadinstitute.ddp.route.AdminParticipantLookupByGuidRoute;
+import org.broadinstitute.ddp.route.AdminParticipantsLookupRoute;
 import org.broadinstitute.ddp.route.AdminUpdateInvitationDetailsRoute;
 import org.broadinstitute.ddp.route.Auth0LogEventRoute;
 import org.broadinstitute.ddp.route.CheckIrbPasswordRoute;
@@ -205,6 +208,7 @@ public class DataDonationPlatform {
 
     private static final AtomicBoolean isReady = new AtomicBoolean(false);
     private static final int DEFAULT_BOOT_WAIT_SECS = 30;
+
 
     /**
      * Stop the server using the default wait time.
@@ -358,12 +362,18 @@ public class DataDonationPlatform {
         post(API.SENDGRID_EVENT, new SendGridEventRoute(new SendGridEventService()), responseSerializer);
         post(API.AUTH0_LOG_EVENT, new Auth0LogEventRoute(new Auth0LogEventService()), responseSerializer);
 
+        RestHighLevelClient esClient = ElasticsearchServiceUtil.getElasticsearchClient(cfg);
+
         // Admin APIs
         before(API.ADMIN_BASE + "/*", new StudyAdminAuthFilter());
         post(API.ADMIN_STUDY_PARTICIPANTS, new AdminCreateStudyParticipantRoute(), jsonSerializer);
         post(API.ADMIN_STUDY_INVITATION_LOOKUP, new AdminLookupInvitationRoute(), jsonSerializer);
         post(API.ADMIN_STUDY_INVITATION_DETAILS, new AdminUpdateInvitationDetailsRoute(), jsonSerializer);
         post(API.ADMIN_STUDY_USER_LOGIN_ACCOUNT, new AdminCreateUserLoginAccountRoute(), jsonSerializer);
+        post(API.ADMIN_STUDY_PARTICIPANTS_LOOKUP,
+                new AdminParticipantsLookupRoute(new ESParticipantsLookupService(esClient)), responseSerializer);
+        get(API.ADMIN_STUDY_PARTICIPANT_LOOKUP_BY_GUID,
+                new AdminParticipantLookupByGuidRoute(new ESParticipantsLookupService(esClient)), responseSerializer);
 
         // These filters work in a tandem:
         // - StudyLanguageResolutionFilter figures out and sets the user language in the attribute store
@@ -407,7 +417,6 @@ public class DataDonationPlatform {
         post(API.USER_PROFILE, new AddProfileRoute(), responseSerializer);
         patch(API.USER_PROFILE, new PatchProfileRoute(), responseSerializer);
 
-        RestHighLevelClient esClient = ElasticsearchServiceUtil.getElasticsearchClient(cfg);
         delete(API.USER_SPECIFIC, new DeleteUserRoute(new UserService(esClient)), responseSerializer);
 
         // User mailing address routes

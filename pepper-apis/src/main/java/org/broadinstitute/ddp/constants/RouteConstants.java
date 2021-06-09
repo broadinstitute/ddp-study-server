@@ -38,6 +38,10 @@ public class RouteConstants {
         public static final String ADMIN_BASE = BASE + "/admin";
         public static final String ADMIN_STUDY_PARTICIPANTS =
                 fmt(ADMIN_BASE + "/studies/%s/participants", PathParam.STUDY_GUID);
+        public static final String ADMIN_STUDY_PARTICIPANTS_LOOKUP =
+                fmt(ADMIN_BASE + "/studies/%s/participants-lookup", PathParam.STUDY_GUID);
+        public static final String ADMIN_STUDY_PARTICIPANT_LOOKUP_BY_GUID =
+                fmt(ADMIN_BASE + "/studies/%s/participants/%s", PathParam.STUDY_GUID, PathParam.USER_GUID);
         public static final String ADMIN_STUDY_INVITATION_LOOKUP =
                 fmt(ADMIN_BASE + "/studies/%s/invitation-lookup", PathParam.STUDY_GUID);
         public static final String ADMIN_STUDY_INVITATION_DETAILS =
