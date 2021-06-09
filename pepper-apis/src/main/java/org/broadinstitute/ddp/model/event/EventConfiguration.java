@@ -1,7 +1,7 @@
 package org.broadinstitute.ddp.model.event;
 
 import org.broadinstitute.ddp.db.dto.EventConfigurationDto;
-import org.broadinstitute.ddp.event.publish.pubsub.EventPubSubPublisher;
+import org.broadinstitute.ddp.event.publish.pubsub.TaskPubSubPublisher;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.activity.types.EventActionType;
 import org.broadinstitute.ddp.model.activity.types.EventTriggerType;
@@ -115,7 +115,7 @@ public class EventConfiguration {
                 eventAction = new UpdateUserStatusEventAction(this, dto);
                 break;
             case UPDATE_CUSTOM_WORKFLOW:
-                eventAction = new UpdateCustomWorkflowEventAction(this, dto, new EventPubSubPublisher());
+                eventAction = new UpdateCustomWorkflowEventAction(this, dto, new TaskPubSubPublisher());
                 break;
             default:
                 throw new DDPException("Event action type: " + eventActionType.name() + " is not properly configured in "

@@ -105,7 +105,7 @@ public class ConfigFile {
     public static final String PUBSUB_TASKS_SUB = "pubsub.pubSubTasksSubscription";
     public static final String PUBSUB_TASKS_RESULT_TOPIC = "pubsub.pubSubTasksResultTopic";
     public static final String PUBSUB_TASKS_SUBSCRIBER_AWAIT_RUNNING_TIMEOUT = "pubsub.pubSubTaskSubscriberAwaitRunningTimeout";
-    public static final String PUBSUB_EVENT_ACTION_TOPIC = "pubsub.pubSubEventActionTopic";
+    public static final String PUBSUB_DSM_TASK_TOPIC = "pubsub.pubSubDsmTaskTopic";
     public static final String SLACK_HOOK = "slack.hook";
     public static final String SLACK_CHANNEL = "slack.channel";
     public static final String SLACK_QUEUE_SIZE = "slack.queueSize";

@@ -1,7 +1,7 @@
 package org.broadinstitute.ddp.event.publish.pubsub;
 
-import static org.broadinstitute.ddp.event.publish.pubsub.EventPubSubPublisher.ATTR_PARTICIPANT_GUID;
-import static org.broadinstitute.ddp.event.publish.pubsub.EventPubSubPublisher.ATTR_STUDY_GUID;
+import static org.broadinstitute.ddp.event.publish.pubsub.TaskPubSubPublisher.ATTR_PARTICIPANT_GUID;
+import static org.broadinstitute.ddp.event.publish.pubsub.TaskPubSubPublisher.ATTR_STUDY_GUID;
 import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTask.ATTR_TASK_TYPE;
 import static org.broadinstitute.ddp.model.activity.types.EventActionType.UPDATE_CUSTOM_WORKFLOW;
 import static org.broadinstitute.ddp.model.event.UpdateCustomWorkflowEventAction.generatePayload;
@@ -32,18 +32,18 @@ import org.slf4j.Logger;
 /**
  * Test event publishing/subscribing with PubSub emulator.
  * In order to eun this test it needs to start PubSub emulator (locally), for example to port to localhost:8085.
- * Create a topic `local-eventAction-topic`.
- * Create a subscription `local-eventAction-topic-subs`.
+ * Create a topic `local-dss-to-dsm-tasks`.
+ * Create a subscription `local-dss-to-dsm-tasks-subs`.
  * In IntelliJ config add env variable: PUBSUB_EMULATOR_HOST=localhost:8085.
  * Comment annotation @Ignore.
  * Run test `testEventPublisherSubscriber()`.
  */
-public class EventPubSubPublisherStandaloneTest extends ConfigAwareBaseTest {
+public class TaskForDsmPubSubPublisherStandaloneTest extends ConfigAwareBaseTest {
 
-    private static final Logger LOG = getLogger(EventPubSubPublisherStandaloneTest.class);
+    private static final Logger LOG = getLogger(TaskForDsmPubSubPublisherStandaloneTest.class);
 
     private static final Config conf = ConfigManager.getInstance().getConfig();
-    private static final String TEST_SUBSCRIPTION = conf.getString(ConfigFile.PUBSUB_EVENT_ACTION_TOPIC) + "-subs";
+    private static final String TEST_SUBSCRIPTION = conf.getString(ConfigFile.PUBSUB_DSM_TASK_TOPIC) + "-subs";
 
     private static String expectedTaskType;
     private static String expectedStudyGuid;
@@ -52,7 +52,7 @@ public class EventPubSubPublisherStandaloneTest extends ConfigAwareBaseTest {
 
     @Test
     @Ignore
-    public void testEventPublisherSubscriber() throws InterruptedException {
+    public void testDsmTaskPublisherSubscriber() throws InterruptedException {
         var userId = 1L;
         var userGuid = "USER_GUID";
         var studyId = 2L;
@@ -63,9 +63,9 @@ public class EventPubSubPublisherStandaloneTest extends ConfigAwareBaseTest {
         var workflow = "Workflow1";
         var status = "Registered";
 
-        var eventPublisher = new EventPubSubPublisher();
+        var taskPublisher = new TaskPubSubPublisher();
 
-        eventPublisher.publishEvent(
+        taskPublisher.publishTask(
                 UPDATE_CUSTOM_WORKFLOW.name(),
                 generatePayload(workflow, status),
                 signal.getStudyGuid(),

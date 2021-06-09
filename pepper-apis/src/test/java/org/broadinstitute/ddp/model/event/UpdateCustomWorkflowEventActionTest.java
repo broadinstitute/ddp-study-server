@@ -5,7 +5,7 @@ import static org.junit.Assert.assertEquals;
 import org.broadinstitute.ddp.TxnAwareBaseTest;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dto.EventConfigurationDto;
-import org.broadinstitute.ddp.event.publish.EventPublisher;
+import org.broadinstitute.ddp.event.publish.TaskPublisher;
 import org.broadinstitute.ddp.model.activity.types.EventActionType;
 import org.broadinstitute.ddp.model.activity.types.EventTriggerType;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
@@ -20,7 +20,7 @@ public class UpdateCustomWorkflowEventActionTest extends TxnAwareBaseTest {
 
     private static TestDataSetupUtil.GeneratedTestData testData;
 
-    private static String expectedEventType;
+    private static String expectedTaskName;
     private static String expectedEventPayload;
     private static String expectedStudyGuid;
     private static String expectedParticipantGuid;
@@ -52,10 +52,10 @@ public class UpdateCustomWorkflowEventActionTest extends TxnAwareBaseTest {
                     null, null, null, null, null, null,
                     workflow, status);
             var event = new EventConfiguration(eventDto);
-            var updateCustomWorkflowEventAction = new UpdateCustomWorkflowEventAction(event, eventDto, new TestEventPublisher());
+            var updateCustomWorkflowEventAction = new UpdateCustomWorkflowEventAction(event, eventDto, new TestTaskPublisher());
             updateCustomWorkflowEventAction.doAction(null, handle, signal);
 
-            assertEquals(EventActionType.UPDATE_CUSTOM_WORKFLOW.name(), expectedEventType);
+            assertEquals(EventActionType.UPDATE_CUSTOM_WORKFLOW.name(), expectedTaskName);
             assertEquals("{\"workflow\":\"" + workflow + "\",\"status\":\"" + status + "\"}", expectedEventPayload);
             assertEquals(testData.getStudyGuid(), expectedStudyGuid);
             assertEquals(testData.getUserGuid(), expectedParticipantGuid);
@@ -64,11 +64,11 @@ public class UpdateCustomWorkflowEventActionTest extends TxnAwareBaseTest {
         });
     }
 
-    static class TestEventPublisher implements EventPublisher {
+    static class TestTaskPublisher implements TaskPublisher {
 
         @Override
-        public void publishEvent(String eventType, String payload, String studyGuid, String participantGuid) {
-            expectedEventType = eventType;
+        public void publishTask(String taskName, String payload, String studyGuid, String participantGuid) {
+            expectedTaskName = taskName;
             expectedEventPayload = payload;
             expectedStudyGuid = studyGuid;
             expectedParticipantGuid = participantGuid;

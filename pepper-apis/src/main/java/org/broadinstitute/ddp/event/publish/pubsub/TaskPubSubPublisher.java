@@ -13,39 +13,39 @@ import com.google.common.util.concurrent.MoreExecutors;
 import com.google.protobuf.ByteString;
 import com.google.pubsub.v1.PubsubMessage;
 import org.broadinstitute.ddp.constants.ConfigFile;
-import org.broadinstitute.ddp.event.publish.EventPublisher;
+import org.broadinstitute.ddp.event.publish.TaskPublisher;
 import org.broadinstitute.ddp.util.ConfigManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 
 /**
- * Implementation of {@link EventPublisher} providing publishing
- * an event of a specified type to Google PubSub topic.<br>
+ * Implementation of {@link TaskPublisher} providing publishing
+ * an task (for DSM) of a specified type to Google PubSub topic.<br>
  * The parameters for PubSub publishing are taken from config:
- * `pubsub.pubSubEventActionTopic` - name of PubSub topic where to publish event.
+ * `pubsub.pubSubDsmTaskTopic` - name of PubSub topic where to publish a task.
  */
-public class EventPubSubPublisher implements EventPublisher {
+public class TaskPubSubPublisher implements TaskPublisher {
 
-    private static final Logger LOG = LoggerFactory.getLogger(EventPubSubPublisher.class);
+    private static final Logger LOG = LoggerFactory.getLogger(TaskPubSubPublisher.class);
 
     public static final String ATTR_STUDY_GUID = "studyGuid";
     public static final String ATTR_PARTICIPANT_GUID = "participantGuid";
 
     @Override
-    public void publishEvent(
-            String eventType,
+    public void publishTask(
+            String taskName,
             String payload,
             String studyGuid,
             String participantGuid) {
 
         var publisherData = PubSubPublisherInitializer.getOrCreatePubSubPublisherData(
-                ConfigManager.getInstance().getConfig().getString(ConfigFile.PUBSUB_EVENT_ACTION_TOPIC));
+                ConfigManager.getInstance().getConfig().getString(ConfigFile.PUBSUB_DSM_TASK_TOPIC));
 
-        PubsubMessage pubSubMessage = createPubSubMessage(eventType, payload, studyGuid, participantGuid);
+        PubsubMessage pubSubMessage = createPubSubMessage(taskName, payload, studyGuid, participantGuid);
 
-        final String message = format(" event '%s' to pubsub topic='%s': studyGuid=%s, participantGuid=%s, payload={%s}",
-                eventType, publisherData.getPubSubTopicName().getTopic(), studyGuid, participantGuid, payload);
+        final String message = format(" task '%s' to pubsub topic='%s': studyGuid=%s, participantGuid=%s, payload={%s}",
+                taskName, publisherData.getPubSubTopicName(), studyGuid, participantGuid, payload);
 
         LOG.info("Publish" + message);
 

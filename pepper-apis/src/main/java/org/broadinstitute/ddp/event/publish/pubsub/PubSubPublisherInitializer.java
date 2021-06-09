@@ -41,19 +41,18 @@ public class PubSubPublisherInitializer {
     public static class PubSubPublisherData {
 
         private final Publisher publisher;
-        private final ProjectTopicName pubSubTopicName;
 
         public PubSubPublisherData(String pubSubTopicName) throws IOException {
-            this.pubSubTopicName = ProjectTopicName.of(conf.getString(ConfigFile.GOOGLE_PROJECT_ID), pubSubTopicName);
-            publisher = pubsubConnectionManager.getOrCreatePublisher(this.pubSubTopicName);
+            publisher = pubsubConnectionManager.getOrCreatePublisher(
+                    ProjectTopicName.of(conf.getString(ConfigFile.GOOGLE_PROJECT_ID), pubSubTopicName));
         }
 
         public Publisher getPublisher() {
             return publisher;
         }
 
-        public ProjectTopicName getPubSubTopicName() {
-            return pubSubTopicName;
+        public String getPubSubTopicName() {
+            return publisher != null ? publisher.getTopicNameString() : null;
         }
     }
 }
