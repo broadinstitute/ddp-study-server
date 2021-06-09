@@ -14,6 +14,7 @@ import com.google.protobuf.ByteString;
 import com.google.pubsub.v1.PubsubMessage;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.event.publish.EventPublisher;
+import org.broadinstitute.ddp.util.ConfigManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,7 +23,7 @@ import org.slf4j.LoggerFactory;
  * Implementation of {@link EventPublisher} providing publishing
  * an event of a specified type to Google PubSub topic.<br>
  * The parameters for PubSub publishing are taken from config:
- * `pubsub.eventActionTopic` - name of PubSub topic where to publish event.
+ * `pubsub.pubSubEventActionTopic` - name of PubSub topic where to publish event.
  */
 public class EventPubSubPublisher implements EventPublisher {
 
@@ -39,11 +40,11 @@ public class EventPubSubPublisher implements EventPublisher {
             String participantGuid) {
 
         var publisherData = PubSubPublisherInitializer.getOrCreatePubSubPublisherData(
-                ConfigFile.PUBSUB_EVENT_ACTION_TOPIC);
+                ConfigManager.getInstance().getConfig().getString(ConfigFile.PUBSUB_EVENT_ACTION_TOPIC));
 
         PubsubMessage pubSubMessage = createPubSubMessage(eventType, payload, studyGuid, participantGuid);
 
-        final String message = format(" event %s to pubsub topic=%s: studyGuid=%s, participantGuid=%s, payload={%s}",
+        final String message = format(" event '%s' to pubsub topic='%s': studyGuid=%s, participantGuid=%s, payload={%s}",
                 eventType, publisherData.getPubSubTopicName().getTopic(), studyGuid, participantGuid, payload);
 
         LOG.info("Publish" + message);

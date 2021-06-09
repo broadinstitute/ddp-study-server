@@ -34,6 +34,10 @@ public class PubSubPublisherInitializer {
         });
     }
 
+    public static PubSubConnectionManager getPubsubConnectionManager() {
+        return pubsubConnectionManager;
+    }
+
     public static class PubSubPublisherData {
 
         private final Publisher publisher;

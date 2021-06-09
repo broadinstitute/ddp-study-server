@@ -44,7 +44,7 @@ public class UpdateCustomWorkflowEventAction extends EventAction {
         );
     }
 
-    private String generatePayload(String workflow, String status) {
+    public static String generatePayload(String workflow, String status) {
         return createJsonIgnoreNulls(
                 PAYLOAD_FIELD__WORKFLOW, workflow,
                 PAYLOAD_FIELD__STATUS, status);
