@@ -5,7 +5,7 @@ import static org.junit.Assert.assertEquals;
 import org.broadinstitute.ddp.TxnAwareBaseTest;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dto.EventConfigurationDto;
-import org.broadinstitute.ddp.event.publish.EventActionPublisher;
+import org.broadinstitute.ddp.event.publish.EventPublisher;
 import org.broadinstitute.ddp.model.activity.types.EventActionType;
 import org.broadinstitute.ddp.model.activity.types.EventTriggerType;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
@@ -20,7 +20,7 @@ public class UpdateCustomWorkflowEventActionTest extends TxnAwareBaseTest {
 
     private static TestDataSetupUtil.GeneratedTestData testData;
 
-    private static EventActionType expectedEventActionType;
+    private static String expectedEventType;
     private static String expectedEventPayload;
     private static String expectedStudyGuid;
     private static String expectedParticipantGuid;
@@ -41,37 +41,37 @@ public class UpdateCustomWorkflowEventActionTest extends TxnAwareBaseTest {
             String workflow = "Workflow1";
             String status = "Registered";
 
-            expectedEventActionType = EventActionType.UPDATE_CUSTOM_WORKFLOW;
-            expectedEventPayload =  "{\"workflow\":\"" + workflow + "\",\"status\":\"" + status + "\"}";
-            expectedStudyGuid = testData.getStudyGuid();
-            expectedParticipantGuid = testData.getUserGuid();
-
             var eventDto = new EventConfigurationDto(
                     1L,
                     "label",
                     EventTriggerType.ACTIVITY_STATUS,
-                    expectedEventActionType,
+                    EventActionType.UPDATE_CUSTOM_WORKFLOW,
                     0, true, null, null, null, 1, null,
                     null, 1L, null, null, null, null, null, null, null,
                     null, null, null, 1L,
                     null, null, null, null, null, null,
                     workflow, status);
             var event = new EventConfiguration(eventDto);
-            var updateCustomWorkflowEventAction = new UpdateCustomWorkflowEventAction(event, eventDto, new TestEventActionPublisher());
+            var updateCustomWorkflowEventAction = new UpdateCustomWorkflowEventAction(event, eventDto, new TestEventPublisher());
             updateCustomWorkflowEventAction.doAction(null, handle, signal);
+
+            assertEquals(EventActionType.UPDATE_CUSTOM_WORKFLOW.name(), expectedEventType);
+            assertEquals("{\"workflow\":\"" + workflow + "\",\"status\":\"" + status + "\"}", expectedEventPayload);
+            assertEquals(testData.getStudyGuid(), expectedStudyGuid);
+            assertEquals(testData.getUserGuid(), expectedParticipantGuid);
 
             handle.rollback();
         });
     }
 
-    static class TestEventActionPublisher implements EventActionPublisher {
+    static class TestEventPublisher implements EventPublisher {
 
         @Override
-        public void publishEventAction(EventActionType eventActionType, String eventPayload, String studyGuid, String participantGuid) {
-            assertEquals(expectedEventActionType, eventActionType);
-            assertEquals(expectedEventPayload, eventPayload);
-            assertEquals(expectedStudyGuid, studyGuid);
-            assertEquals(expectedParticipantGuid, participantGuid);
+        public void publishEvent(String eventType, String payload, String studyGuid, String participantGuid) {
+            expectedEventType = eventType;
+            expectedEventPayload = payload;
+            expectedStudyGuid = studyGuid;
+            expectedParticipantGuid = participantGuid;
         }
     }
 }
