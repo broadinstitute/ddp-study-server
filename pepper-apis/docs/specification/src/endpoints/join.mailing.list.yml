@@ -2,8 +2,8 @@ post:
   operationId: joinMailingList
   tags:
     - Studies
-  summary: joinMailingList
-  description: add a user to a studies email list or to a mailing list for a study that does not exist
+  summary: Add a user to an email list
+  description: add a user to a study's email list, or to a mailing list for a study that does not exist
   requestBody:
     $ref: '../pepper.yml#/components/requestBodies/JoinMailingListPayload'
   responses:
