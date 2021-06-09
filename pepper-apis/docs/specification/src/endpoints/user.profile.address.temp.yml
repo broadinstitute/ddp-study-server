@@ -39,7 +39,7 @@ put:
 
 delete:
   operationId: deleteTemporaryMailingAddress
-  summary: Delete a patient's temporary mailing address
+  summary: Delete a participant's temporary mailing address
   tags:
     - Mailing Address
   responses:
