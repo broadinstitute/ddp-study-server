@@ -73,7 +73,7 @@
         "housekeepingTasksSubscription": "{{$conf.Data.pubsub.housekeepingTasksSubscription}}",
         "pubSubTasksSubscription": "{{$conf.Data.pubsub.pubSubTasksSubscription}}",
         "pubSubTasksResultTopic": "{{$conf.Data.pubsub.pubSubTasksResultTopic}}",
-        "pubSubDsmTasksTopic": "{{$pubsub.pubSubDsmTasksTopic}}"
+        "pubSubDsmTasksTopic": "{{$conf.Data.pubsub.pubSubDsmTasksTopic}}"
         "pubSubTaskSubscriberAwaitRunningTimeout": "{{$conf.Data.pubsub.pubSubTaskSubscriberAwaitRunningTimeout}}"
     },
     "studyExportBucket": "{{$conf.Data.studyExportBucket}}",
