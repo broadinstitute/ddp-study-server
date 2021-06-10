@@ -13,13 +13,13 @@
             "stable_id": "DIAGNOSED"
           },
           {
-            "name": "age_diagnosis_years",
+            "name": "age_diagnosis_year_num",
             "type": "Numeric",
             "source_type": "integer",
             "stable_id": "YEARS"
           },
           {
-            "name": "age_diagnosis_months",
+            "name": "age_diagnosis_month_num",
             "type": "Numeric",
             "source_type": "integer",
             "stable_id": "MONTHS"
@@ -577,30 +577,30 @@
             ]
           },
           {
-            "name": "immunodeficiency_type_all",
+            "name": "immunodeficiency_type",
             "stable_id": "IMMUNODEFICIENCY_TYPE",
             "type": "Picklist",
-            "source_type": "string",
+            "source_type": "integer",
             "options": [
               {
-                "name": "iga_deficiency",
-                "type": "integer"
+                "type": "integer",
+                "stable_id": "IGA_DEFICIENCY"
               },
               {
-                "name": "ivig",
-                "type": "integer"
+                "type": "integer",
+                "stable_id": "IVIG"
               },
               {
-                "name": "sub_ig",
-                "type": "integer"
+                "type": "integer",
+                "stable_id": "SUB_IG"
               },
               {
-                "name": "antibiotics",
-                "type": "integer"
+                "type": "integer",
+                "stable_id": "ANTIBIOTICS"
               },
               {
-                "name": "no_treatment",
-                "type": "integer"
+                "type": "integer",
+                "stable_id": "NO_TREATMENT"
               }
             ]
           },

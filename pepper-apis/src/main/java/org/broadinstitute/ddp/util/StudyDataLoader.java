@@ -199,6 +199,16 @@ public class StudyDataLoader {
                 "INCONTINENCE_FREQUENT"));
         datStatLookup.put("incontinence_type", optionList);
 
+        optionList = List.of(
+                "",
+                "IGA_DEFICIENCY",
+                "IVIG",
+                "SUB_IG",
+                "ANTIBIOTICS",
+                "NO_TREATMENT"
+        );
+        datStatLookup.put("immunodeficiency_type", optionList);
+
         booleanValueLookup = new HashMap<>();
         booleanValueLookup.put(0, false);
         booleanValueLookup.put(1, true);

@@ -235,7 +235,7 @@ public class StudyDataLoaderMain {
         dataLoaderMain.isDeleteAuth0Email = cmd.hasOption("de");
 
         if (isDryRun && hasTestEmail) {
-            dataLoaderMain.dryRunEmail = cmd.getOptionValue('e');
+            dataLoaderMain.dryRunEmail = cmd.getOptionValue('e').trim();
             LOG.info("dry run email: {}", dataLoaderMain.dryRunEmail);
             if (dataLoaderMain.dryRunEmail == null || !dataLoaderMain.dryRunEmail.contains("@")
                     || !dataLoaderMain.dryRunEmail.contains(".")) {
@@ -1138,14 +1138,23 @@ public class StudyDataLoaderMain {
 
                     TransactionWrapper.useTxn(TransactionWrapper.DB.DSM, handleDsm -> {
                         Map<String, String> dsmData = DSMData.extractData(datstatParticipantData);
+                        Map<String, String> participantRegistrationType = Map.of(
+                                "1", "Self",
+                                "2", "Dependent",
+                                "3", "PortalUser"
+                        );
                         for (Map.Entry<String, String> entry : dsmData.entrySet()) {
+                            String entryValue = entry.getValue();
+                            if ("registration_type".equals(entry.getKey())) {
+                                entryValue = participantRegistrationType.get(entry.getKey());
+                            }
                             handleDsm.createUpdate("insert into ddp_participant_data(ddp_participant_id, field_type_id, "
                                     + " ddp_instance_id, data, last_changed, changed_by) "
                                     + "values (:participantId, :fieldType, (select ddp_instance_id from "
                                     + "ddp_instance where instance_name='atcp'), :jsonData, now(), 'SYSTEM')")
                                     .bind("participantId", altpid)
                                     .bind("fieldType", entry.getKey())
-                                    .bind("jsonData", entry.getValue())
+                                    .bind("jsonData", entryValue)
                                     .execute();
                         }
                     });

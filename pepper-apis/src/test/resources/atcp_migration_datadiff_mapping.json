@@ -11,12 +11,12 @@
             "source_field_type": "Boolean"
           },
           {
-            "source_field_name": "age_diagnosis_years",
+            "source_field_name": "age_diagnosis_year_num",
             "target_field_name": "YEARS",
             "source_field_type": "Integer"
           },
           {
-            "source_field_name": "age_diagnosis_months",
+            "source_field_name": "age_diagnosis_month_num",
             "target_field_name": "MONTHS",
             "source_field_type": "Integer"
           },
@@ -234,12 +234,9 @@
             "source_field_type": "YesNoDk"
           },
           {
-            "source_field_name": "immunodeficiency_type_all",
+            "source_field_name": "immunodeficiency_type",
             "target_field_name": "IMMUNODEFICIENCY_TYPE",
-            "source_field_type": "Picklist",
-            "options": [
-              "iga_deficiency", "ivig", "sub_ig", "antibiotics", "no_treatment"
-            ]
+            "source_field_type": "SinglePicklist"
           },
           {
             "source_field_name": "vaccine_infection",
