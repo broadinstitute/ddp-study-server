@@ -113,6 +113,7 @@ public class ReceiveDsmNotificationRoute extends ValidatedJsonInputRoute<DsmNoti
                     userGuid,
                     null,
                     studyDto.getId(),
+                    studyDto.getGuid(),
                     eventType,
                     payload.getKitRequestId(),
                     kitReasonType,

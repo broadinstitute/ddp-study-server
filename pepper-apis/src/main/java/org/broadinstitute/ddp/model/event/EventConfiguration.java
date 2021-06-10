@@ -1,13 +1,16 @@
 package org.broadinstitute.ddp.model.event;
 
 import org.broadinstitute.ddp.db.dto.EventConfigurationDto;
+import org.broadinstitute.ddp.event.publish.pubsub.TaskPubSubPublisher;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.activity.types.EventActionType;
 import org.broadinstitute.ddp.model.activity.types.EventTriggerType;
 import org.broadinstitute.ddp.pex.PexInterpreter;
 import org.jdbi.v3.core.Handle;
 
+
 public class EventConfiguration {
+
     private long eventConfigurationId;
     private EventActionType eventActionType;
     private EventTriggerType eventTriggerType;
@@ -111,12 +114,13 @@ public class EventConfiguration {
             case UPDATE_USER_STATUS:
                 eventAction = new UpdateUserStatusEventAction(this, dto);
                 break;
+            case UPDATE_CUSTOM_WORKFLOW:
+                eventAction = new UpdateCustomWorkflowEventAction(this, dto, new TaskPubSubPublisher());
+                break;
             default:
                 throw new DDPException("Event action type: " + eventActionType.name() + " is not properly configured in "
                         + "the EventConfiguration ctor");
-
         }
-
     }
 
     public void doAction(PexInterpreter treeWalkInterpreter, Handle handle, EventSignal eventSignal) {

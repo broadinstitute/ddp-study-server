@@ -225,7 +225,7 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
                     invitationDao.markAccepted(invitation.getInvitationId(), Instant.now());
 
                     EventSignal signal = new EventSignal(user.getId(), user.getId(), user.getGuid(), user.getGuid(),
-                            study.getId(), EventTriggerType.GOVERNED_USER_REGISTERED);
+                            study.getId(), study.getGuid(), EventTriggerType.GOVERNED_USER_REGISTERED);
                     EventService.getInstance().processAllActionsForEventSignal(handle, signal);
                 } else {
                     LOG.error("User {} is not allowed to create an account yet because they have not reached age of majority "
@@ -588,7 +588,9 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
                 participant.getId(),
                 participant.getGuid(),
                 operator.getGuid(),
-                studyDto.getId(), EventTriggerType.USER_REGISTERED);
+                studyDto.getId(),
+                studyDto.getGuid(),
+                EventTriggerType.USER_REGISTERED);
         EventService.getInstance().processAllActionsForEventSignal(handle, signal);
     }
 

@@ -856,6 +856,7 @@ public class Housekeeping {
                     participant.getGuid(),
                     operatorGuid,
                     studyDto.getId(),
+                    studyDto.getGuid(),
                     pendingEvent.getTriggerType());
 
             if (actionType == EventActionType.ACTIVITY_INSTANCE_CREATION) {

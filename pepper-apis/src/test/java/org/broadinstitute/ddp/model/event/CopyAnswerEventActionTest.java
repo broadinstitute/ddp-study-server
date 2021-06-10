@@ -82,7 +82,7 @@ public class CopyAnswerEventActionTest extends TxnAwareBaseTest {
 
             var signal = new EventSignal(
                     testData.getUserId(), testData.getUserId(), testData.getUserGuid(), testData.getUserGuid(),
-                    testData.getStudyId(), EventTriggerType.REACHED_AOM);
+                    testData.getStudyId(), testData.getStudyGuid(), EventTriggerType.REACHED_AOM);
             var action = new CopyAnswerEventAction(null, configId);
             action.doAction(null, handle, signal);
 
@@ -133,6 +133,7 @@ public class CopyAnswerEventActionTest extends TxnAwareBaseTest {
                     testData.getUserId(), testData.getUserId(), testData.getUserGuid(), testData.getUserGuid(),
                     instanceId, act.getDef().getActivityId(),
                     testData.getStudyId(),
+                    testData.getStudyGuid(),
                     InstanceStatusType.COMPLETE);
             var action = new CopyAnswerEventAction(null, configId);
             action.doAction(null, handle, signal);
@@ -252,6 +253,7 @@ public class CopyAnswerEventActionTest extends TxnAwareBaseTest {
                     testData.getUserId(), testData.getUserId(), testData.getUserGuid(),
                     testData.getUserGuid(), instance2.getId(), act2.getDef().getActivityId(),
                     testData.getStudyId(),
+                    testData.getStudyGuid(),
                     InstanceStatusType.CREATED);
             var action = new CopyAnswerEventAction(null, configId);
             action.doAction(null, handle, signal);

@@ -169,6 +169,7 @@ public class ActivityInstanceCreationEventAction extends EventAction {
                 newActivityInstanceId,
                 studyActivityId,
                 signal.getStudyId(),
+                signal.getStudyGuid(),
                 InstanceStatusType.CREATED));
 
         // Create child nested activity instances, if any.
@@ -203,6 +204,7 @@ public class ActivityInstanceCreationEventAction extends EventAction {
                     newChildInstanceId,
                     childActivityId,
                     signal.getStudyId(),
+                    signal.getStudyGuid(),
                     InstanceStatusType.CREATED));
         }
     }
