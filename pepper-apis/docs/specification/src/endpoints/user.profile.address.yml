@@ -14,7 +14,7 @@ parameters:
 
 get:
   operationId: getMailingAddress
-  description: fetch the specified saved address for a participant
+  summary: Get the specified mailing address for a participant
   tags:
     - Mailing Address
   responses:
@@ -25,7 +25,7 @@ get:
 
 put:
   operationId: updateMailingAddress
-  description: updates the specified saved address
+  summary: Update an existing mailing address for a participant
   tags:
     - Mailing Address
   parameters:
@@ -52,6 +52,7 @@ put:
 
 delete:
   operationId: deleteMailingAddress
+  summary: Delete an existing mailing address for a participant
   description: removes the specified saved address for a participant. If this address is the participant's default address, the participant will no longer have a default address set.
   tags:
     - Mailing Address
