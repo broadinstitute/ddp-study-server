@@ -42,7 +42,7 @@ public class EnrollUserEventActionTest extends TxnAwareBaseTest {
             doCallRealMethod().when(actionSpy).doAction(any(), any(), any());
 
             var signal = new EventSignal(testData.getUserId(), testData.getUserId(), testData.getUserGuid(),
-                    testData.getUserGuid(), newStudy.getId(), EventTriggerType.USER_REGISTERED);
+                    testData.getUserGuid(), newStudy.getId(), newStudy.getGuid(), EventTriggerType.USER_REGISTERED);
             actionSpy.doAction(null, handle, signal);
 
             assertEquals("should be enrolled", EnrollmentStatusType.ENROLLED,

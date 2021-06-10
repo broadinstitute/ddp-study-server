@@ -50,7 +50,7 @@ public class ActivityInstanceCreationEventActionTest extends TxnAwareBaseTest {
 
             var signal = new EventSignal(
                     testData.getUserId(), testData.getUserId(), testData.getUserGuid(), testData.getUserGuid(),
-                    testData.getStudyId(), EventTriggerType.DSM_NOTIFICATION);
+                    testData.getStudyId(), testData.getStudyGuid(), EventTriggerType.DSM_NOTIFICATION);
             var action = new ActivityInstanceCreationEventAction(null, nestedAct.getActivityId());
 
             try {
@@ -84,7 +84,8 @@ public class ActivityInstanceCreationEventActionTest extends TxnAwareBaseTest {
 
             var signal = new ActivityInstanceStatusChangeSignal(
                     testData.getUserId(), testData.getUserId(), testData.getUserGuid(), testData.getUserGuid(),
-                    parentInstanceId, parentAct.getActivityId(), testData.getStudyId(), InstanceStatusType.CREATED);
+                    parentInstanceId, parentAct.getActivityId(), testData.getStudyId(), testData.getStudyGuid(),
+                    InstanceStatusType.CREATED);
             var action = new ActivityInstanceCreationEventAction(null, nestedAct.getActivityId());
             action.doActionSynchronously(handle, signal);
 
@@ -123,7 +124,7 @@ public class ActivityInstanceCreationEventActionTest extends TxnAwareBaseTest {
 
             var signal = new ActivityInstanceStatusChangeSignal(
                     testData.getUserId(), testData.getUserId(), testData.getUserGuid(), testData.getUserGuid(),
-                    instanceId1, act1.getActivityId(), testData.getStudyId(), InstanceStatusType.CREATED);
+                    instanceId1, act1.getActivityId(), testData.getStudyId(), testData.getStudyGuid(), InstanceStatusType.CREATED);
             var action = new ActivityInstanceCreationEventAction(null, act2.getActivityId());
             action.doActionSynchronously(handle, signal);
 
