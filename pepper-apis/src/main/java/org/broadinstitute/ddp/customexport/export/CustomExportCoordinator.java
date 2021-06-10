@@ -28,9 +28,9 @@ import com.typesafe.config.Config;
 import org.broadinstitute.ddp.customexport.constants.CustomExportConfigFile;
 import org.broadinstitute.ddp.customexport.db.dao.CustomExportDao;
 import org.broadinstitute.ddp.customexport.db.dto.CompletedUserDto;
+import org.broadinstitute.ddp.customexport.model.CustomExportParticipant;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.exception.DDPException;
-import org.broadinstitute.ddp.model.study.Participant;
 import org.broadinstitute.ddp.util.SendGridMailUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,11 +47,11 @@ public class CustomExportCoordinator {
     private String fullFileName;
     private long exportLastCompleted;
 
-    public CustomExportCoordinator(Config exportCfg) {
+    public CustomExportCoordinator(Config cfg, Config exportCfg) {
         this.exportCfg = exportCfg;
         this.customActivity = exportCfg.getString(CustomExportConfigFile.ACTIVITY);
         this.customExportStatus = exportCfg.getString(CustomExportConfigFile.STATUS);
-        this.exporter = new CustomExporter(exportCfg);
+        this.exporter = new CustomExporter(cfg, exportCfg);
     }
 
     public CustomExportCoordinator includeCsv(Bucket csvBucket) {
@@ -147,7 +147,7 @@ public class CustomExportCoordinator {
 
     private void exportStudyToGoogleBucket(StudyDto studyDto, CustomExporter exporter, Bucket bucket,
                                            List<CustomActivityExtract> activities,
-                                           Iterator<Participant> participants) {
+                                           Iterator<CustomExportParticipant> participants) {
         try (
                 PipedOutputStream outputStream = new PipedOutputStream();
                 Writer csvWriter = new OutputStreamWriter(outputStream, StandardCharsets.UTF_8);
@@ -170,7 +170,7 @@ public class CustomExportCoordinator {
 
     private Runnable buildExportToCsvRunnable(StudyDto studyDto, CustomExporter exporter, Writer csvOutputWriter,
                                               List<CustomActivityExtract> activities,
-                                              Iterator<Participant> participants) {
+                                              Iterator<CustomExportParticipant> participants) {
         return () -> {
             try {
                 int total = exporter.exportDataSetAsCsv(studyDto, activities, participants, csvOutputWriter);
@@ -203,13 +203,13 @@ public class CustomExportCoordinator {
         LOG.info("Uploaded file {} to bucket {} for study {}", blob.getName(), bucket.getName(), studyGuid);
     }
 
-    private class CustomExportPaginatedParticipantIterator implements Iterator<Participant> {
+    private class CustomExportPaginatedParticipantIterator implements Iterator<CustomExportParticipant> {
 
         private final StudyDto studyDto;
         private final int batchSize;
         private int fetched;
         private boolean exhausted;
-        private ArrayDeque<Participant> currentBatch;
+        private ArrayDeque<CustomExportParticipant> currentBatch;
         private final long customLastCompletion;
 
         CustomExportPaginatedParticipantIterator(StudyDto studyDto,
@@ -231,14 +231,12 @@ public class CustomExportCoordinator {
             if (currentBatch == null) {
                 int offset = fetched;
                 currentBatch = withAPIsTxn(handle -> {
-                    CustomExportDao export = handle.attach(CustomExportDao.class);
-                    List<CompletedUserDto>
-                            userIds = export.findCustomUserIdsToExport(studyDto.getId(), customExportStatus, customLastCompletion,
-                            customActivity, batchSize, offset);
+                    List<CompletedUserDto> userIds = handle.attach(CustomExportDao.class).findCustomUserIdsToExport(studyDto.getId(),
+                            customExportStatus, customLastCompletion, customActivity, batchSize, offset);
                     if (!userIds.isEmpty()) {
                         exportLastCompleted = userIds.get(userIds.size() - 1).getCompletedTime();
                     }
-                    List<Participant> extract = CustomExporter.extractParticipantDataSetByIds(handle, studyDto,
+                    List<CustomExportParticipant> extract = exporter.extractParticipantDataSetByIds(handle, studyDto,
                             userIds.stream().map(CompletedUserDto::getUserId).collect(Collectors.toSet()));
                     return new ArrayDeque<>(extract);
                 });
@@ -253,12 +251,12 @@ public class CustomExportCoordinator {
         }
 
         @Override
-        public Participant next() {
+        public CustomExportParticipant next() {
             if (currentBatch == null || currentBatch.isEmpty()) {
                 throw new NoSuchElementException();
             }
 
-            Participant next = currentBatch.remove();
+            CustomExportParticipant next = currentBatch.remove();
             if (currentBatch.isEmpty()) {
                 currentBatch = null;
             }
