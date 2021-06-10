@@ -43,7 +43,6 @@ public class TaskForDsmPubSubPublisherStandaloneTest extends ConfigAwareBaseTest
     private static final Logger LOG = getLogger(TaskForDsmPubSubPublisherStandaloneTest.class);
 
     private static final Config conf = ConfigManager.getInstance().getConfig();
-    private static final String TEST_SUBSCRIPTION = conf.getString(ConfigFile.PUBSUB_DSM_TASK_TOPIC) + "-subs";
 
     private static String expectedTaskType;
     private static String expectedStudyGuid;
@@ -90,7 +89,7 @@ public class TaskForDsmPubSubPublisherStandaloneTest extends ConfigAwareBaseTest
 
         Subscriber pubSubTaskSubscriber = null;
         var projectSubscriptionName = ProjectSubscriptionName.of(
-                conf.getString(ConfigFile.GOOGLE_PROJECT_ID), TEST_SUBSCRIPTION);
+                conf.getString(ConfigFile.GOOGLE_PROJECT_ID), getDsmTasksTopicSubscription());
 
         try {
             pubSubTaskSubscriber = PubSubPublisherInitializer.getPubsubConnectionManager().subscribeBuilder(
@@ -124,5 +123,9 @@ public class TaskForDsmPubSubPublisherStandaloneTest extends ConfigAwareBaseTest
         expectedStudyGuid = message.getAttributesOrDefault(ATTR_STUDY_GUID, null);
         expectedParticipantGuid = message.getAttributesOrDefault(ATTR_PARTICIPANT_GUID, null);
         expectedPayloadJson = message.getData() != null ? message.getData().toStringUtf8() : null;
+    }
+
+    private String getDsmTasksTopicSubscription() {
+        return conf.getString(ConfigFile.PUBSUB_DSM_TASKS_TOPIC) + "-sub";
     }
 }

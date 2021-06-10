@@ -18,16 +18,17 @@ import org.broadinstitute.ddp.util.ConfigManager;
  */
 public class PubSubPublisherInitializer {
 
-    private static ConcurrentHashMap<String, PubSubPublisherData> pubSubPublisherDataMap = new ConcurrentHashMap<>();
+    private static ConcurrentHashMap<String, Publisher> pubSubPublisherDataMap = new ConcurrentHashMap<>();
 
     private static final Config conf = ConfigManager.getInstance().getConfig();
     private static final PubSubConnectionManager pubsubConnectionManager = new PubSubConnectionManager(
             conf.getBoolean(ConfigFile.USE_PUBSUB_EMULATOR));
 
-    public static PubSubPublisherData getOrCreatePubSubPublisherData(String pubSubTopicName) {
+    public static Publisher getOrCreatePublisher(String pubSubTopicName) {
         return pubSubPublisherDataMap.computeIfAbsent(pubSubTopicName, key -> {
             try {
-                return new PubSubPublisherData(key);
+                return pubsubConnectionManager.getOrCreatePublisher(
+                        ProjectTopicName.of(conf.getString(ConfigFile.GOOGLE_PROJECT_ID), pubSubTopicName));
             } catch (IOException e) {
                 throw new DDPException(format("Error during creation of PubSub publisher for topic %s", key), e);
             }
@@ -36,23 +37,5 @@ public class PubSubPublisherInitializer {
 
     public static PubSubConnectionManager getPubsubConnectionManager() {
         return pubsubConnectionManager;
-    }
-
-    public static class PubSubPublisherData {
-
-        private final Publisher publisher;
-
-        public PubSubPublisherData(String pubSubTopicName) throws IOException {
-            publisher = pubsubConnectionManager.getOrCreatePublisher(
-                    ProjectTopicName.of(conf.getString(ConfigFile.GOOGLE_PROJECT_ID), pubSubTopicName));
-        }
-
-        public Publisher getPublisher() {
-            return publisher;
-        }
-
-        public String getPubSubTopicName() {
-            return publisher != null ? publisher.getTopicNameString() : null;
-        }
     }
 }
