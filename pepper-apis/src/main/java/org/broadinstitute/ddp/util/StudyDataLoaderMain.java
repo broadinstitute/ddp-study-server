@@ -1138,23 +1138,14 @@ public class StudyDataLoaderMain {
 
                     TransactionWrapper.useTxn(TransactionWrapper.DB.DSM, handleDsm -> {
                         Map<String, String> dsmData = DSMData.extractData(datstatParticipantData);
-                        Map<String, String> participantRegistrationType = Map.of(
-                                "1", "Self",
-                                "2", "Dependent",
-                                "3", "PortalUser"
-                        );
                         for (Map.Entry<String, String> entry : dsmData.entrySet()) {
-                            String entryValue = entry.getValue();
-                            if ("registration_type".equals(entry.getKey())) {
-                                entryValue = participantRegistrationType.get(entry.getKey());
-                            }
                             handleDsm.createUpdate("insert into ddp_participant_data(ddp_participant_id, field_type_id, "
                                     + " ddp_instance_id, data, last_changed, changed_by) "
                                     + "values (:participantId, :fieldType, (select ddp_instance_id from "
                                     + "ddp_instance where instance_name='atcp'), :jsonData, now(), 'SYSTEM')")
                                     .bind("participantId", altpid)
                                     .bind("fieldType", entry.getKey())
-                                    .bind("jsonData", entryValue)
+                                    .bind("jsonData", entry.getValue())
                                     .execute();
                         }
                     });
@@ -1364,6 +1355,8 @@ public class StudyDataLoaderMain {
 
         static Map<String, List<String>> data;
 
+        static Map<String, String> participantRegistrationType;
+
         static {
             statusMapping = new HashMap<>();
             statusMapping.putAll(Map.of(
@@ -1411,6 +1404,12 @@ public class StudyDataLoaderMain {
                             "RECONSENT_NAME",
                             "RECONSENT_RELATIONSHIP")
             );
+
+            participantRegistrationType = Map.of(
+                    "1", "Self",
+                    "2", "Dependent",
+                    "3", "PortalUser"
+            );
         }
 
         static Map<String, String> extractData(JsonElement el) {
@@ -1425,6 +1424,9 @@ public class StudyDataLoaderMain {
                         String stringValue = field.equals("REGISTRATION_STATUS")
                                 ? statusMapping.getOrDefault(value.getAsString(), value.getAsString()) :
                                 value.getAsString();
+                        if ("REGISTRATION_TYPE".equals(field)) {
+                            stringValue = participantRegistrationType.get(value.getAsString());
+                        }
                         if (!first) {
                             json.append(",");
                         }
