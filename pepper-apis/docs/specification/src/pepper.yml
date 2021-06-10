@@ -1,11 +1,18 @@
-openapi: 3.0.0
-servers: []
+openapi: 3.0.3
+servers:
+  - url: https://pepper-dev.datadonationplatform.org/pepper/v1
+    description: Development server (uses test data)
+  - url: https://pepper.datadonationplatform.org/pepper/v1
+    description: Production server (uses real data)
 info:
   description: 'Pepper API specification'
   version: 1.9.8
   title: Pepper
   contact:
     email: info@datadonationplatform.org
+  license:
+    name: BSD 3-Clause (Revised)
+    url: https://raw.githubusercontent.com/broadinstitute/ddp-study-server/develop/LICENSE
 tags:
   - name: Admin
     description: administrative & internal calls
