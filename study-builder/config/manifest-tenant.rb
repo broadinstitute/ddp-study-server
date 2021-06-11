@@ -3,3 +3,7 @@ render "testboston-config.json.ctmpl"
 render "prion-config.json.ctmpl"
 render "rgp-config.json.ctmpl"
 render "rarex-config.json.ctmpl"
+
+if $env != "prod"
+  render "basil-config.json.ctmpl"
+end
