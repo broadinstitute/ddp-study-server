@@ -157,6 +157,7 @@ public interface ActivityInstanceStatusDao extends SqlObject {
                 instanceDto.getId(),
                 instanceDto.getActivityId(),
                 instanceDto.getStudyId(),
+                instanceDto.getGuid(),
                 newStatusType);
 
         EventService.getInstance().processAllActionsForEventSignal(

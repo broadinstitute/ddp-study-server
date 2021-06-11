@@ -3,17 +3,20 @@ package org.broadinstitute.ddp.model.event;
 import org.broadinstitute.ddp.model.activity.types.EventTriggerType;
 
 public class EventSignal {
-    private long operatorId;
-    private long participantId;
-    private long studyId;
-    private String participantGuid;
-    private String operatorGuid;
-    private EventTriggerType eventTriggerType;
+    private final long operatorId;
+    private final long participantId;
+    private final long studyId;
+    private final String studyGuid;
+    private final String participantGuid;
+    private final String operatorGuid;
+    private final EventTriggerType eventTriggerType;
 
     public EventSignal(long operatorId,
                        long participantId,
                        String participantGuid,
-                       String operatorGuid, long studyId,
+                       String operatorGuid,
+                       long studyId,
+                       String studyGuid,
                        EventTriggerType eventTriggerType) {
         this.operatorGuid = operatorGuid;
         this.eventTriggerType = eventTriggerType;
@@ -21,6 +24,7 @@ public class EventSignal {
         this.participantId = participantId;
         this.participantGuid = participantGuid;
         this.studyId = studyId;
+        this.studyGuid = studyGuid;
     }
 
     public long getOperatorId() {
@@ -45,6 +49,10 @@ public class EventSignal {
 
     public long getStudyId() {
         return studyId;
+    }
+
+    public String getStudyGuid() {
+        return studyGuid;
     }
 
     @Override
