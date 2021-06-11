@@ -77,6 +77,7 @@ public class GetActivityInstanceRoute implements Route {
                 instanceGuid, userGuid, studyGuid, operatorGuid, isStudyAdmin);
 
         ActivityInstance result = TransactionWrapper.withTxn(handle -> {
+
             ActivityInstanceDto instanceDto = RouteUtil.findAccessibleInstanceOrHalt(
                     response, handle, userGuid, studyGuid, instanceGuid, isStudyAdmin);
 

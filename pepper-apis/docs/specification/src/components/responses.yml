@@ -202,12 +202,6 @@ CancerSuggestionResponse:
             description: a list of `Cancer` suggestions with a possible list of substring matches of the query within the cancer name
             items:
               $ref: '../pepper.yml#/components/schemas/Suggestion.Cancer'
-ConsentErrorResponse:
-  description: failed to
-  content:
-    application/json:
-      schema:
-        $ref: '../pepper.yml#/components/schemas/Error.Consent'
 ErrorResponse:
   description: general server error
   content:
@@ -316,14 +310,6 @@ StudyDetailResponse:
     application/json:
       schema:
         $ref: '../pepper.yml#/components/schemas/Study.Detail'
-StudyWorkflowsResponse:
-  description: workflows and allowed statuses for a study
-  content:
-    application/json:
-      schema:
-        type: array
-        items:
-          $ref: '../pepper.yml#/components/schemas/Study.Workflow'
 StudySummaryResponse:
   description: summary information for a list of studies
   content:

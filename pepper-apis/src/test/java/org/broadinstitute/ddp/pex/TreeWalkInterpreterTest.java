@@ -1354,7 +1354,8 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
         thrown.expect(PexRuntimeException.class);
         thrown.expectMessage(containsString("Expected DSM notification"));
         String expr = "user.event.kit.isReason(\"NORMAL\")";
-        EventSignal signal = new ActivityInstanceStatusChangeSignal(1L, 1L, "guid", "guid", 2L, 3L, 4L, InstanceStatusType.COMPLETE);
+        EventSignal signal = new ActivityInstanceStatusChangeSignal(
+                1L, 1L, "guid", "guid", 2L, 3L, 4L, "guid", InstanceStatusType.COMPLETE);
         assertTrue(runEvalEventSignal(expr, signal));
     }
 
@@ -1398,7 +1399,8 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
         thrown.expect(PexRuntimeException.class);
         thrown.expectMessage(containsString("Expected DSM notification"));
         String expr = "user.event.testResult.isCorrected()";
-        EventSignal signal = new ActivityInstanceStatusChangeSignal(1L, 1L, "guid", "guid", 2L, 3L, 4L, InstanceStatusType.COMPLETE);
+        EventSignal signal = new ActivityInstanceStatusChangeSignal(
+                1L, 1L, "guid", "guid", 2L, 3L, 4L, "guid", InstanceStatusType.COMPLETE);
         assertTrue(runEvalEventSignal(expr, signal));
     }
 
@@ -1427,6 +1429,7 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
                 userGuid,
                 userGuid,
                 testData.getStudyId(),
+                testData.getStudyGuid(),
                 DsmNotificationEventType.TEST_RESULT,
                 "dummy-kit-request-id",
                 kitReasonType,
