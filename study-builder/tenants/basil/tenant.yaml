@@ -12,10 +12,10 @@ rules:
     stage: login_success
     enabled: true
     order: 1
-  - name: Force Email Verification
-    script: ../force-email-verification.js
-    enabled: true
-    order: 2
+#  - name: Force Email Verification
+#    script: ../force-email-verification.js
+#    enabled: true
+#    order: 2
   - name: Register User in Pepper
     script: ../register-user-in-pepper.js
     stage: login_success
@@ -33,7 +33,7 @@ pages:
 emailTemplates:
   - template: verify_email
     body: ./emails/verify-email.html
-    from: Basil <##STUDY_EMAIL##>
+    from: Basil <basil@datadonationplatform.org>
     subject: >-
       {% if user.user_metadata.language == "es" %} [es] Basil Project: Confirm Your Email
       {% else %} Basil Project: Confirm Your Email
@@ -43,7 +43,7 @@ emailTemplates:
     enabled: true
   - template: reset_email
     body: ./emails/change-password.html
-    from: Basil <##STUDY_EMAIL##>
+    from: Basil <basil@datadonationplatform.org>
     resultUrl: '##SERVER_BASE_URL##/pepper/v1/post-password-reset?clientId={{ application.clientID }}'
     subject: >-
       {% if user.user_metadata.language == 'es' %} [es] Basil Project: Password Reset

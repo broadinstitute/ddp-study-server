@@ -21,8 +21,7 @@
   {{end}}
     "BASE_URL": "{{$conf.baseWebUrl}}",
     "LOGIN_DOMAIN": "{{$conf.auth0.loginDomain}}",
-    "SERVER_BASE_URL": "{{$conf.serverBaseUrl}}",
-    "STUDY_EMAIL": "basil@{{$environment}}.datadonationplatform.org"
+    "SERVER_BASE_URL": "{{$conf.serverBaseUrl}}"
   },
   "AUTH0_ALLOW_DELETE": false,
   "INCLUDED_PROPS": {
