@@ -33,6 +33,9 @@ public interface ActivityInstanceStatusDao extends SqlObject {
     JdbiActivityInstance getJdbiActivityInstance();
 
     @CreateSqlObject
+    JdbiUmbrellaStudy getJdbiUmbrellaStudy();
+
+    @CreateSqlObject
     JdbiActivityInstanceStatus getJdbiActivityStatus();
 
 
@@ -149,6 +152,8 @@ public interface ActivityInstanceStatusDao extends SqlObject {
             }
         }
 
+        var studyGuid = getJdbiUmbrellaStudy().findGuidByStudyId(instanceDto.getStudyId());
+
         EventSignal eventSignal = new ActivityInstanceStatusChangeSignal(
                 operatorUser.getId(),
                 participantUser.getId(),
@@ -157,7 +162,7 @@ public interface ActivityInstanceStatusDao extends SqlObject {
                 instanceDto.getId(),
                 instanceDto.getActivityId(),
                 instanceDto.getStudyId(),
-                instanceDto.getGuid(),
+                studyGuid,
                 newStatusType);
 
         EventService.getInstance().processAllActionsForEventSignal(
