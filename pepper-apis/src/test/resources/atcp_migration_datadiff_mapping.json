@@ -118,7 +118,7 @@
             "target_field_name": "SYMPTOMS_OR_CONDITIONS",
             "source_field_type": "Picklist",
             "options": [
-              "ataxic_gait", "eye_mvmt_diff", "fatigue", "nausea", "tremors", "slurred_speech", "drooling",
+              "ataxic_gait", "eye_mvmt_diff", "fatigue", "irr_period", "nausea", "tremors", "slurred_speech", "drooling",
               "diabetes", "scoliosis", "slow_speech", "swallow_diff_asp", "swallow_diff_gag", "other"
             ]
           },

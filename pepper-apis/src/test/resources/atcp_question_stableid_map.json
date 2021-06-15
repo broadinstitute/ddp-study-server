@@ -290,6 +290,10 @@
                 "type": "integer"
               },
               {
+                "name": "irr_period",
+                "type": "integer"
+              },
+              {
                 "name": "nausea",
                 "type": "integer"
               },
