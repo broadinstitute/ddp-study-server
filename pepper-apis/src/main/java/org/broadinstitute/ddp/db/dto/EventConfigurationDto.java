@@ -107,6 +107,10 @@ public class EventConfigurationDto {
     /* UPDATE_USER_STATUS */
     EnrollmentStatusType updateUserStatusTargetStatusType;
 
+    private String customWorkflowName;
+    private String customWorkflowStatus;
+
+
     public EventConfigurationDto(long eventConfigurationId,
                                  String label,
                                  EventTriggerType eventTriggerType,
@@ -136,7 +140,9 @@ public class EventConfigurationDto {
                                  Long copyActionCopyConfigurationId,
                                  Long contactEmailQuestionStableCodeId,
                                  String contactEmailQuestionStableId,
-                                 Boolean markExistingInvitationsAsVoided) {
+                                 Boolean markExistingInvitationsAsVoided,
+                                 String customWorkflowName,
+                                 String customWorkflowStatus) {
         this.eventConfigurationId = eventConfigurationId;
         this.label = label;
         this.eventTriggerType = eventTriggerType;
@@ -167,6 +173,8 @@ public class EventConfigurationDto {
         this.contactEmailQuestionStableCodeId = contactEmailQuestionStableCodeId;
         this.contactEmailQuestionStableId = contactEmailQuestionStableId;
         this.markExistingInvitationsAsVoided = markExistingInvitationsAsVoided;
+        this.customWorkflowName = customWorkflowName;
+        this.customWorkflowStatus = customWorkflowStatus;
     }
 
     public long getEventConfigurationId() {
@@ -303,5 +311,13 @@ public class EventConfigurationDto {
 
     public Set<Long> getTargetActivityIds() {
         return targetActivityIds;
+    }
+
+    public String getCustomWorkflowName() {
+        return customWorkflowName;
+    }
+
+    public String getCustomWorkflowStatus() {
+        return customWorkflowStatus;
     }
 }

@@ -54,6 +54,7 @@ public class UpdateUserStatusEventAction extends EventAction {
                 signal.getParticipantGuid(),
                 signal.getOperatorGuid(),
                 signal.getStudyId(),
+                signal.getStudyGuid(),
                 targetStatusType));
     }
 

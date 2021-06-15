@@ -143,6 +143,12 @@ public interface EventActionDao extends SqlObject {
         return actionId;
     }
 
+    default long insertUpdateCustomWorkflowAction(String workflow, String status) {
+        long actionId = getJdbiEventAction().insert(null, EventActionType.UPDATE_CUSTOM_WORKFLOW);
+        DBUtils.checkInsert(1, getEventActionSql().insertUpdateCustomWorkflowEventAction(actionId, workflow, status));
+        return actionId;
+    }
+
     default void deleteAnnouncementAction(long eventActionId) {
         int numDeleted = getJdbiUserAnnouncementEventAction().deleteById(eventActionId);
         if (numDeleted != 1) {

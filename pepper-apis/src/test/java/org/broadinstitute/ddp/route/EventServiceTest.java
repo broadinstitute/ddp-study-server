@@ -254,7 +254,7 @@ public class EventServiceTest extends IntegrationTestSuite.TestCase {
             ActivityInstanceStatusChangeSignal signal = new ActivityInstanceStatusChangeSignal(
                     testUserId, testUserId, testData.getUserGuid(), testData.getUserGuid(),
                     TestData.activityInstanceId, studyActivityTriggeringActionId,
-                    umbrellaStudyId, InstanceStatusType.IN_PROGRESS);
+                    umbrellaStudyId, testData.getStudyGuid(), InstanceStatusType.IN_PROGRESS);
             EventService.getInstance().processAllActionsForEventSignal(handle, signal);
         });
 
