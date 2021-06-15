@@ -30,6 +30,7 @@ import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceStatusDao;
 import org.broadinstitute.ddp.db.dao.AnswerDao;
+import org.broadinstitute.ddp.db.dao.EventDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
 import org.broadinstitute.ddp.db.dao.JdbiClient;
@@ -450,6 +451,9 @@ public class StudyDataLoaderMain {
         migrationRunReport = new ArrayList<>();
         failedList = new ArrayList<>();
         skippedList = new ArrayList<>();
+        //disable events before loading data.
+        updateStudyEvents(studyGuid, false);
+
         processParticipant(studyGuid, surveyDataMap, mappingData, dataLoader, null, addressService, olcService);
 
         try {
@@ -461,6 +465,20 @@ public class StudyDataLoaderMain {
         if (isDeleteAuth0Email) {
             deleteAuth0Emails(cfg, migrationRunReport);
         }
+    }
+
+    private void updateStudyEvents(String studyGuid, boolean enableEvents) {
+        TransactionWrapper.useTxn(TransactionWrapper.DB.APIS, handle -> {
+            JdbiUmbrellaStudy jdbiUmbrellaStudy = handle.attach(JdbiUmbrellaStudy.class);
+            long studyId = jdbiUmbrellaStudy.findByStudyGuid(studyGuid).getId();
+            EventDao eventDao = handle.attach(EventDao.class);
+            eventDao.enableAllStudyEvents(studyId, enableEvents);
+            if (enableEvents) {
+                LOG.info("Enabled events for study : {} ", studyGuid);
+            } else {
+                LOG.info("Disabled events for study : {} ", studyGuid);
+            }
+        });
     }
 
     private PreProcessedData preProcessAddressAndEmailVerification(Config cfg, StudyDataLoader dataLoader) throws Exception {
@@ -567,6 +585,8 @@ public class StudyDataLoaderMain {
             preProcessedData = new Gson().fromJson(new FileReader(preProcessFileName), PreProcessedData.class);
             LOG.info("using pre-processed data from {}", preProcessFileName);
         } else {
+            //disable events before loading data.
+            updateStudyEvents(studyGuid, false);
             //load it now
             preProcessedData = preProcessAddressAndEmailVerification(cfg, dataLoader);
             LOG.info("loaded pre-processed data. {} ", new Date());
@@ -606,6 +626,9 @@ public class StudyDataLoaderMain {
                         preProcessedData.getUserAddressData().get(altpid), addressService, olcService);
             }
         }
+        //enable events
+        //updateStudyEvents(studyGuid, true);
+        //manually enable for bucket loads
         try {
             createReport(migrationRunReport);
         } catch (Exception e) {
