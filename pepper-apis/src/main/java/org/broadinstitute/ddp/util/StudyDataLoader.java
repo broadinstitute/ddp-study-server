@@ -1205,6 +1205,7 @@ public class StudyDataLoader {
         appMetadata.put("user_guid", userGuid);
         LegacyUser legacyUser = new LegacyUser(emailAddress, null, firstName, lastName,
                 passwordHash, appMetadata);
+        legacyUser.setEmailVerified(true);
         Gson gson = new Gson();
         String userJson = gson.toJson(legacyUser);
         userList.add(userJson);

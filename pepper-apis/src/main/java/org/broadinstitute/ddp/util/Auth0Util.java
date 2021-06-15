@@ -539,6 +539,7 @@ public class Auth0Util {
         user.setEmail(emailId);
         user.setPassword(pwd);
         user.setConnection(USERNAME_PASSWORD_AUTH0_CONN_NAME);
+        user.setEmailVerified(true);
         User createdUser = auth0Mgmt.users().create(user).execute();
         //LOG.info("Created password: {}", pwd);
         return createdUser;
