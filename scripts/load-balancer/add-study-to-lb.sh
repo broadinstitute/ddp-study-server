@@ -60,11 +60,25 @@ cert_name="$STUDY-cert"
 proxy_name="$LB_NAME-$STUDY-proxy"
 frontend_name="$LB_NAME-$STUDY-frontend"
 
-echo_run gcloud --project="$PROJECT_ID" \
-  compute addresses create "$ip_name" --global
+# Check if IP address is already reserved or not. Since this can fail if it
+# doesn't exit, we temporary turn off `-e` and redirect fd 2 so we minimize
+# noise on script output.
+set +e
 ip_addr="$(gcloud --project="$PROJECT_ID" \
   compute addresses describe "$ip_name" \
-  --global --format='get(address)')"
+  --global --format='get(address)' 2>/dev/null)"
+set -e
+
+if [[ -z "$ip_addr" ]]; then
+  echo_run gcloud --project="$PROJECT_ID" \
+    compute addresses create "$ip_name" --global
+  ip_addr="$(gcloud --project="$PROJECT_ID" \
+    compute addresses describe "$ip_name" \
+    --global --format='get(address)')"
+else
+  echo "=> IP address is already reserved for name [$ip_name]"
+  echo ""
+fi
 
 echo_run gcloud --project="$PROJECT_ID" \
   compute ssl-certificates create "$cert_name" \
