@@ -36,10 +36,11 @@ public class JdbiFileQuestionTest extends TxnAwareBaseTest {
     private static final String SID_FILE_3 = "FILE_647BD81B017D";
     private static final String SID_FILE_4 = "FILE_234223445553";
 
+    private static final long MAX_FILE_SIZE = ConfigManager.getInstance().getConfig().getLong(MAX_FILE_SIZE_BYTES);
     private static final long FILE_1_MAX_SIZE = 1000L;
     private static final long FILE_2_MAX_SIZE = 5000L;
     private static final long FILE_3_MAX_SIZE = 5000L;
-    private static final long FILE_4_MAX_SIZE_INVALID = ConfigManager.getInstance().getConfig().getLong(MAX_FILE_SIZE_BYTES) + 1;
+    private static final long FILE_4_MAX_SIZE_INVALID = MAX_FILE_SIZE + 1;
 
     private static final Set<String> FILE_1_MIME_TYPES = Set.of("image/gif", "image/jpeg");
     private static final Set<String> FILE_2_MIME_TYPES = Set.of("video/mpeg");
@@ -71,7 +72,10 @@ public class JdbiFileQuestionTest extends TxnAwareBaseTest {
             createFileQuestionWithInvalidMaxFileSize();
             fail();
         } catch (IllegalArgumentException e) {
-            assertEquals("Invalid value of maxFileSize=2000001. It should not exceed max value=2000000.", e.getMessage());
+            String msg = String.format(
+                    "Invalid value of maxFileSize=%d. It should not exceed max value=%d.",
+                    FILE_4_MAX_SIZE_INVALID, MAX_FILE_SIZE);
+            assertEquals(msg, e.getMessage());
         }
     }
 
