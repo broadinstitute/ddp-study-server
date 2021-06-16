@@ -96,7 +96,7 @@
         "uploadsBucket": "ddp-local-file-uploads",
         "scannedBucket": "ddp-local-file-scanned",
         "quarantineBucket": "ddp-local-file-quarantine",
-        "maxFileSizeBytes": 2000000,
+        "maxFileSizeBytes": 10485760,
         "maxSignedUrlMins": 5,
         "removalExpireTime": 1,
         "removalExpireUnit": "DAYS",
