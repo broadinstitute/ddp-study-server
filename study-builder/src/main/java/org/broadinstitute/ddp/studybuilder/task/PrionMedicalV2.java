@@ -71,8 +71,8 @@ public class PrionMedicalV2 implements CustomTask {
         ActivityDto activityDto = activityDao.getJdbiActivity().queryActivityById(activityId);
         SqlHelper helper = handle.attach(SqlHelper.class);
         boolean hideExisting = dataCfg.getBoolean("hideExistingInstancesOnCreation");
-        boolean writeOnce = dataCfg.getBoolean("writeOnce");
-        int hidden = helper.updateHideExistingInstancesOnCreation(activityId, hideExisting, writeOnce);
+        boolean allowOnDemand = dataCfg.getBoolean("allowOnDemandTrigger");
+        int hidden = helper.updateHideExistingInstancesOnCreation(activityId, hideExisting, allowOnDemand);
         if (hidden != 1) {
             LOG.error("Updating hide existing instances on creation for activity {} to true returned {} instead of 1",
                     activityId, hidden); // TODO
@@ -80,9 +80,10 @@ public class PrionMedicalV2 implements CustomTask {
     }
 
     private interface SqlHelper extends SqlObject {
-        @SqlUpdate("update study_activity set hide_existing_instances_on_creation = :hide, is_write_once = :writeOnce where "
+        @SqlUpdate("update study_activity set hide_existing_instances_on_creation = :hide, "
+                + "allow_ondemand_trigger = :allowOnDemandTrigger where "
                 + "study_activity_id = :activityId")
         int updateHideExistingInstancesOnCreation(@Bind("activityId") long activityId, @Bind("hide") boolean hide,
-                                                  @Bind("writeOnce") boolean writeOnce);
+                                                  @Bind("allowOnDemandTrigger") boolean allowOnDemandTrigger);
     }
 }
