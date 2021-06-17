@@ -556,7 +556,7 @@
   "blood_type_title": "Blood Type Survey",
   "blood_type_summary_created": "Blood Type Survey",
   "blood_type_summary_in_progress": "Blood Type Survey",
-  "blood_type_summary_complete": "TBD",
+  "blood_type_summary_complete": "Thank you for signing the Blood Type Survey.",
   "blood_type_q1": "What is your blood type?",
   "blood_type_q1_governed": "What is $ddp.participantFirstName()’s blood type?",
   "blood_type_q2": "Is your blood type + (positive) or - (negative)?",
