@@ -19,7 +19,8 @@
   {{end}}
     "BASE_URL": "{{$conf.baseWebUrl}}",
     "LOGIN_DOMAIN": "{{$conf.auth0.loginDomain}}",
-    "STUDY_EMAIL": "atcp@{{$environment}}.datadonationplatform.org"
+    "STUDY_EMAIL": "atcp@{{$environment}}.datadonationplatform.org",
+    "ASSETS_BUCKET": "{{$conf.assetsBucketName}}"
   },
   "AUTH0_ALLOW_DELETE": false,
 
