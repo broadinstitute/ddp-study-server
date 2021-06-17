@@ -12,7 +12,7 @@
       id="app-favicon"
       rel="icon"
       type="image/x-icon"
-      href="https://atcp-dot-broad-ddp-dev.uc.r.appspot.com/favicon.ico"
+      href="https://storage.googleapis.com/##ASSETS_BUCKET##/images/favicon.ico"
     />
     <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
@@ -33,7 +33,7 @@
     />
     <link
       rel="stylesheet"
-      href="https://atcp-dot-broad-ddp-dev.uc.r.appspot.com/assets/auth0-styles/main.css"
+      href="{{ url }}/assets/auth0-styles/main.css"
     />
   </head>
   <body class="main">
@@ -42,7 +42,7 @@
         <img
           alt="A-T Portal Logo"
           class="logo"
-          src="https://atcp-dot-broad-ddp-dev.uc.r.appspot.com/assets/images/atcp/original-logo-white.svg"
+          src="{{ url }}/assets/images/atcp/original-logo-white.svg"
         />
       </a>
       <nav>
@@ -460,7 +460,7 @@
         </div>
         <a href="/" class="prepare-link-host">
           <img
-            src="https://atcp-dot-broad-ddp-dev.uc.r.appspot.com/assets/images/atcp/original-logo-color.svg"
+            src="{{ url }}/assets/images/atcp/original-logo-color.svg"
           />
         </a>
       </footer>
@@ -497,6 +497,6 @@
         decodeURIComponent(escape(window.atob('@@config@@')))
       );
     </script>
-    <script src="https://atcp-dot-broad-ddp-dev.uc.r.appspot.com/assets/auth0-scripts/bundles/ddp-atcp-auth.umd.js"></script>
+    <script src="{{ url }}/assets/auth0-scripts/bundles/ddp-atcp-auth.umd.js"></script>
   </body>
 </html>
