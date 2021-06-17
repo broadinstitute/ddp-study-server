@@ -9,9 +9,9 @@
   "AUTH0_CLIENT_SECRET": "{{$conf.auth0.deployClientSecret}}",
   "AUTH0_KEYWORD_REPLACE_MAPPINGS": {
   {{if eq $environment "dev"}}
-    "LOCALHOST_CALLBACKS": ",https://atcp.dev.datadonationplatform.org/auth, https://atcp.dev.datadonationplatform.org/login-landing, https://atcp-dot-broad-ddp-dev.uc.r.appspot.com/login-landing, http://localhost:4200/auth, http://localhost:4200/login-landing",
-    "LOCALHOST_LOGOUTS": ",http://localhost:4200, http://localhost:4200/session-expired, http://localhost:4200/account-activation-required, http://localhost:4200/join-us, https://atcp-dot-broad-ddp-dev.uc.r.appspot.com, https://atcp-dot-broad-ddp-dev.uc.r.appspot.com/session-expired, https://atcp-dot-broad-ddp-dev.uc.r.appspot.com/account-activation-required, https://atcp-dot-broad-ddp-dev.uc.r.appspot.com/join-us, https://atcp.dev.datadonationplatform.org, https://atcp.dev.datadonationplatform.org/session-expired, https://atcp.dev.datadonationplatform.org/account-activation-required, https://atcp.dev.datadonationplatform.org/join-us",
-    "LOCALHOST_ORIGINS": ",http://localhost:4200, https://atcp-dot-broad-ddp-dev.uc.r.appspot.com, https://atcp.dev.datadonationplatform.org",
+    "LOCALHOST_CALLBACKS": ",http://localhost:4200/auth, http://localhost:4200/login-landing",
+    "LOCALHOST_LOGOUTS": ",http://localhost:4200, http://localhost:4200/session-expired, http://localhost:4200/account-activation-required, http://localhost:4200/join-us",
+    "LOCALHOST_ORIGINS": ",http://localhost:4200",
   {{else}}
     "LOCALHOST_CALLBACKS": "",
     "LOCALHOST_LOGOUTS": "",
