@@ -18,9 +18,11 @@
     "LOCALHOST_ORIGINS": "",
   {{end}}
     "BASE_URL": "{{$conf.baseWebUrl}}",
-    "LOGIN_DOMAIN": "{{$conf.auth0.loginDomain}}"
+    "LOGIN_DOMAIN": "{{$conf.auth0.loginDomain}}",
+    "STUDY_EMAIL": "atcp@{{$environment}}.datadonationplatform.org"
   },
   "AUTH0_ALLOW_DELETE": false,
+
   "INCLUDED_PROPS": {
   },
   "EXCLUDED_PROPS": {
