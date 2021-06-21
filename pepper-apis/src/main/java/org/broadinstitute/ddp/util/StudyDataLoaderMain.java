@@ -1042,13 +1042,13 @@ public class StudyDataLoaderMain {
                                             lastUpdatedAtEpochi + 1, userGuid);
                         }
 
-                        Long studyActivityId = jdbiActivity.findIdByStudyIdAndCode(studyId, "FEEDING").get();
+                        //Long studyActivityId = jdbiActivity.findIdByStudyIdAndCode(studyId, "FEEDING").get();
 
-                        ActivityInstanceDto dto = activityInstanceDao
+                        /*ActivityInstanceDto dto = activityInstanceDao
                                 .insertInstance(studyActivityId, userGuid, userGuid, InstanceStatusType.CREATED,
                                         null,
                                         Instant.now().toEpochMilli(),
-                                        null, null, null);
+                                        null, null, null);*/
 
                         jdbiUserStudyEnrollment.changeUserStudyEnrollmentStatus(
                                 userDto.getUserId(),
