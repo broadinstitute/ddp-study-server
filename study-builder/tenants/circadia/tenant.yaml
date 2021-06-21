@@ -20,7 +20,7 @@ emailTemplates:
   - template: welcome_email
     enabled: true
     syntax: liquid
-    from: circadia@dev.datadonationplatform.org
+    from: '##FROM_EMAIL##'
     subject: Account Created
     body: emails/welcome_email.html
 
