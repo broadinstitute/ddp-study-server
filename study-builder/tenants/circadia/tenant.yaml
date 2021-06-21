@@ -16,6 +16,14 @@ pages:
     enabled: true
     html: ./pages/password_reset.html
 
+emailTemplates:
+  - template: welcome_email
+    enabled: true
+    syntax: liquid
+    from: circadia@dev.datadonationplatform.org
+    subject: Account Created
+    body: emails/welcome_email.html
+
 clients:
   - name: Circadia Dev
     app_type: spa
