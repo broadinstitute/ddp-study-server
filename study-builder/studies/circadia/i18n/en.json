@@ -4,12 +4,11 @@
   "prequal_header": "Prequalifier",
   "prequal_self_describe": "The following questions will determine if a participant is eligible to participate in the study. ",
 
-  "prequal_atypical_circadian_rhythm_question": "What atypical circadian rhythm have you been diagnosed with? ",
+  "prequal_atypical_circadian_rhythm_question": "Have you been diagnosed with an atypical circadian rhythm?",
   "prequal_aspd_answer": "Advanced Sleep Phase Disorder (ASPD)",
   "prequal_dspd_answer": "Delayed Sleep Phase Disorder (DSPD)",
   "prequal_non_24_answer": "Non-24",
   "prequal_other_ansawer": "Other",
-  "prequal_self_suspect_acr": "I suspect I have an atypical circadian rhythm but have not yet been diagnosed.",
   "prequal_none_answer": "None",
 
   "prequal_crd_symptoms_present_question": "Have the symptoms of your circadian rhythm disorder been present for at least three months?",
