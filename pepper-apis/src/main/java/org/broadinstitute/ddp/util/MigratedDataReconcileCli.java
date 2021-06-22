@@ -242,6 +242,15 @@ public class MigratedDataReconcileCli {
                 "OTHER"
         )));
 
+        singlePicklistLookup.put("immunodeficiency_type", new ArrayList<>(List.of(
+                "",
+                "IGA_DEFICIENCY",
+                "IVIG",
+                "SUB_IG",
+                "ANTIBIOTICS",
+                "NO_TREATMENT"
+        )));
+
         initStateCodes();
 
         //skip reporting some fields to reduce noise !!

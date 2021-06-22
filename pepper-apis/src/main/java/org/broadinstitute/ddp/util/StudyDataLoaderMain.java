@@ -1425,7 +1425,27 @@ public class StudyDataLoaderMain {
                             "RECONSENT_DATE_NEEDED",
                             "RECONSENT_DATE_ENTERED",
                             "RECONSENT_NAME",
-                            "RECONSENT_RELATIONSHIP")
+                            "RECONSENT_RELATIONSHIP"),
+                    "AT_PARTICIPANT_INFO", List.of(
+                            "DATSTAT_TITLE",
+                            "DATSTAT_LANGUAGE",
+                            "DATSTAT_TIMEZONE",
+                            "DATSTAT_WORKPHONE",
+                            "DATSTAT_MOBILEPHONE",
+                            "DATSTAT_ALTEMAIL",
+                            "DATSTAT_MAILINGADDRESS",
+                            "DATSTAT_MAILINGCITY",
+                            "DATSTAT_MAILINGSTATE",
+                            "DATSTAT_MAILINGCOUNTRY",
+                            "DATSTAT_MAILINGZIP",
+                            "DATSTAT_DONOTCONTACT",
+                            "DATSTAT_DONOTCONTACTCOMMENT"
+                    ),
+                    "AT_PARTICIPANT_EXIT", List.of(
+                            "DATSTAT_EXITREASON",
+                            "DATSTAT_EXITDATE",
+                            "DATSTAT_EXITCOMMENT"
+                    )
             );
 
             participantRegistrationType = Map.of(
