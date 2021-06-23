@@ -433,8 +433,65 @@
         }, 200);
       }
 
+      function reorderFields() {
+        let fieldsAreReordered = false;
+
+        const intervalId = setInterval(function () {
+          if (fieldsAreReordered) {
+            clearInterval(intervalId);
+
+            return;
+          }
+
+          const firstNameWrapper = document.querySelector(
+            '.auth0-lock-input-first_name',
+          );
+          const lastNameWrapper = document.querySelector(
+            '.auth0-lock-input-last_name',
+          );
+
+          if (firstNameWrapper && lastNameWrapper) {
+            const parentWrapper = firstNameWrapper.parentElement;
+
+            parentWrapper.insertAdjacentElement('afterbegin', firstNameWrapper);
+            firstNameWrapper.insertAdjacentElement('afterend', lastNameWrapper);
+
+            fieldsAreReordered = true;
+          }
+        }, 100);
+      }
+
+      function focusFirstNameInput() {
+        let isFocused = false;
+
+        const intervalId = setInterval(function () {
+          if (isFocused) {
+            clearInterval(intervalId);
+
+            return;
+          }
+
+          const emailInput = document.querySelector('input[name="email"]');
+          const firstNameInput = document.querySelector(
+            'input[name="first_name"]',
+          );
+
+          if (
+            emailInput &&
+            document.activeElement === emailInput &&
+            firstNameInput
+          ) {
+            firstNameInput.focus();
+
+            isFocused = true;
+          }
+        }, 50);
+      }
+
       lock.on('show', function () {
         addHelp();
+        reorderFields();
+        focusFirstNameInput();
 
         if (realOptions.prefill && realOptions.prefill.email) {
           var getInputElement = function (name) {
