@@ -64,11 +64,10 @@
     </style>
 </head>
 <body>
-{% assign logo_url = "##ASSETS_URL##/auth0/logo.png" %}
+<!-- Variable definitions -->
+{% assign logo_url = "https://storage.googleapis.com/circadia-dev-assets/auth0/logo.png" %}
 
-{% capture language %}
-{{ user.user_metadata.language | default: "en" }}
-{% endcapture %}
+{% capture language %}{{ user.user_metadata.language | default: "en" }}{% endcapture %}
 
 {% if language == "en" %}
 {% assign greeting = "Hello!" %}
@@ -81,7 +80,6 @@
 
 {% assign team = "The Circadia Study Team" %}
 {% endif %}
-
 <center>
     <table
             style="
