@@ -1481,6 +1481,18 @@ public class StudyDataLoaderMain {
                                         .replaceAll("(\\r|\\n|\\r\\n)", "\\\\n")
                                         .replaceAll("\"", "\\\\\""))
                                 .append("\"");
+                        if ("DATSTAT_EXITREASON".equals(field)) {
+                            json.append(",");
+                            json.append("\"EXITSTATUS\":\"1\"");
+                        }
+                    } else {
+                        if ("DATSTAT_EXITREASON".equals(field)) {
+                            if (!first) {
+                                json.append(",");
+                            }
+                            first = false;
+                            json.append("\"EXITSTATUS\":\"0\"");
+                        }
                     }
                 }
                 json.append("}");
