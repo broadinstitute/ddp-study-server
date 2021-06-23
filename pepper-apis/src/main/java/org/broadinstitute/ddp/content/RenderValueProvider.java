@@ -207,13 +207,29 @@ public class RenderValueProvider {
      *
      * @param questionStableId the question stable id
      * @param fallbackValue    the fallback value
-     * @return answer string representation if available, otherwise null
+     * @return answer string representation of answer (in case of picklist: option) if formResponse
+     *     or formInstance objects are available, otherwise null
      */
     public String answer(String questionStableId, String fallbackValue) {
+        return answer(questionStableId, fallbackValue, false);
+    }
+
+    /**
+     * Returns the answer for the question, or the fallback value if no answer.
+     *
+     * @param questionStableId         the question stable id
+     * @param fallbackValue            the fallback value
+     * @param useDetailTextForPickList if true and detecting answer of a picklist then get a detailText instead of
+     *                                 option label.
+     * @return answer string representation of answer (in case of picklist: option or detailText) if formResponse
+     *     or formInstance objects are available, otherwise null
+     * @see #answer(String, String)
+     */
+    public String answer(String questionStableId, String fallbackValue, boolean useDetailTextForPickList) {
         if (formResponse != null) {
-            return renderAnswerUsingFormResponse(questionStableId, fallbackValue);
+            return renderAnswerUsingFormResponse(questionStableId, fallbackValue, useDetailTextForPickList);
         } else if (formInstance != null) {
-            return renderAnswerUsingFormInstance(questionStableId, fallbackValue);
+            return renderAnswerUsingFormInstance(questionStableId, fallbackValue, useDetailTextForPickList);
         } else {
             // No objects to use to lookup answers. Returning null here will keep this part of the template untouched,
             // in case we want to come back and do a second round of rendering.
@@ -221,7 +237,7 @@ public class RenderValueProvider {
         }
     }
 
-    private String renderAnswerUsingFormResponse(String questionStableId, String fallbackValue) {
+    private String renderAnswerUsingFormResponse(String questionStableId, String fallbackValue, boolean useDetailTextForPickList) {
         Answer answer = formResponse.getAnswer(questionStableId);
         if (answer == null || answer.isEmpty()) {
             // No answer response for this question yet, so use fallback.
@@ -233,11 +249,17 @@ public class RenderValueProvider {
                 Map<String, PicklistOptionDef> options = ((PicklistQuestionDef) questionDef)
                         .getAllPicklistOptions().stream()
                         .collect(Collectors.toMap(PicklistOptionDef::getStableId, Function.identity()));
-                return ((PicklistAnswer) answer).getValue().stream()
+                return useDetailTextForPickList
+                        ? ((PicklistAnswer) answer).getValue().stream()
                         .map(selected -> options.get(selected.getStableId())
-                                .getOptionLabelTemplate()
+                                .getDetailLabelTemplate()
                                 .render(isoLangCode))
-                        .collect(Collectors.joining(","));
+                        .collect(Collectors.joining(",")) :
+                        ((PicklistAnswer) answer).getValue().stream()
+                                .map(selected -> options.get(selected.getStableId())
+                                        .getOptionLabelTemplate()
+                                        .render(isoLangCode))
+                                .collect(Collectors.joining(","));
             case COMPOSITE: // Fall-through
             case FILE:
                 // Have not decided what composite or file answers will look like yet.
@@ -248,7 +270,15 @@ public class RenderValueProvider {
         }
     }
 
-    private String renderAnswerUsingFormInstance(String questionStableId, String fallbackValue) {
+    /**
+     * Render template with setting an answer value instead of $ddp.answer(...).
+     * NOTE: in order to avoid NPE replace null values of getDetailLabel() or getOptionLabel() with "".
+     * @param questionStableId         stable ID of a question which answer to render
+     * @param fallbackValue            default value which set in case if answer not set or empty
+     * @param useDetailTextForPickList if it is `true` then use detailText() (instead of option) in case of picklist.
+     * @return String - rendered template
+     */
+    private String renderAnswerUsingFormInstance(String questionStableId, String fallbackValue, boolean useDetailTextForPickList) {
         Question question = formInstance.getQuestionByStableId(questionStableId);
         Answer answer = question != null && question.isAnswered()
                 ? (Answer) question.getAnswers().get(0) : null;
@@ -257,9 +287,15 @@ public class RenderValueProvider {
         }
         switch (answer.getQuestionType()) {
             case PICKLIST:
-                Map<String, String> options = ((PicklistQuestion) question)
+                Map<String, String> options = useDetailTextForPickList
+                        ? ((PicklistQuestion) question)
                         .streamAllPicklistOptions()
-                        .collect(Collectors.toMap(PicklistOption::getStableId, PicklistOption::getOptionLabel));
+                        .collect(Collectors.toMap(PicklistOption::getStableId,
+                                (p) -> p.getDetailLabel() == null ? "" : p.getDetailLabel())) :
+                        ((PicklistQuestion) question)
+                                .streamAllPicklistOptions()
+                                .collect(Collectors.toMap(PicklistOption::getStableId,
+                                        (p) -> p.getOptionLabel() == null ? "" : p.getOptionLabel()));
                 return ((PicklistAnswer) answer).getValue().stream()
                         .map(selected -> options.get(selected.getStableId()))
                         .collect(Collectors.joining(","));

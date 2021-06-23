@@ -246,7 +246,7 @@ public class ActivityInstanceServiceTest extends ActivityInstanceServiceTestAbst
 
     @Test
     public void testRenderInstanceSummaries_rendersAnswer() {
-        String name = "Name: $ddp.answer(\"Q2\",\"picklist\")";
+        String name = "Name: $ddp.answer('Q2','picklist', false)";
         String title = "Title: $ddp.answer(\"Q1\",\"text\") $ddp.answer(\"non-existing\", \"the-fallback\")";
         String subtitle = "Subtitle: $ddp.answer(\"Q2\",\"picklist\")";
         String description = "Description: $ddp.answer(\"Q2\",\"picklist\")";

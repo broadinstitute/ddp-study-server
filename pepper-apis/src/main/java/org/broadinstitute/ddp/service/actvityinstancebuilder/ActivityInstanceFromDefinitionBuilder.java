@@ -204,6 +204,9 @@ public class ActivityInstanceFromDefinitionBuilder {
                 var formInstance = context.getAIBuilderFactory().getFormInstanceCreator().createFormInstance(context);
                 context.setFormInstance(formInstance);
 
+                context.getAIBuilderFactory().getTemplateRenderHelper().addInstanceToRendererInitialContext(
+                        context, context.getFormInstance());
+
                 context.setBuildStep(BUILD_FORM_INSTANCE);
             }
         }
@@ -223,8 +226,6 @@ public class ActivityInstanceFromDefinitionBuilder {
     public ActivityInstanceFromDefinitionBuilder renderFormTitles() {
         if (checkStep(BUILD_FORM_INSTANCE, RENDER_FORM_TITLES)) {
 
-            context.getAIBuilderFactory().getTemplateRenderHelper().addInstanceToRendererInitialContext(
-                    context, context.getFormInstance());
             context.getAIBuilderFactory().getFormInstanceCreator().renderTitleAndSubtitle(context);
 
             context.setBuildStep(RENDER_FORM_TITLES);
@@ -242,8 +243,7 @@ public class ActivityInstanceFromDefinitionBuilder {
                         + " disableTemplatesRendering");
                 context.setFailedStep(RENDER_CONTENT);
             } else {
-                context.getAIBuilderFactory().getFormInstanceCreator().renderContent(
-                        context, context.getRenderedTemplates()::get);
+                context.getAIBuilderFactory().getFormInstanceCreator().renderContent(context);
 
                 context.setBuildStep(RENDER_CONTENT);
             }
