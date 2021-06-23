@@ -128,7 +128,7 @@
       var headerText = '';
       var studyColor = '#0b1245';
       var studyHelpEmail = '##STUDY_EMAIL##';
-      var registerUrl = '##BASE_URL##';
+      var registerUrl = '##BASE_URL##/join-us';
       var connection = config.connection;
       var prompt = !prompt;
       var showPasswordRecentText = false;
@@ -490,8 +490,11 @@
 
       lock.on('show', function () {
         addHelp();
-        reorderFields();
-        focusFirstNameInput();
+
+        if (mode === 'signup') {
+          reorderFields();
+          focusFirstNameInput();
+        }
 
         if (realOptions.prefill && realOptions.prefill.email) {
           var getInputElement = function (name) {
