@@ -16,10 +16,12 @@ import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistOptionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
+import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.activity.instance.FormInstance;
 import org.broadinstitute.ddp.model.activity.instance.FormResponse;
 import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
 import org.broadinstitute.ddp.model.activity.instance.answer.PicklistAnswer;
+import org.broadinstitute.ddp.model.activity.instance.answer.SelectedPicklistOption;
 import org.broadinstitute.ddp.model.activity.instance.question.PicklistOption;
 import org.broadinstitute.ddp.model.activity.instance.question.PicklistQuestion;
 import org.broadinstitute.ddp.model.activity.instance.question.Question;
@@ -251,14 +253,10 @@ public class RenderValueProvider {
                         .collect(Collectors.toMap(PicklistOptionDef::getStableId, Function.identity()));
                 return useDetailTextForPickList
                         ? ((PicklistAnswer) answer).getValue().stream()
-                        .map(selected -> options.get(selected.getStableId()).getDetailLabelTemplate() == null
-                                ? fallbackValue :
-                                options.get(selected.getStableId()).getDetailLabelTemplate().render(isoLangCode))
+                        .map(selected -> detailLabelRender(options, selected, fallbackValue))
                         .collect(Collectors.joining(",")) :
-                        ((PicklistAnswer) answer).getValue().stream()
-                                .map(selected -> options.get(selected.getStableId()).getOptionLabelTemplate() == null
-                                        ? fallbackValue :
-                                        options.get(selected.getStableId()).getOptionLabelTemplate().render(isoLangCode))
+                                ((PicklistAnswer) answer).getValue().stream()
+                                .map(selected -> optionLabelRender(options, selected, fallbackValue))
                                 .collect(Collectors.joining(","));
             case COMPOSITE: // Fall-through
             case FILE:
@@ -268,6 +266,17 @@ public class RenderValueProvider {
                 // Everything else will get turned into a string.
                 return answer.getValue().toString();
         }
+    }
+
+    private String optionLabelRender(Map<String, PicklistOptionDef> options, SelectedPicklistOption selected, String fallbackValue) {
+        PicklistOptionDef option = options.get(selected.getStableId());
+        return option.getOptionLabelTemplate() == null ? fallbackValue : option.getOptionLabelTemplate().render(isoLangCode);
+    }
+
+    private String detailLabelRender(Map<String, PicklistOptionDef> options, SelectedPicklistOption selected, String fallbackValue) {
+        PicklistOptionDef option = options.get(selected.getStableId());
+        Template template = option.getDetailLabelTemplate() == null ? option.getOptionLabelTemplate() : option.getDetailLabelTemplate();
+        return template == null ? fallbackValue : template.render(isoLangCode);
     }
 
     /**
@@ -292,7 +301,9 @@ public class RenderValueProvider {
                         ? ((PicklistQuestion) question)
                         .streamAllPicklistOptions()
                         .collect(Collectors.toMap(PicklistOption::getStableId,
-                                (p) -> p.getDetailLabel() == null ? fallbackValue : p.getDetailLabel())) :
+                                (p) -> p.getDetailLabel() == null
+                                        ? (p.getOptionLabel() == null ? fallbackValue : p.getOptionLabel())
+                                        : p.getDetailLabel())) :
                         ((PicklistQuestion) question)
                                 .streamAllPicklistOptions()
                                 .collect(Collectors.toMap(PicklistOption::getStableId,
