@@ -16,8 +16,10 @@ class Mapping {
     private MappingParticipant participant;
     @SerializedName("activities")
     private List<MappingActivity> activities = new ArrayList<>();
-    @SerializedName("dsm_fields")
-    private List<MappingDsmField> dsmFields = new ArrayList<>();
+    @SerializedName("dsm_participant_fields")
+    private List<MappingDsmField> dsmParticipantFields = new ArrayList<>();
+    @SerializedName("dsm_form_fields")
+    private List<MappingDsmField> dsmFormFields = new ArrayList<>();
 
     public String getStudyGuid() {
         return studyGuid;
@@ -31,7 +33,11 @@ class Mapping {
         return activities;
     }
 
-    public List<MappingDsmField> getDsmFields() {
-        return dsmFields;
+    public List<MappingDsmField> getDsmParticipantFields() {
+        return dsmParticipantFields;
+    }
+
+    public List<MappingDsmField> getDsmFormFields() {
+        return dsmFormFields;
     }
 }

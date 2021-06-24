@@ -481,9 +481,12 @@ class DataLoader {
             return;
         }
 
-        DsmDataLoader.useTxn(dsmHandle -> loadDsmData(dsmHandle, altPid, mapping, participant));
+        DsmDataLoader.useTxn(dsmHandle -> {
+            loadDsmParticipantData(dsmHandle, altPid, mapping, participant);
+            loadDsmFormData(dsmHandle, altPid, mapping, participant);
+        });
         familyIdToParticipantAltPid.put(familyId, altPid);
-        LOG.info("  Assigned family_id={} to participant altpid={}", familyId, altPid);
+        LOG.info("  - Assigned family_id={} to participant altpid={}", familyId, altPid);
     }
 
     private void processFamilyMemberDsmData(Handle dsmHandle, MemberWrapper member) {
@@ -503,13 +506,32 @@ class DataLoader {
             }
         }
 
-        LOG.info("  Using participant altpid={}", altPid);
-        loadDsmData(dsmHandle, altPid, mapping, member);
+        LOG.info("  - Using participant altpid={}", altPid);
+        loadDsmFormData(dsmHandle, altPid, mapping, member);
     }
 
-    private void loadDsmData(Handle dsmHandle, String participantAltPid, Mapping mapping, MemberWrapper member) {
+    private void loadDsmParticipantData(Handle dsmHandle, String participantAltPid, Mapping mapping, MemberWrapper participant) {
         Map<String, String> data = new HashMap<>();
-        for (var field : mapping.getDsmFields()) {
+        for (var field : mapping.getDsmParticipantFields()) {
+            String value = participant.getString(field.getSource());
+            if (value != null) {
+                data.put(field.getTarget(), value);
+            }
+        }
+
+        LOG.info("  - Participant has additional record data with {} field values", data.size());
+        String jsonData = !data.isEmpty() ? gson.toJson(data) : null;
+
+        long dsmParticipantId = dsmLoader.createDsmParticipant(dsmHandle, studyGuid, participantAltPid);
+        LOG.info("  - Created dsm participant with id={}", dsmParticipantId);
+
+        long recordId = dsmLoader.createParticipantRecord(dsmHandle, studyGuid, dsmParticipantId, jsonData);
+        LOG.info("  - Created participant record with id={}", recordId);
+    }
+
+    private void loadDsmFormData(Handle dsmHandle, String participantAltPid, Mapping mapping, MemberWrapper member) {
+        Map<String, String> data = new HashMap<>();
+        for (var field : mapping.getDsmFormFields()) {
             if ("datstat_masterpid".equalsIgnoreCase(field.getSource())) {
                 var obj = member.getObject(field.getSource());
                 if (obj != null) {
@@ -532,11 +554,11 @@ class DataLoader {
             }
         }
 
-        LOG.info("  Member has dsm data with {} field values", data.size());
+        LOG.info("  - Member has dsm form data with {} field values", data.size());
         if (!data.isEmpty()) {
             String json = gson.toJson(data);
-            long id = dsmLoader.loadData(dsmHandle, studyGuid, participantAltPid, json);
-            LOG.info("  Inserted member dsm data with id={}", id);
+            long id = dsmLoader.loadFormData(dsmHandle, studyGuid, participantAltPid, json);
+            LOG.info("  - Inserted member dsm data with id={}", id);
         }
     }
 }

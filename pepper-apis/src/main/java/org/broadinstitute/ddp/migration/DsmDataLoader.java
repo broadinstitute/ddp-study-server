@@ -52,21 +52,51 @@ public class DsmDataLoader {
         }
     }
 
-    public long loadData(Handle dsmHandle, String studyGuid, String participantAltPid, String jsonData) {
-        return dsmHandle.attach(DsmDao.class).insertParticipantData(
+    public long createDsmParticipant(Handle dsmHandle, String studyGuid, String participantAltPid) {
+        return dsmHandle.attach(DsmDao.class).insertParticipant(
+                studyGuid, participantAltPid, Instant.now().toEpochMilli());
+    }
+
+    public long createParticipantRecord(Handle dsmHandle, String studyGuid, long dsmParticipantId, String jsonData) {
+        return dsmHandle.attach(DsmDao.class).insertParticipantRecord(
+                studyGuid, dsmParticipantId, jsonData, Instant.now().toEpochMilli());
+    }
+
+    public long loadFormData(Handle dsmHandle, String studyGuid, String participantAltPid, String jsonData) {
+        return dsmHandle.attach(DsmDao.class).insertDynamicFormData(
                 studyGuid, participantAltPid, jsonData, Instant.now().toEpochMilli());
     }
 
     interface DsmDao extends SqlObject {
         @GetGeneratedKeys
+        @SqlUpdate("insert into ddp_participant"
+                + "        (ddp_participant_id, ddp_instance_id, last_changed, changed_by)"
+                + " select :participantAltPid, ddp_instance_id, :lastChanged, 'SYSTEM'"
+                + "   from ddp_instance where study_guid = :studyGuid")
+        long insertParticipant(
+                @Bind("studyGuid") String studyGuid,
+                @Bind("participantAltPid") String participantAltPid,
+                @Bind("lastChanged") long lastChangedMillis);
+
+        @GetGeneratedKeys
+        @SqlUpdate("insert into ddp_participant_record"
+                + "        (participant_id, additional_values_json, last_changed, changed_by)"
+                + " values (:participantId, :json, :lastChanged, 'SYSTEM')")
+        long insertParticipantRecord(
+                @Bind("studyGuid") String studyGuid,
+                @Bind("participantId") long dsmParticipantId,
+                @Bind("json") String additionalValuesJson,
+                @Bind("lastChanged") long lastChangedMillis);
+
+        @GetGeneratedKeys
         @SqlUpdate("insert into ddp_participant_data"
                 + "        (ddp_participant_id, ddp_instance_id, field_type_id, data, last_changed, changed_by)"
                 + " select :participantAltPid, ddp_instance_id, 'RGP_PARTICIPANTS', :json, :lastChanged, 'SYSTEM'"
                 + "   from ddp_instance where study_guid = :studyGuid")
-        long insertParticipantData(
+        long insertDynamicFormData(
                 @Bind("studyGuid") String studyGuid,
                 @Bind("participantAltPid") String participantAltPid,
                 @Bind("json") String jsonData,
-                @Bind("lastChanged") long lastChanged);
+                @Bind("lastChanged") long lastChangedMillis);
     }
 }
