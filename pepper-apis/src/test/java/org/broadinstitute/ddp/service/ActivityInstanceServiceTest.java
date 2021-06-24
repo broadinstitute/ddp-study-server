@@ -246,7 +246,7 @@ public class ActivityInstanceServiceTest extends ActivityInstanceServiceTestAbst
 
     @Test
     public void testRenderInstanceSummaries_rendersAnswer() {
-        String name = "Name: $ddp.answer('Q2','picklist', false)";
+        String name = "Name: $ddp.answer('Q2','picklist', true)";
         String title = "Title: $ddp.answer(\"Q1\",\"text\") $ddp.answer(\"non-existing\", \"the-fallback\")";
         String subtitle = "Subtitle: $ddp.answer(\"Q2\",\"picklist\")";
         String description = "Description: $ddp.answer(\"Q2\",\"picklist\")";
@@ -264,6 +264,8 @@ public class ActivityInstanceServiceTest extends ActivityInstanceServiceTestAbst
 
         var optionAunt = Template.text("$aunt");
         optionAunt.addVariable(TemplateVariable.single("aunt", "en", "My Aunt"));
+        var optionAuntDetail = Template.text("$auntDetail");
+        optionAuntDetail.addVariable(TemplateVariable.single("auntDetail", "en", "My Aunt Detail"));
         var optionUncle = Template.text("$uncle");
         optionUncle.addVariable(TemplateVariable.single("uncle", "en", "Should not use this one!"));
         var activity = FormActivityDef.generalFormBuilder(activityCode, "v1", "study")
@@ -271,7 +273,7 @@ public class ActivityInstanceServiceTest extends ActivityInstanceServiceTestAbst
                 // No need to add definition for text question since that's not needed for use-friendly display.
                 .addSection(new FormSectionDef(null, List.of(new QuestionBlockDef(
                         PicklistQuestionDef.buildSingleSelect(PicklistRenderMode.LIST, "Q2", Template.text("picklist"))
-                        .addOption(new PicklistOptionDef("AUNT", optionAunt))
+                        .addOption(new PicklistOptionDef("AUNT", optionAunt, optionAuntDetail))
                         .addOption(new PicklistOptionDef("UNCLE", optionUncle))
                         .build()))))
                 .build();
@@ -280,7 +282,7 @@ public class ActivityInstanceServiceTest extends ActivityInstanceServiceTestAbst
         TransactionWrapper.useTxn(handle -> service.renderInstanceSummaries(
                 handle, testData.getUserId(), "operatorGuid", "study", summaries, Map.of("guid", response)));
 
-        assertEquals("Name: My Aunt #2", summaries.get(0).getActivityName());
+        assertEquals("Name: My Aunt Detail #2", summaries.get(0).getActivityName());
         assertEquals("Title: some-text the-fallback", summaries.get(0).getActivityTitle());
         assertEquals("Subtitle: My Aunt", summaries.get(0).getActivitySubtitle());
         assertEquals("Description: My Aunt", summaries.get(0).getActivityDescription());

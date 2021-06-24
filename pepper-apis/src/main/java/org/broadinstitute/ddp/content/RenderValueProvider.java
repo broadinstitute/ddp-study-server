@@ -251,14 +251,14 @@ public class RenderValueProvider {
                         .collect(Collectors.toMap(PicklistOptionDef::getStableId, Function.identity()));
                 return useDetailTextForPickList
                         ? ((PicklistAnswer) answer).getValue().stream()
-                        .map(selected -> options.get(selected.getStableId())
-                                .getDetailLabelTemplate()
-                                .render(isoLangCode))
+                        .map(selected -> options.get(selected.getStableId()).getDetailLabelTemplate() == null
+                                ? fallbackValue :
+                                options.get(selected.getStableId()).getDetailLabelTemplate().render(isoLangCode))
                         .collect(Collectors.joining(",")) :
                         ((PicklistAnswer) answer).getValue().stream()
-                                .map(selected -> options.get(selected.getStableId())
-                                        .getOptionLabelTemplate()
-                                        .render(isoLangCode))
+                                .map(selected -> options.get(selected.getStableId()).getOptionLabelTemplate() == null
+                                        ? fallbackValue :
+                                        options.get(selected.getStableId()).getOptionLabelTemplate().render(isoLangCode))
                                 .collect(Collectors.joining(","));
             case COMPOSITE: // Fall-through
             case FILE:
@@ -272,7 +272,8 @@ public class RenderValueProvider {
 
     /**
      * Render template with setting an answer value instead of $ddp.answer(...).
-     * NOTE: in order to avoid NPE replace null values of getDetailLabel() or getOptionLabel() with "".
+     * NOTE: in order to avoid NPE replace null values of getDetailLabel() or getOptionLabel() with `fallbackValue`.
+     *
      * @param questionStableId         stable ID of a question which answer to render
      * @param fallbackValue            default value which set in case if answer not set or empty
      * @param useDetailTextForPickList if it is `true` then use detailText() (instead of option) in case of picklist.
@@ -291,11 +292,11 @@ public class RenderValueProvider {
                         ? ((PicklistQuestion) question)
                         .streamAllPicklistOptions()
                         .collect(Collectors.toMap(PicklistOption::getStableId,
-                                (p) -> p.getDetailLabel() == null ? "" : p.getDetailLabel())) :
+                                (p) -> p.getDetailLabel() == null ? fallbackValue : p.getDetailLabel())) :
                         ((PicklistQuestion) question)
                                 .streamAllPicklistOptions()
                                 .collect(Collectors.toMap(PicklistOption::getStableId,
-                                        (p) -> p.getOptionLabel() == null ? "" : p.getOptionLabel()));
+                                        (p) -> p.getOptionLabel() == null ? fallbackValue : p.getOptionLabel()));
                 return ((PicklistAnswer) answer).getValue().stream()
                         .map(selected -> options.get(selected.getStableId()))
                         .collect(Collectors.joining(","));
