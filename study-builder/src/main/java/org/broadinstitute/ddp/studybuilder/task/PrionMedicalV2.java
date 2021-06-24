@@ -7,10 +7,8 @@ import java.time.Instant;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
-import org.broadinstitute.ddp.db.dao.JdbiRevision;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.UserDao;
-import org.broadinstitute.ddp.db.dto.ActivityDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
@@ -64,18 +62,25 @@ public class PrionMedicalV2 implements CustomTask {
         String reason = String.format("Update activity with studyGuid=%s activityCode=%s to versionTag=%s",
                 STUDY_GUID, activityCode, versionTag);
         RevisionMetadata metadata = new RevisionMetadata(timestamp.toEpochMilli(), adminUser.getId(), reason);
-        JdbiRevision jdbiRevision = handle.attach(JdbiRevision.class);
 
         // Change version
         activityDao.changeVersion(activityId, versionTag, metadata);
-        ActivityDto activityDto = activityDao.getJdbiActivity().queryActivityById(activityId);
         SqlHelper helper = handle.attach(SqlHelper.class);
         boolean hideExisting = dataCfg.getBoolean("hideExistingInstancesOnCreation");
         boolean allowOnDemand = dataCfg.getBoolean("allowOnDemandTrigger");
         int hidden = helper.updateHideExistingInstancesOnCreation(activityId, hideExisting, allowOnDemand);
         if (hidden != 1) {
             LOG.error("Updating hide existing instances on creation for activity {} to true returned {} instead of 1",
-                    activityId, hidden); // TODO
+                    activityId, hidden);
+        }
+
+        for (Config translatedSecondNames : dataCfg.getConfigList("translatedSecondNames")) {
+            int result = helper.updateSecondNameForLanguage(translatedSecondNames.getString("text"),
+                    translatedSecondNames.getString("language"), activityId);
+
+            if (result != 1) {
+                LOG.error("Updating second names for activity {} returned {} instead of 1", activityId, result);
+            }
         }
     }
 
@@ -85,5 +90,10 @@ public class PrionMedicalV2 implements CustomTask {
                 + "study_activity_id = :activityId")
         int updateHideExistingInstancesOnCreation(@Bind("activityId") long activityId, @Bind("hide") boolean hide,
                                                   @Bind("allowOnDemandTrigger") boolean allowOnDemandTrigger);
+
+        @SqlUpdate("update i18n_activity_detail set second_name = :secondName where language_code_id = (select language_code_id from "
+                + "language_code where iso_language_code = :languageCode) and study_activity_id = :studyActivityId")
+        int updateSecondNameForLanguage(@Bind("secondName") String secondName, @Bind("languageCode") String languageCode,
+                                        @Bind("studyActivityId") long activityId);
     }
 }
