@@ -465,7 +465,7 @@
         let isFocused = false;
 
         const intervalId = setInterval(function () {
-          if (isFocused) {
+          if (isFocused || 'ontouchstart' in window) {
             clearInterval(intervalId);
 
             return;
