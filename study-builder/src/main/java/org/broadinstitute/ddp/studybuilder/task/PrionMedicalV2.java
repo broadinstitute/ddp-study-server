@@ -14,6 +14,7 @@ import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
 import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.studybuilder.ActivityBuilder;
+import org.broadinstitute.ddp.studybuilder.EventBuilder;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.customizer.Bind;
@@ -82,6 +83,10 @@ public class PrionMedicalV2 implements CustomTask {
                 LOG.error("Updating second names for activity {} returned {} instead of 1", activityId, result);
             }
         }
+
+        Config eventConfig = dataCfg.getConfig("event");
+        EventBuilder eventBuilder = new EventBuilder(studyCfg, studyDto, adminUser.getId());
+        eventBuilder.insertEvent(handle, eventConfig);
     }
 
     private interface SqlHelper extends SqlObject {
