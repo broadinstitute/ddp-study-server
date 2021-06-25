@@ -13,6 +13,11 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -27,6 +32,8 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.interfaces.DecodedJWT;
+import com.google.api.core.SettableApiFuture;
+import com.google.cloud.pubsub.v1.Publisher;
 import com.typesafe.config.Config;
 import io.restassured.http.ContentType;
 import io.restassured.mapper.ObjectMapperType;
@@ -66,6 +73,9 @@ import org.broadinstitute.ddp.db.dto.InvitationDto;
 import org.broadinstitute.ddp.db.dto.SendgridEmailEventActionDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.db.dto.UserDto;
+import org.broadinstitute.ddp.event.publish.pubsub.PubSubPublisherInitializer;
+import org.broadinstitute.ddp.event.publish.pubsub.TaskPubSubPublisher;
+import org.broadinstitute.ddp.event.pubsubtask.api.PubSubTask;
 import org.broadinstitute.ddp.json.UserRegistrationPayload;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
 import org.broadinstitute.ddp.model.activity.definition.i18n.Translation;
@@ -82,16 +92,18 @@ import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
 import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.model.user.UserProfile;
 import org.broadinstitute.ddp.util.Auth0Util;
+import org.broadinstitute.ddp.util.ConfigManager;
 import org.broadinstitute.ddp.util.GuidUtils;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
 import org.hamcrest.Matchers;
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 
 public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
 
@@ -99,6 +111,7 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
 
     private static final String EN_LANG_CODE = "en";
 
+    private static Publisher mockPublisher;
     private static String auth0UserId;
     private static String auth0ClientId;
     private static String token;
@@ -178,10 +191,20 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
                             clientId2,
                             userHruid);
         });
+
+        mockPublisher = mock(Publisher.class);
+        String topicName = ConfigManager.getInstance().getConfig().getString(ConfigFile.PUBSUB_DSM_TASKS_TOPIC);
+        PubSubPublisherInitializer.setPublisher(topicName, mockPublisher);
+    }
+
+    @AfterClass
+    public static void tearDown() {
+        String topicName = ConfigManager.getInstance().getConfig().getString(ConfigFile.PUBSUB_DSM_TASKS_TOPIC);
+        PubSubPublisherInitializer.setPublisher(topicName, null);
     }
 
     @Before
-    public void setupUserStudyEnrollments() {
+    public void setupEach() {
         cleanup();
         TransactionWrapper.useTxn(handle -> {
             handle.attach(JdbiUserStudyEnrollment.class).changeUserStudyEnrollmentStatus(user1Guid,
@@ -193,6 +216,11 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
             handle.attach(JdbiUserStudyEnrollment.class).changeUserStudyEnrollmentStatus(user3Guid,
                     study2.getGuid(), EnrollmentStatusType.REGISTERED);
         });
+
+        Mockito.reset(mockPublisher);
+        var future = SettableApiFuture.create();
+        future.set("some-message-id");
+        doReturn(future).when(mockPublisher).publish(any());
     }
 
     @After
@@ -440,6 +468,14 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
             assertTrue(enrollment.isPresent());
             assertEquals(EnrollmentStatusType.REGISTERED, enrollment.get());
         });
+
+        verify(mockPublisher).publish(argThat(msg -> {
+            var attributes = msg.getAttributesMap();
+            assertEquals(TaskPubSubPublisher.TASK_PARTICIPANT_REGISTERED, attributes.get(PubSubTask.ATTR_TASK_TYPE));
+            assertEquals(study1.getGuid(), attributes.get(TaskPubSubPublisher.ATTR_STUDY_GUID));
+            assertEquals(newUserGuid, attributes.get(TaskPubSubPublisher.ATTR_PARTICIPANT_GUID));
+            return true;
+        }));
     }
 
     @Test
@@ -486,8 +522,6 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
 
     @Test
     public void testRegister_newUser_governancePolicy_createGovernedUser() {
-
-
         StudyDto testStudy = TransactionWrapper.withTxn(handle -> {
             StudyDto study = TestDataSetupUtil.generateTestStudy(handle, RouteTestUtil.getConfig());
             GovernancePolicy policy = new GovernancePolicy(study.getId(), new Expression("true"));
@@ -561,6 +595,14 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
             StudyGovernanceDao studyGovernanceDao = handle.attach(StudyGovernanceDao.class);
             Optional<AgeUpCandidate> candidate = studyGovernanceDao.findAgeUpCandidate(testStudy.getId(), governedUser.getId());
             assertTrue("Governed user should be added as age-up candidate because policy has AoM rules", candidate.isPresent());
+
+            verify(mockPublisher).publish(argThat(msg -> {
+                var attributes = msg.getAttributesMap();
+                assertEquals(TaskPubSubPublisher.TASK_PARTICIPANT_REGISTERED, attributes.get(PubSubTask.ATTR_TASK_TYPE));
+                assertEquals(testStudy.getGuid(), attributes.get(TaskPubSubPublisher.ATTR_STUDY_GUID));
+                assertEquals(governedUser.getGuid(), attributes.get(TaskPubSubPublisher.ATTR_PARTICIPANT_GUID));
+                return true;
+            }));
 
             // Cleanup data
             instanceDao.deleteByInstanceGuid(instanceDto.getGuid());
@@ -779,6 +821,14 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
             assertTrue(enrollment.isPresent());
             assertEquals(EnrollmentStatusType.REGISTERED, enrollment.get());
         });
+
+        verify(mockPublisher).publish(argThat(msg -> {
+            var attributes = msg.getAttributesMap();
+            assertEquals(TaskPubSubPublisher.TASK_PARTICIPANT_REGISTERED, attributes.get(PubSubTask.ATTR_TASK_TYPE));
+            assertEquals(tempStudy.getGuid(), attributes.get(TaskPubSubPublisher.ATTR_STUDY_GUID));
+            assertEquals(actualUserGuid, attributes.get(TaskPubSubPublisher.ATTR_PARTICIPANT_GUID));
+            return true;
+        }));
     }
 
     @Test

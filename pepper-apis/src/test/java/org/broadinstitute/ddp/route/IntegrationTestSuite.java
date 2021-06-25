@@ -65,7 +65,6 @@ import org.slf4j.LoggerFactory;
  */
 @RunWith(Suite.class)
 @SuiteClasses({
-        AdminCreateStudyParticipantRouteTest.class,
         AuthFilterRouteTest.class,
         EventServiceTest.class,
         InvitationCheckStatusRouteTest.class,
@@ -101,7 +100,6 @@ import org.slf4j.LoggerFactory;
         JoinMailingListRouteTest.class,
         AdminUpdateInvitationDetailsRouteTest.class,
         UserAuthCheckFilterTest.class,
-        UserRegistrationRouteTest.class,
         DsmAuthFilterTest.class,
         GetDsmMailingListRouteTest.class,
         CheckIrbPasswordRouteTest.class,
@@ -129,7 +127,6 @@ import org.slf4j.LoggerFactory;
         InvitationVerifyRouteTest.class,
         StudyLanguageContentLanguageSettingFilterTest.class,
         GetStudyDetailRouteTest.class,
-        GovernedParticipantRegistrationRouteTest.class,
         GetStudyStatisticsRouteTest.class,
         DeleteUserRouteTest.class
 })

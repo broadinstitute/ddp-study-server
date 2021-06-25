@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.google.cloud.pubsub.v1.Publisher;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.pubsub.v1.ProjectTopicName;
 import com.typesafe.config.Config;
 import org.broadinstitute.ddp.constants.ConfigFile;
@@ -37,5 +38,14 @@ public class PubSubPublisherInitializer {
 
     public static PubSubConnectionManager getPubsubConnectionManager() {
         return pubsubConnectionManager;
+    }
+
+    @VisibleForTesting
+    public static void setPublisher(String pubsubTopicName, Publisher publisher) {
+        if (publisher == null) {
+            pubSubPublisherDataMap.remove(pubsubTopicName);
+        } else {
+            pubSubPublisherDataMap.put(pubsubTopicName, publisher);
+        }
     }
 }

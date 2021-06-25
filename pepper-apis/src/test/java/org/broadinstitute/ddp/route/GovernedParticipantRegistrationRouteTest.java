@@ -2,6 +2,11 @@ package org.broadinstitute.ddp.route;
 
 import static io.restassured.RestAssured.given;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -9,20 +14,29 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import com.google.api.core.SettableApiFuture;
+import com.google.cloud.pubsub.v1.Publisher;
 import io.restassured.mapper.ObjectMapperType;
 import io.restassured.response.Response;
+import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.db.TransactionWrapper;
+import org.broadinstitute.ddp.db.dao.DataExportDao;
 import org.broadinstitute.ddp.db.dao.JdbiUser;
 import org.broadinstitute.ddp.db.dao.JdbiUserStudyEnrollment;
 import org.broadinstitute.ddp.db.dao.UserGovernanceDao;
 import org.broadinstitute.ddp.db.dao.UserProfileDao;
+import org.broadinstitute.ddp.event.publish.pubsub.PubSubPublisherInitializer;
 import org.broadinstitute.ddp.json.GovernedUserRegistrationPayload;
 import org.broadinstitute.ddp.model.governance.Governance;
+import org.broadinstitute.ddp.util.ConfigManager;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
 import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.mockito.Mockito;
 
 public class GovernedParticipantRegistrationRouteTest extends IntegrationTestSuite.TestCase {
 
@@ -30,10 +44,10 @@ public class GovernedParticipantRegistrationRouteTest extends IntegrationTestSui
     private static String url;
     private static TestDataSetupUtil.GeneratedTestData testData;
     private static Set<String> userGuidsToDelete = new HashSet<>();
+    private static Publisher mockPublisher;
 
     @BeforeClass
     public static void setup() {
-
         TransactionWrapper.useTxn(handle -> {
             testData = TestDataSetupUtil.generateBasicUserTestData(handle);
             token = testData.getTestingUser().getToken();
@@ -43,6 +57,24 @@ public class GovernedParticipantRegistrationRouteTest extends IntegrationTestSui
                 .replace(RouteConstants.PathParam.USER_GUID, "{userGuid}")
                 .replace(RouteConstants.PathParam.STUDY_GUID, "{studyGuid}");
         url = RouteTestUtil.getTestingBaseUrl() + endpoint;
+
+        mockPublisher = mock(Publisher.class);
+        String topicName = ConfigManager.getInstance().getConfig().getString(ConfigFile.PUBSUB_DSM_TASKS_TOPIC);
+        PubSubPublisherInitializer.setPublisher(topicName, mockPublisher);
+    }
+
+    @AfterClass
+    public static void tearDown() {
+        String topicName = ConfigManager.getInstance().getConfig().getString(ConfigFile.PUBSUB_DSM_TASKS_TOPIC);
+        PubSubPublisherInitializer.setPublisher(topicName, null);
+    }
+
+    @Before
+    public void setupEach() {
+        Mockito.reset(mockPublisher);
+        var future = SettableApiFuture.create();
+        future.set("some-message-id");
+        doReturn(future).when(mockPublisher).publish(any());
     }
 
     @After
@@ -50,7 +82,9 @@ public class GovernedParticipantRegistrationRouteTest extends IntegrationTestSui
         TransactionWrapper.useTxn(handle -> {
             var jdbiEnrollment = handle.attach(JdbiUserStudyEnrollment.class);
             var profileDao = handle.attach(UserProfileDao.class);
+            var dataExportDao = handle.attach(DataExportDao.class);
             for (var userGuid : userGuidsToDelete) {
+                dataExportDao.deleteDataSyncRequestsForUser(userGuid);
                 jdbiEnrollment.deleteByUserGuidStudyGuid(userGuid, testData.getStudyGuid());
                 profileDao.getUserProfileSql().deleteByUserGuid(userGuid);
             }
@@ -95,6 +129,8 @@ public class GovernedParticipantRegistrationRouteTest extends IntegrationTestSui
             governedUserGuids.remove(governance.getGovernedUserGuid());
         }
         assertTrue("Governed user is not found in the governances list", governedUserGuids.isEmpty());
+
+        verify(mockPublisher, times(2)).publish(any());
     }
 
     private Response postRequest(String studyGuid, GovernedUserRegistrationPayload payload) {

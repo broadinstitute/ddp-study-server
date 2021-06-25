@@ -7,16 +7,25 @@ import static org.hamcrest.Matchers.not;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 
 import java.time.Instant;
 import java.util.concurrent.atomic.AtomicReference;
 
+import com.google.api.core.SettableApiFuture;
+import com.google.cloud.pubsub.v1.Publisher;
 import io.restassured.http.ContentType;
 import io.restassured.mapper.ObjectMapperType;
+import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.AuthDao;
+import org.broadinstitute.ddp.db.dao.DataExportDao;
 import org.broadinstitute.ddp.db.dao.InvitationDao;
 import org.broadinstitute.ddp.db.dao.InvitationFactory;
 import org.broadinstitute.ddp.db.dao.InvitationSql;
@@ -24,16 +33,23 @@ import org.broadinstitute.ddp.db.dao.JdbiUserStudyEnrollment;
 import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dao.UserProfileDao;
 import org.broadinstitute.ddp.db.dao.UserProfileSql;
+import org.broadinstitute.ddp.event.publish.pubsub.PubSubPublisherInitializer;
+import org.broadinstitute.ddp.event.publish.pubsub.TaskPubSubPublisher;
+import org.broadinstitute.ddp.event.pubsubtask.api.PubSubTask;
 import org.broadinstitute.ddp.json.admin.CreateStudyParticipantPayload;
+import org.broadinstitute.ddp.util.ConfigManager;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
 import org.junit.AfterClass;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.mockito.Mockito;
 
 public class AdminCreateStudyParticipantRouteTest extends IntegrationTestSuite.TestCase {
 
     private static TestDataSetupUtil.GeneratedTestData testData;
     private static String urlTemplate;
+    private static Publisher mockPublisher;
 
     @BeforeClass
     public static void setupData() {
@@ -43,6 +59,10 @@ public class AdminCreateStudyParticipantRouteTest extends IntegrationTestSuite.T
             testData = TestDataSetupUtil.generateBasicUserTestData(handle);
             handle.attach(AuthDao.class).assignStudyAdmin(testData.getUserId(), testData.getStudyId());
         });
+
+        mockPublisher = mock(Publisher.class);
+        String topicName = ConfigManager.getInstance().getConfig().getString(ConfigFile.PUBSUB_DSM_TASKS_TOPIC);
+        PubSubPublisherInitializer.setPublisher(topicName, mockPublisher);
     }
 
     @AfterClass
@@ -50,6 +70,16 @@ public class AdminCreateStudyParticipantRouteTest extends IntegrationTestSuite.T
         TransactionWrapper.useTxn(handle -> {
             handle.attach(AuthDao.class).removeAdminFromAllStudies(testData.getUserId());
         });
+        String topicName = ConfigManager.getInstance().getConfig().getString(ConfigFile.PUBSUB_DSM_TASKS_TOPIC);
+        PubSubPublisherInitializer.setPublisher(topicName, null);
+    }
+
+    @Before
+    public void setupEach() {
+        Mockito.reset(mockPublisher);
+        var future = SettableApiFuture.create();
+        future.set("some-message-id");
+        doReturn(future).when(mockPublisher).publish(any());
     }
 
     @Test
@@ -136,11 +166,20 @@ public class AdminCreateStudyParticipantRouteTest extends IntegrationTestSuite.T
                 handle.attach(InvitationSql.class).deleteById(invitation.getInvitationId());
                 if (createdUserGuid.get() != null) {
                     String userGuid = createdUserGuid.get();
+                    handle.attach(DataExportDao.class).deleteDataSyncRequestsForUser(userGuid);
                     handle.attach(JdbiUserStudyEnrollment.class).deleteByUserGuidStudyGuid(userGuid, testData.getStudyGuid());
                     handle.attach(UserProfileSql.class).deleteByUserGuid(userGuid);
                     handle.execute("delete from user where guid = ?", userGuid);
                 }
             });
         }
+
+        verify(mockPublisher).publish(argThat(msg -> {
+            var attributes = msg.getAttributesMap();
+            assertEquals(TaskPubSubPublisher.TASK_PARTICIPANT_REGISTERED, attributes.get(PubSubTask.ATTR_TASK_TYPE));
+            assertEquals(testData.getStudyGuid(), attributes.get(TaskPubSubPublisher.ATTR_STUDY_GUID));
+            assertEquals(createdUserGuid.get(), attributes.get(TaskPubSubPublisher.ATTR_PARTICIPANT_GUID));
+            return true;
+        }));
     }
 }
