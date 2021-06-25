@@ -1397,7 +1397,7 @@ public class StudyDataLoader {
         } else if ("CONTACTING_PHYSICIAN".equals(activityCode)) {
             //Status field is survey_status.  0 and blank are not started, 1 is in progress, and 2 is complete
             int regStatus = Integer.parseInt(getStringValueFromElement(surveyData, "registration_status"));
-            status = regStatus >= 4 ? "COMPLETE" : "CREATED";
+            status = regStatus >= 4 && getStringValueFromElement(surveyData, "physician_first_name") != null ? "COMPLETE" : "CREATED";
         } else if ("REVIEW_AND_SUBMISSION".equals(activityCode)) {
             int regStatus = Integer.parseInt(getStringValueFromElement(surveyData, "registration_status"));
             status = regStatus >= 7 ? "COMPLETE" : "CREATED";
