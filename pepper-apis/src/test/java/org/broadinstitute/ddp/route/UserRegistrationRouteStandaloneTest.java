@@ -105,9 +105,9 @@ import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
+public class UserRegistrationRouteStandaloneTest extends IntegrationTestSuite.TestCase {
 
-    private static final Logger LOG = LoggerFactory.getLogger(UserRegistrationRouteTest.class);
+    private static final Logger LOG = LoggerFactory.getLogger(UserRegistrationRouteStandaloneTest.class);
 
     private static final String EN_LANG_CODE = "en";
 

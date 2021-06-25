@@ -19,8 +19,8 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ListCancersRouteTest extends IntegrationTestSuite.TestCase {
-    private static final Logger LOG = LoggerFactory.getLogger(ListCancersRouteTest.class);
+public class ListCancersRouteStandaloneTest extends IntegrationTestSuite.TestCase {
+    private static final Logger LOG = LoggerFactory.getLogger(ListCancersRouteStandaloneTest.class);
     private static final String url = RouteTestUtil.getTestingBaseUrl() + RouteConstants.API.LIST_CANCERS;
 
     @BeforeClass

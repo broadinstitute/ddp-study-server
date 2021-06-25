@@ -30,9 +30,9 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class GetParticipantInfoRouteTest extends IntegrationTestSuite.TestCase {
+public class GetParticipantInfoRouteStandaloneTest extends IntegrationTestSuite.TestCase {
 
-    private static final Logger LOG = LoggerFactory.getLogger(GetParticipantInfoRouteTest.class);
+    private static final Logger LOG = LoggerFactory.getLogger(GetParticipantInfoRouteStandaloneTest.class);
     private static Gson gson;
 
     private static TestDataSetupUtil.GeneratedTestData testData;

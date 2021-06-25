@@ -45,7 +45,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockito.Mockito;
 
-public class AdminCreateStudyParticipantRouteTest extends IntegrationTestSuite.TestCase {
+public class AdminCreateStudyParticipantRouteStandaloneTest extends IntegrationTestSuite.TestCase {
 
     private static TestDataSetupUtil.GeneratedTestData testData;
     private static String urlTemplate;

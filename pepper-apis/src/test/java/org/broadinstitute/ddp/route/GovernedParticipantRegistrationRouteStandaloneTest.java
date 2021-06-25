@@ -38,7 +38,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockito.Mockito;
 
-public class GovernedParticipantRegistrationRouteTest extends IntegrationTestSuite.TestCase {
+public class GovernedParticipantRegistrationRouteStandaloneTest extends IntegrationTestSuite.TestCase {
 
     private static String token;
     private static String url;
