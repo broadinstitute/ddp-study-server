@@ -692,7 +692,16 @@
   "meq_morning_type": "Definitely a morning type",
   "meq_more_morning_type": "Rather more a morning type than an evening type",
   "meq_more_evening_type": "Rather more an evening type than a morning type",
-  "meq_evening_type": "Definitely an evening type"
+  "meq_evening_type": "Definitely an evening type",
+
+  "kra_name": "Kit Return Attestation",
+  "kra_title": "Kit Return Attestation",
+  "kra_header": "Kit Return Attestation",
+
+  "kra_question": "Mark below to attest to return shipping your At-Home Kit: ",
+  "kra_answer": "I have packaged my At-Home Kit appropriately and return shipped it through FedEx."
+
+
 
 
 
