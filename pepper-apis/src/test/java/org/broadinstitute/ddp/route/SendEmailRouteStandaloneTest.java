@@ -44,9 +44,9 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class SendEmailRouteTest extends IntegrationTestSuite.TestCase {
+public class SendEmailRouteStandaloneTest extends IntegrationTestSuite.TestCase {
 
-    private static final Logger LOG = LoggerFactory.getLogger(SendEmailRouteTest.class);
+    private static final Logger LOG = LoggerFactory.getLogger(SendEmailRouteStandaloneTest.class);
 
     static TestDataSetupUtil.GeneratedTestData testData;
     static String url;

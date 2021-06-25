@@ -15,6 +15,7 @@ import org.junit.runners.Suite;
         AdminCreateStudyParticipantRouteStandaloneTest.class,
         GetParticipantInfoRouteStandaloneTest.class,
         ListCancersRouteStandaloneTest.class,
+        GetCancerSuggestionsRouteStandaloneTest.class,
         GetDsmDrugSuggestionsRouteStandaloneTest.class,
         GovernedParticipantRegistrationRouteStandaloneTest.class,
         PatchFormAnswersRouteStandaloneTest.class,
@@ -22,6 +23,7 @@ import org.junit.runners.Suite;
         PutFormAnswersRouteStandalone2Test.class,
         PutFormAnswersRouteStandalone3Test.class,
         GetActivityInstanceRouteStandaloneTest.class,
+        SendEmailRouteStandaloneTest.class,
         UserActivityInstanceListRouteStandaloneTest.class,
         UserRegistrationRouteStandaloneTest.class
 })
