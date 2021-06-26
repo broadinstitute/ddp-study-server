@@ -609,6 +609,34 @@
             ]
           },
           {
+            "name": "immunodeficiency_type_all",
+            "stable_id": "IMMUNODEFICIENCY_TYPE",
+            "type": "Picklist",
+            "source_type": "string",
+            "options": [
+              {
+                "name": "IGA_DEFICIENCY",
+                "type": "integer"
+              },
+              {
+                "name": "IVIG",
+                "type": "integer"
+              },
+              {
+                "name": "SUB_IG",
+                "type": "integer"
+              },
+              {
+                "name": "ANTIBIOTICS",
+                "type": "integer"
+              },
+              {
+                "name": "NO_TREATMENT",
+                "type": "integer"
+              }
+            ]
+          },
+          {
             "name": "vaccine_infection",
             "stable_id": "IMMUNIZATION",
             "type": "Picklist",

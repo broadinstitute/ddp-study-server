@@ -1451,6 +1451,10 @@ public class StudyDataLoader {
         String activityVersion = getStringValueFromElement(surveyData, "consent_version");
         Integer datstatSubmissionStatus = getIntegerValueFromElement(surveyData, "datstat.submissionstatus");
 
+        if (ddpCreated == null) {
+            ddpCreated = getStringValueFromElement(surveyData, "datstat.startdatetime"); //medical_history
+        }
+
         if (ddpFirstCompleted == null) {
             ddpFirstCompleted = ddpLastSubmitted;
         }
@@ -1655,6 +1659,13 @@ public class StudyDataLoader {
             selectedPicklistOptions = getSelectedPicklistOptions(mapElement, sourceDataElement, questionName, surveyName);
         }
         if (CollectionUtils.isNotEmpty(selectedPicklistOptions)) {
+            //hack to handle "immunodeficiency_type_all" which might have more than 1 option in source atcp_registry_questionnaire_update
+            if (stableId.equalsIgnoreCase("immunodeficiency_type")
+                    && surveyName.equalsIgnoreCase("medicalhistorysurvey")
+                    && selectedPicklistOptions.size() > 1) {
+                List<SelectedPicklistOption> selectedPicklistOptionsIDT = new ArrayList<>();
+                selectedPicklistOptionsIDT.add(0, selectedPicklistOptions.get(0));
+                selectedPicklistOptions = selectedPicklistOptionsIDT; }
             answerGuid = answerPickListQuestion(stableId, participantGuid, instanceGuid, selectedPicklistOptions, answerDao);
         }
         return answerGuid;
@@ -1668,8 +1679,8 @@ public class StudyDataLoader {
 
         sourceDataSurveyQs.get(surveyName).add(questionName);
 
-
-        if (sourceDataElement != null && !sourceDataElement.getAsJsonObject().get(questionName).isJsonNull()) {
+        if (sourceDataElement != null && sourceDataElement.getAsJsonObject().get(questionName) != null
+                && !sourceDataElement.getAsJsonObject().get(questionName).isJsonNull()) {
             value = sourceDataElement.getAsJsonObject().get(questionName);
         }
         if (value == null || value.isJsonNull()) {
