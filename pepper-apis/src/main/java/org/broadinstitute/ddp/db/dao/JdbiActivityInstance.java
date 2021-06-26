@@ -76,6 +76,21 @@ public interface JdbiActivityInstance extends SqlObject {
                               @Bind("sessionId") String sessionId,
                               @Bind("legacyVersion") String legacyVersion);
 
+    @SqlUpdate("insert into activity_instance (study_activity_id,participant_id,activity_instance_guid,is_readonly,"
+            + "created_at, legacy_submissionid,legacy_sessionid,legacy_version, is_hidden) "
+            + "  values(:activityId,:participantId,:guid,"
+            + ":isReadOnly,:createdAt,:submissionId,:sessionId,:legacyVersion, :isHidden)")
+    @GetGeneratedKeys
+    long insertLegacyInstance(@Bind("activityId") long activityId,
+                              @Bind("participantId") long participantId,
+                              @Bind("guid") String activityInstanceGuid,
+                              @Bind("isReadOnly") Boolean isReadOnly,
+                              @Bind("createdAt") long createdAtMillis,
+                              @Bind("submissionId") Long submissionId,
+                              @Bind("sessionId") String sessionId,
+                              @Bind("legacyVersion") String legacyVersion,
+                              @Bind("isHidden") boolean isHidden);
+
     @SqlUpdate("delete from activity_instance where activity_instance_id = :id")
     int delete(@Bind long id);
 

@@ -415,6 +415,16 @@ public class StudyDataLoader {
                                                       ActivityInstanceDao activityInstanceDao,
                                                       ActivityInstanceStatusDao activityInstanceStatusDao) throws Exception {
 
+        return createActivityInstance(surveyData, participantGuid, studyId, activityCode, createdAt,
+                jdbiActivity, activityInstanceDao, activityInstanceStatusDao, false);
+    }
+
+    public ActivityInstanceDto createActivityInstance(JsonElement surveyData, String participantGuid,
+                                                      long studyId, String activityCode, String createdAt,
+                                                      JdbiActivity jdbiActivity,
+                                                      ActivityInstanceDao activityInstanceDao,
+                                                      ActivityInstanceStatusDao activityInstanceStatusDao, boolean hideInstance) throws Exception {
+
         BaseSurvey baseSurvey = getBaseSurveyForActivity(surveyData, activityCode);
         if (baseSurvey.getDdpCreated() == null) {
             LOG.warn("No createdAt for survey: {} participant guid: {} . using participant data created_at ",
@@ -509,7 +519,7 @@ public class StudyDataLoader {
                 .insertInstance(studyActivityId, participantGuid, participantGuid, InstanceStatusType.CREATED,
                         isReadonly,
                         ddpCreatedAt,
-                        submissionId, sessionId, activityVersion);
+                        submissionId, sessionId, activityVersion, hideInstance);
 
         LOG.info("Created activity instance {} for activity {} and user {}",
                 dto.getGuid(), activityCode, participantGuid);
@@ -537,7 +547,6 @@ public class StudyDataLoader {
 
         return dto;
     }
-
 
     public void loadMedicalHistorySurveyData(Handle handle,
                                              JsonElement surveyData,

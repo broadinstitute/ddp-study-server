@@ -356,6 +356,7 @@ public class StudyDataLoaderMain {
 
         JsonElement surveyData = user.getAsJsonObject().get("datstatsurveydata");
         JsonElement medicalHistorySurveyData = surveyData.getAsJsonObject().get("atcp_registry_questionnaire");
+        JsonElement medicalHistorySurveyUpdateData = surveyData.getAsJsonObject().get("atcp_registry_questionnaire_update");
         JsonElement atConsentSurveyData = surveyData.getAsJsonObject().get("ConsentSurvey");
         JsonElement atRegistrationSurveyData = surveyData.getAsJsonObject().get("RegistrationSurvey");
         JsonElement atContactingPhysicianSurveyData = surveyData.getAsJsonObject().get("ContactingPhysicianSurvey");
@@ -371,6 +372,7 @@ public class StudyDataLoaderMain {
 
         surveyDataMap.put("datstatparticipantdata", datstatParticipantData);
         surveyDataMap.put("medicalhistorysurvey", medicalHistorySurveyData);
+        surveyDataMap.put("medicalhistorysurveyUpdate", medicalHistorySurveyUpdateData);
         surveyDataMap.put("atconsentsurvey", atConsentSurveyData);
         surveyDataMap.put("atregistrationsurvey", atRegistrationSurveyData);
         surveyDataMap.put("atcontactingphysiciansurvey", atContactingPhysicianSurveyData);
@@ -787,6 +789,7 @@ public class StudyDataLoaderMain {
             Boolean isSuccess = false;
             Boolean previousRun = false;
             Boolean hasMedicalHistory = false;
+            Boolean hasMedicalHistoryUpdate = false;
             Boolean hasATConsent = false;
             Boolean hasATRegistration = false;
             Boolean hasATContactingPhysician = false;
@@ -850,6 +853,8 @@ public class StudyDataLoaderMain {
                     hasFollowup = (sourceData.get("followupsurvey") != null && !sourceData.get("followupsurvey").isJsonNull());
                     hasMedicalHistory = (sourceData.get("medicalhistorysurvey") != null && !sourceData
                             .get("medicalhistorysurvey").isJsonNull());
+                    hasMedicalHistoryUpdate = (sourceData.get("medicalhistorysurveyUpdate") != null && !sourceData
+                            .get("medicalhistorysurveyUpdate").isJsonNull());
                     hasATConsent = (sourceData.get("atconsentsurvey")) != null && !sourceData
                             .get("atconsentsurvey").isJsonNull();
                     hasATRegistration = (sourceData.get("atregistrationsurvey")) != null && !sourceData
@@ -980,9 +985,26 @@ public class StudyDataLoaderMain {
                                 activityCode, createdAt,
                                 jdbiActivity,
                                 activityInstanceDao,
-                                activityInstanceStatusDao);
+                                activityInstanceStatusDao, hasMedicalHistoryUpdate ? true : null);
                         dataLoader.loadMedicalHistorySurveyData(handle, sourceData.get("medicalhistorysurvey"),
                                 mappingData.get("atcp_registry_questionnaire"),
+                                studyDto, userDto, instanceDto,
+                                answerDao);
+                    }
+                    if (hasMedicalHistoryUpdate) {
+                        String activityCode = mappingData.get("atcp_registry_questionnaire").getAsJsonObject()
+                                .get("activity_code").getAsString();
+                        List<ActivityInstanceDto> activityInstanceDtoList = jdbiActivityInstance
+                                .findAllByUserGuidAndActivityCode(userGuid, activityCode, studyId);
+                        ActivityInstanceDto instanceDto = dataLoader.createActivityInstance(sourceData.get("medicalhistorysurveyUpdate"),
+                                userGuid, studyId,
+                                activityCode, createdAt,
+                                jdbiActivity,
+                                activityInstanceDao,
+                                activityInstanceStatusDao);
+                        dataLoader.loadMedicalHistorySurveyData(handle, sourceData.get("medicalhistorysurveyUpdate"),
+                                mappingData.get("atcp_registry_questionnaire"),
+                                //todo compare fields between atcp_registry_questionnaire and atcp_registry_questionnaire_upddate
                                 studyDto, userDto, instanceDto,
                                 answerDao);
                     }

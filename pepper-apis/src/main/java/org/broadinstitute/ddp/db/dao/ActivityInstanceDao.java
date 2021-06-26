@@ -158,6 +158,23 @@ public interface ActivityInstanceDao extends SqlObject {
                 new DaoException("Could not find newly created activity instance with id " + instanceId));
     }
 
+    default ActivityInstanceDto insertInstance(long activityId, String operatorGuid, String participantGuid,
+                                               InstanceStatusType initialStatus, Boolean isReadOnly,
+                                               long createdAtMillis, Long submissionId,
+                                               String sessionId, String legacyVersion,boolean hideInstance ) {
+        JdbiActivityInstance jdbiInstance = getJdbiActivityInstance();
+        ActivityInstanceStatusDao statusDao = getActivityInstanceStatusDao();
+
+        String instanceGuid = jdbiInstance.generateUniqueGuid();
+        long participantId = getJdbiUser().getUserIdByGuid(participantGuid);
+        long instanceId = jdbiInstance.insertLegacyInstance(activityId, participantId, instanceGuid,
+                isReadOnly, createdAtMillis, submissionId, sessionId, legacyVersion, hideInstance);
+        statusDao.insertStatus(instanceId, initialStatus, createdAtMillis, operatorGuid);
+
+        return jdbiInstance.getByActivityInstanceId(instanceId).orElseThrow(() ->
+                new DaoException("Could not find newly created activity instance with id " + instanceId));
+    }
+
     @SqlUpdate("update activity_instance set is_readonly = :isReadOnly"
             + "  where participant_id = :participantId and study_activity_id in (<activityIds>)")
     int bulkUpdateReadOnlyByActivityIds(
