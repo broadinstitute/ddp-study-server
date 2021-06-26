@@ -161,7 +161,7 @@ public interface ActivityInstanceDao extends SqlObject {
     default ActivityInstanceDto insertInstance(long activityId, String operatorGuid, String participantGuid,
                                                InstanceStatusType initialStatus, Boolean isReadOnly,
                                                long createdAtMillis, Long submissionId,
-                                               String sessionId, String legacyVersion,boolean hideInstance ) {
+                                               String sessionId, String legacyVersion, boolean hideInstance) {
         JdbiActivityInstance jdbiInstance = getJdbiActivityInstance();
         ActivityInstanceStatusDao statusDao = getActivityInstanceStatusDao();
 

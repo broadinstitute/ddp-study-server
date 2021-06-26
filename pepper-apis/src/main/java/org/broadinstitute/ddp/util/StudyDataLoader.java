@@ -423,7 +423,8 @@ public class StudyDataLoader {
                                                       long studyId, String activityCode, String createdAt,
                                                       JdbiActivity jdbiActivity,
                                                       ActivityInstanceDao activityInstanceDao,
-                                                      ActivityInstanceStatusDao activityInstanceStatusDao, boolean hideInstance) throws Exception {
+                                                      ActivityInstanceStatusDao activityInstanceStatusDao,
+                                                      boolean hideInstance) throws Exception {
 
         BaseSurvey baseSurvey = getBaseSurveyForActivity(surveyData, activityCode);
         if (baseSurvey.getDdpCreated() == null) {
