@@ -1480,9 +1480,9 @@ public class StudyDataLoader {
         String activityVersion = getStringValueFromElement(surveyData, "consent_version");
         Integer datstatSubmissionStatus = getIntegerValueFromElement(surveyData, "datstat.submissionstatus");
 
-        if (ddpCreated == null) {
-            ddpCreated = getStringValueFromElement(surveyData, "datstat.startdatetime"); //medical_history
-        }
+        //if (ddpCreated == null) {
+        //    ddpCreated = getStringValueFromElement(surveyData, "datstat.startdatetime"); //medical_history
+        //}
 
         if (ddpFirstCompleted == null) {
             ddpFirstCompleted = ddpLastSubmitted;
