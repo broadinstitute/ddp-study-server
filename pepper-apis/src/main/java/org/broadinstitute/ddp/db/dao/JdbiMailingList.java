@@ -126,18 +126,18 @@ public interface JdbiMailingList extends SqlObject {
             + "where sml.email = :email and study.guid = :studyGuid")
     Optional<Long> findIdByEmailAndStudyGuid(@Bind("email") String email, @Bind("studyGuid") String studyGuid);
 
-    @SqlQuery("select l.first_name, l.last_name, l.email, :studyCode as study_code, l.umbrella_id, l.info, l.additional_information,  "
+    @SqlQuery("select l.first_name, l.last_name, l.email, :studyGuid as study_guid, l.umbrella_id, l.info, l.additional_information,  "
             + " date_created as date_created_millis, l.language_code_id, lc.iso_language_code as language_code "
             + " from study_mailing_list l join umbrella_study s on s.umbrella_study_id = l.umbrella_study_id  "
             + " left join language_code as lc on lc.language_code_id = l.language_code_id"
-            + " where s.guid = :studyCode and l.email = :email")
+            + " where s.guid = :studyGuid and l.email = :email")
     @RegisterConstructorMapper(MailingListEntryDto.class)
     Optional<MailingListEntryDto> findByEmailAndStudy(@Bind("email") String emailAddress,
-                                                      @Bind("studyCode") String studyCode);
+                                                      @Bind("studyGuid") String studyGuid);
 
     @SqlQuery(
             "select sml.first_name, sml.last_name, sml.email, sml.info, "
-             + "  sml.additional_information, NULL as study_code, sml.umbrella_id, sml.date_created as date_created_millis, "
+             + "  sml.additional_information, NULL as study_guid, sml.umbrella_id, sml.date_created as date_created_millis, "
              +       "sml.language_code_id, lc.iso_language_code as language_code "
              + " from study_mailing_list sml join umbrella u on sml.umbrella_id = u.umbrella_id "
              + " left join language_code as lc on lc.language_code_id = sml.language_code_id "
@@ -149,13 +149,13 @@ public interface JdbiMailingList extends SqlObject {
             @Bind("umbrellaGuid") String umbrellaGuid
     );
 
-    @SqlQuery("select l.first_name, l.last_name, l.email, :studyCode as study_code, l.umbrella_id, l.info, l.additional_information,"
+    @SqlQuery("select l.first_name, l.last_name, l.email, :studyGuid as study_guid, l.umbrella_id, l.info, l.additional_information,"
             + " date_created as date_created_millis, l.language_code_id, lc.iso_language_code as language_code "
             + " from study_mailing_list l join umbrella_study s on s.umbrella_study_id = l.umbrella_study_id "
             + " left join language_code as lc on lc.language_code_id = l.language_code_id"
-            + " where s.guid = :studyCode")
+            + " where s.guid = :studyGuid")
     @RegisterConstructorMapper(MailingListEntryDto.class)
-    List<MailingListEntryDto> findByStudy(@Bind("studyCode") String studyCode);
+    List<MailingListEntryDto> findByStudy(@Bind("studyGuid") String studyGuid);
 
     class MailingListEntryDto {
         private String firstName;
