@@ -528,6 +528,10 @@ public class StudyDataLoader {
         long activityInstanceId = dto.getId();
 
         if (InstanceStatusType.IN_PROGRESS == instanceCurrentStatus) {
+            if (ddpCreatedAt == ddpLastUpdatedAt) {
+                //add 30sec
+                ddpLastUpdatedAt = ddpLastUpdatedAt + 30000;
+            }
             activityInstanceStatusDao
                     .insertStatus(activityInstanceId, InstanceStatusType.IN_PROGRESS, ddpLastUpdatedAt, participantGuid);
         } else if (InstanceStatusType.COMPLETE == instanceCurrentStatus) {
