@@ -1612,6 +1612,7 @@ Question.Picklist:
           - LIST
           - DROPDOWN
           - CHECKBOX_LIST
+          - AUTOCOMPLETE
       groups:
         type: array
         description: A list of groups used in the `picklistOptions` values. If there are no options which explicity request grouping, this will be an empty array.
@@ -2246,6 +2247,9 @@ ParticipantStatusTrackingInfo.Workflow:
       format: YYYY-MM-DDThh:mm:ss.sssZ (ISO-8601)
       description: Last changed
       example: 2021-04-18T14:09:37.123Z
+    data:
+      type: object
+      description: Additional participant data, actual key-value pairs might vary depending on study
 ParticipantStatusTrackingInfo.Record:
   type: object
   required:

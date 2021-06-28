@@ -50,10 +50,9 @@ public class DsmAuthFilter implements Filter {
                 return;
             }
         } else {
-            LOG.error("Missing {} header on request with URL: {}", AUTHORIZATION, request.url());
+            LOG.warn("Missing {} header on request to path: {}", AUTHORIZATION, request.pathInfo());
         }
         throw halt(401);
-
     }
 
     boolean isAuthorizationHeaderValid(String authorizationHeader) {
