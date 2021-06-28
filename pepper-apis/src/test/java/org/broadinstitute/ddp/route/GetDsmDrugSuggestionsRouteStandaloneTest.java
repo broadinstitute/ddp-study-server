@@ -20,9 +20,9 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class GetDsmDrugSuggestionsRouteTest extends IntegrationTestSuite.TestCase {
+public class GetDsmDrugSuggestionsRouteStandaloneTest extends IntegrationTestSuite.TestCase {
 
-    private static final Logger LOG = LoggerFactory.getLogger(GetDsmDrugSuggestionsRouteTest.class);
+    private static final Logger LOG = LoggerFactory.getLogger(GetDsmDrugSuggestionsRouteStandaloneTest.class);
     private static final String URL_TEMPLATE = RouteTestUtil.getTestingBaseUrl() + RouteConstants.API.DSM_DRUG_SUGGESTION;
     private static String token;
 
