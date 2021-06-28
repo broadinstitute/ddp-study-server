@@ -1241,6 +1241,27 @@ public class StudyDataLoader {
         return stringBuilder.toString();
     }
 
+    static Map<Integer, String> langMapping;
+
+    static {
+        langMapping = new HashMap<>();
+        langMapping.putAll(Map.of(
+                1033, "en",
+                1031, "de",
+                3082, "es",
+                1036, "fr",
+                1040, "it",
+                1046, "pt",
+                1045, "pl",
+                1055, "tr",
+                2052, "zh",
+                1081, "hi"
+        ));
+        langMapping.put(1041, "ja");
+        langMapping.put(1049, "ru");
+        langMapping.put(null, DEFAULT_PREFERRED_LANGUAGE_CODE);
+    }
+
     UserProfile addUserProfile(UserDto user,
                                JsonElement data,
                                JdbiLanguageCode jdbiLanguageCode,
@@ -1248,7 +1269,11 @@ public class StudyDataLoader {
 
         JsonObject userJsonObject = data.getAsJsonObject();
         Boolean isDoNotContact = getBooleanValueFromElement(data, "ddp_do_not_contact");
-        Long languageCodeId = jdbiLanguageCode.getLanguageCodeId(DEFAULT_PREFERRED_LANGUAGE_CODE);
+        Integer langCode = getIntegerValueFromElement(data, "datstat_language");
+        if (!langMapping.containsKey(langCode)) {
+            langCode = null;
+        }
+        Long languageCodeId = jdbiLanguageCode.getLanguageCodeId(langMapping.get(langCode));
         UserProfile.SexType sexType = null;
         LocalDate userDateOfBirth = null;
         String firstName;
