@@ -1659,13 +1659,6 @@ public class StudyDataLoader {
             selectedPicklistOptions = getSelectedPicklistOptions(mapElement, sourceDataElement, questionName, surveyName);
         }
         if (CollectionUtils.isNotEmpty(selectedPicklistOptions)) {
-            //hack to handle "immunodeficiency_type_all" which might have more than 1 option in source atcp_registry_questionnaire_update
-            if (stableId.equalsIgnoreCase("immunodeficiency_type")
-                    && surveyName.equalsIgnoreCase("medicalhistorysurvey")
-                    && selectedPicklistOptions.size() > 1) {
-                List<SelectedPicklistOption> selectedPicklistOptionsIDT = new ArrayList<>();
-                selectedPicklistOptionsIDT.add(0, selectedPicklistOptions.get(0));
-                selectedPicklistOptions = selectedPicklistOptionsIDT; }
             answerGuid = answerPickListQuestion(stableId, participantGuid, instanceGuid, selectedPicklistOptions, answerDao);
         }
         return answerGuid;

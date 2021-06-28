@@ -37,6 +37,12 @@
             "stable_id": "NEUROLOGIC_PROBLEM"
           },
           {
+            "name": "age_first_neufrologic",
+            "type": "Numeric",
+            "source_type": "integer",
+            "stable_id": "NEUROLOGIC_PROBLEM"
+          },
+          {
             "name": "diagnosis_criteria",
             "stable_id": "DETERMINED",
             "type": "Picklist",
