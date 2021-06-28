@@ -296,7 +296,7 @@ public class Auth0Util {
     }
 
     public BulkUserImportResponse bulkUserWithHashedPassword(String auth0Domain, String mgmtApiToken, File file) throws Auth0Exception {
-        String connectionId = TransactionWrapper.withTxn(handle -> {
+        String connectionId = TransactionWrapper.withTxn(TransactionWrapper.DB.APIS, handle -> {
             Auth0TenantDto auth0TenantDto = handle.attach(JdbiAuth0Tenant.class).findByDomain(auth0Domain);
             var mgmtClient = new Auth0ManagementClient(
                     auth0Domain,

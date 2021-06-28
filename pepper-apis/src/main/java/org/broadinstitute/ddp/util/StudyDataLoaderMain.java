@@ -985,7 +985,8 @@ public class StudyDataLoaderMain {
                                 activityCode, createdAt,
                                 jdbiActivity,
                                 activityInstanceDao,
-                                activityInstanceStatusDao, hasMedicalHistoryUpdate ? true : null);
+                                activityInstanceStatusDao,
+                                hasMedicalHistoryUpdate);
                         dataLoader.loadMedicalHistorySurveyData(handle, sourceData.get("medicalhistorysurvey"),
                                 mappingData.get("atcp_registry_questionnaire"),
                                 studyDto, userDto, instanceDto,
