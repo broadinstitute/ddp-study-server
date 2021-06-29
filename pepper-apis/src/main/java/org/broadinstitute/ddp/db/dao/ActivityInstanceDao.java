@@ -189,6 +189,25 @@ public interface ActivityInstanceDao extends SqlObject {
                 legacyVersion);
     }
 
+    default ActivityInstanceDto insertInstance(long activityId, User operator, User participant,
+                                               Long submissionId, String sessionId, String legacyVersion) {
+        long createdAtMillis = Instant.now().toEpochMilli();
+        var initialStatus = InstanceStatusType.CREATED;
+        Boolean isReadOnly = null;
+        return createNewInstance(
+                activityId,
+                operator,
+                participant,
+                initialStatus,
+                isReadOnly,
+                createdAtMillis,
+                null,
+                null,
+                submissionId,
+                sessionId,
+                legacyVersion);
+    }
+
     // Given the activity instance details and operator/participant, does the heavy-lifting of creating instance,
     // setting up instance status, running events, and creating downstream child activity instances (if any).
     private ActivityInstanceDto createNewInstance(long activityId, User operator, User participant,
