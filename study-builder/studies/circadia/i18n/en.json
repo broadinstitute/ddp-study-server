@@ -282,6 +282,30 @@
   "consent_date_text": "Date",
   "consent_time_text": "Time (optional)",
 
+  "dlmo_instructions_name": "DLMO Instructions",
+  "dlmo_instructions_title": "Dim Light Melatonin Saliva Sample Collection: Scheduling Collection Dates",
+
+  "dlmo_instructions_overview_title": "Overview",
+  "dlmo_instructions_overview_paragraph_1": "One of our study goals is to better understand your biological bedtime. To do so, we require two 8-hour melatonin sample collections, consisting of 8 hourly saliva sample collections. We will analyze your hourly melatonin levels from the saliva sample collections you provide.",
+  "dlmo_instructions_overview_paragraph_2": "The two 8-hour saliva sample collections will occur on <span class=\"bold\">two separate dates</span>, scheduled about one week apart. To ensure that these collections work with your personal schedule, we ask you to select your first collection date using the following guidance. We will automatically schedule your second collection date one week after your first collection date.",
+  "dlmo_instructions_overview_paragraph_3": "Please consider the following questions when scheduling your Dim Light Melatonin Saliva Sample Collection dates:",
+  "dlmo_instructions_overview_item_1": "Do I have least 8 hours of time where I will be uninterrupted by others?",
+  "dlmo_instructions_overview_item_2": "I will have to stay up a bit after my bedtime for the sample collection, will this be a challenge for me?",
+  "dlmo_instructions_overview_item_3": "Do I have the same availability the week after my first collection date for the second collection?",
+  "dlmo_instructions_overview_item_4": "Can I go without coffee, alcohol, or melatonin for at least 24 hours prior to the date I select?",
+  "dlmo_instructions_overview_item_5": "Can I go without coffee, alcohol, or melatonin for at least 24 hours prior to the same day one week after the date I select?",
+  "dlmo_instructions_overview_paragraph_4": "Once you have considered these questions, please use the following instructions to schedule your first collection date. If you have any questions regarding scheduling your collection date, please contact us:",
+  "dlmo_instructions_overview_email_link": "<a class=\"link\" href=\"mailto:circadiastudy@mgh.harvard.edu\">circadiastudy@mgh.harvard.edu</a>",
+  "dlmo_instructions_overview_phone_link": "<a class=\"link\" href=\"tel:+16177267733\">+1 (617) 726-7733</a>",
+
+  "dlmo_instructions_guide_title": "Scheduling Dim Light Melatonin Saliva Sample Collection",
+  "dlmo_instructions_guide_item_1": "1. Click on this link: <a class=\"link\" href=\"https://circadiastudy.youcanbook.me/\" target=\"_blank\">Circadia Study Scheduling</a>. You will be taken to the following web page:",
+  "dlmo_instructions_guide_item_2": "2. Select a date that works best for your sample collection. Please choose a time that is approximately 8 hours prior to your usual bedtime.",
+  "dlmo_instructions_guide_item_3": "3. Once you have selected your date, you will be taken to the following confirmation page:",
+  "dlmo_instructions_guide_item_4": "4. Please enter the same first name, last initial, and email address that you used to register for the study, then confirm booking. You have successfully scheduled your first collection date, thank you!",
+
+  "dlmo_instructions_video_guide_title": "Video Instructions",
+
   "health_and_lifestyle_questionnaire_name": "Health and Lifestyle Questionnaire",
   "health_and_lifestyle_questionnaire_title": "Health and Lifestyle Questionnaire",
 
