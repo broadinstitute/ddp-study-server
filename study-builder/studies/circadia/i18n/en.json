@@ -283,6 +283,7 @@
   "consent_time_text": "Time (optional)",
 
   "dlmo_instructions_name": "DLMO Instructions",
+  "dlmo_scheduling_instructions_created_summary": "Please schedule the DLMO collections and follow the provided instructions on how to appropriately schedule your collection dates",
   "dlmo_instructions_title": "Dim Light Melatonin Saliva Sample Collection: Scheduling Collection Dates",
 
   "dlmo_instructions_overview_title": "Overview",
