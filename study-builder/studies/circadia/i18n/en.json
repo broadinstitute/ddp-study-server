@@ -62,6 +62,10 @@
   "consent_title": "Consent",
   "consent_header": "Consent",
 
+  "consent_created_summary": "Please review and sign the Research Consent Form, which will allow you to enroll in the Circadia research study. ",
+  "consent_in_progress_summary": "Please finish reviewing and signing the Research Consent Form.",
+  "consent_complete_summary": "Thank you for signing the Research Consent Form.",
+
   "consent_intro_title": "About this consent form",
   "consent_intro_p1": "Please read this form carefully.  It tells you important information about a research study.  A member of our research team will also talk to you about taking part in this research study.  People who agree to take part in research studies are called “subjects.”  This term will be used throughout this consent form.",
   "consent_intro_p2": "Partners HealthCare System is made up of Partners hospitals, health care providers, and researchers. Massachusetts General Hospital is the main site for the Circadia study and is a part of the Partners HealthCare System. In the rest of this consent form, we refer to the Partners system simply as “Partners.”",
@@ -282,9 +286,12 @@
   "consent_date_text": "Date",
   "consent_time_text": "Time (optional)",
 
+  "dlmo_scheduling_instructions_summary": "Please schedule the DLMO collections and follow the provided instructions on how to appropriately schedule your collection dates",
+
   "dlmo_instructions_name": "DLMO Instructions",
-  "dlmo_scheduling_instructions_created_summary": "Please schedule the DLMO collections and follow the provided instructions on how to appropriately schedule your collection dates",
   "dlmo_instructions_title": "Dim Light Melatonin Saliva Sample Collection: Scheduling Collection Dates",
+
+  "dlmo_instructions_summary": "Please watch this video prior to starting your DLMO collections. You may also download written instructions here. ",
 
   "dlmo_instructions_overview_title": "Overview",
   "dlmo_instructions_overview_paragraph_1": "One of our study goals is to better understand your biological bedtime. To do so, we require two 8-hour melatonin sample collections, consisting of 8 hourly saliva sample collections. We will analyze your hourly melatonin levels from the saliva sample collections you provide.",
@@ -535,6 +542,10 @@
   "mini_sleep_log_title": "Mini Sleep Log",
   "mini_sleep_log_header": "Mini Sleep Log",
 
+  "mini_sleep_log_created_summary": "Please complete your daily sleep logging.",
+  "mini_sleep_log_in_progress_summary": "You're almost done! Please complete today's daily sleep log.",
+  "mini_sleep_log_complete_summary": "Thank you for completing today's sleep log.",
+
   "dlmo_name": "Dim Light Melatonin Onset",
   "dlmo_title": "Dim Light Melatonin Onset",
   "dlmo_header": "Dim Light Melatonin Onset",
@@ -542,6 +553,10 @@
   "pcq_name": "Post Collection Questionnaire",
   "pcq_title": "Post Collection Questionnaire",
   "pcq_header": "Genetic Info Release Request",
+
+  "pcq_created_summary": "Please fill out the Post-collection Questionnaire.",
+  "pcq_in_progress_summary": "Almost done. Please complete the Post-collection Questionnaire.",
+  "pcq_complete_summary": "Thank you for answering the Post-collection Questionnaire.",
 
   "pcq_bedtime_sleep_earlier_or_later_question": "For your bedtime during the study, did you ever go to sleep earlier/later than the time you entered on the Mini Sleep Log for that night? ",
   "pcq_bedtime_sleep_earlier_yes": "Yes (I went to sleep earlier)",
@@ -606,6 +621,10 @@
 
   "meq_name": "Morning Evening Questionnaire",
   "meq_title": "Morning Evening Questionnaire",
+
+  "meq_created_summary": "Please complete the Morning-Evening Questionnaire.",
+  "meq_in_progress_summary": "Please finish answering the Morning-Evening Questionnaire.",
+  "meq_complete_summary": "Thank you for completing the Morning-Evening Questionnaire.",
 
   "meq_what_time_get_up_early_question": "Approximately what time would you get up if you were entirely free to plan your day?",
   "meq_wake_up_interval_1": "5:00 AM–6:30 AM (05:00–06:30 h)",
@@ -719,15 +738,40 @@
   "meq_more_evening_type": "Rather more an evening type than a morning type",
   "meq_evening_type": "Definitely an evening type",
 
-  "kra_name": "Kit Return Attestation",
-  "kra_title": "Kit Return Attestation",
-  "kra_header": "Kit Return Attestation",
+  "kit_return_attestation_name": "Kit Return Attestation",
+  "kit_return_attestation_title": "Kit Return Attestation",
+  "kit_return_attestation_header": "Kit Return Attestation",
 
-  "kra_question": "Mark below to attest to return shipping your At-Home Kit: ",
-  "kra_answer": "I have packaged my At-Home Kit appropriately and return shipped it through FedEx."
+  "kit_return_attestation_created_summary": "Please complete the Kit Return checklist.",
+  "kit_return_attestation_in_progress_summary": "Please complete and submit your Kit Return checklist.",
+  "kit_return_attestation_complete_summary": "Thank you for returning your kit.",
 
+  "kit_return_attestation_question": "Mark below to attest to return shipping your At-Home Kit: ",
+  "kit_return_attestation_answer": "I have packaged my At-Home Kit appropriately and return shipped it through FedEx.",
 
+  "kit_receipt_attestation_name": "Kit Receipt Attestation",
+  "kit_receipt_attestation_title": "Kit Receipt Attestation",
+  "kit_receipt_attestation_header": "Kit Receipt Attestation",
 
+  "kit_receipt_attestation_created_summary": "Please check your kit once you have received it and complete this checklist.",
+  "kit_receipt_attestation_in_progress_summary": "You have started your kit checklist, please submit it prior to any study collections.",
+  "kit_receipt_attestation_complete_summary": "Thank you for checking your kit and submitting the kit checklist.",
+
+  "pre_collection_attestation_1_name": "DLMO Attestation #1"
+  "pre_collection_attestation_1_title": "DLMO Attestation #1"
+  "pre_collection_attestation_1_header": "DLMO Attestation #1",
+
+  "pre_collection_attestation_1_created_summary": "Please complete the DLMO colllection checklist prior to starting the collection.",
+  "pre_collection_attestation_1_in_progress_summary": "You have started your DLMO collection checklist, please submit it prior to starting collection.",
+  "pre_collection_attestation_1_complete_summary": "Thank you for completing the DLMO collection checklist.",
+
+  "pre_collection_attestation_2_name": "DLMO Attestation #2"
+  "pre_collection_attestation_2_title": "DLMO Attestation #2"
+  "pre_collection_attestation_2_header": "DLMO Attestation #2",
+
+  "pre_collection_attestation_2_created_summary": "Please complete the DLMO colllection checklist prior to starting the collection.",
+  "pre_collection_attestation_2_in_progress_summary": "You have started your DLMO collection checklist, please submit it prior to starting collection.",
+  "pre_collection_attestation_2_complete_summary": "Thank you for completing the DLMO collection checklist."
 
 
 
