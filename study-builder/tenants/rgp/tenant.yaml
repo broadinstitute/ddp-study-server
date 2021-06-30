@@ -1,5 +1,5 @@
 tenant:
-  default_directory: Username-Password-Authentication
+  default_directory: ##DB_NAME##
 
 rules:
   - name: Force email verification
