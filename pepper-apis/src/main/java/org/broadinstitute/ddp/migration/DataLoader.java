@@ -574,9 +574,10 @@ class DataLoader {
 
         Set<String> files = fileReader.listParticipantFiles();
         LOG.info("Found {} participant files", files.size());
-        int count = 1;
+        int count = 0;
         int total = files.size();
         for (var filename : files) {
+            count++;
             LOG.info("({}/{}) Looking at participant file: {}", count, total, filename);
             var data = gson.fromJson(fileReader.readContent(filename), MemberFile.class);
             try {
@@ -604,15 +605,15 @@ class DataLoader {
                     LOG.error("Error while processing participant file, continuing", e);
                 }
             }
-            count++;
         }
 
         LOG.info("");
         files = fileReader.listFamilyMemberFiles();
         LOG.info("Found {} family member files", files.size());
-        count = 1;
+        count = 0;
         total = files.size();
         for (var filename : files) {
+            count++;
             LOG.info("({}/{}) Working on family member file for family notes fix: {}", count, total, filename);
             var data = gson.fromJson(fileReader.readContent(filename), MemberFile.class);
             try {
@@ -666,7 +667,6 @@ class DataLoader {
                     LOG.error("Error while processing family member file for family notes fix, continuing", e);
                 }
             }
-            count++;
         }
     }
 }
