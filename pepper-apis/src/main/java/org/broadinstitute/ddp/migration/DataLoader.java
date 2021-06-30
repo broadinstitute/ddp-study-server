@@ -612,6 +612,7 @@ class DataLoader {
         LOG.info("Found {} family member files", files.size());
         count = 0;
         total = files.size();
+        int numUpdated = 0;
         for (var filename : files) {
             count++;
             LOG.info("({}/{}) Working on family member file for family notes fix: {}", count, total, filename);
@@ -647,7 +648,7 @@ class DataLoader {
                     }
                 }
                 LOG.info("  - Family member has {} field values", values.size());
-                String jsonData = !values.isEmpty() ? gson.toJson(data) : null;
+                String jsonData = !values.isEmpty() ? gson.toJson(values) : null;
 
                 DsmDataLoader.useTxn(dsmHandle -> {
                     Long dsmParticipantId = dsmLoader.findDsmParticipantId(dsmHandle, studyGuid, altPid);
@@ -660,6 +661,7 @@ class DataLoader {
                     dsmLoader.updateParticipantRecord(dsmHandle, dsmParticipantId, jsonData);
                     LOG.info("  - Updated participant record with new family notes json");
                 });
+                numUpdated++;
             } catch (Exception e) {
                 if (isProdRun) {
                     throw e;
@@ -668,5 +670,7 @@ class DataLoader {
                 }
             }
         }
+
+        LOG.info("Updated {} participant records for family notes fix", numUpdated);
     }
 }
