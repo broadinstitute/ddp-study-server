@@ -546,6 +546,12 @@ class DataLoader {
                     value = value.contains("T") ? value.split("T")[0] : value;
                     data.put(field.getTarget(), value);
                 }
+            } else if ("medical_records_received".equalsIgnoreCase(field.getSource())) {
+                String value = member.getString(field.getSource());
+                if (value != null) {
+                    value = value.equalsIgnoreCase("N/A") ? "NA" : value;
+                    data.put(field.getTarget(), value);
+                }
             } else {
                 String value = member.getString(field.getSource());
                 if (value != null) {
