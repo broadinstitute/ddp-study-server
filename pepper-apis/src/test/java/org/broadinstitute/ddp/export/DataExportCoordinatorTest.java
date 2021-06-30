@@ -90,7 +90,7 @@ public class DataExportCoordinatorTest {
 
         // minimal studyDto that will make this work. Really irrelevant for our tests except needed to avoid null pointer exceptions.
         StudyDto testStudyDto = new StudyDto(123, "theguid", "studyname", null,
-                "http://blah.boo.com", 2, 1, null, false, null, null, true);
+                "http://blah.boo.com", 2, 1, null, false, null, null, true, null);
 
         // run the real thing when we call this
         Iterator<Participant> iterator = Collections.emptyIterator();

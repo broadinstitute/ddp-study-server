@@ -26,11 +26,7 @@
   {{else}}
     "STUDY_EMAIL": "rgp@{{$environment}}.datadonationplatform.org",
   {{end}}
-  {{if eq $environment "prod"}}
-    "DB_NAME": "rgp-production",
-  {{else}}
-    "DB_NAME": "Username-Password-Authentication",
-  {{end}}
+    "DB_NAME": "{{$conf.auth0.connection}}",
     "BASE_URL": "{{$conf.baseWebUrl}}",
     "LOGIN_DOMAIN": "{{$conf.auth0.loginDomain}}",
     "ASSETS_BUCKET": "{{$conf.assetsBucketName}}",

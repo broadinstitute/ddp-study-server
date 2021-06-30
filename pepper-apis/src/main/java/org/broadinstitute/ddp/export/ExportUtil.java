@@ -29,11 +29,12 @@ public class ExportUtil {
         return TransactionWrapper.withTxn(TransactionWrapper.DB.APIS, callback);
     }
 
-    static Map<String, String> fetchAndCacheAuth0Emails(Handle handle, String studyGuid,
+    static Map<String, String> fetchAndCacheAuth0Emails(Handle handle, StudyDto studyDto,
                                                                Set<String> auth0UserIds, Map<String, String> emailStore) {
-        var mgmtClient = Auth0ManagementClient.forStudy(handle, studyGuid);
+        var mgmtClient = Auth0ManagementClient.forStudy(handle, studyDto.getGuid());
         Map<String, String> emailResults = new Auth0Util(mgmtClient.getDomain())
-                .getUserPassConnEmailsByAuth0UserIds(auth0UserIds, mgmtClient.getToken());
+                .getEmailsByAuth0UserIdsAndConnection(auth0UserIds, mgmtClient.getToken(),
+                        studyDto.getDefaultAuth0Connection());
         emailResults.forEach(emailStore::put);
         return emailResults;
     }
@@ -84,7 +85,7 @@ public class ExportUtil {
                 .collect(Collectors.toMap(pt -> pt.getUser().getGuid(), pt -> pt));
 
         if (!usersMissingEmails.isEmpty()) {
-            fetchAndCacheAuth0Emails(handle, studyDto.getGuid(), usersMissingEmails.keySet(), emailStore)
+            fetchAndCacheAuth0Emails(handle, studyDto, usersMissingEmails.keySet(), emailStore)
                     .forEach((auth0UserId, email) -> participants.get(usersMissingEmails.get(auth0UserId)).getUser().setEmail(email));
         }
 
