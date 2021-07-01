@@ -567,4 +567,110 @@ class DataLoader {
             LOG.info("  - Inserted member dsm data with id={}", id);
         }
     }
+
+    public void fixFamilyNotes() {
+        LOG.info("");
+        familyIdToParticipantAltPid.clear();
+
+        Set<String> files = fileReader.listParticipantFiles();
+        LOG.info("Found {} participant files", files.size());
+        int count = 0;
+        int total = files.size();
+        for (var filename : files) {
+            count++;
+            LOG.info("({}/{}) Looking at participant file: {}", count, total, filename);
+            var data = gson.fromJson(fileReader.readContent(filename), MemberFile.class);
+            try {
+                var participant = data.getMemberWrapper();
+                String altPid = participant.getAltPid();
+                if (StringUtils.isBlank(altPid)) {
+                    if (isProdRun) {
+                        throw new LoaderException("Participant is missing altpid");
+                    } else {
+                        LOG.error("  Participant is missing altpid, skipping");
+                        continue;
+                    }
+                }
+                String familyId = participant.getFamilyId();
+                if (StringUtils.isBlank(familyId)) {
+                    LOG.error("  Participant is missing family_id, skipping");
+                    continue;
+                }
+                familyIdToParticipantAltPid.put(familyId, altPid);
+                LOG.info("  - Assigned family_id={} to participant altpid={}", familyId, altPid);
+            } catch (Exception e) {
+                if (isProdRun) {
+                    throw e;
+                } else {
+                    LOG.error("Error while processing participant file, continuing", e);
+                }
+            }
+        }
+
+        LOG.info("");
+        files = fileReader.listFamilyMemberFiles();
+        LOG.info("Found {} family member files", files.size());
+        count = 0;
+        total = files.size();
+        int numUpdated = 0;
+        for (var filename : files) {
+            count++;
+            LOG.info("({}/{}) Working on family member file for family notes fix: {}", count, total, filename);
+            var data = gson.fromJson(fileReader.readContent(filename), MemberFile.class);
+            try {
+                var member = data.getMemberWrapper();
+                String familyId = member.getFamilyId();
+                if (StringUtils.isBlank(familyId)) {
+                    LOG.error("  Family member is missing family_id, skipping");
+                    continue;
+                }
+                String altPid = familyIdToParticipantAltPid.get(familyId);
+                if (StringUtils.isBlank(altPid)) {
+                    if (isProdRun) {
+                        throw new LoaderException("Could not find participant altpid for family_id: " + familyId);
+                    } else {
+                        LOG.error("  Could not find participant altpid for family_id={}, skipping", familyId);
+                        continue;
+                    }
+                }
+                LOG.info("  - Using participant altpid={}", altPid);
+
+                if (!"SELF".equalsIgnoreCase(member.getMemberType())) {
+                    LOG.info("  - Family member is not self/proband, skipping family notes fix");
+                    continue;
+                }
+
+                Map<String, String> values = new HashMap<>();
+                for (var field : mapping.getDsmParticipantFields()) {
+                    String value = member.getString(field.getSource());
+                    if (value != null) {
+                        values.put(field.getTarget(), value);
+                    }
+                }
+                LOG.info("  - Family member has {} field values", values.size());
+                String jsonData = !values.isEmpty() ? gson.toJson(values) : null;
+
+                DsmDataLoader.useTxn(dsmHandle -> {
+                    Long dsmParticipantId = dsmLoader.findDsmParticipantId(dsmHandle, studyGuid, altPid);
+                    if (dsmParticipantId == null) {
+                        LOG.error("  Could not find participant id for altpid {}, skipping", altPid);
+                        return;
+                    } else {
+                        LOG.info("  - Found dsm participant with id={}", dsmParticipantId);
+                    }
+                    dsmLoader.updateParticipantRecord(dsmHandle, dsmParticipantId, jsonData);
+                    LOG.info("  - Updated participant record with new family notes json");
+                });
+                numUpdated++;
+            } catch (Exception e) {
+                if (isProdRun) {
+                    throw e;
+                } else {
+                    LOG.error("Error while processing family member file for family notes fix, continuing", e);
+                }
+            }
+        }
+
+        LOG.info("Updated {} participant records for family notes fix", numUpdated);
+    }
 }

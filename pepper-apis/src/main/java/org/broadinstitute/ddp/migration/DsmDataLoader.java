@@ -1,6 +1,7 @@
 package org.broadinstitute.ddp.migration;
 
 import java.time.Instant;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 import com.zaxxer.hikari.HikariConfig;
@@ -13,6 +14,7 @@ import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.SqlObjectPlugin;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
+import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 
 public class DsmDataLoader {
@@ -57,9 +59,20 @@ public class DsmDataLoader {
                 studyGuid, participantAltPid, Instant.now().toEpochMilli());
     }
 
+    public Long findDsmParticipantId(Handle dsmHandle, String studyGuid, String participantAltPid) {
+        return dsmHandle.attach(DsmDao.class).findParticipantId(studyGuid, participantAltPid).orElse(null);
+    }
+
     public long createParticipantRecord(Handle dsmHandle, String studyGuid, long dsmParticipantId, String jsonData) {
         return dsmHandle.attach(DsmDao.class).insertParticipantRecord(
                 studyGuid, dsmParticipantId, jsonData, Instant.now().toEpochMilli());
+    }
+
+    public void updateParticipantRecord(Handle dsmHandle, long dsmParticipantId, String jsonData) {
+        int numUpdated = dsmHandle.attach(DsmDao.class).updateParticipantRecord(dsmParticipantId, jsonData);
+        if (numUpdated != 1) {
+            throw new LoaderException("Expected to update 1 row but did " + numUpdated);
+        }
     }
 
     public long loadFormData(Handle dsmHandle, String studyGuid, String participantAltPid, String jsonData) {
@@ -78,6 +91,12 @@ public class DsmDataLoader {
                 @Bind("participantAltPid") String participantAltPid,
                 @Bind("lastChanged") long lastChangedMillis);
 
+        @SqlQuery("select participant_id from ddp_participant where ddp_participant_id = :participantAltPid"
+                + "   and ddp_instance_id = (select ddp_instance_id from ddp_instance where study_guid = :studyGuid)")
+        Optional<Long> findParticipantId(
+                @Bind("studyGuid") String studyGuid,
+                @Bind("participantAltPid") String participantAltPid);
+
         @GetGeneratedKeys
         @SqlUpdate("insert into ddp_participant_record"
                 + "        (participant_id, additional_values_json, last_changed, changed_by)"
@@ -87,6 +106,13 @@ public class DsmDataLoader {
                 @Bind("participantId") long dsmParticipantId,
                 @Bind("json") String additionalValuesJson,
                 @Bind("lastChanged") long lastChangedMillis);
+
+        @SqlUpdate("update ddp_participant_record"
+                + "    set additional_values_json = :json"
+                + "  where participant_id = :participantId")
+        int updateParticipantRecord(
+                @Bind("participantId") long dsmParticipantId,
+                @Bind("json") String additionalValuesJson);
 
         @GetGeneratedKeys
         @SqlUpdate("insert into ddp_participant_data"

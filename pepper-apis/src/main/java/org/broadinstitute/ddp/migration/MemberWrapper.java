@@ -19,6 +19,10 @@ public class MemberWrapper extends ObjectWrapper {
         return getString("family_id");
     }
 
+    public String getMemberType() {
+        return getString("member_type");
+    }
+
     public String getShortId() {
         return getString("ddp_participant_shortid");
     }

@@ -356,13 +356,13 @@ public class Auth0Util {
      * API errors during the process will be consumed. This means results might not contain all requested user emails and caller should
      * handle such scenario.
      *
-     * <p>Note: this is restricted to querying emails from the Username-Password-Authentication Connection.
-     *
-     * @param auth0UserIds the auth0UserIds to query emails for
-     * @param mgmtApiToken management token to access API
+     * @param auth0UserIds    the auth0UserIds to query emails for
+     * @param mgmtApiToken    management token to access API
+     * @param auth0Connection the auth0 connection, if not provided will fallback to 'Username-Password-Authentication'
      * @return mapping of auth0UserId to email
      */
-    public Map<String, String> getUserPassConnEmailsByAuth0UserIds(Set<String> auth0UserIds, String mgmtApiToken) {
+    public Map<String, String> getEmailsByAuth0UserIdsAndConnection(Set<String> auth0UserIds, String mgmtApiToken,
+                                                                    String auth0Connection) {
         if (auth0UserIds == null || auth0UserIds.isEmpty()) {
             return new HashMap<>();
         }
@@ -371,6 +371,8 @@ public class Auth0Util {
         Map<String, String> results = new HashMap<>();
         List<String> ids = new ArrayList<>(auth0UserIds);
         ManagementAPI auth0Mgmt = new ManagementAPI(baseUrl, mgmtApiToken);
+        String connection = auth0Connection == null || auth0Connection.isBlank()
+                ? USERNAME_PASSWORD_AUTH0_CONN_NAME : auth0Connection;
 
         // IMPORTANT: In order to satisfy certain limits and restrictions, especially URL length limits, we "pagination"
         // through the auth0UserIds. We had issues with 100 auth0UserIds, so 50 in the Lucene query seems like a safe bet.
@@ -381,7 +383,7 @@ public class Auth0Util {
 
             // NOTE: Lucene syntax likes OR operator, but using a space also works. We do the latter to save space on URL limit.
             String query = String.format("identities.connection:\"%s\" AND user_id:(%s)",
-                    USERNAME_PASSWORD_AUTH0_CONN_NAME, String.join(" ", subset));
+                    connection, String.join(" ", subset));
 
             UserFilter filter = new UserFilter()
                     .withFields("user_id,email", true)

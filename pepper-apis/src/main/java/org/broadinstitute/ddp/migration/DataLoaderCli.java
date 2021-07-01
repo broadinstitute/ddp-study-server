@@ -39,6 +39,7 @@ public class DataLoaderCli {
         options.addOption(null, "mailing-list", false, "load mailing list contacts");
         options.addOption(null, "participants", false, "load participant files");
         options.addOption(null, "dsm-data", false, "load data into dsm");
+        options.addOption(null, "fix-family-notes", false, "fix up family notes fields so they're from the proband");
         options.addOption(null, "prod-run", false, "must set this flag for production migration run");
 
         CommandLineParser parser = new DefaultParser();
@@ -60,7 +61,8 @@ public class DataLoaderCli {
         boolean loadMailingList = cmd.hasOption("mailing-list");
         boolean loadParticipants = cmd.hasOption("participants");
         boolean loadDsmData = cmd.hasOption("dsm-data");
-        if (!loadMailingList && !loadParticipants && !loadDsmData) {
+        boolean fixFamilyNotes = cmd.hasOption("fix-family-notes");
+        if (!loadMailingList && !loadParticipants && !loadDsmData && !fixFamilyNotes) {
             LOG.info("Nothing to do, exiting...");
             return;
         }
@@ -121,6 +123,9 @@ public class DataLoaderCli {
         }
         if (loadDsmData) {
             loader.processDsmFiles();
+        }
+        if (fixFamilyNotes) {
+            loader.fixFamilyNotes();
         }
 
         Duration elapsed = Duration.between(start, Instant.now());
