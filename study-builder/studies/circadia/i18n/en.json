@@ -767,7 +767,7 @@
   "pre_collection_attestation_1_title": "DLMO Attestation #1",
   "pre_collection_attestation_1_header": "DLMO Attestation #1",
 
-  "pre_collection_attestation_1_created_summary": "Please complete the DLMO colllection checklist prior to starting the collection.",
+  "pre_collection_attestation_1_created_summary": "Please complete the DLMO collection checklist prior to starting the collection.",
   "pre_collection_attestation_1_in_progress_summary": "You have started your DLMO collection checklist, please submit it prior to starting collection.",
   "pre_collection_attestation_1_complete_summary": "Thank you for completing the DLMO collection checklist.",
 
@@ -775,7 +775,7 @@
   "pre_collection_attestation_2_title": "DLMO Attestation #2",
   "pre_collection_attestation_2_header": "DLMO Attestation #2",
 
-  "pre_collection_attestation_2_created_summary": "Please complete the DLMO colllection checklist prior to starting the collection.",
+  "pre_collection_attestation_2_created_summary": "Please complete the DLMO collection checklist prior to starting the collection.",
   "pre_collection_attestation_2_in_progress_summary": "You have started your DLMO collection checklist, please submit it prior to starting collection.",
   "pre_collection_attestation_2_complete_summary": "Thank you for completing the DLMO collection checklist."
 
