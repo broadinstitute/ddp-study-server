@@ -738,6 +738,8 @@
   "meq_more_evening_type": "Rather more an evening type than a morning type",
   "meq_evening_type": "Definitely an evening type",
 
+  "provide_additional_comments": "Provide additional comments in the text box below",
+
   "kit_return_attestation_name": "Kit Return Attestation",
   "kit_return_attestation_title": "Kit Return Attestation",
   "kit_return_attestation_header": "Kit Return Attestation",
@@ -757,19 +759,23 @@
   "kit_receipt_attestation_in_progress_summary": "You have started your kit checklist, please submit it prior to any study collections.",
   "kit_receipt_attestation_complete_summary": "Thank you for checking your kit and submitting the kit checklist.",
 
-  "pre_collection_attestation_1_name": "DLMO Attestation #1"
-  "pre_collection_attestation_1_title": "DLMO Attestation #1"
+  "kit_receipt_attestation_question": "I have received my At-Home Kit and done the following",
+  "kit_receipt_attestation_checked_instructions": "Checked that all components are present using the provided checklist",
+  "kit_receipt_attestation_icepacks": "Placed both icepacks in the freezer",
+
+  "pre_collection_attestation_1_name": "DLMO Attestation #1",
+  "pre_collection_attestation_1_title": "DLMO Attestation #1",
   "pre_collection_attestation_1_header": "DLMO Attestation #1",
 
-  "pre_collection_attestation_1_created_summary": "Please complete the DLMO colllection checklist prior to starting the collection.",
+  "pre_collection_attestation_1_created_summary": "Please complete the DLMO collection checklist prior to starting the collection.",
   "pre_collection_attestation_1_in_progress_summary": "You have started your DLMO collection checklist, please submit it prior to starting collection.",
   "pre_collection_attestation_1_complete_summary": "Thank you for completing the DLMO collection checklist.",
 
-  "pre_collection_attestation_2_name": "DLMO Attestation #2"
-  "pre_collection_attestation_2_title": "DLMO Attestation #2"
+  "pre_collection_attestation_2_name": "DLMO Attestation #2",
+  "pre_collection_attestation_2_title": "DLMO Attestation #2",
   "pre_collection_attestation_2_header": "DLMO Attestation #2",
 
-  "pre_collection_attestation_2_created_summary": "Please complete the DLMO colllection checklist prior to starting the collection.",
+  "pre_collection_attestation_2_created_summary": "Please complete the DLMO collection checklist prior to starting the collection.",
   "pre_collection_attestation_2_in_progress_summary": "You have started your DLMO collection checklist, please submit it prior to starting collection.",
   "pre_collection_attestation_2_complete_summary": "Thank you for completing the DLMO collection checklist."
 
