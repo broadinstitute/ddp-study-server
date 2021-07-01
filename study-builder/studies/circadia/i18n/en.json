@@ -764,12 +764,20 @@
   "kit_receipt_attestation_icepacks": "Placed both icepacks in the freezer",
 
   "pre_collection_attestation_1_name": "DLMO Attestation #1",
-  "pre_collection_attestation_1_title": "DLMO Attestation #1",
+  "pre_collection_attestation_1_title": "DLMO Pre-Collection Attestation 1",
   "pre_collection_attestation_1_header": "DLMO Attestation #1",
 
   "pre_collection_attestation_1_created_summary": "Please complete the DLMO collection checklist prior to starting the collection.",
   "pre_collection_attestation_1_in_progress_summary": "You have started your DLMO collection checklist, please submit it prior to starting collection.",
   "pre_collection_attestation_1_complete_summary": "Thank you for completing the DLMO collection checklist.",
+
+  "pre_collection_attestation_1_question_title": "Select an option below prior to beginning DLMO Collection 1:",
+  "pre_collection_attestation_1_question_text": "I have not consumed caffeine, melatonin, alcohol, or nicotine in the 24 hours prior to sample collection.",
+  "pre_collection_attestation_1_yes": "Yes",
+  "pre_collection_attestation_1_no": "No",
+  "pre_collection_attestation_1_yes_message": "You may begin DLMO Collection 1 at your scheduled collection time. Thank you.",
+  "pre_collection_attestation_1_no_message": "You will need to reschedule DLMO Collection 1. You have indicated that you have consumed one or more of the previously listed items. We request that you DO NOT proceed with DLMO Collection 1 at this moment. A study team member will be in contact with you to reschedule your DLMO Collection 1. Thank you.",
+
 
   "pre_collection_attestation_2_name": "DLMO Attestation #2",
   "pre_collection_attestation_2_title": "DLMO Attestation #2",
