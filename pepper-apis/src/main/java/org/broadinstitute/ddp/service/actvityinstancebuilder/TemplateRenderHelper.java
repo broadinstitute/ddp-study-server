@@ -33,7 +33,8 @@ public class TemplateRenderHelper {
      */
     public void createRendererInitialContext(AIBuilderContext ctx) {
         Map<String, String> commonSnapshot = I18nContentRenderer
-                .newValueProviderBuilder(ctx.getHandle(), ctx.getFormResponse().getParticipantId())
+                .newValueProviderBuilder(ctx.getHandle(), ctx.getFormResponse().getParticipantId(),
+                        ctx.getOperatorGuid(), ctx.getStudyGuid())
                 .build().getSnapshot();
 
         Map<String, String> snapshot = ctx.getHandle().attach(ActivityInstanceDao.class).findSubstitutions(

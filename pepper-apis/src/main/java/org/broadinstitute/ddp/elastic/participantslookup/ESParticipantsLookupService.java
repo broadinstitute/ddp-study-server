@@ -13,7 +13,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.broadinstitute.ddp.db.dto.StudyDto;
-import org.broadinstitute.ddp.elastic.participantslookup.model.ESParticipantsLookupField;
+import org.broadinstitute.ddp.elastic.participantslookup.model.ESParticipantsLookupData;
 import org.broadinstitute.ddp.elastic.participantslookup.search.ESSearchSteps;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.json.admin.participantslookup.ParticipantsLookupResultRow;
@@ -106,11 +106,12 @@ public class ESParticipantsLookupService extends ParticipantsLookupService {
      * <p><b>Participants lookup algorithm:</b>
      * <ul>
      *     <li>find in index "users" (name of index detected by current study) a substring 'query' (full-text-search in fields
-     *     specified in {@link ESParticipantsLookupField}) and having 'governedUsers' not empty, so search among proxy users only;
+     *     specified in {@link ESParticipantsLookupData.LookupField}) and having 'governedUsers' not empty,
+     *     so search among proxy users only;
      *     collect found rows in Map(Guid, ESUsersIndexResultRow);</li>
      *     <li>add to Map(governedUserGuid, proxyUserGuid) values of 'governedUsers' (key) and proxy's 'profile.guid' (value);</li>
      *     <li>find in index "participants_structured" (name of index detected by current study) a substring 'query' (full-text-search in
-     *     fields specified in {@link ESParticipantsLookupField};</li>
+     *     fields specified in {@link ESParticipantsLookupData.LookupField};</li>
      *     <li>additional query in same index: in invitationId by normalized 'query' - where '-' are removed;</li>
      *     <li>additional query in same index: in 'profile.guid' by all 'governedUsers' found in 'users';</li>
      *     <li>all rows found in index "participants_structured" saved to Map(Guid, ESParticipantsStructuredIndexResultRow);</li>

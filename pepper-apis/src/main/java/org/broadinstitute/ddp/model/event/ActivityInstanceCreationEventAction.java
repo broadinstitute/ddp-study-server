@@ -54,6 +54,9 @@ public class ActivityInstanceCreationEventAction extends EventAction {
                 ActivityDto activityDto = handle.attach(JdbiActivity.class).queryActivityById(studyActivityId);
                 checkSignalIfNestedTargetActivity(activityDto, signal);
                 QueuedEventDao queuedEventDao = handle.attach(QueuedEventDao.class);
+                // fixme: serialize signal data such as activityInstanceIdThatChanged, targetStatusType, etc
+                // (perhaps leverage templateSubstitutions?) so we can rebuilt the signal and avoid issues
+                // when calling doActionSynchronously() in Housekeeping.
                 long queuedEventId = queuedEventDao.insertActivityInstanceCreation(eventConfiguration.getEventConfigurationId(),
                         postAfter,
                         signal.getParticipantId(),
@@ -62,12 +65,11 @@ public class ActivityInstanceCreationEventAction extends EventAction {
                 LOG.info("Created activity instance queued event: {}", queuedEventId);
             }
         } else {
-            //synchronous action
-            doAction(handle, signal);
+            doActionSynchronously(handle, signal);
         }
     }
 
-    public void doAction(Handle handle, EventSignal signal) {
+    public void doActionSynchronously(Handle handle, EventSignal signal) {
         JdbiActivityInstance jdbiActivityInstance = handle.attach(JdbiActivityInstance.class);
         JdbiActivityInstanceStatus jdbiActivityInstanceStatus = handle.attach(JdbiActivityInstanceStatus.class);
         JdbiActivity jdbiActivity = handle.attach(JdbiActivity.class);
@@ -167,6 +169,7 @@ public class ActivityInstanceCreationEventAction extends EventAction {
                 newActivityInstanceId,
                 studyActivityId,
                 signal.getStudyId(),
+                signal.getStudyGuid(),
                 InstanceStatusType.CREATED));
 
         // Create child nested activity instances, if any.
@@ -201,6 +204,7 @@ public class ActivityInstanceCreationEventAction extends EventAction {
                     newChildInstanceId,
                     childActivityId,
                     signal.getStudyId(),
+                    signal.getStudyGuid(),
                     InstanceStatusType.CREATED));
         }
     }

@@ -46,6 +46,7 @@ public class RenderValueProvider {
     private String testResultCode;
     private Instant testResultTimeCompleted;
     private Integer activityInstanceNumber;
+    private Boolean governedParticipant;
 
     // To minimize database round-trips, we lookup answers using existing objects that should have the answer objects.
     // Depending on what's available for the provider, we'll use either response + activity or the instance object.
@@ -161,6 +162,15 @@ public class RenderValueProvider {
         } else {
             return String.valueOf(activityInstanceNumber);
         }
+    }
+
+    /**
+     * Select a string depending on the type of the current participant: if he/she a governed participant or
+     *
+     * @return String - if governedParticipant is not null and == true, then return 'ifTrueString', else return 'ifFalseString'
+     */
+    public String isGovernedParticipant(String ifTrueString, String ifFalseString) {
+        return governedParticipant != null && governedParticipant ? ifTrueString : ifFalseString;
     }
 
     /**
@@ -294,6 +304,9 @@ public class RenderValueProvider {
         if (testResultTimeCompleted != null) {
             snapshot.put(I18nTemplateConstants.Snapshot.TEST_RESULT_TIME_COMPLETED, testResultTimeCompleted.toString());
         }
+        if (governedParticipant != null) {
+            snapshot.put(I18nTemplateConstants.Snapshot.IS_GOVERNED_PARTICIPANT, governedParticipant.toString());
+        }
         return snapshot;
     }
 
@@ -360,6 +373,11 @@ public class RenderValueProvider {
 
         public Builder setActivityInstanceNumber(Integer activityInstanceNumber) {
             provider.activityInstanceNumber = activityInstanceNumber;
+            return this;
+        }
+
+        public Builder setGovernedParticipant(Boolean governedParticipant) {
+            provider.governedParticipant = governedParticipant;
             return this;
         }
 
@@ -432,6 +450,11 @@ public class RenderValueProvider {
                 provider.testResultTimeCompleted = Instant.parse(value);
             }
 
+            value = snapshot.get(I18nTemplateConstants.Snapshot.IS_GOVERNED_PARTICIPANT);
+            if (value != null) {
+                provider.governedParticipant = Boolean.valueOf(value);
+            }
+
             return this;
         }
 
@@ -456,6 +479,7 @@ public class RenderValueProvider {
             copy.formActivity = provider.formActivity;
             copy.isoLangCode = provider.isoLangCode;
             copy.formInstance = provider.formInstance;
+            copy.governedParticipant = provider.governedParticipant;
             return copy;
         }
     }

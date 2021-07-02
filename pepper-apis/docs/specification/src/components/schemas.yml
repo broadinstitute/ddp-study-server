@@ -6,6 +6,7 @@ ActivityType:
 ActivityInstanceStatusType:
   title: ActivityInstanceStatusType
   type: string
+  example: IN_PROGRESS
   enum:
     - COMPLETE
     - CREATED
@@ -17,13 +18,6 @@ FormType:
     - CONSENT
     - GENERAL
     - PREQUALIFIER
-InstitutionType:
-  title: InstitutionType
-  type: string
-  enum:
-    - INITIAL_BIOPSY
-    - INSTITUTION
-    - PHYSICIAN
 JoinMailingListPayload:
   type: object
   title: JoinMailingListPayload
@@ -33,18 +27,19 @@ JoinMailingListPayload:
     - emailAddress
   properties:
     firstName:
-      description: users first name
+      description: user's first name
       type: string
       example: John
       minLength: 0
     lastName:
-      description: users last name
+      description: user's last name
       type: string
       example: Doe
       minLength: 0
     emailAddress:
-      description: users email address
+      description: user's email address
       type: string
+      format: email
       example: john.doe@example.com
     info:
       description: Strings providing context about which umbrella based mailing list the user is interested in. Usually list of diseases
@@ -57,15 +52,17 @@ JoinMailingListPayload:
       description: The umbrella id of the mailing list the user is interested in (one of umbrellaId OR studyGuid but not both is required)
       example: cmi
       type: string
+      format: guid
     studyGuid:
       description: The studyGuid of the mailing list the user is interested in (one of umbrellaId OR studyGuid but not both is required)
       example: ANGIO
       type: string
+      format: guid
     isoLanguageCode:
       description: preferred language code of join mailing list user. If language code is not set, defaults to study default language.
       type: string
       nullable: true
-      format: ISO 639-1 standard
+      format: ISO 639-1
       example: en
 
 ListStyle:
@@ -128,22 +125,23 @@ Activity:
     - sectionIndex
   properties:
     activityType:
-      $ref: '../pepper.yml#/components/schemas/ActivityType'
+      $ref: '#/ActivityType'
     formType:
-      $ref: '../pepper.yml#/components/schemas/FormType'
+      $ref: '#/FormType'
     activityCode:
       type: string
+      format: guid
       description: unique identifier of the activity
     guid:
       type: string
+      format: guid
       description: unique identifier for this instance of the activity
     parentInstanceGuid:
       type: string
       nullable: true
       description: guid for the parent activity instance in case this is a child activity instance
     statusCode:
-      $ref: "../pepper.yml#/components/schemas/ActivityInstanceStatusType"
-      example: IN_PROGRESS
+      $ref: "#/ActivityInstanceStatusType"
     title:
       type: string
       description: title of the activity to be displayed
@@ -156,6 +154,8 @@ Activity:
         unstructured text.
     readonly:
       type: boolean
+      default: false
+      description: false if the activity can be modified.
     readonlyHint:
       type: string
       nullable: true
@@ -164,15 +164,15 @@ Activity:
         `readonly` flag is `true`). If the `ddp-Content-Style` header is set to
         `BASIC`, this field will contain unstructured text.
     listStyleHint:
-      $ref: '../pepper.yml#/components/schemas/ListStyle'
+      $ref: '#/ListStyle'
     introduction:
-      $ref: '../pepper.yml#/components/schemas/Section'
+      $ref: '#/Section'
     sections:
       type: array
       items:
-        $ref: '../pepper.yml#/components/schemas/Section'
+        $ref: '#/Section'
     closing:
-      $ref: '../pepper.yml#/components/schemas/Section'
+      $ref: '#/Section'
     lastUpdatedText:
       type: string
       nullable: true
@@ -182,7 +182,7 @@ Activity:
         will contain unstructured text.
     lastUpdated:
       type: string
-      format: date-time
+      format: YYYY-MM-DDThh:mm:ss.sssZ (ISO-8601)
       nullable: true
       description: The date time the activity definition (NOT the instance) was last updated
     canDelete:
@@ -226,10 +226,11 @@ Activity.Summary:
       description: the source activity for this instance
       example: ABCDEFGH12
       type: string
+      format: guid
     activityType:
-      $ref: "../pepper.yml#/components/schemas/ActivityType"
+      $ref: "#/ActivityType"
     activitySubtype:
-      $ref: "../pepper.yml#/components/schemas/FormType"
+      $ref: "#/FormType"
     activityName:
       type: string
       description: name of the activity
@@ -249,42 +250,49 @@ Activity.Summary:
       nullable: true
     createdAt:
       type: integer
+      format: int64
       description: The creation timestamp of the activity instance, in milliseconds since `1970-01-01T00:00:00Z` (UNIX time)
     icon:
       description: a Base64 encoded png or jpg image
       example: YW55IGN...BwbGVhc3VyZQ==
       type: string
+      format: base64
       nullable: true
     instanceGuid:
       example: 6B03213FD0
       type: string
+      format: guid
     parentInstanceGuid:
       description: guid for the parent activity instance in case this is a child activity instance
       type: string
+      format: guid
       nullable: true
     numQuestions:
       description: number of questions in this activity
       example: 4
       type: integer
+      minimum: 0
     numQuestionsAnswered:
       description: number of questions that have been answered in this activity
       example: 1
+      minimum: 0
       type: integer
     readonly:
       description: false if the activity can be modified
       example: false
       type: boolean
     statusCode:
-      $ref: "../pepper.yml#/components/schemas/ActivityInstanceStatusType"
-      example: IN_PROGRESS
+      $ref: "#/ActivityInstanceStatusType"
     canDelete:
       type: boolean
       description: whether the activity instance can be deleted
     isFollowup:
       description: true if the activity is generally considered to be an activity that comes after the "main" activities
       type: boolean
+      default: false
     isHidden:
       type: boolean
+      default: false
       description: |
         Whether the activity instance is hidden from the participant. When
         true, client should prefer to show some indicator to operator that
@@ -292,20 +300,36 @@ Activity.Summary:
     previousInstanceGuid:
       description: GUID of previous instance
       type: string
+      format: guid
 ######
 #
 # Answers
 ###
 Answer:
   type: object
+  discriminator:
+    propertyName: type
+    mapping:
+      AGREEMENT: '#/Answer.Boolean'
+      BOOLEAN: '#/Answer.Boolean'
+      COMPOSITE: '#/Answer.Composite'
+      DATE: '#/Answer.Date'
+      FILE: '#/Answer.File'
+      NUMERIC: '#/Answer.Numeric'
+      PICKLIST: '#/Answer.Picklist'
+      TEXT: '#/Answer.String'
   required:
     - answerGuid
+    - type
   properties:
     answerGuid:
       type: string
+      format: guid
+    type:
+      type: string
 Answer.String:
   allOf:
-    - $ref: '../pepper.yml#/components/schemas/Answer'
+    - $ref: '#/Answer'
     - type: object
       required:
         - value
@@ -315,16 +339,16 @@ Answer.String:
           nullable: true
 Answer.Date:
   allOf:
-    - $ref: '../pepper.yml#/components/schemas/Answer'
+    - $ref: '#/Answer'
     - type: object
       required:
         - value
       properties:
         value:
-          $ref: '../pepper.yml#/components/schemas/DateValue'
+          $ref: '#/DateValue'
 Answer.Composite:
   allOf:
-    - $ref: '../pepper.yml#/components/schemas/Answer'
+    - $ref: '#/Answer'
     - type: object
       required:
         - value
@@ -335,12 +359,12 @@ Answer.Composite:
             type: array
             items:
               anyOf:
-                - $ref: '../pepper.yml#/components/schemas/Answer.Date'
-                - $ref: '../pepper.yml#/components/schemas/Answer.Picklist'
-                - $ref: '../pepper.yml#/components/schemas/Answer.String'
+                - $ref: '#/Answer.Date'
+                - $ref: '#/Answer.Picklist'
+                - $ref: '#/Answer.String'
 Answer.Boolean:
   allOf:
-    - $ref: '../pepper.yml#/components/schemas/Answer'
+    - $ref: '#/Answer'
     - type: object
       required:
         - value
@@ -349,31 +373,29 @@ Answer.Boolean:
           type: boolean
 Answer.File:
   allOf:
-    - $ref: '../pepper.yml#/components/schemas/Answer'
+    - $ref: '#/Answer'
     - type: object
       required:
         - value
       properties:
         value:
-          $ref: '../pepper.yml#/components/schemas/FileInfo'
+          $ref: '#/FileInfo'
 Answer.Numeric:
   allOf:
-    - $ref: '../pepper.yml#/components/schemas/Answer'
+    - $ref: '#/Answer'
     - type: object
       discriminator:
         propertyName: numericType
         mapping:
-          INTEGER: '../pepper.yml#/components/schemas/Answer.Numeric.Integer'
+          INTEGER: '#/Answer.Numeric.Integer'
       required:
         - numericType
       properties:
         numericType:
           type: string
-          enum:
-            - INTEGER
 Answer.Numeric.Integer:
   allOf:
-    - $ref: '../pepper.yml#/components/schemas/Answer.Numeric'
+    - $ref: '#/Answer.Numeric'
     - type: object
       required:
         - value
@@ -381,14 +403,12 @@ Answer.Numeric.Integer:
         numericType:
           type: string
           default: INTEGER
-          enum:
-            - INTEGER
         value:
           type: integer
           nullable: true
 Answer.Picklist:
   allOf:
-    - $ref: '../pepper.yml#/components/schemas/Answer'
+    - $ref: '#/Answer'
     - type: object
       required:
         - value
@@ -396,7 +416,7 @@ Answer.Picklist:
         value:
           type: array
           items:
-            $ref: '../pepper.yml#/components/schemas/SelectedOption'
+            $ref: '#/SelectedOption'
 SelectedOption:
   type: object
   required:
@@ -405,6 +425,7 @@ SelectedOption:
   properties:
     stableId:
       type: string
+      format: guid
     detail:
       type: string
       nullable: true
@@ -440,23 +461,36 @@ FileInfo:
     fileSize:
       type: integer
       description: Size of the file in bytes
+      minimum: 0
 AnswerSubmission:
   type: object
   discriminator:
-    propertyName: value
+    propertyName: type
+    mapping:
+      AGREEMENT: '#/AnswerSubmission.Boolean'
+      BOOLEAN: '#/AnswerSubmission.Boolean'
+      COMPOSITE: '#/AnswerSubmission.Composite'
+      DATE: '#/AnswerSubmission.Date'
+      FILE: '#/AnswerSubmission.File'
+      NUMERIC: '#/AnswerSubmission.Numeric.Integer'
+      PICKLIST: '#/AnswerSubmission.Picklist'
+      TEXT: '#/AnswerSubmission.String'
   required:
     - stableId
-    - value
   properties:
     stableId:
       type: string
       description: question identifier that the answer is for
     answerGuid:
       type: string
-      description: the identifier for the answer to update
+      format: guid
+      nullable: true
+      description: the existing answer guid if this is an update
+    type:
+      type: string
 AnswerSubmission.Boolean:
   allOf:
-    - $ref: '../pepper.yml#/components/schemas/AnswerSubmission'
+    - $ref: '#/AnswerSubmission'
     - type: object
       required:
         - value
@@ -465,7 +499,7 @@ AnswerSubmission.Boolean:
           type: boolean
 AnswerSubmission.Composite:
   allOf:
-    - $ref: '../pepper.yml#/components/schemas/AnswerSubmission'
+    - $ref: '#/AnswerSubmission'
     - type: object
       required:
         - value
@@ -476,21 +510,21 @@ AnswerSubmission.Composite:
             type: array
             items:
               anyOf:
-                - $ref: '../pepper.yml#/components/schemas/AnswerSubmission.Date'
-                - $ref: '../pepper.yml#/components/schemas/AnswerSubmission.Picklist'
-                - $ref: '../pepper.yml#/components/schemas/AnswerSubmission.String'
+                - $ref: '#/AnswerSubmission.Date'
+                - $ref: '#/AnswerSubmission.Picklist'
+                - $ref: '#/AnswerSubmission.String'
 AnswerSubmission.Date:
   allOf:
-    - $ref: '../pepper.yml#/components/schemas/AnswerSubmission'
+    - $ref: '#/AnswerSubmission'
     - type: object
       required:
         - value
       properties:
         value:
-          $ref: '../pepper.yml#/components/schemas/DateValue'
+          $ref: '#/DateValue'
 AnswerSubmission.File:
   allOf:
-    - $ref: '../pepper.yml#/components/schemas/AnswerSubmission'
+    - $ref: '#/AnswerSubmission'
     - type: object
       required:
         - value
@@ -504,7 +538,7 @@ AnswerSubmission.File:
             value will unassociate it and the uploaded file will subsequently get deleted.
 AnswerSubmission.Numeric.Integer:
   allOf:
-    - $ref: '../pepper.yml#/components/schemas/AnswerSubmission'
+    - $ref: '#/AnswerSubmission'
     - type: object
       required:
         - value
@@ -514,7 +548,7 @@ AnswerSubmission.Numeric.Integer:
           nullable: true
 AnswerSubmission.Picklist:
   allOf:
-    - $ref: '../pepper.yml#/components/schemas/AnswerSubmission'
+    - $ref: '#/AnswerSubmission'
     - type: object
       required:
         - value
@@ -522,10 +556,10 @@ AnswerSubmission.Picklist:
         value:
           type: array
           items:
-            $ref: '../pepper.yml#/components/schemas/SelectedOption'
+            $ref: '#/SelectedOption'
 AnswerSubmission.String:
   allOf:
-    - $ref: '../pepper.yml#/components/schemas/AnswerSubmission'
+    - $ref: '#/AnswerSubmission'
     - type: object
       required:
         - value
@@ -541,6 +575,13 @@ Block:
   type: object
   discriminator:
     propertyName: blockType
+    mapping:
+      ACTIVITY: '#/Block.Activity'
+      COMPONENT: '#/Block.Component'
+      CONDITIONAL: '#/Block.Conditional'
+      CONTENT: '#/Block.Content'
+      GROUP: '#/Block.Grouped'
+      QUESTION: '#/Block.Question'
   required:
     - blockType
     - blockGuid
@@ -550,11 +591,12 @@ Block:
       type: string
     blockGuid:
       type: string
+      format: guid
     shown:
       type: boolean
 Block.Component:
   allOf:
-    - $ref: '../pepper.yml#/components/schemas/Block'
+    - $ref: '#/Block'
     - type: object
       required:
         - component
@@ -566,7 +608,7 @@ Block.Component:
           enum:
             - COMPONENT
         component:
-          $ref: '../pepper.yml#/components/schemas/Component'
+          $ref: '#/Component'
         displayNumber:
           type: integer
           minimum: 1
@@ -574,7 +616,7 @@ Block.Component:
           description: the number to label this block, `null` if it shouldn't be numbered
 Block.Activity:
   allOf:
-    - $ref: '../pepper.yml#/components/schemas/Block'
+    - $ref: '#/Block'
     - type: object
       required:
         - renderHint
@@ -619,10 +661,10 @@ Block.Activity:
             (so the value will be `null` for the `icon` property).
           type: array
           items:
-            $ref: '../pepper.yml#/components/schemas/Activity.Summary'
+            $ref: '#/Activity.Summary'
 Block.Conditional:
   allOf:
-    - $ref: '../pepper.yml#/components/schemas/Block'
+    - $ref: '#/Block'
     - type: object
       required:
         - control
@@ -635,14 +677,14 @@ Block.Conditional:
           enum:
             - CONDITIONAL
         control:
-          $ref: '../pepper.yml#/components/schemas/Question'
+          $ref: '#/Question'
         nested:
           type: array
           items:
             anyOf:
-              - $ref: '../pepper.yml#/components/schemas/Block.Component'
-              - $ref: '../pepper.yml#/components/schemas/Block.Question'
-              - $ref: '../pepper.yml#/components/schemas/Block.Content'
+              - $ref: '#/Block.Component'
+              - $ref: '#/Block.Question'
+              - $ref: '#/Block.Content'
         displayNumber:
           type: integer
           minimum: 1
@@ -650,7 +692,7 @@ Block.Conditional:
           description: the number to label this block, `null` if it shouldn't be numbered
 Block.Grouped:
   allOf:
-    - $ref: '../pepper.yml#/components/schemas/Block'
+    - $ref: '#/Block'
     - type: object
       required:
         - listStyleHint
@@ -664,21 +706,21 @@ Block.Grouped:
           enum:
             - GROUP
         listStyleHint:
-          $ref: '../pepper.yml#/components/schemas/ListStyle'
+          $ref: '#/ListStyle'
         presentation:
-          $ref: '../pepper.yml#/components/schemas/Presentation'
+          $ref: '#/Presentation'
         title:
           type: string
         nested:
           type: array
           items:
             anyOf:
-              - $ref: '../pepper.yml#/components/schemas/Block.Component'
-              - $ref: '../pepper.yml#/components/schemas/Block.Question'
-              - $ref: '../pepper.yml#/components/schemas/Block.Content'
+              - $ref: '#/Block.Component'
+              - $ref: '#/Block.Question'
+              - $ref: '#/Block.Content'
 Block.Question:
   allOf:
-    - $ref: '../pepper.yml#/components/schemas/Block'
+    - $ref: '#/Block'
     - type: object
       required:
         - question
@@ -690,7 +732,7 @@ Block.Question:
           enum:
             - QUESTION
         question:
-          $ref: '../pepper.yml#/components/schemas/Question'
+          $ref: '#/Question'
         displayNumber:
           type: integer
           minimum: 1
@@ -698,7 +740,7 @@ Block.Question:
           description: the number to label this block, `null` if it shouldn't be numbered
 Block.Content:
   allOf:
-    - $ref: '../pepper.yml#/components/schemas/Block'
+    - $ref: '#/Block'
     - type: object
       required:
         - body
@@ -721,20 +763,20 @@ Component:
   type: object
   discriminator:
     propertyName: componentType
+    mapping:
+      PHYSICIAN: '#/Component.Physician'
+      INSTITUTION: '#/Component.Institution'
+      MAILING_ADDRESS:  '#/Component.MailingAddress'
   required:
     - componentType
   properties:
     componentType:
       type: string
-      enum:
-        - PHYSICIAN
-        - INSTITUTION
-        - MAILING_ADDRESS
     parameters:
       type: object
 Component.Physician:
   allOf:
-    - $ref: '../pepper.yml#/components/schemas/Component'
+    - $ref: '#/Component'
     - type: object
       required:
         - componentType
@@ -765,7 +807,7 @@ Component.Physician:
               type: boolean
 Component.Institution:
   allOf:
-    - $ref: '../pepper.yml#/components/schemas/Component'
+    - $ref: '#/Component'
     - type: object
       required:
         - componentType
@@ -797,7 +839,7 @@ Component.Institution:
               type: boolean
 Component.MailingAddress:
   allOf:
-    - $ref: '../pepper.yml#/components/schemas/Component'
+    - $ref: '#/Component'
     - type: object
       required:
         - componentType
@@ -859,7 +901,7 @@ ConsentModel:
     elections:
       type: array
       items:
-        $ref: '../pepper.yml#/components/schemas/ElectionModel'
+        $ref: '#/ElectionModel'
 ElectionModel:
   type: object
   title: Election
@@ -877,7 +919,7 @@ ElectionModel:
       example: false
 Error.Activity:
   allOf:
-    - $ref: '../pepper.yml#/components/schemas/Error'
+    - $ref: '#/Error'
     - type: object
       properties:
         code:
@@ -886,7 +928,7 @@ Error.Activity:
             - MALFORMED_ACCEPT_LANGUAGE_HEADER
 Error.ActivityNotFound:
   allOf:
-    - $ref: '../pepper.yml#/components/schemas/Error'
+    - $ref: '#/Error'
     - type: object
       properties:
         code:
@@ -909,7 +951,7 @@ ValidationFailure:
       type: string
 Error.Consent:
   allOf:
-    - $ref: '../pepper.yml#/components/schemas/Error'
+    - $ref: '#/Error'
     - type: object
       properties:
         code:
@@ -918,7 +960,7 @@ Error.Consent:
             - ACTIVITY_NOT_FOUND
 Error.ProfileGet:
   allOf:
-    - $ref: '../pepper.yml#/components/schemas/Error'
+    - $ref: '#/Error'
     - type: object
       properties:
         code:
@@ -927,7 +969,7 @@ Error.ProfileGet:
             - MISSING_PROFILE
 Error.ProfileUpdate:
   allOf:
-    - $ref: '../pepper.yml#/components/schemas/Error'
+    - $ref: '#/Error'
     - type: object
       properties:
         code:
@@ -941,7 +983,7 @@ Error.ProfileUpdate:
             - INVALID_DATE
 Error.ProfileAdd:
   allOf:
-    - $ref: '../pepper.yml#/components/schemas/Error'
+    - $ref: '#/Error'
     - type: object
       properties:
         code:
@@ -954,7 +996,7 @@ Error.ProfileAdd:
             - INVALID_DATE
 Error.ProviderNotFound:
   allOf:
-    - $ref: '../pepper.yml#/components/schemas/Error'
+    - $ref: '#/Error'
     - type: object
       properties:
         code:
@@ -963,7 +1005,7 @@ Error.ProviderNotFound:
             - NOT_FOUND
 Error.StudyNotFound:
   allOf:
-    - $ref: '../pepper.yml#/components/schemas/Error'
+    - $ref: '#/Error'
     - type: object
       properties:
         code:
@@ -972,7 +1014,7 @@ Error.StudyNotFound:
             - STUDY_NOT_FOUND
 Error.UmbrellaNotFound:
   allOf:
-    - $ref: '../pepper.yml#/components/schemas/Error'
+    - $ref: '#/Error'
     - type: object
       properties:
         code:
@@ -991,7 +1033,7 @@ Error:
       type: string
 Error.ActivityAnswersPatchBadPayload:
   allOf:
-    - $ref: '../pepper.yml#/components/schemas/Error'
+    - $ref: '#/Error'
     - type: object
       properties:
         code:
@@ -1005,7 +1047,7 @@ Error.ActivityAnswersPatchBadPayload:
             - UNEXPECTED_NUMBER_OF_ELEMENTS
 Error.ActivityAnswersInternalServerError:
   allOf:
-    - $ref: '../pepper.yml#/components/schemas/Error'
+    - $ref: '#/Error'
     - type: object
       properties:
         code:
@@ -1015,7 +1057,7 @@ Error.ActivityAnswersInternalServerError:
             - SERVER_ERROR
 Error.ActivityAnswersPatchInvalid:
   allOf:
-    - $ref: '../pepper.yml#/components/schemas/Error'
+    - $ref: '#/Error'
     - type: object
       properties:
         code:
@@ -1041,10 +1083,10 @@ Error.ActivityAnswersPatchInvalid:
               rules:
                 type: array
                 items:
-                  $ref: '../pepper.yml#/components/schemas/ValidationType'
+                  $ref: '#/ValidationType'
 Error.ActivityAnswersPatchNotFound:
   allOf:
-    - $ref: '../pepper.yml#/components/schemas/Error'
+    - $ref: '#/Error'
     - type: object
       properties:
         code:
@@ -1057,7 +1099,7 @@ Error.ActivityAnswersPatchNotFound:
             - USER_NOT_FOUND
 Error.ActivityAnswersPutInvalid:
   allOf:
-    - $ref: '../pepper.yml#/components/schemas/Error'
+    - $ref: '#/Error'
     - type: object
       properties:
         code:
@@ -1068,7 +1110,7 @@ Error.ActivityAnswersPutInvalid:
             - QUESTION_REQUIREMENTS_NOT_MET
 Error.ActivityAnswersPutNotFound:
   allOf:
-    - $ref: '../pepper.yml#/components/schemas/Error'
+    - $ref: '#/Error'
     - type: object
       properties:
         code:
@@ -1079,7 +1121,7 @@ Error.ActivityAnswersPutNotFound:
             - USER_NOT_FOUND
 Error.ActivityDetailNotFound:
   allOf:
-    - $ref: '../pepper.yml#/components/schemas/Error'
+    - $ref: '#/Error'
     - type: object
       properties:
         code:
@@ -1090,7 +1132,7 @@ Error.ActivityDetailNotFound:
             - USER_NOT_FOUND
 Error.BadPayload:
   allOf:
-    - $ref: '../pepper.yml#/components/schemas/Error'
+    - $ref: '#/Error'
     - type: object
       properties:
         code:
@@ -1099,7 +1141,7 @@ Error.BadPayload:
             - BAD_PAYLOAD
 Error.NotFound:
   allOf:
-    - $ref: '../pepper.yml#/components/schemas/Error'
+    - $ref: '#/Error'
     - type: object
       properties:
         code:
@@ -1108,7 +1150,7 @@ Error.NotFound:
             - NOT_FOUND
 Error.OperationNotAllowed:
   allOf:
-    - $ref: '../pepper.yml#/components/schemas/Error'
+    - $ref: '#/Error'
     - type: object
       properties:
         code:
@@ -1117,7 +1159,7 @@ Error.OperationNotAllowed:
             - OPERATION_NOT_ALLOWED
 Error.RegisterNotFound:
   allOf:
-    - $ref: '../pepper.yml#/components/schemas/Error'
+    - $ref: '#/Error'
     - type: object
       properties:
         code:
@@ -1127,7 +1169,7 @@ Error.RegisterNotFound:
             - USER_NOT_FOUND
 Error.RegisterNotValid:
   allOf:
-    - $ref: '../pepper.yml#/components/schemas/Error'
+    - $ref: '#/Error'
     - type: object
       properties:
         code:
@@ -1137,7 +1179,7 @@ Error.RegisterNotValid:
             - NOT_SUPPORTED
 Error.StudyExit:
   allOf:
-    - $ref: '../pepper.yml#/components/schemas/Error'
+    - $ref: '#/Error'
     - type: object
       properties:
         code:
@@ -1147,7 +1189,7 @@ Error.StudyExit:
             - NOT_SUPPORTED
 Error.CreateActivityInstance:
   allOf:
-    - $ref: '../pepper.yml#/components/schemas/Error'
+    - $ref: '#/Error'
     - type: object
       properties:
         code:
@@ -1157,7 +1199,7 @@ Error.CreateActivityInstance:
             - TOO_MANY_INSTANCES
 Error.UserStudyActivityNotFound:
   allOf:
-    - $ref: '../pepper.yml#/components/schemas/Error'
+    - $ref: '#/Error'
     - type: object
       properties:
         code:
@@ -1168,7 +1210,7 @@ Error.UserStudyActivityNotFound:
             - USER_NOT_FOUND
 Error.UserStudyActivityQuestionNotFound:
   allOf:
-    - $ref: '../pepper.yml#/components/schemas/Error'
+    - $ref: '#/Error'
     - type: object
       properties:
         code:
@@ -1206,7 +1248,7 @@ Participant:
       type: string
       example: Y9JJVE1MLN8AIZL8DO7D
     userProfile:
-      $ref: '../pepper.yml#/components/schemas/ProfileModel'
+      $ref: '#/ProfileModel'
 PicklistOption:
   type: object
   required:
@@ -1237,7 +1279,7 @@ PicklistOption:
     nestedOptions:
         type: array
         items:
-          $ref: '../pepper.yml#/components/schemas/PicklistOption'
+          $ref: '#/PicklistOption'
 PrequalifierModel:
   type: object
   required:
@@ -1311,6 +1353,15 @@ Question:
   type: object
   discriminator:
     propertyName: questionType
+    mapping:
+      AGREEMENT: '#/Question.Agreement'
+      BOOLEAN: '#/Question.Boolean'
+      COMPOSITE: '#/Question.Composite'
+      DATE: '#/Question.Date'
+      FILE: '#/Question.File'
+      NUMERIC: '#/Question.Numeric'
+      PICKLIST: '#/Question.Picklist'
+      TEXT: '#/Question.Text'
   required:
   - questionType
   - stableId
@@ -1347,18 +1398,18 @@ Question:
     validations:
       type: array
       items:
-        $ref: '../pepper.yml#/components/schemas/Validation'
+        $ref: '#/Validation'
     postConditionals:
       type: array
       items:
-        $ref: '../pepper.yml#/components/schemas/ConditionalRule'
+        $ref: '#/ConditionalRule'
     validationFailures:
       type: array
       items:
-        $ref: '../pepper.yml#/components/schemas/ValidationFailure'
+        $ref: '#/ValidationFailure'
 Question.Agreement:
   allOf:
-  - $ref: '../pepper.yml#/components/schemas/Question'
+  - $ref: '#/Question'
   - type: object
     required:
       - answers
@@ -1371,10 +1422,10 @@ Question.Agreement:
       answers:
         type: array
         items:
-          $ref: '../pepper.yml#/components/schemas/Answer.Boolean'
+          $ref: '#/Answer.Boolean'
 Question.Boolean:
   allOf:
-  - $ref: '../pepper.yml#/components/schemas/Question'
+  - $ref: '#/Question'
   - type: object
     required:
       - answers
@@ -1395,10 +1446,10 @@ Question.Boolean:
       answers:
         type: array
         items:
-          $ref: '../pepper.yml#/components/schemas/Answer.Boolean'
+          $ref: '#/Answer.Boolean'
 Question.Composite:
   allOf:
-  - $ref: '../pepper.yml#/components/schemas/Question'
+  - $ref: '#/Question'
   - type: object
     required:
       - allowMultiple
@@ -1428,9 +1479,9 @@ Question.Composite:
         description: 'The child questions to present'
         items:
           anyOf:
-            - $ref: '../pepper.yml#/components/schemas/Question.Date'
-            - $ref: '../pepper.yml#/components/schemas/Question.Picklist'
-            - $ref: '../pepper.yml#/components/schemas/Question.Text'
+            - $ref: '#/Question.Date'
+            - $ref: '#/Question.Picklist'
+            - $ref: '#/Question.Text'
       childOrientation:
         type: string
         nullable: true
@@ -1441,10 +1492,10 @@ Question.Composite:
       answers:
         type: array
         items:
-          $ref: '../pepper.yml#/components/schemas/Answer.Composite'
+          $ref: '#/Answer.Composite'
 Question.Date:
   allOf:
-  - $ref: '../pepper.yml#/components/schemas/Question'
+  - $ref: '#/Question'
   - type: object
     required:
       - answers
@@ -1484,26 +1535,38 @@ Question.Date:
       answers:
         type: array
         items:
-          $ref: '../pepper.yml#/components/schemas/Answer.Date'
+          $ref: '#/Answer.Date'
 Question.File:
   allOf:
-    - $ref: '../pepper.yml#/components/schemas/Question'
+    - $ref: '#/Question'
     - type: object
       required:
         - answers
+        - maxFileSize
+        - mimeTypes
       properties:
         questionType:
           type: string
           default: FILE
           enum:
             - FILE
+        maxFileSize:
+          type: integer
+          format: int64
+          description: a max size of uploaded file, in bytes
+        mimeTypes:
+          type: array
+          items:
+            type: string
+          description: a list of allowed mime-types (if the list is empty then any type allowed)
+          minItems: 0
         answers:
           type: array
           items:
-            $ref: '../pepper.yml#/components/schemas/Answer.File'
+            $ref: '#/Answer.File'
 Question.Numeric:
   allOf:
-  - $ref: '../pepper.yml#/components/schemas/Question'
+  - $ref: '#/Question'
   - type: object
     required:
       - answers
@@ -1518,14 +1581,14 @@ Question.Numeric:
         type: string
         description: if present, this text string can be used as a placeholder hint
       numericType:
-        $ref: '../pepper.yml#/components/schemas/NumericType'
+        $ref: '#/NumericType'
       answers:
         type: array
         items:
-          $ref: '../pepper.yml#/components/schemas/Answer.Numeric.Integer'
+          $ref: '#/Answer.Numeric.Integer'
 Question.Picklist:
   allOf:
-  - $ref: '../pepper.yml#/components/schemas/Question'
+  - $ref: '#/Question'
   - type: object
     required:
       - selectMode
@@ -1549,6 +1612,7 @@ Question.Picklist:
           - LIST
           - DROPDOWN
           - CHECKBOX_LIST
+          - AUTOCOMPLETE
       groups:
         type: array
         description: A list of groups used in the `picklistOptions` values. If there are no options which explicity request grouping, this will be an empty array.
@@ -1568,14 +1632,14 @@ Question.Picklist:
       picklistOptions:
         type: array
         items:
-          $ref: '../pepper.yml#/components/schemas/PicklistOption'
+          $ref: '#/PicklistOption'
       answers:
         type: array
         items:
-          $ref: '../pepper.yml#/components/schemas/Answer.Picklist'
+          $ref: '#/Answer.Picklist'
 Question.Text:
   allOf:
-  - $ref: '../pepper.yml#/components/schemas/Question'
+  - $ref: '#/Question'
   - type: object
     required:
       - answers
@@ -1624,7 +1688,7 @@ Question.Text:
       answers:
         type: array
         items:
-          $ref: '../pepper.yml#/components/schemas/Answer.String'
+          $ref: '#/Answer.String'
 Section:
   type: object
   required:
@@ -1633,29 +1697,11 @@ Section:
     name:
       type: string
     icon:
-      $ref: '../pepper.yml#/components/schemas/Image'
+      $ref: '#/Image'
     blocks:
       type: array
       items:
-        $ref: '../pepper.yml#/components/schemas/Block'
-Study.Workflow:
-  type: object
-  properties:
-    name:
-      type: string
-      description: the name of the worklflow, for example "DEVICE_REGISTRATION"
-    states:
-      type: array
-      description: List of allowed states for this workflow
-      items:
-        $ref: '../pepper.yml#/components/schemas/Study.WorkflowState'
-Study.WorkflowState:
-  type: object
-  description: A state within a workflow
-  properties:
-    name:
-      type: string
-      description: the name of the state, such as "Accepted" or "Scheduled"
+        $ref: '#/Block'
 Study.Summary:
   type: object
   required:
@@ -1665,21 +1711,28 @@ Study.Summary:
   properties:
     studyGuid:
       type: string
+      format: guid
     name:
       type: string
     participantCount:
       type: integer
       minimum: 0
+      description: The total number of consented participants in a study. This is a subset of the registered users.
     registeredCount:
       type: integer
       minimum: 0
+      description: The total number of registered users in a study.
     restricted:
       type: boolean
+      default: false
+      description: |
+        `true` if the study requires an IRB password for access.
     studyEmail:
-        type: string
+      type: string
+      format: email
 Study.Detail:
   allOf:
-    - $ref: '../pepper.yml#/components/schemas/Study.Summary'
+    - $ref: '#/Study.Summary'
     - type: object
       properties:
         summary:
@@ -1695,12 +1748,24 @@ Validation:
   type: object
   discriminator:
     propertyName: rule
+    mapping:
+      AGE_RANGE: '#/Validation.AgeRange'
+      COMPLETE: '#/Validation.Complete'
+      DATE_RANGE: '#/Validation.DateRange'
+      DAY_REQUIRED: '#/Validation.DayRequired'
+      INT_RANGE: '#/Validation.IntRange'
+      LENGTH: '#/Validation.Length'
+      MONTH_REQUIRED: '#/Validation.MonthRequired'
+      NUM_OPTIONS_SELECTED: '#/Validation.OptionsSelected'
+      REGEX: '#/Validation.RegularExpression'
+      REQUIRED: '#/Validation.Required'
+      YEAR_REQUIRED: '#/Validation.YearRequired'
   required:
     - rule
     - message
   properties:
     rule:
-      $ref: '../pepper.yml#/components/schemas/ValidationType'
+      $ref: '#/ValidationType'
     message:
       type: string
     allowSave:
@@ -1709,7 +1774,7 @@ Validation:
       default: false
 Validation.Required:
   allOf:
-    - $ref: '../pepper.yml#/components/schemas/Validation'
+    - $ref: '#/Validation'
     - type: object
       properties:
         rule:
@@ -1719,7 +1784,7 @@ Validation.Required:
             - REQUIRED
 Validation.Complete:
   allOf:
-    - $ref: '../pepper.yml#/components/schemas/Validation'
+    - $ref: '#/Validation'
     - type: object
       properties:
         rule:
@@ -1729,7 +1794,7 @@ Validation.Complete:
             - COMPLETE
 Validation.Length:
   allOf:
-    - $ref: '../pepper.yml#/components/schemas/Validation'
+    - $ref: '#/Validation'
     - type: object
       deprecated: true
       required:
@@ -1749,7 +1814,7 @@ Validation.Length:
           minimum: 0
 Validation.RegularExpression:
   allOf:
-    - $ref: '../pepper.yml#/components/schemas/Validation'
+    - $ref: '#/Validation'
     - type: object
       deprecated: true
       required:
@@ -1764,7 +1829,7 @@ Validation.RegularExpression:
           type: string
 Validation.OptionsSelected:
   allOf:
-    - $ref: '../pepper.yml#/components/schemas/Validation'
+    - $ref: '#/Validation'
     - type: object
       deprecated: true
       properties:
@@ -1781,7 +1846,7 @@ Validation.OptionsSelected:
           minimum: 0
 Validation.DayRequired:
   allOf:
-    - $ref: '../pepper.yml#/components/schemas/Validation'
+    - $ref: '#/Validation'
     - type: object
       deprecated: true
       properties:
@@ -1792,7 +1857,7 @@ Validation.DayRequired:
             - DAY_REQUIRED
 Validation.MonthRequired:
   allOf:
-    - $ref: '../pepper.yml#/components/schemas/Validation'
+    - $ref: '#/Validation'
     - type: object
       deprecated: true
       properties:
@@ -1803,7 +1868,7 @@ Validation.MonthRequired:
             - MONTH_REQUIRED
 Validation.YearRequired:
   allOf:
-    - $ref: '../pepper.yml#/components/schemas/Validation'
+    - $ref: '#/Validation'
     - type: object
       deprecated: true
       properties:
@@ -1814,7 +1879,7 @@ Validation.YearRequired:
             - YEAR_REQUIRED
 Validation.DateRange:
   allOf:
-    - $ref: '../pepper.yml#/components/schemas/Validation'
+    - $ref: '#/Validation'
     - type: object
       required:
         - startDate
@@ -1829,13 +1894,15 @@ Validation.DateRange:
           type: string
           description: the minimum date required to be considered valid. This value is inclusive. The date format is a full, extended ISO-8601 Calendar date in the format `YYYY-MM-DD` in the UTC time zone.
           nullable: true
+          format: date
         endDate:
           type: string
           description: the maximum date required to be considered valid. This value is inclusive. The date format is a full, extended ISO-8601 Calendar date in the format `YYYY-MM-DD` in the UTC time zone.
           nullable: true
+          format: date
 Validation.AgeRange:
   allOf:
-    - $ref: '../pepper.yml#/components/schemas/Validation'
+    - $ref: '#/Validation'
     - type: object
       properties:
         rule:
@@ -1853,7 +1920,7 @@ Validation.AgeRange:
           nullable: true
 Validation.IntRange:
   allOf:
-    - $ref: '../pepper.yml#/components/schemas/Validation'
+    - $ref: '#/Validation'
     - type: object
       properties:
         rule:
@@ -1905,13 +1972,13 @@ Suggestion.Drug:
   type: object
   properties:
     drug:
-      $ref: '../pepper.yml#/components/schemas/Drug'
+      $ref: '#/Drug'
     matches:
       type: array
       description: Contains a list of substring matches for the given `Drug`. The substrings are based within the drug's `name` property.
       minItems: 0
       items:
-        $ref: '../pepper.yml#/components/schemas/Suggestion.Match'
+        $ref: '#/Suggestion.Match'
 Cancer:
   type: object
   required:
@@ -1933,13 +2000,13 @@ Suggestion.Cancer:
   type: object
   properties:
     cancer:
-      $ref: '../pepper.yml#/components/schemas/Cancer'
+      $ref: '#/Cancer'
     matches:
       type: array
       description: Contains a list of substring matches for the given `Cancer` name. The substrings are based within the cancer `name` property.
       minItems: 0
       items:
-        $ref: '../pepper.yml#/components/schemas/Suggestion.Match'
+        $ref: '#/Suggestion.Match'
 Suggestion.Institution:
   type: object
   required:
@@ -1993,7 +2060,7 @@ BaseMailAddress:
       type: string
 MailingAddress:
   allOf:
-    - $ref: '../pepper.yml#/components/schemas/BaseMailAddress'
+    - $ref: '#/BaseMailAddress'
     - type: object
       description: a participant's mailing address, to be used for delivery.
       properties:
@@ -2058,7 +2125,7 @@ AddressVerifyError:
       type: array
       description: errors for specific fields of the address
       items:
-        $ref: '../pepper.yml#/components/schemas/AddressFieldError'
+        $ref: '#/AddressFieldError'
 AddressFieldError:
   type: object
   required:
@@ -2105,24 +2172,27 @@ Invitation:
       description: the id of the invitation
       type: string
     createdAt:
-      description: timestamp of when invitation was created, in ISO-8601 UTC format
+      description: timestamp of when invitation was created.
       type: string
       example: 2020-05-13T17:58:33.887Z
+      format: YYYY-MM-DDThh:mm:ss.sssZ (ISO-8601)
     voidedAt:
-      description: timestamp of when invitation was voided, making the invitation invalid, in ISO-8601 UTC format
+      description: timestamp of when invitation was voided, making the invitation invalid.
       type: string
       nullable: true
       example: null
     verifiedAt:
-      description: timestamp of when invitation was verified, indicating user has acknowledged receiving the invitation, in ISO-8601 UTC format
+      description: timestamp of when invitation was verified, indicating user has acknowledged receiving the invitation.
       type: string
       nullable: true
       example: 2020-05-13T18:58:33.887Z
+      format: YYYY-MM-DDThh:mm:ss.sssZ (ISO-8601)
     acceptedAt:
-      description: timestamp of when invitation was accepted, in ISO-8601 UTC format
+      description: timestamp of when invitation was accepted.
       type: string
       nullable: true
       example: 2020-05-13T19:58:33.887Z
+      format: YYYY-MM-DDThh:mm:ss.sssZ (ISO-8601)
 
 MedicalProvider:
   type: object
@@ -2132,6 +2202,7 @@ MedicalProvider:
     medicalProviderGuid:
       type: string
       readOnly: true
+      format: guid
     institutionName:
       type: string
     physicianName:
@@ -2140,43 +2211,6 @@ MedicalProvider:
       type: string
     state:
       type: string
-### Participant status
-ParticipantStatus:
-  type: object
-  required:
-    - samples
-  properties:
-    mrRequested:
-      type: integer
-    mrReceived:
-      type: integer
-    tissueRequested:
-      type: integer
-    tissueSent:
-      type: integer
-    tissueReceived:
-      type: integer
-    samples:
-      type: array
-      description: Contains a list samples records for the participant
-      minItems: 0
-      items:
-        $ref: '../pepper.yml#/components/schemas/ParticipantStatus.Sample'
-ParticipantStatus.Sample:
-  type: object
-  required:
-    - sent
-  properties:
-    kitType:
-      type: string
-    sent:
-      type: integer
-    trackingId:
-      type: string
-    carrier:
-      type: string
-    received:
-      type: integer
 ParticipantStatusTrackingInfo:
   type: object
   required:
@@ -2185,20 +2219,20 @@ ParticipantStatusTrackingInfo:
     - kits
   properties:
     medicalRecord:
-      $ref: '../pepper.yml#/components/schemas/ParticipantStatusTrackingInfo.Record'
+      $ref: '#/ParticipantStatusTrackingInfo.Record'
     tissueRecord:
-      $ref: '../pepper.yml#/components/schemas/ParticipantStatusTrackingInfo.Record'
+      $ref: '#/ParticipantStatusTrackingInfo.Record'
     kits:
       type: array
       description: Contains a list of kits sent to the participant
       minItems: 0
       items:
-        $ref: '../pepper.yml#/components/schemas/ParticipantStatusTrackingInfo.Kit'
+        $ref: '#/ParticipantStatusTrackingInfo.Kit'
     workflows:
       type: array
       minItems: 0
       items:
-        $ref: '../pepper.yml#/components/schemas/ParticipantStatusTrackingInfo.Workflow'
+        $ref: '#/ParticipantStatusTrackingInfo.Workflow'
 ParticipantStatusTrackingInfo.Workflow:
   type: object
   properties:
@@ -2210,9 +2244,12 @@ ParticipantStatusTrackingInfo.Workflow:
       description: The current state in the workflow
     date:
       type: string
-      format: date-time
+      format: YYYY-MM-DDThh:mm:ss.sssZ (ISO-8601)
       description: Last changed
       example: 2021-04-18T14:09:37.123Z
+    data:
+      type: object
+      description: Additional participant data, actual key-value pairs might vary depending on study
 ParticipantStatusTrackingInfo.Record:
   type: object
   required:
@@ -2300,6 +2337,13 @@ WorkflowNextSuggestion:
   type: object
   discriminator:
     propertyName: next
+    mapping:
+      ACTIVITY: '#/WorkflowNextSuggestion.Activity'
+      DASHBOARD: '#/WorkflowNextSuggestion.Static'
+      MAILING_LIST: '#/WorkflowNextSuggestion.Static'
+      PARTICIPANT_LIST: '#/WorkflowNextSuggestion.Static'
+      THANK_YOU: '#/WorkflowNextSuggestion.Static'
+      UNKNOWN: '#/WorkflowNextSuggestion.Static'
   required:
     - next
   properties:
@@ -2312,16 +2356,9 @@ WorkflowNextSuggestion:
         * `THANK_YOU` - Indicates end of workflow and a thank you message should be shown.
         * `PARTICIPANT_LIST` - Indicates the list of governed users.
         * `UNKNOWN` - No suggestions available.
-      enum:
-        - ACTIVITY
-        - DASHBOARD
-        - MAILING_LIST
-        - THANK_YOU
-        - PARTICIPANT_LIST
-        - UNKNOWN
 WorkflowNextSuggestion.Activity:
   allOf:
-  - $ref: '../pepper.yml#/components/schemas/WorkflowNextSuggestion'
+  - $ref: '#/WorkflowNextSuggestion'
   - type: object
     required:
       - activityCode
@@ -2339,15 +2376,16 @@ WorkflowNextSuggestion.Activity:
         description: Whether the next activity allows access to temporary users. If `false`, user will need to authenticate in order to access activity.
 WorkflowNextSuggestion.Static:
   allOf:
-  - $ref: '../pepper.yml#/components/schemas/WorkflowNextSuggestion'
+  - $ref: '#/WorkflowNextSuggestion'
   - type: object
     properties:
       next:
         type: string
         enum:
           - DASHBOARD
-          - THANK_YOU
+          - MAILING_LIST
           - PARTICIPANT_LIST
+          - THANK_YOU
           - UNKNOWN
 Statistics.Configuration:
   type: object
@@ -2378,7 +2416,7 @@ Statistics.Figure.Item.Data:
     count:
       type: string
     optionDetails:
-      $ref: '../pepper.yml#/components/schemas/PicklistOption'
+      $ref: '#/PicklistOption'
 Statistics.Figure.Item:
   type: object
   properties:
@@ -2386,20 +2424,20 @@ Statistics.Figure.Item:
       type: string
       description: Statistics item title
     data:
-      $ref: '../pepper.yml#/components/schemas/Statistics.Figure.Item.Data'
+      $ref: '#/Statistics.Figure.Item.Data'
 Statistics.Figure:
   type: object
   properties:
     configuration:
-      $ref: '../pepper.yml#/components/schemas/Statistics.Configuration'
+      $ref: '#/Statistics.Configuration'
     statistics:
       type: array
       items:
-        $ref: '../pepper.yml#/components/schemas/Statistics.Figure.Item'
+        $ref: '#/Statistics.Figure.Item'
 Statistics:
   type: array
   items:
-    $ref: '../pepper.yml#/components/schemas/Statistics.Figure'
+    $ref: '#/Statistics.Figure'
 
 EnrollmentStatusType:
   description: Participant's enrollment status
@@ -2440,7 +2478,7 @@ ParticipantsLookupResultItem:
       type: string
       nullable: true
     status:
-      $ref: '../pepper.yml#/components/schemas/EnrollmentStatusType'
+      $ref: '#/EnrollmentStatusType'
     firstName:
       description: Participant's first name, if available
       type: string
@@ -2459,7 +2497,7 @@ ParticipantsLookupResultItem:
       type: string
       nullable: true
     proxy:
-      $ref: '../pepper.yml#/components/schemas/ParticipantsLookupProxyItem'
+      $ref: '#/ParticipantsLookupProxyItem'
 ParticipantsLookupProxyItem:
   description: The proxy if the participant is a govnerned user
   type: object

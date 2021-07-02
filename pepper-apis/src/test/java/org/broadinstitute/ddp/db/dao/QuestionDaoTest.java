@@ -1,5 +1,6 @@
 package org.broadinstitute.ddp.db.dao;
 
+import static org.broadinstitute.ddp.util.TestFormActivity.DEFAULT_MAX_FILE_SIZE_FOR_TEST;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -1456,7 +1457,9 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
     @Test
     public void testGetFileQuestion() {
         TransactionWrapper.useTxn(handle -> {
-            FileQuestionDef questionDef = FileQuestionDef.builder(sid, prompt).build();
+            FileQuestionDef questionDef = FileQuestionDef.builder(sid, prompt)
+                    .setMaxFileSize(DEFAULT_MAX_FILE_SIZE_FOR_TEST)
+                    .build();
             FormActivityDef form = buildSingleSectionForm(testData.getStudyGuid(), questionDef);
 
             ActivityVersionDto version1 = handle.attach(ActivityDao.class)

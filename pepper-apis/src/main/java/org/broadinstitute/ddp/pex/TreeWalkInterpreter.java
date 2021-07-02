@@ -26,6 +26,7 @@ import org.broadinstitute.ddp.db.dao.InvitationDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudyCached;
+import org.broadinstitute.ddp.db.dao.JdbiUserStudyEnrollment;
 import org.broadinstitute.ddp.db.dao.StudyGovernanceDao;
 import org.broadinstitute.ddp.db.dao.UserGovernanceDao;
 import org.broadinstitute.ddp.db.dao.UserProfileDao;
@@ -48,6 +49,7 @@ import org.broadinstitute.ddp.model.event.DsmNotificationSignal;
 import org.broadinstitute.ddp.model.event.EventSignal;
 import org.broadinstitute.ddp.model.governance.GovernancePolicy;
 import org.broadinstitute.ddp.model.invitation.InvitationType;
+import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
 import org.broadinstitute.ddp.model.user.UserProfile;
 import org.broadinstitute.ddp.pex.lang.PexBaseVisitor;
 import org.broadinstitute.ddp.pex.lang.PexParser;
@@ -266,8 +268,20 @@ public class TreeWalkInterpreter implements PexInterpreter {
                 throw new PexRuntimeException("isGovernedParticipant() shouldn't be used without operator in the context");
             }
             return ictx.getHandle().attach(UserGovernanceDao.class)
-                    .findActiveGovernancesByParticipantAndStudyGuids(ictx.getUserGuid(), studyGuid)
-                    .anyMatch(governance -> governance.getProxyUserGuid().equals(ictx.getOperatorGuid()));
+                    .isGovernedParticipant(ictx.getUserGuid(), ictx.getOperatorGuid(), studyGuid);
+        } else if (predCtx instanceof PexParser.IsEnrollmentStatusPredicateContext) {
+            String str = extractString(((PexParser.IsEnrollmentStatusPredicateContext) predCtx).STR());
+            EnrollmentStatusType statusType;
+            try {
+                statusType = EnrollmentStatusType.valueOf(str.toUpperCase());
+            } catch (Exception e) {
+                throw new PexUnsupportedException("Invalid enrollment status type for isEnrollmentStatus() predicate: " + str, e);
+            }
+            return ictx.getHandle()
+                    .attach(JdbiUserStudyEnrollment.class)
+                    .getEnrollmentStatusByUserAndStudyGuids(userGuid, studyGuid)
+                    .map(currentStatusType -> currentStatusType == statusType)
+                    .orElse(false);
         } else {
             throw new PexUnsupportedException("Unsupported study predicate: " + predCtx.getText());
         }

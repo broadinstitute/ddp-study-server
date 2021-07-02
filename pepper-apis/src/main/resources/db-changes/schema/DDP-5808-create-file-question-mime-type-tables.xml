@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="evgeniipr" id="20210517-create-file-question-table">
+        <createTable tableName="file_question">
+            <column name="question_id" type="bigint(20)">
+                <constraints primaryKey="true" primaryKeyName="file_question_pk"
+                             references="question(question_id)" foreignKeyName="file_question_question_fk"/>
+            </column>
+            <column name="max_file_size" type="bigint(20)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="evgeniipr" id="20210517-create-mime-type-table">
+        <createTable tableName="mime_type">
+            <column name="mime_type_id" type="bigint(20)" autoIncrement="true" startWith="1">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="mime_type_pk"/>
+            </column>
+            <column name="mime_type_code" type="varchar(255)">
+                <constraints nullable="false" unique="true" uniqueConstraintName="mime_type__mime_type_code_uk"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="evgeniipr" id="20210517-create-file-question-mime-type-table">
+        <createTable tableName="file_question__mime_type">
+            <column name="file_question__mime_type_id" type="bigint(20)" autoIncrement="true" startWith="1">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="file_question__mime_type_pk"/>
+            </column>
+            <column name="file_question_id" type="bigint(20)">
+                <constraints nullable="false" references="file_question(question_id)"
+                             foreignKeyName="file_question__mime_type_file_question_fk"/>
+            </column>
+            <column name="mime_type_id" type="bigint(20)">
+                <constraints nullable="false" references="mime_type(mime_type_id)"
+                             foreignKeyName="file_question__mime_type_mime_type_fk"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+</databaseChangeLog>

@@ -231,7 +231,7 @@ public interface JdbiUserStudyEnrollment extends SqlObject {
      * @param updateTime              the time that we want to record the status was updated at
      * @return the id of the new enrollment status
      */
-    private long changeUserStudyEnrollmentStatus(
+    private long updateEnrollmentStatus(
             String userGuid,
             String studyGuid,
             EnrollmentStatusType newEnrollmentStatus,
@@ -278,7 +278,7 @@ public interface JdbiUserStudyEnrollment extends SqlObject {
             currentEnrollmentStatus = optionalCurrentEnrollmentStatus.get();
         }
 
-        return changeUserStudyEnrollmentStatus(userGuid,
+        return updateEnrollmentStatus(userGuid,
                 studyGuid,
                 newEnrollmentStatus,
                 currentEnrollmentStatus,
@@ -358,7 +358,7 @@ public interface JdbiUserStudyEnrollment extends SqlObject {
         if (timestamp == null) {
             timestamp = Instant.now().toEpochMilli();
         }
-        changeUserStudyEnrollmentStatus(userGuid,
+        updateEnrollmentStatus(userGuid,
                 studyGuid,
                 newEnrollmentStatus,
                 currentEnrollmentStatus,

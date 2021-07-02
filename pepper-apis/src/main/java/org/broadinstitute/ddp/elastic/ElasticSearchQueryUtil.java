@@ -90,4 +90,18 @@ public class ElasticSearchQueryUtil {
             return sb.toString();
         }
     }
+
+    /**
+     * In most cases invitation GUID contains character '-' (at least on the web page it entered with it),
+     * but in DB it can or cannot contain '-' (i.e. it could be stored without '-').
+     * Therefore it is searched by 'query' as it is sent from frontend
+     * and by same 'query' but with '-' removed from it.
+     * This method removes characters '-' from 'query' string (guessing that it is invitationId or it's fragment).
+     */
+    public static String normalizeInvitationGuid(String invitationGuid) {
+        if (invitationGuid != null) {
+            return invitationGuid.replaceAll("-", "");
+        }
+        return invitationGuid;
+    }
 }
