@@ -260,7 +260,7 @@ public class ActivityInstanceServiceTest extends ActivityInstanceServiceTestAbst
         var response = new FormResponse(1L, "guid", 1L, null, 1L, 1L, null, null, 1L, activityCode, "v1", false, 0,
                 new ActivityInstanceStatusDto(1L, 1L, 1L, 1L, InstanceStatusType.CREATED));
         response.putAnswer(new TextAnswer(1L, "Q1", "guid1", "some-text"));
-        response.putAnswer(new PicklistAnswer(2L, "Q2", "guid2", List.of(new SelectedPicklistOption("AUNT"))));
+        response.putAnswer(new PicklistAnswer(2L, "Q2", "guid2", List.of(new SelectedPicklistOption("AUNT", "aunt detail text"))));
 
         var optionAunt = Template.text("$aunt");
         optionAunt.addVariable(TemplateVariable.single("aunt", "en", "My Aunt"));
@@ -282,7 +282,7 @@ public class ActivityInstanceServiceTest extends ActivityInstanceServiceTestAbst
         TransactionWrapper.useTxn(handle -> service.renderInstanceSummaries(
                 handle, testData.getUserId(), "operatorGuid", "study", summaries, Map.of("guid", response)));
 
-        assertEquals("Name: My Aunt Detail #2", summaries.get(0).getActivityName());
+        assertEquals("Name: aunt detail text #2", summaries.get(0).getActivityName());
         assertEquals("Title: some-text the-fallback", summaries.get(0).getActivityTitle());
         assertEquals("Subtitle: My Aunt", summaries.get(0).getActivitySubtitle());
         assertEquals("Description: My Aunt", summaries.get(0).getActivityDescription());

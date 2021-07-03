@@ -1,5 +1,8 @@
 package org.broadinstitute.ddp.content;
 
+import static org.broadinstitute.ddp.content.SelectedPickListOptionRenderUtil.detailTextRender;
+import static org.broadinstitute.ddp.content.SelectedPickListOptionRenderUtil.selectedOptionLabelsRender;
+
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -7,23 +10,14 @@ import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
-import org.broadinstitute.ddp.model.activity.definition.question.PicklistOptionDef;
-import org.broadinstitute.ddp.model.activity.definition.question.PicklistQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
-import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.activity.instance.FormInstance;
 import org.broadinstitute.ddp.model.activity.instance.FormResponse;
 import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
-import org.broadinstitute.ddp.model.activity.instance.answer.PicklistAnswer;
-import org.broadinstitute.ddp.model.activity.instance.answer.SelectedPicklistOption;
-import org.broadinstitute.ddp.model.activity.instance.question.PicklistOption;
-import org.broadinstitute.ddp.model.activity.instance.question.PicklistQuestion;
 import org.broadinstitute.ddp.model.activity.instance.question.Question;
 import org.broadinstitute.ddp.model.dsm.KitReasonType;
 import org.broadinstitute.ddp.model.dsm.TestResult;
@@ -240,6 +234,7 @@ public class RenderValueProvider {
     }
 
     private String renderAnswerUsingFormResponse(String questionStableId, String fallbackValue, boolean useDetailTextForPickList) {
+        QuestionDef questionDef = formActivity.getQuestionByStableId(questionStableId);
         Answer answer = formResponse.getAnswer(questionStableId);
         if (answer == null || answer.isEmpty()) {
             // No answer response for this question yet, so use fallback.
@@ -247,17 +242,9 @@ public class RenderValueProvider {
         }
         switch (answer.getQuestionType()) {
             case PICKLIST:
-                QuestionDef questionDef = formActivity.getQuestionByStableId(questionStableId);
-                Map<String, PicklistOptionDef> options = ((PicklistQuestionDef) questionDef)
-                        .getAllPicklistOptions().stream()
-                        .collect(Collectors.toMap(PicklistOptionDef::getStableId, Function.identity()));
                 return useDetailTextForPickList
-                        ? ((PicklistAnswer) answer).getValue().stream()
-                        .map(selected -> detailLabelRender(options, selected, fallbackValue))
-                        .collect(Collectors.joining(",")) :
-                                ((PicklistAnswer) answer).getValue().stream()
-                                .map(selected -> optionLabelRender(options, selected, fallbackValue))
-                                .collect(Collectors.joining(","));
+                        ? detailTextRender(questionDef, answer, fallbackValue, isoLangCode) :
+                        selectedOptionLabelsRender(questionDef, answer, fallbackValue, isoLangCode);
             case COMPOSITE: // Fall-through
             case FILE:
                 // Have not decided what composite or file answers will look like yet.
@@ -266,17 +253,6 @@ public class RenderValueProvider {
                 // Everything else will get turned into a string.
                 return answer.getValue().toString();
         }
-    }
-
-    private String optionLabelRender(Map<String, PicklistOptionDef> options, SelectedPicklistOption selected, String fallbackValue) {
-        PicklistOptionDef option = options.get(selected.getStableId());
-        return option.getOptionLabelTemplate() == null ? fallbackValue : option.getOptionLabelTemplate().render(isoLangCode);
-    }
-
-    private String detailLabelRender(Map<String, PicklistOptionDef> options, SelectedPicklistOption selected, String fallbackValue) {
-        PicklistOptionDef option = options.get(selected.getStableId());
-        Template template = option.getDetailLabelTemplate() == null ? option.getOptionLabelTemplate() : option.getDetailLabelTemplate();
-        return template == null ? fallbackValue : template.render(isoLangCode);
     }
 
     /**
@@ -297,20 +273,9 @@ public class RenderValueProvider {
         }
         switch (answer.getQuestionType()) {
             case PICKLIST:
-                Map<String, String> options = useDetailTextForPickList
-                        ? ((PicklistQuestion) question)
-                        .streamAllPicklistOptions()
-                        .collect(Collectors.toMap(PicklistOption::getStableId,
-                                (p) -> p.getDetailLabel() == null
-                                        ? (p.getOptionLabel() == null ? fallbackValue : p.getOptionLabel())
-                                        : p.getDetailLabel())) :
-                        ((PicklistQuestion) question)
-                                .streamAllPicklistOptions()
-                                .collect(Collectors.toMap(PicklistOption::getStableId,
-                                        (p) -> p.getOptionLabel() == null ? fallbackValue : p.getOptionLabel()));
-                return ((PicklistAnswer) answer).getValue().stream()
-                        .map(selected -> options.get(selected.getStableId()))
-                        .collect(Collectors.joining(","));
+                return useDetailTextForPickList
+                        ? detailTextRender(question, answer, fallbackValue) :
+                        selectedOptionLabelsRender(question, answer, fallbackValue);
             case COMPOSITE: // Fall-through
             case FILE:
                 throw new DDPException("Rendering answer type " + answer.getQuestionType() + " is currently not supported");
