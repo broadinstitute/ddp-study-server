@@ -800,7 +800,16 @@
   "post_collection_attestation_1_question_title": "Select an option below to attest to your completed DLMO Collection 1:",
   "post_collection_attestation_1_question_text": "I completed my DLMO collection, and upon completion, the samples were placed in a freezer.",
   "post_collection_attestation_1_yes": "Yes",
-  "post_collection_attestation_1_no": "No"
+  "post_collection_attestation_1_no": "No",
+
+  "post_collection_attestation_2_name": "DLMO Post-Collection Attestation 2",
+  "post_collection_attestation_2_title": "DLMO Post-Collection Attestation 2",
+  "post_collection_attestation_2_header": "DLMO Post-Collection Attestation 2",
+
+  "post_collection_attestation_2_question_title": "Select an option below to attest to your completed DLMO Collection 2:",
+  "post_collection_attestation_2_question_text": "I completed my DLMO collection, and upon completion, the samples were placed in a freezer.",
+  "post_collection_attestation_2_yes": "Yes",
+  "post_collection_attestation_2_no": "No"
 
 
 }
