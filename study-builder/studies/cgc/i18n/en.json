@@ -122,13 +122,52 @@
   "medical_history_genomic_testing": "Have you ever had genomic testing?",
   "medical_history_genomic_testing_name": "If you have had genomic testing and know the name of your test(s), please enter here:",
 
-
-  "rrc_name": "Join Us",
-  "rrc_title": "Join Us",
+  "rrc_name": "Clinical Info Release Request",
+  "rrc_title": "Clinical Info Release Request",
   "rrc_header": "Clinical Info Release Request",
-  "rrg_name": "Join Us",
-  "rrg_title": "Join Us",
+  "rrc_your_name": "Your Name",
+  "rrc_your_street_address": "Your Street Address",
+  "rrc_your_city": "Your City",
+  "rrc_your_state": "Your State",
+  "rrc_your_zip_code": "Your Zip Code",
+  "rrc_your_phone": "Your Phone",
+  "rrc_your_email": "Your Email",
+
+  "rrc_recipient_name": "Recipient's Name",
+  "rrc_recipient_street_address": "Recipient's Street Address",
+  "rrc_recipient_city": "Recipient's City",
+  "rrc_recipient_state": "Recipient's State",
+  "rrc_recipient_zip_code": "Recipient's Zip Code",
+  "rrc_recipient_phone": "Recipient's Phone",
+  "rrc_recipient_email": "Recipient's Email",
+
+  "rrc_today_date": "Today's Date",
+
+  "rrc_authorized_person": "Type \"me\" here, or enter name of authorized person or organization",
+  "rrc_provider_name": "Provider Name",
+  "rrc_authorized_email": "Your email or authorized person's or organization's email",
+
+  "rrc_seeking": "I am seeking:",
+  "rrc_seeking_all": "comprehensive medical records for all dates/time periods of care provided",
+  "rrc_seeking_time_period": "medical records for specific period of time",
+  "rrc_seeking_condition": "medical, records pertaining only to specific condition",
+  "rrc_period_from": "period from",
+  "rrc_period_to": "period to",
+  "rrc_specific_condition": "condition",
+
+  "rrc_provide_consent": "I further provide consent for the following records to be released alongside the above:",
+  "rrc_sexual_history": "Sexual history",
+  "rrc_abortion_history": "Abortion history",
+  "rrc_hiv_history": "HIV/AIDS history",
+  "rrc_mental_health": "Mental health",
+  "rrc_alcohol_drug_use": "Alcohol and drug use",
+
+
+  "rrg_name": "Genetic Info Release Request",
+  "rrg_title": "Genetic Info Release Request",
   "rrg_header": "Genetic Info Release Request",
 
-  "validation_max_len": "Text maximum length is 500"
+  "validation_max_len": "Text maximum length is 500",
+  "req_hint": "This field is mandatory",
+
 }
