@@ -215,7 +215,7 @@ public interface EventDao extends SqlObject {
             Long userNotificationDocumentConfigurationId = view.getColumn("user_notification_document_configuration_id", Long.class);
             if (userNotificationDocumentConfigurationId != null) {
                 dto.addNotificationPdfAttachment(userNotificationDocumentConfigurationId,
-                        view.getColumn("generate_if_missing", Boolean.class));
+                        view.getColumn("always_generate", Boolean.class));
             }
 
             Long targetActivityId = view.getColumn("target_activity_id", Long.class);
