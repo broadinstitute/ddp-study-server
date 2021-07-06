@@ -21,6 +21,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 import io.restassured.http.ContentType;
 import org.broadinstitute.ddp.cache.CacheService;
@@ -28,6 +29,7 @@ import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.content.I18nTemplateConstants;
 import org.broadinstitute.ddp.db.ActivityDefStore;
 import org.broadinstitute.ddp.db.TransactionWrapper;
+import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceStatusDao;
 import org.broadinstitute.ddp.db.dao.AnswerDao;
@@ -41,9 +43,14 @@ import org.broadinstitute.ddp.db.dao.JdbiUser;
 import org.broadinstitute.ddp.db.dao.QuestionDao;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
+import org.broadinstitute.ddp.model.activity.definition.FormSectionDef;
+import org.broadinstitute.ddp.model.activity.definition.NestedActivityBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.QuestionBlockDef;
+import org.broadinstitute.ddp.model.activity.definition.i18n.Translation;
 import org.broadinstitute.ddp.model.activity.definition.question.CompositeQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.TextQuestionDef;
+import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.activity.definition.validation.RequiredRuleDef;
 import org.broadinstitute.ddp.model.activity.instance.ComponentBlock;
 import org.broadinstitute.ddp.model.activity.instance.FormInstance;
@@ -53,9 +60,12 @@ import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
 import org.broadinstitute.ddp.model.activity.instance.answer.BoolAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.CompositeAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
+import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
 import org.broadinstitute.ddp.model.activity.types.FormType;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
+import org.broadinstitute.ddp.model.activity.types.NestedActivityRenderHint;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
+import org.broadinstitute.ddp.model.activity.types.TextInputType;
 import org.broadinstitute.ddp.model.address.MailAddress;
 import org.broadinstitute.ddp.model.workflow.ActivityState;
 import org.broadinstitute.ddp.model.workflow.StateType;
@@ -704,6 +714,67 @@ public class PutFormAnswersRouteStandaloneTest extends PutFormAnswersRouteStanda
         TransactionWrapper.useTxn(handle -> {
             var result = handle.attach(AnswerDao.class).findAnswerById(answer.getAnswerId());
             assertTrue("hidden answer should have been deleted", result.isEmpty());
+        });
+    }
+
+    @Test
+    public void testHiddenChildInstancesAreDeleted() {
+        // Setup data
+        var parentActCode = "PARENT" + Instant.now().toEpochMilli();
+        var childActCode = "CHILD" + Instant.now().toEpochMilli();
+        var nestedActBlockDef = new NestedActivityBlockDef(
+                childActCode, NestedActivityRenderHint.EMBEDDED, true, Template.text("add button"));
+        nestedActBlockDef.setShownExpr("false");    // Make child instances hidden.
+
+        var question = TextQuestionDef
+                .builder(TextInputType.TEXT, childActCode + "Q1", Template.text("q1"))
+                .build();
+        var parentAct = FormActivityDef.generalFormBuilder(parentActCode, "v1", testData.getStudyGuid())
+                .addName(new Translation("en", "parent"))
+                .addSection(new FormSectionDef(null, List.of(nestedActBlockDef)))
+                .build();
+        var childAct = FormActivityDef.generalFormBuilder(childActCode, "v1", testData.getStudyGuid())
+                .addName(new Translation("en", "child"))
+                .setParentActivityCode(parentActCode)
+                .setCanDeleteInstances(true)
+                .setCanDeleteFirstInstance(false)
+                .addSection(new FormSectionDef(null, List.of(new QuestionBlockDef(question))))
+                .build();
+
+        var parentInstanceDto = TransactionWrapper.withTxn(handle -> {
+            handle.attach(ActivityDao.class).insertActivity(
+                    parentAct, List.of(childAct), RevisionMetadata.now(testData.getUserId(), "test"));
+            var instanceDao = handle.attach(ActivityInstanceDao.class);
+            var parentInstance = instanceDao.insertInstance(parentAct.getActivityId(), testData.getUserGuid());
+
+            var answerDao = handle.attach(AnswerDao.class);
+            var childInstance1 = instanceDao.insertInstance(childAct.getActivityId(), testData.getUserGuid(),
+                    testData.getUserGuid(), parentInstance.getId());
+            answerDao.createAnswer(testData.getUserId(), childInstance1.getId(),
+                    new TextAnswer(null, question.getStableId(), null, "child1"));
+
+            var childInstance2 = instanceDao.insertInstance(childAct.getActivityId(), testData.getUserGuid(),
+                    testData.getUserGuid(), parentInstance.getId());
+            answerDao.createAnswer(testData.getUserId(), childInstance2.getId(),
+                    new TextAnswer(null, question.getStableId(), null, "child2"));
+
+            return parentInstance;
+        });
+
+        // Run test
+        given().auth().oauth2(token)
+                .pathParam("instanceGuid", parentInstanceDto.getGuid())
+                .when().put(urlTemplate).then().assertThat()
+                .statusCode(200);
+
+        // Verify instances
+        TransactionWrapper.useTxn(handle -> {
+            var instanceDao = handle.attach(ActivityInstanceDao.class);
+            var instances = instanceDao.findFormResponsesSubsetWithAnswersByUserId(
+                    testData.getUserId(), Set.of(childAct.getActivityId()))
+                    .collect(Collectors.toList());
+            assertEquals("first instance should not be deleted", 1, instances.size());
+            assertTrue("first instance answers should be cleared", instances.get(0).getAnswers().isEmpty());
         });
     }
 
