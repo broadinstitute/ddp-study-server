@@ -20,48 +20,40 @@ import org.broadinstitute.ddp.model.activity.instance.question.Question;
  */
 public class SelectedPickListOptionRenderUtil {
 
-    public static String selectedOptionLabelsRender(QuestionDef questionDef, Answer answer, String fallbackValue, String isoLangCode) {
+    public static String selectedOptionsRender(QuestionDef questionDef, Answer answer, String isoLangCode,
+                                               boolean useDetailTextForPickList) {
         Map<String, PicklistOptionDef> options = ((PicklistQuestionDef) questionDef)
                 .getAllPicklistOptions().stream()
                 .collect(Collectors.toMap(PicklistOptionDef::getStableId, Function.identity()));
         return ((PicklistAnswer) answer).getValue().stream()
-                .map(selected -> renderOptionLabelOrFallback(options, selected, fallbackValue, isoLangCode))
+                .map(selected -> optionRender(selected, options, isoLangCode, useDetailTextForPickList))
                 .collect(Collectors.joining(","));
     }
 
-    public static String selectedOptionLabelsRender(Question question, Answer answer, String fallbackValue) {
-        Map<String, String> options = ((PicklistQuestion) question)
-                .streamAllPicklistOptions()
-                .collect(Collectors.toMap(PicklistOption::getStableId,
-                        (p) -> p.getOptionLabel() == null ? fallbackValue : p.getOptionLabel()));
+    public static String selectedOptionsRender(Question question, Answer answer, boolean useDetailTextForPickList) {
+        Map<String, String> options = ((PicklistQuestion) question).streamAllPicklistOptions()
+                .collect(Collectors.toMap(PicklistOption::getStableId, (p) -> p.getOptionLabel()));
         return ((PicklistAnswer) answer).getValue().stream()
-                .map(selected -> options.get(selected.getStableId()))
+                .map(selected -> optionRender(selected, options, useDetailTextForPickList))
                 .collect(Collectors.joining(","));
     }
 
-    public static String detailTextRender(QuestionDef questionDef, Answer answer, String fallbackValue, String isoLangCode) {
-        String detailText = getDetailText(answer);
-        return detailText != null ? detailText : selectedOptionLabelsRender(questionDef, answer, fallbackValue, isoLangCode);
-    }
-
-    public static String detailTextRender(Question question, Answer answer, String fallbackValue) {
-        String detailText = getDetailText(answer);
-        return detailText != null ? detailText : selectedOptionLabelsRender(question, answer, fallbackValue);
-    }
-
-    private static String getDetailText(Answer answer) {
-        String detailText = null;
-        for (SelectedPicklistOption option : ((PicklistAnswer) answer).getValue()) {
-            if (option.getDetailText() != null) {
-                detailText = option.getDetailText();
-            }
+    private static String optionRender(SelectedPicklistOption selected, Map<String, PicklistOptionDef> options,
+                                       String isoLangCode, boolean useDetailTextForPickList) {
+        if (useDetailTextForPickList) {
+            return selected.getDetailText() != null ? selected.getDetailText() :
+                    options.get(selected.getStableId()).getOptionLabelTemplate().render(isoLangCode);
+        } else {
+            return options.get(selected.getStableId()).getOptionLabelTemplate().render(isoLangCode);
         }
-        return  detailText;
     }
 
-    private static String renderOptionLabelOrFallback(Map<String, PicklistOptionDef> options, SelectedPicklistOption selected,
-                                                      String fallbackValue, String isoLangCode) {
-        PicklistOptionDef option = options.get(selected.getStableId());
-        return option.getOptionLabelTemplate() == null ? fallbackValue : option.getOptionLabelTemplate().render(isoLangCode);
+    private static String optionRender(SelectedPicklistOption selected, Map<String, String> options,
+                                       boolean useDetailTextForPickList) {
+        if (useDetailTextForPickList) {
+            return selected.getDetailText() != null ? selected.getDetailText() : options.get(selected.getStableId());
+        } else {
+            return options.get(selected.getStableId());
+        }
     }
 }

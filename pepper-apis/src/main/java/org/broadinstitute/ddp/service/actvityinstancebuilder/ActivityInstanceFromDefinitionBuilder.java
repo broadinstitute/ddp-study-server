@@ -4,6 +4,7 @@ import static org.broadinstitute.ddp.model.activity.types.ActivityType.FORMS;
 import static org.broadinstitute.ddp.service.actvityinstancebuilder.context.AIBuildStep.BUILD_FORM_CHILDREN;
 import static org.broadinstitute.ddp.service.actvityinstancebuilder.context.AIBuildStep.BUILD_FORM_INSTANCE;
 import static org.broadinstitute.ddp.service.actvityinstancebuilder.context.AIBuildStep.CHECK_PARAMS;
+import static org.broadinstitute.ddp.service.actvityinstancebuilder.context.AIBuildStep.CREATE_RENDERER_CONTEXT;
 import static org.broadinstitute.ddp.service.actvityinstancebuilder.context.AIBuildStep.END_BUILD;
 import static org.broadinstitute.ddp.service.actvityinstancebuilder.context.AIBuildStep.INIT;
 import static org.broadinstitute.ddp.service.actvityinstancebuilder.context.AIBuildStep.READ_ACTIVITY_DEF;
@@ -46,7 +47,7 @@ import org.slf4j.LoggerFactory;
  * from DB: answers, validation messages.. Btw, validation messages saved then to
  * {@link ActivityDefStore} cache for further reusing.
  *
- *<p>NOTE: it needs to use {@link AIBuilderFactory#createAIBuilder(AIBuilderFactory, Handle, AIBuilderParams)}
+ * <p>NOTE: it needs to use {@link AIBuilderFactory#createAIBuilder(AIBuilderFactory, Handle, AIBuilderParams)}
  * or {@link AIBuilderFactory#createAIBuilder(Handle, AIBuilderParams)} in order to create an
  * instance of {@link ActivityInstanceFromDefinitionBuilder}.
  *
@@ -163,7 +164,7 @@ public class ActivityInstanceFromDefinitionBuilder {
         if (checkStep(READ_FORM_INSTANCE, READ_ACTIVITY_DEF)) {
 
             if (context.getFormResponse() == null) {
-                context.setFailedMessage("FormInstance data not fetched");
+                context.setFailedMessage("FormResponse data not fetched");
                 context.setFailedStep(READ_ACTIVITY_DEF);
             } else {
                 FormActivityDef formActivityDef = existingFormActivityDef != null ? existingFormActivityDef :
@@ -182,8 +183,18 @@ public class ActivityInstanceFromDefinitionBuilder {
         return this;
     }
 
+    public ActivityInstanceFromDefinitionBuilder createRendererContext(TemplateRenderHelper.RenderContextSource renderContextSource) {
+        if (checkStep(READ_ACTIVITY_DEF, CREATE_RENDERER_CONTEXT)) {
+
+            context.getAIBuilderFactory().getTemplateRenderHelper().createRendererInitialContext(context, renderContextSource);
+
+            context.setBuildStep(CREATE_RENDERER_CONTEXT);
+        }
+        return this;
+    }
+
     public ActivityInstanceFromDefinitionBuilder startBuild() {
-        if (checkStep(READ_ACTIVITY_DEF, START_BUILD)) {
+        if (checkStep(CREATE_RENDERER_CONTEXT, START_BUILD)) {
 
             LOG.debug("Start ActivityInstance building from definition (ActivityDefStore). StudyGuid={}, instanceGuid={}",
                     context.getStudyGuid(), context.getInstanceGuid());
@@ -200,13 +211,8 @@ public class ActivityInstanceFromDefinitionBuilder {
                 context.setFailedMessage("Cannot build ActivityInstance of type other than FORMS");
                 context.setFailedStep(BUILD_FORM_INSTANCE);
             } else {
-                context.getAIBuilderFactory().getTemplateRenderHelper().createRendererInitialContext(context);
                 var formInstance = context.getAIBuilderFactory().getFormInstanceCreator().createFormInstance(context);
                 context.setFormInstance(formInstance);
-
-                context.getAIBuilderFactory().getTemplateRenderHelper().addInstanceToRendererInitialContext(
-                        context, context.getFormInstance());
-
                 context.setBuildStep(BUILD_FORM_INSTANCE);
             }
         }

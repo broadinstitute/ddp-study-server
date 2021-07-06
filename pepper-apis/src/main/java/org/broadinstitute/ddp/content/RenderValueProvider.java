@@ -1,7 +1,6 @@
 package org.broadinstitute.ddp.content;
 
-import static org.broadinstitute.ddp.content.SelectedPickListOptionRenderUtil.detailTextRender;
-import static org.broadinstitute.ddp.content.SelectedPickListOptionRenderUtil.selectedOptionLabelsRender;
+import static org.broadinstitute.ddp.content.SelectedPickListOptionRenderUtil.selectedOptionsRender;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -242,9 +241,7 @@ public class RenderValueProvider {
         }
         switch (answer.getQuestionType()) {
             case PICKLIST:
-                return useDetailTextForPickList
-                        ? detailTextRender(questionDef, answer, fallbackValue, isoLangCode) :
-                        selectedOptionLabelsRender(questionDef, answer, fallbackValue, isoLangCode);
+                return SelectedPickListOptionRenderUtil.selectedOptionsRender(questionDef, answer, isoLangCode, useDetailTextForPickList);
             case COMPOSITE: // Fall-through
             case FILE:
                 // Have not decided what composite or file answers will look like yet.
@@ -266,16 +263,13 @@ public class RenderValueProvider {
      */
     private String renderAnswerUsingFormInstance(String questionStableId, String fallbackValue, boolean useDetailTextForPickList) {
         Question question = formInstance.getQuestionByStableId(questionStableId);
-        Answer answer = question != null && question.isAnswered()
-                ? (Answer) question.getAnswers().get(0) : null;
+        Answer answer = question != null && question.isAnswered() ? (Answer) question.getAnswers().get(0) : null;
         if (answer == null || answer.isEmpty()) {
             return fallbackValue;
         }
         switch (answer.getQuestionType()) {
             case PICKLIST:
-                return useDetailTextForPickList
-                        ? detailTextRender(question, answer, fallbackValue) :
-                        selectedOptionLabelsRender(question, answer, fallbackValue);
+                return selectedOptionsRender(question, answer, useDetailTextForPickList);
             case COMPOSITE: // Fall-through
             case FILE:
                 throw new DDPException("Rendering answer type " + answer.getQuestionType() + " is currently not supported");

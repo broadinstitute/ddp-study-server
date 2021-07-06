@@ -95,17 +95,10 @@ public class FormInstanceCreator {
     }
 
     /**
-     * The rendering done in 2 runs - in order to correctly calculate templates depending on results of other templates
-     * (for example with using of Velocity method $ddp.answer())
+     * Render templates
      */
     public void renderContent(AIBuilderContext ctx) {
         Map<Long, String> renderedTemplates = new TreeMap<>();
-
-        // 1st run
-        renderTemplates(ctx, renderedTemplates);
-        applyRenderedTemplates(ctx, renderedTemplates);
-
-        // 2nd run
         renderTemplates(ctx, renderedTemplates);
         applyRenderedTemplates(ctx, renderedTemplates);
     }
