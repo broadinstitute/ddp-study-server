@@ -42,6 +42,14 @@ public interface EventActionSql extends SqlObject {
             + "  where enrollment_status_type_code = :targetStatus")
     int insertUpdateUserStatusAction(@Bind("actionId") long actionId, @Bind("targetStatus") EnrollmentStatusType targetStatusType);
 
+    @SqlUpdate("insert into update_custom_workflow_event_action (event_action_id, custom_workflow_name, custom_workflow_status)"
+            + " values (:actionId, :workflow, :status)")
+    int insertUpdateCustomWorkflowEventAction(
+            @Bind("actionId") long actionId,
+            @Bind("workflow") String workflow,
+            @Bind("status") String status
+     );
+
     @SqlUpdate("delete from activity_instance_creation_action where activity_instance_creation_action_id = :actionId")
     int deleteActivityInstanceCreationAction(@Bind("actionId") long eventActionId);
 

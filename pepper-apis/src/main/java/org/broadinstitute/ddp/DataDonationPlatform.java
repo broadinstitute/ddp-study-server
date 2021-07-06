@@ -44,6 +44,7 @@ import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.StudyActivityDao;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.elastic.participantslookup.ESParticipantsLookupService;
+import org.broadinstitute.ddp.event.publish.pubsub.TaskPubSubPublisher;
 import org.broadinstitute.ddp.filter.AddDDPAuthLoggingFilter;
 import org.broadinstitute.ddp.filter.Auth0LogEventCheckTokenFilter;
 import org.broadinstitute.ddp.filter.DsmAuthFilter;
@@ -356,7 +357,7 @@ public class DataDonationPlatform {
             allowlist(API.AUTH0_LOG_EVENT, cfg.getStringList(ConfigFile.AUTH0_IP_ALLOW_LIST));
         }
 
-        post(API.REGISTRATION, new UserRegistrationRoute(interpreter), responseSerializer);
+        post(API.REGISTRATION, new UserRegistrationRoute(interpreter, new TaskPubSubPublisher()), responseSerializer);
         post(API.TEMP_USERS, new CreateTemporaryUserRoute(), responseSerializer);
 
         post(API.SENDGRID_EVENT, new SendGridEventRoute(new SendGridEventService()), responseSerializer);
@@ -366,7 +367,7 @@ public class DataDonationPlatform {
 
         // Admin APIs
         before(API.ADMIN_BASE + "/*", new StudyAdminAuthFilter());
-        post(API.ADMIN_STUDY_PARTICIPANTS, new AdminCreateStudyParticipantRoute(), jsonSerializer);
+        post(API.ADMIN_STUDY_PARTICIPANTS, new AdminCreateStudyParticipantRoute(new TaskPubSubPublisher()), jsonSerializer);
         post(API.ADMIN_STUDY_INVITATION_LOOKUP, new AdminLookupInvitationRoute(), jsonSerializer);
         post(API.ADMIN_STUDY_INVITATION_DETAILS, new AdminUpdateInvitationDetailsRoute(), jsonSerializer);
         post(API.ADMIN_STUDY_USER_LOGIN_ACCOUNT, new AdminCreateUserLoginAccountRoute(), jsonSerializer);
@@ -410,7 +411,7 @@ public class DataDonationPlatform {
 
         // Governed participant routes
         get(API.USER_STUDY_PARTICIPANTS, new GetGovernedStudyParticipantsRoute(), responseSerializer);
-        post(API.USER_STUDY_PARTICIPANTS, new GovernedParticipantRegistrationRoute(), responseSerializer);
+        post(API.USER_STUDY_PARTICIPANTS, new GovernedParticipantRegistrationRoute(new TaskPubSubPublisher()), responseSerializer);
 
         // User profile routes
         get(API.USER_PROFILE, new GetProfileRoute(), responseSerializer);

@@ -76,7 +76,7 @@ public class WorkflowService {
 
         Optional<WorkflowState> nextState = Optional.ofNullable(next);
         nextState.ifPresent(nextWfState -> {
-            createActivityInstanceIfMissing(handle, fromState, nextWfState, operatorGuid, userGuid, studyId);
+            createActivityInstanceIfMissing(handle, fromState, nextWfState, operatorGuid, userGuid, studyId, studyGuid);
         });
 
         return nextState;
@@ -102,7 +102,8 @@ public class WorkflowService {
             WorkflowState nextState,
             String operatorGuid,
             String userGuid,
-            long studyId
+            long studyId,
+            String studyGuid
     ) {
         if (nextState.getType() != StateType.ACTIVITY) {
             return;
@@ -128,7 +129,8 @@ public class WorkflowService {
                     userGuid,
                     instanceDto.getId(),
                     activityState.getActivityId(),
-                    studyId
+                    studyId,
+                    studyGuid
             );
             LOG.info(
                     "Processed actions for the activity instance {} of activity {} triggered by the creation signal",
@@ -147,7 +149,8 @@ public class WorkflowService {
             String participantGuid,
             long instanceId,
             long activityId,
-            long studyId
+            long studyId,
+            String studyGuid
     ) {
         long operatorId = handle.attach(JdbiUser.class).getUserIdByGuid(operatorGuid);
         EventSignal activityCreationSignal = new ActivityInstanceStatusChangeSignal(
@@ -158,6 +161,7 @@ public class WorkflowService {
                 instanceId,
                 activityId,
                 studyId,
+                studyGuid,
                 InstanceStatusType.CREATED
         );
         EventService.getInstance().processSynchronousActionsForEventSignal(handle, activityCreationSignal);

@@ -173,7 +173,8 @@ public class PutFormAnswersRoute implements Route {
                         // This is the first submit for the activity instance, so save a snapshot of substitutions.
                         handle.attach(ActivityInstanceDao.class).saveSubstitutions(
                                 form.getInstanceId(),
-                                I18nContentRenderer.newValueProvider(handle, form.getParticipantUserId()).getSnapshot());
+                                I18nContentRenderer.newValueProvider(
+                                        handle, form.getParticipantUserId(), operatorGuid, studyGuid).getSnapshot());
                     }
 
                     User participantUser = instanceSummary.getParticipantUser();

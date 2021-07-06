@@ -15,5 +15,6 @@ public class I18nTemplateConstants {
         public static final String KIT_REASON_TYPE = "DDP_KIT_REASON_TYPE";
         public static final String TEST_RESULT_CODE = "DDP_TEST_RESULT_CODE";
         public static final String TEST_RESULT_TIME_COMPLETED = "DDP_TEST_RESULT_TIME_COMPLETED";
+        public static final String IS_GOVERNED_PARTICIPANT = "DDP_IS_GOVERNED_PARTICIPANT";
     }
 }

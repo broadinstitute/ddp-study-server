@@ -268,8 +268,7 @@ public class TreeWalkInterpreter implements PexInterpreter {
                 throw new PexRuntimeException("isGovernedParticipant() shouldn't be used without operator in the context");
             }
             return ictx.getHandle().attach(UserGovernanceDao.class)
-                    .findActiveGovernancesByParticipantAndStudyGuids(ictx.getUserGuid(), studyGuid)
-                    .anyMatch(governance -> governance.getProxyUserGuid().equals(ictx.getOperatorGuid()));
+                    .isGovernedParticipant(ictx.getUserGuid(), ictx.getOperatorGuid(), studyGuid);
         } else if (predCtx instanceof PexParser.IsEnrollmentStatusPredicateContext) {
             String str = extractString(((PexParser.IsEnrollmentStatusPredicateContext) predCtx).STR());
             EnrollmentStatusType statusType;

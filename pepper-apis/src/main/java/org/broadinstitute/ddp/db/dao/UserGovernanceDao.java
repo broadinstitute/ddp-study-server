@@ -161,6 +161,19 @@ public interface UserGovernanceDao extends SqlObject {
         return findGovernancesByStudyGuid(studyGuid).filter((Governance::isActive));
     }
 
+    /**
+     * Check if current operator - is proxy (for example, a parent) for a user (participant) for which
+     * the operator enters study data
+     * @param participantGuid participant (user) GUID
+     * @param operatorGuid operator GUID
+     * @param studyGuid study GUID
+     * @return boolean true-if a current participant is a governed user (and proxy user enters data for him)
+     */
+    default boolean isGovernedParticipant(String participantGuid, String operatorGuid, String studyGuid) {
+        return findActiveGovernancesByParticipantAndStudyGuids(participantGuid, studyGuid)
+                .anyMatch(governance -> governance.getProxyUserGuid().equals(operatorGuid));
+    }
+
     class GovernanceWithStudiesReducer implements LinkedHashMapRowReducer<Long, Governance> {
         @Override
         public void accumulate(Map<Long, Governance> container, RowView view) {
