@@ -1,7 +1,9 @@
 package org.broadinstitute.ddp.model.dsm;
 
 import java.time.LocalDate;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import com.google.gson.annotations.SerializedName;
 
@@ -46,6 +48,8 @@ public class ParticipantStatusES {
         protected String status;
         @SerializedName("date")
         protected String date;
+        @SerializedName("data")
+        protected Map<String, String> data = new HashMap<>();
 
         public Workflow(String workflow, String status) {
             this.workflow = workflow;
@@ -62,6 +66,10 @@ public class ParticipantStatusES {
 
         public String getDate() {
             return date;
+        }
+
+        public Map<String, String> getData() {
+            return data;
         }
     }
 

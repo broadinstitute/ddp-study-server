@@ -71,7 +71,8 @@ public class GetDsmParticipantStatusRouteTest extends IntegrationTestSuite.TestC
                 new ParticipantStatus.Sample("a", "BLOOD", 6L, 7L, 8L, "tracking9", "carrier10")));
         GetResponse getResponse = new GetResponse(new GetResult("index", "id", "id01", 0,
                 1, 1, true,
-                new BytesArray("{\"workflows\":[{\"workflow\":\"ACCEPTANCE_STATUS\",\"status\":\"ACCEPTED\"}],"
+                new BytesArray("{\"workflows\":[{\"workflow\":\"ACCEPTANCE_STATUS\",\"status\":\"ACCEPTED\","
+                        + "\"data\":{\"subjectId\":\"XYZ\",\"name\":\"foobar\"}}],"
                         + "\"samples\": [{\"trackingIn\": \"testtrackingIn\",\"kitType\": \"testType\",\"carrier\": "
                         + "\"testCarrier\",\"kitRequestId\": \"5729\",\"trackingOut\": \"testtrackingOut\",\"delivered\":"
                         + " \"2020-02-29\",\"received\": \"2020-02-29\",\"sent\": \"2020-02-29\"}],"
@@ -95,10 +96,15 @@ public class GetDsmParticipantStatusRouteTest extends IntegrationTestSuite.TestC
         assertEquals(RecordStatus.RECEIVED, actual.getTissueRecord().getStatus());
         assertEquals(expected.getTissueRequestedEpochTimeSec(), actual.getTissueRecord().getRequestedAt());
         assertEquals(expected.getTissueReceivedEpochTimeSec(), actual.getTissueRecord().getReceivedBackAt());
+
         assertNotNull(actual.getWorkflows());
         assertEquals(1, actual.getWorkflows().size());
-        assertEquals("ACCEPTANCE_STATUS", actual.getWorkflows().get(0).getWorkflow());
-        assertEquals("ACCEPTED", actual.getWorkflows().get(0).getStatus());
+        var actualWorkflow = actual.getWorkflows().get(0);
+        assertEquals("ACCEPTANCE_STATUS", actualWorkflow.getWorkflow());
+        assertEquals("ACCEPTED", actualWorkflow.getStatus());
+        assertEquals(2, actualWorkflow.getData().size());
+        assertEquals("XYZ", actualWorkflow.getData().get("subjectId"));
+        assertEquals("foobar", actualWorkflow.getData().get("name"));
     }
 
     @Test

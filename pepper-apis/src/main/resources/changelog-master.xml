@@ -268,4 +268,6 @@
     <include file="db-changes/schema/DDP-5750-new-enrollment-events.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/DDP-6278-create-update-custom-workflow-event-action-table.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/DDP-6281-add-picklist-render-mode-autocomplete.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/DDP-6501-study-default-auth0-connection.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/DDP-5910-always-generate-pdf.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>

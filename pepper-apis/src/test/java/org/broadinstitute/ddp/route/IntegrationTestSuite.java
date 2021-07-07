@@ -65,7 +65,6 @@ import org.slf4j.LoggerFactory;
  */
 @RunWith(Suite.class)
 @SuiteClasses({
-        AdminCreateStudyParticipantRouteTest.class,
         AuthFilterRouteTest.class,
         EventServiceTest.class,
         InvitationCheckStatusRouteTest.class,
@@ -101,14 +100,12 @@ import org.slf4j.LoggerFactory;
         JoinMailingListRouteTest.class,
         AdminUpdateInvitationDetailsRouteTest.class,
         UserAuthCheckFilterTest.class,
-        UserRegistrationRouteTest.class,
         DsmAuthFilterTest.class,
         GetDsmMailingListRouteTest.class,
         CheckIrbPasswordRouteTest.class,
         ReceiveDsmNotificationRouteTest.class,
         GetDsmInstitutionRequestsRouteTest.class,
         DsmExitUserRouteTest.class,
-        SendEmailRouteTest.class,
         SendExitNotificationRouteTest.class,
         GetDsmParticipantInstitutionsRouteTest.class,
         PostPasswordResetRouteTest.class,
@@ -116,10 +113,6 @@ import org.slf4j.LoggerFactory;
         GetPdfRouteTest.class,
         GetDsmStudyParticipantTest.class,
         GetDsmParticipantStatusRouteTest.class,
-        GetCancerSuggestionsRouteTest.class,
-        GetDsmDrugSuggestionsRouteTest.class,
-        GetParticipantInfoRouteTest.class,
-        ListCancersRouteTest.class,
         ListStudyLanguagesRouteTest.class,
         ListUserStudyInvitationsRouteTest.class,
         GetStudyPasswordPolicyRouteTest.class,
@@ -129,7 +122,6 @@ import org.slf4j.LoggerFactory;
         InvitationVerifyRouteTest.class,
         StudyLanguageContentLanguageSettingFilterTest.class,
         GetStudyDetailRouteTest.class,
-        GovernedParticipantRegistrationRouteTest.class,
         GetStudyStatisticsRouteTest.class,
         DeleteUserRouteTest.class
 })
