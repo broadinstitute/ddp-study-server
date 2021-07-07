@@ -905,13 +905,13 @@ public class TestDataSetupUtil {
 
         CustomTemplate customTemplate = new CustomTemplate(fileContents);
         customTemplate.addSubstitution(new BooleanAnswerSubstitution(fieldValues.get(0),
-                consentActivityId, generatedTestData.getBloodQuestionStableId(), false, null));
+                consentActivityId, generatedTestData.getBloodQuestionStableId(), false, null, null));
         customTemplate.addSubstitution(new BooleanAnswerSubstitution(fieldValues.get(1),
-                consentActivityId, generatedTestData.getBloodQuestionStableId(), true, null));
+                consentActivityId, generatedTestData.getBloodQuestionStableId(), true, null, null));
         customTemplate.addSubstitution(new BooleanAnswerSubstitution(fieldValues.get(2),
-                consentActivityId, generatedTestData.getTissueQuestionStableId(), false, null));
+                consentActivityId, generatedTestData.getTissueQuestionStableId(), false, null, null));
         customTemplate.addSubstitution(new BooleanAnswerSubstitution(fieldValues.get(3),
-                consentActivityId, generatedTestData.getTissueQuestionStableId(), true, null));
+                consentActivityId, generatedTestData.getTissueQuestionStableId(), true, null, null));
         customTemplate.addSubstitution(new AnswerSubstitution(fieldValues.get(4),
                 consentActivityId, QuestionType.TEXT, generatedTestData.getSignatureQuestionStableId()));
         customTemplate.addSubstitution(new AnswerSubstitution(fieldValues.get(5),

@@ -151,8 +151,10 @@ public interface PdfSql extends SqlObject {
             @Bind("stableId") String questionStableId,
             @Bind("parentStableId") String parentQuestionStableId);
 
-    @SqlUpdate("insert into pdf_boolean_answer_substitution (pdf_answer_substitution_id, check_if_false) values (:subId, :checkIfFalse)")
-    int insertBooleanAnswerSubstitution(@Bind("subId") long substitutionId, @Bind("checkIfFalse") boolean checkIfFalse);
+    @SqlUpdate("insert into pdf_boolean_answer_substitution (pdf_answer_substitution_id, check_if_false, bound_option_stable_id) values "
+            + "(:subId, :checkIfFalse, :boundOption)")
+    int insertBooleanAnswerSubstitution(@Bind("subId") long substitutionId, @Bind("checkIfFalse") boolean checkIfFalse,
+                                        @Bind("boundOption") String boundOption);
 
     @GetGeneratedKeys
     @SqlUpdate("insert into pdf_version_template (pdf_document_version_id, pdf_base_template_id, template_order)"
