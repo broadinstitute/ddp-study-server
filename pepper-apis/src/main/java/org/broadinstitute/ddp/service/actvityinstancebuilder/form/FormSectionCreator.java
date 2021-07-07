@@ -12,7 +12,7 @@ public class FormSectionCreator {
 
     public FormSection createSection(AIBuilderContext ctx, FormSectionDef formSectionDef) {
         if (formSectionDef != null) {
-            var formSection = new FormSection(ctx.getAIBuilderFactory().getTemplateRenderHelper().renderTemplate(
+            var formSection = new FormSection(ctx.getAIBuilderFactory().getTemplateRenderHelper().addTemplate(
                     ctx, formSectionDef.getNameTemplate()));
             addChildren(ctx, formSection, formSectionDef);
             return formSection;

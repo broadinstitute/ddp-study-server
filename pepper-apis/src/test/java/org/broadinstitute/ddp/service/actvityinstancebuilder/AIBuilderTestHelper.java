@@ -13,6 +13,7 @@ import static org.broadinstitute.ddp.service.actvityinstancebuilder.AIBuilderTes
 import static org.broadinstitute.ddp.service.actvityinstancebuilder.AIBuilderTestUtil.createFormSectionDef;
 import static org.broadinstitute.ddp.service.actvityinstancebuilder.AIBuilderTestUtil.createQuestionBoolBlockDef;
 import static org.broadinstitute.ddp.service.actvityinstancebuilder.AIBuilderTestUtil.createQuestionTextBlockDef;
+import static org.broadinstitute.ddp.service.actvityinstancebuilder.TemplateRenderHelper.RenderContextSource.FORM_RESPONSE_AND_ACTIVITY_DEF;
 import static org.broadinstitute.ddp.service.actvityinstancebuilder.context.AIBuilderParams.createParams;
 
 import java.util.Arrays;
@@ -93,6 +94,7 @@ public class AIBuilderTestHelper {
                 .checkParams()
                 .readFormInstanceData(createFormResponse(INSTANCE_GUID, CREATED_AT, UPDATED_AT))
                 .readActivityDef(formActivityDef)
+                .createRendererContext(FORM_RESPONSE_AND_ACTIVITY_DEF)
                 .startBuild()
                 .buildFormInstance()
                 .buildFormChildren()
@@ -188,10 +190,11 @@ public class AIBuilderTestHelper {
     static class TemplateRenderHelperTest extends TemplateRenderHelper {
 
         @Override
-        public void createRendererInitialContext(AIBuilderContext ctx) {
+        public void createRendererInitialContext(AIBuilderContext ctx, RenderContextSource renderContextSource) {
             Map<String, Object> context = new HashMap<>();
             context.put(I18nTemplateConstants.DDP,
                     new RenderValueProvider.Builder()
+                            .withFormResponse(ctx.getFormResponse(), ctx.getFormActivityDef(), ctx.getIsoLangCode())
                             .setParticipantFirstName(PARTICIPANT_FIRST_NAME)
                             .setParticipantLastName(PARTICIPANT_LAST_NAME)
                             .build());

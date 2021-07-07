@@ -246,7 +246,7 @@ public class ActivityInstanceServiceTest extends ActivityInstanceServiceTestAbst
 
     @Test
     public void testRenderInstanceSummaries_rendersAnswer() {
-        String name = "Name: $ddp.answer(\"Q2\",\"picklist\")";
+        String name = "Name: $ddp.answer('Q2','picklist', true)";
         String title = "Title: $ddp.answer(\"Q1\",\"text\") $ddp.answer(\"non-existing\", \"the-fallback\")";
         String subtitle = "Subtitle: $ddp.answer(\"Q2\",\"picklist\")";
         String description = "Description: $ddp.answer(\"Q2\",\"picklist\")";
@@ -260,10 +260,12 @@ public class ActivityInstanceServiceTest extends ActivityInstanceServiceTestAbst
         var response = new FormResponse(1L, "guid", 1L, null, 1L, 1L, null, null, 1L, activityCode, "v1", false, 0,
                 new ActivityInstanceStatusDto(1L, 1L, 1L, 1L, InstanceStatusType.CREATED));
         response.putAnswer(new TextAnswer(1L, "Q1", "guid1", "some-text"));
-        response.putAnswer(new PicklistAnswer(2L, "Q2", "guid2", List.of(new SelectedPicklistOption("AUNT"))));
+        response.putAnswer(new PicklistAnswer(2L, "Q2", "guid2", List.of(new SelectedPicklistOption("AUNT", "aunt detail text"))));
 
         var optionAunt = Template.text("$aunt");
         optionAunt.addVariable(TemplateVariable.single("aunt", "en", "My Aunt"));
+        var optionAuntDetail = Template.text("$auntDetail");
+        optionAuntDetail.addVariable(TemplateVariable.single("auntDetail", "en", "My Aunt Detail"));
         var optionUncle = Template.text("$uncle");
         optionUncle.addVariable(TemplateVariable.single("uncle", "en", "Should not use this one!"));
         var activity = FormActivityDef.generalFormBuilder(activityCode, "v1", "study")
@@ -271,7 +273,7 @@ public class ActivityInstanceServiceTest extends ActivityInstanceServiceTestAbst
                 // No need to add definition for text question since that's not needed for use-friendly display.
                 .addSection(new FormSectionDef(null, List.of(new QuestionBlockDef(
                         PicklistQuestionDef.buildSingleSelect(PicklistRenderMode.LIST, "Q2", Template.text("picklist"))
-                        .addOption(new PicklistOptionDef("AUNT", optionAunt))
+                        .addOption(new PicklistOptionDef("AUNT", optionAunt, optionAuntDetail))
                         .addOption(new PicklistOptionDef("UNCLE", optionUncle))
                         .build()))))
                 .build();
@@ -280,7 +282,7 @@ public class ActivityInstanceServiceTest extends ActivityInstanceServiceTestAbst
         TransactionWrapper.useTxn(handle -> service.renderInstanceSummaries(
                 handle, testData.getUserId(), "operatorGuid", "study", summaries, Map.of("guid", response)));
 
-        assertEquals("Name: My Aunt #2", summaries.get(0).getActivityName());
+        assertEquals("Name: aunt detail text #2", summaries.get(0).getActivityName());
         assertEquals("Title: some-text the-fallback", summaries.get(0).getActivityTitle());
         assertEquals("Subtitle: My Aunt", summaries.get(0).getActivitySubtitle());
         assertEquals("Description: My Aunt", summaries.get(0).getActivityDescription());
