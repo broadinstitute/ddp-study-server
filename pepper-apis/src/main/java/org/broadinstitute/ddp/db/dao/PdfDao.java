@@ -136,7 +136,8 @@ public interface PdfDao extends SqlObject {
 
         if (substitution.getQuestionType() == QuestionType.BOOLEAN) {
             BooleanAnswerSubstitution boolSubstitution = (BooleanAnswerSubstitution) substitution;
-            DBUtils.checkInsert(1, pdfSql.insertBooleanAnswerSubstitution(substitution.getId(), boolSubstitution.checkIfFalse()));
+            DBUtils.checkInsert(1, pdfSql.insertBooleanAnswerSubstitution(substitution.getId(), boolSubstitution.checkIfFalse(),
+                    boolSubstitution.getBoundOption()));
         }
     }
 
@@ -521,7 +522,8 @@ public interface PdfDao extends SqlObject {
                     break;
                 case ANSWER:
                     QuestionType qtype = QuestionType.valueOf(view.getColumn("a_question_type", String.class));
-                    if (qtype == QuestionType.BOOLEAN) {
+                    String boundOption = view.getColumn("a_bound_option_stable_id", String.class);
+                    if ((qtype == QuestionType.BOOLEAN) || (boundOption != null)) {
                         sub = view.getRow(BooleanAnswerSubstitution.class);
                     } else {
                         sub = view.getRow(AnswerSubstitution.class);

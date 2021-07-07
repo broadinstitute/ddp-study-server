@@ -613,7 +613,7 @@ public final class PdfTestingUtil {
                             fieldNames.get(counter),
                             pdfInfo.getTestActivityId(),
                             question.getStableId(),
-                            checkIfFalseValues.get(booleanQuestionCounter), null));
+                            checkIfFalseValues.get(booleanQuestionCounter), null, null));
                     break;
                 case TEXT:
                     textQuestionCounter++;
