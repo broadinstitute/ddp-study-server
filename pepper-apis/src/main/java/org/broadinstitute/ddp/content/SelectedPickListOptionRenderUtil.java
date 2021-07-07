@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistOptionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
@@ -43,8 +44,8 @@ public class SelectedPickListOptionRenderUtil {
     private static String optionRender(SelectedPicklistOption selected, Map<String, PicklistOptionDef> options,
                                        String isoLangCode, boolean useDetailTextForPickList) {
         if (useDetailTextForPickList) {
-            return selected.getDetailText() != null ? selected.getDetailText() :
-                    options.get(selected.getStableId()).getOptionLabelTemplate().render(isoLangCode);
+            return StringUtils.isNotBlank(selected.getDetailText()) ? selected.getDetailText()
+                    : options.get(selected.getStableId()).getOptionLabelTemplate().render(isoLangCode);
         } else {
             return options.get(selected.getStableId()).getOptionLabelTemplate().render(isoLangCode);
         }
@@ -53,7 +54,8 @@ public class SelectedPickListOptionRenderUtil {
     private static String optionRender(SelectedPicklistOption selected, Map<String, String> optionLabels,
                                        boolean useDetailTextForPickList) {
         if (useDetailTextForPickList) {
-            return selected.getDetailText() != null ? selected.getDetailText() : optionLabels.get(selected.getStableId());
+            return StringUtils.isNotBlank(selected.getDetailText()) ? selected.getDetailText()
+                    : optionLabels.get(selected.getStableId());
         } else {
             return optionLabels.get(selected.getStableId());
         }
