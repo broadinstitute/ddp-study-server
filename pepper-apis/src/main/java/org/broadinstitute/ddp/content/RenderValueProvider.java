@@ -241,7 +241,7 @@ public class RenderValueProvider {
         }
         switch (answer.getQuestionType()) {
             case PICKLIST:
-                return SelectedPickListOptionRenderUtil.selectedOptionsRender(questionDef, answer, isoLangCode, useDetailTextForPickList);
+                return selectedOptionsRender(questionDef, answer, isoLangCode, useDetailTextForPickList);
             case COMPOSITE: // Fall-through
             case FILE:
                 // Have not decided what composite or file answers will look like yet.

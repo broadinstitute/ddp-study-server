@@ -1,5 +1,7 @@
 package org.broadinstitute.ddp.content;
 
+import static org.broadinstitute.ddp.util.CollectionMiscUtil.joinWithComma;
+
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -27,15 +29,15 @@ public class SelectedPickListOptionRenderUtil {
                 .collect(Collectors.toMap(PicklistOptionDef::getStableId, Function.identity()));
         return ((PicklistAnswer) answer).getValue().stream()
                 .map(selected -> optionRender(selected, options, isoLangCode, useDetailTextForPickList))
-                .collect(Collectors.joining(","));
+                .collect(joinWithComma());
     }
 
     public static String selectedOptionsRender(Question question, Answer answer, boolean useDetailTextForPickList) {
-        Map<String, String> options = ((PicklistQuestion) question).streamAllPicklistOptions()
+        Map<String, String> optionLabels = ((PicklistQuestion) question).streamAllPicklistOptions()
                 .collect(Collectors.toMap(PicklistOption::getStableId, (p) -> p.getOptionLabel()));
         return ((PicklistAnswer) answer).getValue().stream()
-                .map(selected -> optionRender(selected, options, useDetailTextForPickList))
-                .collect(Collectors.joining(","));
+                .map(selected -> optionRender(selected, optionLabels, useDetailTextForPickList))
+                .collect(joinWithComma());
     }
 
     private static String optionRender(SelectedPicklistOption selected, Map<String, PicklistOptionDef> options,
@@ -48,12 +50,12 @@ public class SelectedPickListOptionRenderUtil {
         }
     }
 
-    private static String optionRender(SelectedPicklistOption selected, Map<String, String> options,
+    private static String optionRender(SelectedPicklistOption selected, Map<String, String> optionLabels,
                                        boolean useDetailTextForPickList) {
         if (useDetailTextForPickList) {
-            return selected.getDetailText() != null ? selected.getDetailText() : options.get(selected.getStableId());
+            return selected.getDetailText() != null ? selected.getDetailText() : optionLabels.get(selected.getStableId());
         } else {
-            return options.get(selected.getStableId());
+            return optionLabels.get(selected.getStableId());
         }
     }
 }
