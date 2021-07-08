@@ -257,7 +257,10 @@ public class EventBuilder {
                     .orElseThrow(() -> new DDPException("Could not find pdf configuration with name " + pdfName));
             return actionDao.insertPdfGenerationAction(pdfId);
         } else if (EventActionType.ACTIVITY_INSTANCE_CREATION.name().equals(type)) {
-            String activityCode = actionCfg.getString(ACTIVITY_CODE_FIELD);
+            String activityCode = actionCfg.getString("ACTIVITY_CODE_FIELD");
+            Boolean createFromAnswer = ConfigUtil.getBoolIfPresent(actionCfg, "createFromAnswer");
+            String sourceQuestionStableId = actionCfg.getString("sourceQuestionStableId");
+            String targetQuestionStableId = actionCfg.getString("targetQuestionStableId");
             ActivityDto activityDto = handle.attach(JdbiActivity.class)
                     .findActivityByStudyIdAndCode(studyDto.getId(), activityCode)
                     .orElseThrow(() -> new DDPException("Could not find activity " + activityCode));
@@ -270,7 +273,8 @@ public class EventBuilder {
                             + " when target activity is a child nested activity");
                 }
             }
-            return actionDao.insertInstanceCreationAction(activityDto.getActivityId());
+            return actionDao.insertInstanceCreationAction(activityDto.getActivityId(),
+                    createFromAnswer, sourceQuestionStableId, targetQuestionStableId);
         } else if (EventActionType.ANNOUNCEMENT.name().equals(type)) {
             Template tmpl = BuilderUtils.parseAndValidateTemplate(actionCfg, "msgTemplate");
 

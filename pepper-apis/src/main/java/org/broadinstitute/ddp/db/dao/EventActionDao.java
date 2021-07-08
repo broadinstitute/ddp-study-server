@@ -67,9 +67,11 @@ public interface EventActionDao extends SqlObject {
         return actionId;
     }
 
-    default long insertInstanceCreationAction(long targetActivityId) {
+    default long insertInstanceCreationAction(long targetActivityId,
+                      Boolean createFromAnswer, String sourceQuestionStableId, String targetQuestionStableId) {
         long actionId = getJdbiEventAction().insert(null, EventActionType.ACTIVITY_INSTANCE_CREATION);
-        int numRowsInserted = getEventActionSql().insertActivityInstanceCreationAction(actionId, targetActivityId);
+        int numRowsInserted = getEventActionSql().insertActivityInstanceCreationAction(
+                actionId, targetActivityId, createFromAnswer, sourceQuestionStableId, targetQuestionStableId);
         if (numRowsInserted != 1) {
             throw new DaoException("Could not insert activity instance creation event for target activity id " + targetActivityId);
         }
