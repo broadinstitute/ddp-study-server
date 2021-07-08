@@ -23,6 +23,8 @@ import org.broadinstitute.ddp.model.activity.instance.answer.PicklistAnswer;
 import org.broadinstitute.ddp.model.event.EventSignal;
 import org.broadinstitute.ddp.service.ActivityInstanceCreationService;
 import org.jdbi.v3.core.Handle;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Create  activity instances from the selected answers of parent instances.
@@ -37,6 +39,8 @@ import org.jdbi.v3.core.Handle;
  * </ul>
  */
 public class ActivityInstanceCreatorFromAnswers extends ActivityInstanceCreatorDefault {
+
+    private static final Logger LOG = LoggerFactory.getLogger(ActivityInstanceCreatorFromAnswers.class);
 
     private final String sourceQuestionStableId;
     private final String targetQuestionStableId;
@@ -82,11 +86,13 @@ public class ActivityInstanceCreatorFromAnswers extends ActivityInstanceCreatorD
             int newInstancesCount = sourceAnswers.size();
             if (newInstancesCount < numberOfActivitiesLeft) {
                 newInstancesCount = numberOfActivitiesLeft;
+                LOG.warn("Only {} activity instances can be created (out of {}) because limit of instances is reached",
+                        newInstancesCount, sourceAnswers.size());
             }
 
             creationService.hideExistingInstancesIfRequired(studyActivityId, handle, activityDto);
 
-            // create child instances and copy source answers to target question in a created activities
+            // create child instances and copy source answers to target question in the created activities
             for (int i = 0; i < newInstancesCount; i++) {
 
                 long newActivityInstanceId =
