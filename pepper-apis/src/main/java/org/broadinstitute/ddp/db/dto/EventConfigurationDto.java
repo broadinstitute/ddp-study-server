@@ -86,6 +86,9 @@ public class EventConfigurationDto {
 
     /* ACTIVITY_INSTANCE_CREATION */
     private Long activityInstanceCreationStudyActivityId;
+    private Boolean createFromAnswer;
+    private String sourceQuestionStableId;
+    private String targetQuestionStableId;
 
     /* USER_ENROLLED */
     // No sub-table
@@ -142,7 +145,10 @@ public class EventConfigurationDto {
                                  String contactEmailQuestionStableId,
                                  Boolean markExistingInvitationsAsVoided,
                                  String customWorkflowName,
-                                 String customWorkflowStatus) {
+                                 String customWorkflowStatus,
+                                 Boolean createFromAnswer,
+                                 String sourceQuestionStableId,
+                                 String targetQuestionStableId) {
         this.eventConfigurationId = eventConfigurationId;
         this.label = label;
         this.eventTriggerType = eventTriggerType;
@@ -175,6 +181,9 @@ public class EventConfigurationDto {
         this.markExistingInvitationsAsVoided = markExistingInvitationsAsVoided;
         this.customWorkflowName = customWorkflowName;
         this.customWorkflowStatus = customWorkflowStatus;
+        this.createFromAnswer = createFromAnswer;
+        this.sourceQuestionStableId = sourceQuestionStableId;
+        this.targetQuestionStableId = targetQuestionStableId;
     }
 
     public long getEventConfigurationId() {
@@ -275,6 +284,18 @@ public class EventConfigurationDto {
 
     public Long getActivityInstanceCreationStudyActivityId() {
         return activityInstanceCreationStudyActivityId;
+    }
+
+    public Boolean isCreateFromAnswer() {
+        return createFromAnswer;
+    }
+
+    public String getSourceQuestionStableId() {
+        return sourceQuestionStableId;
+    }
+
+    public String getTargetQuestionStableId() {
+        return targetQuestionStableId;
     }
 
     public Long getCopyActionCopyConfigurationId() {
