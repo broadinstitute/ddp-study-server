@@ -74,7 +74,7 @@
        border="0" cellpadding="0" cellspacing="0" width="100%">
   <tr style="width: 540px;">
     <td align="left" style="margin: 0; padding: 0; font-family: Roboto, sans-serif; width: 278px; height: 33px">
-      <a href="-ddp.baseWebUrl-" target="_blank" style="cursor: pointer; text-decoration: none;">
+      <a href="{{baseWebUrl}}" target="_blank" style="cursor: pointer; text-decoration: none;">
         <img src="https://storage.googleapis.com/${assetsBucketName}/pancan/logo-count-me-in.png"
              alt="PanCan Project logo" style="-ms-interpolation-mode: bicubic; border: 0; outline: none; text-decoration: none;"
              width="250px" height="111px" border="0">
@@ -85,14 +85,12 @@
   <tr style="width: 540px;">
     <td style="padding: 50px 0 0px 0;">
       <p style="font-family: 'Roboto', sans-serif; text-align: left; font-weight: 300; font-size: 15px; line-height: 23px;">
-        ${text["salutation"]}
+        {{#if proxy_firstName}}${text["salutation_parent"]}{{else}}${text["salutation_self"]}{{/if}}
       </p>
       <p style="font-family: 'Roboto', sans-serif; text-align: left; font-weight: 300; font-size: 15px; line-height: 23px;">${text["thank_you"]}</p>
       <p style="font-family: 'Roboto', sans-serif; text-align: left; font-weight: 300; font-size: 15px; line-height: 23px;">${text["goal"]}</p>
       <p style="font-family: 'Roboto', sans-serif; text-align: left; font-weight: 300; font-size: 15px; line-height: 23px;">${text["stay_in_touch"]}</p>
-      <p style="font-family: 'Roboto', sans-serif; text-align: left; font-weight: 300; font-size: 15px; line-height: 23px;">${text["contact_1"]} <a
-              href="mailto:info@joincountmein.org" target="_blank" style="color: #7154ff; text-decoration: none; cursor: pointer;">info@joincountmein.org</a>
-        ${text["contact_2"]} 651-287-1608.</p>
+      <p style="font-family: 'Roboto', sans-serif; text-align: left; font-weight: 300; font-size: 15px; line-height: 23px;">${text["contact"]}</p>
       <p style="font-family: 'Roboto', sans-serif; text-align: left; font-weight: 300; font-size: 15px; line-height: 23px;">${text["closing"]}</p>
       <p style="font-family: 'Roboto', sans-serif; text-align: left; font-weight: 300; font-size: 15px; line-height: 23px;">${text["study_team"]}</p>
       <p style="font-family: 'Roboto', sans-serif; text-align: left; font-weight: 300; font-size: 15px; line-height: 23px;">${text["footnote"]}</p>
