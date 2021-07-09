@@ -9,7 +9,7 @@ import org.broadinstitute.ddp.db.dto.EventConfigurationDto;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.event.activityinstancecreation.ActivityInstanceCreationEventSyncProcessor;
 import org.broadinstitute.ddp.model.event.activityinstancecreation.ActivityInstanceCreationEventSyncProcessorDefault;
-import org.broadinstitute.ddp.model.event.activityinstancecreation.ActivityInstanceCreationEventSyncProcessorFromAnswers;
+import org.broadinstitute.ddp.model.event.activityinstancecreation.ActivityInstanceCreationFromAnswersEventSyncProcessor;
 import org.broadinstitute.ddp.pex.PexInterpreter;
 import org.broadinstitute.ddp.service.ActivityInstanceCreationService;
 import org.jdbi.v3.core.Handle;
@@ -82,7 +82,7 @@ public class ActivityInstanceCreationEventAction extends EventAction {
     public void doActionSynchronously(Handle handle, EventSignal signal) {
         ActivityInstanceCreationEventSyncProcessor activityInstanceCreationEventSyncProcessor;
         if (createFromAnswer) {
-            activityInstanceCreationEventSyncProcessor = new ActivityInstanceCreationEventSyncProcessorFromAnswers(
+            activityInstanceCreationEventSyncProcessor = new ActivityInstanceCreationFromAnswersEventSyncProcessor(
                     handle,
                     signal,
                     studyActivityId,

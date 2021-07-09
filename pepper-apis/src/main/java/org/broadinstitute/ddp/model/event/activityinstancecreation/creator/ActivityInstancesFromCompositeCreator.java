@@ -2,8 +2,8 @@ package org.broadinstitute.ddp.model.event.activityinstancecreation.creator;
 
 import static java.lang.String.format;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
-import static org.broadinstitute.ddp.model.event.activityinstancecreation.creator.ActivityInstanceCreatorUtil.cloneAnswer;
-import static org.broadinstitute.ddp.model.event.activityinstancecreation.creator.ActivityInstanceCreatorUtil.getQuestionDto;
+import static org.broadinstitute.ddp.model.event.activityinstancecreation.ActivityInstanceCreatorUtil.cloneAnswer;
+import static org.broadinstitute.ddp.model.event.activityinstancecreation.ActivityInstanceCreatorUtil.getQuestionDto;
 
 import java.util.List;
 

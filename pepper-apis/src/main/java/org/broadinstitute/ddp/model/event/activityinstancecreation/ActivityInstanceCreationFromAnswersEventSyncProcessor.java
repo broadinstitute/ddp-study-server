@@ -1,14 +1,10 @@
 package org.broadinstitute.ddp.model.event.activityinstancecreation;
 
-import static java.lang.String.format;
+import static org.broadinstitute.ddp.model.event.activityinstancecreation.ActivityInstanceCreatorUtil.getAnswer;
+import static org.broadinstitute.ddp.model.event.activityinstancecreation.ActivityInstanceCreatorUtil.getAnswersFromComposite;
 
 import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
-import org.broadinstitute.ddp.db.DaoException;
-import org.broadinstitute.ddp.db.dao.AnswerDao;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
 import org.broadinstitute.ddp.model.activity.instance.answer.CompositeAnswer;
@@ -21,23 +17,36 @@ import org.broadinstitute.ddp.service.ActivityInstanceCreationService;
 import org.jdbi.v3.core.Handle;
 
 /**
- * Create  activity instances from the selected answers of parent instances.
+ * Create activity instances from the selected answers (selected in current instance).
  * Question stable_id which answers to check is specified by parameter {@link #sourceQuestionStableId}.
  *
  * <p><b>Algorithm:</b>
  * <ul>
- *     <li>find answer (picklist) by 'sourceQuestionStableId' and detect selected options;</li>
- *     <li>for each of selected options:</li>
+ *     <li>find a question by 'sourceQuestionStableId' (in source, current activity) and get all answers (for example selections);</li>
+ *     <li>for each of found answers:</li>
  *     <li> - create a new instance (of activity with ID='studyActivityId';</li>
- *     <li> - if `targetQuestionStableId` is specified then copy source answers to target answers;</li>
+ *     <li> - if `targetQuestionStableId` is specified then copy the processed answer to to `targetQuestionStableId`;</li>
  * </ul>
+ * NOTE: currently is supported the COMPOSITE source (i.e. 'sourceQuestionStableId' points to a CompositeQuestion
+ * containing PickList of render mode AUTOCOMPLETE). And in this case `targetQuestionStableId` should point to a
+ * PickList also. Both source and target picklists should contain same options. In addition to options it could be possible
+ * that a user enter some custom text (detail text).
  */
-public class ActivityInstanceCreationEventSyncProcessorFromAnswers extends ActivityInstanceCreationEventSyncProcessorDefault {
+public class ActivityInstanceCreationFromAnswersEventSyncProcessor extends ActivityInstanceCreationEventSyncProcessorDefault {
 
     private final String sourceQuestionStableId;
     private final String targetQuestionStableId;
 
-    public ActivityInstanceCreationEventSyncProcessorFromAnswers(
+    /**
+     * Constructor.
+     * @param handle                  jdbi Handle
+     * @param signal                  EventSignal (here should be of type ActivityInstanceStatusChangeSignal)
+     * @param studyActivityId         ID of a study activity which instance to create
+     * @param sourceQuestionStableId  stable_id of a question in source activity (from which to copy answers)
+     * @param targetQuestionStableId  stable_id of a question in target (created ones) activities (where to copy answers)
+     * @param creationService         service containins methods used during activity instance creation
+     */
+    public ActivityInstanceCreationFromAnswersEventSyncProcessor(
             Handle handle,
             EventSignal signal,
             long studyActivityId,
@@ -52,8 +61,6 @@ public class ActivityInstanceCreationEventSyncProcessorFromAnswers extends Activ
     /**
      * Create N activity instances.
      * where N = number of answers in composite question `sourceQuestionStableId`.
-     * IF N > not_used_activities_count THEN N = not_used_activities_count,
-     * where not_used_activities_count = max_allowed_activity_instances - created_activity_instances.
      */
     @Override
     public void create() {
@@ -68,6 +75,7 @@ public class ActivityInstanceCreationEventSyncProcessorFromAnswers extends Activ
 
             List<Answer> sourceAnswers = detectSelectedAnswers(handle, sourceActivityInstanceId);
 
+            // depending on a question type choose an appropriate creator (now supported only COMPOSITE creator)
             var questionType = detectQuestionType(sourceAnswers);
             ActivityInstancesCreator activityInstancesCreator;
             switch (questionType) {
@@ -83,9 +91,9 @@ public class ActivityInstanceCreationEventSyncProcessorFromAnswers extends Activ
     }
 
     /**
-     * Detect an array with child answers inside a composite answer.
+     * Detect an array with answers in source question (pointed by `sourceQuestionStableId`).
      * Currently supported only composite answers (i.e. `sourceQuestionStableId` - should be
-     * stable_ID of a Composite Question.
+     * stable_ID of a Composite Question).
      */
     private List<Answer> detectSelectedAnswers(Handle handle, long sourceActivityInstanceId) {
         var answer = getAnswer(handle, sourceActivityInstanceId, sourceQuestionStableId);
@@ -96,20 +104,6 @@ public class ActivityInstanceCreationEventSyncProcessorFromAnswers extends Activ
                 throw new DDPException("Activity instances creation from answers is supported only for composite questions. StableID="
                         + sourceQuestionStableId);
         }
-    }
-
-    private static Answer getAnswer(Handle handle, long instanceId, String questionStableId) {
-        return handle.attach(AnswerDao.class).findAnswerByInstanceIdAndQuestionStableId(instanceId, questionStableId)
-                .orElseThrow(() -> new DaoException(format(
-                        "Error to detect answer: question stableId=%s, instanceId=%d", questionStableId, instanceId)));
-    }
-
-    private static List<Answer> getAnswersFromComposite(CompositeAnswer answer) {
-        return Optional.of(answer).stream()
-                .flatMap(parent -> parent.getValue().stream())
-                .flatMap(row -> row.getValues().stream())
-                .filter(Objects::nonNull)
-                .collect(Collectors.toList());
     }
 
     /**
