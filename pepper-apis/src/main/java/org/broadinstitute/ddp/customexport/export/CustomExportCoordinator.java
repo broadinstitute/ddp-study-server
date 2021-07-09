@@ -113,8 +113,8 @@ public class CustomExportCoordinator {
         } else {
             subject = cfg.getString(CustomExportConfigFile.EMAIL_SUCCESS_SUBJECT);
             templateId = cfg.getString(CustomExportConfigFile.EMAIL_SUCCESS_TEMPLATE_ID);
-            String fileUrl = "https://console.cloud.google.com/storage/browser/" + mainCfg.getString(CustomExportConfigFile.BUCKET_NAME)
-                    + "/" + mainCfg.getString(CustomExportConfigFile.FILE_PATH);
+            String fileUrl = "https://console.cloud.google.com/storage/browser/" + exportCfg.getString(CustomExportConfigFile.BUCKET_NAME)
+                    + "/" + exportCfg.getString(CustomExportConfigFile.FILE_PATH);
             templateVarNameToValue.put("bucketLink", fileUrl);
         }
 
