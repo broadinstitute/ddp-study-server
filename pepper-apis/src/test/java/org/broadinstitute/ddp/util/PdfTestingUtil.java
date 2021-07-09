@@ -98,6 +98,7 @@ import org.broadinstitute.ddp.model.user.UserProfile;
 import org.broadinstitute.ddp.service.PdfGenerationService;
 import org.jdbi.v3.core.Handle;
 
+
 // This class is the container for utility methods not intended for instantiation,
 // hence "final" and the private constructor
 public final class PdfTestingUtil {
