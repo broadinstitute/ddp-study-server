@@ -46,11 +46,13 @@ public class CustomExportCoordinator {
     private final String customActivity;
     private final String customExportStatus;
     private final Config exportCfg;
+    private final Config mainCfg;
     private String fullFileName;
     private long exportLastCompleted;
 
     public CustomExportCoordinator(Config cfg, Config exportCfg) {
         this.exportCfg = exportCfg;
+        this.mainCfg = cfg;
         this.customActivity = exportCfg.getString(CustomExportConfigFile.ACTIVITY);
         this.customExportStatus = exportCfg.getString(CustomExportConfigFile.STATUS);
         this.exporter = new CustomExporter(cfg, exportCfg);
@@ -116,7 +118,9 @@ public class CustomExportCoordinator {
             templateVarNameToValue.put("bucketLink", fileUrl);
         }
 
-        String proxy = ConfigUtil.getStrIfPresent(cfg, ConfigFile.Sendgrid.PROXY);
+        String proxy = ConfigUtil.getStrIfPresent(mainCfg, ConfigFile.Sendgrid.PROXY);
+        LOG.info("About to send notification email to {} <{}> with{}", toName, toEmailAddress, null == proxy ? "out proxy" :
+                " proxy " + proxy);
         SendGridMailUtil.sendDynamicEmailMessage(fromName, fromEmailAddress, toName, toEmailAddress,  subject, templateId,
                 templateVarNameToValue, sendGridApiKey, proxy);
     }

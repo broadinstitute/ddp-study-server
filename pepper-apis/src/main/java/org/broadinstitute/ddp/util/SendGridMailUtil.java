@@ -94,6 +94,8 @@ public class SendGridMailUtil {
                     + "Response Body: " + response.getBody();
             LOG.error(msg);
             throw new RuntimeException(msg);
+        } else {
+            LOG.info("Successfully submitted message to SendGrid with subject {}", mailMessage.subject);
         }
     }
 
