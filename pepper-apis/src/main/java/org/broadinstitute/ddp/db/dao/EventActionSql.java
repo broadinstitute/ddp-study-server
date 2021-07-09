@@ -23,7 +23,7 @@ public interface EventActionSql extends SqlObject {
     int insertActivityInstanceCreationAction(
             @Bind("actionId") long eventActionId,
             @Bind("activityId") long activityId,
-            @Bind("createFromAnswer") Boolean createFromAnswer,
+            @Bind("createFromAnswer") boolean createFromAnswer,
             @Bind("sourceQuestionStableId") String sourceQuestionStableId,
             @Bind("targetQuestionStableId") String targetQuestionStableId);
 

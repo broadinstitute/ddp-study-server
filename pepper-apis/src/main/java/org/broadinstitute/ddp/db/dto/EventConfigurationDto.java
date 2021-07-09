@@ -86,7 +86,7 @@ public class EventConfigurationDto {
 
     /* ACTIVITY_INSTANCE_CREATION */
     private Long activityInstanceCreationStudyActivityId;
-    private Boolean createFromAnswer;
+    private boolean createFromAnswer;
     private String sourceQuestionStableId;
     private String targetQuestionStableId;
 
@@ -146,7 +146,7 @@ public class EventConfigurationDto {
                                  Boolean markExistingInvitationsAsVoided,
                                  String customWorkflowName,
                                  String customWorkflowStatus,
-                                 Boolean createFromAnswer,
+                                 boolean createFromAnswer,
                                  String sourceQuestionStableId,
                                  String targetQuestionStableId) {
         this.eventConfigurationId = eventConfigurationId;
@@ -286,7 +286,7 @@ public class EventConfigurationDto {
         return activityInstanceCreationStudyActivityId;
     }
 
-    public Boolean isCreateFromAnswer() {
+    public boolean getCreateFromAnswer() {
         return createFromAnswer;
     }
 

@@ -16,23 +16,33 @@ import org.jdbi.v3.core.Handle;
  * Default activity instance creator (creates one activity instance).
  * Called from {@link ActivityInstanceCreationEventAction}.
  */
-public class ActivityInstanceCreatorDefault {
+public class ActivityInstanceCreationEventSyncProcessorDefault implements ActivityInstanceCreationEventSyncProcessor {
+
+    protected final Handle handle;
+    protected final EventSignal signal;
+
+    protected final JdbiActivityInstance jdbiActivityInstance;
+    protected final JdbiActivityInstanceStatus jdbiActivityInstanceStatus;
+    protected final JdbiActivity jdbiActivity;
 
     protected final long studyActivityId;
     protected final ActivityInstanceCreationService creationService;
 
-    public ActivityInstanceCreatorDefault(long studyActivityId, ActivityInstanceCreationService creationService) {
+    public ActivityInstanceCreationEventSyncProcessorDefault(
+            Handle handle, EventSignal signal, long studyActivityId, ActivityInstanceCreationService creationService) {
+        this.handle = handle;
+        this.signal = signal;
         this.studyActivityId = studyActivityId;
         this.creationService = creationService;
+        this.jdbiActivityInstance = handle.attach(JdbiActivityInstance.class);
+        this.jdbiActivityInstanceStatus = handle.attach(JdbiActivityInstanceStatus.class);
+        this.jdbiActivity = handle.attach(JdbiActivity.class);
     }
 
-    public void create(Handle handle, EventSignal signal) {
-        JdbiActivityInstance jdbiActivityInstance = handle.attach(JdbiActivityInstance.class);
-        JdbiActivityInstanceStatus jdbiActivityInstanceStatus = handle.attach(JdbiActivityInstanceStatus.class);
-        JdbiActivity jdbiActivity = handle.attach(JdbiActivity.class);
-
+    @Override
+    public void create() {
         ActivityDto activityDto = jdbiActivity.queryActivityById(studyActivityId);
-        creationService.checkSignalIfNestedTargetActivity(activityDto);
+        creationService.checkSignalIfNestedTargetActivity(activityDto.getParentActivityId());
 
         Integer numberOfActivitiesLeft = creationService.detectNumberOfActivitiesLeft(studyActivityId, activityDto, jdbiActivityInstance);
 
@@ -40,24 +50,20 @@ public class ActivityInstanceCreatorDefault {
 
             creationService.hideExistingInstancesIfRequired(studyActivityId, handle, activityDto);
 
-            Long parentInstanceId = creationService.detectParentInstanceId(activityDto);
-
-            createActivityInstance(handle, signal, jdbiActivityInstance, jdbiActivityInstanceStatus, parentInstanceId);
+            createActivityInstance(activityDto.getParentActivityId());
         }
     }
 
     /**
      * Create an activity instance.
      *
-     * @param parentInstanceId  ID of activity instance which is a current one (parent)
      * @return long  ID of a new instance
      */
-    protected long createActivityInstance(
-            Handle handle,
-            EventSignal signal,
-            JdbiActivityInstance jdbiActivityInstance,
-            JdbiActivityInstanceStatus jdbiActivityInstanceStatus,
-            Long parentInstanceId) {
+    @Override
+    public long createActivityInstance(Long parentActivityId) {
+
+        Long parentInstanceId = creationService.detectParentInstanceId(parentActivityId);
+
         ActivityInstanceCreationService.ActivityInstanceCreationResult creationResult = creationService.createActivityInstance(
                 studyActivityId,
                 parentInstanceId,
@@ -75,13 +81,7 @@ public class ActivityInstanceCreatorDefault {
 
         creationService.runDownstreamEvents(studyActivityId, newActivityInstanceId, handle);
 
-        createChildActivityInstances(
-                studyActivityId,
-                newActivityInstanceId,
-                newActivityInstanceGuid,
-                jdbiActivityInstance,
-                jdbiActivityInstanceStatus,
-                handle);
+        createChildActivityInstances(studyActivityId, newActivityInstanceId, newActivityInstanceGuid);
 
         return newActivityInstanceId;
     }
@@ -89,14 +89,7 @@ public class ActivityInstanceCreatorDefault {
     /**
      * Create child nested activity instances, if any
      */
-    public void createChildActivityInstances(
-            long parentActivityId,
-            long parentActivityInstanceId,
-            String parentActivityInstanceGuid,
-            JdbiActivityInstance jdbiActivityInstance,
-            JdbiActivityInstanceStatus jdbiActivityInstanceStatus,
-            Handle handle) {
-
+    public void createChildActivityInstances(long parentActivityId, long parentActivityInstanceId, String parentActivityInstanceGuid) {
         List<Long> childActIdsToCreate = handle.attach(JdbiActivity.class).findChildActivityIdsThatNeedCreation(parentActivityId);
         for (var activityId : childActIdsToCreate) {
             ActivityInstanceCreationService.ActivityInstanceCreationResult creationResult = creationService.createActivityInstance(
@@ -108,5 +101,21 @@ public class ActivityInstanceCreatorDefault {
                     parentActivityInstanceGuid);
             creationService.runDownstreamEvents(activityId, creationResult.getActivityInstanceId(), handle);
         }
+    }
+
+    public Handle getHandle() {
+        return handle;
+    }
+
+    public EventSignal getSignal() {
+        return signal;
+    }
+
+    public long getStudyActivityId() {
+        return studyActivityId;
+    }
+
+    public ActivityInstanceCreationService getCreationService() {
+        return creationService;
     }
 }

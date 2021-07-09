@@ -7,8 +7,9 @@ import org.broadinstitute.ddp.db.dao.QueuedEventDao;
 import org.broadinstitute.ddp.db.dto.ActivityDto;
 import org.broadinstitute.ddp.db.dto.EventConfigurationDto;
 import org.broadinstitute.ddp.exception.DDPException;
-import org.broadinstitute.ddp.model.event.activityinstancecreation.ActivityInstanceCreatorDefault;
-import org.broadinstitute.ddp.model.event.activityinstancecreation.ActivityInstanceCreatorFromAnswers;
+import org.broadinstitute.ddp.model.event.activityinstancecreation.ActivityInstanceCreationEventSyncProcessor;
+import org.broadinstitute.ddp.model.event.activityinstancecreation.ActivityInstanceCreationEventSyncProcessorDefault;
+import org.broadinstitute.ddp.model.event.activityinstancecreation.ActivityInstanceCreationEventSyncProcessorFromAnswers;
 import org.broadinstitute.ddp.pex.PexInterpreter;
 import org.broadinstitute.ddp.service.ActivityInstanceCreationService;
 import org.jdbi.v3.core.Handle;
@@ -29,7 +30,7 @@ public class ActivityInstanceCreationEventAction extends EventAction {
     public ActivityInstanceCreationEventAction(EventConfiguration eventConfiguration, EventConfigurationDto dto) {
         super(eventConfiguration, dto);
         studyActivityId = dto.getActivityInstanceCreationStudyActivityId();
-        createFromAnswer = dto.isCreateFromAnswer() != null ? dto.isCreateFromAnswer() : false;
+        createFromAnswer = dto.getCreateFromAnswer();
         sourceQuestionStableId = dto.getSourceQuestionStableId();
         targetQuestionStableId = dto.getTargetQuestionStableId();
         creationService = new ActivityInstanceCreationService();
@@ -38,12 +39,12 @@ public class ActivityInstanceCreationEventAction extends EventAction {
     public ActivityInstanceCreationEventAction(
             EventConfiguration eventConfiguration,
             long studyActivityId,
-            Boolean createFromAnswer,
+            boolean createFromAnswer,
             String sourceQuestionStableId,
             String targetQuestionStableId) {
         super(eventConfiguration, null);
         this.studyActivityId = studyActivityId;
-        this.createFromAnswer = createFromAnswer != null ? createFromAnswer : false;
+        this.createFromAnswer = createFromAnswer;
         this.sourceQuestionStableId = sourceQuestionStableId;
         this.targetQuestionStableId = targetQuestionStableId;
         creationService = new ActivityInstanceCreationService();
@@ -61,7 +62,7 @@ public class ActivityInstanceCreationEventAction extends EventAction {
             } else {
                 //insert queued event after checking nested activity and signal
                 ActivityDto activityDto = handle.attach(JdbiActivity.class).queryActivityById(studyActivityId);
-                creationService.checkSignalIfNestedTargetActivity(activityDto);
+                creationService.checkSignalIfNestedTargetActivity(activityDto.getParentActivityId());
                 QueuedEventDao queuedEventDao = handle.attach(QueuedEventDao.class);
                 // fixme: serialize signal data such as activityInstanceIdThatChanged, targetStatusType, etc
                 // (perhaps leverage templateSubstitutions?) so we can rebuilt the signal and avoid issues
@@ -79,18 +80,20 @@ public class ActivityInstanceCreationEventAction extends EventAction {
     }
 
     public void doActionSynchronously(Handle handle, EventSignal signal) {
-        ActivityInstanceCreatorDefault activityInstanceCreatorDefault;
+        ActivityInstanceCreationEventSyncProcessor activityInstanceCreationEventSyncProcessor;
         if (createFromAnswer) {
-            activityInstanceCreatorDefault = new ActivityInstanceCreatorFromAnswers(
+            activityInstanceCreationEventSyncProcessor = new ActivityInstanceCreationEventSyncProcessorFromAnswers(
+                    handle,
+                    signal,
                     studyActivityId,
                     sourceQuestionStableId,
                     targetQuestionStableId,
                     creationService);
         } else {
-            activityInstanceCreatorDefault =
-                    new ActivityInstanceCreatorDefault(studyActivityId, creationService);
+            activityInstanceCreationEventSyncProcessor =
+                    new ActivityInstanceCreationEventSyncProcessorDefault(handle, signal, studyActivityId, creationService);
         }
-        activityInstanceCreatorDefault.create(handle, signal);
+        activityInstanceCreationEventSyncProcessor.create();
     }
 
     public long getStudyActivityId() {

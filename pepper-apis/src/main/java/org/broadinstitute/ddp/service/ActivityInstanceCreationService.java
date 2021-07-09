@@ -74,9 +74,9 @@ public class ActivityInstanceCreationService {
         }
     }
 
-    public Long detectParentInstanceId(ActivityDto activityDto) {
+    public Long detectParentInstanceId(Long parentActivityId) {
         Long parentInstanceId = null;
-        if (activityDto.getParentActivityId() != null && signal.getEventTriggerType() == EventTriggerType.ACTIVITY_STATUS) {
+        if (parentActivityId != null && signal.getEventTriggerType() == EventTriggerType.ACTIVITY_STATUS) {
             parentInstanceId = ((ActivityInstanceStatusChangeSignal) signal).getActivityInstanceIdThatChanged();
         }
         return parentInstanceId;
@@ -164,13 +164,13 @@ public class ActivityInstanceCreationService {
                 InstanceStatusType.CREATED));
     }
 
-    public void checkSignalIfNestedTargetActivity(ActivityDto activityDto) {
-        if (activityDto.getParentActivityId() != null) {
+    public void checkSignalIfNestedTargetActivity(Long parentActivityId) {
+        if (parentActivityId != null) {
             if (signal.getEventTriggerType() != EventTriggerType.ACTIVITY_STATUS) {
                 throw new DDPException("ActivityInstance creation action is not paired with ACTIVITY_STATUS trigger");
             }
             ActivityInstanceStatusChangeSignal statusSignal = (ActivityInstanceStatusChangeSignal) signal;
-            if (statusSignal.getActivityIdThatChanged() != activityDto.getParentActivityId()) {
+            if (statusSignal.getActivityIdThatChanged() != parentActivityId) {
                 throw new DDPException("ActivityInstance creation action parent activity does not match trigger");
             }
         }

@@ -259,8 +259,8 @@ public class EventBuilder {
         } else if (EventActionType.ACTIVITY_INSTANCE_CREATION.name().equals(type)) {
             String activityCode = actionCfg.getString("ACTIVITY_CODE_FIELD");
             Boolean createFromAnswer = ConfigUtil.getBoolIfPresent(actionCfg, "createFromAnswer");
-            String sourceQuestionStableId = actionCfg.getString("sourceQuestionStableId");
-            String targetQuestionStableId = actionCfg.getString("targetQuestionStableId");
+            String sourceQuestionStableId = ConfigUtil.getStrIfPresent(actionCfg, "sourceQuestionStableId");
+            String targetQuestionStableId = ConfigUtil.getStrIfPresent(actionCfg, "targetQuestionStableId");
             ActivityDto activityDto = handle.attach(JdbiActivity.class)
                     .findActivityByStudyIdAndCode(studyDto.getId(), activityCode)
                     .orElseThrow(() -> new DDPException("Could not find activity " + activityCode));
