@@ -33,7 +33,7 @@ import org.jdbi.v3.core.Handle;
  * PickList also. Both source and target picklists should contain same options. In addition to options it could be possible
  * that a user enter some custom text (detail text).
  */
-public class ActivityInstanceCreationFromAnswersEventSyncProcessor extends ActivityInstanceCreationEventSyncProcessorDefault {
+public class ActivityInstanceCreationFromAnswersEventSyncProcessor extends ActivityInstanceCreationEventSyncProcessor {
 
     private final String sourceQuestionStableId;
     private final String targetQuestionStableId;
@@ -68,9 +68,7 @@ public class ActivityInstanceCreationFromAnswersEventSyncProcessor extends Activ
     public void create() {
         activityDto = jdbiActivity.queryActivityById(studyActivityId);
         creationService.checkSignalIfNestedTargetActivity(activityDto.getParentActivityId());
-
         long sourceActivityInstanceId = ((ActivityInstanceStatusChangeSignal) signal).getActivityInstanceIdThatChanged();
-
         var sourceAnswers = detectSelectedAnswers(handle, sourceActivityInstanceId);
 
         var activityInstancesCreator = detectActivityInstancesCreator(sourceAnswers);
