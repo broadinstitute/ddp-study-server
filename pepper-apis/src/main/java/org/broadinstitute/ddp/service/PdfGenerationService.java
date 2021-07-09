@@ -33,6 +33,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.client.Auth0ManagementClient;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
+import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudyCached;
 import org.broadinstitute.ddp.db.dao.ParticipantDao;
 import org.broadinstitute.ddp.db.dao.PdfDao;
 import org.broadinstitute.ddp.db.dao.StudyLanguageDao;
@@ -269,9 +270,11 @@ public class PdfGenerationService {
 
         if (hasEmailSource) {
             var mgmtClient = Auth0ManagementClient.forStudy(handle, config.getStudyGuid());
+            var studyDto = new JdbiUmbrellaStudyCached(handle).findByStudyGuid(config.getStudyGuid());
             String auth0UserId = participant.getUser().getAuth0UserId();
             Map<String, String> emailResults = new Auth0Util(mgmtClient.getDomain())
-                    .getUserPassConnEmailsByAuth0UserIds(Sets.newHashSet(auth0UserId), mgmtClient.getToken());
+                    .getEmailsByAuth0UserIdsAndConnection(Sets.newHashSet(auth0UserId), mgmtClient.getToken(),
+                            studyDto.getDefaultAuth0Connection());
             participant.getUser().setEmail(emailResults.get(auth0UserId));
         }
 

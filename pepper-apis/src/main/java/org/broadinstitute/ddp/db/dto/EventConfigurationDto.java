@@ -306,8 +306,8 @@ public class EventConfigurationDto {
         return pdfGenerationDocumentConfigurationId;
     }
 
-    public void addNotificationPdfAttachment(Long pdfDocumentConfigurationId, Boolean generateIfMissing) {
-        notificationPdfAttachments.add(new PdfAttachment(pdfDocumentConfigurationId, generateIfMissing));
+    public void addNotificationPdfAttachment(Long pdfDocumentConfigurationId, Boolean alwaysGenerate) {
+        notificationPdfAttachments.add(new PdfAttachment(pdfDocumentConfigurationId, alwaysGenerate));
     }
 
     public List<PdfAttachment> getNotificationPdfAttachments() {

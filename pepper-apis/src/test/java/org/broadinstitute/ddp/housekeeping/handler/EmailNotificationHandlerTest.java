@@ -211,7 +211,7 @@ public class EmailNotificationHandlerTest extends TxnAwareBaseTest {
         var mockEventDao = mock(EventDao.class);
         when(mockHandle.attach(EventDao.class)).thenReturn(mockEventDao);
         when(mockHandle.attach(JdbiUmbrellaStudy.class)).thenReturn(mock(JdbiUmbrellaStudy.class));
-        when(mockEventDao.getPdfAttachmentsForEvent(1L)).thenReturn(List.of(new PdfAttachment(1L, true)));
+        when(mockEventDao.getPdfAttachmentsForEvent(1L)).thenReturn(List.of(new PdfAttachment(1L, false)));
         when(mockPdf.findFullConfigForUser(any(), eq(1L), any(), any())).thenReturn(pdfConfig);
         when(mockPdfBucket.getBucketName()).thenReturn("test-bucket");
         when(mockPdfGen.generateFlattenedPdfForConfiguration(any(), any(), any())).thenReturn(new ByteArrayInputStream(content.getBytes()));
@@ -293,7 +293,7 @@ public class EmailNotificationHandlerTest extends TxnAwareBaseTest {
         var mockEventDao = mock(EventDao.class);
         when(mockHandle.attach(EventDao.class)).thenReturn(mockEventDao);
         when(mockHandle.attach(JdbiUmbrellaStudy.class)).thenReturn(mock(JdbiUmbrellaStudy.class));
-        when(mockEventDao.getPdfAttachmentsForEvent(1L)).thenReturn(List.of(new PdfAttachment(1L, true)));
+        when(mockEventDao.getPdfAttachmentsForEvent(1L)).thenReturn(List.of(new PdfAttachment(1L, false)));
         when(mockPdf.findFullConfigForUser(any(), eq(1L), any(), any())).thenReturn(pdfConfig);
         when(mockPdfBucket.getPdfFromBucket(any())).thenThrow(new DDPException("testing"));
         when(mockPdfBucket.getBucketName()).thenReturn("test-bucket");

@@ -20,6 +20,7 @@ public class StudyDto implements Serializable {
     private String studyEmail;
     private String recaptchaSiteKey;
     private boolean dataExportEnabled;
+    private String defaultAuth0Connection;
 
     @JdbiConstructor
     public StudyDto(@ColumnName("umbrella_study_id") long id,
@@ -33,7 +34,8 @@ public class StudyDto implements Serializable {
                     @ColumnName("share_participant_location") boolean shareParticipantLocation,
                     @ColumnName("study_email") String studyEmail,
                     @ColumnName("recaptcha_site_key") String recaptchaSiteKey,
-                    @ColumnName("enable_data_export") boolean dataExportEnabled) {
+                    @ColumnName("enable_data_export") boolean dataExportEnabled,
+                    @ColumnName("default_auth0_connection") String defaultAuth0Connection) {
         this.id = id;
         this.guid = guid;
         this.name = name;
@@ -46,6 +48,7 @@ public class StudyDto implements Serializable {
         this.studyEmail = studyEmail;
         this.recaptchaSiteKey = recaptchaSiteKey;
         this.dataExportEnabled = dataExportEnabled;
+        this.defaultAuth0Connection = defaultAuth0Connection;
     }
 
     public long getId() {
@@ -98,5 +101,9 @@ public class StudyDto implements Serializable {
 
     public void setRecaptchaSiteKey(String key) {
         this.recaptchaSiteKey = key;
+    }
+
+    public String getDefaultAuth0Connection() {
+        return defaultAuth0Connection;
     }
 }

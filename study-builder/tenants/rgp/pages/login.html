@@ -2004,7 +2004,7 @@
 
           webAuth.signup(
             {
-              connection: 'Username-Password-Authentication',
+              connection: '##DB_NAME##',
               username: email,
               email: email,
               password: password,
@@ -2099,7 +2099,7 @@
           webAuth.login(
             {
               state: config.extraParams.state,
-              realm: 'Username-Password-Authentication',
+              realm: '##DB_NAME##',
               email: email,
               password: password,
             },
@@ -2164,7 +2164,7 @@
 
           webAuth.changePassword(
             {
-              connection: 'Username-Password-Authentication',
+              connection: '##DB_NAME##',
               email: email,
             },
             function (err) {

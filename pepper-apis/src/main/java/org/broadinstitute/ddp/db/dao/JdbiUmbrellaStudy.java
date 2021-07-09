@@ -25,14 +25,16 @@ public interface JdbiUmbrellaStudy extends SqlObject {
     String findUmbrellaGuidForStudyId(@Bind("studyId") long studyId);
 
     @SqlQuery("select us.umbrella_study_id, us.umbrella_id, us.study_name, us.guid, us.irb_password, us.web_base_url, us.auth0_tenant_id,"
-            + " op.olc_precision_code, us.share_participant_location, us.study_email, us.enable_data_export, us.recaptcha_site_key"
+            + " op.olc_precision_code, us.share_participant_location, us.study_email, us.enable_data_export, us.recaptcha_site_key,"
+            + " us.default_auth0_connection"
             + " from umbrella_study us"
             + " left join olc_precision op on op.olc_precision_id = us.olc_precision_id")
     @RegisterConstructorMapper(StudyDto.class)
     List<StudyDto> findAll();
 
     @SqlQuery("select us.umbrella_study_id, us.umbrella_id, us.study_name, us.guid, us.irb_password, us.web_base_url, us.auth0_tenant_id,"
-            + " op.olc_precision_code, us.share_participant_location, us.study_email, us.enable_data_export, us.recaptcha_site_key"
+            + " op.olc_precision_code, us.share_participant_location, us.study_email, us.enable_data_export, us.recaptcha_site_key,"
+            + " us.default_auth0_connection"
             + " from umbrella_study us"
             + " left join olc_precision op on op.olc_precision_id = us.olc_precision_id"
             + " where us.guid = :studyGuid")
@@ -40,7 +42,8 @@ public interface JdbiUmbrellaStudy extends SqlObject {
     StudyDto findByStudyGuid(@Bind("studyGuid") String studyGuid);
 
     @SqlQuery("select us.umbrella_study_id, us.umbrella_id, us.study_name, us.guid, us.irb_password, us.web_base_url, us.auth0_tenant_id,"
-            + " op.olc_precision_code, us.share_participant_location, us.study_email, us.enable_data_export, us.recaptcha_site_key"
+            + " op.olc_precision_code, us.share_participant_location, us.study_email, us.enable_data_export, us.recaptcha_site_key,"
+            + " us.default_auth0_connection"
             + " from umbrella_study us"
             + " left join olc_precision op on op.olc_precision_id = us.olc_precision_id"
             + " where us.umbrella_study_id = :studyId")
@@ -48,7 +51,8 @@ public interface JdbiUmbrellaStudy extends SqlObject {
     StudyDto findById(@Bind("studyId") long studyId);
 
     @SqlQuery("select us.umbrella_study_id, us.umbrella_id, us.study_name, us.guid, us.irb_password, us.web_base_url, us.auth0_tenant_id,"
-            + " op.olc_precision_code, us.share_participant_location, us.study_email, us.enable_data_export, us.recaptcha_site_key"
+            + " op.olc_precision_code, us.share_participant_location, us.study_email, us.enable_data_export, us.recaptcha_site_key,"
+            + " us.default_auth0_connection"
             + " from umbrella_study as us"
             + " join umbrella as u on us.umbrella_id = u.umbrella_id"
             + " left join olc_precision op on op.olc_precision_id = us.olc_precision_id"
@@ -57,7 +61,8 @@ public interface JdbiUmbrellaStudy extends SqlObject {
     List<StudyDto> findByUmbrellaGuid(@Bind("umbrellaGuid") String umbrellaGuid);
 
     @SqlQuery("select us.umbrella_study_id, us.umbrella_id, us.study_name, us.guid, us.irb_password, us.web_base_url, us.auth0_tenant_id,"
-            + " op.olc_precision_code, us.share_participant_location, us.study_email, us.enable_data_export, us.recaptcha_site_key"
+            + " op.olc_precision_code, us.share_participant_location, us.study_email, us.enable_data_export, us.recaptcha_site_key,"
+            + " us.default_auth0_connection"
             + " from umbrella_study as us"
             + " join auth0_tenant as t on t.auth0_tenant_id = us.auth0_tenant_id "
             + " left join olc_precision op on op.olc_precision_id = us.olc_precision_id"
@@ -84,9 +89,10 @@ public interface JdbiUmbrellaStudy extends SqlObject {
     String getIrbPasswordUsingStudyGuid(String studyGuid);
 
     @SqlUpdate("insert into umbrella_study(study_name, guid, umbrella_id, web_base_url, auth0_tenant_id,"
-            + " irb_password, olc_precision_id, share_participant_location, study_email, enable_data_export, recaptcha_site_key) "
+            + " irb_password, olc_precision_id, share_participant_location, study_email, enable_data_export, recaptcha_site_key,"
+            + " default_auth0_connection) "
             + "values(:studyName, :studyGuid, :umbrellaId, :webBaseUrl, :auth0TenantId, :irbPassword, :precisionId,"
-            + " :shareLocation, :studyEmail, true, :recaptchaSiteKey)")
+            + " :shareLocation, :studyEmail, true, :recaptchaSiteKey, :defaultAuth0Connection)")
     @GetGeneratedKeys
     long insert(@Bind("studyName") String studyName,
                 @Bind("studyGuid") String studyGuid,
@@ -97,10 +103,12 @@ public interface JdbiUmbrellaStudy extends SqlObject {
                 @Bind("precisionId") Long precisionId,
                 @Bind("shareLocation") boolean shareLocation,
                 @Bind("studyEmail") String studyEmail,
-                @Bind("recaptchaSiteKey") String recaptchaSiteKey);
+                @Bind("recaptchaSiteKey") String recaptchaSiteKey,
+                @Bind("defaultAuth0Connection") String defaultAuth0Connection);
 
     default long insert(String studyName, String studyGuid, long umbrellaId, String webBaseUrl, long auth0TenantId,
-                        OLCPrecision precision, boolean shareLocation, String studyEmail, String recaptchaSiteKey) {
+                        OLCPrecision precision, boolean shareLocation, String studyEmail, String recaptchaSiteKey,
+                        String defaultAuth0Connection) {
         Long precisionId;
         if (precision == null) {
             precisionId = null;
@@ -108,7 +116,7 @@ public interface JdbiUmbrellaStudy extends SqlObject {
             precisionId = getJdbiOLCPrecision().findDtoForCode(precision).getId();
         }
         return insert(studyName, studyGuid, umbrellaId, webBaseUrl, auth0TenantId, null, precisionId, shareLocation, studyEmail,
-                recaptchaSiteKey);
+                recaptchaSiteKey, defaultAuth0Connection);
     }
 
     @SqlUpdate("update umbrella_study set irb_password = :irbPassword where guid = :studyGuid")

@@ -1,5 +1,5 @@
 tenant:
-  default_directory: Username-Password-Authentication
+  default_directory: ##DB_NAME##
 
 rules:
   - name: Force email verification
@@ -33,6 +33,7 @@ emailTemplates:
   - template: verify_email
     body: ./emails/verify_email.html
     from: Rare Genomes Project <##STUDY_EMAIL##>
+    resultUrl: '{{ application.callback_domain }}/email-verified-callback'
     subject: >-
       {% if user.user_metadata.language == "es" %}
       [es] Confirm your Rare Genomes Project Account
@@ -58,7 +59,8 @@ clients:
     allowed_logout_urls: [
       '##BASE_URL##',
       '##BASE_URL##/error',
-      '##BASE_URL##/session-expired'
+      '##BASE_URL##/session-expired',
+      '##BASE_URL##/email-verification-required'
       ##LOCALHOST_LOGOUTS##
     ]
     web_origins: [

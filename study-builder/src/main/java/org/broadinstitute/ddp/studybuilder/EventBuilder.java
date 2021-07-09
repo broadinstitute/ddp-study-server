@@ -241,11 +241,12 @@ public class EventBuilder {
 
             for (Config attachmentCfg : actionCfg.getConfigList("pdfAttachments")) {
                 String pdfName = attachmentCfg.getString("pdfName");
-                boolean generateIfMissing = attachmentCfg.getBoolean("generateIfMissing");
+                boolean generateAlways = attachmentCfg.hasPath("alwaysGenerate")
+                        && attachmentCfg.getBoolean("alwaysGenerate");
                 long pdfId = pdfDao.findConfigInfoByStudyIdAndName(studyDto.getId(), pdfName)
                         .map(PdfConfigInfo::getId)
                         .orElseThrow(() -> new DDPException("Could not find pdf configuration with name " + pdfName));
-                jdbiPdfNotification.insert(pdfId, actionId, generateIfMissing);
+                jdbiPdfNotification.insert(pdfId, actionId, generateAlways);
             }
 
             return actionId;

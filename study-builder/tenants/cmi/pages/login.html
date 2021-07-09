@@ -121,6 +121,12 @@
         headerText = '';
         headerLogo = '##ASSETS_BUCKET_URL##/esc/project-logo.png';
         studyColor = '#3785BF';
+    } else if (study_guid === 'cmi-pancan') {
+        registerUrl = '##PANCAN_BASE_URL##/count-me-in';
+        studyColor = '#7154FF';
+        headerText = '';
+        headerLogo = '##ASSETS_BUCKET_URL##/pancan/project-logo.png';
+        applyRedesignedStyles();
     } else {
         console.log('No configuration for ' + study_guid + ', will use defaults');
     }
