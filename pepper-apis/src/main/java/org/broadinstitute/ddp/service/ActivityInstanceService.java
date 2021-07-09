@@ -1,5 +1,6 @@
 package org.broadinstitute.ddp.service;
 
+import static org.broadinstitute.ddp.service.actvityinstancebuilder.TemplateRenderHelper.RenderContextSource.FORM_RESPONSE_AND_ACTIVITY_DEF;
 import static org.broadinstitute.ddp.service.actvityinstancebuilder.context.AIBuilderParams.createParams;
 import static org.broadinstitute.ddp.util.TranslationUtil.extractOptionalActivitySummary;
 import static org.broadinstitute.ddp.util.TranslationUtil.extractOptionalActivityTranslation;
@@ -545,6 +546,7 @@ public class ActivityInstanceService {
                 .checkParams()
                     .readFormInstanceData()
                     .readActivityDef()
+                    .createRendererContext(FORM_RESPONSE_AND_ACTIVITY_DEF)
                 .startBuild()
                     .buildFormInstance()
                     .buildFormChildren()
@@ -592,6 +594,7 @@ public class ActivityInstanceService {
                 .checkParams()
                     .readFormInstanceData()
                     .readActivityDef()
+                    .createRendererContext(FORM_RESPONSE_AND_ACTIVITY_DEF)
                 .startBuild()
                     .buildFormInstance()
                     .buildFormChildren()

@@ -7,6 +7,7 @@ import org.apache.http.HttpStatus;
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.db.TransactionWrapper;
+import org.broadinstitute.ddp.db.dao.DataExportDao;
 import org.broadinstitute.ddp.db.dao.JdbiClient;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudyCached;
 import org.broadinstitute.ddp.db.dao.JdbiUserStudyEnrollment;
@@ -16,6 +17,8 @@ import org.broadinstitute.ddp.db.dao.UserGovernanceDao;
 import org.broadinstitute.ddp.db.dao.UserProfileDao;
 import org.broadinstitute.ddp.db.dto.LanguageDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
+import org.broadinstitute.ddp.event.publish.TaskPublisher;
+import org.broadinstitute.ddp.event.publish.pubsub.TaskPubSubPublisher;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.json.GovernedUserRegistrationPayload;
 import org.broadinstitute.ddp.json.UserRegistrationResponse;
@@ -39,6 +42,12 @@ import spark.Response;
 
 public class GovernedParticipantRegistrationRoute extends ValidatedJsonInputRoute<GovernedUserRegistrationPayload> {
     private static final Logger LOG = LoggerFactory.getLogger(GovernedParticipantRegistrationRoute.class);
+
+    private final TaskPublisher taskPublisher;
+
+    public GovernedParticipantRegistrationRoute(TaskPublisher taskPublisher) {
+        this.taskPublisher = taskPublisher;
+    }
 
     @Override
     public Object handle(Request request, Response response, GovernedUserRegistrationPayload payload) throws Exception {
@@ -77,6 +86,11 @@ public class GovernedParticipantRegistrationRoute extends ValidatedJsonInputRout
             handle.attach(JdbiUserStudyEnrollment.class)
                     .changeUserStudyEnrollmentStatus(governedUser.getGuid(), studyGuid, EnrollmentStatusType.REGISTERED);
             LOG.info("Registered user {} with status {} in study {}", governedUser.getGuid(), EnrollmentStatusType.REGISTERED, studyGuid);
+
+            handle.attach(DataExportDao.class).queueDataSync(governedUser.getId());
+            taskPublisher.publishTask(
+                    TaskPubSubPublisher.TASK_PARTICIPANT_REGISTERED,
+                    "", studyGuid, governedUser.getGuid());
 
             return new UserRegistrationResponse(governedUser.getGuid());
         });

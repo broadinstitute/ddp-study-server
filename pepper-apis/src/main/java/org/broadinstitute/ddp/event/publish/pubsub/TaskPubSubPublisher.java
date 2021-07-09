@@ -26,6 +26,7 @@ public class TaskPubSubPublisher implements TaskPublisher {
 
     private static final Logger LOG = LoggerFactory.getLogger(TaskPubSubPublisher.class);
 
+    public static final String TASK_PARTICIPANT_REGISTERED = "PARTICIPANT_REGISTERED";
     public static final String ATTR_STUDY_GUID = "studyGuid";
     public static final String ATTR_PARTICIPANT_GUID = "participantGuid";
 

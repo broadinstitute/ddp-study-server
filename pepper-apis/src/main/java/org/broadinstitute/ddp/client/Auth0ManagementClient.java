@@ -283,12 +283,13 @@ public class Auth0ManagementClient {
     /**
      * Create a new auth0 user account. Note: need database connection for creating email/password account.
      *
-     * @param connection the database connection name
-     * @param email      the user's email
-     * @param password   the user's password
+     * @param connection    the database connection name
+     * @param email         the user's email
+     * @param password      the user's password
+     * @param emailVerified optional, if non-null then set email verified
      * @return result with created user, or error response
      */
-    public ApiResult<User, APIException> createAuth0User(String connection, String email, String password) {
+    public ApiResult<User, APIException> createAuth0User(String connection, String email, String password, Boolean emailVerified) {
         String msg = String.format(
                 "Hit rate limit while creating auth0 user with email %s in connection %s, retrying",
                 email, connection);
@@ -299,6 +300,9 @@ public class Auth0ManagementClient {
                 user.setEmail(email);
                 user.setPassword(password);
                 user.setConnection(connection);
+                if (emailVerified != null) {
+                    user.setEmailVerified(emailVerified);
+                }
                 User createdUser = mgmtApi.users().create(user).execute();
                 return ApiResult.ok(200, createdUser);
             } catch (APIException e) {
@@ -307,6 +311,10 @@ public class Auth0ManagementClient {
                 return ApiResult.thrown(e);
             }
         });
+    }
+
+    public ApiResult<User, APIException> createAuth0User(String connection, String email, String password) {
+        return createAuth0User(connection, email, password, null);
     }
 
     /**

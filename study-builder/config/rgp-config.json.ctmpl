@@ -22,10 +22,11 @@
     "LOCALHOST_ORIGINS": "",
   {{end}}
   {{if eq $environment "prod"}}
-    "STUDY_EMAIL": "info@raregenomes.org",
+    "STUDY_EMAIL": "raregenomes@broadinstitute.org",
   {{else}}
     "STUDY_EMAIL": "rgp@{{$environment}}.datadonationplatform.org",
   {{end}}
+    "DB_NAME": "{{$conf.auth0.connection}}",
     "BASE_URL": "{{$conf.baseWebUrl}}",
     "LOGIN_DOMAIN": "{{$conf.auth0.loginDomain}}",
     "ASSETS_BUCKET": "{{$conf.assetsBucketName}}",
