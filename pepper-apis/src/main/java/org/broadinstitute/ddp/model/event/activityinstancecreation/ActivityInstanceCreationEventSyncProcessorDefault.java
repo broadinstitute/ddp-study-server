@@ -18,6 +18,9 @@ import org.jdbi.v3.core.Handle;
  */
 public class ActivityInstanceCreationEventSyncProcessorDefault implements ActivityInstanceCreationEventSyncProcessor {
 
+    /** In default case created only 1 activity instance */
+    private static final int INSTANCES_TO_CREATE_COUNT = 1;
+
     protected final Handle handle;
     protected final EventSignal signal;
 
@@ -27,6 +30,9 @@ public class ActivityInstanceCreationEventSyncProcessorDefault implements Activi
 
     protected final long studyActivityId;
     protected final ActivityInstanceCreationService creationService;
+
+    protected ActivityDto activityDto;
+
 
     public ActivityInstanceCreationEventSyncProcessorDefault(
             Handle handle, EventSignal signal, long studyActivityId, ActivityInstanceCreationService creationService) {
@@ -41,12 +47,10 @@ public class ActivityInstanceCreationEventSyncProcessorDefault implements Activi
 
     @Override
     public void create() {
-        ActivityDto activityDto = jdbiActivity.queryActivityById(studyActivityId);
+        activityDto = jdbiActivity.queryActivityById(studyActivityId);
         creationService.checkSignalIfNestedTargetActivity(activityDto.getParentActivityId());
 
-        Integer numberOfActivitiesLeft = creationService.detectNumberOfActivitiesLeft(studyActivityId, activityDto, jdbiActivityInstance);
-
-        if (numberOfActivitiesLeft == null || numberOfActivitiesLeft > 0) {
+        if (detectPossibleNumberOfInstancesToCreate(INSTANCES_TO_CREATE_COUNT) >= INSTANCES_TO_CREATE_COUNT) {
 
             creationService.hideExistingInstancesIfRequired(studyActivityId, handle, activityDto);
 
@@ -101,6 +105,15 @@ public class ActivityInstanceCreationEventSyncProcessorDefault implements Activi
                     parentActivityInstanceGuid);
             creationService.runDownstreamEvents(activityId, creationResult.getActivityInstanceId(), handle);
         }
+    }
+
+    /**
+     * Get possible number of instances to create
+     */
+    @Override
+    public int detectPossibleNumberOfInstancesToCreate(int instancesToCreate) {
+        Integer numberOfActivitiesLeft = creationService.detectNumberOfActivitiesLeft(studyActivityId, activityDto, jdbiActivityInstance);
+        return numberOfActivitiesLeft == null || numberOfActivitiesLeft > 0 ? INSTANCES_TO_CREATE_COUNT : 0;
     }
 
     public Handle getHandle() {

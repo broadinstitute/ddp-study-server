@@ -1,5 +1,6 @@
 package org.broadinstitute.ddp.model.event.activityinstancecreation;
 
+import static java.lang.String.format;
 import static org.broadinstitute.ddp.model.event.activityinstancecreation.ActivityInstanceCreatorUtil.getAnswer;
 import static org.broadinstitute.ddp.model.event.activityinstancecreation.ActivityInstanceCreatorUtil.getAnswersFromComposite;
 
@@ -25,7 +26,7 @@ import org.jdbi.v3.core.Handle;
  *     <li>find a question by 'sourceQuestionStableId' (in source, current activity) and get all answers (for example selections);</li>
  *     <li>for each of found answers:</li>
  *     <li> - create a new instance (of activity with ID='studyActivityId';</li>
- *     <li> - if `targetQuestionStableId` is specified then copy the processed answer to to `targetQuestionStableId`;</li>
+ *     <li> - if `targetQuestionStableId` is specified then copy the processed answer to `targetQuestionStableId`;</li>
  * </ul>
  * NOTE: currently is supported the COMPOSITE source (i.e. 'sourceQuestionStableId' points to a CompositeQuestion
  * containing PickList of render mode AUTOCOMPLETE). And in this case `targetQuestionStableId` should point to a
@@ -39,12 +40,13 @@ public class ActivityInstanceCreationFromAnswersEventSyncProcessor extends Activ
 
     /**
      * Constructor.
-     * @param handle                  jdbi Handle
-     * @param signal                  EventSignal (here should be of type ActivityInstanceStatusChangeSignal)
-     * @param studyActivityId         ID of a study activity which instance to create
-     * @param sourceQuestionStableId  stable_id of a question in source activity (from which to copy answers)
-     * @param targetQuestionStableId  stable_id of a question in target (created ones) activities (where to copy answers)
-     * @param creationService         service containins methods used during activity instance creation
+     *
+     * @param handle                 jdbi Handle
+     * @param signal                 EventSignal (here should be of type ActivityInstanceStatusChangeSignal)
+     * @param studyActivityId        ID of a study activity which instance to create
+     * @param sourceQuestionStableId stable_id of a question in source activity (from which to copy answers)
+     * @param targetQuestionStableId stable_id of a question in target (created ones) activities (where to copy answers)
+     * @param creationService        service class containing methods used during activity instance creation
      */
     public ActivityInstanceCreationFromAnswersEventSyncProcessor(
             Handle handle,
@@ -59,34 +61,36 @@ public class ActivityInstanceCreationFromAnswersEventSyncProcessor extends Activ
     }
 
     /**
-     * Create N activity instances.
+     * Create N activity instances from answers entered in current activity.
      * where N = number of answers in composite question `sourceQuestionStableId`.
      */
     @Override
     public void create() {
-        var activityDto = jdbiActivity.queryActivityById(studyActivityId);
+        activityDto = jdbiActivity.queryActivityById(studyActivityId);
         creationService.checkSignalIfNestedTargetActivity(activityDto.getParentActivityId());
 
-        // check if number of non-used activities is enough (it can be limited if a special limit parameter specified)
-        Integer numberOfActivitiesLeft = creationService.detectNumberOfActivitiesLeft(studyActivityId, activityDto, jdbiActivityInstance);
-        if (numberOfActivitiesLeft == null || numberOfActivitiesLeft > 0) {
+        long sourceActivityInstanceId = ((ActivityInstanceStatusChangeSignal) signal).getActivityInstanceIdThatChanged();
 
-            long sourceActivityInstanceId = ((ActivityInstanceStatusChangeSignal) signal).getActivityInstanceIdThatChanged();
+        var sourceAnswers = detectSelectedAnswers(handle, sourceActivityInstanceId);
 
-            List<Answer> sourceAnswers = detectSelectedAnswers(handle, sourceActivityInstanceId);
+        var activityInstancesCreator = detectActivityInstancesCreator(sourceAnswers);
+        if (detectPossibleNumberOfInstancesToCreate(activityInstancesCreator.getInstancesCount(sourceAnswers)) > 0) {
+            creationService.hideExistingInstancesIfRequired(studyActivityId, handle, activityDto);
+            activityInstancesCreator.createActivityInstances(sourceAnswers, activityDto);
+        }
+    }
 
-            // depending on a question type choose an appropriate creator (now supported only COMPOSITE creator)
-            var questionType = detectQuestionType(sourceAnswers);
-            ActivityInstancesCreator activityInstancesCreator;
-            switch (questionType) {
-                case COMPOSITE:
-                    activityInstancesCreator = new ActivityInstancesFromCompositeCreator(
-                            this, sourceQuestionStableId, targetQuestionStableId);
-                    break;
-                default:
-                    throw new DDPException("Not supported creation of activity instances from answers for type=" + questionType);
-            }
-            activityInstancesCreator.createActivityInstances(sourceAnswers, activityDto, numberOfActivitiesLeft);
+    /**
+     * Check if the necessary number of activities is possible to create. If not - an exception is thrown
+     */
+    @Override
+    public int detectPossibleNumberOfInstancesToCreate(int instancesToCreate) {
+        var numberOfActivitiesLeft = creationService.detectNumberOfActivitiesLeft(studyActivityId, activityDto, jdbiActivityInstance);
+        if (numberOfActivitiesLeft != null && numberOfActivitiesLeft < instancesToCreate) {
+            throw new DDPException(format("Impossible to create all %d instances from answers: the limit of instances "
+                    + "of this type is gained", instancesToCreate));
+        } else {
+            return instancesToCreate;
         }
     }
 
@@ -104,6 +108,23 @@ public class ActivityInstanceCreationFromAnswersEventSyncProcessor extends Activ
                 throw new DDPException("Activity instances creation from answers is supported only for composite questions. StableID="
                         + sourceQuestionStableId);
         }
+    }
+
+    /**
+     * Depending on a question type choose an appropriate creator (now supported only COMPOSITE creator)
+     */
+    private ActivityInstancesCreator detectActivityInstancesCreator(List<Answer> sourceAnswers) {
+        var questionType = detectQuestionType(sourceAnswers);
+        ActivityInstancesCreator activityInstancesCreator;
+        switch (questionType) {
+            case COMPOSITE:
+                activityInstancesCreator = new ActivityInstancesFromCompositeCreator(
+                        this, sourceQuestionStableId, targetQuestionStableId);
+                break;
+            default:
+                throw new DDPException("Not supported creation of activity instances from answers for type=" + questionType);
+        }
+        return activityInstancesCreator;
     }
 
     /**

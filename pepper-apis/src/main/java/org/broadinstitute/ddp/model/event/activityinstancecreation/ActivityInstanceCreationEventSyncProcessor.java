@@ -15,6 +15,8 @@ public interface ActivityInstanceCreationEventSyncProcessor {
 
     long createActivityInstance(Long parentActivityId);
 
+    int detectPossibleNumberOfInstancesToCreate(int instancesToCreate);
+
     Handle getHandle();
 
     EventSignal getSignal();
