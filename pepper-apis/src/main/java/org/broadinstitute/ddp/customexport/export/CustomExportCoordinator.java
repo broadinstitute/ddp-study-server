@@ -25,12 +25,14 @@ import java.util.stream.Collectors;
 import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.Bucket;
 import com.typesafe.config.Config;
+import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.customexport.constants.CustomExportConfigFile;
 import org.broadinstitute.ddp.customexport.db.dao.CustomExportDao;
 import org.broadinstitute.ddp.customexport.db.dto.CompletedUserDto;
 import org.broadinstitute.ddp.customexport.model.CustomExportParticipant;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.exception.DDPException;
+import org.broadinstitute.ddp.util.ConfigUtil;
 import org.broadinstitute.ddp.util.SendGridMailUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -114,8 +116,9 @@ public class CustomExportCoordinator {
             templateVarNameToValue.put("bucketLink", fileUrl);
         }
 
+        String proxy = ConfigUtil.getStrIfPresent(cfg, ConfigFile.Sendgrid.PROXY);
         SendGridMailUtil.sendDynamicEmailMessage(fromName, fromEmailAddress, toName, toEmailAddress,  subject, templateId,
-                templateVarNameToValue, sendGridApiKey);
+                templateVarNameToValue, sendGridApiKey, proxy);
     }
 
     private boolean runCsvExports(StudyDto studyDto, List<CustomActivityExtract> activities) {
