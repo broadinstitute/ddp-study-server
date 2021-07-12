@@ -1,8 +1,11 @@
 package org.broadinstitute.ddp.util;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.Map;
 
+import com.sendgrid.Client;
 import com.sendgrid.helpers.mail.objects.Email;
 import com.sendgrid.helpers.mail.Mail;
 import com.sendgrid.Method;
@@ -10,7 +13,10 @@ import com.sendgrid.helpers.mail.objects.Personalization;
 import com.sendgrid.Request;
 import com.sendgrid.Response;
 import com.sendgrid.SendGrid;
+import org.apache.http.HttpHost;
 import org.apache.http.HttpStatus;
+import org.apache.http.impl.NoConnectionReuseStrategy;
+import org.apache.http.impl.client.HttpClients;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,16 +31,16 @@ public class SendGridMailUtil {
         Mail messageToSend = buildEmailMessage(fromName, fromEmailAddress, toName, toEmailAddress, subject, sendGridTemplateId,
                 templateVarNameToValue, false);
 
-        submitMailMessage(messageToSend, sendGridApiKey);
+        submitMailMessage(messageToSend, sendGridApiKey, null);
     }
 
     public static void sendDynamicEmailMessage(String fromName, String fromEmailAddress, String toName, String toEmailAddress,
                                               String subject, String sendGridTemplateId, Map<String, String> templateVarNameToValue,
-                                               String sendGridApiKey) {
+                                               String sendGridApiKey, String proxy) {
         Mail messageToSend = buildEmailMessage(fromName, fromEmailAddress, toName, toEmailAddress, subject, sendGridTemplateId,
                 templateVarNameToValue, true);
 
-        submitMailMessage(messageToSend, sendGridApiKey);
+        submitMailMessage(messageToSend, sendGridApiKey, proxy);
     }
 
     private static Mail buildEmailMessage(String fromName, String fromEmailAddress, String toName, String toEmailAddress, String subject,
@@ -62,7 +68,7 @@ public class SendGridMailUtil {
         return mail;
     }
 
-    private static void submitMailMessage(Mail mailMessage, String sendGridApiKey) {
+    private static void submitMailMessage(Mail mailMessage, String sendGridApiKey, String proxy) {
         Request request = new Request();
         request.setMethod(Method.POST);
         request.setEndpoint("mail/send");
@@ -74,7 +80,7 @@ public class SendGridMailUtil {
             throw new RuntimeException(msg, e);
         }
 
-        SendGrid sendGrid = new SendGrid(sendGridApiKey);
+        SendGrid sendGrid = createSendGridInstance(sendGridApiKey, proxy);
         Response response;
         try {
             response = sendGrid.api(request);
@@ -88,6 +94,25 @@ public class SendGridMailUtil {
                     + "Response Body: " + response.getBody();
             LOG.error(msg);
             throw new RuntimeException(msg);
+        } else {
+            LOG.info("Successfully submitted message to SendGrid with subject {}", mailMessage.subject);
         }
+    }
+
+    private static SendGrid createSendGridInstance(String sendGridApiKey, String proxy) {
+        var httpClientBuilder = HttpClients.custom();
+        if (proxy != null && !proxy.isBlank()) {
+            URL proxyUrl;
+            try {
+                proxyUrl = new URL(proxy);
+            } catch (MalformedURLException e) {
+                throw new IllegalArgumentException("proxy needs to be a valid url");
+            }
+            httpClientBuilder.setProxy(new HttpHost(proxyUrl.getHost(), proxyUrl.getPort(), proxyUrl.getProtocol()));
+            httpClientBuilder.setConnectionReuseStrategy(NoConnectionReuseStrategy.INSTANCE);
+            LOG.info("Using SendGrid proxy: {}", proxy);
+        }
+        var client = new Client(httpClientBuilder.build());
+        return new SendGrid(sendGridApiKey, client);
     }
 }
