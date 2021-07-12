@@ -1,7 +1,5 @@
 package org.broadinstitute.ddp.model.event.activityinstancecreation.creator;
 
-import static org.broadinstitute.ddp.model.event.activityinstancecreation.creator.ActivityInstanceCreatorUtil.getQuestionDto;
-
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -57,8 +55,7 @@ public class ActivityInstancesFromCompositeCreator extends ActivityInstancesCrea
     @Override
     protected void copyAnswerToNewActivityInstance(Handle handle, EventSignal signal, long targetInstanceId, Answer sourceAnswer) {
         var targetAnswer = cloneChildAnswer(sourceAnswer, sourceQuestionStableId, targetQuestionStableId);
-        var questionDto = getQuestionDto(handle, signal.getStudyId(), targetQuestionStableId);
-        handle.attach(AnswerDao.class).createAnswer(signal.getOperatorId(), targetInstanceId, questionDto.getId(), targetAnswer);
+        handle.attach(AnswerDao.class).createAnswer(signal.getOperatorId(), targetInstanceId, targetAnswer);
     }
 
     /**

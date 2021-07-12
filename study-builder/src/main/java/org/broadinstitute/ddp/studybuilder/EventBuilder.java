@@ -2,6 +2,7 @@ package org.broadinstitute.ddp.studybuilder;
 
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
+import static org.broadinstitute.ddp.util.MiscUtil.isTrue;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -258,13 +259,18 @@ public class EventBuilder {
                     .orElseThrow(() -> new DDPException("Could not find pdf configuration with name " + pdfName));
             return actionDao.insertPdfGenerationAction(pdfId);
         } else if (EventActionType.ACTIVITY_INSTANCE_CREATION.name().equals(type)) {
-            String activityCode = actionCfg.getString("ACTIVITY_CODE_FIELD");
+            String activityCode = actionCfg.getString(ACTIVITY_CODE_FIELD);
             Boolean createFromAnswer = ConfigUtil.getBoolIfPresent(actionCfg, "createFromAnswer");
             String sourceQuestionStableId = ConfigUtil.getStrIfPresent(actionCfg, "sourceQuestionStableId");
             String targetQuestionStableId = ConfigUtil.getStrIfPresent(actionCfg, "targetQuestionStableId");
             ActivityDto activityDto = handle.attach(JdbiActivity.class)
                     .findActivityByStudyIdAndCode(studyDto.getId(), activityCode)
                     .orElseThrow(() -> new DDPException("Could not find activity " + activityCode));
+            if (isTrue(createFromAnswer)) {
+                if (!triggerCfg.getString("type").equals(EventTriggerType.ACTIVITY_STATUS.name())) {
+                    throw new DDPException("When createFromAnswer==true then trigger type must be ACTIVITY_STATUS");
+                }
+            }
             if (activityDto.getParentActivityCode() != null) {
                 if (!triggerCfg.getString("type").equals(EventTriggerType.ACTIVITY_STATUS.name())) {
                     throw new DDPException("Currently only ACTIVITY_STATUS trigger is allowed"
@@ -338,8 +344,8 @@ public class EventBuilder {
     }
 
     public CopyConfiguration buildCopyConfiguration(long studyId, boolean copyFromPreviousInstance,
-                                                     List<String> previousInstanceQuestionStableIds,
-                                                     List<Config> pairsCfgList) {
+                                                    List<String> previousInstanceQuestionStableIds,
+                                                    List<Config> pairsCfgList) {
         List<CopyPreviousInstanceFilter> filters = new ArrayList<>();
         for (var stableId : previousInstanceQuestionStableIds) {
             var location = new CopyAnswerLocation(stableId);
@@ -456,10 +462,10 @@ public class EventBuilder {
         } else if (EventActionType.MARK_ACTIVITIES_READ_ONLY.name().equals(type)) {
             List<String> activityCodes = actionCfg.getStringList("activityCodes");
             return String.format("%s/%s", type, String.join(",", activityCodes));
-        } else if (EventActionType.UPDATE_USER_STATUS.name().equals(type))  {
+        } else if (EventActionType.UPDATE_USER_STATUS.name().equals(type)) {
             String targetStatus = actionCfg.getString("status");
             return String.format("%s/%s", type, targetStatus);
-        } else if (EventActionType.UPDATE_USER_STATUS.name().equals(type))  {
+        } else if (EventActionType.UPDATE_USER_STATUS.name().equals(type)) {
             String workflow = actionCfg.getString("workflow");
             String status = actionCfg.getString("status");
             return String.format("%s/%s/%s", type, workflow, status);
