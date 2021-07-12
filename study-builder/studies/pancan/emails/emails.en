@@ -1,9 +1,0 @@
-#set( $globalTranslationsFile = {
-    "salutation": "Dear Participant/Parent,",
-    "thank_you": "Thank you for registering for Count Me In. We are now asking if you would be willing to sign our research consent form to complete [your/your child’s] enrollment and opt into different aspects of this study.",
-    "sign_consent": "Please Sign Consent Form"
-    "contact": "If you have questions at any point and would like to talk to a member of our study staff, please reach out to us at <a href="mailto:${contact.email}" target="_blank" style="color: #7154ff; text-decoration: none; cursor: pointer;">${contact.email}</a> or call <a href="tel:${contact.phone}" style="color: #7154ff; text-decoration: none; cursor: pointer;">${contact.phone}</a>."
-    "closing": "Sincerely,",
-    "study_team": "The Count Me In Team",
-    "addition": "For additional updates, follow us on <a href="${social.twitter}" target="_blank" style="color: #7154ff; text-decoration: none; cursor: pointer;">Twitter</a>, <a href="${social.facebook}" target="_blank" style="color: #7154ff; text-decoration: none; cursor: pointer;">Facebook</a>, or <a href="${social.instagram}" target="_blank" style="color: #7154ff; text-decoration: none; cursor: pointer;">Instagram</a>."
-})
