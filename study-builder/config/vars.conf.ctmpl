@@ -1,8 +1,8 @@
 {{with $environment := env "ENVIRONMENT"}}
 {{with $version := env "VERSION"}}
 {{with $study := env "STUDY_KEY"}}
-{{with $confonse := vault (printf "secret/pepper/%s/%s/%s/conf" $environment $version $study)}}
-{{with $conf := $confonse.Data}}
+{{with $response := vault (printf "secret/pepper/%s/%s/%s/conf" $environment $version $study)}}
+{{with $conf := $response.Data}}
 {{with $auth := $conf.auth0}}
 
 {
