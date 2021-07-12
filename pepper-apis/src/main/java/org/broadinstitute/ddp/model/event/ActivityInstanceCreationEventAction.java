@@ -25,7 +25,7 @@ public class ActivityInstanceCreationEventAction extends EventAction {
     private final String sourceQuestionStableId;
     private final String targetQuestionStableId;
 
-    private final ActivityInstanceCreationService creationService;
+    private ActivityInstanceCreationService creationService;
 
     public ActivityInstanceCreationEventAction(EventConfiguration eventConfiguration, EventConfigurationDto dto) {
         super(eventConfiguration, dto);
@@ -33,7 +33,6 @@ public class ActivityInstanceCreationEventAction extends EventAction {
         createFromAnswer = dto.getCreateFromAnswer();
         sourceQuestionStableId = dto.getSourceQuestionStableId();
         targetQuestionStableId = dto.getTargetQuestionStableId();
-        creationService = new ActivityInstanceCreationService();
     }
 
     public ActivityInstanceCreationEventAction(
@@ -47,12 +46,10 @@ public class ActivityInstanceCreationEventAction extends EventAction {
         this.createFromAnswer = createFromAnswer;
         this.sourceQuestionStableId = sourceQuestionStableId;
         this.targetQuestionStableId = targetQuestionStableId;
-        creationService = new ActivityInstanceCreationService();
     }
 
     @Override
     public void doAction(PexInterpreter interpreter, Handle handle, EventSignal signal) {
-        creationService.setEventSignal(signal);
         Integer delayBeforePosting = eventConfiguration.getPostDelaySeconds();
         if (delayBeforePosting != null && delayBeforePosting > 0) {
             long postAfter = Instant.now().getEpochSecond() + delayBeforePosting;
@@ -62,7 +59,7 @@ public class ActivityInstanceCreationEventAction extends EventAction {
             } else {
                 //insert queued event after checking nested activity and signal
                 ActivityDto activityDto = handle.attach(JdbiActivity.class).queryActivityById(studyActivityId);
-                creationService.checkSignalIfNestedTargetActivity(activityDto.getParentActivityId());
+                getCreationService(signal).checkSignalIfNestedTargetActivity(activityDto.getParentActivityId());
                 QueuedEventDao queuedEventDao = handle.attach(QueuedEventDao.class);
                 // fixme: serialize signal data such as activityInstanceIdThatChanged, targetStatusType, etc
                 // (perhaps leverage templateSubstitutions?) so we can rebuilt the signal and avoid issues
@@ -79,6 +76,11 @@ public class ActivityInstanceCreationEventAction extends EventAction {
         }
     }
 
+    /**
+     * Synchronous processing of ACTIVITY_INSTANCE_CREATION event.
+     * The processing of an event delegated to one of implementations of {@link ActivityInstanceCreationEventSyncProcessor}
+     * depending on an event parameters.
+     */
     public void doActionSynchronously(Handle handle, EventSignal signal) {
         ActivityInstanceCreationEventSyncProcessor activityInstanceCreationEventSyncProcessor;
         if (createFromAnswer) {
@@ -88,15 +90,25 @@ public class ActivityInstanceCreationEventAction extends EventAction {
                     studyActivityId,
                     sourceQuestionStableId,
                     targetQuestionStableId,
-                    creationService);
+                    getCreationService(signal));
         } else {
             activityInstanceCreationEventSyncProcessor =
-                    new ActivityInstanceCreationEventSyncProcessorDefault(handle, signal, studyActivityId, creationService);
+                    new ActivityInstanceCreationEventSyncProcessorDefault(handle, signal, studyActivityId, getCreationService(signal));
         }
-        activityInstanceCreationEventSyncProcessor.create();
+        activityInstanceCreationEventSyncProcessor.processInstancesCreation();
     }
 
     public long getStudyActivityId() {
         return studyActivityId;
+    }
+
+    /**
+     * Lazily create {@link ActivityInstanceCreationService}
+     */
+    private ActivityInstanceCreationService getCreationService(EventSignal signal) {
+        if (creationService == null) {
+            creationService = new ActivityInstanceCreationService(signal);
+        }
+        return creationService;
     }
 }

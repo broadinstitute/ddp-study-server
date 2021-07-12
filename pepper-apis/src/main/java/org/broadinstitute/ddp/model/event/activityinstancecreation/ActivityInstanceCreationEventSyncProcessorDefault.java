@@ -1,13 +1,12 @@
 package org.broadinstitute.ddp.model.event.activityinstancecreation;
 
-import org.broadinstitute.ddp.model.event.ActivityInstanceCreationEventAction;
 import org.broadinstitute.ddp.model.event.EventSignal;
 import org.broadinstitute.ddp.service.ActivityInstanceCreationService;
 import org.jdbi.v3.core.Handle;
 
 /**
  * Default activity instance creator (creates one activity instance).
- * Called from {@link ActivityInstanceCreationEventAction}.
+ * This implementation is used when event parameter `createFromAnswer` = false.
  */
 public class ActivityInstanceCreationEventSyncProcessorDefault extends ActivityInstanceCreationEventSyncProcessor {
 
@@ -22,7 +21,7 @@ public class ActivityInstanceCreationEventSyncProcessorDefault extends ActivityI
     }
 
     @Override
-    public void create() {
+    public void processInstancesCreation() {
         activityDto = jdbiActivity.queryActivityById(studyActivityId);
         creationService.checkSignalIfNestedTargetActivity(activityDto.getParentActivityId());
 
@@ -33,11 +32,11 @@ public class ActivityInstanceCreationEventSyncProcessorDefault extends ActivityI
     }
 
     /**
-     * Get possible number of instances to create
+     * Get possible number of instances to create.
      */
     @Override
     public int detectPossibleNumberOfInstancesToCreate(int instancesToCreate) {
-        Integer numberOfActivitiesLeft = creationService.detectNumberOfActivitiesLeft(studyActivityId, activityDto, jdbiActivityInstance);
+        var numberOfActivitiesLeft = creationService.detectNumberOfActivitiesLeft(studyActivityId, activityDto, jdbiActivityInstance);
         return numberOfActivitiesLeft == null || numberOfActivitiesLeft > 0 ? INSTANCES_TO_CREATE_COUNT : 0;
     }
 }

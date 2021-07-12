@@ -1,12 +1,17 @@
 package org.broadinstitute.ddp.model.event.activityinstancecreation.creator;
 
-import static org.broadinstitute.ddp.model.event.activityinstancecreation.ActivityInstanceCreatorUtil.cloneAnswer;
-import static org.broadinstitute.ddp.model.event.activityinstancecreation.ActivityInstanceCreatorUtil.getQuestionDto;
+import static org.broadinstitute.ddp.model.event.activityinstancecreation.creator.ActivityInstanceCreatorUtil.getQuestionDto;
 
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.broadinstitute.ddp.db.dao.AnswerDao;
+import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
+import org.broadinstitute.ddp.model.activity.instance.answer.CompositeAnswer;
+import org.broadinstitute.ddp.model.activity.instance.answer.PicklistAnswer;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
 import org.broadinstitute.ddp.model.event.EventSignal;
 import org.broadinstitute.ddp.model.event.activityinstancecreation.ActivityInstanceCreationEventSyncProcessor;
@@ -51,8 +56,34 @@ public class ActivityInstancesFromCompositeCreator extends ActivityInstancesCrea
      */
     @Override
     protected void copyAnswerToNewActivityInstance(Handle handle, EventSignal signal, long targetInstanceId, Answer sourceAnswer) {
-        var targetAnswer = cloneAnswer(sourceAnswer, sourceQuestionStableId, targetQuestionStableId);
+        var targetAnswer = cloneChildAnswer(sourceAnswer, sourceQuestionStableId, targetQuestionStableId);
         var questionDto = getQuestionDto(handle, signal.getStudyId(), targetQuestionStableId);
         handle.attach(AnswerDao.class).createAnswer(signal.getOperatorId(), targetInstanceId, questionDto.getId(), targetAnswer);
+    }
+
+    /**
+     * Create a PicklistAnswer from a child (Picklist option or detail text) answer of source instance. This answer to be saved
+     * to a target new instance.
+     */
+    private Answer cloneChildAnswer(Answer answer, String sourceQuestionStableId, String targetQuestionStableId) {
+        if (!(answer instanceof PicklistAnswer)) {
+            throw new DDPException("Source answer should be of type PicklistAnswer, StableID=" + sourceQuestionStableId);
+        }
+        var picklistAnswer = (PicklistAnswer) answer;
+        return new PicklistAnswer(null, targetQuestionStableId, null, picklistAnswer.getValue());
+    }
+
+    /**
+     * Get child non-null answers from a composite answer.
+     * The result List of Answers will be copied (one by one) to created activity instances.
+     *
+     * @param answer  a parent (composite) answer in source instance pointed by `sourceQuestionStableId`.
+     */
+    public static List<Answer> getChildAnswersFromComposite(CompositeAnswer answer) {
+        return Optional.of(answer).stream()
+                .flatMap(parent -> parent.getValue().stream())
+                .flatMap(row -> row.getValues().stream())
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
     }
 }

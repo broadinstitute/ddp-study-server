@@ -1,7 +1,5 @@
 package org.broadinstitute.ddp.model.event.activityinstancecreation;
 
-import java.util.List;
-
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
 import org.broadinstitute.ddp.db.dao.JdbiActivityInstanceStatus;
@@ -45,9 +43,8 @@ public abstract class ActivityInstanceCreationEventSyncProcessor {
     /**
      * Create activity instance (or instances).
      * Do necessary pre- and post-processing (depending on implementation).
-     *
      */
-    public abstract void create();
+    public abstract void processInstancesCreation();
 
     /**
      * Detect number of instances which can be really created
@@ -61,9 +58,9 @@ public abstract class ActivityInstanceCreationEventSyncProcessor {
      */
     public long createActivityInstance(Long parentActivityId) {
 
-        Long parentInstanceId = creationService.detectParentInstanceId(parentActivityId);
+        var parentInstanceId = creationService.detectParentInstanceId(parentActivityId);
 
-        ActivityInstanceCreationService.ActivityInstanceCreationResult creationResult = creationService.createActivityInstance(
+        var creationResult = creationService.createActivityInstance(
                 studyActivityId,
                 parentInstanceId,
                 jdbiActivityInstance,
@@ -71,8 +68,8 @@ public abstract class ActivityInstanceCreationEventSyncProcessor {
                 false,
                 null);
 
-        long newActivityInstanceId = creationResult.getActivityInstanceId();
-        String newActivityInstanceGuid = creationResult.getActivityInstanceGuid();
+        var newActivityInstanceId = creationResult.getActivityInstanceId();
+        var newActivityInstanceGuid = creationResult.getActivityInstanceGuid();
 
         if (signal instanceof DsmNotificationSignal) {
             creationService.saveKitEventData(handle, newActivityInstanceId);
@@ -89,7 +86,7 @@ public abstract class ActivityInstanceCreationEventSyncProcessor {
      * Create child nested activity instances, if any
      */
     public void createChildActivityInstances(long parentActivityId, long parentActivityInstanceId, String parentActivityInstanceGuid) {
-        List<Long> childActIdsToCreate = handle.attach(JdbiActivity.class).findChildActivityIdsThatNeedCreation(parentActivityId);
+        var childActIdsToCreate = handle.attach(JdbiActivity.class).findChildActivityIdsThatNeedCreation(parentActivityId);
         for (var activityId : childActIdsToCreate) {
             ActivityInstanceCreationService.ActivityInstanceCreationResult creationResult = creationService.createActivityInstance(
                     activityId,

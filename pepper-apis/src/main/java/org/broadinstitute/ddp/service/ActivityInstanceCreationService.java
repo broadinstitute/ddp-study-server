@@ -31,9 +31,9 @@ public class ActivityInstanceCreationService {
 
     private static final Logger LOG = LoggerFactory.getLogger(ActivityInstanceCreationService.class);
 
-    private EventSignal signal;
+    private final EventSignal signal;
 
-    public void setEventSignal(EventSignal signal) {
+    public ActivityInstanceCreationService(EventSignal signal) {
         this.signal = signal;
     }
 

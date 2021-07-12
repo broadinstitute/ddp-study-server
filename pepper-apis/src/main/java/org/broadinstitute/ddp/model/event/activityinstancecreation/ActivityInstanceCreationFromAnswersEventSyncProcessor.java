@@ -1,15 +1,14 @@
 package org.broadinstitute.ddp.model.event.activityinstancecreation;
 
 import static java.lang.String.format;
-import static org.broadinstitute.ddp.model.event.activityinstancecreation.ActivityInstanceCreatorUtil.getAnswer;
-import static org.broadinstitute.ddp.model.event.activityinstancecreation.ActivityInstanceCreatorUtil.getAnswersFromComposite;
+import static org.broadinstitute.ddp.model.event.activityinstancecreation.creator.ActivityInstanceCreatorUtil.getAnswer;
+import static org.broadinstitute.ddp.model.event.activityinstancecreation.creator.ActivityInstancesFromCompositeCreator.getChildAnswersFromComposite;
 
 import java.util.List;
 
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
 import org.broadinstitute.ddp.model.activity.instance.answer.CompositeAnswer;
-import org.broadinstitute.ddp.model.activity.types.QuestionType;
 import org.broadinstitute.ddp.model.event.ActivityInstanceStatusChangeSignal;
 import org.broadinstitute.ddp.model.event.EventSignal;
 import org.broadinstitute.ddp.model.event.activityinstancecreation.creator.ActivityInstancesCreator;
@@ -65,13 +64,14 @@ public class ActivityInstanceCreationFromAnswersEventSyncProcessor extends Activ
      * where N = number of answers in composite question `sourceQuestionStableId`.
      */
     @Override
-    public void create() {
+    public void processInstancesCreation() {
         activityDto = jdbiActivity.queryActivityById(studyActivityId);
         creationService.checkSignalIfNestedTargetActivity(activityDto.getParentActivityId());
-        long sourceActivityInstanceId = ((ActivityInstanceStatusChangeSignal) signal).getActivityInstanceIdThatChanged();
-        var sourceAnswers = detectSelectedAnswers(handle, sourceActivityInstanceId);
+        var sourceActivityInstanceId = ((ActivityInstanceStatusChangeSignal) signal).getActivityInstanceIdThatChanged();
+        var parentAnswer = getAnswer(handle, sourceActivityInstanceId, sourceQuestionStableId);
+        var sourceAnswers = detectSourceAnswers(handle, sourceActivityInstanceId, parentAnswer);
 
-        var activityInstancesCreator = detectActivityInstancesCreator(sourceAnswers);
+        var activityInstancesCreator = detectActivityInstancesCreator(parentAnswer);
         if (detectPossibleNumberOfInstancesToCreate(activityInstancesCreator.getInstancesCount(sourceAnswers)) > 0) {
             creationService.hideExistingInstancesIfRequired(studyActivityId, handle, activityDto);
             activityInstancesCreator.createActivityInstances(sourceAnswers, activityDto);
@@ -97,11 +97,10 @@ public class ActivityInstanceCreationFromAnswersEventSyncProcessor extends Activ
      * Currently supported only composite answers (i.e. `sourceQuestionStableId` - should be
      * stable_ID of a Composite Question).
      */
-    private List<Answer> detectSelectedAnswers(Handle handle, long sourceActivityInstanceId) {
-        var answer = getAnswer(handle, sourceActivityInstanceId, sourceQuestionStableId);
-        switch (answer.getQuestionType()) {
+    private List<Answer> detectSourceAnswers(Handle handle, long sourceActivityInstanceId, Answer parentAnswer) {
+        switch (parentAnswer.getQuestionType()) {
             case COMPOSITE:
-                return getAnswersFromComposite((CompositeAnswer) answer);
+                return getChildAnswersFromComposite((CompositeAnswer) parentAnswer);
             default:
                 throw new DDPException("Activity instances creation from answers is supported only for composite questions. StableID="
                         + sourceQuestionStableId);
@@ -111,25 +110,17 @@ public class ActivityInstanceCreationFromAnswersEventSyncProcessor extends Activ
     /**
      * Depending on a question type choose an appropriate creator (now supported only COMPOSITE creator)
      */
-    private ActivityInstancesCreator detectActivityInstancesCreator(List<Answer> sourceAnswers) {
-        var questionType = detectQuestionType(sourceAnswers);
+    private ActivityInstancesCreator detectActivityInstancesCreator(Answer parentAnswer) {
         ActivityInstancesCreator activityInstancesCreator;
-        switch (questionType) {
+        switch (parentAnswer.getQuestionType()) {
             case COMPOSITE:
                 activityInstancesCreator = new ActivityInstancesFromCompositeCreator(
                         this, sourceQuestionStableId, targetQuestionStableId);
                 break;
             default:
-                throw new DDPException("Not supported creation of activity instances from answers for type=" + questionType);
+                throw new DDPException("Not supported creation of activity instances from answers for type="
+                        + parentAnswer.getQuestionType());
         }
         return activityInstancesCreator;
-    }
-
-    /**
-     * Detect question type.
-     * Assume that all answers in the list are of the same type.
-     */
-    private QuestionType detectQuestionType(List<Answer> answers) {
-        return !answers.isEmpty() ? answers.get(0).getQuestionType() : null;
     }
 }
