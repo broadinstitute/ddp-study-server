@@ -1,5 +1,7 @@
 package org.broadinstitute.ddp.content;
 
+import static org.broadinstitute.ddp.content.SelectedPickListOptionRenderUtil.selectedOptionsRender;
+
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -7,21 +9,14 @@ import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
-import org.broadinstitute.ddp.model.activity.definition.question.PicklistOptionDef;
-import org.broadinstitute.ddp.model.activity.definition.question.PicklistQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
 import org.broadinstitute.ddp.model.activity.instance.FormInstance;
 import org.broadinstitute.ddp.model.activity.instance.FormResponse;
 import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
-import org.broadinstitute.ddp.model.activity.instance.answer.PicklistAnswer;
-import org.broadinstitute.ddp.model.activity.instance.question.PicklistOption;
-import org.broadinstitute.ddp.model.activity.instance.question.PicklistQuestion;
 import org.broadinstitute.ddp.model.activity.instance.question.Question;
 import org.broadinstitute.ddp.model.dsm.KitReasonType;
 import org.broadinstitute.ddp.model.dsm.TestResult;
@@ -207,13 +202,29 @@ public class RenderValueProvider {
      *
      * @param questionStableId the question stable id
      * @param fallbackValue    the fallback value
-     * @return answer string representation if available, otherwise null
+     * @return answer string representation of answer (in case of picklist: option) if formResponse
+     *     or formInstance objects are available, otherwise null
      */
     public String answer(String questionStableId, String fallbackValue) {
+        return answer(questionStableId, fallbackValue, false);
+    }
+
+    /**
+     * Returns the answer for the question, or the fallback value if no answer.
+     *
+     * @param questionStableId         the question stable id
+     * @param fallbackValue            the fallback value
+     * @param useDetailTextForPickList if true and detecting answer of a picklist then get a detailText instead of
+     *                                 option label.
+     * @return answer string representation of answer (in case of picklist: option or detailText) if formResponse
+     *     or formInstance objects are available, otherwise null
+     * @see #answer(String, String)
+     */
+    public String answer(String questionStableId, String fallbackValue, boolean useDetailTextForPickList) {
         if (formResponse != null) {
-            return renderAnswerUsingFormResponse(questionStableId, fallbackValue);
+            return renderAnswerUsingFormResponse(questionStableId, fallbackValue, useDetailTextForPickList);
         } else if (formInstance != null) {
-            return renderAnswerUsingFormInstance(questionStableId, fallbackValue);
+            return renderAnswerUsingFormInstance(questionStableId, fallbackValue, useDetailTextForPickList);
         } else {
             // No objects to use to lookup answers. Returning null here will keep this part of the template untouched,
             // in case we want to come back and do a second round of rendering.
@@ -221,7 +232,8 @@ public class RenderValueProvider {
         }
     }
 
-    private String renderAnswerUsingFormResponse(String questionStableId, String fallbackValue) {
+    private String renderAnswerUsingFormResponse(String questionStableId, String fallbackValue, boolean useDetailTextForPickList) {
+        QuestionDef questionDef = formActivity.getQuestionByStableId(questionStableId);
         Answer answer = formResponse.getAnswer(questionStableId);
         if (answer == null || answer.isEmpty()) {
             // No answer response for this question yet, so use fallback.
@@ -229,15 +241,7 @@ public class RenderValueProvider {
         }
         switch (answer.getQuestionType()) {
             case PICKLIST:
-                QuestionDef questionDef = formActivity.getQuestionByStableId(questionStableId);
-                Map<String, PicklistOptionDef> options = ((PicklistQuestionDef) questionDef)
-                        .getAllPicklistOptions().stream()
-                        .collect(Collectors.toMap(PicklistOptionDef::getStableId, Function.identity()));
-                return ((PicklistAnswer) answer).getValue().stream()
-                        .map(selected -> options.get(selected.getStableId())
-                                .getOptionLabelTemplate()
-                                .render(isoLangCode))
-                        .collect(Collectors.joining(","));
+                return selectedOptionsRender(questionDef, answer, isoLangCode, useDetailTextForPickList);
             case COMPOSITE: // Fall-through
             case FILE:
                 // Have not decided what composite or file answers will look like yet.
@@ -248,21 +252,24 @@ public class RenderValueProvider {
         }
     }
 
-    private String renderAnswerUsingFormInstance(String questionStableId, String fallbackValue) {
+    /**
+     * Render template with setting an answer value instead of $ddp.answer(...).
+     * NOTE: in order to avoid NPE replace null values of getDetailLabel() or getOptionLabel() with `fallbackValue`.
+     *
+     * @param questionStableId         stable ID of a question which answer to render
+     * @param fallbackValue            default value which set in case if answer not set or empty
+     * @param useDetailTextForPickList if it is `true` then use detailText() (instead of option) in case of picklist.
+     * @return String - rendered template
+     */
+    private String renderAnswerUsingFormInstance(String questionStableId, String fallbackValue, boolean useDetailTextForPickList) {
         Question question = formInstance.getQuestionByStableId(questionStableId);
-        Answer answer = question != null && question.isAnswered()
-                ? (Answer) question.getAnswers().get(0) : null;
+        Answer answer = question != null && question.isAnswered() ? (Answer) question.getAnswers().get(0) : null;
         if (answer == null || answer.isEmpty()) {
             return fallbackValue;
         }
         switch (answer.getQuestionType()) {
             case PICKLIST:
-                Map<String, String> options = ((PicklistQuestion) question)
-                        .streamAllPicklistOptions()
-                        .collect(Collectors.toMap(PicklistOption::getStableId, PicklistOption::getOptionLabel));
-                return ((PicklistAnswer) answer).getValue().stream()
-                        .map(selected -> options.get(selected.getStableId()))
-                        .collect(Collectors.joining(","));
+                return selectedOptionsRender(question, answer, useDetailTextForPickList);
             case COMPOSITE: // Fall-through
             case FILE:
                 throw new DDPException("Rendering answer type " + answer.getQuestionType() + " is currently not supported");
