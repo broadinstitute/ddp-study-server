@@ -20,6 +20,7 @@ import org.broadinstitute.ddp.model.workflow.ActivityState;
 import org.broadinstitute.ddp.model.workflow.NextStateCandidate;
 import org.broadinstitute.ddp.model.workflow.StateType;
 import org.broadinstitute.ddp.model.workflow.StaticState;
+import org.broadinstitute.ddp.model.workflow.StudyRedirectState;
 import org.broadinstitute.ddp.model.workflow.WorkflowState;
 import org.broadinstitute.ddp.pex.PexException;
 import org.broadinstitute.ddp.pex.PexInterpreter;
@@ -89,6 +90,10 @@ public class WorkflowService {
                 return handle.attach(WorkflowDao.class)
                         .findActivityCodeAndLatestInstanceGuidAsResponse(activityId, userGuid)
                         .orElseThrow(() -> new NoSuchElementException("Could not find activity data to build response for " + state));
+            } else if (state.getType() == StateType.STUDY_REDIRECT) {
+                StudyRedirectState studyRedirectState = (StudyRedirectState)state;
+                return new WorkflowResponse(StateType.STUDY_REDIRECT.name(), studyRedirectState.getStudyName(),
+                        studyRedirectState.getStudyGuid(), studyRedirectState.getRedirectUrl());
             } else {
                 return WorkflowResponse.from((StaticState) state);
             }

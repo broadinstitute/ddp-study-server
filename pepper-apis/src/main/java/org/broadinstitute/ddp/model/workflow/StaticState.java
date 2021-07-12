@@ -32,6 +32,10 @@ public class StaticState implements WorkflowState {
         return new StaticState(StateType.PARTICIPANT_LIST);
     }
 
+    public static StaticState studyRedirect() {
+        return new StaticState(StateType.STUDY_REDIRECT);
+    }
+
     public static StaticState of(StateType type) {
         if (type.isStatic()) {
             return new StaticState(type);

@@ -140,3 +140,18 @@ findSortedInstanceSummariesByUserStudyActivityGuids() ::= <<
    and act.study_activity_code = :activityCode
  order by ai.created_at asc
 >>
+
+queryLatestActivityInstanceGuidByUserGuidStudyIdAndQuestionStableId() ::= <<
+select ai.activity_instance_guid
+ from activity_instance as ai
+  join study_activity as sa on sa.study_activity_id = ai.study_activity_id
+  join umbrella_study as us on us.umbrella_study_id = sa.study_id
+  join user as u on u.user_id = ai.participant_id
+  join question as q on q.study_activity_id = sa.study_activity_id
+  join question_stable_code as qsc on qsc.question_stable_code_id = q.question_stable_code_id
+  where qsc.stable_id = :questionStableId
+  and us.umbrella_study_id = :studyId
+  and u.guid = :userGuid
+ order by ai.created_at desc
+ limit 1
+>>

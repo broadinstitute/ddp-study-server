@@ -12,12 +12,14 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
 
+import org.broadinstitute.ddp.constants.SqlConstants;
 import org.broadinstitute.ddp.db.DaoException;
 import org.broadinstitute.ddp.json.workflow.WorkflowActivityResponse;
 import org.broadinstitute.ddp.model.pex.Expression;
 import org.broadinstitute.ddp.model.workflow.ActivityState;
 import org.broadinstitute.ddp.model.workflow.NextStateCandidate;
 import org.broadinstitute.ddp.model.workflow.StateType;
+import org.broadinstitute.ddp.model.workflow.StudyRedirectState;
 import org.broadinstitute.ddp.model.workflow.WorkflowState;
 import org.broadinstitute.ddp.model.workflow.WorkflowTransition;
 import org.jdbi.v3.core.mapper.RowMapper;
@@ -39,6 +41,9 @@ public interface WorkflowDao extends SqlObject {
 
     @CreateSqlObject
     JdbiWorkflowActivityState getJdbiWorkflowActivityState();
+
+    @CreateSqlObject
+    JdbiWorkflowStudyRedirectState getJdbiWorkflowStudyRedirectState();
 
     @CreateSqlObject
     JdbiWorkflowTransition getJdbiWorkflowTransition();
@@ -75,6 +80,17 @@ public interface WorkflowDao extends SqlObject {
         if (state.getType() == StateType.ACTIVITY) {
             long activityId = ((ActivityState) state).getActivityId();
             return getJdbiWorkflowActivityState().findIdByActivityId(activityId);
+        } else if (state.getType() == StateType.STUDY_REDIRECT) {
+            String studyGuid = ((StudyRedirectState) state).getStudyGuid();
+            String redirectUrl = ((StudyRedirectState) state).getRedirectUrl();
+            Optional<StudyRedirectState> redirectStateOpt =  getJdbiWorkflowStudyRedirectState().findIdByStudyNameGuidAndRedirectUrl(
+                    studyGuid, redirectUrl);
+            if (redirectStateOpt.isPresent()) {
+                StudyRedirectState redirectState = redirectStateOpt.get();
+                return Optional.of(redirectState.getWorkflowStateId());
+            } else {
+                return Optional.empty();
+            }
         } else {
             return getJdbiWorkflowState().findIdByType(state.getType());
         }
@@ -87,6 +103,12 @@ public interface WorkflowDao extends SqlObject {
                 long activityId = ((ActivityState) state).getActivityId();
                 if (1 != getJdbiWorkflowActivityState().insert(id, activityId)) {
                     throw new DaoException("Unable to insert " + state);
+                }
+            } else if (state.getType() == StateType.STUDY_REDIRECT) {
+                String studyGuid = ((StudyRedirectState) state).getStudyGuid();
+                String redirectUrl = ((StudyRedirectState) state).getRedirectUrl();
+                if (1 != getJdbiWorkflowStudyRedirectState().insert(id, studyGuid, redirectUrl)) {
+                    throw new DaoException("Unable to insert study redirect " + state);
                 }
             }
             return id;
@@ -105,6 +127,9 @@ public interface WorkflowDao extends SqlObject {
                     rs.getLong(WorkflowTransitionTable.ID),
                     StateType.valueOf(rs.getString(WorkflowStateTypeTable.CODE)),
                     (Long) rs.getObject(WorkflowActivityStateTable.ACTIVITY_ID),
+                    (String) rs.getObject(SqlConstants.UmbrellaStudyTable.STUDY_NAME),
+                    (String) rs.getObject(SqlConstants.WorkflowStudyRedirectStateTable.STUDY_GUID),
+                    (String) rs.getObject(SqlConstants.WorkflowStudyRedirectStateTable.REDIRECT_URL),
                     rs.getString(ExpressionTable.TEXT));
         }
     }

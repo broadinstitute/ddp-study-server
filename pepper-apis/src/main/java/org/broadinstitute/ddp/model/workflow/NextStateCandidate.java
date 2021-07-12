@@ -13,12 +13,26 @@ public class NextStateCandidate {
     private StateType nextStateType;
     private Long nextActivityId;
     private String precondition;
+    private String studyName;
+    private String studyGuid;
+    private String redirectUrl;
 
     public NextStateCandidate(long transitionId, StateType nextStateType, Long nextActivityId, String precondition) {
         this.transitionId = transitionId;
         this.nextStateType = nextStateType;
         this.nextActivityId = nextActivityId;
         this.precondition = precondition;
+    }
+
+    public NextStateCandidate(long transitionId, StateType nextStateType, Long nextActivityId,
+                              String studyName, String studyGuid, String redirectUrl, String precondition) {
+        this.transitionId = transitionId;
+        this.nextStateType = nextStateType;
+        this.nextActivityId = nextActivityId;
+        this.precondition = precondition;
+        this.studyName = studyName;
+        this.studyGuid = studyGuid;
+        this.redirectUrl = redirectUrl;
     }
 
     public long getTransitionId() {
@@ -41,6 +55,18 @@ public class NextStateCandidate {
         return StringUtils.isNotBlank(precondition);
     }
 
+    public String getStudyName() {
+        return studyName;
+    }
+
+    public String getStudyGuid() {
+        return studyGuid;
+    }
+
+    public String getRedirectUrl() {
+        return redirectUrl;
+    }
+
     public WorkflowState asWorkflowState() {
         if (nextStateType.isStatic()) {
             return StaticState.of(nextStateType);
@@ -49,6 +75,8 @@ public class NextStateCandidate {
                 throw new DDPException("Workflow activity state is missing an activity id for transition id " + transitionId);
             }
             return new ActivityState(nextActivityId);
+        } else if (nextStateType == StateType.STUDY_REDIRECT) {
+            return new StudyRedirectState(studyName, studyGuid, redirectUrl);
         } else {
             throw new DDPException("Unhandled workflow state type " + nextStateType);
         }
