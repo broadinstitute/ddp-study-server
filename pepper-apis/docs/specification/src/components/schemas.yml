@@ -2344,6 +2344,7 @@ WorkflowNextSuggestion:
       PARTICIPANT_LIST: '#/WorkflowNextSuggestion.Static'
       THANK_YOU: '#/WorkflowNextSuggestion.Static'
       UNKNOWN: '#/WorkflowNextSuggestion.Static'
+      STUDY_REDIRECT: '#/WorkflowNextSuggestion.StudyRedirect'
   required:
     - next
   properties:
@@ -2356,6 +2357,7 @@ WorkflowNextSuggestion:
         * `THANK_YOU` - Indicates end of workflow and a thank you message should be shown.
         * `PARTICIPANT_LIST` - Indicates the list of governed users.
         * `UNKNOWN` - No suggestions available.
+        * `STUDY_REDIRECT` - Indicates end of current study workflow and should direct to suggested study .
 WorkflowNextSuggestion.Activity:
   allOf:
   - $ref: '#/WorkflowNextSuggestion'
@@ -2374,6 +2376,24 @@ WorkflowNextSuggestion.Activity:
       allowUnauthenticated:
         type: boolean
         description: Whether the next activity allows access to temporary users. If `false`, user will need to authenticate in order to access activity.
+WorkflowNextSuggestion.StudyRedirect:
+  allOf:
+    - $ref: '#/WorkflowNextSuggestion'
+    - type: object
+      required:
+        - studyName
+        - studyGuid
+        - redirectUrl
+      properties:
+        studyName:
+          type: string
+          description: the study name
+        studyGuid:
+          type: string
+          description: the study guid
+        redirectUrl:
+          type: string
+          description: the study url to redirect
 WorkflowNextSuggestion.Static:
   allOf:
   - $ref: '#/WorkflowNextSuggestion'

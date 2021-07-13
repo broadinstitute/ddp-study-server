@@ -8,18 +8,26 @@ import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
+import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudyCached;
+import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudyI18n;
 import org.broadinstitute.ddp.db.dao.JdbiUser;
+import org.broadinstitute.ddp.db.dao.UserProfileDao;
 import org.broadinstitute.ddp.db.dao.WorkflowDao;
 import org.broadinstitute.ddp.db.dto.ActivityDto;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
+import org.broadinstitute.ddp.db.dto.StudyDto;
+import org.broadinstitute.ddp.db.dto.StudyI18nDto;
 import org.broadinstitute.ddp.json.workflow.WorkflowResponse;
+import org.broadinstitute.ddp.json.workflow.WorkflowStudyRedirectResponse;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.broadinstitute.ddp.model.event.ActivityInstanceStatusChangeSignal;
 import org.broadinstitute.ddp.model.event.EventSignal;
+import org.broadinstitute.ddp.model.user.UserProfile;
 import org.broadinstitute.ddp.model.workflow.ActivityState;
 import org.broadinstitute.ddp.model.workflow.NextStateCandidate;
 import org.broadinstitute.ddp.model.workflow.StateType;
 import org.broadinstitute.ddp.model.workflow.StaticState;
+import org.broadinstitute.ddp.model.workflow.StudyRedirectState;
 import org.broadinstitute.ddp.model.workflow.WorkflowState;
 import org.broadinstitute.ddp.pex.PexException;
 import org.broadinstitute.ddp.pex.PexInterpreter;
@@ -89,11 +97,47 @@ public class WorkflowService {
                 return handle.attach(WorkflowDao.class)
                         .findActivityCodeAndLatestInstanceGuidAsResponse(activityId, userGuid)
                         .orElseThrow(() -> new NoSuchElementException("Could not find activity data to build response for " + state));
+            } else if (state.getType() == StateType.STUDY_REDIRECT) {
+                StudyRedirectState studyRedirectState = (StudyRedirectState)state;
+                String studyName = getStudyName(handle, userGuid, studyRedirectState.getStudyGuid());
+                return new WorkflowStudyRedirectResponse(studyName, studyRedirectState.getStudyGuid(), studyRedirectState.getRedirectUrl());
             } else {
                 return WorkflowResponse.from((StaticState) state);
             }
         }
         return WorkflowResponse.unknown();
+    }
+
+    private String getStudyName(Handle handle, String userGuid, String studyGuid) {
+        String studyName;
+        JdbiUmbrellaStudy studyDao = new JdbiUmbrellaStudyCached(handle);
+        JdbiUmbrellaStudyI18n translationDao = handle.attach(JdbiUmbrellaStudyI18n.class);
+        StudyDto study = studyDao.findByStudyGuid(studyGuid);
+        if (null == study) {
+            throw new NoSuchElementException("Could not find study :" + studyGuid);
+        }
+
+        String preferredLanguageCode = null;
+        StudyI18nDto preferredTranslation = null;
+        Optional<UserProfile> userProfile = handle.attach(UserProfileDao.class).findProfileByUserGuid(userGuid);
+        if (userProfile.isPresent()) {
+            preferredLanguageCode = userProfile.get().getPreferredLangCode();
+        }
+        if (preferredLanguageCode != null) {
+            List<StudyI18nDto> studyTranslations = translationDao.findTranslationsByStudyId(study.getId());
+            for (StudyI18nDto dto : studyTranslations) {
+                if (dto.getLanguageCode() != null && dto.getLanguageCode() == preferredLanguageCode) {
+                    preferredTranslation = dto;
+                    break;
+                }
+            }
+        }
+        if (preferredTranslation != null) {
+            studyName = preferredTranslation.getName();
+        } else {
+            studyName = study.getName();
+        }
+        return studyName;
     }
 
     private void createActivityInstanceIfMissing(

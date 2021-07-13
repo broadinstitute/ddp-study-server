@@ -10,6 +10,7 @@ import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.workflow.ActivityState;
 import org.broadinstitute.ddp.model.workflow.StateType;
 import org.broadinstitute.ddp.model.workflow.StaticState;
+import org.broadinstitute.ddp.model.workflow.StudyRedirectState;
 import org.broadinstitute.ddp.model.workflow.WorkflowState;
 import org.broadinstitute.ddp.model.workflow.WorkflowTransition;
 import org.jdbi.v3.core.Handle;
@@ -77,6 +78,10 @@ public class WorkflowBuilder {
             String activityCode = stateCfg.getString("activityCode");
             long activityId = ActivityBuilder.findActivityId(handle, studyDto.getId(), activityCode);
             return new ActivityState(activityId);
+        } else if (type == StateType.STUDY_REDIRECT) {
+            String studyGuid = stateCfg.getString("studyGuid");
+            String redirectUrl = stateCfg.getString("redirectUrl");
+            return new StudyRedirectState(studyGuid, redirectUrl);
         } else {
             throw new DDPException("Unsupported workflow state type " + type);
         }
@@ -87,6 +92,10 @@ public class WorkflowBuilder {
         if (StateType.ACTIVITY.name().equals(type)) {
             String activityCode = stateCfg.getString("activityCode");
             return String.format("%s/%s", type, activityCode);
+        } else if (StateType.STUDY_REDIRECT.name().equals(type)) {
+            String studyGuid = stateCfg.getString("studyGuid");
+            String redirectUrl = stateCfg.getString("redirectUrl");
+            return String.format("%s/%s/%s", type, studyGuid, redirectUrl);
         } else {
             return type;
         }
