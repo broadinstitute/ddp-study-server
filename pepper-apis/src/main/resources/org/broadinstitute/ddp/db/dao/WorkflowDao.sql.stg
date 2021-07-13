@@ -13,7 +13,6 @@ select trans.workflow_transition_id,
   left join workflow_activity_state as next_act_state on next_act_state.workflow_state_id = next_state.workflow_state_id
   left join expression as expr on expr.expression_id = trans.precondition_expression_id
   left join workflow_study_redirect_state as next_redirect_state on next_redirect_state.workflow_state_id = next_state.workflow_state_id
-  join umbrella_study as us on us.umbrella_study_id = trans.umbrella_study_id
  where trans.umbrella_study_id = :studyId
    and trans.from_state_id = :fromStateId
    and trans.is_active

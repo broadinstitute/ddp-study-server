@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 
-import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
@@ -110,6 +109,7 @@ public class WorkflowService {
     }
 
     private String getStudyName(Handle handle, String userGuid, String studyGuid) {
+        String studyName;
         JdbiUmbrellaStudy studyDao = new JdbiUmbrellaStudyCached(handle);
         JdbiUmbrellaStudyI18n translationDao = handle.attach(JdbiUmbrellaStudyI18n.class);
         StudyDto study = studyDao.findByStudyGuid(studyGuid);
@@ -117,19 +117,27 @@ public class WorkflowService {
             throw new NoSuchElementException("Could not find study :" + studyGuid);
         }
 
-        Long preferredLanguageId = null;
+        String preferredLanguageCode = null;
+        StudyI18nDto preferredTranslation = null;
         Optional<UserProfile> userProfile = handle.attach(UserProfileDao.class).findProfileByUserGuid(userGuid);
         if (userProfile.isPresent()) {
-            preferredLanguageId = userProfile.get().getPreferredLangId();
+            preferredLanguageCode = userProfile.get().getPreferredLangCode();
         }
-        if (preferredLanguageId == null) {
-            preferredLanguageId = LanguageStore.getDefault().getId();
+        if (preferredLanguageCode != null) {
+            List<StudyI18nDto> studyTranslations = translationDao.findTranslationsByStudyId(study.getId());
+            for (StudyI18nDto dto : studyTranslations) {
+                if (dto.getLanguageCode() != null && dto.getLanguageCode() == preferredLanguageCode) {
+                    preferredTranslation = dto;
+                    break;
+                }
+            }
         }
-        Optional<StudyI18nDto> preferredTranslation = translationDao.findTranslationByStudyIdAndLanguageCodeId(
-                study.getId(),
-                preferredLanguageId
-        );
-        return preferredTranslation.map(StudyI18nDto::getName).orElse(study.getName());
+        if (preferredTranslation != null) {
+            studyName = preferredTranslation.getName();
+        } else {
+            studyName = study.getName();
+        }
+        return studyName;
     }
 
     private void createActivityInstanceIfMissing(
