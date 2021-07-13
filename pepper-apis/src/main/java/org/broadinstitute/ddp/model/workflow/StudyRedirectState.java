@@ -6,7 +6,6 @@ import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
 public class StudyRedirectState implements WorkflowState {
 
     long workflowStateId;
-    String studyName;
     String studyGuid;
     String redirectUrl;
 
@@ -16,12 +15,6 @@ public class StudyRedirectState implements WorkflowState {
                               @ColumnName("redirect_url")String redirectUrl) {
 
         this.workflowStateId = workflowStateId;
-        this.studyGuid = studyGuid;
-        this.redirectUrl = redirectUrl;
-    }
-
-    public StudyRedirectState(String studyName, String studyGuid, String redirectUrl) {
-        this.studyName = studyName;
         this.studyGuid = studyGuid;
         this.redirectUrl = redirectUrl;
     }
@@ -43,10 +36,6 @@ public class StudyRedirectState implements WorkflowState {
 
     public long getWorkflowStateId() {
         return workflowStateId;
-    }
-
-    public String getStudyName() {
-        return studyName;
     }
 
     public String getStudyGuid() {

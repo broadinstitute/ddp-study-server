@@ -119,7 +119,6 @@ public interface WorkflowDao extends SqlObject {
                     rs.getLong(WorkflowTransitionTable.ID),
                     StateType.valueOf(rs.getString(WorkflowStateTypeTable.CODE)),
                     (Long) rs.getObject(WorkflowActivityStateTable.ACTIVITY_ID),
-                    (String) rs.getObject(SqlConstants.UmbrellaStudyTable.STUDY_NAME),
                     (String) rs.getObject(SqlConstants.WorkflowStudyRedirectStateTable.STUDY_GUID),
                     (String) rs.getObject(SqlConstants.WorkflowStudyRedirectStateTable.REDIRECT_URL),
                     rs.getString(ExpressionTable.TEXT));
