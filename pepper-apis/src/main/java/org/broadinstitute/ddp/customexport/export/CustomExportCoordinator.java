@@ -24,7 +24,11 @@ import java.util.stream.Collectors;
 
 import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.Bucket;
+import com.sendgrid.helpers.mail.Mail;
+import com.sendgrid.helpers.mail.objects.Email;
+import com.sendgrid.helpers.mail.objects.Personalization;
 import com.typesafe.config.Config;
+import org.broadinstitute.ddp.client.SendGridClient;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.customexport.constants.CustomExportConfigFile;
 import org.broadinstitute.ddp.customexport.db.dao.CustomExportDao;
@@ -121,8 +125,17 @@ public class CustomExportCoordinator {
         String proxy = ConfigUtil.getStrIfPresent(mainCfg, ConfigFile.Sendgrid.PROXY);
         LOG.info("About to send notification email to {} <{}> with{}", toName, toEmailAddress, null == proxy ? "out proxy" :
                 " proxy " + proxy);
-        SendGridMailUtil.sendDynamicEmailMessage(fromName, fromEmailAddress, toName, toEmailAddress,  subject, templateId,
-                templateVarNameToValue, sendGridApiKey, proxy);
+        Email fromEmail = new Email(fromEmailAddress, fromName);
+        Email toEmail = new Email(toEmailAddress, toName);
+        Personalization sendGridPersonalization = new Personalization();
+        templateVarNameToValue.forEach(sendGridPersonalization::addDynamicTemplateData);
+        Mail mail = SendGridMailUtil.createMail(subject, templateId, fromEmail, toEmail, sendGridPersonalization);
+        SendGridClient sgClient = new SendGridClient(sendGridApiKey, proxy);
+        var mailResult = sgClient.sendMail(mail);
+        mailResult.rethrowIfThrown(e -> new DDPException("Error while creating Seqr export notification email", e));
+        if (mailResult.hasError()) {
+            LOG.error("Error while creating Seqr export notification email", mailResult.getError());
+        }
     }
 
     private boolean runCsvExports(StudyDto studyDto, List<CustomActivityExtract> activities) {
