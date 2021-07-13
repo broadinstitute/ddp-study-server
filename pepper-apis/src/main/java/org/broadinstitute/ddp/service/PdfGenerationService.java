@@ -744,7 +744,8 @@ public class PdfGenerationService {
                 if (field != null) {
                     substitutePicklist(picklistAnswer, field);
                 } else {
-                    substitutePicklist(picklistAnswer, form, ((PicklistAnswerSubstitution) substitution).getPlaceholderMapping());
+                    substitutePicklist(picklistAnswer, form, ((PicklistAnswerSubstitution) substitution).getPlaceholderMapping(),
+                            errors);
                 }
                 break;
 
@@ -809,7 +810,8 @@ public class PdfGenerationService {
                 if (field != null) {
                     substitutePicklist(picklistAnswer, field);
                 } else {
-                    substitutePicklist(picklistAnswer, form, ((PicklistAnswerSubstitution) substitution).getPlaceholderMapping());
+                    substitutePicklist(picklistAnswer, form, ((PicklistAnswerSubstitution) substitution).getPlaceholderMapping(),
+                            errors);
                 }
                 break;
 
@@ -859,7 +861,8 @@ public class PdfGenerationService {
         }
     }
 
-    private void substitutePicklist(PicklistAnswer answer, PdfAcroForm form, Map<String, String> mapping) throws IOException {
+    private void substitutePicklist(PicklistAnswer answer, PdfAcroForm form, Map<String, String> mapping,
+                                    List<String> errors) throws IOException {
         List<String> selectedOptions = new ArrayList<>();
         if (answer != null) {
             for (SelectedPicklistOption option : answer.getValue()) {
@@ -870,7 +873,7 @@ public class PdfGenerationService {
         for (String fieldName : mapping.keySet()) {
             PdfFormField field = form.getField(fieldName);
             if (field == null) {
-                LOG.warn(String.format("Could not find PDFFormField field with name: %s", fieldName));
+                errors.add(String.format("Could not find Child answer PDFFormField field with name: %s", fieldName));
             } else {
                 field.setFont(PdfFontFactory.createFont());
                 setIsChecked(field, selectedOptions.contains(mapping.get(fieldName)));
