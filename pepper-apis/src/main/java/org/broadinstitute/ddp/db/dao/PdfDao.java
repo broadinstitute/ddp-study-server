@@ -522,7 +522,7 @@ public interface PdfDao extends SqlObject {
     class SubstitutionsReducer implements LinkedHashMapRowReducer<Long, PdfSubstitution> {
         @Override
         public void accumulate(Map<Long, PdfSubstitution> container, RowView view) {
-            long substId = view.getColumn("p_pdf_substitution_id", Long.class);
+            long substId = view.getColumn("a_pdf_substitution_id", Long.class);
             PdfSubstitution sub = container.get(substId);
             if (sub == null) {
                 SubstitutionType type = SubstitutionType.valueOf(view.getColumn("substitution_type", String.class));
