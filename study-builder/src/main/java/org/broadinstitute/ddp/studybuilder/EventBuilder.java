@@ -259,9 +259,17 @@ public class EventBuilder {
             return actionDao.insertPdfGenerationAction(pdfId);
         } else if (EventActionType.ACTIVITY_INSTANCE_CREATION.name().equals(type)) {
             String activityCode = actionCfg.getString(ACTIVITY_CODE_FIELD);
+            boolean createFromAnswer = ConfigUtil.getBoolOrElse(actionCfg, "createFromAnswer", false);
+            String sourceQuestionStableId = ConfigUtil.getStrIfPresent(actionCfg, "sourceQuestionStableId");
+            String targetQuestionStableId = ConfigUtil.getStrIfPresent(actionCfg, "targetQuestionStableId");
             ActivityDto activityDto = handle.attach(JdbiActivity.class)
                     .findActivityByStudyIdAndCode(studyDto.getId(), activityCode)
                     .orElseThrow(() -> new DDPException("Could not find activity " + activityCode));
+            if (createFromAnswer) {
+                if (!triggerCfg.getString("type").equals(EventTriggerType.ACTIVITY_STATUS.name())) {
+                    throw new DDPException("When createFromAnswer==true then trigger type must be ACTIVITY_STATUS");
+                }
+            }
             if (activityDto.getParentActivityCode() != null) {
                 if (!triggerCfg.getString("type").equals(EventTriggerType.ACTIVITY_STATUS.name())) {
                     throw new DDPException("Currently only ACTIVITY_STATUS trigger is allowed"
@@ -271,7 +279,8 @@ public class EventBuilder {
                             + " when target activity is a child nested activity");
                 }
             }
-            return actionDao.insertInstanceCreationAction(activityDto.getActivityId());
+            return actionDao.insertInstanceCreationAction(activityDto.getActivityId(),
+                    createFromAnswer, sourceQuestionStableId, targetQuestionStableId);
         } else if (EventActionType.ANNOUNCEMENT.name().equals(type)) {
             Template tmpl = BuilderUtils.parseAndValidateTemplate(actionCfg, "msgTemplate");
 
@@ -334,8 +343,8 @@ public class EventBuilder {
     }
 
     public CopyConfiguration buildCopyConfiguration(long studyId, boolean copyFromPreviousInstance,
-                                                     List<String> previousInstanceQuestionStableIds,
-                                                     List<Config> pairsCfgList) {
+                                                    List<String> previousInstanceQuestionStableIds,
+                                                    List<Config> pairsCfgList) {
         List<CopyPreviousInstanceFilter> filters = new ArrayList<>();
         for (var stableId : previousInstanceQuestionStableIds) {
             var location = new CopyAnswerLocation(stableId);
@@ -452,10 +461,10 @@ public class EventBuilder {
         } else if (EventActionType.MARK_ACTIVITIES_READ_ONLY.name().equals(type)) {
             List<String> activityCodes = actionCfg.getStringList("activityCodes");
             return String.format("%s/%s", type, String.join(",", activityCodes));
-        } else if (EventActionType.UPDATE_USER_STATUS.name().equals(type))  {
+        } else if (EventActionType.UPDATE_USER_STATUS.name().equals(type)) {
             String targetStatus = actionCfg.getString("status");
             return String.format("%s/%s", type, targetStatus);
-        } else if (EventActionType.UPDATE_USER_STATUS.name().equals(type))  {
+        } else if (EventActionType.UPDATE_USER_STATUS.name().equals(type)) {
             String workflow = actionCfg.getString("workflow");
             String status = actionCfg.getString("status");
             return String.format("%s/%s/%s", type, workflow, status);
