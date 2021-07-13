@@ -1,7 +1,7 @@
 group WorkflowDao;
 
 queryOrderedActiveNextStateCandidatesByStudyIdAndFromStateId() ::= <<
-select trans.workflow_transition_id, trans.from_state_id,
+select trans.workflow_transition_id,
        next_state_type.workflow_state_type_code,
        next_act_state.study_activity_id,
        next_redirect_state.study_guid,
