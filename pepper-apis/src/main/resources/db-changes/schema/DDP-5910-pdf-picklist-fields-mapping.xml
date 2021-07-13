@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet id="20181003-pdf-picklist-fields-mapping" author="ypavlov">
+        <createTable tableName="pdf_picklist_field_mapping">
+            <column name="pdf_substitution_id" type="bigint">
+                <constraints nullable="false"
+                             foreignKeyName="pdf_picklist_fields_pdf_subs_fk"
+                             references="pdf_answer_substitution(pdf_substitution_id)"/>
+            </column>
+            <column name="placeholder" type="varchar(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="option_stable_id" type="varchar(45)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <dropNotNullConstraint columnDataType="varchar(100)"
+                               columnName="placeholder"
+                               tableName="pdf_substitution"/>
+    </changeSet>
+
+</databaseChangeLog>
