@@ -30,7 +30,7 @@ public interface JdbiWorkflowState extends SqlObject {
     @SqlQuery("select workflow_state_id, study_guid, redirect_url from workflow_study_redirect_state "
             + " where study_guid = :studyGuid and redirect_url = :redirectUrl")
     @RegisterConstructorMapper(StudyRedirectState.class)
-    Optional<StudyRedirectState> findIdByStudyNameGuidAndRedirectUrl(@Bind("studyGuid") String studyGuid,
-                                                                     @Bind("redirectUrl") String redirectUrl);
+    Optional<StudyRedirectState> findByStudyNameGuidAndRedirectUrl(@Bind("studyGuid") String studyGuid,
+                                                                   @Bind("redirectUrl") String redirectUrl);
 
 }
