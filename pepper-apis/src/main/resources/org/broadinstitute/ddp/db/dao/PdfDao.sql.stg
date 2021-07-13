@@ -158,8 +158,7 @@ select stype.pdf_substitution_type_code as substitution_type,
        ) as a_question_type,
        qsc.stable_id               as a_question_stable_id,
        pqsc.stable_id              as a_parent_question_stable_id,
-       sbool.check_if_false        as a_check_if_false,
-       sbool.bound_option_stable_id        as a_bound_option_stable_id
+       sbool.check_if_false        as a_check_if_false
   from pdf_template_substitution_set as ptss
   join pdf_substitution as sub on sub.pdf_substitution_id = ptss.pdf_substitution_id
   join pdf_substitution_type as stype on stype.pdf_substitution_type_id = sub.pdf_substitution_type_id

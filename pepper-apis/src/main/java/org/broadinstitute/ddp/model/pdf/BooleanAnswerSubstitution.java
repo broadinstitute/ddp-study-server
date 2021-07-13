@@ -7,7 +7,6 @@ import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
 public final class BooleanAnswerSubstitution extends AnswerSubstitution {
 
     private boolean checkIfFalse;
-    private String boundOption;
 
     @JdbiConstructor
     public BooleanAnswerSubstitution(@ColumnName("pdf_substitution_id") long id,
@@ -16,25 +15,18 @@ public final class BooleanAnswerSubstitution extends AnswerSubstitution {
                                      @ColumnName("activity_id") long activityId,
                                      @ColumnName("question_stable_id") String questionStableId,
                                      @ColumnName("check_if_false") boolean checkIfFalse,
-                                     @ColumnName("parent_question_stable_id") String parentQuestionStableId,
-                                     @ColumnName("bound_option_stable_id") String boundOption) {
+                                     @ColumnName("parent_question_stable_id") String parentQuestionStableId) {
         super(id, templateId, placeholder, activityId, QuestionType.BOOLEAN, questionStableId, parentQuestionStableId);
         this.checkIfFalse = checkIfFalse;
-        this.boundOption = boundOption;
     }
 
     public BooleanAnswerSubstitution(String placeholder, long activityId, String questionStableId,
-                                     boolean checkIfFalse, String parentQuestionStableId, String boundOption) {
+                                     boolean checkIfFalse, String parentQuestionStableId) {
         super(placeholder, activityId, QuestionType.BOOLEAN, questionStableId, parentQuestionStableId);
         this.checkIfFalse = checkIfFalse;
-        this.boundOption = boundOption;
     }
 
     public boolean checkIfFalse() {
         return checkIfFalse;
-    }
-
-    public String getBoundOption() {
-        return boundOption;
     }
 }

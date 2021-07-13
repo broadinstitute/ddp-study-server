@@ -365,9 +365,7 @@ public class PdfBuilder {
             } else if (QuestionType.BOOLEAN.name().equals(type)) {
                 String stableId = subCfg.getString("questionStableId");
                 boolean checkIfFalse = subCfg.getBoolean("checkIfFalse");
-                String optionId = ConfigUtil.getStrIfPresent(subCfg, "optionStableId");
-                template.addSubstitution(new BooleanAnswerSubstitution(field, activityId, stableId, checkIfFalse, parentStableId,
-                        optionId));
+                template.addSubstitution(new BooleanAnswerSubstitution(field, activityId, stableId, checkIfFalse, parentStableId));
             } else if (QuestionType.PICKLIST.name().equals(type)) {
                 String stableId = subCfg.getString("questionStableId");
                 template.addSubstitution(new AnswerSubstitution(field, activityId, QuestionType.PICKLIST, stableId, parentStableId));
