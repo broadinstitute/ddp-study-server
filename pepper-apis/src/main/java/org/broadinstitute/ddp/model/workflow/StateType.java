@@ -26,7 +26,10 @@ public enum StateType {
     MAILING_LIST(true),
 
     /** Indicates the list of governed participants */
-    PARTICIPANT_LIST(true);
+    PARTICIPANT_LIST(true),
+
+    /** Indicates routing the user to sign up using existing study URL. */
+    STUDY_REDIRECT(false);
 
     private boolean isStatic;
 
