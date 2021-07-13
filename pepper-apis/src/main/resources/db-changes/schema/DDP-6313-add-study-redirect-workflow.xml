@@ -7,13 +7,13 @@
     <changeSet author="sampath" id="20210711-workflow-study-redirect-state-table">
         <createTable tableName="workflow_study_redirect_state">
             <column name="workflow_state_id" type="bigint">
-                <constraints primaryKey="true" primaryKeyName="workflow_activity_state_pk"
+                <constraints primaryKey="true" primaryKeyName="workflow_study_redirect_state_pk"
                              references="workflow_state(workflow_state_id)" foreignKeyName="workflow_study_redirect_state_workflow_state_fk"/>
             </column>
-            <column name="study_guid" type="varchar2(10))">
+            <column name="study_guid" type="varchar(10))">
                 <constraints nullable="false"/>
             </column>
-            <column name="redirect_url" type="varchar2(200))">
+            <column name="redirect_url" type="varchar(200))">
                 <constraints nullable="false"/>
             </column>
         </createTable>

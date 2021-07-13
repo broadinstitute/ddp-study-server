@@ -26,16 +26,11 @@
     "analyticsToken": "{{$conf.analyticsToken}}",
 
 {{if eq $study "pancan"}}
-    "angioStudyGuid": "{{$conf.angioStudyGuid}}",
     "angioRedirectUrl": "{{$conf.angioRedirectUrl}}",
-    "brainStudyGuid": "{{$conf.brainStudyGuid}}",
     "brainRedirectUrl": "{{$conf.brainRedirectUrl}}",
-    "osteoStudyGuid": "{{$conf.osteoStudyGuid}}",
     "osteoRedirectUrl": "{{$conf.osteoRedirectUrl}}",
-    "mbcStudyGuid": "{{$conf.mbcStudyGuid}}",
     "mbcRedirectUrl": "{{$conf.mbcRedirectUrl}}",
     "mbcRedirectUrlES": "{{$conf.mbcRedirectUrlES}}",
-    "mpcStudyGuid": "{{$conf.mpcStudyGuid}}",
     "mpcRedirectUrl": "{{$conf.mpcRedirectUrl}}",
 {{end}}
 

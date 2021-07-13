@@ -66,11 +66,11 @@ public interface ActivityInstanceDao extends SqlObject {
             @Bind("userGuid") String userGuid);
 
     @UseStringTemplateSqlLocator
-    @SqlQuery("queryLatestActivityInstanceGuidByUserGuidStudyIdAndQuestionStableId")
-    String findLatestActivityInstanceGuidByUserStudyAndQuestionStableId(
+    @SqlQuery("queryLatestActivityInstanceGuidByUserGuidStudyIdAndActivityCode")
+    String findLatestActivityInstanceGuidByUserStudyAndActivityCode(
             @Bind("userGuid") String userGuid,
             @Bind("studyId") long studyId,
-            @Bind("questionStableId") String questionStableId);
+            @Bind("activityCode") String activityCode);
 
     /**
      * Convenience method to create new activity instance when both operator and participant is the same, and using defaults.

@@ -13,6 +13,7 @@ import org.broadinstitute.ddp.db.dao.WorkflowDao;
 import org.broadinstitute.ddp.db.dto.ActivityDto;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.json.workflow.WorkflowResponse;
+import org.broadinstitute.ddp.json.workflow.WorkflowStudyRedirectResponse;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.broadinstitute.ddp.model.event.ActivityInstanceStatusChangeSignal;
 import org.broadinstitute.ddp.model.event.EventSignal;
@@ -92,7 +93,7 @@ public class WorkflowService {
                         .orElseThrow(() -> new NoSuchElementException("Could not find activity data to build response for " + state));
             } else if (state.getType() == StateType.STUDY_REDIRECT) {
                 StudyRedirectState studyRedirectState = (StudyRedirectState)state;
-                return new WorkflowResponse(StateType.STUDY_REDIRECT.name(), studyRedirectState.getStudyName(),
+                return new WorkflowStudyRedirectResponse(studyRedirectState.getStudyName(),
                         studyRedirectState.getStudyGuid(), studyRedirectState.getRedirectUrl());
             } else {
                 return WorkflowResponse.from((StaticState) state);

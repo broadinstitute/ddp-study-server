@@ -522,9 +522,9 @@ public class TreeWalkInterpreter implements PexInterpreter {
             if (instanceGuid == null) {
                 //try to find latest activity instance so that if composite answers exists can load child answers
                 instanceGuid = ictx.getHandle().attach(ActivityInstanceDao.class)
-                        .findLatestActivityInstanceGuidByUserStudyAndQuestionStableId(userGuid, studyId, stableId);
+                        .findLatestActivityInstanceGuidByUserStudyAndActivityCode(userGuid, studyId, activityCode);
                 if (instanceGuid == null) {
-                    String msg = String.format("Failed to get latest activity instance for User: %s  Study: '%d'  Question: %s",
+                    String msg = String.format("Failed to get latest activity instance for User: %s  Study: '%d'  activityCode: %s",
                             userGuid, studyId, stableId);
                     return new PexFetchException(new NoSuchElementException(msg));
                 }

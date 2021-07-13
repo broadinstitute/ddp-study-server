@@ -43,9 +43,6 @@ public interface WorkflowDao extends SqlObject {
     JdbiWorkflowActivityState getJdbiWorkflowActivityState();
 
     @CreateSqlObject
-    JdbiWorkflowStudyRedirectState getJdbiWorkflowStudyRedirectState();
-
-    @CreateSqlObject
     JdbiWorkflowTransition getJdbiWorkflowTransition();
 
 
@@ -83,7 +80,7 @@ public interface WorkflowDao extends SqlObject {
         } else if (state.getType() == StateType.STUDY_REDIRECT) {
             String studyGuid = ((StudyRedirectState) state).getStudyGuid();
             String redirectUrl = ((StudyRedirectState) state).getRedirectUrl();
-            Optional<StudyRedirectState> redirectStateOpt =  getJdbiWorkflowStudyRedirectState().findIdByStudyNameGuidAndRedirectUrl(
+            Optional<StudyRedirectState> redirectStateOpt =  getJdbiWorkflowState().findIdByStudyNameGuidAndRedirectUrl(
                     studyGuid, redirectUrl);
             if (redirectStateOpt.isPresent()) {
                 StudyRedirectState redirectState = redirectStateOpt.get();
@@ -107,7 +104,7 @@ public interface WorkflowDao extends SqlObject {
             } else if (state.getType() == StateType.STUDY_REDIRECT) {
                 String studyGuid = ((StudyRedirectState) state).getStudyGuid();
                 String redirectUrl = ((StudyRedirectState) state).getRedirectUrl();
-                if (1 != getJdbiWorkflowStudyRedirectState().insert(id, studyGuid, redirectUrl)) {
+                if (1 != getJdbiWorkflowState().insert(id, studyGuid, redirectUrl)) {
                     throw new DaoException("Unable to insert study redirect " + state);
                 }
             }
