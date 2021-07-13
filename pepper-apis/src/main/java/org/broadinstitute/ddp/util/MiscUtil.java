@@ -111,4 +111,10 @@ public class MiscUtil {
         return new File(classInsideJar.getProtectionDomain().getCodeSource().getLocation().toURI());
     }
 
+    /**
+     * Check if Boolean object is not null and true.
+     */
+    public static boolean isTrue(Boolean bool) {
+        return bool != null && bool;
+    }
 }

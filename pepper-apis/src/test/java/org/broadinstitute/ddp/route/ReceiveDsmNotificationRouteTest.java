@@ -261,7 +261,7 @@ public class ReceiveDsmNotificationRouteTest extends DsmRouteTest {
         TransactionWrapper.useTxn(handle -> {
             long triggerId = handle.attach(EventTriggerDao.class).insertDsmNotificationTrigger(TEST_RESULT);
             long actionId = handle.attach(EventActionDao.class)
-                    .insertInstanceCreationAction(activity.getActivityId());
+                    .insertInstanceCreationAction(activity.getActivityId(), false, null, null);
             Expression cancelExpr = handle.attach(JdbiExpression.class).insertExpression(
                     "!user.event.kit.isReason(\"REPLACEMENT\")");
             handle.attach(JdbiEventConfiguration.class).insert(
