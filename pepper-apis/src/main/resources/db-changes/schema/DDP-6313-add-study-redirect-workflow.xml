@@ -10,10 +10,10 @@
                 <constraints primaryKey="true" primaryKeyName="workflow_study_redirect_state_pk"
                              references="workflow_state(workflow_state_id)" foreignKeyName="workflow_study_redirect_state_workflow_state_fk"/>
             </column>
-            <column name="study_guid" type="varchar(10))">
+            <column name="study_guid" type="varchar(10)">
                 <constraints nullable="false"/>
             </column>
-            <column name="redirect_url" type="varchar(200))">
+            <column name="redirect_url" type="varchar(200)">
                 <constraints nullable="false"/>
             </column>
         </createTable>

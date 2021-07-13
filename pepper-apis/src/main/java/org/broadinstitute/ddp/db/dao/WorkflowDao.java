@@ -80,14 +80,9 @@ public interface WorkflowDao extends SqlObject {
         } else if (state.getType() == StateType.STUDY_REDIRECT) {
             String studyGuid = ((StudyRedirectState) state).getStudyGuid();
             String redirectUrl = ((StudyRedirectState) state).getRedirectUrl();
-            Optional<StudyRedirectState> redirectStateOpt =  getJdbiWorkflowState().findByStudyNameGuidAndRedirectUrl(
-                    studyGuid, redirectUrl);
-            if (redirectStateOpt.isPresent()) {
-                StudyRedirectState redirectState = redirectStateOpt.get();
-                return Optional.of(redirectState.getWorkflowStateId());
-            } else {
-                return Optional.empty();
-            }
+            return getJdbiWorkflowState()
+                    .findByStudyNameGuidAndRedirectUrl(studyGuid, redirectUrl)
+                    .map(StudyRedirectState::getWorkflowStateId);
         } else {
             return getJdbiWorkflowState().findIdByType(state.getType());
         }
