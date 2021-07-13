@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
 
 
 /**
@@ -58,5 +60,9 @@ public class CollectionMiscUtil {
                 consumer.accept(value);
             }
         }
+    }
+
+    public static Collector<CharSequence, ?, String> joinWithComma() {
+        return Collectors.joining(",");
     }
 }

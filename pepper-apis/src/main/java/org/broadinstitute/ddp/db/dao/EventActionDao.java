@@ -1,5 +1,6 @@
 package org.broadinstitute.ddp.db.dao;
 
+import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.broadinstitute.ddp.model.event.MessageDestination.PARTICIPANT_NOTIFICATION;
 
 import java.util.Set;
@@ -67,9 +68,14 @@ public interface EventActionDao extends SqlObject {
         return actionId;
     }
 
-    default long insertInstanceCreationAction(long targetActivityId) {
+    default long insertInstanceCreationAction(long targetActivityId,
+                      boolean createFromAnswer, String sourceQuestionStableId, String targetQuestionStableId) {
+        if (createFromAnswer && isBlank(sourceQuestionStableId)) {
+            throw new IllegalArgumentException("When createFromAnswer is true, then sourceQuestionStableId should not be blank");
+        }
         long actionId = getJdbiEventAction().insert(null, EventActionType.ACTIVITY_INSTANCE_CREATION);
-        int numRowsInserted = getEventActionSql().insertActivityInstanceCreationAction(actionId, targetActivityId);
+        int numRowsInserted = getEventActionSql().insertActivityInstanceCreationAction(
+                actionId, targetActivityId, createFromAnswer, sourceQuestionStableId, targetQuestionStableId);
         if (numRowsInserted != 1) {
             throw new DaoException("Could not insert activity instance creation event for target activity id " + targetActivityId);
         }

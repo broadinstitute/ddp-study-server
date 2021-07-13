@@ -49,7 +49,10 @@ SELECT
      ciea.mark_existing_as_voided as mark_existing_invitations_as_voided,
      eata.activity_id as target_activity_id,
      ucwea.custom_workflow_name,
-     ucwea.custom_workflow_status
+     ucwea.custom_workflow_status,
+     aica.create_from_answer,
+     aica.source_question_stable_id,
+     aica.target_question_stable_id
 FROM
      event_configuration ec
 JOIN event_trigger et ON ec.event_trigger_id = et.event_trigger_id
