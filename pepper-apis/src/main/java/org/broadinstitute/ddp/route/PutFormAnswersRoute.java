@@ -284,18 +284,15 @@ public class PutFormAnswersRoute implements Route {
                 }
 
                 for (var childInstanceDto : childInstanceDtos) {
-                    if (childInstanceDto.getStatusType() != InstanceStatusType.COMPLETE) {
-                        // Child instance is not finished but it might not have required questions, so check it.
-                        FormInstance childForm = loadFormInstance(
-                                response, handle, userGuid, operatorGuid, studyGuid,
-                                childInstanceDto.getGuid(), preferredLangDto, instanceSummary);
-                        if (!childForm.isComplete()) {
-                            String msg = "Status for instance " + instanceGuid + " cannot be set to COMPLETE because the"
-                                    + " question requirements are not met for child instance " + childInstanceDto.getGuid();
-                            LOG.info(msg);
-                            throw ResponseUtil.haltError(response, 422,
-                                    new ApiError(ErrorCodes.QUESTION_REQUIREMENTS_NOT_MET, msg));
-                        }
+                    FormInstance childForm = loadFormInstance(
+                            response, handle, userGuid, operatorGuid, studyGuid,
+                            childInstanceDto.getGuid(), preferredLangDto, instanceSummary);
+                    if (!childForm.isComplete()) {
+                        String msg = "Status for instance " + instanceGuid + " cannot be set to COMPLETE because the"
+                                + " question requirements are not met for child instance " + childInstanceDto.getGuid();
+                        LOG.info(msg);
+                        throw ResponseUtil.haltError(response, 422,
+                                new ApiError(ErrorCodes.QUESTION_REQUIREMENTS_NOT_MET, msg));
                     }
                 }
             }

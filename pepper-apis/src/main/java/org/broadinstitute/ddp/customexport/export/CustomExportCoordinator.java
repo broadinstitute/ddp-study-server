@@ -25,12 +25,14 @@ import java.util.stream.Collectors;
 import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.Bucket;
 import com.typesafe.config.Config;
+import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.customexport.constants.CustomExportConfigFile;
 import org.broadinstitute.ddp.customexport.db.dao.CustomExportDao;
 import org.broadinstitute.ddp.customexport.db.dto.CompletedUserDto;
 import org.broadinstitute.ddp.customexport.model.CustomExportParticipant;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.exception.DDPException;
+import org.broadinstitute.ddp.util.ConfigUtil;
 import org.broadinstitute.ddp.util.SendGridMailUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,11 +46,13 @@ public class CustomExportCoordinator {
     private final String customActivity;
     private final String customExportStatus;
     private final Config exportCfg;
+    private final Config mainCfg;
     private String fullFileName;
     private long exportLastCompleted;
 
     public CustomExportCoordinator(Config cfg, Config exportCfg) {
         this.exportCfg = exportCfg;
+        this.mainCfg = cfg;
         this.customActivity = exportCfg.getString(CustomExportConfigFile.ACTIVITY);
         this.customExportStatus = exportCfg.getString(CustomExportConfigFile.STATUS);
         this.exporter = new CustomExporter(cfg, exportCfg);
@@ -114,8 +118,11 @@ public class CustomExportCoordinator {
             templateVarNameToValue.put("bucketLink", fileUrl);
         }
 
+        String proxy = ConfigUtil.getStrIfPresent(mainCfg, ConfigFile.Sendgrid.PROXY);
+        LOG.info("About to send notification email to {} <{}> with{}", toName, toEmailAddress, null == proxy ? "out proxy" :
+                " proxy " + proxy);
         SendGridMailUtil.sendDynamicEmailMessage(fromName, fromEmailAddress, toName, toEmailAddress,  subject, templateId,
-                templateVarNameToValue, sendGridApiKey);
+                templateVarNameToValue, sendGridApiKey, proxy);
     }
 
     private boolean runCsvExports(StudyDto studyDto, List<CustomActivityExtract> activities) {
