@@ -806,13 +806,7 @@ public class PdfGenerationService {
     }
 
     private void substituteBoolean(BooleanAnswerSubstitution substitution, Answer answer, PdfFormField field) {
-        Boolean boolValue;
-        if (answer instanceof PicklistAnswer) {
-            boolValue = ((PicklistAnswer) answer).getValue().stream()
-                    .anyMatch(option -> option.getStableId().equals(substitution.getBoundOption()));
-        } else {
-            boolValue = answer == null ? null : ((BoolAnswer) answer).getValue();
-        }
+        Boolean boolValue = answer == null ? null : ((BoolAnswer) answer).getValue();
         if (boolValue != null) {
             boolean shouldCheck;
             if (substitution.checkIfFalse()) {

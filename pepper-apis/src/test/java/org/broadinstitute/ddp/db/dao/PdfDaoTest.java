@@ -311,7 +311,7 @@ public class PdfDaoTest extends TxnAwareBaseTest {
 
             CustomTemplate custom = new CustomTemplate(new byte[]{3});
             custom.addSubstitution(new AnswerSubstitution("s1", act.getActivityId(), QuestionType.TEXT, "sid-text"));
-            custom.addSubstitution(new BooleanAnswerSubstitution("s2", act.getActivityId(), "sid-bool", true, null, null));
+            custom.addSubstitution(new BooleanAnswerSubstitution("s2", act.getActivityId(), "sid-bool", true, null));
             custom.addSubstitution(new ActivityDateSubstitution("s3", act.getActivityId()));
             custom.addSubstitution(new ProfileSubstitution("s4", "first_name"));
 
