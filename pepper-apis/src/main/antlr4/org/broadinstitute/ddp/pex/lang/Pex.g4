@@ -61,7 +61,8 @@ formInstancePredicate
 
 // Question predicate functions
 questionPredicate
-  : 'isAnswered' '(' ')'    # IsAnsweredPredicate
+  : 'isAnswered' '(' ')'            # IsAnsweredPredicate
+  | 'numChildAnswers' '(' STR ')'   # NumChildAnswersQuery
   ;
 
 // Predicate functions that operates on a set/collection of things or a single piece of data

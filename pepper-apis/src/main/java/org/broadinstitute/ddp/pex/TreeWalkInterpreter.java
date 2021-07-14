@@ -1,5 +1,6 @@
 package org.broadinstitute.ddp.pex;
 
+import static java.lang.String.format;
 import static org.broadinstitute.ddp.pex.RetrievedActivityInstanceType.LATEST;
 
 import java.time.LocalDate;
@@ -25,12 +26,14 @@ import org.broadinstitute.ddp.db.dao.AnswerDao;
 import org.broadinstitute.ddp.db.dao.InvitationDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
+import org.broadinstitute.ddp.db.dao.JdbiQuestionCached;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudyCached;
 import org.broadinstitute.ddp.db.dao.JdbiUserStudyEnrollment;
 import org.broadinstitute.ddp.db.dao.StudyGovernanceDao;
 import org.broadinstitute.ddp.db.dao.UserGovernanceDao;
 import org.broadinstitute.ddp.db.dao.UserProfileDao;
 import org.broadinstitute.ddp.db.dto.ActivityDto;
+import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.db.dto.UserActivityInstanceSummary;
 import org.broadinstitute.ddp.model.activity.definition.question.CompositeQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
@@ -365,11 +368,12 @@ public class TreeWalkInterpreter implements PexInterpreter {
         }
     }
 
-    private boolean evalQuestionQuery(InterpreterContext ictx, QuestionQueryContext ctx) {
+    private Object evalQuestionQuery(InterpreterContext ictx, QuestionQueryContext ctx) {
         String userGuid = getUserGuidByUserType(ictx, ctx.USER_TYPE());
         String studyGuid = extractString(ctx.study().STR());
         String activityCode = extractString(ctx.form().STR());
         String stableId = extractString(ctx.question().STR());
+        StudyDto studyDto = new JdbiUmbrellaStudyCached(ictx.getHandle()).findByStudyGuid(studyGuid);
 
         long activityId = ictx.getHandle().attach(JdbiActivity.class)
                 .findActivityByStudyGuidAndCode(studyGuid, activityCode)
@@ -379,26 +383,20 @@ public class TreeWalkInterpreter implements PexInterpreter {
                     return new PexFetchException(new NoSuchElementException(msg));
                 });
 
-        return applyQuestionPredicate(ictx, userGuid, activityId, stableId, ctx.questionPredicate());
+        return applyQuestionPredicate(ictx, studyDto.getId(), userGuid, activityId, stableId, ctx.questionPredicate());
     }
 
-    private boolean applyQuestionPredicate(InterpreterContext ictx, String userGuid, long activityId,
-                                           String stableId, QuestionPredicateContext predCtx) {
+    private Object applyQuestionPredicate(InterpreterContext ictx, long studyId, String userGuid, long activityId,
+                                          String stableId, QuestionPredicateContext predCtx) {
         if (predCtx instanceof PexParser.IsAnsweredPredicateContext) {
-            Long instanceId = ictx.getHandle().attach(JdbiActivityInstance.class)
-                    .findLatestInstanceIdByUserGuidAndActivityId(userGuid, activityId)
-                    .orElse(null);
+            Long instanceId = getInstanceId(ictx, userGuid, activityId);
             if (instanceId == null) {
                 return false;
             }
-
-            Answer answer = ictx.getHandle().attach(AnswerDao.class)
-                    .findAnswerByInstanceIdAndQuestionStableId(instanceId, stableId)
-                    .orElse(null);
+            var answer = getAnswer(ictx, instanceId, stableId);
             if (answer == null || answer.getValue() == null) {
                 return false;
             }
-
             if (answer.getQuestionType() == QuestionType.PICKLIST) {
                 return ((PicklistAnswer) answer).getValue().size() > 0;
             } else if (answer.getQuestionType() == QuestionType.TEXT) {
@@ -406,6 +404,37 @@ public class TreeWalkInterpreter implements PexInterpreter {
             } else {
                 return true;
             }
+        } else if (predCtx instanceof PexParser.NumChildAnswersQueryContext) {
+            var instanceId = getInstanceId(ictx, userGuid, activityId);
+            if (instanceId == null) {
+                return false;
+            }
+            var questionDto = new JdbiQuestionCached(ictx.getHandle())
+                    .findLatestDtoByStudyIdAndQuestionStableId(studyId, stableId).orElseThrow(() -> new PexFetchException(format(
+                            "Could not find question with stable id %s in study %d", stableId, studyId)));
+            if (questionDto.getType() != QuestionType.COMPOSITE) {
+                throw new PexUnsupportedException("Only composite question supported for 'numChildAnswers'. "
+                        + "Question stableID: " + stableId);
+            }
+
+            String childStableId = extractString(((PexParser.NumChildAnswersQueryContext) predCtx).STR());
+            var answer = getAnswer(ictx, instanceId, stableId);
+            if (answer != null) {
+                List<Answer> childAnswers = Optional.of(answer).stream()
+                        .map(ans -> (CompositeAnswer) ans)
+                        .flatMap(parent -> parent.getValue().stream())
+                        .flatMap(row -> row.getValues().stream())
+                        .filter(child -> child != null && child.getQuestionStableId().equals(childStableId))
+                        .collect(Collectors.toList());
+                childAnswers.forEach(ans -> {
+                    if (ans.getQuestionType() != QuestionType.PICKLIST) {
+                        throw new PexUnsupportedException("For 'numChildAnswers' the children inside composite "
+                                + "should be of type Picklist. Parent stableID: " + stableId);
+                    }
+                });
+                return Long.valueOf(childAnswers.size());
+            }
+            return 0L;
         } else {
             throw new PexUnsupportedException("Unsupported question predicate: " + predCtx.getText());
         }
@@ -993,5 +1022,16 @@ public class TreeWalkInterpreter implements PexInterpreter {
         public Object visitEventKitQuery(PexParser.EventKitQueryContext ctx) {
             return interpreter.evalEventKitQuery(ictx, ctx);
         }
+    }
+
+    private static Long getInstanceId(InterpreterContext ictx, String userGuid, long activityId) {
+        return ictx.getHandle().attach(JdbiActivityInstance.class)
+                .findLatestInstanceIdByUserGuidAndActivityId(userGuid, activityId)
+                .orElse(null);
+    }
+
+    private static Answer getAnswer(InterpreterContext ictx, Long instanceId, String stableId) {
+        return ictx.getHandle().attach(AnswerDao.class).findAnswerByInstanceIdAndQuestionStableId(instanceId, stableId)
+                .orElse(null);
     }
 }
