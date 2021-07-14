@@ -1,8 +1,8 @@
 package org.broadinstitute.ddp.model.event.activityinstancecreation;
 
 import static java.lang.String.format;
-import static org.broadinstitute.ddp.model.event.activityinstancecreation.creator.ActivityInstanceCreatorUtil.getAnswer;
 import static org.broadinstitute.ddp.model.event.activityinstancecreation.creator.ActivityInstancesFromCompositeCreator.getChildAnswersFromComposite;
+import static org.broadinstitute.ddp.util.QuestionUtil.getAnswer;
 
 import java.util.List;
 
@@ -69,7 +69,7 @@ public class ActivityInstanceCreationFromAnswersEventSyncProcessor extends Activ
         creationService.checkSignalIfNestedTargetActivity(activityDto.getParentActivityId());
         var sourceActivityInstanceId = ((ActivityInstanceStatusChangeSignal) signal).getActivityInstanceIdThatChanged();
         var parentAnswer = getAnswer(handle, sourceActivityInstanceId, sourceQuestionStableId);
-        var sourceAnswers = detectSourceAnswers(handle, sourceActivityInstanceId, parentAnswer);
+        var sourceAnswers = detectSourceAnswers(parentAnswer);
 
         var activityInstancesCreator = detectActivityInstancesCreator(parentAnswer);
         if (detectPossibleNumberOfInstancesToCreate(activityInstancesCreator.getInstancesCount(sourceAnswers)) > 0) {
@@ -97,7 +97,7 @@ public class ActivityInstanceCreationFromAnswersEventSyncProcessor extends Activ
      * Currently supported only composite answers (i.e. `sourceQuestionStableId` - should be
      * stable_ID of a Composite Question).
      */
-    private List<Answer> detectSourceAnswers(Handle handle, long sourceActivityInstanceId, Answer parentAnswer) {
+    private List<Answer> detectSourceAnswers(Answer parentAnswer) {
         switch (parentAnswer.getQuestionType()) {
             case COMPOSITE:
                 return getChildAnswersFromComposite((CompositeAnswer) parentAnswer);
