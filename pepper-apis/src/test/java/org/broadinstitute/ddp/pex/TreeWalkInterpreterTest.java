@@ -1197,6 +1197,41 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
     }
 
     @Test
+    public void testEval_numChildAnswers() {
+        String stableId = compositeDef.getStableId();
+        String childStableId = compositeDef.getChildren().get(0).getStableId();
+
+        String expr = String.format("user.studies[\"%s\"].forms[\"%s\"].questions[\"%s\"].numChildAnswers(\"%s\") == 2",
+                studyGuid, activityCode, stableId, childStableId);
+
+        var answer = new CompositeAnswer(null, stableId, null);
+        answer.addRowOfChildAnswers(new PicklistAnswer(null, childStableId, null,
+                List.of(new SelectedPicklistOption("NEGATIVE"))));
+        answer.addRowOfChildAnswers(new PicklistAnswer(null, childStableId, null,
+                List.of(new SelectedPicklistOption("POSITIVE"))));
+
+        TransactionWrapper.useTxn(handle -> {
+            handle.attach(AnswerDao.class).createAnswer(testData.getUserId(), secondInstance.getId(), answer);
+            assertTrue("calculated number of child answers in a composite == 2", run(handle, expr));
+            handle.rollback();
+        });
+    }
+
+    @Test
+    public void testEval_numChildAnswersNoAnswers() {
+        String stableId = compositeDef.getStableId();
+        String childStableId = compositeDef.getChildren().get(0).getStableId();
+
+        String expr = String.format("user.studies[\"%s\"].forms[\"%s\"].questions[\"%s\"].numChildAnswers(\"%s\") == 0",
+                studyGuid, activityCode, stableId, childStableId);
+
+        TransactionWrapper.useTxn(handle -> {
+            assertTrue("no composite answer therefore number of child answers == 0", run(handle, expr));
+            handle.rollback();
+        });
+    }
+
+    @Test
     public void testEval_profileQuery_noProfile() {
         TransactionWrapper.useTxn(handle -> {
             handle.attach(UserProfileDao.class).getUserProfileSql().deleteByUserId(testData.getUserId());
@@ -1240,6 +1275,16 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
             } catch (PexFetchException e) {
                 assertTrue(e.getMessage().contains("does not have birth date"));
             }
+
+            handle.rollback();
+        });
+    }
+
+    @Test
+    public void testEval_profileQuery_preferredLanguage() {
+        TransactionWrapper.useTxn(handle -> {
+            String expr = "user.profile.language() == \"en\"";
+            assertTrue(run(handle, expr));
 
             handle.rollback();
         });

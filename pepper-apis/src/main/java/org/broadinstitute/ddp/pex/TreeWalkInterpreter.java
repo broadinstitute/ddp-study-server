@@ -1,5 +1,6 @@
 package org.broadinstitute.ddp.pex;
 
+import static java.lang.String.format;
 import static org.broadinstitute.ddp.pex.RetrievedActivityInstanceType.LATEST;
 
 import java.time.LocalDate;
@@ -25,12 +26,14 @@ import org.broadinstitute.ddp.db.dao.AnswerDao;
 import org.broadinstitute.ddp.db.dao.InvitationDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
+import org.broadinstitute.ddp.db.dao.JdbiQuestionCached;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudyCached;
 import org.broadinstitute.ddp.db.dao.JdbiUserStudyEnrollment;
 import org.broadinstitute.ddp.db.dao.StudyGovernanceDao;
 import org.broadinstitute.ddp.db.dao.UserGovernanceDao;
 import org.broadinstitute.ddp.db.dao.UserProfileDao;
 import org.broadinstitute.ddp.db.dto.ActivityDto;
+import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.db.dto.UserActivityInstanceSummary;
 import org.broadinstitute.ddp.model.activity.definition.question.CompositeQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
@@ -323,13 +326,7 @@ public class TreeWalkInterpreter implements PexInterpreter {
         String activityCode = extractString(ctx.form().STR());
         String instanceType = ctx.instance().INSTANCE_TYPE().getText();
 
-        long activityId = ictx.getHandle().attach(JdbiActivity.class)
-                .findActivityByStudyGuidAndCode(studyGuid, activityCode)
-                .map(ActivityDto::getActivityId)
-                .orElseThrow(() -> {
-                    String msg = String.format("Could not find activity with study guid %s and activity code %s", studyGuid, activityCode);
-                    return new PexFetchException(new NoSuchElementException(msg));
-                });
+        long activityId = getActivityId(ictx, studyGuid, activityCode);
 
         final long instanceId;
         if (instanceType.equals(LATEST)) {
@@ -365,40 +362,29 @@ public class TreeWalkInterpreter implements PexInterpreter {
         }
     }
 
-    private boolean evalQuestionQuery(InterpreterContext ictx, QuestionQueryContext ctx) {
+    private Object evalQuestionQuery(InterpreterContext ictx, QuestionQueryContext ctx) {
         String userGuid = getUserGuidByUserType(ictx, ctx.USER_TYPE());
         String studyGuid = extractString(ctx.study().STR());
         String activityCode = extractString(ctx.form().STR());
         String stableId = extractString(ctx.question().STR());
 
-        long activityId = ictx.getHandle().attach(JdbiActivity.class)
-                .findActivityByStudyGuidAndCode(studyGuid, activityCode)
-                .map(ActivityDto::getActivityId)
-                .orElseThrow(() -> {
-                    String msg = String.format("Could not find activity with study guid %s and activity code %s", studyGuid, activityCode);
-                    return new PexFetchException(new NoSuchElementException(msg));
-                });
+        StudyDto studyDto = getStudyByGuid(ictx, studyGuid);
+        long activityId = getActivityId(ictx, studyGuid, activityCode);
 
-        return applyQuestionPredicate(ictx, userGuid, activityId, stableId, ctx.questionPredicate());
+        return applyQuestionPredicate(ictx, studyDto.getId(), userGuid, activityId, stableId, ctx.questionPredicate());
     }
 
-    private boolean applyQuestionPredicate(InterpreterContext ictx, String userGuid, long activityId,
-                                           String stableId, QuestionPredicateContext predCtx) {
+    private Object applyQuestionPredicate(InterpreterContext ictx, long studyId, String userGuid, long activityId,
+                                          String stableId, QuestionPredicateContext predCtx) {
         if (predCtx instanceof PexParser.IsAnsweredPredicateContext) {
-            Long instanceId = ictx.getHandle().attach(JdbiActivityInstance.class)
-                    .findLatestInstanceIdByUserGuidAndActivityId(userGuid, activityId)
-                    .orElse(null);
+            Long instanceId = getInstanceId(ictx, userGuid, activityId);
             if (instanceId == null) {
                 return false;
             }
-
-            Answer answer = ictx.getHandle().attach(AnswerDao.class)
-                    .findAnswerByInstanceIdAndQuestionStableId(instanceId, stableId)
-                    .orElse(null);
+            var answer = getAnswer(ictx, instanceId, stableId);
             if (answer == null || answer.getValue() == null) {
                 return false;
             }
-
             if (answer.getQuestionType() == QuestionType.PICKLIST) {
                 return ((PicklistAnswer) answer).getValue().size() > 0;
             } else if (answer.getQuestionType() == QuestionType.TEXT) {
@@ -406,6 +392,31 @@ public class TreeWalkInterpreter implements PexInterpreter {
             } else {
                 return true;
             }
+        } else if (predCtx instanceof PexParser.NumChildAnswersQueryContext) {
+            var instanceId = getInstanceId(ictx, userGuid, activityId);
+            if (instanceId == null) {
+                return false;
+            }
+            var questionDto = new JdbiQuestionCached(ictx.getHandle())
+                    .findLatestDtoByStudyIdAndQuestionStableId(studyId, stableId).orElseThrow(() -> new PexFetchException(format(
+                            "Could not find question with stable id %s in study %d", stableId, studyId)));
+            if (questionDto.getType() != QuestionType.COMPOSITE) {
+                throw new PexUnsupportedException("Only composite question supported for 'numChildAnswers'. "
+                        + "Question stableID: " + stableId);
+            }
+
+            String childStableId = extractString(((PexParser.NumChildAnswersQueryContext) predCtx).STR());
+            var answer = getAnswer(ictx, instanceId, stableId);
+            if (answer != null) {
+                List<Answer> childAnswers = Optional.of(answer).stream()
+                        .map(ans -> (CompositeAnswer) ans)
+                        .flatMap(parent -> parent.getValue().stream())
+                        .flatMap(row -> row.getValues().stream())
+                        .filter(child -> child != null && child.getQuestionStableId().equals(childStableId))
+                        .collect(Collectors.toList());
+                return Long.valueOf(childAnswers.size());
+            }
+            return 0L;
         } else {
             throw new PexUnsupportedException("Unsupported question predicate: " + predCtx.getText());
         }
@@ -816,6 +827,12 @@ public class TreeWalkInterpreter implements PexInterpreter {
                 throw new PexFetchException(msg);
             }
             return ChronoUnit.YEARS.between(birthDate, LocalDate.now());
+        } else if (queryCtx instanceof  PexParser.ProfileLanguageQueryContext) {
+            if (profile.getPreferredLangCode() == null) {
+                String msg = String.format("User %s does not have preferred language in profile", ictx.getUserGuid());
+                throw new PexFetchException(msg);
+            }
+            return profile.getPreferredLangCode();
         } else {
             throw new PexUnsupportedException("Unhandled profile data query: " + queryCtx.getText());
         }
@@ -1001,4 +1018,35 @@ public class TreeWalkInterpreter implements PexInterpreter {
             return interpreter.evalEventKitQuery(ictx, ctx);
         }
     }
+
+    private static Long getInstanceId(InterpreterContext ictx, String userGuid, long activityId) {
+        return ictx.getHandle().attach(JdbiActivityInstance.class)
+                .findLatestInstanceIdByUserGuidAndActivityId(userGuid, activityId)
+                .orElse(null);
+    }
+
+    private static Answer getAnswer(InterpreterContext ictx, Long instanceId, String stableId) {
+        return ictx.getHandle().attach(AnswerDao.class).findAnswerByInstanceIdAndQuestionStableId(instanceId, stableId)
+                .orElse(null);
+    }
+
+    private static long getActivityId(InterpreterContext ictx, String studyGuid, String activityCode) {
+        return ictx.getHandle().attach(JdbiActivity.class)
+                .findActivityByStudyGuidAndCode(studyGuid, activityCode)
+                .map(ActivityDto::getActivityId)
+                .orElseThrow(() -> {
+                    String msg = String.format("Could not find activity with study guid %s and activity code %s", studyGuid, activityCode);
+                    return new PexFetchException(new NoSuchElementException(msg));
+                });
+    }
+
+    private static StudyDto getStudyByGuid(InterpreterContext ictx, String studyGuid) {
+        StudyDto studyDto = new JdbiUmbrellaStudyCached(ictx.getHandle()).findByStudyGuid(studyGuid);
+        if (studyDto == null) {
+            String msg = String.format("Could not find study by study guid %s", studyGuid);
+            throw new PexFetchException(new NoSuchElementException(msg));
+        }
+        return studyDto;
+    }
+
 }
