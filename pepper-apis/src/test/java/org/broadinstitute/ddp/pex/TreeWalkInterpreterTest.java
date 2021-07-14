@@ -1281,6 +1281,16 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
     }
 
     @Test
+    public void testEval_profileQuery_preferredLanguage() {
+        TransactionWrapper.useTxn(handle -> {
+            String expr = "user.profile.language() == \"en\"";
+            assertTrue(run(handle, expr));
+
+            handle.rollback();
+        });
+    }
+
+    @Test
     public void testEval_profileQuery_birthDate() {
         TransactionWrapper.useTxn(handle -> {
             var profileDao = handle.attach(UserProfileDao.class);

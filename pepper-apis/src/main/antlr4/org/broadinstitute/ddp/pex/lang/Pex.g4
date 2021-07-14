@@ -81,6 +81,7 @@ predicate
 profileDataQuery
   : 'birthDate' '(' ')'   # ProfileBirthDateQuery
   | 'age' '(' ')'         # ProfileAgeQuery
+  | 'language' '(' ')'    # ProfileLanguageQuery
   ;
 
 // Queries for current kit event.

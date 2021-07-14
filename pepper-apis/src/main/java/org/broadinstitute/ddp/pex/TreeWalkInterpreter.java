@@ -845,6 +845,12 @@ public class TreeWalkInterpreter implements PexInterpreter {
                 throw new PexFetchException(msg);
             }
             return ChronoUnit.YEARS.between(birthDate, LocalDate.now());
+        } else if (queryCtx instanceof  PexParser.ProfileLanguageQueryContext) {
+            if (profile.getPreferredLangCode() == null) {
+                String msg = String.format("User %s does not have preferred language in profile", ictx.getUserGuid());
+                throw new PexFetchException(msg);
+            }
+            return profile.getPreferredLangCode();
         } else {
             throw new PexUnsupportedException("Unhandled profile data query: " + queryCtx.getText());
         }
