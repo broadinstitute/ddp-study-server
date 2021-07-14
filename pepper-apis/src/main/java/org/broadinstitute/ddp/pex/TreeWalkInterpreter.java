@@ -548,12 +548,19 @@ public class TreeWalkInterpreter implements PexInterpreter {
             }
         } else {
             var answerDao = new AnswerCachedDao(ictx.getHandle());
-            Optional<Answer> compositeAnswer;
             if (instanceGuid == null) {
-                compositeAnswer = answerDao.findAnswerByLatestInstanceAndQuestionStableId(userGuid, studyId, stableId);
-            } else {
-                compositeAnswer = answerDao.findAnswerByInstanceGuidAndQuestionStableId(instanceGuid, stableId);
+                //try to find latest activity instance so that if composite answers exists can load child answers
+                instanceGuid = ictx.getHandle().attach(ActivityInstanceDao.class)
+                        .findLatestActivityInstanceGuidByUserStudyAndActivityCode(userGuid, studyId, activityCode);
+                if (instanceGuid == null) {
+                    String msg = String.format("Failed to get latest activity instance for User: %s  Study: '%d'  activityCode: %s",
+                            userGuid, studyId, stableId);
+                    return new PexFetchException(new NoSuchElementException(msg));
+                }
             }
+
+            Optional<Answer> compositeAnswer = answerDao.findAnswerByInstanceGuidAndQuestionStableId(instanceGuid, stableId);
+
             List<Answer> childAnswers = compositeAnswer.stream()
                     .map(ans -> (CompositeAnswer) ans)
                     .flatMap(parent -> parent.getValue().stream())

@@ -2,7 +2,6 @@ package org.broadinstitute.ddp.studybuilder;
 
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
-import static org.broadinstitute.ddp.util.MiscUtil.isTrue;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -260,13 +259,13 @@ public class EventBuilder {
             return actionDao.insertPdfGenerationAction(pdfId);
         } else if (EventActionType.ACTIVITY_INSTANCE_CREATION.name().equals(type)) {
             String activityCode = actionCfg.getString(ACTIVITY_CODE_FIELD);
-            Boolean createFromAnswer = ConfigUtil.getBoolIfPresent(actionCfg, "createFromAnswer");
+            boolean createFromAnswer = ConfigUtil.getBoolOrElse(actionCfg, "createFromAnswer", false);
             String sourceQuestionStableId = ConfigUtil.getStrIfPresent(actionCfg, "sourceQuestionStableId");
             String targetQuestionStableId = ConfigUtil.getStrIfPresent(actionCfg, "targetQuestionStableId");
             ActivityDto activityDto = handle.attach(JdbiActivity.class)
                     .findActivityByStudyIdAndCode(studyDto.getId(), activityCode)
                     .orElseThrow(() -> new DDPException("Could not find activity " + activityCode));
-            if (isTrue(createFromAnswer)) {
+            if (createFromAnswer) {
                 if (!triggerCfg.getString("type").equals(EventTriggerType.ACTIVITY_STATUS.name())) {
                     throw new DDPException("When createFromAnswer==true then trigger type must be ACTIVITY_STATUS");
                 }

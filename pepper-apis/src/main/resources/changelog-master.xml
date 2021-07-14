@@ -271,4 +271,6 @@
     <include file="db-changes/schema/DDP-6501-study-default-auth0-connection.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/DDP-5910-always-generate-pdf.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/DDP-6306-add-activity-instance-creation-properties.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/DDP-5910-pdf-picklist-fields-mapping.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/DDP-6313-add-study-redirect-workflow.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>
