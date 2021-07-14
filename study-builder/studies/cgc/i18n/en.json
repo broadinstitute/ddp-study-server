@@ -125,6 +125,7 @@
   "rrc_name": "Clinical Info Release Request",
   "rrc_title": "Clinical Info Release Request",
   "rrc_header": "Clinical Info Release Request",
+  "rrc_intro": "Please complete the information below. A copy of this request in PDF format will be generated and emailed to you.",
   "rrc_your_name": "Your Name",
   "rrc_your_street_address": "Your Street Address",
   "rrc_your_city": "Your City",
@@ -132,7 +133,6 @@
   "rrc_your_zip_code": "Your Zip Code",
   "rrc_your_phone": "Your Phone",
   "rrc_your_email": "Your Email",
-
   "rrc_recipient_name": "Recipient's Name",
   "rrc_recipient_street_address": "Recipient's Street Address",
   "rrc_recipient_city": "Recipient's City",
@@ -140,13 +140,10 @@
   "rrc_recipient_zip_code": "Recipient's Zip Code",
   "rrc_recipient_phone": "Recipient's Phone",
   "rrc_recipient_email": "Recipient's Email",
-
   "rrc_today_date": "Today's Date",
-
   "rrc_authorized_person": "Type \"me\" here, or enter name of authorized person or organization",
   "rrc_provider_name": "Provider Name",
   "rrc_authorized_email": "Your email or authorized person's or organization's email",
-
   "rrc_seeking": "I am seeking:",
   "rrc_seeking_all": "comprehensive medical records for all dates/time periods of care provided",
   "rrc_seeking_time_period": "medical records for specific period of time",
@@ -154,7 +151,6 @@
   "rrc_period_from": "period from",
   "rrc_period_to": "period to",
   "rrc_specific_condition": "condition",
-
   "rrc_provide_consent": "I further provide consent for the following records to be released alongside the above:",
   "rrc_sexual_history": "Sexual history",
   "rrc_abortion_history": "Abortion history",
@@ -173,7 +169,6 @@
   "rrg_your_zip_code": "Your Zip Code",
   "rrg_your_phone": "Your Phone",
   "rrg_your_email": "Your Email",
-
   "rrg_recipient_name": "Recipient's Name",
   "rrg_recipient_street_address": "Recipient's Street Address",
   "rrg_recipient_city": "Recipient's City",
@@ -181,9 +176,7 @@
   "rrg_recipient_zip_code": "Recipient's Zip Code",
   "rrg_recipient_phone": "Recipient's Phone",
   "rrg_recipient_email": "Recipient's Email",
-
   "rrg_today_date": "Today's Date",
-
   "rrg_authorized_person": "Type \"me\" here, or enter name of authorized person or organization",
   "rrg_lab_name": "Genetic sequencing company or clinical laboratory name",
   "rrg_authorized_email": "Your email or authorized person's or organization's email",
