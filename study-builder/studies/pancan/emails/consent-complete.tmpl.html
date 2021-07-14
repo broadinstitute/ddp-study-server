@@ -82,11 +82,11 @@
       <tr style="width: 540px;">
         <td style="padding: 50px 0 0px 0;">
           <p style="font-family: 'Roboto', sans-serif; text-align: left; font-weight: 300; font-size: 15px; line-height: 23px;">
-            {{#if proxy_firstName ~}}
-                ${text["salutation_parent"]},
-            {{~else ~}}
-                ${text["salutation_self"]},
-            {{~/if ~}}
+            {{#if proxy_firstName~}}
+                ${text["salutation_parent"]}
+            {{~else~}}
+                ${text["salutation_self"]}
+            {{~/if~}}
           </p>
           <p style="font-family: 'Roboto', sans-serif; text-align: left; font-weight: 300; font-size: 15px; line-height: 23px;">${text["thank_you"]}</p>
           <p style="font-family: 'Roboto', sans-serif; text-align: left; font-weight: 300; font-size: 15px; line-height: 23px;">${text["what_to_expect"]}</p>
