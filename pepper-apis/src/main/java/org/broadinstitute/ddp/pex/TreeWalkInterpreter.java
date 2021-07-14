@@ -326,13 +326,7 @@ public class TreeWalkInterpreter implements PexInterpreter {
         String activityCode = extractString(ctx.form().STR());
         String instanceType = ctx.instance().INSTANCE_TYPE().getText();
 
-        long activityId = ictx.getHandle().attach(JdbiActivity.class)
-                .findActivityByStudyGuidAndCode(studyGuid, activityCode)
-                .map(ActivityDto::getActivityId)
-                .orElseThrow(() -> {
-                    String msg = String.format("Could not find activity with study guid %s and activity code %s", studyGuid, activityCode);
-                    return new PexFetchException(new NoSuchElementException(msg));
-                });
+        long activityId = getActivityId(ictx, studyGuid, activityCode);
 
         final long instanceId;
         if (instanceType.equals(LATEST)) {
@@ -373,15 +367,9 @@ public class TreeWalkInterpreter implements PexInterpreter {
         String studyGuid = extractString(ctx.study().STR());
         String activityCode = extractString(ctx.form().STR());
         String stableId = extractString(ctx.question().STR());
-        StudyDto studyDto = new JdbiUmbrellaStudyCached(ictx.getHandle()).findByStudyGuid(studyGuid);
 
-        long activityId = ictx.getHandle().attach(JdbiActivity.class)
-                .findActivityByStudyGuidAndCode(studyGuid, activityCode)
-                .map(ActivityDto::getActivityId)
-                .orElseThrow(() -> {
-                    String msg = String.format("Could not find activity with study guid %s and activity code %s", studyGuid, activityCode);
-                    return new PexFetchException(new NoSuchElementException(msg));
-                });
+        StudyDto studyDto = getStudyByGuid(ictx, studyGuid);
+        long activityId = getActivityId(ictx, studyGuid, activityCode);
 
         return applyQuestionPredicate(ictx, studyDto.getId(), userGuid, activityId, stableId, ctx.questionPredicate());
     }
@@ -426,12 +414,6 @@ public class TreeWalkInterpreter implements PexInterpreter {
                         .flatMap(row -> row.getValues().stream())
                         .filter(child -> child != null && child.getQuestionStableId().equals(childStableId))
                         .collect(Collectors.toList());
-                childAnswers.forEach(ans -> {
-                    if (ans.getQuestionType() != QuestionType.PICKLIST) {
-                        throw new PexUnsupportedException("For 'numChildAnswers' the children inside composite "
-                                + "should be of type Picklist. Parent stableID: " + stableId);
-                    }
-                });
                 return Long.valueOf(childAnswers.size());
             }
             return 0L;
@@ -1047,4 +1029,24 @@ public class TreeWalkInterpreter implements PexInterpreter {
         return ictx.getHandle().attach(AnswerDao.class).findAnswerByInstanceIdAndQuestionStableId(instanceId, stableId)
                 .orElse(null);
     }
+
+    private static long getActivityId(InterpreterContext ictx, String studyGuid, String activityCode) {
+        return ictx.getHandle().attach(JdbiActivity.class)
+                .findActivityByStudyGuidAndCode(studyGuid, activityCode)
+                .map(ActivityDto::getActivityId)
+                .orElseThrow(() -> {
+                    String msg = String.format("Could not find activity with study guid %s and activity code %s", studyGuid, activityCode);
+                    return new PexFetchException(new NoSuchElementException(msg));
+                });
+    }
+
+    private static StudyDto getStudyByGuid(InterpreterContext ictx, String studyGuid) {
+        StudyDto studyDto = new JdbiUmbrellaStudyCached(ictx.getHandle()).findByStudyGuid(studyGuid);
+        if (studyDto == null) {
+            String msg = String.format("Could not find study by study guid %s", studyGuid);
+            throw new PexFetchException(new NoSuchElementException(msg));
+        }
+        return studyDto;
+    }
+
 }
