@@ -62,6 +62,7 @@ import org.slf4j.LoggerFactory;
 public class StudyBuilder {
 
     private static final Logger LOG = LoggerFactory.getLogger(StudyBuilder.class);
+    private static final String UMBRELLA_UNASSIGNED = "unassigned";
 
     private boolean doWorkflow = true;
     private boolean doEvents = true;
@@ -205,13 +206,14 @@ public class StudyBuilder {
             newGuid = GuidUtils.randomStandardGuid();
         }
 
-        numRows = helper.renameStudy(studyDto.getId(), newGuid);
+        var umbrellaDto = helper.findOrInsertUmbrella(UMBRELLA_UNASSIGNED);
+        numRows = helper.renameStudy(studyDto.getId(), newGuid, umbrellaDto.getId());
         if (numRows != 1) {
             throw new DDPException("unable to rename study for invalidation");
         }
 
         StudyDto renamedStudy = handle.attach(JdbiUmbrellaStudy.class).findById(studyDto.getId());
-        LOG.info("renamed study with guid={}", renamedStudy.getGuid());
+        LOG.info("renamed study with guid={} and moved to umbrella '{}'", renamedStudy.getGuid(), UMBRELLA_UNASSIGNED);
     }
 
     public Auth0TenantDto getTenantOrInsert(Handle handle) {
@@ -702,8 +704,17 @@ public class StudyBuilder {
         @SqlUpdate("update umbrella_study"
                 + "    set study_name = concat(study_name, '-', umbrella_study_id),"
                 + "        guid = :newGuid,"
+                + "        umbrella_id = :umbrellaId,"
                 + "        enable_data_export = false"
                 + "  where umbrella_study_id = :studyId")
-        int renameStudy(@Bind("studyId") long studyId, @Bind("newGuid") String newGuid);
+        int renameStudy(@Bind("studyId") long studyId, @Bind("newGuid") String newGuid, @Bind("umbrellaId") long umbrellaId);
+
+        default UmbrellaDto findOrInsertUmbrella(String umbrella) {
+            var jdbiUmbrella = getHandle().attach(JdbiUmbrella.class);
+            return jdbiUmbrella.findByGuid(umbrella).or(() -> {
+                long id = jdbiUmbrella.insert(umbrella, umbrella);
+                return jdbiUmbrella.findById(id);
+            }).get();
+        }
     }
 }
