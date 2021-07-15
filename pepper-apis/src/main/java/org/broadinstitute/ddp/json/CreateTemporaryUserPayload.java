@@ -5,8 +5,7 @@ import javax.validation.constraints.NotBlank;
 import com.google.gson.annotations.SerializedName;
 
 public class CreateTemporaryUserPayload {
-
-    @NotBlank
+    
     @SerializedName("auth0ClientId")
     private String auth0ClientId;
 
