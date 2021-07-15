@@ -28,8 +28,6 @@ import spark.Response;
 public class CreateTemporaryUserRoute extends ValidatedJsonInputRoute<CreateTemporaryUserPayload> {
 
     private static final Logger LOG = LoggerFactory.getLogger(CreateTemporaryUserRoute.class);
-    private static final String STUDY_GUID_REGEX = "/studies/([0-9a-zA-Z-]+)";
-    private static final int STUDY_GUID_INDEX = 1;
 
     @Override
     protected int getValidationErrorStatus() {
