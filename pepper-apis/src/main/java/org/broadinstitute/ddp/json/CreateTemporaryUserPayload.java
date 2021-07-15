@@ -13,9 +13,18 @@ public class CreateTemporaryUserPayload {
     @SerializedName("auth0Domain")
     private String auth0Domain;
 
+    @SerializedName("languageCode")
+    private String languageCode;
+
     public CreateTemporaryUserPayload(String auth0ClientId, String auth0Domain) {
         this.auth0ClientId = auth0ClientId;
         this.auth0Domain = auth0Domain;
+    }
+
+    public CreateTemporaryUserPayload(@NotBlank String auth0ClientId, String auth0Domain, String languageCode) {
+        this.auth0ClientId = auth0ClientId;
+        this.auth0Domain = auth0Domain;
+        this.languageCode = languageCode;
     }
 
     public String getAuth0ClientId() {
@@ -24,5 +33,9 @@ public class CreateTemporaryUserPayload {
 
     public String getAuth0Domain() {
         return auth0Domain;
+    }
+
+    public String getLanguageCode() {
+        return languageCode;
     }
 }

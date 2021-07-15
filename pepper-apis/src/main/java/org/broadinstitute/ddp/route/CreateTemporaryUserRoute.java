@@ -3,17 +3,22 @@ package org.broadinstitute.ddp.route;
 import java.util.List;
 
 import org.apache.http.HttpStatus;
+import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.db.DaoException;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.JdbiClient;
 import org.broadinstitute.ddp.db.dao.UserDao;
+import org.broadinstitute.ddp.db.dao.UserProfileDao;
 import org.broadinstitute.ddp.db.dto.ClientDto;
+import org.broadinstitute.ddp.db.dto.LanguageDto;
 import org.broadinstitute.ddp.json.CreateTemporaryUserPayload;
 import org.broadinstitute.ddp.json.CreateTemporaryUserResponse;
 import org.broadinstitute.ddp.json.errors.ApiError;
 import org.broadinstitute.ddp.model.user.User;
+import org.broadinstitute.ddp.model.user.UserProfile;
 import org.broadinstitute.ddp.util.ResponseUtil;
+import org.broadinstitute.ddp.util.RouteUtil;
 import org.broadinstitute.ddp.util.ValidatedJsonInputRoute;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,6 +28,8 @@ import spark.Response;
 public class CreateTemporaryUserRoute extends ValidatedJsonInputRoute<CreateTemporaryUserPayload> {
 
     private static final Logger LOG = LoggerFactory.getLogger(CreateTemporaryUserRoute.class);
+    private static final String STUDY_GUID_REGEX = "/studies/([0-9a-zA-Z-]+)";
+    private static final int STUDY_GUID_INDEX = 1;
 
     @Override
     protected int getValidationErrorStatus() {
@@ -33,6 +40,19 @@ public class CreateTemporaryUserRoute extends ValidatedJsonInputRoute<CreateTemp
     public Object handle(Request request, Response response, CreateTemporaryUserPayload payload) {
         String auth0ClientId = payload.getAuth0ClientId();
         String auth0Domain = payload.getAuth0Domain();
+        String languageCode = payload.getLanguageCode();
+        if (languageCode == null) {
+            //try from request header
+            LanguageDto preferredLanguage = RouteUtil.getUserLanguage(request);
+            if (preferredLanguage != null) {
+                languageCode = preferredLanguage.getIsoCode();
+            } else {
+                //fall back to default language
+                languageCode = LanguageStore.DEFAULT_LANG_CODE;
+            }
+        }
+        LanguageDto languageDto = LanguageStore.get(languageCode);
+        Long languageId = languageDto != null ? languageDto.getId() : null;
 
         LOG.info(
                 "Request to create new temporary user from ipAddress '{}', auth0ClientId '{}' and auth0Domain '{}'",
@@ -68,6 +88,12 @@ public class CreateTemporaryUserRoute extends ValidatedJsonInputRoute<CreateTemp
 
             try {
                 User user = handle.attach(UserDao.class).createTempUser(clientDto.getId());
+                //create profile
+                UserProfileDao profileDao = handle.attach(UserProfileDao.class);
+                profileDao.createProfile(new UserProfile.Builder(user.getId())
+                        .setPreferredLangId(languageId)
+                        .build());
+
                 return new CreateTemporaryUserResponse(user.getGuid(), user.getExpiresAt());
             } catch (DaoException e) {
                 String msg = "Error while creating temporary user";
