@@ -21,7 +21,7 @@ public class CreateTemporaryUserPayload {
         this.auth0Domain = auth0Domain;
     }
 
-    public CreateTemporaryUserPayload(@NotBlank String auth0ClientId, String auth0Domain, String languageCode) {
+    public CreateTemporaryUserPayload(String auth0ClientId, String auth0Domain, String languageCode) {
         this.auth0ClientId = auth0ClientId;
         this.auth0Domain = auth0Domain;
         this.languageCode = languageCode;
