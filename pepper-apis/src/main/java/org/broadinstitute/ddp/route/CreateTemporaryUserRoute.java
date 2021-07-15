@@ -1,7 +1,6 @@
 package org.broadinstitute.ddp.route;
 
 import java.util.List;
-
 import org.apache.http.HttpStatus;
 import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.constants.ErrorCodes;
@@ -18,7 +17,6 @@ import org.broadinstitute.ddp.json.errors.ApiError;
 import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.model.user.UserProfile;
 import org.broadinstitute.ddp.util.ResponseUtil;
-import org.broadinstitute.ddp.util.RouteUtil;
 import org.broadinstitute.ddp.util.ValidatedJsonInputRoute;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,14 +38,8 @@ public class CreateTemporaryUserRoute extends ValidatedJsonInputRoute<CreateTemp
         String auth0Domain = payload.getAuth0Domain();
         String languageCode = payload.getLanguageCode();
         if (languageCode == null) {
-            //try from request header
-            LanguageDto preferredLanguage = RouteUtil.getUserLanguage(request);
-            if (preferredLanguage != null) {
-                languageCode = preferredLanguage.getIsoCode();
-            } else {
-                //fall back to default language
-                languageCode = LanguageStore.DEFAULT_LANG_CODE;
-            }
+            //fall back to default language
+            languageCode = LanguageStore.DEFAULT_LANG_CODE;
         }
         LanguageDto languageDto = LanguageStore.get(languageCode);
         Long languageId = languageDto != null ? languageDto.getId() : null;
