@@ -21,6 +21,7 @@ import org.antlr.v4.runtime.tree.TerminalNode;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.db.ActivityDefStore;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
+import org.broadinstitute.ddp.db.dao.ActivityInstanceStatusDao;
 import org.broadinstitute.ddp.db.dao.AnswerCachedDao;
 import org.broadinstitute.ddp.db.dao.AnswerDao;
 import org.broadinstitute.ddp.db.dao.InvitationDao;
@@ -33,6 +34,7 @@ import org.broadinstitute.ddp.db.dao.StudyGovernanceDao;
 import org.broadinstitute.ddp.db.dao.UserGovernanceDao;
 import org.broadinstitute.ddp.db.dao.UserProfileDao;
 import org.broadinstitute.ddp.db.dto.ActivityDto;
+import org.broadinstitute.ddp.db.dto.ActivityInstanceStatusDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.db.dto.UserActivityInstanceSummary;
 import org.broadinstitute.ddp.model.activity.definition.question.CompositeQuestionDef;
@@ -345,7 +347,23 @@ public class TreeWalkInterpreter implements PexInterpreter {
     }
 
     private Object applyFormInstancePredicate(InterpreterContext ictx, PexParser.FormInstancePredicateContext predCtx, long instanceId) {
-        if (predCtx instanceof PexParser.InstanceSnapshotSubstitutionQueryContext) {
+        if (predCtx instanceof PexParser.IsInstanceStatusPredicateContext) {
+            List<InstanceStatusType> expectedStatuses = ((PexParser.IsInstanceStatusPredicateContext) predCtx).STR().stream()
+                    .map(node -> {
+                        String str = extractString(node).toUpperCase();
+                        try {
+                            return InstanceStatusType.valueOf(str);
+                        } catch (Exception e) {
+                            throw new PexUnsupportedException("Invalid status used for status predicate: " + str, e);
+                        }
+                    })
+                    .collect(Collectors.toList());
+            return ictx.getHandle().attach(ActivityInstanceStatusDao.class)
+                    .getCurrentStatus(instanceId)
+                    .map(ActivityInstanceStatusDto::getType)
+                    .map(expectedStatuses::contains)
+                    .orElse(false);
+        } else if (predCtx instanceof PexParser.InstanceSnapshotSubstitutionQueryContext) {
             String subName = extractString(((PexParser.InstanceSnapshotSubstitutionQueryContext) predCtx).STR());
             String value = ictx.getHandle().attach(ActivityInstanceDao.class)
                     .findSubstitutions(instanceId)
