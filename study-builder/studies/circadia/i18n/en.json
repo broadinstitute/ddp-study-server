@@ -317,6 +317,10 @@
   "health_and_lifestyle_questionnaire_name": "Health and Lifestyle Questionnaire",
   "health_and_lifestyle_questionnaire_title": "Health and Lifestyle Questionnaire",
 
+  "halq_created_summary": "Please complete the Health and Lifestyle Questionnaire.",
+  "halq_in_progress_summary": "Please finish answering the Health and Lifestyle Questionnaire.",
+  "halq_complete_summary": "Thank you for completing the Health and Lifestyle Questionnaire.",
+
   "halq_self_describe": "This Health and Lifestyle Questionnaire aims to better understand your health history and further assess your eligibility for the Circadia research study. You may choose to skip any questions you are not comfortable answering. Skipping questions may affect your eligibility for the study.",
   "halq_dob_question": "What is your date of birth?",
 
@@ -328,22 +332,22 @@
   "halq_sex_at_birth_intersex_ambiguous": "Intersex/Ambiguous",
 
   "halq_current_gender_question": "What is your current gender identity?",
-  "halq_current_gender_male": "Male/man",
-  "halq_current_gender_female": "Female/woman",
-  "halq_current_gender_trans_female": "Trans female/trans woman",
-  "halq_current_gender_trans_male": "Trans male/trans man",
-  "halq_current_gender_non_binary": "Non-Binary",
-  "halq_current_gender_genderqueer": "Genderqueer or gender non-conforming",
-  "halq_current_gender_other": "Other (please specify)",
-  "halq_current_gender_decline_to_answer": "Decline to answer",
+  "halq_current_gender_man": "Man",
+  "halq_current_gender_woman": "Woman",
+  "halq_current_gender_nonbinary": "Nonbinary",
+  "halq_current_gender_transgender": "Transgender",
+  "halq_current_gender_none": "None of these describe me, and I’d like to describe myself",
+  "halq_current_gender_prefer_not_to_answer": "Prefer not to answer",
+  "halq_specify_your_gender": "Please specify your gender",
 
   "halq_pronouns_question": "What are your pronouns?",
   "halq_pronouns_she_her_hers": "She/Her/Hers",
   "halq_pronouns_he_him_his": "He/Him/His",
   "halq_pronouns_they_them_theirs": "They/Them/Theirs",
-  "halq_pronouns_other": "Other (please specify)",
-
+  "halq_pronouns_other": "Other",
   "halq_height_question": "How tall are you?",
+  "halq_specify_pronouns": "Please specify your pronouns",
+
   "halq_height_feet": "Feet",
   "halq_height_inches": "Inches",
 
@@ -376,7 +380,7 @@
   "halq_other_explanation": "Please specify",
   "halq_none": "None",
 
-  "halq_when_diagnosed_with_acr_question": "When were you diagnosed with your atypical circadian rhythm? (MM-DD-YYYY)",
+  "halq_when_diagnosed_with_acr_question": "When were you diagnosed with your atypical circadian rhythm?",
 
   "halq_where_diagnosed_with_acr_question": "Where were you diagnosed with your atypical circadian rhythm? ",
 
@@ -434,7 +438,7 @@
   "halq_flexible_hours_yes": "Yes",
   "halq_flexible_hours_no": "No",
 
-  "halq_been_diagnosed_with_following_disorders_question": "Have you ever been diagnosed with one of the following psychiatric disorders? Please select all that apply. ",
+  "halq_been_diagnosed_with_psychiatric_disorders_question": "Have you ever been diagnosed with one of the following psychiatric disorders? Please select all that apply. ",
   "halq_clinical_depression": "Clinical Depression",
   "halq_anxiety": "Anxiety Disorder",
   "halq_bipolar_affective_disorder": "Bipolar Affective Disorder",
@@ -444,6 +448,7 @@
   "halq_obsessive_compulsive_disorder": "Obsessive Compulsive Disorder",
   "halq_autism": "Autism",
   "halq_post_traumatic_disorder": "Post-Traumatic Stress Disorder",
+  "halq_specify_psychiatric_disorder": "Please specify Psychiatric Disorder",
 
   "halq_sleep_disorders_question": "Aside from your diagnosed atypical circadian rhythm, have you ever been diagnosed with one of the following sleep disorders? Please select all that apply. ",
   "halq_restless_leg_syndrome": "Restless Leg Syndrome",
@@ -451,10 +456,15 @@
   "halq_sleep_apnea": "Obstructive Sleep Apnea",
   "halq_insomnia": "Insomnia",
   "halq_other": "Other",
+  "halq_specify_sleep_disorder": "Please specify Sleep Disorder",
 
   "halq_caffeinated_beverages_question": "Do you typically consume caffeinated beverages at least 1x a day?",
   "halq_caffeinated_beverages_yes": "Yes",
   "halq_caffeinated_beverages_no": "No",
+
+  "halq_withhold_caffein_consumption_question": "As part of the study you will be required to withhold consuming caffeine for up to 48 hours for sample collection purposes. Please select an option regarding your caffeine consumption during the study collection:",
+  "halq_withhold_caffein_consumption_yes": "Yes – I will be able to withhold consumption of caffeine for up to 48 hours for the duration of the study.",
+  "halq_withhold_caffein_consumption_no": "No – I will not be able to withhold consumption of caffeine for up to 48 hours for the duration of the study.",
 
   "halq_alcoholic_beverages_question": "Do you typically consume alcoholic beverages at least 1x a day?",
   "halq_alcoholic_beverages_yes": "Yes",
@@ -536,6 +546,8 @@
   "halq_hydromorphone": "Hydromorphone (Dilaudid)",
   "halq_fentanyl": "Fentanyl (Duragesic)",
   "halq_otca": "Over the Counter Antihistamines ",
+
+  "halq_specify_pasth_month_medications": "Please specify",
 
 
   "mini_sleep_log_name": "Mini Sleep Log",
