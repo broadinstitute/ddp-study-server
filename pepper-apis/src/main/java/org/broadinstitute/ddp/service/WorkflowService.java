@@ -105,7 +105,8 @@ public class WorkflowService {
                         studyName = getStudyName(handle, userGuid, studyRedirectState.getStudyGuid());
                     } else {
                         LOG.error("Study Name not set for StudyRedirect URL: {} ", studyRedirectState.getRedirectUrl());
-                        throw new NoSuchElementException("Could not find studyName for redirect url :" + studyRedirectState.getRedirectUrl());
+                        throw new NoSuchElementException("Could not find studyName for redirect url :"
+                                + studyRedirectState.getRedirectUrl());
                     }
                 }
                 return new WorkflowStudyRedirectResponse(studyName, studyRedirectState.getStudyGuid(), studyRedirectState.getRedirectUrl());
