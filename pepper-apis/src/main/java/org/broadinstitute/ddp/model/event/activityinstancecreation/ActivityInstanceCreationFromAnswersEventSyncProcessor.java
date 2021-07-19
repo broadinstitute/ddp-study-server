@@ -6,9 +6,13 @@ import static org.broadinstitute.ddp.util.QuestionUtil.getAnswer;
 
 import java.util.List;
 
+import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
+import org.broadinstitute.ddp.db.dao.JdbiQuestionCached;
+import org.broadinstitute.ddp.db.dto.QuestionDto;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
 import org.broadinstitute.ddp.model.activity.instance.answer.CompositeAnswer;
+import org.broadinstitute.ddp.model.activity.types.EventTriggerType;
 import org.broadinstitute.ddp.model.event.ActivityInstanceStatusChangeSignal;
 import org.broadinstitute.ddp.model.event.EventSignal;
 import org.broadinstitute.ddp.model.event.activityinstancecreation.creator.ActivityInstancesCreator;
@@ -67,7 +71,7 @@ public class ActivityInstanceCreationFromAnswersEventSyncProcessor extends Activ
     public void processInstancesCreation() {
         activityDto = jdbiActivity.queryActivityById(studyActivityId);
         creationService.checkSignalIfNestedTargetActivity(activityDto.getParentActivityId());
-        var sourceActivityInstanceId = ((ActivityInstanceStatusChangeSignal) signal).getActivityInstanceIdThatChanged();
+        var sourceActivityInstanceId = detectSourceInstanceId();
         var parentAnswer = getAnswer(handle, sourceActivityInstanceId, sourceQuestionStableId);
         var sourceAnswers = detectSourceAnswers(parentAnswer);
 
@@ -90,6 +94,30 @@ public class ActivityInstanceCreationFromAnswersEventSyncProcessor extends Activ
         } else {
             return instancesToCreate;
         }
+    }
+
+    /**
+     * Detect the source activity instance to use for creating instances and copying answers. Questions are associated
+     * with the activity they're used in, so if the signal's activity matches with the source question, then we'll use
+     * that. Otherwise, we lookup the latest activity instance for the source question.
+     */
+    private long detectSourceInstanceId() {
+        QuestionDto questionDto = new JdbiQuestionCached(handle)
+                .findLatestDtoByStudyIdAndQuestionStableId(signal.getStudyId(), sourceQuestionStableId)
+                .orElseThrow(() -> new DDPException("Unable to find source question with stable id " + sourceQuestionStableId));
+        long sourceActivityId = questionDto.getActivityId();
+
+        if (signal.getEventTriggerType() == EventTriggerType.ACTIVITY_STATUS) {
+            var statusSignal = (ActivityInstanceStatusChangeSignal) signal;
+            if (statusSignal.getActivityIdThatChanged() == sourceActivityId) {
+                return statusSignal.getActivityInstanceIdThatChanged();
+            }
+        }
+
+        return handle.attach(JdbiActivityInstance.class)
+                .findLatestInstanceIdByUserGuidAndActivityId(signal.getParticipantGuid(), sourceActivityId)
+                .orElseThrow(() -> new DDPException(
+                        "Unable to find source activity instance with question stable id " + sourceQuestionStableId));
     }
 
     /**
