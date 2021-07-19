@@ -79,9 +79,10 @@ public interface WorkflowDao extends SqlObject {
             return getJdbiWorkflowActivityState().findIdByActivityId(activityId);
         } else if (state.getType() == StateType.STUDY_REDIRECT) {
             String studyGuid = ((StudyRedirectState) state).getStudyGuid();
+            String studyName = ((StudyRedirectState) state).getStudyName();
             String redirectUrl = ((StudyRedirectState) state).getRedirectUrl();
             return getJdbiWorkflowState()
-                    .findByStudyNameGuidAndRedirectUrl(studyGuid, redirectUrl)
+                    .findByStudyGuidNameAndRedirectUrl(studyGuid, studyName, redirectUrl)
                     .map(StudyRedirectState::getWorkflowStateId);
         } else {
             return getJdbiWorkflowState().findIdByType(state.getType());
@@ -98,8 +99,9 @@ public interface WorkflowDao extends SqlObject {
                 }
             } else if (state.getType() == StateType.STUDY_REDIRECT) {
                 String studyGuid = ((StudyRedirectState) state).getStudyGuid();
+                String studyName = ((StudyRedirectState) state).getStudyName();
                 String redirectUrl = ((StudyRedirectState) state).getRedirectUrl();
-                if (1 != getJdbiWorkflowState().insert(id, studyGuid, redirectUrl)) {
+                if (1 != getJdbiWorkflowState().insert(id, studyGuid, studyName, redirectUrl)) {
                     throw new DaoException("Unable to insert study redirect " + state);
                 }
             }
@@ -120,6 +122,7 @@ public interface WorkflowDao extends SqlObject {
                     StateType.valueOf(rs.getString(WorkflowStateTypeTable.CODE)),
                     (Long) rs.getObject(WorkflowActivityStateTable.ACTIVITY_ID),
                     (String) rs.getObject(SqlConstants.WorkflowStudyRedirectStateTable.STUDY_GUID),
+                    (String) rs.getObject(SqlConstants.WorkflowStudyRedirectStateTable.STUDY_NAME),
                     (String) rs.getObject(SqlConstants.WorkflowStudyRedirectStateTable.REDIRECT_URL),
                     rs.getString(ExpressionTable.TEXT));
         }

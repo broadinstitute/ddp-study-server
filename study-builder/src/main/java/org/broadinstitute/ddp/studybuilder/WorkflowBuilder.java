@@ -13,6 +13,7 @@ import org.broadinstitute.ddp.model.workflow.StaticState;
 import org.broadinstitute.ddp.model.workflow.StudyRedirectState;
 import org.broadinstitute.ddp.model.workflow.WorkflowState;
 import org.broadinstitute.ddp.model.workflow.WorkflowTransition;
+import org.broadinstitute.ddp.util.ConfigUtil;
 import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -79,9 +80,13 @@ public class WorkflowBuilder {
             long activityId = ActivityBuilder.findActivityId(handle, studyDto.getId(), activityCode);
             return new ActivityState(activityId);
         } else if (type == StateType.STUDY_REDIRECT) {
-            String studyGuid = stateCfg.getString("studyGuid");
+            String studyGuid = ConfigUtil.getStrIfPresent(stateCfg, "studyGuid");
+            String studyName = ConfigUtil.getStrIfPresent(stateCfg, "studyName");
             String redirectUrl = stateCfg.getString("redirectUrl");
-            return new StudyRedirectState(studyGuid, redirectUrl);
+            if (studyGuid == null && studyName == null) {
+                throw new DDPException("Both studyGuid and studyName cannot be null. Atleast one of them should be provided. ");
+            }
+            return new StudyRedirectState(studyGuid, studyName, redirectUrl);
         } else {
             throw new DDPException("Unsupported workflow state type " + type);
         }
@@ -94,8 +99,9 @@ public class WorkflowBuilder {
             return String.format("%s/%s", type, activityCode);
         } else if (StateType.STUDY_REDIRECT.name().equals(type)) {
             String studyGuid = stateCfg.getString("studyGuid");
+            String studyName = stateCfg.getString("studyName");
             String redirectUrl = stateCfg.getString("redirectUrl");
-            return String.format("%s/%s/%s", type, studyGuid, redirectUrl);
+            return String.format("%s/%s/%s/%s", type, studyGuid, studyName, redirectUrl);
         } else {
             return type;
         }

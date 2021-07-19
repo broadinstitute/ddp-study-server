@@ -99,7 +99,15 @@ public class WorkflowService {
                         .orElseThrow(() -> new NoSuchElementException("Could not find activity data to build response for " + state));
             } else if (state.getType() == StateType.STUDY_REDIRECT) {
                 StudyRedirectState studyRedirectState = (StudyRedirectState)state;
-                String studyName = getStudyName(handle, userGuid, studyRedirectState.getStudyGuid());
+                String studyName = studyRedirectState.getStudyName();
+                if (studyName == null) {
+                    if (studyRedirectState.getStudyGuid() != null) {
+                        studyName = getStudyName(handle, userGuid, studyRedirectState.getStudyGuid());
+                    } else {
+                        LOG.error("Study Name not set for StudyRedirect URL: {} ", studyRedirectState.getRedirectUrl());
+                        throw new NoSuchElementException("Could not find studyName for redirect url :" + studyRedirectState.getRedirectUrl());
+                    }
+                }
                 return new WorkflowStudyRedirectResponse(studyName, studyRedirectState.getStudyGuid(), studyRedirectState.getRedirectUrl());
             } else {
                 return WorkflowResponse.from((StaticState) state);
