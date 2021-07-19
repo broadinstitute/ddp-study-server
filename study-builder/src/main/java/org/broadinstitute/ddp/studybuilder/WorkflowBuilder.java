@@ -78,7 +78,8 @@ public class WorkflowBuilder {
         } else if (type == StateType.ACTIVITY) {
             String activityCode = stateCfg.getString("activityCode");
             long activityId = ActivityBuilder.findActivityId(handle, studyDto.getId(), activityCode);
-            return new ActivityState(activityId);
+            boolean checkEachInstance = ConfigUtil.getBoolOrElse(stateCfg, "checkEachInstance", false);
+            return new ActivityState(activityId, checkEachInstance);
         } else if (type == StateType.STUDY_REDIRECT) {
             String studyGuid = ConfigUtil.getStrIfPresent(stateCfg, "studyGuid");
             String studyName = ConfigUtil.getStrIfPresent(stateCfg, "studyName");
@@ -96,7 +97,8 @@ public class WorkflowBuilder {
         String type = stateCfg.getString("type");
         if (StateType.ACTIVITY.name().equals(type)) {
             String activityCode = stateCfg.getString("activityCode");
-            return String.format("%s/%s", type, activityCode);
+            boolean checkEachInstance = ConfigUtil.getBoolOrElse(stateCfg, "checkEachInstance", false);
+            return String.format("%s/%s/%s", type, activityCode, checkEachInstance);
         } else if (StateType.STUDY_REDIRECT.name().equals(type)) {
             String studyGuid = ConfigUtil.getStrIfPresent(stateCfg, "studyGuid");
             String studyName = ConfigUtil.getStrIfPresent(stateCfg, "studyName");
