@@ -98,8 +98,8 @@ public class WorkflowBuilder {
             String activityCode = stateCfg.getString("activityCode");
             return String.format("%s/%s", type, activityCode);
         } else if (StateType.STUDY_REDIRECT.name().equals(type)) {
-            String studyGuid = stateCfg.getString("studyGuid");
-            String studyName = stateCfg.getString("studyName");
+            String studyGuid = ConfigUtil.getStrIfPresent(stateCfg, "studyGuid");
+            String studyName = ConfigUtil.getStrIfPresent(stateCfg, "studyName");
             String redirectUrl = stateCfg.getString("redirectUrl");
             return String.format("%s/%s/%s/%s", type, studyGuid, studyName, redirectUrl);
         } else {
