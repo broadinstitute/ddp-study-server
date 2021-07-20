@@ -4,18 +4,22 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang.StringUtils;
 import org.broadinstitute.ddp.client.Auth0ManagementClient;
+import org.broadinstitute.ddp.content.I18nTemplateConstants;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dao.ParticipantDao;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.model.activity.instance.ActivityResponse;
+import org.broadinstitute.ddp.model.address.MailAddress;
 import org.broadinstitute.ddp.model.study.Participant;
+import org.broadinstitute.ddp.service.AddressService;
 import org.broadinstitute.ddp.util.Auth0Util;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.HandleCallback;
@@ -114,5 +118,30 @@ public class ExportUtil {
         List<String> names = instanceDao
                 .findSubstitutionNamesSeenAcrossUsersByActivityAndVersion(activityId, versionId);
         activity.addAttributesSeen(names);
+    }
+
+    /**
+     * If address was snapshotted and addressGuid saved to activity_instance_substitution with key = ADDRESS_GUID
+     * then try to get this address. If not found snapshotted address then this method returns a specified defaultAddress.
+     * @param handle          jdbi handle
+     * @param instanceId      activity instance which substitutions to read (where to detect addressGuid)
+     * @param addressService  service for finding an address bu guid
+     * @param defaultAddress  default address which to return in case of snapshotted address not found
+     * @return MailAddress    detected snapshotted address or defaultAddress (f snapshotted not found)
+     */
+    public static MailAddress getSnapshottedAddress(
+            Handle handle,
+            long instanceId,
+            AddressService addressService,
+            MailAddress defaultAddress) {
+        Map<String, String> substitutions = handle.attach(ActivityInstanceDao.class).findSubstitutions(instanceId);
+        String addressGuid = substitutions.get(I18nTemplateConstants.Snapshot.ADDRESS_GUID);
+        if (addressGuid != null) {
+            Optional<MailAddress> snapshottedAddress = addressService.findAddressByGuid(handle, addressGuid);
+            if (snapshottedAddress.isPresent()) {
+                return snapshottedAddress.get();
+            }
+        }
+        return  defaultAddress;
     }
 }

@@ -1,5 +1,8 @@
 package org.broadinstitute.ddp.export.collectors;
 
+import static org.broadinstitute.ddp.export.ExportUtil.getSnapshottedAddress;
+import static org.broadinstitute.ddp.export.ExportUtil.withAPIsTxn;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -42,6 +45,8 @@ import org.broadinstitute.ddp.model.activity.instance.answer.PicklistAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
 import org.broadinstitute.ddp.model.activity.types.ActivityType;
 import org.broadinstitute.ddp.model.activity.types.InstitutionType;
+import org.broadinstitute.ddp.model.address.MailAddress;
+import org.broadinstitute.ddp.service.AddressService;
 
 public class ActivityResponseCollector {
 
@@ -63,14 +68,18 @@ public class ActivityResponseCollector {
     private MailingAddressFormatter addressFmt = new MailingAddressFormatter();
     private MedicalProviderFormatter providerFmt = new MedicalProviderFormatter();
 
+    private final AddressService addressService;
+
     public ActivityResponseCollector(ActivityDef definition) {
         this.definition = definition;
+        this.addressService = new AddressService();
     }
 
     public ActivityResponseCollector(ActivityDef definition, List<String> firstFields, List<String> excludedFields) {
         this.definition = definition;
         this.firstFields = firstFields;
         this.excludedFields = excludedFields;
+        this.addressService = new AddressService();
     }
 
     public List<String> emptyRow() {
@@ -494,7 +503,7 @@ public class ActivityResponseCollector {
                 collectQuestionIntoRecord(record, ((QuestionBlockDef) block).getQuestion(), instance);
                 break;
             case COMPONENT:
-                collectComponentIntoRecord(record, (ComponentBlockDef) block, supplier);
+                collectComponentIntoRecord(instance, record, (ComponentBlockDef) block, supplier);
                 break;
             case CONDITIONAL:
                 ConditionalBlockDef condBlock = (ConditionalBlockDef) block;
@@ -557,10 +566,14 @@ public class ActivityResponseCollector {
         }
     }
 
-    private void collectComponentIntoRecord(Map<String, String> record, ComponentBlockDef component, ComponentDataSupplier supplier) {
+    private void collectComponentIntoRecord(FormResponse formResponse, Map<String, String> record,
+                                            ComponentBlockDef component, ComponentDataSupplier supplier) {
         switch (component.getComponentType()) {
             case MAILING_ADDRESS:
-                record.putAll(addressFmt.collect(supplier.getAddress()));
+                MailAddress address = withAPIsTxn(handle -> {
+                    return getSnapshottedAddress(handle, formResponse.getId(), addressService, supplier.getAddress());
+                });
+                record.putAll(addressFmt.collect(address));
                 break;
             case PHYSICIAN:     // fall-through
             case INSTITUTION:

@@ -1,6 +1,7 @@
 package org.broadinstitute.ddp.export;
 
 import static org.broadinstitute.ddp.export.ExportUtil.extractParticipantsFromResultSet;
+import static org.broadinstitute.ddp.export.ExportUtil.getSnapshottedAddress;
 import static org.broadinstitute.ddp.model.activity.types.ComponentType.MAILING_ADDRESS;
 
 import java.io.BufferedWriter;
@@ -115,6 +116,7 @@ import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.model.user.UserProfile;
 import org.broadinstitute.ddp.pex.PexInterpreter;
 import org.broadinstitute.ddp.pex.TreeWalkInterpreter;
+import org.broadinstitute.ddp.service.AddressService;
 import org.broadinstitute.ddp.service.ConsentService;
 import org.broadinstitute.ddp.service.FileUploadService;
 import org.broadinstitute.ddp.service.MedicalRecordService;
@@ -149,6 +151,7 @@ public class DataExporter {
     private final PdfService pdfService;
     private final FileUploadService fileService;
     private final RestHighLevelClient esClient;
+    private final AddressService addressService;
 
     public static String makeExportCSVFilename(String studyGuid, Instant timestamp) {
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmssX").withZone(ZoneOffset.UTC);
@@ -166,6 +169,8 @@ public class DataExporter {
         this.gson = new GsonBuilder().serializeNulls().create();
         this.pdfService = new PdfService();
         this.fileService = FileUploadService.fromConfig(cfg);
+        this.addressService = new AddressService(cfg.getString(ConfigFile.EASY_POST_API_KEY),
+                cfg.getString(ConfigFile.GEOCODING_API_KEY));
         try {
             this.esClient = ElasticsearchServiceUtil.getElasticsearchClient(cfg);
         } catch (MalformedURLException e) {
@@ -270,7 +275,6 @@ public class DataExporter {
     }
 
 
-
     /**
      * Extract all the participants for a study, pooling together all the data associated with the participant.
      *
@@ -298,9 +302,9 @@ public class DataExporter {
     }
 
     public void exportToElasticsearch(Handle handle, StudyDto studyDto,
-                                       List<ActivityExtract> activities,
-                                       List<Participant> participants,
-                                       boolean exportStructuredDocument) {
+                                      List<ActivityExtract> activities,
+                                      List<Participant> participants,
+                                      boolean exportStructuredDocument) {
         int maxExtractSize = cfg.getInt(ConfigFile.ELASTICSEARCH_EXPORT_BATCH_SIZE);
 
         if (!exportStructuredDocument) {
@@ -789,7 +793,7 @@ public class DataExporter {
             List<ActivityResponse> instances = participant.getResponses(activityExtract.getTag());
             for (ActivityResponse instance : instances) {
                 ActivityInstanceStatusDto lastStatus = instance.getLatestStatus();
-                List<QuestionRecord> questionsAnswers = createQuestionRecordsForActivity(activityExtract.getDefinition(),
+                List<QuestionRecord> questionsAnswers = createQuestionRecordsForActivity(handle, activityExtract.getDefinition(),
                         instance, participant);
                 ActivityInstanceRecord activityInstanceRecord = new ActivityInstanceRecord(
                         instance.getActivityVersionTag(),
@@ -886,7 +890,7 @@ public class DataExporter {
      * @param response   An activity instance with the answers
      * @return A flat list of question records
      */
-    private List<QuestionRecord> createQuestionRecordsForActivity(ActivityDef definition, ActivityResponse response,
+    private List<QuestionRecord> createQuestionRecordsForActivity(Handle handle, ActivityDef definition, ActivityResponse response,
                                                                   Participant participant) {
         List<QuestionRecord> questionRecords = new ArrayList<>();
 
@@ -951,7 +955,7 @@ public class DataExporter {
             if (question.getQuestionType() == QuestionType.COMPOSITE) {
                 CompositeQuestionDef composite = (CompositeQuestionDef) question;
                 if (componentNames.contains(composite.getStableId())) {
-                    questionRecords.add(createRecordForComponent(composite.getStableId(), participant));
+                    questionRecords.add(createRecordForComponent(handle, instance, composite.getStableId(), participant));
                     continue;
                 }
                 if (composite.shouldUnwrapChildQuestions() && instance.hasAnswer(composite.getStableId())) {
@@ -969,12 +973,13 @@ public class DataExporter {
         return questionRecords.stream().filter(Objects::nonNull).collect(Collectors.toList());
     }
 
-    private QuestionRecord createRecordForComponent(String component, Participant participant) {
+    private QuestionRecord createRecordForComponent(Handle handle, FormResponse formResponse, String component, Participant participant) {
         ComponentQuestionRecord record = null;
         List<List<String>> values;
         switch (component) {
             case "MAILING_ADDRESS":
-                MailAddress address = participant.getUser().getAddress();
+                MailAddress address =
+                        getSnapshottedAddress(handle, formResponse.getId(), addressService, participant.getUser().getAddress());
                 values = new MailingAddressFormatter().collectAsAnswer(address);
                 if (CollectionUtils.isNotEmpty(values)) {
                     record = new ComponentQuestionRecord("MAILING_ADDRESS", values);
@@ -1109,7 +1114,7 @@ public class DataExporter {
         }
 
         CSVWriter writer = new CSVWriter(output);
-        writer.writeNext(headers.toArray(new String[] {}), false);
+        writer.writeNext(headers.toArray(new String[]{}), false);
 
         int numWritten = 0;
         while (participants.hasNext()) {
@@ -1153,7 +1158,7 @@ public class DataExporter {
                 continue;
             }
 
-            writer.writeNext(row.toArray(new String[] {}), false);
+            writer.writeNext(row.toArray(new String[]{}), false);
             numWritten += 1;
 
             LOG.info("[export] ({}) participant {} for study {}:"

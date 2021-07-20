@@ -55,6 +55,8 @@ public class FormBlockCreatorHelper {
                         mailingAddressComponentDef.shouldRequireVerified(),
                         mailingAddressComponentDef.shouldRequirePhone()
                 );
+                // remember mailing address component in order to save to it addressGuid (stored in activity instance substitutions)
+                ctx.setMailingAddressComponent((MailingAddressComponent)formComponent);
                 break;
             default:
                 throw new IllegalStateException("Unexpected value: " + componentBlockDef.getComponentType());

@@ -46,6 +46,14 @@ public class AddressService {
     private final EasyPostClient easyPost;
     private final OLCService olcService;
 
+    /**
+     * This constructor can be used when needs to create the service instance for address reading
+     * (for example {@link #findAddressByGuid(Handle, String)}
+     */
+    public AddressService() {
+        this((String)null, (String)null);
+    }
+
     public AddressService(String easyPostApiKey, String geocodingKey) {
         this(easyPostApiKey, new OLCService(geocodingKey));
     }

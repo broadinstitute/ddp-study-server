@@ -42,6 +42,7 @@ public class RenderValueProvider {
     private Instant testResultTimeCompleted;
     private Integer activityInstanceNumber;
     private Boolean governedParticipant;
+    private String addressGuid;
 
     // To minimize database round-trips, we lookup answers using existing objects that should have the answer objects.
     // Depending on what's available for the provider, we'll use either response + activity or the instance object.
@@ -166,6 +167,13 @@ public class RenderValueProvider {
      */
     public String isGovernedParticipant(String ifTrueString, String ifFalseString) {
         return governedParticipant != null && governedParticipant ? ifTrueString : ifFalseString;
+    }
+
+    /**
+     * Get GUID of a snapshotted address
+     */
+    public String addressGuid() {
+        return addressGuid;
     }
 
     /**
@@ -314,6 +322,9 @@ public class RenderValueProvider {
         if (governedParticipant != null) {
             snapshot.put(I18nTemplateConstants.Snapshot.IS_GOVERNED_PARTICIPANT, governedParticipant.toString());
         }
+        if (addressGuid != null) {
+            snapshot.put(I18nTemplateConstants.Snapshot.ADDRESS_GUID, addressGuid);
+        }
         return snapshot;
     }
 
@@ -385,6 +396,11 @@ public class RenderValueProvider {
 
         public Builder setGovernedParticipant(Boolean governedParticipant) {
             provider.governedParticipant = governedParticipant;
+            return this;
+        }
+
+        public Builder setAddressGuid(String addressGuid) {
+            provider.addressGuid = addressGuid;
             return this;
         }
 
@@ -462,6 +478,11 @@ public class RenderValueProvider {
                 provider.governedParticipant = Boolean.valueOf(value);
             }
 
+            value = snapshot.get(I18nTemplateConstants.Snapshot.ADDRESS_GUID);
+            if (value != null) {
+                provider.addressGuid = value;
+            }
+
             return this;
         }
 
@@ -487,6 +508,7 @@ public class RenderValueProvider {
             copy.isoLangCode = provider.isoLangCode;
             copy.formInstance = provider.formInstance;
             copy.governedParticipant = provider.governedParticipant;
+            copy.addressGuid = provider.addressGuid;
             return copy;
         }
     }

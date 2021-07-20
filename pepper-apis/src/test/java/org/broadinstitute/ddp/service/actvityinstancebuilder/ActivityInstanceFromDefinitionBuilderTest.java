@@ -54,6 +54,7 @@ public class ActivityInstanceFromDefinitionBuilderTest extends ActivityInstanceS
                     .renderContent()
                     .setDisplayNumbers()
                     .updateBlockStatuses()
+                    .populateSnapshottedAddress()
                     .endBuild()
                     .getContext();
 
@@ -97,6 +98,7 @@ public class ActivityInstanceFromDefinitionBuilderTest extends ActivityInstanceS
                     .buildFormInstance()
                     .buildFormChildren()
                     .renderFormTitles()
+                    .populateSnapshottedAddress()
                     .endBuild()
                     .getContext();
 
@@ -140,6 +142,7 @@ public class ActivityInstanceFromDefinitionBuilderTest extends ActivityInstanceS
                         .startBuild()
                         .buildFormInstance()
                         .buildFormChildren()
+                        .populateSnapshottedAddress()
                         .endBuild()
                         .getContext();
 
@@ -175,6 +178,7 @@ public class ActivityInstanceFromDefinitionBuilderTest extends ActivityInstanceS
                         .startBuild()
                         .buildFormInstance()
                         .buildFormChildren()
+                        .populateSnapshottedAddress()
                         .endBuild()
                         .getContext();
 
@@ -249,6 +253,7 @@ public class ActivityInstanceFromDefinitionBuilderTest extends ActivityInstanceS
                         .startBuild()
                         .buildFormInstance()
                         .buildFormChildren()
+                        .populateSnapshottedAddress()
                         .renderContent()
                         .endBuild()
                         .getContext();

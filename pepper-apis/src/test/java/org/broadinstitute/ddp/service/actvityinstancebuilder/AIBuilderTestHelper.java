@@ -102,6 +102,7 @@ public class AIBuilderTestHelper {
                 .renderContent()
                 .setDisplayNumbers()
                 .updateBlockStatuses()
+                .populateSnapshottedAddress()
                 .endBuild()
                 .getContext();
     }

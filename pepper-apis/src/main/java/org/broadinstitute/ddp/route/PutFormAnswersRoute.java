@@ -18,6 +18,7 @@ import org.broadinstitute.ddp.analytics.GoogleAnalyticsMetricsTracker;
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants.PathParam;
 import org.broadinstitute.ddp.content.I18nContentRenderer;
+import org.broadinstitute.ddp.content.I18nTemplateConstants;
 import org.broadinstitute.ddp.db.ActivityDefStore;
 import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.TransactionWrapper;
@@ -59,6 +60,7 @@ import org.broadinstitute.ddp.pex.PexInterpreter;
 import org.broadinstitute.ddp.security.DDPAuth;
 import org.broadinstitute.ddp.service.ActivityInstanceService;
 import org.broadinstitute.ddp.service.ActivityValidationService;
+import org.broadinstitute.ddp.service.AddressService;
 import org.broadinstitute.ddp.service.DsmAddressValidationStatus;
 import org.broadinstitute.ddp.service.WorkflowService;
 import org.broadinstitute.ddp.util.ActivityInstanceUtil;
@@ -79,17 +81,20 @@ public class PutFormAnswersRoute implements Route {
     private final ActivityInstanceService actInstService;
     private final ActivityValidationService actValidationService;
     private final PexInterpreter interpreter;
+    private final AddressService addressService;
 
     public PutFormAnswersRoute(
             WorkflowService workflowService,
             ActivityInstanceService actInstService,
             ActivityValidationService actValidationService,
-            PexInterpreter interpreter
+            PexInterpreter interpreter,
+            AddressService addressService
     ) {
         this.workflowService = workflowService;
         this.actInstService = actInstService;
         this.actValidationService = actValidationService;
         this.interpreter = interpreter;
+        this.addressService = addressService;
     }
 
     @Override
@@ -169,16 +174,14 @@ public class PutFormAnswersRoute implements Route {
                         throw ResponseUtil.haltError(response, 422, new ApiError(ErrorCodes.ACTIVITY_VALIDATION, msg));
                     }
 
-                    boolean shouldSnapshotSubstitutions = handle.attach(JdbiFormActivitySetting.class)
-                            .findSettingDtoByInstanceGuid(instanceGuid)
-                            .map(FormActivitySettingDto::shouldSnapshotSubstitutionsOnSubmit)
-                            .orElse(false);
-                    if (instanceDto.getFirstCompletedAt() == null && shouldSnapshotSubstitutions) {
-                        // This is the first submit for the activity instance, so save a snapshot of substitutions.
-                        handle.attach(ActivityInstanceDao.class).saveSubstitutions(
-                                form.getInstanceId(),
-                                I18nContentRenderer.newValueProvider(
-                                        handle, form.getParticipantUserId(), operatorGuid, studyGuid).getSnapshot());
+                    Optional<FormActivitySettingDto> formActivitySettingDto = handle.attach(JdbiFormActivitySetting.class)
+                            .findSettingDtoByInstanceGuid(instanceGuid);
+                    // if this is the first submit for the activity instance, then do snapshots
+                    if (formActivitySettingDto.isPresent() && instanceDto.getFirstCompletedAt() == null) {
+                        snapshotSubstitutions(handle, studyGuid, operatorGuid, form,
+                                formActivitySettingDto.get().shouldSnapshotSubstitutionsOnSubmit());
+                        snapshotAddress(handle, userGuid, operatorGuid, form,
+                                formActivitySettingDto.get().shouldSnapshotAddressOnSubmit());
                     }
 
                     User participantUser = instanceSummary.getParticipantUser();
@@ -224,6 +227,48 @@ public class PutFormAnswersRoute implements Route {
 
         response.status(200);
         return resp;
+    }
+
+    /**
+     * If this is the first submit for the activity instance and should snapshot flag is true,
+     * then save a snapshot of substitutions.
+     */
+    private void snapshotSubstitutions(Handle handle, String studyGuid, String operatorGuid,
+                                       FormInstance form, boolean shouldSnapshotSubstitutionsOnSubmit) {
+        if (shouldSnapshotSubstitutionsOnSubmit) {
+            handle.attach(ActivityInstanceDao.class).saveSubstitutions(
+                    form.getInstanceId(),
+                    I18nContentRenderer.newValueProvider(
+                            handle, form.getParticipantUserId(), operatorGuid, studyGuid).getSnapshot());
+        }
+    }
+
+    /**
+     * Snapshot address on submit.
+     * If flag shouldSnapshotAddressOnSubmit is true then snapshot an address.
+     *
+     * <p>Algorithm:
+     * <ul>
+     *     <li>Find the user’s “default” address;</li>
+     *     <li>Create a copy of the address but don’t mark it as the default;</li>
+     *     <li>Save the address guid as “snapshot” variable I18nTemplateConstants.Snapshot.ADDRESS_GUID.</li>
+     * </ul>
+     */
+    private void snapshotAddress(Handle handle, String participantGuid, String operatorGuid, FormInstance form,
+                                 boolean shouldSnapshotAddressOnSubmit) {
+        if (shouldSnapshotAddressOnSubmit) {
+            // find default address
+            Optional<MailAddress> defaultAddress = addressService.findDefaultAddressForParticipant(handle, participantGuid);
+            if (defaultAddress.isPresent()) {
+                MailAddress mailAddress = defaultAddress.get();
+                mailAddress.setDefault(false);
+                // create a copy of the default address (but setting it as non-default)
+                mailAddress = addressService.addAddress(handle, mailAddress, participantGuid, operatorGuid);
+                // save address.guid to activity_instance_substitution with key ADDRESS_GUID
+                handle.attach(ActivityInstanceDao.class).saveSubstitutions(
+                        form.getInstanceId(), Map.of(I18nTemplateConstants.Snapshot.ADDRESS_GUID, mailAddress.getGuid()));
+            }
+        }
     }
 
     private FormInstance loadFormInstance(Response response,
