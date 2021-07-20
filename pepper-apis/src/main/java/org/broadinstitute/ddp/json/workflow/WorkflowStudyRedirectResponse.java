@@ -11,7 +11,6 @@ public final class WorkflowStudyRedirectResponse extends WorkflowResponse {
     @SerializedName("studyName")
     protected String studyName;
 
-    @NotBlank
     @SerializedName("studyGuid")
     protected String studyGuid;
 
