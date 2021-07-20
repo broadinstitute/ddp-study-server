@@ -311,6 +311,7 @@ public class SqlConstants {
 
     public static final class WorkflowStudyRedirectStateTable {
         public static final String STUDY_GUID = "study_guid";
+        public static final String STUDY_NAME = "study_name";
         public static final String REDIRECT_URL = "redirect_url";
     }
 

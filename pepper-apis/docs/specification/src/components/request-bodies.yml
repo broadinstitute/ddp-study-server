@@ -82,6 +82,9 @@ CreateTempUserRequestBody:
           auth0Domain:
             type: string
             description: the domain of the client making the request
+          languageCode:
+            type: string
+            description: the languageCode of the user
 MailingAddress:
   description: payload for setting a participant's address
   required: true

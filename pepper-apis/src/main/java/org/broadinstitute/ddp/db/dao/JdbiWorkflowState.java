@@ -18,19 +18,21 @@ public interface JdbiWorkflowState extends SqlObject {
     @GetGeneratedKeys
     long insert(@Bind("type") StateType type);
 
-    @SqlUpdate("insert into workflow_study_redirect_state (workflow_state_id, study_guid, redirect_url) "
-            + " values (:stateId, :studyGuid, :redirectUrl)")
-    int insert(@Bind("stateId") long stateId, @Bind("studyGuid") String studyGuid, @Bind("redirectUrl") String redirectUrl);
+    @SqlUpdate("insert into workflow_study_redirect_state (workflow_state_id, study_guid, study_name, redirect_url) "
+            + " values (:stateId, :studyGuid, :studyName, :redirectUrl)")
+    int insert(@Bind("stateId") long stateId, @Bind("studyGuid") String studyGuid,
+               @Bind("studyName") String studyName, @Bind("redirectUrl") String redirectUrl);
 
     @SqlQuery("select ws.workflow_state_id from workflow_state as ws"
             + " join workflow_state_type as wst on wst.workflow_state_type_id = ws.workflow_state_type_id"
             + " where wst.workflow_state_type_code = :type")
     Optional<Long> findIdByType(@Bind("type") StateType type);
 
-    @SqlQuery("select workflow_state_id, study_guid, redirect_url from workflow_study_redirect_state "
-            + " where study_guid = :studyGuid and redirect_url = :redirectUrl")
+    @SqlQuery("select workflow_state_id, study_guid, study_name, redirect_url from workflow_study_redirect_state "
+            + " where study_guid = :studyGuid and study_name = :studyName and redirect_url = :redirectUrl")
     @RegisterConstructorMapper(StudyRedirectState.class)
-    Optional<StudyRedirectState> findByStudyNameGuidAndRedirectUrl(@Bind("studyGuid") String studyGuid,
+    Optional<StudyRedirectState> findByStudyGuidNameAndRedirectUrl(@Bind("studyGuid") String studyGuid,
+                                                                   @Bind("studyName") String studyName,
                                                                    @Bind("redirectUrl") String redirectUrl);
 
 }
