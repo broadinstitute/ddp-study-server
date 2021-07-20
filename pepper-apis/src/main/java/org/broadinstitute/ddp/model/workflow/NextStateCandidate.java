@@ -94,7 +94,8 @@ public class NextStateCandidate {
             if (nextActivityId == null) {
                 throw new DDPException("Workflow activity state is missing an activity id for transition id " + transitionId);
             }
-            return new ActivityState(nextActivityId, checkEachInstance);
+            boolean check = checkEachInstance == null ? false : checkEachInstance;
+            return new ActivityState(nextActivityId, check);
         } else if (nextStateType == StateType.STUDY_REDIRECT) {
             return new StudyRedirectState(studyGuid, studyName, redirectUrl);
         } else {
