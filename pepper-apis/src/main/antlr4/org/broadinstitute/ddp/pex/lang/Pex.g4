@@ -55,7 +55,8 @@ formPredicate
 
 // Form predicate functions for a particular instance
 formInstancePredicate
-  : 'snapshotSubstitution' '(' STR ')'   # InstanceSnapshotSubstitutionQuery
+  : 'isStatus' '(' STR ( ',' STR )* ')'  # IsInstanceStatusPredicate
+  | 'snapshotSubstitution' '(' STR ')'   # InstanceSnapshotSubstitutionQuery
   | 'hasPreviousInstance' '(' ')'   # HasPreviousInstancePredicate
   ;
 

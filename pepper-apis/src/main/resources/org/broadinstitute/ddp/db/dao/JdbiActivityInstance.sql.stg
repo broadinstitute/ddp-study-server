@@ -76,6 +76,13 @@ queryAllByUserGuidAndActivityCode() ::= <<
    and act.study_id = :studyId
 >>
 
+queryAllByUserGuidAndActivityId() ::= <<
+<select_all_instances()>
+  join user as participant on participant.user_id = ai.participant_id
+ where participant.guid = :userGuid
+   and act.study_activity_id = :activityId
+>>
+
 queryAllByUserIdAndStudyId() ::= <<
 <select_all_instances()>
   join user as participant on participant.user_id = ai.participant_id
