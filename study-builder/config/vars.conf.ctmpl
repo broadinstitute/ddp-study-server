@@ -15,6 +15,10 @@
         "clientSecret": "{{$auth.clientSecret}}",
         "adminClientId": "{{$auth.adminClientId}}",
         "adminClientSecret": "{{$auth.adminClientSecret}}",
+{{ if $auth.iosClientId }}
+        "iosClientId": "{{$auth.iosClientId}}",
+        "iosClientSecret": "{{$auth.iosClientSecret}}",
+{{ end }}
     },
     "baseWebUrl": "{{$conf.baseWebUrl}}",
     "passwordRedirectUrl": "{{$conf.passwordRedirectUrl}}",
@@ -32,6 +36,9 @@
     "mbcRedirectUrl": "{{$conf.mbcRedirectUrl}}",
     "mbcRedirectUrlES": "{{$conf.mbcRedirectUrlES}}",
     "mpcRedirectUrl": "{{$conf.mpcRedirectUrl}}",
+    "escRedirectUrl": "{{$conf.escRedirectUrl}}",
+    "lmsRedirectUrl": "{{$conf.lmsRedirectUrl}}",
+    "ccpRedirectUrl": "{{$conf.ccpRedirectUrl}}"
 {{end}}
 
 {{if not $conf.irbPassword}}

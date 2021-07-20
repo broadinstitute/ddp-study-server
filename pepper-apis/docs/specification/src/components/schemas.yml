@@ -2382,7 +2382,6 @@ WorkflowNextSuggestion.StudyRedirect:
     - type: object
       required:
         - studyName
-        - studyGuid
         - redirectUrl
       properties:
         studyName:

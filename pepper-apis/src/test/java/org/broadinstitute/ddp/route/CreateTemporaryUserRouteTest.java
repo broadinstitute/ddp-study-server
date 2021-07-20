@@ -25,6 +25,7 @@ import org.broadinstitute.ddp.db.dao.ClientDao;
 import org.broadinstitute.ddp.db.dao.JdbiAuth0Tenant;
 import org.broadinstitute.ddp.db.dao.JdbiUser;
 import org.broadinstitute.ddp.db.dao.UserDao;
+import org.broadinstitute.ddp.db.dao.UserProfileSql;
 import org.broadinstitute.ddp.db.dto.Auth0TenantDto;
 import org.broadinstitute.ddp.db.dto.UserDto;
 import org.broadinstitute.ddp.json.CreateTemporaryUserPayload;
@@ -56,6 +57,7 @@ public class CreateTemporaryUserRouteTest extends IntegrationTestSuite.TestCase 
     @AfterClass
     public static void cleanup() {
         TransactionWrapper.useTxn(handle -> {
+            handle.attach(UserProfileSql.class).deleteByUserGuids(usersToDelete);
             int numDeleted = handle.attach(JdbiUser.class).deleteAllByGuids(usersToDelete);
             assertEquals(usersToDelete.size(), numDeleted);
         });
@@ -67,7 +69,7 @@ public class CreateTemporaryUserRouteTest extends IntegrationTestSuite.TestCase 
 
         CreateTemporaryUserPayload payload = new CreateTemporaryUserPayload(
                 testData.getTestingClient().getAuth0ClientId(),
-                auth0Domain
+                auth0Domain, "en"
         );
         String body = given().body(payload, ObjectMapperType.GSON)
                 .when().post(url)

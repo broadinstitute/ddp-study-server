@@ -14,6 +14,7 @@ public class NextStateCandidate {
     private Long nextActivityId;
     private String precondition;
     private String studyGuid;
+    private String studyName;
     private String redirectUrl;
 
     public NextStateCandidate(long transitionId, StateType nextStateType, Long nextActivityId, String precondition) {
@@ -24,12 +25,13 @@ public class NextStateCandidate {
     }
 
     public NextStateCandidate(long transitionId, StateType nextStateType, Long nextActivityId,
-                              String studyGuid, String redirectUrl, String precondition) {
+                              String studyGuid, String studyName, String redirectUrl, String precondition) {
         this.transitionId = transitionId;
         this.nextStateType = nextStateType;
         this.nextActivityId = nextActivityId;
         this.precondition = precondition;
         this.studyGuid = studyGuid;
+        this.studyName = studyName;
         this.redirectUrl = redirectUrl;
     }
 
@@ -53,6 +55,10 @@ public class NextStateCandidate {
         return StringUtils.isNotBlank(precondition);
     }
 
+    public String getStudyName() {
+        return studyName;
+    }
+
     public String getStudyGuid() {
         return studyGuid;
     }
@@ -70,7 +76,7 @@ public class NextStateCandidate {
             }
             return new ActivityState(nextActivityId);
         } else if (nextStateType == StateType.STUDY_REDIRECT) {
-            return new StudyRedirectState(studyGuid, redirectUrl);
+            return new StudyRedirectState(studyGuid, studyName, redirectUrl);
         } else {
             throw new DDPException("Unhandled workflow state type " + nextStateType);
         }
