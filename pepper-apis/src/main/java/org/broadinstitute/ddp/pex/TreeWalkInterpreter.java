@@ -218,6 +218,25 @@ public class TreeWalkInterpreter implements PexInterpreter {
         }
     }
 
+    /**
+     * Extract a list of activity instance status types given a list of nodes.
+     *
+     * @param nodes the parse tree node list
+     * @return list of status types
+     */
+    private List<InstanceStatusType> extractStatusList(List<TerminalNode> nodes) {
+        return nodes.stream()
+                .map(node -> {
+                    String str = extractString(node).toUpperCase();
+                    try {
+                        return InstanceStatusType.valueOf(str);
+                    } catch (Exception e) {
+                        throw new PexUnsupportedException("Invalid status used for status predicate: " + str, e);
+                    }
+                })
+                .collect(Collectors.toList());
+    }
+
     private String getUserGuidByUserType(InterpreterContext ictx, TerminalNode node) {
         if (UserType.OPERATOR.equals(node.getText())) {
             if (ictx.getOperatorGuid() == null) {
@@ -302,16 +321,7 @@ public class TreeWalkInterpreter implements PexInterpreter {
     private boolean applyFormPredicate(InterpreterContext ictx, FormPredicateContext predCtx, String userGuid,
                                        String studyGuid, String activityCode) {
         if (predCtx instanceof IsStatusPredicateContext) {
-            List<InstanceStatusType> expectedStatuses = ((IsStatusPredicateContext) predCtx).STR().stream()
-                    .map(node -> {
-                        String str = extractString(node).toUpperCase();
-                        try {
-                            return InstanceStatusType.valueOf(str);
-                        } catch (Exception e) {
-                            throw new PexUnsupportedException("Invalid status used for status predicate: " + str, e);
-                        }
-                    })
-                    .collect(Collectors.toList());
+            List<InstanceStatusType> expectedStatuses = extractStatusList(((IsStatusPredicateContext) predCtx).STR());
             return fetcher.findLatestActivityInstanceStatus(ictx, userGuid, studyGuid, activityCode)
                     .map(expectedStatuses::contains)
                     .orElse(false);
@@ -348,16 +358,7 @@ public class TreeWalkInterpreter implements PexInterpreter {
 
     private Object applyFormInstancePredicate(InterpreterContext ictx, PexParser.FormInstancePredicateContext predCtx, long instanceId) {
         if (predCtx instanceof PexParser.IsInstanceStatusPredicateContext) {
-            List<InstanceStatusType> expectedStatuses = ((PexParser.IsInstanceStatusPredicateContext) predCtx).STR().stream()
-                    .map(node -> {
-                        String str = extractString(node).toUpperCase();
-                        try {
-                            return InstanceStatusType.valueOf(str);
-                        } catch (Exception e) {
-                            throw new PexUnsupportedException("Invalid status used for status predicate: " + str, e);
-                        }
-                    })
-                    .collect(Collectors.toList());
+            List<InstanceStatusType> expectedStatuses = extractStatusList(((PexParser.IsInstanceStatusPredicateContext) predCtx).STR());
             return ictx.getHandle().attach(ActivityInstanceStatusDao.class)
                     .getCurrentStatus(instanceId)
                     .map(ActivityInstanceStatusDto::getType)

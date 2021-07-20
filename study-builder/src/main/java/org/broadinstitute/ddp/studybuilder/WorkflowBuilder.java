@@ -98,7 +98,7 @@ public class WorkflowBuilder {
         if (StateType.ACTIVITY.name().equals(type)) {
             String activityCode = stateCfg.getString("activityCode");
             boolean checkEachInstance = ConfigUtil.getBoolOrElse(stateCfg, "checkEachInstance", false);
-            return String.format("%s/%s/%s", type, activityCode, checkEachInstance);
+            return String.format("%s/%s/%b", type, activityCode, checkEachInstance);
         } else if (StateType.STUDY_REDIRECT.name().equals(type)) {
             String studyGuid = ConfigUtil.getStrIfPresent(stateCfg, "studyGuid");
             String studyName = ConfigUtil.getStrIfPresent(stateCfg, "studyName");
