@@ -2,7 +2,7 @@
   "prequal_name": "Prequalifier Survey",
   "prequal_title": "Prequalifier",
   "prequal_header": "Prequalifier",
-  "prequal_self_describe": "The following questions will determine if a participant is eligible to participate in the study. ",
+  "prequal_self_describe": "The following questions will determine if you are eligible to participate in the study. ",
 
   "prequal_atypical_circadian_rhythm_question": "Have you been diagnosed with an atypical circadian rhythm?",
   "prequal_aspd_answer": "Advanced Sleep Phase Disorder (ASPD)",
@@ -284,7 +284,6 @@
   "consent_signature_of_subject_p1": "I give my consent to take part in this research study and agree that my data may be used for different types of health, medical, or biomedical research, as outlined and explained in this consent form. ",
   "consent_fullname_text": "Full name",
   "consent_date_text": "Date",
-  "consent_time_text": "Time (optional)",
 
   "dlmo_scheduling_instructions_summary": "Please schedule the DLMO collections and follow the provided instructions on how to appropriately schedule your collection dates",
 
@@ -422,11 +421,13 @@
   "halq_schedule_rotating_shift_schedule": "Rotating Shift Schedule",
 
   "halq_how_many_days_shift_question": "Thinking about a typical work month, on average how many day shifts do you work?",
-  "halq_how_many_days_shift_0": "0",
-  "halq_how_many_days_shift_1-3": "1-3",
-  "helq_how_many_days_shift_1-week": "1 per week",
-  "helq_how_many_days_shift_2-4-week": "2-4 per week",
-  "helq_how_many_days_shift_5-6-week": "5-6 per week",
+  "halq_0": "0",
+  "halq_1-3": "1-3",
+  "helq_1-week": "1 per week",
+  "helq_2-4-week": "2-4 per week",
+  "helq_5-6-week": "5-6 per week",
+
+  "helq_night_shifts_question": "Thinking about a typical work month, on average how many night shifts do you work? Night shifts are defined as shifts that start after 6:00 PM.",
 
   "halq_start_work_time_question": "What time do you typically start work?",
   "halq_start_work_answer_prompt": "Time (HH:MM, AM/PM)",
@@ -517,7 +518,7 @@
   "halq_ramelteon": "Ramelteon",
   "halq_provigil": "Provigil",
   "halq_zolpidem": "Zolpidem (Ambien)",
-  "halq_zalepion": "Zalepion (Sonata",
+  "halq_zalepion": "Zalepion (Sonata)",
   "halq_eszopicione": "Eszopicione (Lunesta)",
   "halq_aderrall": "Adderall",
   "halq_dextroamphetamine": "Dextroamphetamine (Dexidrine)",
@@ -578,13 +579,15 @@
 
   "pcq_waketime_earlier_or_later_question": "For your waketime during the study, did you ever wake up earlier/later than the time you entered on the Mini Sleep Log for that day?",
   "pcq_waketime_earlier_yes": "Yes (I woke up earlier)",
-  "pcq_waketime_earlier_no": "No (I woke up later)",
+  "pcq_waketime_later_yes": "Yes (I woke up later)",
   "pcq_waketime_no": "No",
   "pcq_waketime_earlier_or_later_text_field": "If yes, please provide details that you best remember",
 
   "pcq_activity_tracker_off_question": "Did you ever take your activity tracker off and not report it?",
   "pcq_activity_tracker_yes": "Yes",
   "pcq_activity_tracker_no": "No",
+  "pcq_specify_activity_tracker": "If yes, please provide details:",
+
 
   "pqc_activity_tracker_problems_question": "Did you have any problems wearing the activity tracker?",
   "pcq_activity_tracker_problems_yes": "Yes",
@@ -598,10 +601,13 @@
   "pcq_consume_alcohol_question": "Did you consume any alcohol in the 48 hours prior to completing either or both of your DLMO collections? ",
   "pcq_consume_alcohol_yes": "Yes",
   "pcq_consume_alcohol_no": "No",
+  "pcq_specify_alcohol_consumption": "If yes, please provide details:",
 
   "pcq_consume_caffeine_question": "Did you consume any caffeine in the 24 hours prior to completing either or both of your DLMO collections?",
   "pcq_consume_caffeine_yes": "Yes",
   "pcq_consume_caffeine_no": "No",
+  "pcq_specify_caffeine_consumption": "If yes, please provide details:",
+
 
   "pcq_consume_nicotine_question": "Did you consume any nicotine products in the 3 hours prior to completing either or both of your DLMO collections?",
   "pcq_consume_nicotine_yes": "Yes",
