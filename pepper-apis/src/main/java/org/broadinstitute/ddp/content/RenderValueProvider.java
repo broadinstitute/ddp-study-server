@@ -170,13 +170,6 @@ public class RenderValueProvider {
     }
 
     /**
-     * Get GUID of a snapshotted address
-     */
-    public String addressGuid() {
-        return addressGuid;
-    }
-
-    /**
      * Provides more flexibility for how to display an activity instance number, if available. The activity instance
      * number will first be adjusted by subtracting the given offset. Then, if the adjusted number is less than the
      * given cutoff number, then no number will be displayed. The cutoff number effectively serves as the first number

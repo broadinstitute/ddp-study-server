@@ -260,10 +260,9 @@ public class PutFormAnswersRoute implements Route {
             // find default address
             Optional<MailAddress> defaultAddress = addressService.findDefaultAddressForParticipant(handle, participantGuid);
             if (defaultAddress.isPresent()) {
-                MailAddress mailAddress = defaultAddress.get();
-                mailAddress.setDefault(false);
                 // create a copy of the default address (but setting it as non-default)
-                mailAddress = addressService.addAddress(handle, mailAddress, participantGuid, operatorGuid);
+                MailAddress mailAddress = addressService.addExistingAddress(
+                        handle, new MailAddress(defaultAddress.get(), false), participantGuid, operatorGuid);
                 // save address.guid to activity_instance_substitution with key ADDRESS_GUID
                 handle.attach(ActivityInstanceDao.class).saveSubstitutions(
                         form.getInstanceId(), Map.of(I18nTemplateConstants.Snapshot.ADDRESS_GUID, mailAddress.getGuid()));

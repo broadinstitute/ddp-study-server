@@ -96,7 +96,7 @@ public class FormInstanceCreatorHelper {
      */
     public void populateSnapshottedAddress(MailingAddressComponent mailingAddressComponent, Map<String, String> activitySnapshots) {
         String addressGuid = activitySnapshots.get(I18nTemplateConstants.Snapshot.ADDRESS_GUID);
-        if (addressGuid != null) {
+        if (addressGuid != null && mailingAddressComponent != null) {
             mailingAddressComponent.setAddressGuid(addressGuid);
         }
     }

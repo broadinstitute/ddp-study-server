@@ -104,6 +104,10 @@ public class Participant {
         activityInstanceSubstitutions.put(activityInstanceId, substitutions);
     }
 
+    public Map<Long, Map<String, String>> getAllActivityInstanceSubstitutions() {
+        return activityInstanceSubstitutions;
+    }
+
     public LocalDate getDateOfMajority() {
         return dateOfMajority;
     }

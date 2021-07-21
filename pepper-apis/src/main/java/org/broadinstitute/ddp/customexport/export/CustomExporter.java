@@ -1,5 +1,7 @@
 package org.broadinstitute.ddp.customexport.export;
 
+import static org.broadinstitute.ddp.export.ExportUtil.getSnapshottedAddress;
+
 import java.io.IOException;
 import java.io.Writer;
 import java.net.MalformedURLException;
@@ -41,6 +43,7 @@ import org.broadinstitute.ddp.model.activity.definition.ActivityDef;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
 import org.broadinstitute.ddp.model.activity.instance.ActivityResponse;
 import org.broadinstitute.ddp.model.study.Participant;
+import org.broadinstitute.ddp.service.AddressService;
 import org.broadinstitute.ddp.util.ElasticsearchServiceUtil;
 import org.elasticsearch.action.get.GetRequest;
 import org.elasticsearch.action.get.GetResponse;
@@ -63,11 +66,14 @@ public class CustomExporter {
     private final String customGuid;
     private final String customActivity;
     private final RestHighLevelClient elasticsearchClient;
+    private final AddressService addressService;
+
 
     CustomExporter(Config mainConfig, Config exportConfig) {
         this.exportConfig = exportConfig;
         this.customActivity = exportConfig.getString(CustomExportConfigFile.ACTIVITY);
         this.customGuid = exportConfig.getString(CustomExportConfigFile.STUDY_GUID);
+        addressService = new AddressService();
         try {
             elasticsearchClient = ElasticsearchServiceUtil.getElasticsearchClient(mainConfig);
         } catch (MalformedURLException e) {
@@ -112,7 +118,7 @@ public class CustomExporter {
                     + "ElasticSearch is null");
         }
 
-        Object familyId = ((Map)source.get("dsm")).get("familyId");
+        Object familyId = ((Map) source.get("dsm")).get("familyId");
         if (familyId == null) {
             throw new DDPException("Failed to get family ID for participant with guid " + userGuid + " because dsm.familyId is null");
         }
@@ -156,7 +162,7 @@ public class CustomExporter {
         for (CustomActivityExtract activity : activities) {
             ExportUtil.computeActivityAttributesSeen(instanceDao, activity);
             if (activity.getChildExtracts() != null) {
-                for (List<CustomActivityExtract> childExtracts: activity.getChildExtracts().values()) {
+                for (List<CustomActivityExtract> childExtracts : activity.getChildExtracts().values()) {
                     for (CustomActivityExtract childExtract : childExtracts) {
                         ExportUtil.computeActivityAttributesSeen(instanceDao, childExtract);
                     }
@@ -167,9 +173,10 @@ public class CustomExporter {
 
     /**
      * Extract all versions of an activity for a study
-     * @param handle the database handle
+     *
+     * @param handle      the database handle
      * @param activityDto the activity
-     * @param studyGuid the study guid
+     * @param studyGuid   the study guid
      * @return list of extracts, in ascending order by version
      */
     private List<CustomActivityExtract> extractVersionsOfActivity(Handle handle, ActivityDto activityDto, String studyGuid,
@@ -235,6 +242,7 @@ public class CustomExporter {
 
     /**
      * Extracts all versions of custom export's activity
+     *
      * @param handle the database handle
      * @return list of extracts
      */
@@ -264,8 +272,8 @@ public class CustomExporter {
      * @return number of participant records written
      * @throws IOException if error while writing
      */
-    int exportDataSetAsCsv(StudyDto studyDto, List<CustomActivityExtract> activities, Iterator<CustomExportParticipant> participants,
-                           Writer output) throws IOException {
+    int exportDataSetAsCsv(Handle handle, StudyDto studyDto, List<CustomActivityExtract> activities,
+                           Iterator<CustomExportParticipant> participants, Writer output) throws IOException {
         List<String> firstFields = exportConfig.getStringList(CustomExportConfigFile.FIRST_FIELDS);
         List<String> excludedParticipantFields = new ArrayList<>(exportConfig
                 .getStringList(CustomExportConfigFile.EXCLUDED_PARTICIPANT_FIELDS));
@@ -345,7 +353,7 @@ public class CustomExporter {
         }
 
         CSVWriter writer = new CSVWriter(output);
-        writer.writeNext(headers.toArray(new String[] {}), false);
+        writer.writeNext(headers.toArray(new String[]{}), false);
 
         int numWritten = 0;
 
@@ -357,7 +365,10 @@ public class CustomExporter {
             try {
                 row = new LinkedList<>(participantMetaFmt.format(pt.getStatus(), pt.getUser()));
                 row.add(customPt.getFamilyId());
-                ComponentDataSupplier supplier = new ComponentDataSupplier(pt.getUser().getAddress(), pt.getProviders());
+                ComponentDataSupplier supplier = new ComponentDataSupplier(
+                        pt.getUser().getAddress(),
+                        getSnapshottedAddress(handle, pt.getAllActivityInstanceSubstitutions(), addressService, pt.getUser().getAddress()),
+                        pt.getProviders());
                 for (CustomActivityExtract activity : activities) {
                     String activityTag = activity.getTag();
                     int maxInstances = activityTagToNormalizedMaxInstanceCounts.get(activityTag);
@@ -468,7 +479,7 @@ public class CustomExporter {
                 continue;
             }
 
-            writer.writeNext(row.toArray(new String[] {}), false);
+            writer.writeNext(row.toArray(new String[]{}), false);
             numWritten += 1;
 
             LOG.info("[export] ({}) participant {} for study {}:"

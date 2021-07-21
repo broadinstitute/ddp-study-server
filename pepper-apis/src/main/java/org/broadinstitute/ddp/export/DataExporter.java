@@ -700,7 +700,7 @@ public class DataExporter {
                             handle,
                             medicalRecordService);
                 } else {
-                    elasticSearchDocument = formatParticipantToFlatJSON(studyExtract.getActivities(), extract);
+                    elasticSearchDocument = formatParticipantToFlatJSON(handle, studyExtract.getActivities(), extract);
                 }
                 participantsRecords.put(extract.getUser().getGuid(), elasticSearchDocument);
             } catch (Exception e) {
@@ -720,7 +720,7 @@ public class DataExporter {
      * @param extract    the participant data for the study
      * @return
      */
-    private String formatParticipantToFlatJSON(List<ActivityExtract> activities,
+    private String formatParticipantToFlatJSON(Handle handle, List<ActivityExtract> activities,
                                                Participant extract) {
         ParticipantMetadataFormatter participantMetaFmt = new ParticipantMetadataFormatter();
         ActivityMetadataCollector activityMetadataCollector = new ActivityMetadataCollector();
@@ -732,7 +732,11 @@ public class DataExporter {
 
         Map<String, String> recordForParticipant = new LinkedHashMap<>(participantMetaFmt.records(extract.getStatus(), extract.getUser()));
 
-        ComponentDataSupplier supplier = new ComponentDataSupplier(extract.getUser().getAddress(), extract.getProviders());
+        ComponentDataSupplier supplier = new ComponentDataSupplier(
+                extract.getUser().getAddress(),
+                getSnapshottedAddress(
+                        handle, extract.getAllActivityInstanceSubstitutions(), addressService, extract.getUser().getAddress()),
+                extract.getProviders());
         for (ActivityExtract activity : activities) {
             ActivityResponseCollector activityResponseCollector = responseCollectors.get(activity.getTag());
             List<ActivityResponse> instances = extract.getResponses(activity.getTag());
@@ -1062,7 +1066,7 @@ public class DataExporter {
         List<Participant> dataset = extractParticipantDataSet(handle, studyDto);
         computeMaxInstancesSeen(handle, activities);
         computeActivityAttributesSeen(handle, activities);
-        return exportDataSetAsCsv(studyDto, activities, dataset.iterator(), output);
+        return exportDataSetAsCsv(handle, studyDto, activities, dataset.iterator(), output);
     }
 
     /**
@@ -1074,7 +1078,7 @@ public class DataExporter {
      * @return number of participant records written
      * @throws IOException if error while writing
      */
-    public int exportDataSetAsCsv(StudyDto studyDto, List<ActivityExtract> activities, Iterator<Participant> participants,
+    public int exportDataSetAsCsv(Handle handle, StudyDto studyDto, List<ActivityExtract> activities, Iterator<Participant> participants,
                                   Writer output) throws IOException {
         ParticipantMetadataFormatter participantMetaFmt = new ParticipantMetadataFormatter();
         ActivityMetadataCollector activityMetadataCollector = new ActivityMetadataCollector();
@@ -1122,7 +1126,10 @@ public class DataExporter {
             List<String> row;
             try {
                 row = new LinkedList<>(participantMetaFmt.format(pt.getStatus(), pt.getUser()));
-                ComponentDataSupplier supplier = new ComponentDataSupplier(pt.getUser().getAddress(), pt.getProviders());
+                ComponentDataSupplier supplier = new ComponentDataSupplier(
+                        pt.getUser().getAddress(),
+                        getSnapshottedAddress(handle, pt.getAllActivityInstanceSubstitutions(), addressService, pt.getUser().getAddress()),
+                        pt.getProviders());
                 for (ActivityExtract activity : activities) {
                     String activityTag = activity.getTag();
                     int maxInstances = activityTagToNormalizedMaxInstanceCounts.get(activityTag);

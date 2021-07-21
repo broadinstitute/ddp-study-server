@@ -34,7 +34,7 @@ public class ExportUtil {
     }
 
     static Map<String, String> fetchAndCacheAuth0Emails(Handle handle, StudyDto studyDto,
-                                                               Set<String> auth0UserIds, Map<String, String> emailStore) {
+                                                        Set<String> auth0UserIds, Map<String, String> emailStore) {
         var mgmtClient = Auth0ManagementClient.forStudy(handle, studyDto.getGuid());
         Map<String, String> emailResults = new Auth0Util(mgmtClient.getDomain())
                 .getEmailsByAuth0UserIdsAndConnection(auth0UserIds, mgmtClient.getToken(),
@@ -61,7 +61,7 @@ public class ExportUtil {
     }
 
     public static List<Participant> extractParticipantsFromResultSet(Handle handle, StudyDto studyDto, Stream<Participant> resultset,
-                                                                      Map<String, String> emailStore) {
+                                                                     Map<String, String> emailStore) {
         Map<String, String> usersMissingEmails = new HashMap<>();
 
         var instanceDao = handle.attach(ActivityInstanceDao.class);
@@ -123,10 +123,42 @@ public class ExportUtil {
     /**
      * If address was snapshotted and addressGuid saved to activity_instance_substitution with key = ADDRESS_GUID
      * then try to get this address. If not found snapshotted address then this method returns a specified defaultAddress.
-     * @param handle          jdbi handle
-     * @param instanceId      activity instance which substitutions to read (where to detect addressGuid)
-     * @param addressService  service for finding an address bu guid
-     * @param defaultAddress  default address which to return in case of snapshotted address not found
+     *
+     * @param handle                        jdbi handle
+     * @param activityInstanceSubstitutions substitutions of all activity instances of a current participant:
+     *                                      try to find from it a substitution snapshotted address (we consider
+     *                                      that snapshotted address exist then only one is stored among all activity instances)
+     * @param addressService                service for finding an address bu guid
+     * @param defaultAddress                default address which to return in case of snapshotted address not found
+     * @return MailAddress    detected snapshotted address or defaultAddress (f snapshotted not found)
+     */
+    public static MailAddress getSnapshottedAddress(
+            Handle handle,
+            Map<Long, Map<String, String>> activityInstanceSubstitutions,
+            AddressService addressService,
+            MailAddress defaultAddress) {
+        String addressGuid = null;
+        if (activityInstanceSubstitutions != null) {
+            addressGuid =
+                    activityInstanceSubstitutions.values().stream()
+                            .flatMap(subs -> subs.entrySet().stream())
+                            .filter(subs -> subs.getKey().equals(I18nTemplateConstants.Snapshot.ADDRESS_GUID))
+                            .map(subs -> subs.getValue())
+                            .findFirst()
+                            .orElse(null);
+        }
+        return getMailAddress(handle, addressService, addressGuid, defaultAddress);
+    }
+
+    /**
+     * If address was snapshotted and addressGuid saved to activity_instance_substitution with key = ADDRESS_GUID
+     * then try to get this address. If not found snapshotted address then this method returns a specified defaultAddress.
+     *
+     * @param handle                        jdbi handle
+     * @param instanceId                    activity instance which substitutions to read (where to detect addressGuid): it will be used
+     *                                      in case if ADDRESS_GUID not found in `activityInstanceSubstitutions`
+     * @param addressService                service for finding an address bu guid
+     * @param defaultAddress                default address which to return in case of snapshotted address not found
      * @return MailAddress    detected snapshotted address or defaultAddress (f snapshotted not found)
      */
     public static MailAddress getSnapshottedAddress(
@@ -136,12 +168,17 @@ public class ExportUtil {
             MailAddress defaultAddress) {
         Map<String, String> substitutions = handle.attach(ActivityInstanceDao.class).findSubstitutions(instanceId);
         String addressGuid = substitutions.get(I18nTemplateConstants.Snapshot.ADDRESS_GUID);
+        return getMailAddress(handle, addressService, addressGuid, defaultAddress);
+    }
+
+    private static MailAddress getMailAddress(Handle handle, AddressService addressService,
+                                              String addressGuid, MailAddress defaultAddress) {
         if (addressGuid != null) {
             Optional<MailAddress> snapshottedAddress = addressService.findAddressByGuid(handle, addressGuid);
             if (snapshottedAddress.isPresent()) {
                 return snapshottedAddress.get();
             }
         }
-        return  defaultAddress;
+        return defaultAddress;
     }
 }

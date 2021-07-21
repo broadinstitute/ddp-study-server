@@ -87,6 +87,23 @@ public class AddressService {
     }
 
     /**
+     * Insert a copy of already existing address (which already was successfully added to the database and
+     * having plus code and validation status calculated.
+     *
+     * @param handle            the database handle
+     * @param copiedAddress     the address to save
+     * @param participantGuid   the user guid for the participant
+     * @param operatorGuid      the user guid for the operator
+     * @return the saved address with new guid
+     */
+    public MailAddress addExistingAddress(Handle handle, MailAddress copiedAddress, String participantGuid, String operatorGuid) {
+        JdbiMailAddress dao = buildAddressDao(handle);
+        dao.insertAddress(copiedAddress, participantGuid, operatorGuid);
+        setAddressIsDefaultFlag(copiedAddress, dao);
+        return copiedAddress;
+    }
+
+    /**
      * Calculate the validation status of the address to support DSM integration
      *
      * @param address the address

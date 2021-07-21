@@ -15,10 +15,12 @@ import org.broadinstitute.ddp.model.address.MailAddress;
 public class ComponentDataSupplier {
 
     private MailAddress address;
+    private MailAddress snapshottedAddress;
     private Map<InstitutionType, List<MedicalProviderDto>> providers;
 
-    public ComponentDataSupplier(MailAddress address, List<MedicalProviderDto> providers) {
+    public ComponentDataSupplier(MailAddress address, MailAddress snapshottedAddress, List<MedicalProviderDto> providers) {
         this.address = address;
+        this.snapshottedAddress = snapshottedAddress;
         sortProviders(providers);
     }
 
@@ -38,6 +40,10 @@ public class ComponentDataSupplier {
 
     public MailAddress getAddress() {
         return address;
+    }
+
+    public MailAddress getSnapshottedAddress() {
+        return snapshottedAddress;
     }
 
     public List<MedicalProviderDto> getProviders(InstitutionType type) {
