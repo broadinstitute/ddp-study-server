@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.BiFunction;
@@ -19,6 +20,8 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.client.EasyPostClient;
 import org.broadinstitute.ddp.client.EasyPostVerifyError;
+import org.broadinstitute.ddp.content.I18nTemplateConstants;
+import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dao.JdbiCountryAddressInfo;
 import org.broadinstitute.ddp.db.dao.JdbiMailAddress;
 import org.broadinstitute.ddp.db.dao.KitConfigurationDao;
@@ -408,6 +411,34 @@ public class AddressService {
         }
 
         return warns;
+    }
+
+    /**
+     * Snapshot mail address.
+     *
+     * <b>Algorithm:</b>
+     * <ul>
+     *     <li>find default address;</li>
+     *     <li>create a copy of the default address (but setting it as non-default);</li>
+     *     <li>save address.guid to activity_instance_substitution with key ADDRESS_GUID.</li>
+     * </ul>
+     *
+     * @param instanceId   ID of an activity instance in which substitutions to save addressGuid
+     * @return new address object which is created
+     */
+    public MailAddress snapshotAddress(Handle handle, String participantGuid, String operatorGuid, long instanceId) {
+        // find default address
+        Optional<MailAddress> defaultAddress = findDefaultAddressForParticipant(handle, participantGuid);
+        if (defaultAddress.isPresent()) {
+            // create a copy of the default address (but setting it as non-default)
+            MailAddress mailAddress = addExistingAddress(
+                    handle, new MailAddress(defaultAddress.get(), false), participantGuid, operatorGuid);
+            // save address.guid to activity_instance_substitution with key ADDRESS_GUID
+            handle.attach(ActivityInstanceDao.class).saveSubstitutions(
+                    instanceId, Map.of(I18nTemplateConstants.Snapshot.ADDRESS_GUID, mailAddress.getGuid()));
+            return mailAddress;
+        }
+        return null;
     }
 
     private EasyPostVerifyError buildGenericVerificationError() {

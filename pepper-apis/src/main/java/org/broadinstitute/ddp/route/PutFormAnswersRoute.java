@@ -18,7 +18,6 @@ import org.broadinstitute.ddp.analytics.GoogleAnalyticsMetricsTracker;
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants.PathParam;
 import org.broadinstitute.ddp.content.I18nContentRenderer;
-import org.broadinstitute.ddp.content.I18nTemplateConstants;
 import org.broadinstitute.ddp.db.ActivityDefStore;
 import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.TransactionWrapper;
@@ -180,8 +179,9 @@ public class PutFormAnswersRoute implements Route {
                     if (formActivitySettingDto.isPresent() && instanceDto.getFirstCompletedAt() == null) {
                         snapshotSubstitutions(handle, studyGuid, operatorGuid, form,
                                 formActivitySettingDto.get().shouldSnapshotSubstitutionsOnSubmit());
-                        snapshotAddress(handle, userGuid, operatorGuid, form,
-                                formActivitySettingDto.get().shouldSnapshotAddressOnSubmit());
+                        if (formActivitySettingDto.get().shouldSnapshotAddressOnSubmit()) {
+                            addressService.snapshotAddress(handle, userGuid, operatorGuid, form.getInstanceId());
+                        }
                     }
 
                     User participantUser = instanceSummary.getParticipantUser();
@@ -240,33 +240,6 @@ public class PutFormAnswersRoute implements Route {
                     form.getInstanceId(),
                     I18nContentRenderer.newValueProvider(
                             handle, form.getParticipantUserId(), operatorGuid, studyGuid).getSnapshot());
-        }
-    }
-
-    /**
-     * Snapshot address on submit.
-     * If flag shouldSnapshotAddressOnSubmit is true then snapshot an address.
-     *
-     * <p>Algorithm:
-     * <ul>
-     *     <li>Find the user’s “default” address;</li>
-     *     <li>Create a copy of the address but don’t mark it as the default;</li>
-     *     <li>Save the address guid as “snapshot” variable I18nTemplateConstants.Snapshot.ADDRESS_GUID.</li>
-     * </ul>
-     */
-    private void snapshotAddress(Handle handle, String participantGuid, String operatorGuid, FormInstance form,
-                                 boolean shouldSnapshotAddressOnSubmit) {
-        if (shouldSnapshotAddressOnSubmit) {
-            // find default address
-            Optional<MailAddress> defaultAddress = addressService.findDefaultAddressForParticipant(handle, participantGuid);
-            if (defaultAddress.isPresent()) {
-                // create a copy of the default address (but setting it as non-default)
-                MailAddress mailAddress = addressService.addExistingAddress(
-                        handle, new MailAddress(defaultAddress.get(), false), participantGuid, operatorGuid);
-                // save address.guid to activity_instance_substitution with key ADDRESS_GUID
-                handle.attach(ActivityInstanceDao.class).saveSubstitutions(
-                        form.getInstanceId(), Map.of(I18nTemplateConstants.Snapshot.ADDRESS_GUID, mailAddress.getGuid()));
-            }
         }
     }
 
