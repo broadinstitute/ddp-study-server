@@ -1,11 +1,10 @@
 #set( $text = {
-  "subject": "Reminder: Please sign the Count Me In Consent form",
-  "logo_alt": "Pancan Project logo",
+  "subject": "Reminder: Please provide additional information for Count Me In",
   "salutation_self": "Dear Participant,",
   "salutation_parent": "Dear Parent,",
-  "thank_you": "Thank you for registering for Count Me In. We are now asking if you would be willing to sign our research consent form
-    to complete {{\#if proxy_firstName}}your child's{{else}}your{{/if}} enrollment and opt into different aspects of this study.",
-  "sign_consent": "Please Sign Consent Form",
+  "thank_you": "Thank you for enrolling in Count Me In and giving us your consent for research.",
+  "need_info": "Before we can proceed, we need some information about where {{\#if proxy_guid}}your child has{{else}}you have{{/if}} received care for {{\#if proxy_guid}}their{{else}}your{{/if}} cancer(s). Please click on the link below to provide this information:",
+  "button": "Contact Information Form",
   "contact": "If you have questions at any point and would like to talk to a member of our study staff, please reach out to us at
     <a href='mailto:${contact.email}' target='_blank' style='color: #7154ff; text-decoration: none; cursor: pointer;'>${contact.email}</a>
     or call <a href='tel:${contact.phone}' style='color: #7154ff; text-decoration: none; cursor: pointer;'>${contact.phone}</a>.",
@@ -16,4 +15,4 @@
     <a href='${social.facebook}' target='_blank' style='color: #7154ff; text-decoration: none; cursor: pointer;'>Facebook</a>."
 })
 
-#parse("parental_consent_reminder.tmpl.html")
+#parse("release_reminder.tmpl.html")

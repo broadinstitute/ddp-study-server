@@ -1,12 +1,9 @@
 #set( $text = {
-  "subject": "Recordatorio: Firme el formulario de consentimiento de Count Me In",
-  "logo_alt": "Logo de Pancan Proyecto",
+  "subject": "Información sobre el kit de Count Me In",
   "salutation_self": "Estimado participante:",
   "salutation_parent": "Estimado(a) padre/madre:",
-  "thank_you": "Gracias por registrarse en Count Me In. En este momento, le preguntamos si estaría dispuesto(a) a firmar nuestro formulario de consentimiento de investigación
-    para completar {{\#if proxy_firstName}}la inscripción de su hijo(a){{else}}su inscripción{{/if}} y optar por diversos aspectos de este estudio.",
-  "sign_consent": "Firme el formulario de consentimiento",
-  "contact": " Si, en algún momento, tiene alguna pregunta y desea hablar con un miembro de nuestro equipo,
+  "thank_you": "Le agradecemos nuevamente por darnos su consentimiento para nuestro estudio de investigación. Hace poco, le enviamos por correo postal un kit con instrucciones para obtener una muestra de sangre y, ahora, nos ponemos en contacto para asegurarnos de que lo ha recibido.",
+  "contact": "Si aún no ha recibido el kit, o si tiene alguna pregunta sobre el proceso,
     comuníquese con nosotros por correo electrónico a <a href='mailto:${contact.email}' target='_blank' style='color: #7154ff; text-decoration: none; cursor: pointer;'>${contact.email}</a>
     o al número de teléfono <a href='tel:${contact.phone}' style='color: #7154ff; text-decoration: none; cursor: pointer;'>${contact.phone}</a>.",
   "closing": "Atentamente,",
@@ -16,4 +13,4 @@
     <a href='${social.facebook}' target='_blank' style='color: #7154ff; text-decoration: none; cursor: pointer;'>Facebook</a>."
 })
 
-#parse("parental_consent_reminder.tmpl.html")
+#parse("blood_reminder.tmpl.html")
