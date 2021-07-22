@@ -258,7 +258,7 @@
   "general_information_health_insurance_coverage": "Are you covered by health insurance or some other kind of health care plan? *",
   "general_information_patient_health_insurance_coverage": "Is the patient covered by health insurance or some other kind of health care plan? *",
   "general_information_health_insurance_coverage_validation_hint": "Health insurance cannot be empty",
-  "general_information_health_insurance_coverage_exp": "We will not be asking any additional questions about insurance details, this is just to look at insurance coverage in rare disease in general, NOT to track insurance details.",
+  "general_information_health_insurance_coverage_exp": "This is just to look at insurance coverage in rare disease in general, NOT to track insurance details.",
   "general_information_hic_yes": "Yes",
   "general_information_hic_no": "No",
   "general_information_hic_not_to_answer": "Prefer Not to Answer",
@@ -316,7 +316,7 @@
   "h_d_patient_growth_issues_exp": "Examples: You are much shorter or taller than expected for your family, you have had significant and/or lifelong problems gaining weight, or you have significant and/or lifelong problems with obesity. They may have seen an endocrinologist or other specialist for these issues.",
 
   "h_d_behavior_issues": "Have you had BEHAVIOR and/or PSYCHIATRIC issues?",
-  "h_d_patient_behavior_issues": "Has the patient had BEHAVIOR and/or PSYCHIATRIC issues?",
+  "h_d_patient_behavior_issues": "Has `the pat`ient had BEHAVIOR and/or PSYCHIATRIC issues?",
   "h_d_behavior_issues_exp": "Examples: Autism spectrum disorders, schizophrenia, anxiety, aggression, repetitive behaviors, and depression. You may have seen a developmental pediatrician, psychologist, psychiatrist, or therapist for these issues.",
   "h_d_patient_behavior_issues_exp": "Examples: Autism spectrum disorders, schizophrenia, anxiety, aggression, repetitive behaviors, and depression. They may have seen a developmental pediatrician, psychologist, psychiatrist, or therapist for these issues.",
 
@@ -325,9 +325,9 @@
   "h_d_patient_brain_issues": "Has the patient had issues with BRAIN and/or NERVOUS SYSTEM (neurological issues)?",
   "h_d_patient_brain_issues_exp": "Examples: Seizures, epilepsy, developmental delays, intellectual disability, learning problems, significant problems with muscle tone, cerebral palsy, or problems with brain structure. They may have seen a neurologist for these issues.",
 
-  "h_d_cancer_issues": "Have you ever been diagnosed with cancer, colon polyps or a non-cancerous tumor?",
+  "h_d_cancer_issues": "Have you ever been diagnosed with CANCER, COLON POLYPS or a NON-CANCEROUS TUMOR?",
   "h_d_cancer_issues_exp": "Examples: Breast cancer, prostate cancer, skin cancer, lung cancer. You may have seen an oncologist for these issues.",
-  "h_d_patient_cancer_issues": "Has the patient ever been diagnosed with cancer, colon polyps or a non-cancerous tumor? ",
+  "h_d_patient_cancer_issues": "Has the patient ever been diagnosed with CANCER, COLON POLYPS or a NON-CANCEROUS TUMOR?",
   "h_d_patient_cancer_issues_exp": "Examples: Breast cancer, prostate cancer, skin cancer, lung cancer. They may have seen an oncologist for these issues.",
 
   "h_d_head_neck_issues": "Have you had issues with your HEAD/FACE/NECK?",
@@ -395,9 +395,9 @@
   "h_d_patient_blood_issues": "Has the patient had issues with their BLOOD and/or BLEEDING?",
   "h_d_patient_blood_issues_exp": "Examples: Excessive bleeding or problems noted with your blood cells on lab reports. They may have seen a hematologist for these issues.",
 
-  "h_d_teeth_issues": "Have you had issues with your teeth or mouth?",
+  "h_d_teeth_issues": "Have you had issues with your TEETH or MOUTH?",
   "h_d_teeth_issues_exp": "Examples: physical mouth, lips, tongue or teeth issues or mouth function.",
-  "h_d_patient_teeth_issues": "Has the patient had issues with their teeth or mouth?",
+  "h_d_patient_teeth_issues": "Has the patient had issues with their TEETH or MOUTH?",
   "h_d_patient_teeth_issues_exp": "Examples: physical mouth, lips, tongue or teeth issues or mouth function.",
 
   "h_d_patient_walk_issues": "Is the patient able to walk without assistance?",
