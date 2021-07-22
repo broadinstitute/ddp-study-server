@@ -773,6 +773,19 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
     }
 
     @Test
+    public void testEval_formInstanceQuery_isStatus() {
+        TransactionWrapper.useTxn(handle ->  {
+            String fmt = "user.studies[\"%s\"].forms[\"%s\"].instances[specific].isStatus(%s)";
+
+            String expr = String.format(fmt, studyGuid, activityCode, "\"CREATED\"");
+            assertTrue("should match status", run(handle, expr));
+
+            expr = String.format(fmt, studyGuid, activityCode, "\"CREATED\", \"IN_PROGRESS\"");
+            assertTrue("should check if contained in list", run(handle, expr));
+        });
+    }
+
+    @Test
     public void testEval_formInstanceQuery_snapshotSubstitution() {
         String expr = String.format(
                 "user.studies[\"%s\"].forms[\"%s\"].instances[specific]"
