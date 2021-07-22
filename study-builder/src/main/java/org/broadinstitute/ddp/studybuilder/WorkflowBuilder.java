@@ -10,8 +10,10 @@ import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.workflow.ActivityState;
 import org.broadinstitute.ddp.model.workflow.StateType;
 import org.broadinstitute.ddp.model.workflow.StaticState;
+import org.broadinstitute.ddp.model.workflow.StudyRedirectState;
 import org.broadinstitute.ddp.model.workflow.WorkflowState;
 import org.broadinstitute.ddp.model.workflow.WorkflowTransition;
+import org.broadinstitute.ddp.util.ConfigUtil;
 import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -76,7 +78,16 @@ public class WorkflowBuilder {
         } else if (type == StateType.ACTIVITY) {
             String activityCode = stateCfg.getString("activityCode");
             long activityId = ActivityBuilder.findActivityId(handle, studyDto.getId(), activityCode);
-            return new ActivityState(activityId);
+            boolean checkEachInstance = ConfigUtil.getBoolOrElse(stateCfg, "checkEachInstance", false);
+            return new ActivityState(activityId, checkEachInstance);
+        } else if (type == StateType.STUDY_REDIRECT) {
+            String studyGuid = ConfigUtil.getStrIfPresent(stateCfg, "studyGuid");
+            String studyName = ConfigUtil.getStrIfPresent(stateCfg, "studyName");
+            String redirectUrl = stateCfg.getString("redirectUrl");
+            if (studyGuid == null && studyName == null) {
+                throw new DDPException("Both studyGuid and studyName cannot be null. Atleast one of them should be provided. ");
+            }
+            return new StudyRedirectState(studyGuid, studyName, redirectUrl);
         } else {
             throw new DDPException("Unsupported workflow state type " + type);
         }
@@ -86,7 +97,13 @@ public class WorkflowBuilder {
         String type = stateCfg.getString("type");
         if (StateType.ACTIVITY.name().equals(type)) {
             String activityCode = stateCfg.getString("activityCode");
-            return String.format("%s/%s", type, activityCode);
+            boolean checkEachInstance = ConfigUtil.getBoolOrElse(stateCfg, "checkEachInstance", false);
+            return String.format("%s/%s/%b", type, activityCode, checkEachInstance);
+        } else if (StateType.STUDY_REDIRECT.name().equals(type)) {
+            String studyGuid = ConfigUtil.getStrIfPresent(stateCfg, "studyGuid");
+            String studyName = ConfigUtil.getStrIfPresent(stateCfg, "studyName");
+            String redirectUrl = stateCfg.getString("redirectUrl");
+            return String.format("%s/%s/%s/%s", type, studyGuid, studyName, redirectUrl);
         } else {
             return type;
         }

@@ -48,6 +48,9 @@ public interface DataExportDao extends SqlObject {
     @SqlUpdate("delete from data_sync_request where user_id = :userId")
     int deleteDataSyncRequestsForUser(@Bind("userId") long userId);
 
+    @SqlUpdate("delete from data_sync_request where user_id = (select user_id from user where guid = :userGuid)")
+    int deleteDataSyncRequestsForUser(@Bind("userGuid") String userGuid);
+
     @SqlUpdate("delete from data_sync_request where user_id in (<userIds>)")
     int deleteDataSyncRequestsForUsers(@BindList(value = "userIds", onEmpty = EmptyHandling.NULL) Set<Long> userIds);
 }

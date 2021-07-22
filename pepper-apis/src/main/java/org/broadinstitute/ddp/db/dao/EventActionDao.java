@@ -1,5 +1,6 @@
 package org.broadinstitute.ddp.db.dao;
 
+import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.broadinstitute.ddp.model.event.MessageDestination.PARTICIPANT_NOTIFICATION;
 
 import java.util.Set;
@@ -12,6 +13,7 @@ import org.broadinstitute.ddp.model.activity.types.EventActionType;
 import org.broadinstitute.ddp.model.copy.CopyConfiguration;
 import org.broadinstitute.ddp.model.event.NotificationServiceType;
 import org.broadinstitute.ddp.model.event.NotificationType;
+import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
 import org.jdbi.v3.sqlobject.CreateSqlObject;
 import org.jdbi.v3.sqlobject.SqlObject;
 
@@ -66,9 +68,14 @@ public interface EventActionDao extends SqlObject {
         return actionId;
     }
 
-    default long insertInstanceCreationAction(long targetActivityId) {
+    default long insertInstanceCreationAction(long targetActivityId,
+                      boolean createFromAnswer, String sourceQuestionStableId, String targetQuestionStableId) {
+        if (createFromAnswer && isBlank(sourceQuestionStableId)) {
+            throw new IllegalArgumentException("When createFromAnswer is true, then sourceQuestionStableId should not be blank");
+        }
         long actionId = getJdbiEventAction().insert(null, EventActionType.ACTIVITY_INSTANCE_CREATION);
-        int numRowsInserted = getEventActionSql().insertActivityInstanceCreationAction(actionId, targetActivityId);
+        int numRowsInserted = getEventActionSql().insertActivityInstanceCreationAction(
+                actionId, targetActivityId, createFromAnswer, sourceQuestionStableId, targetQuestionStableId);
         if (numRowsInserted != 1) {
             throw new DaoException("Could not insert activity instance creation event for target activity id " + targetActivityId);
         }
@@ -129,6 +136,22 @@ public interface EventActionDao extends SqlObject {
         if (numInserted != 1) {
             throw new DaoException("Could not insert copy event action with copy configuration id " + configId);
         }
+        return actionId;
+    }
+
+    default long insertUpdateUserStatusAction(EnrollmentStatusType targetStatusType) {
+        var supported = Set.of(EnrollmentStatusType.COMPLETED);
+        if (!supported.contains(targetStatusType)) {
+            throw new DaoException("Target status '" + targetStatusType + "' is currently not supported");
+        }
+        long actionId = getJdbiEventAction().insert(null, EventActionType.UPDATE_USER_STATUS);
+        DBUtils.checkInsert(1, getEventActionSql().insertUpdateUserStatusAction(actionId, targetStatusType));
+        return actionId;
+    }
+
+    default long insertUpdateCustomWorkflowAction(String workflow, String status) {
+        long actionId = getJdbiEventAction().insert(null, EventActionType.UPDATE_CUSTOM_WORKFLOW);
+        DBUtils.checkInsert(1, getEventActionSql().insertUpdateCustomWorkflowEventAction(actionId, workflow, status));
         return actionId;
     }
 

@@ -127,7 +127,7 @@ public class CustomExportJob implements Job {
         ActivityDefStore.getInstance().clear();
         CustomExporter.clearCachedAuth0Emails();
 
-        var coordinator = new CustomExportCoordinator(exportCfg)
+        var coordinator = new CustomExportCoordinator(cfg, exportCfg)
                 .includeCsv(bucket);
 
         try {

@@ -7,6 +7,7 @@
 
 {
     "auth0": {
+        "connection": "{{$auth.connection}}",
         "domain": "{{$auth.domain}}",
         "mgmtClientId": "{{$auth.mgmtClientId}}",
         "mgmtSecret": "{{$auth.mgmtSecret}}",
@@ -14,6 +15,10 @@
         "clientSecret": "{{$auth.clientSecret}}",
         "adminClientId": "{{$auth.adminClientId}}",
         "adminClientSecret": "{{$auth.adminClientSecret}}",
+{{ if $auth.iosClientId }}
+        "iosClientId": "{{$auth.iosClientId}}",
+        "iosClientSecret": "{{$auth.iosClientSecret}}",
+{{ end }}
     },
     "baseWebUrl": "{{$conf.baseWebUrl}}",
     "passwordRedirectUrl": "{{$conf.passwordRedirectUrl}}",
@@ -23,6 +28,18 @@
     "sendgridFromEmail": "{{$conf.sendgridFromEmail}}",
     "sendgridDefaultSalutation" : "{{$conf.sendgridDefaultSalutation}}",
     "analyticsToken": "{{$conf.analyticsToken}}",
+
+{{if eq $study "pancan"}}
+    "angioRedirectUrl": "{{$conf.angioRedirectUrl}}",
+    "brainRedirectUrl": "{{$conf.brainRedirectUrl}}",
+    "osteoRedirectUrl": "{{$conf.osteoRedirectUrl}}",
+    "mbcRedirectUrl": "{{$conf.mbcRedirectUrl}}",
+    "mbcRedirectUrlES": "{{$conf.mbcRedirectUrlES}}",
+    "mpcRedirectUrl": "{{$conf.mpcRedirectUrl}}",
+    "escRedirectUrl": "{{$conf.escRedirectUrl}}",
+    "lmsRedirectUrl": "{{$conf.lmsRedirectUrl}}",
+    "ccpRedirectUrl": "{{$conf.ccpRedirectUrl}}"
+{{end}}
 
 {{if not $conf.irbPassword}}
     "irbPassword": null,

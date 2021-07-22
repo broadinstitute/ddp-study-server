@@ -9,4 +9,7 @@ public enum PicklistRenderMode {
 
     /** Hint to render as a list of options. */
     LIST,
+
+    /** Hint to render as a list of options with autocompletion function */
+    AUTOCOMPLETE
 }

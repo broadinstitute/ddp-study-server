@@ -50,11 +50,11 @@ public class ActivityInstanceCreationEventActionTest extends TxnAwareBaseTest {
 
             var signal = new EventSignal(
                     testData.getUserId(), testData.getUserId(), testData.getUserGuid(), testData.getUserGuid(),
-                    testData.getStudyId(), EventTriggerType.DSM_NOTIFICATION);
-            var action = new ActivityInstanceCreationEventAction(null, nestedAct.getActivityId());
+                    testData.getStudyId(), testData.getStudyGuid(), EventTriggerType.DSM_NOTIFICATION);
+            var action = new ActivityInstanceCreationEventAction(null, nestedAct.getActivityId(), false, null, null);
 
             try {
-                action.doAction(handle, signal);
+                action.doActionSynchronously(handle, signal);
                 fail("Expected exception not thrown");
             } catch (Exception e) {
                 assertTrue(e instanceof DDPException);
@@ -84,9 +84,10 @@ public class ActivityInstanceCreationEventActionTest extends TxnAwareBaseTest {
 
             var signal = new ActivityInstanceStatusChangeSignal(
                     testData.getUserId(), testData.getUserId(), testData.getUserGuid(), testData.getUserGuid(),
-                    parentInstanceId, parentAct.getActivityId(), testData.getStudyId(), InstanceStatusType.CREATED);
-            var action = new ActivityInstanceCreationEventAction(null, nestedAct.getActivityId());
-            action.doAction(handle, signal);
+                    parentInstanceId, parentAct.getActivityId(), testData.getStudyId(), testData.getStudyGuid(),
+                    InstanceStatusType.CREATED);
+            var action = new ActivityInstanceCreationEventAction(null, nestedAct.getActivityId(), false, null, null);
+            action.doActionSynchronously(handle, signal);
 
             List<ActivityInstanceDto> actualInstances = handle.attach(JdbiActivityInstance.class)
                     .findAllByUserGuidAndActivityCode(testData.getUserGuid(), nestedAct.getActivityCode(), testData.getStudyId());
@@ -123,9 +124,9 @@ public class ActivityInstanceCreationEventActionTest extends TxnAwareBaseTest {
 
             var signal = new ActivityInstanceStatusChangeSignal(
                     testData.getUserId(), testData.getUserId(), testData.getUserGuid(), testData.getUserGuid(),
-                    instanceId1, act1.getActivityId(), testData.getStudyId(), InstanceStatusType.CREATED);
-            var action = new ActivityInstanceCreationEventAction(null, act2.getActivityId());
-            action.doAction(handle, signal);
+                    instanceId1, act1.getActivityId(), testData.getStudyId(), testData.getStudyGuid(), InstanceStatusType.CREATED);
+            var action = new ActivityInstanceCreationEventAction(null, act2.getActivityId(), false, null, null);
+            action.doActionSynchronously(handle, signal);
 
             List<ActivityInstanceDto> actualInstances = handle.attach(JdbiActivityInstance.class)
                     .findAllByUserGuidAndActivityCode(testData.getUserGuid(), act2.getActivityCode(), testData.getStudyId());

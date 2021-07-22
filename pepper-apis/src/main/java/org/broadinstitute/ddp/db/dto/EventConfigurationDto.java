@@ -12,6 +12,7 @@ import org.broadinstitute.ddp.model.dsm.DsmNotificationEventType;
 import org.broadinstitute.ddp.model.event.NotificationServiceType;
 import org.broadinstitute.ddp.model.event.NotificationType;
 import org.broadinstitute.ddp.model.event.PdfAttachment;
+import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
 
 /**
  * A DTO representing the event configuration, left joined with possible trigger and action configuration info
@@ -58,6 +59,9 @@ public class EventConfigurationDto {
     /* USER_REGISTERED */
     // No sub-table
 
+    /* USER_STATUS_CHANGE */
+    private EnrollmentStatusType userStatusChangedTargetStatusType;
+
     /* EXIT_REQUEST */
     // No sub-table
 
@@ -80,9 +84,11 @@ public class EventConfigurationDto {
     /* PDF_GENERATION */
     private Long pdfGenerationDocumentConfigurationId;
 
-
     /* ACTIVITY_INSTANCE_CREATION */
     private Long activityInstanceCreationStudyActivityId;
+    private boolean createFromAnswer;
+    private String sourceQuestionStableId;
+    private String targetQuestionStableId;
 
     /* USER_ENROLLED */
     // No sub-table
@@ -101,6 +107,13 @@ public class EventConfigurationDto {
     /* REVOKE_PROXIES */
     // No sub-table
 
+    /* UPDATE_USER_STATUS */
+    EnrollmentStatusType updateUserStatusTargetStatusType;
+
+    private String customWorkflowName;
+    private String customWorkflowStatus;
+
+
     public EventConfigurationDto(long eventConfigurationId,
                                  String label,
                                  EventTriggerType eventTriggerType,
@@ -117,6 +130,8 @@ public class EventConfigurationDto {
                                  Long workflowStateId,
                                  Boolean triggerAutomatically,
                                  DsmNotificationEventType dsmNotificationEventType,
+                                 EnrollmentStatusType userStatusChangedTargetStatusType,
+                                 EnrollmentStatusType updateUserStatusTargetStatusType,
                                  Long announcementMsgTemplateId,
                                  Boolean announcementIsPermanent,
                                  Boolean announcementCreateForProxies,
@@ -128,7 +143,12 @@ public class EventConfigurationDto {
                                  Long copyActionCopyConfigurationId,
                                  Long contactEmailQuestionStableCodeId,
                                  String contactEmailQuestionStableId,
-                                 Boolean markExistingInvitationsAsVoided) {
+                                 Boolean markExistingInvitationsAsVoided,
+                                 String customWorkflowName,
+                                 String customWorkflowStatus,
+                                 boolean createFromAnswer,
+                                 String sourceQuestionStableId,
+                                 String targetQuestionStableId) {
         this.eventConfigurationId = eventConfigurationId;
         this.label = label;
         this.eventTriggerType = eventTriggerType;
@@ -145,6 +165,8 @@ public class EventConfigurationDto {
         this.workflowStateId = workflowStateId;
         this.triggerAutomatically = triggerAutomatically;
         this.dsmNotificationEventType = dsmNotificationEventType;
+        this.userStatusChangedTargetStatusType = userStatusChangedTargetStatusType;
+        this.updateUserStatusTargetStatusType = updateUserStatusTargetStatusType;
         this.announcementMsgTemplateId = announcementMsgTemplateId;
         this.isAnnouncementPermanent = announcementIsPermanent;
         this.createAnnouncementForProxies = announcementCreateForProxies;
@@ -157,6 +179,11 @@ public class EventConfigurationDto {
         this.contactEmailQuestionStableCodeId = contactEmailQuestionStableCodeId;
         this.contactEmailQuestionStableId = contactEmailQuestionStableId;
         this.markExistingInvitationsAsVoided = markExistingInvitationsAsVoided;
+        this.customWorkflowName = customWorkflowName;
+        this.customWorkflowStatus = customWorkflowStatus;
+        this.createFromAnswer = createFromAnswer;
+        this.sourceQuestionStableId = sourceQuestionStableId;
+        this.targetQuestionStableId = targetQuestionStableId;
     }
 
     public long getEventConfigurationId() {
@@ -223,6 +250,14 @@ public class EventConfigurationDto {
         return dsmNotificationEventType;
     }
 
+    public EnrollmentStatusType getUserStatusChangedTargetStatusType() {
+        return userStatusChangedTargetStatusType;
+    }
+
+    public EnrollmentStatusType getUpdateUserStatusTargetStatusType() {
+        return updateUserStatusTargetStatusType;
+    }
+
     public Long getAnnouncementMsgTemplateId() {
         return announcementMsgTemplateId;
     }
@@ -251,6 +286,18 @@ public class EventConfigurationDto {
         return activityInstanceCreationStudyActivityId;
     }
 
+    public boolean getCreateFromAnswer() {
+        return createFromAnswer;
+    }
+
+    public String getSourceQuestionStableId() {
+        return sourceQuestionStableId;
+    }
+
+    public String getTargetQuestionStableId() {
+        return targetQuestionStableId;
+    }
+
     public Long getCopyActionCopyConfigurationId() {
         return copyActionCopyConfigurationId;
     }
@@ -259,8 +306,8 @@ public class EventConfigurationDto {
         return pdfGenerationDocumentConfigurationId;
     }
 
-    public void addNotificationPdfAttachment(Long pdfDocumentConfigurationId, Boolean generateIfMissing) {
-        notificationPdfAttachments.add(new PdfAttachment(pdfDocumentConfigurationId, generateIfMissing));
+    public void addNotificationPdfAttachment(Long pdfDocumentConfigurationId, Boolean alwaysGenerate) {
+        notificationPdfAttachments.add(new PdfAttachment(pdfDocumentConfigurationId, alwaysGenerate));
     }
 
     public List<PdfAttachment> getNotificationPdfAttachments() {
@@ -285,5 +332,13 @@ public class EventConfigurationDto {
 
     public Set<Long> getTargetActivityIds() {
         return targetActivityIds;
+    }
+
+    public String getCustomWorkflowName() {
+        return customWorkflowName;
+    }
+
+    public String getCustomWorkflowStatus() {
+        return customWorkflowStatus;
     }
 }

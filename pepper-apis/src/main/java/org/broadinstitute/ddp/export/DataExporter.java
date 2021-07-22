@@ -182,8 +182,8 @@ public class DataExporter {
         ExportUtil.clearCachedAuth0Emails(emailStore);
     }
 
-    public static void fetchAndCacheAuth0Emails(Handle handle, String studyGuid, Set<String> userIds) {
-        ExportUtil.fetchAndCacheAuth0Emails(handle, studyGuid, userIds, emailStore);
+    public static void fetchAndCacheAuth0Emails(Handle handle, StudyDto studyDto, Set<String> userIds) {
+        ExportUtil.fetchAndCacheAuth0Emails(handle, studyDto, userIds, emailStore);
     }
 
     /**
@@ -533,7 +533,7 @@ public class DataExporter {
                 .collect(Collectors.toMap(User::getGuid, user -> user));
 
         if (!usersMissingEmails.isEmpty()) {
-            ExportUtil.fetchAndCacheAuth0Emails(handle, studyDto.getGuid(), usersMissingEmails.keySet(), emailStore)
+            ExportUtil.fetchAndCacheAuth0Emails(handle, studyDto, usersMissingEmails.keySet(), emailStore)
                     .forEach((auth0UserId, email) -> users.get(usersMissingEmails.get(auth0UserId)).setEmail(email));
         }
 

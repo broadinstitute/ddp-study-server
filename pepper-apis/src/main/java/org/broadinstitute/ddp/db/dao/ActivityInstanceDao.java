@@ -65,6 +65,13 @@ public interface ActivityInstanceDao extends SqlObject {
             @Bind("activityCode") String activityCode,
             @Bind("userGuid") String userGuid);
 
+    @UseStringTemplateSqlLocator
+    @SqlQuery("queryLatestActivityInstanceGuidByUserGuidStudyIdAndActivityCode")
+    String findLatestActivityInstanceGuidByUserStudyAndActivityCode(
+            @Bind("userGuid") String userGuid,
+            @Bind("studyId") long studyId,
+            @Bind("activityCode") String activityCode);
+
     /**
      * Convenience method to create new activity instance when both operator and participant is the same, and using defaults.
      */
@@ -175,6 +182,25 @@ public interface ActivityInstanceDao extends SqlObject {
                 .orElseThrow(() -> new DaoException("Could not find participant user with guid: " + participantGuid));
         User operator = userDao.findUserByGuid(operatorGuid)
                 .orElseThrow(() -> new DaoException("Could not find operator user with guid: " + operatorGuid));
+        return createNewInstance(
+                activityId,
+                operator,
+                participant,
+                initialStatus,
+                isReadOnly,
+                createdAtMillis,
+                null,
+                null,
+                submissionId,
+                sessionId,
+                legacyVersion);
+    }
+
+    default ActivityInstanceDto insertInstance(long activityId, User operator, User participant,
+                                               Long submissionId, String sessionId, String legacyVersion) {
+        long createdAtMillis = Instant.now().toEpochMilli();
+        var initialStatus = InstanceStatusType.CREATED;
+        Boolean isReadOnly = null;
         return createNewInstance(
                 activityId,
                 operator,

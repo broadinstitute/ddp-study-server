@@ -25,6 +25,7 @@ import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dao.AnswerDao;
 import org.broadinstitute.ddp.db.dao.InvitationDao;
 import org.broadinstitute.ddp.db.dao.InvitationFactory;
+import org.broadinstitute.ddp.db.dao.JdbiUserStudyEnrollment;
 import org.broadinstitute.ddp.db.dao.StudyGovernanceDao;
 import org.broadinstitute.ddp.db.dao.UserProfileDao;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
@@ -70,6 +71,7 @@ import org.broadinstitute.ddp.model.governance.AgeOfMajorityRule;
 import org.broadinstitute.ddp.model.governance.GovernancePolicy;
 import org.broadinstitute.ddp.model.invitation.InvitationType;
 import org.broadinstitute.ddp.model.pex.Expression;
+import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
 import org.broadinstitute.ddp.util.ConfigManager;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
 import org.broadinstitute.ddp.util.TestUtil;
@@ -771,6 +773,19 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
     }
 
     @Test
+    public void testEval_formInstanceQuery_isStatus() {
+        TransactionWrapper.useTxn(handle ->  {
+            String fmt = "user.studies[\"%s\"].forms[\"%s\"].instances[specific].isStatus(%s)";
+
+            String expr = String.format(fmt, studyGuid, activityCode, "\"CREATED\"");
+            assertTrue("should match status", run(handle, expr));
+
+            expr = String.format(fmt, studyGuid, activityCode, "\"CREATED\", \"IN_PROGRESS\"");
+            assertTrue("should check if contained in list", run(handle, expr));
+        });
+    }
+
+    @Test
     public void testEval_formInstanceQuery_snapshotSubstitution() {
         String expr = String.format(
                 "user.studies[\"%s\"].forms[\"%s\"].instances[specific]"
@@ -1195,6 +1210,41 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
     }
 
     @Test
+    public void testEval_numChildAnswers() {
+        String stableId = compositeDef.getStableId();
+        String childStableId = compositeDef.getChildren().get(0).getStableId();
+
+        String expr = String.format("user.studies[\"%s\"].forms[\"%s\"].questions[\"%s\"].numChildAnswers(\"%s\") == 2",
+                studyGuid, activityCode, stableId, childStableId);
+
+        var answer = new CompositeAnswer(null, stableId, null);
+        answer.addRowOfChildAnswers(new PicklistAnswer(null, childStableId, null,
+                List.of(new SelectedPicklistOption("NEGATIVE"))));
+        answer.addRowOfChildAnswers(new PicklistAnswer(null, childStableId, null,
+                List.of(new SelectedPicklistOption("POSITIVE"))));
+
+        TransactionWrapper.useTxn(handle -> {
+            handle.attach(AnswerDao.class).createAnswer(testData.getUserId(), secondInstance.getId(), answer);
+            assertTrue("calculated number of child answers in a composite == 2", run(handle, expr));
+            handle.rollback();
+        });
+    }
+
+    @Test
+    public void testEval_numChildAnswersNoAnswers() {
+        String stableId = compositeDef.getStableId();
+        String childStableId = compositeDef.getChildren().get(0).getStableId();
+
+        String expr = String.format("user.studies[\"%s\"].forms[\"%s\"].questions[\"%s\"].numChildAnswers(\"%s\") == 0",
+                studyGuid, activityCode, stableId, childStableId);
+
+        TransactionWrapper.useTxn(handle -> {
+            assertTrue("no composite answer therefore number of child answers == 0", run(handle, expr));
+            handle.rollback();
+        });
+    }
+
+    @Test
     public void testEval_profileQuery_noProfile() {
         TransactionWrapper.useTxn(handle -> {
             handle.attach(UserProfileDao.class).getUserProfileSql().deleteByUserId(testData.getUserId());
@@ -1238,6 +1288,16 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
             } catch (PexFetchException e) {
                 assertTrue(e.getMessage().contains("does not have birth date"));
             }
+
+            handle.rollback();
+        });
+    }
+
+    @Test
+    public void testEval_profileQuery_preferredLanguage() {
+        TransactionWrapper.useTxn(handle -> {
+            String expr = "user.profile.language() == \"en\"";
+            assertTrue(run(handle, expr));
 
             handle.rollback();
         });
@@ -1302,6 +1362,25 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
     }
 
     @Test
+    public void testEval_isEnrollmentStatus() {
+        TransactionWrapper.useTxn(handle -> {
+            String fmt = "user.studies[\"%s\"].isEnrollmentStatus(\"ENROLLED\")";
+            String expr = String.format(fmt, testStudy.getGuid());
+
+            var jdbiEnrollment = handle.attach(JdbiUserStudyEnrollment.class);
+            jdbiEnrollment.changeUserStudyEnrollmentStatus(
+                    testData.getUserGuid(), testStudy.getGuid(), EnrollmentStatusType.ENROLLED);
+            assertTrue(run(handle, expr));
+
+            jdbiEnrollment.changeUserStudyEnrollmentStatus(
+                    testData.getUserGuid(), testStudy.getGuid(), EnrollmentStatusType.COMPLETED);
+            assertFalse(run(handle, expr));
+
+            handle.rollback();
+        });
+    }
+
+    @Test
     public void testEval_eventKit_isReason() {
         String expr = "user.event.kit.isReason(\"NORMAL\")";
         EventSignal signal = newDsmEventSignal(null, KitReasonType.NORMAL);
@@ -1333,7 +1412,8 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
         thrown.expect(PexRuntimeException.class);
         thrown.expectMessage(containsString("Expected DSM notification"));
         String expr = "user.event.kit.isReason(\"NORMAL\")";
-        EventSignal signal = new ActivityInstanceStatusChangeSignal(1L, 1L, "guid", "guid", 2L, 3L, 4L, InstanceStatusType.COMPLETE);
+        EventSignal signal = new ActivityInstanceStatusChangeSignal(
+                1L, 1L, "guid", "guid", 2L, 3L, 4L, "guid", InstanceStatusType.COMPLETE);
         assertTrue(runEvalEventSignal(expr, signal));
     }
 
@@ -1377,7 +1457,8 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
         thrown.expect(PexRuntimeException.class);
         thrown.expectMessage(containsString("Expected DSM notification"));
         String expr = "user.event.testResult.isCorrected()";
-        EventSignal signal = new ActivityInstanceStatusChangeSignal(1L, 1L, "guid", "guid", 2L, 3L, 4L, InstanceStatusType.COMPLETE);
+        EventSignal signal = new ActivityInstanceStatusChangeSignal(
+                1L, 1L, "guid", "guid", 2L, 3L, 4L, "guid", InstanceStatusType.COMPLETE);
         assertTrue(runEvalEventSignal(expr, signal));
     }
 
@@ -1406,6 +1487,7 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
                 userGuid,
                 userGuid,
                 testData.getStudyId(),
+                testData.getStudyGuid(),
                 DsmNotificationEventType.TEST_RESULT,
                 "dummy-kit-request-id",
                 kitReasonType,

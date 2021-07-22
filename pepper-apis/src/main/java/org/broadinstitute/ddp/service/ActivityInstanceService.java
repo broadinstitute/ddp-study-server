@@ -1,5 +1,6 @@
 package org.broadinstitute.ddp.service;
 
+import static org.broadinstitute.ddp.service.actvityinstancebuilder.TemplateRenderHelper.RenderContextSource.FORM_RESPONSE_AND_ACTIVITY_DEF;
 import static org.broadinstitute.ddp.service.actvityinstancebuilder.context.AIBuilderParams.createParams;
 import static org.broadinstitute.ddp.util.TranslationUtil.extractOptionalActivitySummary;
 import static org.broadinstitute.ddp.util.TranslationUtil.extractOptionalActivityTranslation;
@@ -129,7 +130,8 @@ public class ActivityInstanceService {
                         .collect(Collectors.toList());
                 Map<String, FormResponse> nestedResponses = countQuestionsAndAnswers(
                         handle, userGuid, operatorGuid, studyGuid, nestedSummaries);
-                renderInstanceSummaries(handle, instance.getParticipantUserId(), studyGuid, nestedSummaries, nestedResponses);
+                renderInstanceSummaries(handle, instance.getParticipantUserId(),
+                        operatorGuid, studyGuid, nestedSummaries, nestedResponses);
 
                 nestedActBlock.addInstanceSummaries(nestedSummaries);
             }
@@ -432,7 +434,7 @@ public class ActivityInstanceService {
      * @param summaries         the list of summaries
      * @param instanceResponses the mapping of instance guid to answer response objects
      */
-    public void renderInstanceSummaries(Handle handle, long userId, String studyGuid,
+    public void renderInstanceSummaries(Handle handle, long userId, String operatorGuid, String studyGuid,
                                         List<ActivityInstanceSummary> summaries,
                                         Map<String, FormResponse> instanceResponses) {
         if (summaries.isEmpty()) {
@@ -449,7 +451,7 @@ public class ActivityInstanceService {
                     .collect(Collectors.toMap(wrapper -> wrapper.getActivityInstanceId(), wrapper -> wrapper.unwrap()));
         }
         var sharedSnapshot = I18nContentRenderer
-                .newValueProviderBuilder(handle, userId)
+                .newValueProviderBuilder(handle, userId, operatorGuid, studyGuid)
                 .build().getSnapshot();
 
         ActivityDefStore activityDefStore = ActivityDefStore.getInstance();
@@ -544,6 +546,7 @@ public class ActivityInstanceService {
                 .checkParams()
                     .readFormInstanceData()
                     .readActivityDef()
+                    .createRendererContext(FORM_RESPONSE_AND_ACTIVITY_DEF)
                 .startBuild()
                     .buildFormInstance()
                     .buildFormChildren()
@@ -591,6 +594,7 @@ public class ActivityInstanceService {
                 .checkParams()
                     .readFormInstanceData()
                     .readActivityDef()
+                    .createRendererContext(FORM_RESPONSE_AND_ACTIVITY_DEF)
                 .startBuild()
                     .buildFormInstance()
                     .buildFormChildren()

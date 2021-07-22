@@ -304,18 +304,6 @@ public class SqlConstants {
         public static final String EXPRESSION_ID = "expression_id";
     }
 
-    public static final class WorkflowActivityStateTable {
-        public static final String ACTIVITY_ID = "study_activity_id";
-    }
-
-    public static final class WorkflowStateTypeTable {
-        public static final String CODE = "workflow_state_type_code";
-    }
-
-    public static final class WorkflowTransitionTable {
-        public static final String ID = "workflow_transition_id";
-    }
-
     public static class MailingListTable {
         public static final String FIRST_NAME = "first_name";
         public static final String LAST_NAME = "last_name";

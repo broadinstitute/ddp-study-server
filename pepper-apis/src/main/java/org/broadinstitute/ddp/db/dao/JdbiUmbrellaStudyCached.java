@@ -187,18 +187,18 @@ public class JdbiUmbrellaStudyCached extends SQLObjectWrapper<JdbiUmbrellaStudy>
 
     @Override
     public long insert(String studyName, String studyGuid, long umbrellaId, String webBaseUrl, long auth0TenantId, String irbPassword,
-                       Long precisionId, boolean shareLocation, String studyEmail, String recaptchaSiteKey) {
+                       Long precisionId, boolean shareLocation, String studyEmail, String recaptchaSiteKey, String defaultAuth0Connection) {
         long studyId = delegate.insert(studyName, studyGuid, umbrellaId, webBaseUrl, auth0TenantId, irbPassword, precisionId, shareLocation,
-                studyEmail, recaptchaSiteKey);
+                studyEmail, recaptchaSiteKey, defaultAuth0Connection);
         notifyModelUpdated(ModelChangeType.STUDY, studyId);
         return studyId;
     }
 
     @Override
     public long insert(String studyName, String studyGuid, long umbrellaId, String webBaseUrl, long auth0TenantId, OLCPrecision precision,
-                       boolean shareLocation, String studyEmail, String recaptchaSiteKey) {
+                       boolean shareLocation, String studyEmail, String recaptchaSiteKey, String defaultAuth0Connection) {
         long studyId = delegate.insert(studyName, studyGuid, umbrellaId, webBaseUrl, auth0TenantId, precision, shareLocation,
-                studyEmail, recaptchaSiteKey);
+                studyEmail, recaptchaSiteKey, defaultAuth0Connection);
         notifyModelUpdated(ModelChangeType.STUDY, studyId);
         return studyId;
     }

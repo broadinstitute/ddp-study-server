@@ -264,4 +264,15 @@
     <include file="db-changes/schema/DDP-6032-add-studymailinglist-language.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/DDP-5096-custom-export-last-completed.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/seed/DDP-6597-add-dsm-notification-event-types-circadia.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/DDP-5808-create-file-question-mime-type-tables.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/DDP-6115-fix-guam-state-code.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/DDP-5750-new-enrollment-events.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/DDP-6278-create-update-custom-workflow-event-action-table.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/DDP-6281-add-picklist-render-mode-autocomplete.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/DDP-6501-study-default-auth0-connection.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/DDP-5910-always-generate-pdf.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/DDP-6306-add-activity-instance-creation-properties.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/DDP-5910-pdf-picklist-fields-mapping.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/DDP-6313-add-study-redirect-workflow.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/DDP-6338-workflow-check-each-instance.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>

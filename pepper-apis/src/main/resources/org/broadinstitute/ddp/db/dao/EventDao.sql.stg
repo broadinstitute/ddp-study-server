@@ -25,6 +25,12 @@ SELECT
      wst.workflow_state_id,
      wst.trigger_automatically,
      dnet.dsm_notification_event_type_code as dsm_notification_event_type,
+     (select enrollment_status_type_code from enrollment_status_type
+       where enrollment_status_type_id = usct.target_status_type_id
+     ) as user_status_changed_target_status_type,
+     (select enrollment_status_type_code from enrollment_status_type
+       where enrollment_status_type_id = uusa.target_status_type_id
+     ) as update_user_status_target_status_type,
      ann_act.message_template_id as announcement_msg_template_id,
      ann_act.is_permanent as announcement_is_permanent,
      ann_act.create_for_proxies as announcement_create_for_proxies,
@@ -32,7 +38,7 @@ SELECT
      ns.service_code as notification_service_type,
      unea.linked_activity_id,
      unpdf.pdf_document_configuration_id as user_notification_document_configuration_id,
-     unpdf.generate_if_missing,
+     unpdf.always_generate,
      pea.pdf_document_configuration_id as pdf_generation_document_configuration_id,
      aica.study_activity_id as activity_instance_creation_study_activity_id,
      cp_answer.copy_configuration_id as copy_action_copy_configuration_id,
@@ -41,7 +47,12 @@ SELECT
        where question_stable_code_id = ciea.contact_email_question_stable_code_id
      ) as contact_email_question_stable_id,
      ciea.mark_existing_as_voided as mark_existing_invitations_as_voided,
-     eata.activity_id as target_activity_id
+     eata.activity_id as target_activity_id,
+     ucwea.custom_workflow_name,
+     ucwea.custom_workflow_status,
+     aica.create_from_answer,
+     aica.source_question_stable_id,
+     aica.target_question_stable_id
 FROM
      event_configuration ec
 JOIN event_trigger et ON ec.event_trigger_id = et.event_trigger_id
@@ -55,6 +66,8 @@ LEFT JOIN activity_instance_status_type aist ON ast.activity_instance_status_typ
 LEFT JOIN workflow_state_trigger wst on wst.event_trigger_id = et.event_trigger_id
 LEFT JOIN dsm_notification_trigger dnt ON dnt.dsm_notification_trigger_id = et.event_trigger_id
 LEFT JOIN dsm_notification_event_type dnet ON dnet.dsm_notification_event_type_id = dnt.dsm_notification_event_type_id
+LEFT JOIN user_status_changed_trigger as usct on usct.event_trigger_id = et.event_trigger_id
+LEFT JOIN update_user_status_action as uusa on uusa.event_action_id = ea.event_action_id
 LEFT JOIN user_announcement_event_action as ann_act on ann_act.event_action_id = ea.event_action_id
 LEFT JOIN user_notification_event_action unea on unea.user_notification_event_action_id = ea.event_action_id
 LEFT JOIN user_notification_pdf unpdf on unpdf.user_notification_event_action_id = ea.event_action_id
@@ -65,6 +78,7 @@ LEFT JOIN activity_instance_creation_action aica ON aica.activity_instance_creat
 LEFT JOIN copy_answer_event_action as cp_answer on cp_answer.event_action_id=ea.event_action_id
 LEFT JOIN create_invitation_event_action as ciea on ciea.event_action_id = ea.event_action_id
 LEFT JOIN event_action_target_activity as eata on eata.event_action_id = ea.event_action_id
+LEFT JOIN update_custom_workflow_event_action as ucwea on ucwea.event_action_id = ea.event_action_id
 >>
 
 getEventConfigurationByEventConfigurationId() ::= <<
@@ -113,7 +127,7 @@ getActivityStatusEventConfigurations() ::= <<
 getNotificationAttachmentDetails() ::= <<
 select
     pdf_cfg.pdf_document_configuration_id,
-    notification_pdf.generate_if_missing
+    notification_pdf.always_generate
 	from
     event_configuration evt_config
     join event_action act on evt_config.event_action_id = act.event_action_id
