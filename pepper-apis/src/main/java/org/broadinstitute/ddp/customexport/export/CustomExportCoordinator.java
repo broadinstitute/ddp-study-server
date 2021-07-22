@@ -34,7 +34,6 @@ import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.util.ConfigUtil;
 import org.broadinstitute.ddp.util.SendGridMailUtil;
-import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -136,7 +135,7 @@ public class CustomExportCoordinator {
 
                 long lastCompleted = customExportDao.getLastCompleted(studyDto.getId()).toEpochMilli();
                 var iterator = new CustomExportPaginatedParticipantIterator(studyDto, DEFAULT_BATCH_SIZE, lastCompleted);
-                exportStudyToGoogleBucket(handle, studyDto, exporter, csvBucket, activities, iterator);
+                exportStudyToGoogleBucket(studyDto, exporter, csvBucket, activities, iterator);
 
                 // For custom export, keep track of the most recent survey completion time so we know where to start for next export
                 customExportDao.updateLastCompleted(exportLastCompleted, studyDto.getId());
@@ -153,7 +152,7 @@ public class CustomExportCoordinator {
         }
     }
 
-    private void exportStudyToGoogleBucket(Handle handle, StudyDto studyDto, CustomExporter exporter, Bucket bucket,
+    private void exportStudyToGoogleBucket(StudyDto studyDto, CustomExporter exporter, Bucket bucket,
                                            List<CustomActivityExtract> activities,
                                            Iterator<CustomExportParticipant> participants) {
         try (
@@ -162,7 +161,7 @@ public class CustomExportCoordinator {
                 PipedInputStream csvInputStream = new PipedInputStream(outputStream, READER_BUFFER_SIZE_IN_BYTES)
         ) {
             // Running the DataExporter in separate thread
-            Runnable csvExportRunnable = buildExportToCsvRunnable(handle, studyDto, exporter, csvWriter, activities, participants);
+            Runnable csvExportRunnable = buildExportToCsvRunnable(studyDto, exporter, csvWriter, activities, participants);
             Thread csvExportThread = new Thread(csvExportRunnable);
             csvExportThread.start();
 
@@ -176,12 +175,12 @@ public class CustomExportCoordinator {
         }
     }
 
-    private Runnable buildExportToCsvRunnable(Handle handle, StudyDto studyDto, CustomExporter exporter, Writer csvOutputWriter,
+    private Runnable buildExportToCsvRunnable(StudyDto studyDto, CustomExporter exporter, Writer csvOutputWriter,
                                               List<CustomActivityExtract> activities,
                                               Iterator<CustomExportParticipant> participants) {
         return () -> {
             try {
-                int total = exporter.exportDataSetAsCsv(handle, studyDto, activities, participants, csvOutputWriter);
+                int total = exporter.exportDataSetAsCsv(studyDto, activities, participants, csvOutputWriter);
                 LOG.info("Written {} participants to csv export for study {}", total, studyDto.getGuid());
                 // closing here is important! Can't wait until the try block calls close
                 csvOutputWriter.close();

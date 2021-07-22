@@ -22,7 +22,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.commons.io.IOUtils;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.model.study.Participant;
-import org.jdbi.v3.core.Handle;
 import org.junit.Test;
 import org.mockito.invocation.InvocationOnMock;
 
@@ -38,7 +37,7 @@ public class DataExportCoordinatorTest {
         Arrays.fill(testData, 'x');
         //Simulate running the DataExporter
         //mocking the method that does the writing and the one that does reading. Writing first:
-        when(coordinator.buildExportToCsvRunnable(any(Handle.class), any(StudyDto.class), isNull(), any(Writer.class), anyList(), any()))
+        when(coordinator.buildExportToCsvRunnable(any(StudyDto.class), isNull(), any(Writer.class), anyList(), any()))
                 .thenAnswer(
                         (InvocationOnMock invocation) ->
                                 (Runnable) () -> {
@@ -96,10 +95,10 @@ public class DataExportCoordinatorTest {
 
         // run the real thing when we call this
         Iterator<Participant> iterator = Collections.emptyIterator();
-        when(coordinator.exportStudyToGoogleBucket(null, testStudyDto, null, null, List.of(), iterator)).thenCallRealMethod();
+        when(coordinator.exportStudyToGoogleBucket(testStudyDto, null, null, List.of(), iterator)).thenCallRealMethod();
 
         // run it!
-        coordinator.exportStudyToGoogleBucket(null, testStudyDto, null, null, List.of(), iterator);
+        coordinator.exportStudyToGoogleBucket(testStudyDto, null, null, List.of(), iterator);
         assertTrue(saveToGoogleBucketRanOk.get());
     }
 }

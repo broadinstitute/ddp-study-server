@@ -1,5 +1,7 @@
 package org.broadinstitute.ddp.export.collectors;
 
+import static org.broadinstitute.ddp.export.ExportUtil.getSnapshottedMailAddress;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -499,7 +501,7 @@ public class ActivityResponseCollector {
                 collectQuestionIntoRecord(record, ((QuestionBlockDef) block).getQuestion(), instance);
                 break;
             case COMPONENT:
-                collectComponentIntoRecord(record, (ComponentBlockDef) block, supplier);
+                collectComponentIntoRecord(record, (ComponentBlockDef) block, supplier, instance);
                 break;
             case CONDITIONAL:
                 ConditionalBlockDef condBlock = (ConditionalBlockDef) block;
@@ -562,10 +564,12 @@ public class ActivityResponseCollector {
         }
     }
 
-    private void collectComponentIntoRecord(Map<String, String> record, ComponentBlockDef component, ComponentDataSupplier supplier) {
+    private void collectComponentIntoRecord(Map<String, String> record, ComponentBlockDef component,
+                                            ComponentDataSupplier supplier, FormResponse formResponse) {
         switch (component.getComponentType()) {
             case MAILING_ADDRESS:
-                record.putAll(addressFmt.collect(supplier.getSnapshottedAddress()));
+                record.putAll(addressFmt.collect(
+                        getSnapshottedMailAddress(supplier.getSnapshottedAddresses(), formResponse.getId(), supplier.getAddress())));
                 break;
             case PHYSICIAN:     // fall-through
             case INSTITUTION:

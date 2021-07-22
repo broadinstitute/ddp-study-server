@@ -616,9 +616,7 @@ public class DataExporterTest extends TxnAwareBaseTest {
         // Run the test!
         StringWriter buffer = new StringWriter();
         activities.get(0).setMaxInstancesSeen(2);   // Do 2 so we get a second set of columns.
-        int numWritten = TransactionWrapper.withTxn(handle ->
-                exporter.exportDataSetAsCsv(handle, testData.getTestingStudy(), activities, participants.iterator(), buffer)
-        );
+        int numWritten = exporter.exportDataSetAsCsv(testData.getTestingStudy(), activities, participants.iterator(), buffer);
         assertEquals(1, numWritten);
 
         String output = buffer.toString();

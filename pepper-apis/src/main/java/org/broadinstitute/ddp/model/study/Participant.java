@@ -14,6 +14,7 @@ import org.broadinstitute.ddp.db.dto.MedicalProviderDto;
 import org.broadinstitute.ddp.export.json.structured.FileRecord;
 import org.broadinstitute.ddp.model.activity.instance.ActivityResponse;
 import org.broadinstitute.ddp.model.activity.instance.answer.DateValue;
+import org.broadinstitute.ddp.model.address.MailAddress;
 import org.broadinstitute.ddp.model.user.User;
 
 /**
@@ -25,6 +26,9 @@ public class Participant {
     private User user;
     private Map<String, List<ActivityResponse>> responses;
     private Map<Long, Map<String, String>> activityInstanceSubstitutions;
+
+    /** Map with addresses: key = instanceId, value = MailAddress (which guid stored in activity_instance_substitution ADDRESS_GUID */
+    private Map<Long, MailAddress> nonDefaultMailAddresses;
 
     // todo: better models for status and medical providers
     private EnrollmentStatusDto status;
@@ -43,6 +47,7 @@ public class Participant {
         this.files = new ArrayList<>();
         this.responses = new HashMap<>();
         this.activityInstanceSubstitutions = new HashMap<>();
+        this.nonDefaultMailAddresses = new HashMap<>();
     }
 
     public EnrollmentStatusDto getStatus() {
@@ -104,8 +109,12 @@ public class Participant {
         activityInstanceSubstitutions.put(activityInstanceId, substitutions);
     }
 
-    public Map<Long, Map<String, String>> getAllActivityInstanceSubstitutions() {
-        return activityInstanceSubstitutions;
+    public Map<Long, MailAddress> getNonDefaultMailAddresses() {
+        return nonDefaultMailAddresses;
+    }
+
+    public void putNonDefaultMailAddresses(Map<Long, MailAddress> nonDefaultMailAddresses) {
+        this.nonDefaultMailAddresses = nonDefaultMailAddresses;
     }
 
     public LocalDate getDateOfMajority() {

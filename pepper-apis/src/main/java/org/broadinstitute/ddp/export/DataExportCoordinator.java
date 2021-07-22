@@ -26,7 +26,6 @@ import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.elastic.ElasticSearchIndexType;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.study.Participant;
-import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -89,9 +88,7 @@ public class DataExportCoordinator {
                 DataExporter.computeActivityAttributesSeen(handle, activities);
                 return null;
             });
-            boolean runSuccess = withAPIsTxn(handle -> {
-                return runCsvExports(handle, studyDto, activities);
-            });
+            boolean runSuccess = runCsvExports(studyDto, activities);
             success = success && runSuccess;
         }
 
@@ -169,13 +166,13 @@ public class DataExportCoordinator {
         return success;
     }
 
-    private boolean runCsvExports(Handle handle, StudyDto studyDto, List<ActivityExtract> activities) {
+    private boolean runCsvExports(StudyDto studyDto, List<ActivityExtract> activities) {
         String studyGuid = studyDto.getGuid();
         try {
             LOG.info("Running csv export for study {}", studyGuid);
             long start = Instant.now().toEpochMilli();
             var iterator = new PaginatedParticipantIterator(studyDto, batchSize);
-            exportStudyToGoogleBucket(handle, studyDto, exporter, csvBucket, activities, iterator);
+            exportStudyToGoogleBucket(studyDto, exporter, csvBucket, activities, iterator);
             long elapsed = Instant.now().toEpochMilli() - start;
             LOG.info("Finished csv export for study {} in {}s", studyGuid, elapsed / 1000);
             return true;
@@ -185,7 +182,7 @@ public class DataExportCoordinator {
         }
     }
 
-    boolean exportStudyToGoogleBucket(Handle handle, StudyDto studyDto, DataExporter exporter, Bucket bucket,
+    boolean exportStudyToGoogleBucket(StudyDto studyDto, DataExporter exporter, Bucket bucket,
                                       List<ActivityExtract> activities,
                                       Iterator<Participant> participants) {
         try (
@@ -194,7 +191,7 @@ public class DataExportCoordinator {
                 PipedInputStream csvInputStream = new PipedInputStream(outputStream, READER_BUFFER_SIZE_IN_BYTES)
         ) {
             // Running the DataExporter in separate thread
-            Runnable csvExportRunnable = buildExportToCsvRunnable(handle, studyDto, exporter, csvWriter, activities, participants);
+            Runnable csvExportRunnable = buildExportToCsvRunnable(studyDto, exporter, csvWriter, activities, participants);
             Thread csvExportThread = new Thread(csvExportRunnable);
             csvExportThread.start();
 
@@ -207,12 +204,12 @@ public class DataExportCoordinator {
         }
     }
 
-    Runnable buildExportToCsvRunnable(Handle handle, StudyDto studyDto, DataExporter exporter, Writer csvOutputWriter,
+    Runnable buildExportToCsvRunnable(StudyDto studyDto, DataExporter exporter, Writer csvOutputWriter,
                                       List<ActivityExtract> activities,
                                       Iterator<Participant> participants) {
         return () -> {
             try {
-                int total = exporter.exportDataSetAsCsv(handle, studyDto, activities, participants, csvOutputWriter);
+                int total = exporter.exportDataSetAsCsv(studyDto, activities, participants, csvOutputWriter);
                 LOG.info("Written {} participants to csv export for study {}", total, studyDto.getGuid());
                 // closing here is important! Can't wait until the try block calls close
                 csvOutputWriter.close();

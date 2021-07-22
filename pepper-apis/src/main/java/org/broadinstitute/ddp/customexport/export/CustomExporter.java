@@ -1,7 +1,5 @@
 package org.broadinstitute.ddp.customexport.export;
 
-import static org.broadinstitute.ddp.export.ExportUtil.getSnapshottedAddress;
-
 import java.io.IOException;
 import java.io.Writer;
 import java.net.MalformedURLException;
@@ -36,6 +34,7 @@ import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.export.ActivityResponseMapping;
 import org.broadinstitute.ddp.export.ComponentDataSupplier;
 import org.broadinstitute.ddp.export.ExportUtil;
+import org.broadinstitute.ddp.export.ParticipantsResultSetUtil;
 import org.broadinstitute.ddp.export.collectors.ActivityAttributesCollector;
 import org.broadinstitute.ddp.export.collectors.ActivityResponseCollector;
 import org.broadinstitute.ddp.export.collectors.ParticipantMetadataFormatter;
@@ -82,7 +81,8 @@ public class CustomExporter {
     }
 
     List<CustomExportParticipant> extractParticipantDataSetByIds(Handle handle, StudyDto studyDto, Set<Long> userIds) {
-        List<Participant> baseParticipants = ExportUtil.extractParticipantDataSetByIds(handle, studyDto, userIds, emailStore);
+        List<Participant> baseParticipants = ParticipantsResultSetUtil.extractParticipantDataSetByIds(
+                handle, studyDto, userIds, emailStore);
         return createCustomParticipantsFrom(baseParticipants, handle, studyDto, elasticsearchClient);
     }
 
@@ -272,7 +272,7 @@ public class CustomExporter {
      * @return number of participant records written
      * @throws IOException if error while writing
      */
-    int exportDataSetAsCsv(Handle handle, StudyDto studyDto, List<CustomActivityExtract> activities,
+    int exportDataSetAsCsv(StudyDto studyDto, List<CustomActivityExtract> activities,
                            Iterator<CustomExportParticipant> participants, Writer output) throws IOException {
         List<String> firstFields = exportConfig.getStringList(CustomExportConfigFile.FIRST_FIELDS);
         List<String> excludedParticipantFields = new ArrayList<>(exportConfig
@@ -367,7 +367,7 @@ public class CustomExporter {
                 row.add(customPt.getFamilyId());
                 ComponentDataSupplier supplier = new ComponentDataSupplier(
                         pt.getUser().getAddress(),
-                        getSnapshottedAddress(handle, pt.getAllActivityInstanceSubstitutions(), addressService, pt.getUser().getAddress()),
+                        pt.getNonDefaultMailAddresses(),
                         pt.getProviders());
                 for (CustomActivityExtract activity : activities) {
                     String activityTag = activity.getTag();

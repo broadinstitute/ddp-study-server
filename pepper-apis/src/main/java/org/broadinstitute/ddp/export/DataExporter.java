@@ -1,7 +1,7 @@
 package org.broadinstitute.ddp.export;
 
-import static org.broadinstitute.ddp.export.ExportUtil.extractParticipantsFromResultSet;
-import static org.broadinstitute.ddp.export.ExportUtil.getSnapshottedAddress;
+import static org.broadinstitute.ddp.export.ExportUtil.getSnapshottedMailAddress;
+import static org.broadinstitute.ddp.export.ParticipantsResultSetUtil.extractParticipantsFromResultSet;
 import static org.broadinstitute.ddp.model.activity.types.ComponentType.MAILING_ADDRESS;
 
 import java.io.BufferedWriter;
@@ -734,8 +734,7 @@ public class DataExporter {
 
         ComponentDataSupplier supplier = new ComponentDataSupplier(
                 extract.getUser().getAddress(),
-                getSnapshottedAddress(
-                        handle, extract.getAllActivityInstanceSubstitutions(), addressService, extract.getUser().getAddress()),
+                extract.getNonDefaultMailAddresses(),
                 extract.getProviders());
         for (ActivityExtract activity : activities) {
             ActivityResponseCollector activityResponseCollector = responseCollectors.get(activity.getTag());
@@ -797,7 +796,7 @@ public class DataExporter {
             List<ActivityResponse> instances = participant.getResponses(activityExtract.getTag());
             for (ActivityResponse instance : instances) {
                 ActivityInstanceStatusDto lastStatus = instance.getLatestStatus();
-                List<QuestionRecord> questionsAnswers = createQuestionRecordsForActivity(handle, activityExtract.getDefinition(),
+                List<QuestionRecord> questionsAnswers = createQuestionRecordsForActivity(activityExtract.getDefinition(),
                         instance, participant);
                 ActivityInstanceRecord activityInstanceRecord = new ActivityInstanceRecord(
                         instance.getActivityVersionTag(),
@@ -894,7 +893,7 @@ public class DataExporter {
      * @param response   An activity instance with the answers
      * @return A flat list of question records
      */
-    private List<QuestionRecord> createQuestionRecordsForActivity(Handle handle, ActivityDef definition, ActivityResponse response,
+    private List<QuestionRecord> createQuestionRecordsForActivity(ActivityDef definition, ActivityResponse response,
                                                                   Participant participant) {
         List<QuestionRecord> questionRecords = new ArrayList<>();
 
@@ -959,7 +958,7 @@ public class DataExporter {
             if (question.getQuestionType() == QuestionType.COMPOSITE) {
                 CompositeQuestionDef composite = (CompositeQuestionDef) question;
                 if (componentNames.contains(composite.getStableId())) {
-                    questionRecords.add(createRecordForComponent(handle, instance, composite.getStableId(), participant));
+                    questionRecords.add(createRecordForComponent(instance, composite.getStableId(), participant));
                     continue;
                 }
                 if (composite.shouldUnwrapChildQuestions() && instance.hasAnswer(composite.getStableId())) {
@@ -977,14 +976,14 @@ public class DataExporter {
         return questionRecords.stream().filter(Objects::nonNull).collect(Collectors.toList());
     }
 
-    private QuestionRecord createRecordForComponent(Handle handle, FormResponse formResponse, String component, Participant participant) {
+    private QuestionRecord createRecordForComponent(FormResponse formResponse, String component, Participant participant) {
         ComponentQuestionRecord record = null;
         List<List<String>> values;
         switch (component) {
             case "MAILING_ADDRESS":
-                MailAddress address =
-                        getSnapshottedAddress(handle, formResponse.getId(), addressService, participant.getUser().getAddress());
-                values = new MailingAddressFormatter().collectAsAnswer(address);
+                values = new MailingAddressFormatter().collectAsAnswer(
+                        getSnapshottedMailAddress(
+                                participant.getNonDefaultMailAddresses(), formResponse.getId(), participant.getUser().getAddress()));
                 if (CollectionUtils.isNotEmpty(values)) {
                     record = new ComponentQuestionRecord("MAILING_ADDRESS", values);
                 }
@@ -1066,7 +1065,7 @@ public class DataExporter {
         List<Participant> dataset = extractParticipantDataSet(handle, studyDto);
         computeMaxInstancesSeen(handle, activities);
         computeActivityAttributesSeen(handle, activities);
-        return exportDataSetAsCsv(handle, studyDto, activities, dataset.iterator(), output);
+        return exportDataSetAsCsv(studyDto, activities, dataset.iterator(), output);
     }
 
     /**
@@ -1078,7 +1077,7 @@ public class DataExporter {
      * @return number of participant records written
      * @throws IOException if error while writing
      */
-    public int exportDataSetAsCsv(Handle handle, StudyDto studyDto, List<ActivityExtract> activities, Iterator<Participant> participants,
+    public int exportDataSetAsCsv(StudyDto studyDto, List<ActivityExtract> activities, Iterator<Participant> participants,
                                   Writer output) throws IOException {
         ParticipantMetadataFormatter participantMetaFmt = new ParticipantMetadataFormatter();
         ActivityMetadataCollector activityMetadataCollector = new ActivityMetadataCollector();
@@ -1128,7 +1127,7 @@ public class DataExporter {
                 row = new LinkedList<>(participantMetaFmt.format(pt.getStatus(), pt.getUser()));
                 ComponentDataSupplier supplier = new ComponentDataSupplier(
                         pt.getUser().getAddress(),
-                        getSnapshottedAddress(handle, pt.getAllActivityInstanceSubstitutions(), addressService, pt.getUser().getAddress()),
+                        pt.getNonDefaultMailAddresses(),
                         pt.getProviders());
                 for (ActivityExtract activity : activities) {
                     String activityTag = activity.getTag();
@@ -1204,6 +1203,6 @@ public class DataExporter {
     }
 
     static List<Participant> extractParticipantDataSetByIds(Handle handle, StudyDto studyDto, Set<Long> batch) {
-        return ExportUtil.extractParticipantDataSetByIds(handle, studyDto, batch, emailStore);
+        return ParticipantsResultSetUtil.extractParticipantDataSetByIds(handle, studyDto, batch, emailStore);
     }
 }

@@ -60,7 +60,7 @@ public class ActivityInstanceFromDefinitionBuilderTest extends ActivityInstanceS
 
             assertEquals(userGuid, context.getParams().getOperatorGuid());
 
-            assertEquals(13, context.getPassedBuildSteps().size());
+            assertEquals(14, context.getPassedBuildSteps().size());
             assertTrue(context.isBuildStepPassed(AIBuildStep.SET_DISPLAY_NUMBERS));
             assertTrue(context.isBuildStepPassed(AIBuildStep.UPDATE_BLOCK_STATUSES));
 
@@ -104,7 +104,7 @@ public class ActivityInstanceFromDefinitionBuilderTest extends ActivityInstanceS
 
             assertEquals(userGuid, context.getParams().getOperatorGuid());
 
-            assertEquals(10, context.getPassedBuildSteps().size());
+            assertEquals(11, context.getPassedBuildSteps().size());
             assertFalse(context.isBuildStepPassed(AIBuildStep.RENDER_CONTENT));
             assertFalse(context.isBuildStepPassed(AIBuildStep.SET_DISPLAY_NUMBERS));
             assertFalse(context.isBuildStepPassed(AIBuildStep.UPDATE_BLOCK_STATUSES));
