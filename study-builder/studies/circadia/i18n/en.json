@@ -62,7 +62,7 @@
   "consent_title": "Consent",
   "consent_header": "Consent",
 
-  "consent_created_summary": "Please review and sign the Research Consent Form, which will allow you to enroll in the Circadia research study. ",
+  "consent_created_summary": "Please review and sign the Research Consent Form, which will allow you to enroll in the Circadia research study.",
   "consent_in_progress_summary": "Please finish reviewing and signing the Research Consent Form.",
   "consent_complete_summary": "Thank you for signing the Research Consent Form.",
 
@@ -785,7 +785,7 @@
   "pre_collection_attestation_1_title": "DLMO Pre-Collection Attestation 1",
   "pre_collection_attestation_1_header": "DLMO Attestation #1",
 
-  "pre_collection_attestation_1_created_summary": "Please complete the DLMO collection checklist prior to starting the collection.",
+  "pre_collection_attestation_1_created_summary": "Please complete the DLMO colllection checklist prior to starting your first collection.",
   "pre_collection_attestation_1_in_progress_summary": "You have started your DLMO collection checklist, please submit it prior to starting collection.",
   "pre_collection_attestation_1_complete_summary": "Thank you for completing the DLMO collection checklist.",
 
@@ -800,7 +800,7 @@
   "pre_collection_attestation_2_title": "DLMO Pre-Collection Attestation #2",
   "pre_collection_attestation_2_header": "DLMO Attestation #2",
 
-  "pre_collection_attestation_2_created_summary": "Please complete the DLMO collection checklist prior to starting the collection.",
+  "pre_collection_attestation_2_created_summary": "Please complete the Post-Collection Attestation after your second collection.",
   "pre_collection_attestation_2_in_progress_summary": "You have started your DLMO collection checklist, please submit it prior to starting collection.",
   "pre_collection_attestation_2_complete_summary": "Thank you for completing the DLMO collection checklist.",
 
@@ -815,9 +815,9 @@
   "post_collection_attestation_1_title": "DLMO Post-Collection Attestation 1",
   "post_collection_attestation_1_header": "DLMO Post-Collection Attestation 1",
 
-  "post_collection_attestation_created_summary": "Please complete the Post-Collection Attestation",
-  "post_collection_attestation_in_progress_summary": "Please finish the Post-Collection Attestation",
-  "post_collection_attestation_complete_summary": "Thank you for completing the Post-Collection Attestation",
+  "post_collection_attestation_1_created_summary": "Please complete the DLMO collection checklist prior to starting your collection.",
+  "post_collection_attestation_1_in_progress_summary": "Please finish the Post-Collection Attestation",
+  "post_collection_attestation_1_complete_summary": "Thank you for completing the Post-Collection Attestation",
 
   "post_collection_attestation_1_question_title": "Select an option below to attest to your completed DLMO Collection 1:",
   "post_collection_attestation_1_question_text": "I completed my DLMO collection, and upon completion, the samples were placed in a freezer.",
@@ -827,6 +827,10 @@
   "post_collection_attestation_2_name": "DLMO Post-Collection Attestation 2",
   "post_collection_attestation_2_title": "DLMO Post-Collection Attestation 2",
   "post_collection_attestation_2_header": "DLMO Post-Collection Attestation 2",
+
+  "post_collection_attestation_2_created_summary": "Please complete the Post-Collection Attestation after your second collection.",
+  "post_collection_attestation_2_in_progress_summary": "Please finish the Post-Collection Attestation",
+  "post_collection_attestation_2_complete_summary": "Thank you for completing the Post-Collection Attestation",
 
   "post_collection_attestation_2_question_title": "Select an option below to attest to your completed DLMO Collection 2:",
   "post_collection_attestation_2_question_text": "I completed my DLMO collection, and upon completion, the samples were placed in a freezer.",
