@@ -1,8 +1,10 @@
 package org.broadinstitute.ddp.service;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
@@ -17,6 +19,7 @@ import org.broadinstitute.ddp.db.dto.ActivityDto;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.db.dto.StudyI18nDto;
+import org.broadinstitute.ddp.json.workflow.WorkflowActivityResponse;
 import org.broadinstitute.ddp.json.workflow.WorkflowResponse;
 import org.broadinstitute.ddp.json.workflow.WorkflowStudyRedirectResponse;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
@@ -67,18 +70,29 @@ public class WorkflowService {
 
         WorkflowState next = null;
         for (NextStateCandidate candidate : candidates) {
-            boolean success = true;
-            if (candidate.hasPrecondition()) {
-                try {
-                    success = interpreter.eval(candidate.getPrecondition(), handle, userGuid, operatorGuid, null);
-                } catch (PexException e) {
-                    LOG.warn("Error evaluating pex expression: `{}`", candidate.getPrecondition(), e);
-                    success = false;
+            if (candidate.getNextStateType() == StateType.ACTIVITY && candidate.shouldCheckEachInstance()) {
+                List<ActivityInstanceDto> instanceDtos = handle.attach(JdbiActivityInstance.class)
+                        .findAllByUserGuidAndActivityId(userGuid, candidate.getNextActivityId())
+                        .stream()
+                        .sorted(Comparator.comparing(ActivityInstanceDto::getCreatedAtMillis))
+                        .collect(Collectors.toList());
+                ActivityState found = null;
+                for (var instanceDto : instanceDtos) {
+                    if (passedCondition(handle, candidate, userGuid, operatorGuid, instanceDto.getGuid())) {
+                        found = (ActivityState) candidate.asWorkflowState();
+                        found.setCandidateInstance(instanceDto);
+                        break;
+                    }
                 }
-            }
-            if (success) {
-                next = candidate.asWorkflowState();
-                break;
+                if (found != null) {
+                    next = found;
+                    break;
+                }
+            } else {
+                if (passedCondition(handle, candidate, userGuid, operatorGuid, null)) {
+                    next = candidate.asWorkflowState();
+                    break;
+                }
             }
         }
 
@@ -90,13 +104,36 @@ public class WorkflowService {
         return nextState;
     }
 
+    private boolean passedCondition(Handle handle, NextStateCandidate candidate,
+                                    String userGuid, String operatorGuid, String instanceGuid) {
+        if (candidate.hasPrecondition()) {
+            try {
+                return interpreter.eval(candidate.getPrecondition(), handle, userGuid, operatorGuid, instanceGuid);
+            } catch (PexException e) {
+                LOG.warn("Error evaluating pex expression: `{}`", candidate.getPrecondition(), e);
+                return false;
+            }
+        } else {
+            return true;
+        }
+    }
+
     public WorkflowResponse buildStateResponse(Handle handle, String userGuid, WorkflowState state) {
         if (state != null) {
             if (state.getType() == StateType.ACTIVITY) {
-                long activityId = ((ActivityState) state).getActivityId();
-                return handle.attach(WorkflowDao.class)
-                        .findActivityCodeAndLatestInstanceGuidAsResponse(activityId, userGuid)
-                        .orElseThrow(() -> new NoSuchElementException("Could not find activity data to build response for " + state));
+                ActivityState activityState = (ActivityState) state;
+                long activityId = activityState.getActivityId();
+                var instanceDto = activityState.getCandidateInstance();
+                if (instanceDto != null) {
+                    return new WorkflowActivityResponse(
+                            instanceDto.getActivityCode(),
+                            instanceDto.getGuid(),
+                            instanceDto.isAllowUnauthenticated());
+                } else {
+                    return handle.attach(WorkflowDao.class)
+                            .findActivityCodeAndLatestInstanceGuidAsResponse(activityId, userGuid)
+                            .orElseThrow(() -> new NoSuchElementException("Could not find activity data to build response for " + state));
+                }
             } else if (state.getType() == StateType.STUDY_REDIRECT) {
                 StudyRedirectState studyRedirectState = (StudyRedirectState)state;
                 String studyName = studyRedirectState.getStudyName();
@@ -162,6 +199,9 @@ public class WorkflowService {
             return;
         }
         ActivityState activityState = (ActivityState) nextState;
+        if (activityState.getCandidateInstance() != null) {
+            return;
+        }
         ActivityDto activityDto = handle.attach(JdbiActivity.class).queryActivityById(activityState.getActivityId());
         if (activityDto.getMaxInstancesPerUser() != null && activityDto.getMaxInstancesPerUser() == 0) {
             return;

@@ -23,10 +23,18 @@ public interface JdbiWorkflowState extends SqlObject {
     int insert(@Bind("stateId") long stateId, @Bind("studyGuid") String studyGuid,
                @Bind("studyName") String studyName, @Bind("redirectUrl") String redirectUrl);
 
+    @SqlUpdate("insert into workflow_activity_state (workflow_state_id, study_activity_id, check_each_instance)"
+            + " values (:stateId, :activityId, :check)")
+    int insertActivityState(@Bind("stateId") long stateId, @Bind("activityId") long activityId, @Bind("check") boolean checkEachInstance);
+
     @SqlQuery("select ws.workflow_state_id from workflow_state as ws"
             + " join workflow_state_type as wst on wst.workflow_state_type_id = ws.workflow_state_type_id"
             + " where wst.workflow_state_type_code = :type")
     Optional<Long> findIdByType(@Bind("type") StateType type);
+
+    @SqlQuery("select workflow_state_id from workflow_activity_state"
+            + " where study_activity_id = :activityId and check_each_instance = :check")
+    Optional<Long> findActivityStateId(@Bind("activityId") long activityId, @Bind("check") boolean checkEachInstance);
 
     @SqlQuery("select workflow_state_id, study_guid, study_name, redirect_url from workflow_study_redirect_state "
             + " where study_guid = :studyGuid and study_name = :studyName and redirect_url = :redirectUrl")
