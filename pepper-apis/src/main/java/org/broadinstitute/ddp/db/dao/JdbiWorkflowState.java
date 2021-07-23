@@ -37,7 +37,8 @@ public interface JdbiWorkflowState extends SqlObject {
     Optional<Long> findActivityStateId(@Bind("activityId") long activityId, @Bind("check") boolean checkEachInstance);
 
     @SqlQuery("select workflow_state_id, study_guid, study_name, redirect_url from workflow_study_redirect_state "
-            + " where study_guid = :studyGuid and study_name = :studyName and redirect_url = :redirectUrl")
+            + " where (study_guid is null or study_guid = :studyGuid) and (study_name is null or study_name = :studyName) "
+            + " and redirect_url = :redirectUrl")
     @RegisterConstructorMapper(StudyRedirectState.class)
     Optional<StudyRedirectState> findByStudyGuidNameAndRedirectUrl(@Bind("studyGuid") String studyGuid,
                                                                    @Bind("studyName") String studyName,
