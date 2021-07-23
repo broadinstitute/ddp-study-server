@@ -15,13 +15,17 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.TxnAwareBaseTest;
 import org.broadinstitute.ddp.constants.ConfigFile;
+import org.broadinstitute.ddp.content.I18nTemplateConstants;
 import org.broadinstitute.ddp.db.TransactionWrapper;
+import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dao.KitConfigurationDao;
+import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.exception.AddressVerificationException;
 import org.broadinstitute.ddp.model.address.AddressWarning;
 import org.broadinstitute.ddp.model.address.MailAddress;
@@ -30,6 +34,7 @@ import org.broadinstitute.ddp.model.kit.KitConfiguration;
 import org.broadinstitute.ddp.model.kit.KitZipCodeRule;
 import org.broadinstitute.ddp.util.JsonValidationError;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
+import org.broadinstitute.ddp.util.TestFormActivity;
 import org.jdbi.v3.core.Handle;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -248,6 +253,30 @@ public class AddressServiceTest extends TxnAwareBaseTest {
         actual = service.checkStudyAddress(mockHandle, testData.getStudyId(), "en", addr);
         assertEquals(1, actual.size());
         assertEquals(AddressWarning.Warn.ZIP_UNSUPPORTED.getCode(), actual.get(0).getCode());
+    }
+
+    @Test
+    public void test_snapshotAddressOnSubmit() {
+        TransactionWrapper.withTxn(handle -> {
+            TestFormActivity act = TestFormActivity.builder()
+                    .build(handle, testData.getUserId(), testData.getStudyGuid());
+            ActivityInstanceDto instanceDto = handle.attach(ActivityInstanceDao.class).insertInstance(
+                    act.getDef().getActivityId(), userGuid);
+            MailAddress defaultAddress = buildTestAddress();
+            defaultAddress.setDefault(true);
+            service.addAddress(handle, defaultAddress, userGuid, userGuid);
+            MailAddress snapshottedAddress = service.snapshotAddress(handle, userGuid, userGuid, instanceDto.getId());
+            List<MailAddress> addresses = service.findAllAddressesForParticipant(handle, userGuid);
+            assertEquals(2, addresses.size());
+            MailAddress snapshottedAddress1 = addresses.stream().filter(m -> !m.isDefault()).findFirst().orElse(null);
+            assertNotNull(snapshottedAddress1);
+            assertFalse(snapshottedAddress1.isDefault());
+            assertEquals(snapshottedAddress1.getGuid(), snapshottedAddress.getGuid());
+            Map<String, String> subs = handle.attach(ActivityInstanceDao.class).findSubstitutions(instanceDto.getId());
+            String addresssGuid = subs.get(I18nTemplateConstants.Snapshot.ADDRESS_GUID);
+            assertEquals(snapshottedAddress.getGuid(), addresssGuid);
+            return null;
+        });
     }
 
     private MailAddress buildTestAddress() {
