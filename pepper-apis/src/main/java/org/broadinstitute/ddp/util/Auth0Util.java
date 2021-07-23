@@ -187,18 +187,23 @@ public class Auth0Util {
     /**
      * Updates the user's email in Auth0
      *
-     * @param mgmtAPI  Auth0 Management API instance
-     * @param userDto  user for which you want to update the email
-     * @param newEmail A new email of this user
+     * @param mgmtAPI    Auth0 Management API instance
+     * @param userDto    user for which you want to update the email
+     * @param newEmail   A new email of this user
+     * @param isVerified Whether email is verified or not, will not set status if `null` (so we get the default behavior)
      * @return The result of the Auth0 call
      */
     public static Auth0CallResponse updateUserEmail(
             ManagementAPI mgmtAPI,
             UserDto userDto,
-            String newEmail
+            String newEmail,
+            Boolean isVerified
     ) {
         User payload = new User();
         payload.setEmail(newEmail);
+        if (isVerified != null) {
+            payload.setEmailVerified(isVerified);
+        }
         LOG.info("Trying to set the email to {} for the user {}", newEmail, userDto.getUserGuid());
         return updateUserData(mgmtAPI, userDto, payload);
     }
