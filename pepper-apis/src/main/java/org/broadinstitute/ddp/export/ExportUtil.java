@@ -10,7 +10,6 @@ import java.util.stream.Stream;
 
 import org.apache.commons.lang.StringUtils;
 import org.broadinstitute.ddp.client.Auth0ManagementClient;
-import org.broadinstitute.ddp.content.I18nTemplateConstants;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dao.JdbiMailAddress;
@@ -165,11 +164,11 @@ public class ExportUtil {
      */
     private static void extractParticipantsNonDefaultAddresses(Handle handle, Map<String, Participant> participants) {
         try (var stream = handle.attach(JdbiMailAddress.class)
-                .findNonDefaultAddressesByParticipantIds(I18nTemplateConstants.Snapshot.ADDRESS_GUID, participants.keySet())) {
+                .findNonDefaultAddressesByParticipantIds(participants.keySet())) {
             stream.forEach(wrapper -> {
                 Participant participant = participants.get(wrapper.getParticipantGuid());
                 if (participant != null) {
-                    participant.putNonDefaultMailAddresses(wrapper.unwrap());
+                    participant.associateParticipantInstancesWithSnapshottedAddresses(wrapper.unwrap());
                 }
             });
         }

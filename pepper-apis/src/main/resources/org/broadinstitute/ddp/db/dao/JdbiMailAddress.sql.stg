@@ -96,10 +96,9 @@ findAllAddressesByParticipantGuid() ::= <<
 
 >>
 
-findNonDefaultAddressesByParticipantIds(addressGuidSubstitutionName, participantGuids) ::= <<
+findNonDefaultAddressesByParticipantIds(participantGuids) ::= <<
         SELECT
             u.guid AS participant_guid,
-            ais.activity_instance_id as instance_id,
             m.address_id,
             m.address_guid,
             m.name,
@@ -126,8 +125,6 @@ findNonDefaultAddressesByParticipantIds(addressGuidSubstitutionName, participant
             default_mailing_address da ON m.address_id=da.address_id
                LEFT JOIN
             mailing_address_validation_status vs on m.validation_status_id=vs.mailing_address_validation_status_id
-			   JOIN
-            activity_instance_substitution ais on ais.variable_name = :addressGuidSubstitutionName and ais.value = m.address_guid
         WHERE
             da.participant_user_id is null
             AND

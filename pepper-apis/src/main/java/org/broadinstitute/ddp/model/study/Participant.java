@@ -8,9 +8,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.broadinstitute.ddp.content.I18nTemplateConstants;
 import org.broadinstitute.ddp.db.dto.EnrollmentStatusDto;
 import org.broadinstitute.ddp.db.dto.InvitationDto;
 import org.broadinstitute.ddp.db.dto.MedicalProviderDto;
+import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.export.json.structured.FileRecord;
 import org.broadinstitute.ddp.model.activity.instance.ActivityResponse;
 import org.broadinstitute.ddp.model.activity.instance.answer.DateValue;
@@ -113,8 +115,22 @@ public class Participant {
         return nonDefaultMailAddresses;
     }
 
-    public void putNonDefaultMailAddresses(Map<Long, MailAddress> nonDefaultMailAddresses) {
-        this.nonDefaultMailAddresses = nonDefaultMailAddresses;
+    public void associateParticipantInstancesWithSnapshottedAddresses(List<MailAddress> allParticipantsAddresses) {
+        nonDefaultMailAddresses = new HashMap<>();
+        for (Map.Entry<Long, Map<String, String>> instanceEntry : activityInstanceSubstitutions.entrySet()) {
+            for (Map.Entry<String, String> subsEntry : instanceEntry.getValue().entrySet()) {
+                if (subsEntry.getKey().equals(I18nTemplateConstants.Snapshot.ADDRESS_GUID)) {
+                    MailAddress mailAddress = allParticipantsAddresses
+                            .stream()
+                            .filter(m -> m.getGuid().equals(subsEntry.getValue()))
+                            .findFirst().orElse(null);
+                    if (mailAddress == null) {
+                        throw new DDPException("Inconsistent non-default address data in DB");
+                    }
+                    nonDefaultMailAddresses.put(instanceEntry.getKey(), mailAddress);
+                }
+            }
+        }
     }
 
     public LocalDate getDateOfMajority() {

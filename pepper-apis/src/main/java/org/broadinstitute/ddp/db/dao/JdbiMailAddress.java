@@ -1,7 +1,7 @@
 package org.broadinstitute.ddp.db.dao;
 
 import java.time.Instant;
-import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -92,7 +92,6 @@ public interface JdbiMailAddress extends SqlObject {
     @UseRowReducer(BulkFindNonDefaultMailAddressesReducer.class)
     @UseStringTemplateSqlLocator
     Stream<NonDefaultMailAddressesWrapper> findNonDefaultAddressesByParticipantIds(
-            @Bind(value = "addressGuidSubstitutionName") String addressGuidSubstitutionName,
             @BindList(value = "participantGuids", onEmpty = BindList.EmptyHandling.NULL) Set<String> participantGuids);
 
     @SqlUpdate("setAddressAsDefault")
@@ -121,7 +120,6 @@ public interface JdbiMailAddress extends SqlObject {
         public void accumulate(Map<String, NonDefaultMailAddressesWrapper> container, RowView view) {
             try {
                 String participantGuid = view.getColumn("participant_guid", String.class);
-                long instanceId = view.getColumn("instance_id", Long.class);
                 MailAddress mailAddress = new MailAddress(
                         view.getColumn("address_id", Long.class),
                         view.getColumn("address_guid", String.class),
@@ -138,7 +136,7 @@ public interface JdbiMailAddress extends SqlObject {
                         DsmAddressValidationStatus.getByCode(view.getColumn("validationStatus", Integer.class)),
                         false
                 );
-                container.computeIfAbsent(participantGuid, NonDefaultMailAddressesWrapper::new).unwrap().put(instanceId, mailAddress);
+                container.computeIfAbsent(participantGuid, NonDefaultMailAddressesWrapper::new).unwrap().add(mailAddress);
             } catch (Exception e) {
                 throw new DaoException("Error during parsing a DB result with non-default MailAddresses ", e);
             }
@@ -147,13 +145,11 @@ public interface JdbiMailAddress extends SqlObject {
 
     /**
      * A wrapper around a non-default MailAddress'es of a certain Participant,
-     * containing a Map where key=instanceId, value=MailAddress to work better with JDBI for bulk querying MailAddresses.
      */
     class NonDefaultMailAddressesWrapper {
 
         private String participantGuid;
-        /** Map with all instances (of this participant) non-default MailAddress'es: key=instanceId, value=MailAddress */
-        private Map<Long, MailAddress> mailAddresses = new HashMap<>();
+        private List<MailAddress> mailAddresses = new ArrayList<>();
 
         public NonDefaultMailAddressesWrapper(String participantGuid) {
             this.participantGuid = participantGuid;
@@ -163,7 +159,7 @@ public interface JdbiMailAddress extends SqlObject {
             return participantGuid;
         }
 
-        public Map<Long, MailAddress> unwrap() {
+        public List<MailAddress> unwrap() {
             return mailAddresses;
         }
     }
