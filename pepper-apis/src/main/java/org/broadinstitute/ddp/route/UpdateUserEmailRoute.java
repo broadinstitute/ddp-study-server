@@ -37,7 +37,8 @@ public class UpdateUserEmailRoute extends ValidatedJsonInputRoute<UpdateUserEmai
 
             LOG.info("Attempting to change the email of the user {}", userGuid);
             ManagementAPI mgmtAPI = Auth0Util.getManagementApiInstanceForUser(userDto.getUserGuid(), handle);
-            Auth0CallResponse status = Auth0Util.updateUserEmail(mgmtAPI, userDto, newEmail);
+            // todo: investigate if this route should set email as verified or not
+            Auth0CallResponse status = Auth0Util.updateUserEmail(mgmtAPI, userDto, newEmail, null);
 
             String errMsg = null;
             switch (status.getAuth0Status()) {
