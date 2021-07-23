@@ -1,7 +1,7 @@
 package org.broadinstitute.ddp.export;
 
 import static org.broadinstitute.ddp.export.ExportUtil.getSnapshottedMailAddress;
-import static org.broadinstitute.ddp.export.ParticipantsResultSetUtil.extractParticipantsFromResultSet;
+import static org.broadinstitute.ddp.export.ExportUtil.extractParticipantsFromResultSet;
 import static org.broadinstitute.ddp.model.activity.types.ComponentType.MAILING_ADDRESS;
 
 import java.io.BufferedWriter;
@@ -1203,6 +1203,6 @@ public class DataExporter {
     }
 
     static List<Participant> extractParticipantDataSetByIds(Handle handle, StudyDto studyDto, Set<Long> batch) {
-        return ParticipantsResultSetUtil.extractParticipantDataSetByIds(handle, studyDto, batch, emailStore);
+        return ExportUtil.extractParticipantDataSetByIds(handle, studyDto, batch, emailStore);
     }
 }

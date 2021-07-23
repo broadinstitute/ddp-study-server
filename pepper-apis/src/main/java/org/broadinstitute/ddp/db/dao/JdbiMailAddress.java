@@ -9,7 +9,7 @@ import java.util.Set;
 import java.util.stream.Stream;
 
 import org.broadinstitute.ddp.db.DBUtils;
-import org.broadinstitute.ddp.exception.DDPException;
+import org.broadinstitute.ddp.db.DaoException;
 import org.broadinstitute.ddp.model.address.MailAddress;
 import org.broadinstitute.ddp.service.DsmAddressValidationStatus;
 import org.jdbi.v3.core.result.LinkedHashMapRowReducer;
@@ -93,7 +93,7 @@ public interface JdbiMailAddress extends SqlObject {
     @UseStringTemplateSqlLocator
     Stream<NonDefaultMailAddressesWrapper> findNonDefaultAddressesByParticipantIds(
             @Bind(value = "addressGuidSubstitutionName") String addressGuidSubstitutionName,
-            @BindList(value = "participantIds", onEmpty = BindList.EmptyHandling.NULL) Set<Long> participantIds);
+            @BindList(value = "participantGuids", onEmpty = BindList.EmptyHandling.NULL) Set<String> participantGuids);
 
     @SqlUpdate("setAddressAsDefault")
     @UseStringTemplateSqlLocator
@@ -140,7 +140,7 @@ public interface JdbiMailAddress extends SqlObject {
                 );
                 container.computeIfAbsent(participantGuid, NonDefaultMailAddressesWrapper::new).unwrap().put(instanceId, mailAddress);
             } catch (Exception e) {
-                throw new DDPException("Error during parsing a DB result with non-default MailAddresses ", e);
+                throw new DaoException("Error during parsing a DB result with non-default MailAddresses ", e);
             }
         }
     }

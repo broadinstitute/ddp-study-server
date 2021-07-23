@@ -34,7 +34,6 @@ import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.export.ActivityResponseMapping;
 import org.broadinstitute.ddp.export.ComponentDataSupplier;
 import org.broadinstitute.ddp.export.ExportUtil;
-import org.broadinstitute.ddp.export.ParticipantsResultSetUtil;
 import org.broadinstitute.ddp.export.collectors.ActivityAttributesCollector;
 import org.broadinstitute.ddp.export.collectors.ActivityResponseCollector;
 import org.broadinstitute.ddp.export.collectors.ParticipantMetadataFormatter;
@@ -42,7 +41,6 @@ import org.broadinstitute.ddp.model.activity.definition.ActivityDef;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
 import org.broadinstitute.ddp.model.activity.instance.ActivityResponse;
 import org.broadinstitute.ddp.model.study.Participant;
-import org.broadinstitute.ddp.service.AddressService;
 import org.broadinstitute.ddp.util.ElasticsearchServiceUtil;
 import org.elasticsearch.action.get.GetRequest;
 import org.elasticsearch.action.get.GetResponse;
@@ -65,14 +63,12 @@ public class CustomExporter {
     private final String customGuid;
     private final String customActivity;
     private final RestHighLevelClient elasticsearchClient;
-    private final AddressService addressService;
 
 
     CustomExporter(Config mainConfig, Config exportConfig) {
         this.exportConfig = exportConfig;
         this.customActivity = exportConfig.getString(CustomExportConfigFile.ACTIVITY);
         this.customGuid = exportConfig.getString(CustomExportConfigFile.STUDY_GUID);
-        addressService = new AddressService();
         try {
             elasticsearchClient = ElasticsearchServiceUtil.getElasticsearchClient(mainConfig);
         } catch (MalformedURLException e) {
@@ -81,7 +77,7 @@ public class CustomExporter {
     }
 
     List<CustomExportParticipant> extractParticipantDataSetByIds(Handle handle, StudyDto studyDto, Set<Long> userIds) {
-        List<Participant> baseParticipants = ParticipantsResultSetUtil.extractParticipantDataSetByIds(
+        List<Participant> baseParticipants = ExportUtil.extractParticipantDataSetByIds(
                 handle, studyDto, userIds, emailStore);
         return createCustomParticipantsFrom(baseParticipants, handle, studyDto, elasticsearchClient);
     }

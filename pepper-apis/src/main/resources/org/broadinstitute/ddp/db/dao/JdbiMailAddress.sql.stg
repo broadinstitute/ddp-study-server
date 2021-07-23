@@ -96,7 +96,7 @@ findAllAddressesByParticipantGuid() ::= <<
 
 >>
 
-findNonDefaultAddressesByParticipantIds(addressGuidSubstitutionName, participantIds) ::= <<
+findNonDefaultAddressesByParticipantIds(addressGuidSubstitutionName, participantGuids) ::= <<
         SELECT
             u.guid AS participant_guid,
             ais.activity_instance_id as instance_id,
@@ -131,7 +131,7 @@ findNonDefaultAddressesByParticipantIds(addressGuidSubstitutionName, participant
         WHERE
             da.participant_user_id is null
             AND
-            u.user_id in (<participantIds>)
+            u.guid in (<participantGuids>)
         ORDER BY
             m.created_at
 >>
