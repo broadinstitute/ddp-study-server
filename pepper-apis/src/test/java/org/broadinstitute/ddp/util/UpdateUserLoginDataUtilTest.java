@@ -49,7 +49,8 @@ public class UpdateUserLoginDataUtilTest extends TxnAwareBaseTest {
         return Auth0Util.updateUserEmail(
                 mgmtAPI,
                 convertTestingUserToDto(testingUser),
-                newEmail
+                newEmail,
+                null
         );
     }
 
