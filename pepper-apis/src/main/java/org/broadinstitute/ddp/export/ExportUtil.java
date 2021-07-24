@@ -168,7 +168,7 @@ public class ExportUtil {
             stream.forEach(wrapper -> {
                 Participant participant = participants.get(wrapper.getParticipantGuid());
                 if (participant != null) {
-                    participant.associateParticipantInstancesWithSnapshottedAddresses(wrapper.unwrap());
+                    participant.associateParticipantInstancesWithNonDefaultAddresses(wrapper.unwrap());
                 }
             });
         }
