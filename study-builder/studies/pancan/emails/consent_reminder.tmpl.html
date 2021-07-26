@@ -99,20 +99,17 @@
           {{\#if proxy_guid}}${text["salutation_parent"]}{{else}}${text["salutation_self"]}{{/if}}
         </p>
         <p style="font-family: Roboto, sans-serif; text-align: left; font-weight: 400; font-size: 16px; line-height: 24px;">${text["thank_you"]}</p>
-        <p style="font-family: Roboto, sans-serif; text-align: left; font-weight: 400; font-size: 16px; line-height: 24px;">${text["instructions"]}</p>
-        <p style="font-family: Roboto, sans-serif; text-align: left; font-weight: 400; font-size: 16px; line-height: 24px;">${text["provide_samples"]}</p>
-        <p style="font-family: Roboto, sans-serif; text-align: left; font-weight: 400; font-size: 16px; line-height: 24px;">${text["complete_process"]}</p>
       </td>
     </tr>
     <tr style="width: 540px;">
       <td style="border-left:solid #ffffff 1px;border-right:solid #ffffff 1px;border-bottom:solid #ffffff 1px;border-top:solid #ffffff 1px;vertical-align:top;background-color:#ffffff;padding:20px 0px 0px 0px">
-        <div>&nbsp; <a href="{{baseWebUrl}}/dashboard" style="font-size:16px;font-family:Helvetica,Arial,sans-serif;font-weight:normal;color:#ffffff;text-decoration:none;background-color:#7154ff;border-top:15px solid #7154ff;border-bottom:15px solid #7154ff;border-left:25px solid #7154ff;border-right:25px solid #7154ff;border-radius:3px;display:inline-block"
-                       target="_blank">${text["button"]}</a>&nbsp;&nbsp;</div>
+        <div>&nbsp; <a href="{{baseWebUrl}}/activity-link/{{activityInstanceGuid}}" style="font-size:16px;font-family:Helvetica,Arial,sans-serif;font-weight:normal;color:#ffffff;text-decoration:none;background-color:#7154ff;border-top:15px solid #7154ff;border-bottom:15px solid #7154ff;border-left:25px solid #7154ff;border-right:25px solid #7154ff;border-radius:3px;display:inline-block"
+                       target="_blank">${text["sign_consent"]}</a>&nbsp;&nbsp;</div>
       </td>
     </tr>
     <tr style="width: 540px;">
       <td style="padding: 20px 0 80px 0;">
-        <p style="font-family: Roboto, sans-serif; text-align: left; font-weight: 400; font-size: 16px; line-height: 24px;">${text["copy_of_consent"]} ${text["contact"]} </p>
+        <p style="font-family: Roboto, sans-serif; text-align: left; font-weight: 400; font-size: 16px; line-height: 24px;">${text["contact"]}</p>
         <p style="font-family: Roboto, sans-serif; text-align: left; font-weight: 400; font-size: 16px; line-height: 24px;">${text["closing"]}</p>
         <p style="font-family: Roboto, sans-serif; text-align: left; font-weight: 400; font-size: 16px; line-height: 24px;">${text["study_team"]}</p>
         <p style="font-family: Roboto, sans-serif; text-align: left; font-weight: 400; font-size: 16px; line-height: 24px;">${text["footnote"]}</p>
