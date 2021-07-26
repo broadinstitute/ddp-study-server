@@ -8,6 +8,7 @@ import static org.broadinstitute.ddp.Housekeeping.DDP_IGNORE_AFTER;
 import static org.broadinstitute.ddp.Housekeeping.DDP_MESSAGE_ID;
 import static org.broadinstitute.ddp.Housekeeping.DDP_STUDY_GUID;
 import static org.broadinstitute.ddp.constants.NotificationTemplateVariables.DDP_PROXY_FIRST_NAME;
+import static org.broadinstitute.ddp.constants.NotificationTemplateVariables.DDP_PROXY_GUID;
 import static org.broadinstitute.ddp.constants.NotificationTemplateVariables.DDP_PROXY_LAST_NAME;
 
 import java.util.Collection;
@@ -152,6 +153,7 @@ public class PubSubMessageBuilder {
                                 .findProfileByUserId(gov.getProxyUserId()).orElse(null);
                         if (profile != null) {
                             queuedNotificationDto.addTemplateSubstitutions(
+                                    new NotificationTemplateSubstitutionDto(DDP_PROXY_GUID, gov.getProxyUserGuid()),
                                     new NotificationTemplateSubstitutionDto(DDP_PROXY_FIRST_NAME, profile.getFirstName()),
                                     new NotificationTemplateSubstitutionDto(DDP_PROXY_LAST_NAME, profile.getLastName()));
                             // User proxy's preferred language since email will be sent to proxy.

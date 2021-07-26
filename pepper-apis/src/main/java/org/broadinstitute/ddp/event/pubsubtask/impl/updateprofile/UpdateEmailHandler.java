@@ -60,7 +60,8 @@ public class UpdateEmailHandler {
      */
     private void updateEmailInAuth0(Handle handle, UserDto userDto, String email, String userGuid) {
         var mgmtAPI = Auth0Util.getManagementApiInstanceForUser(userDto.getUserGuid(), handle);
-        var status = Auth0Util.updateUserEmail(mgmtAPI, userDto, email);
+        // Note: when updating email administratively through DSM, we assume email has been verified.
+        var status = Auth0Util.updateUserEmail(mgmtAPI, userDto, email, true);
         String errMsg = null;
         switch (status.getAuth0Status()) {
             case SUCCESS:
