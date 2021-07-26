@@ -15,17 +15,13 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.TxnAwareBaseTest;
 import org.broadinstitute.ddp.constants.ConfigFile;
-import org.broadinstitute.ddp.content.I18nTemplateConstants;
 import org.broadinstitute.ddp.db.TransactionWrapper;
-import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dao.KitConfigurationDao;
-import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.exception.AddressVerificationException;
 import org.broadinstitute.ddp.model.address.AddressWarning;
 import org.broadinstitute.ddp.model.address.MailAddress;
@@ -34,7 +30,6 @@ import org.broadinstitute.ddp.model.kit.KitConfiguration;
 import org.broadinstitute.ddp.model.kit.KitZipCodeRule;
 import org.broadinstitute.ddp.util.JsonValidationError;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
-import org.broadinstitute.ddp.util.TestFormActivity;
 import org.jdbi.v3.core.Handle;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -42,15 +37,15 @@ import org.junit.Test;
 
 public class AddressServiceTest extends TxnAwareBaseTest {
 
-    private static final String TEST_PLUSCODE = "87JC9W76+CF";
+    protected static final String TEST_PLUSCODE = "87JC9W76+CF";
 
-    private static TestDataSetupUtil.GeneratedTestData testData;
-    private static String userGuid;
+    protected static TestDataSetupUtil.GeneratedTestData testData;
+    protected static String userGuid;
 
     // The logic around EasyPost's address verification is a little tricky, so we're only mocking
     // the OLCService here and letting the EasyPostClient pass through to the real service.
-    private OLCService mockOLC;
-    private AddressService service;
+    protected OLCService mockOLC;
+    protected AddressService service;
 
     @BeforeClass
     public static void setupTestData() {
@@ -255,31 +250,7 @@ public class AddressServiceTest extends TxnAwareBaseTest {
         assertEquals(AddressWarning.Warn.ZIP_UNSUPPORTED.getCode(), actual.get(0).getCode());
     }
 
-    @Test
-    public void test_snapshotAddressOnSubmit() {
-        TransactionWrapper.withTxn(handle -> {
-            TestFormActivity act = TestFormActivity.builder()
-                    .build(handle, testData.getUserId(), testData.getStudyGuid());
-            ActivityInstanceDto instanceDto = handle.attach(ActivityInstanceDao.class).insertInstance(
-                    act.getDef().getActivityId(), userGuid);
-            MailAddress defaultAddress = buildTestAddress();
-            defaultAddress.setDefault(true);
-            service.addAddress(handle, defaultAddress, userGuid, userGuid);
-            MailAddress snapshottedAddress = service.snapshotAddress(handle, userGuid, userGuid, instanceDto.getId());
-            List<MailAddress> addresses = service.findAllAddressesForParticipant(handle, userGuid);
-            assertEquals(2, addresses.size());
-            MailAddress snapshottedAddress1 = addresses.stream().filter(m -> !m.isDefault()).findFirst().orElse(null);
-            assertNotNull(snapshottedAddress1);
-            assertFalse(snapshottedAddress1.isDefault());
-            assertEquals(snapshottedAddress1.getGuid(), snapshottedAddress.getGuid());
-            Map<String, String> subs = handle.attach(ActivityInstanceDao.class).findSubstitutions(instanceDto.getId());
-            String addresssGuid = subs.get(I18nTemplateConstants.Snapshot.ADDRESS_GUID);
-            assertEquals(snapshottedAddress.getGuid(), addresssGuid);
-            return null;
-        });
-    }
-
-    private MailAddress buildTestAddress() {
+    protected MailAddress buildTestAddress() {
         MailAddress addr = new MailAddress();
         addr.setName("RHONDA ROUSEY");
         addr.setStreet1("75 Ames Street");
@@ -291,7 +262,7 @@ public class AddressServiceTest extends TxnAwareBaseTest {
         return addr;
     }
 
-    private MailAddress buildInternationalAddress() {
+    protected MailAddress buildInternationalAddress() {
         MailAddress addr = new MailAddress();
         addr.setName("Foo Bar");
         addr.setStreet1("27 Avenue Pasteur");
