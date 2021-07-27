@@ -1249,6 +1249,18 @@ Participant:
       example: Y9JJVE1MLN8AIZL8DO7D
     userProfile:
       $ref: '#/ProfileModel'
+PicklistParentOption:
+  allOf:
+    - $ref: '#/PicklistOption'
+    - type: object
+      title: ParentPicklistOption
+      properties:
+        nestedOptionsLabel:
+          type: string
+        nestedOptions:
+          type: array
+          items:
+            $ref: '#/PicklistOption'
 PicklistOption:
   type: object
   required:
@@ -1274,12 +1286,6 @@ PicklistOption:
       type: string
     exclusive:
       type: boolean
-    nestedOptionsLabel:
-      type: string
-    nestedOptions:
-        type: array
-        items:
-          $ref: '#/PicklistOption'
 PrequalifierModel:
   type: object
   required:
@@ -1632,7 +1638,7 @@ Question.Picklist:
       picklistOptions:
         type: array
         items:
-          $ref: '#/PicklistOption'
+          $ref: '#/PicklistParentOption'
       answers:
         type: array
         items:
@@ -2435,7 +2441,7 @@ Statistics.Figure.Item.Data:
     count:
       type: string
     optionDetails:
-      $ref: '#/PicklistOption'
+      $ref: '#/PicklistParentOption'
 Statistics.Figure.Item:
   type: object
   properties:
