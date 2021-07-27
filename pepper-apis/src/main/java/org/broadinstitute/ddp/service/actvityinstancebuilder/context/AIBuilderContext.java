@@ -14,6 +14,7 @@ import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.activity.instance.ActivityInstance;
 import org.broadinstitute.ddp.model.activity.instance.FormInstance;
 import org.broadinstitute.ddp.model.activity.instance.FormResponse;
+import org.broadinstitute.ddp.model.activity.instance.MailingAddressComponent;
 import org.broadinstitute.ddp.pex.PexInterpreter;
 import org.broadinstitute.ddp.pex.TreeWalkInterpreter;
 import org.broadinstitute.ddp.service.actvityinstancebuilder.AIBuilderFactory;
@@ -47,6 +48,14 @@ public class AIBuilderContext {
     private final Map<String, Object> rendererInitialContext = new HashMap<>();
 
     private Map<Long, Template> templates = new HashMap<>();
+
+    private Map<String, String> activitySnapshots = new HashMap<>();
+
+    /**
+     * Reference to MailingAddressComponent which built in formInstance (if not exist, then null).
+     * Currently we assume that form can contain only one MailingAddressComponent.
+     */
+    private MailingAddressComponent mailingAddressComponent;
 
 
     public AIBuilderContext(AIBuilderFactory aiBuilderFactory, Handle handle, AIBuilderParams params) {
@@ -179,5 +188,17 @@ public class AIBuilderContext {
     public AIBuilderContext setPreviousInstanceId(Long previousInstanceId) {
         this.previousInstanceId = previousInstanceId;
         return this;
+    }
+
+    public Map<String, String> getActivitySnapshots() {
+        return activitySnapshots;
+    }
+
+    public MailingAddressComponent getMailingAddressComponent() {
+        return mailingAddressComponent;
+    }
+
+    public void setMailingAddressComponent(MailingAddressComponent mailingAddressComponent) {
+        this.mailingAddressComponent = mailingAddressComponent;
     }
 }

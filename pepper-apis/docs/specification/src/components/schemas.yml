@@ -849,6 +849,9 @@ Component.MailingAddress:
           type: string
           enum:
             - MAILING_ADDRESS
+        addressGuid:
+          type: string
+          description: 'guid of a snapshotted address: if it is not null then the address should be loaded by this guid, if it is null then load the default address'
         parameters:
           type: object
           properties:
@@ -1249,6 +1252,18 @@ Participant:
       example: Y9JJVE1MLN8AIZL8DO7D
     userProfile:
       $ref: '#/ProfileModel'
+PicklistParentOption:
+  allOf:
+    - $ref: '#/PicklistOption'
+    - type: object
+      title: ParentPicklistOption
+      properties:
+        nestedOptionsLabel:
+          type: string
+        nestedOptions:
+          type: array
+          items:
+            $ref: '#/PicklistOption'
 PicklistOption:
   type: object
   required:
@@ -1274,12 +1289,6 @@ PicklistOption:
       type: string
     exclusive:
       type: boolean
-    nestedOptionsLabel:
-      type: string
-    nestedOptions:
-        type: array
-        items:
-          $ref: '#/PicklistOption'
 PrequalifierModel:
   type: object
   required:
@@ -1632,7 +1641,7 @@ Question.Picklist:
       picklistOptions:
         type: array
         items:
-          $ref: '#/PicklistOption'
+          $ref: '#/PicklistParentOption'
       answers:
         type: array
         items:
@@ -2435,7 +2444,7 @@ Statistics.Figure.Item.Data:
     count:
       type: string
     optionDetails:
-      $ref: '#/PicklistOption'
+      $ref: '#/PicklistParentOption'
 Statistics.Figure.Item:
   type: object
   properties:

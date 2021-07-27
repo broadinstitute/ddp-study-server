@@ -95,6 +95,44 @@ findAllAddressesByParticipantGuid() ::= <<
             m.created_at
 
 >>
+
+findNonDefaultAddressesByParticipantIds(participantGuids) ::= <<
+        SELECT
+            u.guid AS participant_guid,
+            m.address_id,
+            m.address_guid,
+            m.name,
+            m.street1,
+            m.street2,
+            m.city,
+            coalesce(s.code, m.state) AS state,
+            c.code AS country,
+            m.phone,
+            m.pluscode,
+            m.description,
+            vs.code AS validationStatus,
+            m.postal_code AS zip,
+            da.address_id AS defaultValue
+        FROM
+            mailing_address m
+               LEFT JOIN
+            country_address_info c ON c.country_address_info_id = m.country_id
+               LEFT JOIN
+            country_subnational_division s ON s.country_subnational_division_id = m.subnational_division_id
+               JOIN
+            user u on u.user_id=m.participant_user_id
+               LEFT JOIN
+            default_mailing_address da ON m.address_id=da.address_id
+               LEFT JOIN
+            mailing_address_validation_status vs on m.validation_status_id=vs.mailing_address_validation_status_id
+        WHERE
+            da.participant_user_id is null
+            AND
+            u.guid in (<participantGuids>)
+        ORDER BY
+            m.created_at
+>>
+
 insertAddress() ::= <<
     INSERT INTO mailing_address(
         address_guid,
