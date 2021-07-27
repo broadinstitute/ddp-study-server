@@ -180,7 +180,9 @@ public class PutFormAnswersRoute implements Route {
                         snapshotSubstitutions(handle, studyGuid, operatorGuid, form,
                                 formActivitySettingDto.get().shouldSnapshotSubstitutionsOnSubmit());
                         if (formActivitySettingDto.get().shouldSnapshotAddressOnSubmit()) {
-                            addressService.snapshotAddress(handle, userGuid, operatorGuid, form.getInstanceId());
+                            var address = addressService.snapshotAddress(handle, userGuid, operatorGuid, form.getInstanceId());
+                            LOG.info("Created snapshotted address with guid {} for user {} and activity instance {}",
+                                    address.getGuid(), userGuid, instanceGuid);
                         }
                     }
 
