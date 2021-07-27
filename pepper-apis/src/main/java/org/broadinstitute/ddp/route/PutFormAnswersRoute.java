@@ -59,6 +59,7 @@ import org.broadinstitute.ddp.pex.PexInterpreter;
 import org.broadinstitute.ddp.security.DDPAuth;
 import org.broadinstitute.ddp.service.ActivityInstanceService;
 import org.broadinstitute.ddp.service.ActivityValidationService;
+import org.broadinstitute.ddp.service.AddressService;
 import org.broadinstitute.ddp.service.DsmAddressValidationStatus;
 import org.broadinstitute.ddp.service.WorkflowService;
 import org.broadinstitute.ddp.util.ActivityInstanceUtil;
@@ -79,17 +80,20 @@ public class PutFormAnswersRoute implements Route {
     private final ActivityInstanceService actInstService;
     private final ActivityValidationService actValidationService;
     private final PexInterpreter interpreter;
+    private final AddressService addressService;
 
     public PutFormAnswersRoute(
             WorkflowService workflowService,
             ActivityInstanceService actInstService,
             ActivityValidationService actValidationService,
-            PexInterpreter interpreter
+            PexInterpreter interpreter,
+            AddressService addressService
     ) {
         this.workflowService = workflowService;
         this.actInstService = actInstService;
         this.actValidationService = actValidationService;
         this.interpreter = interpreter;
+        this.addressService = addressService;
     }
 
     @Override
@@ -169,16 +173,15 @@ public class PutFormAnswersRoute implements Route {
                         throw ResponseUtil.haltError(response, 422, new ApiError(ErrorCodes.ACTIVITY_VALIDATION, msg));
                     }
 
-                    boolean shouldSnapshotSubstitutions = handle.attach(JdbiFormActivitySetting.class)
-                            .findSettingDtoByInstanceGuid(instanceGuid)
-                            .map(FormActivitySettingDto::shouldSnapshotSubstitutionsOnSubmit)
-                            .orElse(false);
-                    if (instanceDto.getFirstCompletedAt() == null && shouldSnapshotSubstitutions) {
-                        // This is the first submit for the activity instance, so save a snapshot of substitutions.
-                        handle.attach(ActivityInstanceDao.class).saveSubstitutions(
-                                form.getInstanceId(),
-                                I18nContentRenderer.newValueProvider(
-                                        handle, form.getParticipantUserId(), operatorGuid, studyGuid).getSnapshot());
+                    Optional<FormActivitySettingDto> formActivitySettingDto = handle.attach(JdbiFormActivitySetting.class)
+                            .findSettingDtoByInstanceGuid(instanceGuid);
+                    // if this is the first submit for the activity instance, then do snapshots
+                    if (formActivitySettingDto.isPresent() && instanceDto.getFirstCompletedAt() == null) {
+                        snapshotSubstitutions(handle, studyGuid, operatorGuid, form,
+                                formActivitySettingDto.get().shouldSnapshotSubstitutionsOnSubmit());
+                        if (formActivitySettingDto.get().shouldSnapshotAddressOnSubmit()) {
+                            addressService.snapshotAddress(handle, userGuid, operatorGuid, form.getInstanceId());
+                        }
                     }
 
                     User participantUser = instanceSummary.getParticipantUser();
@@ -224,6 +227,20 @@ public class PutFormAnswersRoute implements Route {
 
         response.status(200);
         return resp;
+    }
+
+    /**
+     * If this is the first submit for the activity instance and should snapshot flag is true,
+     * then save a snapshot of substitutions.
+     */
+    private void snapshotSubstitutions(Handle handle, String studyGuid, String operatorGuid,
+                                       FormInstance form, boolean shouldSnapshotSubstitutionsOnSubmit) {
+        if (shouldSnapshotSubstitutionsOnSubmit) {
+            handle.attach(ActivityInstanceDao.class).saveSubstitutions(
+                    form.getInstanceId(),
+                    I18nContentRenderer.newValueProvider(
+                            handle, form.getParticipantUserId(), operatorGuid, studyGuid).getSnapshot());
+        }
     }
 
     private FormInstance loadFormInstance(Response response,

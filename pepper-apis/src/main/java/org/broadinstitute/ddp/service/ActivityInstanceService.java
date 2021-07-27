@@ -554,6 +554,7 @@ public class ActivityInstanceService {
                     .renderContent()
                     .setDisplayNumbers()
                     .updateBlockStatuses()
+                    .populateSnapshottedAddress()
                 .endBuild()
                     .getContext();
 
@@ -600,6 +601,7 @@ public class ActivityInstanceService {
                     .buildFormChildren()
                     .renderFormTitles()
                     .updateBlockStatuses()
+                    .populateSnapshottedAddress()
                 .endBuild()
                     .getContext();
 
