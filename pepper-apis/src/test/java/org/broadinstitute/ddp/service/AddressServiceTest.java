@@ -37,15 +37,15 @@ import org.junit.Test;
 
 public class AddressServiceTest extends TxnAwareBaseTest {
 
-    private static final String TEST_PLUSCODE = "87JC9W76+CF";
+    protected static final String TEST_PLUSCODE = "87JC9W76+CF";
 
-    private static TestDataSetupUtil.GeneratedTestData testData;
-    private static String userGuid;
+    protected static TestDataSetupUtil.GeneratedTestData testData;
+    protected static String userGuid;
 
     // The logic around EasyPost's address verification is a little tricky, so we're only mocking
     // the OLCService here and letting the EasyPostClient pass through to the real service.
-    private OLCService mockOLC;
-    private AddressService service;
+    protected OLCService mockOLC;
+    protected AddressService service;
 
     @BeforeClass
     public static void setupTestData() {
@@ -250,7 +250,7 @@ public class AddressServiceTest extends TxnAwareBaseTest {
         assertEquals(AddressWarning.Warn.ZIP_UNSUPPORTED.getCode(), actual.get(0).getCode());
     }
 
-    private MailAddress buildTestAddress() {
+    protected MailAddress buildTestAddress() {
         MailAddress addr = new MailAddress();
         addr.setName("RHONDA ROUSEY");
         addr.setStreet1("75 Ames Street");
@@ -262,7 +262,7 @@ public class AddressServiceTest extends TxnAwareBaseTest {
         return addr;
     }
 
-    private MailAddress buildInternationalAddress() {
+    protected MailAddress buildInternationalAddress() {
         MailAddress addr = new MailAddress();
         addr.setName("Foo Bar");
         addr.setStreet1("27 Avenue Pasteur");
