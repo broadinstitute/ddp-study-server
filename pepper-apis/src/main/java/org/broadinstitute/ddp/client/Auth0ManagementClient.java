@@ -9,6 +9,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -31,6 +32,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.annotations.SerializedName;
 import org.apache.http.HttpHeaders;
+import org.apache.http.HttpStatus;
 import org.apache.http.entity.ContentType;
 import org.broadinstitute.ddp.db.dao.JdbiAuth0Tenant;
 import org.broadinstitute.ddp.db.dto.Auth0TenantDto;
@@ -66,6 +68,7 @@ public class Auth0ManagementClient {
     private static final int DEFAULT_MAX_RETRIES = 3;
     private static final long DEFAULT_BACKOFF_MILLIS = 500L;
     private static final int MAX_JITTER_MILLIS = 100;
+    private static final int MAX_RESULTS_PER_PAGE = 50;
 
     private final URI baseUrl;
     private final String clientId;
@@ -210,18 +213,32 @@ public class Auth0ManagementClient {
      * @return result with list of connections, or error response
      */
     public ApiResult<List<Connection>, APIException> listConnections() {
+        int pageNum = 0;
         String msg = String.format("Hit rate limit while listing connections for tenant '%s', retrying", baseUrl);
-        return withRetries(msg, () -> {
-            try {
-                mgmtApi.setApiToken(getToken());
-                ConnectionsPage page = mgmtApi.connections().listAll(null).execute();
-                return ApiResult.ok(200, page.getItems());
-            } catch (APIException e) {
-                return ApiResult.err(e.getStatusCode(), e);
-            } catch (Exception e) {
-                return ApiResult.thrown(e);
+        Integer currentTotal = MAX_RESULTS_PER_PAGE;
+        List<Connection> connections = new ArrayList<>();
+        while (currentTotal == MAX_RESULTS_PER_PAGE) {
+            //keep make API calls with 1 page at a time until current iteration results size is maxPerPage (else no more results)
+            var filter = new ConnectionFilter().withPage(pageNum, MAX_RESULTS_PER_PAGE);
+            ApiResult<List<Connection>, APIException> apiResult = withRetries(msg, () -> {
+                try {
+                    mgmtApi.setApiToken(getToken());
+                    ConnectionsPage page = mgmtApi.connections().listAll(filter).execute();
+                    return ApiResult.ok(HttpStatus.SC_OK, page.getItems());
+                } catch (APIException e) {
+                    return ApiResult.err(e.getStatusCode(), e);
+                } catch (Exception e) {
+                    return ApiResult.thrown(e);
+                }
+            });
+            if (apiResult.hasFailure()) {
+                return apiResult;
             }
-        });
+            pageNum++;
+            connections.addAll(apiResult.getBody());
+            currentTotal = apiResult.getBody().size();
+        }
+        return ApiResult.ok(HttpStatus.SC_OK, connections);
     }
 
     /**
@@ -266,12 +283,13 @@ public class Auth0ManagementClient {
     /**
      * Create a new auth0 user account. Note: need database connection for creating email/password account.
      *
-     * @param connection the database connection name
-     * @param email      the user's email
-     * @param password   the user's password
+     * @param connection    the database connection name
+     * @param email         the user's email
+     * @param password      the user's password
+     * @param emailVerified optional, if non-null then set email verified
      * @return result with created user, or error response
      */
-    public ApiResult<User, APIException> createAuth0User(String connection, String email, String password) {
+    public ApiResult<User, APIException> createAuth0User(String connection, String email, String password, Boolean emailVerified) {
         String msg = String.format(
                 "Hit rate limit while creating auth0 user with email %s in connection %s, retrying",
                 email, connection);
@@ -282,6 +300,9 @@ public class Auth0ManagementClient {
                 user.setEmail(email);
                 user.setPassword(password);
                 user.setConnection(connection);
+                if (emailVerified != null) {
+                    user.setEmailVerified(emailVerified);
+                }
                 User createdUser = mgmtApi.users().create(user).execute();
                 return ApiResult.ok(200, createdUser);
             } catch (APIException e) {
@@ -290,6 +311,10 @@ public class Auth0ManagementClient {
                 return ApiResult.thrown(e);
             }
         });
+    }
+
+    public ApiResult<User, APIException> createAuth0User(String connection, String email, String password) {
+        return createAuth0User(connection, email, password, null);
     }
 
     /**

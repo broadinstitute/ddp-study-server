@@ -32,7 +32,7 @@ Desktop.ini
 # Misc
 *.log
 *.logs
-
+*.csv
 pepper-angular/ddp-angio/src/assets/config/ddpConfig\.js
 
 # Xcode

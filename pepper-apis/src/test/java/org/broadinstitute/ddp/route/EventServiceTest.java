@@ -146,7 +146,8 @@ public class EventServiceTest extends IntegrationTestSuite.TestCase {
 
                     studyActivityToCreateId = handle.attach(JdbiActivity.class).findIdByStudyIdAndCode(umbrellaStudyId,
                             TestData.targetActivityCode).get();
-                    activityInstanceCreationEventActionId = eventActionDao.insertInstanceCreationAction(studyActivityToCreateId);
+                    activityInstanceCreationEventActionId = eventActionDao.insertInstanceCreationAction(
+                            studyActivityToCreateId, false, null, null);
 
                     dsmInclusionEventActionId = eventActionDao.insertEnrolledAction();
 
@@ -254,7 +255,7 @@ public class EventServiceTest extends IntegrationTestSuite.TestCase {
             ActivityInstanceStatusChangeSignal signal = new ActivityInstanceStatusChangeSignal(
                     testUserId, testUserId, testData.getUserGuid(), testData.getUserGuid(),
                     TestData.activityInstanceId, studyActivityTriggeringActionId,
-                    umbrellaStudyId, InstanceStatusType.IN_PROGRESS);
+                    umbrellaStudyId, testData.getStudyGuid(), InstanceStatusType.IN_PROGRESS);
             EventService.getInstance().processAllActionsForEventSignal(handle, signal);
         });
 

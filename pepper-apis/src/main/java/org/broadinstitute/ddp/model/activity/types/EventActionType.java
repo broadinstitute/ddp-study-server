@@ -10,6 +10,8 @@ public enum EventActionType {
     NOTIFICATION(false),
     PDF_GENERATION(false),
     REVOKE_PROXIES(true),
+    UPDATE_CUSTOM_WORKFLOW(false),
+    UPDATE_USER_STATUS(false),
     USER_ENROLLED(true);
 
     private boolean isStatic;

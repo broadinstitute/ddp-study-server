@@ -162,7 +162,7 @@ public class DataExporterCli {
             System.out.println("[export] warming up caches...");
 
             StudyDto studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(studyGuid);
-            DataExporter.fetchAndCacheAuth0Emails(handle, studyGuid, handle
+            DataExporter.fetchAndCacheAuth0Emails(handle, studyDto, handle
                     .select("select auth0_user_id from user")
                     .mapTo(String.class)
                     .stream()
@@ -208,7 +208,7 @@ public class DataExporterCli {
             StudyDto studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(studyGuid);
 
             // Warm up the emails cache
-            DataExporter.fetchAndCacheAuth0Emails(handle, studyGuid,
+            DataExporter.fetchAndCacheAuth0Emails(handle, studyDto,
                     handle.select("select auth0_user_id from user").mapTo(String.class).stream().collect(Collectors.toSet()));
 
             System.out.println(String.format("[export] starting %s json elasticsearch export...",
@@ -227,7 +227,7 @@ public class DataExporterCli {
             StudyDto studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(studyGuid);
 
             // Warm up the emails cache
-            DataExporter.fetchAndCacheAuth0Emails(handle, studyGuid,
+            DataExporter.fetchAndCacheAuth0Emails(handle, studyDto,
                     handle.select("select auth0_user_id from user").mapTo(String.class).stream().collect(Collectors.toSet()));
 
             System.out.println("[export] starting elasticsearch user export...");

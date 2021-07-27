@@ -563,7 +563,7 @@ public class AngioConsentVersion2 implements CustomTask {
                 .collect(Collectors.toMap(UserDto::getUserId, userDto -> userDto));
 
         Map<String, String> emailsMap = new Auth0Util(cfg.getString("tenant.domain"))
-                .getUserPassConnEmailsByAuth0UserIds(auth0UserIds, getAuth0MgmtToken());
+                .getEmailsByAuth0UserIdsAndConnection(auth0UserIds, getAuth0MgmtToken(), null);
 
         String[] headers = new String[] {
                 "guid", "hruid", "legacy_altpid", "legacy_shortid",

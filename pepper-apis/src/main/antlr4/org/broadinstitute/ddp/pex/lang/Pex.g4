@@ -43,7 +43,8 @@ child : 'children' '[' STR ']';
 studyPredicate
   : 'hasAgedUp' '(' ')'  # HasAgedUpPredicate
   | 'hasInvitation' '(' STR ')'   # HasInvitationPredicate
-  | 'isGovernedParticipant' '(' ')' #IsGovernedParticipantQuery
+  | 'isGovernedParticipant' '(' ')' # IsGovernedParticipantQuery
+  | 'isEnrollmentStatus' '(' STR ')' # IsEnrollmentStatusPredicate
   ;
 
 // Form predicate functions that operate on a single piece of data
@@ -54,13 +55,15 @@ formPredicate
 
 // Form predicate functions for a particular instance
 formInstancePredicate
-  : 'snapshotSubstitution' '(' STR ')'   # InstanceSnapshotSubstitutionQuery
+  : 'isStatus' '(' STR ( ',' STR )* ')'  # IsInstanceStatusPredicate
+  | 'snapshotSubstitution' '(' STR ')'   # InstanceSnapshotSubstitutionQuery
   | 'hasPreviousInstance' '(' ')'   # HasPreviousInstancePredicate
   ;
 
 // Question predicate functions
 questionPredicate
-  : 'isAnswered' '(' ')'    # IsAnsweredPredicate
+  : 'isAnswered' '(' ')'            # IsAnsweredPredicate
+  | 'numChildAnswers' '(' STR ')'   # NumChildAnswersQuery
   ;
 
 // Predicate functions that operates on a set/collection of things or a single piece of data
@@ -79,6 +82,7 @@ predicate
 profileDataQuery
   : 'birthDate' '(' ')'   # ProfileBirthDateQuery
   | 'age' '(' ')'         # ProfileAgeQuery
+  | 'language' '(' ')'    # ProfileLanguageQuery
   ;
 
 // Queries for current kit event.

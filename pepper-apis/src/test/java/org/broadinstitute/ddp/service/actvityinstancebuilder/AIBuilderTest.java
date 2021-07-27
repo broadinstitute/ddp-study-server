@@ -35,7 +35,7 @@ public class AIBuilderTest {
     public void testAIBuilderNormalFlow() {
         var ctx = buildActivityInstance(createFormActivityDef());
 
-        assertEquals(12, ctx.getPassedBuildSteps().size());
+        assertEquals(13, ctx.getPassedBuildSteps().size());
 
         assertEquals(4, ctx.getFormInstance().getBodySections().get(0).getBlocks().size());
 

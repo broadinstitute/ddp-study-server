@@ -18,7 +18,11 @@
     "LOCALHOST_ORIGINS": "",
   {{end}}
     "BASE_URL": "{{$conf.baseWebUrl}}",
-    "LOGIN_DOMAIN": "{{$conf.auth0.loginDomain}}"
+    "LOGIN_DOMAIN": "{{$conf.auth0.loginDomain}}",
+    "ASSETS_URL": "{{$conf.assetsBucketName}}",
+    "STUDY_EMAIL": "{{$conf.studyEmail}}",
+    "FROM_NAME": "{{$conf.sendgridFromName}}",
+    "FROM_EMAIL": "{{$conf.sendgridFromEmail}}"
   },
   "AUTH0_ALLOW_DELETE": false,
   "INCLUDED_PROPS": {

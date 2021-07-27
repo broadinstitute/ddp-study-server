@@ -2,7 +2,9 @@ package org.broadinstitute.ddp.route;
 
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -17,6 +19,7 @@ import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants.PathParam;
 import org.broadinstitute.ddp.content.I18nContentRenderer;
 import org.broadinstitute.ddp.db.ActivityDefStore;
+import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceStatusDao;
@@ -145,8 +148,9 @@ public class PutFormAnswersRoute implements Route {
                         throw ResponseUtil.haltError(response, 422, new ApiError(ErrorCodes.QUESTION_REQUIREMENTS_NOT_MET, msg));
                     }
 
+                    Map<Long, List<ActivityInstanceDto>> hiddenChildInstances = null;
                     if (parentInstanceDto == null) {
-                        checkChildInstancesCompleteness(
+                        hiddenChildInstances = checkStateOfChildInstances(
                                 response, handle, userGuid, operatorGuid, studyGuid, instanceGuid,
                                 form, preferredUserLangDto, instanceSummary);
                     }
@@ -173,7 +177,8 @@ public class PutFormAnswersRoute implements Route {
                         // This is the first submit for the activity instance, so save a snapshot of substitutions.
                         handle.attach(ActivityInstanceDao.class).saveSubstitutions(
                                 form.getInstanceId(),
-                                I18nContentRenderer.newValueProvider(handle, form.getParticipantUserId()).getSnapshot());
+                                I18nContentRenderer.newValueProvider(
+                                        handle, form.getParticipantUserId(), operatorGuid, studyGuid).getSnapshot());
                     }
 
                     User participantUser = instanceSummary.getParticipantUser();
@@ -191,15 +196,8 @@ public class PutFormAnswersRoute implements Route {
                                 Instant.now().toEpochMilli(), operatorUser, participantUser);
                     }
 
-                    // Cleanup hidden answers.
-                    Set<Long> answerIdsToDelete = form.collectHiddenAnswers()
-                            .stream()
-                            .map(Answer::getAnswerId)
-                            .filter(Objects::nonNull)
-                            .collect(Collectors.toSet());
-                    handle.attach(AnswerDao.class).deleteAnswers(answerIdsToDelete);
-                    LOG.info("Deleted {} hidden answers for user {} and activity instance {}",
-                            answerIdsToDelete.size(), userGuid, instanceGuid);
+                    cleanupHiddenAnswers(handle, userGuid, form);
+                    cleanupHiddenChildInstances(handle, activityStore, userGuid, form, hiddenChildInstances);
 
                     WorkflowState fromState = new ActivityState(form.getActivityId());
                     WorkflowResponse workflowResp = workflowService
@@ -250,45 +248,118 @@ public class PutFormAnswersRoute implements Route {
     }
 
     // For a parent instance, check if there are any child instances that are not hidden and if those are complete.
-    private void checkChildInstancesCompleteness(Response response,
-                                                 Handle handle,
-                                                 String userGuid,
-                                                 String operatorGuid,
-                                                 String studyGuid,
-                                                 String instanceGuid,
-                                                 FormInstance form,
-                                                 LanguageDto preferredLangDto,
-                                                 UserActivityInstanceSummary instanceSummary) {
+    // For efficiency, we also keep track of which child instances are hidden so we can clean them up later.
+    private Map<Long, List<ActivityInstanceDto>> checkStateOfChildInstances(Response response,
+                                                                            Handle handle,
+                                                                            String userGuid,
+                                                                            String operatorGuid,
+                                                                            String studyGuid,
+                                                                            String instanceGuid,
+                                                                            FormInstance form,
+                                                                            LanguageDto preferredLangDto,
+                                                                            UserActivityInstanceSummary instanceSummary) {
         Map<String, List<ActivityInstanceDto>> childInstances = new HashMap<>();
+        Map<Long, List<ActivityInstanceDto>> hiddenChildInstances = new HashMap<>();
         instanceSummary.getInstancesStream()
                 .filter(instance -> instanceGuid.equals(instance.getParentInstanceGuid()))
                 .forEach(instance -> childInstances
                         .computeIfAbsent(instance.getActivityCode(), key -> new ArrayList<>())
                         .add(instance));
+
         for (FormSection section : form.getAllSections()) {
             for (FormBlock block : section.getBlocks()) {
-                if (block.getBlockType() != BlockType.ACTIVITY || !block.isShown()) {
+                if (block.getBlockType() != BlockType.ACTIVITY) {
                     continue;
                 }
+
                 var nestedActivityBlock = (NestedActivityBlock) block;
                 List<ActivityInstanceDto> childInstanceDtos = childInstances
                         .getOrDefault(nestedActivityBlock.getActivityCode(), new ArrayList<>());
+                if (!nestedActivityBlock.isShown()) {
+                    if (!childInstanceDtos.isEmpty()) {
+                        long childActivityId = childInstanceDtos.get(0).getActivityId();
+                        hiddenChildInstances.put(childActivityId, childInstanceDtos);
+                    }
+                    continue;
+                }
+
                 for (var childInstanceDto : childInstanceDtos) {
-                    if (childInstanceDto.getStatusType() != InstanceStatusType.COMPLETE) {
-                        // Child instance is not finished but it might not have required questions, so check it.
-                        FormInstance childForm = loadFormInstance(
-                                response, handle, userGuid, operatorGuid, studyGuid,
-                                childInstanceDto.getGuid(), preferredLangDto, instanceSummary);
-                        if (!childForm.isComplete()) {
-                            String msg = "Status for instance " + instanceGuid + " cannot be set to COMPLETE because the"
-                                    + " question requirements are not met for child instance " + childInstanceDto.getGuid();
-                            LOG.info(msg);
-                            throw ResponseUtil.haltError(response, 422,
-                                    new ApiError(ErrorCodes.QUESTION_REQUIREMENTS_NOT_MET, msg));
-                        }
+                    FormInstance childForm = loadFormInstance(
+                            response, handle, userGuid, operatorGuid, studyGuid,
+                            childInstanceDto.getGuid(), preferredLangDto, instanceSummary);
+                    if (!childForm.isComplete()) {
+                        String msg = "Status for instance " + instanceGuid + " cannot be set to COMPLETE because the"
+                                + " question requirements are not met for child instance " + childInstanceDto.getGuid();
+                        LOG.info(msg);
+                        throw ResponseUtil.haltError(response, 422,
+                                new ApiError(ErrorCodes.QUESTION_REQUIREMENTS_NOT_MET, msg));
                     }
                 }
             }
+        }
+
+        return hiddenChildInstances;
+    }
+
+    public void cleanupHiddenAnswers(Handle handle, String userGuid, FormInstance form) {
+        Set<Long> answerIdsToDelete = form.collectHiddenAnswers()
+                .stream()
+                .map(Answer::getAnswerId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+        handle.attach(AnswerDao.class).deleteAnswers(answerIdsToDelete);
+        LOG.info("Deleted {} hidden answers for user {} and activity instance {}",
+                answerIdsToDelete.size(), userGuid, form.getGuid());
+    }
+
+    private void cleanupHiddenChildInstances(Handle handle,
+                                             ActivityDefStore activityStore,
+                                             String userGuid,
+                                             FormInstance form,
+                                             Map<Long, List<ActivityInstanceDto>> hiddenChildInstances) {
+        if (hiddenChildInstances == null || hiddenChildInstances.isEmpty()) {
+            return;
+        }
+
+        var answerDao = handle.attach(AnswerDao.class);
+        var instanceDao = handle.attach(ActivityInstanceDao.class);
+        for (var entry : hiddenChildInstances.entrySet()) {
+            var childInstanceDtos = entry.getValue();
+            if (childInstanceDtos.isEmpty()) {
+                continue;
+            }
+            var childActivity = activityStore.findActivityDto(handle, entry.getKey())
+                    .orElseThrow(() -> new DDPException("Could not find child activity with id " + entry.getKey()));
+            if (!childActivity.canDeleteInstances()) {
+                continue;
+            }
+
+            childInstanceDtos.sort(Comparator.comparing(ActivityInstanceDto::getCreatedAtMillis));
+            Set<Long> deletableInstanceIds = new HashSet<>();
+            Set<Long> deleteOnlyAnswers = new HashSet<>();
+
+            for (int i = 0; i < childInstanceDtos.size(); i++) {
+                boolean isFirstInstance = (i == 0);
+                boolean canDelete = ActivityInstanceUtil.computeCanDelete(
+                        childActivity.canDeleteInstances(),
+                        childActivity.getCanDeleteFirstInstance(),
+                        isFirstInstance);
+                if (canDelete) {
+                    // Should delete the instance and all its answers.
+                    deletableInstanceIds.add(childInstanceDtos.get(i).getId());
+                } else {
+                    // Can't delete the instance itself, but let's at the very least cleanup its answers.
+                    deleteOnlyAnswers.add(childInstanceDtos.get(i).getId());
+                }
+            }
+
+            DBUtils.checkDelete(deletableInstanceIds.size(), instanceDao.deleteAllByIds(deletableInstanceIds));
+            LOG.info("Deleted {} hidden child instances for user {}, parent instance {}, child activity {}",
+                    deletableInstanceIds.size(), userGuid, form.getGuid(), childActivity.getActivityCode());
+
+            answerDao.deleteAllByInstanceIds(deleteOnlyAnswers);
+            LOG.info("Cleared answers for {} hidden child instances for user {}, parent instance {}, child activity {}",
+                    deleteOnlyAnswers.size(), userGuid, form.getGuid(), childActivity.getActivityCode());
         }
     }
 

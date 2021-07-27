@@ -65,20 +65,20 @@
 </head>
 <body>
 <!-- Variable definitions -->
-{% assign logo_url = "https://storage.googleapis.com/circadia-dev-assets/auth0/logo.png" %}
+{% assign logo_url = "https://storage.googleapis.com/##ASSETS_URL##/auth0/logo.png" %}
 
 {% capture language %}{{ user.user_metadata.language | default: "en" }}{% endcapture %}
 
 {% if language == "en" %}
-{% assign greeting = "Hello!" %}
+    {% assign greeting = "Hello!" %}
 
-{% assign paragraph1 = "You have created an account with the Circadia Research study through our web-based portal. Please remember your username and password and keep it secure." %}
+    {% assign paragraph1 = "You have created an account with the Circadia Research study through our web-based portal. Please remember your username and password and keep it secure." %}
 
-{% assign paragraph2 = "You will access next steps for the study through the web portal. Please contact the study team should you require any help." %}
+    {% assign paragraph2 = "You will access next steps for the study through the web portal. Please contact the study team should you require any help." %}
 
-{% assign closing = "Thank you." %}
+    {% assign closing = "Thank you." %}
 
-{% assign team = "The Circadia Study Team" %}
+    {% assign team = "The Circadia Study Team" %}
 {% endif %}
 <center>
     <table

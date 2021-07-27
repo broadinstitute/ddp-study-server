@@ -133,6 +133,12 @@ public interface JdbiActivityInstance extends SqlObject {
                                                                @Bind("studyId") long studyId);
 
     @UseStringTemplateSqlLocator
+    @SqlQuery("queryAllByUserGuidAndActivityId")
+    @RegisterConstructorMapper(ActivityInstanceDto.class)
+    List<ActivityInstanceDto> findAllByUserGuidAndActivityId(@Bind("userGuid") String userGuid,
+                                                             @Bind("activityId") long activityId);
+
+    @UseStringTemplateSqlLocator
     @SqlQuery("queryAllByUserIdAndStudyId")
     @RegisterConstructorMapper(ActivityInstanceDto.class)
     List<ActivityInstanceDto> findAllByUserIdAndStudyId(@Bind("userId") long participantUserId, @Bind("studyId") long studyId);

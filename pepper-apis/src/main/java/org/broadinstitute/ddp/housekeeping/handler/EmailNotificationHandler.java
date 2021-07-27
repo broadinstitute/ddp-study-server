@@ -273,10 +273,11 @@ public class EmailNotificationHandler implements HousekeepingMessageHandler<Noti
                     pdfConfig.getVersion().getVersionTag());
             InputStream pdfStream =  null;
             try {
-                pdfStream = pdfBucketService.getPdfFromBucket(blobName).orElse(null);
+                pdfStream = pdfAttachment.shouldAlwaysGenerate() ? null : pdfBucketService.getPdfFromBucket(blobName).orElse(null);
                 if (pdfStream == null) {
-                    // todo: remove the generateIfMissing feature
-                    LOG.info("Could not find {} in bucket {}, generating", blobName, pdfBucketService.getBucketName());
+                    if (!pdfAttachment.shouldAlwaysGenerate()) {
+                        LOG.info("Could not find {} in bucket {}, generating", blobName, pdfBucketService.getBucketName());
+                    }
                     pdfStream = pdfGenerationService.generateFlattenedPdfForConfiguration(
                             pdfConfig,
                             participantGuid,

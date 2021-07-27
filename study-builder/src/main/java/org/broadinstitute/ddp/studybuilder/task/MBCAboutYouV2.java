@@ -9,6 +9,7 @@ import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
+import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiFormSectionBlock;
 import org.broadinstitute.ddp.db.dao.JdbiQuestion;
 import org.broadinstitute.ddp.db.dao.JdbiRevision;
@@ -16,15 +17,18 @@ import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.QuestionDao;
 import org.broadinstitute.ddp.db.dao.SectionBlockDao;
 import org.broadinstitute.ddp.db.dao.UserDao;
+import org.broadinstitute.ddp.db.dto.ActivityDto;
 import org.broadinstitute.ddp.db.dto.ActivityVersionDto;
 import org.broadinstitute.ddp.db.dto.QuestionDto;
 import org.broadinstitute.ddp.db.dto.SectionBlockMembershipDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.exception.DDPException;
+import org.broadinstitute.ddp.model.activity.definition.ActivityDef;
+import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
 import org.broadinstitute.ddp.model.activity.definition.FormBlockDef;
+import org.broadinstitute.ddp.model.activity.definition.FormSectionDef;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
 import org.broadinstitute.ddp.model.user.User;
-import org.broadinstitute.ddp.studybuilder.ActivityBuilder;
 import org.broadinstitute.ddp.util.ConfigUtil;
 import org.broadinstitute.ddp.util.GsonUtil;
 import org.jdbi.v3.core.Handle;
@@ -71,6 +75,7 @@ public class MBCAboutYouV2 implements CustomTask {
         //creates version: 2 for AboutYou activity.
         //Add updated new RACE question and disable existing RACE and HISPANIC questions
         //Add GENDER and SEX questions
+        //Add Citations
 
         LanguageStore.init(handle);
         User adminUser = handle.attach(UserDao.class).findUserByGuid(studyCfg.getString("adminUser.guid")).get();
@@ -78,8 +83,12 @@ public class MBCAboutYouV2 implements CustomTask {
         var activityDao = handle.attach(ActivityDao.class);
         String activityCode = dataCfg.getString("activityCode");
         String studyGuid = studyDto.getGuid();
+        ActivityDto activityDto = handle.attach(JdbiActivity.class)
+                .findActivityByStudyGuidAndCode(studyGuid, activityCode)
+                .orElseThrow(() -> new DDPException(
+                        "Could not find activity for activity code " + activityCode + " and study id " + studyGuid));
         long studyId = studyDto.getId();
-        long activityId = ActivityBuilder.findActivityId(handle, studyId, activityCode);
+        long activityId = activityDto.getActivityId();
         SqlHelper helper = handle.attach(SqlHelper.class);
         String reason = String.format(
                 "Update activity with studyGuid=%s activityCode=%s to versionTag=%s",
@@ -125,6 +134,15 @@ public class MBCAboutYouV2 implements CustomTask {
         FormBlockDef assignedSexDef = gson.fromJson(ConfigUtil.toJson(dataCfg.getConfig("assignedSexQuestion")), FormBlockDef.class);
         sectionBlockDao.insertBlockForSection(activityId, currRaceSectionDto.getSectionId(),
                 currRaceSectionDto.getDisplayOrder() + 4, assignedSexDef, newV2RevId);
+
+        //Add new citations block to closing
+        FormBlockDef citationsDef = gson.fromJson(ConfigUtil.toJson(dataCfg.getConfig("citationsBlock")), FormBlockDef.class);
+        ActivityDef currActivityDef = activityDao.findDefByDtoAndVersion(activityDto, activityVersionDto);
+        FormActivityDef formActivityDef = (FormActivityDef) currActivityDef;
+        FormSectionDef closingSectionDef =  formActivityDef.getClosing();
+        sectionBlockDao.insertBlockForSection(activityId, closingSectionDef.getSectionId(),
+                (closingSectionDef.getBlocks().size() * 10) + 10, citationsDef, newV2RevId);
+        LOG.info("Added citations");
     }
 
     private interface SqlHelper extends SqlObject {

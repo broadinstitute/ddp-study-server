@@ -6,20 +6,20 @@ import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
 public class PdfAttachment {
 
     private long pdfConfigId;
-    private boolean generateIfMissing;
+    private boolean alwaysGenerate;
 
     @JdbiConstructor
     public PdfAttachment(@ColumnName("pdf_document_configuration_id") long pdfConfigId,
-                         @ColumnName("generate_if_missing") boolean generateIfMissing) {
+                         @ColumnName("always_generate") boolean alwaysGenerate) {
         this.pdfConfigId = pdfConfigId;
-        this.generateIfMissing = generateIfMissing;
+        this.alwaysGenerate = alwaysGenerate;
     }
 
     public long getPdfConfigId() {
         return pdfConfigId;
     }
 
-    public boolean shouldGenerateIfMissing() {
-        return generateIfMissing;
+    public boolean shouldAlwaysGenerate() {
+        return alwaysGenerate;
     }
 }

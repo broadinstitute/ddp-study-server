@@ -23,7 +23,6 @@ gcloud --project=$PROJECT_ID \
 gcloud --project=$PROJECT_ID functions deploy $CF_NAME \
   --entry-point org.broadinstitute.ddp.cf.ATCPContactEmailer \
   --trigger-topic $TOPIC \
-  --allow-unauthenticated \
   --service-account $SA_ACCT \
   --env-vars-file env.yaml \
   --region us-central1 \

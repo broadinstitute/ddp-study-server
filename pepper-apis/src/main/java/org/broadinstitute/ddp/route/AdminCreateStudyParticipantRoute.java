@@ -7,6 +7,7 @@ import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.db.TransactionWrapper;
+import org.broadinstitute.ddp.db.dao.DataExportDao;
 import org.broadinstitute.ddp.db.dao.InvitationDao;
 import org.broadinstitute.ddp.db.dao.JdbiAuth0Tenant;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
@@ -17,6 +18,8 @@ import org.broadinstitute.ddp.db.dao.UserProfileDao;
 import org.broadinstitute.ddp.db.dto.Auth0TenantDto;
 import org.broadinstitute.ddp.db.dto.InvitationDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
+import org.broadinstitute.ddp.event.publish.TaskPublisher;
+import org.broadinstitute.ddp.event.publish.pubsub.TaskPubSubPublisher;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.json.admin.CreateStudyParticipantPayload;
 import org.broadinstitute.ddp.json.admin.CreateStudyParticipantResponse;
@@ -37,6 +40,12 @@ import spark.Response;
 public class AdminCreateStudyParticipantRoute extends ValidatedJsonInputRoute<CreateStudyParticipantPayload> {
 
     private static final Logger LOG = LoggerFactory.getLogger(AdminCreateStudyParticipantRoute.class);
+
+    private final TaskPublisher taskPublisher;
+
+    public AdminCreateStudyParticipantRoute(TaskPublisher taskPublisher) {
+        this.taskPublisher = taskPublisher;
+    }
 
     @Override
     protected int getValidationErrorStatus() {
@@ -107,6 +116,11 @@ public class AdminCreateStudyParticipantRoute extends ValidatedJsonInputRoute<Cr
 
             invitationDao.assignAcceptingUser(invitation.getInvitationId(), user.getId(), Instant.now());
             LOG.info("Assigned invitation {} to user {}", invitationGuid, user.getGuid());
+
+            handle.attach(DataExportDao.class).queueDataSync(user.getId());
+            taskPublisher.publishTask(
+                    TaskPubSubPublisher.TASK_PARTICIPANT_REGISTERED,
+                    "", studyGuid, user.getGuid());
 
             response.status(HttpStatus.SC_CREATED);
             return new CreateStudyParticipantResponse(user.getGuid());
