@@ -2,33 +2,31 @@ package org.broadinstitute.ddp.studybuilder.task;
 
 import com.google.gson.Gson;
 import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
 import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiActivityVersion;
-import org.broadinstitute.ddp.db.dao.JdbiFormSectionBlock;
 import org.broadinstitute.ddp.db.dao.JdbiQuestion;
-import org.broadinstitute.ddp.db.dao.JdbiQuestionValidation;
-import org.broadinstitute.ddp.db.dao.JdbiRevision;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
-import org.broadinstitute.ddp.db.dao.PdfDao;
-import org.broadinstitute.ddp.db.dao.SectionBlockDao;
-import org.broadinstitute.ddp.db.dao.UserDao;
+import org.broadinstitute.ddp.db.dao.PicklistQuestionDao;
 import org.broadinstitute.ddp.db.dao.ValidationDao;
-import org.broadinstitute.ddp.db.dto.*;
-import org.broadinstitute.ddp.db.dto.validation.RuleDto;
+import org.broadinstitute.ddp.db.dto.ActivityDto;
+import org.broadinstitute.ddp.db.dto.ActivityVersionDto;
+import org.broadinstitute.ddp.db.dto.QuestionDto;
+import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.exception.DDPException;
-import org.broadinstitute.ddp.model.activity.types.ListStyleHint;
-import org.broadinstitute.ddp.model.activity.types.RuleType;
-import org.broadinstitute.ddp.model.pdf.PdfActivityDataSource;
-import org.broadinstitute.ddp.model.pdf.PdfConfigInfo;
-import org.broadinstitute.ddp.model.pdf.PdfVersion;
-import org.broadinstitute.ddp.model.user.User;
+import org.broadinstitute.ddp.model.activity.definition.ContentBlockDef;
+import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
+import org.broadinstitute.ddp.model.activity.definition.question.PicklistOptionDef;
+import org.broadinstitute.ddp.model.activity.definition.template.TemplateVariable;
+import org.broadinstitute.ddp.model.activity.definition.validation.RequiredRuleDef;
+import org.broadinstitute.ddp.model.activity.types.BlockType;
 import org.broadinstitute.ddp.studybuilder.ActivityBuilder;
+import org.broadinstitute.ddp.util.ConfigUtil;
 import org.broadinstitute.ddp.util.GsonUtil;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.sqlobject.SqlObject;
-import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindList;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
@@ -36,57 +34,63 @@ import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.nio.file.Path;
-import java.time.Instant;
+import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Stream;
 
 public class RarexVersion2 implements CustomTask {
 
     private static final Logger LOG = LoggerFactory.getLogger(RarexVersion2.class);
-    private static final String RAREX = "rarex";
+    private static final String STUDY_GUID = "rarex";
+    private static final String DATA_FILE = "patches/patch_0721.conf";
 
     private Config studyCfg;
-    private Config varsCfg;
-    private Instant timestamp;
-    private String versionTag;
     private Gson gson;
+    private Config dataCfg;
+    private long studyId;
+
+    private JdbiActivityVersion jdbiVersion;
+    private ActivityDao activityDao;
+    private JdbiActivity jdbiActivity;
 
     @Override
     public void init(Path cfgPath, Config studyCfg, Config varsCfg) {
-
-        if (!studyCfg.getString("study.guid").equals(RAREX)) {
-            throw new DDPException("This task is only for the " + RAREX + " study!");
+        if (!studyCfg.getString("study.guid").equals(STUDY_GUID)) {
+            throw new DDPException("This task is only for the " + STUDY_GUID + " study!");
         }
-
         this.studyCfg = studyCfg;
-        timestamp = Instant.now();
-        this.varsCfg = varsCfg;
         gson = GsonUtil.standardGson();
-
+        File file = cfgPath.getParent().resolve(DATA_FILE).toFile();
+        if (!file.exists()) {
+            throw new DDPException("Data file is missing: " + file);
+        }
+        this.dataCfg = ConfigFactory.parseFile(file).resolveWith(varsCfg);
     }
 
     @Override
     public void run(Handle handle) {
-
         LanguageStore.init(handle);
-        User adminUser = handle.attach(UserDao.class).findUserByGuid(studyCfg.getString("adminUser.guid")).get();
         StudyDto studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(studyCfg.getString("study.guid"));
 
-        String studyGuid = studyDto.getGuid();
-        long studyId = studyDto.getId();
+        jdbiVersion = handle.attach(JdbiActivityVersion.class);
+        jdbiActivity = handle.attach(JdbiActivity.class);
+        activityDao = handle.attach(ActivityDao.class);
+
+        studyId = studyDto.getId();
         SqlHelper helper = handle.attach(SqlHelper.class);
-
-        //first update styling (applies to both versions: v1 and v2)
-        var activityDao = handle.attach(ActivityDao.class);
-        var jdbiActivity = handle.attach(JdbiActivity.class);
-        var jdbiActVersion = handle.attach(JdbiActivityVersion.class);
-
-
 
         long generalInformationId = ActivityBuilder.findActivityId(handle, studyId, "GENERAL_INFORMATION");
         long healthAndDevelopmentId = ActivityBuilder.findActivityId(handle, studyId, "HEALTH_AND_DEVELOPMENT");
         long prequalId = ActivityBuilder.findActivityId(handle, studyId, "PREQUAL");
+        long addParticipantId = ActivityBuilder.findActivityId(handle, studyId, "ADD_PARTICIPANT");
+        long legacyId = ActivityBuilder.findActivityId(handle, studyId, "LEGACY");
+        long qolSelfId = ActivityBuilder.findActivityId(handle, studyId, "QUALITY_OF_LIFE");
+        long qolChildId = ActivityBuilder.findActivityId(handle, studyId, "CHILD_QUALITY_OF_LIFE");
+        long qolPatientId = ActivityBuilder.findActivityId(handle, studyId, "PATIENT_QUALITY_OF_LIFE");
 
         // REFID 27
         replaceContentBlockVariableText(helper, generalInformationId,
@@ -99,73 +103,107 @@ public class RarexVersion2 implements CustomTask {
                 "Examples: physical mouth, lips, tongue or teeth issues or mouth function. You may have seen a dentist for these issues.");
         replaceContentBlockVariableText(helper, healthAndDevelopmentId,
                 "h_d_patient_teeth_issues_exp",
-                "Examples: physical mouth, lips, tongue or teeth issues or mouth function. The patient may have seen a dentist for these issues.");
+                "Examples: physical mouth, lips, tongue or teeth issues or mouth function. The patient may have "
+                + "seen a dentist for these issues.");
 
         // REFID 83
         replaceQuestionBlockVariableText(helper, prequalId, "SELF_COUNTRY",
                 "COUNTRY_picklist_label",
                 "Choose Country or Territory...");
+        replaceQuestionBlockVariableText(helper, addParticipantId, "PARTICIPANT_COUNTRY",
+                "COUNTRY_picklist_label",
+                "Choose Country or Territory...");
 
-        // RFID 98
-        List<Long> varIds = helper.findVariableIdsByText(healthAndDevelopmentId, "Have you ever been diagnosed with cancer, colon polyps or a non-cancerous tumor?");
-        varIds.forEach(varId -> helper.updateVarValueByTemplateVarId(varId, "Have you ever been diagnosed with CANCER, COLON POLYPS or a NON-CANCEROUS TUMOR?"));
-        varIds = helper.findVariableIdsByText(healthAndDevelopmentId, "Has the patient ever been diagnosed with cancer, colon polyps or a non-cancerous tumor? ");
-        varIds.forEach(varId -> helper.updateVarValueByTemplateVarId(varId, "Has the patient ever been diagnosed with CANCER, COLON POLYPS or a NON-CANCEROUS TUMOR?"));
-        varIds = helper.findVariableIdsByText(healthAndDevelopmentId, "Have you had issues with your teeth or mouth?");
-        varIds.forEach(varId -> helper.updateVarValueByTemplateVarId(varId, "Have you had issues with your TEETH or MOUTH?"));
-        varIds = helper.findVariableIdsByText(healthAndDevelopmentId, "Has the patient had issues with their teeth or mouth?");
-        varIds.forEach(varId -> helper.updateVarValueByTemplateVarId(varId, "Has the patient had issues with their TEETH or MOUTH?"));
+        // REFID 98
+        List<Long> varIds = helper.findVariableIdsByText(healthAndDevelopmentId,
+                "Have you ever been diagnosed with cancer, colon polyps or a non-cancerous tumor?");
+        varIds.forEach(varId -> helper.updateVarValueByTemplateVarId(varId,
+                "Have you ever been diagnosed with CANCER, COLON POLYPS or a NON-CANCEROUS TUMOR?"));
+        varIds = helper.findVariableIdsByText(healthAndDevelopmentId,
+                "Has the patient ever been diagnosed with cancer, colon polyps or a non-cancerous tumor? ");
+        varIds.forEach(varId -> helper.updateVarValueByTemplateVarId(varId,
+                "Has the patient ever been diagnosed with CANCER, COLON POLYPS or a NON-CANCEROUS TUMOR?"));
+        varIds = helper.findVariableIdsByText(healthAndDevelopmentId,
+                "Have you had issues with your teeth or mouth?");
+        varIds.forEach(varId -> helper.updateVarValueByTemplateVarId(varId,
+                "Have you had issues with your TEETH or MOUTH?"));
+        varIds = helper.findVariableIdsByText(healthAndDevelopmentId,
+                "Has the patient had issues with their teeth or mouth?");
+        varIds.forEach(varId -> helper.updateVarValueByTemplateVarId(varId,
+                "Has the patient had issues with their TEETH or MOUTH?"));
 
-        // RFID 105
-        varIds = helper.findVariableIdsByText(healthAndDevelopmentId, "For the conditions you listed above do you have reports or summaries to upload as support?");
-        varIds.forEach(varId -> helper.updateVarValueByTemplateVarId(varId, "Do you have genetic reports or summaries to upload?"));
+        // REFID 105
+        varIds = helper.findVariableIdsByText(healthAndDevelopmentId,
+                "For the conditions you listed above do you have reports or summaries to upload as support?");
+        varIds.forEach(varId -> helper.updateVarValueByTemplateVarId(varId,
+                "Do you have genetic reports or summaries to upload?"));
 
+        // REFID 99
+        varIds = helper.findPicklistOptionVariableIdsByStableIds(addParticipantId, "DYRK1",
+                "PRIMARY_DIAGNOSIS");
+        varIds.addAll(helper.findPicklistOptionVariableIdsByStableIds(legacyId, "DYRK1",
+                "LEGACY_PRIMARY_DIAGNOSIS"));
+        varIds.forEach(varId -> helper.updateVarValueByTemplateVarId(varId,
+                "DYRK1A - dual-specificity tyrosine phosphorylation regulated kinase 1A"));
 
-        JdbiQuestion jdbiQuestion = handle.attach(JdbiQuestion.class);
-        QuestionDto dobDto = jdbiQuestion.findLatestDtoByStudyIdAndQuestionStableId(studyId, "CONSENT_DOB").get();
+        // REFID 101
+        Config option = dataCfg.getConfig("stateDC");
+        addPicklistOption(handle, studyId, Set.of("PARTICIPANT_STATE", "SELF_STATE"), option, 75);
 
+        // REFID 107
+        option = dataCfg.getConfig("preferNotToAnswer");
+        Config ruleConfig = dataCfg.getConfig("qolRequiredValidation");
+        Set<String> stableIds = Set.of("QOL_SELF_WALK", "QOL_SELF_ERRANDS", "QOL_SELF_FEARFUL", "QOL_SELF_FOCUS",
+                "QOL_SELF_OVERWHELMED", "QOL_SELF_UNEASY", "QOL_SELF_WORTHLESS", "QOL_SELF_HELPLESS", "QOL_SELF_DEPRESSED",
+                "QOL_SELF_HOPELESS", "QOL_SELF_FEEL_FATIGUED", "QOL_SELF_TROUBLE_STARTING", "QOL_SELF_RUN_DOWN",
+                "QOL_SELF_FATIGUED_AVERAGE", "QOL_SELF_SLEEP_QUALITY", "QOL_SELF_SLEEP_REFRESHING", "QOL_SELF_SLEEP_PROBLEM",
+                "QOL_SELF_SLEEP_DIFFICULTY", "QOL_SELF_TROUBLE_LEISURE_ACTV", "QOL_SELF_TROUBLE_FAMILY_ACTV",
+                "QOL_SELF_TROUBLE_DOING_WORK", "QOL_SELF_TROUBLE_FRIENDS_ACTV", "QOL_SELF_PAIN_DAILY_ACTV",
+                "QOL_SELF_PAIN_WORK", "QOL_SELF_PAIN_SOCIAL", "QOL_SELF_PAIN_CHORES", "QOL_SELF_STAIRS", "QOL_SELF_CHORES",
 
-        //disable AgeTooYoung Dob Validation
-        ValidationDao validationDao = handle.attach(ValidationDao.class);
-        JdbiQuestionValidation validation = handle.attach(JdbiQuestionValidation.class);
-        List<RuleDto> consentDobValidations = validation.getAllActiveValidations(dobDto.getId());
-        RuleDto ageRangeValidation = consentDobValidations.stream().filter(
-                validationDto -> validationDto.getRuleType().equals(RuleType.AGE_RANGE)).findFirst().get();
-        LOG.info("Disabled age range validation for consent dob QID: {} validationID: {} old ver: {} rule: {}",
-                dobDto.getId(), ageRangeValidation.getId(), ageRangeValidation.getRevisionId(), ageRangeValidation.getRuleType());
+                "QOL_CHILD_SPORT_EXERCISE", "QOL_CHILD_GET_UP_FROM_FLOOR", "QOL_CHILD_WALK_UP_STAIRS",
+                "QOL_CHILD_ABLE_TO_DO_ACTIVITIES", "QOL_CHILD_AWFUL_MIGHT_HAPPEN", "QOL_CHILD_FELT_NERVOUS",
+                "QOL_CHILD_FELT_WORRIED", "QOL_CHILD_FELT_WORRIED_AT_HOME", "QOL_CHILD_FELT_EVRTHNG_WENT_WRONG",
+                "QOL_CHILD_FELT_LONELY", "QOL_CHILD_FELT_SAD", "QOL_CHILD_HARD_TO_HAVE_FUN", "QOL_CHILD_TIRED_TO_KEEP_UP",
+                "QOL_CHILD_GET_TIRED_EASILY", "QOL_CHILD_TOO_TIRED_FOR_SPORT", "QOL_CHILD_TOO_TIRED_TO_ENJOY",
+                "QOL_CHILD_FELT_ACCEPTED", "QOL_CHILD_COUNT_ON_FRIENDS", "QOL_CHILD_FRIENDS_HELP",
+                "QOL_CHILD_WANT_TO_BE_FRIENDS", "QOL_CHILD_TROUBLE_SLEEPING_PAIN", "QOL_CHILD_PAY_ATTENTION_PAIN",
+                "QOL_CHILD_HARD_TO_RUN_PAIN", "QOL_CHILD_HARD_TO_WALK_ONE_BLOCK_PAIN",
 
-        UpdateTemplatesInPlace updateTemplatesTask = new UpdateTemplatesInPlace();
-        LOG.info("updated variables for styling changes");
+                "QOL_PATIENT_SPORT_EXERCISE", "QOL_PATIENT_GET_UP_FROM_FLOOR", "QOL_PATIENT_WALK_UP_STAIRS",
+                "QOL_PATIENT_ABLE_TO_DO_ACTIVITIES", "QOL_PATIENT_AWFUL_MIGHT_HAPPEN", "QOL_PATIENT_FELT_NERVOUS",
+                "QOL_PATIENT_FELT_WORRIED", "QOL_PATIENT_FELT_WORRIED_AT_HOME", "QOL_PATIENT_FELT_EVRTHNG_WENT_WRONG",
+                "QOL_PATIENT_FELT_LONELY", "QOL_PATIENT_FELT_SAD", "QOL_PATIENT_HARD_TO_HAVE_FUN",
+                "QOL_PATIENT_TIRED_TO_KEEP_UP", "QOL_PATIENT_GET_TIRED_EASILY", "QOL_PATIENT_TOO_TIRED_FOR_SPORT",
+                "QOL_PATIENT_TOO_TIRED_TO_ENJOY", "QOL_PATIENT_FELT_ACCEPTED", "QOL_PATIENT_COUNT_ON_FRIENDS",
+                "QOL_PATIENT_FRIENDS_HELP", "QOL_PATIENT_WANT_TO_BE_FRIENDS", "QOL_PATIENT_TROUBLE_SLEEPING_PAIN",
+                "QOL_PATIENT_PAY_ATTENTION_PAIN", "QOL_PATIENT_HARD_TO_RUN_PAIN", "QOL_PATIENT_HARD_TO_WALK_ONE_BLOCK_PAIN"
+        );
+        addPicklistOption(handle, studyId, stableIds, option, 60);
+        addValidation(handle, studyId, stableIds, ruleConfig);
+        addAsteriskToQuestionContentBlocks(helper, handle, studyId, qolSelfId, "QUALITY_OF_LIFE");
+        addAsteriskToQuestionContentBlocks(helper, handle, studyId, qolChildId, "CHILD_QUALITY_OF_LIFE");
+        addAsteriskToQuestionContentBlocks(helper, handle, studyId, qolPatientId, "PATIENT_QUALITY_OF_LIFE");
 
-        //update brain_consent_s3_election_agree listHintStyle to NONE
-        long tmplId = helper.findTemplateIdByTemplateText("$brain_consent_s3_election_agree");
-        helper.updateGroupHeaderStyleHintByTemplateId(tmplId, ListStyleHint.NONE.name());
+        // REFID 38
+        stableIds = Set.of("HD_GENETIC_TEST", "HD_GENETIC_TEST_REASON", "HD_GENETIC_TEST_REASON_PATIENT", "HD_GENETIC_TEST_REPORT",
+                "HD_GENETIC_TEST_REPORT_PATIENT", "HD_PREGNANCY_ISSUES", "HD_LABOR_AND_DELIVERY_ISSUES", "HD_BRAIN_ISSUES",
+                "HD_BEHAVIOR_ISSUES", "HD_GROWTH_ISSUES", "HD_CANCER_ISSUES", "HD_HEAD_NECK_ISSUES", "HD_EYES_ISSUES",
+                "HD_EARS_ISSUES", "HD_SKIN_ISSUES", "HD_BONES_ISSUES", "HD_MUSCLES_ISSUES", "HD_HEART_ISSUES", "HD_LUNGS_ISSUES",
+                "HD_DIGEST_ISSUES", "HD_HORMONES_ISSUES", "HD_GENITALS_ISSUES", "HD_IMMUNE_ISSUES", "HD_BLOOD_ISSUES",
+                "HD_TEETH_ISSUES", "HD_WALK_ISSUES_PATIENT", "HD_DEVELOPMENT_CONCERNS_PATIENT", "HD_DEVELOPMENT_CONCERNS_M_Y_PATIENT",
+                "HD_DEVELOPMENT_CONCERNS_MONTHS_PATIENT", "HD_DEVELOPMENT_CONCERNS_YEARS_PATIENT", "HD_REGRESSION_PATIENT",
+                "HD_COMMUNICATION_ISSUES", "HD_LEARNING_DIFFERENCES", "HD_MOBILITY_ISSUES", "HD_SLEEPING_ISSUES", "HD_ENERGY_ISSUES",
+                "HD_EMOTION_ISSUES", "HD_DEVELOPMENT_CONCERNS_M_Y", "HD_DEVELOPMENT_CONCERNS_MONTHS", "HD_DEVELOPMENT_CONCERNS_YEARS",
+                "HD_FIRST_DEVELOPMENT_CONCERNS", "HD_WALK_ISSUES", "HD_DEVELOPMENT_CONCERNS", "HD_REGRESSION", "HD_PAIN",
+                "HD_DIAGNOSIS_LIST");
+        addValidation(handle, studyId, stableIds, ruleConfig);
+        addAsteriskToQuestionContentBlocks(helper, handle, studyId, healthAndDevelopmentId, "HEALTH_AND_DEVELOPMENT");
 
-
-
-
-
-        //consent ver: 2 stuff
-        JdbiRevision jdbiRevision = handle.attach(JdbiRevision.class);
-
-
-        QuestionDto fullNameDto = jdbiQuestion.findLatestDtoByStudyIdAndQuestionStableId(studyId, "CONSENT_FULLNAME").get();
-        TextQuestionDto fullNameTextDto = (TextQuestionDto) handle.attach(JdbiQuestion.class)
-                .findQuestionDtoById(fullNameDto.getId()).get();
-        long fullNameBlockId = helper.findQuestionBlockId(fullNameDto.getId());
-        JdbiFormSectionBlock jdbiFormSectionBlock = handle.attach(JdbiFormSectionBlock.class);
-        SectionBlockMembershipDto fullNameSectionDto = jdbiFormSectionBlock.getActiveMembershipByBlockId(fullNameBlockId).get();
-
-        long dobBlockId = helper.findQuestionBlockId(dobDto.getId());
-        SectionBlockMembershipDto dobSectionDto = jdbiFormSectionBlock.getActiveMembershipByBlockId(dobBlockId).get();
-        long newV2RevId = jdbiRevision.insertStart(timestamp.toEpochMilli(), adminUser.getId(), "consent version#2 change");
-        SectionBlockDao sectionBlockDao = handle.attach(SectionBlockDao.class);
-        int dobDisplayOrder = dobSectionDto.getDisplayOrder();
 
         /*TextQuestionDef firstNameDef = gson.fromJson(ConfigUtil.toJson(dataCfg.getConfig("firstNameQuestion")), TextQuestionDef.class);
         QuestionBlockDef blockDef = new QuestionBlockDef(firstNameDef);
         sectionBlockDao.insertBlockForSection(activityId, fullNameSectionDto.getSectionId(), dobDisplayOrder - 5, blockDef, newV2RevId);*/
-        LOG.info("Added first name and last name questions.");
 
 
         //update template placeholder text
@@ -181,29 +219,21 @@ public class RarexVersion2 implements CustomTask {
 
     }
 
-    private void addNewConsentDataSourceToReleasePdf(Handle handle, long studyId, String pdfName, String activityCode, String versionTag) {
-        PdfDao pdfDao = handle.attach(PdfDao.class);
-        JdbiActivityVersion jdbiActivityVersion = handle.attach(JdbiActivityVersion.class);
-
-        PdfConfigInfo info = pdfDao.findConfigInfoByStudyIdAndName(studyId, pdfName)
-                .orElseThrow(() -> new DDPException("Could not find pdf with name=" + pdfName));
-
-        PdfVersion version = pdfDao.findOrderedConfigVersionsByConfigId(info.getId())
-                .stream()
-                .filter(ver -> ver.getAcceptedActivityVersions().containsKey(activityCode))
-                .findFirst()
-                .orElseThrow(() -> new DDPException("Could not find pdf version with data source for activityCode=" + activityCode));
-
-        long activityId = ActivityBuilder.findActivityId(handle, studyId, activityCode);
-        long activityVersionId = jdbiActivityVersion.findByActivityCodeAndVersionTag(studyId, activityCode, versionTag)
-                .map(ActivityVersionDto::getId)
-                .orElseThrow(() -> new DDPException(String.format(
-                        "Could not find activity version id for activityCode=%s versionTag=%s", activityCode, versionTag)));
-
-        pdfDao.insertDataSource(version.getId(), new PdfActivityDataSource(activityId, activityVersionId));
-
-        LOG.info("Added activity data source with activityCode={} versionTag={} to pdf {} version {}",
-                activityCode, versionTag, info.getConfigName(), version.getVersionTag());
+    private void addAsteriskToQuestionContentBlocks(SqlHelper helper, Handle handle, long studyId, Long activityId, String activityCode) {
+        ActivityVersionDto currentVersionDto = jdbiVersion.getActiveVersion(activityId)
+                .orElseThrow(() -> new DDPException("Could not find active version for activity " + activityId));
+        FormActivityDef activity = findActivityDef(activityCode, currentVersionDto.getVersionTag());
+        for (var section : activity.getAllSections()) {
+            for (var block : section.getBlocks()) {
+                if (block.getBlockType() == BlockType.CONTENT) {
+                    var contentBlock = (ContentBlockDef) block;
+                    Optional<TemplateVariable> questionVariable = contentBlock.getBodyTemplate().getVariable("question");
+                    questionVariable.ifPresent(templateVariable -> helper.updateVarValueByTemplateVarId(
+                            templateVariable.getId().get(),
+                            templateVariable.getTranslation(LanguageStore.DEFAULT_LANG_CODE).get().getText() + "*"));
+                }
+            }
+        }
     }
 
     private void replaceContentBlockVariableText(SqlHelper helper, long activityId, String variableName, String text) {
@@ -218,6 +248,36 @@ public class RarexVersion2 implements CustomTask {
         for (Long variableId : variableIds) {
             helper.updateVarValueByTemplateVarId(variableId, text);
         }
+    }
+
+    private void addPicklistOption(Handle handle, long studyId, Set<String> questionStableIds, Config option, int displayOrder) {
+        PicklistQuestionDao plQuestionDao = handle.attach(PicklistQuestionDao.class);
+        JdbiQuestion jdbiQuestion = handle.attach(JdbiQuestion.class);
+        Stream<QuestionDto> questionDtos = jdbiQuestion.findLatestDtosByStudyIdAndQuestionStableIds(studyId, questionStableIds);
+        questionDtos.forEach(questionDto -> plQuestionDao.insertOption(questionDto.getId(),
+                gson.fromJson(ConfigUtil.toJson(option), PicklistOptionDef.class), displayOrder,
+                questionDto.getRevisionId()));
+    }
+
+    private void addValidation(Handle handle, long studyId, Collection<String> stableIds, Config ruleConfig) {
+        ValidationDao validationDao = handle.attach(ValidationDao.class);
+        for (String stableId : stableIds) {
+            QuestionDto questionDto = handle.attach(JdbiQuestion.class)
+                    .findLatestDtoByStudyIdAndQuestionStableId(studyId, stableId)
+                    .orElseThrow(() -> new DDPException("Could not find question " + stableId));
+            RequiredRuleDef rule = gson.fromJson(ConfigUtil.toJson(ruleConfig), RequiredRuleDef.class);
+            validationDao.insert(questionDto.getId(), rule, questionDto.getRevisionId());
+            LOG.info("Inserted validation rule with id={} questionStableId={}", rule.getRuleId(), questionDto.getStableId());
+        }
+    }
+
+    private FormActivityDef findActivityDef(String activityCode, String versionTag) {
+        ActivityDto activityDto = jdbiActivity
+                .findActivityByStudyIdAndCode(studyId, activityCode).get();
+        ActivityVersionDto versionDto = jdbiVersion
+                .findByActivityCodeAndVersionTag(studyId, activityCode, versionTag).get();
+        return (FormActivityDef) activityDao
+                .findDefByDtoAndVersion(activityDto, versionDto);
     }
 
     private interface SqlHelper extends SqlObject {
@@ -308,10 +368,33 @@ public class RarexVersion2 implements CustomTask {
                                                                     @Bind("stableId") String stableId);
 
         @SqlQuery("select tv.template_variable_id from template_variable tv"
+                + " join template as tmpl on tmpl.template_id = tv.template_id"
+                + " join picklist_option po on tmpl.template_id = po.option_label_template_id"
+                + " join picklist_question pk on po.picklist_question_id = pk.question_id"
+                + " join block__question bt on bt.question_id = pk.question_id"
+                + " join question q on q.question_id = bt.question_id"
+                + " join question_stable_code qsc on qsc.question_stable_code_id = q.question_stable_code_id"
+                + " where qsc.stable_id = :questionStableId"
+                + "   and po.picklist_option_stable_id = :optionStableId"
+                + "   and bt.block_id in (select fsb.block_id"
+                + "                         from form_activity__form_section as fafs"
+                + "                         join form_section__block as fsb on fsb.form_section_id = fafs.form_section_id"
+                + "                        where fafs.form_activity_id = :activityId"
+                + "                        union"
+                + "                       select bn.nested_block_id"
+                + "                         from form_activity__form_section as fafs"
+                + "                         join form_section__block as fsb on fsb.form_section_id = fafs.form_section_id"
+                + "                         join block_nesting as bn on bn.parent_block_id = fsb.block_id"
+                + "                        where fafs.form_activity_id = :activityId)")
+        List<Long> findPicklistOptionVariableIdsByStableIds(@Bind("activityId") long activityId,
+                                                                    @Bind("optionStableId") String optionStableId,
+                                                                    @Bind("questionStableId") String questionStableId);
+
+        @SqlQuery("select tv.template_variable_id from template_variable tv"
                 + " join i18n_template_substitution ts on ts.template_variable_id = tv.template_variable_id"
                 + " join template as tmpl on tmpl.template_id = tv.template_id"
                 + " join block_content as bt on tmpl.template_id = bt.body_template_id"
-                + " where ts.substitution_value= = :text"
+                + " where ts.substitution_value = :text"
                 + "   and bt.block_id in (select fsb.block_id"
                 + "                         from form_activity__form_section as fafs"
                 + "                         join form_section__block as fsb on fsb.form_section_id = fafs.form_section_id"
@@ -325,6 +408,7 @@ public class RarexVersion2 implements CustomTask {
         List<Long> findVariableIdsByText(@Bind("activityId") long activityId,
                                          @Bind("text") String text);
 
+        // For single language only
         @SqlUpdate("update i18n_template_substitution set substitution_value = :value where template_variable_id = :id")
         int updateVarValueByTemplateVarId(@Bind("id") long templateVarId, @Bind("value") String value);
 
