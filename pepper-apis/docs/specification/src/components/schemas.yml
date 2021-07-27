@@ -849,6 +849,9 @@ Component.MailingAddress:
           type: string
           enum:
             - MAILING_ADDRESS
+        addressGuid:
+          type: string
+          description: 'guid of a snapshotted address: if it is not null then the address should be loaded by this guid, if it is null then load the default address'
         parameters:
           type: object
           properties:

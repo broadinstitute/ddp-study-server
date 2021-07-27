@@ -44,6 +44,7 @@ public class TemplateRenderHelper {
 
         Map<String, String> snapshot = ctx.getHandle().attach(ActivityInstanceDao.class).findSubstitutions(
                 ctx.getFormResponse().getId());
+        ctx.getActivitySnapshots().putAll(snapshot);
 
         Map<String, Object> context = new HashMap<>();
         switch (renderContextSource) {
