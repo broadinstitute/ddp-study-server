@@ -1,10 +1,9 @@
 #set( $text = {
-  "subject": "Reminder: Please provide additional information for Count Me In",
-  "salutation_self": "Dear {{participant_firstName}},",
-  "salutation_parent": "Dear {{proxy_firstName}},",
-  "thank_you": "Thank you for enrolling in Count Me In and giving us your consent for research.",
-  "need_info": "Before we can proceed, we need some information about where {{\#if proxy_guid}}your child has{{else}}you have{{/if}} received care for {{\#if proxy_guid}}their{{else}}your{{/if}} cancer(s). Please click on the link below to provide this information:",
-  "button": "Contact Information Form",
+  "subject": "Reminder: Request for your child's contact information",
+  "salutation": "Dear {{proxy_firstName}},",
+  "thank_you": "Thank you for joining Count Me In and telling us about your child's experience.",
+  "reminder": "${reminder_week}, we sent you a link to provide us with your child's email so we can contact them about their upcoming re-consent process. We are resending the link in case it was missed. Once you provide us with your child's email, we will let them know what to expect in the re-consent process.",
+  "button": "Provide Contact Information",
   "contact": "If you have questions at any point and would like to talk to a member of our study staff, please reach out to us at
     <a href='mailto:${contact.email}' target='_blank' style='color: #7154ff; text-decoration: none; cursor: pointer;'>${contact.email}</a>
     or call <a href='tel:${contact.phone}' style='color: #7154ff; text-decoration: none; cursor: pointer;'>${contact.phone}</a>.",
@@ -15,4 +14,4 @@
     <a href='${social.facebook}' target='_blank' style='color: #7154ff; text-decoration: none; cursor: pointer;'>Facebook</a>."
 })
 
-#parse("release_reminder.tmpl.html")
+#parse("reconsent_child_contact_reminder.tmpl.html")
