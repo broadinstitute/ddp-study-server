@@ -275,4 +275,5 @@
     <include file="db-changes/schema/DDP-5910-pdf-picklist-fields-mapping.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/DDP-6313-add-study-redirect-workflow.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/DDP-6338-workflow-check-each-instance.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/DDP-6490-form_activity_setting_snapshot_address_on_submit.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>

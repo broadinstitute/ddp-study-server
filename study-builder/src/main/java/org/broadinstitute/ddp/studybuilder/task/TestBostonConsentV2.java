@@ -204,7 +204,8 @@ public class TestBostonConsentV2 implements CustomTask {
                 v1Settings.getReadonlyHintTemplateId(),
                 v2LastUpdated,
                 v2LastUpdatedTemplate.getTemplateId(),
-                v1Settings.shouldSnapshotSubstitutionsOnSubmit());
+                v1Settings.shouldSnapshotSubstitutionsOnSubmit(),
+                v1Settings.shouldSnapshotAddressOnSubmit());
 
         //
         // Lastly, update consent naming details.

@@ -1,6 +1,7 @@
 package org.broadinstitute.ddp.content;
 
 public class I18nTemplateConstants {
+
     public static final String LAST_UPDATED = "LAST_UPDATED";
     public static final String DDP = "ddp";
 
@@ -16,5 +17,6 @@ public class I18nTemplateConstants {
         public static final String TEST_RESULT_CODE = "DDP_TEST_RESULT_CODE";
         public static final String TEST_RESULT_TIME_COMPLETED = "DDP_TEST_RESULT_TIME_COMPLETED";
         public static final String IS_GOVERNED_PARTICIPANT = "DDP_IS_GOVERNED_PARTICIPANT";
+        public static final String ADDRESS_GUID = "ADDRESS_GUID";
     }
 }

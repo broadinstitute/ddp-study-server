@@ -8,12 +8,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.broadinstitute.ddp.content.I18nTemplateConstants;
+import org.broadinstitute.ddp.db.DaoException;
 import org.broadinstitute.ddp.db.dto.EnrollmentStatusDto;
 import org.broadinstitute.ddp.db.dto.InvitationDto;
 import org.broadinstitute.ddp.db.dto.MedicalProviderDto;
 import org.broadinstitute.ddp.export.json.structured.FileRecord;
 import org.broadinstitute.ddp.model.activity.instance.ActivityResponse;
 import org.broadinstitute.ddp.model.activity.instance.answer.DateValue;
+import org.broadinstitute.ddp.model.address.MailAddress;
 import org.broadinstitute.ddp.model.user.User;
 
 /**
@@ -25,6 +28,11 @@ public class Participant {
     private User user;
     private Map<String, List<ActivityResponse>> responses;
     private Map<Long, Map<String, String>> activityInstanceSubstitutions;
+
+    /**
+     * Map with addresses: key = instanceId, value = MailAddress (which guid stored in activity_instance_substitution ADDRESS_GUID
+     */
+    private Map<Long, MailAddress> nonDefaultMailAddresses;
 
     // todo: better models for status and medical providers
     private EnrollmentStatusDto status;
@@ -43,6 +51,7 @@ public class Participant {
         this.files = new ArrayList<>();
         this.responses = new HashMap<>();
         this.activityInstanceSubstitutions = new HashMap<>();
+        this.nonDefaultMailAddresses = new HashMap<>();
     }
 
     public EnrollmentStatusDto getStatus() {
@@ -102,6 +111,28 @@ public class Participant {
 
     public void putActivityInstanceSubstitutions(long activityInstanceId, Map<String, String> substitutions) {
         activityInstanceSubstitutions.put(activityInstanceId, substitutions);
+    }
+
+    public Map<Long, MailAddress> getNonDefaultMailAddresses() {
+        return nonDefaultMailAddresses;
+    }
+
+    public void associateParticipantInstancesWithNonDefaultAddresses(List<MailAddress> participantNonDefaultAddresses) {
+        nonDefaultMailAddresses = new HashMap<>();
+        for (Map.Entry<Long, Map<String, String>> instanceEntry : activityInstanceSubstitutions.entrySet()) {
+            for (Map.Entry<String, String> subsEntry : instanceEntry.getValue().entrySet()) {
+                if (subsEntry.getKey().equals(I18nTemplateConstants.Snapshot.ADDRESS_GUID)) {
+                    MailAddress mailAddress = participantNonDefaultAddresses
+                            .stream()
+                            .filter(m -> m.getGuid().equals(subsEntry.getValue()))
+                            .findFirst()
+                            .orElseThrow(() -> new DaoException(
+                                    "Inconsistent non-default address data in DB (address stored in instance subscriptions "
+                                            + "is not found in participants address). AddressGuid=" + subsEntry.getValue()));
+                    nonDefaultMailAddresses.put(instanceEntry.getKey(), mailAddress);
+                }
+            }
+        }
     }
 
     public LocalDate getDateOfMajority() {

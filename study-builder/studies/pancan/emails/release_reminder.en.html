@@ -1,7 +1,7 @@
 #set( $text = {
   "subject": "Reminder: Please provide additional information for Count Me In",
-  "salutation_self": "Dear Participant,",
-  "salutation_parent": "Dear Parent,",
+  "salutation_self": "Dear {{participant_firstName}},",
+  "salutation_parent": "Dear {{proxy_firstName}},",
   "thank_you": "Thank you for enrolling in Count Me In and giving us your consent for research.",
   "need_info": "Before we can proceed, we need some information about where {{\#if proxy_guid}}your child has{{else}}you have{{/if}} received care for {{\#if proxy_guid}}their{{else}}your{{/if}} cancer(s). Please click on the link below to provide this information:",
   "button": "Contact Information Form",

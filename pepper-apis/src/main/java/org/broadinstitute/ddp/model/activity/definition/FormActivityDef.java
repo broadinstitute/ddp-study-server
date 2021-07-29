@@ -55,6 +55,9 @@ public class FormActivityDef extends ActivityDef {
     @SerializedName("snapshotSubstitutionsOnSubmit")
     protected boolean snapshotSubstitutionsOnSubmit;
 
+    @SerializedName("snapshotAddressOnSubmit")
+    protected boolean snapshotAddressOnSubmit;
+
     private transient List<FormBlockDef> cachedToggleableBlocks;
     private transient Map<String, QuestionDef> stableIdToQuestion;
 
@@ -159,6 +162,10 @@ public class FormActivityDef extends ActivityDef {
         return snapshotSubstitutionsOnSubmit;
     }
 
+    public boolean shouldSnapshotAddressOnSubmit() {
+        return snapshotAddressOnSubmit;
+    }
+
     public List<FormSectionDef> getAllSections() {
         List<FormSectionDef> allSections = new ArrayList<>();
         if (introduction != null) {
@@ -222,6 +229,7 @@ public class FormActivityDef extends ActivityDef {
         private Template lastUpdatedTextTemplate = null;
         private LocalDateTime lastUpdated = null;
         private boolean snapshotSubstitutionsOnSubmit = false;
+        private boolean snapshotAddressOnSubmit = false;
 
         protected FormBuilder() {
             // Use static factories.
@@ -282,6 +290,11 @@ public class FormActivityDef extends ActivityDef {
             return this;
         }
 
+        public FormBuilder setSnapshotAddressOnSubmit(boolean snapshotAddressOnSubmit) {
+            this.snapshotAddressOnSubmit = snapshotAddressOnSubmit;
+            return this;
+        }
+
         public FormActivityDef build() {
             FormActivityDef form = new FormActivityDef(
                     formType,
@@ -311,6 +324,7 @@ public class FormActivityDef extends ActivityDef {
             form.introduction = introduction;
             form.closing = closing;
             form.snapshotSubstitutionsOnSubmit = snapshotSubstitutionsOnSubmit;
+            form.snapshotAddressOnSubmit = snapshotAddressOnSubmit;
             return form;
         }
     }
