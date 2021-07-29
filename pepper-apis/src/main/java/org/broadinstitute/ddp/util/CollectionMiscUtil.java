@@ -72,7 +72,7 @@ public class CollectionMiscUtil {
         if (strList != null) {
             strList
                     .stream()
-                    .allMatch(str -> StringUtils.startsWithIgnoreCase(str, prefix));
+                    .anyMatch(str -> StringUtils.startsWithIgnoreCase(str, prefix));
         }
         return false;
     }
