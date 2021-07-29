@@ -8,6 +8,8 @@ import java.util.function.Function;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.StringUtils;
+
 
 /**
  * General-purpose utility methods used to work with collections
@@ -64,5 +66,14 @@ public class CollectionMiscUtil {
 
     public static Collector<CharSequence, ?, String> joinWithComma() {
         return Collectors.joining(",");
+    }
+
+    public static boolean anyStartsWithIgnoreCase(List<String> strList, String prefix) {
+        if (strList != null) {
+            strList
+                    .stream()
+                    .allMatch(str -> StringUtils.startsWithIgnoreCase(str, prefix));
+        }
+        return false;
     }
 }
