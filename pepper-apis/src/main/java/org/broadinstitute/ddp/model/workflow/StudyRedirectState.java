@@ -11,7 +11,7 @@ public class StudyRedirectState implements WorkflowState {
     String redirectUrl;
 
     @JdbiConstructor
-    public StudyRedirectState(@ColumnName("workflow_state_id") Long workflowStateId,
+    public StudyRedirectState(@ColumnName("workflow_state_id") long workflowStateId,
                               @ColumnName("study_guid") String studyGuid,
                               @ColumnName("study_name") String studyName,
                               @ColumnName("redirect_url")String redirectUrl) {
