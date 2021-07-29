@@ -160,13 +160,13 @@
   "general_information_patient_last_name_at_b_exp": "The patient’s complete legal last (family) name at birth",
   "general_information_patient_middle_name_at_b_exp": "The patient’s complete middle/second or additional name at birth",
 
-  "general_information_primary_lang_prompt": "What is the primary language you speak?",
+  "general_information_primary_lang_prompt": "What is the primary language you speak?*",
   "general_information_patient_primary_lang_prompt": "What is the primary language the patient speaks?",
 
   "general_information_mailing_address_title": "Your Mailing Address",
   "general_information_mailing_address_subtitle": "We are asking this in the event that a researcher or organization wants to collect biospecimens (spit, blood, skin, etc) in the future, so we can mail the sample collection kit to you. Please list an address where you wish to receive a kit.",
 
-  "general_information_birthplace_header": "Birthplace/Birthday",
+  "general_information_birthplace_header": "Birthplace",
   "general_information_birthplace_header_exp": "The following questions are used to create the unique codes for your data.",
   "general_information_patient_birthplace_header": "Patient's Birthplace",
   "general_information_patient_birthplace_header_exp": "The following questions are used to create the unique codes for the data provided.",
@@ -262,8 +262,21 @@
   "general_information_hic_yes": "Yes",
   "general_information_hic_no": "No",
   "general_information_hic_not_to_answer": "Prefer Not to Answer",
-  "general_information_hic_not_to_answer_details": "What type(s) of coverage do you have?",
-  "general_information_hic_not_to_answer_details_exp": "Please describe the general type of insurance(s) you have.",
+  "general_information_hic_not_to_answer_details": "What type(s) of coverage do you have?*",
+  "general_information_hic_not_to_answer_details_exp": "For health insurance coverage outside the USA, please select the categories that most closely describe the source of the participant's health insurance.",
+
+  "private_health_insurance": "Private health insurance",
+  "medicare": "Medicare",
+  "medigap": "Medi-gap",
+  "medicaid": "Medicaid",
+  "schip": "SCHIP (Children’s Health Insurance Program)",
+  "military_health_care": "Military health care (Tricare/VA, Champ-VA)",
+  "indian_health_service": "Indian health service",
+  "state_sponsored": "State-sponsored health plan",
+  "other_government_program": "Other government program",
+  "single_service_plan": "Single service plan (e.g. dental, vision, prescription)",
+  "no_coverage": "No coverage",
+  "dont_know": "Don’t know",
 
   "general_information_patient_country_birthplace": "Country/Territory where the patient was born *",
   "general_information_patient_country_birthplace_req_hint": "Country/Territory cannot be empty",
@@ -396,9 +409,9 @@
   "h_d_patient_blood_issues_exp": "Examples: Excessive bleeding or problems noted with your blood cells on lab reports. They may have seen a hematologist for these issues.",
 
   "h_d_teeth_issues": "Have you had issues with your TEETH or MOUTH?*",
-  "h_d_teeth_issues_exp": "Examples: physical mouth, lips, tongue or teeth issues or mouth function.",
+  "h_d_teeth_issues_exp": "Examples: physical mouth, lips, tongue or teeth issues or mouth function. You may have seen a dentist for these issues.",
   "h_d_patient_teeth_issues": "Has the patient had issues with their TEETH or MOUTH?*",
-  "h_d_patient_teeth_issues_exp": "Examples: physical mouth, lips, tongue or teeth issues or mouth function.",
+  "h_d_patient_teeth_issues_exp": "Examples: physical mouth, lips, tongue or teeth issues or mouth function. You may have seen a dentist for these issues.",
 
   "h_d_patient_walk_issues": "Is the patient able to walk without assistance?*",
   "h_d_patient_communication": "Is the patient able to communicate (either single syllables, verbal words, or sentences)?*",
