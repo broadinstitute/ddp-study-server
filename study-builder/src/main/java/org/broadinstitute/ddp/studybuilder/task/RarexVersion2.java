@@ -10,6 +10,7 @@ import org.broadinstitute.ddp.db.dao.JdbiActivityVersion;
 import org.broadinstitute.ddp.db.dao.JdbiQuestion;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.PicklistQuestionDao;
+import org.broadinstitute.ddp.db.dao.QuestionDao;
 import org.broadinstitute.ddp.db.dao.ValidationDao;
 import org.broadinstitute.ddp.db.dto.ActivityDto;
 import org.broadinstitute.ddp.db.dto.ActivityVersionDto;
@@ -19,6 +20,8 @@ import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.activity.definition.ContentBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistOptionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.PicklistQuestionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.template.TemplateVariable;
 import org.broadinstitute.ddp.model.activity.definition.validation.RequiredRuleDef;
 import org.broadinstitute.ddp.model.activity.types.BlockType;
@@ -56,6 +59,7 @@ public class RarexVersion2 implements CustomTask {
     private JdbiActivityVersion jdbiVersion;
     private ActivityDao activityDao;
     private JdbiActivity jdbiActivity;
+    private QuestionDao questionDao;
 
     @Override
     public void init(Path cfgPath, Config studyCfg, Config varsCfg) {
@@ -79,6 +83,7 @@ public class RarexVersion2 implements CustomTask {
         jdbiVersion = handle.attach(JdbiActivityVersion.class);
         jdbiActivity = handle.attach(JdbiActivity.class);
         activityDao = handle.attach(ActivityDao.class);
+        questionDao = handle.attach(QuestionDao.class);
 
         studyId = studyDto.getId();
         SqlHelper helper = handle.attach(SqlHelper.class);
@@ -91,6 +96,8 @@ public class RarexVersion2 implements CustomTask {
         long qolSelfId = ActivityBuilder.findActivityId(handle, studyId, "QUALITY_OF_LIFE");
         long qolChildId = ActivityBuilder.findActivityId(handle, studyId, "CHILD_QUALITY_OF_LIFE");
         long qolPatientId = ActivityBuilder.findActivityId(handle, studyId, "PATIENT_QUALITY_OF_LIFE");
+        long consentSelfId = ActivityBuilder.findActivityId(handle, studyId, "CONSENT");
+        long consentParentalId = ActivityBuilder.findActivityId(handle, studyId, "PARENTAL_CONSENT");
 
         // REFID 27
         replaceContentBlockVariableText(helper, generalInformationId,
@@ -98,13 +105,11 @@ public class RarexVersion2 implements CustomTask {
                 "This is just to look at insurance coverage in rare disease in general, NOT to track insurance details.");
 
         // REFID 71
-        replaceContentBlockVariableText(helper, healthAndDevelopmentId,
-                "h_d_teeth_issues_exp",
-                "Examples: physical mouth, lips, tongue or teeth issues or mouth function. You may have seen a dentist for these issues.");
-        replaceContentBlockVariableText(helper, healthAndDevelopmentId,
-                "h_d_patient_teeth_issues_exp",
-                "Examples: physical mouth, lips, tongue or teeth issues or mouth function. The patient may have "
-                + "seen a dentist for these issues.");
+        List<Long> varIds = helper.findVariableIdsByText(healthAndDevelopmentId,
+                "Examples: physical mouth, lips, tongue or teeth issues or mouth function.");
+        varIds.forEach(varId -> helper.updateVarValueByTemplateVarId(varId,
+                "Examples: physical mouth, lips, tongue or teeth issues or mouth function. "
+                        + "You may have seen a dentist for these issues."));
 
         // REFID 83
         replaceQuestionBlockVariableText(helper, prequalId, "SELF_COUNTRY",
@@ -115,7 +120,7 @@ public class RarexVersion2 implements CustomTask {
                 "Choose Country or Territory...");
 
         // REFID 98
-        List<Long> varIds = helper.findVariableIdsByText(healthAndDevelopmentId,
+        varIds = helper.findVariableIdsByText(healthAndDevelopmentId,
                 "Have you ever been diagnosed with cancer, colon polyps or a non-cancerous tumor?");
         varIds.forEach(varId -> helper.updateVarValueByTemplateVarId(varId,
                 "Have you ever been diagnosed with CANCER, COLON POLYPS or a NON-CANCEROUS TUMOR?"));
@@ -185,7 +190,7 @@ public class RarexVersion2 implements CustomTask {
         addAsteriskToQuestionContentBlocks(helper, handle, studyId, qolChildId, "CHILD_QUALITY_OF_LIFE");
         addAsteriskToQuestionContentBlocks(helper, handle, studyId, qolPatientId, "PATIENT_QUALITY_OF_LIFE");
 
-        // REFID 38
+        // REFID 103
         stableIds = Set.of("HD_GENETIC_TEST", "HD_GENETIC_TEST_REASON", "HD_GENETIC_TEST_REASON_PATIENT", "HD_GENETIC_TEST_REPORT",
                 "HD_GENETIC_TEST_REPORT_PATIENT", "HD_PREGNANCY_ISSUES", "HD_LABOR_AND_DELIVERY_ISSUES", "HD_BRAIN_ISSUES",
                 "HD_BEHAVIOR_ISSUES", "HD_GROWTH_ISSUES", "HD_CANCER_ISSUES", "HD_HEAD_NECK_ISSUES", "HD_EYES_ISSUES",
@@ -199,6 +204,69 @@ public class RarexVersion2 implements CustomTask {
                 "HD_DIAGNOSIS_LIST");
         addValidation(handle, studyId, stableIds, ruleConfig);
         addAsteriskToQuestionContentBlocks(helper, handle, studyId, healthAndDevelopmentId, "HEALTH_AND_DEVELOPMENT");
+
+        // REFID 109
+        replaceContentBlockVariableText(helper, consentSelfId,
+                "rarex_consent_s2_purpose_detail",
+                "The DCP is a program to collect and store data about participants with lots of different kinds of rare "
+                        + "diseases for research and participant support. Another purpose of the DCP is to increase participant "
+                        + "recruitment into research studies and clinical trials.");
+        varIds = helper.findVariableIdsByText(consentSelfId,
+                "\n              I give permission to the RARE-X DCP’s staff to contact me to ask me to update my health status, or my\n"
+                        + "              contact information, to request that I upload a particular attachment or to complete forms "
+                        + "associated with\n              my participation in the DCP.\n            ");
+        varIds.forEach(varId -> helper.updateVarValueByTemplateVarId(varId,
+                "I give permission to the RARE-X DCP’s study staff to contact me to ask me to update my health status, or my "
+                        + " contact information, to request that I upload a particular attachment or to complete forms associated with "
+                        + " my participation in the DCP."));
+        varIds = helper.findVariableIdsByText(consentSelfId,
+                "\n              You are not likely to directly benefit from participating in this Program.\n            ");
+        varIds.forEach(varId -> helper.updateVarValueByTemplateVarId(varId,
+                "You are not likely to directly benefit from participating in this program."));
+        varIds = helper.findVariableIdsByText(consentParentalId,
+                "\n              Your child is not likely to directly benefit from participating in this Program.\n            ");
+        varIds.forEach(varId -> helper.updateVarValueByTemplateVarId(varId,
+                "Your child is not likely to directly benefit from participating in this program."));
+
+        // REFID 71
+        replaceContentBlockVariableText(helper, generalInformationId,
+                "general_information_birthplace_header",
+                "Birthplace");
+        detachQuestionFromBothSectionAndBlock(handle, helper, "PATIENT_DATE_OF_BIRTH");
+
+        // REFID 92
+        helper.updateExpressionText(
+                "user.studies[\"rarex\"].forms[\"ADD_PARTICIPANT\"].questions[\"PARTICIPANT_RELATIONSHIP\"].answers"
+                        + ".hasOption(\"SELF\") && user.studies[\"rarex\"].forms[\"DATA_SHARING\"].questions"
+                        + "[\"DATA_SHARING_BIOSPECIMEN_INTERESTED\"].answers.hasOption(\"YES\")",
+                helper.findComponentBlockExpressionIds(generalInformationId));
+
+        // REFID 28
+        helper.updatePicklistsToMulti(healthAndDevelopmentId, List.of("HD_GENETIC_TEST_REASON_PATIENT", "HD_GENETIC_TEST_REASON"));
+
+        // REFID 102
+        replaceContentBlockVariableText(helper, generalInformationId,
+                "general_information_primary_lang_prompt",
+                "What is the primary language you speak?*");
+        addValidation(handle, studyId, List.of("GI_PRIMARY_LANGUAGE"), ruleConfig);
+        replaceContentBlockVariableText(helper, generalInformationId,
+                "general_information_hic_not_to_answer_details",
+                "What type(s) of coverage do you have?*");
+
+        // REFID 48
+        replaceContentBlockVariableText(helper, generalInformationId,
+                "general_information_hic_not_to_answer_details_exp",
+                "For health insurance coverage outside the USA, please select the categories that most closely "
+                        + "describe the source of the participant's health insurance.");
+        JdbiQuestion jdbiQuestion = handle.attach(JdbiQuestion.class);
+        Optional<QuestionDto> questionDto = jdbiQuestion.findLatestDtoByStudyIdAndQuestionStableId(studyId,
+                "GENERAL_INFORMATION_HIC_OTHER_DETAIL");
+        long blockId = detachQuestionFromBlockAndGetBlockId(handle, helper, "GENERAL_INFORMATION_HIC_OTHER_DETAIL");
+        PicklistQuestionDef questionDef = (PicklistQuestionDef) gson.fromJson(
+                ConfigUtil.toJson(dataCfg.getConfig("GIInsuranceQuestionBlock")), QuestionDef.class);
+        questionDao.insertQuestion(generalInformationId, questionDef, questionDto.get().getRevisionId());
+        questionDao.getJdbiBlockQuestion().insert(blockId, questionDef.getQuestionId());
+
 
 
         /*TextQuestionDef firstNameDef = gson.fromJson(ConfigUtil.toJson(dataCfg.getConfig("firstNameQuestion")), TextQuestionDef.class);
@@ -217,6 +285,27 @@ public class RarexVersion2 implements CustomTask {
         jdbiVarSubst.bulkUpdateRevisionIdsBySubIds(Arrays.asList(currTranslation.getId().get()), revIds);
         jdbiVarSubst.insert(currTranslation.getLanguageCode(), newTemplateText, newV2RevId, tmplVarId);*/
 
+    }
+
+    private void detachQuestionFromBothSectionAndBlock(Handle handle, SqlHelper helper, String questionStableId) {
+        JdbiQuestion jdbiQuestion = handle.attach(JdbiQuestion.class);
+        Optional<QuestionDto> questionDto = jdbiQuestion.findLatestDtoByStudyIdAndQuestionStableId(studyId, questionStableId);
+        if (questionDto.isEmpty()) {
+            throw new DDPException("Couldn't find question with stableId: " + questionStableId);
+        }
+        helper.detachQuestionFromBothSectionAndBlock(questionDto.get().getId());
+    }
+
+    private long detachQuestionFromBlockAndGetBlockId(Handle handle, SqlHelper helper, String questionStableId) {
+        JdbiQuestion jdbiQuestion = handle.attach(JdbiQuestion.class);
+        Optional<QuestionDto> questionDto = jdbiQuestion.findLatestDtoByStudyIdAndQuestionStableId(studyId, questionStableId);
+        if (questionDto.isPresent()) {
+            long questionId = questionDto.get().getId();
+            long blockId = helper.findQuestionBlockId(questionId);
+            helper.detachQuestionFromBlock(questionId);
+            return blockId;
+        }
+        throw new DDPException("Couldn't find question with stableId: " + questionStableId);
     }
 
     private void addAsteriskToQuestionContentBlocks(SqlHelper helper, Handle handle, long studyId, Long activityId, String activityCode) {
@@ -331,7 +420,7 @@ public class RarexVersion2 implements CustomTask {
 
         @SqlQuery("select tv.template_variable_id from template_variable tv"
                 + " join template as tmpl on tmpl.template_id = tv.template_id"
-                + " join block_content as bt on tmpl.template_id = bt.body_template_id"
+                + " join block_content as bt on tmpl.template_id = bt.body_template_id or tmpl.template_id = bt.title_template_id"
                 + " where tv.variable_name = :varName"
                 + "   and bt.block_id in (select fsb.block_id"
                 + "                         from form_activity__form_section as fafs"
@@ -408,10 +497,66 @@ public class RarexVersion2 implements CustomTask {
         List<Long> findVariableIdsByText(@Bind("activityId") long activityId,
                                          @Bind("text") String text);
 
+        @SqlQuery("select e.expression_id from block_component as bt "
+                + "   join block__expression be on be.block_id = bt.block_id"
+                + "   join expression e on e.expression_id = be.expression_id"
+                + " where bt.block_id in "
+                + " (select fsb.block_id"
+                + " from form_activity__form_section as fafs"
+                + " join form_section__block as fsb on fsb.form_section_id = fafs.form_section_id"
+                + " where fafs.form_activity_id = :activityId)")
+        List<Long> findComponentBlockExpressionIds(@Bind("activityId") long activityId);
+
         // For single language only
         @SqlUpdate("update i18n_template_substitution set substitution_value = :value where template_variable_id = :id")
         int updateVarValueByTemplateVarId(@Bind("id") long templateVarId, @Bind("value") String value);
 
+        default void detachQuestionFromBlock(long questionId) {
+            int numDeleted = _deleteBlockQuestionByQuestionId(questionId);
+            if (numDeleted != 1) {
+                throw new DDPException("Could not remove question with questionId=" + questionId + " from block");
+            }
+        }
 
+        default void detachQuestionFromBothSectionAndBlock(long questionId) {
+            int numDeleted = _deleteSectionBlockMembershipByQuestionId(questionId);
+            if (numDeleted != 1) {
+                throw new DDPException("Could not remove question with questionId=" + questionId + " from section");
+            }
+            numDeleted = _deleteBlockQuestionByQuestionId(questionId);
+            if (numDeleted != 1) {
+                throw new DDPException("Could not remove question with questionId=" + questionId + " from block");
+            }
+        }
+
+        @SqlUpdate("delete from form_section__block"
+                + "  where block_id in (select block_id from block__question where question_id = :questionId)")
+        int _deleteSectionBlockMembershipByQuestionId(@Bind("questionId") long questionId);
+
+        @SqlUpdate("delete from block__question where question_id = :questionId")
+        int _deleteBlockQuestionByQuestionId(@Bind("questionId") long questionId);
+
+        @SqlQuery("select block_id from block__question where question_id = :questionId")
+        Long getBlockIdByQuestionId(@Bind("questionId") long questionId);
+
+        @SqlUpdate("update expression set expression_text = :text where expression_id in (<ids>)")
+        int updateExpressionText(@Bind("text") String text,
+                                  @BindList(value = "ids", onEmpty = BindList.EmptyHandling.NULL) List<Long> ids);
+
+        @SqlUpdate("update picklist_question pk"
+                + " join block__question bt on bt.question_id = pk.question_id"
+                + " join question q on q.question_id = bt.question_id"
+                + " join question_stable_code qsc on qsc.question_stable_code_id = q.question_stable_code_id"
+                + " set pk.picklist_select_mode_id = "
+                + " (select picklist_select_mode_id from picklist_select_mode where picklist_select_mode_code='MULTIPLE')"
+                + "                where"
+                + " qsc.stable_id in (<stableIds>)"
+                + "   and bt.block_id in "
+                + "(select fsb.block_id"
+                + " from form_activity__form_section as fafs"
+                + " join form_section__block as fsb on fsb.form_section_id = fafs.form_section_id"
+                + " where fafs.form_activity_id = :activityId)")
+        int updatePicklistsToMulti(@Bind("activityId") long activityId,
+                                   @BindList(value = "stableIds", onEmpty = BindList.EmptyHandling.NULL) List<String> stableIds);
     }
 }
