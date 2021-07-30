@@ -802,7 +802,7 @@ public class TreeWalkInterpreter implements PexInterpreter {
             return childAnswers.stream()
                     .flatMap(child -> ((PicklistAnswer) child).getValue().stream())
                     .map(SelectedPicklistOption::getStableId)
-                    .anyMatch(stableId -> CollectionMiscUtil.anyStartsWith(optionStableIds, stableId));
+                    .anyMatch(stableId -> CollectionMiscUtil.startsWithAny(stableId, optionStableIds));
         } else if (predicateCtx instanceof HasAnyOptionPredicateContext) {
             List<String> optionStableIds = ((HasAnyOptionPredicateContext) predicateCtx).STR()
                     .stream()

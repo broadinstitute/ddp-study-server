@@ -73,7 +73,7 @@ public class CollectionMiscUtil {
 
     public static boolean anyStartsWith(List<String> strList, String prefix) {
         if (strList != null) {
-            strList
+            return strList
                     .stream()
                     .anyMatch(str -> StringUtils.startsWith(str, prefix));
         }
