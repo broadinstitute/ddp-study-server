@@ -68,7 +68,7 @@ public class CollectionMiscUtil {
         return Collectors.joining(",");
     }
 
-    public static boolean anyStartsWithIgnoreCase(List<String> strList, String prefix) {
+    public static boolean anyStartsWith(List<String> strList, String prefix) {
         if (strList != null) {
             strList
                     .stream()

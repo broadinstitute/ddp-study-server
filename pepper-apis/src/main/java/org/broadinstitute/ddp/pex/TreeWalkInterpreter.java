@@ -777,7 +777,7 @@ public class TreeWalkInterpreter implements PexInterpreter {
             if (value == null) {
                 return false;
             } else {
-                return value.stream().anyMatch(stId -> CollectionMiscUtil.anyStartsWithIgnoreCase(optionStableIds, stId));
+                return value.stream().anyMatch(stId -> CollectionMiscUtil.anyStartsWith(optionStableIds, stId));
             }
         } else if (predicateCtx instanceof PexParser.ValueQueryContext) {
             throw new PexUnsupportedException("Getting picklist answer value is currently not supported");
@@ -802,7 +802,7 @@ public class TreeWalkInterpreter implements PexInterpreter {
             return childAnswers.stream()
                     .flatMap(child -> ((PicklistAnswer) child).getValue().stream())
                     .map(SelectedPicklistOption::getStableId)
-                    .anyMatch(stableId -> CollectionMiscUtil.anyStartsWithIgnoreCase(optionStableIds, stableId));
+                    .anyMatch(stableId -> CollectionMiscUtil.anyStartsWith(optionStableIds, stableId));
         } else if (predicateCtx instanceof HasAnyOptionPredicateContext) {
             List<String> optionStableIds = ((HasAnyOptionPredicateContext) predicateCtx).STR()
                     .stream()
