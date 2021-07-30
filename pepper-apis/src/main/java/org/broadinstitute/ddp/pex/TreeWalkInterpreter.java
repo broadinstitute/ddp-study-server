@@ -777,7 +777,7 @@ public class TreeWalkInterpreter implements PexInterpreter {
             if (value == null) {
                 return false;
             } else {
-                return value.stream().anyMatch(stId -> CollectionMiscUtil.anyStartsWith(optionStableIds, stId));
+                return value.stream().anyMatch(stId -> CollectionMiscUtil.startsWithAny(stId, optionStableIds));
             }
         } else if (predicateCtx instanceof PexParser.ValueQueryContext) {
             throw new PexUnsupportedException("Getting picklist answer value is currently not supported");

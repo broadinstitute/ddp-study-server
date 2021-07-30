@@ -556,6 +556,24 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
     }
 
     @Test
+    public void testEval_picklist_defaultLatestAnswer_hasOptionStartsWith() {
+        String expr = String.format(
+                "user.studies[\"%s\"].forms[\"%s\"].questions[\"%s\"].answers.hasOptionStartsWith(\"OPTION_Y\", \"OPTION_N\")",
+                studyGuid, activityCode, picklistStableId);
+        TransactionWrapper.useTxn(handle -> {
+            SelectedPicklistOption option1 = new SelectedPicklistOption("OPTION_NO");
+            SelectedPicklistOption option2 = new SelectedPicklistOption("OPTION_YES");
+            PicklistAnswer answer = new PicklistAnswer(null, picklistStableId, null,
+                    List.of(option1, option2));
+            handle.attach(AnswerDao.class).createAnswer(testData.getUserId(), firstInstance.getId(), answer);
+
+            assertTrue(run(handle, expr));
+
+            handle.rollback();
+        });
+    }
+
+    @Test
     public void testEval_numeric_defaultLatestAnswer_compare_less() {
         String expr = String.format(
                 "user.studies[\"%s\"].forms[\"%s\"].questions[\"%s\"].answers.value() < 18",
