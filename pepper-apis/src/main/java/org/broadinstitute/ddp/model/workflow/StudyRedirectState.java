@@ -7,20 +7,24 @@ public class StudyRedirectState implements WorkflowState {
 
     long workflowStateId;
     String studyGuid;
+    String studyName;
     String redirectUrl;
 
     @JdbiConstructor
-    public StudyRedirectState(@ColumnName("workflow_state_id") Long workflowStateId,
+    public StudyRedirectState(@ColumnName("workflow_state_id") long workflowStateId,
                               @ColumnName("study_guid") String studyGuid,
+                              @ColumnName("study_name") String studyName,
                               @ColumnName("redirect_url")String redirectUrl) {
 
         this.workflowStateId = workflowStateId;
         this.studyGuid = studyGuid;
+        this.studyName = studyName;
         this.redirectUrl = redirectUrl;
     }
 
-    public StudyRedirectState(String studyGuid, String redirectUrl) {
+    public StudyRedirectState(String studyGuid, String studyName, String redirectUrl) {
         this.studyGuid = studyGuid;
+        this.studyName = studyName;
         this.redirectUrl = redirectUrl;
     }
 
@@ -40,6 +44,10 @@ public class StudyRedirectState implements WorkflowState {
 
     public String getStudyGuid() {
         return studyGuid;
+    }
+
+    public String getStudyName() {
+        return studyName;
     }
 
     public String getRedirectUrl() {

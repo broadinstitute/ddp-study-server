@@ -317,5 +317,20 @@ public class FormInstanceTest {
         var answerIds = hidden.stream().map(Answer::getAnswerId).collect(Collectors.toSet());
         assertTrue(answerIds.containsAll(Set.of(2L, 3L, 4L)));
     }
+
+    @Test
+    public void testCollectHiddenAnswers_permanentlyHiddenBlock() {
+        var q1 = new QuestionBlock(new BoolQuestion("b1", 1L,
+                List.of(new BoolAnswer(1L, "b1", "1", true)), List.of(), 2L, 3L));
+        q1.setShown(false);
+        q1.setShownExpr("false");
+        var section = new FormSection(List.of(q1));
+        var form = createEmptyTestInstance();
+        form.addBodySections(List.of(section));
+
+        var hidden = form.collectHiddenAnswers();
+        assertNotNull(hidden);
+        assertTrue(hidden.isEmpty());
+    }
 }
 

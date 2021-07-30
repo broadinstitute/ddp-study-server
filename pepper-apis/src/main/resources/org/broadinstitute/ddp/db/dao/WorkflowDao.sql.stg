@@ -4,7 +4,9 @@ queryOrderedActiveNextStateCandidatesByStudyIdAndFromStateId() ::= <<
 select trans.workflow_transition_id,
        next_state_type.workflow_state_type_code,
        next_act_state.study_activity_id,
+       next_act_state.check_each_instance,
        next_redirect_state.study_guid,
+       next_redirect_state.study_name,
        next_redirect_state.redirect_url,
        expr.expression_text
   from workflow_transition as trans

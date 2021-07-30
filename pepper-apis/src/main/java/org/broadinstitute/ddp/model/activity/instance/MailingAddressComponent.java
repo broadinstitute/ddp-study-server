@@ -13,6 +13,9 @@ public class MailingAddressComponent extends FormComponent {
     @SerializedName("parameters")
     private SerializedFields serializedFields;
 
+    @SerializedName("addressGuid")
+    private String addressGuid;
+
     private transient Long titleTemplateId;
     private transient Long subtitleTemplateId;
 
@@ -69,6 +72,14 @@ public class MailingAddressComponent extends FormComponent {
 
     public boolean shouldRequirePhone() {
         return serializedFields.requirePhone;
+    }
+
+    public String getAddressGuid() {
+        return addressGuid;
+    }
+
+    public void setAddressGuid(String addressGuid) {
+        this.addressGuid = addressGuid;
     }
 
     public static class SerializedFields {

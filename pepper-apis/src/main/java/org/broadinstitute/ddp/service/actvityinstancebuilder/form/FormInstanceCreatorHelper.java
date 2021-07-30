@@ -3,7 +3,9 @@ package org.broadinstitute.ddp.service.actvityinstancebuilder.form;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
+import org.broadinstitute.ddp.content.I18nTemplateConstants;
 import org.broadinstitute.ddp.db.dto.UserActivityInstanceSummary;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.activity.instance.ConditionalBlock;
@@ -11,6 +13,7 @@ import org.broadinstitute.ddp.model.activity.instance.FormBlock;
 import org.broadinstitute.ddp.model.activity.instance.FormInstance;
 import org.broadinstitute.ddp.model.activity.instance.FormSection;
 import org.broadinstitute.ddp.model.activity.instance.GroupBlock;
+import org.broadinstitute.ddp.model.activity.instance.MailingAddressComponent;
 import org.broadinstitute.ddp.model.activity.instance.Numberable;
 import org.broadinstitute.ddp.model.activity.types.BlockType;
 import org.broadinstitute.ddp.pex.PexException;
@@ -84,6 +87,18 @@ public class FormInstanceCreatorHelper {
             startingNumber = setNumberables(formInstance.getClosing().getBlocks(), startingNumber);
         }
         return startingNumber;
+    }
+
+    /**
+     * If snapshotted address GUID is preserved in activity instance substitutions (with key ADDRESS_GUID)
+     * then find MAILING_ADDRESS component in the created formInstance and set addressGuid with this found
+     * snapshotted address GUID
+     */
+    public void populateSnapshottedAddress(MailingAddressComponent mailingAddressComponent, Map<String, String> activitySnapshots) {
+        String addressGuid = activitySnapshots.get(I18nTemplateConstants.Snapshot.ADDRESS_GUID);
+        if (addressGuid != null && mailingAddressComponent != null) {
+            mailingAddressComponent.setAddressGuid(addressGuid);
+        }
     }
 
     /**

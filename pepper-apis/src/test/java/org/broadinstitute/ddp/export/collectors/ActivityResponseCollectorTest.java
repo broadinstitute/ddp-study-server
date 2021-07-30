@@ -145,7 +145,7 @@ public class ActivityResponseCollectorTest {
         ActivityResponseCollector formatter = new ActivityResponseCollector(newTestDefinition());
         formatter.getHeaders();
 
-        ComponentDataSupplier supplier = new ComponentDataSupplier(null, Arrays.asList(new MedicalProviderDto(1L, "guid", 1L, 1L,
+        ComponentDataSupplier supplier = new ComponentDataSupplier(null, null, Arrays.asList(new MedicalProviderDto(1L, "guid", 1L, 1L,
                 InstitutionType.PHYSICIAN, "inst a", "dr. a", "boston", "ma", null, null, null, null)));
         List<String> row = formatter.format(newTestInstance(), supplier, "");
 

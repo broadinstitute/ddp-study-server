@@ -1,18 +1,28 @@
 package org.broadinstitute.ddp.db.dao;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Stream;
 
 import org.broadinstitute.ddp.db.DBUtils;
+import org.broadinstitute.ddp.db.DaoException;
 import org.broadinstitute.ddp.model.address.MailAddress;
+import org.broadinstitute.ddp.service.DsmAddressValidationStatus;
+import org.jdbi.v3.core.result.LinkedHashMapRowReducer;
+import org.jdbi.v3.core.result.RowView;
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.config.RegisterBeanMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindBean;
+import org.jdbi.v3.sqlobject.customizer.BindList;
 import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
+import org.jdbi.v3.sqlobject.statement.UseRowReducer;
 import org.jdbi.v3.stringtemplate4.UseStringTemplateSqlLocator;
 
 public interface JdbiMailAddress extends SqlObject {
@@ -78,6 +88,12 @@ public interface JdbiMailAddress extends SqlObject {
     @UseStringTemplateSqlLocator
     List<MailAddress> findAllAddressesForParticipant(String participantGuid);
 
+    @SqlQuery("findNonDefaultAddressesByParticipantIds")
+    @UseRowReducer(BulkFindNonDefaultMailAddressesReducer.class)
+    @UseStringTemplateSqlLocator
+    Stream<NonDefaultMailAddressesWrapper> findNonDefaultAddressesByParticipantIds(
+            @BindList(value = "participantGuids", onEmpty = BindList.EmptyHandling.NULL) Set<String> participantGuids);
+
     @SqlUpdate("setAddressAsDefault")
     @UseStringTemplateSqlLocator
     void setDefaultAddressForParticipant(@Bind("guid") String mailAddressGuid);
@@ -94,4 +110,57 @@ public interface JdbiMailAddress extends SqlObject {
     @UseStringTemplateSqlLocator
     boolean deleteDefaultAddressByParticipantId(@Bind("participantId") Long participantId);
 
+
+    /**
+     * Reducer for reading non-default MailAddresses of a specified set of Participants
+     */
+    class BulkFindNonDefaultMailAddressesReducer implements LinkedHashMapRowReducer<String, NonDefaultMailAddressesWrapper> {
+
+        @Override
+        public void accumulate(Map<String, NonDefaultMailAddressesWrapper> container, RowView view) {
+            try {
+                String participantGuid = view.getColumn("participant_guid", String.class);
+                MailAddress mailAddress = new MailAddress(
+                        view.getColumn("address_id", Long.class),
+                        view.getColumn("address_guid", String.class),
+                        view.getColumn("name", String.class),
+                        view.getColumn("street1", String.class),
+                        view.getColumn("street2", String.class),
+                        view.getColumn("city", String.class),
+                        view.getColumn("state", String.class),
+                        view.getColumn("country", String.class),
+                        view.getColumn("zip", String.class),
+                        view.getColumn("phone", String.class),
+                        view.getColumn("pluscode", String.class),
+                        view.getColumn("description", String.class),
+                        DsmAddressValidationStatus.getByCode(view.getColumn("validationStatus", Integer.class)),
+                        false
+                );
+                container.computeIfAbsent(participantGuid, NonDefaultMailAddressesWrapper::new).unwrap().add(mailAddress);
+            } catch (Exception e) {
+                throw new DaoException("Error during parsing a DB result with non-default MailAddresses ", e);
+            }
+        }
+    }
+
+    /**
+     * A wrapper around a non-default MailAddress'es of a certain Participant,
+     */
+    class NonDefaultMailAddressesWrapper {
+
+        private String participantGuid;
+        private List<MailAddress> mailAddresses = new ArrayList<>();
+
+        public NonDefaultMailAddressesWrapper(String participantGuid) {
+            this.participantGuid = participantGuid;
+        }
+
+        public String getParticipantGuid() {
+            return participantGuid;
+        }
+
+        public List<MailAddress> unwrap() {
+            return mailAddresses;
+        }
+    }
 }
