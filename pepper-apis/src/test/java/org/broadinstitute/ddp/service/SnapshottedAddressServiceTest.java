@@ -19,7 +19,7 @@ public class SnapshottedAddressServiceTest extends AddressServiceTest {
 
     @Test
     public void test_snapshotAddressOnSubmit() {
-        TransactionWrapper.withTxn(handle -> {
+        TransactionWrapper.useTxn(handle -> {
             TestFormActivity act = TestFormActivity.builder()
                     .build(handle, testData.getUserId(), testData.getStudyGuid());
             ActivityInstanceDto instanceDto = handle.attach(ActivityInstanceDao.class).insertInstance(
@@ -27,17 +27,19 @@ public class SnapshottedAddressServiceTest extends AddressServiceTest {
             MailAddress defaultAddress = buildTestAddress();
             defaultAddress.setDefault(true);
             service.addAddress(handle, defaultAddress, userGuid, userGuid);
+            int initialNumAddresses = service.findAllAddressesForParticipant(handle, userGuid).size();
             MailAddress snapshottedAddress = service.snapshotAddress(handle, userGuid, userGuid, instanceDto.getId());
             List<MailAddress> addresses = service.findAllAddressesForParticipant(handle, userGuid);
-            assertEquals(2, addresses.size());
-            MailAddress snapshottedAddress1 = addresses.stream().filter(m -> !m.isDefault()).findFirst().orElse(null);
+            assertEquals(initialNumAddresses + 1, addresses.size());
+            MailAddress snapshottedAddress1 = addresses.stream()
+                    .filter(m -> m.getGuid().equals(snapshottedAddress.getGuid())).findFirst().orElse(null);
             assertNotNull(snapshottedAddress1);
             assertFalse(snapshottedAddress1.isDefault());
             assertEquals(snapshottedAddress1.getGuid(), snapshottedAddress.getGuid());
             Map<String, String> subs = handle.attach(ActivityInstanceDao.class).findSubstitutions(instanceDto.getId());
             String addresssGuid = subs.get(I18nTemplateConstants.Snapshot.ADDRESS_GUID);
             assertEquals(snapshottedAddress.getGuid(), addresssGuid);
-            return null;
+            handle.rollback();
         });
     }
 }
