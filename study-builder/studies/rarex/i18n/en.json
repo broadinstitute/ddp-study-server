@@ -161,7 +161,7 @@
   "general_information_patient_middle_name_at_b_exp": "The patient’s complete middle/second or additional name at birth",
 
   "general_information_primary_lang_prompt": "What is the primary language you speak?*",
-  "general_information_patient_primary_lang_prompt": "What is the primary language the patient speaks?",
+  "general_information_patient_primary_lang_prompt": "What is the primary language the patient speaks?*",
 
   "general_information_mailing_address_title": "Your Mailing Address",
   "general_information_mailing_address_subtitle": "We are asking this in the event that a researcher or organization wants to collect biospecimens (spit, blood, skin, etc) in the future, so we can mail the sample collection kit to you. Please list an address where you wish to receive a kit.",
@@ -315,9 +315,10 @@
   "h_d_parent_genetic_test_reason": "What was the reason for genetic testing?*",
   "h_d_genetic_test_reports": "For the conditions you listed above do you have reports or summaries to upload as support?*",
   "h_d_genetic_test_reports_exp": "** Instructions for uploading a copy of your genetic test report(s) will be provided after you complete this survey.",
-  "h_d_pregnancy_issues": "While your mom was pregnant with you do you know if there were any concerns with the pregnancy or have you been told that there were issues during <u>your biological mother's</u> PREGNANCY with you?*",
-  "h_d_patient_pregnancy_issues": "During the pregnancy with this patient do you know if there were any concerns with the pregnancy or have you been told that there were issues during the biological mother's pregnancy?*",
-  "h_d_pregnancy_issues_exp": "Examples: Mother had to be put on bed rest, there were concerns on ultrasound, etc.",
+  "h_d_pregnancy_issues": "Have you been told that there were issues during <u>your biological mother's</u> PREGNANCY with you and/or your DELIVERY/BIRTH?*",
+  "h_d_patient_pregnancy_issues": "Have you been told that there were issues during <u>the patient's biological mother's</u> PREGNANCY with the patient and/or the patient DELIVERY/BIRTH?*",
+  "h_d_pregnancy_issues_exp": "Examples: Mother had to be put on bed rest, there were concerns on ultrasound, you were born early (prematurely), or you had to stay in the neonatal intensive care unit (NICU).",
+  "h_d_patient_pregnancy_issues_exp": "Examples: Mother had to be put on bed rest, there were concerns on ultrasound, the patient was born early (prematurely), or the patient had to stay in the neonatal intensive care unit (NICU).",
   "h_d_labor_issues": "Were there any issues during the labor and delivery?*",
   "h_d_patient_labor_issues": "Were there any issues during the labor and delivery?*",
   "h_d_labor_issues_exp": "Examples: You were born early (prematurely), or you had to stay in the neonatal intensive care unit (NICU).",
@@ -629,6 +630,7 @@
   "qol_with_lot_of_trouble": "With a lot of trouble",
   "qol_not_able_to_do": "Not able to do",
   "qol_unable_to_answer_due_to_child": "Unable to answer because of my child's condition or communication skills",
+  "qol_prefer_not_to_answer": "Prefer not to answer",
 
   "data_sharing_name": "Data Sharing Survey",
   "data_sharing_title": "Data Sharing Survey",
