@@ -71,15 +71,6 @@ public class CollectionMiscUtil {
         return Collectors.joining(",");
     }
 
-    public static boolean anyStartsWith(List<String> strList, String prefix) {
-        if (strList != null) {
-            return strList
-                    .stream()
-                    .anyMatch(str -> StringUtils.startsWith(str, prefix));
-        }
-        return false;
-    }
-
     public static boolean startsWithAny(String str, List<String> prefixes) {
         if (str != null) {
             return prefixes
