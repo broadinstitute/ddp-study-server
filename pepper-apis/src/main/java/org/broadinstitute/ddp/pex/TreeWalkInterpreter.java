@@ -766,6 +766,19 @@ public class TreeWalkInterpreter implements PexInterpreter {
             } else {
                 return value.stream().anyMatch(optionStableIds::contains);
             }
+        } else if (predicateCtx instanceof HasOptionStartsWithPredicateContext) {
+            List<String> optionStableIds = ((HasOptionStartsWithPredicateContext) predicateCtx).STR()
+                    .stream()
+                    .map(this::extractString)
+                    .collect(Collectors.toList());
+            List<String> value = StringUtils.isBlank(instanceGuid)
+                    ? fetcher.findLatestPicklistAnswer(ictx, userGuid, activityCode, stableId, studyId)
+                    : fetcher.findSpecificPicklistAnswer(ictx, activityCode, instanceGuid, stableId);
+            if (value == null) {
+                return false;
+            } else {
+                return value.stream().anyMatch(stId -> CollectionMiscUtil.anyStartsWithIgnoreCase(optionStableIds, stId));
+            }
         } else if (predicateCtx instanceof PexParser.ValueQueryContext) {
             throw new PexUnsupportedException("Getting picklist answer value is currently not supported");
         } else {
