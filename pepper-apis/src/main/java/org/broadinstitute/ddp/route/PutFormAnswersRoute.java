@@ -181,13 +181,8 @@ public class PutFormAnswersRoute implements Route {
                                 formActivitySettingDto.get().shouldSnapshotSubstitutionsOnSubmit());
                         if (formActivitySettingDto.get().shouldSnapshotAddressOnSubmit()) {
                             var address = addressService.snapshotAddress(handle, userGuid, operatorGuid, form.getInstanceId());
-                            if (address != null) {
-                                LOG.info("Default address is snapshotted with guid {}, for user {}, activity instance {}",
-                                        address.getGuid(), userGuid, instanceGuid);
-                            } else {
-                                LOG.warn("Address snapshotting failed - default address is not found. User {}, activity instance {}",
-                                        userGuid, instanceGuid);
-                            }
+                            LOG.info("Created snapshotted address with guid {} for user {} and activity instance {}",
+                                    address.getGuid(), userGuid, instanceGuid);
                         }
                     }
 
