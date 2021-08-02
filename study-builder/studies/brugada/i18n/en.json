@@ -1,0 +1,25 @@
+{
+  "prequal": {
+    "name": "Prequal",
+    "title": "Thank you for your interest in joining the Brugada Project!",
+
+    "intro1": "Complete the form below to tell us about yourself. Our goal is to learn more about genetic and other risk factors that increase the risk of arrhythmias and sudden cardiac death. The current project is specifically focused on Brugada syndrome. We believe that this research will ultimately allow us to better treat conditions that may put people at risk for dangerous arrhythmias that can cause sudden cardiac death. With this effort we plan to collect health information from you and your medical records as well as collect, process, and store a sample of your saliva for research purposes.",
+    "intro2": "We will record your answers but will only keep detailed contact information if you qualify for the study and want to participate. We will not keep or store your contact information if you do not qualify for the study.",
+
+    "diagnosed": {
+      "prompt": "Have you been diagnosed with Brugada Syndrome?",
+      "yes": "Yes",
+      "no": "No",
+      "required_hint": "Please select an answer.",
+      "ineligible_hint": "You must be diagnosed with Brugada Syndrome in order to join the project. Please navigate to our FAQ here if you'd like to learn more about our future projects.  Thank you for your interest."
+    },
+
+    "age": {
+      "prompt": "How old are you?",
+      "placeholder": "Enter age",
+      "range_hint": "Please enter an age between 0 and 120",
+      "required_hint": "Please enter your age",
+      "restriction_hint": "You must be 21 years of age or older in order to join the Brugada Project. Thank you for your interest."
+    }
+  }
+}
