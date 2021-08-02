@@ -67,6 +67,7 @@ import org.broadinstitute.ddp.pex.lang.PexParser.HasAnyOptionPredicateContext;
 import org.broadinstitute.ddp.pex.lang.PexParser.HasDatePredicateContext;
 import org.broadinstitute.ddp.pex.lang.PexParser.HasFalsePredicateContext;
 import org.broadinstitute.ddp.pex.lang.PexParser.HasOptionPredicateContext;
+import org.broadinstitute.ddp.pex.lang.PexParser.HasOptionStartsWithPredicateContext;
 import org.broadinstitute.ddp.pex.lang.PexParser.HasTruePredicateContext;
 import org.broadinstitute.ddp.pex.lang.PexParser.IsStatusPredicateContext;
 import org.broadinstitute.ddp.pex.lang.PexParser.PredicateContext;
@@ -75,6 +76,7 @@ import org.broadinstitute.ddp.pex.lang.PexParser.QuestionQueryContext;
 import org.broadinstitute.ddp.pex.lang.PexParser.StudyPredicateContext;
 import org.broadinstitute.ddp.pex.lang.PexParser.StudyQueryContext;
 import org.broadinstitute.ddp.util.ActivityInstanceUtil;
+import org.broadinstitute.ddp.util.CollectionMiscUtil;
 import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -764,6 +766,19 @@ public class TreeWalkInterpreter implements PexInterpreter {
             } else {
                 return value.stream().anyMatch(optionStableIds::contains);
             }
+        } else if (predicateCtx instanceof HasOptionStartsWithPredicateContext) {
+            List<String> optionStableIds = ((HasOptionStartsWithPredicateContext) predicateCtx).STR()
+                    .stream()
+                    .map(this::extractString)
+                    .collect(Collectors.toList());
+            List<String> value = StringUtils.isBlank(instanceGuid)
+                    ? fetcher.findLatestPicklistAnswer(ictx, userGuid, activityCode, stableId, studyId)
+                    : fetcher.findSpecificPicklistAnswer(ictx, activityCode, instanceGuid, stableId);
+            if (value == null) {
+                return false;
+            } else {
+                return value.stream().anyMatch(stId -> CollectionMiscUtil.startsWithAny(stId, optionStableIds));
+            }
         } else if (predicateCtx instanceof PexParser.ValueQueryContext) {
             throw new PexUnsupportedException("Getting picklist answer value is currently not supported");
         } else {
@@ -779,6 +794,15 @@ public class TreeWalkInterpreter implements PexInterpreter {
                     .flatMap(child -> ((PicklistAnswer) child).getValue().stream())
                     .map(SelectedPicklistOption::getStableId)
                     .anyMatch(optionStableId::equals);
+        } else if (predicateCtx instanceof HasOptionStartsWithPredicateContext) {
+            List<String> optionStableIds = ((HasOptionStartsWithPredicateContext) predicateCtx).STR()
+                    .stream()
+                    .map(this::extractString)
+                    .collect(Collectors.toList());
+            return childAnswers.stream()
+                    .flatMap(child -> ((PicklistAnswer) child).getValue().stream())
+                    .map(SelectedPicklistOption::getStableId)
+                    .anyMatch(stableId -> CollectionMiscUtil.startsWithAny(stableId, optionStableIds));
         } else if (predicateCtx instanceof HasAnyOptionPredicateContext) {
             List<String> optionStableIds = ((HasAnyOptionPredicateContext) predicateCtx).STR()
                     .stream()
