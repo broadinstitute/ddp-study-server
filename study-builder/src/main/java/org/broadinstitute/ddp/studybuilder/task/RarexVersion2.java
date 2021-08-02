@@ -196,13 +196,13 @@ public class RarexVersion2 implements CustomTask {
                 "preferNotToAnswerCheckboxPatient");
         updateExpressionTextByQuestionStableCode(qolSelfId, "QOL_SELF_PAIN_INTENSITY",
                 "!user.studies[\"rarex\"].forms[\"QUALITY_OF_LIFE\"].questions[\"PAIN_INTENSITY_SELF_PREFERENCE\"].answers."
-                        + "hasOption(\"PREFER_NO_TO_ANSWER\")");
+                        + "hasOption(\"PREFER_NOT_TO_ANSWER\")");
         updateExpressionTextByQuestionStableCode(qolChildId, "QOL_CHILD_PAIN_INTENSITY",
                 "!user.studies[\"rarex\"].forms[\"CHILD_QUALITY_OF_LIFE\"].questions[\"PAIN_INTENSITY_CHILD_PREFERENCE\"].answers."
-                        + "hasOption(\"PREFER_NO_TO_ANSWER\")");
+                        + "hasOption(\"PREFER_NOT_TO_ANSWER\")");
         updateExpressionTextByQuestionStableCode(qolPatientId, "QOL_PATIENT_PAIN_INTENSITY",
                 "!user.studies[\"rarex\"].forms[\"PATIENT_QUALITY_OF_LIFE\"].questions[\"PAIN_INTENSITY_PATIENT_PREFERENCE\"].answers."
-                        + "hasOption(\"PREFER_NO_TO_ANSWER\")");
+                        + "hasOption(\"PREFER_NOT_TO_ANSWER\")");
 
         LOG.info("REFID 103");
         stableIds = Set.of("HD_GENETIC_TEST", "HD_GENETIC_TEST_REASON", "HD_GENETIC_TEST_REASON_PATIENT", "HD_GENETIC_TEST_REPORT",
