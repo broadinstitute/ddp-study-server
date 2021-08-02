@@ -11,5 +11,6 @@ public enum RuleType {
     NUM_OPTIONS_SELECTED,
     REGEX,
     REQUIRED,
+    UNIQUE,
     YEAR_REQUIRED
 }
