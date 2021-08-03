@@ -40,5 +40,13 @@ public enum DsmNotificationEventType {
     /**
      * Message sent by DSM when a Circadia  kit is received back
      */
-    CIRCADIA_RECEIVED
+    CIRCADIA_RECEIVED,
+    /**
+     * Message sent by DSM when DLMO Collection Date #1 is entered for Circadia
+     */
+    DLMO_DATE_1,
+    /**
+     * Message sent by DSM when DLMO Collection Date #2 is entered for Circadia
+     */
+    DLMO_DATE_2
 }
