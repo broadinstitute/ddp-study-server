@@ -86,33 +86,35 @@ public class UniqueRule extends Rule<CompositeAnswer> {
 
     private boolean addAnswerValueToSet(Set<String> set, Answer answer, boolean addStableIds) {
         boolean result = true;
-        switch (answer.getQuestionType()) {
-            case PICKLIST:
-                List<SelectedPicklistOption> values = ((PicklistAnswer) answer).getValue();
-                for (SelectedPicklistOption option : values) {
-                    if (addStableIds) {
-                        if (isBlank(option.getDetailText())) {
-                            result &= set.add(option.getStableId());
-                        }
-                    } else {
-                        if (isNotBlank(option.getDetailText())) {
-                            result &= set.add(option.getDetailText());
+        if (answer != null) {
+            switch (answer.getQuestionType()) {
+                case PICKLIST:
+                    List<SelectedPicklistOption> values = ((PicklistAnswer) answer).getValue();
+                    for (SelectedPicklistOption option : values) {
+                        if (addStableIds) {
+                            if (isBlank(option.getDetailText())) {
+                                result &= set.add(option.getStableId());
+                            }
+                        } else {
+                            if (isNotBlank(option.getDetailText())) {
+                                result &= set.add(option.getDetailText());
+                            }
                         }
                     }
-                }
-                break;
-            case DATE:
-            case AGREEMENT:
-            case NUMERIC:
-            case TEXT:
-            case BOOLEAN:
-            case FILE:
-                if (!addStableIds && answer.getValue() != null && isNotBlank(answer.getValue().toString())) {
-                    result &= set.add(answer.getValue().toString());
-                }
-                break;
-            default:
-                throw new DDPException("Unhandled answer type " + answer.getQuestionType());
+                    break;
+                case DATE:
+                case AGREEMENT:
+                case NUMERIC:
+                case TEXT:
+                case BOOLEAN:
+                case FILE:
+                    if (!addStableIds && answer.getValue() != null && isNotBlank(answer.getValue().toString())) {
+                        result &= set.add(answer.getValue().toString());
+                    }
+                    break;
+                default:
+                    throw new DDPException("Unhandled answer type " + answer.getQuestionType());
+            }
         }
         return result;
     }
