@@ -58,7 +58,7 @@ public class AddressServiceTest extends TxnAwareBaseTest {
     @Before
     public void init() {
         mockOLC = mock(OLCService.class);
-        service = new AddressService(cfg.getString(ConfigFile.EASY_POST_API_KEY), mockOLC);
+        service = new AddressService(cfg.getString(ConfigFile.EASY_POST_API_KEY), mockOLC, true);
         when(mockOLC.calculateFullPlusCode(any())).thenReturn(TEST_PLUSCODE);
     }
 

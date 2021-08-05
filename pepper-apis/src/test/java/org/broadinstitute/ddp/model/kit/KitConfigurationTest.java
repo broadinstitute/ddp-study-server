@@ -67,7 +67,7 @@ public class KitConfigurationTest extends TxnAwareBaseTest {
             JdbiCountry country = handle.attach(JdbiCountry.class);
             JdbiExpression expression = handle.attach(JdbiExpression.class);
             AddressService addressService = new AddressService(cfg.getString(ConfigFile.EASY_POST_API_KEY),
-                    cfg.getString(ConfigFile.GEOCODING_API_KEY));
+                    cfg.getString(ConfigFile.GEOCODING_API_KEY), true);
             ActivityInstanceDao activityInstanceDao = handle.attach(ActivityInstanceDao.class);
 
             long studyId = data.getStudyId();
@@ -152,7 +152,7 @@ public class KitConfigurationTest extends TxnAwareBaseTest {
 
             activityInstanceDao.deleteByInstanceGuid(activityInstanceGuid);
             AddressService addressService = new AddressService(cfg.getString(ConfigFile.EASY_POST_API_KEY),
-                    cfg.getString(ConfigFile.GEOCODING_API_KEY));
+                    cfg.getString(ConfigFile.GEOCODING_API_KEY), true);
             assertTrue(addressService.deleteAddress(handle, mailAddress.getGuid()));
         });
     }

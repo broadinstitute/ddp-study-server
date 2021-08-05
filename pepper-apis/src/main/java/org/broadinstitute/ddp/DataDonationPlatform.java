@@ -422,7 +422,7 @@ public class DataDonationPlatform {
 
         // User mailing address routes
         AddressService addressService = new AddressService(cfg.getString(ConfigFile.EASY_POST_API_KEY),
-                cfg.getString(ConfigFile.GEOCODING_API_KEY));
+                cfg.getString(ConfigFile.GEOCODING_API_KEY), true);
 
         post(API.PARTICIPANT_ADDRESS, new CreateMailAddressRoute(addressService), responseSerializer);
         get(API.PARTICIPANT_ADDRESS, new GetParticipantMailAddressRoute(addressService), responseSerializer);

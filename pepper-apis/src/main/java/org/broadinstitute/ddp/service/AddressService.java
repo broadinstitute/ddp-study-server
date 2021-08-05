@@ -35,6 +35,7 @@ import org.broadinstitute.ddp.model.kit.KitRule;
 import org.broadinstitute.ddp.model.kit.KitRuleType;
 import org.broadinstitute.ddp.model.kit.KitZipCodeRule;
 import org.broadinstitute.ddp.util.JsonValidationError;
+import org.broadinstitute.ddp.util.NamedLocksMap;
 import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,24 +51,38 @@ public class AddressService {
     private final OLCService olcService;
 
     /**
+     * If true then sections where default address is created and snapshotted will be locked
+     */
+    private final boolean useMailAddressLocks;
+
+    /**
+     * Holds the locks (for different users) which used to lock 2 sections of code which should be
+     * executed one after another: default address creation; address snapshotting.
+     * Without such lock the error happens (because the snapshotting started before default address creation completed).
+     * This locking executed when useMailAddressLocks==true (we do not want to do it during data exporting, for example).
+     */
+    private final NamedLocksMap addMailAddressLocks = new NamedLocksMap();
+
+    /**
      * This constructor can be used when needs to create the service instance for address reading
      * (for example {@link #findAddressByGuid(Handle, String)}
      */
     public AddressService() {
-        this((String)null, (String)null);
+        this((String) null, (String) null, false);
     }
 
-    public AddressService(String easyPostApiKey, String geocodingKey) {
-        this(easyPostApiKey, new OLCService(geocodingKey));
+    public AddressService(String easyPostApiKey, String geocodingKey, boolean useMailAddressLocks) {
+        this(easyPostApiKey, new OLCService(geocodingKey), useMailAddressLocks);
     }
 
-    public AddressService(String easyPostApiKey, OLCService olcService) {
-        this(new EasyPostClient(easyPostApiKey), olcService);
+    public AddressService(String easyPostApiKey, OLCService olcService, boolean useMailAddressLocks) {
+        this(new EasyPostClient(easyPostApiKey), olcService, useMailAddressLocks);
     }
 
-    public AddressService(EasyPostClient easyPostClient, OLCService olcService) {
+    public AddressService(EasyPostClient easyPostClient, OLCService olcService, boolean useMailAddressLocks) {
         this.easyPost = easyPostClient;
         this.olcService = olcService;
+        this.useMailAddressLocks = useMailAddressLocks;
     }
 
     /**
@@ -423,20 +438,29 @@ public class AddressService {
      *     <li>save address.guid to activity_instance_substitution with key ADDRESS_GUID.</li>
      * </ul>
      *
-     * @param instanceId   ID of an activity instance in which substitutions to save addressGuid
+     * @param instanceId ID of an activity instance in which substitutions to save addressGuid
      * @return new address object which is created
      */
     public MailAddress snapshotAddress(Handle handle, String participantGuid, String operatorGuid, long instanceId) {
-        // find default address
-        Optional<MailAddress> defaultAddress = findDefaultAddressForParticipant(handle, participantGuid);
-        if (defaultAddress.isPresent()) {
-            // create a copy of the default address (but setting it as non-default)
-            MailAddress mailAddress = addExistingAddress(
-                    handle, new MailAddress(defaultAddress.get(), false), participantGuid, operatorGuid);
-            // save address.guid to activity_instance_substitution with key ADDRESS_GUID
-            handle.attach(ActivityInstanceDao.class).saveSubstitutions(
-                    instanceId, Map.of(I18nTemplateConstants.Snapshot.ADDRESS_GUID, mailAddress.getGuid()));
-            return mailAddress;
+        if (useMailAddressLocks) {
+            addMailAddressLocks.lockIfExists(participantGuid);
+        }
+        try {
+            // find default address
+            Optional<MailAddress> defaultAddress = findDefaultAddressForParticipant(handle, participantGuid);
+            if (defaultAddress.isPresent()) {
+                // create a copy of the default address (but setting it as non-default)
+                MailAddress mailAddress = addExistingAddress(
+                        handle, new MailAddress(defaultAddress.get(), false), participantGuid, operatorGuid);
+                // save address.guid to activity_instance_substitution with key ADDRESS_GUID
+                handle.attach(ActivityInstanceDao.class).saveSubstitutions(
+                        instanceId, Map.of(I18nTemplateConstants.Snapshot.ADDRESS_GUID, mailAddress.getGuid()));
+                return mailAddress;
+            }
+        } finally {
+            if (useMailAddressLocks) {
+                addMailAddressLocks.unlockAndRemove(participantGuid);
+            }
         }
         return null;
     }
@@ -451,5 +475,13 @@ public class AddressService {
 
     private JdbiCountryAddressInfo buildCountryInfoDao(Handle handle) {
         return handle.attach(JdbiCountryAddressInfo.class);
+    }
+
+    public NamedLocksMap getAddMailAddressLocks() {
+        return addMailAddressLocks;
+    }
+
+    public boolean isUseMailAddressLocks() {
+        return useMailAddressLocks;
     }
 }

@@ -22,8 +22,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.time.Instant;
-import java.util.Arrays;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -127,7 +127,7 @@ public class StudyDataLoaderTest {
         Config cfg = ConfigManager.getInstance().getConfig();
         olcService = new OLCService(cfg.getString(ConfigFile.GEOCODING_API_KEY));
         addressService = new AddressService(cfg.getString(ConfigFile.EASY_POST_API_KEY),
-                cfg.getString(ConfigFile.GEOCODING_API_KEY));
+                cfg.getString(ConfigFile.GEOCODING_API_KEY), false);
         try {
             sourceData = new String(Files.readAllBytes(Paths.get(PARTICIPANT_DATA_TEST_DATA_LOCATION)));
         } catch (IOException e) {

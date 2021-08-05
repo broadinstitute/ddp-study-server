@@ -2,6 +2,8 @@ package org.broadinstitute.ddp.route;
 
 import static org.broadinstitute.ddp.constants.RouteConstants.PathParam.USER_GUID;
 
+import java.util.concurrent.locks.Lock;
+
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpStatus;
 import org.broadinstitute.ddp.constants.RouteConstants;
@@ -32,24 +34,39 @@ public class CreateMailAddressRoute extends ValidatedMailAddressInputRoute {
         if (LOG.isDebugEnabled()) {
             LOG.debug("About to save: {}", getGson().toJson(dataObject));
         }
-        MailAddress addedAddress = TransactionWrapper.withTxn(handle -> {
-            MailAddress addr = addressService.addAddress(handle, dataObject, participantGuid, operatorGuid);
-            EventDao eventDao = handle.attach(EventDao.class);
-            handle.attach(JdbiUserStudyEnrollment.class)
-                    .getAllLatestEnrollmentsForUser(participantGuid).stream()
-                    .filter(enrollmentStatusDto -> enrollmentStatusDto.getEnrollmentStatus().isEnrolled())
-                    .forEach(enrollmentStatusDto -> {
-                        int numQueued = eventDao.addMedicalUpdateTriggeredEventsToQueue(
-                                enrollmentStatusDto.getStudyId(), enrollmentStatusDto.getUserId());
-                        LOG.info("Queued {} medical-update events for participantGuid={} studyGuid={}",
-                                numQueued, enrollmentStatusDto.getUserGuid(), enrollmentStatusDto.getStudyGuid());
-                    });
-            handle.attach(DataExportDao.class).queueDataSync(participantGuid);
-            return addr;
-        });
+        MailAddress addedAddress;
+        Lock lock = null;
+        // lock the block where default address inserted
+        // to be sure that address snapshotting will be done after the default address created
+        // (snapshotting done in AddressService.snapshotAddress())
+        if (addressService.isUseMailAddressLocks()) {
+            lock = addressService.getAddMailAddressLocks().addAndLock(participantGuid);
+        }
+        try {
+            addedAddress = TransactionWrapper.withTxn(handle -> {
+                MailAddress addr = addressService.addAddress(handle, dataObject, participantGuid, operatorGuid);
+                EventDao eventDao = handle.attach(EventDao.class);
+                handle.attach(JdbiUserStudyEnrollment.class)
+                        .getAllLatestEnrollmentsForUser(participantGuid).stream()
+                        .filter(enrollmentStatusDto -> enrollmentStatusDto.getEnrollmentStatus().isEnrolled())
+                        .forEach(enrollmentStatusDto -> {
+                            int numQueued = eventDao.addMedicalUpdateTriggeredEventsToQueue(
+                                    enrollmentStatusDto.getStudyId(), enrollmentStatusDto.getUserId());
+                            LOG.info("Queued {} medical-update events for participantGuid={} studyGuid={}",
+                                    numQueued, enrollmentStatusDto.getUserGuid(), enrollmentStatusDto.getStudyGuid());
+                        });
+                handle.attach(DataExportDao.class).queueDataSync(participantGuid);
+                return addr;
+            });
+        } finally {
+            if (addressService.isUseMailAddressLocks() && lock != null) {
+                lock.unlock();
+            }
+        }
         response.status(HttpStatus.SC_CREATED);
         String locationHeaderValue = buildMailAddressUrl(request, participantGuid, addedAddress);
         response.header(HttpHeaders.LOCATION, locationHeaderValue);
+        LOG.info("Successfully created mailing address for participant {} by operator {}", participantGuid, operatorGuid);
         return addedAddress;
     }
 

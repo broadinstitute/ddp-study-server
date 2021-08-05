@@ -400,7 +400,7 @@ public class StudyDataLoaderMain {
         StudyDataLoader dataLoader = new StudyDataLoader(cfg);
         final OLCService olcService = new OLCService(cfg.getString(ConfigFile.GEOCODING_API_KEY));
         final AddressService addressService = new AddressService(cfg.getString(ConfigFile.EASY_POST_API_KEY),
-                cfg.getString(ConfigFile.GEOCODING_API_KEY));
+                cfg.getString(ConfigFile.GEOCODING_API_KEY), false);
 
         //load mapping data
         Map<String, JsonElement> mappingData = loadDataMapping(mappingFileName);
@@ -436,7 +436,7 @@ public class StudyDataLoaderMain {
         Map<String, MailAddress> userAddressMap = new HashMap<>();
         final OLCService olcService = new OLCService(cfg.getString(ConfigFile.GEOCODING_API_KEY));
         final AddressService addressService = new AddressService(cfg.getString(ConfigFile.EASY_POST_API_KEY),
-                cfg.getString(ConfigFile.GEOCODING_API_KEY));
+                cfg.getString(ConfigFile.GEOCODING_API_KEY), false);
         //load all Bucket data into memory
         Map<String, Map> altpidBucketDataMap = new HashMap<>();
         for (Blob file : bucket.list().iterateAll()) {
@@ -543,7 +543,7 @@ public class StudyDataLoaderMain {
         Map<String, JsonElement> mappingData = loadDataMapping(mappingFileName);
         final OLCService olcService = new OLCService(cfg.getString(ConfigFile.GEOCODING_API_KEY));
         final AddressService addressService = new AddressService(cfg.getString(ConfigFile.EASY_POST_API_KEY),
-                cfg.getString(ConfigFile.GEOCODING_API_KEY));
+                cfg.getString(ConfigFile.GEOCODING_API_KEY), false);
 
         Map<String, Map> altpidBucketDataMap = preProcessedData.getAltpidBucketDataMap();
         for (String altpid : altpidBucketDataMap.keySet()) {

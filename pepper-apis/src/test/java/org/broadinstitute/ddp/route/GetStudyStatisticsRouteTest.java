@@ -109,7 +109,7 @@ public class GetStudyStatisticsRouteTest extends IntegrationTestSuite.TestCase {
         testAddress.setDefault(true);
         Config cfg = ConfigManager.getInstance().getConfig();
         AddressService addressService = new AddressService(cfg.getString(ConfigFile.EASY_POST_API_KEY),
-                cfg.getString(ConfigFile.GEOCODING_API_KEY));
+                cfg.getString(ConfigFile.GEOCODING_API_KEY), true);
         return addressService.addAddress(handle, testAddress, userGuid, userGuid);
     }
 

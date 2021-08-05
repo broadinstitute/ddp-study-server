@@ -1,7 +1,7 @@
 package org.broadinstitute.ddp.export;
 
-import static org.broadinstitute.ddp.export.ExportUtil.getSnapshottedMailAddress;
 import static org.broadinstitute.ddp.export.ExportUtil.extractParticipantsFromResultSet;
+import static org.broadinstitute.ddp.export.ExportUtil.getSnapshottedMailAddress;
 import static org.broadinstitute.ddp.model.activity.types.ComponentType.MAILING_ADDRESS;
 
 import java.io.BufferedWriter;
@@ -170,7 +170,7 @@ public class DataExporter {
         this.pdfService = new PdfService();
         this.fileService = FileUploadService.fromConfig(cfg);
         this.addressService = new AddressService(cfg.getString(ConfigFile.EASY_POST_API_KEY),
-                cfg.getString(ConfigFile.GEOCODING_API_KEY));
+                cfg.getString(ConfigFile.GEOCODING_API_KEY), false);
         try {
             this.esClient = ElasticsearchServiceUtil.getElasticsearchClient(cfg);
         } catch (MalformedURLException e) {

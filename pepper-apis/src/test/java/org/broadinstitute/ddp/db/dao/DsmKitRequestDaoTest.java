@@ -339,7 +339,7 @@ public class DsmKitRequestDaoTest extends TxnAwareBaseTest {
         testAddress.setPhone("999-232-5522");
         testAddress.setDefault(true);
         AddressService addressService = new AddressService(cfg.getString(ConfigFile.EASY_POST_API_KEY),
-                cfg.getString(ConfigFile.GEOCODING_API_KEY));
+                cfg.getString(ConfigFile.GEOCODING_API_KEY), true);
         return TransactionWrapper.withTxn(handle -> addressService.addAddress(handle, testAddress, TEST_USER_GUID, TEST_USER_GUID));
     }
 
