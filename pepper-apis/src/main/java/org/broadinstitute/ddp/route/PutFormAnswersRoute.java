@@ -188,6 +188,13 @@ public class PutFormAnswersRoute implements Route {
                                 LOG.error("Address snapshotting failed - default address is not found. User {}, activity instance {}",
                                         userGuid, instanceGuid);
                             }
+                        } else {
+                            // if address snapshotting not executed then removed lock which
+                            // is created for this user during the default address creation
+                            // (if no such lock was added then no problem anyway)
+                            if (addressService.isUseMailAddressLocks()) {
+                                addressService.getAddMailAddressLocks().remove(userGuid);
+                            }
                         }
                     }
 

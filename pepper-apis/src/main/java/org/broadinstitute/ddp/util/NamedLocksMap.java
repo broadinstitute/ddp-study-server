@@ -83,4 +83,14 @@ public class NamedLocksMap {
             locks.remove(key);
         }
     }
+
+    /**
+     * Remove the lock from the map.
+     */
+    public synchronized void remove(String key) {
+        Lock lock = locks.get(key);
+        if (lock != null) {
+            locks.remove(key);
+        }
+    }
 }
