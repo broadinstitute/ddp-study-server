@@ -34,8 +34,8 @@ public class RenderValueProvider {
      * If this value is `true` then  DDP methods (answer(), isGovernedParticipant()) defined in {@link RenderValueProvider} will
      * return pre-defined values:
      * <pre>
-     *     - isGovernedParticipant() return both parameters separated with slash (`isTrueString`/`isFalseString`);
-     *     - answer() return fallbackValue.
+     *     - isGovernedParticipant() returns both parameters separated with slash (`isTrueString`/`isFalseString`);
+     *     - answer() returns fallbackValue.
      * </pre>
      */
     private boolean useDefaultsForDdpMethods = false;

@@ -14,7 +14,7 @@ import org.broadinstitute.ddp.model.activity.instance.FormResponse;
 import org.jdbi.v3.core.Handle;
 
 /**
- * Helper methods used for Velocity context creation (Map with key=value pairs).
+ * Helper methods used for Velocity context creation (Map with key-string, value-object).
  * Basic part of this context - an instance of object {@link RenderValueProvider} which
  * stored to the map with key {@link I18nTemplateConstants#DDP}.
  */
@@ -85,7 +85,7 @@ public class RendererInitialContextCreator {
     }
 
     /**
-     * Creates Velocity context for a case when activitu instance and user data not available.
+     * Creates Velocity context for a case when activity instance and user data not available.
      * The example of such case: study data export.
      * @param useDefaultsForDdpMethods boolean value defining if default values should be generated/used in DDP methods
      *                                 answer() and isGovernedParticipant()

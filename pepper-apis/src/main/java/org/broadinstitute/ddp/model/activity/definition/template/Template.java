@@ -142,8 +142,8 @@ public class Template {
      * Setting this parameter to `true` forces the following behaviour for some of DDP methods
      * (answer(), isGovernedParticipant()) defined in {@link RenderValueProvider}:
      * <pre>
-     *     - isGovernedParticipant() return both parameters separated with slash (`isTrueString`/`isFalseString`);
-     *     - answer() return fallbackValue.
+     *     - isGovernedParticipant() returns both parameters separated with slash (`isTrueString`/`isFalseString`);
+     *     - answer() returns fallbackValue.
      * </pre>
      */
     public String renderWithDefaultValues(String languageCode) {
