@@ -103,6 +103,7 @@ ValidationType:
     - NUM_OPTIONS_SELECTED
     - REGEX
     - REQUIRED
+    - UNIQUE
     - YEAR_REQUIRED
 Activity:
   type: object
@@ -1768,6 +1769,7 @@ Validation:
       NUM_OPTIONS_SELECTED: '#/Validation.OptionsSelected'
       REGEX: '#/Validation.RegularExpression'
       REQUIRED: '#/Validation.Required'
+      UNIQUE: '#/Validation.Unique'
       YEAR_REQUIRED: '#/Validation.YearRequired'
   required:
     - rule
@@ -1945,6 +1947,16 @@ Validation.IntRange:
           type: integer
           nullable: true
           description: the maximum acceptable number, inclusive
+Validation.Unique:
+  allOf:
+    - $ref: '#/Validation'
+    - type: object
+      properties:
+        rule:
+          type: string
+          default: UNIQUE
+          enum:
+            - UNIQUE
 AnnouncementModel:
   type: object
   required:
