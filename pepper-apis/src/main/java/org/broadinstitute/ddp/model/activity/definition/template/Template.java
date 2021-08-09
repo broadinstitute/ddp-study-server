@@ -1,5 +1,7 @@
 package org.broadinstitute.ddp.model.activity.definition.template;
 
+import static org.broadinstitute.ddp.content.RendererInitialContextCreator.createRendererInitialContextWithoutUserAndInstanceData;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -11,6 +13,7 @@ import javax.validation.constraints.NotNull;
 import com.google.gson.annotations.SerializedName;
 import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.content.I18nContentRenderer;
+import org.broadinstitute.ddp.content.RenderValueProvider;
 import org.broadinstitute.ddp.model.activity.definition.i18n.Translation;
 import org.broadinstitute.ddp.model.activity.types.TemplateType;
 import org.broadinstitute.ddp.util.MiscUtil;
@@ -108,7 +111,12 @@ public class Template {
     }
 
     public String render(String languageCode) {
-        return render(languageCode, new I18nContentRenderer(), null);
+        return render(languageCode, false);
+    }
+
+    public String render(String languageCode, boolean useDefaultsForDdpMethods) {
+        return render(languageCode, new I18nContentRenderer(),
+                createRendererInitialContextWithoutUserAndInstanceData(useDefaultsForDdpMethods));
     }
 
     public String render(String languageCode, I18nContentRenderer renderer, Map<String, Object> initialContext) {
@@ -125,5 +133,20 @@ public class Template {
         }
 
         return renderer.renderToString(getTemplateText(), variablesTxt);
+    }
+
+    /**
+     * This method renders values with context containing reference to {@link RenderValueProvider} (with key = 'DDP').
+     * Therefore it is available all methods of this class. But methods should return default values
+     * (parameter `useDefaultsForDdpMethods`=`true`).
+     * Setting this parameter to `true` forces the following behaviour for some of DDP methods
+     * (answer(), isGovernedParticipant()) defined in {@link RenderValueProvider}:
+     * <pre>
+     *     - isGovernedParticipant() return both parameters separated with slash (`isTrueString`/`isFalseString`);
+     *     - answer() return fallbackValue.
+     * </pre>
+     */
+    public String renderWithDefaultValues(String languageCode) {
+        return render(languageCode, true);
     }
 }

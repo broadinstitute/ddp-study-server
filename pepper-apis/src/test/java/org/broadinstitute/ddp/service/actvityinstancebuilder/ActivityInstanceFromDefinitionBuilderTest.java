@@ -1,6 +1,6 @@
 package org.broadinstitute.ddp.service.actvityinstancebuilder;
 
-import static org.broadinstitute.ddp.service.actvityinstancebuilder.TemplateRenderHelper.RenderContextSource.FORM_RESPONSE_AND_ACTIVITY_DEF;
+import static org.broadinstitute.ddp.content.RendererInitialContextCreator.RenderContextSource.FORM_RESPONSE_AND_ACTIVITY_DEF;
 import static org.broadinstitute.ddp.service.actvityinstancebuilder.context.AIBuilderParams.createParams;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
