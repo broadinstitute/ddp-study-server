@@ -1,5 +1,7 @@
 package org.broadinstitute.ddp.route;
 
+import static java.lang.String.format;
+
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -13,6 +15,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.http.HttpStatus;
 import org.broadinstitute.ddp.analytics.GoogleAnalyticsMetrics;
 import org.broadinstitute.ddp.analytics.GoogleAnalyticsMetricsTracker;
 import org.broadinstitute.ddp.constants.ErrorCodes;
@@ -181,8 +184,15 @@ public class PutFormAnswersRoute implements Route {
                                 formActivitySettingDto.get().shouldSnapshotSubstitutionsOnSubmit());
                         if (formActivitySettingDto.get().shouldSnapshotAddressOnSubmit()) {
                             var address = addressService.snapshotAddress(handle, userGuid, operatorGuid, form.getInstanceId());
-                            LOG.info("Created snapshotted address with guid {} for user {} and activity instance {}",
-                                    address.getGuid(), userGuid, instanceGuid);
+                            if (address != null) {
+                                LOG.info("Default address is snapshotted with guid {}, for user {}, activity instance {}",
+                                        address.getGuid(), userGuid, instanceGuid);
+                            } else {
+                                String errorMsg = format("Default mail address is not found, therefore the snapshotting is not possible. "
+                                        + "User %s, activity instance %s", userGuid, instanceGuid);
+                                throw ResponseUtil.haltError(response, HttpStatus.SC_NOT_FOUND,
+                                        new ApiError(ErrorCodes.MAIL_ADDRESS_NOT_FOUND, errorMsg));
+                            }
                         }
                     }
 
@@ -258,7 +268,7 @@ public class PutFormAnswersRoute implements Route {
         Optional<ActivityInstance> activityInstance = actInstService.buildInstanceFromDefinition(
                 handle, userGuid, operatorGuid, studyGuid, instanceGuid, isoLangCode, instanceSummary);
         if (activityInstance.isEmpty()) {
-            String msg = String.format("Could not find activity instance %s for user %s using language %s",
+            String msg = format("Could not find activity instance %s for user %s using language %s",
                     instanceGuid, userGuid, isoLangCode);
             LOG.warn(msg);
             throw ResponseUtil.haltError(response, 404, new ApiError(ErrorCodes.ACTIVITY_NOT_FOUND, msg));
