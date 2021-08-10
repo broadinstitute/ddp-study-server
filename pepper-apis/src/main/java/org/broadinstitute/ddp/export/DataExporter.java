@@ -1,5 +1,6 @@
 package org.broadinstitute.ddp.export;
 
+import static org.broadinstitute.ddp.export.ExportUtil.getSnapshottedMailAddress;
 import static org.broadinstitute.ddp.export.ExportUtil.extractParticipantsFromResultSet;
 import static org.broadinstitute.ddp.model.activity.types.ComponentType.MAILING_ADDRESS;
 
@@ -115,6 +116,7 @@ import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.model.user.UserProfile;
 import org.broadinstitute.ddp.pex.PexInterpreter;
 import org.broadinstitute.ddp.pex.TreeWalkInterpreter;
+import org.broadinstitute.ddp.service.AddressService;
 import org.broadinstitute.ddp.service.ConsentService;
 import org.broadinstitute.ddp.service.FileUploadService;
 import org.broadinstitute.ddp.service.MedicalRecordService;
@@ -149,6 +151,7 @@ public class DataExporter {
     private final PdfService pdfService;
     private final FileUploadService fileService;
     private final RestHighLevelClient esClient;
+    private final AddressService addressService;
 
     public static String makeExportCSVFilename(String studyGuid, Instant timestamp) {
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmssX").withZone(ZoneOffset.UTC);
@@ -166,6 +169,8 @@ public class DataExporter {
         this.gson = new GsonBuilder().serializeNulls().create();
         this.pdfService = new PdfService();
         this.fileService = FileUploadService.fromConfig(cfg);
+        this.addressService = new AddressService(cfg.getString(ConfigFile.EASY_POST_API_KEY),
+                cfg.getString(ConfigFile.GEOCODING_API_KEY));
         try {
             this.esClient = ElasticsearchServiceUtil.getElasticsearchClient(cfg);
         } catch (MalformedURLException e) {
@@ -270,7 +275,6 @@ public class DataExporter {
     }
 
 
-
     /**
      * Extract all the participants for a study, pooling together all the data associated with the participant.
      *
@@ -298,9 +302,9 @@ public class DataExporter {
     }
 
     public void exportToElasticsearch(Handle handle, StudyDto studyDto,
-                                       List<ActivityExtract> activities,
-                                       List<Participant> participants,
-                                       boolean exportStructuredDocument) {
+                                      List<ActivityExtract> activities,
+                                      List<Participant> participants,
+                                      boolean exportStructuredDocument) {
         int maxExtractSize = cfg.getInt(ConfigFile.ELASTICSEARCH_EXPORT_BATCH_SIZE);
 
         if (!exportStructuredDocument) {
@@ -696,7 +700,7 @@ public class DataExporter {
                             handle,
                             medicalRecordService);
                 } else {
-                    elasticSearchDocument = formatParticipantToFlatJSON(studyExtract.getActivities(), extract);
+                    elasticSearchDocument = formatParticipantToFlatJSON(handle, studyExtract.getActivities(), extract);
                 }
                 participantsRecords.put(extract.getUser().getGuid(), elasticSearchDocument);
             } catch (Exception e) {
@@ -716,7 +720,7 @@ public class DataExporter {
      * @param extract    the participant data for the study
      * @return
      */
-    private String formatParticipantToFlatJSON(List<ActivityExtract> activities,
+    private String formatParticipantToFlatJSON(Handle handle, List<ActivityExtract> activities,
                                                Participant extract) {
         ParticipantMetadataFormatter participantMetaFmt = new ParticipantMetadataFormatter();
         ActivityMetadataCollector activityMetadataCollector = new ActivityMetadataCollector();
@@ -728,7 +732,10 @@ public class DataExporter {
 
         Map<String, String> recordForParticipant = new LinkedHashMap<>(participantMetaFmt.records(extract.getStatus(), extract.getUser()));
 
-        ComponentDataSupplier supplier = new ComponentDataSupplier(extract.getUser().getAddress(), extract.getProviders());
+        ComponentDataSupplier supplier = new ComponentDataSupplier(
+                extract.getUser().getAddress(),
+                extract.getNonDefaultMailAddresses(),
+                extract.getProviders());
         for (ActivityExtract activity : activities) {
             ActivityResponseCollector activityResponseCollector = responseCollectors.get(activity.getTag());
             List<ActivityResponse> instances = extract.getResponses(activity.getTag());
@@ -951,7 +958,7 @@ public class DataExporter {
             if (question.getQuestionType() == QuestionType.COMPOSITE) {
                 CompositeQuestionDef composite = (CompositeQuestionDef) question;
                 if (componentNames.contains(composite.getStableId())) {
-                    questionRecords.add(createRecordForComponent(composite.getStableId(), participant));
+                    questionRecords.add(createRecordForComponent(instance, composite.getStableId(), participant));
                     continue;
                 }
                 if (composite.shouldUnwrapChildQuestions() && instance.hasAnswer(composite.getStableId())) {
@@ -969,13 +976,14 @@ public class DataExporter {
         return questionRecords.stream().filter(Objects::nonNull).collect(Collectors.toList());
     }
 
-    private QuestionRecord createRecordForComponent(String component, Participant participant) {
+    private QuestionRecord createRecordForComponent(FormResponse formResponse, String component, Participant participant) {
         ComponentQuestionRecord record = null;
         List<List<String>> values;
         switch (component) {
             case "MAILING_ADDRESS":
-                MailAddress address = participant.getUser().getAddress();
-                values = new MailingAddressFormatter().collectAsAnswer(address);
+                values = new MailingAddressFormatter().collectAsAnswer(
+                        getSnapshottedMailAddress(
+                                participant.getNonDefaultMailAddresses(), formResponse.getId(), participant.getUser().getAddress()));
                 if (CollectionUtils.isNotEmpty(values)) {
                     record = new ComponentQuestionRecord("MAILING_ADDRESS", values);
                 }
@@ -1109,7 +1117,7 @@ public class DataExporter {
         }
 
         CSVWriter writer = new CSVWriter(output);
-        writer.writeNext(headers.toArray(new String[] {}), false);
+        writer.writeNext(headers.toArray(new String[]{}), false);
 
         int numWritten = 0;
         while (participants.hasNext()) {
@@ -1117,7 +1125,10 @@ public class DataExporter {
             List<String> row;
             try {
                 row = new LinkedList<>(participantMetaFmt.format(pt.getStatus(), pt.getUser()));
-                ComponentDataSupplier supplier = new ComponentDataSupplier(pt.getUser().getAddress(), pt.getProviders());
+                ComponentDataSupplier supplier = new ComponentDataSupplier(
+                        pt.getUser().getAddress(),
+                        pt.getNonDefaultMailAddresses(),
+                        pt.getProviders());
                 for (ActivityExtract activity : activities) {
                     String activityTag = activity.getTag();
                     int maxInstances = activityTagToNormalizedMaxInstanceCounts.get(activityTag);
@@ -1153,7 +1164,7 @@ public class DataExporter {
                 continue;
             }
 
-            writer.writeNext(row.toArray(new String[] {}), false);
+            writer.writeNext(row.toArray(new String[]{}), false);
             numWritten += 1;
 
             LOG.info("[export] ({}) participant {} for study {}:"

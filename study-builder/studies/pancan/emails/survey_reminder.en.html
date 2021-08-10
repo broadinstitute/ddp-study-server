@@ -1,7 +1,7 @@
 #set( $text = {
   "subject": "Reminder: Count Me In Survey",
-  "salutation_self": "Dear Participant,",
-  "salutation_parent": "Dear Parent,",
+  "salutation_self": "Dear {{participant_firstName}},",
+  "salutation_parent": "Dear {{proxy_firstName}},",
   "thank_you": "Thank you for enrolling in Count Me In. If you haven't yet completed the surveys about {{\#if proxy_guid}}your child{{else}}you{{/if}}, {{\#if proxy_guid}}their{{else}}your{{/if}} additional cancer details or other topics, this link will take you back to the dashboard form so you can pick up where you left off.",
   "button": "Return to Questionnaire",
   "trouble": "If you're having trouble filling out these forms, you may find it helpful to show them to a family member or physician, either by printing them out or displaying them on a smartphone/tablet.",

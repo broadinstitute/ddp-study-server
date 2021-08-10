@@ -225,7 +225,7 @@ public interface FormActivityDao extends SqlObject {
         getJdbiFormActivitySetting().insert(
                 activityId, activity.getListStyleHint(), introductionSectionId,
                 closingSectionId, revisionId, readonlyHintTemplateId, activity.getLastUpdated(), lastUpdatedTextTemplateId,
-                activity.shouldSnapshotSubstitutionsOnSubmit());
+                activity.shouldSnapshotSubstitutionsOnSubmit(), activity.shouldSnapshotAddressOnSubmit());
     }
 
     default FormActivityDef findDefByDtoAndVersion(ActivityDto activityDto, ActivityVersionDto revisionDto) {
@@ -296,6 +296,7 @@ public interface FormActivityDao extends SqlObject {
             builder.setListStyleHint(settingDto.getListStyleHint());
             builder.setLastUpdated(settingDto.getLastUpdated());
             builder.setSnapshotSubstitutionsOnSubmit(settingDto.shouldSnapshotSubstitutionsOnSubmit());
+            builder.setSnapshotAddressOnSubmit(settingDto.shouldSnapshotAddressOnSubmit());
 
             Map<Long, Template> templates = getTemplateDao().collectTemplatesByIdsAndTimestamp(settingDto.getTemplateIds(), revisionStart);
             builder.setLastUpdatedTextTemplate(templates.getOrDefault(settingDto.getLastUpdatedTextTemplateId(), null));

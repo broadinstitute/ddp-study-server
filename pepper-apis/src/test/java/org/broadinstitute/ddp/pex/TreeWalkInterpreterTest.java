@@ -1462,6 +1462,46 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
         assertTrue(runEvalEventSignal(expr, signal));
     }
 
+    @Test
+    public void testEval_picklist_defaultLatestAnswer_hasOptionStartsWith() {
+        String expr = String.format(
+                "user.studies[\"%s\"].forms[\"%s\"].questions[\"%s\"].answers.hasOptionStartsWith(\"OPTION_Y\", \"OPTION_N\")",
+                studyGuid, activityCode, picklistStableId);
+        TransactionWrapper.useTxn(handle -> {
+            SelectedPicklistOption option1 = new SelectedPicklistOption("OPTION_NO");
+            SelectedPicklistOption option2 = new SelectedPicklistOption("OPTION_YES");
+            PicklistAnswer answer = new PicklistAnswer(null, picklistStableId, null,
+                    List.of(option1, option2));
+            handle.attach(AnswerDao.class).createAnswer(testData.getUserId(), firstInstance.getId(), answer);
+
+            assertTrue(run(handle, expr));
+
+            handle.rollback();
+        });
+    }
+
+    @Test
+    public void testEval_compositeChildAnswer__hasOptionStartsWith() {
+        String stableId = compositeDef.getStableId();
+        String childStableId = compositeDef.getChildren().get(0).getStableId();
+        String expr = String.format("user.studies[\"%s\"].forms[\"%s\"].instances[specific]"
+                        + ".questions[\"%s\"].children[\"%s\"].answers.hasOptionStartsWith(\"POS\", \"NEG\")",
+                studyGuid, activityCode, stableId, childStableId);
+
+        var answer = new CompositeAnswer(null, stableId, null);
+        answer.addRowOfChildAnswers(new PicklistAnswer(null, childStableId, null,
+                List.of(new SelectedPicklistOption("NEGATIVE"))));
+        answer.addRowOfChildAnswers(new PicklistAnswer(null, childStableId, null,
+                List.of(new SelectedPicklistOption("POSITIVE"))));
+
+        TransactionWrapper.useTxn(handle -> {
+            handle.attach(AnswerDao.class).createAnswer(testData.getUserId(), firstInstance.getId(), answer);
+            assertTrue("should look at specific instance and look at all child answers", run(handle, expr));
+            handle.rollback();
+        });
+    }
+
+
     private boolean run(String expr) {
         return TransactionWrapper.withTxn(handle -> new TreeWalkInterpreter()
                 .eval(expr, handle, userGuid, userGuid, firstInstance.getGuid()));

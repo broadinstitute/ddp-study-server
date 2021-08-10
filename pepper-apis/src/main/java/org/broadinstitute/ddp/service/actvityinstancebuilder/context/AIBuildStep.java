@@ -19,5 +19,6 @@ public enum AIBuildStep {
         RENDER_CONTENT,
         UPDATE_BLOCK_STATUSES,
         SET_DISPLAY_NUMBERS,
+        POPULATE_SNAPSHOTTED_ADDRESS,
     END_BUILD
 }

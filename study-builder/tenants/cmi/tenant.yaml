@@ -38,7 +38,7 @@ emailTemplates:
       {% elsif client.client_metadata.study == "CMI-OSTEO" %} Osteosarcoma Project
       {% elsif client.client_metadata.study == "cmi-mpc" %} Metastatic Prostate Cancer Project
       {% elsif client.client_metadata.study == "cmi-esc" %} Esophageal and Stomach Cancer Project
-      {% elsif client.client_metadata.study == "cmi-pancan" %} Pan-Cancer Project
+      {% elsif client.client_metadata.study == "cmi-pancan" %} Count Me In
       {% endif %} Password Reset
     urlLifetimeInSeconds: 432000
     syntax: liquid

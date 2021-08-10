@@ -172,7 +172,7 @@ public class WorkflowService {
         if (preferredLanguageCode != null) {
             List<StudyI18nDto> studyTranslations = translationDao.findTranslationsByStudyId(study.getId());
             for (StudyI18nDto dto : studyTranslations) {
-                if (dto.getLanguageCode() != null && dto.getLanguageCode() == preferredLanguageCode) {
+                if (dto.getLanguageCode() != null && dto.getLanguageCode().equals(preferredLanguageCode)) {
                     preferredTranslation = dto;
                     break;
                 }
