@@ -1,0 +1,33 @@
+    float allPoints = 0;
+    int answersCount = 0;
+    for (activity in ctx.get('activities')) {
+        for (questionAnswer in activity.get('questionsAnswers')) {
+            def points = params.points.get(questionAnswer.get('stableId'));
+            if (points != null && questionAnswer.get('questionType').equals('PICKLIST')) {
+                def answers = questionAnswer.get('answer');
+                if (answers instanceof ArrayList) {
+                    for (answer in answers) {
+                        def answerPoints = points.get(answer);
+                        if (answerPoints != null) {
+                            allPoints += answerPoints;
+                            answersCount++;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    Map computed = ctx.computeIfAbsent('computed', key -> new HashMap());
+    if (answersCount > 0) {
+        def score = Math.round(allPoints / answersCount);
+        computed.put(params.scoreKey, score);
+        def results = params.get('results');
+        if (results != null && params.resultsKey != null) {
+            for (result in params.get('results')) {
+                if (score <= result.get('upTo')) {
+                    computed.put(params.resultsKey, result.get('result'));
+                    break;
+                }
+            }
+        }
+    }
