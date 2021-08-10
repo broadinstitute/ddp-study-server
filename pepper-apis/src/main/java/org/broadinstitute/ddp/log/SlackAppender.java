@@ -9,6 +9,10 @@ import java.net.http.HttpResponse;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
@@ -60,6 +64,10 @@ public class SlackAppender<E> extends AppenderBase<ILoggingEvent> {
 
     private int intervalInMillis;
 
+    private Map<String, Long> messageTimeMap = new ConcurrentHashMap<>();
+    private static final long CHECK_DUPLICATES_TIMEOUT_MILLIS = 60000;
+    private static final long CLEAR_MESSAGE_TIME_MAP_PERIOD_SEC = 60 * 60 * 24;
+
     private HttpClient httpClient;
     private ScheduledThreadPoolExecutor executorService;
 
@@ -102,6 +110,14 @@ public class SlackAppender<E> extends AppenderBase<ILoggingEvent> {
             executorService.scheduleWithFixedDelay(() -> {
                 sendQueuedMessages();
             }, 0, this.intervalInMillis, TimeUnit.MILLISECONDS);
+
+            // clear map with unique messages (every 24 hours)
+            ScheduledExecutorService messageMapClearExecutor = Executors.newScheduledThreadPool(1);
+            messageMapClearExecutor.scheduleAtFixedRate(
+                    () -> messageTimeMap.clear(),
+                    CLEAR_MESSAGE_TIME_MAP_PERIOD_SEC, CLEAR_MESSAGE_TIME_MAP_PERIOD_SEC, TimeUnit.SECONDS);
+
+
         } else {
             LOG.info("No slack alerts will be sent.");
         }
@@ -200,16 +216,34 @@ public class SlackAppender<E> extends AppenderBase<ILoggingEvent> {
                     String exceptionMessage = getExceptionMessage(e);
                     String stackTrace = getStringifiedStackTrace(e);
 
-                    String message = MESSAGE.replace(SERVICE, HostUtil.getGAEServiceName());
-                    message = message.replace(TITLE, exceptionMessage);
-                    message = message.replace(STACK_TRACE, stackTrace);
+                    if (notRecentDuplicate(exceptionMessage)) {
+                        String message = MESSAGE.replace(SERVICE, HostUtil.getGAEServiceName());
+                        message = message.replace(TITLE, exceptionMessage);
+                        message = message.replace(STACK_TRACE, stackTrace);
 
-                    SlackMessagePayload messagePayload = new SlackMessagePayload(message, channel, "Pepper",
-                            ":nerd_face:");
-                    messagesToSend.add(messagePayload);
+                        SlackMessagePayload messagePayload = new SlackMessagePayload(message, channel, "Pepper",
+                                ":nerd_face:");
+                        messagesToSend.add(messagePayload);
+                    }
                 }
             }
         }
+    }
+
+    /**
+     * Check if duplicate of same message exist and it was added to slack less than CHECK_DUPLICATES_TIMEOUT_MILLIS ago.
+     * @return boolean  true - if such duplicate not exist (and new message can be added), otherwise false (not add new message)
+     */
+    private boolean notRecentDuplicate(String message) {
+        long currTime = System.currentTimeMillis();
+        Long previousMessageTime = messageTimeMap.get(message);
+        if (previousMessageTime != null) {
+            messageTimeMap.put(message, currTime);
+            return currTime - previousMessageTime > CHECK_DUPLICATES_TIMEOUT_MILLIS;
+        } else {
+            messageTimeMap.put(message, currTime);
+        }
+        return true;
     }
 
     private void sendQueuedMessages() {
