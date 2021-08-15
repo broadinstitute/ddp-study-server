@@ -1,5 +1,7 @@
 package org.broadinstitute.ddp.db.dao;
 
+import static java.util.stream.Collectors.toList;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -9,7 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.broadinstitute.ddp.db.DaoException;
@@ -18,6 +20,7 @@ import org.broadinstitute.ddp.db.dto.PicklistOptionDto;
 import org.broadinstitute.ddp.db.dto.RevisionDto;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistGroupDef;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistOptionDef;
+import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
 import org.broadinstitute.ddp.model.activity.types.TemplateType;
 import org.jdbi.v3.core.mapper.reflect.ConstructorMapper;
@@ -107,13 +110,59 @@ public interface PicklistQuestionDao extends SqlObject {
     default List<Long> insertOptions(long questionId, List<PicklistOptionDef> options, long revisionId) {
         List<Long> optionIds = new ArrayList<>();
         int displayOrder = 0;
-        for (PicklistOptionDef option : options) {
+        // Let's try to get all the template for all the options in a single batch
+        List<Template> templateList = Stream.of(
+                options.stream().map(o -> o.getOptionLabelTemplate()),
+                options.stream().map(o -> o.getTooltipTemplate()),
+                options.stream().map(o -> o.getDetailLabelTemplate()),
+                options.stream().map(o -> o.getNestedOptionsLabelTemplate())
+                ).flatMap(i -> i).collect(toList());
+
+        Long[] templateIds = getTemplateDao().insertTemplates(templateList, revisionId);
+        for (int i = 0; i < options.size(); i++) {
+            PicklistOptionDef option = options.get(i);
             displayOrder += DISPLAY_ORDER_GAP;
-            long optionId = insertOption(questionId, option, displayOrder, revisionId);
+            long optionId = insertOption(questionId, option, templateIds[i], templateIds[options.size() + i],
+                    templateIds[2 * options.size() + i], templateIds[3 * options.size() + i],
+                    displayOrder, revisionId);
             optionIds.add(optionId);
         }
+
         LOG.info("Inserted {} picklist options for picklist question id {}", options.size(), questionId);
         return optionIds;
+    }
+
+    default long insertOption(long questionId, PicklistOptionDef option, Long optionLabelTmplId, Long tooltipTmplId,
+                              Long detailLabelTmplId,
+                              Long nestedOptionsTmplId,
+                              int displayOrder, long revisionId) {
+        JdbiPicklistOption jdbiOption = getJdbiPicklistOption();
+
+        if (option.getTooltipTemplate() != null) {
+            if (option.getTooltipTemplate().getTemplateType() != TemplateType.TEXT) {
+                throw new DaoException("Only TEXT template type is supported for tooltips");
+            }
+        }
+
+        long optionId = jdbiOption.insert(questionId, option.getStableId(), optionLabelTmplId, tooltipTmplId,
+                detailLabelTmplId, option.isDetailsAllowed(), option.isExclusive(), displayOrder, revisionId, nestedOptionsTmplId);
+        option.setOptionId(optionId);
+
+        if (CollectionUtils.isNotEmpty(option.getNestedOptions())) {
+            int subOptionDisplayOrder = displayOrder;
+            List<Long> nestedOptionIds = new ArrayList<>();
+            for (PicklistOptionDef nestedOption : option.getNestedOptions()) {
+                subOptionDisplayOrder += DISPLAY_ORDER_GAP;
+                long nestedOptionId = insertOption(questionId, nestedOption, subOptionDisplayOrder, revisionId);
+                nestedOptionIds.add(nestedOptionId);
+            }
+            //now populate nested options join table
+            getJdbiPicklistOption().bulkInsertNestedOptions(optionId, nestedOptionIds);
+            LOG.info("Inserted {} nested options for picklist option: {} optionId: {}",
+                    nestedOptionIds.size(), option.getStableId(), optionId);
+        }
+
+        return optionId;
     }
 
     /**
@@ -264,7 +313,7 @@ public interface PicklistQuestionDao extends SqlObject {
 
         List<PicklistOptionDto> shifted = optionDtos.subList(startIdx, idx);
         if (!shifted.isEmpty()) {
-            List<Long> oldRevIds = optionDtos.stream().map(PicklistOptionDto::getRevisionId).collect(Collectors.toList());
+            List<Long> oldRevIds = optionDtos.stream().map(PicklistOptionDto::getRevisionId).collect(toList());
             long[] newRevIds = jdbiRev.bulkCopyAndTerminate(oldRevIds, revision);
             if (newRevIds.length != oldRevIds.size()) {
                 throw new DaoException("Not all revisions of shifted picklist options were terminated");
@@ -301,7 +350,7 @@ public interface PicklistQuestionDao extends SqlObject {
         TemplateDao tmplDao = getTemplateDao();
 
         List<PicklistOptionDto> options = jdbiOption.findAllActiveOrderedOptionsByQuestionId(questionId);
-        List<Long> oldRevIds = options.stream().map(PicklistOptionDto::getRevisionId).collect(Collectors.toList());
+        List<Long> oldRevIds = options.stream().map(PicklistOptionDto::getRevisionId).collect(toList());
         long[] newRevIds = jdbiRev.bulkCopyAndTerminate(oldRevIds, meta);
         if (newRevIds.length != oldRevIds.size()) {
             throw new DaoException("Not all revisions for picklist options were terminated");
