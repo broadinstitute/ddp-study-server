@@ -2,6 +2,7 @@ package org.broadinstitute.ddp.db.dao;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Iterator;
 import java.util.List;
 
 import org.broadinstitute.ddp.model.activity.definition.i18n.Translation;
@@ -23,6 +24,15 @@ public interface JdbiVariableSubstitution extends SqlObject {
             + " (language_code_id,substitution_value,revision_id,template_variable_id) values(?,?,?,?)")
     @GetGeneratedKeys()
     long insert(long languageCodeId, String translatedText, long revisionId, long templateVariableId);
+
+    @SqlBatch("insert into i18n_template_substitution"
+            + " (language_code_id,substitution_value,revision_id,template_variable_id) values(:languageCode,:substitutionValue,"
+            + ":revisionId, :templateVariableId)")
+    @GetGeneratedKeys()
+    long[] insert(@Bind("languageCode") List<Long> languageCodeIds,
+                @Bind("substitutionValue") Iterator<String> translatedTexts,
+                @Bind("revisionId") long revisionId,
+                @Bind("templateVariableId")List<Long> templateVariableId);
     
     @SqlUpdate("INSERT INTO "
             + "     i18n_template_substitution(language_code_id,substitution_value,revision_id,template_variable_id)"
