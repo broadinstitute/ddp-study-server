@@ -104,6 +104,10 @@ public final class DBUtils {
         return uniqueGuid(GuidUtils::randomStandardGuid, handle, table, guidColumn);
     }
 
+    public static String generateUncheckedStandardGuid() {
+        return GuidUtils.randomStandardGuid();
+    }
+
     /**
      * Chance of randomly-generated GUI already existing in database is small, so we will proceed with
      * insert before checking ahead and just retry with new guid in the unlikely case of a duplicate guid
