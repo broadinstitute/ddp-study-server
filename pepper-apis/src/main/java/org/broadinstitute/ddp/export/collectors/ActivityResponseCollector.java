@@ -296,7 +296,7 @@ public class ActivityResponseCollector {
             case MAILING_ADDRESS:
                 MailingAddressComponentDef mailingAddressComponentDef = (MailingAddressComponentDef) componentBlockDef;
                 if (mailingAddressComponentDef.getTitleTemplate() != null) {
-                    questionText = mailingAddressComponentDef.getTitleTemplate().render("en");
+                    questionText = mailingAddressComponentDef.getTitleTemplate().renderWithDefaultValues("en");
                 } else {
                     questionText = "Your contact information";
                 }
@@ -306,7 +306,7 @@ public class ActivityResponseCollector {
             case INSTITUTION:
                 PhysicianInstitutionComponentDef physicianInstitutionDef = (PhysicianInstitutionComponentDef) componentBlockDef;
                 if (physicianInstitutionDef.getTitleTemplate() != null) {
-                    questionText = physicianInstitutionDef.getTitleTemplate().render("en");
+                    questionText = physicianInstitutionDef.getTitleTemplate().renderWithDefaultValues("en");
                 } else {
                     questionText = physicianInstitutionDef.getInstitutionType().name();
                 }

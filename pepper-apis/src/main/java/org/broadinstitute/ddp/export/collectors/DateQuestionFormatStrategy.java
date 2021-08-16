@@ -57,7 +57,7 @@ public class DateQuestionFormatStrategy implements ResponseFormatStrategy<DateQu
 
         props.put("stableId", definition.getStableId());
         props.put("questionType", definition.getQuestionType().name());
-        props.put("questionText", HtmlConverter.getPlainText(definition.getPromptTemplate().render("en")));
+        props.put("questionText", HtmlConverter.getPlainText(definition.getPromptTemplate().renderWithDefaultValues("en")));
 
         if (definition.getFields().size() != 3) {
             List<String> dateElements = new ArrayList<>();
