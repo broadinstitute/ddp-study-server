@@ -30,7 +30,7 @@ public class BoolQuestionFormatStrategy implements ResponseFormatStrategy<BoolQu
         Map<String, Object> props = new HashMap<>();
         props.put("stableId", definition.getStableId());
         props.put("questionType", definition.getQuestionType().name());
-        props.put("questionText", HtmlConverter.getPlainText(definition.getPromptTemplate().render("en")));
+        props.put("questionText", HtmlConverter.getPlainText(definition.getPromptTemplate().renderWithDefaultValues("en")));
         return props;
     }
 
