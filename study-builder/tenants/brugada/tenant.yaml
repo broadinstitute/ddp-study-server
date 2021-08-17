@@ -8,6 +8,18 @@ rules:
     enabled: true
     order: 1
 
+emailTemplates:
+  - template: reset_email
+    body: ./emails/password_reset.html
+    from: Brugada Project <##STUDY_EMAIL##>
+    subject: >
+      {% if user.user_metadata.language == "en" %}
+        Password Change Request
+      {% endif %}
+    urlLifetimeInSeconds: 432000
+    syntax: liquid
+    enabled: true
+
 clients:
   - name: Brugada Dev
     app_type: spa

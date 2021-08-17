@@ -17,7 +17,9 @@
     "LOCALHOST_LOGOUTS": "",
     "LOCALHOST_ORIGINS": "",
   {{end}}
-    "BASE_URL": "{{$conf.baseWebUrl}}"
+    "BASE_URL": "{{$conf.baseWebUrl}}",
+    "ASSETS_BUCKET": "{{$conf.assetsBucketName}}",
+    "STUDY_EMAIL": "{{$conf.studyEmail}}"
   },
   "AUTH0_ALLOW_DELETE": false,
   "INCLUDED_PROPS": {
