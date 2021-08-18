@@ -206,7 +206,7 @@
               return {
                 valid:
                   first_name.length >= 1 &&
-                  /^(?!\s)[a-zA-Z\s][a-zA-Z0-9`'\-\s]*[^\s]$/.test(first_name),
+                  /^(?!\s)[a-zA-Z\s][a-zA-Z0-9`'\u2019\-\s]*[^\s]$/.test(first_name),
                 hint: "Must have 1 or more letters",
               };
             },
@@ -219,7 +219,7 @@
               return {
                 valid:
                   last_name.length >= 1 &&
-                  /^(?!\s)[a-zA-Z\s][a-zA-Z0-9`'\-\s]*[^\s]$/.test(last_name),
+                  /^(?!\s)[a-zA-Z\s][a-zA-Z0-9`'\u2019\-\s]*[^\s]$/.test(last_name),
                 hint: "Must have 1 or more letters",
               };
             },
