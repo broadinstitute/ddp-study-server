@@ -26,7 +26,7 @@
     content="IE=Edge"
   />
   <title>
-    ${i18n.en.emails.consent_reminder.subject}
+    ${i18n.en.emails.medical_release_reminder.subject}
   </title>
   <!--<![endif]-->
 
@@ -103,16 +103,29 @@
     <tr>
       <td style="border-collapse: collapse">
         <p>
-          ${i18n.en.emails.common.salutation}
+          ${i18n.en.emails.medical_release_reminder.salutation}
         </p>
       </td>
     </tr>
 
     <tr>
       <td>
-        <p>
-          ${i18n.en.emails.consent_reminder.thank_you}
+        <p style="margin-bottom: 0;">
+          ${i18n.en.emails.medical_release_reminder.thank_you}
         </p>
+      </td>
+    </tr>
+
+    <tr>
+      <td>
+        <ul>
+          <li>
+            ${i18n.en.emails.medical_release_reminder.li1}
+          </li>
+          <li>
+            ${i18n.en.emails.medical_release_reminder.li2}
+          </li>
+        </ul>
       </td>
     </tr>
 
@@ -127,7 +140,7 @@
                 text-decoration: underline;
                 color: #589297;
               "
-          >${i18n.en.emails.consent_reminder.consent_link}</a>
+          >${i18n.en.emails.medical_release_reminder.activity_link_text}</a>
         </p>
       </td>
     </tr>
@@ -144,7 +157,7 @@
       <td>
         <p style="text-align: center; margin: 40px 0 40px 0;">
           <img
-            src="https://storage.googleapis.com/${assetsBucketName}/email-assets/workflow-steps.png"
+            src="https://storage.googleapis.com/${assetsBucketName}/email-assets/workflow-steps-1.png"
             alt="${i18n.en.emails.common.progress_image_alt}"
             style="
                 height: 140px;
@@ -158,13 +171,13 @@
       <td>
         <p>
           ${i18n.en.emails.common.questions} <a
-                                               href="tel:6177147560"
-                                               style="
+          href="tel:6177147560"
+          style="
                                                                            font-weight: bold;
                                                                            text-decoration: underline;
                                                                            color: #589297;
                                                                          "
-                                             >(617) 714-7560</a>
+        >(617) 714-7560</a>
         </p>
       </td>
     </tr>
