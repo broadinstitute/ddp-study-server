@@ -26,7 +26,7 @@
     content="IE=Edge"
   />
   <title>
-    ${i18n.en.emails.consent_thank_you.subject}
+    ${i18n.en.emails.background_information_reminder.subject}
   </title>
   <!--<![endif]-->
 
@@ -111,37 +111,8 @@
     <tr>
       <td>
         <p>
-          ${i18n.en.emails.consent_thank_you.thank_you}
+          ${i18n.en.emails.background_information_reminder.thank_you}
         </p>
-      </td>
-    </tr>
-
-    <tr>
-      <td>
-        <p>
-          ${i18n.en.emails.consent_thank_you.next}
-        </p>
-      </td>
-    </tr>
-
-    <tr>
-      <td>
-        <p style="margin-bottom: 0;">
-          ${i18n.en.emails.consent_thank_you.visit}
-        </p>
-      </td>
-    </tr>
-
-    <tr>
-      <td>
-        <ul>
-          <li>
-            ${i18n.en.emails.consent_thank_you.li1}
-          </li>
-          <li>
-            ${i18n.en.emails.consent_thank_you.li2}
-          </li>
-        </ul>
       </td>
     </tr>
 
@@ -149,22 +120,14 @@
       <td>
         <p>
           <a
-            href="{{ baseWebUrl }}/dashboard"
+            href="{{ baseWebUrl }}/activity/{{ activityInstanceGuid }}"
             target="_blank"
             style="
                 font-weight: bold;
                 text-decoration: underline;
                 color: #589297;
               "
-          >${i18n.en.emails.consent_thank_you.dashboard_link_text}</a>
-        </p>
-      </td>
-    </tr>
-
-    <tr>
-      <td>
-        <p>
-          ${i18n.en.emails.consent_thank_you.note}
+          >${i18n.en.emails.background_information_reminder.activity_link_text}</a>
         </p>
       </td>
     </tr>
@@ -181,7 +144,7 @@
       <td>
         <p style="text-align: center; margin: 40px 0 40px 0;">
           <img
-            src="https://storage.googleapis.com/${assetsBucketName}/email-assets/workflow-steps-1.png"
+            src="https://storage.googleapis.com/${assetsBucketName}/email-assets/workflow-steps-2.png"
             alt="${i18n.en.emails.common.progress_image_alt}"
             style="
                 height: 140px;
