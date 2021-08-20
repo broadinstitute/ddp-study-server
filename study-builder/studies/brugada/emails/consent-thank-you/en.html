@@ -103,7 +103,7 @@
     <tr>
       <td style="border-collapse: collapse">
         <p>
-          ${i18n.en.emails.consent_thank_you.salutation}
+          ${i18n.en.emails.common.salutationWithName}
         </p>
       </td>
     </tr>
@@ -149,14 +149,14 @@
       <td>
         <p>
           <a
-            href="${baseWebUrl}/dashboard"
+            href="{{ baseWebUrl }}/dashboard"
             target="_blank"
             style="
                 font-weight: bold;
                 text-decoration: underline;
                 color: #589297;
               "
-          >${i18n.en.emails.consent_thank_you.dashboard_link_text}</a>
+          >${i18n.en.emails.common.dashboard_link_text}</a>
         </p>
       </td>
     </tr>
@@ -164,7 +164,7 @@
     <tr>
       <td>
         <p>
-          ${i18n.en.emails.consent_thank_you.note}
+          ${i18n.en.emails.common.note_secure}
         </p>
       </td>
     </tr>
@@ -181,7 +181,7 @@
       <td>
         <p style="text-align: center; margin: 40px 0 40px 0;">
           <img
-            src="https://storage.googleapis.com/${assetsBucketName}/email-assets/workflow-steps-consent-done.png"
+            src="https://storage.googleapis.com/${assetsBucketName}/email-assets/workflow-steps-1.png"
             alt="${i18n.en.emails.common.progress_image_alt}"
             style="
                 height: 140px;
