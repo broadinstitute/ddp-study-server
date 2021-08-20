@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -54,7 +55,7 @@ public class AddressService {
      * (for example {@link #findAddressByGuid(Handle, String)}
      */
     public AddressService() {
-        this((String)null, (String)null);
+        this((String) null, (String) null);
     }
 
     public AddressService(String easyPostApiKey, String geocodingKey) {
@@ -93,10 +94,10 @@ public class AddressService {
      * Insert a copy of already existing address (which already was successfully added to the database and
      * having plus code and validation status calculated.
      *
-     * @param handle            the database handle
-     * @param copiedAddress     the address to save
-     * @param participantGuid   the user guid for the participant
-     * @param operatorGuid      the user guid for the operator
+     * @param handle          the database handle
+     * @param copiedAddress   the address to save
+     * @param participantGuid the user guid for the participant
+     * @param operatorGuid    the user guid for the operator
      * @return the saved address with new guid
      */
     public MailAddress addExistingAddress(Handle handle, MailAddress copiedAddress, String participantGuid, String operatorGuid) {
@@ -281,6 +282,23 @@ public class AddressService {
         return findDefaultAddressForParticipant(handle, participantGuid, DEFAULT_OLC_PRECISION);
     }
 
+    public Optional<MailAddress> findDefaultAddressForParticipantWithRetries(Handle handle, String participantGuid, int retries) {
+        do {
+            Optional<MailAddress> optionalAddress = findDefaultAddressForParticipant(handle, participantGuid);
+            if (optionalAddress.isPresent()) {
+                return optionalAddress;
+            } else {
+                try {
+                    LOG.warn("Could not find default address for participant with guid {}. Waiting to retry", participantGuid);
+                    TimeUnit.SECONDS.sleep(2);
+                } catch (InterruptedException e) {
+                    LOG.error("Sleep while waiting to retry findDefaultAddressForParticipant was interrupted, e");
+                }
+            }
+        } while (retries-- > 0);
+        return Optional.empty();
+    }
+
     /**
      * Return the corresponding address
      *
@@ -423,12 +441,12 @@ public class AddressService {
      *     <li>save address.guid to activity_instance_substitution with key ADDRESS_GUID.</li>
      * </ul>
      *
-     * @param instanceId   ID of an activity instance in which substitutions to save addressGuid
+     * @param instanceId ID of an activity instance in which substitutions to save addressGuid
      * @return new address object which is created
      */
     public MailAddress snapshotAddress(Handle handle, String participantGuid, String operatorGuid, long instanceId) {
         // find default address
-        Optional<MailAddress> defaultAddress = findDefaultAddressForParticipant(handle, participantGuid);
+        Optional<MailAddress> defaultAddress = findDefaultAddressForParticipantWithRetries(handle, participantGuid, 5);
         if (defaultAddress.isPresent()) {
             // create a copy of the default address (but setting it as non-default)
             MailAddress mailAddress = addExistingAddress(
