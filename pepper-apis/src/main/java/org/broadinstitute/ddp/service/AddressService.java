@@ -292,7 +292,7 @@ public class AddressService {
                     LOG.warn("Could not find default address for participant with guid {}. Waiting to retry", participantGuid);
                     TimeUnit.SECONDS.sleep(2);
                 } catch (InterruptedException e) {
-                    LOG.error("Sleep while waiting to retry findDefaultAddressForParticipant was interrupted, e");
+                    LOG.error("Sleep while waiting to retry findDefaultAddressForParticipant was interrupted", e);
                 }
             }
         } while (retries-- > 0);
