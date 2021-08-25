@@ -18,7 +18,6 @@ import org.slf4j.LoggerFactory;
 
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Set;
 
 public class RarexVersion3 implements CustomTask {
 
@@ -177,59 +176,6 @@ public class RarexVersion3 implements CustomTask {
 
     private interface SqlHelper extends SqlObject {
 
-        @SqlQuery("select block_id from block__question where question_id = :questionId")
-        int findQuestionBlockId(@Bind("questionId") long questionId);
-
-        @SqlQuery("select template_variable_id from template_variable where template_id = :templateId")
-        long findTemplateVariableId(@Bind("templateId") long templateId);
-
-        @SqlUpdate("update form_section__block set display_order = :displayOrder where form_section__block_id = :formSectionBlockId")
-        int updateFormSectionBlockDisplayOrder(@Bind("formSectionBlockId") long formSectionBlockId, @Bind("displayOrder") int displayOrder);
-
-        @SqlUpdate("delete from form_section_icon_source where form_section_icon_id in (<ids>)")
-        int _deleteActivityIconSources(@BindList("ids") Set<Long> ids);
-
-        @SqlUpdate("delete from form_section_icon where form_section_icon_id in (<ids>)")
-        int _deleteActivityIcons(@BindList("ids") Set<Long> ids);
-
-        default void deleteActivityIcons(Set<Long> ids) {
-            int numUpdated = _deleteActivityIconSources(ids);
-            if (numUpdated != 6) {
-                throw new DDPException("Expected to delete 6 rows from icon sources ="
-                        + " but deleted " + numUpdated);
-            }
-
-            numUpdated = _deleteActivityIcons(ids);
-            if (numUpdated != 6) {
-                throw new DDPException("Expected to delete 6 rows from form section icons ="
-                        + " but deleted " + numUpdated);
-            }
-        }
-
-
-        @SqlQuery("select tv.template_variable_id from template_variable tv"
-                + " join template as tmpl on tmpl.template_id = tv.template_id"
-                + " join picklist_option po on tmpl.template_id = po.option_label_template_id"
-                + " join picklist_question pk on po.picklist_question_id = pk.question_id"
-                + " join block__question bt on bt.question_id = pk.question_id"
-                + " join question q on q.question_id = bt.question_id"
-                + " join question_stable_code qsc on qsc.question_stable_code_id = q.question_stable_code_id"
-                + " where qsc.stable_id = :questionStableId"
-                + "   and po.picklist_option_stable_id = :optionStableId"
-                + "   and bt.block_id in (select fsb.block_id"
-                + "                         from form_activity__form_section as fafs"
-                + "                         join form_section__block as fsb on fsb.form_section_id = fafs.form_section_id"
-                + "                        where fafs.form_activity_id = :activityId"
-                + "                        union"
-                + "                       select bn.nested_block_id"
-                + "                         from form_activity__form_section as fafs"
-                + "                         join form_section__block as fsb on fsb.form_section_id = fafs.form_section_id"
-                + "                         join block_nesting as bn on bn.parent_block_id = fsb.block_id"
-                + "                        where fafs.form_activity_id = :activityId)")
-        List<Long> findPicklistOptionVariableIdsByStableIds(@Bind("activityId") long activityId,
-                                                            @Bind("optionStableId") String optionStableId,
-                                                            @Bind("questionStableId") String questionStableId);
-
         @SqlQuery("select tv.template_variable_id from template_variable tv"
                 + " join i18n_template_substitution ts on ts.template_variable_id = tv.template_variable_id"
                 + " join template as tmpl on tmpl.template_id = tv.template_id"
@@ -248,16 +194,6 @@ public class RarexVersion3 implements CustomTask {
         List<Long> findVariableIdsByText(@Bind("activityId") long activityId,
                                          @Bind("text") String text);
 
-        @SqlQuery("select e.expression_id from block_component as bt "
-                + "   join block__expression be on be.block_id = bt.block_id"
-                + "   join expression e on e.expression_id = be.expression_id"
-                + " where bt.block_id in "
-                + " (select fsb.block_id"
-                + " from form_activity__form_section as fafs"
-                + " join form_section__block as fsb on fsb.form_section_id = fafs.form_section_id"
-                + " where fafs.form_activity_id = :activityId)")
-        List<Long> findComponentBlockExpressionIds(@Bind("activityId") long activityId);
-
         @SqlQuery("select e.expression_id from block__question as bt "
                 + "left join block__expression be on be.block_id = bt.block_id "
                 + "join expression e on e.expression_id = be.expression_id "
@@ -272,59 +208,13 @@ public class RarexVersion3 implements CustomTask {
         List<Long> findBlockExpressionIdsByQuestionStableCode(@Bind("activityId") long activityId,
                                                               @Bind("stableId") String stableId);
 
-        @SqlQuery("select e.expression_id from block as bt "
-                + "left join block__expression be on be.block_id = bt.block_id "
-                + "join expression e on e.expression_id = be.expression_id "
-                + "  where "
-                + "  e.expression_text = :expr and "
-                + "  bt.block_id in "
-                + "  (select fsb.block_id "
-                + "  from form_activity__form_section as fafs  "
-                + "  join form_section__block as fsb on fsb.form_section_id = fafs.form_section_id "
-                + "  where fafs.form_activity_id = :activityId)")
-        List<Long> findBlockExpressionIdsByExpressionText(@Bind("activityId") long activityId,
-                                                          @Bind("expr") String expr);
-
         // For single language only
         @SqlUpdate("update i18n_template_substitution set substitution_value = :value where template_variable_id = :id")
         int updateVarValueByTemplateVarId(@Bind("id") long templateVarId, @Bind("value") String value);
-
-        default void detachQuestionFromBlock(long questionId) {
-            int numDeleted = _deleteBlockQuestionByQuestionId(questionId);
-            if (numDeleted != 1) {
-                throw new DDPException("Could not remove question with questionId=" + questionId + " from block");
-            }
-        }
-
-        @SqlUpdate("delete from block__question where question_id = :questionId")
-        int _deleteBlockQuestionByQuestionId(@Bind("questionId") long questionId);
-
-        @SqlQuery("select block_id from block__question where question_id = :questionId")
-        Long getBlockIdByQuestionId(@Bind("questionId") long questionId);
 
         @SqlUpdate("update expression set expression_text = :text where expression_id in (<ids>)")
         int updateExpressionText(@Bind("text") String text,
                                  @BindList(value = "ids", onEmpty = BindList.EmptyHandling.THROW) List<Long> ids);
 
-        @SqlQuery("select bt.block_id from template_variable tv "
-                + "join i18n_template_substitution ts on ts.template_variable_id = tv.template_variable_id "
-                + "join template as tmpl on tmpl.template_id = tv.template_id "
-                + "join block_content as bt on tmpl.template_id = bt.body_template_id "
-                + "where ts.substitution_value = :text and "
-                + " bt.block_id in (select fsb.block_id "
-                + " from form_activity__form_section as fafs "
-                + " join form_section__block as fsb on fsb.form_section_id = fafs.form_section_id "
-                + " where fafs.form_activity_id = :activityId)")
-        Long findBlockByText(@Bind("activityId") long activityId, @Bind("text") String text);
-
-        @SqlUpdate("update template_variable tv "
-                + "join i18n_template_substitution ts on ts.template_variable_id = tv.template_variable_id "
-                + "join template as tmpl on tmpl.template_id = tv.template_id "
-                + "join block_content as bt on tmpl.template_id = bt.body_template_id "
-                + "set ts.substitution_value = :text "
-                + "where "
-                + " tv.variable_name = :varName and "
-                + " bt.block_id = :blockId")
-        void updateBlockVariable(@Bind("blockId") long blockId, @Bind("varName") String varName, @Bind("text") String text);
     }
 }
