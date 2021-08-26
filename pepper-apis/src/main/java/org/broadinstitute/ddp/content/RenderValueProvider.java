@@ -30,6 +30,16 @@ public class RenderValueProvider {
 
     private static final Logger LOG = LoggerFactory.getLogger(RenderValueProvider.class);
 
+    /**
+     * If this value is `true` then  DDP methods (answer(), isGovernedParticipant()) defined in {@link RenderValueProvider} will
+     * return pre-defined values:
+     * <pre>
+     *     - isGovernedParticipant() returns both parameters separated with slash (`isTrueString`/`isFalseString`);
+     *     - answer() returns fallbackValue.
+     * </pre>
+     */
+    private boolean useDefaultsForDdpMethods = false;
+
     private String participantGuid;
     private String participantFirstName;
     private String participantLastName;
@@ -166,7 +176,11 @@ public class RenderValueProvider {
      * @return String - if governedParticipant is not null and == true, then return 'ifTrueString', else return 'ifFalseString'
      */
     public String isGovernedParticipant(String ifTrueString, String ifFalseString) {
-        return governedParticipant != null && governedParticipant ? ifTrueString : ifFalseString;
+        if (governedParticipant == null && useDefaultsForDdpMethods) {
+            return ifTrueString + '/' + ifFalseString;
+        } else {
+            return governedParticipant != null && governedParticipant ? ifTrueString : ifFalseString;
+        }
     }
 
     /**
@@ -227,9 +241,13 @@ public class RenderValueProvider {
         } else if (formInstance != null) {
             return renderAnswerUsingFormInstance(questionStableId, fallbackValue, useDetailTextForPickList);
         } else {
-            // No objects to use to lookup answers. Returning null here will keep this part of the template untouched,
-            // in case we want to come back and do a second round of rendering.
-            return null;
+            if (useDefaultsForDdpMethods) {
+                return fallbackValue;
+            } else {
+                // No objects to use to lookup answers. Returning null here will keep this part of the template untouched,
+                // in case we want to come back and do a second round of rendering.
+                return null;
+            }
         }
     }
 
@@ -397,6 +415,11 @@ public class RenderValueProvider {
             return this;
         }
 
+        public Builder setUseDefaultsForDdpMethods(boolean useDefaultsForDdpMethods) {
+            provider.useDefaultsForDdpMethods = useDefaultsForDdpMethods;
+            return this;
+        }
+
         /**
          * If caller has a FormResponse object available, then use this.
          */
@@ -502,6 +525,7 @@ public class RenderValueProvider {
             copy.formInstance = provider.formInstance;
             copy.governedParticipant = provider.governedParticipant;
             copy.addressGuid = provider.addressGuid;
+            copy.useDefaultsForDdpMethods = provider.useDefaultsForDdpMethods;
             return copy;
         }
     }

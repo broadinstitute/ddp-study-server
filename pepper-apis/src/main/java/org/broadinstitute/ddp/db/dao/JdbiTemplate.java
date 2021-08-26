@@ -2,6 +2,8 @@ package org.broadinstitute.ddp.db.dao;
 
 import static org.broadinstitute.ddp.constants.SqlConstants.TemplateTable;
 
+import java.util.Iterator;
+import java.util.List;
 import java.util.Optional;
 
 import org.broadinstitute.ddp.db.DBUtils;
@@ -11,23 +13,33 @@ import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
+import org.jdbi.v3.sqlobject.statement.SqlBatch;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 
 public interface JdbiTemplate extends SqlObject {
 
+    String INSERT_TEMPLATE_SQL = "INSERT INTO template(template_code, template_type_id, template_text, revision_id) "
+            + "SELECT :templateCode, type.template_type_id, :templateText, :revisionId "
+            + "FROM template_type AS type "
+            + "WHERE type.template_type_code = :templateType";
+
     default String generateUniqueCode() {
         return DBUtils.uniqueStandardGuid(getHandle(), TemplateTable.TABLE_NAME, TemplateTable.CODE);
     }
 
-    @SqlUpdate("INSERT INTO template(template_code, template_type_id, template_text, revision_id) "
-                + "SELECT :templateCode, type.template_type_id, :templateText, :revisionId "
-                + "FROM template_type AS type "
-                + "WHERE type.template_type_code = :templateType")
+    @SqlUpdate(INSERT_TEMPLATE_SQL)
     @GetGeneratedKeys()
     long insert(@Bind("templateCode") String templateCode,
                 @Bind("templateType") TemplateType templateType,
                 @Bind("templateText") String templateText,
+                @Bind("revisionId") long revisionId);
+
+    @SqlBatch(INSERT_TEMPLATE_SQL)
+    @GetGeneratedKeys("template_id")
+    long[] insert(@Bind("templateCode") List<String> templateCode,
+                @Bind("templateType") Iterator<TemplateType> templateType,
+                @Bind("templateText") Iterator<String> templateText,
                 @Bind("revisionId") long revisionId);
 
     @SqlUpdate("UPDATE template "

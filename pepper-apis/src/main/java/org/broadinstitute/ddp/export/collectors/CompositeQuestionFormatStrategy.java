@@ -45,7 +45,7 @@ public class CompositeQuestionFormatStrategy implements ResponseFormatStrategy<C
         Map<String, Object> props = new HashMap<>();
         props.put("stableId", definition.getStableId());
         props.put("questionType", definition.getQuestionType().name());
-        props.put("questionText", HtmlConverter.getPlainText(definition.getPromptTemplate().render("en")));
+        props.put("questionText", HtmlConverter.getPlainText(definition.getPromptTemplate().renderWithDefaultValues("en")));
         props.put("allowMultiple", definition.isAllowMultiple());
         //watchout: children not handled here
         return props;

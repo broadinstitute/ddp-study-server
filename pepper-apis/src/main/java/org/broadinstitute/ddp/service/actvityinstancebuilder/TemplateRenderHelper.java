@@ -1,14 +1,11 @@
 package org.broadinstitute.ddp.service.actvityinstancebuilder;
 
 import java.time.LocalDate;
-import java.util.HashMap;
 import java.util.Map;
 
 import org.broadinstitute.ddp.content.I18nContentRenderer;
 import org.broadinstitute.ddp.content.I18nTemplateConstants;
-import org.broadinstitute.ddp.content.RenderValueProvider;
-import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
-import org.broadinstitute.ddp.exception.DDPException;
+import org.broadinstitute.ddp.content.RendererInitialContextCreator;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.activity.instance.ActivityInstance;
 import org.broadinstitute.ddp.service.actvityinstancebuilder.context.AIBuilderContext;
@@ -20,13 +17,8 @@ import org.broadinstitute.ddp.service.actvityinstancebuilder.context.AIBuilderCo
  */
 public class TemplateRenderHelper {
 
-    public enum RenderContextSource {
-        FORM_RESPONSE_AND_ACTIVITY_DEF,
-        FORM_INSTANCE
-    }
-
     /**
-     * Creates renderer initial context and popualtes it with common data.
+     * Creates renderer initial context and populates it with common data.
      * The created context stored in {@link AIBuilderContext#getRendererInitialContext()}
      *
      * <p>The following types of data stored to the renderer context:
@@ -36,38 +28,20 @@ public class TemplateRenderHelper {
      *     <li>form activity last updated date (if previous version exists).</li>
      * </ul>
      */
-    public void createRendererInitialContext(AIBuilderContext ctx, RenderContextSource renderContextSource) {
-        Map<String, String> commonSnapshot = I18nContentRenderer
-                .newValueProviderBuilder(ctx.getHandle(), ctx.getFormResponse().getParticipantId(),
-                        ctx.getOperatorGuid(), ctx.getStudyGuid())
-                .build().getSnapshot();
-
-        Map<String, String> snapshot = ctx.getHandle().attach(ActivityInstanceDao.class).findSubstitutions(
-                ctx.getFormResponse().getId());
-        ctx.getActivitySnapshots().putAll(snapshot);
-
-        Map<String, Object> context = new HashMap<>();
-        switch (renderContextSource) {
-            case FORM_RESPONSE_AND_ACTIVITY_DEF:
-                context.put(I18nTemplateConstants.DDP, new RenderValueProvider.Builder()
-                        .withFormResponse(ctx.getFormResponse(), ctx.getFormActivityDef(), ctx.getIsoLangCode())
-                        .withSnapshot(commonSnapshot)
-                        .withSnapshot(snapshot)
-                        .build());
-                break;
-            case FORM_INSTANCE:
-                context.put(I18nTemplateConstants.DDP, new RenderValueProvider.Builder()
-                        .withFormInstance(ctx.getFormInstance())
-                        .withSnapshot(commonSnapshot)
-                        .withSnapshot(snapshot)
-                        .build());
-                break;
-            default:
-                throw new DDPException("Unhandled renderContextSource " + renderContextSource);
-        }
-
+    public void createRendererInitialContext(AIBuilderContext ctx, RendererInitialContextCreator.RenderContextSource renderContextSource) {
+        Map<String, Object> context = RendererInitialContextCreator.createRendererInitialContext(
+                ctx.getHandle(),
+                ctx.getFormResponse() != null ? ctx.getFormResponse().getParticipantId() : ctx.getFormInstance().getParticipantUserId(),
+                ctx.getOperatorGuid(),
+                ctx.getStudyGuid(),
+                ctx.getIsoLangCode(),
+                ctx.getFormActivityDef(),
+                ctx.getFormResponse(),
+                ctx.getFormInstance(),
+                ctx.getActivitySnapshots(),
+                renderContextSource
+        );
         putLastUpdatedToRenderContext(ctx, context);
-
         ctx.getRendererInitialContext().putAll(context);
     }
 
