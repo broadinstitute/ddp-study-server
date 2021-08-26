@@ -19,6 +19,7 @@ import static org.broadinstitute.ddp.service.actvityinstancebuilder.context.AIBu
 import java.util.Optional;
 
 import org.broadinstitute.ddp.cache.LanguageStore;
+import org.broadinstitute.ddp.content.RendererInitialContextCreator.RenderContextSource;
 import org.broadinstitute.ddp.db.ActivityDefStore;
 import org.broadinstitute.ddp.db.dto.LanguageDto;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
@@ -184,7 +185,7 @@ public class ActivityInstanceFromDefinitionBuilder {
         return this;
     }
 
-    public ActivityInstanceFromDefinitionBuilder createRendererContext(TemplateRenderHelper.RenderContextSource renderContextSource) {
+    public ActivityInstanceFromDefinitionBuilder createRendererContext(RenderContextSource renderContextSource) {
         if (checkStep(READ_ACTIVITY_DEF, CREATE_RENDERER_CONTEXT)) {
 
             context.getAIBuilderFactory().getTemplateRenderHelper().createRendererInitialContext(context, renderContextSource);

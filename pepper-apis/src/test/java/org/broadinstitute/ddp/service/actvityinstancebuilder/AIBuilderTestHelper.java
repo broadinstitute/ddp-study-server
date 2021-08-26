@@ -1,6 +1,7 @@
 package org.broadinstitute.ddp.service.actvityinstancebuilder;
 
 import static java.util.Collections.emptyList;
+import static org.broadinstitute.ddp.content.RendererInitialContextCreator.RenderContextSource.FORM_RESPONSE_AND_ACTIVITY_DEF;
 import static org.broadinstitute.ddp.service.actvityinstancebuilder.AIBuilderTestUtil.Q_ID_1;
 import static org.broadinstitute.ddp.service.actvityinstancebuilder.AIBuilderTestUtil.Q_ID_2;
 import static org.broadinstitute.ddp.service.actvityinstancebuilder.AIBuilderTestUtil.Q_ID_3;
@@ -13,7 +14,6 @@ import static org.broadinstitute.ddp.service.actvityinstancebuilder.AIBuilderTes
 import static org.broadinstitute.ddp.service.actvityinstancebuilder.AIBuilderTestUtil.createFormSectionDef;
 import static org.broadinstitute.ddp.service.actvityinstancebuilder.AIBuilderTestUtil.createQuestionBoolBlockDef;
 import static org.broadinstitute.ddp.service.actvityinstancebuilder.AIBuilderTestUtil.createQuestionTextBlockDef;
-import static org.broadinstitute.ddp.service.actvityinstancebuilder.TemplateRenderHelper.RenderContextSource.FORM_RESPONSE_AND_ACTIVITY_DEF;
 import static org.broadinstitute.ddp.service.actvityinstancebuilder.context.AIBuilderParams.createParams;
 
 import java.util.Arrays;
@@ -24,6 +24,7 @@ import java.util.Map;
 import org.broadinstitute.ddp.content.ContentStyle;
 import org.broadinstitute.ddp.content.I18nTemplateConstants;
 import org.broadinstitute.ddp.content.RenderValueProvider;
+import org.broadinstitute.ddp.content.RendererInitialContextCreator.RenderContextSource;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
 import org.broadinstitute.ddp.model.activity.definition.FormBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.FormSectionDef;
