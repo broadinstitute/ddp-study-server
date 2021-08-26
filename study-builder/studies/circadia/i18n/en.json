@@ -188,7 +188,7 @@
   "consent_study_communication_via_email_title": "Study Communication via Unsecured Email",
   "consent_study_communication_via_email_p1": "This study may communicate with you via email. The Partners standard is to send email securely. This requires you to initially set up and activate an account with a password. You can then use the password to access secure emails sent to you from Partners HealthCare. ",
   "consent_study_communication_via_email_p2": "However, this study uses “unencrypted” email that is not secure and could result in the unauthorized use or disclosure of your information. If you want to receive communications by unencrypted email despite these risks, Partners HealthCare will not be held responsible. Your preference to receive unencrypted email will apply to emails sent from this research group/study only. ",
-  "consent_study_communication_via_email_p3_italic": "This study may communicate with you via email. The Partners standard is to send email securely. This requires you to initially set up and activate an account with a password. You can then use the password to access secure emails sent to you from Partners HealthCare. ",
+  "consent_study_communication_via_email_p3_italic": "I have had the chance to ask questions about the use of unencrypted email with staff associated with this research study. I have been informed of the risks and other information covered above and consent to the use of unencrypted email communications associated with this research study.",
 
   "consent_receive_unencrypted_email_communications_title": "Please select one of the following options",
   "consent_receive_unencrypted_email_communications_yes_answer": "I consent to receive unencrypted email communications.",
