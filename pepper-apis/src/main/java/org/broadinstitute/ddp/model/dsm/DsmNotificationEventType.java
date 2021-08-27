@@ -33,4 +33,20 @@ public enum DsmNotificationEventType {
      * Message sent by DSM when a result from a lab test on a kit is available
      */
     TEST_RESULT,
+    /**
+     * Message sent by DSM when a Circadia kit is delivered to participant
+     */
+    CIRCADIA_SENT,
+    /**
+     * Message sent by DSM when a Circadia  kit is received back
+     */
+    CIRCADIA_RECEIVED,
+    /**
+     * Message sent by DSM when DLMO Collection Date #1 is entered for Circadia
+     */
+    DLMO_DATE_1,
+    /**
+     * Message sent by DSM when DLMO Collection Date #2 is entered for Circadia
+     */
+    DLMO_DATE_2
 }

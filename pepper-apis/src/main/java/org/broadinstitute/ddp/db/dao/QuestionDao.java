@@ -12,6 +12,7 @@ import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.broadinstitute.ddp.db.ActivityDefStore;
@@ -1000,15 +1001,10 @@ public interface QuestionDao extends SqlObject {
         }
 
         if (CollectionUtils.isNotEmpty(textQuestion.getSuggestions())) {
-            int displayOrder = 0;
-            for (String suggestion : textQuestion.getSuggestions()) {
-                displayOrder += DISPLAY_ORDER_GAP;
-                numInserted = getJdbiTextQuestionSuggestion().insert(textQuestion.getQuestionId(),
-                        suggestion, displayOrder);
-                if (numInserted != 1) {
-                    throw new DaoException("Inserted " + numInserted + " for text question: " + textQuestion.getStableId()
-                            + "  suggestion: " + suggestion);
-                }
+            int[] ids = getJdbiTextQuestionSuggestion().insert(textQuestion.getQuestionId(), textQuestion.getSuggestions(),
+                    Stream.iterate(0, i -> i + DISPLAY_ORDER_GAP).iterator());
+            if (ids.length != textQuestion.getSuggestions().size()) {
+                throw new DaoException("Inserted " + numInserted + " suggestions" + textQuestion.getStableId());
             }
         }
     }

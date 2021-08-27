@@ -98,6 +98,7 @@ import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
 import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.model.user.UserProfile;
 import org.broadinstitute.ddp.pex.PexInterpreter;
+import org.broadinstitute.ddp.service.AddressService;
 import org.broadinstitute.ddp.service.DsmAddressValidationStatus;
 import org.broadinstitute.ddp.service.MedicalRecordService;
 import org.broadinstitute.ddp.util.ElasticsearchServiceUtil;
@@ -124,6 +125,7 @@ public class DataExporterTest extends TxnAwareBaseTest {
     DateValue testBirthdate = new DateValue(1978, 5, 16);
     private MedicalRecordService mockMedicalRecordService;
     private GovernancePolicy mockGovernancePolicy;
+    private AddressService addressService;
 
     @BeforeClass
     public static void setup() {
@@ -156,6 +158,7 @@ public class DataExporterTest extends TxnAwareBaseTest {
 
         Mockito.when(ageOfMajorityRule.getDateOfMajority(Mockito.any(LocalDate.class))).thenReturn(testDateOfMajority);
 
+        addressService = new AddressService();
     }
 
     @Test
@@ -240,6 +243,11 @@ public class DataExporterTest extends TxnAwareBaseTest {
             handle.attach(InvitationFactory.class)
                     .createInvitation(InvitationType.AGE_UP, invitationCode2, testData.getStudyId(),
                             testData.getUserId(), email2);
+
+            // insert snapshotted address
+            MailAddress snapshottedAdress = addressService.snapshotAddress(
+                    handle, testData.getUserGuid(), testData.getUserGuid(), instanceDto.getId());
+
             // Extract and test
             List<Participant> extracts = exporter.extractParticipantDataSet(handle, testData.getTestingStudy());
 
@@ -250,6 +258,12 @@ public class DataExporterTest extends TxnAwareBaseTest {
             assertEquals(EnrollmentStatusType.ENROLLED, actual.getStatus().getEnrollmentStatus());
             assertEquals(testData.getUserGuid(), actual.getStatus().getUserGuid());
             assertEquals(testData.getStudyGuid(), actual.getStatus().getStudyGuid());
+
+            // verify non-default (snapshotted) address fetched to Participant object
+            assertEquals(1, actual.getNonDefaultMailAddresses().size());
+            assertEquals(instanceDto.getId(), actual.getNonDefaultMailAddresses().keySet().iterator().next().longValue());
+            MailAddress nonDefaultAddress = actual.getNonDefaultMailAddresses().values().iterator().next();
+            assertEquals(snapshottedAdress.getGuid(), nonDefaultAddress.getGuid());
 
             assertEquals(testData.getTestingUser().getEmail(), actual.getUser().getEmail());
 

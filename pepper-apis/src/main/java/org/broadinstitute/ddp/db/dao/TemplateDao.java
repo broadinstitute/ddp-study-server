@@ -1,5 +1,6 @@
 package org.broadinstitute.ddp.db.dao;
 
+import static java.util.stream.Collectors.toList;
 import static org.broadinstitute.ddp.constants.SqlConstants.TemplateTable;
 import static org.broadinstitute.ddp.constants.SqlConstants.TemplateVariableTable;
 
@@ -7,12 +8,13 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
@@ -22,6 +24,7 @@ import java.util.stream.Stream;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.content.I18nTemplateConstants;
+import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.DaoException;
 import org.broadinstitute.ddp.model.activity.definition.i18n.Translation;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
@@ -81,57 +84,97 @@ public interface TemplateDao extends SqlObject {
     }
 
     /**
+     * Batch insert templates.
+     * Template is created only is the {@link Template} object is not null.
+     *
+     * @param templates  the template definition, without generated things like ids
+     * @param revisionId the revision to use, will be shared by all created data
+     * @return array that with either the db template id or a null if the there was a null in template list
+     */
+    default Long[] insertTemplates(List<Template> templates, long revisionId) {
+        // it is helpful to accept some nulls in the template list, but lets filter those out
+        List<Template> nonNullTemplates = templates.stream().filter(Objects::nonNull).collect(toList());
+        if (nonNullTemplates.stream().anyMatch(t -> t.getTemplateId() != null)) {
+            throw new IllegalStateException("One of the templates had a Template id");
+        }
+        for (Template template : nonNullTemplates) {
+            for (TemplateVariable variable : template.getVariables()) {
+                String variableName = variable.getName();
+
+                if (I18nTemplateConstants.DDP.equals(variableName) || I18nTemplateConstants.LAST_UPDATED.equals(variableName)) {
+                    throw new DaoException("Variable name '" + variableName + "' is not allowed");
+                }
+            }
+        }
+        JdbiTemplate jdbiTemplate = getJdbiTemplate();
+        JdbiTemplateVariable jdbiTemplateVariable = getJdbiTemplateVariable();
+        JdbiVariableSubstitution jdbiVariableSubstitution = getJdbiVariableSubstitution();
+
+        // Note we are just generating the guids without checking the database. For our purpose the very rare collision
+        // is a tolerable problem
+        List<String> templateCodes = nonNullTemplates.stream().map(t -> DBUtils.generateUncheckedStandardGuid()).collect(toList());
+        Iterator<TemplateType> templateTypes = nonNullTemplates.stream().map(Template::getTemplateType).iterator();
+        Iterator<String> templateText = nonNullTemplates.stream().map(Template::getTemplateText).iterator();
+
+        long[] templateIds = jdbiTemplate.insert(templateCodes, templateTypes, templateText, revisionId);
+
+        for (int i = 0; i < templateIds.length; i++) {
+            nonNullTemplates.get(i).setTemplateId(templateIds[i]);
+            nonNullTemplates.get(i).setTemplateCode(templateCodes.get(i));
+        }
+        class IdToTemplateVariable {
+            Long templateId;
+            TemplateVariable variable;
+
+            IdToTemplateVariable(Long id, TemplateVariable variable) {
+                this.templateId = id;
+                this.variable = variable;
+            }
+        }
+
+        List<IdToTemplateVariable> templateIdToTemplateVariable = nonNullTemplates.stream()
+                .flatMap(t -> t.getVariables().stream().map(v -> new IdToTemplateVariable(t.getTemplateId(), v)))
+                .collect(toList());
+
+        long[] variableIds = jdbiTemplateVariable.insertVariables(templateIdToTemplateVariable.stream().map(p -> p.templateId).iterator(),
+                templateIdToTemplateVariable.stream().map(p -> p.variable.getName()).iterator());
+
+        for (int i = 0; i < variableIds.length; i++) {
+            templateIdToTemplateVariable.get(i).variable.setId(variableIds[i]);
+        }
+
+        List<Long> langCodes = templateIdToTemplateVariable.stream()
+                .flatMap(v -> v.variable.getTranslations().stream())
+                .map(tr -> LanguageStore.get(tr.getLanguageCode()).getId())
+                .collect(toList());
+
+        Iterator<String> transTexts = templateIdToTemplateVariable.stream()
+                .flatMap(v -> v.variable.getTranslations().stream())
+                .map(Translation::getText)
+                .iterator();
+
+        List<Long> transVarIds = templateIdToTemplateVariable.stream()
+                .flatMap(v -> v.variable.getTranslations().stream().map(tr -> v.variable.getId().orElse(null)))
+                .collect(toList());
+
+        jdbiVariableSubstitution.insert(langCodes, transTexts, revisionId, transVarIds);
+
+        Long[] templateIdsToReturn = new Long[templates.size()];
+        int j = 0;
+        for (int i = 0; i < templates.size(); i++) {
+            templateIdsToReturn[i] = templates.get(i) == null ? null : templateIds[j++];
+        }
+        return templateIdsToReturn;
+    }
+
+    /**
      * Create new template by inserting all its related data. If template code is not provided, it will be generated.
      *
      * @param template   the template definition, without generated things like ids
      * @param revisionId the revision to use, will be shared by all created data
      */
     default long insertTemplate(Template template, long revisionId) {
-        if (template.getTemplateId() != null) {
-            throw new IllegalStateException("Template id already set to " + template.getTemplateId());
-        }
-
-        JdbiTemplate jdbiTemplate = getJdbiTemplate();
-        JdbiTemplateVariable jdbiTemplateVariable = getJdbiTemplateVariable();
-        JdbiVariableSubstitution jdbiVariableSubstitution = getJdbiVariableSubstitution();
-
-        TemplateType templateType = template.getTemplateType();
-        String templateText = template.getTemplateText();
-        String templateCode = template.getTemplateCode();
-
-        if (templateCode == null) {
-            templateCode = jdbiTemplate.generateUniqueCode();
-            template.setTemplateCode(templateCode);
-        }
-
-        long templateId = jdbiTemplate.insert(templateCode,
-                                                templateType,
-                                                templateText,
-                                                revisionId);
-        template.setTemplateId(templateId);
-
-        for (TemplateVariable variable : template.getVariables()) {
-            String variableName = variable.getName();
-            Collection<Translation> translations = variable.getTranslations();
-
-            if (I18nTemplateConstants.DDP.equals(variableName) || I18nTemplateConstants.LAST_UPDATED.equals(variableName)) {
-                throw new DaoException("Variable name '" + variableName + "' is not allowed");
-            }
-
-            // insert into template variable
-            long templateVariableId = jdbiTemplateVariable.insertVariable(templateId, variableName);
-
-            for (Translation translation : translations) {
-                String languageCode = translation.getLanguageCode();
-                String translatedText = translation.getText();
-                jdbiVariableSubstitution.insert(
-                        LanguageStore.get(languageCode).getId(),
-                        translatedText, revisionId, templateVariableId);
-            }
-        }
-        LOG.debug("inserted template {} for {}", templateId, templateCode);
-
-        return templateId;
+        return this.insertTemplates(List.of(template), revisionId)[0];
     }
 
     /**

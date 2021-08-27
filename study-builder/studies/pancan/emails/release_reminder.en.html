@@ -1,0 +1,18 @@
+#set( $text = {
+  "subject": "Reminder: Please provide additional information for Count Me In",
+  "salutation_self": "Dear {{participant_firstName}},",
+  "salutation_parent": "Dear {{proxy_firstName}},",
+  "thank_you": "Thank you for enrolling in Count Me In and giving us your consent for research.",
+  "need_info": "Before we can proceed, we need some information about where {{\#if proxy_guid}}your child has{{else}}you have{{/if}} received care for {{\#if proxy_guid}}their{{else}}your{{/if}} cancer(s). Please click on the link below to provide this information:",
+  "button": "Contact Information Form",
+  "contact": "If you have questions at any point and would like to talk to a member of our study staff, please reach out to us at
+    <a href='mailto:${contact.email}' target='_blank' style='color: #7154ff; text-decoration: none; cursor: pointer;'>${contact.email}</a>
+    or call <a href='tel:${contact.phone}' style='color: #7154ff; text-decoration: none; cursor: pointer;'>${contact.phone}</a>.",
+  "closing": "Sincerely,",
+  "study_team": "The Count Me In Team",
+  "footnote": "For additional updates, follow us on
+    <a href='${social.twitter}' target='_blank' style='color: #7154ff; text-decoration: none; cursor: pointer;'>Twitter</a>,
+    <a href='${social.facebook}' target='_blank' style='color: #7154ff; text-decoration: none; cursor: pointer;'>Facebook</a>."
+})
+
+#parse("release_reminder.tmpl.html")

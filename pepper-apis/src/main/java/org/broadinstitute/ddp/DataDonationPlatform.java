@@ -401,6 +401,7 @@ public class DataDonationPlatform {
         // User route filter
         before(API.USER_ALL, new UserAuthCheckFilter()
                 .addTempUserAllowlist(HttpMethod.get, API.USER_PROFILE)
+                .addTempUserAllowlist(HttpMethod.patch, API.USER_PROFILE)
                 .addTempUserAllowlist(HttpMethod.get, API.USER_STUDY_WORKFLOW)
                 .addTempUserAllowlist(HttpMethod.get, API.USER_ACTIVITIES_INSTANCE)
                 .addTempUserAllowlist(HttpMethod.patch, API.USER_ACTIVITY_ANSWERS)
@@ -485,7 +486,7 @@ public class DataDonationPlatform {
                 responseSerializer);
         put(
                 API.USER_ACTIVITY_ANSWERS,
-                new PutFormAnswersRoute(workflowService, actInstService, activityValidationService, interpreter),
+                new PutFormAnswersRoute(workflowService, actInstService, activityValidationService, interpreter, addressService),
                 responseSerializer
         );
         post(API.USER_ACTIVITY_UPLOADS, new CreateUserActivityUploadRoute(fileUploadService), responseSerializer);

@@ -15,11 +15,12 @@ import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 public interface JdbiFormActivitySetting extends SqlObject {
 
     @SqlUpdate("insert into form_activity_setting (form_activity_id, list_style_hint_id, introduction_section_id, closing_section_id,"
-            + " revision_id, readonly_hint_template_id, last_updated, last_updated_text_template_id, snapshot_substitutions_on_submit)"
+            + " revision_id, readonly_hint_template_id, last_updated, last_updated_text_template_id, snapshot_substitutions_on_submit,"
+            + "snapshot_address_on_submit)"
             + " values (:activityId,"
             + "(select list_style_hint_id from list_style_hint where list_style_hint_code = :listStyleHint),"
             + ":introductionSectionId, :closingSectionId, :revisionId, :readonlyHintTemplateId, :lastUpdated, :lastUpdatedTemplateId,"
-            + ":snapshotSubs)")
+            + ":snapshotSubs, :snapshotAddressOnSubmit)")
     @GetGeneratedKeys()
     long insert(
             @Bind("activityId") long activityId,
@@ -30,7 +31,8 @@ public interface JdbiFormActivitySetting extends SqlObject {
             @Bind("readonlyHintTemplateId") Long readonlyHintTemplateId,
             @Bind("lastUpdated") LocalDateTime lastUpdated,
             @Bind("lastUpdatedTemplateId") Long lastUpdatedTemplateId,
-            @Bind("snapshotSubs") boolean snapshotSubstitutionsOnSubmit
+            @Bind("snapshotSubs") boolean snapshotSubstitutionsOnSubmit,
+            @Bind("snapshotAddressOnSubmit") boolean snapshotAddressOnSubmit
     );
 
     @SqlQuery("select lsh.list_style_hint_code, fas.* from form_activity_setting as fas "

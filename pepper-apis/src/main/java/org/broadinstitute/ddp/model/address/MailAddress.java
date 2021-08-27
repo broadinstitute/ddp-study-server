@@ -68,6 +68,28 @@ public class MailAddress {
         this.guid = guid;
     }
 
+    /**
+     * Construct from existing MailAddress (not copying ID-field and GUID)
+     *
+     * @param mailAddress  MailAddress which to copy
+     * @param isDefault    value for 'isDefault'
+     */
+    public MailAddress(MailAddress mailAddress, boolean isDefault) {
+        this.name = mailAddress.name;
+        this.street1 = mailAddress.street1;
+        this.street2 = mailAddress.street2;
+        this.city = mailAddress.city;
+        this.state = mailAddress.state;
+        this.zip = mailAddress.zip;
+        this.country = mailAddress.country;
+        this.phone = mailAddress.phone;
+        this.validationStatus = mailAddress.validationStatus;
+        this.validationStatusName = mailAddress.validationStatusName;
+        this.description = mailAddress.description;
+        this.plusCode = mailAddress.plusCode;
+        this.isDefault = isDefault;
+    }
+
     public String toAddressString() {
         return Stream.of(this.getStreet1(), this.getCity(),
                 this.getState(), this.getZip(), this.getCountry())

@@ -129,6 +129,7 @@ public final class ConsentActivityDef extends FormActivityDef {
         private Template lastUpdatedTextTemplate;
         private LocalDateTime lastUpdated;
         private boolean snapshotSubstitutionsOnSubmit;
+        private boolean snapshotAddressOnSubmit;
 
         private Builder() {
             // Use static factories.
@@ -218,6 +219,7 @@ public final class ConsentActivityDef extends FormActivityDef {
             consent.setConsentedExprId(consentedExprId);
             consent.closing = closing;
             consent.snapshotSubstitutionsOnSubmit = snapshotSubstitutionsOnSubmit;
+            consent.snapshotAddressOnSubmit = snapshotAddressOnSubmit;
             return consent;
         }
 
@@ -248,6 +250,11 @@ public final class ConsentActivityDef extends FormActivityDef {
 
         public Builder setSnapshotSubstitutionsOnSubmit(boolean snapshotSubstitutionsOnSubmit) {
             this.snapshotSubstitutionsOnSubmit = snapshotSubstitutionsOnSubmit;
+            return this;
+        }
+
+        public Builder setSnapshotAddressOnSubmit(boolean snapshotAddressOnSubmit) {
+            this.snapshotAddressOnSubmit = snapshotAddressOnSubmit;
             return this;
         }
     }

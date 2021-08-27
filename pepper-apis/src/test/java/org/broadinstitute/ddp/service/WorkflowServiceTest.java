@@ -20,12 +20,13 @@ import org.broadinstitute.ddp.TxnAwareBaseTest;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
+import org.broadinstitute.ddp.db.dao.ActivityInstanceStatusDao;
 import org.broadinstitute.ddp.db.dao.EventActionDao;
+import org.broadinstitute.ddp.db.dao.EventTriggerSql;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
 import org.broadinstitute.ddp.db.dao.JdbiActivityStatusTrigger;
 import org.broadinstitute.ddp.db.dao.JdbiEventConfiguration;
-import org.broadinstitute.ddp.db.dao.EventTriggerSql;
 import org.broadinstitute.ddp.db.dao.JdbiWorkflowTransition;
 import org.broadinstitute.ddp.db.dao.WorkflowDao;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
@@ -217,6 +218,40 @@ public class WorkflowServiceTest extends TxnAwareBaseTest {
     }
 
     @Test
+    public void testSuggestNextState_checkEachInstance() {
+        TransactionWrapper.useTxn(handle -> {
+            FormActivityDef form = insertNewActivity(handle);
+            ActivityState actState = new ActivityState(form.getActivityId(), true);
+            String condition = String.format(
+                    "!user.studies[\"%s\"].forms[\"%s\"].instances[specific].isStatus(\"COMPLETE\")",
+                    studyGuid, form.getActivityCode());
+            insertTransitions(handle, new WorkflowTransition(studyId, StaticState.start(), actState, condition, 1));
+
+            var instance1 = insertNewInstance(handle, form.getActivityId());
+            var instance2 = insertNewInstance(handle, form.getActivityId());
+            var instance3 = insertNewInstance(handle, form.getActivityId());
+
+            // Make instances complete, so we're left with only instance 2.
+            handle.attach(ActivityInstanceStatusDao.class)
+                    .insertStatus(instance1.getGuid(), InstanceStatusType.COMPLETE, Instant.now().toEpochMilli(), userGuid);
+            handle.attach(ActivityInstanceStatusDao.class)
+                    .insertStatus(instance3.getGuid(), InstanceStatusType.COMPLETE, Instant.now().toEpochMilli(), userGuid);
+
+            WorkflowState from = StaticState.start();
+            Optional<WorkflowState> actual = service.suggestNextState(handle, operatorGuid, userGuid, studyGuid, from);
+            assertNotNull(actual);
+            assertTrue(actual.isPresent());
+            assertEquals(StateType.ACTIVITY, actual.get().getType());
+
+            ActivityState activityState = (ActivityState) actual.get();
+            assertNotNull(activityState.getCandidateInstance());
+            assertEquals(instance2.getGuid(), activityState.getCandidateInstance().getGuid());
+
+            handle.rollback();
+        });
+    }
+
+    @Test
     public void testBuildStateResponse_noState() {
         TransactionWrapper.useTxn(handle -> {
             WorkflowResponse resp = service.buildStateResponse(handle, userGuid, null);
@@ -256,6 +291,27 @@ public class WorkflowServiceTest extends TxnAwareBaseTest {
             assertEquals(StateType.ACTIVITY.name(), resp.getNext());
             assertEquals(form.getActivityCode(), ((WorkflowActivityResponse) resp).getActivityCode());
             assertNull(((WorkflowActivityResponse) resp).getInstanceGuid());
+
+            handle.rollback();
+        });
+    }
+
+    @Test
+    public void testBuildStateResponse_activityState_withCandidateInstance() {
+        TransactionWrapper.useTxn(handle -> {
+            FormActivityDef form = insertNewActivity(handle);
+            var instance = insertNewInstance(handle, form.getActivityId());
+
+            var actState = new ActivityState(form.getActivityId(), true);
+            actState.setCandidateInstance(instance);
+            WorkflowResponse resp = service.buildStateResponse(handle, userGuid, actState);
+
+            assertNotNull(resp);
+            assertEquals(StateType.ACTIVITY.name(), resp.getNext());
+
+            var activityResponse = (WorkflowActivityResponse) resp;
+            assertEquals(form.getActivityCode(), activityResponse.getActivityCode());
+            assertEquals(instance.getGuid(), activityResponse.getInstanceGuid());
 
             handle.rollback();
         });

@@ -36,6 +36,8 @@
     "mbcRedirectUrl": "{{$conf.mbcRedirectUrl}}",
     "mbcRedirectUrlES": "{{$conf.mbcRedirectUrlES}}",
     "mpcRedirectUrl": "{{$conf.mpcRedirectUrl}}",
+    "escRedirectUrl": "{{$conf.escRedirectUrl}}",
+    "lmsRedirectUrl": "{{$conf.lmsRedirectUrl}}"
 {{end}}
 
 {{if not $conf.irbPassword}}

@@ -55,7 +55,8 @@ formPredicate
 
 // Form predicate functions for a particular instance
 formInstancePredicate
-  : 'snapshotSubstitution' '(' STR ')'   # InstanceSnapshotSubstitutionQuery
+  : 'isStatus' '(' STR ( ',' STR )* ')'  # IsInstanceStatusPredicate
+  | 'snapshotSubstitution' '(' STR ')'   # InstanceSnapshotSubstitutionQuery
   | 'hasPreviousInstance' '(' ')'   # HasPreviousInstancePredicate
   ;
 
@@ -70,10 +71,11 @@ predicate
   : 'hasTrue' '(' ')'   # HasTruePredicate
   | 'hasFalse' '(' ')'  # HasFalsePredicate
   | 'hasText' '(' ')'   # HasTextPredicate
-  | 'hasOption' '(' STR ')'                 # HasOptionPredicate
-  | 'hasAnyOption' '(' STR ( ',' STR )* ')' # HasAnyOptionPredicate
-  | 'hasDate' '(' ')'                       # HasDatePredicate
-  | 'ageAtLeast' '(' INT ',' TIMEUNIT ')'   # AgeAtLeastPredicate
+  | 'hasOption' '(' STR ')'                         # HasOptionPredicate
+  | 'hasAnyOption' '(' STR ( ',' STR )* ')'         # HasAnyOptionPredicate
+  | 'hasOptionStartsWith' '(' STR ( ',' STR )* ')'  # HasOptionStartsWithPredicate
+  | 'hasDate' '(' ')'                               # HasDatePredicate
+  | 'ageAtLeast' '(' INT ',' TIMEUNIT ')'           # AgeAtLeastPredicate
   | 'value' '(' ')' # ValueQuery    // Not exactly a predicate but putting this here eases implementation and backwards-compatibility.
   ;
 

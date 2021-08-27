@@ -6,7 +6,7 @@ servers:
     description: Production server (uses real data)
 info:
   description: 'Pepper API specification'
-  version: 1.9.8
+  version: '1.16.1-863fa496'
   title: Pepper
   contact:
     email: info@datadonationplatform.org

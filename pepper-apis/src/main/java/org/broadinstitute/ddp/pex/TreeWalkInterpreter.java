@@ -21,6 +21,7 @@ import org.antlr.v4.runtime.tree.TerminalNode;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.db.ActivityDefStore;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
+import org.broadinstitute.ddp.db.dao.ActivityInstanceStatusDao;
 import org.broadinstitute.ddp.db.dao.AnswerCachedDao;
 import org.broadinstitute.ddp.db.dao.AnswerDao;
 import org.broadinstitute.ddp.db.dao.InvitationDao;
@@ -33,6 +34,7 @@ import org.broadinstitute.ddp.db.dao.StudyGovernanceDao;
 import org.broadinstitute.ddp.db.dao.UserGovernanceDao;
 import org.broadinstitute.ddp.db.dao.UserProfileDao;
 import org.broadinstitute.ddp.db.dto.ActivityDto;
+import org.broadinstitute.ddp.db.dto.ActivityInstanceStatusDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.db.dto.UserActivityInstanceSummary;
 import org.broadinstitute.ddp.model.activity.definition.question.CompositeQuestionDef;
@@ -65,6 +67,7 @@ import org.broadinstitute.ddp.pex.lang.PexParser.HasAnyOptionPredicateContext;
 import org.broadinstitute.ddp.pex.lang.PexParser.HasDatePredicateContext;
 import org.broadinstitute.ddp.pex.lang.PexParser.HasFalsePredicateContext;
 import org.broadinstitute.ddp.pex.lang.PexParser.HasOptionPredicateContext;
+import org.broadinstitute.ddp.pex.lang.PexParser.HasOptionStartsWithPredicateContext;
 import org.broadinstitute.ddp.pex.lang.PexParser.HasTruePredicateContext;
 import org.broadinstitute.ddp.pex.lang.PexParser.IsStatusPredicateContext;
 import org.broadinstitute.ddp.pex.lang.PexParser.PredicateContext;
@@ -73,6 +76,7 @@ import org.broadinstitute.ddp.pex.lang.PexParser.QuestionQueryContext;
 import org.broadinstitute.ddp.pex.lang.PexParser.StudyPredicateContext;
 import org.broadinstitute.ddp.pex.lang.PexParser.StudyQueryContext;
 import org.broadinstitute.ddp.util.ActivityInstanceUtil;
+import org.broadinstitute.ddp.util.CollectionMiscUtil;
 import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -216,6 +220,25 @@ public class TreeWalkInterpreter implements PexInterpreter {
         }
     }
 
+    /**
+     * Extract a list of activity instance status types given a list of nodes.
+     *
+     * @param nodes the parse tree node list
+     * @return list of status types
+     */
+    private List<InstanceStatusType> extractStatusList(List<TerminalNode> nodes) {
+        return nodes.stream()
+                .map(node -> {
+                    String str = extractString(node).toUpperCase();
+                    try {
+                        return InstanceStatusType.valueOf(str);
+                    } catch (Exception e) {
+                        throw new PexUnsupportedException("Invalid status used for status predicate: " + str, e);
+                    }
+                })
+                .collect(Collectors.toList());
+    }
+
     private String getUserGuidByUserType(InterpreterContext ictx, TerminalNode node) {
         if (UserType.OPERATOR.equals(node.getText())) {
             if (ictx.getOperatorGuid() == null) {
@@ -300,16 +323,7 @@ public class TreeWalkInterpreter implements PexInterpreter {
     private boolean applyFormPredicate(InterpreterContext ictx, FormPredicateContext predCtx, String userGuid,
                                        String studyGuid, String activityCode) {
         if (predCtx instanceof IsStatusPredicateContext) {
-            List<InstanceStatusType> expectedStatuses = ((IsStatusPredicateContext) predCtx).STR().stream()
-                    .map(node -> {
-                        String str = extractString(node).toUpperCase();
-                        try {
-                            return InstanceStatusType.valueOf(str);
-                        } catch (Exception e) {
-                            throw new PexUnsupportedException("Invalid status used for status predicate: " + str, e);
-                        }
-                    })
-                    .collect(Collectors.toList());
+            List<InstanceStatusType> expectedStatuses = extractStatusList(((IsStatusPredicateContext) predCtx).STR());
             return fetcher.findLatestActivityInstanceStatus(ictx, userGuid, studyGuid, activityCode)
                     .map(expectedStatuses::contains)
                     .orElse(false);
@@ -345,7 +359,14 @@ public class TreeWalkInterpreter implements PexInterpreter {
     }
 
     private Object applyFormInstancePredicate(InterpreterContext ictx, PexParser.FormInstancePredicateContext predCtx, long instanceId) {
-        if (predCtx instanceof PexParser.InstanceSnapshotSubstitutionQueryContext) {
+        if (predCtx instanceof PexParser.IsInstanceStatusPredicateContext) {
+            List<InstanceStatusType> expectedStatuses = extractStatusList(((PexParser.IsInstanceStatusPredicateContext) predCtx).STR());
+            return ictx.getHandle().attach(ActivityInstanceStatusDao.class)
+                    .getCurrentStatus(instanceId)
+                    .map(ActivityInstanceStatusDto::getType)
+                    .map(expectedStatuses::contains)
+                    .orElse(false);
+        } else if (predCtx instanceof PexParser.InstanceSnapshotSubstitutionQueryContext) {
             String subName = extractString(((PexParser.InstanceSnapshotSubstitutionQueryContext) predCtx).STR());
             String value = ictx.getHandle().attach(ActivityInstanceDao.class)
                     .findSubstitutions(instanceId)
@@ -745,6 +766,19 @@ public class TreeWalkInterpreter implements PexInterpreter {
             } else {
                 return value.stream().anyMatch(optionStableIds::contains);
             }
+        } else if (predicateCtx instanceof HasOptionStartsWithPredicateContext) {
+            List<String> optionStableIds = ((HasOptionStartsWithPredicateContext) predicateCtx).STR()
+                    .stream()
+                    .map(this::extractString)
+                    .collect(Collectors.toList());
+            List<String> value = StringUtils.isBlank(instanceGuid)
+                    ? fetcher.findLatestPicklistAnswer(ictx, userGuid, activityCode, stableId, studyId)
+                    : fetcher.findSpecificPicklistAnswer(ictx, activityCode, instanceGuid, stableId);
+            if (value == null) {
+                return false;
+            } else {
+                return value.stream().anyMatch(stId -> CollectionMiscUtil.startsWithAny(stId, optionStableIds));
+            }
         } else if (predicateCtx instanceof PexParser.ValueQueryContext) {
             throw new PexUnsupportedException("Getting picklist answer value is currently not supported");
         } else {
@@ -760,6 +794,15 @@ public class TreeWalkInterpreter implements PexInterpreter {
                     .flatMap(child -> ((PicklistAnswer) child).getValue().stream())
                     .map(SelectedPicklistOption::getStableId)
                     .anyMatch(optionStableId::equals);
+        } else if (predicateCtx instanceof HasOptionStartsWithPredicateContext) {
+            List<String> optionStableIds = ((HasOptionStartsWithPredicateContext) predicateCtx).STR()
+                    .stream()
+                    .map(this::extractString)
+                    .collect(Collectors.toList());
+            return childAnswers.stream()
+                    .flatMap(child -> ((PicklistAnswer) child).getValue().stream())
+                    .map(SelectedPicklistOption::getStableId)
+                    .anyMatch(stableId -> CollectionMiscUtil.startsWithAny(stableId, optionStableIds));
         } else if (predicateCtx instanceof HasAnyOptionPredicateContext) {
             List<String> optionStableIds = ((HasAnyOptionPredicateContext) predicateCtx).STR()
                     .stream()

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="aghurtch" id="20210722-add-dsm-notification-event-types-circadia">
+        <insert tableName="dsm_notification_event_type">
+            <column name="dsm_notification_event_type_code">DLMO_DATE_1</column>
+        </insert>
+        <insert tableName="dsm_notification_event_type">
+            <column name="dsm_notification_event_type_code">DLMO_DATE_2</column>
+        </insert>
+    </changeSet>
+
+</databaseChangeLog>

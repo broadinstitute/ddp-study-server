@@ -7,6 +7,7 @@ import static org.broadinstitute.ddp.service.actvityinstancebuilder.context.AIBu
 import static org.broadinstitute.ddp.service.actvityinstancebuilder.context.AIBuildStep.CREATE_RENDERER_CONTEXT;
 import static org.broadinstitute.ddp.service.actvityinstancebuilder.context.AIBuildStep.END_BUILD;
 import static org.broadinstitute.ddp.service.actvityinstancebuilder.context.AIBuildStep.INIT;
+import static org.broadinstitute.ddp.service.actvityinstancebuilder.context.AIBuildStep.POPULATE_SNAPSHOTTED_ADDRESS;
 import static org.broadinstitute.ddp.service.actvityinstancebuilder.context.AIBuildStep.READ_ACTIVITY_DEF;
 import static org.broadinstitute.ddp.service.actvityinstancebuilder.context.AIBuildStep.READ_FORM_INSTANCE;
 import static org.broadinstitute.ddp.service.actvityinstancebuilder.context.AIBuildStep.RENDER_CONTENT;
@@ -18,6 +19,7 @@ import static org.broadinstitute.ddp.service.actvityinstancebuilder.context.AIBu
 import java.util.Optional;
 
 import org.broadinstitute.ddp.cache.LanguageStore;
+import org.broadinstitute.ddp.content.RendererInitialContextCreator.RenderContextSource;
 import org.broadinstitute.ddp.db.ActivityDefStore;
 import org.broadinstitute.ddp.db.dto.LanguageDto;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
@@ -183,7 +185,7 @@ public class ActivityInstanceFromDefinitionBuilder {
         return this;
     }
 
-    public ActivityInstanceFromDefinitionBuilder createRendererContext(TemplateRenderHelper.RenderContextSource renderContextSource) {
+    public ActivityInstanceFromDefinitionBuilder createRendererContext(RenderContextSource renderContextSource) {
         if (checkStep(READ_ACTIVITY_DEF, CREATE_RENDERER_CONTEXT)) {
 
             context.getAIBuilderFactory().getTemplateRenderHelper().createRendererInitialContext(context, renderContextSource);
@@ -273,6 +275,17 @@ public class ActivityInstanceFromDefinitionBuilder {
             context.getAIBuilderFactory().getFormInstanceCreatorHelper().setDisplayNumbers(context.getFormInstance());
 
             context.setBuildStep(SET_DISPLAY_NUMBERS);
+        }
+        return this;
+    }
+
+    public ActivityInstanceFromDefinitionBuilder populateSnapshottedAddress() {
+        if (checkStep(BUILD_FORM_CHILDREN, POPULATE_SNAPSHOTTED_ADDRESS)) {
+
+            context.getAIBuilderFactory().getFormInstanceCreatorHelper().populateSnapshottedAddress(
+                    context.getMailingAddressComponent(), context.getActivitySnapshots());
+
+            context.setBuildStep(POPULATE_SNAPSHOTTED_ADDRESS);
         }
         return this;
     }

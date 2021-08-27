@@ -16,6 +16,7 @@ import org.broadinstitute.ddp.model.activity.definition.validation.NumOptionsSel
 import org.broadinstitute.ddp.model.activity.definition.validation.RegexRuleDef;
 import org.broadinstitute.ddp.model.activity.definition.validation.RequiredRuleDef;
 import org.broadinstitute.ddp.model.activity.definition.validation.RuleDef;
+import org.broadinstitute.ddp.model.activity.definition.validation.UniqueRuleDef;
 import org.broadinstitute.ddp.model.activity.instance.validation.AgeRangeRule;
 import org.broadinstitute.ddp.model.activity.instance.validation.CompleteRule;
 import org.broadinstitute.ddp.model.activity.instance.validation.DateFieldRequiredRule;
@@ -26,6 +27,7 @@ import org.broadinstitute.ddp.model.activity.instance.validation.NumOptionsSelec
 import org.broadinstitute.ddp.model.activity.instance.validation.RegexRule;
 import org.broadinstitute.ddp.model.activity.instance.validation.RequiredRule;
 import org.broadinstitute.ddp.model.activity.instance.validation.Rule;
+import org.broadinstitute.ddp.model.activity.instance.validation.UniqueRule;
 import org.broadinstitute.ddp.model.activity.types.RuleType;
 import org.broadinstitute.ddp.service.actvityinstancebuilder.context.AIBuilderContext;
 import org.jdbi.v3.core.Handle;
@@ -59,6 +61,8 @@ public class ValidationRuleCreator {
                 return createDateFieldRequiredRule(ctx, (DateFieldRequiredRuleDef) ruleDef);
             case NUM_OPTIONS_SELECTED:
                 return createNumOptionsSelectedRule(ctx, (NumOptionsSelectedRuleDef) ruleDef);
+            case UNIQUE:
+                return createUniqueRule(ctx, (UniqueRuleDef) ruleDef);
             default:
                 throw new IllegalStateException("Unexpected value: " + ruleDef.getRuleType());
         }
@@ -157,6 +161,15 @@ public class ValidationRuleCreator {
         );
     }
 
+    private UniqueRule createUniqueRule(AIBuilderContext ctx, UniqueRuleDef ruleDef) {
+        return UniqueRule.of(
+                ruleDef.getRuleId(),
+                findRuleMessage(ctx, ruleDef),
+                getHintTitle(ctx, ruleDef),
+                ruleDef.getAllowSave()
+        );
+    }
+
     private String findRuleMessage(AIBuilderContext ctx, RuleDef ruleDef) {
         return ActivityDefStore.getInstance().findValidationRuleMessage(
                 ctx.getHandle(),
@@ -168,7 +181,9 @@ public class ValidationRuleCreator {
     }
 
     private String getHintTitle(AIBuilderContext ctx, RuleDef ruleDef) {
-        return ruleDef.getHintTemplate() !=  null ? ruleDef.getHintTemplate().render(ctx.getIsoLangCode()) : null;
+        return ruleDef.getHintTemplate() !=  null
+                ? ruleDef.getHintTemplate().render(ctx.getIsoLangCode(), ctx.getI18nContentRenderer(), ctx.getRendererInitialContext())
+                : null;
     }
 
     public String detectValidationRuleMessage(
