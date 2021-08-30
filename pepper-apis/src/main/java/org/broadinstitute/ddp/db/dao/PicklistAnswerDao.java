@@ -4,11 +4,14 @@ import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Collectors.toSet;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.broadinstitute.ddp.db.DaoException;
@@ -70,6 +73,12 @@ public interface PicklistAnswerDao extends SqlObject {
 
         List<Long> selectedIds = new ArrayList<>();
         List<String> detailTexts = new ArrayList<>();
+        // sort options by their database id for a particular question and ensure inserted in same
+        // order as database index and minimize deadlock opportunity
+        Function<SelectedPicklistOption, Long> getOptionDbId = (o) -> Optional.ofNullable(dtoMap.get(o.getStableId()))
+                        .map(PicklistOptionDto::getId).orElse(Long.MAX_VALUE);
+        selected.sort(Comparator.comparingLong(getOptionDbId::apply));
+
         for (SelectedPicklistOption option : selected) {
             if (!dtoMap.containsKey(option.getStableId())) {
                 throw new NoSuchElementException("Could not find picklist option id for " + option.getStableId());
