@@ -698,6 +698,7 @@
   "meq_good_form": "Would be in good form",
   "meq_reasonable_form": "Would be in reasonable form",
   "meq_difficult": "Would find it difficult",
+  "meq_would_find_very_difficult": "Would find it very difficult",
 
   "meq_at_what_time_feel_tired_question": "At approximately what time in the evening do you feel tired, and, as a result, in need of sleep?",
   "meq_feel_tired_interval_1": "8:00 PM–9:00 PM (20:00–21:00 h)",
