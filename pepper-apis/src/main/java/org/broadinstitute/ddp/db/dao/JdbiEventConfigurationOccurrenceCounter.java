@@ -8,6 +8,8 @@ import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 
 public interface JdbiEventConfigurationOccurrenceCounter extends SqlObject {
+    String NUM_OCCURRENCES_SELECT_SQL = "select num_occurrences from event_configuration_occurrence_counter"
+            + " where event_configuration_id = :eventConfigurationId and participant_user_id = :participantUserId";
 
     @SqlUpdate(
             "insert into event_configuration_occurrence_counter"
@@ -19,10 +21,7 @@ public interface JdbiEventConfigurationOccurrenceCounter extends SqlObject {
             @Bind("participantUserId") long participantUserId
     );
 
-    @SqlQuery(
-            "select num_occurrences from event_configuration_occurrence_counter"
-            + " where event_configuration_id = :eventConfigurationId and participant_user_id = :participantUserId"
-    )
+    @SqlQuery(NUM_OCCURRENCES_SELECT_SQL)
     Optional<Integer> getNumOccurrences(
             @Bind("eventConfigurationId") long eventConfigurationId,
             @Bind("participantUserId") long participantUserId
@@ -37,13 +36,27 @@ public interface JdbiEventConfigurationOccurrenceCounter extends SqlObject {
         );
     }
 
-    @SqlUpdate(
-            "update event_configuration_occurrence_counter set num_occurrences = num_occurrences + 1"
-            + " where event_configuration_id = :eventConfigurationId and participant_user_id = :participantUserId"
-    )
-    void incNumOccurrences(
+    default void incNumOccurrences(long eventConfigurationId, long participantUserId) {
+        _getNumOccurrencesForUpdate(eventConfigurationId, participantUserId)
+                .ifPresent(previousCounterValue -> _updateNumOccurrences(eventConfigurationId, participantUserId, previousCounterValue + 1));
+    }
+
+    // private
+    @SqlQuery(NUM_OCCURRENCES_SELECT_SQL + " FOR UPDATE")
+    Optional<Integer> _getNumOccurrencesForUpdate(
             @Bind("eventConfigurationId") long eventConfigurationId,
             @Bind("participantUserId") long participantUserId
+    );
+
+    // private
+    @SqlUpdate(
+            "update event_configuration_occurrence_counter set num_occurrences = :newCounterValue"
+            + " where event_configuration_id = :eventConfigurationId and participant_user_id = :participantUserId"
+    )
+    void _updateNumOccurrences(
+            @Bind("eventConfigurationId") long eventConfigurationId,
+            @Bind("participantUserId") long participantUserId,
+            @Bind("newCounterValue") Integer newCounterValue
     );
 
     @SqlUpdate(
