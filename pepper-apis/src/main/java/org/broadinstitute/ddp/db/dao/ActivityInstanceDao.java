@@ -2,12 +2,15 @@ package org.broadinstitute.ddp.db.dao;
 
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
@@ -270,11 +273,15 @@ public interface ActivityInstanceDao extends SqlObject {
             @BindList(value = "activityIds", onEmpty = EmptyHandling.NULL) Set<Long> activityIds);
 
     @SqlUpdate("update activity_instance set is_hidden = :isHidden"
-            + "  where participant_id = :participantId and study_activity_id in (<activityIds>)")
-    int bulkUpdateIsHiddenByActivityIds(
+            + "  where participant_id = :participantId and study_activity_id in (<activityIds>) order by study_activity_id")
+    int _bulkUpdateIsHiddenByActivityIds(
             @Bind("participantId") long participantId,
             @Bind("isHidden") boolean isHidden,
-            @BindList(value = "activityIds", onEmpty = EmptyHandling.NULL) Set<Long> activityIds);
+            @BindList(value = "activityIds", onEmpty = EmptyHandling.NULL) SortedSet<Long> activityIds);
+
+    default int bulkUpdateIsHiddenByActivityIds(long participantId, boolean isHidden, Collection<Long> activityIds) {
+        return _bulkUpdateIsHiddenByActivityIds(participantId, isHidden, new TreeSet(activityIds));
+    }
 
     @SqlUpdate("update activity_instance as ai"
             + "   join study_activity as act on act.study_activity_id = ai.study_activity_id"
