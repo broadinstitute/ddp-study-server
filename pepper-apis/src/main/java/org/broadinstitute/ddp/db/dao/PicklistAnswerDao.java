@@ -77,9 +77,10 @@ public interface PicklistAnswerDao extends SqlObject {
         // order as database index and minimize deadlock opportunity
         Function<SelectedPicklistOption, Long> getOptionDbId = (o) -> Optional.ofNullable(dtoMap.get(o.getStableId()))
                         .map(PicklistOptionDto::getId).orElse(Long.MAX_VALUE);
-        selected.sort(Comparator.comparingLong(getOptionDbId::apply));
+        List<SelectedPicklistOption> sortedSelected = new ArrayList(selected);
+        sortedSelected.sort(Comparator.comparingLong(getOptionDbId::apply));
 
-        for (SelectedPicklistOption option : selected) {
+        for (SelectedPicklistOption option : sortedSelected) {
             if (!dtoMap.containsKey(option.getStableId())) {
                 throw new NoSuchElementException("Could not find picklist option id for " + option.getStableId());
             }
