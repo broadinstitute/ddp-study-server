@@ -1,0 +1,503 @@
+{
+  "settings": {
+    "index": {
+      "number_of_shards": "1",
+      "auto_expand_replicas": "0-1",
+      "default_pipeline": "circadia-pipeline"
+    }
+  },
+  "mappings": {
+    "_doc": {
+      "properties": {
+        "status": {
+          "type": "keyword"
+        },
+        "statusTimestamp": {
+          "type": "date",
+          "ignore_malformed": false,
+          "format": "strict_date_time||strict_date_time_no_millis||epoch_millis"
+        },
+        "profile": {
+          "properties": {
+            "guid": {
+              "type": "keyword"
+            },
+            "hruid": {
+              "type": "keyword"
+            },
+            "legacyAltPid": {
+              "type": "keyword"
+            },
+            "legacyShortId": {
+              "type": "keyword"
+            },
+            "firstName": {
+              "type": "text"
+            },
+            "lastName": {
+              "type": "text"
+            },
+            "email": {
+              "type": "keyword",
+              "fields": {
+                "text": {
+                  "type": "text"
+                }
+              }
+            },
+            "preferredLanguage": {
+              "type": "keyword"
+            },
+            "doNotContact": {
+              "type": "boolean"
+            },
+            "createdAt": {
+              "type": "date",
+              "ignore_malformed": false,
+              "format": "strict_date_time||strict_date_time_no_millis||epoch_millis"
+            }
+          }
+        },
+        "address": {
+          "properties": {
+            "guid": {
+              "type": "keyword"
+            },
+            "mailToName": {
+              "type": "text"
+            },
+            "street1": {
+              "type": "text"
+            },
+            "street2": {
+              "type": "text"
+            },
+            "city": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                }
+              }
+            },
+            "state": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                }
+              }
+            },
+            "zip": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                }
+              }
+            },
+            "country": {
+              "type": "keyword"
+            },
+            "phone": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                }
+              }
+            },
+            "plusCode": {
+              "type": "keyword"
+            },
+            "valid": {
+              "type": "boolean"
+            }
+          }
+        },
+        "medicalProviders": {
+          "properties": {
+            "guid": {
+              "type": "keyword"
+            },
+            "legacyGuid": {
+              "type": "keyword"
+            },
+            "type": {
+              "type": "keyword"
+            },
+            "physicianName": {
+              "type": "text"
+            },
+            "institutionName": {
+              "type": "text"
+            },
+            "city": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                }
+              }
+            },
+            "state": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                }
+              }
+            },
+            "postalCode": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                }
+              }
+            },
+            "phone": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                }
+              }
+            }
+          }
+        },
+        "computed": {
+          "properties": {
+            "meqScore": {
+              "type": "long"
+            },
+            "meqChronotype": {
+              "type": "keyword"
+            }
+          }
+        },
+        "activities": {
+          "type": "nested",
+          "properties": {
+            "activityCode": {
+              "type": "keyword"
+            },
+            "activityVersion": {
+              "type": "keyword"
+            },
+            "guid": {
+              "type": "keyword"
+            },
+            "parentInstanceGuid": {
+              "type": "keyword"
+            },
+            "status": {
+              "type": "keyword"
+            },
+            "createdAt": {
+              "type": "date",
+              "ignore_malformed": false,
+              "format": "strict_date_time||strict_date_time_no_millis||epoch_millis"
+            },
+            "completedAt": {
+              "type": "date",
+              "ignore_malformed": false,
+              "format": "strict_date_time||strict_date_time_no_millis||epoch_millis"
+            },
+            "lastUpdatedAt": {
+              "type": "date",
+              "ignore_malformed": false,
+              "format": "strict_date_time||strict_date_time_no_millis||epoch_millis"
+            },
+            "attributes": {
+              "type": "object"
+            },
+            "questionsAnswers": {
+              "type": "nested",
+              "properties": {
+                "questionType": {
+                  "type": "keyword"
+                },
+                "stableId": {
+                  "type": "keyword"
+                },
+                "answer": {
+                  "type": "text"
+                },
+                "date": {
+                  "type": "date",
+                  "ignore_malformed": false,
+                  "format": "strict_year_month_day||strict_year_month||strict_year"
+                },
+                "dateFields": {
+                  "properties": {
+                    "year": {
+                      "type": "short"
+                    },
+                    "month": {
+                      "type": "short"
+                    },
+                    "day": {
+                      "type": "short"
+                    }
+                  }
+                },
+                "selected": {
+                  "type": "keyword"
+                },
+                "optionDetails": {
+                  "properties": {
+                    "option": {
+                      "type": "keyword"
+                    },
+                    "details": {
+                      "type": "text"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "invitations": {
+          "properties": {
+            "type": {
+              "type": "keyword"
+            },
+            "guid": {
+              "type": "keyword"
+            },
+            "createdAt": {
+              "type": "date",
+              "ignore_malformed": false,
+              "format": "strict_date_time||strict_date_time_no_millis||epoch_millis"
+            },
+            "voidedAt": {
+              "type": "date",
+              "ignore_malformed": false,
+              "format": "strict_date_time||strict_date_time_no_millis||epoch_millis"
+            },
+            "verifiedAt": {
+              "type": "date",
+              "ignore_malformed": false,
+              "format": "strict_date_time||strict_date_time_no_millis||epoch_millis"
+            },
+            "acceptedAt": {
+              "type": "date",
+              "ignore_malformed": false,
+              "format": "strict_date_time||strict_date_time_no_millis||epoch_millis"
+            },
+            "contactEmail": {
+              "type": "keyword",
+              "fields": {
+                "text": {
+                  "type": "text"
+                }
+              }
+            },
+            "notes": {
+              "type": "text"
+            }
+          }
+        },
+        "files": {
+          "properties": {
+            "guid": {
+              "type": "keyword"
+            },
+            "bucket": {
+              "type": "text"
+            },
+            "blobName": {
+              "type": "text"
+            },
+            "fileName": {
+              "type": "text"
+            },
+            "fileSize": {
+              "type": "long"
+            },
+            "mimeType": {
+              "type": "text"
+            },
+            "authorizedAt": {
+              "type": "date",
+              "ignore_malformed": false,
+              "format": "strict_date_time||strict_date_time_no_millis||epoch_millis"
+            },
+            "uploadedAt": {
+              "type": "date",
+              "ignore_malformed": false,
+              "format": "strict_date_time||strict_date_time_no_millis||epoch_millis"
+            },
+            "scannedAt": {
+              "type": "date",
+              "ignore_malformed": false,
+              "format": "strict_date_time||strict_date_time_no_millis||epoch_millis"
+            },
+            "scanResult": {
+              "type": "keyword"
+            }
+          }
+        },
+        "samples": {
+          "properties": {
+            "bspCollaboratorParticipantId": {
+              "type": "keyword"
+            },
+            "bspCollaboratorSampleId": {
+              "type": "keyword"
+            },
+            "carrier": {
+              "type": "keyword"
+            },
+            "kitRequestId": {
+              "type": "keyword"
+            },
+            "kitType": {
+              "type": "keyword"
+            },
+            "trackingIn": {
+              "type": "keyword"
+            },
+            "trackingOut": {
+              "type": "keyword"
+            },
+            "sent": {
+              "type": "date",
+              "ignore_malformed": false,
+              "format": "strict_year_month_day"
+            },
+            "delivered": {
+              "type": "date",
+              "ignore_malformed": false,
+              "format": "strict_year_month_day"
+            },
+            "received": {
+              "type": "date",
+              "ignore_malformed": false,
+              "format": "strict_year_month_day"
+            }
+          }
+        },
+        "workflows": {
+          "properties": {
+            "workflow": {
+              "type": "keyword"
+            },
+            "status": {
+              "type": "keyword"
+            },
+            "date": {
+              "type": "date",
+              "ignore_malformed": false,
+              "format": "strict_date_time||strict_date_time_no_millis||epoch_millis"
+            }
+          }
+        },
+        "dsm": {
+          "properties": {
+            "dateOfBirth": {
+              "type": "date",
+              "ignore_malformed": false,
+              "format": "strict_year_month_day"
+            },
+            "dateOfMajority": {
+              "type": "date",
+              "ignore_malformed": false,
+              "format": "strict_year_month_day"
+            },
+            "diagnosisYear": {
+              "type": "integer"
+            },
+            "diagnosisMonth": {
+              "type": "integer"
+            },
+            "familyId": {
+              "type": "long"
+            },
+            "hasConsentedToBloodDraw": {
+              "type": "boolean"
+            },
+            "hasConsentedToTissueSample": {
+              "type": "boolean"
+            },
+            "medicalRecords": {
+              "properties": {
+                "medicalRecordId": {
+                  "type": "keyword"
+                },
+                "name": {
+                  "type": "text"
+                },
+                "type": {
+                  "type": "keyword"
+                },
+                "requested": {
+                  "type": "date",
+                  "ignore_malformed": false,
+                  "format": "strict_year_month_day"
+                },
+                "received": {
+                  "type": "date",
+                  "ignore_malformed": false,
+                  "format": "strict_year_month_day"
+                }
+              }
+            },
+            "pdfs": {
+              "properties": {
+                "configName":{
+                  "type": "keyword"
+                },
+                "displayName":{
+                  "type": "text"
+                }
+              }
+            },
+            "tissueRecords": {
+              "properties": {
+                "tissueRecordId": {
+                  "type": "keyword"
+                },
+                "accessionNumber": {
+                  "type": "keyword"
+                },
+                "typePX": {
+                  "type": "text"
+                },
+                "locationPX": {
+                  "type": "text"
+                },
+                "datePX": {
+                  "type": "text"
+                },
+                "histology": {
+                  "type": "text"
+                },
+                "requested": {
+                  "type": "date",
+                  "ignore_malformed": false,
+                  "format": "strict_year_month_day"
+                },
+                "received": {
+                  "type": "date",
+                  "ignore_malformed": false,
+                  "format": "strict_year_month_day"
+                },
+                "sent": {
+                  "type": "date",
+                  "ignore_malformed": false,
+                  "format": "strict_year_month_day"
+                }
+              }
+            }
+          }
+        },
+        "proxies": {
+          "type": "keyword"
+        }
+      }
+    }
+  }
+}
