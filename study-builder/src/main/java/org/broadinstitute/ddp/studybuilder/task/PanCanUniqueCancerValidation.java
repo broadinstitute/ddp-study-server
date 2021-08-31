@@ -6,6 +6,7 @@ import java.nio.file.Path;
 
 import com.google.gson.Gson;
 import com.typesafe.config.Config;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.db.dao.JdbiQuestion;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.ValidationDao;
@@ -41,10 +42,12 @@ public class PanCanUniqueCancerValidation implements CustomTask {
     @Override
     public void run(Handle handle) {
         String studyGuid = dataCfg.getString("studyGuid");
-        String questionStableId = dataCfg.getString("questionStableId");
+        String[] questionStableIds = StringUtils.split(dataCfg.getString("questionStableIds"), ',');
         Config ruleConfig = dataCfg.getConfig("uniqueRule");
         StudyDto studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(studyGuid);
-        addValidation(handle, studyDto.getId(), questionStableId, ruleConfig);
+        for (String questionStableId :questionStableIds) {
+            addValidation(handle, studyDto.getId(), questionStableId, ruleConfig);
+        }
     }
 
     public static void addValidation(Handle handle, long studyId, String stableId, Config ruleConfig) {
