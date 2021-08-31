@@ -30,7 +30,7 @@ public class NumericQuestionFormatStrategy implements ResponseFormatStrategy<Num
         Map<String, Object> props = new LinkedHashMap<>();
         props.put("stableId", definition.getStableId());
         props.put("questionType", definition.getQuestionType().name());
-        props.put("questionText", HtmlConverter.getPlainText(definition.getPromptTemplate().render("en")));
+        props.put("questionText", HtmlConverter.getPlainText(definition.getPromptTemplate().renderWithDefaultValues("en")));
         props.put("numericType", definition.getNumericType().name());
         return props;
     }
