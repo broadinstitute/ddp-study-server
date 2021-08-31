@@ -178,6 +178,12 @@ public class EventConfiguration {
     public boolean dispatchToHousekeeping() {
         return dispatchToHousekeeping;
     }
+    public boolean isSynchronous() {
+        return !isAsynchronous();
+    }
+    public boolean isAsynchronous() {
+        return dispatchToHousekeeping();
+    }
 
     public Integer getPostDelaySeconds() {
         return postDelaySeconds;
