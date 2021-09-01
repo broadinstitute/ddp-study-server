@@ -85,6 +85,11 @@ public interface UserProfileSql extends SqlObject {
     @SqlUpdate("update user_profile set do_not_contact = :doNotContact where user_id = :userId")
     int updateDoNotContact(@Bind("userId") long userId, @Bind("doNotContact") Boolean doNotContact);
 
+    @SqlUpdate("update user_profile set do_not_contact = :doNotContact where user_id in "
+            + " ( select u.user_id from user u where u.hruid in (<userHruids>))")
+    int updateDoNotContact(@BindList(value = "userHruids", onEmpty = BindList.EmptyHandling.NULL) Set<String> userHruids,
+                           @Bind("doNotContact") Boolean doNotContact);
+
     @SqlUpdate("update user_profile set preferred_language_id = :langId where user_id = :userId")
     int updatePreferredLangId(@Bind("userId") long userId, @Bind("langId") long preferredLangId);
 

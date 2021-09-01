@@ -1,6 +1,7 @@
 package org.broadinstitute.ddp.event;
 
 import java.io.IOException;
+import java.util.Set;
 
 import com.google.cloud.pubsub.v1.AckReplyConsumer;
 import com.google.cloud.pubsub.v1.MessageReceiver;
@@ -10,6 +11,8 @@ import com.google.pubsub.v1.PubsubMessage;
 import org.broadinstitute.ddp.cache.CacheService;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.db.ActivityDefStore;
+import org.broadinstitute.ddp.db.TransactionWrapper;
+import org.broadinstitute.ddp.db.dao.UserProfileSql;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.export.DataExporter;
 import org.broadinstitute.ddp.housekeeping.schedule.OnDemandExportJob;
@@ -75,6 +78,9 @@ public class HousekeepingTaskReceiver implements MessageReceiver {
                 break;
             case GENERATE_HEAP_DUMP:
                 handleHeapDumpGeneration(message, reply);
+                break;
+            case USER_UPDATE_DNC:
+                handleUserUpdateDoNotContact(message, reply);
                 break;
             default:
                 throw new DDPException("Unhandled task type: " + type);
@@ -160,6 +166,34 @@ public class HousekeepingTaskReceiver implements MessageReceiver {
         }
     }
 
+    private void handleUserUpdateDoNotContact(PubsubMessage message, AckReplyConsumer reply) {
+        String data = message.getData() != null ? message.getData().toStringUtf8() : null;
+        var payload = gson.fromJson(data, UserUpdatePayload.class);
+        if (payload == null || payload.getHruids() == null) {
+            LOG.error("User hruid's need to be provided for USER_UPDATE_DNC task message, ack-ing");
+            reply.ack();
+            return;
+        }
+
+        String[] hruids = payload.getHruids().split(",");
+        boolean doNotContact = payload.isDoNotContact();
+        if (hruids == null || hruids.length == 0) {
+            //just return
+            reply.ack();
+            return;
+        }
+
+        try {
+            int count = TransactionWrapper.withTxn(TransactionWrapper.DB.APIS, handle ->
+                    handle.attach(UserProfileSql.class).updateDoNotContact(Set.of(hruids), doNotContact));
+            LOG.info("Updated {} users {} doNotContact to {} ", count, hruids, doNotContact);
+            reply.ack();
+        } catch (RuntimeException e) {
+            LOG.error("Error updating users doNotContact requested via message id {}. Nack-ing message ", message.getMessageId(), e);
+            reply.nack();
+        }
+    }
+
     private void handleHeapDumpGeneration(PubsubMessage message, AckReplyConsumer reply)  {
         LOG.info("Received heap dump request via message id {}", message.getMessageId());
         String projectId = ConfigManager.getInstance().getConfig().getString(ConfigFile.GOOGLE_PROJECT_ID);
@@ -181,7 +215,8 @@ public class HousekeepingTaskReceiver implements MessageReceiver {
         CSV_EXPORT,
         ELASTIC_EXPORT,
         GENERATE_HEAP_DUMP,
-        PING
+        PING,
+        USER_UPDATE_DNC
     }
 
     public static class ExportPayload {
@@ -196,4 +231,18 @@ public class HousekeepingTaskReceiver implements MessageReceiver {
             return study;
         }
     }
+
+    public static class UserUpdatePayload {
+        private String hruids;
+        private boolean doNotContact;
+
+        public String getHruids() {
+            return hruids;
+        }
+
+        public boolean isDoNotContact() {
+            return doNotContact;
+        }
+    }
+
 }
