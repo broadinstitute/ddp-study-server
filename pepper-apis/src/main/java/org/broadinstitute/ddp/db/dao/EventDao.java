@@ -52,8 +52,8 @@ public interface EventDao extends SqlObject {
 
     /**
      * Return event configurations in execution order
-     * @param studyId
-     * @param eventTriggerType
+     * @param studyId study db id
+     * @param eventTriggerType the trigger enum type
      * @return the event configurations in order of execution precedence
      */
     default List<EventConfiguration> getAllEventConfigurationsByStudyIdAndTriggerType(long studyId,

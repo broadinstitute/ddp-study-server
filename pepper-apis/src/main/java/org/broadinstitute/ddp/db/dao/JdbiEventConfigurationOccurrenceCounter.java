@@ -13,8 +13,8 @@ public interface JdbiEventConfigurationOccurrenceCounter extends SqlObject {
 
     @SqlUpdate(
             "insert into event_configuration_occurrence_counter"
-            + " (event_configuration_id, participant_user_id, num_occurrences)"
-            + " values (:eventConfigurationId, :participantUserId, 0)"
+                    + " (event_configuration_id, participant_user_id, num_occurrences)"
+                    + " values (:eventConfigurationId, :participantUserId, 0)"
     )
     int insert(
             @Bind("eventConfigurationId") long eventConfigurationId,
@@ -38,7 +38,8 @@ public interface JdbiEventConfigurationOccurrenceCounter extends SqlObject {
 
     default void incNumOccurrences(long eventConfigurationId, long participantUserId) {
         _getNumOccurrencesForUpdate(eventConfigurationId, participantUserId)
-                .ifPresent(previousCounterValue -> _updateNumOccurrences(eventConfigurationId, participantUserId, previousCounterValue + 1));
+                .ifPresent(previousCounterValue ->
+                        _updateNumOccurrences(eventConfigurationId, participantUserId, previousCounterValue + 1));
     }
 
     // private
@@ -51,7 +52,7 @@ public interface JdbiEventConfigurationOccurrenceCounter extends SqlObject {
     // private
     @SqlUpdate(
             "update event_configuration_occurrence_counter set num_occurrences = :newCounterValue"
-            + " where event_configuration_id = :eventConfigurationId and participant_user_id = :participantUserId"
+                    + " where event_configuration_id = :eventConfigurationId and participant_user_id = :participantUserId"
     )
     void _updateNumOccurrences(
             @Bind("eventConfigurationId") long eventConfigurationId,
@@ -61,8 +62,8 @@ public interface JdbiEventConfigurationOccurrenceCounter extends SqlObject {
 
     @SqlUpdate(
             "delete from event_configuration_occurrence_counter"
-            + " where event_configuration_id = :eventConfigurationId"
-            + " and participant_user_id = :participantUserId"
+                    + " where event_configuration_id = :eventConfigurationId"
+                    + " and participant_user_id = :participantUserId"
     )
     int deleteById(
             @Bind("eventConfigurationId") long eventConfigurationId,
