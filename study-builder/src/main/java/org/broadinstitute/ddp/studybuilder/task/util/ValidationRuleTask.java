@@ -1,5 +1,9 @@
 package org.broadinstitute.ddp.studybuilder.task.util;
 
+import static org.broadinstitute.ddp.studybuilder.task.util.TaskConfConstants.CONF_PARAM__CHANGE_TYPE;
+import static org.broadinstitute.ddp.studybuilder.task.util.TaskConfConstants.CONF_PARAM__QUESTION_STABLE_IDS;
+import static org.broadinstitute.ddp.studybuilder.task.util.TaskConfConstants.CONF_PARAM__STUDY_GUID;
+import static org.broadinstitute.ddp.studybuilder.task.util.TaskConfConstants.CONF_PARAM__VALIDATIONS;
 import static org.broadinstitute.ddp.studybuilder.task.util.TaskUtil.readConfigFromFile;
 
 import java.nio.file.Path;
@@ -36,8 +40,10 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Custom task providing insert/update/delete of validation rules to specified questions.
+ * Note: before a validation rule insert it is checked if a validation rule (for such questionStableId/ruleType) already exist.
+ * If it is exist then insert operation just ignored (without throwing any error - just a warn message to log).
  *
- * Example of patch config: defined a rule UNIQUE to be added (INSERT) to 3 different questions.
+ * <p>Example of patch config: defined a rule UNIQUE to be added (INSERT) to 3 different questions.
  * {
  * "studyGuid": "cmi-pancan",
  * "questionStableIds": "PRIMARY_CANCER_LIST_SELF,PRIMARY_CANCER_LIST_CHILD,PRIMARY_CANCER_LIST_ADD_CHILD",
@@ -82,19 +88,37 @@ public class ValidationRuleTask implements CustomTask {
 
     @Override
     public void run(Handle handle) {
-        String studyGuid = dataCfg.getString("studyGuid");
-        String[] questionStableIds = StringUtils.split(dataCfg.getString("questionStableIds"), ',');
+        String studyGuid = dataCfg.getString(CONF_PARAM__STUDY_GUID);
+        String[] questionStableIds = StringUtils.split(dataCfg.getString(CONF_PARAM__QUESTION_STABLE_IDS), ',');
         StudyDto studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(studyGuid);
-        for (Config ruleCfg : dataCfg.getConfigList("validations")) {
-            for (String questionStableId :questionStableIds) {
-                String insertType = ruleCfg.getString("changeType");
-                if (insertType.equals("INSERT")) {
-                    insertValidation(handle, studyDto.getId(), questionStableId, ruleCfg);
-                }
+        processValidationRules(handle, questionStableIds, studyDto);
+    }
+
+    /**
+     * Iterate through all validation rules specified inside "validations" and
+     * add each rule to each of specified question
+     */
+    private void processValidationRules(Handle handle, String[] questionStableIds, StudyDto studyDto) {
+        for (Config ruleCfg : dataCfg.getConfigList(CONF_PARAM__VALIDATIONS)) {
+            for (String questionStableId : questionStableIds) {
+                doValidationRuleAction(handle, studyDto, ruleCfg, questionStableId);
             }
         }
     }
 
+    /**
+     * Do an action (depending on parameter "changeType" for a selected rule/selected question)
+     */
+    private void doValidationRuleAction(Handle handle, StudyDto studyDto, Config ruleCfg, String questionStableId) {
+        String insertType = ruleCfg.getString(CONF_PARAM__CHANGE_TYPE);
+        if (insertType.equals(OperationType.INSERT.name())) {
+            insertValidation(handle, studyDto.getId(), questionStableId, ruleCfg);
+        }
+    }
+
+    /**
+     * Insert validation rule to a specified question.
+     */
     private static void insertValidation(Handle handle, long studyId, String stableId, Config ruleConfig) {
         ValidationDao validationDao = handle.attach(ValidationDao.class);
         QuestionDto questionDto = handle.attach(JdbiQuestion.class)
@@ -102,7 +126,7 @@ public class ValidationRuleTask implements CustomTask {
                 .orElseThrow(() -> new DDPException("Could not find question " + stableId));
         RuleDef rule = gson.fromJson(ConfigUtil.toJson(ruleConfig), RuleDef.class);
 
-        JdbiQuestionValidation jdbiQuestionValidation =handle.attach(JdbiQuestionValidation.class);
+        JdbiQuestionValidation jdbiQuestionValidation = handle.attach(JdbiQuestionValidation.class);
         List<RuleDto> existingRules = jdbiQuestionValidation.getAllActiveValidations(questionDto.getId());
         if (existingRules.stream().anyMatch(r -> r.getRuleType() == rule.getRuleType())) {
             LOG.warn("Rule of type={} already exist for question with stableId={}", rule.getRuleType(), questionDto.getStableId());
@@ -160,6 +184,8 @@ public class ValidationRuleTask implements CustomTask {
                             gson.fromJson(ConfigUtil.toJson(ruleConfig), UniqueRuleDef.class),
                             questionDto.getRevisionId());
                     break;
+                default:
+                    throw new DDPException("Unhandled validation rule type: " + rule.getRuleType());
             }
             LOG.info("Inserted validation rule of type={} to question with stableId={}", rule.getRuleType(), questionDto.getStableId());
         }
