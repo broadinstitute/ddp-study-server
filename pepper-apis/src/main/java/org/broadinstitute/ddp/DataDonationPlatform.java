@@ -201,7 +201,14 @@ public class DataDonationPlatform {
     public static final int DEFAULT_RATE_LIMIT_MAX_QUERIES_PER_SECOND = 10;
     public static final int DEFAULT_RATE_LIMIT_BURST = 15;
     private static final Logger LOG = LoggerFactory.getLogger(DataDonationPlatform.class);
-    private static final String[] CORS_HTTP_METHODS = new String[] {"GET", "PUT", "POST", "OPTIONS", "PATCH"};
+    private static final String HTTP_GET = "GET";
+    private static final String HTTP_PUT = "PUT";
+    private static final String HTTP_POST = "POST";
+    private static final String HTTP_OPTIONS = "OPTIONS";
+    private static final String HTTP_PATCH = "PATCH";
+    private static final String[] CORS_HTTP_METHODS = new String[] {
+            HTTP_GET, HTTP_PUT, HTTP_POST, HTTP_OPTIONS, HTTP_PATCH
+    };
     private static final String[] CORS_HTTP_HEADERS = new String[] {"Content-Type", "Authorization", "X-Requested-With",
             "Content-Length", "Accept", "Origin", ""};
     private static final Map<String, String> pathToClass = new HashMap<>();
@@ -629,43 +636,47 @@ public class DataDonationPlatform {
         });
     }
 
-    private static void setupMDC(String path, Route route) {
-        pathToClass.put(path, route.getClass().getSimpleName());
-        before(path, (request, response) -> MDC.put(MDC_ROUTE_CLASS, pathToClass.get(path)));
+    private static void setupMDC(String path, Route route, String operation) {
+        pathToClass.put(operationAndPath(operation, path), route.getClass().getSimpleName());
+        before(path, (request, response) -> MDC.put(MDC_ROUTE_CLASS, pathToClass.get(operationAndPath(request.requestMethod(), path))));
+    }
+
+    private static String operationAndPath(String operation, String path) {
+        return operation + '_' + path;
     }
 
     public static void get(String path, Route route, ResponseTransformer transformer) {
-        setupMDC(path, route);
+        setupMDC(path, route, HTTP_GET);
         Spark.get(path, route, transformer);
     }
 
     public static void get(String path, Route route) {
-        setupMDC(path, route);
+        setupMDC(path, route, HTTP_GET);
         Spark.get(path, route);
     }
 
     public static void post(String path, Route route) {
-        setupMDC(path, route);
+        setupMDC(path, route, HTTP_POST);
         Spark.post(path, route);
     }
 
     public static void post(String path, Route route, ResponseTransformer transformer) {
-        setupMDC(path, route);
+        setupMDC(path, route, HTTP_POST);
         Spark.post(path, route, transformer);
     }
 
     public static void put(String path, Route route) {
-        setupMDC(path, route);
+        setupMDC(path, route, HTTP_PUT);
         Spark.put(path, route);
     }
 
     public static void put(String path, Route route, ResponseTransformer transformer) {
-        setupMDC(path, route);
+        setupMDC(path, route, HTTP_PUT);
         Spark.put(path, route, transformer);
     }
 
     public static void patch(String path, Route route, ResponseTransformer transformer) {
-        setupMDC(path, route);
+        setupMDC(path, route, HTTP_PATCH);
         Spark.patch(path, route, transformer);
     }
 
