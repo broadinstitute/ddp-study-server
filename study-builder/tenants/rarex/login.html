@@ -203,10 +203,12 @@
             placeholder: "First name",
             icon: baseAssetsUrl + "auth0-user-icon.svg",
             validator: function (first_name) {
+              first_name = first_name.trim();
+
               return {
                 valid:
                   first_name.length >= 1 &&
-                  /^(?!\s)[a-zA-Z\s][a-zA-Z0-9`'\-\s]*[^\s]$/.test(first_name),
+                  /^[a-zA-Z][a-zA-Z0-9`'\u2019\-\s]*$/.test(first_name),
                 hint: "Must have 1 or more letters",
               };
             },
@@ -216,10 +218,12 @@
             placeholder: "Your full last name (family name)",
             icon: baseAssetsUrl + "auth0-user-icon.svg",
             validator: function (last_name) {
+              last_name = last_name.trim();
+
               return {
                 valid:
                   last_name.length >= 1 &&
-                  /^(?!\s)[a-zA-Z\s][a-zA-Z0-9`'\-\s]*[^\s]$/.test(last_name),
+                  /^[a-zA-Z][a-zA-Z0-9`'\u2019\-\s]*$/.test(last_name),
                 hint: "Must have 1 or more letters",
               };
             },
