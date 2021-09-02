@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import com.google.cloud.pubsub.v1.AckReplyConsumer;
 import com.google.cloud.pubsub.v1.MessageReceiver;
@@ -171,13 +172,15 @@ public class HousekeepingTaskReceiver implements MessageReceiver {
     private void handleUserUpdateDoNotContact(PubsubMessage message, AckReplyConsumer reply) {
         String data = message.getData() != null ? message.getData().toStringUtf8() : null;
         var payload = gson.fromJson(data, UserUpdatePayload.class);
-        if (payload == null || payload.getHruids() == null) {
+        if (payload == null || payload.getHruids() == null || payload.getHruids().isBlank()) {
             LOG.error("User hruid's need to be provided for USER_UPDATE_DNC task message, ack-ing");
             reply.ack();
             return;
         }
 
-        List<String> hruids = Arrays.asList(payload.getHruids());
+        List<String> hruids = Arrays.stream(payload.getHruids().split(","))
+                .map(String::trim)
+                .collect(Collectors.toList());
         boolean doNotContact = payload.isDoNotContact();
         if (hruids == null || hruids.size() == 0) {
             //just return
@@ -196,7 +199,7 @@ public class HousekeepingTaskReceiver implements MessageReceiver {
         }
     }
 
-    private void handleHeapDumpGeneration(PubsubMessage message, AckReplyConsumer reply)  {
+    private void handleHeapDumpGeneration(PubsubMessage message, AckReplyConsumer reply) {
         LOG.info("Received heap dump request via message id {}", message.getMessageId());
         String projectId = ConfigManager.getInstance().getConfig().getString(ConfigFile.GOOGLE_PROJECT_ID);
         String bucketName = projectId + "-heap-dumps";
