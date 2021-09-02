@@ -1,6 +1,8 @@
 package org.broadinstitute.ddp.event;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
 
 import com.google.cloud.pubsub.v1.AckReplyConsumer;
@@ -175,9 +177,9 @@ public class HousekeepingTaskReceiver implements MessageReceiver {
             return;
         }
 
-        String[] hruids = payload.getHruids().split(",");
+        List<String> hruids = Arrays.asList(payload.getHruids());
         boolean doNotContact = payload.isDoNotContact();
-        if (hruids == null || hruids.length == 0) {
+        if (hruids == null || hruids.size() == 0) {
             //just return
             reply.ack();
             return;
@@ -185,7 +187,7 @@ public class HousekeepingTaskReceiver implements MessageReceiver {
 
         try {
             int count = TransactionWrapper.withTxn(TransactionWrapper.DB.APIS, handle ->
-                    handle.attach(UserProfileSql.class).updateDoNotContact(Set.of(hruids), doNotContact));
+                    handle.attach(UserProfileSql.class).updateDoNotContact(Set.copyOf(hruids), doNotContact));
             LOG.info("Updated {} users {} doNotContact to {} ", count, hruids, doNotContact);
             reply.ack();
         } catch (RuntimeException e) {
