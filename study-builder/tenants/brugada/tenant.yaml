@@ -8,6 +8,11 @@ rules:
     enabled: true
     order: 1
 
+pages:
+  - name: password_reset
+    enabled: true
+    html: ./pages/password_reset.html
+
 emailTemplates:
   - template: reset_email
     body: ./emails/password_reset.html
