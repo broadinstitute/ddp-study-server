@@ -636,13 +636,14 @@ public class DataDonationPlatform {
         });
     }
 
-    private static void setupMDC(String path, Route route, String operation) {
-        pathToClass.put(operationAndPath(operation, path), route.getClass().getSimpleName());
-        before(path, (request, response) -> MDC.put(MDC_ROUTE_CLASS, pathToClass.get(operationAndPath(request.requestMethod(), path))));
-    }
-
-    private static String operationAndPath(String operation, String path) {
-        return operation + '_' + path;
+    /**
+     * In map `pathToClass` a compound key is used: urlPath + httpMethod.
+     * This needs in order to solve a problem that some of Routes have same `path` (as a result when we have map key = path,
+     * then we miss some of Route classes in the statistics: only the last one was saved in the map `pathToClass`).
+     */
+    private static void setupMDC(String path, Route route, String httpMethod) {
+        pathToClass.put(path + httpMethod, route.getClass().getSimpleName());
+        before(path, (request, response) -> MDC.put(MDC_ROUTE_CLASS, pathToClass.get(path + request.requestMethod())));
     }
 
     public static void get(String path, Route route, ResponseTransformer transformer) {
