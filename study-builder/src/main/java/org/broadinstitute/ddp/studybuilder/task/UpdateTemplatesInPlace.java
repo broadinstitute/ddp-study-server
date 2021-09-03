@@ -32,6 +32,7 @@ import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.activity.definition.ComponentBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.ConditionalBlockDef;
+import org.broadinstitute.ddp.model.activity.definition.NestedActivityBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.ContentBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
 import org.broadinstitute.ddp.model.activity.definition.FormBlockDef;
@@ -272,6 +273,9 @@ public class UpdateTemplatesInPlace implements CustomTask {
             case COMPONENT:
                 traverseComponent(handle, sectionNum, blockNum, nestedNum, blockCfg, (ComponentBlockDef) block);
                 break;
+            case ACTIVITY:
+                traverseNestedActivity(handle, sectionNum, blockNum, blockCfg, (NestedActivityBlockDef) block);
+                break;
             case CONDITIONAL:
                 ConditionalBlockDef condBlock = (ConditionalBlockDef) block;
                 traverseQuestion(handle, blockCfg.getConfig("control"), condBlock.getControl(), timestamp);
@@ -307,11 +311,17 @@ public class UpdateTemplatesInPlace implements CustomTask {
 
                 break;
             default:
-                throw new DDPException("Unhandled block type: " + block.getBlockType());
+                throw new DDPException("Unhandled type: " + block.getBlockType());
         }
     }
 
     // Note: for now, we're querying the content block templates here.
+    private void traverseNestedActivity(Handle handle, int sectionNum, int blockNum, Config blockCfg, NestedActivityBlockDef block) {
+        String type = block.getBlockType().name();
+        String prefix = String.format("section %d block %d %s", sectionNum, blockNum, type);
+        extractAndCompare(handle, prefix, block.getAddButtonTemplate(), blockCfg, "addButtonTemplate");
+    }
+
     private void traverseContent(Handle handle, int sectionNum, int blockNum, Integer nestedNum,
                                  Config blockCfg, ContentBlockDef block, long timestamp) {
         String type = block.getBlockType().name();
