@@ -188,7 +188,7 @@
   "consent_study_communication_via_email_title": "Study Communication via Unsecured Email",
   "consent_study_communication_via_email_p1": "This study may communicate with you via email. The Partners standard is to send email securely. This requires you to initially set up and activate an account with a password. You can then use the password to access secure emails sent to you from Partners HealthCare. ",
   "consent_study_communication_via_email_p2": "However, this study uses “unencrypted” email that is not secure and could result in the unauthorized use or disclosure of your information. If you want to receive communications by unencrypted email despite these risks, Partners HealthCare will not be held responsible. Your preference to receive unencrypted email will apply to emails sent from this research group/study only. ",
-  "consent_study_communication_via_email_p3_italic": "This study may communicate with you via email. The Partners standard is to send email securely. This requires you to initially set up and activate an account with a password. You can then use the password to access secure emails sent to you from Partners HealthCare. ",
+  "consent_study_communication_via_email_p3_italic": "I have had the chance to ask questions about the use of unencrypted email with staff associated with this research study. I have been informed of the risks and other information covered above and consent to the use of unencrypted email communications associated with this research study.",
 
   "consent_receive_unencrypted_email_communications_title": "Please select one of the following options",
   "consent_receive_unencrypted_email_communications_yes_answer": "I consent to receive unencrypted email communications.",
@@ -290,7 +290,7 @@
   "dlmo_instructions_name": "DLMO Instructions",
   "dlmo_instructions_title": "Dim Light Melatonin Saliva Sample Collection: Scheduling Collection Dates",
 
-  "dlmo_instructions_summary": "Please watch this video prior to starting your DLMO collections. You may also download written instructions here. ",
+  "dlmo_instructions_summary": "Please watch the Circadia At-Home Kit Unboxing video when you receive your kit and the DLMO Collection video prior to starting your DLMO collections.",
 
   "dlmo_instructions_overview_title": "Overview",
   "dlmo_instructions_overview_paragraph_1": "One of our study goals is to better understand your biological bedtime. To do so, we require two 8-hour melatonin sample collections, consisting of 8 hourly saliva sample collections. We will analyze your hourly melatonin levels from the saliva sample collections you provide.",
@@ -434,6 +434,7 @@
 
   "halq_end_work_time_question": "What time do you typically end work?",
   "halq_end_work_answer_prompt": "Time (HH:MM, AM/PM)",
+  "time_format_hint": "Please enter time in the correct format",
 
   "halq_flexible_hours_question": "Are you work hours flexible?",
   "halq_flexible_hours_yes": "Yes",
@@ -698,6 +699,7 @@
   "meq_good_form": "Would be in good form",
   "meq_reasonable_form": "Would be in reasonable form",
   "meq_difficult": "Would find it difficult",
+  "meq_would_find_very_difficult": "Would find it very difficult",
 
   "meq_at_what_time_feel_tired_question": "At approximately what time in the evening do you feel tired, and, as a result, in need of sleep?",
   "meq_feel_tired_interval_1": "8:00 PM–9:00 PM (20:00–21:00 h)",
@@ -815,7 +817,7 @@
   "post_collection_attestation_1_title": "DLMO Post-Collection Attestation 1",
   "post_collection_attestation_1_header": "DLMO Post-Collection Attestation 1",
 
-  "post_collection_attestation_1_created_summary": "Please complete the DLMO collection checklist prior to starting your collection.",
+  "post_collection_attestation_1_created_summary": "Please complete the Post-Collection Attestation after your first collection.",
   "post_collection_attestation_1_in_progress_summary": "Please finish the Post-Collection Attestation",
   "post_collection_attestation_1_complete_summary": "Thank you for completing the Post-Collection Attestation",
 
