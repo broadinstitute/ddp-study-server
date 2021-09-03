@@ -434,6 +434,7 @@
 
   "halq_end_work_time_question": "What time do you typically end work?",
   "halq_end_work_answer_prompt": "Time (HH:MM, AM/PM)",
+  "time_format_hint": "Please enter time in the correct format",
 
   "halq_flexible_hours_question": "Are you work hours flexible?",
   "halq_flexible_hours_yes": "Yes",
@@ -816,7 +817,7 @@
   "post_collection_attestation_1_title": "DLMO Post-Collection Attestation 1",
   "post_collection_attestation_1_header": "DLMO Post-Collection Attestation 1",
 
-  "post_collection_attestation_1_created_summary": "Please complete the DLMO collection checklist prior to starting your collection.",
+  "post_collection_attestation_1_created_summary": "Please complete the Post-Collection Attestation after your first collection.",
   "post_collection_attestation_1_in_progress_summary": "Please finish the Post-Collection Attestation",
   "post_collection_attestation_1_complete_summary": "Thank you for completing the Post-Collection Attestation",
 
