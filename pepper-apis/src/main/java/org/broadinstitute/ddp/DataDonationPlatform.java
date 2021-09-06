@@ -201,14 +201,21 @@ public class DataDonationPlatform {
     public static final int DEFAULT_RATE_LIMIT_MAX_QUERIES_PER_SECOND = 10;
     public static final int DEFAULT_RATE_LIMIT_BURST = 15;
     private static final Logger LOG = LoggerFactory.getLogger(DataDonationPlatform.class);
-    private static final String HTTP_GET = "GET";
-    private static final String HTTP_PUT = "PUT";
-    private static final String HTTP_POST = "POST";
-    private static final String HTTP_OPTIONS = "OPTIONS";
-    private static final String HTTP_PATCH = "PATCH";
+
+    private static final String HTTP_METHOD__GET = "GET";
+    private static final String HTTP_METHOD__PUT = "PUT";
+    private static final String HTTP_METHOD__POST = "POST";
+    private static final String HTTP_METHOD__OPTIONS = "OPTIONS";
+    private static final String HTTP_METHOD__PATCH = "PATCH";
+
     private static final String[] CORS_HTTP_METHODS = new String[] {
-            HTTP_GET, HTTP_PUT, HTTP_POST, HTTP_OPTIONS, HTTP_PATCH
+            HTTP_METHOD__GET,
+            HTTP_METHOD__PUT,
+            HTTP_METHOD__POST,
+            HTTP_METHOD__OPTIONS,
+            HTTP_METHOD__PATCH
     };
+
     private static final String[] CORS_HTTP_HEADERS = new String[] {"Content-Type", "Authorization", "X-Requested-With",
             "Content-Length", "Accept", "Origin", ""};
     private static final Map<String, String> pathToClass = new HashMap<>();
@@ -637,47 +644,57 @@ public class DataDonationPlatform {
     }
 
     /**
-     * In map `pathToClass` a compound key is used: urlPath + httpMethod.
-     * This needs in order to solve a problem that some of Routes have same `path` (as a result when we have map key = path,
+     * This method sets to log4j MDC a key/value pair: "RouteClass"=route_class_name.
+     * It is set before a route executing.<br>
+     * And this MDC value ("RouteClass"=route_class_name) can be used in the route code or in after-filters
+     * (for example when collecting Stackdriver metrics data).<br>
+     * In map `pathToClass` a compound key is used: httpMethod + urlPath.
+     * This needs in order to solve a problem that some of Routes share similar `path` (as a result when we have map key = path,
      * then we miss some of Route classes in the statistics: only the last one was saved in the map `pathToClass`).
+     *
+     * <p>Example of such routes having same urlPath:
+     * <pre>
+     *   PATCH /user/%s/studies/%s/activities/%s/answers
+     *   PUT   /user/%s/studies/%s/activities/%s/answers
+     * </pre>
      */
-    private static void setupMDC(String path, Route route, String httpMethod) {
-        pathToClass.put(path + httpMethod, route.getClass().getSimpleName());
-        before(path, (request, response) -> MDC.put(MDC_ROUTE_CLASS, pathToClass.get(path + request.requestMethod())));
+    private static void setupMDC(String path, String httpMethod, Route route) {
+        pathToClass.put(httpMethod + path, route.getClass().getSimpleName());
+        before(path, (request, response) -> MDC.put(MDC_ROUTE_CLASS, pathToClass.get(request.requestMethod() + path)));
     }
 
     public static void get(String path, Route route, ResponseTransformer transformer) {
-        setupMDC(path, route, HTTP_GET);
+        setupMDC(path, HTTP_METHOD__GET, route);
         Spark.get(path, route, transformer);
     }
 
     public static void get(String path, Route route) {
-        setupMDC(path, route, HTTP_GET);
+        setupMDC(path, HTTP_METHOD__GET, route);
         Spark.get(path, route);
     }
 
     public static void post(String path, Route route) {
-        setupMDC(path, route, HTTP_POST);
+        setupMDC(path, HTTP_METHOD__POST, route);
         Spark.post(path, route);
     }
 
     public static void post(String path, Route route, ResponseTransformer transformer) {
-        setupMDC(path, route, HTTP_POST);
+        setupMDC(path, HTTP_METHOD__POST, route);
         Spark.post(path, route, transformer);
     }
 
     public static void put(String path, Route route) {
-        setupMDC(path, route, HTTP_PUT);
+        setupMDC(path, HTTP_METHOD__PUT, route);
         Spark.put(path, route);
     }
 
     public static void put(String path, Route route, ResponseTransformer transformer) {
-        setupMDC(path, route, HTTP_PUT);
+        setupMDC(path, HTTP_METHOD__PUT, route);
         Spark.put(path, route, transformer);
     }
 
     public static void patch(String path, Route route, ResponseTransformer transformer) {
-        setupMDC(path, route, HTTP_PATCH);
+        setupMDC(path, HTTP_METHOD__PATCH, route);
         Spark.patch(path, route, transformer);
     }
 
