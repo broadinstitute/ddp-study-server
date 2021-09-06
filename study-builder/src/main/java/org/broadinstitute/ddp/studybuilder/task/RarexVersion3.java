@@ -1,12 +1,19 @@
 package org.broadinstitute.ddp.studybuilder.task;
 
 import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
 import org.apache.commons.collections.CollectionUtils;
 import org.broadinstitute.ddp.cache.LanguageStore;
+import org.broadinstitute.ddp.db.dao.JdbiQuestion;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
+import org.broadinstitute.ddp.db.dao.PicklistQuestionDao;
+import org.broadinstitute.ddp.db.dto.QuestionDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.exception.DDPException;
+import org.broadinstitute.ddp.model.activity.definition.question.PicklistOptionDef;
 import org.broadinstitute.ddp.studybuilder.ActivityBuilder;
+import org.broadinstitute.ddp.util.ConfigUtil;
+import org.broadinstitute.ddp.util.GsonUtil;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.customizer.Bind;
@@ -16,15 +23,21 @@ import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.nio.file.Path;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Stream;
 
 public class RarexVersion3 implements CustomTask {
 
     private static final Logger LOG = LoggerFactory.getLogger(RarexVersion3.class);
     private static final String STUDY_GUID = "rarex";
+    private static final String DATA_FILE = "patches/patch_0903.conf";
 
     private Config studyCfg;
+    private Config dataCfg;
 
     private SqlHelper helper;
 
@@ -34,6 +47,11 @@ public class RarexVersion3 implements CustomTask {
             throw new DDPException("This task is only for the " + STUDY_GUID + " study!");
         }
         this.studyCfg = studyCfg;
+        File file = cfgPath.getParent().resolve(DATA_FILE).toFile();
+        if (!file.exists()) {
+            throw new DDPException("Data file is missing: " + file);
+        }
+        this.dataCfg = ConfigFactory.parseFile(file).resolveWith(varsCfg);
     }
 
     @Override
@@ -156,6 +174,27 @@ public class RarexVersion3 implements CustomTask {
         updateVariableByText(consentAssent, eligibleBefore, eligibleAfter);
         updateVariableByText(consentLar, eligibleBefore, eligibleAfter);
         updateVariableByText(consentAssentLar, eligibleBefore, eligibleAfter);
+
+        Config option = dataCfg.getConfig("parentOfAMinor");
+        Set<String> stableIds = new HashSet<>(Set.of(
+                "LAR_CONSENT_ASSENT_RELATIONSHIP",
+                "LAR_CONSENT_RELATIONSHIP",
+                "PARENTAL_CONSENT_RELATIONSHIP",
+                "CONSENT_ASSENT_RELATIONSHIP"
+        ));
+        addPicklistOption(handle, studyId, stableIds, option, 7);
+    }
+
+    private void addPicklistOption(Handle handle, long studyId, Set<String> questionStableIds, Config option, int displayOrder) {
+        PicklistQuestionDao plQuestionDao = handle.attach(PicklistQuestionDao.class);
+        JdbiQuestion jdbiQuestion = handle.attach(JdbiQuestion.class);
+        Stream<QuestionDto> questionDtos = jdbiQuestion.findLatestDtosByStudyIdAndQuestionStableIds(studyId, questionStableIds);
+        questionDtos.forEach(questionDto -> {
+            PicklistOptionDef pickListOptionDef = GsonUtil.standardGson().fromJson(ConfigUtil.toJson(option), PicklistOptionDef.class);
+            plQuestionDao.insertOption(questionDto.getId(), pickListOptionDef, displayOrder, questionDto.getRevisionId());
+            LOG.info("Added new picklistOption " + pickListOptionDef.getStableId() + " with id "
+                    + pickListOptionDef.getOptionId() + " into question " + questionDto.getStableId());
+        });
     }
 
     private void updateExpressionTextByQuestionStableCode(long activityId, String questionStableCode, String expr) {
