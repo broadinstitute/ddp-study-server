@@ -237,6 +237,7 @@ public class UpdateTemplatesInPlace implements CustomTask {
         var task = new UpdateActivityBaseSettings();
         task.init(cfgPath, studyCfg, varsCfg);
         task.compareNamingDetails(handle, definition, activityId, versionDto);
+        task.compareStatusSummaries(handle, definition, activityId);
 
         traverseActivity(handle, activityCode, definition, activity, versionDto.getRevStart());
     }
