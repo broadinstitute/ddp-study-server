@@ -413,6 +413,11 @@ public class UpdateTemplatesInPlace implements CustomTask {
         Map<String, Config> allOptionCfgs = new HashMap<>();
         for (var optionCfg : questionCfg.getConfigList("picklistOptions")) {
             allOptionCfgs.put(optionCfg.getString("stableId"), optionCfg);
+            if (optionCfg.hasPath("nestedOptions")) {
+                for (var nestedOptionCfg : optionCfg.getConfigList("nestedOptions")) {
+                    allOptionCfgs.put(nestedOptionCfg.getString("stableId"), nestedOptionCfg);
+                }
+            }
         }
 
         for (int i = 0; i < groups.size(); i++) {
