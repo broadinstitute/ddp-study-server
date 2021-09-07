@@ -2,6 +2,7 @@ package org.broadinstitute.ddp.event.pubsubtask.impl.updateprofile;
 
 
 import static java.lang.String.format;
+import static org.broadinstitute.ddp.event.pubsubtask.PubSubTaskTestUtil.DO_NOT_CONTACT;
 import static org.broadinstitute.ddp.event.pubsubtask.PubSubTaskTestUtil.EMAIL;
 import static org.broadinstitute.ddp.event.pubsubtask.PubSubTaskTestUtil.FIRST_NAME;
 import static org.broadinstitute.ddp.event.pubsubtask.PubSubTaskTestUtil.LAST_NAME;
@@ -42,7 +43,7 @@ public class PubSubTaskUpdateProfileMessageTest {
     public void testUpdateProfileValidMessageParser() {
         buildMessageAndAssert(true);
 
-        assertEquals("{'email':'test@datadonationplatform.org', 'firstName':'Lorenzo', 'lastName':'Montana'}",
+        assertEquals("{'email':'test@datadonationplatform.org', 'firstName':'Lorenzo', 'lastName':'Montana', 'doNotContact':'true'}",
                 testResultSender.getPubSubTaskResult().getPubSubTask().getPayloadJson());
         Map<String, String> payload = gson.fromJson(testResultSender.getPubSubTaskResult().getPubSubTask().getPayloadJson(), Map.class);
         assertEquals(TEST_EMAIL, payload.get(EMAIL));
@@ -54,7 +55,7 @@ public class PubSubTaskUpdateProfileMessageTest {
     public void testUpdateProfileInvalidMessageParser() {
         buildMessageAndAssert(false);
 
-        assertEquals("{'email':'test@datadonationplatform.org', 'firstName':'Lorenzo', 'lastName':'Montana'}",
+        assertEquals("{'email':'test@datadonationplatform.org', 'firstName':'Lorenzo', 'lastName':'Montana', 'doNotContact':'true'}",
                 testResultSender.getPubSubTaskResult().getPubSubTask().getPayloadJson());
         assertEquals(ERROR, testResultSender.getPubSubTaskResult().getResultType());
         assertEquals("Error processing task - some attributes are not specified: participantGuid=null, userId=null",
@@ -78,8 +79,9 @@ public class PubSubTaskUpdateProfileMessageTest {
     private void buildMessageAndAssert(boolean buildValidMessage) {
         init();
         var message = buildMessage(TASK_TYPE__UPDATE_PROFILE,
-                format("{'%s':'%s', '%s':'%s', '%s':'%s'}",
-                        EMAIL, TEST_EMAIL, FIRST_NAME, TEST_FIRST_NAME, LAST_NAME, TEST_LAST_NAME), buildValidMessage);
+                format("{'%s':'%s', '%s':'%s', '%s':'%s', '%s':'%s'}",
+                        EMAIL, TEST_EMAIL, FIRST_NAME, TEST_FIRST_NAME, LAST_NAME, TEST_LAST_NAME,
+                        DO_NOT_CONTACT, true), buildValidMessage);
         pubSubTaskReceiver.receiveMessage(message, mock(AckReplyConsumer.class));
     }
 
