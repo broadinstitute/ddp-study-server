@@ -1,0 +1,62 @@
+{
+  "prequal": {
+    "name": "Join Us",
+    "title": "Join Us",
+    "header": "Prequalifier"
+  },
+
+  "add_participant": {
+    "name": "Add Participant",
+    "title": "Add Participant",
+    "header": "Add Participant"
+  },
+
+  "consent": {
+    "name": "Consent",
+    "title": "Consent",
+    "header": "Consent"
+  },
+
+  "consent_parental": {
+    "name": "Consent",
+    "title": "Consent",
+    "header": "Consent"
+  },
+
+  "consent_assent": {
+    "name": "Consent",
+    "title": "Consent",
+    "header": "Consent"
+  },
+
+  "about_healthy": {
+    "name": "About",
+    "title": "About",
+    "header": "About"
+  },
+
+  "about_patient": {
+    "name": "About",
+    "title": "About",
+    "header": "About"
+  },
+
+  "mrr": {
+    "name": "Medical Record Release Form",
+    "title": "Medical Record Release Form",
+    "header": "Medical Record Release Form"
+  },
+
+  "mrfu": {
+    "name": "Medical Record File Upload",
+    "title": "Medical Record File Upload",
+    "header": "Medical Record File Upload"
+  },
+
+  "patient_survey": {
+    "name": "Patient Survey",
+    "title": "Patient Survey",
+    "header": "Patient Survey"
+  }
+
+}
