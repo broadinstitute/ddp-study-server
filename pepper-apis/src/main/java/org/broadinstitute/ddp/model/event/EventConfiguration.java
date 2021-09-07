@@ -179,6 +179,14 @@ public class EventConfiguration {
         return dispatchToHousekeeping;
     }
 
+    public boolean isSynchronous() {
+        return !isAsynchronous();
+    }
+
+    public boolean isAsynchronous() {
+        return dispatchToHousekeeping();
+    }
+
     public Integer getPostDelaySeconds() {
         return postDelaySeconds;
     }
