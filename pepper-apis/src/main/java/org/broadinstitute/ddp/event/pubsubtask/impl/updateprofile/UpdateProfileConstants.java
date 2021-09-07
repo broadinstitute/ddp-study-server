@@ -21,4 +21,5 @@ public class UpdateProfileConstants {
     static final String FIELD_EMAIL = "email";
     static final String FIELD_FIRST_NAME = "firstName";
     static final String FIELD_LAST_NAME = "lastName";
+    static final String FIELD_DO_NOT_CONTACT = "doNotContact";
 }
