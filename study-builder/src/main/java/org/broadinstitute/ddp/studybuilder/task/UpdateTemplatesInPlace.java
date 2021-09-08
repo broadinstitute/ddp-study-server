@@ -331,17 +331,17 @@ public class UpdateTemplatesInPlace implements CustomTask {
 
                 break;
             default:
-                throw new DDPException("Unhandled type: " + block.getBlockType());
+                throw new DDPException("Unhandled block type: " + block.getBlockType());
         }
     }
 
-    // Note: for now, we're querying the content block templates here.
     private void traverseNestedActivity(Handle handle, int sectionNum, int blockNum, Config blockCfg, NestedActivityBlockDef block) {
         String type = block.getBlockType().name();
         String prefix = String.format("section %d block %d %s", sectionNum, blockNum, type);
         extractAndCompare(handle, prefix, block.getAddButtonTemplate(), blockCfg, "addButtonTemplate");
     }
 
+    // Note: for now, we're querying the content block templates here.
     private void traverseContent(Handle handle, int sectionNum, int blockNum, Integer nestedNum,
                                  Config blockCfg, ContentBlockDef block, long timestamp) {
         String type = block.getBlockType().name();
