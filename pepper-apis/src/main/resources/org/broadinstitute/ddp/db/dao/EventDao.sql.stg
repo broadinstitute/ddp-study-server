@@ -101,7 +101,7 @@ getEventConfigurationsForStudyIdAndTriggerType() ::= <<
         ec.umbrella_study_id = :studyId
         and ett.event_trigger_type_code = :eventTriggerType
         and ec.is_active = 1
-    order by ec.execution_order asc
+    order by ec.execution_order asc, ec.event_configuration_id asc
 >>
 
 getActiveDispatchConfigsByStudyIdAndTrigger() ::= <<
