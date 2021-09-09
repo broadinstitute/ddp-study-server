@@ -349,8 +349,7 @@ public class DataExporter {
                             exportsSoFar, participants.size(), studyDto.getGuid());
                 }
             } catch (Exception e) {
-                LOG.error("[export] failed to export participant {} for study {}, continuing",
-                        participant.getUser().getGuid(), studyDto.getGuid(), e);
+                LOG.error("[export] failed to export participants for study {}, continuing... ", studyDto.getGuid(), e);
             }
         }
     }

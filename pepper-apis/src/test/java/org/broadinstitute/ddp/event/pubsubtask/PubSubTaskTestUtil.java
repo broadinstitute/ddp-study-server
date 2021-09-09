@@ -30,6 +30,7 @@ public class PubSubTaskTestUtil {
     public static final String MARITAL_STATUS = "maritalStatus";
     public static final String FIRST_NAME = "firstName";
     public static final String LAST_NAME = "lastName";
+    public static final String DO_NOT_CONTACT = "doNotContact";
 
     public static final String TEST_EMAIL = "test@datadonationplatform.org";
     public static final String TEST_EDUCATION = "University";
