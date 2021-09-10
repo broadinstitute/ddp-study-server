@@ -159,4 +159,22 @@ public class I18nUtilTest {
         Locale locale = I18nUtil.resolvePreferredLanguage(preferredLocale, testLocale, acceptedLanguages, supportedLocales);
         Assert.assertEquals(testLocale, locale);
     }
+
+    /**
+     * Check method resolveLocale() with 1 valid and 2 invalid values of AcceptLanguage
+     */
+    @Test
+    public void test_resolveLocale() {
+        Locale locale = I18nUtil.resolveLocale(null, null, Locale.ENGLISH,
+                "ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7,fi;q=0.6,lv;q=0.5,nl;q=0.4,et;q=0.3");
+        Assert.assertEquals(Locale.ENGLISH, locale);
+
+        locale = I18nUtil.resolveLocale(null, null, Locale.ENGLISH,
+                "en-US.UTF-8");
+        Assert.assertEquals(Locale.ENGLISH, locale);
+
+        locale = I18nUtil.resolveLocale(null, null, Locale.ENGLISH,
+                "zh;q=0.9;q=0.9");
+        Assert.assertEquals(Locale.ENGLISH, locale);
+    }
 }
