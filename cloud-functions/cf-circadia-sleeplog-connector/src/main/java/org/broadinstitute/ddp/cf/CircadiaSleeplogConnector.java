@@ -91,13 +91,21 @@ public class CircadiaSleeplogConnector implements HttpFunction {
 
         java.net.http.HttpResponse<String> incomingResponse;
         try {
-            OutgoingRequest outReq = new OutgoingRequest(incReq, sleeplogCohort);
+            OutgoingRequest outReq = new OutgoingRequest(incReq.getEmail(), incReq.getIsActive(), sleeplogCohort,
+                    incReq.getUrl().contains("api/user/") && "POST".equals(incReq.getMethod()));
             String outReqString = gson.toJson(outReq);
-            var outgoingRequest = java.net.http.HttpRequest.newBuilder(new URI(baseUrl + incReq.getUrl()))
+            boolean usePathParams = "GET".equals(incReq.getMethod());
+            var outgoingRequestBuilder= java.net.http.HttpRequest.newBuilder(new URI(baseUrl + incReq.getUrl()
+                    + (usePathParams ? outReq.toString() : "")))
                     .header("Content-Type", "application/json")
-                    .header("Authorization", authHeader)
-                    .method(incReq.getMethod(), java.net.http.HttpRequest.BodyPublishers.ofString(outReqString,
-                            StandardCharsets.UTF_8))
+                    .header("Authorization", authHeader);
+            if (!usePathParams) {
+                outgoingRequestBuilder = outgoingRequestBuilder.method(incReq.getMethod(),
+                        java.net.http.HttpRequest.BodyPublishers.ofString(outReqString, StandardCharsets.UTF_8));
+            } else {
+                outgoingRequestBuilder = outgoingRequestBuilder.GET();
+            }
+            var outgoingRequest = outgoingRequestBuilder
                     .build();
             incomingResponse = client.send(outgoingRequest, java.net.http.HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
         } catch (URISyntaxException e) {
