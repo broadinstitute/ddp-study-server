@@ -1,7 +1,5 @@
 package org.broadinstitute.ddp.util;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -14,6 +12,8 @@ import java.util.Locale;
 import java.util.Locale.LanguageRange;
 import java.util.Map;
 import java.util.Set;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.ObjectUtils;
@@ -31,6 +31,8 @@ public class I18nUtil {
     // Might want to pull this from a config file at some point, although
     // there is also Locale.getDefault() (bskinner)
     public static final Locale DEFAULT_LOCALE = Locale.ENGLISH;
+
+    private static final String DEFAULT_ACCEPTE_LANGUAGE_HEADER = "en-US";
 
     private static final Logger LOG = LoggerFactory.getLogger(I18nUtil.class);
 
@@ -114,7 +116,9 @@ public class I18nUtil {
             try {
                 acceptedRanges = Locale.LanguageRange.parse(acceptLanguageHeader);
             } catch (Exception e) {
-                LOG.warn("Error while parsing Accept-Language header '{}', will disregard and continue", acceptLanguageHeader, e);
+                acceptedRanges = Locale.LanguageRange.parse(DEFAULT_ACCEPTE_LANGUAGE_HEADER);
+                LOG.warn("Error while parsing Accept-Language header '{}', fallback to default Accept-Language header '{}'."
+                            + " StudyGuid '{}'.", acceptLanguageHeader, DEFAULT_ACCEPTE_LANGUAGE_HEADER, studyGuid);
             }
         }
 
