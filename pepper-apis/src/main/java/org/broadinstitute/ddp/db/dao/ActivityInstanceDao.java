@@ -270,7 +270,7 @@ public interface ActivityInstanceDao extends SqlObject {
             @BindList(value = "activityIds", onEmpty = EmptyHandling.NULL) Set<Long> activityIds);
 
     @SqlUpdate("update activity_instance set is_hidden = :isHidden"
-            + "  where participant_id = :participantId and study_activity_id in (<activityIds>)")
+            + "  where participant_id = :participantId and study_activity_id in (<activityIds>) order by activity_instance_id")
     int bulkUpdateIsHiddenByActivityIds(
             @Bind("participantId") long participantId,
             @Bind("isHidden") boolean isHidden,

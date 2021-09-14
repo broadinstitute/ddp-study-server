@@ -2,6 +2,10 @@ package org.broadinstitute.ddp.cf.json;
 
 import com.google.gson.annotations.SerializedName;
 
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+
 @SuppressWarnings("unused")
 public class OutgoingRequest {
 
@@ -9,10 +13,10 @@ public class OutgoingRequest {
     private final String email;
 
     @SerializedName("start")
-    private final String start;
+    private String start;
 
     @SerializedName("end")
-    private final String end;
+    private String end;
 
     @SerializedName("is_active")
     private final Boolean isActive;
@@ -20,11 +24,13 @@ public class OutgoingRequest {
     @SerializedName("cohort")
     private final String sleeplogCohort;
 
-    public OutgoingRequest(IncomingRequest request, String sleeplogCohort) {
-        this.email = request.getEmail();
-        this.start = request.getStart();
-        this.end = request.getEnd();
-        this.isActive = request.getIsActive();
+    public OutgoingRequest(String email, Boolean isActive, String sleeplogCohort, boolean addDates) {
+        this.email = email;
+        if (addDates) {
+            this.start = DateTimeFormatter.ISO_LOCAL_DATE.format(LocalDateTime.now());
+            this.end = DateTimeFormatter.ISO_LOCAL_DATE.format(LocalDateTime.now().plusWeeks(6));
+        }
+        this.isActive = isActive;
         this.sleeplogCohort = sleeplogCohort;
     }
 
@@ -46,5 +52,10 @@ public class OutgoingRequest {
 
     public String getSleeplogCohort() {
         return sleeplogCohort;
+    }
+
+    @Override
+    public String toString() {
+        return "?cohort=" + getSleeplogCohort() + "&email=" + getEmail();
     }
 }

@@ -88,6 +88,7 @@ import org.broadinstitute.ddp.model.activity.definition.i18n.Translation;
 import org.broadinstitute.ddp.model.activity.definition.question.CompositeQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
+import org.broadinstitute.ddp.model.activity.definition.template.TemplateUtil;
 import org.broadinstitute.ddp.model.activity.definition.validation.RuleDef;
 import org.broadinstitute.ddp.model.activity.instance.ActivityResponse;
 import org.broadinstitute.ddp.model.activity.instance.FormResponse;
@@ -349,8 +350,7 @@ public class DataExporter {
                             exportsSoFar, participants.size(), studyDto.getGuid());
                 }
             } catch (Exception e) {
-                LOG.error("[export] failed to export participant {} for study {}, continuing",
-                        participant.getUser().getGuid(), studyDto.getGuid(), e);
+                LOG.error("[export] failed to export participants for study {}, continuing... ", studyDto.getGuid(), e);
             }
         }
     }
@@ -373,7 +373,7 @@ public class DataExporter {
             Map<String, Object> activityDefinitions = new HashMap<>();
             activityDefinitions.put("studyGuid", studyDto.getGuid());
             activityDefinitions.put("activityCode", activity.getDefinition().getActivityCode());
-            activityDefinitions.put("activityName", activityName);
+            activityDefinitions.put("activityName", TemplateUtil.renderWithDefaultValues(activityName, null, "en"));
             activityDefinitions.put("activityVersion", activity.getDefinition().getVersionTag());
             activityDefinitions.put("parentActivityCode", activity.getDefinition().getParentActivityCode());
             activityDefinitions.putAll(formatter.questionDefinitions());
