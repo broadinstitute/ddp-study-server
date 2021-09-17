@@ -58,10 +58,10 @@
       text-decoration: none!important;
       color: #281d1c;
     }
-    .header[_ngcontent-nba-c439] {
+    .header {
         height: 100px;
     }
-    .header__container[_ngcontent-nba-c439] {
+    .header__container {
       display: flex;
       align-items: center;
       max-width: 1200px;
@@ -69,11 +69,11 @@
       margin: 0 auto;
       padding: 0 2.4rem;
     }
-    .header__logo[_ngcontent-nba-c439] {
+    .header__logo {
       height: 36px;
       margin-right: 32px;
     }
-    .toggle[_ngcontent-nba-c439] {
+    .toggle {
       display: none;
       position: relative;
       width: 32px;
@@ -82,25 +82,25 @@
       border: none;
       cursor: pointer;
     }
-    .header__nav[_ngcontent-nba-c439] {
+    .header__nav {
       display: flex;
       align-items: center;
       width: 100%;
     }
-    .header__logo-img[_ngcontent-nba-c439] {
+    .header__logo-img {
       height: 100%;
     }
-    .toggle__bar[_ngcontent-nba-c439]:nth-of-type(1) {
+    .toggle__bar:nth-of-type(1) {
       top: 0;
     }
-    .toggle__bar[_ngcontent-nba-c439]:nth-of-type(2) {
+    .toggle__bar:nth-of-type(2) {
       top: 50%;
       margin-top: -1px;
     }
-    .toggle__bar[_ngcontent-nba-c439]:nth-of-type(3) {
+    .toggle__bar:nth-of-type(3) {
       bottom: 0;
     }
-    .toggle__bar[_ngcontent-nba-c439] {
+    .toggle__bar {
       display: block;
       position: absolute;
       left: 0;
@@ -112,12 +112,7 @@
       -webkit-backface-visibility: hidden;
       backface-visibility: hidden;
     }
-    .link-list[_ngcontent-nba-c439] {
-      display: flex;
-      align-items: center;
-      list-style: none;
-    }
-    .pull-right[_ngcontent-nba-c439] {
+    .pull-right {
       margin-left: auto;
     }
     .link {
@@ -129,7 +124,7 @@
       cursor: pointer;
       transition: opacity 0.3s ease;
     }
-    .link-list[_ngcontent-nba-c438] {
+    .link-list {
       display: flex;
       align-items: center;
       list-style: none;
@@ -153,39 +148,30 @@
       transition: background-color 0.3s ease;
       outline: none;
     }
-    .link-list__item[_ngcontent-nba-c439] + .link-list__item[_ngcontent-nba-c439] {
+    .link-list__item {
       margin-left: 28px;
     }
-    .link-list__item[_ngcontent-nba-c438] + .link-list__item[_ngcontent-nba-c438] {
-      margin-left: 28px;
-    }
-    .footer[_ngcontent-nba-c440] {
+    .footer {
       padding: 42px 0;
       background: #c4353d;
       color: #ffffff;
       flex: 0 0 auto;
     }
-    .footer__container[_ngcontent-nba-c440] {
+    .footer__container {
       display: flex;
       justify-content: space-between;
       max-width: 1200px;
       margin: 0 auto;
       padding: 0 24px;
     }
-    .contact-us[_ngcontent-nba-c440] {
+    .contact-us {
       display: flex;
     }
-    .link-list[_ngcontent-nba-c440] {
-      display: flex;
-      list-style: none;
-      align-items: baseline;
-      padding-left: 0;
-    }
-    .footer__logo[_ngcontent-nba-c440] {
+    .footer__logo {
       height: 36px;
       margin-top: 24px;
     }
-    .link-icon[_ngcontent-nba-c440] {
+    .link-icon {
       display: flex;
       align-items: center;
     }
@@ -198,7 +184,7 @@
       cursor: pointer;
       transition: opacity 0.3s ease;
     }
-    .link-icon[_ngcontent-nba-c440] .mat-icon[_ngcontent-nba-c440] {
+    .link-icon {
       margin-right: 3px;
       font-size: 20px;
     }
@@ -224,16 +210,16 @@
       -webkit-font-feature-settings: 'liga';
       -webkit-font-smoothing: antialiased;
     }
-    .footer__logo[_ngcontent-nba-c440] {
+    .footer__logo {
       height: 36px;
       margin-top: 24px;
     }
-    .contact-us__label[_ngcontent-nba-c440] {
+    .contact-us__label {
       margin-right: 32px;
       font-weight: normal;
       opacity: 0.8;
     }
-    .contact-us__label[_ngcontent-nba-c440] {
+    .contact-us__label {
       margin-right: 32px;
       font-weight: normal;
       opacity: 0.8;
@@ -267,6 +253,9 @@
         margin-top: 9px;
         height: unset;
       }
+      .link-list__item {
+        margin-left: 0 !important;
+      }
       .link-list__item+ .link-list__item {
         margin-top: 1.6rem;
         margin-left: 0!important;
@@ -277,7 +266,7 @@
       .header__container {
         position: relative;
       }
-      .header__logo[_ngcontent-nba-c439] {
+      .header__logo {
         margin-right: auto;
         height: 28px;
       }
@@ -297,6 +286,11 @@
         transform: translate3d(-120%, 0, 0);
         transition: transform 0.3s ease;
         z-index: 10;
+      }
+      @media (max-width: 1210px) {
+        .header__nav {
+          height: calc(100vh - 84px);
+        }
       }
       .link-list {
         padding-left: 0;
@@ -414,65 +408,65 @@
 <body>
 
   <div class="wrapper">
-    <header _ngcontent-nba-c439="" class="header">
-      <div _ngcontent-nba-c439="" class="header__container">
-        <a _ngcontent-nba-c439="" class="header__logo" ng-reflect-router-link="" href="##BASE_URL##">
-          <img _ngcontent-nba-c439="" src="https://storage.googleapis.com/##ASSETS_BUCKET##/email-assets/logo.png" class="header__logo-img" alt="Brugada Project">
+    <header class="header">
+      <div class="header__container">
+        <a class="header__logo" href="##BASE_URL##">
+          <img src="https://storage.googleapis.com/##ASSETS_BUCKET##/email-assets/logo.png" class="header__logo-img" alt="Brugada Project">
         </a>
   
-        <button _ngcontent-nba-c439="" class="toggle">
-          <span _ngcontent-nba-c439="" class="toggle__bar"></span>
-          <span _ngcontent-nba-c439="" class="toggle__bar"></span>
-          <span _ngcontent-nba-c439="" class="toggle__bar"></span>
+        <button class="toggle">
+          <span class="toggle__bar"></span>
+          <span class="toggle__bar"></span>
+          <span class="toggle__bar"></span>
         </button>
   
-        <nav _ngcontent-nba-c439="" class="header__nav">
-          <ul _ngcontent-nba-c439="" class="link-list">
-            <li _ngcontent-nba-c439="" class="link-list__item">
-              <a _ngcontent-nba-c439="" class="link" ng-reflect-router-link="about" href="##BASE_URL##/about">
+        <nav class="header__nav">
+          <ul class="link-list">
+            <li class="link-list__item">
+              <a class="link" href="##BASE_URL##/about">
                 About
               </a>
             </li>
   
-            <li _ngcontent-nba-c439="" class="link-list__item">
-              <a _ngcontent-nba-c439="" class="link" ng-reflect-router-link="team" href="##BASE_URL##/team">
+            <li class="link-list__item">
+              <a class="link" href="##BASE_URL##/team">
                 Our Team
               </a>
             </li>
   
-            <li _ngcontent-nba-c439="" class="link-list__item">
-              <a _ngcontent-nba-c439="" class="link" ng-reflect-router-link="faq" href="##BASE_URL##/faq">
+            <li class="link-list__item">
+              <a class="link" href="##BASE_URL##/faq">
                 FAQ
               </a>
             </li>
   
-            <li _ngcontent-nba-c439="" class="link-list__item">
-              <a _ngcontent-nba-c439="" href="##BASE_URL##/assets/pdf/LMH_For_Physicians_2021.pdf" target="_blank" class="link">
+            <li class="link-list__item">
+              <a href="##BASE_URL##/assets/pdf/LMH_For_Physicians_2021.pdf" target="_blank" class="link">
                 For Physicians
               </a>
             </li>
   
             
   
-            <li _ngcontent-nba-c439="" class="link-list__item">
+            <li class="link-list__item">
               <a href="##BASE_URL##?joinMailingList=show">
-                <button _ngcontent-nba-c440="" class="link link-black">
+                <button class="link link-black">
                   Join Mailing List
                 </button>
               </a>
             </li>
           </ul>
   
-          <div _ngcontent-nba-c439="" class="pull-right">
-            <div _ngcontent-nba-c439="" _nghost-nba-c438="">
-              <ul _ngcontent-nba-c438="" class="link-list">
-                <li _ngcontent-nba-c438="" class="link-list__item">
-                  <a _ngcontent-nba-c438="" class="btn btn--scarlet" ng-reflect-router-link="join" href="##BASE_URL##/join">
+          <div class="pull-right">
+            <div>
+              <ul class="link-list">
+                <li class="link-list__item">
+                  <a class="btn btn--scarlet" href="##BASE_URL##/join">
                     Join the Brugada Project
                   </a>
                 </li>
-                <li _ngcontent-nba-c438="" class="link-list__item js-login">
-                  <a _ngcontent-nba-c438="" ng-reflect-router-link="login" href="#">
+                <li class="link-list__item js-login">
+                  <a href="##BASE_URL##/login-landing/login">
                     Log in
                   </a>
                 </li>
@@ -487,75 +481,75 @@
 
     </div>
     
-    <footer _ngcontent-nba-c440="" class="footer">
-      <div _ngcontent-nba-c440="" class="footer__container">
-        <div _ngcontent-nba-c440="" class="footer__left-side">
-          <ul _ngcontent-nba-c440="" class="link-list">
+    <footer class="footer">
+      <div class="footer__container">
+        <div class="footer__left-side">
+          <ul class="link-list">
   
   
-            <li _ngcontent-nba-c440="" class="link-list__item">
-              <a _ngcontent-nba-c440="" class="link" ng-reflect-router-link="about" href="##BASE_URL##/about">
+            <li class="link-list__item">
+              <a class="link" href="##BASE_URL##/about">
                 About
               </a>
             </li>
   
-            <li _ngcontent-nba-c440="" class="link-list__item">
-              <a _ngcontent-nba-c440="" class="link" ng-reflect-router-link="team" href="##BASE_URL##/team">
+            <li class="link-list__item">
+              <a class="link" href="##BASE_URL##/team">
                 Our Team
               </a>
             </li>
   
-            <li _ngcontent-nba-c440="" class="link-list__item">
-              <a _ngcontent-nba-c440="" class="link" ng-reflect-router-link="faq" href="##BASE_URL##/faq">
+            <li class="link-list__item">
+              <a class="link" href="##BASE_URL##/faq">
                 FAQ
               </a>
             </li>
   
-            <li _ngcontent-nba-c440="" class="link-list__item">
-              <a _ngcontent-nba-c440="" href="##BASE_URL##/assets/pdf/LMH_For_Physicians_2021.pdf" target="_blank" class="link">
+            <li class="link-list__item">
+              <a href="##BASE_URL##/assets/pdf/LMH_For_Physicians_2021.pdf" target="_blank" class="link">
                 For Physicians
               </a>
             </li>
   
-            <li _ngcontent-nba-c440="" class="link-list__item">
+            <li class="link-list__item">
               <a href="##BASE_URL##?joinMailingList=show">
-                <button _ngcontent-nba-c440="" class="link">
+                <button class="link">
                   Join Mailing List
                 </button>
               </a>
             </li>
           </ul>
   
-          <img _ngcontent-nba-c440="" src="https://storage.googleapis.com/##ASSETS_BUCKET##/email-assets/logo-transparent-white.png" class="footer__logo" alt="Brugada Project">
+          <img src="https://storage.googleapis.com/##ASSETS_BUCKET##/email-assets/logo-transparent-white.png" class="footer__logo" alt="Brugada Project">
         </div>
   
-        <div _ngcontent-nba-c440="" class="contact-us">
-          <h4 _ngcontent-nba-c440="" class="contact-us__label">
+        <div class="contact-us">
+          <h4 class="contact-us__label">
             Contact Us
           </h4>
   
-          <div _ngcontent-nba-c440="" class="contacts-wrapper">
-            <p _ngcontent-nba-c440="" class="info text-bold"><a class="link" href="mailto:info@linkmyheart.org" tabindex="-1">info@linkmyheart.org</a></p>
+          <div class="contacts-wrapper">
+            <p class="info text-bold"><a class="link" href="mailto:info@linkmyheart.org" tabindex="-1">info@linkmyheart.org</a></p>
   
-            <p _ngcontent-nba-c440="" class="info text-bold"><a class="link" href="tel:6177147560" tabindex="-1">(617) 714-7560</a></p>
+            <p class="info text-bold"><a class="link" href="tel:6177147560" tabindex="-1">(617) 714-7560</a></p>
   
-            <p _ngcontent-nba-c440="" class="info" style="margin-top: 1.4rem;">
+            <p class="info" style="margin-top: 1.4rem;">
               Link My Heart
             </p>
   
-            <p _ngcontent-nba-c440="" class="info">
+            <p class="info">
               The Broad Institute of MIT and Harvard
             </p>
   
-            <p _ngcontent-nba-c440="" class="info">
+            <p class="info">
               415 Main Street
             </p>
   
-            <p _ngcontent-nba-c440="" class="info">
+            <p class="info">
               Cambridge, MA 02142
             </p>
   
-            <p _ngcontent-nba-c440="" class="info">
+            <p class="info">
               United States
             </p>
           </div>
@@ -591,11 +585,7 @@
       title = "Create an Account";
     }
 
-    var loginUrl = config.callbackURL + "/login";
-
-    var registerUrl = "https://cgc.dev.datadonationplatform.org";
-    var baseAssetsUrl = "https://rare-x.dev.datadonationplatform.org/assets/images/";
-    var headerLogo = baseAssetsUrl + "cgc-logo-dark-transparent.png";
+    var baseAssetsUrl = "https://storage.googleapis.com/##ASSETS_BUCKET##";
     var headerText = "";
 
     var connection = config.connection;
@@ -639,7 +629,7 @@
       language: language,
       languageDictionary: languageDictionary,
       theme: {
-        logo: headerLogo,
+        logo: null,
         primaryColor: studyColor,
       },
       prefill: loginHint ? { email: loginHint, username: loginHint } : null,
@@ -647,7 +637,7 @@
       configurationBaseUrl: config.clientConfigurationBaseUrl,
       overrides: {
         __tenant: config.auth0Tenant,
-        __token_issuer: "rarex-dev.us.auth0.com",
+        __token_issuer: "brugada-dev.us.auth0.com",
       },
       showTerms: false,
       // uncomment if you want small buttons for social providers
@@ -656,7 +646,7 @@
         {
           name: "first_name",
           placeholder: "Your first name",
-          icon: baseAssetsUrl + "auth0-user-icon.svg",
+          icon: baseAssetsUrl + "/auth0-assets/user-icon.svg",
           validator: function (first_name) {
             return {
               valid:
@@ -669,7 +659,7 @@
         {
           name: "last_name",
           placeholder: "Your last name",
-          icon: baseAssetsUrl + "auth0-user-icon.svg",
+          icon: baseAssetsUrl + "/auth0-assets/user-icon.svg",
           validator: function (last_name) {
             return {
               valid:
@@ -684,7 +674,7 @@
     var options = { allowForgotPassword: true };
     if (mode === "signup") {
       options.allowSignUp = true;
-      options.allowLogin = true;
+      options.allowLogin = false;
       options.initialScreen = "signUp";
     } else if (mode === "login") {
       options.allowSignUp = false;
@@ -773,11 +763,6 @@
     	toggleEl.classList.toggle('toggle--shown');
       headerNav.classList.toggle('header__nav--shown');
     });
-
-    document.querySelector('.js-login').addEventListener(
-      'click', 
-      () => document.querySelector('.auth0-lock-tabs li:first-child a')?.click()
-    );
   </script>
 </body>
 </html>

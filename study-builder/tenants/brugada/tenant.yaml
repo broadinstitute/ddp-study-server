@@ -27,6 +27,7 @@ emailTemplates:
     urlLifetimeInSeconds: 432000
     syntax: liquid
     enabled: true
+    resultUrl: ##BASE_URL##/login-landing/login
 
 clients:
   - name: Brugada Dev
