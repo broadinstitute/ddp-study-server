@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="mocana" id="20210919-activity_instance_creation_mutex_table">
+        <createTable tableName="activity_instance_creation_mutex">
+            <column name="participant_id" type="bigint">
+                <constraints references="user(user_id)"
+                             foreignKeyName="act_instance_mutex_participant_fk"/>
+            </column>
+            <column name="study_activity_id" type="bigint">
+                <constraints references="study_activity(study_activity_id)"
+                             foreignKeyName="act_instance_mutex_study_activity_fk"/>
+            </column>
+            <column name="update_time" type="datetime(6)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addPrimaryKey
+                columnNames="participant_id, study_activity_id"
+                constraintName="pk_activity_instance_creation_mutex"
+                tableName="activity_instance_creation_mutex"/>
+    </changeSet>
+</databaseChangeLog>

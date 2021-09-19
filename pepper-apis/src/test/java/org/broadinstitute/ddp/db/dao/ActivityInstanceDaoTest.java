@@ -299,6 +299,34 @@ public class ActivityInstanceDaoTest extends TxnAwareBaseTest {
     }
 
     @Test
+    public void testUpdateActivityInstanceCreationMutex() throws InterruptedException{
+        TransactionWrapper.useTxn(handle -> {
+            ActivityInstanceDao dao = handle.attach(ActivityInstanceDao.class);
+            TestFormActivity act = TestFormActivity.builder()
+                    .build(handle, testData.getUserId(), testData.getStudyGuid());
+            var time = Instant.now();
+            int count = dao.upsertActivityInstanceCreationMutex(testData.getUserId(), testData.getStudyId(),
+                    act.getDef().getActivityCode(), time);
+            assertEquals(1, count);
+            time = Instant.now();
+            dao.upsertActivityInstanceCreationMutex(testData.getUserId(), testData.getStudyId(),
+                    act.getDef().getActivityCode(), time);
+            var timeRead = dao.getActivityInstanceCreationMutexLastUpdate(testData.getUserId(), testData.getStudyId(),
+                    act.getDef().getActivityCode());
+            assertTrue(time.equals(timeRead));
+            Thread.sleep(10);
+            time = Instant.now();
+            dao.upsertActivityInstanceCreationMutex(testData.getUserId(), testData.getStudyId(),
+                    act.getDef().getActivityCode(), time);
+            timeRead = dao.getActivityInstanceCreationMutexLastUpdate(testData.getUserId(), testData.getStudyId(),
+                    act.getDef().getActivityCode());
+            assertTrue(time.equals(timeRead));
+
+            handle.rollback();
+        });
+    }
+
+    @Test
     public void testFindSubstitutionNamesSeenAcrossUsersByActivityAndVersion() {
         TransactionWrapper.useTxn(handle -> {
             ActivityInstanceDao dao = handle.attach(ActivityInstanceDao.class);

@@ -60,8 +60,15 @@ public class CreateActivityInstanceRoute extends ValidatedJsonInputRoute<Activit
             long participantId = found.getUser().getId();
 
             var activityInstanceDao = handle.attach(ActivityInstanceDao.class);
+
+            // Insert or update row for which this transaction will have to hold a lock before proceeding.
+            // This enforces that for a given activity and participant only one transaction is allowed to execute
+            // this code at a time.
+            // Lessens chance of deadlocks and ensures the counts of activity instances for a given activity are
+            // accurate so we can enforce max number of activity instances accurately
+            activityInstanceDao.upsertActivityInstanceCreationMutex(participantId, studyId, activityCode);
             ActivityInstanceCreationValidation validation = activityInstanceDao
-                    .checkSuitabilityForActivityInstanceCreation(studyId, activityCode, participantGuid)
+                    .checkSuitabilityForActivityInstanceCreation(studyId, activityCode, participantId)
                     .orElse(null);
             if (validation == null) {
                 String msg = "Could not find creation validation information for activity " + activityCode;
@@ -95,7 +102,6 @@ public class CreateActivityInstanceRoute extends ValidatedJsonInputRoute<Activit
             handle.attach(DataExportDao.class).queueDataSync(participantGuid, studyGuid);
             LOG.info("Created activity instance {} for activity {} and user {}",
                     instanceGuid, activityCode, participantGuid);
-
             return new ActivityInstanceCreationResponse(instanceGuid);
         });
     }
