@@ -299,7 +299,7 @@ public class ActivityInstanceDaoTest extends TxnAwareBaseTest {
     }
 
     @Test
-    public void testUpdateActivityInstanceCreationMutex() throws InterruptedException{
+    public void testUpdateActivityInstanceCreationMutex() throws InterruptedException {
         TransactionWrapper.useTxn(handle -> {
             ActivityInstanceDao dao = handle.attach(ActivityInstanceDao.class);
             TestFormActivity act = TestFormActivity.builder()

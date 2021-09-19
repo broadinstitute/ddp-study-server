@@ -189,12 +189,12 @@ public class CreateActivityInstanceRouteTest extends IntegrationTestSuite.TestCa
             activityInstancesToDelete.add(secondInstanceGuid);
 
 
-                ActivityInstanceDto firstInstance = TransactionWrapper.withTxn(handle -> handle
-                        .attach(JdbiActivityInstance.class)
-                        .getByActivityInstanceGuid(firstInstanceGuid)
-                        .orElse(null));
-                assertNotNull(firstInstance);
-                assertTrue(firstInstance.isHidden());
+            ActivityInstanceDto firstInstance = TransactionWrapper.withTxn(handle -> handle
+                    .attach(JdbiActivityInstance.class)
+                    .getByActivityInstanceGuid(firstInstanceGuid)
+                    .orElse(null));
+            assertNotNull(firstInstance);
+            assertTrue(firstInstance.isHidden());
         } finally {
             TransactionWrapper.useTxn(handle -> assertEquals(1, handle
                     .attach(JdbiActivity.class)
