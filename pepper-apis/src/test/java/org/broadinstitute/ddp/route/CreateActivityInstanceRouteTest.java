@@ -211,7 +211,7 @@ public class CreateActivityInstanceRouteTest extends IntegrationTestSuite.TestCa
                     .updateMaxInstancesPerUserById(parentActivity.getActivityId(), 1)));
             Gson gson = GsonUtil.standardGson();
             // parallelize requests to test concurrent handling of this situation
-            List<Integer> returnCodes = IntStream.range(0, 3).parallel().mapToObj(i -> {
+            List<Integer> returnCodes = IntStream.range(0, 4).parallel().mapToObj(i -> {
                 try {
                     Request activitiesGetRequest = RouteTestUtil.buildAuthorizedPostRequest(token, url,
                             gson.toJson(new ActivityInstanceCreationPayload(parentActivity.getActivityCode())));
@@ -227,9 +227,9 @@ public class CreateActivityInstanceRouteTest extends IntegrationTestSuite.TestCa
                 }
             }).collect(toList());
             // we attempted 3 creations, but only one should have succeeded
-            assertEquals(3, returnCodes.size());
+            assertEquals(4, returnCodes.size());
             assertEquals(1, returnCodes.stream().filter(each -> each == 200).count());
-            assertEquals(2, returnCodes.stream().filter(each -> each == 422).count());
+            assertEquals(3, returnCodes.stream().filter(each -> each == 422).count());
         } finally {
             TransactionWrapper.useTxn(handle -> {
                 assertEquals(1, handle.attach(JdbiActivity.class).updateMaxInstancesPerUserById(parentActivity.getActivityId(), 1));
