@@ -6,21 +6,27 @@
 
     <changeSet author="mocana" id="20210919-activity_instance_creation_mutex_table">
         <createTable tableName="activity_instance_creation_mutex">
+            <column name="activity_instance_creation_mutex_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="activity_instance_creation_mutex_pk"/>
+            </column>
             <column name="participant_id" type="bigint">
-                <constraints references="user(user_id)"
+                <constraints nullable="false"
+                             references="user(user_id)"
                              foreignKeyName="act_instance_mutex_participant_fk"/>
             </column>
             <column name="study_activity_id" type="bigint">
-                <constraints references="study_activity(study_activity_id)"
+                <constraints nullable="true"
+                             references="study_activity(study_activity_id)"
                              foreignKeyName="act_instance_mutex_study_activity_fk"/>
+
             </column>
             <column name="update_time" type="datetime(6)">
                 <constraints nullable="false"/>
             </column>
         </createTable>
-        <addPrimaryKey
+        <addUniqueConstraint
                 columnNames="participant_id, study_activity_id"
-                constraintName="pk_activity_instance_creation_mutex"
+                constraintName="activity_instance_creation_mute_uk"
                 tableName="activity_instance_creation_mutex"/>
     </changeSet>
 </databaseChangeLog>
