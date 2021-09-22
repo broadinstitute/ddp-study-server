@@ -61,12 +61,8 @@ public class CreateActivityInstanceRoute extends ValidatedJsonInputRoute<Activit
 
             var activityInstanceDao = handle.attach(ActivityInstanceDao.class);
 
-            // Insert or update row for which this transaction will have to hold a lock before proceeding.
-            // This enforces that for a given activity and participant only one transaction is allowed to execute
-            // this code at a time.
-            // Lessens chance of deadlocks and ensures the counts of activity instances for a given activity are
-            // accurate so we can enforce max number of activity instances accurately
-            activityInstanceDao.upsertActivityInstanceCreationMutex(participantId, studyId, activityCode);
+            createMutexLock(activityCode, studyId, participantId, activityInstanceDao);
+
             ActivityInstanceCreationValidation validation = activityInstanceDao
                     .checkSuitabilityForActivityInstanceCreation(studyId, activityCode, participantId)
                     .orElse(null);
@@ -104,6 +100,15 @@ public class CreateActivityInstanceRoute extends ValidatedJsonInputRoute<Activit
                     instanceGuid, activityCode, participantGuid);
             return new ActivityInstanceCreationResponse(instanceGuid);
         });
+    }
+
+    // Insert or update row for which this transaction will have to hold a lock before proceeding.
+    // This enforces that for a given activity and participant only one transaction is allowed to execute
+    // this code at a time.
+    // Lessens chance of deadlocks and ensures the counts of activity instances for a given activity are
+    // accurate so we can enforce max number of activity instances accurately
+    private void createMutexLock(String activityCode, long studyId, long participantId, ActivityInstanceDao activityInstanceDao) {
+        activityInstanceDao.upsertActivityInstanceCreationMutex(participantId, studyId, activityCode);
     }
 
     private void warnAndHalt(Response response, int status, String code, String message) {
