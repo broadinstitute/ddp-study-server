@@ -19,7 +19,8 @@
   {{end}}
     "BASE_URL": "{{$conf.baseWebUrl}}",
     "ASSETS_BUCKET": "{{$conf.assetsBucketName}}",
-    "STUDY_EMAIL": "{{$conf.studyEmail}}"
+    "STUDY_EMAIL": "{{$conf.studyEmail}}",
+    "DB_NAME": "{{$conf.auth0.dbName}}"
   },
   "AUTH0_ALLOW_DELETE": false,
   "INCLUDED_PROPS": {
