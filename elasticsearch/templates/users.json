@@ -9,9 +9,12 @@
       "normalizer": {
         "my_normalizer": {
           "type": "custom",
-          "filter": ["lowercase"]
+          "filter": [
+            "lowercase"
+          ]
         }
       }
+    }
   },
   "mappings": {
     "_doc": {
