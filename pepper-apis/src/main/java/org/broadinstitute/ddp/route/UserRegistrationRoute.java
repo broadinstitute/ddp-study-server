@@ -261,7 +261,7 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
                                        UserRegistrationPayload payload, StudyClientConfiguration clientConfig,
                                        Auth0ManagementClient mgmtClient) {
         String studyGuid = study.getGuid();
-        LOG.info(String.format("Attempting to register new user {}, with client {}  study {}  {}",
+        LOG.info(String.format("Attempting to register new user %s, with client %s  study %s  %s",
                 auth0UserId, clientConfig.getAuth0ClientId(), studyGuid,
                 payload.getTempUserGuid() != null ? " (temp user " + payload.getTempUserGuid() + ")" : " NO-Temp-User"));
 
