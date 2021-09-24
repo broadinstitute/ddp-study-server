@@ -793,7 +793,9 @@ public class DataExporter {
         List<ActivityInstanceRecord> activityInstanceRecords = new ArrayList<>();
         Map<String, Set<String>> userActivityVersions = new HashMap<>();
         for (ActivityExtract activityExtract : studyExtract.getActivities()) {
-            List<ActivityResponse> instances = participant.getResponses(activityExtract.getTag());
+            List<ActivityResponse> instances = participant.getResponses(activityExtract.getTag()).stream()
+                    .sorted(Comparator.comparing(ActivityResponse::getCreatedAt).reversed())
+                    .collect(Collectors.toList());
             for (ActivityResponse instance : instances) {
                 ActivityInstanceStatusDto lastStatus = instance.getLatestStatus();
                 List<QuestionRecord> questionsAnswers = createQuestionRecordsForActivity(activityExtract.getDefinition(),
