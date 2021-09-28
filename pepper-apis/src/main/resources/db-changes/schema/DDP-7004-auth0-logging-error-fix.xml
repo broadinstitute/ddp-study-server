@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+
+    <changeSet author="evgeniipr" id="20210928-auth0-logging-error-fix">
+        <sql>
+insert into auth0_log_event_code (code, title, description)
+values
+('fapi', 'Operation on API failed', ''),
+('fi', 'Failed invite accept', 'Failed to accept a user invitation. This could happen if the user accepts an invitation using a different email address than provided in the invitation, or due to a system failure while provisioning the invitation.'),
+('limit_sul', 'Blocked Account', 'A user is temporarily prevented from logging in because more than 20 logins per minute occurred from the same IP address'),
+('mfar', 'MFA Required', 'A user has been prompted for multi-factor authentication (MFA). When using Adaptive MFA, Auth0 includes details about the risk assessment.'),
+('mgmt_api_read', 'Management API read Operation', 'API GET operation returning secrets completed successfully'),
+('pla', 'Pre-login assessment	', 'This log is generated before a login and helps in monitoring the behavior of bot detection without having to enable it.'),
+('si', 'Successful invite accept', 'Successfully accepted a user invitation'),
+('srrt', 'Success Revocation', 'Successfully revoked a Refresh Token');
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>
+

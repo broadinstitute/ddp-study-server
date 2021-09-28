@@ -9,7 +9,6 @@ import static org.broadinstitute.ddp.constants.ErrorCodes.REQUIRED_PARAMETER_MIS
 import static org.broadinstitute.ddp.json.auth0.Auth0LogEvent.createInstance;
 import static org.slf4j.LoggerFactory.getLogger;
 
-
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.json.auth0.Auth0LogEvent;
@@ -79,7 +78,7 @@ public class Auth0LogEventRoute implements Route {
     }
 
     private void haltError(int status, String code, String msg) {
-        LOG.warn(msg);
+        LOG.error(msg);
         throw ResponseUtil.haltError(status, new ApiError(code, msg));
     }
 }
