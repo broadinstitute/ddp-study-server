@@ -63,7 +63,7 @@ public interface ActivityInstanceDao extends SqlObject {
     Optional<ActivityInstanceCreationValidation> checkSuitabilityForActivityInstanceCreation(
             @Bind("studyId") long studyId,
             @Bind("activityCode") String activityCode,
-            @Bind("userGuid") String userGuid);
+            @Bind("participantUserId") long participantUserId);
 
     @UseStringTemplateSqlLocator
     @SqlQuery("queryLatestActivityInstanceGuidByUserGuidStudyIdAndActivityCode")
@@ -71,6 +71,20 @@ public interface ActivityInstanceDao extends SqlObject {
             @Bind("userGuid") String userGuid,
             @Bind("studyId") long studyId,
             @Bind("activityCode") String activityCode);
+
+    @SqlUpdate("upsertActivityInstanceCreationMutex")
+    @UseStringTemplateSqlLocator
+    int upsertActivityInstanceCreationMutex(@Bind("participantId")long participantId, @Bind("studyId")long studyId,
+                                             @Bind("activityCode")String activityCode, @Bind("updateTime") Instant updateTime);
+
+    default int upsertActivityInstanceCreationMutex(long participantId, long studyId, String activityCode) {
+        return upsertActivityInstanceCreationMutex(participantId, studyId, activityCode, Instant.now());
+    }
+
+    @UseStringTemplateSqlLocator
+    @SqlQuery("queryLastUpdateForActivityInstanceCreationMutex")
+    Instant getActivityInstanceCreationMutexLastUpdate(@Bind("participantId")long participantId, @Bind("studyId")long studyId,
+                                                       @Bind("activityCode")String activityCode);
 
     /**
      * Convenience method to create new activity instance when both operator and participant is the same, and using defaults.
@@ -270,7 +284,7 @@ public interface ActivityInstanceDao extends SqlObject {
             @BindList(value = "activityIds", onEmpty = EmptyHandling.NULL) Set<Long> activityIds);
 
     @SqlUpdate("update activity_instance set is_hidden = :isHidden"
-            + "  where participant_id = :participantId and study_activity_id in (<activityIds>)")
+            + "  where participant_id = :participantId and study_activity_id in (<activityIds>) order by activity_instance_id")
     int bulkUpdateIsHiddenByActivityIds(
             @Bind("participantId") long participantId,
             @Bind("isHidden") boolean isHidden,

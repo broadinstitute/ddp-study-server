@@ -121,7 +121,7 @@
   "consent_questions_concerns_title": "If you have questions or concerns about this research study, whom can you call?",
   "consent_questions_concerns_p1": "You can call us with your questions or concerns.  Our telephone numbers are listed below.  Ask questions as often as you want.  ",
   "consent_questions_concerns_p2": "Dr. Jacqueline Lane, PhD, is the person in charge of this research study.  You can call her at 617-643-3067, Monday through Friday, 9AM-5PM or by email at lane@chgr.mgh.harvard.edu. ",
-  "consent_questions_concerns_p3": "If you have questions about the scheduling of appointments or study visits, call a study coordinator at (617) 726-7733 or email at circadiastudy@mgh.harvard.edu",
+  "consent_questions_concerns_p3": "If you have questions about the scheduling of appointments or study visits, call a study coordinator at +1 (857) 265-6742 or email at circadiastudy@mgh.harvard.edu",
   "consent_questions_concerns_p4": "If you want to speak with someone not directly involved in this research study, please contact the Partners Human Research Committee office.  You can call them at 857-282-1900.",
   "consent_questions_concerns_p5": "You can talk to them about:",
   "consent_questions_concerns_p6_l1": "Your rights as a research subject",
@@ -303,7 +303,7 @@
   "dlmo_instructions_overview_item_5": "Can I go without coffee, alcohol, or melatonin for at least 24 hours prior to the same day one week after the date I select?",
   "dlmo_instructions_overview_paragraph_4": "Once you have considered these questions, please use the following instructions to schedule your first collection date. If you have any questions regarding scheduling your collection date, please contact us:",
   "dlmo_instructions_overview_email_link": "<a class=\"link\" href=\"mailto:circadiastudy@mgh.harvard.edu\">circadiastudy@mgh.harvard.edu</a>",
-  "dlmo_instructions_overview_phone_link": "<a class=\"link\" href=\"tel:+16177267733\">+1 (617) 726-7733</a>",
+  "dlmo_instructions_overview_phone_link": "<a class=\"link\" href=\"tel:+18572656742\">+1 (857) 265-6742</a>",
 
   "dlmo_instructions_guide_title": "Scheduling Dim Light Melatonin Saliva Sample Collection",
   "dlmo_instructions_guide_item_1": "1. Click on this link: <a class=\"link\" href=\"https://circadiastudy.youcanbook.me/\" target=\"_blank\">Circadia Study Scheduling</a>. You will be taken to the following web page:",
@@ -783,9 +783,9 @@
   "kit_receipt_attestation_checked_instructions": "Checked that all components are present using the provided checklist",
   "kit_receipt_attestation_icepacks": "Placed both icepacks in the freezer",
 
-  "pre_collection_attestation_1_name": "DLMO Attestation #1",
-  "pre_collection_attestation_1_title": "DLMO Pre-Collection Attestation 1",
-  "pre_collection_attestation_1_header": "DLMO Attestation #1",
+  "pre_collection_attestation_1_name": "Pre-Collection DLMO Attestation #1",
+  "pre_collection_attestation_1_title": "Pre-Collection DLMO Attestation #1",
+  "pre_collection_attestation_1_header": "Pre-Collection DLMO Attestation #1",
 
   "pre_collection_attestation_1_created_summary": "Please complete the DLMO colllection checklist prior to starting your first collection.",
   "pre_collection_attestation_1_in_progress_summary": "You have started your DLMO collection checklist, please submit it prior to starting collection.",
@@ -798,11 +798,11 @@
   "pre_collection_attestation_1_yes_message": "You may begin DLMO Collection 1 at your scheduled collection time. Thank you.",
   "pre_collection_attestation_1_no_message": "You will need to reschedule DLMO Collection 1. You have indicated that you have consumed one or more of the previously listed items. We request that you DO NOT proceed with DLMO Collection 1 at this moment. A study team member will be in contact with you to reschedule your DLMO Collection 1. Thank you.",
 
-  "pre_collection_attestation_2_name": "DLMO Attestation #2",
-  "pre_collection_attestation_2_title": "DLMO Pre-Collection Attestation #2",
-  "pre_collection_attestation_2_header": "DLMO Attestation #2",
+  "pre_collection_attestation_2_name": "Pre-Collection DLMO Attestation #2",
+  "pre_collection_attestation_2_title": "Pre-Collection DLMO Attestation #2",
+  "pre_collection_attestation_2_header": "Pre-Collection DLMO Attestation #2",
 
-  "pre_collection_attestation_2_created_summary": "Please complete the Post-Collection Attestation after your second collection.",
+  "pre_collection_attestation_2_created_summary": "Please complete the DLMO collection checklist prior to starting your second collection.",
   "pre_collection_attestation_2_in_progress_summary": "You have started your DLMO collection checklist, please submit it prior to starting collection.",
   "pre_collection_attestation_2_complete_summary": "Thank you for completing the DLMO collection checklist.",
 
@@ -813,9 +813,9 @@
   "pre_collection_attestation_2_yes_message": "You may begin DLMO Collection 2 at your scheduled collection time. Thank you.",
   "pre_collection_attestation_2_no_message": "You will need to reschedule DLMO Collection 2. You have indicated that you have consumed one or more of the previously listed items. We request that you DO NOT proceed with DLMO Collection 2 at this moment. A study team member will be in contact with you to reschedule your DLMO Collection 2. Thank you.",
 
-  "post_collection_attestation_1_name": "DLMO Post-Collection Attestation 1",
-  "post_collection_attestation_1_title": "DLMO Post-Collection Attestation 1",
-  "post_collection_attestation_1_header": "DLMO Post-Collection Attestation 1",
+  "post_collection_attestation_1_name": "Post-Collection DLMO Attestation #1",
+  "post_collection_attestation_1_title": "Post-Collection DLMO Attestation #1",
+  "post_collection_attestation_1_header": "Post-Collection DLMO Attestation #1",
 
   "post_collection_attestation_1_created_summary": "Please complete the Post-Collection Attestation after your first collection.",
   "post_collection_attestation_1_in_progress_summary": "Please finish the Post-Collection Attestation",
@@ -826,9 +826,9 @@
   "post_collection_attestation_1_yes": "Yes",
   "post_collection_attestation_1_no": "No",
 
-  "post_collection_attestation_2_name": "DLMO Post-Collection Attestation 2",
-  "post_collection_attestation_2_title": "DLMO Post-Collection Attestation 2",
-  "post_collection_attestation_2_header": "DLMO Post-Collection Attestation 2",
+  "post_collection_attestation_2_name": "Post-Collection DLMO Attestation #2",
+  "post_collection_attestation_2_title": "Post-Collection DLMO Attestation #2",
+  "post_collection_attestation_2_header": "Post-Collection DLMO Attestation #2",
 
   "post_collection_attestation_2_created_summary": "Please complete the Post-Collection Attestation after your second collection.",
   "post_collection_attestation_2_in_progress_summary": "Please finish the Post-Collection Attestation",
