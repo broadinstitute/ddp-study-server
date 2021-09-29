@@ -1,5 +1,6 @@
 package org.broadinstitute.ddp.studybuilder;
 
+import static org.broadinstitute.ddp.studybuilder.StudyBuilderContext.readTranslationsFromConfSectionI18n;
 import static org.broadinstitute.ddp.studybuilder.StudyPatcher.LOG_FILENAME;
 
 import java.io.File;
@@ -106,6 +107,7 @@ public class StudyBuilderCli {
         if (cmd.hasOption("substitutions")) {
             String subsFile = cmd.getOptionValue("substitutions");
             subsCfg = ConfigFactory.parseFile(new File(subsFile));
+            readTranslationsFromConfSectionI18n(subsCfg);
             log("using substitutions file: %s", subsFile);
         }
 

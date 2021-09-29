@@ -210,20 +210,40 @@ public abstract class ActivityDef {
         return translatedNames;
     }
 
+    public void setTranslatedNames(List<Translation> translatedNames) {
+        this.translatedNames = translatedNames;
+    }
+
     public List<Translation> getTranslatedSecondNames() {
         return translatedSecondNames;
+    }
+
+    public void setTranslatedSecondNames(List<Translation> translatedSecondNames) {
+        this.translatedSecondNames = translatedSecondNames;
     }
 
     public List<Translation> getTranslatedTitles() {
         return translatedTitles;
     }
 
+    public void setTranslatedTitles(List<Translation> translatedTitles) {
+        this.translatedTitles = translatedTitles;
+    }
+
     public List<Translation> getTranslatedSubtitles() {
         return translatedSubtitles;
     }
 
+    public void setTranslatedSubtitles(List<Translation> translatedSubtitles) {
+        this.translatedSubtitles = translatedSubtitles;
+    }
+
     public List<Translation> getTranslatedDescriptions() {
         return translatedDescriptions;
+    }
+
+    public void setTranslatedDescriptions(List<Translation> translatedDescriptions) {
+        this.translatedDescriptions = translatedDescriptions;
     }
 
     public List<SummaryTranslation> getTranslatedSummaries() {
