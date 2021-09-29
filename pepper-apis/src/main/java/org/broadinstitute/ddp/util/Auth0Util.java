@@ -387,8 +387,7 @@ public class Auth0Util {
             List<String> subset = ids.subList(i, end);
 
             // NOTE: Lucene syntax likes OR operator, but using a space also works. We do the latter to save space on URL limit.
-            String query = String.format("identities.connection:\"%s\" AND user_id:(%s)",
-                    connection, String.join(" ", subset));
+            String query = String.format("user_id:(%s)", String.join(" ", subset));
 
             UserFilter filter = new UserFilter()
                     .withFields("user_id,email", true)

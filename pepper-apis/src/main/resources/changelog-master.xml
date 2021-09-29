@@ -278,4 +278,5 @@
     <include file="db-changes/schema/DDP-6490-form_activity_setting_snapshot_address_on_submit.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/seed/DDP-6689-add-dlmo-date-notification-event-types-circadia.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/DDP-6339-add-unique-validation-type.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/DDP-6983-activity-instance-creation-mutex-table.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>

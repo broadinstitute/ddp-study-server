@@ -121,7 +121,7 @@
   "consent_questions_concerns_title": "If you have questions or concerns about this research study, whom can you call?",
   "consent_questions_concerns_p1": "You can call us with your questions or concerns.  Our telephone numbers are listed below.  Ask questions as often as you want.  ",
   "consent_questions_concerns_p2": "Dr. Jacqueline Lane, PhD, is the person in charge of this research study.  You can call her at 617-643-3067, Monday through Friday, 9AM-5PM or by email at lane@chgr.mgh.harvard.edu. ",
-  "consent_questions_concerns_p3": "If you have questions about the scheduling of appointments or study visits, call a study coordinator at (617) 726-7733 or email at circadiastudy@mgh.harvard.edu",
+  "consent_questions_concerns_p3": "If you have questions about the scheduling of appointments or study visits, call a study coordinator at +1 (857) 265-6742 or email at circadiastudy@mgh.harvard.edu",
   "consent_questions_concerns_p4": "If you want to speak with someone not directly involved in this research study, please contact the Partners Human Research Committee office.  You can call them at 857-282-1900.",
   "consent_questions_concerns_p5": "You can talk to them about:",
   "consent_questions_concerns_p6_l1": "Your rights as a research subject",
@@ -303,7 +303,7 @@
   "dlmo_instructions_overview_item_5": "Can I go without coffee, alcohol, or melatonin for at least 24 hours prior to the same day one week after the date I select?",
   "dlmo_instructions_overview_paragraph_4": "Once you have considered these questions, please use the following instructions to schedule your first collection date. If you have any questions regarding scheduling your collection date, please contact us:",
   "dlmo_instructions_overview_email_link": "<a class=\"link\" href=\"mailto:circadiastudy@mgh.harvard.edu\">circadiastudy@mgh.harvard.edu</a>",
-  "dlmo_instructions_overview_phone_link": "<a class=\"link\" href=\"tel:+16177267733\">+1 (617) 726-7733</a>",
+  "dlmo_instructions_overview_phone_link": "<a class=\"link\" href=\"tel:+18572656742\">+1 (857) 265-6742</a>",
 
   "dlmo_instructions_guide_title": "Scheduling Dim Light Melatonin Saliva Sample Collection",
   "dlmo_instructions_guide_item_1": "1. Click on this link: <a class=\"link\" href=\"https://circadiastudy.youcanbook.me/\" target=\"_blank\">Circadia Study Scheduling</a>. You will be taken to the following web page:",
