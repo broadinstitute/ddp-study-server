@@ -1,19 +1,31 @@
 package org.broadinstitute.ddp.studybuilder.task;
 
+import com.google.gson.Gson;
 import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
+import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.EventDao;
 import org.broadinstitute.ddp.db.dao.EventTriggerDao;
 import org.broadinstitute.ddp.db.dao.EventTriggerSql;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
+import org.broadinstitute.ddp.db.dao.JdbiActivityVersion;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
+import org.broadinstitute.ddp.db.dao.SectionBlockDao;
+import org.broadinstitute.ddp.db.dto.ActivityDto;
+import org.broadinstitute.ddp.db.dto.ActivityVersionDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.exception.DDPException;
+import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
+import org.broadinstitute.ddp.model.activity.definition.FormBlockDef;
+import org.broadinstitute.ddp.model.activity.definition.FormSectionDef;
 import org.broadinstitute.ddp.model.activity.types.EventTriggerType;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.broadinstitute.ddp.model.dsm.DsmNotificationEventType;
 import org.broadinstitute.ddp.model.event.ActivityInstanceCreationEventAction;
 import org.broadinstitute.ddp.model.event.DsmNotificationTrigger;
 import org.broadinstitute.ddp.model.event.EventConfiguration;
+import org.broadinstitute.ddp.util.ConfigUtil;
+import org.broadinstitute.ddp.util.GsonUtil;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.customizer.Bind;
@@ -22,6 +34,7 @@ import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.nio.file.Path;
 import java.util.Comparator;
 import java.util.List;
@@ -34,14 +47,22 @@ public class CircadiaUpdateDLMOInstructionsTrigger implements CustomTask {
 
     private static final Logger LOG = LoggerFactory.getLogger(CircadiaUpdateDLMOInstructionsTrigger.class);
     private static final String STUDY_GUID = "circadia";
+    private static final String DATA_FILE = "patches/patch1.conf";
 
     private long studyId;
+    private final Gson gson = GsonUtil.standardGson();
+    private Config dataCfg;
 
     @Override
     public void init(Path cfgPath, Config studyCfg, Config varsCfg) {
         if (!studyCfg.getString("study.guid").equals(STUDY_GUID)) {
             throw new DDPException("This task is only for the " + STUDY_GUID + " study!");
         }
+        File file = cfgPath.getParent().resolve(DATA_FILE).toFile();
+        if (!file.exists()) {
+            throw new DDPException("Data file is missing: " + file);
+        }
+        this.dataCfg = ConfigFactory.parseFile(file).resolveWith(varsCfg);
     }
 
     @Override
@@ -61,6 +82,7 @@ public class CircadiaUpdateDLMOInstructionsTrigger implements CustomTask {
 
         long activityId = helper.findActivityIdByStudyIdAndCode(studyId, "DLMO_INSTRUCTIONS");
         long hlqActivityId = helper.findActivityIdByStudyIdAndCode(studyId, "HEALTH_AND_LIFESTYLE_QUESTIONNAIRE");
+        long dlmoInstructionsActivityId = helper.findActivityIdByStudyIdAndCode(studyId, "DLMO_INSTRUCTIONS");
 
         List<EventConfiguration> dsmEvents = events.stream()
                 .filter(e -> e.getEventTriggerType() == EventTriggerType.DSM_NOTIFICATION)
@@ -87,6 +109,25 @@ public class CircadiaUpdateDLMOInstructionsTrigger implements CustomTask {
                 }
             }
         }
+
+        addBlockToActivity(handle, dlmoInstructionsActivityId, "header_block");
+        addBlockToActivity(handle, dlmoInstructionsActivityId, "content_block1");
+        addBlockToActivity(handle, dlmoInstructionsActivityId, "content_block2");
+    }
+
+    private void addBlockToActivity(Handle handle, long activityId, String blockName) {
+        ActivityDto activityDto = handle.attach(JdbiActivity.class)
+                .findActivityByStudyGuidAndCode(STUDY_GUID, "DLMO_INSTRUCTIONS").get();
+        ActivityVersionDto ver = handle.attach(JdbiActivityVersion.class).getActiveVersion(activityId).get();
+        FormActivityDef currentDef = (FormActivityDef) handle.attach(ActivityDao.class).findDefByDtoAndVersion(activityDto, ver);
+        FormSectionDef currentSectionDef = currentDef.getSections().get(0);
+        SectionBlockDao sectionBlockDao = handle.attach(SectionBlockDao.class);
+        FormBlockDef raceDef = gson.fromJson(ConfigUtil.toJson(dataCfg.getConfig(blockName)), FormBlockDef.class);
+        int displayOrder = currentSectionDef.getBlocks().size() * 10 + 10;
+        sectionBlockDao.insertBlockForSection(activityId, currentSectionDef.getSectionId(),
+                displayOrder, raceDef, ver.getRevId());
+        LOG.info("New block {} was added to activity {} into section #{} with display order {}", blockName,
+                "DLMO_INSTRUCTIONS", 1, displayOrder);
     }
 
     private interface SqlHelper extends SqlObject {
