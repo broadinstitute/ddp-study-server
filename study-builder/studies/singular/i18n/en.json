@@ -3,7 +3,8 @@
     "common": {
       "logo_alt": "Project Singular logo",
       "greeting": "Hello!",
-      "greeting_self": "Dear {{ participant_firstName }}",
+      "greeting_participant": "Dear {{ participant_firstName }},",
+      "greeting_proxy": "Dear {{ proxy_firstName }},",
       "thank_you_for_joining": "Thank you for joining Project Singular!",
       "closing1": "If you have questions at any point and would like to talk to a member of our study staff, please reach out to us at",
       "closing2": "or",
