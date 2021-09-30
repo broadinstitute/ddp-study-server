@@ -2,6 +2,7 @@
   "emails": {
     "common": {
       "logo_alt": "Project Singular logo",
+      "greeting": "Hello!",
       "closing1": "If you have questions at any point and would like to talk to a member of our study staff, please reach out to us at",
       "closing2": "or",
       "closing_thank_you": "Thank you!",
@@ -9,7 +10,7 @@
     },
 
     "welcome": {
-      "subject": "Welcome! Your account has been created. Hello!",
+      "subject": "Welcome! Your account has been created.",
       "p1": "Thank you for joining Project Singular!",
       "p2": "You have successfully created an account. If you haven’t already, the next step is to begin enrollment for a participant by clicking on the “Add Participant” button in Project Singular dashboard. Participants that can be enrolled include:",
       "list_li1": "Yourself, if:",
