@@ -59,6 +59,14 @@
       "p2": "The next step is to complete a Medical Record Release Form so that we may request and receive copies of your medical records.",
       "p3": "If you haven’t already done so, please click the following link to return to Project Singular to complete your medical release form.",
       "form_link": "Medical Record Release Form"
+    },
+
+    "parental_medical_release_reminder": {
+      "subject": "Please complete a form",
+      "p1": "There are a few more steps in the process in order to enroll your child in Project Singular.",
+      "p2": "The next step is to complete a Medical Record Release Form so that we may request and receive copies of your child’s medical records.",
+      "p3": "If you haven’t already done so, please click the following link to return to Project Singular to complete your child’s medical release form.",
+      "form_link": "Medical Record Release Form"
     }
   },
 
