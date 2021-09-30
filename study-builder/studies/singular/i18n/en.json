@@ -1,4 +1,32 @@
 {
+  "emails": {
+    "common": {
+      "logo_alt": "Project Singular logo",
+      "closing1": "If you have questions at any point and would like to talk to a member of our study staff, please reach out to us at",
+      "closing2": "or",
+      "closing_thank_you": "Thank you!",
+      "closing_team": "Project Singular Research Team"
+    },
+
+    "welcome": {
+      "subject": "Welcome! Your account has been created. Hello!",
+      "p1": "Thank you for joining Project Singular!",
+      "p2": "You have successfully created an account. If you haven’t already, the next step is to begin enrollment for a participant by clicking on the “Add Participant” button in Project Singular dashboard. Participants that can be enrolled include:",
+      "list_li1": "Yourself, if:",
+      "list_li1_li1": "You have a single ventricle defect; or",
+      "list_li1_li2": "You have a biological child with a single ventricle defect; or",
+      "list_li1_li3": "You have a biological sibling with a single ventricle defect.",
+      "list_li2": "Your child, if:",
+      "list_li2_li1": "That child has a single ventricle defect; or",
+      "list_li2_li2": "That child is the biological sibling of an individual with a single ventricle defect; or",
+      "list_li2_li3": "That child has a biological parent with a single ventricle defect.",
+      "p3": "Please note that you can enroll multiple children if you have more than one child who meets the criteria above.",
+      "p4": "After adding a participant, you will be asked to read the research consent form where we explain in detail what will happen in this study and ask for your agreement to participate.",
+      "p5": "Please click the following link to return to your Project Singular dashboard to begin enrollment of you or your child.",
+      "dashboard_link": "My Dashboard"
+    }
+  },
+
   "prequal": {
     "name": "Pre-qualifier",
     "title": "Thank you for your interest in joining Project Singular!",
