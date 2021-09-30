@@ -45,6 +45,12 @@
       "subject": "Please complete a form",
       "p1": "The next step in completing your enrollment in Project Singular is to answer a few short questions in a section called “About Me”. If you haven’t yet had a chance to complete this questionnaire, please click on the following link to return to Project Singular to do so now.",
       "about_me_link": "About Me"
+    },
+
+    "about_my_child_reminder": {
+      "subject": "Please complete a form",
+      "p1": "The next step in completing your child’s enrollment in Project Singular is to answer a few short questions in a section called “About My Child.” If you haven’t yet had a chance to complete this questionnaire, please click on the following link to return to Project Singular to do so now.",
+      "about_my_child_link": "About My Child"
     }
   },
 
