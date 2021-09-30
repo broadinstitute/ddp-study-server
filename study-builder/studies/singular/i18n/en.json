@@ -25,6 +25,13 @@
       "p4": "After adding a participant, you will be asked to read the research consent form where we explain in detail what will happen in this study and ask for your agreement to participate.",
       "p5": "Please click the following link to return to your Project Singular dashboard to begin enrollment of you or your child.",
       "dashboard_link": "My Dashboard"
+    },
+
+    "consent_reminder_self": {
+      "subject": "Please sign the consent form",
+      "p1": "Thank you for joining Project Singular!",
+      "p2": "We have previously sent you a link to read and sign the consent form and have not heard back from you. We are resending the link in case it was missed. This is the next step in the process to enroll in Project Singular. Please click the following link to return to Project Singular to read and sign the Consent Form.",
+      "consent_link": "Consent Form"
     }
   },
 
