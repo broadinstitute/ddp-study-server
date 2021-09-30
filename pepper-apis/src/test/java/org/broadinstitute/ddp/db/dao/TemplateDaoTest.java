@@ -195,4 +195,35 @@ public class TemplateDaoTest extends TxnAwareBaseTest {
             handle.rollback();
         });
     }
+
+    @Test
+    public void testRenderWithCompoundValues() {
+        TransactionWrapper.useTxn(handle -> {
+            TemplateDao dao = handle.attach(TemplateDao.class);
+            JdbiTemplate jdbiTmpl = handle.attach(JdbiTemplate.class);
+            JdbiRevision jdbiRev = handle.attach(JdbiRevision.class);
+            JdbiVariableSubstitution jdbiSub = handle.attach(JdbiVariableSubstitution.class);
+
+            // define templates
+            Template tmpl = new Template(TemplateType.HTML, null, "<p>$prequal.var</p>");
+            tmpl.addVariable(new TemplateVariable("prequal.var", Arrays.asList(
+                    new Translation("en", "variable (en)"),
+                    new Translation("ru", "variable (ru)"))));
+
+            // insert revision and template data
+            long millis = Instant.now().toEpochMilli();
+            long revId = jdbiRev.insert(testData.getUserId(), millis, null, "test");
+            dao.insertTemplate(tmpl, revId);
+
+            //load template
+            Template loadedTmpl = dao.loadTemplateByIdAndTimestamp(tmpl.getTemplateId(), millis);
+            assertNotNull(loadedTmpl.getTemplateId());
+            assertNotNull(loadedTmpl.getTemplateCode());
+            HtmlConverter.getPlainText(loadedTmpl.renderWithDefaultValues("en"));
+            assertEquals("variable (en)", HtmlConverter.getPlainText(loadedTmpl.renderWithDefaultValues("en")));
+            assertEquals("variable (ru)", HtmlConverter.getPlainText(loadedTmpl.renderWithDefaultValues("ru")));
+
+            handle.rollback();
+        });
+    }
 }

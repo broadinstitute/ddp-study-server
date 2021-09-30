@@ -31,6 +31,18 @@
             <version>4.4</version>
         </dependency>
 
+        <!-- logging and notifications -->
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-core</artifactId>
+            <version>1.2.3</version>
+        </dependency>
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+            <version>1.2.3</version>
+        </dependency>
+
         <!-- testing utilities -->
         <dependency>
             <!-- declare this before junit to get correct version of hamcrest -->

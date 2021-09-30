@@ -17,6 +17,7 @@ public class StudyBuilderContext {
         CONTEXT.setTranslations(TranslationsUtil.getTranslations(subsCfg, TRANSLATION_KEY_PREFIX));
     }
 
+    private boolean processTranslations = false;
     private Map<String, Properties> translations;
 
     public Map<String, Properties> getTranslations() {
@@ -25,5 +26,13 @@ public class StudyBuilderContext {
 
     public void setTranslations(Map<String, Properties> translations) {
         this.translations = translations;
+    }
+
+    public boolean isProcessTranslations() {
+        return processTranslations;
+    }
+
+    public void setProcessTranslations(boolean processTranslations) {
+        this.processTranslations = processTranslations;
     }
 }

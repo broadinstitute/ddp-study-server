@@ -20,7 +20,10 @@ import org.broadinstitute.ddp.model.activity.definition.PhysicianInstitutionComp
 import org.broadinstitute.ddp.model.activity.definition.QuestionBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.validation.RuleDef;
+import org.broadinstitute.ddp.studybuilder.StudyBuilderContext;
 import org.broadinstitute.ddp.studybuilder.StudyBuilderException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Add the translations (for all study languages) to the activities definitions.
@@ -54,13 +57,24 @@ import org.broadinstitute.ddp.studybuilder.StudyBuilderException;
  */
 public class ActivityDefTranslationsProcessor {
 
+    private static final Logger LOG = LoggerFactory.getLogger(ActivityDefTranslationsProcessor.class);
+
     private final Map<String, Properties> allTranslations;
 
     public ActivityDefTranslationsProcessor(Map<String, Properties> allTranslations) {
         this.allTranslations = allTranslations;
     }
 
-    public void enrichActivityDefWithTranslations(ActivityDef activityDef) {
+    public void run(ActivityDef activityDef) {
+        if (StudyBuilderContext.CONTEXT.isProcessTranslations()) {
+            enrichActivityDefWithTranslations(activityDef);
+        }
+    }
+
+    private void enrichActivityDefWithTranslations(ActivityDef activityDef) {
+        LOG.info("Add translations for languages {} to a generated activity definition {}",
+                StudyBuilderContext.CONTEXT.getTranslations().keySet(), activityDef.getActivityCode());
+
         addTemplateTranslations(activityDef.getReadonlyHintTemplate(), allTranslations);
         activityDef.setTranslatedDescriptions(addTranslations(activityDef.getTranslatedDescriptions(), allTranslations));
         activityDef.setTranslatedNames(addTranslations(activityDef.getTranslatedNames(), allTranslations));

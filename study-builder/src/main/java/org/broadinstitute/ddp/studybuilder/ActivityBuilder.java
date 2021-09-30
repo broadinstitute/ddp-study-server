@@ -99,7 +99,7 @@ public class ActivityBuilder {
             if (activityCode.equals(definition.getString("activityCode"))) {
                 LOG.info("Using configuration for activityCode={} with filepath={}", activityCode, activityCfg.getString("filepath"));
                 ActivityDef def = gson.fromJson(ConfigUtil.toJson(definition), ActivityDef.class);
-                activityDefTranslationsProcessor.enrichActivityDefWithTranslations(def);
+                activityDefTranslationsProcessor.run(def);
                 validateDefinition(def);
                 List<ActivityDef> nestedDefs = loadNestedActivities(activityCfg);
                 insertActivity(handle, def, nestedDefs, timestamp);
@@ -122,7 +122,7 @@ public class ActivityBuilder {
         for (var nestedPath : nestedPaths) {
             Config nestedCfg = readDefinitionConfig(nestedPath);
             ActivityDef nestedDef = gson.fromJson(ConfigUtil.toJson(nestedCfg), ActivityDef.class);
-            activityDefTranslationsProcessor.enrichActivityDefWithTranslations(nestedDef);
+            activityDefTranslationsProcessor.run(nestedDef);
             validateDefinition(nestedDef);
             nestedDefs.add(nestedDef);
         }
@@ -141,7 +141,7 @@ public class ActivityBuilder {
         for (Config activityCfg : activitiesCfg.getConfigList("activities")) {
             Config definitionCfg = readDefinitionConfig(activityCfg.getString("filepath"));
             ActivityDef def = gson.fromJson(ConfigUtil.toJson(definitionCfg), ActivityDef.class);
-            activityDefTranslationsProcessor.enrichActivityDefWithTranslations(def);
+            activityDefTranslationsProcessor.run(def);
             validateDefinition(def);
             List<ActivityDef> nestedDefs = loadNestedActivities(activityCfg);
             long activityRevisionId = insertActivity(handle, def, nestedDefs, timestamp).getRevId();
@@ -152,13 +152,13 @@ public class ActivityBuilder {
 
     public ActivityVersionDto insertActivity(Handle handle, Config definition, List<Config> nestedCfgs, Instant timestamp) {
         ActivityDef def = gson.fromJson(ConfigUtil.toJson(definition), ActivityDef.class);
-        activityDefTranslationsProcessor.enrichActivityDefWithTranslations(def);
+        activityDefTranslationsProcessor.run(def);
         validateDefinition(def);
 
         List<ActivityDef> nestedDefs = new ArrayList<>();
         for (var nestedCfg : nestedCfgs) {
             ActivityDef nestedDef = gson.fromJson(ConfigUtil.toJson(nestedCfg), ActivityDef.class);
-            activityDefTranslationsProcessor.enrichActivityDefWithTranslations(nestedDef);
+            activityDefTranslationsProcessor.run(nestedDef);
             validateDefinition(nestedDef);
             nestedDefs.add(nestedDef);
         }

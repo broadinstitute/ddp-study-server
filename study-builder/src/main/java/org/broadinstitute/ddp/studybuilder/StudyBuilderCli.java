@@ -44,6 +44,8 @@ public class StudyBuilderCli {
     private static final String OPT_CREATE_EMAILS = "create-emails";
     private static final String OPT_UPDATE_EMAILS = "update-emails";
     private static final String OPT_EMAIL_KEYS = "email-keys";
+    private static final String OPT_PROCESS_TRANSLATIONS = "process-translations";
+
     private static final String DEFAULT_STUDIES_DIR = "studies";
     private static final String DEFAULT_STUDY_CONF_FILENAME = "study.conf";
     private static final String DOUBLE_DASH = "--";
@@ -74,6 +76,7 @@ public class StudyBuilderCli {
         options.addOption(null, OPT_EMAIL_KEYS, true, "comma-separated email keys, only create/update emails with these keys");
         options.addOption(null, OPT_RUN_TASK, true, "run a custom task");
         options.addOption(null, OPT_PATCH, false, "run patches for a study");
+        options.addOption(null, OPT_PROCESS_TRANSLATIONS, false, "run the process of translations assignment for all study languages");
 
         CommandLineParser parser = new DefaultParser();
         CommandLine cmd = parser.parse(options, args);
@@ -205,6 +208,8 @@ public class StudyBuilderCli {
         if (cmd.hasOption("no-events")) {
             builder.doEvents(false);
         }
+
+        StudyBuilderContext.CONTEXT.setProcessTranslations(cmd.hasOption(OPT_PROCESS_TRANSLATIONS));
 
         log("executing setup...");
         execute(builder::run, isDryRun);

@@ -1,6 +1,6 @@
 package org.broadinstitute.ddp.studybuilder.translation;
 
-import static org.broadinstitute.ddp.studybuilder.translation.VelocityUtil.VARIABLE_PREFIX;
+import static org.broadinstitute.ddp.content.VelocityUtil.VARIABLE_PREFIX;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -164,8 +164,8 @@ public class TranslationsUtil {
      * @param variablesFromTemplateText  list of Velocity variables detected in `templateText`
      * @return list of Strings with names of variables
      */
-    public static List<String> detectVariablesNotPresentInList(
-            Collection<TemplateVariable> variablesList, List<String> variablesFromTemplateText) {
+    public static Collection<String> detectVariablesNotPresentInList(
+            Collection<TemplateVariable> variablesList, Collection<String> variablesFromTemplateText) {
         if (variablesList == null) {
             return variablesFromTemplateText;
         } else {

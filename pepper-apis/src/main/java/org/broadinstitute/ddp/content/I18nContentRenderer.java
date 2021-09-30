@@ -303,9 +303,11 @@ public class I18nContentRenderer {
     }
 
     public String renderToString(String template, Map<String, Object> context) {
-        VelocityContext ctx = new VelocityContext(context);
+        Map<String, Object> convertedContext = VelocityUtil.convertVariablesToValid(context);
+        String convertedTemplate = VelocityUtil.convertTemplateVariablesToValid(template, context.keySet());
+        VelocityContext ctx = new VelocityContext(convertedContext);
         StringWriter writer = new StringWriter();
-        engine.evaluate(ctx, writer, TEMPLATE_NAME, template);
+        engine.evaluate(ctx, writer, TEMPLATE_NAME, convertedTemplate);
         String result = writer.toString();
         if (result.contains("$")) {
             // Here we have a second pass in case of variables in the substitution values,
