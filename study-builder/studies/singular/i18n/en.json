@@ -3,6 +3,7 @@
     "common": {
       "logo_alt": "Project Singular logo",
       "greeting": "Hello!",
+      "thank_you_for_joining": "Thank you for joining Project Singular!",
       "closing1": "If you have questions at any point and would like to talk to a member of our study staff, please reach out to us at",
       "closing2": "or",
       "closing_thank_you": "Thank you!",
@@ -11,8 +12,7 @@
 
     "welcome": {
       "subject": "Welcome! Your account has been created.",
-      "p1": "Thank you for joining Project Singular!",
-      "p2": "You have successfully created an account. If you haven’t already, the next step is to begin enrollment for a participant by clicking on the “Add Participant” button in Project Singular dashboard. Participants that can be enrolled include:",
+      "p1": "You have successfully created an account. If you haven’t already, the next step is to begin enrollment for a participant by clicking on the “Add Participant” button in Project Singular dashboard. Participants that can be enrolled include:",
       "list_li1": "Yourself, if:",
       "list_li1_li1": "You have a single ventricle defect; or",
       "list_li1_li2": "You have a biological child with a single ventricle defect; or",
@@ -21,16 +21,21 @@
       "list_li2_li1": "That child has a single ventricle defect; or",
       "list_li2_li2": "That child is the biological sibling of an individual with a single ventricle defect; or",
       "list_li2_li3": "That child has a biological parent with a single ventricle defect.",
-      "p3": "Please note that you can enroll multiple children if you have more than one child who meets the criteria above.",
-      "p4": "After adding a participant, you will be asked to read the research consent form where we explain in detail what will happen in this study and ask for your agreement to participate.",
-      "p5": "Please click the following link to return to your Project Singular dashboard to begin enrollment of you or your child.",
+      "p2": "Please note that you can enroll multiple children if you have more than one child who meets the criteria above.",
+      "p3": "After adding a participant, you will be asked to read the research consent form where we explain in detail what will happen in this study and ask for your agreement to participate.",
+      "p4": "Please click the following link to return to your Project Singular dashboard to begin enrollment of you or your child.",
       "dashboard_link": "My Dashboard"
     },
 
     "consent_reminder_self": {
       "subject": "Please sign the consent form",
-      "p1": "Thank you for joining Project Singular!",
-      "p2": "We have previously sent you a link to read and sign the consent form and have not heard back from you. We are resending the link in case it was missed. This is the next step in the process to enroll in Project Singular. Please click the following link to return to Project Singular to read and sign the Consent Form.",
+      "p1": "We have previously sent you a link to read and sign the consent form and have not heard back from you. We are resending the link in case it was missed. This is the next step in the process to enroll in Project Singular. Please click the following link to return to Project Singular to read and sign the Consent Form.",
+      "consent_link": "Consent Form"
+    },
+
+    "consent_reminder_child": {
+      "subject": "Please sign the consent form",
+      "p1": "We have previously sent you a link to read and sign the consent form and have not heard back from you. We are resending the link in case it was missed. This is the next step in the process to enroll your child in Project Singular. Please click the following link to return to Project Singular to read and sign the Consent Form.",
       "consent_link": "Consent Form"
     }
   },

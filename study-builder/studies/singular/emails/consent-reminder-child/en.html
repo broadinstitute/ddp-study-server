@@ -17,7 +17,7 @@
 
     <!--[if !mso]><!-->
     <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
-    <title>${i18n.en.emails.welcome.subject}</title>
+    <title>${i18n.en.emails.consent_reminder_child.subject}</title>
     <!--<![endif]-->
 
     <!--[if (gte mso 9)|(IE)]>
@@ -114,51 +114,7 @@
 
           <tr>
             <td>
-              <p>${i18n.en.emails.welcome.p1}</p>
-            </td>
-          </tr>
-
-          <tr>
-            <td>
-              <ul>
-                <li>
-                  ${i18n.en.emails.welcome.list_li1}
-
-                  <ul>
-                    <li>${i18n.en.emails.welcome.list_li1_li1}</li>
-                    <li>${i18n.en.emails.welcome.list_li1_li2}</li>
-                    <li>${i18n.en.emails.welcome.list_li1_li3}</li>
-                  </ul>
-                </li>
-
-                <li>
-                  ${i18n.en.emails.welcome.list_li2}
-
-                  <ul>
-                    <li>${i18n.en.emails.welcome.list_li2_li1}</li>
-                    <li>${i18n.en.emails.welcome.list_li2_li2}</li>
-                    <li>${i18n.en.emails.welcome.list_li2_li3}</li>
-                  </ul>
-                </li>
-              </ul>
-            </td>
-          </tr>
-
-          <tr>
-            <td>
-              <p>${i18n.en.emails.welcome.p2}</p>
-            </td>
-          </tr>
-
-          <tr>
-            <td>
-              <p>${i18n.en.emails.welcome.p3}</p>
-            </td>
-          </tr>
-
-          <tr>
-            <td>
-              <p>${i18n.en.emails.welcome.p4}</p>
+              <p>${i18n.en.emails.consent_reminder_child.p1}</p>
             </td>
           </tr>
 
@@ -166,11 +122,11 @@
             <td>
               <p>
                 <a
-                  href="{{ baseWebUrl }}/dashboard"
+                  href="{{ baseWebUrl }}/activity/{{ activityInstanceGuid }}"
                   target="_blank"
                   style="text-decoration: underline"
                 >
-                  ${i18n.en.emails.welcome.dashboard_link}
+                  ${i18n.en.emails.consent_reminder_child.consent_link}
                 </a>
               </p>
             </td>
