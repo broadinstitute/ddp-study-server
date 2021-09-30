@@ -3,6 +3,7 @@
     "common": {
       "logo_alt": "Project Singular logo",
       "greeting": "Hello!",
+      "greeting_self": "Dear {{ participant_firstName }}",
       "thank_you_for_joining": "Thank you for joining Project Singular!",
       "closing1": "If you have questions at any point and would like to talk to a member of our study staff, please reach out to us at",
       "closing2": "or",
@@ -37,6 +38,12 @@
       "subject": "Please sign the consent form",
       "p1": "We have previously sent you a link to read and sign the consent form and have not heard back from you. We are resending the link in case it was missed. This is the next step in the process to enroll your child in Project Singular. Please click the following link to return to Project Singular to read and sign the Consent Form.",
       "consent_link": "Consent Form"
+    },
+
+    "about_me_reminder": {
+      "subject": "Please complete a form",
+      "p1": "The next step in completing your enrollment in Project Singular is to answer a few short questions in a section called “About Me”. If you haven’t yet had a chance to complete this questionnaire, please click on the following link to return to Project Singular to do so now.",
+      "about_me_link": "About Me"
     }
   },
 
