@@ -98,9 +98,7 @@ public class ActivityBuilder {
             }
             if (activityCode.equals(definition.getString("activityCode"))) {
                 LOG.info("Using configuration for activityCode={} with filepath={}", activityCode, activityCfg.getString("filepath"));
-                ActivityDef def = gson.fromJson(ConfigUtil.toJson(definition), ActivityDef.class);
-                activityDefTranslationsProcessor.run(def);
-                validateDefinition(def);
+                ActivityDef def = buildActivityDefFromConfig(definition);
                 List<ActivityDef> nestedDefs = loadNestedActivities(activityCfg);
                 insertActivity(handle, def, nestedDefs, timestamp);
                 insertActivityMappings(handle, activityCfg, def);
@@ -120,10 +118,7 @@ public class ActivityBuilder {
                 : Collections.emptyList();
         List<ActivityDef> nestedDefs = new ArrayList<>();
         for (var nestedPath : nestedPaths) {
-            Config nestedCfg = readDefinitionConfig(nestedPath);
-            ActivityDef nestedDef = gson.fromJson(ConfigUtil.toJson(nestedCfg), ActivityDef.class);
-            activityDefTranslationsProcessor.run(nestedDef);
-            validateDefinition(nestedDef);
+            ActivityDef nestedDef = buildActivityDefFromConfig(readDefinitionConfig(nestedPath));
             nestedDefs.add(nestedDef);
         }
         return nestedDefs;
@@ -139,10 +134,7 @@ public class ActivityBuilder {
             return;
         }
         for (Config activityCfg : activitiesCfg.getConfigList("activities")) {
-            Config definitionCfg = readDefinitionConfig(activityCfg.getString("filepath"));
-            ActivityDef def = gson.fromJson(ConfigUtil.toJson(definitionCfg), ActivityDef.class);
-            activityDefTranslationsProcessor.run(def);
-            validateDefinition(def);
+            ActivityDef def = buildActivityDefFromConfig(readDefinitionConfig(activityCfg.getString("filepath")));
             List<ActivityDef> nestedDefs = loadNestedActivities(activityCfg);
             long activityRevisionId = insertActivity(handle, def, nestedDefs, timestamp).getRevId();
             insertActivityMappings(handle, activityCfg, def);
@@ -151,15 +143,11 @@ public class ActivityBuilder {
     }
 
     public ActivityVersionDto insertActivity(Handle handle, Config definition, List<Config> nestedCfgs, Instant timestamp) {
-        ActivityDef def = gson.fromJson(ConfigUtil.toJson(definition), ActivityDef.class);
-        activityDefTranslationsProcessor.run(def);
-        validateDefinition(def);
+        ActivityDef def = buildActivityDefFromConfig(definition);
 
         List<ActivityDef> nestedDefs = new ArrayList<>();
         for (var nestedCfg : nestedCfgs) {
-            ActivityDef nestedDef = gson.fromJson(ConfigUtil.toJson(nestedCfg), ActivityDef.class);
-            activityDefTranslationsProcessor.run(nestedDef);
-            validateDefinition(nestedDef);
+            ActivityDef nestedDef = buildActivityDefFromConfig(nestedCfg);
             nestedDefs.add(nestedDef);
         }
 
@@ -341,6 +329,24 @@ public class ActivityBuilder {
             throw new DDPException("Activity definition file is empty: " + file);
         }
         return definition;
+    }
+
+    /**
+     * Build an instance of {@link ActivityDef}.
+     *
+     * <p><b>Steps:</b>
+     * <ul>
+     *   <li>build an instance of {@link ActivityDef} from {@link Config} definition;</li>
+     *   <li>if command-line option `process-translations` is specified then run the process of
+     *       translations' references automatic generation;</li>
+     *   <li>validate the {@link ActivityDef}.</li>
+     * </ul>
+     */
+    private ActivityDef buildActivityDefFromConfig(Config definition) {
+        ActivityDef activityDef = gson.fromJson(ConfigUtil.toJson(definition), ActivityDef.class);
+        activityDefTranslationsProcessor.run(activityDef);
+        validateDefinition(activityDef);
+        return activityDef;
     }
 
     public void validateDefinition(ActivityDef def) {

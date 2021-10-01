@@ -196,6 +196,10 @@ public class TemplateDaoTest extends TxnAwareBaseTest {
         });
     }
 
+    /**
+     * Verify that templates containing variables with dots in it's names are rendered correctly
+     * (correctly supported a new feature "translations' references automatic generation:).
+     */
     @Test
     public void testRenderWithCompoundValues() {
         TransactionWrapper.useTxn(handle -> {
