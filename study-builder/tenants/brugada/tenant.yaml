@@ -30,7 +30,7 @@ emailTemplates:
     resultUrl: ##BASE_URL##/login-landing/login
 
 clients:
-  - name: Brugada Dev
+  - name: brugada-angular-client
     app_type: spa
     callbacks: [
       '##BASE_URL##/auth',
