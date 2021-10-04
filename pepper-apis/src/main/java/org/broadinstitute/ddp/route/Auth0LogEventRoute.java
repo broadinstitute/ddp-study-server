@@ -82,10 +82,10 @@ public class Auth0LogEventRoute implements Route {
         final String ERROR_TEXT__CODE_CANNOT_BE_NULL = "Column 'auth0_log_event_code_id' cannot be null";
         if (e instanceof JdbiException) {
             if (e.getMessage().contains(ERROR_TEXT__CODE_CANNOT_BE_NULL)) {
-                return "ERROR: trying to insert null-value to column 'auth0_log_event_code_id' in table `auth0_log_event` . "
-                        + "It's null because a log event code is not found in table `auth0_log_event_code` - the event contains "
-                        + "an unknown code. Please, check URL `https://auth0.com/docs/monitor-auth0/logs/log-event-type-codes` "
-                        + "for new codes and create Liquibase script with insert statements to insert new codes to table "
+                return "Tried to insert null-value to column 'auth0_log_event_code_id' in table `auth0_log_event`. "
+                        + "It's null because a log event type code is not found in table `auth0_log_event_code` - the event contains "
+                        + "an unknown type code. Please, check URL `https://auth0.com/docs/monitor-auth0/logs/log-event-type-codes` "
+                        + "for new type codes and create Liquibase script with insert statements to insert new type codes to table "
                         + "`auth0_log_event_code`. Cause error: " + e.getMessage();
             }
         }
