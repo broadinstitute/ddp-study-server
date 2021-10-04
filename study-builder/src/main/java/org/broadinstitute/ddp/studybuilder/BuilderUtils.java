@@ -1,5 +1,7 @@
 package org.broadinstitute.ddp.studybuilder;
 
+import java.io.File;
+import java.net.URL;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -106,5 +108,11 @@ public class BuilderUtils {
                     "Activity definition with code=%s and versionTag=%s has validation errors: %s",
                     def.getActivityCode(), def.getVersionTag(), msg));
         }
+    }
+
+    public static File[] getResourceFolderFiles(String filePath) {
+        ClassLoader loader = Thread.currentThread().getContextClassLoader();
+        URL url = loader.getResource(filePath);
+        return new File(url != null ? url.getPath() : filePath).listFiles();
     }
 }

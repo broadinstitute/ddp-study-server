@@ -1,7 +1,8 @@
 package org.broadinstitute.ddp.studybuilder;
 
-import static org.broadinstitute.ddp.studybuilder.StudyBuilderContext.readTranslationsFromConfSectionI18n;
+import static org.broadinstitute.ddp.studybuilder.StudyBuilderContext.CONTEXT;
 import static org.broadinstitute.ddp.studybuilder.StudyPatcher.LOG_FILENAME;
+import static org.broadinstitute.ddp.studybuilder.translation.I18nReader.readI18nTranslations;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -45,6 +46,7 @@ public class StudyBuilderCli {
     private static final String OPT_UPDATE_EMAILS = "update-emails";
     private static final String OPT_EMAIL_KEYS = "email-keys";
     private static final String OPT_PROCESS_TRANSLATIONS = "process-translations";
+    private static final String OPT_I18N_PATH = "i18n-path";
 
     private static final String DEFAULT_STUDIES_DIR = "studies";
     private static final String DEFAULT_STUDY_CONF_FILENAME = "study.conf";
@@ -77,6 +79,7 @@ public class StudyBuilderCli {
         options.addOption(null, OPT_RUN_TASK, true, "run a custom task");
         options.addOption(null, OPT_PATCH, false, "run patches for a study");
         options.addOption(null, OPT_PROCESS_TRANSLATIONS, false, "run the process of translations assignment for all study languages");
+        options.addOption(null, OPT_I18N_PATH, true, "path to folder with i18n-files (translations)");
 
         CommandLineParser parser = new DefaultParser();
         CommandLine cmd = parser.parse(options, args);
@@ -110,9 +113,10 @@ public class StudyBuilderCli {
         if (cmd.hasOption("substitutions")) {
             String subsFile = cmd.getOptionValue("substitutions");
             subsCfg = ConfigFactory.parseFile(new File(subsFile));
-            readTranslationsFromConfSectionI18n(subsCfg);
             log("using substitutions file: %s", subsFile);
         }
+
+        CONTEXT.setTranslations(readI18nTranslations(subsCfg, cmd.hasOption(OPT_I18N_PATH) ? cmd.getOptionValue(OPT_I18N_PATH) : null));
 
         // Merge the configs. Substitutions have higher priority, and we fallback to vars, i.e. substitutions override keys in vars.
         varsCfg = subsCfg.withFallback(varsCfg);

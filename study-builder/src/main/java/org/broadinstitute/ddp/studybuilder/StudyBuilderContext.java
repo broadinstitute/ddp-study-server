@@ -1,21 +1,21 @@
 package org.broadinstitute.ddp.studybuilder;
 
-import static org.broadinstitute.ddp.studybuilder.translation.TranslationsUtil.TRANSLATION_KEY_PREFIX;
-
 import java.util.Map;
 import java.util.Properties;
 
-import com.typesafe.config.Config;
-import org.broadinstitute.ddp.studybuilder.translation.TranslationsUtil;
-
-
+/**
+ * Holds the StudyBuilder variables which needs to be accessed globally during a study processing.<br>
+ * NOTE: this is not a very good approach and in future it's better to refactor class {@link StudyBuilderCli}
+ * and pass the context object as a parameter of methods.<br>
+ * Basic variables stored in the context:
+ * <pre>
+ * - translations for all languages (stored in translation files);
+ * - boolean flag `processTranslations` indicating if translations references auto-resolving should happen or not.
+ * </pre>
+ */
 public class StudyBuilderContext {
 
     public static final StudyBuilderContext CONTEXT = new StudyBuilderContext();
-
-    public static void readTranslationsFromConfSectionI18n(Config subsCfg) {
-        CONTEXT.setTranslations(TranslationsUtil.getTranslations(subsCfg, TRANSLATION_KEY_PREFIX));
-    }
 
     private boolean processTranslations = false;
     private Map<String, Properties> translations;
