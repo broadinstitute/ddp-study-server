@@ -1,5 +1,6 @@
 package org.broadinstitute.ddp.studybuilder.translation;
 
+import static org.broadinstitute.ddp.model.activity.types.DateRenderMode.PICKLIST;
 import static org.broadinstitute.ddp.studybuilder.translation.TranslationsEnricher.addTemplateTranslations;
 import static org.broadinstitute.ddp.studybuilder.translation.TranslationsEnricher.addTranslations;
 
@@ -18,7 +19,14 @@ import org.broadinstitute.ddp.model.activity.definition.MailingAddressComponentD
 import org.broadinstitute.ddp.model.activity.definition.NestedActivityBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.PhysicianInstitutionComponentDef;
 import org.broadinstitute.ddp.model.activity.definition.QuestionBlockDef;
+import org.broadinstitute.ddp.model.activity.definition.question.BoolQuestionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.CompositeQuestionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.DateQuestionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.NumericQuestionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.PicklistOptionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.PicklistQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.TextQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.validation.RuleDef;
 import org.broadinstitute.ddp.studybuilder.StudyBuilderContext;
 import org.broadinstitute.ddp.studybuilder.StudyBuilderException;
@@ -180,6 +188,50 @@ public class ActivityDefTranslationsProcessor {
         if (questionDef.getValidations() != null) {
             questionDef.getValidations().forEach(r -> enrichRuleWithTranslations(r));
         }
+        switch (questionDef.getQuestionType()) {
+            case DATE:
+                if (((DateQuestionDef) questionDef).getRenderMode() != PICKLIST) {
+                    addTemplateTranslations(((DateQuestionDef) questionDef).getPlaceholderTemplate(), allTranslations);
+                }
+                break;
+            case BOOLEAN:
+                addTemplateTranslations(((BoolQuestionDef) questionDef).getTrueTemplate(), allTranslations);
+                addTemplateTranslations(((BoolQuestionDef) questionDef).getFalseTemplate(), allTranslations);
+                break;
+            case TEXT:
+                addTemplateTranslations(((TextQuestionDef) questionDef).getConfirmPlaceholderTemplate(), allTranslations);
+                addTemplateTranslations(((TextQuestionDef) questionDef).getPlaceholderTemplate(), allTranslations);
+                addTemplateTranslations(((TextQuestionDef) questionDef).getConfirmPromptTemplate(), allTranslations);
+                addTemplateTranslations(((TextQuestionDef) questionDef).getMismatchMessageTemplate(), allTranslations);
+                break;
+            case NUMERIC:
+                addTemplateTranslations(((NumericQuestionDef) questionDef).getPlaceholderTemplate(), allTranslations);
+                break;
+            case PICKLIST:
+                addTemplateTranslations(((PicklistQuestionDef) questionDef).getPicklistLabelTemplate(), allTranslations);
+                ((PicklistQuestionDef) questionDef).getGroups().forEach(
+                        g -> addTemplateTranslations(g.getNameTemplate(), allTranslations));
+                ((PicklistQuestionDef) questionDef).getPicklistOptions().forEach(o -> processPickListOptionTemplates(o));
+                break;
+            case COMPOSITE:
+                addTemplateTranslations(((CompositeQuestionDef) questionDef).getAddButtonTemplate(), allTranslations);
+                addTemplateTranslations(((CompositeQuestionDef) questionDef).getAdditionalItemTemplate(), allTranslations);
+                ((CompositeQuestionDef) questionDef).getChildren().forEach(q -> enrichQuestionWithTranslations(q));
+                break;
+            case AGREEMENT:
+            case FILE:
+                break;
+            default:
+                throw new IllegalStateException("Unexpected value: " + questionDef.getQuestionType());
+        }
+    }
+
+    private void processPickListOptionTemplates(PicklistOptionDef optionDef) {
+        addTemplateTranslations(optionDef.getTooltipTemplate(), allTranslations);
+        addTemplateTranslations(optionDef.getDetailLabelTemplate(), allTranslations);
+        addTemplateTranslations(optionDef.getOptionLabelTemplate(), allTranslations);
+        addTemplateTranslations(optionDef.getNestedOptionsLabelTemplate(), allTranslations);
+        optionDef.getNestedOptions().forEach(n -> processPickListOptionTemplates(n));
     }
 
     private void enrichRuleWithTranslations(RuleDef ruleDef) {
