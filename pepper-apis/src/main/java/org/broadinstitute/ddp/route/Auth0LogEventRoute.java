@@ -9,13 +9,13 @@ import static org.broadinstitute.ddp.constants.ErrorCodes.REQUIRED_PARAMETER_MIS
 import static org.broadinstitute.ddp.json.auth0.Auth0LogEvent.createInstance;
 import static org.slf4j.LoggerFactory.getLogger;
 
-
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.json.auth0.Auth0LogEvent;
 import org.broadinstitute.ddp.json.errors.ApiError;
 import org.broadinstitute.ddp.service.Auth0LogEventService;
 import org.broadinstitute.ddp.util.ResponseUtil;
+import org.jdbi.v3.core.JdbiException;
 import org.slf4j.Logger;
 import spark.Request;
 import spark.Response;
@@ -74,12 +74,28 @@ public class Auth0LogEventRoute implements Route {
                 }
             });
         } catch (Exception e) {
-            haltError(SC_INTERNAL_SERVER_ERROR, DATA_PERSIST_ERROR, e.getMessage());
+            haltError(SC_INTERNAL_SERVER_ERROR, DATA_PERSIST_ERROR, preProcessExceptionMessage(e));
         }
     }
 
+    private String preProcessExceptionMessage(Exception e) {
+        final String ERROR_TEXT__CODE_CANNOT_BE_NULL = "Column 'auth0_log_event_code_id' cannot be null";
+        if (e instanceof JdbiException) {
+            if (e.getMessage().contains(ERROR_TEXT__CODE_CANNOT_BE_NULL)) {
+                return "Error: trying to insert null-value to column 'auth0_log_event_code_id' in table `auth0_log_event` . "
+                        + "It's null because a log event code is not found in table `auth0_log_event_code` - the event contains "
+                        + "an unknown code. Please, check URL `https://auth0.com/docs/monitor-auth0/logs/log-event-type-codes` "
+                        + "for new codes and create Liquibase script with insert statements to insert new codes to table "
+                        + "`auth0_log_event_code`."
+                        + "\nCause error:\n"
+                        + e.getMessage();
+            }
+        }
+        return e.getMessage();
+    }
+
     private void haltError(int status, String code, String msg) {
-        LOG.warn(msg);
+        LOG.error(msg);
         throw ResponseUtil.haltError(status, new ApiError(code, msg));
     }
 }
