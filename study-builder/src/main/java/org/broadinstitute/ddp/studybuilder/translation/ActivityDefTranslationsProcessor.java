@@ -19,6 +19,7 @@ import org.broadinstitute.ddp.model.activity.definition.MailingAddressComponentD
 import org.broadinstitute.ddp.model.activity.definition.NestedActivityBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.PhysicianInstitutionComponentDef;
 import org.broadinstitute.ddp.model.activity.definition.QuestionBlockDef;
+import org.broadinstitute.ddp.model.activity.definition.i18n.Translation;
 import org.broadinstitute.ddp.model.activity.definition.question.BoolQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.CompositeQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.DateQuestionDef;
@@ -27,6 +28,8 @@ import org.broadinstitute.ddp.model.activity.definition.question.PicklistOptionD
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.TextQuestionDef;
+import org.broadinstitute.ddp.model.activity.definition.template.Template;
+import org.broadinstitute.ddp.model.activity.definition.template.TemplateVariable;
 import org.broadinstitute.ddp.model.activity.definition.validation.RuleDef;
 import org.broadinstitute.ddp.studybuilder.StudyBuilderContext;
 import org.broadinstitute.ddp.studybuilder.StudyBuilderException;
@@ -34,25 +37,27 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Add the translations (for all study languages) to the activities definitions.
- * Translations can be defined as an array in variables which defined in Templates.
- * Or Translations can be defined as an array in activity definition (like `translatedNames`, `translatedSecondNames`).
+ * Add {@link Translation} references (for all study languages) to the {@link Template}s in {@link FormActivityDef}s.
+ * An array of {@link Translation} is defined in {@link TemplateVariable} which is defined in a {@link Template}.
+ * Another translations definition: {@link Translation}s can be defined as an array directly in {@link FormActivityDef}
+ * (properties like `translatedNames`, `translatedSecondNames`).
  *
  * <p><b>Algorithm:</b>
  * <ul>
- *     <li>detect active languages;</li>
+ *     <li>detect active languages (from subs.conf or from a folder specified by argument `-i18n-path`);</li>
  *     <li>process all activity-level templates;</li>
  *     <li>go through all sections and process section level templates;</li>
  *     <li>go through all blocks of a section and process all block level templates (depending on a block type);</li>
+ *     <li>process templates for each of questions (depending on type), picklist options, validations..</li>
  *     <li>for each template do the following steps:
  *       <ol>
- *           <li>if a translation without template (like activityDef.translatedTitles, activityDef.translatedSubtitles)
- *               then process only translations arrays which
- *               are not empty and contain at least one translation (for example with default language):
- *               detect from such element a name of a translation and add translations for the rest of languages
- *               (which are still not defined);</li>
- *           <li>if a template is processed then check it's variables:
- *               - if a variable contains non-empty translation array containing at least one translation
+ *           <li>if a list of {@link Translation} without {@link Template} (like activityDef.translatedTitles,
+ *               activityDef.translatedSubtitles) then process only translations arrays which
+ *               are not empty and contain at least one translation where instead of a text defined a translation kes
+ *               (for example `$prequal.name`): using this key generate translations for all languages specified in
+ *               a study (except for translations which already defined and which not contain translation keys);</li>
+ *           <li>if a {@link Template} is processed then check it's {@link TemplateVariable}:
+ *               - if a {@link TemplateVariable} contains non-empty array {@link Translation} containing at least one translation
  *                 (for example with default language):
  *                 detect from such element a name of a translation and add translations for the rest of languages
  *                 (which are still not defined);
@@ -216,7 +221,9 @@ public class ActivityDefTranslationsProcessor {
             case COMPOSITE:
                 addTemplateTranslations(((CompositeQuestionDef) questionDef).getAddButtonTemplate(), allTranslations);
                 addTemplateTranslations(((CompositeQuestionDef) questionDef).getAdditionalItemTemplate(), allTranslations);
-                ((CompositeQuestionDef) questionDef).getChildren().forEach(q -> enrichQuestionWithTranslations(q));
+                if (((CompositeQuestionDef) questionDef).getChildren() != null) {
+                    ((CompositeQuestionDef) questionDef).getChildren().forEach(q -> enrichQuestionWithTranslations(q));
+                }
                 break;
             case AGREEMENT:
             case FILE:
@@ -231,7 +238,9 @@ public class ActivityDefTranslationsProcessor {
         addTemplateTranslations(optionDef.getDetailLabelTemplate(), allTranslations);
         addTemplateTranslations(optionDef.getOptionLabelTemplate(), allTranslations);
         addTemplateTranslations(optionDef.getNestedOptionsLabelTemplate(), allTranslations);
-        optionDef.getNestedOptions().forEach(n -> processPickListOptionTemplates(n));
+        if (optionDef.getNestedOptions() != null) {
+            optionDef.getNestedOptions().forEach(n -> processPickListOptionTemplates(n));
+        }
     }
 
     private void enrichRuleWithTranslations(RuleDef ruleDef) {

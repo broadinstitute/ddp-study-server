@@ -95,21 +95,19 @@ public class TranslationsEnricher {
         String translationKey = detectTranslationKey(translations, templateVariable);
         if (translationKey != null) {
             List<String> langCdeToAdd = detectLanguagesToBeAddedToTranslations(translations, allTranslations);
-            if (translationKey != null) {
-                final List<Translation> updatedTranslations = !isTranslationsEmpty(translations)
-                        ? translations.stream().filter(t -> !isTranslationTextContainsKeyName(t)).collect(Collectors.toList())
-                        : new ArrayList<>();
-                langCdeToAdd.forEach(langCde -> {
-                    String translationValue = getTranslationForLang(langCde, translationKey, allTranslations);
-                    if (translationValue != null) {
-                        updatedTranslations.add(new Translation(langCde, translationValue));
-                        LOG.debug("Added translation: langCde={}, key={}, value={}", langCde, translationKey, translationValue);
-                    } else {
-                        throw new RuntimeException(format("Translation not found: langCde=%s, key=%s", langCde, translationKey));
-                    }
-                });
-                return updatedTranslations;
-            }
+            final List<Translation> updatedTranslations = !isTranslationsEmpty(translations)
+                    ? translations.stream().filter(t -> !isTranslationTextContainsKeyName(t)).collect(Collectors.toList())
+                    : new ArrayList<>();
+            langCdeToAdd.forEach(langCde -> {
+                String translationValue = getTranslationForLang(langCde, translationKey, allTranslations);
+                if (translationValue != null) {
+                    updatedTranslations.add(new Translation(langCde, translationValue));
+                    LOG.debug("Added translation: langCde={}, key={}, value={}", langCde, translationKey, translationValue);
+                } else {
+                    throw new RuntimeException(format("Translation not found: langCde=%s, key=%s", langCde, translationKey));
+                }
+            });
+            return updatedTranslations;
         }
         return translations;
     }

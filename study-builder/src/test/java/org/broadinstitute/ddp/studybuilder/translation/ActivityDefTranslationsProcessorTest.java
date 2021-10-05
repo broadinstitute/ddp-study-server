@@ -55,6 +55,7 @@ public class ActivityDefTranslationsProcessorTest {
 
     private static final String LANG_EN = "en";
     private static final String LANG_ES = "es";
+    private static final String LANG_FI = "fi";
 
     private static final Gson gson = GsonUtil.standardGson();
     private static final GsonPojoValidator validator = new GsonPojoValidator();
@@ -102,7 +103,7 @@ public class ActivityDefTranslationsProcessorTest {
             buildActivityAndProcessTranslations(subsCfg, ACTIVITY_INVALID_CONF_FILE);
             fail();
         } catch (Exception e) {
-            assertEquals("Translation not found: langCde=en, key=prequal.non_existing_translation", e.getMessage());
+            assertEquals("Translation not found: langCde=fi, key=prequal.non_existing_translation", e.getMessage());
         }
     }
 
@@ -151,14 +152,14 @@ public class ActivityDefTranslationsProcessorTest {
     }
 
     private void assertAfterTranslationsProcessingPositiveActivity(FormActivityDef formDef) {
-        assertEquals(2, formDef.getTranslatedNames().size());
-        assertEquals(LANG_EN, formDef.getTranslatedNames().get(0).getLanguageCode());
-        assertEquals(LANG_ES, formDef.getTranslatedNames().get(1).getLanguageCode());
+        assertEquals(3, formDef.getTranslatedNames().size());
+        assertEquals(LANG_FI, formDef.getTranslatedNames().get(0).getLanguageCode());
+        assertEquals(LANG_EN, formDef.getTranslatedNames().get(1).getLanguageCode());
         assertEquals(1, formDef.getSections().size());
         assertEquals(3, formDef.getSections().get(0).getBlocks().size());
         assertEquals(2, questionDef1.getPromptTemplate().getVariables().size());
         assertEquals(1, questionDef2.getPromptTemplate().getVariables().size());
-        assertEquals(2, questionDef2.getPromptTemplate().getVariables().iterator().next().getTranslations().size());
+        assertEquals(3, questionDef2.getPromptTemplate().getVariables().iterator().next().getTranslations().size());
         assertEquals(3, questionDef3.getPromptTemplate().getVariables().size());
 
         String templateRendered = questionDef1.getPromptTemplate().renderWithDefaultValues(LANG_EN);
