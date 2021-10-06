@@ -18,7 +18,7 @@
     <!--[if !mso]><!-->
     <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <title>
-      ${i18n.en.emails.consent_child_age_of_majority_reminder.subject}
+      ${i18n.en.emails.consent_child_age_of_majority_email_verification.subject}
     </title>
     <!--<![endif]-->
 
@@ -104,19 +104,31 @@
 
           <tr>
             <td>
-              <p>${i18n.en.emails.common.greeting_proxy}</p>
+              <p>${i18n.en.emails.common.greeting_participant}</p>
             </td>
           </tr>
 
           <tr>
             <td>
-              <p>${i18n.en.emails.consent_child_age_of_majority_reminder.p1}</p>
+              <p>
+                ${i18n.en.emails.consent_child_age_of_majority_email_verification.p1}
+              </p>
             </td>
           </tr>
 
           <tr>
             <td>
-              <p>${i18n.en.emails.consent_child_age_of_majority_reminder.p2}</p>
+              <p>
+                ${i18n.en.emails.consent_child_age_of_majority_email_verification.p2}
+              </p>
+            </td>
+          </tr>
+
+          <tr>
+            <td>
+              <p>
+                ${i18n.en.emails.consent_child_age_of_majority_email_verification.p3}
+              </p>
             </td>
           </tr>
 
@@ -124,11 +136,11 @@
             <td>
               <p>
                 <a
-                  href="{{ baseWebUrl }}/activity/{{ activityInstanceGuid }}"
+                  href="{{ baseWebUrl }}/verify?invitationId={{ invitationId }}"
                   target="_blank"
                   style="text-decoration: underline"
                 >
-                  ${i18n.en.emails.consent_child_age_of_majority_reminder.form_link}
+                  ${i18n.en.emails.consent_child_age_of_majority_email_verification.verification_link}
                 </a>
               </p>
             </td>
@@ -136,20 +148,24 @@
 
           <tr>
             <td>
-              <p>${i18n.en.emails.consent_child_age_of_majority_reminder.p3}</p>
-            </td>
-          </tr>
-
-          <tr>
-            <td>
-              <p>${i18n.en.emails.consent_child_age_of_majority_reminder.p4}</p>
+              <p>
+                ${i18n.en.emails.consent_child_age_of_majority_email_verification.p4}
+              </p>
             </td>
           </tr>
 
           <tr>
             <td>
               <p>
-                ${i18n.en.emails.common.closing1_you_or_child}
+                ${i18n.en.emails.consent_child_age_of_majority_email_verification.p5_1} <a href="{{ baseWebUrl }}/about" target="_blank" style="text-decoration: underline">${i18n.en.emails.consent_child_age_of_majority_email_verification.p5_2}</a> ${i18n.en.emails.consent_child_age_of_majority_email_verification.p5_3}
+              </p>
+            </td>
+          </tr>
+
+          <tr>
+            <td>
+              <p>
+                ${i18n.en.emails.common.closing1}
                 <a
                   href="mailto:contact@projectsingular.org"
                   style="text-decoration: underline"
