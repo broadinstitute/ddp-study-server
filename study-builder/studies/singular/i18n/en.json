@@ -7,6 +7,7 @@
       "greeting_proxy": "Dear {{ proxy_firstName }},",
       "thank_you_for_joining": "Thank you for joining Project Singular!",
       "closing1": "If you have questions at any point and would like to talk to a member of our study staff, please reach out to us at",
+      "closing1_you_or_child": "If you or your child have questions at any point and would like to talk to a member of our study staff, please reach out to us at",
       "closing2": "or",
       "closing_thank_you": "Thank you!",
       "closing_team": "Project Singular Research Team"
@@ -113,6 +114,15 @@
       "subject": "Thank you! Your kit was received.",
       "p1": "Thank you for sending us a sample of your child’s saliva. We are writing to let you know that it has been received by our laboratory.",
       "p2": "Thank you again for your participation in Project Singular! We hope to learn a great deal about single ventricle heart disease through Project Singular, and your child is playing a critically important role."
+    },
+
+    "consent_child_age_of_majority": {
+      "subject": "Request for child’s contact information for re-consent",
+      "p1": "Thank you for helping your child enroll in Project Singular. Each participant’s information has played a critically important role to understand single ventricle heart defects.",
+      "p2": "We are reaching out because your child will soon be reaching the age of majority (18-21 depending on location) and we will need to have them sign their own consent form at that time if they are to continue their participation in the study. So that we may contact them about the upcoming re-consent process, please click on the link below to provide us with your child’s email address:",
+      "form_link": "Provide email address",
+      "p3": "After we contact your child via email, we will ask them to verify their email and instruct them on how to create an account with Project Singular to enroll in the research study as an adult.",
+      "p4": "We’re on a mission to accelerate research into single ventricle heart defects and appreciate your contributions."
     }
   },
 
