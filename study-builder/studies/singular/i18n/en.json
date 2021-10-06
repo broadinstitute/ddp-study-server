@@ -123,6 +123,15 @@
       "form_link": "Provide email address",
       "p3": "After we contact your child via email, we will ask them to verify their email and instruct them on how to create an account with Project Singular to enroll in the research study as an adult.",
       "p4": "We’re on a mission to accelerate research into single ventricle heart defects and appreciate your contributions."
+    },
+
+    "consent_child_age_of_majority_reminder": {
+      "subject": "Reminder: Request for child’s contact information for re-consent",
+      "p1": "We recently sent you an email because you have enrolled your child in the Project Singular research study and your child will soon be reaching the age of majority (18-21 depending on location). We will need to have them sign their own consent form at the time of their birthday if they are to continue their participation in the study.",
+      "p2": "As we have so far not received your child’s email address, we are re-sending the link to you in case it was missed. Please click on the link below to provide us with your child’s email address:",
+      "form_link": "Provide email address",
+      "p3": "After we contact your child via email, we will ask them to verify their email address and instruct them on how to create an account with Project Singular to enroll in the research study as an adult.",
+      "p4": "We’re on a mission to accelerate research into single ventricle heart defects and appreciate your contributions."
     }
   },
 
