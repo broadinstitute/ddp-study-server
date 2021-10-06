@@ -18,7 +18,7 @@
     <!--[if !mso]><!-->
     <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <title>
-      ${i18n.en.emails.consent_child_age_of_majority_email_verification.subject}
+      ${i18n.en.emails.consent_child_age_of_majority_signup.subject}
     </title>
     <!--<![endif]-->
 
@@ -74,7 +74,7 @@
         padding: 0;
       }
 
-      ul {
+      ul, ol {
         margin: 0 0 20px 0;
       }
     </style>
@@ -110,25 +110,27 @@
 
           <tr>
             <td>
-              <p>
-                ${i18n.en.emails.consent_child_age_of_majority_email_verification.p1}
-              </p>
+              <p>${i18n.en.emails.consent_child_age_of_majority_signup.p1}</p>
             </td>
           </tr>
 
           <tr>
             <td>
-              <p>
-                ${i18n.en.emails.consent_child_age_of_majority_email_verification.p2}
-              </p>
+              <p>${i18n.en.emails.consent_child_age_of_majority_signup.p2}</p>
             </td>
           </tr>
 
           <tr>
             <td>
-              <p>
-                ${i18n.en.emails.consent_child_age_of_majority_email_verification.p3}
-              </p>
+              <ol>
+                <li>
+                  ${i18n.en.emails.consent_child_age_of_majority_signup.li1}
+                </li>
+
+                <li>
+                  ${i18n.en.emails.consent_child_age_of_majority_signup.li2}
+                </li>
+              </ol>
             </td>
           </tr>
 
@@ -136,11 +138,11 @@
             <td>
               <p>
                 <a
-                  href="{{ baseWebUrl }}/verify?invitation={{ invitationId }}"
+                  href="{{ baseWebUrl }}/accept?invitation={{ invitationId }}"
                   target="_blank"
                   style="text-decoration: underline"
                 >
-                  ${i18n.en.emails.consent_child_age_of_majority_email_verification.verification_link}
+                  ${i18n.en.emails.consent_child_age_of_majority_signup.signup_link}
                 </a>
               </p>
             </td>
@@ -148,17 +150,13 @@
 
           <tr>
             <td>
-              <p>
-                ${i18n.en.emails.consent_child_age_of_majority_email_verification.p4}
-              </p>
+              <p>${i18n.en.emails.consent_child_age_of_majority_signup.p3}</p>
             </td>
           </tr>
 
           <tr>
             <td>
-              <p>
-                ${i18n.en.emails.consent_child_age_of_majority_email_verification.p5_1} <a href="{{ baseWebUrl }}/about" target="_blank" style="text-decoration: underline">${i18n.en.emails.consent_child_age_of_majority_email_verification.p5_2}</a> ${i18n.en.emails.consent_child_age_of_majority_email_verification.p5_3}
-              </p>
+              <p>${i18n.en.emails.consent_child_age_of_majority_signup.p4}</p>
             </td>
           </tr>
 
