@@ -155,6 +155,17 @@
       "signup_link": "Complete consent form",
       "p3": "If you do not re-enroll as an adult or contact us to let us know that you are no longer interested in participating in Project Singular, we will automatically withdraw you from further participation.",
       "p4": "Thank you for your contributions to Project Singular. Each participant’s information plays a critically important role in understanding single ventricle heart defects."
+    },
+
+    "consent_child_age_of_majority_form_reminder": {
+      "subject": "Reminder to provide your consent",
+      "p1": "This is a reminder that you are now eligible to enroll in Project Singular as an adult. You have previously been enrolled in Project Singular by your parent and have recently reached the age when you would need to provide your own consent in order to continue your participation in Project Singular. Project Singular is a research study seeking to understand why some individuals are born with a single ventricle heart defect. Your parent enrolled you because either you or an immediate family member has single ventricle heart disease.",
+      "p2": "We have recently sent you instructions on continuing your participation, but have noticed that you have not signed your consent form yet. Please click on the link below where you may:",
+      "li1": "Create your own Project Singular account if you haven’t already",
+      "li2": "Opt-in to a new consent for ongoing participation in Project Singular",
+      "form_link": "Complete consent form",
+      "p3": "If you do not re-enroll as an adult or contact us to let us know that you are no longer interested in participating in Project Singular, we will automatically withdraw you from further participation.",
+      "p4": "Thank you for your contributions to Project Singular. Each participant’s information plays a critically important role in understanding single ventricle heart defects."
     }
   },
 
