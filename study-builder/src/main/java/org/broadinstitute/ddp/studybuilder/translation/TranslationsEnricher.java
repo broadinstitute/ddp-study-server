@@ -71,7 +71,7 @@ public class TranslationsEnricher {
             Collection<String> extraVariables = detectVariablesNotPresentInList(template.getVariables(), variablesInTemplate);
             extraVariables.forEach(v -> {
                 List<Translation> translations = addTranslations(null, v, allTranslations);
-                template.getVariables().add(new TemplateVariable(v, translations));
+                template.addVariable(new TemplateVariable(v, translations));
             });
         }
     }

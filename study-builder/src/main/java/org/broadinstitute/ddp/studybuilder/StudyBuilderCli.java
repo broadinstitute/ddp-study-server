@@ -116,6 +116,7 @@ public class StudyBuilderCli {
             log("using substitutions file: %s", subsFile);
         }
 
+        // read translations from i18n-files (from subs.conf section "i18n" or from a folder specified by opt "i18n-path"
         CONTEXT.setTranslations(readI18nTranslations(subsCfg, cmd.hasOption(OPT_I18N_PATH) ? cmd.getOptionValue(OPT_I18N_PATH) : null));
 
         // Merge the configs. Substitutions have higher priority, and we fallback to vars, i.e. substitutions override keys in vars.

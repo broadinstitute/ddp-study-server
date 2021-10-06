@@ -31,7 +31,7 @@ public class Template {
 
     @NotNull
     @SerializedName("variables")
-    private final Collection<@Valid @NotNull TemplateVariable> variables = new ArrayList<>();
+    private Collection<@Valid @NotNull TemplateVariable> variables = new ArrayList<>();
 
     private transient Long templateId;
     private transient Long revisionId;
@@ -88,12 +88,19 @@ public class Template {
 
     public void addVariable(TemplateVariable variable) {
         if (variable != null) {
+            if (variables == null) {
+                variables = new ArrayList<>();
+            }
             variables.add(variable);
         }
     }
 
     public Optional<TemplateVariable> getVariable(String name) {
-        return variables.stream().filter(var -> var.getName().equals(name)).findFirst();
+        if (variables == null) {
+            return null;
+        } else {
+            return variables.stream().filter(var -> var.getName().equals(name)).findFirst();
+        }
     }
 
     public Long getTemplateId() {
