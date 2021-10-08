@@ -90,11 +90,17 @@ function (user, context, callback) {
         } else if (context.request.body.temp_user_guid) {
             pepper_params.tempUserGuid = context.request.body.temp_user_guid;
             console.log('Temp user guid passed in (via body) = ' + pepper_params.tempUserGuid);
-        } else if (user.user_metadata.temp_user_guid) {
-            pepper_params.tempUserGuid = user.user_metadata.temp_user_guid;
-            console.log('No temp user guid found in request, taking one from user metadata');
         } else {
-            console.log('No temp user guid found in request nor user metadata');
+            console.log('No temp user guid passed in request');
+        }
+
+        /**
+         * If `tempUserGuid` was not set with value from request
+         * AND user is not yet registered in pepper (`user.app_metadata.user_guid` is empty)
+         * take `tempUserGuid` from `user_metadata`
+         */
+        if (!pepper_params.tempUserGuid && !user.app_metadata.user_guid) {
+            pepper_params.tempUserGuid = user.user_metadata.temp_user_guid;
         }
 
         if (context.request.query.mode) {
