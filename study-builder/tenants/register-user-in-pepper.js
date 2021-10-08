@@ -97,9 +97,13 @@ function (user, context, callback) {
         /**
          * If `tempUserGuid` was not set with value from request
          * AND user is not yet registered in pepper (`user.app_metadata.user_guid` is empty)
-         * take `tempUserGuid` from `user_metadata`
+         * take `tempUserGuid` from `user_metadata` (if one exists)
          */
-        if (!pepper_params.tempUserGuid && !user.app_metadata.user_guid) {
+        if (
+            !pepper_params.tempUserGuid &&
+            !user.app_metadata.user_guid &&
+            !!user.user_metadata.temp_user_guid
+        ) {
             pepper_params.tempUserGuid = user.user_metadata.temp_user_guid;
         }
 
