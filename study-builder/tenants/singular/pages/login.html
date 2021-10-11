@@ -103,9 +103,27 @@
 
       config.extraParams = config.extraParams || {};
 
+      var inviteKey = 'invitationId';
+
+      // save the invitation in local storage to minimize breached password loss-of-invitation
+      if (config.extraParams.invitation_id) {
+        localStorage.setItem(inviteKey, config.extraParams.invitation_id);
+        console.log('Saving invitation ' + config.extraParams.invitation_id);
+      } else {
+        var invitation = localStorage.getItem(inviteKey);
+        if (invitation) {
+          // unsafe, but better than losing this value during breached password shield
+          config.internalOptions.invitation_id = invitation;
+          console.log(
+            'Using stored invitation ' + invitation + ' from local storage',
+          );
+        }
+      }
+
       var mode = config.extraParams.mode;
       var study_guid = config.extraParams.study_guid;
-      var headerLogo = 'https://storage.googleapis.com/##ASSETS_BUCKET_NAME##/images/logo-black.png';
+      var headerLogo =
+        'https://storage.googleapis.com/##ASSETS_BUCKET_NAME##/images/logo-black.png';
       var headerText = '';
       var studyColor = '#458484';
       var studyHelpEmail = '##STUDY_EMAIL##';
