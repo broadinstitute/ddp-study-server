@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="ypavlov" id="20211006-add-operator_user_id-to-age_up_candidate">
+        <addColumn tableName="age_up_candidate" >
+            <column afterColumn="participant_user_id"
+                    name="operator_user_id"
+                    type="BIGINT(20)" >
+                <constraints references="user(user_id)" foreignKeyName="age_up_candidate_operator_user_fk" nullable="false" />
+            </column>
+        </addColumn>
+    </changeSet>
+
+</databaseChangeLog>
