@@ -154,6 +154,7 @@ public class DataExporterTest extends TxnAwareBaseTest {
         mockGovernancePolicy = mock(GovernancePolicy.class);
         Mockito.when(mockGovernancePolicy.getApplicableAgeOfMajorityRule(Mockito.any(Handle.class),
                 Mockito.any(PexInterpreter.class),
+                Mockito.anyString(),
                 Mockito.anyString())).thenReturn(Optional.of(ageOfMajorityRule));
 
         Mockito.when(ageOfMajorityRule.getDateOfMajority(Mockito.any(LocalDate.class))).thenReturn(testDateOfMajority);

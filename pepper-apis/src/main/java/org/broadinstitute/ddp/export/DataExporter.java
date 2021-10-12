@@ -644,6 +644,7 @@ public class DataExporter {
             if (governancePolicy != null) {
                 AgeOfMajorityRule aomRule = governancePolicy.getApplicableAgeOfMajorityRule(handle,
                         pexInterpreter,
+                        participant.getUser().getGuid(),
                         participant.getUser().getGuid())
                         .orElse(null);
 

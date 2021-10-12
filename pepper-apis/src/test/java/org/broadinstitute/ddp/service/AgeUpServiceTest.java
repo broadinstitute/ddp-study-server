@@ -235,9 +235,10 @@ public class AgeUpServiceTest extends TxnAwareBaseTest {
 
     private User createAgeUpTestCandidate(Handle handle, EnrollmentStatusType status, LocalDate birthDate) {
         User user = handle.attach(UserDao.class).createUser(testData.getClientId(), null);
+        User operator = handle.attach(UserDao.class).createUser(testData.getClientId(), testData.getAuth0ClientId());
         handle.attach(JdbiUserStudyEnrollment.class).changeUserStudyEnrollmentStatus(user.getGuid(), testData.getStudyGuid(), status);
         handle.attach(UserProfileDao.class).createProfile(new UserProfile.Builder(user.getId()).setBirthDate(birthDate).build());
-        handle.attach(StudyGovernanceDao.class).addAgeUpCandidate(testData.getStudyId(), user.getId());
+        handle.attach(StudyGovernanceDao.class).addAgeUpCandidate(testData.getStudyId(), user.getId(), operator.getId());
         return user;
     }
 

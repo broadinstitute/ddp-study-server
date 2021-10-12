@@ -44,7 +44,7 @@ public class GovernancePolicyTest {
     @Test
     public void testGetApplicableAgeOfMajorityRule_noRules() {
         var policy = new GovernancePolicy(1, new Expression("true"));
-        var actual = policy.getApplicableAgeOfMajorityRule(handle, interpreter, "guid");
+        var actual = policy.getApplicableAgeOfMajorityRule(handle, interpreter, "guid", "guid");
         assertTrue(actual.isEmpty());
     }
 
@@ -55,7 +55,7 @@ public class GovernancePolicyTest {
                 new AgeOfMajorityRule("false", 21, 4),
                 new AgeOfMajorityRule("false", 18, 6));
 
-        var actual = policy.getApplicableAgeOfMajorityRule(handle, interpreter, "guid");
+        var actual = policy.getApplicableAgeOfMajorityRule(handle, interpreter, "guid", "guid");
         assertTrue(actual.isEmpty());
     }
 
@@ -67,7 +67,7 @@ public class GovernancePolicyTest {
                 new AgeOfMajorityRule("true", 19, 5),
                 new AgeOfMajorityRule("true", 18, 6));
 
-        var actual = policy.getApplicableAgeOfMajorityRule(handle, interpreter, "guid");
+        var actual = policy.getApplicableAgeOfMajorityRule(handle, interpreter, "guid", "guid");
         assertTrue(actual.isPresent());
         assertEquals(19, actual.get().getAge());
     }
@@ -82,7 +82,7 @@ public class GovernancePolicyTest {
                 new AgeOfMajorityRule("not supported", 19, 5),
                 new AgeOfMajorityRule("true", 18, 6));
 
-        policy.getApplicableAgeOfMajorityRule(handle, interpreter, "guid");
+        policy.getApplicableAgeOfMajorityRule(handle, interpreter, "guid", "guid");
     }
 
     @Test
