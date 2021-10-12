@@ -7,6 +7,7 @@ import static org.broadinstitute.ddp.event.pubsubtask.impl.updateprofile.UpdateP
 
 import java.util.Properties;
 
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.TransactionWrapper.DB;
 import org.broadinstitute.ddp.db.dao.DataExportDao;
@@ -33,7 +34,7 @@ public class UpdateProfileDataHandler {
         String firstName = detectFieldValueForUpdate(payload, FIELD_FIRST_NAME, profile.getFirstName());
         String lastName = detectFieldValueForUpdate(payload, FIELD_LAST_NAME, profile.getLastName());
         boolean needElasticUpdate = false;
-        if (!firstName.isBlank() || !lastName.isBlank()) {
+        if (StringUtils.isNotBlank(firstName) || StringUtils.isNotBlank(lastName)) {
             int count = profileDao.getUserProfileSql().updateFirstAndLastNameByUserGuid(userGuid, firstName, lastName);
             if (count > 0) {
                 needElasticUpdate = true;

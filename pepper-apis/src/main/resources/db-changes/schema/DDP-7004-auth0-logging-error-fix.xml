@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+
+    <changeSet author="evgeniipr" id="20210928-auth0-logging-error-fix">
+
+        <insert tableName="auth0_log_event_code">
+            <column name="code" value="fapi"/>
+            <column name="title" value="Operation on API failed"/>
+            <column name="description" value=""/>
+        </insert>
+        <insert tableName="auth0_log_event_code">
+            <column name="code" value="fi"/>
+            <column name="title" value="Failed invite accept"/>
+            <column name="description" value="Failed to accept a user invitation. This could happen if the user accepts an invitation using a different email address than provided in the invitation, or due to a system failure while provisioning the invitation."/>
+        </insert>
+        <insert tableName="auth0_log_event_code">
+            <column name="code" value="limit_sul"/>
+            <column name="title" value="Blocked Account"/>
+            <column name="description" value="A user is temporarily prevented from logging in because more than 20 logins per minute occurred from the same IP address."/>
+        </insert>
+        <insert tableName="auth0_log_event_code">
+            <column name="code" value="mfar"/>
+            <column name="title" value="MFA Required"/>
+            <column name="description" value="A user has been prompted for multi-factor authentication (MFA). When using Adaptive MFA, Auth0 includes details about the risk assessment."/>
+        </insert>
+        <insert tableName="auth0_log_event_code">
+            <column name="code" value="mgmt_api_read"/>
+            <column name="title" value="Management API read Operation"/>
+            <column name="description" value="API GET operation returning secrets completed successfully."/>
+        </insert>
+        <insert tableName="auth0_log_event_code">
+            <column name="code" value="pla"/>
+            <column name="title" value="Pre-login assessment"/>
+            <column name="description" value="This log is generated before a login and helps in monitoring the behavior of bot detection without having to enable it."/>
+        </insert>
+        <insert tableName="auth0_log_event_code">
+            <column name="code" value="si"/>
+            <column name="title" value="Successful invite accept"/>
+            <column name="description" value="Successfully accepted a user invitation"/>
+        </insert>
+        <insert tableName="auth0_log_event_code">
+            <column name="code" value="srrt"/>
+            <column name="title" value="Success Revocation"/>
+            <column name="description" value="Successfully revoked a Refresh Token"/>
+        </insert>
+    </changeSet>
+
+</databaseChangeLog>
+
