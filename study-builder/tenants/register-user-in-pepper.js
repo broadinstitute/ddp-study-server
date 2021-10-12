@@ -94,6 +94,19 @@ function (user, context, callback) {
             console.log('No temp user guid passed in request');
         }
 
+        /**
+         * If `tempUserGuid` was not set with value from request
+         * AND user is not yet registered in pepper (`user.app_metadata.user_guid` is empty)
+         * take `tempUserGuid` from `user_metadata` (if one exists)
+         */
+        if (
+            !pepper_params.tempUserGuid &&
+            !user.app_metadata.user_guid &&
+            !!user.user_metadata.temp_user_guid
+        ) {
+            pepper_params.tempUserGuid = user.user_metadata.temp_user_guid;
+        }
+
         if (context.request.query.mode) {
             pepper_params.mode = context.request.query.mode;
             console.log('Registration Mode passed in (via query) = ' + pepper_params.mode);
