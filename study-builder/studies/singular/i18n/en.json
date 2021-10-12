@@ -1346,6 +1346,19 @@
       }
     }
   },
+  "child_contact": {
+    "name": "Provide contact information",
+    "title": "Provide contact information",
+    "summary_created": "Please provide us with your child's email so we can contact them about the upcoming re-consent process.",
+    "summary_inprogress": "Please complete providing your child's email so we can contact them about the upcoming re-consent process.",
+    "summary_complete": "Thank you for providing us with your child's email so we can contact them about the upcoming re-consent process.",
+    "intro": "In a few months, your child will reach the age when they will need to sign a consent form to continue participation in the study. Please provide us with your child's email so we can contact them about the upcoming re-consent process.",
+    "email_prompt": "Your child's email address",
+    "email_confirm_prompt": "Confirm your child's email address",
+    "email_mismatch_msg": "Please make sure your child's email address matches",
+    "email_placeholder": "name@email.com",
+    "email_req_hint": "Please provide an email address to contact your child."
+  },
   "option": {
     "yes": "Yes",
     "no": "No",
