@@ -1,16 +1,17 @@
 package org.broadinstitute.ddp.content;
 
 import static java.lang.String.format;
+import static java.lang.String.valueOf;
 import static org.apache.commons.lang3.StringUtils.contains;
-import static org.apache.commons.lang3.StringUtils.replaceChars;
 import static org.broadinstitute.ddp.content.I18nTemplateConstants.DDP;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
 
 /**
@@ -31,13 +32,7 @@ public class VelocityUtil {
      * variables should be equal to translation references (which could contain dots, for example: `prequal.name`)
      */
     public static final char VARIABLE_SEP = '.';
-    /**
-     * Character which will be placed instead of '.' into Velocity variables (except variable '$dds.' which is
-     * reserved). Character replacement is done in both {@link Template#getTemplateText()} and Velocity variables
-     * defined in this template, right before a template rendering
-     * in method {@link I18nContentRenderer#renderToString(String, Map)}
-     */
-    public static final char CONVERTED_SEP = '-';
+
     /** Character used to escape special characters in Velocity template */
     public static final char ESCAPE_PREFIX = '\\';
 
@@ -105,74 +100,31 @@ public class VelocityUtil {
         return velocityVariables;
     }
 
-    /**
-     * Convert variables in templateText: replace '.' to '-'.
-     */
-    public static String convertTemplateVariablesToValid(String templateText, Collection<String> variables) {
-        if (templateText != null) {
-            StringBuilder convertedTemplateText = new StringBuilder(templateText.length());
-            boolean varStarted = false;
-            char ch;
-            char prevCh = '\0';
-            StringBuilder variable = new StringBuilder();
-            for (int i = 0; i < templateText.length(); i++) {
-                ch = templateText.charAt(i);
-                if (ch == VARIABLE_PREFIX && prevCh != ESCAPE_PREFIX) {
-                    varStarted = true;
-                    addVariableToText(variable, convertedTemplateText, variables);
-                    convertedTemplateText.append(ch);
+    public static Map<String, Object> convertNestedVariablesToMap(Map<String, Object> context) {
+        if (context != null && context.keySet().stream().anyMatch(k -> contains(k, VARIABLE_SEP))) {
+            Map<String, Object> convertedContext = new HashMap<>();
+            context.forEach((k, v) -> {
+                if (contains(k, VARIABLE_SEP)) {
+                    String[] splitted = StringUtils.split(k, VARIABLE_SEP);
+                    Object obj = convertedContext.get(splitted[0]);
+                    Map<String, String> translations;
+                    if (obj != null) {
+                        if (!(obj instanceof Map)) {
+                            throw new DDPException("Velocity context contains invalid variable " + splitted[0]);
+                        }
+                        translations = (Map<String, String>)obj;
+                    } else {
+                        convertedContext.put(splitted[0], new HashMap<>());
+                        translations = (Map<String, String>)convertedContext.get(splitted[0]);
+                    }
+                    translations.put(splitted[1], valueOf(v));
                 } else {
-                    if (varStarted) {
-                        if (ch == VARIABLE_SEP && !DDP.equals(variable.toString())) {
-                            if (i < templateText.length() - 1 && isVariableValidChar(templateText.charAt(i + 1))) {
-                                ch = CONVERTED_SEP;
-                            }
-                        }
-                        if (!isVariableValidChar(ch)) {
-                            varStarted = false;
-                            addVariableToText(variable, convertedTemplateText, variables);
-                        } else {
-                            variable.append(ch);
-                        }
-                    }
-                    if (!varStarted) {
-                        convertedTemplateText.append(ch);
-                    }
+                    convertedContext.put(k, v);
                 }
-            }
-            addVariableToText(variable, convertedTemplateText, variables);
-            return convertedTemplateText.toString();
-        }
-        return null;
-    }
-
-    /**
-     * Convert Velocity variables' names to valid (possible to be processed correctly by Velocity Engine): replace '.' to '-'.
-     * This is needs to be done in order to make names of Velocity variables stored in a context map confirming to
-     * names defined in a template text (where it is also converted with using method
-     * {@link #convertTemplateVariablesToValid(String, Collection)}).
-     */
-    public static final Map<String, Object> convertVariablesToValid(Map<String, Object> context) {
-        if (context != null) {
-            if (context.keySet().stream().anyMatch(k -> contains(k, VARIABLE_SEP))) {
-                Map<String, Object> convertedMap = new HashMap<>();
-                context.forEach((k, v) ->
-                        convertedMap.put(!contains(k, VARIABLE_SEP) ? k : replaceChars(k, VARIABLE_SEP, CONVERTED_SEP), v));
-                return convertedMap;
-            }
+            });
+            return convertedContext;
         }
         return context;
-    }
-
-    private static void addVariableToText(StringBuilder variable, StringBuilder convertedTemplateText, Collection<String> variables) {
-        if (variable.length() > 0 && variables.contains(variable)) {
-            variable.replace(0, variable.length(),
-                    replaceChars(variable.toString(), VARIABLE_SEP, CONVERTED_SEP));
-        }
-        if (variable.length() > 0) {
-            convertedTemplateText.append(variable);
-            variable.setLength(0);
-        }
     }
 
     private static void addVariableToList(List<String> velocityVariables, StringBuilder variable, String templateText) {

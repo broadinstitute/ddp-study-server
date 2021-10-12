@@ -318,13 +318,10 @@ public class I18nContentRenderer {
      * @return a string with rendered template text
      */
     public String renderToString(String template, Map<String, Object> context) {
-
-        Map<String, Object> convertedContext = VelocityUtil.convertVariablesToValid(context);
-        String convertedTemplate = VelocityUtil.convertTemplateVariablesToValid(template, context.keySet());
-
+        Map<String, Object> convertedContext = VelocityUtil.convertNestedVariablesToMap(context);
         VelocityContext ctx = new VelocityContext(convertedContext);
         StringWriter writer = new StringWriter();
-        engine.evaluate(ctx, writer, TEMPLATE_NAME, convertedTemplate);
+        engine.evaluate(ctx, writer, TEMPLATE_NAME, template);
         String result = writer.toString();
         if (contains(result, VARIABLE_PREFIX)) {
             // Here we have a second pass in case of variables in the substitution values,
