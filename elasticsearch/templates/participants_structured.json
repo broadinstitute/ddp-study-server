@@ -449,6 +449,66 @@
                 "type": {
                   "type": "keyword"
                 },
+                "phone": {
+                  "type": "text"
+                },
+                "fax": {
+                  "type": "text"
+                },
+                "faxSent": {
+                  "type": "text"
+                },
+                "faxSent2": {
+                  "type": "text"
+                },
+                "faxSent3": {
+                  "type": "text"
+                },
+                "mrReceived": {
+                  "type": "text"
+                },
+                "mrDocument": {
+                  "type": "text"
+                },
+                "mrDocumentFileNames": {
+                  "type": "text"
+                },
+                "mrProblem": {
+                  "type": "boolean"
+                },
+                "mrProblemText": {
+                  "type": "text"
+                },
+                "unableObtain": {
+                  "type": "boolean"
+                },
+                "duplicate": {
+                  "type": "boolean"
+                },
+                "international": {
+                  "type": "boolean"
+                },
+                "crRequired": {
+                  "type": "boolean"
+                },
+                "pathologyPresent": {
+                  "type": "text"
+                },
+                "notes": {
+                  "type": "text"
+                },
+                "reviewMedicalRecord": {
+                  "type": "integer"
+                },
+                "followUps": {
+                  "type": "text"
+                },
+                "followUpRequired": {
+                  "type": "boolean"
+                },
+                "followUpRequiredText": {
+                  "type": "boolean"
+                },
                 "requested": {
                   "type": "date",
                   "ignore_malformed": false,
@@ -458,6 +518,66 @@
                   "type": "date",
                   "ignore_malformed": false,
                   "format": "strict_year_month_day"
+                }
+              }
+            },
+            "oncHistoryDetail": {
+              "properties": {
+                "accessionNumber": {
+                  "type": "text"
+                },
+                "datePX": {
+                  "type": "date",
+                  "ignore_malformed": false,
+                  "format": "strict_year_month_day"
+                },
+                "typePX": {
+                  "type": "text"
+                },
+                "facility": {
+                  "type": "text"
+                },
+                "phone": {
+                  "type": "text"
+                },
+                "fax": {
+                  "type": "text"
+                },
+                "histology": {
+                  "type": "text"
+                },
+                "locationPX": {
+                  "type": "text"
+                },
+                "notes": {
+                  "type": "text"
+                },
+                "request": {
+                  "type": "text"
+                },
+                "faxSent": {
+                  "type": "text"
+                },
+                "faxSent2": {
+                  "type": "text"
+                },
+                "faxSent3": {
+                  "type": "text"
+                },
+                "tissueReceived": {
+                  "type": "text"
+                },
+                "gender": {
+                  "type": "text"
+                },
+                "destructionPolicy": {
+                  "type": "text"
+                },
+                "tissueProblemOption": {
+                  "type": "text"
+                },
+                "unableObtain": {
+                  "type": "boolean"
                 }
               }
             },
