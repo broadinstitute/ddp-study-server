@@ -93,8 +93,8 @@ public class CustomExporter {
             if (familyId != null) {
                 customExportParticipants.add(new CustomExportParticipant(familyId, p));
             } else {
-                LOG.error("Exclude participant with GUID = '{}' from the export batch: "
-                        + "Failed to get family ID for the participant because dsm.familyId is null", p.getUser().getGuid());
+                LOG.error("Skipped participant with GUID = '{}' from the export batch because dsm.familyId is null",
+                        p.getUser().getGuid());
             }
         }
         return customExportParticipants;
