@@ -90,7 +90,12 @@ public class CustomExporter {
         List<CustomExportParticipant> customExportParticipants = new ArrayList<>();
         for (Participant p : participants) {
             String familyId = getFamilyId(handle, studyDto, p.getUser().getGuid(), esClient);
-            customExportParticipants.add(new CustomExportParticipant(familyId, p));
+            if (familyId != null) {
+                customExportParticipants.add(new CustomExportParticipant(familyId, p));
+            } else {
+                LOG.error("Exclude participant with GUID = '{}' from the export batch: "
+                        + "Failed to get family ID for the participant because dsm.familyId is null", p.getUser().getGuid());
+            }
         }
         return customExportParticipants;
     }
@@ -114,11 +119,9 @@ public class CustomExporter {
                     + "ElasticSearch is null");
         }
 
-        Object familyId = ((Map) source.get("dsm")).get("familyId");
-        if (familyId == null) {
-            throw new DDPException("Failed to get family ID for participant with guid " + userGuid + " because dsm.familyId is null");
-        }
-        return familyId.toString();
+        Object familyId = source.get("dsm") == null ? null : ((Map) source.get("dsm")).get("familyId");
+
+        return familyId == null ? null : familyId.toString();
     }
 
     public static void clearCachedAuth0Emails() {
