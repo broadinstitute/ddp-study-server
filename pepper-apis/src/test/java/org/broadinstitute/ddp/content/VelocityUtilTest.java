@@ -20,8 +20,8 @@ public class VelocityUtilTest {
 
     private static final String VAR1 = "var1";
     private static final String VAR2 = "var2";
-    private static final String PREQUAL_VAR1_VALUE = "testvar1";
-    private static final String PREQUAL_VAR2_VALUE = "testvar2";
+    private static final String VAR1_VALUE = "testvar1";
+    private static final String VAR2_VALUE = "testvar2";
 
     private static final String PREQUAL_VAR1 = VAR_PREFIX + VARIABLE_SEP + VAR1;
     private static final String PREQUAL_VAR2 = VAR_PREFIX + VARIABLE_SEP + VAR2;
@@ -31,17 +31,35 @@ public class VelocityUtilTest {
     private static final String TEMPLATE_TEXT_2 =
             "$prequal.err_international_self,$prequal.err_international_child,$prequal.err_need_parental.";
 
-
+    /**
+     * Verify that variables with compound names (like "prequal.var1", "prequal.var2", containing '.')
+     * are converted to map hierarchy
+     */
     @Test
-    public void testConvertTemplateVariablesToValid() {
+    public void testConvertTemplateVariablesWithCompoundNames() {
         Map<String, Object> context = new HashMap<>();
-        context.put(PREQUAL_VAR1, PREQUAL_VAR1_VALUE);
-        context.put(PREQUAL_VAR2, PREQUAL_VAR2_VALUE);
-        Map<String, Object> convertedContext = VelocityUtil.convertNestedVariablesToMap(context);
+        context.put(PREQUAL_VAR1, VAR1_VALUE);
+        context.put(PREQUAL_VAR2, VAR2_VALUE);
+        Map<String, Object> convertedContext = VelocityUtil.convertVariablesWithCompoundNamesToMap(context);
         assertNotNull(convertedContext.get(VAR_PREFIX));
         Map<String, String> translations = (Map<String, String>)convertedContext.get(VAR_PREFIX);
-        assertEquals(PREQUAL_VAR1_VALUE, translations.get(VAR1));
-        assertEquals(PREQUAL_VAR2_VALUE, translations.get(VAR2));
+        assertEquals(VAR1_VALUE, translations.get(VAR1));
+        assertEquals(VAR2_VALUE, translations.get(VAR2));
+    }
+
+    /**
+     * Verify that variables with simple names (like "var1", "var2", not containing '.')
+     * not converted to map hierarchy
+     */
+    @Test
+    public void testConvertTemplateVariablesWithSimpleNames() {
+        Map<String, Object> context = new HashMap<>();
+        context.put(VAR1, VAR1_VALUE);
+        context.put(VAR2, VAR2_VALUE);
+        Map<String, Object> convertedContext = VelocityUtil.convertVariablesWithCompoundNamesToMap(context);
+        assertEquals(2, convertedContext.size());
+        assertEquals(VAR1_VALUE, convertedContext.get(VAR1));
+        assertEquals(VAR2_VALUE, convertedContext.get(VAR2));
     }
 
     @Test

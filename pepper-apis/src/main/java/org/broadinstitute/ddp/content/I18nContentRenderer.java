@@ -318,8 +318,7 @@ public class I18nContentRenderer {
      * @return a string with rendered template text
      */
     public String renderToString(String template, Map<String, Object> context) {
-        Map<String, Object> convertedContext = VelocityUtil.convertNestedVariablesToMap(context);
-        VelocityContext ctx = new VelocityContext(convertedContext);
+        VelocityContext ctx = new VelocityContext(context);
         StringWriter writer = new StringWriter();
         engine.evaluate(ctx, writer, TEMPLATE_NAME, template);
         String result = writer.toString();
