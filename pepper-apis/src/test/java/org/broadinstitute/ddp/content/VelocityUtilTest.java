@@ -64,12 +64,12 @@ public class VelocityUtilTest {
 
     @Test
     public void testDetectVelocityVariablesFromTemplate() {
-        Collection<String> variables = VelocityUtil.detectVelocityVariablesFromTemplate(TEMPLATE_TEXT_1);
+        Collection<String> variables = VelocityUtil.extractVelocityVariablesFromTemplate(TEMPLATE_TEXT_1);
         assertEquals(2, variables.size());
         assertTrue(variables.contains(PREQUAL_VAR1));
         assertTrue(variables.contains(PREQUAL_VAR2));
 
-        variables = VelocityUtil.detectVelocityVariablesFromTemplate(TEMPLATE_TEXT_2);
+        variables = VelocityUtil.extractVelocityVariablesFromTemplate(TEMPLATE_TEXT_2);
         assertEquals(3, variables.size());
     }
 }

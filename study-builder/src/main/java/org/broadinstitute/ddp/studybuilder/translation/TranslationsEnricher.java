@@ -1,7 +1,7 @@
 package org.broadinstitute.ddp.studybuilder.translation;
 
 import static java.lang.String.format;
-import static org.broadinstitute.ddp.content.VelocityUtil.detectVelocityVariablesFromTemplate;
+import static org.broadinstitute.ddp.content.VelocityUtil.extractVelocityVariablesFromTemplate;
 import static org.broadinstitute.ddp.studybuilder.translation.TranslationsUtil.detectLanguagesToBeAddedToTranslations;
 import static org.broadinstitute.ddp.studybuilder.translation.TranslationsUtil.detectTranslationKey;
 import static org.broadinstitute.ddp.studybuilder.translation.TranslationsUtil.detectVariablesNotPresentInList;
@@ -61,7 +61,7 @@ public class TranslationsEnricher {
      */
     public static void addTemplateTranslations(Template template, Map<String, Properties> allTranslations) {
         if (template != null) {
-            Collection<String> variablesInTemplate = detectVelocityVariablesFromTemplate(template.getTemplateText());
+            Collection<String> variablesInTemplate = extractVelocityVariablesFromTemplate(template.getTemplateText());
             if (template.getVariables() != null) {
                 template.getVariables().forEach(v -> {
                     List<Translation> translations = addTranslations(v.getTranslations(), v.getName(), allTranslations);

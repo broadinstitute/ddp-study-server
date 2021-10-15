@@ -89,7 +89,7 @@ public class VelocityUtil {
      * @param templateText template text where to find Velocity variables
      * @return list of String - list of variables
      */
-    public static List<String> detectVelocityVariablesFromTemplate(String templateText) {
+    public static List<String> extractVelocityVariablesFromTemplate(String templateText) {
         try {
             RuntimeInstance ri = new RuntimeInstance();
             SimpleNode node = ri.parse(templateText, TEMPLATE_NAME);
