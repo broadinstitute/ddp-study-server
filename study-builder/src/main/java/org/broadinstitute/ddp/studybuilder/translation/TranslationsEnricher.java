@@ -3,10 +3,8 @@ package org.broadinstitute.ddp.studybuilder.translation;
 import static java.lang.String.format;
 import static org.broadinstitute.ddp.content.VelocityUtil.extractVelocityVariablesFromTemplate;
 import static org.broadinstitute.ddp.studybuilder.translation.TranslationsUtil.detectLanguagesToBeAddedToTranslations;
-import static org.broadinstitute.ddp.studybuilder.translation.TranslationsUtil.detectTranslationKey;
 import static org.broadinstitute.ddp.studybuilder.translation.TranslationsUtil.detectVariablesNotPresentInList;
 import static org.broadinstitute.ddp.studybuilder.translation.TranslationsUtil.getTranslationForLang;
-import static org.broadinstitute.ddp.studybuilder.translation.TranslationsUtil.isTranslationTextContainsKeyName;
 import static org.broadinstitute.ddp.studybuilder.translation.TranslationsUtil.isTranslationsEmpty;
 
 import java.util.ArrayList;
@@ -79,41 +77,45 @@ public class TranslationsEnricher {
     /**
      * Add translations to specified array of translations (if it is null then it is created).
      * The result translations list are returned.
-     * If parameter `translations` not empty then try to detect translation key from it (from a translation
-     * containing in text element a translations key which should start with '$'. Or translation key
-     * is taken from parameter `templateVariable`.
      *
-     * @param translations      existing array of translations (it can be empty or null)
-     * @param templateVariable  template variable which equal to a translation key to be detected
-     *                          (in could be null and in that case try to detect a translation key from one of
-     *                          translations)
-     * @param allTranslations   all translations for all languages of a study
+     * @param translations     existing array of translations (it can be empty or null)
+     * @param templateVariable template variable which equal to a translation key to be detected
+     * @param allTranslations  all translations for all languages of a study
      * @return list of Translations built for all languages of a study.
      */
     public static List<Translation> addTranslations(
             List<Translation> translations, String templateVariable, Map<String, Properties> allTranslations) {
-        String translationKey = detectTranslationKey(translations, templateVariable);
+        String translationKey = templateVariable;
         if (translationKey != null) {
             List<String> langCdeToAdd = detectLanguagesToBeAddedToTranslations(translations, allTranslations);
-            final List<Translation> updatedTranslations = !isTranslationsEmpty(translations)
-                    ? translations.stream().filter(t -> !isTranslationTextContainsKeyName(t)).collect(Collectors.toList())
-                    : new ArrayList<>();
+            final List<Translation> addedTranslations = !isTranslationsEmpty(translations) ? translations : new ArrayList<>();
             langCdeToAdd.forEach(langCde -> {
                 String translationValue = getTranslationForLang(langCde, translationKey, allTranslations);
                 if (translationValue != null) {
-                    updatedTranslations.add(new Translation(langCde, translationValue));
+                    addedTranslations.add(new Translation(langCde, translationValue));
                     LOG.debug("Added translation: langCde={}, key={}, value={}", langCde, translationKey, translationValue);
                 } else {
                     throw new RuntimeException(format("Translation not found: langCde=%s, key=%s", langCde, translationKey));
                 }
             });
-            return updatedTranslations;
+            return addedTranslations;
         }
         return translations;
     }
 
-    public static List<Translation> addTranslations(
-            List<Translation> translations, Map<String, Properties> allTranslations) {
-        return addTranslations(translations, null, allTranslations);
+    /**
+     * Get rendered translations of a {@link Template} for all of languages defiend for the current study.
+     *
+     * @param template                template which translations to get
+     * @return - list of {@link Template} rendered translations
+     */
+    public static List<Translation> getTemplateRendered(Template template, Map<String, Properties> allTranslations) {
+        if (template != null && template.getVariables() != null && template.getVariables().size() > 0) {
+            return allTranslations.keySet().stream()
+                    .map(langCde -> new Translation(langCde, template.renderWithDefaultValues(langCde)))
+                    .collect(Collectors.toList());
+        }
+        return null;
     }
+
 }

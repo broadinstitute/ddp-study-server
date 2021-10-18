@@ -2,12 +2,10 @@ package org.broadinstitute.ddp.studybuilder.translation;
 
 import static org.broadinstitute.ddp.model.activity.types.DateRenderMode.PICKLIST;
 import static org.broadinstitute.ddp.studybuilder.translation.TranslationsEnricher.addTemplateTranslations;
-import static org.broadinstitute.ddp.studybuilder.translation.TranslationsEnricher.addTranslations;
 
 import java.util.Map;
 import java.util.Properties;
 
-import org.broadinstitute.ddp.model.activity.definition.ActivityDef;
 import org.broadinstitute.ddp.model.activity.definition.ComponentBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.ConditionalBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.ContentBlockDef;
@@ -33,38 +31,29 @@ import org.broadinstitute.ddp.model.activity.definition.template.TemplateVariabl
 import org.broadinstitute.ddp.model.activity.definition.validation.RuleDef;
 import org.broadinstitute.ddp.studybuilder.StudyBuilderContext;
 import org.broadinstitute.ddp.studybuilder.StudyBuilderException;
+import org.broadinstitute.ddp.studybuilder.translation.model.ExtendedFormActivityDef;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
  * Add {@link Translation} references (for all study languages) to the {@link Template}s in {@link FormActivityDef}s.
  * An array of {@link Translation} is defined in {@link TemplateVariable} which is defined in a {@link Template}.
- * Another translations definition: {@link Translation}s can be defined as an array directly in {@link FormActivityDef}
- * (properties like `translatedNames`, `translatedSecondNames`).
  *
  * <p><b>Algorithm:</b>
  * <ul>
  *     <li>detect active languages (from subs.conf or from a folder specified by argument `-i18n-path`);</li>
- *     <li>process all activity-level templates;</li>
+ *     <li>process all activity-level templates (it's processed the special way:
+ *         in a conf can be defined templates for
+ *         nameTemplate, secondNameTemplate, titleTemplate, subtitleTemplate, descriptionTemplate, summaryTemplates
+ *         and then it's translations (if specified) are copied to existing activity properties:
+ *         translatedNames, translatedSecondNames, translatedTitles, translatedSubtitles, translatedDescriptions,
+ *         translatedSummaries;</li>
  *     <li>go through all sections and process section level templates;</li>
  *     <li>go through all blocks of a section and process all block level templates (depending on a block type);</li>
  *     <li>process templates for each of questions (depending on type), picklist options, validations..</li>
  *     <li>for each template do the following steps:
- *       <ol>
- *           <li>if a list of {@link Translation} without {@link Template} (like activityDef.translatedTitles,
- *               activityDef.translatedSubtitles) then process only translations arrays which
- *               are not empty and contain at least one translation where instead of a text defined a translation kes
- *               (for example `$prequal.name`): using this key generate translations for all languages specified in
- *               a study (except for translations which already defined and which not contain translation keys);</li>
- *           <li>if a {@link Template} is processed then check it's {@link TemplateVariable}:
- *               - if a {@link TemplateVariable} contains non-empty array {@link Translation} containing at least one translation
- *                 (for example with default language):
- *                 detect from such element a name of a translation and add translations for the rest of languages
- *                 (which are still not defined);
- *               - if variables array is empty then detect names of variables from a Template text and build
- *                 translations for each of detected variables (for each of active languages).
- *           </li>
- *       </ol>
+ *          - detect list of {@link TemplateVariable}'s: for each of variable create list of translations
+ *            (for all of languages which defined in a study).
  *     </li>
  * </ul>
  */
@@ -78,32 +67,25 @@ public class ActivityDefTranslationsProcessor {
         this.allTranslations = allTranslations;
     }
 
-    public void run(ActivityDef activityDef) {
+    public void run(ExtendedFormActivityDef activityDef) {
         if (StudyBuilderContext.CONTEXT.isProcessTranslations()) {
             enrichActivityDefWithTranslations(activityDef);
         }
     }
 
-    private void enrichActivityDefWithTranslations(ActivityDef activityDef) {
+    private void enrichActivityDefWithTranslations(ExtendedFormActivityDef activityDef) {
         LOG.info("Add translations for languages {} to a generated activity definition {}",
                 StudyBuilderContext.CONTEXT.getTranslations().keySet(), activityDef.getActivityCode());
 
         addTemplateTranslations(activityDef.getReadonlyHintTemplate(), allTranslations);
-        activityDef.setTranslatedDescriptions(addTranslations(activityDef.getTranslatedDescriptions(), allTranslations));
-        activityDef.setTranslatedNames(addTranslations(activityDef.getTranslatedNames(), allTranslations));
-        activityDef.setTranslatedSecondNames(addTranslations(activityDef.getTranslatedSecondNames(), allTranslations));
-        activityDef.setTranslatedTitles(addTranslations(activityDef.getTranslatedTitles(), allTranslations));
-        activityDef.setTranslatedSubtitles(addTranslations(activityDef.getTranslatedSubtitles(), allTranslations));
+        addTemplateTranslations(activityDef.getLastUpdatedTextTemplate(), allTranslations);
 
-        if (activityDef instanceof FormActivityDef) {
-            FormActivityDef formDef = (FormActivityDef) activityDef;
-            addTemplateTranslations(formDef.getLastUpdatedTextTemplate(), allTranslations);
+        new ActivityNonStandardTranslationsProcessor().run(activityDef, allTranslations);
 
-            enrichSectionWithTranslations(formDef.getIntroduction());
-            enrichSectionWithTranslations(formDef.getClosing());
-            if (formDef.getSections() != null) {
-                formDef.getSections().forEach(s -> enrichSectionWithTranslations(s));
-            }
+        enrichSectionWithTranslations(activityDef.getIntroduction());
+        enrichSectionWithTranslations(activityDef.getClosing());
+        if (activityDef.getSections() != null) {
+            activityDef.getSections().forEach(s -> enrichSectionWithTranslations(s));
         }
     }
 

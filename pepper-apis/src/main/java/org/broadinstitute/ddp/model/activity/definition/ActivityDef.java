@@ -250,6 +250,10 @@ public abstract class ActivityDef {
         return translatedSummaries;
     }
 
+    public void setTranslatedSummaries(List<SummaryTranslation> translatedSummaries) {
+        this.translatedSummaries = translatedSummaries;
+    }
+
     public Template getReadonlyHintTemplate() {
         return readonlyHintTemplate;
     }

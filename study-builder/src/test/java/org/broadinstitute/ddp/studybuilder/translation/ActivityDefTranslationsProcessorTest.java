@@ -1,6 +1,8 @@
 package org.broadinstitute.ddp.studybuilder.translation;
 
 
+import static org.broadinstitute.ddp.model.activity.types.InstanceStatusType.CREATED;
+import static org.broadinstitute.ddp.model.activity.types.InstanceStatusType.IN_PROGRESS;
 import static org.broadinstitute.ddp.studybuilder.BuilderUtils.validateActivityDef;
 import static org.broadinstitute.ddp.studybuilder.StudyBuilderContext.CONTEXT;
 import static org.broadinstitute.ddp.studybuilder.translation.I18nReader.readI18nTranslations;
@@ -22,8 +24,10 @@ import org.broadinstitute.ddp.model.activity.definition.ActivityDef;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
 import org.broadinstitute.ddp.model.activity.definition.FormBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.QuestionBlockDef;
+import org.broadinstitute.ddp.model.activity.definition.i18n.SummaryTranslation;
 import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
 import org.broadinstitute.ddp.studybuilder.StudyBuilderContext;
+import org.broadinstitute.ddp.studybuilder.translation.model.ExtendedFormActivityDef;
 import org.broadinstitute.ddp.util.ConfigUtil;
 import org.broadinstitute.ddp.util.GsonPojoValidator;
 import org.broadinstitute.ddp.util.GsonUtil;
@@ -33,7 +37,7 @@ import org.junit.Test;
  * Test {@link ActivityDefTranslationsProcessor}
  * used for adding translations to the {@link ActivityDef} generated from StudyBuilder conf-files.<br>
  * Tests how translations (for new languages) are added to a generated {@link FormActivityDef}.
- * Translations are added using method {@link ActivityDefTranslationsProcessor#run(ActivityDef)}
+ * Translations are added using method {@link ActivityDefTranslationsProcessor#run(ExtendedFormActivityDef)}
  * <br>
  * <b>Testing steps:</b>
  * <ul>
@@ -54,7 +58,6 @@ public class ActivityDefTranslationsProcessorTest {
     private static final String I18N_NON_EXISTING_FOLDER = TEST_STUDY_FOLDER + "i18n-non-existing-folder";
 
     private static final String LANG_EN = "en";
-    private static final String LANG_ES = "es";
     private static final String LANG_FI = "fi";
 
     private static final Gson gson = GsonUtil.standardGson();
@@ -76,6 +79,13 @@ public class ActivityDefTranslationsProcessorTest {
 
         FormActivityDef formDef = buildActivityAndProcessTranslations(subsCfg, ACTIVITY_CONF_FILE);
         assertAfterTranslationsProcessingPositiveActivity(formDef);
+
+        assertEquals(3, formDef.getTranslatedNames().size());
+        assertEquals(3, formDef.getTranslatedTitles().size());
+        List<SummaryTranslation> summ = formDef.getTranslatedSummaries();
+        assertEquals(6, summ.size());
+        assertEquals(3, summ.stream().filter(s -> s.getStatusType() == CREATED).count());
+        assertEquals(3, summ.stream().filter(s -> s.getStatusType() == IN_PROGRESS).count());
     }
 
     /**
@@ -127,9 +137,8 @@ public class ActivityDefTranslationsProcessorTest {
     private FormActivityDef buildActivityAndProcessTranslations(Config subsCfg, String activityConfFile) {
         // [2] build ActivityDef from config
         Config activityConf = parseFile(activityConfFile).resolveWith(subsCfg, ConfigResolveOptions.defaults());
-        ActivityDef activityDef = gson.fromJson(ConfigUtil.toJson(activityConf), ActivityDef.class);
-        FormActivityDef formDef = (FormActivityDef) activityDef;
-        List<FormBlockDef> blocks = formDef.getSections().get(0).getBlocks();
+        ExtendedFormActivityDef activityDef = gson.fromJson(ConfigUtil.toJson(activityConf), ExtendedFormActivityDef.class);
+        List<FormBlockDef> blocks = activityDef.getSections().get(0).getBlocks();
         if (blocks.size() > 0) {
             questionDef1 = ((QuestionBlockDef) blocks.get(0)).getQuestion();
         }
@@ -148,7 +157,7 @@ public class ActivityDefTranslationsProcessorTest {
         // [4] validate ActivityDef
         validateActivityDef(activityDef, validator);
 
-        return formDef;
+        return activityDef;
     }
 
     private void assertAfterTranslationsProcessingPositiveActivity(FormActivityDef formDef) {

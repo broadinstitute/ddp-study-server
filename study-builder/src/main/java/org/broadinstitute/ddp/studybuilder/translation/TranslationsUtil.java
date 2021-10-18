@@ -1,8 +1,5 @@
 package org.broadinstitute.ddp.studybuilder.translation;
 
-import static org.apache.commons.lang3.StringUtils.startsWith;
-import static org.broadinstitute.ddp.content.VelocityUtil.VARIABLE_PREFIX;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -30,15 +27,8 @@ public class TranslationsUtil {
     /** LangCde length (in a translation key follows after a prefix 'i18n' */
     public static final int LANG_CDE_LENGTH = LANG_CDE_PLACEHOLDER.length();
 
-    public static final String HOCON_PARAM_PREFIX = "${";
-    /** Prefix in Translation HOCON parameter: "${i18n." */
-    public static final String TRANSLATION_KEY_HOCON_PREFIX = HOCON_PARAM_PREFIX + TRANSLATION_KEY_PREFIX + TRANSLATION_KEY_SEPARATOR;
-
     /** Length of substring 'xx.' where xx - language code */
     public static final int LANG_CDE_WITH_SEP_LENGTH = LANG_CDE_LENGTH + TRANSLATION_KEY_SEPARATOR.length();
-
-    /** Length of the translation prefix (in HOCON parameter): "${i18n.xx." */
-    public static final int TRANSLATION_KEY_FULL_PREFIX_LENGTH = TRANSLATION_KEY_HOCON_PREFIX.length() + LANG_CDE_WITH_SEP_LENGTH;
 
 
     /**
@@ -107,41 +97,6 @@ public class TranslationsUtil {
     }
 
     /**
-     * Detect a name of a translation key (if it still not known).
-     * For example, if a {@link Translation} is specified like this `{ "language": "en", "text": "$prequal.name" }`
-     * then key is "prequal.name" (an eventually a full translation key it will be "i18n.xx.prequal.name" where xx - langCde).
-     * NOTE: such approach (to detect a translation key from {@link Translation#getText()} could be used for
-     * cases where translations are used without {@link Template}.
-     * Such arrays of {@link Translation} could be defined on activity level for some properties like title, subtitle etc.
-     * (in the future it is planned to replace these definitions to standard {@link Template}s).
-     * If not possible to detect a translation key from {@link Translation}s then use value
-     * specified in parameter `translationKey`.
-     *
-     * @param translations    list of {@link Translation} which is defined in a conf-file: a translation key can be detected
-     *                        from any element where 'text' starts with '$' (after resolving):
-     *                        i.e. it is not a HOCON placeholder but a text value (example: "$prequal.name");
-     *                        the $ means that it is an analogue of a Velocity variable (which name should coincide with
-     *                        a translation key)
-     * @param translationKey  already known translation key (it could be detected from a {@link Template} (Velocity) variable specified
-     *                        in a `templateText'),
-     *                        (for example if `"templateText": "<p class=\"PageContent-text\">$prequal.instruction_body</p>"`
-     *                        then translationKey = `prequal.instruction_body`)
-     * @return String  detected translation key (or null - in case if translations array is null or empty and
-     *                 parameter `translationKey` is null either): in such case it is recommended to throw a StudyBuilder
-     *                 exception
-     */
-    public static String detectTranslationKey(List<Translation> translations, String translationKey) {
-        String detectedTranslationKey = translationKey;
-        if (!isTranslationsEmpty(translations)) {
-            detectedTranslationKey = translations.stream()
-                    .filter(tr -> isTranslationTextContainsKeyName(tr))
-                    .map(t -> detectTranslationShortKey(t))
-                    .findFirst().orElse(translationKey);
-        }
-        return detectedTranslationKey;
-    }
-
-    /**
      * Detect list of langCde which needs to be added to translations array.
      * For example, if a specified array contains translations for 'en', 'es', but in a study
      * specified 'en', 'es', 'fi', 'pl', then it needs to add 'fi' and 'pl'.
@@ -156,9 +111,7 @@ public class TranslationsUtil {
         allTranslations.keySet().forEach(langCde -> {
             boolean addLangCde = true;
             if (!isTranslationsEmpty(translations)) {
-                addLangCde = !translations.stream().anyMatch(tr -> langCde.equals(tr.getLanguageCode()))
-                        || translations.stream()
-                            .anyMatch(tr -> langCde.equals(tr.getLanguageCode()) && isTranslationTextContainsKeyName(tr));
+                addLangCde = !translations.stream().anyMatch(tr -> langCde.equals(tr.getLanguageCode()));
             }
             if (addLangCde) {
                 langCdeList.add(langCde);
@@ -183,29 +136,5 @@ public class TranslationsUtil {
                 .filter(vtt -> variablesFromTemplateText != null && !variablesList.stream().anyMatch(v -> v.getName().equals(vtt)))
                 .collect(Collectors.toList());
         }
-    }
-
-    /**
-     * Check if a {@link Translation} text contains from either
-     * a HOCON parameter (like "${i18n.es.prequal.name}") or from name of a
-     * Velocity variable (like "$prequal.name")
-     */
-    public static boolean isTranslationTextContainsKeyName(Translation translation) {
-        return translation.getText().length() > 1 && translation.getText().charAt(0) == VARIABLE_PREFIX;
-    }
-
-    /**
-     * Detect a {@link Translation} short key (without prefix "i18n.xx") from either
-     * a HOCON parameter (like "${i18n.es.prequal.name}") or from name of a
-     * Velocity variable (like "$prequal.name").
-     */
-    public static String detectTranslationShortKey(Translation translation) {
-        int subsIndexStart = 1;
-        int subsIndexEnd = translation.getText().length();
-        if (startsWith(translation.getText(), TRANSLATION_KEY_HOCON_PREFIX)) {
-            subsIndexStart = TRANSLATION_KEY_FULL_PREFIX_LENGTH;
-            --subsIndexEnd;
-        }
-        return translation.getText().substring(subsIndexStart, subsIndexEnd);
     }
 }

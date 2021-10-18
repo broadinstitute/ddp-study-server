@@ -34,6 +34,7 @@ import org.broadinstitute.ddp.model.activity.types.FormType;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.broadinstitute.ddp.model.study.ActivityMappingType;
 import org.broadinstitute.ddp.studybuilder.translation.ActivityDefTranslationsProcessor;
+import org.broadinstitute.ddp.studybuilder.translation.model.ExtendedFormActivityDef;
 import org.broadinstitute.ddp.util.ConfigUtil;
 import org.broadinstitute.ddp.util.GsonPojoValidator;
 import org.broadinstitute.ddp.util.GsonUtil;
@@ -343,8 +344,13 @@ public class ActivityBuilder {
      * </ul>
      */
     private ActivityDef buildActivityDefFromConfig(Config definition) {
-        ActivityDef activityDef = gson.fromJson(ConfigUtil.toJson(definition), ActivityDef.class);
-        activityDefTranslationsProcessor.run(activityDef);
+        ActivityDef activityDef;
+        if (StudyBuilderContext.CONTEXT.isProcessTranslations()) {
+            activityDef = gson.fromJson(ConfigUtil.toJson(definition), ExtendedFormActivityDef.class);
+            activityDefTranslationsProcessor.run((ExtendedFormActivityDef)activityDef);
+        } else {
+            activityDef = gson.fromJson(ConfigUtil.toJson(definition), ActivityDef.class);
+        }
         validateDefinition(activityDef);
         return activityDef;
     }
