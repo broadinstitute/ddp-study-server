@@ -20,7 +20,7 @@ public class Template {
 
     @NotNull
     @SerializedName("templateType")
-    private final TemplateType templateType;
+    private TemplateType templateType;
 
     @SerializedName("templateCode")
     private String templateCode;
@@ -68,6 +68,10 @@ public class Template {
 
     public TemplateType getTemplateType() {
         return templateType;
+    }
+
+    public void setTemplateType(TemplateType templateType) {
+        this.templateType = templateType;
     }
 
     public String getTemplateCode() {
