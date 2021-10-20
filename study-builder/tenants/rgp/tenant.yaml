@@ -25,8 +25,11 @@ emailTemplates:
     body: ./emails/change_password.html
     from: Rare Genomes Project <##STUDY_EMAIL##>
     subject: >-
-      {% if user.user_metadata.language == "es" %} [es]Reset Your Password
-      {% else %} Reset Your Password {% endif %}
+      {% if user.user_metadata.language == "es" %}
+      Cambie su contraseña
+      {% else %}
+      Reset Your Password
+      {% endif %}
     urlLifetimeInSeconds: 432000
     syntax: liquid
     enabled: true
@@ -36,7 +39,7 @@ emailTemplates:
     resultUrl: '{{ application.callback_domain }}/email-verified-callback'
     subject: >-
       {% if user.user_metadata.language == "es" %}
-      [es] Confirm your Rare Genomes Project Account
+      Confirme su cuenta en el Proyecto Genomas Raros
       {% else %}
       Confirm your Rare Genomes Project Account
       {% endif %}
