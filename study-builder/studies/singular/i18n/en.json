@@ -178,7 +178,7 @@
     "intro3": "Participants must currently reside in the United States or Canada.",
 
     "age": {
-      "prompt": "How old are you?",
+      "prompt": "How old are you?*",
       "placeholder": "Enter age",
       "range_hint": "Please enter an age between 0 and 120",
       "required_hint": "Please enter your age",
@@ -186,24 +186,24 @@
     },
 
     "country": {
-      "prompt": "Where do you currently live?",
-      "label": "Choose country...",
+      "prompt": "Where do you currently live?*",
+      "label": "Select Country",
       "required_hint": "Please choose a country",
       "ineligible_hint": "Project Singular is currently open only to participants in the United States and Territories or Canada. Thank you for your interest."
     },
 
     "state": {
-      "label": "Choose state...",
+      "label": "Select State",
       "required_hint": "Please choose a state"
     },
 
     "province": {
-      "label": "Choose province...",
+      "label": "Select Province",
       "required_hint": "Please choose a province"
     },
 
     "diagnosed": {
-      "prompt": "Do you or your immediate family member have single ventricle heart defect?",
+      "prompt": "Do you or your immediate family member have single ventricle heart defect?*",
       "required_hint": "Please select an answer.",
       "ineligible_hint": "In order to participate in Project Singular, you or a member of your immediate family must have single ventricle heart defect.",
       "tooltip": "An immediate family member includes a biological mother, father, sister, brother, daughter or son of an individual with single ventricle heart defect."
@@ -219,7 +219,7 @@
     "summary_complete": "Thank you for completing this survey!",
 
     "enrolling": {
-      "prompt": "Who are you enrolling?",
+      "prompt": "Who are you enrolling?*",
       "required_hint": "Please select an option",
 
       "myself": "Myself",
@@ -227,7 +227,7 @@
     },
 
     "enrolling_child_diagnosed": {
-      "prompt": "Who in your family has single ventricle heart defect?",
+      "prompt": "Who in your family has single ventricle heart defect?*",
       "required_hint": "Please select an option",
       "ineligible_hint": "Only an individual with single ventricle heart defect or immediate family members of an individual with single ventricle heart defect can be enrolled.",
 
@@ -240,7 +240,7 @@
     },
 
     "enrolling_child_age": {
-      "prompt": "How old is your child?",
+      "prompt": "How old is your child?*",
       "placeholder": "Enter age",
       "range_hint": "Please enter an age between 0 and 100",
       "required_hint": "Please enter your child's age",
@@ -248,13 +248,13 @@
     },
 
     "incapacitated": {
-      "prompt": "Does your child have a cognitive impairment that impacts their understanding of words commonly used by others in their age group?",
+      "prompt": "Does your child have a cognitive impairment that impacts their understanding of words commonly used by others in their age group?*",
       "required_hint": "Please select an option",
       "tooltip": "Children age 7 and up should be told about the study in age-appropriate language and given an opportunity to say whether or not they would like to participate which is called giving assent. After reading the assent form or having a parent read it to them, the child can say yes or no to participating. If your child has a cognitive impairment, other developmental disability, language or learning difficulties, you should decide whether your child can understand information about the study, which is written in language appropriate for children as young as seven to understand. If so, please include your child in the assent process."
     },
 
     "enrolling_myself_diagnosed": {
-      "prompt": "Who in your family has single ventricle heart defect?",
+      "prompt": "Who in your family has single ventricle heart defect?*",
       "required_hint": "Please select an option",
       "ineligible_hint": "Only an individual with single ventricle heart defect or immediate family members of an individual with single ventricle heart defect can be enrolled.",
 
@@ -269,7 +269,7 @@
     }
   },
   "consent_self": {
-    "name": "Consent Self",
+    "name": "Consent",
     "title": "PROJECT SINGULAR<br>RESEARCH CONSENT FORM",
 
     "intro": {
@@ -278,8 +278,8 @@
       "p3": "Principal Investigator: Kirstie E Keller, PhD",
       "p4": "Study Staff: Diane Pickles",
       "p5": "Contact: <a href=\"mailto:contact@projectsingular.org\" class=\"Link\">contact@projectsingular.org</a>",
-      "p6": "Please carefully read the consent form below. Click “Next” when you are done with this page. This will let you move to the next page. If you have questions about Project Singular or this form, please ask us. You can call us at <a href=\"tel:(650) 761-6486\" class=\"Link\">(650) 761-6486</a>. Or you can email us at <a href=\"mailto:contact@projectsingular.org\" class=\"Link\">contact@projectsingular.org</a>.",
-      "p7": "We encourage you to <a href=\"https://storage.googleapis.com/\"\"\"${assetsBucketName}\"\"\"/consent_self.pdf\" target=\"_blank\"download class=\"consent-download__link\">download</a> a PDF version of the consent form and read it carefully."
+      "p6": "Please carefully read the consent form below. Click “Next” when you are done with this page. If you have questions about Project Singular or this form, please ask us. You can call us at <a href=\"tel:(650) 761-6486\" class=\"Link\">(650) 761-6486</a>. Or you can email us at <a href=\"mailto:contact@projectsingular.org\" class=\"Link\">contact@projectsingular.org</a>.",
+      "p7": """We encourage you to <a href="https://storage.googleapis.com/"""${assetsBucketName}"""/consent_self.pdf" target="_blank" download class="consent-download__link">download</a> a PDF version of the consent form and read it carefully."""
     },
 
     "summary_created": "Please complete this questionnaire so that we may learn more about you.",
@@ -534,23 +534,23 @@
         "subject_declined": "The subject is not able to assent because the capability of the subject is so limited that the subject cannot reasonably be consulted."
       },
       "finding_genes": {
-        "prompt": "If a secondary finding is found in my genes:",
+        "prompt": "If a secondary finding is found in my genes:*",
         "option_know": "I want to know.",
         "option_not_know": "I do not want to know.",
         "required_hint": "Please select an option"
       },
       "first_name": {
-        "prompt": "First Name",
+        "prompt": "First Name*",
         "placeholder": "First Name",
         "required_hint": "Please type in your first name"
       },
       "last_name": {
-        "prompt": "Last Name",
+        "prompt": "Last Name*",
         "placeholder": "Last Name",
         "required_hint": "Please type in your last name"
       },
       "date_of_birth": {
-        "prompt": "Your Date of Birth",
+        "prompt": "Your Date of Birth*",
         "placeholder": "MM / DD / YYYY",
         "required_hint": "Please enter your date of birth",
         "format_hint": "Please enter your date of birth in MM DD YYYY format"
@@ -561,17 +561,17 @@
         "required_hint": "Please select an option"
       },
       "your_signature": {
-        "prompt": "Your Signature:",
+        "prompt": "Your Signature:*",
         "placeholder": "Signature of adult subject capable of consent",
         "required_hint": "Please provide your signature"
       },
       "legally_signature": {
-        "prompt": "Subjects in need of a Legally Authorized Representative:",
+        "prompt": "Subjects in need of a Legally Authorized Representative:*",
         "placeholder": "Signature of Legally Authorized Representative",
         "required_hint": "Please provide your signature"
       },
       "signature_subject": {
-        "prompt": "AUTHORIZATION SIGNATURE",
+        "prompt": "AUTHORIZATION SIGNATURE*",
         "placeholder": "Signature of Subject/Legally Authorized Representative",
         "required_hint": "Please provide your signature"
       },
@@ -581,7 +581,7 @@
     }
   },
   "consent_parental": {
-    "name": "Consent Parental",
+    "name": "Parental Consent",
     "title": "PROJECT SINGULAR<br>RESEARCH CONSENT FORM",
     "intro": {
       "p1": "Parents/Guardians and Other Legally Authorized Representatives of Affected Children and Children Who Are Immediate Family Members of Affected Individuals",
@@ -589,8 +589,8 @@
       "p3": "Principal Investigator: Kirstie E Keller, PhD",
       "p4": "Study Staff: Diane Pickles",
       "p5": "Contact: <a href=\"mailto:contact@projectsingular.org\" class=\"Link\">contact@projectsingular.org</a>",
-      "p6": "Please carefully read the consent form below. Click “Next” when you are done with this page. This will let you move to the next page. If you have questions about Project Singular or this form, please ask us. You can call us at <a href=\"tel:(650) 761-6486\" class=\"Link\">(650) 761-6486</a>. Or you can email us at <a href=\"mailto:contact@projectsingular.org\" class=\"Link\">contact@projectsingular.org</a>.",
-      "p7": "We encourage you to <a href=\"https://storage.googleapis.com/\"\"\"${assetsBucketName}\"\"\"/consent_parental.pdf\" target=\"_blank\"download class=\"consent-download__link\">download</a> a PDF version of the consent form and read it carefully."
+      "p6": "Please carefully read the consent form below. Click “Next” when you are done with each page. This will let you move to the next page. If you have questions about Project Singular or this form, please ask us. You can call us at <a href=\"tel:(650) 761-6486\" class=\"Link\">(650) 761-6486</a>. Or you can email us at <a href=\"mailto:contact@projectsingular.org\" class=\"Link\">contact@projectsingular.org</a>.",
+      "p7": """We encourage you to <a href="https://storage.googleapis.com/"""${assetsBucketName}"""/consent_parental.pdf" target="_blank " download class="consent-download__link">download</a> a PDF version of the consent form and read it carefully."""
     },
     "summary_created": "Please complete this questionnaire so that we may learn more about you.",
     "summary_in_progress": "Please complete this questionnaire so that we may learn more about you.",
@@ -816,51 +816,51 @@
         "required_hint": "Please confirm assent"
       },
       "finding_genes": {
-        "prompt": "If a secondary finding is found in my child’s genes:",
+        "prompt": "If a secondary finding is found in my child’s genes:*",
         "option_know": "I want to know.",
         "option_not_know": "I do not want to know.",
         "required_hint": "Please select an option"
       },
       "first_name": {
         "prompt": "First Name",
-        "placeholder": "First Name",
+        "placeholder": "First Name*",
         "required_hint": "Please type in your first name"
       },
       "last_name": {
         "prompt": "Last Name",
-        "placeholder": "Last Name",
+        "placeholder": "Last Name*",
         "required_hint": "Please type in your last name"
       },
       "date_of_birth": {
-        "prompt": "Your Date of Birth",
+        "prompt": "Your Date of Birth*",
         "placeholder": "MM / DD / YYYY",
         "required_hint": "Please enter your date of birth",
         "format_hint": "Please enter your date of birth in MM DD YYYY format"
       },
       "child_date_of_birth": {
-        "prompt": "Your Child’s Date of Birth:",
+        "prompt": "Your Child’s Date of Birth:*",
         "placeholder": "MM / DD / YYYY",
         "required_hint": "Please enter your date of birth",
         "format_hint": "Please enter your date of birth in MM DD YYYY format"
       },
       "guardian_signature": {
-        "prompt": "Parent/Guardian/Legally Authorized Representative’s Signature:",
+        "prompt": "Parent/Guardian/Legally Authorized Representative’s Signature:*",
         "placeholder": "Signature",
         "required_hint": "Please provide your signature"
       },
       "person_providing": {
-        "prompt": "Person Providing Consent",
+        "prompt": "Person Providing Consent*",
         "placeholder": "Signature",
         "required_hint": "Please provide your signature"
       },
       "relationship": {
-        "prompt": "Relationship to subject:",
+        "prompt": "Relationship to subject:*",
         "option_parent": "Parent",
         "option_guardian": "Guardian/Legally Authorized Representative",
         "required_hint": "Please check one of the boxes above"
       },
       "signature_parent_guardian": {
-        "prompt": "AUTHORIZATION SIGNATURE",
+        "prompt": "AUTHORIZATION SIGNATURE*",
         "placeholder": "Signature of Parent/Guardian",
         "required_hint": "Please provide your signature"
       },
@@ -903,17 +903,17 @@
         "subject_declined": "The subject is not able to assent because the capability of the subject is so limited that the subject cannot reasonably be consulted."
       },
       "full_name": {
-        "prompt": "First Name",
-        "placeholder": "First Name",
+        "prompt": "Full Name*",
+        "placeholder": "Full Name",
         "required_hint": "Please type in your full name"
       },
       "child_assent_signature": {
-        "prompt": "Child/Adolescent Assent",
+        "prompt": "Child/Adolescent Assent*",
         "placeholder": "Signature",
         "required_hint": "Please provide your signature"
       },
       "guardian_assent_signature": {
-        "prompt": "Signature of person obtaining assent (parent/guardian)",
+        "prompt": "Signature of person obtaining assent (parent/guardian)*",
         "placeholder": "Signatufre of person obtaining assent",
         "required_hint": "Please provide your signature"
       },
@@ -927,18 +927,18 @@
     "title": "$ddp.checkAnswer(\"ABOUT_HEALTHY_WHO_ENROLLING_HIDDEN\",\"ENROLLING_MYSELF\", \"About MySelf - Healthy\", \"About My Child - Healthy\")",
     "questions": {
       "first_name": {
-        "prompt": "$ddp.checkAnswer(\"ABOUT_HEALTHY_WHO_ENROLLING_HIDDEN\",\"ENROLLING_MYSELF\", \"Your First Name\", \"Your Child's First Name\")",
+        "prompt": "$ddp.checkAnswer(\"ABOUT_HEALTHY_WHO_ENROLLING_HIDDEN\",\"ENROLLING_MYSELF\", \"Your First Name\", \"Your Child's First Name\")*",
         "placeholder": "$ddp.checkAnswer(\"ABOUT_HEALTHY_WHO_ENROLLING_HIDDEN\",\"ENROLLING_MYSELF\", \"Your First Name\", \"Your Child's First Name\")",
         "required_hint": "$ddp.checkAnswer(\"ABOUT_HEALTHY_WHO_ENROLLING_HIDDEN\",\"ENROLLING_MYSELF\", \"Please enter your name\", \"Please enter your child’s name\")"
       },
       "last_name": {
-        "prompt": "$ddp.checkAnswer(\"ABOUT_HEALTHY_WHO_ENROLLING_HIDDEN\",\"ENROLLING_MYSELF\", \"Your Last Name\", \"Your Child's Last Name\")",
+        "prompt": "$ddp.checkAnswer(\"ABOUT_HEALTHY_WHO_ENROLLING_HIDDEN\",\"ENROLLING_MYSELF\", \"Your Last Name\", \"Your Child's Last Name\")*",
         "placeholder": "$ddp.checkAnswer(\"ABOUT_HEALTHY_WHO_ENROLLING_HIDDEN\",\"ENROLLING_MYSELF\", \"Your Last Name\", \"Your Child's Last Name\")",
         "required_hint": "$ddp.checkAnswer(\"ABOUT_HEALTHY_WHO_ENROLLING_HIDDEN\",\"ENROLLING_MYSELF\", \"Please enter your name\", \"Please enter your child’s name\")"
       },
       "address_title": "$ddp.checkAnswer(\"ABOUT_HEALTHY_WHO_ENROLLING_HIDDEN\",\"ENROLLING_MYSELF\", \"Your Mailing Address:\", \"Your Child's Mailing Address:\")",
       "what_is_relationship" : {
-        "prompt": "What is your relationship to an individual with a single ventricle defect?",
+        "prompt": "What is your relationship to an individual with a single ventricle defect?*",
         "biological_mother": "Biological mother",
         "biological_father": "Biological father",
         "biological_brother": "Biological brother",
@@ -948,7 +948,7 @@
         "required_hint": "Please select an answer."
       },
       "what_is_your_childs_relationship" : {
-        "prompt": "What is your child's relationship to an individual with a single ventricle defect?)",
+        "prompt": "What is your child's relationship to an individual with a single ventricle defect?*",
         "biological_brother": "Biological brother",
         "biological_sister": "Biological sister",
         "biological_child": "Biological child",
@@ -1000,12 +1000,12 @@
     "title": "$ddp.checkAnswer(\"ABOUT_PATIENT_WHO_ENROLLING_HIDDEN\",\"ENROLLING_MYSELF\", \"About MySelf\", \"About My Child\")",
     "questions": {
       "first_name": {
-        "prompt": "$ddp.checkAnswer(\"ABOUT_PATIENT_WHO_ENROLLING_HIDDEN\",\"ENROLLING_MYSELF\", \"Your First Name\", \"Your Child's First Name\")",
+        "prompt": "$ddp.checkAnswer(\"ABOUT_PATIENT_WHO_ENROLLING_HIDDEN\",\"ENROLLING_MYSELF\", \"Your First Name\", \"Your Child's First Name\")*",
         "placeholder": "$ddp.checkAnswer(\"ABOUT_PATIENT_WHO_ENROLLING_HIDDEN\",\"ENROLLING_MYSELF\", \"Your First Name\", \"Your Child's First Name\")",
         "required_hint": "$ddp.checkAnswer(\"ABOUT_PATIENT_WHO_ENROLLING_HIDDEN\",\"ENROLLING_MYSELF\", \"Please enter your name\", \"Please enter your child’s name\")"
       },
       "last_name": {
-        "prompt": "$ddp.checkAnswer(\"ABOUT_PATIENT_WHO_ENROLLING_HIDDEN\",\"ENROLLING_MYSELF\", \"Your Last Name\", \"Your Child's Last Name\")",
+        "prompt": "$ddp.checkAnswer(\"ABOUT_PATIENT_WHO_ENROLLING_HIDDEN\",\"ENROLLING_MYSELF\", \"Your Last Name\", \"Your Child's Last Name\")*",
         "placeholder": "$ddp.checkAnswer(\"ABOUT_PATIENT_WHO_ENROLLING_HIDDEN\",\"ENROLLING_MYSELF\", \"Your Last Name\", \"Your Child's Last Name\")",
         "required_hint": "$ddp.checkAnswer(\"ABOUT_PATIENT_WHO_ENROLLING_HIDDEN\",\"ENROLLING_MYSELF\", \"Please enter your name\", \"Please enter your child’s name\")"
       },
@@ -1051,8 +1051,8 @@
         "primary_care": "Primary care",
         "pediatrician": "Pediatrician",
         "cardiologist": "Cardiologist",
-        "other_physician": "Other physician (box to type in speciality)",
-        "other_physician_details": "OTHER PHYSICIAN",
+        "other_physician": "Other physician",
+        "other_physician_details": "Select speciality",
 
         "name": "PHYSICIAN NAME:",
         "institution": "HOSPITAL, CLINIC, OR PROVIDER NAME (if any):",
@@ -1064,7 +1064,7 @@
         "additional_title": "Other Physician",
 
         "validations": {
-          "required_field" : "This field is required"
+          "required_field" : "Please fill required fields"
         },
 
         "upload": {
@@ -1074,19 +1074,20 @@
         }
       },
       "name": {
-        "prompt": "Name",
+        "prompt": "Name*",
         "placeholder": "Your name",
         "required_hint": "Please type in your name"
       },
       "dob": {
-        "prompt": "$ddp.checkAnswer(\"MRR_WHO_ENROLLING_COPY\",\"ENROLLING_MYSELF\", \"PATIENT DATE OF BIRTH:\", \"YOUR CHILD’S DATE OF BIRTH: \")",
-        "required_hint": "$ddp.checkAnswer(\"MRR_WHO_ENROLLING_COPY\",\"ENROLLING_MYSELF\", \"Please enter your date of birth\", \"Please enter your child’s date of birth\")",
-        "format_hint": "$ddp.checkAnswer(\"MRR_WHO_ENROLLING_COPY\",\"ENROLLING_MYSELF\", \"Please enter your date of birth in MM DD YYYY format\", \"Please enter your child’s date of birth in MM DD YYYY format\")"
+        "prompt": "$ddp.checkAnswer(\"MRR_WHO_ENROLLING_COPY\",\"ENROLLING_MYSELF\", \"PATIENT DATE OF BIRTH:\", \"YOUR CHILD’S DATE OF BIRTH: \")*",
+        "required_hint": "$ddp.checkAnswer(\"MRR_WHO_ENROLLING_COPY\",\"ENROLLING_MYSELF\", \"Please type in your date of birth\", \"Please type in your child’s date of birth\")",
+        "format_hint": "$ddp.checkAnswer(\"MRR_WHO_ENROLLING_COPY\",\"ENROLLING_MYSELF\", \"Please type in your date of birth in MM DD YYYY format\", \"Please type in your child’s date of birth in MM DD YYYY format\")"
       },
       "date": {
         "title": "Date"
       }
-    }
+    },
+    "phone_hint": "Please type in valid phone number"
   },
 
   "medical_record_upload": {
@@ -1106,17 +1107,17 @@
     "title": "$ddp.checkAnswer(\"PATIENT_SURVEY_WHO_ENROLLING_HIDDEN\",\"ENROLLING_MYSELF\", \"Patient Survey - Self Enrollment\", \"Patient Survey - Child Enrollment\")",
     "questions": {
       "what_city_did_you_live": {
-        "prompt": "$ddp.checkAnswer(\"PATIENT_SURVEY_WHO_ENROLLING_HIDDEN\",\"ENROLLING_MYSELF\", \"What city did you live in when you were born? (Please note, we want to know where you lived, not necessarily the city in which you were born.)\", \"What city did your child live in when they were born? (Please note, we want to know where your child lived, not necessarily the city in which your child was born.)\")",
+        "prompt": "$ddp.checkAnswer(\"PATIENT_SURVEY_WHO_ENROLLING_HIDDEN\",\"ENROLLING_MYSELF\", \"What city did you live in when you were born? (Please note, we want to know where you lived, not necessarily the city in which you were born.)\", \"What city did your child live in when they were born? (Please note, we want to know where your child lived, not necessarily the city in which your child was born.)\")*",
         "placeholder": "",
         "required_hint": ""
       },
       "what_state_or_province_did_you_live": {
-        "prompt": "$ddp.checkAnswer(\"PATIENT_SURVEY_WHO_ENROLLING_HIDDEN\",\"ENROLLING_MYSELF\", \"What state or province did you live in when you were born? (Please note, we want to know where you lived, not necessarily the state or province in which you were born.)\", \"What state or province did your child live in when they were born? (Please note, we want to know where your child lived, not necessarily the state or province in which your child was born.)\")",
+        "prompt": "$ddp.checkAnswer(\"PATIENT_SURVEY_WHO_ENROLLING_HIDDEN\",\"ENROLLING_MYSELF\", \"What state or province did you live in when you were born? (Please note, we want to know where you lived, not necessarily the state or province in which you were born.)\", \"What state or province did your child live in when they were born? (Please note, we want to know where your child lived, not necessarily the state or province in which your child was born.)\")*",
         "placeholder": "",
         "required_hint": "Please enter a state or province"
       },
       "if_you_remember": {
-        "prompt": "$ddp.checkAnswer(\"PATIENT_SURVEY_WHO_ENROLLING_HIDDEN\",\"ENROLLING_MYSELF\", \"If you remember, what was the zip code or postal code of the city you lived in when you were born?\", \"If you remember, what was the zip code or postal code of the city you lived in when your child was born?\")",
+        "prompt": "$ddp.checkAnswer(\"PATIENT_SURVEY_WHO_ENROLLING_HIDDEN\",\"ENROLLING_MYSELF\", \"If you remember, what was the zip code or postal code of the city you lived in when you were born?\", \"If you remember, what was the zip code or postal code of the city you lived in when your child was born?\")*",
         "placeholder": "",
         "required_hint": ""
       },
@@ -1126,7 +1127,7 @@
         "required_hint": "Please choose an option"
       },
       "what_was_your_recorded": {
-        "prompt": "$ddp.checkAnswer(\"PATIENT_SURVEY_WHO_ENROLLING_HIDDEN\",\"ENROLLING_MYSELF\", \"What was your recorded sex at birth?  (We ask this question to help us learn about the unique characteristics of each person in our study which may help us better understand genetics and/or risk.  We recognize that individuals do not always identify with their recorded sex at birth.)\", \"What was your child's recorded sex at birth?  (We ask this question to help us learn about the unique characteristics of each person in our study which may help us better understand genetics and/or risk.  We recognize that individuals do not always identify with their recorded sex at birth.)\")",
+        "prompt": "$ddp.checkAnswer(\"PATIENT_SURVEY_WHO_ENROLLING_HIDDEN\",\"ENROLLING_MYSELF\", \"What was your recorded sex at birth?  (We ask this question to help us learn about the unique characteristics of each person in our study which may help us better understand genetics and/or risk.  We recognize that individuals do not always identify with their recorded sex at birth.)\", \"What was your child's recorded sex at birth?  (We ask this question to help us learn about the unique characteristics of each person in our study which may help us better understand genetics and/or risk.  We recognize that individuals do not always identify with their recorded sex at birth.)\")*",
         "required_hint": "Please choose an option",
         "male": "male",
         "female": "female",
@@ -1135,7 +1136,7 @@
         "prefer_not_to_answer": "$ddp.checkAnswer(\"PATIENT_SURVEY_WHO_ENROLLING_HIDDEN\",\"ENROLLING_MYSELF\", \"Prefer not to answer\", \"Prefer not to say\")"
       },
       "what_is_your_race": {
-        "prompt": "$ddp.checkAnswer(\"PATIENT_SURVEY_WHO_ENROLLING_HIDDEN\",\"ENROLLING_MYSELF\", \"What is your race?  (We ask this question to help us learn about the unique characteristics of each person in our study which may help us to better understand genetics and/or risk.)\", \"What is your child's race?  (We ask this question to help us learn about the unique characteristics of each person in our study which may help us to better understand genetics and/or risk.)\")",
+        "prompt": "$ddp.checkAnswer(\"PATIENT_SURVEY_WHO_ENROLLING_HIDDEN\",\"ENROLLING_MYSELF\", \"What is your race?  (We ask this question to help us learn about the unique characteristics of each person in our study which may help us to better understand genetics and/or risk.)\", \"What is your child's race?  (We ask this question to help us learn about the unique characteristics of each person in our study which may help us to better understand genetics and/or risk.)\")*",
         "required_hint": "Please choose an option",
         "white": "White",
         "black_or_african_american": "Black or African American",
@@ -1146,7 +1147,7 @@
         "prefer_not_to_answer": "Prefer not to answer"
       },
       "are_you_of_hispanic": {
-        "prompt": "$ddp.checkAnswer(\"PATIENT_SURVEY_WHO_ENROLLING_HIDDEN\",\"ENROLLING_MYSELF\", \"Are you of Hispanic or Latino ethnicity?  (We ask this question to help us learn about the unique characteristics of each person in our study which may help us better understand genetics and/or risk.)\", \"Is your child of Hispanic or Latino ethnicity?  (We ask this question to help us learn about the unique characteristics of each person in our study which may help us better understand genetics and/or risk.)\")",
+        "prompt": "$ddp.checkAnswer(\"PATIENT_SURVEY_WHO_ENROLLING_HIDDEN\",\"ENROLLING_MYSELF\", \"Are you of Hispanic or Latino ethnicity?  (We ask this question to help us learn about the unique characteristics of each person in our study which may help us better understand genetics and/or risk.)\", \"Is your child of Hispanic or Latino ethnicity?  (We ask this question to help us learn about the unique characteristics of each person in our study which may help us better understand genetics and/or risk.)\")*",
         "required_hint": "Please choose an option",
         "yes": "Yes",
         "no": "No",
@@ -1154,7 +1155,7 @@
       },
       "select_your_single_ventricle": {
         "prompt": {
-          "p1": "$ddp.checkAnswer(\"PATIENT_SURVEY_WHO_ENROLLING_HIDDEN\",\"ENROLLING_MYSELF\", \"Select your single ventricle diagnosis from the list provided.\", \"Select your child's single ventricle diagnosis from the list provided.\")",
+          "p1": "$ddp.checkAnswer(\"PATIENT_SURVEY_WHO_ENROLLING_HIDDEN\",\"ENROLLING_MYSELF\", \"Select your single ventricle diagnosis from the list provided.\", \"Select your child's single ventricle diagnosis from the list provided.\")*",
           "p2": "If you are unsure, choose your best guess or select other."
         },
         "required_hint": "Please choose an option",
