@@ -1,4 +1,4 @@
-package org.broadinstitute.ddp.service;
+package org.broadinstitute.ddp.service.userdelete;
 
 import java.io.IOException;
 import java.util.Collection;

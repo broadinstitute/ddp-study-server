@@ -12,10 +12,7 @@ public class UpdateProfileConstants {
      */
     public static final String TASK_TYPE__UPDATE_PROFILE = "UPDATE_PROFILE";
 
-    // attribute names
-    public static final String ATTR_PARTICIPANT_GUID = "participantGuid";
-    public static final String ATTR_USER_ID = "userId";
-    public static final String ATTR_STUDY_GUID = "studyGuid";
+    public static final String ATTR_NAME__USER_ID = "userId";
 
     // possible payload fields
     static final String FIELD_EMAIL = "email";
