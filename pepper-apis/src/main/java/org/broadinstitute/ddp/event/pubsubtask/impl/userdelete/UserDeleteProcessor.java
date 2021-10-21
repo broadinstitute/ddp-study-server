@@ -22,6 +22,12 @@ import org.elasticsearch.client.RestHighLevelClient;
  */
 public class UserDeleteProcessor extends PubSubTaskProcessorAbstract {
 
+    /**
+     * {@link PubSubTask} taskType for a user deletion
+     */
+    public static final String TASK_TYPE__USER_DELETE = "USER_DELETE";
+
+
     @Override
     public void handleTask(PubSubTask pubSubTask) {
         UserFullDeleteService userFullDeleteService = createUserDeleteService();

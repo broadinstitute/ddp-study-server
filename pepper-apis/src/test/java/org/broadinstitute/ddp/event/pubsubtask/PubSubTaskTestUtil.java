@@ -5,7 +5,7 @@ import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTask.ATTR_NAME__
 import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTask.ATTR_NAME__TASK_TYPE;
 import static org.broadinstitute.ddp.event.pubsubtask.impl.updateprofile.UpdateProfileConstants.ATTR_NAME__USER_ID;
 import static org.broadinstitute.ddp.event.pubsubtask.impl.updateprofile.UpdateProfileConstants.TASK_TYPE__UPDATE_PROFILE;
-import static org.broadinstitute.ddp.event.pubsubtask.impl.userdelete.UserDeleteConstants.TASK_TYPE__USER_DELETE;
+import static org.broadinstitute.ddp.event.pubsubtask.impl.userdelete.UserDeleteProcessor.TASK_TYPE__USER_DELETE;
 
 import com.google.protobuf.ByteString;
 import com.google.pubsub.v1.PubsubMessage;

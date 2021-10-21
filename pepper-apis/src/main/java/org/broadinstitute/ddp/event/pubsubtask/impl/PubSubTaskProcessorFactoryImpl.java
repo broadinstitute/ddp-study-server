@@ -1,7 +1,7 @@
 package org.broadinstitute.ddp.event.pubsubtask.impl;
 
 import static org.broadinstitute.ddp.event.pubsubtask.impl.updateprofile.UpdateProfileConstants.TASK_TYPE__UPDATE_PROFILE;
-import static org.broadinstitute.ddp.event.pubsubtask.impl.userdelete.UserDeleteConstants.TASK_TYPE__USER_DELETE;
+import static org.broadinstitute.ddp.event.pubsubtask.impl.userdelete.UserDeleteProcessor.TASK_TYPE__USER_DELETE;
 
 import org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskProcessorFactory;
 import org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskProcessorFactoryAbstract;

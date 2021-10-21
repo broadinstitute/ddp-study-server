@@ -11,7 +11,7 @@ import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTask.ATTR_NAME__
 import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskResult.ATTR_TASK__MESSAGE_ID;
 import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskResult.PubSubTaskResultType.ERROR;
 import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskResult.PubSubTaskResultType.SUCCESS;
-import static org.broadinstitute.ddp.event.pubsubtask.impl.userdelete.UserDeleteConstants.TASK_TYPE__USER_DELETE;
+import static org.broadinstitute.ddp.event.pubsubtask.impl.userdelete.UserDeleteProcessor.TASK_TYPE__USER_DELETE;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
 
@@ -21,7 +21,7 @@ import org.broadinstitute.ddp.event.pubsubtask.impl.PubSubTaskMessageTestAbstrac
 import org.junit.Test;
 
 /**
- * Tests to verify processing PubSub task of type {@link UserDeleteConstants#TASK_TYPE__USER_DELETE}
+ * Tests to verify processing PubSub task of type {@link UserDeleteProcessor#TASK_TYPE__USER_DELETE}
  */
 public class PubSubTaskUserDeleteMessageTest extends PubSubTaskMessageTestAbstract {
 
