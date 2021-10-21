@@ -196,7 +196,7 @@ function (user, context, callback) {
             if (cloudLoggingEnabled) {
                 var severity = "INFO";
 
-                if ( !!pepper_params.mode ) {
+                if (pepper_params.mode) {
                     if ( (pepper_params.mode === 'signup') && (!pepper_params.tempUserGuid) ) {
                         severity = "ERROR";
                     }
