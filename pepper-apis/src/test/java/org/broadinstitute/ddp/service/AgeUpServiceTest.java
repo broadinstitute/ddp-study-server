@@ -283,7 +283,7 @@ public class AgeUpServiceTest extends TxnAwareBaseTest {
         assertNotNull(instance.getId());
 
         BoolAnswer answer = new BoolAnswer(null, boolStableId, null, true);
-        handle.attach(AnswerDao.class).createAnswer(user.getId(), activity.getActivityId(), answer);
+        handle.attach(AnswerDao.class).createAnswer(user.getId(), instance.getId(), answer);
         assertNotNull(answer.getAnswerId());
 
         return instance;
