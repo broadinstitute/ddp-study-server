@@ -5,8 +5,10 @@ import static spark.Spark.halt;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
@@ -214,11 +216,21 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
                 throw new DDPException("There is already an account-bearing user for invitation " + invitationGuid);
             }
 
+            List<Governance> governances;
+            try (Stream<Governance> governanceStream = handle.attach(UserGovernanceDao.class)
+                    .findActiveGovernancesByParticipantAndStudyGuids(user.getGuid(), studyGuid)) {
+                governances = governanceStream.collect(Collectors.toList());
+            }
+
+            String operatorGuid = (!governances.isEmpty())
+                    ? governances.stream().findFirst().get().getProxyUserGuid()
+                    : user.getGuid();
+
             // verify that there is governance policy configured for the study and that the
             // user has reached age of majority.
             GovernancePolicy policy = handle.attach(StudyGovernanceDao.class).findPolicyByStudyGuid(studyGuid).orElse(null);
             if (policy != null) {
-                if (policy.hasReachedAgeOfMajority(handle, interpreter, user.getGuid())) {
+                if (policy.hasReachedAgeOfMajority(handle, interpreter, user.getGuid(), operatorGuid)) {
                     LOG.info("Assigning {} to user {} for invitation {}", auth0UserId, user.getGuid(), invitationGuid);
 
                     var numRows = userDao.updateAuth0UserId(user.getGuid(), auth0UserId);

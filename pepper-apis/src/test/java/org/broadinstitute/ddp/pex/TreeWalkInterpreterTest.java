@@ -27,7 +27,9 @@ import org.broadinstitute.ddp.db.dao.InvitationDao;
 import org.broadinstitute.ddp.db.dao.InvitationFactory;
 import org.broadinstitute.ddp.db.dao.JdbiUserStudyEnrollment;
 import org.broadinstitute.ddp.db.dao.StudyGovernanceDao;
+import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dao.UserProfileDao;
+import org.broadinstitute.ddp.db.dao.UserGovernanceDao;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.db.dto.InvitationDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
@@ -68,10 +70,12 @@ import org.broadinstitute.ddp.model.event.ActivityInstanceStatusChangeSignal;
 import org.broadinstitute.ddp.model.event.DsmNotificationSignal;
 import org.broadinstitute.ddp.model.event.EventSignal;
 import org.broadinstitute.ddp.model.governance.AgeOfMajorityRule;
+import org.broadinstitute.ddp.model.governance.Governance;
 import org.broadinstitute.ddp.model.governance.GovernancePolicy;
 import org.broadinstitute.ddp.model.invitation.InvitationType;
 import org.broadinstitute.ddp.model.pex.Expression;
 import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
+import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.util.ConfigManager;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
 import org.broadinstitute.ddp.util.TestUtil;
@@ -88,6 +92,7 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
     private static String userGuid;
     private static String studyGuid;
     private static String activityCode;
+    private static long activityId;
     private static ActivityInstanceDto firstInstance;
     private static ActivityInstanceDto secondInstance;
     private static String boolStableId;
@@ -189,9 +194,39 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
         ActivityInstanceDao activityInstanceDao = handle.attach(ActivityInstanceDao.class);
         firstInstance = activityInstanceDao.insertInstance(form.getActivityId(), userGuid);
         secondInstance = activityInstanceDao.insertInstance(form.getActivityId(), userGuid);
+        activityId = form.getActivityId();
 
         activityInstanceDao.saveSubstitutions(firstInstance.getId(), Map.of(
                 I18nTemplateConstants.Snapshot.TEST_RESULT_CODE, "NEGATIVE"));
+    }
+
+    @Test
+    public void testEval_operator_boolDefaultLatestAnswerQueryContextQuery_hasTrueAnswer() {
+
+        String expr = String.format(
+                "operator.studies[\"%s\"].forms[\"%s\"].questions[\"%s\"].answers.hasTrue()",
+                studyGuid, activityCode, boolStableId);
+
+        TransactionWrapper.useTxn(handle -> {
+            String operatorGuid = testData.getUserGuid();
+            long operatorId = testData.getUserId();
+
+            Governance gov = handle.attach(UserGovernanceDao.class)
+                    .createGovernedUserWithGuidAlias(testData.getClientId(), operatorId);
+            User user = handle.attach(UserDao.class).findUserById(gov.getGovernedUserId()).get();
+
+            ActivityInstanceDao activityInstanceDao = handle.attach(ActivityInstanceDao.class);
+            ActivityInstanceDto instance = activityInstanceDao.insertInstance(activityId,
+                    operatorGuid);
+
+            BoolAnswer answer = new BoolAnswer(null, boolStableId, null, true);
+            handle.attach(AnswerDao.class).createAnswer(user.getId(), instance.getId(), answer);
+
+            assertTrue(new TreeWalkInterpreter().eval(expr, handle, user.getGuid(), operatorGuid, instance.getGuid()));
+
+            handle.rollback();
+        });
+
     }
 
     @Test

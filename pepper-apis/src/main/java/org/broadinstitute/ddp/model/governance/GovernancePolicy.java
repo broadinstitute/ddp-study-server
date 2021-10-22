@@ -83,23 +83,24 @@ public class GovernancePolicy {
                 .findFirst();
     }
 
-    public boolean hasReachedAgeOfMajority(Handle handle, PexInterpreter interpreter, String userGuid,
+    public boolean hasReachedAgeOfMajority(Handle handle, PexInterpreter interpreter, String userGuid, String operatorGuid,
                                            LocalDate birthDate, LocalDate today) {
-        return getApplicableAgeOfMajorityRule(handle, interpreter, userGuid, userGuid)
+        return getApplicableAgeOfMajorityRule(handle, interpreter, userGuid, operatorGuid)
                 .map(rule -> rule.hasReachedAgeOfMajority(birthDate, today))
                 .orElse(false);
     }
 
-    public boolean hasReachedAgeOfMajority(Handle handle, PexInterpreter interpreter, String userGuid, LocalDate birthDate) {
+    public boolean hasReachedAgeOfMajority(Handle handle, PexInterpreter interpreter, String userGuid, String operatorGuid,
+                                           LocalDate birthDate) {
         LocalDate today = Instant.now().atZone(ZoneOffset.UTC).toLocalDate();
-        return hasReachedAgeOfMajority(handle, interpreter, userGuid, birthDate, today);
+        return hasReachedAgeOfMajority(handle, interpreter, userGuid, operatorGuid, birthDate, today);
     }
 
-    public boolean hasReachedAgeOfMajority(Handle handle, PexInterpreter interpreter, String userGuid) {
+    public boolean hasReachedAgeOfMajority(Handle handle, PexInterpreter interpreter, String userGuid, String operatorGuid) {
         UserProfile profile = handle.attach(UserProfileDao.class).findProfileByUserGuid(userGuid).orElse(null);
         if (profile == null || profile.getBirthDate() == null) {
             throw new DDPException("User with guid " + userGuid + " does not have profile or birth date");
         }
-        return hasReachedAgeOfMajority(handle, interpreter, userGuid, profile.getBirthDate());
+        return hasReachedAgeOfMajority(handle, interpreter, userGuid, operatorGuid, profile.getBirthDate());
     }
 }
