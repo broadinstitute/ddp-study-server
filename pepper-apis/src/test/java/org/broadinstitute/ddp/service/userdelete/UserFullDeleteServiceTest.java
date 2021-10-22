@@ -16,6 +16,8 @@ import org.junit.Test;
  */
 public class UserFullDeleteServiceTest extends DeleteUserRouteTestAbstract {
 
+    private static final String NON_EXISTING_USER_GUID = "aaabbbccc";
+
     private static UserFullDeleteService userFullDeleteService;
 
     @BeforeClass
@@ -32,17 +34,17 @@ public class UserFullDeleteServiceTest extends DeleteUserRouteTestAbstract {
     @Test
     public void testFullDeleteUserWithGovernedUsers() throws IOException {
         try {
-            userFullDeleteService.deleteUser(testData.getStudyGuid(), testData.getUserGuid());
+            userFullDeleteService.deleteUser(testData.getUserGuid());
         } catch (DDPException e) {
-            assertEquals(format("The user with GUID=%s has governed users and cannot be deleted", testData.getUserGuid()),
-                    e.getMessage());
+            assertEquals(format("User [guid=19i3-test-user-48f0] full deletion is FAILED: the user has governed users",
+                    testData.getUserGuid()), e.getMessage());
         }
     }
 
     @Test
     public void testFullDeleteUserWithAuthInvalidAccount() {
         try {
-            userFullDeleteService.deleteUser(testData.getStudyGuid(), userWithAccount.getGuid());
+            userFullDeleteService.deleteUser(userWithAccount.getGuid());
         } catch (Exception e) {
             assertEquals("com.auth0.exception.APIException: Request failed with status code 400: "
                     + "Object didn't pass validation for format user-id: some_account", e.getMessage());
@@ -50,8 +52,17 @@ public class UserFullDeleteServiceTest extends DeleteUserRouteTestAbstract {
     }
 
     @Test
+    public void testFullDeleteNonExistingUser() throws IOException {
+        try {
+            userFullDeleteService.deleteUser(NON_EXISTING_USER_GUID);
+        } catch (Exception e) {
+            assertEquals("User [guid=aaabbbccc] full deletion is FAILED: the user not found", e.getMessage());
+        }
+    }
+
+    @Test
     public void testFullDeleteUserNormal() throws IOException {
-        userFullDeleteService.deleteUser(testData.getStudyGuid(), userMultiGoverned.getGuid());
+        userFullDeleteService.deleteUser(userMultiGoverned.getGuid());
         usersToDelete.remove(userMultiGoverned);
         governancesToDelete.remove(userMultiGoverned);
     }

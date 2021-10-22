@@ -1,8 +1,6 @@
 package org.broadinstitute.ddp.service.userdelete;
 
 import static java.lang.String.format;
-import static org.broadinstitute.ddp.service.userdelete.UserDeleteUtil.getUser;
-import static org.broadinstitute.ddp.service.userdelete.UserDeleteUtil.hasGovernedUsers;
 
 import java.io.IOException;
 
@@ -11,8 +9,11 @@ import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.AnswerSql;
 import org.broadinstitute.ddp.db.dao.DsmKitRequestDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivityInstanceStatus;
+import org.broadinstitute.ddp.db.dao.JdbiRevision;
 import org.broadinstitute.ddp.db.dao.JdbiUserStudyLegacyData;
 import org.broadinstitute.ddp.db.dao.UserAnnouncementDao;
+import org.broadinstitute.ddp.db.dao.UserDao;
+import org.broadinstitute.ddp.db.dao.UserGovernanceDao;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.user.User;
 import org.jdbi.v3.core.Handle;
@@ -55,25 +56,34 @@ public class UserFullDeleteService {
 
     private static final Logger LOG = LoggerFactory.getLogger(UserFullDeleteService.class);
 
+    private static final String LOG_PREFIX_USER_DELETE = "User [guid={}] full deletion";
+    private static final String ERROR_PREFIX_USER_DELETE = "User [guid=%s] full deletion is FAILED: ";
+
     private final UserService userService;
 
     public UserFullDeleteService(UserService userService) {
         this.userService = userService;
     }
 
-    public void deleteUser(String studyGuid, String userGuid) throws IOException {
-        LOG.info("Started full deletion of user with GUID: {}", userGuid);
+    public void deleteUser(String userGuid) throws IOException {
+        LOG.info(LOG_PREFIX_USER_DELETE + " is STARTED", userGuid);
         TransactionWrapper.useTxn(TransactionWrapper.DB.APIS, handle -> {
             User user = getUser(handle, userGuid);
             checkBeforeDelete(handle, user);
             deleteUserSteps(handle, user);
         });
-        LOG.info("Completed full deletion of user with GUID: {}", userGuid);
+        LOG.info(LOG_PREFIX_USER_DELETE + " is COMPLETED successfully", userGuid);
     }
 
     private void checkBeforeDelete(Handle handle, User user) {
         if (hasGovernedUsers(handle, user.getGuid())) {
-            throw new DDPException(format("The user with GUID=%s has governed users and cannot be deleted", user.getGuid()));
+            throw new DDPException(format(ERROR_PREFIX_USER_DELETE + "the user has governed users", user.getGuid()));
+        }
+
+        // check if user refers to revisions
+        long[] revisionIds = handle.attach(JdbiRevision.class).findByUserId(user.getId());
+        if (revisionIds.length > 0) {
+            throw new DDPException(format(ERROR_PREFIX_USER_DELETE + "the user has references to a revision history", user.getGuid()));
         }
     }
 
@@ -94,6 +104,7 @@ public class UserFullDeleteService {
             if (result.hasFailure()) {
                 throw new DDPException(result.hasThrown() ? result.getThrown() : result.getError());
             }
+            LOG.info(LOG_PREFIX_USER_DELETE + ": auth0 data with id={} is deleted", user.getGuid(), user.getAuth0UserId());
         }
     }
 
@@ -115,5 +126,22 @@ public class UserFullDeleteService {
 
     private void deleteAnswersByOperator(Handle handle, User user) {
         handle.attach(AnswerSql.class).deleteAnswerByOperatorId(user.getId());
+    }
+
+    /**
+     * Find user by GUID. If not found - throw an error
+     */
+    public static User getUser(Handle handle, String userGuid) {
+        UserDao userDao = handle.attach(UserDao.class);
+        return userDao.findUserByGuid(userGuid)
+                .orElseThrow(() -> new DDPException(format(ERROR_PREFIX_USER_DELETE + "the user not found", userGuid)));
+    }
+
+    /**
+     * Check if user has governed users
+     */
+    public static boolean hasGovernedUsers(Handle handle, String userGuid) {
+        UserGovernanceDao userGovernanceDao = handle.attach(UserGovernanceDao.class);
+        return userGovernanceDao.findActiveGovernancesByProxyGuid(userGuid).count() > 0;
     }
 }

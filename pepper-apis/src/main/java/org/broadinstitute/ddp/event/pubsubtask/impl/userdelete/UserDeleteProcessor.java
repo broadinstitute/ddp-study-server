@@ -32,7 +32,7 @@ public class UserDeleteProcessor extends PubSubTaskProcessorAbstract {
     public void handleTask(PubSubTask pubSubTask) {
         UserFullDeleteService userFullDeleteService = createUserDeleteService();
         try {
-            userFullDeleteService.deleteUser(studyGuid, participantGuid);
+            userFullDeleteService.deleteUser(participantGuid);
         } catch (Exception e) {
             throw new PubSubTaskException("Error delete user " + participantGuid, e);
         }
@@ -41,9 +41,6 @@ public class UserDeleteProcessor extends PubSubTaskProcessorAbstract {
     @Override
     protected void validateTaskData(PubSubTask pubSubTask) {
         super.validateTaskData(pubSubTask);
-        if (studyGuid == null) {
-            throwIfInvalidAttribute(pubSubTask, PubSubTask.ATTR_NAME__STUDY_GUID, studyGuid);
-        }
         if (participantGuid == null) {
             throwIfInvalidAttribute(pubSubTask, PubSubTask.ATTR_NAME__PARTICIPANT_GUID, participantGuid);
         }
