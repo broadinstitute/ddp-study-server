@@ -438,29 +438,6 @@
             "hasConsentedToTissueSample": {
               "type": "boolean"
             },
-            "medicalRecords": {
-              "properties": {
-                "medicalRecordId": {
-                  "type": "keyword"
-                },
-                "name": {
-                  "type": "text"
-                },
-                "type": {
-                  "type": "keyword"
-                },
-                "requested": {
-                  "type": "date",
-                  "ignore_malformed": false,
-                  "format": "strict_year_month_day"
-                },
-                "received": {
-                  "type": "date",
-                  "ignore_malformed": false,
-                  "format": "strict_year_month_day"
-                }
-              }
-            },
             "pdfs": {
               "properties": {
                 "configName":{
@@ -468,43 +445,6 @@
                 },
                 "displayName":{
                   "type": "text"
-                }
-              }
-            },
-            "tissueRecords": {
-              "properties": {
-                "tissueRecordId": {
-                  "type": "keyword"
-                },
-                "accessionNumber": {
-                  "type": "keyword"
-                },
-                "typePX": {
-                  "type": "text"
-                },
-                "locationPX": {
-                  "type": "text"
-                },
-                "datePX": {
-                  "type": "text"
-                },
-                "histology": {
-                  "type": "text"
-                },
-                "requested": {
-                  "type": "date",
-                  "ignore_malformed": false,
-                  "format": "strict_year_month_day"
-                },
-                "received": {
-                  "type": "date",
-                  "ignore_malformed": false,
-                  "format": "strict_year_month_day"
-                },
-                "sent": {
-                  "type": "date",
-                  "ignore_malformed": false,
-                  "format": "strict_year_month_day"
                 }
               }
             }
