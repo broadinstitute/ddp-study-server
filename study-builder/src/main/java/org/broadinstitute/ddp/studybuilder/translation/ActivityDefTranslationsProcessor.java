@@ -1,6 +1,7 @@
 package org.broadinstitute.ddp.studybuilder.translation;
 
 import static org.broadinstitute.ddp.model.activity.types.DateRenderMode.PICKLIST;
+import static org.broadinstitute.ddp.studybuilder.translation.TranslationsProcessingType.NOT_PROCESS;
 import static org.broadinstitute.ddp.studybuilder.translation.TranslationsEnricher.addTemplateTranslations;
 
 import java.util.Map;
@@ -31,7 +32,6 @@ import org.broadinstitute.ddp.model.activity.definition.template.TemplateVariabl
 import org.broadinstitute.ddp.model.activity.definition.validation.RuleDef;
 import org.broadinstitute.ddp.studybuilder.StudyBuilderContext;
 import org.broadinstitute.ddp.studybuilder.StudyBuilderException;
-import org.broadinstitute.ddp.studybuilder.translation.model.ExtendedFormActivityDef;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -67,13 +67,13 @@ public class ActivityDefTranslationsProcessor {
         this.allTranslations = allTranslations;
     }
 
-    public void run(ExtendedFormActivityDef activityDef) {
-        if (StudyBuilderContext.CONTEXT.isProcessTranslations()) {
+    public void run(FormActivityDef activityDef) {
+        if (StudyBuilderContext.CONTEXT.getTranslationsProcessingType() != NOT_PROCESS) {
             enrichActivityDefWithTranslations(activityDef);
         }
     }
 
-    private void enrichActivityDefWithTranslations(ExtendedFormActivityDef activityDef) {
+    private void enrichActivityDefWithTranslations(FormActivityDef activityDef) {
         LOG.info("Add translations for languages {} to a generated activity definition {}",
                 StudyBuilderContext.CONTEXT.getTranslations().keySet(), activityDef.getActivityCode());
 

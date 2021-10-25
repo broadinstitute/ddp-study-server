@@ -4,6 +4,7 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
@@ -19,6 +20,7 @@ import org.broadinstitute.ddp.model.activity.definition.i18n.Translation;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.activity.types.ActivityType;
 import org.broadinstitute.ddp.model.activity.types.FormType;
+import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.broadinstitute.ddp.util.MiscUtil;
 
 public abstract class ActivityDef {
@@ -101,6 +103,36 @@ public abstract class ActivityDef {
     @NotNull
     @SerializedName("translatedSummaries")
     protected List<@Valid @NotNull SummaryTranslation> translatedSummaries;
+
+    /**
+     * These properties used to serialize the activity JSON (conf document).
+     * It adds template components in order to be possible to define
+     * in a conf file standard templates (instead of non-standard lists of translations).
+     * After a conf file serialization the templates are rendered and copied to
+     * the translations properties defined in {@link ActivityDef}.<br>
+     * The following rules of translations copying:
+     * <pre>
+     *     nameTemplate -> translatedNames
+     *     secondNameTemplate -> translatedSecondNames
+     *     titleTemplate -> translatedTitles
+     *     subtitleTemplate -> translatedSubtitles
+     *     descriptionTemplate ->translatedDescriptions
+     *     summaryTemplates -> translatedSummaries
+     * </pre>
+     */
+    @Valid   @SerializedName("nameTemplate")
+    protected Template nameTemplate;
+    @Valid   @SerializedName("secondNameTemplate")
+    protected Template secondNameTemplate;
+    @Valid   @SerializedName("titleTemplate")
+    protected Template titleTemplate;
+    @Valid   @SerializedName("subtitleTemplate")
+    protected Template subtitleTemplate;
+    @Valid   @SerializedName("descriptionTemplate")
+    protected Template descriptionTemplate;
+    @Valid   @SerializedName("summaryTemplates")
+    protected Map<InstanceStatusType, @Valid @NotNull Template> summaryTemplates;
+
 
     @Valid
     @SerializedName("readonlyHintTemplate")
@@ -248,6 +280,30 @@ public abstract class ActivityDef {
 
     public List<SummaryTranslation> getTranslatedSummaries() {
         return translatedSummaries;
+    }
+
+    public Template getNameTemplate() {
+        return nameTemplate;
+    }
+
+    public Template getSecondNameTemplate() {
+        return secondNameTemplate;
+    }
+
+    public Template getTitleTemplate() {
+        return titleTemplate;
+    }
+
+    public Template getSubtitleTemplate() {
+        return subtitleTemplate;
+    }
+
+    public Template getDescriptionTemplate() {
+        return descriptionTemplate;
+    }
+
+    public Map<InstanceStatusType, Template> getSummaryTemplates() {
+        return summaryTemplates;
     }
 
     public void setTranslatedSummaries(List<SummaryTranslation> translatedSummaries) {

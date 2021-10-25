@@ -3,6 +3,8 @@ package org.broadinstitute.ddp.studybuilder.translation;
 import static java.lang.String.format;
 import static org.broadinstitute.ddp.content.VelocityUtil.extractVelocityVariablesFromTemplate;
 import static org.broadinstitute.ddp.model.activity.types.TemplateType.TEXT;
+import static org.broadinstitute.ddp.studybuilder.translation.TranslationsProcessingType.PROCESS_ALL_TEMPLATES;
+import static org.broadinstitute.ddp.studybuilder.translation.TranslationsProcessingType.PROCESS_IGNORE_TEMPLATES_WITH_TRANSLATIONS;
 import static org.broadinstitute.ddp.studybuilder.translation.TranslationsUtil.detectLanguagesToBeAddedToTranslations;
 import static org.broadinstitute.ddp.studybuilder.translation.TranslationsUtil.detectVariablesNotPresentInList;
 import static org.broadinstitute.ddp.studybuilder.translation.TranslationsUtil.getTranslationForLang;
@@ -15,9 +17,11 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.model.activity.definition.i18n.Translation;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.activity.definition.template.TemplateVariable;
+import org.broadinstitute.ddp.studybuilder.StudyBuilderContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,7 +63,7 @@ public class TranslationsEnricher {
      * </ul>
      */
     public static void addTemplateTranslations(Template template, Map<String, Properties> allTranslations) {
-        if (template != null) {
+        if (isProcessTemplate(template)) {
             if (template.getTemplateType() == null) {
                 template.setTemplateType(TEXT);
             }
@@ -110,7 +114,7 @@ public class TranslationsEnricher {
     /**
      * Get rendered translations of a {@link Template} for all of languages defiend for the current study.
      *
-     * @param template                template which translations to get
+     * @param template template which translations to get
      * @return - list of {@link Template} rendered translations
      */
     public static List<Translation> getTemplateRendered(Template template, Map<String, Properties> allTranslations) {
@@ -122,4 +126,18 @@ public class TranslationsEnricher {
         return null;
     }
 
+    /**
+     * Template can be processed if it is not null.
+     * Also checked the following conditions:
+     * <pre>
+     * if processingType == PROCESS_ALL_TEMPLATES then all templates are processed;
+     * if processingType = PROCESS_IGNORE_WITH_VARIABLES then process only templates having empty or null variables list.
+     * </pre>
+     */
+    private static boolean isProcessTemplate(Template template) {
+        return template != null && StringUtils.isNotBlank(template.getTemplateText())
+                && (StudyBuilderContext.CONTEXT.getTranslationsProcessingType() == PROCESS_ALL_TEMPLATES
+                    || (StudyBuilderContext.CONTEXT.getTranslationsProcessingType() == PROCESS_IGNORE_TEMPLATES_WITH_TRANSLATIONS
+                        && (template.getVariables() == null || template.getVariables().size() == 0)));
+    }
 }

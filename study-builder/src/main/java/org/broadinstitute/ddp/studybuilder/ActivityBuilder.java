@@ -1,6 +1,7 @@
 package org.broadinstitute.ddp.studybuilder;
 
 import static org.broadinstitute.ddp.studybuilder.BuilderUtils.validateActivityDef;
+import static org.broadinstitute.ddp.studybuilder.translation.TranslationsProcessingType.NOT_PROCESS;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -34,7 +35,6 @@ import org.broadinstitute.ddp.model.activity.types.FormType;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.broadinstitute.ddp.model.study.ActivityMappingType;
 import org.broadinstitute.ddp.studybuilder.translation.ActivityDefTranslationsProcessor;
-import org.broadinstitute.ddp.studybuilder.translation.model.ExtendedFormActivityDef;
 import org.broadinstitute.ddp.util.ConfigUtil;
 import org.broadinstitute.ddp.util.GsonPojoValidator;
 import org.broadinstitute.ddp.util.GsonUtil;
@@ -345,9 +345,9 @@ public class ActivityBuilder {
      */
     private ActivityDef buildActivityDefFromConfig(Config definition) {
         ActivityDef activityDef;
-        if (StudyBuilderContext.CONTEXT.isProcessTranslations()) {
-            activityDef = gson.fromJson(ConfigUtil.toJson(definition), ExtendedFormActivityDef.class);
-            activityDefTranslationsProcessor.run((ExtendedFormActivityDef)activityDef);
+        if (StudyBuilderContext.CONTEXT.getTranslationsProcessingType() != NOT_PROCESS) {
+            activityDef = gson.fromJson(ConfigUtil.toJson(definition), ActivityDef.class);
+            activityDefTranslationsProcessor.run((FormActivityDef) activityDef);
         } else {
             activityDef = gson.fromJson(ConfigUtil.toJson(definition), ActivityDef.class);
         }

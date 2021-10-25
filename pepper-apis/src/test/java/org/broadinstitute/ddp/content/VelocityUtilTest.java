@@ -30,6 +30,16 @@ public class VelocityUtilTest {
             "Test template: $prequal.var1 $ddp.isGovernedParticipant('aaa', 'bbb') \\$\\$ $prequal.var2";
     private static final String TEMPLATE_TEXT_2 =
             "$prequal.err_international_self,$prequal.err_international_child,$prequal.err_need_parental.";
+    private static final String TEMPLATE_TEXT_3 = "\n"
+            + "            <p>$prequal.intro1</p>\n"
+            + "            <ul>\n"
+            + "              <li>$prequal.intro1_1</li>\n"
+            + "              <li>$prequal.intro1_2</li>\n"
+            + "              <li>$prequal.intro1_3</li>\n"
+            + "              <li>$prequal.intro1_4</li>\n"
+            + "            </ul>\n"
+            + "            <p>$prequal.intro2</p>\n"
+            + "          ";
 
     /**
      * Verify that variables with compound names (like "prequal.var1", "prequal.var2", containing '.')
@@ -71,5 +81,11 @@ public class VelocityUtilTest {
 
         variables = VelocityUtil.extractVelocityVariablesFromTemplate(TEMPLATE_TEXT_2);
         assertEquals(3, variables.size());
+    }
+
+    @Test
+    public void testDetectVelocityVariablesFromTemplate_1() {
+        Collection<String> variables = VelocityUtil.extractVelocityVariablesFromTemplate(TEMPLATE_TEXT_3);
+        assertEquals(6, variables.size());
     }
 }

@@ -1,7 +1,11 @@
 package org.broadinstitute.ddp.studybuilder;
 
+import static org.broadinstitute.ddp.studybuilder.translation.TranslationsProcessingType.NOT_PROCESS;
+
 import java.util.Map;
 import java.util.Properties;
+
+import org.broadinstitute.ddp.studybuilder.translation.TranslationsProcessingType;
 
 /**
  * Holds the StudyBuilder variables which needs to be accessed globally during a study processing.<br>
@@ -10,14 +14,15 @@ import java.util.Properties;
  * Basic variables stored in the context:
  * <pre>
  * - translations for all languages (stored in translation files);
- * - boolean flag `processTranslations` indicating if translations references auto-resolving should happen or not.
+ * - translationsProcessingType storing the type of translations processing.
  * </pre>
  */
 public class StudyBuilderContext {
 
     public static final StudyBuilderContext CONTEXT = new StudyBuilderContext();
 
-    private boolean processTranslations = false;
+    private TranslationsProcessingType translationsProcessingType = NOT_PROCESS;
+
     private Map<String, Properties> translations;
 
     public Map<String, Properties> getTranslations() {
@@ -28,11 +33,11 @@ public class StudyBuilderContext {
         this.translations = translations;
     }
 
-    public boolean isProcessTranslations() {
-        return processTranslations;
+    public TranslationsProcessingType getTranslationsProcessingType() {
+        return translationsProcessingType;
     }
 
-    public void setProcessTranslations(boolean processTranslations) {
-        this.processTranslations = processTranslations;
+    public void setTranslationsProcessingType(TranslationsProcessingType processTranslations) {
+        this.translationsProcessingType = processTranslations;
     }
 }

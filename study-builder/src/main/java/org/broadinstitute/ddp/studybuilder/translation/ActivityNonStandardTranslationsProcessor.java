@@ -10,11 +10,11 @@ import java.util.Properties;
 import java.util.stream.Collectors;
 
 import org.broadinstitute.ddp.model.activity.definition.ActivityDef;
+import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
 import org.broadinstitute.ddp.model.activity.definition.i18n.SummaryTranslation;
 import org.broadinstitute.ddp.model.activity.definition.i18n.Translation;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
-import org.broadinstitute.ddp.studybuilder.translation.model.ExtendedFormActivityDef;
 
 /**
  * Helper class used to copy translations defined in a StudyBuilder activity conf file
@@ -31,7 +31,7 @@ import org.broadinstitute.ddp.studybuilder.translation.model.ExtendedFormActivit
  */
 public class ActivityNonStandardTranslationsProcessor {
 
-    void run(ExtendedFormActivityDef activityDef, Map<String, Properties> allTranslations) {
+    void run(FormActivityDef activityDef, Map<String, Properties> allTranslations) {
         if (activityDef.getNameTemplate() != null) {
             addTemplateTranslations(activityDef.getNameTemplate(), allTranslations);
             activityDef.setTranslatedNames(getTemplateRendered(activityDef.getNameTemplate(), allTranslations));

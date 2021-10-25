@@ -1,6 +1,7 @@
 package org.broadinstitute.ddp.studybuilder;
 
 import static org.broadinstitute.ddp.studybuilder.StudyBuilderContext.CONTEXT;
+import static org.broadinstitute.ddp.studybuilder.translation.TranslationsProcessingType.NOT_PROCESS;
 import static org.broadinstitute.ddp.studybuilder.StudyPatcher.LOG_FILENAME;
 import static org.broadinstitute.ddp.studybuilder.translation.I18nReader.readI18nTranslations;
 
@@ -24,6 +25,7 @@ import org.apache.commons.cli.ParseException;
 import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.exception.DDPException;
+import org.broadinstitute.ddp.studybuilder.translation.TranslationsProcessingType;
 import org.broadinstitute.ddp.studybuilder.task.CustomTask;
 import org.jdbi.v3.core.Handle;
 
@@ -78,7 +80,7 @@ public class StudyBuilderCli {
         options.addOption(null, OPT_EMAIL_KEYS, true, "comma-separated email keys, only create/update emails with these keys");
         options.addOption(null, OPT_RUN_TASK, true, "run a custom task");
         options.addOption(null, OPT_PATCH, false, "run patches for a study");
-        options.addOption(null, OPT_PROCESS_TRANSLATIONS, false, "run the process of translations assignment for all study languages");
+        options.addOption(null, OPT_PROCESS_TRANSLATIONS, true, "run the process of translations assignment for all study languages");
         options.addOption(null, OPT_I18N_PATH, true, "path to folder with i18n-files (translations)");
 
         CommandLineParser parser = new DefaultParser();
@@ -214,7 +216,10 @@ public class StudyBuilderCli {
             builder.doEvents(false);
         }
 
-        StudyBuilderContext.CONTEXT.setProcessTranslations(cmd.hasOption(OPT_PROCESS_TRANSLATIONS));
+        StudyBuilderContext.CONTEXT.setTranslationsProcessingType(
+                cmd.hasOption(OPT_PROCESS_TRANSLATIONS)
+                        ? TranslationsProcessingType.valueOf(cmd.getOptionValue(OPT_PROCESS_TRANSLATIONS))
+                        : NOT_PROCESS);
 
         log("executing setup...");
         execute(builder::run, isDryRun);
@@ -238,7 +243,6 @@ public class StudyBuilderCli {
             return true;
         }
     }
-
 
 
     private void log(String fmt, Object... args) {
@@ -291,7 +295,7 @@ public class StudyBuilderCli {
 
         String[] args;
         if (separatorIndex < 0) {
-            args = new String[] {};
+            args = new String[]{};
         } else {
             args = Arrays.copyOfRange(fullArgs, separatorIndex + 1, fullArgs.length);
         }
