@@ -31,6 +31,7 @@ import org.broadinstitute.ddp.db.dto.PicklistOptionDto;
 import org.broadinstitute.ddp.db.dto.PicklistQuestionDto;
 import org.broadinstitute.ddp.db.dto.QuestionDto;
 import org.broadinstitute.ddp.db.dto.TextQuestionDto;
+import org.broadinstitute.ddp.db.dto.DynamicSelectQuestionDto;
 import org.broadinstitute.ddp.db.dto.TypedQuestionId;
 import org.broadinstitute.ddp.db.dto.validation.RuleDto;
 import org.broadinstitute.ddp.model.activity.definition.QuestionBlockDef;
@@ -46,6 +47,7 @@ import org.broadinstitute.ddp.model.activity.definition.question.PicklistOptionD
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.TextQuestionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.DynamicSelectQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.activity.definition.validation.RequiredRuleDef;
 import org.broadinstitute.ddp.model.activity.definition.validation.RuleDef;
@@ -57,6 +59,7 @@ import org.broadinstitute.ddp.model.activity.instance.answer.FileAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.NumericAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.PicklistAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
+import org.broadinstitute.ddp.model.activity.instance.answer.DynamicSelectAnswer;
 import org.broadinstitute.ddp.model.activity.instance.question.AgreementQuestion;
 import org.broadinstitute.ddp.model.activity.instance.question.BoolQuestion;
 import org.broadinstitute.ddp.model.activity.instance.question.CompositeQuestion;
@@ -69,6 +72,7 @@ import org.broadinstitute.ddp.model.activity.instance.question.PicklistOption;
 import org.broadinstitute.ddp.model.activity.instance.question.PicklistQuestion;
 import org.broadinstitute.ddp.model.activity.instance.question.Question;
 import org.broadinstitute.ddp.model.activity.instance.question.TextQuestion;
+import org.broadinstitute.ddp.model.activity.instance.question.DynamicSelectQuestion;
 import org.broadinstitute.ddp.model.activity.instance.validation.Rule;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
 import org.broadinstitute.ddp.model.activity.types.DateFieldType;
@@ -109,6 +113,12 @@ public interface QuestionDao extends SqlObject {
 
     @CreateSqlObject
     JdbiTextQuestionSuggestion getJdbiTextQuestionSuggestion();
+
+    @CreateSqlObject
+    JdbiDynamicSelectQuestion getJdbiDynamicSelectQuestion();
+
+    @CreateSqlObject
+    JdbiDynamicSelectSourceQuestions getJdbiDynamicSourceQuestions();
 
     @CreateSqlObject
     JdbiDateQuestion getJdbiDateQuestion();
@@ -358,6 +368,9 @@ public interface QuestionDao extends SqlObject {
             case TEXT:
                 question = getTextQuestion((TextQuestionDto) dto, activityInstanceGuid, answerIds, untypedRules);
                 break;
+            case DYNAMIC_SELECT:
+                question = getDynamicSelectQuestion((DynamicSelectQuestionDto) dto, activityInstanceGuid, answerIds, untypedRules);
+                break;
             case DATE:
                 question = getDateQuestion((DateQuestionDto) dto, activityInstanceGuid, answerIds, untypedRules);
                 break;
@@ -552,6 +565,45 @@ public interface QuestionDao extends SqlObject {
                 dto.isConfirmEntry(),
                 dto.getConfirmPromptTemplateId(),
                 dto.getMismatchMessageTemplateId());
+    }
+
+    /**
+     * Build a dynamic question.
+     *
+     * @param dto                  the question dto
+     * @param activityInstanceGuid the activity instance guid
+     * @param answerIds            list of base answer ids to question (may be empty)
+     * @param untypedRules         list of untyped validations for question (may be empty)
+     * @return dynamic question object
+     */
+    default DynamicSelectQuestion getDynamicSelectQuestion(DynamicSelectQuestionDto dto,
+                                                     String activityInstanceGuid,
+                                                     List<Long> answerIds,
+                                                     List<Rule> untypedRules) {
+        AnswerDao answerDao = getAnswerDao();
+        List<DynamicSelectAnswer> dynamicSelectAnswers = answerIds.stream()
+                .map(answerId -> (DynamicSelectAnswer) answerDao.findAnswerById(answerId)
+                        .orElseThrow(() -> new DaoException("Could not find dynamic select answer with id " + answerId)))
+                .collect(toList());
+
+        List<Rule<DynamicSelectAnswer>> rules = untypedRules
+                .stream()
+                .map(rule -> (Rule<DynamicSelectAnswer>) rule)
+                .collect(toList());
+
+        boolean isReadonly = QuestionUtil.isReadonly(getHandle(), dto, activityInstanceGuid);
+        List<String> sourceStableIds = getJdbiQuestion().getDynamicAnswersBasedOnQuestionsList(dto.getId());
+
+        return new DynamicSelectQuestion(dto.getStableId(), dto.getPromptTemplateId(),
+                dto.isRestricted(),
+                dto.isDeprecated(),
+                isReadonly,
+                dto.getTooltipTemplateId(),
+                dto.getAdditionalInfoHeaderTemplateId(),
+                dto.getAdditionalInfoFooterTemplateId(),
+                dynamicSelectAnswers,
+                rules,
+                sourceStableIds);
     }
 
     /**
@@ -796,6 +848,9 @@ public interface QuestionDao extends SqlObject {
             case TEXT:
                 insertQuestion(activityId, (TextQuestionDef) question, revisionId);
                 break;
+            case DYNAMIC_SELECT:
+                insertQuestion(activityId, (DynamicSelectQuestionDef) question, revisionId);
+                break;
             case DATE:
                 insertQuestion(activityId, (DateQuestionDef) question, revisionId);
                 break;
@@ -835,6 +890,9 @@ public interface QuestionDao extends SqlObject {
                 break;
             case TEXT:
                 disableTextQuestion(qid.getId(), meta);
+                break;
+            case DYNAMIC_SELECT:
+                disableDynamicSelectQuestion(qid.getId(), meta);
                 break;
             case DATE:
                 disableDateQuestion(qid.getId(), meta);
@@ -1005,6 +1063,31 @@ public interface QuestionDao extends SqlObject {
                     Stream.iterate(0, i -> i + DISPLAY_ORDER_GAP).iterator());
             if (ids.length != textQuestion.getSuggestions().size()) {
                 throw new DaoException("Inserted " + numInserted + " suggestions" + textQuestion.getStableId());
+            }
+        }
+    }
+
+    /**
+     * Create new dynamic question by inserting common data and text specific data.
+     *
+     * @param activityId      the associated activity
+     * @param dynamicQuestion the question definition, without generated things like ids
+     * @param revisionId      the revision to use, will be shared by all created data
+     */
+    default void insertQuestion(long activityId, DynamicSelectQuestionDef dynamicQuestion, long revisionId) {
+        insertBaseQuestion(activityId, dynamicQuestion, revisionId);
+
+        int numInserted = getJdbiDynamicSelectQuestion().insert(dynamicQuestion.getQuestionId());
+
+        if (numInserted != 1) {
+            throw new DaoException("Inserted " + numInserted + " for dynamic question " + dynamicQuestion.getStableId());
+        }
+
+        if (CollectionUtils.isNotEmpty(dynamicQuestion.getSourceQuestions())) {
+            int[] ids = getJdbiDynamicSourceQuestions().insert(dynamicQuestion.getQuestionId(), dynamicQuestion.getSourceQuestions(),
+                    Stream.iterate(0, i -> i + DISPLAY_ORDER_GAP).iterator());
+            if (ids.length != dynamicQuestion.getSourceQuestions().size()) {
+                throw new DaoException("Inserted " + numInserted + " questions based for " + dynamicQuestion.getStableId());
             }
         }
     }
@@ -1250,6 +1333,21 @@ public interface QuestionDao extends SqlObject {
     }
 
     /**
+     * End currently active dynamic question by terminating common data and text specific data.
+     *
+     * @param questionId the question id
+     * @param meta       the revision metadata used for terminating data
+     */
+    default void disableDynamicSelectQuestion(long questionId, RevisionMetadata meta) {
+        QuestionDto dto = getJdbiQuestion().findQuestionDtoById(questionId).orElse(null);
+        DynamicSelectQuestionDto question = dto == null ? null : (DynamicSelectQuestionDto) dto;
+        if (question == null || question.getRevisionEnd() != null) {
+            throw new NoSuchElementException("Cannot find active text question with id " + questionId);
+        }
+        disableBaseQuestion(question, meta);
+    }
+
+    /**
      * End currently active date question by terminating common data and date specific data.
      *
      * @param questionId the question id
@@ -1444,6 +1542,10 @@ public interface QuestionDao extends SqlObject {
                     questionDef = buildTextQuestionDef((TextQuestionDto) questionDto, ruleDefs, templates);
                     questionDefs.put(questionId, questionDef);
                     break;
+                case DYNAMIC_SELECT:
+                    questionDef = buildDynamicSelectQuestionDef((DynamicSelectQuestionDto) questionDto, ruleDefs, templates);
+                    questionDefs.put(questionId, questionDef);
+                    break;
                 case COMPOSITE:
                     compositeDtos.add((CompositeQuestionDto) questionDto);
                     break;
@@ -1634,6 +1736,22 @@ public interface QuestionDao extends SqlObject {
                 .setConfirmPromptTemplate(confirmPromptTemplate)
                 .setMismatchMessage(mismatchMessageTemplate)
                 .addSuggestions(suggestions);
+        configureBaseQuestionDef(builder, dto, ruleDefs, templates);
+
+        return builder.build();
+    }
+
+    private DynamicSelectQuestionDef buildDynamicSelectQuestionDef(DynamicSelectQuestionDto dto,
+                                                                   List<RuleDef> ruleDefs,
+                                                                   Map<Long, Template> templates) {
+        Template prompt = templates.get(dto.getPromptTemplateId());
+
+        List<String> sourceStableIds = getJdbiQuestion().getDynamicAnswersBasedOnQuestionsList(dto.getId());
+
+        var builder = DynamicSelectQuestionDef
+                .builder(dto.getStableId(), prompt)
+                .setSourceQuestions(sourceStableIds);
+
         configureBaseQuestionDef(builder, dto, ruleDefs, templates);
 
         return builder.build();

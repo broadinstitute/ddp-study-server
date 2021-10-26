@@ -4,6 +4,7 @@ import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
 import org.broadinstitute.ddp.model.activity.instance.answer.DateAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.PicklistAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
+import org.broadinstitute.ddp.model.activity.instance.answer.DynamicSelectAnswer;
 import org.broadinstitute.ddp.model.activity.instance.question.DateQuestion;
 import org.broadinstitute.ddp.model.activity.instance.question.Question;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
@@ -37,6 +38,10 @@ public class RequiredRule<T extends Answer> extends Rule<T> {
 
         if (answer.getQuestionType() == QuestionType.TEXT) {
             return !((TextAnswer) answer).getValue().isBlank();
+        }
+
+        if (answer.getQuestionType() == QuestionType.DYNAMIC_SELECT) {
+            return !((DynamicSelectAnswer) answer).getValue().isBlank();
         }
 
         if (answer.getQuestionType() == QuestionType.DATE) {

@@ -22,6 +22,7 @@ import org.broadinstitute.ddp.model.activity.instance.answer.DateValue;
 import org.broadinstitute.ddp.model.activity.instance.answer.PicklistAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.SelectedPicklistOption;
 import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
+import org.broadinstitute.ddp.model.activity.instance.answer.DynamicSelectAnswer;
 
 /**
  * Rule:
@@ -97,6 +98,8 @@ public class CompositeQuestionFormatStrategy implements ResponseFormatStrategy<C
                 return (boolValue == null ? "" : boolValue.toString());
             case TEXT:
                 return StringUtils.defaultString(((TextAnswer) answer).getValue(), "");
+            case DYNAMIC_SELECT:
+                return StringUtils.defaultString(((DynamicSelectAnswer) answer).getValue(), "");
             case NUMERIC:
                 return (answer.getValue() == null ? "" : answer.getValue().toString());
             case DATE:

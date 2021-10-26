@@ -54,6 +54,7 @@ import org.broadinstitute.ddp.model.activity.instance.answer.DateValue;
 import org.broadinstitute.ddp.model.activity.instance.answer.PicklistAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.SelectedPicklistOption;
 import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
+import org.broadinstitute.ddp.model.activity.instance.answer.DynamicSelectAnswer;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.broadinstitute.ddp.model.activity.types.InstitutionType;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
@@ -736,6 +737,9 @@ public class PdfGenerationService {
             case TEXT:
                 substituteText(answer, field);
                 break;
+            case DYNAMIC_SELECT:
+                substituteDynamic(answer, field);
+                break;
             case DATE:
                 substituteDate(answer, field);
                 break;
@@ -802,6 +806,9 @@ public class PdfGenerationService {
             case TEXT:
                 substituteText(answer, field);
                 break;
+            case DYNAMIC_SELECT:
+                substituteDynamic(answer, field);
+                break;
             case DATE:
                 substituteDate(answer, field);
                 break;
@@ -843,6 +850,13 @@ public class PdfGenerationService {
 
     private void substituteText(Answer answer, PdfFormField field) {
         String textValue = answer == null ? null : ((TextAnswer) answer).getValue();
+        if (textValue != null) {
+            field.setValue(textValue);
+        }
+    }
+
+    private void substituteDynamic(Answer answer, PdfFormField field) {
+        String textValue = answer == null ? null : ((DynamicSelectAnswer) answer).getValue();
         if (textValue != null) {
             field.setValue(textValue);
         }

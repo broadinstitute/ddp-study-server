@@ -55,6 +55,7 @@ import org.broadinstitute.ddp.model.activity.definition.question.PicklistOptionD
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.TextQuestionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.DynamicSelectQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.activity.definition.validation.DateRangeRuleDef;
 import org.broadinstitute.ddp.model.activity.definition.validation.IntRangeRuleDef;
@@ -72,6 +73,7 @@ import org.broadinstitute.ddp.model.activity.instance.answer.NumericIntegerAnswe
 import org.broadinstitute.ddp.model.activity.instance.answer.PicklistAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.SelectedPicklistOption;
 import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
+import org.broadinstitute.ddp.model.activity.instance.answer.DynamicSelectAnswer;
 import org.broadinstitute.ddp.model.activity.instance.question.AgreementQuestion;
 import org.broadinstitute.ddp.model.activity.instance.question.BoolQuestion;
 import org.broadinstitute.ddp.model.activity.instance.question.CompositeQuestion;
@@ -81,6 +83,7 @@ import org.broadinstitute.ddp.model.activity.instance.question.PicklistOption;
 import org.broadinstitute.ddp.model.activity.instance.question.PicklistQuestion;
 import org.broadinstitute.ddp.model.activity.instance.question.Question;
 import org.broadinstitute.ddp.model.activity.instance.question.TextQuestion;
+import org.broadinstitute.ddp.model.activity.instance.question.DynamicSelectQuestion;
 import org.broadinstitute.ddp.model.activity.instance.validation.DateRangeRule;
 import org.broadinstitute.ddp.model.activity.instance.validation.IntRangeRule;
 import org.broadinstitute.ddp.model.activity.instance.validation.RequiredRule;
@@ -1288,6 +1291,63 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
             assertNotNull(actual.getSuggestions());
             assertEquals(2, suggestions.size());
             assertEquals("test type ahead#2", suggestions.get(1));
+
+            handle.rollback();
+        });
+    }
+
+    @Test
+    public void testGetDynamicSelectQuestion_success() {
+        TransactionWrapper.useTxn(handle -> {
+            TextQuestionDef textQuestionDef = TextQuestionDef.builder(TextInputType.TEXT, "TEXT_Q1_SID", Template.text("text"))
+                    .build();
+            DynamicSelectQuestionDef dynamicSelectQuestionDef = DynamicSelectQuestionDef.builder(sid, prompt)
+                    .setSourceQuestions(List.of(textQuestionDef.getStableId()))
+                    .addValidation(new RequiredRuleDef(null))
+                    .build();
+
+            QuestionBlockDef block = new QuestionBlockDef(dynamicSelectQuestionDef);
+            QuestionBlockDef block2 = new QuestionBlockDef(textQuestionDef);
+
+            var activity = FormActivityDef.generalFormBuilder("ACT" + Instant.now().toEpochMilli(), "v1", testData.getStudyGuid())
+                    .addName(new Translation("en", "activity test Dynamic Question success"))
+                    .addSection(new FormSectionDef(null, List.of(block, block2)))
+                    .build();
+
+            var activityVersionDto = handle.attach(ActivityDao.class)
+                    .insertActivity(activity, RevisionMetadata.now(testData.getUserId(), "add " + activity.getActivityCode()));
+
+            var instanceDto = handle.attach(ActivityInstanceDao.class)
+                    .insertInstance(activityVersionDto.getActivityId(), testData.getUserGuid());
+
+            String textAnswerGuid = handle.attach(AnswerDao.class)
+                    .createAnswer(testData.getUserId(), instanceDto.getId(),
+                            new TextAnswer(null, "TEXT_Q1_SID", null, "itsAnAnswer"))
+                    .getAnswerGuid();
+
+            assertNotNull(textAnswerGuid);
+
+            Answer testAnswer = handle.attach(AnswerDao.class).findAnswerByGuid(textAnswerGuid).get();
+
+            assertEquals(textAnswerGuid, testAnswer.getAnswerGuid());
+
+            DynamicSelectAnswer answer = (DynamicSelectAnswer) handle.attach(AnswerDao.class)
+                    .createAnswer(testData.getUserId(), instanceDto.getId(),
+                            new DynamicSelectAnswer(null, sid, null, textAnswerGuid));
+
+            assertNotNull(answer.getAnswerGuid());
+
+            DynamicSelectQuestion question = (DynamicSelectQuestion) handle.attach(QuestionDao.class)
+                    .getQuestionByBlockId(block.getBlockId(), instanceDto.getGuid(), instanceDto.getCreatedAtMillis(), langCodeId).get();
+
+            assertEquals(QuestionType.DYNAMIC_SELECT, question.getQuestionType());
+            assertEquals(prompt.getTemplateId(), (Long) question.getPromptTemplateId());
+            assertEquals(sid, question.getStableId());
+            assertEquals(1, question.getSourceQuestions().size());
+            assertEquals("TEXT_Q1_SID", question.getSourceQuestions().get(0));
+
+            DynamicSelectAnswer dynamicSelectAnswer = question.getAnswers().get(0);
+            assertEquals(textAnswerGuid, dynamicSelectAnswer.getValue());
 
             handle.rollback();
         });

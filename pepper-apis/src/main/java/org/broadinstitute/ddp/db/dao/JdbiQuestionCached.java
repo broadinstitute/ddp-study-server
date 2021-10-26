@@ -75,6 +75,11 @@ public class JdbiQuestionCached extends SQLObjectWrapper<JdbiQuestion> implement
     }
 
     @Override
+    public List<String> getDynamicAnswersBasedOnQuestionsList(Long questionId) {
+        return delegate.getDynamicAnswersBasedOnQuestionsList(questionId);
+    }
+
+    @Override
     public Stream<QuestionDto> findLatestDtosByStudyIdAndQuestionStableIds(long studyId, Set<String> questionStableId) {
         return delegate.findLatestDtosByStudyIdAndQuestionStableIds(studyId, questionStableId);
     }

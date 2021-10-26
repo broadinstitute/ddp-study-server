@@ -8,6 +8,7 @@ select ans.answer_id,
        aa.answer as aa_value,
        ba.answer as ba_value,
        ta.answer as ta_value,
+       dy.answer_source_guid as dy_answer_source_guid,
        da.year   as da_year,
        da.month  as da_month,
        da.day    as da_day,
@@ -48,6 +49,7 @@ select ans.answer_id,
   left join agreement_answer as aa on aa.answer_id = ans.answer_id
   left join boolean_answer as ba on ba.answer_id = ans.answer_id
   left join text_answer as ta on ta.answer_id = ans.answer_id
+  left join dynamic_select_answer as dy on dy.answer_id = ans.answer_id
   left join date_answer as da on da.answer_id = ans.answer_id
   left join file_answer as fa on fa.answer_id = ans.answer_id
   left join file_upload as fd on fd.file_upload_id = fa.file_upload_id
@@ -134,5 +136,27 @@ where u.guid = :userGuid
         from activity_instance
        where participant_id = ai.participant_id
          and study_activity_id = ai.study_activity_id)
+<all_answers_order_by()>
+>>
+
+findDynamicSelectAnswerByUserGuidAndStableId() ::= <<
+<all_answers_select()>
+where u.guid = :userGuid
+  and qsc.stable_id in (
+    select dynamic_source_stable_id
+      from dynamic_select_source_questions as dbq
+      join question as q on q.question_id = dbq.dynamic_question_id
+      join question_stable_code as qsc on qsc.question_stable_code_id = q.question_stable_code_id
+      join revision as rev on rev.revision_id = q.revision_id
+      join activity_instance as ai on ai.study_activity_id = q.study_activity_id
+      join study_activity as sa on q.study_activity_id = sa.study_activity_id
+      join user as u on u.user_id = ai.participant_id
+    where u.guid = :userGuid
+      and qsc.stable_id = :stableId
+      and ai.created_at = (
+    	  select max(created_at)
+          from activity_instance
+        where participant_id = ai.participant_id
+          and study_activity_id = ai.study_activity_id))
 <all_answers_order_by()>
 >>

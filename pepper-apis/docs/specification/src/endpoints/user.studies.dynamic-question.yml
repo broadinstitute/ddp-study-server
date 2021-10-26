@@ -1,0 +1,30 @@
+get:
+  operationId: getDynamicAnswersBasedOnQuestions
+  tags:
+    - Dynamic Question
+  summary: get dynamic answers based on previus questions
+  description: returns a list of answers on previus questions
+  parameters:
+    - in: path
+      name: user
+      required: true
+      description: the user's unique identifier
+      schema:
+        type: string
+    - in: path
+      name: study
+      required: true
+      description: the unique identifier for the study
+      schema:
+        type: string
+    - in: path
+      name: stableId
+      required: true
+      description: the dynamic question's unique identifier
+      schema:
+        type: string
+  responses:
+    200:
+      $ref: '../pepper.yml#/components/responses/DynamicSelectAnswersResponse'
+    default:
+      $ref: '../pepper.yml#/components/responses/ErrorResponse'
