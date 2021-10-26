@@ -1,4 +1,23 @@
 function (user, context, callback) {
+    const {Logging} = require('@google-cloud/logging');
+    const cloudLoggingEnabled = !!configuration.googleApplicationCredentials;
+    var cloudLog = null;
+
+    if (cloudLoggingEnabled) {
+        const cloudLogName = "_Default";
+        var applicationCredentials = JSON.parse(configuration.googleApplicationCredentials);
+
+        console.log("Successfully loaded googleApplicationCredentials. Google Cloud Logging to project " + applicationCredentials.project_id + " is enabled");
+
+        var cloudLoggingConfig = {
+            projectId: applicationCredentials.project_id,
+            credentials: applicationCredentials
+        };
+
+        var cloudLogging = new Logging(cloudLoggingConfig);
+        cloudLog = cloudLogging.log(cloudLogName);
+    }
+
     // Environment stabilization. This will save us a number of
     // overly complex if statements later
     context.clientMetadata = context.clientMetadata || {};
@@ -141,8 +160,6 @@ function (user, context, callback) {
             console.log('User timezone passed in (via body) = ' + pepper_params.timeZone);
         }
 
-        console.log(context);
-
         // This is the token renewal case. Let's avoid going through pepper registration
         if (context.request.query.renew_token_only) {
             context.idToken[pepperUserGuidClaim] = user.app_metadata.user_guid;
@@ -176,6 +193,28 @@ function (user, context, callback) {
                 console.log('User metadata has last name = ' + pepper_params.lastName);
             }
 
+            if (cloudLoggingEnabled) {
+                var severity = "INFO";
+
+                if (pepper_params.mode) {
+                    if ( (pepper_params.mode === 'signup') && (!pepper_params.tempUserGuid) ) {
+                        severity = "ERROR";
+                    }
+                }
+
+                var entry = cloudLog.entry({
+                    severity: severity,
+                    labels: {
+                        source: "auth0",
+                        mode: pepper_params.mode || "default"
+                    }
+                }, context);
+
+                cloudLog.write(entry);
+            } else {
+                console.log(context);
+            }
+            
             request.post({
                 url: configuration.pepperBaseUrl + '/pepper/v1/register',
                 json: pepper_params,
