@@ -46,6 +46,7 @@ import org.broadinstitute.ddp.model.activity.instance.answer.DateValue;
 import org.broadinstitute.ddp.model.activity.instance.answer.PicklistAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.SelectedPicklistOption;
 import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
+import org.broadinstitute.ddp.model.activity.instance.answer.DynamicSelectAnswer;
 import org.broadinstitute.ddp.model.activity.types.EventTriggerType;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
@@ -539,6 +540,8 @@ public class TreeWalkInterpreter implements PexInterpreter {
                     return applyBoolAnswerPredicate(ictx, predicateCtx, userGuid, studyId, activityCode, instanceGuid, stableId);
                 case TEXT:
                     return applyTextAnswerPredicate(ictx, predicateCtx, userGuid, studyId, activityCode, instanceGuid, stableId);
+                case DYNAMIC_SELECT:
+                    return applyDynamicAnswerPredicate(ictx, predicateCtx, userGuid, studyId, activityCode, instanceGuid, stableId);
                 case PICKLIST:
                     return applyPicklistAnswerPredicate(ictx, predicateCtx, userGuid, studyId, activityCode, instanceGuid, stableId);
                 case DATE:
@@ -573,6 +576,8 @@ public class TreeWalkInterpreter implements PexInterpreter {
             switch (questionType) {
                 case TEXT:
                     return applyChildTextAnswerPredicate(ictx, predicateCtx, userGuid, childAnswers);
+                case DYNAMIC_SELECT:
+                    return applyChildDynamicAnswerPredicate(ictx, predicateCtx, userGuid, childAnswers);
                 case PICKLIST:
                     return applyChildPicklistAnswerPredicate(ictx, predicateCtx, userGuid, childAnswers);
                 case DATE:
@@ -725,6 +730,33 @@ public class TreeWalkInterpreter implements PexInterpreter {
             throw new PexUnsupportedException("Getting text answer value for child question is currently not supported");
         } else {
             throw new PexUnsupportedException("Invalid predicate used on text answer query: " + predicateCtx.getText());
+        }
+    }
+
+    private Object applyDynamicAnswerPredicate(InterpreterContext ictx, PredicateContext predicateCtx,
+                                               String userGuid, long studyId, String activityCode, String instanceGuid, String stableId) {
+        if (predicateCtx instanceof PexParser.HasTextPredicateContext) {
+            String value = StringUtils.isBlank(instanceGuid)
+                    ? fetcher.findLatestDynamicAnswer(ictx, userGuid, activityCode, stableId, studyId)
+                    : fetcher.findSpecificDynamicAnswer(ictx, activityCode, instanceGuid, stableId);
+            return StringUtils.isNotBlank(value);
+        } else if (predicateCtx instanceof PexParser.ValueQueryContext) {
+            throw new PexUnsupportedException("Getting dynamic answer value is not supported");
+        } else {
+            throw new PexUnsupportedException("Invalid predicate used on dynamic answer query: " + predicateCtx.getText());
+        }
+    }
+
+    private Object applyChildDynamicAnswerPredicate(InterpreterContext ictx, PredicateContext predicateCtx,
+                                                    String userGuid, List<Answer> childAnswers) {
+        if (predicateCtx instanceof PexParser.HasTextPredicateContext) {
+            return childAnswers.stream()
+                    .map(child -> ((DynamicSelectAnswer) child).getValue())
+                    .anyMatch(StringUtils::isNotBlank);
+        } else if (predicateCtx instanceof PexParser.ValueQueryContext) {
+            throw new PexUnsupportedException("Getting dynamic answer value is not supported");
+        } else {
+            throw new PexUnsupportedException("Invalid predicate used on dynamic answer query: " + predicateCtx.getText());
         }
     }
 

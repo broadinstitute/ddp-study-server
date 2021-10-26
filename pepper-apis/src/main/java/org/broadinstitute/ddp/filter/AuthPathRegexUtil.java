@@ -43,6 +43,9 @@ public class AuthPathRegexUtil {
     private static final Pattern CANCER_SUGGESTION_ROUTE_REGEX = Pattern.compile(
             BASE_REGEX + "\\/studies\\/" + GUID_PATTERN + "/suggestions/cancers" + "\\/?");
 
+    private static final Pattern DYNAMIC_ANSWER_BASED_ON_QUESTION_ROUTE_REGEX = Pattern.compile(
+            BASE_REGEX + "/user/" + GUID_PATTERN + "\\/studies\\/" + GUID_PATTERN  + "\\/dynamic-question\\/" + GUID_PATTERN + "\\/?");
+
     private static final Pattern UPDATE_USER_PASSWORD_ROUTE_REGEX = Pattern.compile(
             BASE_REGEX + "\\/user\\/" + GUID_PATTERN + "/password");
 
@@ -78,6 +81,10 @@ public class AuthPathRegexUtil {
 
     public boolean isCancerSuggestionRoute(String path) {
         return CANCER_SUGGESTION_ROUTE_REGEX.matcher(path).matches();
+    }
+
+    public boolean isDynamicAnswerBasedOnQuestionRoute(String path) {
+        return DYNAMIC_ANSWER_BASED_ON_QUESTION_ROUTE_REGEX.matcher(path).matches();
     }
 
     public boolean isUpdateUserPasswordRoute(String path) {

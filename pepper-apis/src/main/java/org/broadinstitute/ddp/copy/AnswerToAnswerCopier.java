@@ -24,6 +24,7 @@ import org.broadinstitute.ddp.model.activity.instance.answer.NumericIntegerAnswe
 import org.broadinstitute.ddp.model.activity.instance.answer.PicklistAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.SelectedPicklistOption;
 import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
+import org.broadinstitute.ddp.model.activity.instance.answer.DynamicSelectAnswer;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
 import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
@@ -164,6 +165,9 @@ public class AnswerToAnswerCopier {
         } else if (type == QuestionType.TEXT) {
             String value = ((TextAnswer) sourceAnswer).getValue();
             targetAnswer = new TextAnswer(null, targetQuestion.getStableId(), null, value);
+        } else if (type == QuestionType.DYNAMIC_SELECT) {
+            String value = ((DynamicSelectAnswer) sourceAnswer).getValue();
+            targetAnswer = new DynamicSelectAnswer(null, targetQuestion.getStableId(), null, value);
         } else {
             throw new DDPException("Unhandled copying for answer type " + type);
         }

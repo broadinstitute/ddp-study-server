@@ -21,6 +21,7 @@ import org.broadinstitute.ddp.model.activity.definition.question.PicklistOptionD
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.TextQuestionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.DynamicSelectQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.activity.definition.validation.RequiredRuleDef;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
@@ -50,6 +51,7 @@ public class TestFormActivity {
     private PicklistQuestionDef picklistSingleListQuestion;
     private PicklistQuestionDef picklistMultiListQuestion;
     private TextQuestionDef textQuestion;
+    private DynamicSelectQuestionDef dynamicSelectQuestion;
 
     public static Builder builder() {
         return new Builder();
@@ -99,6 +101,10 @@ public class TestFormActivity {
         return textQuestion;
     }
 
+    public DynamicSelectQuestionDef getDynamicSelectQuestion() {
+        return dynamicSelectQuestion;
+    }
+
     public static class Builder {
         private Integer maxInstancesPerUser = null;
         private boolean hideExistingInstances = false;
@@ -108,6 +114,7 @@ public class TestFormActivity {
         private boolean withFileQuestion = false;
         private boolean withNumericIntQuestion = false;
         private boolean withTextQuestion = false;
+        private boolean withDynamicSelectQuestion = false;
         private List<PicklistOptionDef> picklistSingleListOptions = null;
         private List<PicklistOptionDef> picklistMultiListOptions = null;
         private List<QuestionDef> compositeChildQuestions = null;
@@ -180,6 +187,11 @@ public class TestFormActivity {
 
         public Builder withTextQuestion(boolean include) {
             this.withTextQuestion = include;
+            return this;
+        }
+
+        public Builder withDynamicSelectQuestion(boolean include) {
+            this.withDynamicSelectQuestion = include;
             return this;
         }
 
@@ -289,6 +301,18 @@ public class TestFormActivity {
             }
             if (!textBlocks.isEmpty()) {
                 builder.addSection(new FormSectionDef(null, textBlocks));
+            }
+
+            var dynamicBlocks = new ArrayList<FormBlockDef>();
+            if (withDynamicSelectQuestion) {
+                var question = DynamicSelectQuestionDef
+                        .builder("DYNAMIC_SELECT" + Instant.now().toEpochMilli(), Template.text("text prompt"))
+                        .build();
+                result.dynamicSelectQuestion = question;
+                dynamicBlocks.add(new QuestionBlockDef(question));
+            }
+            if (!dynamicBlocks.isEmpty()) {
+                builder.addSection(new FormSectionDef(null, dynamicBlocks));
             }
 
             result.def = builder.build();

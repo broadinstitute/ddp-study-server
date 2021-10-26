@@ -34,6 +34,7 @@ import org.broadinstitute.ddp.model.activity.instance.answer.NumericIntegerAnswe
 import org.broadinstitute.ddp.model.activity.instance.answer.PicklistAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.SelectedPicklistOption;
 import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
+import org.broadinstitute.ddp.model.activity.instance.answer.DynamicSelectAnswer;
 import org.broadinstitute.ddp.model.activity.types.DateFieldType;
 import org.broadinstitute.ddp.model.activity.types.DateRenderMode;
 import org.broadinstitute.ddp.model.activity.types.NumericType;
@@ -173,6 +174,56 @@ public class AnswerDaoTest extends TxnAwareBaseTest {
 
             answerDao.deleteAnswer(textAnswer1.getAnswerId());
             assertFalse(answerDao.findAnswerById(textAnswer1.getAnswerId()).isPresent());
+
+            handle.rollback();
+        });
+    }
+
+    @Test
+    public void testCreateUpdateDelete_dynamic() {
+        TransactionWrapper.useTxn(handle -> {
+            TestFormActivity activity = TestFormActivity.builder()
+                    .withTextQuestion(true)
+                    .withDynamicSelectQuestion(true)
+                    .build(handle, testData.getUserId(), testData.getStudyGuid());
+
+            long instanceId = createInstance(handle, activity.getDef().getActivityId()).getId();
+
+            AnswerDao answerDao = daoBuilder.buildDao(handle);
+
+            TextAnswer textAnswer1 = new TextAnswer(null, activity.getTextQuestion().getStableId(), null, "old");
+            answerDao.createAnswer(testData.getUserId(), instanceId, textAnswer1);
+
+            DynamicSelectAnswer dynamicSelectAnswer1 =
+                    new DynamicSelectAnswer(null, activity.getDynamicSelectQuestion().getStableId(), null, textAnswer1.getAnswerGuid());
+            answerDao.createAnswer(testData.getUserId(), instanceId, dynamicSelectAnswer1);
+
+            assertTrue(dynamicSelectAnswer1.getAnswerId() > 0);
+            assertEquals(QuestionType.DYNAMIC_SELECT, dynamicSelectAnswer1.getQuestionType());
+            assertEquals(textAnswer1.getAnswerGuid(), dynamicSelectAnswer1.getValue());
+
+            TextAnswer textAnswer2 = new TextAnswer(null, activity.getTextQuestion().getStableId(), null, "new");
+            answerDao.createAnswer(testData.getUserId(), instanceId, textAnswer2);
+
+            DynamicSelectAnswer dynamicSelectAnswer2 =
+                    new DynamicSelectAnswer(null, activity.getDynamicSelectQuestion().getStableId(), null, textAnswer2.getAnswerGuid());
+            answerDao.updateAnswer(testData.getUserId(), dynamicSelectAnswer1.getAnswerId(), dynamicSelectAnswer2);
+
+            assertEquals(dynamicSelectAnswer1.getAnswerId(), dynamicSelectAnswer2.getAnswerId());
+
+            Optional<Answer> updatedOpt = answerDao.findAnswerById(dynamicSelectAnswer1.getAnswerId());
+
+            assertTrue(updatedOpt.isPresent());
+
+            Answer updatedAnswer = updatedOpt.get();
+
+            assertEquals(dynamicSelectAnswer1.getAnswerId(), updatedAnswer.getAnswerId());
+            assertEquals(dynamicSelectAnswer1.getAnswerGuid(), updatedAnswer.getAnswerGuid());
+
+            assertEquals(textAnswer2.getAnswerGuid(), updatedAnswer.getValue());
+
+            answerDao.deleteAnswer(dynamicSelectAnswer1.getAnswerId());
+            assertFalse(answerDao.findAnswerById(dynamicSelectAnswer1.getAnswerId()).isPresent());
 
             handle.rollback();
         });
