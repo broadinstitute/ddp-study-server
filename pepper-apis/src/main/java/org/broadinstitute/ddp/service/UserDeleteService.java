@@ -123,7 +123,7 @@ public class UserDeleteService {
             checkBeforeDelete(handle, user);
         }
         LogInfo logInfo = deleteUserSteps(handle, user, fullDelete);
-        LOG.info(LOG_PREFIX_USER_DELETE + " is COMPLETED successfully. Steps:\n{}", user.getGuid(), logInfo.getInfo());
+        LOG.info(LOG_PREFIX_USER_DELETE + " is COMPLETED successfully.\nDeleted data:\n{}", user.getGuid(), logInfo.getInfo());
     }
 
     private void checkBeforeDelete(Handle handle, User user) {
@@ -171,47 +171,47 @@ public class UserDeleteService {
     }
 
     private void deleteKitRequests(Handle handle, User user, LogInfo logInfo) {
-        logInfo.addEol("kit_request");
+        logInfo.add("kit_request");
         handle.attach(DsmKitRequestDao.class).deleteKitRequestByParticipantId(user.getId());
     }
 
     private void deleteUserStudyLegacyData(Handle handle, User user, LogInfo logInfo) {
-        logInfo.addEol("user_study_legacy_data");
+        logInfo.add("user_study_legacy_data");
         handle.attach(JdbiUserStudyLegacyData.class).deleteByUserId(user.getId());
     }
 
     private void deleteUserAnnouncement(Handle handle, User user, LogInfo logInfo) {
-        logInfo.addEol("user_announcement");
+        logInfo.add("user_announcement");
         handle.attach(UserAnnouncementDao.class).deleteAllForUser(user.getId());
     }
 
     private void deleteActivityInstanceStatus(Handle handle, User user, LogInfo logInfo) {
-        logInfo.addEol("activity_instance_status");
+        logInfo.add("activity_instance_status");
         handle.attach(JdbiActivityInstanceStatus.class).deleteStatusByOperatorId(user.getId());
     }
 
     private void deleteAnswersByOperator(Handle handle, User user, LogInfo logInfo) {
-        logInfo.addEol("answer (by operator_user_id)");
+        logInfo.add("answer (by operator_user_id)");
         handle.attach(AnswerSql.class).deleteAnswerByOperatorId(user.getId());
     }
 
     private void deleteUserProfile(Handle handle, User user, LogInfo logInfo) {
-        logInfo.addEol("user_profile");
+        logInfo.add("user_profile");
         handle.attach(UserProfileDao.class).getUserProfileSql().deleteByUserId(user.getId());
     }
 
     private void deleteMedicalProvider(Handle handle, User user, LogInfo logInfo) {
-        logInfo.addEol("user_medical_provider");
+        logInfo.add("user_medical_provider");
         handle.attach(JdbiMedicalProvider.class).deleteByUserId(user.getId());
     }
 
     private void deleteEnrollmentStatuses(Handle handle, User user, LogInfo logInfo) {
-        logInfo.addEol("user_study_enrollment");
+        logInfo.add("user_study_enrollment");
         handle.attach(JdbiUserStudyEnrollment.class).deleteByUserId(user.getId());
     }
 
     private void deleteUserAddresses(Handle handle, User user, LogInfo logInfo) {
-        logInfo.addEol("temp_mailing_address, default_mailing_address, mailing_address");
+        logInfo.add("temp_mailing_address, default_mailing_address, mailing_address");
         handle.attach(JdbiTempMailAddress.class).deleteTempAddressByParticipantId(user.getId());
         JdbiMailAddress mailAddressDao = handle.attach(JdbiMailAddress.class);
         mailAddressDao.deleteDefaultAddressByParticipantId(user.getId());
@@ -222,12 +222,11 @@ public class UserDeleteService {
         logInfo.add("answer, activity_instance_status, activity_instance");
         ActivityInstanceDao instanceDao = handle.attach(ActivityInstanceDao.class);
         List<ActivityInstanceDto> instances = instanceDao.findAllInstancesByUserIds(Collections.singleton(user.getId()));
-        logInfo.addEol(format(" (found {} activity instances)", instances.size()));
         instanceDao.deleteInstances(instances);
     }
 
     private void deleteCountersAndEvents(Handle handle, User user, LogInfo logInfo) {
-        logInfo.addEol("event_configuration_occurrence_counter, queued_event");
+        logInfo.add("event_configuration_occurrence_counter, queued_event");
         handle.attach(JdbiEventConfigurationOccurrenceCounter.class).deleteAllByParticipantId(user.getId());
         JdbiQueuedEvent queueEvent = handle.attach(JdbiQueuedEvent.class);
         queueEvent.deleteQueuedNotificationSubstitutionsByUserIds(Collections.singleton(user.getId()));
@@ -236,7 +235,7 @@ public class UserDeleteService {
     }
 
     private void deleteGovernances(Handle handle, User user, LogInfo logInfo, UserCollectedData userCollectedData) {
-        logInfo.addEol("user_governance (by operator_user_id), user_governance (by participant_user_id)");
+        logInfo.add("user_governance (by operator_user_id), user_governance (by participant_user_id)");
         UserGovernanceDao userGovernanceDao = handle.attach(UserGovernanceDao.class);
         List<Governance> userGovernances = userGovernanceDao.findGovernancesByParticipantGuid(user.getGuid()).collect(Collectors.toList());
         Set<String> studyGuids = userGovernances.stream()
@@ -250,12 +249,12 @@ public class UserDeleteService {
     }
 
     private void deleteAgeUpCandidates(Handle handle, User user, LogInfo logInfo) {
-        logInfo.addEol("age_up_candidate");
+        logInfo.add("age_up_candidate");
         handle.attach(StudyGovernanceSql.class).deleteAgeUpCandidateByParticipantId(user.getId());
     }
 
     private void deleteUser(Handle handle, User user, LogInfo logInfo) {
-        logInfo.addEol("data_sync_request, user");
+        logInfo.add("data_sync_request, user");
         handle.attach(DataExportDao.class).deleteDataSyncRequestsForUser(user.getId());
         handle.attach(JdbiUser.class).deleteAllByIds(Collections.singleton(user.getId()));
     }
@@ -263,7 +262,7 @@ public class UserDeleteService {
     private void deleteElasticSearchData(Handle handle, User user, LogInfo logInfo, UserCollectedData userCollectedData)
             throws IOException {
         if (esClient != null) {
-            logInfo.addEol("ES indices: participants, participants_structured, users");
+            logInfo.add("ES indices: participants, participants_structured, users");
             BulkRequest bulkRequest = new BulkRequest().timeout("2m");
             for (String studyGuid : userCollectedData.getStudyGuids()) {
                 StudyDto studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(studyGuid);
@@ -301,7 +300,7 @@ public class UserDeleteService {
 
     private void deleteAuth0User(Handle handle, User user, LogInfo logInfo) {
         if (user.getAuth0UserId() != null) {
-            logInfo.addEol("auth0 data");
+            logInfo.add("auth0 data");
             var result = Auth0ManagementClient.forUser(handle, user.getGuid()).deleteAuth0User(user.getAuth0UserId());
             if (result.hasFailure()) {
                 throw new DDPException(result.hasThrown() ? result.getThrown() : result.getError());
@@ -336,11 +335,7 @@ public class UserDeleteService {
         final StringBuilder logInfo = new StringBuilder();
 
         void add(String info) {
-            logInfo.append(info);
-        }
-
-        void addEol(String info) {
-            logInfo.append(info).append('\n');
+            logInfo.append(" -- ").append(info).append('\n');
         }
 
         String getInfo() {
