@@ -169,8 +169,8 @@ import org.broadinstitute.ddp.service.PdfBucketService;
 import org.broadinstitute.ddp.service.PdfGenerationService;
 import org.broadinstitute.ddp.service.PdfService;
 import org.broadinstitute.ddp.service.SendGridEventService;
+import org.broadinstitute.ddp.service.UserDeleteService;
 import org.broadinstitute.ddp.service.WorkflowService;
-import org.broadinstitute.ddp.service.userdelete.UserService;
 import org.broadinstitute.ddp.transformers.NullableJsonTransformer;
 import org.broadinstitute.ddp.transformers.SimpleJsonTransformer;
 import org.broadinstitute.ddp.util.ConfigManager;
@@ -433,7 +433,7 @@ public class DataDonationPlatform {
         post(API.USER_PROFILE, new AddProfileRoute(), responseSerializer);
         patch(API.USER_PROFILE, new PatchProfileRoute(), responseSerializer);
 
-        delete(API.USER_SPECIFIC, new DeleteUserRoute(new UserService(esClient)), responseSerializer);
+        delete(API.USER_SPECIFIC, new DeleteUserRoute(new UserDeleteService(esClient)), responseSerializer);
 
         // User mailing address routes
         AddressService addressService = new AddressService(cfg.getString(ConfigFile.EASY_POST_API_KEY),

@@ -9,20 +9,20 @@ import java.io.IOException;
 
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.UserDao;
-import org.broadinstitute.ddp.service.userdelete.UserService;
+import org.broadinstitute.ddp.service.UserDeleteService;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 public class DeleteUserRouteTest extends DeleteUserRouteTestAbstract {
 
-    private static UserService userService;
+    private static UserDeleteService userDeleteService;
     private static DeleteUserRoute route;
 
     @BeforeClass
     public static void setup() throws Exception {
-        userService = new UserService(esClientMock);
-        route = new DeleteUserRoute(userService);
+        userDeleteService = new UserDeleteService(esClientMock);
+        route = new DeleteUserRoute(userDeleteService);
         DeleteUserRouteTestAbstract.setup();
     }
 
@@ -81,7 +81,7 @@ public class DeleteUserRouteTest extends DeleteUserRouteTestAbstract {
         TransactionWrapper.useTxn(handle -> {
             DeleteUserRoute.CheckError err = route.checkLimits(handle, userNormal, testData.getUserGuid());
             assertNull(err);
-            userService.deleteUser(handle, userNormal);
+            userDeleteService.simpleDelete(handle, userNormal);
             assertFalse(handle.attach(UserDao.class).findUserById(userNormal.getId()).isPresent());
         });
         usersToDelete.remove(userNormal);
