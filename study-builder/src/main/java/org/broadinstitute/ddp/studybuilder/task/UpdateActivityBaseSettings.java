@@ -198,7 +198,7 @@ public class UpdateActivityBaseSettings implements CustomTask {
                 current.getRevisionId());
     }
 
-    private void compareStatusSummaries(Handle handle, Config definition, long activityId) {
+    protected void compareStatusSummaries(Handle handle, Config definition, long activityId) {
         var activityI18nDao = handle.attach(ActivityI18nDao.class);
         Map<String, SummaryTranslation> currentSummaries = activityI18nDao
                 .findSummariesByActivityId(activityId)
