@@ -27,6 +27,7 @@ import org.broadinstitute.ddp.model.address.MailAddress;
 import org.broadinstitute.ddp.model.dsm.KitType;
 import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
 import org.broadinstitute.ddp.model.user.User;
+import org.broadinstitute.ddp.model.user.UserProfile;
 import org.broadinstitute.ddp.service.DsmAddressValidationStatus;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
 import org.elasticsearch.client.RestHighLevelClient;
@@ -55,16 +56,24 @@ public class DeleteUserRouteTestAbstract extends IntegrationTestSuite.TestCase {
             testData = TestDataSetupUtil.generateBasicUserTestData(handle);
 
             userNonGoverned = createUser(handle, testData.getTestingStudy(), null, false,
+                    testData.getProfile(), testData.getTestingUser().getEmail(),
                     false);
             userMultiGoverned = createUser(handle, testData.getTestingStudy(), null, false,
+                    testData.getProfile(), testData.getTestingUser().getEmail(),
                     false, testData.getUserId(), userNonGoverned.getId());
             userWithAccount = createUser(handle, testData.getTestingStudy(), "some_account", false,
+                    testData.getProfile(), testData.getTestingUser().getEmail(),
                     false, testData.getUserId());
-            userEnrolled = createUser(handle, testData.getTestingStudy(), null, true, false,
+            userEnrolled = createUser(handle, testData.getTestingStudy(), null, true,
+                    testData.getProfile(), testData.getTestingUser().getEmail(),
+                    false,
                     testData.getUserId());
-            userWithKit = createUser(handle, testData.getTestingStudy(), null, false, true,
+            userWithKit = createUser(handle, testData.getTestingStudy(), null, false,
+                    testData.getProfile(), testData.getTestingUser().getEmail(),
+                    true,
                     testData.getUserId());
             userNormal = createUser(handle, testData.getTestingStudy(), null, false,
+                    testData.getProfile(), testData.getTestingUser().getEmail(),
                     false, testData.getUserId());
         });
     }
@@ -91,13 +100,29 @@ public class DeleteUserRouteTestAbstract extends IntegrationTestSuite.TestCase {
     }
 
     protected static User createUser(Handle handle, StudyDto study, String auth0Account, boolean enrolled,
-                                   boolean kitRequested, Long... proxyUserIds) throws Exception {
+                                     UserProfile userProfile, String email,
+                                     boolean kitRequested, Long... proxyUserIds) throws Exception {
         UserDao userDao = handle.attach(UserDao.class);
         JdbiUser jdbiUser = handle.attach(JdbiUser.class);
         String userGuid = DBUtils.uniqueUserGuid(handle);
         String userHruid = DBUtils.uniqueUserHruid(handle);
         long userId = jdbiUser.insert(auth0Account, userGuid, testData.getClientId(), userHruid);
         User user = userDao.findUserById(userId).orElseThrow(() -> new Exception("Could not find user: " + userId));
+        if (userProfile != null) {
+            handle.attach(UserProfileDao.class).createProfile(
+                    new UserProfile.Builder(userId)
+                            .setFirstName(userProfile.getFirstName())
+                            .setLastName(userProfile.getLastName())
+                            .setBirthDate(userProfile.getBirthDate())
+                            .setPreferredLangId(userProfile.getPreferredLangId())
+                            .setSexType(userProfile.getSexType())
+                            .build()
+            );
+            user.setProfile(userProfile);
+        }
+        if (email != null) {
+            user.setEmail(email);
+        }
         Arrays.stream(proxyUserIds).forEach(proxyUserId -> {
             UserGovernanceDao userGovernanceDao = handle.attach(UserGovernanceDao.class);
             long governanceId = userGovernanceDao.assignProxy(userGuid, proxyUserId, userId);

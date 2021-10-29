@@ -38,7 +38,7 @@ public class UserDeleteServiceTest extends DeleteUserRouteTestAbstract {
     public void testFullDeleteUserWithGovernedUsers() throws IOException {
         try {
             TransactionWrapper.useTxn(handle -> {
-                userDeleteService.fullDelete(handle, getUser(handle, testData.getUserGuid()));
+                userDeleteService.fullDelete(handle, userNonGoverned);
             });
         } catch (DDPException e) {
             assertEquals(format("User [guid=19i3-test-user-48f0] deletion is FAILED: the user has governed users",
@@ -60,7 +60,7 @@ public class UserDeleteServiceTest extends DeleteUserRouteTestAbstract {
     @Test
     public void testFullDeleteUserNormal() throws IOException {
         TransactionWrapper.useTxn(handle -> {
-            userDeleteService.fullDelete(handle, getUser(handle, userMultiGoverned.getGuid()));
+            userDeleteService.fullDelete(handle, userMultiGoverned);
         });
         usersToDelete.remove(userMultiGoverned);
         governancesToDelete.remove(userMultiGoverned);

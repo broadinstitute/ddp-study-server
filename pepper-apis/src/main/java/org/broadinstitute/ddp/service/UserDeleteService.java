@@ -94,7 +94,6 @@ public class UserDeleteService {
 
     private final RestHighLevelClient esClient;
 
-    private static final String LOG_PREFIX_USER_DELETE = "User [guid={}] deletion";
     private static final String ERROR_PREFIX_USER_DELETE = "User [guid=%s] deletion is FAILED: ";
 
     public UserDeleteService(RestHighLevelClient esClient) {
@@ -118,12 +117,22 @@ public class UserDeleteService {
     }
 
     private void delete(Handle handle, User user, boolean fullDelete) throws IOException {
-        LOG.info(LOG_PREFIX_USER_DELETE + " is STARTED", user.getGuid());
+        LOG.info("User {} deletion is STARTED. guid:{}", fullDelete ? "FULL" : "SIMPLE", user.getGuid());
         if (fullDelete) {
             checkBeforeDelete(handle, user);
         }
         LogInfo logInfo = deleteUserSteps(handle, user, fullDelete);
-        LOG.info(LOG_PREFIX_USER_DELETE + " is COMPLETED successfully.\nDeleted data:\n{}", user.getGuid(), logInfo.getInfo());
+        LOG.warn("User {} deletion is completed SUCCESSFULLY. "
+                + "guid:{}, hruid:{}, e-mail:{}, name:{} {}, dob:{} "
+                + "\nDeleted data:\n{}",
+                fullDelete ? "FULL" : "SIMPLE",
+                user.getGuid(),
+                user.getHruid(),
+                user.getEmail(),
+                user.getProfile() != null ? user.getProfile().getFirstName() : "",
+                user.getProfile() != null ? user.getProfile().getLastName() : "",
+                user.getProfile() != null ? user.getProfile().getBirthDate() : "",
+                logInfo.getInfo());
     }
 
     private void checkBeforeDelete(Handle handle, User user) {
@@ -146,7 +155,7 @@ public class UserDeleteService {
             deleteKitRequests(handle, user, logInfo);
             deleteUserStudyLegacyData(handle, user, logInfo);
             deleteUserAnnouncement(handle, user, logInfo);
-            deleteActivityInstanceStatus(handle, user, logInfo);
+            deleteActivityInstanceStatusByOperator(handle, user, logInfo);
             deleteAnswersByOperator(handle, user, logInfo);
         }
 
@@ -185,8 +194,8 @@ public class UserDeleteService {
         handle.attach(UserAnnouncementDao.class).deleteAllForUser(user.getId());
     }
 
-    private void deleteActivityInstanceStatus(Handle handle, User user, LogInfo logInfo) {
-        logInfo.add("activity_instance_status");
+    private void deleteActivityInstanceStatusByOperator(Handle handle, User user, LogInfo logInfo) {
+        logInfo.add("activity_instance_status (by operator_id)");
         handle.attach(JdbiActivityInstanceStatus.class).deleteStatusByOperatorId(user.getId());
     }
 
@@ -219,7 +228,7 @@ public class UserDeleteService {
     }
 
     private void deleteAnswersAndActivityInstances(Handle handle, User user, LogInfo logInfo) {
-        logInfo.add("answer, activity_instance_status, activity_instance");
+        logInfo.add("answer, activity_instance_status (by activity_instance_id), activity_instance");
         ActivityInstanceDao instanceDao = handle.attach(ActivityInstanceDao.class);
         List<ActivityInstanceDto> instances = instanceDao.findAllInstancesByUserIds(Collections.singleton(user.getId()));
         instanceDao.deleteInstances(instances);
