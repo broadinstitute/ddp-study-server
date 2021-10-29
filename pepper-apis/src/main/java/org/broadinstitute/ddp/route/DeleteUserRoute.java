@@ -59,7 +59,7 @@ public class DeleteUserRoute implements Route {
             if (err != null) {
                 throw ResponseUtil.haltError(response, err.getStatus(), err.getError());
             }
-            userDeleteService.simpleDelete(handle, user);
+            userDeleteService.simpleDelete(handle, user, "operatorGuid=" + operatorGuid, "called from DELETE /user");
             response.status(HttpStatus.SC_NO_CONTENT);
             return "";
         });

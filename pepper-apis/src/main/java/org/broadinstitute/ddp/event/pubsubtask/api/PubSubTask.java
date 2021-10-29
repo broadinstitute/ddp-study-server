@@ -59,6 +59,6 @@ public class PubSubTask {
 
     @Override
     public String toString() {
-        return "taskType=" + taskType + ", messageId=" + messageId + ", attr=" + attributes + ", payload={" + payloadJson + "}";
+        return "taskType=" + taskType + ", messageId=" + messageId + ", attr=" + attributes + ", payload=" + payloadJson;
     }
 }

@@ -55,7 +55,7 @@ public class PubSubTaskUpdateProfileMessageTest extends PubSubTaskMessageTestAbs
     @Test
     public void testUpdateProfileEmptyBodyMessageParser() {
         init();
-        var message = buildMessage(TASK_TYPE__UPDATE_PROFILE, "", true, TEST_USER_ID);
+        var message = buildMessage(TASK_TYPE__UPDATE_PROFILE, null, "", true, TEST_USER_ID);
 
         pubSubTaskReceiver.receiveMessage(message, mock(AckReplyConsumer.class));
 
@@ -68,7 +68,7 @@ public class PubSubTaskUpdateProfileMessageTest extends PubSubTaskMessageTestAbs
 
     private void buildMessageAndAssert(boolean buildValidMessage) {
         init();
-        var message = buildMessage(TASK_TYPE__UPDATE_PROFILE,
+        var message = buildMessage(TASK_TYPE__UPDATE_PROFILE, null,
                 format("{'%s':'%s', '%s':'%s', '%s':'%s', '%s':'%s'}",
                         EMAIL, TEST_EMAIL, FIRST_NAME, TEST_FIRST_NAME, LAST_NAME, TEST_LAST_NAME,
                         DO_NOT_CONTACT, true), buildValidMessage, TEST_USER_ID);

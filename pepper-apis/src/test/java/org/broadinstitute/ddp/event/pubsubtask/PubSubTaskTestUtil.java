@@ -5,7 +5,9 @@ import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTask.ATTR_NAME__
 import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTask.ATTR_NAME__TASK_TYPE;
 import static org.broadinstitute.ddp.event.pubsubtask.impl.updateprofile.UpdateProfileConstants.ATTR_NAME__USER_ID;
 import static org.broadinstitute.ddp.event.pubsubtask.impl.updateprofile.UpdateProfileConstants.TASK_TYPE__UPDATE_PROFILE;
-import static org.broadinstitute.ddp.event.pubsubtask.impl.userdelete.UserDeleteProcessor.TASK_TYPE__USER_DELETE;
+import static org.broadinstitute.ddp.event.pubsubtask.impl.userdelete.UserDeleteConstants.TASK_TYPE__USER_DELETE;
+
+import java.util.Map;
 
 import com.google.protobuf.ByteString;
 import com.google.pubsub.v1.PubsubMessage;
@@ -43,6 +45,7 @@ public class PubSubTaskTestUtil {
 
     public static PubsubMessage buildMessage(
             String taskType,
+            Map<String, String> extraAttibutes,
             String payloadJson,
             boolean buildValidMessage,
             String testUserId) {
@@ -57,7 +60,9 @@ public class PubSubTaskTestUtil {
             messageBuilder
                     .putAttributes(ATTR_NAME__PARTICIPANT_GUID, TEST_PARTICIPANT_GUID)
                     .putAttributes(ATTR_NAME__STUDY_GUID, TEST_STUDY_GUID);
-
+            if (extraAttibutes != null) {
+                extraAttibutes.forEach((k, v) -> messageBuilder.putAttributes(k, v));
+            }
             if (testUserId != null) {
                 messageBuilder.putAttributes(ATTR_NAME__USER_ID, testUserId);
             }

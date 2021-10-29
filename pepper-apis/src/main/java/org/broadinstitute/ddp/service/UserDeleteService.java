@@ -1,6 +1,7 @@
 package org.broadinstitute.ddp.service;
 
 import static java.lang.String.format;
+import static org.broadinstitute.ddp.util.MiscUtil.objToStr;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -104,34 +105,38 @@ public class UserDeleteService {
      * Used to delete a user which still not registered in auth0-system, not governed by others than a user
      * who deletes this user, not having status ENROLLED.
      */
-    public void simpleDelete(Handle handle, User user) throws IOException {
-        delete(handle, user, false);
+    public void simpleDelete(Handle handle, User user, String whoDeleted, String comment) throws IOException {
+        delete(handle, user, whoDeleted, comment, false);
     }
 
     /**
      * User full delete (including auth0 data). Cannot be deleted if have governed users (such users should
      * be deleted first).
      */
-    public void fullDelete(Handle handle, User user) throws IOException {
-        delete(handle, user, true);
+    public void fullDelete(Handle handle, User user, String whoDeleted, String comment) throws IOException {
+        delete(handle, user, whoDeleted, comment, true);
     }
 
-    private void delete(Handle handle, User user, boolean fullDelete) throws IOException {
+    private void delete(Handle handle, User user, String whoDeleted, String comment, boolean fullDelete) throws IOException {
         LOG.info("User {} deletion is STARTED. guid:{}", fullDelete ? "FULL" : "SIMPLE", user.getGuid());
         if (fullDelete) {
             checkBeforeDelete(handle, user);
         }
         LogInfo logInfo = deleteUserSteps(handle, user, fullDelete);
         LOG.warn("User {} deletion is completed SUCCESSFULLY. "
-                + "guid:{}, hruid:{}, e-mail:{}, name:{} {}, dob:{} "
-                + "\nDeleted data:\n{}",
+                + "guid:{}, hruid:{}, e-mail:{}, name:{} {}, dob:{}\n"
+                + "Who deleted: {}\n"
+                + "Comment: {}\n"
+                + "Deleted data:\n{}",
                 fullDelete ? "FULL" : "SIMPLE",
                 user.getGuid(),
                 user.getHruid(),
                 user.getEmail(),
-                user.getProfile() != null ? user.getProfile().getFirstName() : "",
-                user.getProfile() != null ? user.getProfile().getLastName() : "",
-                user.getProfile() != null ? user.getProfile().getBirthDate() : "",
+                user.getProfile() != null ? objToStr(user.getProfile().getFirstName()) : "",
+                user.getProfile() != null ? objToStr(user.getProfile().getLastName()) : "",
+                user.getProfile() != null ? objToStr(user.getProfile().getBirthDate()) : "",
+                objToStr(whoDeleted),
+                objToStr(comment),
                 logInfo.getInfo());
     }
 

@@ -21,6 +21,9 @@ public class UserDeleteServiceTest extends DeleteUserRouteTestAbstract {
 
     private static final String NON_EXISTING_USER_GUID = "aaabbbccc";
 
+    private static final String WHO_DELETED_USER = "operatorGuid=I2OMJ257OGNF0GY30HQT";
+    private static final String DELETION_COMMENT = "This user is deleted by mistake";
+
     private static UserDeleteService userDeleteService;
 
     @BeforeClass
@@ -38,7 +41,7 @@ public class UserDeleteServiceTest extends DeleteUserRouteTestAbstract {
     public void testFullDeleteUserWithGovernedUsers() throws IOException {
         try {
             TransactionWrapper.useTxn(handle -> {
-                userDeleteService.fullDelete(handle, userNonGoverned);
+                userDeleteService.fullDelete(handle, userNonGoverned, WHO_DELETED_USER, DELETION_COMMENT);
             });
         } catch (DDPException e) {
             assertEquals(format("User [guid=19i3-test-user-48f0] deletion is FAILED: the user has governed users",
@@ -50,7 +53,8 @@ public class UserDeleteServiceTest extends DeleteUserRouteTestAbstract {
     public void testFullDeleteNonExistingUser() throws IOException {
         try {
             TransactionWrapper.useTxn(handle -> {
-                userDeleteService.fullDelete(handle, getUser(handle, NON_EXISTING_USER_GUID));
+                userDeleteService.fullDelete(handle, getUser(handle, NON_EXISTING_USER_GUID),
+                        WHO_DELETED_USER, DELETION_COMMENT);
             });
         } catch (Exception e) {
             assertEquals("User [guid=aaabbbccc] deletion is FAILED: the user not found", e.getMessage());
@@ -60,7 +64,7 @@ public class UserDeleteServiceTest extends DeleteUserRouteTestAbstract {
     @Test
     public void testFullDeleteUserNormal() throws IOException {
         TransactionWrapper.useTxn(handle -> {
-            userDeleteService.fullDelete(handle, userMultiGoverned);
+            userDeleteService.fullDelete(handle, userMultiGoverned, WHO_DELETED_USER, DELETION_COMMENT);
         });
         usersToDelete.remove(userMultiGoverned);
         governancesToDelete.remove(userMultiGoverned);

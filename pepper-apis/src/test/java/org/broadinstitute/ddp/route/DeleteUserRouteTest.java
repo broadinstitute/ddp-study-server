@@ -81,7 +81,7 @@ public class DeleteUserRouteTest extends DeleteUserRouteTestAbstract {
         TransactionWrapper.useTxn(handle -> {
             DeleteUserRoute.CheckError err = route.checkLimits(handle, userNormal, testData.getUserGuid());
             assertNull(err);
-            userDeleteService.simpleDelete(handle, userNormal);
+            userDeleteService.simpleDelete(handle, userNormal, "TestAdmin", "test deletion");
             assertFalse(handle.attach(UserDao.class).findUserById(userNormal.getId()).isPresent());
         });
         usersToDelete.remove(userNormal);

@@ -1,6 +1,9 @@
 package org.broadinstitute.ddp.event.pubsubtask.impl.userdelete;
 
+import static org.apache.commons.lang.StringUtils.isBlank;
 import static org.broadinstitute.ddp.db.TransactionWrapper.DB.APIS;
+import static org.broadinstitute.ddp.event.pubsubtask.impl.userdelete.UserDeleteConstants.FIELD__COMMENT;
+import static org.broadinstitute.ddp.event.pubsubtask.impl.userdelete.UserDeleteConstants.FIELD__WHO_DELETED;
 
 import java.net.MalformedURLException;
 
@@ -26,11 +29,6 @@ import org.jdbi.v3.core.Handle;
  */
 public class UserDeleteProcessor extends PubSubTaskProcessorAbstract {
 
-    /**
-     * {@link PubSubTask} taskType for a user deletion
-     */
-    public static final String TASK_TYPE__USER_DELETE = "USER_DELETE";
-
 
     @Override
     public void handleTask(PubSubTask pubSubTask) {
@@ -43,6 +41,10 @@ public class UserDeleteProcessor extends PubSubTaskProcessorAbstract {
         if (participantGuid == null) {
             throwIfInvalidAttribute(pubSubTask, PubSubTask.ATTR_NAME__PARTICIPANT_GUID, participantGuid);
         }
+        String whoDeleted = payloadProps.getProperty(FIELD__WHO_DELETED);
+        if (isBlank(whoDeleted)) {
+            throwIfInvalidPayloadProperty(pubSubTask, FIELD__WHO_DELETED, whoDeleted);
+        }
     }
 
     @Override
@@ -53,7 +55,8 @@ public class UserDeleteProcessor extends PubSubTaskProcessorAbstract {
     private void deleteUser(Handle handle, UserDeleteService userDeleteService) {
         try {
             User user = UserDeleteService.getUser(handle, participantGuid);
-            userDeleteService.fullDelete(handle, user);
+            userDeleteService.fullDelete(handle, user,
+                    payloadProps.getProperty(FIELD__WHO_DELETED), payloadProps.getProperty(FIELD__COMMENT));
         } catch (Exception e) {
             throw new PubSubTaskException("Error delete user " + participantGuid, e);
         }

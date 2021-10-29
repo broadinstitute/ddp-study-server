@@ -53,7 +53,7 @@ public class PubSubTaskCustomMessageTest {
     @Test
     public void testCustomMessageProcessing1() {
         init();
-        var message = buildMessage(TestProcessor1.TEST_TASK_1,
+        var message = buildMessage(TestProcessor1.TEST_TASK_1, null,
                 format("{'%s':'%s', '%s':'%s', '%s':'%s'}",
                         EMAIL, TEST_EMAIL, EDUCATION, TEST_EDUCATION, MARITAL_STATUS, TEST_MARITAL_STATUS), true, TEST_USER_ID);
         pubSubTaskReceiver.receiveMessage(message, mock(AckReplyConsumer.class));
@@ -89,7 +89,7 @@ public class PubSubTaskCustomMessageTest {
     @Test
     public void testCustomMessageProcessing2() {
         init();
-        var message = buildMessage(TestProcessor2.TEST_TASK_2,
+        var message = buildMessage(TestProcessor2.TEST_TASK_2, null,
                 format("{'%s':'%s', '%s':'%s'}", EMAIL, TEST_EMAIL, EDUCATION, TEST_EDUCATION), true, TEST_USER_ID);
         pubSubTaskReceiver.receiveMessage(message, mock(AckReplyConsumer.class));
 
