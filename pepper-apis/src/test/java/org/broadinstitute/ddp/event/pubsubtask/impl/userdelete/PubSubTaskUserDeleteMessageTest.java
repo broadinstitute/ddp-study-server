@@ -49,7 +49,7 @@ public class PubSubTaskUserDeleteMessageTest extends PubSubTaskMessageTestAbstra
         buildMessageAndAssert(false);
 
         assertEquals(ERROR, testResultSender.getPubSubTaskResult().getResultType());
-        assertEquals("PubSubTask 'USER_DELETE' processing FAILED: attribute studyGuid is incorrect: [null]",
+        assertEquals("PubSubTask 'USER_DELETE' processing FAILED: attribute participantGuid is incorrect: [null]",
                 testResultSender.getPubSubTaskResult().getErrorMessage());
     }
 
