@@ -1,13 +1,12 @@
 package org.broadinstitute.ddp.event.pubsubtask.api;
 
 import static java.lang.String.format;
-import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTask.ATTR_TASK_TYPE;
+import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTask.ATTR_NAME__TASK_TYPE;
 import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskException.Severity.WARN;
 import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskLogUtil.errorMsg;
 import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskLogUtil.infoMsg;
 import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskResult.PubSubTaskResultType.ERROR;
 import static org.slf4j.LoggerFactory.getLogger;
-
 
 import com.google.cloud.pubsub.v1.AckReplyConsumer;
 import com.google.cloud.pubsub.v1.MessageReceiver;
@@ -69,7 +68,7 @@ public class PubSubTaskReceiver implements MessageReceiver {
 
     private PubSubTask parseMessage(PubsubMessage message) {
         String messageId = message.getMessageId();
-        String taskType = message.getAttributesOrDefault(ATTR_TASK_TYPE, null);
+        String taskType = message.getAttributesOrDefault(ATTR_NAME__TASK_TYPE, null);
         String payloadJson = message.getData() != null ? message.getData().toStringUtf8() : null;
 
         PubSubTask pubSubTask = new PubSubTask(messageId, taskType, message.getAttributesMap(), payloadJson);

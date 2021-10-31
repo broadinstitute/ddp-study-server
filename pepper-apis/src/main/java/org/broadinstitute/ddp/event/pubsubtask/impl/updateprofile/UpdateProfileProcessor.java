@@ -3,11 +3,7 @@ package org.broadinstitute.ddp.event.pubsubtask.impl.updateprofile;
 import static java.lang.String.format;
 import static org.apache.commons.lang.StringUtils.isBlank;
 import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskException.Severity.WARN;
-import static org.broadinstitute.ddp.event.pubsubtask.impl.updateprofile.UpdateProfileConstants.ATTR_PARTICIPANT_GUID;
-import static org.broadinstitute.ddp.event.pubsubtask.impl.updateprofile.UpdateProfileConstants.ATTR_USER_ID;
-
-import java.util.Properties;
-
+import static org.broadinstitute.ddp.event.pubsubtask.impl.updateprofile.UpdateProfileConstants.ATTR_NAME__USER_ID;
 
 import org.broadinstitute.ddp.event.pubsubtask.api.PubSubTask;
 import org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskException;
@@ -29,29 +25,23 @@ public class UpdateProfileProcessor extends PubSubTaskProcessorAbstract {
 
     @Override
     public void handleTask(PubSubTask pubSubTask) {
-        validateTaskData(pubSubTask);
         updateData(pubSubTask);
     }
 
     protected void validateTaskData(PubSubTask pubSubTask) {
-        String participantGuid = pubSubTask.getAttributes().get(ATTR_PARTICIPANT_GUID);
-        String userId = pubSubTask.getAttributes().get(ATTR_USER_ID);
+        super.validateTaskData(pubSubTask);
+        String userId = pubSubTask.getAttributes().get(ATTR_NAME__USER_ID);
         if (isBlank(participantGuid) || isBlank(userId)) {
-            throw new PubSubTaskException(format("Error processing task - some attributes are not specified: "
-                            + "participantGuid=%s, userId=%s", participantGuid, userId), WARN);
-        }
-        if (isBlank(pubSubTask.getPayloadJson())) {
-            throw new PubSubTaskException("Error processing task - empty payload", WARN);
+            throw new PubSubTaskException(format("PubSubTask '%s' processing FAILED, some attributes are not specified: "
+                    + "participantGuid=%s, userId=%s", pubSubTask.getTaskType(), participantGuid, userId), WARN);
         }
     }
 
     protected void updateData(PubSubTask pubSubTask) {
-        Properties properties = gson.fromJson(pubSubTask.getPayloadJson(), Properties.class);
+        var participantGuid = pubSubTask.getAttributes().get(PubSubTask.ATTR_NAME__PARTICIPANT_GUID);
 
-        var participantGuid = pubSubTask.getAttributes().get(ATTR_PARTICIPANT_GUID);
+        new UpdateEmailHandler().updateEmail(participantGuid, payloadProps);
 
-        new UpdateEmailHandler().updateEmail(participantGuid, properties);
-
-        new UpdateProfileDataHandler().updateProfileData(participantGuid, properties);
+        new UpdateProfileDataHandler().updateProfileData(participantGuid, payloadProps);
     }
 }
