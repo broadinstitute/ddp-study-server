@@ -1,5 +1,7 @@
 package org.broadinstitute.ddp.route;
 
+import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
@@ -16,12 +18,14 @@ import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.json.ActivityInstanceCreationPayload;
 import org.broadinstitute.ddp.json.ActivityInstanceCreationResponse;
 import org.broadinstitute.ddp.json.errors.ApiError;
+import org.broadinstitute.ddp.json.form.BlockVisibility;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
 import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.security.DDPAuth;
 import org.broadinstitute.ddp.util.ActivityInstanceUtil;
 import org.broadinstitute.ddp.util.ResponseUtil;
 import org.broadinstitute.ddp.util.RouteUtil;
+import org.broadinstitute.ddp.util.QuestionUtil;
 import org.broadinstitute.ddp.util.ValidatedJsonInputRoute;
 import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
@@ -72,6 +76,8 @@ public class CreateActivityInstanceRoute extends ValidatedJsonInputRoute<Activit
                 return null;
             }
 
+            ActivityInstanceCreationResponse res = new ActivityInstanceCreationResponse();
+
             Long parentInstanceId = null;
             if (validation.getParentActivityCode() != null) {
                 parentInstanceId = findAndCheckParentInstance(
@@ -98,7 +104,15 @@ public class CreateActivityInstanceRoute extends ValidatedJsonInputRoute<Activit
             handle.attach(DataExportDao.class).queueDataSync(participantGuid, studyGuid);
             LOG.info("Created activity instance {} for activity {} and user {}",
                     instanceGuid, activityCode, participantGuid);
-            return new ActivityInstanceCreationResponse(instanceGuid);
+            res.setInstanceGuid(instanceGuid);
+
+            Optional<List<BlockVisibility>> parentInstanceBlockVisibility = QuestionUtil.getBlockVisibility(handle,
+                    response, parentInstanceGuid, found.getUser(), found.getStudyDto(), operatorGuid, isStudyAdmin);
+            if (parentInstanceBlockVisibility.isPresent()) {
+                res.setBlockVisibilities(parentInstanceBlockVisibility.get());
+            }
+
+            return res;
         });
     }
 
