@@ -280,4 +280,5 @@
     <include file="db-changes/schema/DDP-6339-add-unique-validation-type.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/DDP-6983-activity-instance-creation-mutex-table.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/DDP-7004-auth0-logging-error-fix.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/DDP-7095-create-table-i18n-translation.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>
