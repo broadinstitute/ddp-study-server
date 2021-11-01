@@ -7,7 +7,7 @@ import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
 import com.google.gson.annotations.SerializedName;
 import org.broadinstitute.ddp.content.ContentStyle;
-import org.broadinstitute.ddp.model.activity.instance.answer.DynamicSelectAnswer;
+import org.broadinstitute.ddp.model.activity.instance.answer.ActivityInstanceSelectAnswer;
 import org.broadinstitute.ddp.model.activity.instance.validation.Rule;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
 
@@ -16,17 +16,17 @@ import java.lang.reflect.Type;
 import java.util.List;
 import java.util.function.Consumer;
 
-public class DynamicSelectQuestion extends Question<DynamicSelectAnswer> {
+public class ActivityInstanceSelectQuestion extends Question<ActivityInstanceSelectAnswer> {
 
     @NotNull
-    @SerializedName("sourceStableIds")
-    private List<String> sourceStableIds;
+    @SerializedName("activityCodes")
+    private final List<String> activityCodes;
 
-    public DynamicSelectQuestion(String stableId, long promptTemplateId, boolean isRestricted, boolean isDeprecated,
-                                 Boolean readonly, Long tooltipTemplateId, Long additionalInfoHeaderTemplateId,
-                                 Long additionalInfoFooterTemplateId, List<DynamicSelectAnswer> answers,
-                                 List<Rule<DynamicSelectAnswer>> validations, List<String> sourceStableIds) {
-        super(QuestionType.DYNAMIC_SELECT,
+    public ActivityInstanceSelectQuestion(String stableId, long promptTemplateId, boolean isRestricted, boolean isDeprecated,
+                                          Boolean readonly, Long tooltipTemplateId, Long additionalInfoHeaderTemplateId,
+                                          Long additionalInfoFooterTemplateId, List<ActivityInstanceSelectAnswer> answers,
+                                          List<Rule<ActivityInstanceSelectAnswer>> validations, List<String> activityCodes) {
+        super(QuestionType.ACTIVITY_INSTANCE_SELECT,
                 stableId,
                 promptTemplateId,
                 isRestricted,
@@ -37,7 +37,7 @@ public class DynamicSelectQuestion extends Question<DynamicSelectAnswer> {
                 additionalInfoFooterTemplateId,
                 answers,
                 validations);
-        this.sourceStableIds = sourceStableIds;
+        this.activityCodes = activityCodes;
     }
 
     @Override
@@ -50,15 +50,15 @@ public class DynamicSelectQuestion extends Question<DynamicSelectAnswer> {
         super.applyRenderedTemplates(rendered, style);
     }
 
-    public List<String> getSourceQuestions() {
-        return sourceStableIds;
+    public List<String> getActivityCodes() {
+        return activityCodes;
     }
 
-    public static class Serializer implements JsonSerializer<DynamicSelectQuestion> {
-        private static Gson gson = new GsonBuilder().create();
+    public static class Serializer implements JsonSerializer<ActivityInstanceSelectQuestion> {
+        private static final Gson gson = new GsonBuilder().create();
 
         @Override
-        public JsonElement serialize(DynamicSelectQuestion src, Type typeOfSrc, JsonSerializationContext context) {
+        public JsonElement serialize(ActivityInstanceSelectQuestion src, Type typeOfSrc, JsonSerializationContext context) {
             return gson.toJsonTree(src);
         }
     }

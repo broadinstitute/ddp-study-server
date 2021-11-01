@@ -39,6 +39,7 @@ import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.db.dto.UserActivityInstanceSummary;
 import org.broadinstitute.ddp.model.activity.definition.question.CompositeQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
+import org.broadinstitute.ddp.model.activity.instance.answer.ActivityInstanceSelectAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
 import org.broadinstitute.ddp.model.activity.instance.answer.CompositeAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.DateAnswer;
@@ -46,7 +47,6 @@ import org.broadinstitute.ddp.model.activity.instance.answer.DateValue;
 import org.broadinstitute.ddp.model.activity.instance.answer.PicklistAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.SelectedPicklistOption;
 import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
-import org.broadinstitute.ddp.model.activity.instance.answer.DynamicSelectAnswer;
 import org.broadinstitute.ddp.model.activity.types.EventTriggerType;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
@@ -540,8 +540,9 @@ public class TreeWalkInterpreter implements PexInterpreter {
                     return applyBoolAnswerPredicate(ictx, predicateCtx, userGuid, studyId, activityCode, instanceGuid, stableId);
                 case TEXT:
                     return applyTextAnswerPredicate(ictx, predicateCtx, userGuid, studyId, activityCode, instanceGuid, stableId);
-                case DYNAMIC_SELECT:
-                    return applyDynamicAnswerPredicate(ictx, predicateCtx, userGuid, studyId, activityCode, instanceGuid, stableId);
+                case ACTIVITY_INSTANCE_SELECT:
+                    return applyActivityInstanceSelectAnswerPredicate(ictx, predicateCtx, userGuid, studyId, activityCode,
+                            instanceGuid, stableId);
                 case PICKLIST:
                     return applyPicklistAnswerPredicate(ictx, predicateCtx, userGuid, studyId, activityCode, instanceGuid, stableId);
                 case DATE:
@@ -576,8 +577,8 @@ public class TreeWalkInterpreter implements PexInterpreter {
             switch (questionType) {
                 case TEXT:
                     return applyChildTextAnswerPredicate(ictx, predicateCtx, userGuid, childAnswers);
-                case DYNAMIC_SELECT:
-                    return applyChildDynamicAnswerPredicate(ictx, predicateCtx, userGuid, childAnswers);
+                case ACTIVITY_INSTANCE_SELECT:
+                    return applyChildActivityInstanceSelectAnswerPredicate(ictx, predicateCtx, userGuid, childAnswers);
                 case PICKLIST:
                     return applyChildPicklistAnswerPredicate(ictx, predicateCtx, userGuid, childAnswers);
                 case DATE:
@@ -733,30 +734,33 @@ public class TreeWalkInterpreter implements PexInterpreter {
         }
     }
 
-    private Object applyDynamicAnswerPredicate(InterpreterContext ictx, PredicateContext predicateCtx,
-                                               String userGuid, long studyId, String activityCode, String instanceGuid, String stableId) {
+    private Object applyActivityInstanceSelectAnswerPredicate(InterpreterContext ictx, PredicateContext predicateCtx,
+                                                              String userGuid, long studyId, String activityCode,
+                                                              String instanceGuid, String stableId) {
         if (predicateCtx instanceof PexParser.HasTextPredicateContext) {
             String value = StringUtils.isBlank(instanceGuid)
-                    ? fetcher.findLatestDynamicAnswer(ictx, userGuid, activityCode, stableId, studyId)
-                    : fetcher.findSpecificDynamicAnswer(ictx, activityCode, instanceGuid, stableId);
+                    ? fetcher.findLatestActivityInstanceAnswer(ictx, userGuid, activityCode, stableId, studyId)
+                    : fetcher.findSpecificActivityInstanceSelectAnswer(ictx, activityCode, instanceGuid, stableId);
             return StringUtils.isNotBlank(value);
         } else if (predicateCtx instanceof PexParser.ValueQueryContext) {
-            throw new PexUnsupportedException("Getting dynamic answer value is not supported");
+            throw new PexUnsupportedException("Getting Activity Instance Select answer value is not supported");
         } else {
-            throw new PexUnsupportedException("Invalid predicate used on dynamic answer query: " + predicateCtx.getText());
+            throw new PexUnsupportedException("Invalid predicate used on Activity Instance Select answer query: "
+                    + predicateCtx.getText());
         }
     }
 
-    private Object applyChildDynamicAnswerPredicate(InterpreterContext ictx, PredicateContext predicateCtx,
-                                                    String userGuid, List<Answer> childAnswers) {
+    private Object applyChildActivityInstanceSelectAnswerPredicate(InterpreterContext ictx, PredicateContext predicateCtx,
+                                                                   String userGuid, List<Answer> childAnswers) {
         if (predicateCtx instanceof PexParser.HasTextPredicateContext) {
             return childAnswers.stream()
-                    .map(child -> ((DynamicSelectAnswer) child).getValue())
+                    .map(child -> ((ActivityInstanceSelectAnswer) child).getValue())
                     .anyMatch(StringUtils::isNotBlank);
         } else if (predicateCtx instanceof PexParser.ValueQueryContext) {
-            throw new PexUnsupportedException("Getting dynamic answer value is not supported");
+            throw new PexUnsupportedException("Getting Activity Instance Select answer value is not supported");
         } else {
-            throw new PexUnsupportedException("Invalid predicate used on dynamic answer query: " + predicateCtx.getText());
+            throw new PexUnsupportedException("Invalid predicate used on Activity Instance Select answer query: "
+                    + predicateCtx.getText());
         }
     }
 

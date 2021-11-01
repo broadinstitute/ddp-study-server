@@ -89,8 +89,8 @@ paths:
     $ref: 'endpoints/studies.suggestions.drugs.yml'
   /studies/{study}/suggestions/cancers:
     $ref: 'endpoints/studies.suggestions.cancers.yml'
-  /user/{user}/studies/{study}/dynamic-question/{stableId}:
-    $ref: 'endpoints/user.studies.dynamic-question.yml'
+  /user/{user}/studies/{study}/activity-instance-select/{stableId}:
+    $ref: 'endpoints/user.studies.activity-instance-select.yml'
   /studies/{study}/statistics:
     $ref: 'endpoints/studies.statistics.yml'
   /user/{user}:

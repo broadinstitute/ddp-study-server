@@ -21,7 +21,7 @@ import org.broadinstitute.ddp.model.activity.definition.question.PicklistOptionD
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.TextQuestionDef;
-import org.broadinstitute.ddp.model.activity.definition.question.DynamicSelectQuestionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.ActivityInstanceSelectQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.activity.definition.validation.RequiredRuleDef;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
@@ -51,7 +51,7 @@ public class TestFormActivity {
     private PicklistQuestionDef picklistSingleListQuestion;
     private PicklistQuestionDef picklistMultiListQuestion;
     private TextQuestionDef textQuestion;
-    private DynamicSelectQuestionDef dynamicSelectQuestion;
+    private ActivityInstanceSelectQuestionDef activityInstanceSelectQuestion;
 
     public static Builder builder() {
         return new Builder();
@@ -101,8 +101,8 @@ public class TestFormActivity {
         return textQuestion;
     }
 
-    public DynamicSelectQuestionDef getDynamicSelectQuestion() {
-        return dynamicSelectQuestion;
+    public ActivityInstanceSelectQuestionDef getActivityInstanceSelectQuestion() {
+        return activityInstanceSelectQuestion;
     }
 
     public static class Builder {
@@ -114,7 +114,7 @@ public class TestFormActivity {
         private boolean withFileQuestion = false;
         private boolean withNumericIntQuestion = false;
         private boolean withTextQuestion = false;
-        private boolean withDynamicSelectQuestion = false;
+        private boolean withActivityInstanceSelectQuestion = false;
         private List<PicklistOptionDef> picklistSingleListOptions = null;
         private List<PicklistOptionDef> picklistMultiListOptions = null;
         private List<QuestionDef> compositeChildQuestions = null;
@@ -190,8 +190,8 @@ public class TestFormActivity {
             return this;
         }
 
-        public Builder withDynamicSelectQuestion(boolean include) {
-            this.withDynamicSelectQuestion = include;
+        public Builder withActivityInstanceSelectQuestion(boolean include) {
+            this.withActivityInstanceSelectQuestion = include;
             return this;
         }
 
@@ -303,16 +303,16 @@ public class TestFormActivity {
                 builder.addSection(new FormSectionDef(null, textBlocks));
             }
 
-            var dynamicBlocks = new ArrayList<FormBlockDef>();
-            if (withDynamicSelectQuestion) {
-                var question = DynamicSelectQuestionDef
-                        .builder("DYNAMIC_SELECT" + Instant.now().toEpochMilli(), Template.text("text prompt"))
+            var aiBlocks = new ArrayList<FormBlockDef>();
+            if (withActivityInstanceSelectQuestion) {
+                var question = ActivityInstanceSelectQuestionDef
+                        .builder("AI_SELECT" + Instant.now().toEpochMilli(), Template.text("text prompt"))
                         .build();
-                result.dynamicSelectQuestion = question;
-                dynamicBlocks.add(new QuestionBlockDef(question));
+                result.activityInstanceSelectQuestion = question;
+                aiBlocks.add(new QuestionBlockDef(question));
             }
-            if (!dynamicBlocks.isEmpty()) {
-                builder.addSection(new FormSectionDef(null, dynamicBlocks));
+            if (!aiBlocks.isEmpty()) {
+                builder.addSection(new FormSectionDef(null, aiBlocks));
             }
 
             result.def = builder.build();

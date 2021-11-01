@@ -2,10 +2,8 @@ package org.broadinstitute.ddp.db.dao;
 
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Stream;
 
 import org.broadinstitute.ddp.cache.CacheService;
-import org.broadinstitute.ddp.json.DynamicSelectAnswerSubmission;
 import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
 import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
 import org.broadinstitute.ddp.model.activity.instance.answer.CompositeAnswer;
@@ -123,11 +121,6 @@ public class AnswerCachedDao extends SQLObjectWrapper<AnswerDao> implements Answ
     @Override
     public Optional<Answer> findAnswerByGuid(String answerGuid) {
         return delegate.findAnswerByGuid(answerGuid);
-    }
-
-    @Override
-    public Stream<DynamicSelectAnswerSubmission> findDynamicSelectAnswerByUserGuidAndStableId(String userGuid, String stableId) {
-        return delegate.findDynamicSelectAnswerByUserGuidAndStableId(userGuid, stableId);
     }
 
     @Override

@@ -1,9 +1,9 @@
 get:
-  operationId: getDynamicAnswersBasedOnQuestions
+  operationId: getActivityInstancesForSelection
   tags:
-    - Dynamic Question
-  summary: get dynamic answers based on previus questions
-  description: returns a list of answers on previus questions
+    - Suggestion
+  summary: get a list of activity instances to select
+  description: For specific Activity Instance Select question - returns a list of activity instances that can be selected as an answer to this specific question
   parameters:
     - in: path
       name: user
@@ -20,11 +20,11 @@ get:
     - in: path
       name: stableId
       required: true
-      description: the dynamic question's unique identifier
+      description: the activity instance select question's unique identifier
       schema:
         type: string
   responses:
     200:
-      $ref: '../pepper.yml#/components/responses/DynamicSelectAnswersResponse'
+      $ref: '../pepper.yml#/components/responses/ActivityInstanceSelectAnswersResponse'
     default:
       $ref: '../pepper.yml#/components/responses/ErrorResponse'

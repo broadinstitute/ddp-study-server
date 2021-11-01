@@ -14,7 +14,7 @@ import org.broadinstitute.ddp.model.activity.definition.question.NumericQuestion
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistGroupDef;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.TextQuestionDef;
-import org.broadinstitute.ddp.model.activity.definition.question.DynamicSelectQuestionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.ActivityInstanceSelectQuestionDef;
 import org.broadinstitute.ddp.model.activity.instance.question.AgreementQuestion;
 import org.broadinstitute.ddp.model.activity.instance.question.BoolQuestion;
 import org.broadinstitute.ddp.model.activity.instance.question.CompositeQuestion;
@@ -26,7 +26,7 @@ import org.broadinstitute.ddp.model.activity.instance.question.PicklistGroup;
 import org.broadinstitute.ddp.model.activity.instance.question.PicklistOption;
 import org.broadinstitute.ddp.model.activity.instance.question.PicklistQuestion;
 import org.broadinstitute.ddp.model.activity.instance.question.TextQuestion;
-import org.broadinstitute.ddp.model.activity.instance.question.DynamicSelectQuestion;
+import org.broadinstitute.ddp.model.activity.instance.question.ActivityInstanceSelectQuestion;
 import org.broadinstitute.ddp.service.actvityinstancebuilder.context.AIBuilderContext;
 import org.broadinstitute.ddp.util.CollectionMiscUtil;
 
@@ -280,9 +280,10 @@ public class QuestionCreatorHelper {
         );
     }
 
-    DynamicSelectQuestion createDynamicSelectQuestion(AIBuilderContext ctx, DynamicSelectQuestionDef questionDef) {
+    ActivityInstanceSelectQuestion createActivityInstanceSelectQuestion(AIBuilderContext ctx,
+                                                                        ActivityInstanceSelectQuestionDef questionDef) {
         QuestionCreator questionCreator = ctx.getAIBuilderFactory().getQuestionCreator();
-        return new DynamicSelectQuestion(
+        return new ActivityInstanceSelectQuestion(
                 questionDef.getStableId(),
                 ctx.getAIBuilderFactory().getTemplateRenderHelper().addTemplate(
                         ctx, questionDef.getPromptTemplate()),
@@ -297,6 +298,6 @@ public class QuestionCreatorHelper {
                         ctx, questionDef.getAdditionalInfoFooterTemplate()),
                 questionCreator.getAnswers(ctx, questionDef.getStableId()),
                 questionCreator.getValidationRules(ctx, questionDef),
-                questionDef.getSourceQuestions());
+                questionDef.getActivityCodes());
     }
 }

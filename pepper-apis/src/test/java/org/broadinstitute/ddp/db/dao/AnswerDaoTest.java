@@ -22,6 +22,7 @@ import org.broadinstitute.ddp.model.activity.definition.question.DateQuestionDef
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistOptionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.TextQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
+import org.broadinstitute.ddp.model.activity.instance.answer.ActivityInstanceSelectAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.AgreementAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
 import org.broadinstitute.ddp.model.activity.instance.answer.BoolAnswer;
@@ -34,7 +35,6 @@ import org.broadinstitute.ddp.model.activity.instance.answer.NumericIntegerAnswe
 import org.broadinstitute.ddp.model.activity.instance.answer.PicklistAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.SelectedPicklistOption;
 import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
-import org.broadinstitute.ddp.model.activity.instance.answer.DynamicSelectAnswer;
 import org.broadinstitute.ddp.model.activity.types.DateFieldType;
 import org.broadinstitute.ddp.model.activity.types.DateRenderMode;
 import org.broadinstitute.ddp.model.activity.types.NumericType;
@@ -180,50 +180,58 @@ public class AnswerDaoTest extends TxnAwareBaseTest {
     }
 
     @Test
-    public void testCreateUpdateDelete_dynamic() {
+    public void testCreateUpdateDelete_ActivityInstanceSelect() {
         TransactionWrapper.useTxn(handle -> {
             TestFormActivity activity = TestFormActivity.builder()
                     .withTextQuestion(true)
-                    .withDynamicSelectQuestion(true)
+                    .withActivityInstanceSelectQuestion(true)
                     .build(handle, testData.getUserId(), testData.getStudyGuid());
+            ActivityInstanceDto instanceDto = createInstance(handle, activity.getDef().getActivityId());
+            long instanceId = instanceDto.getId();
 
-            long instanceId = createInstance(handle, activity.getDef().getActivityId()).getId();
+            TestFormActivity subActivity1 = TestFormActivity.builder()
+                    .withTextQuestion(true)
+                    .build(handle, testData.getUserId(), testData.getStudyGuid());
+            ActivityInstanceDto instanceDto1 = createInstance(handle, subActivity1.getDef().getActivityId());
+
+            TestFormActivity subActivity2 = TestFormActivity.builder()
+                    .withTextQuestion(true)
+                    .build(handle, testData.getUserId(), testData.getStudyGuid());
+            ActivityInstanceDto instanceDto2 = createInstance(handle, subActivity2.getDef().getActivityId());
+
 
             AnswerDao answerDao = daoBuilder.buildDao(handle);
 
-            TextAnswer textAnswer1 = new TextAnswer(null, activity.getTextQuestion().getStableId(), null, "old");
-            answerDao.createAnswer(testData.getUserId(), instanceId, textAnswer1);
+            ActivityInstanceSelectAnswer activityInstanceSelectAnswer1 =
+                    new ActivityInstanceSelectAnswer(null, activity.getActivityInstanceSelectQuestion().getStableId(),
+                            null, instanceDto1.getGuid());
+            answerDao.createAnswer(testData.getUserId(), instanceId, activityInstanceSelectAnswer1);
 
-            DynamicSelectAnswer dynamicSelectAnswer1 =
-                    new DynamicSelectAnswer(null, activity.getDynamicSelectQuestion().getStableId(), null, textAnswer1.getAnswerGuid());
-            answerDao.createAnswer(testData.getUserId(), instanceId, dynamicSelectAnswer1);
+            assertTrue(activityInstanceSelectAnswer1.getAnswerId() > 0);
+            assertEquals(QuestionType.ACTIVITY_INSTANCE_SELECT, activityInstanceSelectAnswer1.getQuestionType());
+            assertEquals(instanceDto1.getGuid(), activityInstanceSelectAnswer1.getValue());
 
-            assertTrue(dynamicSelectAnswer1.getAnswerId() > 0);
-            assertEquals(QuestionType.DYNAMIC_SELECT, dynamicSelectAnswer1.getQuestionType());
-            assertEquals(textAnswer1.getAnswerGuid(), dynamicSelectAnswer1.getValue());
+            ActivityInstanceSelectAnswer activityInstanceSelectAnswer2 =
+                    new ActivityInstanceSelectAnswer(null, activity.getActivityInstanceSelectQuestion().getStableId(),
+                            null, instanceDto2.getGuid());
+            answerDao.updateAnswer(testData.getUserId(), activityInstanceSelectAnswer1.getAnswerId(), activityInstanceSelectAnswer2);
 
-            TextAnswer textAnswer2 = new TextAnswer(null, activity.getTextQuestion().getStableId(), null, "new");
-            answerDao.createAnswer(testData.getUserId(), instanceId, textAnswer2);
+            assertEquals(activityInstanceSelectAnswer1.getAnswerId(), activityInstanceSelectAnswer2.getAnswerId());
+            assertEquals(instanceDto2.getGuid(), activityInstanceSelectAnswer2.getValue());
 
-            DynamicSelectAnswer dynamicSelectAnswer2 =
-                    new DynamicSelectAnswer(null, activity.getDynamicSelectQuestion().getStableId(), null, textAnswer2.getAnswerGuid());
-            answerDao.updateAnswer(testData.getUserId(), dynamicSelectAnswer1.getAnswerId(), dynamicSelectAnswer2);
-
-            assertEquals(dynamicSelectAnswer1.getAnswerId(), dynamicSelectAnswer2.getAnswerId());
-
-            Optional<Answer> updatedOpt = answerDao.findAnswerById(dynamicSelectAnswer1.getAnswerId());
+            Optional<Answer> updatedOpt = answerDao.findAnswerById(activityInstanceSelectAnswer1.getAnswerId());
 
             assertTrue(updatedOpt.isPresent());
 
             Answer updatedAnswer = updatedOpt.get();
 
-            assertEquals(dynamicSelectAnswer1.getAnswerId(), updatedAnswer.getAnswerId());
-            assertEquals(dynamicSelectAnswer1.getAnswerGuid(), updatedAnswer.getAnswerGuid());
+            assertEquals(activityInstanceSelectAnswer1.getAnswerId(), updatedAnswer.getAnswerId());
+            assertEquals(activityInstanceSelectAnswer1.getAnswerGuid(), updatedAnswer.getAnswerGuid());
 
-            assertEquals(textAnswer2.getAnswerGuid(), updatedAnswer.getValue());
+            assertEquals(instanceDto2.getGuid(), updatedAnswer.getValue());
 
-            answerDao.deleteAnswer(dynamicSelectAnswer1.getAnswerId());
-            assertFalse(answerDao.findAnswerById(dynamicSelectAnswer1.getAnswerId()).isPresent());
+            answerDao.deleteAnswer(activityInstanceSelectAnswer1.getAnswerId());
+            assertFalse(answerDao.findAnswerById(activityInstanceSelectAnswer1.getAnswerId()).isPresent());
 
             handle.rollback();
         });

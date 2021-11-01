@@ -58,16 +58,16 @@ interface PexDao extends SqlObject {
                                   @Bind("stableId") String stableId);
 
     @UseStringTemplateSqlLocator
-    @SqlQuery("queryLatestDynamicAnswerByUserGuidActivityCodeAndQuestionStableId")
-    String findLatestDynamicAnswer(@Bind("userGuid") String userGuid,
-                                   @Bind("activityCode") String activityCode,
-                                   @Bind("stableId") String stableId,
-                                   @Bind("studyId") long studyId);
+    @SqlQuery("queryLatestActivityInstanceSelectAnswerByUserGuidActivityCodeAndQuestionStableId")
+    String findLatestActivityInstanceSelectAnswer(@Bind("userGuid") String userGuid,
+                                                  @Bind("activityCode") String activityCode,
+                                                  @Bind("stableId") String stableId,
+                                                  @Bind("studyId") long studyId);
 
     @UseStringTemplateSqlLocator
-    @SqlQuery("queryDynamicAnswerByStableIdAndActivityInstance")
-    String findSpecificDynamicAnswer(@Bind("activityInstanceGuid") String activityInstanceGuid,
-                                     @Bind("stableId") String stableId);
+    @SqlQuery("queryActivityInstanceSelectAnswerByStableIdAndActivityInstance")
+    String findSpecificActivityInstanceSelectAnswer(@Bind("activityInstanceGuid") String activityInstanceGuid,
+                                                    @Bind("stableId") String stableId);
 
     @UseStringTemplateSqlLocator
     @SqlQuery("queryLatestPicklistAnswersAsSelectedOptionGroupsByUserInstanceAndStableId")

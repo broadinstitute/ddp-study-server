@@ -260,8 +260,8 @@ public abstract class QuestionDef {
                     return ctx.deserialize(elem, BoolQuestionDef.class);
                 case TEXT:
                     return ctx.deserialize(elem, TextQuestionDef.class);
-                case DYNAMIC_SELECT:
-                    return ctx.deserialize(elem, DynamicSelectQuestionDef.class);
+                case ACTIVITY_INSTANCE_SELECT:
+                    return ctx.deserialize(elem, ActivityInstanceSelectQuestionDef.class);
                 case DATE:
                     return ctx.deserialize(elem, DateQuestionDef.class);
                 case FILE:

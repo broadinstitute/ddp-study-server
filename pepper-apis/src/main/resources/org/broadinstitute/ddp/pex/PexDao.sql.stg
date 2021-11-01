@@ -88,10 +88,10 @@ select ta.answer
      and qsc.stable_id = :stableId
 >>
 
-queryLatestDynamicAnswerByUserGuidActivityCodeAndQuestionStableId() ::= <<
-select dy.answer_source_guid
-  from dynamic_select_answer as dy
-  join answer as a on dy.answer_id = a.answer_id
+queryLatestActivityInstanceSelectAnswerByUserGuidActivityCodeAndQuestionStableId() ::= <<
+select aia.instance_guid
+  from activity_instance_select_answer as aia
+  join answer as a on aia.answer_id = a.answer_id
   join question as q on a.question_id = q.question_id
   join question_stable_code as qsc on q.question_stable_code_id = qsc.question_stable_code_id
   join activity_instance as ai on a.activity_instance_id = ai.activity_instance_id
@@ -104,10 +104,10 @@ select dy.answer_source_guid
  order by ai.created_at desc limit 1
 >>
 
-queryDynamicAnswerByStableIdAndActivityInstance() ::= <<
-select dy.answer_source_guid
-    from dynamic_select_answer as dy
-    join answer as a on dy.answer_id = a.answer_id
+queryActivityInstanceSelectAnswerByStableIdAndActivityInstance() ::= <<
+select aia.instance_guid
+    from activity_instance_select_answer as aia
+    join answer as a on aia.answer_id = a.answer_id
     join question as q on a.question_id = q.question_id
     join question_stable_code as qsc on q.question_stable_code_id = qsc.question_stable_code_id
     join activity_instance as ai on ai.activity_instance_id = a.activity_instance_id

@@ -168,8 +168,8 @@ public class RouteConstants {
         public static final String CANCER_SUGGESTION = fmt(
                 STUDY_DETAIL + "/suggestions/cancers"
         );
-        public static final String DYNAMIC_ANSWER_BASED_ON_QUESTION = fmt(
-                BASE + "/user/%s/studies/%s/dynamic-question/%s",
+        public static final String ACTIVITY_INSTANCE_SELECT_SUGGESTION = fmt(
+                BASE + "/user/%s/studies/%s/activity-instance-select/%s",
                 PathParam.USER_GUID,
                 PathParam.STUDY_GUID,
                 PathParam.STABLE_ID

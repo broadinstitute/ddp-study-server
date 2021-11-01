@@ -75,8 +75,8 @@ public class JdbiQuestionCached extends SQLObjectWrapper<JdbiQuestion> implement
     }
 
     @Override
-    public List<String> getDynamicAnswersBasedOnQuestionsList(Long questionId) {
-        return delegate.getDynamicAnswersBasedOnQuestionsList(questionId);
+    public List<String> getActivityCodesByActivityInstanceSelectQuestionId(Long questionId) {
+        return delegate.getActivityCodesByActivityInstanceSelectQuestionId(questionId);
     }
 
     @Override
