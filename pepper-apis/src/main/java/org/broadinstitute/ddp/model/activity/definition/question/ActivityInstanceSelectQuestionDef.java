@@ -8,11 +8,11 @@ import org.broadinstitute.ddp.model.activity.types.QuestionType;
 import javax.validation.constraints.NotNull;
 import java.util.List;
 
-public final class DynamicSelectQuestionDef extends QuestionDef {
+public final class ActivityInstanceSelectQuestionDef extends QuestionDef {
 
     @NotNull
-    @SerializedName("sourceStableIds")
-    private List<String> sourceStableIds;
+    @SerializedName("activityCodes")
+    private List<String> activityCodes;
 
     public static Builder builder() {
         return new Builder();
@@ -24,11 +24,11 @@ public final class DynamicSelectQuestionDef extends QuestionDef {
                 .setPrompt(prompt);
     }
 
-    public DynamicSelectQuestionDef(String stableId, boolean isRestricted, Template promptTemplate,
-                                    Template additionalInfoHeaderTemplate, Template additionalInfoFooterTemplate,
-                                    List<RuleDef> validations, List<String> sourceStableIds,
-                                    boolean hideNumber, boolean writeOnce) {
-        super(QuestionType.DYNAMIC_SELECT,
+    public ActivityInstanceSelectQuestionDef(String stableId, boolean isRestricted, Template promptTemplate,
+                                             Template additionalInfoHeaderTemplate, Template additionalInfoFooterTemplate,
+                                             List<RuleDef> validations, List<String> activityCodes,
+                                             boolean hideNumber, boolean writeOnce) {
+        super(QuestionType.ACTIVITY_INSTANCE_SELECT,
                 stableId,
                 isRestricted,
                 promptTemplate,
@@ -37,20 +37,20 @@ public final class DynamicSelectQuestionDef extends QuestionDef {
                 validations,
                 hideNumber,
                 writeOnce);
-        this.sourceStableIds = sourceStableIds;
+        this.activityCodes = activityCodes;
     }
 
-    public List<String> getSourceQuestions() {
-        return sourceStableIds;
+    public List<String> getActivityCodes() {
+        return activityCodes;
     }
 
-    public void setSourceQuestions(List<String> sourceStableIds) {
-        this.sourceStableIds = sourceStableIds;
+    public void setActivityCodes(List<String> activityCodes) {
+        this.activityCodes = activityCodes;
     }
 
     public static final class Builder extends AbstractQuestionBuilder<Builder> {
 
-        private List<String> sourceStableIds;
+        private List<String> activityCodes;
 
         private Builder() {
             // Use static factories.
@@ -61,19 +61,19 @@ public final class DynamicSelectQuestionDef extends QuestionDef {
             return this;
         }
 
-        public Builder setSourceQuestions(List<String> sourceStableIds) {
-            this.sourceStableIds = sourceStableIds;
+        public Builder setActivityCodes(List<String> activityCodes) {
+            this.activityCodes = activityCodes;
             return this;
         }
 
-        public DynamicSelectQuestionDef build() {
-            DynamicSelectQuestionDef question = new DynamicSelectQuestionDef(stableId,
+        public ActivityInstanceSelectQuestionDef build() {
+            ActivityInstanceSelectQuestionDef question = new ActivityInstanceSelectQuestionDef(stableId,
                                                             isRestricted,
                                                             prompt,
                                                             getAdditionalInfoHeader(),
                                                             getAdditionalInfoFooter(),
                                                             validations,
-                                                            sourceStableIds,
+                                                            activityCodes,
                                                             hideNumber,
                                                             writeOnce);
             configure(question);

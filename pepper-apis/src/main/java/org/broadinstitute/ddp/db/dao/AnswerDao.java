@@ -17,8 +17,7 @@ import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.DaoException;
 import org.broadinstitute.ddp.db.dto.AnswerDto;
 import org.broadinstitute.ddp.db.dto.CompositeAnswerSummaryDto;
-import org.broadinstitute.ddp.model.activity.instance.answer.DynamicSelectAnswer;
-import org.broadinstitute.ddp.json.DynamicSelectAnswerSubmission;
+import org.broadinstitute.ddp.model.activity.instance.answer.ActivityInstanceSelectAnswer;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
 import org.broadinstitute.ddp.model.activity.instance.answer.AgreementAnswer;
@@ -129,9 +128,9 @@ public interface AnswerDao extends SqlObject {
         } else if (type == QuestionType.TEXT) {
             String value = ((TextAnswer) answer).getValue();
             DBUtils.checkInsert(1, answerSql.insertTextValue(answerId, value));
-        } else if (type == QuestionType.DYNAMIC_SELECT) {
-            String value = ((DynamicSelectAnswer) answer).getValue();
-            DBUtils.checkInsert(1, answerSql.insertDynamicSelectValue(answerId, value));
+        } else if (type == QuestionType.ACTIVITY_INSTANCE_SELECT) {
+            String value = ((ActivityInstanceSelectAnswer) answer).getValue();
+            DBUtils.checkInsert(1, answerSql.insertActivityInstanceSelectValue(answerId, value));
         } else {
             throw new DaoException("Unhandled answer type " + type);
         }
@@ -208,9 +207,9 @@ public interface AnswerDao extends SqlObject {
         } else if (type == QuestionType.TEXT) {
             String value = ((TextAnswer) newAnswer).getValue();
             DBUtils.checkInsert(1, answerSql.updateTextValueById(answerId, value));
-        } else if (type == QuestionType.DYNAMIC_SELECT) {
-            String value = ((DynamicSelectAnswer) newAnswer).getValue();
-            DBUtils.checkInsert(1, answerSql.updateDynamicSelectValueById(answerId, value));
+        } else if (type == QuestionType.ACTIVITY_INSTANCE_SELECT) {
+            String value = ((ActivityInstanceSelectAnswer) newAnswer).getValue();
+            DBUtils.checkInsert(1, answerSql.updateActivityInstanceSelectValueById(answerId, value));
         } else {
             throw new DaoException("Unhandled answer type " + type);
         }
@@ -377,13 +376,6 @@ public interface AnswerDao extends SqlObject {
             @Bind("studyId") long studyId,
             @Bind("questionStableId") String questionStableId);
 
-    @UseStringTemplateSqlLocator
-    @SqlQuery("findDynamicSelectAnswerByUserGuidAndStableId")
-    @UseRowReducer(DynamicSelectAnswerSubmissionReducer.class)
-    Stream<DynamicSelectAnswerSubmission> findDynamicSelectAnswerByUserGuidAndStableId(
-            @Bind("userGuid") String userGuid,
-            @Bind("stableId") String stableId);
-
     //
     // reducers
     //
@@ -435,11 +427,11 @@ public interface AnswerDao extends SqlObject {
                     answer = new TextAnswer(answerId, questionStableId, answerGuid, view.getColumn("ta_value", String.class),
                             actInstanceGuid);
                     break;
-                case DYNAMIC_SELECT:
-                    answer = new DynamicSelectAnswer(answerId,
+                case ACTIVITY_INSTANCE_SELECT:
+                    answer = new ActivityInstanceSelectAnswer(answerId,
                             questionStableId,
                             answerGuid,
-                            view.getColumn("dy_answer_source_guid", String.class),
+                            view.getColumn("aia_instance_guid", String.class),
                             actInstanceGuid);
                     break;
                 case DATE:
@@ -525,42 +517,6 @@ public interface AnswerDao extends SqlObject {
                 container.put(answerId, answer);
                 return answer;
             }
-        }
-    }
-
-    class DynamicSelectAnswerSubmissionReducer implements LinkedHashMapRowReducer<Long, DynamicSelectAnswerSubmission> {
-
-        @Override
-        public void accumulate(Map<Long, DynamicSelectAnswerSubmission> container, RowView view) {
-            reduce(container, view);
-        }
-
-        @Override
-        public Stream<DynamicSelectAnswerSubmission> stream(Map<Long, DynamicSelectAnswerSubmission> container) {
-            return container.values().stream();
-        }
-
-        public DynamicSelectAnswerSubmission reduce(Map<Long, DynamicSelectAnswerSubmission> container, RowView view) {
-            long answerId = view.getColumn("answer_id", Long.class);
-            var answerGuid = view.getColumn("answer_guid", String.class);
-            var questionStableId = view.getColumn("question_stable_id", String.class);
-            var type = QuestionType.valueOf(view.getColumn("question_type", String.class));
-            String actInstanceGuid = view.getColumn("activity_instance_guid", String.class);
-
-            DynamicSelectAnswerSubmission answerSubmission;
-            if (type == QuestionType.TEXT) {
-                var answer = new TextAnswer(answerId, questionStableId, answerGuid, view.getColumn("ta_value", String.class),
-                        actInstanceGuid);
-
-                answerSubmission = new DynamicSelectAnswerSubmission(answer.getAnswerGuid(), answer.getValue());
-            } else {
-                throw new DaoException("Unhandled answer type " + type + " for Dynamic Select Question");
-            }
-
-            if (!answerSubmission.getValue().isEmpty()) {
-                container.put(answerId, answerSubmission);
-            }
-            return answerSubmission;
         }
     }
 }

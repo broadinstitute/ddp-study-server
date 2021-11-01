@@ -2566,3 +2566,17 @@ ParticipantsLookupProxyItem:
       description: The proxy's email
       type: string
       format: email
+Suggestion.ActivityInstance:
+  type: object
+  required:
+    - guid
+    - name
+  properties:
+    guid:
+      description: Activity Instance GUID
+      type: string
+      example: TY51BW3M6S
+    name:
+      description: Activity Instance Name, rendered, as could be seen on the dashboard
+      type: string
+      example: "Medical Record Release Form #2"

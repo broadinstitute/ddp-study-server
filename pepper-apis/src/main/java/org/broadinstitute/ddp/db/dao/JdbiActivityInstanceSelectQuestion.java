@@ -4,8 +4,8 @@ import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 
-public interface JdbiDynamicSelectQuestion extends SqlObject {
+public interface JdbiActivityInstanceSelectQuestion extends SqlObject {
 
-    @SqlUpdate("insert into dynamic_select_question (dynamic_question_id) values (:questionId)")
+    @SqlUpdate("insert into activity_instance_select_question (activity_instance_select_question_id) values (:questionId)")
     int insert(@Bind("questionId") long questionId);
 }

@@ -106,7 +106,7 @@ public class UniqueRule extends Rule<CompositeAnswer> {
                 case AGREEMENT:
                 case NUMERIC:
                 case TEXT:
-                case DYNAMIC_SELECT:
+                case ACTIVITY_INSTANCE_SELECT:
                 case BOOLEAN:
                 case FILE:
                     if (!addStableIds && answer.getValue() != null && isNotBlank(answer.getValue().toString())) {

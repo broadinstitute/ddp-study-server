@@ -6,20 +6,20 @@ import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
 
 import javax.validation.constraints.NotNull;
 
-public class DynamicSelectAnswer extends Answer<String> {
+public class ActivityInstanceSelectAnswer extends Answer<String> {
 
     @NotNull
     @SerializedName("value")
     protected String value;
 
     @JdbiConstructor
-    public DynamicSelectAnswer(Long answerId, String questionStableId, String answerGuid, String value) {
-        super(QuestionType.DYNAMIC_SELECT, answerId, questionStableId, answerGuid);
+    public ActivityInstanceSelectAnswer(Long answerId, String questionStableId, String answerGuid, String value) {
+        super(QuestionType.ACTIVITY_INSTANCE_SELECT, answerId, questionStableId, answerGuid);
         this.value = value;
     }
 
-    public DynamicSelectAnswer(Long answerId, String questionStableId, String answerGuid, String value, String actInstanceGuid) {
-        super(QuestionType.DYNAMIC_SELECT, answerId, questionStableId, answerGuid, actInstanceGuid);
+    public ActivityInstanceSelectAnswer(Long answerId, String questionStableId, String answerGuid, String value, String actInstanceGuid) {
+        super(QuestionType.ACTIVITY_INSTANCE_SELECT, answerId, questionStableId, answerGuid, actInstanceGuid);
         this.value = value;
     }
 
@@ -35,7 +35,6 @@ public class DynamicSelectAnswer extends Answer<String> {
 
     @Override
     public boolean isEmpty() {
-        // Does whitespace count?
         return value == null || value.isEmpty();
     }
 }

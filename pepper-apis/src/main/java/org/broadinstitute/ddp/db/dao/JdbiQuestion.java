@@ -21,7 +21,7 @@ import org.broadinstitute.ddp.db.dto.NumericQuestionDto;
 import org.broadinstitute.ddp.db.dto.PicklistQuestionDto;
 import org.broadinstitute.ddp.db.dto.QuestionDto;
 import org.broadinstitute.ddp.db.dto.TextQuestionDto;
-import org.broadinstitute.ddp.db.dto.DynamicSelectQuestionDto;
+import org.broadinstitute.ddp.db.dto.ActivityInstanceSelectQuestionDto;
 import org.broadinstitute.ddp.model.activity.definition.question.DatePicklistDef;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
 import org.jdbi.v3.core.mapper.RowMapper;
@@ -67,8 +67,9 @@ public interface JdbiQuestion extends SqlObject {
             @Bind("studyId") long studyId,
             @Bind("questionStableId") String questionStableId);
 
-    @SqlQuery("select dynamic_source_stable_id from dynamic_select_source_questions where dynamic_question_id = :questionId")
-    List<String> getDynamicAnswersBasedOnQuestionsList(@Bind("questionId") Long questionId);
+    @SqlQuery("select study_activity_code from activity_instance_select_activity_code where"
+            + " activity_instance_select_question_id = :questionId")
+    List<String> getActivityCodesByActivityInstanceSelectQuestionId(@Bind("questionId") Long questionId);
 
     @UseStringTemplateSqlLocator
     @SqlQuery("queryLatestDtosByStudyIdAndQuestionStableIds")
@@ -163,7 +164,7 @@ public interface JdbiQuestion extends SqlObject {
     @RegisterConstructorMapper(NumericQuestionDto.class)
     @RegisterConstructorMapper(PicklistQuestionDto.class)
     @RegisterConstructorMapper(TextQuestionDto.class)
-    @RegisterConstructorMapper(DynamicSelectQuestionDto.class)
+    @RegisterConstructorMapper(ActivityInstanceSelectQuestionDto.class)
     @RegisterConstructorMapper(CompositeQuestionDto.class)
     @RegisterRowMapper(DatePicklistDefMapper.class)
     @UseRowReducer(QuestionDtoReducer.class)
@@ -225,8 +226,8 @@ public interface JdbiQuestion extends SqlObject {
                 case TEXT:
                     questionDto = view.getRow(TextQuestionDto.class);
                     break;
-                case DYNAMIC_SELECT:
-                    questionDto = view.getRow(DynamicSelectQuestionDto.class);
+                case ACTIVITY_INSTANCE_SELECT:
+                    questionDto = view.getRow(ActivityInstanceSelectQuestionDto.class);
                     break;
                 case COMPOSITE:
                     questionDto = view.getRow(CompositeQuestionDto.class);

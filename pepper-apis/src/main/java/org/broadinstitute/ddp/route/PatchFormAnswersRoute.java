@@ -57,6 +57,7 @@ import org.broadinstitute.ddp.json.errors.AnswerValidationError;
 import org.broadinstitute.ddp.json.errors.ApiError;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
 import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
+import org.broadinstitute.ddp.model.activity.instance.answer.ActivityInstanceSelectAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.AgreementAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
 import org.broadinstitute.ddp.model.activity.instance.answer.BoolAnswer;
@@ -70,7 +71,6 @@ import org.broadinstitute.ddp.model.activity.instance.answer.NumericIntegerAnswe
 import org.broadinstitute.ddp.model.activity.instance.answer.PicklistAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.SelectedPicklistOption;
 import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
-import org.broadinstitute.ddp.model.activity.instance.answer.DynamicSelectAnswer;
 import org.broadinstitute.ddp.model.activity.instance.question.CompositeQuestion;
 import org.broadinstitute.ddp.model.activity.instance.question.Question;
 import org.broadinstitute.ddp.model.activity.instance.question.TextQuestion;
@@ -423,8 +423,8 @@ public class PatchFormAnswersRoute implements Route {
                 return convertPicklistAnswer(stableId, guid, instanceGuid, value);
             case TEXT:
                 return convertTextAnswer(stableId, guid, instanceGuid, value);
-            case DYNAMIC_SELECT:
-                return convertDynamicAnswer(stableId, guid, instanceGuid, value);
+            case ACTIVITY_INSTANCE_SELECT:
+                return convertActivityInstanceSelectAnswer(stableId, guid, instanceGuid, value);
             case DATE:
                 return convertDateAnswer(stableId, guid, instanceGuid, value);
             case FILE:
@@ -498,17 +498,18 @@ public class PatchFormAnswersRoute implements Route {
     }
 
     /**
-     * Converts the dynamic answer.
+     * Converts the activity instance select answer.
      *
      * @param stableId the question stable id
      * @param guid     the answer guid, or null
      * @param value    the answer value
-     * @return dynamic answer object, or null if value is not a string
+     * @return activity instance select answer object, or null if value is not a string
      */
-    private DynamicSelectAnswer convertDynamicAnswer(String stableId, String guid, String actInstanceGuid, JsonElement value) {
+    private ActivityInstanceSelectAnswer convertActivityInstanceSelectAnswer(String stableId, String guid,
+                                                                             String actInstanceGuid, JsonElement value) {
         if (value != null && value.isJsonPrimitive() && value.getAsJsonPrimitive().isString()) {
             String textValue = value.getAsJsonPrimitive().getAsString();
-            return new DynamicSelectAnswer(null, stableId, guid, textValue, actInstanceGuid);
+            return new ActivityInstanceSelectAnswer(null, stableId, guid, textValue, actInstanceGuid);
         } else {
             return null;
         }

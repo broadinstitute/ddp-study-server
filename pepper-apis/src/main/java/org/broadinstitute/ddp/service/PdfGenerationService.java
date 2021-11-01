@@ -45,6 +45,7 @@ import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.activity.definition.ActivityDef;
 import org.broadinstitute.ddp.model.activity.instance.ActivityResponse;
 import org.broadinstitute.ddp.model.activity.instance.FormResponse;
+import org.broadinstitute.ddp.model.activity.instance.answer.ActivityInstanceSelectAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
 import org.broadinstitute.ddp.model.activity.instance.answer.AnswerRow;
 import org.broadinstitute.ddp.model.activity.instance.answer.BoolAnswer;
@@ -54,7 +55,6 @@ import org.broadinstitute.ddp.model.activity.instance.answer.DateValue;
 import org.broadinstitute.ddp.model.activity.instance.answer.PicklistAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.SelectedPicklistOption;
 import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
-import org.broadinstitute.ddp.model.activity.instance.answer.DynamicSelectAnswer;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.broadinstitute.ddp.model.activity.types.InstitutionType;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
@@ -737,8 +737,8 @@ public class PdfGenerationService {
             case TEXT:
                 substituteText(answer, field);
                 break;
-            case DYNAMIC_SELECT:
-                substituteDynamic(answer, field);
+            case ACTIVITY_INSTANCE_SELECT:
+                substituteActivityInstanceSelect(answer, field);
                 break;
             case DATE:
                 substituteDate(answer, field);
@@ -806,8 +806,8 @@ public class PdfGenerationService {
             case TEXT:
                 substituteText(answer, field);
                 break;
-            case DYNAMIC_SELECT:
-                substituteDynamic(answer, field);
+            case ACTIVITY_INSTANCE_SELECT:
+                substituteActivityInstanceSelect(answer, field);
                 break;
             case DATE:
                 substituteDate(answer, field);
@@ -855,8 +855,8 @@ public class PdfGenerationService {
         }
     }
 
-    private void substituteDynamic(Answer answer, PdfFormField field) {
-        String textValue = answer == null ? null : ((DynamicSelectAnswer) answer).getValue();
+    private void substituteActivityInstanceSelect(Answer answer, PdfFormField field) {
+        String textValue = answer == null ? null : ((ActivityInstanceSelectAnswer) answer).getValue();
         if (textValue != null) {
             field.setValue(textValue);
         }

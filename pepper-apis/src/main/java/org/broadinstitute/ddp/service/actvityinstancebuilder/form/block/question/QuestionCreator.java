@@ -14,7 +14,7 @@ import org.broadinstitute.ddp.model.activity.definition.question.NumericQuestion
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.TextQuestionDef;
-import org.broadinstitute.ddp.model.activity.definition.question.DynamicSelectQuestionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.ActivityInstanceSelectQuestionDef;
 import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
 import org.broadinstitute.ddp.model.activity.instance.question.Question;
 import org.broadinstitute.ddp.model.activity.instance.validation.Rule;
@@ -43,8 +43,8 @@ public class QuestionCreator {
                 case TEXT:
                     question = creatorHelper.createTextQuestion(ctx, (TextQuestionDef) questionDef);
                     break;
-                case DYNAMIC_SELECT:
-                    question = creatorHelper.createDynamicSelectQuestion(ctx, (DynamicSelectQuestionDef) questionDef);
+                case ACTIVITY_INSTANCE_SELECT:
+                    question = creatorHelper.createActivityInstanceSelectQuestion(ctx, (ActivityInstanceSelectQuestionDef) questionDef);
                     break;
                 case NUMERIC:
                     question = creatorHelper.createNumericQuestion(ctx, (NumericQuestionDef) questionDef);

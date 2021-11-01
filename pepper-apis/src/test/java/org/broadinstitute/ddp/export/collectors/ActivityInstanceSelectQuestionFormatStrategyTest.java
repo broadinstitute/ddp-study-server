@@ -1,8 +1,8 @@
 package org.broadinstitute.ddp.export.collectors;
 
-import org.broadinstitute.ddp.model.activity.definition.question.DynamicSelectQuestionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.ActivityInstanceSelectQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
-import org.broadinstitute.ddp.model.activity.instance.answer.DynamicSelectAnswer;
+import org.broadinstitute.ddp.model.activity.instance.answer.ActivityInstanceSelectAnswer;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -13,13 +13,13 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-public class DynamicSelectQuestionFormatStrategyTest {
+public class ActivityInstanceSelectQuestionFormatStrategyTest {
 
-    private DynamicSelectQuestionFormatStrategy fmt;
+    private ActivityInstanceSelectQuestionFormatStrategy fmt;
 
     @Before
     public void setup() {
-        fmt = new DynamicSelectQuestionFormatStrategy();
+        fmt = new ActivityInstanceSelectQuestionFormatStrategy();
     }
 
     @Test
@@ -52,7 +52,7 @@ public class DynamicSelectQuestionFormatStrategyTest {
     }
 
     @Test
-    public void testCollect_dynamic() {
+    public void testCollect_ai() {
         Map<String, String> actual = fmt.collect(buildQuestion(), buildAnswer("foobar"));
         assertEquals("foobar", actual.get("sid"));
     }
@@ -63,11 +63,11 @@ public class DynamicSelectQuestionFormatStrategyTest {
         assertEquals("foo, bar.baz ; bob", actual.get("sid"));
     }
 
-    private DynamicSelectQuestionDef buildQuestion() {
-        return DynamicSelectQuestionDef.builder("sid", Template.text("")).build();
+    private ActivityInstanceSelectQuestionDef buildQuestion() {
+        return ActivityInstanceSelectQuestionDef.builder("sid", Template.text("")).build();
     }
 
-    private DynamicSelectAnswer buildAnswer(String value) {
-        return new DynamicSelectAnswer(1L, "sid", "abc", value);
+    private ActivityInstanceSelectAnswer buildAnswer(String value) {
+        return new ActivityInstanceSelectAnswer(1L, "sid", "abc", value);
     }
 }

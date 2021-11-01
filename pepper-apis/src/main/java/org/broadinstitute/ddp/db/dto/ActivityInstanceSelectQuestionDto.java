@@ -8,10 +8,10 @@ import java.util.Set;
 
 import static org.broadinstitute.ddp.util.CollectionMiscUtil.addNonNullsToSet;
 
-public final class DynamicSelectQuestionDto extends QuestionDto implements Serializable {
+public final class ActivityInstanceSelectQuestionDto extends QuestionDto implements Serializable {
 
     @JdbiConstructor
-    public DynamicSelectQuestionDto(@Nested QuestionDto questionDto) {
+    public ActivityInstanceSelectQuestionDto(@Nested QuestionDto questionDto) {
         super(questionDto);
     }
 

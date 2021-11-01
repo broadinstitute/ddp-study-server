@@ -12,6 +12,7 @@ import org.broadinstitute.ddp.elastic.MappingUtil;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.activity.definition.question.CompositeQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
+import org.broadinstitute.ddp.model.activity.instance.answer.ActivityInstanceSelectAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.AgreementAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
 import org.broadinstitute.ddp.model.activity.instance.answer.AnswerRow;
@@ -22,7 +23,6 @@ import org.broadinstitute.ddp.model.activity.instance.answer.DateValue;
 import org.broadinstitute.ddp.model.activity.instance.answer.PicklistAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.SelectedPicklistOption;
 import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
-import org.broadinstitute.ddp.model.activity.instance.answer.DynamicSelectAnswer;
 
 /**
  * Rule:
@@ -98,8 +98,8 @@ public class CompositeQuestionFormatStrategy implements ResponseFormatStrategy<C
                 return (boolValue == null ? "" : boolValue.toString());
             case TEXT:
                 return StringUtils.defaultString(((TextAnswer) answer).getValue(), "");
-            case DYNAMIC_SELECT:
-                return StringUtils.defaultString(((DynamicSelectAnswer) answer).getValue(), "");
+            case ACTIVITY_INSTANCE_SELECT:
+                return StringUtils.defaultString(((ActivityInstanceSelectAnswer) answer).getValue(), "");
             case NUMERIC:
                 return (answer.getValue() == null ? "" : answer.getValue().toString());
             case DATE:

@@ -12,5 +12,5 @@ public enum QuestionType {
     NUMERIC,
     PICKLIST,
     TEXT,
-    DYNAMIC_SELECT
+    ACTIVITY_INSTANCE_SELECT
 }

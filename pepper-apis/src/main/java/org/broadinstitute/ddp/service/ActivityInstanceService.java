@@ -10,6 +10,7 @@ import java.sql.Blob;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -230,6 +231,47 @@ public class ActivityInstanceService {
                 studyGuid, preferredLangCode, studyDefaultLangCode);
 
         return Optional.of(summaries.get(0));
+    }
+
+    /**
+     * Find a activity instance summaries. Instance numbering will be performed and instance summary will be
+     * translated to the user's preferred language, or fallback to an appropriate language. Caller should set other
+     * computed properties such as question/answer count, etc.
+     *
+     * @param handle            the database handle
+     * @param userGuid          the user guid
+     * @param studyGuid         the study guid
+     * @param activityCodes     the activity identifiers
+     * @param preferredLangCode the desired language
+     * @return an activity instance summary
+     */
+    public List<ActivityInstanceSummary> findTranslatedInstanceSummaries(Handle handle,
+                                                                       String userGuid,
+                                                                       String studyGuid,
+                                                                       Set<String> activityCodes,
+                                                                       String preferredLangCode) {
+        // Find all instance summaries of the same activity so we can figure out numbering.
+        List<ActivityInstanceSummaryDto> summaryDtos = handle
+                .attach(org.broadinstitute.ddp.db.dao.ActivityInstanceDao.class)
+                .findSortedInstanceSummaries(userGuid, studyGuid, activityCodes);
+        if (summaryDtos.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        performInstanceNumbering(summaryDtos);
+        String studyDefaultLangCode = new StudyLanguageCachedDao(handle)
+                .findLanguages(studyGuid)
+                .stream()
+                .filter(StudyLanguage::isDefault)
+                .map(StudyLanguage::getLanguageCode)
+                .findFirst()
+                .orElse(LanguageConstants.EN_LANGUAGE_CODE);
+
+        ActivityDefStore activityStore = ActivityDefStore.getInstance();
+
+        return buildTranslatedInstanceSummaries(
+                handle, activityStore, true, summaryDtos,
+                studyGuid, preferredLangCode, studyDefaultLangCode);
     }
 
     // Compute and set the instance numbers, as well as previousInstanceGuid, for the given list of activity instance
