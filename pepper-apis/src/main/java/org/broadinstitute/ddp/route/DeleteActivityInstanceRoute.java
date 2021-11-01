@@ -8,12 +8,14 @@ import org.broadinstitute.ddp.db.ActivityDefStore;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.DataExportDao;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
-import org.broadinstitute.ddp.json.activity.ActivityInstanceSummary;
+import org.broadinstitute.ddp.json.ActivityInstanceDeletionResponse;
 import org.broadinstitute.ddp.json.errors.ApiError;
+import org.broadinstitute.ddp.json.form.BlockVisibility;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
 import org.broadinstitute.ddp.security.DDPAuth;
 import org.broadinstitute.ddp.service.ActivityInstanceService;
 import org.broadinstitute.ddp.util.ActivityInstanceUtil;
+import org.broadinstitute.ddp.util.QuestionUtil;
 import org.broadinstitute.ddp.util.ResponseUtil;
 import org.broadinstitute.ddp.util.RouteUtil;
 import org.slf4j.Logger;
@@ -21,6 +23,9 @@ import org.slf4j.LoggerFactory;
 import spark.Request;
 import spark.Response;
 import spark.Route;
+
+import java.util.List;
+import java.util.Optional;
 
 public class DeleteActivityInstanceRoute implements Route {
 
@@ -33,7 +38,7 @@ public class DeleteActivityInstanceRoute implements Route {
     }
 
     @Override
-    public ActivityInstanceSummary handle(Request request, Response response) {
+    public Object handle(Request request, Response response) {
         String studyGuid = request.params(RouteConstants.PathParam.STUDY_GUID);
         String participantGuid = request.params(RouteConstants.PathParam.USER_GUID);
         String instanceGuid = request.params(RouteConstants.PathParam.INSTANCE_GUID);
@@ -44,6 +49,8 @@ public class DeleteActivityInstanceRoute implements Route {
 
         LOG.info("Attempting to delete activity instance {} for participant {} in study {} by operator {} (isStudyAdmin={})",
                 instanceGuid, participantGuid, studyGuid, operatorGuid, isStudyAdmin);
+
+        ActivityInstanceDeletionResponse res = new ActivityInstanceDeletionResponse();
 
         TransactionWrapper.useTxn(handle -> {
             var found = RouteUtil.findUserAndStudyOrHalt(handle, participantGuid, studyGuid);
@@ -72,11 +79,19 @@ public class DeleteActivityInstanceRoute implements Route {
 
             service.deleteInstance(handle, instanceDto);
             handle.attach(DataExportDao.class).queueDataSync(instanceDto.getParticipantId(), instanceDto.getStudyId());
+
+            String parentInstanceGuid = instanceDto.getParentInstanceGuid();
+            Optional<List<BlockVisibility>> parentInstanceBlockVisibility = QuestionUtil.getBlockVisibility(handle,
+                    response, parentInstanceGuid, found.getUser(), found.getStudyDto(), operatorGuid, isStudyAdmin);
+            if (parentInstanceBlockVisibility.isPresent()) {
+                res.setBlockVisibilities(parentInstanceBlockVisibility.get());
+            }
+
         });
 
         LOG.info("Deleted activity instance {}", instanceGuid);
-        response.status(HttpStatus.SC_NO_CONTENT);
-        return null;
+        response.status(HttpStatus.SC_OK);
+        return res;
     }
 
     private void throwNotAllowed(Response response, String message) {
@@ -84,4 +99,5 @@ public class DeleteActivityInstanceRoute implements Route {
         throw ResponseUtil.haltError(response, HttpStatus.SC_UNPROCESSABLE_ENTITY,
                 new ApiError(ErrorCodes.OPERATION_NOT_ALLOWED, message));
     }
+
 }
