@@ -41,7 +41,6 @@ public class ActivityInstanceSelectQuestionFormatStrategy implements ResponseFor
         return Arrays.asList(definition.getStableId());
     }
 
-    // TODO: Collect Activity Instance name
     @Override
     public Map<String, String> collect(ActivityInstanceSelectQuestionDef question, ActivityInstanceSelectAnswer answer) {
         Map<String, String> record = new HashMap<>();

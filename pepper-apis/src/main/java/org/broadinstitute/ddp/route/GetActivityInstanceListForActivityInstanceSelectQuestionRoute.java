@@ -74,7 +74,7 @@ public class GetActivityInstanceListForActivityInstanceSelectQuestionRoute imple
             }
             Map<String, FormResponse> responses = service.countQuestionsAndAnswers(
                     handle, userGuid, operatorGuid, studyGuid, summaries);
-            // TODO: Filter out disabled activity instances
+            // TODO: Filter out disabled activity instances DDP-7085
             service.renderInstanceSummaries(handle, found.getUser().getId(), operatorGuid, studyGuid, summaries, responses);
             return summaries;
         });
