@@ -37,6 +37,9 @@ public class PicklistOption implements Renderable {
     @SerializedName("exclusive")
     private boolean isExclusive;
 
+    @SerializedName("isDefault")
+    private boolean isDefault;
+
     @SerializedName("groupId")
     private String groupStableId;
 
@@ -55,12 +58,13 @@ public class PicklistOption implements Renderable {
      * Constructs a picklist option. The detail label is required if detail field is allowed.
      */
     public PicklistOption(String stableId, long optionLabelTemplateId, Long tooltipTemplateId,
-                          Long detailLabelTemplateId, boolean isDetailsAllowed, boolean isExclusive) {
+                          Long detailLabelTemplateId, boolean isDetailsAllowed, boolean isExclusive, boolean isDefault) {
         this.stableId = MiscUtil.checkNotBlank(stableId, "stableId");
         this.optionLabelTemplateId = optionLabelTemplateId;
         this.tooltipTemplateId = tooltipTemplateId;
         this.isDetailsAllowed = isDetailsAllowed;
         this.isExclusive = isExclusive;
+        this.isDefault = isDefault;
         if (isDetailsAllowed) {
             if (detailLabelTemplateId == null) {
                 throw new IllegalArgumentException("detail label must be provided when allowing attached details field");
@@ -70,13 +74,14 @@ public class PicklistOption implements Renderable {
     }
 
     public PicklistOption(String stableId, long optionLabelTemplateId, Long tooltipTemplateId,
-                          Long detailLabelTemplateId, boolean isDetailsAllowed, boolean isExclusive,
+                          Long detailLabelTemplateId, boolean isDetailsAllowed, boolean isExclusive, boolean isDefault,
                           Long nestedPicklistTemplateId, List<PicklistOption> nestedOptions) {
         this.stableId = MiscUtil.checkNotBlank(stableId, "stableId");
         this.optionLabelTemplateId = optionLabelTemplateId;
         this.tooltipTemplateId = tooltipTemplateId;
         this.isDetailsAllowed = isDetailsAllowed;
         this.isExclusive = isExclusive;
+        this.isDefault = isDefault;
         if (isDetailsAllowed) {
             if (detailLabelTemplateId == null) {
                 throw new IllegalArgumentException("detail label must be provided when allowing attached details field");
@@ -88,8 +93,8 @@ public class PicklistOption implements Renderable {
     }
 
     public PicklistOption(String groupStableId, String stableId, long optionLabelTemplateId, Long tooltipTemplateId,
-                          Long detailLabelTemplateId, boolean isDetailsAllowed, boolean isExclusive) {
-        this(stableId, optionLabelTemplateId, tooltipTemplateId, detailLabelTemplateId, isDetailsAllowed, isExclusive);
+                          Long detailLabelTemplateId, boolean isDetailsAllowed, boolean isExclusive, boolean isDefault) {
+        this(stableId, optionLabelTemplateId, tooltipTemplateId, detailLabelTemplateId, isDetailsAllowed, isExclusive, isDefault);
         this.groupStableId = groupStableId;
     }
 
@@ -115,6 +120,10 @@ public class PicklistOption implements Renderable {
 
     public boolean isExclusive() {
         return isExclusive;
+    }
+
+    public boolean isDefault() {
+        return isDefault;
     }
 
     public long getOptionLabelTemplateId() {

@@ -81,7 +81,8 @@ public class RequiredRuleTest {
     @Test
     public void testValidate_picklistAnswer() {
         PicklistQuestion unused = new PicklistQuestion("sid", 1L, emptyList(), emptyList(), PicklistSelectMode.SINGLE,
-                PicklistRenderMode.LIST, 2L, singletonList(new PicklistOption("opt", 3L, null, null, false, false)));
+                PicklistRenderMode.LIST, 2L, singletonList(
+                        new PicklistOption("opt", 3L, null, null, false, false, false)));
         RequiredRule<PicklistAnswer> rule = new RequiredRule<>("msg", null, false);
         assertFalse(rule.validate(unused, null));
         assertFalse(rule.validate(unused, new PicklistAnswer(1L, "q", "a", emptyList())));

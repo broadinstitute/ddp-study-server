@@ -112,15 +112,15 @@ public interface PicklistQuestionDao extends SqlObject {
                 .anyMatch(o -> o.getTooltipTemplate() != null && o.getTooltipTemplate().getTemplateType() != TemplateType.TEXT);
 
         if (nonTextTemplateFound) {
-            new DaoException("Only TEXT template type is supported for tooltips");
+            throw new DaoException("Only TEXT template type is supported for tooltips");
         }
 
         // Let's try to get all the template for all the options in a single batch
         List<Template> templateList = Stream.of(
-                options.stream().map(o -> o.getOptionLabelTemplate()),
-                options.stream().map(o -> o.getTooltipTemplate()),
-                options.stream().map(o -> o.getDetailLabelTemplate()),
-                options.stream().map(o -> o.getNestedOptionsLabelTemplate())
+                options.stream().map(PicklistOptionDef::getOptionLabelTemplate),
+                options.stream().map(PicklistOptionDef::getTooltipTemplate),
+                options.stream().map(PicklistOptionDef::getDetailLabelTemplate),
+                options.stream().map(PicklistOptionDef::getNestedOptionsLabelTemplate)
         ).flatMap(i -> i).collect(toList());
 
         Long[] templateIds = getTemplateDao().insertTemplates(templateList, revisionId);
@@ -130,12 +130,13 @@ public interface PicklistQuestionDao extends SqlObject {
 
         // batch enter all the options
         long[] optionIds = jdbiOption.insert(questionId,
-                options.stream().map(o -> o.getStableId()).iterator(),
+                options.stream().map(PicklistOptionDef::getStableId).iterator(),
                 templateIdList.listIterator(),
                 templateIdList.listIterator(options.size()),
                 templateIdList.listIterator(2 * options.size()),
-                options.stream().map(o -> o.isDetailsAllowed()).iterator(),
-                options.stream().map(o -> o.isExclusive()).iterator(),
+                options.stream().map(PicklistOptionDef::isDetailsAllowed).iterator(),
+                options.stream().map(PicklistOptionDef::isExclusive).iterator(),
+                options.stream().map(PicklistOptionDef::isDefault).iterator(),
                 Stream.iterate(0, i -> i + DISPLAY_ORDER_GAP).iterator(),
                 revisionId,
                 templateIdList.listIterator(3 * options.size()));
@@ -150,7 +151,7 @@ public interface PicklistQuestionDao extends SqlObject {
         }
 
         LOG.info("Inserted {} picklist options for picklist question id {}", options.size(), questionId);
-        return options.stream().map(o -> o.getOptionId()).collect(toList());
+        return options.stream().map(PicklistOptionDef::getOptionId).collect(toList());
     }
 
     default void insertNestedOptions(long questionId, PicklistOptionDef option,
@@ -169,8 +170,6 @@ public interface PicklistQuestionDao extends SqlObject {
             LOG.info("Inserted {} nested options for picklist option: {} optionId: {}",
                     nestedOptionIds.size(), option.getStableId(), option.getOptionId());
         }
-
-        return;
     }
 
     /**
@@ -210,7 +209,8 @@ public interface PicklistQuestionDao extends SqlObject {
         }
 
         long optionId = jdbiOption.insert(questionId, option.getStableId(), optionLabelTmplId, tooltipTmplId,
-                detailLabelTmplId, option.isDetailsAllowed(), option.isExclusive(), displayOrder, revisionId, nestedOptionsTmplId);
+                detailLabelTmplId, option.isDetailsAllowed(), option.isExclusive(),
+                option.isDefault(), displayOrder, revisionId, nestedOptionsTmplId);
         option.setOptionId(optionId);
 
         if (CollectionUtils.isNotEmpty(option.getNestedOptions())) {
@@ -391,7 +391,7 @@ public interface PicklistQuestionDao extends SqlObject {
         //disable any nested options
         List<PicklistOptionDto> nestedOptions = getJdbiPicklistOption().findAllActiveNestedOptionsByQuestionId(questionId);
         if (CollectionUtils.isNotEmpty(nestedOptions)) {
-            nestedOptions.stream().forEach(nestedOpt -> disableOption(questionId, nestedOpt.getStableId(), meta, false));
+            nestedOptions.forEach(nestedOpt -> disableOption(questionId, nestedOpt.getStableId(), meta, false));
         }
 
         LOG.info("Terminated {} picklist options for picklist question id {}", options.size(), questionId);
@@ -437,7 +437,7 @@ public interface PicklistQuestionDao extends SqlObject {
         if (disableNested) {
             List<PicklistOptionDto> nestedOptions = getJdbiPicklistOption().findActiveNestedOptions(questionId, optionDto.getId());
             if (CollectionUtils.isNotEmpty(nestedOptions)) {
-                nestedOptions.stream().forEach(nestedOpt -> disableOption(questionId, nestedOpt.getStableId(), meta, false));
+                nestedOptions.forEach(nestedOpt -> disableOption(questionId, nestedOpt.getStableId(), meta, false));
             }
         }
 
@@ -499,23 +499,21 @@ public interface PicklistQuestionDao extends SqlObject {
                     return result;
                 });
 
-        dtosMap.values().forEach(dto -> {
-            dto.getUngroupedOptions().forEach(parentDto -> {
-                if (nestedOptMap.containsKey(parentDto.getId())) {
-                    parentDto.getNestedOptions().addAll(nestedOptMap.get(parentDto.getId()));
-                }
-            });
-        });
+        dtosMap.values().forEach(dto -> dto.getUngroupedOptions().forEach(parentDto -> {
+            if (nestedOptMap.containsKey(parentDto.getId())) {
+                parentDto.getNestedOptions().addAll(nestedOptMap.get(parentDto.getId()));
+            }
+        }));
 
         return dtosMap;
     }
 
     class GroupAndOptionDtos implements Serializable {
 
-        private long questionId;
-        private List<PicklistGroupDto> groups = new ArrayList<>();
-        private List<PicklistOptionDto> ungroupedOptions = new ArrayList<>();
-        private Map<Long, List<PicklistOptionDto>> groupIdToOptions = new HashMap<>();
+        private final long questionId;
+        private final List<PicklistGroupDto> groups = new ArrayList<>();
+        private final List<PicklistOptionDto> ungroupedOptions = new ArrayList<>();
+        private final Map<Long, List<PicklistOptionDto>> groupIdToOptions = new HashMap<>();
 
         public GroupAndOptionDtos(long questionId) {
             this.questionId = questionId;
