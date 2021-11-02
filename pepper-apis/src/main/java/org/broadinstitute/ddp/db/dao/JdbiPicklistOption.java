@@ -29,6 +29,7 @@ public interface JdbiPicklistOption extends SqlObject {
                 @Bind("detailLabelTemplateId") Long detailLabelTemplateId,
                 @Bind("allowDetails") boolean allowDetails,
                 @Bind("isExclusive") boolean isExclusive,
+                @Bind("isDefault") boolean isDefault,
                 @Bind("displayOrder") int displayOrder,
                 @Bind("revisionId") long revisionId);
 
@@ -42,6 +43,7 @@ public interface JdbiPicklistOption extends SqlObject {
                 @Bind("detailLabelTemplateId") Long detailLabelTemplateId,
                 @Bind("allowDetails") boolean allowDetails,
                 @Bind("isExclusive") boolean isExclusive,
+                @Bind("isDefault") boolean isDefault,
                 @Bind("displayOrder") int displayOrder,
                 @Bind("revisionId") long revisionId,
                 @Bind("nestedOptionsTemplateId") Long nestedOptionsTemplateId);
@@ -56,6 +58,7 @@ public interface JdbiPicklistOption extends SqlObject {
                 @Bind("detailLabelTemplateId") Iterator<Long> detailLabelTemplateIds,
                 @Bind("allowDetails") Iterator<Boolean> allowDetails,
                 @Bind("isExclusive") Iterator<Boolean> isExclusive,
+                @Bind("isDefault") Iterator<Boolean> isDefault,
                 @Bind("displayOrder") Iterator<Integer> displayOrder,
                 @Bind("revisionId") long revisionId,
                 @Bind("nestedOptionsTemplateId") Iterator<Long> nestedOptionsTemplateId);

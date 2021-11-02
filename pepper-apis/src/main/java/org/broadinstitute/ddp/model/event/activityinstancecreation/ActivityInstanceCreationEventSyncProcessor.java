@@ -8,6 +8,7 @@ import org.broadinstitute.ddp.model.activity.types.EventActionType;
 import org.broadinstitute.ddp.model.event.DsmNotificationSignal;
 import org.broadinstitute.ddp.model.event.EventSignal;
 import org.broadinstitute.ddp.service.ActivityInstanceCreationService;
+import org.broadinstitute.ddp.util.ActivityInstanceUtil;
 import org.jdbi.v3.core.Handle;
 
 
@@ -75,6 +76,8 @@ public abstract class ActivityInstanceCreationEventSyncProcessor {
             creationService.saveKitEventData(handle, newActivityInstanceId);
         }
 
+        ActivityInstanceUtil.populateDefaultValues(handle, newActivityInstanceId, signal.getOperatorId());
+
         creationService.runDownstreamEvents(studyActivityId, newActivityInstanceId, handle);
 
         createChildActivityInstances(studyActivityId, newActivityInstanceId, newActivityInstanceGuid);
@@ -95,6 +98,7 @@ public abstract class ActivityInstanceCreationEventSyncProcessor {
                     jdbiActivityInstanceStatus,
                     true,
                     parentActivityInstanceGuid);
+            ActivityInstanceUtil.populateDefaultValues(handle, creationResult.getActivityInstanceId(), signal.getOperatorId());
             creationService.runDownstreamEvents(activityId, creationResult.getActivityInstanceId(), handle);
         }
     }
