@@ -44,6 +44,7 @@ public class TestFormActivity {
     private ActivityVersionDto versionDto;
     private AgreementQuestionDef agreementQuestion;
     private BoolQuestionDef boolQuestion;
+    private QuestionBlockDef boolQuestionBlock;
     private CompositeQuestionDef compositeQuestion;
     private DateQuestionDef dateFullQuestion;
     private FileQuestionDef fileQuestion;
@@ -71,6 +72,10 @@ public class TestFormActivity {
 
     public BoolQuestionDef getBoolQuestion() {
         return boolQuestion;
+    }
+
+    public QuestionBlockDef getBoolQuestionBlock() {
+        return boolQuestionBlock;
     }
 
     public CompositeQuestionDef getCompositeQuestion() {
@@ -219,12 +224,12 @@ public class TestFormActivity {
             }
 
             if (withBoolQuestion) {
-                var question = BoolQuestionDef
+                result.boolQuestion = BoolQuestionDef
                         .builder("BOOL" + Instant.now().toEpochMilli(), Template.text("bool prompt"),
                                 Template.text("bool yes"), Template.text("bool no"))
                         .build();
-                result.boolQuestion = question;
-                builder.addSection(new FormSectionDef(null, List.of(new QuestionBlockDef(question))));
+                result.boolQuestionBlock = new QuestionBlockDef(result.boolQuestion);
+                builder.addSection(new FormSectionDef(null, List.of(result.boolQuestionBlock)));
             }
 
             if (compositeChildQuestions != null) {
