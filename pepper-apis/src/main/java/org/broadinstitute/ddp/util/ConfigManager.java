@@ -37,7 +37,7 @@ public class ConfigManager {
         if (configFileName == null) {
             configFileName = System.getProperty(TYPESAFE_CONFIG_SYSTEM_VAR);
         }
-        TYPESAFE_CONFIG_FILE = new File(configFileName);
+        TYPESAFE_CONFIG_FILE = configFileName != null ? new File(configFileName) : null;
     }
 
     private final Config cfg;
@@ -55,7 +55,7 @@ public class ConfigManager {
      * @return the config for the app
      */
     public static synchronized ConfigManager getInstance() {
-        if (configManager == null) {
+        if (configManager == null && TYPESAFE_CONFIG_FILE != null) {
             try {
                 configManager = new ConfigManager(parseConfig());
             } catch (Exception e) {

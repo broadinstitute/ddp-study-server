@@ -1,5 +1,11 @@
 package org.broadinstitute.ddp.service;
 
+import static org.broadinstitute.ddp.content.RendererInitialContextCreator.RenderContextSource.FORM_RESPONSE_AND_ACTIVITY_DEF;
+import static org.broadinstitute.ddp.service.actvityinstancebuilder.context.AIBuilderParams.createParams;
+import static org.broadinstitute.ddp.util.TranslationUtil.extractOptionalActivitySummary;
+import static org.broadinstitute.ddp.util.TranslationUtil.extractOptionalActivityTranslation;
+import static org.broadinstitute.ddp.util.TranslationUtil.extractTranslatedActivityName;
+
 import java.sql.Blob;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -31,10 +37,10 @@ import org.broadinstitute.ddp.db.dto.ActivityDto;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceSummaryDto;
 import org.broadinstitute.ddp.db.dto.ActivityVersionDto;
+import org.broadinstitute.ddp.db.dto.UserActivityInstanceSummary;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.json.activity.ActivityInstanceSummary;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
-import org.broadinstitute.ddp.model.activity.definition.i18n.SummaryTranslation;
 import org.broadinstitute.ddp.model.activity.definition.i18n.Translation;
 import org.broadinstitute.ddp.model.activity.instance.ActivityInstance;
 import org.broadinstitute.ddp.model.activity.instance.ActivityResponse;
@@ -45,13 +51,14 @@ import org.broadinstitute.ddp.model.activity.instance.FormSection;
 import org.broadinstitute.ddp.model.activity.instance.NestedActivityBlock;
 import org.broadinstitute.ddp.model.activity.types.ActivityType;
 import org.broadinstitute.ddp.model.activity.types.BlockType;
-import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.broadinstitute.ddp.model.study.StudyLanguage;
 import org.broadinstitute.ddp.pex.PexInterpreter;
+import org.broadinstitute.ddp.service.actvityinstancebuilder.AIBuilderFactory;
 import org.broadinstitute.ddp.util.ActivityInstanceUtil;
 import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 
 public class ActivityInstanceService {
 
@@ -65,34 +72,6 @@ public class ActivityInstanceService {
         this.actInstanceDao = actInstanceDao;
         this.interpreter = interpreter;
         this.renderer = renderer;
-    }
-
-    /**
-     * Get an activity instance, translated to given language. If activity is a form, visibility of blocks will be
-     * resolved as well. Activity instance summaries for nested activity blocks will not be loaded -- this should be
-     * done by caller separately.
-     *
-     * @param handle          the jdbi handle
-     * @param userGuid        the user guid
-     * @param actType         the activity type
-     * @param actInstanceGuid the activity instance guid
-     * @param isoLangCode     the iso language code
-     * @param style           the content style to use for converting content
-     * @return activity instance, if found
-     * @throws DDPException if pex evaluation error
-     */
-    public Optional<ActivityInstance> getTranslatedActivity(Handle handle, String userGuid, String operatorGuid, ActivityType actType,
-                                                            String actInstanceGuid, String isoLangCode, ContentStyle style) {
-        ActivityInstance inst = actInstanceDao.getTranslatedActivityByTypeAndGuid(handle, actType, actInstanceGuid, isoLangCode, style);
-        if (inst == null) {
-            return Optional.empty();
-        }
-
-        if (ActivityType.FORMS.equals(inst.getActivityType())) {
-            ((FormInstance) inst).updateBlockStatuses(handle, interpreter, userGuid, operatorGuid, actInstanceGuid, null);
-        }
-
-        return Optional.of(inst);
     }
 
     /**
@@ -151,7 +130,8 @@ public class ActivityInstanceService {
                         .collect(Collectors.toList());
                 Map<String, FormResponse> nestedResponses = countQuestionsAndAnswers(
                         handle, userGuid, operatorGuid, studyGuid, nestedSummaries);
-                renderInstanceSummaries(handle, instance.getParticipantUserId(), studyGuid, nestedSummaries, nestedResponses);
+                renderInstanceSummaries(handle, instance.getParticipantUserId(),
+                        operatorGuid, studyGuid, nestedSummaries, nestedResponses);
 
                 nestedActBlock.addInstanceSummaries(nestedSummaries);
             }
@@ -341,6 +321,12 @@ public class ActivityInstanceService {
                     def.isWriteOnce(),
                     summaryDto.getReadonly());
 
+            boolean isFirstInstance = StringUtils.isBlank(summaryDto.getPreviousInstanceGuid());
+            boolean canDelete = ActivityInstanceUtil.computeCanDelete(
+                    def.canDeleteInstances(),
+                    def.getCanDeleteFirstInstance(),
+                    isFirstInstance);
+
             var summary = new ActivityInstanceSummary(
                     def.getActivityCode(),
                     summaryDto.getId(),
@@ -360,7 +346,7 @@ public class ActivityInstanceService {
                     def.isExcludeFromDisplay(),
                     summaryDto.isHidden(),
                     summaryDto.getCreatedAtMillis(),
-                    def.canDeleteInstances(),
+                    canDelete,
                     def.isFollowup(),
                     versionDto.getVersionTag(),
                     versionDto.getId(),
@@ -372,41 +358,6 @@ public class ActivityInstanceService {
         }
 
         return summaries;
-    }
-
-    private Translation extractTranslatedActivityName(FormActivityDef def, String preferredLangCode, String studyDefaultLangCode) {
-        Translation preferredName = null;
-        Translation studyDefaultName = null;
-        for (var name : def.getTranslatedNames()) {
-            if (name.getLanguageCode().equals(studyDefaultLangCode)) {
-                studyDefaultName = name;
-            }
-            if (name.getLanguageCode().equals(preferredLangCode)) {
-                preferredName = name;
-            }
-        }
-        if (preferredName == null && studyDefaultName == null) {
-            throw new DDPException("Could not find name for activity " + def.getActivityCode());
-        }
-        return preferredName != null ? preferredName : studyDefaultName;
-    }
-
-    private String extractOptionalActivityTranslation(List<Translation> translations, String isoLangCode) {
-        return translations.stream()
-                .filter(trans -> trans.getLanguageCode().equals(isoLangCode))
-                .map(Translation::getText)
-                .findFirst()
-                .orElse(null);
-    }
-
-    private String extractOptionalActivitySummary(List<SummaryTranslation> summaryTranslations,
-                                                  InstanceStatusType statusType,
-                                                  String isoLangCode) {
-        return summaryTranslations.stream()
-                .filter(trans -> trans.getStatusType().equals(statusType) && trans.getLanguageCode().equals(isoLangCode))
-                .map(Translation::getText)
-                .findFirst()
-                .orElse(null);
     }
 
     /**
@@ -483,7 +434,7 @@ public class ActivityInstanceService {
      * @param summaries         the list of summaries
      * @param instanceResponses the mapping of instance guid to answer response objects
      */
-    public void renderInstanceSummaries(Handle handle, long userId, String studyGuid,
+    public void renderInstanceSummaries(Handle handle, long userId, String operatorGuid, String studyGuid,
                                         List<ActivityInstanceSummary> summaries,
                                         Map<String, FormResponse> instanceResponses) {
         if (summaries.isEmpty()) {
@@ -500,7 +451,7 @@ public class ActivityInstanceService {
                     .collect(Collectors.toMap(wrapper -> wrapper.getActivityInstanceId(), wrapper -> wrapper.unwrap()));
         }
         var sharedSnapshot = I18nContentRenderer
-                .newValueProviderBuilder(handle, userId)
+                .newValueProviderBuilder(handle, userId, operatorGuid, studyGuid)
                 .build().getSnapshot();
 
         ActivityDefStore activityDefStore = ActivityDefStore.getInstance();
@@ -541,6 +492,9 @@ public class ActivityInstanceService {
             if (StringUtils.isNotBlank(summary.getActivitySubtitle())) {
                 summary.setActivitySubtitle(renderer.renderToString(summary.getActivitySubtitle(), context));
             }
+            if (StringUtils.isNotBlank(summary.getActivityDescription())) {
+                summary.setActivityDescription(renderer.renderToString(summary.getActivityDescription(), context));
+            }
             if (StringUtils.isNotBlank(summary.getActivitySummary())) {
                 summary.setActivitySummary(renderer.renderToString(summary.getActivitySummary(), context));
             }
@@ -559,5 +513,101 @@ public class ActivityInstanceService {
         var instanceDao = handle.attach(org.broadinstitute.ddp.db.dao.ActivityInstanceDao.class);
         int numDeleted = instanceDao.deleteAllByIds(Set.of(instanceDto.getId()));
         DBUtils.checkDelete(1, numDeleted);
+    }
+
+    /**
+     * Build {@link ActivityInstance} from data cached stored in {@link ActivityDefStore}.
+     * Some of data (answers, rule messages) are queried from DB.
+     * This method provide full building and rendering of {@link FormInstance}:
+     * <pre>
+     * - create form;
+     * - add children;
+     * - render form title/subtitle;
+     * - render content;
+     * - set display numbers;
+     * - update block statuses.
+     * </pre>
+     */
+    public Optional<ActivityInstance> buildInstanceFromDefinition(
+            Handle handle,
+            String userGuid,
+            String operatorGuid,
+            String studyGuid,
+            String instanceGuid,
+            ContentStyle style,
+            String isoLangCode) {
+
+        var context = AIBuilderFactory.createAIBuilder(handle,
+                createParams(userGuid, studyGuid, instanceGuid)
+                        .setReadPreviousInstanceId(true)
+                        .setOperatorGuid(operatorGuid)
+                        .setIsoLangCode(isoLangCode)
+                        .setStyle(style))
+                .checkParams()
+                    .readFormInstanceData()
+                    .readActivityDef()
+                    .createRendererContext(FORM_RESPONSE_AND_ACTIVITY_DEF)
+                .startBuild()
+                    .buildFormInstance()
+                    .buildFormChildren()
+                    .renderFormTitles()
+                    .renderContent()
+                    .setDisplayNumbers()
+                    .updateBlockStatuses()
+                    .populateSnapshottedAddress()
+                .endBuild()
+                    .getContext();
+
+        if (context.getFailedStep() != null) {
+            LOG.warn("ActivityInstance build failed: {}, step={}", context.getFailedMessage(), context.getFailedStep());
+        }
+        return Optional.ofNullable(context.getFormInstance());
+    }
+
+    /**
+     * Build {@link ActivityInstance} from data cached stored in {@link ActivityDefStore}.
+     * Some of data (answers, rule messages) are queried from DB.
+     * This method provide partial building and rendering of {@link FormInstance}, plus it passes 'instanceSummary'.<br>
+     * The following building steps executed:
+     * <pre>
+     * - create form;
+     * - add children;
+     * - render form title/subtitle;
+     * - update block statuses.
+     * </pre>
+     */
+    public Optional<ActivityInstance> buildInstanceFromDefinition(
+            Handle handle,
+            String userGuid,
+            String operatorGuid,
+            String studyGuid,
+            String instanceGuid,
+            String isoLangCode,
+            UserActivityInstanceSummary instanceSummary) {
+
+        var context = AIBuilderFactory.createAIBuilder(handle,
+                createParams(userGuid, studyGuid, instanceGuid)
+                        .setReadPreviousInstanceId(true)
+                        .setOperatorGuid(operatorGuid)
+                        .setIsoLangCode(isoLangCode)
+                        .setInstanceSummary(instanceSummary)
+                        .setDisableTemplatesRendering(true))
+                .checkParams()
+                    .readFormInstanceData()
+                    .readActivityDef()
+                    .createRendererContext(FORM_RESPONSE_AND_ACTIVITY_DEF)
+                .startBuild()
+                    .buildFormInstance()
+                    .buildFormChildren()
+                    .renderFormTitles()
+                    .updateBlockStatuses()
+                    .populateSnapshottedAddress()
+                .endBuild()
+                    .getContext();
+
+        if (context.getFailedStep() != null) {
+            LOG.warn("ActivityInstance build failed: {}, step={}", context.getFailedMessage(), context.getFailedStep());
+        }
+        return Optional.ofNullable(context.getFormInstance());
     }
 }

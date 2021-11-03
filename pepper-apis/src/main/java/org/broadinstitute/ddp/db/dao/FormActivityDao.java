@@ -92,6 +92,9 @@ public interface FormActivityDao extends SqlObject {
         if (activity.canDeleteInstances()) {
             throw new UnsupportedOperationException("canDeleteInstances can only be set on nested child activities");
         }
+        if (activity.getCanDeleteFirstInstance() != null) {
+            throw new UnsupportedOperationException("canDeleteFirstInstance can only be set on nested child activities");
+        }
 
         nestedActivities = ListUtils.defaultIfNull(nestedActivities, List.of());
         for (var nested : nestedActivities) {
@@ -135,7 +138,7 @@ public interface FormActivityDao extends SqlObject {
                 activity.getMaxInstancesPerUser(), activity.getDisplayOrder(), activity.isWriteOnce(), activity.getEditTimeoutSec(),
                 activity.isOndemandTriggerAllowed(), activity.isExcludeFromDisplay(), activity.isExcludeStatusIconFromDisplay(),
                 activity.isAllowUnauthenticated(), activity.isFollowup(), activity.isHideInstances(),
-                activity.isCreateOnParentCreation(), activity.canDeleteInstances());
+                activity.isCreateOnParentCreation(), activity.canDeleteInstances(), activity.getCanDeleteFirstInstance());
         activity.setActivityId(activityId);
         return activityId;
     }
@@ -222,7 +225,7 @@ public interface FormActivityDao extends SqlObject {
         getJdbiFormActivitySetting().insert(
                 activityId, activity.getListStyleHint(), introductionSectionId,
                 closingSectionId, revisionId, readonlyHintTemplateId, activity.getLastUpdated(), lastUpdatedTextTemplateId,
-                activity.shouldSnapshotSubstitutionsOnSubmit());
+                activity.shouldSnapshotSubstitutionsOnSubmit(), activity.shouldSnapshotAddressOnSubmit());
     }
 
     default FormActivityDef findDefByDtoAndVersion(ActivityDto activityDto, ActivityVersionDto revisionDto) {
@@ -249,6 +252,7 @@ public interface FormActivityDao extends SqlObject {
                 .setHideInstances(activityDto.isHideExistingInstancesOnCreation())
                 .setCreateOnParentCreation(activityDto.isCreateOnParentCreation())
                 .setCanDeleteInstances(activityDto.canDeleteInstances())
+                .setCanDeleteFirstInstance(activityDto.getCanDeleteFirstInstance())
                 .setIsFollowup(activityDto.isFollowup());
 
         List<Translation> names = new ArrayList<>();
@@ -292,6 +296,7 @@ public interface FormActivityDao extends SqlObject {
             builder.setListStyleHint(settingDto.getListStyleHint());
             builder.setLastUpdated(settingDto.getLastUpdated());
             builder.setSnapshotSubstitutionsOnSubmit(settingDto.shouldSnapshotSubstitutionsOnSubmit());
+            builder.setSnapshotAddressOnSubmit(settingDto.shouldSnapshotAddressOnSubmit());
 
             Map<Long, Template> templates = getTemplateDao().collectTemplatesByIdsAndTimestamp(settingDto.getTemplateIds(), revisionStart);
             builder.setLastUpdatedTextTemplate(templates.getOrDefault(settingDto.getLastUpdatedTextTemplateId(), null));

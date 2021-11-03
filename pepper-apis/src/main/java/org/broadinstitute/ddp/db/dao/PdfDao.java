@@ -1,5 +1,6 @@
 package org.broadinstitute.ddp.db.dao;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -31,6 +32,7 @@ import org.broadinstitute.ddp.model.pdf.PdfTemplate;
 import org.broadinstitute.ddp.model.pdf.PdfTemplateType;
 import org.broadinstitute.ddp.model.pdf.PdfVersion;
 import org.broadinstitute.ddp.model.pdf.PhysicianInstitutionTemplate;
+import org.broadinstitute.ddp.model.pdf.PicklistAnswerSubstitution;
 import org.broadinstitute.ddp.model.pdf.ProfileSubstitution;
 import org.broadinstitute.ddp.model.pdf.SubstitutionType;
 import org.jdbi.v3.core.result.LinkedHashMapRowReducer;
@@ -75,7 +77,7 @@ public interface PdfDao extends SqlObject {
 
     default long insertTemplate(PdfTemplate template) {
         PdfSql pdfSql = getPdfSql();
-        long templateId = pdfSql.insertBaseTemplate(template.getRawBytes(), template.getType());
+        long templateId = pdfSql.insertBaseTemplate(template.getRawBytes(), template.getType(), template.getLanguageCodeId());
         template.setId(templateId);
         switch (template.getType()) {
             case MAILING_ADDRESS:
@@ -137,6 +139,15 @@ public interface PdfDao extends SqlObject {
         if (substitution.getQuestionType() == QuestionType.BOOLEAN) {
             BooleanAnswerSubstitution boolSubstitution = (BooleanAnswerSubstitution) substitution;
             DBUtils.checkInsert(1, pdfSql.insertBooleanAnswerSubstitution(substitution.getId(), boolSubstitution.checkIfFalse()));
+        } else if (substitution.getQuestionType() == QuestionType.PICKLIST) {
+            Map<String, String> substitutions = ((PicklistAnswerSubstitution) substitution).getPlaceholderMapping();
+            List<String> fieldNames = new ArrayList<>();
+            List<String> optionStableIds = new ArrayList<>();
+            for (var key : substitutions.keySet()) {
+                fieldNames.add(key);
+                optionStableIds.add(substitutions.get(key));
+            }
+            pdfSql.bulkInsertPicklistMappings(substitution.getId(), fieldNames, optionStableIds);
         }
     }
 
@@ -334,6 +345,7 @@ public interface PdfDao extends SqlObject {
     @RegisterConstructorMapper(value = ActivityDateSubstitution.class, prefix = "d")
     @RegisterConstructorMapper(value = AnswerSubstitution.class, prefix = "a")
     @RegisterConstructorMapper(value = BooleanAnswerSubstitution.class, prefix = "a")
+    @RegisterConstructorMapper(value = PicklistAnswerSubstitution.class, prefix = "a")
     @UseRowReducer(SubstitutionsReducer.class)
     List<PdfSubstitution> findSubstitutionsByCustomTemplateIds(
             @BindList(value = "customTemplateIds", onEmpty = BindList.EmptyHandling.NULL) Set<Long> customTemplateIds);
@@ -343,6 +355,10 @@ public interface PdfDao extends SqlObject {
     @UseStringTemplateSqlLocator
     @SqlQuery("findTemplateIdsByVersionId")
     List<Long> findTemplateIdsByVersionId(@Bind("versionId") long versionId);
+
+    @UseStringTemplateSqlLocator
+    @SqlQuery("findTemplateIdsByVersionIdAndLanguageCodeId")
+    List<Long> findTemplateIdsByVersionIdAndLanguageCodeId(@Bind("versionId") long versionId, @Bind("languageCodeId") long languageCodeId);
 
     default Optional<PdfTemplate> findFullTemplateByTemplateId(long templateId) {
         Optional<PdfTemplate> optionalTemplate = findBaseTemplateByTemplateId(templateId);
@@ -506,27 +522,37 @@ public interface PdfDao extends SqlObject {
     class SubstitutionsReducer implements LinkedHashMapRowReducer<Long, PdfSubstitution> {
         @Override
         public void accumulate(Map<Long, PdfSubstitution> container, RowView view) {
-            SubstitutionType type = SubstitutionType.valueOf(view.getColumn("substitution_type", String.class));
-            PdfSubstitution sub;
-            switch (type) {
-                case PROFILE:
-                    sub = view.getRow(ProfileSubstitution.class);
-                    break;
-                case ACTIVITY_DATE:
-                    sub = view.getRow(ActivityDateSubstitution.class);
-                    break;
-                case ANSWER:
-                    QuestionType qtype = QuestionType.valueOf(view.getColumn("a_question_type", String.class));
-                    if (qtype == QuestionType.BOOLEAN) {
-                        sub = view.getRow(BooleanAnswerSubstitution.class);
-                    } else {
-                        sub = view.getRow(AnswerSubstitution.class);
-                    }
-                    break;
-                default:
-                    throw new DaoException("unhandled pdf substitution type " + type);
+            long substId = view.getColumn("a_pdf_substitution_id", Long.class);
+            PdfSubstitution sub = container.get(substId);
+            if (sub == null) {
+                SubstitutionType type = SubstitutionType.valueOf(view.getColumn("substitution_type", String.class));
+                switch (type) {
+                    case PROFILE:
+                        sub = view.getRow(ProfileSubstitution.class);
+                        break;
+                    case ACTIVITY_DATE:
+                        sub = view.getRow(ActivityDateSubstitution.class);
+                        break;
+                    case ANSWER:
+                        QuestionType qtype = QuestionType.valueOf(view.getColumn("a_question_type", String.class));
+                        if (qtype == QuestionType.BOOLEAN) {
+                            sub = view.getRow(BooleanAnswerSubstitution.class);
+                        } else if (qtype == QuestionType.PICKLIST) {
+                            sub = view.getRow(PicklistAnswerSubstitution.class);
+                        } else {
+                            sub = view.getRow(AnswerSubstitution.class);
+                        }
+                        break;
+                    default:
+                        throw new DaoException("unhandled pdf substitution type " + type);
+                }
+                container.put(sub.getId(), sub);
             }
-            container.put(sub.getId(), sub);
+            if (sub instanceof PicklistAnswerSubstitution) {
+                ((PicklistAnswerSubstitution) sub).addPlaceholderMapping(
+                        view.getColumn("a_field_name", String.class),
+                        view.getColumn("a_option_stable_id", String.class));
+            }
         }
     }
 }

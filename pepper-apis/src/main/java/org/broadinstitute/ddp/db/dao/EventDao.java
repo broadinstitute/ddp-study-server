@@ -50,6 +50,12 @@ public interface EventDao extends SqlObject {
                 .findFirst();
     }
 
+    /**
+     * Return event configurations in execution order
+     * @param studyId study db id
+     * @param eventTriggerType the trigger enum type
+     * @return the event configurations in order of execution precedence
+     */
     default List<EventConfiguration> getAllEventConfigurationsByStudyIdAndTriggerType(long studyId,
                                                                                       EventTriggerType eventTriggerType) {
         return getEventConfigurationDtosForStudyIdAndTriggerType(studyId, eventTriggerType).stream()
@@ -57,6 +63,12 @@ public interface EventDao extends SqlObject {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * Get event configurations that should be executed by pepper-backend process
+     * @param studyId study db id
+     * @param eventTriggerType the trigger enum type
+     * @return the event configurations in order of execution precedence
+     */
     default List<EventConfiguration> getSynchronousEventConfigurationsByStudyIdAndTriggerType(long studyId,
                                                                                               EventTriggerType eventTriggerType) {
         return getAllEventConfigurationsByStudyIdAndTriggerType(studyId, eventTriggerType).stream()
@@ -64,6 +76,12 @@ public interface EventDao extends SqlObject {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * Get event configurations that should be executed by housekeeping process
+     * @param studyId study db id
+     * @param eventTriggerType the trigger enum type
+     * @return the event configurations in order of execution precedence
+     */
     default List<EventConfiguration> getAsynchronousEventConfigurationsByStudyIdAndTriggerType(long studyId,
                                                                                                EventTriggerType eventTriggerType) {
         return getAllEventConfigurationsByStudyIdAndTriggerType(studyId, eventTriggerType).stream()
@@ -215,7 +233,7 @@ public interface EventDao extends SqlObject {
             Long userNotificationDocumentConfigurationId = view.getColumn("user_notification_document_configuration_id", Long.class);
             if (userNotificationDocumentConfigurationId != null) {
                 dto.addNotificationPdfAttachment(userNotificationDocumentConfigurationId,
-                        view.getColumn("generate_if_missing", Boolean.class));
+                        view.getColumn("always_generate", Boolean.class));
             }
 
             Long targetActivityId = view.getColumn("target_activity_id", Long.class);

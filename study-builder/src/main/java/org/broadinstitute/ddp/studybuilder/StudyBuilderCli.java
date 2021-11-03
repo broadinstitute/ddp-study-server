@@ -122,8 +122,7 @@ public class StudyBuilderCli {
         log("using study configuration file: %s", cfgPath);
 
         log("resolving study configuration...");
-        studyCfg = studyCfg.resolveWith(varsCfg);
-
+        studyCfg = studyCfg.withFallback(varsCfg).resolve();
         boolean isDryRun = cmd.hasOption("dry-run");
         if (cmd.hasOption(OPT_RUN_TASK)) {
             String taskName = cmd.getOptionValue(OPT_RUN_TASK);

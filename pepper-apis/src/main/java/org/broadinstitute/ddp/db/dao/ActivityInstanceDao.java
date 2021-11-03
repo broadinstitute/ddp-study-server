@@ -3,6 +3,7 @@ package org.broadinstitute.ddp.db.dao;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -62,7 +63,28 @@ public interface ActivityInstanceDao extends SqlObject {
     Optional<ActivityInstanceCreationValidation> checkSuitabilityForActivityInstanceCreation(
             @Bind("studyId") long studyId,
             @Bind("activityCode") String activityCode,
-            @Bind("userGuid") String userGuid);
+            @Bind("participantUserId") long participantUserId);
+
+    @UseStringTemplateSqlLocator
+    @SqlQuery("queryLatestActivityInstanceGuidByUserGuidStudyIdAndActivityCode")
+    String findLatestActivityInstanceGuidByUserStudyAndActivityCode(
+            @Bind("userGuid") String userGuid,
+            @Bind("studyId") long studyId,
+            @Bind("activityCode") String activityCode);
+
+    @SqlUpdate("upsertActivityInstanceCreationMutex")
+    @UseStringTemplateSqlLocator
+    int upsertActivityInstanceCreationMutex(@Bind("participantId")long participantId, @Bind("studyId")long studyId,
+                                             @Bind("activityCode")String activityCode, @Bind("updateTime") Instant updateTime);
+
+    default int upsertActivityInstanceCreationMutex(long participantId, long studyId, String activityCode) {
+        return upsertActivityInstanceCreationMutex(participantId, studyId, activityCode, Instant.now());
+    }
+
+    @UseStringTemplateSqlLocator
+    @SqlQuery("queryLastUpdateForActivityInstanceCreationMutex")
+    Instant getActivityInstanceCreationMutexLastUpdate(@Bind("participantId")long participantId, @Bind("studyId")long studyId,
+                                                       @Bind("activityCode")String activityCode);
 
     /**
      * Convenience method to create new activity instance when both operator and participant is the same, and using defaults.
@@ -188,6 +210,25 @@ public interface ActivityInstanceDao extends SqlObject {
                 legacyVersion);
     }
 
+    default ActivityInstanceDto insertInstance(long activityId, User operator, User participant,
+                                               Long submissionId, String sessionId, String legacyVersion) {
+        long createdAtMillis = Instant.now().toEpochMilli();
+        var initialStatus = InstanceStatusType.CREATED;
+        Boolean isReadOnly = null;
+        return createNewInstance(
+                activityId,
+                operator,
+                participant,
+                initialStatus,
+                isReadOnly,
+                createdAtMillis,
+                null,
+                null,
+                submissionId,
+                sessionId,
+                legacyVersion);
+    }
+
     // Given the activity instance details and operator/participant, does the heavy-lifting of creating instance,
     // setting up instance status, running events, and creating downstream child activity instances (if any).
     private ActivityInstanceDto createNewInstance(long activityId, User operator, User participant,
@@ -243,7 +284,7 @@ public interface ActivityInstanceDao extends SqlObject {
             @BindList(value = "activityIds", onEmpty = EmptyHandling.NULL) Set<Long> activityIds);
 
     @SqlUpdate("update activity_instance set is_hidden = :isHidden"
-            + "  where participant_id = :participantId and study_activity_id in (<activityIds>)")
+            + "  where participant_id = :participantId and study_activity_id in (<activityIds>) order by activity_instance_id")
     int bulkUpdateIsHiddenByActivityIds(
             @Bind("participantId") long participantId,
             @Bind("isHidden") boolean isHidden,
@@ -258,6 +299,10 @@ public interface ActivityInstanceDao extends SqlObject {
             @Bind("studyId") long studyId,
             @Bind("oldParticipantId") long oldParticipantId,
             @Bind("newParticipantId") long newParticipantId);
+
+    default List<ActivityInstanceDto> findAllInstancesByUserIds(Iterable<Long> userIds) {
+        return getJdbiActivityInstance().findAllByUserIds(userIds);
+    }
 
     @SqlQuery("select activity_instance_id from activity_instance where participant_id in (<userIds>)")
     Set<Long> findAllInstanceIdsByUserIds(@BindList(value = "userIds", onEmpty = BindList.EmptyHandling.NULL) Set<Long> userIds);
@@ -319,6 +364,24 @@ public interface ActivityInstanceDao extends SqlObject {
         getAnswerDao().deleteAllByInstanceIds(instanceIds);
         getActivityInstanceStatusDao().deleteAllByInstanceIds(instanceIds);
         return _deleteAllInstancesByIds(instanceIds);
+    }
+
+    default void deleteInstances(Iterable<ActivityInstanceDto> instances) {
+        Set<Long> nestedInstanceIds = new HashSet<>();
+        Set<Long> parentInstanceIds = new HashSet<>();
+        for (var instance : instances) {
+            if (instance.getParentInstanceId() != null) {
+                nestedInstanceIds.add(instance.getId());
+            } else {
+                parentInstanceIds.add(instance.getId());
+            }
+        }
+        if (!nestedInstanceIds.isEmpty()) {
+            DBUtils.checkDelete(nestedInstanceIds.size(), deleteAllByIds(nestedInstanceIds));
+        }
+        if (!parentInstanceIds.isEmpty()) {
+            DBUtils.checkDelete(parentInstanceIds.size(), deleteAllByIds(parentInstanceIds));
+        }
     }
 
     default void saveSubstitutions(long instanceId, Map<String, String> substitutions) {

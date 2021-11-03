@@ -1,45 +1,44 @@
 package org.broadinstitute.ddp.model.dsm;
 
+import static org.broadinstitute.ddp.util.DateTimeUtils.localDateToEpochSeconds;
+
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 import com.google.gson.annotations.SerializedName;
-
 import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 // All epoch timestamps are expressed in seconds
 public class ParticipantStatusTrackingInfo {
 
+    private static final Logger LOG = LoggerFactory.getLogger(ParticipantStatus.class);
+
     public enum RecordStatus {
         INELIGIBLE, PENDING, SENT, RECEIVED, DELIVERED, UNKNOWN
     }
 
-    private static final Logger LOG = LoggerFactory.getLogger(ParticipantStatus.class);
-
-    @SerializedName("medicalRecords")
+    @SerializedName("medicalRecord")
     private MedicalRecord medicalRecord;
-    @SerializedName("tissue")
+    @SerializedName("tissueRecord")
     private TissueRecord tissueRecord;
     @SerializedName("kits")
     private List<Kit> kits;
     @SerializedName("workflows")
-    private List<Workflow> workflows;
+    private List<ParticipantStatusES.Workflow> workflows;
 
-    private transient String userGuid;
+    private final transient String userGuid;
 
     private RecordStatus figureOutMedicalRecordStatus(
-            String userGuid,
             String entityName,
             EnrollmentStatusType enrollmentStatusType,
-            Long requested,
-            Long received
+            LocalDate requested,
+            LocalDate received
     ) {
         // Is it possible? Should we check for it here?
-        if (enrollmentStatusType != EnrollmentStatusType.ENROLLED) {
+        if (!enrollmentStatusType.isEnrolled()) {
             return RecordStatus.INELIGIBLE;
         } else if (requested == null && received == null) {
             return RecordStatus.PENDING;
@@ -50,70 +49,85 @@ public class ParticipantStatusTrackingInfo {
         } else if (requested == null && received != null) {
             return RecordStatus.RECEIVED;
         } else {
-            LOG.error("Something completely unexpected happened with ", entityName);
+            LOG.error("Something completely unexpected happened with {}", entityName);
             return RecordStatus.UNKNOWN;
         }
     }
 
-    public ParticipantStatusTrackingInfo(ParticipantStatus dsmParticipantStatus,
-                                         List<Workflow> workflows,
-                                         EnrollmentStatusType enrollmentStatusType,
-                                         String userGuid
-    ) {
-        this(dsmParticipantStatus, enrollmentStatusType, userGuid);
-        this.workflows = workflows;
-    }
-
-    public ParticipantStatusTrackingInfo(
-            ParticipantStatus dsmParticipantStatus,
-            EnrollmentStatusType enrollmentStatusType,
-            String userGuid
-    ) {
+    public ParticipantStatusTrackingInfo(ParticipantStatusES statusES, EnrollmentStatusType enrollmentStatusType,
+                                         String userGuid) {
         this.userGuid = userGuid;
+        this.workflows = statusES.getWorkflows() != null ? statusES.getWorkflows() : new ArrayList<>();
+
+        LocalDate minReceived = null;
+        LocalDate minRequested = null;
+        if (statusES.getMedicalRecords() != null) {
+            for (ParticipantStatusES.MedicalRecord medicalRecord : statusES.getMedicalRecords()) {
+                if (medicalRecord.getReceived() != null) {
+                    if (minReceived == null || minReceived.compareTo(medicalRecord.getReceived()) > 0) {
+                        minReceived = medicalRecord.getReceived();
+                    }
+                }
+                if (medicalRecord.getRequested() != null) {
+                    if (minRequested == null || minRequested.compareTo(medicalRecord.getRequested()) > 0) {
+                        minRequested = medicalRecord.getRequested();
+                    }
+                }
+            }
+        }
         this.medicalRecord = new MedicalRecord(
                 figureOutMedicalRecordStatus(
-                        userGuid,
                         "medical record",
                         enrollmentStatusType,
-                        dsmParticipantStatus.getMrRequestedEpochTimeSec(),
-                        dsmParticipantStatus.getMrReceivedEpochTimeSec()
+                        minRequested,
+                        minReceived
                 ),
-                dsmParticipantStatus.getMrRequestedEpochTimeSec(),
-                dsmParticipantStatus.getMrReceivedEpochTimeSec()
+                localDateToEpochSeconds(minRequested),
+                localDateToEpochSeconds(minReceived)
         );
+
+        minReceived = null;
+        minRequested = null;
+        if (statusES.getTissueRecords() != null) {
+            for (ParticipantStatusES.TissueRecord tissueRecord : statusES.getTissueRecords()) {
+                if (tissueRecord.getReceived() != null) {
+                    if (minReceived == null || minReceived.compareTo(tissueRecord.getReceived()) > 0) {
+                        minReceived = tissueRecord.getReceived();
+                    }
+                }
+                if (tissueRecord.getRequested() != null) {
+                    if (minRequested == null || minRequested.compareTo(tissueRecord.getRequested()) > 0) {
+                        minRequested = tissueRecord.getRequested();
+                    }
+                }
+            }
+        }
         this.tissueRecord = new TissueRecord(
                 figureOutMedicalRecordStatus(
-                        userGuid,
                         "tissue record",
                         enrollmentStatusType,
-                        dsmParticipantStatus.getTissueRequestedEpochTimeSec(),
-                        dsmParticipantStatus.getTissueReceivedEpochTimeSec()
+                        minRequested,
+                        minReceived
                 ),
-                dsmParticipantStatus.getTissueRequestedEpochTimeSec(),
-                dsmParticipantStatus.getTissueReceivedEpochTimeSec()
+                localDateToEpochSeconds(minRequested),
+                localDateToEpochSeconds(minReceived)
         );
 
-        List<ParticipantStatus.Sample> samples = dsmParticipantStatus.getSamples();
-        samples = Optional.ofNullable(samples)
-                .orElse(new ArrayList<ParticipantStatus.Sample>());
-
-        List<Kit> kits = new ArrayList<Kit>();
-        for (ParticipantStatus.Sample sample: samples) {
-            kits.add(
-                    new Kit(
-                            sample,
-                            Kit.figureOutStatus(
-                                    userGuid,
-                                    enrollmentStatusType,
-                                    sample.getDeliveredEpochTimeSec(),
-                                    sample.getReceivedEpochTimeSec(),
-                                    sample.getTrackingId()
-                            )
-                    )
-            );
+        this.kits = new ArrayList<>();
+        if (statusES.getSamples() != null) {
+            for (ParticipantStatusES.Sample sample : statusES.getSamples()) {
+                kits.add(
+                        new Kit(
+                                sample,
+                                Kit.figureOutStatus(
+                                        enrollmentStatusType,
+                                        sample.getDelivered(),
+                                        sample.getReceived()
+                                )
+                        )
+                );
+            }
         }
-
-        this.kits = kits;
     }
 
     public String getUserGuid() {
@@ -132,7 +146,7 @@ public class ParticipantStatusTrackingInfo {
         return tissueRecord;
     }
 
-    public List<Workflow> getWorkflows() {
+    public List<ParticipantStatusES.Workflow> getWorkflows() {
         return workflows;
     }
 
@@ -177,33 +191,30 @@ public class ParticipantStatusTrackingInfo {
 
     public static class Kit {
         @SerializedName("kitType")
-        private String kitType;
+        private final String kitType;
         @SerializedName("status")
-        private RecordStatus status;
+        private final RecordStatus status;
         // sentAt is NOT NULL since it's guaranteed to be set in Sample by DSM
         @SerializedName("sentAt")
-        private long sentAt;
+        private final long sentAt;
         @SerializedName("deliveredAt")
-        private Long deliveredAt;
+        private final Long deliveredAt;
         @SerializedName("receivedBackAt")
-        private Long receivedBackAt;
+        private final Long receivedBackAt;
         @SerializedName("trackingId")
-        private String trackingId;
+        private final String trackingId;
         @SerializedName("shipper")
-        private String shipper;
+        private final String shipper;
 
         // We have a constralong that if we receive a kit from DSM, it has been definitely sent
         // As a result, the "sent" is not nullable and we never check its value
         public static RecordStatus figureOutStatus(
-                String userGuid,
                 EnrollmentStatusType enrollmentStatusType,
-                Long delivered,
-                Long received,
-                String trackingId
+                LocalDate delivered,
+                LocalDate received
         ) {
             // Is it possible? Should we check for it here?
-            String entityName = "kit";
-            if (enrollmentStatusType != EnrollmentStatusType.ENROLLED) {
+            if (!enrollmentStatusType.isEnrolled()) {
                 return RecordStatus.INELIGIBLE;
             } else if (delivered == null && received == null) {
                 return RecordStatus.SENT;
@@ -214,43 +225,47 @@ public class ParticipantStatusTrackingInfo {
             } else if (delivered == null && received != null) {
                 return RecordStatus.RECEIVED;
             } else {
-                LOG.error("Something completely unexpected happened with ", entityName);
+                LOG.error("Something completely unexpected happened with kit");
                 return RecordStatus.UNKNOWN;
             }
         }
 
-        public Kit(ParticipantStatus.Sample sample, RecordStatus status) {
+        public Kit(ParticipantStatusES.Sample sample, RecordStatus status) {
             this.kitType = sample.getKitType();
             this.status = status;
-            this.sentAt = sample.getSentEpochTimeSec();
-            this.deliveredAt = sample.getDeliveredEpochTimeSec();
-            this.receivedBackAt = sample.getReceivedEpochTimeSec();
-            this.trackingId = sample.getTrackingId();
+            this.sentAt = localDateToEpochSeconds(sample.getSent());
+            this.deliveredAt = localDateToEpochSeconds(sample.getDelivered());
+            this.receivedBackAt = localDateToEpochSeconds(sample.getReceived());
+            this.trackingId = sample.getTrackingOut();
             this.shipper = sample.getCarrier();
         }
 
         public RecordStatus getStatus() {
             return status;
         }
-    }
 
-    public static class Workflow {
-        @SerializedName("workflow")
-        protected String workflow;
-        @SerializedName("status")
-        protected String status;
-
-        public Workflow(String workflow, String status) {
-            this.workflow = workflow;
-            this.status = status;
+        public String getKitType() {
+            return kitType;
         }
 
-        public String getStatus() {
-            return status;
+        public long getSentAt() {
+            return sentAt;
         }
 
-        public String getWorkflow() {
-            return workflow;
+        public Long getDeliveredAt() {
+            return deliveredAt;
+        }
+
+        public Long getReceivedBackAt() {
+            return receivedBackAt;
+        }
+
+        public String getTrackingId() {
+            return trackingId;
+        }
+
+        public String getShipper() {
+            return shipper;
         }
     }
 }

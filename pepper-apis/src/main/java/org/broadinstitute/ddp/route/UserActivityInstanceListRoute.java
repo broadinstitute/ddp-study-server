@@ -66,7 +66,7 @@ public class UserActivityInstanceListRoute implements Route {
             }
             Map<String, FormResponse> responses = service.countQuestionsAndAnswers(
                     handle, userGuid, operatorGuid, studyGuid, summaries);
-            service.renderInstanceSummaries(handle, found.getUser().getId(), studyGuid, summaries, responses);
+            service.renderInstanceSummaries(handle, found.getUser().getId(), operatorGuid, studyGuid, summaries, responses);
             return summaries;
         });
     }

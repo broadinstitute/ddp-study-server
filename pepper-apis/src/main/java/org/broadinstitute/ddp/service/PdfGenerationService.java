@@ -7,6 +7,7 @@ import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -29,10 +30,13 @@ import com.itextpdf.kernel.pdf.PdfReader;
 import com.itextpdf.kernel.pdf.PdfWriter;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.client.Auth0ManagementClient;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
+import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudyCached;
 import org.broadinstitute.ddp.db.dao.ParticipantDao;
 import org.broadinstitute.ddp.db.dao.PdfDao;
+import org.broadinstitute.ddp.db.dao.StudyLanguageDao;
 import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dao.UserGovernanceDao;
 import org.broadinstitute.ddp.db.dao.UserProfileDao;
@@ -67,6 +71,7 @@ import org.broadinstitute.ddp.model.pdf.PdfSubstitution;
 import org.broadinstitute.ddp.model.pdf.PdfTemplate;
 import org.broadinstitute.ddp.model.pdf.PdfVersion;
 import org.broadinstitute.ddp.model.pdf.PhysicianInstitutionTemplate;
+import org.broadinstitute.ddp.model.pdf.PicklistAnswerSubstitution;
 import org.broadinstitute.ddp.model.pdf.ProfileSubstitution;
 import org.broadinstitute.ddp.model.pdf.SubstitutionType;
 import org.broadinstitute.ddp.model.study.Participant;
@@ -138,6 +143,37 @@ public class PdfGenerationService {
                                        Handle handle) throws IOException {
         Participant participant = loadParticipantData(handle, configuration, userGuid);
         Map<Long, ActivityResponse> instances = loadActivityInstanceData(handle, configuration, participant);
+        Long languageId = null;
+        List<Long> templateIds = Collections.emptyList();
+        if (participant.getUser().getProfile() != null) {
+            languageId = participant.getUser().getProfile().getPreferredLangId();
+            if (languageId != null) {
+                //make sure pdf templates exist for this language else fallback to study default language
+                templateIds = handle.attach(PdfDao.class)
+                        .findTemplateIdsByVersionIdAndLanguageCodeId(configuration.getVersion().getId(), languageId);
+                if (templateIds.isEmpty()) {
+                    LOG.warn("User : {} has language {} as preferred language but NO PDF templates found for the language. " 
+                            + "Using study default language ", userGuid, participant.getUser().getProfile().getPreferredLangCode());
+                }
+            }
+        }
+
+        if (languageId == null || templateIds.isEmpty()) {
+            //use study default language if exists
+            StudyLanguageDao studyLanguageDao = handle.attach(StudyLanguageDao.class);
+            List<Long> defaultLanguages = studyLanguageDao.getStudyLanguageSql().selectDefaultLanguageCodeId(configuration.getStudyId());
+            if (!defaultLanguages.isEmpty()) {
+                languageId = defaultLanguages.get(0);
+            } else {
+                //fallback to "en" as default
+                languageId = LanguageStore.getDefault().getId();
+            }
+            templateIds = handle.attach(PdfDao.class)
+                    .findTemplateIdsByVersionIdAndLanguageCodeId(configuration.getVersion().getId(), languageId);
+            if (templateIds.isEmpty()) {
+                throw new DDPException("NO PDF templates found for study " + configuration.getStudyGuid());
+            }
+        }
 
         List<String> errors = new ArrayList<>();
         try (
@@ -145,9 +181,9 @@ public class PdfGenerationService {
                 PdfWriter pdfWriter = new PdfWriter(renderedStream);
                 PdfDocument mergedDoc = new PdfDocument(pdfWriter)) {
             int counter = 0;
-            for (int pdfOrderIndex = 0; pdfOrderIndex < configuration.getTemplateIds().size(); pdfOrderIndex++) {
+            for (int pdfOrderIndex = 0; pdfOrderIndex < templateIds.size(); pdfOrderIndex++) {
                 byte[] pdf;
-                long templateId = configuration.getTemplateIds().get(pdfOrderIndex);
+                long templateId = templateIds.get(pdfOrderIndex);
                 PdfTemplate template = handle.attach(PdfDao.class)
                         .findFullTemplateByTemplateId(templateId)
                         .orElseThrow(() -> new DDPException("Could not find template with id:" + templateId));
@@ -226,13 +262,20 @@ public class PdfGenerationService {
             participant = new Participant(null, handle.attach(UserDao.class)
                     .findUserByGuid(userGuid)
                     .orElseThrow(() -> new DDPException("Could not find participant user data for pdf generation with guid=" + userGuid)));
+            UserProfileDao userProfileDao = handle.attach(UserProfileDao.class);
+            Optional<UserProfile>  profileOpt = userProfileDao.findProfileByUserGuid(userGuid);
+            if (profileOpt.isPresent()) {
+                participant.getUser().setProfile(profileOpt.get());
+            }
         }
 
         if (hasEmailSource) {
             var mgmtClient = Auth0ManagementClient.forStudy(handle, config.getStudyGuid());
+            var studyDto = new JdbiUmbrellaStudyCached(handle).findByStudyGuid(config.getStudyGuid());
             String auth0UserId = participant.getUser().getAuth0UserId();
             Map<String, String> emailResults = new Auth0Util(mgmtClient.getDomain())
-                    .getUserPassConnEmailsByAuth0UserIds(Sets.newHashSet(auth0UserId), mgmtClient.getToken());
+                    .getEmailsByAuth0UserIdsAndConnection(Sets.newHashSet(auth0UserId), mgmtClient.getToken(),
+                            studyDto.getDefaultAuth0Connection());
             participant.getUser().setEmail(emailResults.get(auth0UserId));
         }
 
@@ -675,7 +718,8 @@ public class PdfGenerationService {
 
         String placeholder = substitution.getPlaceholder();
         PdfFormField field = form.getField(placeholder);
-        if (field == null && substitution.getQuestionType() != QuestionType.COMPOSITE) {
+        if (field == null && substitution.getQuestionType() != QuestionType.COMPOSITE
+                && substitution.getQuestionType() != QuestionType.PICKLIST) {
             errors.add(String.format("Could not find PDFFormField field with name: %s", placeholder));
             return;
         }
@@ -696,7 +740,13 @@ public class PdfGenerationService {
                 substituteDate(answer, field);
                 break;
             case PICKLIST:
-                substitutePicklist(answer, field);
+                PicklistAnswer picklistAnswer = (PicklistAnswer) answer;
+                if (field != null) {
+                    substitutePicklist(picklistAnswer, field);
+                } else {
+                    substitutePicklist(picklistAnswer, form, ((PicklistAnswerSubstitution) substitution).getPlaceholderMapping(),
+                            errors);
+                }
                 break;
 
             case COMPOSITE:
@@ -736,12 +786,14 @@ public class PdfGenerationService {
 
         String placeholder = substitution.getPlaceholder();
         PdfFormField field = form.getField(placeholder);
-        if (field == null) {
+        if (field == null && substitution.getQuestionType() != QuestionType.PICKLIST) {
             errors.add(String.format("Could not find Child answer PDFFormField field with name: %s", placeholder));
             return;
         }
 
-        field.setFont(PdfFontFactory.createFont());
+        if (field != null) {
+            field.setFont(PdfFontFactory.createFont());
+        }
 
         switch (substitution.getQuestionType()) {
             case BOOLEAN:
@@ -754,7 +806,13 @@ public class PdfGenerationService {
                 substituteDate(answer, field);
                 break;
             case PICKLIST:
-                substitutePicklist(answer, field);
+                PicklistAnswer picklistAnswer = (PicklistAnswer) answer;
+                if (field != null) {
+                    substitutePicklist(picklistAnswer, field);
+                } else {
+                    substitutePicklist(picklistAnswer, form, ((PicklistAnswerSubstitution) substitution).getPlaceholderMapping(),
+                            errors);
+                }
                 break;
 
             default:
@@ -790,16 +848,36 @@ public class PdfGenerationService {
         }
     }
 
-    private void substitutePicklist(Answer answer, PdfFormField field) {
+    private void substitutePicklist(PicklistAnswer answer, PdfFormField field) {
         //sets selected option stableIds.
         List<String> selectedOptions = new ArrayList<>();
         if (answer != null) {
-            for (SelectedPicklistOption option : ((PicklistAnswer) answer).getValue()) {
+            for (SelectedPicklistOption option : answer.getValue()) {
                 selectedOptions.add(option.getStableId());
             }
         }
         if (CollectionUtils.isNotEmpty(selectedOptions)) {
             field.setValue(String.join(", ", selectedOptions));
+        }
+    }
+
+    private void substitutePicklist(PicklistAnswer answer, PdfAcroForm form, Map<String, String> mapping,
+                                    List<String> errors) throws IOException {
+        List<String> selectedOptions = new ArrayList<>();
+        if (answer != null) {
+            for (SelectedPicklistOption option : answer.getValue()) {
+                selectedOptions.add(option.getStableId());
+            }
+        }
+
+        for (String fieldName : mapping.keySet()) {
+            PdfFormField field = form.getField(fieldName);
+            if (field == null) {
+                errors.add(String.format("Could not find Child answer PDFFormField field with name: %s", fieldName));
+            } else {
+                field.setFont(PdfFontFactory.createFont());
+                setIsChecked(field, selectedOptions.contains(mapping.get(fieldName)));
+            }
         }
     }
 

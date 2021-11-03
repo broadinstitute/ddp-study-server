@@ -1,11 +1,16 @@
 package org.broadinstitute.ddp.util;
 
+import static java.lang.String.format;
+
 import org.broadinstitute.ddp.db.DaoException;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
+import org.broadinstitute.ddp.db.dao.AnswerDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.db.dto.QuestionDto;
 import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
+import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
+import org.broadinstitute.ddp.model.activity.instance.question.Question;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.jdbi.v3.core.Handle;
 
@@ -66,5 +71,25 @@ public class QuestionUtil {
                 .findMostRecentInstanceBeforeCurrent(instanceDto.getId())
                 .orElse(null);
         return previousInstanceId != null;
+    }
+
+    /**
+     * Detect if {@link Question} is read-only.
+     * PreviousInstanceId already calculated and passed as a parameter.
+     */
+    public static boolean isReadOnly(QuestionDef questionDef, InstanceStatusType instanceStatusType, Long previousInstanceId) {
+        if (!questionDef.isWriteOnce()) {
+            return false;
+        }
+        if (InstanceStatusType.COMPLETE.equals(instanceStatusType)) {
+            return true;
+        }
+        return previousInstanceId != null;
+    }
+
+    public static Answer getAnswer(Handle handle, long instanceId, String questionStableId) {
+        return handle.attach(AnswerDao.class).findAnswerByInstanceIdAndQuestionStableId(instanceId, questionStableId)
+                .orElseThrow(() -> new DaoException(format(
+                        "Error to detect answer: question stableId=%s, instanceId=%d", questionStableId, instanceId)));
     }
 }

@@ -52,6 +52,6 @@ public class UpdateProfileProcessor extends PubSubTaskProcessorAbstract {
 
         new UpdateEmailHandler().updateEmail(participantGuid, properties);
 
-        new UpdateFirstLastNameHandler().updateFirstLastName(participantGuid, properties);
+        new UpdateProfileDataHandler().updateProfileData(participantGuid, properties);
     }
 }

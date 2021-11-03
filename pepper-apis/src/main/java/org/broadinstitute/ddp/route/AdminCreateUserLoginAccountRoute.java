@@ -175,6 +175,7 @@ public class AdminCreateUserLoginAccountRoute extends ValidatedJsonInputRoute<Cr
                     user.getGuid(),
                     operator.getGuid(),
                     studyDto.getId(),
+                    studyDto.getGuid(),
                     userWithTicket.getTicket());
             triggerEvents(handle, signal);
         });

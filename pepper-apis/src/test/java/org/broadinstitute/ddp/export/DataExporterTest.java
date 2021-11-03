@@ -1,6 +1,7 @@
 package org.broadinstitute.ddp.export;
 
 import static java.util.stream.Collectors.toList;
+import static org.broadinstitute.ddp.util.TestFormActivity.DEFAULT_MAX_FILE_SIZE_FOR_TEST;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -97,6 +98,7 @@ import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
 import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.model.user.UserProfile;
 import org.broadinstitute.ddp.pex.PexInterpreter;
+import org.broadinstitute.ddp.service.AddressService;
 import org.broadinstitute.ddp.service.DsmAddressValidationStatus;
 import org.broadinstitute.ddp.service.MedicalRecordService;
 import org.broadinstitute.ddp.util.ElasticsearchServiceUtil;
@@ -123,6 +125,7 @@ public class DataExporterTest extends TxnAwareBaseTest {
     DateValue testBirthdate = new DateValue(1978, 5, 16);
     private MedicalRecordService mockMedicalRecordService;
     private GovernancePolicy mockGovernancePolicy;
+    private AddressService addressService;
 
     @BeforeClass
     public static void setup() {
@@ -155,6 +158,7 @@ public class DataExporterTest extends TxnAwareBaseTest {
 
         Mockito.when(ageOfMajorityRule.getDateOfMajority(Mockito.any(LocalDate.class))).thenReturn(testDateOfMajority);
 
+        addressService = new AddressService();
     }
 
     @Test
@@ -239,6 +243,11 @@ public class DataExporterTest extends TxnAwareBaseTest {
             handle.attach(InvitationFactory.class)
                     .createInvitation(InvitationType.AGE_UP, invitationCode2, testData.getStudyId(),
                             testData.getUserId(), email2);
+
+            // insert snapshotted address
+            MailAddress snapshottedAdress = addressService.snapshotAddress(
+                    handle, testData.getUserGuid(), testData.getUserGuid(), instanceDto.getId());
+
             // Extract and test
             List<Participant> extracts = exporter.extractParticipantDataSet(handle, testData.getTestingStudy());
 
@@ -249,6 +258,12 @@ public class DataExporterTest extends TxnAwareBaseTest {
             assertEquals(EnrollmentStatusType.ENROLLED, actual.getStatus().getEnrollmentStatus());
             assertEquals(testData.getUserGuid(), actual.getStatus().getUserGuid());
             assertEquals(testData.getStudyGuid(), actual.getStatus().getStudyGuid());
+
+            // verify non-default (snapshotted) address fetched to Participant object
+            assertEquals(1, actual.getNonDefaultMailAddresses().size());
+            assertEquals(instanceDto.getId(), actual.getNonDefaultMailAddresses().keySet().iterator().next().longValue());
+            MailAddress nonDefaultAddress = actual.getNonDefaultMailAddresses().values().iterator().next();
+            assertEquals(snapshottedAdress.getGuid(), nonDefaultAddress.getGuid());
 
             assertEquals(testData.getTestingUser().getEmail(), actual.getUser().getEmail());
 
@@ -346,6 +361,7 @@ public class DataExporterTest extends TxnAwareBaseTest {
 
             FileQuestionDef fileDef = FileQuestionDef
                     .builder("TEST_FILEQ", Template.text("file prompt"))
+                    .setMaxFileSize(DEFAULT_MAX_FILE_SIZE_FOR_TEST)
                     .build();
 
             TextQuestionDef textDef = TextQuestionDef.builder().setStableId("TEST_TEXTQ")
@@ -727,6 +743,7 @@ public class DataExporterTest extends TxnAwareBaseTest {
                                     .build()),
                             new QuestionBlockDef(FileQuestionDef
                                     .builder("Q_FILE", Template.text("file prompt"))
+                                    .setMaxFileSize(DEFAULT_MAX_FILE_SIZE_FOR_TEST)
                                     .build()))))
                     .addSection(new FormSectionDef(null, Arrays.asList(
                             new MailingAddressComponentDef(null, null),
@@ -762,7 +779,7 @@ public class DataExporterTest extends TxnAwareBaseTest {
                     InstitutionType.PHYSICIAN, "inst a", "dr. a", "boston", "ma", null, null, null, null));
             if (!emptyActivity) {
                 FormResponse instance = new FormResponse(1L, "instance-guid-xyz", 1L, false, timestamp, firstCompletedAt,
-                        null, null, 1L, "ACT", "v1",
+                        null, null, 1L, "ACT", "v1", false, 0,
                         new ActivityInstanceStatusDto(2L, 1L, 1L, lastUpdatedAt, InstanceStatusType.COMPLETE));
                 instance.putAnswer(new BoolAnswer(1L, "Q_BOOL", "guid", true));
                 instance.putAnswer(new TextAnswer(2L, "Q_TEXT", "guid", "john smith"));
@@ -788,7 +805,7 @@ public class DataExporterTest extends TxnAwareBaseTest {
                 FormResponse nestedResponse = new FormResponse(
                         2L, "nested-instance-1", 1L, false, timestamp, firstCompletedAt,
                         instance.getId(), instance.getGuid(),
-                        2L, nestedDef.getActivityCode(), nestedVersionDto.getVersionTag(),
+                        2L, nestedDef.getActivityCode(), nestedVersionDto.getVersionTag(), false, 0,
                         new ActivityInstanceStatusDto(3L, 2L, 1L, lastUpdatedAt, InstanceStatusType.COMPLETE));
                 participant.addResponse(nestedResponse);
             }

@@ -83,7 +83,7 @@ public class ConfigUtil {
      * Convert the config object into a JSON string.
      */
     public static String toJson(Config cfg) {
-        return cfg.root().render(ConfigRenderOptions.concise());
+        return cfg.resolve().root().render(ConfigRenderOptions.concise());
     }
 
 

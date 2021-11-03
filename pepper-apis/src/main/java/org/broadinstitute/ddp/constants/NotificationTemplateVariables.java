@@ -33,6 +33,11 @@ public class NotificationTemplateVariables {
     public static final String DDP_PARTICIPANT_EXIT_NOTES = "-ddp.participant.exitNotes-";
 
     /**
+     * Guid of the proxy who is receiving the email notification on behalf of the participant
+     */
+    public static final String DDP_PROXY_GUID = "-ddp.proxy.guid-";
+
+    /**
      * First name of the proxy who is receiving the email notification on behalf of the participant
      */
     public static final String DDP_PROXY_FIRST_NAME = "-ddp.proxy.firstName-";
@@ -85,6 +90,7 @@ public class NotificationTemplateVariables {
     public static final String PARTICIPANT_HRUID = "participant_hruid";
     public static final String PARTICIPANT_EXIT_NOTES = "participant_exitNotes";
     public static final String SALUTATION = "salutation";
+    public static final String PROXY_GUID = "proxy_guid";
     public static final String PROXY_FIRST_NAME = "proxy_firstName";
     public static final String PROXY_LAST_NAME = "proxy_lastName";
     public static final String ACTIVITY_INSTANCE_GUID = "activityInstanceGuid";

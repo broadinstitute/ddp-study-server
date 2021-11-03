@@ -1,5 +1,6 @@
 package org.broadinstitute.ddp.db.dao;
 
+import static org.broadinstitute.ddp.util.TestFormActivity.DEFAULT_MAX_FILE_SIZE_FOR_TEST;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -116,6 +117,7 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
     private String sid;
     private Template prompt;
     private Template placeholder;
+    private Template confirmPlaceholder;
 
     @BeforeClass
     public static void setup() {
@@ -130,6 +132,7 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
         sid = "QID" + Instant.now().toEpochMilli();
         prompt = new Template(TemplateType.TEXT, null, "dummy prompt");
         placeholder = new Template(TemplateType.TEXT, null, "dummy placeholder");
+        confirmPlaceholder = new Template(TemplateType.TEXT, null, "dummy confirm placeholder");
     }
 
     @Test
@@ -315,13 +318,16 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
             JdbiTemplate jdbiTmpl = handle.attach(JdbiTemplate.class);
 
             TextQuestionDef question = TextQuestionDef.builder(TextInputType.TEXT, sid, prompt)
-                    .setPlaceholderTemplate(placeholder).build();
+                    .setPlaceholderTemplate(placeholder)
+                    .setConfirmPlaceholderTemplate(confirmPlaceholder)
+                    .build();
             FormActivityDef form = buildSingleSectionForm(testData.getStudyGuid(), question);
             ActivityVersionDto version1 = actDao.insertActivity(form, RevisionMetadata.now(testData.getUserId(), "test"));
 
             assertNotNull(question.getQuestionId());
             assertTrue(jdbiTmpl.getRevisionIdIfActive(prompt.getTemplateId()).isPresent());
             assertTrue(jdbiTmpl.getRevisionIdIfActive(placeholder.getTemplateId()).isPresent());
+            assertTrue(jdbiTmpl.getRevisionIdIfActive(confirmPlaceholder.getTemplateId()).isPresent());
 
             RevisionMetadata meta = new RevisionMetadata(version1.getRevStart() + 5, testData.getUserId(), "test");
             actDao.changeVersion(form.getActivityId(), "v2", meta);
@@ -332,6 +338,7 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
                     .isPresent());
             assertFalse(jdbiTmpl.getRevisionIdIfActive(prompt.getTemplateId()).isPresent());
             assertFalse(jdbiTmpl.getRevisionIdIfActive(placeholder.getTemplateId()).isPresent());
+            assertFalse(jdbiTmpl.getRevisionIdIfActive(confirmPlaceholder.getTemplateId()).isPresent());
 
             handle.rollback();
         });
@@ -1450,7 +1457,9 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
     @Test
     public void testGetFileQuestion() {
         TransactionWrapper.useTxn(handle -> {
-            FileQuestionDef questionDef = FileQuestionDef.builder(sid, prompt).build();
+            FileQuestionDef questionDef = FileQuestionDef.builder(sid, prompt)
+                    .setMaxFileSize(DEFAULT_MAX_FILE_SIZE_FOR_TEST)
+                    .build();
             FormActivityDef form = buildSingleSectionForm(testData.getStudyGuid(), questionDef);
 
             ActivityVersionDto version1 = handle.attach(ActivityDao.class)

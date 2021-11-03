@@ -1,5 +1,7 @@
 package org.broadinstitute.ddp.export.collectors;
 
+import static org.broadinstitute.ddp.export.ExportUtil.getSnapshottedMailAddress;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -49,6 +51,8 @@ public class ActivityResponseCollector {
     private List<String> responseHeaders = null;
     private List<String> deprecatedHeaders = null;
     private List<String> allHeaders = null;
+    private List<String> firstFields = null;
+    private List<String> excludedFields = null;
 
     private AgreementQuestionFormatStrategy agreementFmt = new AgreementQuestionFormatStrategy();
     private BoolQuestionFormatStrategy boolFmt = new BoolQuestionFormatStrategy();
@@ -63,6 +67,12 @@ public class ActivityResponseCollector {
 
     public ActivityResponseCollector(ActivityDef definition) {
         this.definition = definition;
+    }
+
+    public ActivityResponseCollector(ActivityDef definition, List<String> firstFields, List<String> excludedFields) {
+        this.definition = definition;
+        this.firstFields = firstFields;
+        this.excludedFields = excludedFields;
     }
 
     public List<String> emptyRow() {
@@ -286,7 +296,7 @@ public class ActivityResponseCollector {
             case MAILING_ADDRESS:
                 MailingAddressComponentDef mailingAddressComponentDef = (MailingAddressComponentDef) componentBlockDef;
                 if (mailingAddressComponentDef.getTitleTemplate() != null) {
-                    questionText = mailingAddressComponentDef.getTitleTemplate().render("en");
+                    questionText = mailingAddressComponentDef.getTitleTemplate().renderWithDefaultValues("en");
                 } else {
                     questionText = "Your contact information";
                 }
@@ -296,7 +306,7 @@ public class ActivityResponseCollector {
             case INSTITUTION:
                 PhysicianInstitutionComponentDef physicianInstitutionDef = (PhysicianInstitutionComponentDef) componentBlockDef;
                 if (physicianInstitutionDef.getTitleTemplate() != null) {
-                    questionText = physicianInstitutionDef.getTitleTemplate().render("en");
+                    questionText = physicianInstitutionDef.getTitleTemplate().renderWithDefaultValues("en");
                 } else {
                     questionText = physicianInstitutionDef.getInstitutionType().name();
                 }
@@ -334,6 +344,15 @@ public class ActivityResponseCollector {
             if (definition.getActivityType() == ActivityType.FORMS) {
                 flattenHeadersByOrderedDepthTraversal((FormActivityDef) definition);
             }
+            if (excludedFields != null) {
+                responseHeaders.removeAll(excludedFields);
+                deprecatedHeaders.removeAll(excludedFields);
+            }
+            if (firstFields != null) {
+                responseHeaders.removeAll(firstFields);
+                responseHeaders.addAll(0, firstFields);
+            }
+
             allHeaders = new LinkedList<>();
             allHeaders.addAll(responseHeaders);
             allHeaders.addAll(deprecatedHeaders);
@@ -477,7 +496,7 @@ public class ActivityResponseCollector {
                 collectQuestionIntoRecord(record, ((QuestionBlockDef) block).getQuestion(), instance);
                 break;
             case COMPONENT:
-                collectComponentIntoRecord(record, (ComponentBlockDef) block, supplier);
+                collectComponentIntoRecord(record, (ComponentBlockDef) block, supplier, instance);
                 break;
             case CONDITIONAL:
                 ConditionalBlockDef condBlock = (ConditionalBlockDef) block;
@@ -540,10 +559,12 @@ public class ActivityResponseCollector {
         }
     }
 
-    private void collectComponentIntoRecord(Map<String, String> record, ComponentBlockDef component, ComponentDataSupplier supplier) {
+    private void collectComponentIntoRecord(Map<String, String> record, ComponentBlockDef component,
+                                            ComponentDataSupplier supplier, FormResponse formResponse) {
         switch (component.getComponentType()) {
             case MAILING_ADDRESS:
-                record.putAll(addressFmt.collect(supplier.getAddress()));
+                record.putAll(addressFmt.collect(
+                        getSnapshottedMailAddress(supplier.getSnapshottedAddresses(), formResponse.getId(), supplier.getAddress())));
                 break;
             case PHYSICIAN:     // fall-through
             case INSTITUTION:

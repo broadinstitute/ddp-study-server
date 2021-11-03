@@ -73,6 +73,7 @@
         "housekeepingTasksSubscription": "{{$conf.Data.pubsub.housekeepingTasksSubscription}}",
         "pubSubTasksSubscription": "{{$conf.Data.pubsub.pubSubTasksSubscription}}",
         "pubSubTasksResultTopic": "{{$conf.Data.pubsub.pubSubTasksResultTopic}}",
+        "pubSubDsmTasksTopic": "{{$conf.Data.pubsub.pubSubDsmTasksTopic}}"
         "pubSubTaskSubscriberAwaitRunningTimeout": "{{$conf.Data.pubsub.pubSubTaskSubscriberAwaitRunningTimeout}}"
     },
     "studyExportBucket": "{{$conf.Data.studyExportBucket}}",
@@ -84,7 +85,8 @@
         "cancerLoader": "{{$conf.Data.schedules.cancerLoader}}",
         "studyExport": "{{$conf.Data.schedules.studyExport}}",
         "fileUploadCleanup": "{{$conf.Data.schedules.fileUploadCleanup}}",
-        "tempUserCleanup": "{{$conf.Data.schedules.tempUserCleanup}}"
+        "tempUserCleanup": "{{$conf.Data.schedules.tempUserCleanup}}",
+        "customExport": "{{$conf.Data.schedules.customExport}}"
     },
     "preferredSourceIPHeader":"X-AppEngine-User-IP",
     "nginx": {

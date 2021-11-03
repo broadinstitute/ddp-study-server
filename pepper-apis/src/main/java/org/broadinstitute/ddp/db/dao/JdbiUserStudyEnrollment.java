@@ -107,7 +107,7 @@ public interface JdbiUserStudyEnrollment extends SqlObject {
             + " JOIN umbrella_study us ON us.umbrella_study_id = usen.study_id "
             + " WHERE "
             + " us.guid = :studyGuid "
-            + " AND est.enrollment_status_type_code = 'ENROLLED'"
+            + " AND est.enrollment_status_type_code in ('ENROLLED', 'COMPLETED')"
             + " AND usen.valid_to is null"
     )
     List<String> findAllOLCsForEnrolledParticipantsInStudy(@Bind("studyGuid") String studyGuid);
@@ -231,7 +231,7 @@ public interface JdbiUserStudyEnrollment extends SqlObject {
      * @param updateTime              the time that we want to record the status was updated at
      * @return the id of the new enrollment status
      */
-    private long changeUserStudyEnrollmentStatus(
+    private long updateEnrollmentStatus(
             String userGuid,
             String studyGuid,
             EnrollmentStatusType newEnrollmentStatus,
@@ -278,7 +278,7 @@ public interface JdbiUserStudyEnrollment extends SqlObject {
             currentEnrollmentStatus = optionalCurrentEnrollmentStatus.get();
         }
 
-        return changeUserStudyEnrollmentStatus(userGuid,
+        return updateEnrollmentStatus(userGuid,
                 studyGuid,
                 newEnrollmentStatus,
                 currentEnrollmentStatus,
@@ -350,7 +350,7 @@ public interface JdbiUserStudyEnrollment extends SqlObject {
         }
 
         EnrollmentStatusType newEnrollmentStatus = EnrollmentStatusType.EXITED_BEFORE_ENROLLMENT;
-        if (currentEnrollmentStatus == EnrollmentStatusType.ENROLLED) {
+        if (currentEnrollmentStatus != null && currentEnrollmentStatus.isEnrolled()) {
             newEnrollmentStatus = EnrollmentStatusType.EXITED_AFTER_ENROLLMENT;
         }
 
@@ -358,7 +358,7 @@ public interface JdbiUserStudyEnrollment extends SqlObject {
         if (timestamp == null) {
             timestamp = Instant.now().toEpochMilli();
         }
-        changeUserStudyEnrollmentStatus(userGuid,
+        updateEnrollmentStatus(userGuid,
                 studyGuid,
                 newEnrollmentStatus,
                 currentEnrollmentStatus,

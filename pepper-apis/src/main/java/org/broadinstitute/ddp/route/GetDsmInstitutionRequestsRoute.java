@@ -28,7 +28,6 @@ import org.broadinstitute.ddp.db.dto.UserDto;
 import org.broadinstitute.ddp.json.errors.ApiError;
 import org.broadinstitute.ddp.model.dsm.Institution;
 import org.broadinstitute.ddp.model.dsm.InstitutionRequests;
-import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
 import org.broadinstitute.ddp.util.ResponseUtil;
 import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
@@ -86,7 +85,7 @@ public class GetDsmInstitutionRequestsRoute implements Route {
                     .findByStudyGuidAfterOrEqualToInstant(studyGuid, createdSince)
                     .stream()
                     .filter(enrollmentStatusDto ->
-                            enrollmentStatusDto.getEnrollmentStatus() == EnrollmentStatusType.ENROLLED)
+                            enrollmentStatusDto.getEnrollmentStatus().isEnrolled())
                     .collect(Collectors.toList());
 
             return buildJsonForUsers(handle, enrollmentStatuses, studyIdOpt.get());

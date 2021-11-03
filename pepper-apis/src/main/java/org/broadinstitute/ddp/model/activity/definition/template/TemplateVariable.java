@@ -70,6 +70,10 @@ public class TemplateVariable {
         return Optional.ofNullable(this.id);
     }
 
+    public void setId(Long id) {
+        this.id = id;
+    }
+
     public String getName() {
         return name;
     }

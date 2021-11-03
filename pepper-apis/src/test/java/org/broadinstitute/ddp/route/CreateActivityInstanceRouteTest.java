@@ -1,6 +1,7 @@
 package org.broadinstitute.ddp.route;
 
 import static io.restassured.RestAssured.given;
+import static java.util.stream.Collectors.toList;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertEquals;
@@ -8,16 +9,23 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import java.io.IOException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.IntStream;
 
+import com.google.gson.Gson;
 import io.restassured.http.ContentType;
 import io.restassured.mapper.ObjectMapperType;
 import io.restassured.response.ValidatableResponse;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.fluent.Request;
+import org.apache.http.util.EntityUtils;
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.db.TransactionWrapper;
@@ -28,9 +36,11 @@ import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.json.ActivityInstanceCreationPayload;
+import org.broadinstitute.ddp.json.ActivityInstanceCreationResponse;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
 import org.broadinstitute.ddp.model.activity.definition.i18n.Translation;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
+import org.broadinstitute.ddp.util.GsonUtil;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
 import org.broadinstitute.ddp.util.TestFormActivity;
 import org.junit.After;
@@ -39,7 +49,7 @@ import org.junit.Test;
 
 public class CreateActivityInstanceRouteTest extends IntegrationTestSuite.TestCase {
 
-    private static final Collection<String> activityInstancesToDelete = new HashSet<>();
+    private static final Collection<String> activityInstancesToDelete = ConcurrentHashMap.newKeySet();
     private static final Collection<String> parentInstancesToDelete = new HashSet<>();
     private static TestDataSetupUtil.GeneratedTestData testData;
     private static TestFormActivity anotherActivity;
@@ -161,23 +171,24 @@ public class CreateActivityInstanceRouteTest extends IntegrationTestSuite.TestCa
 
     @Test
     public void testCreateActivityShouldHideExistingInstances() {
-        TransactionWrapper.useTxn(handle -> assertEquals(1, handle
-                .attach(JdbiActivity.class)
-                .updateMaxInstancesPerUserById(parentActivity.getActivityId(), null)));
-
-        String firstInstanceGuid = makeCreationRequest(parentActivity.getActivityCode())
-                .statusCode(200).and().extract().path("instanceGuid");
-
-        assertTrue(StringUtils.isNoneBlank(firstInstanceGuid));
-        activityInstancesToDelete.add(firstInstanceGuid);
-
-        String secondInstanceGuid = makeCreationRequest(parentActivity.getActivityCode())
-                .statusCode(200).and().extract().path("instanceGuid");
-
-        assertTrue(StringUtils.isNoneBlank(secondInstanceGuid));
-        activityInstancesToDelete.add(secondInstanceGuid);
-
         try {
+            TransactionWrapper.useTxn(handle -> assertEquals(1, handle
+                    .attach(JdbiActivity.class)
+                    .updateMaxInstancesPerUserById(parentActivity.getActivityId(), null)));
+
+            String firstInstanceGuid = makeCreationRequest(parentActivity.getActivityCode())
+                    .statusCode(200).and().extract().path("instanceGuid");
+
+            assertTrue(StringUtils.isNoneBlank(firstInstanceGuid));
+            activityInstancesToDelete.add(firstInstanceGuid);
+
+            String secondInstanceGuid = makeCreationRequest(parentActivity.getActivityCode())
+                    .statusCode(200).and().extract().path("instanceGuid");
+
+            assertTrue(StringUtils.isNoneBlank(secondInstanceGuid));
+            activityInstancesToDelete.add(secondInstanceGuid);
+
+
             ActivityInstanceDto firstInstance = TransactionWrapper.withTxn(handle -> handle
                     .attach(JdbiActivityInstance.class)
                     .getByActivityInstanceGuid(firstInstanceGuid)
@@ -188,6 +199,45 @@ public class CreateActivityInstanceRouteTest extends IntegrationTestSuite.TestCa
             TransactionWrapper.useTxn(handle -> assertEquals(1, handle
                     .attach(JdbiActivity.class)
                     .updateMaxInstancesPerUserById(parentActivity.getActivityId(), 1)));
+        }
+    }
+
+    @Test
+    public void runCreateInstanceConcurrently() {
+        try {
+            // set constraint that only 1 activity instance of test activity is allowed
+            TransactionWrapper.useTxn(handle -> assertEquals(1, handle
+                    .attach(JdbiActivity.class)
+                    .updateMaxInstancesPerUserById(parentActivity.getActivityId(), 1)));
+            Gson gson = GsonUtil.standardGson();
+            // parallelize requests to test concurrent handling of this situation
+            List<Integer> returnCodes = IntStream.range(0, 4).parallel().mapToObj(i -> {
+                try {
+                    Request activitiesGetRequest = RouteTestUtil.buildAuthorizedPostRequest(token, url,
+                            gson.toJson(new ActivityInstanceCreationPayload(parentActivity.getActivityCode())));
+                    HttpResponse response = activitiesGetRequest.execute().returnResponse();
+                    ActivityInstanceCreationResponse creationResponse = gson.fromJson(EntityUtils.toString(response.getEntity()),
+                            ActivityInstanceCreationResponse.class);
+                    if (creationResponse.getInstanceGuid() != null) {
+                        activityInstancesToDelete.add(creationResponse.getInstanceGuid());
+                    }
+                    return response.getStatusLine().getStatusCode();
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }).collect(toList());
+            // we attempted 3 creations, but only one should have succeeded
+            assertEquals(4, returnCodes.size());
+            assertEquals(1, returnCodes.stream().filter(each -> each == 200).count());
+            assertEquals(3, returnCodes.stream().filter(each -> each == 422).count());
+        } finally {
+            TransactionWrapper.useTxn(handle -> {
+                assertEquals(1, handle.attach(JdbiActivity.class).updateMaxInstancesPerUserById(parentActivity.getActivityId(), 1));
+                List<ActivityInstanceDto> allActivityInstances =
+                        handle.attach(JdbiActivityInstance.class).findAllByUserGuidAndActivityCode(testData.getUserGuid(),
+                                parentActivity.getActivityCode(), testData.getStudyId());
+                assertEquals(1, allActivityInstances.size());
+            });
         }
     }
 

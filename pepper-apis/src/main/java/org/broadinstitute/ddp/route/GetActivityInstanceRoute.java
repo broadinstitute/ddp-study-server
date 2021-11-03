@@ -8,6 +8,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.time.StopWatch;
 import org.broadinstitute.ddp.analytics.GoogleAnalyticsMetrics;
 import org.broadinstitute.ddp.analytics.GoogleAnalyticsMetricsTracker;
 import org.broadinstitute.ddp.constants.RouteConstants.PathParam;
@@ -44,7 +45,6 @@ import spark.Route;
 public class GetActivityInstanceRoute implements Route {
 
     private static final Logger LOG = LoggerFactory.getLogger(GetActivityInstanceRoute.class);
-    private static final String DEFAULT_ISO_LANGUAGE_CODE = "en";
 
     private ActivityInstanceService actInstService;
     private ActivityValidationService actValidationService;
@@ -66,6 +66,9 @@ public class GetActivityInstanceRoute implements Route {
         String studyGuid = request.params(PathParam.STUDY_GUID);
         String instanceGuid = request.params(PathParam.INSTANCE_GUID);
 
+        StopWatch watch = new StopWatch();
+        watch.start();
+
         DDPAuth ddpAuth = RouteUtil.getDDPAuth(request);
         String operatorGuid = StringUtils.defaultIfBlank(ddpAuth.getOperator(), userGuid);
         boolean isStudyAdmin = ddpAuth.hasAdminAccessToStudy(studyGuid);
@@ -74,6 +77,7 @@ public class GetActivityInstanceRoute implements Route {
                 instanceGuid, userGuid, studyGuid, operatorGuid, isStudyAdmin);
 
         ActivityInstance result = TransactionWrapper.withTxn(handle -> {
+
             ActivityInstanceDto instanceDto = RouteUtil.findAccessibleInstanceOrHalt(
                     response, handle, userGuid, studyGuid, instanceGuid, isStudyAdmin);
 
@@ -86,11 +90,10 @@ public class GetActivityInstanceRoute implements Route {
             LanguageDto preferredUserLanguage = RouteUtil.getUserLanguage(request);
             String isoLangCode = preferredUserLanguage.getIsoCode();
 
-
             LOG.info("Attempting to find a translation for the following language: {}", isoLangCode);
-            Optional<ActivityInstance> inst = actInstService.getTranslatedActivity(
-                    handle, userGuid, operatorGuid, instanceDto.getActivityType(), instanceGuid, isoLangCode, style
-            );
+            Optional<ActivityInstance> inst = getActivityInstance(
+                    handle, userGuid, operatorGuid, studyGuid, instanceGuid, style, isoLangCode);
+
             if (inst.isEmpty()) {
                 String errMsg = String.format(
                         "Unable to find activity instance %s of type '%s' in '%s'",
@@ -124,7 +127,32 @@ public class GetActivityInstanceRoute implements Route {
                 GoogleAnalyticsMetrics.EVENT_ACTION_ACTIVITY_INSTANCE, GoogleAnalyticsMetrics.EVENT_LABEL_ACTIVITY_INSTANCE,
                 null, 1);
 
+        watch.stop();
+        LOG.debug("ActivityInstance reading TOTAL time: " + watch.getTime());
+
         return result;
+    }
+
+    private Optional<ActivityInstance> getActivityInstance(
+            Handle handle,
+            String userGuid,
+            String operatorGuid,
+            String studyGuid,
+            String instanceGuid,
+            ContentStyle style,
+            String isoLangCode) {
+
+        StopWatch watch = new StopWatch();
+        watch.start();
+
+        Optional<ActivityInstance> inst = actInstService.buildInstanceFromDefinition(
+                handle, userGuid, operatorGuid, studyGuid, instanceGuid, style, isoLangCode
+        );
+
+        watch.stop();
+        LOG.debug("ActivityInstance reading time: " + watch.getTime());
+
+        return inst;
     }
 
     private ActivityInstance validateActivityInstance(

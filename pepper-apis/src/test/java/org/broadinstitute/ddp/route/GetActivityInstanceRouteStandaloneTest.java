@@ -1,6 +1,7 @@
 package org.broadinstitute.ddp.route;
 
 import static io.restassured.RestAssured.given;
+import static org.broadinstitute.ddp.util.TestFormActivity.DEFAULT_MAX_FILE_SIZE_FOR_TEST;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasItems;
@@ -10,8 +11,8 @@ import static org.hamcrest.Matchers.isEmptyOrNullString;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
 
 import java.net.URL;
 import java.time.Instant;
@@ -20,6 +21,7 @@ import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -109,12 +111,24 @@ import org.junit.Test;
 public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite.TestCaseWithCacheEnabled {
 
     public static final String TEXT_QUESTION_STABLE_ID = "TEXT_Q";
+
+    public static final String MIME_TYPE_1 = "image/gif";
+    public static final String MIME_TYPE_2 = "image/jpeg";
+
+    private static final Set<String> MIME_TYPES = new LinkedHashSet<>() {
+        {
+            add(MIME_TYPE_1);
+            add(MIME_TYPE_2);
+        }
+    };
+
     private static TestDataSetupUtil.GeneratedTestData testData;
     private static FormActivityDef parentActivity;
     private static FormActivityDef activity;
     private static ActivityVersionDto activityVersionDto;
     private static ActivityInstanceDto parentInstanceDto;
     private static ActivityInstanceDto instanceDto;
+    private static ActivityInstanceDto instanceDto2;
     private static String userGuid;
     private static String token;
     private static String url;
@@ -146,7 +160,7 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
     }
 
     private static void setupActivityAndInstance(Handle handle) throws Exception {
-        placeholderTemplate = newTemplate();
+        //------------- create SECTION[0] ---------
         DateQuestionDef d1 = DateQuestionDef.builder(DateRenderMode.TEXT, "DATE_TEXT_Q", newTemplate())
                 .addFields(DateFieldType.MONTH)
                 .addValidation(new RequiredRuleDef(newTemplate()))
@@ -163,8 +177,13 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
                 .addFields(DateFieldType.YEAR, DateFieldType.MONTH, DateFieldType.DAY)
                 .addValidation(new DateRangeRuleDef(newTemplate("Pi Day to today"), LocalDate.of(2018, 3, 14), null, true))
                 .build();
-        FormSectionDef dateSection = new FormSectionDef(null, TestUtil.wrapQuestions(d1, d2, d3));
+        TextQuestionDef t4 = TextQuestionDef.builder(TextInputType.TEXT, "TEXT_Q_DISABLED", newTemplate())
+                .setDeprecated(true)
+                .build();
+        FormSectionDef dateSection = new FormSectionDef(null, TestUtil.wrapQuestions(d1, d2, d3, t4));
 
+        //------------- create SECTION[1] ---------
+        placeholderTemplate = newTemplate();
         txt1 = TextQuestionDef.builder(TextInputType.TEXT, TEXT_QUESTION_STABLE_ID, newTemplate())
                 .setPlaceholderTemplate(placeholderTemplate)
                 .addValidation(new LengthRuleDef(newTemplate(), 5, 300))
@@ -177,8 +196,12 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
         TextQuestionDef txt3 = TextQuestionDef.builder(TextInputType.TEXT, "TEXT_WITH_SPECIAL_VARS", txt3Tmpl)
                 .setTooltip(Template.text("some helper text"))
                 .build();
-        FormSectionDef textSection = new FormSectionDef(null, TestUtil.wrapQuestions(txt1, txt2, txt3));
+        TextQuestionDef txt4 = TextQuestionDef.builder(TextInputType.TEXT, "TEXT_Q1_DISABLED", newTemplate())
+                .setDeprecated(true)
+                .build();
+        FormSectionDef textSection = new FormSectionDef(null, TestUtil.wrapQuestions(txt1, txt2, txt3, txt4));
 
+        //------------- create SECTION[2] ---------
         PicklistQuestionDef p1 = PicklistQuestionDef
                 .buildSingleSelect(PicklistRenderMode.LIST, "PL_NO_OTHER", newTemplate())
                 .addOption(new PicklistOptionDef("PL_NO_OTHER_OPT_1", newTemplate()))
@@ -197,8 +220,25 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
                         new PicklistOptionDef("G2_OPT2", newTemplate()))))
                 .addOption(new PicklistOptionDef("OPT1", newTemplate()))
                 .build();
-        FormSectionDef plistSection = new FormSectionDef(null, TestUtil.wrapQuestions(p1, p2, p3));
+        TextQuestionDef t5 = TextQuestionDef.builder(TextInputType.TEXT, "TEXT_Q3_DISABLED", newTemplate())
+                .setDeprecated(true)
+                .build();
 
+        //add picklist nested options question
+        PicklistOptionDef nestedOptionDef1 = new PicklistOptionDef("NESTED_OPT1", new Template(TemplateType.TEXT, null, "nested option 1"));
+        PicklistOptionDef nestedOptionDef2 = new PicklistOptionDef("NESTED_OPT2", new Template(TemplateType.TEXT, null, "nested option 2"));
+        List<PicklistOptionDef> nestedOpts = List.of(nestedOptionDef1, nestedOptionDef2);
+        PicklistOptionDef nestedPLOptionDef = new PicklistOptionDef("PARENT_OPT", new Template(TemplateType.TEXT, null, "parent option1"),
+                new Template(TemplateType.TEXT, null, "nested options Label"), nestedOpts);
+        String stableIdNPL = "PQ_NESTED_OPTS";
+        PicklistQuestionDef nestedPLOptionsQuestion = PicklistQuestionDef.buildSingleSelect(PicklistRenderMode.LIST, stableIdNPL,
+                new Template(TemplateType.TEXT, null, "prompt for Nested PL Question"))
+                .addOption(nestedPLOptionDef)
+                .build();
+
+        FormSectionDef plistSection = new FormSectionDef(null, TestUtil.wrapQuestions(p1, p2, p3, t5, nestedPLOptionsQuestion));
+
+        //------------- create SECTION[3] ---------
         essayQuestionStableId = "PATCH_TEXT_Q2";
         TextQuestionDef t2 = TextQuestionDef.builder(
                 TextInputType.ESSAY,
@@ -207,6 +247,7 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
         ).build();
         FormSectionDef textSection2 = new FormSectionDef(null, TestUtil.wrapQuestions(t2));
 
+        //------------- create SECTION[4] ---------
         AgreementQuestionDef a1 = new AgreementQuestionDef("AGREEMENT_Q",
                 false,
                 newTemplate("I agree with the preceding text"),
@@ -218,6 +259,7 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
                 false);
         FormSectionDef agreementSection = new FormSectionDef(null, TestUtil.wrapQuestions(a1));
 
+        //------------- create SECTION[5] ---------
         Template contentTitle = new Template(TemplateType.HTML, null, "<p>hello title</p>");
         Template contentBody = new Template(TemplateType.HTML, null, "<p>hello body</p>");
         ContentBlockDef contentDef = new ContentBlockDef(contentTitle, contentBody);
@@ -225,6 +267,7 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
                 "<p>$ddp.participantFirstName()<br/>$ddp.participantLastName()<br/>$ddp.date(\"MM-dd-uuuu\")</p>"));
         FormSectionDef contentSection = new FormSectionDef(null, List.of(contentDef, content2));
 
+        //------------- create SECTION[6] ---------
         Template nameTmpl = Template.text("icon section");
         SectionIcon icon1 = new SectionIcon(FormSectionState.COMPLETE, 100, 100);
         icon1.putSource("1x", new URL("https://dev.ddp.org/icon1_1x.png"));
@@ -233,6 +276,7 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
         icon2.putSource("2x", new URL("https://dev.ddp.org/icon2_2x.png"));
         FormSectionDef iconSection = new FormSectionDef(null, nameTmpl, Arrays.asList(icon1, icon2), Collections.emptyList());
 
+        //------------- create SECTION[7] ---------
         comp1 = CompositeQuestionDef.builder()
                 .setStableId("comp" + System.currentTimeMillis())
                 .setPrompt(Template.text("composite"))
@@ -242,15 +286,20 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
                 .build();
         var compSection = new FormSectionDef(null, List.of(new QuestionBlockDef(comp1)));
 
+        //------------- create SECTION[8] ---------
         FileQuestionDef file1 = FileQuestionDef
                 .builder("FILE" + System.currentTimeMillis(), Template.text("file"))
+                .setMaxFileSize(DEFAULT_MAX_FILE_SIZE_FOR_TEST)
+                .setMimeTypes(MIME_TYPES)
                 .build();
         var fileSection = new FormSectionDef(null, List.of(new QuestionBlockDef(file1)));
 
+
+        //------------- create STUDY ACTIVITY ---------
         String parentActCode = "ACT_ROUTE_PARENT" + Instant.now().toEpochMilli();
         activityCode = "ACT_ROUTE_ACT" + Instant.now().toEpochMilli();
         var nestedActBlockDef = new NestedActivityBlockDef(
-                activityCode, NestedActivityRenderHint.MODAL, true, Template.text("add button"));
+                activityCode, NestedActivityRenderHint.EMBEDDED, true, Template.text("add button"));
 
         var parentQuestion = TextQuestionDef.builder(TextInputType.TEXT, parentActCode + "_Q1", Template.text("q1")).build();
         parentActivity = FormActivityDef.generalFormBuilder(parentActCode, "v1", testData.getStudyGuid())
@@ -263,6 +312,7 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
                 .addName(new Translation("en", "activity " + activityCode))
                 .setParentActivityCode(parentActCode)
                 .setCanDeleteInstances(true)
+                .setCanDeleteFirstInstance(false)
                 .addSections(Arrays.asList(dateSection, textSection, plistSection, textSection2, agreementSection, contentSection))
                 .addSection(iconSection)
                 .addSection(compSection)
@@ -274,10 +324,15 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
         assertNotNull(activity.getActivityId());
         activityId = activity.getActivityId();
 
+
+        //------------ create ACTIVITY INSTANCE ----------
         ActivityInstanceDao instanceDao = handle.attach(ActivityInstanceDao.class);
         parentInstanceDto = instanceDao.insertInstance(parentActivity.getActivityId(), userGuid);
         instanceDto = instanceDao.insertInstance(activity.getActivityId(), userGuid, userGuid, parentInstanceDto.getId());
+        instanceDto2 = instanceDao.insertInstance(activity.getActivityId(), userGuid, userGuid, parentInstanceDto.getId());
 
+
+        //------------- create ANSWERS ---------------
         AnswerDao answerDao = handle.attach(AnswerDao.class);
         answerDao.createAnswer(testData.getUserId(), parentInstanceDto.getId(),
                 new TextAnswer(null, parentQuestion.getStableId(), null, "parent-subtitle-answer"));
@@ -312,6 +367,7 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
     @AfterClass
     public static void cleanup() {
         TransactionWrapper.useTxn(handle -> {
+            handle.attach(ActivityInstanceDao.class).deleteAllByIds(Set.of(instanceDto2.getId()));
             handle.attach(ActivityInstanceDao.class).deleteAllByIds(Set.of(instanceDto.getId()));
             handle.attach(AnswerDao.class).deleteAllByInstanceIds(Set.of(instanceDto.getId()));
             handle.attach(FileUploadDao.class).deleteById(upload.getId());
@@ -351,7 +407,7 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
         assertEquals(activityCode, inst.getActivityCode());
         assertEquals(InstanceStatusType.CREATED, inst.getStatusType());
         assertEquals(parentInstanceDto.getGuid(), inst.getParentInstanceGuid());
-        assertTrue("child instance should have canDelete true", inst.canDelete());
+        assertFalse("first child instance should have canDelete false", inst.canDelete());
     }
 
     @Test
@@ -420,13 +476,15 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
                 .root("sections[0].blocks[0]")
                 .body("blockType", equalTo(BlockType.ACTIVITY.name()))
                 .body("activityCode", equalTo(activityCode))
-                .body("renderHint", equalTo(NestedActivityRenderHint.MODAL.name()))
+                .body("renderHint", equalTo(NestedActivityRenderHint.EMBEDDED.name()))
                 .body("allowMultiple", equalTo(true))
                 .body("addButtonText", equalTo("add button"))
-                .body("instances.size()", equalTo(1))
+                .body("instances.size()", equalTo(2))
                 .body("instances[0].activityCode", equalTo(activityCode))
                 .body("instances[0].instanceGuid", equalTo(instanceDto.getGuid()))
-                .body("instances[0].canDelete", equalTo(true));
+                .body("instances[0].canDelete", equalTo(false))
+                .body("instances[1].instanceGuid", equalTo(instanceDto2.getGuid()))
+                .body("instances[1].canDelete", equalTo(true));
     }
 
     @Test
@@ -452,7 +510,7 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
     public void testGet_picklistQuestion_withGroups() {
         testFor200()
                 .body("sections.size()", equalTo(activity.getSections().size()))
-                .body("sections[2].blocks.size()", equalTo(3))
+                .body("sections[2].blocks.size()", equalTo(4))
                 .root("sections[2].blocks[2].question")
                 .body("stableId", equalTo("PL_GROUPS"))
                 .body("groups.size()", equalTo(2))
@@ -579,7 +637,7 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
                 .body("sections.size()", equalTo(activity.getSections().size()))
                 .body("sections[0].blocks.size()", equalTo(3))
                 .body("sections[1].blocks.size()", equalTo(3))
-                .body("sections[2].blocks.size()", equalTo(3));
+                .body("sections[2].blocks.size()", equalTo(4));
 
         // Check rules are rendered
         resp.then().assertThat()
@@ -597,6 +655,7 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
                 activity.getStudyGuid())
         );
 
+        ActivityDefStore.getInstance().clearCachedActivityData();
         TransactionWrapper.withTxn(handle -> handle.attach(JdbiActivity.class).updateEditTimeoutSecByCode(
                 1L, activity.getActivityCode(), optStudyId.get())
         );
@@ -794,7 +853,7 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
 
     @Test
     public void test_whenIsHidden_thenNotFound() {
-        TransactionWrapper.useTxn(handle -> assertEquals(1, handle.attach(ActivityInstanceDao.class)
+        TransactionWrapper.useTxn(handle -> assertEquals(2, handle.attach(ActivityInstanceDao.class)
                 .bulkUpdateIsHiddenByActivityIds(testData.getUserId(), true, Set.of(activity.getActivityId()))));
         try {
             given().auth().oauth2(token)
@@ -804,7 +863,7 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
                     .body("code", equalTo(ErrorCodes.ACTIVITY_NOT_FOUND))
                     .body("message", containsString("is hidden"));
         } finally {
-            TransactionWrapper.useTxn(handle -> assertEquals(1, handle.attach(ActivityInstanceDao.class)
+            TransactionWrapper.useTxn(handle -> assertEquals(2, handle.attach(ActivityInstanceDao.class)
                     .bulkUpdateIsHiddenByActivityIds(testData.getUserId(), false, Set.of(activity.getActivityId()))));
         }
     }
@@ -812,7 +871,7 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
     @Test
     public void testStudyAdmin_canRetrieveInstances() {
         TransactionWrapper.useTxn(handle -> {
-            assertEquals(1, handle.attach(ActivityInstanceDao.class)
+            assertEquals(2, handle.attach(ActivityInstanceDao.class)
                     .bulkUpdateIsHiddenByActivityIds(testData.getUserId(), true, Set.of(activity.getActivityId())));
             handle.attach(AuthDao.class).assignStudyAdmin(testData.getUserId(), testData.getStudyId());
         });
@@ -826,7 +885,7 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
                     .body("isHidden", equalTo(true));
         } finally {
             TransactionWrapper.useTxn(handle -> {
-                assertEquals(1, handle.attach(ActivityInstanceDao.class)
+                assertEquals(2, handle.attach(ActivityInstanceDao.class)
                         .bulkUpdateIsHiddenByActivityIds(testData.getUserId(), false, Set.of(activity.getActivityId())));
                 handle.attach(AuthDao.class).removeAdminFromAllStudies(testData.getUserId());
             });
@@ -879,6 +938,29 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
                 .body("answers.size()", equalTo(1))
                 .body("answers[0].value.fileName", equalTo("file.pdf"))
                 .body("answers[0].value.fileSize", equalTo(123));
+    }
+
+    /**
+     * To DB were added 3 deprecated questions: in each section - 1 deprecated question.
+     * Verify that these questions (and blocks enclosing it) are not included into
+     * rendered sections.
+     */
+    @Test
+    public void testThatBlocksWithDeprecatedQuestionsNotAddedToSections() {
+        testFor200()
+                .body("sections.size()", equalTo(activity.getSections().size()))
+                .body("sections[0].blocks.size()", equalTo(3))
+                .body("sections[1].blocks.size()", equalTo(3))
+                .body("sections[2].blocks.size()", equalTo(4));
+    }
+
+    @Test
+    public void testFileQuestionProperties() {
+        testFor200()
+                .body("sections[8].blocks[0].question.questionType", equalTo(QuestionType.FILE.name()))
+                .body("sections[8].blocks[0].question.maxFileSize", equalTo(Long.valueOf(DEFAULT_MAX_FILE_SIZE_FOR_TEST).intValue()))
+                .body("sections[8].blocks[0].question.mimeTypes[0]", equalTo(MIME_TYPE_1))
+                .body("sections[8].blocks[0].question.mimeTypes[1]", equalTo(MIME_TYPE_2));
     }
 
     private Response testFor200AndExtractResponse() {

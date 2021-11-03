@@ -96,7 +96,7 @@
         "uploadsBucket": "ddp-local-file-uploads",
         "scannedBucket": "ddp-local-file-scanned",
         "quarantineBucket": "ddp-local-file-quarantine",
-        "maxFileSizeBytes": 2000000,
+        "maxFileSizeBytes": 10485760,
         "maxSignedUrlMins": 5,
         "removalExpireTime": 1,
         "removalExpireUnit": "DAYS",
@@ -112,6 +112,7 @@
         "housekeepingTasksSubscription": "local-housekeeping-tasks-sub",
         "pubSubTasksSubscription": "local-dsm-to-dss-tasks-sub",
         "pubSubTasksResultTopic": "local-dss-to-dsm-results",
+        "pubSubDsmTasksTopic": " local-dsm-tasks",
         "pubSubTaskSubscriberAwaitRunningTimeout": 30
     },
     "studyExportBucket": "ddp-dev-study-exports-testing",
@@ -123,7 +124,8 @@
         "cancerLoader": "0 0 8,20 ? * * *",
         "studyExport": "0 0 9 ? * * *",
         "fileUploadCleanup": "0 0 5 ? * * *",
-        "tempUserCleanup": "0 30 5 ? * * *"
+        "tempUserCleanup": "0 30 5 ? * * *",
+        "customExport": "0 10 5 ? * * *"
     },
     "housekeepingMaxConnections": 50,
     "sendgrid": {

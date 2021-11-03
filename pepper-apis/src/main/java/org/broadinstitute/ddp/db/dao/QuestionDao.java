@@ -12,6 +12,7 @@ import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.broadinstitute.ddp.db.ActivityDefStore;
@@ -76,6 +77,7 @@ import org.broadinstitute.ddp.model.activity.types.PicklistRenderMode;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
 import org.broadinstitute.ddp.model.activity.types.SuggestionType;
 import org.broadinstitute.ddp.model.activity.types.TemplateType;
+import org.broadinstitute.ddp.util.FileUploadValidator;
 import org.broadinstitute.ddp.util.QuestionUtil;
 import org.jdbi.v3.sqlobject.CreateSqlObject;
 import org.jdbi.v3.sqlobject.SqlObject;
@@ -535,6 +537,7 @@ public interface QuestionDao extends SqlObject {
 
         return new TextQuestion(dto.getStableId(), dto.getPromptTemplateId(),
                 dto.getPlaceholderTemplateId(),
+                dto.getConfirmPlaceholderTemplateId(),
                 dto.isRestricted(),
                 dto.isDeprecated(),
                 isReadonly,
@@ -639,7 +642,9 @@ public interface QuestionDao extends SqlObject {
                 dto.getAdditionalInfoHeaderTemplateId(),
                 dto.getAdditionalInfoFooterTemplateId(),
                 answers,
-                rules);
+                rules,
+                dto.getMaxFileSize(),
+                dto.getMimeTypes());
     }
 
     /**
@@ -977,25 +982,17 @@ public interface QuestionDao extends SqlObject {
     default void insertQuestion(long activityId, TextQuestionDef textQuestion, long revisionId) {
         insertBaseQuestion(activityId, textQuestion, revisionId);
         TemplateDao templateDao = getTemplateDao();
-        Long placeholderTemplateId = null;
-        if (textQuestion.getPlaceholderTemplate() != null) {
-            placeholderTemplateId = templateDao.insertTemplate(textQuestion.getPlaceholderTemplate(), revisionId);
-        }
 
-        Long confirmEntryTemplateId = null;
-        if (textQuestion.getConfirmPromptTemplate() != null) {
-            confirmEntryTemplateId = templateDao.insertTemplate(textQuestion.getConfirmPromptTemplate(), revisionId);
-        }
-
-        Long mismatchMessageTemplateId = null;
-        if (textQuestion.getMismatchMessageTemplate() != null) {
-            mismatchMessageTemplateId = templateDao.insertTemplate(textQuestion.getMismatchMessageTemplate(), revisionId);
-        }
+        Long placeholderTemplateId = templateDao.insertTemplateIfNotNull(textQuestion.getPlaceholderTemplate(), revisionId);
+        Long confirmPlaceholderTemplateId = templateDao.insertTemplateIfNotNull(textQuestion.getConfirmPlaceholderTemplate(), revisionId);
+        Long confirmEntryTemplateId = templateDao.insertTemplateIfNotNull(textQuestion.getConfirmPromptTemplate(), revisionId);
+        Long mismatchMessageTemplateId = templateDao.insertTemplateIfNotNull(textQuestion.getMismatchMessageTemplate(), revisionId);
 
         int numInserted = getJdbiTextQuestion().insert(textQuestion.getQuestionId(),
                 textQuestion.getInputType(),
                 textQuestion.getSuggestionType(),
                 placeholderTemplateId,
+                confirmPlaceholderTemplateId,
                 textQuestion.isConfirmEntry(),
                 confirmEntryTemplateId,
                 mismatchMessageTemplateId);
@@ -1004,15 +1001,10 @@ public interface QuestionDao extends SqlObject {
         }
 
         if (CollectionUtils.isNotEmpty(textQuestion.getSuggestions())) {
-            int displayOrder = 0;
-            for (String suggestion : textQuestion.getSuggestions()) {
-                displayOrder += DISPLAY_ORDER_GAP;
-                numInserted = getJdbiTextQuestionSuggestion().insert(textQuestion.getQuestionId(),
-                        suggestion, displayOrder);
-                if (numInserted != 1) {
-                    throw new DaoException("Inserted " + numInserted + " for text question: " + textQuestion.getStableId()
-                            + "  suggestion: " + suggestion);
-                }
+            int[] ids = getJdbiTextQuestionSuggestion().insert(textQuestion.getQuestionId(), textQuestion.getSuggestions(),
+                    Stream.iterate(0, i -> i + DISPLAY_ORDER_GAP).iterator());
+            if (ids.length != textQuestion.getSuggestions().size()) {
+                throw new DaoException("Inserted " + numInserted + " suggestions" + textQuestion.getStableId());
             }
         }
     }
@@ -1086,12 +1078,21 @@ public interface QuestionDao extends SqlObject {
     /**
      * Create new file question by inserting common data and file question specific data.
      *
+     *
      * @param activityId   the associated activity
      * @param fileQuestion the file question definition, without generated things like ids
      * @param revisionId   the revision to use, will be shared by all created data
      */
     default void insertQuestion(long activityId, FileQuestionDef fileQuestion, long revisionId) {
         insertBaseQuestion(activityId, fileQuestion, revisionId);
+        FileUploadValidator.validateFileMaxSize(fileQuestion.getMaxFileSize());
+        JdbiQuestion jdbiQuestion = getJdbiQuestion();
+        jdbiQuestion.insertFileQuestion(fileQuestion.getQuestionId(), fileQuestion.getMaxFileSize());
+        Collection<String> mimeTypes = fileQuestion.getMimeTypes();
+        for (String mimeType : mimeTypes) {
+            long mimeTypeId = jdbiQuestion.findMimeTypeIdOrInsert(mimeType);
+            jdbiQuestion.insertFileQuestionMimeType(fileQuestion.getQuestionId(), mimeTypeId);
+        }
     }
 
     /**
@@ -1241,6 +1242,10 @@ public interface QuestionDao extends SqlObject {
         Long placeholderTemplateId = question.getPlaceholderTemplateId();
         if (placeholderTemplateId != null) {
             tmplDao.disableTemplate(placeholderTemplateId, meta);
+        }
+        Long confirmPlaceholderTemplateId = question.getConfirmPlaceholderTemplateId();
+        if (confirmPlaceholderTemplateId != null) {
+            tmplDao.disableTemplate(confirmPlaceholderTemplateId, meta);
         }
     }
 
@@ -1587,7 +1592,9 @@ public interface QuestionDao extends SqlObject {
                                                  List<RuleDef> ruleDefs,
                                                  Map<Long, Template> templates) {
         Template prompt = templates.get(dto.getPromptTemplateId());
-        var builder = FileQuestionDef.builder(dto.getStableId(), prompt);
+        var builder = FileQuestionDef.builder(dto.getStableId(), prompt)
+                .setMaxFileSize(dto.getMaxFileSize())
+                .setMimeTypes(dto.getMimeTypes());
         configureBaseQuestionDef(builder, dto, ruleDefs, templates);
         return builder.build();
     }
@@ -1609,6 +1616,7 @@ public interface QuestionDao extends SqlObject {
                                                  Map<Long, Template> templates) {
         Template prompt = templates.get(dto.getPromptTemplateId());
         Template placeholderTemplate = templates.getOrDefault(dto.getPlaceholderTemplateId(), null);
+        Template confirmPlaceholderTemplate = templates.getOrDefault(dto.getConfirmPlaceholderTemplateId(), null);
         Template confirmPromptTemplate = templates.getOrDefault(dto.getConfirmPromptTemplateId(), null);
         Template mismatchMessageTemplate = templates.getOrDefault(dto.getMismatchMessageTemplateId(), null);
 
@@ -1621,6 +1629,7 @@ public interface QuestionDao extends SqlObject {
                 .builder(dto.getInputType(), dto.getStableId(), prompt)
                 .setSuggestionType(dto.getSuggestionType())
                 .setPlaceholderTemplate(placeholderTemplate)
+                .setConfirmPlaceholderTemplate(confirmPlaceholderTemplate)
                 .setConfirmEntry(dto.isConfirmEntry())
                 .setConfirmPromptTemplate(confirmPromptTemplate)
                 .setMismatchMessage(mismatchMessageTemplate)

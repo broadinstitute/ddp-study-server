@@ -70,7 +70,7 @@ public class ReceiveDsmNotificationRoute extends ValidatedJsonInputRoute<DsmNoti
             EnrollmentStatusType status = handle.attach(JdbiUserStudyEnrollment.class)
                     .getEnrollmentStatusByUserAndStudyIds(user.getId(), studyDto.getId())
                     .orElse(null);
-            if (status != EnrollmentStatusType.ENROLLED) {
+            if (status == null || !status.isEnrolled()) {
                 String msg = String.format(
                         "User %s with status %s is not enrolled in study %s, will not process DSM notification event %s",
                         userGuid, status == null ? "<null>" : status, studyGuid, payload.getEventType());
@@ -113,6 +113,7 @@ public class ReceiveDsmNotificationRoute extends ValidatedJsonInputRoute<DsmNoti
                     userGuid,
                     null,
                     studyDto.getId(),
+                    studyDto.getGuid(),
                     eventType,
                     payload.getKitRequestId(),
                     kitReasonType,

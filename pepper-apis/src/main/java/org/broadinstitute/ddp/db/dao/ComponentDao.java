@@ -196,6 +196,7 @@ public interface ComponentDao extends SqlObject {
             }
 
             blockDef.setHideNumber(componentDto.shouldHideNumber());
+            blockDef.setComponentRevisionId(componentDto.getRevisionId());
             blockDef.setBlockId(blockDto.getId());
             blockDef.setBlockGuid(blockDto.getGuid());
             blockDef.setShownExpr(blockDto.getShownExpr());

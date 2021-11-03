@@ -11,7 +11,10 @@ import org.broadinstitute.ddp.model.pdf.SubstitutionType;
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
+import org.jdbi.v3.sqlobject.statement.SqlBatch;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
+
+import java.util.List;
 
 public interface PdfSql extends SqlObject {
 
@@ -50,9 +53,9 @@ public interface PdfSql extends SqlObject {
     int insertActivityDataSource(@Bind("srcId") long sourceId, @Bind("actId") long activityId, @Bind("actVerId") long activityVersionId);
 
     @GetGeneratedKeys
-    @SqlUpdate("insert into pdf_base_template (template, pdf_template_type_id)"
-            + " values (:blob, (select pdf_template_type_id from pdf_template_type where pdf_template_type_code = :type))")
-    long insertBaseTemplate(@Bind("blob") byte[] blob, @Bind("type") PdfTemplateType type);
+    @SqlUpdate("insert into pdf_base_template (template, pdf_template_type_id, language_code_id)"
+            + " values (:blob, (select pdf_template_type_id from pdf_template_type where pdf_template_type_code = :type), :languageCodeId)")
+    long insertBaseTemplate(@Bind("blob") byte[] blob, @Bind("type") PdfTemplateType type, @Bind("languageCodeId") long languageCodeId);
 
     @SqlUpdate("insert into pdf_mailing_address_template ("
             + "        pdf_base_template_id, first_name_placeholder, last_name_placeholder,"
@@ -153,6 +156,13 @@ public interface PdfSql extends SqlObject {
 
     @SqlUpdate("insert into pdf_boolean_answer_substitution (pdf_answer_substitution_id, check_if_false) values (:subId, :checkIfFalse)")
     int insertBooleanAnswerSubstitution(@Bind("subId") long substitutionId, @Bind("checkIfFalse") boolean checkIfFalse);
+
+    @SqlBatch("insert into pdf_picklist_field_mapping (pdf_substitution_id, placeholder, option_stable_id)"
+            + "values (:substId, :fieldName, :optionStableId)")
+    void bulkInsertPicklistMappings(
+            @Bind("substId") long substitutionId,
+            @Bind("fieldName") List<String> fieldNames,
+            @Bind("optionStableId") List<String> optionStableIds);
 
     @GetGeneratedKeys
     @SqlUpdate("insert into pdf_version_template (pdf_document_version_id, pdf_base_template_id, template_order)"

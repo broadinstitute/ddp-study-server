@@ -134,6 +134,7 @@ public class SqlConstants {
         public static final String LAST_UPDATED_TEXT_TEMPLATE_ID = "last_updated_text_template_id";
         public static final String LAST_UPDATED = "last_updated";
         public static final String SNAPSHOT_SUBSTITUTIONS_ON_SUBMIT = "snapshot_substitutions_on_submit";
+        public static final String SNAPSHOT_ADDRESS_ON_SUBMIT = "snapshot_address_on_submit";
     }
 
     public static final class ListStyleHintTable {
@@ -302,18 +303,6 @@ public class SqlConstants {
         public static final String KIT_PEX_RULE_ID = "kit_pex_rule_id";
         public static final String RULE_ID = "kit_rule_id";
         public static final String EXPRESSION_ID = "expression_id";
-    }
-
-    public static final class WorkflowActivityStateTable {
-        public static final String ACTIVITY_ID = "study_activity_id";
-    }
-
-    public static final class WorkflowStateTypeTable {
-        public static final String CODE = "workflow_state_type_code";
-    }
-
-    public static final class WorkflowTransitionTable {
-        public static final String ID = "workflow_transition_id";
     }
 
     public static class MailingListTable {

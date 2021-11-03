@@ -48,7 +48,7 @@ public class AnswerToProfileCopierTest extends TxnAwareBaseTest {
                     .findProfileByUserId(testData.getUserId())
                     .get().getFirstName();
 
-            var instance = new FormResponse(1L, "a", testData.getUserId(), false, 1L, 1L, null, null, 1L, "b", "c", null);
+            var instance = new FormResponse(1L, "a", testData.getUserId(), false, 1L, 1L, null, null, 1L, "b", "c", false, 0, null);
             var question = new QuestionDto(QuestionType.TEXT, 1L, "q", 1L, 1L, 1L, 1L, false, false, false, false, 1L, 1L, 1L);
             new AnswerToProfileCopier(handle, testData.getUserId())
                     .copy(instance, question, CopyLocationType.PARTICIPANT_PROFILE_FIRST_NAME);
@@ -65,7 +65,7 @@ public class AnswerToProfileCopierTest extends TxnAwareBaseTest {
     @Test
     public void testCopy_toOperatorName() {
         TransactionWrapper.useTxn(handle -> {
-            var instance = new FormResponse(1L, "a", 1L, false, 1L, 1L, null, null, 1L, "b", "c", null);
+            var instance = new FormResponse(1L, "a", 1L, false, 1L, 1L, null, null, 1L, "b", "c", false, 0, null);
             instance.putAnswer(new TextAnswer(1L, "q1", "a", "op-first"));
             instance.putAnswer(new TextAnswer(2L, "q2", "b", "op-last"));
             var copier = new AnswerToProfileCopier(handle, testData.getUserId());
@@ -87,7 +87,7 @@ public class AnswerToProfileCopierTest extends TxnAwareBaseTest {
     @Test
     public void testCopy_toParticipantName() {
         TransactionWrapper.useTxn(handle -> {
-            var instance = new FormResponse(1L, "a", testData.getUserId(), false, 1L, 1L, null, null, 1L, "b", "c", null);
+            var instance = new FormResponse(1L, "a", testData.getUserId(), false, 1L, 1L, null, null, 1L, "b", "c", false, 0, null);
             instance.putAnswer(new TextAnswer(1L, "q1", "a", "ptp-first"));
             instance.putAnswer(new TextAnswer(2L, "q2", "b", "ptp-last"));
             var copier = new AnswerToProfileCopier(handle, 1L);
@@ -109,7 +109,7 @@ public class AnswerToProfileCopierTest extends TxnAwareBaseTest {
     @Test
     public void testCopy_toParticipantBirthDate() {
         TransactionWrapper.useTxn(handle -> {
-            var instance = new FormResponse(1L, "a", testData.getUserId(), false, 1L, 1L, null, null, 1L, "b", "c", null);
+            var instance = new FormResponse(1L, "a", testData.getUserId(), false, 1L, 1L, null, null, 1L, "b", "c", false, 0, null);
             instance.putAnswer(new DateAnswer(1L, "q1", "a", 1987, 3, 14));
             var copier = new AnswerToProfileCopier(handle, testData.getUserId());
 
@@ -129,7 +129,7 @@ public class AnswerToProfileCopierTest extends TxnAwareBaseTest {
         thrown.expect(DDPException.class);
         thrown.expectMessage(containsString("invalid date"));
         TransactionWrapper.useTxn(handle -> {
-            var instance = new FormResponse(1L, "a", testData.getUserId(), false, 1L, 1L, null, null, 1L, "b", "c", null);
+            var instance = new FormResponse(1L, "a", testData.getUserId(), false, 1L, 1L, null, null, 1L, "b", "c", false, 0, null);
             instance.putAnswer(new DateAnswer(1L, "q1", "a", 1987, null, null));
             var copier = new AnswerToProfileCopier(handle, testData.getUserId());
             var q1 = new QuestionDto(QuestionType.DATE, 1L, "q1", 1L, 1L, 1L, 1L, false, false, false, false, 1L, 1L, 1L);
@@ -143,7 +143,7 @@ public class AnswerToProfileCopierTest extends TxnAwareBaseTest {
         thrown.expect(DDPException.class);
         thrown.expectMessage(containsString("unable to convert answer"));
         TransactionWrapper.useTxn(handle -> {
-            var instance = new FormResponse(1L, "a", testData.getUserId(), false, 1L, 1L, null, null, 1L, "b", "c", null);
+            var instance = new FormResponse(1L, "a", testData.getUserId(), false, 1L, 1L, null, null, 1L, "b", "c", false, 0, null);
             instance.putAnswer(new DateAnswer(1L, "q1", "a", 1987, null, null));
             var copier = new AnswerToProfileCopier(handle, testData.getUserId());
             var q1 = new QuestionDto(QuestionType.DATE, 1L, "q1", 1L, 1L, 1L, 1L, false, false, false, false, 1L, 1L, 1L);
@@ -166,7 +166,7 @@ public class AnswerToProfileCopierTest extends TxnAwareBaseTest {
             QuestionDto cq2 = handle.attach(JdbiQuestion.class)
                     .findQuestionDtoById(child2.getQuestionId()).get();
 
-            var instance = new FormResponse(1L, "a", testData.getUserId(), false, 1L, 1L, null, null, 1L, "b", "c", null);
+            var instance = new FormResponse(1L, "a", testData.getUserId(), false, 1L, 1L, null, null, 1L, "b", "c", false, 0, null);
             CompositeAnswer answer = new CompositeAnswer(1L, act.getCompositeQuestion().getStableId(), "a");
             answer.addRowOfChildAnswers(new TextAnswer(2L, cq.getStableId(), "b", "child-text"));
             instance.putAnswer(answer);
@@ -197,7 +197,7 @@ public class AnswerToProfileCopierTest extends TxnAwareBaseTest {
             QuestionDto cq = handle.attach(JdbiQuestion.class)
                     .findQuestionDtoById(child.getQuestionId()).get();
 
-            var instance = new FormResponse(1L, "a", testData.getUserId(), false, 1L, 1L, null, null, 1L, "b", "c", null);
+            var instance = new FormResponse(1L, "a", testData.getUserId(), false, 1L, 1L, null, null, 1L, "b", "c", false, 0, null);
             var copier = new AnswerToProfileCopier(handle, testData.getUserId());
             copier.copy(instance, cq, CopyLocationType.PARTICIPANT_PROFILE_FIRST_NAME);
 
@@ -222,7 +222,7 @@ public class AnswerToProfileCopierTest extends TxnAwareBaseTest {
             QuestionDto cq = handle.attach(JdbiQuestion.class)
                     .findQuestionDtoById(child.getQuestionId()).get();
 
-            var instance = new FormResponse(1L, "a", testData.getUserId(), false, 1L, 1L, null, null, 1L, "b", "c", null);
+            var instance = new FormResponse(1L, "a", testData.getUserId(), false, 1L, 1L, null, null, 1L, "b", "c", false, 0, null);
             CompositeAnswer answer = new CompositeAnswer(1L, act.getCompositeQuestion().getStableId(), "a");
             answer.addRowOfChildAnswers(new TextAnswer(2L, cq.getStableId(), "b", "child-text"));
             answer.addRowOfChildAnswers(new TextAnswer(3L, cq.getStableId(), "c", "child-text-2"));

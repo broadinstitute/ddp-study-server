@@ -537,7 +537,7 @@ public class AngioConsentVersion2 implements CustomTask {
         long lastUpdatedTemplateId = templateDao.insertTemplate(lastUpdatedTemplate, versionDto.getRevId());
         long newSettingId = jdbiFormSetting.insert(activityId, settings.getListStyleHint(),
                 settings.getIntroductionSectionId(), settings.getClosingSectionId(), versionDto.getRevId(),
-                settings.getReadonlyHintTemplateId(), lastUpdated, lastUpdatedTemplateId, false);
+                settings.getReadonlyHintTemplateId(), lastUpdated, lastUpdatedTemplateId, false, false);
 
         LOG.info("Created new form activity setting with id={}, lastUpdatedTemplateText='{}', lastUpdated={}",
                 newSettingId, lastUpdatedTemplate.getTemplateText(), lastUpdated);
@@ -563,7 +563,7 @@ public class AngioConsentVersion2 implements CustomTask {
                 .collect(Collectors.toMap(UserDto::getUserId, userDto -> userDto));
 
         Map<String, String> emailsMap = new Auth0Util(cfg.getString("tenant.domain"))
-                .getUserPassConnEmailsByAuth0UserIds(auth0UserIds, getAuth0MgmtToken());
+                .getEmailsByAuth0UserIdsAndConnection(auth0UserIds, getAuth0MgmtToken(), null);
 
         String[] headers = new String[] {
                 "guid", "hruid", "legacy_altpid", "legacy_shortid",

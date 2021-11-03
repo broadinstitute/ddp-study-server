@@ -3,9 +3,9 @@ package org.broadinstitute.ddp;
 import static com.google.common.net.HttpHeaders.X_FORWARDED_FOR;
 import static org.broadinstitute.ddp.constants.ConfigFile.Auth0LogEvents.AUTH0_LOG_EVENTS_TOKEN;
 import static org.broadinstitute.ddp.constants.ConfigFile.Sendgrid.EVENTS_VERIFICATION_KEY;
+import static org.broadinstitute.ddp.filter.AllowListFilter.allowlist;
 import static org.broadinstitute.ddp.filter.Exclusions.afterWithExclusion;
 import static org.broadinstitute.ddp.filter.Exclusions.beforeWithExclusion;
-import static org.broadinstitute.ddp.filter.AllowListFilter.allowlist;
 import static spark.Spark.after;
 import static spark.Spark.afterAfter;
 import static spark.Spark.awaitInitialization;
@@ -32,7 +32,6 @@ import org.apache.http.entity.ContentType;
 import org.broadinstitute.ddp.analytics.GoogleAnalyticsMetricsTracker;
 import org.broadinstitute.ddp.cache.CacheService;
 import org.broadinstitute.ddp.cache.LanguageStore;
-import org.broadinstitute.ddp.client.DsmClient;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants;
@@ -42,10 +41,10 @@ import org.broadinstitute.ddp.db.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.CancerStore;
 import org.broadinstitute.ddp.db.ConsentElectionDao;
 import org.broadinstitute.ddp.db.DBUtils;
-import org.broadinstitute.ddp.db.FormInstanceDao;
-import org.broadinstitute.ddp.db.SectionBlockDao;
 import org.broadinstitute.ddp.db.StudyActivityDao;
 import org.broadinstitute.ddp.db.TransactionWrapper;
+import org.broadinstitute.ddp.elastic.participantslookup.ESParticipantsLookupService;
+import org.broadinstitute.ddp.event.publish.pubsub.TaskPubSubPublisher;
 import org.broadinstitute.ddp.filter.AddDDPAuthLoggingFilter;
 import org.broadinstitute.ddp.filter.Auth0LogEventCheckTokenFilter;
 import org.broadinstitute.ddp.filter.DsmAuthFilter;
@@ -71,6 +70,8 @@ import org.broadinstitute.ddp.route.AddProfileRoute;
 import org.broadinstitute.ddp.route.AdminCreateStudyParticipantRoute;
 import org.broadinstitute.ddp.route.AdminCreateUserLoginAccountRoute;
 import org.broadinstitute.ddp.route.AdminLookupInvitationRoute;
+import org.broadinstitute.ddp.route.AdminParticipantLookupByGuidRoute;
+import org.broadinstitute.ddp.route.AdminParticipantsLookupRoute;
 import org.broadinstitute.ddp.route.AdminUpdateInvitationDetailsRoute;
 import org.broadinstitute.ddp.route.Auth0LogEventRoute;
 import org.broadinstitute.ddp.route.CheckIrbPasswordRoute;
@@ -200,7 +201,21 @@ public class DataDonationPlatform {
     public static final int DEFAULT_RATE_LIMIT_MAX_QUERIES_PER_SECOND = 10;
     public static final int DEFAULT_RATE_LIMIT_BURST = 15;
     private static final Logger LOG = LoggerFactory.getLogger(DataDonationPlatform.class);
-    private static final String[] CORS_HTTP_METHODS = new String[] {"GET", "PUT", "POST", "OPTIONS", "PATCH"};
+
+    private static final String HTTP_METHOD__GET = "GET";
+    private static final String HTTP_METHOD__PUT = "PUT";
+    private static final String HTTP_METHOD__POST = "POST";
+    private static final String HTTP_METHOD__OPTIONS = "OPTIONS";
+    private static final String HTTP_METHOD__PATCH = "PATCH";
+
+    private static final String[] CORS_HTTP_METHODS = new String[] {
+            HTTP_METHOD__GET,
+            HTTP_METHOD__PUT,
+            HTTP_METHOD__POST,
+            HTTP_METHOD__OPTIONS,
+            HTTP_METHOD__PATCH
+    };
+
     private static final String[] CORS_HTTP_HEADERS = new String[] {"Content-Type", "Authorization", "X-Requested-With",
             "Content-Length", "Accept", "Origin", ""};
     private static final Map<String, String> pathToClass = new HashMap<>();
@@ -208,6 +223,7 @@ public class DataDonationPlatform {
 
     private static final AtomicBoolean isReady = new AtomicBoolean(false);
     private static final int DEFAULT_BOOT_WAIT_SECS = 30;
+
 
     /**
      * Stop the server using the default wait time.
@@ -301,10 +317,7 @@ public class DataDonationPlatform {
         // only once server has fully booted.
         registerAppEngineCallbacks(DEFAULT_BOOT_WAIT_SECS);
 
-        SectionBlockDao sectionBlockDao = new SectionBlockDao();
-
-        FormInstanceDao formInstanceDao = FormInstanceDao.fromDaoAndConfig(sectionBlockDao, sqlConfig);
-        ActivityInstanceDao activityInstanceDao = new ActivityInstanceDao(formInstanceDao);
+        ActivityInstanceDao activityInstanceDao = new ActivityInstanceDao();
 
         PexInterpreter interpreter = new TreeWalkInterpreter();
         I18nContentRenderer i18nContentRenderer = new I18nContentRenderer();
@@ -358,18 +371,24 @@ public class DataDonationPlatform {
             allowlist(API.AUTH0_LOG_EVENT, cfg.getStringList(ConfigFile.AUTH0_IP_ALLOW_LIST));
         }
 
-        post(API.REGISTRATION, new UserRegistrationRoute(interpreter), responseSerializer);
+        post(API.REGISTRATION, new UserRegistrationRoute(interpreter, new TaskPubSubPublisher()), responseSerializer);
         post(API.TEMP_USERS, new CreateTemporaryUserRoute(), responseSerializer);
 
         post(API.SENDGRID_EVENT, new SendGridEventRoute(new SendGridEventService()), responseSerializer);
         post(API.AUTH0_LOG_EVENT, new Auth0LogEventRoute(new Auth0LogEventService()), responseSerializer);
 
+        RestHighLevelClient esClient = ElasticsearchServiceUtil.getElasticsearchClient(cfg);
+
         // Admin APIs
         before(API.ADMIN_BASE + "/*", new StudyAdminAuthFilter());
-        post(API.ADMIN_STUDY_PARTICIPANTS, new AdminCreateStudyParticipantRoute(), jsonSerializer);
+        post(API.ADMIN_STUDY_PARTICIPANTS, new AdminCreateStudyParticipantRoute(new TaskPubSubPublisher()), jsonSerializer);
         post(API.ADMIN_STUDY_INVITATION_LOOKUP, new AdminLookupInvitationRoute(), jsonSerializer);
         post(API.ADMIN_STUDY_INVITATION_DETAILS, new AdminUpdateInvitationDetailsRoute(), jsonSerializer);
         post(API.ADMIN_STUDY_USER_LOGIN_ACCOUNT, new AdminCreateUserLoginAccountRoute(), jsonSerializer);
+        post(API.ADMIN_STUDY_PARTICIPANTS_LOOKUP,
+                new AdminParticipantsLookupRoute(new ESParticipantsLookupService(esClient)), responseSerializer);
+        get(API.ADMIN_STUDY_PARTICIPANT_LOOKUP_BY_GUID,
+                new AdminParticipantLookupByGuidRoute(new ESParticipantsLookupService(esClient)), responseSerializer);
 
         // These filters work in a tandem:
         // - StudyLanguageResolutionFilter figures out and sets the user language in the attribute store
@@ -396,6 +415,7 @@ public class DataDonationPlatform {
         // User route filter
         before(API.USER_ALL, new UserAuthCheckFilter()
                 .addTempUserAllowlist(HttpMethod.get, API.USER_PROFILE)
+                .addTempUserAllowlist(HttpMethod.patch, API.USER_PROFILE)
                 .addTempUserAllowlist(HttpMethod.get, API.USER_STUDY_WORKFLOW)
                 .addTempUserAllowlist(HttpMethod.get, API.USER_ACTIVITIES_INSTANCE)
                 .addTempUserAllowlist(HttpMethod.patch, API.USER_ACTIVITY_ANSWERS)
@@ -406,14 +426,13 @@ public class DataDonationPlatform {
 
         // Governed participant routes
         get(API.USER_STUDY_PARTICIPANTS, new GetGovernedStudyParticipantsRoute(), responseSerializer);
-        post(API.USER_STUDY_PARTICIPANTS, new GovernedParticipantRegistrationRoute(), responseSerializer);
+        post(API.USER_STUDY_PARTICIPANTS, new GovernedParticipantRegistrationRoute(new TaskPubSubPublisher()), responseSerializer);
 
         // User profile routes
         get(API.USER_PROFILE, new GetProfileRoute(), responseSerializer);
         post(API.USER_PROFILE, new AddProfileRoute(), responseSerializer);
         patch(API.USER_PROFILE, new PatchProfileRoute(), responseSerializer);
 
-        RestHighLevelClient esClient = ElasticsearchServiceUtil.getElasticsearchClient(cfg);
         delete(API.USER_SPECIFIC, new DeleteUserRoute(new UserService(esClient)), responseSerializer);
 
         // User mailing address routes
@@ -481,7 +500,7 @@ public class DataDonationPlatform {
                 responseSerializer);
         put(
                 API.USER_ACTIVITY_ANSWERS,
-                new PutFormAnswersRoute(workflowService, activityValidationService, formInstanceDao, interpreter),
+                new PutFormAnswersRoute(workflowService, actInstService, activityValidationService, interpreter, addressService),
                 responseSerializer
         );
         post(API.USER_ACTIVITY_UPLOADS, new CreateUserActivityUploadRoute(fileUploadService), responseSerializer);
@@ -542,7 +561,7 @@ public class DataDonationPlatform {
         get(API.STUDY_STATISTICS, new GetStudyStatisticsRoute(i18nContentRenderer), responseSerializer);
 
         // Routes calling DSM
-        get(API.PARTICIPANT_STATUS, new GetDsmParticipantStatusRoute(new DsmClient(cfg), esClient), responseSerializer);
+        get(API.PARTICIPANT_STATUS, new GetDsmParticipantStatusRoute(esClient), responseSerializer);
 
         boolean runScheduler = cfg.getBoolean(ConfigFile.RUN_SCHEDULER);
         if (runScheduler) {
@@ -624,43 +643,58 @@ public class DataDonationPlatform {
         });
     }
 
-    private static void setupMDC(String path, Route route) {
-        pathToClass.put(path, route.getClass().getSimpleName());
-        before(path, (request, response) -> MDC.put(MDC_ROUTE_CLASS, pathToClass.get(path)));
+    /**
+     * This method sets to log4j MDC a key/value pair: "RouteClass"=route_class_name.
+     * It is set before a route executing.<br>
+     * And this MDC value ("RouteClass"=route_class_name) can be used in the route code or in after-filters
+     * (for example when collecting Stackdriver metrics data).<br>
+     * In map `pathToClass` a compound key is used: httpMethod + urlPath.
+     * This needs in order to solve a problem that some of Routes share similar `path` (as a result when we have map key = path,
+     * then we miss some of Route classes in the statistics: only the last one was saved in the map `pathToClass`).
+     *
+     * <p>Example of such routes having same urlPath:
+     * <pre>
+     *   PATCH /user/%s/studies/%s/activities/%s/answers
+     *   PUT   /user/%s/studies/%s/activities/%s/answers
+     * </pre>
+     */
+    private static void setupMDC(String path, String httpMethod, Route route) {
+        pathToClass.put(httpMethod + path, route.getClass().getSimpleName());
+        before(path, (request, response) -> MDC.put(MDC_ROUTE_CLASS, pathToClass.get(request.requestMethod() + path)));
     }
 
     public static void get(String path, Route route, ResponseTransformer transformer) {
-        setupMDC(path, route);
+        setupMDC(path, HTTP_METHOD__GET, route);
         Spark.get(path, route, transformer);
     }
 
     public static void get(String path, Route route) {
-        setupMDC(path, route);
+        setupMDC(path, HTTP_METHOD__GET, route);
         Spark.get(path, route);
     }
 
     public static void post(String path, Route route) {
-        setupMDC(path, route);
+        setupMDC(path, HTTP_METHOD__POST, route);
         Spark.post(path, route);
     }
 
     public static void post(String path, Route route, ResponseTransformer transformer) {
-        setupMDC(path, route);
+        setupMDC(path, HTTP_METHOD__POST, route);
         Spark.post(path, route, transformer);
     }
 
     public static void put(String path, Route route) {
-        setupMDC(path, route);
+        setupMDC(path, HTTP_METHOD__PUT, route);
         Spark.put(path, route);
     }
 
     public static void put(String path, Route route, ResponseTransformer transformer) {
-        setupMDC(path, route);
+        setupMDC(path, HTTP_METHOD__PUT, route);
         Spark.put(path, route, transformer);
     }
 
     public static void patch(String path, Route route, ResponseTransformer transformer) {
-        setupMDC(path, route);
+        setupMDC(path, HTTP_METHOD__PATCH, route);
         Spark.patch(path, route, transformer);
     }
 

@@ -76,6 +76,7 @@ order by rev.start_date desc,
 selectBaseTemplates() ::= <<
 select base.pdf_base_template_id    as template_id,
        base.template                as template_blob,
+       base.language_code_id        as language_code_id,
        ttype.pdf_template_type_code as template_type,
        taddr.pdf_base_template_id   as m_template_id,
        taddr.first_name_placeholder as m_first_name_placeholder,
@@ -122,6 +123,15 @@ findTemplateIdsByVersionId() ::= <<
     order by pvt.template_order asc
 >>
 
+findTemplateIdsByVersionIdAndLanguageCodeId() ::= <<
+    select pvt.pdf_base_template_id
+    from pdf_version_template as pvt
+    join pdf_base_template as pbt on pbt.pdf_base_template_id = pvt.pdf_base_template_id
+    where pvt.pdf_document_version_id = :versionId
+    and language_code_id = :languageCodeId
+    order by pvt.template_order asc
+>>
+
 bulkQuerySubstitutionsByCustomTemplateIds(customTemplateIds) ::= <<
 select stype.pdf_substitution_type_code as substitution_type,
        sub.pdf_substitution_id     as p_pdf_substitution_id,
@@ -148,7 +158,9 @@ select stype.pdf_substitution_type_code as substitution_type,
        ) as a_question_type,
        qsc.stable_id               as a_question_stable_id,
        pqsc.stable_id              as a_parent_question_stable_id,
-       sbool.check_if_false        as a_check_if_false
+       sbool.check_if_false        as a_check_if_false,
+       pfm.placeholder             as a_field_name,
+       pfm.option_stable_id        as a_option_stable_id
   from pdf_template_substitution_set as ptss
   join pdf_substitution as sub on sub.pdf_substitution_id = ptss.pdf_substitution_id
   join pdf_substitution_type as stype on stype.pdf_substitution_type_id = sub.pdf_substitution_type_id
@@ -158,5 +170,6 @@ select stype.pdf_substitution_type_code as substitution_type,
   left join pdf_boolean_answer_substitution as sbool on sbool.pdf_answer_substitution_id = sans.pdf_substitution_id
   left join question_stable_code as qsc on qsc.question_stable_code_id = sans.question_stable_code_id
   left join question_stable_code as pqsc on pqsc.question_stable_code_id = sans.parent_question_stable_code_id
+  left join pdf_picklist_field_mapping as pfm on pfm.pdf_substitution_id = sub.pdf_substitution_id
  where ptss.pdf_custom_template_id in (<customTemplateIds>)
 >>

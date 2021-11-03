@@ -21,7 +21,9 @@ import org.apache.velocity.app.VelocityEngine;
 import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.db.dao.TemplateDao;
 import org.broadinstitute.ddp.db.dao.UserDao;
+import org.broadinstitute.ddp.db.dao.UserGovernanceDao;
 import org.broadinstitute.ddp.db.dao.UserProfileDao;
+import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.model.user.UserProfile;
 import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
@@ -45,12 +47,14 @@ public class I18nContentRenderer {
         }
     }
 
-    public static RenderValueProvider newValueProvider(Handle handle, long participantUserId) {
-        return newValueProvider(handle, participantUserId, new HashMap<>());
+    public static RenderValueProvider newValueProvider(Handle handle, long participantUserId, String operatorGuid, String studyGuid) {
+        return newValueProvider(handle, participantUserId, operatorGuid, studyGuid, new HashMap<>());
     }
 
-    public static RenderValueProvider newValueProvider(Handle handle, long participantUserId, Map<String, String> snapshot) {
-        var builder = newValueProviderBuilder(handle, participantUserId);
+    public static RenderValueProvider newValueProvider(Handle handle,
+                                       long participantUserId, String operatorGuid, String studyGuid,
+                                       Map<String, String> snapshot) {
+        var builder = newValueProviderBuilder(handle, participantUserId, operatorGuid, studyGuid);
 
         // If there are saved snapshot substitution values, override with those so final rendered
         // content will be consistent with what user last saw when snapshot was taken.
@@ -59,15 +63,22 @@ public class I18nContentRenderer {
         return builder.build();
     }
 
-    public static RenderValueProvider.Builder newValueProviderBuilder(Handle handle, long participantUserId) {
+    public static RenderValueProvider.Builder newValueProviderBuilder(Handle handle,
+                      long participantUserId, String operatorGuid, String studyGuid) {
+
         var builder = new RenderValueProvider.Builder();
 
-        handle.attach(UserDao.class).findUserById(participantUserId)
-                .ifPresent(user -> builder.setParticipantGuid(user.getGuid()));
+        Optional<User> user = handle.attach(UserDao.class).findUserById(participantUserId);
+        if (user.isPresent()) {
+            builder.setParticipantGuid(user.get().getGuid());
+            builder.setGovernedParticipant(handle.attach(UserGovernanceDao.class)
+                    .isGovernedParticipant(user.get().getGuid(), operatorGuid, studyGuid));
+        }
 
         UserProfile profile = handle.attach(UserProfileDao.class)
                 .findProfileByUserId(participantUserId)
                 .orElse(null);
+
         ZoneId zone = ZoneOffset.UTC;
         if (profile != null) {
             if (profile.getFirstName() != null) {
@@ -306,12 +317,12 @@ public class I18nContentRenderer {
         return result;
     }
 
-    private String convertToString(Object obj) {
+    public static String convertToString(Object obj) {
         //todo can make this conversion a little more sophisticated, e.g. different date formats for different locales or langCodes
         if (obj instanceof LocalDate) {
             return DateTimeFormatter.ofPattern("MMMM dd, yyyy").format((LocalDate) obj);
         } else {
-            return obj.toString();
+            return obj != null ? obj.toString() : null;
         }
     }
 }

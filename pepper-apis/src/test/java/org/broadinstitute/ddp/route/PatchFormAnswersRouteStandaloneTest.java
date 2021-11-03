@@ -1,6 +1,7 @@
 package org.broadinstitute.ddp.route;
 
 import static io.restassured.RestAssured.given;
+import static org.broadinstitute.ddp.util.TestFormActivity.DEFAULT_MAX_FILE_SIZE_FOR_TEST;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
@@ -330,7 +331,9 @@ public class PatchFormAnswersRouteStandaloneTest {
                 .build();
         FormSectionDef numericSection = new FormSectionDef(null, TestUtil.wrapQuestions(numericQuestionDef, n2, n3));
 
-        fileQuestion = FileQuestionDef.builder("FILE" + timestamp, Template.text("file")).build();
+        fileQuestion = FileQuestionDef.builder("FILE" + timestamp, Template.text("file"))
+                .setMaxFileSize(DEFAULT_MAX_FILE_SIZE_FOR_TEST)
+                .build();
         var fileSection = new FormSectionDef(null, TestUtil.wrapQuestions(fileQuestion));
 
         String parentActCode = "PATCH_ANS_PARENT_" + timestamp;

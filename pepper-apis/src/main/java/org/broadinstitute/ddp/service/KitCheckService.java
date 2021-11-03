@@ -271,7 +271,9 @@ public class KitCheckService {
                 pending.getUserId(),
                 pending.getUserGuid(),
                 null,
-                pending.getStudyId(), EventTriggerType.KIT_PREP);
+                pending.getStudyId(),
+                pending.getStudyGuid(),
+                EventTriggerType.KIT_PREP);
         EventService.getInstance().processAllActionsForEventSignal(apisHandle, signal);
         kitScheduleDao.updateRecordCurrentOccurrencePrepTime(record.getId(), Instant.now());
         LOG.info("Preparation step finished for participant {} and occurrence {} of kit_configuration_id={}",

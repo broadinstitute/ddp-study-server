@@ -34,6 +34,8 @@ import org.broadinstitute.ddp.db.dto.Auth0TenantDto;
 import org.broadinstitute.ddp.db.dto.InvitationDto;
 import org.broadinstitute.ddp.db.dto.LanguageDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
+import org.broadinstitute.ddp.event.publish.TaskPublisher;
+import org.broadinstitute.ddp.event.publish.pubsub.TaskPubSubPublisher;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.json.LocalRegistrationResponse;
 import org.broadinstitute.ddp.json.UserRegistrationPayload;
@@ -75,9 +77,11 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
     private static final String MODE_LOGIN = "login";
 
     private final PexInterpreter interpreter;
+    private final TaskPublisher taskPublisher;
 
-    public UserRegistrationRoute(PexInterpreter interpreter) {
+    public UserRegistrationRoute(PexInterpreter interpreter, TaskPublisher taskPublisher) {
         this.interpreter = interpreter;
+        this.taskPublisher = taskPublisher;
     }
 
     @Override
@@ -179,6 +183,7 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
                         payload, clientConfig, mgmtClient);
                 operatorUser = pair.getOperatorUser();
                 triggerUserRegisteredEvents(handle, study, operatorUser, pair.getParticipantUser());
+                publishRegisteredPubSubMessage(studyGuid, pair.getParticipantUser().getGuid());
                 ddpUserGuid.set(operatorUser.getGuid());
             } else {
                 LOG.info("Attempting to register existing user {} with client {} and study {}", auth0UserId, auth0ClientId, studyGuid);
@@ -225,7 +230,7 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
                     invitationDao.markAccepted(invitation.getInvitationId(), Instant.now());
 
                     EventSignal signal = new EventSignal(user.getId(), user.getId(), user.getGuid(), user.getGuid(),
-                            study.getId(), EventTriggerType.GOVERNED_USER_REGISTERED);
+                            study.getId(), study.getGuid(), EventTriggerType.GOVERNED_USER_REGISTERED);
                     EventService.getInstance().processAllActionsForEventSignal(handle, signal);
                 } else {
                     LOG.error("User {} is not allowed to create an account yet because they have not reached age of majority "
@@ -245,6 +250,7 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
             LOG.info("Assigned invitation {} of type {} to participant user {}", invitation.getInvitationGuid(),
                     invitation.getInvitationType(), pair.getParticipantUser().getGuid());
             triggerUserRegisteredEvents(handle, study, pair.getOperatorUser(), pair.getParticipantUser());
+            publishRegisteredPubSubMessage(studyGuid, pair.getParticipantUser().getGuid());
             return pair.getOperatorUser();
         } else {
             throw new DDPException("Unhandled invitation type " + invitation.getInvitationType());
@@ -255,8 +261,9 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
                                        UserRegistrationPayload payload, StudyClientConfiguration clientConfig,
                                        Auth0ManagementClient mgmtClient) {
         String studyGuid = study.getGuid();
-        LOG.info("Attempting to register new user {} with client {} and study {}",
-                auth0UserId, clientConfig.getAuth0ClientId(), studyGuid);
+        LOG.info("Attempting to register new user {}, with client {}  study {}  {}",
+                auth0UserId, clientConfig.getAuth0ClientId(), studyGuid,
+                payload.getTempUserGuid() != null ? " (temp user " + payload.getTempUserGuid() + ")" : " NO-Temp-User");
 
         User operatorUser = registerUser(response, payload, handle,
                 clientConfig.getAuth0Domain(), clientConfig.getAuth0ClientId(), auth0UserId);
@@ -382,7 +389,7 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
             shouldCreateGoverned = policy.shouldCreateGovernedUser(handle, interpreter, operatorUser.getGuid());
         } catch (Exception e) {
             String msg = "Error while evaluating study governance policy for study " + policy.getStudyGuid();
-            LOG.warn(msg, e);
+            LOG.error(msg, e);
             throw ResponseUtil.haltError(response, HttpStatus.SC_INTERNAL_SERVER_ERROR, new ApiError(ErrorCodes.SERVER_ERROR, msg));
         }
         if (!shouldCreateGoverned) {
@@ -509,7 +516,7 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
             LOG.info("Upgraded temporary user with guid '{}'", tempUserGuid);
         } catch (Exception e) {
             String msg = String.format("Error while upgrading temporary user with guid '%s'", tempUserGuid);
-            LOG.warn(msg, e);
+            LOG.error(msg, e);
             throw ResponseUtil.haltError(response, HttpStatus.SC_INTERNAL_SERVER_ERROR, new ApiError(ErrorCodes.SERVER_ERROR, msg));
         }
         return userDao.findUserByGuid(tempUserGuid).orElseThrow(() -> new DDPException("Could not find user with guid " + tempUserGuid));
@@ -588,8 +595,17 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
                 participant.getId(),
                 participant.getGuid(),
                 operator.getGuid(),
-                studyDto.getId(), EventTriggerType.USER_REGISTERED);
+                studyDto.getId(),
+                studyDto.getGuid(),
+                EventTriggerType.USER_REGISTERED);
         EventService.getInstance().processAllActionsForEventSignal(handle, signal);
+    }
+
+    private void publishRegisteredPubSubMessage(String studyGuid, String participantGuid) {
+        String payload = ""; // No payload.
+        taskPublisher.publishTask(
+                TaskPubSubPublisher.TASK_PARTICIPANT_REGISTERED,
+                payload, studyGuid, participantGuid);
     }
 
     private static class UserPair {

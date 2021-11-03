@@ -7,18 +7,39 @@ import org.broadinstitute.ddp.model.activity.instance.ActivityInstance;
 
 public enum EnrollmentStatusType {
 
+    /**
+     * Means participant is registered with study but not yet enrolled. Typically this is after they have created an
+     * account but before giving consent.
+     */
     REGISTERED(true, false, false, true),
+    /**
+     * Means participant is fully enrolled in study. Typically this is after they have completed consent.
+     */
     ENROLLED(true, false, false,  true),
+    /**
+     * Means participant withdrew from study before being enrolled.
+     */
     EXITED_BEFORE_ENROLLMENT(false, true, true, false),
+    /**
+     * Means participant withdrew from study after being enrolled.
+     */
     EXITED_AFTER_ENROLLMENT(false, true, true, false),
-    CONSENT_SUSPENDED(true, false, false, true);
+    /**
+     * Means the consent participant given is no longer valid, and thus suspended. Participant is no longer considered
+     * enrolled until they re-consent. Typically this can happen when a minor participant ages up. Their parental
+     * consent will be suspended and they will need to give their own consent.
+     */
+    CONSENT_SUSPENDED(true, false, false, true),
+    /**
+     * Means participant has reached the end of participation in the study. This is very similar to `ENROLLED`. They are
+     * considered to be fully enrolled in the study and can continue to view/edit their data, but will not be
+     * participating in future activities (e.g. will not receive any more kits).
+     */
+    COMPLETED(true, false, false, true);
 
     private final boolean shouldReceiveCommunications;
-
     private final boolean isExited;
-
     private final boolean shouldMarkActivitiesAsReadOnly;
-
     private final boolean isDSMVisible;
 
     /**
@@ -39,7 +60,7 @@ public enum EnrollmentStatusType {
      *                     return information.  If false, such calls should return not data.
      *
      */
-    private EnrollmentStatusType(boolean shouldReceiveCommunications,
+    EnrollmentStatusType(boolean shouldReceiveCommunications,
                                  boolean isExited,
                                  boolean shouldMarkActivitiesAsReadOnly,
                                  boolean isDSMVisible) {
@@ -94,5 +115,12 @@ public enum EnrollmentStatusType {
      */
     public boolean isDSMVisible() {
         return isDSMVisible;
+    }
+
+    /**
+     * Returns whether this status represents being enrolled in study or not.
+     */
+    public boolean isEnrolled() {
+        return this == ENROLLED || this == COMPLETED;
     }
 }

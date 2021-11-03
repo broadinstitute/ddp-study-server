@@ -2,10 +2,12 @@ package org.broadinstitute.ddp.db.dao;
 
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.util.Set;
 
 import org.broadinstitute.ddp.model.user.UserProfile;
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.customizer.Bind;
+import org.jdbi.v3.sqlobject.customizer.BindList;
 import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 
@@ -95,4 +97,9 @@ public interface UserProfileSql extends SqlObject {
 
     @SqlUpdate("delete from user_profile where user_id = (select user_id from user where guid = :userGuid)")
     int deleteByUserGuid(@Bind("userGuid") String userGuid);
+
+    @SqlUpdate("delete profile from user as u left join user_profile as profile on profile.user_id = u.user_id "
+            + " where u.guid in (<guid>)")
+    int deleteByUserGuids(@BindList(value = "guid", onEmpty = BindList.EmptyHandling.NULL) Set<String> userGuids);
+
 }

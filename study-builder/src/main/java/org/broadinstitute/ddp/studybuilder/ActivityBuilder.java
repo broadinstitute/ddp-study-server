@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 import com.google.gson.Gson;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import com.typesafe.config.ConfigResolveOptions;
 import org.apache.commons.io.IOUtils;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
@@ -312,12 +313,20 @@ public class ActivityBuilder {
     }
 
     public Config readDefinitionConfig(String filepath) {
+        return readDefinitionConfig(filepath, true);
+    }
+
+    public Config readDefinitionConfig(String filepath, boolean allowUnresolved) {
         File file = dirPath.resolve(filepath).toFile();
         if (!file.exists()) {
             throw new DDPException("Activity definition file is missing: " + file);
         }
 
-        Config definition = ConfigFactory.parseFile(file).resolveWith(varsCfg);
+        Config definition = ConfigFactory.parseFile(file)
+                // going to resolve first the external global variables that might be used in this configuration
+                // using setAllowUnresolved = true so we can do a second pass that will allow us to resolve variables
+                // within the configuration
+                .resolveWith(varsCfg, ConfigResolveOptions.defaults().setAllowUnresolved(allowUnresolved));
         if (definition.isEmpty()) {
             throw new DDPException("Activity definition file is empty: " + file);
         }
