@@ -136,10 +136,10 @@ public class VelocityUtil {
             StringBuilder var = new StringBuilder();
             Token t = node.getFirstToken();
             var.append(t);
-            do {
+            while (!t.equals(node.getLastToken())) {
                 t = t.next;
                 var.append(t);
-            } while (!t.equals(node.getLastToken()));
+            }
             String variable = var.toString();
             if (!variable.startsWith(VARIABLE_PREFIX + DDP)) {
                 variables.add(variable.substring(1));
