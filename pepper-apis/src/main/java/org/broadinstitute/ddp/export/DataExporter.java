@@ -1,7 +1,7 @@
 package org.broadinstitute.ddp.export;
 
-import static org.broadinstitute.ddp.export.ExportUtil.getSnapshottedMailAddress;
 import static org.broadinstitute.ddp.export.ExportUtil.extractParticipantsFromResultSet;
+import static org.broadinstitute.ddp.export.ExportUtil.getSnapshottedMailAddress;
 import static org.broadinstitute.ddp.model.activity.types.ComponentType.MAILING_ADDRESS;
 
 import java.io.BufferedWriter;
@@ -37,6 +37,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.constants.ConfigFile;
+import org.broadinstitute.ddp.content.I18nTemplateRenderFacade;
 import org.broadinstitute.ddp.db.ActivityDefStore;
 import org.broadinstitute.ddp.db.DaoException;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
@@ -88,7 +89,6 @@ import org.broadinstitute.ddp.model.activity.definition.i18n.Translation;
 import org.broadinstitute.ddp.model.activity.definition.question.CompositeQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
-import org.broadinstitute.ddp.model.activity.definition.template.TemplateUtil;
 import org.broadinstitute.ddp.model.activity.definition.validation.RuleDef;
 import org.broadinstitute.ddp.model.activity.instance.ActivityResponse;
 import org.broadinstitute.ddp.model.activity.instance.FormResponse;
@@ -373,7 +373,8 @@ public class DataExporter {
             Map<String, Object> activityDefinitions = new HashMap<>();
             activityDefinitions.put("studyGuid", studyDto.getGuid());
             activityDefinitions.put("activityCode", activity.getDefinition().getActivityCode());
-            activityDefinitions.put("activityName", TemplateUtil.renderWithDefaultValues(activityName, null, "en"));
+            activityDefinitions.put("activityName", I18nTemplateRenderFacade.INSTANCE.renderTemplateWithDefaultValues(
+                    activityName, null, "en"));
             activityDefinitions.put("activityVersion", activity.getDefinition().getVersionTag());
             activityDefinitions.put("parentActivityCode", activity.getDefinition().getParentActivityCode());
             activityDefinitions.putAll(formatter.questionDefinitions());

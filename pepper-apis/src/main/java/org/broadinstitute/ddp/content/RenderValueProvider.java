@@ -113,6 +113,14 @@ public class RenderValueProvider {
         }
     }
 
+    public void setDate(LocalDate date) {
+        this.date = date;
+    }
+
+    public void setUseDefaultsForDdpMethods(boolean useDefaultsForDdpMethods) {
+        this.useDefaultsForDdpMethods = useDefaultsForDdpMethods;
+    }
+
     /**
      * Returns the kit request id, if available.
      */

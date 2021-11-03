@@ -1,0 +1,17 @@
+group JdbiI18nTranslation;
+
+getI18nTranslations() ::= <<
+select
+        t.i18n_translation_id,
+        t.i18n_translation_doc,
+        t.study_id,
+        t.language_code_id,
+        t.created_at,
+        t.updated_at
+from
+    i18n_translation t
+    join language_code lc on lc.language_code_id = t.language_code_id
+    join umbrella_study us on us.umbrella_study_id = t.study_id
+where
+   lc.iso_language_code = :isoLangCode and us.guid = :studyGuid
+>>
