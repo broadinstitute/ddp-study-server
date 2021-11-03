@@ -97,7 +97,7 @@ public class GetActivityInstanceListForActivityInstanceSelectQuestionRouteStanda
         assertEquals(200, response.getStatusLine().getStatusCode());
         assertEquals(1, activityInstanceSelectAnswersResponse.getResults().size());
         assertEquals(instanceOption1Dto.getGuid(), activityInstanceSelectAnswersResponse.getResults().get(0).getGuid());
-        assertEquals("activity to select", activityInstanceSelectAnswersResponse.getResults().get(0).getValue());
+        assertEquals("activity to select", activityInstanceSelectAnswersResponse.getResults().get(0).getName());
     }
 
     @Test
@@ -121,8 +121,8 @@ public class GetActivityInstanceListForActivityInstanceSelectQuestionRouteStanda
         assertEquals(2, activityInstanceSelectAnswersResponse.getResults().size());
         assertEquals(instanceOption1Dto.getGuid(), activityInstanceSelectAnswersResponse.getResults().get(0).getGuid());
         assertEquals(instanceOption2Dto.getGuid(), activityInstanceSelectAnswersResponse.getResults().get(1).getGuid());
-        assertEquals("activity to select", activityInstanceSelectAnswersResponse.getResults().get(0).getValue());
-        assertEquals("activity to select #2", activityInstanceSelectAnswersResponse.getResults().get(1).getValue());
+        assertEquals("activity to select", activityInstanceSelectAnswersResponse.getResults().get(0).getName());
+        assertEquals("activity to select #2", activityInstanceSelectAnswersResponse.getResults().get(1).getName());
     }
 
     private static void setupActivity(Handle handle) {

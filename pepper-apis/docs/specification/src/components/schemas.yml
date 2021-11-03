@@ -311,6 +311,7 @@ Answer:
   discriminator:
     propertyName: type
     mapping:
+      ACTIVITY_INSTANCE_SELECT: '#/Answer.String'
       AGREEMENT: '#/Answer.Boolean'
       BOOLEAN: '#/Answer.Boolean'
       COMPOSITE: '#/Answer.Composite'
@@ -468,6 +469,7 @@ AnswerSubmission:
   discriminator:
     propertyName: type
     mapping:
+      ACTIVITY_INSTANCE_SELECT: '#/AnswerSubmission.String'
       AGREEMENT: '#/AnswerSubmission.Boolean'
       BOOLEAN: '#/AnswerSubmission.Boolean'
       COMPOSITE: '#/AnswerSubmission.Composite'
@@ -1364,6 +1366,7 @@ Question:
   discriminator:
     propertyName: questionType
     mapping:
+      ACTIVITY_INSTANCE_SELECT: '#/Question.ActivityInstanceSelect'
       AGREEMENT: '#/Question.Agreement'
       BOOLEAN: '#/Question.Boolean'
       COMPOSITE: '#/Question.Composite'
@@ -1417,6 +1420,28 @@ Question:
       type: array
       items:
         $ref: '#/ValidationFailure'
+Question.ActivityInstanceSelect:
+  allOf:
+    - $ref: '#/Question'
+    - type: object
+      required:
+        - answers
+        - activityCodes
+      properties:
+        questionType:
+          type: string
+          default: ACTIVITY_INSTANCE_SELECT
+          enum:
+            - ACTIVITY_INSTANCE_SELECT
+        activityCodes:
+          description: 'List of activity codes for instance lookup'
+          type: array
+          items:
+            type: string
+        answers:
+          type: array
+          items:
+            $ref: '#/Answer.String'
 Question.Agreement:
   allOf:
   - $ref: '#/Question'
