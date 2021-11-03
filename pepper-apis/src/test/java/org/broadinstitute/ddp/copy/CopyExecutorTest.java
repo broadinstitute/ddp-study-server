@@ -7,6 +7,7 @@ import static org.junit.Assert.assertNull;
 import java.util.List;
 
 import org.broadinstitute.ddp.TxnAwareBaseTest;
+import org.broadinstitute.ddp.db.ActivityDefStore;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
@@ -78,6 +79,8 @@ public class CopyExecutorTest extends TxnAwareBaseTest {
             meta = RevisionMetadata.now(testData.getUserId(), "remove question");
             activityDao.changeVersion(act2.getDef().getActivityId(), "v2", meta);
             questionDao.disableBoolQuestion(act2.getBoolQuestion().getQuestionId(), meta);
+
+            ActivityDefStore.getInstance().clearCachedActivityData();
 
             long instance1Id = createInstance(handle, act1.getDef().getActivityId()).getId();
             long instance2Id = createInstance(handle, act2.getDef().getActivityId()).getId();
