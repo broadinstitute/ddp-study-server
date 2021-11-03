@@ -257,7 +257,7 @@ function (user, context, callback) {
                     // all is well
                     var ddpUserGuid = body.ddpUserGuid;
                     user.app_metadata.user_guid = ddpUserGuid;
-
+                    //todo looks like updating on every re-login .. check and avoid the update when not needed
                     auth0.users.updateAppMetadata(user.user_id, user.app_metadata)
                         .then(function(){
                             context.idToken[pepperUserGuidClaim] = ddpUserGuid;
