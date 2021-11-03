@@ -277,6 +277,8 @@ public class PutFormAnswersRouteStandaloneTest extends PutFormAnswersRouteStanda
             assertEquals(1, handle.attach(JdbiExpression.class).updateById(exprId, "true"));
         });
 
+        ActivityDefStore.getInstance().clearCachedActivityData();
+
         given().auth().oauth2(token)
                 .pathParam("instanceGuid", instanceDto.getGuid())
                 .when().put(urlTemplate).then().assertThat()
@@ -529,6 +531,8 @@ public class PutFormAnswersRouteStandaloneTest extends PutFormAnswersRouteStanda
 
         ActivityInstanceDto instanceDto = TransactionWrapper.withTxn(handle ->
                 insertNewInstanceAndDeferCleanup(handle, form.getActivityId()));
+
+        ActivityDefStore.getInstance().clearCachedActivityData();
 
         given().auth().oauth2(token)
                 .pathParam("instanceGuid", instanceDto.getGuid())
