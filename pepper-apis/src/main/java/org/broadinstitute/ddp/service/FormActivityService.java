@@ -37,7 +37,7 @@ public class FormActivityService {
                                                       String userGuid, String operatorGuid, String instanceGuid) {
         List<BlockVisibility> visibilities = new ArrayList<>();
         for (var block : def.getAllToggleableBlocks()) {
-            BlockVisibility vis = evaluateVisibility(handle, block, instanceSummary, def, userGuid, operatorGuid, instanceGuid);
+            BlockVisibility vis = evaluateVisibility(handle, block, instanceSummary, userGuid, operatorGuid, instanceGuid);
             if (vis != null) {
                 visibilities.add(vis);
             }
@@ -46,7 +46,7 @@ public class FormActivityService {
     }
 
     private BlockVisibility evaluateVisibility(Handle handle, FormBlockDef block, UserActivityInstanceSummary instanceSummary,
-                                               FormActivityDef formActivityDef, String userGuid, String operatorGuid,
+                                               String userGuid, String operatorGuid,
                                                String instanceGuid) {
         BlockVisibility vis = null;
         String expr = block.getShownExpr();
