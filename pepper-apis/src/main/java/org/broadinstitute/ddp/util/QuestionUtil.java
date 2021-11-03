@@ -24,8 +24,8 @@ import org.broadinstitute.ddp.service.FormActivityService;
 import org.jdbi.v3.core.Handle;
 import spark.Response;
 
+import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 
 public class QuestionUtil {
 
@@ -106,35 +106,27 @@ public class QuestionUtil {
                         "Error to detect answer: question stableId=%s, instanceId=%d", questionStableId, instanceId)));
     }
 
-    public static Optional<List<BlockVisibility>> getBlockVisibility(Handle handle, Response response,
-                                                                     String parentInstanceGuid, User participantUser, StudyDto studyDto,
+    public static List<BlockVisibility> getBlockVisibility(Handle handle, Response response,
+                                                                     String activityInstanceGuid, User participantUser, StudyDto studyDto,
                                                                      String operatorGuid, boolean isStudyAdmin) {
+        List<BlockVisibility> result = Collections.emptyList();
 
-        PexInterpreter interpreter = new TreeWalkInterpreter();
-        FormActivityService formService = new FormActivityService(interpreter);
-
-        List<org.broadinstitute.ddp.json.form.BlockVisibility> result = null;
-
-        if (parentInstanceGuid == null) {
-            return Optional.ofNullable(result);
+        if (activityInstanceGuid != null) {
+            ActivityInstanceDto activityInstanceDto = RouteUtil.findAccessibleInstanceOrHalt(
+                    response, handle, participantUser, studyDto,
+                    activityInstanceGuid, isStudyAdmin);
+            if (activityInstanceDto != null) {
+                ActivityDefStore activityStore = ActivityDefStore.getInstance();
+                FormActivityDef activityDef = ActivityInstanceUtil
+                        .getActivityDef(handle, activityStore, activityInstanceDto, studyDto.getGuid());
+                UserActivityInstanceSummary instanceSummary = RouteUtil.findUserActivityInstanceSummaryOrHalt(
+                        response, handle, participantUser.getGuid(), studyDto.getGuid(), activityInstanceGuid, isStudyAdmin);
+                PexInterpreter interpreter = new TreeWalkInterpreter();
+                FormActivityService formService = new FormActivityService(interpreter);
+                result = formService.getBlockVisibilities(handle, instanceSummary, activityDef,
+                        participantUser.getGuid(), operatorGuid, activityInstanceGuid);
+            }
         }
-
-        ActivityInstanceDto parentInstanceDto = RouteUtil.findAccessibleInstanceOrHalt(
-                response, handle, participantUser, studyDto,
-                parentInstanceGuid, isStudyAdmin);
-
-        if (parentInstanceDto != null) {
-
-            ActivityDefStore activityStore = ActivityDefStore.getInstance();
-            FormActivityDef parentActivity = ActivityInstanceUtil
-                    .getActivityDef(handle, activityStore, parentInstanceDto, studyDto.getGuid());
-
-            UserActivityInstanceSummary instanceSummary = RouteUtil.findUserActivityInstanceSummaryOrHalt(
-                    response, handle, participantUser.getGuid(), studyDto.getGuid(), parentInstanceGuid, isStudyAdmin);
-            result = formService.getBlockVisibilities(handle, instanceSummary, parentActivity,
-                    participantUser.getGuid(), operatorGuid, parentInstanceGuid);
-        }
-
-        return Optional.ofNullable(result);
+        return result;
     }
 }

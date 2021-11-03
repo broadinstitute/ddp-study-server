@@ -1,7 +1,5 @@
 package org.broadinstitute.ddp.route;
 
-import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
@@ -18,7 +16,6 @@ import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.json.ActivityInstanceCreationPayload;
 import org.broadinstitute.ddp.json.ActivityInstanceCreationResponse;
 import org.broadinstitute.ddp.json.errors.ApiError;
-import org.broadinstitute.ddp.json.form.BlockVisibility;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
 import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.security.DDPAuth;
@@ -105,13 +102,8 @@ public class CreateActivityInstanceRoute extends ValidatedJsonInputRoute<Activit
             LOG.info("Created activity instance {} for activity {} and user {}",
                     instanceGuid, activityCode, participantGuid);
             res.setInstanceGuid(instanceGuid);
-
-            Optional<List<BlockVisibility>> parentInstanceBlockVisibility = QuestionUtil.getBlockVisibility(handle,
-                    response, parentInstanceGuid, found.getUser(), found.getStudyDto(), operatorGuid, isStudyAdmin);
-            if (parentInstanceBlockVisibility.isPresent()) {
-                res.setBlockVisibilities(parentInstanceBlockVisibility.get());
-            }
-
+            res.setBlockVisibilities(QuestionUtil.getBlockVisibility(handle,
+                        response, parentInstanceGuid, found.getUser(), found.getStudyDto(), operatorGuid, isStudyAdmin));
             return res;
         });
     }
