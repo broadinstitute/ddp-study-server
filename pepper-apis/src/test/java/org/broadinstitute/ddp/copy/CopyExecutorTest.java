@@ -120,9 +120,9 @@ public class CopyExecutorTest extends TxnAwareBaseTest {
 
             new CopyExecutor().execute(handle, testData.getUserId(), testData.getUserId(), config);
 
-            Optional<UserProfile> oProfile = handle.attach(UserProfileDao.class).findProfileByUserId(testData.getUserId());
-            assertTrue(oProfile.isPresent());
-            UserProfile profile = oProfile.get();
+            Optional<UserProfile> optProfile = handle.attach(UserProfileDao.class).findProfileByUserId(testData.getUserId());
+            assertTrue(optProfile.isPresent());
+            UserProfile profile = optProfile.get();
             assertEquals("new-first-name", profile.getFirstName());
 
             handle.rollback();
