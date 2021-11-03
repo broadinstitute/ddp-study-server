@@ -3,8 +3,10 @@ package org.broadinstitute.ddp.copy;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.broadinstitute.ddp.TxnAwareBaseTest;
 import org.broadinstitute.ddp.db.ActivityDefStore;
@@ -13,12 +15,11 @@ import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dao.AnswerDao;
 import org.broadinstitute.ddp.db.dao.CopyConfigurationDao;
-import org.broadinstitute.ddp.db.dao.QuestionDao;
+import org.broadinstitute.ddp.db.dao.SectionBlockDao;
 import org.broadinstitute.ddp.db.dao.UserProfileDao;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.model.activity.definition.question.NumericQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
-import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
 import org.broadinstitute.ddp.model.activity.instance.answer.BoolAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.CompositeAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.NumericIntegerAnswer;
@@ -52,7 +53,7 @@ public class CopyExecutorTest extends TxnAwareBaseTest {
     public void testExecute_questionNotFoundIsSkipped() {
         TransactionWrapper.useTxn(handle -> {
             var activityDao = handle.attach(ActivityDao.class);
-            var questionDao = handle.attach(QuestionDao.class);
+            var sectionBlockDao = handle.attach(SectionBlockDao.class);
 
             TestFormActivity act1 = TestFormActivity.builder()
                     .withTextQuestion(true)
@@ -74,11 +75,11 @@ public class CopyExecutorTest extends TxnAwareBaseTest {
 
             var meta = RevisionMetadata.now(testData.getUserId(), "remove question");
             activityDao.changeVersion(act1.getDef().getActivityId(), "v2", meta);
-            questionDao.disableBoolQuestion(act1.getBoolQuestion().getQuestionId(), meta);
+            sectionBlockDao.disableBlock(act1.getBoolQuestionBlock().getBlockId(), meta);
 
             meta = RevisionMetadata.now(testData.getUserId(), "remove question");
             activityDao.changeVersion(act2.getDef().getActivityId(), "v2", meta);
-            questionDao.disableBoolQuestion(act2.getBoolQuestion().getQuestionId(), meta);
+            sectionBlockDao.disableBlock(act2.getBoolQuestionBlock().getBlockId(), meta);
 
             ActivityDefStore.getInstance().clearCachedActivityData();
 
@@ -89,7 +90,7 @@ public class CopyExecutorTest extends TxnAwareBaseTest {
 
             new CopyExecutor().execute(handle, testData.getUserId(), testData.getUserId(), config);
 
-            Answer actual = handle.attach(AnswerDao.class)
+            var actual = handle.attach(AnswerDao.class)
                     .findAnswerByInstanceIdAndQuestionStableId(instance2Id, act2.getTextQuestion().getStableId())
                     .orElse(null);
             assertNotNull(actual);
@@ -119,7 +120,9 @@ public class CopyExecutorTest extends TxnAwareBaseTest {
 
             new CopyExecutor().execute(handle, testData.getUserId(), testData.getUserId(), config);
 
-            UserProfile profile = handle.attach(UserProfileDao.class).findProfileByUserId(testData.getUserId()).get();
+            Optional<UserProfile> oProfile = handle.attach(UserProfileDao.class).findProfileByUserId(testData.getUserId());
+            assertTrue(oProfile.isPresent());
+            UserProfile profile = oProfile.get();
             assertEquals("new-first-name", profile.getFirstName());
 
             handle.rollback();
@@ -149,7 +152,7 @@ public class CopyExecutorTest extends TxnAwareBaseTest {
 
             new CopyExecutor().execute(handle, testData.getUserId(), testData.getUserId(), config);
 
-            Answer actual = handle.attach(AnswerDao.class)
+            var actual = handle.attach(AnswerDao.class)
                     .findAnswerByInstanceIdAndQuestionStableId(instance2Id, act2.getTextQuestion().getStableId())
                     .orElse(null);
             assertNotNull(actual);
