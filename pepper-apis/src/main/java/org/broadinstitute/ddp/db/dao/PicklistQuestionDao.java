@@ -500,11 +500,11 @@ public interface PicklistQuestionDao extends SqlObject {
                 });
 
         dtosMap.values().forEach(dto ->
-            dto.getUngroupedOptions().forEach(parentDto -> {
-                if (nestedOptMap.containsKey(parentDto.getId())) {
-                    parentDto.getNestedOptions().addAll(nestedOptMap.get(parentDto.getId()));
-                }
-            })
+                dto.getUngroupedOptions().forEach(parentDto -> {
+                    if (nestedOptMap.containsKey(parentDto.getId())) {
+                        parentDto.getNestedOptions().addAll(nestedOptMap.get(parentDto.getId()));
+                    }
+                })
         );
 
         return dtosMap;
