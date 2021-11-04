@@ -61,17 +61,23 @@ post:
               example: ABCDEFGH12
   responses:
       200:
-        description: successfully created a new instance of the specified activity
+        description: successfully created a new instance of the specified activity and return list of updated parent instance block visibilities
         content:
           application/json:
             schema:
               type: object
               required:
                 - instanceGuid
+                - blockVisibility
               properties:
                 instanceGuid:
                   type: string
                   example: ABCDEFGH12
+                blockVisibility:
+                  type: array
+                  description: list of updated parent instance block visibilities
+                  items:
+                    $ref: '../pepper.yml#/components/schemas/Block.Visibility'
       400:
         description: invalid or missing required payload
         content:
