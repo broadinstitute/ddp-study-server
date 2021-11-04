@@ -3,7 +3,9 @@ package org.broadinstitute.dsm.db;
 import lombok.Data;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.ddp.db.SimpleResult;
+import org.broadinstitute.lddp.db.SimpleResult;
+import org.broadinstitute.dsm.db.dao.user.UserDao;
+import org.broadinstitute.dsm.db.dto.user.UserDto;
 import org.broadinstitute.dsm.db.structure.ColumnName;
 import org.broadinstitute.dsm.db.structure.TableName;
 import org.broadinstitute.dsm.statics.DBConstants;
@@ -75,8 +77,8 @@ public class AbstractionActivity {
 
     public static AbstractionActivity startAbstractionActivity(@NonNull String participantId, @NonNull String realm, @NonNull Integer changedBy, @NonNull String activity, @NonNull String status) {
         Long startDate = System.currentTimeMillis();
-        User user = User.getUser(changedBy);
-        AbstractionActivity abstractionActivity = new AbstractionActivity(null, participantId, activity, status, user.getName(), startDate, null, null);
+        UserDto userDto = new UserDao().get(changedBy).orElseThrow();
+        AbstractionActivity abstractionActivity = new AbstractionActivity(null, participantId, activity, status, userDto.getName().orElse(""), startDate, null, null);
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(SQL_INSERT_MEDICAL_RECORD_ABSTRACTION_ACTIVITY, Statement.RETURN_GENERATED_KEYS)) {
@@ -147,6 +149,11 @@ public class AbstractionActivity {
 
     public static Map<String, List<AbstractionActivity>> getAllAbstractionActivityByRealm(@NonNull String realm) {
         return getAllAbstractionActivityByRealm(realm, null);
+    }
+
+    public static Map<String, List<AbstractionActivity>> getAllAbstractionActivityByParticipantIds(@NonNull String realm, List<String> participantIds) {
+        String queryAddition = " AND p.ddp_participant_id IN (?)".replace("?", DBUtil.participantIdsInClause(participantIds));
+        return getAllAbstractionActivityByRealm(realm, queryAddition);
     }
 
     public static Map<String, List<AbstractionActivity>> getAllAbstractionActivityByRealm(@NonNull String realm, String queryAddition) {

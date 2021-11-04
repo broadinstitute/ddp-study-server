@@ -14,7 +14,7 @@ public class RoutePath {
     public static final String KIT_TYPE = "kitType";
     public static final String UPLOAD_REASONS = "uploadReasons";
     public static final String CARRIERS = "carriers";
-    public static final String ddpParticipantId = "ddpParticipantId";
+    public static final String DDP_PARTICIPANT_ID = "ddpParticipantId";
 
     //DDP - routes
     public static final String DDP_PARTICIPANTS_PATH = "/ddp/participants";
@@ -31,6 +31,9 @@ public class RoutePath {
     //BSP - routes
     public static final String BSP_KIT_QUERY_PATH = "/Kits/:label";
     public static final String BSP_KIT_REGISTERED = "/KitsRegistered";
+    public static final String DUMMY_ENDPOINT = "/createDummy/:label";
+    public static final String CREATE_CLINICAL_KIT_ENDPOINT = "/createClinicalDummy/:label/:type";
+    public static final String CLINICAL_KIT_ENDPOINT = "/ClinicalKits/:label";
 
     //Drug list endpoint route
     public static final String DRUG_LIST_REQUEST = "/drugs"; // display names only (for survey display)
@@ -38,8 +41,6 @@ public class RoutePath {
     public static final String CANCER_LIST_REQUEST = "/cancers";
 
     public static final String PARTICIPANT_STATUS_REQUEST = "/participantstatus/" + RequestParameter.REALM + "/" + RequestParameter.PARTICIPANTID;
-
-    public static final String BATCH_KITS_REQUEST = "/batchKitsStatus/" + RequestParameter.REALM ;
 
     public static final String ROUTE_SEPARATOR = "/";
 
@@ -104,6 +105,7 @@ public class RoutePath {
     public static final String EDIT_PARTICIPANT = "editParticipant";
     public static final String EDIT_PARTICIPANT_MESSAGE = "editParticipantMessageStatus";
     public static final String ADD_FAMILY_MEMBER = "familyMember";
+    public static final String GET_PARTICIPANTS_SIZE = "getParticipantsSize";
 
     public static String getRealm(Request request) {
         QueryParamsMap queryParams = request.queryMap();

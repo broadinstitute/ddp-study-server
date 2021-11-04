@@ -1,18 +1,14 @@
 package org.broadinstitute.dsm.route;
 
-import java.util.Map;
-
 import com.auth0.jwt.JWT;
-import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.exceptions.JWTDecodeException;
-import com.auth0.jwt.impl.JWTParser;
 import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.log4j.MDC;
 import org.broadinstitute.ddp.util.Utility;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.slf4j.MDC;
 import spark.Filter;
 import spark.Request;
 import spark.Response;

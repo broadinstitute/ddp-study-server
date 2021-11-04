@@ -1,7 +1,7 @@
 package org.broadinstitute.dsm.db;
 
 import lombok.NonNull;
-import org.broadinstitute.ddp.db.SimpleResult;
+import org.broadinstitute.lddp.db.SimpleResult;
 import org.broadinstitute.dsm.model.NameValue;
 import org.broadinstitute.dsm.util.SystemUtil;
 import org.slf4j.Logger;

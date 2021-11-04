@@ -7,7 +7,6 @@ import com.google.api.gax.rpc.ApiException;
 import com.google.cloud.pubsub.v1.Publisher;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.protobuf.ByteString;
-import com.google.pubsub.v1.ProjectTopicName;
 import com.google.pubsub.v1.PubsubMessage;
 import com.google.pubsub.v1.TopicName;
 import org.broadinstitute.dsm.db.EditParticipantMessage;
@@ -30,7 +29,7 @@ public class EditParticipantMessagePublisher {
 
     public static void publishWithErrorHandler(String projectId, String topicId, String messageData, Map<String, String> attributeMap)
             throws IOException, InterruptedException {
-        TopicName topicName = ProjectTopicName.of(projectId, topicId);
+        TopicName topicName = TopicName.of(projectId, topicId);
         Publisher publisher = null;
 
         try {
@@ -75,11 +74,7 @@ public class EditParticipantMessagePublisher {
         } finally {
             if (publisher != null) {
                 // When finished with the publisher, shutdown to free up resources.
-                try {
-                    publisher.shutdown();
-                } catch (Exception e) {
-                    logger.error("Could not shut down publisher", e);
-                }
+                publisher.shutdown();
                 publisher.awaitTermination(1, TimeUnit.MINUTES);
             }
         }

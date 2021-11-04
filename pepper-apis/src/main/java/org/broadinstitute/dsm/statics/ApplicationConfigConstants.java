@@ -19,6 +19,7 @@ public class ApplicationConfigConstants {
     //db connection information
     public static final String DSM_DB_MAX_CONNECTIONS = "portal.maxConnections";
     public static final String DSM_DB_URL = "portal.dbUrl";
+    public static final String CF_DSM_DB_URL = "dsmDBUrl";
 
     //google buckets
     public static final String GOOGLE_PROJECT_NAME = "portal.googleProjectName";
@@ -76,26 +77,20 @@ public class ApplicationConfigConstants {
     public static final String EMAIL_NOTIFICATIONS_SEND_GRID_TEMPLATE_ID = "sendGridTemplate";
 
     //db queries
-    public static final String GET_BSP_RESPONSE_INFORMATION_FOR_KIT = "portal.kit_query";
     public static final String GET_RECEIVED_KIT_INFORMATION_FOR_NOTIFICATION_EMAIL = "portal.selectReceivedKitForNotification";
     public static final String GET_SENT_KIT_INFORMATION_FOR_NOTIFICATION_EMAIL = "portal.selectSentKitForNotification";
     public static final String GET_ALLOWED_REALMS_FOR_USER_ROLE_STARTS_LIKE = "portal.selectAllowedRealmsStartsLike";
     public static final String GET_ROLES_LIKE = "portal.getRoles";
     public static final String UPDATE_KIT_REQUEST = "portal.updateKitRequest";
     public static final String INSERT_KIT_TRACKING = "portal.insertKitTrackingRequest";
-    public static final String UPDATE_KIT_ERROR = "portal.updateKitRequestError";
     public static final String GET_DDP_PARTICIPANT_ID = "portal.getDDPParticipantId";
     public static final String GET_DASHBOARD_INFORMATION_OF_KIT_REQUESTS = "portal.dashboardKitRequests";
     public static final String GET_DASHBOARD_INFORMATION_OF_KIT_REQUESTS_DEACTIVATED = "portal.dashboardKitDeactivated";
     public static final String GET_DASHBOARD_INFORMATION_OF_KIT_REQUESTS_SENT_REPORT = "portal.dashboardReportKitSent";
     public static final String GET_DASHBOARD_INFORMATION_OF_KIT_REQUESTS_RECEIVED_REPORT = "portal.dashboardReportKitReceived";
-    public static final String GET_FOUND_IF_KIT_WITH_DDP_LABEL_ALREADY_EXISTS = "portal.checkDdpLabelIdQuery";
     public static final String GET_FOUND_IF_KIT_LABEL_ALREADY_EXISTS_IN_TRACKING_TABLE = "portal.checkTrackingQuery";
     public static final String GET_KIT_TYPE_NEED_TRACKING_BY_DDP_LABEL = "portal.checkKitTypeNeedsTrackingQuery";
-    public static final String INSERT_KIT_REQUEST = "portal.insertKitRequest";
     public static final String INSERT_KIT = "portal.insertKit";
-    public static final String GET_COUNT_KITS_WITH_SAME_COLLABORATOR_SAMPLE_ID_AND_KIT_TYPE = "portal.counterCollaboratorSample";
-    public static final String GET_UNSENT_KIT_REQUESTS_FOR_REALM = "portal.unsentKitRequestsPerRealmQuery";
     public static final String GET_UPLOADED_KITS = "portal.selectUploadedKits";
     public static final String GET_LABEL_SETTINGS = "portal.labelSettingsQuery";
     public static final String UPDATE_LABEL_SETTINGS = "portal.updateLabelSettings";
@@ -129,4 +124,8 @@ public class ApplicationConfigConstants {
     public static final String CARE_EVOLVE_PROVIDER_NPI = "careEvolve.provider.NPI";
     public static final String CARE_EVOLVE_MAX_RETRIES = "careEvolve.maxRetries";
     public static final String CARE_EVOLVE_RETRY_WAIT_SECONDS = "careEvolve.retryWaitSeconds";
+
+    //pubsub for cf
+    public static final String PUBSUB_PROJECT_ID = "pubsub.projectId";
+    public static final String PUBSUB_TOPIC_ID = "pubsub.topicId";
 }

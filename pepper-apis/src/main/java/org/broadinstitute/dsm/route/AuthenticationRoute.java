@@ -6,10 +6,10 @@ import com.google.gson.JsonParser;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.security.Auth0Util;
-import org.broadinstitute.ddp.security.CookieUtil;
 import org.broadinstitute.ddp.security.SecurityHelper;
-import org.broadinstitute.dsm.db.User;
 import org.broadinstitute.dsm.db.UserSettings;
+import org.broadinstitute.dsm.db.dao.user.UserDao;
+import org.broadinstitute.dsm.db.dto.user.UserDto;
 import org.broadinstitute.dsm.util.UserUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,7 +17,6 @@ import spark.Request;
 import spark.Response;
 import spark.Route;
 
-import javax.servlet.http.Cookie;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -68,10 +67,11 @@ public class AuthenticationRoute implements Route {
                 logger.info("User (" + email + ") was found ");
                 Gson gson = new Gson();
                 Map<String, String> claims = new HashMap<>();
-                User user = User.getUser(email);
-                if (user == null) {
+                UserDao userDao = new UserDao();
+                UserDto userDto = userDao.getUserByEmail(email).orElseThrow();
+                if (userDto == null) {
                     userUtil.insertUser(email, email);
-                    user = User.getUser(email);
+                    userDto = userDao.getUserByEmail(email).orElseThrow();
                     claims.put(userAccessRoles, "user needs roles and groups");
                 }
                 else {
@@ -80,8 +80,8 @@ public class AuthenticationRoute implements Route {
                     logger.info(userSetting);
                     claims.put(userSettings, gson.toJson(UserSettings.getUserSettings(email), UserSettings.class));
                 }
-                claims.put(authUserId, user.getId());
-                claims.put(authUserName, user.getName());
+                claims.put(authUserId, String.valueOf(userDto.getId()));
+                claims.put(authUserName, userDto.getName().orElse(""));
                 claims.put(authUserEmail, email);
 
                 long auth0Expiration = auth0UserInfo.getTokenExpiration();

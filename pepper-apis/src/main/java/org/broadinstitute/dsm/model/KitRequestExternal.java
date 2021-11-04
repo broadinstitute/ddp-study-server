@@ -1,15 +1,12 @@
 package org.broadinstitute.dsm.model;
 
 import lombok.NonNull;
-import org.broadinstitute.ddp.db.SimpleResult;
 import org.broadinstitute.dsm.model.ddp.DDPParticipant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
-
-import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
 
 public class KitRequestExternal extends KitRequest {
 

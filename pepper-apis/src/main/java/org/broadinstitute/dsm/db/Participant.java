@@ -3,7 +3,7 @@ package org.broadinstitute.dsm.db;
 import lombok.Data;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.ddp.db.SimpleResult;
+import org.broadinstitute.lddp.db.SimpleResult;
 import org.broadinstitute.dsm.db.structure.ColumnName;
 import org.broadinstitute.dsm.db.structure.TableName;
 import org.broadinstitute.dsm.statics.DBConstants;
@@ -14,7 +14,10 @@ import org.slf4j.LoggerFactory;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
 
@@ -174,6 +177,11 @@ public class Participant {
 
     public static Map<String, Participant> getParticipants(@NonNull String realm) {
         return getParticipants(realm, null);
+    }
+
+    public static List<Participant> getParticipantsByIds(@NonNull String realm, List<String> participantIds) {
+        String queryAddition = " AND p.ddp_participant_id IN (?)".replace("?", DBUtil.participantIdsInClause(participantIds));
+        return new ArrayList<>(getParticipants(realm, queryAddition).values());
     }
 
     public static Map<String, Participant> getParticipants(@NonNull String realm, String queryAddition) {

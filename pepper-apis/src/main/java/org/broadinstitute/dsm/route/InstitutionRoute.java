@@ -1,27 +1,26 @@
 package org.broadinstitute.dsm.route;
 
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
-import com.google.gson.stream.JsonReader;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.db.SimpleResult;
 import org.broadinstitute.ddp.handlers.util.Result;
-import org.broadinstitute.dsm.db.*;
+import org.broadinstitute.dsm.db.DDPInstance;
+import org.broadinstitute.dsm.db.MedicalRecord;
 import org.broadinstitute.dsm.security.RequestHandler;
-import org.broadinstitute.dsm.statics.*;
+import org.broadinstitute.dsm.statics.RequestParameter;
+import org.broadinstitute.dsm.statics.RoutePath;
+import org.broadinstitute.dsm.statics.UserErrorMessages;
 import org.broadinstitute.dsm.util.UserUtil;
+import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import spark.Request;
 import spark.Response;
 
-import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
-import static org.broadinstitute.ddp.db.TransactionWrapper.withTxn;
+import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
 
 public class InstitutionRoute extends RequestHandler {
 
@@ -35,16 +34,13 @@ public class InstitutionRoute extends RequestHandler {
     @Override
     public Object processRequest(Request request, Response response, String userId) throws Exception {
         String requestBody = request.body();
-        JsonObject jsonObject = new JsonParser().parse(requestBody).getAsJsonObject();
-        String user = jsonObject.get(RequestParameter.USER_ID).getAsString();
-        if (!userId.equals(user)) {
-            throw new RuntimeException("User id was not equal. User Id in token " + userId + " user Id in request " + user);
-        }
+        JSONObject jsonObject = new JSONObject(requestBody);
+        String user = String.valueOf(jsonObject.get(RequestParameter.USER_ID));
         if (RoutePath.RequestMethod.POST.toString().equals(request.requestMethod())) {
             if (StringUtils.isNotBlank(requestBody)) {
-                String ddpParticipantId = jsonObject.get(RequestParameter.DDP_PARTICIPANT_ID).getAsString();
-                String realm = jsonObject.get(RequestParameter.DDP_REALM).getAsString();
-                if (UserUtil.checkUserAccess(realm, userId, "mr_view")) {
+                String ddpParticipantId = (String) jsonObject.get(RequestParameter.DDP_PARTICIPANT_ID);
+                String realm = (String) jsonObject.get(RequestParameter.DDP_REALM);
+                if (UserUtil.checkUserAccess(realm, userId, "mr_view", user)) {
                     if (StringUtils.isNotBlank(ddpParticipantId) && StringUtils.isNotBlank(realm)) {
                         DDPInstance ddpInstance = DDPInstance.getDDPInstance(realm);
                         if (ddpInstance != null) {
@@ -64,7 +60,7 @@ public class InstitutionRoute extends RequestHandler {
             if (jsonObject.has(RequestParameter.POLICY)) {
                 policy = String.valueOf(jsonObject.get(RequestParameter.POLICY));
             }
-            if (UserUtil.checkUserAccess(null, userId, "mr_request")) {
+            if (UserUtil.checkUserAccess(null, userId, "mr_request", user)) {
                 String facility = String.valueOf(jsonObject.get(RequestParameter.FACILITY));
                 String userMail = String.valueOf(jsonObject.get(RequestParameter.USER_MAIL));
                 applyDestructionPolicy(userMail, facility, policy);
@@ -81,17 +77,15 @@ public class InstitutionRoute extends RequestHandler {
     }
 
     private void applyDestructionPolicy(@NonNull String user, String facility, String policy) {
-        SimpleResult results = withTxn((handle) -> {
+        SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
-            try (Connection conn = handle.getConnection()) {
-                try (PreparedStatement stmt = conn.prepareStatement(APPLY_DESTRUCTION_POLICY)) {
-                    if (StringUtils.isNotBlank(user) && StringUtils.isNotBlank(facility) && StringUtils.isNotBlank(policy)) {
-                        stmt.setString(1, policy);
-                        stmt.setString(2, String.valueOf(System.currentTimeMillis()));
-                        stmt.setString(3, user);
-                        stmt.setString(4, facility);
-                        stmt.executeUpdate();
-                    }
+            try (PreparedStatement stmt = conn.prepareStatement(APPLY_DESTRUCTION_POLICY)) {
+                if (StringUtils.isNotBlank(user) && StringUtils.isNotBlank(facility) && StringUtils.isNotBlank(policy)) {
+                    stmt.setString(1, policy);
+                    stmt.setString(2, String.valueOf(System.currentTimeMillis()));
+                    stmt.setString(3, user);
+                    stmt.setString(4, facility);
+                    stmt.executeUpdate();
                 }
             }
             catch (SQLException ex) {

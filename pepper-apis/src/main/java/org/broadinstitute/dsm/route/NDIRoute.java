@@ -2,13 +2,12 @@ package org.broadinstitute.dsm.route;
 
 import org.broadinstitute.ddp.handlers.util.Result;
 import org.broadinstitute.dsm.db.NationalDeathIndex;
-import org.broadinstitute.dsm.model.NDIUploadObject;
 import org.broadinstitute.dsm.exception.FileColumnMissing;
 import org.broadinstitute.dsm.exception.FileWrongFormat;
 import org.broadinstitute.dsm.exception.FileWrongSeparator;
 import org.broadinstitute.dsm.exception.UploadLineException;
+import org.broadinstitute.dsm.model.NDIUploadObject;
 import org.broadinstitute.dsm.security.RequestHandler;
-import org.broadinstitute.dsm.statics.RequestParameter;
 import org.broadinstitute.dsm.statics.UserErrorMessages;
 import org.broadinstitute.dsm.util.SystemUtil;
 import org.broadinstitute.dsm.util.UserUtil;
@@ -34,10 +33,10 @@ public class NDIRoute extends RequestHandler {
 
     @Override
     public Object processRequest(Request request, Response response, String userId) throws Exception {
-        if (UserUtil.checkUserAccess(null, userId, "ndi_download")) {
+        String userIdRequest = UserUtil.getUserId(request);
+        if (UserUtil.checkUserAccess(null, userId, "ndi_download", userIdRequest)) {
             HttpServletRequest rawRequest = request.raw();
             String content = SystemUtil.getBody(rawRequest);
-            String userIdRequest = UserUtil.getUserId(request);
             try {
                 List<NDIUploadObject> requests = isFileValid(content);
                 if (requests != null) {

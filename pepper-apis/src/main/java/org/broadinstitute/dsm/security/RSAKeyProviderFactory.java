@@ -1,11 +1,12 @@
 package org.broadinstitute.dsm.security;
 
-import java.security.interfaces.RSAPrivateKey;
-import java.security.interfaces.RSAPublicKey;
-
 import com.auth0.jwk.JwkException;
 import com.auth0.jwk.JwkProvider;
 import com.auth0.jwt.interfaces.RSAKeyProvider;
+
+import java.security.interfaces.RSAPrivateKey;
+import java.security.interfaces.RSAPublicKey;
+
 /**
  * A factory class creating specific RSAKeyProvider instances.
  */

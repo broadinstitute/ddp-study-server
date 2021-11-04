@@ -5,19 +5,15 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 import lombok.NonNull;
 import org.broadinstitute.ddp.db.SimpleResult;
+import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.handlers.util.Result;
-import org.broadinstitute.ddp.util.ConfigUtil;
+import org.broadinstitute.dsm.db.DDPInstance;
+import org.broadinstitute.dsm.db.dao.ddp.kitrequest.KitRequestDao;
+import org.broadinstitute.dsm.db.dto.ddp.kitrequest.KitRequestDto;
 import org.broadinstitute.dsm.model.KitDDPNotification;
 import org.broadinstitute.dsm.model.at.ReceiveKitRequest;
 import org.broadinstitute.dsm.security.RequestHandler;
-import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
-import org.broadinstitute.dsm.statics.DBConstants;
-import org.broadinstitute.dsm.statics.RoutePath;
-import org.broadinstitute.dsm.statics.UserErrorMessages;
-import org.broadinstitute.dsm.util.EventUtil;
-import org.broadinstitute.dsm.util.KitUtil;
-import org.broadinstitute.dsm.util.NotificationUtil;
-import org.broadinstitute.dsm.util.UserUtil;
+import org.broadinstitute.dsm.statics.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import spark.Request;
@@ -27,7 +23,9 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
 
@@ -43,13 +41,9 @@ public class KitStatusChangeRoute extends RequestHandler {
 
     @Override
     public Object processRequest(Request request, Response response, String userId) throws Exception {
-        if (UserUtil.checkUserAccess(null, userId, "kit_shipping") || UserUtil.checkUserAccess(null, userId, "kit_receiving")) {
-            String requestBody = request.body();
-            String userIdRequest = UserUtil.getUserId(request);
-            if (!userId.equals(userIdRequest)) {
-                throw new RuntimeException("User id was not equal. User Id in token " + userId + " user Id in request " + userIdRequest);
-            }
-
+        String requestBody = request.body();
+        String userIdRequest = UserUtil.getUserId(request);
+        if (UserUtil.checkUserAccess(null, userId, "kit_shipping", userIdRequest) || UserUtil.checkUserAccess(null, userId, "kit_receiving", userIdRequest)) {
             List<ScanError> scanErrorList = new ArrayList<>();
 
             long currentTime = System.currentTimeMillis();
@@ -89,10 +83,15 @@ public class KitStatusChangeRoute extends RequestHandler {
                 addValue = scan.getAsJsonObject().get("leftValue").getAsString();
                 kit = scan.getAsJsonObject().get("rightValue").getAsString();
                 //check if ddp_label is blood kit
-                if (checkKitLabel(ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.GET_KIT_TYPE_NEED_TRACKING_BY_DDP_LABEL), kit)) {
+                if (checkKitLabel(TransactionWrapper.getSqlFromConfig(ApplicationConfigConstants.GET_KIT_TYPE_NEED_TRACKING_BY_DDP_LABEL), kit)) {
                     //check if kit_label is in tracking table
-                    if (checkKitLabel(ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.GET_FOUND_IF_KIT_LABEL_ALREADY_EXISTS_IN_TRACKING_TABLE), addValue)) {
+                    if (checkKitLabel(TransactionWrapper.getSqlFromConfig(ApplicationConfigConstants.GET_FOUND_IF_KIT_LABEL_ALREADY_EXISTS_IN_TRACKING_TABLE), addValue)) {
                         updateKit(changeType, kit, addValue, currentTime, scanErrorList, userId);
+                        KitRequestDao kitRequestDao = new KitRequestDao();
+                        KitRequestDto kitRequestByLabel = kitRequestDao.getKitRequestByLabel(kit);
+                        if (kitRequestByLabel != null) {
+                            writeSampleSentToES(kitRequestByLabel);
+                        }
                     }
                     else {
                         scanErrorList.add(new ScanError(kit, "Kit with DSM Label \"" + kit + "\" does not have a Tracking Label"));
@@ -117,15 +116,31 @@ public class KitStatusChangeRoute extends RequestHandler {
         }
     }
 
+    private static void writeSampleSentToES(KitRequestDto kitRequest) {
+        int ddpInstanceId = kitRequest.getDdpInstanceId();
+        DDPInstance ddpInstance = DDPInstance.getDDPInstanceById(ddpInstanceId);
+        Map<String, Object> nameValuesMap = new HashMap<>();
+        ElasticSearchDataUtil.setCurrentStrictYearMonthDay(nameValuesMap, ESObjectConstants.SENT);
+        if (ddpInstance != null && kitRequest.getDdpKitRequestId() != null && kitRequest.getDdpParticipantId() != null) {
+            ElasticSearchUtil.writeSample(
+                    ddpInstance,
+                    kitRequest.getDdpKitRequestId(),
+                    kitRequest.getDdpParticipantId(),
+                    ESObjectConstants.SAMPLES,
+                    ESObjectConstants.KIT_REQUEST_ID, nameValuesMap
+            );
+        }
+    }
+
     private void updateKit(@NonNull String changeType, @NonNull String kit, String addValue, @NonNull long currentTime, @NonNull List<ScanError> scanErrorList, @NonNull String userId) {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
             String query = null;
             if (RoutePath.FINAL_SCAN_REQUEST.equals(changeType) || RoutePath.SENT_KIT_REQUEST.equals(changeType)) {
-                query = ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.UPDATE_KIT_REQUEST);
+                query = TransactionWrapper.getSqlFromConfig(ApplicationConfigConstants.UPDATE_KIT_REQUEST);
             }
             else if (RoutePath.TRACKING_SCAN_REQUEST.equals(changeType)) {
-                query = ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.INSERT_KIT_TRACKING);
+                query = TransactionWrapper.getSqlFromConfig(ApplicationConfigConstants.INSERT_KIT_TRACKING);
             }
             else if (RoutePath.RECEIVED_KIT_REQUEST.equals(changeType)) {
                 query = KitUtil.SQL_UPDATE_KIT_RECEIVED;
@@ -144,7 +159,7 @@ public class KitStatusChangeRoute extends RequestHandler {
                 if (result == 1) {
                     if (RoutePath.FINAL_SCAN_REQUEST.equals(changeType) || RoutePath.SENT_KIT_REQUEST.equals(changeType)) {
                         logger.info("Updated kitRequests w/ ddp_label " + kit);
-                        KitDDPNotification kitDDPNotification = KitDDPNotification.getKitDDPNotification(ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.GET_SENT_KIT_INFORMATION_FOR_NOTIFICATION_EMAIL), kit, 1);
+                        KitDDPNotification kitDDPNotification = KitDDPNotification.getKitDDPNotification(TransactionWrapper.getSqlFromConfig(ApplicationConfigConstants.GET_SENT_KIT_INFORMATION_FOR_NOTIFICATION_EMAIL), kit, 1);
                         if (kitDDPNotification != null) {
                             EventUtil.triggerDDP(conn, kitDDPNotification);
                         }
@@ -203,6 +218,29 @@ public class KitStatusChangeRoute extends RequestHandler {
                 logger.error("Error something went wrong at the scan pages");
             }
         }
+    }
+
+    private String getKitRequestId(@NonNull String query, @NonNull String kitLabel) {
+        List<String> ddpKitRequestIds = new ArrayList<>();
+        SimpleResult results = inTransaction((conn) -> {
+            SimpleResult dbVals = new SimpleResult(0);
+            try (PreparedStatement stmt = conn.prepareStatement(query)) {
+                stmt.setString(1, kitLabel);
+                try (ResultSet rs = stmt.executeQuery()) {
+                    if (rs.next()) {
+                        ddpKitRequestIds.add(rs.getString(0));
+                    }
+                }
+            }
+            catch (SQLException ex) {
+                dbVals.resultException = ex;
+            }
+            if (dbVals.resultException != null) {
+                throw new RuntimeException("Error getting kit request id ", dbVals.resultException);
+            }
+            return dbVals;
+        });
+        return ddpKitRequestIds.get(0);
     }
 
     private boolean checkKitLabel(@NonNull String query, @NonNull String kitLabel) {

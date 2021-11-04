@@ -4,8 +4,8 @@ import com.google.gson.Gson;
 import lombok.Data;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.ddp.db.SimpleResult;
-import org.broadinstitute.ddp.handlers.util.Result;
+import org.broadinstitute.lddp.db.SimpleResult;
+import org.broadinstitute.lddp.handlers.util.Result;
 import org.broadinstitute.dsm.db.structure.ColumnName;
 import org.broadinstitute.dsm.db.structure.DBElement;
 import org.broadinstitute.dsm.db.structure.TableName;
@@ -578,10 +578,23 @@ public class ViewFilter {
                             break;
 
                         case 3: // exact matching value
-                            if (word.equals(Filter.TODAY)) {
-                                value = getDate();
+                            if (word.equals(Filter.TODAY) || word.matches("'\\d{4}-\\d{1,2}-\\d{1,2}'")) {
+                                if (word.equals(Filter.TODAY)) {
+                                    value = getDate();
+                                } else {
+                                    value = word.replace("'","");
+                                }
                                 state = 22;
                                 break;
+                            }
+                            else if (word.equals(Filter.TRUE) || word.equals(Filter.FALSE)) {
+                                value = word;
+                                type = Filter.BOOLEAN;
+                                state = 40;
+                            } else if (StringUtils.isNumeric(word)) {
+                                value = word;
+                                type = Filter.NUMBER;
+                                state = 40;
                             }
                             else {
                                 tempValue = word;
@@ -620,6 +633,8 @@ public class ViewFilter {
                             value = trimValue(word);
                             if (isValidDate(value, false)) {
                                 type = Filter.DATE;
+                            } else if (StringUtils.isNumeric(word)) {
+                                type = Filter.NUMBER;
                             }
                             state = 11;
                             break;
@@ -879,11 +894,13 @@ public class ViewFilter {
                                 state = 8;
                             }
                             break;
+                        case 40:
+                            break;
 
                     }
                 }
             }
-            if (state != 7 && state != 9 && state != 10 && state != 11 && state != 13 && state != 22 && state != 25 && state != 37) {// terminal states
+            if (state != 7 && state != 9 && state != 10 && state != 11 && state != 13 && state != 22 && state != 25 && state != 37 && state != 40) {// terminal states
                 throw new RuntimeException("Query parsing ended in bad state: " + state);
             }
             String columnKey = columnName;
@@ -898,80 +915,90 @@ public class ViewFilter {
                     throw new RuntimeException("Bad columnName! " + columnName);
                 }
                 if (Filter.JSON_ARRAY.equals(type)) {
-                    filter.type = type;
-                    filter.filter1 = new NameValue(columnName, value);
-                    filter.filter2 = new NameValue(path, null);
-                    filter.participantColumn = new ParticipantColumn(path, tableName);
+                    filter.setType(type);
+                    filter.setFilter1(new NameValue(columnName, value));
+                    filter.setFilter2(new NameValue(path, null));
+                    filter.setParticipantColumn(new ParticipantColumn(path, tableName));
                 }
                 else {
                     if (range) {
-                        filter.range = true;
+                        filter.setRange(true);
                     }
                     if (StringUtils.isNotBlank(value)) {
                         if (f1) {
-                            filter.filter1 = new NameValue(columnName, value);
+                            filter.setFilter1(new NameValue(columnName, value));
                         }
                         else {
-                            filter.filter2 = new NameValue(columnName, value);
+                            filter.setFilter2(new NameValue(columnName, value));
                         }
                     }
-                    filter.notEmpty = notEmpty;
-                    filter.empty = empty;
+                    filter.setNotEmpty(notEmpty);
+                    filter.setEmpty(empty);
                     filters.put(columnName, filter);
                 }
             }
             else {
                 Filter filter = new Filter();
-                filter.exactMatch = exact;
-                filter.range = range;
-                filter.notEmpty = notEmpty;
-                filter.empty = empty;
-                filter.participantColumn = new ParticipantColumn(columnName, tableName);
+                filter.setExactMatch(exact);
+                filter.setRange(range);
+                filter.setNotEmpty(notEmpty);
+                filter.setParentName(viewFilter.getParent());
+                filter.setEmpty(empty);
+                filter.setParticipantColumn(new ParticipantColumn(columnName, tableName));
                 if (StringUtils.isNotBlank(type) && type.equals(Filter.JSON_ARRAY) && StringUtils.isNotBlank(path)) {
-                    filter.participantColumn = new ParticipantColumn(path, tableName);
+                    filter.setParticipantColumn(new ParticipantColumn(path, tableName));
                 }
                 String[] b = new String[selectedOptions.size()];
-                filter.selectedOptions = selectedOptions.toArray(b);
-                filter.type = type == null ? Filter.TEXT : type;
+                filter.setSelectedOptions(selectedOptions.toArray(b));
+                filter.setType(type == null ? Filter.TEXT : type);
                 if (isValidDate(value, false)) {
-                    type = Filter.DATE;
+                    filter.setType(Filter.DATE);
                 }
                 if (Filter.JSON_ARRAY.equals(filter.type)) {
-                    filter.filter1 = new NameValue(columnName, value);
-                    filter.filter2 = new NameValue(path, null);
+                    filter.setFilter1(new NameValue(columnName, value));
+                    filter.setFilter2(new NameValue(path, null));
                 }
                 if (Filter.ADDITIONAL_VALUES.equals(filter.type)) {
-                    filter.participantColumn = new ParticipantColumn(path, tableName);
+                    filter.setParticipantColumn(new ParticipantColumn(path, tableName));
                 }
-                else if (Filter.TEXT.equals(filter.type)) {
-                    filter.filter1 = new NameValue(columnName, value);
+                else if (Filter.TEXT.equals(filter.type) || Filter.BOOLEAN.equals(filter.type) || Filter.NUMBER.equals(filter.type)) {
+                    if (Filter.NUMBER.equals(filter.type)
+                            && condition.contains(Filter.SMALLER_EQUALS_TRIMMED) && !arrayContains(conditions, Filter.LARGER_EQUALS_TRIMMED)) {
+                        filter.setFilter2(new NameValue(columnName, value));
+                    } else {
+                        filter.setFilter1(new NameValue(columnName, value));
+                    }
                 }
                 else if (!Filter.CHECKBOX.equals(filter.type)) {
                     if (f1) {// first in range
-                        filter.filter1 = new NameValue(columnName, value);
+                        filter.setFilter1(new NameValue(columnName, value));
                     }
                     if (path != null && !f2) {//additional field
-                        filter.filter2 = new NameValue(path, "");
+                        filter.setFilter2(new NameValue(path, ""));
+                    }
+                    if (f1 && !f2 && Filter.DATE.equals(filter.type) && filter.isRange()) {
+                        // set max date to very far in the future
+                        filter.setFilter2(new NameValue(filter.getFilter1().getName(), LocalDateTime.now().plusYears(10).format(DateTimeFormatter.ISO_LOCAL_DATE)));
                     }
                     if (f2) {// maximum set in a range filter
-                        if (filter.filter1 == null) {
-                            filter.filter1 = new NameValue(columnName, null);
+                        if (filter.getFilter1() == null) {
+                            filter.setFilter1(new NameValue(columnName, null));
                         }
-                        filter.filter2 = new NameValue(columnName, value);
+                        filter.setFilter2(new NameValue(columnName, value));
                     }
                     else if (StringUtils.isBlank(value)) {// no values
-                        filter.filter1 = new NameValue(columnName, null);
-                        filter.filter2 = new NameValue(columnName, null);
+                        filter.setFilter1(new NameValue(columnName, null));
+                        filter.setFilter2(new NameValue(columnName, null));
                     }
                 }
                 else {
                     if (filter1 != null && !f2) {
                         filter1.setName(columnName);// to change from dbName to column name
-                        filter.filter1 = filter1;
+                        filter.setFilter1(filter1);
                     }
                     else if (filter2 != null || f2) {
                         filter2.setName(columnName);// to change from dbName to column name
-                        filter.filter2 = filter2;
+                        filter.setFilter2(filter2);
                     }
                 }
                 filters.put(columnName, filter);
@@ -983,6 +1010,15 @@ public class ViewFilter {
                 viewFilter.userId, filters.values().toArray(a), viewFilter.parent,
                 viewFilter.icon, viewFilter.quickFilterName, newQuery, null, viewFilter.realmId);
         return result;
+    }
+
+    private static boolean arrayContains(String[] arr, String str) {
+        for (String s : arr) {
+            if (s.contains(str)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static String[] getColumnTableNames(String word) {

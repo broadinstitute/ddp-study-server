@@ -2,8 +2,10 @@ package org.broadinstitute.dsm.db;
 
 import lombok.Data;
 import lombok.NonNull;
-import org.broadinstitute.ddp.db.SimpleResult;
+import org.broadinstitute.lddp.db.SimpleResult;
 import org.broadinstitute.dsm.db.structure.ColumnName;
+import org.broadinstitute.dsm.db.structure.DbDateConversion;
+import org.broadinstitute.dsm.db.structure.SqlDateConverter;
 import org.broadinstitute.dsm.db.structure.TableName;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.slf4j.Logger;
@@ -69,6 +71,7 @@ public class Tissue {
     private final String shlWorkNumber;
 
     @ColumnName (DBConstants.SCROLLS_RECEIVED)
+    @DbDateConversion(SqlDateConverter.STRING_DAY)
     private final String scrollsReceived;
 
     @ColumnName (DBConstants.SK_ID)
@@ -78,6 +81,7 @@ public class Tissue {
     private final String smId;
 
     @ColumnName (DBConstants.SENT_GP)
+    @DbDateConversion(SqlDateConverter.STRING_DAY)
     private final String sentGp;
 
     private String changedBy;
@@ -92,6 +96,7 @@ public class Tissue {
     private String additionalValues;
 
     @ColumnName (DBConstants.TISSUE_RETURN_DATE)
+    @DbDateConversion(SqlDateConverter.STRING_DAY)
     private String tissueReturnDate;
     //
     @ColumnName (DBConstants.RETURN_FEDEX_ID)

@@ -33,6 +33,11 @@ public class Address {
     public Address() {
     }
 
+    public Address(String addressLine1, String city, String state, String zipCode,
+                   String country, String phoneNumber) {
+        this(null, addressLine1, null, city, state, zipCode, country, phoneNumber);
+    }
+
     public Address(String company, String addressLine1, String addressLine2, String city, String state, String zipCode,
                    String country, String phoneNumber) {
 
@@ -44,8 +49,9 @@ public class Address {
         this.zipCode = zipCode;
         this.country = country;
         this.phoneNumber = phoneNumber;
-
     }
+
+
     public boolean isComplete(){
         return  StringUtils.isNotBlank(this.company) && StringUtils.isNotBlank(this.addressLine1) &&
                 StringUtils.isNotBlank(this.city) && StringUtils.isNotBlank(this.state) &&

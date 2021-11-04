@@ -35,7 +35,7 @@ public class MedicalRecordLogRoute extends RequestHandler {
 
     @Override
     public Object processRequest(Request request, Response response, String userId) throws Exception {
-        if (UserUtil.checkUserAccess(null, userId, "mr_view")) {
+        if (UserUtil.checkUserAccess(null, userId, "mr_view", null)) {
             String medicalRecordId = request.params(RequestParameter.MEDICALRECORDID);
             if (StringUtils.isNotBlank(medicalRecordId)) {
                 if (request.requestMethod().equals(RoutePath.RequestMethod.GET.toString())) {

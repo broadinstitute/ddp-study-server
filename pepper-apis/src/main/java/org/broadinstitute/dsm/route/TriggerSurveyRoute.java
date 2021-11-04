@@ -6,10 +6,10 @@ import com.google.gson.JsonParser;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.db.SimpleResult;
+import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.handlers.util.ParticipantSurveyInfo;
 import org.broadinstitute.ddp.handlers.util.Result;
 import org.broadinstitute.ddp.handlers.util.SimpleFollowUpSurvey;
-import org.broadinstitute.ddp.util.ConfigUtil;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.SurveyTrigger;
 import org.broadinstitute.dsm.exception.SurveyNotCreated;
@@ -31,7 +31,10 @@ import javax.servlet.http.HttpServletRequest;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Statement;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 
 import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
 
@@ -43,9 +46,10 @@ public class TriggerSurveyRoute extends RequestHandler {
 
     @Override
     public Object processRequest(Request request, Response response, String userId) throws Exception {
+        String userIdRequest = UserUtil.getUserId(request);
         if (request.requestMethod().equals(RoutePath.RequestMethod.GET.toString())) {
             String realm = request.params(RequestParameter.REALM);
-            if (UserUtil.checkUserAccess(realm, userId, "survey_creation")) {
+            if (UserUtil.checkUserAccess(realm, userId, "survey_creation", userIdRequest)) {
                 if (StringUtils.isNotBlank(realm)) {
                     DDPInstance instance = DDPInstance.getDDPInstanceWithRole(realm, DBConstants.SURVEY_STATUS_ENDPOINTS);
                     QueryParamsMap queryParams = request.queryMap();
@@ -108,7 +112,7 @@ public class TriggerSurveyRoute extends RequestHandler {
             else {
                 throw new RuntimeException("No realm query param was sent");
             }
-            if (UserUtil.checkUserAccess(realm, userId, "survey_creation")) {
+            if (UserUtil.checkUserAccess(realm, userId, "survey_creation", userIdRequest)) {
                 String surveyName;
                 if (queryParams.value("surveyName") != null) {
                     surveyName = queryParams.get("surveyName").value();
@@ -129,10 +133,6 @@ public class TriggerSurveyRoute extends RequestHandler {
                 }
                 else {
                     throw new RuntimeException("No isFileUpload query param was sent");
-                }
-                String userIdRequest = UserUtil.getUserId(request);
-                if (!userId.equals(userIdRequest)) {
-                    throw new RuntimeException("User id was not equal. User Id in token " + userId + " user Id in request " + userIdRequest);
                 }
 
                 boolean triggerAgainQueryParam = false;
@@ -239,7 +239,7 @@ public class TriggerSurveyRoute extends RequestHandler {
     private long addTriggerCommentIntoDB(@NonNull String userId, @NonNull String reason, @NonNull long currentTime) {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement stmt = conn.prepareStatement(ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.INSERT_SURVEY_TRIGGER), Statement.RETURN_GENERATED_KEYS)) {
+            try (PreparedStatement stmt = conn.prepareStatement(TransactionWrapper.getSqlFromConfig(ApplicationConfigConstants.INSERT_SURVEY_TRIGGER), Statement.RETURN_GENERATED_KEYS)) {
                 stmt.setString(1, reason);
                 stmt.setLong(2, currentTime);
                 stmt.setString(3, userId);

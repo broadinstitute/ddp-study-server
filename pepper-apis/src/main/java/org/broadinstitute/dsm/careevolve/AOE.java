@@ -1,9 +1,9 @@
 package org.broadinstitute.dsm.careevolve;
 
+import com.google.gson.annotations.SerializedName;
+
 import java.util.ArrayList;
 import java.util.List;
-
-import com.google.gson.annotations.SerializedName;
 
 /**
  * Ask at Order Entry tuple, which has a code,

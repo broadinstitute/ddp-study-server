@@ -3,10 +3,12 @@ package org.broadinstitute.dsm.db;
 import lombok.Data;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.ddp.db.SimpleResult;
+import org.broadinstitute.lddp.db.SimpleResult;
 import org.broadinstitute.dsm.db.structure.ColumnName;
+import org.broadinstitute.dsm.db.structure.DbDateConversion;
+import org.broadinstitute.dsm.db.structure.SqlDateConverter;
 import org.broadinstitute.dsm.db.structure.TableName;
-import org.broadinstitute.dsm.model.Patch;
+import org.broadinstitute.dsm.model.patch.Patch;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.QueryExtension;
 import org.broadinstitute.dsm.util.DBUtil;
@@ -17,7 +19,10 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
 
@@ -108,33 +113,40 @@ public class OncHistoryDetail {
     private String request;
 
     @ColumnName (DBConstants.FAX_SENT)
+    @DbDateConversion(SqlDateConverter.STRING_DAY)
     private String tFaxSent;
 
     @ColumnName (DBConstants.FAX_SENT_BY)
     private String tFaxSentBy;
 
     @ColumnName (DBConstants.FAX_CONFIRMED)
+    @DbDateConversion(SqlDateConverter.STRING_DAY)
     private String tFaxConfirmed;
 
     @ColumnName (DBConstants.FAX_SENT_2)
+    @DbDateConversion(SqlDateConverter.STRING_DAY)
     private String tFaxSent2;
 
     @ColumnName (DBConstants.FAX_SENT_2_BY)
     private String tFaxSent2By;
 
     @ColumnName (DBConstants.FAX_CONFIRMED_2)
+    @DbDateConversion(SqlDateConverter.STRING_DAY)
     private String tFaxConfirmed2;
 
     @ColumnName (DBConstants.FAX_SENT_3)
+    @DbDateConversion(SqlDateConverter.STRING_DAY)
     private String tFaxSent3;
 
     @ColumnName (DBConstants.FAX_SENT_3_BY)
     private String tFaxSent3By;
 
     @ColumnName (DBConstants.FAX_CONFIRMED_3)
+    @DbDateConversion(SqlDateConverter.STRING_DAY)
     private String tFaxConfirmed3;
 
     @ColumnName (DBConstants.TISSUE_RECEIVED)
+    @DbDateConversion(SqlDateConverter.STRING_DAY)
     private String tissueReceived;
 
     @ColumnName (DBConstants.TISSUE_PROBLEM_OPTION)
@@ -281,6 +293,11 @@ public class OncHistoryDetail {
 
     public static Map<String, List<OncHistoryDetail>> getOncHistoryDetails(@NonNull String realm) {
         return getOncHistoryDetails(realm, null);
+    }
+
+    public static Map<String, List<OncHistoryDetail>> getOncHistoryDetailsByParticipantIds(@NonNull String realm, List<String> participantIds) {
+        String queryAddition = " AND p.ddp_participant_id IN (?)".replace("?", DBUtil.participantIdsInClause(participantIds));
+        return getOncHistoryDetails(realm, queryAddition);
     }
 
     public static Map<String, List<OncHistoryDetail>> getOncHistoryDetails(@NonNull String realm, String queryAddition) {

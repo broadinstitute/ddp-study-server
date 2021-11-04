@@ -15,8 +15,6 @@ public class MedicalRecordUtil {
 
     private static final Logger logger = LoggerFactory.getLogger(MedicalRecordUtil.class);
 
-    private static final String SQL_INSERT_PARTICIPANT = "INSERT INTO ddp_participant (ddp_participant_id, last_version, last_version_date, ddp_instance_id, release_completed, " +
-            "last_changed, changed_by) VALUES (?,?,?,?,?,?,?)";
     private static final String SQL_UPDATE_PARTICIPANT = "UPDATE ddp_participant SET last_version = ?, last_version_date = ?, last_changed = ?, changed_by = ? WHERE ddp_participant_id = ? " +
             "AND ddp_instance_id = ? AND last_version != ?";
     private static final String SQL_INSERT_INSTITUTION = "INSERT INTO ddp_institution (ddp_institution_id, type, participant_id, last_changed) VALUES (?, ?, (SELECT participant_id " +
@@ -228,28 +226,6 @@ public class MedicalRecordUtil {
             throw new RuntimeException("Error updating/inserting participant ", e);
         }
         return null;
-    }
-
-    public static void writeParticipantIntoDB(@NonNull Connection conn, @NonNull String participantId, @NonNull String instanceId,
-                                              @NonNull long lastVersion, @NonNull String lastUpdated, @NonNull String userId) {
-        //new participant
-        try (PreparedStatement insertParticipant = conn.prepareStatement(SQL_INSERT_PARTICIPANT)) {
-            insertParticipant.setString(1, participantId);
-            insertParticipant.setLong(2, lastVersion);
-            insertParticipant.setString(3, lastUpdated);
-            insertParticipant.setString(4, instanceId);
-            insertParticipant.setInt(5, 1);
-            insertParticipant.setLong(6, System.currentTimeMillis());
-            insertParticipant.setString(7, userId);
-            int result = insertParticipant.executeUpdate();
-            if (result != 1) {
-                throw new RuntimeException("Error updating row");
-            }
-            logger.info("Added new participant w/ id " + participantId);
-        }
-        catch (SQLException e) {
-            throw new RuntimeException("Error inserting new participant ", e);
-        }
     }
 
     public static boolean updateParticipant(@NonNull Connection conn, @NonNull String participantId, @NonNull String instanceId,

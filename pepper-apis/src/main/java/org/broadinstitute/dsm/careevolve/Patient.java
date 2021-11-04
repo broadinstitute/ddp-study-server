@@ -1,6 +1,7 @@
 package org.broadinstitute.dsm.careevolve;
 
 import com.google.gson.annotations.SerializedName;
+import org.apache.commons.lang3.StringUtils;
 
 public class Patient {
 
@@ -46,5 +47,35 @@ public class Patient {
         this.ethnicity = ethnicity;
         this.gender = gender;
         this.address = address;
+    }
+
+    public String getPatientId() {
+        return patientId;
+    }
+
+    public boolean hasFullName() {
+        return StringUtils.isNotBlank(firstName) && StringUtils.isNotBlank(lastName);
+    }
+
+    public boolean hasDateOfBirth() {
+        return StringUtils.isNotBlank(dateOfBirth);
+    }
+
+    public boolean hasAddress() {
+        return address != null;
+    }
+
+    @Override
+    public String toString() {
+        return "Patient{" +
+                "patientId='" + patientId + '\'' +
+                ", lastName='" + lastName + '\'' +
+                ", firstName='" + firstName + '\'' +
+                ", dateOfBirth='" + dateOfBirth + '\'' +
+                ", race='" + race + '\'' +
+                ", ethnicity='" + ethnicity + '\'' +
+                ", gender='" + gender + '\'' +
+                ", address=" + address +
+                '}';
     }
 }

@@ -3,6 +3,7 @@ package org.broadinstitute.dsm.statics;
 public class RequestParameter {
 
     public static final String LABEL = ":label";
+    public static final String KIT_TYPE = ":type";
     public static final String START = ":start";
     public static final String END = ":end";
     public static final String PARTICIPANTID = ":participantId";

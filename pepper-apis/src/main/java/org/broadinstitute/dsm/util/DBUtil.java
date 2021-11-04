@@ -2,13 +2,12 @@ package org.broadinstitute.dsm.util;
 
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.ddp.db.SimpleResult;
+import org.broadinstitute.lddp.db.SimpleResult;
 import org.broadinstitute.dsm.statics.DBConstants;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
 
@@ -37,7 +36,7 @@ public class DBUtil {
 
     public static Long getBookmark(Connection conn, String bookmarkName) {
         if (conn != null) {
-            try (PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_BOOKMARK,ResultSet.TYPE_SCROLL_SENSITIVE,ResultSet.CONCUR_READ_ONLY)) {
+            try (PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_BOOKMARK, ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_READ_ONLY)) {
                 stmt.setString(1, bookmarkName);
                 try (ResultSet rs = stmt.executeQuery()) {
                     rs.last();
@@ -89,14 +88,14 @@ public class DBUtil {
         }
     }
 
-    public static String getFinalQuery (@NonNull String query, String additionalQuery) {
+    public static String getFinalQuery(@NonNull String query, String additionalQuery) {
         if (StringUtils.isNotBlank(additionalQuery)) {
             query = query.concat(additionalQuery);
         }
         return query;
     }
 
-    public static boolean existsExternalOrderNumber(String externalOrderNumber){
+    public static boolean existsExternalOrderNumber(String externalOrderNumber) {
         String query = "Select * from ddp_kit_request where external_order_number = ?";
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
@@ -105,7 +104,8 @@ public class DBUtil {
                 try (ResultSet rs = selectKitRequest.executeQuery();) {
                     if (rs.next()) {
                         dbVals.resultValue = true;
-                    }else{
+                    }
+                    else {
                         dbVals.resultValue = false;
                     }
 
@@ -124,5 +124,30 @@ public class DBUtil {
             throw new RuntimeException("Error checking if values exist in db", results.resultException);
         }
         return (boolean) results.resultValue;
+    }
+
+    public static boolean columnExists(ResultSet rs, String column) {
+        ResultSetMetaData rsMetaData = null;
+        try {
+            rsMetaData = rs.getMetaData();
+            int numberOfColumns = rsMetaData.getColumnCount();
+            // get the column names; column indexes start from 1
+            for (int i = 1; i < numberOfColumns + 1; i++) {
+                String columnName = rsMetaData.getColumnName(i);
+                // Get the name of the column's table name
+                if (column.equals(columnName)) {
+                    return true;
+                }
+            }
+        }
+        catch (SQLException e) {
+            throw new RuntimeException("Unable to get column names ", e);
+        }
+        return false;
+    }
+
+    public static String participantIdsInClause(List<String> participantIds) {
+        return participantIds.stream()
+                .collect(Collectors.joining("','", "'", "'"));
     }
 }

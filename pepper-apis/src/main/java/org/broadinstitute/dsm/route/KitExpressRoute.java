@@ -6,9 +6,9 @@ import com.easypost.model.Shipment;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.db.SimpleResult;
+import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.email.Recipient;
 import org.broadinstitute.ddp.handlers.util.Result;
-import org.broadinstitute.ddp.util.ConfigUtil;
 import org.broadinstitute.dsm.DSMServer;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.KitRequestShipping;
@@ -45,17 +45,14 @@ public class KitExpressRoute extends RequestHandler {
 
     @Override
     public Object processRequest(Request request, Response response, String userId) throws Exception {
-        if (UserUtil.checkUserAccess(null, userId, "kit_express")) {
+        String userIdRequest = UserUtil.getUserId(request);
+        if (UserUtil.checkUserAccess(null, userId, "kit_express", userIdRequest)) {
             String kitRequestId = request.params(RequestParameter.KITREQUESTID);
             if (StringUtils.isNotBlank(kitRequestId)) {
                 if (RoutePath.RequestMethod.GET.toString().equals(request.requestMethod())) {
                     return getRateForOvernightExpress(kitRequestId);
                 }
                 if (RoutePath.RequestMethod.PATCH.toString().equals(request.requestMethod())) {
-                    String userIdRequest = UserUtil.getUserId(request);
-                    if (!userId.equals(userIdRequest)) {
-                        throw new RuntimeException("User id was not equal. User Id in token " + userId + " user Id in request " + userIdRequest);
-                    }
                     expressKitRequest(kitRequestId, userIdRequest);
                     return new Result(200);
                 }
@@ -81,7 +78,7 @@ public class KitExpressRoute extends RequestHandler {
         DDPInstance ddpInstance = DDPInstance.getDDPInstance(kitRequest.getRealm());
 
         EasyPostUtil easyPostUtil = new EasyPostUtil(kitRequest.getRealm());
-        HashMap<String, KitType> kitTypes = org.broadinstitute.dsm.model.KitType.getKitLookup();
+        HashMap<String, KitType> kitTypes = KitType.getKitLookup();
         String key = kitRequest.getKitType() + "_" + ddpInstance.getDdpInstanceId();
         KitType kitType = kitTypes.get(key);
 
@@ -113,7 +110,7 @@ public class KitExpressRoute extends RequestHandler {
     private String getKitId(@NonNull String kitRequestId) {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement stmt = conn.prepareStatement(ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.GET_UPLOADED_KITS) + QueryExtension.KIT_BY_KIT_REQUEST_ID)) {
+            try (PreparedStatement stmt = conn.prepareStatement(TransactionWrapper.getSqlFromConfig(ApplicationConfigConstants.GET_UPLOADED_KITS) + QueryExtension.KIT_BY_KIT_REQUEST_ID)) {
                 stmt.setString(1, kitRequestId);
                 try (ResultSet rs = stmt.executeQuery()) {
                     if (rs.next()) {
@@ -138,7 +135,7 @@ public class KitExpressRoute extends RequestHandler {
         if (StringUtils.isNotBlank(kitRequest.getEasypostToId())) {
             DDPInstance ddpInstance = DDPInstance.getDDPInstance(kitRequest.getRealm());
 
-            HashMap<String, KitType> kitTypes = org.broadinstitute.dsm.model.KitType.getKitLookup();
+            HashMap<String, KitType> kitTypes = KitType.getKitLookup();
             String key = kitRequest.getKitType() + "_" + ddpInstance.getDdpInstanceId();
             KitType kitType = kitTypes.get(key);
 
@@ -155,8 +152,8 @@ public class KitExpressRoute extends RequestHandler {
         String message = "An express label for " + realm + " was created.<br>";
         Map<String, String> mapy = new HashMap<>();
         mapy.put(":customText", message);
-        Recipient emailRecipient = new Recipient(ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.EMAIL_GP_RECIPIENT));
-        emailRecipient.setUrl(ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.EMAIL_FRONTEND_URL_FOR_LINKS) + KITREQUEST_LINK);
+        Recipient emailRecipient = new Recipient(TransactionWrapper.getSqlFromConfig(ApplicationConfigConstants.EMAIL_GP_RECIPIENT));
+        emailRecipient.setUrl(TransactionWrapper.getSqlFromConfig(ApplicationConfigConstants.EMAIL_FRONTEND_URL_FOR_LINKS) + KITREQUEST_LINK);
         emailRecipient.setSurveyLinks(mapy);
         notificationUtil.queueCurrentAndFutureEmails(EMAIL_TYPE, emailRecipient, EMAIL_TYPE);
     }

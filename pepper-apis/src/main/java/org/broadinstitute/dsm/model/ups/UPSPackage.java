@@ -6,13 +6,22 @@ import lombok.Data;
 public class UPSPackage {
     String trackingNumber;
     UPSActivity[] activity;
+    String upsShipmentId;
+    UPSDeliveryDate[] deliveryDate;
+    UPSDeliveryTime deliveryTime;
+    String upsPackageId;
 
-    public UPSPackage() { }
 
-    public UPSPackage(String trackingNumber, UPSActivity[] activity) {
+    public UPSPackage(String trackingNumber, UPSActivity[] activity, String upsShipmentId, String upsPackageId,
+                      UPSDeliveryDate[] deliveryDate, UPSDeliveryTime deliveryTime) {
         this.trackingNumber = trackingNumber;
         this.activity = activity;
+        this.upsShipmentId = upsShipmentId;
+        this.upsPackageId = upsPackageId;
+        this.deliveryDate = deliveryDate;
+        this.deliveryTime = deliveryTime;
     }
+
 
     /**
      * Gets the earliest {@link UPSActivity} that indicates
@@ -30,7 +39,8 @@ public class UPSPackage {
             if (filter.includeEvent(event)) {
                 if (earliestFilteredEvent == null) {
                     earliestFilteredEvent = event;
-                } else if (event.getInstant().isBefore(earliestFilteredEvent.getInstant())) {
+                }
+                else if (event!=null && event.getInstant()!= null && event.getInstant().isBefore(earliestFilteredEvent.getInstant())) {
                     earliestFilteredEvent = event;
                 }
             }
@@ -53,3 +63,4 @@ public class UPSPackage {
         boolean includeEvent(UPSActivity event);
     }
 }
+

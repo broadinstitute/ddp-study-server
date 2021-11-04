@@ -29,13 +29,10 @@ public class CarrierServiceRoute extends RequestHandler {
     @Override
     protected Object processRequest(Request request, Response response, String userId) throws Exception {
         String realm = request.params(RequestParameter.REALM);
+        String userIdRequest = UserUtil.getUserId(request);
         if (request.url().contains(RoutePath.CARRIERS)) {
-            if (UserUtil.checkUserAccess(realm, userId, "kit_shipping_view") || UserUtil.checkUserAccess(realm, userId, "kit_shipping")) {
+            if (UserUtil.checkUserAccess(realm, userId, "kit_shipping_view", userIdRequest) || UserUtil.checkUserAccess(realm, userId, "kit_shipping", userIdRequest)) {
                 if (StringUtils.isNotBlank(realm)) {
-                    String userIdRequest = UserUtil.getUserId(request);
-                    if (!userId.equals(userIdRequest)) {
-                        throw new RuntimeException("User id was not equal. User Id in token " + userId + " user Id in request " + userIdRequest);
-                    }
                     return this.getCarriers(realm);
                 }
             }

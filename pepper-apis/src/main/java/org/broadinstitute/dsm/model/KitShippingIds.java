@@ -2,7 +2,7 @@ package org.broadinstitute.dsm.model;
 
 import lombok.Data;
 import lombok.NonNull;
-import org.broadinstitute.ddp.db.SimpleResult;
+import org.broadinstitute.lddp.db.SimpleResult;
 import org.broadinstitute.dsm.db.KitRequestShipping;
 import org.broadinstitute.dsm.statics.DBConstants;
 

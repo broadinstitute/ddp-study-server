@@ -1,6 +1,5 @@
 package org.broadinstitute.dsm.model;
 
-import org.broadinstitute.dsm.db.KitRequestShipping;
 import org.broadinstitute.dsm.db.KitStatus;
 
 import java.util.List;

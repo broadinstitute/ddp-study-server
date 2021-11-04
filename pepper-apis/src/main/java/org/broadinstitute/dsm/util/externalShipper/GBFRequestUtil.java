@@ -2,8 +2,6 @@ package org.broadinstitute.dsm.util.externalShipper;
 
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.gson.Gson;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
 import lombok.NonNull;
 import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.StringUtils;
@@ -12,12 +10,13 @@ import org.broadinstitute.ddp.db.SimpleResult;
 import org.broadinstitute.ddp.util.Utility;
 import org.broadinstitute.dsm.DSMServer;
 import org.broadinstitute.dsm.db.DDPInstance;
+import org.broadinstitute.dsm.db.InstanceSettings;
 import org.broadinstitute.dsm.exception.ExternalShipperException;
 import org.broadinstitute.dsm.model.*;
 import org.broadinstitute.dsm.model.gbf.*;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.util.*;
-
+import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
@@ -39,7 +38,9 @@ import javax.xml.transform.stream.StreamResult;
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathFactory;
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.StringReader;
+import java.io.StringWriter;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -68,6 +69,24 @@ public class GBFRequestUtil implements ExternalShipper {
             "                                WHERE ex.ddp_participant_exit_id is null AND request.ddp_instance_id = ? AND (external_order_status not like '%CANCELLED%' or external_order_status is null) AND external_order_number IS NOT NULL " +
             "                                order by request.dsm_kit_request_id desc ";
 
+    private String SQL_SELECT_KIT_FOR_NOTIFICATION_EXTERNAL_SHIPPER = "select  eve.*,   request.ddp_participant_id,   request.ddp_label,   request.dsm_kit_request_id, request.ddp_kit_request_id, request.upload_reason, " +
+            "        realm.ddp_instance_id, realm.instance_name, realm.base_url, realm.auth0_token, realm.notification_recipients, realm.migrated_ddp, kit.receive_date, kit.scan_date" +
+            "        FROM ddp_kit_request request, ddp_kit kit, event_type eve, ddp_instance realm where request.dsm_kit_request_id = kit.dsm_kit_request_id and request.ddp_instance_id = realm.ddp_instance_id" +
+            "        and not exists " +
+            "                    (select 1 FROM EVENT_QUEUE q" +
+            "                    where q.DDP_INSTANCE_ID = realm.ddp_instance_id" +
+            "                    and " +
+            "                    q.EVENT_TYPE = eve.event_name" +
+            "                    and " +
+            "                    q.DSM_KIT_REQUEST_ID = request.dsm_kit_request_id " +
+            "                    and q.event_triggered = true" +
+            "                    )" +
+            "        and (eve.ddp_instance_id = request.ddp_instance_id and eve.kit_type_id = request.kit_type_id) and eve.event_type = ? " +
+            "         and realm.ddp_instance_id = ?" +
+            "          and kit.dsm_kit_request_id = ?";
+
+    private String SELECT_BY_EXTERNAL_ORDER_NUMBER = "and request.external_order_number = ?";
+    String DELIVERED = "DELIVERED";
 
     private static final String SQL_SELECT_KIT_REQUEST_BY_EXTERNAL_ORDER_NUMBER = "SELECT dsm_kit_request_id FROM ddp_kit_request req WHERE external_order_number = ?";
     private static final String SQL_SELECT_SENT_KIT_FOR_NOTIFICATION_EXTERNAL_SHIPPER = "select  eve.*,   request.ddp_participant_id,   request.ddp_label, request.upload_reason, request.ddp_kit_request_id, request.dsm_kit_request_id, realm.ddp_instance_id, realm.instance_name, realm.base_url, realm.auth0_token, realm.notification_recipients, realm.migrated_ddp, kit.receive_date, kit.scan_date" +
@@ -161,10 +180,8 @@ public class GBFRequestUtil implements ExternalShipper {
                 String orderXml = GBFRequestUtil.orderXmlToString(Orders.class, orders);
 
                 //                logger.info("orderXML: " + orderXml);
-                boolean test = DSMServer.isTest(getExternalShipperName());
-                JsonObject payload = new JsonObject();
-                payload.addProperty("orderXml", orderXml);
-                payload.addProperty("test", test);
+                boolean test = DSMServer.isTest(getExternalShipperName());//true for dev in `not-secret.conf`
+                JSONObject payload = new JSONObject().put("orderXml", orderXml).put("test", test);
                 String sendRequest = DSMServer.getBaseUrl(getExternalShipperName()) + ORDER_ENDPOINT;
                 String apiKey = DSMServer.getApiKey(getExternalShipperName());
                 Response gbfResponse = null;
@@ -193,7 +210,6 @@ public class GBFRequestUtil implements ExternalShipper {
                 }
                 if (gbfResponse != null && gbfResponse.isSuccess()) {
                     logger.info("Ordered kits");
-                    //todo pegah change status to "ORDERED" and change null checks to ORDERED -> for when UPS checks needed
                 }
                 else {
                     throw new ExternalShipperException("Unable to order kits after retry.", ex);
@@ -205,16 +221,11 @@ public class GBFRequestUtil implements ExternalShipper {
     //  Status is as it sounds, a real-time status of the order progression through the GBF internal process
     // 'RECEIVED', 'PROCESSING', 'SHIPPED', 'DISTRIBUTION', 'FORMS PRINTED', 'CANCELLED', 'NOT FOUND', 'SHIPPED (SIMULATED)'
     // return the actual tube barcode for all tubes but only after the kit is shipped (around 7:00pm)
-    public void orderStatus(Connection conn, KitRequest kit) throws Exception {
+    public void orderStatus(Connection conn, KitRequest kit, int instanceId, boolean gbfShippedTriggerDSSDelivered) throws Exception {
         logger.info("checking status of " + kit.getExternalOrderNumber() + " for participant " + kit.getParticipantId());
         List<String> orderNumbers = new ArrayList<>();
         orderNumbers.addAll(Arrays.asList(new String[] { kit.getExternalOrderNumber() }));
-        JsonObject payload = new JsonObject();
-        JsonArray orderNumbersJson = new JsonArray();
-        for (String orderNumber : orderNumbers) {
-            orderNumbersJson.add(orderNumber);
-        }
-        payload.add("orderNumbers", orderNumbersJson);
+        JSONObject payload = new JSONObject().put("orderNumbers", orderNumbers);
         String sendRequest = DSMServer.getBaseUrl(getExternalShipperName()) + STATUS_ENDPOINT;
         Response gbfResponse = executePost(Response.class, sendRequest, payload.toString(), DSMServer.getApiKey(getExternalShipperName()));
         if (gbfResponse != null && gbfResponse.isSuccess()) {
@@ -241,8 +252,17 @@ public class GBFRequestUtil implements ExternalShipper {
                             !kit.getExternalOrderStatus().contains(SHIPPED))) {
                         if (kitDDPNotification != null) {
                             logger.info("Triggering DDP for shipped kit with external order number: " + kit.getExternalOrderNumber());
+                            if (gbfShippedTriggerDSSDelivered) {
+                                KitDDPNotification kitDeliveredNotification = KitDDPNotification.getKitDDPNotification(conn, SQL_SELECT_KIT_FOR_NOTIFICATION_EXTERNAL_SHIPPER + SELECT_BY_EXTERNAL_ORDER_NUMBER, new String[] { DELIVERED, String.valueOf(instanceId), kit.getDsmKitRequestId(), kit.getExternalOrderNumber() }, 1);
+                                if (kitDeliveredNotification != null) {
+                                    logger.info("Triggering DDP for kit 'DELIVERED' with external order number: " + kit.getExternalOrderNumber());
+                                    EventUtil.triggerDDP(conn, kitDeliveredNotification);
+                                }
+                                else {
+                                    logger.error("delivered kitDDPNotification was null for " + kit.getExternalOrderNumber());
+                                }
+                            }
                             EventUtil.triggerDDP(conn, kitDDPNotification);
-
                         }
                         else {
                             logger.error("kitDDPNotification was null for " + kit.getExternalOrderNumber());
@@ -310,9 +330,7 @@ public class GBFRequestUtil implements ExternalShipper {
     // The confirmation, dependent upon level of detail required, is a shipping receipt to prove completion.
     // Confirmation may include order number, client(participant) ID, outbound tracking number, return tracking number(s), line item(s), kit serial number(s), etc.
     public void orderConfirmation(long startDate, long endDate) throws Exception {
-        JsonObject payload = new JsonObject();
-        payload.addProperty("startDate", SystemUtil.getDateFormatted(startDate));
-        payload.addProperty("endDate", SystemUtil.getDateFormatted(endDate));
+        JSONObject payload = new JSONObject().put("startDate", SystemUtil.getDateFormatted(startDate)).put("endDate", SystemUtil.getDateFormatted(endDate));
         String sendRequest = DSMServer.getBaseUrl(getExternalShipperName()) + CONFIRM_ENDPOINT;
         logger.info("payload: " + payload.toString());
         Response gbfResponse = executePost(Response.class, sendRequest, payload.toString(), DSMServer.getApiKey(getExternalShipperName()));
@@ -322,13 +340,14 @@ public class GBFRequestUtil implements ExternalShipper {
             ShippingConfirmations shippingConfirmations = objectFromXMLString(ShippingConfirmations.class, gbfResponse.getXML());
             if (shippingConfirmations != null) {
                 List<ShippingConfirmation> confirmationList = shippingConfirmations.getShippingConfirmations();
-                Collections.shuffle(confirmationList);
-                logger.info("Number of confirmations received: " + confirmationList.size());
                 if (confirmationList != null && !confirmationList.isEmpty()) {
+                    Collections.shuffle(confirmationList);
+                    logger.info("Number of confirmations received: " + confirmationList.size());
                     for (ShippingConfirmation confirmation : confirmationList) {
                         try {
                             processingSingleConfirmation(gbfResponse, confirmation);
-                        } catch (Exception e) {
+                        }
+                        catch (Exception e) {
                             logger.error("Could not process confirmation for " + confirmation.getOrderNumber(), e);
                         }
                     }
@@ -336,8 +355,11 @@ public class GBFRequestUtil implements ExternalShipper {
                     logger.info("Finished adding confirmations into db!");
                 }
                 else {
-                    logger.info("No shipping confirmation returned");
+                    logger.info("No ShippingConfirmation Elements");
                 }
+            }
+            else {
+                logger.info("No shipping confirmation returned");
             }
         }
     }
@@ -356,6 +378,7 @@ public class GBFRequestUtil implements ExternalShipper {
      * details from GBF
      */
     private void updateOrderStatusForPendingKitRequests(int instanceId, String query) {
+        boolean gbfShippedTriggerDSSDelivered = InstanceSettings.getInstanceSettings(instanceId).isGbfShippedTriggerDSSDelivered();
         final AtomicInteger numOrdersProcessed = new AtomicInteger();
         final Set<String> queriedOrderIds = new HashSet<>();
         SimpleResult results = inTransaction((conn) -> {
@@ -375,7 +398,7 @@ public class GBFRequestUtil implements ExternalShipper {
                                 // keep track of which request ids we've already asked about, since this
                                 // result set may show subkits with the same external order id
                                 if (!queriedOrderIds.contains(kitRequest.getExternalOrderNumber())) {
-                                    orderStatus(conn, kitRequest);
+                                    orderStatus(conn, kitRequest, instanceId, gbfShippedTriggerDSSDelivered);
                                     numOrdersProcessed.incrementAndGet();
                                     queriedOrderIds.add(kitRequest.getExternalOrderNumber());
                                 }

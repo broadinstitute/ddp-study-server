@@ -2,6 +2,7 @@ package org.broadinstitute.dsm.util;
 
 import com.auth0.jwt.interfaces.Claim;
 import com.google.gson.GsonBuilder;
+import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.client.HttpClient;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
@@ -9,16 +10,14 @@ import org.apache.http.entity.ContentType;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.ssl.SSLContextBuilder;
 import org.apache.http.ssl.TrustStrategy;
+import org.broadinstitute.ddp.security.Auth0Util;
+import org.broadinstitute.ddp.security.SecurityHelper;
+import org.broadinstitute.dsm.DSMServer;
+import spark.Request;
 
 import java.security.cert.X509Certificate;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
-
-import lombok.NonNull;
-import org.broadinstitute.ddp.security.SecurityHelper;
-import org.broadinstitute.dsm.DSMServer;
-import spark.Request;
 
 import static org.apache.http.client.fluent.Request.Get;
 import static org.apache.http.client.fluent.Request.Post;
@@ -186,5 +185,39 @@ public class SecurityUtil {
             }
         }
         return null;
+    }
+
+    public static org.apache.http.client.fluent.Request createPostRequestWithHeader(@NonNull String requestString,
+                                                                                    @NonNull String instanceName,
+                                                                                    boolean auth0Token,
+                                                                                    Object objectToPost, Auth0Util auth0Util) {
+        org.apache.http.client.fluent.Request request = Post(requestString);
+        Map<String, String> headers = createHeader(instanceName, auth0Token, auth0Util);
+        if (headers != null) {
+            for (Map.Entry<String, String> headerEntry : headers.entrySet()) {
+                request = request.addHeader(headerEntry.getKey(), headerEntry.getValue());
+            }
+        }
+        return addBodyToRequest(objectToPost, request);
+    }
+    public static Map<String, String> createHeader(@NonNull String instanceName, boolean auth0Token, Auth0Util auth0Util) {
+        String token = null;
+        String secret = null;
+        if (auth0Token) {
+            token =auth0Util.getAccessToken();
+        }
+        else {
+            secret = DSMServer.getDDPTokenSecret(instanceName);
+        }
+        if (StringUtils.isBlank(token) && StringUtils.isNotBlank(secret)) {
+            long invalidAfter = 300 + (System.currentTimeMillis() / 1000);
+            Map<String, String> claims = new HashMap<>();
+            claims.put(CLAIM_ISSUER, SIGNER);
+            token = SecurityHelper.createToken(secret, invalidAfter, claims);
+        }
+        if (StringUtils.isBlank(token)) {
+            throw new RuntimeException("No token available for " + instanceName);
+        }
+        return createHeaderWithBearer(token);
     }
 }

@@ -1,22 +1,28 @@
 package org.broadinstitute.dsm.route;
 
-import com.google.gson.*;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.handlers.util.Result;
 import org.broadinstitute.dsm.db.*;
 import org.broadinstitute.dsm.db.structure.DBElement;
-import org.broadinstitute.dsm.model.*;
+import org.broadinstitute.dsm.model.AbstractionQCWrapper;
+import org.broadinstitute.dsm.model.AbstractionWrapper;
+import org.broadinstitute.dsm.model.NameValue;
+import org.broadinstitute.dsm.model.Value;
+import org.broadinstitute.dsm.model.patch.Patch;
 import org.broadinstitute.dsm.security.RequestHandler;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.RequestParameter;
 import org.broadinstitute.dsm.statics.UserErrorMessages;
 import org.broadinstitute.dsm.util.AbstractionUtil;
 import org.broadinstitute.dsm.util.UserUtil;
+import org.json.JSONArray;
+import org.json.JSONObject;
 import spark.Request;
 import spark.Response;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 public class AbstractionRoute extends RequestHandler {
@@ -25,24 +31,25 @@ public class AbstractionRoute extends RequestHandler {
     public Object processRequest(Request request, Response response, String userId) throws Exception {
         String requestBody = request.body();
         if (StringUtils.isNotBlank(requestBody)) {
-            JsonObject jsonObject = new JsonParser().parse(requestBody).getAsJsonObject();
-            String ddpParticipantId = jsonObject.get(RequestParameter.DDP_PARTICIPANT_ID).getAsString();
-            String realm = jsonObject.get(RequestParameter.DDP_REALM).getAsString();
+            JSONObject jsonObject = new JSONObject(requestBody);
+            String ddpParticipantId = (String) jsonObject.get(RequestParameter.DDP_PARTICIPANT_ID);
+            String userIdReq = UserUtil.getUserId(request);
+            String realm = (String) jsonObject.get(RequestParameter.DDP_REALM);
 
-            if (UserUtil.checkUserAccess(realm, userId, "mr_abstracter") || UserUtil.checkUserAccess(realm, userId, "mr_qc")) {
+            if (UserUtil.checkUserAccess(realm, userId, "mr_abstracter", userIdReq) || UserUtil.checkUserAccess(realm, userId, "mr_qc", userIdReq)) {
                 if (StringUtils.isNotBlank(ddpParticipantId)) {
                     String status = null;
-                    if (jsonObject.has(RequestParameter.STATUS) && !jsonObject.has(RequestParameter.STATUS)) {
-                        status = jsonObject.get(RequestParameter.STATUS).getAsString();
+                    if (jsonObject.has(RequestParameter.STATUS) && !jsonObject.isNull(RequestParameter.STATUS)) {
+                        status = (String) jsonObject.get(RequestParameter.STATUS);
                     }
                     Integer userIdRequest = null;
                     if (jsonObject.has(UserUtil.USER_ID)) {
-                        userIdRequest = Integer.parseInt(jsonObject.get(UserUtil.USER_ID).getAsString());
+                        userIdRequest = Integer.parseInt((String) jsonObject.get(UserUtil.USER_ID));
                     }
                     AbstractionActivity abstractionActivity = null;
                     if (jsonObject.has("abstraction")) {
                         Gson gson = new GsonBuilder().create();
-                        abstractionActivity = gson.fromJson(jsonObject.get("abstraction").getAsString(), AbstractionActivity.class);
+                        abstractionActivity = gson.fromJson(jsonObject.getJSONObject("abstraction").toString(), AbstractionActivity.class);
                     }
                     if (abstractionActivity != null && userIdRequest != null) {
                         // updated filesUsed
@@ -88,12 +95,12 @@ public class AbstractionRoute extends RequestHandler {
                                                 else if (StringUtils.isNotBlank(fieldValue.getValue()) && fieldValue.getValue().indexOf(AbstractionUtil.DATE_STRING) > -1) {
                                                     String jsonValue = fieldValue.getValue();
                                                     if (jsonValue.startsWith("[")) {
-                                                        JsonArray array = new JsonParser().parse(jsonValue).getAsJsonArray();
-                                                        for (int i = 0; i < array.size(); i++) {
-                                                            JsonObject j = array.get(i).getAsJsonObject();
-                                                            Set<Map.Entry<String, JsonElement>> entries = j.entrySet();
-                                                            for (Map.Entry<String, JsonElement> entry : entries) {
-                                                                String test = entry.getValue().getAsString();
+                                                        JSONArray array = new JSONArray(jsonValue);
+                                                        for (int i = 0; i < array.length(); i++) {
+                                                            JSONObject j = array.getJSONObject(i);
+                                                            Set<String> entries = j.keySet();
+                                                            for (String entry : entries) {
+                                                                String test = j.optString(entry);
                                                                 if (StringUtils.isNotBlank(test) && test.indexOf(AbstractionUtil.DATE_STRING) > -1) {
                                                                     if (!AbstractionUtil.isDateStringSet(test)) {
                                                                         submit = false;

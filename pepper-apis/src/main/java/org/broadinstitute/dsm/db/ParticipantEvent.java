@@ -2,8 +2,8 @@ package org.broadinstitute.dsm.db;
 
 import lombok.Data;
 import lombok.NonNull;
-import org.broadinstitute.ddp.db.SimpleResult;
-import org.broadinstitute.ddp.util.ConfigUtil;
+import org.broadinstitute.lddp.db.SimpleResult;
+import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.dsm.model.ddp.DDPParticipant;
 import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
 import org.broadinstitute.dsm.statics.DBConstants;
@@ -12,6 +12,7 @@ import org.broadinstitute.dsm.util.DDPRequestUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
@@ -31,6 +32,13 @@ public class ParticipantEvent {
 
     private String shortId;
 
+    private static String GET_PARTICIPANT_EVENT = "select event " +
+            "        from " +
+            "        ddp_participant_event ev " +
+            "        where " +
+            "        ev.ddp_instance_id = ? " +
+            "        and ev.ddp_participant_id = ?";
+
     public ParticipantEvent(String participantId, String eventType, String user, long date) {
         this.participantId = participantId;
         this.eventType = eventType;
@@ -42,7 +50,7 @@ public class ParticipantEvent {
         ArrayList<ParticipantEvent> skippedParticipantEvents = new ArrayList();
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement stmt = conn.prepareStatement(ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.GET_PARTICIPANT_EVENTS))) {
+            try (PreparedStatement stmt = conn.prepareStatement(TransactionWrapper.getSqlFromConfig(ApplicationConfigConstants.GET_PARTICIPANT_EVENTS))) {
                 stmt.setString(1, realm);
                 try (ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
@@ -84,7 +92,7 @@ public class ParticipantEvent {
                                             @NonNull DDPInstance instance, @NonNull String eventType) {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement stmt = conn.prepareStatement(ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.INSERT_PARTICIPANT_EVENT))) {
+            try (PreparedStatement stmt = conn.prepareStatement(TransactionWrapper.getSqlFromConfig(ApplicationConfigConstants.INSERT_PARTICIPANT_EVENT))) {
                 stmt.setString(1, instance.getDdpInstanceId());
                 stmt.setString(2, ddpParticipantId);
                 stmt.setLong(3, currentTime);
@@ -113,7 +121,7 @@ public class ParticipantEvent {
         ArrayList<String> skippedEvents = new ArrayList();
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement stmt = conn.prepareStatement(ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.GET_PARTICIPANT_EVENT))) {
+            try (PreparedStatement stmt = conn.prepareStatement(GET_PARTICIPANT_EVENT)) {
                 stmt.setString(1, instanceId);
                 stmt.setString(2, ddpParticipantId);
                 try (ResultSet rs = stmt.executeQuery()) {
@@ -131,6 +139,24 @@ public class ParticipantEvent {
         if (results.resultException != null) {
             logger.error("Couldn't exited participants for " + instanceId, results.resultException);
         }
+        return skippedEvents;
+    }
+
+    public static Collection<String> getParticipantEvent(Connection conn, @NonNull String ddpParticipantId, @NonNull String instanceId) {
+        ArrayList<String> skippedEvents = new ArrayList();
+        try (PreparedStatement stmt = conn.prepareStatement(GET_PARTICIPANT_EVENT)) {
+            stmt.setString(1, instanceId);
+            stmt.setString(2, ddpParticipantId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    skippedEvents.add(rs.getString(DBConstants.EVENT));
+                }
+            }
+        }
+        catch (Exception ex) {
+            logger.error("Couldn't get exited participants for " + instanceId, ex);
+        }
+
         return skippedEvents;
     }
 }

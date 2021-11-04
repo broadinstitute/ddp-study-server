@@ -1,15 +1,15 @@
 package org.broadinstitute.dsm.route.participant;
 
-import java.util.NoSuchElementException;
-
-import org.broadinstitute.dsm.db.dao.participant.data.ParticipantDataDao;
-import org.broadinstitute.dsm.model.participant.data.NewParticipantData;
+import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDataDao;
+import org.broadinstitute.dsm.model.participant.data.ParticipantData;
 import org.broadinstitute.dsm.security.RequestHandler;
 import org.broadinstitute.dsm.util.ParticipantUtil;
 import org.broadinstitute.dsm.util.UserUtil;
 import spark.QueryParamsMap;
 import spark.Request;
 import spark.Response;
+
+import java.util.NoSuchElementException;
 
 public class GetParticipantDataRoute extends RequestHandler {
 
@@ -32,6 +32,6 @@ public class GetParticipantDataRoute extends RequestHandler {
         String ddpParticipantId = queryParamsMap.get(ParticipantUtil.DDP_PARTICIPANT_ID).value();
         ParticipantDataDao participantDataDao = new ParticipantDataDao();
 
-        return NewParticipantData.parseDtoList(participantDataDao.getParticipantDataByParticipantId(ddpParticipantId));
+        return ParticipantData.parseDtoList(participantDataDao.getParticipantDataByParticipantId(ddpParticipantId));
     }
 }

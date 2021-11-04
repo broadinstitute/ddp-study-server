@@ -1,6 +1,6 @@
 package org.broadinstitute.dsm.db;
 
-import org.broadinstitute.ddp.db.SimpleResult;
+import org.broadinstitute.lddp.db.SimpleResult;
 import org.broadinstitute.dsm.model.NDIUploadObject;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.slf4j.Logger;

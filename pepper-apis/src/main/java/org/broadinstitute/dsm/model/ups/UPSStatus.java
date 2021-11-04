@@ -16,7 +16,6 @@ public class UPSStatus {
 
     public static final String OUT_FOR_DELIVERY_TYPE = "O";
 
-    public UPSStatus() {}
 
     public UPSStatus(String type, String description, String code) {
         this.type = type;

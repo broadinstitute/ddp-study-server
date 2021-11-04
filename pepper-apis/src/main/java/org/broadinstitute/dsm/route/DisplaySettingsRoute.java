@@ -5,6 +5,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.handlers.util.Result;
 import org.broadinstitute.dsm.db.*;
 import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
+import org.broadinstitute.dsm.db.dto.settings.InstanceSettingsDto;
 import org.broadinstitute.dsm.model.KitRequestSettings;
 import org.broadinstitute.dsm.model.KitSubKits;
 import org.broadinstitute.dsm.model.ddp.PreferredLanguage;
@@ -12,7 +13,6 @@ import org.broadinstitute.dsm.security.RequestHandler;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.RequestParameter;
 import org.broadinstitute.dsm.statics.UserErrorMessages;
-import org.broadinstitute.dsm.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import spark.QueryParamsMap;
@@ -48,12 +48,11 @@ public class DisplaySettingsRoute extends RequestHandler {
         if (StringUtils.isBlank(ddpGroupId)) {
             logger.error("GroupId is empty");
         }
-
         String userIdRequest = UserUtil.getUserId(request);//gets checked in UserUtil
         if (!userId.equals(userIdRequest)) {
             throw new RuntimeException("User id was not equal. User Id in token " + userId + " user Id in request " + userIdRequest);
         }
-        if (UserUtil.checkUserAccess(realm, userId, "mr_view") || UserUtil.checkUserAccess(realm, userId, "pt_list_view")) {
+        if (UserUtil.checkUserAccess(realm, userId, "mr_view", userIdRequest) || UserUtil.checkUserAccess(realm, userId, "pt_list_view", userIdRequest)) {
             String parent = queryParams.get("parent").value();
             if (StringUtils.isBlank(parent)) {
                 logger.error("Parent is empty");
@@ -65,6 +64,7 @@ public class DisplaySettingsRoute extends RequestHandler {
             if (StringUtils.isNotBlank(realm) && instance != null && StringUtils.isNotBlank(userIdRequest)
                     && StringUtils.isNotBlank(parent) && StringUtils.isNotBlank(ddpGroupId)) {
                 Map<String, Object> displaySettings = new HashMap<>();
+                InstanceSettings instanceSettings = new InstanceSettings();
                 displaySettings.put("assignees", Assignee.getAssignees(realm));
                 displaySettings.put("fieldSettings", FieldSettings.getFieldSettings(realm));
                 displaySettings.put("drugs", Drug.getDrugList());
@@ -72,16 +72,8 @@ public class DisplaySettingsRoute extends RequestHandler {
                 displaySettings.put("activityDefinitions", ElasticSearchUtil.getActivityDefinitions(instance));
                 displaySettings.put("filters", ViewFilter.getAllFilters(userIdRequest, patchUtil.getColumnNameMap(), parent, ddpGroupId, instance.getDdpInstanceId()));
                 displaySettings.put("abstractionFields", AbstractionUtil.getFormControls(realm));
-                InstanceSettings instanceSettings = InstanceSettings.getInstanceSettings(realm);
-                if (instanceSettings != null && instanceSettings.getMrCoverPdf() != null && !instanceSettings.getMrCoverPdf().isEmpty()) {
-                    displaySettings.put("mrCoverPDF", instanceSettings.getMrCoverPdf());
-                }
-                if (instanceSettings != null && instanceSettings.getHideESFields() != null && !instanceSettings.getHideESFields().isEmpty()) {
-                    displaySettings.put("hideESFields", instanceSettings.getHideESFields());
-                }
-                if (instanceSettings != null && instanceSettings.isHasInvitations()) {
-                    displaySettings.put("hasInvitations", true);
-                }
+                InstanceSettingsDto instanceSettingsDto = instanceSettings.getInstanceSettings(realm);
+                displaySettings.putAll(instanceSettings.getInstanceSettingsAsMap(instanceSettingsDto));
                 if (!instance.isHasRole()) {
                     displaySettings.put("hideMRTissueWorkflow", true);
                 }
@@ -124,6 +116,9 @@ public class DisplaySettingsRoute extends RequestHandler {
                 }
                 if (DDPInstanceDao.getRole(instance.getName(), DBConstants.ADD_FAMILY_MEMBER)) {
                     displaySettings.put("addFamilyMember", true);
+                }
+                if (DDPInstanceDao.getRole(instance.getName(), DBConstants.SHOW_GROUP_FIELDS)) {
+                    displaySettings.put("showGroupFields", true);
                 }
                 return displaySettings;
             }

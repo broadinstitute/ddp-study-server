@@ -5,7 +5,7 @@ import com.google.gson.GsonBuilder;
 import lombok.Data;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.ddp.db.SimpleResult;
+import org.broadinstitute.lddp.db.SimpleResult;
 import org.broadinstitute.dsm.model.Value;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.slf4j.Logger;
@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Types;
 import java.util.*;
 
 import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
@@ -23,14 +24,16 @@ import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
  */
 @Data
 public class FieldSettings {
-    public static final String GET_FIELD_SETTINGS = "SELECT setting.field_settings_id, setting.column_name, " +
-            "setting.column_display, setting.field_type, setting.display_type, setting.possible_values, setting.order_number, actions FROM field_settings setting, ddp_instance realm WHERE " +
+    public static final String GET_FIELD_SETTINGS = "SELECT setting.field_settings_id, setting.column_name, setting.max_length, " +
+            "setting.column_display, setting.field_type, setting.display_type, setting.possible_values, setting.order_number, actions, readonly " +
+            "FROM field_settings setting, ddp_instance realm WHERE " +
             "realm.ddp_instance_id = setting.ddp_instance_id AND NOT (setting.deleted <=>1) AND realm.instance_name=? ORDER BY order_number asc";
     public static final String UPDATE_FIELD_SETTINGS_TABLE = "UPDATE field_settings SET column_name = ?, " +
-            "column_display = ?, deleted = ?, field_type = ?, display_type = ?, possible_values = ?, changed_by = ?, last_changed = ? WHERE field_settings_id = ?";
+            "column_display = ?, deleted = ?, field_type = ?, display_type = ?, possible_values = ?, " +
+            "max_length = ?, readonly = ?, changed_by = ?, last_changed = ? WHERE field_settings_id = ?";
     public static final String INSERT_FIELD_SETTINGS = "INSERT INTO field_settings SET column_name = ?, " +
             "column_display = ?, field_type = ?, display_type = ?, possible_values = ?, ddp_instance_id = (SELECT ddp_instance_id FROM ddp_instance " +
-            "WHERE instance_name = ?), changed_by = ?, last_changed = ?";
+            "WHERE instance_name = ?), max_length = ?, readonly = ?, changed_by = ?, last_changed = ?";
 
     private static final Logger logger = LoggerFactory.getLogger(FieldSettings.class);
     private final String fieldSettingId; //Value of field_settings_id for the setting
@@ -42,9 +45,11 @@ public class FieldSettings {
     private final String fieldType; //Value of field_type for the setting
     private final int orderNumber; //Value of order number for the setting
     private final List<Value> actions; //Value of action for the setting
+    private final boolean readonly; //Value of readonly for the setting
+    private final Integer maxLength; //Value of max_length for string-like field settings
 
     public FieldSettings(String fieldSettingId, String columnName, String columnDisplay, String fieldType, String displayType,
-                         List<Value> possibleValues, int orderNumber, List<Value> actions) {
+                         List<Value> possibleValues, int orderNumber, List<Value> actions, boolean readonly, Integer maxLength) {
         this.fieldSettingId = fieldSettingId;
         this.columnName = columnName;
         this.columnDisplay = columnDisplay;
@@ -53,6 +58,8 @@ public class FieldSettings {
         this.possibleValues = possibleValues;
         this.orderNumber = orderNumber;
         this.actions = actions;
+        this.readonly = readonly;
+        this.maxLength = maxLength;
     }
 
     /**
@@ -71,10 +78,12 @@ public class FieldSettings {
                         List<Value> possibleValues = getValueListFromJsonString(rs, DBConstants.POSSIBLE_VALUE);
                         List<Value> actionValues = getValueListFromJsonString(rs, DBConstants.ACTIONS);
                         String type = rs.getString(DBConstants.FIELD_TYPE);
+                        Integer maxLength = (Integer) rs.getObject(DBConstants.MAX_LENGTH);
                         FieldSettings setting = new FieldSettings(rs.getString(DBConstants.FIELD_SETTING_ID),
                                 rs.getString(DBConstants.COLUMN_NAME), rs.getString(DBConstants.COLUMN_DISPLAY),
                                 type, rs.getString(DBConstants.DISPLAY_TYPE), possibleValues,
-                                rs.getInt(DBConstants.ORDER_NUMBER), actionValues);
+                                rs.getInt(DBConstants.ORDER_NUMBER), actionValues, rs.getBoolean(DBConstants.READONLY),
+                                maxLength);
                         if (fieldSettingsList.containsKey(type)){
                             // If we have already found settings with this field_type, add this
                             // setting to the list of settings with this field_type
@@ -172,9 +181,18 @@ public class FieldSettings {
                 else {
                     stmt.setString(6, null);
                 }
-                stmt.setString(7, userId);
-                stmt.setLong(8, System.currentTimeMillis());
-                stmt.setString(9, fieldSetting.getFieldSettingId());
+
+                if (fieldSetting.getMaxLength() != null) {
+                    stmt.setInt(7, fieldSetting.getMaxLength());
+                }
+                else {
+                    stmt.setNull(7, Types.INTEGER);
+                }
+
+                stmt.setBoolean(8, fieldSetting.isReadonly());
+                stmt.setString(9, userId);
+                stmt.setLong(10, System.currentTimeMillis());
+                stmt.setString(11, fieldSetting.getFieldSettingId());
                 int result = stmt.executeUpdate();
                 if (result == 1) {
                     logger.info("Updated field setting with id " + fieldSettingId);
@@ -206,8 +224,15 @@ public class FieldSettings {
                 stmt.setString(4, fieldSetting.getDisplayType());
                 stmt.setString(5, possibleValues != null && !"null".equals(possibleValues) ? possibleValues : null);
                 stmt.setString(6, realm);
-                stmt.setString(7, userId);
-                stmt.setLong(8, System.currentTimeMillis());
+                if (fieldSetting.getMaxLength() != null) {
+                    stmt.setInt(7, fieldSetting.getMaxLength());
+                }
+                else {
+                    stmt.setNull(7, Types.INTEGER);
+                }
+                stmt.setBoolean(8, fieldSetting.isReadonly());
+                stmt.setString(9, userId);
+                stmt.setLong(10, System.currentTimeMillis());
                 int result = stmt.executeUpdate();
                 if (result == 1){
                     logger.info("Added new setting for " + realm);
@@ -235,4 +260,5 @@ public class FieldSettings {
         }
         return values;
     }
+
 }

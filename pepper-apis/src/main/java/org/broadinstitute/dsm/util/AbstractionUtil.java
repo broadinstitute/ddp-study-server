@@ -3,13 +3,13 @@ package org.broadinstitute.dsm.util;
 import com.google.gson.*;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.ddp.db.SimpleResult;
+import org.broadinstitute.lddp.db.SimpleResult;
 import org.broadinstitute.dsm.db.AbstractionField;
 import org.broadinstitute.dsm.db.AbstractionFieldValue;
 import org.broadinstitute.dsm.db.AbstractionGroup;
 import org.broadinstitute.dsm.model.AbstractionQCWrapper;
-import org.broadinstitute.dsm.model.Patch;
 import org.broadinstitute.dsm.model.Value;
+import org.broadinstitute.dsm.model.patch.Patch;
 import org.broadinstitute.dsm.statics.DBConstants;
 
 import java.sql.PreparedStatement;
@@ -180,9 +180,8 @@ public class AbstractionUtil {
                                             //first check estimated
                                             for (int i = 0; i < abstractionArray.size(); i++) {
                                                 JsonObject j = abstractionArray.get(i).getAsJsonObject();
-                                                Set<String> entries = j.entrySet().stream().map(Map.Entry::getKey).collect(Collectors.toSet());
+                                                Set<String> entries = j.entrySet().stream().map(Map.Entry::getKey).collect(Collectors.toSet());;
                                                 for (String entry : entries) {
-                                                    String test = j.get(entry).getAsString();
                                                     List <Value> values = field.getPossibleValues();
                                                     Value typeTest = values.stream().filter(e -> e.getValue().equals(entry)).findFirst().orElse(null);
                                                     String abstractionValue = null;

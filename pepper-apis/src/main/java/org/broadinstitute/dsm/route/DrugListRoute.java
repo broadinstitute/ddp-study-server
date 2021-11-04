@@ -21,8 +21,9 @@ public class DrugListRoute extends RequestHandler {
         if (RoutePath.RequestMethod.GET.toString().equals(request.requestMethod())) {
             return Drug.getDrugListALL();
         }
+        String userIdRequest = UserUtil.getUserId(request);
         if (RoutePath.RequestMethod.PATCH.toString().equals(request.requestMethod())) {
-            if (UserUtil.checkUserAccess(null, userId, "drug_list_edit")) {
+            if (UserUtil.checkUserAccess(null, userId, "drug_list_edit", userIdRequest)) {
                 String requestBody = request.body();
                 Drug drugUpdateValues = new Gson().fromJson(requestBody, Drug.class);
                 if (drugUpdateValues != null) {

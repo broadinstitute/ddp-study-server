@@ -1,6 +1,7 @@
 package org.broadinstitute.dsm.careevolve;
 
 import com.google.gson.annotations.SerializedName;
+import org.apache.commons.lang3.StringUtils;
 
 public class OrderResponse {
 
@@ -23,5 +24,9 @@ public class OrderResponse {
 
     public String getError() {
         return error;
+    }
+
+    public boolean hasError() {
+        return StringUtils.isNotBlank(error);
     }
 }

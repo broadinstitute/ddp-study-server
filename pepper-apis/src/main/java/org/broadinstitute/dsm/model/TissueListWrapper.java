@@ -29,7 +29,7 @@ public class TissueListWrapper {
             participantESData = ElasticSearchUtil.getFilteredDDPParticipantsFromES(instance, filters.get("ES"));
         }
         else if ((filters == null || !filters.containsKey("ES")) || (filters.containsKey("ES") && participantESData == null) || !hasESData) {
-            participantESData = ParticipantWrapper.getESData(instance);
+            participantESData = ElasticSearchUtil.getESData(instance);
         }
         List<TissueListWrapper> results = new ArrayList<>();
         long timeBegin = System.currentTimeMillis();

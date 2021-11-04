@@ -3,8 +3,8 @@ package org.broadinstitute.dsm.db;
 import com.google.gson.Gson;
 import lombok.Data;
 import lombok.NonNull;
-import org.broadinstitute.ddp.db.SimpleResult;
-import org.broadinstitute.ddp.email.Recipient;
+import org.broadinstitute.lddp.db.SimpleResult;
+import org.broadinstitute.lddp.email.Recipient;
 import org.broadinstitute.dsm.statics.DBConstants;
 
 import java.sql.PreparedStatement;

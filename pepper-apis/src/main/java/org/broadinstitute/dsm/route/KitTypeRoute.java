@@ -24,35 +24,26 @@ public class KitTypeRoute extends RequestHandler {
     @Override
     public Object processRequest(Request request, Response response, String userId) throws Exception {
         String realm = request.params(RequestParameter.REALM);
-        if (request.url().contains(RoutePath.KIT_TYPE)) {
-            if (UserUtil.checkUserAccess(realm, userId, "kit_shipping") || UserUtil.checkUserAccess(realm, userId, "kit_shipping_view")) {
-                if (StringUtils.isNotBlank(realm)) {
-                    String userIdRequest = UserUtil.getUserId(request);
-                    if (!userId.equals(userIdRequest)) {
-                        throw new RuntimeException("User id was not equal. User Id in token " + userId + " user Id in request " + userIdRequest);
-                    }
+        if (StringUtils.isNotBlank(realm)) {
+            String userIdRequest = UserUtil.getUserId(request);
+            if (request.url().contains(RoutePath.KIT_TYPE)) {
+                if (UserUtil.checkUserAccess(realm, userId, "kit_shipping", userIdRequest) || UserUtil.checkUserAccess(realm, userId, "kit_shipping_view", userIdRequest)) {
                     return KitType.getKitTypes(realm, userIdRequest);
-                }
-            }
-            else {
-                response.status(500);
-                return new Result(500, UserErrorMessages.NO_RIGHTS);
-            }
-        }
-        else {
-            if(request.url().contains(RoutePath.UPLOAD_REASONS)){
-                if (UserUtil.checkUserAccess(realm, userId, "kit_upload") || UserUtil.checkUserAccess(realm, userId, "kit_shipping_view")) {
-                    if (StringUtils.isNotBlank(realm)) {
-                        String userIdRequest = UserUtil.getUserId(request);
-                        if (!userId.equals(userIdRequest)) {
-                            throw new RuntimeException("User id was not equal. User Id in token " + userId + " user Id in request " + userIdRequest);
-                        }
-                        return KitType.getUploadReasons(realm);
-                    }
                 }
                 else {
                     response.status(500);
                     return new Result(500, UserErrorMessages.NO_RIGHTS);
+                }
+            }
+            else {
+                if (request.url().contains(RoutePath.UPLOAD_REASONS)) {
+                    if (UserUtil.checkUserAccess(realm, userId, "kit_upload", userIdRequest) || UserUtil.checkUserAccess(realm, userId, "kit_shipping_view", userIdRequest)) {
+                        return KitType.getUploadReasons(realm);
+                    }
+                    else {
+                        response.status(500);
+                        return new Result(500, UserErrorMessages.NO_RIGHTS);
+                    }
                 }
             }
         }

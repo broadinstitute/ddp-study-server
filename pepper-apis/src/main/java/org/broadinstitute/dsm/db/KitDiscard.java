@@ -2,8 +2,8 @@ package org.broadinstitute.dsm.db;
 
 import lombok.Data;
 import lombok.NonNull;
-import org.broadinstitute.ddp.db.SimpleResult;
-import org.broadinstitute.ddp.util.ConfigUtil;
+import org.broadinstitute.lddp.db.SimpleResult;
+import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.QueryExtension;
@@ -98,7 +98,7 @@ public class KitDiscard {
         List<KitDiscard> exitedKits = new ArrayList();
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement stmt = conn.prepareStatement(ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.GET_KIT_OF_EXITED_PARTICIPANTS) + QueryExtension.BY_INSTANCE_NAME)) {
+            try (PreparedStatement stmt = conn.prepareStatement(TransactionWrapper.getSqlFromConfig(ApplicationConfigConstants.GET_KIT_OF_EXITED_PARTICIPANTS) + QueryExtension.BY_INSTANCE_NAME)) {
                 stmt.setString(1, realm);
                 try (ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
@@ -145,7 +145,7 @@ public class KitDiscard {
     public static boolean setConfirmed(@NonNull String kitDiscardId, @NonNull Integer userId) {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement stmt = conn.prepareStatement(ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.SET_USER_CONFIRMED))) {
+            try (PreparedStatement stmt = conn.prepareStatement(TransactionWrapper.getSqlFromConfig(ApplicationConfigConstants.SET_USER_CONFIRMED))) {
                 stmt.setInt(1, userId);
                 stmt.setString(2, APPROVED);
                 stmt.setString(3, kitDiscardId);
@@ -170,7 +170,7 @@ public class KitDiscard {
     public void setAction(@NonNull String kitDiscardId, @NonNull String action) {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement stmt = conn.prepareStatement(ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.UPDATE_KIT_DISCARD_ACTION))) {
+            try (PreparedStatement stmt = conn.prepareStatement(TransactionWrapper.getSqlFromConfig(ApplicationConfigConstants.UPDATE_KIT_DISCARD_ACTION))) {
                 stmt.setString(1, action);
                 stmt.setString(2, kitDiscardId);
                 int result = stmt.executeUpdate();
@@ -195,7 +195,7 @@ public class KitDiscard {
     public void setKitDiscarded(@NonNull String kitDiscardId, @NonNull String userId, @NonNull String discardDate) {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement stmt = conn.prepareStatement(ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.UPDATE_KIT_DISCARDED))) {
+            try (PreparedStatement stmt = conn.prepareStatement(TransactionWrapper.getSqlFromConfig(ApplicationConfigConstants.UPDATE_KIT_DISCARDED))) {
                 stmt.setString(1, userId);
                 stmt.setString(2, discardDate);
                 stmt.setString(3, DESTROYED);
@@ -222,7 +222,7 @@ public class KitDiscard {
     public static void updateInfo(@NonNull String kitDiscardId, @NonNull String userId, String note, String pathName, String path) {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
-            String query = ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.UPDATE_KIT_DISCARD);
+            String query = TransactionWrapper.getSqlFromConfig(ApplicationConfigConstants.UPDATE_KIT_DISCARD);
             String value = null;
             if (note != null) {
                 query = query.replace("%file", DBConstants.NOTE);
@@ -264,7 +264,7 @@ public class KitDiscard {
     public static String addKitToDiscard(@NonNull String kitRequestId, @NonNull String action) {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement stmt = conn.prepareStatement(ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.INSERT_KIT_DISCARD), Statement.RETURN_GENERATED_KEYS)) {
+            try (PreparedStatement stmt = conn.prepareStatement(TransactionWrapper.getSqlFromConfig(ApplicationConfigConstants.INSERT_KIT_DISCARD), Statement.RETURN_GENERATED_KEYS)) {
                 stmt.setString(1, action);
                 stmt.setString(2, kitRequestId);
                 int result = stmt.executeUpdate();
@@ -300,7 +300,7 @@ public class KitDiscard {
         Map<Integer, String> users = UserUtil.getUserMap();
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement stmt = conn.prepareStatement(ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.GET_KIT_OF_EXITED_PARTICIPANTS) + QueryExtension.DISCARD_KIT_BY_DISCARD_ID,
+            try (PreparedStatement stmt = conn.prepareStatement(TransactionWrapper.getSqlFromConfig(ApplicationConfigConstants.GET_KIT_OF_EXITED_PARTICIPANTS) + QueryExtension.DISCARD_KIT_BY_DISCARD_ID,
                     ResultSet.TYPE_SCROLL_SENSITIVE,ResultSet.CONCUR_READ_ONLY)) {
                 stmt.setString(1, kitDiscardId);
                 try (ResultSet rs = stmt.executeQuery()) {

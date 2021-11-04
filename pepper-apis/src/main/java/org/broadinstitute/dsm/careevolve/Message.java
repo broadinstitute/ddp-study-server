@@ -1,9 +1,9 @@
 package org.broadinstitute.dsm.careevolve;
 
-import java.util.Base64;
-
 import com.google.gson.GsonBuilder;
 import com.google.gson.annotations.SerializedName;
+
+import java.util.Base64;
 
 public class Message {
 

@@ -4,13 +4,19 @@ import com.google.gson.Gson;
 import lombok.Data;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.ddp.db.SimpleResult;
+import org.broadinstitute.lddp.db.SimpleResult;
+import org.broadinstitute.dsm.db.dao.settings.InstanceSettingsDao;
+import org.broadinstitute.dsm.db.dto.settings.InstanceSettingsDto;
 import org.broadinstitute.dsm.model.Filter;
 import org.broadinstitute.dsm.model.Value;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -19,6 +25,7 @@ import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
 
@@ -27,8 +34,15 @@ public class InstanceSettings {
 
     private static final Logger logger = LoggerFactory.getLogger(InstanceSettings.class);
 
-    private static final String SQL_SELECT_INSTANCE_SETTINGS = "SELECT mr_cover_pdf, kit_behavior_change, special_format, hide_ES_fields, has_invitations FROM instance_settings settings, ddp_instance realm " +
-            "WHERE realm.ddp_instance_id = settings.ddp_instance_id AND realm.instance_name = ?";
+    private static final String SQL_SELECT_INSTANCE_SETTINGS =
+            "SELECT mr_cover_pdf, kit_behavior_change, special_format, hide_ES_fields, study_specific_statuses, default_columns, has_invitations, " +
+                    "GBF_SHIPPED_DSS_DELIVERED, has_address_tab, has_computed_object " +
+                    "FROM instance_settings settings, ddp_instance realm " +
+                    "WHERE realm.ddp_instance_id = settings.ddp_instance_id AND realm.instance_name = ?";
+    private static final String SQL_SELECT_INSTANCE_SETTINGS_BY_ID =
+            "SELECT mr_cover_pdf, kit_behavior_change, special_format, hide_ES_fields, study_specific_statuses, default_columns, has_invitations, GBF_SHIPPED_DSS_DELIVERED, has_address_tab, has_computed_object " +
+            "FROM instance_settings settings " +
+            "WHERE settings.ddp_instance_id = ?";
 
     public static final String INSTANCE_SETTING_UPLOAD = "upload";
     public static final String INSTANCE_SETTING_UPLOADED = "uploaded"; //"Kits without Labels" page
@@ -41,29 +55,60 @@ public class InstanceSettings {
     private List<Value> kitBehaviorChange;
     private List<Value> specialFormat;
     private List<Value> hideESFields;
+    private List<Value> studySpecificStatuses;
+    private List<Value> defaultColumns;
     private boolean hasInvitations;
+    private boolean gbfShippedTriggerDSSDelivered;
+    private final InstanceSettingsDao instanceSettingsDao = new InstanceSettingsDao();
 
-    public InstanceSettings(List<Value> mrCoverPdf, List<Value> kitBehaviorChange, List<Value> specialFormat, List<Value> hideESFields, boolean hasInvitations) {
+    public InstanceSettings(List<Value> mrCoverPdf, List<Value> kitBehaviorChange, List<Value> specialFormat, List<Value> hideESFields, List<Value> studySpecificStatuses,
+                            List<Value> defaultColumns, boolean hasInvitations, boolean gbfShippedTriggerDSSDelivered) {
         this.mrCoverPdf = mrCoverPdf;
         this.kitBehaviorChange = kitBehaviorChange;
         this.specialFormat = specialFormat;
         this.hideESFields = hideESFields;
+        this.studySpecificStatuses = studySpecificStatuses;
+        this.defaultColumns = defaultColumns;
         this.hasInvitations = hasInvitations;
+        this.gbfShippedTriggerDSSDelivered = gbfShippedTriggerDSSDelivered;
     }
 
-    public static InstanceSettings getInstanceSettings(@NonNull String realm) {
+    public InstanceSettings() {
+
+    }
+
+
+    public boolean getHideSamplesTabByStudyGuid(String studyGuid) {
+        return instanceSettingsDao.getHideSamplesTabByStudyGuid(studyGuid)
+                .orElse(false);
+    }
+
+    public InstanceSettingsDto getInstanceSettings(String realm) {
+        return instanceSettingsDao.getByInstanceName(Objects.requireNonNull(realm))
+                .orElse(new InstanceSettingsDto.Builder().build());
+    }
+
+    //used ONLY for google cloud function
+    public InstanceSettingsDto getInstanceSettings(Connection conn, String realm) {
+        return instanceSettingsDao.getByInstanceName(Objects.requireNonNull(conn), Objects.requireNonNull(realm))
+                .orElse(new InstanceSettingsDto.Builder().build());
+    }
+
+    public static InstanceSettings getInstanceSettings(@NonNull int realmId) {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_INSTANCE_SETTINGS)) {
-                stmt.setString(1, realm);
+            try (PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_INSTANCE_SETTINGS_BY_ID)) {
+                stmt.setInt(1, realmId);
                 try (ResultSet rs = stmt.executeQuery()) {
                     if (rs.next()) {
                         List<Value> mrCoverPdfSettings = getListValue(rs.getString(DBConstants.MR_COVER_PDF));
                         List<Value> kitBehaviorChange = getListValue(rs.getString(DBConstants.KIT_BEHAVIOR_CHANGE));
                         List<Value> specialFormat = getListValue(rs.getString(DBConstants.SPECIAL_FORMAT));
                         List<Value> hideESFields = getListValue(rs.getString(DBConstants.HIDE_ES_FIELDS));
-                        dbVals.resultValue = new InstanceSettings(mrCoverPdfSettings, kitBehaviorChange, specialFormat, hideESFields,
-                                rs.getBoolean(DBConstants.HAS_INVITATIONS));
+                        List<Value> studySpecificStatuses = getListValue(rs.getString(DBConstants.STUDY_SPECIFIC_STATUSES));
+                        List<Value> defaultColumns = getListValue(rs.getString(DBConstants.DEFAULT_COLUMNS));
+                        dbVals.resultValue = new InstanceSettings(mrCoverPdfSettings, kitBehaviorChange, specialFormat, hideESFields, studySpecificStatuses,
+                                defaultColumns, rs.getBoolean(DBConstants.HAS_INVITATIONS), rs.getBoolean(DBConstants.GBF_SHIPPED_DSS_DELIVERED));
                     }
                 }
             }
@@ -79,6 +124,28 @@ public class InstanceSettings {
         return (InstanceSettings) results.resultValue;
     }
 
+    public static InstanceSettings getInstanceSettings(@NonNull int realmId,@NonNull Connection conn) {
+        InstanceSettings result = null;
+        try (PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_INSTANCE_SETTINGS_BY_ID)) {
+            stmt.setInt(1, realmId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    List<Value> mrCoverPdfSettings = getListValue(rs.getString(DBConstants.MR_COVER_PDF));
+                    List<Value> kitBehaviorChange = getListValue(rs.getString(DBConstants.KIT_BEHAVIOR_CHANGE));
+                    List<Value> specialFormat = getListValue(rs.getString(DBConstants.SPECIAL_FORMAT));
+                    List<Value> hideESFields = getListValue(rs.getString(DBConstants.HIDE_ES_FIELDS));
+                    List<Value> studySpecificStatuses = getListValue(rs.getString(DBConstants.STUDY_SPECIFIC_STATUSES));
+                    List<Value> defaultColumns = getListValue(rs.getString(DBConstants.DEFAULT_COLUMNS));
+                    result = new InstanceSettings(mrCoverPdfSettings, kitBehaviorChange, specialFormat, hideESFields, studySpecificStatuses,
+                            defaultColumns, rs.getBoolean(DBConstants.HAS_INVITATIONS), rs.getBoolean(DBConstants.GBF_SHIPPED_DSS_DELIVERED));
+                }
+            }
+        }
+        catch (SQLException ex) {
+            throw new RuntimeException("Error getting list of realms ", ex);
+        }
+        return result;
+    }
 
     public static boolean shouldKitBehaveDifferently(@NonNull Map<String, Object> participant, @NonNull Value behavior) {
         boolean specialKit = false;
@@ -155,11 +222,36 @@ public class InstanceSettings {
         return specialKit;
     }
 
-    private static List<Value> getListValue (String dbValue) {
+    private static List<Value> getListValue(String dbValue) {
         List<Value> list = null;
         if (StringUtils.isNotBlank(dbValue)) {
             list = Arrays.asList(new Gson().fromJson(dbValue, Value[].class));
         }
         return list;
+    }
+
+    public Map<String, Object> getInstanceSettingsAsMap(InstanceSettingsDto instanceSettingsDto) {
+        Map<String, Object> settingsMap = new HashMap<>();
+        Class<? extends InstanceSettingsDto> clazz = instanceSettingsDto.getClass();
+        List<String> fieldNames = Arrays.stream(clazz.getDeclaredFields())
+                .map(Field::getName)
+                .collect(Collectors.toList());
+        List<Method> methods = Arrays.stream(clazz.getMethods())
+                .filter(method -> method.getName().startsWith("get") || method.getName().startsWith("is") || method.getName().startsWith("has"))
+                .collect(Collectors.toList());
+        fieldNames.forEach(fieldName -> {
+            Optional<Method> methodByFieldName = methods.stream()
+                    .filter(method -> method.getName().toLowerCase().contains(fieldName.toLowerCase()))
+                    .findFirst();
+            methodByFieldName.ifPresent(method -> {
+                try {
+                    Optional methodResult = (Optional) method.invoke(instanceSettingsDto);
+                    methodResult.ifPresent(result -> settingsMap.put(fieldName, result));
+                } catch (IllegalAccessException | InvocationTargetException e) {
+                    logger.warn(String.valueOf(e));
+                }
+            });
+        });
+        return settingsMap;
     }
 }

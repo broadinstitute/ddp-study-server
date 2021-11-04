@@ -4,8 +4,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.*;
 import org.broadinstitute.dsm.db.structure.ColumnName;
 import org.broadinstitute.dsm.db.structure.DBElement;
+import org.broadinstitute.dsm.db.structure.DbDateConversion;
 import org.broadinstitute.dsm.db.structure.TableName;
-import org.broadinstitute.dsm.db.ViewFilter;
 import org.broadinstitute.dsm.model.KitRequest;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.slf4j.Logger;
@@ -13,7 +13,10 @@ import org.slf4j.LoggerFactory;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 public class PatchUtil {
 
@@ -23,7 +26,7 @@ public class PatchUtil {
     private static Map<String, String> dataBaseMap;
     private static Set<String> tableAliases = new HashSet<>();
 
-    public PatchUtil() {
+    static {
         columnNameMap = new HashMap<>();
         dataBaseMap = new HashMap<>();
         getColumnNames(Participant.class);
@@ -40,6 +43,9 @@ public class PatchUtil {
         getColumnNames(Drug.class);
         getColumnNames(ParticipantData.class);
         logger.info("Loaded patch utils");
+    }
+    
+    public PatchUtil() {
     }
 
     public static Map<String, DBElement> getColumnNameMap() {
@@ -63,7 +69,7 @@ public class PatchUtil {
         return null;
     }
 
-    private void getColumnNames(Class<?> obj) {
+    private static void getColumnNames(Class<?> obj) {
         String tableName = null;
         String tableAlias = null;
         String primaryKey = null;
@@ -104,7 +110,8 @@ public class PatchUtil {
                     if (StringUtils.isNotBlank(columnPrefix)) {
                         fieldKey = columnPrefix.concat("_").concat(field.getName());
                     }
-                    columnNameMap.put(fieldKey, new DBElement(tableName, tableAlias, primaryKey, column.value()));
+
+                    columnNameMap.put(fieldKey, new DBElement(tableName, tableAlias, primaryKey, column.value(), field.getAnnotation(DbDateConversion.class)));
                     dataBaseMap.put(nameKey, field.getName());
                 }
             }

@@ -1,10 +1,10 @@
 package org.broadinstitute.dsm.careevolve;
 
+import com.google.gson.annotations.SerializedName;
+
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
-
-import com.google.gson.annotations.SerializedName;
 
 public class Order {
 

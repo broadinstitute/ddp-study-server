@@ -1,21 +1,22 @@
 package org.broadinstitute.dsm.util;
 
 import com.google.api.client.http.HttpStatusCodes;
-import com.google.gson.*;
+import com.google.gson.Gson;
 import lombok.NonNull;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.fluent.Executor;
 import org.apache.http.util.EntityUtils;
+import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.handlers.util.*;
-import org.broadinstitute.ddp.util.ConfigUtil;
+import org.broadinstitute.ddp.security.Auth0Util;
 import org.broadinstitute.ddp.util.GoogleBucket;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.exception.SurveyNotCreated;
+import org.broadinstitute.dsm.model.PDF.MiscPDFDownload;
 import org.broadinstitute.dsm.model.ddp.DDPParticipant;
 import org.broadinstitute.dsm.model.ddp.PreferredLanguage;
-import org.broadinstitute.dsm.route.DownloadPDFRoute;
 import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.RoutePath;
@@ -36,7 +37,7 @@ public class DDPRequestUtil {
 
     public DDPRequestUtil() {
         try {
-            if (Boolean.valueOf(ConfigUtil.getSqlFromConfig("portal.enableBlindTrustDDP"))) {
+            if (Boolean.valueOf(TransactionWrapper.getSqlFromConfig("portal.enableBlindTrustDDP"))) {
                 if (blindTrustEverythingExecutor == null) {
                     blindTrustEverythingExecutor = Executor.newInstance(SecurityUtil.buildHttpClient());
                     logger.info("Loaded blindTrustEverythingExecutor for DDP requests.");
@@ -51,7 +52,7 @@ public class DDPRequestUtil {
 
     public static String getContentAsString(HttpResponse response) throws IOException {
         BufferedReader rd = new BufferedReader(new InputStreamReader(response.getEntity().getContent()));
-        return org.apache.commons.io.IOUtils.toString(rd);
+        return IOUtils.toString(rd);
     }
 
     // make a get request
@@ -257,7 +258,7 @@ public class DDPRequestUtil {
     public static void savePDFsInBucket(@NonNull String baseURL, @NonNull String instanceName, @NonNull String ddpParticipantId, @NonNull boolean hasAuth0Token, @NonNull String pdfEndpoint,
                                         @NonNull long time, @NonNull String userId, @NonNull String reason) {
         String fileName = pdfEndpoint.replace("/", "").replace("pdf", "");
-        String gcpName = ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.GOOGLE_PROJECT_NAME);
+        String gcpName = TransactionWrapper.getSqlFromConfig(ApplicationConfigConstants.GOOGLE_PROJECT_NAME);
         if (StringUtils.isNotBlank(gcpName)) {
             String bucketName = gcpName + "_dsm_" + instanceName.toLowerCase();
             try {
@@ -304,22 +305,7 @@ public class DDPRequestUtil {
     }
 
     public static void makeNonStandardPDF(@NonNull DDPInstance ddpInstance, @NonNull String ddpParticipantId, @NonNull String userId, @NonNull String reason) {
-        //get pdf info from ES (get participant)
-        Map<String, Map<String, Object>> participantESData = ElasticSearchUtil.getFilteredDDPParticipantsFromES(ddpInstance,
-                ElasticSearchUtil.BY_GUID + ddpParticipantId);
-        if (participantESData != null && !participantESData.isEmpty()) {
-            makeNonStandardPDF(participantESData, ddpInstance, ddpParticipantId, userId, reason);
-        }
-        else {
-            participantESData = ElasticSearchUtil.getFilteredDDPParticipantsFromES(ddpInstance, ElasticSearchUtil.BY_LEGACY_ALTPID + ddpParticipantId);
-            if (participantESData != null && !participantESData.isEmpty()) {
-                makeNonStandardPDF(participantESData, ddpInstance, ddpParticipantId, userId, reason);
-            }
-        }
-    }
-
-    private static void makeNonStandardPDF(@NonNull Map<String, Map<String, Object>> participantESData, @NonNull DDPInstance ddpInstance, @NonNull String ddpParticipantId, @NonNull String userId, @NonNull String reason) {
-        Object pdfs = DownloadPDFRoute.returnPDFS(participantESData, ddpParticipantId);
+        Object pdfs = new MiscPDFDownload().returnPDFS(ddpParticipantId, ddpInstance.getName());
         List<Map<String, String>> pdfList = (List<Map<String, String>>) pdfs;
         long time = System.currentTimeMillis();
         for (Map<String, String> pdf : pdfList) {
@@ -340,5 +326,19 @@ public class DDPRequestUtil {
             return Arrays.asList(list.clone());
         }
         return null;
+    }
+    // make a post request
+    public static Integer postRequest(String sendRequest, Object objectToPost, String name, boolean auth0Token, Auth0Util auth0Util) throws IOException, RuntimeException {
+        logger.info("Requesting data from " + name + " w/ " + sendRequest);
+        org.apache.http.client.fluent.Request request = SecurityUtil.createPostRequestWithHeader(sendRequest, name, auth0Token, objectToPost, auth0Util);
+
+        int responseCode;
+        if (blindTrustEverythingExecutor != null) {
+            responseCode = blindTrustEverythingExecutor.execute(request).handleResponse(res -> getResponseCode(res, sendRequest));
+        }
+        else {
+            responseCode = request.execute().handleResponse(res -> getResponseCode(res, sendRequest));
+        }
+        return responseCode;
     }
 }

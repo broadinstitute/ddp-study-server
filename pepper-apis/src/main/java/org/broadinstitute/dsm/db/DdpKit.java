@@ -1,17 +1,17 @@
 package org.broadinstitute.dsm.db;
 
 import lombok.Data;
-import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.dsm.model.ups.UPSStatus;
+import org.broadinstitute.dsm.model.ups.UPSShipment;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 
 @Data
 public class DdpKit {
-    String DsmKitRequestId;
+    String dsmKitRequestId;
     String kitLabel;
     String trackingToId;
     String trackingReturnId;
@@ -25,13 +25,16 @@ public class DdpKit {
     String HRUID;
     String externalOrderNumber;
     boolean CEOrdered;
+    String ddpInstanceId;
+    UPSShipment shipment;
+
     private static final Logger logger = LoggerFactory.getLogger(DdpKit.class);
 
-    public DdpKit(String DsmKitRequestId, String kitLabel, String trackingToId, String trackingReturnId, String error,
-                  String message, String receiveDate, String upsTrackingStatus, String upsTrackingDate,
-                  String upsReturnStatus, String upsReturnDate, String bspCollaboratodId, String externalOrderNumber,
-                  boolean CEOrdered) {
-        this.DsmKitRequestId = DsmKitRequestId;
+    public DdpKit(String dsmKitRequestId, String kitLabel, String trackingToId, String trackingReturnId, String error,
+                  String message, String receiveDate, String bspCollaboratodId, String externalOrderNumber,
+                  boolean CEOrdered, String ddpInstanceId,
+                  String upsTrackingStatus, String upsTrackingDate, String upsReturnStatus, String upsReturnDate, UPSShipment shipment) {
+        this.dsmKitRequestId = dsmKitRequestId;
         this.kitLabel = kitLabel;
         this.trackingToId = trackingToId;
         this.trackingReturnId = trackingReturnId;
@@ -45,52 +48,49 @@ public class DdpKit {
         this.HRUID = bspCollaboratodId;
         this.externalOrderNumber = externalOrderNumber;
         this.CEOrdered = CEOrdered;
+        this.ddpInstanceId = ddpInstanceId;
+        this.shipment = shipment;
     }
 
-    public void changeCEOrdered(Connection conn, boolean orderStatus) {
-        String query = "UPDATE ddp_kit SET CE_order = ? where dsm_kit_request_id = ?";
+
+    public static boolean hasKitBeenOrderedInCE(Connection conn, String kitLabel) {
+        String query = "select k.ce_order from ddp_kit k where k.kit_label = ?";
+        boolean hasBeenOrdered = false;
         try (PreparedStatement stmt = conn.prepareStatement(query)) {
-            stmt.setBoolean(1, orderStatus);
-            stmt.setString(2, this.getDsmKitRequestId());
-            int r = stmt.executeUpdate();
-            if (r != 1) {//number of subkits
-                throw new RuntimeException("Update query for CE order flag updated " + r + " rows! with dsm kit request id: " + this.getDsmKitRequestId());
+            stmt.setString(1, kitLabel);
+            ResultSet rs = stmt.executeQuery();
+
+            if (rs.next()) {
+                hasBeenOrdered = rs.getBoolean(1);
+                if (rs.next()) {
+                    throw new RuntimeException("Too many rows found for kit " + kitLabel);
+                }
             }
-            logger.info("Updated CE_Order value for kit with dsm kit request id " + this.getDsmKitRequestId()
-                    + " to " + orderStatus);
+            else {
+                throw new RuntimeException("Could not find kit " + kitLabel);
+            }
+
         }
         catch (Exception e) {
-            throw new RuntimeException("Could not update ce_ordered status for " + this.getDsmKitRequestId(),e);
+            throw new RuntimeException("Could not determine ce_ordered status for " + kitLabel, e);
+        }
+        return hasBeenOrdered;
+    }
+
+    public static void updateCEOrdered(Connection conn, boolean ordered, String kitLabel) {
+        String query = "UPDATE ddp_kit SET CE_order = ? where kit_label = ?";
+        try (PreparedStatement stmt = conn.prepareStatement(query)) {
+            stmt.setBoolean(1, ordered);
+            stmt.setString(2, kitLabel);
+            int r = stmt.executeUpdate();
+            if (r != 1) {//number of subkits
+                throw new RuntimeException("Update query for CE order flag updated " + r + " rows! with dsm kit " + kitLabel);
+            }
+        }
+        catch (Exception e) {
+            throw new RuntimeException("Could not update ce_ordered status for " + kitLabel, e);
         }
     }
 
-    public boolean isDelivered() {
-        if (StringUtils.isNotBlank(trackingToId)) {
-            return isTypeDelivered(upsTrackingStatus);
-        }
-        return false;
-    }
-
-    public boolean isReturned() {
-        if (StringUtils.isNotBlank(trackingReturnId)) {
-            return isTypeDelivered(upsReturnStatus);
-        }
-        return false;
-    }
-
-    private boolean isTypeDelivered(String statusDescription) {
-        if (StringUtils.isNotBlank(statusDescription) && statusDescription.indexOf(' ') > -1) {// get only type from it
-            String type = statusDescription.substring(0, statusDescription.indexOf(' '));
-            return UPSStatus.DELIVERED_TYPE.equals(type);
-        }
-        return false;
-    }
-
-    public String getMainKitLabel() {
-        if (StringUtils.isNotBlank(kitLabel) && kitLabel.contains("_1") && kitLabel.indexOf("_1") == kitLabel.length() - 2) {
-            return kitLabel.substring(0, kitLabel.length() - 2);
-        }
-        return kitLabel;
-    }
 
 }

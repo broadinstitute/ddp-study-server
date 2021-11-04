@@ -2,7 +2,7 @@ package org.broadinstitute.dsm.model;
 
 import lombok.Data;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.ddp.db.SimpleResult;
+import org.broadinstitute.lddp.db.SimpleResult;
 import org.broadinstitute.dsm.db.OncHistoryDetail;
 import org.broadinstitute.dsm.db.Tissue;
 import org.broadinstitute.dsm.statics.DBConstants;

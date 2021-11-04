@@ -3,12 +3,11 @@ package org.broadinstitute.dsm.db;
 import com.google.gson.Gson;
 import lombok.Data;
 import lombok.NonNull;
-import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.ddp.db.SimpleResult;
-import org.broadinstitute.ddp.handlers.util.InstitutionDetail;
-import org.broadinstitute.ddp.handlers.util.MedicalInfo;
-import org.broadinstitute.dsm.DSMServer;
+import org.broadinstitute.lddp.db.SimpleResult;
+import org.broadinstitute.lddp.handlers.util.MedicalInfo;
 import org.broadinstitute.dsm.db.structure.ColumnName;
+import org.broadinstitute.dsm.db.structure.DbDateConversion;
+import org.broadinstitute.dsm.db.structure.SqlDateConverter;
 import org.broadinstitute.dsm.db.structure.TableName;
 import org.broadinstitute.dsm.model.FollowUp;
 import org.broadinstitute.dsm.statics.*;
@@ -18,8 +17,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.sql.*;
-import java.util.*;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
 
@@ -94,6 +98,7 @@ public class MedicalRecord {
             primaryKey = DBConstants.MEDICAL_RECORD_ID,
             columnPrefix = "")
     @ColumnName (DBConstants.FAX_SENT)
+    @DbDateConversion(SqlDateConverter.STRING_DAY)
     private String faxSent;
 
     @TableName (
@@ -110,6 +115,7 @@ public class MedicalRecord {
             primaryKey = DBConstants.MEDICAL_RECORD_ID,
             columnPrefix = "")
     @ColumnName (DBConstants.FAX_CONFIRMED)
+    @DbDateConversion(SqlDateConverter.STRING_DAY)
     private String faxConfirmed;
 
     @TableName (
@@ -118,6 +124,7 @@ public class MedicalRecord {
             primaryKey = DBConstants.MEDICAL_RECORD_ID,
             columnPrefix = "")
     @ColumnName (DBConstants.FAX_SENT_2)
+    @DbDateConversion(SqlDateConverter.STRING_DAY)
     private String faxSent2;
 
     @TableName (
@@ -134,6 +141,7 @@ public class MedicalRecord {
             primaryKey = DBConstants.MEDICAL_RECORD_ID,
             columnPrefix = "")
     @ColumnName (DBConstants.FAX_CONFIRMED_2)
+    @DbDateConversion(SqlDateConverter.STRING_DAY)
     private String faxConfirmed2;
 
     @TableName (
@@ -142,6 +150,7 @@ public class MedicalRecord {
             primaryKey = DBConstants.MEDICAL_RECORD_ID,
             columnPrefix = "")
     @ColumnName (DBConstants.FAX_SENT_3)
+    @DbDateConversion(SqlDateConverter.STRING_DAY)
     private String faxSent3;
 
     @TableName (
@@ -158,6 +167,7 @@ public class MedicalRecord {
             primaryKey = DBConstants.MEDICAL_RECORD_ID,
             columnPrefix = "")
     @ColumnName (DBConstants.FAX_CONFIRMED_3)
+    @DbDateConversion(SqlDateConverter.STRING_DAY)
     private String faxConfirmed3;
 
     @TableName (
@@ -166,6 +176,7 @@ public class MedicalRecord {
             primaryKey = DBConstants.MEDICAL_RECORD_ID,
             columnPrefix = "")
     @ColumnName (DBConstants.MR_RECEIVED)
+    @DbDateConversion(SqlDateConverter.STRING_DAY)
     private String mrReceived;
 
     @TableName (
@@ -387,6 +398,11 @@ public class MedicalRecord {
 
     public static Map<String, List<MedicalRecord>> getMedicalRecords(@NonNull String realm) {
         return getMedicalRecords(realm, null);
+    }
+
+    public static Map<String, List<MedicalRecord>> getMedicalRecordsByParticipantIds(@NonNull String realm, List<String> participantIds) {
+        String queryAddition = " AND p.ddp_participant_id IN (?)".replace("?", DBUtil.participantIdsInClause(participantIds));
+        return getMedicalRecords(realm, queryAddition);
     }
 
     public static Map<String, List<MedicalRecord>> getMedicalRecords(@NonNull String realm, String queryAddition) {

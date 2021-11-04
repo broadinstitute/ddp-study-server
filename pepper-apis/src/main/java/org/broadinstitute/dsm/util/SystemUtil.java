@@ -2,13 +2,18 @@ package org.broadinstitute.dsm.util;
 
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
-
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import javax.servlet.http.HttpServletRequest;
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
@@ -34,6 +39,31 @@ public class SystemUtil {
     private static final String LINEBREAK = "\r";
     public static final String SEPARATOR = "\t";
 
+    public static String getISO8601DateString() {
+        Instant instant = Instant.now();
+        return instant.toString();
+    }
+
+    /**
+     * Detects current time and converts it to String "yyyy-MM-dd".<br>
+     * This format is equivalent to ElasticSearch 'strict_year_month_day' format.<br>
+     * From the ES documentation:
+     * <pre>
+     * year_month_day or strict_year_month_day
+     * A formatter for a four digit year, two digit month of year, and two digit day of month: yyyy-MM-dd
+     * </pre>
+     */
+    public static String getStrictYearMonthDay() {
+        return new SimpleDateFormat(DATE_FORMAT).format(Date.from(Instant.now()));
+    }
+
+    public static final DateTimeFormatter USUAL_DATE = new DateTimeFormatterBuilder()
+            .appendPattern(DATE_FORMAT)
+            .parseDefaulting(ChronoField.HOUR_OF_DAY, 0)
+            .parseDefaulting(ChronoField.MINUTE_OF_DAY, 0)
+            .parseDefaulting(ChronoField.SECOND_OF_MINUTE, 0)
+            .toFormatter();
+    
     public static final DateTimeFormatter FULL_DATE = new DateTimeFormatterBuilder()
             .appendPattern(DATE_FORMAT)
             .parseDefaulting(ChronoField.HOUR_OF_DAY, 0)
@@ -66,9 +96,23 @@ public class SystemUtil {
         return sdf.format(date);
     }
 
+    public static String getNullOrDateFormatted(long inputDate) {
+        if (inputDate == 0) {
+            return null;
+        }
+        return getDateFormatted(inputDate);
+    }
+
     public static long getLongFromDateString(String dateString) {
         if (StringUtils.isNotBlank(dateString)) {
             return getLong(dateString, FULL_DATE);
+        }
+        return 0;
+    }
+
+    public static long getLongFromUsualDateString(String dateString) {
+        if (StringUtils.isNotBlank(dateString)) {
+            return getLong(dateString, USUAL_DATE);
         }
         return 0;
     }
@@ -124,11 +168,16 @@ public class SystemUtil {
             }
             catch (DateTimeParseException e1) {
                 if (dateString.length() != 4) {
-                    throw new ParseException("String " + dateString + " is not a year", 0);
+                    throw new ParseException("String was not a year", 0);
                 }
-                dateTimeFormatter = ONLY_YEAR;
-                startDate = LocalDateTime.parse(dateString, dateTimeFormatter);
-                return startDate.toInstant(ZoneOffset.UTC).toEpochMilli();
+                try {
+                    dateTimeFormatter = ONLY_YEAR;
+                    startDate = LocalDateTime.parse(dateString, dateTimeFormatter);
+                    return startDate.toInstant(ZoneOffset.UTC).toEpochMilli();
+                }
+                catch (DateTimeParseException e2) {
+                    throw new ParseException("String was not a year", 0);
+                }
             }
         }
     }
@@ -184,5 +233,27 @@ public class SystemUtil {
             return LINEBREAK;
         }
         return null;
+    }
+
+    public static JSONObject mergeJSONStrings(@NonNull String json1, @NonNull String json2) {
+        if (StringUtils.isNotBlank(json1) && StringUtils.isNotBlank(json2)) {
+            System.out.println(json1 + " " + json2);
+            return mergeJSONObjects(new JSONObject(json1), new JSONObject(json2));
+        }
+        return null;
+    }
+
+    public static JSONObject mergeJSONObjects(@NonNull JSONObject json1, @NonNull JSONObject json2) {
+        JSONObject mergedJson = new JSONObject();
+        try {
+            mergedJson = new JSONObject(json1, JSONObject.getNames(json1));
+            for (String key : JSONObject.getNames(json2)) {
+                mergedJson.put(key, json2.get(key));
+            }
+        }
+        catch (JSONException e) {
+            throw new RuntimeException("JSON exception ", e);
+        }
+        return mergedJson;
     }
 }

@@ -38,8 +38,7 @@ public class LookupRoute extends RequestHandler {
             "LEFT JOIN ddp_instance_group gr on (realm.ddp_instance_id = gr.ddp_instance_id) " +
             "WHERE oD.type_px LIKE ? AND NOT (oD.deleted <=> 1) AND gr.ddp_group_id = ?";
     private static final String SQL_SELECT_CONTACT = "SELECT DISTINCT name, contact, phone, fax FROM ddp_medical_record WHERE name LIKE ?";
-    private static final String SQL_SELECT_FACILITY = "SELECT DISTINCT facility, phone, fax, destruction_policy FROM ddp_onc_history_detail WHERE facility LIKE ? AND NOT (deleted <=> 1)";
-    private static final String SQL_SELECT_FACILITY_IN_GROUP = "SELECT DISTINCT oD.facility, oD.phone, oD.fax, oD.destruction_policy, realm.ddp_instance_id " +
+    private static final String SQL_SELECT_FACILITY_IN_GROUP = "SELECT DISTINCT oD.facility, oD.phone, oD.fax, oD.destruction_policy " +
             "FROM ddp_onc_history_detail oD " +
             "LEFT JOIN ddp_medical_record m on (m.medical_record_id = oD.medical_record_id AND NOT m.deleted <=> 1) " +
             "LEFT JOIN ddp_institution inst on (m.institution_id = inst.institution_id) " +
@@ -83,7 +82,7 @@ public class LookupRoute extends RequestHandler {
             shortId = queryParams.get(SHORT_ID).value();
         }
         if (StringUtils.isNotBlank(field)) {
-            if (UserUtil.checkUserAccess(realm, userId, "mr_view")) {
+            if (UserUtil.checkUserAccess(realm, userId, "mr_view", null)) {
                 String query = null;
                 if (MEDICAL_RECORD_CONTACT.equals(field)) {
                     query = SQL_SELECT_CONTACT;

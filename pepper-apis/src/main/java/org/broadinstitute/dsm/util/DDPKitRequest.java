@@ -2,7 +2,6 @@ package org.broadinstitute.dsm.util;
 
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.dsm.DSMServer;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.KitRequestShipping;
 import org.broadinstitute.dsm.db.LatestKitRequest;
@@ -10,14 +9,15 @@ import org.broadinstitute.dsm.model.KitRequest;
 import org.broadinstitute.dsm.model.KitRequestSettings;
 import org.broadinstitute.dsm.model.KitSubKits;
 import org.broadinstitute.dsm.model.KitType;
-import org.broadinstitute.dsm.model.ddp.DDPParticipant;
 import org.broadinstitute.dsm.model.ddp.KitDetail;
 import org.broadinstitute.dsm.statics.RoutePath;
-import org.broadinstitute.dsm.util.externalShipper.ExternalShipper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class DDPKitRequest {
 
@@ -60,11 +60,6 @@ public class DDPKitRequest {
                                         if (kitType != null) {
                                             KitRequestSettings kitRequestSettings = kitRequestSettingsMap.get(kitType.getKitTypeId());
 
-                                            ArrayList<KitRequest> orderKit = kitsToOrder.get(kitRequestSettings);
-                                            if (orderKit == null) {
-                                                orderKit = new ArrayList<>();
-                                            }
-
                                             boolean kitHasSubKits = kitRequestSettings.getHasSubKits() != 0;
 
                                             //kit requests from study-server
@@ -82,34 +77,20 @@ public class DDPKitRequest {
 
                                                             if (kitHasSubKits) {
                                                                 List<KitSubKits> subKits = kitRequestSettings.getSubKits();
-                                                                String externalOrderNumber = addSubKits(subKits, kitDetail, collaboratorParticipantId, kitRequestSettings, latestKit.getInstanceID(), null);
-                                                                DDPParticipant ddpParticipant = ElasticSearchUtil.getParticipantAsDDPParticipant(participantsESData, kitDetail.getParticipantId());
-                                                                if (ddpParticipant != null) {
-                                                                    if (StringUtils.isNotBlank(kitRequestSettings.getExternalShipper())) {
-                                                                        orderKit.add(new KitRequest(kitDetail.getParticipantId(), (String) profile.get("hruid"), ddpParticipant, externalOrderNumber));
-                                                                        logger.info("Added kit with external order number " + orderKit.get(orderKit.size() - 1).getExternalOrderNumber() + " to the order list");
-                                                                    }
-                                                                }
-                                                            }
-                                                            else {
+                                                                addSubKits(subKits, kitDetail, collaboratorParticipantId, kitRequestSettings, latestKit.getInstanceID(), null);
+                                                            } else {
                                                                 KitRequestShipping.addKitRequests(latestKit.getInstanceID(), kitDetail, kitType.getKitTypeId(),
                                                                         kitRequestSettings, collaboratorParticipantId, null, null);
                                                             }
-                                                            if (StringUtils.isNotBlank(kitRequestSettings.getExternalShipper()) && !kitDetail.isNeedsApproval()) {//testboston
-                                                                kitsToOrder.put(kitRequestSettings, orderKit);
-                                                            }
-                                                        }
-                                                        else {
+                                                        } else {
                                                             logger.error("ES profile data was empty for participant with ddp_kit_request_id " + kitDetail.getKitRequestId());
                                                         }
-                                                    }
-                                                    else {
+                                                    } else {
                                                         logger.error("Participant of ddp_kit_request_id " + kitDetail.getKitRequestId() + " not found in ES ");
                                                     }
                                                 }
-                                            }
-                                            else {
-                                                throw new RuntimeException("No participant_index was setup for  " + latestKit.getInstanceName());
+                                            } else {
+                                                logger.error("Cannot process gen2 kit request for {}", latestKit.getInstanceName());
                                             }
                                         }
                                         else {
@@ -123,25 +104,6 @@ public class DDPKitRequest {
                                                          " kitRequest.getKitRequestId() " + kitDetail.getKitRequestId() +
                                                          " kitRequest.getKitType() " + kitDetail.getKitType());
                                     throw new RuntimeException("Important information for kitRequest is missing");
-                                }
-                            }
-                            //TODO PEGAH GET UNORDERED OR NOT FOUND ORDERS AND ADD THEM  TO THE LIST
-                            //                            addOtherUnorderedKitsToList(kitsToOrder);
-
-                            //only order if kit were added to kits to order hash (which should only be if a kit has an external shipper)
-                            if (!kitsToOrder.isEmpty()) {
-                                Iterator<KitRequestSettings> iter = kitsToOrder.keySet().iterator();
-                                while (iter.hasNext()) {
-                                    KitRequestSettings setting = iter.next();
-                                    ArrayList<KitRequest> kits = kitsToOrder.get(setting);
-                                    try {
-                                        logger.info("placing order with external shipper");
-                                        ExternalShipper shipper = (ExternalShipper) Class.forName(DSMServer.getClassName(setting.getExternalShipper())).newInstance();
-                                        shipper.orderKitRequests(kits, new EasyPostUtil(latestKit.getInstanceName()), setting, null);
-                                    }
-                                    catch (Exception e) {
-                                        logger.error("Failed to sent external shipper kit request order to " + setting.getExternalShipper(), e);
-                                    }
                                 }
                             }
                         }

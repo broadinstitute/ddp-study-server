@@ -45,16 +45,12 @@ public class ViewFilterRoute extends RequestHandler {
         else {
             throw new RuntimeException("No realm is sent!");
         }
-        if (UserUtil.checkUserAccess(realm, userId, "mr_view") || UserUtil.checkUserAccess(realm, userId, "pt_list_view")) {
+        String userIdRequest = null;
+        if (queryParams.value(UserUtil.USER_ID) != null) {
+            userIdRequest = UserUtil.getUserId(request);
+        }
+        if (UserUtil.checkUserAccess(realm, userId, "mr_view", userIdRequest) || UserUtil.checkUserAccess(realm, userId, "pt_list_view", userIdRequest)) {
             String json = request.body();
-            String userIdRequest = null;
-            if (queryParams.value(UserUtil.USER_ID) != null) {
-                userIdRequest = queryParams.get(UserUtil.USER_ID).value();
-                if (!userId.equals(userIdRequest)) {
-                    throw new RuntimeException("User id was not equal. User Id in token " + userId + " user Id in request " + userIdRequest);
-                }
-            }
-
             if (request.url().contains(RoutePath.GET_FILTERS)) {
                 if (StringUtils.isNotBlank(realm)) {
                     String ddpGroupId = DDPInstance.getDDPGroupId(realm);

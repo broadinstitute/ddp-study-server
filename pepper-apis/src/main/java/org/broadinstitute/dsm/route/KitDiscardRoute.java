@@ -3,12 +3,13 @@ package org.broadinstitute.dsm.route;
 import com.google.gson.Gson;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.handlers.util.Result;
 import org.broadinstitute.ddp.security.Auth0Util;
-import org.broadinstitute.ddp.util.ConfigUtil;
 import org.broadinstitute.ddp.util.GoogleBucket;
 import org.broadinstitute.dsm.db.KitDiscard;
-import org.broadinstitute.dsm.db.User;
+import org.broadinstitute.dsm.db.dao.user.UserDao;
+import org.broadinstitute.dsm.db.dto.user.UserDto;
 import org.broadinstitute.dsm.security.RequestHandler;
 import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
 import org.broadinstitute.dsm.statics.DBConstants;
@@ -51,9 +52,10 @@ public class KitDiscardRoute extends RequestHandler {
         else {
             throw new RuntimeException("No realm query param was sent");
         }
+        String userIdRequest = UserUtil.getUserId(request);
 
         if (RoutePath.RequestMethod.GET.toString().equals(request.requestMethod())) {
-            if (UserUtil.checkUserAccess(realm, userId, "discard_sample") || UserUtil.checkUserAccess(realm, userId, "participant_exit")) {
+            if (userUtil.checkUserAccess(realm, userId, "discard_sample", userIdRequest) || userUtil.checkUserAccess(realm, userId, "participant_exit",userIdRequest)) {
                 return KitDiscard.getExitedKits(realm);
             }
             else {
@@ -65,11 +67,11 @@ public class KitDiscardRoute extends RequestHandler {
             String requestBody = request.body();
             KitDiscard kitAction = new Gson().fromJson(requestBody, KitDiscard.class);
             if (request.url().contains(RoutePath.DISCARD_SHOW_UPLOAD)) {
-                if (UserUtil.checkUserAccess(realm, userId, "discard_sample") || UserUtil.checkUserAccess(realm, userId, "participant_exit")) {
+                if (userUtil.checkUserAccess(realm, userId, "discard_sample", userIdRequest) || userUtil.checkUserAccess(realm, userId, "participant_exit", userIdRequest)) {
                     if (kitAction.getPath() != null) {
                         byte[] bytes = GoogleBucket.downloadFile(null,
-                                ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.GOOGLE_PROJECT_NAME),
-                                ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.GOOGLE_DISCARD_BUCKET), kitAction.getPath());
+                                TransactionWrapper.getSqlFromConfig(ApplicationConfigConstants.GOOGLE_PROJECT_NAME),
+                                TransactionWrapper.getSqlFromConfig(ApplicationConfigConstants.GOOGLE_DISCARD_BUCKET), kitAction.getPath());
                         if (bytes != null) {
                             logger.info("Got file from bucket");
                             try {
@@ -94,7 +96,7 @@ public class KitDiscardRoute extends RequestHandler {
             else {
                 if (StringUtils.isNotBlank(kitAction.getKitDiscardId())) {
                     if (StringUtils.isNotBlank(kitAction.getAction())) {
-                        if (UserUtil.checkUserAccess(realm, userId, "discard_sample") || UserUtil.checkUserAccess(realm, userId, "participant_exit")) {
+                        if (userUtil.checkUserAccess(realm, userId, "discard_sample", userIdRequest) || userUtil.checkUserAccess(realm, userId, "participant_exit", userIdRequest)) {
                             kitAction.setAction(kitAction.getKitDiscardId(), kitAction.getAction());
                             return new Result(200);
                         }
@@ -104,8 +106,7 @@ public class KitDiscardRoute extends RequestHandler {
                         }
                     }
                     if (StringUtils.isNotBlank(kitAction.getDiscardDate())) {
-                        if (UserUtil.checkUserAccess(realm, userId, "discard_sample")) {
-                            String userIdRequest = UserUtil.getUserId(request);
+                        if (userUtil.checkUserAccess(realm, userId, "discard_sample", userIdRequest)) {
                             kitAction.setKitDiscarded(kitAction.getKitDiscardId(), userIdRequest, kitAction.getDiscardDate());
                             return new Result(200);
                         }
@@ -128,14 +129,14 @@ public class KitDiscardRoute extends RequestHandler {
                     Auth0Util.Auth0UserInfo auth0UserInfo = auth0Util.getAuth0UserInfo(token);
                     if (auth0UserInfo != null) {
                         String email = auth0UserInfo.getEmail();
-                        User user = User.getUser(email);
-                        if (user != null && user.getId() != null) {
+                        UserDto userDto = new UserDao().getUserByEmail(email).orElseThrow();
+                        if (userDto != null && userDto.getId() > 0) {
                             ArrayList<String> userSetting = userUtil.getUserAccessRoles(email);
                             if (userSetting.contains(DBConstants.KIT_SHIPPING) || userSetting.contains(DBConstants.DISCARD_SAMPLE)) {
                                 KitDiscard kit = KitDiscard.getKitDiscard(kitAction.getKitDiscardId());
-                                if (kit.getChangedById() != user.getUserId()) {
-                                    if (KitDiscard.setConfirmed(kitAction.getKitDiscardId(), user.getUserId())) {
-                                        return new Result(200, user.getName());
+                                if (kit.getChangedById() != userDto.getId()) {
+                                    if (KitDiscard.setConfirmed(kitAction.getKitDiscardId(), userDto.getId())) {
+                                        return new Result(200, userDto.getName().orElse(""));
                                     }
                                     throw new RuntimeException("Failed to save confirm");
                                 }
@@ -157,7 +158,7 @@ public class KitDiscardRoute extends RequestHandler {
                 }
             }
             else {
-                if (UserUtil.checkUserAccess(realm, userId, "discard_sample")) {
+                if (userUtil.checkUserAccess(realm, userId, "discard_sample", userIdRequest)) {
                     //save note and files
                     String kitDiscardId = null;
                     if (queryParams.value(KitDiscard.KIT_DISCARD_ID) != null) {
@@ -169,7 +170,6 @@ public class KitDiscardRoute extends RequestHandler {
 
                     //create a kitAction with the given kitDiscardId
                     KitDiscard kitAction = new Gson().fromJson("{\"" + KitDiscard.KIT_DISCARD_ID + "\": \"" + kitDiscardId + "\"}", KitDiscard.class);
-                    String userIdRequest = UserUtil.getUserId(request);
 
                     String pathName = null;
                     String path = null;
@@ -194,8 +194,8 @@ public class KitDiscardRoute extends RequestHandler {
                         if (deleteFile) {
                             //delete file
                             if (GoogleBucket.deleteFile(null,
-                                    ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.GOOGLE_PROJECT_NAME),
-                                    ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.GOOGLE_DISCARD_BUCKET), path)) {
+                                    TransactionWrapper.getSqlFromConfig(ApplicationConfigConstants.GOOGLE_PROJECT_NAME),
+                                    TransactionWrapper.getSqlFromConfig(ApplicationConfigConstants.GOOGLE_DISCARD_BUCKET), path)) {
                                 KitDiscard.updateInfo(kitAction.getKitDiscardId(), userIdRequest, null, pathName, null);
                                 return new Result(200);
                             }
@@ -204,8 +204,8 @@ public class KitDiscardRoute extends RequestHandler {
                             //save file
                             HttpServletRequest rawRequest = request.raw();
                             String fileName = GoogleBucket.uploadFile(null,
-                                    ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.GOOGLE_PROJECT_NAME),
-                                    ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.GOOGLE_DISCARD_BUCKET), kitDiscardId + "_" + path, rawRequest.getInputStream());
+                                    TransactionWrapper.getSqlFromConfig(ApplicationConfigConstants.GOOGLE_PROJECT_NAME),
+                                    TransactionWrapper.getSqlFromConfig(ApplicationConfigConstants.GOOGLE_DISCARD_BUCKET), kitDiscardId + "_" + path, rawRequest.getInputStream());
                             KitDiscard.updateInfo(kitAction.getKitDiscardId(), userIdRequest, null, pathName, fileName);
                             return new Result(200, fileName);
                         }

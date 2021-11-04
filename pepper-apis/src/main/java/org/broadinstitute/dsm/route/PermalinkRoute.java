@@ -6,8 +6,6 @@ import spark.Request;
 import spark.Response;
 import spark.Route;
 
-import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
-
 public class PermalinkRoute implements Route {
 
     private static final Logger logger = LoggerFactory.getLogger(PermalinkRoute.class);

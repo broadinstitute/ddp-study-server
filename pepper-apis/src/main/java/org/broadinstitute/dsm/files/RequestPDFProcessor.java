@@ -1,5 +1,6 @@
 package org.broadinstitute.dsm.files;
 
+import org.apache.pdfbox.io.MemoryUsageSetting;
 import org.apache.pdfbox.multipdf.PDFMergerUtility;
 import org.broadinstitute.ddp.exception.FileProcessingException;
 import org.slf4j.Logger;
@@ -31,6 +32,9 @@ public class RequestPDFProcessor extends PDFProcessor {
 
     public static final String BLOCK_COUNTER = "accessionNumber";
 
+    public static final String USER_NAME = "username";
+    public static final String USER_PHONE = "userPhone";
+
     private String ddp;
 
     public RequestPDFProcessor(String ddp) {
@@ -61,6 +65,10 @@ public class RequestPDFProcessor extends PDFProcessor {
                 fields.put(FIELD_DATE_PX + i, valueMap.get(FIELD_DATE_PX + i));
             }
 
+            fields.put(USER_NAME, valueMap.get(USER_NAME));
+            fields.put(USER_PHONE, valueMap.getOrDefault(USER_PHONE, ""));
+            fields.put(USER_PHONE+"#1", valueMap.getOrDefault(USER_PHONE, ""));
+
             PDFMergerUtility pdfMerger = new PDFMergerUtility();
             pdfMerger.setDestinationStream(output);
             addNormalPage(pdfMerger, fields);
@@ -77,7 +85,7 @@ public class RequestPDFProcessor extends PDFProcessor {
                     addAdditionalPage(pdfMerger, fields);
                 }
             }
-            pdfMerger.mergeDocuments();
+            pdfMerger.mergeDocuments(MemoryUsageSetting.setupTempFileOnly());
         }
         catch (Exception ex) {
             throw new FileProcessingException("Unable to generate request pdf stream.", ex);

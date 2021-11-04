@@ -7,7 +7,9 @@ import com.google.cloud.pubsub.v1.AckReplyConsumer;
 import com.google.cloud.pubsub.v1.MessageReceiver;
 import com.google.cloud.pubsub.v1.Subscriber;
 import com.google.common.net.MediaType;
-import com.google.gson.*;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
 import com.google.pubsub.v1.ProjectSubscriptionName;
 import com.google.pubsub.v1.PubsubMessage;
 import com.typesafe.config.Config;
@@ -27,18 +29,18 @@ import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.security.Auth0Util;
 import org.broadinstitute.ddp.security.CookieUtil;
 import org.broadinstitute.ddp.util.BasicTriggerListener;
-import org.broadinstitute.ddp.util.ConfigUtil;
 import org.broadinstitute.ddp.util.JsonTransformer;
 import org.broadinstitute.ddp.util.Utility;
-import org.broadinstitute.dsm.careevolve.Authentication;
 import org.broadinstitute.dsm.careevolve.Provider;
 import org.broadinstitute.dsm.jetty.JettyConfig;
 import org.broadinstitute.dsm.jobs.*;
 import org.broadinstitute.dsm.log.SlackAppender;
+import org.broadinstitute.dsm.pubsub.DSMtasksSubscription;
 import org.broadinstitute.dsm.pubsub.PubSubResultMessageSubscription;
 import org.broadinstitute.dsm.route.*;
 import org.broadinstitute.dsm.route.familymember.AddFamilyMemberRoute;
 import org.broadinstitute.dsm.route.participant.GetParticipantDataRoute;
+import org.broadinstitute.dsm.route.participant.GetParticipantRoute;
 import org.broadinstitute.dsm.security.JWTConverter;
 import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
 import org.broadinstitute.dsm.statics.RequestParameter;
@@ -72,10 +74,9 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static spark.Spark.*;
-
+import static org.quartz.CronScheduleBuilder.cronSchedule;
 import static org.quartz.SimpleScheduleBuilder.simpleSchedule;
-import static org.quartz.CronScheduleBuilder.*;
+import static spark.Spark.*;
 
 public class DSMServer extends BasicServer {
 
@@ -100,22 +101,12 @@ public class DSMServer extends BasicServer {
     public static final String UPS_PATH_TO_ACCESSKEY = "ups.accesskey";
     public static final String UPS_PATH_TO_ENDPOINT = "ups.url";
 
-    public static String UPS_USERNAME;
-    public static String UPS_PASSWORD;
-    public static String UPS_ENDPOINT;
-    public static String UPS_ACCESSKEY;
-    public static String careEvolveSubscriberKey;
-    public static String careEvolveServiceKey;
-    public static String careEvolveOrderEndpoint;
-    public static int careEvolveMaxRetries;
-    public static int careEvolveRetyWaitSeconds;
-    public static String careEvolveAccount;
-    public static Authentication careEvolveAuth;
     public static Provider provider;
     public static final String GCP_PATH_TO_PUBSUB_PROJECT_ID = "pubsub.projectId";
     public static final String GCP_PATH_TO_PUBSUB_SUB = "pubsub.subscription";
     public static final String GCP_PATH_TO_DSS_TO_DSM_SUB = "pubsub.dss_to_dsm_subscription";
     public static final String GCP_PATH_TO_DSM_TO_DSS_TOPIC = "pubsub.dsm_to_dss_topic";
+    public static final String GCP_PATH_TO_DSM_TASKS_SUB = "pubsub.dsm_tasks_subscription";
 
     private static Map<String, JsonElement> ddpConfigurationLookup = new HashMap<>();
     private static final String VAULT_DOT_CONF = "vault.conf";
@@ -180,7 +171,6 @@ public class DSMServer extends BasicServer {
 
         setupDB(config);
 
-
         // don't run superclass routing--it won't work with JettyConfig changes for capturing proper IP address in GAE
         setupCustomRouting(config);
 
@@ -208,6 +198,12 @@ public class DSMServer extends BasicServer {
             }
             res.header(HttpHeaders.CONTENT_TYPE, MediaType.JSON_UTF_8.toString());
         });
+        before(API_ROOT + RoutePath.CLINICAL_KIT_ENDPOINT, (req, res) -> {
+            if (!new JWTRouteFilter(bspSecret, null).isAccessAllowed(req)) {
+                halt(404);
+            }
+            res.header(HttpHeaders.CONTENT_TYPE, MediaType.JSON_UTF_8.toString());
+        });
 
         //DSM internal routes
         EventUtil eventUtil = new EventUtil();
@@ -215,8 +211,14 @@ public class DSMServer extends BasicServer {
 
         setupPubSub(cfg, notificationUtil);
 
-        get(API_ROOT + RoutePath.BSP_KIT_QUERY_PATH, new BSPKitQueryRoute(notificationUtil), new JsonTransformer());
+        get(API_ROOT + RoutePath.BSP_KIT_QUERY_PATH, new BSPKitRoute(notificationUtil), new JsonTransformer());
         get(API_ROOT + RoutePath.BSP_KIT_REGISTERED, new BSPKitRegisteredRoute(), new JsonTransformer());
+        get(API_ROOT + RoutePath.CLINICAL_KIT_ENDPOINT, new ClinicalKitsRoute(notificationUtil), new JsonTransformer());
+        get(API_ROOT + RoutePath.CREATE_CLINICAL_KIT_ENDPOINT, new CreateClinicalDummyKitRoute(), new JsonTransformer());
+
+        if(!cfg.getBoolean("ui.production")){
+            get(API_ROOT + RoutePath.DUMMY_ENDPOINT, new CreateBSPDummyKitRoute(), new JsonTransformer());
+        }
 
         String appRoute = cfg.hasPath("portal.appRoute") ? cfg.getString("portal.appRoute") : null;
 
@@ -233,8 +235,6 @@ public class DSMServer extends BasicServer {
         DrugRoute drugRoute = new DrugRoute();
         get(appRoute + RoutePath.DRUG_LIST_REQUEST, drugRoute, new JsonTransformer());
         get(UI_ROOT + RoutePath.DRUG_LIST_REQUEST, drugRoute, new JsonTransformer());
-
-        post(appRoute + RoutePath.BATCH_KITS_REQUEST, new BatchKitsRoute(), new JsonTransformer());
 
         CancerRoute cancerRoute = new CancerRoute();
         get(appRoute + RoutePath.CANCER_LIST_REQUEST, cancerRoute, new JsonTransformer());
@@ -320,9 +320,7 @@ public class DSMServer extends BasicServer {
             @Override
             public Object handle(Request request, Response response) throws Exception {
                 logger.info("Received request to create java heap dump");
-
-                // todo arz factor out to config util
-                String gcpName = ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.GOOGLE_PROJECT_NAME);
+                String gcpName = TransactionWrapper.getSqlFromConfig(ApplicationConfigConstants.GOOGLE_PROJECT_NAME);
                 heapDumper.dumpHeapToBucket(gcpName + "_dsm_heapdumps");
                 return null;
             }
@@ -334,6 +332,7 @@ public class DSMServer extends BasicServer {
         String projectId = cfg.getString(GCP_PATH_TO_PUBSUB_PROJECT_ID);
         String subscriptionId = cfg.getString(GCP_PATH_TO_PUBSUB_SUB);
         String dsmToDssSubscriptionId = cfg.getString(GCP_PATH_TO_DSS_TO_DSM_SUB);
+        String DSMtasksSubscriptionId = cfg.getString(GCP_PATH_TO_DSM_TASKS_SUB);
 
         logger.info("Setting up pubsub for {}/{}", projectId, subscriptionId);
 
@@ -385,6 +384,12 @@ public class DSMServer extends BasicServer {
             e.printStackTrace();
         }
 
+        try {
+            DSMtasksSubscription.subscribeDSMtasks(projectId, DSMtasksSubscriptionId);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
         logger.info("Pubsub setup complete");
     }
 
@@ -392,10 +397,10 @@ public class DSMServer extends BasicServer {
         logger.info("Running DB update...");
 
         try (Connection conn = DriverManager.getConnection(dbUrl
-                + "&defaultTimezone&sessionVariables=innodb_strict_mode=on,tx_isolation='READ-COMMITTED',sql_mode='TRADITIONAL'")) {
+                + "&sessionVariables=innodb_strict_mode=on,tx_isolation='READ-COMMITTED',sql_mode='TRADITIONAL'")) {
             Database database = DatabaseFactory.getInstance().findCorrectDatabaseImplementation(new JdbcConnection(conn));
 
-            Liquibase liquibase = new liquibase.Liquibase("master-changelog.xml", new ClassLoaderResourceAccessor(), database);
+            Liquibase liquibase = new Liquibase("master-changelog.xml", new ClassLoaderResourceAccessor(), database);
 
             liquibase.update(new Contexts());
         }
@@ -453,11 +458,8 @@ public class DSMServer extends BasicServer {
         patch(UI_ROOT + RoutePath.INSTITUTION_REQUEST, institutionRoute, new JsonTransformer());
 
         DownloadPDFRoute pdfRoute = new DownloadPDFRoute();
-        post(UI_ROOT + RoutePath.DOWNLOAD_PDF + DownloadPDFRoute.CONSENT_PDF, pdfRoute, new JsonTransformer());
-        post(UI_ROOT + RoutePath.DOWNLOAD_PDF + DownloadPDFRoute.RELEASE_PDF, pdfRoute, new JsonTransformer());
-        post(UI_ROOT + RoutePath.DOWNLOAD_PDF + DownloadPDFRoute.COVER_PDF + RoutePath.ROUTE_SEPARATOR + RequestParameter.MEDICALRECORDID, pdfRoute, new JsonTransformer());
-        post(UI_ROOT + RoutePath.DOWNLOAD_PDF + DownloadPDFRoute.REQUEST_PDF, pdfRoute, new JsonTransformer());
         post(UI_ROOT + RoutePath.DOWNLOAD_PDF + DownloadPDFRoute.PDF, pdfRoute, new JsonTransformer());
+        post(UI_ROOT + RoutePath.DOWNLOAD_PDF + DownloadPDFRoute.BUNDLE, pdfRoute, new JsonTransformer());
         get(UI_ROOT + DownloadPDFRoute.PDF, pdfRoute, new JsonTransformer());
 
         patch(UI_ROOT + RoutePath.ASSIGN_PARTICIPANT_REQUEST, new AssignParticipantRoute(
@@ -472,12 +474,12 @@ public class DSMServer extends BasicServer {
         patch(UI_ROOT + RoutePath.SAVE_FILTER, viewFilterRoute, new JsonTransformer());
         patch(UI_ROOT + RoutePath.FILTER_DEFAULT, viewFilterRoute, new JsonTransformer());
 
-        FilterRoute filterRoute = new FilterRoute(patchUtil);
+        FilterRoute filterRoute = new FilterRoute();
         //returns List[] that is filtered based on the filterName
         get(UI_ROOT + RoutePath.APPLY_FILTER, filterRoute, new JsonTransformer());
         patch(UI_ROOT + RoutePath.FILTER_LIST, filterRoute, new JsonTransformer());
         //gets the participant to go to the tissue that was clicked on
-        get(UI_ROOT + RoutePath.GET_PARTICIPANT, filterRoute, new JsonTransformer());
+        get(UI_ROOT + RoutePath.GET_PARTICIPANT, new GetParticipantRoute(), new JsonTransformer());
 
         MedicalRecordLogRoute medicalRecordLogRoute = new MedicalRecordLogRoute();
         get(UI_ROOT + RoutePath.MEDICAL_RECORD_LOG_REQUEST, medicalRecordLogRoute, new JsonTransformer());
@@ -604,38 +606,6 @@ public class DSMServer extends BasicServer {
                 createScheduleJob(scheduler, null, null, EasypostShipmentStatusJob.class, "CHECK_STATUS_SHIPMENT",
                         cfg.getString(ApplicationConfigConstants.QUARTZ_CRON_STATUS_SHIPMENT), new EasypostShipmentStatusTriggerListener(), cfg);
 
-                //pegah todo
-
-                UPS_ACCESSKEY = cfg.getString(UPS_PATH_TO_ACCESSKEY);
-                UPS_USERNAME = cfg.getString(UPS_PATH_TO_USERNAME);
-                UPS_PASSWORD = cfg.getString(UPS_PATH_TO_PASSWORD);
-                UPS_ENDPOINT = cfg.getString(UPS_PATH_TO_ENDPOINT);
-
-                careEvolveSubscriberKey = cfg.getString(ApplicationConfigConstants.CARE_EVOLVE_SUBSCRIBER_KEY);
-                careEvolveServiceKey = cfg.getString(ApplicationConfigConstants.CARE_EVOLVE_SERVICE_KEY);
-                careEvolveAuth = new Authentication(careEvolveSubscriberKey, careEvolveServiceKey);
-                careEvolveAccount = cfg.getString(ApplicationConfigConstants.CARE_EVOLVE_ACCOUNT);
-                careEvolveSubscriberKey = cfg.getString(ApplicationConfigConstants.CARE_EVOLVE_SUBSCRIBER_KEY);
-                careEvolveServiceKey = cfg.getString(ApplicationConfigConstants.CARE_EVOLVE_SERVICE_KEY);
-                careEvolveOrderEndpoint = cfg.getString(ApplicationConfigConstants.CARE_EVOLVE_ORDER_ENDPOINT);
-                if (cfg.hasPath(ApplicationConfigConstants.CARE_EVOLVE_MAX_RETRIES)) {
-                    careEvolveMaxRetries = cfg.getInt(ApplicationConfigConstants.CARE_EVOLVE_MAX_RETRIES);
-                } else {
-                    careEvolveMaxRetries = 5;
-                }
-                if (cfg.hasPath(ApplicationConfigConstants.CARE_EVOLVE_RETRY_WAIT_SECONDS)) {
-                    careEvolveRetyWaitSeconds = cfg.getInt(ApplicationConfigConstants.CARE_EVOLVE_RETRY_WAIT_SECONDS);
-                } else {
-                    careEvolveRetyWaitSeconds = 10;
-                }
-                logger.info("Will retry CareEvolve at most {} times after {} seconds", careEvolveMaxRetries, careEvolveRetyWaitSeconds);
-                provider = new Provider(cfg.getString(ApplicationConfigConstants.CARE_EVOLVE_PROVIDER_FIRSTNAME),
-                        cfg.getString(ApplicationConfigConstants.CARE_EVOLVE_PROVIDER_LAST_NAME),
-                        cfg.getString(ApplicationConfigConstants.CARE_EVOLVE_PROVIDER_NPI));
-
-                createScheduleJob(scheduler, null, null, TestBostonUPSTrackingJob.class, "UPS_TRACKING_JOB",
-                        cfg.getString(ApplicationConfigConstants.QUARTZ_UPS_LOOKUP_JOB), new UPSTriggerListener(), cfg);
-
 
                 logger.info("Setup Job Scheduler...");
                 try {
@@ -653,6 +623,8 @@ public class DSMServer extends BasicServer {
         setupErrorNotifications(cfg, schedulerName);
     }
 
+
+    @Override
     protected void setupErrorNotifications(Config config, String schedulerName) {
         if (config == null) {
             throw new IllegalArgumentException("Config should be provided");

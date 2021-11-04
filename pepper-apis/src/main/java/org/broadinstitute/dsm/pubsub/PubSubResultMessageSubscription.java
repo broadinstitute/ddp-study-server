@@ -73,10 +73,10 @@ public class PubSubResultMessageSubscription {
                 .build();
         try {
             subscriber.startAsync().awaitRunning(1L, TimeUnit.MINUTES);
-            logger.info("Started pubsub subscription receiver for {}", subscriptionId);
+            logger.info("Started pubsub subscription receiver for edit participant");
         }
         catch (TimeoutException e) {
-            throw new RuntimeException("Timed out while starting pubsub subscription " + subscriptionId, e);
+            throw new RuntimeException("Timed out while starting pubsub subscription for edit participant", e);
         }
 
     }

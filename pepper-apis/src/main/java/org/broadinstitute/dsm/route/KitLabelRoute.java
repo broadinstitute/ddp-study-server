@@ -2,8 +2,8 @@ package org.broadinstitute.dsm.route;
 
 import com.google.gson.Gson;
 import org.broadinstitute.ddp.handlers.util.Result;
-import org.broadinstitute.dsm.db.KitRequestShipping;
 import org.broadinstitute.dsm.db.KitRequestCreateLabel;
+import org.broadinstitute.dsm.db.KitRequestShipping;
 import org.broadinstitute.dsm.security.RequestHandler;
 import org.broadinstitute.dsm.statics.RoutePath;
 import org.broadinstitute.dsm.statics.UserErrorMessages;
@@ -22,11 +22,8 @@ public class KitLabelRoute extends RequestHandler {
             return new Result(200, String.valueOf(DBUtil.getBookmark(KitUtil.BOOKMARK_LABEL_CREATION_RUNNING)));
         }
         else {
-            if (UserUtil.checkUserAccess(null, userId, "kit_shipping")) {
-                String userIdRequest = UserUtil.getUserId(request);
-                if (!userId.equals(userIdRequest)) {
-                    throw new RuntimeException("User id was not equal. User Id in token " + userId + " user Id in request " + userIdRequest);
-                }
+            String userIdRequest = UserUtil.getUserId(request);
+            if (UserUtil.checkUserAccess(null, userId, "kit_shipping", userIdRequest)) {
                 QueryParamsMap queryParams = request.queryMap();
 
                 String requestBody = request.body();

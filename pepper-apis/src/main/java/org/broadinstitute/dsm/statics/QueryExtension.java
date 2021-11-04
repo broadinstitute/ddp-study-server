@@ -4,6 +4,7 @@ public class QueryExtension {
 
     public static final String BY_INSTANCE_NAME = " and instance_name = ? ";
     public static final String BY_INSTANCE_ID = " and ddp_instance_id = ? ";
+    public static final String BY_STUDY_GUID = " and study_guid = ? ";
 
     public static final String BY_ROLE_NAME = " and role.name = \'%1\' ";
     public static final String BY_ROLE_NAMES = " and (role.name = \'%1\' or role.name = \'%2\')";
@@ -43,6 +44,7 @@ public class QueryExtension {
 
     public static final String WHERE_INSTANCE_ID = " where ddp_instance_id = ?";
     public static final String WHERE_REALM_INSTANCE_ID = " where realm.ddp_instance_id = ?";
+    public static final String AND_REALM_INSTANCE_ID = " and realm.ddp_instance_id = ?";
 
 
 }

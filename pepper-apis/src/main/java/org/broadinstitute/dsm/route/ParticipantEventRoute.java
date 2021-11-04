@@ -22,10 +22,9 @@ public class ParticipantEventRoute extends RequestHandler {
     @Override
     public Object processRequest(Request request, Response response, String userId) throws Exception {
         String requestBody = request.body();
-
         String realm = request.params(RequestParameter.REALM);
         if (StringUtils.isNotBlank(realm)) {
-            if (UserUtil.checkUserAccess(realm, userId, "participant_event")) {
+            if (UserUtil.checkUserAccess(realm, userId, "participant_event", null)) {
                 return ParticipantEvent.getSkippedParticipantEvents(realm);
             }
             else {
@@ -38,7 +37,7 @@ public class ParticipantEventRoute extends RequestHandler {
             long currentTime = System.currentTimeMillis();
             JsonObject jsonObject = new JsonParser().parse(request.body()).getAsJsonObject();
             realm = jsonObject.getAsJsonObject().get("realm").getAsString();
-            if (UserUtil.checkUserAccess(realm, userId, "participant_event")) {
+            if (UserUtil.checkUserAccess(realm, userId, "participant_event", null)) {
                 DDPInstance instance = DDPInstance.getDDPInstance(realm);
 
                 String ddpParticipantId = jsonObject.getAsJsonObject().get("participantId").getAsString();

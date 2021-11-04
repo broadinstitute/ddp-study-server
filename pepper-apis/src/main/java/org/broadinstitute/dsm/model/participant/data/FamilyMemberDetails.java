@@ -6,38 +6,55 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
+import com.google.gson.Gson;
 import com.google.gson.annotations.SerializedName;
-import lombok.Getter;
+import lombok.Data;
+import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
+import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDataDto;
+import org.broadinstitute.dsm.model.bookmark.Bookmark;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import spark.utils.StringUtils;
 
-@Getter
+@Data
 public class FamilyMemberDetails {
 
     private static final Logger logger = LoggerFactory.getLogger(FamilyMemberDetails.class);
 
-    @SerializedName(value = "DATSTAT_FIRSTNAME", alternate = "firstName")
+    @SerializedName(value = FamilyMemberConstants.FIRSTNAME, alternate = "firstName")
     private String firstName;
 
-    @SerializedName(value = "DATSTAT_LASTNAME", alternate = "lastName")
+    @SerializedName(value = FamilyMemberConstants.LASTNAME, alternate = "lastName")
     private String lastName;
 
-    @SerializedName(value = "MEMBER_TYPE", alternate = "memberType")
+    @SerializedName(value = FamilyMemberConstants.MEMBER_TYPE, alternate = "memberType")
     private String memberType;
 
-    @SerializedName(value = "FAMILY_ID", alternate = "familyId")
-    private String familyId;
+    @SerializedName(value = FamilyMemberConstants.FAMILY_ID, alternate = "familyId")
+    private long familyId;
 
-    @SerializedName(value = "COLLABORATOR_PARTICIPANT_ID", alternate = "collaboratorParticipantId")
+    @SerializedName(value = FamilyMemberConstants.SUBJECT_ID, alternate = "subjectId")
+    private String subjectId;
+
+    @SerializedName(value = FamilyMemberConstants.COLLABORATOR_PARTICIPANT_ID, alternate = "collaboratorParticipantId")
     private String collaboratorParticipantId;
+
+    @SerializedName(value = FamilyMemberConstants.PHONE, alternate = "mobilePhone")
+    private String mobilePhone;
+
+    @SerializedName(value = FamilyMemberConstants.EMAIL, alternate = "email")
+    private String email;
+
+    @SerializedName(value = FamilyMemberConstants.IS_APPLICANT, alternate = "isApplicant")
+    private boolean isApplicant;
 
 
     public FamilyMemberDetails() {}
 
-    public FamilyMemberDetails(String firstName, String lastName, String memberType, String familyId,
+    public FamilyMemberDetails(String firstName, String lastName, String memberType, long familyId,
                                String collaboratorParticipantId) {
         this.firstName = firstName;
         this.lastName = lastName;
@@ -53,7 +70,9 @@ public class FamilyMemberDetails {
                 .collect(Collectors.toList());
         for (Field f: declaredFields) {
             try {
-                familyMemberDetailMap.put(f.getAnnotation(SerializedName.class).value(), (String) f.get(this));
+                Object fieldValue = f.get(this);
+                if (Objects.isNull(fieldValue)) continue;
+                familyMemberDetailMap.put(f.getAnnotation(SerializedName.class).value(), String.valueOf(fieldValue));
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
@@ -63,6 +82,10 @@ public class FamilyMemberDetails {
 
     public boolean isFamilyMemberFieldsEmpty() {
         return StringUtils.isBlank(this.firstName) || StringUtils.isBlank(this.lastName) || StringUtils.isBlank(this.memberType)
-                    || StringUtils.isBlank(this.familyId) || StringUtils.isBlank(this.collaboratorParticipantId);
+                     || StringUtils.isBlank(this.subjectId);
     }
+
+
+
 }
+

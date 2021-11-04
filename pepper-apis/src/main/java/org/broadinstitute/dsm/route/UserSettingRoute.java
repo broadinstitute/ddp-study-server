@@ -22,13 +22,10 @@ public class UserSettingRoute extends RequestHandler {
         QueryParamsMap queryParams = request.queryMap();
         if (queryParams.value(UserUtil.USER_ID) != null) {
             String userIdRequest = queryParams.get(UserUtil.USER_ID).value();
-            if (UserUtil.checkUserAccess(null, userId, "kit_shipping") || UserUtil.checkUserAccess(null, userId, "mr_view")
-                    || UserUtil.checkUserAccess(null, userId, "pt_list_view")) {
+            if (UserUtil.checkUserAccess(null, userId, "kit_shipping",userIdRequest) || UserUtil.checkUserAccess(null, userId, "mr_view",userIdRequest)
+                    || UserUtil.checkUserAccess(null, userId, "pt_list_view",userIdRequest)) {
                 if (StringUtils.isNotBlank(userIdRequest)) {
                     String requestBody = request.body();
-                    if (!userId.equals(userIdRequest)) {
-                        throw new RuntimeException("User id was not equal. User Id in token " + userId + " user Id in request " + userIdRequest);
-                    }
                     UserSettings userSettings = new Gson().fromJson(requestBody, UserSettings.class);
                     UserSettings.editUserSettings(userIdRequest, userSettings);
                     return new Result(200);

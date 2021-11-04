@@ -1,33 +1,78 @@
 package org.broadinstitute.dsm.model.participant.data;
 
 
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalInt;
 
+import com.google.gson.Gson;
 import lombok.Setter;
+import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
+import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDataDto;
+import org.broadinstitute.dsm.model.bookmark.Bookmark;
 
 @Setter
 public class AddFamilyMemberPayload {
 
-    private String participantGuid;
+    private String participantId;
     private String realm;
     private FamilyMemberDetails data;
     private Integer userId;
     private Boolean copyProbandInfo;
     private int probandDataId;
 
-    public AddFamilyMemberPayload(String participantGuid, String realm, FamilyMemberDetails data, Integer userId,
-                                  Boolean copyProbandInfo, int probandDataId) {
-        this.participantGuid = participantGuid;
-        this.realm = realm;
-        this.data = data;
-        this.userId = userId;
-        this.copyProbandInfo = copyProbandInfo;
-        this.probandDataId = probandDataId;
+    private AddFamilyMemberPayload(Builder builder) {
+        this.participantId = builder.participantId;
+        this.realm = builder.realm;
+        this.data = builder.data;
+        this.userId = builder.userId;
+        this.copyProbandInfo = builder.copyProbandInfo;
+        this.probandDataId = builder.probandDataId;
+    }
+    
+    public static class Builder {
+        private String participantId;
+        private String realm;
+        private FamilyMemberDetails data;
+        private Integer userId;
+        private Boolean copyProbandInfo;
+        private int probandDataId;
+        
+        public Builder(String participantId, String realm) {
+            this.participantId = participantId;
+            this.realm = realm;
+        }
+        
+        public Builder withData(FamilyMemberDetails data) {
+            this.data = data;
+            return this;
+        }
+        
+        public Builder withUserId(Integer userId) {
+            this.userId = userId;
+            return this;
+        }
+
+        public Builder withCopyProbandInfo(Boolean copyProbandInfo) {
+            this.copyProbandInfo = copyProbandInfo;
+            return this;
+        }
+
+        public Builder withProbandDataId(int probandDataId) {
+            this.probandDataId = probandDataId;
+            return this;
+        }
+
+        public AddFamilyMemberPayload build() {
+            return new AddFamilyMemberPayload(this);
+        }
     }
 
-    public Optional<String> getParticipantGuid() {
-        return Optional.ofNullable(participantGuid);
+    public Optional<String> getParticipantId() {
+        return Optional.ofNullable(participantId);
     }
 
     public Optional<String> getRealm() {
@@ -45,4 +90,39 @@ public class AddFamilyMemberPayload {
     public Optional<Boolean> getCopyProbandInfo() { return Optional.ofNullable(copyProbandInfo); }
 
     public OptionalInt getProbandDataId() { return OptionalInt.of(probandDataId); }
+
+    public String generateCollaboratorParticipantId() {
+        if (Objects.isNull(this.data)) throw new NullPointerException("field data[FamilyMemberDetails] is null");
+        DDPInstanceDao ddpInstanceDao = new DDPInstanceDao();
+        String collaboratorIdPrefix = ddpInstanceDao.getCollaboratorIdPrefixByStudyGuid(this.realm).orElseThrow();
+        return collaboratorIdPrefix +
+                "_" +
+                getOrGenerateFamilyId() +
+                "_" +
+                this.data.getSubjectId();
+    }
+
+    public long getFamilyId(List<ParticipantDataDto> participantDataDtos) throws NoSuchFieldException {
+        String familyId = null;
+        for (ParticipantDataDto pDataDto: Objects.requireNonNull(participantDataDtos)) {
+            Map<String, String> pDataMap = new Gson().fromJson(pDataDto.getData().orElse(""), Map.class);
+            familyId = pDataMap.get(FamilyMemberConstants.FAMILY_ID);
+            if (StringUtils.isNumeric(familyId)) break;
+        }
+        if (Objects.isNull(familyId)) throw new NoSuchFieldException("could not find family id");
+        return Long.parseLong(familyId);
+    }
+
+    public long getOrGenerateFamilyId() {
+        ParticipantData participantData = new ParticipantData();
+        List<ParticipantDataDto> participantDataByParticipantId = participantData.getParticipantDataByParticipantId(this.participantId);
+        long familyId;
+        try {
+            familyId = getFamilyId(participantDataByParticipantId);
+        } catch (NoSuchFieldException e) {
+            familyId = new Bookmark().getBookmarkFamilyIdAndUpdate(this.realm);
+        }
+        return familyId;
+    }
+
 }

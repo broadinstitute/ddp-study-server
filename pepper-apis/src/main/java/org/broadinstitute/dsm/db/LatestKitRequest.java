@@ -2,7 +2,7 @@ package org.broadinstitute.dsm.db;
 
 import lombok.Data;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.ddp.db.SimpleResult;
+import org.broadinstitute.lddp.db.SimpleResult;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.util.DDPKitRequest;
 import org.slf4j.Logger;
@@ -25,7 +25,7 @@ public class LatestKitRequest {
             "site.collaborator_id_prefix, site.auth0_token, site.es_participant_index, site.migrated_ddp, (SELECT req2.ddp_kit_request_id FROM ddp_kit_request req2 " +
             "WHERE req2.dsm_kit_request_id = (SELECT max(req.dsm_kit_request_id) FROM ddp_kit_request req " +
             "WHERE req.ddp_instance_id = site.ddp_instance_id AND req.ddp_kit_request_id NOT LIKE 'MIGRATED%' " +
-            "AND req.ddp_kit_request_id not like 'UPLOADED%')) AS last_kit, (SELECT count(role.name) FROM ddp_instance realm, " +
+            "AND req.ddp_kit_request_id not like 'UPLOADED%' AND req.ddp_kit_request_id not like 'MERCURY_%'  AND req.ddp_kit_request_id not like 'CLINICALKIT_%')) AS last_kit, (SELECT count(role.name) FROM ddp_instance realm, " +
             "ddp_instance_role inRol, instance_role role WHERE realm.ddp_instance_id = inRol.ddp_instance_id " +
             "AND inRol.instance_role_id = role.instance_role_id AND role.name = ? AND realm.ddp_instance_id = site.ddp_instance_id) AS 'has_role', " +
             "(SELECT count(role.name) FROM ddp_instance realm, ddp_instance_role inRol, instance_role role WHERE realm.ddp_instance_id = inRol.ddp_instance_id " +
