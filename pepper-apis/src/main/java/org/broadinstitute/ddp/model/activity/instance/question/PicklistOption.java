@@ -37,9 +37,6 @@ public class PicklistOption implements Renderable {
     @SerializedName("exclusive")
     private boolean isExclusive;
 
-    @SerializedName("isDefault")
-    private boolean isDefault;
-
     @SerializedName("groupId")
     private String groupStableId;
 
@@ -49,6 +46,7 @@ public class PicklistOption implements Renderable {
     @SerializedName("nestedOptions")
     private List<@Valid @NotNull PicklistOption> nestedOptions = new ArrayList<>();
 
+    private transient boolean isDefault;
     private transient long optionLabelTemplateId;
     private transient Long tooltipTemplateId;
     private transient Long detailLabelTemplateId;
