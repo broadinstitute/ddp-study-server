@@ -133,6 +133,10 @@ public final class PicklistQuestionDef extends QuestionDef {
         return Stream.concat(nestedOptsIncluded, groupOptions).collect(toList());
     }
 
+    public List<PicklistOptionDef> getDefaultOptions() {
+        return getAllPicklistOptions().stream().filter(PicklistOptionDef::isDefault).collect(toList());
+    }
+
     public static final class Builder extends AbstractQuestionBuilder<Builder> {
 
         private PicklistSelectMode selectMode;
