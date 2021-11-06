@@ -18,6 +18,7 @@ public class PicklistOptionDto implements TimestampRevisioned, Serializable {
     private Long detailLabelTemplateId;
     private boolean allowDetails;
     private boolean isExclusive;
+    private boolean isDefault;
     private int displayOrder;
     private long revisionId;
     private Long revisionStartTimestamp;
@@ -33,6 +34,7 @@ public class PicklistOptionDto implements TimestampRevisioned, Serializable {
                              @ColumnName("detail_label_template_id") Long detailLabelTemplateId,
                              @ColumnName("allow_details") boolean allowDetails,
                              @ColumnName("is_exclusive") boolean isExclusive,
+                             @ColumnName("is_default") boolean isDefault,
                              @ColumnName("display_order") int displayOrder,
                              @ColumnName("revision_id") long revisionId,
                              @ColumnName("revision_start_timestamp") Long revisionStartTimestamp,
@@ -45,6 +47,7 @@ public class PicklistOptionDto implements TimestampRevisioned, Serializable {
         this.detailLabelTemplateId = detailLabelTemplateId;
         this.allowDetails = allowDetails;
         this.isExclusive = isExclusive;
+        this.isDefault = isDefault;
         this.displayOrder = displayOrder;
         this.revisionId = revisionId;
         this.revisionStartTimestamp = revisionStartTimestamp;
@@ -78,6 +81,10 @@ public class PicklistOptionDto implements TimestampRevisioned, Serializable {
 
     public boolean isExclusive() {
         return isExclusive;
+    }
+
+    public boolean isDefault() {
+        return isDefault;
     }
 
     public int getDisplayOrder() {
