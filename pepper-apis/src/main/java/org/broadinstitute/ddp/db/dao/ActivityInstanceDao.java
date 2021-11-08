@@ -86,6 +86,9 @@ public interface ActivityInstanceDao extends SqlObject {
     Instant getActivityInstanceCreationMutexLastUpdate(@Bind("participantId")long participantId, @Bind("studyId")long studyId,
                                                        @Bind("activityCode")String activityCode);
 
+    @SqlUpdate("delete from activity_instance_creation_mutex where participant_id = :participantId")
+    void deleteActivityInstanceCreationMutex(@Bind("participantId") long participantId);
+
     /**
      * Convenience method to create new activity instance when both operator and participant is the same, and using defaults.
      */

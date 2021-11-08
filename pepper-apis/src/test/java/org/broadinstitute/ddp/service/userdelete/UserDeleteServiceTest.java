@@ -3,11 +3,13 @@ package org.broadinstitute.ddp.service.userdelete;
 import static java.lang.String.format;
 import static org.broadinstitute.ddp.service.UserDeleteService.getUser;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 import java.io.IOException;
 
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.exception.DDPException;
+import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.route.DeleteUserRouteTestAbstract;
 import org.broadinstitute.ddp.service.UserDeleteService;
 import org.junit.AfterClass;
@@ -25,11 +27,16 @@ public class UserDeleteServiceTest extends DeleteUserRouteTestAbstract {
     private static final String DELETION_COMMENT = "This user is deleted by mistake";
 
     private static UserDeleteService userDeleteService;
+    private static User userWithGovernedUsers;
+
 
     @BeforeClass
     public static void setup() throws Exception {
         userDeleteService = new UserDeleteService(esClientMock);
         DeleteUserRouteTestAbstract.setup();
+        userWithGovernedUsers = new User(testData.getUserId(), testData.getUserGuid(), "testUser-hruid",
+                "testUser-altpid", "testUser-shortid",
+                false, 1L, 1L, "auth", 0, 0, null);
     }
 
     @AfterClass
@@ -39,13 +46,15 @@ public class UserDeleteServiceTest extends DeleteUserRouteTestAbstract {
 
     @Test
     public void testFullDeleteUserWithGovernedUsers() throws IOException {
+
         try {
             TransactionWrapper.useTxn(handle -> {
-                userDeleteService.fullDelete(handle, userNonGoverned, WHO_DELETED_USER, DELETION_COMMENT);
+                userDeleteService.fullDelete(handle, userWithGovernedUsers, WHO_DELETED_USER, DELETION_COMMENT);
             });
+            fail();
         } catch (DDPException e) {
-            assertEquals(format("User [guid=19i3-test-user-48f0] deletion is FAILED: the user has governed users",
-                    testData.getUserGuid()), e.getMessage());
+            assertEquals(format("User [guid=%s] deletion is FAILED: the user has governed users",
+                    userWithGovernedUsers.getGuid()), e.getMessage());
         }
     }
 

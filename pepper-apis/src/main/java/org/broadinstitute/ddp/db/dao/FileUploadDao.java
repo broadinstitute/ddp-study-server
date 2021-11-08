@@ -17,6 +17,7 @@ import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindList;
 import org.jdbi.v3.sqlobject.customizer.BindList.EmptyHandling;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
+import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 
 public interface FileUploadDao extends SqlObject {
 
@@ -51,6 +52,9 @@ public interface FileUploadDao extends SqlObject {
             DBUtils.checkDelete(fileUploadIds.size(), getFileUploadSql().bulkDelete(fileUploadIds));
         }
     }
+
+    @SqlUpdate("delete from file_upload where participant_user_id = :userId or operator_user_id = :userId")
+    void deleteByParticipantOrOperatorId(@Bind("userId") long userId);
 
     @SqlQuery("select f.*, (select file_scan_result_code from file_scan_result"
             + "       where file_scan_result_id = f.scan_result_id) as scan_result"
