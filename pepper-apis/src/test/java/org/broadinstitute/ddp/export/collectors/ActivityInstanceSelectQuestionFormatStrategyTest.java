@@ -19,7 +19,7 @@ public class ActivityInstanceSelectQuestionFormatStrategyTest {
 
     @Before
     public void setup() {
-        fmt = new ActivityInstanceSelectQuestionFormatStrategy();
+        fmt = new ActivityInstanceSelectQuestionFormatStrategy(null);
     }
 
     @Test

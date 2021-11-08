@@ -1452,6 +1452,7 @@ Question.ActivityInstanceSelect:
             type: string
             format: guid
         answers:
+          description: 'Selected activity instance GUIDs'
           type: array
           items:
             $ref: '#/Answer.String'

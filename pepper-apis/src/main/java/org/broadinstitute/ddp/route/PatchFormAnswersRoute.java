@@ -236,7 +236,7 @@ public class PatchFormAnswersRoute implements Route {
                     }
 
                     Answer answer = convertAnswer(handle, response, instanceGuid, questionStableId,
-                            submission.getAnswerGuid(), questionDto, submission.getValue());
+                            submission.getAnswerGuid(), studyGuid, participantGuid, questionDto, submission.getValue());
                     if (answer == null) {
                         String msg = "Answer value does not have expected format for question stable id " + questionStableId;
                         LOG.info(msg);
@@ -415,7 +415,7 @@ public class PatchFormAnswersRoute implements Route {
      * @return answer object, or null if no answer value given
      */
     private Answer convertAnswer(Handle handle, Response response, String instanceGuid, String stableId, String guid,
-                                 QuestionDto questionDto, JsonElement value) {
+                                 String studyGuid, String userGuid, QuestionDto questionDto, JsonElement value) {
         switch (questionDto.getType()) {
             case BOOLEAN:
                 return convertBoolAnswer(stableId, guid, instanceGuid, value);
@@ -424,7 +424,7 @@ public class PatchFormAnswersRoute implements Route {
             case TEXT:
                 return convertTextAnswer(stableId, guid, instanceGuid, value);
             case ACTIVITY_INSTANCE_SELECT:
-                return convertActivityInstanceSelectAnswer(stableId, guid, instanceGuid, value);
+                return convertActivityInstanceSelectAnswer(handle, response, studyGuid, userGuid, questionDto, guid, instanceGuid, value);
             case DATE:
                 return convertDateAnswer(stableId, guid, instanceGuid, value);
             case FILE:
@@ -434,7 +434,8 @@ public class PatchFormAnswersRoute implements Route {
             case AGREEMENT:
                 return convertAgreementAnswer(stableId, guid, instanceGuid, value);
             case COMPOSITE:
-                return convertCompositeAnswer(handle, response, instanceGuid, (CompositeQuestionDto) questionDto, guid, value);
+                return convertCompositeAnswer(handle, response, instanceGuid, studyGuid, userGuid,
+                        (CompositeQuestionDto) questionDto, guid, value);
             default:
                 throw new RuntimeException("Unhandled question type " + questionDto.getType());
         }
@@ -500,16 +501,27 @@ public class PatchFormAnswersRoute implements Route {
     /**
      * Converts the activity instance select answer.
      *
-     * @param stableId the question stable id
+     * @param handle   the database handle
+     * @param questionDto the question dto object
      * @param guid     the answer guid, or null
      * @param value    the answer value
      * @return activity instance select answer object, or null if value is not a string
      */
-    private ActivityInstanceSelectAnswer convertActivityInstanceSelectAnswer(String stableId, String guid,
-                                                                             String actInstanceGuid, JsonElement value) {
+    private ActivityInstanceSelectAnswer convertActivityInstanceSelectAnswer(Handle handle, Response response, String studyGuid,
+                                                                             String userGuid, QuestionDto questionDto,
+                                                                             String guid, String actInstanceGuid, JsonElement value) {
         if (value != null && value.isJsonPrimitive() && value.getAsJsonPrimitive().isString()) {
             String textValue = value.getAsJsonPrimitive().getAsString();
-            return new ActivityInstanceSelectAnswer(null, stableId, guid, textValue, actInstanceGuid);
+            var jdbiQuestion = new JdbiQuestionCached(handle);
+            Set<String> activityCodes = new HashSet<>(jdbiQuestion
+                    .getActivityCodesByActivityInstanceSelectQuestionId(questionDto.getId()));
+            var instanceSummaries = handle.attach(org.broadinstitute.ddp.db.dao.ActivityInstanceDao.class)
+                    .findSortedInstanceSummaries(userGuid, studyGuid, activityCodes);
+            if (instanceSummaries.stream().noneMatch(summary -> summary.getGuid().equals(textValue))) {
+                throw ResponseUtil.haltError(response, 400, new ApiError(ErrorCodes.NOT_FOUND,
+                        "Could not find activity instance with guid " + textValue));
+            }
+            return new ActivityInstanceSelectAnswer(null, questionDto.getStableId(), guid, textValue, actInstanceGuid);
         } else {
             return null;
         }
@@ -576,7 +588,8 @@ public class PatchFormAnswersRoute implements Route {
     }
 
     private CompositeAnswer convertCompositeAnswer(Handle handle, Response response, String instanceGuid,
-                                                   CompositeQuestionDto compositeDto, String answerGuid, JsonElement value) {
+                                                   String studyGuid, String userGuid, CompositeQuestionDto compositeDto,
+                                                   String answerGuid, JsonElement value) {
         String parentStableId = compositeDto.getStableId();
         final Consumer<String> haltError = (String msg) -> {
             LOG.info(msg);
@@ -622,7 +635,8 @@ public class PatchFormAnswersRoute implements Route {
 
                         QuestionDto childQuestionDto = extractQuestionDto(response, childAnswerStableId, correspondingChildQuestion);
                         childAnswersRow.add(convertAnswer(handle, response, instanceGuid, childAnswerStableId,
-                                childAnswerSubmission.getAnswerGuid(), childQuestionDto, childAnswerSubmission.getValue()));
+                                childAnswerSubmission.getAnswerGuid(), studyGuid, userGuid, childQuestionDto,
+                                childAnswerSubmission.getValue()));
                     }
 
                     compAnswer.addRowOfChildAnswers(childAnswersRow);

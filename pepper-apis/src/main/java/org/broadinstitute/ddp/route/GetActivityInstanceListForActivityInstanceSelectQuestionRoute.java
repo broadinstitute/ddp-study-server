@@ -61,11 +61,11 @@ public class GetActivityInstanceListForActivityInstanceSelectQuestionRoute imple
                     .findLatestDtoByStudyIdAndQuestionStableId(found.getStudyDto().getId(), stableId)
                     .orElseThrow(() -> new DDPException("Could not find question with stableId " + stableId));
 
-            Set<String> activityGuids = new HashSet<>(jdbiQuestion
+            Set<String> activityCodes = new HashSet<>(jdbiQuestion
                     .getActivityCodesByActivityInstanceSelectQuestionId(questionDto.getId()));
 
             List<ActivityInstanceSummary> summaries = service.findTranslatedInstanceSummaries(
-                    handle, userGuid, studyGuid, activityGuids, preferredUserLanguage.getIsoCode());
+                    handle, userGuid, studyGuid, activityCodes, preferredUserLanguage.getIsoCode());
             if (!isStudyAdmin) {
                 // Study admins are allowed to view all the data, so if they're NOT admin then do filtering.
                 summaries = summaries.stream()

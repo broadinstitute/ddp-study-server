@@ -59,7 +59,7 @@ public class ActivityResponseCollector {
     private AgreementQuestionFormatStrategy agreementFmt = new AgreementQuestionFormatStrategy();
     private BoolQuestionFormatStrategy boolFmt = new BoolQuestionFormatStrategy();
     private TextQuestionFormatStrategy textFmt = new TextQuestionFormatStrategy();
-    private ActivityInstanceSelectQuestionFormatStrategy aiFmt = new ActivityInstanceSelectQuestionFormatStrategy();
+    private ActivityInstanceSelectQuestionFormatStrategy aiFmt;
     private DateQuestionFormatStrategy dateFmt = new DateQuestionFormatStrategy();
     private FileQuestionFormatStrategy fileFmt = new FileQuestionFormatStrategy();
     private NumericQuestionFormatStrategy numericFmt = new NumericQuestionFormatStrategy();
@@ -70,12 +70,14 @@ public class ActivityResponseCollector {
 
     public ActivityResponseCollector(ActivityDef definition) {
         this.definition = definition;
+        this.aiFmt = new ActivityInstanceSelectQuestionFormatStrategy(definition.getStudyGuid());
     }
 
     public ActivityResponseCollector(ActivityDef definition, List<String> firstFields, List<String> excludedFields) {
         this.definition = definition;
         this.firstFields = firstFields;
         this.excludedFields = excludedFields;
+        this.aiFmt = new ActivityInstanceSelectQuestionFormatStrategy(definition.getStudyGuid());
     }
 
     public List<String> emptyRow() {
@@ -540,7 +542,8 @@ public class ActivityResponseCollector {
                 record.putAll(textFmt.collect((TextQuestionDef) question, (TextAnswer) answer));
                 break;
             case ACTIVITY_INSTANCE_SELECT:
-                record.putAll(aiFmt.collect((ActivityInstanceSelectQuestionDef) question, (ActivityInstanceSelectAnswer) answer));
+                record.putAll(aiFmt.collect((ActivityInstanceSelectQuestionDef) question, (ActivityInstanceSelectAnswer) answer,
+                        instance.getParticipantId()));
                 break;
             case DATE:
                 record.putAll(dateFmt.collect((DateQuestionDef) question, (DateAnswer) answer));
