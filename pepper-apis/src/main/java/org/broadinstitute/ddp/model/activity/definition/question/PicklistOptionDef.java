@@ -36,6 +36,9 @@ public class PicklistOptionDef {
     @SerializedName("exclusive")
     private boolean isExclusive;
 
+    @SerializedName("default")
+    private boolean isDefault;
+
     @SerializedName("nestedOptionsLabelTemplate")
     private Template nestedOptionsLabelTemplate;
 
@@ -80,7 +83,7 @@ public class PicklistOptionDef {
     }
 
     public PicklistOptionDef(Long optionId, String stableId, Template optionLabelTemplate, Template tooltipTemplate,
-                             Template detailLabelTemplate, boolean isExclusive) {
+                             Template detailLabelTemplate, boolean isExclusive, boolean isDefault) {
         this.optionId = optionId;
         this.stableId = MiscUtil.checkNotBlank(stableId, "stableId");
         this.optionLabelTemplate = MiscUtil.checkNonNull(optionLabelTemplate, "optionLabelTemplate");
@@ -88,10 +91,12 @@ public class PicklistOptionDef {
         this.isDetailsAllowed = (detailLabelTemplate != null);
         this.detailLabelTemplate = detailLabelTemplate;
         this.isExclusive = isExclusive;
+        this.isDefault = isDefault;
     }
 
     public PicklistOptionDef(Long optionId, String stableId, Template optionLabelTemplate, Template tooltipTemplate,
-                             Template detailLabelTemplate, boolean isExclusive, Template nestedOptionsLabelTemplate,
+                             Template detailLabelTemplate, boolean isExclusive,
+                             boolean isDefault, Template nestedOptionsLabelTemplate,
                              List<PicklistOptionDef> nestedOptions) {
         this.optionId = optionId;
         this.stableId = MiscUtil.checkNotBlank(stableId, "stableId");
@@ -100,6 +105,7 @@ public class PicklistOptionDef {
         this.isDetailsAllowed = (detailLabelTemplate != null);
         this.detailLabelTemplate = detailLabelTemplate;
         this.isExclusive = isExclusive;
+        this.isDefault = isDefault;
         this.nestedOptionsLabelTemplate = nestedOptionsLabelTemplate;
         this.nestedOptions = nestedOptions;
     }
@@ -134,6 +140,10 @@ public class PicklistOptionDef {
 
     public boolean isExclusive() {
         return isExclusive;
+    }
+
+    public boolean isDefault() {
+        return isDefault;
     }
 
     public Long getOptionId() {

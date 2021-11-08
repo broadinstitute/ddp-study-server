@@ -11,11 +11,18 @@ import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.db.dto.QuestionDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.db.dto.UserActivityInstanceSummary;
+import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.json.form.BlockVisibility;
+import org.broadinstitute.ddp.model.activity.definition.ConditionalBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
+import org.broadinstitute.ddp.model.activity.definition.FormBlockDef;
+import org.broadinstitute.ddp.model.activity.definition.FormSectionDef;
+import org.broadinstitute.ddp.model.activity.definition.GroupBlockDef;
+import org.broadinstitute.ddp.model.activity.definition.QuestionBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
 import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
 import org.broadinstitute.ddp.model.activity.instance.question.Question;
+import org.broadinstitute.ddp.model.activity.types.BlockType;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.pex.PexInterpreter;
@@ -24,8 +31,12 @@ import org.broadinstitute.ddp.service.FormActivityService;
 import org.jdbi.v3.core.Handle;
 import spark.Response;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
+
 
 public class QuestionUtil {
 
@@ -105,7 +116,37 @@ public class QuestionUtil {
                 .orElseThrow(() -> new DaoException(format(
                         "Error to detect answer: question stableId=%s, instanceId=%d", questionStableId, instanceId)));
     }
-
+  
+    public static List<QuestionDef> collectQuestions(FormActivityDef activityDef, Predicate<? super QuestionDef> predicate) {
+        List<QuestionDef> questions = new ArrayList<>();
+        for (FormSectionDef section : activityDef.getAllSections()) {
+            for (FormBlockDef block : section.getBlocks()) {
+                if (block.getBlockType() == BlockType.QUESTION) {
+                    questions.add(((QuestionBlockDef) block).getQuestion());
+                }
+                if (block.getBlockType().isContainerBlock()) {
+                    List<FormBlockDef> children;
+                    if (block.getBlockType() == BlockType.CONDITIONAL) {
+                        children = ((ConditionalBlockDef) block).getNested();
+                    } else if (block.getBlockType() == BlockType.GROUP) {
+                        children = ((GroupBlockDef) block).getNested();
+                    } else if (block.getBlockType() == BlockType.ACTIVITY) {
+                        // Questions within the nested activity itself are not considered.
+                        children = new ArrayList<>();
+                    } else {
+                        throw new DDPException("Unhandled container block type " + block.getBlockType());
+                    }
+                    for (var child : children) {
+                        if (child.getBlockType() == BlockType.QUESTION) {
+                            questions.add(((QuestionBlockDef) child).getQuestion());
+                        }
+                    }
+                }
+            }
+        }
+        return questions.stream().filter(predicate).collect(Collectors.toList());
+    }
+  
     public static List<BlockVisibility> getBlockVisibility(Handle handle, Response response,
                                                                      String activityInstanceGuid, User participantUser, StudyDto studyDto,
                                                                      String operatorGuid, boolean isStudyAdmin) {
