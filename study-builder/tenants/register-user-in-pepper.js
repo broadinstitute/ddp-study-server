@@ -121,7 +121,7 @@ function (user, context, callback) {
         if (
             !pepper_params.tempUserGuid &&
             !user.app_metadata.user_guid &&
-            !!user.user_metadata.temp_user_guid
+            user.user_metadata && !!user.user_metadata.temp_user_guid
         ) {
             pepper_params.tempUserGuid = user.user_metadata.temp_user_guid;
         }
@@ -134,6 +134,20 @@ function (user, context, callback) {
             console.log('Registration Mode passed in (via body) = ' + pepper_params.mode);
         } else {
             console.log('No Registration Mode passed in request');
+        }
+
+        if (pepper_params.mode && pepper_params.mode === "login" &&
+            !user.app_metadata.user_guid &&
+            !pepper_params.tempUserGuid
+        ) {
+            console.log('User not registered');
+            const loginErrPayload = {
+                code: 'user_not_registered',
+                message: 'User need to register first in order to login',
+                statusCode: 403,
+            };
+            const loginErr = new Error(JSON.stringify(loginErrPayload));
+            return callback(loginErr, user, context);
         }
 
         if (context.request.query.invitation_id) {
@@ -243,7 +257,6 @@ function (user, context, callback) {
                     // all is well
                     var ddpUserGuid = body.ddpUserGuid;
                     user.app_metadata.user_guid = ddpUserGuid;
-
                     auth0.users.updateAppMetadata(user.user_id, user.app_metadata)
                         .then(function(){
                             context.idToken[pepperUserGuidClaim] = ddpUserGuid;

@@ -49,6 +49,7 @@ public class PicklistOption implements Renderable {
     @SerializedName("nestedOptions")
     private List<@Valid @NotNull PicklistOption> nestedOptions = new ArrayList<>();
 
+    private transient boolean isDefault;
     private transient long optionLabelTemplateId;
     private transient Long tooltipTemplateId;
     private transient Long detailLabelTemplateId;
