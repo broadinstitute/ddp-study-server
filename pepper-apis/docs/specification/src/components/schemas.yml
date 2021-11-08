@@ -1450,6 +1450,7 @@ Question.ActivityInstanceSelect:
           type: array
           items:
             type: string
+            format: guid
         answers:
           type: array
           items:
