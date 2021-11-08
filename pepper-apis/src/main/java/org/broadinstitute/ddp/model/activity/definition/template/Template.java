@@ -90,6 +90,28 @@ public class Template {
         return variables;
     }
 
+    /**
+     * It is possible that `variables` set to null: this could happen during building of
+     * object {@link Template} from a JSON (config file) in a case if child element `variables[]` is not specified
+     * (and we don't want to specify it trying to make template definition in config files as compact as possible).
+     * It means that if we want during JSON serialization to Template object to avoid assigning variables to null we
+     * need to define in config like:
+     * <pre>
+     * {@code
+     *     "bodyTemplate": {
+     *             "templateType": "HTML", "templateText": """<p class="ddp-question-prompt">$prompt *</p>"""
+     *             "variables": []
+     *     }
+     * }
+     * </pre>
+     * But more compact to do like this (but this causes to set `variables` to null):
+     * <pre>
+     * {@code
+     *  "bodyTemplate": {"templateType": "HTML", "templateText": """<p class="ddp-question-prompt">$prompt *</p>"""}
+     * }
+     * </pre>
+     * So, it is checked if `variables` is null and if it is - an empty list is created.
+     */
     public void addVariable(TemplateVariable variable) {
         if (variable != null) {
             if (variables == null) {
@@ -99,6 +121,9 @@ public class Template {
         }
     }
 
+    /**
+     * It is possible that variables could be null (see comments to method {@link #addVariable(TemplateVariable)}
+     */
     public Optional<TemplateVariable> getVariable(String name) {
         if (variables == null) {
             return null;

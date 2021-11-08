@@ -6,13 +6,6 @@ package org.broadinstitute.ddp.studybuilder.translation;
 public enum TranslationsProcessingType {
 
     /**
-     * Not to run the translations processing.
-     * This is how the conf files processed an old way: translations
-     * should be defined inside variables in templates definitions.
-     */
-    NOT_PROCESS,
-
-    /**
      * Process (generate translations) for all templates. Even that ones where variables with translations
      * are defined and it needs to generate translations for some new language which was introduced in a study.
      * NOTE: translations having an empty 'translationText' are skipped.

@@ -1,7 +1,6 @@
 package org.broadinstitute.ddp.studybuilder.translation;
 
 import static org.broadinstitute.ddp.model.activity.types.DateRenderMode.PICKLIST;
-import static org.broadinstitute.ddp.studybuilder.translation.TranslationsProcessingType.NOT_PROCESS;
 import static org.broadinstitute.ddp.studybuilder.translation.TranslationsEnricher.addTemplateTranslations;
 
 import java.util.Map;
@@ -68,7 +67,7 @@ public class ActivityDefTranslationsProcessor {
     }
 
     public void run(FormActivityDef activityDef) {
-        if (StudyBuilderContext.CONTEXT.getTranslationsProcessingType() != NOT_PROCESS) {
+        if (StudyBuilderContext.CONTEXT.getTranslationsProcessingType() != null) {
             enrichActivityDefWithTranslations(activityDef);
         }
     }

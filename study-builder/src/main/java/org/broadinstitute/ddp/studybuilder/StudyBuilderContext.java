@@ -1,7 +1,5 @@
 package org.broadinstitute.ddp.studybuilder;
 
-import static org.broadinstitute.ddp.studybuilder.translation.TranslationsProcessingType.NOT_PROCESS;
-
 import java.util.Map;
 import java.util.Properties;
 
@@ -21,7 +19,7 @@ public class StudyBuilderContext {
 
     public static final StudyBuilderContext CONTEXT = new StudyBuilderContext();
 
-    private TranslationsProcessingType translationsProcessingType = NOT_PROCESS;
+    private TranslationsProcessingType translationsProcessingType = null;
 
     private Map<String, Properties> translations;
 

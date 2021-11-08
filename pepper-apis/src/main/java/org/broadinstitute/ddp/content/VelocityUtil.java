@@ -24,7 +24,7 @@ import org.broadinstitute.ddp.model.activity.definition.template.TemplateVariabl
  * is used in order to support translations references automatic resolving: as soon as this feature
  * enabled in the study conf-files (in StudyBuilder) it needs to define Velocity variables with same names
  * as translations references (without prefix `i18n.xx' where xx - langCde).
- * For example, in StudyBuilder conf file thr translations defined in files en.conf, es.conf.. like:
+ * For example, in StudyBuilder conf file the translations defined in files en.conf, es.conf.. like:
  * <pre>
  * "prequal": {
  *   "name": "Prequalifier Survey",

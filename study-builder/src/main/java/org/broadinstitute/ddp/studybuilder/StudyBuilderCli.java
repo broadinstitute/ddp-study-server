@@ -1,7 +1,6 @@
 package org.broadinstitute.ddp.studybuilder;
 
 import static org.broadinstitute.ddp.studybuilder.StudyBuilderContext.CONTEXT;
-import static org.broadinstitute.ddp.studybuilder.translation.TranslationsProcessingType.NOT_PROCESS;
 import static org.broadinstitute.ddp.studybuilder.StudyPatcher.LOG_FILENAME;
 import static org.broadinstitute.ddp.studybuilder.translation.I18nReader.readI18nTranslations;
 
@@ -219,7 +218,7 @@ public class StudyBuilderCli {
         StudyBuilderContext.CONTEXT.setTranslationsProcessingType(
                 cmd.hasOption(OPT_PROCESS_TRANSLATIONS)
                         ? TranslationsProcessingType.valueOf(cmd.getOptionValue(OPT_PROCESS_TRANSLATIONS))
-                        : NOT_PROCESS);
+                        : null);
 
         log("executing setup...");
         execute(builder::run, isDryRun);

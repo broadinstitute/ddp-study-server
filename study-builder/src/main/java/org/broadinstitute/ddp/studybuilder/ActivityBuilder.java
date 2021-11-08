@@ -1,7 +1,6 @@
 package org.broadinstitute.ddp.studybuilder;
 
 import static org.broadinstitute.ddp.studybuilder.BuilderUtils.validateActivityDef;
-import static org.broadinstitute.ddp.studybuilder.translation.TranslationsProcessingType.NOT_PROCESS;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -345,7 +344,7 @@ public class ActivityBuilder {
      */
     private ActivityDef buildActivityDefFromConfig(Config definition) {
         ActivityDef activityDef;
-        if (StudyBuilderContext.CONTEXT.getTranslationsProcessingType() != NOT_PROCESS) {
+        if (StudyBuilderContext.CONTEXT.getTranslationsProcessingType() != null) {
             activityDef = gson.fromJson(ConfigUtil.toJson(definition), ActivityDef.class);
             activityDefTranslationsProcessor.run((FormActivityDef) activityDef);
         } else {

@@ -83,12 +83,34 @@ public class TranslationsEnricher {
     }
 
     /**
-     * Add translations to specified array of translations (if it is null then it is created).
-     * The result translations list are returned.
+     * Generates translations list for a specified template variable for all languages defined in a study.
+     * Note: it is possible that initial translations list is not empty and it just needs to add it translations for
+     * all existing language. But most typical use case: initial translations list is empty and generated
+     * references to translations for all defined languages.<br>
+     * EXAMPLE:
+     * <pre>
+     * - defined a template in conf-file (as you can see the variables are not defined):
+     * {@code
+     *    "bodyTemplate": {"templateType": "HTML", "templateText": """<p class="ddp-question-prompt">$prequal.name *</p>"""}
+     * }
+     * - in a study defined translations for languages "en", "es" (files "en.conf", "es.conf").
+     * - during study building process from this template definition will be built an object {@link Template}
+     * with empty list of variables.
+     * - this method ({@link #addTranslations(List, String, Map)}) applied to a template variable "prequal.name" will generate
+     *   2 translation references for each of defined languages:
+     * {@code
+     *"variables": [{
+     *    "name": "prequal.name",
+     *    "translations": [
+     *        { "language": "en", "text": ${i18n.en.prequal.name} },
+     *        { "language": "es", "text": ${i18n.es.prequal.name} },
+     *    ]}]
+     * }
+     * </pre>
      *
      * @param translations     existing array of translations (it can be empty or null)
-     * @param templateVariable template variable which equal to a translation key to be detected
-     * @param allTranslations  all translations for all languages of a study
+     * @param templateVariable template variable which equal to a translation key to be detected (for example, "prequal.name")
+     * @param allTranslations  all translations for all languages of a study (defined in files in folder 'i18n')
      * @return list of Translations built for all languages of a study.
      */
     public static List<Translation> addTranslations(
