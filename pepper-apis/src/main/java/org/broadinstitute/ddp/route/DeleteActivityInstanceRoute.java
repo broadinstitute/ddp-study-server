@@ -10,7 +10,6 @@ import org.broadinstitute.ddp.db.dao.DataExportDao;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.json.ActivityInstanceDeletionResponse;
 import org.broadinstitute.ddp.json.errors.ApiError;
-import org.broadinstitute.ddp.json.form.BlockVisibility;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
 import org.broadinstitute.ddp.security.DDPAuth;
 import org.broadinstitute.ddp.service.ActivityInstanceService;
@@ -23,9 +22,6 @@ import org.slf4j.LoggerFactory;
 import spark.Request;
 import spark.Response;
 import spark.Route;
-
-import java.util.List;
-import java.util.Optional;
 
 public class DeleteActivityInstanceRoute implements Route {
 
