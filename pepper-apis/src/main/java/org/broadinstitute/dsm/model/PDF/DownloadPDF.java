@@ -1,16 +1,16 @@
 package org.broadinstitute.dsm.model.PDF;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import lombok.Getter;
 import lombok.NonNull;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.pdfbox.io.MemoryUsageSetting;
 import org.apache.pdfbox.multipdf.PDFMergerUtility;
-import org.broadinstitute.ddp.db.TransactionWrapper;
-import org.broadinstitute.ddp.exception.FileProcessingException;
-import org.broadinstitute.ddp.handlers.util.MedicalInfo;
-import org.broadinstitute.ddp.util.GoogleBucket;
+import org.broadinstitute.ddp.util.ConfigUtil;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.dao.user.UserDao;
 import org.broadinstitute.dsm.db.dto.user.UserDto;
@@ -24,8 +24,9 @@ import org.broadinstitute.dsm.statics.RoutePath;
 import org.broadinstitute.dsm.util.DDPRequestUtil;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.broadinstitute.dsm.util.SystemUtil;
-import org.json.JSONArray;
-import org.json.JSONObject;
+import org.broadinstitute.lddp.exception.FileProcessingException;
+import org.broadinstitute.lddp.handlers.util.MedicalInfo;
+import org.broadinstitute.lddp.util.GoogleBucket;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,26 +51,26 @@ public class DownloadPDF {
     Logger logger = LoggerFactory.getLogger(DownloadPDF.class);
 
     public DownloadPDF(@NonNull String requestBody) {
-        JSONObject jsonObject = new JSONObject(requestBody);
+        JsonObject jsonObject = new JsonParser().parse(requestBody).getAsJsonObject();
 
-        this.ddpParticipantId = (String) jsonObject.get(RequestParameter.DDP_PARTICIPANT_ID);
+        this.ddpParticipantId = jsonObject.get(RequestParameter.DDP_PARTICIPANT_ID).getAsString();
         this.configName = null;
         if (jsonObject.has(RequestParameter.CONFIG_NAME)) {
-            configName = (String) jsonObject.get(RequestParameter.CONFIG_NAME);
+            configName = jsonObject.get(RequestParameter.CONFIG_NAME).getAsString();
         }
         this.medicalRecordId = null;
         if (jsonObject.has("medicalRecordId")) {
-            this.medicalRecordId = (String) jsonObject.get("medicalRecordId");
+            this.medicalRecordId = jsonObject.get("medicalRecordId").getAsString();
         }
         if (jsonObject.has("requestId")) {
             this.oncHistoryIDs = new ArrayList<>();
-            JSONArray array = (JSONArray) jsonObject.get("requestId");
-            for (int i = 0; i < array.length(); i++) {
-                this.oncHistoryIDs.add((String) array.get(i));
+            JsonArray array = (JsonArray) jsonObject.get("requestId");
+            for (int i = 0; i < array.size(); i++) {
+                this.oncHistoryIDs.add(array.get(i).getAsString());
             }
         }
         if (jsonObject.has("pdfs")) {
-            this.pdfs = Arrays.asList(new Gson().fromJson(jsonObject.getString("pdfs"), PDF[].class));
+            this.pdfs = Arrays.asList(new Gson().fromJson(jsonObject.get("pdfs").getAsString(), PDF[].class));
         }
     }
 
@@ -192,7 +193,8 @@ public class DownloadPDF {
             String bucketName = gcpName + "_dsm_" + realm.toLowerCase();
             try {
                 String credentials = null;
-                if (TransactionWrapper.hasConfigPath(ApplicationConfigConstants.GOOGLE_CREDENTIALS)) {
+                //TODO DSM check if GOOGLE_CREDENTIALS is set!!!
+                if (StringUtils.isNotBlank(ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.GOOGLE_CREDENTIALS))) {
                     String tmp = ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.GOOGLE_CREDENTIALS);
                     if (StringUtils.isNotBlank(tmp) && new File(tmp).exists()) {
                         credentials = tmp;

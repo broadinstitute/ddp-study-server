@@ -1,7 +1,7 @@
 package org.broadinstitute.dsm.util;
 
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.ddp.handlers.util.Event;
+import org.broadinstitute.lddp.handlers.util.Event;
 
 public class KitEvent extends Event {
     private String kitReasonType;

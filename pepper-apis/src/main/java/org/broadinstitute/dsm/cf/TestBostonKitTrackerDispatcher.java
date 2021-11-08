@@ -2,6 +2,9 @@ package org.broadinstitute.dsm.cf;
 
 import com.google.cloud.functions.BackgroundFunction;
 import com.google.cloud.functions.Context;
+import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.typesafe.config.Config;
 import lombok.NonNull;
@@ -18,8 +21,6 @@ import org.broadinstitute.dsm.model.ups.UPSStatus;
 import org.broadinstitute.dsm.pubsub.KitTrackerPubSubPublisher;
 import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
 import org.broadinstitute.dsm.statics.DBConstants;
-import org.json.JSONArray;
-import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import spark.utils.StringUtils;
@@ -80,7 +81,7 @@ public class TestBostonKitTrackerDispatcher implements BackgroundFunction<Pubsub
         logger.info("Starting the UPS lookup job");
         LOOKUP_CHUNK_SIZE = new JsonParser().parse(data).getAsJsonObject().get("size").getAsInt();
         logger.info("The chunk size for each cloud function is " + LOOKUP_CHUNK_SIZE);
-        JSONArray subsetOfKits = new JSONArray();
+        JsonArray subsetOfKits = new JsonArray();
         String project = cfg.getString(ApplicationConfigConstants.PUBSUB_PROJECT_ID);
         String topicId = cfg.getString(ApplicationConfigConstants.PUBSUB_TOPIC_ID);
         try (Connection conn = dataSource.getConnection()) {
@@ -100,7 +101,7 @@ public class TestBostonKitTrackerDispatcher implements BackgroundFunction<Pubsub
                             stmt.setString(1, ddpInstance.getDdpInstanceId());
                             stmt.setInt(2, lastKitId);
                             stmt.setInt(3, LOOKUP_CHUNK_SIZE);
-                            subsetOfKits = new JSONArray();
+                            subsetOfKits = new JsonArray();
                             stmt.setFetchSize(LOOKUP_CHUNK_SIZE);
                             try (ResultSet rs = stmt.executeQuery()) {
                                 while (rs.next()) {
@@ -145,7 +146,7 @@ public class TestBostonKitTrackerDispatcher implements BackgroundFunction<Pubsub
                                             rs.getString(DBConstants.DDP_KIT_REQUEST_TABLE_ABBR + DBConstants.COLLABORATOR_PARTICIPANT_ID),
                                             gbfShippedTriggerDSSDelivered
                                     );
-                                    JSONObject jsonKit = new JSONObject(kit);
+                                    JsonObject jsonKit = new JsonParser().parse(new Gson().toJson(kit)).getAsJsonObject();
                                     subsetOfKits.put(jsonKit);
                                     logger.info("added label " + kit.getKitLabel() + " with tracking number " + kit.getUpsPackage().getTrackingNumber() + " size of array " + subsetOfKits.length());
                                 }

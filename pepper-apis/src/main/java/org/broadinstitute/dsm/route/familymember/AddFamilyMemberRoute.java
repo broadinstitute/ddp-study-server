@@ -1,7 +1,7 @@
 package org.broadinstitute.dsm.route.familymember;
 
 import com.google.gson.Gson;
-import org.broadinstitute.ddp.handlers.util.Result;
+import org.broadinstitute.lddp.handlers.util.Result;
 import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
 import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDataDao;
 import org.broadinstitute.dsm.model.Study;

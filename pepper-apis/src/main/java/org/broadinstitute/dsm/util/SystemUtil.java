@@ -1,9 +1,8 @@
 package org.broadinstitute.dsm.util;
 
+import com.google.gson.JsonObject;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.BufferedReader;
@@ -235,19 +234,19 @@ public class SystemUtil {
         return null;
     }
 
-    public static JSONObject mergeJSONStrings(@NonNull String json1, @NonNull String json2) {
+    public static JsonObject mergeJSONStrings(@NonNull String json1, @NonNull String json2) {
         if (StringUtils.isNotBlank(json1) && StringUtils.isNotBlank(json2)) {
             System.out.println(json1 + " " + json2);
-            return mergeJSONObjects(new JSONObject(json1), new JSONObject(json2));
+            return mergeJSONObjects(new JsonObject(json1), new JsonObject(json2));
         }
         return null;
     }
 
-    public static JSONObject mergeJSONObjects(@NonNull JSONObject json1, @NonNull JSONObject json2) {
-        JSONObject mergedJson = new JSONObject();
+    public static JsonObject mergeJSONObjects(@NonNull JsonObject json1, @NonNull JsonObject json2) {
+        JsonObject mergedJson = new JsonObject();
         try {
-            mergedJson = new JSONObject(json1, JSONObject.getNames(json1));
-            for (String key : JSONObject.getNames(json2)) {
+            mergedJson = new JsonObject(json1, JsonObject.getNames(json1));
+            for (String key : JsonObject.getNames(json2)) {
                 mergedJson.put(key, json2.get(key));
             }
         }

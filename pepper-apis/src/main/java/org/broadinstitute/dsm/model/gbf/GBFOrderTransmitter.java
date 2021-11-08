@@ -1,15 +1,14 @@
 package org.broadinstitute.dsm.model.gbf;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import javax.xml.bind.JAXBException;
-
+import com.google.gson.JsonObject;
 import org.broadinstitute.dsm.exception.ExternalShipperException;
 import org.broadinstitute.dsm.util.externalShipper.GBFRequestUtil;
-import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.xml.bind.JAXBException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Sends a single order to GBF
@@ -58,8 +57,9 @@ public class GBFOrderTransmitter {
         } catch(JAXBException e) {
             throw new RuntimeException("Could not convert order " + externalOrderNumber + " to XML", e);
         }
-
-        JSONObject payload = new JSONObject().put("orderXml", orderXml).put("test", isTest);
+        JsonObject payload = new JsonObject();
+        payload.addProperty("orderXml", orderXml);
+        payload.addProperty("test", isTest);
         Response gbfResponse = null;
         int totalAttempts = 1 + maxRetries;
         Exception ex = null;

@@ -2,9 +2,9 @@ package org.broadinstitute.dsm.util;
 
 import com.sun.management.HotSpotDiagnosticMXBean;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.ddp.db.TransactionWrapper;
-import org.broadinstitute.ddp.util.GoogleBucket;
+import org.broadinstitute.ddp.util.ConfigUtil;
 import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
+import org.broadinstitute.lddp.util.GoogleBucket;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,7 +47,7 @@ public class JavaHeapDumper {
         }
         try (FileInputStream localDumpFileStream = new FileInputStream(localDumpFile)) {
             String credentials = null;
-            if (TransactionWrapper.hasConfigPath(ApplicationConfigConstants.GOOGLE_CREDENTIALS)) {
+            if (StringUtils.isNotBlank(ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.GOOGLE_CREDENTIALS))) {
                 String tmp = ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.GOOGLE_CREDENTIALS);
                 if (StringUtils.isNotBlank(tmp) && new File(tmp).exists()) {
                     credentials = tmp;

@@ -1,6 +1,6 @@
 package org.broadinstitute.dsm.files;
 
-import org.broadinstitute.ddp.exception.FileProcessingException;
+import org.broadinstitute.lddp.exception.FileProcessingException;
 import org.broadinstitute.dsm.db.InstanceSettings;
 import org.broadinstitute.dsm.db.dto.settings.InstanceSettingsDto;
 import org.slf4j.Logger;

@@ -1,10 +1,9 @@
 package org.broadinstitute.dsm.util;
 
-import com.sun.istack.NotNull;
 import lombok.NonNull;
-import org.broadinstitute.ddp.db.SimpleResult;
+import org.broadinstitute.lddp.db.SimpleResult;
 import org.broadinstitute.ddp.db.TransactionWrapper;
-import org.broadinstitute.ddp.security.Auth0Util;
+import org.broadinstitute.lddp.security.Auth0Util;
 import org.broadinstitute.dsm.db.ParticipantEvent;
 import org.broadinstitute.dsm.db.dto.settings.EventTypeDto;
 import org.broadinstitute.dsm.model.KitDDPNotification;
@@ -105,7 +104,7 @@ public class EventUtil {
         }
     }
 
-    public static void triggerDDP(Connection conn, @NonNull Optional<EventTypeDto> eventTypes, @NotNull String ddpParticipantId) {
+    public static void triggerDDP(Connection conn, @NonNull Optional<EventTypeDto> eventTypes, @NonNull String ddpParticipantId) {
         Collection<String> events = ParticipantEvent.getParticipantEvent(conn, ddpParticipantId, eventTypes.get().getDdpInstanceId());
         if (!events.contains(eventTypes.get().getEventName())) {
             EventUtil.triggerDDP(conn, eventTypes.get().getEventName(), eventTypes, ddpParticipantId);
@@ -150,7 +149,7 @@ public class EventUtil {
         }
     }
 
-    private static void triggerDDP(Connection conn, @NonNull String eventType, @NonNull Optional<EventTypeDto> eventTypes, @NotNull String ddpParticipantId) {
+    private static void triggerDDP(Connection conn, @NonNull String eventType, @NonNull Optional<EventTypeDto> eventTypes, @NonNull String ddpParticipantId) {
         try {
             KitEvent event = new KitEvent(ddpParticipantId, eventType, 0, null, ddpParticipantId);
             String sendRequest = eventTypes.get().getBaseUrl() + RoutePath.DDP_PARTICIPANT_EVENT_PATH + "/" + ddpParticipantId;

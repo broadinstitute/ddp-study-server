@@ -1,5 +1,20 @@
 package org.broadinstitute.dsm.log;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.classic.spi.IThrowableProxy;
+import ch.qos.logback.classic.spi.StackTraceElementProxy;
+import ch.qos.logback.core.AppenderBase;
+import com.google.gson.Gson;
+import com.google.gson.annotations.SerializedName;
+import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.apache.http.HttpHeaders;
+import org.apache.http.client.utils.URIBuilder;
+import org.apache.http.entity.ContentType;
+import org.broadinstitute.lddp.util.Utility;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -11,22 +26,12 @@ import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
-import com.google.gson.Gson;
-import com.google.gson.annotations.SerializedName;
-import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.apache.http.HttpHeaders;
-import org.apache.http.client.utils.URIBuilder;
-import org.apache.http.entity.ContentType;
-import org.apache.log4j.AppenderSkeleton;
-import org.apache.log4j.Level;
-import org.apache.log4j.spi.LoggingEvent;
-import org.broadinstitute.ddp.util.Utility;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-public class SlackAppender extends AppenderSkeleton {
+public class SlackAppender<E> extends AppenderBase<ILoggingEvent> {
 
 
+    // arz note that StackdriverErrorAppender has been removed
+    // because SD error monitoring is already operating off of stderr/stdout.
+    // do not import SD error reporting library as it has caused stability problems.
 
     public SlackAppender() {
     }
@@ -57,12 +62,12 @@ public class SlackAppender extends AppenderSkeleton {
     private static String GCP_SERVICE;
     private static String ROOT_PACKAGE;
     final String JOB_ERROR_MESSAGE = String.format("This looks like a job error. Job error reporting is " +
-                                    "throttled so you will only see 1 per %s minutes.", JOB_DELAY);
+            "throttled so you will only see 1 per %s minutes.", JOB_DELAY);
     final String NON_JOB_ERROR_MESSAGE = String.format("This does NOT look like a job error. " +
-                            "Non-job error reporting is throttled so you will only see 1 per %s minutes.", NON_JOB_DELAY);
+            "Non-job error reporting is throttled so you will only see 1 per %s minutes.", NON_JOB_DELAY);
 
     @Override
-    protected void append(LoggingEvent event) {
+    protected void append(ILoggingEvent event) {
         if (configured && event.getLevel().toInt() == Level.ERROR_INT) {
             try {
                 boolean jobError = schedulerName != null && event.getThreadName().contains(schedulerName);
@@ -87,16 +92,13 @@ public class SlackAppender extends AppenderSkeleton {
         }
     }
 
-    String buildLinkToGcpError(LoggingEvent event) {
-        String filterString = event.getThrowableInformation() == null
-                ? event.getRenderedMessage()
-                : event.getThrowableInformation().getThrowable().toString();
+    String buildLinkToGcpError(ILoggingEvent event) {
         URIBuilder gcpErrorsUri = new URIBuilder();
         gcpErrorsUri.setScheme(SECURED_SCHEME);
         gcpErrorsUri.setHost(GCP_HOST);
         gcpErrorsUri.setPath(GCP_ERROR_PATH);
         gcpErrorsUri.setParameter(GCP_SERVICE_PARAMETER, GCP_SERVICE);
-        gcpErrorsUri.setParameter(GCP_ERROR_FILTER_PARAMETER, filterString);
+        gcpErrorsUri.setParameter(GCP_ERROR_FILTER_PARAMETER, event.getThrowableProxy().toString());
         return gcpErrorsUri.toString();
     }
 
@@ -108,9 +110,9 @@ public class SlackAppender extends AppenderSkeleton {
 
         StringBuilder gcpLogUriWithParameters = new StringBuilder(gcpLogUri.toString());
         LocalDateTime currentDateTime = LocalDateTime.now();
-        String minuteTimeRange = currentDateTime.withNano(0).minusSeconds(30).toInstant(ZoneOffset.UTC)
+        String minuteTimeRange = currentDateTime.withNano(0).minusHours(4).minusSeconds(30).toInstant(ZoneOffset.UTC)
                 + urlEncodedSlash
-                + currentDateTime.withNano(0).plusSeconds(30).toInstant(ZoneOffset.UTC);
+                + currentDateTime.withNano(0).minusHours(4).plusSeconds(30).toInstant(ZoneOffset.UTC);
 
         gcpLogUriWithParameters
                 .append(urlQuerySeparator)
@@ -129,24 +131,21 @@ public class SlackAppender extends AppenderSkeleton {
         return gcpLogUriWithParameters.toString();
     }
 
-    String getErrorMessageAndLocation(LoggingEvent event) {
+    String getErrorMessageAndLocation(ILoggingEvent event) {
         StringBuilder errorCauseAndPlace = new StringBuilder();
-        boolean isLoggerError = event.getThrowableInformation() == null;
-        if (isLoggerError) {
-            errorCauseAndPlace
-                .append(event.getLocationInformation().fullInfo);
-        } else {
-            Throwable error = event.getThrowableInformation().getThrowable();
-            String developerDefinedCodeErrorLocation = Arrays.stream(error.getStackTrace())
-                    .map(StackTraceElement::toString)
-                    .filter(s -> s.contains(ROOT_PACKAGE))
-                    .collect(Collectors.joining(System.lineSeparator()));
-            errorCauseAndPlace
+        IThrowableProxy error = event.getThrowableProxy();
+
+        String developerDefinedCodeErrorLocation = Arrays.stream(error.getStackTraceElementProxyArray())
+                .map(StackTraceElementProxy::toString)
+                .filter(s -> s.contains(ROOT_PACKAGE))
+                .collect(Collectors.joining(System.lineSeparator()));
+
+        errorCauseAndPlace
                 .append(error.toString())
                 .append(System.lineSeparator())
                 .append(developerDefinedCodeErrorLocation)
                 .append(System.lineSeparator());
-        }
+
         return errorCauseAndPlace.toString();
     }
 
@@ -187,16 +186,6 @@ public class SlackAppender extends AppenderSkeleton {
 
     public SlackMessagePayload buildSlackMessageWithPayload(String note) {
         return new SlackMessagePayload(note, slackChannel, "Study-Manager", ":nerd_face:");
-    }
-
-    @Override
-    public void close() {
-
-    }
-
-    @Override
-    public boolean requiresLayout() {
-        return false;
     }
 
 

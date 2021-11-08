@@ -13,8 +13,7 @@ import org.apache.http.client.CredentialsProvider;
 import org.apache.http.impl.NoConnectionReuseStrategy;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.lucene.search.join.ScoreMode;
-import org.broadinstitute.ddp.db.TransactionWrapper;
-import org.broadinstitute.ddp.handlers.util.MedicalInfo;
+import org.broadinstitute.ddp.util.ConfigUtil;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.export.WorkflowForES;
 import org.broadinstitute.dsm.model.Filter;
@@ -27,6 +26,7 @@ import org.broadinstitute.dsm.model.gbf.Address;
 import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
+import org.broadinstitute.lddp.handlers.util.MedicalInfo;
 import org.elasticsearch.action.get.GetRequest;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.search.SearchRequest;
@@ -158,8 +158,8 @@ public class ElasticSearchUtil {
         credentialsProvider.setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(userName, password));
 
         URL url = new URL(baseUrl);
-        String proxy = TransactionWrapper.hasConfigPath(ApplicationConfigConstants.ES_PROXY)
-                ? ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.ES_PROXY) : null;
+        //TODO DSM check if ES_PROXY is set!!!
+        String proxy = ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.ES_PROXY);
         return getClientForElasticsearchCloud(baseUrl, userName, password, proxy);
     }
 

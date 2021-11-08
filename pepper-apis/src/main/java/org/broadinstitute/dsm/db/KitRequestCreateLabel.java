@@ -5,6 +5,7 @@ import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.lddp.db.SimpleResult;
 import org.broadinstitute.dsm.model.KitRequestSettings;
+import org.broadinstitute.dsm.model.KitType;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.QueryExtension;
 import org.slf4j.Logger;

@@ -1,5 +1,6 @@
 package org.broadinstitute.dsm.model.PDF;
 
+import com.google.gson.JsonObject;
 import lombok.NonNull;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -12,7 +13,6 @@ import org.broadinstitute.dsm.files.CoverPDFProcessor;
 import org.broadinstitute.dsm.files.PDFProcessor;
 import org.broadinstitute.dsm.files.RequestPDFProcessor;
 import org.broadinstitute.dsm.util.SystemUtil;
-import org.json.JSONObject;
 
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -27,7 +27,7 @@ public class MRCoverPDF{
     }
 
     public Map<String, Object> getValuesFromRequest(@NonNull String requestBody, DDPInstance ddpInstance, UserDto user) {
-        JSONObject jsonObject = new JSONObject(requestBody);
+        JsonObject jsonObject = new JsonObject(requestBody);
         Set keySet = jsonObject.keySet();
         String startDate = null;
         String endDate = null;
