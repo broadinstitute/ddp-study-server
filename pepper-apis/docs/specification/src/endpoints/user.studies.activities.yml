@@ -76,7 +76,8 @@ post:
                 blockVisibility:
                   type: array
                   description: list of updated parent instance block visibilities
-                  $ref: '../pepper.yml#/components/schemas/Block.Visibility'
+                  items:
+                    $ref: '../pepper.yml#/components/schemas/Block.Visibility'
       400:
         description: invalid or missing required payload
         content:

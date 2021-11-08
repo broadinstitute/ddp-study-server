@@ -756,18 +756,17 @@ Block.Content:
         body:
           type: string
 Block.Visibility:
-  items:
-    type: object
-    required:
-      - blockGuid
-      - shown
-    properties:
-      blockGuid:
-        type: string
-        description: identifier for the block
-      shown:
-        type: boolean
-        description: whether block is shown or not
+  type: object
+  required:
+    - blockGuid
+    - shown
+  properties:
+    blockGuid:
+      type: string
+      description: identifier for the block
+    shown:
+      type: boolean
+      description: whether block is shown or not
 #####
 #
 # Components

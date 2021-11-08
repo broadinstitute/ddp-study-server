@@ -105,13 +105,8 @@ public class CreateActivityInstanceRoute extends ValidatedJsonInputRoute<Activit
             LOG.info("Created activity instance {} for activity {} and user {}",
                     instanceGuid, activityCode, participantGuid);
             res.setInstanceGuid(instanceGuid);
-
-            Optional<List<BlockVisibility>> parentInstanceBlockVisibility = QuestionUtil.getBlockVisibility(handle,
-                    response, parentInstanceGuid, found.getUser(), found.getStudyDto(), operatorGuid, isStudyAdmin);
-            if (parentInstanceBlockVisibility.isPresent()) {
-                res.setBlockVisibilities(parentInstanceBlockVisibility.get());
-            }
-
+            res.setBlockVisibilities(QuestionUtil.getBlockVisibility(handle,
+                        response, parentInstanceGuid, found.getUser(), found.getStudyDto(), operatorGuid, isStudyAdmin));
             return res;
         });
     }

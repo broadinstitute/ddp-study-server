@@ -81,12 +81,8 @@ public class DeleteActivityInstanceRoute implements Route {
             handle.attach(DataExportDao.class).queueDataSync(instanceDto.getParticipantId(), instanceDto.getStudyId());
 
             String parentInstanceGuid = instanceDto.getParentInstanceGuid();
-            Optional<List<BlockVisibility>> parentInstanceBlockVisibility = QuestionUtil.getBlockVisibility(handle,
-                    response, parentInstanceGuid, found.getUser(), found.getStudyDto(), operatorGuid, isStudyAdmin);
-            if (parentInstanceBlockVisibility.isPresent()) {
-                res.setBlockVisibilities(parentInstanceBlockVisibility.get());
-            }
-
+            res.setBlockVisibilities(QuestionUtil.getBlockVisibility(handle, response, parentInstanceGuid,
+                    found.getUser(), found.getStudyDto(), operatorGuid, isStudyAdmin));
         });
 
         LOG.info("Deleted activity instance {}", instanceGuid);
