@@ -124,9 +124,9 @@ public class ElasticSearchUtil {
         if (client == null) {
             try {
                 client = getClientForElasticsearchCloud(
-                        TransactionWrapper.getSqlFromConfig(ApplicationConfigConstants.ES_URL),
-                        TransactionWrapper.getSqlFromConfig(ApplicationConfigConstants.ES_USERNAME),
-                        TransactionWrapper.getSqlFromConfig(ApplicationConfigConstants.ES_PASSWORD));
+                        ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.ES_URL),
+                        ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.ES_USERNAME),
+                        ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.ES_PASSWORD));
             } catch (MalformedURLException e) {
                 throw new RuntimeException("Error while initializing ES client", e);
             }
@@ -159,7 +159,7 @@ public class ElasticSearchUtil {
 
         URL url = new URL(baseUrl);
         String proxy = TransactionWrapper.hasConfigPath(ApplicationConfigConstants.ES_PROXY)
-                ? TransactionWrapper.getSqlFromConfig(ApplicationConfigConstants.ES_PROXY) : null;
+                ? ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.ES_PROXY) : null;
         return getClientForElasticsearchCloud(baseUrl, userName, password, proxy);
     }
 

@@ -1,7 +1,7 @@
 package org.broadinstitute.lddp.handlers.util;
 
 import lombok.Data;
-import org.broadinstitute.lddp.Recipient;
+import org.broadinstitute.lddp.email.Recipient;
 
 @Data
 public class FollowUpSurvey extends SimpleFollowUpSurvey

@@ -1,23 +1,15 @@
 package org.broadinstitute.ddp;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import com.typesafe.config.ConfigParseOptions;
 import com.typesafe.config.ConfigSyntax;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.fluent.Request;
-import org.apache.http.client.fluent.Response;
-import org.apache.http.entity.ContentType;
-import org.apache.http.util.EntityUtils;
-import org.broadinstitute.ddp.constants.ConfigProperties;
-import org.broadinstitute.ddp.datstat.AuthSingleton;
+import org.broadinstitute.lddp.constants.ConfigProperties;
+import org.broadinstitute.lddp.datstat.AuthSingleton;
 
 import javax.servlet.http.Cookie;
 import java.io.File;
 import java.io.IOException;
-import java.util.Map;
 
 
 import static org.junit.Assert.assertEquals;

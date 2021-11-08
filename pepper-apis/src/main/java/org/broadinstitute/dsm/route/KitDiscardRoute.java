@@ -3,10 +3,10 @@ package org.broadinstitute.dsm.route;
 import com.google.gson.Gson;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.ddp.db.TransactionWrapper;
-import org.broadinstitute.ddp.handlers.util.Result;
-import org.broadinstitute.ddp.security.Auth0Util;
-import org.broadinstitute.ddp.util.GoogleBucket;
+import org.broadinstitute.ddp.util.ConfigUtil;
+import org.broadinstitute.lddp.handlers.util.Result;
+import org.broadinstitute.lddp.security.Auth0Util;
+import org.broadinstitute.lddp.util.GoogleBucket;
 import org.broadinstitute.dsm.db.KitDiscard;
 import org.broadinstitute.dsm.db.dao.user.UserDao;
 import org.broadinstitute.dsm.db.dto.user.UserDto;
@@ -70,8 +70,8 @@ public class KitDiscardRoute extends RequestHandler {
                 if (userUtil.checkUserAccess(realm, userId, "discard_sample", userIdRequest) || userUtil.checkUserAccess(realm, userId, "participant_exit", userIdRequest)) {
                     if (kitAction.getPath() != null) {
                         byte[] bytes = GoogleBucket.downloadFile(null,
-                                TransactionWrapper.getSqlFromConfig(ApplicationConfigConstants.GOOGLE_PROJECT_NAME),
-                                TransactionWrapper.getSqlFromConfig(ApplicationConfigConstants.GOOGLE_DISCARD_BUCKET), kitAction.getPath());
+                                ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.GOOGLE_PROJECT_NAME),
+                                ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.GOOGLE_DISCARD_BUCKET), kitAction.getPath());
                         if (bytes != null) {
                             logger.info("Got file from bucket");
                             try {
@@ -194,8 +194,8 @@ public class KitDiscardRoute extends RequestHandler {
                         if (deleteFile) {
                             //delete file
                             if (GoogleBucket.deleteFile(null,
-                                    TransactionWrapper.getSqlFromConfig(ApplicationConfigConstants.GOOGLE_PROJECT_NAME),
-                                    TransactionWrapper.getSqlFromConfig(ApplicationConfigConstants.GOOGLE_DISCARD_BUCKET), path)) {
+                                    ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.GOOGLE_PROJECT_NAME),
+                                    ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.GOOGLE_DISCARD_BUCKET), path)) {
                                 KitDiscard.updateInfo(kitAction.getKitDiscardId(), userIdRequest, null, pathName, null);
                                 return new Result(200);
                             }
@@ -204,8 +204,8 @@ public class KitDiscardRoute extends RequestHandler {
                             //save file
                             HttpServletRequest rawRequest = request.raw();
                             String fileName = GoogleBucket.uploadFile(null,
-                                    TransactionWrapper.getSqlFromConfig(ApplicationConfigConstants.GOOGLE_PROJECT_NAME),
-                                    TransactionWrapper.getSqlFromConfig(ApplicationConfigConstants.GOOGLE_DISCARD_BUCKET), kitDiscardId + "_" + path, rawRequest.getInputStream());
+                                    ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.GOOGLE_PROJECT_NAME),
+                                    ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.GOOGLE_DISCARD_BUCKET), kitDiscardId + "_" + path, rawRequest.getInputStream());
                             KitDiscard.updateInfo(kitAction.getKitDiscardId(), userIdRequest, null, pathName, fileName);
                             return new Result(200, fileName);
                         }

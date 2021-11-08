@@ -1,6 +1,6 @@
 package org.broadinstitute.dsm.route;
 
-import org.broadinstitute.ddp.handlers.util.Result;
+import org.broadinstitute.lddp.handlers.util.Result;
 import org.broadinstitute.dsm.db.Drug;
 import org.broadinstitute.dsm.statics.UserErrorMessages;
 import org.slf4j.Logger;

@@ -4,12 +4,12 @@ import com.google.gson.*;
 import com.typesafe.config.Config;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.ddp.db.SimpleResult;
-import org.broadinstitute.ddp.db.TransactionWrapper;
-import org.broadinstitute.ddp.email.EmailClient;
-import org.broadinstitute.ddp.email.EmailRecord;
-import org.broadinstitute.ddp.email.Recipient;
-import org.broadinstitute.ddp.exception.EmailQueueException;
+import org.broadinstitute.ddp.util.ConfigUtil;
+import org.broadinstitute.lddp.db.SimpleResult;
+import org.broadinstitute.lddp.email.EmailClient;
+import org.broadinstitute.lddp.email.EmailRecord;
+import org.broadinstitute.lddp.email.Recipient;
+import org.broadinstitute.lddp.exception.EmailQueueException;
 import org.broadinstitute.dsm.db.EmailQueue;
 import org.broadinstitute.dsm.db.MedicalRecord;
 import org.broadinstitute.dsm.db.OncHistoryDetail;
@@ -17,7 +17,6 @@ import org.broadinstitute.dsm.db.Tissue;
 import org.broadinstitute.dsm.route.AssignParticipantRoute;
 import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
 import org.broadinstitute.dsm.statics.DBConstants;
-import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -99,7 +98,7 @@ public class NotificationUtil {
         mapy.put(":subject", subject);
         Recipient emailRecipient = new Recipient(recipient);
         if (EMAIL_TYPE.equals(recordId)) {
-            emailRecipient.setUrl(TransactionWrapper.getSqlFromConfig(ApplicationConfigConstants.EMAIL_FRONTEND_URL_FOR_LINKS) + KITREQUEST_LINK);
+            emailRecipient.setUrl(ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.EMAIL_FRONTEND_URL_FOR_LINKS) + KITREQUEST_LINK);
         }
         emailRecipient.setSurveyLinks(mapy);
         queueCurrentAndFutureEmails(recordId, emailRecipient, recordId);
@@ -173,7 +172,9 @@ public class NotificationUtil {
         emailRecipient.setSurveyLinks(mapy);
         try {
             EmailClient abstractionEmailClient = (EmailClient) Class.forName(emailClassName).newInstance();
-            JSONObject emailClientSettings = new JSONObject().put("sendGridFrom", from).put("sendGridFromName", name);
+            JsonObject emailClientSettings = new JsonObject();
+            emailClientSettings.addProperty("sendGridFrom", from);
+            emailClientSettings.addProperty("sendGridFromName", name);
             abstractionEmailClient.configure(emailKey, new Gson().fromJson(emailClientSettings.toString(), JsonObject.class), "", null, "");
             abstractionEmailClient.sendSingleEmail(sendGridTemplate, emailRecipient, null);
         }

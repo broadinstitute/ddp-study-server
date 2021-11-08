@@ -5,11 +5,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.ddp.db.SimpleResult;
-import org.broadinstitute.ddp.db.TransactionWrapper;
-import org.broadinstitute.ddp.handlers.util.ParticipantSurveyInfo;
-import org.broadinstitute.ddp.handlers.util.Result;
-import org.broadinstitute.ddp.handlers.util.SimpleFollowUpSurvey;
+import org.broadinstitute.ddp.util.ConfigUtil;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.SurveyTrigger;
 import org.broadinstitute.dsm.exception.SurveyNotCreated;
@@ -21,6 +17,10 @@ import org.broadinstitute.dsm.statics.*;
 import org.broadinstitute.dsm.util.DDPRequestUtil;
 import org.broadinstitute.dsm.util.SystemUtil;
 import org.broadinstitute.dsm.util.UserUtil;
+import org.broadinstitute.lddp.db.SimpleResult;
+import org.broadinstitute.lddp.handlers.util.ParticipantSurveyInfo;
+import org.broadinstitute.lddp.handlers.util.Result;
+import org.broadinstitute.lddp.handlers.util.SimpleFollowUpSurvey;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import spark.QueryParamsMap;
@@ -239,7 +239,7 @@ public class TriggerSurveyRoute extends RequestHandler {
     private long addTriggerCommentIntoDB(@NonNull String userId, @NonNull String reason, @NonNull long currentTime) {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement stmt = conn.prepareStatement(TransactionWrapper.getSqlFromConfig(ApplicationConfigConstants.INSERT_SURVEY_TRIGGER), Statement.RETURN_GENERATED_KEYS)) {
+            try (PreparedStatement stmt = conn.prepareStatement(ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.INSERT_SURVEY_TRIGGER), Statement.RETURN_GENERATED_KEYS)) {
                 stmt.setString(1, reason);
                 stmt.setLong(2, currentTime);
                 stmt.setString(3, userId);

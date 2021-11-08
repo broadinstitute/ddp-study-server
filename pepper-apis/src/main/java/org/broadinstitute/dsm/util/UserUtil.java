@@ -258,7 +258,7 @@ public class UserUtil {
                     getList(conn, query, instanceRole, userId, listOfRealms);
                 }
                 else if (PDF_DOWNLOAD_MENU.equals(menu)) {
-                    query = TransactionWrapper.getSqlFromConfig(ApplicationConfigConstants.GET_ALLOWED_REALMS_FOR_USER_ROLE_STARTS_LIKE);
+                    query = ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.GET_ALLOWED_REALMS_FOR_USER_ROLE_STARTS_LIKE);
                     query = query.replace("%1", DBConstants.PDF_DOWNLOAD);
                     query = query + QueryExtension.BY_ROLE_NAME;
                     query = query.replace("%1", DBConstants.PDF_DOWNLOAD);

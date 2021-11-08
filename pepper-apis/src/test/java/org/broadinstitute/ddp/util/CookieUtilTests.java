@@ -1,18 +1,12 @@
 package org.broadinstitute.ddp.util;
 
-import org.broadinstitute.ddp.security.CookieUtil;
+import org.broadinstitute.lddp.security.CookieUtil;
 import org.junit.Before;
 import org.junit.Test;
 
 import javax.servlet.http.Cookie;
-import java.security.NoSuchAlgorithmException;
-import java.security.spec.InvalidKeySpecException;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
 
 //todo EOB - refactor
 

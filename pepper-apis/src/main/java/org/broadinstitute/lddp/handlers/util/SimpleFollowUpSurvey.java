@@ -2,7 +2,7 @@ package org.broadinstitute.lddp.handlers.util;
 
 import lombok.Data;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.lddp.Recipient;
+import org.broadinstitute.lddp.email.Recipient;
 import org.broadinstitute.lddp.util.CheckValidity;
 
 @Data

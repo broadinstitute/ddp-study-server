@@ -5,7 +5,7 @@ import com.google.gson.GsonBuilder;
 import lombok.NonNull;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.fluent.Request;
-import org.broadinstitute.ddp.handlers.util.Result;
+import org.broadinstitute.lddp.handlers.util.Result;
 import org.broadinstitute.dsm.db.AbstractionActivity;
 import org.broadinstitute.dsm.db.AbstractionField;
 import org.broadinstitute.dsm.db.AbstractionGroup;

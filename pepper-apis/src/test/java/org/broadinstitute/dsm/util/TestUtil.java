@@ -5,8 +5,8 @@ import com.typesafe.config.Config;
 import org.apache.http.client.fluent.Request;
 import org.apache.http.client.fluent.Response;
 import org.apache.http.entity.ContentType;
-import org.broadinstitute.ddp.security.CookieUtil;
-import org.broadinstitute.ddp.security.SecurityHelper;
+import org.broadinstitute.lddp.security.CookieUtil;
+import org.broadinstitute.lddp.security.SecurityHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

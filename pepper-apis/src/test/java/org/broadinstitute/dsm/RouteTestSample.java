@@ -7,7 +7,7 @@ import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.fluent.Request;
-import org.broadinstitute.ddp.util.GoogleBucket;
+import org.broadinstitute.lddp.util.GoogleBucket;
 import org.broadinstitute.dsm.db.*;
 import org.broadinstitute.dsm.exception.RateNotAvailableException;
 import org.broadinstitute.dsm.model.*;

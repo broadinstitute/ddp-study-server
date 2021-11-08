@@ -1,5 +1,6 @@
 package org.broadinstitute.ddp.util;
 
+import org.broadinstitute.lddp.util.FileUtil;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;

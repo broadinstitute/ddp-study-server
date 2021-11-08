@@ -8,7 +8,7 @@ import java.util.NoSuchElementException;
 
 import com.google.gson.Gson;
 import com.google.gson.annotations.SerializedName;
-import org.broadinstitute.ddp.handlers.util.Result;
+import org.broadinstitute.lddp.handlers.util.Result;
 import org.broadinstitute.dsm.db.User;
 import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
 import org.broadinstitute.dsm.db.dao.participant.data.ParticipantDataDao;

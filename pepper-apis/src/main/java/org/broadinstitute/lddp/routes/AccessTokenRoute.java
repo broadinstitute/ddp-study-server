@@ -4,21 +4,23 @@ import com.google.gson.Gson;
 import com.typesafe.config.Config;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.lddp.datstat.DatStatUtil;
+import org.broadinstitute.lddp.datstat.SurveyConfig;
+import org.broadinstitute.lddp.datstat.SurveyInstance;
+import org.broadinstitute.lddp.datstat.SurveyService;
 import org.broadinstitute.lddp.exception.RecaptchaException;
 import org.broadinstitute.lddp.exception.TokenGenerationException;
-import org.broadinstitute.lddp.util.EDCClient;
-import org.broadinstitute.lddp.util.Utility;
 import org.broadinstitute.lddp.security.Auth0Util;
 import org.broadinstitute.lddp.security.AuthPayload;
 import org.broadinstitute.lddp.security.AuthResponse;
 import org.broadinstitute.lddp.security.SecurityHelper;
+import org.broadinstitute.lddp.util.EDCClient;
+import org.broadinstitute.lddp.util.Utility;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import spark.Request;
 import spark.Response;
 import spark.Route;
-
-import static spark.Spark.halt;
 
 /**
  * Generates tokens for UI routes.

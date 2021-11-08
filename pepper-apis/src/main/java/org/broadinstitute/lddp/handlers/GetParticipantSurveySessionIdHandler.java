@@ -5,7 +5,7 @@ import com.google.gson.GsonBuilder;
 import com.typesafe.config.Config;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.lddp.datstat.DatStatUtil;
-import org.broadinstitute.lddp.Recipient;
+import org.broadinstitute.lddp.email.Recipient;
 import org.broadinstitute.lddp.handlers.util.EmptyPayload;
 import org.broadinstitute.lddp.handlers.util.HandlerUtil;
 import org.broadinstitute.lddp.handlers.util.Result;

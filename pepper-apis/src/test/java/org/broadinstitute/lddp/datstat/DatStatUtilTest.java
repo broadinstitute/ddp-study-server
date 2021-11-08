@@ -1,22 +1,13 @@
-package org.broadinstitute.ddp.datstat;
+package org.broadinstitute.lddp.datstat;
 
-import com.google.api.client.http.HttpResponse;
-import com.google.gson.*;
 import com.typesafe.config.Config;
 import org.broadinstitute.ddp.TestHelper;
-import org.broadinstitute.ddp.constants.ConfigProperties;
-import org.broadinstitute.ddp.exception.DatStatRestApiException;
-import org.broadinstitute.ddp.exception.DatStatTokenException;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import java.util.*;
 
-import org.hamcrest.core.IsInstanceOf;
 import org.junit.rules.ExpectedException;
 
-import static org.junit.Assert.*;
 import static org.junit.Assert.assertTrue;
 
 //todo EOB - refactor.. there need to be way more tests here!!!

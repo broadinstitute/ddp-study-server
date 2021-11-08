@@ -24,13 +24,14 @@ import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpStatus;
-import org.broadinstitute.ddp.BasicServer;
+import org.broadinstitute.ddp.util.ConfigUtil;
+import org.broadinstitute.lddp.BasicServer;
 import org.broadinstitute.ddp.db.TransactionWrapper;
-import org.broadinstitute.ddp.security.Auth0Util;
-import org.broadinstitute.ddp.security.CookieUtil;
-import org.broadinstitute.ddp.util.BasicTriggerListener;
-import org.broadinstitute.ddp.util.JsonTransformer;
-import org.broadinstitute.ddp.util.Utility;
+import org.broadinstitute.lddp.security.Auth0Util;
+import org.broadinstitute.lddp.security.CookieUtil;
+import org.broadinstitute.lddp.util.BasicTriggerListener;
+import org.broadinstitute.lddp.util.JsonTransformer;
+import org.broadinstitute.lddp.util.Utility;
 import org.broadinstitute.dsm.careevolve.Provider;
 import org.broadinstitute.dsm.jetty.JettyConfig;
 import org.broadinstitute.dsm.jobs.*;
@@ -320,7 +321,7 @@ public class DSMServer extends BasicServer {
             @Override
             public Object handle(Request request, Response response) throws Exception {
                 logger.info("Received request to create java heap dump");
-                String gcpName = TransactionWrapper.getSqlFromConfig(ApplicationConfigConstants.GOOGLE_PROJECT_NAME);
+                String gcpName = ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.GOOGLE_PROJECT_NAME);
                 heapDumper.dumpHeapToBucket(gcpName + "_dsm_heapdumps");
                 return null;
             }
@@ -623,9 +624,7 @@ public class DSMServer extends BasicServer {
         setupErrorNotifications(cfg, schedulerName);
     }
 
-
-    @Override
-    protected void setupErrorNotifications(Config config, String schedulerName) {
+    private void setupErrorNotifications(Config config, String schedulerName) {
         if (config == null) {
             throw new IllegalArgumentException("Config should be provided");
         } else {
