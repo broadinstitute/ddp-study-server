@@ -37,9 +37,6 @@ public class PicklistOption implements Renderable {
     @SerializedName("exclusive")
     private boolean isExclusive;
 
-    @SerializedName("isDefault")
-    private boolean isDefault;
-
     @SerializedName("groupId")
     private String groupStableId;
 
