@@ -158,7 +158,6 @@ public class UserDeleteService {
             deleteUserStudyLegacyData(handle, user);
             deleteUserAnnouncement(handle, user);
             deleteActivityInstanceStatusByOperator(handle, user);
-            deleteFileUpload(handle, user);
             deleteInvitation(handle, user);
             deleteStudyAdmin(handle, user);
             deleteStudyExitRequest(handle, user);
@@ -171,12 +170,13 @@ public class UserDeleteService {
         deleteUserAddresses(handle, user);
         deleteParticipantAnswersAndActivityInstances(handle, user);
         deleteActivityInstanceCreationMutex(handle, user);
+        deleteFileUpload(handle, user);
         deleteCountersAndEvents(handle, user);
         deleteGovernances(handle, user, userCollectedData);
         deleteAgeUpCandidates(handle, user);
         deleteDataSyncRequest(handle, user);
         deleteUser(handle, user);
-        deleteElasticSearchData(handle, user, userCollectedData);
+        deleteElasticSearchData(handle, user, userCollectedData, fullDelete);
 
         if (fullDelete) {
             deleteAuth0User(handle, user);
@@ -188,6 +188,7 @@ public class UserDeleteService {
     private void deleteKitRequests(Handle handle, User user) {
         log("kit_request", user);
         handle.attach(DsmKitRequestDao.class).deleteKitRequestByParticipantId(user.getId());
+
         log("kit_schedule_record", user);
         handle.attach(KitScheduleSql.class).deleteByUserId(user.getId());
     }
@@ -316,7 +317,7 @@ public class UserDeleteService {
         handle.attach(JdbiUser.class).deleteAllByIds(Collections.singleton(user.getId()));
     }
 
-    private void deleteElasticSearchData(Handle handle, User user, UserCollectedData userCollectedData)
+    private void deleteElasticSearchData(Handle handle, User user, UserCollectedData userCollectedData, boolean fullDelete)
             throws IOException {
         if (esClient != null) {
             LOG.info(LOG_MESSAGE_PREFIX__DELETE_FROM_ES + "participants, participants_structured, users", user.getGuid());
@@ -350,7 +351,11 @@ public class UserDeleteService {
             BulkResponse bulkResponse = esClient.bulk(bulkRequest, RequestOptions.DEFAULT);
 
             if (bulkResponse != null && bulkResponse.hasFailures()) {
-                LOG.error(bulkResponse.buildFailureMessage());
+                if (fullDelete) {
+                    throw new DDPException(bulkResponse.buildFailureMessage());
+                } else {
+                    LOG.error(bulkResponse.buildFailureMessage());
+                }
             }
         }
     }
