@@ -311,7 +311,7 @@ Answer:
   discriminator:
     propertyName: type
     mapping:
-      ACTIVITY_INSTANCE_SELECT: '#/Answer.String'
+      ACTIVITY_INSTANCE_SELECT: '#/Answer.ActivityInstance'
       AGREEMENT: '#/Answer.Boolean'
       BOOLEAN: '#/Answer.Boolean'
       COMPOSITE: '#/Answer.Composite'
@@ -419,6 +419,19 @@ Answer.Picklist:
           type: array
           items:
             $ref: '#/SelectedOption'
+Answer.ActivityInstance:
+  allOf:
+    - $ref: '#/Answer'
+    - type: object
+      required:
+        - value
+      properties:
+        value:
+          type: string
+          format: guid
+          nullable: true
+          description: |
+            GUID of selected activity instance.
 SelectedOption:
   type: object
   required:
@@ -469,7 +482,7 @@ AnswerSubmission:
   discriminator:
     propertyName: type
     mapping:
-      ACTIVITY_INSTANCE_SELECT: '#/AnswerSubmission.String'
+      ACTIVITY_INSTANCE_SELECT: '#/AnswerSubmission.ActivityInstance'
       AGREEMENT: '#/AnswerSubmission.Boolean'
       BOOLEAN: '#/AnswerSubmission.Boolean'
       COMPOSITE: '#/AnswerSubmission.Composite'
@@ -569,6 +582,21 @@ AnswerSubmission.String:
       properties:
         value:
           type: string
+AnswerSubmission.ActivityInstance:
+  allOf:
+    - $ref: '#/AnswerSubmission'
+    - type: object
+      required:
+        - value
+      properties:
+        value:
+          type: string
+          format: guid
+          nullable: true
+          description: |
+            GUID of instance of activity available for selection. If this
+            answer is currently associated with an instance, then submitting a `null`
+            value will unassociate it.
 #####
 #
 # Blocks
@@ -1452,10 +1480,9 @@ Question.ActivityInstanceSelect:
             type: string
             format: guid
         answers:
-          description: 'Selected activity instance GUIDs'
           type: array
           items:
-            $ref: '#/Answer.String'
+            $ref: '#/Answer.ActivityInstance'
 Question.Agreement:
   allOf:
   - $ref: '#/Question'
