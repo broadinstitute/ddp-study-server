@@ -1,11 +1,11 @@
 package org.broadinstitute.dsm.model.ups;
 
-import java.text.SimpleDateFormat;
-import java.time.Instant;
-
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+
+import java.text.SimpleDateFormat;
+import java.time.Instant;
 
 public class UPSActivityTest {
 
@@ -13,12 +13,12 @@ public class UPSActivityTest {
 
     private UPSActivity deliveredActivity;
 
-    private UPSActivity labelGenerated = new UPSActivity(new UPSStatus("M","Printed some stuff","MO"), "20201117", "015327");
+    private UPSActivity labelGenerated = new UPSActivity((String) null, new UPSStatus("M", "Printed some stuff", "MO"), "20201117", "015327", null, null, null);
 
     @Before
     public void setUp() {
-        inTransitActivity = new UPSActivity(new UPSStatus("I","On the way!","IX"), "20201113", "195327");
-        deliveredActivity = new UPSActivity(new UPSStatus("D","You got it!","DX"), "20201117", "015327");
+        inTransitActivity = new UPSActivity((UPSLocation) null, new UPSStatus("I", "On the way!", "IX"), "20201113", "195327", null, null, null);
+        deliveredActivity = new UPSActivity((UPSLocation) null, new UPSStatus("D", "You got it!", "DX"), "20201117", "015327", null, null, null);
     }
 
 

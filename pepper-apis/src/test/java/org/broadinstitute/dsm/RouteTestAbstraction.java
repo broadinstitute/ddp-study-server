@@ -10,7 +10,7 @@ import org.broadinstitute.dsm.db.AbstractionActivity;
 import org.broadinstitute.dsm.db.AbstractionField;
 import org.broadinstitute.dsm.db.AbstractionGroup;
 import org.broadinstitute.dsm.model.AbstractionWrapper;
-import org.broadinstitute.dsm.model.ParticipantWrapper;
+import org.broadinstitute.dsm.model.participant.ParticipantWrapperDto;
 import org.broadinstitute.dsm.util.DBTestUtil;
 import org.broadinstitute.dsm.util.DDPRequestUtil;
 import org.broadinstitute.dsm.util.TestUtil;
@@ -227,8 +227,8 @@ public class RouteTestAbstraction extends TestHelper {
 
     public void abstraction(@NonNull String activityName, @NonNull String abstractionUniqueValue, @NonNull String abstractionUniqueValue2) throws Exception {
         String ddpParticipantId = "ABSTRACTION_PARTICIPANT_ID";
-        ParticipantWrapper[] participants = RouteTest.getParticipants("/ui/applyFilter?parent=participantList&userId=26&realm=" + TEST_DDP);
-        for (ParticipantWrapper participant : participants) {
+        ParticipantWrapperDto[] participants = RouteTest.getParticipants("/ui/applyFilter?parent=participantList&userId=26&realm=" + TEST_DDP);
+        for (ParticipantWrapperDto participant : participants) {
             if (participant.getParticipant().getDdpParticipantId().equals(ddpParticipantId)) {
                 List<AbstractionActivity> abstractionActivities = participant.getAbstractionActivities();
                 if (abstractionActivities != null) {

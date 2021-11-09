@@ -4,8 +4,6 @@ import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.fluent.Request;
-import org.broadinstitute.lddp.db.SimpleResult;
-import org.broadinstitute.lddp.util.BasicTriggerListener;
 import org.broadinstitute.dsm.jobs.ExternalShipperJob;
 import org.broadinstitute.dsm.model.KitRequest;
 import org.broadinstitute.dsm.model.KitRequestSettings;
@@ -15,7 +13,12 @@ import org.broadinstitute.dsm.util.SystemUtil;
 import org.broadinstitute.dsm.util.TestUtil;
 import org.broadinstitute.dsm.util.externalShipper.GBFRequestUtil;
 import org.broadinstitute.dsm.util.triggerListener.ExternalShipperTriggerListener;
-import org.junit.*;
+import org.broadinstitute.lddp.db.SimpleResult;
+import org.broadinstitute.lddp.util.BasicTriggerListener;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.BeforeClass;
+import org.junit.Test;
 import org.quartz.*;
 import org.quartz.impl.StdSchedulerFactory;
 import org.quartz.impl.matchers.KeyMatcher;
@@ -26,8 +29,6 @@ import java.util.ArrayList;
 import java.util.Map;
 
 import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
-//import static org.mockserver.model.HttpRequest.request;
-//import static org.mockserver.model.HttpResponse.response;
 import static org.quartz.CronScheduleBuilder.cronSchedule;
 
 public class QuartzExternalShipperTest extends TestHelper {

@@ -1,13 +1,13 @@
-package org.broadinstitute.dsm;
+package org.broadinstitute.dsm.pubsub;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.typesafe.config.Config;
+import org.broadinstitute.dsm.TestHelper;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.EditParticipantMessage;
-import org.broadinstitute.dsm.db.User;
-import org.broadinstitute.dsm.pubsub.EditParticipantMessagePublisher;
-import org.broadinstitute.dsm.pubsub.PubSubResultMessageSubscription;
+import org.broadinstitute.dsm.db.dao.user.UserDao;
+import org.broadinstitute.dsm.db.dto.user.UserDto;
 import org.broadinstitute.dsm.route.EditParticipantPublisherRoute;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.util.DBTestUtil;
@@ -43,15 +43,14 @@ public class EditParticipantTest extends TestHelper {
         dsmToDssSubscriptionId = cfg.getString(GCP_PATH_TO_DSS_TO_DSM_SUB);
         topicId = cfg.getString(GCP_PATH_TO_DSM_TO_DSS_TOPIC);
         messageData = TEST_PAYLOAD;
-        userId = User.getUser(cfg.getString(UNIT_TESTER_EMAIL)).getUserId();
+        userId = new UserDao().getUserByEmail(cfg.getString(UNIT_TESTER_EMAIL)).orElse(new UserDto()).getId();
     }
 
     @Test
     public void testEditParticipantFeature() {
 
         String realm = null;
-
-        if (UserUtil.checkUserAccess(realm, Integer.toString(userId), "participant_edit")) {
+        if (UserUtil.checkUserAccess(realm, Integer.toString(userId), "participant_edit", null)) {
             try {
                 PubSubResultMessageSubscription.dssToDsmSubscriber(projectId, dsmToDssSubscriptionId);
             } catch (Exception e) {

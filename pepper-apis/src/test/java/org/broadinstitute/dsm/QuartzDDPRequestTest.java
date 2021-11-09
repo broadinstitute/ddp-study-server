@@ -1,16 +1,20 @@
 package org.broadinstitute.dsm;
 
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.lddp.db.SimpleResult;
-import org.broadinstitute.lddp.util.BasicTriggerListener;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.LatestKitRequest;
 import org.broadinstitute.dsm.jobs.DDPRequestJob;
 import org.broadinstitute.dsm.statics.DBConstants;
-import org.broadinstitute.dsm.util.*;
+import org.broadinstitute.dsm.util.DBTestUtil;
+import org.broadinstitute.dsm.util.TestUtil;
 import org.broadinstitute.dsm.util.tools.util.DBUtil;
 import org.broadinstitute.dsm.util.triggerListener.DDPRequestTriggerListener;
-import org.junit.*;
+import org.broadinstitute.lddp.db.SimpleResult;
+import org.broadinstitute.lddp.util.BasicTriggerListener;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.BeforeClass;
+import org.junit.Test;
 import org.quartz.*;
 import org.quartz.impl.StdSchedulerFactory;
 import org.slf4j.Logger;
@@ -19,7 +23,9 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.sql.*;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 

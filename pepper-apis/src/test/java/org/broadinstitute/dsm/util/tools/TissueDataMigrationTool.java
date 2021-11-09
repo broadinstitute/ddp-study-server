@@ -7,11 +7,10 @@ import com.typesafe.config.ConfigFactory;
 import lombok.Data;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.lddp.db.SimpleResult;
-import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.dsm.db.DDPInstance;
+import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDao;
+import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDto;
 import org.broadinstitute.dsm.db.structure.DBElement;
-import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.util.DBTestUtil;
 import org.broadinstitute.dsm.util.MedicalRecordUtil;
@@ -19,6 +18,7 @@ import org.broadinstitute.dsm.util.PatchUtil;
 import org.broadinstitute.dsm.util.TestUtil;
 import org.broadinstitute.dsm.util.tools.util.DBUtil;
 import org.broadinstitute.dsm.util.tools.util.FileUtil;
+import org.broadinstitute.lddp.db.SimpleResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,13 +26,12 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.sql.*;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
 import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
-
-import java.sql.*;
 
 @Data
 public class TissueDataMigrationTool {
@@ -297,8 +296,13 @@ public class TissueDataMigrationTool {
         File c = new File(config);
 
         cfg = cfg.withFallback(ConfigFactory.parseFile(c));
-        TransactionWrapper.init(new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.DSM, cfg.getInt(ApplicationConfigConstants.DSM_DB_MAX_CONNECTIONS),
-                cfg.getString(ApplicationConfigConstants.DSM_DB_URL)));
+        //TODO DSM add back in
+//        TransactionWrapper.configureSslProperties(cfg.getString("portal.dbSslKeyStore"),
+//                cfg.getString("portal.dbSslKeyStorePwd"),
+//                cfg.getString("portal.dbSslTrustStore"),
+//                cfg.getString("portal.dbSslTrustStorePwd"));
+//        TransactionWrapper.init(cfg.getInt(ApplicationConfigConstants.DSM_DB_MAX_CONNECTIONS),
+//                cfg.getString(ApplicationConfigConstants.DSM_DB_URL), cfg, false);
         logger.info("TISSUE MIGRATION TOOL SETUP COMPLETED ");
     }
 
@@ -325,8 +329,13 @@ public class TissueDataMigrationTool {
                     if (!MedicalRecordUtil.isParticipantInDB(conn, ddpParticipantId, String.valueOf(realmId))) {
                         //new participant
                         logger.info("participant doesn't exist in database for realm " + realmId);
-                        MedicalRecordUtil.writeParticipantIntoDB(conn, ddpParticipantId, String.valueOf(realmId),
-                                0, "TISSUE_MIGRATION_TOOL", MedicalRecordUtil.SYSTEM);
+                        ParticipantDto participantDto = new ParticipantDto.Builder(Integer.parseInt(realmId), System.currentTimeMillis())
+                                .withDdpParticipantId(ddpParticipantId)
+                                .withLastVersion(0)
+                                .withLastVersionDate("TISSUE_MIGRATION_TOOL")
+                                .withChangedBy(MedicalRecordUtil.SYSTEM)
+                                .build();
+                        new ParticipantDao().create(participantDto);
                     }
                     return dbVals;
                 });

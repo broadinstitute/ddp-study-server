@@ -1,7 +1,5 @@
 package org.broadinstitute.lddp.email;
 
-import static org.broadinstitute.ddp.client.SendGridClient.PATH_MAIL_SEND;
-
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
 import com.sendgrid.Method;
@@ -13,6 +11,7 @@ import com.sendgrid.helpers.mail.objects.Attachments;
 import com.sendgrid.helpers.mail.objects.Content;
 import com.sendgrid.helpers.mail.objects.Email;
 import com.sendgrid.helpers.mail.objects.Personalization;
+import lombok.NonNull;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.IOUtils;
 import org.broadinstitute.lddp.datstat.DatStatUtil;
@@ -27,17 +26,16 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
-import lombok.NonNull;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
 
+import static org.broadinstitute.ddp.client.SendGridClient.PATH_MAIL_SEND;
+
 /**
  * Used for integrating with SendGrid...
  */
-public class SendGridClient implements EmailClient
-{
+public class SendGridClient implements EmailClient {
     private static final Logger logger = LoggerFactory.getLogger(SendGridClient.class);
 
     public static final String ERROR_INVALID_SURVEY_LINK_NUMBER = "Recipients must all have the same number of survey links.";

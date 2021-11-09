@@ -2,15 +2,16 @@ package org.broadinstitute.dsm;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonParser;
-import org.broadinstitute.ddp.db.TransactionWrapper;
-import org.broadinstitute.dsm.TestHelper;
 import org.broadinstitute.dsm.route.KitStatusChangeRoute;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.util.DBTestUtil;
 import org.broadinstitute.dsm.util.TestUtil;
 import org.broadinstitute.dsm.util.tools.UpdateReceivedDateTool;
 import org.broadinstitute.dsm.util.tools.util.DBUtil;
-import org.junit.*;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -70,7 +71,8 @@ public class KitStatusChangeRouteTest extends TestHelper {
         //check if kitlabel was added to dsmlabel
         Assert.assertEquals("1", count);
 
-        TransactionWrapper.reset();
+        //TODO DSM add back in
+//        TransactionWrapper.reset(TestUtil.UNIT_TEST);
         //update receive_date per tool
         UpdateReceivedDateTool.argumentsForTesting("config/test-config.conf", "receivedUpdate.txt");
         UpdateReceivedDateTool.littleMain();

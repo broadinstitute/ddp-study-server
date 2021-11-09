@@ -1,8 +1,6 @@
 package org.broadinstitute.dsm;
 
-import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.dsm.util.DBTestUtil;
-import org.broadinstitute.dsm.util.TestUtil;
 import org.broadinstitute.dsm.util.tools.TissueDataMigrationTool;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -26,9 +24,8 @@ public class TissueDataMigrationToolTest extends TestHelper {
 
     @Test
     public void testMigrationTool() {
-        TransactionWrapper.reset();
-        TransactionWrapper.init(new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.DSM,cfg.getInt("portal.maxConnections"), cfg.getString("portal.dbUrl")));
-
+        //TODO DSM add back in
+//        TransactionWrapper.reset(TestUtil.UNIT_TEST);
 
         TissueDataMigrationTool tool = new TissueDataMigrationTool("AngioTissueMigrationTestFile.txt", "GEC");
         String phone = DBTestUtil.getQueryDetail(query, "TEST_ACC_NUM1", "phone");
@@ -159,8 +156,9 @@ public class TissueDataMigrationToolTest extends TestHelper {
         DBTestUtil.deleteAllParticipantData("FAKE_ANGIO_MIGRATION_2", true);
         DBTestUtil.deleteAllParticipantData("FAKE_ANGIO_MIGRATION_3", true);
         DBTestUtil.deleteAllParticipantData("FAKE_ANGIO_MIGRATION_4", true);
-        TransactionWrapper.reset();
-        TransactionWrapper.init(new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.DSM,cfg.getInt("portal.maxConnections"), cfg.getString("portal.dbUrl")));
+        //TODO DSM add back in
+//        TransactionWrapper.reset(TestUtil.UNIT_TEST);
+//        TransactionWrapper.init(cfg.getInt("portal.maxConnections"), cfg.getString("portal.dbUrl"), cfg, false);
         //delete all KitRequests added by the test
     }
 

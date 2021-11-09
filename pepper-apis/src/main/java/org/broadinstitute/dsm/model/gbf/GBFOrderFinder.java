@@ -1,17 +1,5 @@
 package org.broadinstitute.dsm.model.gbf;
 
-import java.net.MalformedURLException;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import org.broadinstitute.ddp.db.TransactionWrapper;
@@ -20,6 +8,13 @@ import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.net.MalformedURLException;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.*;
 
 /**
  * Finds kit requests that should be sent to GBF.
@@ -182,7 +177,8 @@ public class GBFOrderFinder {
         String esUrl = args[3];
         int numDays = Integer.parseInt(args[4]);
         Config cfg = ConfigFactory.load();
-        TransactionWrapper.init(1, dbUrl,cfg, true);
+        //TODO DSM needs to get init!
+//        TransactionWrapper.init(1, dbUrl, cfg, true);
 
 
         try {

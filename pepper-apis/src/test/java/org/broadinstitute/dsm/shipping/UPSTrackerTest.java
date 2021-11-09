@@ -5,7 +5,6 @@ import com.typesafe.config.ConfigFactory;
 import org.broadinstitute.dsm.DSMServer;
 import org.broadinstitute.dsm.model.ups.UPSPackage;
 import org.broadinstitute.dsm.model.ups.UPSTrackingResponse;
-import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -24,8 +23,9 @@ public class UPSTrackerTest {
         cfg = ConfigFactory.load();
 
     }
+
     @Test
-    public void lookupHistory() {
+    public void lookupHistory() throws Exception {
         UPSTracker upsTracker = new UPSTracker(cfg.getString(DSMServer.UPS_PATH_TO_ENDPOINT),
                 cfg.getString(DSMServer.UPS_PATH_TO_USERNAME),
                 cfg.getString(DSMServer.UPS_PATH_TO_PASSWORD),

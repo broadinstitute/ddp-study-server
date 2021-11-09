@@ -147,8 +147,8 @@ public class TestBostonKitTrackerDispatcher implements BackgroundFunction<Pubsub
                                             gbfShippedTriggerDSSDelivered
                                     );
                                     JsonObject jsonKit = new JsonParser().parse(new Gson().toJson(kit)).getAsJsonObject();
-                                    subsetOfKits.put(jsonKit);
-                                    logger.info("added label " + kit.getKitLabel() + " with tracking number " + kit.getUpsPackage().getTrackingNumber() + " size of array " + subsetOfKits.length());
+                                    subsetOfKits.add(jsonKit);
+                                    logger.info("added label " + kit.getKitLabel() + " with tracking number " + kit.getUpsPackage().getTrackingNumber() + " size of array " + subsetOfKits.size());
                                 }
                             }
                             catch (Exception e) {
@@ -164,7 +164,7 @@ public class TestBostonKitTrackerDispatcher implements BackgroundFunction<Pubsub
                             logger.info("lastKitId in this batch is " + kit.getDsmKitRequestId());
                             lastKitId = Integer.parseInt(kit.getDsmKitRequestId());
                             kitTrackerPubSubPublisher.publishMessage(project, topicId, subsetOfKits.toString());
-                            subsetOfKits = new JSONArray();
+                            subsetOfKits = new JsonArray();
                         }
                         else {
                             break loop;

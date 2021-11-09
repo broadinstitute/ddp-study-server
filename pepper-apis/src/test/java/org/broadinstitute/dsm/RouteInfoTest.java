@@ -11,7 +11,8 @@ import com.google.gson.reflect.TypeToken;
 import lombok.NonNull;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.fluent.Request;
-import org.broadinstitute.dsm.db.*;
+import org.broadinstitute.dsm.db.KitStatus;
+import org.broadinstitute.dsm.db.ParticipantStatus;
 import org.broadinstitute.dsm.model.DashboardInformation;
 import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
 import org.broadinstitute.dsm.util.DBTestUtil;
@@ -21,7 +22,10 @@ import org.broadinstitute.dsm.util.TestUtil;
 import org.junit.*;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import static org.mockserver.model.HttpRequest.request;
 import static org.mockserver.model.HttpResponse.response;
@@ -343,7 +347,7 @@ public class RouteInfoTest extends TestHelper {
     public void participantStatus() throws Exception {
         //insert a kit for pt of migrated ddp (will be uploaded with legacy shortId)
         DBTestUtil.insertLatestKitRequest(cfg.getString("portal.insertKitRequest"), cfg.getString("portal.insertKit"), "M1", 1, INSTANCE_ID_MIGRATED,
-                "adr_6c3ace20442b49bd8fae9a661e481c9e", "shp_f470591c3fb441a68dbb9b76ecf3bb3d", "1112321.22-698-965-659-666");
+                "adr_6c3ace20442b49bd8fae9a661e481c9e", "shp_f470591c3fb441a68dbb9b76ecf3bb3d", "1112321.22-698-965-659-666", 0);
         //change bsp_collaborator_ids
         DBTestUtil.executeQuery("UPDATE ddp_kit_request set bsp_collaborator_participant_id = \"MigratedProject_0011\", bsp_collaborator_sample_id =\"MigratedProject_0011_SALIVA\" where ddp_participant_id = \"1112321.22-698-965-659-666\"");
 
@@ -368,7 +372,7 @@ public class RouteInfoTest extends TestHelper {
     public void poBoxParticipantStatus() throws Exception {
         //insert a kit for pt of migrated ddp (will be uploaded with legacy shortId)
         DBTestUtil.insertLatestKitRequest(cfg.getString("portal.insertKitRequest"), cfg.getString("portal.insertKit"), "M1", 1, INSTANCE_ID_MIGRATED,
-                "adr_6c3ace20442b49bd8fae9a661e481c9e", null, "1112321.22-698-965-659-666");
+                "adr_6c3ace20442b49bd8fae9a661e481c9e", null, "1112321.22-698-965-659-666", 0);
 
         //create label an therefore collaborator id
         RouteTestSample.triggerLabelCreationAndWaitForLabel(TEST_DDP_MIGRATED, "SALIVA", 60);

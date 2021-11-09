@@ -9,7 +9,10 @@ import org.broadinstitute.lddp.db.SimpleResult;
 import org.broadinstitute.dsm.TestHelper;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.FieldSettings;
-import org.broadinstitute.dsm.db.User;
+import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
+import org.broadinstitute.dsm.db.dao.user.UserDao;
+import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
+import org.broadinstitute.dsm.db.dto.user.UserDto;
 import org.broadinstitute.dsm.model.Value;
 import org.broadinstitute.dsm.util.tools.util.DBUtil;
 
@@ -59,7 +62,12 @@ public class DBTestUtil {
     public static final String SELECT_ONC_HISTORY_DETAIL = "select onc_history_detail_id from ddp_onc_history_detail where medical_record_id = ? ";
     public static final String SELECT_UNSENT_EMAILS = "SELECT EMAIL_ID FROM EMAIL_QUEUE where EMAIL_DATE_PROCESSED is null";
     public static final String DELETE_UNSENT_EMAILS = "DELETE FROM EMAIL_QUEUE where EMAIL_ID = ?";
-    public static final String UPDATE_KIT_SENT = "update ddp_kit set kit_complete = 1, scan_date = ?, scan_by = ?, kit_label = ? where dsm_kit_request_id = ( select dsm_kit_request_id from ddp_kit_request where ddp_label = ?) and deactivated_date is null";
+    public static final String UPDATE_KIT_SENT = "update ddp_kit set test_result = '[{\"isCorrected\":false,\"result\":\"UNSATISFACTORY_12\",\"timeCompleted\":\"2020-09-03T12:08:21.657Z\"}]', kit_complete = 1, scan_date = ?, scan_by = ?, kit_label = ? where dsm_kit_request_id = ( select dsm_kit_request_id from ddp_kit_request where ddp_label = ?) and deactivated_date is null";
+    public static final String UPDATE_KIT_SENT_UPS = "update ddp_kit set test_result = '[{\"isCorrected\":false,\"result\":\"UNSATISFACTORY_12\",\"timeCompleted\":\"2020-09-03T12:08:21.657Z\"}]', kit_complete = 1, scan_date = ?, scan_by = ?, kit_label = ?, ups_tracking_status = ?, ups_return_status = ?, ups_tracking_date = ?, ups_return_date = ? where dsm_kit_request_id = ( select dsm_kit_request_id from ddp_kit_request where ddp_label = ?) and deactivated_date is null";
+    public static final String UPDATE_KIT_RECEIVED = "update ddp_kit set test_result = '[{\"isCorrected\":false,\"result\":\"UNSATISFACTORY_12\",\"timeCompleted\":\"2020-09-03T12:08:21.657Z\"}]', kit_complete = 1, scan_date = ?, scan_by = ?, kit_label = ?, ups_tracking_status = ?, ups_return_status = ?, ups_tracking_date = ?, ups_return_date = ?, receive_date = ?, receive_by = 'TEST' where dsm_kit_request_id = ( select dsm_kit_request_id from ddp_kit_request where ddp_label = ?) and deactivated_date is null";
+    public static final String SQL_INSERT_UPS_SHIPMENT = "INSERT INTO ups_shipment (dsm_kit_request_id) values (?)";
+    public static final String SQL_INSERT_UPS_PACKAGE = "INSERT INTO ups_package (ups_shipment_id, tracking_number) values (?,?)";
+    public static final String SQL_INSERT_UPS_ACTIVITY = "INSERT INTO ups_activity (ups_package_id, ups_location, ups_status_type, ups_status_description, ups_status_code,ups_activity_date_time) values (?,?,?,?,?,?)";
     public static final String SELECT_GENERIC_DRUG_ROWS = "SELECT generic_name FROM drug_list WHERE ( length(brand_name) < 1 or brand_name is null) ORDER BY generic_name asc";
     public static final String SELECT_DISTINCT_GENERICS_FROM_BRAND_ROWS = "SELECT distinct generic_name FROM drug_list WHERE length(brand_name) > 1 ORDER BY generic_name asc";
     public static final String DELETE_ALL_NDI_ADDED = "DELETE FROM ddp_ndi WHERE ndi_id = ?";
@@ -74,6 +82,10 @@ public class DBTestUtil {
                     "user_id = ? " +
             "ORDER BY published_at DESC " +
             "LIMIT 1";
+    public static final String SQL_INSERT_KIT_REQUEST = "INSERT INTO ddp_kit_request " +
+            "(ddp_instance_id, ddp_kit_request_id, kit_type_id, ddp_participant_id, bsp_collaborator_participant_id, bsp_collaborator_sample_id, " +
+            "ddp_label, created_by, created_date, external_order_number, upload_reason, external_order_date, external_order_status) " +
+            "values (?,?,?,?,?,?,?,?,?,?,?,?,?)";
     public static final long WEEK = 7 * 24 * 60 * 60 * 1000;
 
     public static void deleteAllParticipantData(String participantMaxVersionId) {
@@ -483,13 +495,13 @@ public class DBTestUtil {
         }
     }
 
-    public static void insertUser(@NonNull User user, int is_active) {
+    public static void insertUser(@NonNull UserDto userDto, int is_active) {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(SQL_INSERT_USER)) {
-                stmt.setInt(1, user.getUserId());
-                stmt.setString(2, user.getName());
-                stmt.setString(3, user.getEmail());
+                stmt.setInt(1, userDto.getId());
+                stmt.setString(2, userDto.getName().orElse(""));
+                stmt.setString(3, userDto.getEmail().orElse(""));
                 stmt.setInt(4, is_active);
                 int result = stmt.executeUpdate();
                 if (result != 1){
@@ -503,7 +515,7 @@ public class DBTestUtil {
         });
         if (results.resultException != null) {
             throw new RuntimeException("Error inserting user with "
-                    + user.getUserId(), results.resultException);
+                    + userDto.getId(), results.resultException);
         }
     }
 
@@ -721,6 +733,47 @@ public class DBTestUtil {
         });
     }
 
+    public static void setKitToStatus(String kitLabel, String ddpLabel, String toStatus, String returnStatus, String toDate, String returnDate) {
+        inTransaction((conn) -> {
+            try (PreparedStatement stmt = conn.prepareStatement(UPDATE_KIT_SENT_UPS)) {
+                stmt.setLong(1, System.currentTimeMillis());
+                stmt.setString(2, "TEST");
+                stmt.setString(3, kitLabel);
+                stmt.setString(4, toStatus);
+                stmt.setString(5, returnStatus);
+                stmt.setString(6, toDate);
+                stmt.setString(7, returnDate);
+                stmt.setString(8, ddpLabel);
+                stmt.executeUpdate();
+            }
+            catch (SQLException e) {
+                throw new RuntimeException("Error setKitToSent", e);
+            }
+            return null;
+        });
+    }
+
+    public static void setKitToReceived(String kitLabel, String ddpLabel, String toDate, String returnDate) {
+        inTransaction((conn) -> {
+            try (PreparedStatement stmt = conn.prepareStatement(UPDATE_KIT_RECEIVED)) {
+                stmt.setLong(1, System.currentTimeMillis());
+                stmt.setString(2, "TEST");
+                stmt.setString(3, kitLabel);
+                stmt.setString(4, "D Delivered");
+                stmt.setString(5, "D Delivered");
+                stmt.setString(6, toDate);
+                stmt.setString(7, returnDate);
+                stmt.setLong(8, System.currentTimeMillis());
+                stmt.setString(9, ddpLabel);
+                stmt.executeUpdate();
+            }
+            catch (SQLException e) {
+                throw new RuntimeException("Error setKitToReceived", e);
+            }
+            return null;
+        });
+    }
+
     public static void insertLatestKitRequest(String insertKitRequestQuery, String insertKitQuery, String suffix, int kitType, String instanceId) {
         insertLatestKitRequest(insertKitRequestQuery, insertKitQuery, suffix, kitType, instanceId, null);
     }
@@ -732,13 +785,23 @@ public class DBTestUtil {
             testAddress = "adr_3633293dc8db49c99e962ca251a0eab4";
             testShipment = "shp_529711e853f048bb9c0cbc527204c7d4";
         }
-        insertLatestKitRequest(insertKitRequestQuery, insertKitQuery, suffix, kitType, instanceId, testAddress, testShipment, ddpParticipantId);
+        insertLatestKitRequest(insertKitRequestQuery, insertKitQuery, suffix, kitType, instanceId, testAddress, testShipment, ddpParticipantId, System.currentTimeMillis());
+    }
+
+    public static void insertLatestKitRequest(String insertKitRequestQuery, String insertKitQuery, String suffix, int kitType, String instanceId, String ddpParticipantId, long ordered) {
+        String testAddress = "adr_64dad76d44c24a5daa95c0148ecb3ea8";
+        String testShipment = "shp_428f62fbafe84b33a4b5d9685981390a";
+        if (TestHelper.INSTANCE_ID_2 == instanceId) {
+            testAddress = "adr_3633293dc8db49c99e962ca251a0eab4";
+            testShipment = "shp_529711e853f048bb9c0cbc527204c7d4";
+        }
+        insertLatestKitRequest(insertKitRequestQuery, insertKitQuery, suffix, kitType, instanceId, testAddress, testShipment, ddpParticipantId, ordered);
     }
 
     public static void insertLatestKitRequest(String insertKitRequestQuery, String insertKitQuery, String suffix, int kitType,
-                                              String instanceId, String testAddress, String testShipment, String ddpParticipantId) {
+                                              String instanceId, String testAddress, String testShipment, String ddpParticipantId, long ordered) {
         inTransaction((conn) -> {
-            try (PreparedStatement stmt = conn.prepareStatement(insertKitRequestQuery)) {
+            try (PreparedStatement stmt = conn.prepareStatement(insertKitRequestQuery, PreparedStatement.RETURN_GENERATED_KEYS)) {
                 stmt.setString(1, instanceId);
                 stmt.setString(2, TestHelper.FAKE_LATEST_KIT + suffix);
                 stmt.setInt(3, kitType);
@@ -746,9 +809,12 @@ public class DBTestUtil {
                 stmt.setString(5, "FAKE_BSP_COLL_ID" + suffix);
                 stmt.setString(6, "FAKE_BSP_SAM_ID" + suffix);
                 stmt.setString(7, TestHelper.FAKE_DSM_LABEL_UID + suffix);
-                stmt.setString(8, "TEST");
-                stmt.setLong(9, System.currentTimeMillis());
+                stmt.setString(8, "SYSTEM");
+                stmt.setLong(9, ordered);
                 stmt.setObject(10, null);
+                stmt.setObject(11, null);
+                stmt.setLong(12, ordered);
+                stmt.setObject(13, "SHIPPED");
                 stmt.executeUpdate();
 
                 int kitRequestKey = -1;
@@ -773,12 +839,65 @@ public class DBTestUtil {
                     insertKit.setString(12, testAddress); //test address
                     insertKit.executeUpdate();
                 }
+                if (kitRequestKey != -1) {
+                    //add ups shipment
+                    PreparedStatement insertShipment = conn.prepareStatement(SQL_INSERT_UPS_SHIPMENT, PreparedStatement.RETURN_GENERATED_KEYS);
+                    insertShipment.setInt(1, kitRequestKey);
+                    insertShipment.executeUpdate();
+
+                    ResultSet upsShipmentRS = insertShipment.getGeneratedKeys();
+                    if (upsShipmentRS.next()) {
+                        int shipmentId = upsShipmentRS.getInt(1);
+                         addUPSPackage(conn, shipmentId, "FAKE_TRACKING_TO_ID" + suffix);
+                         addUPSPackage(conn, shipmentId, "FAKE_TRACKING_RETURN_ID" + suffix);
+                    }
+                }
             }
             catch (SQLException e) {
                 throw new RuntimeException("Error insertLatestKitRequest", e);
             }
             return null;
         });
+    }
+
+    private static void addUPSPackage (Connection conn, int shipmentId, String trackingNumber) throws SQLException {
+        //add ups package
+        PreparedStatement insertPackage = conn.prepareStatement(SQL_INSERT_UPS_PACKAGE, PreparedStatement.RETURN_GENERATED_KEYS);
+        insertPackage.setInt(1, shipmentId);
+        insertPackage.setString(2, trackingNumber);
+        insertPackage.executeUpdate();
+        ResultSet insertPackageRS = insertPackage.getGeneratedKeys();
+        if (insertPackageRS.next()) {
+            int packageId = insertPackageRS.getInt(1);
+            addUPSActivity(conn, packageId, "{\"address\":{\"city\":\"\",\"stateProvince\":\"\",\"postalCode\":\"\"}}",
+                    "M", "Shipper created a label, UPS has not received the package yet.", "MP", "2021-04-01 19:16:57");
+            addUPSActivity(conn, packageId, "{\"address\":{\"city\":\"Lakewood\",\"stateProvince\":\"NJ\",\"postalCode\":\"\"}}",
+                    "I", "Origin Scan", "OR", "2021-04-01 18:23:46");
+            addUPSActivity(conn, packageId, "{\"address\":{\"city\":\"\",\"stateProvince\":\"\",\"postalCode\":\"\"}}",
+                    "I", "Departed from Facility.", "DP", "2021-04-01 22:54:00");
+            addUPSActivity(conn, packageId, "{\"address\":{\"city\":\"\",\"stateProvince\":\"\",\"postalCode\":\"\"}}",
+                    "I", "Arrived at Facility", "AR", "2021-04-02 21:48:00");
+            addUPSActivity(conn, packageId, "{\"address\":{\"city\":\"\",\"stateProvince\":\"\",\"postalCode\":\"\"}}",
+                    "I", "Processing at UPS Facility", "DS", "2021-04-03 02:05:37");
+            addUPSActivity(conn, packageId, "{\"address\":{\"city\":\"\",\"stateProvince\":\"\",\"postalCode\":\"\"}}",
+                    "I", "Package transferred to post office", "LX", "2021-04-03 11:30:59");
+            addUPSActivity(conn, packageId, "{\"address\":{\"city\":\"\",\"stateProvince\":\"\",\"postalCode\":\"\"}}",
+                    "I", "Received by the local post office", "YH", "2021-04-03 13:12:00");
+            addUPSActivity(conn, packageId, "{\"address\":{\"city\":\"\",\"stateProvince\":\"\",\"postalCode\":\"\"}}",
+                    "D", "Delivered by Local Post Office", "YC", "2021-04-04 12:56:00");
+        }
+    }
+
+    private static void addUPSActivity(Connection conn, int packageId, String location, String status, String description, String code, String dateTime) throws SQLException {
+        //add ups activity
+        PreparedStatement insertPackage = conn.prepareStatement(SQL_INSERT_UPS_ACTIVITY);
+        insertPackage.setInt(1, packageId);
+        insertPackage.setString(2, location);
+        insertPackage.setString(3, status);
+        insertPackage.setString(4, description);
+        insertPackage.setString(5, code);
+        insertPackage.setString(6, dateTime);
+        insertPackage.executeUpdate();
     }
 
     /**
@@ -823,13 +942,14 @@ public class DBTestUtil {
 
     public static List<String> getStringList(String query, String returnColumn, String dbName) {
         List<String> list = new ArrayList<>();
-        SimpleResult results = inTransaction((conn) -> {
-            return getSimpleResult(conn, query, returnColumn, list);
-        });
+        //TODO DSM add back in
+//        SimpleResult results = inTransaction((conn) -> {
+//            return getSimpleResult(conn, query, returnColumn, list);
+//        }, dbName);
 
-        if (results.resultException != null) {
-            throw new RuntimeException("Error getting data ", results.resultException);
-        }
+//        if (results.resultException != null) {
+//            throw new RuntimeException("Error getting data ", results.resultException);
+//        }
         return list;
     }
 
@@ -939,7 +1059,7 @@ public class DBTestUtil {
             deleted = true;
         }
 
-        FieldSettings setting = new FieldSettings(settingId, columnName, columnDisplay, fieldType, displayType, possibleValues, new Integer(orderNumber).intValue(), null);
+        FieldSettings setting = new FieldSettings(settingId, columnName, columnDisplay, fieldType, displayType, possibleValues, new Integer(orderNumber).intValue(), null, false, null);
         setting.setDeleted(deleted);
         checkSettingMatch(setting, expectedFieldType, expectedColumnDisplay, expectedColumnName, expectedDisplayType,
                 expectedPossibleValues, expectedDeleted, "setting with id " + settingId);
@@ -1029,5 +1149,19 @@ public class DBTestUtil {
             throw new RuntimeException("Error deleting message with user id: "
                     + userId, results.resultException);
         }
+    }
+
+    public static DDPInstanceDto createTestDdpInstance(DDPInstanceDto ddpInstanceDto, DDPInstanceDao ddpInstanceDao, String ddpInstanceName) {
+        ddpInstanceDto = new DDPInstanceDto.Builder().build();
+        ddpInstanceDto.setInstanceName(ddpInstanceName);
+        int testCreatedInstanceId = ddpInstanceDao.create(ddpInstanceDto);
+        ddpInstanceDto.setDdpInstanceId(testCreatedInstanceId);
+        return ddpInstanceDto;
+    }
+
+    public static UserDto createTestDsmUser(String name, String email, UserDao userDao, UserDto userDto) {
+        userDto = new UserDto(0, name, email, "");
+        userDto.setId(userDao.create(userDto));
+        return userDto;
     }
 }

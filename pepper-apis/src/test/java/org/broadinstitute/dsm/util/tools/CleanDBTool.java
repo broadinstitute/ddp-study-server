@@ -1,4 +1,4 @@
-//package org.broadinstitute.dsm.util.tools;
+package org.broadinstitute.dsm.util.tools;//package org.broadinstitute.dsm.util.tools;
 //
 //import com.typesafe.config.Config;
 //import com.typesafe.config.ConfigFactory;

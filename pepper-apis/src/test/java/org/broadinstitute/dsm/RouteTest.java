@@ -8,20 +8,22 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.fluent.Request;
-import org.broadinstitute.lddp.handlers.util.Result;
-import org.broadinstitute.lddp.handlers.util.SimpleFollowUpSurvey;
-import org.broadinstitute.lddp.handlers.util.SurveyInfo;
-import org.broadinstitute.lddp.security.SecurityHelper;
 import org.broadinstitute.dsm.db.*;
 import org.broadinstitute.dsm.model.*;
+import org.broadinstitute.dsm.model.participant.ParticipantWrapper;
+import org.broadinstitute.dsm.model.participant.ParticipantWrapperDto;
 import org.broadinstitute.dsm.util.*;
+import org.broadinstitute.lddp.handlers.util.*;
+import org.broadinstitute.lddp.security.SecurityHelper;
 import org.junit.*;
 import org.mockserver.matchers.MatchType;
 import org.mockserver.model.JsonBody;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.Type;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -444,16 +446,16 @@ public class RouteTest extends TestHelper {
 
     @Test
     public void participantEndpoint() throws Exception {
-        ParticipantWrapper[] participants = getParticipants("/ui/applyFilter?parent=participantList&userId=26&realm=" + TEST_DDP);
+        ParticipantWrapperDto[] participants = getParticipants("/ui/applyFilter?parent=participantList&userId=26&realm=" + TEST_DDP);
         Assert.assertNotNull(participants);
         Assert.assertTrue(participants.length > 0);
     }
 
-    public static ParticipantWrapper[] getParticipants(String sentRequest) throws Exception {
+    public static ParticipantWrapperDto[] getParticipants(String sentRequest) throws Exception {
         HttpResponse response = TestUtil.performGet(DSM_BASE_URL, sentRequest, testUtil.buildAuthHeaders()).returnResponse();
         Assert.assertEquals(200, response.getStatusLine().getStatusCode());
         Gson gson = new GsonBuilder().create();
-        ParticipantWrapper[] participants = gson.fromJson(DDPRequestUtil.getContentAsString(response), ParticipantWrapper[].class);
+        ParticipantWrapperDto[] participants = gson.fromJson(DDPRequestUtil.getContentAsString(response), ParticipantWrapperDto[].class);
         return participants;
     }
 
@@ -1001,7 +1003,7 @@ public class RouteTest extends TestHelper {
     public void getMaxParticipantId() {
         inTransaction((conn) -> {
             try {
-                long maxParticipantId = org.broadinstitute.dsm.util.DBUtil.getBookmark(conn, INSTANCE_ID);
+                long maxParticipantId = DBUtil.getBookmark(conn, INSTANCE_ID);
                 Assert.assertNotNull(maxParticipantId);
             }
             catch (Exception e) {
@@ -1017,12 +1019,12 @@ public class RouteTest extends TestHelper {
             try {
                 long maxParticipantId = addParticipantIntoDb(conn);
 
-                long newMaxParticipantId = org.broadinstitute.dsm.util.DBUtil.getBookmark(conn, INSTANCE_ID);
+                long newMaxParticipantId = DBUtil.getBookmark(conn, INSTANCE_ID);
                 Assert.assertNotNull(newMaxParticipantId);
                 Assert.assertNotEquals(maxParticipantId, newMaxParticipantId);
                 Assert.assertEquals(66666666, newMaxParticipantId);
 
-                org.broadinstitute.dsm.util.DBUtil.updateBookmark(conn, maxParticipantId, INSTANCE_ID);
+                DBUtil.updateBookmark(conn, maxParticipantId, INSTANCE_ID);
 
                 DBTestUtil.deleteAllParticipantData(String.valueOf(newMaxParticipantId));
             }
@@ -1034,7 +1036,7 @@ public class RouteTest extends TestHelper {
     }
 
     public long addParticipantIntoDb(Connection conn) throws Exception {
-        long maxParticipantId = org.broadinstitute.dsm.util.DBUtil.getBookmark(conn, INSTANCE_ID);
+        long maxParticipantId = DBUtil.getBookmark(conn, INSTANCE_ID);
         mockDDP.clear(request().withPath("/ddp/institutionrequests/" + maxParticipantId));
 
         String messageParticipant = TestUtil.readFile("ddpResponses/Institutionrequests.json");
@@ -1054,7 +1056,7 @@ public class RouteTest extends TestHelper {
                 //add participant with institutions
                 String messageParticipant = TestUtil.readFile("ddpResponses/forQuartzJob/Institutionrequests_1.json");
                 int instanceId = Integer.parseInt(INSTANCE_ID);
-                long maxParticipantId = org.broadinstitute.dsm.util.DBUtil.getBookmark(conn, INSTANCE_ID);
+                long maxParticipantId = DBUtil.getBookmark(conn, INSTANCE_ID);
                 try {
                     addParticipant(messageParticipant, instanceId, maxParticipantId);
                 }
@@ -1063,7 +1065,7 @@ public class RouteTest extends TestHelper {
                 }
 
                 //check if participant got added by checking if newMaxParticipantId changed
-                long newMaxParticipantId = org.broadinstitute.dsm.util.DBUtil.getBookmark(conn, INSTANCE_ID);
+                long newMaxParticipantId = DBUtil.getBookmark(conn, INSTANCE_ID);
                 Assert.assertNotNull(newMaxParticipantId);
                 Assert.assertNotEquals(maxParticipantId, newMaxParticipantId);
 
@@ -1097,7 +1099,7 @@ public class RouteTest extends TestHelper {
                 }
 
                 //check if participant got added by checking if newMaxParticipantId is changed
-                Assert.assertNotEquals(newMaxParticipantId, org.broadinstitute.dsm.util.DBUtil.getBookmark(conn, INSTANCE_ID).intValue());
+                Assert.assertNotEquals(newMaxParticipantId, DBUtil.getBookmark(conn, INSTANCE_ID).intValue());
 
                 //check if a medicalRecord was generated
                 String SQL_SELECT_MR_LOG = "SELECT medical_record_log_id, date, comments, type FROM ddp_medical_record_log WHERE medical_record_id = ?";
@@ -1114,7 +1116,7 @@ public class RouteTest extends TestHelper {
                 }
 
                 //check if participant got added by checking if newMaxParticipantId is changed
-                Assert.assertNotEquals(newMaxParticipantId, org.broadinstitute.dsm.util.DBUtil.getBookmark(conn, INSTANCE_ID).intValue());
+                Assert.assertNotEquals(newMaxParticipantId, DBUtil.getBookmark(conn, INSTANCE_ID).intValue());
 
                 //check if no new medicalRecord was generated
                 String logCount = DBTestUtil.getQueryDetail("select count(*) as count from ddp_medical_record_log where medical_record_id = ?", medicalRecordId, "count");
@@ -1157,7 +1159,7 @@ public class RouteTest extends TestHelper {
         final long max = maxParticipantId;
         inTransaction((conn) -> {
             try {
-                org.broadinstitute.dsm.util.DBUtil.updateBookmark(conn, max, INSTANCE_ID);
+                DBUtil.updateBookmark(conn, max, INSTANCE_ID);
             }
             catch (Exception e) {
                 throw new RuntimeException("medicalRecordLog ", e);
@@ -1313,14 +1315,14 @@ public class RouteTest extends TestHelper {
         inTransaction((conn) -> {
             try {
                 //returning 3 times same response
-                long currentMaxParticipantId = org.broadinstitute.dsm.util.DBUtil.getBookmark(conn, INSTANCE_ID);
+                long currentMaxParticipantId = DBUtil.getBookmark(conn, INSTANCE_ID);
                 mockDDP.when(
                         request().withPath("/ddp/institutionrequests/" + currentMaxParticipantId))
                         .respond(response().withStatusCode(200)
                                 .withBody(messageParticipant));
                 ddpMedicalRecordDataRequest.requestAndWriteParticipantInstitutions();
 
-                long newMaxParticipantId = org.broadinstitute.dsm.util.DBUtil.getBookmark(conn, INSTANCE_ID);
+                long newMaxParticipantId = DBUtil.getBookmark(conn, INSTANCE_ID);
                 Assert.assertNotNull(newMaxParticipantId);
                 Assert.assertNotEquals(currentMaxParticipantId, newMaxParticipantId);
                 Assert.assertEquals(1668888666, newMaxParticipantId);
@@ -1338,7 +1340,7 @@ public class RouteTest extends TestHelper {
                                 .withBody(messageParticipantNew));
                 ddpMedicalRecordDataRequest.requestAndWriteParticipantInstitutions(); //adding new pt into db
 
-                long newMaxParticipantIdAfter = org.broadinstitute.dsm.util.DBUtil.getBookmark(conn, INSTANCE_ID);
+                long newMaxParticipantIdAfter = DBUtil.getBookmark(conn, INSTANCE_ID);
                 Assert.assertEquals(1668888888, newMaxParticipantIdAfter);
                 String pkAfterNewCall = DBTestUtil.getStringFromQuery("SELECT * FROM ddp_institution order by institution_id desc limit 1", null, "institution_id");
                 int newPK = Integer.parseInt(pkAfterMultipleCall) + 1; //new pt has only one institution
@@ -1346,7 +1348,7 @@ public class RouteTest extends TestHelper {
                 Assert.assertEquals(String.valueOf(newPK), pkAfterNewCall);
 
                 Assert.assertEquals(0, currentMaxParticipantId);
-                org.broadinstitute.dsm.util.DBUtil.updateBookmark(conn, currentMaxParticipantId, INSTANCE_ID); //set it back to the bookmark before testing
+                DBUtil.updateBookmark(conn, currentMaxParticipantId, INSTANCE_ID); //set it back to the bookmark before testing
             }
             catch (Exception e) {
                 throw new RuntimeException("getParticipantInstitutions ", e);
@@ -1360,7 +1362,7 @@ public class RouteTest extends TestHelper {
         String messageParticipant = TestUtil.readFile("ddpResponses/InstitutionrequestsPepperMulti.json");
         inTransaction((conn) -> {
             try {
-                long currentMaxParticipantId = org.broadinstitute.dsm.util.DBUtil.getBookmark(conn, INSTANCE_ID);
+                long currentMaxParticipantId = DBUtil.getBookmark(conn, INSTANCE_ID);
                 mockDDP.clear(request().withPath("/ddp/institutionrequests/" + currentMaxParticipantId));
                 mockDDP.when(
                         request().withPath("/ddp/institutionrequests/" + currentMaxParticipantId))
@@ -1368,7 +1370,7 @@ public class RouteTest extends TestHelper {
                                 .withBody(messageParticipant));
                 ddpMedicalRecordDataRequest.requestAndWriteParticipantInstitutions();
 
-                long newMaxParticipantId = org.broadinstitute.dsm.util.DBUtil.getBookmark(conn, INSTANCE_ID);
+                long newMaxParticipantId = DBUtil.getBookmark(conn, INSTANCE_ID);
                 Assert.assertNotNull(newMaxParticipantId);
                 Assert.assertNotEquals(currentMaxParticipantId, newMaxParticipantId);
                 Assert.assertEquals(1668888444, newMaxParticipantId);
@@ -1376,7 +1378,7 @@ public class RouteTest extends TestHelper {
                 Assert.assertEquals("3", String.valueOf(count));
 
                 Assert.assertEquals(0, currentMaxParticipantId);
-                org.broadinstitute.dsm.util.DBUtil.updateBookmark(conn, currentMaxParticipantId, INSTANCE_ID); //set it back to the bookmark before testing
+                DBUtil.updateBookmark(conn, currentMaxParticipantId, INSTANCE_ID); //set it back to the bookmark before testing
             }
             catch (Exception e) {
                 throw new RuntimeException("getParticipantInstitutions ", e);
@@ -1456,7 +1458,7 @@ public class RouteTest extends TestHelper {
 
         //insert a kit for pt of migrated ddp (will be uploaded with legacy shortId)
         DBTestUtil.insertLatestKitRequest(cfg.getString("portal.insertKitRequest"), cfg.getString("portal.insertKit"), "M1", 1, INSTANCE_ID_MIGRATED,
-                "adr_6c3ace20442b49bd8fae9a661e481c9e", "shp_f470591c3fb441a68dbb9b76ecf3bb3d", "FAKE.MIGRATED_PARTICIPANT_ID");
+                "adr_6c3ace20442b49bd8fae9a661e481c9e", "shp_f470591c3fb441a68dbb9b76ecf3bb3d", "FAKE.MIGRATED_PARTICIPANT_ID", 0);
         //change bsp_collaborator_ids
         DBTestUtil.executeQuery("UPDATE ddp_kit_request set bsp_collaborator_participant_id = \"MigratedProject_0111\", bsp_collaborator_sample_id =\"MigratedProject_0111_SALIVA\" where ddp_participant_id = \"FAKE.MIGRATED_PARTICIPANT_ID\"");
 

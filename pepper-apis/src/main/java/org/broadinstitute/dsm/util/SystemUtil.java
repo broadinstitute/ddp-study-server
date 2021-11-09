@@ -1,5 +1,6 @@
 package org.broadinstitute.dsm.util;
 
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
@@ -20,6 +21,8 @@ import java.time.format.DateTimeFormatterBuilder;
 import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoField;
 import java.util.Date;
+import java.util.Map;
+import java.util.Set;
 
 public class SystemUtil {
 
@@ -181,13 +184,6 @@ public class SystemUtil {
         }
     }
 
-    //TODO Simone - delete if not used at the end...
-    public static int getDaysTillNow(@NonNull String date) {
-        long dateSent = SystemUtil.getLongFromDateString(date);
-        long current = System.currentTimeMillis();
-        return (int) ((current - dateSent) / SystemUtil.MILLIS_PER_DAY);
-    }
-
     public static String getBody(HttpServletRequest request) throws IOException {
         String body = null;
         StringBuilder stringBuilder = new StringBuilder();
@@ -236,23 +232,20 @@ public class SystemUtil {
 
     public static JsonObject mergeJSONStrings(@NonNull String json1, @NonNull String json2) {
         if (StringUtils.isNotBlank(json1) && StringUtils.isNotBlank(json2)) {
-            System.out.println(json1 + " " + json2);
-            return mergeJSONObjects(new JsonObject(json1), new JsonObject(json2));
+            JsonObject object = new JsonObject();
+            object.addProperty(json1, json1);
+            JsonObject object2 = new JsonObject();
+            object2.addProperty(json2, json2);
+            return mergeJSONObjects(object, object2);
         }
         return null;
     }
 
     public static JsonObject mergeJSONObjects(@NonNull JsonObject json1, @NonNull JsonObject json2) {
-        JsonObject mergedJson = new JsonObject();
-        try {
-            mergedJson = new JsonObject(json1, JsonObject.getNames(json1));
-            for (String key : JsonObject.getNames(json2)) {
-                mergedJson.put(key, json2.get(key));
-            }
-        }
-        catch (JSONException e) {
-            throw new RuntimeException("JSON exception ", e);
-        }
-        return mergedJson;
+        Set<Map.Entry<String, JsonElement>> entrySet = json2.entrySet();
+        entrySet.forEach((next) -> {
+            json1.add(next.getKey(), next.getValue());
+        });
+        return json1;
     }
 }

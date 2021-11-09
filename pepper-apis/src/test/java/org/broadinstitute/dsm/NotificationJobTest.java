@@ -2,13 +2,14 @@ package org.broadinstitute.dsm;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import org.broadinstitute.lddp.EmailClient;
-import org.broadinstitute.lddp.util.BasicTriggerListener;
 import org.broadinstitute.dsm.jobs.GPNotificationJob;
 import org.broadinstitute.dsm.model.KitDDPSummary;
 import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
-import org.broadinstitute.dsm.util.*;
+import org.broadinstitute.dsm.util.DBTestUtil;
+import org.broadinstitute.dsm.util.GPNotificationUtil;
 import org.broadinstitute.dsm.util.triggerListener.GPNotificationTriggerListener;
+import org.broadinstitute.lddp.email.EmailClient;
+import org.broadinstitute.lddp.util.BasicTriggerListener;
 import org.junit.*;
 import org.quartz.*;
 import org.quartz.impl.StdSchedulerFactory;
@@ -92,7 +93,7 @@ public class NotificationJobTest extends TestHelper {
     @Test
     public void checkCronExpression() {
         String cronExpression = cfg.getString("email.cron_expression_GP_notification");
-        Assert.assertTrue(org.quartz.CronExpression.isValidExpression(cronExpression));
+        Assert.assertTrue(CronExpression.isValidExpression(cronExpression));
     }
 
     @Test

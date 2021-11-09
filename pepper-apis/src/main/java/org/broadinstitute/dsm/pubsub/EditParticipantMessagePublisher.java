@@ -74,8 +74,13 @@ public class EditParticipantMessagePublisher {
         } finally {
             if (publisher != null) {
                 // When finished with the publisher, shutdown to free up resources.
-                publisher.shutdown();
-                publisher.awaitTermination(1, TimeUnit.MINUTES);
+                try {
+                    publisher.shutdown();
+                    publisher.awaitTermination(1, TimeUnit.MINUTES);
+                }
+                catch (Exception e) {
+                    //TODO DSM
+                }
             }
         }
     }

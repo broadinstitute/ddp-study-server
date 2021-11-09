@@ -1,6 +1,7 @@
 package org.broadinstitute.dsm.model.PDF;
 
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import lombok.NonNull;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -27,12 +28,12 @@ public class MRCoverPDF{
     }
 
     public Map<String, Object> getValuesFromRequest(@NonNull String requestBody, DDPInstance ddpInstance, UserDto user) {
-        JsonObject jsonObject = new JsonObject(requestBody);
+        JsonObject jsonObject = new JsonParser().parse(requestBody).getAsJsonObject();
         Set keySet = jsonObject.keySet();
         String startDate = null;
         String endDate = null;
         if (keySet.contains(JSON_START_DATE)) {
-            startDate = (String) jsonObject.get(JSON_START_DATE);
+            startDate = jsonObject.get(JSON_START_DATE).getAsString();
             if (!"0/0".equals(startDate) && !startDate.contains("/") && startDate.contains("-")) {
                 startDate = SystemUtil.changeDateFormat(SystemUtil.DATE_FORMAT, SystemUtil.US_DATE_FORMAT, startDate);
             }
@@ -41,7 +42,7 @@ public class MRCoverPDF{
             }
         }
         if (keySet.contains(JSON_END_DATE)) {
-            endDate = (String) jsonObject.get(JSON_END_DATE);
+            endDate = jsonObject.get(JSON_END_DATE).getAsString();
             endDate = SystemUtil.changeDateFormat(SystemUtil.DATE_FORMAT, SystemUtil.US_DATE_FORMAT, endDate);
         }
         if (StringUtils.isBlank(originalDownloadPDF.getMedicalRecordId())) {
@@ -71,7 +72,7 @@ public class MRCoverPDF{
                 .orElse(Collections.emptyList())
                 .forEach(mrCoverSetting -> {
                     if (keySet.contains(mrCoverSetting.getValue())) {
-                        valueMap.put(mrCoverSetting.getValue(), BooleanUtils.toBoolean((Boolean) jsonObject.get(mrCoverSetting.getValue())));
+                        valueMap.put(mrCoverSetting.getValue(), BooleanUtils.toBoolean((Boolean) jsonObject.get(mrCoverSetting.getValue()).getAsBoolean()));
                     }
                 });
 

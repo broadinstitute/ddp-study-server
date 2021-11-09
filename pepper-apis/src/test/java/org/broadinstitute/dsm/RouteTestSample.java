@@ -10,7 +10,9 @@ import org.apache.http.client.fluent.Request;
 import org.broadinstitute.lddp.util.GoogleBucket;
 import org.broadinstitute.dsm.db.*;
 import org.broadinstitute.dsm.exception.RateNotAvailableException;
-import org.broadinstitute.dsm.model.*;
+import org.broadinstitute.dsm.model.EasypostLabelRate;
+import org.broadinstitute.dsm.model.KitRequest;
+import org.broadinstitute.dsm.model.KitRequestSettings;
 import org.broadinstitute.dsm.model.KitType;
 import org.broadinstitute.dsm.model.bsp.BSPKitInfo;
 import org.broadinstitute.dsm.model.bsp.BSPKitRegistration;
@@ -195,7 +197,7 @@ public class RouteTestSample extends TestHelper {
 
     @Test
     public void getKitLookup() {
-        HashMap<String, org.broadinstitute.dsm.model.KitType> kitLookup = org.broadinstitute.dsm.model.KitType.getKitLookup();
+        HashMap<String, KitType> kitLookup = KitType.getKitLookup();
         Assert.assertNotNull(kitLookup);
 
         String key = "SALIVA" + "_" + INSTANCE_ID;
@@ -442,7 +444,7 @@ public class RouteTestSample extends TestHelper {
         DBTestUtil.deleteAllKitData("1_3");
         DDPInstance ddpInstance = DDPInstance.getDDPInstance(TEST_DDP);
 
-        HashMap<String, KitType> kitTypes = org.broadinstitute.dsm.model.KitType.getKitLookup();
+        HashMap<String, KitType> kitTypes = KitType.getKitLookup();
         KitType kitType = kitTypes.get("TEST" + "_" + INSTANCE_ID);
         if (kitType == null) {
             throw new RuntimeException("KitType unknown");
@@ -1574,13 +1576,13 @@ public class RouteTestSample extends TestHelper {
 
         //insert a kit for pt of migrated ddp (will be uploaded with legacy shortId)
         DBTestUtil.insertLatestKitRequest(cfg.getString("portal.insertKitRequest"), cfg.getString("portal.insertKit"), "M1", 1, INSTANCE_ID_MIGRATED,
-                "adr_6c3ace20442b49bd8fae9a661e481c9e", "shp_f470591c3fb441a68dbb9b76ecf3bb3d", "1112321.22-698-965-659-666");
+                "adr_6c3ace20442b49bd8fae9a661e481c9e", "shp_f470591c3fb441a68dbb9b76ecf3bb3d", "1112321.22-698-965-659-666",0);
         //change bsp_collaborator_ids
         DBTestUtil.executeQuery("UPDATE ddp_kit_request set bsp_collaborator_participant_id = \"MigratedProject_0011\", bsp_collaborator_sample_id =\"MigratedProject_0011_SALIVA\" where ddp_participant_id = \"1112321.22-698-965-659-666\"");
 
         //insert a kit for pt of migrated ddp (will be uploaded with pepper HRUID)
         DBTestUtil.insertLatestKitRequest(cfg.getString("portal.insertKitRequest"), cfg.getString("portal.insertKit"), "M2", 1, INSTANCE_ID_MIGRATED,
-                "adr_6c3ace20442b49bd8fae9a661e481c9e", "shp_f470591c3fb441a68dbb9b76ecf3bb3d", "1112321.22-698-965-659-667");
+                "adr_6c3ace20442b49bd8fae9a661e481c9e", "shp_f470591c3fb441a68dbb9b76ecf3bb3d", "1112321.22-698-965-659-667", 0);
         //change bsp_collaborator_ids
         DBTestUtil.executeQuery("UPDATE ddp_kit_request set bsp_collaborator_participant_id = \"MigratedProject_0012\", bsp_collaborator_sample_id =\"MigratedProject_0012_SALIVA\" where ddp_participant_id = \"1112321.22-698-965-659-667\"");
 

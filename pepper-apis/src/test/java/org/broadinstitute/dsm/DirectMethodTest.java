@@ -6,10 +6,11 @@ import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.lddp.db.SimpleResult;
 import org.broadinstitute.lddp.util.GoogleBucket;
 import org.broadinstitute.dsm.db.*;
-import org.broadinstitute.dsm.model.NDIUploadObject;
+import org.broadinstitute.dsm.db.dto.settings.InstanceSettingsDto;
 import org.broadinstitute.dsm.exception.FileColumnMissing;
 import org.broadinstitute.dsm.model.KitRequestSettings;
 import org.broadinstitute.dsm.model.KitType;
+import org.broadinstitute.dsm.model.NDIUploadObject;
 import org.broadinstitute.dsm.model.Value;
 import org.broadinstitute.dsm.model.gbf.LineItem;
 import org.broadinstitute.dsm.model.gbf.Orders;
@@ -110,7 +111,7 @@ public class DirectMethodTest extends TestHelper {
                                                                              int orderNumber,
                                                                              boolean deleted) {
         FieldSettings setting = new FieldSettings(settingId, columnName, columnDisplay, fieldType, displayType,
-                possibleValues, orderNumber, null);
+                possibleValues, orderNumber, null, false, null);
         if (settingId != null && deleted) {
             setting.setDeleted(true);
         }
@@ -715,25 +716,22 @@ public class DirectMethodTest extends TestHelper {
 
     @Test
     public void instanceSettings() {
-        InstanceSettings instanceSettings = InstanceSettings.getInstanceSettings(TEST_DDP);
-        Assert.assertNotNull(instanceSettings);
-        Assert.assertNotNull(instanceSettings.getMrCoverPdf());
-        Assert.assertNotNull(instanceSettings.getKitBehaviorChange());
-        Assert.assertFalse(instanceSettings.getMrCoverPdf().isEmpty());
-        Assert.assertFalse(instanceSettings.getKitBehaviorChange().isEmpty());
+        InstanceSettings instanceSettings = new InstanceSettings();
+        InstanceSettingsDto instanceSettingsDto = instanceSettings.getInstanceSettings(TEST_DDP);
+        Assert.assertNotNull(instanceSettingsDto);
+        Assert.assertNotNull(instanceSettingsDto.getMrCoverPdf().orElse(null));
+        Assert.assertNotNull(instanceSettingsDto.getKitBehaviorChange().orElse(null));
+        Assert.assertFalse(instanceSettingsDto.getMrCoverPdf().orElse(Collections.emptyList()).isEmpty());
+        Assert.assertFalse(instanceSettingsDto.getKitBehaviorChange().orElse(Collections.emptyList()).isEmpty());
 
-        List<Value> kitBehaviour = instanceSettings.getKitBehaviorChange();
-        Value upload = kitBehaviour.stream().filter(o -> o.getName().equals("upload")).findFirst().get();
-        if (upload != null && upload.getValues() != null && !upload.getValues().isEmpty()) {
-            for (Value condition : upload.getValues()) {
-                if (StringUtils.isNotBlank(condition.getName()) && condition.getName().contains(".")) {
-                    String[] names = condition.getName().split("\\.");
-                }
-            }
-        }
-        else {
-            Assert.fail();
-        }
+        instanceSettingsDto
+                .getKitBehaviorChange()
+                .map(kitBehaviour -> kitBehaviour.stream().filter(o -> o.getName().equals("upload")).findFirst().orElse(null))
+                .ifPresentOrElse(value -> value.getValues().forEach(condition -> {
+                    if (StringUtils.isNotBlank(condition.getName()) && condition.getName().contains(".")) {
+                        String[] names = condition.getName().split("\\.");
+                    }
+                }), Assert::fail);
     }
 
     @Ignore ("ES values are changing a lot because of testing")

@@ -9,11 +9,10 @@ import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.fluent.Request;
-import org.broadinstitute.ddp.db.TransactionWrapper;
-import org.broadinstitute.lddp.util.Utility;
 import org.broadinstitute.dsm.db.MedicalRecord;
 import org.broadinstitute.dsm.util.*;
 import org.broadinstitute.dsm.util.externalShipper.GBFRequestUtil;
+import org.elasticsearch.client.RestHighLevelClient;
 import org.junit.Assert;
 import org.mockserver.integration.ClientAndServer;
 import org.slf4j.Logger;
@@ -21,6 +20,7 @@ import org.slf4j.LoggerFactory;
 import spark.Spark;
 
 import java.io.File;
+import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -68,6 +68,7 @@ public class TestHelper {
     public static String PROMISE_INSTANCE_ID = null;
     protected static String DDP_BASE_URL;
     protected static String DSM_BASE_URL;
+    protected static RestHighLevelClient esClient;
 
     public static Config cfg;
 
@@ -125,13 +126,21 @@ public class TestHelper {
                 logger.info("Skipping DB update...");
             }
 
-            TransactionWrapper.reset();
-            TransactionWrapper.init(new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.DSM,cfg.getInt("portal.maxConnections"), cfg.getString("portal.dbUrl")));
-            if (!Utility.dbCheck()) {
-                throw new RuntimeException("DB connection error.");
-            } else {
-                logger.info("DB setup complete.");
-            }
+            //TODO DSM add back in
+//            if (!skipSsl) {
+//                TransactionWrapper.configureSslProperties(cfg.getString("portal.dbSslKeyStore"),
+//                        cfg.getString("portal.dbSslKeyStorePwd"),
+//                        cfg.getString("portal.dbSslTrustStore"),
+//                        cfg.getString("portal.dbSslTrustStorePwd"));
+//            }
+//
+//        TransactionWrapper.reset(TestUtil.UNIT_TEST);
+//            TransactionWrapper.init(maxConnections, dbUrl, cfg, skipSsl);
+//            if (!Utility.dbCheck()) {
+//                throw new RuntimeException("DB connection error.");
+//            } else {
+//                logger.info("DB setup complete.");
+//            }
         }
 //
 //        TransactionWrapper.configureSslProperties(cfg.getString("portal.dbSslKeyStore"),
@@ -255,7 +264,8 @@ public class TestHelper {
     }
 
     public static void startDSMServer() {
-        TransactionWrapper.reset();
+        //TODO DSM add back in
+//        TransactionWrapper.reset(TestUtil.UNIT_TEST);
         server = new DSMServer();
         if (!cfg.getString("portal.environment").startsWith("Local")) {
             throw new RuntimeException("Not local environment");
@@ -274,6 +284,11 @@ public class TestHelper {
     }
 
     public static void setupUtils() throws Exception {
+        //TODO DSM add back in
+//        TransactionWrapper.configureSslProperties(cfg.getString("portal.dbSslKeyStore"),
+//                cfg.getString("portal.dbSslKeyStorePwd"),
+//                cfg.getString("portal.dbSslTrustStore"),
+//                cfg.getString("portal.dbSslTrustStorePwd"));
 
         testUtil = TestUtil.newInstance(cfg);
         ddpRequestUtil = new DDPRequestUtil();
@@ -284,6 +299,20 @@ public class TestHelper {
 
         userUtil = new UserUtil();
         eventUtil = new EventUtil();
+    }
+
+    public static void setupEsClient() {
+        if (esClient == null) {
+            if (cfg == null) {
+                setupDB();
+            }
+            try {
+                esClient = ElasticSearchUtil.getClientForElasticsearchCloud(cfg.getString("elasticSearch.url"), cfg.getString("elasticSearch.username"), cfg.getString("elasticSearch.password"));
+            } catch (MalformedURLException e) {
+                throw new RuntimeException("Could not initialize es client",e);
+            }
+        }
+
     }
 
     //Methods shared by more than 2 classes!!!

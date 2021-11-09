@@ -1,10 +1,5 @@
 package org.broadinstitute.dsm;
 
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 import com.auth0.jwk.JwkProvider;
 import com.auth0.jwk.JwkProviderBuilder;
 import com.auth0.jwt.JWTCreator;
@@ -17,13 +12,12 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
-import org.broadinstitute.lddp.security.Auth0Util;
-import org.broadinstitute.lddp.security.SecurityHelper;
 import org.broadinstitute.dsm.security.RSAKeyProviderFactory;
 import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
 import org.broadinstitute.dsm.util.JWTRouteFilter;
 import org.broadinstitute.dsm.util.TestUtil;
-
+import org.broadinstitute.lddp.security.Auth0Util;
+import org.broadinstitute.lddp.security.SecurityHelper;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -31,6 +25,8 @@ import spark.Request;
 
 import java.io.File;
 import java.util.*;
+
+import static org.mockito.Mockito.*;
 
 public class JWTRouteFilterTest {
 
