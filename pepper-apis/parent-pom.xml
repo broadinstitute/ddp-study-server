@@ -693,41 +693,41 @@
                     </compilerArgs>
                 </configuration>
             </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <version>2.22.1</version>
-                <dependencies>
-                    <dependency>
-                        <groupId>org.apache.maven.surefire</groupId>
-                        <artifactId>surefire-junit47</artifactId>
-                        <version>2.22.1</version>
-                    </dependency>
-                </dependencies>
-                <configuration>
-                    <systemPropertyVariables>
-                        <testFailureIgnore>true</testFailureIgnore>
-                        <!-- set these variables as -D vars in mvn commandline. -->
-                        <!-- please do not set them in the pom because local dev environments -->
-                        <!-- and cloud jenkins/docker CI differ in terms of file system paths -->
-                        <config.file>${config.file}</config.file>
-                        <buildDirectory>${project.build.directory}</buildDirectory>
-                        <runOrder>alphabetical</runOrder>
-                    </systemPropertyVariables>
-                    <includes>
-                        <include>${include.test.pattern}</include>
-                    </includes>
-                    <excludes>
-                        <exclude>${exclude.test.pattern}</exclude>
-                    </excludes>
-                    <environmentVariables>
-                        <PUBSUB_EMULATOR_HOST>localhost:8442</PUBSUB_EMULATOR_HOST>
-                        <JAVA_HOME>${java.home}</JAVA_HOME>
-                        <GAE_INSTANCE>test-GAE-instance</GAE_INSTANCE>
-                        <GAE_SERVICE>test-GAE-service</GAE_SERVICE>
-                    </environmentVariables>
-                </configuration>
-            </plugin>
+<!--            <plugin>-->
+<!--                <groupId>org.apache.maven.plugins</groupId>-->
+<!--                <artifactId>maven-surefire-plugin</artifactId>-->
+<!--                <version>2.22.1</version>-->
+<!--                <dependencies>-->
+<!--                    <dependency>-->
+<!--                        <groupId>org.apache.maven.surefire</groupId>-->
+<!--                        <artifactId>surefire-junit47</artifactId>-->
+<!--                        <version>2.22.1</version>-->
+<!--                    </dependency>-->
+<!--                </dependencies>-->
+<!--                <configuration>-->
+<!--                    <systemPropertyVariables>-->
+<!--                        <testFailureIgnore>true</testFailureIgnore>-->
+<!--                        &lt;!&ndash; set these variables as -D vars in mvn commandline. &ndash;&gt;-->
+<!--                        &lt;!&ndash; please do not set them in the pom because local dev environments &ndash;&gt;-->
+<!--                        &lt;!&ndash; and cloud jenkins/docker CI differ in terms of file system paths &ndash;&gt;-->
+<!--                        <config.file>${config.file}</config.file>-->
+<!--                        <buildDirectory>${project.build.directory}</buildDirectory>-->
+<!--                        <runOrder>alphabetical</runOrder>-->
+<!--                    </systemPropertyVariables>-->
+<!--                    <includes>-->
+<!--                        <include>${include.test.pattern}</include>-->
+<!--                    </includes>-->
+<!--                    <excludes>-->
+<!--                        <exclude>${exclude.test.pattern}</exclude>-->
+<!--                    </excludes>-->
+<!--                    <environmentVariables>-->
+<!--                        <PUBSUB_EMULATOR_HOST>localhost:8442</PUBSUB_EMULATOR_HOST>-->
+<!--                        <JAVA_HOME>${java.home}</JAVA_HOME>-->
+<!--                        <GAE_INSTANCE>test-GAE-instance</GAE_INSTANCE>-->
+<!--                        <GAE_SERVICE>test-GAE-service</GAE_SERVICE>-->
+<!--                    </environmentVariables>-->
+<!--                </configuration>-->
+<!--            </plugin>-->
             <plugin>
                 <!-- used to generate single jar for smoketest  -->
                 <groupId>org.apache.maven.plugins</groupId>
