@@ -34,8 +34,8 @@ public interface StudyGovernanceSql extends SqlObject {
 
     @GetGeneratedKeys
     @SqlUpdate("insert into age_up_candidate (study_id, participant_user_id, operator_user_id) values (:studyId, :userId, :operatorId)")
-    long insertAgeUpCandidate(@Bind("studyId") long studyId, @Bind("userId") long operatorUserId,
-                              @Bind("operatorId") long participantUserId);
+    long insertAgeUpCandidate(@Bind("studyId") long studyId, @Bind("userId") long participantUserId,
+                              @Bind("operatorId") long operatorUserId);
 
     @SqlUpdate("delete from study_governance_policy where study_governance_policy_id = :policyId")
     int deletePolicy(@Bind("policyId") long policyId);
