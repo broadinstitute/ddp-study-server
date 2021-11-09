@@ -214,7 +214,7 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
                 .buildMultiSelect(PicklistRenderMode.LIST, "PL_GROUPS", newTemplate())
                 .addGroup(new PicklistGroupDef("G1", newTemplate(), Arrays.asList(
                         new PicklistOptionDef(null, "G1_OPT1", newTemplate(),
-                                Template.text("option tooltip"), null, false))))
+                                Template.text("option tooltip"), null, false, false))))
                 .addGroup(new PicklistGroupDef("G2", newTemplate(), Arrays.asList(
                         new PicklistOptionDef("G2_OPT1", newTemplate()),
                         new PicklistOptionDef("G2_OPT2", newTemplate()))))
