@@ -1,19 +1,27 @@
 package org.broadinstitute.ddp.util;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.broadinstitute.ddp.db.ActivityDefStore;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
+import org.broadinstitute.ddp.db.dao.AnswerCachedDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
+import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudyCached;
 import org.broadinstitute.ddp.db.dto.ActivityDto;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.db.dto.ActivityVersionDto;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
+import org.broadinstitute.ddp.model.activity.definition.question.PicklistQuestionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
 import org.broadinstitute.ddp.model.activity.instance.ActivityInstance;
 import org.broadinstitute.ddp.model.activity.instance.FormResponse;
+import org.broadinstitute.ddp.model.activity.instance.answer.PicklistAnswer;
+import org.broadinstitute.ddp.model.activity.instance.answer.SelectedPicklistOption;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.jdbi.v3.core.Handle;
 
@@ -37,6 +45,12 @@ public class ActivityInstanceUtil {
                 .orElseThrow(() -> new DDPException("Could not find activity version for instance " + instanceGuid));
         return activityStore.findActivityDef(handle, studyGuid, activityDto, versionDto)
                 .orElseThrow(() -> new DDPException("Could not find activity definition for instance " + instanceGuid));
+    }
+
+    public static FormActivityDef getActivityDef(Handle handle, ActivityDefStore activityStore, Long instanceId) {
+        ActivityInstanceDto activityInstanceDto = handle.attach(JdbiActivityInstance.class).getByActivityInstanceId(instanceId).get();
+        var studyGuid = new JdbiUmbrellaStudyCached(handle).findGuidByStudyId(activityInstanceDto.getStudyId());
+        return ActivityInstanceUtil.getActivityDef(handle, activityStore, activityInstanceDto, studyGuid);
     }
 
     /**
@@ -146,5 +160,20 @@ public class ActivityInstanceUtil {
             canDelete = canDeleteFirstInstance != null ? canDeleteFirstInstance : true;
         }
         return canDelete;
+    }
+
+    public static void populateDefaultValues(Handle handle, long instanceId, long operatorId) {
+        var answerDao = new AnswerCachedDao(handle);
+        FormActivityDef activityDef = getActivityDef(handle, ActivityDefStore.getInstance(), instanceId);
+        List<QuestionDef> questions = QuestionUtil.collectQuestions(activityDef, questionDef ->
+                (questionDef instanceof PicklistQuestionDef) && !((PicklistQuestionDef) questionDef).getDefaultOptions().isEmpty());
+        for (QuestionDef question : questions) {
+            PicklistQuestionDef plQuestion = (PicklistQuestionDef) question;
+            var answer = new PicklistAnswer(null, plQuestion.getStableId(), null,
+                    plQuestion.getDefaultOptions().stream()
+                            .map(plOpt -> new SelectedPicklistOption(plOpt.getStableId()))
+                            .collect(Collectors.toList()));
+            answerDao.createAnswer(operatorId, instanceId, answer, plQuestion);
+        }
     }
 }
