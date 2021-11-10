@@ -1,19 +1,23 @@
 package org.broadinstitute.lddp.handlers.util;
 
 import lombok.Data;
-import org.broadinstitute.lddp.datstat.SurveyConfig;
 
 @Data
 public class SurveyInfo
 {
+    public enum FollowUpType
+    {
+        NONE, REPEATING, NONREPEATING
+    }
+
     public SurveyInfo() {
     }
 
-    public SurveyInfo(String name, SurveyConfig.FollowUpType type) {
+    public SurveyInfo(String name, FollowUpType type) {
         this.name = name;
         this.type = type;
     }
 
     private String name;
-    private SurveyConfig.FollowUpType type;
+    private FollowUpType type;
 }

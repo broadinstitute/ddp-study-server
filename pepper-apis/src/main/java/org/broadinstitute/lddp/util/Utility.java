@@ -1,27 +1,17 @@
 package org.broadinstitute.lddp.util;
 
 import com.google.api.client.http.HttpTransport;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
-import com.typesafe.config.Config;
-import com.typesafe.config.ConfigFactory;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
-import org.apache.http.client.fluent.Form;
 import org.apache.http.util.EntityUtils;
 import org.broadinstitute.lddp.db.SimpleResult;
 import org.broadinstitute.lddp.exception.DMLException;
-import org.broadinstitute.lddp.exception.DatStatKitRequestIdException;
-import org.broadinstitute.lddp.exception.RecaptchaException;
-import org.broadinstitute.lddp.security.Auth0Util;
 import org.broadinstitute.lddp.security.SecurityHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Statement;
@@ -187,140 +177,6 @@ public class Utility
         else return "";
     }
 
-    public static void verifyRecaptcha(@NonNull String recaptcha, @NonNull String secret, @NonNull String googleURL, String bypass, @NonNull String propertySource)
-    {
-        if (!BypassRecaptchaVerify(bypass, propertySource))
-        {
-            List<NameValuePair> postData = Form.form().add("secret", secret).add("response", recaptcha).build();
-
-            String response = Utility.postToServer(googleURL, postData);
-
-            JsonObject json = new JsonParser().parse(response).getAsJsonObject();
-
-            JsonElement successElement = json.get("success");
-
-            boolean success = false;
-
-            if (!successElement.isJsonNull())
-            {
-                success = successElement.getAsBoolean();
-            }
-
-            if (!success) throw new RecaptchaException("ReCAPTCHA validation failure.");
-        }
-        else
-        {
-            logger.warn("Bypassing reCAPTCHA validation.");
-        }
-    }
-
-    public static Config getApplicationConfig(@NonNull String[] args)
-    {
-        if (args.length == 0)
-        {
-            throw new RuntimeException(FILE_ARG_MISSING_MESSAGE);
-        }
-
-        File configFile = new File(args[0]);
-
-        if (!configFile.exists()) throw new RuntimeException(FILE_MISSING_MESSAGE);
-
-        Config originalConfig;
-        Config mergedConfig;
-
-        try
-        {
-            Config tempConfig = ConfigFactory.parseFile(configFile); //use a file here so file can be outside jar
-            originalConfig = tempConfig.resolve(); //otherwise substitutions won't be made for environment variables
-        }
-        catch (Exception ex)
-        {
-            throw new RuntimeException(FILE_LOAD_ERROR_MESSAGE + ex);
-        }
-
-        Properties argProps = new Properties();
-
-        //loop through the rest of the command line args
-        for (int i = 1; i < args.length; i++)
-        {
-            if (args[i].contains("=="))
-            {
-                String[] parts = args[i].split("==");
-                argProps.setProperty(parts[0].toString(), (parts.length == 2) ? parts[1].toString() : "");
-            }
-            else
-            {
-                throw new IllegalArgumentException("Argument " + args[i] + " does not contain ==.");
-            }
-        }
-
-        //create a merged config from the old plus command line args
-        if (argProps.size() > 0)
-        {
-            mergedConfig = ConfigFactory.parseProperties(argProps).withFallback(originalConfig);
-        }
-        else
-        {
-            mergedConfig = originalConfig;
-        }
-
-
-        String[] vaultFields = VAULT_FIELDS;
-
-        if (mergedConfig.hasPath("portal.splashPageUI")) {
-            if (mergedConfig.getBoolean("portal.splashPageUI")) {
-                vaultFields = SPLASH_VAULT_FIELDS;
-            }
-        }
-        else if (mergedConfig.hasPath("portal.simpleService")) {
-            if (mergedConfig.getBoolean("portal.simpleService")) {
-                vaultFields = SIMPLESERVICE_VAULT_FIELDS;
-            }
-        }
-        else if (mergedConfig.hasPath("portal.ddpLite")) {
-            if (mergedConfig.getBoolean("portal.ddpLite")) {
-                vaultFields = DDP_LITE_FIELDS;
-            }
-        }
-
-        //now check that we didn't miss any of the required secrets
-        for (String propertyName : vaultFields)
-        {
-            if (StringUtils.isBlank(mergedConfig.getString(propertyName)))
-            {
-                throw new RuntimeException(CONFIG_INCOMPLETE_ERROR_MESSAGE + propertyName);
-            }
-        }
-
-        //now check that we didn't miss any Auth0 secrets
-        if (Auth0Util.useAuth0(mergedConfig)) {
-            for (String propertyName : AUTH0_FIELDS) {
-                if (propertyName.equals("auth0.connections")) {
-                    if (mergedConfig.getList(propertyName).size() == 0) {
-                        throw new RuntimeException(CONFIG_AUTH_INCOMPLETE_ERROR_MESSAGE + propertyName);
-                    }
-                }
-                else if (propertyName.equals("auth0.isSecretBase64Encoded")) {
-                    if (!mergedConfig.hasPath("auth0.isSecretBase64Encoded")) {
-                        throw new RuntimeException(CONFIG_AUTH_INCOMPLETE_ERROR_MESSAGE + propertyName);
-                    }
-                }
-                else if (StringUtils.isBlank(mergedConfig.getString(propertyName))) {
-                    throw new RuntimeException(CONFIG_AUTH_INCOMPLETE_ERROR_MESSAGE + propertyName);
-                }
-            }
-        }
-
-        //let's make sure we grabbed the right vault settings for this environment
-        if (!mergedConfig.getString("portal.environment").equals(mergedConfig.getString("portal.environmentFromVault")))
-        {
-            throw new RuntimeException(LOAD_MISMATCH_ERROR_MESSAGE);
-        }
-
-
-        return mergedConfig;
-    }
-
     /**
      * Handy method for just getting a count of records in a DDP table.
      * @param sql
@@ -407,132 +263,9 @@ public class Utility
         return ok;
     }
 
-    /**
-     * Inserts a row into the table that generates integer ids for participants and returns the id.
-     * @return id for participant
-     */
-    public static int getNextShortParticipantId()
-    {
-        try
-        {
-            logger.info(LOG_PREFIX + "Adding short participant id...");
-            return generateNextId(SQL_INSERT_SHORT_ID);
-        }
-        catch (Exception ex)
-        {
-            throw new DatStatKitRequestIdException("An error occurred trying to get the next short participant id.", ex);
-        }
-    }
-
-    /**
-     * Inserts a row into the table that generates integer ids for kit request UUIDs.
-     * @return kit request Id
-     */
-    public static int getNextKitRequestId()
-    {
-        try
-        {
-            logger.info(LOG_PREFIX + "Adding kit request id...");
-            return generateAndStoreIdForUuid(SQL_INSERT_KIT_REQUEST_ID, java.util.UUID.randomUUID().toString());
-        }
-        catch (Exception ex)
-        {
-            throw new DatStatKitRequestIdException("An error occurred trying to get the next kit request id.", ex);
-        }
-    }
-
-    /**
-     * Gets the kit request UUID using the request Id.
-     * @return kit request UUID
-     */
-    public static String getKitRequestUuid(@NonNull int requestId)
-    {
-        try
-        {
-            logger.info(LOG_PREFIX + "Checking for uuid for kit request id...");
-            return getUuidForStoredId(SQL_KIT_REQUEST_UUID_BY_REQID, requestId);
-        }
-        catch (Exception ex)
-        {
-            throw new DatStatKitRequestIdException("An error occurred trying find the kit UUID for kit " + requestId + ".", ex);
-        }
-    }
-
     public static long getCurrentEpoch()
     {
         return System.currentTimeMillis()/1000;
-    }
-
-    /**
-     * Inserts row with uuid into DDP table and returns the value of the auto incremented column for the row.
-     * Assumes table only has two columns: one auto increment and one for a UUID.
-     * @param sql should look something like: INSERT INTO KIT_REQUEST (KITREQ_UUID) VALUES (?)
-     * @param uuid UUID to map to an id
-     * @return id
-     */
-    private static int generateAndStoreIdForUuid(@NonNull String sql, @NonNull String uuid)
-    {
-        SimpleResult results = inTransaction((conn) -> {
-            SimpleResult dbVals = new SimpleResult(0);
-            try (PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS))
-            {
-                stmt.setString(1, uuid);
-                stmt.executeUpdate();
-
-                try (ResultSet rs = stmt.getGeneratedKeys())
-                {
-                    if (rs.next())
-                    {
-                        dbVals.resultValue = rs.getInt(1);
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                dbVals.resultException = ex;
-            }
-            return dbVals;
-        });
-
-        if ((results.resultException != null)||((Integer)results.resultValue < 1))
-        {
-            throw new DMLException("An error occurred while trying to add uuid and retrieve id.", results.resultException);
-        }
-
-        return (Integer)results.resultValue;
-    }
-
-    /**
-     * Gets all records in KIT_REQUEST table
-     * @return map of uuid and request ID
-     * @
-     */
-    public static Map<Integer,String> getAllKitRequests()  {
-        try
-        {
-            logger.info(LOG_PREFIX + "Getting all records from KIT_REQUEST");
-            return  (Map<Integer,String>)getAllKitRequestRecords(SQL_ALL_KIT_REQUEST,0);
-        }
-        catch (Exception ex)
-        {
-            throw new DatStatKitRequestIdException("An error occurred trying fetch all records ", ex);
-        }
-    }
-
-    /**
-     * Gets all records in KIT_REQUEST table where reqId GT maxReqId
-     * @return map of uuid and request ID
-     */
-    public static Map<Integer,String> getAllKitRequestsGTID(int maxReqId)  {
-        try
-        {
-            logger.info(LOG_PREFIX + "Getting all records from KIT_REQUEST where req id is GT " + maxReqId);
-            return  (Map<Integer,String>)getAllKitRequestRecords(SQL_ALL_KIT_REQUEST_GT_REQID, maxReqId);
-        }
-        catch (Exception ex)
-        {
-            throw new DatStatKitRequestIdException("An error occurred trying fetch records ", ex);
-        }
     }
 
     public static void removedUnprocessedFromQueue(@NonNull String identifier, @NonNull String deleteSql, @NonNull String errorMsg) {
@@ -709,32 +442,6 @@ public class Utility
         }
 
         return Integer.parseInt((String)results.resultValue);
-    }
-
-    /**
-     * Gets the kit request UUID using the request Id.
-     * @return kit request UUID
-     */
-    public static int getKitRequestByUuid(@NonNull String UUID)  {
-        try
-        {
-            logger.info(LOG_PREFIX + "Checking for reqId by UUID...");
-            return getIdForStoredUuid(SQL_KIT_REQUEST_REQID_BY_UUID, UUID);
-        }
-        catch (Exception ex)
-        {
-            throw new DatStatKitRequestIdException("An error occurred trying find the kit req for uuid " + UUID + ".", ex);
-        }
-    }
-
-    private static boolean BypassRecaptchaVerify(String bypass, @NonNull String propertySource)
-    {
-        //we will only consider doing this bypass for unit testing
-        if (!propertySource.equals(Deployment.UNIT_TEST.toString())){
-            return false;
-        }
-
-        return ((bypass != null)&&(bypass.equals("1")));
     }
 
     /**

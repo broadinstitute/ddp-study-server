@@ -9,16 +9,16 @@ import com.auth0.jwt.interfaces.DecodedJWT;
 import com.google.gson.Gson;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.lddp.datstat.DatStatUtil;
-import org.broadinstitute.lddp.email.Recipient;
 import org.broadinstitute.lddp.exception.InvalidTokenException;
-import org.broadinstitute.lddp.exception.TokenGenerationException;
 import org.broadinstitute.lddp.util.Utility;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.servlet.http.Cookie;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import java.util.Map;
 
 public class SecurityHelper {
     private static final Logger logger = LoggerFactory.getLogger(SecurityHelper.class);
@@ -60,7 +60,7 @@ public class SecurityHelper {
     public static String createTokenWithRoles(@NonNull String secret, long invalidAfter, @NonNull String username, @NonNull Collection<String> roles) {
         try {
             Date dateSoon = new Date(invalidAfter * 1000);
-            JWTCreator.Builder builder = com.auth0.jwt.JWT.create();
+            JWTCreator.Builder builder = JWT.create();
             builder.withExpiresAt(dateSoon);
             builder.withClaim(CLAIM_ROLES, new Gson().toJson(roles, ArrayList.class));
             builder.withClaim(CLAIM_USER, username);
@@ -89,7 +89,7 @@ public class SecurityHelper {
                                            String email, boolean recaptchaOk, boolean accountOk) {
         try {
             Date dateSoon = new Date(invalidAfter * 1000);
-            JWTCreator.Builder builder = com.auth0.jwt.JWT.create();
+            JWTCreator.Builder builder = JWT.create();
             builder.withExpiresAt(dateSoon);
             builder.withClaim(CLAIM_FIRSTNAME, firstName);
             builder.withClaim(CLAIM_LASTNAME, lastName);
@@ -112,36 +112,12 @@ public class SecurityHelper {
         }
     }
 
-    public static String createAccessTokenAndCookieFromAuth0Tokens(@NonNull spark.Response response, @NonNull String secret, @NonNull String salt, @NonNull String cookieName,
-                                                                   @NonNull DatStatUtil datstatUtil, @NonNull Auth0Util auth0Util, @NonNull String idToken,
-                                                                   boolean skipEmailVerification) throws Exception {
-
-        Auth0Util.Auth0UserInfo userInfo = auth0Util.getAuth0UserInfo(idToken);
-
-        if (userInfo != null) {
-            //check to see if we need a verified email before we generate our ddp token
-            if ((!skipEmailVerification) && (auth0Util.isEmailVerificationRequired()) && (!userInfo.getEmailVerified())) {
-                throw new TokenGenerationException("Email is unverified for Auth0 user: " + userInfo.getEmail());
-            }
-
-            Recipient participant = datstatUtil.getSimpleParticipantInfoByEmail(userInfo.getEmail());
-            String participantId = participant.getId();
-            long auth0Expiration = userInfo.getTokenExpiration();
-
-            return createAccessTokenAndCookie(response, secret, salt, cookieName, auth0Expiration, null, null, participantId, userInfo.getEmail(),
-                    false, (!auth0Util.isEmailVerificationRequired()) || (userInfo.getEmailVerified()));
-        }
-        else {
-            throw new TokenGenerationException("Unable to determine auth0 identity.");
-        }
-    }
-
     public static String createAccessTokenAndCookie(@NonNull spark.Response response, @NonNull String secret, @NonNull String salt, @NonNull String cookieName,
                                                     long invalidAfter, String firstName, String lastName, String participantId, String email,
                                                     boolean recaptchaOk, boolean accountOk) throws Exception {
         String jwtToken = SecurityHelper.createAccessToken(secret, invalidAfter, firstName, lastName, participantId, email, recaptchaOk, accountOk);
 
-        CookieUtil cookieUtil = new CookieUtil();
+        org.broadinstitute.lddp.security.CookieUtil cookieUtil = new CookieUtil();
         long durationInSeconds = invalidAfter - Utility.getCurrentEpoch();
         Cookie secureCookie = cookieUtil.createSecureCookieForToken(cookieName, new Long(durationInSeconds).intValue(), jwtToken, salt.getBytes());
         secureCookie.setPath("/");
@@ -159,7 +135,7 @@ public class SecurityHelper {
      */
     public static String createMonitoringToken(@NonNull String secret, String monitoringSystem) {
         try {
-            JWTCreator.Builder builder = com.auth0.jwt.JWT.create();
+            JWTCreator.Builder builder = JWT.create();
             builder.withClaim(CLAIM_MONITORINGSYSTEM, monitoringSystem);
 //            builder.withClaim(CLAIM_EXPIRATION, 0);
             builder.withClaim(CLAIM_ISSUER, SIGNER);
@@ -182,7 +158,7 @@ public class SecurityHelper {
         try {
             Date dateSoon = new Date(invalidAfter * 1000);
 
-            JWTCreator.Builder builder = com.auth0.jwt.JWT.create();
+            JWTCreator.Builder builder = JWT.create();
             builder.withIssuer(SIGNER);
             builder.withExpiresAt(dateSoon);
             if (claims != null) {

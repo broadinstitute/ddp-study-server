@@ -3,8 +3,8 @@ package org.broadinstitute.lddp.email;
 import lombok.Data;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.lddp.util.CheckValidity;
 import org.broadinstitute.lddp.user.BasicUser;
+import org.broadinstitute.lddp.util.CheckValidity;
 
 import java.util.HashMap;
 import java.util.Map;

@@ -1,6 +1,5 @@
 package org.broadinstitute.dsm.util;
 
-
 import org.broadinstitute.dsm.security.RequestHandler;
 import org.mockserver.integration.ClientAndServer;
 import org.slf4j.Logger;

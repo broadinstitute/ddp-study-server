@@ -2,8 +2,6 @@ package org.broadinstitute.lddp.handlers.util;
 
 import com.google.gson.JsonElement;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.lddp.datstat.InstitutionInfo;
-import org.broadinstitute.lddp.datstat.PhysicianInfo;
 
 import java.util.ArrayList;
 
@@ -74,7 +72,7 @@ public class InstitutionDetail extends Institution {
             for (PhysicianInfo physician : physicians) {
                 if (!StringUtils.isBlank(physician.getPhysicianId())) {
                     combinedInstitutions.add(new InstitutionDetail(physician.getPhysicianId(), physician.getName(), physician.getInstitution(), physician.getCity(), physician.getState(),
-                            Institution.InstitutionType.PHYSICIAN.toString()));
+                            InstitutionType.PHYSICIAN.toString()));
                 }
             }
         }
@@ -84,14 +82,14 @@ public class InstitutionDetail extends Institution {
             for (InstitutionInfo institution : institutions) {
                 if (!StringUtils.isBlank(institution.getInstitutionId())) {
                     combinedInstitutions.add(new InstitutionDetail(institution.getInstitutionId(), null, institution.getInstitution(), institution.getCity(), institution.getState(),
-                            Institution.InstitutionType.INSTITUTION.toString()));
+                            InstitutionType.INSTITUTION.toString()));
                 }
             }
         }
 
         //initial biopsy institution
         if (!(StringUtils.isBlank(initialBiopsyInstitution)&&StringUtils.isBlank(initialBiopsyCity)&&StringUtils.isBlank(initialBiopsyState))) {
-            combinedInstitutions.add(new InstitutionDetail(Institution.INITIAL_BIOPSY_ID, null, initialBiopsyInstitution, initialBiopsyCity, initialBiopsyState, Institution.InstitutionType.INITIAL_BIOPSY.toString()));
+            combinedInstitutions.add(new InstitutionDetail(Institution.INITIAL_BIOPSY_ID, null, initialBiopsyInstitution, initialBiopsyCity, initialBiopsyState, InstitutionType.INITIAL_BIOPSY.toString()));
         }
 
         return combinedInstitutions;

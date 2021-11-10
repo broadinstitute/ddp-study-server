@@ -175,7 +175,7 @@ public class NotificationUtil {
             JsonObject emailClientSettings = new JsonObject();
             emailClientSettings.addProperty("sendGridFrom", from);
             emailClientSettings.addProperty("sendGridFromName", name);
-            abstractionEmailClient.configure(emailKey, new Gson().fromJson(emailClientSettings.toString(), JsonObject.class), "", null, "");
+            abstractionEmailClient.configure(emailKey, new Gson().fromJson(emailClientSettings.toString(), JsonObject.class), "", "");
             abstractionEmailClient.sendSingleEmail(sendGridTemplate, emailRecipient, null);
         }
         catch (Exception ex) {
@@ -193,7 +193,7 @@ public class NotificationUtil {
 
         try {
             EmailClient emailClient = (EmailClient) Class.forName(emailClassName).newInstance();
-            emailClient.configure(emailKey, emailClientSettings, "", null, "");
+            emailClient.configure(emailKey, emailClientSettings, "", "");
 
             Map<String, ArrayList<EmailRecord>> records = EmailRecord.getRecordsForProcessing();
 
