@@ -44,7 +44,7 @@ public class GovernancePolicyTest {
     @Test
     public void testGetApplicableAgeOfMajorityRule_noRules() {
         var policy = new GovernancePolicy(1, new Expression("true"));
-        var actual = policy.getApplicableAgeOfMajorityRule(handle, interpreter, "guid");
+        var actual = policy.getApplicableAgeOfMajorityRule(handle, interpreter, "guid", "guid");
         assertTrue(actual.isEmpty());
     }
 
@@ -55,7 +55,7 @@ public class GovernancePolicyTest {
                 new AgeOfMajorityRule("false", 21, 4),
                 new AgeOfMajorityRule("false", 18, 6));
 
-        var actual = policy.getApplicableAgeOfMajorityRule(handle, interpreter, "guid");
+        var actual = policy.getApplicableAgeOfMajorityRule(handle, interpreter, "guid", "guid");
         assertTrue(actual.isEmpty());
     }
 
@@ -67,7 +67,7 @@ public class GovernancePolicyTest {
                 new AgeOfMajorityRule("true", 19, 5),
                 new AgeOfMajorityRule("true", 18, 6));
 
-        var actual = policy.getApplicableAgeOfMajorityRule(handle, interpreter, "guid");
+        var actual = policy.getApplicableAgeOfMajorityRule(handle, interpreter, "guid", "guid");
         assertTrue(actual.isPresent());
         assertEquals(19, actual.get().getAge());
     }
@@ -82,7 +82,7 @@ public class GovernancePolicyTest {
                 new AgeOfMajorityRule("not supported", 19, 5),
                 new AgeOfMajorityRule("true", 18, 6));
 
-        policy.getApplicableAgeOfMajorityRule(handle, interpreter, "guid");
+        policy.getApplicableAgeOfMajorityRule(handle, interpreter, "guid", "guid");
     }
 
     @Test
@@ -92,14 +92,14 @@ public class GovernancePolicyTest {
         var birthDate = LocalDate.of(1982, 12, 13);
 
         var today = LocalDate.of(2019, 12, 13);
-        var actual = policy.hasReachedAgeOfMajority(handle, interpreter, "guid", birthDate, today);
+        var actual = policy.hasReachedAgeOfMajority(handle, interpreter, "guid", "guid", birthDate, today);
         assertTrue(actual);
     }
 
     @Test
     public void testHasReachedAgeOfMajority_defaultsToFalse() {
         var policy = new GovernancePolicy(1, new Expression("true"));
-        var actual = policy.hasReachedAgeOfMajority(handle, interpreter, "guid", LocalDate.now(), LocalDate.now());
+        var actual = policy.hasReachedAgeOfMajority(handle, interpreter, "guid", "guid", LocalDate.now(), LocalDate.now());
         assertFalse(actual);
     }
 
@@ -109,6 +109,6 @@ public class GovernancePolicyTest {
 
         var policy = new GovernancePolicy(1, new Expression("true"));
         policy.addAgeOfMajorityRule(new AgeOfMajorityRule("not supported", 18, 6));
-        policy.hasReachedAgeOfMajority(handle, interpreter, "guid", LocalDate.now(), LocalDate.now());
+        policy.hasReachedAgeOfMajority(handle, interpreter, "guid", "guid", LocalDate.now(), LocalDate.now());
     }
 }

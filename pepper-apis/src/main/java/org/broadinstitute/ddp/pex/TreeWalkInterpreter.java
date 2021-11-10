@@ -276,7 +276,8 @@ public class TreeWalkInterpreter implements PexInterpreter {
                 return false;
             }
 
-            return policy.hasReachedAgeOfMajority(ictx.getHandle(), new TreeWalkInterpreter(), userGuid, profile.getBirthDate());
+            return policy.hasReachedAgeOfMajority(ictx.getHandle(), new TreeWalkInterpreter(), userGuid, ictx.getOperatorGuid(),
+                    profile.getBirthDate());
         } else if (predCtx instanceof PexParser.HasInvitationPredicateContext) {
             String str = extractString(((PexParser.HasInvitationPredicateContext) predCtx).STR());
             InvitationType inviteType;
