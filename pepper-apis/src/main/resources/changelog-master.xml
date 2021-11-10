@@ -281,5 +281,5 @@
     <include file="db-changes/schema/DDP-6983-activity-instance-creation-mutex-table.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/DDP-7004-auth0-logging-error-fix.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/DDP-7074-default-picklist-option.xml" relativeToChangelogFile="true"/>
-	  <include file="db-changes/schema/activity-instance-select-question-type.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/activity-instance-select-question-type.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>
