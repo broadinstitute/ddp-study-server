@@ -48,6 +48,8 @@ select auc.age_up_candidate_id,
        study.guid              as study_guid,
        participant.user_id as participant_user_id,
        participant.guid    as participant_user_guid,
+       operator.user_id as operator_user_id,
+       operator.guid    as operator_user_guid,
        profile.birth_date,
        auc.initiated_preparation,
        (select et.enrollment_status_type_code
@@ -62,6 +64,7 @@ select auc.age_up_candidate_id,
   from age_up_candidate as auc
   join umbrella_study as study on study.umbrella_study_id = auc.study_id
   join user as participant on participant.user_id = auc.participant_user_id
+  join user as operator on operator.user_id = auc.operator_user_id
   left join user_profile as profile on profile.user_id = participant.user_id
 >>
 

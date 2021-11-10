@@ -16,8 +16,8 @@ import java.io.StringWriter;
 import java.lang.reflect.Type;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -154,6 +154,7 @@ public class DataExporterTest extends TxnAwareBaseTest {
         mockGovernancePolicy = mock(GovernancePolicy.class);
         Mockito.when(mockGovernancePolicy.getApplicableAgeOfMajorityRule(Mockito.any(Handle.class),
                 Mockito.any(PexInterpreter.class),
+                Mockito.anyString(),
                 Mockito.anyString())).thenReturn(Optional.of(ageOfMajorityRule));
 
         Mockito.when(ageOfMajorityRule.getDateOfMajority(Mockito.any(LocalDate.class))).thenReturn(testDateOfMajority);
@@ -335,7 +336,8 @@ public class DataExporterTest extends TxnAwareBaseTest {
                 mockMedicalRecordService,
                 mockGovernancePolicy,
                 testData.getStudyId(),
-                Collections.singletonList(participant)));
+                Collections.singletonList(participant),
+                Collections.singletonMap(testData.getUserGuid(), Collections.singletonList(testData.getUserGuid()))));
 
         assertEquals(testBirthdate.asLocalDate().orElse(null), participant.getBirthDate());
         assertEquals(testDateOfMajority, participant.getDateOfMajority());
