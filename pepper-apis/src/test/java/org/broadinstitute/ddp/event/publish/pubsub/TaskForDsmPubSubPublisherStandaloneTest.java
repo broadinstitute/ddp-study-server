@@ -1,8 +1,8 @@
 package org.broadinstitute.ddp.event.publish.pubsub;
 
-import static org.broadinstitute.ddp.event.publish.pubsub.TaskPubSubPublisher.ATTR_PARTICIPANT_GUID;
-import static org.broadinstitute.ddp.event.publish.pubsub.TaskPubSubPublisher.ATTR_STUDY_GUID;
-import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTask.ATTR_TASK_TYPE;
+import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTask.ATTR_NAME__PARTICIPANT_GUID;
+import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTask.ATTR_NAME__STUDY_GUID;
+import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTask.ATTR_NAME__TASK_TYPE;
 import static org.broadinstitute.ddp.model.activity.types.EventActionType.UPDATE_CUSTOM_WORKFLOW;
 import static org.broadinstitute.ddp.model.event.UpdateCustomWorkflowEventAction.generatePayload;
 import static org.junit.Assert.assertEquals;
@@ -119,9 +119,9 @@ public class TaskForDsmPubSubPublisherStandaloneTest extends ConfigAwareBaseTest
     }
 
     private static void parseMessage(PubsubMessage message) {
-        expectedTaskType = message.getAttributesOrDefault(ATTR_TASK_TYPE, null);
-        expectedStudyGuid = message.getAttributesOrDefault(ATTR_STUDY_GUID, null);
-        expectedParticipantGuid = message.getAttributesOrDefault(ATTR_PARTICIPANT_GUID, null);
+        expectedTaskType = message.getAttributesOrDefault(ATTR_NAME__TASK_TYPE, null);
+        expectedStudyGuid = message.getAttributesOrDefault(ATTR_NAME__STUDY_GUID, null);
+        expectedParticipantGuid = message.getAttributesOrDefault(ATTR_NAME__PARTICIPANT_GUID, null);
         expectedPayloadJson = message.getData() != null ? message.getData().toStringUtf8() : null;
     }
 

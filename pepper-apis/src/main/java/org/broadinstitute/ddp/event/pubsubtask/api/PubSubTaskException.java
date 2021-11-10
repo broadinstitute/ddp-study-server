@@ -39,6 +39,7 @@ public class PubSubTaskException extends DDPException {
         this.shouldRetry = shouldRetry;
     }
 
+
     public boolean isShouldRetry() {
         return shouldRetry;
     }

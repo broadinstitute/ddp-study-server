@@ -117,4 +117,11 @@ public class MiscUtil {
     public static boolean isTrue(Boolean bool) {
         return bool != null && bool;
     }
+
+    /**
+     * Convert a null object to a string: if object is null then return ""
+     */
+    public static String objToStr(Object obj) {
+        return obj == null ? "" : obj.toString();
+    }
 }
