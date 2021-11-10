@@ -19,4 +19,6 @@ public interface JdbiUserStudyLegacyData extends SqlObject {
             @Bind("fieldValue") String fieldValue
     );
 
+    @SqlUpdate("delete from user_study_legacy_data where user_id = :userId")
+    int deleteByUserId(@Bind("userId") long userId);
 }

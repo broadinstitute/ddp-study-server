@@ -16,7 +16,7 @@ public class GsonCreateUtil {
         return  GsonUtil.standardGson().toJson(excludeNullValues(map));
     }
 
-    private static Map<String, Object> excludeNullValues(Map<String, Object> map) {
+    public static Map<String, Object> excludeNullValues(Map<String, Object> map) {
         return map.entrySet().stream().filter(x -> x.getValue() != null)
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
