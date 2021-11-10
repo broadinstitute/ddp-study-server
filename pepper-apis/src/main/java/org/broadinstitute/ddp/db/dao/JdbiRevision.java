@@ -9,6 +9,7 @@ import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
 import org.jdbi.v3.sqlobject.statement.SqlBatch;
+import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import org.jdbi.v3.stringtemplate4.StringTemplateSqlLocator;
 import org.jdbi.v3.stringtemplate4.UseStringTemplateSqlLocator;
@@ -36,6 +37,9 @@ public interface JdbiRevision extends SqlObject {
     default long insertStart(long startEpochMillis, long userId, String reason) {
         return insert(userId, startEpochMillis, null, reason);
     }
+
+    @SqlQuery("select revision_id from revision where changed_by_user_id = :userId or terminated_by_user_id = :userId")
+    long[] findByUserId(@Bind("userId") long userId);
 
     /**
      * Create a copy of the revision with only the start date and no end date.

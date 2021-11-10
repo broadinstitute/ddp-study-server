@@ -2,7 +2,9 @@ package org.broadinstitute.ddp.event.publish.pubsub;
 
 import static java.lang.String.format;
 import static org.broadinstitute.ddp.event.publish.pubsub.PubSubUtil.publishMessage;
-import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTask.ATTR_TASK_TYPE;
+import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTask.ATTR_NAME__PARTICIPANT_GUID;
+import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTask.ATTR_NAME__STUDY_GUID;
+import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTask.ATTR_NAME__TASK_TYPE;
 
 import java.util.Map;
 
@@ -27,8 +29,6 @@ public class TaskPubSubPublisher implements TaskPublisher {
     private static final Logger LOG = LoggerFactory.getLogger(TaskPubSubPublisher.class);
 
     public static final String TASK_PARTICIPANT_REGISTERED = "PARTICIPANT_REGISTERED";
-    public static final String ATTR_STUDY_GUID = "studyGuid";
-    public static final String ATTR_PARTICIPANT_GUID = "participantGuid";
 
     @Override
     public void publishTask(String taskType, String payload, String studyGuid, String participantGuid) {
@@ -45,9 +45,9 @@ public class TaskPubSubPublisher implements TaskPublisher {
         var messageBuilder = PubsubMessage.newBuilder();
         messageBuilder.setData(ByteString.copyFromUtf8(eventPayload));
         messageBuilder.putAllAttributes(Map.of(
-                ATTR_TASK_TYPE, taskType,
-                ATTR_STUDY_GUID, studyGuid,
-                ATTR_PARTICIPANT_GUID, participantGuid
+                ATTR_NAME__TASK_TYPE, taskType,
+                ATTR_NAME__STUDY_GUID, studyGuid,
+                ATTR_NAME__PARTICIPANT_GUID, participantGuid
         ));
         return messageBuilder.build();
     }
