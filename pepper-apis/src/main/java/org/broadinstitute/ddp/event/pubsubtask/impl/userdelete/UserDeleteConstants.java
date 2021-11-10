@@ -3,7 +3,7 @@ package org.broadinstitute.ddp.event.pubsubtask.impl.userdelete;
 import org.broadinstitute.ddp.event.pubsubtask.api.PubSubTask;
 
 /**
- * Constants specific for taskType='UPDATE_PROFILE'
+ * Constants specific for taskType='USER_DELETE'
  */
 public class UserDeleteConstants {
 

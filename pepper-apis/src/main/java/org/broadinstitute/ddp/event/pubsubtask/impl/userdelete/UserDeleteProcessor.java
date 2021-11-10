@@ -24,8 +24,9 @@ import org.jdbi.v3.core.Handle;
 /**
  * Processes PubSubTask of taskType='USER_DELETE'.
  * It deletes a specified user (GUID should be specified in {@link PubSubTask} attribute "participantGuid").<br>
- * The task
- *
+ * Other parameters to be specified:<br>
+ * - attribute "operatorGuid" (optional);<br>
+ * - payload property "comment" (optional).
  */
 public class UserDeleteProcessor extends PubSubTaskProcessorAbstract {
 
