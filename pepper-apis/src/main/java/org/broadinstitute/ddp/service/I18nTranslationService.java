@@ -15,6 +15,13 @@ import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * Provides reading of translations (stored in table `i18n_translation`).
+ * It checks if translations (for certain study/language pair) is stored in translations cache in
+ * {@link I18nTranslationStore}.
+ * If it’s there then translations are taken from the cache. Otherwise it’s queried from the DB and saved in the
+ * {@link I18nTranslationStore}.
+ */
 public class I18nTranslationService {
 
     private static final Logger LOG = LoggerFactory.getLogger(I18nTranslationService.class);

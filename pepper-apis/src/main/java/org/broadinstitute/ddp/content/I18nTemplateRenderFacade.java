@@ -14,8 +14,12 @@ import org.broadinstitute.ddp.service.I18nTranslationService;
 
 /**
  * Facade class providing {@link Template}'s rendering.
- * It tries to render templates with new approach (taking translations from `i18n_translation' JSON)
- * and if it is not found there then render with using a default approach.
+ * It tries to render a template with new approach (taking translations from table `i18n_translation': it tries
+ * to find translations by template variables specified in {@link Template#getTemplateText()}).
+ * And if it is not found in `i18n_translation' then template is rendered using a default approach:
+ * gets variables from {@link Template#getVariables()} and gets translations from variables:
+ * {@link TemplateVariable#getTranslations()}.
+ *
  */
 public class I18nTemplateRenderFacade {
 
@@ -29,7 +33,7 @@ public class I18nTemplateRenderFacade {
 
 
     /**
-     * Render a specified template: detect list of variables defined in a template, detect values of each variable
+     * Render a specified template: detect a list of variables defined in a template, detect values of each variable
      * and do template rendering (evaluation of a final text where variables replaced to it's values for a current language).
      * Initially called a rendering with new algorithm (trying to find template variable translations from
      * JSON doc stored in DB table `i18n-translation`).
@@ -45,8 +49,7 @@ public class I18nTemplateRenderFacade {
     public String renderTemplate(Template template, String isoLangCode, Map<String, Object> initialContext) {
         String renderedTemplate = renderTemplateFromJson(template, template.getTemplateText(), isoLangCode, initialContext);
         if (renderedTemplate == null) {
-            renderedTemplate = renderTemplateDefault(
-                    template, template.getTemplateText(), template.getVariables(), isoLangCode, initialContext);
+            renderedTemplate = renderTemplateDefault(template.getTemplateText(), template.getVariables(), isoLangCode, initialContext);
         }
         return renderedTemplate;
     }
@@ -72,7 +75,7 @@ public class I18nTemplateRenderFacade {
         String renderedTemplate = renderTemplateFromJson(template, templateText, isoLangCode,
                 getInitialContextNoInstance(useDefaultsForDdpMethods));
         if (renderedTemplate == null) {
-            renderedTemplate = renderTemplateDefault(template, templateText, templateVariables,
+            renderedTemplate = renderTemplateDefault(templateText, templateVariables,
                     isoLangCode, getInitialContextNoInstance(useDefaultsForDdpMethods));
         }
         return renderedTemplate;
@@ -94,12 +97,11 @@ public class I18nTemplateRenderFacade {
     }
 
     private String renderTemplateDefault(
-            Template template,
             String templateText,
             Collection<TemplateVariable> templateVariables,
             String isoLangCode,
             Map<String, Object> initialContext) {
-        return I18nTemplateDefaultRenderer.render(template, templateText, templateVariables, isoLangCode, renderer, initialContext);
+        return I18nTemplateDefaultRenderer.render(templateText, templateVariables, isoLangCode, renderer, initialContext);
     }
 
     /**

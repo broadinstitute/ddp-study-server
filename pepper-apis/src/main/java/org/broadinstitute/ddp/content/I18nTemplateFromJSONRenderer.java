@@ -12,6 +12,11 @@ import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.service.I18nTranslationService;
 import org.slf4j.MDC;
 
+/**
+ * implementation of a {@link Template} renderer which tries to fetch translations from table
+ * `i18n_translation` (from JSON doc) by template variables fetched from {@link Template#getTemplateText()}.
+ * It calls {@link I18nTranslationService#getTranslation(String, String, String)}  to read translations stored in JSON doc.
+ */
 public class I18nTemplateFromJSONRenderer {
 
     static String render(

@@ -12,14 +12,15 @@ import org.broadinstitute.ddp.model.activity.definition.template.TemplateVariabl
 
 /**
  * {@link Template} default renderer.
- * Default renderer detects {@link TemplateVariable}'s from a list of {@link TemplateVariable}'s
- * connected to a {@link Template}. And for each of variable it detects a translation  (for a specified
- * language). Translations are stored in table `i18n_template_substitution`.
+ * Default renderer finds template variables from a list of {@link TemplateVariable}'s
+ * connected to a {@link Template}. And for each of variables it detects translations (for each of a specified
+ * languages). Translations are stored in table `i18n_template_substitution`.<br>
+ * Note: the template default renderer is used in a case when template variables was not found
+ * in an appropriate row of a table 'i18n_translation'.
  */
 public class I18nTemplateDefaultRenderer {
 
     static String render(
-            Template template,
             String templateText,
             Collection<TemplateVariable> templateVariables,
             String languageCode,
