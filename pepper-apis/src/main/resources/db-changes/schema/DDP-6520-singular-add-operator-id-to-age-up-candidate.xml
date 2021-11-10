@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="ypavlov" id="20211006-add-operator_user_id-to-age_up_candidate">
+        <addColumn tableName="age_up_candidate">
+            <column afterColumn="participant_user_id"
+                    name="operator_user_id"
+                    type="bigint">
+            </column>
+        </addColumn>
+        <sql>
+            update
+                age_up_candidate auc
+            left join (
+                user_governance ug
+                join user_study_governance usg on usg.user_governance_id = ug.user_governance_id
+            ) on auc.participant_user_id = ug.participant_user_id and ug.is_active=1 and usg.umbrella_study_id = auc.study_id
+            set auc.operator_user_id = coalesce(ug.operator_user_id, auc.participant_user_id)
+        </sql>
+        <addNotNullConstraint tableName="age_up_candidate" columnName="operator_user_id" columnDataType="bigint"/>
+        <addForeignKeyConstraint baseTableName="age_up_candidate" baseColumnNames="operator_user_id"
+                                 referencedTableName="user" referencedColumnNames="user_id"
+                                 constraintName="age_up_candidate_operator_user_fk"/>
+    </changeSet>
+
+</databaseChangeLog>

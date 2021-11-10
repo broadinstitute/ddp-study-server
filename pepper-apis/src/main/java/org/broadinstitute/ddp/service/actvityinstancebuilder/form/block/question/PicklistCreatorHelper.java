@@ -38,6 +38,7 @@ public class PicklistCreatorHelper {
                         ctx, picklistOptionDef.getDetailLabelTemplate()),
                 picklistOptionDef.isDetailsAllowed(),
                 picklistOptionDef.isExclusive(),
+                picklistOptionDef.isDefault(),
                 isNested ? null : ctx.getAIBuilderFactory().getTemplateRenderHelper().addTemplate(
                         ctx, picklistOptionDef.getNestedOptionsLabelTemplate()),
                 isNested ? null :

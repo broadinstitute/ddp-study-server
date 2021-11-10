@@ -591,7 +591,7 @@ public class DataExporter {
         GovernancePolicy governancePolicy = handle.attach(StudyGovernanceDao.class)
                 .findPolicyByStudyId(studyDto.getId()).orElse(null);
 
-        enrichWithDSMEventDates(handle, medicalRecordService, governancePolicy, studyDto.getId(), participants);
+        enrichWithDSMEventDates(handle, medicalRecordService, governancePolicy, studyDto.getId(), participants, participantProxyGuids);
         enrichWithFileRecords(handle, fileService, studyDto.getId(), participants);
 
         StudyExtract studyExtract = new StudyExtract(activities,
@@ -625,7 +625,8 @@ public class DataExporter {
                                  MedicalRecordService medicalRecordService,
                                  GovernancePolicy governancePolicy,
                                  long studyId,
-                                 List<Participant> dataset) {
+                                 List<Participant> dataset,
+                                 Map<String, List<String>> participantProxyGuids) {
 
         PexInterpreter pexInterpreter = new TreeWalkInterpreter();
 
@@ -642,10 +643,15 @@ public class DataExporter {
                     .orElse(null);
 
             LocalDate dateOfMajority = null;
+            String participantGuid = participant.getUser().getGuid();
+            String operatorGuid = (participantProxyGuids.containsKey(participantGuid))
+                    ? participantProxyGuids.get(participantGuid).stream().findFirst().get()
+                    : participantGuid;
             if (governancePolicy != null) {
                 AgeOfMajorityRule aomRule = governancePolicy.getApplicableAgeOfMajorityRule(handle,
                         pexInterpreter,
-                        participant.getUser().getGuid())
+                        participantGuid,
+                        operatorGuid)
                         .orElse(null);
 
                 if (birthDate != null && aomRule != null) {

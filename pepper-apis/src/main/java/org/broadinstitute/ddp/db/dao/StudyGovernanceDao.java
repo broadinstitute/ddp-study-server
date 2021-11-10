@@ -85,8 +85,8 @@ public interface StudyGovernanceDao extends SqlObject {
     @UseRowReducer(PolicyWithAgeOfMajorityRuleReducer.class)
     Optional<GovernancePolicy> findPolicyByStudyGuid(@Bind("studyGuid") String studyGuid);
 
-    default void addAgeUpCandidate(long studyId, long participantUserId) {
-        getStudyGovernanceSql().insertAgeUpCandidate(studyId, participantUserId);
+    default void addAgeUpCandidate(long studyId, long participantUserId, long operatorUserId) {
+        getStudyGovernanceSql().insertAgeUpCandidate(studyId, participantUserId, operatorUserId);
     }
 
     default int markAgeUpPrepInitiated(Set<Long> candidateIds) {

@@ -9,7 +9,7 @@ import java.util.TreeMap;
 import org.apache.commons.lang.StringEscapeUtils;
 
 /**
- * Converts properties to hierarchy of maps: properties names are splitted into parts which separated by '.'
+ * Converts properties to hierarchy of maps: properties names are split into parts which separated by '.'
  * and loaded to hierarchy of maps.
  *
  * <p>For example a template:
