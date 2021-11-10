@@ -343,12 +343,9 @@ public class ActivityBuilder {
      * </ul>
      */
     private ActivityDef buildActivityDefFromConfig(Config definition) {
-        ActivityDef activityDef;
+        ActivityDef activityDef = gson.fromJson(ConfigUtil.toJson(definition), ActivityDef.class);
         if (StudyBuilderContext.CONTEXT.getTranslationsProcessingType() != null) {
-            activityDef = gson.fromJson(ConfigUtil.toJson(definition), ActivityDef.class);
             activityDefTranslationsProcessor.run((FormActivityDef) activityDef);
-        } else {
-            activityDef = gson.fromJson(ConfigUtil.toJson(definition), ActivityDef.class);
         }
         validateDefinition(activityDef);
         return activityDef;
