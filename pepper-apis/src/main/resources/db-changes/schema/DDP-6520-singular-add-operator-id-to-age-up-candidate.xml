@@ -14,12 +14,11 @@
         <sql>
             update
                 age_up_candidate auc
-                left join user_governance ug
-                    on auc.participant_user_id = ug.participant_user_id and ug.is_active=1
-                left join user_study_governance usg
-                    on usg.user_governance_id = ug.user_governance_id
-            set
-                auc.operator_user_id = coalesce(ug.operator_user_id, auc.participant_user_id)
+            left join (
+                user_governance ug
+                join user_study_governance usg on usg.user_governance_id = ug.user_governance_id
+            ) on auc.participant_user_id = ug.participant_user_id and ug.is_active=1 and usg.umbrella_study_id = auc.study_id
+            set auc.operator_user_id = coalesce(ug.operator_user_id, auc.participant_user_id)
         </sql>
         <addNotNullConstraint tableName="age_up_candidate" columnName="operator_user_id" columnDataType="bigint"/>
         <addForeignKeyConstraint baseTableName="age_up_candidate" baseColumnNames="operator_user_id"
