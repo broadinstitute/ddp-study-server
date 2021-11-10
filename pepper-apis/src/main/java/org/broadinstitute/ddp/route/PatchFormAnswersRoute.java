@@ -69,6 +69,8 @@ import org.broadinstitute.ddp.model.activity.instance.answer.NumericAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.NumericIntegerAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.PicklistAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.SelectedPicklistOption;
+import org.broadinstitute.ddp.model.activity.instance.answer.MatrixAnswer;
+import org.broadinstitute.ddp.model.activity.instance.answer.SelectedMatrixCell;
 import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
 import org.broadinstitute.ddp.model.activity.instance.question.CompositeQuestion;
 import org.broadinstitute.ddp.model.activity.instance.question.Question;
@@ -420,6 +422,8 @@ public class PatchFormAnswersRoute implements Route {
                 return convertBoolAnswer(stableId, guid, instanceGuid, value);
             case PICKLIST:
                 return convertPicklistAnswer(stableId, guid, instanceGuid, value);
+            case MATRIX:
+                return convertMatrixAnswer(stableId, guid, instanceGuid, value);
             case TEXT:
                 return convertTextAnswer(stableId, guid, instanceGuid, value);
             case DATE:
@@ -473,6 +477,29 @@ public class PatchFormAnswersRoute implements Route {
             return new PicklistAnswer(null, stableId, guid, selected, actInstanceGuid);
         } catch (JsonSyntaxException e) {
             LOG.warn("Failed to convert submitted answer to a picklist answer", e);
+            return null;
+        }
+    }
+
+    /**
+     * Convert given data to matrix answer.
+     *
+     * @param stableId the question stable id
+     * @param guid     the answer guid, or null
+     * @param value    the answer value
+     * @return matrix answer object, or null if value is not a list of options
+     */
+    private MatrixAnswer convertMatrixAnswer(String stableId, String guid, String actInstanceGuid, JsonElement value) {
+        if (value == null || !value.isJsonArray()) {
+            return null;
+        }
+        try {
+            Type selectedOptionListType = new TypeToken<ArrayList<SelectedMatrixCell>>() {
+            }.getType();
+            List<SelectedMatrixCell> selected = gson.fromJson(value, selectedOptionListType);
+            return new MatrixAnswer(null, stableId, guid, selected, actInstanceGuid);
+        } catch (JsonSyntaxException e) {
+            LOG.warn("Failed to convert submitted answer to a matrix answer", e);
             return null;
         }
     }

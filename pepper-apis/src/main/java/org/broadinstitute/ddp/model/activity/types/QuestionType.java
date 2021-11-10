@@ -11,5 +11,6 @@ public enum QuestionType {
     FILE,
     NUMERIC,
     PICKLIST,
-    TEXT
+    TEXT,
+    MATRIX
 }

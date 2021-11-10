@@ -18,6 +18,7 @@ import org.broadinstitute.ddp.db.DaoException;
 import org.broadinstitute.ddp.db.dto.AnswerDto;
 import org.broadinstitute.ddp.db.dto.CompositeAnswerSummaryDto;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistQuestionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.MatrixQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
 import org.broadinstitute.ddp.model.activity.instance.answer.AgreementAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
@@ -32,6 +33,8 @@ import org.broadinstitute.ddp.model.activity.instance.answer.NumericAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.NumericIntegerAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.PicklistAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.SelectedPicklistOption;
+import org.broadinstitute.ddp.model.activity.instance.answer.SelectedMatrixCell;
+import org.broadinstitute.ddp.model.activity.instance.answer.MatrixAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
 import org.broadinstitute.ddp.model.activity.types.NumericType;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
@@ -54,6 +57,9 @@ public interface AnswerDao extends SqlObject {
 
     @CreateSqlObject
     PicklistAnswerDao getPicklistAnswerDao();
+
+    @CreateSqlObject
+    MatrixAnswerDao getMatrixAnswerDao();
 
     @CreateSqlObject
     JdbiCompositeAnswer getJdbiCompositeAnswer();
@@ -124,6 +130,12 @@ public interface AnswerDao extends SqlObject {
             } else {
                 createAnswerPicklistValue(answerId, (PicklistAnswer) answer, (PicklistQuestionDef) questionDef);
             }
+        } else if (type == QuestionType.MATRIX) {
+            if (questionDef == null) {
+                createAnswerMatrixValue(instanceId, answerId, (MatrixAnswer) answer);
+            } else {
+                createAnswerMatrixValue(answerId, (MatrixAnswer) answer, (MatrixQuestionDef) questionDef);
+            }
         } else if (type == QuestionType.TEXT) {
             String value = ((TextAnswer) answer).getValue();
             DBUtils.checkInsert(1, answerSql.insertTextValue(answerId, value));
@@ -154,6 +166,15 @@ public interface AnswerDao extends SqlObject {
 
     private void createAnswerPicklistValue(long answerId, PicklistAnswer answer, PicklistQuestionDef questionDef) {
         getPicklistAnswerDao().assignOptionsToAnswerId(answerId, answer.getValue(), questionDef);
+    }
+
+    private void createAnswerMatrixValue(long instanceId, long answerId, MatrixAnswer answer) {
+        String instanceGuid = getHandle().attach(JdbiActivityInstance.class).getActivityInstanceGuid(instanceId);
+        getMatrixAnswerDao().assignOptionsToAnswerId(answerId, answer.getValue(), instanceGuid);
+    }
+
+    private void createAnswerMatrixValue(long answerId, MatrixAnswer answer, MatrixQuestionDef questionDef) {
+        getMatrixAnswerDao().assignOptionsToAnswerId(answerId, answer.getValue(), questionDef);
     }
 
     //
@@ -199,6 +220,12 @@ public interface AnswerDao extends SqlObject {
                 updateAnswerPicklistValue(answerId, (PicklistAnswer) newAnswer);
             } else {
                 updateAnswerPicklistValue(answerId, (PicklistAnswer) newAnswer, (PicklistQuestionDef) questionDef);
+            }
+        } else if (type == QuestionType.MATRIX) {
+            if (questionDef == null) {
+                updateAnswerMatrixValue(answerId, (MatrixAnswer) newAnswer);
+            } else {
+                updateAnswerMatrixValue(answerId, (MatrixAnswer) newAnswer, (MatrixQuestionDef) questionDef);
             }
         } else if (type == QuestionType.TEXT) {
             String value = ((TextAnswer) newAnswer).getValue();
@@ -278,6 +305,18 @@ public interface AnswerDao extends SqlObject {
     private void updateAnswerPicklistValue(long answerId, PicklistAnswer newAnswer, PicklistQuestionDef questionDef) {
         getAnswerSql().deletePicklistSelectedByAnswerId(answerId);
         getPicklistAnswerDao().assignOptionsToAnswerId(answerId, newAnswer.getValue(), questionDef);
+    }
+
+    private void updateAnswerMatrixValue(long answerId, MatrixAnswer newAnswer) {
+        String instanceGuid = getAnswerSql().findInstanceGuidByAnswerId(answerId)
+                .orElseThrow(() -> new DaoException("Could not find activity instance guid for answer id " + answerId));
+        getAnswerSql().deleteMatrixSelectedByAnswerId(answerId);
+        getMatrixAnswerDao().assignOptionsToAnswerId(answerId, newAnswer.getValue(), instanceGuid);
+    }
+
+    private void updateAnswerMatrixValue(long answerId, MatrixAnswer newAnswer, MatrixQuestionDef questionDef) {
+        getAnswerSql().deleteMatrixSelectedByAnswerId(answerId);
+        getMatrixAnswerDao().assignOptionsToAnswerId(answerId, newAnswer.getValue(), questionDef);
     }
 
     //
@@ -448,16 +487,32 @@ public interface AnswerDao extends SqlObject {
                     }
                     break;
                 case PICKLIST:
-                    var map = isChildAnswer ? childAnswers : container;
-                    answer = map.computeIfAbsent(answerId, id ->
+                    var picklistMap = isChildAnswer ? childAnswers : container;
+                    answer = picklistMap.computeIfAbsent(answerId, id ->
                             new PicklistAnswer(answerId, questionStableId, answerGuid, new ArrayList<>(), actInstanceGuid));
-                    var optionStableId = view.getColumn("pa_option_stable_id", String.class);
-                    if (optionStableId != null) {
-                        var option = new SelectedPicklistOption(optionStableId,
+                    String picklistOptionSid = view.getColumn("pa_option_stable_id", String.class);
+                    if (picklistOptionSid != null) {
+                        var option = new SelectedPicklistOption(picklistOptionSid,
                                 view.getColumn("pa_parent_option_stable_id", String.class),
                                 view.getColumn("pa_group_stable_id", String.class),
                                 view.getColumn("pa_detail_text", String.class));
                         ((PicklistAnswer) answer).getValue().add(option);
+                    }
+                    break;
+                case MATRIX:
+                    var matrixMap = isChildAnswer ? childAnswers : container;
+                    answer = matrixMap.computeIfAbsent(answerId, id ->
+                            new MatrixAnswer(answerId, questionStableId, answerGuid, new ArrayList<>(), actInstanceGuid));
+
+                    String matrixOptionSid = view.getColumn("matrix_option_stable_id", String.class);
+                    String matrixQuestionRowSid = view.getColumn("matrix_row_stable_id", String.class);
+
+                    if (matrixOptionSid != null && matrixQuestionRowSid != null) {
+                        var option = new SelectedMatrixCell(
+                                matrixQuestionRowSid,
+                                matrixOptionSid,
+                                view.getColumn("matrix_group_stable_id", String.class));
+                        ((MatrixAnswer) answer).getValue().add(option);
                     }
                     break;
                 case COMPOSITE:

@@ -29,6 +29,7 @@ import org.broadinstitute.ddp.model.activity.definition.question.DateQuestionDef
 import org.broadinstitute.ddp.model.activity.definition.question.FileQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.NumericQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistQuestionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.MatrixQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.TextQuestionDef;
 import org.broadinstitute.ddp.model.activity.instance.ActivityResponse;
@@ -41,6 +42,7 @@ import org.broadinstitute.ddp.model.activity.instance.answer.DateAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.FileAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.NumericAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.PicklistAnswer;
+import org.broadinstitute.ddp.model.activity.instance.answer.MatrixAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
 import org.broadinstitute.ddp.model.activity.types.ActivityType;
 import org.broadinstitute.ddp.model.activity.types.InstitutionType;
@@ -61,6 +63,7 @@ public class ActivityResponseCollector {
     private FileQuestionFormatStrategy fileFmt = new FileQuestionFormatStrategy();
     private NumericQuestionFormatStrategy numericFmt = new NumericQuestionFormatStrategy();
     private PicklistQuestionFormatStrategy picklistFmt = new PicklistQuestionFormatStrategy();
+    private MatrixQuestionFormatStrategy matrixFmt = new MatrixQuestionFormatStrategy();
     private CompositeQuestionFormatStrategy compositeFmt = new CompositeQuestionFormatStrategy();
     private MailingAddressFormatter addressFmt = new MailingAddressFormatter();
     private MedicalProviderFormatter providerFmt = new MedicalProviderFormatter();
@@ -234,6 +237,9 @@ public class ActivityResponseCollector {
             case PICKLIST:
                 currProps.putAll(picklistFmt.mappings((PicklistQuestionDef) questionDef));
                 break;
+            case MATRIX:
+                currProps.putAll(matrixFmt.mappings((MatrixQuestionDef) questionDef));
+                break;
             case COMPOSITE:
                 CompositeQuestionDef composite = (CompositeQuestionDef) questionDef;
                 if (composite.shouldUnwrapChildQuestions()) {
@@ -269,6 +275,9 @@ public class ActivityResponseCollector {
                 break;
             case PICKLIST:
                 questions.add(picklistFmt.questionDef((PicklistQuestionDef) questionDef));
+                break;
+            case MATRIX:
+                questions.add(matrixFmt.questionDef((MatrixQuestionDef) questionDef));
                 break;
             case COMPOSITE:
                 CompositeQuestionDef composite = (CompositeQuestionDef) questionDef;
@@ -425,6 +434,9 @@ public class ActivityResponseCollector {
             case PICKLIST:
                 headers.addAll(picklistFmt.headers((PicklistQuestionDef) questionDef));
                 break;
+            case MATRIX:
+                headers.addAll(matrixFmt.headers((MatrixQuestionDef) questionDef));
+                break;
             case COMPOSITE:
                 CompositeQuestionDef composite = (CompositeQuestionDef) questionDef;
                 if (composite.shouldUnwrapChildQuestions()) {
@@ -538,6 +550,9 @@ public class ActivityResponseCollector {
                 break;
             case PICKLIST:
                 record.putAll(picklistFmt.collect((PicklistQuestionDef) question, (PicklistAnswer) answer));
+                break;
+            case MATRIX:
+                record.putAll(matrixFmt.collect((MatrixQuestionDef) question, (MatrixAnswer) answer));
                 break;
             case COMPOSITE:
                 CompositeQuestionDef composite = (CompositeQuestionDef) question;

@@ -46,6 +46,7 @@ import org.broadinstitute.ddp.model.activity.instance.answer.DateValue;
 import org.broadinstitute.ddp.model.activity.instance.answer.PicklistAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.SelectedPicklistOption;
 import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
+import org.broadinstitute.ddp.model.activity.instance.answer.MatrixAnswer;
 import org.broadinstitute.ddp.model.activity.types.EventTriggerType;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
@@ -504,6 +505,8 @@ public class TreeWalkInterpreter implements PexInterpreter {
                         QuestionType type = null;
                         if (childStableId == null) {
                             type = question.getQuestionType();
+                        } else if (question.getQuestionType() == QuestionType.MATRIX) {
+                            type = question.getQuestionType();
                         } else if (question.getQuestionType() == QuestionType.COMPOSITE) {
                             type = ((CompositeQuestionDef) question)
                                     .getChildren().stream()
@@ -542,6 +545,8 @@ public class TreeWalkInterpreter implements PexInterpreter {
                     return applyTextAnswerPredicate(ictx, predicateCtx, userGuid, studyId, activityCode, instanceGuid, stableId);
                 case PICKLIST:
                     return applyPicklistAnswerPredicate(ictx, predicateCtx, userGuid, studyId, activityCode, instanceGuid, stableId);
+                case MATRIX:
+                    return applyMatrixAnswerPredicate(ictx, predicateCtx, userGuid, studyId, activityCode, instanceGuid, stableId);
                 case DATE:
                     return applyDateAnswerPredicate(ictx, predicateCtx, userGuid, studyId, activityCode, instanceGuid, stableId);
                 case NUMERIC:
@@ -563,9 +568,13 @@ public class TreeWalkInterpreter implements PexInterpreter {
                 }
             }
 
-            Optional<Answer> compositeAnswer = answerDao.findAnswerByInstanceGuidAndQuestionStableId(instanceGuid, stableId);
+            Optional<Answer> answer = answerDao.findAnswerByInstanceGuidAndQuestionStableId(instanceGuid, stableId);
 
-            List<Answer> childAnswers = compositeAnswer.stream()
+            if (answer.isPresent() && answer.get().getQuestionType() == QuestionType.MATRIX) {
+                return applyChildMatrixAnswerPredicate(predicateCtx, stableId, ((MatrixAnswer) answer.get()));
+            }
+
+            List<Answer> childAnswers = answer.stream()
                     .map(ans -> (CompositeAnswer) ans)
                     .flatMap(parent -> parent.getValue().stream())
                     .flatMap(row -> row.getValues().stream())
@@ -786,6 +795,45 @@ public class TreeWalkInterpreter implements PexInterpreter {
             throw new PexUnsupportedException("Invalid predicate used on picklist answer set query: " + predicateCtx.getText());
         }
     }
+
+    private Object applyMatrixAnswerPredicate(InterpreterContext ictx, PredicateContext predicateCtx,
+                                              String userGuid, long studyId, String activityCode, String instanceGuid, String stableId) {
+        if (predicateCtx instanceof PexParser.ValueQueryContext) {
+            throw new PexUnsupportedException("Getting matrix answer value is currently not supported");
+        } else {
+            throw new PexUnsupportedException("Invalid predicate used on matrix answer set query: " + predicateCtx.getText());
+        }
+    }
+
+    private Object applyChildMatrixAnswerPredicate(PredicateContext predicateCtx, String rowStableId, MatrixAnswer answer) {
+        if (predicateCtx instanceof HasOptionPredicateContext) {
+            String optionStableId = extractString(((HasOptionPredicateContext) predicateCtx).STR());
+            return answer.getValue().stream()
+                    .filter(row -> row.getRowStableId().equals(rowStableId))
+                    .anyMatch(option -> option.getOptionStableId().equals(optionStableId));
+        } else if (predicateCtx instanceof HasOptionStartsWithPredicateContext) {
+            List<String> optionStableIds = ((HasOptionStartsWithPredicateContext) predicateCtx).STR()
+                    .stream()
+                    .map(this::extractString)
+                    .collect(Collectors.toList());
+            return answer.getValue().stream()
+                    .filter(row -> row.getRowStableId().equals(rowStableId))
+                    .anyMatch(option -> CollectionMiscUtil.startsWithAny(option.getOptionStableId(), optionStableIds));
+        } else if (predicateCtx instanceof HasAnyOptionPredicateContext) {
+            List<String> optionStableIds = ((HasAnyOptionPredicateContext) predicateCtx).STR()
+                    .stream()
+                    .map(this::extractString)
+                    .collect(Collectors.toList());
+            return answer.getValue().stream()
+                    .filter(row -> row.getRowStableId().equals(rowStableId))
+                    .anyMatch(option -> optionStableIds.contains(option.getOptionStableId()));
+        } else if (predicateCtx instanceof PexParser.ValueQueryContext) {
+            throw new PexUnsupportedException("Getting picklist answer value of child question is currently not supported");
+        } else {
+            throw new PexUnsupportedException("Invalid predicate used on picklist answer set query: " + predicateCtx.getText());
+        }
+    }
+
 
     private Object applyChildPicklistAnswerPredicate(InterpreterContext ictx, PredicateContext predicateCtx,
                                                      String userGuid, List<Answer> childAnswers) {
