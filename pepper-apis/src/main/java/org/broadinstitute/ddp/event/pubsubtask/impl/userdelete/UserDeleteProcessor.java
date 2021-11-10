@@ -1,9 +1,9 @@
 package org.broadinstitute.ddp.event.pubsubtask.impl.userdelete;
 
-import static org.apache.commons.lang.StringUtils.isBlank;
 import static org.broadinstitute.ddp.db.TransactionWrapper.DB.APIS;
+import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTask.ATTR_NAME__OPERATOR_GUID;
+import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTask.ATTR_NAME__PARTICIPANT_GUID;
 import static org.broadinstitute.ddp.event.pubsubtask.impl.userdelete.UserDeleteConstants.FIELD__COMMENT;
-import static org.broadinstitute.ddp.event.pubsubtask.impl.userdelete.UserDeleteConstants.FIELD__WHO_DELETED;
 
 import java.net.MalformedURLException;
 
@@ -29,21 +29,18 @@ import org.jdbi.v3.core.Handle;
  */
 public class UserDeleteProcessor extends PubSubTaskProcessorAbstract {
 
+    private static final String PROP_NAME__OPERATOR_GUID = "operatorGuid=";
 
     @Override
     public void handleTask(PubSubTask pubSubTask) {
-        TransactionWrapper.useTxn(APIS, handle -> deleteUser(handle, createUserDeleteService()));
+        TransactionWrapper.useTxn(APIS, handle -> deleteUser(handle, pubSubTask, createUserDeleteService()));
     }
 
     @Override
     protected void validateTaskData(PubSubTask pubSubTask) {
         super.validateTaskData(pubSubTask);
         if (participantGuid == null) {
-            throwIfInvalidAttribute(pubSubTask, PubSubTask.ATTR_NAME__PARTICIPANT_GUID, participantGuid);
-        }
-        String whoDeleted = payloadProps.getProperty(FIELD__WHO_DELETED);
-        if (isBlank(whoDeleted)) {
-            throwIfInvalidPayloadProperty(pubSubTask, FIELD__WHO_DELETED, whoDeleted);
+            throwIfInvalidAttribute(pubSubTask, ATTR_NAME__PARTICIPANT_GUID, participantGuid);
         }
     }
 
@@ -52,11 +49,12 @@ public class UserDeleteProcessor extends PubSubTaskProcessorAbstract {
         return true;
     }
 
-    private void deleteUser(Handle handle, UserDeleteService userDeleteService) {
+    private void deleteUser(Handle handle, PubSubTask pubSubTask, UserDeleteService userDeleteService) {
         try {
             User user = UserDeleteService.getUser(handle, participantGuid);
             userDeleteService.fullDelete(handle, user,
-                    payloadProps.getProperty(FIELD__WHO_DELETED), payloadProps.getProperty(FIELD__COMMENT));
+                    PROP_NAME__OPERATOR_GUID + pubSubTask.getAttributes().get(ATTR_NAME__OPERATOR_GUID),
+                    payloadProps.getProperty(FIELD__COMMENT));
         } catch (Exception e) {
             throw new PubSubTaskException("Error delete user " + participantGuid, e);
         }

@@ -2,6 +2,7 @@ package org.broadinstitute.ddp.event.pubsubtask.impl.updateprofile;
 
 import static java.lang.String.format;
 import static org.apache.commons.lang.StringUtils.isBlank;
+import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTask.ATTR_NAME__PARTICIPANT_GUID;
 import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskException.Severity.WARN;
 import static org.broadinstitute.ddp.event.pubsubtask.impl.updateprofile.UpdateProfileConstants.ATTR_NAME__USER_ID;
 
@@ -38,7 +39,7 @@ public class UpdateProfileProcessor extends PubSubTaskProcessorAbstract {
     }
 
     protected void updateData(PubSubTask pubSubTask) {
-        var participantGuid = pubSubTask.getAttributes().get(PubSubTask.ATTR_NAME__PARTICIPANT_GUID);
+        var participantGuid = pubSubTask.getAttributes().get(ATTR_NAME__PARTICIPANT_GUID);
 
         new UpdateEmailHandler().updateEmail(participantGuid, payloadProps);
 

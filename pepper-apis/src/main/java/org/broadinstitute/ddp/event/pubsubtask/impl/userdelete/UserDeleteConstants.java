@@ -13,6 +13,5 @@ public class UserDeleteConstants {
     public static final String TASK_TYPE__USER_DELETE = "USER_DELETE";
 
     // possible payload fields
-    public static final String FIELD__WHO_DELETED = "whoDeleted";
     static final String FIELD__COMMENT = "comment";
 }

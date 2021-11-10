@@ -6,6 +6,7 @@ import static org.broadinstitute.ddp.event.pubsubtask.PubSubTaskTestUtil.TEST_ME
 import static org.broadinstitute.ddp.event.pubsubtask.PubSubTaskTestUtil.TEST_PARTICIPANT_GUID;
 import static org.broadinstitute.ddp.event.pubsubtask.PubSubTaskTestUtil.TEST_STUDY_GUID;
 import static org.broadinstitute.ddp.event.pubsubtask.PubSubTaskTestUtil.buildMessage;
+import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTask.ATTR_NAME__OPERATOR_GUID;
 import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTask.ATTR_NAME__PARTICIPANT_GUID;
 import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTask.ATTR_NAME__STUDY_GUID;
 import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTask.ATTR_NAME__TASK_TYPE;
@@ -13,10 +14,11 @@ import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskResult.ATTR_
 import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskResult.PubSubTaskResultType.ERROR;
 import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskResult.PubSubTaskResultType.SUCCESS;
 import static org.broadinstitute.ddp.event.pubsubtask.impl.userdelete.UserDeleteConstants.FIELD__COMMENT;
-import static org.broadinstitute.ddp.event.pubsubtask.impl.userdelete.UserDeleteConstants.FIELD__WHO_DELETED;
 import static org.broadinstitute.ddp.event.pubsubtask.impl.userdelete.UserDeleteConstants.TASK_TYPE__USER_DELETE;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
+
+import java.util.Map;
 
 import com.google.cloud.pubsub.v1.AckReplyConsumer;
 import org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskResult;
@@ -28,7 +30,7 @@ import org.junit.Test;
  */
 public class PubSubTaskUserDeleteMessageTest extends PubSubTaskMessageTestAbstract {
 
-    private static final String FIELD_TEST_VALUE__WHO_DELETED = "operatorGuid=I2OMJ257OGNF0GY30HQT";
+    private static final String ATTR_TEST_VALUE__OPERATOR_GUID = "I2OMJ257OGNF0GY30HQT";
     private static final String FIELD_TEST_VALUE__COMMENT = "This user is deleted by mistake";
 
     @Test
@@ -37,12 +39,12 @@ public class PubSubTaskUserDeleteMessageTest extends PubSubTaskMessageTestAbstra
 
         PubSubTaskResult result = testResultSender.getPubSubTaskResult();
 
-        assertEquals("taskType=USER_DELETE, messageId=msg_id, "
-                        + "attr={taskType=USER_DELETE, participantGuid=participant_guid, studyGuid=study_guid}, "
-                        + "payload={'whoDeleted': 'operatorGuid=I2OMJ257OGNF0GY30HQT', 'comment':'This user is deleted by mistake'}",
+        assertEquals("taskType=USER_DELETE, messageId=msg_id, attr={taskType=USER_DELETE, "
+                        + "participantGuid=participant_guid, studyGuid=study_guid, operatorGuid=I2OMJ257OGNF0GY30HQT}, "
+                        + "payload={'comment':'This user is deleted by mistake'}",
                 result.getPubSubTask().toString());
         assertEquals(SUCCESS, result.getResultType());
-        assertEquals(4, result.getAttributes().size());
+        assertEquals(5, result.getAttributes().size());
         assertEquals(TASK_TYPE__USER_DELETE, result.getAttributes().get(ATTR_NAME__TASK_TYPE));
         assertEquals(TEST_PARTICIPANT_GUID, result.getAttributes().get(ATTR_NAME__PARTICIPANT_GUID));
         assertEquals(TEST_STUDY_GUID, result.getAttributes().get(ATTR_NAME__STUDY_GUID));
@@ -62,9 +64,8 @@ public class PubSubTaskUserDeleteMessageTest extends PubSubTaskMessageTestAbstra
     private void buildMessageAndAssert(boolean buildValidMessage) {
         init();
         var message = buildMessage(TASK_TYPE__USER_DELETE,
-                null,
-                format("{'%s': '%s', '%s':'%s'}",
-                        FIELD__WHO_DELETED, FIELD_TEST_VALUE__WHO_DELETED, FIELD__COMMENT, FIELD_TEST_VALUE__COMMENT),
+                Map.of(ATTR_NAME__OPERATOR_GUID, ATTR_TEST_VALUE__OPERATOR_GUID),
+                format("{'%s':'%s'}", FIELD__COMMENT, FIELD_TEST_VALUE__COMMENT),
                 buildValidMessage, null);
         pubSubTaskReceiver.receiveMessage(message, mock(AckReplyConsumer.class));
     }

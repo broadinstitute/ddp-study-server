@@ -16,8 +16,12 @@ public class PubSubTask {
 
     /** PubSubTask standard attribute: holds a study GUID */
     public static final String ATTR_NAME__STUDY_GUID = "studyGuid";
+
     /** PubSubTask standard attribute: holds a participant (user) GUID */
     public static final String ATTR_NAME__PARTICIPANT_GUID = "participantGuid";
+
+    /** PubSubTask standard attribute: holds an operator  GUID */
+    public static final String ATTR_NAME__OPERATOR_GUID = "operatorGuid";
 
     private final String messageId;
     private final String taskType;
