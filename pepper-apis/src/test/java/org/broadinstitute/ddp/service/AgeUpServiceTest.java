@@ -170,8 +170,8 @@ public class AgeUpServiceTest extends TxnAwareBaseTest {
         TransactionWrapper.useTxn(handle -> {
             User operator = handle.attach(UserDao.class).createUser(testData.getClientId(), testData.getAuth0ClientId());
             User user1 = createAgeUpTestCandidate(handle, operator, EnrollmentStatusType.REGISTERED, LocalDate.of(2000, 5, 14));
-            String userBoolStableId = "PEX_BOOL_" + Instant.now().toEpochMilli();
-            String operatorBoolStableId = "PEX_BOOL_" + Instant.now().toEpochMilli();
+            String userBoolStableId = "PEX_BOOL_U_" + Instant.now().toEpochMilli();
+            String operatorBoolStableId = "PEX_BOOL_O_" + Instant.now().toEpochMilli();
 
             // Setup downstream event and test data
             ActivityInstanceDto userInstanceDto = createActivityAndInstanceAndQuestion(handle, user1, userBoolStableId, "ACT");
