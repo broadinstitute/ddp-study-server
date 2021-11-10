@@ -22,6 +22,7 @@ import org.broadinstitute.ddp.security.DDPAuth;
 import org.broadinstitute.ddp.util.ActivityInstanceUtil;
 import org.broadinstitute.ddp.util.ResponseUtil;
 import org.broadinstitute.ddp.util.RouteUtil;
+import org.broadinstitute.ddp.util.QuestionUtil;
 import org.broadinstitute.ddp.util.ValidatedJsonInputRoute;
 import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
@@ -72,6 +73,8 @@ public class CreateActivityInstanceRoute extends ValidatedJsonInputRoute<Activit
                 return null;
             }
 
+            ActivityInstanceCreationResponse res = new ActivityInstanceCreationResponse();
+
             Long parentInstanceId = null;
             if (validation.getParentActivityCode() != null) {
                 parentInstanceId = findAndCheckParentInstance(
@@ -98,7 +101,10 @@ public class CreateActivityInstanceRoute extends ValidatedJsonInputRoute<Activit
             handle.attach(DataExportDao.class).queueDataSync(participantGuid, studyGuid);
             LOG.info("Created activity instance {} for activity {} and user {}",
                     instanceGuid, activityCode, participantGuid);
-            return new ActivityInstanceCreationResponse(instanceGuid);
+            res.setInstanceGuid(instanceGuid);
+            res.setBlockVisibilities(QuestionUtil.getBlockVisibility(handle,
+                        response, parentInstanceGuid, found.getUser(), found.getStudyDto(), operatorGuid, isStudyAdmin));
+            return res;
         });
     }
 

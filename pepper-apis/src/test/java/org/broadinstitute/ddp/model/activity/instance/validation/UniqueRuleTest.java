@@ -87,7 +87,7 @@ public class UniqueRuleTest {
             PicklistSelectMode selectMode, PicklistRenderMode renderMode, String pickListStableId, List<String> optionsStableIds) {
         List<PicklistOption> options = new ArrayList<>();
         for (String optionStableId : optionsStableIds) {
-            options.add(new PicklistOption(optionStableId, 3L, null, null, false, false));
+            options.add(new PicklistOption(optionStableId, 3L, null, null, false, false, false));
         }
         return new PicklistQuestion(pickListStableId, 1L, emptyList(), emptyList(), selectMode,
                 renderMode, 2L, options

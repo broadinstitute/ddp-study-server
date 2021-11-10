@@ -20,6 +20,7 @@ import org.broadinstitute.ddp.model.activity.instance.ActivityResponse;
 import org.broadinstitute.ddp.model.activity.instance.FormResponse;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.broadinstitute.ddp.model.user.User;
+import org.broadinstitute.ddp.util.ActivityInstanceUtil;
 import org.jdbi.v3.core.result.LinkedHashMapRowReducer;
 import org.jdbi.v3.core.result.RowView;
 import org.jdbi.v3.sqlobject.CreateSqlObject;
@@ -253,6 +254,10 @@ public interface ActivityInstanceDao extends SqlObject {
                 legacySubmissionId,
                 legacySessionId,
                 legacyVersion);
+
+        // Pre-populating default picklist options. It runs before status update so that copier is able to override
+        ActivityInstanceUtil.populateDefaultValues(getHandle(), instanceId, operator.getId());
+
         // Important: we set the status for the parent before checking for child instances. Setting
         // the status will trigger running the events on the parent instance. This means any events
         // that hooks into the parent instance's status will run before child instances are created.
