@@ -133,7 +133,7 @@ public class UserDeleteService {
                     objToStr(comment));
         } catch (Throwable e) {
             LOG.error(format(EXCEPTION_MESSAGE_PREFIX__ERROR + e.getMessage(), user.getGuid()), e);
-            throw new DDPException(format(EXCEPTION_MESSAGE_PREFIX__ERROR + e.getMessage()));
+            throw new DDPException(format(EXCEPTION_MESSAGE_PREFIX__ERROR + e.getMessage(), user.getGuid()));
         }
     }
 
@@ -319,7 +319,7 @@ public class UserDeleteService {
 
     private void deleteElasticSearchData(Handle handle, User user, UserCollectedData userCollectedData, boolean fullDelete)
             throws IOException {
-        if (esClient != null) {
+        if (esClient != null && userCollectedData.getStudyGuids().size() > 0) {
             LOG.info(LOG_MESSAGE_PREFIX__DELETE_FROM_ES + "participants, participants_structured, users", user.getGuid());
             BulkRequest bulkRequest = new BulkRequest().timeout("2m");
             for (String studyGuid : userCollectedData.getStudyGuids()) {
@@ -362,7 +362,7 @@ public class UserDeleteService {
 
     private void deleteAuth0User(Handle handle, User user) {
         if (user.getAuth0UserId() != null) {
-            LOG.info(LOG_MESSAGE_PREFIX__DELETE_FROM_AUTH, user);
+            LOG.info(LOG_MESSAGE_PREFIX__DELETE_FROM_AUTH, user.getGuid());
             var result = Auth0ManagementClient.forUser(handle, user.getGuid()).deleteAuth0User(user.getAuth0UserId());
             if (result.hasFailure()) {
                 throw new DDPException(result.hasThrown() ? result.getThrown() : result.getError());
