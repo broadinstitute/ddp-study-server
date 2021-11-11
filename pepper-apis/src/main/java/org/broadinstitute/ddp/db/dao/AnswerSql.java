@@ -149,6 +149,9 @@ public interface AnswerSql extends SqlObject {
     @SqlUpdate("delete from picklist_option__answer where answer_id = :answerId")
     int deletePicklistSelectedByAnswerId(@Bind("answerId") long answerId);
 
+    @SqlUpdate("delete from answer where operator_user_id = :operatorId")
+    int deleteAnswerByOperatorId(@Bind("operatorId") long operatorId);
+
     //
     // queries
     //

@@ -27,7 +27,7 @@ public interface KitTypeDao extends SqlObject {
 
     @SqlQuery("SELECT kit_type_id, name FROM kit_type WHERE name = :kitTypeName")
     @RegisterRowMapper(KitTypeRowMapper.class)
-    Optional<KitType> getKitTypeByName(@Bind String kitTypeName);
+    Optional<KitType> getKitTypeByName(@Bind("kitTypeName") String kitTypeName);
 
     @SqlQuery("select kit_type_id, name from kit_type where kit_type_id = :id")
     @RegisterRowMapper(KitTypeRowMapper.class)

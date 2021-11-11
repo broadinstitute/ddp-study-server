@@ -85,4 +85,7 @@ public interface KitScheduleSql extends SqlObject {
 
     @SqlUpdate("delete from kit_schedule_record where kit_schedule_record_id = :id")
     int deleteRecord(@Bind("id") long recordId);
+
+    @SqlUpdate("delete from kit_schedule_record where participant_user_id = :userId")
+    int deleteByUserId(@Bind("userId") long userId);
 }
