@@ -1,11 +1,13 @@
 package org.broadinstitute.ddp.event.pubsubtask;
 
-import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTask.ATTR_TASK_TYPE;
-import static org.broadinstitute.ddp.event.pubsubtask.impl.updateprofile.UpdateProfileConstants.ATTR_PARTICIPANT_GUID;
-import static org.broadinstitute.ddp.event.pubsubtask.impl.updateprofile.UpdateProfileConstants.ATTR_STUDY_GUID;
-import static org.broadinstitute.ddp.event.pubsubtask.impl.updateprofile.UpdateProfileConstants.ATTR_USER_ID;
+import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTask.ATTR_NAME__PARTICIPANT_GUID;
+import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTask.ATTR_NAME__STUDY_GUID;
+import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTask.ATTR_NAME__TASK_TYPE;
+import static org.broadinstitute.ddp.event.pubsubtask.impl.updateprofile.UpdateProfileConstants.ATTR_NAME__USER_ID;
 import static org.broadinstitute.ddp.event.pubsubtask.impl.updateprofile.UpdateProfileConstants.TASK_TYPE__UPDATE_PROFILE;
+import static org.broadinstitute.ddp.event.pubsubtask.impl.userdelete.UserDeleteConstants.TASK_TYPE__USER_DELETE;
 
+import java.util.Map;
 
 import com.google.protobuf.ByteString;
 import com.google.pubsub.v1.PubsubMessage;
@@ -14,6 +16,7 @@ import org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskProcessorFactoryAbs
 import org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskResult;
 import org.broadinstitute.ddp.event.pubsubtask.api.ResultSender;
 import org.broadinstitute.ddp.event.pubsubtask.impl.updateprofile.UpdateProfileProcessor;
+import org.broadinstitute.ddp.event.pubsubtask.impl.userdelete.UserDeleteProcessor;
 
 public class PubSubTaskTestUtil {
 
@@ -40,15 +43,29 @@ public class PubSubTaskTestUtil {
 
 
 
-    public static PubsubMessage buildMessage(String taskType, String payloadJson, boolean buildValidMessage) {
+    public static PubsubMessage buildMessage(
+            String taskType,
+            Map<String, String> extraAttibutes,
+            String payloadJson,
+            boolean buildValidMessage,
+            String testUserId) {
         var messageBuilder = PubsubMessage.newBuilder()
                 .setMessageId(TEST_MESSAGE_ID)
-                .setData(ByteString.copyFromUtf8(payloadJson))
-                .putAttributes(ATTR_TASK_TYPE, taskType);
+                .putAttributes(ATTR_NAME__TASK_TYPE, taskType);
+        if (payloadJson != null) {
+            messageBuilder.setData(ByteString.copyFromUtf8(payloadJson));
+        }
         if (buildValidMessage) {
-            messageBuilder.putAttributes(ATTR_PARTICIPANT_GUID, TEST_PARTICIPANT_GUID)
-                    .putAttributes(ATTR_USER_ID, TEST_USER_ID)
-                    .putAttributes(ATTR_STUDY_GUID, TEST_STUDY_GUID);
+            // set standard attributes
+            messageBuilder
+                    .putAttributes(ATTR_NAME__PARTICIPANT_GUID, TEST_PARTICIPANT_GUID)
+                    .putAttributes(ATTR_NAME__STUDY_GUID, TEST_STUDY_GUID);
+            if (extraAttibutes != null) {
+                extraAttibutes.forEach((k, v) -> messageBuilder.putAttributes(k, v));
+            }
+            if (testUserId != null) {
+                messageBuilder.putAttributes(ATTR_NAME__USER_ID, testUserId);
+            }
         }
         return messageBuilder.build();
     }
@@ -74,12 +91,21 @@ public class PubSubTaskTestUtil {
                     TASK_TYPE__UPDATE_PROFILE,
                     new TestUpdateProfileProcessor()
             );
+            registerPubSubTaskProcessor(
+                    TASK_TYPE__USER_DELETE,
+                    new TestUserDeleteProcessor()
+            );
         }
 
         class TestUpdateProfileProcessor extends UpdateProfileProcessor {
-
             @Override
-            protected void updateData(PubSubTask pubSubTask) {
+            public void handleTask(PubSubTask pubSubTask) {
+            }
+        }
+
+        class TestUserDeleteProcessor extends UserDeleteProcessor {
+            @Override
+            public void handleTask(PubSubTask pubSubTask) {
             }
         }
     }

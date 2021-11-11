@@ -15,18 +15,17 @@ import static org.broadinstitute.ddp.event.pubsubtask.PubSubTaskTestUtil.TEST_PA
 import static org.broadinstitute.ddp.event.pubsubtask.PubSubTaskTestUtil.TEST_STUDY_GUID;
 import static org.broadinstitute.ddp.event.pubsubtask.PubSubTaskTestUtil.TEST_USER_ID;
 import static org.broadinstitute.ddp.event.pubsubtask.PubSubTaskTestUtil.buildMessage;
-import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskResult.ATTR_TASK_MESSAGE_ID;
+import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTask.ATTR_NAME__PARTICIPANT_GUID;
+import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTask.ATTR_NAME__STUDY_GUID;
+import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskResult.ATTR_TASK__MESSAGE_ID;
 import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskResult.PubSubTaskResultType.ERROR;
 import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskResult.PubSubTaskResultType.SUCCESS;
 import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskResultSender.createPubSubMessage;
-import static org.broadinstitute.ddp.event.pubsubtask.impl.updateprofile.UpdateProfileConstants.ATTR_PARTICIPANT_GUID;
-import static org.broadinstitute.ddp.event.pubsubtask.impl.updateprofile.UpdateProfileConstants.ATTR_STUDY_GUID;
-import static org.broadinstitute.ddp.event.pubsubtask.impl.updateprofile.UpdateProfileConstants.ATTR_USER_ID;
+import static org.broadinstitute.ddp.event.pubsubtask.impl.updateprofile.UpdateProfileConstants.ATTR_NAME__USER_ID;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
 
 import java.util.Properties;
-
 
 import com.google.cloud.pubsub.v1.AckReplyConsumer;
 import com.google.gson.Gson;
@@ -54,9 +53,9 @@ public class PubSubTaskCustomMessageTest {
     @Test
     public void testCustomMessageProcessing1() {
         init();
-        var message = buildMessage(TestProcessor1.TEST_TASK_1,
+        var message = buildMessage(TestProcessor1.TEST_TASK_1, null,
                 format("{'%s':'%s', '%s':'%s', '%s':'%s'}",
-                        EMAIL, TEST_EMAIL, EDUCATION, TEST_EDUCATION, MARITAL_STATUS, TEST_MARITAL_STATUS), true);
+                        EMAIL, TEST_EMAIL, EDUCATION, TEST_EDUCATION, MARITAL_STATUS, TEST_MARITAL_STATUS), true, TEST_USER_ID);
         pubSubTaskReceiver.receiveMessage(message, mock(AckReplyConsumer.class));
 
         PubSubTask pubSubTask = testResultSender.getPubSubTaskResult().getPubSubTask();
@@ -64,9 +63,9 @@ public class PubSubTaskCustomMessageTest {
         assertEquals("{'email':'test@datadonationplatform.org', 'education':'University', 'maritalStatus':'Married'}",
                 pubSubTask.getPayloadJson());
 
-        assertEquals(TEST_PARTICIPANT_GUID, pubSubTask.getAttributes().get(ATTR_PARTICIPANT_GUID));
-        assertEquals(TEST_USER_ID, pubSubTask.getAttributes().get(ATTR_USER_ID));
-        assertEquals(TEST_STUDY_GUID, pubSubTask.getAttributes().get(ATTR_STUDY_GUID));
+        assertEquals(TEST_PARTICIPANT_GUID, pubSubTask.getAttributes().get(ATTR_NAME__PARTICIPANT_GUID));
+        assertEquals(TEST_USER_ID, pubSubTask.getAttributes().get(ATTR_NAME__USER_ID));
+        assertEquals(TEST_STUDY_GUID, pubSubTask.getAttributes().get(ATTR_NAME__STUDY_GUID));
 
         Properties payload = gson.fromJson(pubSubTask.getPayloadJson(), Properties.class);
         assertEquals(TEST_EMAIL, payload.get(EMAIL));
@@ -76,10 +75,10 @@ public class PubSubTaskCustomMessageTest {
         PubSubTaskResult pubSubTaskResult = new PubSubTaskResult(SUCCESS, null, pubSubTask);
         PubsubMessage resultMessage = createPubSubMessage(pubSubTaskResult);
 
-        assertEquals(TEST_MESSAGE_ID, resultMessage.getAttributesOrDefault(ATTR_TASK_MESSAGE_ID, null));
-        assertEquals(TEST_PARTICIPANT_GUID, resultMessage.getAttributesOrDefault(ATTR_PARTICIPANT_GUID, null));
-        assertEquals(TEST_USER_ID, resultMessage.getAttributesOrDefault(ATTR_USER_ID, null));
-        assertEquals(TEST_STUDY_GUID, resultMessage.getAttributesOrDefault(ATTR_STUDY_GUID, null));
+        assertEquals(TEST_MESSAGE_ID, resultMessage.getAttributesOrDefault(ATTR_TASK__MESSAGE_ID, null));
+        assertEquals(TEST_PARTICIPANT_GUID, resultMessage.getAttributesOrDefault(ATTR_NAME__PARTICIPANT_GUID, null));
+        assertEquals(TEST_USER_ID, resultMessage.getAttributesOrDefault(ATTR_NAME__USER_ID, null));
+        assertEquals(TEST_STUDY_GUID, resultMessage.getAttributesOrDefault(ATTR_NAME__STUDY_GUID, null));
         assertEquals("{\"resultType\":\"SUCCESS\"}", resultMessage.getData().toStringUtf8());
     }
 
@@ -90,15 +89,15 @@ public class PubSubTaskCustomMessageTest {
     @Test
     public void testCustomMessageProcessing2() {
         init();
-        var message = buildMessage(TestProcessor2.TEST_TASK_2,
-                format("{'%s':'%s', '%s':'%s'}", EMAIL, TEST_EMAIL, EDUCATION, TEST_EDUCATION), true);
+        var message = buildMessage(TestProcessor2.TEST_TASK_2, null,
+                format("{'%s':'%s', '%s':'%s'}", EMAIL, TEST_EMAIL, EDUCATION, TEST_EDUCATION), true, TEST_USER_ID);
         pubSubTaskReceiver.receiveMessage(message, mock(AckReplyConsumer.class));
 
         PubSubTask pubSubTask = testResultSender.getPubSubTaskResult().getPubSubTask();
 
-        assertEquals(TEST_PARTICIPANT_GUID, pubSubTask.getAttributes().get(ATTR_PARTICIPANT_GUID));
-        assertEquals(TEST_USER_ID, pubSubTask.getAttributes().get(ATTR_USER_ID));
-        assertEquals(TEST_STUDY_GUID, pubSubTask.getAttributes().get(ATTR_STUDY_GUID));
+        assertEquals(TEST_PARTICIPANT_GUID, pubSubTask.getAttributes().get(ATTR_NAME__PARTICIPANT_GUID));
+        assertEquals(TEST_USER_ID, pubSubTask.getAttributes().get(ATTR_NAME__USER_ID));
+        assertEquals(TEST_STUDY_GUID, pubSubTask.getAttributes().get(ATTR_NAME__STUDY_GUID));
 
         PubSubTaskResult pubSubTaskResult = new PubSubTaskResult(ERROR, "Custom error occured", pubSubTask);
         PubsubMessage resultMessage = createPubSubMessage(pubSubTaskResult);
@@ -119,10 +118,6 @@ public class PubSubTaskCustomMessageTest {
         @Override
         protected void handleTask(PubSubTask pubSubTask) {
         }
-
-        @Override
-        protected void addCustomDataToResult(PubSubTask pubSubTask, PubSubTaskResult pubSubTaskResult) {
-        }
     }
 
     class TestProcessor2 extends PubSubTaskProcessorAbstract {
@@ -131,10 +126,6 @@ public class PubSubTaskCustomMessageTest {
 
         @Override
         protected void handleTask(PubSubTask pubSubTask) {
-        }
-
-        @Override
-        protected void addCustomDataToResult(PubSubTask pubSubTask, PubSubTaskResult pubSubTaskResult) {
         }
     }
 
