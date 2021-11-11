@@ -152,6 +152,7 @@ public class UserDeleteService {
 
     private void deleteUserData(Handle handle, User user, boolean fullDelete) throws IOException {
         UserCollectedData userCollectedData = new UserCollectedData();
+        Auth0ManagementClient auth0ManagementClient = Auth0ManagementClient.forUser(handle, user.getGuid());
 
         if (fullDelete) {
             deleteKitRequests(handle, user);
@@ -179,7 +180,7 @@ public class UserDeleteService {
         deleteElasticSearchData(handle, user, userCollectedData, fullDelete);
 
         if (fullDelete) {
-            deleteAuth0User(handle, user);
+            deleteAuth0User(user, auth0ManagementClient);
         }
 
         dataSyncRequest(handle, userCollectedData);
@@ -360,10 +361,10 @@ public class UserDeleteService {
         }
     }
 
-    private void deleteAuth0User(Handle handle, User user) {
-        if (user.getAuth0UserId() != null) {
+    private void deleteAuth0User(User user, Auth0ManagementClient auth0ManagementClient) {
+        if (user.getAuth0UserId() != null && auth0ManagementClient != null) {
             LOG.info(LOG_MESSAGE_PREFIX__DELETE_FROM_AUTH, user.getGuid());
-            var result = Auth0ManagementClient.forUser(handle, user.getGuid()).deleteAuth0User(user.getAuth0UserId());
+            var result = auth0ManagementClient.deleteAuth0User(user.getAuth0UserId());
             if (result.hasFailure()) {
                 throw new DDPException(result.hasThrown() ? result.getThrown() : result.getError());
             }
