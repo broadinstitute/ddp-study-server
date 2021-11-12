@@ -104,7 +104,9 @@ public interface JdbiFormSectionBlock extends SqlObject {
     }
 
     @SqlQuery("select fsb.form_section_id, null as parent_block_id,"
-            + "       bt.block_type_code, b.block_id, b.block_guid, e.expression_text"
+            + "       bt.block_type_code, b.block_id, b.block_guid,"
+            + "       e.expression_text as shown_expression_text,"
+            + "       ee.expression_text as enabled_expression_text"
             + "  from form_section__block as fsb"
             + "  join revision as rev on rev.revision_id = fsb.revision_id"
             + "  join block as b on b.block_id = fsb.block_id"

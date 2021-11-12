@@ -27,7 +27,9 @@ public interface JdbiBlockNesting extends SqlObject {
     List<FormBlockDto> findOrderedNestedFormBlockDtos(@Bind("blockId") long blockId, @Bind("instanceGuid") String instanceGuid);
 
     @SqlQuery("select null as form_section_id, bn.parent_block_id,"
-            + "       bt.block_type_code, nested.block_id, nested.block_guid, e.expression_text"
+            + "       bt.block_type_code, nested.block_id, nested.block_guid,"
+            + "       e.expression_text as shown_expression_text,"
+            + "       ee.expression_text as enabled_expression_text"
             + "  from block_nesting as bn"
             + "  join block as nested on nested.block_id = bn.nested_block_id"
             + "  join block_type as bt on bt.block_type_id = nested.block_type_id"

@@ -6,7 +6,7 @@ select fsb.form_section_id,
        bt.block_type_code,
        b.block_id,
        b.block_guid,
-       es.expression_text as shown_expression_text,
+       ev.expression_text as shown_expression_text,
        ee.expression_text as enabled_expression_text
   from form_section__block as fsb
   join revision as rev on rev.revision_id = fsb.revision_id
