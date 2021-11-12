@@ -1385,6 +1385,7 @@ public interface QuestionDao extends SqlObject {
             blockDef.setBlockId(blockDto.getId());
             blockDef.setBlockGuid(blockDto.getGuid());
             blockDef.setShownExpr(blockDto.getShownExpr());
+            blockDef.setEnabledExpr(blockDto.getEnabledExpr());
 
             blockDefs.put(blockDto.getId(), blockDef);
         }

@@ -310,7 +310,7 @@ public class FormInstanceTest {
         var form = createEmptyTestInstance();
         form.addBodySections(List.of(section));
 
-        var hidden = form.collectHiddenAnswers();
+        var hidden = form.collectHiddenAndDisabledAnswers();
         assertNotNull(hidden);
         assertEquals(3, hidden.size());
 
@@ -328,7 +328,7 @@ public class FormInstanceTest {
         var form = createEmptyTestInstance();
         form.addBodySections(List.of(section));
 
-        var hidden = form.collectHiddenAnswers();
+        var hidden = form.collectHiddenAndDisabledAnswers();
         assertNotNull(hidden);
         assertTrue(hidden.isEmpty());
     }

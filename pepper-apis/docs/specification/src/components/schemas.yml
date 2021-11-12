@@ -587,6 +587,7 @@ Block:
     - blockType
     - blockGuid
     - shown
+    - enabled
   properties:
     blockType:
       type: string
@@ -594,6 +595,8 @@ Block:
       type: string
       format: guid
     shown:
+      type: boolean
+    enabled:
       type: boolean
 Block.Component:
   allOf:
@@ -760,6 +763,7 @@ Block.Visibility:
   required:
     - blockGuid
     - shown
+    - enabled
   properties:
     blockGuid:
       type: string
@@ -767,6 +771,9 @@ Block.Visibility:
     shown:
       type: boolean
       description: whether block is shown or not
+    enabled:
+      type: boolean
+      description: whether block is enabled or not
 #####
 #
 # Components

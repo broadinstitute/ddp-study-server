@@ -83,6 +83,9 @@ public interface SectionBlockDao extends SqlObject {
     JdbiBlockExpression getJdbiBlockExpression();
 
     @CreateSqlObject
+    JdbiBlockEnabledExpression getJdbiBlockEnabledExpression();
+
+    @CreateSqlObject
     JdbiBlockConditionalControl getJdbiBlockConditionalControl();
 
     @CreateSqlObject
@@ -223,6 +226,14 @@ public interface SectionBlockDao extends SqlObject {
             Expression expr = getJdbiExpression().insertExpression(block.getShownExpr());
             block.setShownExprId(expr.getId());
             getJdbiBlockExpression().insert(blockId, expr.getId(), revisionId);
+        }
+        if (block.getEnabledExpr() != null) {
+            if (block.getEnabledExprId() != null) {
+                throw new IllegalStateException("Block enabled expr id already set to " + block.getEnabledExprId());
+            }
+            Expression expr = getJdbiExpression().insertExpression(block.getEnabledExpr());
+            block.setEnabledExprId(expr.getId());
+            getJdbiBlockEnabledExpression().insert(blockId, expr.getId(), revisionId);
         }
 
         BlockType blockType = block.getBlockType();
@@ -674,6 +685,7 @@ public interface SectionBlockDao extends SqlObject {
             blockDef.setBlockId(blockDto.getId());
             blockDef.setBlockGuid(blockDto.getGuid());
             blockDef.setShownExpr(blockDto.getShownExpr());
+            blockDef.setEnabledExpr(blockDto.getEnabledExpr());
 
             blockDefs.put(blockDto.getId(), blockDef);
         }
@@ -708,6 +720,7 @@ public interface SectionBlockDao extends SqlObject {
             blockDef.setBlockId(blockDto.getId());
             blockDef.setBlockGuid(blockDto.getGuid());
             blockDef.setShownExpr(blockDto.getShownExpr());
+            blockDef.setEnabledExpr(blockDto.getEnabledExpr());
 
             blockDefs.put(blockDto.getId(), blockDef);
         }
@@ -752,6 +765,7 @@ public interface SectionBlockDao extends SqlObject {
             blockDef.setBlockId(blockDto.getId());
             blockDef.setBlockGuid(blockDto.getGuid());
             blockDef.setShownExpr(blockDto.getShownExpr());
+            blockDef.setEnabledExpr(blockDto.getEnabledExpr());
 
             blockDefs.put(blockDto.getId(), blockDef);
         }

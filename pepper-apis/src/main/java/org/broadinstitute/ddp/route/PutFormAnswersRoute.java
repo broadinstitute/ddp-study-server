@@ -155,9 +155,9 @@ public class PutFormAnswersRoute implements Route {
                         throw ResponseUtil.haltError(response, 422, new ApiError(ErrorCodes.QUESTION_REQUIREMENTS_NOT_MET, msg));
                     }
 
-                    Map<Long, List<ActivityInstanceDto>> hiddenChildInstances = null;
+                    Map<Long, List<ActivityInstanceDto>> hiddenAndDisabledChildInstances = null;
                     if (parentInstanceDto == null) {
-                        hiddenChildInstances = checkStateOfChildInstances(
+                        hiddenAndDisabledChildInstances = checkStateOfChildInstances(
                                 response, handle, userGuid, operatorGuid, studyGuid, instanceGuid,
                                 form, preferredUserLangDto, instanceSummary);
                     }
@@ -211,8 +211,8 @@ public class PutFormAnswersRoute implements Route {
                                 Instant.now().toEpochMilli(), operatorUser, participantUser);
                     }
 
-                    cleanupHiddenAnswers(handle, userGuid, form);
-                    cleanupHiddenChildInstances(handle, activityStore, userGuid, form, hiddenChildInstances);
+                    cleanupHiddenAndDisabledAnswers(handle, userGuid, form);
+                    cleanupChildInstances(handle, activityStore, userGuid, form, hiddenAndDisabledChildInstances);
 
                     WorkflowState fromState = new ActivityState(form.getActivityId());
                     WorkflowResponse workflowResp = workflowService
@@ -288,7 +288,7 @@ public class PutFormAnswersRoute implements Route {
                                                                             LanguageDto preferredLangDto,
                                                                             UserActivityInstanceSummary instanceSummary) {
         Map<String, List<ActivityInstanceDto>> childInstances = new HashMap<>();
-        Map<Long, List<ActivityInstanceDto>> hiddenChildInstances = new HashMap<>();
+        Map<Long, List<ActivityInstanceDto>> hiddenOrDisabledChildInstances = new HashMap<>();
         instanceSummary.getInstancesStream()
                 .filter(instance -> instanceGuid.equals(instance.getParentInstanceGuid()))
                 .forEach(instance -> childInstances
@@ -304,10 +304,10 @@ public class PutFormAnswersRoute implements Route {
                 var nestedActivityBlock = (NestedActivityBlock) block;
                 List<ActivityInstanceDto> childInstanceDtos = childInstances
                         .getOrDefault(nestedActivityBlock.getActivityCode(), new ArrayList<>());
-                if (!nestedActivityBlock.isShown()) {
+                if (!nestedActivityBlock.isShown() || !nestedActivityBlock.isEnabled()) {
                     if (!childInstanceDtos.isEmpty()) {
                         long childActivityId = childInstanceDtos.get(0).getActivityId();
-                        hiddenChildInstances.put(childActivityId, childInstanceDtos);
+                        hiddenOrDisabledChildInstances.put(childActivityId, childInstanceDtos);
                     }
                     continue;
                 }
@@ -327,11 +327,11 @@ public class PutFormAnswersRoute implements Route {
             }
         }
 
-        return hiddenChildInstances;
+        return hiddenOrDisabledChildInstances;
     }
 
-    public void cleanupHiddenAnswers(Handle handle, String userGuid, FormInstance form) {
-        Set<Long> answerIdsToDelete = form.collectHiddenAnswers()
+    public void cleanupHiddenAndDisabledAnswers(Handle handle, String userGuid, FormInstance form) {
+        Set<Long> answerIdsToDelete = form.collectHiddenAndDisabledAnswers()
                 .stream()
                 .map(Answer::getAnswerId)
                 .filter(Objects::nonNull)
@@ -341,11 +341,11 @@ public class PutFormAnswersRoute implements Route {
                 answerIdsToDelete.size(), userGuid, form.getGuid());
     }
 
-    private void cleanupHiddenChildInstances(Handle handle,
-                                             ActivityDefStore activityStore,
-                                             String userGuid,
-                                             FormInstance form,
-                                             Map<Long, List<ActivityInstanceDto>> hiddenChildInstances) {
+    private void cleanupChildInstances(Handle handle,
+                                       ActivityDefStore activityStore,
+                                       String userGuid,
+                                       FormInstance form,
+                                       Map<Long, List<ActivityInstanceDto>> hiddenChildInstances) {
         if (hiddenChildInstances == null || hiddenChildInstances.isEmpty()) {
             return;
         }
