@@ -13,7 +13,7 @@ import org.broadinstitute.ddp.service.I18nTranslationService;
 import org.slf4j.MDC;
 
 /**
- * implementation of a {@link Template} renderer which tries to fetch translations from table
+ * Implementation of a {@link Template} renderer which tries to fetch translations from table
  * `i18n_translation` (from JSON doc) by template variables fetched from {@link Template#getTemplateText()}.
  * It calls {@link I18nTranslationService#getTranslation(String, String, String)}  to read translations stored in JSON doc.
  */
@@ -33,6 +33,7 @@ public class I18nTemplateFromJSONRenderer {
         }
         List<String> variables = getTemplateVariables(template != null ? template.getTemplateId() : null, templateText);
         if (variables != null && variables.size() > 0) {
+            Map<String, Object> variablesMap = new HashMap<>();
             String studyGuid = MDC.get(MDC_STUDY);
             boolean variablesDetected = true;
             for (String variable : variables) {
@@ -42,10 +43,11 @@ public class I18nTemplateFromJSONRenderer {
                     variablesDetected = false;
                     break;
                 } else {
-                    context.put(variable, variableTxt);
+                    variablesMap.put(variable, variableTxt);
                 }
             }
             if (variablesDetected) {
+                context.putAll(VelocityUtil.convertVariablesWithCompoundNamesToMap(variablesMap));
                 return renderer.renderToString(templateText, context);
             }
         }

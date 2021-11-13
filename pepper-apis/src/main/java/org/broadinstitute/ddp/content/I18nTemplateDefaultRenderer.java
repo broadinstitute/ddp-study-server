@@ -15,8 +15,9 @@ import org.broadinstitute.ddp.model.activity.definition.template.TemplateVariabl
  * Default renderer finds template variables from a list of {@link TemplateVariable}'s
  * connected to a {@link Template}. And for each of variables it detects translations (for each of a specified
  * languages). Translations are stored in table `i18n_template_substitution`.<br>
- * Note: the template default renderer is used in a case when template variables was not found
- * in an appropriate row of a table 'i18n_translation'.
+ * Note: the template default renderer is used in a case when template has references
+ * to {@link TemplateVariable}'s (i.e. it's method {@link Template#getVariables()} returns
+ * non-empty list.
  */
 public class I18nTemplateDefaultRenderer {
 

@@ -51,7 +51,7 @@ public class I18nTranslationService {
     private Properties readTranslationsFromDBAndCache(Handle handle, String studyGuid, String isoLangCode) {
         LOG.info("Try to find i18n-translations for StudyGuid={}, isoLangCode={}.", studyGuid, isoLangCode);
         I18nTranslation i18nTranslation = handle.attach(JdbiI18nTranslation.class)
-                .getI18nTranslations(studyGuid, isoLangCode)
+                .getI18nTranslation(studyGuid, isoLangCode)
                 .orElse(null);
         Properties translations;
         if (i18nTranslation != null) {

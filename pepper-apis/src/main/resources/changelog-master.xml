@@ -282,4 +282,5 @@
     <include file="db-changes/schema/DDP-7004-auth0-logging-error-fix.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/DDP-7074-default-picklist-option.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/DDP-6520-singular-add-operator-id-to-age-up-candidate.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/DDP-7095-create-table-i18n-translation.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>

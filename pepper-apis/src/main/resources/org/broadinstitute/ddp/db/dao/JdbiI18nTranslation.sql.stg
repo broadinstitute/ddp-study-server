@@ -1,6 +1,6 @@
 group JdbiI18nTranslation;
 
-getI18nTranslations() ::= <<
+getI18nTranslation() ::= <<
 select
         t.i18n_translation_id,
         t.i18n_translation_doc,
@@ -14,4 +14,21 @@ from
     join umbrella_study us on us.umbrella_study_id = t.study_id
 where
    lc.iso_language_code = :isoLangCode and us.guid = :studyGuid
+>>
+
+insertI18nTranslation() ::= <<
+insert into i18n_translation (
+    i18n_translation_doc,
+    study_id,
+    language_code_id,
+    created_at,
+    updated_at)
+values (:translationDoc, :studyId, :languageCodeId, :createdAt, :updatedAt)
+>>
+
+updateI18nTranslation() ::= <<
+update i18n_translation
+   set i18n_translation_doc = :translationDoc, updated_at = :updatedAt)
+where
+   study_id = :studyId and language_code_id = :languageCodeId
 >>

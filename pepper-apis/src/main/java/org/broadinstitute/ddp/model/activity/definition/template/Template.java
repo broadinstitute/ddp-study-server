@@ -90,6 +90,10 @@ public class Template {
         return variables;
     }
 
+    public void setVariables(Collection<TemplateVariable> variables) {
+        this.variables = variables;
+    }
+
     /**
      * It is possible that `variables` set to null: this could happen during building of
      * object {@link Template} from a JSON (config file) in a case if child element `variables[]` is not specified
