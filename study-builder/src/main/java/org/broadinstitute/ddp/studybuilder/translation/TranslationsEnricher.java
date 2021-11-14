@@ -111,18 +111,12 @@ public class TranslationsEnricher {
             Collection<String> variablesInTemplate = extractVelocityVariablesFromTemplate(template.getTemplateText());
             if (template.getVariables() != null) {
                 template.getVariables().forEach(v -> {
-                    List<Translation> translations = addTranslations(v.getTranslations(), v.getName(), allTranslations);
+                    List<Translation> translations = detectTranslationsForTemplateVariable(
+                            v.getTranslations(), v.getName(), allTranslations);
                     v.setTranslation(translations);
                 });
             }
-            // add variables to template only if feature 'saveTranslationsToDbJson' is disabled
-            if (!TranslationsProcessingData.INSTANCE.isSaveTranslationsToDbJson()) {
-                addVariablesToTemplate(template, variablesInTemplate, allTranslations);
-            } else {
-                if (template.getVariables() == null) {
-                    template.setVariables(new ArrayList<>());
-                }
-            }
+            addVariablesToTemplate(template, variablesInTemplate, allTranslations);
         }
     }
 
@@ -137,8 +131,16 @@ public class TranslationsEnricher {
 
         Collection<String> extraVariables = detectVariablesNotPresentInList(template.getVariables(), variablesInTemplate);
         extraVariables.forEach(v -> {
-            List<Translation> translations = addTranslations(null, v, allTranslations);
-            template.addVariable(new TemplateVariable(v, translations));
+            List<Translation> translations = detectTranslationsForTemplateVariable(null, v, allTranslations);
+
+            // add variables to template only if feature 'saveTranslationsToDbJson' is disabled
+            if (!TranslationsProcessingData.INSTANCE.isSaveTranslationsToDbJson()) {
+                template.addVariable(new TemplateVariable(v, translations));
+            } else {
+                if (template.getVariables() == null) {
+                    template.setVariables(new ArrayList<>());
+                }
+            }
         });
     }
 
@@ -156,8 +158,8 @@ public class TranslationsEnricher {
      * - in a study defined translations for languages "en", "es" (files "en.conf", "es.conf").
      * - during study building process from this template definition will be built an object {@link Template}
      * with empty list of variables.
-     * - this method ({@link #addTranslations(List, String, Map)}) applied to a template variable "prequal.name" will generate
-     *   2 translation references for each of defined languages:
+     * - this method ({@link #detectTranslationsForTemplateVariable(List, String, Map)}) applied to a template variable
+     *   "prequal.name" will generate 2 translation references for each of defined languages:
      * {@code
      *"variables": [{
      *    "name": "prequal.name",
@@ -173,7 +175,7 @@ public class TranslationsEnricher {
      * @param allTranslations  all translations for all languages of a study (defined in files in folder 'i18n')
      * @return list of Translations built for all languages of a study.
      */
-    private static List<Translation> addTranslations(
+    private static List<Translation> detectTranslationsForTemplateVariable(
             List<Translation> translations, String templateVariable, Map<String, TranslationData> allTranslations) {
         String translationKey = templateVariable;
         if (translationKey != null) {
