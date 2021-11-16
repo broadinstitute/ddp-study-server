@@ -518,7 +518,7 @@ public class PatchFormAnswersRoute implements Route {
             var instanceSummaries = handle.attach(org.broadinstitute.ddp.db.dao.ActivityInstanceDao.class)
                     .findSortedInstanceSummaries(userGuid, studyGuid, activityCodes);
             if (instanceSummaries.stream().noneMatch(summary -> summary.getGuid().equals(textValue))) {
-                throw ResponseUtil.haltError(response, 400, new ApiError(ErrorCodes.NOT_FOUND,
+                throw ResponseUtil.haltError(response, HttpStatus.SC_NOT_FOUND, new ApiError(ErrorCodes.NOT_FOUND,
                         "Could not find activity instance with guid " + textValue));
             }
             return new ActivityInstanceSelectAnswer(null, questionDto.getStableId(), guid, textValue, actInstanceGuid);
