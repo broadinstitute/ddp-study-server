@@ -718,187 +718,187 @@
                           "type": "keyword"
                         }
                       }
-                    }
-                  },
-                  "notes": {
-                    "type": "text",
-                    "fields": {
-                      "keyword": {
-                        "type": "keyword"
+                    },
+                    "notes": {
+                      "type": "text",
+                      "fields": {
+                        "keyword": {
+                          "type": "keyword"
+                        }
                       }
-                    }
-                  },
-                  "countReceived": {
-                    "type": "text",
-                    "fields": {
-                      "keyword": {
-                        "type": "keyword"
+                    },
+                    "countReceived": {
+                      "type": "text",
+                      "fields": {
+                        "keyword": {
+                          "type": "keyword"
+                        }
                       }
-                    }
-                  },
-                  "tissueType": {
-                    "type": "text",
-                    "fields": {
-                      "keyword": {
-                        "type": "keyword"
+                    },
+                    "tissueType": {
+                      "type": "text",
+                      "fields": {
+                        "keyword": {
+                          "type": "keyword"
+                        }
                       }
-                    }
-                  },
-                  "tissueSite": {
-                    "type": "text",
-                    "fields": {
-                      "keyword": {
-                        "type": "keyword"
+                    },
+                    "tissueSite": {
+                      "type": "text",
+                      "fields": {
+                        "keyword": {
+                          "type": "keyword"
+                        }
                       }
-                    }
-                  },
-                  "tumorType": {
-                    "type": "text",
-                    "fields": {
-                      "keyword": {
-                        "type": "keyword"
+                    },
+                    "tumorType": {
+                      "type": "text",
+                      "fields": {
+                        "keyword": {
+                          "type": "keyword"
+                        }
                       }
-                    }
-                  },
-                  "hE": {
-                    "type": "text",
-                    "fields": {
-                      "keyword": {
-                        "type": "keyword"
+                    },
+                    "hE": {
+                      "type": "text",
+                      "fields": {
+                        "keyword": {
+                          "type": "keyword"
+                        }
                       }
-                    }
-                  },
-                  "pathologyReport": {
-                    "type": "text",
-                    "fields": {
-                      "keyword": {
-                        "type": "keyword"
+                    },
+                    "pathologyReport": {
+                      "type": "text",
+                      "fields": {
+                        "keyword": {
+                          "type": "keyword"
+                        }
                       }
-                    }
-                  },
-                  "collaboratorSampleId": {
-                    "type": "text",
-                    "fields": {
-                      "keyword": {
-                        "type": "keyword"
+                    },
+                    "collaboratorSampleId": {
+                      "type": "text",
+                      "fields": {
+                        "keyword": {
+                          "type": "keyword"
+                        }
                       }
-                    }
-                  },
-                  "blockSent": {
-                    "type": "date"
-                  },
-                  "shlWorkNumber": {
-                    "type": "text",
-                    "fields": {
-                      "keyword": {
-                        "type": "keyword"
+                    },
+                    "blockSent": {
+                      "type": "date"
+                    },
+                    "shlWorkNumber": {
+                      "type": "text",
+                      "fields": {
+                        "keyword": {
+                          "type": "keyword"
+                        }
                       }
-                    }
-                  },
-                  "scrollsReceived": {
-                    "type": "date"
-                  },
-                  "skId": {
-                    "type": "text",
-                    "fields": {
-                      "keyword": {
-                        "type": "keyword"
+                    },
+                    "scrollsReceived": {
+                      "type": "date"
+                    },
+                    "skId": {
+                      "type": "text",
+                      "fields": {
+                        "keyword": {
+                          "type": "keyword"
+                        }
                       }
-                    }
-                  },
-                  "smId": {
-                    "type": "text",
-                    "fields": {
-                      "keyword": {
-                        "type": "keyword"
+                    },
+                    "smId": {
+                      "type": "text",
+                      "fields": {
+                        "keyword": {
+                          "type": "keyword"
+                        }
                       }
-                    }
-                  },
-                  "sentGp": {
-                    "type": "date"
-                  },
-                  "deleted": {
-                    "type": "boolean"
-                  },
-                  "firstSmId": {
-                    "type": "text",
-                    "fields": {
-                      "keyword": {
-                        "type": "keyword"
+                    },
+                    "sentGp": {
+                      "type": "date"
+                    },
+                    "deleted": {
+                      "type": "boolean"
+                    },
+                    "firstSmId": {
+                      "type": "text",
+                      "fields": {
+                        "keyword": {
+                          "type": "keyword"
+                        }
                       }
-                    }
-                  },
-                  "additionalTissueValueJson": {
-                    "type": "text",
-                    "fields": {
-                      "keyword": {
-                        "type": "keyword"
+                    },
+                    "additionalTissueValueJson": {
+                      "type": "text",
+                      "fields": {
+                        "keyword": {
+                          "type": "keyword"
+                        }
                       }
-                    }
-                  },
-                  "returnDate": {
-                    "type": "date"
-                  },
-                  "returnFedexId": {
-                    "type": "text",
-                    "fields": {
-                      "keyword": {
-                        "type": "keyword"
+                    },
+                    "returnDate": {
+                      "type": "date"
+                    },
+                    "returnFedexId": {
+                      "type": "text",
+                      "fields": {
+                        "keyword": {
+                          "type": "keyword"
+                        }
                       }
-                    }
-                  },
-                  "expectedReturn": {
-                    "type": "date"
-                  },
-                  "tumorPercentage": {
-                    "type": "text",
-                    "fields": {
-                      "keyword": {
-                        "type": "keyword"
+                    },
+                    "expectedReturn": {
+                      "type": "date"
+                    },
+                    "tumorPercentage": {
+                      "type": "text",
+                      "fields": {
+                        "keyword": {
+                          "type": "keyword"
+                        }
                       }
-                    }
-                  },
-                  "tissueSequence": {
-                    "type": "text",
-                    "fields": {
-                      "keyword": {
-                        "type": "keyword"
+                    },
+                    "tissueSequence": {
+                      "type": "text",
+                      "fields": {
+                        "keyword": {
+                          "type": "keyword"
+                        }
                       }
-                    }
-                  },
-                  "scrollsCount": {
-                    "type": "text",
-                    "fields": {
-                      "keyword": {
-                        "type": "keyword"
+                    },
+                    "scrollsCount": {
+                      "type": "text",
+                      "fields": {
+                        "keyword": {
+                          "type": "keyword"
+                        }
                       }
-                    }
-                  },
-                  "ussCount": {
-                    "type": "text",
-                    "fields": {
-                      "keyword": {
-                        "type": "keyword"
+                    },
+                    "ussCount": {
+                      "type": "text",
+                      "fields": {
+                        "keyword": {
+                          "type": "keyword"
+                        }
                       }
-                    }
-                  },
-                  "blocksCount": {
-                    "type": "text",
-                    "fields": {
-                      "keyword": {
-                        "type": "keyword"
+                    },
+                    "blocksCount": {
+                      "type": "text",
+                      "fields": {
+                        "keyword": {
+                          "type": "keyword"
+                        }
                       }
-                    }
-                  },
-                  "hECount": {
-                    "type": "text",
-                    "fields": {
-                      "keyword": {
-                        "type": "keyword"
+                    },
+                    "hECount": {
+                      "type": "text",
+                      "fields": {
+                        "keyword": {
+                          "type": "keyword"
+                        }
                       }
                     }
                   }
-                },
+                  },
                 "notes": {
                   "type": "text",
                   "fields": {
