@@ -41,6 +41,22 @@ public class MatrixOptionDef {
         this.isExclusive = isExclusive;
     }
 
+    /**
+     * Constructs a picklist option definition object without a detail field.
+     */
+    public MatrixOptionDef(String stableId, Template optionLabelTemplate, String groupStableId) {
+        this.stableId = MiscUtil.checkNotBlank(stableId, "stableId");
+        this.optionLabelTemplate = MiscUtil.checkNonNull(optionLabelTemplate, "optionLabelTemplate");
+        this.groupStableId = groupStableId;
+    }
+
+    public static MatrixOptionDef buildExclusive(String stableId, Template optionLabelTemplate, String groupStableId) {
+        MatrixOptionDef matrixOptionDef = new MatrixOptionDef(stableId, optionLabelTemplate, groupStableId);
+        matrixOptionDef.isExclusive = true;
+        return matrixOptionDef;
+    }
+
+
     public String getStableId() {
         return stableId;
     }

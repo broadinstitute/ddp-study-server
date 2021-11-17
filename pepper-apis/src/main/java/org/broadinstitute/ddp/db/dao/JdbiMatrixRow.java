@@ -10,6 +10,7 @@ import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
 import org.jdbi.v3.sqlobject.statement.SqlBatch;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
+import org.jdbi.v3.stringtemplate4.StringTemplateSqlLocator;
 import org.jdbi.v3.stringtemplate4.UseStringTemplateSqlLocator;
 
 import java.util.Iterator;
@@ -45,11 +46,26 @@ public interface JdbiMatrixRow extends SqlObject {
     @UseStringTemplateSqlLocator
     @SqlQuery("queryMatrixRowsByStableIdsQuestionIdAndRevision")
     @RegisterConstructorMapper(MatrixRowDto.class)
-    List<MatrixRowDto> findRows(@BindList("stableIds") List<String> stableIds,
-                                @Bind("questionId") long questionId,
+    List<MatrixRowDto> findRows(@Bind("questionId") long questionId,
+                                @BindList("stableIds") List<String> stableIds,
                                 @Bind("instanceGuid") String instanceGuid);
 
-    @SqlBatch("update matrix_row set revision_id = :revisionId where matrix_option_id = :dto.getId")
+    @SqlBatch("update matrix_row set revision_id = :revisionId where matrix_row_id = :dto.getId")
     int[] bulkUpdateRevisionIdsByDtos(@BindMethods("dto") List<MatrixRowDto> rows,
                                       @Bind("revisionId") long[] revisionIds);
+
+    /**
+     * Checks if stable id is already used with a matrix question, and if so, is it currently active.
+     */
+    default boolean isCurrentlyActive(long questionId, String stableId) {
+        String query = StringTemplateSqlLocator
+                .findStringTemplate(JdbiMatrixRow.class, "isMatrixRowStableIdCurrentlyActive")
+                .render();
+        return getHandle().createQuery(query)
+                .bind("questionId", questionId)
+                .bind("stableId", stableId)
+                .mapTo(Boolean.class)
+                .findFirst()
+                .isPresent();
+    }
 }

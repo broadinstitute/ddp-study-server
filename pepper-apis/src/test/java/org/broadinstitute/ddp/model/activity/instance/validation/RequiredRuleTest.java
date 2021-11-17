@@ -17,17 +17,24 @@ import org.broadinstitute.ddp.model.activity.instance.answer.BoolAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.DateAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.PicklistAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.SelectedPicklistOption;
+import org.broadinstitute.ddp.model.activity.instance.answer.MatrixAnswer;
+import org.broadinstitute.ddp.model.activity.instance.answer.SelectedMatrixCell;
 import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
 import org.broadinstitute.ddp.model.activity.instance.question.AgreementQuestion;
 import org.broadinstitute.ddp.model.activity.instance.question.BoolQuestion;
 import org.broadinstitute.ddp.model.activity.instance.question.DateQuestion;
 import org.broadinstitute.ddp.model.activity.instance.question.PicklistOption;
 import org.broadinstitute.ddp.model.activity.instance.question.PicklistQuestion;
+import org.broadinstitute.ddp.model.activity.instance.question.MatrixQuestion;
+import org.broadinstitute.ddp.model.activity.instance.question.MatrixOption;
+import org.broadinstitute.ddp.model.activity.instance.question.MatrixGroup;
+import org.broadinstitute.ddp.model.activity.instance.question.MatrixRow;
 import org.broadinstitute.ddp.model.activity.instance.question.TextQuestion;
 import org.broadinstitute.ddp.model.activity.types.DateFieldType;
 import org.broadinstitute.ddp.model.activity.types.DateRenderMode;
 import org.broadinstitute.ddp.model.activity.types.PicklistRenderMode;
 import org.broadinstitute.ddp.model.activity.types.PicklistSelectMode;
+import org.broadinstitute.ddp.model.activity.types.MatrixSelectMode;
 import org.broadinstitute.ddp.model.activity.types.RuleType;
 import org.broadinstitute.ddp.model.activity.types.TextInputType;
 import org.junit.Test;
@@ -90,6 +97,25 @@ public class RequiredRuleTest {
                 singletonList(new SelectedPicklistOption("opt 1")))));
         assertTrue(rule.validate(unused, new PicklistAnswer(1L, "q", "a",
                 Arrays.asList(new SelectedPicklistOption("opt 1"), new SelectedPicklistOption("opt 2")))));
+    }
+
+    @Test
+    public void testValidate_matrixAnswer() {
+        MatrixQuestion unused =
+                new MatrixQuestion("sid", 1L, MatrixSelectMode.SINGLE, emptyList(), emptyList(),
+                        List.of(new MatrixOption("opt 1", 3L, null, null, false),
+                                new MatrixOption("opt 2", 3L, null, "group", false)),
+                        singletonList(new MatrixRow("row 1", 4L, null)),
+                        singletonList(new MatrixGroup("group", 5L)));
+        RequiredRule<MatrixAnswer> rule = new RequiredRule<>("msg", null, false);
+        assertFalse(rule.validate(unused, null));
+        assertFalse(rule.validate(unused, new MatrixAnswer(1L, "sid", "a", emptyList())));
+        assertFalse(rule.validate(unused, new MatrixAnswer(1L, "sid", "a",
+                singletonList(new SelectedMatrixCell("row 1", "opt 1", null)))));
+        assertTrue(rule.validate(unused, new MatrixAnswer(1L, "sid", "a",
+                Arrays.asList(
+                        new SelectedMatrixCell("row 1", "opt 1", null),
+                        new SelectedMatrixCell("row 1", "opt 2", "group")))));
     }
 
     @Test

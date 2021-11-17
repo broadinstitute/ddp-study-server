@@ -13,7 +13,7 @@ public class MatrixOptionDto implements TimestampRevisioned, Serializable {
     private String stableId;
     private long optionLabelTemplateId;
     private Long tooltipTemplateId;
-    private String groupId;
+    private Long groupId;
     private boolean isExclusive;
     private int displayOrder;
     private long revisionId;
@@ -25,7 +25,7 @@ public class MatrixOptionDto implements TimestampRevisioned, Serializable {
                            @ColumnName("matrix_option_stable_id") String stableId,
                            @ColumnName("option_label_template_id") long optionLabelTemplateId,
                            @ColumnName("tooltip_template_id") Long tooltipTemplateId,
-                           @ColumnName("matrix_group_id") String groupId,
+                           @ColumnName("matrix_group_id") Long groupId,
                            @ColumnName("is_exclusive") boolean isExclusive,
                            @ColumnName("display_order") int displayOrder,
                            @ColumnName("revision_id") long revisionId,
@@ -59,7 +59,7 @@ public class MatrixOptionDto implements TimestampRevisioned, Serializable {
         return tooltipTemplateId;
     }
 
-    public String getGroupId() {
+    public Long getGroupId() {
         return groupId;
     }
 

@@ -45,6 +45,10 @@ public class MatrixOption implements Renderable {
         this.groupStableId = groupStableId;
     }
 
+    public MatrixOption(String stableId, long optionLabelTemplateId) {
+        this(stableId, optionLabelTemplateId, null, null, false);
+    }
+
     public String getStableId() {
         return stableId;
     }
@@ -65,16 +69,12 @@ public class MatrixOption implements Renderable {
         return groupStableId;
     }
 
-    public void setOptionLabelTemplateId(long optionLabelTemplateId) {
-        this.optionLabelTemplateId = optionLabelTemplateId;
-    }
-
     public Long getTooltipTemplateId() {
         return tooltipTemplateId;
     }
 
-    public void setTooltipTemplateId(Long tooltipTemplateId) {
-        this.tooltipTemplateId = tooltipTemplateId;
+    public long getOptionLabelTemplateId() {
+        return optionLabelTemplateId;
     }
 
     @Override

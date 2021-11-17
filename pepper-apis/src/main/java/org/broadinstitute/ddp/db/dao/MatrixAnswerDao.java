@@ -74,15 +74,15 @@ public interface MatrixAnswerDao extends SqlObject {
         Map<String, MatrixGroupDto> selectedGroupMap = new HashMap<>();
 
         getJdbiMatrixOption()
-                .findOptions(optionStableIds, answerDto.getQuestionId(), instanceGuid)
+                .findOptions(answerDto.getQuestionId(), optionStableIds, instanceGuid)
                 .forEach(dto -> selectedOptionMap.put(dto.getStableId(), dto));
 
         getJdbiMatrixRow()
-                .findRows(rowStableIds, answerDto.getQuestionId(), instanceGuid)
+                .findRows(answerDto.getQuestionId(), rowStableIds, instanceGuid)
                 .forEach(dto -> selectedRowMap.put(dto.getStableId(), dto));
 
         getJdbiMatrixGroup()
-                .findGroups(groupStableIds, answerDto.getQuestionId(), instanceGuid)
+                .findGroups(answerDto.getQuestionId(), groupStableIds, instanceGuid)
                 .forEach(dto -> selectedGroupMap.put(dto.getStableId(), dto));
 
         List<Long> optionIds = new ArrayList<>();
@@ -90,7 +90,7 @@ public interface MatrixAnswerDao extends SqlObject {
         Map<String, Boolean> selectedCellsMap = new HashMap<>();
 
         for (SelectedMatrixCell cell : selected) {
-            var groupSid = cell.getGroupStableId() == null ? "null" : cell.getGroupStableId();
+            var groupSid = String.valueOf(cell.getGroupStableId());
 
             if (!selectedRowMap.containsKey(cell.getRowStableId())) {
                 throw new NoSuchElementException("Could not find matrix row stable id " + cell.getRowStableId());
@@ -144,14 +144,14 @@ public interface MatrixAnswerDao extends SqlObject {
 
         Map<String, MatrixGroupDef> selectedGroupMap = questionDef.getGroups().stream()
                 .filter(group -> groupStableIds.contains(group.getStableId()))
-                .collect(toMap(g -> g.getGroupId() == null ? "null" : g.getGroupId(), def -> def));
+                .collect(toMap(g -> String.valueOf(g.getStableId()), def -> def));
 
         List<Long> optionIds = new ArrayList<>();
         List<Long> rowIds = new ArrayList<>();
         Map<String, Boolean> selectedCellsMap = new HashMap<>();
 
         for (SelectedMatrixCell cell : selected) {
-            var groupSid = cell.getGroupStableId() == null ? "null" : cell.getGroupStableId();
+            var groupSid = String.valueOf(cell.getGroupStableId());
 
             if (!selectedRowMap.containsKey(cell.getRowStableId())) {
                 throw new NoSuchElementException("Could not find matrix row stable id " + cell.getRowStableId());

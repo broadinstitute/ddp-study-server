@@ -148,6 +148,9 @@ public interface QuestionDao extends SqlObject {
     JdbiMatrixQuestion getJdbiMatrixQuestion();
 
     @CreateSqlObject
+    JdbiMatrixGroup getJdbiMatrixGroup();
+
+    @CreateSqlObject
     JdbiPicklistOption getJdbiPicklistOption();
 
     @CreateSqlObject
@@ -571,7 +574,9 @@ public interface QuestionDao extends SqlObject {
 
         for (MatrixOptionDto optionDto : container.getOptions()) {
             options.add(new MatrixOption(optionDto.getStableId(), optionDto.getOptionLabelTemplateId(),
-                    optionDto.getTooltipTemplateId(), optionDto.getGroupId(), optionDto.isExclusive()));
+                    optionDto.getTooltipTemplateId(),
+                    getJdbiMatrixGroup().findGroupCodeById(optionDto.getGroupId()),
+                    optionDto.isExclusive()));
         }
 
         for (MatrixRowDto questionDto : container.getRows()) {
@@ -1460,7 +1465,7 @@ public interface QuestionDao extends SqlObject {
         }
 
         disableBaseQuestion(matrixQuestion, meta);
-        getMatrixQuestionDao().disableOptionsAndRowQuestions(questionId, meta);
+        getMatrixQuestionDao().disableOptionsGroupsRowQuestions(questionId, meta);
     }
 
     /**
@@ -1902,14 +1907,14 @@ public interface QuestionDao extends SqlObject {
                 continue;
             }
             Template nameTemplate = templates.get(groupDto.getNameTemplateId());
-            groups.add(new MatrixGroupDef(groupDto.getStableId(), groupDto.getStableId(), nameTemplate));
+            groups.add(new MatrixGroupDef(groupDto.getId(), groupDto.getStableId(), nameTemplate));
         }
 
         List<MatrixOptionDef> options = container.getOptions().stream().map(optionDto -> {
             Template optionLabel = templates.get(optionDto.getOptionLabelTemplateId());
             Template tooltipTemplate = templates.getOrDefault(optionDto.getTooltipTemplateId(), null);
             return new MatrixOptionDef(optionDto.getId(), optionDto.getStableId(), optionLabel, tooltipTemplate,
-                    optionDto.getGroupId(), optionDto.isExclusive());
+                    getJdbiMatrixGroup().findGroupCodeById(optionDto.getGroupId()), optionDto.isExclusive());
         }).collect(Collectors.toList());
 
         List<MatrixRowDef> questions = container.getRows().stream().map(questionDto -> {

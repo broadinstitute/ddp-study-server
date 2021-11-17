@@ -32,6 +32,11 @@ public class MatrixRowDef {
         this.tooltipTemplate = tooltipTemplate;
     }
 
+    public MatrixRowDef(String stableId, Template rowLabelTemplate) {
+        this.stableId = MiscUtil.checkNotBlank(stableId, "stableId");
+        this.rowLabelTemplate = MiscUtil.checkNonNull(rowLabelTemplate, "rowLabelTemplate");
+    }
+
     public String getStableId() {
         return stableId;
     }

@@ -500,20 +500,18 @@ public interface AnswerDao extends SqlObject {
                     }
                     break;
                 case MATRIX:
-                    var matrixMap = isChildAnswer ? childAnswers : container;
-                    answer = matrixMap.computeIfAbsent(answerId, id ->
+                    answer = container.computeIfAbsent(answerId, id ->
                             new MatrixAnswer(answerId, questionStableId, answerGuid, new ArrayList<>(), actInstanceGuid));
 
                     String matrixOptionSid = view.getColumn("matrix_option_stable_id", String.class);
                     String matrixQuestionRowSid = view.getColumn("matrix_row_stable_id", String.class);
+                    String matrixGroupSid = view.getColumn("matrix_group_stable_id", String.class);
 
                     if (matrixOptionSid != null && matrixQuestionRowSid != null) {
-                        var option = new SelectedMatrixCell(
-                                matrixQuestionRowSid,
-                                matrixOptionSid,
-                                view.getColumn("matrix_group_stable_id", String.class));
-                        ((MatrixAnswer) answer).getValue().add(option);
+                        var cell = new SelectedMatrixCell(matrixQuestionRowSid, matrixOptionSid, matrixGroupSid);
+                        ((MatrixAnswer) answer).getValue().add(cell);
                     }
+
                     break;
                 case COMPOSITE:
                     answer = container.computeIfAbsent(answerId, id -> {

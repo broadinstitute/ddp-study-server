@@ -19,6 +19,10 @@ import org.broadinstitute.ddp.model.activity.definition.question.FileQuestionDef
 import org.broadinstitute.ddp.model.activity.definition.question.NumericQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistOptionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistQuestionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.MatrixOptionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.MatrixQuestionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.MatrixRowDef;
+import org.broadinstitute.ddp.model.activity.definition.question.MatrixGroupDef;
 import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.TextQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
@@ -28,6 +32,7 @@ import org.broadinstitute.ddp.model.activity.types.DateFieldType;
 import org.broadinstitute.ddp.model.activity.types.DateRenderMode;
 import org.broadinstitute.ddp.model.activity.types.NumericType;
 import org.broadinstitute.ddp.model.activity.types.PicklistRenderMode;
+import org.broadinstitute.ddp.model.activity.types.MatrixSelectMode;
 import org.broadinstitute.ddp.model.activity.types.TextInputType;
 import org.jdbi.v3.core.Handle;
 
@@ -50,6 +55,7 @@ public class TestFormActivity {
     private NumericQuestionDef numericIntQuestion;
     private PicklistQuestionDef picklistSingleListQuestion;
     private PicklistQuestionDef picklistMultiListQuestion;
+    private MatrixQuestionDef matrixListQuestion;
     private TextQuestionDef textQuestion;
 
     public static Builder builder() {
@@ -100,6 +106,10 @@ public class TestFormActivity {
         return picklistMultiListQuestion;
     }
 
+    public MatrixQuestionDef getMatrixListQuestion() {
+        return matrixListQuestion;
+    }
+
     public TextQuestionDef getTextQuestion() {
         return textQuestion;
     }
@@ -115,6 +125,10 @@ public class TestFormActivity {
         private boolean withTextQuestion = false;
         private List<PicklistOptionDef> picklistSingleListOptions = null;
         private List<PicklistOptionDef> picklistMultiListOptions = null;
+        private MatrixSelectMode matrixSelectMode = null;
+        private List<MatrixGroupDef> matrixGroups = null;
+        private List<MatrixOptionDef> matrixOptions = null;
+        private List<MatrixRowDef> matrixRows = null;
         private List<QuestionDef> compositeChildQuestions = null;
 
         private Builder() {
@@ -179,6 +193,35 @@ public class TestFormActivity {
                 picklistMultiListOptions = List.of(options);
             } else {
                 picklistMultiListOptions = null;
+            }
+            return this;
+        }
+
+        public Builder withMatrixOptionsRowsList(boolean include, MatrixSelectMode mode,
+                                                 List<MatrixOptionDef> options, List<MatrixRowDef> rows) {
+            if (include) {
+                matrixSelectMode = mode;
+                matrixOptions = List.copyOf(options);
+                matrixRows = List.copyOf(rows);
+            } else {
+                matrixSelectMode = null;
+                matrixOptions = null;
+                matrixRows = null;
+            }
+            return this;
+        }
+
+        public Builder withMatrixOptionsRowsGroupsList(boolean include, MatrixSelectMode mode, List<MatrixOptionDef> options,
+                                                       List<MatrixRowDef> rows, List<MatrixGroupDef> groups) {
+            if (include) {
+                matrixSelectMode = mode;
+                matrixGroups = List.copyOf(groups);
+                matrixOptions = List.copyOf(options);
+                matrixRows = List.copyOf(rows);
+            } else {
+                matrixGroups = null;
+                matrixOptions = null;
+                matrixRows = null;
             }
             return this;
         }
@@ -282,6 +325,21 @@ public class TestFormActivity {
             }
             if (!picklistBlocks.isEmpty()) {
                 builder.addSection(new FormSectionDef(null, picklistBlocks));
+            }
+
+            var matrixBlocks = new ArrayList<FormBlockDef>();
+            if (matrixOptions != null && matrixSelectMode != null) {
+                var question = MatrixQuestionDef
+                        .builder(matrixSelectMode, "MATRIX" + Instant.now().toEpochMilli(), Template.text("matrix multi prompt"))
+                        .addOptions(List.copyOf(matrixOptions))
+                        .addRows(List.copyOf(matrixRows))
+                        .addGroups(List.copyOf(matrixGroups))
+                        .build();
+                result.matrixListQuestion = question;
+                matrixBlocks.add(new QuestionBlockDef(question));
+            }
+            if (!matrixBlocks.isEmpty()) {
+                builder.addSection(new FormSectionDef(null, matrixBlocks));
             }
 
             var textBlocks = new ArrayList<FormBlockDef>();

@@ -140,7 +140,8 @@
         <createTable tableName="matrix_answer">
             <column name="answer_id" type="bigint">
                 <constraints nullable="false" references="answer(answer_id)"
-                             foreignKeyName="matrix_answer_answer_fk"/>
+                             foreignKeyName="matrix_answer_answer_fk"
+                             deleteCascade="true"/>
             </column>
             <column name="matrix_answer_id" type="bigint" autoIncrement="true" startWith="1">
                 <constraints primaryKey="true" primaryKeyName="matrix_answer_pk"/>

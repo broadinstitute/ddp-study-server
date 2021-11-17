@@ -5,7 +5,7 @@ select mo.matrix_option_id           as mo_matrix_option_id,
        mo.matrix_option_stable_id    as mo_matrix_option_stable_id,
        mo.option_label_template_id   as mo_option_label_template_id,
        mo.tooltip_template_id        as mo_tooltip_template_id,
-       mg.group_stable_id            as mo_matrix_group_id,
+       mo.matrix_group_id            as mo_matrix_group_id,
        mo.is_exclusive               as mo_is_exclusive,
        mo.display_order              as mo_display_order,
        mo.revision_id                as mo_revision_id,
@@ -47,5 +47,5 @@ queryAllOrderedGroupsOptionsRowsByQuestionIdsAndTimestamp() ::= <<
    and (group_rev.revision_id is null or
        (group_rev.start_date \<= :timestamp
        and (group_rev.end_date is null or :timestamp \< group_rev.end_date)))
- order by mg.display_order asc, mo.display_order, mr.display_order asc
+ order by mr.display_order asc, mo.display_order, mg.display_order asc
 >>

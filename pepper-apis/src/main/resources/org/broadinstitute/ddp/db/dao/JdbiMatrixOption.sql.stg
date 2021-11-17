@@ -11,6 +11,7 @@ select mo.matrix_option_id,
        mo.matrix_option_stable_id,
        mo.option_label_template_id,
        mo.tooltip_template_id,
+       mo.matrix_group_id,
        mo.is_exclusive,
        mo.display_order,
        mo.revision_id,
@@ -28,6 +29,7 @@ select mo.matrix_option_id,
        mo.matrix_option_stable_id,
        mo.option_label_template_id,
        mo.tooltip_template_id,
+       mo.matrix_group_id,
        mo.is_exclusive,
        mo.display_order,
        mo.revision_id,
@@ -40,4 +42,22 @@ select mo.matrix_option_id,
    and mo.matrix_option_stable_id in (<stableIds>)
    and rev.start_date \<= ai.created_at
    and (rev.end_date is null or ai.created_at \< rev.end_date)
+>>
+
+isMatrixOptionStableIdCurrentlyActive() ::= <<
+select 1
+from
+    matrix_option as mo,
+    revision as rev
+where mo.matrix_question_id = :questionId
+and mo.matrix_option_stable_id = :stableId
+and mo.revision_id = rev.revision_id
+and rev.end_date is null
+>>
+
+insertMatrixOptionByDto() ::= <<
+insert into matrix_option (matrix_question_id, matrix_option_stable_id, option_label_template_id, tooltip_template_id,
+       matrix_group_id, is_exclusive, display_order, revision_id)
+values (:matrixQuestionId, :dto.getStableId, :dto.getOptionLabelTemplateId, :dto.getTooltipTemplateId,
+       :dto.getGroupId, :dto.isExclusive, :dto.getDisplayOrder, :revisionId)
 >>

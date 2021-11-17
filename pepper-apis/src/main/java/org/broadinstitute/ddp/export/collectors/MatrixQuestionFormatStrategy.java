@@ -69,15 +69,15 @@ public class MatrixQuestionFormatStrategy implements ResponseFormatStrategy<Matr
         }
         props.put("options", options);
 
-        List<Object> questions = new ArrayList<>();
+        List<Object> rows = new ArrayList<>();
         for (MatrixRowDef rowDef : definition.getRows()) {
             Map<String, Object> stableIdTxt = new HashMap<>();
             stableIdTxt.put("rowStableId", rowDef.getStableId());
             stableIdTxt.put("rowText", HtmlConverter.getPlainText(rowDef.getRowLabelTemplate().renderWithDefaultValues("en")));
 
-            options.add(stableIdTxt);
+            rows.add(stableIdTxt);
         }
-        props.put("questions", questions);
+        props.put("rows", rows);
 
         return props;
     }

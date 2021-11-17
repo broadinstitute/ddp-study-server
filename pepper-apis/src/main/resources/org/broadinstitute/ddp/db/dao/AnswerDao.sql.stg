@@ -68,7 +68,7 @@ select ans.answer_id,
 
 // Important: sort the child answers first so we have them in memory when we get to the composite parent answers.
 all_answers_order_by() ::= <<
-order by is_child_answer desc, po.display_order asc, ca_child_row asc, ca_child_col asc
+order by is_child_answer desc, po.display_order asc, mr.display_order asc, mo.display_order asc, ca_child_row asc, ca_child_col asc
 >>
 
 findAnswerById() ::= <<

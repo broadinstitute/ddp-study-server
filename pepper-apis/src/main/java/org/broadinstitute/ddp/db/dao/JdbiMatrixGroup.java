@@ -5,9 +5,12 @@ import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindList;
+import org.jdbi.v3.sqlobject.customizer.BindMethods;
 import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
+import org.jdbi.v3.sqlobject.statement.SqlBatch;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
+import org.jdbi.v3.stringtemplate4.StringTemplateSqlLocator;
 import org.jdbi.v3.stringtemplate4.UseStringTemplateSqlLocator;
 
 import java.util.List;
@@ -23,14 +26,41 @@ public interface JdbiMatrixGroup extends SqlObject {
                 @Bind("displayOrder") int displayOrder,
                 @Bind("revisionId") long revisionId);
 
-    @SqlQuery("select matrix_group_id from matrix_group where group_stable_id = :stableId")
-    Long findGroupIdByCode(@Bind("stableId") String groupStableId);
+    @SqlQuery("select matrix_group_id from matrix_group where matrix_question_id = :questionId and group_stable_id = :stableId")
+    Long findGroupIdByCodeAndQuestionId(@Bind("questionId") long questionId,
+                                        @Bind("stableId") String groupStableId);
 
+    @SqlQuery("select group_stable_id from matrix_group where matrix_group_id = :groupId")
+    String findGroupCodeById(@Bind("groupId") Long groupId);
 
     @UseStringTemplateSqlLocator
     @SqlQuery("queryMatrixGroupsByStableIdsQuestionIdAndRevision")
     @RegisterConstructorMapper(MatrixGroupDto.class)
-    List<MatrixGroupDto> findGroups(@BindList("stableIds") List<String> stableIds,
-                                    @Bind("questionId") long questionId,
+    List<MatrixGroupDto> findGroups(@Bind("questionId") long questionId,
+                                    @BindList("stableIds") List<String> stableIds,
                                     @Bind("instanceGuid") String instanceGuid);
+
+    @UseStringTemplateSqlLocator
+    @SqlQuery("queryAllActiveOrderedMatrixGroupsQuestionId")
+    @RegisterConstructorMapper(MatrixGroupDto.class)
+    List<MatrixGroupDto> findAllActiveOrderedMatrixGroupsQuestionId(@Bind("questionId") long questionId);
+
+    @SqlBatch("update matrix_group set revision_id = :revisionId where matrix_group_id = :dto.getId")
+    int[] bulkUpdateRevisionIdsByDtos(@BindMethods("dto") List<MatrixGroupDto> rows,
+                                      @Bind("revisionId") long[] revisionIds);
+
+    /**
+     * Checks if stable id is already used with a matrix question, and if so, is it currently active.
+     */
+    default boolean isCurrentlyActive(long questionId, String stableId) {
+        String query = StringTemplateSqlLocator
+                .findStringTemplate(JdbiMatrixGroup.class, "isMatrixGroupStableIdCurrentlyActive")
+                .render();
+        return getHandle().createQuery(query)
+                .bind("questionId", questionId)
+                .bind("stableId", stableId)
+                .mapTo(Boolean.class)
+                .findFirst()
+                .isPresent();
+    }
 }

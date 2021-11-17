@@ -10,6 +10,7 @@ import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
 import org.jdbi.v3.sqlobject.statement.SqlBatch;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
+import org.jdbi.v3.stringtemplate4.StringTemplateSqlLocator;
 import org.jdbi.v3.stringtemplate4.UseStringTemplateSqlLocator;
 
 import java.util.Iterator;
@@ -49,11 +50,33 @@ public interface JdbiMatrixOption extends SqlObject {
     @UseStringTemplateSqlLocator
     @SqlQuery("queryMatrixOptionsByStableIdsQuestionIdAndRevision")
     @RegisterConstructorMapper(MatrixOptionDto.class)
-    List<MatrixOptionDto> findOptions(@BindList("stableIds") List<String> stableIds,
-                                        @Bind("questionId") long questionId,
-                                        @Bind("instanceGuid") String instanceGuid);
+    List<MatrixOptionDto> findOptions(@Bind("questionId") long questionId,
+                                      @BindList("stableIds") List<String> stableIds,
+                                      @Bind("instanceGuid") String instanceGuid);
 
     @SqlBatch("update matrix_option set revision_id = :revisionId where matrix_option_id = :dto.getId")
     int[] bulkUpdateRevisionIdsByDtos(@BindMethods("dto") List<MatrixOptionDto> options,
                                       @Bind("revisionId") long[] revisionIds);
+
+    @UseStringTemplateSqlLocator
+    @SqlBatch("insertMatrixOptionByDto")
+    @GetGeneratedKeys
+    long[] bulkInsertByDtos(@BindMethods("dto") List<MatrixOptionDto> optionDtos,
+                            @Bind("matrixQuestionId") long matrixQuestionId,
+                            @Bind("revisionId") long revisionId);
+
+    /**
+     * Checks if stable id is already used with a matrix question, and if so, is it currently active.
+     */
+    default boolean isCurrentlyActive(long questionId, String stableId) {
+        String query = StringTemplateSqlLocator
+                .findStringTemplate(JdbiMatrixOption.class, "isMatrixOptionStableIdCurrentlyActive")
+                .render();
+        return getHandle().createQuery(query)
+                .bind("questionId", questionId)
+                .bind("stableId", stableId)
+                .mapTo(Boolean.class)
+                .findFirst()
+                .isPresent();
+    }
 }

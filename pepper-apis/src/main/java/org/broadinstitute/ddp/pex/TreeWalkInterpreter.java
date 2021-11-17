@@ -6,6 +6,8 @@ import static org.broadinstitute.ddp.pex.RetrievedActivityInstanceType.LATEST;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Set;
+import java.util.HashSet;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
@@ -28,6 +30,9 @@ import org.broadinstitute.ddp.db.dao.InvitationDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
 import org.broadinstitute.ddp.db.dao.JdbiQuestionCached;
+import org.broadinstitute.ddp.db.dao.JdbiMatrixOption;
+import org.broadinstitute.ddp.db.dao.JdbiMatrixRow;
+import org.broadinstitute.ddp.db.dao.JdbiMatrixGroup;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudyCached;
 import org.broadinstitute.ddp.db.dao.JdbiUserStudyEnrollment;
 import org.broadinstitute.ddp.db.dao.StudyGovernanceDao;
@@ -37,6 +42,8 @@ import org.broadinstitute.ddp.db.dto.ActivityDto;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceStatusDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.db.dto.UserActivityInstanceSummary;
+import org.broadinstitute.ddp.db.dto.MatrixRowDto;
+import org.broadinstitute.ddp.db.dto.MatrixOptionDto;
 import org.broadinstitute.ddp.model.activity.definition.question.CompositeQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
 import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
@@ -412,6 +419,8 @@ public class TreeWalkInterpreter implements PexInterpreter {
                 return ((PicklistAnswer) answer).getValue().size() > 0;
             } else if (answer.getQuestionType() == QuestionType.TEXT) {
                 return !((TextAnswer) answer).getValue().isBlank();
+            } else if (answer.getQuestionType() == QuestionType.MATRIX) {
+                return checkMatrixQuestionAnswered(ictx, studyId, stableId, (MatrixAnswer) answer);
             } else {
                 return true;
             }
@@ -443,6 +452,38 @@ public class TreeWalkInterpreter implements PexInterpreter {
         } else {
             throw new PexUnsupportedException("Unsupported question predicate: " + predCtx.getText());
         }
+    }
+
+    private boolean checkMatrixQuestionAnswered(InterpreterContext ictx, long studyId, String stableId,
+                                                MatrixAnswer answer) {
+        var questionDto = new JdbiQuestionCached(ictx.getHandle())
+                .findLatestDtoByStudyIdAndQuestionStableId(studyId, stableId).orElseThrow(() -> new PexFetchException(format(
+                        "Could not find question with stable id %s in study %d", stableId, studyId)));
+
+        var getJdbiOption = ictx.getHandle().attach(JdbiMatrixOption.class);
+        var getJdbiGroup = ictx.getHandle().attach(JdbiMatrixGroup.class);
+        var getJdbiRow = ictx.getHandle().attach(JdbiMatrixRow.class);
+
+        Set<String> groups = getJdbiOption.findAllActiveOrderedMatrixOptionsByQuestionId(questionDto.getId())
+                .stream().map(MatrixOptionDto::getGroupId).distinct()
+                .map(getJdbiGroup::findGroupCodeById).collect(Collectors.toSet());
+
+        Set<String> rows = getJdbiRow.findAllActiveOrderedMatrixRowsByQuestionId(questionDto.getId())
+                .stream().map(MatrixRowDto::getStableId).collect(Collectors.toSet());
+
+        Set<String> allCells = new HashSet<>();
+
+        answer.getValue().forEach(cell -> allCells.add(cell.getRowStableId() + ":" + cell.getGroupStableId()));
+
+        for (var row : rows) {
+            for (var group : groups) {
+                if (allCells.add(row + ":" + group)) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
     }
 
     private Object evalDefaultLatestAnswerQuery(InterpreterContext ictx, DefaultLatestAnswerQueryContext ctx) {
@@ -525,14 +566,15 @@ public class TreeWalkInterpreter implements PexInterpreter {
                         throw new PexFetchException(new NoSuchElementException(msg));
                     });
         } else {
-            String stableIdToLookup = childStableId != null ? childStableId : stableId;
-            questionType = fetcher.findQuestionType(ictx, userGuid, studyGuid, activityCode, stableIdToLookup).orElseThrow(() -> {
-                String msg = String.format(
-                        "Cannot find question %s%s in form %s for user %s and study %s",
-                        stableId, childStableId != null ? " (child " + childStableId + ")" : "",
-                        activityCode, userGuid, studyGuid);
-                return new PexFetchException(new NoSuchElementException(msg));
-            });
+            questionType = fetcher.findQuestionType(ictx, userGuid, studyGuid, activityCode, childStableId).orElse(
+                    fetcher.findQuestionType(ictx, userGuid, studyGuid, activityCode, stableId).orElseThrow(() -> {
+                        String msg = String.format(
+                                "Cannot find question %s%s in form %s for user %s and study %s",
+                                stableId, childStableId != null ? " (child " + childStableId + ")" : "",
+                                activityCode, userGuid, studyGuid);
+                        return new PexFetchException(new NoSuchElementException(msg));
+                    })
+            );
         }
 
         String instanceGuid = instanceType.equals(LATEST) ? null : ictx.getActivityInstanceGuid();
@@ -570,8 +612,8 @@ public class TreeWalkInterpreter implements PexInterpreter {
 
             Optional<Answer> answer = answerDao.findAnswerByInstanceGuidAndQuestionStableId(instanceGuid, stableId);
 
-            if (answer.isPresent() && answer.get().getQuestionType() == QuestionType.MATRIX) {
-                return applyChildMatrixAnswerPredicate(predicateCtx, stableId, ((MatrixAnswer) answer.get()));
+            if (questionType == QuestionType.MATRIX) {
+                return applyChildMatrixAnswerPredicate(predicateCtx, childStableId, answer);
             }
 
             List<Answer> childAnswers = answer.stream()
@@ -805,7 +847,19 @@ public class TreeWalkInterpreter implements PexInterpreter {
         }
     }
 
-    private Object applyChildMatrixAnswerPredicate(PredicateContext predicateCtx, String rowStableId, MatrixAnswer answer) {
+    private Object applyChildMatrixAnswerPredicate(PredicateContext predicateCtx, String rowStableId, Optional<Answer> optionalAnswer) {
+
+        if (predicateCtx instanceof PexParser.ValueQueryContext) {
+            throw new PexUnsupportedException("Getting matrix answer value of child question is currently not supported");
+        }
+
+        MatrixAnswer answer;
+        if (optionalAnswer.isPresent()) {
+            answer = (MatrixAnswer) optionalAnswer.get();
+        } else {
+            return false;
+        }
+
         if (predicateCtx instanceof HasOptionPredicateContext) {
             String optionStableId = extractString(((HasOptionPredicateContext) predicateCtx).STR());
             return answer.getValue().stream()
@@ -827,10 +881,8 @@ public class TreeWalkInterpreter implements PexInterpreter {
             return answer.getValue().stream()
                     .filter(row -> row.getRowStableId().equals(rowStableId))
                     .anyMatch(option -> optionStableIds.contains(option.getOptionStableId()));
-        } else if (predicateCtx instanceof PexParser.ValueQueryContext) {
-            throw new PexUnsupportedException("Getting picklist answer value of child question is currently not supported");
         } else {
-            throw new PexUnsupportedException("Invalid predicate used on picklist answer set query: " + predicateCtx.getText());
+            throw new PexUnsupportedException("Invalid predicate used on matrix answer set query: " + predicateCtx.getText());
         }
     }
 

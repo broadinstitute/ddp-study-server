@@ -19,16 +19,25 @@ public class MatrixGroupDef {
     @SerializedName("nameTemplate")
     private Template nameTemplate;
 
-    private transient String groupId;
+    private transient Long groupId;
 
-    public MatrixGroupDef(String groupId, String stableId, Template nameTemplate) {
+    public MatrixGroupDef(Long groupId, String stableId, Template nameTemplate) {
         this.groupId = groupId;
         this.stableId = MiscUtil.checkNonNull(stableId, "stableId");
         this.nameTemplate = MiscUtil.checkNonNull(nameTemplate, "nameTemplate");
     }
 
-    public String getGroupId() {
+    public MatrixGroupDef(String stableId, Template nameTemplate) {
+        this.stableId = MiscUtil.checkNonNull(stableId, "stableId");
+        this.nameTemplate = MiscUtil.checkNonNull(nameTemplate, "nameTemplate");
+    }
+
+    public Long getGroupId() {
         return groupId;
+    }
+
+    public void setGroupId(long groupId) {
+        this.groupId = groupId;
     }
 
     public String getStableId() {

@@ -42,20 +42,6 @@ public final class MatrixQuestionDef extends QuestionDef {
                 .setPrompt(prompt);
     }
 
-    public static Builder buildSingleSelect(String stableId, Template prompt) {
-        return new Builder()
-                .setSelectMode(MatrixSelectMode.SINGLE)
-                .setStableId(stableId)
-                .setPrompt(prompt);
-    }
-
-    public static Builder buildMultiSelect(String stableId, Template prompt) {
-        return new Builder()
-                .setSelectMode(MatrixSelectMode.MULTIPLE)
-                .setStableId(stableId)
-                .setPrompt(prompt);
-    }
-
     /**
      * Construct a picklist question definition, with one or more picklist options.
      */

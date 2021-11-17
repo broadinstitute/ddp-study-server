@@ -104,6 +104,8 @@ order by ai.participant_id asc,
       ai.activity_instance_id asc,
       is_child_answer desc,
       po.display_order asc,
+      mr.display_order asc,
+      mo.display_order asc,
       ca_child_row asc,
       ca_child_col asc
 >>
