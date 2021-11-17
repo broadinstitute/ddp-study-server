@@ -1077,7 +1077,7 @@
                       "type": "keyword"
                     }
                   }
-                },
+                }
               }
             },
             "kitRequestShipping": {
