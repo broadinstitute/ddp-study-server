@@ -86,7 +86,7 @@ public class BrugadaAddKitConfigurationAndUpdateEnrolledEvent implements CustomT
         KitConfigurationDao kitDao = handle.attach(KitConfigurationDao.class);
         KitTypeDao kitTypeDao = handle.attach(KitTypeDao.class);
 
-        List<KitConfigurationDto> kits = kitDao.getKitConfigurationDtos();
+        List<KitConfigurationDto> kits = kitDao.getKitConfigurationDtosByStudyId(studyDto.getId());
         if (kits.size() != 0) {
             LOG.info("Kit configuration exists in study {}", STUDY_GUID);
             return;

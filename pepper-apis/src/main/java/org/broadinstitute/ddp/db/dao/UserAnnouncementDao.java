@@ -37,6 +37,9 @@ public interface UserAnnouncementDao extends SqlObject {
     @SqlUpdate("delete from user_announcement where user_id = :userId and study_id = :studyId")
     int deleteAllForUserAndStudy(@Bind("userId") long userId, @Bind("studyId") long studyId);
 
+    @SqlUpdate("delete from user_announcement where user_id = :userId")
+    int deleteAllForUser(@Bind("userId") long userId);
+
     @SqlUpdate("delete from user_announcement where user_announcement_id in (<ids>)")
     int deleteByIds(@BindList(value = "ids", onEmpty = BindList.EmptyHandling.NULL) Set<Long> ids);
 

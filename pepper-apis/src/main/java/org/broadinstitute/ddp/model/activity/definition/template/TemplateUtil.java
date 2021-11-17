@@ -12,6 +12,7 @@ import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.content.I18nContentRenderer;
 import org.broadinstitute.ddp.content.I18nTemplateConstants;
 import org.broadinstitute.ddp.content.RenderValueProvider;
+import org.broadinstitute.ddp.content.VelocityUtil;
 import org.broadinstitute.ddp.model.activity.definition.i18n.Translation;
 
 public class TemplateUtil {
@@ -47,13 +48,15 @@ public class TemplateUtil {
             variablesTxt.putAll(initialContext);
         }
         if (templateVariables != null) {
+            Map<String, Object> variables = new HashMap<>();
             for (TemplateVariable variable : templateVariables) {
                 Optional<Translation> translation = variable.getTranslation(languageCode);
                 if (translation.isEmpty()) {
                     translation = variable.getTranslation(LanguageStore.getDefault().getIsoCode());
                 }
-                variablesTxt.put(variable.getName(), translation.<Object>map(Translation::getText).orElse(null));
+                variables.put(variable.getName(), translation.<Object>map(Translation::getText).orElse(null));
             }
+            variablesTxt.putAll(VelocityUtil.convertVariablesWithCompoundNamesToMap(variables));
         }
         return renderer.renderToString(templateText, variablesTxt);
     }

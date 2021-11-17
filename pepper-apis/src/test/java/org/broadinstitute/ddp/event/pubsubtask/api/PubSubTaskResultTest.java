@@ -7,7 +7,6 @@ import static org.junit.Assert.assertEquals;
 
 import java.util.Map;
 
-
 import org.junit.Test;
 
 public class PubSubTaskResultTest {
@@ -17,10 +16,10 @@ public class PubSubTaskResultTest {
         var errorText = "User profile is not found for guid ABC";
         var pubSubTaskResult = new PubSubTaskResult(ERROR, errorText, generatePubSubTask());
         assertEquals("{\"errorMessage\":\"User profile is not found for guid ABC\",\"resultType\":\"ERROR\"}",
-                pubSubTaskResult.getJsonPayload());
+                pubSubTaskResult.getPayloadJson());
 
         pubSubTaskResult = new PubSubTaskResult(SUCCESS, null, generatePubSubTask());
-        assertEquals("{\"resultType\":\"SUCCESS\"}", pubSubTaskResult.getJsonPayload());
+        assertEquals("{\"resultType\":\"SUCCESS\"}", pubSubTaskResult.getPayloadJson());
     }
 
     @Test

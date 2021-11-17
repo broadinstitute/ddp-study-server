@@ -164,6 +164,9 @@ public interface AnswerSql extends SqlObject {
     @SqlUpdate("delete from matrix_answer where answer_id = :answerId")
     int deleteMatrixSelectedByAnswerId(@Bind("answerId") long answerId);
 
+    @SqlUpdate("delete from answer where operator_user_id = :operatorId")
+    int deleteAnswerByOperatorId(@Bind("operatorId") long operatorId);
+
     //
     // queries
     //

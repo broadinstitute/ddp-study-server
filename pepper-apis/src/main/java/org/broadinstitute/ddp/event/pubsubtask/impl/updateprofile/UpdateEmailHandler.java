@@ -3,7 +3,7 @@ package org.broadinstitute.ddp.event.pubsubtask.impl.updateprofile;
 import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskException.Severity.ERROR;
 import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskException.Severity.WARN;
 import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskLogUtil.infoMsg;
-import static org.broadinstitute.ddp.event.pubsubtask.impl.updateprofile.UpdateProfileConstants.FIELD_EMAIL;
+import static org.broadinstitute.ddp.event.pubsubtask.impl.updateprofile.UpdateProfileConstants.FIELD__EMAIL;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.util.Properties;
@@ -28,8 +28,8 @@ public class UpdateEmailHandler {
     }
 
     private void updateEmail(Handle handle, String userGuid, Properties payload) {
-        if (payload.containsKey(FIELD_EMAIL)) {
-            String email = payload.getProperty(FIELD_EMAIL);
+        if (payload.containsKey(FIELD__EMAIL)) {
+            String email = payload.getProperty(FIELD__EMAIL);
             var userDto = handle.attach(JdbiUser.class).findByUserGuid(userGuid);
             if (userDto == null) {
                 throw new PubSubTaskException("User profile is not found for guid=" + userGuid, WARN);

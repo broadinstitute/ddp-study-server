@@ -15,7 +15,7 @@ import org.broadinstitute.ddp.db.dao.UserGovernanceDao;
 import org.broadinstitute.ddp.json.errors.ApiError;
 import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.security.DDPAuth;
-import org.broadinstitute.ddp.service.UserService;
+import org.broadinstitute.ddp.service.UserDeleteService;
 import org.broadinstitute.ddp.util.ResponseUtil;
 import org.broadinstitute.ddp.util.RouteUtil;
 import org.jdbi.v3.core.Handle;
@@ -28,10 +28,10 @@ import spark.Route;
 public class DeleteUserRoute implements Route {
     private static final Logger LOG = LoggerFactory.getLogger(DeleteUserRoute.class);
 
-    private final UserService userService;
+    private final UserDeleteService userDeleteService;
 
-    public DeleteUserRoute(UserService userService) {
-        this.userService = userService;
+    public DeleteUserRoute(UserDeleteService userDeleteService) {
+        this.userDeleteService = userDeleteService;
     }
 
     @Override
@@ -59,9 +59,7 @@ public class DeleteUserRoute implements Route {
             if (err != null) {
                 throw ResponseUtil.haltError(response, err.getStatus(), err.getError());
             }
-            LOG.info("Deleting user with GUID: {}", userGuid);
-            userService.deleteUser(handle, user);
-            LOG.info("User with GUID: {} deleted", userGuid);
+            userDeleteService.simpleDelete(handle, user, "operatorGuid=" + operatorGuid, "called from DELETE /user");
             response.status(HttpStatus.SC_NO_CONTENT);
             return "";
         });
