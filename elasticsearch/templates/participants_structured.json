@@ -603,7 +603,6 @@
                 }
               },
               "followUps": {
-                "type": "nested",
                 "properties": {
                   "fReceived": {
                     "type": "text",
