@@ -603,38 +603,10 @@
                 }
               },
               "followUps": {
-                "properties": {
-                  "fReceived": {
-                    "type": "text",
-                    "fields": {
-                      "keyword": {
-                        "type": "keyword"
-                      }
-                    }
-                  },
-                  "fRequest1": {
-                    "type": "text",
-                    "fields": {
-                      "keyword": {
-                        "type": "keyword"
-                      }
-                    }
-                  },
-                  "fRequest2": {
-                    "type": "text",
-                    "fields": {
-                      "keyword": {
-                        "type": "keyword"
-                      }
-                    }
-                  },
-                  "fRequest3": {
-                    "type": "text",
-                    "fields": {
-                      "keyword": {
-                        "type": "keyword"
-                      }
-                    }
+                "type": "text",
+                "fields": {
+                  "keyword": {
+                    "type": "keyword"
                   }
                 }
               },
