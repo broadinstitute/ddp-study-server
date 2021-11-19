@@ -1537,9 +1537,6 @@
                     }
                   }
                 },
-                "created": {
-                  "type": "date"
-                },
                 "ddpParticipantId": {
                   "type": "text",
                   "fields": {
@@ -1621,9 +1618,6 @@
                     }
                   }
                 },
-                "reviewed": {
-                  "type": "date"
-                },
                 "notificationRecipients": {
                   "type": "text",
                   "fields": {
@@ -1650,6 +1644,22 @@
                       "type": "keyword"
                     }
                   }
+                }
+              }
+            },
+            "oncHistory": {
+              "properties": {
+                "oncHistoryId": {
+                  "type": "keyword"
+                },
+                "participantId": {
+                  "type": "keyword"
+                },
+                "created": {
+                  "type": "date"
+                },
+                "reviewed": {
+                  "type": "date"
                 }
               }
             }
