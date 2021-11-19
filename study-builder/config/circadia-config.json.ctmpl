@@ -17,6 +17,7 @@
     "LOCALHOST_LOGOUTS": "",
     "LOCALHOST_ORIGINS": "",
   {{end}}
+    "SERVER_BASE_URL": "{{$conf.serverBaseUrl}}",
     "BASE_URL": "{{$conf.baseWebUrl}}",
     "LOGIN_DOMAIN": "{{$conf.auth0.loginDomain}}",
     "ASSETS_URL": "{{$conf.assetsBucketName}}",

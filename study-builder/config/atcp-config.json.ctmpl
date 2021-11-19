@@ -22,6 +22,7 @@
   {{else}}
     "STUDY_EMAIL": "atcp@{{$environment}}.datadonationplatform.org",
   {{end}}
+    "SERVER_BASE_URL": "{{$conf.serverBaseUrl}}",
     "BASE_URL": "{{$conf.baseWebUrl}}",
     "LOGIN_DOMAIN": "{{$conf.auth0.loginDomain}}",
     "ASSETS_BUCKET": "{{$conf.assetsBucketName}}"
