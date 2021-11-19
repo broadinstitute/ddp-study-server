@@ -100,7 +100,7 @@ public interface MatrixQuestionDao extends SqlObject {
      * @param revisionId the revision to use, will be shared for all created data
      * @return the option ids
      */
-    default List<Long> insertOptions(long questionId, List<MatrixOptionDef> options, long revisionId) {
+    default List<Long> insertOptions(long questionId, List<MatrixOptionDef> options, Map<String, Long> groupsMap, long revisionId) {
         boolean nonTextTemplateFound = options.stream()
                 .anyMatch(o -> o.getTooltipTemplate() != null && o.getTooltipTemplate().getTemplateType() != TemplateType.TEXT);
 
@@ -122,8 +122,7 @@ public interface MatrixQuestionDao extends SqlObject {
                 templateIdList.listIterator(),
                 templateIdList.listIterator(options.size()),
                 options.stream().map(MatrixOptionDef::isExclusive).iterator(),
-                options.stream().map(g -> getJdbiMatrixGroup()
-                        .findGroupIdByCodeAndQuestionId(questionId, g.getGroupStableId())).iterator(),
+                options.stream().map(g -> groupsMap.get(g.getGroupStableId())).iterator(),
                 Stream.iterate(0, i -> i + DISPLAY_ORDER_GAP).iterator(),
                 revisionId);
 

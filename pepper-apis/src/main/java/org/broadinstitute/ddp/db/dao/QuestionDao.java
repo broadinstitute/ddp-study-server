@@ -1,6 +1,7 @@
 package org.broadinstitute.ddp.db.dao;
 
 import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toMap;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -1241,8 +1242,13 @@ public interface QuestionDao extends SqlObject {
             throw new DaoException("Inserted " + numInserted + " for picklist question " + matrix.getStableId());
         }
 
-        getMatrixQuestionDao().insertGroups(matrix.getQuestionId(), matrix.getGroups(), revisionId);
-        getMatrixQuestionDao().insertOptions(matrix.getQuestionId(), matrix.getOptions(), revisionId);
+        Map<String, Long> groupMap = new HashMap<>();
+        if (!matrix.getGroups().isEmpty()) {
+            getMatrixQuestionDao().insertGroups(matrix.getQuestionId(), matrix.getGroups(), revisionId);
+            groupMap = matrix.getGroups().stream().collect(toMap(MatrixGroupDef::getStableId, MatrixGroupDef::getGroupId));
+        }
+
+        getMatrixQuestionDao().insertOptions(matrix.getQuestionId(), matrix.getOptions(), groupMap, revisionId);
         getMatrixQuestionDao().insertRowsQuestions(matrix.getQuestionId(), matrix.getRows(), revisionId);
     }
 
