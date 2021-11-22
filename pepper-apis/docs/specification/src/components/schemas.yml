@@ -2641,6 +2641,7 @@ Suggestion.ActivityInstance:
     guid:
       description: Activity Instance GUID
       type: string
+      format: guid
       example: TY51BW3M6S
     name:
       description: Activity Instance Name, rendered, as could be seen on the dashboard
