@@ -89,7 +89,6 @@ public class UserAuthCheckFilter implements Filter {
         } else if (pathMatcher.isAutocompleteRoute(path)
                 || pathMatcher.isDrugSuggestionRoute(path)
                 || pathMatcher.isCancerSuggestionRoute(path)
-                || pathMatcher.isDynamicAnswerBasedOnQuestionRoute(path)
                 || pathMatcher.isStudyStatisticsRoute(path)) {
             canAccess = ddpAuth.isActive();
         }

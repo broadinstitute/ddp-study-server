@@ -744,7 +744,8 @@ public class TreeWalkInterpreter implements PexInterpreter {
                     : fetcher.findSpecificActivityInstanceSelectAnswer(ictx, activityCode, instanceGuid, stableId);
             return StringUtils.isNotBlank(value);
         } else if (predicateCtx instanceof PexParser.ValueQueryContext) {
-            throw new PexUnsupportedException("Getting Activity Instance Select answer value is not supported");
+            throw new PexUnsupportedException("Getting Activity Instance Select answer value is not supported."
+                    + " Query: " + predicateCtx.getText());
         } else {
             throw new PexUnsupportedException("Invalid predicate used on Activity Instance Select answer query: "
                     + predicateCtx.getText());
@@ -758,7 +759,8 @@ public class TreeWalkInterpreter implements PexInterpreter {
                     .map(child -> ((ActivityInstanceSelectAnswer) child).getValue())
                     .anyMatch(StringUtils::isNotBlank);
         } else if (predicateCtx instanceof PexParser.ValueQueryContext) {
-            throw new PexUnsupportedException("Getting Activity Instance Select answer value is not supported");
+            throw new PexUnsupportedException("Getting Activity Instance Select answer value is not supported"
+                    + " Query: " + predicateCtx.getText());
         } else {
             throw new PexUnsupportedException("Invalid predicate used on Activity Instance Select answer query: "
                     + predicateCtx.getText());

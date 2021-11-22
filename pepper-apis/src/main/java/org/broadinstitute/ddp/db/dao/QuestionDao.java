@@ -1084,8 +1084,9 @@ public interface QuestionDao extends SqlObject {
         int numInserted = getJdbiActivityInstanceSelectQuestion().insert(activityInstanceSelectQuestion.getQuestionId());
 
         if (numInserted != 1) {
-            throw new DaoException("Inserted " + numInserted + " for activity instance select question "
-                    + activityInstanceSelectQuestion.getStableId());
+            throw new DaoException("Expected 1 activity instance select question with stableId "
+                    + activityInstanceSelectQuestion.getStableId()
+                    + " to be inserted, but " + numInserted + " inserted instead");
         }
 
         if (CollectionUtils.isNotEmpty(activityInstanceSelectQuestion.getActivityCodes())) {
@@ -1093,8 +1094,10 @@ public interface QuestionDao extends SqlObject {
                     activityInstanceSelectQuestion.getActivityCodes(),
                     Stream.iterate(0, i -> i + DISPLAY_ORDER_GAP).iterator());
             if (ids.length != activityInstanceSelectQuestion.getActivityCodes().size()) {
-                throw new DaoException("Inserted " + numInserted + " questions for "
-                        + activityInstanceSelectQuestion.getStableId());
+                throw new DaoException("Expected " + activityInstanceSelectQuestion.getActivityCodes().size()
+                        + " activity codes to be inserted for activity instance select questions with stableId "
+                        + activityInstanceSelectQuestion.getStableId()
+                        + " but " + ids.length + " inserted instead");
             }
         }
     }
