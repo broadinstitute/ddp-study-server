@@ -6,13 +6,17 @@ You'll need a few things to get up and running for local development:
 
 * Java 11 - see the [docs here](docs/java-11.md)
 * Maven - for building the project
-* Python - for running various scripts if needed
+* Python - for running various scripts if needed (latest 2.x.x version)
 * Ruby - for rendering configuration files from templates
 * Google Cloud SDK - for running pubsub locally
 * Docker - for building images and optionally for running the test suite
 * Vault - for secrets management
 
 ### Setting up Google Cloud SDK
+
+Before installation of google components please make sure you have Python 2.x.x
+installed and environment variable CLOUDSDK_PYTHON is pointing to the python.exe
+(for example CLOUDSDK_PYTHON=c:\python\python.exe)
 
 We mainly use Google's [pubsub emulator][pubsub] for running Housekeeping
 locally and for tests related to Housekeeping. If you have homebrew, you can
