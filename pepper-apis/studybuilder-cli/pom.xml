@@ -10,12 +10,10 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>studybuilder-cli</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
     <dependencies>
         <dependency>
             <groupId>org.broadinstitute.ddp</groupId>
             <artifactId>dss-core</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
         </dependency>
     </dependencies>
 

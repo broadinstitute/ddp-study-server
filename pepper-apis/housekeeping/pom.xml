@@ -5,19 +5,20 @@
     <parent>
         <artifactId>pepper-parent</artifactId>
         <groupId>org.broadinstitute.ddp</groupId>
-        <version>1.0</version>
+        <version>1.0.0-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
+
+    <artifactId>housekeeping</artifactId>
 
     <dependencies>
         <dependency>
             <groupId>org.broadinstitute.ddp</groupId>
             <artifactId>dss-core</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
         </dependency>
     </dependencies>
 
-    <artifactId>housekeeping</artifactId>
+
     <build>
         <plugins>
             <plugin>
