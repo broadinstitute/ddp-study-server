@@ -1,9 +1,6 @@
 package org.broadinstitute.lddp.handlers.util;
 
-import lombok.NonNull;
-
 import java.util.ArrayList;
-import java.util.Comparator;
 
 public class InstitutionRequest
 {
@@ -50,17 +47,5 @@ public class InstitutionRequest
         this.institutions = institutions;
     }
 
-    static public class InstitutionsComp implements Comparator<InstitutionRequest> {
-        @Override
-        public int compare(@NonNull InstitutionRequest request1, @NonNull InstitutionRequest request2) {
-            if (request1.getId() > request2.getId()) {
-                return 1;
-            } else if (request1.getId() < request2.getId()) {
-                return -1;
-            } else {
-                return 0;
-            }
-        }
-    }
 }
 

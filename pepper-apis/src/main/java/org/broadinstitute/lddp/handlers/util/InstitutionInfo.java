@@ -1,12 +1,6 @@
 package org.broadinstitute.lddp.handlers.util;
 
 import com.google.api.client.util.Data;
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
-import org.apache.commons.lang3.StringUtils;
-
-import java.lang.reflect.Type;
-import java.util.ArrayList;
 
 public class InstitutionInfo {
 
@@ -50,15 +44,5 @@ public class InstitutionInfo {
     public void setInstitutionId(String institutionId)
     {
         this.institutionId = institutionId;
-    }
-
-    public boolean isEmpty() {
-        return StringUtils.isBlank(institution) && StringUtils.isBlank(city) && StringUtils.isBlank(state)
-                && StringUtils.isBlank(institutionId) && StringUtils.isBlank(country);
-    }
-
-    public static ArrayList<InstitutionInfo> jsonToArrayList(String json) {
-        Type listType = new TypeToken<ArrayList<InstitutionInfo>>() {}.getType();
-        return new Gson().fromJson(json, listType);
     }
 }

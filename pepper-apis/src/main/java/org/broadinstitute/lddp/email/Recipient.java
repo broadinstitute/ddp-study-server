@@ -2,7 +2,6 @@ package org.broadinstitute.lddp.email;
 
 import lombok.Data;
 import lombok.NonNull;
-import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.lddp.user.BasicUser;
 import org.broadinstitute.lddp.util.CheckValidity;
 
@@ -72,9 +71,5 @@ public class Recipient implements BasicUser, CheckValidity
         return (!email.isEmpty());
     }
 
-    public String emailClientToAddress()
-    {
-        return (StringUtils.isBlank(getAdminRecipientEmail())) ? getEmail() : getAdminRecipientEmail();
-    }
 }
 

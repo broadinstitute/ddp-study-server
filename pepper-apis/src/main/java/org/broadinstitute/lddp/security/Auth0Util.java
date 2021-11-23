@@ -12,12 +12,9 @@ import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.auth0.net.AuthRequest;
 import com.auth0.net.Request;
-import com.auth0.net.SignUpRequest;
-import com.typesafe.config.Config;
 import lombok.NonNull;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.lddp.util.Utility;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,12 +38,6 @@ public class Auth0Util {
 
     public Auth0Util(@NonNull String account, @NonNull List<String> connections, boolean secretEncoded,
                      @NonNull String ddpKey, @NonNull String ddpSecret,
-                     @NonNull String mgtKey, @NonNull String mgtSecret, @NonNull String mgtApiUrl, boolean emailVerificationRequired) {
-        this(account, connections, secretEncoded, ddpKey, ddpSecret, mgtKey, mgtSecret, mgtApiUrl, emailVerificationRequired, null);
-    }
-
-    public Auth0Util(@NonNull String account, @NonNull List<String> connections, boolean secretEncoded,
-                     @NonNull String ddpKey, @NonNull String ddpSecret,
                      @NonNull String mgtKey, @NonNull String mgtSecret, @NonNull String mgtApiUrl, boolean emailVerificationRequired,
                      String audience) {
         this.ddpSecret = ddpSecret;
@@ -67,10 +58,6 @@ public class Auth0Util {
         this.audience = audience;
     }
 
-    public boolean isEmailVerificationRequired() {
-        return emailVerificationRequired;
-    }
-
     public Auth0UserInfo getAuth0UserInfo(@NonNull String idToken) {
         Map<String, Claim> auth0Claims = verifyAndParseAuth0TokenClaims(idToken);
         boolean isEmailVerified = false;
@@ -84,75 +71,6 @@ public class Auth0Util {
         verifyUserConnection(auth0Claims.get("sub").asString(), userInfo.getEmail());
 
         return userInfo;
-    }
-
-    public void signUp(@NonNull String email, @NonNull String password) {
-        try {
-            SignUpRequest request = ddpAuthApi.signUp(email, password, connections.get(0));
-            request.execute();
-        }
-        catch (Exception ex) {
-            throw new RuntimeException("Unable to signup user with email " + email, ex);
-        }
-    }
-
-    public String signUpAndGetIdToken(@NonNull String email, @NonNull String password) {
-        try {
-            SignUpRequest request = ddpAuthApi.signUp(email, password, connections.get(0));
-            request.execute();
-        }
-        catch (Exception ex) {
-            throw new RuntimeException("Unable to signup user with email " + email, ex);
-        }
-
-        return login(email, password);
-    }
-
-    public String login(@NonNull String email, @NonNull String password) {
-        TokenHolder tokenHolder = null;
-        try {
-            AuthRequest request = ddpAuthApi.login(email, password, connections.get(0)).setScope("openid email");
-            tokenHolder = request.execute();
-        }
-        catch (Exception ex) {
-            throw new RuntimeException("Unable to login user with email " + email, ex);
-        }
-
-        if ((tokenHolder == null) || ((tokenHolder.getIdToken() == null))) {
-            throw new RuntimeException("Could not obtain auth0 token for " + email + ".");
-        }
-
-        return tokenHolder.getIdToken();
-    }
-
-    //Only used for testing right now.
-    public void verifyEmail(@NonNull Config config, @NonNull String idToken) {
-        if (config.getString("portal.environment").equals(Utility.Deployment.UNIT_TEST.toString())) {
-            try {
-                Map<String, Claim> auth0Claims = verifyAndParseAuth0TokenClaims(idToken);
-                String userId = auth0Claims.get("sub").asString();
-
-                ManagementAPI mgmtApi = configManagementApi();
-                Request<User> userRequest = mgmtApi.users().get(userId, null);
-                User user = userRequest.execute();
-                String connection = findUserConnection(user.getIdentities());
-
-                if (!user.isEmailVerified()) {
-
-                    User updateUser = new User();
-                    updateUser.setEmailVerified(true);
-                    updateUser.setConnection(connection);
-                    userRequest = mgmtApi.users().update(userId, updateUser);
-                    userRequest.execute();
-                }
-            }
-            catch (Exception ex) {
-                throw new RuntimeException("Unable to perform email verification.", ex);
-            }
-        }
-        else {
-            throw new RuntimeException("This method is for testing purposes only! ENV=" + config.getString("portal.environment"));
-        }
     }
 
     private ManagementAPI configManagementApi() {
@@ -203,7 +121,7 @@ public class Auth0Util {
         }
     }
 
-    public Map<String, Claim> verifyAndParseAuth0TokenClaims(String auth0Token) {
+    private Map<String, Claim> verifyAndParseAuth0TokenClaims(String auth0Token) {
         Map<String, Claim> auth0Claims = new HashMap<>();
         try {
             Algorithm algorithm = Algorithm.HMAC256(decodedSecret);
@@ -215,22 +133,6 @@ public class Auth0Util {
             throw new RuntimeException("Could not verify auth0 token.", e);
         }
         return auth0Claims;
-    }
-
-    public static Auth0Util configureAuth0Util(@NonNull Config config) {
-        Auth0Util auth0Util = null;
-        if (useAuth0(config)) {
-            auth0Util = new Auth0Util(config.getString("auth0.account"), config.getStringList("auth0.connections"), config.getBoolean("auth0.isSecretBase64Encoded"),
-                    config.getString("auth0.ddpKey"), config.getString("auth0.ddpSecret"),
-                    config.getString("auth0.mgtKey"), config.getString("auth0.mgtSecret"), config.getString("auth0.mgtApiUrl"),
-                    (!config.hasPath("auth0.emailVerificationRequired")) ? true : config.getBoolean("auth0.emailVerificationRequired"));
-        }
-
-        return auth0Util;
-    }
-
-    public static boolean useAuth0(@NonNull Config config) {
-        return (!config.hasPath("auth0.skip") || !config.getBoolean("auth0.skip"));
     }
 
     /**
