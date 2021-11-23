@@ -441,6 +441,9 @@ commands:
       pom_file:
         type: string
         default: pom.xml
+      module:
+        type: string
+        default: ''
       additional_options:
         type: string
         default: ''
@@ -485,10 +488,15 @@ commands:
             if [[ ! -d "$ddp_cache_dir" ]]; then
               mkdir -p "$ddp_cache_dir"
             fi
+            MODULES_OPTION=''
+            if [[ ! -z '<<parameters.module>>' ]]; then
+              MODULES_OPTION='-pl <<parameters.module>> -am'
+            fi
             mvn <<parameters.phase>> --batch-mode \
                     -f <<parameters.pom_file>> \
                     $CHECKSTYLE_OPTION \
                     $SKIPTESTS_OPTION \
+                    $MODULES_OPTION \
                     -Dddp.cacheDir="$ddp_cache_dir" \
                     -Ditext.license=output-config/itextkey.xml \
                     -Dconfig.file=output-build-config/testing-inmemorydb.conf  \
@@ -531,6 +539,7 @@ commands:
     description: Run test server that applies liquibase and load test data
     steps:
       - run-maven-with-pepper-options:
+          module: dss-core
           phase: exec:java
           additional_options: '-Dexec.mainClass=org.broadinstitute.ddp.route.IntegrationTestSuite -Dexec.classpathScope=test'
           background: true
@@ -701,6 +710,7 @@ jobs:
       - create-test-dbs
       - restore-ddp-cache
       - run-maven-with-pepper-options:
+          module: dss-core
           phase: test
           skip_tests: false
           skip_checkstyle: true
