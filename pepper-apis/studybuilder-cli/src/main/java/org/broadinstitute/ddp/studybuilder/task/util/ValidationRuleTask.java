@@ -31,7 +31,6 @@ import org.broadinstitute.ddp.model.activity.definition.validation.RegexRuleDef;
 import org.broadinstitute.ddp.model.activity.definition.validation.RequiredRuleDef;
 import org.broadinstitute.ddp.model.activity.definition.validation.RuleDef;
 import org.broadinstitute.ddp.model.activity.definition.validation.UniqueRuleDef;
-import org.broadinstitute.ddp.model.activity.types.RuleType;
 import org.broadinstitute.ddp.studybuilder.task.CustomTask;
 import org.broadinstitute.ddp.util.ConfigUtil;
 import org.broadinstitute.ddp.util.GsonUtil;
@@ -39,7 +38,7 @@ import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
+/**Ø
  * Custom task providing insert/update/delete of validation rules to specified questions.
  * Note: before a validation rule insert it is checked if a validation rule (for such questionStableId/ruleType) already exist.
  * If it is exist then insert operation just ignored (without throwing any error - just a warn message to log).
