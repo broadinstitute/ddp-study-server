@@ -497,11 +497,11 @@ commands:
                     -f <<parameters.pom_file>> \
                     $CHECKSTYLE_OPTION \
                     $SKIPTESTS_OPTION \
-                    $MODULES_OPTION \
                     -Dddp.cacheDir="$ddp_cache_dir" \
                     -Ditext.license=output-config/itextkey.xml \
                     -Dconfig.file="$CONFIG_FILE_PATH"  \
-                    -Dmaven.repo.local=<< parameters.m2_repo >> <<parameters.additional_options>>
+                    -Dmaven.repo.local=<< parameters.m2_repo >> <<parameters.additional_options>> \
+                    $MODULES_OPTION
           background: <<parameters.background>>
       - when:
           condition: << parameters.save_m2_cache >>
