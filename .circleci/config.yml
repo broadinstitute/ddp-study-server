@@ -13,7 +13,7 @@ references:
   repo_path: &repo_path
       /home/circleci/repo
   m2_cache_key: &m2_cache_key
-      pom.xml2-{{ checksum "pom.xml" }}-{{ checksum "parent-pom.xml" }}
+      pom.xml2-{{ checksum "pom.xml" }}-{{ checksum "pex-antlr/pom.xml" }}-{{ checksum "dss-database/pom.xml" }}-{{ checksum "dss-core/pom.xml" }}-{{ checksum "dss-server/pom.xml" }}-{{ checksum "housekeeping/pom.xml" }}-{{ checksum "studybuilder-cli/pom.xml" }}
   m2_cache_restore_key: &m2_cache_keys
     keys:
       - *m2_cache_key
