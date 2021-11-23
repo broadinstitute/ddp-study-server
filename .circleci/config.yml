@@ -492,7 +492,7 @@ commands:
             MODULES_OPTION=''
             if [[ ! -z '<<parameters.module>>' ]]; then
               MODULES_OPTION='-pl <<parameters.module>>'
-              CONFIG_FILE_PATH="../${CONFIG_FILE_OPTION}"
+              CONFIG_FILE_PATH="../${CONFIG_FILE_PATH}"
             fi
             mvn <<parameters.phase>> --batch-mode \
                     -f <<parameters.pom_file>> \
