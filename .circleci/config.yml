@@ -488,11 +488,10 @@ commands:
             if [[ ! -d "$ddp_cache_dir" ]]; then
               mkdir -p "$ddp_cache_dir"
             fi
-            CONFIG_FILE_PATH='output-build-config/testing-inmemorydb.conf'
+            CONFIG_FILE_PATH=$(readlink -f output-build-config/testing-inmemorydb.conf)
             MODULES_OPTION=''
             if [[ ! -z '<<parameters.module>>' ]]; then
               MODULES_OPTION='-pl <<parameters.module>>'
-              CONFIG_FILE_PATH="../${CONFIG_FILE_PATH}"
             fi
             mvn <<parameters.phase>> --batch-mode \
                     -f <<parameters.pom_file>> \
