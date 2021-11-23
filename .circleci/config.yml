@@ -488,9 +488,11 @@ commands:
             if [[ ! -d "$ddp_cache_dir" ]]; then
               mkdir -p "$ddp_cache_dir"
             fi
+            CONFIG_FILE_PATH='output-build-config/testing-inmemorydb.conf'
             MODULES_OPTION=''
             if [[ ! -z '<<parameters.module>>' ]]; then
               MODULES_OPTION='-pl <<parameters.module>>'
+              CONFIG_FILE_PATH="../${CONFIG_FILE_OPTION}"
             fi
             mvn <<parameters.phase>> --batch-mode \
                     -f <<parameters.pom_file>> \
@@ -499,7 +501,7 @@ commands:
                     $MODULES_OPTION \
                     -Dddp.cacheDir="$ddp_cache_dir" \
                     -Ditext.license=output-config/itextkey.xml \
-                    -Dconfig.file=output-build-config/testing-inmemorydb.conf  \
+                    -Dconfig.file="$CONFIG_FILE_PATH"  \
                     -Dmaven.repo.local=<< parameters.m2_repo >> <<parameters.additional_options>>
           background: <<parameters.background>>
       - when:
