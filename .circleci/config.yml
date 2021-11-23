@@ -131,6 +131,7 @@ commands:
             ;;
             rc_deleteme_not_valid1)
               DEPLOY_ENV=dev
+            ;;
             *)
               echo "Cannot map << pipeline.git.branch >> to a deployment environment"
               exit 17
