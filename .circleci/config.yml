@@ -570,16 +570,6 @@ commands:
             # Install pepper-apis to .m2 so we can compile study-builder
             mvn install --batch-mode -DskipTests -Dmaven.repo.local=<< parameters.m2_repo >>
 
-            # Just need to get parent-pom into .m2 so don't need to run checkstyle.
-            mvn install -f parent-pom.xml --batch-mode -DskipTests -Dcheckstyle.skip -Dmaven.repo.local=<< parameters.m2_repo >>
-
-            # Compile housekeeping
-            mvn test-compile -f housekeeping-pom.xml --batch-mode -DskipTests -Dmaven.repo.local=<< parameters.m2_repo >>
-
-            # Compile study-builder
-            cd << parameters.repo_path >>/study-builder
-            mvn test-compile --batch-mode -DskipTests -Dmaven.repo.local=<< parameters.m2_repo >>
-
   restore-ddp-cache:
     description: Restore ddp cache
     parameters:
