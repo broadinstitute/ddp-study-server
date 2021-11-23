@@ -732,11 +732,11 @@ jobs:
             - match-file-patterns-or-halt:
                 file_patterns: "pepper-apis/config pepper-apis/src pepper-apis/.*pom.xml"
       - setup-shared-env
+      - render-configs
       - run-maven-with-pepper-options:
           phase: install
           restore_m2_cache: true
           skip_checkstyle: true
-      - render-configs
       - create-test-dbs
       - start-ddp-test-server # starts DDP server. And execute Liquibase DB population
       - compute-parallel-test-split
