@@ -391,7 +391,7 @@ commands:
             TEST_DATA_PATH='<< parameters.circleci_path >>/tests'
             mkdir -p "$TEST_DATA_PATH"
 
-            TEST_SRC_DIRECTORY='src/test/java'
+            TEST_SRC_DIRECTORY='dss-core/src/test/java'
             TEST_SEARCH_PATTERN='**/*Test.java'
 
             ALL_TEST_CLASS_NAMES_PATH="${TEST_DATA_PATH}/allTestClassNames.txt"
