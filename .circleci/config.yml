@@ -732,7 +732,7 @@ jobs:
                 file_patterns: "pepper-apis/config pepper-apis/src pepper-apis/.*pom.xml"
       - setup-shared-env
       - run-maven-with-pepper-options:
-          phase: process-test-classes
+          phase: install
           restore_m2_cache: true
           skip_checkstyle: true
       - render-configs
