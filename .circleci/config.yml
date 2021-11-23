@@ -490,7 +490,7 @@ commands:
             fi
             MODULES_OPTION=''
             if [[ ! -z '<<parameters.module>>' ]]; then
-              MODULES_OPTION='-pl <<parameters.module>> -am'
+              MODULES_OPTION='-pl <<parameters.module>>'
             fi
             mvn <<parameters.phase>> --batch-mode \
                     -f <<parameters.pom_file>> \
