@@ -479,6 +479,8 @@ commands:
       - run:
           name: 'Run maven <<parameters.phase>> with options: <<parameters.additional_options>>'
           command: |
+            echo  "The pwd is $(pwd)"
+            ls -l
             CHECKSTYLE_OPTION=''
             if [[ <<parameters.skip_checkstyle>> = true ]]; then
               CHECKSTYLE_OPTION='-Dcheckstyle.skip'
