@@ -129,7 +129,7 @@ commands:
             production)
               DEPLOY_ENV=prod
             ;;
-            rc_deleteme_not_valid1)
+            dev_deleteme_not_valid1)
               DEPLOY_ENV=dev
             ;;
             *)
@@ -883,7 +883,6 @@ workflows:
             branches:
               only:
                 - develop
-                - rc_deleteme_not_valid1
           requires:
             - parallel-compile-and-test-job
             - compile-and-run-test-suite-job
@@ -917,6 +916,7 @@ workflows:
                 - test
                 - staging
                 - production
+                - dev_deleteme_not_valid1
 
   deploy-api-docs-workflow:
     jobs:
