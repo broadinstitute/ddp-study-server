@@ -6,7 +6,7 @@
 
     <groupId>org.broadinstitute.ddp</groupId>
     <artifactId>pepper-parent</artifactId>
-    <version>1.0</version>
+    <version>1.0.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <properties>
@@ -23,10 +23,11 @@
 
     <modules>
         <module>pex-antlr</module>
-        <module>pepper-common</module>
+        <module>dss-core</module>
         <module>studybuilder-cli</module>
         <module>dss-server</module>
         <module>housekeeping</module>
+        <module>dss-database</module>
     </modules>
 
     <repositories>

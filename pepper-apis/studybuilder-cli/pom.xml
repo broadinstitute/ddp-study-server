@@ -5,17 +5,17 @@
     <parent>
         <artifactId>pepper-parent</artifactId>
         <groupId>org.broadinstitute.ddp</groupId>
-        <version>1.0</version>
+        <version>1.0.0-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>studybuilder-cli</artifactId>
-    <version>1.0</version>
+    <version>1.0.0-SNAPSHOT</version>
     <dependencies>
         <dependency>
-            <artifactId>pepper-common</artifactId>
             <groupId>org.broadinstitute.ddp</groupId>
-            <version>1.0</version>
+            <artifactId>dss-core</artifactId>
+            <version>1.0.0-SNAPSHOT</version>
         </dependency>
     </dependencies>
 
