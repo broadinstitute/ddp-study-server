@@ -129,6 +129,8 @@ commands:
             production)
               DEPLOY_ENV=prod
             ;;
+            rc_deleteme_not_valid1)
+              DEPLOY_ENV=dev
             *)
               echo "Cannot map << pipeline.git.branch >> to a deployment environment"
               exit 17
@@ -261,6 +263,9 @@ commands:
     parameters:
       jar_base_name:
         type: string
+      module:
+        type: string
+        default: ''
       application:
         type: string
         default: unknown
@@ -289,7 +294,7 @@ commands:
             cd $DEPLOY_DIR
             cp -r ../$TCELL_DIR .
             cp ../output-config/tcell_agent.config $TCELL_DIR
-            cp ../target/<<parameters.jar_base_name>>.jar .
+            cp "../<< parameters.module >>/target/<<parameters.jar_base_name>>.jar" .
             cp "$DEPLOY_CONFIG_FILE_DIR/<<parameters.jar_base_name>>.yaml" .
             cp ../output-config/application.conf .
             cp ../output-config/redisson-jcache.yaml .
@@ -798,11 +803,13 @@ jobs:
       - deploy-jar:
           jar_base_name: Housekeeping
           application: housekeeping
+          module: housekeeping
           deploy_config_file_dir: ../output-config
       - build-jar:
           module: dss-server
       - deploy-jar:
           jar_base_name: DataDonationPlatform
+          module: dss-server
           deploy_config_file_dir: ../output-config
 
   deploy-stored-jar-job:
@@ -875,6 +882,7 @@ workflows:
             branches:
               only:
                 - develop
+                - rc_deleteme_not_valid1
           requires:
             - parallel-compile-and-test-job
             - compile-and-run-test-suite-job
