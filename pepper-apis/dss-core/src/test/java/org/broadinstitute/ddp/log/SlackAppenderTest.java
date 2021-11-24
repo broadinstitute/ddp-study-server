@@ -5,6 +5,7 @@ import static org.mockserver.model.HttpResponse.response;
 
 import ch.qos.logback.classic.spi.LoggingEvent;
 import com.google.gson.Gson;
+import org.broadinstitute.ddp.environment.HostUtil;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -49,7 +50,8 @@ public class SlackAppenderTest {
             slackAppender.waitForClearToQueue(3000);
 
             mockServerClient.verify(request().withPath("/mock_slack_test").withBody(JsonBody.json(
-                    new Gson().toJson(new SlackAppender.SlackMessagePayload("[test-GAE-service] *Hi there*\n ``````",
+                    new Gson().toJson(new SlackAppender.SlackMessagePayload("["
+                            + HostUtil.getGAEServiceName() + "] *Hi there*\n ``````",
                             "SlackChannel",
                             "Pepper",
                             ":nerd_face:")))));
