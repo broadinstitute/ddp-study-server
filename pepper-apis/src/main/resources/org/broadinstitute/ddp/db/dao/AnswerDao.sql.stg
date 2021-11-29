@@ -8,6 +8,7 @@ select ans.answer_id,
        aa.answer as aa_value,
        ba.answer as ba_value,
        ta.answer as ta_value,
+       aia.instance_guid as aia_instance_guid,
        da.year   as da_year,
        da.month  as da_month,
        da.day    as da_day,
@@ -51,6 +52,7 @@ select ans.answer_id,
   left join agreement_answer as aa on aa.answer_id = ans.answer_id
   left join boolean_answer as ba on ba.answer_id = ans.answer_id
   left join text_answer as ta on ta.answer_id = ans.answer_id
+  left join activity_instance_select_answer as aia on aia.answer_id = ans.answer_id
   left join date_answer as da on da.answer_id = ans.answer_id
   left join file_answer as fa on fa.answer_id = ans.answer_id
   left join file_upload as fd on fd.file_upload_id = fa.file_upload_id

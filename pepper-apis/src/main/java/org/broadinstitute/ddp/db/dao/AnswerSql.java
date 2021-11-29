@@ -109,6 +109,8 @@ public interface AnswerSql extends SqlObject {
     @SqlUpdate("insert into text_answer (answer_id, answer) values (:answerId, :value)")
     int insertTextValue(@Bind("answerId") long answerId, @Bind("value") String value);
 
+    @SqlUpdate("insert into activity_instance_select_answer (answer_id, instance_guid) values (:answerId, :instanceGuid)")
+    int insertActivityInstanceSelectValue(@Bind("answerId") long answerId, @Bind("instanceGuid") String instanceGuid);
     //
     // updates
     //
@@ -148,6 +150,8 @@ public interface AnswerSql extends SqlObject {
     @SqlUpdate("update text_answer set answer = :value where answer_id = :answerId")
     int updateTextValueById(@Bind("answerId") long answerId, @Bind("value") String value);
 
+    @SqlUpdate("update activity_instance_select_answer set instance_guid = :instanceGuid where answer_id = :answerId")
+    int updateActivityInstanceSelectValueById(@Bind("answerId") long answerId, @Bind("instanceGuid") String instanceGuid);
     //
     // deletes
     //

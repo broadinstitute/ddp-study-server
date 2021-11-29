@@ -25,6 +25,7 @@ import org.broadinstitute.ddp.model.activity.definition.question.MatrixRowDef;
 import org.broadinstitute.ddp.model.activity.definition.question.MatrixGroupDef;
 import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.TextQuestionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.ActivityInstanceSelectQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.activity.definition.validation.RequiredRuleDef;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
@@ -57,6 +58,7 @@ public class TestFormActivity {
     private PicklistQuestionDef picklistMultiListQuestion;
     private MatrixQuestionDef matrixListQuestion;
     private TextQuestionDef textQuestion;
+    private ActivityInstanceSelectQuestionDef activityInstanceSelectQuestion;
 
     public static Builder builder() {
         return new Builder();
@@ -114,6 +116,10 @@ public class TestFormActivity {
         return textQuestion;
     }
 
+    public ActivityInstanceSelectQuestionDef getActivityInstanceSelectQuestion() {
+        return activityInstanceSelectQuestion;
+    }
+
     public static class Builder {
         private Integer maxInstancesPerUser = null;
         private boolean hideExistingInstances = false;
@@ -123,6 +129,7 @@ public class TestFormActivity {
         private boolean withFileQuestion = false;
         private boolean withNumericIntQuestion = false;
         private boolean withTextQuestion = false;
+        private boolean withActivityInstanceSelectQuestion = false;
         private List<PicklistOptionDef> picklistSingleListOptions = null;
         private List<PicklistOptionDef> picklistMultiListOptions = null;
         private MatrixSelectMode matrixSelectMode = null;
@@ -228,6 +235,11 @@ public class TestFormActivity {
 
         public Builder withTextQuestion(boolean include) {
             this.withTextQuestion = include;
+            return this;
+        }
+
+        public Builder withActivityInstanceSelectQuestion(boolean include) {
+            this.withActivityInstanceSelectQuestion = include;
             return this;
         }
 
@@ -352,6 +364,18 @@ public class TestFormActivity {
             }
             if (!textBlocks.isEmpty()) {
                 builder.addSection(new FormSectionDef(null, textBlocks));
+            }
+
+            var aiBlocks = new ArrayList<FormBlockDef>();
+            if (withActivityInstanceSelectQuestion) {
+                var question = ActivityInstanceSelectQuestionDef
+                        .builder("AI_SELECT" + Instant.now().toEpochMilli(), Template.text("text prompt"))
+                        .build();
+                result.activityInstanceSelectQuestion = question;
+                aiBlocks.add(new QuestionBlockDef(question));
+            }
+            if (!aiBlocks.isEmpty()) {
+                builder.addSection(new FormSectionDef(null, aiBlocks));
             }
 
             result.def = builder.build();

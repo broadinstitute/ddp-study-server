@@ -172,6 +172,46 @@ class PexFetcher {
     }
 
     /**
+     * Get latest activity instance select answer value for given question.
+     * An activity instance needs to exist for user and activity.
+     *
+     * @param ictx         the interpreter context
+     * @param activityCode the activity
+     * @param stableId     the question stable id
+     * @return stream of dynamic values
+     */
+    String findLatestActivityInstanceAnswer(InterpreterContext ictx, String userGuid, String activityCode,
+                                            String stableId, long studyId) {
+        try {
+            return ictx.getHandle().attach(PexDao.class)
+                    .findLatestActivityInstanceSelectAnswer(userGuid, activityCode, stableId, studyId);
+        } catch (Exception e) {
+            throw new PexFetchException("Could not fetch text answers for form "
+                    + activityCode + " question " + stableId, e);
+        }
+    }
+
+    /**
+     * Get a specific activity instance select answer value for given question.
+     *
+     * @param ictx                 the interpreter context
+     * @param activityCode         the activity
+     * @param activityInstanceGuid the activity instance guid
+     * @param stableId             the question stable id
+     * @return dynamic value
+     */
+    String findSpecificActivityInstanceSelectAnswer(InterpreterContext ictx, String activityCode,
+                                                    String activityInstanceGuid, String stableId) {
+        try {
+            return ictx.getHandle().attach(PexDao.class)
+                    .findSpecificActivityInstanceSelectAnswer(activityInstanceGuid, stableId);
+        } catch (Exception e) {
+            throw new PexFetchException("Could not fetch text answser for form "
+                    + activityCode + " of instance " + activityInstanceGuid + ", question" + stableId, e);
+        }
+    }
+
+    /**
      * Get all picklist answers as list of selected option stable ids for given question. An activity instance needs to
      * exist for user and activity.
      *

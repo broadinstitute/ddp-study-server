@@ -43,6 +43,16 @@ public class QuestionCachedDao extends SQLObjectWrapper<QuestionDao> implements 
     }
 
     @Override
+    public JdbiActivityInstanceSelectQuestion getJdbiActivityInstanceSelectQuestion() {
+        return delegate.getJdbiActivityInstanceSelectQuestion();
+    }
+
+    @Override
+    public JdbiActivityInstanceSelectActivityCodes getJdbiActivityInstanceSelectActivityCodes() {
+        return delegate.getJdbiActivityInstanceSelectActivityCodes();
+    }
+
+    @Override
     public JdbiDateQuestion getJdbiDateQuestion() {
         return delegate.getJdbiDateQuestion();
     }

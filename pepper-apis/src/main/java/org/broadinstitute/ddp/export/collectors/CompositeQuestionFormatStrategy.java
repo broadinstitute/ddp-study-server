@@ -12,6 +12,7 @@ import org.broadinstitute.ddp.elastic.MappingUtil;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.activity.definition.question.CompositeQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
+import org.broadinstitute.ddp.model.activity.instance.answer.ActivityInstanceSelectAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.AgreementAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
 import org.broadinstitute.ddp.model.activity.instance.answer.AnswerRow;
@@ -99,6 +100,8 @@ public class CompositeQuestionFormatStrategy implements ResponseFormatStrategy<C
                 return (boolValue == null ? "" : boolValue.toString());
             case TEXT:
                 return StringUtils.defaultString(((TextAnswer) answer).getValue(), "");
+            case ACTIVITY_INSTANCE_SELECT:
+                return StringUtils.defaultString(((ActivityInstanceSelectAnswer) answer).getValue(), "");
             case NUMERIC:
                 return (answer.getValue() == null ? "" : answer.getValue().toString());
             case DATE:
