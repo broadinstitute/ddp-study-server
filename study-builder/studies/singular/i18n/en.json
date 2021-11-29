@@ -279,7 +279,9 @@
       "p4": "Study Staff: Diane Pickles",
       "p5": "Contact: <a href=\"mailto:contact@projectsingular.org\" class=\"Link\">contact@projectsingular.org</a>",
       "p6": "Please carefully read the consent form below. Click “Next” when you are done with this page. If you have questions about Project Singular or this form, please ask us. You can call us at <a href=\"tel:(650) 761-6486\" class=\"Link\">(650) 761-6486</a>. Or you can email us at <a href=\"mailto:contact@projectsingular.org\" class=\"Link\">contact@projectsingular.org</a>.",
-      "p7": "We encourage you to <a href=\"https://storage.googleapis.com/\"\"\"${assetsBucketName}\"\"\"/consent_parental.pdf\" target=\"_blank \" download class=\"consent-download__link\">download</a> a PDF version of the consent form and read it carefully."
+      "p7p1": "We encourage you to",
+      "download": "download",
+      "p7p2": "a PDF version of the consent form and read it carefully."
     },
 
     "summary_created": "Please complete this questionnaire so that we may learn more about you.",
@@ -590,7 +592,9 @@
       "p4": "Study Staff: Diane Pickles",
       "p5": "Contact: <a href=\"mailto:contact@projectsingular.org\" class=\"Link\">contact@projectsingular.org</a>",
       "p6": "Please carefully read the consent form below. Click “Next” when you are done with each page. This will let you move to the next page. If you have questions about Project Singular or this form, please ask us. You can call us at <a href=\"tel:(650) 761-6486\" class=\"Link\">(650) 761-6486</a>. Or you can email us at <a href=\"mailto:contact@projectsingular.org\" class=\"Link\">contact@projectsingular.org</a>.",
-      "p7": "We encourage you to <a href=\"https://storage.googleapis.com/\"\"\"${assetsBucketName}\"\"\"/consent_parental.pdf\" target=\"_blank \" download class=\"consent-download__link\">download</a> a PDF version of the consent form and read it carefully."
+      "p7p1": "We encourage you to",
+      "download": "download",
+      "p7p2": "a PDF version of the consent form and read it carefully."
     },
     "summary_created": "Please complete this questionnaire so that we may learn more about you.",
     "summary_in_progress": "Please complete this questionnaire so that we may learn more about you.",
@@ -1025,12 +1029,12 @@
 
     "summary_created": "Completing this form is needed so that we can collect your medical records.",
     "summary_in_progress": "Completing this form is needed so that we can collect your medical records.",
-    "summary_complete": "Thank you for providing your mailing address and contact information for your physician(s) and hospital(s). You can update the information you provided by clicking on the \"Update\" button.",
+    "summary_complete": "Thank you for providing your mailing address and contact information for your physician(s) and hospital(s).",
 
     "intro": {
       "p1": "$ddp.checkAnswer(\"MRR_WHO_ENROLLING_COPY\",\"MYSELF\", \"Thank you very much for your consent to participate in our research study, Project Singular.\", \"Thank you very much for your consent to have your child participate in a research study called Project Singular.\")",
       "p2": "To proceed with our study, we are asking you for:",
-      "li1": "$ddp.checkAnswer(\"MRR_WHO_ENROLLING_COPY\",\"MYSELF\", \"Your signature for medical record release so that our study staff may obtain copies of your medical records, store, and use them for this study. We will need the name and contact information for the physician(s) who has/have cared for you throughout your experiences with your single ventricle disease.\", \". Your signature for medical record release so that our study staff may obtain copies of your child’s medical records, store, and use them for this study. We will need the name and contact information for the physician(s) who has/have cared for your child throughout your child’s experiences with their single ventricle disease.\")",
+      "li1": "$ddp.checkAnswer(\"MRR_WHO_ENROLLING_COPY\",\"MYSELF\", \"Your signature for medical record release so that our study staff may obtain copies of your medical records, store, and use them for this study. We will need the name and contact information for the physician(s) who has/have cared for you throughout your experiences with your single ventricle disease.\", \"Your signature for medical record release so that our study staff may obtain copies of your child’s medical records, store, and use them for this study. We will need the name and contact information for the physician(s) who has/have cared for your child throughout your child’s experiences with their single ventricle disease.\")",
       "li2": "$ddp.checkAnswer(\"MRR_WHO_ENROLLING_COPY\",\"MYSELF\", \"Some participants may prefer to personally collect and send our study staff medical records via fax, or by uploading them online in Project Singular. You will find instructions to do so in this form. Please still fill out this medical record release form if you will collect your own records so that we can store and utilize your records.\", \"You may prefer to personally collect and send our study staff your child’s medical records through fax or by uploading them online in Project Singular. You will find instructions to do so in this form. Please still fill out this medical record release form if you gather your records yourself so that we can store and utilize your child’s records.\")",
       "li3": "$ddp.checkAnswer(\"MRR_WHO_ENROLLING_COPY\",\"MYSELF\", \"Participants with questions about this form may contact a member of the study staff at (650) 761-6486 Monday - Friday 9 a.m. - 5 p.m. or email at contact@projectsingular.org.\", \"Parents or legal guardians with questions about this form may contact a member of the study staff at (650) 761-6486 Monday - Friday 9 a.m. - 5 p.m. or email at contact@projectsingular.org.\")"
     },
@@ -1137,7 +1141,8 @@
         "required_hint": "Please choose an option"
       },
       "what_was_your_recorded": {
-        "prompt": "$ddp.checkAnswer(\"PATIENT_SURVEY_WHO_ENROLLING_HIDDEN\",\"MYSELF\", \"What was your recorded sex at birth?  (We ask this question to help us learn about the unique characteristics of each person in our study which may help us better understand genetics and/or risk.  We recognize that individuals do not always identify with their recorded sex at birth.)\", \"What was your child's recorded sex at birth?  (We ask this question to help us learn about the unique characteristics of each person in our study which may help us better understand genetics and/or risk.  We recognize that individuals do not always identify with their recorded sex at birth.)\")*",
+        "prompt_p1": "$ddp.checkAnswer(\"PATIENT_SURVEY_WHO_ENROLLING_HIDDEN\",\"MYSELF\", \"What was your recorded sex at birth?\", \"What was your child's recorded sex at birth?\")*",
+        "prompt_p2": "(We ask this question to help us learn about the unique characteristics of each person in our study which may help us better understand genetics and/or risk.  We recognize that individuals do not always identify with their recorded sex at birth.)",
         "required_hint": "Please choose an option",
         "male": "Male",
         "female": "Female",
@@ -1146,7 +1151,8 @@
         "prefer_not_to_answer": "$ddp.checkAnswer(\"PATIENT_SURVEY_WHO_ENROLLING_HIDDEN\",\"MYSELF\", \"Prefer not to answer\", \"Prefer not to say\")"
       },
       "what_is_your_race": {
-        "prompt": "$ddp.checkAnswer(\"PATIENT_SURVEY_WHO_ENROLLING_HIDDEN\",\"MYSELF\", \"What is your race?  (We ask this question to help us learn about the unique characteristics of each person in our study which may help us to better understand genetics and/or risk.)\", \"What is your child's race?  (We ask this question to help us learn about the unique characteristics of each person in our study which may help us to better understand genetics and/or risk.)\")*",
+        "prompt_p1": "$ddp.checkAnswer(\"PATIENT_SURVEY_WHO_ENROLLING_HIDDEN\",\"MYSELF\", \"What is your race?\", \"What is your child's race?\")*",
+        "prompt_p2": "(We ask this question to help us learn about the unique characteristics of each person in our study which may help us to better understand genetics and/or risk.)",
         "required_hint": "Please choose an option",
         "white": "White",
         "black_or_african_american": "Black or African American",
@@ -1157,7 +1163,8 @@
         "prefer_not_to_answer": "Prefer not to answer"
       },
       "are_you_of_hispanic": {
-        "prompt": "$ddp.checkAnswer(\"PATIENT_SURVEY_WHO_ENROLLING_HIDDEN\",\"MYSELF\", \"Are you of Hispanic or Latino ethnicity?  (We ask this question to help us learn about the unique characteristics of each person in our study which may help us better understand genetics and/or risk.)\", \"Is your child of Hispanic or Latino ethnicity?  (We ask this question to help us learn about the unique characteristics of each person in our study which may help us better understand genetics and/or risk.)\")*",
+        "prompt_p1": "$ddp.checkAnswer(\"PATIENT_SURVEY_WHO_ENROLLING_HIDDEN\",\"MYSELF\", \"Are you of Hispanic or Latino ethnicity?\", \"Is your child of Hispanic or Latino ethnicity?\")*",
+        "prompt_p2": "(We ask this question to help us learn about the unique characteristics of each person in our study which may help us better understand genetics and/or risk.)",
         "required_hint": "Please choose an option",
         "yes": "Yes",
         "no": "No",
@@ -1178,8 +1185,8 @@
         "mitral_atresia": "Mitral Atresia (including Mitral Atresia with DORV)",
         "unbalanced_av_canal": "Unbalanced AV Canal",
         "other": {
-          "title" : "Other: please specify (or write Unsure)",
-          "required_hint": "Other: please specify (or write Unsure)"
+          "title" : "Other",
+          "required_hint": "Please specify (or write Unsure)"
         }
       },
       "what_is_your_height": {
@@ -1204,8 +1211,8 @@
         "arrhythmia": "Arrhythmia (Heart Rhythm) Complications",
         "stroke": "Stroke",
         "other": {
-          "title" : "Other: please specify (or write Unsure)",
-          "required_hint": "Other: please specify (or write Unsure)"
+          "title" : "Other",
+          "required_hint": "Please specify (or write Unsure)"
         },
         "none": "None",
         "i_don_not_know": "I don't know"
@@ -1341,8 +1348,8 @@
         "none": "None",
         "i_do_not_know": "I don't know",
         "other": {
-          "title" : "Other: Please Specify",
-          "required_hint": "Other: Please Specify"
+          "title" : "Other",
+          "required_hint": "Please specify (or write Unsure)"
         }
       },
       "living_with_a_behavioral": {
