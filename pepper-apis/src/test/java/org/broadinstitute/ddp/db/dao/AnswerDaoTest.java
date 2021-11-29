@@ -22,6 +22,7 @@ import org.broadinstitute.ddp.model.activity.definition.question.DateQuestionDef
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistOptionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.TextQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
+import org.broadinstitute.ddp.model.activity.instance.answer.ActivityInstanceSelectAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.AgreementAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
 import org.broadinstitute.ddp.model.activity.instance.answer.BoolAnswer;
@@ -173,6 +174,64 @@ public class AnswerDaoTest extends TxnAwareBaseTest {
 
             answerDao.deleteAnswer(textAnswer1.getAnswerId());
             assertFalse(answerDao.findAnswerById(textAnswer1.getAnswerId()).isPresent());
+
+            handle.rollback();
+        });
+    }
+
+    @Test
+    public void testCreateUpdateDelete_ActivityInstanceSelect() {
+        TransactionWrapper.useTxn(handle -> {
+            TestFormActivity activity = TestFormActivity.builder()
+                    .withTextQuestion(true)
+                    .withActivityInstanceSelectQuestion(true)
+                    .build(handle, testData.getUserId(), testData.getStudyGuid());
+            ActivityInstanceDto instanceDto = createInstance(handle, activity.getDef().getActivityId());
+            long instanceId = instanceDto.getId();
+
+            TestFormActivity subActivity1 = TestFormActivity.builder()
+                    .withTextQuestion(true)
+                    .build(handle, testData.getUserId(), testData.getStudyGuid());
+            ActivityInstanceDto instanceDto1 = createInstance(handle, subActivity1.getDef().getActivityId());
+
+            TestFormActivity subActivity2 = TestFormActivity.builder()
+                    .withTextQuestion(true)
+                    .build(handle, testData.getUserId(), testData.getStudyGuid());
+            ActivityInstanceDto instanceDto2 = createInstance(handle, subActivity2.getDef().getActivityId());
+
+
+            AnswerDao answerDao = daoBuilder.buildDao(handle);
+
+            ActivityInstanceSelectAnswer activityInstanceSelectAnswer1 =
+                    new ActivityInstanceSelectAnswer(null, activity.getActivityInstanceSelectQuestion().getStableId(),
+                            null, instanceDto1.getGuid());
+            answerDao.createAnswer(testData.getUserId(), instanceId, activityInstanceSelectAnswer1);
+
+            assertTrue(activityInstanceSelectAnswer1.getAnswerId() > 0);
+            assertEquals(QuestionType.ACTIVITY_INSTANCE_SELECT, activityInstanceSelectAnswer1.getQuestionType());
+            assertEquals(instanceDto1.getGuid(), activityInstanceSelectAnswer1.getValue());
+
+            ActivityInstanceSelectAnswer activityInstanceSelectAnswer2 =
+                    new ActivityInstanceSelectAnswer(null, activity.getActivityInstanceSelectQuestion().getStableId(),
+                            null, instanceDto2.getGuid());
+            answerDao.updateAnswer(testData.getUserId(), activityInstanceSelectAnswer1.getAnswerId(), activityInstanceSelectAnswer2);
+
+            assertEquals(activityInstanceSelectAnswer1.getAnswerId(), activityInstanceSelectAnswer2.getAnswerId());
+            assertEquals(instanceDto2.getGuid(), activityInstanceSelectAnswer2.getValue());
+
+            Optional<Answer> updatedOpt = answerDao.findAnswerById(activityInstanceSelectAnswer1.getAnswerId());
+
+            assertTrue(updatedOpt.isPresent());
+
+            Answer updatedAnswer = updatedOpt.get();
+
+            assertEquals(activityInstanceSelectAnswer1.getAnswerId(), updatedAnswer.getAnswerId());
+            assertEquals(activityInstanceSelectAnswer1.getAnswerGuid(), updatedAnswer.getAnswerGuid());
+
+            assertEquals(instanceDto2.getGuid(), updatedAnswer.getValue());
+
+            answerDao.deleteAnswer(activityInstanceSelectAnswer1.getAnswerId());
+            assertFalse(answerDao.findAnswerById(activityInstanceSelectAnswer1.getAnswerId()).isPresent());
 
             handle.rollback();
         });

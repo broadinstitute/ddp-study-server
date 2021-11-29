@@ -13,6 +13,7 @@ import org.broadinstitute.ddp.db.dto.CompositeQuestionDto;
 import org.broadinstitute.ddp.db.dto.QuestionDto;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.activity.instance.FormResponse;
+import org.broadinstitute.ddp.model.activity.instance.answer.ActivityInstanceSelectAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.AgreementAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
 import org.broadinstitute.ddp.model.activity.instance.answer.AnswerRow;
@@ -164,6 +165,9 @@ public class AnswerToAnswerCopier {
         } else if (type == QuestionType.TEXT) {
             String value = ((TextAnswer) sourceAnswer).getValue();
             targetAnswer = new TextAnswer(null, targetQuestion.getStableId(), null, value);
+        } else if (type == QuestionType.ACTIVITY_INSTANCE_SELECT) {
+            String value = ((ActivityInstanceSelectAnswer) sourceAnswer).getValue();
+            targetAnswer = new ActivityInstanceSelectAnswer(null, targetQuestion.getStableId(), null, value);
         } else {
             throw new DDPException("Unhandled copying for answer type " + type);
         }

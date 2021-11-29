@@ -168,6 +168,12 @@ public class RouteConstants {
         public static final String CANCER_SUGGESTION = fmt(
                 STUDY_DETAIL + "/suggestions/cancers"
         );
+        public static final String ACTIVITY_INSTANCE_SELECT_SUGGESTION = fmt(
+                BASE + "/user/%s/studies/%s/activity-instance-select/%s",
+                PathParam.USER_GUID,
+                PathParam.STUDY_GUID,
+                PathParam.STABLE_ID
+        );
 
         public static final String STUDY_PASSWORD_POLICY = STUDY_DETAIL + "/password-policy";
 
@@ -180,6 +186,7 @@ public class RouteConstants {
         public static final String CONFIG_NAME = ":configName";
         public static final String MAX_ID = ":maxId";
         public static final String ACTIVITY_CODE = ":activityCode";
+        public static final String STABLE_ID = ":stableId";
         public static final String INSTANCE_GUID = ":instanceGuid";
         public static final String COUNTRY_CODE = ":countryCode";
         public static final String PREVIOUS_LAST_KIT_REQUEST_ID = ":previousLastKitRequestId";

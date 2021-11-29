@@ -311,6 +311,7 @@ Answer:
   discriminator:
     propertyName: type
     mapping:
+      ACTIVITY_INSTANCE_SELECT: '#/Answer.ActivityInstance'
       AGREEMENT: '#/Answer.Boolean'
       BOOLEAN: '#/Answer.Boolean'
       COMPOSITE: '#/Answer.Composite'
@@ -418,6 +419,19 @@ Answer.Picklist:
           type: array
           items:
             $ref: '#/SelectedOption'
+Answer.ActivityInstance:
+  allOf:
+    - $ref: '#/Answer'
+    - type: object
+      required:
+        - value
+      properties:
+        value:
+          type: string
+          format: guid
+          nullable: true
+          description: |
+            GUID of selected activity instance.
 SelectedOption:
   type: object
   required:
@@ -468,6 +482,7 @@ AnswerSubmission:
   discriminator:
     propertyName: type
     mapping:
+      ACTIVITY_INSTANCE_SELECT: '#/AnswerSubmission.ActivityInstance'
       AGREEMENT: '#/AnswerSubmission.Boolean'
       BOOLEAN: '#/AnswerSubmission.Boolean'
       COMPOSITE: '#/AnswerSubmission.Composite'
@@ -567,6 +582,21 @@ AnswerSubmission.String:
       properties:
         value:
           type: string
+AnswerSubmission.ActivityInstance:
+  allOf:
+    - $ref: '#/AnswerSubmission'
+    - type: object
+      required:
+        - value
+      properties:
+        value:
+          type: string
+          format: guid
+          nullable: true
+          description: |
+            GUID of instance of activity available for selection. If this
+            answer is currently associated with an instance, then submitting a `null`
+            value will unassociate it.
 #####
 #
 # Blocks
@@ -1376,6 +1406,7 @@ Question:
   discriminator:
     propertyName: questionType
     mapping:
+      ACTIVITY_INSTANCE_SELECT: '#/Question.ActivityInstanceSelect'
       AGREEMENT: '#/Question.Agreement'
       BOOLEAN: '#/Question.Boolean'
       COMPOSITE: '#/Question.Composite'
@@ -1429,6 +1460,29 @@ Question:
       type: array
       items:
         $ref: '#/ValidationFailure'
+Question.ActivityInstanceSelect:
+  allOf:
+    - $ref: '#/Question'
+    - type: object
+      required:
+        - answers
+        - activityCodes
+      properties:
+        questionType:
+          type: string
+          default: ACTIVITY_INSTANCE_SELECT
+          enum:
+            - ACTIVITY_INSTANCE_SELECT
+        activityCodes:
+          description: 'List of activity codes for instance lookup'
+          type: array
+          items:
+            type: string
+            format: guid
+        answers:
+          type: array
+          items:
+            $ref: '#/Answer.ActivityInstance'
 Question.Agreement:
   allOf:
   - $ref: '#/Question'
@@ -2578,3 +2632,18 @@ ParticipantsLookupProxyItem:
       description: The proxy's email
       type: string
       format: email
+Suggestion.ActivityInstance:
+  type: object
+  required:
+    - guid
+    - name
+  properties:
+    guid:
+      description: Activity Instance GUID
+      type: string
+      format: guid
+      example: TY51BW3M6S
+    name:
+      description: Activity Instance Name, rendered, as could be seen on the dashboard
+      type: string
+      example: "Medical Record Release Form #2"

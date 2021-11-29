@@ -31,6 +31,7 @@ import org.broadinstitute.ddp.db.dto.PicklistOptionDto;
 import org.broadinstitute.ddp.db.dto.PicklistQuestionDto;
 import org.broadinstitute.ddp.db.dto.QuestionDto;
 import org.broadinstitute.ddp.db.dto.TextQuestionDto;
+import org.broadinstitute.ddp.db.dto.ActivityInstanceSelectQuestionDto;
 import org.broadinstitute.ddp.db.dto.TypedQuestionId;
 import org.broadinstitute.ddp.db.dto.validation.RuleDto;
 import org.broadinstitute.ddp.model.activity.definition.QuestionBlockDef;
@@ -46,9 +47,11 @@ import org.broadinstitute.ddp.model.activity.definition.question.PicklistOptionD
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.TextQuestionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.ActivityInstanceSelectQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.activity.definition.validation.RequiredRuleDef;
 import org.broadinstitute.ddp.model.activity.definition.validation.RuleDef;
+import org.broadinstitute.ddp.model.activity.instance.answer.ActivityInstanceSelectAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.AgreementAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.BoolAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.CompositeAnswer;
@@ -69,6 +72,7 @@ import org.broadinstitute.ddp.model.activity.instance.question.PicklistOption;
 import org.broadinstitute.ddp.model.activity.instance.question.PicklistQuestion;
 import org.broadinstitute.ddp.model.activity.instance.question.Question;
 import org.broadinstitute.ddp.model.activity.instance.question.TextQuestion;
+import org.broadinstitute.ddp.model.activity.instance.question.ActivityInstanceSelectQuestion;
 import org.broadinstitute.ddp.model.activity.instance.validation.Rule;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
 import org.broadinstitute.ddp.model.activity.types.DateFieldType;
@@ -109,6 +113,12 @@ public interface QuestionDao extends SqlObject {
 
     @CreateSqlObject
     JdbiTextQuestionSuggestion getJdbiTextQuestionSuggestion();
+
+    @CreateSqlObject
+    JdbiActivityInstanceSelectQuestion getJdbiActivityInstanceSelectQuestion();
+
+    @CreateSqlObject
+    JdbiActivityInstanceSelectActivityCodes getJdbiActivityInstanceSelectActivityCodes();
 
     @CreateSqlObject
     JdbiDateQuestion getJdbiDateQuestion();
@@ -358,6 +368,10 @@ public interface QuestionDao extends SqlObject {
             case TEXT:
                 question = getTextQuestion((TextQuestionDto) dto, activityInstanceGuid, answerIds, untypedRules);
                 break;
+            case ACTIVITY_INSTANCE_SELECT:
+                question = getActivityInstanceSelectQuestion((ActivityInstanceSelectQuestionDto) dto, activityInstanceGuid,
+                        answerIds, untypedRules);
+                break;
             case DATE:
                 question = getDateQuestion((DateQuestionDto) dto, activityInstanceGuid, answerIds, untypedRules);
                 break;
@@ -553,6 +567,46 @@ public interface QuestionDao extends SqlObject {
                 dto.isConfirmEntry(),
                 dto.getConfirmPromptTemplateId(),
                 dto.getMismatchMessageTemplateId());
+    }
+
+    /**
+     * Build an activity instance select question.
+     *
+     * @param dto                  the question dto
+     * @param activityInstanceGuid the activity instance guid
+     * @param answerIds            list of base answer ids to question (may be empty)
+     * @param untypedRules         list of untyped validations for question (may be empty)
+     * @return activity instance select question object
+     */
+    default ActivityInstanceSelectQuestion getActivityInstanceSelectQuestion(ActivityInstanceSelectQuestionDto dto,
+                                                                             String activityInstanceGuid,
+                                                                             List<Long> answerIds,
+                                                                             List<Rule> untypedRules) {
+        AnswerDao answerDao = getAnswerDao();
+        List<ActivityInstanceSelectAnswer> activityInstanceSelectAnswers = answerIds.stream()
+                .map(answerId -> (ActivityInstanceSelectAnswer) answerDao.findAnswerById(answerId)
+                        .orElseThrow(() -> new DaoException("Could not find the Activity Instance Select answer with id "
+                                + answerId)))
+                .collect(toList());
+
+        List<Rule<ActivityInstanceSelectAnswer>> rules = untypedRules
+                .stream()
+                .map(rule -> (Rule<ActivityInstanceSelectAnswer>) rule)
+                .collect(toList());
+
+        boolean isReadonly = QuestionUtil.isReadonly(getHandle(), dto, activityInstanceGuid);
+        List<String> activityCodes = getJdbiQuestion().getActivityCodesByActivityInstanceSelectQuestionId(dto.getId());
+
+        return new ActivityInstanceSelectQuestion(dto.getStableId(), dto.getPromptTemplateId(),
+                dto.isRestricted(),
+                dto.isDeprecated(),
+                isReadonly,
+                dto.getTooltipTemplateId(),
+                dto.getAdditionalInfoHeaderTemplateId(),
+                dto.getAdditionalInfoFooterTemplateId(),
+                activityInstanceSelectAnswers,
+                rules,
+                activityCodes);
     }
 
     /**
@@ -797,6 +851,9 @@ public interface QuestionDao extends SqlObject {
             case TEXT:
                 insertQuestion(activityId, (TextQuestionDef) question, revisionId);
                 break;
+            case ACTIVITY_INSTANCE_SELECT:
+                insertQuestion(activityId, (ActivityInstanceSelectQuestionDef) question, revisionId);
+                break;
             case DATE:
                 insertQuestion(activityId, (DateQuestionDef) question, revisionId);
                 break;
@@ -836,6 +893,9 @@ public interface QuestionDao extends SqlObject {
                 break;
             case TEXT:
                 disableTextQuestion(qid.getId(), meta);
+                break;
+            case ACTIVITY_INSTANCE_SELECT:
+                disableActivityInstanceSelectQuestion(qid.getId(), meta);
                 break;
             case DATE:
                 disableDateQuestion(qid.getId(), meta);
@@ -1006,6 +1066,38 @@ public interface QuestionDao extends SqlObject {
                     Stream.iterate(0, i -> i + DISPLAY_ORDER_GAP).iterator());
             if (ids.length != textQuestion.getSuggestions().size()) {
                 throw new DaoException("Inserted " + numInserted + " suggestions" + textQuestion.getStableId());
+            }
+        }
+    }
+
+    /**
+     * Create new activity instance select question by inserting common data and text specific data.
+     *
+     * @param activityId      the associated activity
+     * @param activityInstanceSelectQuestion the question definition, without generated things like ids
+     * @param revisionId      the revision to use, will be shared by all created data
+     */
+    default void insertQuestion(long activityId, ActivityInstanceSelectQuestionDef activityInstanceSelectQuestion,
+                                long revisionId) {
+        insertBaseQuestion(activityId, activityInstanceSelectQuestion, revisionId);
+
+        int numInserted = getJdbiActivityInstanceSelectQuestion().insert(activityInstanceSelectQuestion.getQuestionId());
+
+        if (numInserted != 1) {
+            throw new DaoException("Expected 1 activity instance select question with stableId "
+                    + activityInstanceSelectQuestion.getStableId()
+                    + " to be inserted, but " + numInserted + " inserted instead");
+        }
+
+        if (CollectionUtils.isNotEmpty(activityInstanceSelectQuestion.getActivityCodes())) {
+            int[] ids = getJdbiActivityInstanceSelectActivityCodes().insert(activityInstanceSelectQuestion.getQuestionId(),
+                    activityInstanceSelectQuestion.getActivityCodes(),
+                    Stream.iterate(0, i -> i + DISPLAY_ORDER_GAP).iterator());
+            if (ids.length != activityInstanceSelectQuestion.getActivityCodes().size()) {
+                throw new DaoException("Expected " + activityInstanceSelectQuestion.getActivityCodes().size()
+                        + " activity codes to be inserted for activity instance select questions with stableId "
+                        + activityInstanceSelectQuestion.getStableId()
+                        + " but " + ids.length + " inserted instead");
             }
         }
     }
@@ -1251,6 +1343,21 @@ public interface QuestionDao extends SqlObject {
     }
 
     /**
+     * End currently active activity instance select question by terminating common data and text specific data.
+     *
+     * @param questionId the question id
+     * @param meta       the revision metadata used for terminating data
+     */
+    default void disableActivityInstanceSelectQuestion(long questionId, RevisionMetadata meta) {
+        QuestionDto dto = getJdbiQuestion().findQuestionDtoById(questionId).orElse(null);
+        ActivityInstanceSelectQuestionDto question = dto == null ? null : (ActivityInstanceSelectQuestionDto) dto;
+        if (question == null || question.getRevisionEnd() != null) {
+            throw new NoSuchElementException("Cannot find active text question with id " + questionId);
+        }
+        disableBaseQuestion(question, meta);
+    }
+
+    /**
      * End currently active date question by terminating common data and date specific data.
      *
      * @param questionId the question id
@@ -1445,6 +1552,11 @@ public interface QuestionDao extends SqlObject {
                     questionDef = buildTextQuestionDef((TextQuestionDto) questionDto, ruleDefs, templates);
                     questionDefs.put(questionId, questionDef);
                     break;
+                case ACTIVITY_INSTANCE_SELECT:
+                    questionDef = buildActivityInstanceSelectQuestionDef((ActivityInstanceSelectQuestionDto) questionDto,
+                            ruleDefs, templates);
+                    questionDefs.put(questionId, questionDef);
+                    break;
                 case COMPOSITE:
                     compositeDtos.add((CompositeQuestionDto) questionDto);
                     break;
@@ -1635,6 +1747,22 @@ public interface QuestionDao extends SqlObject {
                 .setConfirmPromptTemplate(confirmPromptTemplate)
                 .setMismatchMessage(mismatchMessageTemplate)
                 .addSuggestions(suggestions);
+        configureBaseQuestionDef(builder, dto, ruleDefs, templates);
+
+        return builder.build();
+    }
+
+    private ActivityInstanceSelectQuestionDef buildActivityInstanceSelectQuestionDef(ActivityInstanceSelectQuestionDto dto,
+                                                                                     List<RuleDef> ruleDefs,
+                                                                                     Map<Long, Template> templates) {
+        Template prompt = templates.get(dto.getPromptTemplateId());
+
+        List<String> activityCodes = getJdbiQuestion().getActivityCodesByActivityInstanceSelectQuestionId(dto.getId());
+
+        var builder = ActivityInstanceSelectQuestionDef
+                .builder(dto.getStableId(), prompt)
+                .setActivityCodes(activityCodes);
+
         configureBaseQuestionDef(builder, dto, ruleDefs, templates);
 
         return builder.build();

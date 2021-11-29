@@ -31,6 +31,7 @@ import org.broadinstitute.ddp.model.activity.definition.question.NumericQuestion
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.TextQuestionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.ActivityInstanceSelectQuestionDef;
 import org.broadinstitute.ddp.model.activity.instance.ActivityResponse;
 import org.broadinstitute.ddp.model.activity.instance.FormResponse;
 import org.broadinstitute.ddp.model.activity.instance.answer.AgreementAnswer;
@@ -42,6 +43,7 @@ import org.broadinstitute.ddp.model.activity.instance.answer.FileAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.NumericAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.PicklistAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
+import org.broadinstitute.ddp.model.activity.instance.answer.ActivityInstanceSelectAnswer;
 import org.broadinstitute.ddp.model.activity.types.ActivityType;
 import org.broadinstitute.ddp.model.activity.types.InstitutionType;
 
@@ -57,6 +59,7 @@ public class ActivityResponseCollector {
     private AgreementQuestionFormatStrategy agreementFmt = new AgreementQuestionFormatStrategy();
     private BoolQuestionFormatStrategy boolFmt = new BoolQuestionFormatStrategy();
     private TextQuestionFormatStrategy textFmt = new TextQuestionFormatStrategy();
+    private ActivityInstanceSelectQuestionFormatStrategy aiFmt;
     private DateQuestionFormatStrategy dateFmt = new DateQuestionFormatStrategy();
     private FileQuestionFormatStrategy fileFmt = new FileQuestionFormatStrategy();
     private NumericQuestionFormatStrategy numericFmt = new NumericQuestionFormatStrategy();
@@ -67,12 +70,14 @@ public class ActivityResponseCollector {
 
     public ActivityResponseCollector(ActivityDef definition) {
         this.definition = definition;
+        this.aiFmt = new ActivityInstanceSelectQuestionFormatStrategy(definition.getStudyGuid());
     }
 
     public ActivityResponseCollector(ActivityDef definition, List<String> firstFields, List<String> excludedFields) {
         this.definition = definition;
         this.firstFields = firstFields;
         this.excludedFields = excludedFields;
+        this.aiFmt = new ActivityInstanceSelectQuestionFormatStrategy(definition.getStudyGuid());
     }
 
     public List<String> emptyRow() {
@@ -222,6 +227,9 @@ public class ActivityResponseCollector {
             case TEXT:
                 currProps.putAll(textFmt.mappings((TextQuestionDef) questionDef));
                 break;
+            case ACTIVITY_INSTANCE_SELECT:
+                currProps.putAll(aiFmt.mappings((ActivityInstanceSelectQuestionDef) questionDef));
+                break;
             case DATE:
                 currProps.putAll(dateFmt.mappings((DateQuestionDef) questionDef));
                 break;
@@ -257,6 +265,9 @@ public class ActivityResponseCollector {
                 break;
             case TEXT:
                 questions.add(textFmt.questionDef((TextQuestionDef) questionDef));
+                break;
+            case ACTIVITY_INSTANCE_SELECT:
+                questions.add(aiFmt.questionDef((ActivityInstanceSelectQuestionDef) questionDef));
                 break;
             case DATE:
                 questions.add(dateFmt.questionDef((DateQuestionDef) questionDef));
@@ -413,6 +424,9 @@ public class ActivityResponseCollector {
             case TEXT:
                 headers.addAll(textFmt.headers((TextQuestionDef) questionDef));
                 break;
+            case ACTIVITY_INSTANCE_SELECT:
+                headers.addAll(aiFmt.headers((ActivityInstanceSelectQuestionDef) questionDef));
+                break;
             case DATE:
                 headers.addAll(dateFmt.headers((DateQuestionDef) questionDef));
                 break;
@@ -526,6 +540,10 @@ public class ActivityResponseCollector {
                 break;
             case TEXT:
                 record.putAll(textFmt.collect((TextQuestionDef) question, (TextAnswer) answer));
+                break;
+            case ACTIVITY_INSTANCE_SELECT:
+                record.putAll(aiFmt.collect((ActivityInstanceSelectQuestionDef) question, (ActivityInstanceSelectAnswer) answer,
+                        instance.getParticipantId()));
                 break;
             case DATE:
                 record.putAll(dateFmt.collect((DateQuestionDef) question, (DateAnswer) answer));
