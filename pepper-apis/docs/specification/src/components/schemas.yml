@@ -773,7 +773,7 @@ Block.Visibility:
       description: whether block is shown or not
     enabled:
       type: boolean
-      description: whether block is enabled or not
+      description: whether block is enabled or not (used in cases when block inputs should be disabled but still visible)
 #####
 #
 # Components
