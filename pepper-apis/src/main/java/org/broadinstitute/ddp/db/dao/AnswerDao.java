@@ -17,6 +17,7 @@ import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.DaoException;
 import org.broadinstitute.ddp.db.dto.AnswerDto;
 import org.broadinstitute.ddp.db.dto.CompositeAnswerSummaryDto;
+import org.broadinstitute.ddp.model.activity.instance.answer.ActivityInstanceSelectAnswer;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
 import org.broadinstitute.ddp.model.activity.instance.answer.AgreementAnswer;
@@ -127,6 +128,9 @@ public interface AnswerDao extends SqlObject {
         } else if (type == QuestionType.TEXT) {
             String value = ((TextAnswer) answer).getValue();
             DBUtils.checkInsert(1, answerSql.insertTextValue(answerId, value));
+        } else if (type == QuestionType.ACTIVITY_INSTANCE_SELECT) {
+            String value = ((ActivityInstanceSelectAnswer) answer).getValue();
+            DBUtils.checkInsert(1, answerSql.insertActivityInstanceSelectValue(answerId, value));
         } else {
             throw new DaoException("Unhandled answer type " + type);
         }
@@ -203,6 +207,9 @@ public interface AnswerDao extends SqlObject {
         } else if (type == QuestionType.TEXT) {
             String value = ((TextAnswer) newAnswer).getValue();
             DBUtils.checkInsert(1, answerSql.updateTextValueById(answerId, value));
+        } else if (type == QuestionType.ACTIVITY_INSTANCE_SELECT) {
+            String value = ((ActivityInstanceSelectAnswer) newAnswer).getValue();
+            DBUtils.checkInsert(1, answerSql.updateActivityInstanceSelectValueById(answerId, value));
         } else {
             throw new DaoException("Unhandled answer type " + type);
         }
@@ -418,6 +425,13 @@ public interface AnswerDao extends SqlObject {
                     break;
                 case TEXT:
                     answer = new TextAnswer(answerId, questionStableId, answerGuid, view.getColumn("ta_value", String.class),
+                            actInstanceGuid);
+                    break;
+                case ACTIVITY_INSTANCE_SELECT:
+                    answer = new ActivityInstanceSelectAnswer(answerId,
+                            questionStableId,
+                            answerGuid,
+                            view.getColumn("aia_instance_guid", String.class),
                             actInstanceGuid);
                     break;
                 case DATE:

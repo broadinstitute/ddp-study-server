@@ -65,6 +65,7 @@ import org.slf4j.LoggerFactory;
  */
 @RunWith(Suite.class)
 @SuiteClasses({
+        GetActivityInstanceListForActivityInstanceSelectQuestionRouteStandaloneTest.class,
         AuthFilterRouteTest.class,
         EventServiceTest.class,
         InvitationCheckStatusRouteTest.class,

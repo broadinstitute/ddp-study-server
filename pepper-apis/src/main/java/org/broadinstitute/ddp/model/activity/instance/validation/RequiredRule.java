@@ -1,5 +1,6 @@
 package org.broadinstitute.ddp.model.activity.instance.validation;
 
+import org.broadinstitute.ddp.model.activity.instance.answer.ActivityInstanceSelectAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
 import org.broadinstitute.ddp.model.activity.instance.answer.DateAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.PicklistAnswer;
@@ -37,6 +38,10 @@ public class RequiredRule<T extends Answer> extends Rule<T> {
 
         if (answer.getQuestionType() == QuestionType.TEXT) {
             return !((TextAnswer) answer).getValue().isBlank();
+        }
+
+        if (answer.getQuestionType() == QuestionType.ACTIVITY_INSTANCE_SELECT) {
+            return !((ActivityInstanceSelectAnswer) answer).getValue().isBlank();
         }
 
         if (answer.getQuestionType() == QuestionType.DATE) {
