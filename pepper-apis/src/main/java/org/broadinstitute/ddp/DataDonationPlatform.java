@@ -91,6 +91,7 @@ import org.broadinstitute.ddp.route.GetActivityInstanceRoute;
 import org.broadinstitute.ddp.route.GetActivityInstanceStatusTypeListRoute;
 import org.broadinstitute.ddp.route.GetActivityInstanceSummaryRoute;
 import org.broadinstitute.ddp.route.GetCancerSuggestionsRoute;
+import org.broadinstitute.ddp.route.GetActivityInstanceListForActivityInstanceSelectQuestionRoute;
 import org.broadinstitute.ddp.route.GetConsentSummariesRoute;
 import org.broadinstitute.ddp.route.GetConsentSummaryRoute;
 import org.broadinstitute.ddp.route.GetCountryAddressInfoRoute;
@@ -557,6 +558,9 @@ public class DataDonationPlatform {
         get(API.DSM_DRUG_SUGGESTION, new GetDsmDrugSuggestionsRoute(DrugStore.getInstance()), responseSerializer);
 
         get(API.CANCER_SUGGESTION, new GetCancerSuggestionsRoute(CancerStore.getInstance()), responseSerializer);
+
+        get(API.ACTIVITY_INSTANCE_SELECT_SUGGESTION,
+                new GetActivityInstanceListForActivityInstanceSelectQuestionRoute(actInstService), responseSerializer);
 
         get(API.STUDY_STATISTICS, new GetStudyStatisticsRoute(i18nContentRenderer), responseSerializer);
 

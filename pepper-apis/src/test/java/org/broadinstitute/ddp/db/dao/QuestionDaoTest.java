@@ -55,11 +55,13 @@ import org.broadinstitute.ddp.model.activity.definition.question.PicklistOptionD
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.TextQuestionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.ActivityInstanceSelectQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.activity.definition.validation.DateRangeRuleDef;
 import org.broadinstitute.ddp.model.activity.definition.validation.IntRangeRuleDef;
 import org.broadinstitute.ddp.model.activity.definition.validation.LengthRuleDef;
 import org.broadinstitute.ddp.model.activity.definition.validation.RequiredRuleDef;
+import org.broadinstitute.ddp.model.activity.instance.answer.ActivityInstanceSelectAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.AgreementAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
 import org.broadinstitute.ddp.model.activity.instance.answer.AnswerRow;
@@ -81,6 +83,7 @@ import org.broadinstitute.ddp.model.activity.instance.question.PicklistOption;
 import org.broadinstitute.ddp.model.activity.instance.question.PicklistQuestion;
 import org.broadinstitute.ddp.model.activity.instance.question.Question;
 import org.broadinstitute.ddp.model.activity.instance.question.TextQuestion;
+import org.broadinstitute.ddp.model.activity.instance.question.ActivityInstanceSelectQuestion;
 import org.broadinstitute.ddp.model.activity.instance.validation.DateRangeRule;
 import org.broadinstitute.ddp.model.activity.instance.validation.IntRangeRule;
 import org.broadinstitute.ddp.model.activity.instance.validation.RequiredRule;
@@ -1288,6 +1291,78 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
             assertNotNull(actual.getSuggestions());
             assertEquals(2, suggestions.size());
             assertEquals("test type ahead#2", suggestions.get(1));
+
+            handle.rollback();
+        });
+    }
+
+    @Test
+    public void testGetActivityInstanceSelectQuestion_success() {
+        TransactionWrapper.useTxn(handle -> {
+            var actSelection1 = FormActivityDef.generalFormBuilder("AS1_" + Instant.now().toEpochMilli(),
+                    "v1", testData.getStudyGuid())
+                    .addName(new Translation("en", "Activity1"))
+                    .addSection(new FormSectionDef(null, List.of(
+                            new ContentBlockDef(
+                                    new Template(TemplateType.TEXT, null, "intro template")))))
+                    .build();
+
+            var actSelection2 = FormActivityDef.generalFormBuilder("AS2_" + Instant.now().toEpochMilli(),
+                    "v1", testData.getStudyGuid())
+                    .addName(new Translation("en", "Activity2"))
+                    .addSection(new FormSectionDef(null, List.of(
+                            new ContentBlockDef(
+                                    new Template(TemplateType.TEXT, null, "intro template")))))
+                    .build();
+
+            ActivityInstanceSelectQuestionDef activityInstanceSelectQuestionDef = ActivityInstanceSelectQuestionDef.builder(sid, prompt)
+                    .setActivityCodes(List.of(actSelection1.getActivityCode(), actSelection2.getActivityCode()))
+                    .addValidation(new RequiredRuleDef(null))
+                    .build();
+
+            var block = new QuestionBlockDef(activityInstanceSelectQuestionDef);
+            var activity = FormActivityDef.generalFormBuilder("ACT" + Instant.now().toEpochMilli(),
+                    "v1", testData.getStudyGuid())
+                    .addName(new Translation("en", "activity test ActivityInstanceSelect Question success"))
+                    .addSection(new FormSectionDef(null, List.of(block)))
+                    .build();
+
+            var activityVersionDto = handle.attach(ActivityDao.class)
+                    .insertActivity(activity, RevisionMetadata.now(testData.getUserId(), "add " + activity.getActivityCode()));
+            var activityVersionDto1 = handle.attach(ActivityDao.class)
+                    .insertActivity(actSelection1, RevisionMetadata.now(testData.getUserId(), "add " + activity.getActivityCode()));
+            var activityVersionDto2 = handle.attach(ActivityDao.class)
+                    .insertActivity(actSelection2, RevisionMetadata.now(testData.getUserId(), "add " + activity.getActivityCode()));
+
+            var instanceDto = handle.attach(ActivityInstanceDao.class)
+                    .insertInstance(activityVersionDto.getActivityId(), testData.getUserGuid());
+            var instanceDto1 = handle.attach(ActivityInstanceDao.class)
+                    .insertInstance(activityVersionDto1.getActivityId(), testData.getUserGuid());
+            var instanceDto2 = handle.attach(ActivityInstanceDao.class)
+                    .insertInstance(activityVersionDto2.getActivityId(), testData.getUserGuid());
+
+            String answerGuid = handle.attach(AnswerDao.class)
+                    .createAnswer(testData.getUserId(), instanceDto.getId(),
+                            new ActivityInstanceSelectAnswer(null, sid, null, instanceDto1.getGuid()))
+                    .getAnswerGuid();
+
+            assertNotNull(answerGuid);
+
+            Answer testAnswer = handle.attach(AnswerDao.class).findAnswerByGuid(answerGuid).get();
+
+            assertEquals(answerGuid, testAnswer.getAnswerGuid());
+
+            ActivityInstanceSelectQuestion question = (ActivityInstanceSelectQuestion) handle.attach(QuestionDao.class)
+                    .getQuestionByBlockId(block.getBlockId(), instanceDto.getGuid(), instanceDto.getCreatedAtMillis(), langCodeId).get();
+
+            assertEquals(QuestionType.ACTIVITY_INSTANCE_SELECT, question.getQuestionType());
+            assertEquals(prompt.getTemplateId(), (Long) question.getPromptTemplateId());
+            assertEquals(sid, question.getStableId());
+            assertEquals(2, question.getActivityCodes().size());
+            assertEquals(actSelection1.getActivityCode(), question.getActivityCodes().get(0));
+
+            ActivityInstanceSelectAnswer activityInstanceSelectAnswer = question.getAnswers().get(0);
+            assertEquals(instanceDto1.getGuid(), activityInstanceSelectAnswer.getValue());
 
             handle.rollback();
         });

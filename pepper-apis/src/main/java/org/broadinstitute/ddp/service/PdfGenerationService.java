@@ -45,6 +45,7 @@ import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.activity.definition.ActivityDef;
 import org.broadinstitute.ddp.model.activity.instance.ActivityResponse;
 import org.broadinstitute.ddp.model.activity.instance.FormResponse;
+import org.broadinstitute.ddp.model.activity.instance.answer.ActivityInstanceSelectAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
 import org.broadinstitute.ddp.model.activity.instance.answer.AnswerRow;
 import org.broadinstitute.ddp.model.activity.instance.answer.BoolAnswer;
@@ -736,6 +737,9 @@ public class PdfGenerationService {
             case TEXT:
                 substituteText(answer, field);
                 break;
+            case ACTIVITY_INSTANCE_SELECT:
+                substituteActivityInstanceSelect(answer, field);
+                break;
             case DATE:
                 substituteDate(answer, field);
                 break;
@@ -802,6 +806,9 @@ public class PdfGenerationService {
             case TEXT:
                 substituteText(answer, field);
                 break;
+            case ACTIVITY_INSTANCE_SELECT:
+                substituteActivityInstanceSelect(answer, field);
+                break;
             case DATE:
                 substituteDate(answer, field);
                 break;
@@ -843,6 +850,13 @@ public class PdfGenerationService {
 
     private void substituteText(Answer answer, PdfFormField field) {
         String textValue = answer == null ? null : ((TextAnswer) answer).getValue();
+        if (textValue != null) {
+            field.setValue(textValue);
+        }
+    }
+
+    private void substituteActivityInstanceSelect(Answer answer, PdfFormField field) {
+        String textValue = answer == null ? null : ((ActivityInstanceSelectAnswer) answer).getValue();
         if (textValue != null) {
             field.setValue(textValue);
         }
