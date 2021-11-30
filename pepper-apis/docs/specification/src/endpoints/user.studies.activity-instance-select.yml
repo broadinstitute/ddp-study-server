@@ -1,0 +1,30 @@
+get:
+  operationId: getActivityInstancesForSelection
+  tags:
+    - Suggestion
+  summary: get a list of activity instances to select
+  description: For specific Activity Instance Select question - returns a list of activity instances that can be selected as an answer to this specific question
+  parameters:
+    - in: path
+      name: user
+      required: true
+      description: the user's unique identifier
+      schema:
+        type: string
+    - in: path
+      name: study
+      required: true
+      description: the unique identifier for the study
+      schema:
+        type: string
+    - in: path
+      name: stableId
+      required: true
+      description: the activity instance select question's unique identifier
+      schema:
+        type: string
+  responses:
+    200:
+      $ref: '../pepper.yml#/components/responses/ActivityInstanceSelectAnswersResponse'
+    default:
+      $ref: '../pepper.yml#/components/responses/ErrorResponse'

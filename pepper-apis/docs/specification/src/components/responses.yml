@@ -470,3 +470,17 @@ StatisticsResponse:
     application/json:
       schema:
         $ref: '../pepper.yml#/components/schemas/Statistics'
+ActivityInstanceSelectAnswersResponse:
+  description: a list of activity instance suggestions
+  content:
+    application/json:
+      schema:
+        type: object
+        required:
+          - results
+        properties:
+          results:
+            description: A list of Activity Instances available for selection for the given Activity Instance Select question
+            type: array
+            items:
+              $ref: '../pepper.yml#/components/schemas/Suggestion.ActivityInstance'
