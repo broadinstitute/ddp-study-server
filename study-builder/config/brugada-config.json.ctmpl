@@ -21,6 +21,8 @@
     "BASE_URL": "{{$conf.baseWebUrl}}",
     "ASSETS_BUCKET": "{{$conf.assetsBucketName}}",
     "STUDY_EMAIL": "{{$conf.studyEmail}}",
+    "SENDGRID_EMAIL": "{{$conf.sendgridFromEmail}}",
+    "SENDGRID_TOKEN": "{{$conf.sendgridApiKey}}",
     "DB_NAME": "{{$conf.auth0.dbName}}"
   },
   "AUTH0_ALLOW_DELETE": false,

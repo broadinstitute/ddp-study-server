@@ -25,7 +25,9 @@
     "SERVER_BASE_URL": "{{$conf.serverBaseUrl}}",
     "BASE_URL": "{{$conf.baseWebUrl}}",
     "LOGIN_DOMAIN": "{{$conf.auth0.loginDomain}}",
-    "ASSETS_BUCKET": "{{$conf.assetsBucketName}}"
+    "ASSETS_BUCKET": "{{$conf.assetsBucketName}}",
+    "SENDGRID_EMAIL": "{{$conf.sendgridFromEmail}}",
+    "SENDGRID_TOKEN": "{{$conf.sendgridApiKey}}"
   },
   "AUTH0_ALLOW_DELETE": false,
 

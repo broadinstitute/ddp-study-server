@@ -23,7 +23,8 @@
     "ASSETS_URL": "{{$conf.assetsBucketName}}",
     "STUDY_EMAIL": "{{$conf.studyEmail}}",
     "FROM_NAME": "{{$conf.sendgridFromName}}",
-    "FROM_EMAIL": "{{$conf.sendgridFromEmail}}"
+    "SENDGRID_EMAIL": "{{$conf.sendgridFromEmail}}",
+    "SENDGRID_TOKEN": "{{$conf.sendgridApiKey}}"
   },
   "AUTH0_ALLOW_DELETE": false,
   "INCLUDED_PROPS": {
