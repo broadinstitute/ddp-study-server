@@ -652,14 +652,6 @@
                   }
                 }
               },
-              "additionalValuesJson": {
-                "type": "text",
-                "fields": {
-                  "keyword": {
-                    "type": "keyword"
-                  }
-                }
-              },
               "phone": {
                 "type": "text",
                 "fields": {
@@ -761,14 +753,6 @@
                   }
                 },
                 "medicalRecordId": {
-                  "type": "text",
-                  "fields": {
-                    "keyword": {
-                      "type": "keyword"
-                    }
-                  }
-                },
-                "additionalValuesJson": {
                   "type": "text",
                   "fields": {
                     "keyword": {
@@ -1547,14 +1531,6 @@
                   }
                 },
                 "baseUrl": {
-                  "type": "text",
-                  "fields": {
-                    "keyword": {
-                      "type": "keyword"
-                    }
-                  }
-                },
-                "additionalValuesJson": {
                   "type": "text",
                   "fields": {
                     "keyword": {
