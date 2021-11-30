@@ -995,14 +995,6 @@
                     }
                   }
                 },
-                "additionalTissueValueJson": {
-                  "type": "text",
-                  "fields": {
-                    "keyword": {
-                      "type": "keyword"
-                    }
-                  }
-                },
                 "returnDate": {
                   "type": "date"
                 },
