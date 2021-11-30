@@ -28,6 +28,7 @@
         <module>dss-server</module>
         <module>housekeeping</module>
         <module>dss-database</module>
+        <module>dsm-core</module>
     </modules>
 
     <repositories>
