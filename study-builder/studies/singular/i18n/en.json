@@ -284,9 +284,9 @@
       "p7p2": "a PDF version of the consent form and read it carefully."
     },
 
-    "summary_created": "Please complete this questionnaire so that we may learn more about you.",
-    "summary_in_progress": "Please complete this questionnaire so that we may learn more about you.",
-    "summary_complete": "Thank you for completing this survey!",
+    "summary_created": "Signing this informed consent document is required if you wish to enroll.",
+    "summary_in_progress": "Signing this informed consent document is required if you wish to enroll.",
+    "summary_complete": "Thank you for signing the consent form -- you are now enrolled!",
 
     "summary": {
       "title": "RESEARCH CONSENT SUMMARY",
@@ -596,9 +596,9 @@
       "download": "download",
       "p7p2": "a PDF version of the consent form and read it carefully."
     },
-    "summary_created": "Please complete this questionnaire so that we may learn more about you.",
-    "summary_in_progress": "Please complete this questionnaire so that we may learn more about you.",
-    "summary_complete": "Thank you for completing this survey!",
+    "summary_created": "Signing this informed consent document is required if you wish to enroll your child.",
+    "summary_in_progress": "Signing this informed consent document is required if you wish to enroll your child.",
+    "summary_complete": "Thank you for signing the consent form!",
     "summary": {
       "title": "RESEARCH CONSENT SUMMARY",
       "p1": "We are asking your child to take part in a research study. We are asking because your child or a close family member of your child (parent or sibling) has a single ventricle heart defect.",
@@ -884,9 +884,9 @@
       "p3": "<b>STUDY-RELATED PHONE NUMBER(S):</b> <a href=\"tel:(650) 761-6486\" class=\"Link\">(650) 761-6486</a> (24 hours), <a href=\"mailto:contact@projectsingular.org\" class=\"Link\">contact@projectsingular.org</a>"
     },
 
-    "summary_created": "Please complete this questionnaire so that we may learn more about you.",
-    "summary_in_progress": "Please complete this questionnaire so that we may learn more about you.",
-    "summary_complete": "Thank you for completing this survey!",
+    "summary_created": "Please have your child read and sign this assent document, which is required if you wish to enroll your child.",
+    "summary_in_progress": "Please have your child read and sign this assent document, which is required if you wish to enroll your child.",
+    "summary_complete": "Thank you for signing the assent form -- your child is now enrolled!",
 
     "content": {
       "p1": "We’re asking you to take part in a research study. The study wants to learn more about how hearts grow. We also want to find out why some hearts don’t grow the ways others do. A research study is a way for scientists to learn more about something.",
@@ -929,9 +929,9 @@
   "about_healthy": {
     "name": "$ddp.checkAnswer(\"ABOUT_HEALTHY_WHO_ENROLLING_HIDDEN\",\"MYSELF\", \"About Me\", \"About My Child\")",
     "title": "$ddp.checkAnswer(\"ABOUT_HEALTHY_WHO_ENROLLING_HIDDEN\",\"MYSELF\", \"About Me\", \"About My Child\")",
-    "summary_created": "Please complete this questionnaire so that we may learn more about you.",
-    "summary_in_progress": "Please complete this questionnaire so that we may learn more about you.",
-    "summary_complete": "Thank you for completing this survey!",
+    "summary_created": "$ddp.checkAnswer(\"ABOUT_HEALTHY_WHO_ENROLLING_HIDDEN\",\"MYSELF\", \"Please complete this form so that we may send you a saliva collection kit for DNA sequencing and learn about your medical background\", \"Please complete this form so that we may send you a saliva collection kit for DNA sequencing and learn about your child's medical background\")",
+    "summary_in_progress": "$ddp.checkAnswer(\"ABOUT_HEALTHY_WHO_ENROLLING_HIDDEN\",\"MYSELF\", \"Please complete this form so that we may send you a saliva collection kit for DNA sequencing and learn about your medical background\", \"Please complete this form so that we may send you a saliva collection kit for DNA sequencing and learn about your child's medical background\")",
+    "summary_complete": "Thank you for providing your address. You may click on \"Update\" to update your address at any time!",
     "questions": {
       "first_name": {
         "prompt": "$ddp.checkAnswer(\"ABOUT_HEALTHY_WHO_ENROLLING_HIDDEN\",\"MYSELF\", \"Your First Name\", \"Your Child's First Name\")*",
@@ -1006,9 +1006,9 @@
   "about_patient": {
     "name": "$ddp.checkAnswer(\"ABOUT_PATIENT_WHO_ENROLLING_HIDDEN\",\"MYSELF\", \"About Me\", \"About My Child\")",
     "title": "$ddp.checkAnswer(\"ABOUT_PATIENT_WHO_ENROLLING_HIDDEN\",\"MYSELF\", \"About Me\", \"About My Child\")",
-    "summary_created": "Please complete this questionnaire so that we may learn more about you.",
-    "summary_in_progress": "Please complete this questionnaire so that we may learn more about you.",
-    "summary_complete": "Thank you for completing this survey!",
+    "summary_created": "Please provide your mailing address in this form so that we may send you a saliva collection kit for DNA sequencing.",
+    "summary_in_progress": "Please provide your mailing address in this form so that we may send you a saliva collection kit for DNA sequencing.",
+    "summary_complete": "Thank you for providing your address. You may click on \"Update\" to update your address at any time.",
     "questions": {
       "first_name": {
         "prompt": "$ddp.checkAnswer(\"ABOUT_PATIENT_WHO_ENROLLING_HIDDEN\",\"MYSELF\", \"Your First Name\", \"Your Child's First Name\")*",
@@ -1029,7 +1029,7 @@
 
     "summary_created": "Completing this form is needed so that we can collect your medical records.",
     "summary_in_progress": "Completing this form is needed so that we can collect your medical records.",
-    "summary_complete": "Thank you for providing your mailing address and contact information for your physician(s) and hospital(s).",
+    "summary_complete": "Thank you for providing contact information for your physician(s) and hospital(s).  You can update the information you provided by clicking on the \"Update\" button.",
 
     "intro": {
       "p1": "$ddp.checkAnswer(\"MRR_WHO_ENROLLING_COPY\",\"MYSELF\", \"Thank you very much for your consent to participate in our research study, Project Singular.\", \"Thank you very much for your consent to have your child participate in a research study called Project Singular.\")",
@@ -1105,9 +1105,9 @@
     "name": "Medical Record File Upload",
     "title": "Medical Record File Upload",
 
-    "summary_created": "",
-    "summary_in_progress": "",
-    "summary_complete": "",
+    "summary_created": "You can upload your medical record files here if they are available.",
+    "summary_in_progress": "You can upload your medical record files here if they are available.",
+    "summary_complete": "You can upload your medical record files here if they are available.",
 
     "upload": {
       "prompt": "Please upload your medical records files"
@@ -1115,9 +1115,9 @@
   },
   "patient_survey": {
     "name": "Patient Survey",
-    "title": "$ddp.checkAnswer(\"PATIENT_SURVEY_WHO_ENROLLING_HIDDEN\",\"MYSELF\", \"Patient Survey\", \"Patient Survey\")",
-    "summary_created": "Please complete this questionnaire so that we may learn more about you.",
-    "summary_in_progress": "Please complete this questionnaire so that we may learn more about you.",
+    "title": "$ddp.checkAnswer(\"PATIENT_SURVEY_WHO_ENROLLING_HIDDEN\",\"MYSELF\", \"Please complete this survey so that we may learn more about your medical background.\", \"Please complete this survey so that we may learn more about your child's medical background.\")",
+    "summary_created": "$ddp.checkAnswer(\"PATIENT_SURVEY_WHO_ENROLLING_HIDDEN\",\"MYSELF\", \"Please complete this survey so that we may learn more about your medical background.\", \"Please complete this survey so that we may learn more about your child's medical background.\")",
+    "summary_in_progress": "$ddp.checkAnswer(\"PATIENT_SURVEY_WHO_ENROLLING_HIDDEN\",\"MYSELF\", \"Patient Survey\", \"Patient Survey\")",
     "summary_complete": "Thank you for completing this survey!",
     "questions": {
       "what_city_did_you_live": {
