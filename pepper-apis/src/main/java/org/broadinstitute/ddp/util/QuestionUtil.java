@@ -164,7 +164,7 @@ public class QuestionUtil {
                         response, handle, participantUser.getGuid(), studyDto.getGuid(), activityInstanceGuid, isStudyAdmin);
                 PexInterpreter interpreter = new TreeWalkInterpreter();
                 FormActivityService formService = new FormActivityService(interpreter);
-                result = formService.getBlockVisibilities(handle, instanceSummary, activityDef,
+                result = formService.getBlockVisibilitiesAndEnabled(handle, instanceSummary, activityDef,
                         participantUser.getGuid(), operatorGuid, activityInstanceGuid);
             }
         }

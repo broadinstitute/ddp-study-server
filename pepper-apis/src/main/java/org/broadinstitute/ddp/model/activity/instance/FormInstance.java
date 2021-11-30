@@ -216,18 +216,18 @@ public final class FormInstance extends ActivityInstance {
     }
 
     /**
-     * Collect all answers that are within hidden blocks.
+     * Collect all answers that are within hidden or disabled blocks.
      *
-     * @return all hidden answers
+     * @return all hidden or disabled answers
      */
-    public List<Answer> collectHiddenAnswers() {
+    public List<Answer> collectHiddenAndDisabledAnswers() {
         List<Answer> hidden = new ArrayList<>();
         for (var section : getAllSections()) {
             for (var block : section.getBlocks()) {
                 if (isPermanentlyHidden(block)) {
                     continue;
                 }
-                if (!block.isShown()) {
+                if (!block.isShown() || !block.isEnabled()) {
                     hidden.addAll(collectAnswers(block));
                 }
                 List<FormBlock> children = new ArrayList<>();
@@ -237,7 +237,7 @@ public final class FormInstance extends ActivityInstance {
                     children = ((GroupBlock) block).getNested();
                 }
                 for (FormBlock child : children) {
-                    if (!child.isShown()) {
+                    if (!child.isShown() || !child.isEnabled()) {
                         hidden.addAll(collectAnswers(child));
                     }
                 }

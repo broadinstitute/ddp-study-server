@@ -8,12 +8,15 @@ public class BlockVisibility {
     private String guid;
     @SerializedName("shown")
     private Boolean shown;
+    @SerializedName("enabled")
+    private Boolean enabled;
 
     public BlockVisibility() {}
 
-    public BlockVisibility(String guid, Boolean shown) {
+    public BlockVisibility(String guid, Boolean shown, Boolean enabled) {
         this.guid = guid;
         this.shown = shown;
+        this.enabled = enabled;
     }
 
     public String getGuid() {
@@ -30,5 +33,13 @@ public class BlockVisibility {
 
     public void setShown(Boolean shown) {
         this.shown = shown;
+    }
+
+    public Boolean getEnabled() {
+        return enabled;
+    }
+
+    public void setEnabled(Boolean enabled) {
+        this.enabled = enabled;
     }
 }
