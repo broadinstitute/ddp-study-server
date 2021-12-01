@@ -304,13 +304,13 @@ public class FormInstanceTest {
                 List.of(new TextAnswer(4L, "t2", "4", "nest1")), List.of(), TextInputType.TEXT));
         cond1.getNested().add(nest1);
         cond1.setShown(false);
-        nest1.setShown(false);
+        nest1.setEnabled(false);
 
         var section = new FormSection(List.of(q1, q2, cond1));
         var form = createEmptyTestInstance();
         form.addBodySections(List.of(section));
 
-        var hidden = form.collectHiddenAnswers();
+        var hidden = form.collectHiddenAndDisabledAnswers();
         assertNotNull(hidden);
         assertEquals(3, hidden.size());
 
@@ -328,7 +328,7 @@ public class FormInstanceTest {
         var form = createEmptyTestInstance();
         form.addBodySections(List.of(section));
 
-        var hidden = form.collectHiddenAnswers();
+        var hidden = form.collectHiddenAndDisabledAnswers();
         assertNotNull(hidden);
         assertTrue(hidden.isEmpty());
     }
