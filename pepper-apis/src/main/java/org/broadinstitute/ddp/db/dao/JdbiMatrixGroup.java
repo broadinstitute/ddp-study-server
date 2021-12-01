@@ -44,7 +44,7 @@ public interface JdbiMatrixGroup extends SqlObject {
     @SqlQuery("queryMatrixGroupsByIdsQuestionIdAndRevision")
     @RegisterConstructorMapper(MatrixGroupDto.class)
     List<MatrixGroupDto> findGroupsByIds(@Bind("questionId") long questionId,
-                                    @BindList("ids") List<Long> ids,
+                                    @BindList(value = "ids", onEmpty = BindList.EmptyHandling.NULL) List<Long> ids,
                                     @Bind("instanceGuid") String instanceGuid);
 
     @UseStringTemplateSqlLocator

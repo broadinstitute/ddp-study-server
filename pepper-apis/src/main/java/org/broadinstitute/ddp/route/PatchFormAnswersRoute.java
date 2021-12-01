@@ -514,14 +514,16 @@ public class PatchFormAnswersRoute implements Route {
             Map<Long, MatrixGroupDto> selectedGroupMap = new HashMap<>();
             handle.attach(JdbiMatrixOption.class)
                     .findOptions(questionId, optionStableIds, actInstanceGuid)
-                    .forEach(dto -> {
-                        optionStableIdToGroupId.put(dto.getStableId(), dto.getGroupId());
-                    });
+                    .forEach(dto -> optionStableIdToGroupId.put(dto.getStableId(), dto.getGroupId()));
             List<Long> groupIds = new ArrayList<>(optionStableIdToGroupId.values());
             handle.attach(JdbiMatrixGroup.class).findGroupsByIds(questionId, groupIds, actInstanceGuid).forEach(g ->
                     selectedGroupMap.put(g.getId(), g));
-            selected.forEach(s -> s.setGroupStableId(
-                    selectedGroupMap.get(optionStableIdToGroupId.get(s.getOptionStableId())).getStableId()));
+            selected.forEach(s -> {
+                Long groupId = optionStableIdToGroupId.get(s.getOptionStableId());
+                if (groupId != null) {
+                    s.setGroupStableId(selectedGroupMap.get(groupId).getStableId());
+                }
+            });
             return new MatrixAnswer(null, stableId, guid, selected, actInstanceGuid);
         } catch (JsonSyntaxException e) {
             LOG.warn("Failed to convert submitted answer to a matrix answer", e);

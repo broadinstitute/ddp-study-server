@@ -51,7 +51,7 @@ public interface JdbiMatrixOption extends SqlObject {
     @SqlQuery("queryMatrixOptionsByStableIdsQuestionIdAndRevision")
     @RegisterConstructorMapper(MatrixOptionDto.class)
     List<MatrixOptionDto> findOptions(@Bind("questionId") long questionId,
-                                      @BindList("stableIds") List<String> stableIds,
+                                      @BindList(value = "stableIds", onEmpty = BindList.EmptyHandling.NULL) List<String> stableIds,
                                       @Bind("instanceGuid") String instanceGuid);
 
     @SqlBatch("update matrix_option set revision_id = :revisionId where matrix_option_id = :dto.getId")
