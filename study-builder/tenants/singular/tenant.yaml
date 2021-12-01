@@ -19,9 +19,9 @@ pages:
 emailProvider:
   name: "sendgrid"
   enabled: true
+  default_from_address: ##SENDGRID_EMAIL##
   credentials:
-    from: ##SENDGRID_EMAIL##
-    apiKey: ##SENDGRID_TOKEN##
+    api_key: ##SENDGRID_TOKEN##
 
 emailTemplates:
   - template: reset_email
