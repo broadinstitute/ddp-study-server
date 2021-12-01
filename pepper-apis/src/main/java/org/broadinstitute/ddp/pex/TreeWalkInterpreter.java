@@ -39,6 +39,7 @@ import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.db.dto.UserActivityInstanceSummary;
 import org.broadinstitute.ddp.model.activity.definition.question.CompositeQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
+import org.broadinstitute.ddp.model.activity.instance.answer.ActivityInstanceSelectAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
 import org.broadinstitute.ddp.model.activity.instance.answer.CompositeAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.DateAnswer;
@@ -540,6 +541,9 @@ public class TreeWalkInterpreter implements PexInterpreter {
                     return applyBoolAnswerPredicate(ictx, predicateCtx, userGuid, studyId, activityCode, instanceGuid, stableId);
                 case TEXT:
                     return applyTextAnswerPredicate(ictx, predicateCtx, userGuid, studyId, activityCode, instanceGuid, stableId);
+                case ACTIVITY_INSTANCE_SELECT:
+                    return applyActivityInstanceSelectAnswerPredicate(ictx, predicateCtx, userGuid, studyId, activityCode,
+                            instanceGuid, stableId);
                 case PICKLIST:
                     return applyPicklistAnswerPredicate(ictx, predicateCtx, userGuid, studyId, activityCode, instanceGuid, stableId);
                 case DATE:
@@ -574,6 +578,8 @@ public class TreeWalkInterpreter implements PexInterpreter {
             switch (questionType) {
                 case TEXT:
                     return applyChildTextAnswerPredicate(ictx, predicateCtx, userGuid, childAnswers);
+                case ACTIVITY_INSTANCE_SELECT:
+                    return applyChildActivityInstanceSelectAnswerPredicate(ictx, predicateCtx, userGuid, childAnswers);
                 case PICKLIST:
                     return applyChildPicklistAnswerPredicate(ictx, predicateCtx, userGuid, childAnswers);
                 case DATE:
@@ -726,6 +732,38 @@ public class TreeWalkInterpreter implements PexInterpreter {
             throw new PexUnsupportedException("Getting text answer value for child question is currently not supported");
         } else {
             throw new PexUnsupportedException("Invalid predicate used on text answer query: " + predicateCtx.getText());
+        }
+    }
+
+    private Object applyActivityInstanceSelectAnswerPredicate(InterpreterContext ictx, PredicateContext predicateCtx,
+                                                              String userGuid, long studyId, String activityCode,
+                                                              String instanceGuid, String stableId) {
+        if (predicateCtx instanceof PexParser.HasTextPredicateContext) {
+            String value = StringUtils.isBlank(instanceGuid)
+                    ? fetcher.findLatestActivityInstanceAnswer(ictx, userGuid, activityCode, stableId, studyId)
+                    : fetcher.findSpecificActivityInstanceSelectAnswer(ictx, activityCode, instanceGuid, stableId);
+            return StringUtils.isNotBlank(value);
+        } else if (predicateCtx instanceof PexParser.ValueQueryContext) {
+            throw new PexUnsupportedException("Getting Activity Instance Select answer value is not supported."
+                    + " Query: " + predicateCtx.getText());
+        } else {
+            throw new PexUnsupportedException("Invalid predicate used on Activity Instance Select answer query: "
+                    + predicateCtx.getText());
+        }
+    }
+
+    private Object applyChildActivityInstanceSelectAnswerPredicate(InterpreterContext ictx, PredicateContext predicateCtx,
+                                                                   String userGuid, List<Answer> childAnswers) {
+        if (predicateCtx instanceof PexParser.HasTextPredicateContext) {
+            return childAnswers.stream()
+                    .map(child -> ((ActivityInstanceSelectAnswer) child).getValue())
+                    .anyMatch(StringUtils::isNotBlank);
+        } else if (predicateCtx instanceof PexParser.ValueQueryContext) {
+            throw new PexUnsupportedException("Getting Activity Instance Select answer value is not supported"
+                    + " Query: " + predicateCtx.getText());
+        } else {
+            throw new PexUnsupportedException("Invalid predicate used on Activity Instance Select answer query: "
+                    + predicateCtx.getText());
         }
     }
 

@@ -48,6 +48,7 @@ import org.broadinstitute.ddp.model.activity.definition.question.PicklistOptionD
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.TextQuestionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.ActivityInstanceSelectQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.activity.definition.template.TemplateVariable;
 import org.broadinstitute.ddp.model.activity.definition.validation.DateFieldRequiredRuleDef;
@@ -64,6 +65,7 @@ import org.broadinstitute.ddp.model.activity.instance.answer.BoolAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.DateAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.PicklistAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
+import org.broadinstitute.ddp.model.activity.instance.answer.ActivityInstanceSelectAnswer;
 import org.broadinstitute.ddp.model.activity.instance.question.BoolQuestion;
 import org.broadinstitute.ddp.model.activity.instance.question.DatePicklistQuestion;
 import org.broadinstitute.ddp.model.activity.instance.question.DateQuestion;
@@ -71,6 +73,7 @@ import org.broadinstitute.ddp.model.activity.instance.question.PicklistOption;
 import org.broadinstitute.ddp.model.activity.instance.question.PicklistQuestion;
 import org.broadinstitute.ddp.model.activity.instance.question.Question;
 import org.broadinstitute.ddp.model.activity.instance.question.TextQuestion;
+import org.broadinstitute.ddp.model.activity.instance.question.ActivityInstanceSelectQuestion;
 import org.broadinstitute.ddp.model.activity.instance.validation.DateRangeRule;
 import org.broadinstitute.ddp.model.activity.instance.validation.LengthRule;
 import org.broadinstitute.ddp.model.activity.instance.validation.RegexRule;
@@ -249,6 +252,51 @@ public class FormActivityDaoTest extends TxnAwareBaseTest {
     }
 
     @Test
+    public void testInsertActivity_ActivityInstanceSelectQuestion() {
+
+        List<RuleDef> rules = List.of(new RequiredRuleDef(null));
+        List<String> sourceStableIds = new ArrayList<>(List.of("PREVIOUS_TEXT_QUESTION_SID"));
+
+        ActivityInstanceSelectQuestionDef activityInstanceSelectQuestionDef = new ActivityInstanceSelectQuestionDef(DUMMY_QSID,
+                false,
+                Template.text("ActivityInstanceSelect question prompt"),
+                Template.text("ActivityInstanceSelect question header"),
+                Template.text("ActivityInstanceSelect question footer"),
+                rules,
+                sourceStableIds,
+                true,
+                false);
+
+        FormActivityDef form = buildSingleBlockForm(testData.getStudyGuid(), "ACT_DY_SEL",
+                new QuestionBlockDef(activityInstanceSelectQuestionDef));
+
+        TransactionWrapper.useTxn(handle -> {
+            FormInstance formInstance = runInsertAndFetchInstance(handle, form, testData.getUserGuid(), testData.getStudyGuid());
+
+            assertEquals("ACT_DY_SEL", formInstance.getTitle());
+            ActivityInstanceSelectQuestion question = unwrapSingleBlockQuestion(formInstance, ActivityInstanceSelectQuestion.class);
+
+            assertEquals(DUMMY_QSID, question.getStableId());
+            assertTrue(HtmlConverter.hasSameValue("ActivityInstanceSelect question prompt", question.getPrompt()));
+            assertEquals("ActivityInstanceSelect question prompt", question.getTextPrompt());
+            assertEquals("PREVIOUS_TEXT_QUESTION_SID", question.getActivityCodes().get(0));
+
+            assertEquals(rules.size(), question.getValidations().size());
+            for (Rule<ActivityInstanceSelectAnswer> rule : question.getValidations()) {
+                if (rule.getRuleType() == RuleType.REQUIRED) {
+                    assertNotNull(rule.getDefaultMessage());
+                    assertNull(rule.getCorrectionHint());
+                    assertEquals(rule.getMessage(), rule.getDefaultMessage());
+                } else {
+                    fail("unrecognized rule " + rule.getRuleType());
+                }
+            }
+
+            handle.rollback();
+        });
+    }
+
+    @Test
     public void testInsertActivity_dateQuestion() {
         runInsertDateQuestionTest(false);
         runInsertDateQuestionTest(true);
@@ -289,6 +337,7 @@ public class FormActivityDaoTest extends TxnAwareBaseTest {
         Template tmpl = new Template(TemplateType.TEXT, "tmpl", "test block expr");
         ContentBlockDef block = new ContentBlockDef(tmpl);
         block.setShownExpr("true && false");
+        block.setEnabledExpr("true && false");
 
         FormActivityDef form = buildSingleBlockForm(testData.getStudyGuid(), "dummy activity", block);
 
@@ -298,6 +347,8 @@ public class FormActivityDaoTest extends TxnAwareBaseTest {
 
             assertNotNull(actual.getShownExpr());
             assertFalse(actual.isShown());
+            assertNotNull(actual.getEnabledExpr());
+            assertFalse(actual.isEnabled());
 
             handle.rollback();
         });

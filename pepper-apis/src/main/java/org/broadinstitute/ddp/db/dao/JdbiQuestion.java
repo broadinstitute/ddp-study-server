@@ -21,6 +21,7 @@ import org.broadinstitute.ddp.db.dto.NumericQuestionDto;
 import org.broadinstitute.ddp.db.dto.PicklistQuestionDto;
 import org.broadinstitute.ddp.db.dto.QuestionDto;
 import org.broadinstitute.ddp.db.dto.TextQuestionDto;
+import org.broadinstitute.ddp.db.dto.ActivityInstanceSelectQuestionDto;
 import org.broadinstitute.ddp.model.activity.definition.question.DatePicklistDef;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
 import org.jdbi.v3.core.mapper.RowMapper;
@@ -65,6 +66,10 @@ public interface JdbiQuestion extends SqlObject {
     Optional<QuestionDto> findLatestDtoByStudyIdAndQuestionStableId(
             @Bind("studyId") long studyId,
             @Bind("questionStableId") String questionStableId);
+
+    @SqlQuery("select study_activity_code from activity_instance_select_activity_code where"
+            + " activity_instance_select_question_id = :questionId")
+    List<String> getActivityCodesByActivityInstanceSelectQuestionId(@Bind("questionId") Long questionId);
 
     @UseStringTemplateSqlLocator
     @SqlQuery("queryLatestDtosByStudyIdAndQuestionStableIds")
@@ -159,6 +164,7 @@ public interface JdbiQuestion extends SqlObject {
     @RegisterConstructorMapper(NumericQuestionDto.class)
     @RegisterConstructorMapper(PicklistQuestionDto.class)
     @RegisterConstructorMapper(TextQuestionDto.class)
+    @RegisterConstructorMapper(ActivityInstanceSelectQuestionDto.class)
     @RegisterConstructorMapper(CompositeQuestionDto.class)
     @RegisterRowMapper(DatePicklistDefMapper.class)
     @UseRowReducer(QuestionDtoReducer.class)
@@ -170,7 +176,6 @@ public interface JdbiQuestion extends SqlObject {
             return stream.findFirst();
         }
     }
-
 
     @SqlUpdate("insert into file_question (question_id, max_file_size) values (:questionId, :maxFileSize)")
     int insertFileQuestion(@Bind("questionId") long questionId, @Bind("maxFileSize") long maxFileSize);
@@ -220,6 +225,9 @@ public interface JdbiQuestion extends SqlObject {
                     break;
                 case TEXT:
                     questionDto = view.getRow(TextQuestionDto.class);
+                    break;
+                case ACTIVITY_INSTANCE_SELECT:
+                    questionDto = view.getRow(ActivityInstanceSelectQuestionDto.class);
                     break;
                 case COMPOSITE:
                     questionDto = view.getRow(CompositeQuestionDto.class);

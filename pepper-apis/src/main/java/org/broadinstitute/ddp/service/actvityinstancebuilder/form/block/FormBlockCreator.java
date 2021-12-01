@@ -46,6 +46,7 @@ public class FormBlockCreator {
             formBlock.setBlockId(formBlockDef.getBlockId());
             formBlock.setGuid(formBlockDef.getBlockGuid());
             formBlock.setShownExpr(formBlockDef.getShownExpr());
+            formBlock.setEnabledExpr(formBlockDef.getEnabledExpr());
         }
     }
 }
