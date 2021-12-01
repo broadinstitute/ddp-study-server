@@ -45,8 +45,6 @@ import org.broadinstitute.ddp.db.dto.AnswerDto;
 import org.broadinstitute.ddp.db.dto.CompositeQuestionDto;
 import org.broadinstitute.ddp.db.dto.LanguageDto;
 import org.broadinstitute.ddp.db.dto.MatrixGroupDto;
-import org.broadinstitute.ddp.db.dto.MatrixOptionDto;
-import org.broadinstitute.ddp.db.dto.MatrixRowDto;
 import org.broadinstitute.ddp.db.dto.NumericQuestionDto;
 import org.broadinstitute.ddp.db.dto.QuestionDto;
 import org.broadinstitute.ddp.db.dto.UserActivityInstanceSummary;
