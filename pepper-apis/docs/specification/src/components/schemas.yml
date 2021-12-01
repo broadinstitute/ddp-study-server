@@ -1395,7 +1395,7 @@ MatrixOption:
       description: tooltip for the option, in plain text
     exclusive:
       type: boolean
-      description: if `exclusive` option selected, other options will be cleared (applicable for MULTIPLE select mode)
+      description: if `exclusive` option selected, other options in the group will be cleared (applicable for MULTIPLE select mode)
 MatrixRowQuestion:
   type: object
   required:
