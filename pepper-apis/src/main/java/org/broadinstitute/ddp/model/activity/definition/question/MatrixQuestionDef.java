@@ -20,7 +20,7 @@ public final class MatrixQuestionDef extends QuestionDef {
     private MatrixSelectMode selectMode;
 
     @NotNull
-    @SerializedName("groups")
+    @SerializedName("matrixGroups")
     private List<@Valid @NotNull MatrixGroupDef> groups = new ArrayList<>();
 
     @NotNull

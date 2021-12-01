@@ -61,7 +61,7 @@ public interface MatrixAnswerDao extends SqlObject {
                 .orElseThrow(() -> new NoSuchElementException("Could not find question id " + answerDto.getQuestionId()
                         + " for answer id " + answerId));
 
-        if (questionDto.getSelectMode() == MatrixSelectMode.SINGLE && !validateSingleModeMatrixSelected(selected)) {
+        if (questionDto.getSelectMode() == MatrixSelectMode.SINGLE && isSingleModeMatrixSelectionInvalid(selected)) {
             throw new OperationNotAllowedException("Single-select matrix question does not allow more than one selected options per row");
         }
 
@@ -82,7 +82,7 @@ public interface MatrixAnswerDao extends SqlObject {
                 .forEach(dto -> selectedRowMap.put(dto.getStableId(), dto));
 
         getJdbiMatrixGroup()
-                .findGroups(answerDto.getQuestionId(), groupStableIds, instanceGuid)
+                .findGroupsByStableIds(answerDto.getQuestionId(), groupStableIds, instanceGuid)
                 .forEach(dto -> selectedGroupMap.put(dto.getStableId(), dto));
 
         List<Long> optionIds = new ArrayList<>();
@@ -126,7 +126,7 @@ public interface MatrixAnswerDao extends SqlObject {
             return;
         }
 
-        if (questionDef.getSelectMode() == MatrixSelectMode.SINGLE && !validateSingleModeMatrixSelected(selected)) {
+        if (questionDef.getSelectMode() == MatrixSelectMode.SINGLE && isSingleModeMatrixSelectionInvalid(selected)) {
             throw new OperationNotAllowedException("Single-select matrix question does not allow more than one selected options per row");
         }
 
@@ -181,13 +181,13 @@ public interface MatrixAnswerDao extends SqlObject {
         }
     }
 
-    private boolean validateSingleModeMatrixSelected(List<SelectedMatrixCell> selected) {
+    private boolean isSingleModeMatrixSelectionInvalid(List<SelectedMatrixCell> selected) {
         Set<String> rows = new HashSet<>();
         for (SelectedMatrixCell cell : selected) {
             if (!rows.add(cell.getRowStableId())) {
-                return false;
+                return true;
             }
         }
-        return true;
+        return false;
     }
 }

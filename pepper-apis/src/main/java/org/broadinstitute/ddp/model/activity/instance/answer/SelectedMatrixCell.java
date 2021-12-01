@@ -10,14 +10,13 @@ public class SelectedMatrixCell implements Serializable {
 
     @NotBlank
     @SerializedName("rowStableId")
-    private String rowStableId;
+    private final String rowStableId;
 
     @NotBlank
     @SerializedName("optionStableId")
-    private String optionStableId;
+    private final String optionStableId;
 
-    @SerializedName("groupStableId")
-    private String groupStableId;
+    private transient String groupStableId;
 
     public SelectedMatrixCell(String rowStableId, String optionStableId, String groupStableId) {
         this.rowStableId = MiscUtil.checkNotBlank(rowStableId, "rowStableId");

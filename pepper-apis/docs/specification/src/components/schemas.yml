@@ -461,7 +461,6 @@ SelectedCell:
   required:
     - rowStableId
     - optionStableId
-    - groupStableId
   properties:
     rowStableId:
       type: string
@@ -469,10 +468,6 @@ SelectedCell:
     optionStableId:
       type: string
       format: guid
-    groupStableId:
-      type: string
-      format: guid
-      nullable: true
 DateValue:
   type: object
   description: an object which represents a day, month, and year in UTC.
@@ -1400,6 +1395,7 @@ MatrixOption:
       description: tooltip for the option, in plain text
     exclusive:
       type: boolean
+      description: if `exclusive` option selected, other options will be cleared (applicable for MULTIPLE select mode)
 MatrixRowQuestion:
   type: object
   required:
@@ -1801,8 +1797,8 @@ Question.Matrix:
     - type: object
       required:
         - selectMode
-        - matrixOptions
-        - matrixQuestions
+        - options
+        - questions
         - answers
       properties:
         questionType:
@@ -1819,7 +1815,6 @@ Question.Matrix:
             - MULTIPLE
             - SINGLE
         groups:
-
           type: array
           description: A list of groups used in the `matrixOptions` values. If there are no options which explicity request grouping, this will be an empty array.
           minItems: 0
@@ -1833,11 +1828,11 @@ Question.Matrix:
                 type: string
               name:
                 type: string
-        matrixOptions:
+        options:
           type: array
           items:
             $ref: '#/MatrixOption'
-        matrixQuestions:
+        questions:
           type: array
           items:
             $ref: '#/MatrixRowQuestion'
