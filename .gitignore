@@ -13,6 +13,7 @@ Desktop.ini
 # Intellij
 .idea/
 *.iml
+target
 
 # VS Code
 .settings/
