@@ -1834,7 +1834,7 @@ Question.Matrix:
         answers:
           type: array
           items:
-            $ref: '#/Answer.Picklist'
+            $ref: '#/Answer.Matrix'
 Question.Text:
   allOf:
   - $ref: '#/Question'
