@@ -5,8 +5,11 @@ import static java.util.stream.Collectors.toMap;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.function.Function;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 
@@ -58,7 +61,7 @@ public class FormActivityDef extends ActivityDef {
     @SerializedName("snapshotAddressOnSubmit")
     protected boolean snapshotAddressOnSubmit;
 
-    private transient List<FormBlockDef> cachedToggleableBlocks;
+    private transient Set<FormBlockDef> cachedToggleableBlocks;
     private transient Map<String, QuestionDef> stableIdToQuestion;
 
     public static FormBuilder formBuilder() {
@@ -186,35 +189,40 @@ public class FormActivityDef extends ActivityDef {
     }
 
     private Map<String, QuestionDef> buildStableIdToQuestionMap() {
-        Map<String, QuestionDef> stableIdToQuestionMap = getAllSections().stream()
+        return getAllSections().stream()
                 .flatMap(section -> section.getBlocks().stream())
-                .flatMap(block -> block.getQuestions())
-                .collect(toMap(s -> s.getStableId(), s -> s));
-        return stableIdToQuestionMap;
+                .flatMap(FormBlockDef::getQuestions)
+                .collect(toMap(QuestionDef::getStableId, s -> s));
     }
 
-    public List<FormBlockDef> getAllToggleableBlocks() {
+    public Collection<FormBlockDef> getAllToggleableBlocks() {
         if (cachedToggleableBlocks == null) {
-            List<FormBlockDef> blocks = new ArrayList<>();
-            for (var section : getAllSections()) {
-                for (var block : section.getBlocks()) {
-                    if (block.getShownExpr() != null) {
-                        blocks.add(block);
-                    }
-                    List<FormBlockDef> nested = null;
-                    if (block.getBlockType() == BlockType.CONDITIONAL) {
-                        nested = ((ConditionalBlockDef) block).getNested();
-                    } else if (block.getBlockType() == BlockType.GROUP) {
-                        nested = ((GroupBlockDef) block).getNested();
-                    }
-                    if (nested != null) {
-                        nested.stream().filter(b -> b.getShownExpr() != null).forEach(blocks::add);
-                    }
-                }
-            }
-            cachedToggleableBlocks = List.copyOf(blocks);   // Make immutable.
+            Set<FormBlockDef> blocks = getFilteredBlocks(b -> b.getShownExpr() != null);
+            blocks.addAll(getFilteredBlocks(b -> b.getEnabledExpr() != null));
+            cachedToggleableBlocks = Set.copyOf(blocks);   // Make immutable.
         }
         return cachedToggleableBlocks;
+    }
+
+    public Set<FormBlockDef> getFilteredBlocks(Function<FormBlockDef, Boolean> check) {
+        Set<FormBlockDef> blocks = new HashSet<>();
+        for (var section : getAllSections()) {
+            for (var block : section.getBlocks()) {
+                if (check.apply(block)) {
+                    blocks.add(block);
+                }
+                List<FormBlockDef> nested = null;
+                if (block.getBlockType() == BlockType.CONDITIONAL) {
+                    nested = ((ConditionalBlockDef) block).getNested();
+                } else if (block.getBlockType() == BlockType.GROUP) {
+                    nested = ((GroupBlockDef) block).getNested();
+                }
+                if (nested != null) {
+                    nested.stream().filter(check::apply).forEach(blocks::add);
+                }
+            }
+        }
+        return blocks;
     }
 
     // Note: this builder is named a bit differently so we don't clash with builders in subclasses.
@@ -222,7 +230,7 @@ public class FormActivityDef extends ActivityDef {
 
         private FormType formType;
 
-        private List<FormSectionDef> sections = new ArrayList<>();
+        private final List<FormSectionDef> sections = new ArrayList<>();
         private ListStyleHint listStyleHint = null;
         private FormSectionDef introduction = null;
         private FormSectionDef closing = null;

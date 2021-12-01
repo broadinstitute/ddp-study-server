@@ -104,7 +104,9 @@ public interface JdbiFormSectionBlock extends SqlObject {
     }
 
     @SqlQuery("select fsb.form_section_id, null as parent_block_id,"
-            + "       bt.block_type_code, b.block_id, b.block_guid, e.expression_text"
+            + "       bt.block_type_code, b.block_id, b.block_guid,"
+            + "       e.expression_text as shown_expression_text,"
+            + "       ee.expression_text as enabled_expression_text"
             + "  from form_section__block as fsb"
             + "  join revision as rev on rev.revision_id = fsb.revision_id"
             + "  join block as b on b.block_id = fsb.block_id"
@@ -112,11 +114,16 @@ public interface JdbiFormSectionBlock extends SqlObject {
             + "  left join block__expression as be on be.block_id = b.block_id"
             + "  left join expression as e on e.expression_id = be.expression_id"
             + "  left join revision as be_rev on be_rev.revision_id = be.revision_id"
+            + "  left join block_enabled_expression as bee on bee.block_id = b.block_id"
+            + "  left join expression as ee on ee.expression_id = bee.expression_id"
+            + "  left join revision as bee_rev on bee_rev.revision_id = bee.revision_id"
             + " where fsb.form_section_id in (<sectionIds>)"
             + "   and rev.start_date <= :timestamp"
             + "   and (rev.end_date is null or :timestamp < rev.end_date)"
             + "   and (be.block__expression_id is null or "
             + "       (be_rev.start_date <= :timestamp and (be_rev.end_date is null or :timestamp < be_rev.end_date)))"
+            + "   and (bee.block_enabled_expression_id is null or "
+            + "       (bee_rev.start_date <= :timestamp and (bee_rev.end_date is null or :timestamp < bee_rev.end_date)))"
             + " order by fsb.form_section_id asc, fsb.display_order asc")
     @RegisterRowMapper(FormBlockDto.FormBlockDtoMapper.class)
     List<FormBlockDto> findOrderedFormBlockDtosBySectionIdsAndTimestamp(

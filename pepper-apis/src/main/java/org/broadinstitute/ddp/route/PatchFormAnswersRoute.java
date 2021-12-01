@@ -333,7 +333,7 @@ public class PatchFormAnswersRoute implements Route {
                 throw ResponseUtil.haltError(response, 400, new ApiError(ErrorCodes.REQUIRED_PARAMETER_MISSING, e.getMessage()));
             }
 
-            res.setBlockVisibilities(formService.getBlockVisibilities(handle, instanceSummary, activityDef, participantGuid,
+            res.setBlockVisibilities(formService.getBlockVisibilitiesAndEnabled(handle, instanceSummary, activityDef, participantGuid,
                     operatorGuid, instanceGuid));
 
             List<ActivityValidationFailure> failures = getActivityValidationFailures(

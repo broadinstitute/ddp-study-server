@@ -207,11 +207,18 @@ public class SqlConstants {
         public static final String TABLE_NAME = "block";
     }
 
-    public static final class BlockExpressionTable {
-        public static final String ID = "block__expression_id";
+    private static class BlockExpressionAbstract {
         public static final String BLOCK_ID = "block_id";
         public static final String EXPRESSION_ID = "expression_id";
         public static final String REVISION_ID = "revision_id";
+    }
+
+    public static final class BlockExpressionTable extends BlockExpressionAbstract {
+        public static final String ID = "block__expression_id";
+    }
+
+    public static final class BlockEnabledExpressionTable extends BlockExpressionAbstract {
+        public static final String ID = "block_enabled_expression_id";
     }
 
     public static final class TemplateTable {

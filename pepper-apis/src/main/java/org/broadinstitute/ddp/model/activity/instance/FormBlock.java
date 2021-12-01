@@ -21,8 +21,12 @@ public abstract class FormBlock implements Renderable {
     @SerializedName("shown")
     protected boolean shown = true;
 
+    @SerializedName("enabled")
+    protected boolean enabled = true;
+
     protected transient Long blockId;
     protected transient String shownExpr;
+    protected transient String enabledExpr;
 
     FormBlock(BlockType type) {
         this.blockType = MiscUtil.checkNonNull(type, "type");
@@ -60,6 +64,14 @@ public abstract class FormBlock implements Renderable {
         this.shown = shown;
     }
 
+    public boolean isEnabled() {
+        return enabled;
+    }
+
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
+    }
+
     public Long getBlockId() {
         return blockId;
     }
@@ -76,4 +88,11 @@ public abstract class FormBlock implements Renderable {
         this.shownExpr = shownExpr;
     }
 
+    public String getEnabledExpr() {
+        return enabledExpr;
+    }
+
+    public void setEnabledExpr(String enabledExpr) {
+        this.enabledExpr = enabledExpr;
+    }
 }
