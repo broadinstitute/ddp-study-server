@@ -1805,6 +1805,9 @@ Question.Matrix:
             - MATRIX
         selectMode:
           type: string
+          description: |
+            * `MULTIPLE` - Allows user to select as many options as needed (checkbox)
+            * `SINGLE` - Only one selection is allowed inside group (radio button)
           enum:
             - MULTIPLE
             - SINGLE
