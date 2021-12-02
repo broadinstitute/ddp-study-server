@@ -94,8 +94,8 @@ public class FormActivityServiceTest extends TxnAwareBaseTest {
                     versionDto)
                     .orElseThrow(() -> new DDPException("Could not find activity definition for instance " + instanceGuid));
 
-            List<BlockVisibility> visibilities = service.getBlockVisibilities(handle, summary.get(), formDef, testData.getUserGuid(),
-                    testData.getUserGuid(), instanceGuid);
+            List<BlockVisibility> visibilities = service.getBlockVisibilitiesAndEnabled(handle, summary.get(), formDef,
+                    testData.getUserGuid(), testData.getUserGuid(), instanceGuid);
             assertNotNull(visibilities);
             assertEquals(2, visibilities.size());
             assertFalse(visibilities.stream().anyMatch(vis -> vis.getGuid().equals(controlBlockGuid)));
@@ -130,8 +130,8 @@ public class FormActivityServiceTest extends TxnAwareBaseTest {
                     versionDto)
                     .orElseThrow(() -> new DDPException("Could not find activity definition for instance " + instanceGuid));
 
-            List<BlockVisibility> visibilities = formService.getBlockVisibilities(handle, summary.get(), formDef, testData.getUserGuid(),
-                    testData.getUserGuid(), instanceGuid);
+            List<BlockVisibility> visibilities = formService.getBlockVisibilitiesAndEnabled(handle, summary.get(), formDef,
+                    testData.getUserGuid(), testData.getUserGuid(), instanceGuid);
             assertNotNull(visibilities);
             assertEquals(2, visibilities.size());
 
@@ -175,7 +175,8 @@ public class FormActivityServiceTest extends TxnAwareBaseTest {
                     versionDto)
                     .orElseThrow(() -> new DDPException("Could not find activity definition for instance " + instanceGuid));
 
-            formService.getBlockVisibilities(handle, summary.get(), formDef, testData.getUserGuid(), testData.getUserGuid(), instanceGuid);
+            formService.getBlockVisibilitiesAndEnabled(handle, summary.get(), formDef, testData.getUserGuid(),
+                    testData.getUserGuid(), instanceGuid);
             fail("expected exception was not thrown");
         });
     }
@@ -200,8 +201,8 @@ public class FormActivityServiceTest extends TxnAwareBaseTest {
                     versionDto)
                     .orElseThrow(() -> new DDPException("Could not find activity definition for instance " + instanceGuid));
 
-            List<BlockVisibility> visibilities = service.getBlockVisibilities(handle, summary.get(), formDef, testData.getUserGuid(),
-                    testData.getUserGuid(), instanceGuid);
+            List<BlockVisibility> visibilities = service.getBlockVisibilitiesAndEnabled(handle, summary.get(), formDef,
+                    testData.getUserGuid(), testData.getUserGuid(), instanceGuid);
             assertNotNull(visibilities);
             assertEquals(2, visibilities.size());
             assertTrue(visibilities.stream().anyMatch(vis -> vis.getGuid().equals(conditionalNestedBlockGuid)));

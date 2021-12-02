@@ -337,6 +337,7 @@ public class FormActivityDaoTest extends TxnAwareBaseTest {
         Template tmpl = new Template(TemplateType.TEXT, "tmpl", "test block expr");
         ContentBlockDef block = new ContentBlockDef(tmpl);
         block.setShownExpr("true && false");
+        block.setEnabledExpr("true && false");
 
         FormActivityDef form = buildSingleBlockForm(testData.getStudyGuid(), "dummy activity", block);
 
@@ -346,6 +347,8 @@ public class FormActivityDaoTest extends TxnAwareBaseTest {
 
             assertNotNull(actual.getShownExpr());
             assertFalse(actual.isShown());
+            assertNotNull(actual.getEnabledExpr());
+            assertFalse(actual.isEnabled());
 
             handle.rollback();
         });
