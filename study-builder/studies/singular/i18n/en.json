@@ -1027,9 +1027,9 @@
     "name": "$ddp.checkAnswer(\"MRR_WHO_ENROLLING_COPY\",\"MYSELF\", \"Medical Record Release Form\", \"Parental Medical Record Release Form\")",
     "title": "$ddp.checkAnswer(\"MRR_WHO_ENROLLING_COPY\",\"MYSELF\", \"Medical Record Release Form\", \"Parental Medical Record Release Form\")",
 
-    "summary_created": "Completing this form is needed so that we can collect your medical records.",
-    "summary_in_progress": "Completing this form is needed so that we can collect your medical records.",
-    "summary_complete": "Thank you for providing contact information for your physician(s) and hospital(s).  You can update the information you provided by clicking on the \"Update\" button.",
+    "summary_created": "$ddp.checkAnswer(\"MRR_WHO_ENROLLING_COPY\",\"MYSELF\", \"Completing this form is needed so that we can collect your medical records.\", \"Completing this form is needed so that we can collect your child's medical records.\")",
+    "summary_in_progress": "$ddp.checkAnswer(\"MRR_WHO_ENROLLING_COPY\",\"MYSELF\", \"Completing this form is needed so that we can collect your medical records.\", \"Completing this form is needed so that we can collect your child's medical records.\")",
+    "summary_complete": "Thank you for providing contact information for your physician(s) and hospital(s). You can update the information you provided by clicking on the \"Update\" button.",
 
     "intro": {
       "p1": "$ddp.checkAnswer(\"MRR_WHO_ENROLLING_COPY\",\"MYSELF\", \"Thank you very much for your consent to participate in our research study, Project Singular.\", \"Thank you very much for your consent to have your child participate in a research study called Project Singular.\")",
@@ -1117,7 +1117,7 @@
     "name": "Patient Survey",
     "title": "$ddp.checkAnswer(\"PATIENT_SURVEY_WHO_ENROLLING_HIDDEN\",\"MYSELF\", \"Please complete this survey so that we may learn more about your medical background.\", \"Please complete this survey so that we may learn more about your child's medical background.\")",
     "summary_created": "$ddp.checkAnswer(\"PATIENT_SURVEY_WHO_ENROLLING_HIDDEN\",\"MYSELF\", \"Please complete this survey so that we may learn more about your medical background.\", \"Please complete this survey so that we may learn more about your child's medical background.\")",
-    "summary_in_progress": "$ddp.checkAnswer(\"PATIENT_SURVEY_WHO_ENROLLING_HIDDEN\",\"MYSELF\", \"Patient Survey\", \"Patient Survey\")",
+    "summary_in_progress": "$ddp.checkAnswer(\"PATIENT_SURVEY_WHO_ENROLLING_HIDDEN\",\"MYSELF\", \"Please complete this survey so that we may learn more about your medical background\", \"Please complete this survey so that we may learn more about your child's medical background\")",
     "summary_complete": "Thank you for completing this survey!",
     "questions": {
       "what_city_did_you_live": {
