@@ -279,12 +279,14 @@
       "p4": "Study Staff: Diane Pickles",
       "p5": "Contact: <a href=\"mailto:contact@projectsingular.org\" class=\"Link\">contact@projectsingular.org</a>",
       "p6": "Please carefully read the consent form below. Click “Next” when you are done with this page. If you have questions about Project Singular or this form, please ask us. You can call us at <a href=\"tel:(650) 761-6486\" class=\"Link\">(650) 761-6486</a>. Or you can email us at <a href=\"mailto:contact@projectsingular.org\" class=\"Link\">contact@projectsingular.org</a>.",
-      "p7": "We encourage you to <a href=\"https://storage.googleapis.com/\"\"\"${assetsBucketName}\"\"\"/consent_parental.pdf\" target=\"_blank \" download class=\"consent-download__link\">download</a> a PDF version of the consent form and read it carefully."
+      "p7p1": "We encourage you to",
+      "download": "download",
+      "p7p2": "a PDF version of the consent form and read it carefully."
     },
 
-    "summary_created": "Please complete this questionnaire so that we may learn more about you.",
-    "summary_in_progress": "Please complete this questionnaire so that we may learn more about you.",
-    "summary_complete": "Thank you for completing this survey!",
+    "summary_created": "Signing this informed consent document is required if you wish to enroll.",
+    "summary_in_progress": "Signing this informed consent document is required if you wish to enroll.",
+    "summary_complete": "Thank you for signing the consent form -- you are now enrolled!",
 
     "summary": {
       "title": "RESEARCH CONSENT SUMMARY",
@@ -590,11 +592,13 @@
       "p4": "Study Staff: Diane Pickles",
       "p5": "Contact: <a href=\"mailto:contact@projectsingular.org\" class=\"Link\">contact@projectsingular.org</a>",
       "p6": "Please carefully read the consent form below. Click “Next” when you are done with each page. This will let you move to the next page. If you have questions about Project Singular or this form, please ask us. You can call us at <a href=\"tel:(650) 761-6486\" class=\"Link\">(650) 761-6486</a>. Or you can email us at <a href=\"mailto:contact@projectsingular.org\" class=\"Link\">contact@projectsingular.org</a>.",
-      "p7": "We encourage you to <a href=\"https://storage.googleapis.com/\"\"\"${assetsBucketName}\"\"\"/consent_parental.pdf\" target=\"_blank \" download class=\"consent-download__link\">download</a> a PDF version of the consent form and read it carefully."
+      "p7p1": "We encourage you to",
+      "download": "download",
+      "p7p2": "a PDF version of the consent form and read it carefully."
     },
-    "summary_created": "Please complete this questionnaire so that we may learn more about you.",
-    "summary_in_progress": "Please complete this questionnaire so that we may learn more about you.",
-    "summary_complete": "Thank you for completing this survey!",
+    "summary_created": "Signing this informed consent document is required if you wish to enroll your child.",
+    "summary_in_progress": "Signing this informed consent document is required if you wish to enroll your child.",
+    "summary_complete": "Thank you for signing the consent form!",
     "summary": {
       "title": "RESEARCH CONSENT SUMMARY",
       "p1": "We are asking your child to take part in a research study. We are asking because your child or a close family member of your child (parent or sibling) has a single ventricle heart defect.",
@@ -880,9 +884,9 @@
       "p3": "<b>STUDY-RELATED PHONE NUMBER(S):</b> <a href=\"tel:(650) 761-6486\" class=\"Link\">(650) 761-6486</a> (24 hours), <a href=\"mailto:contact@projectsingular.org\" class=\"Link\">contact@projectsingular.org</a>"
     },
 
-    "summary_created": "Please complete this questionnaire so that we may learn more about you.",
-    "summary_in_progress": "Please complete this questionnaire so that we may learn more about you.",
-    "summary_complete": "Thank you for completing this survey!",
+    "summary_created": "Please have your child read and sign this assent document, which is required if you wish to enroll your child.",
+    "summary_in_progress": "Please have your child read and sign this assent document, which is required if you wish to enroll your child.",
+    "summary_complete": "Thank you for signing the assent form -- your child is now enrolled!",
 
     "content": {
       "p1": "We’re asking you to take part in a research study. The study wants to learn more about how hearts grow. We also want to find out why some hearts don’t grow the ways others do. A research study is a way for scientists to learn more about something.",
@@ -925,9 +929,9 @@
   "about_healthy": {
     "name": "$ddp.checkAnswer(\"ABOUT_HEALTHY_WHO_ENROLLING_HIDDEN\",\"MYSELF\", \"About Me\", \"About My Child\")",
     "title": "$ddp.checkAnswer(\"ABOUT_HEALTHY_WHO_ENROLLING_HIDDEN\",\"MYSELF\", \"About Me\", \"About My Child\")",
-    "summary_created": "Please complete this questionnaire so that we may learn more about you.",
-    "summary_in_progress": "Please complete this questionnaire so that we may learn more about you.",
-    "summary_complete": "Thank you for completing this survey!",
+    "summary_created": "$ddp.checkAnswer(\"ABOUT_HEALTHY_WHO_ENROLLING_HIDDEN\",\"MYSELF\", \"Please complete this form so that we may send you a saliva collection kit for DNA sequencing and learn about your medical background\", \"Please complete this form so that we may send you a saliva collection kit for DNA sequencing and learn about your child's medical background\")",
+    "summary_in_progress": "$ddp.checkAnswer(\"ABOUT_HEALTHY_WHO_ENROLLING_HIDDEN\",\"MYSELF\", \"Please complete this form so that we may send you a saliva collection kit for DNA sequencing and learn about your medical background\", \"Please complete this form so that we may send you a saliva collection kit for DNA sequencing and learn about your child's medical background\")",
+    "summary_complete": "Thank you for providing your address. You may click on \"Update\" to update your address at any time!",
     "questions": {
       "first_name": {
         "prompt": "$ddp.checkAnswer(\"ABOUT_HEALTHY_WHO_ENROLLING_HIDDEN\",\"MYSELF\", \"Your First Name\", \"Your Child's First Name\")*",
@@ -1002,9 +1006,9 @@
   "about_patient": {
     "name": "$ddp.checkAnswer(\"ABOUT_PATIENT_WHO_ENROLLING_HIDDEN\",\"MYSELF\", \"About Me\", \"About My Child\")",
     "title": "$ddp.checkAnswer(\"ABOUT_PATIENT_WHO_ENROLLING_HIDDEN\",\"MYSELF\", \"About Me\", \"About My Child\")",
-    "summary_created": "Please complete this questionnaire so that we may learn more about you.",
-    "summary_in_progress": "Please complete this questionnaire so that we may learn more about you.",
-    "summary_complete": "Thank you for completing this survey!",
+    "summary_created": "Please provide your mailing address in this form so that we may send you a saliva collection kit for DNA sequencing.",
+    "summary_in_progress": "Please provide your mailing address in this form so that we may send you a saliva collection kit for DNA sequencing.",
+    "summary_complete": "Thank you for providing your address. You may click on \"Update\" to update your address at any time.",
     "questions": {
       "first_name": {
         "prompt": "$ddp.checkAnswer(\"ABOUT_PATIENT_WHO_ENROLLING_HIDDEN\",\"MYSELF\", \"Your First Name\", \"Your Child's First Name\")*",
@@ -1023,14 +1027,14 @@
     "name": "$ddp.checkAnswer(\"MRR_WHO_ENROLLING_COPY\",\"MYSELF\", \"Medical Record Release Form\", \"Parental Medical Record Release Form\")",
     "title": "$ddp.checkAnswer(\"MRR_WHO_ENROLLING_COPY\",\"MYSELF\", \"Medical Record Release Form\", \"Parental Medical Record Release Form\")",
 
-    "summary_created": "Completing this form is needed so that we can collect your medical records.",
-    "summary_in_progress": "Completing this form is needed so that we can collect your medical records.",
-    "summary_complete": "Thank you for providing your mailing address and contact information for your physician(s) and hospital(s). You can update the information you provided by clicking on the \"Update\" button.",
+    "summary_created": "$ddp.checkAnswer(\"MRR_WHO_ENROLLING_COPY\",\"MYSELF\", \"Completing this form is needed so that we can collect your medical records.\", \"Completing this form is needed so that we can collect your child's medical records.\")",
+    "summary_in_progress": "$ddp.checkAnswer(\"MRR_WHO_ENROLLING_COPY\",\"MYSELF\", \"Completing this form is needed so that we can collect your medical records.\", \"Completing this form is needed so that we can collect your child's medical records.\")",
+    "summary_complete": "Thank you for providing contact information for your physician(s) and hospital(s). You can update the information you provided by clicking on the \"Update\" button.",
 
     "intro": {
       "p1": "$ddp.checkAnswer(\"MRR_WHO_ENROLLING_COPY\",\"MYSELF\", \"Thank you very much for your consent to participate in our research study, Project Singular.\", \"Thank you very much for your consent to have your child participate in a research study called Project Singular.\")",
       "p2": "To proceed with our study, we are asking you for:",
-      "li1": "$ddp.checkAnswer(\"MRR_WHO_ENROLLING_COPY\",\"MYSELF\", \"Your signature for medical record release so that our study staff may obtain copies of your medical records, store, and use them for this study. We will need the name and contact information for the physician(s) who has/have cared for you throughout your experiences with your single ventricle disease.\", \". Your signature for medical record release so that our study staff may obtain copies of your child’s medical records, store, and use them for this study. We will need the name and contact information for the physician(s) who has/have cared for your child throughout your child’s experiences with their single ventricle disease.\")",
+      "li1": "$ddp.checkAnswer(\"MRR_WHO_ENROLLING_COPY\",\"MYSELF\", \"Your signature for medical record release so that our study staff may obtain copies of your medical records, store, and use them for this study. We will need the name and contact information for the physician(s) who has/have cared for you throughout your experiences with your single ventricle disease.\", \"Your signature for medical record release so that our study staff may obtain copies of your child’s medical records, store, and use them for this study. We will need the name and contact information for the physician(s) who has/have cared for your child throughout your child’s experiences with their single ventricle disease.\")",
       "li2": "$ddp.checkAnswer(\"MRR_WHO_ENROLLING_COPY\",\"MYSELF\", \"Some participants may prefer to personally collect and send our study staff medical records via fax, or by uploading them online in Project Singular. You will find instructions to do so in this form. Please still fill out this medical record release form if you will collect your own records so that we can store and utilize your records.\", \"You may prefer to personally collect and send our study staff your child’s medical records through fax or by uploading them online in Project Singular. You will find instructions to do so in this form. Please still fill out this medical record release form if you gather your records yourself so that we can store and utilize your child’s records.\")",
       "li3": "$ddp.checkAnswer(\"MRR_WHO_ENROLLING_COPY\",\"MYSELF\", \"Participants with questions about this form may contact a member of the study staff at (650) 761-6486 Monday - Friday 9 a.m. - 5 p.m. or email at contact@projectsingular.org.\", \"Parents or legal guardians with questions about this form may contact a member of the study staff at (650) 761-6486 Monday - Friday 9 a.m. - 5 p.m. or email at contact@projectsingular.org.\")"
     },
@@ -1101,9 +1105,9 @@
     "name": "Medical Record File Upload",
     "title": "Medical Record File Upload",
 
-    "summary_created": "",
-    "summary_in_progress": "",
-    "summary_complete": "",
+    "summary_created": "You can upload your medical record files here if they are available.",
+    "summary_in_progress": "You can upload your medical record files here if they are available.",
+    "summary_complete": "You can upload your medical record files here if they are available.",
 
     "upload": {
       "prompt": "Please upload your medical records files"
@@ -1111,9 +1115,9 @@
   },
   "patient_survey": {
     "name": "Patient Survey",
-    "title": "$ddp.checkAnswer(\"PATIENT_SURVEY_WHO_ENROLLING_HIDDEN\",\"MYSELF\", \"Patient Survey\", \"Patient Survey\")",
-    "summary_created": "Please complete this questionnaire so that we may learn more about you.",
-    "summary_in_progress": "Please complete this questionnaire so that we may learn more about you.",
+    "title": "$ddp.checkAnswer(\"PATIENT_SURVEY_WHO_ENROLLING_HIDDEN\",\"MYSELF\", \"Please complete this survey so that we may learn more about your medical background.\", \"Please complete this survey so that we may learn more about your child's medical background.\")",
+    "summary_created": "$ddp.checkAnswer(\"PATIENT_SURVEY_WHO_ENROLLING_HIDDEN\",\"MYSELF\", \"Please complete this survey so that we may learn more about your medical background.\", \"Please complete this survey so that we may learn more about your child's medical background.\")",
+    "summary_in_progress": "$ddp.checkAnswer(\"PATIENT_SURVEY_WHO_ENROLLING_HIDDEN\",\"MYSELF\", \"Please complete this survey so that we may learn more about your medical background\", \"Please complete this survey so that we may learn more about your child's medical background\")",
     "summary_complete": "Thank you for completing this survey!",
     "questions": {
       "what_city_did_you_live": {
@@ -1137,7 +1141,8 @@
         "required_hint": "Please choose an option"
       },
       "what_was_your_recorded": {
-        "prompt": "$ddp.checkAnswer(\"PATIENT_SURVEY_WHO_ENROLLING_HIDDEN\",\"MYSELF\", \"What was your recorded sex at birth?  (We ask this question to help us learn about the unique characteristics of each person in our study which may help us better understand genetics and/or risk.  We recognize that individuals do not always identify with their recorded sex at birth.)\", \"What was your child's recorded sex at birth?  (We ask this question to help us learn about the unique characteristics of each person in our study which may help us better understand genetics and/or risk.  We recognize that individuals do not always identify with their recorded sex at birth.)\")*",
+        "prompt_p1": "$ddp.checkAnswer(\"PATIENT_SURVEY_WHO_ENROLLING_HIDDEN\",\"MYSELF\", \"What was your recorded sex at birth?\", \"What was your child's recorded sex at birth?\")*",
+        "prompt_p2": "(We ask this question to help us learn about the unique characteristics of each person in our study which may help us better understand genetics and/or risk.  We recognize that individuals do not always identify with their recorded sex at birth.)",
         "required_hint": "Please choose an option",
         "male": "Male",
         "female": "Female",
@@ -1146,7 +1151,8 @@
         "prefer_not_to_answer": "$ddp.checkAnswer(\"PATIENT_SURVEY_WHO_ENROLLING_HIDDEN\",\"MYSELF\", \"Prefer not to answer\", \"Prefer not to say\")"
       },
       "what_is_your_race": {
-        "prompt": "$ddp.checkAnswer(\"PATIENT_SURVEY_WHO_ENROLLING_HIDDEN\",\"MYSELF\", \"What is your race?  (We ask this question to help us learn about the unique characteristics of each person in our study which may help us to better understand genetics and/or risk.)\", \"What is your child's race?  (We ask this question to help us learn about the unique characteristics of each person in our study which may help us to better understand genetics and/or risk.)\")*",
+        "prompt_p1": "$ddp.checkAnswer(\"PATIENT_SURVEY_WHO_ENROLLING_HIDDEN\",\"MYSELF\", \"What is your race?\", \"What is your child's race?\")*",
+        "prompt_p2": "(We ask this question to help us learn about the unique characteristics of each person in our study which may help us to better understand genetics and/or risk.)",
         "required_hint": "Please choose an option",
         "white": "White",
         "black_or_african_american": "Black or African American",
@@ -1157,7 +1163,8 @@
         "prefer_not_to_answer": "Prefer not to answer"
       },
       "are_you_of_hispanic": {
-        "prompt": "$ddp.checkAnswer(\"PATIENT_SURVEY_WHO_ENROLLING_HIDDEN\",\"MYSELF\", \"Are you of Hispanic or Latino ethnicity?  (We ask this question to help us learn about the unique characteristics of each person in our study which may help us better understand genetics and/or risk.)\", \"Is your child of Hispanic or Latino ethnicity?  (We ask this question to help us learn about the unique characteristics of each person in our study which may help us better understand genetics and/or risk.)\")*",
+        "prompt_p1": "$ddp.checkAnswer(\"PATIENT_SURVEY_WHO_ENROLLING_HIDDEN\",\"MYSELF\", \"Are you of Hispanic or Latino ethnicity?\", \"Is your child of Hispanic or Latino ethnicity?\")*",
+        "prompt_p2": "(We ask this question to help us learn about the unique characteristics of each person in our study which may help us better understand genetics and/or risk.)",
         "required_hint": "Please choose an option",
         "yes": "Yes",
         "no": "No",
@@ -1178,8 +1185,8 @@
         "mitral_atresia": "Mitral Atresia (including Mitral Atresia with DORV)",
         "unbalanced_av_canal": "Unbalanced AV Canal",
         "other": {
-          "title" : "Other: please specify (or write Unsure)",
-          "required_hint": "Other: please specify (or write Unsure)"
+          "title" : "Other",
+          "required_hint": "Please specify (or write Unsure)"
         }
       },
       "what_is_your_height": {
@@ -1204,8 +1211,8 @@
         "arrhythmia": "Arrhythmia (Heart Rhythm) Complications",
         "stroke": "Stroke",
         "other": {
-          "title" : "Other: please specify (or write Unsure)",
-          "required_hint": "Other: please specify (or write Unsure)"
+          "title" : "Other",
+          "required_hint": "Please specify (or write Unsure)"
         },
         "none": "None",
         "i_don_not_know": "I don't know"
@@ -1278,7 +1285,7 @@
         "yes": "Yes",
         "no": "No",
         "i_do_not_know": "I don't know",
-        "tooltip": "A Neuroldevelopmental or Neurocognitive Evaluation is a special set of tests by a licsensed professional to assess a person's development and functioning, including their language or speech, motor skills, social skills, intelligence (IQ), attention, ability to do everyday tasks, and behavior."
+        "tooltip": "A Neuroldevelopmental or Neurocognitive Evaluation is a special set of tests by a licensed professional to assess a person's development and functioning, including their language or speech, motor skills, social skills, intelligence (IQ), attention, ability to do everyday tasks, and behavior."
       },
       "diagnosed_by_a_physician": {
         "prompt": "$ddp.checkAnswer(\"PATIENT_SURVEY_WHO_ENROLLING_HIDDEN\",\"MYSELF\", \"Have you ever been diagnosed by a physician or licensed professional with any of the following?\", \"Has your child ever been diagnosed by a physician or licensed professional with any of the following?\")",
@@ -1341,8 +1348,8 @@
         "none": "None",
         "i_do_not_know": "I don't know",
         "other": {
-          "title" : "Other: Please Specify",
-          "required_hint": "Other: Please Specify"
+          "title" : "Other",
+          "required_hint": "Please specify (or write Unsure)"
         }
       },
       "living_with_a_behavioral": {
