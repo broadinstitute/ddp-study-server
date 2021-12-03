@@ -27,7 +27,7 @@ public class MatrixGroupDef {
 
     public MatrixGroupDef(String stableId, Template nameTemplate) {
         this.stableId = MiscUtil.checkNonNull(stableId, "stableId");
-        this.nameTemplate = MiscUtil.checkNonNull(nameTemplate, "nameTemplate");
+        this.nameTemplate = nameTemplate;
     }
 
     public Long getGroupId() {

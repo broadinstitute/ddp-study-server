@@ -50,10 +50,11 @@ public class MatrixQuestionFormatStrategy implements ResponseFormatStrategy<Matr
         for (MatrixGroupDef group : definition.getGroups()) {
             Map<String, Object> groupDef = new HashMap<>();
             String groupStableId = group.getStableId();
-            String groupTxt = HtmlConverter.getPlainText(group.getNameTemplate().renderWithDefaultValues("en"));
+            if (group.getNameTemplate() != null) {
+                groupDef.put("groupText", HtmlConverter.getPlainText(group.getNameTemplate().renderWithDefaultValues("en")));
+            }
 
             groupDef.put("groupStableId", groupStableId);
-            groupDef.put("groupText", groupTxt);
 
             groups.add(groupDef);
         }
