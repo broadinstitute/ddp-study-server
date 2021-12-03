@@ -268,16 +268,17 @@ public class AnswerToAnswerCopierTest extends TxnAwareBaseTest {
             var sourceInstance = newDummyInstance();
             var sourceQuestion = newDummyQuestion(QuestionType.TEXT, "q1");
             sourceInstance.putAnswer(new MatrixAnswer(1L, "q1", "a", List.of(
-                    new SelectedMatrixCell("row1", "op1", null),
+                    new SelectedMatrixCell("row1", "op1", "DEFAULT"),
                     new SelectedMatrixCell("row2", "op2", "group"))));
 
             TestFormActivity act = TestFormActivity.builder()
                     .withMatrixOptionsRowsGroupsList(true, MatrixSelectMode.SINGLE,
-                            List.of(new MatrixOptionDef("op1", Template.text(""), null),
+                            List.of(new MatrixOptionDef("op1", Template.text(""), "DEFAULT"),
                                     new MatrixOptionDef("op2", Template.text(""), "group")),
                             List.of(new MatrixRowDef("row1", Template.text("row1")),
                                     new MatrixRowDef("row2", Template.text("row2"))),
-                            List.of(new MatrixGroupDef("group", Template.text("Group"))))
+                            List.of(new MatrixGroupDef("group", Template.text("Group")),
+                                    new MatrixGroupDef("DEFAULT", null)))
                     .build(handle, testData.getUserId(), testData.getStudyGuid());
 
             var targetInstance = createInstance(handle, act.getDef().getActivityId());

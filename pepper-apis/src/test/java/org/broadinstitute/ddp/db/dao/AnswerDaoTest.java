@@ -437,13 +437,14 @@ public class AnswerDaoTest extends TxnAwareBaseTest {
                     Template.text("nested options Label"), nestedOpts);
 
             List<MatrixOptionDef> options = List.of(
-                    new MatrixOptionDef("OPT_1", Template.text(""), null),
+                    new MatrixOptionDef("OPT_1", Template.text(""), "DEFAULT"),
                     new MatrixOptionDef("OPT_2", Template.text(""), "GROUP"),
                     new MatrixOptionDef("OPT_3", Template.text(""), "GROUP"));
             List<MatrixRowDef> rows = List.of(
                     new MatrixRowDef("ROW_1", Template.text("")),
                     new MatrixRowDef("ROW_2", Template.text("")));
-            List<MatrixGroupDef> groups = Collections.singletonList(new MatrixGroupDef("GROUP", Template.text("")));
+            List<MatrixGroupDef> groups = List.of(new MatrixGroupDef("GROUP", Template.text("")),
+                    new MatrixGroupDef("DEFAULT", null));
 
             TestFormActivity act = TestFormActivity.builder()
                     .withMatrixOptionsRowsGroupsList(true, MatrixSelectMode.SINGLE, options, rows, groups)
@@ -454,7 +455,7 @@ public class AnswerDaoTest extends TxnAwareBaseTest {
             AnswerDao answerDao = daoBuilder.buildDao(handle);
             var created = answerDao.createAnswer(testData.getUserId(), instanceId,
                     new MatrixAnswer(null, act.getMatrixListQuestion().getStableId(), null, List.of(
-                            new SelectedMatrixCell("ROW_1", "OPT_1", null))));
+                            new SelectedMatrixCell("ROW_1", "OPT_1", "DEFAULT"))));
 
             assertTrue(created.getAnswerId() > 0);
             assertEquals(QuestionType.MATRIX, created.getQuestionType());
@@ -485,7 +486,7 @@ public class AnswerDaoTest extends TxnAwareBaseTest {
             assertEquals("GROUP", selected.get(0).getGroupStableId());
 
             matrixAnswer = new MatrixAnswer(null, act.getMatrixListQuestion().getStableId(), null, List.of(
-                    new SelectedMatrixCell("ROW_1", "OPT_1", null),
+                    new SelectedMatrixCell("ROW_1", "OPT_1", "DEFAULT"),
                     new SelectedMatrixCell("ROW_2", "OPT_2", "GROUP")));
             answerDao.updateAnswer(testData.getUserId(), created.getAnswerId(), matrixAnswer);
             assertEquals(created.getAnswerId(), matrixAnswer.getAnswerId());

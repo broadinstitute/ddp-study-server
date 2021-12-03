@@ -46,8 +46,8 @@ public class MatrixOption implements Renderable {
         this.groupStableId = groupStableId;
     }
 
-    public MatrixOption(String stableId, long optionLabelTemplateId) {
-        this(stableId, optionLabelTemplateId, null, null, false);
+    public MatrixOption(String stableId, long optionLabelTemplateId, String groupStableId) {
+        this(stableId, optionLabelTemplateId, null, groupStableId, false);
     }
 
     public String getStableId() {

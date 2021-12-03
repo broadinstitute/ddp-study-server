@@ -32,12 +32,13 @@ public class MatrixQuestionFormatStrategyTest {
     public void testMappings_Multiple() {
         MatrixQuestionDef def = MatrixQuestionDef.builder(MatrixSelectMode.MULTIPLE, "sid", Template.text(""))
                 .addOptions(List.of(
-                        new MatrixOptionDef("OPT_1", Template.text("option 1"), null),
+                        new MatrixOptionDef("OPT_1", Template.text("option 1"), "DEFAULT"),
                         new MatrixOptionDef("OPT_2", Template.text("option 2"), "GROUP")))
                 .addRows(List.of(
                         new MatrixRowDef("ROW_1", Template.text("row 1")),
                         new MatrixRowDef("ROW_2", Template.text("row 2"))))
                 .addGroups(List.of(
+                        new MatrixGroupDef("DEFAULT", null),
                         new MatrixGroupDef("GROUP", Template.text("group 1"))))
                 .build();
 
@@ -59,12 +60,13 @@ public class MatrixQuestionFormatStrategyTest {
     public void testMappings_Single() {
         MatrixQuestionDef def = MatrixQuestionDef.builder(MatrixSelectMode.SINGLE, "sid", Template.text(""))
                 .addOptions(List.of(
-                        new MatrixOptionDef("OPT_1", Template.text("option 1"), null),
+                        new MatrixOptionDef("OPT_1", Template.text("option 1"), "DEFAULT"),
                         new MatrixOptionDef("OPT_2", Template.text("option 2"), "GROUP")))
                 .addRows(List.of(
                         new MatrixRowDef("ROW_1", Template.text("row 1")),
                         new MatrixRowDef("ROW_2", Template.text("row 2"))))
                 .addGroups(List.of(
+                        new MatrixGroupDef("DEFAULT", null),
                         new MatrixGroupDef("GROUP", Template.text("group 1"))))
                 .build();
 
@@ -86,12 +88,13 @@ public class MatrixQuestionFormatStrategyTest {
     public void testQuestionDef_withOptionsRowsGroups() {
         MatrixQuestionDef def = MatrixQuestionDef.builder(MatrixSelectMode.SINGLE, "sid", Template.text(""))
                 .addOptions(List.of(
-                        new MatrixOptionDef("OPT_1", Template.text("option 1"), null),
+                        new MatrixOptionDef("OPT_1", Template.text("option 1"), "DEFAULT"),
                         new MatrixOptionDef("OPT_2", Template.text("option 2"), "GROUP")))
                 .addRows(List.of(
                         new MatrixRowDef("ROW_1", Template.text("row 1")),
                         new MatrixRowDef("ROW_2", Template.text("row 2"))))
                 .addGroups(List.of(
+                        new MatrixGroupDef("DEFAULT", null),
                         new MatrixGroupDef("GROUP", Template.text("group 1"))))
                 .build();
 
@@ -129,11 +132,14 @@ public class MatrixQuestionFormatStrategyTest {
     public void testQuestionDef_withOptionsRows() {
         MatrixQuestionDef def = MatrixQuestionDef.builder(MatrixSelectMode.SINGLE, "sid", Template.text(""))
                 .addOptions(List.of(
-                        new MatrixOptionDef("OPT_1", Template.text("option 1"), null),
+                        new MatrixOptionDef("OPT_1", Template.text("option 1"), "DEFAULT"),
                         new MatrixOptionDef("OPT_2", Template.text("option 2"), "GROUP")))
                 .addRows(List.of(
                         new MatrixRowDef("ROW_1", Template.text("row 1")),
                         new MatrixRowDef("ROW_2", Template.text("row 2"))))
+                .addGroups(List.of(
+                        new MatrixGroupDef("DEFAULT", null),
+                        new MatrixGroupDef("GROUP", null)))
                 .build();
 
         Map<String, Object> actual = fmt.questionDef(def);
@@ -168,12 +174,13 @@ public class MatrixQuestionFormatStrategyTest {
     public void testCollect_answerWithNoSelections() {
         MatrixQuestionDef questionDef = MatrixQuestionDef.builder(MatrixSelectMode.SINGLE, "sid", Template.text(""))
                 .addOptions(List.of(
-                        new MatrixOptionDef("OPT_1", Template.text("option 1"), null),
+                        new MatrixOptionDef("OPT_1", Template.text("option 1"), "DEFAULT"),
                         new MatrixOptionDef("OPT_2", Template.text("option 2"), "GROUP")))
                 .addRows(List.of(
                         new MatrixRowDef("ROW_1", Template.text("row 1")),
                         new MatrixRowDef("ROW_2", Template.text("row 2"))))
                 .addGroups(List.of(
+                        new MatrixGroupDef("DEFAULT", null),
                         new MatrixGroupDef("GROUP", Template.text("group 1"))))
                 .build();
 
@@ -188,18 +195,19 @@ public class MatrixQuestionFormatStrategyTest {
     public void testCollect_selectedOptionsSortedInDefinitionOrder() {
         MatrixQuestionDef questionDef = MatrixQuestionDef.builder(MatrixSelectMode.SINGLE, "sid", Template.text(""))
                 .addOptions(List.of(
-                        new MatrixOptionDef("OPT_1", Template.text("option 1"), null),
+                        new MatrixOptionDef("OPT_1", Template.text("option 1"), "DEFAULT"),
                         new MatrixOptionDef("OPT_2", Template.text("option 2"), "GROUP")))
                 .addRows(List.of(
                         new MatrixRowDef("ROW_1", Template.text("row 1")),
                         new MatrixRowDef("ROW_2", Template.text("row 2"))))
                 .addGroups(List.of(
+                        new MatrixGroupDef("DEFAULT", null),
                         new MatrixGroupDef("GROUP", Template.text("group 1"))))
                 .build();
 
         Map<String, String> actual = fmt.collect(questionDef, buildAnswer(
-                new SelectedMatrixCell("ROW_1", "OPT_1", null),
-                new SelectedMatrixCell("ROW_2", "OPT_1", null)));
+                new SelectedMatrixCell("ROW_1", "OPT_1", "DEFAULT"),
+                new SelectedMatrixCell("ROW_2", "OPT_1", "DEFAULT")));
 
         assertNotNull(actual);
         assertEquals(1, actual.size());

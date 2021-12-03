@@ -103,7 +103,7 @@ public class RequiredRuleTest {
     public void testValidate_matrixAnswer() {
         MatrixQuestion unused =
                 new MatrixQuestion("sid", 1L, MatrixSelectMode.SINGLE, emptyList(), emptyList(),
-                        List.of(new MatrixOption("opt 1", 3L, null, null, false),
+                        List.of(new MatrixOption("opt 1", 3L, null, "DEFAULT", false),
                                 new MatrixOption("opt 2", 3L, null, "group", false)),
                         singletonList(new MatrixRow("row 1", 4L, null)),
                         singletonList(new MatrixGroup("group", 5L)));
@@ -111,10 +111,10 @@ public class RequiredRuleTest {
         assertFalse(rule.validate(unused, null));
         assertFalse(rule.validate(unused, new MatrixAnswer(1L, "sid", "a", emptyList())));
         assertFalse(rule.validate(unused, new MatrixAnswer(1L, "sid", "a",
-                singletonList(new SelectedMatrixCell("row 1", "opt 1", null)))));
+                singletonList(new SelectedMatrixCell("row 1", "opt 1", "DEFAULT")))));
         assertTrue(rule.validate(unused, new MatrixAnswer(1L, "sid", "a",
                 Arrays.asList(
-                        new SelectedMatrixCell("row 1", "opt 1", null),
+                        new SelectedMatrixCell("row 1", "opt 1", "DEFAULT"),
                         new SelectedMatrixCell("row 1", "opt 2", "group")))));
     }
 

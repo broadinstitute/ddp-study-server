@@ -613,8 +613,9 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
             ActivityDao actDao = handle.attach(ActivityDao.class);
 
             MatrixQuestionDef def = MatrixQuestionDef.builder(MatrixSelectMode.SINGLE, sid, prompt)
-                    .addOption(new MatrixOptionDef("NO_USED_OPT", Template.text("no used"), null))
+                    .addOption(new MatrixOptionDef("NO_USED_OPT", Template.text("no used"), "DEFAULT"))
                     .addRow(new MatrixRowDef("NO_USED_ROW", Template.text("no used")))
+                    .addGroup(new MatrixGroupDef("DEFAULT", null))
                     .build();
             def.getGroups().clear();
             def.getOptions().clear();
@@ -635,8 +636,9 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
             ActivityDao actDao = handle.attach(ActivityDao.class);
 
             MatrixQuestionDef def = MatrixQuestionDef.builder(MatrixSelectMode.SINGLE, sid, prompt)
-                    .addOption(new MatrixOptionDef("NO_USED_OPT", Template.text("no used"), null))
+                    .addOption(new MatrixOptionDef("NO_USED_OPT", Template.text("no used"), "DEFAULT"))
                     .addRow(new MatrixRowDef("NO_USED_ROW", Template.text("no used")))
+                    .addGroup(new MatrixGroupDef("DEFAULT", null))
                     .build();
             def.getGroups().clear();
             def.getRows().clear();
@@ -656,8 +658,9 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
             ActivityDao actDao = handle.attach(ActivityDao.class);
 
             MatrixQuestionDef def = MatrixQuestionDef.builder(MatrixSelectMode.SINGLE, sid, prompt)
-                    .addOption(new MatrixOptionDef("NO_USED_OPT", Template.text("no used"), null))
+                    .addOption(new MatrixOptionDef("NO_USED_OPT", Template.text("no used"), "DEFAULT"))
                     .addRow(new MatrixRowDef("NO_USED_ROW", Template.text("no used")))
+                    .addGroup(new MatrixGroupDef("DEFAULT", null))
                     .build();
             def.getGroups().clear();
             def.getOptions().clear();
@@ -673,16 +676,17 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
     public void testInsertSingleMatrixQuestion_withOptionsAndRows() {
         MatrixQuestionDef def = MatrixQuestionDef.builder(MatrixSelectMode.SINGLE, sid, prompt)
                 .addOptions(List.of(
-                        new MatrixOptionDef("OPT_1", Template.text("option 1"), null),
-                        new MatrixOptionDef("OPT_2", Template.text("option 2"), null),
-                        new MatrixOptionDef("OPT_3", Template.text("option 3"), null),
-                        new MatrixOptionDef("OPT_4", Template.text("option 4"), null),
-                        new MatrixOptionDef("OPT_5", Template.text("option 5"), null)))
+                        new MatrixOptionDef("OPT_1", Template.text("option 1"), "DEFAULT"),
+                        new MatrixOptionDef("OPT_2", Template.text("option 2"), "DEFAULT"),
+                        new MatrixOptionDef("OPT_3", Template.text("option 3"), "DEFAULT"),
+                        new MatrixOptionDef("OPT_4", Template.text("option 4"), "DEFAULT"),
+                        new MatrixOptionDef("OPT_5", Template.text("option 5"), "DEFAULT")))
                 .addRows(List.of(
                         new MatrixRowDef("ROW_1", Template.text("row 1")),
                         new MatrixRowDef("ROW_2", Template.text("row 2")),
                         new MatrixRowDef("ROW_3", Template.text("row 3")),
                         new MatrixRowDef("ROW_4", Template.text("row 4"))))
+                .addGroup(new MatrixGroupDef("DEFAULT", null))
                 .build();
 
         runMatrixQuestionWithGivenScenarioTests(def);
@@ -692,16 +696,17 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
     public void testInsertMultipleMatrixQuestion_withOptionsAndRows() {
         MatrixQuestionDef def = MatrixQuestionDef.builder(MatrixSelectMode.MULTIPLE, sid, prompt)
                 .addOptions(List.of(
-                        new MatrixOptionDef("OPT_1", Template.text("option 1"), null),
-                        new MatrixOptionDef("OPT_2", Template.text("option 2"), null),
-                        new MatrixOptionDef("OPT_3", Template.text("option 3"), null),
-                        new MatrixOptionDef("OPT_4", Template.text("option 4"), null),
-                        new MatrixOptionDef("OPT_5", Template.text("option 5"), null)))
+                        new MatrixOptionDef("OPT_1", Template.text("option 1"), "DEFAULT"),
+                        new MatrixOptionDef("OPT_2", Template.text("option 2"), "DEFAULT"),
+                        new MatrixOptionDef("OPT_3", Template.text("option 3"), "DEFAULT"),
+                        new MatrixOptionDef("OPT_4", Template.text("option 4"), "DEFAULT"),
+                        new MatrixOptionDef("OPT_5", Template.text("option 5"), "DEFAULT")))
                 .addRows(List.of(
                         new MatrixRowDef("ROW_1", Template.text("row 1")),
                         new MatrixRowDef("ROW_2", Template.text("row 2")),
                         new MatrixRowDef("ROW_3", Template.text("row 3")),
                         new MatrixRowDef("ROW_4", Template.text("row 4"))))
+                .addGroup(new MatrixGroupDef("DEFAULT", null))
                 .build();
 
         runMatrixQuestionWithGivenScenarioTests(def);
@@ -711,8 +716,8 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
     public void testInsertSingleMatrixQuestion_withGroups_andOptionsAndRows() {
         MatrixQuestionDef def = MatrixQuestionDef.builder(MatrixSelectMode.SINGLE, sid, prompt)
                 .addOptions(List.of(
-                        new MatrixOptionDef("OPT_1", Template.text("option 1"), null),
-                        new MatrixOptionDef("OPT_2", Template.text("option 2"), null),
+                        new MatrixOptionDef("OPT_1", Template.text("option 1"), "DEFAULT"),
+                        new MatrixOptionDef("OPT_2", Template.text("option 2"), "DEFAULT"),
                         new MatrixOptionDef("OPT_3", Template.text("option 3"), "GROUP_1"),
                         new MatrixOptionDef("OPT_4", Template.text("option 4"), "GROUP_1"),
                         new MatrixOptionDef("OPT_5", Template.text("option 5"), "GROUP_2")))
@@ -722,6 +727,7 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
                         new MatrixRowDef("ROW_3", Template.text("row 3")),
                         new MatrixRowDef("ROW_4", Template.text("row 4"))))
                 .addGroups(List.of(
+                        new MatrixGroupDef("DEFAULT", null),
                         new MatrixGroupDef("GROUP_1", Template.text("group 1")),
                         new MatrixGroupDef("GROUP_2", Template.text("group 2"))))
                 .build();
@@ -733,8 +739,8 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
     public void testInsertMultipleMatrixQuestion_withGroups_andOptionsAndRows() {
         MatrixQuestionDef def = MatrixQuestionDef.builder(MatrixSelectMode.MULTIPLE, sid, prompt)
                 .addOptions(List.of(
-                        new MatrixOptionDef("OPT_1", Template.text("option 1"), null),
-                        new MatrixOptionDef("OPT_2", Template.text("option 2"), null),
+                        new MatrixOptionDef("OPT_1", Template.text("option 1"), "DEFAULT"),
+                        new MatrixOptionDef("OPT_2", Template.text("option 2"), "DEFAULT"),
                         new MatrixOptionDef("OPT_3", Template.text("option 3"), "GROUP_1"),
                         new MatrixOptionDef("OPT_4", Template.text("option 4"), "GROUP_1"),
                         new MatrixOptionDef("OPT_5", Template.text("option 5"), "GROUP_2")))
@@ -744,6 +750,7 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
                         new MatrixRowDef("ROW_3", Template.text("row 3")),
                         new MatrixRowDef("ROW_4", Template.text("row 4"))))
                 .addGroups(List.of(
+                        new MatrixGroupDef("DEFAULT", null),
                         new MatrixGroupDef("GROUP_1", Template.text("group 1")),
                         new MatrixGroupDef("GROUP_2", Template.text("group 2"))))
                 .build();
@@ -821,12 +828,15 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
 
             Template label = new Template(TemplateType.TEXT, null, "matrix label");
             MatrixQuestionDef question = MatrixQuestionDef.builder(MatrixSelectMode.SINGLE, sid, prompt)
-                    .addOption(new MatrixOptionDef("OPT_1", new Template(TemplateType.TEXT, null, "option 1"), null))
-                    .addOption(new MatrixOptionDef("OPT_2", new Template(TemplateType.TEXT, null, "option 2"), null))
+                    .addOption(new MatrixOptionDef("OPT_1", new Template(TemplateType.TEXT, null, "option 1"), "DEFAULT"))
+                    .addOption(new MatrixOptionDef("OPT_2", new Template(TemplateType.TEXT, null, "option 2"), "DEFAULT"))
                     .addOption(new MatrixOptionDef("OPT_3", new Template(TemplateType.TEXT, null, "option 3"), "GROUP_1"))
                     .addRow(new MatrixRowDef("ROW_1", new Template(TemplateType.TEXT, null, "row 1")))
                     .addRow(new MatrixRowDef("ROW_2", new Template(TemplateType.TEXT, null, "row 2")))
-                    .addGroup(new MatrixGroupDef("GROUP_1", new Template(TemplateType.TEXT, null, "group 1")))
+                    .addGroups(List.of(
+                            new MatrixGroupDef("DEFAULT", null),
+                            new MatrixGroupDef("GROUP_1", new Template(TemplateType.TEXT, null, "group 1"))
+                    ))
                     .build();
             FormActivityDef form = buildSingleSectionForm(testData.getStudyGuid(), question);
             ActivityVersionDto version1 = actDao.insertActivity(form, RevisionMetadata.now(testData.getUserId(), "test"));

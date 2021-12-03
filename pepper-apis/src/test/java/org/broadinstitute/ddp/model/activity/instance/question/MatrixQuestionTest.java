@@ -36,7 +36,7 @@ public class MatrixQuestionTest {
         thrown.expectMessage("rows");
         thrown.expectMessage("non-empty");
         new MatrixQuestion("sid", 1, MatrixSelectMode.SINGLE, emptyList(), emptyList(),
-                List.of(new MatrixOption("opt", 2)), emptyList(), emptyList());
+                List.of(new MatrixOption("opt", 2, "DEFAULT")), emptyList(), emptyList());
     }
 
     @Test
@@ -46,7 +46,7 @@ public class MatrixQuestionTest {
         rendered.put(2L, "this is <em>option</em> label");
         rendered.put(3L, "this is <em>row</em> label");
 
-        MatrixOption option = new MatrixOption("opt", 2);
+        MatrixOption option = new MatrixOption("opt", 2, "DEFAULT");
         MatrixRow row = new MatrixRow("row", 3, null);
         MatrixQuestion question = new MatrixQuestion("sid", 1, MatrixSelectMode.SINGLE, emptyList(), emptyList(),
                 singletonList(option), singletonList(row), null);
@@ -65,7 +65,7 @@ public class MatrixQuestionTest {
         rendered.put(2L, "this is <em>option</em> label");
         rendered.put(3L, "this is <em>row</em> label");
 
-        MatrixOption option = new MatrixOption("opt", 2);
+        MatrixOption option = new MatrixOption("opt", 2, "DEFAULT");
         MatrixRow row = new MatrixRow("row", 3, null);
         MatrixQuestion question = new MatrixQuestion("sid", 1, MatrixSelectMode.SINGLE, emptyList(), emptyList(),
                 singletonList(option), singletonList(row), null);

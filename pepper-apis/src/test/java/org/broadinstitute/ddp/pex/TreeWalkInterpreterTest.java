@@ -163,12 +163,14 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
         MatrixQuestionDef matrixDef = MatrixQuestionDef.builder().setStableId(matrixStableId)
                 .setSelectMode(MatrixSelectMode.MULTIPLE)
                 .setPrompt(Template.text("matrix prompt"))
-                .addOption(new MatrixOptionDef("OPTION_ONCE", Template.text("once"), null))
+                .addOption(new MatrixOptionDef("OPTION_ONCE", Template.text("once"), "DEFAULT"))
                 .addOption(new MatrixOptionDef("OPTION_TWICE", Template.text("twice"), "GROUP_MATRIX"))
                 .addOption(new MatrixOptionDef("OPTION_THRICE", Template.text("thrice"), "GROUP_MATRIX"))
                 .addRow(new MatrixRowDef("ROW_FIRST", Template.text("row1")))
                 .addRow(new MatrixRowDef("ROW_SECOND", Template.text("row2")))
-                .addGroup(new MatrixGroupDef("GROUP_MATRIX", Template.text("group")))
+                .addGroups(List.of(
+                        new MatrixGroupDef("DEFAULT", null),
+                        new MatrixGroupDef("GROUP_MATRIX", Template.text("group"))))
                 .build();
 
         numericStableId = "PEX_NUMERIC_" + timestamp;
@@ -382,7 +384,7 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
             // No answers yet, so should satisfy expression
             assertTrue(run(handle, expr));
 
-            SelectedMatrixCell cell = new SelectedMatrixCell("ROW_FIRST", "OPTION_ONCE", null);
+            SelectedMatrixCell cell = new SelectedMatrixCell("ROW_FIRST", "OPTION_ONCE", "DEFAULT");
             MatrixAnswer answer = new MatrixAnswer(null, matrixStableId, null, Collections.singletonList(cell));
             handle.attach(AnswerDao.class).createAnswer(testData.getUserId(), secondInstance.getId(), answer);
 
@@ -678,7 +680,7 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
                 "user.studies[\"%s\"].forms[\"%s\"].questions[\"%s\"].children[\"ROW_FIRST\"].answers.hasOption(\"OPTION_ONCE\")",
                 studyGuid, activityCode, matrixStableId);
         TransactionWrapper.useTxn(handle -> {
-            SelectedMatrixCell cell = new SelectedMatrixCell("ROW_FIRST", "OPTION_ONCE", null);
+            SelectedMatrixCell cell = new SelectedMatrixCell("ROW_FIRST", "OPTION_ONCE", "DEFAULT");
             MatrixAnswer answer = new MatrixAnswer(null, matrixStableId, null, Collections.singletonList(cell));
             handle.attach(AnswerDao.class).createAnswer(testData.getUserId(), secondInstance.getId(), answer);
 
@@ -694,7 +696,7 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
                 "user.studies[\"%s\"].forms[\"%s\"].questions[\"%s\"].children[\"ROW_FIRST\"].answers.hasOption(\"OPTION_ONCE\")",
                 studyGuid, activityCode, matrixStableId);
         TransactionWrapper.useTxn(handle -> {
-            SelectedMatrixCell cell = new SelectedMatrixCell("ROW_SECOND", "OPTION_ONCE", null);
+            SelectedMatrixCell cell = new SelectedMatrixCell("ROW_SECOND", "OPTION_ONCE", "DEFAULT");
             MatrixAnswer answer = new MatrixAnswer(null, matrixStableId, null, Collections.singletonList(cell));
             handle.attach(AnswerDao.class).createAnswer(testData.getUserId(), secondInstance.getId(), answer);
 
@@ -720,7 +722,7 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
                         + ".answers.hasAnyOption(\"OPTION_ONCE\", \"OPTION_TWICE\")",
                 studyGuid, activityCode, matrixStableId);
         TransactionWrapper.useTxn(handle -> {
-            SelectedMatrixCell cell = new SelectedMatrixCell("ROW_FIRST", "OPTION_ONCE", null);
+            SelectedMatrixCell cell = new SelectedMatrixCell("ROW_FIRST", "OPTION_ONCE", "DEFAULT");
             MatrixAnswer answer = new MatrixAnswer(null, matrixStableId, null, Collections.singletonList(cell));
             handle.attach(AnswerDao.class).createAnswer(testData.getUserId(), secondInstance.getId(), answer);
 
@@ -738,7 +740,7 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
                 studyGuid, activityCode, matrixStableId);
         TransactionWrapper.useTxn(handle -> {
             List<SelectedMatrixCell> selected = new ArrayList<>();
-            selected.add(new SelectedMatrixCell("ROW_SECOND", "OPTION_ONCE", null));
+            selected.add(new SelectedMatrixCell("ROW_SECOND", "OPTION_ONCE", "DEFAULT"));
             selected.add(new SelectedMatrixCell("ROW_SECOND", "OPTION_TWICE", "GROUP_MATRIX"));
             MatrixAnswer answer = new MatrixAnswer(null, matrixStableId, null, selected);
 
@@ -1245,7 +1247,7 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
         TransactionWrapper.useTxn(handle -> {
             handle.attach(AnswerDao.class).createAnswer(testData.getUserId(), secondInstance.getId(),
                     new MatrixAnswer(null, matrixStableId, null, List.of(
-                            new SelectedMatrixCell("ROW_FIRST", "OPTION_ONCE", null),
+                            new SelectedMatrixCell("ROW_FIRST", "OPTION_ONCE", "DEFAULT"),
                             new SelectedMatrixCell("ROW_FIRST", "OPTION_TWICE", "GROUP_MATRIX"))));
             assertFalse("should be false because of second row is empty", run(handle, expr));
             handle.rollback();
@@ -1262,9 +1264,9 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
         TransactionWrapper.useTxn(handle -> {
             handle.attach(AnswerDao.class).createAnswer(testData.getUserId(), secondInstance.getId(),
                     new MatrixAnswer(null, matrixStableId, null, List.of(
-                            new SelectedMatrixCell("ROW_FIRST", "OPTION_ONCE", null),
+                            new SelectedMatrixCell("ROW_FIRST", "OPTION_ONCE", "DEFAULT"),
                             new SelectedMatrixCell("ROW_FIRST", "OPTION_TWICE", "GROUP_MATRIX"),
-                            new SelectedMatrixCell("ROW_SECOND", "OPTION_ONCE", null))));
+                            new SelectedMatrixCell("ROW_SECOND", "OPTION_ONCE", "DEFAULT"))));
             assertFalse("should be false because of group is empty (second row)", run(handle, expr));
             handle.rollback();
         });
@@ -1280,9 +1282,9 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
         TransactionWrapper.useTxn(handle -> {
             handle.attach(AnswerDao.class).createAnswer(testData.getUserId(), secondInstance.getId(),
                     new MatrixAnswer(null, matrixStableId, null, List.of(
-                            new SelectedMatrixCell("ROW_FIRST", "OPTION_ONCE", null),
+                            new SelectedMatrixCell("ROW_FIRST", "OPTION_ONCE", "DEFAULT"),
                             new SelectedMatrixCell("ROW_FIRST", "OPTION_TWICE", "GROUP_MATRIX"),
-                            new SelectedMatrixCell("ROW_SECOND", "OPTION_ONCE", null),
+                            new SelectedMatrixCell("ROW_SECOND", "OPTION_ONCE", "DEFAULT"),
                             new SelectedMatrixCell("ROW_SECOND", "OPTION_THRICE", "GROUP_MATRIX"))));
             assertTrue("should be true because matrix selection (all rows, all groups) is non-empty", run(handle, expr));
             handle.rollback();

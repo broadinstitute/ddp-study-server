@@ -97,22 +97,24 @@ public class MatrixQuestionDaoTest extends TxnAwareBaseTest {
 
         question = MatrixQuestionDef.builder(MatrixSelectMode.SINGLE, stableId, textTmpl("matrix prompt"))
                 .addOptions(List.of(
-                        new MatrixOptionDef("SINGLE_OPT_1", textTmpl("option 1"), null),
-                        new MatrixOptionDef("SINGLE_OPT_2", textTmpl("option 2"), null)))
+                        new MatrixOptionDef("SINGLE_OPT_1", textTmpl("option 1"), "DEFAULT"),
+                        new MatrixOptionDef("SINGLE_OPT_2", textTmpl("option 2"), "DEFAULT")))
                 .addRows(List.of(
                         new MatrixRowDef("SINGLE_ROW_1", textTmpl("row 1")),
                         new MatrixRowDef("SINGLE_ROW_2", textTmpl("row 2"))))
+                .addGroup(new MatrixGroupDef("DEFAULT", null))
                 .build();
 
         question2 = MatrixQuestionDef.builder(MatrixSelectMode.MULTIPLE, stableId2, textTmpl("matrix prompt"))
                 .addOptions(List.of(
-                        new MatrixOptionDef("MULTI_OPT_1", textTmpl("option 1"), null),
+                        new MatrixOptionDef("MULTI_OPT_1", textTmpl("option 1"), "DEFAULT"),
                         new MatrixOptionDef("MULTI_OPT_2", textTmpl("option 2"), "GROUP"),
                         new MatrixOptionDef("MULTI_OPT_3", textTmpl("option 3"), "GROUP")))
                 .addRows(List.of(
                         new MatrixRowDef("MULTI_ROW_1", textTmpl("row 1")),
                         new MatrixRowDef("MULTI_ROW_2", textTmpl("row 2"))))
-                .addGroups(List.of(new MatrixGroupDef("GROUP", textTmpl("group"))))
+                .addGroups(List.of(new MatrixGroupDef("GROUP", textTmpl("group")),
+                        new MatrixGroupDef("DEFAULT", null)))
                 .build();
 
         String actCode = "ACT" + Instant.now().toEpochMilli();
@@ -184,7 +186,7 @@ public class MatrixQuestionDaoTest extends TxnAwareBaseTest {
             RevisionMetadata meta = new RevisionMetadata(version1.getRevStart() + 5000L, userId, "test");
             ActivityVersionDto version2 = activityDao.changeVersion(activity.getActivityId(), "v2", meta);
             RevisionDto revDto = RevisionDto.fromStartMetadata(version2.getRevId(), meta);
-            MatrixOptionDef option2 = new MatrixOptionDef("MULTI_OPT_2_V2", textTmpl("option 2 v2"), null);
+            MatrixOptionDef option2 = new MatrixOptionDef("MULTI_OPT_2_V2", textTmpl("option 2 v2"), "DEFAULT");
             CacheService.getInstance().resetAllCaches();
             daoBuilder.buildDao(handle).addOption(question.getQuestionId(), option2, 2, revDto);
             assertNotNull(option2.getOptionId());
@@ -210,7 +212,7 @@ public class MatrixQuestionDaoTest extends TxnAwareBaseTest {
             RevisionMetadata meta = new RevisionMetadata(version1.getRevStart() + 5000L, userId, "test");
             ActivityVersionDto version2 = activityDao.changeVersion(activity.getActivityId(), "v2", meta);
             RevisionDto revDto = RevisionDto.fromStartMetadata(version2.getRevId(), meta);
-            MatrixOptionDef option3 = new MatrixOptionDef("SINGLE_OPT_1", textTmpl("option new"), null);
+            MatrixOptionDef option3 = new MatrixOptionDef("SINGLE_OPT_1", textTmpl("option new"), "DEFAULT");
             CacheService.getInstance().resetAllCaches();
             daoBuilder.buildDao(handle).addOption(question.getQuestionId(), option3, 1, revDto);
 
@@ -225,7 +227,7 @@ public class MatrixQuestionDaoTest extends TxnAwareBaseTest {
             ActivityVersionDto version1 = setupTestActivity(meta);
 
             RevisionDto revDto = RevisionDto.fromStartMetadata(version1.getRevId(), meta);
-            MatrixOptionDef option3 = new MatrixOptionDef("SINGLE_OPT_3_NEW", textTmpl("option 3"), null);
+            MatrixOptionDef option3 = new MatrixOptionDef("SINGLE_OPT_3_NEW", textTmpl("option 3"), "DEFAULT");
 
             // Add to start of option list.
             CacheService.getInstance().resetAllCaches();
@@ -245,7 +247,7 @@ public class MatrixQuestionDaoTest extends TxnAwareBaseTest {
             ActivityVersionDto version1 = setupTestActivity(meta);
 
             RevisionDto revDto = RevisionDto.fromStartMetadata(version1.getRevId(), meta);
-            MatrixOptionDef option3 = new MatrixOptionDef("SINGLE_OPT_3_NEW", textTmpl("option 3"), null);
+            MatrixOptionDef option3 = new MatrixOptionDef("SINGLE_OPT_3_NEW", textTmpl("option 3"), "DEFAULT");
 
             // Add to the end with some randomly large position.
             CacheService.getInstance().resetAllCaches();
@@ -266,8 +268,8 @@ public class MatrixQuestionDaoTest extends TxnAwareBaseTest {
             ActivityVersionDto version1 = setupTestActivity(meta);
 
             RevisionDto revDto = RevisionDto.fromStartMetadata(version1.getRevId(), meta);
-            MatrixOptionDef option3 = new MatrixOptionDef("SINGLE_OPT_3_NEW", textTmpl("option 3"), null);
-            MatrixOptionDef option4 = new MatrixOptionDef("SINGLE_MIDDLE", textTmpl("option 4"), null);
+            MatrixOptionDef option3 = new MatrixOptionDef("SINGLE_OPT_3_NEW", textTmpl("option 3"), "DEFAULT");
+            MatrixOptionDef option4 = new MatrixOptionDef("SINGLE_MIDDLE", textTmpl("option 4"), "DEFAULT");
             CacheService.getInstance().resetAllCaches();
             daoBuilder.buildDao(handle).addOption(question.getQuestionId(), option3, 2, revDto);
 

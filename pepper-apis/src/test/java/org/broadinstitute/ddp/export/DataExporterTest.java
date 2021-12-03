@@ -355,12 +355,13 @@ public class DataExporterTest extends TxnAwareBaseTest {
                     .setSelectMode(MatrixSelectMode.MULTIPLE)
                     .setPrompt(Template.text("matrix prompt"))
                     .addOptions(List.of(
-                            new MatrixOptionDef("OPT_1", Template.text("option 1"), null),
+                            new MatrixOptionDef("OPT_1", Template.text("option 1"), "DEFAULT"),
                             new MatrixOptionDef("OPT_2", Template.text("option 2"), "GROUP")))
                     .addRows(List.of(
                             new MatrixRowDef("ROW_1", Template.text("row 1")),
                             new MatrixRowDef("ROW_2", Template.text("row 2"))))
                     .addGroups(List.of(
+                            new MatrixGroupDef("DEFAULT", null),
                             new MatrixGroupDef("GROUP", Template.text("group 1"))))
                     .build();
 

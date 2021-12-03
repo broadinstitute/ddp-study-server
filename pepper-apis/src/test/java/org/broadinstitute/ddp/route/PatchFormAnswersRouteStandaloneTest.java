@@ -179,6 +179,7 @@ public class PatchFormAnswersRouteStandaloneTest {
     private static String matrixSingleRowStableId2;
     private static String matrixSingleOptionStableId1;
     private static String matrixSingleOptionStableId2;
+    private static String matrixDefaultGroup;
     private static String matrixSingleGroup;
 
     private static String matrixMultiSelectSid;
@@ -263,6 +264,7 @@ public class PatchFormAnswersRouteStandaloneTest {
         matrixSingleOptionStableId1 = "MATRIX_SINGLE_OPT1" + timestamp;
         matrixSingleOptionStableId2 = "MATRIX_SINGLE_OPT2" + timestamp;
         matrixSingleGroup = "MATRIX_SINGLE_GROUP" + timestamp;
+        matrixDefaultGroup = "DEFAULT_GROUP" + timestamp;
         matrixMultiSelectSid = "MATRIX_MULTI_Q_" + timestamp;
         matrixMultiRowStableId1 = "MATRIX_MULTI_ROW1" + timestamp;
         matrixMultiRowStableId2 = "MATRIX_MULTI_ROW2" + timestamp;
@@ -329,19 +331,23 @@ public class PatchFormAnswersRouteStandaloneTest {
         MatrixQuestionDef mqf1 = MatrixQuestionDef.builder(MatrixSelectMode.SINGLE, matrixSingleSelectSid, newTemplate())
                 .addRow(new MatrixRowDef(matrixSingleRowStableId1, newTemplate()))
                 .addRow(new MatrixRowDef(matrixSingleRowStableId2, newTemplate()))
-                .addOption(new MatrixOptionDef(matrixSingleOptionStableId1, newTemplate(), null))
+                .addOption(new MatrixOptionDef(matrixSingleOptionStableId1, newTemplate(), matrixDefaultGroup))
                 .addOption(new MatrixOptionDef(matrixSingleOptionStableId2, newTemplate(), matrixSingleGroup))
-                .addGroup(new MatrixGroupDef(matrixSingleGroup, newTemplate()))
+                .addGroups(List.of(
+                        new MatrixGroupDef(matrixDefaultGroup, null),
+                        new MatrixGroupDef(matrixSingleGroup, newTemplate())))
                 .build();
 
         MatrixQuestionDef mqf2 = MatrixQuestionDef.builder(MatrixSelectMode.MULTIPLE, matrixMultiSelectSid, newTemplate())
                 .addRow(new MatrixRowDef(matrixMultiRowStableId1, newTemplate()))
                 .addRow(new MatrixRowDef(matrixMultiRowStableId2, newTemplate()))
-                .addOption(new MatrixOptionDef(matrixMultiOptionStableId1, newTemplate(), null))
+                .addOption(new MatrixOptionDef(matrixMultiOptionStableId1, newTemplate(), matrixDefaultGroup))
                 .addOption(new MatrixOptionDef(matrixMultiOptionStableId2, newTemplate(), matrixMultiGroup))
                 .addOption(new MatrixOptionDef(matrixMultiOptionStableId3, newTemplate(), matrixMultiGroup))
                 .addOption(MatrixOptionDef.buildExclusive(matrixMultiOptionStableId4, newTemplate(), matrixMultiGroup))
-                .addGroup(new MatrixGroupDef(matrixMultiGroup, newTemplate()))
+                .addGroups(List.of(
+                        new MatrixGroupDef(matrixDefaultGroup, null),
+                        new MatrixGroupDef(matrixMultiGroup, newTemplate())))
                 .addValidation(new RequiredRuleDef(newTemplate()))
                 .build();
 
@@ -1349,7 +1355,7 @@ public class PatchFormAnswersRouteStandaloneTest {
     @Test
     public void testPatch_matrixAnswer_newAnswer() {
         PatchAnswerPayload payload = createMatrixPayload(matrixSingleSelectSid, null,
-                new SelectedMatrixCell(matrixSingleRowStableId1, matrixSingleOptionStableId1, null),
+                new SelectedMatrixCell(matrixSingleRowStableId1, matrixSingleOptionStableId1, matrixDefaultGroup),
                 new SelectedMatrixCell(matrixSingleRowStableId2, matrixSingleOptionStableId2, matrixSingleGroup));
 
         String guid = givenMatrixRequest(instanceGuid, payload)
@@ -1382,7 +1388,7 @@ public class PatchFormAnswersRouteStandaloneTest {
     public void testPatch_matrixAnswer_updateAnswer() {
         String answerGuid = TransactionWrapper.withTxn(handle ->
                 createAnswerAndDeferCleanup(handle, new MatrixAnswer(null, matrixSingleSelectSid, null, List.of(
-                        new SelectedMatrixCell(matrixSingleRowStableId1, matrixSingleOptionStableId1, null)
+                        new SelectedMatrixCell(matrixSingleRowStableId1, matrixSingleOptionStableId1, matrixDefaultGroup)
                 ))));
 
         PatchAnswerPayload payload = createMatrixPayload(matrixSingleSelectSid, answerGuid,
@@ -1410,7 +1416,7 @@ public class PatchFormAnswersRouteStandaloneTest {
     @Test
     public void testPatch_matrixAnswer_singleSelect_onlyAllowOne() {
         PatchAnswerPayload payload = createMatrixPayload(matrixSingleSelectSid, null,
-                new SelectedMatrixCell(matrixSingleRowStableId1, matrixSingleOptionStableId1, null),
+                new SelectedMatrixCell(matrixSingleRowStableId1, matrixSingleOptionStableId1, matrixDefaultGroup),
                 new SelectedMatrixCell(matrixSingleRowStableId1, matrixSingleOptionStableId2, matrixSingleGroup));
 
         givenMatrixRequest(instanceGuid, payload)
@@ -1423,8 +1429,8 @@ public class PatchFormAnswersRouteStandaloneTest {
     @Test
     public void testPatch_matrixAnswer_multiSelect_andExclusive_allowMultiple() {
         PatchAnswerPayload payload = createMatrixPayload(matrixMultiSelectSid, null,
-                new SelectedMatrixCell(matrixMultiRowStableId1, matrixMultiOptionStableId1, null),
-                new SelectedMatrixCell(matrixMultiRowStableId2, matrixMultiOptionStableId1, null),
+                new SelectedMatrixCell(matrixMultiRowStableId1, matrixMultiOptionStableId1, matrixDefaultGroup),
+                new SelectedMatrixCell(matrixMultiRowStableId2, matrixMultiOptionStableId1, matrixDefaultGroup),
                 new SelectedMatrixCell(matrixMultiRowStableId1, matrixMultiOptionStableId2, matrixMultiGroup),
                 new SelectedMatrixCell(matrixMultiRowStableId2, matrixMultiOptionStableId2, matrixMultiGroup));
 
@@ -1485,9 +1491,9 @@ public class PatchFormAnswersRouteStandaloneTest {
     @Test
     public void testPatch_matrixAnswer_exclusive_rejectedWhenMultipleSelected() {
         PatchAnswerPayload payload = createMatrixPayload(matrixMultiSelectSid, null,
-                new SelectedMatrixCell(matrixMultiRowStableId1, matrixMultiOptionStableId1, null),
+                new SelectedMatrixCell(matrixMultiRowStableId1, matrixMultiOptionStableId1, matrixDefaultGroup),
                 new SelectedMatrixCell(matrixMultiRowStableId1, matrixMultiOptionStableId3, matrixMultiGroup),
-                new SelectedMatrixCell(matrixMultiRowStableId2, matrixMultiOptionStableId1, null),
+                new SelectedMatrixCell(matrixMultiRowStableId2, matrixMultiOptionStableId1, matrixDefaultGroup),
                 new SelectedMatrixCell(matrixMultiRowStableId2, matrixMultiOptionStableId3, matrixMultiGroup),
                 new SelectedMatrixCell(matrixMultiRowStableId2, matrixMultiOptionStableId4, matrixMultiGroup));
 

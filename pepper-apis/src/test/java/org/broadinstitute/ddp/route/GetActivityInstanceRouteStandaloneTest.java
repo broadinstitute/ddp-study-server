@@ -303,19 +303,23 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
         MatrixQuestionDef mqf1 = MatrixQuestionDef.builder(MatrixSelectMode.SINGLE, "MA_SINGLE", newTemplate())
                 .addRow(new MatrixRowDef("MA_SINGLE_ROW_1", newTemplate()))
                 .addRow(new MatrixRowDef("MA_SINGLE_ROW_2", newTemplate()))
-                .addOption(new MatrixOptionDef("MA_SINGLE_OPT_1", newTemplate(), null))
+                .addOption(new MatrixOptionDef("MA_SINGLE_OPT_1", newTemplate(), "DEFAULT"))
                 .addOption(new MatrixOptionDef("MA_SINGLE_OPT_2", newTemplate(), "MA_SINGLE_GROUP"))
                 .addOption(new MatrixOptionDef("MA_SINGLE_OPT_3", newTemplate(), "MA_SINGLE_GROUP"))
-                .addGroup(new MatrixGroupDef("MA_SINGLE_GROUP", newTemplate()))
+                .addGroups(List.of(
+                        new MatrixGroupDef("DEFAULT", null),
+                        new MatrixGroupDef("MA_SINGLE_GROUP", newTemplate())))
                 .build();
 
         MatrixQuestionDef mqf2 = MatrixQuestionDef.builder(MatrixSelectMode.MULTIPLE, "MA_MULTI", newTemplate())
                 .addRow(new MatrixRowDef("MA_MULTI_ROW_1", newTemplate()))
                 .addRow(new MatrixRowDef("MA_MULTI_ROW_2", newTemplate()))
-                .addOption(new MatrixOptionDef("MA_MULTI_OPT_1", newTemplate(), null))
+                .addOption(new MatrixOptionDef("MA_MULTI_OPT_1", newTemplate(), "DEFAULT"))
                 .addOption(new MatrixOptionDef("MA_MULTI_OPT_2", newTemplate(), "MA_MULTI_GROUP"))
                 .addOption(new MatrixOptionDef("MA_MULTI_OPT_3", newTemplate(), "MA_MULTI_GROUP"))
-                .addGroup(new MatrixGroupDef("MA_MULTI_GROUP", newTemplate()))
+                .addGroups(List.of(
+                        new MatrixGroupDef("DEFAULT", null),
+                        new MatrixGroupDef("MA_MULTI_GROUP", newTemplate())))
                 .addValidation(new RequiredRuleDef(newTemplate()))
                 .build();
 
