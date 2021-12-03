@@ -389,7 +389,7 @@ public class FormActivityDaoTest extends TxnAwareBaseTest {
                 }
             }
 
-            var group = question.getGroups().get(0);
+            var group = question.getGroups().get(1);
             assertEquals("GROUP", group.getStableId());
             assertEquals("group 1", group.getName());
 
@@ -1065,18 +1065,18 @@ public class FormActivityDaoTest extends TxnAwareBaseTest {
             MatrixQuestionDef matrixQuestion = (MatrixQuestionDef) question;
             assertEquals(4, matrixQuestion.getOptions().size());
             assertEquals(2, matrixQuestion.getRows().size());
-            assertEquals(1, matrixQuestion.getGroups().size());
+            assertEquals(2, matrixQuestion.getGroups().size());
 
             MatrixOptionDef matrixOption = matrixQuestion.getOptions().get(0);
             assertEquals("OP1", matrixOption.getStableId());
-            assertNull(matrixOption.getGroupStableId());
+            assertEquals("DEFAULT", matrixOption.getGroupStableId());
             assertNotNull(matrixOption.getOptionLabelTemplate());
             assertNull(matrixOption.getTooltipTemplate());
             assertTrue(matrixOption.isExclusive());
 
             matrixOption = matrixQuestion.getOptions().get(1);
             assertEquals("OP2", matrixOption.getStableId());
-            assertNull(matrixOption.getGroupStableId());
+            assertEquals("DEFAULT", matrixOption.getGroupStableId());
             assertNotNull(matrixOption.getOptionLabelTemplate());
             assertNull(matrixOption.getTooltipTemplate());
             assertTrue(matrixOption.isExclusive());
@@ -1105,9 +1105,13 @@ public class FormActivityDaoTest extends TxnAwareBaseTest {
             assertNotNull(matrixRow.getRowLabelTemplate());
             assertNull(matrixRow.getTooltipTemplate());
 
-            MatrixGroupDef matrixGroup = matrixQuestion.getGroups().get(0);
-            assertEquals("GROUP1", matrixGroup.getStableId());
-            assertNotNull(matrixGroup.getNameTemplate());
+            MatrixGroupDef matrixGroup0 = matrixQuestion.getGroups().get(0);
+            assertEquals("DEFAULT", matrixGroup0.getStableId());
+            assertNull(matrixGroup0.getNameTemplate());
+
+            MatrixGroupDef matrixGroup1 = matrixQuestion.getGroups().get(1);
+            assertEquals("GROUP1", matrixGroup1.getStableId());
+            assertNotNull(matrixGroup1.getNameTemplate());
 
             section = actual.getSections().get(1);
             assertEquals(4, section.getBlocks().size());

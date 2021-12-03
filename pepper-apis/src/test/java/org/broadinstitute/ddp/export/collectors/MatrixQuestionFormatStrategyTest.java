@@ -114,7 +114,7 @@ public class MatrixQuestionFormatStrategyTest {
 
         assertEquals(2, options.size());
         assertEquals(2, rows.size());
-        assertEquals(1, groups.size());
+        assertEquals(2, groups.size());
 
         assertEquals("OPT_1", options.get(0).get("optionStableId"));
         assertEquals("option 1", options.get(0).get("optionText"));
@@ -158,7 +158,7 @@ public class MatrixQuestionFormatStrategyTest {
 
         assertEquals(2, options.size());
         assertEquals(2, rows.size());
-        assertEquals(0, groups.size());
+        assertEquals(2, groups.size());
 
         assertEquals("OPT_1", options.get(0).get("optionStableId"));
         assertEquals("option 1", options.get(0).get("optionText"));

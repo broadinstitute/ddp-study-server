@@ -463,7 +463,7 @@ public class AnswerDaoTest extends TxnAwareBaseTest {
             assertEquals(1, selected.size());
             assertEquals("OPT_1", selected.get(0).getOptionStableId());
             assertEquals("ROW_1", selected.get(0).getRowStableId());
-            assertNull(selected.get(0).getGroupStableId());
+            assertEquals("DEFAULT", selected.get(0).getGroupStableId());
 
             MatrixAnswer matrixAnswer = new MatrixAnswer(null, act.getMatrixListQuestion().getStableId(), null, List.of(
                     new SelectedMatrixCell("ROW_2", "OPT_2", "GROUP")));

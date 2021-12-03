@@ -300,7 +300,7 @@ public class AnswerToAnswerCopierTest extends TxnAwareBaseTest {
             assertEquals(2, selectedCells.size());
             assertEquals("row1", selectedCells.get(0).getRowStableId());
             assertEquals("op1", selectedCells.get(0).getOptionStableId());
-            assertNull(selectedCells.get(0).getGroupStableId());
+            assertEquals("DEFAULT", selectedCells.get(0).getGroupStableId());
 
             assertEquals("row2", selectedCells.get(1).getRowStableId());
             assertEquals("op2", selectedCells.get(1).getOptionStableId());

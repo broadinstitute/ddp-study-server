@@ -113,8 +113,8 @@ public class MatrixQuestionDaoTest extends TxnAwareBaseTest {
                 .addRows(List.of(
                         new MatrixRowDef("MULTI_ROW_1", textTmpl("row 1")),
                         new MatrixRowDef("MULTI_ROW_2", textTmpl("row 2"))))
-                .addGroups(List.of(new MatrixGroupDef("GROUP", textTmpl("group")),
-                        new MatrixGroupDef("DEFAULT", null)))
+                .addGroups(List.of(new MatrixGroupDef("DEFAULT", null),
+                        new MatrixGroupDef("GROUP", textTmpl("group"))))
                 .build();
 
         String actCode = "ACT" + Instant.now().toEpochMilli();

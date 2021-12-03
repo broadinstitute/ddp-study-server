@@ -18,7 +18,7 @@ public class MatrixGroupDto implements TimestampRevisioned, Serializable {
     @JdbiConstructor
     public MatrixGroupDto(@ColumnName("matrix_group_id") long id,
                           @ColumnName("group_stable_id") String stableId,
-                          @ColumnName("name_template_id") long nameTemplateId,
+                          @ColumnName("name_template_id") Long nameTemplateId,
                           @ColumnName("display_order") int displayOrder,
                           @ColumnName("revision_id") long revisionId,
                           @ColumnName("revision_start_timestamp") Long revisionStartTimestamp,
