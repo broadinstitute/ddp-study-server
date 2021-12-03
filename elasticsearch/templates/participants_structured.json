@@ -452,7 +452,7 @@
                 }
               }
             },
-            "medicalRecords": {
+            "medicalRecord": {
             "type": "nested",
             "properties": {
               "id": {
@@ -678,7 +678,7 @@
               }
             }
           },
-            "oncHistoryDetails": {
+            "oncHistoryDetail": {
               "type": "nested",
               "properties": {
                 "id": {
@@ -865,7 +865,7 @@
                 }
               }
             },
-            "tissues": {
+            "tissue": {
               "type": "nested",
               "properties": {
                 "id": {
@@ -1440,12 +1440,7 @@
             "participant": {
               "properties": {
                 "minimalMr": {
-                  "type": "text",
-                  "fields": {
-                    "keyword": {
-                      "type": "keyword"
-                    }
-                  }
+                  "type": "boolean"
                 },
                 "assigneeIdMr": {
                   "type": "text",
@@ -1561,12 +1556,7 @@
                   }
                 },
                 "abstractionReady": {
-                  "type": "text",
-                  "fields": {
-                    "keyword": {
-                      "type": "keyword"
-                    }
-                  }
+                  "type": "boolean"
                 },
                 "crSent": {
                   "type": "date"
