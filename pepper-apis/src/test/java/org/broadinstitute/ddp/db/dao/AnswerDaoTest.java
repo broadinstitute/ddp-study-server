@@ -497,7 +497,7 @@ public class AnswerDaoTest extends TxnAwareBaseTest {
             assertEquals(2, selected.size());
             assertEquals("OPT_1", selected.get(0).getOptionStableId());
             assertEquals("ROW_1", selected.get(0).getRowStableId());
-            assertNull(selected.get(0).getGroupStableId());
+            assertEquals("DEFAULT", selected.get(0).getGroupStableId());
             assertEquals("OPT_2", selected.get(1).getOptionStableId());
             assertEquals("ROW_2", selected.get(1).getRowStableId());
             assertEquals("GROUP", selected.get(1).getGroupStableId());

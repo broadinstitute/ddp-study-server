@@ -477,7 +477,8 @@ public class DataExporterTest extends TxnAwareBaseTest {
 
             //check Picklist Question
             Assert.assertTrue(esDoc.contains("{\"stableId\":\"TEST_MAQ\",\"questionType\":\"MATRIX\",\"questionText\":\"matrix prompt\","
-                    + "\"selectMode\":\"MULTIPLE\",\"groups\":[{\"groupStableId\":\"GROUP\",\"groupText\":\"group 1\"}],"
+                    + "\"selectMode\":\"MULTIPLE\",\"groups\":[{\"groupStableId\":\"DEFAULT\"},{\"groupStableId\":\"GROUP\","
+                    + "\"groupText\":\"group 1\"}],"
                     + "\"options\":[{\"optionStableId\":\"OPT_1\",\"optionText\":\"option 1\"},{\"optionStableId\":\"OPT_2\","
                     + "\"optionText\":\"option 2\"}],\"rows\":[{\"rowStableId\":\"ROW_1\",\"rowText\":\"row 1\"},"
                     + "{\"rowStableId\":\"ROW_2\",\"rowText\":\"row 2\"}]}]"));

@@ -124,7 +124,8 @@ public class MatrixQuestionFormatStrategyTest {
         assertEquals("row 1", rows.get(0).get("rowText"));
         assertEquals("ROW_2", rows.get(1).get("rowStableId"));
         assertEquals("row 2", rows.get(1).get("rowText"));
-        assertEquals("GROUP", groups.get(0).get("groupStableId"));
+        assertEquals("DEFAULT", groups.get(0).get("groupStableId"));
+        assertEquals("GROUP", groups.get(1).get("groupStableId"));
         assertEquals("group 1", groups.get(0).get("groupText"));
     }
 
