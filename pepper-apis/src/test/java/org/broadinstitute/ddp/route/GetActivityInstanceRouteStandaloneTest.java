@@ -571,7 +571,7 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
                 .body("questionType", equalTo("MATRIX"))
                 .body("stableId", equalTo("MA_SINGLE"))
                 .body("selectMode", equalTo("SINGLE"))
-                .body("groups.size()", equalTo(1))
+                .body("groups.size()", equalTo(2))
                 .body("groups[0].identifier", equalTo("MA_SINGLE_GROUP"))
                 .body("matrixOptions.size()", equalTo(3))
                 .body("matrixOptions[0].stableId", equalTo("MA_SINGLE_OPT_1"))
