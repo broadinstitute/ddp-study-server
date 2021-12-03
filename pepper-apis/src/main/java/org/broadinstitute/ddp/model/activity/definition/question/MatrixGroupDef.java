@@ -22,7 +22,7 @@ public class MatrixGroupDef {
     public MatrixGroupDef(Long groupId, String stableId, Template nameTemplate) {
         this.groupId = groupId;
         this.stableId = MiscUtil.checkNonNull(stableId, "stableId");
-        this.nameTemplate = MiscUtil.checkNonNull(nameTemplate, "nameTemplate");
+        this.nameTemplate = nameTemplate;
     }
 
     public MatrixGroupDef(String stableId, Template nameTemplate) {

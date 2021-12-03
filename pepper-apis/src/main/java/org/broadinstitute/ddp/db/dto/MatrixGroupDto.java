@@ -7,13 +7,13 @@ import java.io.Serializable;
 
 public class MatrixGroupDto implements TimestampRevisioned, Serializable {
 
-    private long id;
-    private String stableId;
-    private long nameTemplateId;
-    private int displayOrder;
-    private long revisionId;
-    private Long revisionStartTimestamp;
-    private Long revisionEndTimestamp;
+    private final long id;
+    private final String stableId;
+    private final Long nameTemplateId;
+    private final int displayOrder;
+    private final long revisionId;
+    private final Long revisionStartTimestamp;
+    private final Long revisionEndTimestamp;
 
     @JdbiConstructor
     public MatrixGroupDto(@ColumnName("matrix_group_id") long id,
@@ -40,7 +40,7 @@ public class MatrixGroupDto implements TimestampRevisioned, Serializable {
         return stableId;
     }
 
-    public long getNameTemplateId() {
+    public Long getNameTemplateId() {
         return nameTemplateId;
     }
 

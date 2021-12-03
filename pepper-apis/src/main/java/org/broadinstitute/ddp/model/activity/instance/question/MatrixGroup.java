@@ -14,14 +14,14 @@ public class MatrixGroup implements Renderable {
 
     @NotBlank
     @SerializedName("identifier")
-    private String stableId;
+    private final String stableId;
 
     @SerializedName("name")
     private String name;
 
-    private transient long nameTemplateId;
+    private final transient Long nameTemplateId;
 
-    public MatrixGroup(String stableId, long nameTemplateId) {
+    public MatrixGroup(String stableId, Long nameTemplateId) {
         this.stableId = MiscUtil.checkNotBlank(stableId, "stableId");
         this.nameTemplateId = nameTemplateId;
     }
@@ -34,24 +34,28 @@ public class MatrixGroup implements Renderable {
         return name;
     }
 
-    public long getNameTemplateId() {
+    public Long getNameTemplateId() {
         return nameTemplateId;
     }
 
     @Override
     public void registerTemplateIds(Consumer<Long> registry) {
-        registry.accept(nameTemplateId);
+        if (nameTemplateId != null) {
+            registry.accept(nameTemplateId);
+        }
     }
 
     @Override
     public void applyRenderedTemplates(Provider<String> rendered, ContentStyle style) {
-        name = rendered.get(nameTemplateId);
-        if (name == null) {
-            throw new NoSuchElementException("No rendered template found for name with id " + nameTemplateId);
-        }
+        if (nameTemplateId != null) {
+            name = rendered.get(nameTemplateId);
+            if (name == null) {
+                throw new NoSuchElementException("No rendered template found for name with id " + nameTemplateId);
+            }
 
-        if (style == ContentStyle.BASIC) {
-            name = HtmlConverter.getPlainText(name);
+            if (style == ContentStyle.BASIC) {
+                name = HtmlConverter.getPlainText(name);
+            }
         }
     }
 }

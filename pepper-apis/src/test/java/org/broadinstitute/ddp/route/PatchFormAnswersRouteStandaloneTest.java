@@ -1377,7 +1377,7 @@ public class PatchFormAnswersRouteStandaloneTest {
 
         assertEquals(matrixSingleOptionStableId1, answer.getValue().get(0).getOptionStableId());
         assertEquals(matrixSingleRowStableId1, answer.getValue().get(0).getRowStableId());
-        assertNull(answer.getValue().get(0).getGroupStableId());
+        assertEquals(matrixDefaultGroup, answer.getValue().get(0).getGroupStableId());
 
         assertEquals(matrixSingleOptionStableId2, answer.getValue().get(1).getOptionStableId());
         assertEquals(matrixSingleRowStableId2, answer.getValue().get(1).getRowStableId());
@@ -1453,7 +1453,7 @@ public class PatchFormAnswersRouteStandaloneTest {
 
         assertEquals(matrixMultiOptionStableId1, answer.getValue().get(0).getOptionStableId());
         assertEquals(matrixMultiRowStableId1, answer.getValue().get(0).getRowStableId());
-        assertNull(answer.getValue().get(0).getGroupStableId());
+        assertEquals(matrixDefaultGroup, answer.getValue().get(0).getGroupStableId());
     }
 
     @Test

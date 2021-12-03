@@ -902,12 +902,13 @@ public class FormActivityDaoTest extends TxnAwareBaseTest {
 
             questionSection.getBlocks().add(new QuestionBlockDef(MatrixQuestionDef
                     .builder(MatrixSelectMode.MULTIPLE, "MATRIX", Template.text("matrix prompt"))
-                    .addOption(MatrixOptionDef.buildExclusive("OP1", Template.text("exclusive1"), null))
-                    .addOption(MatrixOptionDef.buildExclusive("OP2", Template.text("exclusive2"), null))
+                    .addOption(MatrixOptionDef.buildExclusive("OP1", Template.text("exclusive1"), "DEFAULT"))
+                    .addOption(MatrixOptionDef.buildExclusive("OP2", Template.text("exclusive2"), "DEFAULT"))
                     .addOption(new MatrixOptionDef("OP3", Template.text("op in group 1"), "GROUP1"))
                     .addOption(new MatrixOptionDef("OP4", Template.text("op in group 2"), "GROUP1"))
                     .addRow(new MatrixRowDef("ROW1", Template.text("row1")))
                     .addRow(new MatrixRowDef("ROW2", Template.text("row2")))
+                    .addGroup(new MatrixGroupDef("DEFAULT", null))
                     .addGroup(new MatrixGroupDef("GROUP1", Template.text("group")))
                     .setRestricted(true)
                     .setDeprecated(true)

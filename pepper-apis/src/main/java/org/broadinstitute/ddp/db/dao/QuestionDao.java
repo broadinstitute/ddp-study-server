@@ -1785,8 +1785,8 @@ public interface QuestionDao extends SqlObject {
             templateIds.addAll(container.getTemplateIds());
         }
 
-        Map<Long, Template> picklistTemplates = getTemplateDao().collectTemplatesByIdsAndTimestamp(templateIds, timestamp);
-        templates.putAll(picklistTemplates);
+        Map<Long, Template> matrixTemplates = getTemplateDao().collectTemplatesByIdsAndTimestamp(templateIds, timestamp);
+        templates.putAll(matrixTemplates);
 
         Map<Long, MatrixQuestionDef> matrixDefs = new HashMap<>();
         for (var matrixDto : matrixDtos) {
@@ -2041,7 +2041,10 @@ public interface QuestionDao extends SqlObject {
             if (groupDto.getStableId() == null) {
                 continue;
             }
-            Template nameTemplate = templates.get(groupDto.getNameTemplateId());
+            Template nameTemplate = null;
+            if (groupDto.getNameTemplateId() != null) {
+                nameTemplate = templates.get(groupDto.getNameTemplateId());
+            }
             groups.add(new MatrixGroupDef(groupDto.getId(), groupDto.getStableId(), nameTemplate));
         }
 

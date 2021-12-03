@@ -1584,7 +1584,7 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
 
             var group = matrixQ.getGroups().get(0);
             assertEquals("GROUP_1", group.getStableId());
-            assertEquals(optGroupTemp.getTemplateId(), (Long) group.getNameTemplateId());
+            assertEquals(optGroupTemp.getTemplateId(), group.getNameTemplateId());
 
             handle.rollback();
 

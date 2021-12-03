@@ -377,7 +377,9 @@ public interface MatrixQuestionDao extends SqlObject {
             }
         }
         for (MatrixGroupDto group : groups) {
-            tmplDao.disableTemplate(group.getNameTemplateId(), meta);
+            if (group.getNameTemplateId() != null) {
+                tmplDao.disableTemplate(group.getNameTemplateId(), meta);
+            }
         }
 
         LOG.info("Terminated {} matrix options, {} rows, {} groups for matrix question id {}",
@@ -468,7 +470,9 @@ public interface MatrixQuestionDao extends SqlObject {
         public Set<Long> getTemplateIds() {
             var ids = new HashSet<Long>();
             for (var group : groups.values()) {
-                ids.add(group.getNameTemplateId());
+                if (group.getNameTemplateId() != null) {
+                    ids.add(group.getNameTemplateId());
+                }
             }
             for (var option : options.values()) {
                 ids.addAll(option.getTemplateIds());
