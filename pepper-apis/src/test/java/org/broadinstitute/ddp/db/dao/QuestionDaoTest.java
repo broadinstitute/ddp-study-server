@@ -1492,12 +1492,13 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
 
             MatrixQuestionDef question = MatrixQuestionDef.builder(MatrixSelectMode.SINGLE, sid, prompt)
                     .addOptions(List.of(
-                            new MatrixOptionDef("OPT_1", opt1OptTemp, null),
-                            new MatrixOptionDef("OPT_2", opt2OptTemp, null),
+                            new MatrixOptionDef("OPT_1", opt1OptTemp, "DEFAULT"),
+                            new MatrixOptionDef("OPT_2", opt2OptTemp, "DEFAULT"),
                             new MatrixOptionDef("OPT_3", opt3OptTemp, "GROUP_1")))
                     .addRows(List.of(
                             new MatrixRowDef("ROW_1", opt1RowTemp),
                             new MatrixRowDef("ROW_2", opt2RowTemp)))
+                    .addGroup(new MatrixGroupDef("DEFAULT", null))
                     .addGroup(new MatrixGroupDef("GROUP_1", optGroupTemp))
                     .addValidation(rule)
                     .build();
@@ -1541,12 +1542,12 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
             for (MatrixOption option : matrixQ.getMatrixOptions()) {
                 if ("OPT_1".equals(option.getStableId())) {
                     assertEquals(opt1OptTemp.getTemplateId(), (Long) option.getOptionLabelTemplateId());
-                    assertNull(option.getGroupStableId());
+                    assertEquals("DEFAULT", option.getGroupStableId());
                     assertFalse(option.isExclusive());
                     assertNull(option.getTooltip());
                 } else if ("OPT_2".equals(option.getStableId())) {
                     assertEquals(opt2OptTemp.getTemplateId(), (Long) option.getOptionLabelTemplateId());
-                    assertNull(option.getGroupStableId());
+                    assertEquals("DEFAULT", option.getGroupStableId());
                     assertFalse(option.isExclusive());
                     assertNull(option.getTooltip());
                 } else if ("OPT_3".equals(option.getStableId())) {

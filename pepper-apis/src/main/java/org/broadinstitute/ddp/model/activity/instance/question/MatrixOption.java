@@ -15,7 +15,7 @@ public class MatrixOption implements Renderable {
 
     @NotBlank
     @SerializedName("stableId")
-    private String stableId;
+    private final String stableId;
 
     @NotNull
     @SerializedName("optionLabel")
@@ -25,13 +25,14 @@ public class MatrixOption implements Renderable {
     private String tooltip;
 
     @SerializedName("exclusive")
-    private boolean isExclusive;
+    private final boolean isExclusive;
 
+    @NotNull
     @SerializedName("groupId")
     private String groupStableId;
 
-    private transient long optionLabelTemplateId;
-    private transient Long tooltipTemplateId;
+    private final transient long optionLabelTemplateId;
+    private final transient Long tooltipTemplateId;
 
     public MatrixOption(String stableId, long optionLabelTemplateId, Long tooltipTemplateId, boolean isExclusive) {
         this.stableId = MiscUtil.checkNotBlank(stableId, "stableId");

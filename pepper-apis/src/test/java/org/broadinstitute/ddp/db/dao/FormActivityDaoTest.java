@@ -322,15 +322,16 @@ public class FormActivityDaoTest extends TxnAwareBaseTest {
     public void testInsertActivity_matrixQuestion() {
         TransactionWrapper.useTxn(handle -> {
             List<MatrixOptionDef> options = Arrays.asList(
-                    new MatrixOptionDef("OP1", Template.text("option 1"), null),
-                    new MatrixOptionDef("OP2", Template.text("option 2"), null),
+                    new MatrixOptionDef("OP1", Template.text("option 1"), "DEFAULT"),
+                    new MatrixOptionDef("OP2", Template.text("option 2"), "DEFAULT"),
                     new MatrixOptionDef("OP3", Template.text("option 3"), "GROUP"));
 
             List<MatrixRowDef> rows = Arrays.asList(
                     new MatrixRowDef("ROW1", Template.text("row 1")),
                     new MatrixRowDef("ROW2", Template.text("row 2")));
 
-            List<MatrixGroupDef> groups = Collections.singletonList(
+            List<MatrixGroupDef> groups = List.of(
+                    new MatrixGroupDef("DEFAULT", null),
                     new MatrixGroupDef("GROUP", Template.text("group 1")));
 
             List<RuleDef> rules = Collections.singletonList(new RequiredRuleDef(null));
@@ -362,10 +363,10 @@ public class FormActivityDaoTest extends TxnAwareBaseTest {
             for (MatrixOption option : question.getMatrixOptions()) {
                 if ("OP1".equals(option.getStableId())) {
                     assertEquals("option 1", option.getOptionLabel());
-                    assertNull(option.getGroupStableId());
+                    assertEquals("DEFAULT", option.getGroupStableId());
                 } else if ("OP2".equals(option.getStableId())) {
                     assertEquals("option 2", option.getOptionLabel());
-                    assertNull(option.getGroupStableId());
+                    assertEquals("DEFAULT", option.getGroupStableId());
                 } else if ("OP3".equals(option.getStableId())) {
                     assertEquals("option 3", option.getOptionLabel());
                     assertEquals("GROUP", option.getGroupStableId());

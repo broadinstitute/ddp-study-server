@@ -84,8 +84,11 @@ public interface MatrixQuestionDao extends SqlObject {
         JdbiMatrixGroup jdbiGroup = getJdbiMatrixGroup();
         TemplateDao templateDao = getTemplateDao();
 
-        templateDao.insertTemplate(group.getNameTemplate(), revisionId);
-        long nameTemplateId = group.getNameTemplate().getTemplateId();
+        Long nameTemplateId = null;
+
+        if (group.getNameTemplate() != null) {
+            nameTemplateId = templateDao.insertTemplate(group.getNameTemplate(), revisionId);
+        }
 
         long groupId = jdbiGroup.insert(questionId, group.getStableId(), nameTemplateId, order, revisionId);
         group.setGroupId(groupId);
@@ -191,13 +194,11 @@ public interface MatrixQuestionDao extends SqlObject {
             tooltipTmplId = templateDao.insertTemplate(option.getTooltipTemplate(), revisionId);
         }
 
-        Long groupId = null;
-
-        if (option.getGroupStableId() != null) {
-            JdbiMatrixGroup jdbiGroup = getJdbiMatrixGroup();
-            groupId = jdbiGroup.findGroupIdByCodeAndQuestionId(questionId, option.getGroupStableId());
+        JdbiMatrixGroup jdbiGroup = getJdbiMatrixGroup();
+        Long groupId = jdbiGroup.findGroupIdByCodeAndQuestionId(questionId, option.getGroupStableId());
+        if (groupId == null) {
+            throw new DaoException("Cannot find group with stableId " + option.getGroupStableId());
         }
-
         long optionId = jdbiOption.insert(questionId, option.getStableId(), optionLabelTmplId, tooltipTmplId,
                 option.isExclusive(), groupId, displayOrder, revisionId);
         option.setOptionId(optionId);

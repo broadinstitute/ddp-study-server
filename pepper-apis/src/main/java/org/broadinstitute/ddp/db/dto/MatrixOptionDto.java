@@ -9,16 +9,16 @@ import java.util.Set;
 
 public class MatrixOptionDto implements TimestampRevisioned, Serializable {
 
-    private long id;
-    private String stableId;
-    private long optionLabelTemplateId;
-    private Long tooltipTemplateId;
-    private Long groupId;
-    private boolean isExclusive;
+    private final long id;
+    private final String stableId;
+    private final long optionLabelTemplateId;
+    private final Long tooltipTemplateId;
+    private final long groupId;
+    private final boolean isExclusive;
     private int displayOrder;
-    private long revisionId;
-    private Long revisionStartTimestamp;
-    private Long revisionEndTimestamp;
+    private final long revisionId;
+    private final Long revisionStartTimestamp;
+    private final Long revisionEndTimestamp;
 
     @JdbiConstructor
     public MatrixOptionDto(@ColumnName("matrix_option_id") long id,
@@ -59,7 +59,7 @@ public class MatrixOptionDto implements TimestampRevisioned, Serializable {
         return tooltipTemplateId;
     }
 
-    public Long getGroupId() {
+    public long getGroupId() {
         return groupId;
     }
 

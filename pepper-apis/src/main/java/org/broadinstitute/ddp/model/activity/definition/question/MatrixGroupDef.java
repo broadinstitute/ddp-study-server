@@ -6,18 +6,16 @@ import org.broadinstitute.ddp.util.MiscUtil;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
 
 public class MatrixGroupDef {
 
     @NotBlank
     @SerializedName("stableId")
-    private String stableId;
+    private final String stableId;
 
     @Valid
-    @NotNull
     @SerializedName("nameTemplate")
-    private Template nameTemplate;
+    private final Template nameTemplate;
 
     private transient Long groupId;
 

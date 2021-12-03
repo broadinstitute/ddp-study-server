@@ -1387,7 +1387,7 @@ MatrixOption:
       type: string
     groupId:
       type: string
-      nullable: true
+      nullable: false
     optionLabel:
       type: string
     tooltip:

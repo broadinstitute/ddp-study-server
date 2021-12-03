@@ -41,7 +41,7 @@
                 <constraints nullable="false"/>
             </column>
             <column name="name_template_id" type="bigint">
-                <constraints nullable="false" references="template(template_id)"
+                <constraints nullable="true" references="template(template_id)"
                              foreignKeyName="matrix_group_name_template_fk"/>
             </column>
             <column name="display_order" type="int">
@@ -83,7 +83,7 @@
                 <constraints nullable="false"/>
             </column>
             <column name="matrix_group_id" type="bigint">
-                <constraints nullable="true" references="matrix_group(matrix_group_id)"
+                <constraints nullable="false" references="matrix_group(matrix_group_id)"
                              foreignKeyName="matrix_option_matrix_group_fk"/>
             </column>
             <column name="display_order" type="int">

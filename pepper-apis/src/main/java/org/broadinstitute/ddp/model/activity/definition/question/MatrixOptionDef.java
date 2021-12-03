@@ -26,6 +26,7 @@ public class MatrixOptionDef {
     @SerializedName("exclusive")
     private boolean isExclusive;
 
+    @NotNull
     @SerializedName("groupId")
     private String groupStableId;
 
@@ -36,7 +37,7 @@ public class MatrixOptionDef {
         this.optionId = optionId;
         this.stableId = MiscUtil.checkNotBlank(stableId, "stableId");
         this.optionLabelTemplate = MiscUtil.checkNonNull(optionLabelTemplate, "optionLabelTemplate");
-        this.groupStableId = groupStableId;
+        this.groupStableId = MiscUtil.checkNotBlank(groupStableId, "groupId");
         this.tooltipTemplate = tooltipTemplate;
         this.isExclusive = isExclusive;
     }
@@ -47,7 +48,7 @@ public class MatrixOptionDef {
     public MatrixOptionDef(String stableId, Template optionLabelTemplate, String groupStableId) {
         this.stableId = MiscUtil.checkNotBlank(stableId, "stableId");
         this.optionLabelTemplate = MiscUtil.checkNonNull(optionLabelTemplate, "optionLabelTemplate");
-        this.groupStableId = groupStableId;
+        this.groupStableId = MiscUtil.checkNotBlank(groupStableId, "groupId");
     }
 
     public static MatrixOptionDef buildExclusive(String stableId, Template optionLabelTemplate, String groupStableId) {

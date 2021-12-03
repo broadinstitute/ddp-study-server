@@ -17,19 +17,19 @@ public final class MatrixQuestionDef extends QuestionDef {
 
     @NotNull
     @SerializedName("selectMode")
-    private MatrixSelectMode selectMode;
+    private final MatrixSelectMode selectMode;
 
     @NotNull
-    @SerializedName("matrixGroups")
-    private List<@Valid @NotNull MatrixGroupDef> groups = new ArrayList<>();
+    @SerializedName("groups")
+    private final List<@Valid @NotNull MatrixGroupDef> groups = new ArrayList<>();
 
     @NotNull
-    @SerializedName("matrixOptions")
-    private List<@Valid @NotNull MatrixOptionDef> matrixOptions = new ArrayList<>();
+    @SerializedName("options")
+    private final List<@Valid @NotNull MatrixOptionDef> matrixOptions = new ArrayList<>();
 
     @NotNull
-    @SerializedName("matrixRows")
-    private List<@Valid @NotNull MatrixRowDef> matrixRows = new ArrayList<>();
+    @SerializedName("rows")
+    private final List<@Valid @NotNull MatrixRowDef> matrixRows = new ArrayList<>();
 
     public static Builder builder() {
         return new Builder();
@@ -94,10 +94,9 @@ public final class MatrixQuestionDef extends QuestionDef {
 
         private MatrixSelectMode selectMode;
 
-        private Template label = null;
-        private List<MatrixGroupDef> groups = new ArrayList<>();
-        private List<MatrixOptionDef> options = new ArrayList<>();
-        private List<MatrixRowDef> rows = new ArrayList<>();
+        private final List<MatrixGroupDef> groups = new ArrayList<>();
+        private final List<MatrixOptionDef> options = new ArrayList<>();
+        private final List<MatrixRowDef> rows = new ArrayList<>();
 
         private Builder() {
             // Use static factories.

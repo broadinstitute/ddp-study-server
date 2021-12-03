@@ -22,7 +22,7 @@ public interface JdbiMatrixGroup extends SqlObject {
     @GetGeneratedKeys
     long insert(@Bind("matrixQuestionId") long questionId,
                 @Bind("groupStableId") String stableId,
-                @Bind("nameTemplateId") long nameTemplateId,
+                @Bind("nameTemplateId") Long nameTemplateId,
                 @Bind("displayOrder") int displayOrder,
                 @Bind("revisionId") long revisionId);
 
@@ -31,7 +31,7 @@ public interface JdbiMatrixGroup extends SqlObject {
                                         @Bind("stableId") String groupStableId);
 
     @SqlQuery("select group_stable_id from matrix_group where matrix_group_id = :groupId")
-    String findGroupCodeById(@Bind("groupId") Long groupId);
+    String findGroupCodeById(@Bind("groupId") long groupId);
 
     @UseStringTemplateSqlLocator
     @SqlQuery("queryMatrixGroupsByStableIdsQuestionIdAndRevision")

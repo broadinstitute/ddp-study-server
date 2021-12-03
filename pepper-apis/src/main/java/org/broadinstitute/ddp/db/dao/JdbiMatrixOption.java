@@ -26,7 +26,7 @@ public interface JdbiMatrixOption extends SqlObject {
                 @Bind("optionLabelTemplateId") long optionLabelTemplateId,
                 @Bind("tooltipTemplateId") Long tooltipTemplateId,
                 @Bind("isExclusive") boolean isExclusive,
-                @Bind("groupId") Long groupId,
+                @Bind("groupId") long groupId,
                 @Bind("displayOrder") int displayOrder,
                 @Bind("revisionId") long revisionId);
 
