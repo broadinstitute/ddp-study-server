@@ -1081,7 +1081,7 @@
         "upload": {
           "p1": "For participants who are opting to send their own medical records to Project Singular study staff you may use one of the below methods.",
           "li1": "Fax: (617)730-6201",
-          "li2": "Online Upload: If you have access to your own medical records files, you may upload the files via the Medical Record File Upload form available during enrollment in Project Singular and on the Project Singular dashboard."
+          "li2": "Online Upload: If you have access to your own medical record files, you may upload the files via the Medical Record File Upload form available during enrollment in Project Singular and on the Project Singular dashboard."
         }
       },
       "name": {
@@ -1110,7 +1110,7 @@
     "summary_complete": "You can upload your medical record files here if they are available.",
 
     "upload": {
-      "prompt": "Please upload your medical records files"
+      "prompt": "Please upload your medical record files"
     }
   },
   "patient_survey": {
