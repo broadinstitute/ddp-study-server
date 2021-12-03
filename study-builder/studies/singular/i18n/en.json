@@ -875,7 +875,7 @@
   },
 
   "consent_assent": {
-    "name": "Consent Assent",
+    "name": "Assent Form",
     "title": "Assent Form",
 
     "intro": {
@@ -1121,7 +1121,7 @@
     "summary_complete": "Thank you for completing this survey!",
     "questions": {
       "what_city_did_you_live": {
-        "prompt": "$ddp.checkAnswer(\"PATIENT_SURVEY_WHO_ENROLLING_HIDDEN\",\"MYSELF\", \"What city did you live in when you were born? (Please note, we want to know where you lived, not necessarily the city in which you were born.)\", \"What city did your child live in when they were born? (Please note, we want to know where your child lived, not necessarily the city in which your child was born.)\")*",
+        "prompt": "$ddp.checkAnswer(\"PATIENT_SURVEY_WHO_ENROLLING_HIDDEN\",\"MYSELF\", \"What city did you live in when you were born? (Please note, we want to know where you lived, not necessarily the city in which you were born.)\", \"What city did your child live in when they were born? (Please note, we want to know where your child lived, not necessarily the city in which your child was born.)\")",
         "placeholder": "",
         "required_hint": ""
       },
@@ -1131,7 +1131,7 @@
         "required_hint": "Please enter a state or province"
       },
       "if_you_remember": {
-        "prompt": "$ddp.checkAnswer(\"PATIENT_SURVEY_WHO_ENROLLING_HIDDEN\",\"MYSELF\", \"If you remember, what was the zip code or postal code of the city you lived in when you were born?\", \"If you remember, what was the zip code or postal code of the city you lived in when your child was born?\")*",
+        "prompt": "$ddp.checkAnswer(\"PATIENT_SURVEY_WHO_ENROLLING_HIDDEN\",\"MYSELF\", \"If you remember, what was the zip code or postal code of the city you lived in when you were born?\", \"If you remember, what was the zip code or postal code of the city you lived in when your child was born?\")",
         "placeholder": "",
         "required_hint": ""
       },
@@ -1285,7 +1285,7 @@
         "yes": "Yes",
         "no": "No",
         "i_do_not_know": "I don't know",
-        "tooltip": "A Neuroldevelopmental or Neurocognitive Evaluation is a special set of tests by a licensed professional to assess a person's development and functioning, including their language or speech, motor skills, social skills, intelligence (IQ), attention, ability to do everyday tasks, and behavior."
+        "tooltip": "A Neurodevelopmental or Neurocognitive Evaluation is a special set of tests by a licensed professional to assess a person's development and functioning, including their language or speech, motor skills, social skills, intelligence (IQ), attention, ability to do everyday tasks, and behavior."
       },
       "diagnosed_by_a_physician": {
         "prompt": "$ddp.checkAnswer(\"PATIENT_SURVEY_WHO_ENROLLING_HIDDEN\",\"MYSELF\", \"Have you ever been diagnosed by a physician or licensed professional with any of the following?\", \"Has your child ever been diagnosed by a physician or licensed professional with any of the following?\")",
