@@ -270,6 +270,8 @@ public abstract class QuestionDef {
                     return ctx.deserialize(elem, NumericQuestionDef.class);
                 case PICKLIST:
                     return ctx.deserialize(elem, PicklistQuestionDef.class);
+                case MATRIX:
+                    return ctx.deserialize(elem, MatrixQuestionDef.class);
                 case COMPOSITE:
                     return ctx.deserialize(elem, CompositeQuestionDef.class);
                 default:

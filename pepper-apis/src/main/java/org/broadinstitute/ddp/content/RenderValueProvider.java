@@ -292,6 +292,7 @@ public class RenderValueProvider {
         switch (answer.getQuestionType()) {
             case PICKLIST:
                 return selectedOptionsRender(questionDef, answer, isoLangCode, useDetailTextForPickList);
+            case MATRIX: // Fall-through
             case COMPOSITE: // Fall-through
             case FILE:
                 // Have not decided what composite or file answers will look like yet.
@@ -320,6 +321,7 @@ public class RenderValueProvider {
         switch (answer.getQuestionType()) {
             case PICKLIST:
                 return selectedOptionsRender(question, answer, useDetailTextForPickList);
+            case MATRIX: // Fall-through
             case COMPOSITE: // Fall-through
             case FILE:
                 throw new DDPException("Rendering answer type " + answer.getQuestionType() + " is currently not supported");

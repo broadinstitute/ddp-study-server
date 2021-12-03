@@ -81,6 +81,10 @@ import org.broadinstitute.ddp.model.activity.definition.question.FileQuestionDef
 import org.broadinstitute.ddp.model.activity.definition.question.NumericQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistOptionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistQuestionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.MatrixOptionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.MatrixQuestionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.MatrixGroupDef;
+import org.broadinstitute.ddp.model.activity.definition.question.MatrixRowDef;
 import org.broadinstitute.ddp.model.activity.definition.question.TextQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.activity.definition.validation.DateFieldRequiredRuleDef;
@@ -98,6 +102,8 @@ import org.broadinstitute.ddp.model.activity.instance.answer.FileAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.NumericAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.PicklistAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.SelectedPicklistOption;
+import org.broadinstitute.ddp.model.activity.instance.answer.MatrixAnswer;
+import org.broadinstitute.ddp.model.activity.instance.answer.SelectedMatrixCell;
 import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
 import org.broadinstitute.ddp.model.activity.instance.question.CompositeQuestion;
 import org.broadinstitute.ddp.model.activity.instance.question.Question;
@@ -107,6 +113,7 @@ import org.broadinstitute.ddp.model.activity.types.DateRenderMode;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.broadinstitute.ddp.model.activity.types.NumericType;
 import org.broadinstitute.ddp.model.activity.types.PicklistRenderMode;
+import org.broadinstitute.ddp.model.activity.types.MatrixSelectMode;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
 import org.broadinstitute.ddp.model.activity.types.RuleType;
 import org.broadinstitute.ddp.model.activity.types.TemplateType;
@@ -167,6 +174,23 @@ public class PatchFormAnswersRouteStandaloneTest {
     private static String plistMulti_option2_sid;
     private static String plistMulti_opt3_exclusive_sid;
 
+    private static String matrixSingleSelectSid;
+    private static String matrixSingleRowStableId1;
+    private static String matrixSingleRowStableId2;
+    private static String matrixSingleOptionStableId1;
+    private static String matrixSingleOptionStableId2;
+    private static String matrixDefaultGroup;
+    private static String matrixSingleGroup;
+
+    private static String matrixMultiSelectSid;
+    private static String matrixMultiRowStableId1;
+    private static String matrixMultiRowStableId2;
+    private static String matrixMultiOptionStableId1;
+    private static String matrixMultiOptionStableId2;
+    private static String matrixMultiOptionStableId3;
+    private static String matrixMultiOptionStableId4;
+    private static String matrixMultiGroup;
+
     private static FileQuestionDef fileQuestion;
     private static FileUpload upload1;
     private static FileUpload upload2;
@@ -221,34 +245,61 @@ public class PatchFormAnswersRouteStandaloneTest {
         long timestamp = Instant.now().toEpochMilli();
 
         boolStableId = "PATCH_BOOL_Q_" + timestamp;
-        BoolQuestionDef b1 = BoolQuestionDef.builder(boolStableId, newTemplate(), newTemplate(), newTemplate()).build();
-        FormSectionDef boolSection = new FormSectionDef(null, TestUtil.wrapQuestions(b1));
-
         textStableId = "PATCH_TEXT_Q_" + timestamp;
-        TextQuestionDef t1 = TextQuestionDef.builder(TextInputType.TEXT, textStableId, newTemplate()).build();
-        FormSectionDef textSection = new FormSectionDef(null, TestUtil.wrapQuestions(t1));
-
         textStableId2 = "PATCH_TEXT_Q2_" + timestamp;
-        TextQuestionDef t2 = TextQuestionDef.builder(TextInputType.ESSAY, textStableId2, newTemplate()).build();
-        FormSectionDef textSection2 = new FormSectionDef(null, TestUtil.wrapQuestions(t2));
-
         textStableId3 = "PATCH_TEXT_Q3_" + timestamp;
-        TextQuestionDef t3 = TextQuestionDef.builder(TextInputType.EMAIL, textStableId3, newTemplate()).build();
-        FormSectionDef textSection3 = new FormSectionDef(null, TestUtil.wrapQuestions(t3));
-
         plistSingleSelectSid = "PATCH_PLIST_SINGLE_Q_" + timestamp;
         plistSingle_option1_sid = "PLIST_SINGLE_OPT_1_" + timestamp;
         plistSingle_option2_sid = "PLIST_SINGLE_OPT_2_" + timestamp;
+        plistMultiSelectSid = "PATCH_PLIST_MULTI_Q_" + timestamp;
+        plistMulti_option1_sid = "PLIST_MULTI_OPT_1_" + timestamp;
+        plistMulti_option2_sid = "PLIST_MULTI_OPT_2_" + timestamp;
+        plistMulti_opt3_exclusive_sid = "PLIST_MULTI_OPT3_EXCLUSIVE_" + timestamp;
+        dateTextSid = "PATCH_DATE_TEXT_Q_" + timestamp;
+        dateSingleTextSid = "PATCH_DATE_SINGLETEXT_Q_" + timestamp;
+        datePicklistSid = "PATCH_DATE_PICKLIST_Q_" + timestamp;
+        matrixSingleSelectSid = "MATRIX_SINGLE_Q_" + timestamp;
+        matrixSingleRowStableId1 = "MATRIX_SINGLE_ROW1" + timestamp;
+        matrixSingleRowStableId2 = "MATRIX_SINGLE_ROW2" + timestamp;
+        matrixSingleOptionStableId1 = "MATRIX_SINGLE_OPT1" + timestamp;
+        matrixSingleOptionStableId2 = "MATRIX_SINGLE_OPT2" + timestamp;
+        matrixSingleGroup = "MATRIX_SINGLE_GROUP" + timestamp;
+        matrixDefaultGroup = "DEFAULT_GROUP" + timestamp;
+        matrixMultiSelectSid = "MATRIX_MULTI_Q_" + timestamp;
+        matrixMultiRowStableId1 = "MATRIX_MULTI_ROW1" + timestamp;
+        matrixMultiRowStableId2 = "MATRIX_MULTI_ROW2" + timestamp;
+        matrixMultiOptionStableId1 = "MATRIX_MULTI_OPT1" + timestamp;
+        matrixMultiOptionStableId2 = "MATRIX_MULTI_OPT2" + timestamp;
+        matrixMultiOptionStableId3 = "MATRIX_MULTI_OPT3" + timestamp;
+        matrixMultiOptionStableId4 = "MATRIX_MULTI_OPT4" + timestamp;
+        matrixMultiGroup = "MATRIX_MULTI_GROUP" + timestamp;
+        childTextStableId = "PATCH_TEXT_CHILD_" + timestamp;
+        childDateStableId = "PATCH__DATE_CHILD" + timestamp;
+        compStabledId = "ANS_COMPOSITE_" + timestamp;
+        essayTextStableId = "PATCH_ESSAY_TEXT_Q_" + timestamp;
+        agreementSid = "AGREEMENT_Q" + timestamp;
+        numericIntegerSid = "PATCH_NUMERIC_INTEGER_Q" + timestamp;
+        numericIntegerReqSid = "PATCH_NUMERIC_INTEGER_REQ" + timestamp;
+        numericIntegerWithMultipleRulesSid = "PATCH_NUM_INT_W_MULT_RULES" + timestamp;
+
+        BoolQuestionDef b1 = BoolQuestionDef.builder(boolStableId, newTemplate(), newTemplate(), newTemplate()).build();
+        FormSectionDef boolSection = new FormSectionDef(null, TestUtil.wrapQuestions(b1));
+
+        TextQuestionDef t1 = TextQuestionDef.builder(TextInputType.TEXT, textStableId, newTemplate()).build();
+        FormSectionDef textSection = new FormSectionDef(null, TestUtil.wrapQuestions(t1));
+
+        TextQuestionDef t2 = TextQuestionDef.builder(TextInputType.ESSAY, textStableId2, newTemplate()).build();
+        FormSectionDef textSection2 = new FormSectionDef(null, TestUtil.wrapQuestions(t2));
+
+        TextQuestionDef t3 = TextQuestionDef.builder(TextInputType.EMAIL, textStableId3, newTemplate()).build();
+        FormSectionDef textSection3 = new FormSectionDef(null, TestUtil.wrapQuestions(t3));
+
         PicklistQuestionDef p1 = PicklistQuestionDef
                 .buildSingleSelect(PicklistRenderMode.LIST, plistSingleSelectSid, newTemplate())
                 .addOption(new PicklistOptionDef(plistSingle_option1_sid, newTemplate()))
                 .addOption(new PicklistOptionDef(plistSingle_option2_sid, newTemplate(), newTemplate()))
                 .build();
 
-        plistMultiSelectSid = "PATCH_PLIST_MULTI_Q_" + timestamp;
-        plistMulti_option1_sid = "PLIST_MULTI_OPT_1_" + timestamp;
-        plistMulti_option2_sid = "PLIST_MULTI_OPT_2_" + timestamp;
-        plistMulti_opt3_exclusive_sid = "PLIST_MULTI_OPT3_EXCLUSIVE_" + timestamp;
         PicklistQuestionDef p2 = PicklistQuestionDef
                 .buildMultiSelect(PicklistRenderMode.LIST, plistMultiSelectSid, newTemplate())
                 .addOption(new PicklistOptionDef(plistMulti_option1_sid, newTemplate()))
@@ -258,17 +309,16 @@ public class PatchFormAnswersRouteStandaloneTest {
                 .build();
         FormSectionDef plistSection = new FormSectionDef(null, TestUtil.wrapQuestions(p1, p2));
 
-        dateTextSid = "PATCH_DATE_TEXT_Q_" + timestamp;
         DateQuestionDef d1 = DateQuestionDef.builder(DateRenderMode.TEXT, dateTextSid, newTemplate())
                 .addFields(DateFieldType.MONTH, DateFieldType.YEAR)
                 .build();
-        dateSingleTextSid = "PATCH_DATE_SINGLETEXT_Q_" + timestamp;
+
         DateQuestionDef d2 = DateQuestionDef.builder(DateRenderMode.SINGLE_TEXT, dateSingleTextSid, newTemplate())
                 .addFields(DateFieldType.YEAR, DateFieldType.MONTH, DateFieldType.DAY)
                 .addValidation(new DateFieldRequiredRuleDef(RuleType.YEAR_REQUIRED, newTemplate()))
                 .addValidation(new DateRangeRuleDef(newTemplate(), LocalDate.now(), null, false))
                 .build();
-        datePicklistSid = "PATCH_DATE_PICKLIST_Q_" + timestamp;
+
         DateRangeRuleDef rangeRuleWithAllowSaveTrue = new DateRangeRuleDef(newTemplate(), LocalDate.of(2016, 3, 14), null, false);
         rangeRuleWithAllowSaveTrue.setAllowSave(true);
         DateQuestionDef d3 = DateQuestionDef.builder(DateRenderMode.PICKLIST, datePicklistSid, newTemplate())
@@ -278,13 +328,35 @@ public class PatchFormAnswersRouteStandaloneTest {
                 .build();
         FormSectionDef dateSection = new FormSectionDef(null, TestUtil.wrapQuestions(d1, d2, d3));
 
-        childTextStableId = "PATCH_TEXT_CHILD_" + timestamp;
+        MatrixQuestionDef mqf1 = MatrixQuestionDef.builder(MatrixSelectMode.SINGLE, matrixSingleSelectSid, newTemplate())
+                .addRow(new MatrixRowDef(matrixSingleRowStableId1, newTemplate()))
+                .addRow(new MatrixRowDef(matrixSingleRowStableId2, newTemplate()))
+                .addOption(new MatrixOptionDef(matrixSingleOptionStableId1, newTemplate(), matrixDefaultGroup))
+                .addOption(new MatrixOptionDef(matrixSingleOptionStableId2, newTemplate(), matrixSingleGroup))
+                .addGroups(List.of(
+                        new MatrixGroupDef(matrixDefaultGroup, null),
+                        new MatrixGroupDef(matrixSingleGroup, newTemplate())))
+                .build();
+
+        MatrixQuestionDef mqf2 = MatrixQuestionDef.builder(MatrixSelectMode.MULTIPLE, matrixMultiSelectSid, newTemplate())
+                .addRow(new MatrixRowDef(matrixMultiRowStableId1, newTemplate()))
+                .addRow(new MatrixRowDef(matrixMultiRowStableId2, newTemplate()))
+                .addOption(new MatrixOptionDef(matrixMultiOptionStableId1, newTemplate(), matrixDefaultGroup))
+                .addOption(new MatrixOptionDef(matrixMultiOptionStableId2, newTemplate(), matrixMultiGroup))
+                .addOption(new MatrixOptionDef(matrixMultiOptionStableId3, newTemplate(), matrixMultiGroup))
+                .addOption(MatrixOptionDef.buildExclusive(matrixMultiOptionStableId4, newTemplate(), matrixMultiGroup))
+                .addGroups(List.of(
+                        new MatrixGroupDef(matrixDefaultGroup, null),
+                        new MatrixGroupDef(matrixMultiGroup, newTemplate())))
+                .addValidation(new RequiredRuleDef(newTemplate()))
+                .build();
+
+        FormSectionDef matrixSection = new FormSectionDef(null, TestUtil.wrapQuestions(mqf1, mqf2));
+
         TextQuestionDef childTextDef = buildTextQuestionDef(childTextStableId);
 
-        childDateStableId = "PATCH__DATE_CHILD" + timestamp;
         DateQuestionDef childDateDef = buildDateQuestionDef(childDateStableId);
 
-        compStabledId = "ANS_COMPOSITE_" + timestamp;
         CompositeQuestionDef compQ = CompositeQuestionDef.builder()
                 .setStableId(compStabledId)
                 .setPrompt(new Template(TemplateType.TEXT, null, "Comp1"))
@@ -296,12 +368,10 @@ public class PatchFormAnswersRouteStandaloneTest {
 
         FormSectionDef compositeSection = new FormSectionDef(null, TestUtil.wrapQuestions(compQ));
 
-        essayTextStableId = "PATCH_ESSAY_TEXT_Q_" + timestamp;
         TextQuestionDef e2 = TextQuestionDef.builder(TextInputType.ESSAY, essayTextStableId, newTemplate())
                 .build();
         FormSectionDef essayTextSection = new FormSectionDef(null, TestUtil.wrapQuestions(e2));
 
-        agreementSid = "AGREEMENT_Q" + timestamp;
         AgreementQuestionDef a1 = new AgreementQuestionDef(agreementSid,
                 false,
                 newTemplate(),
@@ -313,17 +383,14 @@ public class PatchFormAnswersRouteStandaloneTest {
                 false);
         FormSectionDef agreementSection = new FormSectionDef(null, TestUtil.wrapQuestions(a1));
 
-        numericIntegerSid = "PATCH_NUMERIC_INTEGER_Q" + timestamp;
         numericQuestionDef = NumericQuestionDef
                 .builder(NumericType.INTEGER, numericIntegerSid, newTemplate())
                 .addValidation(new IntRangeRuleDef(null, 5L, 100L))
                 .build();
-        numericIntegerReqSid = "PATCH_NUMERIC_INTEGER_REQ" + timestamp;
         NumericQuestionDef n2 = NumericQuestionDef
                 .builder(NumericType.INTEGER, numericIntegerReqSid, newTemplate())
                 .addValidation(new RequiredRuleDef(null))
                 .build();
-        numericIntegerWithMultipleRulesSid = "PATCH_NUM_INT_W_MULT_RULES" + timestamp;
         NumericQuestionDef n3 = NumericQuestionDef
                 .builder(NumericType.INTEGER, numericIntegerWithMultipleRulesSid, newTemplate())
                 .addValidation(new IntRangeRuleDef(null, 5L, 100L))
@@ -349,7 +416,7 @@ public class PatchFormAnswersRouteStandaloneTest {
                         Arrays.asList(
                                 boolSection, textSection, textSection2, textSection3, plistSection,
                                 dateSection, compositeSection, essayTextSection, agreementSection,
-                                numericSection, fileSection
+                                numericSection, fileSection, matrixSection
                         )
                 )
                 .build();
@@ -1268,6 +1335,193 @@ public class PatchFormAnswersRouteStandaloneTest {
     }
 
     private Response givenPicklistRequest(String instanceGuid, PatchAnswerPayload data) {
+        return given().auth().oauth2(token)
+                .pathParam("instanceGuid", instanceGuid)
+                .body(data, ObjectMapperType.GSON)
+                .when().patch(urlTemplate);
+    }
+
+    @Test
+    public void testPatch_matrixAnswer_missingOptionList() {
+        PatchAnswerPayload payload = new PatchAnswerPayload();
+        payload.addSubmission(new AnswerSubmission(matrixSingleSelectSid, null, JsonNull.INSTANCE));
+
+        givenMatrixRequest(instanceGuid, payload)
+                .then().assertThat()
+                .statusCode(400).contentType(ContentType.JSON)
+                .body("code", equalTo(ErrorCodes.BAD_PAYLOAD));
+    }
+
+    @Test
+    public void testPatch_matrixAnswer_newAnswer() {
+        PatchAnswerPayload payload = createMatrixPayload(matrixSingleSelectSid, null,
+                new SelectedMatrixCell(matrixSingleRowStableId1, matrixSingleOptionStableId1, matrixDefaultGroup),
+                new SelectedMatrixCell(matrixSingleRowStableId2, matrixSingleOptionStableId2, matrixSingleGroup));
+
+        String guid = givenMatrixRequest(instanceGuid, payload)
+                .then().assertThat()
+                .statusCode(200).contentType(ContentType.JSON)
+                .body("answers.size()", equalTo(1))
+                .body("answers[0].stableId", equalTo(matrixSingleSelectSid))
+                .body("answers[0].answerGuid", not(isEmptyOrNullString()))
+                .and().extract().path("answers[0].answerGuid");
+
+        answerGuidsToDelete.get(QuestionType.MATRIX).add(guid);
+        MatrixAnswer answer = (MatrixAnswer) TransactionWrapper.withTxn(handle ->
+                new AnswerCachedDao(handle).findAnswerByGuid(guid).get());
+
+        assertNotNull(answer);
+        assertEquals(guid, answer.getAnswerGuid());
+        assertEquals(matrixSingleSelectSid, answer.getQuestionStableId());
+        assertEquals(2, answer.getValue().size());
+
+        assertEquals(matrixSingleOptionStableId1, answer.getValue().get(0).getOptionStableId());
+        assertEquals(matrixSingleRowStableId1, answer.getValue().get(0).getRowStableId());
+        assertEquals(matrixDefaultGroup, answer.getValue().get(0).getGroupStableId());
+
+        assertEquals(matrixSingleOptionStableId2, answer.getValue().get(1).getOptionStableId());
+        assertEquals(matrixSingleRowStableId2, answer.getValue().get(1).getRowStableId());
+        assertEquals(matrixSingleGroup, answer.getValue().get(1).getGroupStableId());
+    }
+
+    @Test
+    public void testPatch_matrixAnswer_updateAnswer() {
+        String answerGuid = TransactionWrapper.withTxn(handle ->
+                createAnswerAndDeferCleanup(handle, new MatrixAnswer(null, matrixSingleSelectSid, null, List.of(
+                        new SelectedMatrixCell(matrixSingleRowStableId1, matrixSingleOptionStableId1, matrixDefaultGroup)
+                ))));
+
+        PatchAnswerPayload payload = createMatrixPayload(matrixSingleSelectSid, answerGuid,
+                new SelectedMatrixCell(matrixSingleRowStableId2, matrixSingleOptionStableId2, matrixSingleGroup));
+        givenMatrixRequest(instanceGuid, payload)
+                .then().assertThat()
+                .statusCode(200).contentType(ContentType.JSON)
+                .body("answers.size()", equalTo(1))
+                .body("answers[0].stableId", equalTo(matrixSingleSelectSid))
+                .body("answers[0].answerGuid", equalTo(answerGuid));
+
+        MatrixAnswer answer = (MatrixAnswer) TransactionWrapper.withTxn(handle ->
+                new AnswerCachedDao(handle).findAnswerByGuid(answerGuid).get());
+
+        assertNotNull(answer);
+        assertEquals(answerGuid, answer.getAnswerGuid());
+        assertEquals(matrixSingleSelectSid, answer.getQuestionStableId());
+        assertEquals(1, answer.getValue().size());
+
+        assertEquals(matrixSingleOptionStableId2, answer.getValue().get(0).getOptionStableId());
+        assertEquals(matrixSingleRowStableId2, answer.getValue().get(0).getRowStableId());
+        assertEquals(matrixSingleGroup, answer.getValue().get(0).getGroupStableId());
+    }
+
+    @Test
+    public void testPatch_matrixAnswer_singleSelect_onlyAllowOne() {
+        PatchAnswerPayload payload = createMatrixPayload(matrixSingleSelectSid, null,
+                new SelectedMatrixCell(matrixSingleRowStableId1, matrixSingleOptionStableId1, matrixDefaultGroup),
+                new SelectedMatrixCell(matrixSingleRowStableId1, matrixSingleOptionStableId2, matrixSingleGroup));
+
+        givenMatrixRequest(instanceGuid, payload)
+                .then().assertThat()
+                .statusCode(422).contentType(ContentType.JSON)
+                .body("code", equalTo(ErrorCodes.OPERATION_NOT_ALLOWED))
+                .body("message", containsString("does not allow more than one"));
+    }
+
+    @Test
+    public void testPatch_matrixAnswer_multiSelect_andExclusive_allowMultiple() {
+        PatchAnswerPayload payload = createMatrixPayload(matrixMultiSelectSid, null,
+                new SelectedMatrixCell(matrixMultiRowStableId1, matrixMultiOptionStableId1, matrixDefaultGroup),
+                new SelectedMatrixCell(matrixMultiRowStableId2, matrixMultiOptionStableId1, matrixDefaultGroup),
+                new SelectedMatrixCell(matrixMultiRowStableId1, matrixMultiOptionStableId2, matrixMultiGroup),
+                new SelectedMatrixCell(matrixMultiRowStableId2, matrixMultiOptionStableId2, matrixMultiGroup));
+
+        String guid = givenMatrixRequest(instanceGuid, payload)
+                .then().assertThat()
+                .statusCode(200).contentType(ContentType.JSON)
+                .body("answers.size()", equalTo(1))
+                .body("answers[0].stableId", equalTo(matrixMultiSelectSid))
+                .body("answers[0].answerGuid", not(isEmptyOrNullString()))
+                .and().extract().path("answers[0].answerGuid");
+
+        answerGuidsToDelete.get(QuestionType.MATRIX).add(guid);
+        MatrixAnswer answer = (MatrixAnswer) TransactionWrapper.withTxn(handle ->
+                new AnswerCachedDao(handle).findAnswerByGuid(guid).get());
+
+        assertNotNull(answer);
+        assertEquals(guid, answer.getAnswerGuid());
+        assertEquals(matrixMultiSelectSid, answer.getQuestionStableId());
+        assertEquals(4, answer.getValue().size());
+
+        assertEquals(matrixMultiOptionStableId1, answer.getValue().get(0).getOptionStableId());
+        assertEquals(matrixMultiRowStableId1, answer.getValue().get(0).getRowStableId());
+        assertEquals(matrixDefaultGroup, answer.getValue().get(0).getGroupStableId());
+    }
+
+    @Test
+    public void testPatch_matrixAnswer_emptyListAllowed_whenNotRequired() {
+        PatchAnswerPayload payload = createMatrixPayload(matrixSingleSelectSid, null);
+
+        String guid = givenMatrixRequest(instanceGuid, payload)
+                .then().assertThat()
+                .statusCode(200).contentType(ContentType.JSON)
+                .body("answers.size()", equalTo(1))
+                .body("answers[0].stableId", equalTo(matrixSingleSelectSid))
+                .body("answers[0].answerGuid", not(isEmptyOrNullString()))
+                .and().extract().path("answers[0].answerGuid");
+
+        answerGuidsToDelete.get(QuestionType.MATRIX).add(guid);
+        MatrixAnswer answer = (MatrixAnswer) TransactionWrapper.withTxn(handle ->
+                new AnswerCachedDao(handle).findAnswerByGuid(guid).get());
+
+        assertNotNull(answer);
+        assertEquals(0, answer.getValue().size());
+    }
+
+    @Test
+    public void testPatch_matrixAnswer_needOne_whenRequired() {
+        PatchAnswerPayload payload = createMatrixPayload(matrixMultiSelectSid, null);
+
+        givenMatrixRequest(instanceGuid, payload)
+                .then().assertThat()
+                .statusCode(422).contentType(ContentType.JSON)
+                .body("code", equalTo(ErrorCodes.ANSWER_VALIDATION))
+                .body("violations[0].stableId", equalTo(matrixMultiSelectSid))
+                .body("violations[0].rules[0]", equalTo(RuleType.REQUIRED.name()));
+    }
+
+    @Test
+    public void testPatch_matrixAnswer_exclusive_rejectedWhenMultipleSelected() {
+        PatchAnswerPayload payload = createMatrixPayload(matrixMultiSelectSid, null,
+                new SelectedMatrixCell(matrixMultiRowStableId1, matrixMultiOptionStableId1, matrixDefaultGroup),
+                new SelectedMatrixCell(matrixMultiRowStableId1, matrixMultiOptionStableId3, matrixMultiGroup),
+                new SelectedMatrixCell(matrixMultiRowStableId2, matrixMultiOptionStableId1, matrixDefaultGroup),
+                new SelectedMatrixCell(matrixMultiRowStableId2, matrixMultiOptionStableId3, matrixMultiGroup),
+                new SelectedMatrixCell(matrixMultiRowStableId2, matrixMultiOptionStableId4, matrixMultiGroup));
+
+        givenMatrixRequest(instanceGuid, payload)
+                .then().assertThat()
+                .statusCode(422).contentType(ContentType.JSON)
+                .body("code", equalTo(ErrorCodes.OPERATION_NOT_ALLOWED))
+                .body("message", containsString("contains an exclusive option"));
+    }
+
+    @Test
+    public void testPatch_matrixAnswer_unknownOption() {
+        PatchAnswerPayload payload = createMatrixPayload(matrixSingleSelectSid, null,
+                new SelectedMatrixCell("UNKNOWN", "UNKNOWN", "UNKNOWN"));
+
+        givenMatrixRequest(instanceGuid, payload)
+                .then().assertThat()
+                .statusCode(400).contentType(ContentType.JSON)
+                .body("code", equalTo(ErrorCodes.NO_SUCH_ELEMENT));
+    }
+
+    private PatchAnswerPayload createMatrixPayload(String questionStableId, String answerGuid, SelectedMatrixCell... selected) {
+        PatchAnswerPayload payload = new PatchAnswerPayload();
+        payload.addSubmission(new AnswerSubmission(questionStableId, answerGuid, gson.toJsonTree(selected)));
+        return payload;
+    }
+
+    private Response givenMatrixRequest(String instanceGuid, PatchAnswerPayload data) {
         return given().auth().oauth2(token)
                 .pathParam("instanceGuid", instanceGuid)
                 .body(data, ObjectMapperType.GSON)

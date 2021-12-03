@@ -90,6 +90,22 @@ public interface AnswerSql extends SqlObject {
             @Bind("optionId") List<Long> picklistOptionIds,
             @Bind("detailText") List<String> detailTexts);
 
+    @GetGeneratedKeys
+    @SqlUpdate("insert into matrix_answer (answer_id, matrix_option_id, matrix_row_id)"
+            + " values (:answerId, :optionId, :rowId)")
+    long insertMatrixSelected(
+            @Bind("answerId") long answerId,
+            @Bind("optionId") long matrixOptionId,
+            @Bind("rowId") long matrixRowId);
+
+    @GetGeneratedKeys
+    @SqlBatch("insert into matrix_answer (answer_id, matrix_option_id, matrix_row_id)"
+            + "values (:answerId, :optionId, :rowId)")
+    long[] bulkInsertMatrixSelected(
+            @Bind("answerId") long answerId,
+            @Bind("optionId") List<Long> matrixOptionIds,
+            @Bind("rowId") List<Long> matrixRowIds);
+
     @SqlUpdate("insert into text_answer (answer_id, answer) values (:answerId, :value)")
     int insertTextValue(@Bind("answerId") long answerId, @Bind("value") String value);
 
@@ -148,6 +164,9 @@ public interface AnswerSql extends SqlObject {
 
     @SqlUpdate("delete from picklist_option__answer where answer_id = :answerId")
     int deletePicklistSelectedByAnswerId(@Bind("answerId") long answerId);
+
+    @SqlUpdate("delete from matrix_answer where answer_id = :answerId")
+    int deleteMatrixSelectedByAnswerId(@Bind("answerId") long answerId);
 
     @SqlUpdate("delete from answer where operator_user_id = :operatorId")
     int deleteAnswerByOperatorId(@Bind("operatorId") long operatorId);

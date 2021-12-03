@@ -44,6 +44,10 @@ import org.broadinstitute.ddp.model.activity.definition.question.DateQuestionDef
 import org.broadinstitute.ddp.model.activity.definition.question.NumericQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistOptionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistQuestionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.MatrixQuestionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.MatrixGroupDef;
+import org.broadinstitute.ddp.model.activity.definition.question.MatrixRowDef;
+import org.broadinstitute.ddp.model.activity.definition.question.MatrixOptionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.TextQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.activity.instance.answer.BoolAnswer;
@@ -53,6 +57,8 @@ import org.broadinstitute.ddp.model.activity.instance.answer.DateValue;
 import org.broadinstitute.ddp.model.activity.instance.answer.NumericIntegerAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.PicklistAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.SelectedPicklistOption;
+import org.broadinstitute.ddp.model.activity.instance.answer.MatrixAnswer;
+import org.broadinstitute.ddp.model.activity.instance.answer.SelectedMatrixCell;
 import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
 import org.broadinstitute.ddp.model.activity.types.DateFieldType;
@@ -61,6 +67,7 @@ import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.broadinstitute.ddp.model.activity.types.NumericType;
 import org.broadinstitute.ddp.model.activity.types.PicklistRenderMode;
 import org.broadinstitute.ddp.model.activity.types.PicklistSelectMode;
+import org.broadinstitute.ddp.model.activity.types.MatrixSelectMode;
 import org.broadinstitute.ddp.model.activity.types.TemplateType;
 import org.broadinstitute.ddp.model.activity.types.TextInputType;
 import org.broadinstitute.ddp.model.dsm.DsmNotificationEventType;
@@ -99,6 +106,7 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
     private static String textStableId;
     private static String dateStableId;
     private static String picklistStableId;
+    private static String matrixStableId;
     private static String conditionalControlStableId;
     private static String conditionalNestedStableId;
     private static String numericStableId;
@@ -151,6 +159,20 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
                 .addOption(new PicklistOptionDef("OPTION_NA", new Template(TemplateType.TEXT, null, "n/a")))
                 .build();
 
+        matrixStableId = "PEX_MATRIX_" + timestamp;
+        MatrixQuestionDef matrixDef = MatrixQuestionDef.builder().setStableId(matrixStableId)
+                .setSelectMode(MatrixSelectMode.MULTIPLE)
+                .setPrompt(Template.text("matrix prompt"))
+                .addOption(new MatrixOptionDef("OPTION_ONCE", Template.text("once"), "DEFAULT"))
+                .addOption(new MatrixOptionDef("OPTION_TWICE", Template.text("twice"), "GROUP_MATRIX"))
+                .addOption(new MatrixOptionDef("OPTION_THRICE", Template.text("thrice"), "GROUP_MATRIX"))
+                .addRow(new MatrixRowDef("ROW_FIRST", Template.text("row1")))
+                .addRow(new MatrixRowDef("ROW_SECOND", Template.text("row2")))
+                .addGroups(List.of(
+                        new MatrixGroupDef("DEFAULT", null),
+                        new MatrixGroupDef("GROUP_MATRIX", Template.text("group"))))
+                .build();
+
         numericStableId = "PEX_NUMERIC_" + timestamp;
         NumericQuestionDef numericDef = NumericQuestionDef.builder().setStableId(numericStableId)
                 .setPrompt(Template.text("numeric prompt"))
@@ -182,7 +204,8 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
         activityCode = "PEX_ACT_" + timestamp;
         FormActivityDef form = FormActivityDef.generalFormBuilder(activityCode, "v1", studyGuid)
                 .addName(new Translation("en", "pex test activity"))
-                .addSection(new FormSectionDef(null, TestUtil.wrapQuestions(boolDef, textDef, picklistDef, dateDef, numericDef)))
+                .addSection(new FormSectionDef(null,
+                        TestUtil.wrapQuestions(boolDef, textDef, picklistDef, dateDef, numericDef, matrixDef)))
                 .addSection(new FormSectionDef(null, TestUtil.wrapQuestions(compositeDef)))
                 .addSection(new FormSectionDef(null, Collections.singletonList(condDef)))
                 .build();
@@ -347,6 +370,25 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
 
             // Should still satisfy expression
             assertTrue(run(handle, expr));
+
+            handle.rollback();
+        });
+    }
+
+    @Test
+    public void testEval_matrix_notExpr_withQuery() {
+        String expr = String.format(
+                "!user.studies[\"%s\"].forms[\"%s\"].questions[\"%s\"].children[\"ROW_FIRST\"].answers.hasOption(\"OPTION_ONCE\")",
+                studyGuid, activityCode, matrixStableId);
+        TransactionWrapper.useTxn(handle -> {
+            // No answers yet, so should satisfy expression
+            assertTrue(run(handle, expr));
+
+            SelectedMatrixCell cell = new SelectedMatrixCell("ROW_FIRST", "OPTION_ONCE", "DEFAULT");
+            MatrixAnswer answer = new MatrixAnswer(null, matrixStableId, null, Collections.singletonList(cell));
+            handle.attach(AnswerDao.class).createAnswer(testData.getUserId(), secondInstance.getId(), answer);
+
+            assertFalse(run(handle, expr));
 
             handle.rollback();
         });
@@ -583,6 +625,143 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
             SelectedPicklistOption option = new SelectedPicklistOption("OPTION_NA");
             PicklistAnswer answer = new PicklistAnswer(null, picklistStableId, null, Collections.singletonList(option));
             handle.attach(AnswerDao.class).createAnswer(testData.getUserId(), firstInstance.getId(), answer);
+
+            assertFalse(run(handle, expr));
+
+            handle.rollback();
+        });
+    }
+
+    @Test
+    public void testEval_matrixDefaultLatestAnswerQueryContextQuery_noAnswer() {
+        String expr = String.format(
+                "user.studies[\"%s\"].forms[\"%s\"].questions[\"%s\"].children[\"ROW_FIRST\"].answers.hasOption(\"OPTION_ONCE\")",
+                studyGuid, activityCode, matrixStableId);
+        assertFalse(run(expr));
+    }
+
+    @Test
+    public void testEval_matrixDefaultLatestAnswerQueryContextQuery_doesNotMatchAnswerWithSingleOption() {
+        String expr = String.format(
+                "user.studies[\"%s\"].forms[\"%s\"].questions[\"%s\"].children[\"ROW_FIRST\"].answers.hasOption(\"OPTION_ONCE\")",
+                studyGuid, activityCode, matrixStableId);
+        TransactionWrapper.useTxn(handle -> {
+            SelectedMatrixCell cell = new SelectedMatrixCell("ROW_FIRST", "OPTION_TWICE", "GROUP_MATRIX");
+            MatrixAnswer answer = new MatrixAnswer(null, matrixStableId, null, Collections.singletonList(cell));
+            handle.attach(AnswerDao.class).createAnswer(testData.getUserId(), secondInstance.getId(), answer);
+
+            assertFalse(run(handle, expr));
+
+            handle.rollback();
+        });
+    }
+
+    @Test
+    public void testEval_matrixDefaultLatestAnswerQueryContextQuery_doesNotMatchAnswerWithMultipleOptions() {
+        String expr = String.format(
+                "user.studies[\"%s\"].forms[\"%s\"].questions[\"%s\"].children[\"ROW_FIRST\"].answers.hasOption(\"OPTION_ONCE\")",
+                studyGuid, activityCode, matrixStableId);
+        TransactionWrapper.useTxn(handle -> {
+            List<SelectedMatrixCell> selected = new ArrayList<>();
+            selected.add(new SelectedMatrixCell("ROW_FIRST", "OPTION_TWICE", "GROUP_MATRIX"));
+            selected.add(new SelectedMatrixCell("ROW_FIRST", "OPTION_THRICE", "GROUP_MATRIX"));
+            MatrixAnswer answer = new MatrixAnswer(null, matrixStableId, null, selected);
+            handle.attach(AnswerDao.class).createAnswer(testData.getUserId(), secondInstance.getId(), answer);
+
+            assertFalse(run(handle, expr));
+
+            handle.rollback();
+        });
+    }
+
+    @Test
+    public void testEval_matrixDefaultLatestAnswerQueryContextQuery_matchesAnswer() {
+        String expr = String.format(
+                "user.studies[\"%s\"].forms[\"%s\"].questions[\"%s\"].children[\"ROW_FIRST\"].answers.hasOption(\"OPTION_ONCE\")",
+                studyGuid, activityCode, matrixStableId);
+        TransactionWrapper.useTxn(handle -> {
+            SelectedMatrixCell cell = new SelectedMatrixCell("ROW_FIRST", "OPTION_ONCE", "DEFAULT");
+            MatrixAnswer answer = new MatrixAnswer(null, matrixStableId, null, Collections.singletonList(cell));
+            handle.attach(AnswerDao.class).createAnswer(testData.getUserId(), secondInstance.getId(), answer);
+
+            assertTrue(run(handle, expr));
+
+            handle.rollback();
+        });
+    }
+
+    @Test
+    public void testEval_matrixDefaultLatestAnswerQueryContextQuery_anotherRow_doesNotMatchAnswer() {
+        String expr = String.format(
+                "user.studies[\"%s\"].forms[\"%s\"].questions[\"%s\"].children[\"ROW_FIRST\"].answers.hasOption(\"OPTION_ONCE\")",
+                studyGuid, activityCode, matrixStableId);
+        TransactionWrapper.useTxn(handle -> {
+            SelectedMatrixCell cell = new SelectedMatrixCell("ROW_SECOND", "OPTION_ONCE", "DEFAULT");
+            MatrixAnswer answer = new MatrixAnswer(null, matrixStableId, null, Collections.singletonList(cell));
+            handle.attach(AnswerDao.class).createAnswer(testData.getUserId(), secondInstance.getId(), answer);
+
+            assertFalse(run(handle, expr));
+
+            handle.rollback();
+        });
+    }
+
+    @Test
+    public void testEval_matrix_defaultLatestAnswer_hasAnyOption_whenNoOptions() {
+        String expr = String.format(
+                "user.studies[\"%s\"].forms[\"%s\"].questions[\"%s\"].children[\"ROW_FIRST\"]"
+                        + ".answers.hasAnyOption(\"OPTION_ONCE\", \"OPTION_TWICE\")",
+                studyGuid, activityCode, matrixStableId);
+        assertFalse(run(expr));
+    }
+
+    @Test
+    public void testEval_matrix_defaultLatestAnswer_hasAnyOption_whenChoiceMatch() {
+        String expr = String.format(
+                "user.studies[\"%s\"].forms[\"%s\"].questions[\"%s\"].children[\"ROW_FIRST\"]"
+                        + ".answers.hasAnyOption(\"OPTION_ONCE\", \"OPTION_TWICE\")",
+                studyGuid, activityCode, matrixStableId);
+        TransactionWrapper.useTxn(handle -> {
+            SelectedMatrixCell cell = new SelectedMatrixCell("ROW_FIRST", "OPTION_ONCE", "DEFAULT");
+            MatrixAnswer answer = new MatrixAnswer(null, matrixStableId, null, Collections.singletonList(cell));
+            handle.attach(AnswerDao.class).createAnswer(testData.getUserId(), secondInstance.getId(), answer);
+
+            assertTrue(run(handle, expr));
+
+            handle.rollback();
+        });
+    }
+
+    @Test
+    public void testEval_matrix_defaultLatestAnswer_hasAnyOption_anotherRow_whenChoiceDoesNotMatch() {
+        String expr = String.format(
+                "user.studies[\"%s\"].forms[\"%s\"].questions[\"%s\"].children[\"ROW_FIRST\"]"
+                        + ".answers.hasAnyOption(\"OPTION_ONCE\", \"OPTION_TWICE\")",
+                studyGuid, activityCode, matrixStableId);
+        TransactionWrapper.useTxn(handle -> {
+            List<SelectedMatrixCell> selected = new ArrayList<>();
+            selected.add(new SelectedMatrixCell("ROW_SECOND", "OPTION_ONCE", "DEFAULT"));
+            selected.add(new SelectedMatrixCell("ROW_SECOND", "OPTION_TWICE", "GROUP_MATRIX"));
+            MatrixAnswer answer = new MatrixAnswer(null, matrixStableId, null, selected);
+
+            handle.attach(AnswerDao.class).createAnswer(testData.getUserId(), secondInstance.getId(), answer);
+
+            assertFalse(run(handle, expr));
+
+            handle.rollback();
+        });
+    }
+
+    @Test
+    public void testEval_matrix_defaultLatestAnswer_hasAnyOption_whenChoiceDoesNotMatch() {
+        String expr = String.format(
+                "user.studies[\"%s\"].forms[\"%s\"].questions[\"%s\"].children[\"ROW_FIRST\"]"
+                        + ".answers.hasAnyOption(\"OPTION_ONCE\", \"OPTION_TWICE\")",
+                studyGuid, activityCode, matrixStableId);
+        TransactionWrapper.useTxn(handle -> {
+            SelectedMatrixCell cell = new SelectedMatrixCell("ROW_FIRST", "OPTION_THRICE", "GROUP_MATRIX");
+            MatrixAnswer answer = new MatrixAnswer(null, matrixStableId, null, Collections.singletonList(cell));
+            handle.attach(AnswerDao.class).createAnswer(testData.getUserId(), secondInstance.getId(), answer);
 
             assertFalse(run(handle, expr));
 
@@ -1044,6 +1223,75 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
     }
 
     @Test
+    public void testEval_questionQuery_isAnswered_matrixEmpty() {
+        String expr = String.format(
+                "user.studies[\"%s\"].forms[\"%s\"].questions[\"%s\"].isAnswered()",
+                studyGuid, activityCode, matrixStableId);
+        assertFalse("should be false because question is not answered yet", run(expr));
+
+        TransactionWrapper.useTxn(handle -> {
+            handle.attach(AnswerDao.class).createAnswer(testData.getUserId(), secondInstance.getId(),
+                    new MatrixAnswer(null, matrixStableId, null, List.of()));
+            assertFalse("should be false because matrix selection is empty", run(handle, expr));
+            handle.rollback();
+        });
+    }
+
+    @Test
+    public void testEval_questionQuery_isAnswered_matrixEmptyRow() {
+        String expr = String.format(
+                "user.studies[\"%s\"].forms[\"%s\"].questions[\"%s\"].isAnswered()",
+                studyGuid, activityCode, matrixStableId);
+        assertFalse("should be false because question is not answered yet", run(expr));
+
+        TransactionWrapper.useTxn(handle -> {
+            handle.attach(AnswerDao.class).createAnswer(testData.getUserId(), secondInstance.getId(),
+                    new MatrixAnswer(null, matrixStableId, null, List.of(
+                            new SelectedMatrixCell("ROW_FIRST", "OPTION_ONCE", "DEFAULT"),
+                            new SelectedMatrixCell("ROW_FIRST", "OPTION_TWICE", "GROUP_MATRIX"))));
+            assertFalse("should be false because of second row is empty", run(handle, expr));
+            handle.rollback();
+        });
+    }
+
+    @Test
+    public void testEval_questionQuery_isAnswered_matrixEmptyGroup() {
+        String expr = String.format(
+                "user.studies[\"%s\"].forms[\"%s\"].questions[\"%s\"].isAnswered()",
+                studyGuid, activityCode, matrixStableId);
+        assertFalse("should be false because question is not answered yet", run(expr));
+
+        TransactionWrapper.useTxn(handle -> {
+            handle.attach(AnswerDao.class).createAnswer(testData.getUserId(), secondInstance.getId(),
+                    new MatrixAnswer(null, matrixStableId, null, List.of(
+                            new SelectedMatrixCell("ROW_FIRST", "OPTION_ONCE", "DEFAULT"),
+                            new SelectedMatrixCell("ROW_FIRST", "OPTION_TWICE", "GROUP_MATRIX"),
+                            new SelectedMatrixCell("ROW_SECOND", "OPTION_ONCE", "DEFAULT"))));
+            assertFalse("should be false because of group is empty (second row)", run(handle, expr));
+            handle.rollback();
+        });
+    }
+
+    @Test
+    public void testEval_questionQuery_isAnswered_matrixNonEmpty() {
+        String expr = String.format(
+                "user.studies[\"%s\"].forms[\"%s\"].questions[\"%s\"].isAnswered()",
+                studyGuid, activityCode, matrixStableId);
+        assertFalse("should be false because question is not answered yet", run(expr));
+
+        TransactionWrapper.useTxn(handle -> {
+            handle.attach(AnswerDao.class).createAnswer(testData.getUserId(), secondInstance.getId(),
+                    new MatrixAnswer(null, matrixStableId, null, List.of(
+                            new SelectedMatrixCell("ROW_FIRST", "OPTION_ONCE", "DEFAULT"),
+                            new SelectedMatrixCell("ROW_FIRST", "OPTION_TWICE", "GROUP_MATRIX"),
+                            new SelectedMatrixCell("ROW_SECOND", "OPTION_ONCE", "DEFAULT"),
+                            new SelectedMatrixCell("ROW_SECOND", "OPTION_THRICE", "GROUP_MATRIX"))));
+            assertTrue("should be true because matrix selection (all rows, all groups) is non-empty", run(handle, expr));
+            handle.rollback();
+        });
+    }
+
+    @Test
     public void testEval_questionQuery_isAnswered_textNonEmpty() {
         String expr = String.format(
                 "user.studies[\"%s\"].forms[\"%s\"].questions[\"%s\"].isAnswered()",
@@ -1220,6 +1468,26 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
         String expr = String.format(
                 "18 != user.studies[\"%s\"].forms[\"%s\"].questions[\"%s\"].answers.value()",
                 studyGuid, activityCode, picklistStableId);
+        run(expr);
+    }
+
+    @Test
+    public void testEval_valueQuery_matrix_notSupported() {
+        thrown.expect(PexUnsupportedException.class);
+        thrown.expectMessage(containsString("matrix answer value"));
+        String expr = String.format(
+                "18 != user.studies[\"%s\"].forms[\"%s\"].questions[\"%s\"].answers.value()",
+                studyGuid, activityCode, matrixStableId);
+        run(expr);
+    }
+
+    @Test
+    public void testEval_valueQuery_matrix_children_notSupported() {
+        thrown.expect(PexUnsupportedException.class);
+        thrown.expectMessage(containsString("matrix answer value"));
+        String expr = String.format(
+                "18 != user.studies[\"%s\"].forms[\"%s\"].questions[\"%s\"].children[\"ROW_FIRST\"].answers.value()",
+                studyGuid, activityCode, matrixStableId);
         run(expr);
     }
 
@@ -1510,6 +1778,44 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
             handle.attach(AnswerDao.class).createAnswer(testData.getUserId(), firstInstance.getId(), answer);
 
             assertTrue(run(handle, expr));
+
+            handle.rollback();
+        });
+    }
+
+    @Test
+    public void testEval_matrix_defaultLatestAnswer_hasOptionStartsWith() {
+        String expr = String.format(
+                "user.studies[\"%s\"].forms[\"%s\"].questions[\"%s\"].children[\"ROW_FIRST\"].answers.hasOptionStartsWith(\"OPTION_T\")",
+                studyGuid, activityCode, matrixStableId);
+
+        TransactionWrapper.useTxn(handle -> {
+            List<SelectedMatrixCell> selected = new ArrayList<>();
+            selected.add(new SelectedMatrixCell("ROW_FIRST", "OPTION_TWICE", "GROUP_MATRIX"));
+            selected.add(new SelectedMatrixCell("ROW_FIRST", "OPTION_THRICE", "GROUP_MATRIX"));
+            MatrixAnswer answer = new MatrixAnswer(null, matrixStableId, null, selected);
+            handle.attach(AnswerDao.class).createAnswer(testData.getUserId(), secondInstance.getId(), answer);
+
+            assertTrue(run(handle, expr));
+
+            handle.rollback();
+        });
+    }
+
+    @Test
+    public void testEval_matrix_defaultLatestAnswer_anotherRow_hasOptionStartsWith() {
+        String expr = String.format(
+                "user.studies[\"%s\"].forms[\"%s\"].questions[\"%s\"].children[\"ROW_FIRST\"].answers.hasOptionStartsWith(\"OPTION_T\")",
+                studyGuid, activityCode, matrixStableId);
+
+        TransactionWrapper.useTxn(handle -> {
+            List<SelectedMatrixCell> selected = new ArrayList<>();
+            selected.add(new SelectedMatrixCell("ROW_SECOND", "OPTION_TWICE", "GROUP_MATRIX"));
+            selected.add(new SelectedMatrixCell("ROW_SECOND", "OPTION_THRICE", "GROUP_MATRIX"));
+            MatrixAnswer answer = new MatrixAnswer(null, matrixStableId, null, selected);
+            handle.attach(AnswerDao.class).createAnswer(testData.getUserId(), secondInstance.getId(), answer);
+
+            assertFalse(run(handle, expr));
 
             handle.rollback();
         });

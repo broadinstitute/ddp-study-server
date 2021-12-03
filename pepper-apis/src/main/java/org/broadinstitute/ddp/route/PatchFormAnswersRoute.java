@@ -35,6 +35,8 @@ import org.broadinstitute.ddp.db.dao.ActivityInstanceStatusDao;
 import org.broadinstitute.ddp.db.dao.AnswerCachedDao;
 import org.broadinstitute.ddp.db.dao.DataExportDao;
 import org.broadinstitute.ddp.db.dao.FileUploadDao;
+import org.broadinstitute.ddp.db.dao.JdbiMatrixGroup;
+import org.broadinstitute.ddp.db.dao.JdbiMatrixOption;
 import org.broadinstitute.ddp.db.dao.JdbiQuestionCached;
 import org.broadinstitute.ddp.db.dao.QuestionCachedDao;
 import org.broadinstitute.ddp.db.dao.UserDao;
@@ -42,6 +44,7 @@ import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.db.dto.AnswerDto;
 import org.broadinstitute.ddp.db.dto.CompositeQuestionDto;
 import org.broadinstitute.ddp.db.dto.LanguageDto;
+import org.broadinstitute.ddp.db.dto.MatrixGroupDto;
 import org.broadinstitute.ddp.db.dto.NumericQuestionDto;
 import org.broadinstitute.ddp.db.dto.QuestionDto;
 import org.broadinstitute.ddp.db.dto.UserActivityInstanceSummary;
@@ -70,6 +73,8 @@ import org.broadinstitute.ddp.model.activity.instance.answer.NumericAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.NumericIntegerAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.PicklistAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.SelectedPicklistOption;
+import org.broadinstitute.ddp.model.activity.instance.answer.MatrixAnswer;
+import org.broadinstitute.ddp.model.activity.instance.answer.SelectedMatrixCell;
 import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
 import org.broadinstitute.ddp.model.activity.instance.question.CompositeQuestion;
 import org.broadinstitute.ddp.model.activity.instance.question.Question;
@@ -421,6 +426,8 @@ public class PatchFormAnswersRoute implements Route {
                 return convertBoolAnswer(stableId, guid, instanceGuid, value);
             case PICKLIST:
                 return convertPicklistAnswer(stableId, guid, instanceGuid, value);
+            case MATRIX:
+                return convertMatrixAnswer(handle, stableId, guid, instanceGuid, value);
             case TEXT:
                 return convertTextAnswer(stableId, guid, instanceGuid, value);
             case ACTIVITY_INSTANCE_SELECT:
@@ -477,6 +484,49 @@ public class PatchFormAnswersRoute implements Route {
             return new PicklistAnswer(null, stableId, guid, selected, actInstanceGuid);
         } catch (JsonSyntaxException e) {
             LOG.warn("Failed to convert submitted answer to a picklist answer", e);
+            return null;
+        }
+    }
+
+    /**
+     * Convert given data to matrix answer.
+     *
+     *
+     * @param handle    the database handle
+     * @param stableId the question stable id
+     * @param guid     the answer guid, or null
+     * @param value    the answer value
+     * @return matrix answer object, or null if value is not a list of options
+     */
+    private MatrixAnswer convertMatrixAnswer(Handle handle, String stableId, String guid, String actInstanceGuid,
+                                             JsonElement value) {
+        if (value == null || !value.isJsonArray()) {
+            return null;
+        }
+        try {
+            Type selectedOptionListType = new TypeToken<ArrayList<SelectedMatrixCell>>() {
+            }.getType();
+            List<SelectedMatrixCell> selected = gson.fromJson(value, selectedOptionListType);
+            List<String> optionStableIds = selected.stream().map(SelectedMatrixCell::getOptionStableId).collect(Collectors.toList());
+            var jdbiQuestion = new JdbiQuestionCached(handle);
+            var questionId = jdbiQuestion.findIdByStableIdAndInstanceGuid(stableId, actInstanceGuid).orElseThrow();
+            Map<String, Long> optionStableIdToGroupId = new HashMap<>();
+            Map<Long, MatrixGroupDto> selectedGroupMap = new HashMap<>();
+            handle.attach(JdbiMatrixOption.class)
+                    .findOptions(questionId, optionStableIds, actInstanceGuid)
+                    .forEach(dto -> optionStableIdToGroupId.put(dto.getStableId(), dto.getGroupId()));
+            List<Long> groupIds = new ArrayList<>(optionStableIdToGroupId.values());
+            handle.attach(JdbiMatrixGroup.class).findGroupsByIds(questionId, groupIds, actInstanceGuid).forEach(g ->
+                    selectedGroupMap.put(g.getId(), g));
+            selected.forEach(s -> {
+                Long groupId = optionStableIdToGroupId.get(s.getOptionStableId());
+                if (groupId != null) {
+                    s.setGroupStableId(selectedGroupMap.get(groupId).getStableId());
+                }
+            });
+            return new MatrixAnswer(null, stableId, guid, selected, actInstanceGuid);
+        } catch (JsonSyntaxException e) {
+            LOG.warn("Failed to convert submitted answer to a matrix answer", e);
             return null;
         }
     }

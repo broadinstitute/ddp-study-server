@@ -24,6 +24,8 @@ import org.broadinstitute.ddp.model.activity.instance.answer.DateValue;
 import org.broadinstitute.ddp.model.activity.instance.answer.NumericIntegerAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.PicklistAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.SelectedPicklistOption;
+import org.broadinstitute.ddp.model.activity.instance.answer.MatrixAnswer;
+import org.broadinstitute.ddp.model.activity.instance.answer.SelectedMatrixCell;
 import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
 import org.jdbi.v3.core.Handle;
@@ -162,6 +164,9 @@ public class AnswerToAnswerCopier {
         } else if (type == QuestionType.PICKLIST) {
             List<SelectedPicklistOption> value = ((PicklistAnswer) sourceAnswer).getValue();
             targetAnswer = new PicklistAnswer(null, targetQuestion.getStableId(), null, value);
+        } else if (type == QuestionType.MATRIX) {
+            List<SelectedMatrixCell> value = ((MatrixAnswer) sourceAnswer).getValue();
+            targetAnswer = new MatrixAnswer(null, targetQuestion.getStableId(), null, value);
         } else if (type == QuestionType.TEXT) {
             String value = ((TextAnswer) sourceAnswer).getValue();
             targetAnswer = new TextAnswer(null, targetQuestion.getStableId(), null, value);
