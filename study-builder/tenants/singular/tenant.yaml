@@ -7,6 +7,10 @@ rules:
     stage: login_success
     enabled: true
     order: 1
+rulesConfigs:
+  # Key/Value pairs for Rule configuration settings
+  - key: "pepperBaseUrl"
+    value: ##SERVER_BASE_URL##
 
 pages:
   - name: login
@@ -37,7 +41,7 @@ emailTemplates:
     enabled: true
 
 clients:
-  - name: Dev
+  - name: singular-angular-client
     app_type: spa
     callbacks: [
         '##BASE_URL##/auth',
