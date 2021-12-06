@@ -220,22 +220,17 @@ public class RenderValueProvider {
      */
     public String checkAnswer(String questionStableId, String optionStableId,
                               String stringIfMatches, String stringOtherwise) {
-        Answer answer = formResponse.getAnswer(questionStableId);
-
-        if (answer == null) {
-            throw new DDPException(String.format("Activity code:%s. Rendering answer questionStableId: %s is not exists.",
-                    formResponse.getActivityCode(), questionStableId));
+        Answer answer = null;
+        if (formResponse != null) {
+            answer = formResponse.getAnswer(questionStableId);
+            if (answer.getQuestionType() != QuestionType.PICKLIST) {
+                throw new DDPException(String.format("Activity code: %s. Rendering questionStableId: %s must be PICKLIST type.",
+                        formResponse.getActivityCode(), questionStableId));
+            }
         }
-
-        if (answer.getQuestionType() != QuestionType.PICKLIST) {
-            throw new DDPException(String.format("Activity code: %s. Rendering questionStableId: %s must be PICKLIST type.",
-                    formResponse.getActivityCode(), questionStableId));
-        }
-
-        return ((PicklistAnswer) answer).getValue().stream()
+        return answer == null || ((PicklistAnswer) answer).getValue().stream()
                 .anyMatch(selected -> selected.getStableId().equals(optionStableId))
                 ? stringIfMatches : stringOtherwise;
-
     }
 
     /**
