@@ -5,7 +5,6 @@ import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskLogUtil.erro
 import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskLogUtil.infoMsg;
 import static org.slf4j.LoggerFactory.getLogger;
 
-
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutureCallback;
 import com.google.api.core.ApiFutures;
@@ -71,8 +70,8 @@ public class PubSubTaskResultSender implements ResultSender {
 
     public static PubsubMessage createPubSubMessage(PubSubTaskResult pubSubTaskResult) {
         var messageBuilder = PubsubMessage.newBuilder();
-        if (pubSubTaskResult.getJsonPayload() != null) {
-            messageBuilder.setData(ByteString.copyFromUtf8(pubSubTaskResult.getJsonPayload()));
+        if (pubSubTaskResult.getPayloadJson() != null) {
+            messageBuilder.setData(ByteString.copyFromUtf8(pubSubTaskResult.getPayloadJson()));
         }
         messageBuilder.putAllAttributes(pubSubTaskResult.getAttributes());
         return messageBuilder.build();

@@ -17,7 +17,9 @@ import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
 import org.broadinstitute.ddp.model.activity.instance.FormInstance;
 import org.broadinstitute.ddp.model.activity.instance.FormResponse;
 import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
+import org.broadinstitute.ddp.model.activity.instance.answer.PicklistAnswer;
 import org.broadinstitute.ddp.model.activity.instance.question.Question;
+import org.broadinstitute.ddp.model.activity.types.QuestionType;
 import org.broadinstitute.ddp.model.dsm.KitReasonType;
 import org.broadinstitute.ddp.model.dsm.TestResult;
 import org.slf4j.Logger;
@@ -208,6 +210,35 @@ public class RenderValueProvider {
     }
 
     /**
+     * checkAnswer
+     *
+     * @param questionStableId the question stable id
+     * @param optionStableId    the option stable Id
+     * @param stringIfMatches    string if question is answered with option stable Id
+     * @param stringOtherwise    string if question is not answered with option stable Id
+     * @return string stringIfMatches or stringOtherwise
+     */
+    public String checkAnswer(String questionStableId, String optionStableId,
+                              String stringIfMatches, String stringOtherwise) {
+        Answer answer = formResponse.getAnswer(questionStableId);
+
+        if (answer == null) {
+            throw new DDPException(String.format("Activity code:%s. Rendering answer questionStableId: %s is not exists.",
+                    formResponse.getActivityCode(), questionStableId));
+        }
+
+        if (answer.getQuestionType() != QuestionType.PICKLIST) {
+            throw new DDPException(String.format("Activity code: %s. Rendering questionStableId: %s must be PICKLIST type.",
+                    formResponse.getActivityCode(), questionStableId));
+        }
+
+        return ((PicklistAnswer) answer).getValue().stream()
+                .anyMatch(selected -> selected.getStableId().equals(optionStableId))
+                ? stringIfMatches : stringOtherwise;
+
+    }
+
+    /**
      * Returns the answer for the question, or the fallback value if no answer. Need to assign the appropriate form
      * object(s) beforehand as sources for looking up answers, otherwise no substitution will be performed.
      *
@@ -261,6 +292,7 @@ public class RenderValueProvider {
         switch (answer.getQuestionType()) {
             case PICKLIST:
                 return selectedOptionsRender(questionDef, answer, isoLangCode, useDetailTextForPickList);
+            case MATRIX: // Fall-through
             case COMPOSITE: // Fall-through
             case FILE:
                 // Have not decided what composite or file answers will look like yet.
@@ -289,6 +321,7 @@ public class RenderValueProvider {
         switch (answer.getQuestionType()) {
             case PICKLIST:
                 return selectedOptionsRender(question, answer, useDetailTextForPickList);
+            case MATRIX: // Fall-through
             case COMPOSITE: // Fall-through
             case FILE:
                 throw new DDPException("Rendering answer type " + answer.getQuestionType() + " is currently not supported");

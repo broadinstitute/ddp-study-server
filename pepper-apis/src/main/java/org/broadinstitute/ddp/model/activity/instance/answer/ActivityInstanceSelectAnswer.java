@@ -35,7 +35,8 @@ public class ActivityInstanceSelectAnswer extends Answer<String> {
 
     @Override
     public boolean isEmpty() {
-        return value == null || value.isEmpty();
+        // Can not be empty. If an object of this class exists, it should have a value.
+        return false;
     }
 }
 

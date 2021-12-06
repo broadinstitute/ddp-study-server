@@ -752,7 +752,9 @@ public class PdfGenerationService {
                             errors);
                 }
                 break;
-
+            case MATRIX:
+                errors.add("there is no logic of converting substitution to pdf for matrix question type");
+                break;
             case COMPOSITE:
                 substituteComposite((CompositeAnswerSubstitution) substitution, form, template, errors, answer);
                 break;
@@ -821,7 +823,9 @@ public class PdfGenerationService {
                             errors);
                 }
                 break;
-
+            case MATRIX:
+                errors.add("there is no logic of converting child substitution to pdf for matrix question type");
+                break;
             default:
                 errors.add("tried to use an unsupported answer type " + substitution.getQuestionType());
                 return;

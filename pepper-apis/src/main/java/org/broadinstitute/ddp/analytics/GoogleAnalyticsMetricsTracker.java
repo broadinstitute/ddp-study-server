@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory;
 public class GoogleAnalyticsMetricsTracker {
     private static final Logger LOG = LoggerFactory.getLogger(GoogleAnalyticsMetricsTracker.class);
     private static final Integer DEFAULT_BATCH_SIZE = 10;
+    private static final String CUSTOM_USER_AGENT = "Custom User Agent";
     private static Map<String, GoogleAnalytics> studyAnalyticsTrackers = new HashMap<>();
     private static Set<String> noAnalyticsTokenStudies = new HashSet<>(); //studyGuid with NO analytics token
     private static volatile GoogleAnalyticsMetricsTracker instance;
@@ -63,7 +64,8 @@ public class GoogleAnalyticsMetricsTracker {
             }
 
             GoogleAnalytics metricTracker = GoogleAnalytics.builder()
-                    .withConfig(new GoogleAnalyticsConfig().setBatchingEnabled(true).setBatchSize(DEFAULT_BATCH_SIZE))
+                    .withConfig(new GoogleAnalyticsConfig().setBatchingEnabled(true).setBatchSize(DEFAULT_BATCH_SIZE)
+                            .setUserAgent(CUSTOM_USER_AGENT))
                     .withTrackingId(studySettings.getAnalyticsToken())
                     .build();
             studyAnalyticsTrackers.put(studyGuid, metricTracker);

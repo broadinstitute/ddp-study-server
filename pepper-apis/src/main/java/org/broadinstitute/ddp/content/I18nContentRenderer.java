@@ -1,5 +1,8 @@
 package org.broadinstitute.ddp.content;
 
+import static org.apache.commons.lang3.StringUtils.contains;
+import static org.broadinstitute.ddp.content.VelocityUtil.VARIABLE_PREFIX;
+
 import java.io.StringWriter;
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -23,6 +26,7 @@ import org.broadinstitute.ddp.db.dao.TemplateDao;
 import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dao.UserGovernanceDao;
 import org.broadinstitute.ddp.db.dao.UserProfileDao;
+import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.model.user.UserProfile;
 import org.jdbi.v3.core.Handle;
@@ -38,7 +42,7 @@ public class I18nContentRenderer {
 
     private VelocityEngine engine;
 
-    private static Long getDefaultLanguageId(Handle handle) {
+    private static Long getDefaultLanguageId() {
         if (defaultLangId != null) {
             return defaultLangId;
         } else {
@@ -128,7 +132,7 @@ public class I18nContentRenderer {
      * @throws NoSuchElementException   Thrown when a db search returns no element
      */
     public String renderContent(Handle handle, Long contentTemplateId, Long languageCodeId, long timestamp) {
-        return renderContent(handle, contentTemplateId, languageCodeId, getDefaultLanguageId(handle), timestamp);
+        return renderContent(handle, contentTemplateId, languageCodeId, getDefaultLanguageId(), timestamp);
     }
 
     /**
@@ -150,7 +154,7 @@ public class I18nContentRenderer {
         for (Map.Entry<String, ?> entry : varNameToValueMap.entrySet()) {
             varNameToString.put(entry.getKey(), convertToString(entry.getValue()));
         }
-        return render(handle, templateId, languageCodeId, getDefaultLanguageId(handle), varNameToString, timestamp);
+        return render(handle, templateId, languageCodeId, getDefaultLanguageId(), varNameToString, timestamp);
     }
 
     /**
@@ -247,7 +251,7 @@ public class I18nContentRenderer {
         TemplateDao tmplDao = handle.attach(TemplateDao.class);
         Map<Long, TemplateDao.TextAndVarCount> templateData = tmplDao.findAllTextAndVarCountsByIds(templateIds);
         Map<Long, Map<String, String>> variables = tmplDao
-                .findAllTranslatedVariablesByIds(templateIds, langCodeId, getDefaultLanguageId(handle), timestamp);
+                .findAllTranslatedVariablesByIds(templateIds, langCodeId, getDefaultLanguageId(), timestamp);
         Map<Long, String> rendered = new HashMap<>(templateIds.size());
 
         for (long templateId : templateIds) {
@@ -302,12 +306,23 @@ public class I18nContentRenderer {
         }
     }
 
+    /**
+     * Render Velocity template (resolving Variables specified in parameter `context`).<br>
+     * NOTE: this version of the method supports a new feature `translations' references automatic generation`
+     * which means that Velocity variables can contain dots ('.') in it's names.
+     * Therefore right before loading to Velocity context the Variables' names are converted: '.' replaced to '-'
+     * (except $ddp.) - in both context map and template text. This is done with help of {@link VelocityUtil} methods.
+     *
+     * @param template  template text (stored in {@link Template#getTemplateText()}
+     * @param context   map with Velocity variables to be loaded to Velocity context
+     * @return a string with rendered template text
+     */
     public String renderToString(String template, Map<String, Object> context) {
         VelocityContext ctx = new VelocityContext(context);
         StringWriter writer = new StringWriter();
         engine.evaluate(ctx, writer, TEMPLATE_NAME, template);
         String result = writer.toString();
-        if (result.contains("$")) {
+        if (contains(result, VARIABLE_PREFIX)) {
             // Here we have a second pass in case of variables in the substitution values,
             // e.g. participantName() with locale-dependent position in the sentence.
             writer = new StringWriter();

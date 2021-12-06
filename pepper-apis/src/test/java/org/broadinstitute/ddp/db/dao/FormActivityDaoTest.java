@@ -46,6 +46,10 @@ import org.broadinstitute.ddp.model.activity.definition.question.DatePicklistDef
 import org.broadinstitute.ddp.model.activity.definition.question.DateQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistOptionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistQuestionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.MatrixQuestionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.MatrixGroupDef;
+import org.broadinstitute.ddp.model.activity.definition.question.MatrixRowDef;
+import org.broadinstitute.ddp.model.activity.definition.question.MatrixOptionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.TextQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.ActivityInstanceSelectQuestionDef;
@@ -64,6 +68,7 @@ import org.broadinstitute.ddp.model.activity.instance.QuestionBlock;
 import org.broadinstitute.ddp.model.activity.instance.answer.BoolAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.DateAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.PicklistAnswer;
+import org.broadinstitute.ddp.model.activity.instance.answer.MatrixAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.ActivityInstanceSelectAnswer;
 import org.broadinstitute.ddp.model.activity.instance.question.BoolQuestion;
@@ -71,6 +76,9 @@ import org.broadinstitute.ddp.model.activity.instance.question.DatePicklistQuest
 import org.broadinstitute.ddp.model.activity.instance.question.DateQuestion;
 import org.broadinstitute.ddp.model.activity.instance.question.PicklistOption;
 import org.broadinstitute.ddp.model.activity.instance.question.PicklistQuestion;
+import org.broadinstitute.ddp.model.activity.instance.question.MatrixRow;
+import org.broadinstitute.ddp.model.activity.instance.question.MatrixQuestion;
+import org.broadinstitute.ddp.model.activity.instance.question.MatrixOption;
 import org.broadinstitute.ddp.model.activity.instance.question.Question;
 import org.broadinstitute.ddp.model.activity.instance.question.TextQuestion;
 import org.broadinstitute.ddp.model.activity.instance.question.ActivityInstanceSelectQuestion;
@@ -89,6 +97,7 @@ import org.broadinstitute.ddp.model.activity.types.ListStyleHint;
 import org.broadinstitute.ddp.model.activity.types.NestedActivityRenderHint;
 import org.broadinstitute.ddp.model.activity.types.PicklistRenderMode;
 import org.broadinstitute.ddp.model.activity.types.PicklistSelectMode;
+import org.broadinstitute.ddp.model.activity.types.MatrixSelectMode;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
 import org.broadinstitute.ddp.model.activity.types.RuleType;
 import org.broadinstitute.ddp.model.activity.types.TemplateType;
@@ -308,6 +317,95 @@ public class FormActivityDaoTest extends TxnAwareBaseTest {
         runInsertPicklistQuestionTest(true);
     }
 
+
+    @Test
+    public void testInsertActivity_matrixQuestion() {
+        TransactionWrapper.useTxn(handle -> {
+            List<MatrixOptionDef> options = Arrays.asList(
+                    new MatrixOptionDef("OP1", Template.text("option 1"), "DEFAULT"),
+                    new MatrixOptionDef("OP2", Template.text("option 2"), "DEFAULT"),
+                    new MatrixOptionDef("OP3", Template.text("option 3"), "GROUP"));
+
+            List<MatrixRowDef> rows = Arrays.asList(
+                    new MatrixRowDef("ROW1", Template.text("row 1")),
+                    new MatrixRowDef("ROW2", Template.text("row 2")));
+
+            List<MatrixGroupDef> groups = List.of(
+                    new MatrixGroupDef("DEFAULT", null),
+                    new MatrixGroupDef("GROUP", Template.text("group 1")));
+
+            List<RuleDef> rules = Collections.singletonList(new RequiredRuleDef(null));
+
+            MatrixQuestionDef matrixQuestion = MatrixQuestionDef
+                    .builder(MatrixSelectMode.MULTIPLE, DUMMY_QSID, Template.text("prompt"))
+                    .addOptions(options)
+                    .addRows(rows)
+                    .addGroups(groups)
+                    .addValidations(rules)
+                    .build();
+
+            FormActivityDef form = buildSingleBlockForm(testData.getStudyGuid(), "Matrix Activity",
+                    new QuestionBlockDef(matrixQuestion));
+            FormInstance inst = runInsertAndFetchInstance(handle, form, testData.getUserGuid(), testData.getStudyGuid());
+
+            assertEquals("Matrix Activity", inst.getTitle());
+            MatrixQuestion question = unwrapSingleBlockQuestion(inst, MatrixQuestion.class);
+
+            assertEquals(DUMMY_QSID, question.getStableId());
+            assertTrue(HtmlConverter.hasSameValue("prompt", question.getPrompt()));
+            assertEquals("prompt", question.getTextPrompt());
+            assertEquals(MatrixSelectMode.MULTIPLE, question.getSelectMode());
+
+            assertEquals(options.size(), question.getMatrixOptions().size());
+            assertEquals(rows.size(), question.getMatrixQuestionRows().size());
+            assertEquals(groups.size(), question.getGroups().size());
+
+            for (MatrixOption option : question.getMatrixOptions()) {
+                if ("OP1".equals(option.getStableId())) {
+                    assertEquals("option 1", option.getOptionLabel());
+                    assertEquals("DEFAULT", option.getGroupStableId());
+                } else if ("OP2".equals(option.getStableId())) {
+                    assertEquals("option 2", option.getOptionLabel());
+                    assertEquals("DEFAULT", option.getGroupStableId());
+                } else if ("OP3".equals(option.getStableId())) {
+                    assertEquals("option 3", option.getOptionLabel());
+                    assertEquals("GROUP", option.getGroupStableId());
+                } else {
+                    fail("unrecognized matrix option " + option.getStableId());
+                }
+            }
+
+            for (MatrixRow row : question.getMatrixQuestionRows()) {
+                if ("ROW1".equals(row.getStableId())) {
+                    assertEquals("row 1", row.getQuestionLabel());
+                    assertNull(row.getTooltip());
+                    break;
+                } else if ("ROW2".equals(row.getStableId())) {
+                    assertEquals("row 2", row.getQuestionLabel());
+                    assertNull(row.getTooltip());
+                    break;
+                } else {
+                    fail("unrecognized matrix option " + row.getStableId());
+                }
+            }
+
+            var group = question.getGroups().get(1);
+            assertEquals("GROUP", group.getStableId());
+            assertEquals("group 1", group.getName());
+
+            assertEquals(rules.size(), question.getValidations().size());
+            for (Rule<MatrixAnswer> rule : question.getValidations()) {
+                if (rule.getRuleType() == RuleType.REQUIRED) {
+                    assertNull(rule.getCorrectionHint());
+                } else {
+                    fail("unrecognized rule " + rule.getRuleType());
+                }
+            }
+
+            handle.rollback();
+        });
+    }
+
     @Test
     public void testInsertActivity_version() {
         FormActivityDef form = FormActivityDef.formBuilder(FormType.GENERAL, "DUMMY_ACTIVITY", "v1.1.23", testData.getStudyGuid())
@@ -337,6 +435,7 @@ public class FormActivityDaoTest extends TxnAwareBaseTest {
         Template tmpl = new Template(TemplateType.TEXT, "tmpl", "test block expr");
         ContentBlockDef block = new ContentBlockDef(tmpl);
         block.setShownExpr("true && false");
+        block.setEnabledExpr("true && false");
 
         FormActivityDef form = buildSingleBlockForm(testData.getStudyGuid(), "dummy activity", block);
 
@@ -346,6 +445,8 @@ public class FormActivityDaoTest extends TxnAwareBaseTest {
 
             assertNotNull(actual.getShownExpr());
             assertFalse(actual.isShown());
+            assertNotNull(actual.getEnabledExpr());
+            assertFalse(actual.isEnabled());
 
             handle.rollback();
         });
@@ -799,6 +900,21 @@ public class FormActivityDaoTest extends TxnAwareBaseTest {
                                     .build())
                     .build()));
 
+            questionSection.getBlocks().add(new QuestionBlockDef(MatrixQuestionDef
+                    .builder(MatrixSelectMode.MULTIPLE, "MATRIX", Template.text("matrix prompt"))
+                    .addOption(MatrixOptionDef.buildExclusive("OP1", Template.text("exclusive1"), "DEFAULT"))
+                    .addOption(MatrixOptionDef.buildExclusive("OP2", Template.text("exclusive2"), "DEFAULT"))
+                    .addOption(new MatrixOptionDef("OP3", Template.text("op in group 1"), "GROUP1"))
+                    .addOption(new MatrixOptionDef("OP4", Template.text("op in group 2"), "GROUP1"))
+                    .addRow(new MatrixRowDef("ROW1", Template.text("row1")))
+                    .addRow(new MatrixRowDef("ROW2", Template.text("row2")))
+                    .addGroup(new MatrixGroupDef("DEFAULT", null))
+                    .addGroup(new MatrixGroupDef("GROUP1", Template.text("group")))
+                    .setRestricted(true)
+                    .setDeprecated(true)
+                    .setHideNumber(true)
+                    .build()));
+
             FormSectionDef componentSection = new FormSectionDef(null, new ArrayList<>());
 
             componentSection.getBlocks().add(new MailingAddressComponentDef(null, null));
@@ -884,7 +1000,7 @@ public class FormActivityDaoTest extends TxnAwareBaseTest {
             assertEquals(4, actual.getSections().size());
 
             FormSectionDef section = actual.getSections().get(0);
-            assertEquals(6, section.getBlocks().size());
+            assertEquals(7, section.getBlocks().size());
             assertEquals(QuestionType.AGREEMENT, ((QuestionBlockDef) section.getBlocks().get(0)).getQuestion().getQuestionType());
             assertEquals(QuestionType.BOOLEAN, ((QuestionBlockDef) section.getBlocks().get(1)).getQuestion().getQuestionType());
             assertEquals(QuestionType.TEXT, ((QuestionBlockDef) section.getBlocks().get(2)).getQuestion().getQuestionType());
@@ -939,6 +1055,63 @@ public class FormActivityDaoTest extends TxnAwareBaseTest {
             assertEquals(2, compositeQuestion.getChildren().size());
             assertEquals(QuestionType.TEXT, compositeQuestion.getChildren().get(0).getQuestionType());
             assertEquals(QuestionType.DATE, compositeQuestion.getChildren().get(1).getQuestionType());
+
+            question = ((QuestionBlockDef) section.getBlocks().get(6)).getQuestion();
+            assertEquals(QuestionType.MATRIX, question.getQuestionType());
+            assertTrue(question.isRestricted());
+            assertTrue(question.isDeprecated());
+            assertTrue(question.shouldHideNumber());
+
+            MatrixQuestionDef matrixQuestion = (MatrixQuestionDef) question;
+            assertEquals(4, matrixQuestion.getOptions().size());
+            assertEquals(2, matrixQuestion.getRows().size());
+            assertEquals(2, matrixQuestion.getGroups().size());
+
+            MatrixOptionDef matrixOption = matrixQuestion.getOptions().get(0);
+            assertEquals("OP1", matrixOption.getStableId());
+            assertEquals("DEFAULT", matrixOption.getGroupStableId());
+            assertNotNull(matrixOption.getOptionLabelTemplate());
+            assertNull(matrixOption.getTooltipTemplate());
+            assertTrue(matrixOption.isExclusive());
+
+            matrixOption = matrixQuestion.getOptions().get(1);
+            assertEquals("OP2", matrixOption.getStableId());
+            assertEquals("DEFAULT", matrixOption.getGroupStableId());
+            assertNotNull(matrixOption.getOptionLabelTemplate());
+            assertNull(matrixOption.getTooltipTemplate());
+            assertTrue(matrixOption.isExclusive());
+
+            matrixOption = matrixQuestion.getOptions().get(2);
+            assertEquals("OP3", matrixOption.getStableId());
+            assertEquals("GROUP1", matrixOption.getGroupStableId());
+            assertNotNull(matrixOption.getOptionLabelTemplate());
+            assertNull(matrixOption.getTooltipTemplate());
+            assertFalse(matrixOption.isExclusive());
+
+            matrixOption = matrixQuestion.getOptions().get(3);
+            assertEquals("OP4", matrixOption.getStableId());
+            assertEquals("GROUP1", matrixOption.getGroupStableId());
+            assertNotNull(matrixOption.getOptionLabelTemplate());
+            assertNull(matrixOption.getTooltipTemplate());
+            assertFalse(matrixOption.isExclusive());
+
+            MatrixRowDef matrixRow = matrixQuestion.getRows().get(0);
+            assertEquals("ROW1", matrixRow.getStableId());
+            assertNotNull(matrixRow.getRowLabelTemplate());
+            assertNull(matrixRow.getTooltipTemplate());
+
+            matrixRow = matrixQuestion.getRows().get(1);
+            assertEquals("ROW2", matrixRow.getStableId());
+            assertNotNull(matrixRow.getRowLabelTemplate());
+            assertNull(matrixRow.getTooltipTemplate());
+
+            MatrixGroupDef matrixGroup0 = matrixQuestion.getGroups().get(0);
+            assertEquals("DEFAULT", matrixGroup0.getStableId());
+            assertNull(matrixGroup0.getNameTemplate());
+
+            MatrixGroupDef matrixGroup1 = matrixQuestion.getGroups().get(1);
+            assertEquals("GROUP1", matrixGroup1.getStableId());
+            assertNotNull(matrixGroup1.getNameTemplate());
 
             section = actual.getSections().get(1);
             assertEquals(4, section.getBlocks().size());

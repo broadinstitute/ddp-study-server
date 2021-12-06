@@ -22,6 +22,8 @@ import org.broadinstitute.ddp.model.activity.instance.answer.DateAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.DateValue;
 import org.broadinstitute.ddp.model.activity.instance.answer.PicklistAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.SelectedPicklistOption;
+import org.broadinstitute.ddp.model.activity.instance.answer.MatrixAnswer;
+import org.broadinstitute.ddp.model.activity.instance.answer.SelectedMatrixCell;
 import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
 
 /**
@@ -118,6 +120,12 @@ public class CompositeQuestionFormatStrategy implements ResponseFormatStrategy<C
                     ids.add(detailText);
                 }
                 return String.join(",", ids);
+            case MATRIX:
+                List<String> matrixIds = new ArrayList<>();
+                for (SelectedMatrixCell cell : ((MatrixAnswer) answer).getValue()) {
+                    matrixIds.add(cell.getRowStableId() + ":" + cell.getOptionStableId());
+                }
+                return String.join(",", matrixIds);
             case COMPOSITE:
                 throw new DDPException("Composite-inside-composite is not supported in data export");
             default:
