@@ -23,11 +23,11 @@ public final class MatrixQuestion extends Question<MatrixAnswer> {
     private final List<MatrixGroup> groups;
 
     @NotEmpty
-    @SerializedName("matrixOptions")
+    @SerializedName("options")
     private final List<MatrixOption> matrixOptions;
 
     @NotEmpty
-    @SerializedName("matrixQuestions")
+    @SerializedName("questions")
     private final List<MatrixRow> matrixQuestionRows;
 
     public MatrixQuestion(String stableId, long promptTemplateId, boolean isRestricted,
