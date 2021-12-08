@@ -284,7 +284,6 @@ public class UserDeleteService {
         if (userCollectedData.getStudyGuids().isEmpty() && !studyGuids.isEmpty()) {
             userCollectedData.setStudyGuids(studyGuids);
         }
-        //userCollectedData.setStudyGuids(studyGuids);
         userCollectedData.setUserGovernances(userGovernances);
     }
 
