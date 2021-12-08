@@ -1,5 +1,6 @@
 package org.broadinstitute.ddp.route;
 
+import java.util.Set;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
 import org.broadinstitute.ddp.constants.ErrorCodes;
@@ -18,17 +19,15 @@ import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
 import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.security.DDPAuth;
 import org.broadinstitute.ddp.util.ActivityInstanceUtil;
-import org.broadinstitute.ddp.util.QuestionUtil;
 import org.broadinstitute.ddp.util.ResponseUtil;
 import org.broadinstitute.ddp.util.RouteUtil;
+import org.broadinstitute.ddp.util.QuestionUtil;
 import org.broadinstitute.ddp.util.ValidatedJsonInputRoute;
 import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import spark.Request;
 import spark.Response;
-
-import java.util.Set;
 
 public class CreateActivityInstanceRoute extends ValidatedJsonInputRoute<ActivityInstanceCreationPayload> {
 
