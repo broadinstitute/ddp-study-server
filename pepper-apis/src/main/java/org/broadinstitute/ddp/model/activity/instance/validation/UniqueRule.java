@@ -102,6 +102,7 @@ public class UniqueRule extends Rule<CompositeAnswer> {
                         }
                     }
                     break;
+                case MATRIX:
                 case DATE:
                 case AGREEMENT:
                 case NUMERIC:

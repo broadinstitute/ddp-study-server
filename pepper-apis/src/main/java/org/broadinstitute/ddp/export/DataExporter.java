@@ -72,6 +72,7 @@ import org.broadinstitute.ddp.export.json.structured.ParticipantProfile;
 import org.broadinstitute.ddp.export.json.structured.ParticipantRecord;
 import org.broadinstitute.ddp.export.json.structured.PdfConfigRecord;
 import org.broadinstitute.ddp.export.json.structured.PicklistQuestionRecord;
+import org.broadinstitute.ddp.export.json.structured.MatrixQuestionRecord;
 import org.broadinstitute.ddp.export.json.structured.QuestionRecord;
 import org.broadinstitute.ddp.export.json.structured.SimpleQuestionRecord;
 import org.broadinstitute.ddp.export.json.structured.UserRecord;
@@ -100,6 +101,8 @@ import org.broadinstitute.ddp.model.activity.instance.answer.FileAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.FileInfo;
 import org.broadinstitute.ddp.model.activity.instance.answer.PicklistAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.SelectedPicklistOption;
+import org.broadinstitute.ddp.model.activity.instance.answer.MatrixAnswer;
+import org.broadinstitute.ddp.model.activity.instance.answer.SelectedMatrixCell;
 import org.broadinstitute.ddp.model.activity.types.ActivityType;
 import org.broadinstitute.ddp.model.activity.types.BlockType;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
@@ -1036,6 +1039,9 @@ public class DataExporter {
         } else if (answer.getQuestionType() == QuestionType.PICKLIST) {
             List<SelectedPicklistOption> selected = ((PicklistAnswer) answer).getValue();
             return new PicklistQuestionRecord(question.getStableId(), selected);
+        } else if (answer.getQuestionType() == QuestionType.MATRIX) {
+            List<SelectedMatrixCell> selected = ((MatrixAnswer) answer).getValue();
+            return new MatrixQuestionRecord(question.getStableId(), selected);
         } else if (answer.getQuestionType() == QuestionType.COMPOSITE) {
             List<AnswerRow> rows = ((CompositeAnswer) answer).getValue();
             return new CompositeQuestionRecord(question.getStableId(), rows);

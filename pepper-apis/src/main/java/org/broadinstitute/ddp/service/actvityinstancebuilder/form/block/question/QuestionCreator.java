@@ -12,6 +12,7 @@ import org.broadinstitute.ddp.model.activity.definition.question.DateQuestionDef
 import org.broadinstitute.ddp.model.activity.definition.question.FileQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.NumericQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistQuestionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.MatrixQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.TextQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.ActivityInstanceSelectQuestionDef;
@@ -51,6 +52,9 @@ public class QuestionCreator {
                     break;
                 case PICKLIST:
                     question = creatorHelper.createPicklistQuestion(ctx, (PicklistQuestionDef) questionDef);
+                    break;
+                case MATRIX:
+                    question = creatorHelper.createMatrixQuestion(ctx, (MatrixQuestionDef) questionDef);
                     break;
                 case AGREEMENT:
                     question = creatorHelper.createAgreementQuestion(ctx, (AgreementQuestionDef) questionDef);

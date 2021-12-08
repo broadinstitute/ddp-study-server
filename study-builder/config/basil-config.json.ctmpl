@@ -19,9 +19,11 @@
     "LOCALHOST_LOGOUTS": "",
     "LOCALHOST_ORIGINS": "",
   {{end}}
+    "SERVER_BASE_URL": "{{$conf.serverBaseUrl}}",
     "BASE_URL": "{{$conf.baseWebUrl}}",
     "LOGIN_DOMAIN": "{{$conf.auth0.loginDomain}}",
-    "SERVER_BASE_URL": "{{$conf.serverBaseUrl}}"
+    "SENDGRID_EMAIL": "{{$conf.sendgridFromEmail}}",
+    "SENDGRID_TOKEN": "{{$conf.sendgridApiKey}}"
   },
   "AUTH0_ALLOW_DELETE": false,
   "INCLUDED_PROPS": {

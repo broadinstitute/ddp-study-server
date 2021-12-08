@@ -9,6 +9,7 @@ import org.broadinstitute.ddp.service.actvityinstancebuilder.form.SectionIconCre
 import org.broadinstitute.ddp.service.actvityinstancebuilder.form.block.FormBlockCreator;
 import org.broadinstitute.ddp.service.actvityinstancebuilder.form.block.FormBlockCreatorHelper;
 import org.broadinstitute.ddp.service.actvityinstancebuilder.form.block.question.PicklistCreatorHelper;
+import org.broadinstitute.ddp.service.actvityinstancebuilder.form.block.question.MatrixCreatorHelper;
 import org.broadinstitute.ddp.service.actvityinstancebuilder.form.block.question.QuestionCreator;
 import org.broadinstitute.ddp.service.actvityinstancebuilder.form.block.question.QuestionCreatorHelper;
 import org.broadinstitute.ddp.service.actvityinstancebuilder.form.block.question.ValidationRuleCreator;
@@ -76,6 +77,7 @@ public class AIBuilderFactory {
     private FormInstanceCreatorHelper formInstanceCreatorHelper = new FormInstanceCreatorHelper();
     private FormBlockCreatorHelper formBlockCreatorHelper = new FormBlockCreatorHelper();
     private PicklistCreatorHelper picklistCreatorHelper = new PicklistCreatorHelper();
+    private MatrixCreatorHelper matrixCreatorHelper = new MatrixCreatorHelper();
     private QuestionCreatorHelper questionCreatorHelper = new QuestionCreatorHelper();
     private ValidationRuleCreator validationRuleCreator = new ValidationRuleCreator();
 
@@ -157,6 +159,11 @@ public class AIBuilderFactory {
 
     public PicklistCreatorHelper getPicklistCreatorHelper() {
         return picklistCreatorHelper;
+    }
+
+
+    public MatrixCreatorHelper getMatrixCreatorHelper() {
+        return matrixCreatorHelper;
     }
 
     public AIBuilderFactory setPicklistCreatorHelper(PicklistCreatorHelper picklistCreatorHelper) {

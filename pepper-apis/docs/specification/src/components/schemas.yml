@@ -319,6 +319,7 @@ Answer:
       FILE: '#/Answer.File'
       NUMERIC: '#/Answer.Numeric'
       PICKLIST: '#/Answer.Picklist'
+      MATRIX: '#/Answer.Matrix'
       TEXT: '#/Answer.String'
   required:
     - answerGuid
@@ -444,6 +445,29 @@ SelectedOption:
     detail:
       type: string
       nullable: true
+Answer.Matrix:
+  allOf:
+    - $ref: '#/Answer'
+    - type: object
+      required:
+        - value
+      properties:
+        value:
+          type: array
+          items:
+            $ref: '#/SelectedCell'
+SelectedCell:
+  type: object
+  required:
+    - rowStableId
+    - optionStableId
+  properties:
+    rowStableId:
+      type: string
+      format: guid
+    optionStableId:
+      type: string
+      format: guid
 DateValue:
   type: object
   description: an object which represents a day, month, and year in UTC.
@@ -490,6 +514,7 @@ AnswerSubmission:
       FILE: '#/AnswerSubmission.File'
       NUMERIC: '#/AnswerSubmission.Numeric.Integer'
       PICKLIST: '#/AnswerSubmission.Picklist'
+      MATRIX: '#/AnswerSubmission.Matrix'
       TEXT: '#/AnswerSubmission.String'
   required:
     - stableId
@@ -573,6 +598,17 @@ AnswerSubmission.Picklist:
           type: array
           items:
             $ref: '#/SelectedOption'
+AnswerSubmission.Matrix:
+  allOf:
+    - $ref: '#/AnswerSubmission'
+    - type: object
+      required:
+        - value
+      properties:
+        value:
+          type: array
+          items:
+            $ref: '#/SelectedCell'
 AnswerSubmission.String:
   allOf:
     - $ref: '#/AnswerSubmission'
@@ -1339,6 +1375,39 @@ PicklistOption:
       type: string
     exclusive:
       type: boolean
+MatrixOption:
+  type: object
+  required:
+    - stableId
+    - optionLabel
+    - exclusive
+    - groupId
+  properties:
+    stableId:
+      type: string
+    groupId:
+      type: string
+    optionLabel:
+      type: string
+    tooltip:
+      type: string
+      description: tooltip for the option, in plain text
+    exclusive:
+      type: boolean
+      description: if `exclusive` option selected, other options in the group will be cleared (applicable for MULTIPLE select mode)
+MatrixRowQuestion:
+  type: object
+  required:
+    - stableId
+    - questionLabel
+  properties:
+    stableId:
+      type: string
+    questionLabel:
+      type: string
+    tooltip:
+      type: string
+      description: tooltip for the option, in plain text
 PrequalifierModel:
   type: object
   required:
@@ -1421,6 +1490,7 @@ Question:
       FILE: '#/Question.File'
       NUMERIC: '#/Question.Numeric'
       PICKLIST: '#/Question.Picklist'
+      MATRIX: '#/Question.Matrix'
       TEXT: '#/Question.Text'
   required:
   - questionType
@@ -1720,6 +1790,55 @@ Question.Picklist:
         type: array
         items:
           $ref: '#/Answer.Picklist'
+Question.Matrix:
+  allOf:
+    - $ref: '#/Question'
+    - type: object
+      required:
+        - selectMode
+        - options
+        - questions
+        - answers
+      properties:
+        questionType:
+          type: string
+          default: MATRIX
+          enum:
+            - MATRIX
+        selectMode:
+          type: string
+          description: |
+            * `MULTIPLE` - Allows user to select as many options as needed (checkbox)
+            * `SINGLE` - Only one selection is allowed inside group (radio button)
+          enum:
+            - MULTIPLE
+            - SINGLE
+        groups:
+          type: array
+          description: A list of groups used in the `matrixOptions` values. If there are no options which explicity request grouping, this will be an empty array.
+          minItems: 0
+          items:
+            type: object
+            required:
+              - identifier
+              - name
+            properties:
+              identifier:
+                type: string
+              name:
+                type: string
+        options:
+          type: array
+          items:
+            $ref: '#/MatrixOption'
+        questions:
+          type: array
+          items:
+            $ref: '#/MatrixRowQuestion'
+        answers:
+          type: array
+          items:
+            $ref: '#/Answer.Matrix'
 Question.Text:
   allOf:
   - $ref: '#/Question'
