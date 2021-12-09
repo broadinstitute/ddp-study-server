@@ -39,6 +39,11 @@ public class AnswerCachedDao extends SQLObjectWrapper<AnswerDao> implements Answ
     }
 
     @Override
+    public MatrixAnswerDao getMatrixAnswerDao() {
+        return delegate.getMatrixAnswerDao();
+    }
+
+    @Override
     public JdbiCompositeAnswer getJdbiCompositeAnswer() {
         return delegate.getJdbiCompositeAnswer();
     }
@@ -51,6 +56,11 @@ public class AnswerCachedDao extends SQLObjectWrapper<AnswerDao> implements Answ
     @Override
     public Answer createAnswer(String operatorGuid, String instanceGuid, Answer answer) {
         return delegate.createAnswer(operatorGuid, instanceGuid, answer);
+    }
+
+    @Override
+    public Answer createAnswer(long operatorId, long instanceId, Answer answer) {
+        return delegate.createAnswer(operatorId, instanceId, answer);
     }
 
 

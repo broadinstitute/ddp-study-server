@@ -108,6 +108,10 @@ select qt.question_type_code as question_type,
        ) as picklist_render_mode,
        pq.picklist_label_template_id,
 
+       (select matrix_select_mode_code from matrix_select_mode
+         where matrix_select_mode_id = mq.matrix_select_mode_id
+       ) as matrix_select_mode,
+
        (select text_question_input_type_code from text_question_input_type
          where text_question_input_type_id = tq.input_type_id
        ) as input_type,
@@ -137,6 +141,7 @@ select qt.question_type_code as question_type,
   left join date_question_year_picklist as dqyp on dqyp.date_question_id = dq.question_id
   left join numeric_question as nq on nq.question_id = q.question_id
   left join picklist_question as pq on pq.question_id = q.question_id
+  left join matrix_question as mq on mq.question_id = q.question_id
   left join text_question as tq on tq.question_id = q.question_id
   left join composite_question as cq on cq.question_id = q.question_id
   left join file_question as fq on fq.question_id = q.question_id

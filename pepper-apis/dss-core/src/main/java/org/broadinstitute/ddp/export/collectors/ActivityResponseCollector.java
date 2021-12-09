@@ -29,8 +29,10 @@ import org.broadinstitute.ddp.model.activity.definition.question.DateQuestionDef
 import org.broadinstitute.ddp.model.activity.definition.question.FileQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.NumericQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistQuestionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.MatrixQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.TextQuestionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.ActivityInstanceSelectQuestionDef;
 import org.broadinstitute.ddp.model.activity.instance.ActivityResponse;
 import org.broadinstitute.ddp.model.activity.instance.FormResponse;
 import org.broadinstitute.ddp.model.activity.instance.answer.AgreementAnswer;
@@ -41,7 +43,9 @@ import org.broadinstitute.ddp.model.activity.instance.answer.DateAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.FileAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.NumericAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.PicklistAnswer;
+import org.broadinstitute.ddp.model.activity.instance.answer.MatrixAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
+import org.broadinstitute.ddp.model.activity.instance.answer.ActivityInstanceSelectAnswer;
 import org.broadinstitute.ddp.model.activity.types.ActivityType;
 import org.broadinstitute.ddp.model.activity.types.InstitutionType;
 
@@ -57,22 +61,26 @@ public class ActivityResponseCollector {
     private AgreementQuestionFormatStrategy agreementFmt = new AgreementQuestionFormatStrategy();
     private BoolQuestionFormatStrategy boolFmt = new BoolQuestionFormatStrategy();
     private TextQuestionFormatStrategy textFmt = new TextQuestionFormatStrategy();
+    private ActivityInstanceSelectQuestionFormatStrategy aiFmt;
     private DateQuestionFormatStrategy dateFmt = new DateQuestionFormatStrategy();
     private FileQuestionFormatStrategy fileFmt = new FileQuestionFormatStrategy();
     private NumericQuestionFormatStrategy numericFmt = new NumericQuestionFormatStrategy();
     private PicklistQuestionFormatStrategy picklistFmt = new PicklistQuestionFormatStrategy();
+    private MatrixQuestionFormatStrategy matrixFmt = new MatrixQuestionFormatStrategy();
     private CompositeQuestionFormatStrategy compositeFmt = new CompositeQuestionFormatStrategy();
     private MailingAddressFormatter addressFmt = new MailingAddressFormatter();
     private MedicalProviderFormatter providerFmt = new MedicalProviderFormatter();
 
     public ActivityResponseCollector(ActivityDef definition) {
         this.definition = definition;
+        this.aiFmt = new ActivityInstanceSelectQuestionFormatStrategy(definition.getStudyGuid());
     }
 
     public ActivityResponseCollector(ActivityDef definition, List<String> firstFields, List<String> excludedFields) {
         this.definition = definition;
         this.firstFields = firstFields;
         this.excludedFields = excludedFields;
+        this.aiFmt = new ActivityInstanceSelectQuestionFormatStrategy(definition.getStudyGuid());
     }
 
     public List<String> emptyRow() {
@@ -222,6 +230,9 @@ public class ActivityResponseCollector {
             case TEXT:
                 currProps.putAll(textFmt.mappings((TextQuestionDef) questionDef));
                 break;
+            case ACTIVITY_INSTANCE_SELECT:
+                currProps.putAll(aiFmt.mappings((ActivityInstanceSelectQuestionDef) questionDef));
+                break;
             case DATE:
                 currProps.putAll(dateFmt.mappings((DateQuestionDef) questionDef));
                 break;
@@ -233,6 +244,9 @@ public class ActivityResponseCollector {
                 break;
             case PICKLIST:
                 currProps.putAll(picklistFmt.mappings((PicklistQuestionDef) questionDef));
+                break;
+            case MATRIX:
+                currProps.putAll(matrixFmt.mappings((MatrixQuestionDef) questionDef));
                 break;
             case COMPOSITE:
                 CompositeQuestionDef composite = (CompositeQuestionDef) questionDef;
@@ -258,6 +272,9 @@ public class ActivityResponseCollector {
             case TEXT:
                 questions.add(textFmt.questionDef((TextQuestionDef) questionDef));
                 break;
+            case ACTIVITY_INSTANCE_SELECT:
+                questions.add(aiFmt.questionDef((ActivityInstanceSelectQuestionDef) questionDef));
+                break;
             case DATE:
                 questions.add(dateFmt.questionDef((DateQuestionDef) questionDef));
                 break;
@@ -269,6 +286,9 @@ public class ActivityResponseCollector {
                 break;
             case PICKLIST:
                 questions.add(picklistFmt.questionDef((PicklistQuestionDef) questionDef));
+                break;
+            case MATRIX:
+                questions.add(matrixFmt.questionDef((MatrixQuestionDef) questionDef));
                 break;
             case COMPOSITE:
                 CompositeQuestionDef composite = (CompositeQuestionDef) questionDef;
@@ -413,6 +433,9 @@ public class ActivityResponseCollector {
             case TEXT:
                 headers.addAll(textFmt.headers((TextQuestionDef) questionDef));
                 break;
+            case ACTIVITY_INSTANCE_SELECT:
+                headers.addAll(aiFmt.headers((ActivityInstanceSelectQuestionDef) questionDef));
+                break;
             case DATE:
                 headers.addAll(dateFmt.headers((DateQuestionDef) questionDef));
                 break;
@@ -424,6 +447,9 @@ public class ActivityResponseCollector {
                 break;
             case PICKLIST:
                 headers.addAll(picklistFmt.headers((PicklistQuestionDef) questionDef));
+                break;
+            case MATRIX:
+                headers.addAll(matrixFmt.headers((MatrixQuestionDef) questionDef));
                 break;
             case COMPOSITE:
                 CompositeQuestionDef composite = (CompositeQuestionDef) questionDef;
@@ -527,6 +553,10 @@ public class ActivityResponseCollector {
             case TEXT:
                 record.putAll(textFmt.collect((TextQuestionDef) question, (TextAnswer) answer));
                 break;
+            case ACTIVITY_INSTANCE_SELECT:
+                record.putAll(aiFmt.collect((ActivityInstanceSelectQuestionDef) question, (ActivityInstanceSelectAnswer) answer,
+                        instance.getParticipantId()));
+                break;
             case DATE:
                 record.putAll(dateFmt.collect((DateQuestionDef) question, (DateAnswer) answer));
                 break;
@@ -538,6 +568,9 @@ public class ActivityResponseCollector {
                 break;
             case PICKLIST:
                 record.putAll(picklistFmt.collect((PicklistQuestionDef) question, (PicklistAnswer) answer));
+                break;
+            case MATRIX:
+                record.putAll(matrixFmt.collect((MatrixQuestionDef) question, (MatrixAnswer) answer));
                 break;
             case COMPOSITE:
                 CompositeQuestionDef composite = (CompositeQuestionDef) question;

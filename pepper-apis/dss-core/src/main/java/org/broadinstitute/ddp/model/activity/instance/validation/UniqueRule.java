@@ -102,10 +102,12 @@ public class UniqueRule extends Rule<CompositeAnswer> {
                         }
                     }
                     break;
+                case MATRIX:
                 case DATE:
                 case AGREEMENT:
                 case NUMERIC:
                 case TEXT:
+                case ACTIVITY_INSTANCE_SELECT:
                 case BOOLEAN:
                 case FILE:
                     if (!addStableIds && answer.getValue() != null && isNotBlank(answer.getValue().toString())) {
