@@ -515,8 +515,14 @@ commands:
                 key: *m2_cache_key
                 paths:
                   - << parameters.root_path >>/.m2
+      - run:
+          name: Copy test results
+          command: |
+            mkdir -p ~/test-results/junit/
+            find . -type f -regex ".*/target/surefire-reports/.*xml" -exec cp {} ~/test-results/junit/ \;
+          when: always
       - store_test_results:
-          path: target/surefire-reports
+          path: ~/test-results
 
   wait_for_server:
     description: Wait for a server to respond for specific period of time
