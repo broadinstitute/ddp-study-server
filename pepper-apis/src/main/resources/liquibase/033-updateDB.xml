@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+    <changeSet author="simone" id="DDP-4637_dropUniqueConstraint">
+        <dropForeignKeyConstraint constraintName="participant_event_user_fk" baseTableName="ddp_participant_event"/>
+    </changeSet>
+    <changeSet author="simone" id="DDP-4637_modifyDataType">
+        <modifyDataType columnName="done_by" newDataType="VARCHAR(45)" tableName="ddp_participant_event"/>
+    </changeSet>
+    <changeSet author="simone" id="DDP-4637_addColumn">
+        <addColumn tableName="EVENT_QUEUE">
+            <column name="EVENT_TRIGGERED" type="TINYINT(1)" defaultValue="1"></column>
+        </addColumn>
+    </changeSet>
+</databaseChangeLog>

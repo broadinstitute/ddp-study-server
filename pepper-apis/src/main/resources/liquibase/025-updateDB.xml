@@ -1,0 +1,279 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+    <changeSet author="simone" id="DDP-1706_10122018">
+        <createTable tableName="medical_record_abstraction_group">
+            <column autoIncrement="true" name="medical_record_abstraction_group_id" type="BIGINT">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="display_name" type="VARCHAR(250)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="ddp_instance_id" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="order_number" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="deleted" type="INT">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="simone" id="DDP-1706_10122018_2">
+        <createTable tableName="medical_record_abstraction_field">
+            <column autoIncrement="true" name="medical_record_abstraction_field_id" type="BIGINT">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="display_name" type="VARCHAR(250)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="type" type="VARCHAR(250)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="possible_values" type="VARCHAR(1000)">
+            </column>
+            <column name="help_text" type="VARCHAR(1000)">
+            </column>
+            <column name="medical_record_abstraction_group_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="ddp_instance_id" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="order_number" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="deleted" type="INT">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addDefaultValue columnDataType="INT"
+                         columnName="deleted"
+                         defaultValue="0"
+                         tableName="medical_record_abstraction_group"/>
+        <addDefaultValue columnDataType="INT"
+                         columnName="deleted"
+                         defaultValue="0"
+                         tableName="medical_record_abstraction_field"/>
+    </changeSet>
+
+    <changeSet author="simone" id="DDP-1706_10122018_fk">
+        <addForeignKeyConstraint baseColumnNames="medical_record_abstraction_group_id" baseTableName="medical_record_abstraction_field"
+                                 constraintName="medical_record_abstraction_group_id_fk" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION"
+                                 onUpdate="NO ACTION" referencedColumnNames="medical_record_abstraction_group_id"
+                                 referencedTableName="medical_record_abstraction_group"/>
+    </changeSet>
+
+    <changeSet author="simone" id="DDP-1706_10122018_unique">
+        <addUniqueConstraint columnNames="display_name, ddp_instance_id" constraintName="display_name_group_UNIQUE"
+                             tableName="medical_record_abstraction_group"/>
+        <addUniqueConstraint columnNames="display_name, ddp_instance_id, medical_record_abstraction_group_id" constraintName="display_name_field_UNIQUE"
+                             tableName="medical_record_abstraction_field"/>
+    </changeSet>
+
+    <changeSet author="simone" id="DDP-1706_10182018">
+        <createTable tableName="ddp_medical_record_abstraction">
+            <column autoIncrement="true" name="medical_record_abstraction_id" type="BIGINT">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="participant_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="medical_record_abstraction_field_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="value" type="VARCHAR(2000)">
+            </column>
+            <column name="value_changed_counter" type="INT">
+            </column>
+            <column name="note" type="VARCHAR(1000)">
+            </column>
+            <column name="question" type="VARCHAR(1000)">
+            </column>
+            <column name="file_page" type="INT">
+            </column>
+            <column name="file_name" type="VARCHAR(500)">
+            </column>
+            <column name="no_data" type="INT">
+            </column>
+            <column name="double_check" type="BIGINT">
+            </column>
+            <column name="last_changed" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="changed_by" type="VARCHAR(45)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addDefaultValue columnDataType="INT"
+                         columnName="no_data"
+                         defaultValue="0"
+                         tableName="ddp_medical_record_abstraction"/>
+    </changeSet>
+
+    <changeSet author="simone" id="DDP-1706_10222018">
+        <createTable tableName="ddp_medical_record_abstraction_activities">
+            <column autoIncrement="true" name="medical_record_abstraction_activities_id" type="BIGINT">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="participant_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="user_id" type="VARCHAR(45)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="activity" type="VARCHAR(45)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status" type="VARCHAR(45)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="start_date" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="files_used" type="VARCHAR(500)">
+            </column>
+            <column name="last_changed" type="BIGINT">
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="simone" id="DDP-1706_10232018">
+        <createTable tableName="ddp_medical_record_review">
+            <column autoIncrement="true" name="medical_record_review_id" type="BIGINT">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="participant_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="medical_record_abstraction_field_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="value" type="VARCHAR(2000)">
+            </column>
+            <column name="value_changed_counter" type="INT">
+            </column>
+            <column name="note" type="VARCHAR(1000)">
+            </column>
+            <column name="question" type="VARCHAR(1000)">
+            </column>
+            <column name="file_page" type="INT">
+            </column>
+            <column name="file_name" type="VARCHAR(500)">
+            </column>
+            <column name="no_data" type="INT">
+            </column>
+            <column name="double_check" type="BIGINT">
+            </column>
+            <column name="last_changed" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="changed_by" type="VARCHAR(45)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addDefaultValue columnDataType="INT"
+                         columnName="no_data"
+                         defaultValue="0"
+                         tableName="ddp_medical_record_review"/>
+    </changeSet>
+
+    <changeSet author="simone" id="DDP-1706_10242018">
+        <createTable tableName="ddp_medical_record_qc">
+            <column autoIncrement="true" name="medical_record_qc_id" type="BIGINT">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="participant_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="medical_record_abstraction_field_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="value" type="VARCHAR(2000)">
+            </column>
+            <column name="value_changed_counter" type="INT">
+            </column>
+            <column name="note" type="VARCHAR(1000)">
+            </column>
+            <column name="question" type="VARCHAR(1000)">
+            </column>
+            <column name="file_page" type="INT">
+            </column>
+            <column name="file_name" type="VARCHAR(500)">
+            </column>
+            <column name="no_data" type="INT">
+            </column>
+            <column name="last_changed" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="changed_by" type="VARCHAR(45)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addDefaultValue columnDataType="INT"
+                         columnName="no_data"
+                         defaultValue="0"
+                         tableName="ddp_medical_record_qc"/>
+    </changeSet>
+
+    <changeSet author="simone" id="DDP-1706_11092018">
+        <insert tableName="access_role">
+            <column name="name" value="mr_abstracter"/>
+        </insert>
+        <insert tableName="access_role">
+            <column name="name" value="mr_qc"/>
+        </insert>
+        <insert tableName="access_role">
+            <column name="name" value="mr_abstraction_admin"/>
+        </insert>
+    </changeSet>
+
+    <changeSet author="simone" id="DDP-1706_11282018">
+        <addColumn tableName="ddp_medical_record">
+            <column name="mr_document_file_names" type="VARCHAR(500)">
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet author="simone" id="DDP-1706_11292018">
+        <createTable tableName="ddp_medical_record_final">
+            <column autoIncrement="true" name="medical_record_final_id" type="BIGINT">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="participant_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="medical_record_abstraction_field_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="value" type="VARCHAR(2000)">
+            </column>
+            <column name="no_data" type="INT">
+            </column>
+            <column name="data_release_id" type="BIGINT">
+            </column>
+        </createTable>
+
+        <addDefaultValue columnDataType="INT"
+                         columnName="no_data"
+                         defaultValue="0"
+                         tableName="ddp_medical_record_qc"/>
+    </changeSet>
+
+    <changeSet author="simone" id="DDP-1706_04102019">
+        <addColumn tableName="ddp_participant_record">
+            <column name="minimal_mr" type="INT" afterColumn="notes">
+            </column>
+        </addColumn>
+    </changeSet>
+
+</databaseChangeLog>

@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+    <changeSet author="simone" id="06252018">
+        <addColumn tableName="ddp_instance">
+            <column name="notification_recipients" type="VARCHAR(1000)">
+            </column>
+        </addColumn>
+    </changeSet>
+    <changeSet author="simone" id="06262018">
+        <insert tableName="access_role">
+            <column name="name" value="discard_sample"/>
+        </insert>
+    </changeSet>
+    <changeSet author="simone" id="06292018">
+        <createTable tableName="ddp_kit_discard">
+            <column autoIncrement="true" name="kit_discard_id" type="INT">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="dsm_kit_request_id" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="action" type="VARCHAR(250)">
+            </column>
+            <column name="path_bsp_screenshot" type="VARCHAR(500)">
+            </column>
+            <column name="path_sample_image" type="VARCHAR(500)">
+            </column>
+            <column name="note" type="VARCHAR(1000)">
+            </column>
+            <column name="changed_by" type="VARCHAR(45)">
+            </column>
+            <column name="user_confirm" type="VARCHAR(45)">
+            </column>
+            <column name="discard_date" type="VARCHAR(45)">
+            </column>
+            <column name="discard_by" type="VARCHAR(45)">
+            </column>
+        </createTable>
+    </changeSet>
+</databaseChangeLog>

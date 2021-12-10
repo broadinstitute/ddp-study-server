@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+       http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+    <changeSet author="simone" id="DDP-3299_03062019">
+        <addColumn tableName="ddp_kit">
+            <column name="easypost_shipment_status" type="VARCHAR(45)" afterColumn="easypost_to_id">
+            </column>
+            <column name="easypost_shipment_date" type="BIGINT" afterColumn="easypost_shipment_status">
+            </column>
+        </addColumn>
+    </changeSet>
+    <changeSet author="simone" id="DDP-3299_03062019_2">
+        <insert tableName="instance_role">
+            <column name="name" value="participant_status_endpoint"/>
+        </insert>
+    </changeSet>
+</databaseChangeLog>
+
+        <!--run this sql manually in db-->
+        <!--<changeSet author="simone" id="DDP-3299_03062019_angio_role">-->
+        <!--<insert tableName="ddp_instance_role">-->
+        <!--<column name="ddp_instance_id" valueComputed="(SELECT ddp_instance_id from ddp_instance where instance_name like 'Angio')"/>-->
+        <!--<column name="instance_role_id" valueComputed="(SELECT instance_role_id from instance_role where name = 'participant_status_endpoint')"/>-->
+        <!--</insert>-->
+        <!--</changeSet>-->

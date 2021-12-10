@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+    <changeSet author="simone" id="addingDeletedFlag">
+        <addColumn tableName="ddp_medical_record">
+            <column name="deleted" type="tinyint(1)"></column>
+        </addColumn>
+    </changeSet>
+    <changeSet author="simone" id="setDeletedFlag">
+        <sql>UPDATE ddp_medical_record as m, (
+                SELECT m.medical_record_id from ddp_medical_record m
+                left join ddp_institution i on (i.institution_id = m.institution_id)
+                left join ddp_participant p on (p.participant_id = i.participant_id)
+                left join ddp_instance realm on (p.ddp_instance_id = realm.ddp_instance_id)
+                where realm.instance_name = 'Prostate' and (p.ddp_participant_id like '1771332079%' OR p.ddp_participant_id like '-763171247%') and type = 'INITIAL_BIOPSY' and i.ddp_institution_id != '1' and i.institution_id &#60; 20000) as m2
+            SET m.deleted = 1 WHERE m2.medical_record_id = m.medical_record_id;</sql>
+    </changeSet>
+    <!-- prefix for gen2 prostate pts in dev: 1771332079 on prod: -763171247  -->
+    <!-- prod i.instance_id > 20000 are actual new added initial_biopsies for migrated pts  -->
+</databaseChangeLog>

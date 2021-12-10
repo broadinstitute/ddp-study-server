@@ -1,0 +1,16 @@
+[
+  {"participantId": "test-consent",
+    "shortId": "short1",
+    "survey": "test-type1",
+    "followUpInstance": "test-type1",
+    "surveyStatus": "DONE",
+    "triggerId": 1,
+    "surveyQueued": 0},
+  {"participantId": "test-consent2",
+    "shortId": "short2",
+    "survey": "test-type1",
+    "followUpInstance": "test-type1",
+    "surveyStatus": "STARTED",
+    "triggerId": 2,
+    "surveyQueued": 1}
+]

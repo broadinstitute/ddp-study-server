@@ -1,5 +1,7 @@
 package org.broadinstitute.ddp.db;
 
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -9,6 +11,7 @@ import java.util.concurrent.TimeUnit;
 import com.typesafe.config.Config;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
+import lombok.NonNull;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.exception.InvalidConfigurationException;
@@ -74,7 +77,8 @@ public class TransactionWrapper {
     public enum DB {
 
         APIS(ConfigFile.DB_URL, ConfigFile.NUM_POOLED_CONNECTIONS),
-        HOUSEKEEPING(ConfigFile.HOUSEKEEPING_DB_URL, ConfigFile.HOUSEKEEPING_NUM_POOLED_CONNECTIONS);
+        HOUSEKEEPING(ConfigFile.HOUSEKEEPING_DB_URL, ConfigFile.HOUSEKEEPING_NUM_POOLED_CONNECTIONS),
+        DSM(ConfigFile.DB_URL, ConfigFile.NUM_POOLED_CONNECTIONS);
 
         private final String dbUrlConfigKey;
         private final String poolSizeConfigKey;
@@ -353,6 +357,27 @@ public class TransactionWrapper {
     }
 
     /**
+     * @deprecated Please use JDBI instead of JDBC via {@link #useTxn(HandleConsumer)} or
+     * {@link #withTxn(HandleCallback)}
+     *
+     * Use a jdbc connection within a transaction.  If more than one database has been
+     * initialized, an exception is thrown.
+     * @param <X> Type of exception thrown by callback
+     * @param callback Accepts a handle  @throws X exception thrown by callback
+     * @throws DDPException if error getting a raw connection
+     */
+    @Deprecated
+    public static <R, X extends Exception> R inTransaction(ConnectionConsumer<R, X> callback) throws X {
+        try (Connection conn = openJdbiWithAuthRetry(getDB()).getConnection()) {
+            return callback.withConnection(conn);
+        } catch (ConnectionException e) {
+            throw new DDPException(COULD_NOT_GET_CONNECTION, e);
+        } catch (SQLException e) {
+            throw new DDPException("Error handling connection", e);
+        }
+    }
+
+    /**
      * Use a Jdbi handle within a transaction.  If more than one database has been
      * initialized, an exception is thrown.  To identify which database to use,
      * call {@link #useTxn(DB, HandleConsumer)} to disambiguate.
@@ -414,5 +439,11 @@ public class TransactionWrapper {
             throw original;
         }
     }
+
+    @FunctionalInterface
+    public interface ConnectionConsumer<T, X extends Exception>  {
+        T withConnection(Connection conn);
+    }
+
 }
 

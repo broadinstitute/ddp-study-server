@@ -5,6 +5,8 @@ import java.time.Instant;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigRenderOptions;
+import lombok.NonNull;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.constants.ConfigFile;
 
 public class ConfigUtil {
@@ -85,4 +87,35 @@ public class ConfigUtil {
     }
 
 
+    /**
+     * @deprecated please use JDBI and daos instead of looking up
+     * SQL snippets from config files
+     */
+    @Deprecated
+    public static String getSqlFromConfig(@NonNull String queryName) {
+        return getSqlFromConfig(null, queryName);
+    }
+
+    /**
+     * @deprecated please use JDBI and daos instead of looking up
+     * SQL snippets from config files
+     */
+    @Deprecated
+    public static String getSqlFromConfig(String sourceName, @NonNull String queryName) {
+        Config conf = ConfigManager.getInstance().getConfig();
+
+        if (StringUtils.isNotBlank(sourceName)) {
+            conf = conf.getConfig(sourceName);
+        }
+
+        if (conf == null) {
+            throw new RuntimeException("Conf has not been configured for source = " + sourceName);
+        }
+
+        if (!conf.hasPath(queryName)) {
+            throw new RuntimeException("Conf is missing query named " + queryName);
+        }
+
+        return conf.getString(queryName);
+    }
 }
