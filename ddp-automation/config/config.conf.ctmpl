@@ -33,6 +33,7 @@
     "testUserPassword":"{{$testingAuth.testUserPassword}}",
 	"browserStackUser":"{{$testingConf.Data.browserStackUser}}",
 	"browserStackKey":"{{$testingConf.Data.browserStackKey}}",
+	"defaultTimezone":"{{$testingConf.Data.defaultTimezone}}",
 	"slackNotificationHookUrl":"{{$testingConf.Data.slackNotificationHookUrl}}",
 	"dbUrl":"{{$conf.Data.dbUrl}}",
     "maxConnections": {{$conf.Data.maxConnections}}

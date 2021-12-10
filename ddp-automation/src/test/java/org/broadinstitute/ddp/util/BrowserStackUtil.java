@@ -211,6 +211,19 @@ public class BrowserStackUtil {
             }
 
             @Override
+            public void minimize() {
+                try {
+                    window.minimize();
+                } catch (WebDriverException error) {
+                    if (isMobileDevice) {
+                        logAppiumUnsupportedWarning("minimize()", error);
+                    } else {
+                        throw error;
+                    }
+                }
+            }
+
+            @Override
             public void fullscreen() {
                 try {
                     window.maximize();

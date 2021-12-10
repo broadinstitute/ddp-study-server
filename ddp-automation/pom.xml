@@ -21,16 +21,29 @@
       <dependency>
           <groupId>org.seleniumhq.selenium</groupId>
           <artifactId>selenium-remote-driver</artifactId>
-          <version>3.14.0</version>
+          <version>4.0.0</version>
       </dependency>
 
       <!-- https://mvnrepository.com/artifact/org.seleniumhq.selenium/selenium-java -->
       <dependency>
           <groupId>org.seleniumhq.selenium</groupId>
           <artifactId>selenium-java</artifactId>
-          <version>3.14.0</version>
+          <version>4.0.0</version>
       </dependency>
 
+      <!-- resolves the dependency issue for com.codeborne.selenide.impl.WebElementsCollection -->
+      <dependency>
+          <groupId>com.codeborne</groupId>
+          <artifactId>selenide</artifactId>
+          <version>5.2.3</version>
+      </dependency>
+
+      <!-- resolves various dependencies needed for selenium -->
+      <dependency>
+          <groupId>org.seleniumhq.selenium</groupId>
+          <artifactId>selenium-api</artifactId>
+          <version>4.1.0</version>
+      </dependency>
 
       <dependency>
           <groupId>com.typesafe</groupId>
