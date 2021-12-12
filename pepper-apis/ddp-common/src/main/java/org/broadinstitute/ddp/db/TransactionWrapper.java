@@ -11,7 +11,6 @@ import java.util.concurrent.TimeUnit;
 import com.typesafe.config.Config;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
-import lombok.NonNull;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.exception.InvalidConfigurationException;
@@ -174,7 +173,7 @@ public class TransactionWrapper {
                 if (transactionWrapper.maxConnections != maxConnections || !transactionWrapper.dbUrl.equals(dbUrl)) {
                     throw new RuntimeException("init() has already been called with "
                             + transactionWrapper.maxConnections + " and "
-                            + transactionWrapper.dbUrl + "; " +  "you cannot re-initialize "
+                            + transactionWrapper.dbUrl + "; " + "you cannot re-initialize "
                             + "it with different params " + maxConnections
                             + " and " + dbUrl);
                 } else {
@@ -216,6 +215,7 @@ public class TransactionWrapper {
 
     /**
      * Re-reads the database pool configuration values.
+     *
      * @param useCache if true, pool is initialized with cached config values.  If false, config file is re-read from underlying storage.
      * @throws InvalidConfigurationException if the configuration is invalid and cannot be used to create a new pool
      */
@@ -231,12 +231,12 @@ public class TransactionWrapper {
 
         // check configuration values first.  If they're no good, we don't want to
         // silently get the pool into  an invalid state
-        StringBuilder invalidConfigMessage  = new StringBuilder();
+        StringBuilder invalidConfigMessage = new StringBuilder();
         for (DB db : dbs) {
             if (!cfg.hasPath(db.getDbUrlConfigKey())) {
                 invalidConfigMessage.append("Config does not have " + db.getDbUrlConfigKey() + " for " + getDB());
             }
-            if  (!cfg.hasPath(db.getDbPoolSizeConfigKey())) {
+            if (!cfg.hasPath(db.getDbPoolSizeConfigKey())) {
                 invalidConfigMessage.append("Config does not have " + db.getDbPoolSizeConfigKey() + " for " + getDB());
             }
         }
@@ -274,7 +274,7 @@ public class TransactionWrapper {
      * @param callback Accepts a handle and returns a value
      * @param <R>      Type of return value from callback
      * @param <X>      Type of exception thrown by callback
-     * @param db the database to use
+     * @param db       the database to use
      * @return value returned by callback
      * @throws X            exception thrown by callback
      * @throws DDPException if error getting a raw connection
@@ -344,7 +344,8 @@ public class TransactionWrapper {
      * Use a Jdbi handle within a transaction.  If more than one database has been
      * initialized, an exception is thrown.  To identify which database to use,
      * call {@link #useTxn(DB, HandleConsumer)} to disambiguate.
-     * @param <X> Type of exception thrown by callback
+     *
+     * @param <X>      Type of exception thrown by callback
      * @param callback Accepts a handle  @throws X exception thrown by callback
      * @throws DDPException if error getting a raw connection
      */
@@ -357,14 +358,31 @@ public class TransactionWrapper {
     }
 
     /**
-     * @deprecated Please use JDBI instead of JDBC via {@link #useTxn(HandleConsumer)} or
-     * {@link #withTxn(HandleCallback)}
+     * Use a Jdbi handle within a transaction.  If more than one database has been
+     * initialized, an exception is thrown.  To identify which database to use,
+     * call {@link #useTxn(DB, HandleConsumer)} to disambiguate.
      *
-     * Use a jdbc connection within a transaction.  If more than one database has been
-     * initialized, an exception is thrown.
-     * @param <X> Type of exception thrown by callback
+     * @param <X>      Type of exception thrown by callback
      * @param callback Accepts a handle  @throws X exception thrown by callback
      * @throws DDPException if error getting a raw connection
+     */
+    public static <X extends Exception> void useTxn(HandleConsumer<X> callback) throws X {
+        try (Handle h = openJdbiWithAuthRetry(getDB())) {
+            h.useTransaction(callback);
+        } catch (ConnectionException e) {
+            throw new DDPException(COULD_NOT_GET_CONNECTION, e);
+        }
+    }
+
+    /**
+     * Create a transaction
+     * @param <X>      Type of exception thrown by callback
+     * @param callback Accepts a handle  @throws X exception thrown by callback
+     * @throws DDPException if error getting a raw connection
+     * @deprecated Please use JDBI instead of JDBC via {@link #useTxn(HandleConsumer)} or
+     * {@link #withTxn(HandleCallback)}
+     * <p>Use a jdbc connection within a transaction.  If more than one database has been
+     * initialized, an exception is thrown.</p>
      */
     @Deprecated
     public static <R, X extends Exception> R inTransaction(ConnectionConsumer<R, X> callback) throws X {
@@ -374,22 +392,6 @@ public class TransactionWrapper {
             throw new DDPException(COULD_NOT_GET_CONNECTION, e);
         } catch (SQLException e) {
             throw new DDPException("Error handling connection", e);
-        }
-    }
-
-    /**
-     * Use a Jdbi handle within a transaction.  If more than one database has been
-     * initialized, an exception is thrown.  To identify which database to use,
-     * call {@link #useTxn(DB, HandleConsumer)} to disambiguate.
-     * @param <X> Type of exception thrown by callback
-     * @param callback Accepts a handle  @throws X exception thrown by callback
-     * @throws DDPException if error getting a raw connection
-     */
-    public static <X extends Exception> void useTxn(HandleConsumer<X> callback) throws X {
-        try (Handle h = openJdbiWithAuthRetry(getDB())) {
-            h.useTransaction(callback);
-        } catch (ConnectionException e) {
-            throw new DDPException(COULD_NOT_GET_CONNECTION, e);
         }
     }
 
@@ -441,7 +443,7 @@ public class TransactionWrapper {
     }
 
     @FunctionalInterface
-    public interface ConnectionConsumer<T, X extends Exception>  {
+    public interface ConnectionConsumer<T, X extends Exception> {
         T withConnection(Connection conn);
     }
 

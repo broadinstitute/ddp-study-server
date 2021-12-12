@@ -2,7 +2,6 @@ package org.broadinstitute.ddp.util;
 
 import java.time.Instant;
 
-
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigRenderOptions;
 import lombok.NonNull;
@@ -86,10 +85,12 @@ public class ConfigUtil {
         return cfg.resolve().root().render(ConfigRenderOptions.concise());
     }
 
-
     /**
-     * @deprecated please use JDBI and daos instead of looking up
-     * SQL snippets from config files
+     * Get sql from config file
+     * @param queryName name of query
+     * @return the SQL for query
+     * @deprecated
+     * please use JDBI and daos instead of looking up
      */
     @Deprecated
     public static String getSqlFromConfig(@NonNull String queryName) {
@@ -97,8 +98,9 @@ public class ConfigUtil {
     }
 
     /**
-     * @deprecated please use JDBI and daos instead of looking up
-     * SQL snippets from config files
+     * Get sql from config file
+     * @deprecated
+     * please use JDBI and daos instead of looking up SQL snippets from config files
      */
     @Deprecated
     public static String getSqlFromConfig(String sourceName, @NonNull String queryName) {
