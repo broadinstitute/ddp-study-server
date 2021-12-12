@@ -19,6 +19,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.ddp.client.AddressVerificationException;
 import org.broadinstitute.ddp.client.EasyPostClient;
 import org.broadinstitute.ddp.client.EasyPostVerifyError;
 import org.broadinstitute.ddp.content.I18nTemplateConstants;
@@ -27,7 +28,6 @@ import org.broadinstitute.ddp.db.dao.JdbiCountryAddressInfo;
 import org.broadinstitute.ddp.db.dao.JdbiMailAddress;
 import org.broadinstitute.ddp.db.dao.KitConfigurationDao;
 import org.broadinstitute.ddp.db.dao.TemplateDao;
-import org.broadinstitute.ddp.exception.AddressVerificationException;
 import org.broadinstitute.ddp.model.address.AddressWarning;
 import org.broadinstitute.ddp.model.address.CountryAddressInfo;
 import org.broadinstitute.ddp.model.address.MailAddress;

@@ -16,6 +16,10 @@
             <artifactId>dss-core</artifactId>
         </dependency>
         <dependency>
+            <groupId>org.broadinstitute.ddp</groupId>
+            <artifactId>ddp-common</artifactId>
+        </dependency>
+        <dependency>
             <!-- declare this before junit to get correct version of hamcrest -->
             <groupId>io.rest-assured</groupId>
             <artifactId>rest-assured</artifactId>
@@ -40,6 +44,10 @@
             <groupId>org.mockito</groupId>
             <artifactId>mockito-inline</artifactId>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
         </dependency>
     </dependencies>
 

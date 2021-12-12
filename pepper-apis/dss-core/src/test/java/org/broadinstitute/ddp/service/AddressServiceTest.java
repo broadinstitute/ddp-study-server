@@ -19,10 +19,10 @@ import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.TxnAwareBaseTest;
+import org.broadinstitute.ddp.client.AddressVerificationException;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.KitConfigurationDao;
-import org.broadinstitute.ddp.exception.AddressVerificationException;
 import org.broadinstitute.ddp.model.address.AddressWarning;
 import org.broadinstitute.ddp.model.address.MailAddress;
 import org.broadinstitute.ddp.model.dsm.KitType;

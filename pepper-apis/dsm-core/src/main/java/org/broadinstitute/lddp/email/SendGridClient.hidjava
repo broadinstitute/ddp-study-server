@@ -30,7 +30,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
 
-import static org.broadinstitute.ddp.client.SendGridClient.PATH_MAIL_SEND;
 
 /**
  * Used for integrating with SendGrid...
@@ -237,7 +236,7 @@ public class SendGridClient implements EmailClient {
         if (settings.get("TESTING_DONOTSEND") == null) {
             Request request = new Request();
             request.setMethod(Method.POST);
-            request.setEndpoint(PATH_MAIL_SEND);
+            request.setEndpoint(SendGridClient.);
             Response response = null;
             try {
                 request.setBody(email.build());
