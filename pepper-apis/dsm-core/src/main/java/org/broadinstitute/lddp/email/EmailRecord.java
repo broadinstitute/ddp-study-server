@@ -33,12 +33,8 @@ public class EmailRecord
 
     public static final String ERROR_EMAIL_RECORD_ADD = "An error occurred adding email records.";
     public static final String ERROR_EMAIL_RECORD_DELETE_REMINDERS = "An error occurred deleting reminder email records.";
-    public static final String ERROR_EMAIL_RECORD_DELETE_UNSENT = "An error occurred deleting unsent email records.";
     public static final String ERROR_EMAIL_RECORD_UPDATE = "An error occurred updating email records.";
     public static final String ERROR_EMAIL_RECORD_QUERY = "An error occurred while querying for email records.";
-
-    public static final String SQL_TOTAL_RECORDS_IN_QUEUE = "SELECT COUNT(*) FROM EMAIL_QUEUE";
-    public static final String SQL_PARTIALLY_PROCESSED_IN_QUEUE = "SELECT COUNT(*) FROM EMAIL_QUEUE WHERE EMAIL_DATE_PROCESSED = -1";
 
     private static final String SQL_INSERT_EMAIL_RECORD = "INSERT INTO EMAIL_QUEUE (EMAIL_DATE_CREATED, EMAIL_DATE_SCHEDULED, " +
             "REMINDER_TYPE, EMAIL_RECORD_ID, EMAIL_TEMPLATE, EMAIL_DATA) VALUES (?, ?, ?, ?, ?, ?)";
@@ -74,30 +70,8 @@ public class EmailRecord
         add(immediateEmailTemplate, recipient, recipient.getCurrentStatus(), reminderInfo, emailGroupId);
     }
 
-    /***
-     * Adds one or more rows to the email queue.
-     * @param immediateInfo
-     * @param recipient
-     * @param reminderInfo
-     * @param emailGroupId - could be an email address, altpid, whatever needs to be used to help identify row or group of rows in email queue table
-     *                      so that things like unnecessary reminders can be deleted together
-     */
-    public static void add(JsonElement immediateInfo, String reminderType, @NonNull Recipient recipient, JsonElement reminderInfo, @NonNull String emailGroupId) {
-        String immediateEmailTemplate = null;
-
-        if (immediateInfo != null) {
-            immediateEmailTemplate = immediateInfo.getAsJsonObject().get("sendGridTemplate").getAsString();
-            if (immediateInfo.getAsJsonObject().get("adminRecipient") != null) {
-                recipient.setAdminRecipientEmail(immediateInfo.getAsJsonObject().get("adminRecipient").getAsString());
-            }
-        }
-
-        add(immediateEmailTemplate, recipient, reminderType, reminderInfo, emailGroupId);
-    }
-
     public static void addOnlyReminders(@NonNull Recipient recipient, @NonNull JsonElement reminderInfo, @NonNull String  emailGroupId) throws Exception {
         addOnlyReminders(recipient, recipient.getCurrentStatus(), reminderInfo, emailGroupId);
-
     }
 
     public static void addOnlyReminders(@NonNull Recipient recipient, @NonNull String reminderType, @NonNull JsonElement reminderInfo, @NonNull String emailGroupId) throws Exception
@@ -131,27 +105,10 @@ public class EmailRecord
         }
     }
 
-    public static void removeUnsentEmails(@NonNull String emailGroupId)
-    {
-        logger.info(LOG_PREFIX + "Removing unsent emails...");
-        Utility.removedUnprocessedFromQueue(emailGroupId, SQL_DELETE_ALL_UNSENT_EMAILS, ERROR_EMAIL_RECORD_DELETE_UNSENT);
-    }
-
     public static void startProcessing(@NonNull Long queueId)
     {
         logger.info(LOG_PREFIX + "Update record for initial processing...");
         Utility.updateProcessedInQueue(queueId, SQL_UPDATE_PROCESSED_RECORDS, ERROR_EMAIL_RECORD_UPDATE, Utility.QueueStatus.STARTED);
-    }
-
-    public static void completeProcessing(@NonNull Long queueId)
-    {
-        logger.info(LOG_PREFIX + "Update record for processing completion...");
-        Utility.updateProcessedInQueue(queueId, SQL_UPDATE_PROCESSED_RECORDS, ERROR_EMAIL_RECORD_UPDATE, Utility.QueueStatus.PROCESSED);
-    }
-
-    public static void resetProcessedEmail(@NonNull Long queueId) {
-        logger.info(LOG_PREFIX + "Resetting processed email...");
-        Utility.updateProcessedInQueue(queueId, SQL_UPDATE_PROCESSED_RECORDS, ERROR_EMAIL_RECORD_UPDATE, Utility.QueueStatus.UNPROCESSED);
     }
 
     public static Map<String, ArrayList<EmailRecord>> getRecordsForProcessing()
@@ -204,29 +161,6 @@ public class EmailRecord
             count = count + value.size();
         }
         return count;
-    }
-
-    public static long getCountInQueue()
-    {
-        return Utility.getCountInBigTable(SQL_TOTAL_RECORDS_IN_QUEUE);
-    }
-
-    public static boolean queueCheck() {
-
-        boolean ok = false;
-
-        try {
-            ok = (getCountOfPartiallyProcessed() == 0);
-        }
-        catch (Exception ex) {
-            logger.error(LOG_PREFIX + "A problem occurred querying the DB.", ex);
-        }
-
-        return ok;
-    }
-
-    public static long getCountOfPartiallyProcessed() {
-        return Utility.getCountInBigTable(SQL_PARTIALLY_PROCESSED_IN_QUEUE);
     }
 
     private static void addRecord(@NonNull PreparedStatement stmt, @NonNull long created, @NonNull long scheduled, String reminderType,

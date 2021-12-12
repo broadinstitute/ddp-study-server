@@ -14,9 +14,7 @@ import org.mockserver.model.JsonBody;
 import static org.mockserver.model.HttpRequest.request;
 import static org.mockserver.model.HttpResponse.response;
 
-
 public class DDPRequestUtilTest extends TestHelper {
-
 
     @BeforeClass
     public static void first() throws Exception {

@@ -24,14 +24,8 @@ import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpStatus;
-import org.broadinstitute.ddp.util.ConfigUtil;
-import org.broadinstitute.lddp.BasicServer;
 import org.broadinstitute.ddp.db.TransactionWrapper;
-import org.broadinstitute.lddp.security.Auth0Util;
-import org.broadinstitute.lddp.security.CookieUtil;
-import org.broadinstitute.lddp.util.BasicTriggerListener;
-import org.broadinstitute.lddp.util.JsonTransformer;
-import org.broadinstitute.lddp.util.Utility;
+import org.broadinstitute.ddp.util.ConfigUtil;
 import org.broadinstitute.dsm.careevolve.Provider;
 import org.broadinstitute.dsm.jetty.JettyConfig;
 import org.broadinstitute.dsm.jobs.*;
@@ -49,6 +43,11 @@ import org.broadinstitute.dsm.statics.RoutePath;
 import org.broadinstitute.dsm.util.*;
 import org.broadinstitute.dsm.util.externalShipper.GBFRequestUtil;
 import org.broadinstitute.dsm.util.triggerListener.*;
+import org.broadinstitute.lddp.security.Auth0Util;
+import org.broadinstitute.lddp.security.CookieUtil;
+import org.broadinstitute.lddp.util.BasicTriggerListener;
+import org.broadinstitute.lddp.util.JsonTransformer;
+import org.broadinstitute.lddp.util.Utility;
 import org.quartz.*;
 import org.quartz.impl.StdSchedulerFactory;
 import org.quartz.impl.matchers.KeyMatcher;
@@ -79,7 +78,7 @@ import static org.quartz.CronScheduleBuilder.cronSchedule;
 import static org.quartz.SimpleScheduleBuilder.simpleSchedule;
 import static spark.Spark.*;
 
-public class DSMServer extends BasicServer {
+public class DSMServer {
 
     private static final Logger logger = LoggerFactory.getLogger(DSMServer.class);
 
@@ -177,6 +176,30 @@ public class DSMServer extends BasicServer {
 
         List<String> allowedOrigins = config.getStringList(ApplicationConfigConstants.CORS_ALLOWED_ORIGINS);
         enableCORS(StringUtils.join(allowedOrigins, ","), String.join(",", CORS_HTTP_METHODS), String.join(",", CORS_HTTP_HEADERS));
+    }
+
+    /**
+     * Sets up the TransactionWrapper class.
+     *
+     * @param config
+     */
+    protected void setupDB(@NonNull Config config)
+    {
+        logger.info("Setup the DB...");
+
+        int maxConnections = config.getInt("portal.maxConnections");
+        String dbUrl = config.getString("portal.dbUrl");
+
+        //setup the mysql transaction/connection utility
+        TransactionWrapper.init(new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.DSM, maxConnections, dbUrl));
+
+        //make sure we can connect to DB
+        if (!Utility.dbCheck())
+        {
+            throw new RuntimeException("DB connection error.");
+        }
+
+        logger.info("DB setup complete.");
     }
 
     protected void setupCustomRouting(@NonNull Config cfg) {

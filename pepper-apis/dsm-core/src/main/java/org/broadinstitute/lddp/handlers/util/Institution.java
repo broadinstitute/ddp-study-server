@@ -4,8 +4,6 @@ import lombok.NonNull;
 
 public class Institution
 {
-    public static final String INITIAL_BIOPSY_ID = "1";
-
     public Institution() {
     }
 
