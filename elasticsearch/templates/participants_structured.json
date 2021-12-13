@@ -1002,12 +1002,7 @@
                   }
                 },
                 "expectedReturn": {
-                  "type": "text",
-                  "fields": {
-                    "keyword": {
-                      "type": "keyword"
-                    }
-                  }
+                  "type": "date"
                 },
                 "tumorPercentage": {
                   "type": "text",
