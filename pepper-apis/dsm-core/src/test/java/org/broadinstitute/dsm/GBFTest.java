@@ -1,5 +1,11 @@
 package org.broadinstitute.dsm;
 
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
@@ -20,24 +26,19 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-
 public class
 GBFTest extends TestHelper {
 
+    private static final Logger logger = LoggerFactory.getLogger(GBFTest.class);
     private String GBF_URL = "https://www.gbfmedical.com/oap/api/";
     private String ORDER_NUMBER = "WEB123ABC4D5";
-
-    private static final Logger logger = LoggerFactory.getLogger(GBFTest.class);
 
     @BeforeClass
     public static void before() throws Exception {
         setupDB();
-        ExternalShipper shipper = (ExternalShipper) Class.forName("org.broadinstitute.dsm.util.externalShipper.GBFRequestUtil").newInstance(); //to get blindTestExecutor instance
+        ExternalShipper shipper =
+                (ExternalShipper) Class.forName("org.broadinstitute.dsm.util.externalShipper.GBFRequestUtil").newInstance(); //to get
+        // blindTestExecutor instance
     }
 
     public String getApiKey() {
@@ -86,7 +87,8 @@ GBFTest extends TestHelper {
 //            long start = testDate - SystemUtil.MILLIS_PER_DAY;
 //            long end = testDate;
 //
-//            JSONObject payload = new JSONObject().put("startDate", SystemUtil.getDateFormatted(start)).put("endDate", SystemUtil.getDateFormatted(end));
+//            JSONObject payload = new JSONObject().put("startDate", SystemUtil.getDateFormatted(start)).put("endDate", SystemUtil
+//            .getDateFormatted(end));
 //            String sendRequest = GBF_URL + GBFRequestUtil.CONFIRM_ENDPOINT;
 //            Response gbfResponse = GBFRequestUtil.executePost(Response.class, sendRequest, payload.toString(), apiKey);
 //            Assert.assertNotNull(gbfResponse);
@@ -123,7 +125,9 @@ GBFTest extends TestHelper {
                 "FROM prod_dsm_db.ddp_kit_request req \n" +
                 "left join ddp_kit kit on \n" +
                 "(req.dsm_kit_request_id = kit.dsm_kit_request_id)\n" +
-                "LEFT JOIN (SELECT subK.kit_type_id, subK.external_name from ddp_kit_request_settings dkc   LEFT JOIN sub_kits_settings subK ON (subK.ddp_kit_request_settings_id = dkc.ddp_kit_request_settings_id)) as subkits ON (subkits.kit_type_id = req.kit_type_id)   " +
+                "LEFT JOIN (SELECT subK.kit_type_id, subK.external_name from ddp_kit_request_settings dkc   LEFT JOIN sub_kits_settings "
+                + "subK ON (subK.ddp_kit_request_settings_id = dkc.ddp_kit_request_settings_id)) as subkits ON (subkits.kit_type_id = req"
+                + ".kit_type_id)   " +
                 "where \n" +
                 "req.ddp_instance_id = ? \n" +
                 "and (external_order_status is null or external_order_status = 'NOT FOUND')\n" +
@@ -131,9 +135,9 @@ GBFTest extends TestHelper {
                 "and req.kit_type_id = 7\n" +
                 "and from_unixtime(created_date/1000) like \"2021-02-27%\"\n" +
                 "order by created_time DESC\n";
-        GBFRequestUtil gbf =  new GBFRequestUtil();
+        GBFRequestUtil gbf = new GBFRequestUtil();
         DDPInstance ddpInstance = DDPInstance.getDDPInstanceById(9);
-        ArrayList<KitRequest> kitRequests =gbf.getKitRequestsNotDone(9, query);
+        ArrayList<KitRequest> kitRequests = gbf.getKitRequestsNotDone(9, query);
         HashMap<Integer, KitRequestSettings> krs = KitRequestSettings.getKitRequestSettings("9");
         gbf.orderKitRequests(kitRequests, new EasyPostUtil(ddpInstance.getName()), krs.values().iterator().next(), null);
     }
@@ -146,7 +150,8 @@ GBFTest extends TestHelper {
 //            List<String> orderNumbers = new ArrayList<>();
 //            orderNumbers.addAll(Arrays.asList(new String[] { "" }));
 //            //            logger.info("Starting the external shipper job");
-//            ExternalShipper shipper = (ExternalShipper) Class.forName("org.broadinstitute.dsm.util.externalShipper.GBFRequestUtil").newInstance(); //to get blindTestExecutor instance
+//            ExternalShipper shipper = (ExternalShipper) Class.forName("org.broadinstitute.dsm.util.externalShipper.GBFRequestUtil")
+//            .newInstance(); //to get blindTestExecutor instance
 //            //            ArrayList<KitRequest> kitRequests = shipper.getKitRequestsNotDone(9);
 //            //            shipper.orderStatus(kitRequests);;
 //            JSONObject payload = new JSONObject().put("orderNumbers", orderNumbers);
@@ -176,7 +181,8 @@ GBFTest extends TestHelper {
 //            long start = 0;
 //            long end = testDate;
 //
-//            JSONObject payload = new JSONObject().put("startDate", SystemUtil.getDateFormatted(start)).put("endDate", SystemUtil.getDateFormatted(end));
+//            JSONObject payload = new JSONObject().put("startDate", SystemUtil.getDateFormatted(start)).put("endDate", SystemUtil
+//            .getDateFormatted(end));
 //            String sendRequest = GBF_URL + GBFRequestUtil.CONFIRM_ENDPOINT;
 //            Response gbfResponse = GBFRequestUtil.executePost(Response.class, sendRequest, payload.toString(), apiKey);
 //            Assert.assertNotNull(gbfResponse);
@@ -199,7 +205,8 @@ GBFTest extends TestHelper {
 //            long start = 0L;
 //            long end = testDate;
 //
-//            JSONObject payload = new JSONObject().put("startDate", SystemUtil.getDateFormatted(start)).put("endDate", SystemUtil.getDateFormatted(end));
+//            JSONObject payload = new JSONObject().put("startDate", SystemUtil.getDateFormatted(start)).put("endDate", SystemUtil
+//            .getDateFormatted(end));
 //            String sendRequest = GBF_URL + GBFRequestUtil.CONFIRM_ENDPOINT;
 //            Response gbfResponse = GBFRequestUtil.executePost(Response.class, sendRequest, payload.toString(), apiKey);
 //
@@ -207,14 +214,17 @@ GBFTest extends TestHelper {
 //            String query = "SELECT * " +
 //                    "FROM ddp_kit_request req  " +
 //                    "LEFT JOIN ddp_kit kit ON (req.dsm_kit_request_id = kit.dsm_kit_request_id)  " +
-//                    "LEFT JOIN (SELECT subK.kit_type_id, subK.external_name from ddp_kit_request_settings dkc   LEFT JOIN sub_kits_settings subK ON (subK.ddp_kit_request_settings_id = dkc.ddp_kit_request_settings_id)) as subkits ON (subkits.kit_type_id = req.kit_type_id)   " +
+//                    "LEFT JOIN (SELECT subK.kit_type_id, subK.external_name from ddp_kit_request_settings dkc   LEFT JOIN
+//                    sub_kits_settings subK ON (subK.ddp_kit_request_settings_id = dkc.ddp_kit_request_settings_id)) as subkits ON
+//                    (subkits.kit_type_id = req.kit_type_id)   " +
 //                    "WHERE " +
 //                    "req.ddp_instance_id = ?  " +
 //                    "AND external_order_status = 'SHIPPED' " +
 //                    "AND external_response is null " +
 //                    "ORDER BY external_order_date ASC ";
 //
-//            ArrayList<KitRequest> kitRequests = gbf.getKitRequestsNotDone(Integer.parseInt(DDPInstance.getDDPInstance("testboston").getDdpInstanceId()), query);
+//            ArrayList<KitRequest> kitRequests = gbf.getKitRequestsNotDone(Integer.parseInt(DDPInstance.getDDPInstance("testboston")
+//            .getDdpInstanceId()), query);
 //            HashMap<String, KitRequest> kits = new HashMap<>();
 //            for (KitRequest kit : kitRequests) {
 //                kits.put(kit.getExternalOrderNumber(), kit);
@@ -268,10 +278,11 @@ GBFTest extends TestHelper {
                 "req.external_order_number = ?";
 
         DDPInstance instance = DDPInstance.getDDPInstanceWithRole("testboston", DBConstants.HAS_KIT_REQUEST_ENDPOINTS);
-          ArrayList<KitRequest> kitsToOrder = new ArrayList<>();
+        ArrayList<KitRequest> kitsToOrder = new ArrayList<>();
 
-          EasyPostUtil easyPostUtil = new EasyPostUtil(null,"");
-        Map<String, Map<String, Object>> elasticMap = ElasticSearchUtil.getDDPParticipantsFromES(instance.getName(), instance.getParticipantIndexES());
+        EasyPostUtil easyPostUtil = new EasyPostUtil(null, "");
+        Map<String, Map<String, Object>> elasticMap = ElasticSearchUtil.getDDPParticipantsFromES(instance.getName(),
+                instance.getParticipantIndexES());
 
         HashMap<Integer, KitRequestSettings> kitRequestSettings = KitRequestSettings.getKitRequestSettings("9");
 

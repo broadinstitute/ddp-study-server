@@ -15,9 +15,10 @@ public class RefundLabelTool {
 
     /**
      * Method to refund label for shipping
-     *
+     * <p>
      * change API_KEY__EASYPOST to the key you want to use!
      * change EASYPOST_TO_ID
+     *
      * @throws Exception
      */
     public static void refundEasyPostLabel() {
@@ -28,8 +29,7 @@ public class RefundLabelTool {
             Shipment shipmentReturn = Shipment.retrieve(shipmentId, apiKey);
             shipmentReturn.refund(apiKey);
             logger.info("Shipment refunded w/ easypost_to_id " + shipmentId);
-        }
-        catch (EasyPostException ex) {
+        } catch (EasyPostException ex) {
             logger.error("Couldn't refund shipment w/ easypost_to_id " + shipmentId, ex);
         }
     }

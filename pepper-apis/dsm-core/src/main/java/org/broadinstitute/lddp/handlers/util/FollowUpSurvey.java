@@ -4,8 +4,9 @@ import lombok.Data;
 import org.broadinstitute.lddp.email.Recipient;
 
 @Data
-public class FollowUpSurvey extends SimpleFollowUpSurvey
-{
+public class FollowUpSurvey extends SimpleFollowUpSurvey {
+    private boolean generateNow = false;
+
     public FollowUpSurvey() {
     }
 
@@ -20,7 +21,5 @@ public class FollowUpSurvey extends SimpleFollowUpSurvey
     public FollowUpSurvey(String participantId, Recipient recipient, long triggerId) {
         super(participantId, recipient, triggerId);
     }
-
-    private boolean generateNow = false;
 }
 

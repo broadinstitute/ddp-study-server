@@ -1,8 +1,8 @@
 package org.broadinstitute.dsm.model;
 
-import org.broadinstitute.dsm.db.KitStatus;
-
 import java.util.List;
+
+import org.broadinstitute.dsm.db.KitStatus;
 
 public class ParticipantKits {
     String participantId;

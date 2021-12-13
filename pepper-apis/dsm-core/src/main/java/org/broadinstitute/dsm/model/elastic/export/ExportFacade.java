@@ -29,8 +29,8 @@ public class ExportFacade {
     BaseExporter exportable;
     Generator generator;
     ElasticSearchable searchable;
-    private ExportFacadePayload exportFacadePayload;
     Processor processor;
+    private ExportFacadePayload exportFacadePayload;
 
     public ExportFacade(ExportFacadePayload exportFacadePayload) {
         this.exportFacadePayload = Objects.requireNonNull(exportFacadePayload);
@@ -52,7 +52,8 @@ public class ExportFacade {
     }
 
     private ESDsm fetchData() {
-        ElasticSearchParticipantDto participantById = searchable.getParticipantById(exportFacadePayload.getIndex(), exportFacadePayload.getDocId());
+        ElasticSearchParticipantDto participantById = searchable.getParticipantById(exportFacadePayload.getIndex(),
+                exportFacadePayload.getDocId());
         // Ensure that participant data will be stored by participant guid
         exportFacadePayload.setDocId(participantById.getParticipantId());
         return participantById.getDsm().orElseThrow();

@@ -1,7 +1,6 @@
 package org.broadinstitute.dsm.route;
 
 import com.google.gson.Gson;
-import org.broadinstitute.lddp.handlers.util.Result;
 import org.broadinstitute.dsm.db.KitRequestCreateLabel;
 import org.broadinstitute.dsm.db.KitRequestShipping;
 import org.broadinstitute.dsm.security.RequestHandler;
@@ -10,6 +9,7 @@ import org.broadinstitute.dsm.statics.UserErrorMessages;
 import org.broadinstitute.dsm.util.DBUtil;
 import org.broadinstitute.dsm.util.KitUtil;
 import org.broadinstitute.dsm.util.UserUtil;
+import org.broadinstitute.lddp.handlers.util.Result;
 import spark.QueryParamsMap;
 import spark.Request;
 import spark.Response;
@@ -20,8 +20,7 @@ public class KitLabelRoute extends RequestHandler {
     public Object processRequest(Request request, Response response, String userId) throws Exception {
         if (RoutePath.RequestMethod.GET.toString().equals(request.requestMethod())) {
             return new Result(200, String.valueOf(DBUtil.getBookmark(KitUtil.BOOKMARK_LABEL_CREATION_RUNNING)));
-        }
-        else {
+        } else {
             String userIdRequest = UserUtil.getUserId(request);
             if (UserUtil.checkUserAccess(null, userId, "kit_shipping", userIdRequest)) {
                 QueryParamsMap queryParams = request.queryMap();
@@ -45,8 +44,7 @@ public class KitLabelRoute extends RequestHandler {
                 }
                 KitRequestCreateLabel.updateKitLabelRequested(realm, kitType, userIdRequest);
                 return new Result(200);
-            }
-            else {
+            } else {
                 response.status(500);
                 return new Result(500, UserErrorMessages.NO_RIGHTS);
             }

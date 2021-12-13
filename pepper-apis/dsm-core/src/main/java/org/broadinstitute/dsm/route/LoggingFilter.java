@@ -29,7 +29,7 @@ public class LoggingFilter implements Filter {
     public void handle(Request request, Response response) {
         String tokenFromHeader = Utility.getTokenFromHeader(request);
         if (StringUtils.isNotBlank(tokenFromHeader)) {
-            try  {
+            try {
                 DecodedJWT decodedUnverifiedJWT = JWT.decode(tokenFromHeader);
                 Claim userEmailClaim = decodedUnverifiedJWT.getClaim("USER_MAIL");
 

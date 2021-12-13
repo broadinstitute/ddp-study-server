@@ -1,14 +1,14 @@
 package org.broadinstitute.dsm.model.gbf;
 
+import java.util.ArrayList;
+import java.util.List;
+import javax.xml.bind.JAXBException;
+
 import com.google.gson.JsonObject;
 import org.broadinstitute.dsm.exception.ExternalShipperException;
 import org.broadinstitute.dsm.util.externalShipper.GBFRequestUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.xml.bind.JAXBException;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Sends a single order to GBF
@@ -54,7 +54,7 @@ public class GBFOrderTransmitter {
         String orderXml = null;
         try {
             orderXml = GBFRequestUtil.orderXmlToString(Orders.class, orders);
-        } catch(JAXBException e) {
+        } catch (JAXBException e) {
             throw new RuntimeException("Could not convert order " + externalOrderNumber + " to XML", e);
         }
         JsonObject payload = new JsonObject();
@@ -74,21 +74,18 @@ public class GBFOrderTransmitter {
                 try {
                     gbfResponse = GBFRequestUtil.executePost(Response.class, orderUrl, payload.toString(), apiKey);
                     break;
-                }
-                catch (Exception newEx) {
+                } catch (Exception newEx) {
                     logger.warn("Send request failed (attempt #" + i + " of " + totalAttempts + "): ", newEx);
                     ex = newEx;
                 }
             }
-        }
-        catch (Exception outerEx) {
+        } catch (Exception outerEx) {
             throw new RuntimeException("Unable to send requests.", ex);
         }
         if (gbfResponse != null && gbfResponse.isSuccess()) {
             logger.info("Ordered kit {} for participant {}", externalOrderNumber, participantId);
             return gbfResponse;
-        }
-        else {
+        } else {
             throw new ExternalShipperException("Unable to order kits after retry.", ex);
         }
     }

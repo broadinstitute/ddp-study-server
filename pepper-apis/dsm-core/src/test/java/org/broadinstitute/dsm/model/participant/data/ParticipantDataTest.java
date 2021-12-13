@@ -1,12 +1,16 @@
 package org.broadinstitute.dsm.model.participant.data;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Random;
+
 import com.google.gson.Gson;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDataDto;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
-
-import java.util.*;
 
 public class ParticipantDataTest {
 
@@ -55,8 +59,10 @@ public class ParticipantDataTest {
             String memberType = MEMBER_TYPES[i];
             int randomGeneratedFamilyId = random.nextInt();
             long familyId = random.nextInt(1000) + 1;
-            String collaboratorParticipantId = "STUDY" + "_" + familyId + "_" + ("SELF".equals(memberType) ? 3 : randomGeneratedFamilyId == 3 ? randomGeneratedFamilyId + 1 : randomGeneratedFamilyId);
-            String email = "SELF".equals(memberType) ? "self@mail.com" : MEMBER_TYPES[1 + random.nextInt(MEMBER_TYPES.length-1)] + "@mail.com";
+            String collaboratorParticipantId = "STUDY" + "_" + familyId + "_" + ("SELF".equals(memberType) ? 3 :
+                    randomGeneratedFamilyId == 3 ? randomGeneratedFamilyId + 1 : randomGeneratedFamilyId);
+            String email = "SELF".equals(memberType) ? "self@mail.com" : MEMBER_TYPES[1 + random.nextInt(MEMBER_TYPES.length - 1)] +
+                    "@mail.com";
             FamilyMemberDetails familyMemberDetails = new FamilyMemberDetails(
                     "John" + i,
                     "Doe" + i,
@@ -67,13 +73,13 @@ public class ParticipantDataTest {
             String data = GSON.toJson(familyMemberDetails);
             ParticipantDataDto participantDataDto =
                     new ParticipantDataDto.Builder()
-                        .withDdpParticipantId(collaboratorParticipantId)
-                        .withDdpInstanceId(i)
-                        .withFieldTypeId("")
-                        .withData(data)
-                        .withLastChanged(System.currentTimeMillis())
-                        .withChangedBy("SYSTEM")
-                        .build();
+                            .withDdpParticipantId(collaboratorParticipantId)
+                            .withDdpInstanceId(i)
+                            .withFieldTypeId("")
+                            .withData(data)
+                            .withLastChanged(System.currentTimeMillis())
+                            .withChangedBy("SYSTEM")
+                            .build();
             participantDataDtoList.add(participantDataDto);
         }
         return participantDataDtoList;

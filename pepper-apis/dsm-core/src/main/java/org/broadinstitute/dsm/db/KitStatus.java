@@ -1,9 +1,6 @@
 package org.broadinstitute.dsm.db;
 
-import lombok.Data;
-import lombok.NonNull;
-import org.broadinstitute.lddp.db.SimpleResult;
-import org.broadinstitute.dsm.statics.DBConstants;
+import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -13,18 +10,29 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
+import lombok.Data;
+import lombok.NonNull;
+import org.broadinstitute.dsm.statics.DBConstants;
+import org.broadinstitute.lddp.db.SimpleResult;
 
 @Data
 public class KitStatus {
 
-    private static final String SQL_SELECT_SAMPLES_STATUS = "SELECT ty.kit_type_name, kit.scan_date, kit.receive_date, kit.tracking_to_id, kit.easypost_shipment_date, cs.carrier as carrierTo FROM ddp_kit_request req LEFT JOIN ddp_kit kit on (kit.dsm_kit_request_id = req.dsm_kit_request_id) " +
-            "LEFT JOIN kit_type ty on (req.kit_type_id = ty.kit_type_id) LEFT JOIN ddp_kit_request_settings ks on (ks.ddp_instance_id = req.ddp_instance_id AND ks.kit_type_id = req.kit_type_id) " +
-            "LEFT JOIN carrier_service cs on (ks.carrier_service_to_id = cs.carrier_service_id) WHERE req.ddp_participant_id = ? AND req.ddp_instance_id = ? AND kit.scan_date IS NOT NULL AND kit.deactivation_reason IS NULL";
+    private static final String SQL_SELECT_SAMPLES_STATUS = "SELECT ty.kit_type_name, kit.scan_date, kit.receive_date, kit"
+            + ".tracking_to_id, kit.easypost_shipment_date, cs.carrier as carrierTo FROM ddp_kit_request req LEFT JOIN ddp_kit kit on "
+            + "(kit.dsm_kit_request_id = req.dsm_kit_request_id) " +
+            "LEFT JOIN kit_type ty on (req.kit_type_id = ty.kit_type_id) LEFT JOIN ddp_kit_request_settings ks on (ks.ddp_instance_id = "
+            + "req.ddp_instance_id AND ks.kit_type_id = req.kit_type_id) " +
+            "LEFT JOIN carrier_service cs on (ks.carrier_service_to_id = cs.carrier_service_id) WHERE req.ddp_participant_id = ? AND req"
+            + ".ddp_instance_id = ? AND kit.scan_date IS NOT NULL AND kit.deactivation_reason IS NULL";
 
-    private static final String SQL_SELECT_BATCH_SAMPLES_STATUS = "SELECT req.ddp_kit_request_id, req.ddp_participant_id , ty.kit_type_name, kit.scan_date, kit.receive_date, kit.tracking_to_id, kit.easypost_shipment_date, cs.carrier as carrierTo FROM ddp_kit_request req LEFT JOIN ddp_kit kit on (kit.dsm_kit_request_id = req.dsm_kit_request_id) " +
-            "LEFT JOIN kit_type ty on (req.kit_type_id = ty.kit_type_id) LEFT JOIN ddp_kit_request_settings ks on (ks.ddp_instance_id = req.ddp_instance_id AND ks.kit_type_id = req.kit_type_id) " +
-            "LEFT JOIN carrier_service cs on (ks.carrier_service_to_id = cs.carrier_service_id) WHERE req.ddp_instance_id = ? AND kit.scan_date IS NOT NULL AND kit.deactivation_reason IS NULL";
+    private static final String SQL_SELECT_BATCH_SAMPLES_STATUS = "SELECT req.ddp_kit_request_id, req.ddp_participant_id , ty"
+            + ".kit_type_name, kit.scan_date, kit.receive_date, kit.tracking_to_id, kit.easypost_shipment_date, cs.carrier as carrierTo "
+            + "FROM ddp_kit_request req LEFT JOIN ddp_kit kit on (kit.dsm_kit_request_id = req.dsm_kit_request_id) " +
+            "LEFT JOIN kit_type ty on (req.kit_type_id = ty.kit_type_id) LEFT JOIN ddp_kit_request_settings ks on (ks.ddp_instance_id = "
+            + "req.ddp_instance_id AND ks.kit_type_id = req.kit_type_id) " +
+            "LEFT JOIN carrier_service cs on (ks.carrier_service_to_id = cs.carrier_service_id) WHERE req.ddp_instance_id = ? AND kit"
+            + ".scan_date IS NOT NULL AND kit.deactivation_reason IS NULL";
 
 
     private String kitRequestId;
@@ -75,8 +83,7 @@ public class KitStatus {
                                 received != null ? (Long) received / 1000 : null));
                     }
                 }
-            }
-            catch (SQLException ex) {
+            } catch (SQLException ex) {
                 dbVals.resultException = ex;
             }
             return dbVals;
@@ -91,7 +98,7 @@ public class KitStatus {
         return null;
     }
 
-    public static Map<String, List<KitStatus>> getBatchOfSampleStatus( @NonNull String instanceId) {
+    public static Map<String, List<KitStatus>> getBatchOfSampleStatus(@NonNull String instanceId) {
         Map<String, List<KitStatus>> results = new HashMap<>();
         SimpleResult simpleResult = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
@@ -104,7 +111,7 @@ public class KitStatus {
                         Object delivered = rs.getObject(DBConstants.EASYPOST_SHIPMENT_DATE);
                         Object received = rs.getObject(DBConstants.DSM_RECEIVE_DATE);
                         String trackingId = rs.getString(DBConstants.DSM_TRACKING_TO);
-                        List<KitStatus> kitStatuses= results.getOrDefault(ddpParticipantId, new ArrayList<>());
+                        List<KitStatus> kitStatuses = results.getOrDefault(ddpParticipantId, new ArrayList<>());
                         kitStatuses.add(new KitStatus(rs.getString("ddp_kit_request_id"),
                                 rs.getString(DBConstants.KIT_TYPE_NAME),
                                 trackingId,
@@ -112,12 +119,11 @@ public class KitStatus {
                                 sent != null ? (Long) sent / 1000 : null,
                                 delivered != null ? (Long) sent / 1000 : null,
                                 received != null ? (Long) received / 1000 : null
-                                ));
+                        ));
                         results.put(ddpParticipantId, kitStatuses);
                     }
                 }
-            }
-            catch (SQLException ex) {
+            } catch (SQLException ex) {
                 dbVals.resultException = ex;
             }
             return dbVals;

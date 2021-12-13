@@ -1,5 +1,16 @@
 package org.broadinstitute.dsm.log;
 
+import java.io.IOException;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.util.Arrays;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Collectors;
+
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.IThrowableProxy;
@@ -15,17 +26,6 @@ import org.broadinstitute.lddp.util.Utility;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
-import java.util.Arrays;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.stream.Collectors;
-
 public class SlackAppender<E> extends AppenderBase<ILoggingEvent> {
 
 
@@ -33,18 +33,7 @@ public class SlackAppender<E> extends AppenderBase<ILoggingEvent> {
     // because SD error monitoring is already operating off of stderr/stdout.
     // do not import SD error reporting library as it has caused stability problems.
 
-    public SlackAppender() {
-    }
-
     private static final Logger logger = LoggerFactory.getLogger(SlackAppender.class);
-    private static HttpClient httpClient;
-    private static String appEnv;
-    private static String schedulerName;
-    private static URI slackHookUrl;
-    private static String slackChannel;
-    private static boolean configured = false;
-    private static AtomicLong minEpochForNextJobError = new AtomicLong(0L);
-    private static AtomicLong minEpochForNextError = new AtomicLong(0L);
     private static final int JOB_DELAY = 60;
     private static final int NON_JOB_DELAY = 30;
     private static final String GCP_HOST = "console.cloud.google.com";
@@ -58,13 +47,38 @@ public class SlackAppender<E> extends AppenderBase<ILoggingEvent> {
     private static final String urlEncodedEqualSign = "%3D";
     private static final String urlEncodedNewLine = "%0A";
     private static final String urlQuerySeparator = ";";
-
+    private static HttpClient httpClient;
+    private static String appEnv;
+    private static String schedulerName;
+    private static URI slackHookUrl;
+    private static String slackChannel;
+    private static boolean configured = false;
+    private static AtomicLong minEpochForNextJobError = new AtomicLong(0L);
+    private static AtomicLong minEpochForNextError = new AtomicLong(0L);
     private static String GCP_SERVICE;
     private static String ROOT_PACKAGE;
     final String JOB_ERROR_MESSAGE = String.format("This looks like a job error. Job error reporting is " +
             "throttled so you will only see 1 per %s minutes.", JOB_DELAY);
     final String NON_JOB_ERROR_MESSAGE = String.format("This does NOT look like a job error. " +
             "Non-job error reporting is throttled so you will only see 1 per %s minutes.", NON_JOB_DELAY);
+    public SlackAppender() {
+    }
+
+    public static synchronized void configure(String scheduler, String appEnv, URI slackHookUri, String slackChannel,
+                                              String gcpServiceName, String rootPackage) {
+        if (!configured) {
+            SlackAppender.appEnv = appEnv;
+            slackHookUrl = slackHookUri;
+            httpClient = HttpClient.newHttpClient();
+            SlackAppender.slackChannel = slackChannel;
+            schedulerName = scheduler;
+            GCP_SERVICE = gcpServiceName;
+            ROOT_PACKAGE = rootPackage;
+            configured = true;
+        } else {
+            throw new RuntimeException("Configure has already been called for this appender.");
+        }
+    }
 
     @Override
     protected void append(ILoggingEvent event) {
@@ -186,23 +200,6 @@ public class SlackAppender<E> extends AppenderBase<ILoggingEvent> {
 
     public SlackMessagePayload buildSlackMessageWithPayload(String note) {
         return new SlackMessagePayload(note, slackChannel, "Study-Manager", ":nerd_face:");
-    }
-
-
-    public static synchronized void configure(String scheduler, String appEnv, URI slackHookUri, String slackChannel,
-                                              String gcpServiceName, String rootPackage) {
-        if (!configured) {
-            SlackAppender.appEnv = appEnv;
-            slackHookUrl = slackHookUri;
-            httpClient = HttpClient.newHttpClient();
-            SlackAppender.slackChannel = slackChannel;
-            schedulerName = scheduler;
-            GCP_SERVICE = gcpServiceName;
-            ROOT_PACKAGE = rootPackage;
-            configured = true;
-        } else {
-            throw new RuntimeException("Configure has already been called for this appender.");
-        }
     }
 
     static class SlackMessagePayload {

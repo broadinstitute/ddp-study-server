@@ -2,7 +2,11 @@ package org.broadinstitute.dsm.jobs;
 
 import org.broadinstitute.dsm.DSMServer;
 import org.broadinstitute.dsm.db.LatestKitRequest;
-import org.broadinstitute.dsm.util.*;
+import org.broadinstitute.dsm.util.DDPKitRequest;
+import org.broadinstitute.dsm.util.DDPMedicalRecordDataRequest;
+import org.broadinstitute.dsm.util.KitUtil;
+import org.broadinstitute.dsm.util.NotificationUtil;
+import org.broadinstitute.dsm.util.PDFAudit;
 import org.quartz.Job;
 import org.quartz.JobDataMap;
 import org.quartz.JobExecutionContext;
@@ -30,16 +34,14 @@ public class DDPRequestJob implements Job {
         try {
             DDPKitRequest kitRequest = new DDPKitRequest();
             kitRequest.requestAndWriteKitRequests(LatestKitRequest.getLatestKitRequests());
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             logger.error("Some error occurred while doing kit request stuff ", e);
         }
         //get new/changed participants from ddps
         try {
             DDPMedicalRecordDataRequest medicalRecordDataRequest = new DDPMedicalRecordDataRequest();
             medicalRecordDataRequest.requestAndWriteParticipantInstitutions();
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             logger.error("Some error occurred while doing medical record stuff ", e);
         }
         //deactivate kit requests which meet special behavior
@@ -50,8 +52,7 @@ public class DDPRequestJob implements Job {
         try {
             PDFAudit pdfAudit = new PDFAudit();
             pdfAudit.checkAndSavePDF();
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             logger.error("Some error occurred while doing pdf audit trail ", e);
         }
     }

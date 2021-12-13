@@ -1,5 +1,12 @@
 package org.broadinstitute.dsm.export;
 
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Deque;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
 import com.google.gson.Gson;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.DDPInstance;
@@ -16,15 +23,12 @@ import org.broadinstitute.dsm.util.ParticipantUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
-import java.util.stream.Collectors;
-
 public class WorkflowAndFamilyIdExporter implements Exporter {
 
+    public static final String RGP_PARTICIPANTS = "RGP_PARTICIPANTS";
     private static final Logger logger = LoggerFactory.getLogger(WorkflowAndFamilyIdExporter.class);
     private static final Gson gson = new Gson();
     private static final ParticipantDataDao participantDataDao = new ParticipantDataDao();
-    public static final String RGP_PARTICIPANTS = "RGP_PARTICIPANTS";
 
     @Override
     public void export(DDPInstance instance) {
@@ -50,8 +54,7 @@ public class WorkflowAndFamilyIdExporter implements Exporter {
 
             checkWorkflowNamesAndExport(instance, workflowColumnNames, queue, clearBeforeUpdate);
             logger.info("Finished exporting workflows and family ID-s for instance with id " + instanceId);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             logger.error("Error exporting workflows and family ids for instanceId " + instanceId, e);
         }
     }
@@ -60,10 +63,10 @@ public class WorkflowAndFamilyIdExporter implements Exporter {
         FieldSettingsDao fieldSettingsDao = FieldSettingsDao.of();
         List<FieldSettingsDto> fieldSettings = fieldSettingsDao.getFieldSettingsByInstanceId(instanceId);
         List<String> workflowColumns = new ArrayList<>();
-        for (FieldSettingsDto fieldSetting: fieldSettings) {
+        for (FieldSettingsDto fieldSetting : fieldSettings) {
             String actions = fieldSetting.getActions();
             if (actions != null) {
-                Value[] actionsArray =  gson.fromJson(actions, Value[].class);
+                Value[] actionsArray = gson.fromJson(actions, Value[].class);
                 for (Value action : actionsArray) {
                     if (ESObjectConstants.ELASTIC_EXPORT_WORKFLOWS.equals(action.getType())) {
                         workflowColumns.add(fieldSetting.getColumnName());
@@ -98,7 +101,8 @@ public class WorkflowAndFamilyIdExporter implements Exporter {
 
             WorkflowsEditor editor = new WorkflowsEditor(new ArrayList<>());
             try {
-                Map<String, Object> source = ElasticSearchUtil.getObjectsMap(index, profile.getParticipantGuid(), ESObjectConstants.WORKFLOWS);
+                Map<String, Object> source = ElasticSearchUtil.getObjectsMap(index, profile.getParticipantGuid(),
+                        ESObjectConstants.WORKFLOWS);
                 if (source != null && source.containsKey(ESObjectConstants.WORKFLOWS)) {
                     List<Map<String, Object>> workflowListES = (List<Map<String, Object>>) source.get(ESObjectConstants.WORKFLOWS);
                     editor = new WorkflowsEditor(workflowListES);
@@ -134,10 +138,12 @@ public class WorkflowAndFamilyIdExporter implements Exporter {
                 // Even if workflow list didn't change, let's export so we start with empty list in the ES document.
                 ElasticSearchUtil.updateRequest(profile.getParticipantGuid(), index, editor.getMapForES());
                 if (StringUtils.isNotBlank(familyId)) {
-                    ElasticSearchUtil.writeDsmRecord(instance, null, profile.getParticipantGuid(), ESObjectConstants.FAMILY_ID, familyId, null);
+                    ElasticSearchUtil.writeDsmRecord(instance, null, profile.getParticipantGuid(), ESObjectConstants.FAMILY_ID, familyId,
+                            null);
                 }
             } catch (Exception e) {
-                logger.error("Error while export ES workflows for participant with guid/altpid: {}, continuing with export", guidOrAltPid, e);
+                logger.error("Error while export ES workflows for participant with guid/altpid: {}, continuing with export", guidOrAltPid
+                        , e);
             }
         }
     }

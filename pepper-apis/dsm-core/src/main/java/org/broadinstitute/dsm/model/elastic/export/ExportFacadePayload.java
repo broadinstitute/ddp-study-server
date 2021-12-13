@@ -23,11 +23,11 @@ public class ExportFacadePayload {
         return docId;
     }
 
-    public GeneratorPayload getGeneratorPayload() {
-        return generatorPayload;
-    }
-
     public void setDocId(String docId) {
         this.docId = docId;
+    }
+
+    public GeneratorPayload getGeneratorPayload() {
+        return generatorPayload;
     }
 }

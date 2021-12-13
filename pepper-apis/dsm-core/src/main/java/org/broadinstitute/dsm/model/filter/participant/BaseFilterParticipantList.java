@@ -19,9 +19,9 @@ import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDataDto;
 import org.broadinstitute.dsm.db.structure.DBElement;
 import org.broadinstitute.dsm.model.Filter;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearch;
-import org.broadinstitute.dsm.model.participant.ParticipantWrapper;
 import org.broadinstitute.dsm.model.filter.BaseFilter;
 import org.broadinstitute.dsm.model.filter.Filterable;
+import org.broadinstitute.dsm.model.participant.ParticipantWrapper;
 import org.broadinstitute.dsm.model.participant.ParticipantWrapperPayload;
 import org.broadinstitute.dsm.model.participant.ParticipantWrapperResult;
 import org.broadinstitute.dsm.statics.DBConstants;
@@ -32,12 +32,12 @@ import org.slf4j.LoggerFactory;
 
 public abstract class BaseFilterParticipantList extends BaseFilter implements Filterable<ParticipantWrapperResult> {
 
-    private static final Logger logger = LoggerFactory.getLogger(BaseFilterParticipantList.class);
     public static final String PARTICIPANT_DATA = "participantData";
     public static final String OPTIONS = "OPTIONS";
     public static final String RADIO = "RADIO";
     public static final String PARTICIPANTS = "PARTICIPANTS";
     protected static final Gson GSON = new Gson();
+    private static final Logger logger = LoggerFactory.getLogger(BaseFilterParticipantList.class);
     private static final Pattern DATE_PATTERN = Pattern.compile(
             "^\\d{4}-\\d{2}-\\d{2}$");
     private final ParticipantDataDao participantDataDao;
@@ -55,7 +55,8 @@ public abstract class BaseFilterParticipantList extends BaseFilter implements Fi
     }
 
 
-    protected ParticipantWrapperResult filterParticipantList(Filter[] filters, Map<String, DBElement> columnNameMap, @NonNull DDPInstance instance) {
+    protected ParticipantWrapperResult filterParticipantList(Filter[] filters, Map<String, DBElement> columnNameMap,
+                                                             @NonNull DDPInstance instance) {
         Map<String, String> queryConditions = new HashMap<>();
         List<ParticipantDataDto> allParticipantData = null;
         DDPInstanceDto ddpInstanceDto = new DDPInstanceDao().getDDPInstanceByInstanceName(realm).orElseThrow();
@@ -71,7 +72,8 @@ public abstract class BaseFilterParticipantList extends BaseFilter implements Fi
                 if (filter != null) {
                     String tmp = null;
                     if (filter.getParticipantColumn() != null) {
-                        tmp = StringUtils.isNotBlank(filter.getParentName()) ? filter.getParentName() : filter.getParticipantColumn().getTableAlias();
+                        tmp = StringUtils.isNotBlank(filter.getParentName()) ? filter.getParentName() :
+                                filter.getParticipantColumn().getTableAlias();
                     }
                     String tmpName = null;
                     DBElement dbElement = null;
@@ -125,7 +127,8 @@ public abstract class BaseFilterParticipantList extends BaseFilter implements Fi
         }
     }
 
-    public void addParticipantDataConditionsToQuery(Map<String, Integer> allIdsForParticipantDataFiltering, Map<String, String> queryConditions, int filtersLength) {
+    public void addParticipantDataConditionsToQuery(Map<String, Integer> allIdsForParticipantDataFiltering,
+                                                    Map<String, String> queryConditions, int filtersLength) {
         String newCondition = createNewConditionByIds(allIdsForParticipantDataFiltering, filtersLength);
         queryConditions.merge(ElasticSearchUtil.ES, newCondition, (prev, next) -> prev + next);
     }
@@ -133,14 +136,16 @@ public abstract class BaseFilterParticipantList extends BaseFilter implements Fi
     public String createNewConditionByIds(Map<String, Integer> allIdsForParticipantDataFiltering, int filtersLength) {
         StringBuilder newCondition = new StringBuilder(ElasticSearchUtil.AND);
         int i = 0;
-        for (Map.Entry<String, Integer> entry: allIdsForParticipantDataFiltering.entrySet()) {
+        for (Map.Entry<String, Integer> entry : allIdsForParticipantDataFiltering.entrySet()) {
             if (entry.getValue() != filtersLength) {
                 continue;
             }
             if (i == 0) {
-                newCondition.append(ParticipantUtil.isGuid(entry.getKey()) ? ElasticSearchUtil.BY_PROFILE_GUID + entry.getKey() : ElasticSearchUtil.BY_PROFILE_LEGACY_ALTPID + entry.getKey());
+                newCondition.append(ParticipantUtil.isGuid(entry.getKey()) ? ElasticSearchUtil.BY_PROFILE_GUID + entry.getKey() :
+                        ElasticSearchUtil.BY_PROFILE_LEGACY_ALTPID + entry.getKey());
             } else {
-                newCondition.append(ParticipantUtil.isGuid(entry.getKey()) ? ElasticSearchUtil.BY_GUIDS + entry.getKey() : ElasticSearchUtil.BY_LEGACY_ALTPIDS + entry.getKey());
+                newCondition.append(ParticipantUtil.isGuid(entry.getKey()) ? ElasticSearchUtil.BY_GUIDS + entry.getKey() :
+                        ElasticSearchUtil.BY_LEGACY_ALTPIDS + entry.getKey());
             }
             i++;
         }
@@ -163,7 +168,8 @@ public abstract class BaseFilterParticipantList extends BaseFilter implements Fi
             }
             String ddpParticipantId = participantData.getDdpParticipantId().orElse(null);
             Map<String, String> dataMap = GSON.fromJson(data, Map.class);
-            boolean questionWithOptions = (OPTIONS.equals(filter.getType()) || RADIO.equals(filter.getType())) && filter.getSelectedOptions() != null;
+            boolean questionWithOptions =
+                    (OPTIONS.equals(filter.getType()) || RADIO.equals(filter.getType())) && filter.getSelectedOptions() != null;
             boolean notEmptyCheck = filter.isNotEmpty() && dataMap.get(fieldName) != null && !dataMap.get(fieldName).isEmpty();
             boolean emptyCheck = filter.isEmpty() && (dataMap.get(fieldName) == null || dataMap.get(fieldName).isEmpty());
             if (notEmptyCheck || emptyCheck && !participantsNotToAdd.containsKey(ddpParticipantId)) {
@@ -212,16 +218,19 @@ public abstract class BaseFilterParticipantList extends BaseFilter implements Fi
         int i = 0;
         for (String id : participantIdsForQuery.keySet()) {
             if (i == 0) {
-                newCondition.append(ParticipantUtil.isGuid(id) ? ElasticSearchUtil.BY_PROFILE_GUID + id : ElasticSearchUtil.BY_PROFILE_LEGACY_ALTPID + id);
+                newCondition.append(ParticipantUtil.isGuid(id) ? ElasticSearchUtil.BY_PROFILE_GUID + id :
+                        ElasticSearchUtil.BY_PROFILE_LEGACY_ALTPID + id);
             } else {
-                newCondition.append(ParticipantUtil.isGuid(id) ? ElasticSearchUtil.BY_GUIDS + id : ElasticSearchUtil.BY_LEGACY_ALTPIDS + id);
+                newCondition.append(ParticipantUtil.isGuid(id) ? ElasticSearchUtil.BY_GUIDS + id :
+                        ElasticSearchUtil.BY_LEGACY_ALTPIDS + id);
             }
             i++;
         }
         return newCondition;
     }
 
-    private void addConditionForRange(Filter filter, String fieldName, Map<String, String> dataMap, Map<String, String> participantIdsForQuery, String ddpParticipantId) {
+    private void addConditionForRange(Filter filter, String fieldName, Map<String, String> dataMap,
+                                      Map<String, String> participantIdsForQuery, String ddpParticipantId) {
         Object rangeValue1 = filter.getFilter1().getValue();
         Object rangeValue2 = filter.getFilter2().getValue();
         if (rangeValue1 == null || rangeValue2 == null) {
@@ -250,8 +259,12 @@ public abstract class BaseFilterParticipantList extends BaseFilter implements Fi
 
     private boolean isInNumberRange(String fieldName, Map<String, String> dataMap, Object rangeValue1, Object rangeValue2) {
         boolean dataIsNumber = dataMap.get(fieldName) != null && NumberUtils.isNumber(dataMap.get(fieldName));
-        boolean moreThanFirstNumber = dataIsNumber && rangeValue1 instanceof Double && Double.compare(Double.parseDouble(dataMap.get(fieldName)), (Double) rangeValue1) >= 0;
-        boolean moreThanSecondNumber = dataIsNumber && rangeValue2 instanceof Double && Double.compare(Double.parseDouble(dataMap.get(fieldName)), (Double) rangeValue2) >= 0;
+        boolean moreThanFirstNumber =
+                dataIsNumber && rangeValue1 instanceof Double && Double.compare(Double.parseDouble(dataMap.get(fieldName)),
+                        (Double) rangeValue1) >= 0;
+        boolean moreThanSecondNumber =
+                dataIsNumber && rangeValue2 instanceof Double && Double.compare(Double.parseDouble(dataMap.get(fieldName)),
+                        (Double) rangeValue2) >= 0;
         //range will be starting from the lower number up until the higher number
         return (moreThanFirstNumber && !moreThanSecondNumber) || (moreThanSecondNumber && !moreThanFirstNumber);
     }

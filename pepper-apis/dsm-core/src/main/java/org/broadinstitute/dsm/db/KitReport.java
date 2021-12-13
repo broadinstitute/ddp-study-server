@@ -4,8 +4,8 @@ import java.util.List;
 
 public class KitReport {
 
-    private String ddpName;
     public List<SummaryKitType> summaryKitTypeList;
+    private String ddpName;
 
     public KitReport(String ddpName, List<SummaryKitType> summaryKitTypes) {
         this.ddpName = ddpName;

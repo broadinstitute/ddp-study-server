@@ -1,25 +1,38 @@
 package org.broadinstitute.dsm.db.dao.kit;
 
-import lombok.NonNull;
-import org.broadinstitute.lddp.db.SimpleResult;
-import org.broadinstitute.ddp.db.TransactionWrapper;
-import org.broadinstitute.dsm.db.dao.Dao;
-import org.broadinstitute.dsm.db.dto.kit.BSPKitDto;
-import org.broadinstitute.dsm.model.BSPKit;
-import org.broadinstitute.dsm.statics.DBConstants;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.Optional;
 
-import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
+import lombok.NonNull;
+import org.broadinstitute.ddp.db.TransactionWrapper;
+import org.broadinstitute.dsm.db.dao.Dao;
+import org.broadinstitute.dsm.db.dto.kit.BSPKitDto;
+import org.broadinstitute.dsm.model.BSPKit;
+import org.broadinstitute.dsm.statics.DBConstants;
+import org.broadinstitute.lddp.db.SimpleResult;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class BSPKitDao implements Dao<BSPKitDto> {
 
 
-    Logger logger = LoggerFactory.getLogger(BSPKitDao.class);
+    public final String BASE_URL = "base_url";
+    public final String BSP_SAMPLE_ID = "bsp_collaborator_sample_id";
+    public final String BSP_PARTICIPANT_ID = "bsp_collaborator_participant_id";
+    public final String INSTANCE_NAME = "instance_name";
+    public final String BSP_COLLECTION = "bsp_collection";
+    public final String BSP_ORGANISM = "bsp_organism";
+    public final String DDP_PARTICIPANT_ID = "ddp_participant_id";
+    public final String MATERIAL_TYPE = "bsp_material_type";
+    public final String RECEPTACLE_TYPE = "bsp_receptacle_type";
+    public final String PARTICIPANT_EXIT = "ddp_participant_exit_id";
+    public final String SQL_UPDATE_KIT_RECEIVED = "UPDATE ddp_kit kit INNER JOIN( SELECT dsm_kit_request_id, MAX(dsm_kit_id) AS kit_id " +
+            "FROM ddp_kit GROUP BY dsm_kit_request_id) groupedKit ON kit.dsm_kit_request_id = groupedKit.dsm_kit_request_id " +
+            "AND kit.dsm_kit_id = groupedKit.kit_id SET receive_date = ?, receive_by = ? WHERE kit.receive_date IS NULL AND kit.kit_label"
+            + " = ?";
     private final String GET_BSP_RESPONSE_INFORMATION_FOR_KIT = "select " +
             "        realm.instance_name, " +
             "        realm.base_url, " +
@@ -51,7 +64,9 @@ public class BSPKitDao implements Dao<BSPKitDto> {
             "  left join ddp_participant_exit ex on (request.ddp_participant_id = ex.ddp_participant_id and " +
             "   request.ddp_instance_id = ex.ddp_instance_id) " +
             "        where " +
-            "  kit.kit_label = ?"; 
+            "  kit.kit_label = ?";
+    private final String BSP = "BSP";
+    Logger logger = LoggerFactory.getLogger(BSPKitDao.class);
 
     @Override
     public int create(BSPKitDto bspKitDto) {
@@ -67,23 +82,6 @@ public class BSPKitDao implements Dao<BSPKitDto> {
     public Optional<BSPKitDto> get(long id) {
         return Optional.empty();
     }
-
-    public final String BASE_URL = "base_url";
-    public final String BSP_SAMPLE_ID = "bsp_collaborator_sample_id";
-    public final String BSP_PARTICIPANT_ID = "bsp_collaborator_participant_id";
-    public final String INSTANCE_NAME = "instance_name";
-    public final String BSP_COLLECTION = "bsp_collection";
-    public final String BSP_ORGANISM = "bsp_organism";
-    public final String DDP_PARTICIPANT_ID = "ddp_participant_id";
-    public final String MATERIAL_TYPE = "bsp_material_type";
-    public final String RECEPTACLE_TYPE = "bsp_receptacle_type";
-    public final String PARTICIPANT_EXIT = "ddp_participant_exit_id";
-
-    private final String BSP = "BSP";
-
-    public final String SQL_UPDATE_KIT_RECEIVED = "UPDATE ddp_kit kit INNER JOIN( SELECT dsm_kit_request_id, MAX(dsm_kit_id) AS kit_id " +
-            "FROM ddp_kit GROUP BY dsm_kit_request_id) groupedKit ON kit.dsm_kit_request_id = groupedKit.dsm_kit_request_id " +
-            "AND kit.dsm_kit_id = groupedKit.kit_id SET receive_date = ?, receive_by = ? WHERE kit.receive_date IS NULL AND kit.kit_label = ?";
 
     public Optional<BSPKitDto> getBSPKitQueryResult(@NonNull String kitLabel) {
         SimpleResult results = inTransaction((conn) -> {
@@ -117,8 +115,7 @@ public class BSPKitDao implements Dao<BSPKitDto> {
                         }
                     }
                 }
-            }
-            catch (Exception ex) {
+            } catch (Exception ex) {
                 dbVals.resultException = ex;
             }
             return dbVals;
@@ -141,14 +138,8 @@ public class BSPKitDao implements Dao<BSPKitDto> {
                 if (result > 1) { // 1 row or 0 row updated is perfect
                     throw new RuntimeException("Error updating kit w/label " + kitLabel + " (was updating " + result + " rows)");
                 }
-                if (result == 1) {
-                    firstTimeReceived = true;
-                }
-                else {
-                    firstTimeReceived = false;
-                }
-            }
-            catch (Exception e) {
+                firstTimeReceived = result == 1;
+            } catch (Exception e) {
                 logger.error("Failed to set kit w/ label " + kitLabel + " as received ", e);
             }
             if (triggerDDP) {

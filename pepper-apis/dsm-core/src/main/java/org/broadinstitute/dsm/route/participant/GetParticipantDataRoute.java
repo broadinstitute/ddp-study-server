@@ -1,5 +1,7 @@
 package org.broadinstitute.dsm.route.participant;
 
+import java.util.NoSuchElementException;
+
 import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDataDao;
 import org.broadinstitute.dsm.model.participant.data.ParticipantData;
 import org.broadinstitute.dsm.security.RequestHandler;
@@ -8,8 +10,6 @@ import org.broadinstitute.dsm.util.UserUtil;
 import spark.QueryParamsMap;
 import spark.Request;
 import spark.Response;
-
-import java.util.NoSuchElementException;
 
 public class GetParticipantDataRoute extends RequestHandler {
 

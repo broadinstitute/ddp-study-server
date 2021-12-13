@@ -1,19 +1,18 @@
 package org.broadinstitute.lddp.email;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import lombok.Data;
 import lombok.NonNull;
 import org.broadinstitute.lddp.user.BasicUser;
 import org.broadinstitute.lddp.util.CheckValidity;
 
-import java.util.HashMap;
-import java.util.Map;
-
 /**
  * Created by ebaker on 5/27/16.
  */
 @Data
-public class Recipient implements BasicUser, CheckValidity
-{
+public class Recipient implements BasicUser, CheckValidity {
     private String firstName = null;
     private String lastName = null;
     private String email = null;
@@ -29,25 +28,21 @@ public class Recipient implements BasicUser, CheckValidity
     private String adminRecipientEmail = "";
     private Map<String, String> surveyLinks = new HashMap<>();
 
-    public Recipient()
-    {
+    public Recipient() {
 
     }
 
-    public Recipient(@NonNull String email)
-    {
+    public Recipient(@NonNull String email) {
         this.email = email;
     }
 
-    public Recipient(@NonNull String firstName, @NonNull String lastName, @NonNull String email)
-    {
+    public Recipient(@NonNull String firstName, @NonNull String lastName, @NonNull String email) {
         this.firstName = firstName;
         this.lastName = lastName;
         this.email = email;
     }
 
-    public Recipient(@NonNull String firstName, @NonNull String lastName, @NonNull String email, @NonNull String id)
-    {
+    public Recipient(@NonNull String firstName, @NonNull String lastName, @NonNull String email, @NonNull String id) {
         this.firstName = firstName;
         this.lastName = lastName;
         this.email = email;
@@ -55,8 +50,7 @@ public class Recipient implements BasicUser, CheckValidity
     }
 
     public Recipient(@NonNull String firstName, @NonNull String lastName, @NonNull String email, @NonNull String currentStatus,
-                     String url, int shortId, String dateExited)
-    {
+                     String url, int shortId, String dateExited) {
         this.firstName = firstName;
         this.lastName = lastName;
         this.email = email;
@@ -66,8 +60,7 @@ public class Recipient implements BasicUser, CheckValidity
         this.dateExited = dateExited;
     }
 
-    public boolean isValid()
-    {
+    public boolean isValid() {
         return (!email.isEmpty());
     }
 

@@ -1,5 +1,9 @@
 package org.broadinstitute.dsm.route;
 
+import java.io.IOException;
+import java.util.Optional;
+import javax.servlet.http.HttpServletResponse;
+
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.apache.commons.lang3.StringUtils;
@@ -16,17 +20,11 @@ import spark.QueryParamsMap;
 import spark.Request;
 import spark.Response;
 
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.util.Optional;
-
 public class DownloadPDFRoute extends RequestHandler {
-
-    private static final Logger logger = LoggerFactory.getLogger(DownloadPDFRoute.class);
 
     public static final String PDF = "/pdf";
     public static final String BUNDLE = "/bundle";
-
+    private static final Logger logger = LoggerFactory.getLogger(DownloadPDFRoute.class);
     private final String PDF_ROLE = "pdf_download";
 
     @Override
@@ -51,7 +49,7 @@ public class DownloadPDFRoute extends RequestHandler {
                 }
                 JsonObject jsonObject = new JsonParser().parse(requestBody).getAsJsonObject();
                 String tempUserIdR = jsonObject.get(RequestParameter.USER_ID).getAsString();
-                Long userIdRequest = Long.parseLong((String) tempUserIdR);
+                Long userIdRequest = Long.parseLong(tempUserIdR);
                 DownloadPDF downloadPDFRequest = new DownloadPDF(requestBody);
                 Optional<byte[]> pdfBytes = downloadPDFRequest.getPDFs(userIdRequest, realm, requestBody);
                 pdfBytes.ifPresent(pdfBytesArray -> {
@@ -61,14 +59,12 @@ public class DownloadPDFRoute extends RequestHandler {
                         rawResponse.setStatus(200);
                         rawResponse.getOutputStream().flush();
                         rawResponse.getOutputStream().close();
-                    }
-                    catch (IOException e) {
+                    } catch (IOException e) {
                         throw new RuntimeException("Couldn't make pdf of ddpInstance " + queryParams.get(RoutePath.REALM).value(), e);
                     }
                 });
                 return null;
-            }
-            else {
+            } else {
                 String ddpParticipantId = null;
                 if (queryParams.value(RequestParameter.DDP_PARTICIPANT_ID) != null) {
                     ddpParticipantId = queryParams.get(RequestParameter.DDP_PARTICIPANT_ID).value();

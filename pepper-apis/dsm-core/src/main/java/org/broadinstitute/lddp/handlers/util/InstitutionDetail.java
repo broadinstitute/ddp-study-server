@@ -1,14 +1,13 @@
 package org.broadinstitute.lddp.handlers.util;
 
 public class InstitutionDetail extends Institution {
-    public InstitutionDetail() {
-    }
-
     private String physician;
     private String institution;
     private String streetAddress;
     private String city;
     private String state;
+    public InstitutionDetail() {
+    }
 
     public InstitutionDetail(String id, String physician, String institution, String city, String state, String type) {
         super(id, type);

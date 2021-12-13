@@ -1,5 +1,11 @@
 package org.broadinstitute.dsm.util.tools;
 
+import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
+
+import java.io.File;
+import java.util.List;
+import java.util.Map;
+
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import lombok.NonNull;
@@ -11,17 +17,10 @@ import org.broadinstitute.dsm.util.tools.util.FileUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
-import java.util.List;
-import java.util.Map;
-
-import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
-
 public class UpdateReceivedDateTool {
 
-    private static final Logger logger = LoggerFactory.getLogger(UpdateReceivedDateTool.class);
-
     public static final String SELECT_KIT_RECEIVED_QUERY = "select receive_date from ddp_kit where kit_label = ?";
+    private static final Logger logger = LoggerFactory.getLogger(UpdateReceivedDateTool.class);
     private static final String SET_KIT_RECEIVED_QUERY = "update ddp_kit set receive_date = ? where kit_label = ?";
 
     private static Config cfg;
@@ -49,13 +48,11 @@ public class UpdateReceivedDateTool {
 
                 String migrationFile = "receivedUpdate.txt";
                 update(migrationFile);
-            }
-            else {
+            } else {
                 setup(propFile);
                 update(testJson);
             }
-        }
-        catch (Exception ex) {
+        } catch (Exception ex) {
             logger.error("Failed to migrate data ", ex);
             System.exit(-1);
         }
@@ -89,14 +86,12 @@ public class UpdateReceivedDateTool {
                     if (StringUtils.isNotBlank(smId) && StringUtils.isNotBlank(receivedDateString)) {
                         if (StringUtils.isBlank(receiveDate)) {
                             DBUtil.setToReceived(conn, SET_KIT_RECEIVED_QUERY, smId, DBUtil.getLong(receivedDateString));
-                        }
-                        else {
+                        } else {
                             logger.warn("Kit w/ SM-ID " + smId + " had already a receive_date");
                         }
                     }
                 }
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                 throw new RuntimeException(" insertIntoDB ", e);
             }
             return null;

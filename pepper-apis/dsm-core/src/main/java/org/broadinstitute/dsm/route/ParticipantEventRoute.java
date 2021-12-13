@@ -3,13 +3,13 @@ package org.broadinstitute.dsm.route;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.lddp.handlers.util.Result;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.ParticipantEvent;
 import org.broadinstitute.dsm.security.RequestHandler;
 import org.broadinstitute.dsm.statics.RequestParameter;
 import org.broadinstitute.dsm.statics.UserErrorMessages;
 import org.broadinstitute.dsm.util.UserUtil;
+import org.broadinstitute.lddp.handlers.util.Result;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import spark.Request;
@@ -26,8 +26,7 @@ public class ParticipantEventRoute extends RequestHandler {
         if (StringUtils.isNotBlank(realm)) {
             if (UserUtil.checkUserAccess(realm, userId, "participant_event", null)) {
                 return ParticipantEvent.getSkippedParticipantEvents(realm);
-            }
-            else {
+            } else {
                 response.status(500);
                 return new Result(500, UserErrorMessages.NO_RIGHTS);
             }
@@ -46,8 +45,7 @@ public class ParticipantEventRoute extends RequestHandler {
 
                 ParticipantEvent.skipParticipantEvent(ddpParticipantId, currentTime, userIdRequest, instance, eventType);
                 return new Result(200);
-            }
-            else {
+            } else {
                 response.status(500);
                 return new Result(500, UserErrorMessages.NO_RIGHTS);
             }

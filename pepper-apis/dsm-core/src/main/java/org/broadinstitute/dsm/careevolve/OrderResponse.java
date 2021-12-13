@@ -6,7 +6,7 @@ import org.apache.commons.lang3.StringUtils;
 public class OrderResponse {
 
     @SerializedName("hl7AcknowledgementMessage")
-    private  String hl7Ack;
+    private String hl7Ack;
 
     @SerializedName("handle")
     private String handle;

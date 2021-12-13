@@ -1,11 +1,6 @@
 package org.broadinstitute.dsm.db;
 
-import lombok.Data;
-import lombok.NonNull;
-import org.broadinstitute.lddp.db.SimpleResult;
-import org.broadinstitute.dsm.statics.DBConstants;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -13,7 +8,12 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
+import lombok.Data;
+import lombok.NonNull;
+import org.broadinstitute.dsm.statics.DBConstants;
+import org.broadinstitute.lddp.db.SimpleResult;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Data
 public class EditParticipantMessage {
@@ -22,37 +22,37 @@ public class EditParticipantMessage {
 
     private static final String SQL_SELECT_MESSAGE_AND_STATUS =
             "SELECT " +
-                "message_id, message_status, received_message " +
-            "FROM " +
-                "message " +
-            "WHERE " +
-                "user_id = ? " +
-            "ORDER BY published_at DESC " +
-            "LIMIT 1";
+                    "message_id, message_status, received_message " +
+                    "FROM " +
+                    "message " +
+                    "WHERE " +
+                    "user_id = ? " +
+                    "ORDER BY published_at DESC " +
+                    "LIMIT 1";
 
     private static final String SQL_INSERT_MESSAGE =
             "INSERT INTO " +
                     "message " +
                     "(user_id, message_status, published_at) " +
-            "VALUES " +
+                    "VALUES " +
                     "(?, ?, ?)";
 
     private static final String SQL_UPDATE_MESSAGE =
             "UPDATE " +
                     "message " +
-            "SET " +
+                    "SET " +
                     "message_status = ?, received_message = ?, received_at = ? " +
-            "WHERE " +
+                    "WHERE " +
                     "user_id = ? " +
-            "ORDER BY published_at DESC " +
-            "LIMIT 1";
+                    "ORDER BY published_at DESC " +
+                    "LIMIT 1";
 
     private static final String SQL_UPDATE_MESSAGE_STATUS =
             "UPDATE " +
                     "message " +
-            "SET " +
+                    "SET " +
                     "message_status = ? " +
-            "WHERE " +
+                    "WHERE " +
                     "message_id = ? ";
 
     private int messageId;
@@ -88,8 +88,7 @@ public class EditParticipantMessage {
                                 rs.getString(DBConstants.RECEIVED_MESSAGE)));
                     }
                 }
-            }
-            catch (SQLException ex) {
+            } catch (SQLException ex) {
                 dbVals.resultException = ex;
             }
             if (messagesWithStatus.size() != 1) {
@@ -115,12 +114,10 @@ public class EditParticipantMessage {
                 int result = stmt.executeUpdate();
                 if (result == 1) {
                     logger.info("Added new message ");
-                }
-                else {
+                } else {
                     throw new RuntimeException("Error adding new message, it was updating " + result + " rows");
                 }
-            }
-            catch (SQLException ex) {
+            } catch (SQLException ex) {
                 dbVals.resultException = ex;
             }
             return dbVals;
@@ -131,7 +128,8 @@ public class EditParticipantMessage {
         }
     }
 
-    public static void updateMessage(@NonNull int userId, @NonNull String messageStatus, @NonNull String message, @NonNull long received_at) {
+    public static void updateMessage(@NonNull int userId, @NonNull String messageStatus, @NonNull String message,
+                                     @NonNull long received_at) {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(SQL_UPDATE_MESSAGE)) {
@@ -143,12 +141,11 @@ public class EditParticipantMessage {
                 int result = stmt.executeUpdate();
                 if (result == 1) {
                     logger.info("Updating message status of user with id: " + userId);
+                } else {
+                    throw new RuntimeException("Error updating message status of user with " + userId + ". it was updating " + result +
+                            " rows");
                 }
-                else {
-                    throw new RuntimeException("Error updating message status of user with " + userId + ". it was updating " + result + " rows");
-                }
-            }
-            catch (SQLException ex) {
+            } catch (SQLException ex) {
                 dbVals.resultException = ex;
             }
             return dbVals;
@@ -168,12 +165,10 @@ public class EditParticipantMessage {
                 int result = stmt.executeUpdate();
                 if (result == 1) {
                     logger.info("Updating status of message by id: " + messageId);
-                }
-                else {
+                } else {
                     throw new RuntimeException("Error updating status of message with id: " + messageId + ". it was updating " + result + " rows");
                 }
-            }
-            catch (SQLException ex) {
+            } catch (SQLException ex) {
                 dbVals.resultException = ex;
             }
             return dbVals;

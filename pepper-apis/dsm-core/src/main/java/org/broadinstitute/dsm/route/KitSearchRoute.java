@@ -1,19 +1,19 @@
 package org.broadinstitute.dsm.route;
 
+import java.util.Arrays;
+import java.util.List;
+
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.lddp.handlers.util.Result;
 import org.broadinstitute.dsm.db.KitRequestShipping;
 import org.broadinstitute.dsm.model.at.SearchKitRequest;
 import org.broadinstitute.dsm.security.RequestHandler;
 import org.broadinstitute.dsm.statics.RoutePath;
 import org.broadinstitute.dsm.statics.UserErrorMessages;
 import org.broadinstitute.dsm.util.UserUtil;
+import org.broadinstitute.lddp.handlers.util.Result;
 import spark.QueryParamsMap;
 import spark.Request;
 import spark.Response;
-
-import java.util.Arrays;
-import java.util.List;
 
 public class KitSearchRoute extends RequestHandler {
 
@@ -23,7 +23,8 @@ public class KitSearchRoute extends RequestHandler {
     @Override
     public Object processRequest(Request request, Response response, String userId) throws Exception {
         String userIdRequest = UserUtil.getUserId(request);
-        if (UserUtil.checkUserAccess(null, userId, "kit_shipping", userIdRequest) || UserUtil.checkUserAccess(null, userId, "kit_shipping_view", userIdRequest)) {
+        if (UserUtil.checkUserAccess(null, userId, "kit_shipping", userIdRequest) || UserUtil.checkUserAccess(null, userId,
+                "kit_shipping_view", userIdRequest)) {
             QueryParamsMap queryParams = request.queryMap();
             String field = null;
             if (queryParams.value(SEARCH_FIELD) != null) {
@@ -45,8 +46,7 @@ public class KitSearchRoute extends RequestHandler {
                 kitRequestShipping.addAll(SearchKitRequest.findATKitRequest(field, value));
             }
             return kitRequestShipping;
-        }
-        else {
+        } else {
             response.status(500);
             return new Result(500, UserErrorMessages.NO_RIGHTS);
         }

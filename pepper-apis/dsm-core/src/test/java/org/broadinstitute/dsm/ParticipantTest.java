@@ -1,12 +1,12 @@
 package org.broadinstitute.dsm;
 
+import java.util.List;
+
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDataDto;
 import org.broadinstitute.dsm.util.ParticipantUtil;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-
-import java.util.List;
 
 public class ParticipantTest {
 
@@ -20,7 +20,8 @@ public class ParticipantTest {
                         .withDdpParticipantId("testId")
                         .withDdpInstanceId(19)
                         .withFieldTypeId("testFieldType")
-                        .withData("{\"DATSTAT_ALTPID\":\"testId\", \"COLLABORATOR_PARTICIPANT_ID\":\"id1\", \"DATSTAT_ALTEMAIL\":\"email\"}")
+                        .withData("{\"DATSTAT_ALTPID\":\"testId\", \"COLLABORATOR_PARTICIPANT_ID\":\"id1\", "
+                                + "\"DATSTAT_ALTEMAIL\":\"email\"}")
                         .withLastChanged(0)
                         .withChangedBy(null)
                         .build(),

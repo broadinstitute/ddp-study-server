@@ -1,14 +1,14 @@
 package org.broadinstitute.dsm.model.rgp;
 
+import static org.broadinstitute.dsm.TestHelper.setupDB;
+
+import java.util.Map;
+
 import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
-
-import java.util.Map;
-
-import static org.broadinstitute.dsm.TestHelper.setupDB;
 
 public class AutomaticProbandDataCreatorTest {
 

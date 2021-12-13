@@ -23,7 +23,8 @@ public class ParticipantMedicalRecordToolTest extends TestHelper {
         //TODO DSM add back in
 //        TransactionWrapper.reset(TestUtil.UNIT_TEST);
 //        TransactionWrapper.reset(TestUtil.UNIT_TEST, DBConstants.EEL_DB_NAME);
-        ParticipantMedicalRecordTool.argumentsForTesting("config/test-config.conf", TEST_DDP, "/Users/simone/IdeaProjects/ddp-dsm/src/test/resources/AllFieldsDatStat.txt");
+        ParticipantMedicalRecordTool.argumentsForTesting("config/test-config.conf", TEST_DDP, "/Users/simone/IdeaProjects/ddp-dsm/src"
+                + "/test/resources/AllFieldsDatStat.txt");
         ParticipantMedicalRecordTool.littleMain();
     }
 }

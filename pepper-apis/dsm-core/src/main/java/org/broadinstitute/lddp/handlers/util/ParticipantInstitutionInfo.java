@@ -4,11 +4,7 @@ import lombok.Data;
 import org.broadinstitute.lddp.util.DeliveryAddress;
 
 @Data
-public class ParticipantInstitutionInfo extends ParticipantInstitutionList
-{
-    public ParticipantInstitutionInfo() {
-    }
-
+public class ParticipantInstitutionInfo extends ParticipantInstitutionList {
     private String firstName;
     private String lastName;
     private String shortId;
@@ -18,4 +14,6 @@ public class ParticipantInstitutionInfo extends ParticipantInstitutionList
     private String surveyFirstCompleted;
     private int addressValid;
     private DeliveryAddress address;
+    public ParticipantInstitutionInfo() {
+    }
 }

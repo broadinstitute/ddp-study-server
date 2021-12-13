@@ -1,22 +1,17 @@
 package org.broadinstitute.dsm.files;
 
-import org.broadinstitute.lddp.exception.FileProcessingException;
-import org.broadinstitute.dsm.db.InstanceSettings;
-import org.broadinstitute.dsm.db.dto.settings.InstanceSettingsDto;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.ByteArrayInputStream;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.broadinstitute.dsm.db.InstanceSettings;
+import org.broadinstitute.dsm.db.dto.settings.InstanceSettingsDto;
+import org.broadinstitute.lddp.exception.FileProcessingException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class CoverPDFProcessor extends PDFProcessor {
-    private static final Logger logger = LoggerFactory.getLogger(CoverPDFProcessor.class);
-
-    private static final String GENERATED_COVER_FILENAME = "cover.pdf";
-    private static final String TEMPLATE_COVER_FILENAME = "%1-MR-Request-Template.pdf";
-
     // Fields which are needed for cover pdf
     public static final String FIELD_CONFIRMED_INSTITUTION_NAME = "confirmedInstitutionName";
     public static final String FIELD_CONFIRMED_INSTITUTION_NAME_2 = "confirmedInstitutionName_page2";
@@ -27,10 +22,11 @@ public class CoverPDFProcessor extends PDFProcessor {
     public static final String FIELD_DATE_OF_BIRTH = "dob";
     public static final String FIELD_DATE_OF_DIAGNOSIS = "dateOfDiagnosis";
     public static final String START_DATE_2 = "start_page2";
-
     public static final String USER_NAME = "username";
     public static final String USER_PHONE = "userPhone";
-
+    private static final Logger logger = LoggerFactory.getLogger(CoverPDFProcessor.class);
+    private static final String GENERATED_COVER_FILENAME = "cover.pdf";
+    private static final String TEMPLATE_COVER_FILENAME = "%1-MR-Request-Template.pdf";
     private String ddp;
 
     public CoverPDFProcessor(String ddp) {
@@ -64,8 +60,7 @@ public class CoverPDFProcessor extends PDFProcessor {
 
             byte[] bytes = PDFProcessor.getTemplateFromGoogleBucket(TEMPLATE_COVER_FILENAME.replace("%1", ddp));
             inputStream = generateStreamFromPdfForm(fields, bytes);
-        }
-        catch (Exception ex) {
+        } catch (Exception ex) {
             throw new FileProcessingException("COVER PDF - Unable to generate consent stream.", ex);
         }
 

@@ -1,19 +1,18 @@
 package org.broadinstitute.dsm.model.elastic.export.generate;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.broadinstitute.dsm.model.elastic.export.parse.Parser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
-import java.util.Map;
-
 public class MappingGenerator extends BaseGenerator {
-
-    private static final Logger logger = LoggerFactory.getLogger(MappingGenerator.class);
 
     public static final String TYPE = "type";
     public static final String NESTED = "nested";
     public static final String TYPE_KEYWORD = "keyword";
+    private static final Logger logger = LoggerFactory.getLogger(MappingGenerator.class);
 
     public MappingGenerator(Parser parser, GeneratorPayload generatorPayload) {
         super(parser, generatorPayload);
@@ -39,7 +38,7 @@ public class MappingGenerator extends BaseGenerator {
     protected Map<String, Object> parseJson() {
         Map<String, Object> resultMap = new HashMap<>();
         Map<String, Object> fieldsByValues = parseJsonToMapFromValue();
-        for (Map.Entry<String, Object> entry: fieldsByValues.entrySet()) {
+        for (Map.Entry<String, Object> entry : fieldsByValues.entrySet()) {
             Object eachType = parser.parse(String.valueOf(entry.getValue()));
             resultMap.put(entry.getKey(), eachType);
         }

@@ -4,13 +4,13 @@ import javax.xml.bind.annotation.XmlElement;
 
 public class ShippingInfo {
 
-    @XmlElement(name="Account")
+    @XmlElement(name = "Account")
     private String account;
 
-    @XmlElement(name="ShipMethod")
+    @XmlElement(name = "ShipMethod")
     private String shipMethod;
 
-    @XmlElement(name="Address")
+    @XmlElement(name = "Address")
     private Address address;
 
     public ShippingInfo() {

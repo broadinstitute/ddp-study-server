@@ -1,5 +1,9 @@
 package org.broadinstitute.dsm.route;
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+
 import com.typesafe.config.Config;
 import org.broadinstitute.dsm.TestHelper;
 import org.broadinstitute.dsm.exception.FileColumnMissing;
@@ -13,10 +17,6 @@ import org.broadinstitute.dsm.util.SystemUtil;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
-
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
 
 public class KitUploadRouteTest {
 
@@ -39,8 +39,7 @@ public class KitUploadRouteTest {
                 "56\tSun\tMaid\t415 Main St\t\tCambridge\tMA\t2142\tUS";
         try {
             route.isFileValid(fileContent, null);
-        }
-        catch (FileColumnMissing e) {
+        } catch (FileColumnMissing e) {
             Assert.assertTrue(e.getMessage().endsWith("shortId"));
         }
     }
@@ -52,8 +51,7 @@ public class KitUploadRouteTest {
                 "56\tMaid\t415 Main St\t\tCambridge\tMA\t2142\tUS";
         try {
             route.isFileValid(fileContent, null);
-        }
-        catch (FileColumnMissing e) {
+        } catch (FileColumnMissing e) {
             Assert.assertTrue(e.getMessage().endsWith("firstName or signature"));
         }
     }
@@ -64,8 +62,7 @@ public class KitUploadRouteTest {
                 "56\t415 Main St\t\tCambridge\tMA\t2142\tUS";
         try {
             route.isFileValid(fileContent, "testrealm");
-        }
-        catch (UploadLineException e) {
+        } catch (UploadLineException e) {
             Assert.assertTrue(e.getMessage().endsWith("Error in line 2"));
         }
     }
@@ -90,7 +87,8 @@ public class KitUploadRouteTest {
         ElasticSearchParticipantDto elasticSearchParticipantDto = new ElasticSearchParticipantDto.Builder()
                 .withProfile(esProfile)
                 .build();
-        Assert.assertNotEquals("", route.checkKitUploadNameMatchesToEsName(participantFirstNameFromDoc, participantLastNameFromDoc, elasticSearchParticipantDto));
+        Assert.assertNotEquals("", route.checkKitUploadNameMatchesToEsName(participantFirstNameFromDoc, participantLastNameFromDoc,
+                elasticSearchParticipantDto));
     }
 
     @Test
@@ -107,7 +105,8 @@ public class KitUploadRouteTest {
         String participantLastNameFromDoc = participantDataAsMap.get("lastName");
 
         ElasticSearchParticipantDto elasticSearchParticipantDto = new ElasticSearchParticipantDto.Builder().build();
-        Assert.assertNotEquals("", route.checkKitUploadNameMatchesToEsName(participantFirstNameFromDoc, participantLastNameFromDoc, elasticSearchParticipantDto));
+        Assert.assertNotEquals("", route.checkKitUploadNameMatchesToEsName(participantFirstNameFromDoc, participantLastNameFromDoc,
+                elasticSearchParticipantDto));
     }
 
     private ParticipantWrapperDto participantFactory(String firstName, String lastName, String shortId) {

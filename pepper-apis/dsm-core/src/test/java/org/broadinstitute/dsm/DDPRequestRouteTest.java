@@ -1,16 +1,8 @@
 package org.broadinstitute.dsm;
 
-import org.broadinstitute.lddp.db.SimpleResult;
-import org.broadinstitute.dsm.db.DDPInstance;
-import org.broadinstitute.dsm.db.KitRequestShipping;
-import org.broadinstitute.dsm.route.KitRequestRoute;
-import org.broadinstitute.dsm.statics.DBConstants;
-import org.broadinstitute.dsm.statics.QueryExtension;
-import org.broadinstitute.dsm.util.DBTestUtil;
-import org.broadinstitute.dsm.util.TestUtil;
-import org.junit.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
+import static org.mockserver.model.HttpRequest.request;
+import static org.mockserver.model.HttpResponse.response;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -19,20 +11,29 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
-import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
-import static org.mockserver.model.HttpRequest.request;
-import static org.mockserver.model.HttpResponse.response;
+import org.broadinstitute.dsm.db.DDPInstance;
+import org.broadinstitute.dsm.db.KitRequestShipping;
+import org.broadinstitute.dsm.route.KitRequestRoute;
+import org.broadinstitute.dsm.statics.DBConstants;
+import org.broadinstitute.dsm.statics.QueryExtension;
+import org.broadinstitute.dsm.util.DBTestUtil;
+import org.broadinstitute.dsm.util.TestUtil;
+import org.broadinstitute.lddp.db.SimpleResult;
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class DDPRequestRouteTest extends TestHelper {
 
     private static final Logger logger = LoggerFactory.getLogger(DDPRequestRouteTest.class);
-
-    private List<String> kitRequests;
-
-    private boolean addedDefaultKitRequest = false;
-
     private final String test_participant_id = "FAKE_PARTICIPANT";
-
+    private List<String> kitRequests;
+    private boolean addedDefaultKitRequest = false;
     private int counter = 0;
 
     private List<KitRequestShipping> kitRequestTestList;
@@ -57,7 +58,9 @@ public class DDPRequestRouteTest extends TestHelper {
     public void checkForParticipant() throws Exception {
         kitRequests = new ArrayList<>();
         inTransaction((conn) -> {
-            try (PreparedStatement stmt = conn.prepareStatement(KitRequestShipping.SQL_SELECT_KIT_REQUEST.concat(QueryExtension.BY_REALM_AND_TYPE).concat(" and not (kit.kit_complete <=> 1) and not (kit.error <=> 1) and label_date is null"))) {
+            try (PreparedStatement stmt =
+                         conn.prepareStatement(KitRequestShipping.SQL_SELECT_KIT_REQUEST.concat(QueryExtension.BY_REALM_AND_TYPE).concat(
+                                 " and not (kit.kit_complete <=> 1) and not (kit.error <=> 1) and label_date is null"))) {
                 stmt.setString(1, TEST_DDP);
                 stmt.setString(2, "SALIVA");
                 try (ResultSet rs = stmt.executeQuery()) {
@@ -65,8 +68,7 @@ public class DDPRequestRouteTest extends TestHelper {
                         kitRequests.add(rs.getString(DBConstants.DDP_PARTICIPANT_ID));
                     }
                 }
-            }
-            catch (SQLException e) {
+            } catch (SQLException e) {
                 throw new RuntimeException("checkForParticipant ", e);
             }
             return null;
@@ -91,8 +93,7 @@ public class DDPRequestRouteTest extends TestHelper {
                     stmt.setLong(9, System.currentTimeMillis());
                     stmt.setObject(10, null);
                     dbVals.resultValue = stmt.executeUpdate();
-                }
-                catch (SQLException e) {
+                } catch (SQLException e) {
                     dbVals.resultException = e;
                 }
                 return dbVals;
@@ -106,25 +107,30 @@ public class DDPRequestRouteTest extends TestHelper {
                     response().withStatusCode(200).withBody(message.replaceAll("%1", test_participant_id).replaceAll("%2", ""))
             );
             kitRequestTestList.add(new KitRequestShipping(test_participant_id, "TestProject_2", null, "FAKE_DSM_LABEL_UID", TEST_DDP,
-                    "SALIVA", "1", "1", "https://easypost-files.s3-us-west-2.amazonaws.com/files/postage_label/20200214/8240f1b66535494a82b1ec0d566c3f0f.png",
-                    "", "794685038506", "9405536897846100551129", "https://track.easypost.com/djE6dHJrXzY4NGJmYzU3ZjM5OTQ1Zjg5MjEzOGRmMWVmMjI1NWZl",
+                    "SALIVA", "1", "1", "https://easypost-files.s3-us-west-2.amazonaws"
+                    + ".com/files/postage_label/20200214/8240f1b66535494a82b1ec0d566c3f0f.png",
+                    "", "794685038506", "9405536897846100551129", "https://track.easypost"
+                    + ".com/djE6dHJrXzY4NGJmYzU3ZjM5OTQ1Zjg5MjEzOGRmMWVmMjI1NWZl",
                     null, 12, false, "", 12, null, 12, "so what", "mf_testLabel", false, "shp_f470591c3fb441a68dbb9b76ecf3bb3d",
                     12, null, "44445", false, "NOT FOUND", null, null, null, null, 0, false, "STANDALONE", null, null, null));
             addedDefaultKitRequest = true;
             counter = 1;
-        }
-        else {
+        } else {
             // fill mockAngio with requests
             for (String participant_id : kitRequests) {
                 logger.info(message.replaceAll("%1", participant_id).replaceAll("%2", Integer.toString(counter)));
                 mockDDP.when(request().withPath("/ddp/participants/" + participant_id)).respond(
-                        response().withStatusCode(200).withBody(message.replaceAll("%1", participant_id).replaceAll("%2", Integer.toString(counter)))
+                        response().withStatusCode(200).withBody(message.replaceAll("%1", participant_id).replaceAll("%2",
+                                Integer.toString(counter)))
                 );
-                kitRequestTestList.add(new KitRequestShipping(participant_id, "TestProject_2", null, "FAKE_DSM_LABEL_UID" + counter, TEST_DDP,
-                        "SALIVA", "1", "1", "https://easypost-files.s3-us-west-2.amazonaws.com/files/postage_label/20200214/8240f1b66535494a82b1ec0d566c3f0f.png",
-                        "", "794685038506", "9405536897846100551129", "https://track.easypost.com/djE6dHJrXzY4NGJmYzU3ZjM5OTQ1Zjg5MjEzOGRmMWVmMjI1NWZl",
+                kitRequestTestList.add(new KitRequestShipping(participant_id, "TestProject_2", null, "FAKE_DSM_LABEL_UID" + counter,
+                        TEST_DDP,
+                        "SALIVA", "1", "1", "https://easypost-files.s3-us-west-2.amazonaws"
+                        + ".com/files/postage_label/20200214/8240f1b66535494a82b1ec0d566c3f0f.png",
+                        "", "794685038506", "9405536897846100551129", "https://track.easypost"
+                        + ".com/djE6dHJrXzY4NGJmYzU3ZjM5OTQ1Zjg5MjEzOGRmMWVmMjI1NWZl",
                         null, 12, false, "", 12, null, 12, "so what", "mf_testLabel", false, "shp_f470591c3fb441a68dbb9b76ecf3bb3d",
-                        12, null, "44445", false, "NOT FOUND", null, null, null, null, 0 ,false, null, null, null, null));
+                        12, null, "44445", false, "NOT FOUND", null, null, null, null, 0, false, null, null, null, null));
                 counter++;
             }
         }
@@ -136,7 +142,8 @@ public class DDPRequestRouteTest extends TestHelper {
         try {
             KitRequestRoute route = new KitRequestRoute();
             inTransaction((conn) -> {
-                try (PreparedStatement stmt = conn.prepareStatement(DDPInstance.SQL_SELECT_ALL_ACTIVE_REALMS + QueryExtension.BY_INSTANCE_NAME)) {
+                try (PreparedStatement stmt =
+                             conn.prepareStatement(DDPInstance.SQL_SELECT_ALL_ACTIVE_REALMS + QueryExtension.BY_INSTANCE_NAME)) {
                     stmt.setString(1, realm);
                     try (ResultSet rs = stmt.executeQuery()) {
                         if (rs.next()) {
@@ -158,14 +165,12 @@ public class DDPRequestRouteTest extends TestHelper {
                             }
                         }
                     }
-                }
-                catch (SQLException e) {
+                } catch (SQLException e) {
                     throw new RuntimeException("test_readKitRequest ", e);
                 }
                 return null;
             });
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             logger.error("Starting up the blindTrustEverythingExecutor");
         }
     }

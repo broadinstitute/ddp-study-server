@@ -19,13 +19,13 @@ public class Util {
             "r", new BaseGenerator.PropertyInfo(ESObjectConstants.PARTICIPANT_RECORD, false),
             "p", new BaseGenerator.PropertyInfo(ESObjectConstants.PARTICIPANT, false),
             "o", new BaseGenerator.PropertyInfo(ESObjectConstants.ONC_HISTORY, false)
-            );
+    );
 
     public static String getQueryTypeFromId(String id) {
         String type;
         if (ParticipantUtil.isHruid(id)) {
             type = Constants.PROFILE_HRUID;
-        } else if (ParticipantUtil.isGuid(id)){
+        } else if (ParticipantUtil.isGuid(id)) {
             type = Constants.PROFILE_GUID;
         } else if (ParticipantUtil.isLegacyAltPid(id)) {
             type = Constants.PROFILE_LEGACYALTPID;

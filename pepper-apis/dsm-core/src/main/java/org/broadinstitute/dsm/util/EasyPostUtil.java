@@ -1,8 +1,19 @@
 package org.broadinstitute.dsm.util;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import com.easypost.EasyPost;
 import com.easypost.exception.EasyPostException;
-import com.easypost.model.*;
+import com.easypost.model.Address;
+import com.easypost.model.CustomsInfo;
+import com.easypost.model.CustomsItem;
+import com.easypost.model.Parcel;
+import com.easypost.model.Rate;
+import com.easypost.model.Shipment;
+import com.easypost.model.ShipmentMessage;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import lombok.NonNull;
@@ -15,15 +26,10 @@ import org.broadinstitute.dsm.model.ddp.DDPParticipant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 public class EasyPostUtil {
 
     private static final Logger logger = LoggerFactory.getLogger(EasyPostUtil.class);
-
+    public final String printCustom1Key = "print_custom_1";
     //easypost fields
     private final String toAddressKey = "to_address";
     private final String fromAddressKey = "from_address";
@@ -33,7 +39,6 @@ public class EasyPostUtil {
     private final String labelFormat = "PNG";
     private final String labelSizeKey = "label_size";
     private final String labelSize = "4x6";
-    public final String printCustom1Key = "print_custom_1";
     private final String customsInfoKey = "customs_info";
 
     private final String name = "name";
@@ -71,8 +76,7 @@ public class EasyPostUtil {
         if (StringUtils.isNotBlank(apiKey)) {
             EasyPost.apiKey = apiKey;
             logger.info("Setup of EasyPost api key");
-        }
-        else {
+        } else {
             throw new RuntimeException("No EasyPost api key was found");
         }
     }
@@ -81,13 +85,31 @@ public class EasyPostUtil {
         if (StringUtils.isNotBlank(apiKey)) {
             EasyPost.apiKey = apiKey;
             logger.info("Setup of EasyPost api key");
-        }
-        else {
+        } else {
             throw new RuntimeException("No EasyPost api key was found");
         }
     }
 
-    public Shipment buyShipment(@NonNull String carrier, String carrierId, String service, @NonNull Address toAddress, @NonNull Address fromAddress,
+    public static EasypostLabelRate getExpressRate(@NonNull String shipmentId, @NonNull String apiKey,
+                                                   @NonNull String carrier, @NonNull String service) throws EasyPostException {
+        Shipment shipment = Shipment.retrieve(shipmentId, apiKey);
+        String express = null;
+        String normal = null;
+        for (Rate availableRate : shipment.getRates()) {
+            if ("FedEx".equals(availableRate.getCarrier()) && "FIRST_OVERNIGHT".equals(availableRate.getService())) {
+                express = String.valueOf(availableRate.getRate());
+                logger.debug("Express rate is available. Carrier: " + availableRate.getCarrier() + ", service: " + availableRate.getService() + " " + availableRate.getRate());
+            }
+            if (carrier.equals(availableRate.getCarrier()) && service.equals(availableRate.getService())) {
+                normal = String.valueOf(availableRate.getRate());
+                logger.debug("Normal label was Carrier: " + availableRate.getCarrier() + ", service: " + availableRate.getService() + " " + availableRate.getRate());
+            }
+        }
+        return new EasypostLabelRate(express, normal);
+    }
+
+    public Shipment buyShipment(@NonNull String carrier, String carrierId, String service, @NonNull Address toAddress,
+                                @NonNull Address fromAddress,
                                 @NonNull Parcel parcel, String billingReference, CustomsInfo customsInfo) throws EasyPostException {
         if (StringUtils.isEmpty(carrier)) {
             logger.error("Carrier and service needs to be set");
@@ -134,14 +156,13 @@ public class EasyPostUtil {
             Rate rate = null;
             for (Rate availableRate : shipment.getRates()) {
                 if (StringUtils.isBlank(service) && carrier.equals(availableRate.getCarrier())) {
-                    if (rate == null ) {
+                    if (rate == null) {
                         rate = availableRate;
                     }
                     if (availableRate.getRate() < rate.getRate()) {
                         rate = availableRate;
                     }
-                }
-                else if (carrier.equals(availableRate.getCarrier()) && service.equals(availableRate.getService())) {
+                } else if (carrier.equals(availableRate.getCarrier()) && service.equals(availableRate.getService())) {
                     rate = availableRate;
                     logger.debug("Requested rate is available. Carrier: " + availableRate.getCarrier() + ", service: " + availableRate.getService() + " " + availableRate.getRate());
                 }
@@ -150,12 +171,10 @@ public class EasyPostUtil {
                 logger.info("Going to buy shipment with rate " + rate.getService());
                 shipment.buy(rate);
                 return shipment;
-            }
-            else {
+            } else {
                 throw new RateNotAvailableException(carrier + " " + service + " not available");
             }
-        }
-        catch (EasyPostException e) {
+        } catch (EasyPostException e) {
             logger.warn(e.getMessage());
             throw new RuntimeException("Error buying easypost shipment", e);
         }
@@ -251,23 +270,5 @@ public class EasyPostUtil {
 
     public Shipment getShipment(String shipmentId) throws EasyPostException {
         return Shipment.retrieve(shipmentId);
-    }
-
-    public static EasypostLabelRate getExpressRate(@NonNull String shipmentId, @NonNull String apiKey,
-                                                   @NonNull String carrier, @NonNull String service) throws EasyPostException {
-        Shipment shipment = Shipment.retrieve(shipmentId, apiKey);
-        String express = null;
-        String normal = null;
-        for (Rate availableRate : shipment.getRates()) {
-            if ("FedEx".equals(availableRate.getCarrier()) && "FIRST_OVERNIGHT".equals(availableRate.getService())) {
-                express = String.valueOf(availableRate.getRate());
-                logger.debug("Express rate is available. Carrier: " + availableRate.getCarrier() + ", service: " + availableRate.getService() + " " + availableRate.getRate());
-            }
-            if (carrier.equals(availableRate.getCarrier()) && service.equals(availableRate.getService())) {
-                normal = String.valueOf(availableRate.getRate());
-                logger.debug("Normal label was Carrier: " + availableRate.getCarrier() + ", service: " + availableRate.getService() + " " + availableRate.getRate());
-            }
-        }
-        return new EasypostLabelRate(express, normal);
     }
 }

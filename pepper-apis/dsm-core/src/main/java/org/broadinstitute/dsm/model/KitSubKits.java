@@ -1,11 +1,6 @@
 package org.broadinstitute.dsm.model;
 
-import lombok.Data;
-import lombok.NonNull;
-import org.broadinstitute.lddp.db.SimpleResult;
-import org.broadinstitute.dsm.statics.DBConstants;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -13,16 +8,24 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
+import lombok.Data;
+import lombok.NonNull;
+import org.broadinstitute.dsm.statics.DBConstants;
+import org.broadinstitute.lddp.db.SimpleResult;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Data
 public class KitSubKits {
 
     private static final Logger logger = LoggerFactory.getLogger(KitSubKits.class);
 
-    private static final String SQL_SELECT_SUB_KIT_TYPES = "SELECT kit.kit_type_id, kit.kit_type_name, subK.kit_count FROM ddp_kit_request_settings dkc " +
-            "LEFT JOIN sub_kits_settings subK ON (subK.ddp_kit_request_settings_id = dkc.ddp_kit_request_settings_id) LEFT JOIN ddp_instance realm ON (realm.ddp_instance_id = dkc.ddp_instance_id) " +
-            "LEFT JOIN kit_type kit ON (subK.kit_type_id = kit.kit_type_id) LEFT JOIN kit_type kitParent ON (dkc.kit_type_id = kitParent.kit_type_id) " +
+    private static final String SQL_SELECT_SUB_KIT_TYPES = "SELECT kit.kit_type_id, kit.kit_type_name, subK.kit_count FROM "
+            + "ddp_kit_request_settings dkc " +
+            "LEFT JOIN sub_kits_settings subK ON (subK.ddp_kit_request_settings_id = dkc.ddp_kit_request_settings_id) LEFT JOIN "
+            + "ddp_instance realm ON (realm.ddp_instance_id = dkc.ddp_instance_id) " +
+            "LEFT JOIN kit_type kit ON (subK.kit_type_id = kit.kit_type_id) LEFT JOIN kit_type kitParent ON (dkc.kit_type_id = kitParent"
+            + ".kit_type_id) " +
             "WHERE realm.instance_name = ? and kitParent.kit_type_name = ?";
 
     private int kitTypeId;
@@ -37,9 +40,10 @@ public class KitSubKits {
 
     /**
      * Getting all kit types
+     *
      * @return HashMap<String, KitType>
-     *     Key: (String) kit_type_name + _ + instance_id from table kit_type
-     *     Value: KitType (Information of kitType like customJson)
+     * Key: (String) kit_type_name + _ + instance_id from table kit_type
+     * Value: KitType (Information of kitType like customJson)
      */
     public static List<KitSubKits> getSubKits(@NonNull String realm, @NonNull String kitType) {
         List<KitSubKits> subKits = new ArrayList<>();
@@ -55,8 +59,7 @@ public class KitSubKits {
                                 rs.getInt(DBConstants.KIT_COUNT)));
                     }
                 }
-            }
-            catch (SQLException ex) {
+            } catch (SQLException ex) {
                 dbVals.resultException = ex;
             }
             return dbVals;

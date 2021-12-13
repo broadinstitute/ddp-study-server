@@ -17,7 +17,8 @@ public class PhysicianInfo {
     public PhysicianInfo() {
     }
 
-    public PhysicianInfo(String name, String phone, String zipCode, String state, String city, String streetAddress, String institution, String id, String country) {
+    public PhysicianInfo(String name, String phone, String zipCode, String state, String city, String streetAddress, String institution,
+                         String id, String country) {
         this.name = name;
         this.phoneNumber = phone;
         this.zipCode = zipCode;
@@ -61,11 +62,11 @@ public class PhysicianInfo {
         return physicianId;
     }
 
-    public String getCountry() {
-        return country;
-    }
-
     public void setPhysicianId(String physicianId) {
         this.physicianId = physicianId;
+    }
+
+    public String getCountry() {
+        return country;
     }
 }

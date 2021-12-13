@@ -6,26 +6,28 @@ import lombok.Data;
 @Data
 public class ClinicalKitDto {
 
-    @SerializedName ("participant_id")
+    @SerializedName("participant_id")
     String collaboratorParticipantId;
 
-    @SerializedName ("sample_id")
+    @SerializedName("sample_id")
     String sampleId;
 
-    @SerializedName ("sample_collection")
+    @SerializedName("sample_collection")
     String sampleCollection;
 
-    @SerializedName ("material_type")
+    @SerializedName("material_type")
     String materialType;
 
-    @SerializedName ("vessel_type")
+    @SerializedName("vessel_type")
     String vesselType;
 
-    @SerializedName ("mail_to_name")
+    @SerializedName("mail_to_name")
     String mailToName;
 
-    @SerializedName ("date_of_birth")
+    @SerializedName("date_of_birth")
     String dateOfBirth;
-    public ClinicalKitDto(){}
+
+    public ClinicalKitDto() {
+    }
 
 }

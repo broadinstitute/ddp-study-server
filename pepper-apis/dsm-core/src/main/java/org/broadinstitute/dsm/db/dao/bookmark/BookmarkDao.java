@@ -1,8 +1,6 @@
 package org.broadinstitute.dsm.db.dao.bookmark;
 
-import org.broadinstitute.dsm.db.dao.Dao;
-import org.broadinstitute.dsm.db.dto.bookmark.BookmarkDto;
-import org.broadinstitute.lddp.db.SimpleResult;
+import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -10,7 +8,9 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Optional;
 
-import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
+import org.broadinstitute.dsm.db.dao.Dao;
+import org.broadinstitute.dsm.db.dto.bookmark.BookmarkDto;
+import org.broadinstitute.lddp.db.SimpleResult;
 
 public class BookmarkDao implements Dao<BookmarkDto> {
 
@@ -88,16 +88,14 @@ public class BookmarkDao implements Dao<BookmarkDto> {
                 stmt.setString(1, instanceName);
                 try (ResultSet rs = stmt.executeQuery()) {
                     if (rs.next()) {
-                        dbVals.resultValue = new BookmarkDto.Builder(rs.getLong(2),rs.getString(3))
+                        dbVals.resultValue = new BookmarkDto.Builder(rs.getLong(2), rs.getString(3))
                                 .withBookmarkId(rs.getInt(1))
                                 .build();
                     }
-                }
-                catch (SQLException e) {
+                } catch (SQLException e) {
                     throw new RuntimeException("Error getting bookmark with instance: " + instanceName, e);
                 }
-            }
-            catch (SQLException ex) {
+            } catch (SQLException ex) {
                 dbVals.resultException = ex;
             }
             return dbVals;

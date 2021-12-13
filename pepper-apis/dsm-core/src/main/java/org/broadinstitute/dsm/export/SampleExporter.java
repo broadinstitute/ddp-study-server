@@ -1,5 +1,8 @@
 package org.broadinstitute.dsm.export;
 
+import java.util.ArrayDeque;
+import java.util.Map;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.dao.ddp.kitrequest.KitRequestDao;
@@ -8,9 +11,6 @@ import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.ArrayDeque;
-import java.util.Map;
 
 public class SampleExporter implements Exporter {
 

@@ -1,5 +1,8 @@
 package org.broadinstitute.dsm.route;
 
+import java.util.Objects;
+import java.util.Optional;
+
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.DDPInstance;
@@ -21,16 +24,11 @@ import spark.Request;
 import spark.Response;
 import spark.Route;
 
-import java.util.Objects;
-import java.util.Optional;
-
 public class ClinicalKitsRoute implements Route {
+    private static final Logger logger = LoggerFactory.getLogger(ClinicalKitsRoute.class);
     private String FIRSTNAME = "firstName";
     private String LASTNAME = "lastName";
     private String DATE_OF_BIRtH = "dateOfBirth";
-
-    private static final Logger logger = LoggerFactory.getLogger(ClinicalKitsRoute.class);
-
     private NotificationUtil notificationUtil;
 
     public ClinicalKitsRoute(@NonNull NotificationUtil notificationUtil) {
@@ -46,7 +44,7 @@ public class ClinicalKitsRoute implements Route {
         BSPKit bspKit = new BSPKit();
         if (!bspKit.canReceiveKit(kitLabel)) {
             Optional<BSPKitStatus> result = bspKit.getKitStatus(kitLabel, notificationUtil);
-            if(result.isEmpty()){
+            if (result.isEmpty()) {
                 response.status(404);
                 return null;
             }
@@ -59,18 +57,21 @@ public class ClinicalKitsRoute implements Route {
     private ClinicalKitDto getClinicalKit(String kitLabel) {
         logger.info("Checking label " + kitLabel);
         BSPKitDao bspKitDao = new BSPKitDao();
-        // this method already sets the received time, check for exited and deactivation and special behaviour, and triggers DDP, we don't need a new
+        // this method already sets the received time, check for exited and deactivation and special behaviour, and triggers DDP, we
+        // don't need a new
         BSPKit bspKit = new BSPKit();
         ClinicalKitDto clinicalKit = new ClinicalKitDto();
         Optional<BSPKitInfo> maybeKitInfo = bspKit.receiveBSPKit(kitLabel, notificationUtil);
         maybeKitInfo.ifPresent(kitInfo -> {
-            logger.info("Creating clinical kit to return to GP "+kitLabel);
+            logger.info("Creating clinical kit to return to GP " + kitLabel);
             clinicalKit.setCollaboratorParticipantId(kitInfo.getCollaboratorParticipantId());
             clinicalKit.setSampleId(kitInfo.getCollaboratorSampleId());
             clinicalKit.setMaterialType(kitInfo.getMaterialInfo());
             clinicalKit.setVesselType(kitInfo.getReceptacleName());
             Optional<BSPKitDto> bspKitQueryResult = bspKitDao.getBSPKitQueryResult(kitLabel);
-            bspKitQueryResult.orElseThrow(() -> {throw new RuntimeException("kit label was not found "+kitLabel);});
+            bspKitQueryResult.orElseThrow(() -> {
+                throw new RuntimeException("kit label was not found " + kitLabel);
+            });
             BSPKitDto maybeBspKitQueryResult = bspKitQueryResult.get();
             DDPInstance ddpInstance = DDPInstance.getDDPInstance(maybeBspKitQueryResult.getInstanceName());
             String hruid = maybeBspKitQueryResult.getBspParticipantId();

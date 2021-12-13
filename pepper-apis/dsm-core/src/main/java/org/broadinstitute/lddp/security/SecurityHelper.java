@@ -1,5 +1,8 @@
 package org.broadinstitute.lddp.security;
 
+import java.util.Date;
+import java.util.Map;
+
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTCreator;
 import com.auth0.jwt.JWTVerifier;
@@ -12,25 +15,15 @@ import org.broadinstitute.lddp.util.Utility;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Date;
-import java.util.Map;
-
 public class SecurityHelper {
-    private static final Logger logger = LoggerFactory.getLogger(SecurityHelper.class);
-
-    public enum ResultType {
-        AUTHENTICATION_ERROR, AUTHORIZATION_ERROR, AUTHORIZED
-    }
-
     public static final String CLAIM_ISSUER = "iss";
     public static final String CLAIM_MONITORINGSYSTEM = "monitor";
-
     public static final String MONITORING_SYSTEM = "google";
     public static final String SIGNER = "org.broadinstitute.kdux";
-
     public static final String AUTHORIZATION_HEADER = "Authorization";
     public static final String BEARER = "Bearer ";
     public static final String BASIC = "Basic ";
+    private static final Logger logger = LoggerFactory.getLogger(SecurityHelper.class);
 
     /**
      * Creates jwt token for a monitoring application
@@ -46,8 +39,7 @@ public class SecurityHelper {
             builder.withClaim(CLAIM_ISSUER, SIGNER);
             Algorithm algorithm = Algorithm.HMAC256(secret);
             return builder.sign(algorithm);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             throw new RuntimeException("Couldn't create token " + e);
         }
     }
@@ -73,8 +65,7 @@ public class SecurityHelper {
             }
             Algorithm algorithm = Algorithm.HMAC256(secret);
             return builder.sign(algorithm);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             throw new RuntimeException("Couldn't create token " + e);
         }
     }
@@ -86,8 +77,7 @@ public class SecurityHelper {
             JWTVerifier verifier = JWT.require(algorithm).build(); //Reusable verifier instance
             DecodedJWT jwt = verifier.verify(token);
             isValid = true;
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             // todo arz probably want to catch specific exceptions for
             // validation failure vs. algorithm related stuff
             logger.warn("Security - Error verifying token", e);
@@ -111,16 +101,18 @@ public class SecurityHelper {
             }
             DecodedJWT jwt = verifier.verify(token);
             claimsMap = jwt.getClaims();
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             throw new InvalidTokenException("Invalid token", e);
         }
 
         if (SIGNER.equals(claimsMap.get(CLAIM_ISSUER).asString())) {
             return claimsMap;
-        }
-        else {
+        } else {
             throw new InvalidTokenException("Token is not signed by the expected signer.");
         }
+    }
+
+    public enum ResultType {
+        AUTHENTICATION_ERROR, AUTHORIZATION_ERROR, AUTHORIZED
     }
 }

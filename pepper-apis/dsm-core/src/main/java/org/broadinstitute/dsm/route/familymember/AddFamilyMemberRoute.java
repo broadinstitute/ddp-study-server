@@ -1,7 +1,9 @@
 package org.broadinstitute.dsm.route.familymember;
 
+import java.util.NoSuchElementException;
+import java.util.Optional;
+
 import com.google.gson.Gson;
-import org.broadinstitute.lddp.handlers.util.Result;
 import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
 import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDataDao;
 import org.broadinstitute.dsm.model.Study;
@@ -11,13 +13,11 @@ import org.broadinstitute.dsm.model.participant.data.FamilyMemberDetails;
 import org.broadinstitute.dsm.model.participant.data.ParticipantData;
 import org.broadinstitute.dsm.security.RequestHandler;
 import org.broadinstitute.dsm.statics.DBConstants;
+import org.broadinstitute.lddp.handlers.util.Result;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import spark.Request;
 import spark.Response;
-
-import java.util.NoSuchElementException;
-import java.util.Optional;
 
 public class AddFamilyMemberRoute extends RequestHandler {
 
@@ -54,7 +54,7 @@ public class AddFamilyMemberRoute extends RequestHandler {
         }
 
         ParticipantDataDao participantDataDao = new ParticipantDataDao();
-        AddFamilyMember addFamilyMember = AddFamilyMember.instance(Study.valueOf(realm.toUpperCase()),addFamilyMemberPayload);
+        AddFamilyMember addFamilyMember = AddFamilyMember.instance(Study.valueOf(realm.toUpperCase()), addFamilyMemberPayload);
         long createdFamilyMemberId = addFamilyMember.add();
         return ParticipantData.parseDto(participantDataDao.get(createdFamilyMemberId).orElseThrow());
     }

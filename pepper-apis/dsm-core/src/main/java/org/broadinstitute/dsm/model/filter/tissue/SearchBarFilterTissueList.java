@@ -18,7 +18,9 @@ public class SearchBarFilterTissueList extends BaseFilterTissueList {
 
     @Override
     public List<TissueListWrapper> filter(QueryParamsMap queryParamsMap) {
-        if (!Objects.requireNonNull(queryParamsMap).hasKey("filterQuery")) return Collections.emptyList();
+        if (!Objects.requireNonNull(queryParamsMap).hasKey("filterQuery")) {
+            return Collections.emptyList();
+        }
         String filterQuery = queryParamsMap.get("filterQuery").value();
         filterQuery = " " + ViewFilter.changeFieldsInQuery(filterQuery, false);
         String realm = queryParamsMap.get(RoutePath.REALM).value();

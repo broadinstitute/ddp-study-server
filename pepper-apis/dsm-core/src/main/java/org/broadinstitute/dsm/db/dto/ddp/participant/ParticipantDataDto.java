@@ -1,14 +1,14 @@
 package org.broadinstitute.dsm.db.dto.ddp.participant;
 
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
-import lombok.Setter;
-import org.apache.commons.lang3.StringUtils;
-
 import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+import lombok.Setter;
+import org.apache.commons.lang3.StringUtils;
 
 @Setter
 public class ParticipantDataDto {
@@ -25,6 +25,16 @@ public class ParticipantDataDto {
 
     // We cache the json data map to avoid deserializing it multiple times.
     private Map<String, String> cachedDataMap;
+
+    private ParticipantDataDto(Builder builder) {
+        this.participantDataId = builder.participantDataId;
+        this.ddpParticipantId = builder.ddpParticipantId;
+        this.ddpInstanceId = builder.ddpInstanceId;
+        this.fieldTypeId = builder.fieldTypeId;
+        this.data = builder.data;
+        this.lastChanged = builder.lastChanged;
+        this.changedBy = builder.changedBy;
+    }
 
     public int getParticipantDataId() {
         return participantDataId;
@@ -58,7 +68,8 @@ public class ParticipantDataDto {
         if (StringUtils.isBlank(data)) {
             return null;
         }
-        Type type = new TypeToken<HashMap<String, String>>() {}.getType();
+        Type type = new TypeToken<HashMap<String, String>>() {
+        }.getType();
         cachedDataMap = gson.fromJson(data, type);
         return cachedDataMap;
     }
@@ -71,16 +82,6 @@ public class ParticipantDataDto {
         return Optional.ofNullable(changedBy);
     }
 
-    private ParticipantDataDto(Builder builder) {
-        this.participantDataId = builder.participantDataId;
-        this.ddpParticipantId = builder.ddpParticipantId;
-        this.ddpInstanceId = builder.ddpInstanceId;
-        this.fieldTypeId = builder.fieldTypeId;
-        this.data = builder.data;
-        this.lastChanged = builder.lastChanged;
-        this.changedBy = builder.changedBy;
-    }
-
     public static class Builder {
         private int participantDataId;
         private String ddpParticipantId;
@@ -89,12 +90,12 @@ public class ParticipantDataDto {
         private String data;
         private long lastChanged;
         private String changedBy;
-        
+
         public Builder withParticipantDataId(int participantDataId) {
             this.participantDataId = participantDataId;
             return this;
         }
-        
+
         public Builder withDdpParticipantId(String ddpParticipantId) {
             this.ddpParticipantId = ddpParticipantId;
             return this;
@@ -128,8 +129,8 @@ public class ParticipantDataDto {
         public ParticipantDataDto build() {
             return new ParticipantDataDto(this);
         }
-        
-        
+
+
     }
 }
 

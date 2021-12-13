@@ -1,5 +1,7 @@
 package org.broadinstitute.dsm.route;
 
+import java.util.Optional;
+
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.model.BSPKit;
@@ -9,8 +11,6 @@ import org.broadinstitute.dsm.util.NotificationUtil;
 import spark.Request;
 import spark.Response;
 import spark.Route;
-
-import java.util.Optional;
 
 public class BSPKitRoute implements Route {
 
@@ -29,7 +29,7 @@ public class BSPKitRoute implements Route {
         BSPKit bspKit = new BSPKit();
         if (!bspKit.canReceiveKit(kitLabel)) {
             Optional<BSPKitStatus> result = bspKit.getKitStatus(kitLabel, notificationUtil);
-            if(result.isEmpty()){
+            if (result.isEmpty()) {
                 response.status(404);
                 return null;
             }

@@ -1,5 +1,9 @@
 package org.broadinstitute.lddp.security;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import com.auth0.client.auth.AuthAPI;
 import com.auth0.client.mgmt.ManagementAPI;
 import com.auth0.json.auth.TokenHolder;
@@ -18,19 +22,14 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 public class Auth0Util {
 
     private static final Logger logger = LoggerFactory.getLogger(Auth0Util.class);
-
-    private byte[] decodedSecret;
     private final String account, ddpKey, ddpSecret, mgtApiUrl;
+    private final List<String> connections;
+    private byte[] decodedSecret;
     private AuthAPI ddpAuthApi = null;
     private AuthAPI mgtAuthApi = null;
-    private final List<String> connections;
     private boolean emailVerificationRequired;
     private String audience;
     private String token;
@@ -82,8 +81,7 @@ public class Auth0Util {
             if (tokenHolder.getAccessToken() == null) {
                 throw new RuntimeException("Unable to retrieve access token.");
             }
-        }
-        catch (Exception ex) {
+        } catch (Exception ex) {
             throw new RuntimeException("Unable to generate token using management client.", ex);
         }
 
@@ -115,8 +113,7 @@ public class Auth0Util {
             Request<User> userRequest = mgmtApi.users().get(userId, null);
             User user = userRequest.execute();
             findUserConnection(user.getIdentities());
-        }
-        catch (Exception ex) {
+        } catch (Exception ex) {
             throw new RuntimeException("User connection verification failed for user " + email, ex);
         }
     }
@@ -128,8 +125,7 @@ public class Auth0Util {
             JWTVerifier verifier = JWT.require(algorithm).withIssuer(account).build(); //Reusable verifier instance
             DecodedJWT jwt = verifier.verify(auth0Token);
             auth0Claims = jwt.getClaims();
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             throw new RuntimeException("Could not verify auth0 token.", e);
         }
         return auth0Claims;
@@ -156,12 +152,10 @@ public class Auth0Util {
                     token = tokenHolder.getAccessToken();
                     expiresAt = System.currentTimeMillis() + (tokenHolder.getExpiresIn() * 1000);
                     logger.info("Generated new token for auth0.");
-                }
-                catch (Exception ex) {
+                } catch (Exception ex) {
                     throw new RuntimeException("Unable to get access token for audience " + audience, ex);
                 }
-            }
-            else {
+            } else {
                 throw new RuntimeException("Auth0 Audience is missing.");
             }
         }

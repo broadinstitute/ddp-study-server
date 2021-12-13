@@ -1,8 +1,8 @@
 package org.broadinstitute.dsm.db.dto.ddp.participant;
 
-import lombok.Getter;
-
 import java.util.Optional;
+
+import lombok.Getter;
 
 @Getter
 public class ParticipantRecordDto {
@@ -42,12 +42,12 @@ public class ParticipantRecordDto {
         public Optional<String> additionalValuesJson = Optional.empty();
         public long lastChanged;
         public Optional<String> changedBy = Optional.empty();
-        
+
         public Builder(int participantId, long lastChanged) {
             this.participantId = participantId;
             this.lastChanged = lastChanged;
         }
-        
+
         public Builder withParticipantRecordId(int participantRecordId) {
             this.participantRecordId = Optional.of(participantRecordId);
             return this;

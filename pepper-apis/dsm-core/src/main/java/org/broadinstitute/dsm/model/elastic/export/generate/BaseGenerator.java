@@ -14,12 +14,11 @@ import org.slf4j.LoggerFactory;
 
 public abstract class BaseGenerator implements Generator, Collector {
 
-    private static final Logger logger = LoggerFactory.getLogger(BaseGenerator.class);
-
     public static final String DSM_OBJECT = "dsm";
     public static final String PROPERTIES = "properties";
     public static final String ID = "id";
     protected static final Gson GSON = new Gson();
+    private static final Logger logger = LoggerFactory.getLogger(BaseGenerator.class);
     protected final Parser parser;
     protected GeneratorPayload generatorPayload;
     private DBElement dbElement;
@@ -30,11 +29,6 @@ public abstract class BaseGenerator implements Generator, Collector {
         dbElement = Util.getDBElement(getNameValue().getName());
     }
 
-    //setter method to set dbElement for testing only!!!
-    public void setDBElement(DBElement dbElement) {
-        this.dbElement = dbElement;
-    }
-
     protected NameValue getNameValue() {
         return generatorPayload.getNameValue();
     }
@@ -42,6 +36,11 @@ public abstract class BaseGenerator implements Generator, Collector {
     //wrap Util.getDBElement in protected method so that we can override it in testing class for tests
     protected DBElement getDBElement() {
         return dbElement;
+    }
+
+    //setter method to set dbElement for testing only!!!
+    public void setDBElement(DBElement dbElement) {
+        this.dbElement = dbElement;
     }
 
     protected PropertyInfo getOuterPropertyByAlias() {
@@ -118,6 +117,6 @@ public abstract class BaseGenerator implements Generator, Collector {
             return isCollection;
         }
     }
-    
+
 }
 

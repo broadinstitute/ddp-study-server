@@ -1,23 +1,24 @@
 package org.broadinstitute.dsm.model.patch;
 
-import org.broadinstitute.dsm.model.AbstractionWrapper;
-import org.broadinstitute.dsm.model.NameValue;
-import spark.utils.StringUtils;
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import org.broadinstitute.dsm.model.AbstractionWrapper;
+import org.broadinstitute.dsm.model.NameValue;
+import spark.utils.StringUtils;
+
 public class AbstractionPatch extends BasePatch {
 
-    String primaryKeyId;
     public static final int FIRST_PRIMARY_KEY_ID = 0;
 
     static {
         NULL_KEY = new HashMap<>();
         NULL_KEY.put(PRIMARY_KEY_ID, null);
     }
+
+    String primaryKeyId;
 
     public AbstractionPatch(Patch patch) {
         super(patch);
@@ -42,14 +43,16 @@ public class AbstractionPatch extends BasePatch {
 
     @Override
     Object handleSingleNameValue() {
-        String primaryKeyId = AbstractionWrapper.createNewAbstractionFieldValue(patch.getParentId(), patch.getFieldId(), patch.getUser(), patch.getNameValue(), dbElement);
+        String primaryKeyId = AbstractionWrapper.createNewAbstractionFieldValue(patch.getParentId(), patch.getFieldId(), patch.getUser(),
+                patch.getNameValue(), dbElement);
         return Map.of(PRIMARY_KEY_ID, primaryKeyId);
     }
 
     @Override
     Optional<Object> processEachNameValue(NameValue nameValue) {
         if (StringUtils.isBlank(primaryKeyId)) {
-            primaryKeyId = AbstractionWrapper.createNewAbstractionFieldValue(patch.getParentId(), patch.getFieldId(), patch.getUser(), nameValue, dbElement);
+            primaryKeyId = AbstractionWrapper.createNewAbstractionFieldValue(patch.getParentId(), patch.getFieldId(), patch.getUser(),
+                    nameValue, dbElement);
         }
         Patch.patch(primaryKeyId, patch.getUser(), nameValue, dbElement);
         return Optional.ofNullable(primaryKeyId);

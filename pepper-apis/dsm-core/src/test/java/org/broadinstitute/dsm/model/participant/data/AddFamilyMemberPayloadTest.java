@@ -1,13 +1,13 @@
 package org.broadinstitute.dsm.model.participant.data;
 
+import static org.broadinstitute.dsm.TestHelper.setupDB;
+
 import org.broadinstitute.dsm.db.dao.bookmark.BookmarkDao;
 import org.broadinstitute.dsm.db.dto.bookmark.BookmarkDto;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
-
-import static org.broadinstitute.dsm.TestHelper.setupDB;
 
 public class AddFamilyMemberPayloadTest {
 
@@ -23,7 +23,9 @@ public class AddFamilyMemberPayloadTest {
 
     @AfterClass
     public static void tearDown() {
-        if (createdTestFamilyIdPK > 0) bookmarkDao.delete(createdTestFamilyIdPK);
+        if (createdTestFamilyIdPK > 0) {
+            bookmarkDao.delete(createdTestFamilyIdPK);
+        }
     }
 
     @Test

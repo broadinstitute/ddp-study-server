@@ -1,16 +1,16 @@
 package org.broadinstitute.dsm.model;
 
-import lombok.Data;
-import lombok.NonNull;
-import org.broadinstitute.lddp.db.SimpleResult;
-import org.broadinstitute.dsm.db.KitRequestShipping;
-import org.broadinstitute.dsm.statics.DBConstants;
+import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
+import lombok.Data;
+import lombok.NonNull;
+import org.broadinstitute.dsm.db.KitRequestShipping;
+import org.broadinstitute.dsm.statics.DBConstants;
+import org.broadinstitute.lddp.db.SimpleResult;
 
 @Data
 public class KitShippingIds {
@@ -42,15 +42,15 @@ public class KitShippingIds {
                         throw new RuntimeException("Found " + numRows + " kits for dsm_kit_request_id " + kitRequestId);
                     }
                 }
-            }
-            catch (SQLException ex) {
+            } catch (SQLException ex) {
                 dbVals.resultException = ex;
             }
             return dbVals;
         });
 
         if (results.resultException != null) {
-            throw new RuntimeException("Error setting kitRequest to deactivated w/ dsm_kit_request_id " + kitRequestId, results.resultException);
+            throw new RuntimeException("Error setting kitRequest to deactivated w/ dsm_kit_request_id " + kitRequestId,
+                    results.resultException);
         }
         return (KitShippingIds) results.resultValue;
     }

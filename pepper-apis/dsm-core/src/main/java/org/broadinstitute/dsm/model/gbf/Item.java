@@ -1,8 +1,8 @@
 package org.broadinstitute.dsm.model.gbf;
 
+import java.util.List;
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
-import java.util.List;
 
 public class Item {
 
@@ -25,12 +25,12 @@ public class Item {
         this.serialNumber = serialNumber;
         this.expireDate = expireDate;
         this.shippedQty = shippedQty;
-        this.returnTracking= returnTracking;
+        this.returnTracking = returnTracking;
         this.tubeSerial = tubeSerial;
 //        this.subItem = subItem;
     }
 
-    @XmlAttribute(name="ItemNumber")
+    @XmlAttribute(name = "ItemNumber")
     public String getItemNumber() {
         return itemNumber;
     }
@@ -39,7 +39,7 @@ public class Item {
         this.itemNumber = itemNumber;
     }
 
-    @XmlAttribute(name="LotNumber")
+    @XmlAttribute(name = "LotNumber")
     public String getLotNumber() {
         return lotNumber;
     }
@@ -48,7 +48,7 @@ public class Item {
         this.lotNumber = lotNumber;
     }
 
-    @XmlAttribute(name="SerialNumber")
+    @XmlAttribute(name = "SerialNumber")
     public String getSerialNumber() {
         return serialNumber;
     }
@@ -57,7 +57,7 @@ public class Item {
         this.serialNumber = serialNumber;
     }
 
-    @XmlAttribute(name="ExpireDate")
+    @XmlAttribute(name = "ExpireDate")
     public String getExpireDate() {
         return expireDate;
     }
@@ -66,7 +66,7 @@ public class Item {
         this.expireDate = expireDate;
     }
 
-    @XmlAttribute(name="ShippedQty")
+    @XmlAttribute(name = "ShippedQty")
     public String getShippedQty() {
         return shippedQty;
     }
@@ -75,16 +75,26 @@ public class Item {
         this.shippedQty = shippedQty;
     }
 
-    @XmlElement(name="ReturnTracking")
-    public String getReturnTracking() { return returnTracking; }
-    public void setReturnTracking(String returnTracking) { this.returnTracking = returnTracking; }
+    @XmlElement(name = "ReturnTracking")
+    public String getReturnTracking() {
+        return returnTracking;
+    }
+
+    public void setReturnTracking(String returnTracking) {
+        this.returnTracking = returnTracking;
+    }
 
 
-    @XmlElement(name="TubeSerial")
-    public String getTubeSerial() { return tubeSerial; }
-    public void setTubeSerial(String tubeSerial) { this.tubeSerial = tubeSerial; }
+    @XmlElement(name = "TubeSerial")
+    public String getTubeSerial() {
+        return tubeSerial;
+    }
 
-    @XmlElement(name="SubItem")
+    public void setTubeSerial(String tubeSerial) {
+        this.tubeSerial = tubeSerial;
+    }
+
+    @XmlElement(name = "SubItem")
     public List<SubItem> getSubItem() {
         return subItem;
     }

@@ -6,17 +6,11 @@ import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.lddp.util.CheckValidity;
 
 @Data
-public class Event implements CheckValidity
-{
+public class Event implements CheckValidity {
 
     private String eventInfo;
     private String eventType;
     private long eventDate;
-
-    public boolean isValid()
-    {
-        return (StringUtils.isNotBlank(eventType));
-    }
 
     public Event() {
 
@@ -26,5 +20,9 @@ public class Event implements CheckValidity
         this.eventInfo = eventInfo;
         this.eventType = eventType;
         this.eventDate = eventDate;
+    }
+
+    public boolean isValid() {
+        return (StringUtils.isNotBlank(eventType));
     }
 }

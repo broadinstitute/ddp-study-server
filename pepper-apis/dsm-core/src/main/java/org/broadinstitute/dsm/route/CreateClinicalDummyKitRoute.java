@@ -1,5 +1,8 @@
 package org.broadinstitute.dsm.route;
 
+import java.util.List;
+import java.util.Optional;
+
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.KitRequestShipping;
@@ -16,15 +19,12 @@ import spark.Request;
 import spark.Response;
 import spark.Route;
 
-import java.util.List;
-import java.util.Optional;
-
 public class CreateClinicalDummyKitRoute implements Route {
     private static final Logger logger = LoggerFactory.getLogger(CreateClinicalDummyKitRoute.class);
+    private static final String USER_ID = "MERCURY";
     private static String CLINICAL_KIT_REALM = "CLINICAL_KIT_REALM";
     private static String CLINICAL_KIT_PREFIX = "CLINICALKIT_";
     private int REALM;
-    private static final String USER_ID = "MERCURY";
 
     @Override
     public Object handle(Request request, Response response) {
@@ -35,7 +35,7 @@ public class CreateClinicalDummyKitRoute implements Route {
             response.status(500);
             return "Please include a kit label as a path parameter";
         }
-        logger.info("Got a new Clinical Kit request with kit label " + kitLabel+" and kit type "+kitTypeString);
+        logger.info("Got a new Clinical Kit request with kit label " + kitLabel + " and kit type " + kitTypeString);
         new BookmarkDao().getBookmarkByInstance(CLINICAL_KIT_REALM).ifPresentOrElse(book -> {
             REALM = (int) book.getValue();
         }, () -> {
@@ -45,17 +45,22 @@ public class CreateClinicalDummyKitRoute implements Route {
         if (ddpInstance != null) {
             String kitRequestId = CLINICAL_KIT_PREFIX + KitRequestShipping.createRandom(20);
             String ddpParticipantId = new BSPDummyKitDao().getRandomParticipantForStudy(ddpInstance);
-            Optional<ElasticSearchParticipantDto> maybeParticipantByParticipantId = ElasticSearchUtil.getParticipantESDataByParticipantId(ddpInstance.getParticipantIndexES(), ddpParticipantId);
+            Optional<ElasticSearchParticipantDto> maybeParticipantByParticipantId =
+                    ElasticSearchUtil.getParticipantESDataByParticipantId(ddpInstance.getParticipantIndexES(), ddpParticipantId);
             List<KitType> kitTypes = KitType.getKitTypes(ddpInstance.getName(), null);
             KitType desiredKitType = kitTypes.stream().filter(k -> kitTypeString.equalsIgnoreCase(k.getName())).findFirst().orElseThrow();
             logger.info("Found kit type " + desiredKitType.getName());
             maybeParticipantByParticipantId.ifPresentOrElse(p -> {
-                String participantCollaboratorId = KitRequestShipping.getCollaboratorParticipantId(ddpInstance.getBaseUrl(), ddpInstance.getDdpInstanceId(), ddpInstance.isMigratedDDP(),
-                        ddpInstance.getCollaboratorIdPrefix(), ddpParticipantId, p.getProfile().map(ESProfile::getHruid).orElseThrow(), null);
-                String collaboratorSampleId = KitRequestShipping.getCollaboratorSampleId(desiredKitType.getKitId(), participantCollaboratorId, desiredKitType.getName());
+                String participantCollaboratorId = KitRequestShipping.getCollaboratorParticipantId(ddpInstance.getBaseUrl(),
+                        ddpInstance.getDdpInstanceId(), ddpInstance.isMigratedDDP(),
+                        ddpInstance.getCollaboratorIdPrefix(), ddpParticipantId, p.getProfile().map(ESProfile::getHruid).orElseThrow(),
+                        null);
+                String collaboratorSampleId = KitRequestShipping.getCollaboratorSampleId(desiredKitType.getKitId(),
+                        participantCollaboratorId, desiredKitType.getName());
                 logger.info("Found collaboratorSampleId  " + collaboratorSampleId);
                 //if instance not null
-                String dsmKitRequestId = KitRequestShipping.writeRequest(ddpInstance.getDdpInstanceId(), kitRequestId, desiredKitType.getKitId(),
+                String dsmKitRequestId = KitRequestShipping.writeRequest(ddpInstance.getDdpInstanceId(), kitRequestId,
+                        desiredKitType.getKitId(),
                         ddpParticipantId, participantCollaboratorId, collaboratorSampleId,
                         USER_ID, "", "", "", false, "");
                 new BSPDummyKitDao().updateKitLabel(kitLabel, dsmKitRequestId);

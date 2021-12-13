@@ -1,5 +1,8 @@
 package org.broadinstitute.dsm.util;
 
+import java.util.List;
+import java.util.Map;
+
 import com.google.gson.Gson;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
@@ -8,15 +11,11 @@ import org.broadinstitute.dsm.model.elastic.ESProfile;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
 import org.broadinstitute.dsm.model.participant.data.FamilyMemberConstants;
 
-import java.util.List;
-import java.util.Map;
-
 public class ParticipantUtil {
-
-    private static final Gson gson = new Gson();
 
     public static final String DDP_PARTICIPANT_ID = "ddpParticipantId";
     public static final String TRUE = "true";
+    private static final Gson gson = new Gson();
 
     public static boolean isHruid(@NonNull String participantId) {
         final String hruidCheck = "^P\\w{5}$";
@@ -50,7 +49,7 @@ public class ParticipantUtil {
 
     public static boolean matchesApplicantEmail(String collaboratorParticipantId, List<ParticipantDataDto> participantDatas) {
         String applicantEmail = null, currentParticipantEmail = null;
-        for (ParticipantDataDto participantData: participantDatas) {
+        for (ParticipantDataDto participantData : participantDatas) {
             Map<String, String> dataMap = participantData.getDataMap();
             if (dataMap == null) {
                 continue;
@@ -80,7 +79,9 @@ public class ParticipantUtil {
     }
 
     public static String getParticipantEmailById(String esParticipantIndex, String pId) {
-        if (StringUtils.isBlank(esParticipantIndex) || StringUtils.isBlank(pId)) throw new IllegalArgumentException();
+        if (StringUtils.isBlank(esParticipantIndex) || StringUtils.isBlank(pId)) {
+            throw new IllegalArgumentException();
+        }
         StringBuilder email = new StringBuilder();
         ElasticSearchParticipantDto elasticSearchParticipantDto =
                 ElasticSearchUtil.getParticipantESDataByParticipantId(esParticipantIndex, pId)

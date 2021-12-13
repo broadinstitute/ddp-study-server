@@ -47,7 +47,8 @@ public class PermalinkRoute implements Route {
 //        String ddpInstitutionId = null;
 //        SimpleResult results = inTransaction((conn) -> {
 //            SimpleResult dbVals = new SimpleResult();
-//            try (PreparedStatement stmt = conn.prepareStatement(MedicalRecord.SQL_SELECT_MEDICAL_RECORD_INFORMATION + QueryExtension.BY_INSTITUTION_ID)) {
+//            try (PreparedStatement stmt = conn.prepareStatement(MedicalRecord.SQL_SELECT_MEDICAL_RECORD_INFORMATION + QueryExtension
+//            .BY_INSTITUTION_ID)) {
 //                stmt.setString(1, ddpParticipantId);
 //                stmt.setString(2, medicalRecordId);
 //                try (ResultSet rs = stmt.executeQuery()) {
@@ -82,7 +83,8 @@ public class PermalinkRoute implements Route {
 //        });
 //
 //        if (results.resultException != null) {
-//            throw new RuntimeException("Error getting list of medicalRecords " + medicalRecordId + " of participant " + ddpParticipantId, results.resultException);
+//            throw new RuntimeException("Error getting list of medicalRecords " + medicalRecordId + " of participant " +
+//            ddpParticipantId, results.resultException);
 //        }
 //        else {
 //            MedicalRecordAndInstance result = (MedicalRecordAndInstance) results.resultValue;
@@ -91,11 +93,14 @@ public class PermalinkRoute implements Route {
 //            ddpInstitutionId = result.getDdpInstanceId();
 //        }
 //
-//        if (medicalRecord != null && instance != null && StringUtils.isNotBlank(ddpInstitutionId) && StringUtils.isNotBlank(ddpParticipantId)) {
+//        if (medicalRecord != null && instance != null && StringUtils.isNotBlank(ddpInstitutionId) && StringUtils.isNotBlank
+//        (ddpParticipantId)) {
 //            if (StringUtils.isNotBlank(instance.getName()) && StringUtils.isNotBlank(instance.getBaseUrl())) {
-//                String dsmRequest = instance.getBaseUrl() + RoutePath.DDP_INSTITUTION_PATH.replace(RequestParameter.PARTICIPANTID, ddpParticipantId);
+//                String dsmRequest = instance.getBaseUrl() + RoutePath.DDP_INSTITUTION_PATH.replace(RequestParameter.PARTICIPANTID,
+//                ddpParticipantId);
 //                try {
-//                    MedicalInfo medicalInfo = DDPRequestUtil.getResponseObject(MedicalInfo.class, dsmRequest, instance.getName(), instance.isHasAuth0Token());
+//                    MedicalInfo medicalInfo = DDPRequestUtil.getResponseObject(MedicalInfo.class, dsmRequest, instance.getName(),
+//                    instance.isHasAuth0Token());
 //                    if (medicalInfo != null) {
 //                        for (InstitutionDetail institutionDetail : medicalInfo.getInstitutions()) {
 //                            if (ddpInstitutionId.equals(institutionDetail.getId())) {
@@ -133,7 +138,8 @@ public class PermalinkRoute implements Route {
 //        private String ddpInstanceId;
 //        private String ddpParticipantId;
 //
-//        public MedicalRecordAndInstance(DDPInstance ddpInstance, MedicalRecord medicalRecord, String ddpInstanceId, String ddpParticipantId) {
+//        public MedicalRecordAndInstance(DDPInstance ddpInstance, MedicalRecord medicalRecord, String ddpInstanceId, String
+//        ddpParticipantId) {
 //            this.ddpInstance = ddpInstance;
 //            this.medicalRecord = medicalRecord;
 //            this.ddpInstanceId = ddpInstanceId;

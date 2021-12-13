@@ -7,7 +7,8 @@ import org.broadinstitute.dsm.util.KitEvent;
 public class TestResultEvent extends KitEvent {
     DSMTestResult eventData;
 
-    public TestResultEvent(String eventInfo, @NonNull String eventType, @NonNull Long eventDate,  String kitUploadType, String ddpKitRequestId, DSMTestResult result) {
+    public TestResultEvent(String eventInfo, @NonNull String eventType, @NonNull Long eventDate, String kitUploadType,
+                           String ddpKitRequestId, DSMTestResult result) {
         super(eventInfo, eventType, eventDate, kitUploadType, ddpKitRequestId);
         this.eventData = result;
     }

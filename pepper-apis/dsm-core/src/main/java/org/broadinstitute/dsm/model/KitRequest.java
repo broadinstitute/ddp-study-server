@@ -27,7 +27,7 @@ public class KitRequest {
     @ColumnName(DBConstants.EXTERNAL_ORDER_NUMBER)
     private String externalOrderNumber;
 
-    @ColumnName (DBConstants.EXTERNAL_ORDER_DATE)
+    @ColumnName(DBConstants.EXTERNAL_ORDER_DATE)
     @DbDateConversion(SqlDateConverter.EPOCH)
     private Long externalOrderDate;
 
@@ -35,7 +35,8 @@ public class KitRequest {
         this(null, participantId, shortId, null, externalOrderNumber, participant, null, null, null);
     }
 
-    public KitRequest(String dsmKitRequestId, String participantId, String shortId, String shippingId, String externalOrderNumber, DDPParticipant participant, String externalOrderStatus, String externalKitName, Long externalOrderDate) {
+    public KitRequest(String dsmKitRequestId, String participantId, String shortId, String shippingId, String externalOrderNumber,
+                      DDPParticipant participant, String externalOrderStatus, String externalKitName, Long externalOrderDate) {
         this.dsmKitRequestId = dsmKitRequestId;
         this.participantId = participantId;
         this.shortId = shortId;

@@ -1,5 +1,14 @@
 package org.broadinstitute.dsm.db;
 
+import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
+
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+
 import lombok.Data;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
@@ -9,15 +18,6 @@ import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.lddp.db.SimpleResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-
-import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
 
 @Data
 public class LabelSettings {
@@ -55,6 +55,7 @@ public class LabelSettings {
 
     /**
      * Read labelSettings form label_settings table
+     *
      * @return List<LabelSettings>
      * @throws Exception
      */
@@ -62,7 +63,8 @@ public class LabelSettings {
         List<LabelSettings> labelSettings = new ArrayList<>();
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement stmt = conn.prepareStatement(ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.GET_LABEL_SETTINGS))) {
+            try (PreparedStatement stmt =
+                         conn.prepareStatement(ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.GET_LABEL_SETTINGS))) {
                 try (ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
                         labelSettings.add(new LabelSettings(rs.getString(DBConstants.LABEL_SETTING_ID),
@@ -78,8 +80,7 @@ public class LabelSettings {
                                 rs.getDouble(DBConstants.LEFT_MARGIN)));
                     }
                 }
-            }
-            catch (SQLException ex) {
+            } catch (SQLException ex) {
                 dbVals.resultException = ex;
             }
             return dbVals;
@@ -104,8 +105,7 @@ public class LabelSettings {
                 String labelSettingId = labelSetting.getLabelSettingId();
                 if (StringUtils.isNotBlank(labelSettingId)) {
                     updateLabelSetting(labelSettingId, labelSetting);
-                }
-                else {
+                } else {
                     addLabelSetting(labelSetting);
                 }
             }
@@ -115,7 +115,8 @@ public class LabelSettings {
     private static void updateLabelSetting(@NonNull String labelSettingId, @NonNull LabelSettings labelSetting) {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement stmt = conn.prepareStatement(ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.UPDATE_LABEL_SETTINGS))) {
+            try (PreparedStatement stmt =
+                         conn.prepareStatement(ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.UPDATE_LABEL_SETTINGS))) {
                 stmt.setString(1, labelSetting.getName());
                 stmt.setString(2, labelSetting.getDescription());
                 stmt.setBoolean(3, labelSetting.isDefaultPage());
@@ -131,12 +132,11 @@ public class LabelSettings {
                 int result = stmt.executeUpdate();
                 if (result == 1) {
                     logger.info("Updated labelSetting w/ id " + labelSettingId);
+                } else {
+                    throw new RuntimeException("Error updating labelSetting w/ id " + labelSettingId + " it was updating " + result + " "
+                            + "rows");
                 }
-                else {
-                    throw new RuntimeException("Error updating labelSetting w/ id " + labelSettingId + " it was updating " + result + " rows");
-                }
-            }
-            catch (SQLException ex) {
+            } catch (SQLException ex) {
                 dbVals.resultException = ex;
             }
             return dbVals;
@@ -150,7 +150,8 @@ public class LabelSettings {
     private static void addLabelSetting(@NonNull LabelSettings labelSetting) {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement stmt = conn.prepareStatement(ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.INSERT_LABEL_SETTINGS))) {
+            try (PreparedStatement stmt =
+                         conn.prepareStatement(ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.INSERT_LABEL_SETTINGS))) {
                 stmt.setString(1, labelSetting.getName());
                 stmt.setString(2, labelSetting.getDescription());
                 stmt.setBoolean(3, labelSetting.isDefaultPage());
@@ -164,12 +165,10 @@ public class LabelSettings {
                 int result = stmt.executeUpdate();
                 if (result == 1) {
                     logger.info("Added new labelSetting ");
-                }
-                else {
+                } else {
                     throw new RuntimeException("Error adding new labelSetting, it was updating " + result + " rows");
                 }
-            }
-            catch (SQLException ex) {
+            } catch (SQLException ex) {
                 dbVals.resultException = ex;
             }
             return dbVals;

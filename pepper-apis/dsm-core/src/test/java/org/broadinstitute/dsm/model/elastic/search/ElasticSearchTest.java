@@ -1,6 +1,9 @@
 package org.broadinstitute.dsm.model.elastic.search;
 
 
+import java.util.Map;
+import java.util.Optional;
+
 import com.google.gson.Gson;
 import org.broadinstitute.dsm.model.elastic.ESAddress;
 import org.broadinstitute.dsm.model.elastic.ESProfile;
@@ -8,12 +11,21 @@ import org.broadinstitute.dsm.model.participant.ParticipantWrapperTest;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.util.Map;
-import java.util.Optional;
-
 public class ElasticSearchTest {
 
     private static final Gson GSON = new Gson();
+
+    private static ESProfile esProfileGeneratorWithGuid() {
+        ESProfile esProfile = new ESProfile();
+        esProfile.setParticipantGuid(ParticipantWrapperTest.randomGuidGenerator());
+        return esProfile;
+    }
+
+    private static ESProfile esProfileGeneratorWithLegacyAltPid() {
+        ESProfile esProfile = new ESProfile();
+        esProfile.setParticipantLegacyAltPid(ParticipantWrapperTest.randomLegacyAltPidGenerator());
+        return esProfile;
+    }
 
     @Test
     public void getParticipantIdFromProfile() {
@@ -84,19 +96,6 @@ public class ElasticSearchTest {
             Assert.fail();
         }
     }
-
-    private static ESProfile esProfileGeneratorWithGuid() {
-        ESProfile esProfile = new ESProfile();
-        esProfile.setParticipantGuid(ParticipantWrapperTest.randomGuidGenerator());
-        return esProfile;
-    }
-
-    private static ESProfile esProfileGeneratorWithLegacyAltPid() {
-        ESProfile esProfile = new ESProfile();
-        esProfile.setParticipantLegacyAltPid(ParticipantWrapperTest.randomLegacyAltPidGenerator());
-        return esProfile;
-    }
-
 
 
 }

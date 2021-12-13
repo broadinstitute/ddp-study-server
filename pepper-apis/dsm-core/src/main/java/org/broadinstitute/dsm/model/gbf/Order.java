@@ -1,23 +1,23 @@
 package org.broadinstitute.dsm.model.gbf;
 
-import javax.xml.bind.annotation.XmlElement;
 import java.util.List;
+import javax.xml.bind.annotation.XmlElement;
 
 public class Order {
 
-    @XmlElement(name="OrderNumber")
+    @XmlElement(name = "OrderNumber")
     private String orderNumber;
 
-    @XmlElement(name="ClientAccount")
+    @XmlElement(name = "ClientAccount")
     private String clientAccount;
 
-    @XmlElement(name="PatientMRN")
+    @XmlElement(name = "PatientMRN")
     private String patientMRN;
 
-    @XmlElement(name="ShippingInfo")
+    @XmlElement(name = "ShippingInfo")
     private ShippingInfo shippingInfo;
 
-    @XmlElement(name="LineItem")
+    @XmlElement(name = "LineItem")
     private List<LineItem> lineItem;
 
     public Order() {

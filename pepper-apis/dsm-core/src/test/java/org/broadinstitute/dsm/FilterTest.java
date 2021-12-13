@@ -1,5 +1,11 @@
 package org.broadinstitute.dsm;
 
+import static org.broadinstitute.dsm.TestHelper.setupDB;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import com.google.gson.Gson;
 import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
 import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDataDao;
@@ -17,44 +23,28 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import static org.broadinstitute.dsm.TestHelper.setupDB;
-
 public class FilterTest {
     private static final String FILTER_TEST = "FILTER_TEST";
-    private static Gson gson;
-
     private static final String participantId = "RBMJW6ZIXVXBMXUX6M3Q";
     private static final String participantId1 = "RBMJW6ZIXVXBMXUX6M31";
-
-    private static UserDto userDto;
-
-    private static int participantDataId;
-
     private static final Map<String, String> participantData = new HashMap<>();
-
-    private static int participantDataId1;
-
     private static final Map<String, String> participantData1 = new HashMap<>();
-
-    private static DDPInstanceDto ddpInstanceDto;
     private static final DDPInstanceDao ddpInstanceDao = new DDPInstanceDao();
-
     private static final UserDao userDao = new UserDao();
-
     private static final ParticipantDataDao participantDataDao = new ParticipantDataDao();
-
     private static final EmptyFilterParticipantList emptyFilterParticipantList = new EmptyFilterParticipantList();
+    private static Gson gson;
+    private static UserDto userDto;
+    private static int participantDataId;
+    private static int participantDataId1;
+    private static DDPInstanceDto ddpInstanceDto;
 
     @BeforeClass
     public static void doFirst() {
         setupDB();
         gson = new Gson();
 
-        ddpInstanceDto =  DBTestUtil.createTestDdpInstance(ddpInstanceDto, ddpInstanceDao, "FilterTestInstance");
+        ddpInstanceDto = DBTestUtil.createTestDdpInstance(ddpInstanceDto, ddpInstanceDao, "FilterTestInstance");
 
         userDto = DBTestUtil.createTestDsmUser("testFilterUser", "testFilter@family.com", userDao, userDto);
 
@@ -72,25 +62,37 @@ public class FilterTest {
     private static void createParticipantData() {
         ParticipantDataDto participantDataDto =
                 new ParticipantDataDto.Builder()
-                    .withDdpParticipantId(participantId)
-                    .withDdpInstanceId(ddpInstanceDto.getDdpInstanceId())
-                    .withFieldTypeId(FILTER_TEST)
-                    .withData(gson.toJson(participantData))
-                    .withLastChanged(System.currentTimeMillis())
-                    .withChangedBy(userDto.getEmail().orElse(""))
-                    .build();
+                        .withDdpParticipantId(participantId)
+                        .withDdpInstanceId(ddpInstanceDto.getDdpInstanceId())
+                        .withFieldTypeId(FILTER_TEST)
+                        .withData(gson.toJson(participantData))
+                        .withLastChanged(System.currentTimeMillis())
+                        .withChangedBy(userDto.getEmail().orElse(""))
+                        .build();
         participantDataId = participantDataDao.create(participantDataDto);
 
         ParticipantDataDto participantDataDto1 =
                 new ParticipantDataDto.Builder()
-                    .withDdpParticipantId(participantId1)
-                    .withDdpInstanceId(ddpInstanceDto.getDdpInstanceId())
-                    .withFieldTypeId(FILTER_TEST)
-                    .withData(gson.toJson(participantData1))
-                    .withLastChanged(System.currentTimeMillis())
-                    .withChangedBy(userDto.getEmail().orElse(""))
-                    .build();
+                        .withDdpParticipantId(participantId1)
+                        .withDdpInstanceId(ddpInstanceDto.getDdpInstanceId())
+                        .withFieldTypeId(FILTER_TEST)
+                        .withData(gson.toJson(participantData1))
+                        .withLastChanged(System.currentTimeMillis())
+                        .withChangedBy(userDto.getEmail().orElse(""))
+                        .build();
         participantDataId1 = participantDataDao.create(participantDataDto1);
+    }
+
+    @AfterClass
+    public static void finish() {
+        if (participantDataId > 0) {
+            participantDataDao.delete(participantDataId);
+        }
+        if (participantDataId1 > 0) {
+            participantDataDao.delete(participantDataId1);
+        }
+        userDao.delete(userDto.getId());
+        ddpInstanceDao.delete(ddpInstanceDto.getDdpInstanceId());
     }
 
     @Test
@@ -101,7 +103,8 @@ public class FilterTest {
                 new NameValue("PARTICIPANT_DEATH_DATE", "2040-10-30"), null, null, null);
         List<ParticipantDataDto> allParticipantData = participantDataDao
                 .getParticipantDataByInstanceId(Integer.parseInt(String.valueOf(ddpInstanceDto.getDdpInstanceId())));
-        emptyFilterParticipantList.addParticipantDataIdsForFilters(filter, filter.getFilter1().getName(), allParticipantData, allParticipantDataForFiltering);
+        emptyFilterParticipantList.addParticipantDataIdsForFilters(filter, filter.getFilter1().getName(), allParticipantData,
+                allParticipantDataForFiltering);
         emptyFilterParticipantList.addParticipantDataConditionsToQuery(allParticipantDataForFiltering, queryConditions, 1);
         Assert.assertEquals(" AND (profile.guid = " + participantId + " OR profile.guid = " + participantId1 + ")",
                 queryConditions.get(ElasticSearchUtil.ES));
@@ -115,7 +118,8 @@ public class FilterTest {
                 new NameValue("PARTICIPANT_DEATH_DATE", "2040-10-35"), null, null, null);
         List<ParticipantDataDto> allParticipantData = participantDataDao
                 .getParticipantDataByInstanceId(Integer.parseInt(String.valueOf(ddpInstanceDto.getDdpInstanceId())));
-        emptyFilterParticipantList.addParticipantDataIdsForFilters(filter, filter.getFilter1().getName(), allParticipantData, allParticipantDataForFiltering);
+        emptyFilterParticipantList.addParticipantDataIdsForFilters(filter, filter.getFilter1().getName(), allParticipantData,
+                allParticipantDataForFiltering);
         emptyFilterParticipantList.addParticipantDataConditionsToQuery(allParticipantDataForFiltering, queryConditions, 1);
         Assert.assertEquals(" AND (profile.guid = " + participantId + " OR profile.guid = " + participantId1 + ")",
                 queryConditions.get(ElasticSearchUtil.ES));
@@ -129,7 +133,8 @@ public class FilterTest {
                 new NameValue("PARTICIPANT_NONEXISTENT_DATE", "2040-10-35"), null, null, null);
         List<ParticipantDataDto> allParticipantData = participantDataDao
                 .getParticipantDataByInstanceId(Integer.parseInt(String.valueOf(ddpInstanceDto.getDdpInstanceId())));
-        emptyFilterParticipantList.addParticipantDataIdsForFilters(filter, filter.getFilter1().getName(), allParticipantData, allParticipantDataForFiltering);
+        emptyFilterParticipantList.addParticipantDataIdsForFilters(filter, filter.getFilter1().getName(), allParticipantData,
+                allParticipantDataForFiltering);
         emptyFilterParticipantList.addParticipantDataConditionsToQuery(allParticipantDataForFiltering, queryConditions, 1);
         Assert.assertEquals(" AND (profile.guid = " + participantId + " OR profile.guid = " + participantId1 + ")",
                 queryConditions.get(ElasticSearchUtil.ES));
@@ -144,7 +149,8 @@ public class FilterTest {
                 new NameValue("PARTICIPANT_DEATH_DATE", "2040-10-31"), null, null);
         List<ParticipantDataDto> allParticipantData = participantDataDao
                 .getParticipantDataByInstanceId(Integer.parseInt(String.valueOf(ddpInstanceDto.getDdpInstanceId())));
-        emptyFilterParticipantList.addParticipantDataIdsForFilters(filter, filter.getFilter1().getName(), allParticipantData, allParticipantDataForFiltering);
+        emptyFilterParticipantList.addParticipantDataIdsForFilters(filter, filter.getFilter1().getName(), allParticipantData,
+                allParticipantDataForFiltering);
         emptyFilterParticipantList.addParticipantDataConditionsToQuery(allParticipantDataForFiltering, queryConditions, 1);
         Assert.assertEquals(" AND (profile.guid = " + participantId + " OR profile.guid = " + participantId1 + ")",
                 queryConditions.get(ElasticSearchUtil.ES));
@@ -159,7 +165,8 @@ public class FilterTest {
                 new NameValue("PARTICIPANT_DEATH_DATE", "2020-10-31"), null, null);
         List<ParticipantDataDto> allParticipantData = participantDataDao
                 .getParticipantDataByInstanceId(Integer.parseInt(String.valueOf(ddpInstanceDto.getDdpInstanceId())));
-        emptyFilterParticipantList.addParticipantDataIdsForFilters(filter, filter.getFilter1().getName(), allParticipantData, allParticipantDataForFiltering);
+        emptyFilterParticipantList.addParticipantDataIdsForFilters(filter, filter.getFilter1().getName(), allParticipantData,
+                allParticipantDataForFiltering);
         emptyFilterParticipantList.addParticipantDataConditionsToQuery(allParticipantDataForFiltering, queryConditions, 1);
         Assert.assertEquals("profile.guid = empty", queryConditions.get(ElasticSearchUtil.ES));
     }
@@ -177,25 +184,16 @@ public class FilterTest {
                 new NameValue("PARTICIPANT_DEATH_DATE", "2040-10-30"), null, null, null);
         List<ParticipantDataDto> allParticipantData = participantDataDao
                 .getParticipantDataByInstanceId(Integer.parseInt(String.valueOf(ddpInstanceDto.getDdpInstanceId())));
-        emptyFilterParticipantList.addParticipantDataIdsForFilters(filterA, filterA.getFilter1().getName(), allParticipantData, allParticipantDataForFiltering);
-        emptyFilterParticipantList.addParticipantDataIdsForFilters(filterB, filterB.getFilter1().getName(), allParticipantData, allParticipantDataForFiltering);
-        emptyFilterParticipantList.addParticipantDataIdsForFilters(filterC, filterC.getFilter1().getName(), allParticipantData, allParticipantDataForFiltering);
+        emptyFilterParticipantList.addParticipantDataIdsForFilters(filterA, filterA.getFilter1().getName(), allParticipantData,
+                allParticipantDataForFiltering);
+        emptyFilterParticipantList.addParticipantDataIdsForFilters(filterB, filterB.getFilter1().getName(), allParticipantData,
+                allParticipantDataForFiltering);
+        emptyFilterParticipantList.addParticipantDataIdsForFilters(filterC, filterC.getFilter1().getName(), allParticipantData,
+                allParticipantDataForFiltering);
         emptyFilterParticipantList.addParticipantDataConditionsToQuery(allParticipantDataForFiltering, queryConditions, 3);
         emptyFilterParticipantList.addParticipantDataConditionsToQuery(allParticipantDataForFiltering, queryConditions1, 1);
         Assert.assertEquals(" AND (profile.guid = RBMJW6ZIXVXBMXUX6M3Q" + " OR profile.guid = " + participantId1 + ")",
                 queryConditions.get(ElasticSearchUtil.ES));
         Assert.assertEquals(" AND ()", queryConditions1.get(ElasticSearchUtil.ES));
-    }
-
-    @AfterClass
-    public static void finish() {
-        if (participantDataId > 0) {
-            participantDataDao.delete(participantDataId);
-        }
-        if (participantDataId1 > 0) {
-            participantDataDao.delete(participantDataId1);
-        }
-        userDao.delete(userDto.getId());
-        ddpInstanceDao.delete(ddpInstanceDto.getDdpInstanceId());
     }
 }

@@ -1,5 +1,9 @@
 package org.broadinstitute.dsm.model.elastic.export.generate;
 
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
 import org.broadinstitute.dsm.db.structure.DBElement;
 import org.broadinstitute.dsm.model.NameValue;
 import org.broadinstitute.dsm.model.elastic.export.TestPatchUtil;
@@ -7,10 +11,6 @@ import org.broadinstitute.dsm.model.elastic.export.parse.Parser;
 import org.broadinstitute.dsm.model.elastic.export.parse.ValueParser;
 import org.junit.Assert;
 import org.junit.Test;
-
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 
 public class SourceGeneratorTest {
 
@@ -62,7 +62,7 @@ public class SourceGeneratorTest {
     private static class TestSourceGenerator extends SourceGenerator {
 
         public TestSourceGenerator(Parser parser, GeneratorPayload generatorPayload) {
-            super(parser,generatorPayload);
+            super(parser, generatorPayload);
         }
 
         @Override

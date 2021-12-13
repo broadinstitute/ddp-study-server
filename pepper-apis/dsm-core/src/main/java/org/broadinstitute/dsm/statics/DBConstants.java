@@ -44,7 +44,7 @@ public class DBConstants {
     public static final String ES_ACTIVITY_DEFINITION_INDEX = "es_activity_definition_index";
     public static final String ES_USERS_INDEX = "es_users_index";
     public static final String CARRIER_USERNAME = "carrier_username";
-    public static final String CARRIER_PASSWORD= "carrier_password";
+    public static final String CARRIER_PASSWORD = "carrier_password";
     public static final String CARRIER_ACCESSKEY = "carrier_accesskey";
 
     //kit request
@@ -60,7 +60,6 @@ public class DBConstants {
     public static final String UPS_TRACKING_DATE = "ups_tracking_date";
     public static final String UPS_RETURN_DATE = "ups_return_date";
     public static final String DDP_KIT_REQUEST_TABLE_ABBR = "req.";
-
 
 
     public static final String DSM_LABEL_TO = "label_url_to";
@@ -209,7 +208,7 @@ public class DBConstants {
     public static final String COLUMN_NAME = "column_name";
     public static final String COLUMN_DISPLAY = "column_display";
     public static final String TISSUE_RECEIVED = "tissue_received";
-    public static final String TISSUE_PROBLEM_OPTION = "tissue_problem_option" ;
+    public static final String TISSUE_PROBLEM_OPTION = "tissue_problem_option";
     public static final String GENDER = "gender";
     public static final String TDELETED = "tDeleted";
     public static final String DESTRUCTION_POLICY = "destruction_policy";
@@ -418,7 +417,7 @@ public class DBConstants {
     public static final String MATCH_PHRASE = "match_phrase";
     public static final String DOUBLE_CHECK = "double_check";
     public static final String NO_DATA = "no_data";
-    public static final String ACTIVITY= "activity";
+    public static final String ACTIVITY = "activity";
     public static final String STATUS = "status";
     public static final String START_DATE = "start_date";
     public static final String FILES_USED = "files_used";
@@ -480,7 +479,6 @@ public class DBConstants {
 
     //access_user
     public static final String PHONE_NUMBER = "phone_number";
-
 
 
 }

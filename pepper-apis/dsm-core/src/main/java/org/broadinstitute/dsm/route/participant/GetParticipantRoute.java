@@ -1,5 +1,7 @@
 package org.broadinstitute.dsm.route.participant;
 
+import java.util.Map;
+
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
@@ -16,8 +18,6 @@ import spark.QueryParamsMap;
 import spark.Request;
 import spark.Response;
 
-import java.util.Map;
-
 public class GetParticipantRoute extends RequestHandler {
 
     @Override
@@ -26,19 +26,26 @@ public class GetParticipantRoute extends RequestHandler {
         QueryParamsMap queryParamsMap = request.queryMap();
 
         String requestUserId = queryParamsMap.get(UserUtil.USER_ID).value();
-        if (!userId.equals(requestUserId)) throw new IllegalAccessException("User id: " + userId  + "does not match to request user id: " + requestUserId);
+        if (!userId.equals(requestUserId)) {
+            throw new IllegalAccessException("User id: " + userId + "does not match to request user id: " + requestUserId);
+        }
 
         String realm = queryParamsMap.get(RoutePath.REALM).value();
-        if (StringUtils.isBlank(realm)) throw new IllegalArgumentException("realm cannot be empty");
+        if (StringUtils.isBlank(realm)) {
+            throw new IllegalArgumentException("realm cannot be empty");
+        }
 
-        if (!UserUtil.checkUserAccess(realm, userId, "mr_view", requestUserId) && !UserUtil.checkUserAccess(realm, userId, "pt_list_view", requestUserId)) {
+        if (!UserUtil.checkUserAccess(realm, userId, "mr_view", requestUserId) && !UserUtil.checkUserAccess(realm, userId, "pt_list_view"
+                , requestUserId)) {
             response.status(500);
             return UserErrorMessages.NO_RIGHTS;
         }
         DDPInstanceDto ddpInstanceDto = new DDPInstanceDao().getDDPInstanceByInstanceName(realm).orElseThrow();
 
         String ddpParticipantId = queryParamsMap.get(RoutePath.DDP_PARTICIPANT_ID).value();
-        if (StringUtils.isBlank(ddpParticipantId)) throw new IllegalArgumentException("participant id cannot be empty");
+        if (StringUtils.isBlank(ddpParticipantId)) {
+            throw new IllegalArgumentException("participant id cannot be empty");
+        }
 
         Map<String, String> queryConditions = Map.of(
                 "p", " AND p.ddp_participant_id = '" + ddpParticipantId + "'",

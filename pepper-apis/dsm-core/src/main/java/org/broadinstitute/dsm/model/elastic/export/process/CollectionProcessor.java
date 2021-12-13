@@ -22,10 +22,9 @@ public class CollectionProcessor implements Processor {
 
     private ESDsm esDsm;
     private String propertyName;
+    private final Predicate<Field> isFieldMatchProperty = field -> propertyName.equals(field.getName());
     private GeneratorPayload generatorPayload;
     private Collector collector;
-
-    private final Predicate<Field> isFieldMatchProperty = field -> propertyName.equals(field.getName());
 
     public CollectionProcessor(ESDsm esDsm, String propertyName, GeneratorPayload generatorPayload, Collector collector) {
         this.esDsm = Objects.requireNonNull(esDsm);

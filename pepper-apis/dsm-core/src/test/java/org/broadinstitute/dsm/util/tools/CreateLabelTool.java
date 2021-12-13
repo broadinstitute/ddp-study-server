@@ -1,5 +1,7 @@
 package org.broadinstitute.dsm.util.tools;
 
+import java.io.File;
+
 import com.easypost.exception.EasyPostException;
 import com.easypost.model.Address;
 import com.easypost.model.Parcel;
@@ -11,8 +13,6 @@ import org.broadinstitute.dsm.model.ddp.DDPParticipant;
 import org.broadinstitute.dsm.util.EasyPostUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.File;
 
 public class CreateLabelTool {
 
@@ -78,8 +78,7 @@ public class CreateLabelTool {
             Shipment shipment2Participant = easyPostUtil.buyShipment(carrier, carrierID, service,
                     toAddress, returnAddress, parcel, billingRef, null);
             logger.info(shipment2Participant.getLabelUrl());
-        }
-        catch (EasyPostException e) {
+        } catch (EasyPostException e) {
             logger.error(e.toString());
         }
     }
@@ -91,8 +90,7 @@ public class CreateLabelTool {
             EasyPostUtil easyPostUtil = new EasyPostUtil(null, apiKey);
             Address address = easyPostUtil.getAddress(easyPostAddressId);
             logger.info(address.getName());
-        }
-        catch (EasyPostException e) {
+        } catch (EasyPostException e) {
             logger.error(e.toString());
         }
     }
@@ -114,8 +112,7 @@ public class CreateLabelTool {
             Address address = easyPostUtil.createAddress(participant, "617-714-8952");
             Address veri = address.verify(apiKey);
             logger.info(veri.getName());
-        }
-        catch (EasyPostException e) {
+        } catch (EasyPostException e) {
             logger.error(e.toString());
         }
     }

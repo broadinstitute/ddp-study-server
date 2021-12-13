@@ -1,5 +1,14 @@
 package org.broadinstitute.dsm.model.participant;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDataDto;
 import org.broadinstitute.dsm.model.elastic.ESProfile;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearch;
@@ -10,11 +19,6 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
 public class ParticipantWrapperTest {
     public static final int PROXIES_QUANTITY = 5;
     private static ElasticSearchTest elasticSearchable;
@@ -24,6 +28,35 @@ public class ParticipantWrapperTest {
         elasticSearchable = new ElasticSearchTest();
     }
 
+    public static List<String> generateProxies() {
+        return Stream
+                .generate(ParticipantWrapperTest::randomGuidGenerator)
+                .limit(PROXIES_QUANTITY)
+                .collect(Collectors.toList());
+    }
+
+    public static String randomGuidGenerator() {
+        char[] letters = new char[] {'A', 'B', 'C', 'D', 'F', 'G', 'H', 'I', 'G'};
+        return generateParticipantId(letters, 20);
+    }
+
+    public static String randomLegacyAltPidGenerator() {
+        char[] letters = new char[] {'a', 'B', 'C', 'd', 'F', 'g', 'H', 'I', 'j', 'K', 'L', 'm', 'X', 'Y', 'z'};
+        return generateParticipantId(letters, 50);
+    }
+
+    private static String generateParticipantId(char[] letters, int stringSize) {
+        StringBuilder guid = new StringBuilder();
+        Random rand = new Random();
+        for (int i = 1; i <= stringSize; i++) {
+            if (i % 5 == 0) {
+                guid.append(rand.nextInt(10));
+            } else {
+                guid.append(letters[rand.nextInt(letters.length)]);
+            }
+        }
+        return guid.toString();
+    }
 
     @Test
     public void getParticipantIdFromElasticList() {
@@ -53,7 +86,8 @@ public class ParticipantWrapperTest {
         ParticipantWrapper participantWrapper = new ParticipantWrapper(participantWrapperPayload, elasticSearchable);
         List<ElasticSearchParticipantDto> elasticSearchList = elasticSearchable.getParticipantsWithinRange("", 0, 50).getEsParticipants();
         Map<String, List<String>> proxiesIdsFromElasticList = participantWrapper.getProxiesIdsFromElasticList(elasticSearchList);
-        Map<String, List<ElasticSearchParticipantDto>> proxiesByParticipantIds = participantWrapper.getProxiesWithParticipantIdsByProxiesIds(
+        Map<String, List<ElasticSearchParticipantDto>> proxiesByParticipantIds =
+                participantWrapper.getProxiesWithParticipantIdsByProxiesIds(
                 "", proxiesIdsFromElasticList);
         Assert.assertEquals(proxiesByParticipantIds.keySet().size(), proxiesByParticipantIds.keySet().size());
         String parentId = proxiesIdsFromElasticList.keySet().stream().findFirst().get();
@@ -75,6 +109,12 @@ public class ParticipantWrapperTest {
         Assert.assertTrue(pDatas.get(0).getData().orElse("").contains(FamilyMemberConstants.MEMBER_TYPE_SELF));
     }
 
+    @Test
+    public void testGuidGenerator() {
+        String guid = randomGuidGenerator();
+        Assert.assertEquals(20, guid.length());
+    }
+
     private static class ElasticSearchTest implements ElasticSearchable {
 
         ElasticSearch elasticSearch = new ElasticSearch();
@@ -82,13 +122,13 @@ public class ParticipantWrapperTest {
         @Override
         public ElasticSearch getParticipantsWithinRange(String esParticipantsIndex, int from, int to) {
             List<ElasticSearchParticipantDto> result = Stream.generate(() -> {
-                        ESProfile esProfile = new ESProfile();
-                        esProfile.setParticipantGuid(randomGuidGenerator());
-                        return new ElasticSearchParticipantDto.Builder()
-                                .withProfile(esProfile)
-                                .withProxies(generateProxies())
-                                .build();
-                    })
+                ESProfile esProfile = new ESProfile();
+                esProfile.setParticipantGuid(randomGuidGenerator());
+                return new ElasticSearchParticipantDto.Builder()
+                        .withProfile(esProfile)
+                        .withProxies(generateProxies())
+                        .build();
+            })
                     .limit(10)
                     .collect(Collectors.toList());
             elasticSearch.setEsParticipants(result);
@@ -135,42 +175,5 @@ public class ParticipantWrapperTest {
         public ElasticSearch getAllParticipantsDataByInstanceIndex(String esParticipantsIndex) {
             return null;
         }
-    }
-
-
-    @Test
-    public void testGuidGenerator() {
-        String guid = randomGuidGenerator();
-        Assert.assertEquals(20, guid.length());
-    }
-
-    public static List<String> generateProxies() {
-        return Stream
-                .generate(ParticipantWrapperTest::randomGuidGenerator)
-                .limit(PROXIES_QUANTITY)
-                .collect(Collectors.toList());
-    }
-
-    public static String randomGuidGenerator() {
-        char[] letters = new char[] {'A', 'B', 'C', 'D', 'F', 'G', 'H', 'I', 'G'};
-        return generateParticipantId(letters, 20);
-    }
-
-    public static String randomLegacyAltPidGenerator() {
-        char[] letters = new char[] {'a', 'B', 'C', 'd', 'F', 'g', 'H', 'I', 'j', 'K', 'L', 'm', 'X', 'Y', 'z'};
-        return generateParticipantId(letters, 50);
-    }
-
-    private static String generateParticipantId(char[] letters, int stringSize) {
-        StringBuilder guid = new StringBuilder();
-        Random rand = new Random();
-        for (int i = 1; i <= stringSize; i++) {
-            if (i % 5 == 0) {
-                guid.append(rand.nextInt(10));
-            } else {
-                guid.append(letters[rand.nextInt(letters.length)]);
-            }
-        }
-        return guid.toString();
     }
 }

@@ -11,7 +11,7 @@ public class JsonTransformerTest {
     @Test
     public void testIt() {
         String json = jsonTransformer.render(new TestDto());
-        Assert.assertEquals("{\"foo\":\"bar\"}",json);
+        Assert.assertEquals("{\"foo\":\"bar\"}", json);
     }
 
     private class TestDto {

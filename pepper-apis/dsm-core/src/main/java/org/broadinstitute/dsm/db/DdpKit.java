@@ -1,16 +1,17 @@
 package org.broadinstitute.dsm.db;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+
 import lombok.Data;
 import org.broadinstitute.dsm.model.ups.UPSShipment;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-
 @Data
 public class DdpKit {
+    private static final Logger logger = LoggerFactory.getLogger(DdpKit.class);
     String dsmKitRequestId;
     String kitLabel;
     String trackingToId;
@@ -27,8 +28,6 @@ public class DdpKit {
     boolean CEOrdered;
     String ddpInstanceId;
     UPSShipment shipment;
-
-    private static final Logger logger = LoggerFactory.getLogger(DdpKit.class);
 
     public DdpKit(String dsmKitRequestId, String kitLabel, String trackingToId, String trackingReturnId, String error,
                   String message, String receiveDate, String bspCollaboratodId, String externalOrderNumber,
@@ -65,13 +64,11 @@ public class DdpKit {
                 if (rs.next()) {
                     throw new RuntimeException("Too many rows found for kit " + kitLabel);
                 }
-            }
-            else {
+            } else {
                 throw new RuntimeException("Could not find kit " + kitLabel);
             }
 
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             throw new RuntimeException("Could not determine ce_ordered status for " + kitLabel, e);
         }
         return hasBeenOrdered;
@@ -86,8 +83,7 @@ public class DdpKit {
             if (r != 1) {//number of subkits
                 throw new RuntimeException("Update query for CE order flag updated " + r + " rows! with dsm kit " + kitLabel);
             }
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             throw new RuntimeException("Could not update ce_ordered status for " + kitLabel, e);
         }
     }

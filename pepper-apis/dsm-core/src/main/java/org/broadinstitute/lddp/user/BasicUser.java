@@ -1,12 +1,11 @@
 package org.broadinstitute.lddp.user;
 
-public interface BasicUser
-{
-    public String getFirstName();
+public interface BasicUser {
+    String getFirstName();
 
-    public String getLastName();
+    String getLastName();
 
-    public String getEmail();
+    String getEmail();
 
-    public String getLanguage();
+    String getLanguage();
 }

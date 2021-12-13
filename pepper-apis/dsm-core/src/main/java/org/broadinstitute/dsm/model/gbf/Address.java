@@ -1,33 +1,33 @@
 package org.broadinstitute.dsm.model.gbf;
-import lombok.Data;
-import org.apache.commons.lang3.StringUtils;
 
 import javax.xml.bind.annotation.XmlElement;
 
+import org.apache.commons.lang3.StringUtils;
+
 public class Address {
 
-    @XmlElement(name="Company")
+    @XmlElement(name = "Company")
     private String company;
 
-    @XmlElement(name="AddressLine1")
+    @XmlElement(name = "AddressLine1")
     private String addressLine1;
 
-    @XmlElement(name="AddressLine2")
+    @XmlElement(name = "AddressLine2")
     private String addressLine2;
 
-    @XmlElement(name="City")
+    @XmlElement(name = "City")
     private String city;
 
-    @XmlElement(name="State")
+    @XmlElement(name = "State")
     private String state;
 
-    @XmlElement(name="ZipCode")
+    @XmlElement(name = "ZipCode")
     private String zipCode;
 
-    @XmlElement(name="Country")
+    @XmlElement(name = "Country")
     private String country;
 
-    @XmlElement(name="PhoneNumber")
+    @XmlElement(name = "PhoneNumber")
     private String phoneNumber;
 
     public Address() {
@@ -52,8 +52,8 @@ public class Address {
     }
 
 
-    public boolean isComplete(){
-        return  StringUtils.isNotBlank(this.company) && StringUtils.isNotBlank(this.addressLine1) &&
+    public boolean isComplete() {
+        return StringUtils.isNotBlank(this.company) && StringUtils.isNotBlank(this.addressLine1) &&
                 StringUtils.isNotBlank(this.city) && StringUtils.isNotBlank(this.state) &&
                 StringUtils.isNotBlank(this.zipCode) && StringUtils.isNotBlank(this.country) &&
                 StringUtils.isNotBlank(this.phoneNumber);

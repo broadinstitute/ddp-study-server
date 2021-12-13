@@ -1,5 +1,9 @@
 package org.broadinstitute.dsm.util;
 
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Map;
+
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
@@ -9,10 +13,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import spark.Request;
-
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Map;
 
 /**
  * Utility for "before" filter that will halt with a 404
@@ -24,16 +24,12 @@ import java.util.Map;
  */
 public class JWTRouteFilter {
 
-    private static final Logger logger = LoggerFactory.getLogger(JWTRouteFilter.class);
-
     public static final String AUTHORIZATION = "Authorization";
     public static final String BEARER = "Bearer";
-
-    private final String jwtSecret;
-
     // todo arz refactor this with ddp backend core jwt util
     public static final String DDP_ROLES_CLAIM = "org.broadinstitute.ddp.roles";
-
+    private static final Logger logger = LoggerFactory.getLogger(JWTRouteFilter.class);
+    private final String jwtSecret;
     private final Collection<String> expectedRoles = new HashSet<>();
 
     /**
@@ -93,14 +89,12 @@ public class JWTRouteFilter {
                                                 }
                                             }
                                         }
-                                    }
-                                    else {
+                                    } else {
                                         // no role restriction required, just a valid signature
                                         isAccessAllowed = true;
                                     }
                                 }
-                            }
-                            catch (Exception e) {
+                            } catch (Exception e) {
                                 logger.error("Invalid token: " + jwtToken, e);
                             }
                         }

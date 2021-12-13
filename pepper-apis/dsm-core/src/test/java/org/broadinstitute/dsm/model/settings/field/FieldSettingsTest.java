@@ -1,5 +1,9 @@
 package org.broadinstitute.dsm.model.settings.field;
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+
 import org.broadinstitute.dsm.TestHelper;
 import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
 import org.broadinstitute.dsm.db.dao.settings.FieldSettingsDao;
@@ -10,21 +14,21 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-
 public class FieldSettingsTest {
 
-    private static final String acceptanceStatusPossibleValue = "[{\"value\":\"ACCEPTED\",\"name\":\"Accepted\",default:true},{\"value\":\"IN_REVIEW\",\"name\":\"In Review\"},{\"name\":\"More Info Needed\",\"value\":\"MORE_INFO_NEEDED\"},{\"name\":\"Not Accepted\",\"value\":\"NOT_ACCEPTED\"},{\"name\":\"Waitlist\",\"value\":\"WAITLIST\"},{\"name\":\"Pre-review\",\"value\":\"PRE_REVIEW\"}]";
-    private static final String activePossibleValue = "[{\"value\":\"ACTIVE\",\"name\":\"Active\"},{\"value\":\"HOLD\",\"name\":\"HOLD\"},{\"value\":\"INACTIVE\",\"name\":\"Inactive\"}]";
-    private static final String ethnicityPossibleValue = "[{\"name\":\"Hispanic\",\"value\":\"HISPANIC\",default:true},{\"name\":\"Not Hispanic\",\"value\":\"NOT_HISPANIC\"},{\"name\":\"Unknown or Not Reported\",\"value\":\"UNKNOWN\"}]";
+    public static final String REGISTRATION_STATUS = "REGISTRATION_STATUS";
+    private static final String acceptanceStatusPossibleValue = "[{\"value\":\"ACCEPTED\",\"name\":\"Accepted\",default:true},"
+            + "{\"value\":\"IN_REVIEW\",\"name\":\"In Review\"},{\"name\":\"More Info Needed\",\"value\":\"MORE_INFO_NEEDED\"},"
+            + "{\"name\":\"Not Accepted\",\"value\":\"NOT_ACCEPTED\"},{\"name\":\"Waitlist\",\"value\":\"WAITLIST\"},"
+            + "{\"name\":\"Pre-review\",\"value\":\"PRE_REVIEW\"}]";
+    private static final String activePossibleValue = "[{\"value\":\"ACTIVE\",\"name\":\"Active\"},{\"value\":\"HOLD\","
+            + "\"name\":\"HOLD\"},{\"value\":\"INACTIVE\",\"name\":\"Inactive\"}]";
+    private static final String ethnicityPossibleValue = "[{\"name\":\"Hispanic\",\"value\":\"HISPANIC\",default:true},{\"name\":\"Not "
+            + "Hispanic\",\"value\":\"NOT_HISPANIC\"},{\"name\":\"Unknown or Not Reported\",\"value\":\"UNKNOWN\"}]";
     private static final String actions = "[{\"name\":\"REGISTRATION_STATUS\",\"type\":\"ELASTIC_EXPORT.workflows\"}]";
     private static final String acceptanceStatusColumnName = "ACCEPTANCE_STATUS";
     private static final String activeColumnName = "ACTIVE";
     private static final String ethnicityColumnName = "ETHNICITY";
-    public static final String REGISTRATION_STATUS = "REGISTRATION_STATUS";
-
     private static FieldSettings fieldSettings;
     private static int instanceId;
     private static int fieldSettingsId;
@@ -39,8 +43,12 @@ public class FieldSettingsTest {
 
     @AfterClass
     public static void tearDown() {
-        if (instanceId > -1) ddpInstanceDao.delete(instanceId);
-        if (fieldSettingsId > -1) FieldSettingsDao.of().delete(fieldSettingsId);
+        if (instanceId > -1) {
+            ddpInstanceDao.delete(instanceId);
+        }
+        if (fieldSettingsId > -1) {
+            FieldSettingsDao.of().delete(fieldSettingsId);
+        }
     }
 
     @Test

@@ -1,17 +1,6 @@
 package org.broadinstitute.dsm.util;
 
-import lombok.NonNull;
-import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.lddp.handlers.util.Institution;
-import org.broadinstitute.lddp.handlers.util.InstitutionRequest;
-import org.broadinstitute.dsm.db.DDPInstance;
-import org.broadinstitute.dsm.db.MedicalRecordLog;
-import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDao;
-import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDto;
-import org.broadinstitute.dsm.statics.DBConstants;
-import org.broadinstitute.dsm.statics.RoutePath;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -21,23 +10,43 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 
-import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
+import lombok.NonNull;
+import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.dsm.db.DDPInstance;
+import org.broadinstitute.dsm.db.MedicalRecordLog;
+import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDao;
+import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDto;
+import org.broadinstitute.dsm.statics.DBConstants;
+import org.broadinstitute.dsm.statics.RoutePath;
+import org.broadinstitute.lddp.handlers.util.Institution;
+import org.broadinstitute.lddp.handlers.util.InstitutionRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class DDPMedicalRecordDataRequest {
 
+    public static final String SQL_INSERT_ONC_HISTORY = "INSERT INTO ddp_onc_history SET participant_id = (SELECT participant_id FROM "
+            + "ddp_participant " +
+            "WHERE ddp_participant_id = ? and ddp_instance_id = ?), last_changed = ?, changed_by = ? ON DUPLICATE KEY UPDATE last_changed"
+            + " = ?, changed_by = ?";
+    public static final String SQL_INSERT_PARTICIPANT_RECORD = "INSERT INTO ddp_participant_record SET participant_id = (SELECT "
+            + "participant_id FROM ddp_participant " +
+            "WHERE ddp_participant_id = ? and ddp_instance_id = ?), last_changed = ?, changed_by = ? ON DUPLICATE KEY UPDATE last_changed"
+            + " = ?, changed_by = ?";
     private static final Logger logger = LoggerFactory.getLogger(DDPMedicalRecordDataRequest.class);
-
-    public static final String SQL_INSERT_ONC_HISTORY = "INSERT INTO ddp_onc_history SET participant_id = (SELECT participant_id FROM ddp_participant " +
-            "WHERE ddp_participant_id = ? and ddp_instance_id = ?), last_changed = ?, changed_by = ? ON DUPLICATE KEY UPDATE last_changed = ?, changed_by = ?";
-    public static final String SQL_INSERT_PARTICIPANT_RECORD = "INSERT INTO ddp_participant_record SET participant_id = (SELECT participant_id FROM ddp_participant " +
-            "WHERE ddp_participant_id = ? and ddp_instance_id = ?), last_changed = ?, changed_by = ? ON DUPLICATE KEY UPDATE last_changed = ?, changed_by = ?";
-    private static final String SQL_INSERT_MEDICAL_RECORD_LOG = "INSERT INTO ddp_medical_record_log SET medical_record_id = ?, type = ?, last_changed = ?";
-    private static final String SQL_SELECT_MEDICAL_RECORD_LOG = "SELECT rec.medical_record_id, log.type, log.date FROM ddp_medical_record rec " +
-            "LEFT JOIN ddp_institution inst on (rec.institution_id = inst.institution_id) LEFT JOIN ddp_participant part on (part.participant_id = inst.participant_id) " +
-            "LEFT JOIN ddp_medical_record_log log on (log.medical_record_id = rec.medical_record_id) WHERE part.ddp_participant_id = ? AND part.ddp_instance_id = ? " +
+    private static final String SQL_INSERT_MEDICAL_RECORD_LOG = "INSERT INTO ddp_medical_record_log SET medical_record_id = ?, type = ?, "
+            + "last_changed = ?";
+    private static final String SQL_SELECT_MEDICAL_RECORD_LOG = "SELECT rec.medical_record_id, log.type, log.date FROM ddp_medical_record"
+            + " rec " +
+            "LEFT JOIN ddp_institution inst on (rec.institution_id = inst.institution_id) LEFT JOIN ddp_participant part on (part"
+            + ".participant_id = inst.participant_id) " +
+            "LEFT JOIN ddp_medical_record_log log on (log.medical_record_id = rec.medical_record_id) WHERE part.ddp_participant_id = ? "
+            + "AND part.ddp_instance_id = ? " +
             "AND NOT rec.deleted <=> 1 AND rec.fax_sent is not null AND (log.type is null OR log.type = ?)";
-    private static final String SQL_SELECT_LOG_FOR_MEDICAL_RECORD = "SELECT rec.medical_record_id, log.type, log.date, rec.fax_sent FROM ddp_medical_record rec " +
-            "LEFT JOIN ddp_medical_record_log log on (log.medical_record_id = rec.medical_record_id) WHERE rec.medical_record_id = ? AND rec.fax_sent is not null " +
+    private static final String SQL_SELECT_LOG_FOR_MEDICAL_RECORD = "SELECT rec.medical_record_id, log.type, log.date, rec.fax_sent FROM "
+            + "ddp_medical_record rec " +
+            "LEFT JOIN ddp_medical_record_log log on (log.medical_record_id = rec.medical_record_id) WHERE rec.medical_record_id = ? AND "
+            + "rec.fax_sent is not null " +
             "AND (log.type is null OR log.type = ?) ORDER BY medical_record_log_id desc";
 
     private long lastTimeChecked = System.currentTimeMillis();
@@ -62,26 +71,25 @@ public class DDPMedicalRecordDataRequest {
                             if (value != null && value != -1) {
                                 String dsmRequest = ddpInstance.getBaseUrl() + RoutePath.DDP_PARTICIPANT_INSTITUTIONS + "/" + value;
                                 try {
-                                    InstitutionRequest[] institutionRequests = DDPRequestUtil.getResponseObject(InstitutionRequest[].class, dsmRequest, ddpInstance.getName(), ddpInstance.isHasAuth0Token());
+                                    InstitutionRequest[] institutionRequests =
+                                            DDPRequestUtil.getResponseObject(InstitutionRequest[].class, dsmRequest,
+                                                    ddpInstance.getName(), ddpInstance.isHasAuth0Token());
                                     if (institutionRequests != null && institutionRequests.length > 0) {
                                         logger.info("Got " + institutionRequests.length + " InstitutionRequests");
                                         for (InstitutionRequest institutionRequest : institutionRequests) {
                                             try {
                                                 writeParticipantIntoDb(conn, ddpInstance.getDdpInstanceId(), institutionRequest);
                                                 value = Math.max(value, institutionRequest.getId());
-                                            }
-                                            catch (Exception e) {
+                                            } catch (Exception e) {
                                                 logger.error("Failed to insert participant for mr into db ", e);
                                             }
                                         }
                                         DBUtil.updateBookmark(conn, value, ddpInstance.getDdpInstanceId());
                                     }
-                                }
-                                catch (Exception e) {
+                                } catch (Exception e) {
                                     logger.error("Couldn't get participants and institutions for ddpInstance " + ddpInstance.getName(), e);
                                 }
-                            }
-                            else {
+                            } else {
                                 logger.error("Couldn't get maxParticipantId for ddpInstance " + ddpInstance.getName());
                             }
                         }
@@ -89,8 +97,7 @@ public class DDPMedicalRecordDataRequest {
                     return null;
                 });
             }
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             throw new RuntimeException("Error getting participant information ", e);
         }
     }
@@ -109,8 +116,7 @@ public class DDPMedicalRecordDataRequest {
                     }
                 }
             }
-        }
-        else {
+        } else {
             //new participant
             ParticipantDto participantDto = new ParticipantDto.Builder(Integer.parseInt(instanceId), System.currentTimeMillis())
                     .withDdpParticipantId(institutionRequest.getParticipantId())
@@ -123,8 +129,10 @@ public class DDPMedicalRecordDataRequest {
         }
     }
 
-    public void writePhysiciansIntoDb(@NonNull Connection conn, @NonNull String instanceId, @NonNull String participantId, @NonNull String ptLastUpdated,
-                                      @NonNull String institutionId, @NonNull boolean institutionChangedSinceLastChecked, @NonNull String type, boolean setDuplicateFlag) {
+    public void writePhysiciansIntoDb(@NonNull Connection conn, @NonNull String instanceId, @NonNull String participantId,
+                                      @NonNull String ptLastUpdated,
+                                      @NonNull String institutionId, @NonNull boolean institutionChangedSinceLastChecked,
+                                      @NonNull String type, boolean setDuplicateFlag) {
         if (!MedicalRecordUtil.isParticipantInDB(conn, participantId, instanceId)) {
             //new participant
             ParticipantDto participantDto = new ParticipantDto.Builder(Integer.parseInt(instanceId), System.currentTimeMillis())
@@ -136,8 +144,7 @@ public class DDPMedicalRecordDataRequest {
             new ParticipantDao().create(participantDto);
             MedicalRecordUtil.writeNewRecordIntoDb(conn, SQL_INSERT_ONC_HISTORY, participantId, instanceId);
             MedicalRecordUtil.writeNewRecordIntoDb(conn, SQL_INSERT_PARTICIPANT_RECORD, participantId, instanceId);
-        }
-        else {
+        } else {
             //pt already exists
             Number lastVersion = MedicalRecordUtil.getParticipantLastVersion(conn, participantId, instanceId);
             long newVersion = lastVersion.longValue() + 1;
@@ -147,8 +154,7 @@ public class DDPMedicalRecordDataRequest {
         Number medicalRecordId = MedicalRecordUtil.isInstitutionInDB(conn, participantId, institutionId, instanceId, type);
         if (medicalRecordId == null) {
             MedicalRecordUtil.writeInstitutionIntoDb(conn, participantId, instanceId, institutionId, type, setDuplicateFlag);
-        }
-        else {
+        } else {
             //physician already exists, so insert mr id into log table
             if (institutionChangedSinceLastChecked) {
                 if (shouldHaveMedicalRecordLog(conn, medicalRecordId)) {
@@ -168,8 +174,7 @@ public class DDPMedicalRecordDataRequest {
                 MedicalRecordUtil.writeInstitutionIntoDb(conn, institutionRequest.getParticipantId(), instanceId,
                         institution.getId(), institution.getType());
             }
-        }
-        else {
+        } else {
             logger.info("Institution list was empty for participant w/ id " + institutionRequest.getParticipantId());
         }
     }
@@ -185,12 +190,10 @@ public class DDPMedicalRecordDataRequest {
                     throw new RuntimeException("Error updating row");
                 }
                 logger.info("Added medical record log for medical record w/ id " + medicalRecordId);
-            }
-            catch (SQLException e) {
+            } catch (SQLException e) {
                 throw new RuntimeException("Error inserting new medical record ", e);
             }
-        }
-        else {
+        } else {
             throw new RuntimeException("DB connection was null");
         }
     }
@@ -209,19 +212,14 @@ public class DDPMedicalRecordDataRequest {
                         if ((StringUtils.isNotBlank(rs.getString(DBConstants.DATE)) && MedicalRecordLog.DATA_REVIEW.equals(type))
                                 || StringUtils.isBlank(type)) {
                             medicalRecordIds.add(medicalRecordId);
-                        }
-                        else {
-                            if (medicalRecordIds.contains(medicalRecordId)) {
-                                medicalRecordIds.remove(medicalRecordId);
-                            }
+                        } else {
+                            medicalRecordIds.remove(medicalRecordId);
                         }
                     }
-                }
-                catch (SQLException e1) {
+                } catch (SQLException e1) {
                     throw new RuntimeException("Error getting medicalRecordId ", e1);
                 }
-            }
-            catch (SQLException e) {
+            } catch (SQLException e) {
                 throw new RuntimeException("Error getting medicalRecordIds ", e);
             }
         }
@@ -241,12 +239,10 @@ public class DDPMedicalRecordDataRequest {
                             return true;
                         }
                     }
-                }
-                catch (SQLException e1) {
+                } catch (SQLException e1) {
                     throw new RuntimeException("Error getting medicalRecordId ", e1);
                 }
-            }
-            catch (SQLException e) {
+            } catch (SQLException e) {
                 throw new RuntimeException("Error getting medicalRecordIds ", e);
             }
         }

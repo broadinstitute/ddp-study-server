@@ -14,6 +14,14 @@ public class ParticipantWrapperPayload {
     private int from;
     private int to;
 
+    private ParticipantWrapperPayload(Builder builder) {
+        this.ddpInstanceDto = builder.ddpInstanceDto;
+        this.filter = builder.filter;
+        this.userId = builder.userId;
+        this.from = builder.from;
+        this.to = builder.to;
+    }
+
     public Optional<DDPInstanceDto> getDdpInstanceDto() {
         return Optional.ofNullable(ddpInstanceDto);
     }
@@ -32,14 +40,6 @@ public class ParticipantWrapperPayload {
 
     public int getTo() {
         return this.to;
-    }
-
-    private ParticipantWrapperPayload(Builder builder) {
-        this.ddpInstanceDto = builder.ddpInstanceDto;
-        this.filter = builder.filter;
-        this.userId = builder.userId;
-        this.from = builder.from;
-        this.to = builder.to;
     }
 
     public static class Builder {

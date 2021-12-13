@@ -1,8 +1,8 @@
 package org.broadinstitute.dsm.model.elastic.export;
 
-import org.elasticsearch.action.update.UpdateRequest;
-
 import java.util.Map;
+
+import org.elasticsearch.action.update.UpdateRequest;
 
 public class UpsertDataRequestPayload {
 
@@ -48,12 +48,12 @@ public class UpsertDataRequestPayload {
             this.index = index;
             return this;
         }
-        
+
         public Builder withType(String type) {
             this.type = type;
             return this;
         }
-        
+
         public Builder withId(String id) {
             this.id = id;
             return this;

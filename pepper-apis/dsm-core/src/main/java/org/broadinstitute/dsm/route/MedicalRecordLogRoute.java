@@ -1,21 +1,6 @@
 package org.broadinstitute.dsm.route;
 
-import com.google.gson.Gson;
-import lombok.NonNull;
-import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.lddp.db.SimpleResult;
-import org.broadinstitute.lddp.handlers.util.Result;
-import org.broadinstitute.dsm.db.MedicalRecordLog;
-import org.broadinstitute.dsm.security.RequestHandler;
-import org.broadinstitute.dsm.statics.DBConstants;
-import org.broadinstitute.dsm.statics.RequestParameter;
-import org.broadinstitute.dsm.statics.RoutePath;
-import org.broadinstitute.dsm.statics.UserErrorMessages;
-import org.broadinstitute.dsm.util.UserUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import spark.Request;
-import spark.Response;
+import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -24,14 +9,31 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
+import com.google.gson.Gson;
+import lombok.NonNull;
+import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.dsm.db.MedicalRecordLog;
+import org.broadinstitute.dsm.security.RequestHandler;
+import org.broadinstitute.dsm.statics.DBConstants;
+import org.broadinstitute.dsm.statics.RequestParameter;
+import org.broadinstitute.dsm.statics.RoutePath;
+import org.broadinstitute.dsm.statics.UserErrorMessages;
+import org.broadinstitute.dsm.util.UserUtil;
+import org.broadinstitute.lddp.db.SimpleResult;
+import org.broadinstitute.lddp.handlers.util.Result;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import spark.Request;
+import spark.Response;
 
 public class MedicalRecordLogRoute extends RequestHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(MedicalRecordLogRoute.class);
 
-    private static final String SQL_SELECT_MR_LOG = "SELECT medical_record_log_id, date, comments, type FROM ddp_medical_record_log WHERE medical_record_id = ?";
-    private static final String SQL_UPDATE_MR_LOG = "UPDATE ddp_medical_record_log SET date = ?, comments = ?, last_changed = ? WHERE medical_record_log_id = ?";
+    private static final String SQL_SELECT_MR_LOG = "SELECT medical_record_log_id, date, comments, type FROM ddp_medical_record_log WHERE"
+            + " medical_record_id = ?";
+    private static final String SQL_UPDATE_MR_LOG = "UPDATE ddp_medical_record_log SET date = ?, comments = ?, last_changed = ? WHERE "
+            + "medical_record_log_id = ?";
 
     @Override
     public Object processRequest(Request request, Response response, String userId) throws Exception {
@@ -47,18 +49,15 @@ public class MedicalRecordLogRoute extends RequestHandler {
                     try {
                         saveMedicalRecordLog(medicalRecordId, medicalRecordLog);
                         return new Result(200);
-                    }
-                    catch (Exception e) {
+                    } catch (Exception e) {
                         throw new RuntimeException("Failed to save medical record log ", e);
                     }
                 }
                 throw new RuntimeException("Request method was not mapped " + request.requestMethod());
-            }
-            else {
+            } else {
                 throw new RuntimeException("Medical record id was missing");
             }
-        }
-        else {
+        } else {
             response.status(500);
             return new Result(500, UserErrorMessages.NO_RIGHTS);
         }
@@ -86,8 +85,7 @@ public class MedicalRecordLogRoute extends RequestHandler {
                         ));
                     }
                 }
-            }
-            catch (SQLException ex) {
+            } catch (SQLException ex) {
                 dbVals.resultException = ex;
             }
             return dbVals;
@@ -118,12 +116,10 @@ public class MedicalRecordLogRoute extends RequestHandler {
                 int result = stmt.executeUpdate();
                 if (result == 1) {
                     logger.info("Updated medical record log w/ id " + medicalRecordLogId);
-                }
-                else {
+                } else {
                     throw new RuntimeException("Error updating medical record log w/ id " + medicalRecordLogId + " it was updating " + result + " rows");
                 }
-            }
-            catch (SQLException ex) {
+            } catch (SQLException ex) {
                 dbVals.resultException = ex;
             }
             return dbVals;

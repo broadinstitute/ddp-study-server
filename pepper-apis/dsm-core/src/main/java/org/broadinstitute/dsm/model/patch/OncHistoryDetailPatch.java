@@ -5,7 +5,6 @@ import java.util.Optional;
 
 import org.broadinstitute.dsm.db.OncHistory;
 import org.broadinstitute.dsm.db.OncHistoryDetail;
-import org.broadinstitute.dsm.db.structure.DBElement;
 import org.broadinstitute.dsm.model.NameValue;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.util.MedicalRecordUtil;
@@ -14,13 +13,21 @@ import org.slf4j.LoggerFactory;
 
 public class OncHistoryDetailPatch extends BasePatch {
 
+    static final Logger logger = LoggerFactory.getLogger(OncHistoryDetailPatch.class);
     private static final String ONC_HISTORY_DETAIL_ID = "oncHistoryDetailId";
+
+    static {
+        NULL_KEY = new HashMap<>();
+        NULL_KEY.put(NAME_VALUE, null);
+    }
 
     private Number mrID;
     private String oncHistoryDetailId;
 
-    static final Logger logger = LoggerFactory.getLogger(OncHistoryDetailPatch.class);
-
+    {
+        nameValues.add(new NameValue("request", OncHistoryDetail.STATUS_REVIEW));
+        resultMap.put(NAME_VALUE, GSON.toJson(nameValues));
+    }
 
     public OncHistoryDetailPatch(Patch patch) {
         super(patch);
@@ -29,16 +36,6 @@ public class OncHistoryDetailPatch extends BasePatch {
     @Override
     public Object doPatch() {
         return isNameValuePairs() ? patchNameValuePairs() : patchNameValuePair();
-    }
-
-    {
-        nameValues.add(new NameValue("request", OncHistoryDetail.STATUS_REVIEW));
-        resultMap.put(NAME_VALUE, GSON.toJson(nameValues));
-    }
-    
-    static {
-        NULL_KEY = new HashMap<>();
-        NULL_KEY.put(NAME_VALUE, null);
     }
 
     private void prepare() {

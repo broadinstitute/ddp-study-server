@@ -31,19 +31,22 @@ public class SavedFiltersTissueList extends BaseFilterTissueList {
     public List<TissueListWrapper> filter(QueryParamsMap queryParamsMap) {
         prepareNeccesaryData(queryParamsMap);
         String filterName = Objects.requireNonNull(queryParamsMap).get(RequestParameter.FILTER_NAME).value();
-        if (!queryParamsMap.hasKey(RoutePath.REALM)) throw new NoSuchElementException("realm is necessary");
+        if (!queryParamsMap.hasKey(RoutePath.REALM)) {
+            throw new NoSuchElementException("realm is necessary");
+        }
         String realm = queryParamsMap.get(RoutePath.REALM).value();
         DDPInstance ddpInstance = DDPInstance.getDDPInstance(realm);
-        if (!queryParamsMap.hasKey(DBConstants.FILTER_PARENT)) throw new RuntimeException("parent is necessary");
+        if (!queryParamsMap.hasKey(DBConstants.FILTER_PARENT)) {
+            throw new RuntimeException("parent is necessary");
+        }
         Filter[] filters = null;
         if (StringUtils.isBlank(filterName)) {
             filters = new Gson().fromJson(queryParamsMap.get(RequestParameter.FILTERS).value(), Filter[].class);
         }
-        return filterTissueList(filters, PatchUtil.getColumnNameMap(), filterName == null ? quickFilterName : filterName, ddpInstance, filterQuery);
+        return filterTissueList(filters, PatchUtil.getColumnNameMap(), filterName == null ? quickFilterName : filterName, ddpInstance,
+                filterQuery);
 
     }
-
-
 
 
 }

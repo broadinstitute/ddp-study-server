@@ -23,9 +23,11 @@ public class FilterFactory {
     public static Filterable of(Request request) {
         QueryParamsMap queryParams = Objects.requireNonNull(request).queryMap();
         String parent = queryParams.get(DBConstants.FILTER_PARENT).value();
-        if (StringUtils.isBlank(parent)) throw new IllegalArgumentException("parent cannot be empty");
+        if (StringUtils.isBlank(parent)) {
+            throw new IllegalArgumentException("parent cannot be empty");
+        }
         String[] pathSegments = request.uri().split("/");
-        String lastSegment = pathSegments.length > 0 ? pathSegments[pathSegments.length-1] : "";
+        String lastSegment = pathSegments.length > 0 ? pathSegments[pathSegments.length - 1] : "";
         String jsonBody = request.body();
         Filterable filterable = queryParamsMap -> Collections.emptyList();
         switch (lastSegment) {
@@ -35,7 +37,7 @@ public class FilterFactory {
                             .PARENT_PARTICIPANT_LIST:
                         if (StringUtils.isNotBlank(queryParams.get(RequestParameter.FILTER_NAME).value())) {
                             filterable = new QuickFilterParticipantList();
-                        } else if (StringUtils.isNotBlank(queryParams.get(RequestParameter.FILTERS).value())){
+                        } else if (StringUtils.isNotBlank(queryParams.get(RequestParameter.FILTERS).value())) {
                             filterable = new SavedFilterParticipantList();
                         } else {
                             filterable = new EmptyFilterParticipantList();

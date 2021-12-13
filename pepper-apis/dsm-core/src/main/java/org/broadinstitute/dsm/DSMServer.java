@@ -1,5 +1,32 @@
 package org.broadinstitute.dsm;
 
+import static org.quartz.CronScheduleBuilder.cronSchedule;
+import static org.quartz.SimpleScheduleBuilder.simpleSchedule;
+import static spark.Spark.afterAfter;
+import static spark.Spark.before;
+import static spark.Spark.get;
+import static spark.Spark.halt;
+import static spark.Spark.patch;
+import static spark.Spark.port;
+import static spark.Spark.post;
+import static spark.Spark.put;
+import static spark.Spark.threadPool;
+
+import java.io.File;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.google.api.gax.core.ExecutorProvider;
 import com.google.api.gax.core.InstantiatingExecutorProvider;
@@ -28,11 +55,65 @@ import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.util.ConfigUtil;
 import org.broadinstitute.dsm.careevolve.Provider;
 import org.broadinstitute.dsm.jetty.JettyConfig;
-import org.broadinstitute.dsm.jobs.*;
+import org.broadinstitute.dsm.jobs.DDPEventJob;
+import org.broadinstitute.dsm.jobs.DDPRequestJob;
+import org.broadinstitute.dsm.jobs.EasypostShipmentStatusJob;
+import org.broadinstitute.dsm.jobs.ExternalShipperJob;
+import org.broadinstitute.dsm.jobs.GPNotificationJob;
+import org.broadinstitute.dsm.jobs.LabelCreationJob;
+import org.broadinstitute.dsm.jobs.NotificationJob;
+import org.broadinstitute.dsm.jobs.PubSubLookUp;
 import org.broadinstitute.dsm.log.SlackAppender;
 import org.broadinstitute.dsm.pubsub.DSMtasksSubscription;
 import org.broadinstitute.dsm.pubsub.PubSubResultMessageSubscription;
-import org.broadinstitute.dsm.route.*;
+import org.broadinstitute.dsm.route.AbstractionFormControlRoute;
+import org.broadinstitute.dsm.route.AbstractionRoute;
+import org.broadinstitute.dsm.route.AllowedRealmsRoute;
+import org.broadinstitute.dsm.route.AssignParticipantRoute;
+import org.broadinstitute.dsm.route.AssigneeRoute;
+import org.broadinstitute.dsm.route.AuthenticationRoute;
+import org.broadinstitute.dsm.route.BSPKitRegisteredRoute;
+import org.broadinstitute.dsm.route.BSPKitRoute;
+import org.broadinstitute.dsm.route.CancerRoute;
+import org.broadinstitute.dsm.route.CarrierServiceRoute;
+import org.broadinstitute.dsm.route.ClinicalKitsRoute;
+import org.broadinstitute.dsm.route.CreateBSPDummyKitRoute;
+import org.broadinstitute.dsm.route.CreateClinicalDummyKitRoute;
+import org.broadinstitute.dsm.route.DashboardRoute;
+import org.broadinstitute.dsm.route.DisplaySettingsRoute;
+import org.broadinstitute.dsm.route.DownloadPDFRoute;
+import org.broadinstitute.dsm.route.DrugListRoute;
+import org.broadinstitute.dsm.route.DrugRoute;
+import org.broadinstitute.dsm.route.EditParticipantMessageReceiverRoute;
+import org.broadinstitute.dsm.route.EditParticipantPublisherRoute;
+import org.broadinstitute.dsm.route.EventTypeRoute;
+import org.broadinstitute.dsm.route.FieldSettingsRoute;
+import org.broadinstitute.dsm.route.FilterRoute;
+import org.broadinstitute.dsm.route.InstitutionRoute;
+import org.broadinstitute.dsm.route.KitAuthorizationRoute;
+import org.broadinstitute.dsm.route.KitDeactivationRoute;
+import org.broadinstitute.dsm.route.KitDiscardRoute;
+import org.broadinstitute.dsm.route.KitExpressRoute;
+import org.broadinstitute.dsm.route.KitLabelRoute;
+import org.broadinstitute.dsm.route.KitRequestRoute;
+import org.broadinstitute.dsm.route.KitSearchRoute;
+import org.broadinstitute.dsm.route.KitStatusChangeRoute;
+import org.broadinstitute.dsm.route.KitTypeRoute;
+import org.broadinstitute.dsm.route.KitUploadRoute;
+import org.broadinstitute.dsm.route.LabelSettingRoute;
+import org.broadinstitute.dsm.route.LoggingFilter;
+import org.broadinstitute.dsm.route.LookupRoute;
+import org.broadinstitute.dsm.route.MailingListRoute;
+import org.broadinstitute.dsm.route.MedicalRecordLogRoute;
+import org.broadinstitute.dsm.route.NDIRoute;
+import org.broadinstitute.dsm.route.ParticipantEventRoute;
+import org.broadinstitute.dsm.route.ParticipantExitRoute;
+import org.broadinstitute.dsm.route.ParticipantStatusRoute;
+import org.broadinstitute.dsm.route.PatchRoute;
+import org.broadinstitute.dsm.route.PermalinkRoute;
+import org.broadinstitute.dsm.route.TriggerSurveyRoute;
+import org.broadinstitute.dsm.route.UserSettingRoute;
+import org.broadinstitute.dsm.route.ViewFilterRoute;
 import org.broadinstitute.dsm.route.familymember.AddFamilyMemberRoute;
 import org.broadinstitute.dsm.route.participant.GetParticipantDataRoute;
 import org.broadinstitute.dsm.route.participant.GetParticipantRoute;
@@ -40,15 +121,38 @@ import org.broadinstitute.dsm.security.JWTConverter;
 import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
 import org.broadinstitute.dsm.statics.RequestParameter;
 import org.broadinstitute.dsm.statics.RoutePath;
-import org.broadinstitute.dsm.util.*;
+import org.broadinstitute.dsm.util.DDPRequestUtil;
+import org.broadinstitute.dsm.util.EventUtil;
+import org.broadinstitute.dsm.util.JWTRouteFilter;
+import org.broadinstitute.dsm.util.JavaHeapDumper;
+import org.broadinstitute.dsm.util.JsonNullTransformer;
+import org.broadinstitute.dsm.util.KitUtil;
+import org.broadinstitute.dsm.util.NotificationUtil;
+import org.broadinstitute.dsm.util.PatchUtil;
+import org.broadinstitute.dsm.util.SecurityUtil;
+import org.broadinstitute.dsm.util.UserUtil;
 import org.broadinstitute.dsm.util.externalShipper.GBFRequestUtil;
-import org.broadinstitute.dsm.util.triggerListener.*;
+import org.broadinstitute.dsm.util.triggerListener.DDPEventTriggerListener;
+import org.broadinstitute.dsm.util.triggerListener.DDPRequestTriggerListener;
+import org.broadinstitute.dsm.util.triggerListener.EasypostShipmentStatusTriggerListener;
+import org.broadinstitute.dsm.util.triggerListener.ExternalShipperTriggerListener;
+import org.broadinstitute.dsm.util.triggerListener.GPNotificationTriggerListener;
+import org.broadinstitute.dsm.util.triggerListener.LabelCreationTriggerListener;
+import org.broadinstitute.dsm.util.triggerListener.NotificationTriggerListener;
 import org.broadinstitute.lddp.security.Auth0Util;
 import org.broadinstitute.lddp.security.CookieUtil;
 import org.broadinstitute.lddp.util.BasicTriggerListener;
 import org.broadinstitute.lddp.util.JsonTransformer;
 import org.broadinstitute.lddp.util.Utility;
-import org.quartz.*;
+import org.quartz.CronTrigger;
+import org.quartz.Job;
+import org.quartz.JobBuilder;
+import org.quartz.JobDetail;
+import org.quartz.Scheduler;
+import org.quartz.SchedulerException;
+import org.quartz.SimpleTrigger;
+import org.quartz.TriggerBuilder;
+import org.quartz.TriggerKey;
 import org.quartz.impl.StdSchedulerFactory;
 import org.quartz.impl.matchers.KeyMatcher;
 import org.slf4j.Logger;
@@ -59,35 +163,7 @@ import spark.Response;
 import spark.Route;
 import spark.Spark;
 
-import java.io.File;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.time.Duration;
-import java.time.Instant;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import static org.quartz.CronScheduleBuilder.cronSchedule;
-import static org.quartz.SimpleScheduleBuilder.simpleSchedule;
-import static spark.Spark.*;
-
 public class DSMServer {
-
-    private static final Logger logger = LoggerFactory.getLogger(DSMServer.class);
-
-    private static final String API_ROOT = "/ddp/";
-    private static final String UI_ROOT = "/ui/";
-
-    private static final String[] CORS_HTTP_METHODS = new String[] { "GET", "PUT", "POST", "OPTIONS", "PATCH" };
-    private static final String[] CORS_HTTP_HEADERS = new String[] { "Content-Type", "Authorization", "X-Requested-With",
-            "Content-Length", "Accept", "Origin", "" };
 
     public static final String CONFIG = "config";
     public static final String NOTIFICATION_UTIL = "NotificationUtil";
@@ -100,20 +176,23 @@ public class DSMServer {
     public static final String UPS_PATH_TO_PASSWORD = "ups.password";
     public static final String UPS_PATH_TO_ACCESSKEY = "ups.accesskey";
     public static final String UPS_PATH_TO_ENDPOINT = "ups.url";
-
-    public static Provider provider;
     public static final String GCP_PATH_TO_PUBSUB_PROJECT_ID = "pubsub.projectId";
     public static final String GCP_PATH_TO_PUBSUB_SUB = "pubsub.subscription";
     public static final String GCP_PATH_TO_DSS_TO_DSM_SUB = "pubsub.dss_to_dsm_subscription";
     public static final String GCP_PATH_TO_DSM_TO_DSS_TOPIC = "pubsub.dsm_to_dss_topic";
     public static final String GCP_PATH_TO_DSM_TASKS_SUB = "pubsub.dsm_tasks_subscription";
-
-    private static Map<String, JsonElement> ddpConfigurationLookup = new HashMap<>();
+    private static final Logger logger = LoggerFactory.getLogger(DSMServer.class);
+    private static final String API_ROOT = "/ddp/";
+    private static final String UI_ROOT = "/ui/";
+    private static final String[] CORS_HTTP_METHODS = new String[] {"GET", "PUT", "POST", "OPTIONS", "PATCH"};
+    private static final String[] CORS_HTTP_HEADERS = new String[] {"Content-Type", "Authorization", "X-Requested-With",
+            "Content-Length", "Accept", "Origin", ""};
     private static final String VAULT_DOT_CONF = "vault.conf";
     private static final String GAE_DEPLOY_DIR = "appengine/deploy";
-    private static AtomicBoolean isReady = new AtomicBoolean(false);
     private static final Duration DEFAULT_BOOT_WAIT = Duration.ofMinutes(10);
-
+    public static Provider provider;
+    private static Map<String, JsonElement> ddpConfigurationLookup = new HashMap<>();
+    private static AtomicBoolean isReady = new AtomicBoolean(false);
     private static Auth0Util auth0Util;
 
     public static void main(String[] args) {
@@ -145,6 +224,227 @@ public class DSMServer {
             isReady.set(true);
             logger.info("DSM Startup Complete");
         }
+    }
+
+    /**
+     * Job to request ddp kitRequests.
+     */
+    public static void createDDPRequestScheduledJobs(@NonNull Scheduler scheduler, @NonNull Class<? extends Job> jobClass,
+                                                     @NonNull String identity, @NonNull int jobIntervalInSeconds,
+                                                     BasicTriggerListener triggerListener, @NonNull NotificationUtil notificationUtil) throws SchedulerException {
+        //create job
+        JobDetail job = JobBuilder.newJob(jobClass)
+                .withIdentity(identity, BasicTriggerListener.NO_CONCURRENCY_GROUP + ".DSM").build();
+
+        //pass parameters to JobDataMap for JobDetail
+        job.getJobDataMap().put(NOTIFICATION_UTIL, notificationUtil);
+
+        //create trigger
+        TriggerKey triggerKey = new TriggerKey(identity + "_TRIGGER", "DDP");
+        SimpleTrigger trigger = TriggerBuilder.newTrigger()
+                .withIdentity(triggerKey).withSchedule(simpleSchedule()
+                        .withIntervalInSeconds(jobIntervalInSeconds).repeatForever()).build();
+
+        //add job
+        scheduler.scheduleJob(job, trigger);
+        //add listener for all triggers
+        scheduler.getListenerManager().addTriggerListener(triggerListener, KeyMatcher.keyEquals(triggerKey));
+    }
+
+    /**
+     * Job to sent notification email
+     */
+    public static void createScheduledJob(@NonNull Scheduler scheduler, @NonNull Config config, @NonNull Class<? extends Job> jobClass,
+                                          @NonNull String identity, @NonNull int jobIntervalInSeconds,
+                                          @NonNull BasicTriggerListener triggerListener) throws SchedulerException {
+        //create job
+        JobDetail job = JobBuilder.newJob(jobClass)
+                .withIdentity(identity, BasicTriggerListener.NO_CONCURRENCY_GROUP).build();
+
+        //pass parameters to JobDataMap for JobDetail
+        job.getJobDataMap().put(CONFIG, config);
+
+        //create trigger
+        TriggerKey triggerKey = new TriggerKey(identity + "_TRIGGER", "DDP");
+        SimpleTrigger trigger = TriggerBuilder.newTrigger()
+                .withIdentity(triggerKey).withSchedule(simpleSchedule()
+                        .withIntervalInSeconds(jobIntervalInSeconds).repeatForever()).build();
+
+        //add job
+        scheduler.scheduleJob(job, trigger);
+        //add listener for all triggers
+        scheduler.getListenerManager().addTriggerListener(triggerListener, KeyMatcher.keyEquals(triggerKey));
+    }
+
+    /**
+     * Job to sent GP notification email
+     */
+    public static void createScheduleJob(@NonNull Scheduler scheduler, @NonNull Config config, @NonNull NotificationUtil notificationUtil,
+                                         @NonNull KitUtil kitUtil, @NonNull Class<? extends Job> jobClass,
+                                         @NonNull String identity, @NonNull String cronExpression) throws SchedulerException {
+        //create job
+        JobDetail job = JobBuilder.newJob(jobClass)
+                .withIdentity(identity, BasicTriggerListener.NO_CONCURRENCY_GROUP).build();
+
+        //pass parameters to JobDataMap for JobDetail
+        job.getJobDataMap().put(CONFIG, config);
+        job.getJobDataMap().put(NOTIFICATION_UTIL, notificationUtil);
+        job.getJobDataMap().put(KIT_UTIL, kitUtil);
+
+        //create trigger
+        TriggerKey triggerKey = new TriggerKey(identity + "_TRIGGER", "DDP");
+        CronTrigger trigger = TriggerBuilder.newTrigger()
+                .withIdentity(triggerKey).withSchedule(cronSchedule(cronExpression)).build();
+        //add job
+        scheduler.scheduleJob(job, trigger);
+        //add listener for all triggers
+        scheduler.getListenerManager().addTriggerListener(new GPNotificationTriggerListener(), KeyMatcher.keyEquals(triggerKey));
+    }
+
+    /**
+     * Job to trigger ddp reminder emails and external shipper
+     */
+    public static void createScheduleJob(@NonNull Scheduler scheduler, EventUtil eventUtil, NotificationUtil notificationUtil,
+                                         @NonNull Class<? extends Job> jobClass,
+                                         @NonNull String identity, @NonNull String cronExpression,
+                                         @NonNull BasicTriggerListener basicTriggerListener,
+                                         Config config) throws SchedulerException {
+        //create job
+        JobDetail job = JobBuilder.newJob(jobClass)
+                .withIdentity(identity, BasicTriggerListener.NO_CONCURRENCY_GROUP).build();
+
+        if (eventUtil != null) {
+            //pass parameters to JobDataMap for JobDetail
+            job.getJobDataMap().put(EVENT_UTIL, eventUtil);
+        }
+        if (notificationUtil != null) {
+            //pass parameters to JobDataMap for JobDetail
+            job.getJobDataMap().put(NOTIFICATION_UTIL, notificationUtil);
+        }
+        //         currently not needed anymore but might come back
+        if (jobClass == ExternalShipperJob.class) {
+            job.getJobDataMap().put(ADDITIONAL_CRON_EXPRESSION,
+                    config.getString(ApplicationConfigConstants.QUARTZ_CRON_EXPRESSION_FOR_EXTERNAL_SHIPPER_ADDITIONAL));
+        }
+
+        logger.info(cronExpression);
+
+        //create trigger
+        TriggerKey triggerKey = new TriggerKey(identity + "_TRIGGER", "DDP");
+        CronTrigger trigger = TriggerBuilder.newTrigger()
+                .withIdentity(triggerKey).withSchedule(cronSchedule(cronExpression)).build();
+        //add job
+        scheduler.scheduleJob(job, trigger);
+
+        //add listener for all triggers
+        scheduler.getListenerManager().addTriggerListener(basicTriggerListener, KeyMatcher.keyEquals(triggerKey));
+    }
+
+    public static void setupDDPConfigurationLookup(@NonNull String ddpConf) {
+        JsonArray array = (JsonArray) (new JsonParser().parse(ddpConf));
+        for (JsonElement ddpInfo : array) {
+            if (ddpInfo.isJsonObject()) {
+                ddpConfigurationLookup.put(ddpInfo.getAsJsonObject().get(ApplicationConfigConstants.INSTANCE_NAME).getAsString().toLowerCase(), ddpInfo);
+            }
+        }
+    }
+
+    public static String getDDPTokenSecret(@NonNull String instanceName) {
+        JsonElement jsonElement = ddpConfigurationLookup.get(instanceName.toLowerCase());
+        if (jsonElement != null && jsonElement.getAsJsonObject().has(ApplicationConfigConstants.TOKEN_SECRET)) {
+            return jsonElement.getAsJsonObject().get(ApplicationConfigConstants.TOKEN_SECRET).getAsString();
+        }
+        return null;
+    }
+
+    public static String getDDPEasypostApiKey(@NonNull String instanceName) {
+        JsonElement jsonElement = ddpConfigurationLookup.get(instanceName.toLowerCase());
+        if (jsonElement != null) {
+            return jsonElement.getAsJsonObject().get(ApplicationConfigConstants.EASYPOST_API_KEY).getAsString();
+        }
+        return null;
+    }
+
+    public static Auth0Util getAuth0Util() {
+        return auth0Util;
+    }
+
+    // currently not needed anymore but might come back
+    public static void setupExternalShipperLookup(@NonNull String externalSipperConf) {
+        JsonArray array = (JsonArray) (new JsonParser().parse(externalSipperConf));
+        for (JsonElement ddpInfo : array) {
+            if (ddpInfo.isJsonObject()) {
+                ddpConfigurationLookup.put(ddpInfo.getAsJsonObject().get(ApplicationConfigConstants.SHIPPER_NAME).getAsString().toLowerCase(), ddpInfo);
+            }
+        }
+    }
+
+    public static String getApiKey(@NonNull String shipperName) {
+        JsonElement jsonElement = ddpConfigurationLookup.get(shipperName.toLowerCase());
+        if (jsonElement != null) {
+            return jsonElement.getAsJsonObject().get(ApplicationConfigConstants.API_KEY).getAsString();
+        }
+        return null;
+    }
+
+    public static String getBaseUrl(@NonNull String shipperName) {
+        JsonElement jsonElement = ddpConfigurationLookup.get(shipperName.toLowerCase());
+        if (jsonElement != null) {
+            return jsonElement.getAsJsonObject().get(ApplicationConfigConstants.BASE_URL).getAsString();
+        }
+        return null;
+    }
+
+    public static String getClassName(@NonNull String shipperName) {
+        JsonElement jsonElement = ddpConfigurationLookup.get(shipperName.toLowerCase());
+        if (jsonElement != null) {
+            return jsonElement.getAsJsonObject().get(ApplicationConfigConstants.CLASS_NAME).getAsString();
+        }
+        return null;
+    }
+
+    public static boolean isTest(@NonNull String shipperName) {
+        JsonElement jsonElement = ddpConfigurationLookup.get(shipperName.toLowerCase());
+        if (jsonElement != null) {
+            return jsonElement.getAsJsonObject().get(ApplicationConfigConstants.TEST).getAsBoolean();
+        }
+        return true;
+    }
+
+    private static void registerAppEngineStartupCallback(long bootTimeoutSeconds) {
+        // Block until isReady is available, with an optional timeout to prevent
+        // instance for sitting around too long in a nonresponsive state.  There is a
+        // judgement call to be made here to allow for lengthy liquibase migrations during boot.
+        logger.info("Will wait for at most {} seconds for boot before GAE termination", bootTimeoutSeconds);
+        get("/_ah/start", new ReadinessRoute(bootTimeoutSeconds));
+    }
+
+    protected static void enableCORS(String allowedOrigins, String methods, String headers) {
+        Spark.options("/*", (request, response) -> {
+            String accessControlRequestHeaders = request.headers("Access-Control-Request-Headers");
+            if (accessControlRequestHeaders != null) {
+                response.header("Access-Control-Allow-Headers", accessControlRequestHeaders);
+            }
+
+            String accessControlRequestMethod = request.headers("Access-Control-Request-Method");
+            if (accessControlRequestMethod != null) {
+                response.header("Access-Control-Allow-Methods", accessControlRequestMethod);
+            }
+            if (accessControlRequestMethod != null || accessControlRequestHeaders != null) {
+                response.header("Access-Control-Max-Age", "172800");
+            }
+
+            return "OK";
+        });
+        Spark.before((request, response) -> {
+            String origin = request.headers("Origin");
+            response.header("Access-Control-Allow-Origin", (StringUtils.isNotBlank(origin) && allowedOrigins.contains(origin)) ? origin :
+                    "");
+            response.header("Access-Control-Request-Method", methods);
+            response.header("Access-Control-Allow-Headers", headers);
+            response.header("Access-Control-Allow-Credentials", "true");
+            response.type("application/json");
+        });
     }
 
     protected void configureServer(@NonNull Config config) {
@@ -183,8 +483,7 @@ public class DSMServer {
      *
      * @param config
      */
-    protected void setupDB(@NonNull Config config)
-    {
+    protected void setupDB(@NonNull Config config) {
         logger.info("Setup the DB...");
 
         int maxConnections = config.getInt("portal.maxConnections");
@@ -194,8 +493,7 @@ public class DSMServer {
         TransactionWrapper.init(new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.DSM, maxConnections, dbUrl));
 
         //make sure we can connect to DB
-        if (!Utility.dbCheck())
-        {
+        if (!Utility.dbCheck()) {
             throw new RuntimeException("DB connection error.");
         }
 
@@ -240,7 +538,7 @@ public class DSMServer {
         get(API_ROOT + RoutePath.CLINICAL_KIT_ENDPOINT, new ClinicalKitsRoute(notificationUtil), new JsonTransformer());
         get(API_ROOT + RoutePath.CREATE_CLINICAL_KIT_ENDPOINT, new CreateClinicalDummyKitRoute(), new JsonTransformer());
 
-        if(!cfg.getBoolean("ui.production")){
+        if (!cfg.getBoolean("ui.production")) {
             get(API_ROOT + RoutePath.DUMMY_ENDPOINT, new CreateBSPDummyKitRoute(), new JsonTransformer());
         }
 
@@ -296,7 +594,8 @@ public class DSMServer {
 
                     boolean isTokenValid = false;
                     if (StringUtils.isNotBlank(tokenFromHeader)) {
-                        isTokenValid = new CookieUtil().isCookieValid(req.cookie(cookieName), cookieSalt.getBytes(), tokenFromHeader, jwtSecret);
+                        isTokenValid = new CookieUtil().isCookieValid(req.cookie(cookieName), cookieSalt.getBytes(), tokenFromHeader,
+                                jwtSecret);
                         isTokenValid = new JWTRouteFilter(jwtSecret, null).isAccessAllowed(req);
 
                     }
@@ -373,7 +672,7 @@ public class DSMServer {
                                 return null;
                             });
 
-                        }catch(Exception ex){
+                        } catch (Exception ex) {
                             logger.info("about to nack the message", ex);
                             consumer.nack();
                             ex.printStackTrace();
@@ -391,12 +690,10 @@ public class DSMServer {
             try {
                 subscriber.startAsync().awaitRunning(1L, TimeUnit.MINUTES);
                 logger.info("Started pubsub subscription receiver for {}", subscriptionId);
-            }
-            catch (TimeoutException e) {
+            } catch (TimeoutException e) {
                 throw new RuntimeException("Timed out while starting pubsub subscription " + subscriptionId, e);
             }
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             throw new RuntimeException("Failed to get results from pubsub ", e);
         }
 
@@ -427,8 +724,7 @@ public class DSMServer {
             Liquibase liquibase = new Liquibase("master-changelog.xml", new ClassLoaderResourceAccessor(), database);
 
             liquibase.update(new Contexts());
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             throw new RuntimeException("Failed to run DB update.", e);
         }
     }
@@ -532,20 +828,25 @@ public class DSMServer {
 
     private void setupMiscellaneousRoutes() {
         MailingListRoute mailingListRoute = new MailingListRoute();
-        get(UI_ROOT + RoutePath.MAILING_LIST_REQUEST + RoutePath.ROUTE_SEPARATOR + RequestParameter.REALM, mailingListRoute, new JsonTransformer());
+        get(UI_ROOT + RoutePath.MAILING_LIST_REQUEST + RoutePath.ROUTE_SEPARATOR + RequestParameter.REALM, mailingListRoute,
+                new JsonTransformer());
 
         ParticipantExitRoute participantExitRoute = new ParticipantExitRoute();
-        get(UI_ROOT + RoutePath.PARTICIPANT_EXIT_REQUEST + RoutePath.ROUTE_SEPARATOR + RequestParameter.REALM, participantExitRoute, new JsonTransformer());
+        get(UI_ROOT + RoutePath.PARTICIPANT_EXIT_REQUEST + RoutePath.ROUTE_SEPARATOR + RequestParameter.REALM, participantExitRoute,
+                new JsonTransformer());
         post(UI_ROOT + RoutePath.PARTICIPANT_EXIT_REQUEST, participantExitRoute, new JsonTransformer());
 
         TriggerSurveyRoute triggerSurveyRoute = new TriggerSurveyRoute();
-        get(UI_ROOT + RoutePath.TRIGGER_SURVEY + RoutePath.ROUTE_SEPARATOR + RequestParameter.REALM, triggerSurveyRoute, new JsonTransformer());
+        get(UI_ROOT + RoutePath.TRIGGER_SURVEY + RoutePath.ROUTE_SEPARATOR + RequestParameter.REALM, triggerSurveyRoute,
+                new JsonTransformer());
         post(UI_ROOT + RoutePath.TRIGGER_SURVEY, triggerSurveyRoute, new JsonTransformer());
 
-        get(UI_ROOT + RoutePath.EVENT_TYPES + RoutePath.ROUTE_SEPARATOR + RequestParameter.REALM, new EventTypeRoute(), new JsonTransformer());
+        get(UI_ROOT + RoutePath.EVENT_TYPES + RoutePath.ROUTE_SEPARATOR + RequestParameter.REALM, new EventTypeRoute(),
+                new JsonTransformer());
 
         ParticipantEventRoute participantEventRoute = new ParticipantEventRoute();
-        get(UI_ROOT + RoutePath.PARTICIPANT_EVENTS + RoutePath.ROUTE_SEPARATOR + RequestParameter.REALM, participantEventRoute, new JsonTransformer());
+        get(UI_ROOT + RoutePath.PARTICIPANT_EVENTS + RoutePath.ROUTE_SEPARATOR + RequestParameter.REALM, participantEventRoute,
+                new JsonTransformer());
         post(UI_ROOT + RoutePath.SKIP_PARTICIPANT_EVENTS, participantEventRoute, new JsonTransformer());
 
         post(UI_ROOT + RoutePath.NDI_REQUEST, new NDIRoute(), new JsonTransformer());
@@ -574,9 +875,11 @@ public class DSMServer {
         get(UI_ROOT + RoutePath.STUDIES, allowedRealmsRoute, new JsonTransformer());
 
         KitTypeRoute kitTypeRoute = new KitTypeRoute(kitUtil);
-        get(UI_ROOT + RoutePath.KIT_TYPES_REQUEST + RoutePath.ROUTE_SEPARATOR + RequestParameter.REALM, kitTypeRoute, new JsonTransformer());
+        get(UI_ROOT + RoutePath.KIT_TYPES_REQUEST + RoutePath.ROUTE_SEPARATOR + RequestParameter.REALM, kitTypeRoute,
+                new JsonTransformer());
         get(UI_ROOT + RoutePath.UPLOAD_REASONS + RoutePath.ROUTE_SEPARATOR + RequestParameter.REALM, kitTypeRoute, new JsonTransformer());
-        get(UI_ROOT + RoutePath.CARRIERS + RoutePath.ROUTE_SEPARATOR + RequestParameter.REALM,  new CarrierServiceRoute(), new JsonTransformer());
+        get(UI_ROOT + RoutePath.CARRIERS + RoutePath.ROUTE_SEPARATOR + RequestParameter.REALM, new CarrierServiceRoute(),
+                new JsonTransformer());
 
         patch(UI_ROOT + RoutePath.PATCH, new PatchRoute(notificationUtil, patchUtil), new JsonTransformer());
     }
@@ -619,7 +922,8 @@ public class DSMServer {
                         cfg.getString(ApplicationConfigConstants.EMAIL_CRON_EXPRESSION_FOR_GP_NOTIFICATION));
 
                 createScheduleJob(scheduler, eventUtil, notificationUtil, DDPEventJob.class, "TRIGGER_DDP_EVENT",
-                        cfg.getString(ApplicationConfigConstants.QUARTZ_CRON_EXPRESSION_FOR_DDP_EVENT_TRIGGER), new DDPEventTriggerListener(), null);
+                        cfg.getString(ApplicationConfigConstants.QUARTZ_CRON_EXPRESSION_FOR_DDP_EVENT_TRIGGER),
+                        new DDPEventTriggerListener(), null);
 
                 // currently not needed anymore but might come back
                 createScheduleJob(scheduler, eventUtil, notificationUtil,
@@ -628,19 +932,18 @@ public class DSMServer {
                         new ExternalShipperTriggerListener(), cfg);
 
                 createScheduleJob(scheduler, null, null, EasypostShipmentStatusJob.class, "CHECK_STATUS_SHIPMENT",
-                        cfg.getString(ApplicationConfigConstants.QUARTZ_CRON_STATUS_SHIPMENT), new EasypostShipmentStatusTriggerListener(), cfg);
+                        cfg.getString(ApplicationConfigConstants.QUARTZ_CRON_STATUS_SHIPMENT),
+                        new EasypostShipmentStatusTriggerListener(), cfg);
 
 
                 logger.info("Setup Job Scheduler...");
                 try {
                     scheduler.start();
                     logger.info("Job Scheduler setup complete.");
-                }
-                catch (Exception ex) {
+                } catch (Exception ex) {
                     throw new RuntimeException("Unable to setup Job Scheduler.", ex);
                 }
-            }
-            catch (SchedulerException e) {
+            } catch (SchedulerException e) {
                 throw new RuntimeException("Could not create scheduler ", e);
             }
         }
@@ -673,197 +976,6 @@ public class DSMServer {
         }
     }
 
-    /**
-     * Job to request ddp kitRequests.
-     */
-    public static void createDDPRequestScheduledJobs(@NonNull Scheduler scheduler, @NonNull Class<? extends Job> jobClass,
-                                                     @NonNull String identity, @NonNull int jobIntervalInSeconds,
-                                                     BasicTriggerListener triggerListener, @NonNull NotificationUtil notificationUtil) throws SchedulerException {
-        //create job
-        JobDetail job = JobBuilder.newJob(jobClass)
-                .withIdentity(identity, BasicTriggerListener.NO_CONCURRENCY_GROUP + ".DSM").build();
-
-        //pass parameters to JobDataMap for JobDetail
-        job.getJobDataMap().put(NOTIFICATION_UTIL, notificationUtil);
-
-        //create trigger
-        TriggerKey triggerKey = new TriggerKey(identity + "_TRIGGER", "DDP");
-        SimpleTrigger trigger = TriggerBuilder.newTrigger()
-                .withIdentity(triggerKey).withSchedule(simpleSchedule()
-                        .withIntervalInSeconds(jobIntervalInSeconds).repeatForever()).build();
-
-        //add job
-        scheduler.scheduleJob(job, trigger);
-        //add listener for all triggers
-        scheduler.getListenerManager().addTriggerListener(triggerListener, KeyMatcher.keyEquals(triggerKey));
-    }
-
-    /**
-     * Job to sent notification email
-     */
-    public static void createScheduledJob(@NonNull Scheduler scheduler, @NonNull Config config, @NonNull Class<? extends Job> jobClass,
-                                          @NonNull String identity, @NonNull int jobIntervalInSeconds,
-                                          @NonNull BasicTriggerListener triggerListener) throws SchedulerException {
-        //create job
-        JobDetail job = JobBuilder.newJob(jobClass)
-                .withIdentity(identity, BasicTriggerListener.NO_CONCURRENCY_GROUP).build();
-
-        //pass parameters to JobDataMap for JobDetail
-        job.getJobDataMap().put(CONFIG, config);
-
-        //create trigger
-        TriggerKey triggerKey = new TriggerKey(identity + "_TRIGGER", "DDP");
-        SimpleTrigger trigger = TriggerBuilder.newTrigger()
-                .withIdentity(triggerKey).withSchedule(simpleSchedule()
-                        .withIntervalInSeconds(jobIntervalInSeconds).repeatForever()).build();
-
-        //add job
-        scheduler.scheduleJob(job, trigger);
-        //add listener for all triggers
-        scheduler.getListenerManager().addTriggerListener(triggerListener, KeyMatcher.keyEquals(triggerKey));
-    }
-
-    /**
-     * Job to sent GP notification email
-     */
-    public static void createScheduleJob(@NonNull Scheduler scheduler, @NonNull Config config, @NonNull NotificationUtil notificationUtil,
-                                         @NonNull KitUtil kitUtil, @NonNull Class<? extends Job> jobClass,
-                                         @NonNull String identity, @NonNull String cronExpression) throws SchedulerException {
-        //create job
-        JobDetail job = JobBuilder.newJob(jobClass)
-                .withIdentity(identity, BasicTriggerListener.NO_CONCURRENCY_GROUP).build();
-
-        //pass parameters to JobDataMap for JobDetail
-        job.getJobDataMap().put(CONFIG, config);
-        job.getJobDataMap().put(NOTIFICATION_UTIL, notificationUtil);
-        job.getJobDataMap().put(KIT_UTIL, kitUtil);
-
-        //create trigger
-        TriggerKey triggerKey = new TriggerKey(identity + "_TRIGGER", "DDP");
-        CronTrigger trigger = TriggerBuilder.newTrigger()
-                .withIdentity(triggerKey).withSchedule(cronSchedule(cronExpression)).build();
-        //add job
-        scheduler.scheduleJob(job, trigger);
-        //add listener for all triggers
-        scheduler.getListenerManager().addTriggerListener(new GPNotificationTriggerListener(), KeyMatcher.keyEquals(triggerKey));
-    }
-
-    /**
-     * Job to trigger ddp reminder emails and external shipper
-     */
-    public static void createScheduleJob(@NonNull Scheduler scheduler, EventUtil eventUtil, NotificationUtil notificationUtil,
-                                         @NonNull Class<? extends Job> jobClass,
-                                         @NonNull String identity, @NonNull String cronExpression, @NonNull BasicTriggerListener basicTriggerListener,
-                                         Config config) throws SchedulerException {
-        //create job
-        JobDetail job = JobBuilder.newJob(jobClass)
-                .withIdentity(identity, BasicTriggerListener.NO_CONCURRENCY_GROUP).build();
-
-        if (eventUtil != null) {
-            //pass parameters to JobDataMap for JobDetail
-            job.getJobDataMap().put(EVENT_UTIL, eventUtil);
-        }
-        if (notificationUtil != null) {
-            //pass parameters to JobDataMap for JobDetail
-            job.getJobDataMap().put(NOTIFICATION_UTIL, notificationUtil);
-        }
-        //         currently not needed anymore but might come back
-        if (jobClass == ExternalShipperJob.class) {
-            job.getJobDataMap().put(ADDITIONAL_CRON_EXPRESSION, config.getString(ApplicationConfigConstants.QUARTZ_CRON_EXPRESSION_FOR_EXTERNAL_SHIPPER_ADDITIONAL));
-        }
-
-        logger.info(cronExpression);
-
-        //create trigger
-        TriggerKey triggerKey = new TriggerKey(identity + "_TRIGGER", "DDP");
-        CronTrigger trigger = TriggerBuilder.newTrigger()
-                .withIdentity(triggerKey).withSchedule(cronSchedule(cronExpression)).build();
-        //add job
-        scheduler.scheduleJob(job, trigger);
-
-        //add listener for all triggers
-        scheduler.getListenerManager().addTriggerListener(basicTriggerListener, KeyMatcher.keyEquals(triggerKey));
-    }
-
-    public static void setupDDPConfigurationLookup(@NonNull String ddpConf) {
-        JsonArray array = (JsonArray) (new JsonParser().parse(ddpConf));
-        for (JsonElement ddpInfo : array) {
-            if (ddpInfo.isJsonObject()) {
-                ddpConfigurationLookup.put(ddpInfo.getAsJsonObject().get(ApplicationConfigConstants.INSTANCE_NAME).getAsString().toLowerCase(), ddpInfo);
-            }
-        }
-    }
-
-    public static String getDDPTokenSecret(@NonNull String instanceName) {
-        JsonElement jsonElement = ddpConfigurationLookup.get(instanceName.toLowerCase());
-        if (jsonElement != null && jsonElement.getAsJsonObject().has(ApplicationConfigConstants.TOKEN_SECRET)) {
-            return jsonElement.getAsJsonObject().get(ApplicationConfigConstants.TOKEN_SECRET).getAsString();
-        }
-        return null;
-    }
-
-    public static String getDDPEasypostApiKey(@NonNull String instanceName) {
-        JsonElement jsonElement = ddpConfigurationLookup.get(instanceName.toLowerCase());
-        if (jsonElement != null) {
-            return jsonElement.getAsJsonObject().get(ApplicationConfigConstants.EASYPOST_API_KEY).getAsString();
-        }
-        return null;
-    }
-
-    public static Auth0Util getAuth0Util() {
-        return auth0Util;
-    }
-
-    // currently not needed anymore but might come back
-    public static void setupExternalShipperLookup(@NonNull String externalSipperConf) {
-        JsonArray array = (JsonArray) (new JsonParser().parse(externalSipperConf));
-        for (JsonElement ddpInfo : array) {
-            if (ddpInfo.isJsonObject()) {
-                ddpConfigurationLookup.put(ddpInfo.getAsJsonObject().get(ApplicationConfigConstants.SHIPPER_NAME).getAsString().toLowerCase(), ddpInfo);
-            }
-        }
-    }
-
-    public static String getApiKey(@NonNull String shipperName) {
-        JsonElement jsonElement = ddpConfigurationLookup.get(shipperName.toLowerCase());
-        if (jsonElement != null) {
-            return jsonElement.getAsJsonObject().get(ApplicationConfigConstants.API_KEY).getAsString();
-        }
-        return null;
-    }
-
-    public static String getBaseUrl(@NonNull String shipperName) {
-        JsonElement jsonElement = ddpConfigurationLookup.get(shipperName.toLowerCase());
-        if (jsonElement != null) {
-            return jsonElement.getAsJsonObject().get(ApplicationConfigConstants.BASE_URL).getAsString();
-        }
-        return null;
-    }
-
-    public static String getClassName(@NonNull String shipperName) {
-        JsonElement jsonElement = ddpConfigurationLookup.get(shipperName.toLowerCase());
-        if (jsonElement != null) {
-            return jsonElement.getAsJsonObject().get(ApplicationConfigConstants.CLASS_NAME).getAsString();
-        }
-        return null;
-    }
-
-    public static boolean isTest(@NonNull String shipperName) {
-        JsonElement jsonElement = ddpConfigurationLookup.get(shipperName.toLowerCase());
-        if (jsonElement != null) {
-            return jsonElement.getAsJsonObject().get(ApplicationConfigConstants.TEST).getAsBoolean();
-        }
-        return true;
-    }
-
-    private static void registerAppEngineStartupCallback(long bootTimeoutSeconds) {
-        // Block until isReady is available, with an optional timeout to prevent
-        // instance for sitting around too long in a nonresponsive state.  There is a
-        // judgement call to be made here to allow for lengthy liquibase migrations during boot.
-        logger.info("Will wait for at most {} seconds for boot before GAE termination", bootTimeoutSeconds);
-        get("/_ah/start", new ReadinessRoute(bootTimeoutSeconds));
-    }
-
     private static class ReadinessRoute implements Route {
 
         private final long bootTimeoutSeconds;
@@ -890,33 +1002,6 @@ public class DSMServer {
             res.status(status.get());
             return "";
         }
-    }
-
-    protected static void enableCORS(String allowedOrigins, String methods, String headers) {
-        Spark.options("/*", (request, response) -> {
-            String accessControlRequestHeaders = request.headers("Access-Control-Request-Headers");
-            if (accessControlRequestHeaders != null) {
-                response.header("Access-Control-Allow-Headers", accessControlRequestHeaders);
-            }
-
-            String accessControlRequestMethod = request.headers("Access-Control-Request-Method");
-            if (accessControlRequestMethod != null) {
-                response.header("Access-Control-Allow-Methods", accessControlRequestMethod);
-            }
-            if (accessControlRequestMethod != null || accessControlRequestHeaders != null) {
-                response.header("Access-Control-Max-Age", "172800");
-            }
-
-            return "OK";
-        });
-        Spark.before((request, response) -> {
-            String origin = request.headers("Origin");
-            response.header("Access-Control-Allow-Origin", (StringUtils.isNotBlank(origin) && allowedOrigins.contains(origin)) ? origin : "");
-            response.header("Access-Control-Request-Method", methods);
-            response.header("Access-Control-Allow-Headers", headers);
-            response.header("Access-Control-Allow-Credentials", "true");
-            response.type("application/json");
-        });
     }
 
 }

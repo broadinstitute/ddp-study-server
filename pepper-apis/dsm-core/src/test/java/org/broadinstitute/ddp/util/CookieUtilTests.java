@@ -1,29 +1,29 @@
 package org.broadinstitute.ddp.util;
 
+import java.util.HashMap;
+import java.util.Map;
+import javax.servlet.http.Cookie;
+
 import org.broadinstitute.lddp.security.CookieUtil;
 import org.junit.Before;
 import org.junit.Test;
-
-import javax.servlet.http.Cookie;
-import java.util.HashMap;
-import java.util.Map;
 
 //todo EOB - refactor
 
 public class CookieUtilTests {
 
-    public static long tokenExpirationTime = System.currentTimeMillis() + 60 * 1000;
     public static final byte[] SALT = "foo".getBytes();
     public static final String TOKEN_SECRET = "foo";
-    private String jwtToken;
     public static final String COOKIE_NAME = "cookie1";
+    public static long tokenExpirationTime = System.currentTimeMillis() + 60 * 1000;
+    private String jwtToken;
     private Cookie cookie;
     private CookieUtil cookieUtil = new CookieUtil();
 
     @Before
     public void setUp() throws Exception {
-        Map<String,Object> claims = new HashMap<>();
-        claims.put("username","fred");
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("username", "fred");
         /*claims.put(JWTUtil.KDUX_ROLES_CLAIM,Collections.singletonList("user"));
         jwtToken = new JWTUtil().createToken(TOKEN_SECRET,tokenExpirationTime,claims);
         this.cookie = getSecureCookieForToken();*/

@@ -1,5 +1,10 @@
 package org.broadinstitute.dsm;
 
+import static org.quartz.SimpleScheduleBuilder.simpleSchedule;
+
+import java.util.ArrayList;
+import java.util.List;
+
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.broadinstitute.dsm.jobs.GPNotificationJob;
@@ -10,27 +15,44 @@ import org.broadinstitute.dsm.util.GPNotificationUtil;
 import org.broadinstitute.dsm.util.triggerListener.GPNotificationTriggerListener;
 import org.broadinstitute.lddp.email.EmailClient;
 import org.broadinstitute.lddp.util.BasicTriggerListener;
-import org.junit.*;
-import org.quartz.*;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.BeforeClass;
+import org.junit.Ignore;
+import org.junit.Test;
+import org.quartz.CronExpression;
+import org.quartz.JobBuilder;
+import org.quartz.JobDetail;
+import org.quartz.Scheduler;
+import org.quartz.SimpleTrigger;
+import org.quartz.TriggerBuilder;
+import org.quartz.TriggerKey;
 import org.quartz.impl.StdSchedulerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.ArrayList;
-import java.util.List;
-
-import static org.quartz.SimpleScheduleBuilder.simpleSchedule;
 
 public class NotificationJobTest extends TestHelper {
 
     private static final Logger logger = LoggerFactory.getLogger(NotificationJobTest.class);
 
-    private static String QUERY_UNSENT_REQUESTS = "select inst.ddp_instance_id, inst.instance_name, kType.kit_type_name, (select count(realm.instance_name) as kitRequestCount from ddp_kit_request request left join ddp_instance realm on request.ddp_instance_id = realm.ddp_instance_id left join ddp_kit kit on request.dsm_kit_request_id = kit.dsm_kit_request_id left join kit_type kt on request.kit_type_id = kt.kit_type_id left join ddp_participant_exit ex on (request.ddp_participant_id = ex.ddp_participant_id and " +
-            "request.ddp_instance_id = ex.ddp_instance_id) where realm.instance_name = inst.instance_name and request.kit_type_id = kType.kit_type_id and ex.ddp_participant_exit_id is null and not (kit.kit_complete <=> 1) and not (kit.error <=> 1) and not (kit.express <=> 1) and kit.deactivated_date is null and kit.label_url_to is not null) as kitRequestCount, " +
-            "(select count(role.name) from ddp_instance realm, ddp_instance_role inRol, instance_role role where realm.ddp_instance_id = inRol.ddp_instance_id and inRol.instance_role_id = role.instance_role_id and role.name = \"kit_request_activated\" and realm.ddp_instance_id = inst.ddp_instance_id) as 'has_role' " +
-            "from ddp_instance inst, ddp_kit_request_settings kSetting, kit_type kType where inst.ddp_instance_id = kSetting.ddp_instance_id and kType.kit_type_id = kSetting.kit_type_id and inst.instance_name = ? and inst.is_active = 1 and kType.kit_type_name = ?;";
-    private static String QUERY_NOTIFICATION_REQUESTS = "select * from EMAIL_QUEUE where EMAIL_RECORD_ID = ? and EMAIL_DATE_PROCESSED IS NULL";
-    private static String DELETE_NOTIFICATION_REQUESTS = "delete from EMAIL_QUEUE where EMAIL_RECORD_ID = ? and EMAIL_DATE_PROCESSED IS NULL";
+    private static String QUERY_UNSENT_REQUESTS = "select inst.ddp_instance_id, inst.instance_name, kType.kit_type_name, (select count"
+            + "(realm.instance_name) as kitRequestCount from ddp_kit_request request left join ddp_instance realm on request"
+            + ".ddp_instance_id = realm.ddp_instance_id left join ddp_kit kit on request.dsm_kit_request_id = kit.dsm_kit_request_id left"
+            + " join kit_type kt on request.kit_type_id = kt.kit_type_id left join ddp_participant_exit ex on (request.ddp_participant_id"
+            + " = ex.ddp_participant_id and " +
+            "request.ddp_instance_id = ex.ddp_instance_id) where realm.instance_name = inst.instance_name and request.kit_type_id = kType"
+            + ".kit_type_id and ex.ddp_participant_exit_id is null and not (kit.kit_complete <=> 1) and not (kit.error <=> 1) and not "
+            + "(kit.express <=> 1) and kit.deactivated_date is null and kit.label_url_to is not null) as kitRequestCount, " +
+            "(select count(role.name) from ddp_instance realm, ddp_instance_role inRol, instance_role role where realm.ddp_instance_id = "
+            + "inRol.ddp_instance_id and inRol.instance_role_id = role.instance_role_id and role.name = \"kit_request_activated\" and "
+            + "realm.ddp_instance_id = inst.ddp_instance_id) as 'has_role' " +
+            "from ddp_instance inst, ddp_kit_request_settings kSetting, kit_type kType where inst.ddp_instance_id = kSetting"
+            + ".ddp_instance_id and kType.kit_type_id = kSetting.kit_type_id and inst.instance_name = ? and inst.is_active = 1 and kType"
+            + ".kit_type_name = ?;";
+    private static String QUERY_NOTIFICATION_REQUESTS = "select * from EMAIL_QUEUE where EMAIL_RECORD_ID = ? and EMAIL_DATE_PROCESSED IS "
+            + "NULL";
+    private static String DELETE_NOTIFICATION_REQUESTS = "delete from EMAIL_QUEUE where EMAIL_RECORD_ID = ? and EMAIL_DATE_PROCESSED IS "
+            + "NULL";
 
     @BeforeClass
     public static void first() throws Exception {
@@ -72,8 +94,7 @@ public class NotificationJobTest extends TestHelper {
                 Thread.sleep(20L * 1000L);//20 sec
                 logger.info("Enough testing going to stop scheduler ...");
                 scheduler.shutdown(true);
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                 logger.error("something went wrong, while waiting for quartz jon to finish...", e);
                 throw new RuntimeException("something went wrong, while waiting for quartz jon to finish...", e);
             }
@@ -112,10 +133,11 @@ public class NotificationJobTest extends TestHelper {
     }
 
     @Test
-    @Ignore("Throws that error when run at ALL Tests, not if run alone! Caused by: java.security.cert.CertificateException: No X509TrustManager implementation available")
+    @Ignore("Throws that error when run at ALL Tests, not if run alone! Caused by: java.security.cert.CertificateException: No "
+            + "X509TrustManager implementation available")
     public void testSendSingleEmail() throws Exception {
         String emailClientKey = cfg.getString("errorAlert.key");
-        JsonObject emailClientSettings = (JsonObject)((new JsonParser()).parse(cfg.getString("errorAlert.clientSettings")));
+        JsonObject emailClientSettings = (JsonObject) ((new JsonParser()).parse(cfg.getString("errorAlert.clientSettings")));
         EmailClient emailClient = (EmailClient) Class.forName(cfg.getString(ApplicationConfigConstants.EMAIL_CLASS_NAME)).newInstance();
         emailClient.configure(emailClientKey, emailClientSettings, "", "");
         emailClient.sendSingleNonTemplate("simone@broadinstitute.org", "fake error alert",

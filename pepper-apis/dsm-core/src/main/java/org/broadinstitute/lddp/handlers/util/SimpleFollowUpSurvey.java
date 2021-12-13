@@ -6,8 +6,11 @@ import org.broadinstitute.lddp.email.Recipient;
 import org.broadinstitute.lddp.util.CheckValidity;
 
 @Data
-public class SimpleFollowUpSurvey implements CheckValidity
-{
+public class SimpleFollowUpSurvey implements CheckValidity {
+    private String participantId;
+    private Recipient recipient;
+    private Long triggerId;
+
     public SimpleFollowUpSurvey() {
     }
 
@@ -26,14 +29,7 @@ public class SimpleFollowUpSurvey implements CheckValidity
         this.triggerId = triggerId;
     }
 
-    private String participantId;
-
-    private Recipient recipient;
-
-    private Long triggerId;
-
-    public boolean isValid()
-    {
+    public boolean isValid() {
         return (StringUtils.isNotBlank(participantId));
     }
 }

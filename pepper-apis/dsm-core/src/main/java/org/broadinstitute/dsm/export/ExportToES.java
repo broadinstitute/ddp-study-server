@@ -1,12 +1,12 @@
 package org.broadinstitute.dsm.export;
 
+import java.time.Duration;
+import java.time.Instant;
+
 import com.google.gson.Gson;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.time.Duration;
-import java.time.Instant;
 
 public class ExportToES {
 

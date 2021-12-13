@@ -112,7 +112,7 @@ public class ApplicationConfigConstants {
 
     public static final String CORS_ALLOWED_ORIGINS = "corsOrigins";
 
-    public static final String CARE_EVOLVE_ACCOUNT ="careEvolve.account";
+    public static final String CARE_EVOLVE_ACCOUNT = "careEvolve.account";
 
     public static final String CARE_EVOLVE_SUBSCRIBER_KEY = "careEvolve.subscriberKey";
 

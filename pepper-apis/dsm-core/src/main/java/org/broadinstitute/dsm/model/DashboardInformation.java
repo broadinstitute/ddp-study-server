@@ -1,25 +1,22 @@
 package org.broadinstitute.dsm.model;
 
-import lombok.Data;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import lombok.Data;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 @Data
 public class DashboardInformation {
-
-    private static final Logger logger = LoggerFactory.getLogger(DashboardInformation.class);
 
     public static final String TISSUE_REVIEW = "review";
     public static final String TISSUE_NO = "no";
     public static final String TISSUE_HOLD = "hold";
     public static final String TISSUE_REQUEST = "request";
     public static final String TISSUE_RETURN = "returned";
-
-
+    private static final Logger logger = LoggerFactory.getLogger(DashboardInformation.class);
     private String ddpName;
 
     private List<KitCounter> sentCounters;

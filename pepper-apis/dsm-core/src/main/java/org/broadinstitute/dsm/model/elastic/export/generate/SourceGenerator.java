@@ -1,12 +1,12 @@
 package org.broadinstitute.dsm.model.elastic.export.generate;
 
-import org.broadinstitute.dsm.model.elastic.export.parse.Parser;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import org.broadinstitute.dsm.model.elastic.export.parse.Parser;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class SourceGenerator extends BaseGenerator {
 

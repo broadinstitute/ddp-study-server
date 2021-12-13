@@ -12,13 +12,13 @@ public class BSPKitInfo {
     private final String collaboratorParticipantId, collaboratorSampleId, sampleCollectionBarcode, gender, materialInfo, receptacleName;
     private final int organismClassificationId;
 
-    public BSPKitInfo (String sampleCollectionBarcode,
-                       int organismClassificationId,
-                       String gender,
-                       String bspParticipantId,
-                       String bspSampleId,
-                       String materialInfo,
-                       String receptacleName) {
+    public BSPKitInfo(String sampleCollectionBarcode,
+                      int organismClassificationId,
+                      String gender,
+                      String bspParticipantId,
+                      String bspSampleId,
+                      String materialInfo,
+                      String receptacleName) {
         this.sampleCollectionBarcode = sampleCollectionBarcode;
         // note that organism is bsp's internal organismClassificationId, as per Damien
         this.organismClassificationId = organismClassificationId;

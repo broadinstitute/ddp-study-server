@@ -1,5 +1,9 @@
 package org.broadinstitute.dsm.model.elastic.export.process;
 
+import java.io.IOException;
+import java.util.List;
+import java.util.Map;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.broadinstitute.dsm.model.NameValue;
 import org.broadinstitute.dsm.model.elastic.ESDsm;
@@ -10,10 +14,6 @@ import org.broadinstitute.dsm.model.elastic.export.generate.SourceGenerator;
 import org.broadinstitute.dsm.model.elastic.export.parse.ValueParser;
 import org.junit.Assert;
 import org.junit.Test;
-
-import java.io.IOException;
-import java.util.List;
-import java.util.Map;
 
 public class CollectionProcessorTest {
 
@@ -29,7 +29,7 @@ public class CollectionProcessorTest {
         ESDsm esDsm = objectMapper.readValue(json, ESDsm.class);
 
         NameValue nameValue = new NameValue(TestPatchUtil.MEDICAL_RECORD_COLUMN, "mr_updated");
-        GeneratorPayload generatorPayload = new GeneratorPayload(nameValue, (int)recordId);
+        GeneratorPayload generatorPayload = new GeneratorPayload(nameValue, (int) recordId);
 
         Processor collectionProcessor = new TestCollectionProcessor(esDsm, propertyName, generatorPayload, instance(generatorPayload,
                 nameValue));
@@ -47,7 +47,7 @@ public class CollectionProcessorTest {
     public void updateIfExistsOrPut() throws IOException {
         String propertyName = "medicalRecords";
         double recordId = 5;
-        String json = String.format("{\"%s\":[{\"id\":%s,\"mr\":\"%s\"}]}", propertyName, recordId, "value");;
+        String json = String.format("{\"%s\":[{\"id\":%s,\"mr\":\"%s\"}]}", propertyName, recordId, "value");
 
         ObjectMapper objectMapper = new ObjectMapper();
 
@@ -69,7 +69,7 @@ public class CollectionProcessorTest {
     public void updateIfExists() throws IOException {
         String propertyName = "medicalRecords";
         double recordId = 5;
-        String json = String.format("{\"%s\":[{\"id\":%s,\"TEST1\":\"%s\", \"TEST2\":\"TEST_VAL2\"}]}", propertyName, recordId, "value");;
+        String json = String.format("{\"%s\":[{\"id\":%s,\"TEST1\":\"%s\", \"TEST2\":\"TEST_VAL2\"}]}", propertyName, recordId, "value");
 
         ObjectMapper objectMapper = new ObjectMapper();
 

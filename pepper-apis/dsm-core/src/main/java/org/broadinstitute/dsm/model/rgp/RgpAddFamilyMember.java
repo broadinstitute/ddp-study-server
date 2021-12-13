@@ -16,13 +16,17 @@ public class RgpAddFamilyMember extends AddFamilyMember {
     @Override
     public void exportDataToEs() {
         boolean isCopyProband = addFamilyMemberPayload.getCopyProbandInfo().orElse(Boolean.FALSE);
-        if (!isCopyProband) return;
+        if (!isCopyProband) {
+            return;
+        }
         exportProbandDataForFamilyMemberToEs();
     }
 
     @Override
     protected void exportProbandDataForFamilyMemberToEs() {
-        if(!participantData.hasFamilyMemberApplicantEmail()) return;
+        if (!participantData.hasFamilyMemberApplicantEmail()) {
+            return;
+        }
         super.exportProbandDataForFamilyMemberToEs();
     }
 }

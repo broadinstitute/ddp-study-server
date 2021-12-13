@@ -1,11 +1,13 @@
 package org.broadinstitute.dsm.route;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.lddp.handlers.util.Result;
 import org.broadinstitute.dsm.DSMServer;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.KitDiscard;
@@ -19,13 +21,11 @@ import org.broadinstitute.dsm.statics.RoutePath;
 import org.broadinstitute.dsm.statics.UserErrorMessages;
 import org.broadinstitute.dsm.util.DDPRequestUtil;
 import org.broadinstitute.dsm.util.UserUtil;
+import org.broadinstitute.lddp.handlers.util.Result;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import spark.Request;
 import spark.Response;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class ParticipantExitRoute extends RequestHandler {
 
@@ -38,8 +38,7 @@ public class ParticipantExitRoute extends RequestHandler {
         if (StringUtils.isNotBlank(realm)) {
             if (UserUtil.checkUserAccess(realm, userId, "participant_exit", null)) {
                 return ParticipantExit.getExitedParticipants(realm).values();
-            }
-            else {
+            } else {
                 response.status(500);
                 return new Result(500, UserErrorMessages.NO_RIGHTS);
             }
@@ -63,20 +62,17 @@ public class ParticipantExitRoute extends RequestHandler {
                         if (kit.getScanDate() != 0 && kit.getReceiveDate() == 0) {
                             String discardId = KitDiscard.addKitToDiscard(kit.getDsmKitRequestId(), KitDiscard.HOLD);
                             kitsNeedAction.add(new KitDiscard(discardId, kit.getKitType(), KitDiscard.HOLD));
-                        }
-                        else {
+                        } else {
                             //refund label of kits which are not sent yet
                             KitRequestShipping.refundKit(kit.getDsmKitRequestId(), DSMServer.getDDPEasypostApiKey(realm));
                         }
                     }
                     return kitsNeedAction;
-                }
-                catch (ParticipantNotExist e) {
+                } catch (ParticipantNotExist e) {
                     logger.error("DDP didn't find participant w/ ddpParticipantId " + ddpParticipantId);
                     return new Result(404, e.getMessage());
                 }
-            }
-            else {
+            } else {
                 response.status(500);
                 return new Result(500, UserErrorMessages.NO_RIGHTS);
             }
@@ -94,19 +90,16 @@ public class ParticipantExitRoute extends RequestHandler {
                 Integer response = null;
                 try {
                     response = DDPRequestUtil.postRequest(sendRequest, null, instance.getName(), instance.isHasAuth0Token());
-                }
-                catch (Exception e) {
+                } catch (Exception e) {
                     throw new RuntimeException("Couldn't exit participant " + sendRequest, e);
                 }
                 if (response == HttpStatusCodes.STATUS_CODE_OK) {
                     logger.info("Triggered DDP to exit participant w/ ddpParticipantId " + ddpParticipantId);
                     ParticipantExit.exitParticipant(ddpParticipantId, currentTime, userId, instance, inDDP);
-                }
-                else if (response == HttpStatusCodes.STATUS_CODE_NOT_FOUND) {
+                } else if (response == HttpStatusCodes.STATUS_CODE_NOT_FOUND) {
                     throw new ParticipantNotExist("Participant not found");
                 }
-            }
-            else {
+            } else {
                 ParticipantExit.exitParticipant(ddpParticipantId, currentTime, userId, instance, false);
             }
         }

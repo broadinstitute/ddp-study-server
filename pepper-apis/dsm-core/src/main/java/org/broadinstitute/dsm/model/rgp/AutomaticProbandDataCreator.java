@@ -9,8 +9,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.dao.bookmark.BookmarkDao;
 import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
-import org.broadinstitute.dsm.db.dao.settings.FieldSettingsDao;
 import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDataDao;
+import org.broadinstitute.dsm.db.dao.settings.FieldSettingsDao;
 import org.broadinstitute.dsm.db.dto.bookmark.BookmarkDto;
 import org.broadinstitute.dsm.db.dto.settings.FieldSettingsDto;
 import org.broadinstitute.dsm.export.WorkflowForES;
@@ -30,9 +30,8 @@ import org.slf4j.LoggerFactory;
 public class AutomaticProbandDataCreator implements Defaultable {
 
 
-    private static final Logger logger = LoggerFactory.getLogger(AutomaticProbandDataCreator.class);
     public static final String RGP_FAMILY_ID = "rgp_family_id";
-
+    private static final Logger logger = LoggerFactory.getLogger(AutomaticProbandDataCreator.class);
     private final FieldSettings fieldSettings = new FieldSettings();
     private final BookmarkDao bookmarkDao = new BookmarkDao();
     private final ParticipantDataDao participantDataDao = new ParticipantDataDao();
@@ -53,7 +52,7 @@ public class AutomaticProbandDataCreator implements Defaultable {
     }
 
     private boolean extractAndInsertProbandFromESData(DDPInstance instance, ElasticSearchParticipantDto esData,
-                                                   List<FieldSettingsDto> fieldSettingsDtosByOptionAndInstanceId) {
+                                                      List<FieldSettingsDto> fieldSettingsDtosByOptionAndInstanceId) {
 
         return esData.getProfile()
                 .map(esProfile -> {
@@ -77,9 +76,11 @@ public class AutomaticProbandDataCreator implements Defaultable {
                     participantData.addDefaultOptionsValueToData(columnsWithDefaultOptions);
                     participantData.insertParticipantData("SYSTEM");
                     columnsWithDefaultOptionsFilteredByElasticExportWorkflow.forEach((col, val) ->
-                            ElasticSearchUtil.writeWorkflow(WorkflowForES.createInstanceWithStudySpecificData(instance, participantId, col, val,
+                            ElasticSearchUtil.writeWorkflow(WorkflowForES.createInstanceWithStudySpecificData(instance, participantId,
+                                    col, val,
                                     new WorkflowForES.StudySpecificData(probandDataMap.get(FamilyMemberConstants.COLLABORATOR_PARTICIPANT_ID),
-                                            probandDataMap.get(FamilyMemberConstants.FIRSTNAME), probandDataMap.get(FamilyMemberConstants.LASTNAME))), false)
+                                            probandDataMap.get(FamilyMemberConstants.FIRSTNAME),
+                                            probandDataMap.get(FamilyMemberConstants.LASTNAME))), false)
                     );
                     maybeFamilyIdOfBookmark.ifPresent(familyIdBookmarkDto -> {
                         insertFamilyIdToDsmES(instance.getParticipantIndexES(), participantId, familyIdBookmarkDto.getValue());
@@ -96,31 +97,32 @@ public class AutomaticProbandDataCreator implements Defaultable {
     }
 
     private Map<String, String> extractProbandDefaultDataFromParticipantProfile(@NonNull ElasticSearchParticipantDto esData,
-                                                                                       Optional<BookmarkDto> maybeBookmark) {
+                                                                                Optional<BookmarkDto> maybeBookmark) {
         Optional<List<ESActivities>> participantActivities = esData.getActivities();
         String mobilePhone = participantActivities
                 .map(this::getPhoneNumberFromActivities)
                 .orElse("");
         return esData.getProfile()
-            .map(esProfile -> {
-                logger.info("Starting extracting data from participant: " + esProfile.getParticipantGuid() + " ES profile");
-                String firstName = esProfile.getFirstName();
-                String lastName = esProfile.getLastName();
-                long familyId = maybeBookmark
-                        .map(bookmarkDto -> bookmarkDto.getValue())
-                        .orElseThrow();
-                String collaboratorParticipantId = instance.getName().toUpperCase() + "_" + familyId + "_" + FamilyMemberConstants.PROBAND_RELATIONSHIP_ID;
-                String memberType = FamilyMemberConstants.MEMBER_TYPE_SELF;
-                String email = esProfile.getEmail();
-                FamilyMemberDetails probandMemberDetails =
-                        new FamilyMemberDetails(firstName, lastName, memberType, familyId, collaboratorParticipantId);
-                probandMemberDetails.setMobilePhone(mobilePhone);
-                probandMemberDetails.setEmail(email);
-                probandMemberDetails.setApplicant(true);
-                logger.info("Profile data extracted from participant: " + esProfile.getParticipantGuid() + " ES profile");
-                return probandMemberDetails.toMap();
-            })
-            .orElse(Map.of());
+                .map(esProfile -> {
+                    logger.info("Starting extracting data from participant: " + esProfile.getParticipantGuid() + " ES profile");
+                    String firstName = esProfile.getFirstName();
+                    String lastName = esProfile.getLastName();
+                    long familyId = maybeBookmark
+                            .map(bookmarkDto -> bookmarkDto.getValue())
+                            .orElseThrow();
+                    String collaboratorParticipantId =
+                            instance.getName().toUpperCase() + "_" + familyId + "_" + FamilyMemberConstants.PROBAND_RELATIONSHIP_ID;
+                    String memberType = FamilyMemberConstants.MEMBER_TYPE_SELF;
+                    String email = esProfile.getEmail();
+                    FamilyMemberDetails probandMemberDetails =
+                            new FamilyMemberDetails(firstName, lastName, memberType, familyId, collaboratorParticipantId);
+                    probandMemberDetails.setMobilePhone(mobilePhone);
+                    probandMemberDetails.setEmail(email);
+                    probandMemberDetails.setApplicant(true);
+                    logger.info("Profile data extracted from participant: " + esProfile.getParticipantGuid() + " ES profile");
+                    return probandMemberDetails.toMap();
+                })
+                .orElse(Map.of());
     }
 
     private String getPhoneNumberFromActivities(List<ESActivities> activities) {
@@ -135,8 +137,8 @@ public class AutomaticProbandDataCreator implements Defaultable {
             return maybePhoneQuestionAnswer
                     .map(answer -> answer.get(DDPActivityConstants.ACTIVITY_QUESTION_ANSWER))
                     .orElse("");
-            })
-            .orElse("");
+        })
+                .orElse("");
     }
 
     void insertFamilyIdToDsmES(@NonNull String esIndex, @NonNull String participantId, @NonNull long familyId) {

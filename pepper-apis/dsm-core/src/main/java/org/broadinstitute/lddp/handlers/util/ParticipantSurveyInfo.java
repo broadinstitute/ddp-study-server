@@ -4,11 +4,7 @@ import lombok.Data;
 import lombok.NonNull;
 
 @Data
-public class ParticipantSurveyInfo
-{
-    public ParticipantSurveyInfo() {
-    }
-
+public class ParticipantSurveyInfo {
     private String participantId;
     private String shortId;
     private String legacyShortId;
@@ -17,8 +13,11 @@ public class ParticipantSurveyInfo
     private Long surveyQueued;
     private String surveyStatus;
     private Long triggerId;
+    public ParticipantSurveyInfo() {
+    }
 
-    public ParticipantSurveyInfo(@NonNull String participantId, @NonNull String survey, @NonNull String followUpInstance, @NonNull Long surveyQueued,
+    public ParticipantSurveyInfo(@NonNull String participantId, @NonNull String survey, @NonNull String followUpInstance,
+                                 @NonNull Long surveyQueued,
                                  @NonNull Long triggerId) {
         this.participantId = participantId;
         this.survey = survey;

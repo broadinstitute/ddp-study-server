@@ -1,5 +1,10 @@
 package org.broadinstitute.dsm.careevolve;
 
+import java.sql.Connection;
+import java.text.SimpleDateFormat;
+import java.time.Instant;
+import java.util.Map;
+
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -20,11 +25,6 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.sql.Connection;
-import java.text.SimpleDateFormat;
-import java.time.Instant;
-import java.util.Map;
-
 
 public class Covid19OrderRegistrarTest {
 
@@ -34,7 +34,7 @@ public class Covid19OrderRegistrarTest {
 
     private static String careEvolveOrderEndpoint;
 
-    private static String  careEvolveAccount;
+    private static String careEvolveAccount;
 
     private static Config cfg;
 
@@ -65,7 +65,6 @@ public class Covid19OrderRegistrarTest {
                 cfg.getString(ApplicationConfigConstants.CARE_EVOLVE_PROVIDER_NPI));
 
 
-
         DDPInstance ddpInstance = null;
 
         try (Connection conn = dataSource.getConnection()) {
@@ -83,7 +82,8 @@ public class Covid19OrderRegistrarTest {
 
         Covid19OrderRegistrar orderRegistrar = new Covid19OrderRegistrar(careEvolveOrderEndpoint, careEvolveAccount, provider, 0, 0);
 
-        Map<String, Map<String, Object>> esData = ElasticSearchUtil.getSingleParticipantFromES(ddpInstance.getName(), ddpInstance.getParticipantIndexES(), esClient, participantHruid);
+        Map<String, Map<String, Object>> esData = ElasticSearchUtil.getSingleParticipantFromES(ddpInstance.getName(),
+                ddpInstance.getParticipantIndexES(), esClient, participantHruid);
 
         if (esData.size() == 1) {
             JsonObject participantJsonData = new JsonParser().parse(new Gson().toJson(esData.values().iterator().next())).getAsJsonObject();
@@ -91,7 +91,7 @@ public class Covid19OrderRegistrarTest {
             System.out.println(cePatient);
 
             Instant collectionDate = new SimpleDateFormat("MM/dd/yyyy hh:mm").parse(collectionTime).toInstant();
-            orderRegistrar.orderTest(auth,cePatient, kitLabel, externalOrderNumber, collectionDate);
+            orderRegistrar.orderTest(auth, cePatient, kitLabel, externalOrderNumber, collectionDate);
             try (Connection conn = dataSource.getConnection()) {
                 DdpKit.updateCEOrdered(dataSource.getConnection(), true, kitLabel);
                 conn.commit();

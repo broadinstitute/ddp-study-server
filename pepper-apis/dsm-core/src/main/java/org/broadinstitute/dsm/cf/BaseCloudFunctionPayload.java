@@ -1,8 +1,8 @@
 package org.broadinstitute.dsm.cf;
 
-import com.google.gson.annotations.SerializedName;
-
 import java.util.Map;
+
+import com.google.gson.annotations.SerializedName;
 
 public abstract class BaseCloudFunctionPayload {
 

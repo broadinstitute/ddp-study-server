@@ -1,12 +1,12 @@
 package org.broadinstitute.dsm.db.dto.ddp.instance;
 
-import lombok.Data;
-
 import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import lombok.Data;
 
 @Data
 public class DDPInstanceDto {
@@ -37,7 +37,7 @@ public class DDPInstanceDto {
         Field[] declaredFields = ddpInstanceDtoClazz.getDeclaredFields();
         Map<String, Field> builderFieldsMap =
                 Arrays.stream(builder.getClass().getDeclaredFields()).collect(Collectors.toMap(Field::getName, Function.identity()));
-        for (Field field: declaredFields) {
+        for (Field field : declaredFields) {
             try {
                 field.set(this, builderFieldsMap.get(field.getName()).get(builder));
             } catch (IllegalAccessException e) {
@@ -68,7 +68,8 @@ public class DDPInstanceDto {
         String esActivityDefinitionIndex;
         String esUsersIndex;
 
-        public Builder() {}
+        public Builder() {
+        }
 
         public Builder withDdpInstanceId(int ddpInstanceId) {
             this.ddpInstanceId = ddpInstanceId;

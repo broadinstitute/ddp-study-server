@@ -9,12 +9,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-import com.google.gson.Gson;
 import com.google.gson.annotations.SerializedName;
 import lombok.Data;
-import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
-import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDataDto;
-import org.broadinstitute.dsm.model.bookmark.Bookmark;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import spark.utils.StringUtils;
@@ -52,7 +48,8 @@ public class FamilyMemberDetails {
     private boolean isApplicant;
 
 
-    public FamilyMemberDetails() {}
+    public FamilyMemberDetails() {
+    }
 
     public FamilyMemberDetails(String firstName, String lastName, String memberType, long familyId,
                                String collaboratorParticipantId) {
@@ -68,10 +65,12 @@ public class FamilyMemberDetails {
         List<Field> declaredFields = Arrays.stream(FamilyMemberDetails.class.getDeclaredFields())
                 .filter(f -> !Modifier.isStatic(f.getModifiers()))
                 .collect(Collectors.toList());
-        for (Field f: declaredFields) {
+        for (Field f : declaredFields) {
             try {
                 Object fieldValue = f.get(this);
-                if (Objects.isNull(fieldValue)) continue;
+                if (Objects.isNull(fieldValue)) {
+                    continue;
+                }
                 familyMemberDetailMap.put(f.getAnnotation(SerializedName.class).value(), String.valueOf(fieldValue));
             } catch (Exception e) {
                 throw new RuntimeException(e);
@@ -82,9 +81,8 @@ public class FamilyMemberDetails {
 
     public boolean isFamilyMemberFieldsEmpty() {
         return StringUtils.isBlank(this.firstName) || StringUtils.isBlank(this.lastName) || StringUtils.isBlank(this.memberType)
-                     || StringUtils.isBlank(this.subjectId);
+                || StringUtils.isBlank(this.subjectId);
     }
-
 
 
 }

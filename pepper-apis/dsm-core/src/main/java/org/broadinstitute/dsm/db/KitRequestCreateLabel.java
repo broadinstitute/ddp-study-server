@@ -1,15 +1,6 @@
 package org.broadinstitute.dsm.db;
 
-import lombok.Data;
-import lombok.NonNull;
-import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.lddp.db.SimpleResult;
-import org.broadinstitute.dsm.model.KitRequestSettings;
-import org.broadinstitute.dsm.model.KitType;
-import org.broadinstitute.dsm.statics.DBConstants;
-import org.broadinstitute.dsm.statics.QueryExtension;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -18,7 +9,16 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
+import lombok.Data;
+import lombok.NonNull;
+import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.dsm.model.KitRequestSettings;
+import org.broadinstitute.dsm.model.KitType;
+import org.broadinstitute.dsm.statics.DBConstants;
+import org.broadinstitute.dsm.statics.QueryExtension;
+import org.broadinstitute.lddp.db.SimpleResult;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Data
 public class KitRequestCreateLabel {
@@ -98,8 +98,7 @@ public class KitRequestCreateLabel {
                         ));
                     }
                 }
-            }
-            catch (SQLException ex) {
+            } catch (SQLException ex) {
                 dbVals.resultException = ex;
             }
             return dbVals;
@@ -120,21 +119,20 @@ public class KitRequestCreateLabel {
 
     private static PreparedStatement getPreparedStatement(@NonNull Connection conn, String realm, String type) throws SQLException {
         PreparedStatement stmt = null;
-        String query = KitRequestShipping.SQL_SELECT_KIT_REQUEST.concat(QueryExtension.KIT_NO_LABEL).concat(QueryExtension.KIT_LABEL_NOT_TRIGGERED);
+        String query =
+                KitRequestShipping.SQL_SELECT_KIT_REQUEST.concat(QueryExtension.KIT_NO_LABEL).concat(QueryExtension.KIT_LABEL_NOT_TRIGGERED);
         if (StringUtils.isNotBlank(realm) && StringUtils.isNotBlank(type)) {
             logger.info("Going to request label for all kits of realm " + realm + " and kit type " + type);
             query = query.concat(QueryExtension.BY_REALM_AND_TYPE);
             stmt = conn.prepareStatement(query);
             stmt.setString(1, realm);
             stmt.setString(2, type);
-        }
-        else if (StringUtils.isNotBlank(realm)) {
+        } else if (StringUtils.isNotBlank(realm)) {
             logger.info("Going to request label for all kits of realm " + realm);
             query = query.concat(QueryExtension.BY_REALM);
             stmt = conn.prepareStatement(query);
             stmt.setString(1, realm);
-        }
-        else {
+        } else {
             logger.info("Going to request label for all kits");
             stmt = conn.prepareStatement(query);
         }

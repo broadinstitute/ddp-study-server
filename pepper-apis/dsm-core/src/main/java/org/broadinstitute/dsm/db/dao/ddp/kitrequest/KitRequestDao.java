@@ -1,11 +1,6 @@
 package org.broadinstitute.dsm.db.dao.ddp.kitrequest;
 
-import org.broadinstitute.lddp.db.SimpleResult;
-import org.broadinstitute.dsm.db.dao.Dao;
-import org.broadinstitute.dsm.db.dto.ddp.kitrequest.ESSamplesDto;
-import org.broadinstitute.dsm.db.dto.ddp.kitrequest.KitRequestDto;
-import org.broadinstitute.dsm.statics.DBConstants;
-import org.broadinstitute.dsm.util.SystemUtil;
+import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -14,67 +9,72 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
+import org.broadinstitute.dsm.db.dao.Dao;
+import org.broadinstitute.dsm.db.dto.ddp.kitrequest.ESSamplesDto;
+import org.broadinstitute.dsm.db.dto.ddp.kitrequest.KitRequestDto;
+import org.broadinstitute.dsm.statics.DBConstants;
+import org.broadinstitute.dsm.util.SystemUtil;
+import org.broadinstitute.lddp.db.SimpleResult;
 
 public class KitRequestDao implements Dao<KitRequestDto> {
 
     public static final String SQL_SELECT_ES_SAMPLE =
             "SELECT " +
-            "kr.ddp_participant_id, " +
-            "kr.ddp_kit_request_id, " +
-            "kt.kit_type_name, " +
-            "dk.kit_label, " +
-            "kr.bsp_collaborator_sample_id, " +
-            "kr.bsp_collaborator_participant_id, " +
-            "dk.tracking_to_id, " +
-            "dk.tracking_return_id, " +
-            "cs.carrier, " +
-            "dk.scan_date, " +
-            "dk.easypost_shipment_date, " +
-            "dk.receive_date " +
+                    "kr.ddp_participant_id, " +
+                    "kr.ddp_kit_request_id, " +
+                    "kt.kit_type_name, " +
+                    "dk.kit_label, " +
+                    "kr.bsp_collaborator_sample_id, " +
+                    "kr.bsp_collaborator_participant_id, " +
+                    "dk.tracking_to_id, " +
+                    "dk.tracking_return_id, " +
+                    "cs.carrier, " +
+                    "dk.scan_date, " +
+                    "dk.easypost_shipment_date, " +
+                    "dk.receive_date " +
                     "FROM " +
-            "ddp_kit_request kr "+
-            "LEFT JOIN " +
-            "ddp_kit dk ON dk.dsm_kit_request_id = kr.dsm_kit_request_id " +
-            "LEFT JOIN " +
-            "kit_type kt ON kr.kit_type_id = kt.kit_type_id " +
-            "LEFT JOIN " +
-            "ddp_kit_request_settings krs ON (kr.ddp_instance_id = krs.ddp_instance_id " +
+                    "ddp_kit_request kr " +
+                    "LEFT JOIN " +
+                    "ddp_kit dk ON dk.dsm_kit_request_id = kr.dsm_kit_request_id " +
+                    "LEFT JOIN " +
+                    "kit_type kt ON kr.kit_type_id = kt.kit_type_id " +
+                    "LEFT JOIN " +
+                    "ddp_kit_request_settings krs ON (kr.ddp_instance_id = krs.ddp_instance_id " +
                     "AND kr.kit_type_id = krs.kit_type_id) " +
-            "LEFT JOIN " +
-            "carrier_service cs ON (krs.carrier_service_to_id = cs.carrier_service_id)";
+                    "LEFT JOIN " +
+                    "carrier_service cs ON (krs.carrier_service_to_id = cs.carrier_service_id)";
 
     public static final String BY_INSTANCE_ID = " WHERE kr.ddp_instance_id = ?";
 
     public static final String SQL_GET_KIT_REQUEST_ID =
             "SELECT " +
-            "ddp_kit_request_id " +
+                    "ddp_kit_request_id " +
                     "FROM " +
-            "ddp_kit_request";
+                    "ddp_kit_request";
 
     public static final String BY_BSP_COLLABORATOR_PARTICIPANT_ID = " WHERE bsp_collaborator_participant_id = ?";
 
     public static final String SQL_GET_KIT_REQUEST =
-        "SELECT " +
-        "req.ddp_kit_request_id,  " +
-        "req.ddp_instance_id, " +
-        "req.ddp_kit_request_id, " +
-        "req.kit_type_id," +
-        "req.bsp_collaborator_participant_id, " +
-        "req.bsp_collaborator_sample_id, " +
-        "req.ddp_participant_id, " +
-        "req.ddp_label, " +
-        "req.created_by, " +
-        "req.created_date, " +
-        "req.external_order_number, " +
-        "req.external_order_date, " +
-        "req.external_order_status, " +
-        "req.external_response, " +
-        "req.upload_reason, " +
-        "req.order_transmitted_at, " +
-        "req.dsm_kit_request_id " +
-        "FROM " +
-        "ddp_kit_request req";
+            "SELECT " +
+                    "req.ddp_kit_request_id,  " +
+                    "req.ddp_instance_id, " +
+                    "req.ddp_kit_request_id, " +
+                    "req.kit_type_id," +
+                    "req.bsp_collaborator_participant_id, " +
+                    "req.bsp_collaborator_sample_id, " +
+                    "req.ddp_participant_id, " +
+                    "req.ddp_label, " +
+                    "req.created_by, " +
+                    "req.created_date, " +
+                    "req.external_order_number, " +
+                    "req.external_order_date, " +
+                    "req.external_order_status, " +
+                    "req.external_response, " +
+                    "req.upload_reason, " +
+                    "req.order_transmitted_at, " +
+                    "req.dsm_kit_request_id " +
+                    "FROM " +
+                    "ddp_kit_request req";
 
     public static final String BY_DDP_LABEL = " where ddp_label = ?";
 
@@ -123,8 +123,7 @@ public class KitRequestDao implements Dao<KitRequestDto> {
                         ));
                     }
                 }
-            }
-            catch (SQLException ex) {
+            } catch (SQLException ex) {
                 dbVals.resultException = ex;
             }
             if (dbVals.resultException != null) {
@@ -141,7 +140,7 @@ public class KitRequestDao implements Dao<KitRequestDto> {
             SimpleResult execResult = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_ES_SAMPLE + BY_INSTANCE_ID)) {
                 stmt.setInt(1, instanceId);
-                try(ResultSet ESSampleRs = stmt.executeQuery()) {
+                try (ResultSet ESSampleRs = stmt.executeQuery()) {
                     while (ESSampleRs.next()) {
                         samplesDtosListES.add(
                                 new ESSamplesDto(
@@ -161,8 +160,7 @@ public class KitRequestDao implements Dao<KitRequestDto> {
                         );
                     }
                 }
-            }
-            catch (SQLException ex) {
+            } catch (SQLException ex) {
                 execResult.resultException = ex;
             }
             return execResult;
@@ -182,13 +180,10 @@ public class KitRequestDao implements Dao<KitRequestDto> {
                     if (idByBSPrs.next()) {
                         dbVals.resultValue = idByBSPrs.getString(DBConstants.DDP_KIT_REQUEST_ID);
                     }
-                }
-
-                catch (SQLException e) {
+                } catch (SQLException e) {
                     throw new RuntimeException("Error getting information for " + bspParticipantId, e);
                 }
-            }
-            catch (SQLException ex) {
+            } catch (SQLException ex) {
                 dbVals.resultException = ex;
             }
             return dbVals;

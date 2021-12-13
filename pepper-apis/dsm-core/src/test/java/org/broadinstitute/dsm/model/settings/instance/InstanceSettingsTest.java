@@ -1,15 +1,15 @@
 package org.broadinstitute.dsm.model.settings.instance;
 
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+
 import org.broadinstitute.dsm.db.InstanceSettings;
 import org.broadinstitute.dsm.db.dto.settings.InstanceSettingsDto;
 import org.broadinstitute.dsm.model.Value;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
-
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
 
 public class InstanceSettingsTest {
 
@@ -30,7 +30,7 @@ public class InstanceSettingsTest {
         Map<String, Object> instanceSettingsAsMap = instanceSettings.getInstanceSettingsAsMap(instanceSettingsDto);
         Assert.assertEquals(instanceSettingsAsMap.get("ddpInstanceId"), 10000);
         Assert.assertTrue((Boolean) instanceSettingsAsMap.get("hideSamplesTab"));
-        Assert.assertTrue(((List)instanceSettingsAsMap.get("defaultColumns")).size() > 0);
+        Assert.assertTrue(((List) instanceSettingsAsMap.get("defaultColumns")).size() > 0);
     }
 
 }

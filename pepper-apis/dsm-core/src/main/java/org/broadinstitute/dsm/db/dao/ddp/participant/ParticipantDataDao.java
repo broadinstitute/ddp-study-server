@@ -1,19 +1,23 @@
 package org.broadinstitute.dsm.db.dao.ddp.participant;
 
-import org.broadinstitute.lddp.db.SimpleResult;
-import org.broadinstitute.dsm.db.dao.Dao;
-import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDataDto;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
-import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
+import org.broadinstitute.dsm.db.dao.Dao;
+import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDataDto;
+import org.broadinstitute.lddp.db.SimpleResult;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ParticipantDataDao implements Dao<ParticipantDataDto> {
 
@@ -106,8 +110,7 @@ public class ParticipantDataDao implements Dao<ParticipantDataDto> {
             try (PreparedStatement stmt = conn.prepareStatement(SQL_DELETE_DDP_PARTICIPANT_DATA)) {
                 stmt.setInt(1, id);
                 execResult.resultValue = stmt.executeUpdate();
-            }
-            catch (SQLException ex) {
+            } catch (SQLException ex) {
                 execResult.resultException = ex;
             }
             return execResult;
@@ -125,21 +128,20 @@ public class ParticipantDataDao implements Dao<ParticipantDataDto> {
             SimpleResult execResult = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(SQL_PARTICIPANT_DATA_BY_ID)) {
                 stmt.setLong(1, id);
-                try(ResultSet rs = stmt.executeQuery()) {
+                try (ResultSet rs = stmt.executeQuery()) {
                     if (rs.next()) {
-                         execResult.resultValue = new ParticipantDataDto.Builder()
-                                 .withParticipantDataId(rs.getInt(PARTICIPANT_DATA_ID))
-                                 .withDdpParticipantId(rs.getString(DDP_PARTICIPANT_ID))
-                                 .withDdpInstanceId(rs.getInt(DDP_INSTANCE_ID))
-                                 .withFieldTypeId(rs.getString(FIELD_TYPE_ID))
-                                 .withData(rs.getString(DATA))
-                                 .withLastChanged(rs.getLong(LAST_CHANGED))
-                                 .withChangedBy(rs.getString(CHANGED_BY))
-                                 .build();
+                        execResult.resultValue = new ParticipantDataDto.Builder()
+                                .withParticipantDataId(rs.getInt(PARTICIPANT_DATA_ID))
+                                .withDdpParticipantId(rs.getString(DDP_PARTICIPANT_ID))
+                                .withDdpInstanceId(rs.getInt(DDP_INSTANCE_ID))
+                                .withFieldTypeId(rs.getString(FIELD_TYPE_ID))
+                                .withData(rs.getString(DATA))
+                                .withLastChanged(rs.getLong(LAST_CHANGED))
+                                .withChangedBy(rs.getString(CHANGED_BY))
+                                .build();
                     }
                 }
-            }
-            catch (SQLException ex) {
+            } catch (SQLException ex) {
                 execResult.resultException = ex;
             }
             return execResult;
@@ -181,23 +183,22 @@ public class ParticipantDataDao implements Dao<ParticipantDataDto> {
             SimpleResult execResult = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(SQL_PARTICIPANT_DATA_BY_PARTICIPANT_ID)) {
                 stmt.setString(1, participantId);
-                try(ResultSet rs = stmt.executeQuery()) {
+                try (ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
                         participantDataDtoList.add(
-                            new ParticipantDataDto.Builder()
-                                    .withParticipantDataId(rs.getInt(PARTICIPANT_DATA_ID))
-                                    .withDdpParticipantId(rs.getString(DDP_PARTICIPANT_ID))
-                                    .withDdpInstanceId(rs.getInt(DDP_INSTANCE_ID))
-                                    .withFieldTypeId(rs.getString(FIELD_TYPE_ID))
-                                    .withData(rs.getString(DATA))
-                                    .withLastChanged(rs.getLong(LAST_CHANGED))
-                                    .withChangedBy(rs.getString(CHANGED_BY))
-                                    .build()
+                                new ParticipantDataDto.Builder()
+                                        .withParticipantDataId(rs.getInt(PARTICIPANT_DATA_ID))
+                                        .withDdpParticipantId(rs.getString(DDP_PARTICIPANT_ID))
+                                        .withDdpInstanceId(rs.getInt(DDP_INSTANCE_ID))
+                                        .withFieldTypeId(rs.getString(FIELD_TYPE_ID))
+                                        .withData(rs.getString(DATA))
+                                        .withLastChanged(rs.getLong(LAST_CHANGED))
+                                        .withChangedBy(rs.getString(CHANGED_BY))
+                                        .build()
                         );
                     }
                 }
-            }
-            catch (SQLException ex) {
+            } catch (SQLException ex) {
                 execResult.resultException = ex;
             }
             return execResult;
@@ -216,7 +217,7 @@ public class ParticipantDataDao implements Dao<ParticipantDataDto> {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult execResult = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(sqlWithInClause)) {
-                try(ResultSet rs = stmt.executeQuery()) {
+                try (ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
                         ArrayList<ParticipantDataDto> value = new ArrayList<>(
                                 List.of(new ParticipantDataDto.Builder()
@@ -236,8 +237,7 @@ public class ParticipantDataDao implements Dao<ParticipantDataDto> {
                         });
                     }
                 }
-            }
-            catch (SQLException ex) {
+            } catch (SQLException ex) {
                 execResult.resultException = ex;
             }
             return execResult;
@@ -249,14 +249,13 @@ public class ParticipantDataDao implements Dao<ParticipantDataDto> {
     }
 
 
-
     public Map<String, List<ParticipantDataDto>> getParticipantDataByInstanceIdAndFilterQuery(int ddpInstanceId, String filterQuery) {
         Map<String, List<ParticipantDataDto>> participantDatasByParticipantIds = new HashMap<>();
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult execResult = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(SQL_ALL_PARTICIPANT_DATA + BY_INSTANCE_ID + filterQuery)) {
                 stmt.setInt(1, ddpInstanceId);
-                try(ResultSet rs = stmt.executeQuery()) {
+                try (ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
                         ArrayList<ParticipantDataDto> value = new ArrayList<>(
                                 List.of(new ParticipantDataDto.Builder()
@@ -276,8 +275,7 @@ public class ParticipantDataDao implements Dao<ParticipantDataDto> {
                         });
                     }
                 }
-            }
-            catch (SQLException ex) {
+            } catch (SQLException ex) {
                 execResult.resultException = ex;
             }
             return execResult;
@@ -293,7 +291,7 @@ public class ParticipantDataDao implements Dao<ParticipantDataDto> {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult execResult = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(SQL_ALL_PARTICIPANT_DATA)) {
-                try(ResultSet rs = stmt.executeQuery()) {
+                try (ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
                         participantDataDtoList.add(
                                 new ParticipantDataDto.Builder()
@@ -308,8 +306,7 @@ public class ParticipantDataDao implements Dao<ParticipantDataDto> {
                         );
                     }
                 }
-            }
-            catch (SQLException ex) {
+            } catch (SQLException ex) {
                 execResult.resultException = ex;
             }
             return execResult;
@@ -326,7 +323,7 @@ public class ParticipantDataDao implements Dao<ParticipantDataDto> {
             SimpleResult execResult = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(SQL_ALL_PARTICIPANT_DATA + BY_INSTANCE_ID)) {
                 stmt.setInt(1, instanceId);
-                try(ResultSet rs = stmt.executeQuery()) {
+                try (ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
                         participantDataDtoList.add(
                                 new ParticipantDataDto.Builder()
@@ -341,8 +338,7 @@ public class ParticipantDataDao implements Dao<ParticipantDataDto> {
                         );
                     }
                 }
-            }
-            catch (SQLException ex) {
+            } catch (SQLException ex) {
                 execResult.resultException = ex;
             }
             return execResult;
@@ -360,7 +356,7 @@ public class ParticipantDataDao implements Dao<ParticipantDataDto> {
             SimpleResult execResult = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(SQL_ALL_PARTICIPANT_DATA + BY_INSTANCE_ID + queryAddition)) {
                 stmt.setInt(1, instanceId);
-                try(ResultSet rs = stmt.executeQuery()) {
+                try (ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
                         participantDataDtoList.add(
                                 new ParticipantDataDto.Builder()
@@ -375,8 +371,7 @@ public class ParticipantDataDao implements Dao<ParticipantDataDto> {
                         );
                     }
                 }
-            }
-            catch (SQLException ex) {
+            } catch (SQLException ex) {
                 execResult.resultException = ex;
             }
             return execResult;

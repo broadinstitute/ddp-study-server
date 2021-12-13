@@ -39,24 +39,23 @@ public class PatchRoute extends RequestHandler {
             throw new RuntimeException("ColumnNameMap is null!");
         }
         String userIdRequest = UserUtil.getUserId(request);
-        if (UserUtil.checkUserAccess(null, userId, DBConstants.MR_VIEW, userIdRequest) || UserUtil.checkUserAccess(null, userId, DBConstants.MR_ABSTRACTER, userIdRequest)
-                || UserUtil.checkUserAccess(null, userId, DBConstants.MR_VIEW, userIdRequest) || UserUtil.checkUserAccess(null, userId, DBConstants.PT_LIST_VIEW, userIdRequest)) {
+        if (UserUtil.checkUserAccess(null, userId, DBConstants.MR_VIEW, userIdRequest) || UserUtil.checkUserAccess(null, userId,
+                DBConstants.MR_ABSTRACTER, userIdRequest)
+                || UserUtil.checkUserAccess(null, userId, DBConstants.MR_VIEW, userIdRequest) || UserUtil.checkUserAccess(null, userId,
+                DBConstants.PT_LIST_VIEW, userIdRequest)) {
             try {
                 String requestBody = request.body();
                 Patch patch = GSON.fromJson(requestBody, Patch.class);
                 BasePatch patcher = PatchFactory.makePatch(patch, notificationUtil);
                 return patcher.doPatch();
-            }
-            catch (DuplicateException e) {
+            } catch (DuplicateException e) {
                 response.status(500);
                 throw new RuntimeException("Duplicate value", e);
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                 response.status(500);
                 throw new RuntimeException("An error occurred while attempting to patch ", e);
             }
-        }
-        else {
+        } else {
             response.status(403);
             return UserErrorMessages.NO_RIGHTS;
         }

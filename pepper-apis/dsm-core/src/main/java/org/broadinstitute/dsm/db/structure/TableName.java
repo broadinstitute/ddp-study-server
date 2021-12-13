@@ -5,7 +5,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-@Target({ElementType.TYPE, ElementType.FIELD})
+@Target( {ElementType.TYPE, ElementType.FIELD})
 @Retention(RetentionPolicy.RUNTIME)
 
 /**
@@ -14,7 +14,10 @@ import java.lang.annotation.Target;
  */
 public @interface TableName {
     String name();
+
     String alias();
+
     String primaryKey();
+
     String columnPrefix();
 }

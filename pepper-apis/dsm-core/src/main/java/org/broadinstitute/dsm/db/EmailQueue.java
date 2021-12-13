@@ -1,11 +1,6 @@
 package org.broadinstitute.dsm.db;
 
-import com.google.gson.Gson;
-import lombok.Data;
-import lombok.NonNull;
-import org.broadinstitute.lddp.db.SimpleResult;
-import org.broadinstitute.lddp.email.Recipient;
-import org.broadinstitute.dsm.statics.DBConstants;
+import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -14,12 +9,18 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
+import com.google.gson.Gson;
+import lombok.Data;
+import lombok.NonNull;
+import org.broadinstitute.dsm.statics.DBConstants;
+import org.broadinstitute.lddp.db.SimpleResult;
+import org.broadinstitute.lddp.email.Recipient;
 
 @Data
 public class EmailQueue {
 
-    private static final String SQL_SELECT_REMINDERS_TO_PROCESS = "SELECT EMAIL_ID, EMAIL_DATA, EMAIL_DATE_CREATED, EMAIL_RECORD_ID, REMINDER_TYPE FROM EMAIL_QUEUE " +
+    private static final String SQL_SELECT_REMINDERS_TO_PROCESS = "SELECT EMAIL_ID, EMAIL_DATA, EMAIL_DATE_CREATED, EMAIL_RECORD_ID, "
+            + "REMINDER_TYPE FROM EMAIL_QUEUE " +
             "WHERE EMAIL_DATE_PROCESSED IS NULL AND REMINDER_TYPE != 'NA' ORDER BY EMAIL_DATE_SCHEDULED";
 
     private Recipient recipient;
@@ -28,7 +29,8 @@ public class EmailQueue {
     private String reminderType;
     private String recordId; //EMAIL_RECORD_ID
 
-    public EmailQueue(@NonNull Recipient recipient, @NonNull Long emailId, @NonNull Long reminderCreated, @NonNull String reminderType, @NonNull String recordId) {
+    public EmailQueue(@NonNull Recipient recipient, @NonNull Long emailId, @NonNull Long reminderCreated, @NonNull String reminderType,
+                      @NonNull String recordId) {
         this.recipient = recipient;
         this.emailId = emailId;
         this.reminderCreated = reminderCreated;
@@ -49,13 +51,13 @@ public class EmailQueue {
                             records.put(reminder, new ArrayList<>());
                         }
                         records.get(reminder).add(new EmailQueue(new Gson().fromJson(rs.getString(DBConstants.EMAIL_DATA), Recipient.class),
-                                rs.getLong(DBConstants.EMAIL_ID), rs.getLong(DBConstants.EMAIL_DATE_CREATED), rs.getString(DBConstants.REMINDER_TYPE),
+                                rs.getLong(DBConstants.EMAIL_ID), rs.getLong(DBConstants.EMAIL_DATE_CREATED),
+                                rs.getString(DBConstants.REMINDER_TYPE),
                                 rs.getString(DBConstants.EMAIL_RECORD_ID)));
                     }
                 }
                 dbVals.resultValue = records;
-            }
-            catch (Exception ex) {
+            } catch (Exception ex) {
                 dbVals.resultException = ex;
             }
             return dbVals;

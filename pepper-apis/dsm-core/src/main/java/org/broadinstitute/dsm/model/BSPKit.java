@@ -1,5 +1,10 @@
 package org.broadinstitute.dsm.model;
 
+import java.sql.Connection;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.util.ConfigUtil;
@@ -20,11 +25,6 @@ import org.broadinstitute.dsm.util.NotificationUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.sql.Connection;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-
 public class BSPKit {
     private static Logger logger = LoggerFactory.getLogger(BSPKit.class);
 
@@ -35,15 +35,13 @@ public class BSPKit {
         Optional<BSPKitStatus> result = Optional.empty();
         if (bspKitQueryResult.isEmpty()) {
             logger.info("No kit w/ label " + kitLabel + " found");
-        }
-        else {
+        } else {
             BSPKitDto maybeBspKitQueryResult = bspKitQueryResult.get();
             if (StringUtils.isNotBlank(maybeBspKitQueryResult.getParticipantExitId())) {
                 String message = "Kit of exited participant " + maybeBspKitQueryResult.getBspParticipantId() + " was received by GP.<br>";
                 notificationUtil.sentNotification(maybeBspKitQueryResult.getNotificationRecipient(), message, NotificationUtil.DSM_SUBJECT);
                 result = Optional.of(new BSPKitStatus(BSPKitStatus.EXITED));
-            }
-            else if (StringUtils.isNotBlank(maybeBspKitQueryResult.getDeactivationDate())) {
+            } else if (StringUtils.isNotBlank(maybeBspKitQueryResult.getDeactivationDate())) {
                 result = Optional.of(new BSPKitStatus(BSPKitStatus.DEACTIVATED));
             }
         }
@@ -56,8 +54,7 @@ public class BSPKit {
         if (bspKitQueryResult.isEmpty()) {
             logger.info("No kit w/ label " + kitLabel + " found");
             return false;
-        }
-        else {
+        } else {
             BSPKitDto maybeBspKitQueryResult = bspKitQueryResult.get();
             if (StringUtils.isNotBlank(maybeBspKitQueryResult.getParticipantExitId()) || StringUtils.isNotBlank(maybeBspKitQueryResult.getDeactivationDate())) {
                 logger.info("Kit can not be received.");
@@ -72,7 +69,7 @@ public class BSPKit {
         BSPKitDao bspKitDao = new BSPKitDao();
         Optional<BSPKitDto> bspKitQueryResult = bspKitDao.getBSPKitQueryResult(kitLabel);
         if (bspKitQueryResult.isEmpty()) {
-            logger.warn("returning empty object for "+kitLabel);
+            logger.warn("returning empty object for " + kitLabel);
             return Optional.empty();
         }
         BSPKitDto maybeBspKitQueryResult = bspKitQueryResult.get();
@@ -97,12 +94,13 @@ public class BSPKit {
                             //don't trigger ddp to sent out email, only email to study staff
                             triggerDDP = false;
                             if (InstanceSettings.TYPE_NOTIFICATION.equals(received.getType())) {
-                                String message = "Kit of participant " + maybeBspKitQueryResult.getBspParticipantId() + " was received by GP. <br> " +
+                                String message = "Kit of participant " + maybeBspKitQueryResult.getBspParticipantId() + " was received by"
+                                        + " GP. <br> " +
                                         "CollaboratorSampleId:  " + maybeBspKitQueryResult.getBspSampleId() + " <br> " +
                                         received.getValue();
-                                notificationUtil.sentNotification(maybeBspKitQueryResult.getNotificationRecipient(), message, NotificationUtil.UNIVERSAL_NOTIFICATION_TEMPLATE, NotificationUtil.DSM_SUBJECT);
-                            }
-                            else {
+                                notificationUtil.sentNotification(maybeBspKitQueryResult.getNotificationRecipient(), message,
+                                        NotificationUtil.UNIVERSAL_NOTIFICATION_TEMPLATE, NotificationUtil.DSM_SUBJECT);
+                            } else {
                                 logger.error("Instance settings behavior for kit was not known " + received.getType());
                             }
                         }
@@ -119,8 +117,7 @@ public class BSPKit {
         int bspOrganism;
         try {
             bspOrganism = Integer.parseInt(maybeBspKitQueryResult.getBspOrganism());
-        }
-        catch (NumberFormatException e) {
+        } catch (NumberFormatException e) {
             throw new RuntimeException("Organism " + maybeBspKitQueryResult.getBspOrganism() + " can't be parsed to integer", e);
         }
 
@@ -147,13 +144,13 @@ public class BSPKit {
     public void triggerDDP(Connection conn, @NonNull BSPKitDto bspKitInfo, boolean firstTimeReceived, String kitLabel) {
         try {
             if (bspKitInfo.isHasParticipantNotifications() && firstTimeReceived) {
-                KitDDPNotification kitDDPNotification = KitDDPNotification.getKitDDPNotification(ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.GET_RECEIVED_KIT_INFORMATION_FOR_NOTIFICATION_EMAIL), kitLabel, 1);
+                KitDDPNotification kitDDPNotification =
+                        KitDDPNotification.getKitDDPNotification(ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.GET_RECEIVED_KIT_INFORMATION_FOR_NOTIFICATION_EMAIL), kitLabel, 1);
                 if (kitDDPNotification != null) {
                     EventUtil.triggerDDP(conn, kitDDPNotification);
                 }
             }
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             logger.error("Failed doing DSM internal received things for kit w/ label " + kitLabel, e);
         }
     }

@@ -1,20 +1,6 @@
 package org.broadinstitute.dsm.db;
 
-import com.google.gson.Gson;
-import lombok.Data;
-import lombok.NonNull;
-import org.broadinstitute.lddp.db.SimpleResult;
-import org.broadinstitute.lddp.handlers.util.MedicalInfo;
-import org.broadinstitute.dsm.db.structure.ColumnName;
-import org.broadinstitute.dsm.db.structure.DbDateConversion;
-import org.broadinstitute.dsm.db.structure.SqlDateConverter;
-import org.broadinstitute.dsm.db.structure.TableName;
-import org.broadinstitute.dsm.model.FollowUp;
-import org.broadinstitute.dsm.statics.*;
-import org.broadinstitute.dsm.util.DBUtil;
-import org.broadinstitute.dsm.util.DDPRequestUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
 
 import java.io.IOException;
 import java.sql.PreparedStatement;
@@ -25,280 +11,302 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
+import com.google.gson.Gson;
+import lombok.Data;
+import lombok.NonNull;
+import org.broadinstitute.dsm.db.structure.ColumnName;
+import org.broadinstitute.dsm.db.structure.DbDateConversion;
+import org.broadinstitute.dsm.db.structure.SqlDateConverter;
+import org.broadinstitute.dsm.db.structure.TableName;
+import org.broadinstitute.dsm.model.FollowUp;
+import org.broadinstitute.dsm.statics.DBConstants;
+import org.broadinstitute.dsm.statics.QueryExtension;
+import org.broadinstitute.dsm.statics.RequestParameter;
+import org.broadinstitute.dsm.statics.RoutePath;
+import org.broadinstitute.dsm.util.DBUtil;
+import org.broadinstitute.dsm.util.DDPRequestUtil;
+import org.broadinstitute.lddp.db.SimpleResult;
+import org.broadinstitute.lddp.handlers.util.MedicalInfo;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Data
 public class MedicalRecord {
 
-    private static final Logger logger = LoggerFactory.getLogger(MedicalRecord.class);
-
     public static final String SQL_SELECT_MEDICAL_RECORD = "SELECT p.ddp_participant_id, p.ddp_instance_id, " +
             "inst.institution_id, inst.ddp_institution_id, inst.type, inst.participant_id, " +
-            "m.medical_record_id, m.name, m.contact, m.phone, m.fax, m.fax_sent, m.fax_sent_by, m.fax_confirmed, m.fax_sent_2, m.fax_sent_2_by, " +
-            "m.fax_confirmed_2, m.fax_sent_3, m.fax_sent_3_by, m.fax_confirmed_3, m.mr_received, m.follow_ups, m.mr_document, m.mr_document_file_names, " +
-            "m.mr_problem, m.mr_problem_text, m.unable_obtain, m.unable_obtain_text, m.duplicate, m.followup_required, m.followup_required_text, m.international, m.cr_required, m.pathology_present, " +
-            "m.notes, m.additional_values_json, (SELECT sum(log.comments is null and log.type = \"DATA_REVIEW\") as reviewMedicalRecord FROM ddp_medical_record rec2 " +
-            "LEFT JOIN ddp_medical_record_log log on (rec2.medical_record_id = log.medical_record_id) WHERE rec2.institution_id = inst.institution_id) as reviewMedicalRecord " +
+            "m.medical_record_id, m.name, m.contact, m.phone, m.fax, m.fax_sent, m.fax_sent_by, m.fax_confirmed, m.fax_sent_2, m"
+            + ".fax_sent_2_by, " +
+            "m.fax_confirmed_2, m.fax_sent_3, m.fax_sent_3_by, m.fax_confirmed_3, m.mr_received, m.follow_ups, m.mr_document, m"
+            + ".mr_document_file_names, " +
+            "m.mr_problem, m.mr_problem_text, m.unable_obtain, m.unable_obtain_text, m.duplicate, m.followup_required, m"
+            + ".followup_required_text, m.international, m.cr_required, m.pathology_present, " +
+            "m.notes, m.additional_values_json, (SELECT sum(log.comments is null and log.type = \"DATA_REVIEW\") as reviewMedicalRecord "
+            + "FROM ddp_medical_record rec2 " +
+            "LEFT JOIN ddp_medical_record_log log on (rec2.medical_record_id = log.medical_record_id) WHERE rec2.institution_id = inst"
+            + ".institution_id) as reviewMedicalRecord " +
             "FROM ddp_institution inst LEFT JOIN ddp_participant as p on (p.participant_id = inst.participant_id) " +
-            "LEFT JOIN ddp_instance as ddp on (ddp.ddp_instance_id = p.ddp_instance_id) LEFT JOIN ddp_medical_record as m on (m.institution_id = inst.institution_id) " +
+            "LEFT JOIN ddp_instance as ddp on (ddp.ddp_instance_id = p.ddp_instance_id) LEFT JOIN ddp_medical_record as m on (m"
+            + ".institution_id = inst.institution_id) " +
             "WHERE ddp.instance_name = ? AND inst.type != 'NOT_SPECIFIED' AND NOT m.deleted <=> 1 ";
     public static final String SQL_SELECT_MEDICAL_RECORD_LAST_CHANGED = "SELECT m.last_changed FROM ddp_institution inst " +
-            "LEFT JOIN ddp_participant as p on (p.participant_id = inst.participant_id) LEFT JOIN ddp_instance as ddp on (ddp.ddp_instance_id = p.ddp_instance_id) " +
+            "LEFT JOIN ddp_participant as p on (p.participant_id = inst.participant_id) LEFT JOIN ddp_instance as ddp on (ddp"
+            + ".ddp_instance_id = p.ddp_instance_id) " +
             "LEFT JOIN ddp_medical_record as m on (m.institution_id = inst.institution_id) WHERE p.participant_id = ?";
     public static final String SQL_ORDER_BY = " ORDER BY p.ddp_participant_id, inst.ddp_institution_id ASC";
-
+    private static final Logger logger = LoggerFactory.getLogger(MedicalRecord.class);
     private final String medicalRecordId;
     private String institutionId;
     private String ddpInstitutionId;
     private String ddpParticipantId;
 
-    @TableName (
+    @TableName(
             name = DBConstants.DDP_INSTITUTION,
             alias = DBConstants.DDP_INSTITUTION_ALIAS,
             primaryKey = DBConstants.INSTITUTION_ID,
             columnPrefix = "")
-    @ColumnName (DBConstants.TYPE)
+    @ColumnName(DBConstants.TYPE)
     private String type;
 
-    @TableName (
+    @TableName(
             name = DBConstants.DDP_MEDICAL_RECORD,
             alias = DBConstants.DDP_MEDICAL_RECORD_ALIAS,
             primaryKey = DBConstants.MEDICAL_RECORD_ID,
             columnPrefix = "")
-    @ColumnName (DBConstants.NAME)
+    @ColumnName(DBConstants.NAME)
     private String name;
 
-    @TableName (
+    @TableName(
             name = DBConstants.DDP_MEDICAL_RECORD,
             alias = DBConstants.DDP_MEDICAL_RECORD_ALIAS,
             primaryKey = DBConstants.MEDICAL_RECORD_ID,
             columnPrefix = "")
-    @ColumnName (DBConstants.CONTACT)
+    @ColumnName(DBConstants.CONTACT)
     private String contact;
 
-    @TableName (
+    @TableName(
             name = DBConstants.DDP_MEDICAL_RECORD,
             alias = DBConstants.DDP_MEDICAL_RECORD_ALIAS,
             primaryKey = DBConstants.MEDICAL_RECORD_ID,
             columnPrefix = "")
-    @ColumnName (DBConstants.PHONE)
+    @ColumnName(DBConstants.PHONE)
     private String phone;
 
-    @TableName (
+    @TableName(
             name = DBConstants.DDP_MEDICAL_RECORD,
             alias = DBConstants.DDP_MEDICAL_RECORD_ALIAS,
             primaryKey = DBConstants.MEDICAL_RECORD_ID,
             columnPrefix = "")
-    @ColumnName (DBConstants.FAX)
+    @ColumnName(DBConstants.FAX)
     private String fax;
 
-    @TableName (
+    @TableName(
             name = DBConstants.DDP_MEDICAL_RECORD,
             alias = DBConstants.DDP_MEDICAL_RECORD_ALIAS,
             primaryKey = DBConstants.MEDICAL_RECORD_ID,
             columnPrefix = "")
-    @ColumnName (DBConstants.FAX_SENT)
+    @ColumnName(DBConstants.FAX_SENT)
     @DbDateConversion(SqlDateConverter.STRING_DAY)
     private String faxSent;
 
-    @TableName (
+    @TableName(
             name = DBConstants.DDP_MEDICAL_RECORD,
             alias = DBConstants.DDP_MEDICAL_RECORD_ALIAS,
             primaryKey = DBConstants.MEDICAL_RECORD_ID,
             columnPrefix = "")
-    @ColumnName (DBConstants.FAX_SENT_BY)
+    @ColumnName(DBConstants.FAX_SENT_BY)
     private String faxSentBy;
 
-    @TableName (
+    @TableName(
             name = DBConstants.DDP_MEDICAL_RECORD,
             alias = DBConstants.DDP_MEDICAL_RECORD_ALIAS,
             primaryKey = DBConstants.MEDICAL_RECORD_ID,
             columnPrefix = "")
-    @ColumnName (DBConstants.FAX_CONFIRMED)
+    @ColumnName(DBConstants.FAX_CONFIRMED)
     @DbDateConversion(SqlDateConverter.STRING_DAY)
     private String faxConfirmed;
 
-    @TableName (
+    @TableName(
             name = DBConstants.DDP_MEDICAL_RECORD,
             alias = DBConstants.DDP_MEDICAL_RECORD_ALIAS,
             primaryKey = DBConstants.MEDICAL_RECORD_ID,
             columnPrefix = "")
-    @ColumnName (DBConstants.FAX_SENT_2)
+    @ColumnName(DBConstants.FAX_SENT_2)
     @DbDateConversion(SqlDateConverter.STRING_DAY)
     private String faxSent2;
 
-    @TableName (
+    @TableName(
             name = DBConstants.DDP_MEDICAL_RECORD,
             alias = DBConstants.DDP_MEDICAL_RECORD_ALIAS,
             primaryKey = DBConstants.MEDICAL_RECORD_ID,
             columnPrefix = "")
-    @ColumnName (DBConstants.FAX_SENT_2_BY)
+    @ColumnName(DBConstants.FAX_SENT_2_BY)
     private String faxSent2By;
 
-    @TableName (
+    @TableName(
             name = DBConstants.DDP_MEDICAL_RECORD,
             alias = DBConstants.DDP_MEDICAL_RECORD_ALIAS,
             primaryKey = DBConstants.MEDICAL_RECORD_ID,
             columnPrefix = "")
-    @ColumnName (DBConstants.FAX_CONFIRMED_2)
+    @ColumnName(DBConstants.FAX_CONFIRMED_2)
     @DbDateConversion(SqlDateConverter.STRING_DAY)
     private String faxConfirmed2;
 
-    @TableName (
+    @TableName(
             name = DBConstants.DDP_MEDICAL_RECORD,
             alias = DBConstants.DDP_MEDICAL_RECORD_ALIAS,
             primaryKey = DBConstants.MEDICAL_RECORD_ID,
             columnPrefix = "")
-    @ColumnName (DBConstants.FAX_SENT_3)
+    @ColumnName(DBConstants.FAX_SENT_3)
     @DbDateConversion(SqlDateConverter.STRING_DAY)
     private String faxSent3;
 
-    @TableName (
+    @TableName(
             name = DBConstants.DDP_MEDICAL_RECORD,
             alias = DBConstants.DDP_MEDICAL_RECORD_ALIAS,
             primaryKey = DBConstants.MEDICAL_RECORD_ID,
             columnPrefix = "")
-    @ColumnName (DBConstants.FAX_SENT_3_BY)
+    @ColumnName(DBConstants.FAX_SENT_3_BY)
     private String faxSent3By;
 
-    @TableName (
+    @TableName(
             name = DBConstants.DDP_MEDICAL_RECORD,
             alias = DBConstants.DDP_MEDICAL_RECORD_ALIAS,
             primaryKey = DBConstants.MEDICAL_RECORD_ID,
             columnPrefix = "")
-    @ColumnName (DBConstants.FAX_CONFIRMED_3)
+    @ColumnName(DBConstants.FAX_CONFIRMED_3)
     @DbDateConversion(SqlDateConverter.STRING_DAY)
     private String faxConfirmed3;
 
-    @TableName (
+    @TableName(
             name = DBConstants.DDP_MEDICAL_RECORD,
             alias = DBConstants.DDP_MEDICAL_RECORD_ALIAS,
             primaryKey = DBConstants.MEDICAL_RECORD_ID,
             columnPrefix = "")
-    @ColumnName (DBConstants.MR_RECEIVED)
+    @ColumnName(DBConstants.MR_RECEIVED)
     @DbDateConversion(SqlDateConverter.STRING_DAY)
     private String mrReceived;
 
-    @TableName (
+    @TableName(
             name = DBConstants.DDP_MEDICAL_RECORD,
             alias = DBConstants.DDP_MEDICAL_RECORD_ALIAS,
             primaryKey = DBConstants.MEDICAL_RECORD_ID,
             columnPrefix = "")
-    @ColumnName (DBConstants.MR_DOCUMENT)
+    @ColumnName(DBConstants.MR_DOCUMENT)
     private String mrDocument;
 
-    @TableName (
+    @TableName(
             name = DBConstants.DDP_MEDICAL_RECORD,
             alias = DBConstants.DDP_MEDICAL_RECORD_ALIAS,
             primaryKey = DBConstants.MEDICAL_RECORD_ID,
             columnPrefix = "")
-    @ColumnName (DBConstants.MR_DOCUMENT_FILE_NAMES)
+    @ColumnName(DBConstants.MR_DOCUMENT_FILE_NAMES)
     private String mrDocumentFileNames;
 
-    @TableName (
+    @TableName(
             name = DBConstants.DDP_MEDICAL_RECORD,
             alias = DBConstants.DDP_MEDICAL_RECORD_ALIAS,
             primaryKey = DBConstants.MEDICAL_RECORD_ID,
             columnPrefix = "")
-    @ColumnName (DBConstants.MR_PROBLEM)
+    @ColumnName(DBConstants.MR_PROBLEM)
     private boolean mrProblem;
 
-    @TableName (
+    @TableName(
             name = DBConstants.DDP_MEDICAL_RECORD,
             alias = DBConstants.DDP_MEDICAL_RECORD_ALIAS,
             primaryKey = DBConstants.MEDICAL_RECORD_ID,
             columnPrefix = "")
-    @ColumnName (DBConstants.MR_PROBLEM_TEXT)
+    @ColumnName(DBConstants.MR_PROBLEM_TEXT)
     private String mrProblemText;
 
-    @TableName (
+    @TableName(
             name = DBConstants.DDP_MEDICAL_RECORD,
             alias = DBConstants.DDP_MEDICAL_RECORD_ALIAS,
             primaryKey = DBConstants.MEDICAL_RECORD_ID,
             columnPrefix = "")
-    @ColumnName (DBConstants.MR_UNABLE_OBTAIN)
+    @ColumnName(DBConstants.MR_UNABLE_OBTAIN)
     private boolean unableObtain;
 
-    @TableName (
+    @TableName(
             name = DBConstants.DDP_MEDICAL_RECORD,
             alias = DBConstants.DDP_MEDICAL_RECORD_ALIAS,
             primaryKey = DBConstants.MEDICAL_RECORD_ID,
             columnPrefix = "")
-    @ColumnName (DBConstants.MR_UNABLE_OBTAIN_TEXT)
+    @ColumnName(DBConstants.MR_UNABLE_OBTAIN_TEXT)
     private String mrUnableToObtainText;
 
-    @TableName (
+    @TableName(
             name = DBConstants.DDP_MEDICAL_RECORD,
             alias = DBConstants.DDP_MEDICAL_RECORD_ALIAS,
             primaryKey = DBConstants.MEDICAL_RECORD_ID,
             columnPrefix = "")
-    @ColumnName (DBConstants.FOLLOWUP_REQUIRED)
+    @ColumnName(DBConstants.FOLLOWUP_REQUIRED)
     private boolean followUpRequired;
 
-    @TableName (
+    @TableName(
             name = DBConstants.DDP_MEDICAL_RECORD,
             alias = DBConstants.DDP_MEDICAL_RECORD_ALIAS,
             primaryKey = DBConstants.MEDICAL_RECORD_ID,
             columnPrefix = "")
-    @ColumnName (DBConstants.FOLLOWUP_REQUIRED_TEXT)
+    @ColumnName(DBConstants.FOLLOWUP_REQUIRED_TEXT)
     private String followUpRequiredText;
 
-    @TableName (
+    @TableName(
             name = DBConstants.DDP_MEDICAL_RECORD,
             alias = DBConstants.DDP_MEDICAL_RECORD_ALIAS,
             primaryKey = DBConstants.MEDICAL_RECORD_ID,
             columnPrefix = "")
-    @ColumnName (DBConstants.DUPLICATE)
+    @ColumnName(DBConstants.DUPLICATE)
     private boolean duplicate;
 
-    @TableName (
+    @TableName(
             name = DBConstants.DDP_MEDICAL_RECORD,
             alias = DBConstants.DDP_MEDICAL_RECORD_ALIAS,
             primaryKey = DBConstants.MEDICAL_RECORD_ID,
             columnPrefix = "")
-    @ColumnName (DBConstants.INTERNATIONAL)
+    @ColumnName(DBConstants.INTERNATIONAL)
     private boolean international;
 
-    @TableName (
+    @TableName(
             name = DBConstants.DDP_MEDICAL_RECORD,
             alias = DBConstants.DDP_MEDICAL_RECORD_ALIAS,
             primaryKey = DBConstants.MEDICAL_RECORD_ID,
             columnPrefix = "")
-    @ColumnName (DBConstants.CR_REQUIRED)
+    @ColumnName(DBConstants.CR_REQUIRED)
     private boolean crRequired;
 
-    @TableName (
+    @TableName(
             name = DBConstants.DDP_MEDICAL_RECORD,
             alias = DBConstants.DDP_MEDICAL_RECORD_ALIAS,
             primaryKey = DBConstants.MEDICAL_RECORD_ID,
             columnPrefix = "")
-    @ColumnName (DBConstants.NOTES)
+    @ColumnName(DBConstants.NOTES)
     private String mrNotes;
 
-    @TableName (
+    @TableName(
             name = DBConstants.DDP_MEDICAL_RECORD,
             alias = DBConstants.DDP_MEDICAL_RECORD_ALIAS,
             primaryKey = DBConstants.MEDICAL_RECORD_ID,
             columnPrefix = "")
-    @ColumnName (DBConstants.FOLLOW_UP_REQUESTS)
+    @ColumnName(DBConstants.FOLLOW_UP_REQUESTS)
     private FollowUp[] followUps;
 
-    @TableName (
+    @TableName(
             name = DBConstants.DDP_MEDICAL_RECORD,
             alias = DBConstants.DDP_MEDICAL_RECORD_ALIAS,
             primaryKey = DBConstants.MEDICAL_RECORD_ID,
             columnPrefix = "")
-    @ColumnName (DBConstants.ADDITIONAL_VALUES)
+    @ColumnName(DBConstants.ADDITIONAL_VALUES)
     private String additionalValues;
 
     private boolean reviewMedicalRecord;
 
-    @TableName (
+    @TableName(
             name = DBConstants.DDP_MEDICAL_RECORD,
             alias = DBConstants.DDP_MEDICAL_RECORD_ALIAS,
             primaryKey = DBConstants.MEDICAL_RECORD_ID,
             columnPrefix = "")
-    @ColumnName (DBConstants.PATHOLOGY_PRESENT)
+    @ColumnName(DBConstants.PATHOLOGY_PRESENT)
     private String pathologyPresent;
 
     public MedicalRecord(String medicalRecordId, String institutionId, String ddpInstitutionId, String type) {
@@ -410,7 +418,8 @@ public class MedicalRecord {
         Map<String, List<MedicalRecord>> medicalRecords = new HashMap<>();
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement stmt = conn.prepareStatement(DBUtil.getFinalQuery(SQL_SELECT_MEDICAL_RECORD, queryAddition) + SQL_ORDER_BY)) {
+            try (PreparedStatement stmt =
+                         conn.prepareStatement(DBUtil.getFinalQuery(SQL_SELECT_MEDICAL_RECORD, queryAddition) + SQL_ORDER_BY)) {
                 stmt.setString(1, realm);
                 try (ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
@@ -418,15 +427,13 @@ public class MedicalRecord {
                         List<MedicalRecord> medicalRecordList = new ArrayList<>();
                         if (medicalRecords.containsKey(ddpParticipantId)) {
                             medicalRecordList = medicalRecords.get(ddpParticipantId);
-                        }
-                        else {
+                        } else {
                             medicalRecords.put(ddpParticipantId, medicalRecordList);
                         }
                         medicalRecordList.add(getMedicalRecord(rs));
                     }
                 }
-            }
-            catch (SQLException ex) {
+            } catch (SQLException ex) {
                 dbVals.resultException = ex;
             }
             return dbVals;
@@ -442,7 +449,8 @@ public class MedicalRecord {
     public static MedicalRecord getMedicalRecord(@NonNull String realm, @NonNull String ddpParticipantId, @NonNull String medicalRecordId) {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_MEDICAL_RECORD + QueryExtension.BY_DDP_PARTICIPANT_ID + QueryExtension.BY_MEDICAL_RECORD_ID)) {
+            try (PreparedStatement stmt =
+                         conn.prepareStatement(SQL_SELECT_MEDICAL_RECORD + QueryExtension.BY_DDP_PARTICIPANT_ID + QueryExtension.BY_MEDICAL_RECORD_ID)) {
                 stmt.setString(1, realm);
                 stmt.setString(2, ddpParticipantId);
                 stmt.setString(3, medicalRecordId);
@@ -451,27 +459,28 @@ public class MedicalRecord {
                         dbVals.resultValue = getMedicalRecord(rs);
                     }
                 }
-            }
-            catch (SQLException ex) {
+            } catch (SQLException ex) {
                 dbVals.resultException = ex;
             }
             return dbVals;
         });
 
         if (results.resultException != null) {
-            throw new RuntimeException("Error getting medicalRecord " + medicalRecordId + " of participant " + ddpParticipantId, results.resultException);
+            throw new RuntimeException("Error getting medicalRecord " + medicalRecordId + " of participant " + ddpParticipantId,
+                    results.resultException);
         }
 
         return (MedicalRecord) results.resultValue;
     }
 
     public static MedicalInfo getDDPInstitutionInfo(@NonNull DDPInstance ddpInstance, @NonNull String ddpParticipantId) {
-        String dsmRequest = ddpInstance.getBaseUrl() + RoutePath.DDP_INSTITUTION_PATH.replace(RequestParameter.PARTICIPANTID, ddpParticipantId);
+        String dsmRequest = ddpInstance.getBaseUrl() + RoutePath.DDP_INSTITUTION_PATH.replace(RequestParameter.PARTICIPANTID,
+                ddpParticipantId);
         try {
-            MedicalInfo medicalInfo = DDPRequestUtil.getResponseObject(MedicalInfo.class, dsmRequest, ddpInstance.getName(), ddpInstance.isHasAuth0Token());
+            MedicalInfo medicalInfo = DDPRequestUtil.getResponseObject(MedicalInfo.class, dsmRequest, ddpInstance.getName(),
+                    ddpInstance.isHasAuth0Token());
             return medicalInfo;
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             throw new RuntimeException("Couldn't get participants and institutions for ddpInstance " + ddpInstance.getName(), e);
         }
     }
@@ -492,8 +501,7 @@ public class MedicalRecord {
                                 rs.getString(DBConstants.TYPE)));
                     }
                 }
-            }
-            catch (SQLException ex) {
+            } catch (SQLException ex) {
                 dbVals.resultException = ex;
             }
             return dbVals;

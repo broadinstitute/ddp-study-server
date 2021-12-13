@@ -37,12 +37,11 @@ public class InstitutionInfo {
         return institutionId;
     }
 
-    public String getCountry() {
-        return country;
+    public void setInstitutionId(String institutionId) {
+        this.institutionId = institutionId;
     }
 
-    public void setInstitutionId(String institutionId)
-    {
-        this.institutionId = institutionId;
+    public String getCountry() {
+        return country;
     }
 }

@@ -1,28 +1,36 @@
 package org.broadinstitute.dsm.model;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+
 import lombok.NonNull;
 import org.broadinstitute.dsm.model.ddp.DDPParticipant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-
 public class KitRequestExternal extends KitRequest {
 
     private static final Logger logger = LoggerFactory.getLogger(KitRequestExternal.class);
 
-    private static final String SQL_UPDATE_KIT_EXTERNAL_SHIPPER = "UPDATE ddp_kit SET  tracking_to_id = ?, tracking_return_id = ?, kit_label = ?, kit_complete = 1, scan_date = ?, scan_by = ? " +
-            "WHERE dsm_kit_request_id = (SELECT request.dsm_kit_request_id FROM ddp_kit_request request LEFT JOIN (SELECT * from (SELECT kit.dsm_kit_request_id, kit.kit_complete " +
-            "FROM ddp_kit kit INNER JOIN(SELECT dsm_kit_request_id, MAX(dsm_kit_id) AS kit_id FROM ddp_kit GROUP BY dsm_kit_request_id) groupedKit " +
-            "ON kit.dsm_kit_request_id = groupedKit.dsm_kit_request_id AND kit.dsm_kit_id = groupedKit.kit_id)as wtf) as kit ON kit.dsm_kit_request_id = request.dsm_kit_request_id " +
+    private static final String SQL_UPDATE_KIT_EXTERNAL_SHIPPER = "UPDATE ddp_kit SET  tracking_to_id = ?, tracking_return_id = ?, "
+            + "kit_label = ?, kit_complete = 1, scan_date = ?, scan_by = ? " +
+            "WHERE dsm_kit_request_id = (SELECT request.dsm_kit_request_id FROM ddp_kit_request request LEFT JOIN (SELECT * from (SELECT "
+            + "kit.dsm_kit_request_id, kit.kit_complete " +
+            "FROM ddp_kit kit INNER JOIN(SELECT dsm_kit_request_id, MAX(dsm_kit_id) AS kit_id FROM ddp_kit GROUP BY dsm_kit_request_id) "
+            + "groupedKit " +
+            "ON kit.dsm_kit_request_id = groupedKit.dsm_kit_request_id AND kit.dsm_kit_id = groupedKit.kit_id)as wtf) as kit ON kit"
+            + ".dsm_kit_request_id = request.dsm_kit_request_id " +
             "WHERE request.dsm_kit_request_id = ? limit 1)";
-    private static final String SQL_UPDATE_KIT_REQUEST_EXTERNAL_SHIPPER_STATUS = "UPDATE ddp_kit_request SET external_order_status = ?, external_order_date = ? WHERE dsm_kit_request_id = ? AND NOT external_order_status <=> ?";
-    private static final String SQL_UPDATE_KIT_REQUEST_EXTERNAL_SHIPPER_RESPONSE = "UPDATE ddp_kit_request SET external_response = ? WHERE dsm_kit_request_id = ?";
+    private static final String SQL_UPDATE_KIT_REQUEST_EXTERNAL_SHIPPER_STATUS = "UPDATE ddp_kit_request SET external_order_status = ?, "
+            + "external_order_date = ? WHERE dsm_kit_request_id = ? AND NOT external_order_status <=> ?";
+    private static final String SQL_UPDATE_KIT_REQUEST_EXTERNAL_SHIPPER_RESPONSE = "UPDATE ddp_kit_request SET external_response = ? "
+            + "WHERE dsm_kit_request_id = ?";
 
-    public KitRequestExternal(String dsmKitRequestId, String participantId, String shortId, String shippingId, String externalOrderNumber, DDPParticipant participant,
+    public KitRequestExternal(String dsmKitRequestId, String participantId, String shortId, String shippingId, String externalOrderNumber
+            , DDPParticipant participant,
                               String externalOrderStatus, String externalKitName) {
-        super(dsmKitRequestId, participantId, shortId, shippingId, externalOrderNumber, participant, externalOrderStatus, externalKitName, null);
+        super(dsmKitRequestId, participantId, shortId, shippingId, externalOrderNumber, participant, externalOrderStatus, externalKitName
+                , null);
     }
 
     // update kit request with status and date of external shipper
@@ -37,9 +45,8 @@ public class KitRequestExternal extends KitRequest {
             if (result > 1) {
                 throw new RuntimeException("Error updating kit request w/ dsm_kit_request_id " + dsmKitRequestId + " it was updating " + result + " rows");
             }
-        }
-        catch (Exception e) {
-           throw new RuntimeException("Error updating kit request w/ dsm_kit_request_id " + dsmKitRequestId, e);
+        } catch (Exception e) {
+            throw new RuntimeException("Error updating kit request w/ dsm_kit_request_id " + dsmKitRequestId, e);
         }
     }
 
@@ -53,14 +60,14 @@ public class KitRequestExternal extends KitRequest {
             if (result > 1) {
                 throw new RuntimeException("Error updating kit request w/ dsm_kit_request_id " + dsmKitRequestId + " it was updating " + result + " rows");
             }
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             logger.error("Error updating kit request w/ dsm_kit_request_id " + dsmKitRequestId, e);
         }
     }
 
     // update kit request with response of external shipper
-    public static void updateKitRequestResponse(@NonNull Connection conn, String trackingIdTo, String trackingIdReturn, String kitLabel, long sentDate,
+    public static void updateKitRequestResponse(@NonNull Connection conn, String trackingIdTo, String trackingIdReturn, String kitLabel,
+                                                long sentDate,
                                                 String sentBy, String dsmKitRequestId) {
         try (PreparedStatement stmt = conn.prepareStatement(SQL_UPDATE_KIT_EXTERNAL_SHIPPER)) {
             stmt.setString(1, trackingIdTo);
@@ -74,8 +81,7 @@ public class KitRequestExternal extends KitRequest {
             if (result != 1) {
                 throw new RuntimeException("Error updating kit w/ dsm_kit_request_id " + dsmKitRequestId + " it was updating " + result + " rows");
             }
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             logger.error("Error updating kit w/ dsm_kit_request_id " + dsmKitRequestId, e);
         }
     }

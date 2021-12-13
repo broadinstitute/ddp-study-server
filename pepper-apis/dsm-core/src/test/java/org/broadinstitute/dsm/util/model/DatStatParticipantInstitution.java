@@ -7,7 +7,7 @@ public class DatStatParticipantInstitution {
     private DDPParticipant ddpParticipant;
     private DatStatInstitution institution;
 
-    public DatStatParticipantInstitution(DDPParticipant ddpParticipant, DatStatInstitution institution){
+    public DatStatParticipantInstitution(DDPParticipant ddpParticipant, DatStatInstitution institution) {
         this.ddpParticipant = ddpParticipant;
         this.institution = institution;
     }

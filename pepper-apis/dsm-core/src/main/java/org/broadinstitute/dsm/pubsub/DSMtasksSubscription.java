@@ -1,5 +1,10 @@
 package org.broadinstitute.dsm.pubsub;
 
+import java.util.Arrays;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+
 import com.google.api.gax.core.ExecutorProvider;
 import com.google.api.gax.core.InstantiatingExecutorProvider;
 import com.google.cloud.pubsub.v1.AckReplyConsumer;
@@ -16,19 +21,14 @@ import org.broadinstitute.dsm.util.ParticipantUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Arrays;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-
 public class DSMtasksSubscription {
 
-    private static final Logger logger = LoggerFactory.getLogger(DSMtasksSubscription.class);
     public static final String TASK_TYPE = "taskType";
     public static final String CLEAR_BEFORE_UPDATE = "clearBeforeUpdate";
     public static final String UPDATE_CUSTOM_WORKFLOW = "UPDATE_CUSTOM_WORKFLOW";
     public static final String ELASTIC_EXPORT = "ELASTIC_EXPORT";
     public static final String PARTICIPANT_REGISTERED = "PARTICIPANT_REGISTERED";
+    private static final Logger logger = LoggerFactory.getLogger(DSMtasksSubscription.class);
 
     public static void subscribeDSMtasks(String projectId, String subscriptionId) {
         // Instantiate an asynchronous message receiver.
@@ -45,8 +45,7 @@ public class DSMtasksSubscription {
                     if (StringUtils.isBlank(taskType)) {
                         logger.warn("task type from pubsub was missing");
                         consumer.ack();
-                    }
-                    else {
+                    } else {
                         switch (taskType) {
                             case UPDATE_CUSTOM_WORKFLOW:
                                 consumer.ack();
@@ -91,7 +90,7 @@ public class DSMtasksSubscription {
         if (!ParticipantUtil.isGuid(participantGuid)) {
             consumer.ack();
             return;
-        };
+        }
         Arrays.stream(Study.values())
                 .filter(study -> study.toString().equals(studyGuid.toUpperCase()))
                 .findFirst()
@@ -99,8 +98,11 @@ public class DSMtasksSubscription {
                     Defaultable defaultable = DefaultableMaker
                             .makeDefaultable(study);
                     boolean result = defaultable.generateDefaults(studyGuid, participantGuid);
-                    if (!result) consumer.nack();
-                    else consumer.ack();
+                    if (!result) {
+                        consumer.nack();
+                    } else {
+                        consumer.ack();
+                    }
                 }, consumer::ack);
     }
 }

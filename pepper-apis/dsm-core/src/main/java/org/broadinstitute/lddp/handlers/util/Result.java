@@ -26,19 +26,14 @@ public class Result {
         if (this == o) {
             return true;
         } else if (o != null && this.getClass() == o.getClass()) {
-            Result result = (Result)o;
+            Result result = (Result) o;
             if (this.code != result.code) {
                 return false;
             } else {
                 if (this.body != null) {
-                    if (!this.body.equals(result.body)) {
-                        return false;
-                    }
-                } else if (result.body != null) {
-                    return false;
-                }
+                    return this.body.equals(result.body);
+                } else return result.body == null;
 
-                return true;
             }
         } else {
             return false;
@@ -53,15 +48,15 @@ public class Result {
         return this.body;
     }
 
+    public void setBody(String body) {
+        this.body = body;
+    }
+
     public int getCode() {
         return this.code;
     }
 
     public InputStream getInputStream() {
         return this.inputStream;
-    }
-
-    public void setBody(String body) {
-        this.body = body;
     }
 }

@@ -1,5 +1,11 @@
 package org.broadinstitute.dsm.log;
 
+import static org.mockserver.model.HttpRequest.request;
+import static org.mockserver.model.HttpResponse.response;
+
+import java.net.URI;
+import java.net.URISyntaxException;
+
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.LoggingEvent;
@@ -15,21 +21,13 @@ import org.mockserver.junit.MockServerRule;
 import org.mockserver.model.JsonBody;
 import org.slf4j.LoggerFactory;
 
-import java.net.URI;
-import java.net.URISyntaxException;
-
-import static org.mockserver.model.HttpRequest.request;
-import static org.mockserver.model.HttpResponse.response;
-
 public class SlackAppenderTest extends TestHelper {
 
     @Rule
     public MockServerRule mockServerRule = new MockServerRule(this);
-
-    private LoggingEvent loggingEvent = new LoggingEvent(null, (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME), Level.ERROR, null, null, null);
-
     public Config cfg;
-
+    private LoggingEvent loggingEvent = new LoggingEvent(null,
+            (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME), Level.ERROR, null, null, null);
 
     @Before
     public void setUp() {

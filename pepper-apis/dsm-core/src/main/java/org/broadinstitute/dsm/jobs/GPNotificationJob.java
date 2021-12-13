@@ -2,9 +2,9 @@ package org.broadinstitute.dsm.jobs;
 
 import com.typesafe.config.Config;
 import org.broadinstitute.dsm.DSMServer;
+import org.broadinstitute.dsm.util.GPNotificationUtil;
 import org.broadinstitute.dsm.util.KitUtil;
 import org.broadinstitute.dsm.util.NotificationUtil;
-import org.broadinstitute.dsm.util.GPNotificationUtil;
 import org.quartz.Job;
 import org.quartz.JobDataMap;
 import org.quartz.JobExecutionContext;
@@ -21,6 +21,7 @@ public class GPNotificationJob implements Job {
      * w/ information about number of spitKitRequests from all portals
      * adding notification into EMAIL_QUEUE
      * which then gets send by next run of NotificationJob
+     *
      * @param context JobExecutionContext
      * @throws JobExecutionException
      */
@@ -33,8 +34,7 @@ public class GPNotificationJob implements Job {
                     (KitUtil) dataMap.get(DSMServer.KIT_UTIL));
             // Request KitRequests
             scheduler.queryAndWriteNotification();
-        }
-        catch (Exception ex) {
+        } catch (Exception ex) {
             logger.error("Failed to execute properly.", ex);
         }
     }

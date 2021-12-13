@@ -1,11 +1,5 @@
 package org.broadinstitute.dsm.util;
 
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import lombok.NonNull;
-import org.apache.commons.lang3.StringUtils;
-
-import javax.servlet.http.HttpServletRequest;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -23,6 +17,12 @@ import java.time.temporal.ChronoField;
 import java.util.Date;
 import java.util.Map;
 import java.util.Set;
+import javax.servlet.http.HttpServletRequest;
+
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import lombok.NonNull;
+import org.apache.commons.lang3.StringUtils;
 
 public class SystemUtil {
 
@@ -36,10 +36,36 @@ public class SystemUtil {
 
     public static final long MILLIS_PER_DAY = 1000 * 60 * 60 * 24;
     public static final long MILLIS_PER_HOUR = 1000 * 60 * 60;
-
+    public static final String SEPARATOR = "\t";
+    public static final DateTimeFormatter USUAL_DATE = new DateTimeFormatterBuilder()
+            .appendPattern(DATE_FORMAT)
+            .parseDefaulting(ChronoField.HOUR_OF_DAY, 0)
+            .parseDefaulting(ChronoField.MINUTE_OF_DAY, 0)
+            .parseDefaulting(ChronoField.SECOND_OF_MINUTE, 0)
+            .toFormatter();
+    public static final DateTimeFormatter FULL_DATE = new DateTimeFormatterBuilder()
+            .appendPattern(DATE_FORMAT)
+            .parseDefaulting(ChronoField.HOUR_OF_DAY, 0)
+            .parseDefaulting(ChronoField.MINUTE_OF_DAY, 0)
+            .parseDefaulting(ChronoField.SECOND_OF_MINUTE, 0)
+            .toFormatter();
+    public static final DateTimeFormatter PARTIAL_DATE = new DateTimeFormatterBuilder()
+            .appendPattern(PARTIAL_DATE_FORMAT)
+            .parseDefaulting(ChronoField.DAY_OF_MONTH, 1)
+            .parseDefaulting(ChronoField.HOUR_OF_DAY, 0)
+            .parseDefaulting(ChronoField.MINUTE_OF_DAY, 0)
+            .parseDefaulting(ChronoField.SECOND_OF_MINUTE, 0)
+            .toFormatter();
+    public static final DateTimeFormatter ONLY_YEAR = new DateTimeFormatterBuilder()
+            .appendPattern(YEAR_DATE_FORMAT)
+            .parseDefaulting(ChronoField.MONTH_OF_YEAR, 1)
+            .parseDefaulting(ChronoField.DAY_OF_MONTH, 1)
+            .parseDefaulting(ChronoField.HOUR_OF_DAY, 0)
+            .parseDefaulting(ChronoField.MINUTE_OF_DAY, 0)
+            .parseDefaulting(ChronoField.SECOND_OF_MINUTE, 0)
+            .toFormatter();
     private static final String LINEBREAK_UNIVERSAL = "\n";
     private static final String LINEBREAK = "\r";
-    public static final String SEPARATOR = "\t";
 
     public static String getISO8601DateString() {
         Instant instant = Instant.now();
@@ -58,39 +84,6 @@ public class SystemUtil {
     public static String getStrictYearMonthDay() {
         return new SimpleDateFormat(DATE_FORMAT).format(Date.from(Instant.now()));
     }
-
-    public static final DateTimeFormatter USUAL_DATE = new DateTimeFormatterBuilder()
-            .appendPattern(DATE_FORMAT)
-            .parseDefaulting(ChronoField.HOUR_OF_DAY, 0)
-            .parseDefaulting(ChronoField.MINUTE_OF_DAY, 0)
-            .parseDefaulting(ChronoField.SECOND_OF_MINUTE, 0)
-            .toFormatter();
-    
-    public static final DateTimeFormatter FULL_DATE = new DateTimeFormatterBuilder()
-            .appendPattern(DATE_FORMAT)
-            .parseDefaulting(ChronoField.HOUR_OF_DAY, 0)
-            .parseDefaulting(ChronoField.MINUTE_OF_DAY, 0)
-            .parseDefaulting(ChronoField.SECOND_OF_MINUTE, 0)
-            .toFormatter();
-
-    public static final DateTimeFormatter PARTIAL_DATE = new DateTimeFormatterBuilder()
-            .appendPattern(PARTIAL_DATE_FORMAT)
-            .parseDefaulting(ChronoField.DAY_OF_MONTH, 1)
-            .parseDefaulting(ChronoField.HOUR_OF_DAY, 0)
-            .parseDefaulting(ChronoField.MINUTE_OF_DAY, 0)
-            .parseDefaulting(ChronoField.SECOND_OF_MINUTE, 0)
-            .toFormatter();
-
-    public static final DateTimeFormatter ONLY_YEAR = new DateTimeFormatterBuilder()
-            .appendPattern(YEAR_DATE_FORMAT)
-            .parseDefaulting(ChronoField.MONTH_OF_YEAR, 1)
-            .parseDefaulting(ChronoField.DAY_OF_MONTH, 1)
-            .parseDefaulting(ChronoField.HOUR_OF_DAY, 0)
-            .parseDefaulting(ChronoField.MINUTE_OF_DAY, 0)
-            .parseDefaulting(ChronoField.SECOND_OF_MINUTE, 0)
-            .toFormatter();
-
-
 
     public static String getDateFormatted(@NonNull long inputDate) {
         Date date = new Date(inputDate);
@@ -129,14 +122,12 @@ public class SystemUtil {
                 DateFormat format = new SimpleDateFormat(inputDateFormat);
                 Date date = format.parse(dateString);
                 return new SimpleDateFormat(outputDateFormat).format(date);
-            }
-            catch (ParseException e) {
+            } catch (ParseException e) {
                 try {
                     DateFormat format = new SimpleDateFormat(PARTIAL_DATE_FORMAT);
                     Date date = format.parse(dateString);
                     return new SimpleDateFormat(PARTIAL_US_DATE_FORMAT).format(date);
-                }
-                catch (ParseException e2) {
+                } catch (ParseException e2) {
                     throw new RuntimeException("Couldn't change format of dateString " + e, e2);
                 }
             }
@@ -148,8 +139,7 @@ public class SystemUtil {
         try {
             LocalDateTime parsedDateTime = LocalDateTime.parse(dateString, dateTimeFormatter);
             return parsedDateTime.toInstant(ZoneOffset.UTC).toEpochMilli();
-        }
-        catch (DateTimeParseException e) {
+        } catch (DateTimeParseException e) {
             throw new RuntimeException("Couldn't parse date string to date ", e);
         }
     }
@@ -161,14 +151,12 @@ public class SystemUtil {
             dateTimeFormatter = FULL_DATE;
             startDate = LocalDateTime.parse(dateString, dateTimeFormatter);
             return startDate.toInstant(ZoneOffset.UTC).toEpochMilli();
-        }
-        catch (DateTimeParseException e) {
+        } catch (DateTimeParseException e) {
             try {
                 dateTimeFormatter = PARTIAL_DATE;
                 startDate = LocalDateTime.parse(dateString, dateTimeFormatter);
                 return startDate.toInstant(ZoneOffset.UTC).toEpochMilli();
-            }
-            catch (DateTimeParseException e1) {
+            } catch (DateTimeParseException e1) {
                 if (dateString.length() != 4) {
                     throw new ParseException("String was not a year", 0);
                 }
@@ -176,8 +164,7 @@ public class SystemUtil {
                     dateTimeFormatter = ONLY_YEAR;
                     startDate = LocalDateTime.parse(dateString, dateTimeFormatter);
                     return startDate.toInstant(ZoneOffset.UTC).toEpochMilli();
-                }
-                catch (DateTimeParseException e2) {
+                } catch (DateTimeParseException e2) {
                     throw new ParseException("String was not a year", 0);
                 }
             }
@@ -198,20 +185,15 @@ public class SystemUtil {
                 while ((bytesRead = bufferedReader.read(charBuffer)) > 0) {
                     stringBuilder.append(charBuffer, 0, bytesRead);
                 }
+            } else {
             }
-            else {
-                stringBuilder.append("");
-            }
-        }
-        catch (IOException ex) {
+        } catch (IOException ex) {
             throw ex;
-        }
-        finally {
+        } finally {
             if (bufferedReader != null) {
                 try {
                     bufferedReader.close();
-                }
-                catch (IOException ex) {
+                } catch (IOException ex) {
                     throw ex;
                 }
             }

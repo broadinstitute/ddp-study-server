@@ -1,12 +1,12 @@
 package org.broadinstitute.dsm.export;
 
-import org.broadinstitute.dsm.statics.ESObjectConstants;
-import org.broadinstitute.dsm.util.ElasticSearchUtil;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import org.broadinstitute.dsm.statics.ESObjectConstants;
+import org.broadinstitute.dsm.util.ElasticSearchUtil;
 
 /**
  * A container that provides a nicer interface to updating the workflows list. The interface is similar to the "builder" pattern.

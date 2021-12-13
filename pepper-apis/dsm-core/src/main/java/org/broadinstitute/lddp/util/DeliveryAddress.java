@@ -1,5 +1,10 @@
 package org.broadinstitute.lddp.util;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import com.easypost.model.Address;
 import lombok.Data;
 import lombok.NonNull;
@@ -7,14 +12,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 @Data
-public class DeliveryAddress
-{
+public class DeliveryAddress {
     private static final Logger logger = LoggerFactory.getLogger(DeliveryAddress.class);
 
     private static final String LOG_PREFIX = "ADDRESS - ";
@@ -31,8 +30,7 @@ public class DeliveryAddress
     private boolean empty = true;
     private boolean valid = false;
 
-    public DeliveryAddress(String street1, String street2, String city, String state, String zip, String country)
-    {
+    public DeliveryAddress(String street1, String street2, String city, String state, String zip, String country) {
         this.street1 = street1;
         this.street2 = street2;
         this.city = city;
@@ -40,20 +38,18 @@ public class DeliveryAddress
         this.zip = zip;
         this.country = country;
 
-        empty = (StringUtils.isBlank(street1))&&(StringUtils.isBlank(street2))&&(StringUtils.isBlank(city))&&
-                (StringUtils.isBlank(state))&&(StringUtils.isBlank(zip))&&(StringUtils.isBlank(country));
+        empty = (StringUtils.isBlank(street1)) && (StringUtils.isBlank(street2)) && (StringUtils.isBlank(city)) &&
+                (StringUtils.isBlank(state)) && (StringUtils.isBlank(zip)) && (StringUtils.isBlank(country));
     }
 
     public DeliveryAddress(String street1, String street2, String city, String state, String zip, String country,
-                           @NonNull String name, @NonNull String phone)
-    {
+                           @NonNull String name, @NonNull String phone) {
         this(street1, street2, city, state, zip, country);
         this.name = name;
         this.phone = phone;
     }
 
-    private DeliveryAddress(@NonNull Address address)
-    {
+    private DeliveryAddress(@NonNull Address address) {
         this.id = address.getId();
         this.name = address.getName();
         this.street1 = address.getStreet1();
@@ -65,13 +61,22 @@ public class DeliveryAddress
         this.phone = address.getPhone();
     }
 
-    public void validate()
-    {
+    public static DeliveryAddress populateFromEasyPost(@NonNull String id) {
+        DeliveryAddress deliveryAddress = null;
+        try {
+            Address address = Address.retrieve(id);
+            deliveryAddress = new DeliveryAddress(address);
+        } catch (Exception ex) {
+            logger.error(LOG_PREFIX + "An error occurred during address retrieval.", ex);
+        }
+        return deliveryAddress;
+    }
+
+    public void validate() {
         valid = false;
 
         //don't bother to call EasyPost if we just have an empty address...
-        if (!empty)
-        {
+        if (!empty) {
             Map<String, Object> addressFields = new HashMap<>();
             addressFields.put("name", name);
             addressFields.put("street1", street1);
@@ -88,14 +93,11 @@ public class DeliveryAddress
 
             Address address = null;
 
-            try
-            {
+            try {
                 address = Address.create(addressFields);
-                if (!address.getVerifications().get("delivery").getSuccess())
-                {
+                if (!address.getVerifications().get("delivery").getSuccess()) {
                     logger.info(LOG_PREFIX + "Address verification failed.");
-                }
-                else //since address is ok update values
+                } else //since address is ok update values
                 {
                     valid = true;
                     id = address.getId(); //only including id if valid
@@ -108,27 +110,11 @@ public class DeliveryAddress
                     country = address.getCountry();
                     phone = address.getPhone();
                 }
-            }
-            catch (Exception ex)
-            {
+            } catch (Exception ex) {
                 logger.error(LOG_PREFIX + "An error occurred during address verification.", ex);
             }
-        }
-        else
-        {
+        } else {
             logger.info(LOG_PREFIX + "Address is empty.");
         }
-    }
-
-    public static DeliveryAddress populateFromEasyPost(@NonNull String id) {
-        DeliveryAddress deliveryAddress = null;
-        try {
-            Address address = Address.retrieve(id);
-            deliveryAddress = new DeliveryAddress(address);
-        }
-        catch (Exception ex) {
-            logger.error(LOG_PREFIX + "An error occurred during address retrieval.", ex);
-        }
-        return deliveryAddress;
     }
 }

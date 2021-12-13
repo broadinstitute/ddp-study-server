@@ -19,7 +19,8 @@ public class NDIUploadObject {
     private String ddpParticipantId;
 
 
-    public NDIUploadObject(@NonNull String firstName, @NonNull String lastName, @NonNull String middle, @NonNull String year, @NonNull String month, @NonNull String day,
+    public NDIUploadObject(@NonNull String firstName, @NonNull String lastName, @NonNull String middle, @NonNull String year,
+                           @NonNull String month, @NonNull String day,
                            @NonNull String ddpParticipantId) {
         this.firstName = firstName;
         this.lastName = lastName;

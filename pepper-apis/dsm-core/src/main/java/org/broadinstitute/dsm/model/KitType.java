@@ -1,10 +1,6 @@
 package org.broadinstitute.dsm.model;
 
-import lombok.Data;
-import org.broadinstitute.lddp.db.SimpleResult;
-import org.broadinstitute.dsm.statics.DBConstants;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -13,25 +9,40 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
+import lombok.Data;
+import org.broadinstitute.dsm.statics.DBConstants;
+import org.broadinstitute.lddp.db.SimpleResult;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Data
 public class KitType {
 
     private static final Logger logger = LoggerFactory.getLogger(KitType.class);
 
-    private static final String SQL_SELECT_KIT_TYPE = "SELECT ks.ddp_instance_id, type.kit_type_name, ks.kit_type_display_name, type.kit_type_id, type.bsp_receptacle_type, type.customs_json, ks.external_shipper " +
-            "FROM ddp_kit_request_settings ks left join kit_type type on (ks.kit_type_id = type.kit_type_id) left join sub_kits_settings subK on (subK.ddp_kit_request_settings_id = ks.ddp_kit_request_settings_id)";
-    private static final String SQL_SELECT_CARRIER_SERVICE = "SELECT dkc.kit_type_id, kt.kit_type_name, kt.customs_json, ddp_instance_id, cs_to.carrier as carrierTo, cs_to.easypost_carrier_id as carrierToId, " +
-        "cs_to.carrier_account_number as carrierToAccountNumber, cs_to.service as serviceTo, cs_return.carrier as carrierReturn, cs_return.easypost_carrier_id as carrierReturnId, " +
-        "cs_return.carrier_account_number as carrierReturnAccountNumber, cs_return.service as serviceReturn, dim.kit_height, dim.kit_weight, dim.kit_length, dim.kit_width, dkc.collaborator_sample_type_overwrite, " +
-        "dkc.collaborator_participant_length_overwrite, ret.return_address_name, ret.return_address_street1, ret.return_address_street2, ret.return_address_city, ret.return_address_state, " +
-        "ret.return_address_zip, ret.return_address_country, ret.return_address_phone, dkc.kit_type_display_name, dkc.external_shipper, dkc.external_name, " +
-        "(SELECT count(dkc2.ddp_kit_request_settings_id) FROM ddp_kit_request_settings dkc2 " +
-        "LEFT JOIN sub_kits_settings subK ON (subK.ddp_kit_request_settings_id = dkc2.ddp_kit_request_settings_id) WHERE subK.ddp_kit_request_settings_id = dkc2.ddp_kit_request_settings_id AND dkc2.ddp_kit_request_settings_id = dkc.ddp_kit_request_settings_id) AS has_sub_kits " +
-        "FROM ddp_kit_request_settings dkc LEFT JOIN kit_dimension dim ON (dkc.kit_dimension_id = dim.kit_dimension_id) LEFT JOIN carrier_service cs_to ON (dkc.carrier_service_to_id=cs_to.carrier_service_id) " +
-        "LEFT JOIN carrier_service cs_return ON (dkc.carrier_service_return_id=cs_return.carrier_service_id) LEFT JOIN kit_return_information ret ON (dkc.kit_return_id=ret.kit_return_id) " +
-        "LEFT JOIN kit_type kt ON (dkc.kit_type_id = kt.kit_type_id) WHERE external_shipper IS NOT NULL;";
+    private static final String SQL_SELECT_KIT_TYPE = "SELECT ks.ddp_instance_id, type.kit_type_name, ks.kit_type_display_name, type"
+            + ".kit_type_id, type.bsp_receptacle_type, type.customs_json, ks.external_shipper " +
+            "FROM ddp_kit_request_settings ks left join kit_type type on (ks.kit_type_id = type.kit_type_id) left join sub_kits_settings "
+            + "subK on (subK.ddp_kit_request_settings_id = ks.ddp_kit_request_settings_id)";
+    private static final String SQL_SELECT_CARRIER_SERVICE = "SELECT dkc.kit_type_id, kt.kit_type_name, kt.customs_json, ddp_instance_id,"
+            + " cs_to.carrier as carrierTo, cs_to.easypost_carrier_id as carrierToId, " +
+            "cs_to.carrier_account_number as carrierToAccountNumber, cs_to.service as serviceTo, cs_return.carrier as carrierReturn, "
+            + "cs_return.easypost_carrier_id as carrierReturnId, " +
+            "cs_return.carrier_account_number as carrierReturnAccountNumber, cs_return.service as serviceReturn, dim.kit_height, dim"
+            + ".kit_weight, dim.kit_length, dim.kit_width, dkc.collaborator_sample_type_overwrite, " +
+            "dkc.collaborator_participant_length_overwrite, ret.return_address_name, ret.return_address_street1, ret"
+            + ".return_address_street2, ret.return_address_city, ret.return_address_state, " +
+            "ret.return_address_zip, ret.return_address_country, ret.return_address_phone, dkc.kit_type_display_name, dkc"
+            + ".external_shipper, dkc.external_name, " +
+            "(SELECT count(dkc2.ddp_kit_request_settings_id) FROM ddp_kit_request_settings dkc2 " +
+            "LEFT JOIN sub_kits_settings subK ON (subK.ddp_kit_request_settings_id = dkc2.ddp_kit_request_settings_id) WHERE subK"
+            + ".ddp_kit_request_settings_id = dkc2.ddp_kit_request_settings_id AND dkc2.ddp_kit_request_settings_id = dkc"
+            + ".ddp_kit_request_settings_id) AS has_sub_kits " +
+            "FROM ddp_kit_request_settings dkc LEFT JOIN kit_dimension dim ON (dkc.kit_dimension_id = dim.kit_dimension_id) LEFT JOIN "
+            + "carrier_service cs_to ON (dkc.carrier_service_to_id=cs_to.carrier_service_id) " +
+            "LEFT JOIN carrier_service cs_return ON (dkc.carrier_service_return_id=cs_return.carrier_service_id) LEFT JOIN "
+            + "kit_return_information ret ON (dkc.kit_return_id=ret.kit_return_id) " +
+            "LEFT JOIN kit_type kt ON (dkc.kit_type_id = kt.kit_type_id) WHERE external_shipper IS NOT NULL;";
 
     private int kitTypeId;
     private int instanceId;
@@ -41,7 +52,7 @@ public class KitType {
     private String customsJson;
     private String externalKitName;
 
-    public KitType (int kitTypeId, int instanceId, String kitTypeName, String kitDisplayName, String externalShipper, String customsJson) {
+    public KitType(int kitTypeId, int instanceId, String kitTypeName, String kitDisplayName, String externalShipper, String customsJson) {
         this.kitTypeId = kitTypeId;
         this.instanceId = instanceId;
         this.kitTypeName = kitTypeName;
@@ -50,7 +61,8 @@ public class KitType {
         this.customsJson = customsJson;
     }
 
-    public KitType(int kitTypeId, int instanceId, String kitTypeName, String kitDisplayName, String externalShipper, String customsJson, String externalKitName) {
+    public KitType(int kitTypeId, int instanceId, String kitTypeName, String kitDisplayName, String externalShipper, String customsJson,
+                   String externalKitName) {
         this.kitTypeId = kitTypeId;
         this.instanceId = instanceId;
         this.kitTypeName = kitTypeName;
@@ -62,9 +74,10 @@ public class KitType {
 
     /**
      * Getting all kit types
+     *
      * @return HashMap<String, KitType>
-     *     Key: (String) kit_type_name + _ + instance_id from table kit_type
-     *     Value: KitType (Information of kitType like customJson)
+     * Key: (String) kit_type_name + _ + instance_id from table kit_type
+     * Value: KitType (Information of kitType like customJson)
      */
     public static HashMap<String, KitType> getKitLookup() {
         HashMap<String, KitType> kitTypes = new HashMap<>();
@@ -82,8 +95,7 @@ public class KitType {
                                 rs.getString(DBConstants.CUSTOMS_JSON)));
                     }
                 }
-            }
-            catch (SQLException ex) {
+            } catch (SQLException ex) {
                 dbVals.resultException = ex;
             }
             return dbVals;
@@ -115,8 +127,7 @@ public class KitType {
                         }
                     }
                 }
-            }
-            catch (SQLException ex) {
+            } catch (SQLException ex) {
                 dbVals.resultException = ex;
             }
             return dbVals;

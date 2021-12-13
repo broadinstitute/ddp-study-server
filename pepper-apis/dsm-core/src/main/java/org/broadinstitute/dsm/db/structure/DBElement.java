@@ -1,10 +1,10 @@
 package org.broadinstitute.dsm.db.structure;
 
-import lombok.Data;
-
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+
+import lombok.Data;
 
 @Data
 public class DBElement {
@@ -26,50 +26,6 @@ public class DBElement {
         this(tableName, tableAlias, primaryKey, columnName);
         if (dateConverter != null) {
             this.dateConverter = dateConverter.value();
-        }
-    }
-
-    /**
-     * Use this for dates that are stored as millis since the epoch.
-     */
-    public static class EpochDateConverter implements DateConverter {
-
-        public String convertArgToSql(Instant arg) {
-            return Long.toString(arg.toEpochMilli());
-        }
-
-        public String convertColumnForSql(String column) {
-            return column;
-        }
-
-        public String convertArgToSqlForDay(Instant arg) {
-            return "DATE(FROM_UNIXTIME(" + arg.toEpochMilli()/1000 + "))";
-        }
-
-        public String convertColumnForSqlForDay(String column) {
-            return "DATE(FROM_UNIXTIME(" + column + "/1000))";
-        }
-    }
-
-    /**
-     * Use this for simple yyyy-mm-dd string columns
-     */
-    public static class StringDayConverter implements DateConverter {
-
-        public String convertArgToSql(Instant arg) {
-            return "STR_TO_DATE(" + "'" + DateTimeFormatter.ISO_LOCAL_DATE.withZone(ZoneId.of("UTC")).format(arg) + "'" + ",'%Y-%m-%d')";
-        }
-
-        public String convertColumnForSql(String column) {
-            return "STR_TO_DATE(" + column + ",'%Y-%m-%d')";
-        }
-
-        public String convertArgToSqlForDay(Instant arg) {
-            return convertArgToSql(arg);
-        }
-
-        public String convertColumnForSqlForDay(String column) {
-            return convertColumnForSql(column);
         }
     }
 
@@ -99,5 +55,49 @@ public class DBElement {
          * Convert the column into SQl for a "in this day" match
          */
         String convertColumnForSqlForDay(String column);
+    }
+
+    /**
+     * Use this for dates that are stored as millis since the epoch.
+     */
+    public static class EpochDateConverter implements DateConverter {
+
+        public String convertArgToSql(Instant arg) {
+            return Long.toString(arg.toEpochMilli());
+        }
+
+        public String convertColumnForSql(String column) {
+            return column;
+        }
+
+        public String convertArgToSqlForDay(Instant arg) {
+            return "DATE(FROM_UNIXTIME(" + arg.toEpochMilli() / 1000 + "))";
+        }
+
+        public String convertColumnForSqlForDay(String column) {
+            return "DATE(FROM_UNIXTIME(" + column + "/1000))";
+        }
+    }
+
+    /**
+     * Use this for simple yyyy-mm-dd string columns
+     */
+    public static class StringDayConverter implements DateConverter {
+
+        public String convertArgToSql(Instant arg) {
+            return "STR_TO_DATE(" + "'" + DateTimeFormatter.ISO_LOCAL_DATE.withZone(ZoneId.of("UTC")).format(arg) + "'" + ",'%Y-%m-%d')";
+        }
+
+        public String convertColumnForSql(String column) {
+            return "STR_TO_DATE(" + column + ",'%Y-%m-%d')";
+        }
+
+        public String convertArgToSqlForDay(Instant arg) {
+            return convertArgToSql(arg);
+        }
+
+        public String convertColumnForSqlForDay(String column) {
+            return convertColumnForSql(column);
+        }
     }
 }

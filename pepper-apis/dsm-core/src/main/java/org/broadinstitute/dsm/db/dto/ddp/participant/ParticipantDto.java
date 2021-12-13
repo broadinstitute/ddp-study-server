@@ -1,8 +1,8 @@
 package org.broadinstitute.dsm.db.dto.ddp.participant;
 
-import lombok.Getter;
-
 import java.util.Optional;
+
+import lombok.Getter;
 
 @Getter
 public class ParticipantDto {

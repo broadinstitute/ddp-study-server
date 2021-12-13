@@ -29,9 +29,8 @@ public abstract class BaseFilterTissueList extends BaseFilter implements Filtera
     }
 
 
-
     protected List<TissueListWrapper> filterTissueList(Filter[] filters, Map<String, DBElement> columnNameMap, String filterName,
-                                                     @NonNull DDPInstance instance, String filterQuery) {
+                                                       @NonNull DDPInstance instance, String filterQuery) {
         Map<String, String> queryConditions = new HashMap<>();
         String subQueryForFiltering = "";
         if (filters != null && !columnNameMap.isEmpty()) {
@@ -82,7 +81,8 @@ public abstract class BaseFilterTissueList extends BaseFilter implements Filtera
         return getListBasedOnFilterName(filterName, instance.getName(), TISSUE_LIST_PARENT, queryString, queryConditions);
     }
 
-    protected List<TissueListWrapper> getListBasedOnFilterName(String filterName, String realm, String parent, String queryString, Map<String, String> filters) {
+    protected List<TissueListWrapper> getListBasedOnFilterName(String filterName, String realm, String parent, String queryString,
+                                                               Map<String, String> filters) {
         List<TissueListWrapper> wrapperList = new ArrayList<>();
         if ("tissueList".equals(parent)) {
             DDPInstance instance = DDPInstance.getDDPInstanceWithRole(realm, DBConstants.MEDICAL_RECORD_ACTIVATED);
@@ -111,7 +111,8 @@ public abstract class BaseFilterTissueList extends BaseFilter implements Filtera
                 }
             }
             //TODO (2021-07-29) -> if queryString is made by ElasticSearch fields `TissueList.getAllTissueListsForRealm` throws exception
-            List<TissueList> tissueLists = TissueList.getAllTissueListsForRealm(realm, TissueList.SQL_SELECT_ALL_ONC_HISTORY_TISSUE_FOR_REALM + (queryString != null ? queryString : "") + query);
+            List<TissueList> tissueLists = TissueList.getAllTissueListsForRealm(realm,
+                    TissueList.SQL_SELECT_ALL_ONC_HISTORY_TISSUE_FOR_REALM + (queryString != null ? queryString : "") + query);
             wrapperList = TissueListWrapper.getTissueListData(instance, filters, tissueLists);
             return wrapperList;
         }

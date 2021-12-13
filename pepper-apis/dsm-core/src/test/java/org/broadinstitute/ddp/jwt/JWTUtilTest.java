@@ -1,14 +1,14 @@
 package org.broadinstitute.ddp.jwt;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+
+import org.junit.Before;
+import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 //todo EOB - revisit tests
 public class JWTUtilTest {
@@ -16,19 +16,17 @@ public class JWTUtilTest {
     private static final Logger logger = LoggerFactory.getLogger(JWTUtilTest.class);
     private static final String QUARTERBACK = "Quarterback";
     private static final String MOVIE_STAR = "Movie Star";
-    private long tokenDurationInMilliseconds = 5 * 1000; //
-
     String secret = "not a great secret here";
     String user = "Tom Brady";
-
-    Collection<String> roles = Arrays.asList(MOVIE_STAR,QUARTERBACK);
-    long invalidAfter = (System.currentTimeMillis() + tokenDurationInMilliseconds)/1000;
+    Collection<String> roles = Arrays.asList(MOVIE_STAR, QUARTERBACK);
     String jwtToken;
+    private long tokenDurationInMilliseconds = 5 * 1000; //
+    long invalidAfter = (System.currentTimeMillis() + tokenDurationInMilliseconds) / 1000;
 
     @Before
     public void createToken() {
-        Map<String,Object> claims = new HashMap<>();
-        claims.put("user",user);
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("user", user);
         /*claims.put(JWTUtil.KDUX_ROLES_CLAIM,roles);
         jwtToken = jwtUtil.createToken(secret,invalidAfter,claims);*/
     }
@@ -58,7 +56,8 @@ public class JWTUtilTest {
     @Category(SlowTests.class)
     @Test
     public void testTokenExpiration() {
-        logger.info("This test may take a while, as it sleeps for a bit over " + (tokenDurationInMilliseconds/1000) + " seconds until the token expires.");
+        logger.info("This test may take a while, as it sleeps for a bit over " + (tokenDurationInMilliseconds/1000) + " seconds until the
+         token expires.");
         try {
             Thread.sleep(tokenDurationInMilliseconds + 1000);
             Assert.assertFalse("Token is expired, should not be considered valid",jwtUtil.isTokenValid(secret,jwtToken));

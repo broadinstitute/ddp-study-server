@@ -2,19 +2,12 @@ package org.broadinstitute.lddp.handlers.util;
 
 import lombok.NonNull;
 
-public class Institution
-{
-    public Institution() {
-    }
-
-    public enum InstitutionType
-    {
-        INSTITUTION, PHYSICIAN, INITIAL_BIOPSY
-    }
-
+public class Institution {
     private String id;
     private String type;
 
+    public Institution() {
+    }
     public Institution(@NonNull String id, @NonNull String type) {
         this.id = id;
         this.type = type;
@@ -26,5 +19,9 @@ public class Institution
 
     public String getType() {
         return type;
+    }
+
+    public enum InstitutionType {
+        INSTITUTION, PHYSICIAN, INITIAL_BIOPSY
     }
 }

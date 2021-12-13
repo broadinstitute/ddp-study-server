@@ -9,12 +9,12 @@ import java.util.Optional;
 
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.DDPInstance;
-import org.broadinstitute.dsm.db.dto.user.UserDto;
 import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
 import org.broadinstitute.dsm.db.dao.settings.FieldSettingsDao;
 import org.broadinstitute.dsm.db.dao.user.UserDao;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDataDto;
 import org.broadinstitute.dsm.db.dto.settings.FieldSettingsDto;
+import org.broadinstitute.dsm.db.dto.user.UserDto;
 import org.broadinstitute.dsm.export.WorkflowForES;
 import org.broadinstitute.dsm.model.Study;
 import org.broadinstitute.dsm.model.participant.data.AddFamilyMemberPayload;
@@ -48,6 +48,19 @@ public class AddFamilyMember {
         ddpInstanceId = ddpInstanceDao.getDDPInstanceIdByGuid(studyGuid);
     }
 
+    public static AddFamilyMember instance(Study study, AddFamilyMemberPayload addFamilyMemberPayload) {
+        AddFamilyMember addFamilyMember;
+        switch (study) {
+            case RGP:
+                addFamilyMember = new RgpAddFamilyMember(addFamilyMemberPayload);
+                break;
+            default:
+                addFamilyMember = new AddFamilyMember(addFamilyMemberPayload);
+                break;
+        }
+        return addFamilyMember;
+    }
+
     public long add() {
         prepareFamilyMemberData();
         copyProbandData();
@@ -60,24 +73,29 @@ public class AddFamilyMember {
 
     protected void prepareFamilyMemberData() {
         FamilyMemberDetails familyMemberDetails = addFamilyMemberPayload.getData().orElseThrow();
-        String fieldTypeId =  studyGuid + ParticipantData.FIELD_TYPE_PARTICIPANTS;
+        String fieldTypeId = studyGuid + ParticipantData.FIELD_TYPE_PARTICIPANTS;
         participantData.setDdpParticipantId(ddpParticipantId);
         participantData.setDdpInstanceId(ddpInstanceId);
         participantData.setFieldTypeId(fieldTypeId);
         familyMemberDetails.setFamilyId(addFamilyMemberPayload.getOrGenerateFamilyId());
         familyMemberDetails.setCollaboratorParticipantId(addFamilyMemberPayload.generateCollaboratorParticipantId());
-        if (FamilyMemberConstants.MEMBER_TYPE_SELF.equalsIgnoreCase(familyMemberDetails.getMemberType()))
+        if (FamilyMemberConstants.MEMBER_TYPE_SELF.equalsIgnoreCase(familyMemberDetails.getMemberType())) {
             familyMemberDetails.setEmail(ParticipantUtil.getParticipantEmailById(
                     ddpInstanceDao.getEsParticipantIndexByStudyGuid(studyGuid).orElse(""),
                     addFamilyMemberPayload.getParticipantId().orElse("")));
+        }
         this.participantData.setData(familyMemberDetails.toMap());
     }
 
     protected void copyProbandData() {
         boolean isCopyProband = addFamilyMemberPayload.getCopyProbandInfo().orElse(Boolean.FALSE);
-        if (!isCopyProband || StringUtils.isBlank(addFamilyMemberPayload.getParticipantId().orElse(""))) return;
+        if (!isCopyProband || StringUtils.isBlank(addFamilyMemberPayload.getParticipantId().orElse(""))) {
+            return;
+        }
         Map<String, String> participantDataData = participantData.getData();
-        if (Objects.isNull(participantDataData)) throw new NoSuchElementException();
+        if (Objects.isNull(participantDataData)) {
+            throw new NoSuchElementException();
+        }
         List<ParticipantDataDto> participantDataByParticipantId =
                 participantData.getParticipantDataByParticipantId(addFamilyMemberPayload.getParticipantId().orElse(""));
         Optional<ParticipantDataDto> maybeProbandData = participantData.findProband(participantDataByParticipantId);
@@ -104,7 +122,9 @@ public class AddFamilyMember {
         FieldSettings fieldSettings = new FieldSettings();
         logger.info("Starting exporting copied proband data to family member into ES");
         fieldSettingsByInstanceIdAndColumns.forEach(fieldSettingsDto -> {
-            if (!fieldSettings.isElasticExportWorkflowType(fieldSettingsDto)) return;
+            if (!fieldSettings.isElasticExportWorkflowType(fieldSettingsDto)) {
+                return;
+            }
             WorkflowForES instanceWithStudySpecificData =
                     WorkflowForES.createInstanceWithStudySpecificData(
                             DDPInstance.getDDPInstance(studyGuid), addFamilyMemberPayload.getParticipantId().get(),
@@ -122,7 +142,8 @@ public class AddFamilyMember {
         logger.info("Exporting workflow for family member of participant: " + ddpParticipantId + " to ES");
         getDefaultOptionsByElasticWorkflow(ddpInstanceId).forEach((col, val) -> {
             WorkflowForES instanceWithStudySpecificData =
-                    WorkflowForES.createInstanceWithStudySpecificData(DDPInstance.getDDPInstanceById(ddpInstanceId), ddpParticipantId, col, val,
+                    WorkflowForES.createInstanceWithStudySpecificData(DDPInstance.getDDPInstanceById(ddpInstanceId), ddpParticipantId,
+                            col, val,
                             new WorkflowForES.StudySpecificData(
                                     addFamilyMemberPayload.getData().get().getCollaboratorParticipantId(),
                                     addFamilyMemberPayload.getData().get().getFirstName(),
@@ -151,19 +172,6 @@ public class AddFamilyMember {
         FieldSettingsDao fieldSettingsDao = FieldSettingsDao.of();
         FieldSettings fieldSettings = new FieldSettings();
         return fieldSettings.getColumnsWithDefaultValues(fieldSettingsDao.getOptionAndRadioFieldSettingsByInstanceId(ddpInstanceId));
-    }
-
-    public static AddFamilyMember instance(Study study, AddFamilyMemberPayload addFamilyMemberPayload) {
-        AddFamilyMember addFamilyMember;
-        switch (study) {
-            case RGP:
-                addFamilyMember = new RgpAddFamilyMember(addFamilyMemberPayload);
-                break;
-            default:
-                addFamilyMember = new AddFamilyMember(addFamilyMemberPayload);
-                break;
-        }
-        return addFamilyMember;
     }
 
 }

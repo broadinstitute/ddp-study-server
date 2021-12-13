@@ -29,6 +29,21 @@ public class ElasticSearchParticipantDto {
     private ESDsm dsm;
     private String ddp;
 
+    private ElasticSearchParticipantDto(Builder builder) {
+        this.address = builder.address;
+        this.medicalProviders = builder.medicalProviders;
+        this.invitations = builder.invitations;
+        this.activities = builder.activities;
+        this.statusTimestamp = builder.statusTimeStamp;
+        this.profile = builder.profile;
+        this.files = builder.files;
+        this.proxies = builder.proxies;
+        this.workflows = builder.workflows;
+        this.status = builder.status;
+        this.dsm = builder.dsm;
+        this.computed = builder.computed;
+    }
+
     public Optional<ESAddress> getAddress() {
         return Optional.ofNullable(address);
     }
@@ -84,21 +99,6 @@ public class ElasticSearchParticipantDto {
                 .orElse("");
     }
 
-    private ElasticSearchParticipantDto(Builder builder) {
-        this.address = builder.address;
-        this.medicalProviders = builder.medicalProviders;
-        this.invitations = builder.invitations;
-        this.activities = builder.activities;
-        this.statusTimestamp = builder.statusTimeStamp;
-        this.profile = builder.profile;
-        this.files = builder.files;
-        this.proxies = builder.proxies;
-        this.workflows = builder.workflows;
-        this.status = builder.status;
-        this.dsm = builder.dsm;
-        this.computed = builder.computed;
-    }
-
     public static class Builder {
         private ESAddress address;
         private List<Object> medicalProviders;
@@ -113,7 +113,8 @@ public class ElasticSearchParticipantDto {
         private String status;
         private ESDsm dsm;
 
-        public Builder() {}
+        public Builder() {
+        }
 
         public Builder withAddress(ESAddress esAddress) {
             this.address = esAddress;

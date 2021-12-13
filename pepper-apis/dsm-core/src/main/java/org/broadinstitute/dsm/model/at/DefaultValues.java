@@ -1,5 +1,12 @@
 package org.broadinstitute.dsm.model.at;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import lombok.NonNull;
@@ -14,33 +21,24 @@ import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDataDto;
 import org.broadinstitute.dsm.db.dto.settings.FieldSettingsDto;
 import org.broadinstitute.dsm.model.elastic.ESProfile;
 import org.broadinstitute.dsm.model.elastic.search.ElasticSearchParticipantDto;
-import org.broadinstitute.dsm.model.settings.field.FieldSettings;
 import org.broadinstitute.dsm.model.participant.data.ParticipantData;
+import org.broadinstitute.dsm.model.settings.field.FieldSettings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-
 public class DefaultValues {
 
+    public static final String REGISTRATION_TYPE_SELF = "self";
+    public static final String REGISTRATION_TYPE_DEPENDENT = "dependent";
+    public static final String EXITSTATUS = "EXITSTATUS";
+    public static final String AT_PARTICIPANT_EXIT = "AT_PARTICIPANT_EXIT";
+    public static final String AT_GENOMIC_ID = "at_genomic_id";
     private static final Logger logger = LoggerFactory.getLogger(DefaultValues.class);
-
     private static final String FIELD_TYPE_ID = "AT_GROUP_GENOME_STUDY";
     private static final String GENOME_STUDY_CPT_ID = "GENOME_STUDY_CPT_ID";
     private static final String PREFIX = "DDP_ATCP_";
     private static final String REGISTRATION_TYPE = "REGISTRATION_TYPE";
-    public static final String REGISTRATION_TYPE_SELF = "self";
-    public static final String REGISTRATION_TYPE_DEPENDENT = "dependent";
-    public static final String EXITSTATUS = "EXITSTATUS";
-
     private static final Gson GSON = new Gson();
-    public static final String AT_PARTICIPANT_EXIT = "AT_PARTICIPANT_EXIT";
-    public static final String AT_GENOMIC_ID = "at_genomic_id";
     private Dao dataAccess;
 
     private Map<String, List<ParticipantDataDto>> participantData;
@@ -66,14 +64,16 @@ public class DefaultValues {
         boolean addedNewParticipantData = false;
         Map<String, ElasticSearchParticipantDto> participantEsDataByParticipantId =
                 participantESData.stream().collect(Collectors.toMap(ElasticSearchParticipantDto::getParticipantId, Function.identity()));
-        for (Map.Entry<String, ElasticSearchParticipantDto> entry: participantEsDataByParticipantId.entrySet()) {
+        for (Map.Entry<String, ElasticSearchParticipantDto> entry : participantEsDataByParticipantId.entrySet()) {
             String ddpParticipantId = entry.getKey();
             List<ParticipantDataDto> participantDataList = participantData.get(ddpParticipantId);
-            if (participantDataList == null) continue;
+            if (participantDataList == null) {
+                continue;
+            }
 
             if (!hasParticipantDataGenomicId(participantDataList) && isSelfOrDependentParticipant(participantDataList)) {
                 ElasticSearchParticipantDto esParticipantData = entry.getValue();
-                String hruid = esParticipantData.getProfile().map(ESProfile::getHruid).orElse("");;
+                String hruid = esParticipantData.getProfile().map(ESProfile::getHruid).orElse("");
                 addedNewParticipantData = getParticipantGenomicFieldData(participantDataList)
                         .map(pData -> insertGenomicIdIfNotExistsInData(ddpParticipantId, hruid, pData))
                         .orElseGet(() -> insertGenomicIdForParticipant(ddpParticipantId, hruid));
@@ -93,8 +93,7 @@ public class DefaultValues {
                         participantDataDao.getParticipantDataByInstanceIdAndQueryAddition(Integer.parseInt(instance.getDdpInstanceId()),
                                 queryAddition);
                 participantData = getParticipantDataWithParticipantId(participantDataByInstanceIdAndQueryAddition);
-            }
-            else {
+            } else {
                 List<ParticipantDataDto> participantDataByInstanceId =
                         participantDataDao.getParticipantDataByInstanceId(Integer.parseInt(instance.getDdpInstanceId()));
                 participantData = getParticipantDataWithParticipantId(participantDataByInstanceId);
@@ -116,19 +115,25 @@ public class DefaultValues {
     }
 
     private boolean hasParticipantDataGenomicId(List<ParticipantDataDto> participantDataList) {
-        if (participantDataList.isEmpty()) return false;
+        if (participantDataList.isEmpty()) {
+            return false;
+        }
         return participantDataList.stream()
                 .anyMatch(participantData -> {
-                    Map<String, String> data = GSON.fromJson(participantData.getData().orElse(""), new TypeToken<Map<String, String>>() {}.getType());
+                    Map<String, String> data = GSON.fromJson(participantData.getData().orElse(""), new TypeToken<Map<String, String>>() {
+                    }.getType());
                     return data.containsKey(GENOME_STUDY_CPT_ID) && StringUtils.isNotBlank(data.get(GENOME_STUDY_CPT_ID));
                 });
     }
 
     private boolean isSelfOrDependentParticipant(List<ParticipantDataDto> participantDataList) {
-        if (participantDataList.isEmpty()) return false;
+        if (participantDataList.isEmpty()) {
+            return false;
+        }
         return participantDataList.stream()
                 .anyMatch(pData -> {
-                    Map<String, String> data = GSON.fromJson(pData.getData().orElse(""), new TypeToken<Map<String, String>>() {}.getType());
+                    Map<String, String> data = GSON.fromJson(pData.getData().orElse(""), new TypeToken<Map<String, String>>() {
+                    }.getType());
                     return data.containsKey(REGISTRATION_TYPE) &&
                             (REGISTRATION_TYPE_SELF.equalsIgnoreCase(data.get(REGISTRATION_TYPE))
                                     || REGISTRATION_TYPE_DEPENDENT.equalsIgnoreCase(data.get(REGISTRATION_TYPE)));
@@ -136,16 +141,21 @@ public class DefaultValues {
     }
 
     private boolean hasExitedStatusDefaultValue(List<ParticipantDataDto> participantDataList) {
-        if (participantDataList.isEmpty()) return false;
+        if (participantDataList.isEmpty()) {
+            return false;
+        }
         return participantDataList.stream()
                 .anyMatch(participantData -> {
-                    Map<String, String> data = GSON.fromJson(participantData.getData().orElse(""), new TypeToken<Map<String, String>>() {}.getType());
+                    Map<String, String> data = GSON.fromJson(participantData.getData().orElse(""), new TypeToken<Map<String, String>>() {
+                    }.getType());
                     return AT_PARTICIPANT_EXIT.equals(participantData.getFieldTypeId().orElse("")) && (data.containsKey(EXITSTATUS) && StringUtils.isNotBlank(data.get(EXITSTATUS)));
                 });
     }
 
     private Optional<ParticipantDataDto> getParticipantGenomicFieldData(List<ParticipantDataDto> participantDataList) {
-        if (participantDataList.isEmpty()) return Optional.empty();
+        if (participantDataList.isEmpty()) {
+            return Optional.empty();
+        }
         return participantDataList.stream()
                 .filter(participantData -> FIELD_TYPE_ID.equals(participantData.getFieldTypeId().orElse("")))
                 .findFirst();
@@ -153,8 +163,11 @@ public class DefaultValues {
 
     private boolean insertGenomicIdIfNotExistsInData(String ddpParticipantId, String hruid,
                                                      ParticipantDataDto pData) {
-        Map<String, String> dataMap = GSON.fromJson(pData.getData().orElse(""), new TypeToken<Map<String, String>>() {}.getType());
-        if (dataMap.containsKey(GENOME_STUDY_CPT_ID)) return false;
+        Map<String, String> dataMap = GSON.fromJson(pData.getData().orElse(""), new TypeToken<Map<String, String>>() {
+        }.getType());
+        if (dataMap.containsKey(GENOME_STUDY_CPT_ID)) {
+            return false;
+        }
         dataMap.put(GENOME_STUDY_CPT_ID, PREFIX.concat(getGenomicIdValue(hruid)));
         return updateParticipantData(ddpParticipantId, pData, dataMap);
     }
@@ -172,20 +185,27 @@ public class DefaultValues {
     }
 
     private boolean insertGenomicIdForParticipant(String ddpParticipantId, String hruid) {
-        if (StringUtils.isBlank(hruid)) return false;
+        if (StringUtils.isBlank(hruid)) {
+            return false;
+        }
         return insertParticipantData(Map.of(GENOME_STUDY_CPT_ID, PREFIX.concat(getGenomicIdValue(hruid))), ddpParticipantId, FIELD_TYPE_ID);
     }
 
     private Optional<ParticipantDataDto> getParticipantExitFieldData(List<ParticipantDataDto> participantDataList) {
-        if (participantDataList.isEmpty()) return Optional.empty();
+        if (participantDataList.isEmpty()) {
+            return Optional.empty();
+        }
         return participantDataList.stream()
                 .filter(participantData -> AT_PARTICIPANT_EXIT.equals(participantData.getFieldTypeId().orElse("")))
                 .findFirst();
     }
 
     private boolean insertExitStatusIfNotExistsInData(String ddpParticipantId, ParticipantDataDto pData) {
-        Map<String, String> dataMap = GSON.fromJson(pData.getData().orElse(""), new TypeToken<Map<String, String>>() {}.getType());
-        if (dataMap.containsKey(EXITSTATUS)) return false;
+        Map<String, String> dataMap = GSON.fromJson(pData.getData().orElse(""), new TypeToken<Map<String, String>>() {
+        }.getType());
+        if (dataMap.containsKey(EXITSTATUS)) {
+            return false;
+        }
         dataMap.put(EXITSTATUS, getDefaultExitStatus());
         return updateParticipantData(ddpParticipantId, pData, dataMap);
     }
@@ -198,7 +218,8 @@ public class DefaultValues {
     private boolean updateParticipantData(String ddpParticipantId, ParticipantDataDto pData, Map<String, String> dataMap) {
         this.setDataAccess(new ParticipantDataDao());
         ParticipantData participantData = new ParticipantData(dataAccess);
-        participantData.setData(ddpParticipantId, Integer.parseInt(instance.getDdpInstanceId()), pData.getFieldTypeId().orElse(""), dataMap);
+        participantData.setData(ddpParticipantId, Integer.parseInt(instance.getDdpInstanceId()), pData.getFieldTypeId().orElse(""),
+                dataMap);
         return participantData.updateParticipantData(pData.getParticipantDataId(), "SYSTEM");
     }
 
@@ -209,7 +230,8 @@ public class DefaultValues {
                 fieldTypeId, data);
         try {
             participantData.insertParticipantData("SYSTEM");
-            logger.info("values: " + data.keySet().stream().collect(Collectors.joining(", ", "[", "]")) + " were created for participant with id: " + ddpParticipantId + " at " + FIELD_TYPE_ID);
+            logger.info("values: " + data.keySet().stream().collect(Collectors.joining(", ", "[", "]")) + " were created for participant "
+                    + "with id: " + ddpParticipantId + " at " + FIELD_TYPE_ID);
             return true;
         } catch (RuntimeException re) {
             return false;
