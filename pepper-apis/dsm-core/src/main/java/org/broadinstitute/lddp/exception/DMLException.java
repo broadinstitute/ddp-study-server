@@ -1,8 +1,5 @@
 package org.broadinstitute.lddp.exception;
 
-/**
- *
- */
 public class DMLException extends RuntimeException {
     public DMLException(String message) {
         super(message);

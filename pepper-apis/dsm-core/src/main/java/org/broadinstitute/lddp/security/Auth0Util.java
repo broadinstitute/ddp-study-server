@@ -25,7 +25,10 @@ import org.slf4j.LoggerFactory;
 public class Auth0Util {
 
     private static final Logger logger = LoggerFactory.getLogger(Auth0Util.class);
-    private final String account, ddpKey, ddpSecret, mgtApiUrl;
+    private final String account;
+    private final String ddpKey;
+    private final String ddpSecret;
+    private final String mgtApiUrl;
     private final List<String> connections;
     private byte[] decodedSecret;
     private AuthAPI ddpAuthApi = null;

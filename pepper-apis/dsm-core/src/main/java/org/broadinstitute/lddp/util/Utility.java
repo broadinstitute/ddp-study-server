@@ -57,8 +57,8 @@ public class Utility {
     /**
      * Handy method for just getting a count of records in a DDP table.
      *
-     * @param sql
-     * @return count
+     * @param sql sql string
+     * @return count count of rows
      * @
      */
     public static int getCountInTable(@NonNull String sql) {

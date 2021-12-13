@@ -8,6 +8,7 @@ import java.util.ArrayList;
 public class ParticipantInstitutionList {
     private String participantId; //UUID (alt pid)
     private ArrayList<InstitutionDetail> institutions; //institutions
+
     public ParticipantInstitutionList() {
     }
 

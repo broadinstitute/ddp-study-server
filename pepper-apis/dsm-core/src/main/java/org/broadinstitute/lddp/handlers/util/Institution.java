@@ -8,6 +8,7 @@ public class Institution {
 
     public Institution() {
     }
+
     public Institution(@NonNull String id, @NonNull String type) {
         this.id = id;
         this.type = type;

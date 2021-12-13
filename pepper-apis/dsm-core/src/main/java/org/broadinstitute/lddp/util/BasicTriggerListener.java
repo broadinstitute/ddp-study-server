@@ -65,5 +65,5 @@ public abstract class BasicTriggerListener implements TriggerListener {
         logger.info(getName() + " - Trigger " + trigger.getKey() + " for job " + context.getJobDetail().getKey() + " --> Completed");
     }
 
-    abstract protected void monitorJobExecution(boolean veto);
+    protected abstract void monitorJobExecution(boolean veto);
 }

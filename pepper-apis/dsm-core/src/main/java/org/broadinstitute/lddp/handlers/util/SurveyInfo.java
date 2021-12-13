@@ -14,6 +14,7 @@ public class SurveyInfo {
         this.name = name;
         this.type = type;
     }
+
     public enum FollowUpType {
         NONE, REPEATING, NONREPEATING
     }

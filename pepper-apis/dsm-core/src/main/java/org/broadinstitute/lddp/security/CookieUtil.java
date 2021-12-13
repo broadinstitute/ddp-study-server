@@ -14,13 +14,14 @@ import javax.servlet.http.Cookie;
  * want against the server side outside of the browser, whenever we hand out a
  * jwt token, we also use a secure, http only cookie, whose
  * value is a hash of the salted jwt token.
- * <p>
- * On every route other than the auth route, we check to ensure that
- * the cookie matches the jwt token.
+
+ * <p>On every route other than the auth route, we check to ensure that
+ * the cookie matches the jwt token.</p>
  */
 public class CookieUtil {
 
-    public Cookie createSecureCookieForToken(String cookieName, int cookieAgeInSeconds, String token, byte[] salt) throws NoSuchAlgorithmException, InvalidKeySpecException {
+    public Cookie createSecureCookieForToken(String cookieName, int cookieAgeInSeconds, String token, byte[] salt)
+            throws NoSuchAlgorithmException, InvalidKeySpecException {
         Cookie cookie = new Cookie(cookieName, hashToken(token, salt));
         cookie.setSecure(true);
         cookie.setHttpOnly(true);
@@ -35,7 +36,8 @@ public class CookieUtil {
         return new String(Base64.getEncoder().encode(hash));
     }
 
-    public boolean isCookieValid(String cookieValue, byte[] cookieSalt, String jwtToken, String tokenSecret) throws NoSuchAlgorithmException, InvalidKeySpecException {
+    public boolean isCookieValid(String cookieValue, byte[] cookieSalt, String jwtToken, String tokenSecret)
+            throws NoSuchAlgorithmException, InvalidKeySpecException {
         boolean isValidToken = SecurityHelper.validToken(tokenSecret, jwtToken);
         boolean doesCookieMatchToken = false;
 

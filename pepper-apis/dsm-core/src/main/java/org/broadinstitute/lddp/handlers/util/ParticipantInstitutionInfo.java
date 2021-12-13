@@ -14,6 +14,7 @@ public class ParticipantInstitutionInfo extends ParticipantInstitutionList {
     private String surveyFirstCompleted;
     private int addressValid;
     private DeliveryAddress address;
+
     public ParticipantInstitutionInfo() {
     }
 }

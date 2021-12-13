@@ -35,7 +35,7 @@ public class SecurityHelper {
         try {
             JWTCreator.Builder builder = JWT.create();
             builder.withClaim(CLAIM_MONITORINGSYSTEM, monitoringSystem);
-//            builder.withClaim(CLAIM_EXPIRATION, 0);
+            // builder.withClaim(CLAIM_EXPIRATION, 0);
             builder.withClaim(CLAIM_ISSUER, SIGNER);
             Algorithm algorithm = Algorithm.HMAC256(secret);
             return builder.sign(algorithm);
@@ -89,7 +89,8 @@ public class SecurityHelper {
         return verifyAndGetClaims(secret, token, false);
     }
 
-    private static Map<String, Claim> verifyAndGetClaims(@NonNull String secret, @NonNull String token, boolean checkMonitoringClaim) throws InvalidTokenException {
+    private static Map<String, Claim> verifyAndGetClaims(@NonNull String secret, @NonNull String token, boolean checkMonitoringClaim)
+            throws InvalidTokenException {
 
         Map<String, Claim> claimsMap = null;
 

@@ -44,7 +44,8 @@ public class GoogleBucket {
         return null;
     }
 
-    public static boolean bucketExists(String googleCredentials, @NonNull String googleCloudId, @NonNull String bucketName) throws Exception {
+    public static boolean bucketExists(String googleCredentials, @NonNull String googleCloudId, @NonNull String bucketName)
+            throws Exception {
         boolean exists = false;
         try {
             Storage storage = getStorage(googleCredentials, googleCloudId);
@@ -124,7 +125,8 @@ public class GoogleBucket {
         return foundBucket;
     }
 
-    public static List<String> getFiles(String googleCredentials, @NonNull String googleCloudId, @NonNull String bucketName) throws Exception {
+    public static List<String> getFiles(String googleCredentials, @NonNull String googleCloudId, @NonNull String bucketName)
+            throws Exception {
         List<String> fileNames = new ArrayList<>();
         Storage storage = GoogleBucket.getStorage(googleCredentials, googleCloudId);
         Page<Blob> blobs = storage.list(bucketName);

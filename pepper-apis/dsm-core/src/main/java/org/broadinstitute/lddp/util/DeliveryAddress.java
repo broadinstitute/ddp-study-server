@@ -38,8 +38,8 @@ public class DeliveryAddress {
         this.zip = zip;
         this.country = country;
 
-        empty = (StringUtils.isBlank(street1)) && (StringUtils.isBlank(street2)) && (StringUtils.isBlank(city)) &&
-                (StringUtils.isBlank(state)) && (StringUtils.isBlank(zip)) && (StringUtils.isBlank(country));
+        empty = (StringUtils.isBlank(street1)) && (StringUtils.isBlank(street2)) && (StringUtils.isBlank(city))
+                && (StringUtils.isBlank(state)) && (StringUtils.isBlank(zip)) && (StringUtils.isBlank(country));
     }
 
     public DeliveryAddress(String street1, String street2, String city, String state, String zip, String country,
@@ -97,8 +97,7 @@ public class DeliveryAddress {
                 address = Address.create(addressFields);
                 if (!address.getVerifications().get("delivery").getSuccess()) {
                     logger.info(LOG_PREFIX + "Address verification failed.");
-                } else //since address is ok update values
-                {
+                } else { //since address is ok update values
                     valid = true;
                     id = address.getId(); //only including id if valid
                     name = address.getName();
