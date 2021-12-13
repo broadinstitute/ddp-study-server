@@ -80,12 +80,18 @@ public class UpdateBlockStatusesTest extends TxnAwareBaseTest {
             form.addBodySections(Collections.singletonList(s1));
 
             content.setShown(false);
+            content.setEnabled(false);
             formInstanceCreatorHelper.updateBlockStatuses(handle, form, interpreter, userGuid, userGuid, form.getGuid(), null);
             assertFalse(content.isShown());
-
+            assertFalse(content.isEnabled());
+            content.setEnabledExpr("true");
+            formInstanceCreatorHelper.updateBlockStatuses(handle, form, interpreter, userGuid, userGuid, form.getGuid(), null);
+            assertFalse(content.isShown());
+            assertTrue(content.isEnabled());
             content.setShownExpr("true");
             formInstanceCreatorHelper.updateBlockStatuses(handle, form, interpreter, userGuid, userGuid, form.getGuid(), null);
             assertTrue(content.isShown());
+            assertTrue(content.isEnabled());
         });
     }
 
@@ -130,7 +136,7 @@ public class UpdateBlockStatusesTest extends TxnAwareBaseTest {
     @Test
     public void testUpdatedBlockStatuses_withExpr_evalError() {
         thrown.expect(DDPException.class);
-        thrown.expectMessage("pex expression");
+        thrown.expectMessage("pex shown expression");
 
         PexInterpreter mockInterpreter = mock(PexInterpreter.class);
 

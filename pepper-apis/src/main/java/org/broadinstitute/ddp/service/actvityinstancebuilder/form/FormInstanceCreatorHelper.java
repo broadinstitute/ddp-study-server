@@ -136,8 +136,18 @@ public class FormInstanceCreatorHelper {
                 boolean shown = interpreter.eval(block.getShownExpr(), handle, userGuid, operatorGuid, instanceGuid, instanceSummary);
                 block.setShown(shown);
             } catch (PexException e) {
-                String msg = String.format("Error evaluating pex expression for form activity instance %s and block %s: `%s`",
+                String msg = String.format("Error evaluating pex shown expression for form activity instance %s and block %s: `%s`",
                         formInstance.getGuid(), block.getGuid(), block.getShownExpr());
+                throw new DDPException(msg, e);
+            }
+        }
+        if (block.getEnabledExpr() != null) {
+            try {
+                boolean enabled = interpreter.eval(block.getEnabledExpr(), handle, userGuid, operatorGuid, instanceGuid, instanceSummary);
+                block.setEnabled(enabled);
+            } catch (PexException e) {
+                String msg = String.format("Error evaluating pex enabled expression for form activity instance %s and block %s: `%s`",
+                        formInstance.getGuid(), block.getGuid(), block.getEnabledExpr());
                 throw new DDPException(msg, e);
             }
         }

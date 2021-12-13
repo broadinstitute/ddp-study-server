@@ -89,6 +89,9 @@ public class Auth0ManagementClient {
      */
     public static Auth0ManagementClient forUser(Handle handle, String userGuid) {
         Auth0TenantDto auth0TenantDto = handle.attach(JdbiAuth0Tenant.class).findByUserGuid(userGuid);
+        if (auth0TenantDto == null) {
+            throw new DDPException("Auth0 tenant for user " + userGuid + " is not found");
+        }
         return new Auth0ManagementClient(
                 auth0TenantDto.getDomain(),
                 auth0TenantDto.getManagementClientId(),

@@ -12,8 +12,10 @@ import org.broadinstitute.ddp.model.activity.definition.question.DateQuestionDef
 import org.broadinstitute.ddp.model.activity.definition.question.FileQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.NumericQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistQuestionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.MatrixQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.TextQuestionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.ActivityInstanceSelectQuestionDef;
 import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
 import org.broadinstitute.ddp.model.activity.instance.question.Question;
 import org.broadinstitute.ddp.model.activity.instance.validation.Rule;
@@ -42,11 +44,17 @@ public class QuestionCreator {
                 case TEXT:
                     question = creatorHelper.createTextQuestion(ctx, (TextQuestionDef) questionDef);
                     break;
+                case ACTIVITY_INSTANCE_SELECT:
+                    question = creatorHelper.createActivityInstanceSelectQuestion(ctx, (ActivityInstanceSelectQuestionDef) questionDef);
+                    break;
                 case NUMERIC:
                     question = creatorHelper.createNumericQuestion(ctx, (NumericQuestionDef) questionDef);
                     break;
                 case PICKLIST:
                     question = creatorHelper.createPicklistQuestion(ctx, (PicklistQuestionDef) questionDef);
+                    break;
+                case MATRIX:
+                    question = creatorHelper.createMatrixQuestion(ctx, (MatrixQuestionDef) questionDef);
                     break;
                 case AGREEMENT:
                     question = creatorHelper.createAgreementQuestion(ctx, (AgreementQuestionDef) questionDef);

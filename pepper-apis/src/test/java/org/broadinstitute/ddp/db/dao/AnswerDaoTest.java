@@ -19,9 +19,13 @@ import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.exception.OperationNotAllowedException;
 import org.broadinstitute.ddp.model.activity.definition.question.DateQuestionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.MatrixGroupDef;
+import org.broadinstitute.ddp.model.activity.definition.question.MatrixOptionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.MatrixRowDef;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistOptionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.TextQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
+import org.broadinstitute.ddp.model.activity.instance.answer.ActivityInstanceSelectAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.AgreementAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
 import org.broadinstitute.ddp.model.activity.instance.answer.BoolAnswer;
@@ -29,13 +33,16 @@ import org.broadinstitute.ddp.model.activity.instance.answer.CompositeAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.DateAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.DateValue;
 import org.broadinstitute.ddp.model.activity.instance.answer.FileAnswer;
+import org.broadinstitute.ddp.model.activity.instance.answer.MatrixAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.NumericAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.NumericIntegerAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.PicklistAnswer;
+import org.broadinstitute.ddp.model.activity.instance.answer.SelectedMatrixCell;
 import org.broadinstitute.ddp.model.activity.instance.answer.SelectedPicklistOption;
 import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
 import org.broadinstitute.ddp.model.activity.types.DateFieldType;
 import org.broadinstitute.ddp.model.activity.types.DateRenderMode;
+import org.broadinstitute.ddp.model.activity.types.MatrixSelectMode;
 import org.broadinstitute.ddp.model.activity.types.NumericType;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
 import org.broadinstitute.ddp.model.activity.types.TextInputType;
@@ -173,6 +180,64 @@ public class AnswerDaoTest extends TxnAwareBaseTest {
 
             answerDao.deleteAnswer(textAnswer1.getAnswerId());
             assertFalse(answerDao.findAnswerById(textAnswer1.getAnswerId()).isPresent());
+
+            handle.rollback();
+        });
+    }
+
+    @Test
+    public void testCreateUpdateDelete_ActivityInstanceSelect() {
+        TransactionWrapper.useTxn(handle -> {
+            TestFormActivity activity = TestFormActivity.builder()
+                    .withTextQuestion(true)
+                    .withActivityInstanceSelectQuestion(true)
+                    .build(handle, testData.getUserId(), testData.getStudyGuid());
+            ActivityInstanceDto instanceDto = createInstance(handle, activity.getDef().getActivityId());
+            long instanceId = instanceDto.getId();
+
+            TestFormActivity subActivity1 = TestFormActivity.builder()
+                    .withTextQuestion(true)
+                    .build(handle, testData.getUserId(), testData.getStudyGuid());
+            ActivityInstanceDto instanceDto1 = createInstance(handle, subActivity1.getDef().getActivityId());
+
+            TestFormActivity subActivity2 = TestFormActivity.builder()
+                    .withTextQuestion(true)
+                    .build(handle, testData.getUserId(), testData.getStudyGuid());
+            ActivityInstanceDto instanceDto2 = createInstance(handle, subActivity2.getDef().getActivityId());
+
+
+            AnswerDao answerDao = daoBuilder.buildDao(handle);
+
+            ActivityInstanceSelectAnswer activityInstanceSelectAnswer1 =
+                    new ActivityInstanceSelectAnswer(null, activity.getActivityInstanceSelectQuestion().getStableId(),
+                            null, instanceDto1.getGuid());
+            answerDao.createAnswer(testData.getUserId(), instanceId, activityInstanceSelectAnswer1);
+
+            assertTrue(activityInstanceSelectAnswer1.getAnswerId() > 0);
+            assertEquals(QuestionType.ACTIVITY_INSTANCE_SELECT, activityInstanceSelectAnswer1.getQuestionType());
+            assertEquals(instanceDto1.getGuid(), activityInstanceSelectAnswer1.getValue());
+
+            ActivityInstanceSelectAnswer activityInstanceSelectAnswer2 =
+                    new ActivityInstanceSelectAnswer(null, activity.getActivityInstanceSelectQuestion().getStableId(),
+                            null, instanceDto2.getGuid());
+            answerDao.updateAnswer(testData.getUserId(), activityInstanceSelectAnswer1.getAnswerId(), activityInstanceSelectAnswer2);
+
+            assertEquals(activityInstanceSelectAnswer1.getAnswerId(), activityInstanceSelectAnswer2.getAnswerId());
+            assertEquals(instanceDto2.getGuid(), activityInstanceSelectAnswer2.getValue());
+
+            Optional<Answer> updatedOpt = answerDao.findAnswerById(activityInstanceSelectAnswer1.getAnswerId());
+
+            assertTrue(updatedOpt.isPresent());
+
+            Answer updatedAnswer = updatedOpt.get();
+
+            assertEquals(activityInstanceSelectAnswer1.getAnswerId(), updatedAnswer.getAnswerId());
+            assertEquals(activityInstanceSelectAnswer1.getAnswerGuid(), updatedAnswer.getAnswerGuid());
+
+            assertEquals(instanceDto2.getGuid(), updatedAnswer.getValue());
+
+            answerDao.deleteAnswer(activityInstanceSelectAnswer1.getAnswerId());
+            assertFalse(answerDao.findAnswerById(activityInstanceSelectAnswer1.getAnswerId()).isPresent());
 
             handle.rollback();
         });
@@ -353,6 +418,89 @@ public class AnswerDaoTest extends TxnAwareBaseTest {
             assertEquals(2, selected.size());
             assertEquals("PARENT_OPT", selected.get(0).getStableId());
             assertEquals("NESTED_OPT2", selected.get(1).getStableId());
+
+            answerDao.deleteAnswer(created.getAnswerId());
+            assertFalse(answerDao.findAnswerById(created.getAnswerId()).isPresent());
+
+            handle.rollback();
+        });
+    }
+
+    @Test
+    public void testCreateUpdateDelete_matrix() {
+        TransactionWrapper.useTxn(handle -> {
+            PicklistOptionDef nestedOptionDef1 = new PicklistOptionDef("NESTED_OPT1", Template.text("nested option 1"));
+            PicklistOptionDef nestedOptionDef2 = new PicklistOptionDef("NESTED_OPT2", Template.text("nested option 2"));
+            List<PicklistOptionDef> nestedOpts = List.of(nestedOptionDef1, nestedOptionDef2);
+            PicklistOptionDef optionDef = new PicklistOptionDef("PARENT_OPT", Template.text("parent option1"),
+                    Template.text("nested options Label"), nestedOpts);
+
+            List<MatrixOptionDef> options = List.of(
+                    new MatrixOptionDef("OPT_1", Template.text(""), "DEFAULT"),
+                    new MatrixOptionDef("OPT_2", Template.text(""), "GROUP"),
+                    new MatrixOptionDef("OPT_3", Template.text(""), "GROUP"));
+            List<MatrixRowDef> rows = List.of(
+                    new MatrixRowDef("ROW_1", Template.text("")),
+                    new MatrixRowDef("ROW_2", Template.text("")));
+            List<MatrixGroupDef> groups = List.of(new MatrixGroupDef("GROUP", Template.text("")),
+                    new MatrixGroupDef("DEFAULT", null));
+
+            TestFormActivity act = TestFormActivity.builder()
+                    .withMatrixOptionsRowsGroupsList(true, MatrixSelectMode.SINGLE, options, rows, groups)
+                    .build(handle, testData.getUserId(), testData.getStudyGuid());
+
+            long instanceId = createInstance(handle, act.getDef().getActivityId()).getId();
+
+            AnswerDao answerDao = daoBuilder.buildDao(handle);
+            var created = answerDao.createAnswer(testData.getUserId(), instanceId,
+                    new MatrixAnswer(null, act.getMatrixListQuestion().getStableId(), null, List.of(
+                            new SelectedMatrixCell("ROW_1", "OPT_1", "DEFAULT"))));
+
+            assertTrue(created.getAnswerId() > 0);
+            assertEquals(QuestionType.MATRIX, created.getQuestionType());
+
+            var selected = ((MatrixAnswer) created).getValue();
+            assertEquals(1, selected.size());
+            assertEquals("OPT_1", selected.get(0).getOptionStableId());
+            assertEquals("ROW_1", selected.get(0).getRowStableId());
+            assertEquals("DEFAULT", selected.get(0).getGroupStableId());
+
+            MatrixAnswer matrixAnswer = new MatrixAnswer(null, act.getMatrixListQuestion().getStableId(), null, List.of(
+                    new SelectedMatrixCell("ROW_2", "OPT_2", "GROUP")));
+            answerDao.updateAnswer(testData.getUserId(), created.getAnswerId(), matrixAnswer);
+
+            assertEquals(created.getAnswerId(), matrixAnswer.getAnswerId());
+
+            Optional<Answer> updatedOpt = answerDao.findAnswerById(created.getAnswerId());
+
+            assertTrue(updatedOpt.isPresent());
+
+            Answer updated = updatedOpt.get();
+            assertEquals(created.getAnswerGuid(), updated.getAnswerGuid());
+
+            selected = ((MatrixAnswer) updated).getValue();
+            assertEquals(1, selected.size());
+            assertEquals("OPT_2", selected.get(0).getOptionStableId());
+            assertEquals("ROW_2", selected.get(0).getRowStableId());
+            assertEquals("GROUP", selected.get(0).getGroupStableId());
+
+            matrixAnswer = new MatrixAnswer(null, act.getMatrixListQuestion().getStableId(), null, List.of(
+                    new SelectedMatrixCell("ROW_1", "OPT_1", "DEFAULT"),
+                    new SelectedMatrixCell("ROW_2", "OPT_2", "GROUP")));
+            answerDao.updateAnswer(testData.getUserId(), created.getAnswerId(), matrixAnswer);
+            assertEquals(created.getAnswerId(), matrixAnswer.getAnswerId());
+            updatedOpt = answerDao.findAnswerById(created.getAnswerId());
+            assertTrue(updatedOpt.isPresent());
+            updated = updatedOpt.get();
+            assertEquals(created.getAnswerGuid(), updated.getAnswerGuid());
+            selected = ((MatrixAnswer) updated).getValue();
+            assertEquals(2, selected.size());
+            assertEquals("OPT_1", selected.get(0).getOptionStableId());
+            assertEquals("ROW_1", selected.get(0).getRowStableId());
+            assertEquals("DEFAULT", selected.get(0).getGroupStableId());
+            assertEquals("OPT_2", selected.get(1).getOptionStableId());
+            assertEquals("ROW_2", selected.get(1).getRowStableId());
+            assertEquals("GROUP", selected.get(1).getGroupStableId());
 
             answerDao.deleteAnswer(created.getAnswerId());
             assertFalse(answerDao.findAnswerById(created.getAnswerId()).isPresent());

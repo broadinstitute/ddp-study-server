@@ -252,6 +252,7 @@ public class ActivityDefStore {
         int numQuestions = 0;
         int numAnswered = 0;
         boolean shown = true;
+        boolean enabled = true;
         String instanceGuid = formResponse != null ? formResponse.getGuid() : null;
 
         if (block.getShownExpr() != null) {
@@ -264,7 +265,17 @@ public class ActivityDefStore {
             }
         }
 
-        if (shown) {
+        if (block.getEnabledExpr() != null) {
+            try {
+                enabled = interpreter.eval(block.getEnabledExpr(), handle, userGuid, operatorGuid, instanceGuid);
+            } catch (PexException e) {
+                String msg = String.format("Error evaluating pex expression for formBlockDef def %s: `%s`",
+                        block.getBlockGuid(), block.getEnabledExpr());
+                throw new DDPException(msg, e);
+            }
+        }
+
+        if (shown && enabled) {
             QuestionDef questionDef = null;
             if (block.getBlockType() == BlockType.CONDITIONAL) {
                 ConditionalBlockDef conditionalBlockDef = (ConditionalBlockDef) block;

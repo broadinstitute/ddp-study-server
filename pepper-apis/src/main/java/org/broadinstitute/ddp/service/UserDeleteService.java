@@ -37,6 +37,7 @@ import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dao.UserGovernanceDao;
 import org.broadinstitute.ddp.db.dao.UserProfileDao;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
+import org.broadinstitute.ddp.db.dto.EnrollmentStatusDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.elastic.ElasticSearchIndexType;
 import org.broadinstitute.ddp.exception.DDPException;
@@ -133,7 +134,7 @@ public class UserDeleteService {
                     objToStr(comment));
         } catch (Throwable e) {
             LOG.error(format(EXCEPTION_MESSAGE_PREFIX__ERROR + e.getMessage(), user.getGuid()), e);
-            throw new DDPException(format(EXCEPTION_MESSAGE_PREFIX__ERROR + e.getMessage()));
+            throw new DDPException(format(EXCEPTION_MESSAGE_PREFIX__ERROR + e.getMessage(), user.getGuid()));
         }
     }
 
@@ -152,6 +153,7 @@ public class UserDeleteService {
 
     private void deleteUserData(Handle handle, User user, boolean fullDelete) throws IOException {
         UserCollectedData userCollectedData = new UserCollectedData();
+        Auth0ManagementClient auth0ManagementClient = Auth0ManagementClient.forUser(handle, user.getGuid());
 
         if (fullDelete) {
             deleteKitRequests(handle, user);
@@ -166,7 +168,7 @@ public class UserDeleteService {
 
         deleteUserProfile(handle, user);
         deleteMedicalProvider(handle, user);
-        deleteEnrollmentStatuses(handle, user);
+        deleteEnrollmentStatuses(handle, user, userCollectedData);
         deleteUserAddresses(handle, user);
         deleteParticipantAnswersAndActivityInstances(handle, user);
         deleteActivityInstanceCreationMutex(handle, user);
@@ -179,7 +181,7 @@ public class UserDeleteService {
         deleteElasticSearchData(handle, user, userCollectedData, fullDelete);
 
         if (fullDelete) {
-            deleteAuth0User(handle, user);
+            deleteAuth0User(user, auth0ManagementClient);
         }
 
         dataSyncRequest(handle, userCollectedData);
@@ -218,9 +220,15 @@ public class UserDeleteService {
         handle.attach(JdbiMedicalProvider.class).deleteByUserId(user.getId());
     }
 
-    private void deleteEnrollmentStatuses(Handle handle, User user) {
+    private void deleteEnrollmentStatuses(Handle handle, User user, UserCollectedData userCollectedData) {
         log("user_study_enrollment", user);
-        handle.attach(JdbiUserStudyEnrollment.class).deleteByUserId(user.getId());
+        JdbiUserStudyEnrollment enrollmentDao = handle.attach(JdbiUserStudyEnrollment.class);
+        List<EnrollmentStatusDto> allEnrolls = enrollmentDao.getAllLatestEnrollmentsForUser(user.getGuid());
+        Set<String> studyGuids = allEnrolls.stream()
+                .map(EnrollmentStatusDto::getStudyGuid)
+                .collect(Collectors.toSet());
+        userCollectedData.setStudyGuids(studyGuids);
+        enrollmentDao.deleteByUserId(user.getId());
     }
 
     private void deleteUserAddresses(Handle handle, User user) {
@@ -273,7 +281,9 @@ public class UserDeleteService {
         log("user_governance (by participant_user_id)", user);
         userGovernanceDao.deleteAllGovernancesForParticipant(user.getId());
 
-        userCollectedData.setStudyGuids(studyGuids);
+        if (userCollectedData.getStudyGuids().isEmpty() && !studyGuids.isEmpty()) {
+            userCollectedData.setStudyGuids(studyGuids);
+        }
         userCollectedData.setUserGovernances(userGovernances);
     }
 
@@ -319,7 +329,7 @@ public class UserDeleteService {
 
     private void deleteElasticSearchData(Handle handle, User user, UserCollectedData userCollectedData, boolean fullDelete)
             throws IOException {
-        if (esClient != null) {
+        if (esClient != null && userCollectedData.getStudyGuids().size() > 0) {
             LOG.info(LOG_MESSAGE_PREFIX__DELETE_FROM_ES + "participants, participants_structured, users", user.getGuid());
             BulkRequest bulkRequest = new BulkRequest().timeout("2m");
             for (String studyGuid : userCollectedData.getStudyGuids()) {
@@ -360,10 +370,10 @@ public class UserDeleteService {
         }
     }
 
-    private void deleteAuth0User(Handle handle, User user) {
-        if (user.getAuth0UserId() != null) {
-            LOG.info(LOG_MESSAGE_PREFIX__DELETE_FROM_AUTH, user);
-            var result = Auth0ManagementClient.forUser(handle, user.getGuid()).deleteAuth0User(user.getAuth0UserId());
+    private void deleteAuth0User(User user, Auth0ManagementClient auth0ManagementClient) {
+        if (user.getAuth0UserId() != null && auth0ManagementClient != null) {
+            LOG.info(LOG_MESSAGE_PREFIX__DELETE_FROM_AUTH, user.getGuid());
+            var result = auth0ManagementClient.deleteAuth0User(user.getAuth0UserId());
             if (result.hasFailure()) {
                 throw new DDPException(result.hasThrown() ? result.getThrown() : result.getError());
             }

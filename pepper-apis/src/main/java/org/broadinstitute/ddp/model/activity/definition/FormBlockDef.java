@@ -24,8 +24,12 @@ public abstract class FormBlockDef {
     @SerializedName("shownExpr")
     private String shownExpr;
 
+    @SerializedName("enabledExpr")
+    private String enabledExpr;
+
     private transient Long blockId;
     private transient Long shownExprId;
+    private transient Long enabledExprId;
 
     FormBlockDef(BlockType blockType) {
         this.blockType = blockType;
@@ -63,8 +67,24 @@ public abstract class FormBlockDef {
         return shownExprId;
     }
 
+    public Long getEnabledExprId() {
+        return enabledExprId;
+    }
+
+    public String getEnabledExpr() {
+        return enabledExpr;
+    }
+
+    public void setEnabledExpr(String enabledExpr) {
+        this.enabledExpr = enabledExpr;
+    }
+
     public void setShownExprId(Long shownExprId) {
         this.shownExprId = shownExprId;
+    }
+
+    public void setEnabledExprId(Long enabledExprId) {
+        this.enabledExprId = enabledExprId;
     }
 
     public abstract Stream<QuestionDef> getQuestions();

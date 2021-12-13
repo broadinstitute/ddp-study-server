@@ -71,6 +71,10 @@ import org.broadinstitute.ddp.model.activity.definition.question.FileQuestionDef
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistGroupDef;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistOptionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistQuestionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.MatrixGroupDef;
+import org.broadinstitute.ddp.model.activity.definition.question.MatrixOptionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.MatrixRowDef;
+import org.broadinstitute.ddp.model.activity.definition.question.MatrixQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.TextQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.activity.definition.template.TemplateVariable;
@@ -92,6 +96,7 @@ import org.broadinstitute.ddp.model.activity.types.FormType;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.broadinstitute.ddp.model.activity.types.NestedActivityRenderHint;
 import org.broadinstitute.ddp.model.activity.types.PicklistRenderMode;
+import org.broadinstitute.ddp.model.activity.types.MatrixSelectMode;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
 import org.broadinstitute.ddp.model.activity.types.RuleType;
 import org.broadinstitute.ddp.model.activity.types.SuggestionType;
@@ -294,6 +299,31 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
                 .build();
         var fileSection = new FormSectionDef(null, List.of(new QuestionBlockDef(file1)));
 
+        //------------- create SECTION[9] ---------
+        MatrixQuestionDef mqf1 = MatrixQuestionDef.builder(MatrixSelectMode.SINGLE, "MA_SINGLE", newTemplate())
+                .addRow(new MatrixRowDef("MA_SINGLE_ROW_1", newTemplate()))
+                .addRow(new MatrixRowDef("MA_SINGLE_ROW_2", newTemplate()))
+                .addOption(new MatrixOptionDef("MA_SINGLE_OPT_1", newTemplate(), "DEFAULT"))
+                .addOption(new MatrixOptionDef("MA_SINGLE_OPT_2", newTemplate(), "MA_SINGLE_GROUP"))
+                .addOption(new MatrixOptionDef("MA_SINGLE_OPT_3", newTemplate(), "MA_SINGLE_GROUP"))
+                .addGroups(List.of(
+                        new MatrixGroupDef("DEFAULT", null),
+                        new MatrixGroupDef("MA_SINGLE_GROUP", newTemplate())))
+                .build();
+
+        MatrixQuestionDef mqf2 = MatrixQuestionDef.builder(MatrixSelectMode.MULTIPLE, "MA_MULTI", newTemplate())
+                .addRow(new MatrixRowDef("MA_MULTI_ROW_1", newTemplate()))
+                .addRow(new MatrixRowDef("MA_MULTI_ROW_2", newTemplate()))
+                .addOption(new MatrixOptionDef("MA_MULTI_OPT_1", newTemplate(), "DEFAULT"))
+                .addOption(new MatrixOptionDef("MA_MULTI_OPT_2", newTemplate(), "MA_MULTI_GROUP"))
+                .addOption(new MatrixOptionDef("MA_MULTI_OPT_3", newTemplate(), "MA_MULTI_GROUP"))
+                .addGroups(List.of(
+                        new MatrixGroupDef("DEFAULT", null),
+                        new MatrixGroupDef("MA_MULTI_GROUP", newTemplate())))
+                .addValidation(new RequiredRuleDef(newTemplate()))
+                .build();
+
+        FormSectionDef matrixSection = new FormSectionDef(null, TestUtil.wrapQuestions(mqf1, mqf2));
 
         //------------- create STUDY ACTIVITY ---------
         String parentActCode = "ACT_ROUTE_PARENT" + Instant.now().toEpochMilli();
@@ -317,6 +347,7 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
                 .addSection(iconSection)
                 .addSection(compSection)
                 .addSection(fileSection)
+                .addSection(matrixSection)
                 .build();
         activityVersionDto = handle.attach(ActivityDao.class).insertActivity(
                 parentActivity, List.of(activity), RevisionMetadata.now(testData.getUserId(), "add " + activityCode)
@@ -525,6 +556,54 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
                 .body("picklistOptions[2].groupId", equalTo("G2"))
                 .body("picklistOptions[3].stableId", equalTo("G2_OPT2"))
                 .body("picklistOptions[3].groupId", equalTo("G2"));
+    }
+
+    @Test
+    public void testGet_matrixQuestion() {
+        Response resp = testFor200AndExtractResponse();
+
+        resp.then().assertThat()
+                .body("sections.size()", equalTo(activity.getSections().size()))
+                .body("sections[9].blocks.size()", equalTo(2));
+
+        resp.then().assertThat()
+                .root("sections[9].blocks[0].question")
+                .body("questionType", equalTo("MATRIX"))
+                .body("stableId", equalTo("MA_SINGLE"))
+                .body("selectMode", equalTo("SINGLE"))
+                .body("groups.size()", equalTo(2))
+                .body("groups[0].identifier", equalTo("DEFAULT"))
+                .body("groups[1].identifier", equalTo("MA_SINGLE_GROUP"))
+                .body("options.size()", equalTo(3))
+                .body("options[0].stableId", equalTo("MA_SINGLE_OPT_1"))
+                .body("options[0].groupId", equalTo("DEFAULT"))
+                .body("options[1].stableId", equalTo("MA_SINGLE_OPT_2"))
+                .body("options[1].groupId", equalTo("MA_SINGLE_GROUP"))
+                .body("options[2].stableId", equalTo("MA_SINGLE_OPT_3"))
+                .body("options[2].groupId", equalTo("MA_SINGLE_GROUP"))
+                .body("questions.size()", equalTo(2))
+                .body("questions[0].stableId", equalTo("MA_SINGLE_ROW_1"))
+                .body("questions[1].stableId", equalTo("MA_SINGLE_ROW_2"));
+
+        resp.then().assertThat()
+                .root("sections[9].blocks[1].question")
+                .body("questionType", equalTo("MATRIX"))
+                .body("stableId", equalTo("MA_MULTI"))
+                .body("selectMode", equalTo("MULTIPLE"))
+                .body("groups.size()", equalTo(2))
+                .body("groups[0].identifier", equalTo("DEFAULT"))
+                .body("groups[1].identifier", equalTo("MA_MULTI_GROUP"))
+                .body("options.size()", equalTo(3))
+                .body("options[0].stableId", equalTo("MA_MULTI_OPT_1"))
+                .body("options[0].groupId", equalTo("DEFAULT"))
+                .body("options[1].stableId", equalTo("MA_MULTI_OPT_2"))
+                .body("options[1].groupId", equalTo("MA_MULTI_GROUP"))
+                .body("options[2].stableId", equalTo("MA_MULTI_OPT_3"))
+                .body("options[2].groupId", equalTo("MA_MULTI_GROUP"))
+                .body("questions.size()", equalTo(2))
+                .body("questions[0].stableId", equalTo("MA_MULTI_ROW_1"))
+                .body("questions[1].stableId", equalTo("MA_MULTI_ROW_2"))
+                .body("validations[0].rule", equalTo("REQUIRED"));
     }
 
     @Test

@@ -43,6 +43,7 @@ public class DeleteUserRouteTestAbstract extends IntegrationTestSuite.TestCase {
     protected static User userEnrolled;
     protected static User userWithKit;
     protected static User userNormal;
+    protected static User userNoGovernance;
 
     protected static final List<Long> addressesToDelete = new ArrayList<>();
     protected static final List<Long> kitsToDelete = new ArrayList<>();
@@ -57,24 +58,28 @@ public class DeleteUserRouteTestAbstract extends IntegrationTestSuite.TestCase {
 
             userNonGoverned = createUser(handle, testData.getTestingStudy(), null, false,
                     testData.getProfile(), testData.getTestingUser().getEmail(),
-                    false);
+                    false, true);
             userMultiGoverned = createUser(handle, testData.getTestingStudy(), null, false,
                     testData.getProfile(), testData.getTestingUser().getEmail(),
-                    false, testData.getUserId(), userNonGoverned.getId());
+                     false, true, testData.getUserId(), userNonGoverned.getId());
             userWithAccount = createUser(handle, testData.getTestingStudy(), "some_account", false,
                     testData.getProfile(), testData.getTestingUser().getEmail(),
-                    false, testData.getUserId());
+                    false, true, testData.getUserId());
             userEnrolled = createUser(handle, testData.getTestingStudy(), null, true,
                     testData.getProfile(), testData.getTestingUser().getEmail(),
-                    false,
+                    false, true,
                     testData.getUserId());
             userWithKit = createUser(handle, testData.getTestingStudy(), null, false,
                     testData.getProfile(), testData.getTestingUser().getEmail(),
-                    true,
+                    true, true,
                     testData.getUserId());
             userNormal = createUser(handle, testData.getTestingStudy(), null, false,
                     testData.getProfile(), testData.getTestingUser().getEmail(),
-                    false, testData.getUserId());
+                    false, true, testData.getUserId());
+            userNoGovernance = createUser(handle, testData.getTestingStudy(), null, true,
+                    testData.getProfile(), testData.getTestingUser().getEmail(),
+                    false, false,
+                    testData.getUserId());
         });
     }
 
@@ -101,7 +106,8 @@ public class DeleteUserRouteTestAbstract extends IntegrationTestSuite.TestCase {
 
     protected static User createUser(Handle handle, StudyDto study, String auth0Account, boolean enrolled,
                                      UserProfile userProfile, String email,
-                                     boolean kitRequested, Long... proxyUserIds) throws Exception {
+                                     boolean kitRequested, boolean needGovernance, Long... proxyUserIds
+                                     ) throws Exception {
         UserDao userDao = handle.attach(UserDao.class);
         JdbiUser jdbiUser = handle.attach(JdbiUser.class);
         String userGuid = DBUtils.uniqueUserGuid(handle);
@@ -123,12 +129,14 @@ public class DeleteUserRouteTestAbstract extends IntegrationTestSuite.TestCase {
         if (email != null) {
             user.setEmail(email);
         }
-        Arrays.stream(proxyUserIds).forEach(proxyUserId -> {
-            UserGovernanceDao userGovernanceDao = handle.attach(UserGovernanceDao.class);
-            long governanceId = userGovernanceDao.assignProxy(userGuid, proxyUserId, userId);
-            governancesToDelete.computeIfAbsent(user, id -> new ArrayList<>()).add(governanceId);
-            userGovernanceDao.grantGovernedStudy(governanceId, study.getId());
-        });
+        if (needGovernance) {
+            Arrays.stream(proxyUserIds).forEach(proxyUserId -> {
+                UserGovernanceDao userGovernanceDao = handle.attach(UserGovernanceDao.class);
+                long governanceId = userGovernanceDao.assignProxy(userGuid, proxyUserId, userId);
+                governancesToDelete.computeIfAbsent(user, id -> new ArrayList<>()).add(governanceId);
+                userGovernanceDao.grantGovernedStudy(governanceId, study.getId());
+            });
+        }
         if (enrolled) {
             handle.attach(JdbiUserStudyEnrollment.class)
                     .changeUserStudyEnrollmentStatus(user.getGuid(), study.getGuid(), EnrollmentStatusType.ENROLLED);

@@ -6,6 +6,8 @@ import static org.broadinstitute.ddp.pex.RetrievedActivityInstanceType.LATEST;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Set;
+import java.util.HashSet;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
@@ -28,6 +30,9 @@ import org.broadinstitute.ddp.db.dao.InvitationDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
 import org.broadinstitute.ddp.db.dao.JdbiQuestionCached;
+import org.broadinstitute.ddp.db.dao.JdbiMatrixOption;
+import org.broadinstitute.ddp.db.dao.JdbiMatrixRow;
+import org.broadinstitute.ddp.db.dao.JdbiMatrixGroup;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudyCached;
 import org.broadinstitute.ddp.db.dao.JdbiUserStudyEnrollment;
 import org.broadinstitute.ddp.db.dao.StudyGovernanceDao;
@@ -37,8 +42,11 @@ import org.broadinstitute.ddp.db.dto.ActivityDto;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceStatusDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.db.dto.UserActivityInstanceSummary;
+import org.broadinstitute.ddp.db.dto.MatrixRowDto;
+import org.broadinstitute.ddp.db.dto.MatrixOptionDto;
 import org.broadinstitute.ddp.model.activity.definition.question.CompositeQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
+import org.broadinstitute.ddp.model.activity.instance.answer.ActivityInstanceSelectAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
 import org.broadinstitute.ddp.model.activity.instance.answer.CompositeAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.DateAnswer;
@@ -46,6 +54,7 @@ import org.broadinstitute.ddp.model.activity.instance.answer.DateValue;
 import org.broadinstitute.ddp.model.activity.instance.answer.PicklistAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.SelectedPicklistOption;
 import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
+import org.broadinstitute.ddp.model.activity.instance.answer.MatrixAnswer;
 import org.broadinstitute.ddp.model.activity.types.EventTriggerType;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
@@ -411,6 +420,8 @@ public class TreeWalkInterpreter implements PexInterpreter {
                 return ((PicklistAnswer) answer).getValue().size() > 0;
             } else if (answer.getQuestionType() == QuestionType.TEXT) {
                 return !((TextAnswer) answer).getValue().isBlank();
+            } else if (answer.getQuestionType() == QuestionType.MATRIX) {
+                return checkMatrixQuestionAnswered(ictx, studyId, stableId, (MatrixAnswer) answer);
             } else {
                 return true;
             }
@@ -442,6 +453,38 @@ public class TreeWalkInterpreter implements PexInterpreter {
         } else {
             throw new PexUnsupportedException("Unsupported question predicate: " + predCtx.getText());
         }
+    }
+
+    private boolean checkMatrixQuestionAnswered(InterpreterContext ictx, long studyId, String stableId,
+                                                MatrixAnswer answer) {
+        var questionDto = new JdbiQuestionCached(ictx.getHandle())
+                .findLatestDtoByStudyIdAndQuestionStableId(studyId, stableId).orElseThrow(() -> new PexFetchException(format(
+                        "Could not find question with stable id %s in study %d", stableId, studyId)));
+
+        var getJdbiOption = ictx.getHandle().attach(JdbiMatrixOption.class);
+        var getJdbiGroup = ictx.getHandle().attach(JdbiMatrixGroup.class);
+        var getJdbiRow = ictx.getHandle().attach(JdbiMatrixRow.class);
+
+        Set<String> groups = getJdbiOption.findAllActiveOrderedMatrixOptionsByQuestionId(questionDto.getId())
+                .stream().map(MatrixOptionDto::getGroupId).distinct()
+                .map(getJdbiGroup::findGroupCodeById).collect(Collectors.toSet());
+
+        Set<String> rows = getJdbiRow.findAllActiveOrderedMatrixRowsByQuestionId(questionDto.getId())
+                .stream().map(MatrixRowDto::getStableId).collect(Collectors.toSet());
+
+        Set<String> allCells = new HashSet<>();
+
+        answer.getValue().forEach(cell -> allCells.add(cell.getRowStableId() + ":" + cell.getGroupStableId()));
+
+        for (var row : rows) {
+            for (var group : groups) {
+                if (allCells.add(row + ":" + group)) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
     }
 
     private Object evalDefaultLatestAnswerQuery(InterpreterContext ictx, DefaultLatestAnswerQueryContext ctx) {
@@ -504,6 +547,8 @@ public class TreeWalkInterpreter implements PexInterpreter {
                         QuestionType type = null;
                         if (childStableId == null) {
                             type = question.getQuestionType();
+                        } else if (question.getQuestionType() == QuestionType.MATRIX) {
+                            type = question.getQuestionType();
                         } else if (question.getQuestionType() == QuestionType.COMPOSITE) {
                             type = ((CompositeQuestionDef) question)
                                     .getChildren().stream()
@@ -522,14 +567,15 @@ public class TreeWalkInterpreter implements PexInterpreter {
                         throw new PexFetchException(new NoSuchElementException(msg));
                     });
         } else {
-            String stableIdToLookup = childStableId != null ? childStableId : stableId;
-            questionType = fetcher.findQuestionType(ictx, userGuid, studyGuid, activityCode, stableIdToLookup).orElseThrow(() -> {
-                String msg = String.format(
-                        "Cannot find question %s%s in form %s for user %s and study %s",
-                        stableId, childStableId != null ? " (child " + childStableId + ")" : "",
-                        activityCode, userGuid, studyGuid);
-                return new PexFetchException(new NoSuchElementException(msg));
-            });
+            questionType = fetcher.findQuestionType(ictx, userGuid, studyGuid, activityCode, childStableId).orElse(
+                    fetcher.findQuestionType(ictx, userGuid, studyGuid, activityCode, stableId).orElseThrow(() -> {
+                        String msg = String.format(
+                                "Cannot find question %s%s in form %s for user %s and study %s",
+                                stableId, childStableId != null ? " (child " + childStableId + ")" : "",
+                                activityCode, userGuid, studyGuid);
+                        return new PexFetchException(new NoSuchElementException(msg));
+                    })
+            );
         }
 
         String instanceGuid = instanceType.equals(LATEST) ? null : ictx.getActivityInstanceGuid();
@@ -540,8 +586,13 @@ public class TreeWalkInterpreter implements PexInterpreter {
                     return applyBoolAnswerPredicate(ictx, predicateCtx, userGuid, studyId, activityCode, instanceGuid, stableId);
                 case TEXT:
                     return applyTextAnswerPredicate(ictx, predicateCtx, userGuid, studyId, activityCode, instanceGuid, stableId);
+                case ACTIVITY_INSTANCE_SELECT:
+                    return applyActivityInstanceSelectAnswerPredicate(ictx, predicateCtx, userGuid, studyId, activityCode,
+                            instanceGuid, stableId);
                 case PICKLIST:
                     return applyPicklistAnswerPredicate(ictx, predicateCtx, userGuid, studyId, activityCode, instanceGuid, stableId);
+                case MATRIX:
+                    return applyMatrixAnswerPredicate(ictx, predicateCtx, userGuid, studyId, activityCode, instanceGuid, stableId);
                 case DATE:
                     return applyDateAnswerPredicate(ictx, predicateCtx, userGuid, studyId, activityCode, instanceGuid, stableId);
                 case NUMERIC:
@@ -563,9 +614,13 @@ public class TreeWalkInterpreter implements PexInterpreter {
                 }
             }
 
-            Optional<Answer> compositeAnswer = answerDao.findAnswerByInstanceGuidAndQuestionStableId(instanceGuid, stableId);
+            Optional<Answer> answer = answerDao.findAnswerByInstanceGuidAndQuestionStableId(instanceGuid, stableId);
 
-            List<Answer> childAnswers = compositeAnswer.stream()
+            if (questionType == QuestionType.MATRIX) {
+                return applyChildMatrixAnswerPredicate(predicateCtx, childStableId, answer);
+            }
+
+            List<Answer> childAnswers = answer.stream()
                     .map(ans -> (CompositeAnswer) ans)
                     .flatMap(parent -> parent.getValue().stream())
                     .flatMap(row -> row.getValues().stream())
@@ -574,6 +629,8 @@ public class TreeWalkInterpreter implements PexInterpreter {
             switch (questionType) {
                 case TEXT:
                     return applyChildTextAnswerPredicate(ictx, predicateCtx, userGuid, childAnswers);
+                case ACTIVITY_INSTANCE_SELECT:
+                    return applyChildActivityInstanceSelectAnswerPredicate(ictx, predicateCtx, userGuid, childAnswers);
                 case PICKLIST:
                     return applyChildPicklistAnswerPredicate(ictx, predicateCtx, userGuid, childAnswers);
                 case DATE:
@@ -729,6 +786,38 @@ public class TreeWalkInterpreter implements PexInterpreter {
         }
     }
 
+    private Object applyActivityInstanceSelectAnswerPredicate(InterpreterContext ictx, PredicateContext predicateCtx,
+                                                              String userGuid, long studyId, String activityCode,
+                                                              String instanceGuid, String stableId) {
+        if (predicateCtx instanceof PexParser.HasTextPredicateContext) {
+            String value = StringUtils.isBlank(instanceGuid)
+                    ? fetcher.findLatestActivityInstanceAnswer(ictx, userGuid, activityCode, stableId, studyId)
+                    : fetcher.findSpecificActivityInstanceSelectAnswer(ictx, activityCode, instanceGuid, stableId);
+            return StringUtils.isNotBlank(value);
+        } else if (predicateCtx instanceof PexParser.ValueQueryContext) {
+            throw new PexUnsupportedException("Getting Activity Instance Select answer value is not supported."
+                    + " Query: " + predicateCtx.getText());
+        } else {
+            throw new PexUnsupportedException("Invalid predicate used on Activity Instance Select answer query: "
+                    + predicateCtx.getText());
+        }
+    }
+
+    private Object applyChildActivityInstanceSelectAnswerPredicate(InterpreterContext ictx, PredicateContext predicateCtx,
+                                                                   String userGuid, List<Answer> childAnswers) {
+        if (predicateCtx instanceof PexParser.HasTextPredicateContext) {
+            return childAnswers.stream()
+                    .map(child -> ((ActivityInstanceSelectAnswer) child).getValue())
+                    .anyMatch(StringUtils::isNotBlank);
+        } else if (predicateCtx instanceof PexParser.ValueQueryContext) {
+            throw new PexUnsupportedException("Getting Activity Instance Select answer value is not supported"
+                    + " Query: " + predicateCtx.getText());
+        } else {
+            throw new PexUnsupportedException("Invalid predicate used on Activity Instance Select answer query: "
+                    + predicateCtx.getText());
+        }
+    }
+
     private Object applyPicklistAnswerPredicate(InterpreterContext ictx, PredicateContext predicateCtx,
                                                 String userGuid, long studyId, String activityCode, String instanceGuid, String stableId) {
         if (predicateCtx instanceof HasOptionPredicateContext) {
@@ -786,6 +875,55 @@ public class TreeWalkInterpreter implements PexInterpreter {
             throw new PexUnsupportedException("Invalid predicate used on picklist answer set query: " + predicateCtx.getText());
         }
     }
+
+    private Object applyMatrixAnswerPredicate(InterpreterContext ictx, PredicateContext predicateCtx,
+                                              String userGuid, long studyId, String activityCode, String instanceGuid, String stableId) {
+        if (predicateCtx instanceof PexParser.ValueQueryContext) {
+            throw new PexUnsupportedException("Getting matrix answer value is currently not supported");
+        } else {
+            throw new PexUnsupportedException("Invalid predicate used on matrix answer set query: " + predicateCtx.getText());
+        }
+    }
+
+    private Object applyChildMatrixAnswerPredicate(PredicateContext predicateCtx, String rowStableId, Optional<Answer> optionalAnswer) {
+
+        if (predicateCtx instanceof PexParser.ValueQueryContext) {
+            throw new PexUnsupportedException("Getting matrix answer value of child question is currently not supported");
+        }
+
+        MatrixAnswer answer;
+        if (optionalAnswer.isPresent()) {
+            answer = (MatrixAnswer) optionalAnswer.get();
+        } else {
+            return false;
+        }
+
+        if (predicateCtx instanceof HasOptionPredicateContext) {
+            String optionStableId = extractString(((HasOptionPredicateContext) predicateCtx).STR());
+            return answer.getValue().stream()
+                    .filter(row -> row.getRowStableId().equals(rowStableId))
+                    .anyMatch(option -> option.getOptionStableId().equals(optionStableId));
+        } else if (predicateCtx instanceof HasOptionStartsWithPredicateContext) {
+            List<String> optionStableIds = ((HasOptionStartsWithPredicateContext) predicateCtx).STR()
+                    .stream()
+                    .map(this::extractString)
+                    .collect(Collectors.toList());
+            return answer.getValue().stream()
+                    .filter(row -> row.getRowStableId().equals(rowStableId))
+                    .anyMatch(option -> CollectionMiscUtil.startsWithAny(option.getOptionStableId(), optionStableIds));
+        } else if (predicateCtx instanceof HasAnyOptionPredicateContext) {
+            List<String> optionStableIds = ((HasAnyOptionPredicateContext) predicateCtx).STR()
+                    .stream()
+                    .map(this::extractString)
+                    .collect(Collectors.toList());
+            return answer.getValue().stream()
+                    .filter(row -> row.getRowStableId().equals(rowStableId))
+                    .anyMatch(option -> optionStableIds.contains(option.getOptionStableId()));
+        } else {
+            throw new PexUnsupportedException("Invalid predicate used on matrix answer set query: " + predicateCtx.getText());
+        }
+    }
+
 
     private Object applyChildPicklistAnswerPredicate(InterpreterContext ictx, PredicateContext predicateCtx,
                                                      String userGuid, List<Answer> childAnswers) {
