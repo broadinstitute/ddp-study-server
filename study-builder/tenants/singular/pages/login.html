@@ -35,8 +35,9 @@
       .header {
         font-family: Spartan-Bold,sans-serif;
         color: #521b93;
-        margin-top: 30px;
-        margin-bottom: 50px;
+        padding-top: 30px;
+        padding-bottom: 20px!important;
+        background: #fff;
       }
       .container {
         width: auto!important;
@@ -66,7 +67,7 @@
         max-width: 1400px;
         height: 100%;
       }
-      .header__logo[_ngcontent-kyp-c428] {
+      .header__logo {
         height: 100px;
       }
       a {
@@ -75,18 +76,19 @@
         text-decoration: none!important;
         padding-bottom: 1px;
       }
-      .header__logo-img[_ngcontent-kyp-c428] {
+      .header__logo-img {
         height: 100%;
+        position: relative;
+        top: -4px;
       }
       img {
         vertical-align: middle;
       }
-      .header[_ngcontent-kyp-c428], .header[_ngcontent-kyp-c428] button {
+      .header, .header button {
         font-weight: bold;
         color: #521b93;
-        padding-bottom: 10px;
       }
-      .toggle[_ngcontent-kyp-c428] {
+      .toggle {
         display: none;
         position: relative;
         width: 32px;
@@ -95,7 +97,7 @@
         border: none;
         cursor: pointer;
       }
-      .toggle__bar[_ngcontent-kyp-c428] {
+      .toggle__bar {
         display: block;
         position: absolute;
         left: 0;
@@ -107,22 +109,22 @@
         -webkit-backface-visibility: hidden;
         backface-visibility: hidden;
       }
-      .toggle__bar[_ngcontent-kyp-c428]:first-of-type {
+      .toggle__bar:first-of-type {
         top: 0;
       }
-      .toggle__bar[_ngcontent-kyp-c428]:nth-of-type(2) {
+      .toggle__bar:nth-of-type(2) {
         top: 50%;
         margin-top: -1px;
       }
-      .toggle__bar[_ngcontent-kyp-c428]:nth-of-type(3) {
+      .toggle__bar:nth-of-type(3) {
         bottom: 0;
       }
-      .header__nav[_ngcontent-kyp-c428] {
+      .header__nav {
         display: flex;
         align-items: center;
         font-size: 16px;
       }
-      .link-list[_ngcontent-kyp-c428] {
+      .link-list {
         display: flex;
         align-items: center;
         list-style: none;
@@ -131,21 +133,29 @@
         margin-top: 0;
         margin-bottom: 10px;
       }
-      .link-list[_ngcontent-kyp-c428] {
+      .link-list {
         display: flex;
         align-items: center;
         list-style: none;
       }
-      .link-list__item[_ngcontent-kyp-c428] + .link-list__item[_ngcontent-kyp-c428] {
+      .link-list__item + .link-list__item {
         margin-left: 25px;
       }
       .header .SimpleButton {
-        width: 160px;
+        width: 140px;
+      }
+      .header .SimpleButton:hover {
+        background: #521b93;
+        color: #fff;
+        transition: .3s;
       }
       .SimpleButton {
         display: inline-block;
-        padding: 9px 14px 5px;
-        font-family: Spartan-Bold,sans-serif;
+        padding: 6px 14px 5px;
+        padding-top: 9px;
+        padding-bottom: 6px;
+        font-family: Spartan,sans-serif;
+        font-weight: bold;
         font-size: 18px;
         text-align: center;
         text-decoration: none;
@@ -156,12 +166,12 @@
         cursor: pointer;
         color: #521b93;
       }
-      .header[_ngcontent-kyp-c428], .header[_ngcontent-kyp-c428] button {
-        font-family: Spartan-Bold,sans-serif;
+      .header, .header button {
+        font-family: Spartan,sans-serif;
         color: #521b93;
       }
-      .button--wide[_ngcontent-kyp-c428] {
-        width: 160px;
+      .button--wide {
+        width: 120px;
       }
       .button--primary {
         background: #521b93!important;
@@ -169,10 +179,12 @@
         color: #fff!important;
       }
       .button {
+        font-weight: bold;
         display: inline-block;
-        padding: 9px 14px 5px;
-        padding-bottom: 10px;
-        font-family: Spartan-Bold,sans-serif;
+        padding: 6px 13px 5px;
+        padding-top: 9px;
+        padding-bottom: 6px;
+        font-family: Spartan,sans-serif;
         font-size: 18px;
         text-align: center;
         text-decoration: none;
@@ -182,37 +194,37 @@
         cursor: pointer;
       }
       @media (max-width: 28.125em) {
-        .header__logo[_ngcontent-kyp-c428] {
+        .header__logo {
           height: 2.8rem;
         }
       }
       @media (max-width: 42.5em) {
-        .header__logo[_ngcontent-kyp-c428] {
+        .header__logo {
           height: 3.2rem;
         }
       }
       @media (max-width: 1280px) {
-        .header__logo[_ngcontent-kyp-c428] {
+        .header__logo {
           height: 80px;
         }
       }
       @media (max-width: 64em) and (max-width: 28.125em) {
-        .header__nav[_ngcontent-kyp-c428] {
+        .header__nav {
           height: calc(100vh - 68px);
         }
       }
       @media (max-width: 1280px) {
-        .header__logo[_ngcontent-kyp-c428] {
+        .header__logo {
           height: 80px;
         }
       }
       @media (max-width: 42.5em) {
-        .header__logo[_ngcontent-kyp-c428] {
+        .header__logo {
           height: 3.2rem;
         }
       }
       @media (max-width: 28.125em) {
-        .header__logo[_ngcontent-kyp-c428] {
+        .header__logo {
           height: 2.8rem;
         }
       }
@@ -233,12 +245,12 @@
       }
 
       @media (max-width: 64em) and (max-width: 28.125em) {
-        .header__nav[_ngcontent-kyp-c428] {
+        .header__nav {
           height: calc(100vh - 168px);
         }
       }
       @media (max-width: 64em) and (max-width: 42.5em) {
-        .header__nav[_ngcontent-kyp-c428] {
+        .header__nav {
           height: calc(100vh - 174px);
         }
       }
@@ -246,36 +258,36 @@
         .header {
           margin-bottom: 20px;
         }
-        .header__logo[_ngcontent-kyp-c428] {
+        .header__logo {
           margin-right: auto;
         }
-        .toggle[_ngcontent-kyp-c428] {
+        .toggle {
           display: block;
         }
-        .link-list__item[_ngcontent-kyp-c428] + .link-list__item[_ngcontent-kyp-c428] {
+        .link-list__item + .link-list__item {
           margin-top: 1.6rem;
           margin-left: 0;
         }
-        .header__nav[_ngcontent-kyp-c428] .link-list[_ngcontent-kyp-c428] .auth-item[_ngcontent-kyp-c428] {
+        .header__nav .link-list .auth-item {
           margin-top: auto;
         }
-        .header__nav--shown[_ngcontent-kyp-c428] {
+        .header__nav--shown {
           width: 100%;
           background: #fff!important;
           padding-left: 0!important;
           transform: translateZ(0)!important;
         }
-        .header[_ngcontent-kyp-c428] .container[_ngcontent-kyp-c428] {
+        .header .container {
           position: relative;
         }
-        .link-list[_ngcontent-kyp-c428] {
+        .link-list {
           flex-flow: column nowrap;
           padding-left: 0;
         }
-        .header__nav[_ngcontent-kyp-c428] .link-list[_ngcontent-kyp-c428] {
+        .header__nav .link-list {
           height: 100%;
         }
-        .header__nav[_ngcontent-kyp-c428] {
+        .header__nav {
           flex-flow: column nowrap;
           position: absolute;
           top: 100%;
@@ -288,36 +300,36 @@
           transition: transform .3s ease;
           z-index: 10;
         }
-        .header__logo[_ngcontent-kyp-c428] {
+        .header__logo {
           margin-right: auto;
         }
       }
 
       /* footer */
-      .footer[_ngcontent-kyp-c429] {
+      .footer {
         padding: 48px 0 60px;
         background: #521b93;
         color: #fff;
       }
-      .footer[_ngcontent-kyp-c429] .container[_ngcontent-kyp-c429] {
+      .footer .container {
         display: flex;
         justify-content: space-between;
       }
-      .footer-logo[_ngcontent-kyp-c429] img[_ngcontent-kyp-c429] {
+      .footer-logo img {
         width: 215px;
       }
       img {
         vertical-align: middle;
       }
-      .footer-contacts[_ngcontent-kyp-c429] {
+      .footer-contacts {
         font-size: 16px;
         margin-top: 30px;
       }
-      .footer-social[_ngcontent-kyp-c429] {
+      .footer-social {
         margin: 40px 0;
         display: flex;
       }
-      .footer-social-item[_ngcontent-kyp-c429] {
+      .footer-social-item {
         width: 50px;
         height: 50px;
         margin-right: 10px;
@@ -325,36 +337,36 @@
         border-radius: 100px;
         border: 2px solid #fff;
       }
-      .footer-social-item[_ngcontent-kyp-c429] img[_ngcontent-kyp-c429] {
+      .footer-social-item img {
         filter: invert(1);
         position: absolute;
         top: 13px;
         left: 13px;
       }
-      .footer-social-item.twitter[_ngcontent-kyp-c429] img[_ngcontent-kyp-c429] {
+      .footer-social-item.twitter img {
         top: 13px;
         left: 13px;
       }
-      .footer-social-item.instagram[_ngcontent-kyp-c429] img[_ngcontent-kyp-c429] {
+      .footer-social-item.instagram img {
         top: 14px;
         width: 21px;
         left: 14px;
       }
-      .footer-social-item.facebook[_ngcontent-kyp-c429] img[_ngcontent-kyp-c429] {
+      .footer-social-item.facebook img {
         top: 8px;
         left: 8px;
       }
-      .footer-copyright[_ngcontent-kyp-c429] {
+      .footer-copyright {
         font-size: 16px;
         opacity: .7;
       }
-      .footer[_ngcontent-kyp-c429] .link-list[_ngcontent-kyp-c429] {
+      .footer .link-list {
         display: flex;
         align-items: center;
         list-style: none;
         padding: 0;
       }
-      .footer-menu[_ngcontent-kyp-c429] .link-list[_ngcontent-kyp-c429] {
+      .footer-menu .link-list {
         margin-top: 0;
       }
       .footer a {
@@ -366,7 +378,6 @@
       .footer .SimpleButton {
         color: #fff;
         border: 2px solid #fff;
-        padding-bottom: 10px;
         font-weight: bold;
       }
       .footer .button--white {
@@ -395,6 +406,11 @@
           margin-bottom: 14px;
         }
       }
+      .footer .SimpleButton:hover {
+        color: #521b93;
+        background: #fff;
+        transition: .3s;
+      }
 
       /* Auth0 */
       .auth0-lock.auth0-lock {
@@ -411,7 +427,8 @@
       }
       .auth0-lock-name {
         font-weight: bold;
-        padding: 10px 0!important;
+        padding: 10px 0;
+        margin-top: 30px;
       }
       section, header, footer {
         display: block!important;
@@ -430,6 +447,9 @@
       .auth0-lock.auth0-lock.auth0-lock-opened .auth0-lock-widget {
         box-shadow: 0 0 40px 4px #ccc!important;
       }
+      .auth0-lock-center {
+        margin-top: 50px;
+      }
     </style>
     <!--[if IE 8]>
       <script src="//cdnjs.cloudflare.com/ajax/libs/ie8/0.2.5/ie8.js"></script>
@@ -440,50 +460,50 @@
       <script src="https://cdn.auth0.com/js/es5-shim.min.js"></script>
     <![endif]-->
 
-    <header _ngcontent-kyp-c428="" class="header">
-      <div _ngcontent-kyp-c428="" class="container">
-        <a _ngcontent-kyp-c428="" class="header__logo" href="##BASE_URL##">
-          <img _ngcontent-kyp-c428="" src="https://storage.googleapis.com/##ASSETS_BUCKET_NAME##/auth0/logo-horizontal-black.png" class="header__logo-img" alt="Header.LogoAlt">
+    <header class="header">
+      <div class="container">
+        <a class="header__logo" href="##BASE_URL##">
+          <img src="https://storage.googleapis.com/##ASSETS_BUCKET_NAME##/auth0/logo-horizontal-black.png" class="header__logo-img" alt="Header.LogoAlt">
         </a>
     
-        <button _ngcontent-kyp-c428="" class="toggle" id="header-toggle">
-          <span _ngcontent-kyp-c428="" class="toggle__bar"></span>
-          <span _ngcontent-kyp-c428="" class="toggle__bar"></span>
-          <span _ngcontent-kyp-c428="" class="toggle__bar"></span>
+        <button class="toggle" id="header-toggle">
+          <span class="toggle__bar"></span>
+          <span class="toggle__bar"></span>
+          <span class="toggle__bar"></span>
         </button>
     
-        <nav _ngcontent-kyp-c428="" class="header__nav" id="header-nav">
-          <ul _ngcontent-kyp-c428="" class="link-list">
-            <li _ngcontent-kyp-c428="" routerlinkactive="link-list__item_active" class="link-list__item">
-              <a _ngcontent-kyp-c428="" class="link" href="##BASE_URL##/about">
+        <nav class="header__nav" id="header-nav">
+          <ul class="link-list">
+            <li routerlinkactive="link-list__item_active" class="link-list__item">
+              <a class="link" href="##BASE_URL##/about">
                 About Us
               </a>
             </li>
-            <li _ngcontent-kyp-c428="" routerlinkactive="link-list__item_active" class="link-list__item">
-              <a _ngcontent-kyp-c428="" href="https://www.additionalventures.org/project-singular-study-updates" target="_blank" class="link">
+            <li routerlinkactive="link-list__item_active" class="link-list__item">
+              <a href="https://www.additionalventures.org/project-singular-study-updates" target="_blank" class="link">
                 Study Progress
               </a>
             </li>
-            <li _ngcontent-kyp-c428="" routerlinkactive="link-list__item_active" class="link-list__item">
-              <a _ngcontent-kyp-c428="" class="link" href="##BASE_URL##/faq">
+            <li routerlinkactive="link-list__item_active" class="link-list__item">
+              <a class="link" href="##BASE_URL##/faq">
                 FAQs
               </a>
             </li>
-            <li _ngcontent-kyp-c428="" routerlinkactive="link-list__item_active" class="link-list__item">
-              <a _ngcontent-kyp-c428="" class="link" href="##BASE_URL##/for-researchers">
+            <li routerlinkactive="link-list__item_active" class="link-list__item">
+              <a class="link" href="##BASE_URL##/for-researchers">
                 For Researchers
               </a>
             </li>
             <!---->
-            <li _ngcontent-kyp-c428="" routerlinkactive="link-list__item_active" class="link-list__item auth-item">
-              <ddp-sign-in-out _ngcontent-kyp-c428="">
+            <li routerlinkactive="link-list__item_active" class="link-list__item auth-item">
+              <ddp-sign-in-out>
         <button data-ddp-test="signInButton" class="SimpleButton">
             Log In
         </button><!---->
         <!----></ddp-sign-in-out>
             </li>
-            <li _ngcontent-kyp-c428="" routerlinkactive="link-list__item_active" class="link-list__item">
-              <a _ngcontent-kyp-c428="" class="button button--primary button--wide" href="##BASE_URL##/pre-screening">
+            <li routerlinkactive="link-list__item_active" class="link-list__item">
+              <a class="button button--primary button--wide" href="##BASE_URL##/pre-screening">
                 Sign me up!
               </a>
             </li><!---->
@@ -492,69 +512,69 @@
       </div>
     </header>
     <section class="content"></section>
-    <footer _ngcontent-kyp-c429="" class="footer">
-      <div _ngcontent-kyp-c429="" class="container">
-        <div _ngcontent-kyp-c429="" class="footer-meta">
-          <div _ngcontent-kyp-c429="" class="footer-logo">
-            <img _ngcontent-kyp-c429="" src="https://storage.googleapis.com/##ASSETS_BUCKET_NAME##/auth0/logo-horizontal-white.png"" alt="Header.LogoAlt">
+    <footer class="footer">
+      <div class="container">
+        <div class="footer-meta">
+          <div class="footer-logo">
+            <img src="https://storage.googleapis.com/##ASSETS_BUCKET_NAME##/auth0/logo-horizontal-white.png"" alt="Header.LogoAlt">
           </div>
-          <div _ngcontent-kyp-c429="" class="footer-contacts">
-            Contact Us: (650) 761-6486<br _ngcontent-kyp-c429="">
+          <div class="footer-contacts">
+            Contact Us: (650) 761-6486<br>
             contact@projectsingular.org
           </div>
     
-          <div _ngcontent-kyp-c429="" class="footer-social">
-            <div _ngcontent-kyp-c429="" class="footer-social-item twitter">
-              <a _ngcontent-kyp-c429="" href="https://twitter.com/proj_singular" target="_blank">
-                <img _ngcontent-kyp-c429="" src="https://storage.googleapis.com/##ASSETS_BUCKET_NAME##/auth0/twitter.svg" alt="twitter">
+          <div class="footer-social">
+            <div class="footer-social-item twitter">
+              <a href="https://twitter.com/proj_singular" target="_blank">
+                <img src="https://storage.googleapis.com/##ASSETS_BUCKET_NAME##/auth0/twitter.svg" alt="twitter">
               </a>
             </div>
-            <div _ngcontent-kyp-c429="" class="footer-social-item instagram">
-              <a _ngcontent-kyp-c429="" href="https://www.instagram.com/project_singular/" target="_blank">
-                <img _ngcontent-kyp-c429="" src="https://storage.googleapis.com/##ASSETS_BUCKET_NAME##/auth0/inst.svg" alt="twitter">
+            <div class="footer-social-item instagram">
+              <a href="https://www.instagram.com/project_singular/" target="_blank">
+                <img src="https://storage.googleapis.com/##ASSETS_BUCKET_NAME##/auth0/inst.svg" alt="twitter">
               </a>
             </div>
-            <div _ngcontent-kyp-c429="" class="footer-social-item facebook">
-              <a _ngcontent-kyp-c429="" href="https://www.facebook.com/project.singular.study" target="_blank">
-                <img _ngcontent-kyp-c429="" src="https://storage.googleapis.com/##ASSETS_BUCKET_NAME##/auth0/facebook.svg" alt="twitter">
+            <div class="footer-social-item facebook">
+              <a href="https://www.facebook.com/project.singular.study" target="_blank">
+                <img src="https://storage.googleapis.com/##ASSETS_BUCKET_NAME##/auth0/facebook.svg" alt="twitter">
               </a>
             </div>
           </div>
-          <div _ngcontent-kyp-c429="" class="footer-copyright">Copyright 2021 Additional Ventures</div>
+          <div class="footer-copyright">Copyright 2021 Additional Ventures</div>
         </div>
-        <div _ngcontent-kyp-c429="" class="footer-menu">
-          <nav _ngcontent-kyp-c429="">
-            <ul _ngcontent-kyp-c429="" class="link-list">
-              <li _ngcontent-kyp-c429="" routerlinkactive="link-list__item_active" class="link-list__item">
-                <a _ngcontent-kyp-c429="" class="link" href="##BASE_URL##/about">
+        <div class="footer-menu">
+          <nav>
+            <ul class="link-list">
+              <li routerlinkactive="link-list__item_active" class="link-list__item">
+                <a class="link" href="##BASE_URL##/about">
                   About Us
                 </a>
               </li>
-              <li _ngcontent-kyp-c429="" routerlinkactive="link-list__item_active" class="link-list__item">
-                <a _ngcontent-kyp-c429="" class="link" href="##BASE_URL##/study-progress">
+              <li routerlinkactive="link-list__item_active" class="link-list__item">
+                <a class="link" href="https://www.additionalventures.org/project-singular-study-updates" target="_blank">
                   Study Progress
                 </a>
               </li>
-              <li _ngcontent-kyp-c429="" routerlinkactive="link-list__item_active" class="link-list__item">
-                <a _ngcontent-kyp-c429="" class="link" href="##BASE_URL##/faq">
+              <li routerlinkactive="link-list__item_active" class="link-list__item">
+                <a class="link" href="##BASE_URL##/faq">
                   FAQs
                 </a>
               </li>
-              <li _ngcontent-kyp-c429="" routerlinkactive="link-list__item_active" class="link-list__item">
-                <a _ngcontent-kyp-c429="" class="link" href="##BASE_URL##/for-researchers">
+              <li routerlinkactive="link-list__item_active" class="link-list__item">
+                <a class="link" href="##BASE_URL##/for-researchers">
                   For Researchers
                 </a>
               </li>
               <!---->
-              <li _ngcontent-kyp-c429="" routerlinkactive="link-list__item_active" class="link-list__item link-list__item_highlight-stroke_invert">
-                <ddp-sign-in-out _ngcontent-kyp-c429="">
+              <li routerlinkactive="link-list__item_active" class="link-list__item link-list__item_highlight-stroke_invert">
+                <ddp-sign-in-out>
         <button data-ddp-test="signInButton" class="SimpleButton">
             Log In
         </button><!---->
         <!----></ddp-sign-in-out>
               </li>
-              <li _ngcontent-kyp-c429="" routerlinkactive="link-list__item_active" class="link-list__item link-list__item_highlight link-list__item_highlight_invert">
-                <a _ngcontent-kyp-c429="" class="button button--white" href="##BASE_URL##/pre-screening">
+              <li routerlinkactive="link-list__item_active" class="link-list__item link-list__item_highlight link-list__item_highlight_invert">
+                <a class="button button--white" href="##BASE_URL##/pre-screening">
                   Sign up
                 </a>
               </li><!---->
@@ -587,7 +607,6 @@
       .auth0-lock-name {
         font-size: 12pt !important;
         text-align: left;
-        padding-left: 0 !important;
       }
 
       .auth0-lock-content {
@@ -613,8 +632,6 @@
       }
 
       .auth0-lock-name {
-        padding: 0 !important;
-
         text-align: center;
       }
 
@@ -665,7 +682,7 @@
       var headerText = '';
       var studyColor = '#458484';
       var studyHelpEmail = '##STUDY_EMAIL##';
-      var registerUrl = '##BASE_URL##/join';
+      var registerUrl = '##BASE_URL##/pre-screening';
       var connection = config.connection;
       var prompt = !prompt;
       var showPasswordRecentText = false;
