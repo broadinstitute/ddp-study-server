@@ -29,10 +29,6 @@
             <artifactId>ddp-common</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.broadinstitute.ddp</groupId>
-            <artifactId>ldd-backend</artifactId>
-        </dependency>
-        <dependency>
             <groupId>org.liquibase</groupId>
             <artifactId>liquibase-core</artifactId>
         </dependency>
@@ -88,12 +84,37 @@
             <artifactId>easypost-api-client</artifactId>
             <!-- <version>3.3.3</version> -->
         </dependency>
+        <dependency>
+            <groupId>com.netflix.servo</groupId>
+            <artifactId>servo-core</artifactId>
+        </dependency>
 
         <!-- authorization and authentication-->
         <dependency>
             <groupId>com.auth0</groupId>
             <artifactId>auth0</artifactId>
             <!-- <version>1.2.0</version> -->
+        </dependency>
+        <dependency>
+            <!-- jwt security token stuff -->
+            <groupId>com.auth0</groupId>
+            <artifactId>java-jwt</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.pdfbox</groupId>
+            <artifactId>pdfbox</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.google.cloud</groupId>
+            <artifactId>google-cloud-storage</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>fluent-hc</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.auth0</groupId>
+            <artifactId>jwks-rsa</artifactId>
         </dependency>
 
         <!-- for mbc decryption -->
