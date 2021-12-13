@@ -715,12 +715,7 @@
                   }
                 },
                 "tissueReceived": {
-                  "type": "text",
-                  "fields": {
-                    "keyword": {
-                      "type": "keyword"
-                    }
-                  }
+                  "type": "date"
                 },
                 "fax": {
                   "type": "text",
