@@ -1,19 +1,29 @@
 package org.broadinstitute.ddp.model.activity.definition.template;
 
-import static org.junit.Assert.assertEquals;
+import org.broadinstitute.ddp.TxnAwareBaseTest;
+import org.broadinstitute.ddp.content.I18nTemplateDefaultRenderer;
+import org.broadinstitute.ddp.content.I18nTemplateRenderFacade;
+import org.broadinstitute.ddp.db.TransactionWrapper;
+import org.broadinstitute.ddp.util.TestDataSetupUtil;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
 
-import org.broadinstitute.ddp.content.I18nTemplateRenderFacade;
-import org.broadinstitute.ddp.content.I18nTemplateDefaultRenderer;
-import org.junit.Test;
+import static org.junit.Assert.assertEquals;
 
 /**
  * Test methods of class {@link I18nTemplateDefaultRenderer}
  */
-public class I18NTemplateDefaultRendererTest {
+public class I18NTemplateDefaultRendererTest extends TxnAwareBaseTest {
+    private static TestDataSetupUtil.GeneratedTestData testData;
+
+    @BeforeClass
+    public static void setup() {
+        TransactionWrapper.useTxn(handle -> testData = TestDataSetupUtil.generateBasicUserTestData(handle));
+    }
 
     /**
      * Verify that method {@link I18nTemplateRenderFacade#renderTemplateWithDefaultValues(String, Collection, String)}
@@ -54,11 +64,15 @@ public class I18NTemplateDefaultRendererTest {
      */
     @Test
     public void testRenderWithDefaultValuesWithVariables() {
-        Collection<TemplateVariable> vars = new ArrayList<>();
-        vars.add(TemplateVariable.single("var1", "en", "VAR1 VALUE"));
-        vars.add(TemplateVariable.single("var2", "en", "VAR2 VALUE"));
-        String initialName = "AAA $var1 BB $var2 CCC";
-        String renderedValue = I18nTemplateRenderFacade.INSTANCE.renderTemplateWithDefaultValues(initialName, vars, "en");
-        assertEquals("AAA VAR1 VALUE BB VAR2 VALUE CCC", renderedValue);
+        TransactionWrapper.useTxn(handle -> {
+            Collection<TemplateVariable> vars = new ArrayList<>();
+            vars.add(TemplateVariable.single("var1", "en", "VAR1 VALUE"));
+            vars.add(TemplateVariable.single("var2", "en", "VAR2 VALUE"));
+            String initialName = "AAA $var1 BB $var2 CCC";
+            String renderedValue = I18nTemplateRenderFacade.INSTANCE.renderTemplateWithDefaultValues(initialName, vars, "en");
+            assertEquals("AAA VAR1 VALUE BB VAR2 VALUE CCC", renderedValue);
+
+            handle.rollback();
+        });
     }
 }
