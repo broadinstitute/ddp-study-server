@@ -789,6 +789,11 @@ jobs:
       - store-jar:
           module: housekeeping
           jar_base_name: Housekeeping
+      - build-jar:
+          module: dsm-server
+      - store-jar:
+          module: dsm-server
+          jar_base_name: DSMServer
 
   deploy-jar-from-workspace-job:
     executor:
