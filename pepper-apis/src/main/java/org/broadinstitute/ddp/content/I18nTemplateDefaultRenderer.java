@@ -41,6 +41,6 @@ public class I18nTemplateDefaultRenderer {
                 variablesTxt.put(variable.getName(), translation.<Object>map(Translation::getText).orElse(null));
             }
         }
-        return renderer.renderToString(templateText, variablesTxt);
+        return renderer.renderToString(templateText, VelocityUtil.convertVariablesWithCompoundNamesToMap(variablesTxt));
     }
 }
