@@ -558,7 +558,7 @@
         "format_hint": "Please enter your date of birth in MM DD YYYY format"
       },
       "independently": {
-        "able": "I am an adult able to independently consent",
+        "able": "I am an adult, able to independently consent",
         "unable": "I am an adult, unable to consent for myself",
         "required_hint": "Please select an option"
       },
