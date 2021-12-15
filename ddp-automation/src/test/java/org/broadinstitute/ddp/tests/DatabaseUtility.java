@@ -6,7 +6,6 @@ import java.util.Optional;
 import com.auth0.jwt.JWT;
 import org.broadinstitute.ddp.constants.Auth0Constants;
 import org.broadinstitute.ddp.db.TransactionWrapper;
-import org.broadinstitute.ddp.db.dao.JdbiAnswer;
 import org.broadinstitute.ddp.db.dao.JdbiMailingList;
 import org.broadinstitute.ddp.db.dao.JdbiUser;
 import org.broadinstitute.ddp.pages.GatekeeperPage;
@@ -106,6 +105,7 @@ public class DatabaseUtility {
     }
 
     public static List<Long> getAnswerIds() {
+        /*
         List<Long> ids = TransactionWrapper.withTxn(handle -> {
             logger.info("Using user id: {}", getUserId());
             JdbiAnswer answerDao = handle.attach(JdbiAnswer.class);
@@ -114,5 +114,7 @@ public class DatabaseUtility {
         logger.info("Answer IDs:");
         listResultSet(ids);
         return ids;
+        */
+        return null;
     }
 }
