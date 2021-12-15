@@ -78,4 +78,22 @@ public class UserDeleteServiceTest extends DeleteUserRouteTestAbstract {
         usersToDelete.remove(userMultiGoverned);
         governancesToDelete.remove(userMultiGoverned);
     }
+
+    @Test
+    public void testFullDeleteUserEnrolled() throws IOException {
+        TransactionWrapper.useTxn(handle -> {
+            userDeleteService.fullDelete(handle, userEnrolled, WHO_DELETED_USER, DELETION_COMMENT);
+        });
+        usersToDelete.remove(userEnrolled);
+        governancesToDelete.remove(userEnrolled);
+    }
+
+    @Test
+    public void testFullDeleteUserNoGovernance() throws IOException {
+        TransactionWrapper.useTxn(handle -> {
+            userDeleteService.fullDelete(handle, userNoGovernance, WHO_DELETED_USER, DELETION_COMMENT);
+        });
+        usersToDelete.remove(userNoGovernance);
+        governancesToDelete.remove(userNoGovernance);
+    }
 }

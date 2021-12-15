@@ -37,6 +37,7 @@ import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dao.UserGovernanceDao;
 import org.broadinstitute.ddp.db.dao.UserProfileDao;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
+import org.broadinstitute.ddp.db.dto.EnrollmentStatusDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.elastic.ElasticSearchIndexType;
 import org.broadinstitute.ddp.exception.DDPException;
@@ -167,7 +168,7 @@ public class UserDeleteService {
 
         deleteUserProfile(handle, user);
         deleteMedicalProvider(handle, user);
-        deleteEnrollmentStatuses(handle, user);
+        deleteEnrollmentStatuses(handle, user, userCollectedData);
         deleteUserAddresses(handle, user);
         deleteParticipantAnswersAndActivityInstances(handle, user);
         deleteActivityInstanceCreationMutex(handle, user);
@@ -219,9 +220,15 @@ public class UserDeleteService {
         handle.attach(JdbiMedicalProvider.class).deleteByUserId(user.getId());
     }
 
-    private void deleteEnrollmentStatuses(Handle handle, User user) {
+    private void deleteEnrollmentStatuses(Handle handle, User user, UserCollectedData userCollectedData) {
         log("user_study_enrollment", user);
-        handle.attach(JdbiUserStudyEnrollment.class).deleteByUserId(user.getId());
+        JdbiUserStudyEnrollment enrollmentDao = handle.attach(JdbiUserStudyEnrollment.class);
+        List<EnrollmentStatusDto> allEnrolls = enrollmentDao.getAllLatestEnrollmentsForUser(user.getGuid());
+        Set<String> studyGuids = allEnrolls.stream()
+                .map(EnrollmentStatusDto::getStudyGuid)
+                .collect(Collectors.toSet());
+        userCollectedData.setStudyGuids(studyGuids);
+        enrollmentDao.deleteByUserId(user.getId());
     }
 
     private void deleteUserAddresses(Handle handle, User user) {
@@ -274,7 +281,9 @@ public class UserDeleteService {
         log("user_governance (by participant_user_id)", user);
         userGovernanceDao.deleteAllGovernancesForParticipant(user.getId());
 
-        userCollectedData.setStudyGuids(studyGuids);
+        if (userCollectedData.getStudyGuids().isEmpty() && !studyGuids.isEmpty()) {
+            userCollectedData.setStudyGuids(studyGuids);
+        }
         userCollectedData.setUserGovernances(userGovernances);
     }
 
