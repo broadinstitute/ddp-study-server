@@ -20,6 +20,7 @@ import org.broadinstitute.ddp.model.activity.instance.ActivityResponse;
 import org.broadinstitute.ddp.model.activity.instance.FormResponse;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.broadinstitute.ddp.model.user.User;
+import org.broadinstitute.ddp.util.ActivityInstanceUtil;
 import org.jdbi.v3.core.result.LinkedHashMapRowReducer;
 import org.jdbi.v3.core.result.RowView;
 import org.jdbi.v3.sqlobject.CreateSqlObject;
@@ -85,6 +86,9 @@ public interface ActivityInstanceDao extends SqlObject {
     @SqlQuery("queryLastUpdateForActivityInstanceCreationMutex")
     Instant getActivityInstanceCreationMutexLastUpdate(@Bind("participantId")long participantId, @Bind("studyId")long studyId,
                                                        @Bind("activityCode")String activityCode);
+
+    @SqlUpdate("delete from activity_instance_creation_mutex where participant_id = :participantId")
+    void deleteActivityInstanceCreationMutex(@Bind("participantId") long participantId);
 
     /**
      * Convenience method to create new activity instance when both operator and participant is the same, and using defaults.
@@ -250,6 +254,10 @@ public interface ActivityInstanceDao extends SqlObject {
                 legacySubmissionId,
                 legacySessionId,
                 legacyVersion);
+
+        // Pre-populating default picklist options. It runs before status update so that copier is able to override
+        ActivityInstanceUtil.populateDefaultValues(getHandle(), instanceId, operator.getId());
+
         // Important: we set the status for the parent before checking for child instances. Setting
         // the status will trigger running the events on the parent instance. This means any events
         // that hooks into the parent instance's status will run before child instances are created.
@@ -433,12 +441,20 @@ public interface ActivityInstanceDao extends SqlObject {
             @Bind("parentInstanceId") long parentInstanceId);
 
     @UseStringTemplateSqlLocator
-    @SqlQuery("findSortedInstanceSummariesByUserStudyActivityGuids")
+    @SqlQuery("findSortedInstanceSummariesByUserStudyActivityCode")
     @RegisterConstructorMapper(ActivityInstanceSummaryDto.class)
     List<ActivityInstanceSummaryDto> findSortedInstanceSummaries(
             @Bind("userGuid") String userGuid,
             @Bind("studyGuid") String studyGuid,
             @Bind("activityCode") String activityCode);
+
+    @UseStringTemplateSqlLocator
+    @SqlQuery("findSortedInstanceSummariesByUserStudyActivityCodes")
+    @RegisterConstructorMapper(ActivityInstanceSummaryDto.class)
+    List<ActivityInstanceSummaryDto> findSortedInstanceSummaries(
+            @Bind("userGuid") String userGuid,
+            @Bind("studyGuid") String studyGuid,
+            @BindList(value = "activityCodes", onEmpty = EmptyHandling.NULL) Set<String> activityCodes);
 
     @UseStringTemplateSqlLocator
     @SqlQuery("queryBaseResponsesByInstanceId")

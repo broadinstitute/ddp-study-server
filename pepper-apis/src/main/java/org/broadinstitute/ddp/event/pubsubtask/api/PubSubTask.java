@@ -11,7 +11,17 @@ import java.util.Map;
  */
 public class PubSubTask {
 
-    public static final String ATTR_TASK_TYPE = "taskType";
+    /** Name of a PubSub message attribute holding a PubSub task type (for example 'UPDATE_PROFILE', 'USER_DELETE') */
+    public static final String ATTR_NAME__TASK_TYPE = "taskType";
+
+    /** PubSubTask standard attribute: holds a study GUID */
+    public static final String ATTR_NAME__STUDY_GUID = "studyGuid";
+
+    /** PubSubTask standard attribute: holds a participant (user) GUID */
+    public static final String ATTR_NAME__PARTICIPANT_GUID = "participantGuid";
+
+    /** PubSubTask standard attribute: holds an operator  GUID */
+    public static final String ATTR_NAME__OPERATOR_GUID = "operatorGuid";
 
     private final String messageId;
     private final String taskType;
@@ -53,6 +63,6 @@ public class PubSubTask {
 
     @Override
     public String toString() {
-        return "taskType=" + taskType + ", messageId=" + messageId + ", attr=" + attributes + ", payload={" + payloadJson + "}";
+        return "taskType=" + taskType + ", messageId=" + messageId + ", attr=" + attributes + ", payload=" + payloadJson;
     }
 }

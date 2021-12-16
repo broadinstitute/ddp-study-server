@@ -7,18 +7,13 @@ import org.broadinstitute.ddp.db.dto.UserActivityInstanceSummary;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.json.form.BlockVisibility;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
-import org.broadinstitute.ddp.model.activity.definition.FormBlockDef;
 import org.broadinstitute.ddp.pex.PexException;
 import org.broadinstitute.ddp.pex.PexInterpreter;
 import org.jdbi.v3.core.Handle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class FormActivityService {
 
-    private static final Logger LOG = LoggerFactory.getLogger(FormActivityService.class);
-
-    private PexInterpreter interpreter;
+    private final PexInterpreter interpreter;
 
     public FormActivityService(PexInterpreter interpreter) {
         this.interpreter = interpreter;
@@ -33,33 +28,38 @@ public class FormActivityService {
      * @return list of block visibilities
      * @throws DDPException if pex evaluation error
      */
-    public List<BlockVisibility> getBlockVisibilities(Handle handle, UserActivityInstanceSummary instanceSummary, FormActivityDef def,
-                                                      String userGuid, String operatorGuid, String instanceGuid) {
+    public List<BlockVisibility> getBlockVisibilitiesAndEnabled(Handle handle, UserActivityInstanceSummary instanceSummary,
+                                                                FormActivityDef def, String userGuid, String operatorGuid,
+                                                                String instanceGuid) {
         List<BlockVisibility> visibilities = new ArrayList<>();
         for (var block : def.getAllToggleableBlocks()) {
-            BlockVisibility vis = evaluateVisibility(handle, block, instanceSummary, def, userGuid, operatorGuid, instanceGuid);
-            if (vis != null) {
-                visibilities.add(vis);
+            Boolean shown = evaluate(handle, block.getBlockGuid(), block.getShownExpr(), instanceSummary, userGuid,
+                    operatorGuid, instanceGuid);
+            Boolean enabled = evaluate(handle, block.getBlockGuid(), block.getEnabledExpr(), instanceSummary, userGuid,
+                    operatorGuid, instanceGuid);
+            if (shown != null || enabled != null) {
+                visibilities.add(new BlockVisibility(
+                        block.getBlockGuid(),
+                        shown == null || shown,
+                        enabled == null || enabled));
             }
         }
         return visibilities;
     }
 
-    private BlockVisibility evaluateVisibility(Handle handle, FormBlockDef block, UserActivityInstanceSummary instanceSummary,
-                                               FormActivityDef formActivityDef, String userGuid, String operatorGuid,
+    private Boolean evaluate(Handle handle, String blockGuid, String expr, UserActivityInstanceSummary instanceSummary,
+                                               String userGuid, String operatorGuid,
                                                String instanceGuid) {
-        BlockVisibility vis = null;
-        String expr = block.getShownExpr();
         if (expr != null) {
             try {
-                boolean shown = interpreter.eval(expr, handle, userGuid, operatorGuid, instanceGuid, instanceSummary);
-                vis = new BlockVisibility(block.getBlockGuid(), shown);
+                return interpreter.eval(expr, handle, userGuid, operatorGuid, instanceGuid, instanceSummary);
             } catch (PexException e) {
                 String msg = String.format("Error evaluating pex expression for form activity instance %s and block %s: `%s`",
-                        instanceGuid, block.getBlockGuid(), expr);
+                        instanceGuid, blockGuid, expr);
                 throw new DDPException(msg, e);
             }
         }
-        return vis;
+        return null;
     }
+
 }

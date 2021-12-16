@@ -210,6 +210,7 @@ public class BrowserStackUtil {
                 }
             }
 
+            /*
             @Override
             public void minimize() {
                 try {
@@ -222,6 +223,7 @@ public class BrowserStackUtil {
                     }
                 }
             }
+             */
 
             @Override
             public void fullscreen() {

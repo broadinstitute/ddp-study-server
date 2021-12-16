@@ -12,6 +12,7 @@ import org.broadinstitute.ddp.elastic.MappingUtil;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.activity.definition.question.CompositeQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
+import org.broadinstitute.ddp.model.activity.instance.answer.ActivityInstanceSelectAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.AgreementAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
 import org.broadinstitute.ddp.model.activity.instance.answer.AnswerRow;
@@ -21,6 +22,8 @@ import org.broadinstitute.ddp.model.activity.instance.answer.DateAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.DateValue;
 import org.broadinstitute.ddp.model.activity.instance.answer.PicklistAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.SelectedPicklistOption;
+import org.broadinstitute.ddp.model.activity.instance.answer.MatrixAnswer;
+import org.broadinstitute.ddp.model.activity.instance.answer.SelectedMatrixCell;
 import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
 
 /**
@@ -97,6 +100,8 @@ public class CompositeQuestionFormatStrategy implements ResponseFormatStrategy<C
                 return (boolValue == null ? "" : boolValue.toString());
             case TEXT:
                 return StringUtils.defaultString(((TextAnswer) answer).getValue(), "");
+            case ACTIVITY_INSTANCE_SELECT:
+                return StringUtils.defaultString(((ActivityInstanceSelectAnswer) answer).getValue(), "");
             case NUMERIC:
                 return (answer.getValue() == null ? "" : answer.getValue().toString());
             case DATE:
@@ -115,6 +120,12 @@ public class CompositeQuestionFormatStrategy implements ResponseFormatStrategy<C
                     ids.add(detailText);
                 }
                 return String.join(",", ids);
+            case MATRIX:
+                List<String> matrixIds = new ArrayList<>();
+                for (SelectedMatrixCell cell : ((MatrixAnswer) answer).getValue()) {
+                    matrixIds.add(cell.getRowStableId() + ":" + cell.getOptionStableId());
+                }
+                return String.join(",", matrixIds);
             case COMPOSITE:
                 throw new DDPException("Composite-inside-composite is not supported in data export");
             default:

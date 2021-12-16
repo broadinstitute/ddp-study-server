@@ -18,6 +18,7 @@ import org.broadinstitute.ddp.TxnAwareBaseTest;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
+import org.broadinstitute.ddp.db.dao.AnswerDao;
 import org.broadinstitute.ddp.db.dao.EventActionDao;
 import org.broadinstitute.ddp.db.dao.EventDao;
 import org.broadinstitute.ddp.db.dao.EventTriggerDao;
@@ -32,9 +33,14 @@ import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.db.dto.QueuedEventDto;
 import org.broadinstitute.ddp.db.dto.SendgridEmailEventActionDto;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
+import org.broadinstitute.ddp.model.activity.definition.FormSectionDef;
 import org.broadinstitute.ddp.model.activity.definition.i18n.Translation;
+import org.broadinstitute.ddp.model.activity.definition.question.BoolQuestionDef;
+import org.broadinstitute.ddp.model.activity.definition.template.Template;
+import org.broadinstitute.ddp.model.activity.instance.answer.BoolAnswer;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
 import org.broadinstitute.ddp.model.activity.types.EventTriggerType;
+import org.broadinstitute.ddp.model.activity.types.TemplateType;
 import org.broadinstitute.ddp.model.governance.AgeOfMajorityRule;
 import org.broadinstitute.ddp.model.governance.AgeUpCandidate;
 import org.broadinstitute.ddp.model.governance.GovernancePolicy;
@@ -45,6 +51,7 @@ import org.broadinstitute.ddp.model.user.UserProfile;
 import org.broadinstitute.ddp.pex.PexInterpreter;
 import org.broadinstitute.ddp.pex.TreeWalkInterpreter;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
+import org.broadinstitute.ddp.util.TestUtil;
 import org.jdbi.v3.core.Handle;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -73,8 +80,9 @@ public class AgeUpServiceTest extends TxnAwareBaseTest {
     @Test
     public void testRunAgeUpCheck_skipWhenNoBirthDate() {
         TransactionWrapper.useTxn(handle -> {
-            User user1 = createAgeUpTestCandidate(handle, EnrollmentStatusType.REGISTERED, null);
-            User user2 = createAgeUpTestCandidate(handle, EnrollmentStatusType.REGISTERED, LocalDate.of(2000, 1, 14));
+            User operator = handle.attach(UserDao.class).createUser(testData.getClientId(), testData.getAuth0ClientId());
+            User user1 = createAgeUpTestCandidate(handle, operator, EnrollmentStatusType.REGISTERED, null);
+            User user2 = createAgeUpTestCandidate(handle, operator, EnrollmentStatusType.REGISTERED, LocalDate.of(2000, 1, 14));
             handle.attach(InvitationFactory.class)
                     .createAgeUpInvitation(testData.getStudyId(), user2.getId(), "test@datadonationplatform.org");
 
@@ -95,7 +103,8 @@ public class AgeUpServiceTest extends TxnAwareBaseTest {
     @Test
     public void testRunAgeUpCheck_removeWhenExitedStudy() {
         TransactionWrapper.useTxn(handle -> {
-            createAgeUpTestCandidate(handle, EnrollmentStatusType.EXITED_BEFORE_ENROLLMENT, LocalDate.of(2000, 5, 14));
+            User operator = handle.attach(UserDao.class).createUser(testData.getClientId(), testData.getAuth0ClientId());
+            createAgeUpTestCandidate(handle, operator, EnrollmentStatusType.EXITED_BEFORE_ENROLLMENT, LocalDate.of(2000, 5, 14));
 
             List<AgeUpCandidate> candidates = handle.attach(StudyGovernanceDao.class)
                     .findAllAgeUpCandidatesByStudyId(testData.getStudyId())
@@ -118,10 +127,11 @@ public class AgeUpServiceTest extends TxnAwareBaseTest {
     @Test
     public void testRunAgeUpCheck_reachedAgeOfMajority() {
         TransactionWrapper.useTxn(handle -> {
-            User user1 = createAgeUpTestCandidate(handle, EnrollmentStatusType.REGISTERED, LocalDate.of(2000, 1, 14));
-
+            User operator = handle.attach(UserDao.class).createUser(testData.getClientId(), testData.getAuth0ClientId());
+            User user1 = createAgeUpTestCandidate(handle, operator, EnrollmentStatusType.REGISTERED, LocalDate.of(2000, 1, 14));
+            String userBoolStableId = "PEX_BOOL_" + Instant.now().toEpochMilli();
             // Setup downstream event and test data
-            ActivityInstanceDto instanceDto = createActivityAndInstance(handle, user1);
+            ActivityInstanceDto instanceDto = createActivityAndInstanceAndQuestion(handle, user1, userBoolStableId, "ACT");
             long triggerId = handle.attach(EventTriggerDao.class)
                     .insertStaticTrigger(EventTriggerType.REACHED_AOM);
             long actionId = handle.attach(EventActionDao.class)
@@ -158,19 +168,29 @@ public class AgeUpServiceTest extends TxnAwareBaseTest {
     @Test
     public void testRunAgeUpCheck_reachedAgeOfMajorityPrep() {
         TransactionWrapper.useTxn(handle -> {
-            User user1 = createAgeUpTestCandidate(handle, EnrollmentStatusType.REGISTERED, LocalDate.of(2000, 5, 14));
+            User operator = handle.attach(UserDao.class).createUser(testData.getClientId(), testData.getAuth0ClientId());
+            User user1 = createAgeUpTestCandidate(handle, operator, EnrollmentStatusType.REGISTERED, LocalDate.of(2000, 5, 14));
+            String userBoolStableId = "PEX_BOOL_U_" + Instant.now().toEpochMilli();
+            String operatorBoolStableId = "PEX_BOOL_O_" + Instant.now().toEpochMilli();
 
             // Setup downstream event and test data
-            ActivityInstanceDto instanceDto = createActivityAndInstance(handle, user1);
+            ActivityInstanceDto userInstanceDto = createActivityAndInstanceAndQuestion(handle, user1, userBoolStableId, "ACT");
+            createActivityAndInstanceAndQuestion(handle, operator, operatorBoolStableId, "PREQUAL");
             long triggerId = handle.attach(EventTriggerDao.class)
                     .insertStaticTrigger(EventTriggerType.REACHED_AOM_PREP);
             long actionId = handle.attach(EventActionDao.class)
-                    .insertMarkActivitiesReadOnlyAction(Set.of(instanceDto.getActivityId()));
+                    .insertMarkActivitiesReadOnlyAction(Set.of(userInstanceDto.getActivityId()));
             handle.attach(JdbiEventConfiguration.class).insert(null, triggerId, actionId, testData.getStudyId(),
-                    Instant.now().toEpochMilli(), null, 0, null, null, false, 1);
+                    Instant.now().toEpochMilli(), null, 0, null, null,
+                    false, 1);
 
+            String expr = String.format(
+                    "operator.studies[\"%s\"].forms[\"%s\"].questions[\"%s\"].answers.hasTrue() "
+                            + "&& user.studies[\"%s\"].forms[\"%s\"].questions[\"%s\"].answers.hasTrue()",
+                    testData.getStudyGuid(), "PREQUAL", operatorBoolStableId,
+                    testData.getStudyGuid(), "ACT", userBoolStableId);
             GovernancePolicy policy = new GovernancePolicy(1L, testData.getStudyId(), testData.getStudyGuid(), new Expression("true"));
-            policy.addAgeOfMajorityRule(new AgeOfMajorityRule("true", 20, 4));
+            policy.addAgeOfMajorityRule(new AgeOfMajorityRule(expr, 20, 4));
             assertEquals(0, service.runAgeUpCheck(handle, interpreter, policy));
 
             List<AgeUpCandidate> candidates = handle.attach(StudyGovernanceDao.class)
@@ -181,7 +201,7 @@ public class AgeUpServiceTest extends TxnAwareBaseTest {
             assertTrue(candidates.get(0).hasInitiatedPrep());
 
             assertTrue("activity instance should have been made read-only", handle.attach(JdbiActivityInstance.class)
-                    .getByActivityInstanceId(instanceDto.getId()).get().getReadonly());
+                    .getByActivityInstanceId(userInstanceDto.getId()).get().getReadonly());
 
             handle.rollback();
         });
@@ -190,8 +210,9 @@ public class AgeUpServiceTest extends TxnAwareBaseTest {
     @Test
     public void testRunAgeUpCheck_errorInOneCandidateDoesNotAffectAnother() {
         TransactionWrapper.useTxn(handle -> {
-            User user1 = createAgeUpTestCandidate(handle, EnrollmentStatusType.REGISTERED, LocalDate.of(2000, 1, 14));
-            User user2 = createAgeUpTestCandidate(handle, EnrollmentStatusType.REGISTERED, LocalDate.of(2000, 1, 24));
+            User operator = handle.attach(UserDao.class).createUser(testData.getClientId(), testData.getAuth0ClientId());
+            User user1 = createAgeUpTestCandidate(handle, operator, EnrollmentStatusType.REGISTERED, LocalDate.of(2000, 1, 14));
+            User user2 = createAgeUpTestCandidate(handle, operator, EnrollmentStatusType.REGISTERED, LocalDate.of(2000, 1, 24));
             handle.attach(InvitationFactory.class)
                     .createAgeUpInvitation(testData.getStudyId(), user1.getId(), "test@datadonationplatform.org");
 
@@ -233,22 +254,38 @@ public class AgeUpServiceTest extends TxnAwareBaseTest {
         });
     }
 
-    private User createAgeUpTestCandidate(Handle handle, EnrollmentStatusType status, LocalDate birthDate) {
+    private User createAgeUpTestCandidate(Handle handle, User operator, EnrollmentStatusType status, LocalDate birthDate) {
         User user = handle.attach(UserDao.class).createUser(testData.getClientId(), null);
         handle.attach(JdbiUserStudyEnrollment.class).changeUserStudyEnrollmentStatus(user.getGuid(), testData.getStudyGuid(), status);
         handle.attach(UserProfileDao.class).createProfile(new UserProfile.Builder(user.getId()).setBirthDate(birthDate).build());
-        handle.attach(StudyGovernanceDao.class).addAgeUpCandidate(testData.getStudyId(), user.getId());
+        handle.attach(StudyGovernanceDao.class).addAgeUpCandidate(testData.getStudyId(), user.getId(), operator.getId());
         return user;
     }
 
-    private ActivityInstanceDto createActivityAndInstance(Handle handle, User user) {
-        FormActivityDef activity = FormActivityDef.generalFormBuilder("ACT", "v1", testData.getStudyGuid())
+    private ActivityInstanceDto createActivityAndInstanceAndQuestion(Handle handle, User user, String boolStableId, String activityCode) {
+
+        BoolQuestionDef boolDef = BoolQuestionDef.builder().setStableId(boolStableId)
+                .setPrompt(new Template(TemplateType.TEXT, null, "bool prompt"))
+                .setTrueTemplate(new Template(TemplateType.TEXT, null, "yes"))
+                .setFalseTemplate(new Template(TemplateType.TEXT, null, "no"))
+                .build();
+
+        FormActivityDef activity = FormActivityDef.generalFormBuilder(activityCode, "v1", testData.getStudyGuid())
                 .addName(new Translation("en", "dummy activity"))
+                .addSection(new FormSectionDef(null, TestUtil.wrapQuestions(boolDef)))
                 .build();
         handle.attach(ActivityDao.class)
                 .insertActivity(activity, RevisionMetadata.now(testData.getUserId(), "test"));
         assertNotNull(activity.getActivityId());
-        return handle.attach(ActivityInstanceDao.class)
-                .insertInstance(activity.getActivityId(), user.getGuid());
+
+        ActivityInstanceDao activityInstanceDao = handle.attach(ActivityInstanceDao.class);
+        ActivityInstanceDto instance = activityInstanceDao.insertInstance(activity.getActivityId(), user.getGuid());
+        assertNotNull(instance.getId());
+
+        BoolAnswer answer = new BoolAnswer(null, boolStableId, null, true);
+        handle.attach(AnswerDao.class).createAnswer(user.getId(), instance.getId(), answer);
+        assertNotNull(answer.getAnswerId());
+
+        return instance;
     }
 }

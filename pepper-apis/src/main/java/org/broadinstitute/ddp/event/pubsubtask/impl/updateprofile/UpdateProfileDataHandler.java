@@ -1,9 +1,9 @@
 package org.broadinstitute.ddp.event.pubsubtask.impl.updateprofile;
 
 import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskException.Severity.WARN;
-import static org.broadinstitute.ddp.event.pubsubtask.impl.updateprofile.UpdateProfileConstants.FIELD_FIRST_NAME;
-import static org.broadinstitute.ddp.event.pubsubtask.impl.updateprofile.UpdateProfileConstants.FIELD_LAST_NAME;
-import static org.broadinstitute.ddp.event.pubsubtask.impl.updateprofile.UpdateProfileConstants.FIELD_DO_NOT_CONTACT;
+import static org.broadinstitute.ddp.event.pubsubtask.impl.updateprofile.UpdateProfileConstants.FIELD__FIRST_NAME;
+import static org.broadinstitute.ddp.event.pubsubtask.impl.updateprofile.UpdateProfileConstants.FIELD__LAST_NAME;
+import static org.broadinstitute.ddp.event.pubsubtask.impl.updateprofile.UpdateProfileConstants.FIELD__DO_NOT_CONTACT;
 
 import java.util.Properties;
 
@@ -31,8 +31,8 @@ public class UpdateProfileDataHandler {
         if (profile == null) {
             throwUserNotFoundException(userGuid);
         }
-        String firstName = detectFieldValueForUpdate(payload, FIELD_FIRST_NAME, profile.getFirstName());
-        String lastName = detectFieldValueForUpdate(payload, FIELD_LAST_NAME, profile.getLastName());
+        String firstName = detectFieldValueForUpdate(payload, FIELD__FIRST_NAME, profile.getFirstName());
+        String lastName = detectFieldValueForUpdate(payload, FIELD__LAST_NAME, profile.getLastName());
         boolean needElasticUpdate = false;
         if (StringUtils.isNotBlank(firstName) || StringUtils.isNotBlank(lastName)) {
             int count = profileDao.getUserProfileSql().updateFirstAndLastNameByUserGuid(userGuid, firstName, lastName);
@@ -45,7 +45,7 @@ public class UpdateProfileDataHandler {
         }
 
         //update doNotContact
-        Boolean doNotContact = detectBooleanFieldValueForUpdate(payload, FIELD_DO_NOT_CONTACT);
+        Boolean doNotContact = detectBooleanFieldValueForUpdate(payload, FIELD__DO_NOT_CONTACT);
         if (doNotContact != null && doNotContact != profile.getDoNotContact()) {
             int count = profileDao.getUserProfileSql().updateDoNotContact(profile.getUserId(), doNotContact);
             if (count > 0) {

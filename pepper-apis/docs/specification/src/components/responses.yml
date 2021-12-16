@@ -36,17 +36,7 @@ ActivityAnswersPatchResponse:
             type: array
             description: list of updated block visibilities
             items:
-              type: object
-              required:
-                - blockGuid
-                - shown
-              properties:
-                blockGuid:
-                  type: string
-                  description: identifier for the block
-                shown:
-                  type: boolean
-                  description: whether block is shown or not
+              $ref: '../pepper.yml#/components/schemas/Block.Visibility'
           validationFailures:
             type: array
             items:
@@ -111,6 +101,20 @@ ActivitySummaryResponse:
     application/json:
       schema:
         $ref: '../pepper.yml#/components/schemas/Activity.Summary'
+ActivityInstanceDeletionResponse:
+  description: The activity was successfully deleted and return list of updated parent instance block visibilities
+  content:
+    application/json:
+      schema:
+        type: object
+        required:
+          - blockVisibility
+        properties:
+          blockVisibility:
+            type: array
+            description: list of updated parent instance block visibilities
+            items:
+              $ref: '../pepper.yml#/components/schemas/Block.Visibility'
 ActivityInstanceNotFoundResponse:
   description: the requested activity instance for user and study does not exist
   content:
@@ -466,3 +470,17 @@ StatisticsResponse:
     application/json:
       schema:
         $ref: '../pepper.yml#/components/schemas/Statistics'
+ActivityInstanceSelectAnswersResponse:
+  description: a list of activity instance suggestions
+  content:
+    application/json:
+      schema:
+        type: object
+        required:
+          - results
+        properties:
+          results:
+            description: A list of Activity Instances available for selection for the given Activity Instance Select question
+            type: array
+            items:
+              $ref: '../pepper.yml#/components/schemas/Suggestion.ActivityInstance'

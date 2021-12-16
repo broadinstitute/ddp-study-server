@@ -1,9 +1,13 @@
 package org.broadinstitute.ddp.event.pubsubtask.api;
 
+import static java.lang.String.format;
+import static org.apache.commons.lang.StringUtils.isBlank;
+import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskException.Severity.WARN;
 import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskLogUtil.infoMsg;
 import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTaskResult.PubSubTaskResultType.SUCCESS;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import java.util.Properties;
 
 import com.google.gson.Gson;
 import org.broadinstitute.ddp.util.GsonUtil;
@@ -20,32 +24,73 @@ public abstract class PubSubTaskProcessorAbstract implements PubSubTaskProcessor
 
     protected final Gson gson = GsonUtil.standardGson();
 
+    protected String studyGuid;
+    protected String participantGuid;
+    protected Properties payloadProps;
+
     @Override
     public PubSubTaskResult processPubSubTask(PubSubTask pubSubTask) {
         LOG.info(infoMsg("PubSubTask processing STARTED: {}"), pubSubTask);
 
+        payloadProps = payloadAsProperties(pubSubTask);
+
+        preProcessTask(pubSubTask);
+
+        validateTaskData(pubSubTask);
+
         handleTask(pubSubTask);
 
-        var pubSubTaskResult = new PubSubTaskResult(SUCCESS, null, pubSubTask);
-        LOG.info(infoMsg("PubSubTask processing COMPLETED: taskType={}, pubSubTaskResult={}"),
-                pubSubTask.getTaskType(), pubSubTaskResult);
+        var pubSubTaskResult = createPubSubTaskResultAfterTaskProcessing(pubSubTask);
+        if (pubSubTaskResult.getResultType() == SUCCESS) {
+            LOG.info(infoMsg("PubSubTask processing COMPLETED: taskType={}, pubSubTaskResult={}"),
+                    pubSubTask.getTaskType(), pubSubTaskResult);
+        } else {
+            LOG.info(infoMsg("PubSubTask processing COMPLETED: taskType={}, pubSubTaskResult={}"),
+                    pubSubTask.getTaskType(), pubSubTaskResult);
+        }
 
-        addCustomDataToResult(pubSubTask, pubSubTaskResult);
         return pubSubTaskResult;
     }
 
     protected abstract void handleTask(PubSubTask pubSubTask);
 
+    protected boolean isEmptyPayloadAllowed() {
+        return false;
+    }
+
+    protected void validateTaskData(PubSubTask pubSubTask) {
+        if (!isEmptyPayloadAllowed() && isBlank(pubSubTask.getPayloadJson())) {
+            throw new PubSubTaskException("PubSubTask processing FAILED: empty payload", WARN);
+        }
+    }
+
+    protected void preProcessTask(PubSubTask pubSubTask) {
+        studyGuid = pubSubTask.getAttributes().get(PubSubTask.ATTR_NAME__STUDY_GUID);
+        participantGuid = pubSubTask.getAttributes().get(PubSubTask.ATTR_NAME__PARTICIPANT_GUID);
+    }
+
+
     /**
-     * This method should be overridden in case if it needs to add to result attributes or
-     * payload some custom data (specific for a task type).
-     * By default in a {@link PubSubTaskResult}:
-     * <pre>
-     * - copied all attributes from {@link PubSubTask};
-     * - added attribute 'taskMessageId' containing ID of PubSubTask message;
-     * - created payload containing resultType and errorMessage (for result type ERROR).
-     * </pre>
+     * Create an instance of {@link PubSubTaskResult} after a {@link PubSubTask} processing.
+     * By default it creates a result of type SUCCESS (because it case of error - an exception is
+     * thrown and an ERROR result is created where it is caught).
+     * But in some cases it needs to create {@link PubSubTaskResult} with custom content.
      */
-    protected void addCustomDataToResult(PubSubTask pubSubTask, PubSubTaskResult pubSubTaskResult) {
+    protected PubSubTaskResult createPubSubTaskResultAfterTaskProcessing(PubSubTask pubSubTask) {
+        return new PubSubTaskResult(SUCCESS, null, pubSubTask);
+    }
+
+    protected Properties payloadAsProperties(PubSubTask pubSubTask) {
+        return gson.fromJson(pubSubTask.getPayloadJson(), Properties.class);
+    }
+
+    public static void throwIfInvalidPayloadProperty(PubSubTask pubSubTask, String propName, Object propValue) {
+        throw new PubSubTaskException(format("PubSubTask '%s' processing FAILED: payload property %s is incorrect: [%s]",
+                pubSubTask.getTaskType(), propName, propValue), WARN);
+    }
+
+    public static void throwIfInvalidAttribute(PubSubTask pubSubTask, String attrName, String attrValue) {
+        throw new PubSubTaskException(format("PubSubTask '%s' processing FAILED: attribute %s is incorrect: [%s]",
+                pubSubTask.getTaskType(), attrName, attrValue), WARN);
     }
 }

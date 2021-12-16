@@ -2,6 +2,9 @@ package org.broadinstitute.ddp.route;
 
 import static io.restassured.RestAssured.given;
 import static java.util.stream.Collectors.toList;
+import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTask.ATTR_NAME__PARTICIPANT_GUID;
+import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTask.ATTR_NAME__STUDY_GUID;
+import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTask.ATTR_NAME__TASK_TYPE;
 import static org.broadinstitute.ddp.util.GuidUtils.UPPER_ALPHA_NUMERIC;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.containsString;
@@ -75,7 +78,6 @@ import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.db.dto.UserDto;
 import org.broadinstitute.ddp.event.publish.pubsub.PubSubPublisherInitializer;
 import org.broadinstitute.ddp.event.publish.pubsub.TaskPubSubPublisher;
-import org.broadinstitute.ddp.event.pubsubtask.api.PubSubTask;
 import org.broadinstitute.ddp.json.UserRegistrationPayload;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
 import org.broadinstitute.ddp.model.activity.definition.i18n.Translation;
@@ -471,9 +473,9 @@ public class UserRegistrationRouteStandaloneTest extends IntegrationTestSuite.Te
 
         verify(mockPublisher).publish(argThat(msg -> {
             var attributes = msg.getAttributesMap();
-            assertEquals(TaskPubSubPublisher.TASK_PARTICIPANT_REGISTERED, attributes.get(PubSubTask.ATTR_TASK_TYPE));
-            assertEquals(study1.getGuid(), attributes.get(TaskPubSubPublisher.ATTR_STUDY_GUID));
-            assertEquals(newUserGuid, attributes.get(TaskPubSubPublisher.ATTR_PARTICIPANT_GUID));
+            assertEquals(TaskPubSubPublisher.TASK_PARTICIPANT_REGISTERED, attributes.get(ATTR_NAME__TASK_TYPE));
+            assertEquals(study1.getGuid(), attributes.get(ATTR_NAME__STUDY_GUID));
+            assertEquals(newUserGuid, attributes.get(ATTR_NAME__PARTICIPANT_GUID));
             return true;
         }));
     }
@@ -598,9 +600,9 @@ public class UserRegistrationRouteStandaloneTest extends IntegrationTestSuite.Te
 
             verify(mockPublisher).publish(argThat(msg -> {
                 var attributes = msg.getAttributesMap();
-                assertEquals(TaskPubSubPublisher.TASK_PARTICIPANT_REGISTERED, attributes.get(PubSubTask.ATTR_TASK_TYPE));
-                assertEquals(testStudy.getGuid(), attributes.get(TaskPubSubPublisher.ATTR_STUDY_GUID));
-                assertEquals(governedUser.getGuid(), attributes.get(TaskPubSubPublisher.ATTR_PARTICIPANT_GUID));
+                assertEquals(TaskPubSubPublisher.TASK_PARTICIPANT_REGISTERED, attributes.get(ATTR_NAME__TASK_TYPE));
+                assertEquals(testStudy.getGuid(), attributes.get(ATTR_NAME__STUDY_GUID));
+                assertEquals(governedUser.getGuid(), attributes.get(ATTR_NAME__PARTICIPANT_GUID));
                 return true;
             }));
 
@@ -824,9 +826,9 @@ public class UserRegistrationRouteStandaloneTest extends IntegrationTestSuite.Te
 
         verify(mockPublisher).publish(argThat(msg -> {
             var attributes = msg.getAttributesMap();
-            assertEquals(TaskPubSubPublisher.TASK_PARTICIPANT_REGISTERED, attributes.get(PubSubTask.ATTR_TASK_TYPE));
-            assertEquals(tempStudy.getGuid(), attributes.get(TaskPubSubPublisher.ATTR_STUDY_GUID));
-            assertEquals(actualUserGuid, attributes.get(TaskPubSubPublisher.ATTR_PARTICIPANT_GUID));
+            assertEquals(TaskPubSubPublisher.TASK_PARTICIPANT_REGISTERED, attributes.get(ATTR_NAME__TASK_TYPE));
+            assertEquals(tempStudy.getGuid(), attributes.get(ATTR_NAME__STUDY_GUID));
+            assertEquals(actualUserGuid, attributes.get(ATTR_NAME__PARTICIPANT_GUID));
             return true;
         }));
     }

@@ -19,6 +19,9 @@ import org.broadinstitute.ddp.db.dto.QuestionDto;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.activity.definition.question.DateQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistOptionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.MatrixOptionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.MatrixRowDef;
+import org.broadinstitute.ddp.model.activity.definition.question.MatrixGroupDef;
 import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.TextQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
@@ -32,11 +35,14 @@ import org.broadinstitute.ddp.model.activity.instance.answer.DateValue;
 import org.broadinstitute.ddp.model.activity.instance.answer.NumericIntegerAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.PicklistAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.SelectedPicklistOption;
+import org.broadinstitute.ddp.model.activity.instance.answer.MatrixAnswer;
+import org.broadinstitute.ddp.model.activity.instance.answer.SelectedMatrixCell;
 import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
 import org.broadinstitute.ddp.model.activity.types.DateFieldType;
 import org.broadinstitute.ddp.model.activity.types.DateRenderMode;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
 import org.broadinstitute.ddp.model.activity.types.TextInputType;
+import org.broadinstitute.ddp.model.activity.types.MatrixSelectMode;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
 import org.broadinstitute.ddp.util.TestFormActivity;
 import org.jdbi.v3.core.Handle;
@@ -251,6 +257,54 @@ public class AnswerToAnswerCopierTest extends TxnAwareBaseTest {
             assertEquals("op1", selected.get(0).getStableId());
             assertEquals("op2", selected.get(1).getStableId());
             assertEquals("details2", selected.get(1).getDetailText());
+
+            handle.rollback();
+        });
+    }
+
+    @Test
+    public void testCopy_create_matrix() {
+        TransactionWrapper.useTxn(handle -> {
+            var sourceInstance = newDummyInstance();
+            var sourceQuestion = newDummyQuestion(QuestionType.TEXT, "q1");
+            sourceInstance.putAnswer(new MatrixAnswer(1L, "q1", "a", List.of(
+                    new SelectedMatrixCell("row1", "op1", "DEFAULT"),
+                    new SelectedMatrixCell("row2", "op2", "group"))));
+
+            TestFormActivity act = TestFormActivity.builder()
+                    .withMatrixOptionsRowsGroupsList(true, MatrixSelectMode.SINGLE,
+                            List.of(new MatrixOptionDef("op1", Template.text(""), "DEFAULT"),
+                                    new MatrixOptionDef("op2", Template.text(""), "group")),
+                            List.of(new MatrixRowDef("row1", Template.text("row1")),
+                                    new MatrixRowDef("row2", Template.text("row2"))),
+                            List.of(new MatrixGroupDef("group", Template.text("Group")),
+                                    new MatrixGroupDef("DEFAULT", null)))
+                    .build(handle, testData.getUserId(), testData.getStudyGuid());
+
+            var targetInstance = createInstance(handle, act.getDef().getActivityId());
+            var targetQuestion = getQuestionDto(handle, act.getMatrixListQuestion());
+            var targetSid = act.getMatrixListQuestion().getStableId();
+
+            new AnswerToAnswerCopier(handle, testData.getUserId())
+                    .copy(sourceInstance, sourceQuestion, targetInstance, targetQuestion);
+            assertEquals(1, targetInstance.getAnswers().size());
+            assertNotNull(targetInstance.getAnswer(targetSid));
+
+            Answer actual = handle.attach(AnswerDao.class)
+                    .findAnswerById(targetInstance.getAnswer(targetSid).getAnswerId()).orElse(null);
+            assertNotNull(actual);
+            assertEquals(QuestionType.MATRIX, actual.getQuestionType());
+
+            var selectedCells = ((MatrixAnswer) actual).getValue();
+
+            assertEquals(2, selectedCells.size());
+            assertEquals("row1", selectedCells.get(0).getRowStableId());
+            assertEquals("op1", selectedCells.get(0).getOptionStableId());
+            assertEquals("DEFAULT", selectedCells.get(0).getGroupStableId());
+
+            assertEquals("row2", selectedCells.get(1).getRowStableId());
+            assertEquals("op2", selectedCells.get(1).getOptionStableId());
+            assertEquals("group", selectedCells.get(1).getGroupStableId());
 
             handle.rollback();
         });

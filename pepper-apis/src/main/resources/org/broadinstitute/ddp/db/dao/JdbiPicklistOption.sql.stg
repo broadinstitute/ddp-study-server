@@ -2,17 +2,20 @@ group JdbiPicklistOption;
 
 insertOption() ::= <<
 insert into picklist_option (picklist_question_id, picklist_option_stable_id, tooltip_template_id,
-       option_label_template_id, detail_label_template_id, allow_details, is_exclusive, display_order, revision_id, nested_options_template_id)
+       option_label_template_id, detail_label_template_id, allow_details, is_exclusive, is_default,
+       display_order, revision_id, nested_options_template_id)
 values (:picklistQuestionId, :stableId, :tooltipTemplateId,
-       :optionLabelTemplateId, :detailLabelTemplateId, :allowDetails, :isExclusive, :displayOrder, :revisionId, :nestedOptionsTemplateId)
+       :optionLabelTemplateId, :detailLabelTemplateId, :allowDetails, :isExclusive, :isDefault,
+       :displayOrder, :revisionId, :nestedOptionsTemplateId)
 >>
 
 insertOptionByDto() ::= <<
 insert into picklist_option (picklist_question_id, picklist_option_stable_id, tooltip_template_id,
-       option_label_template_id, detail_label_template_id, allow_details, is_exclusive, display_order, revision_id)
+       option_label_template_id, detail_label_template_id, allow_details, is_exclusive, is_default,
+       display_order, revision_id)
 values (:picklistQuestionId, :dto.getStableId, :dto.getTooltipTemplateId,
        :dto.getOptionLabelTemplateId, :dto.getDetailLabelTemplateId,
-       :dto.getAllowDetails, :dto.isExclusive, :dto.getDisplayOrder, :revisionId)
+       :dto.getAllowDetails, :dto.isExclusive, :dto.isDefault, :dto.getDisplayOrder, :revisionId)
 >>
 
 queryInfoByOptionStableIdAndRevision() ::= <<
@@ -24,6 +27,7 @@ select
     po.detail_label_template_id,
     po.allow_details,
     po.is_exclusive,
+    po.is_default,
     po.display_order,
     po.revision_id,
     rev.start_date as revision_start_timestamp,
@@ -51,6 +55,7 @@ select
     po.detail_label_template_id,
     po.allow_details,
     po.is_exclusive,
+    po.is_default,
     po.display_order,
     po.revision_id,
     rev.start_date as revision_start_timestamp,
@@ -78,6 +83,7 @@ select po.picklist_option_id,
        po.detail_label_template_id,
        po.allow_details,
        po.is_exclusive,
+       po.is_default,
        po.display_order,
        po.revision_id,
        rev.start_date as revision_start_timestamp,
@@ -101,6 +107,7 @@ select
     po.detail_label_template_id,
     po.allow_details,
     po.is_exclusive,
+    po.is_default,
     po.display_order,
     po.revision_id,
     rev.start_date as revision_start_timestamp,
@@ -123,6 +130,7 @@ select po.picklist_option_id,
        po.detail_label_template_id,
        po.allow_details,
        po.is_exclusive,
+       po.is_default,
        po.display_order,
        po.revision_id,
        rev.start_date as revision_start_timestamp,
@@ -155,6 +163,7 @@ select pno.parent_option_id        as parent_option_id,
        po.detail_label_template_id  as detail_label_template_id,
        po.allow_details             as allow_details,
        po.is_exclusive              as is_exclusive,
+       po.is_default                as is_default,
        po.display_order             as display_order,
        po.revision_id               as revision_id,
        option_rev.start_date        as revision_start_timestamp,

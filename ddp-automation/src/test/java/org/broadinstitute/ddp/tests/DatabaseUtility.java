@@ -104,4 +104,17 @@ public class DatabaseUtility {
         logger.info("Size of result set: {}", resultSet.size());
     }
 
+    public static List<Long> getAnswerIds() {
+        /*
+        List<Long> ids = TransactionWrapper.withTxn(handle -> {
+            logger.info("Using user id: {}", getUserId());
+            JdbiAnswer answerDao = handle.attach(JdbiAnswer.class);
+            return answerDao.getAnswerIds(getUserId());
+        });
+        logger.info("Answer IDs:");
+        listResultSet(ids);
+        return ids;
+        */
+        return null;
+    }
 }
