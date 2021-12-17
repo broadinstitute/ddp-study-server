@@ -1,0 +1,21 @@
+{
+  "prequal_name": "Join Us",
+  "prequal_title": "Join Us",
+  "prequal_header": "Prequalifier",
+
+  "consent_name": "Consent",
+  "consent_title": "Consent",
+  "consent_header": "Consent",
+
+  "mr_name": "Medical Release Form",
+  "mr_title": "Medical Release Form",
+  "mr_header": "Medical Release Form",
+
+  "ayc_name": "About Your Cancer Survey",
+  "ayc_title": "About Your Cancer Survey",
+  "ayc_header": "About Your Cancer Survey",
+
+  "ay_name": "About You",
+  "ay_title": "About You",
+  "ay_header": "About You"
+}
