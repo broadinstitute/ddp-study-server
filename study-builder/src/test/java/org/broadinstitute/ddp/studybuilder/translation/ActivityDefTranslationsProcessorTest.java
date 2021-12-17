@@ -4,7 +4,7 @@ package org.broadinstitute.ddp.studybuilder.translation;
 import static org.broadinstitute.ddp.model.activity.types.InstanceStatusType.CREATED;
 import static org.broadinstitute.ddp.model.activity.types.InstanceStatusType.IN_PROGRESS;
 import static org.broadinstitute.ddp.studybuilder.BuilderUtils.validateActivityDef;
-import static org.broadinstitute.ddp.studybuilder.StudyBuilderContext.CONTEXT;
+import static org.broadinstitute.ddp.studybuilder.translation.TranslationsProcessingData.INSTANCE;
 import static org.broadinstitute.ddp.studybuilder.translation.TranslationsProcessingType.PROCESS_ALL_TEMPLATES;
 import static org.broadinstitute.ddp.studybuilder.translation.I18nReader.readI18nTranslations;
 import static org.broadinstitute.ddp.studybuilder.translation.I18nReader.readTranslationsFromFilesInSpecifiedFolder;
@@ -15,7 +15,6 @@ import static org.junit.Assert.fail;
 import java.io.File;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 
 import com.google.gson.Gson;
 import com.typesafe.config.Config;
@@ -27,7 +26,7 @@ import org.broadinstitute.ddp.model.activity.definition.FormBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.QuestionBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.i18n.SummaryTranslation;
 import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
-import org.broadinstitute.ddp.studybuilder.StudyBuilderContext;
+import org.broadinstitute.ddp.studybuilder.translation.TranslationsProcessingData.TranslationData;
 import org.broadinstitute.ddp.util.ConfigUtil;
 import org.broadinstitute.ddp.util.GsonPojoValidator;
 import org.broadinstitute.ddp.util.GsonUtil;
@@ -41,7 +40,7 @@ import org.junit.Test;
  * <br>
  * <b>Testing steps:</b>
  * <ul>
- *     <li>[1] read subs.conf and read translations to {@link StudyBuilderContext#getTranslations()};</li>
+ *     <li>[1] read subs.conf and read translations to {@link TranslationsProcessingData#getTranslations()};</li>
  *     <li>[2] read form activity conf-file and build FormActivityDef;</li>
  *     <li>[3] run service ActivityDefTranslationsProcessor which go through all translations/templates
  *         of an activity and adds translations for languages which not added yet;</li>
@@ -122,15 +121,15 @@ public class ActivityDefTranslationsProcessorTest {
      */
     @Test
     public void testReadI18nFromFolderNegative() {
-        Map<String, Properties> translations = readTranslationsFromFilesInSpecifiedFolder(I18N_NON_EXISTING_FOLDER);
+        Map<String, TranslationData> translations = readTranslationsFromFilesInSpecifiedFolder(I18N_NON_EXISTING_FOLDER);
         assertNull(translations);
     }
 
 
     private Config parseSubsAndTranslations(String i18nFolder) {
         Config subsCfg = parseFile(SUBS_CONF_FILE);
-        CONTEXT.setTranslations(readI18nTranslations(subsCfg, i18nFolder));
-        CONTEXT.setTranslationsProcessingType(PROCESS_ALL_TEMPLATES);
+        INSTANCE.setTranslations(readI18nTranslations(subsCfg, i18nFolder));
+        INSTANCE.setTranslationsProcessingType(PROCESS_ALL_TEMPLATES);
         return subsCfg;
     }
 
@@ -151,7 +150,7 @@ public class ActivityDefTranslationsProcessorTest {
 
         // [3] run translations processing
         ActivityDefTranslationsProcessor activityDefTranslationsProcessor =
-                new ActivityDefTranslationsProcessor(CONTEXT.getTranslations());
+                new ActivityDefTranslationsProcessor(INSTANCE.getTranslations());
         activityDefTranslationsProcessor.run(activityDef);
 
         // [4] validate ActivityDef
@@ -170,27 +169,6 @@ public class ActivityDefTranslationsProcessorTest {
         assertEquals(1, questionDef2.getPromptTemplate().getVariables().size());
         assertEquals(3, questionDef2.getPromptTemplate().getVariables().iterator().next().getTranslations().size());
         assertEquals(3, questionDef3.getPromptTemplate().getVariables().size());
-
-        String templateRendered = questionDef1.getPromptTemplate().renderWithDefaultValues(LANG_EN);
-        assertEquals(
-                "What primary cancer(s) has your child been diagnosed with? <br/> "
-                        + "<small><em>If your child have been diagnosed with more than one cancer type, "
-                        + "please use the button below to add an additional diagnosis.</em></small>", templateRendered);
-
-        templateRendered = questionDef2.getPromptTemplate().renderWithDefaultValues(LANG_EN);
-        assertEquals("Where do you live?", templateRendered);
-
-        templateRendered = questionDef3.getPromptTemplate().renderWithDefaultValues(LANG_EN);
-        assertEquals(
-                "Currently, Count Me In is open only to patients in the United States or Canada. "
-                        + "If you do live or are treated in the United States or Canada, please reach out to us at "
-                        + "<a href=\"mailto:info@joincountmein.org\" class=\"Link\">info@joincountmein.org</a>.,"
-                        + "Currently, Count Me In is open only to patients in the United States or Canada. "
-                        + "If your child does live or is treated in the United States or Canada, please reach out to us "
-                        + "at <a href=\"mailto:info@joincountmein.org\" class=\"Link\">info@joincountmein.org</a>.,"
-                        + "<span class=\"bold\">In order to participate in the project, a parent needs to help you.</span> "
-                        + "When your parent is with you, click back and select \"My child has been diagnosed\" "
-                        + "and complete the registration together..", templateRendered);
     }
 
     private static Config parseFile(String fileName) {

@@ -1,12 +1,11 @@
 package org.broadinstitute.ddp.studybuilder.translation;
 
 import static org.broadinstitute.ddp.studybuilder.translation.TranslationsEnricher.addTemplateTranslations;
-import static org.broadinstitute.ddp.studybuilder.translation.TranslationsEnricher.getTemplateRendered;
+import static org.broadinstitute.ddp.studybuilder.translation.TranslationsEnricher.getTranslationByTemplateVariable;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import java.util.stream.Collectors;
 
 import org.broadinstitute.ddp.model.activity.definition.ActivityDef;
@@ -15,6 +14,7 @@ import org.broadinstitute.ddp.model.activity.definition.i18n.SummaryTranslation;
 import org.broadinstitute.ddp.model.activity.definition.i18n.Translation;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
+import org.broadinstitute.ddp.studybuilder.translation.TranslationsProcessingData.TranslationData;
 
 /**
  * Helper class used to copy translations defined in a StudyBuilder activity conf file
@@ -31,37 +31,37 @@ import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
  */
 public class ActivityNonStandardTranslationsProcessor {
 
-    void run(FormActivityDef activityDef, Map<String, Properties> allTranslations) {
+    void run(FormActivityDef activityDef, Map<String, TranslationData> allTranslations) {
         if (activityDef.getNameTemplate() != null) {
             addTemplateTranslations(activityDef.getNameTemplate(), allTranslations);
-            activityDef.setTranslatedNames(getTemplateRendered(activityDef.getNameTemplate(), allTranslations));
+            activityDef.setTranslatedNames(getTranslationByTemplateVariable(activityDef.getNameTemplate(), allTranslations));
         }
 
         if (activityDef.getSecondNameTemplate() != null) {
             addTemplateTranslations(activityDef.getSecondNameTemplate(), allTranslations);
-            activityDef.setTranslatedSecondNames(getTemplateRendered(activityDef.getSecondNameTemplate(), allTranslations));
+            activityDef.setTranslatedSecondNames(getTranslationByTemplateVariable(activityDef.getSecondNameTemplate(), allTranslations));
         }
 
         if (activityDef.getTitleTemplate() != null) {
             addTemplateTranslations(activityDef.getTitleTemplate(), allTranslations);
-            activityDef.setTranslatedTitles(getTemplateRendered(activityDef.getTitleTemplate(), allTranslations));
+            activityDef.setTranslatedTitles(getTranslationByTemplateVariable(activityDef.getTitleTemplate(), allTranslations));
         }
 
         if (activityDef.getSubtitleTemplate() != null) {
             addTemplateTranslations(activityDef.getSubtitleTemplate(), allTranslations);
-            activityDef.setTranslatedSubtitles(getTemplateRendered(activityDef.getSubtitleTemplate(), allTranslations));
+            activityDef.setTranslatedSubtitles(getTranslationByTemplateVariable(activityDef.getSubtitleTemplate(), allTranslations));
         }
 
         if (activityDef.getDescriptionTemplate() != null) {
             addTemplateTranslations(activityDef.getDescriptionTemplate(), allTranslations);
-            activityDef.setTranslatedDescriptions(getTemplateRendered(activityDef.getDescriptionTemplate(), allTranslations));
+            activityDef.setTranslatedDescriptions(getTranslationByTemplateVariable(activityDef.getDescriptionTemplate(), allTranslations));
         }
 
         if (activityDef.getSummaryTemplates() != null) {
             List<SummaryTranslation> translatedSummaries = new ArrayList<>();
             activityDef.getSummaryTemplates().forEach((k, v) -> {
                 addTemplateTranslations(v, allTranslations);
-                List<Translation> templateRendered = getTemplateRendered(v, allTranslations);
+                List<Translation> templateRendered = getTranslationByTemplateVariable(v, allTranslations);
                 if (templateRendered != null) {
                     translatedSummaries.addAll(
                             templateRendered.stream().map(t -> new SummaryTranslation(t.getLanguageCode(), t.getText(), k))

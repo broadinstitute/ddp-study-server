@@ -48,6 +48,8 @@ import org.broadinstitute.ddp.model.statistics.StatisticsType;
 import org.broadinstitute.ddp.model.study.StudyLanguage;
 import org.broadinstitute.ddp.security.AesUtil;
 import org.broadinstitute.ddp.security.EncryptionKey;
+import org.broadinstitute.ddp.studybuilder.translation.TranslationsProcessingData;
+import org.broadinstitute.ddp.studybuilder.translation.TranslationsToDbJsonSaver;
 import org.broadinstitute.ddp.util.ConfigUtil;
 import org.broadinstitute.ddp.util.GuidUtils;
 import org.jdbi.v3.core.Handle;
@@ -111,6 +113,9 @@ public class StudyBuilder {
         Path dirPath = cfgPath.getParent();
         new ActivityBuilder(dirPath, cfg, varsCfg, studyDto, adminDto.getUserId()).run(handle);
         new PdfBuilder(dirPath, cfg, studyDto, adminDto.getUserId()).run(handle);
+
+        // save translations (stored in i18n-files) to DB table `i18n_translation`
+        new TranslationsToDbJsonSaver().saveTranslations(handle, studyDto);
 
         if (doWorkflow) {
             new WorkflowBuilder(cfg, studyDto).run(handle);
@@ -478,6 +483,8 @@ public class StudyBuilder {
             if (langCodeId == null) {
                 throw new DDPException("Could not find language using code: " + lang);
             }
+
+            TranslationsProcessingData.INSTANCE.getLanguages().put(lang, langCodeId);
 
             var latest = new StudyLanguage(lang, name, isDefault, studyId, langCodeId);
             StudyLanguage current = currentLanguages.stream()

@@ -9,9 +9,12 @@ import java.util.Properties;
 import java.util.stream.Collectors;
 
 import com.typesafe.config.Config;
+import com.typesafe.config.ConfigObject;
 import org.broadinstitute.ddp.model.activity.definition.i18n.Translation;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.activity.definition.template.TemplateVariable;
+import org.broadinstitute.ddp.studybuilder.translation.TranslationsProcessingData.TranslationData;
+import org.broadinstitute.ddp.util.ConfigUtil;
 
 /**
  * Static methods helped to handle translations defined in Study Builder conf files.
@@ -19,16 +22,12 @@ import org.broadinstitute.ddp.model.activity.definition.template.TemplateVariabl
 public class TranslationsUtil {
 
     /** Translation key prefix (all references to translations in conf-files starts with this prefix) */
-    public static final String TRANSLATION_KEY_PREFIX = "i18n";
-    /** Separator in translation key */
-    public static final String TRANSLATION_KEY_SEPARATOR = ".";
+    public static final String I18N = "i18n";
 
     public static final String LANG_CDE_PLACEHOLDER = "xx";
+
     /** LangCde length (in a translation key follows after a prefix 'i18n' */
     public static final int LANG_CDE_LENGTH = LANG_CDE_PLACEHOLDER.length();
-
-    /** Length of substring 'xx.' where xx - language code */
-    public static final int LANG_CDE_WITH_SEP_LENGTH = LANG_CDE_LENGTH + TRANSLATION_KEY_SEPARATOR.length();
 
 
     /**
@@ -38,8 +37,15 @@ public class TranslationsUtil {
      * @param translationsPath  section in Config containing translations (usually 'i18n)
      * @return map with translations grouped by langCde
      */
-    public static Map<String, Properties> getTranslations(Config conf, String translationsPath) {
-        return groupTranslationsByLangs(toProperties(conf.getConfig(translationsPath).resolve()));
+    public static Map<String, TranslationData> getTranslations(Config conf, String translationsPath) {
+        Map<String, TranslationData> translationsMap = new HashMap<>();
+        conf.getConfig(translationsPath).root().entrySet().forEach(i18n -> {
+            Config translations = ((ConfigObject)i18n.getValue()).toConfig().resolve();
+            translationsMap.put(i18n.getKey(), new TranslationData(
+                    toProperties(translations),
+                    ConfigUtil.toJson(translations)));
+        });
+        return translationsMap;
     }
 
     /**
@@ -52,25 +58,6 @@ public class TranslationsUtil {
     }
 
     /**
-     * Read translations from properties (each translation key starts with prefix 'xx.' where xx - langCde)
-     * and group it according to langCde.
-     *
-     * @param translations  properties with translations (fetched from json file)
-     * @return map with translations grouped by langCde
-     */
-    public static Map<String, Properties> groupTranslationsByLangs(Properties translations) {
-        Map<String, Properties> translationsMap = new HashMap<>();
-        translations.forEach((k, v) -> {
-            String key = ((String)k);
-            String langCode = key.substring(0, LANG_CDE_LENGTH);
-            translationsMap.putIfAbsent(langCode, new Properties());
-            Properties translationsForLang = translationsMap.get(langCode);
-            translationsForLang.put(key.substring(LANG_CDE_WITH_SEP_LENGTH), v);
-        });
-        return translationsMap;
-    }
-
-    /**
      * Get translation value for certain key and langCode.
      *
      * @param langCde         language code for which to detect a translation
@@ -78,10 +65,10 @@ public class TranslationsUtil {
      * @param allTranslations map with language translations from which to detect a translation value
      * @return a detected translation value, or null - if not detected
      */
-    public static String getTranslationForLang(String langCde, String translationKey, Map<String, Properties> allTranslations) {
-        Properties langTranslations = allTranslations.get(langCde);
+    public static String getTranslationForLang(String langCde, String translationKey, Map<String, TranslationData> allTranslations) {
+        TranslationData langTranslations = allTranslations.get(langCde);
         if (langTranslations != null) {
-            return (String)langTranslations.get(translationKey);
+            return (String)langTranslations.getProperties().get(translationKey);
         }
         return null;
     }
@@ -106,7 +93,7 @@ public class TranslationsUtil {
      * @return list of langCde's which needs to be added to a specified translations array
      */
     public static List<String> detectLanguagesToBeAddedToTranslations(
-            List<Translation> translations, Map<String, Properties> allTranslations) {
+            List<Translation> translations, Map<String, TranslationData> allTranslations) {
         List<String> langCdeList = new ArrayList<>();
         allTranslations.keySet().forEach(langCde -> {
             boolean addLangCde = true;
