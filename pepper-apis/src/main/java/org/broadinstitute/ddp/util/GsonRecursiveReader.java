@@ -50,7 +50,7 @@ public class GsonRecursiveReader {
             for (var entry : ((JsonObject) node).entrySet()) {
                 getEntryValueIfFoundInReadNames(entry, yetNotReadNames, results);
             }
-            for (var entry : ((JsonObject) node).entrySet()) {
+            for (var entry : ((JsonObject) node). entrySet()) {
                 getValuesRecursively(entry.getValue(), yetNotReadNames, results);
             }
         }
