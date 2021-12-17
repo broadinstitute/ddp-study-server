@@ -14,26 +14,66 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.ddp.exception.DDPException;
+import org.broadinstitute.ddp.model.activity.definition.ActivityDef;
 import org.broadinstitute.ddp.model.activity.definition.i18n.Translation;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.activity.definition.template.TemplateVariable;
-import org.broadinstitute.ddp.studybuilder.StudyBuilderContext;
+import org.broadinstitute.ddp.studybuilder.translation.TranslationsProcessingData.TranslationData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+
 /**
- * Contains methods used to add translations for all languages supported in a study.
+ * Contains methods used to add variables and translations for all languages supported in a study.
+ * Variables/translations to be added to templates where variables are not defined.
+ * NOTE: The variables will be added only if feature 'saveTranslationsToDbJson' is disabled.
  */
 public class TranslationsEnricher {
 
     private static final Logger LOG = LoggerFactory.getLogger(TranslationsEnricher.class);
 
     /**
+     * Max number of variables in a template which defined in activity definition in config files.
+     * The thing is that variable value in such template should be moved to translations
+     * properties defined in {@link ActivityDef}
+     */
+    private static final int ACTIVITY_LEVEL_TEMPLATES_VARIABLES_MAX_NUMBER = 1;
+
+    /**
+     * Get translations (for all supported languages) by variable defined in a templateText.
+     * This method used for assigning activity-level translation-properties from the templates.
+     *
+     * @param template template which translations to get
+     * @return - list of {@link Template} rendered translations
+     */
+    public static List<Translation> getTranslationByTemplateVariable(Template template, Map<String, TranslationData> allTranslations) {
+        if (template != null && template.getVariables() != null && template.getVariables().size() > 0) {
+            return allTranslations.keySet().stream()
+                    .map(langCde -> createTranslation(template, langCde, allTranslations))
+                    .collect(Collectors.toList());
+        }
+        return null;
+    }
+
+    private static Translation createTranslation(Template template, String langCde, Map<String, TranslationData> allTranslations) {
+        Collection<String> variablesInTemplate = extractVelocityVariablesFromTemplate(template.getTemplateText());
+        if (variablesInTemplate.size() == 0) {
+            throw new DDPException("No any variables are defined in activity level templates");
+        }
+        if (variablesInTemplate.size() > ACTIVITY_LEVEL_TEMPLATES_VARIABLES_MAX_NUMBER) {
+            throw new DDPException("Number of variables in activity templates should not exceed "
+                    + ACTIVITY_LEVEL_TEMPLATES_VARIABLES_MAX_NUMBER);
+        }
+        return new Translation(langCde, getTranslationForLang(langCde, variablesInTemplate.iterator().next(), allTranslations));
+    }
+
+    /**
      * Add translations to {@link Template} variables (which are detected from {@link Template#getTemplateText()}).<br>
+     * Note: The variables will be added only if feature 'saveTranslationsToDbJson' is disabled.
      *
      * <b>Algorithm:</b>
      * <ul>
@@ -62,24 +102,46 @@ public class TranslationsEnricher {
      *    </li>
      * </ul>
      */
-    public static void addTemplateTranslations(Template template, Map<String, Properties> allTranslations) {
+    public static void addTemplateTranslations(Template template, Map<String, TranslationData> allTranslations) {
         if (isProcessTemplate(template)) {
             if (template.getTemplateType() == null) {
                 template.setTemplateType(TEXT);
             }
+            // detect list of variables from templateText
             Collection<String> variablesInTemplate = extractVelocityVariablesFromTemplate(template.getTemplateText());
             if (template.getVariables() != null) {
                 template.getVariables().forEach(v -> {
-                    List<Translation> translations = addTranslations(v.getTranslations(), v.getName(), allTranslations);
+                    List<Translation> translations = detectTranslationsForTemplateVariable(
+                            v.getTranslations(), v.getName(), allTranslations);
                     v.setTranslation(translations);
                 });
             }
-            Collection<String> extraVariables = detectVariablesNotPresentInList(template.getVariables(), variablesInTemplate);
-            extraVariables.forEach(v -> {
-                List<Translation> translations = addTranslations(null, v, allTranslations);
-                template.addVariable(new TemplateVariable(v, translations));
-            });
+            addVariablesToTemplate(template, variablesInTemplate, allTranslations);
         }
+    }
+
+    /**
+     * Add variables to template.
+     * The variables will be added only if feature 'saveTranslationsToDbJson' is disabled.
+     */
+    private static void addVariablesToTemplate(
+            Template template,
+            Collection<String> variablesInTemplate,
+            Map<String, TranslationData> allTranslations) {
+
+        Collection<String> extraVariables = detectVariablesNotPresentInList(template.getVariables(), variablesInTemplate);
+        extraVariables.forEach(v -> {
+            List<Translation> translations = detectTranslationsForTemplateVariable(null, v, allTranslations);
+
+            // add variables to template only if feature 'saveTranslationsToDbJson' is disabled
+            if (!TranslationsProcessingData.INSTANCE.isSaveTranslationsToDbJson()) {
+                template.addVariable(new TemplateVariable(v, translations));
+            } else {
+                if (template.getVariables() == null) {
+                    template.setVariables(new ArrayList<>());
+                }
+            }
+        });
     }
 
     /**
@@ -96,8 +158,8 @@ public class TranslationsEnricher {
      * - in a study defined translations for languages "en", "es" (files "en.conf", "es.conf").
      * - during study building process from this template definition will be built an object {@link Template}
      * with empty list of variables.
-     * - this method ({@link #addTranslations(List, String, Map)}) applied to a template variable "prequal.name" will generate
-     *   2 translation references for each of defined languages:
+     * - this method ({@link #detectTranslationsForTemplateVariable(List, String, Map)}) applied to a template variable
+     *   "prequal.name" will generate 2 translation references for each of defined languages:
      * {@code
      *"variables": [{
      *    "name": "prequal.name",
@@ -113,8 +175,8 @@ public class TranslationsEnricher {
      * @param allTranslations  all translations for all languages of a study (defined in files in folder 'i18n')
      * @return list of Translations built for all languages of a study.
      */
-    public static List<Translation> addTranslations(
-            List<Translation> translations, String templateVariable, Map<String, Properties> allTranslations) {
+    private static List<Translation> detectTranslationsForTemplateVariable(
+            List<Translation> translations, String templateVariable, Map<String, TranslationData> allTranslations) {
         String translationKey = templateVariable;
         if (translationKey != null) {
             List<String> langCdeToAdd = detectLanguagesToBeAddedToTranslations(translations, allTranslations);
@@ -134,21 +196,6 @@ public class TranslationsEnricher {
     }
 
     /**
-     * Get rendered translations of a {@link Template} for all of languages defiend for the current study.
-     *
-     * @param template template which translations to get
-     * @return - list of {@link Template} rendered translations
-     */
-    public static List<Translation> getTemplateRendered(Template template, Map<String, Properties> allTranslations) {
-        if (template != null && template.getVariables() != null && template.getVariables().size() > 0) {
-            return allTranslations.keySet().stream()
-                    .map(langCde -> new Translation(langCde, template.renderWithDefaultValues(langCde)))
-                    .collect(Collectors.toList());
-        }
-        return null;
-    }
-
-    /**
      * Template can be processed if it is not null.
      * Also checked the following conditions:
      * <pre>
@@ -158,8 +205,8 @@ public class TranslationsEnricher {
      */
     private static boolean isProcessTemplate(Template template) {
         return template != null && StringUtils.isNotBlank(template.getTemplateText())
-                && (StudyBuilderContext.CONTEXT.getTranslationsProcessingType() == PROCESS_ALL_TEMPLATES
-                    || (StudyBuilderContext.CONTEXT.getTranslationsProcessingType() == PROCESS_IGNORE_TEMPLATES_WITH_TRANSLATIONS
+                && (TranslationsProcessingData.INSTANCE.getTranslationsProcessingType() == PROCESS_ALL_TEMPLATES
+                    || (TranslationsProcessingData.INSTANCE.getTranslationsProcessingType() == PROCESS_IGNORE_TEMPLATES_WITH_TRANSLATIONS
                         && (template.getVariables() == null || template.getVariables().size() == 0)));
     }
 }

@@ -1,6 +1,6 @@
 package org.broadinstitute.ddp.studybuilder;
 
-import static org.broadinstitute.ddp.studybuilder.StudyBuilderContext.CONTEXT;
+import static org.broadinstitute.ddp.studybuilder.translation.TranslationsProcessingData.INSTANCE;
 import static org.broadinstitute.ddp.studybuilder.StudyPatcher.LOG_FILENAME;
 import static org.broadinstitute.ddp.studybuilder.translation.I18nReader.readI18nTranslations;
 
@@ -24,6 +24,7 @@ import org.apache.commons.cli.ParseException;
 import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.exception.DDPException;
+import org.broadinstitute.ddp.studybuilder.translation.TranslationsProcessingData;
 import org.broadinstitute.ddp.studybuilder.translation.TranslationsProcessingType;
 import org.broadinstitute.ddp.studybuilder.task.CustomTask;
 import org.jdbi.v3.core.Handle;
@@ -48,6 +49,7 @@ public class StudyBuilderCli {
     private static final String OPT_EMAIL_KEYS = "email-keys";
     private static final String OPT_PROCESS_TRANSLATIONS = "process-translations";
     private static final String OPT_I18N_PATH = "i18n-path";
+    private static final String OPT_TRANSLATIONS_TO_DB_JSON = "translations-to-db-json";
 
     private static final String DEFAULT_STUDIES_DIR = "studies";
     private static final String DEFAULT_STUDY_CONF_FILENAME = "study.conf";
@@ -81,6 +83,7 @@ public class StudyBuilderCli {
         options.addOption(null, OPT_PATCH, false, "run patches for a study");
         options.addOption(null, OPT_PROCESS_TRANSLATIONS, true, "run the process of translations assignment for all study languages");
         options.addOption(null, OPT_I18N_PATH, true, "path to folder with i18n-files (translations)");
+        options.addOption(null, OPT_TRANSLATIONS_TO_DB_JSON, false, "saves translations to JSON field in DB");
 
         CommandLineParser parser = new DefaultParser();
         CommandLine cmd = parser.parse(options, args);
@@ -118,7 +121,7 @@ public class StudyBuilderCli {
         }
 
         // read translations from i18n-files (from subs.conf section "i18n" or from a folder specified by opt "i18n-path"
-        CONTEXT.setTranslations(readI18nTranslations(subsCfg, cmd.hasOption(OPT_I18N_PATH) ? cmd.getOptionValue(OPT_I18N_PATH) : null));
+        INSTANCE.setTranslations(readI18nTranslations(subsCfg, cmd.hasOption(OPT_I18N_PATH) ? cmd.getOptionValue(OPT_I18N_PATH) : null));
 
         // Merge the configs. Substitutions have higher priority, and we fallback to vars, i.e. substitutions override keys in vars.
         varsCfg = subsCfg.withFallback(varsCfg);
@@ -215,10 +218,11 @@ public class StudyBuilderCli {
             builder.doEvents(false);
         }
 
-        StudyBuilderContext.CONTEXT.setTranslationsProcessingType(
+        TranslationsProcessingData.INSTANCE.setTranslationsProcessingType(
                 cmd.hasOption(OPT_PROCESS_TRANSLATIONS)
                         ? TranslationsProcessingType.valueOf(cmd.getOptionValue(OPT_PROCESS_TRANSLATIONS))
                         : null);
+        TranslationsProcessingData.INSTANCE.setSaveTranslationsToDbJson(cmd.hasOption(OPT_TRANSLATIONS_TO_DB_JSON));
 
         log("executing setup...");
         execute(builder::run, isDryRun);
