@@ -8,7 +8,7 @@ import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 
 import com.google.gson.annotations.SerializedName;
-import org.broadinstitute.ddp.content.I18nContentRenderer;
+import org.broadinstitute.ddp.content.I18nTemplateRenderFacade;
 import org.broadinstitute.ddp.model.activity.types.TemplateType;
 import org.broadinstitute.ddp.util.MiscUtil;
 import org.jdbi.v3.core.mapper.reflect.ColumnName;
@@ -90,6 +90,10 @@ public class Template {
         return variables;
     }
 
+    public void setVariables(Collection<TemplateVariable> variables) {
+        this.variables = variables;
+    }
+
     /**
      * It is possible that `variables` set to null: this could happen during building of
      * object {@link Template} from a JSON (config file) in a case if child element `variables[]` is not specified
@@ -145,14 +149,15 @@ public class Template {
     }
 
     public String render(String languageCode, boolean useDefaultsForDdpMethods) {
-        return TemplateUtil.render(getTemplateText(), getVariables(), languageCode, useDefaultsForDdpMethods);
+        return I18nTemplateRenderFacade.INSTANCE.renderTemplate(
+                this, getTemplateText(), getVariables(), languageCode, useDefaultsForDdpMethods);
     }
 
-    public String render(String languageCode, I18nContentRenderer renderer, Map<String, Object> initialContext) {
-        return TemplateUtil.render(getTemplateText(), getVariables(), languageCode, renderer, initialContext);
+    public String render(String languageCode, Map<String, Object> initialContext) {
+        return I18nTemplateRenderFacade.INSTANCE.renderTemplate(this, languageCode, initialContext);
     }
 
     public String renderWithDefaultValues(String languageCode) {
-        return TemplateUtil.renderWithDefaultValues(getTemplateText(), getVariables(), languageCode);
+        return I18nTemplateRenderFacade.INSTANCE.renderTemplateWithDefaultValues(getTemplateText(), getVariables(), languageCode);
     }
 }
