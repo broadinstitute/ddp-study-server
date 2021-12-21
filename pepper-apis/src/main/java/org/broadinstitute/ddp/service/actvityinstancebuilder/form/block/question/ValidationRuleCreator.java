@@ -182,7 +182,7 @@ public class ValidationRuleCreator {
 
     private String getHintTitle(AIBuilderContext ctx, RuleDef ruleDef) {
         return ruleDef.getHintTemplate() !=  null
-                ? ruleDef.getHintTemplate().render(ctx.getIsoLangCode(), ctx.getI18nContentRenderer(), ctx.getRendererInitialContext())
+                ? ruleDef.getHintTemplate().render(ctx.getIsoLangCode(), ctx.getRendererInitialContext())
                 : null;
     }
 

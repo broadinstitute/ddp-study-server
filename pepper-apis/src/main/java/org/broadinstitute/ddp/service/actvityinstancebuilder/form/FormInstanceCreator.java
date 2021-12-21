@@ -106,7 +106,7 @@ public class FormInstanceCreator {
     private void renderTemplates(AIBuilderContext ctx, Map<Long, String> renderedTemplates) {
         ctx.getTemplates().values().forEach(t ->
                 renderedTemplates.put(t.getTemplateId(),
-                        t.render(ctx.getIsoLangCode(), ctx.getI18nContentRenderer(), ctx.getRendererInitialContext()))
+                        t.render(ctx.getIsoLangCode(), ctx.getRendererInitialContext()))
         );
     }
 
