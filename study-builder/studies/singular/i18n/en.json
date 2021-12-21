@@ -1100,7 +1100,8 @@
         "title": "Date"
       }
     },
-    "phone_hint": "Please type in valid phone number"
+    "phone_hint": "Please type in valid phone number",
+    "fax_hint": "Please type in valid fax number"
   },
 
   "medical_record_upload": {
