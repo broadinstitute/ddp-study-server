@@ -15,7 +15,7 @@
     },
 
     "age": {
-      "prompt": "$ddp.checkAnswer(\"WHO_ENROLLING\",\"MYSELF\",\"How old are you?\",\"How old is your child?\")*",
+      "prompt": "How old are you? / How old is your child? *",
       "placeholder": "Enter age",
       "range_hint": "Please enter an age between 0 and 110",
       "required_hint": "Please enter age",
@@ -23,7 +23,7 @@
     },
 
     "country": {
-      "prompt": "$ddp.checkAnswer(\"WHO_ENROLLING\",\"MYSELF\",\"Where do you live\",\"Where does your child live?\")*",
+      "prompt": "Where do you live? / Where does your child live? *",
       "label": "Select Country",
       "required_hint": "Please choose a country",
       "ineligible_hint": "Project Singular is currently open only to participants in the United States and Territories or Canada. Thank you for your interest."
