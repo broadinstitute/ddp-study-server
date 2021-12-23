@@ -205,7 +205,9 @@ public class ActivityDefTranslationsProcessor {
                     ((CompositeQuestionDef) questionDef).getChildren().forEach(q -> enrichQuestionWithTranslations(q));
                 }
                 break;
+            case ACTIVITY_INSTANCE_SELECT:
             case AGREEMENT:
+            case MATRIX:
             case FILE:
                 break;
             default:
