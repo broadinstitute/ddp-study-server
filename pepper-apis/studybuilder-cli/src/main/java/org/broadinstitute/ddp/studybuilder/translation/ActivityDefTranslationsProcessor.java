@@ -4,7 +4,6 @@ import static org.broadinstitute.ddp.model.activity.types.DateRenderMode.PICKLIS
 import static org.broadinstitute.ddp.studybuilder.translation.TranslationsEnricher.addTemplateTranslations;
 
 import java.util.Map;
-import java.util.Properties;
 
 import org.broadinstitute.ddp.model.activity.definition.ComponentBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.ConditionalBlockDef;
@@ -29,8 +28,8 @@ import org.broadinstitute.ddp.model.activity.definition.question.TextQuestionDef
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.activity.definition.template.TemplateVariable;
 import org.broadinstitute.ddp.model.activity.definition.validation.RuleDef;
-import org.broadinstitute.ddp.studybuilder.StudyBuilderContext;
 import org.broadinstitute.ddp.studybuilder.StudyBuilderException;
+import org.broadinstitute.ddp.studybuilder.translation.TranslationsProcessingData.TranslationData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -60,21 +59,21 @@ public class ActivityDefTranslationsProcessor {
 
     private static final Logger LOG = LoggerFactory.getLogger(ActivityDefTranslationsProcessor.class);
 
-    private final Map<String, Properties> allTranslations;
+    private final Map<String, TranslationData> allTranslations;
 
-    public ActivityDefTranslationsProcessor(Map<String, Properties> allTranslations) {
+    public ActivityDefTranslationsProcessor(Map<String, TranslationData> allTranslations) {
         this.allTranslations = allTranslations;
     }
 
     public void run(FormActivityDef activityDef) {
-        if (StudyBuilderContext.CONTEXT.getTranslationsProcessingType() != null) {
+        if (TranslationsProcessingData.INSTANCE.getTranslationsProcessingType() != null) {
             enrichActivityDefWithTranslations(activityDef);
         }
     }
 
     private void enrichActivityDefWithTranslations(FormActivityDef activityDef) {
         LOG.info("Add translations for languages {} to a generated activity definition {}",
-                StudyBuilderContext.CONTEXT.getTranslations().keySet(), activityDef.getActivityCode());
+                TranslationsProcessingData.INSTANCE.getTranslations().keySet(), activityDef.getActivityCode());
 
         addTemplateTranslations(activityDef.getReadonlyHintTemplate(), allTranslations);
         addTemplateTranslations(activityDef.getLastUpdatedTextTemplate(), allTranslations);

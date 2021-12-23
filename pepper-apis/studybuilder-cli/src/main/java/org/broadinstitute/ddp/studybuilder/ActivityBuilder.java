@@ -34,6 +34,7 @@ import org.broadinstitute.ddp.model.activity.types.FormType;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.broadinstitute.ddp.model.study.ActivityMappingType;
 import org.broadinstitute.ddp.studybuilder.translation.ActivityDefTranslationsProcessor;
+import org.broadinstitute.ddp.studybuilder.translation.TranslationsProcessingData;
 import org.broadinstitute.ddp.util.ConfigUtil;
 import org.broadinstitute.ddp.util.GsonPojoValidator;
 import org.broadinstitute.ddp.util.GsonUtil;
@@ -71,7 +72,7 @@ public class ActivityBuilder {
         this.studyDto = studyDto;
         this.adminUserId = adminUserId;
 
-        this.activityDefTranslationsProcessor = new ActivityDefTranslationsProcessor(StudyBuilderContext.CONTEXT.getTranslations());
+        this.activityDefTranslationsProcessor = new ActivityDefTranslationsProcessor(TranslationsProcessingData.INSTANCE.getTranslations());
     }
 
     void run(Handle handle) {
@@ -344,7 +345,7 @@ public class ActivityBuilder {
      */
     private ActivityDef buildActivityDefFromConfig(Config definition) {
         ActivityDef activityDef = gson.fromJson(ConfigUtil.toJson(definition), ActivityDef.class);
-        if (StudyBuilderContext.CONTEXT.getTranslationsProcessingType() != null) {
+        if (TranslationsProcessingData.INSTANCE.getTranslationsProcessingType() != null) {
             activityDefTranslationsProcessor.run((FormActivityDef) activityDef);
         }
         validateDefinition(activityDef);
