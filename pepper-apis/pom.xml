@@ -548,10 +548,6 @@
                 <artifactId>fst</artifactId>
                 <version>2.57</version>
             </dependency>
-            <dependency>
-                <groupId>com.google.cloud</groupId>
-                <artifactId>google-cloud-secretmanager</artifactId>
-            </dependency>
             <!-- jackson libraries below meant to upgrade  transitive dependencies    -->
             <!-- from sendgrid.com::sendgrid-java for infosec                         -->
             <!-- shooting for jackson-databind version higher than 2.9.9.2            -->
@@ -798,6 +794,7 @@
                     <sourceDirectories>
                         <directory>${project.build.sourceDirectory}</directory>
                     </sourceDirectories>
+                    <linkXRef>false</linkXRef>
                 </configuration>
             </plugin>
             <plugin>
@@ -854,14 +851,7 @@
                 <version>2.4.3</version>
             </plugin>
 
-            <plugin>
-                <artifactId>maven-checkstyle-plugin</artifactId>
-                <configuration>
-                    <configLocation>checkstyle.xml</configLocation>
-                    <includeTestSourceDirectory>true</includeTestSourceDirectory>
-                    <linkXRef>false</linkXRef>
-                </configuration>
-            </plugin>
+
         </plugins>
         <pluginManagement>
             <plugins>
