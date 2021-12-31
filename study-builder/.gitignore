@@ -1,6 +1,5 @@
 *.swp
 .DS_Store
-.java-version
 
 target/
 output-config/
