@@ -498,6 +498,7 @@
         <dependencies>
             <!-- jackson libraries below meant to upgrade  transitive dependencies    -->
             <!-- from sendgrid.com::sendgrid-java for infosec                         -->
+            <!-- shooting for jackson-databind version higher than 2.9.9.2            -->
             <!-- core, databind and annotations are maintained and compiled together, -->
             <!-- so updating all 3.                                                   -->
             <dependency>
