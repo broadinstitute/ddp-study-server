@@ -496,26 +496,6 @@
 
     <dependencyManagement>
         <dependencies>
-            <!-- jackson libraries below meant to upgrade  transitive dependencies    -->
-            <!-- from sendgrid.com::sendgrid-java for infosec                         -->
-            <!-- shooting for jackson-databind version higher than 2.9.9.2            -->
-            <!-- core, databind and annotations are maintained and compiled together, -->
-            <!-- so updating all 3.                                                   -->
-            <dependency>
-                <groupId>com.fasterxml.jackson.core</groupId>
-                <artifactId>jackson-databind</artifactId>
-                <version>2.12.1</version>
-            </dependency>
-            <dependency>
-                <groupId>com.fasterxml.jackson.core</groupId>
-                <artifactId>jackson-core</artifactId>
-                <version>2.12.1</version>
-            </dependency>
-            <dependency>
-                <groupId>com.fasterxml.jackson.core</groupId>
-                <artifactId>jackson-annotations</artifactId>
-                <version>2.12.1</version>
-            </dependency>
             <dependency>
                 <groupId>commons-beanutils</groupId>
                 <artifactId>commons-beanutils</artifactId>
