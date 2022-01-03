@@ -130,10 +130,10 @@ public class Template {
      */
     public Optional<TemplateVariable> getVariable(String name) {
         if (variables == null) {
-            return null;
-        } else {
-            return variables.stream().filter(var -> var.getName().equals(name)).findFirst();
+            return Optional.empty();
         }
+
+        return variables.stream().filter(var -> var.getName().equals(name)).findFirst();
     }
 
     public Long getTemplateId() {
