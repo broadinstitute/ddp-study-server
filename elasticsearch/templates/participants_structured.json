@@ -459,12 +459,7 @@
                 "type": "keyword"
               },
               "medicalRecordId": {
-                "type": "text",
-                "fields": {
-                  "keyword": {
-                    "type": "keyword"
-                  }
-                }
+                "type": "keyword"
               },
               "mrReceived": {
                 "type": "date"
@@ -498,20 +493,10 @@
                 "type": "boolean"
               },
               "ddpParticipantId": {
-                "type": "text",
-                "fields": {
-                  "keyword": {
-                    "type": "keyword"
-                  }
-                }
+                "type": "keyword"
               },
               "reviewMedicalRecord": {
-                "type": "text",
-                "fields": {
-                  "keyword": {
-                    "type": "keyword"
-                  }
-                }
+                "type": "boolean"
               },
               "type": {
                 "type": "text",
@@ -522,20 +507,10 @@
                 }
               },
               "ddpInstitutionId": {
-                "type": "text",
-                "fields": {
-                  "keyword": {
-                    "type": "keyword"
-                  }
-                }
+                "type": "keyword"
               },
               "participantId": {
-                "type": "text",
-                "fields": {
-                  "keyword": {
-                    "type": "keyword"
-                  }
-                }
+                "type": "keyword"
               },
               "unableObtainText": {
                 "type": "text",
@@ -568,12 +543,7 @@
                 "type": "date"
               },
               "ddpInstanceId": {
-                "type": "text",
-                "fields": {
-                  "keyword": {
-                    "type": "keyword"
-                  }
-                }
+                "type": "keyword"
               },
               "contact": {
                 "type": "text",
@@ -617,12 +587,7 @@
                 }
               },
               "institutionId": {
-                "type": "text",
-                "fields": {
-                  "keyword": {
-                    "type": "keyword"
-                  }
-                }
+                "type": "keyword"
               },
               "crRequired": {
                 "type": "boolean"
@@ -685,12 +650,7 @@
                   "type": "keyword"
                 },
                 "oncHistoryDetailId": {
-                  "type": "text",
-                  "fields": {
-                    "keyword": {
-                      "type": "keyword"
-                    }
-                  }
+                  "type": "keyword"
                 },
                 "notes": {
                   "type": "text",
@@ -748,12 +708,7 @@
                   }
                 },
                 "medicalRecordId": {
-                  "type": "text",
-                  "fields": {
-                    "keyword": {
-                      "type": "keyword"
-                    }
-                  }
+                  "type": "keyword"
                 },
                 "faxSent2By": {
                   "type": "text",
@@ -788,12 +743,7 @@
                   }
                 },
                 "ddpParticipantId": {
-                  "type": "text",
-                  "fields": {
-                    "keyword": {
-                      "type": "keyword"
-                    }
-                  }
+                  "type": "keyword"
                 },
                 "accessionNumber": {
                   "type": "text",
@@ -867,20 +817,10 @@
                   "type": "keyword"
                 },
                 "tissueId": {
-                  "type": "text",
-                  "fields": {
-                    "keyword": {
-                      "type": "keyword"
-                    }
-                  }
+                  "type": "keyword"
                 },
                 "oncHistoryDetailId": {
-                  "type": "text",
-                  "fields": {
-                    "keyword": {
-                      "type": "keyword"
-                    }
-                  }
+                  "type": "keyword"
                 },
                 "notes": {
                   "type": "text",
@@ -891,12 +831,7 @@
                   }
                 },
                 "countReceived": {
-                  "type": "text",
-                  "fields": {
-                    "keyword": {
-                      "type": "keyword"
-                    }
-                  }
+                  "type": "long"
                 },
                 "tissueType": {
                   "type": "text",
@@ -1021,36 +956,16 @@
                   }
                 },
                 "scrollsCount": {
-                  "type": "text",
-                  "fields": {
-                    "keyword": {
-                      "type": "keyword"
-                    }
-                  }
+                  "type": "long"
                 },
                 "ussCount": {
-                  "type": "text",
-                  "fields": {
-                    "keyword": {
-                      "type": "keyword"
-                    }
-                  }
+                  "type": "long"
                 },
                 "blocksCount": {
-                  "type": "text",
-                  "fields": {
-                    "keyword": {
-                      "type": "keyword"
-                    }
-                  }
+                  "type": "long"
                 },
                 "hECount": {
-                  "type": "text",
-                  "fields": {
-                    "keyword": {
-                      "type": "keyword"
-                    }
-                  }
+                  "type": "long"
                 }
               }
             },
@@ -1072,12 +987,7 @@
                   "type": "boolean"
                 },
                 "ddpLabel": {
-                  "type": "text",
-                  "fields": {
-                    "keyword": {
-                      "type": "keyword"
-                    }
-                  }
+                  "type": "keyword"
                 },
                 "instanceName": {
                   "type": "text",
@@ -1088,28 +998,13 @@
                   }
                 },
                 "dsmKitId": {
-                  "type": "text",
-                  "fields": {
-                    "keyword": {
-                      "type": "keyword"
-                    }
-                  }
+                  "type": "keyword"
                 },
                 "deactivatedDate": {
-                  "type": "text",
-                  "fields": {
-                    "keyword": {
-                      "type": "keyword"
-                    }
-                  }
+                  "type": "long"
                 },
                 "ddpParticipantId": {
-                  "type": "text",
-                  "fields": {
-                    "keyword": {
-                      "type": "keyword"
-                    }
-                  }
+                  "type": "keyword"
                 },
                 "express": {
                   "type": "boolean"
@@ -1145,15 +1040,15 @@
                   }
                 },
                 "easypostShipmentStatus": {
-                  "type": "boolean"
-                },
-                "kitTypeId": {
                   "type": "text",
                   "fields": {
                     "keyword": {
                       "type": "keyword"
                     }
                   }
+                },
+                "kitTypeId": {
+                  "type": "keyword"
                 },
                 "labelUrlTo": {
                   "type": "text",
@@ -1223,12 +1118,7 @@
                   }
                 },
                 "trackingId": {
-                  "type": "text",
-                  "fields": {
-                    "keyword": {
-                      "type": "keyword"
-                    }
-                  }
+                  "type": "keyword"
                 },
                 "kitLabel": {
                   "type": "text",
@@ -1247,20 +1137,10 @@
                   }
                 },
                 "externalOrderDate": {
-                  "type": "text",
-                  "fields": {
-                    "keyword": {
-                      "type": "keyword"
-                    }
-                  }
+                  "type": "long"
                 },
                 "receiveDate": {
-                  "type": "text",
-                  "fields": {
-                    "keyword": {
-                      "type": "keyword"
-                    }
-                  }
+                  "type": "long"
                 },
                 "labelUrlReturn": {
                   "type": "text",
@@ -1287,12 +1167,7 @@
                   }
                 },
                 "scanDate": {
-                  "type": "text",
-                  "fields": {
-                    "keyword": {
-                      "type": "keyword"
-                    }
-                  }
+                  "type": "long"
                 },
                 "authorizedBy": {
                   "type": "text",
@@ -1310,13 +1185,8 @@
                     }
                   }
                 },
-                "dsmKitRequest": {
-                  "type": "text",
-                  "fields": {
-                    "keyword": {
-                      "type": "keyword"
-                    }
-                  }
+                "dsmKitRequestId": {
+                  "type": "keyword"
                 },
                 "uploadReason": {
                   "type": "text",
@@ -1369,21 +1239,8 @@
                     }
                   }
                 },
-                "dsmKitRequestId": {
-                  "type": "text",
-                  "fields": {
-                    "keyword": {
-                      "type": "keyword"
-                    }
-                  }
-                },
                 "labelDate": {
-                  "type": "text",
-                  "fields": {
-                    "keyword": {
-                      "type": "keyword"
-                    }
-                  }
+                  "type": "long"
                 }
               }
             },
@@ -1394,20 +1251,10 @@
                   "type": "keyword"
                 },
                 "participantDataId": {
-                  "type": "text",
-                  "fields": {
-                    "keyword": {
-                      "type": "keyword"
-                    }
-                  }
+                  "type": "keyword"
                 },
                 "ddpParticipantId": {
-                  "type": "text",
-                  "fields": {
-                    "keyword": {
-                      "type": "keyword"
-                    }
-                  }
+                  "type": "keyword"
                 },
                 "fieldTypeId": {
                   "type": "text",
@@ -1418,12 +1265,7 @@
                   }
                 },
                 "ddpInstanceId": {
-                  "type": "text",
-                  "fields": {
-                    "keyword": {
-                      "type": "keyword"
-                    }
-                  }
+                  "type": "keyword"
                 }
               }
             },
@@ -1433,12 +1275,7 @@
                   "type": "boolean"
                 },
                 "assigneeIdMr": {
-                  "type": "text",
-                  "fields": {
-                    "keyword": {
-                      "type": "keyword"
-                    }
-                  }
+                  "type": "long"
                 },
                 "notes": {
                   "type": "text",
@@ -1449,12 +1286,7 @@
                   }
                 },
                 "mrAttentionFlagD": {
-                  "type": "text",
-                  "fields": {
-                    "keyword": {
-                      "type": "keyword"
-                    }
-                  }
+                  "type": "long"
                 },
                 "instanceName": {
                   "type": "text",
@@ -1465,47 +1297,22 @@
                   }
                 },
                 "ddpParticipantId": {
-                  "type": "text",
-                  "fields": {
-                    "keyword": {
-                      "type": "keyword"
-                    }
-                  }
+                  "type": "keyword"
                 },
                 "assigneeIdTissue": {
-                  "type": "text",
-                  "fields": {
-                    "keyword": {
-                      "type": "keyword"
-                    }
-                  }
+                  "type": "long"
                 },
                 "tissueAttentionFlagD": {
-                  "type": "text",
-                  "fields": {
-                    "keyword": {
-                      "type": "keyword"
-                    }
-                  }
+                  "type": "long"
                 },
                 "migratedDdp": {
                   "type": "boolean"
                 },
                 "participantId": {
-                  "type": "text",
-                  "fields": {
-                    "keyword": {
-                      "type": "keyword"
-                    }
-                  }
+                  "type": "keyword"
                 },
                 "exitBy": {
-                  "type": "text",
-                  "fields": {
-                    "keyword": {
-                      "type": "keyword"
-                    }
-                  }
+                  "type": "long"
                 },
                 "baseUrl": {
                   "type": "text",
@@ -1522,20 +1329,10 @@
                   "type": "date"
                 },
                 "oncHistoryId": {
-                  "type": "text",
-                  "fields": {
-                    "keyword": {
-                      "type": "keyword"
-                    }
-                  }
+                  "type": "keyword"
                 },
                 "ddpInstanceId": {
-                  "type": "text",
-                  "fields": {
-                    "keyword": {
-                      "type": "keyword"
-                    }
-                  }
+                  "type": "keyword"
                 },
                 "notificationRecipients": {
                   "type": "text",
@@ -1552,12 +1349,7 @@
                   "type": "date"
                 },
                 "exitDate": {
-                  "type": "text",
-                  "fields": {
-                    "keyword": {
-                      "type": "keyword"
-                    }
-                  }
+                  "type": "long"
                 }
               }
             },
