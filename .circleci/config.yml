@@ -117,6 +117,8 @@ commands:
           name: Determine deployment environment for branch << pipeline.git.branch >>
           command: |
             case "${CIRCLE_BRANCH}" in
+            DSMMavenRefactor) # REMOVE WHEN DONE
+              DEPLOY_ENV=dev
             develop)
               DEPLOY_ENV=dev
             ;;
@@ -877,6 +879,7 @@ workflows:
             branches:
               only:
                 - develop
+                - DSMMavenRefactor # REMOVE WHEN DONE
                 - &rc /^rc.*/
                 - &hotfix /^hotfix.*/
       - parallel-compile-and-test-job:
@@ -889,6 +892,7 @@ workflows:
             branches:
               only:
                 - develop
+                - DSMMavenRefactor
           requires:
             - parallel-compile-and-test-job
             - compile-and-run-test-suite-job
