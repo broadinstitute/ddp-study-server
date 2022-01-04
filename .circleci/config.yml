@@ -119,6 +119,7 @@ commands:
             case "${CIRCLE_BRANCH}" in
             DSMMavenRefactor) # REMOVE WHEN DONE
               DEPLOY_ENV=dev
+            ;;
             develop)
               DEPLOY_ENV=dev
             ;;
