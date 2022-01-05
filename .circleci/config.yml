@@ -697,20 +697,20 @@ jobs:
       - checkout:
           path: *repo_path
       # When any code or configuration changes, run compile step below.
-      - when:
-          condition: << parameters.allow_skip_job >>
-          steps:
-            - match-file-patterns-or-halt:
-                file_patterns: "pepper-apis/config pepper-apis/src study-builder/src pom.xml checkstyle.xml"
+#      - when:
+#          condition: << parameters.allow_skip_job >>
+#          steps:
+#            - match-file-patterns-or-halt:
+#                file_patterns: "pepper-apis/config pepper-apis/src study-builder/src pom.xml checkstyle.xml"
       - setup-shared-env
       - compile-all-jars:
           restore_m2_cache: true
       # When only pepper code or configuration changes, run the standalone tests.
-      - when:
-          condition: << parameters.allow_skip_job >>
-          steps:
-            - match-file-patterns-or-halt:
-                file_patterns: "pepper-apis/config pepper-apis/src pepper-apis/.*pom.xml"
+#      - when:
+#          condition: << parameters.allow_skip_job >>
+#          steps:
+#            - match-file-patterns-or-halt:
+#                file_patterns: "pepper-apis/config pepper-apis/src pepper-apis/.*pom.xml"
       - render-configs
       - create-test-dbs
       - restore-ddp-cache
@@ -738,11 +738,11 @@ jobs:
     steps:
       - checkout:
           path: *repo_path
-      - when:
-          condition: << parameters.allow_skip_job >>
-          steps:
-            - match-file-patterns-or-halt:
-                file_patterns: "pepper-apis/config pepper-apis/src pepper-apis/.*pom.xml"
+#      - when:
+#          condition: << parameters.allow_skip_job >>
+#          steps:
+#            - match-file-patterns-or-halt:
+#                file_patterns: "pepper-apis/config pepper-apis/src pepper-apis/.*pom.xml"
       - setup-shared-env
       - render-configs
       - run-maven-with-pepper-options:
@@ -807,7 +807,7 @@ jobs:
           at: *root_path
       - setup-shared-env
       # Deploy Housekeeping first so hopefully liquibase migrations
-      # are ran before DDP boots up.
+      # are run before DDP boots up.
       - build-jar:
           module: housekeeping
       - deploy-jar:
@@ -869,6 +869,11 @@ parameters:
     type: boolean
     default: false
 
+  project:
+    type: enum
+    enum: ["dss", "dsm"]
+    default: "dss"
+
 workflows:
   version: 2
 
@@ -908,7 +913,24 @@ workflows:
             - parallel-compile-and-test-job
 
   run-tests-on-demand-workflow:
-    when: << pipeline.parameters.on_demand >>
+    when:
+      and:
+        - << pipeline.parameters.on_demand >>
+        - equal: ["dss", << pipeline.parameters.project >>]
+    jobs:
+      - compile-and-run-test-suite-job:
+          allow_skip_job: true
+      - parallel-compile-and-test-job:
+          parallelism: *test_parallelism
+          allow_skip_job: true
+      - build-api-docs-job:
+          allow_skip_job: true
+
+  run-dsm-tests-on-demand-workflow:
+    when:
+      and:
+        - << pipeline.parameters.on_demand >>
+        - equal: ["dsm", << pipeline.parameters.project >>]
     jobs:
       - compile-and-run-test-suite-job:
           allow_skip_job: true
