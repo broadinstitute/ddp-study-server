@@ -203,6 +203,7 @@ public abstract class BaseTest {
             logger.info("[{}] -> FINISHED SETUP", currentTestConfiguration);
 
         } else {
+            //Below determines which browser is used during local test runs
             WebSettings.initFromProperties();
             WebSettings.useDriver(DriverTypes.FIREFOX);
         }

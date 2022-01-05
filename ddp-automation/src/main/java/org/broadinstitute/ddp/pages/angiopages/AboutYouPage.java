@@ -34,11 +34,11 @@ public class AboutYouPage extends DDPPage {
             + "//mat-list)[1]";
 
     private static final String ANGIOSARCOMA_DIAGNOSIS_FIRST_LOCATIONS_BONE_LIMB_DETAILS = ""
-            + "(//input[contains(@placeholder, 'Please provide details')])[1]";
+            + "(//input[contains(@data-placeholder, 'Please provide details')])[1]";
     private static final String ANGIOSARCOMA_DIAGNOSIS_FIRST_LOCATIONS_ABDOMINAL_AREA_DETAILS = ""
-            + "(//input[contains(@placeholder, 'Please provide details')])[2]";
+            + "(//input[contains(@data-placeholder, 'Please provide details')])[2]";
     private static final String ANGIOSARCOMA_DIAGNOSIS_FIRST_LOCATIONS_OTHER_DETAILS = ""
-            + "(//input[contains(@placeholder, 'Please provide details')])[3]";
+            + "(//input[contains(@data-placeholder, 'Please provide details')])[3]";
 
     private static final String ANGIOSARCOMA_DIAGNOSIS_FIRST_LOCATIONS_SPECIFIER = "[1]";
 
@@ -47,11 +47,11 @@ public class AboutYouPage extends DDPPage {
             + "(//ddp-activity-checkboxes-picklist-question//mat-list)[2]";
 
     private static final String ANGIOSARCOMA_DIAGNOSIS_ALL_HISTORICAL_LOCATIONS_BONE_LIMB_DETAILS = ""
-            + "(//input[contains(@placeholder, 'Please provide details')])[4]";
+            + "(//input[contains(@data-placeholder, 'Please provide details')])[4]";
     private static final String ANGIOSARCOMA_DIAGNOSIS_ALL_HISTORICAL_LOCATIONS_ABDOMINAL_AREA = ""
-            + "(//input[contains(@placeholder, 'Please provide details')])[5]";
+            + "(//input[contains(@data-placeholder, 'Please provide details')])[5]";
     private static final String ANGIOSARCOMA_DIAGNOSIS_ALL_HISTORICAL_LOCATIONS_OTHER_DETAILS = ""
-            + "(//input[contains(@placeholder, 'Please provide details')])[6]";
+            + "(//input[contains(@data-placeholder, 'Please provide details')])[6]";
 
     private static final String ANGIOSARCOMA_DIAGNOSIS_ALL_HISTORICAL_LOCATIONS_SPECIFIER = "[2]";
 
@@ -60,11 +60,11 @@ public class AboutYouPage extends DDPPage {
             + "(//ddp-activity-checkboxes-picklist-question//mat-list)[3]";
 
     private static final String ANGIOSARCOMA_DIAGNOSIS_ALL_CURRENT_LOCATIONS_BONE_LIMB_DETAILS = ""
-            + "(//input[contains(@placeholder, 'Please provide details')])[7]";
+            + "(//input[contains(@data-placeholder, 'Please provide details')])[7]";
     private static final String ANGIOSARCOMA_DIAGNOSIS_ALL_CURRENT_LOCATIONS_ABDOMINAL_AREA_DETAILS = ""
-            + "(//input[contains(@placeholder, 'Please provide details')])[8]";
+            + "(//input[contains(@data-placeholder, 'Please provide details')])[8]";
     private static final String ANGIOSARCOMA_DIAGNOSIS_ALL_CURRENT_LOCATIONS_OTHER_DETAILS = ""
-            + "(//input[contains(@placeholder, 'Please provide details')])[9]";
+            + "(//input[contains(@data-placeholder, 'Please provide details')])[9]";
 
     private static final String ANGIOSARCOMA_DIAGNOSIS_ALL_CURRENT_LOCATIONS_SPECIFIER = "[3]";
 
@@ -137,7 +137,7 @@ public class AboutYouPage extends DDPPage {
 
     //Ethnicity (everybody else) checklist
     private static final String ETHNICITY_ET_CETERA_CONTENT_XPATH = "(//ddp-activity-checkboxes-picklist-question//mat-list)[10]";
-    private static final String ETHNICITY_OTHER_DETAILS = "//li[@value=14]//input[contains(@placeholder, 'Please provide details')]";
+    private static final String ETHNICITY_OTHER_DETAILS = "//li[@value=14]//input[contains(@data-placeholder, 'Please provide details')]";
 
     //Year of birth dropdown list
     private static final String YEAR_OF_BIRTH_XPATH = "(//option[contains(text(), 'Choose year...')]//parent::select)[2]";
@@ -355,14 +355,14 @@ public class AboutYouPage extends DDPPage {
         if (conditionallyShown) {
             //Find xpath based on the question number and picklist option text
             checkboxOptionXPath =  "(//li[@value=" + questionNumber + "]"
-                    + "//span[normalize-space(text()) = '" + optionName + "']"
-                    + "/preceding-sibling::div[@class='mat-checkbox-inner-container'])" + CONDITIONAL_SPECIFIER + "";
+                    + "//span[@class='mat-checkbox-label'][./span[normalize-space(text()) = '" + optionName + "']]"
+                    + "/preceding-sibling::span[@class='mat-checkbox-inner-container'])" + CONDITIONAL_SPECIFIER + "";
 
         } else {
             //Find xpath of condtionally shown question based on question number and picklist option text
             checkboxOptionXPath =  "//li[@value= " + questionNumber + "]"
-                    + "//span[normalize-space(text()) = '" + optionName + "']"
-                    + "/preceding-sibling::div[@class='mat-checkbox-inner-container']";
+                    + "//span[@class='mat-checkbox-label'][./span[normalize-space(text()) = '" + optionName + "']]"
+                    + "/preceding-sibling::span[@class='mat-checkbox-inner-container']";
 
         }
 
