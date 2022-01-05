@@ -278,7 +278,7 @@
       "p3": "Principal Investigator: Kirstie E Keller, PhD",
       "p4": "Study Staff: Diane Pickles",
       "p5": "Contact: <a href=\"mailto:contact@projectsingular.org\" class=\"Link\">contact@projectsingular.org</a>",
-      "p6": "Please carefully read the consent form below. Click “Next” when you are done with this page. If you have questions about Project Singular or this form, please ask us. You can call us at <a href=\"tel:(650) 761-6486\" class=\"Link\">(650) 761-6486</a>. Or you can email us at <a href=\"mailto:contact@projectsingular.org\" class=\"Link\">contact@projectsingular.org</a>.",
+      "p6": "Please carefully read the consent form below. Click “Next” when you are done with this page. If you have questions about Project Singular or this form, please ask us. You can call us at <a href=\"tel:(650) 761-6486\" class=\"Link\">(650)&nbsp;761-6486</a>. Or you can email us at <a href=\"mailto:contact@projectsingular.org\" class=\"Link\">contact@projectsingular.org</a>.",
       "p7p1": "We encourage you to",
       "download": "download",
       "p7p2": "a PDF version of the consent form and read it carefully."
@@ -558,8 +558,8 @@
         "format_hint": "Please enter your date of birth in MM DD YYYY format"
       },
       "independently": {
-        "able": "Adults able to independently consent",
-        "unable": "Adults unable to consent for themselves",
+        "able": "I am an adult, able to independently consent",
+        "unable": "I am an adult, unable to consent for myself",
         "required_hint": "Please select an option"
       },
       "your_signature": {
@@ -875,7 +875,7 @@
   },
 
   "consent_assent": {
-    "name": "Consent Assent",
+    "name": "Assent Form",
     "title": "Assent Form",
 
     "intro": {
@@ -889,16 +889,17 @@
     "summary_complete": "Thank you for signing the assent form -- your child is now enrolled!",
 
     "content": {
-      "p1": "We’re asking you to take part in a research study. The study wants to learn more about how hearts grow. We also want to find out why some hearts don’t grow the ways others do. A research study is a way for scientists to learn more about something.",
-      "p2": "We’re asking you to take part because you or a family member has a special heart with a single ventricle heart defect. We want to learn more about this kind of special heart.",
-      "p3": "If you agree to take part in this study, you’ll need to spit in a tube. Then mail the tube to us. We’ll study the stuff inside your spit.",
-      "p4": "Inside your spit, there are cells. Cells make up every part of your body. These cells have information that tells your body how to grow. This information comes from instructions in your cells called genes.",
-      "p5": "Each of us has our own genes that tell our body how it will look. Our genes tell the color of our eyes. They tell how tall we are. Sometimes genes give instructions that make it more likely for us to get a certain disease.",
-      "p6": "We want to study the genes of people like you. We want to learn why some people have single ventricle heart defects. Doctors could use what they learn to better help people with these special hearts.",
-      "p7": "If you join this research study, it may not help your health. But we may learn something to help others with single ventricle heart defects one day.",
-      "p8": "You don’t have to take part in this study. It’s up to you. You can say yes now and change your mind later. Just tell your parent or guardian you want to quit the study. No one will be mad if you don't want to be in the study. And no one will be mad if you join and then change your mind and quit. Your doctor will still take good care of you no matter what you choose.",
-      "p9": "If you have any questions, ask your parent or guardian to contact us. You can call us at <a href=\"tel:(650) 761-6486\" class=\"Link\">(650) 761-6486</a> (24 hours). Or you can email us at <a href=\"mailto:contact@projectsingular.org\" class=\"Link\">contact@projectsingular.org</a>.",
-      "p10": "If you sign your name below, it means you agree to take part in this research study."
+      "p1": "Please read or ask your child to read and then sign this assent document.",
+      "p2": "We’re asking you to take part in a research study. The study wants to learn more about how hearts grow. We also want to find out why some hearts don’t grow the ways others do. A research study is a way for scientists to learn more about something.",
+      "p3": "We’re asking you to take part because you or a family member has a special heart with a single ventricle heart defect. We want to learn more about this kind of special heart.",
+      "p4": "If you agree to take part in this study, you’ll need to spit in a tube. Then mail the tube to us. We’ll study the stuff inside your spit.",
+      "p5": "Inside your spit, there are cells. Cells make up every part of your body. These cells have information that tells your body how to grow. This information comes from instructions in your cells called genes.",
+      "p6": "Each of us has our own genes that tell our body how it will look. Our genes tell the color of our eyes. They tell how tall we are. Sometimes genes give instructions that make it more likely for us to get a certain disease.",
+      "p7": "We want to study the genes of people like you. We want to learn why some people have single ventricle heart defects. Doctors could use what they learn to better help people with these special hearts.",
+      "p8": "If you join this research study, it may not help your health. But we may learn something to help others with single ventricle heart defects one day.",
+      "p9": "You don’t have to take part in this study. It’s up to you. You can say yes now and change your mind later. Just tell your parent or guardian you want to quit the study. No one will be mad if you don't want to be in the study. And no one will be mad if you join and then change your mind and quit. Your doctor will still take good care of you no matter what you choose.",
+      "p10": "If you have any questions, ask your parent or guardian to contact us. You can call us at <a href=\"tel:(650) 761-6486\" class=\"Link\">(650) 761-6486</a> (24 hours). Or you can email us at <a href=\"mailto:contact@projectsingular.org\" class=\"Link\">contact@projectsingular.org</a>.",
+      "p11": "If you sign your name below, it means you agree to take part in this research study."
     },
 
     "questions": {
@@ -918,7 +919,7 @@
       },
       "guardian_assent_signature": {
         "prompt": "Signature of person obtaining assent (parent/guardian)*",
-        "placeholder": "Signatufre of person obtaining assent",
+        "placeholder": "Signature of person obtaining assent",
         "required_hint": "Please provide your signature"
       },
       "date": {
@@ -971,7 +972,7 @@
       "if_you_do_have_a_known" : {
         "prompt": "$ddp.checkAnswer(\"ABOUT_HEALTHY_WHO_ENROLLING_HIDDEN\",\"MYSELF\", \"If you do have a known congenital heart defect, please select the type of defect.\", \"If your child does have a known congenital heart defect, please select the type of defect.\")",
         "aortic_stenosis": "Aortic stenosis",
-        "atrial_septal_defect": "Atrial septal defect (ADS)",
+        "atrial_septal_defect": "Atrial septal defect (ASD)",
         "bicuspid_aortic_valve": "Bicuspid aortic valve",
         "coarctation_of_the_aorta": "Coarctation of the aorta (COA)",
         "patent_ductus_arteriosus": "Patent ductus arteriosus (PDA)",
@@ -982,8 +983,9 @@
         "other": {
           "p1": "Other:",
           "li1": "$ddp.checkAnswer(\"ABOUT_HEALTHY_WHO_ENROLLING_HIDDEN\",\"MYSELF\", \"I have a congenital heart defect but I don't know what it is called\", \"My child has a congenital heart defect but I'm not sure what it is called\")",
-          "li2": "$ddp.checkAnswer(\"ABOUT_HEALTHY_WHO_ENROLLING_HIDDEN\",\"MYSELF\", \"I don't have a congenital heart defect\", \"I don't know</p>\")",
-          "li3": "I don't know if I have a congenital heart defect"
+          "li2": "I have another congenital heart defect not listed",
+          "li3": "$ddp.checkAnswer(\"ABOUT_HEALTHY_WHO_ENROLLING_HIDDEN\",\"MYSELF\", \"I don't know if I have a congenital heart defect\", \"I don't know</p>\")",
+          "another_placeholder": "Please specify"
         }
       },
       "have_you_ever_had_arrhythmia" : {
@@ -1081,7 +1083,7 @@
         "upload": {
           "p1": "For participants who are opting to send their own medical records to Project Singular study staff you may use one of the below methods.",
           "li1": "Fax: (617)730-6201",
-          "li2": "Online Upload: If you have access to your own medical records files, you may upload the files via the Medical Record File Upload form available during enrollment in Project Singular and on the Project Singular dashboard."
+          "li2": "Online Upload: If you have access to your own medical record files, you may upload the files via the Medical Record File Upload form available during enrollment in Project Singular and on the Project Singular dashboard."
         }
       },
       "name": {
@@ -1098,7 +1100,8 @@
         "title": "Date"
       }
     },
-    "phone_hint": "Please type in valid phone number"
+    "phone_hint": "Please type in valid phone number",
+    "fax_hint": "Please type in valid fax number"
   },
 
   "medical_record_upload": {
@@ -1110,7 +1113,7 @@
     "summary_complete": "You can upload your medical record files here if they are available.",
 
     "upload": {
-      "prompt": "Please upload your medical records files"
+      "prompt": "Please upload your medical record files"
     }
   },
   "patient_survey": {
@@ -1121,7 +1124,7 @@
     "summary_complete": "Thank you for completing this survey!",
     "questions": {
       "what_city_did_you_live": {
-        "prompt": "$ddp.checkAnswer(\"PATIENT_SURVEY_WHO_ENROLLING_HIDDEN\",\"MYSELF\", \"What city did you live in when you were born? (Please note, we want to know where you lived, not necessarily the city in which you were born.)\", \"What city did your child live in when they were born? (Please note, we want to know where your child lived, not necessarily the city in which your child was born.)\")*",
+        "prompt": "$ddp.checkAnswer(\"PATIENT_SURVEY_WHO_ENROLLING_HIDDEN\",\"MYSELF\", \"What city did you live in when you were born? (Please note, we want to know where you lived, not necessarily the city in which you were born.)\", \"What city did your child live in when they were born? (Please note, we want to know where your child lived, not necessarily the city in which your child was born.)\")",
         "placeholder": "",
         "required_hint": ""
       },
@@ -1131,7 +1134,7 @@
         "required_hint": "Please enter a state or province"
       },
       "if_you_remember": {
-        "prompt": "$ddp.checkAnswer(\"PATIENT_SURVEY_WHO_ENROLLING_HIDDEN\",\"MYSELF\", \"If you remember, what was the zip code or postal code of the city you lived in when you were born?\", \"If you remember, what was the zip code or postal code of the city you lived in when your child was born?\")*",
+        "prompt": "$ddp.checkAnswer(\"PATIENT_SURVEY_WHO_ENROLLING_HIDDEN\",\"MYSELF\", \"If you remember, what was the zip code or postal code of the city you lived in when you were born?\", \"If you remember, what was the zip code or postal code of the city you lived in when your child was born?\")",
         "placeholder": "",
         "required_hint": ""
       },
@@ -1241,7 +1244,7 @@
       "are_true_about_health": {
         "prompt": "$ddp.checkAnswer(\"PATIENT_SURVEY_WHO_ENROLLING_HIDDEN\",\"MYSELF\", \"Which of the following are true about your health in the past year?\", \"Which of the following are true about your child's health in the past year?\")",
         "required_hint": "",
-        "been_prescribed": "$ddp.checkAnswer(\"PATIENT_SURVEY_WHO_ENROLLING_HIDDEN\",\"MYSELF\", \"I have been prescribed at least 1 new medication that I take every day\", \"My child has been prescribed at least 1 new medication that I take every day\")",
+        "been_prescribed": "$ddp.checkAnswer(\"PATIENT_SURVEY_WHO_ENROLLING_HIDDEN\",\"MYSELF\", \"I have been prescribed at least 1 new medication that I take every day\", \"My child has been prescribed at least 1 new medication that my child takes every day\")",
         "had_at_least": "$ddp.checkAnswer(\"PATIENT_SURVEY_WHO_ENROLLING_HIDDEN\",\"MYSELF\", \"I have had at least 5 sick visits to the doctor (not routine check-ups)\", \"My child had at least 5 sick visits to the doctor (not routine check-ups)\")",
         "been_hospitalized": "$ddp.checkAnswer(\"PATIENT_SURVEY_WHO_ENROLLING_HIDDEN\",\"MYSELF\", \"I have been hospitalized for a week or more\", \"My child has been hospitalized for a week or more\")",
         "have_missed": "$ddp.checkAnswer(\"PATIENT_SURVEY_WHO_ENROLLING_HIDDEN\",\"MYSELF\", \"I have missed 7 days or more from work or school due to illness\", \"My child has missed 7 days or more from work or school due to illness\")",
@@ -1285,7 +1288,7 @@
         "yes": "Yes",
         "no": "No",
         "i_do_not_know": "I don't know",
-        "tooltip": "A Neuroldevelopmental or Neurocognitive Evaluation is a special set of tests by a licensed professional to assess a person's development and functioning, including their language or speech, motor skills, social skills, intelligence (IQ), attention, ability to do everyday tasks, and behavior."
+        "tooltip": "A Neurodevelopmental or Neurocognitive Evaluation is a special set of tests by a licensed professional to assess a person's development and functioning, including their language or speech, motor skills, social skills, intelligence (IQ), attention, ability to do everyday tasks, and behavior."
       },
       "diagnosed_by_a_physician": {
         "prompt": "$ddp.checkAnswer(\"PATIENT_SURVEY_WHO_ENROLLING_HIDDEN\",\"MYSELF\", \"Have you ever been diagnosed by a physician or licensed professional with any of the following?\", \"Has your child ever been diagnosed by a physician or licensed professional with any of the following?\")",
