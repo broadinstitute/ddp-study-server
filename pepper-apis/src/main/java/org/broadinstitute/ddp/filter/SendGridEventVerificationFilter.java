@@ -50,7 +50,7 @@ public class SendGridEventVerificationFilter implements Filter {
 
     public SendGridEventVerificationFilter(String cfgParamSendGridEventsVerificationKey) {
         this.cfgParamSendGridEventsVerificationKey = cfgParamSendGridEventsVerificationKey;
-        sendGridEventService = new SendGridEventService();
+        this.sendGridEventService = new SendGridEventService();
         registerSecurityProvider();
     }
 
@@ -75,6 +75,7 @@ public class SendGridEventVerificationFilter implements Filter {
 
         LOG.info("Logging SendGrid event request body");
         var sendGridEvents = sendGridEventService.parseSendGridEvents(request.body());
+        LOG.info("SendGrid event count : {} ", sendGridEvents.length);
         if (sendGridEvents.length > 0) {
             sendGridEventService.logSendGridEvents(sendGridEvents);
         }
