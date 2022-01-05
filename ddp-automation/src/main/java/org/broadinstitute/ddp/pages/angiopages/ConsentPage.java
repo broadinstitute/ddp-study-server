@@ -44,9 +44,9 @@ public class ConsentPage extends DDPPage {
 
     private static final String FULL_NAME_SIGNATURE_XPATH = "//*[contains(@data-ddp-test, 'CONSENT_FULLNAME')]";
 
-    private static final String DATE_OF_BIRTH_MONTH_XPATH = "//*[contains(@placeholder, 'MM')]";
-    private static final String DATE_OF_BIRTH_DAY_XPATH = "//*[contains(@placeholder, 'DD')]";
-    private static final String DATE_OF_BIRTH_YEAR_XPATH = "//*[contains(@placeholder, 'YYYY')]";
+    private static final String DATE_OF_BIRTH_MONTH_XPATH = "//*[contains(@data-placeholder, 'MM')]";
+    private static final String DATE_OF_BIRTH_DAY_XPATH = "//*[contains(@data-placeholder, 'DD')]";
+    private static final String DATE_OF_BIRTH_YEAR_XPATH = "//*[contains(@data-placeholder, 'YYYY')]";
 
     private static final String SIGN_CONSENT_SUBMIT_BUTTON_XPATH = "//button[contains(@class, 'mat-raised-button')]"
             + "[normalize-space(text()) = 'SUBMIT']";
