@@ -912,7 +912,7 @@ workflows:
             - compile-and-run-test-suite-job
             - parallel-compile-and-test-job
 
-  run-tests-on-demand-workflow:
+  run-dss-tests-on-demand-workflow:
     when:
       and:
         - << pipeline.parameters.on_demand >>
@@ -936,8 +936,6 @@ workflows:
           allow_skip_job: true
       - parallel-compile-and-test-job:
           parallelism: *test_parallelism
-          allow_skip_job: true
-      - build-api-docs-job:
           allow_skip_job: true
 
   deploy-workflow:
