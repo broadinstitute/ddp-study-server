@@ -8,6 +8,7 @@ import static org.broadinstitute.ddp.constants.ErrorCodes.MISSING_BODY;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.json.errors.ApiError;
 import org.broadinstitute.ddp.json.sendgrid.SendGridEvent;
@@ -30,8 +31,16 @@ public class SendGridEventRoute implements Route {
 
     @Override
     public Object handle(Request request, Response response) throws Exception {
-        checkBody(request);
-        var sendGridEvents = sendGridEventService.parseSendGridEvents(request.body());
+        String requestBody = request.body();
+        if (StringUtils.isBlank(requestBody)) {
+            LOG.warn("Body not found in SendGrid Event Request.. retrieving from request attribute");
+            requestBody = request.attribute(RouteConstants.QueryParam.SENDGRID_EVENT_REQUEST_BODY);
+            if (StringUtils.isBlank(requestBody)) {
+                haltError(SC_BAD_REQUEST, MISSING_BODY, "Body not specified", null);
+            }
+        }
+
+        var sendGridEvents = sendGridEventService.parseSendGridEvents(requestBody);
         if (sendGridEvents.length > 0) {
             sendGridEventService.logSendGridEvents(sendGridEvents);
             persistLogEvent(sendGridEvents);
@@ -45,12 +54,6 @@ public class SendGridEventRoute implements Route {
             TransactionWrapper.useTxn(handle -> sendGridEventService.persistLogEvents(handle, sendGridEvents));
         } catch (Exception e) {
             haltError(SC_INTERNAL_SERVER_ERROR, DATA_PERSIST_ERROR, "Error saving sendgrid event", e);
-        }
-    }
-
-    private void checkBody(Request request) {
-        if (StringUtils.isBlank(request.body())) {
-            haltError(SC_BAD_REQUEST, MISSING_BODY, "Body not specified", null);
         }
     }
 

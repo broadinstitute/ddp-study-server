@@ -211,6 +211,7 @@ public class RouteConstants {
         public static final String TYPEAHEAD_QUERY = "q";
         public static final String TYPEAHEAD_QUERY_LIMIT = "limit";
         public static final String ERROR_CODE = "errorCode";
+        public static final String SENDGRID_EVENT_REQUEST_BODY = "requestBody";
     }
 
 }

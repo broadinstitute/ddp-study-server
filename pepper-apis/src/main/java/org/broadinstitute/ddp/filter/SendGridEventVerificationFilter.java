@@ -1,10 +1,8 @@
 package org.broadinstitute.ddp.filter;
 
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
-import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
 import static org.apache.http.HttpStatus.SC_UNAUTHORIZED;
 import static org.broadinstitute.ddp.constants.ErrorCodes.INVALID_PAYLOAD_SIGNATURE;
-import static org.broadinstitute.ddp.constants.ErrorCodes.MISSING_BODY;
 import static org.broadinstitute.ddp.constants.ErrorCodes.SIGNATURE_VERIFICATION_ERROR;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -18,10 +16,9 @@ import java.security.spec.InvalidKeySpecException;
 
 import com.sendgrid.helpers.eventwebhook.EventWebhook;
 import com.sendgrid.helpers.eventwebhook.EventWebhookHeader;
-import org.apache.commons.lang3.StringUtils;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.json.errors.ApiError;
-import org.broadinstitute.ddp.service.SendGridEventService;
 import org.broadinstitute.ddp.util.ResponseUtil;
 import org.slf4j.Logger;
 import spark.Filter;
@@ -46,11 +43,8 @@ public class SendGridEventVerificationFilter implements Filter {
 
     private final String cfgParamSendGridEventsVerificationKey;
 
-    private final SendGridEventService sendGridEventService;
-
     public SendGridEventVerificationFilter(String cfgParamSendGridEventsVerificationKey) {
         this.cfgParamSendGridEventsVerificationKey = cfgParamSendGridEventsVerificationKey;
-        this.sendGridEventService = new SendGridEventService();
         registerSecurityProvider();
     }
 
@@ -69,37 +63,18 @@ public class SendGridEventVerificationFilter implements Filter {
 
     @Override
     public void handle(Request request, Response response) {
-        if (StringUtils.isBlank(request.body())) {
-            haltError(SC_BAD_REQUEST, MISSING_BODY, "Body not specified");
-        }
-
-        LOG.info("Logging SendGrid event request body");
-        var sendGridEvents = sendGridEventService.parseSendGridEvents(request.body());
-        LOG.info("SendGrid event count : {} ", sendGridEvents.length);
-        if (sendGridEvents.length > 0) {
-            sendGridEventService.logSendGridEvents(sendGridEvents);
-        }
+        //save request body to handle issue where body is not found in SendGridEvent route
+        request.attribute(RouteConstants.QueryParam.SENDGRID_EVENT_REQUEST_BODY, request.body());
 
         if (isCheckToken()) {
             try {
                 if (!verifyEvent(request)) {
                     haltError(SC_UNAUTHORIZED, INVALID_PAYLOAD_SIGNATURE, "Invalid signature of SendGrid event");
                 }
-
-                if (StringUtils.isBlank(request.body())) {
-                    haltError(SC_BAD_REQUEST, MISSING_BODY, "Body missing post signature verification");
-                }
-
-                LOG.info("Logging SendGrid event request body post signature verification");
-                sendGridEvents = sendGridEventService.parseSendGridEvents(request.body());
-                if (sendGridEvents.length > 0) {
-                    sendGridEventService.logSendGridEvents(sendGridEvents);
-                }
             } catch (Exception e) {
                 haltError(SC_UNAUTHORIZED, SIGNATURE_VERIFICATION_ERROR, "Error during SendGrid event signature verification: " + e);
             }
         }
-
     }
 
     private boolean verifyEvent(Request req)
@@ -107,10 +82,9 @@ public class SendGridEventVerificationFilter implements Filter {
             InvalidKeySpecException {
         var signature = req.headers(EventWebhookHeader.SIGNATURE.toString());
         var timestamp = req.headers(EventWebhookHeader.TIMESTAMP.toString());
-        var requestBody = req.bodyAsBytes();
         var ew = new EventWebhook();
         var ellipticCurvePublicKey = ew.ConvertPublicKeyToECDSA(cfgParamSendGridEventsVerificationKey);
-        return ew.VerifySignature(ellipticCurvePublicKey, requestBody, signature, timestamp);
+        return ew.VerifySignature(ellipticCurvePublicKey, req.body(), signature, timestamp);
     }
 
     private boolean isCheckToken() {
