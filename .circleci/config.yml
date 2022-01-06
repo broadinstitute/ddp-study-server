@@ -719,6 +719,7 @@ jobs:
           phase: test
           skip_tests: false
           skip_checkstyle: true
+          additional_options: '-T 1.5C'
 #          additional_options: '-Dtest=ServerInSameProcessIntegrationTestSuite'
           restore_m2_cache: false
       - save-ddp-cache
@@ -971,9 +972,6 @@ workflows:
         - equal: ["dsm", << pipeline.parameters.project >>]
     jobs:
       - dsm-compile-and-run-tests-job:
-          allow_skip_job: true
-      - parallel-compile-and-test-job:
-          parallelism: *test_parallelism
           allow_skip_job: true
 
   deploy-workflow:
