@@ -583,7 +583,7 @@ commands:
           name: Compile and run checkstyle on all jars
           command: |
             # Install pepper-apis to .m2 so we can compile study-builder
-            mvn install --batch-mode -DskipTests -Dmaven.repo.local=<< parameters.m2_repo >>
+            mvn install --batch-mode -DskipTests -Dmaven.repo.local=<< parameters.m2_repo >> -T 1.5C
 
   restore-ddp-cache:
     description: Restore ddp cache
@@ -719,7 +719,6 @@ jobs:
           phase: test
           skip_tests: false
           skip_checkstyle: true
-          additional_options: '-T 1.5C'
 #          additional_options: '-Dtest=ServerInSameProcessIntegrationTestSuite'
           restore_m2_cache: false
       - save-ddp-cache
