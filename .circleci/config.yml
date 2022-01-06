@@ -685,6 +685,44 @@ jobs:
           name: Build docs
           command: ./build.sh documentation
 
+  dsm-compile-and-run-tests-job:
+    executor:
+      name: test-executor
+    working_directory: *pepper_apis_path
+    parameters:
+      allow_skip_job:
+        type: boolean
+        default: false
+    steps:
+      - checkout:
+          path: *repo_path
+      # When any code or configuration changes, run compile step below.
+      #      - when:
+      #          condition: << parameters.allow_skip_job >>
+      #          steps:
+      #            - match-file-patterns-or-halt:
+      #                file_patterns: "pepper-apis/config pepper-apis/src study-builder/src pom.xml checkstyle.xml"
+      - setup-shared-env
+      - compile-all-jars:
+          restore_m2_cache: true
+      # When only pepper code or configuration changes, run the standalone tests.
+      #      - when:
+      #          condition: << parameters.allow_skip_job >>
+      #          steps:
+      #            - match-file-patterns-or-halt:
+      #                file_patterns: "pepper-apis/config pepper-apis/src pepper-apis/.*pom.xml"
+      - render-configs
+      - create-test-dbs
+      - restore-ddp-cache
+      - run-maven-with-pepper-options:
+          module: dsm-core
+          phase: test
+          skip_tests: false
+          skip_checkstyle: true
+#          additional_options: '-Dtest=ServerInSameProcessIntegrationTestSuite'
+          restore_m2_cache: false
+      - save-ddp-cache
+
   compile-and-run-test-suite-job:
     executor:
       name: test-executor
@@ -932,7 +970,7 @@ workflows:
         - << pipeline.parameters.on_demand >>
         - equal: ["dsm", << pipeline.parameters.project >>]
     jobs:
-      - compile-and-run-test-suite-job:
+      - dsm-compile-and-run-tests-job:
           allow_skip_job: true
       - parallel-compile-and-test-job:
           parallelism: *test_parallelism
