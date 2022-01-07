@@ -17,6 +17,7 @@ import java.security.spec.InvalidKeySpecException;
 import com.sendgrid.helpers.eventwebhook.EventWebhook;
 import com.sendgrid.helpers.eventwebhook.EventWebhookHeader;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.json.errors.ApiError;
 import org.broadinstitute.ddp.util.ResponseUtil;
 import org.slf4j.Logger;
@@ -62,6 +63,9 @@ public class SendGridEventVerificationFilter implements Filter {
 
     @Override
     public void handle(Request request, Response response) {
+        //save request body to handle issue where body is not found in SendGridEvent route
+        request.attribute(RouteConstants.QueryParam.SENDGRID_EVENT_REQUEST_BODY, request.body());
+
         if (isCheckToken()) {
             try {
                 if (!verifyEvent(request)) {
@@ -78,10 +82,9 @@ public class SendGridEventVerificationFilter implements Filter {
             InvalidKeySpecException {
         var signature = req.headers(EventWebhookHeader.SIGNATURE.toString());
         var timestamp = req.headers(EventWebhookHeader.TIMESTAMP.toString());
-        var requestBody = req.bodyAsBytes();
         var ew = new EventWebhook();
         var ellipticCurvePublicKey = ew.ConvertPublicKeyToECDSA(cfgParamSendGridEventsVerificationKey);
-        return ew.VerifySignature(ellipticCurvePublicKey, requestBody, signature, timestamp);
+        return ew.VerifySignature(ellipticCurvePublicKey, req.body(), signature, timestamp);
     }
 
     private boolean isCheckToken() {
