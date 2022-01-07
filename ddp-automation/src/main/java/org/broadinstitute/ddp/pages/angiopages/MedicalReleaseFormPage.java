@@ -24,9 +24,9 @@ public class MedicalReleaseFormPage extends DDPPage {
     private static final String USER_FULL_NAME_XPATH = "//mat-form-field//input[@formcontrolname='name']";
 
     //Address related webcontents
-    private static final String COUNTRY_TERRITORY_ADDRESS_DROPDOWN_MENU_XPATH = "//mat-select[@aria-label='Country/Territory']";
-    private static final String COUNTRY_TERRITORY_ADDRESS_DROPDOWN_MENU_OPTIONS_XPATH = "//div[@id='cdk-overlay-0']";
-    private static final String STREET_ADDRESS_INPUT_XPATH = "//mat-form-field//input[@placeholder='Street Address']";
+    private static final String COUNTRY_TERRITORY_ADDRESS_DROPDOWN_MENU_XPATH = "//mat-select[@formcontrolname='country']";
+    private static final String COUNTRY_TERRITORY_ADDRESS_DROPDOWN_MENU_OPTIONS_XPATH = "//div[@id='cdk-overlay-1']";
+    private static final String STREET_ADDRESS_INPUT_XPATH = "//mat-form-field//input[@data-placeholder='Street Address']";
     private static final String STREET_ADDRESS_OPTIONAL_INPUT_XPATH = "//mat-form-field//input[@formcontrolname='street2']";
     private static final String CITY_ADDRESS_INPUT_XPATH = "//mat-form-field//input[@formcontrolname='city']";
     private static final String STATE_ADDRESS_DROPDOWN_MENU_XPATH = "//mat-select[@formcontrolname='state']";
@@ -48,36 +48,36 @@ public class MedicalReleaseFormPage extends DDPPage {
     //User's general/main physician and institution webelements
     private static final String ADD_ANOTHER_PHYSICIAN_BUTTON_XPATH = "//button[contains(text(), 'ADD ANOTHER PHYSICIAN')]";
     private static final String GENERAL_PHYSICIAN_NAME_INPUT_XPATH = "//li[contains(@class, 'ddp-li') and contains(@value, 2)]"
-            + "//input[@placeholder='Physician Name']";
+            + "//input[@data-placeholder='Physician Name']";
     private static final String GENERAL_INSTITUTION_NAME_INPUT_XPATH = "//li[contains(@class, 'ddp-li') and contains(@value, 2)]"
-            + "//input[@placeholder='Institution (if any)']";
+            + "//input[@data-placeholder='Institution (if any)']";
     private static final String GENERAL_INSTITUTION_CITY_INPUT_XPATH = "//li[contains(@class, 'ddp-li') and contains(@value, 2)]"
-            + "//input[@placeholder='City']";
+            + "//input[@data-placeholder='City']";
     private static final String GENERAL_INSTITUTION_STATE_INPUT_XPATH = "//li[contains(@class, 'ddp-li') and contains(@value, 2)]"
-            + "//input[@placeholder='State']";
+            + "//input[@data-placeholder='State']";
 
     //User's initial biopsy webelements
     private static final String INITIAL_BIOPSY_INSTITUTION_INPUT_XPATH = "//li[contains(@class, 'ddp-li') and contains(@value, 3)]"
-            + "//input[@placeholder='Institution']";
+            + "//input[@data-placeholder='Institution']";
     private static final String INITIAL_BIOPSY_INSTITUTION_CITY_INPUT_XPATH = "//li[contains(@class, 'ddp-li') and contains(@value, 3)]"
-            + "//input[@placeholder='City']";
+            + "//input[@data-placeholder='City']";
     private static final String INITIAL_BIOPSY_INSTITUTION_STATE_INPUT_XPATH = "//li[contains(@class, 'ddp-li') and contains(@value, 3)]"
-            + "//input[@placeholder='State']";
+            + "//input[@data-placeholder='State']";
 
     //User's additional biopsies or surgeries
     private static final String ADD_ANOTHER_INSTITUTION_BUTTON_XPATH = "//button[contains(text(), 'ADD ANOTHER INSTITUTION')]";
     private static final String ADDITIONAL_BIOPSIES_OR_SURGERIES_INSTITUTION_XPATH = ""
             + "//li[contains(@class, 'ddp-li') and contains(@value, 4)]"
-            + "//input[@placeholder='Institution']";
+            + "//input[@data-placeholder='Institution']";
     private static final String ADDITIONAL_BIOPSIES_OR_SURGERIES_CITY_XPATH = "//li[contains(@class, 'ddp-li') and contains(@value, 4)]"
-            + "//input[@placeholder='City']";
+            + "//input[@data-placeholder='City']";
     private static final String ADDITIONAL_BIOPSIES_OR_SURGERIES_STATE_XPATH = "//li[contains(@class, 'ddp-li') and contains(@value, 4)]"
-            + "//input[@placeholder='State']";
+            + "//input[@data-placeholder='State']";
 
     //Release agreement
     private static final String RELEASE_AGREEMENT_CHECKBOX_XPATH = "//div[contains(@class, 'ddp-agreement')]//input";
 
-    private static final String SUBMIT_BUTTON_XPATH = "//button[normalize-space(text()) = 'SUBMIT']";
+    private static final String SUBMIT_BUTTON_XPATH = "//button[@id='submitButton']";
 
 
     @FindBy(xpath = MEDICAL_RELEASE_FORM_CONTENT_XPATH)
@@ -338,7 +338,7 @@ public class MedicalReleaseFormPage extends DDPPage {
     public void clickSubmit() {
         shortWait.until(ExpectedConditions.visibilityOf(submit));
         JDIPageUtils.scrollDownToElement(SUBMIT_BUTTON_XPATH);
-        submit.click();
+        JDIPageUtils.doubleClickAndWait(submit);
     }
 
     public void waitUntilContentDisplayed() {

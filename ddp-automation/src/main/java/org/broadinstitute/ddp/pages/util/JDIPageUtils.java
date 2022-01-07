@@ -52,7 +52,8 @@ public class JDIPageUtils {
     private static final int USERNAME = 1;
     private static final String ATTRIBUTE_INNER_TEXT = "innerText";
     private static final String ATTRIBUTE_VALUE = "value";
-    private static final String ATTRIBUTE_ARIA_LABEL = "aria-label";
+    //was "aria-label" before
+    private static final String ATTRIBUTE_ARIA_LABEL = "formcontrolname";
     private static final String ATTRIBUTE_CHECKBOX_SELECTED = "mat-checkbox-checked";
     private static final String DROPDOWN_LIST_TEXT_OPTIONS_XPATH = "//mat-option//span[@class='mat-option-text']";
     private static final String PARENT_OF_WEBELEMENT_XPATH = "./..";
