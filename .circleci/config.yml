@@ -716,10 +716,11 @@ jobs:
       - restore-ddp-cache
       - run-maven-with-pepper-options:
           module: dsm-core
-          phase: test
+          phase: package
           skip_tests: false
           skip_checkstyle: true
           restore_m2_cache: false
+          save_m2_cache: true    #REMOVE WHEN DONE
       - save-ddp-cache
 
   compile-and-run-test-suite-job:
