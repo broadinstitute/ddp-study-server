@@ -716,7 +716,7 @@ jobs:
       - restore-ddp-cache
       - run-maven-with-pepper-options:
           module: dsm-core
-          phase: package
+          phase: validate
           skip_tests: false
           skip_checkstyle: true
           restore_m2_cache: false
