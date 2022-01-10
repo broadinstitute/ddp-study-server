@@ -1,7 +1,10 @@
 package org.broadinstitute.dsm;
 
 import java.io.File;
+import java.net.InetAddress;
 import java.net.MalformedURLException;
+import java.net.UnknownHostException;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -10,10 +13,17 @@ import com.google.gson.JsonParser;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import com.typesafe.config.ConfigValueFactory;
+import liquibase.Contexts;
+import liquibase.Liquibase;
+import liquibase.database.Database;
+import liquibase.database.DatabaseFactory;
+import liquibase.database.jvm.JdbcConnection;
+import liquibase.resource.ClassLoaderResourceAccessor;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.fluent.Request;
+import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.dsm.db.MedicalRecord;
 import org.broadinstitute.dsm.util.DBTestUtil;
 import org.broadinstitute.dsm.util.DDPKitRequest;
@@ -143,14 +153,31 @@ public class TestHelper {
 //                        cfg.getString("portal.dbSslTrustStorePwd"));
 //            }
 //
-//        TransactionWrapper.reset(TestUtil.UNIT_TEST);
-//            TransactionWrapper.init(maxConnections, dbUrl, cfg, skipSsl);
-//            if (!Utility.dbCheck()) {
-//                throw new RuntimeException("DB connection error.");
-//            } else {
-//                logger.info("DB setup complete.");
-//            }
+            TransactionWrapper.reset();
+
+            TransactionWrapper.init(new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.DSM, maxConnections, dbUrl));
+
+
+            TransactionWrapper.withTxn(handle -> {
+                try {
+                    Database database =
+                            DatabaseFactory.getInstance().findCorrectDatabaseImplementation(new JdbcConnection(handle.getConnection()));
+
+                    Liquibase liquibase = new Liquibase("master-changelog.xml", new ClassLoaderResourceAccessor(), database);
+                    String tag = generateDatabaseTag();
+                    liquibase.tag(tag);
+                    logger.info("Tagged database with tag {}", tag);
+
+                    liquibase.update(new Contexts());
+                } catch (Exception e) {
+                    throw new RuntimeException("Failed to run DB update.", e);
+                }
+                return true;
+            });
+
+
         }
+
 //
 //        TransactionWrapper.configureSslProperties(cfg.getString("portal.dbSslKeyStore"),
 //                cfg.getString("portal.dbSslKeyStorePwd"),
@@ -251,6 +278,16 @@ public class TestHelper {
         }
 
          */
+    }
+    private static String generateDatabaseTag() {
+        String hostname;
+        try {
+            hostname = InetAddress.getLocalHost().getHostName();
+        } catch (UnknownHostException e) {
+            hostname = "DSM";
+            logger.warn("Unable to get hostname to create tag, defaulting to {}", hostname, e);
+        }
+        return String.format("%d-%s", Instant.now().toEpochMilli(), hostname);
     }
 
     private static void checkRole(String role, List<String> roles, String user, String group) {
