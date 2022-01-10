@@ -42,7 +42,37 @@
   "about_you": {
     "intro_text": "Please tell us more about you/your child by answering the questions below. As you fill out the questions, the answers will be automatically saved. If you would like to leave the survey and complete it at another time, it will be available in the Dashboard. You can reach us by emailing info@lmsproject.org if you have any questions. If you would like to withdraw from the project, you can contact the team at info@lmsproject.org at any time. Any information that has already been entered into the system cannot be withdrawn, however no additional data will be generated.",
     "assigned_sex_prompt": "What sex were you assigned at birth? / What sex was your child assigned at birth?",
-    "assigned_sex_note": "Sex assigned at birth is the assignment and classification of people as male, female, or intersex based on a combination of external anatomy, internal anatomy, hormones, and chromosomes."
+    "assigned_sex_note": "Sex assigned at birth is the assignment and classification of people as male, female, or intersex based on a combination of external anatomy, internal anatomy, hormones, and chromosomes.",
+    "gender_identity_prompt":"What is your/your child's gender identity? Select all that apply",
+    "gender_identity_note1": "Gender identity is a term to describe a person's inner sense of being male, female, both, neither or some other gender. It can correspond to or differ from a person's sex assigned at birth."
+  },
+
+  "gender": {
+    "man": "Man/Boy",
+    "woman": "Woman/Girl",
+    "transgender": "Transgender",
+    "transgender_tip": "A term describing a person whose gender identity and/or gender expression does not align with society’s expectations based on the sex they were assigned at birth",
+    "transgender_man": "Transgender man/boy",
+    "transgender_woman": "Transgender woman/girl",
+    "nonbinary_tip": "An umbrella term describing gender identities that are outside of the traditional gender binary of male or female",
+    "nonbinary": "Nonbinary",
+    "genderqueer": "Genderqueer",
+    "genderqueer_tip": "Denoting or relating to a person who does not subscribe to conventional gender distinctions but identifies with neither, both, or a combination of male and female genders.",
+    "genderfluid":"Genderfluid",
+    "genderfluid_tip": "A term describing a person whose gender identity and/or gender expression is not always the same",
+    "agender": "Agender",
+    "agender_tip":"A term describing someone who does not have a gender",
+    "twospirit": "Two-spirit",
+    "twospirit_tip": "An umbrella term used by some Indigenous North Americans to describe Native people in their communities who fulfill a traditional third-gender ceremonial and social role in their cultures",
+    "questioning": "Questioning or unsure of gender identity",
+    "prefer_not_answer":
+
+  },
+
+  "option": {
+    "none_describe": "None of these fully describe me/my child",
+    "specify": "Please specify",
+    "prefer_not_answer": "Prefer not to answer"
   },
 
   "consent_name": "Consent",
