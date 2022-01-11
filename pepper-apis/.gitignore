@@ -28,3 +28,5 @@ output/
 output-config/
 output-build-config/
 docker-compose.yaml
+
+.java-version
