@@ -53,7 +53,12 @@
     "afro_hispanic_note": "(An Afro-Latino or Afro-Hispanic is a Latino or Hispanic with black African ancestry)",
     "indigenous_native_prompt": "Do you consider $ddp.isGovernedParticipant(\"your child\",\"yourself\") to be indigenous or Native American (such as Purepecha, Mixteco, Zapoteco, Nahua, Maya, Tzotzil, Taino, Arawak, Quiche, Aymara, Quechua, Kwichua, Mapuche, Guarani, or some other indigenous or Native American origin), or not?",
     "other_comments_prompt": "Tell us anything else you would like about $ddp.isGovernedParticipant(\"your child\",\"yourself\") or $ddp.isGovernedParticipant(\"their\",\"your\") cancer.",
-    "how_hear_prompt": "How did you hear about the project?"
+    "how_hear_prompt": "How did you hear about the project?",
+    "read_hospital_materials": "How often do you have someone (like a family member, friend, hospital/clinic worker or caregiver) help you read hospital materials?",
+    "problem_understanding_written": "How often do you have problems learning about your medical condition because of difficulty understanding written information?",
+    "confidence_level_question": "How confident are you filling out forms by yourself?",
+    "highest_level_school_question": "What is the highest level of school you have completed? Please check one.",
+    "speak_language": "What language do you speak at home?"
   },
 
   "race": {
@@ -154,7 +159,17 @@
     "twospirit_tip": "An umbrella term used by some Indigenous North Americans to describe Native people in their communities who fulfill a traditional third-gender ceremonial and social role in their cultures",
     "questioning": "Questioning or unsure of gender identity",
     "prefer_not_answer": "Prefer not to answer"
+  },
+  "sex": {
+    "male": "Male",
+    "female": "Female",
+    "intersex": "Intersex"
+  },
 
+  "lang": {
+    "english": "English",
+    "spanish": "Spanish",
+    "other": "Other"
   },
 
   "source": {
@@ -202,6 +217,30 @@
     "specify": "Please specify",
     "prefer_not_answer": "Prefer not to answer",
     "other": "Other"
+  },
+
+  "times": {
+    "all": "All of the time",
+    "most": "Most of the time",
+    "some": "Some of the time",
+    "little": "A little of the time",
+    "none": "None of the time"
+  },
+  "freq": {
+    "always": "Always",
+    "often": "Often",
+    "sometimes": "Sometimes",
+    "occasionally": "Occasionally",
+    "never": "Never"
+  },
+
+  "school": {
+    "8orLess": "8th grade or less",
+    "some": "Some high school",
+    "high": "High school graduate or equivalent",
+    "someCollege": "Some college or technical school",
+    "collegeGrad": "College graduate (Associates or Bachelors)",
+    "gradProf": "Graduate or professional school (for example Masters, PhD, MD, JD/LLB)"
   },
 
   "consent_name": "Consent",
