@@ -157,10 +157,52 @@
 
   },
 
+  "source": {
+    "social_media": "Social media (Facebook, Twitter, Instagram, etc.)",
+    "facebook": "Facebook",
+    "twitter": "Twitter",
+    "instagram": "Instagram",
+    "linkedin": "LinkedIn",
+    "youtube": "YouTube",
+    "internet": "General internet/Online sources (search engines, patient advocacy group website, blogs, online newsletter, etc.)",
+    "search": "Search engines",
+    "advocacy_website": "Patient advocacy group website",
+    "online_newsletter": "Online newsletter",
+    "blog": "Blog",
+    "media": "Media (news media program, print or digital advertisement, promotional video, article in magazine or newspaper, radio or podcasts, brochure, etc.)",
+    "news_program": "News program (online, television, radio)",
+    "newspaper": "Newspaper article",
+    "magazine": "Magazine article",
+    "podcasts": "Podcasts",
+    "print_ads": "Print advertisement",
+    "tv_ads": "Television or radio advertisement",
+    "digital_ads": "Digital advertisement",
+    "billboard_ads": "Billboard advertisement",
+    "promo_video": "Promotional video",
+    "advocacy_group": "Advocacy Group (Cancer patient advocacy group, Cancer related-nonprofit, Other Patient Organizations)",
+    "wom": "Word of mouth (friend/family, study staff, study participants, patient, support group, etc.)",
+    "friend_family": "Friend/family member",
+    "patients": "Patient(s) and/or current study participant(s)",
+    "support_group": "Support group",
+    "study_staff": "Study leader or staff, Count Me In team member",
+    "brochure": "Brochure",
+    "doctor": "Doctor/Clinical care center (physician, doctor’s office, hospital or medical institution, treatment center, etc.)",
+    "physician": "Physician, doctor, nurse, other medical professional etc.",
+    "physician_office": "Physician’s office",
+    "hospital": "Hospital, medical institution, or treatment center",
+    "event": "Event (patient conference, science or research symposium, networking event, etc.)",
+    "patient_conference": "Patient conference or event",
+    "virtual_event": "Virtual event or webinar",
+    "science_conference": "Science or research talk, conference, or symposium",
+    "networking_event": "Networking event"
+  },
+
+
   "option": {
     "none_describe": "None of these fully describe me/my child",
     "specify": "Please specify",
-    "prefer_not_answer": "Prefer not to answer"
+    "prefer_not_answer": "Prefer not to answer",
+    "other": "Other"
   },
 
   "consent_name": "Consent",
