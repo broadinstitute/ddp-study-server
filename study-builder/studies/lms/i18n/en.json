@@ -213,10 +213,14 @@
   },
 
   "option": {
+    "yes": "Yes",
+    "no": "No",
     "none_describe": "None of these fully describe me/my child",
     "specify": "Please specify",
     "prefer_not_answer": "Prefer not to answer",
-    "other": "Other"
+    "i_prefer_not_answer": "Prefer not to answer",
+    "other": "Other",
+    "dk": "Don't know"
   },
 
   "times": {
