@@ -1,4 +1,20 @@
 {
+
+  "consent_name": "Consent",
+  "consent_title": "Consent",
+  "consent_header": "Consent",
+
+  "mr_name": "Medical Release Form",
+  "mr_title": "Medical Release Form",
+  "mr_header": "Medical Release Form",
+
+  "ayc_name": "About Your Cancer Survey",
+  "ayc_title": "About Your Cancer Survey",
+  "ayc_header": "About Your Cancer Survey",
+
+  "ay_name": "About You1",
+  "ay_title": "About You2",
+  "ay_header": "About You3",
   "prequal": {
     "intro_header": "Let's get started",
     "name": "Join Us",
@@ -245,21 +261,5 @@
     "someCollege": "Some college or technical school",
     "collegeGrad": "College graduate (Associates or Bachelors)",
     "gradProf": "Graduate or professional school (for example Masters, PhD, MD, JD/LLB)"
-  },
-
-  "consent_name": "Consent",
-  "consent_title": "Consent",
-  "consent_header": "Consent",
-
-  "mr_name": "Medical Release Form",
-  "mr_title": "Medical Release Form",
-  "mr_header": "Medical Release Form",
-
-  "ayc_name": "About Your Cancer Survey",
-  "ayc_title": "About Your Cancer Survey",
-  "ayc_header": "About Your Cancer Survey",
-
-  "ay_name": "About You",
-  "ay_title": "About You",
-  "ay_header": "About You"
+  }
 }
