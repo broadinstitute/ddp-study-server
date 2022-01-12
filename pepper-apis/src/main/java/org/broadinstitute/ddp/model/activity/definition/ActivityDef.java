@@ -1,13 +1,13 @@
 package org.broadinstitute.ddp.model.activity.definition;
 
 import java.lang.reflect.Type;
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Collection;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 
 import com.google.gson.JsonDeserializationContext;
@@ -80,27 +80,21 @@ public abstract class ActivityDef {
     @SerializedName("canDeleteFirstInstance")
     protected Boolean canDeleteFirstInstance;
 
-    @NotEmpty
     @SerializedName("translatedNames")
     protected List<@Valid @NotNull Translation> translatedNames;
 
-    @NotNull
     @SerializedName("translatedSecondNames")
     protected List<@Valid @NotNull Translation> translatedSecondNames;
 
-    @NotNull
     @SerializedName("translatedTitles")
     protected List<@Valid @NotNull Translation> translatedTitles;
 
-    @NotNull
     @SerializedName("translatedSubtitles")
     protected List<@Valid @NotNull Translation> translatedSubtitles;
 
-    @NotNull
     @SerializedName("translatedDescriptions")
     protected List<@Valid @NotNull Translation> translatedDescriptions;
 
-    @NotNull
     @SerializedName("translatedSummaries")
     protected List<@Valid @NotNull SummaryTranslation> translatedSummaries;
 
@@ -239,7 +233,7 @@ public abstract class ActivityDef {
     }
 
     public List<Translation> getTranslatedNames() {
-        return translatedNames;
+        return translatedNames != null ? translatedNames : Collections.emptyList();
     }
 
     public void setTranslatedNames(List<Translation> translatedNames) {
@@ -247,7 +241,7 @@ public abstract class ActivityDef {
     }
 
     public List<Translation> getTranslatedSecondNames() {
-        return translatedSecondNames;
+        return translatedSecondNames != null ? translatedSecondNames : Collections.emptyList();
     }
 
     public void setTranslatedSecondNames(List<Translation> translatedSecondNames) {
@@ -255,7 +249,7 @@ public abstract class ActivityDef {
     }
 
     public List<Translation> getTranslatedTitles() {
-        return translatedTitles;
+        return translatedTitles != null ? translatedTitles : Collections.emptyList();
     }
 
     public void setTranslatedTitles(List<Translation> translatedTitles) {
@@ -263,7 +257,7 @@ public abstract class ActivityDef {
     }
 
     public List<Translation> getTranslatedSubtitles() {
-        return translatedSubtitles;
+        return translatedSubtitles != null ? translatedSubtitles : Collections.emptyList();
     }
 
     public void setTranslatedSubtitles(List<Translation> translatedSubtitles) {
@@ -271,7 +265,7 @@ public abstract class ActivityDef {
     }
 
     public List<Translation> getTranslatedDescriptions() {
-        return translatedDescriptions;
+        return translatedDescriptions != null ? translatedDescriptions : Collections.emptyList();
     }
 
     public void setTranslatedDescriptions(List<Translation> translatedDescriptions) {
@@ -279,7 +273,7 @@ public abstract class ActivityDef {
     }
 
     public List<SummaryTranslation> getTranslatedSummaries() {
-        return translatedSummaries;
+        return translatedSummaries != null ? translatedSummaries : Collections.emptyList();
     }
 
     public Template getNameTemplate() {
