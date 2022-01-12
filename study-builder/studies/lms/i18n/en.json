@@ -12,9 +12,9 @@
   "ayc_title": "About Your Cancer Survey",
   "ayc_header": "About Your Cancer Survey",
 
-  "ay_name": "About You1",
-  "ay_title": "About You2",
-  "ay_header": "About You3",
+  "ay_name": "About You",
+  "ay_title": "Survey: About $ddp.isGovernedParticipant(\"your child\",\"you\")",
+  "ay_header": "About You",
   "prequal": {
     "intro_header": "Let's get started",
     "name": "Join Us",
