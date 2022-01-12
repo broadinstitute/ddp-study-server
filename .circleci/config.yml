@@ -582,7 +582,7 @@ commands:
       - run:
           name: Compile and run checkstyle on all jars
           command: |
-            mvn install --batch-mode -DskipTests -Dmaven.repo.local=<< parameters.m2_repo >> -pl dsm-core, dss-core, studybuilder-cli, housekeeping -am -T 1.5C
+            mvn install --batch-mode -DskipTests -Dmaven.repo.local=<< parameters.m2_repo >> -pl dsm-core,dss-core,studybuilder-cli,housekeeping -am -T 1.5C
 
   restore-ddp-cache:
     description: Restore ddp cache
