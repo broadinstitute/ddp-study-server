@@ -925,6 +925,18 @@ jobs:
           module: dss-server
           deploy_config_file_dir: ../output-config
 
+  deploy-dsm-job:
+    executor:
+      name: build-deploy-executor
+    working_directory: *pepper_apis_path
+    steps:
+      - checkout:
+          path: *repo_path
+      - setup-shared-env
+      - build-jar:
+          module: dsm-server
+      - deploy-dsm-jar
+
   deploy-stored-jar-job:
     executor:
       name: build-deploy-executor
@@ -938,17 +950,16 @@ jobs:
       - retrieve-jar:
           jar_base_name: DSMServer
       - deploy-dsm-jar
-        # FIX WHEN DONE
-#      - retrieve-jar:
-#          jar_base_name: Housekeeping
-#      - deploy-jar:
-#          jar_base_name: Housekeeping
-#          deploy_config_file_dir: ../output-config
-#      - retrieve-jar:
-#          jar_base_name: DataDonationPlatform
-#      - deploy-jar:
-#          jar_base_name: DataDonationPlatform
-#          deploy_config_file_dir: ../output-config
+      - retrieve-jar:
+          jar_base_name: Housekeeping
+      - deploy-jar:
+          jar_base_name: Housekeeping
+          deploy_config_file_dir: ../output-config
+      - retrieve-jar:
+          jar_base_name: DataDonationPlatform
+      - deploy-jar:
+          jar_base_name: DataDonationPlatform
+          deploy_config_file_dir: ../output-config
 
   deploy-docs-job:
     executor:
@@ -1063,4 +1074,12 @@ workflows:
                 - test
                 - staging
                 - production
+
+  deploy-and-build-dsm-workflow:
+    jobs:
+      - deploy-dsm-job:
+          filters:
+            branches:
+              only:
+                - DSMMavenRefactor-build
 
