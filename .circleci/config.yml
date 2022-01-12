@@ -307,6 +307,7 @@ commands:
             rm -rf $DEPLOY_DIR
             mkdir -p $DEPLOY_DIR
             cd $DEPLOY_DIR
+            cp "../dsm-server/target/<<parameters.jar_base_name>>.jar" .
             cat ../dsm-server/appengine/StudyManager.tmpl.yaml \
               | sed "s/{{project_id}}/broad-ddp-${ENVIRONMENT}/g" \
               > << parameters.jar_base_name >>.yaml
