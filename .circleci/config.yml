@@ -7,7 +7,7 @@ references:
   tcell_gcp_path: &tcell_gcp_path
       gs://ddp-tcell/tcell-1.11.0.tar.gz
   tcell_config_file: &tcell_config_file
-                    gs://ddp-tcell/tcell-1.11.0.tar.gz
+                       tcell_agent.config
   ci_support_image: &ci_support_image
       broadinstitute/study-server-build:2020-04-30A
   root_path: &root_path
