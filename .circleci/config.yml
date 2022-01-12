@@ -309,7 +309,7 @@ commands:
             cd $DEPLOY_DIR
             cat ../dsm-server/appengine/StudyManager.tmpl.yaml \
               | sed "s/{{project_id}}/broad-ddp-${ENVIRONMENT}/g" \
-              > StudyManager.yaml
+              > << parameters.jar_base_name >>.yaml
             cp -r ../$TCELL_DIR .
             cp ../<< parameters.tcell_config_file >> $TCELL_DIR
             pwd
