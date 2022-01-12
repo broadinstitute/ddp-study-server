@@ -119,7 +119,7 @@ commands:
           name: Determine deployment environment for branch << pipeline.git.branch >>
           command: |
             case "${CIRCLE_BRANCH}" in
-            DSMMavenRefactor) # REMOVE WHEN DONE
+            DSMMavenRefactor*) # REMOVE WHEN DONE
               DEPLOY_ENV=dev
             ;;
             develop)
