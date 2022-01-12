@@ -290,6 +290,7 @@ commands:
         default: DSMServer
     steps:
       - set-deployment-env
+      - auth-gcp-service-account
       - render-secrets:
           secret_name: study-manager-config
           output_file: vault.conf
