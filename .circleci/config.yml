@@ -262,6 +262,7 @@ commands:
             gsutil cp  $JAR_FILE_URL $JAR_FILE_PATH
             echo ""
   render-secrets:
+    description: Get secret <<parameters.secret_name>>
     parameters:
       secret_name:
         type: string
@@ -292,12 +293,12 @@ commands:
       - set-deployment-env
       - auth-gcp-service-account
       - render-secrets:
+          secret_name: study-manager-tcell
+          output_file: << parameters.tcell_config_file >>
+      - render-secrets:
           secret_name: study-manager-config
           output_file: vault.conf
       - install-tcell
-      - render-secrets:
-          secret_name: study-manager-tcell
-          output_file: << parameters.tcell_config_file >>
       - run:
           name: gather deployment assets
           command: |
