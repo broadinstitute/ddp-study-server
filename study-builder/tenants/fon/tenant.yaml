@@ -8,6 +8,11 @@ rules:
     enabled: true
     order: 1
 
+pages:
+  - name: login
+    enabled: true
+    html: ./pages/login.html
+
 emailProvider:
   name: "sendgrid"
   enabled: true
