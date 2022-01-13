@@ -1,0 +1,41 @@
+tenant:
+  default_directory: Username-Password-Authentication
+
+rules:
+  - name: Register User in Pepper
+    script: ../register-user-in-pepper.js
+    stage: login_success
+    enabled: true
+    order: 1
+
+emailProvider:
+  name: "sendgrid"
+  enabled: true
+  default_from_address: ##SENDGRID_EMAIL##
+  credentials:
+    api_key: ##SENDGRID_TOKEN##
+
+clients:
+  - name: angular-client
+    app_type: spa
+    callbacks: [
+      '##BASE_URL##/auth',
+      '##BASE_URL##/login-landing'
+      ##LOCALHOST_CALLBACKS##
+    ]
+    allowed_logout_urls: [
+      '##BASE_URL##',
+      '##BASE_URL##/error',
+      '##BASE_URL##/session-expired'
+      ##LOCALHOST_LOGOUTS##
+    ]
+    web_origins: [
+      '##BASE_URL##'
+      ##LOCALHOST_ORIGINS##
+    ]
+    client_metadata:
+      study: fon
+    jwt_configuration:
+      alg: RS256
+      lifetime_in_seconds: 36000
+    oidc_conformant: true
