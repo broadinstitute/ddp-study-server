@@ -52,6 +52,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpStatus;
 import org.broadinstitute.ddp.db.TransactionWrapper;
+import org.broadinstitute.ddp.util.ConfigManager;
 import org.broadinstitute.ddp.util.ConfigUtil;
 import org.broadinstitute.dsm.careevolve.Provider;
 import org.broadinstitute.dsm.jetty.JettyConfig;
@@ -202,12 +203,14 @@ public class DSMServer {
             //config without secrets
             Config cfg = ConfigFactory.load();
             //secrets from vault in a config file
+            //@TODO find consistent way to get configuration (directly, from ConfigManager, from ConfigUtil. Just one!)
             File vaultConfigInCwd = new File(VAULT_DOT_CONF);
             File vaultConfigInDeployDir = new File(GAE_DEPLOY_DIR, VAULT_DOT_CONF);
             File vaultConfig = vaultConfigInCwd.exists() ? vaultConfigInCwd : vaultConfigInDeployDir;
             logger.info("Reading config values from " + vaultConfig.getAbsolutePath());
             cfg = cfg.withFallback(ConfigFactory.parseFile(vaultConfig));
-
+            ConfigManager.init(cfg);
+            ConfigUtil.setDefaultConfig(cfg);
             if (cfg.hasPath(GCP_PATH_TO_SERVICE_ACCOUNT)) {
                 if (StringUtils.isNotBlank(cfg.getString("portal.googleProjectCredentials"))) {
                     System.setProperty("GOOGLE_APPLICATION_CREDENTIALS", cfg.getString("portal.googleProjectCredentials"));

@@ -49,14 +49,15 @@ public class ConfigManager {
         this.cfg = cfg;
     }
 
-    /**
-     * The one true way to get the {@link Config} value for pepper.
-     * @return the config for the app
-     */
+    public static ConfigManager init(Config config) {
+        configManager = new ConfigManager(config);
+        return configManager;
+    }
+
     public static synchronized ConfigManager getInstance() {
         if (configManager == null && TYPESAFE_CONFIG_FILE != null) {
             try {
-                configManager = new ConfigManager(parseConfig());
+                init(parseConfig());
             } catch (Exception e) {
                 throw new DDPException("Could not initialize config", e);
             }

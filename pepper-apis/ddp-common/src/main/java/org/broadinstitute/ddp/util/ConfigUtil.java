@@ -9,6 +9,11 @@ import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.constants.ConfigFile;
 
 public class ConfigUtil {
+    static Config DEFAULT_CONFIG;
+
+    public static void setDefaultConfig(Config config) {
+        DEFAULT_CONFIG = config;
+    }
 
     /**
      * Returns the sendgrid templates used for testing.  Don't call this
@@ -94,7 +99,7 @@ public class ConfigUtil {
      */
     @Deprecated
     public static String getSqlFromConfig(@NonNull String queryName) {
-        return getSqlFromConfig(null, queryName);
+        return DEFAULT_CONFIG != null ? DEFAULT_CONFIG.getString(queryName) : getSqlFromConfig(null, queryName);
     }
 
     /**
