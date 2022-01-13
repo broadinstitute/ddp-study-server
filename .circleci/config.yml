@@ -274,6 +274,8 @@ commands:
           command: |
             gcloud --project "broad-ddp-${ENVIRONMENT}" secrets versions access latest \
                 --secret='<<parameters.secret_name>>' > '<<parameters.output_file>>'
+            pwd
+            ls -l
 
   deploy-dsm-jar:
     parameters:
@@ -289,6 +291,9 @@ commands:
       jar_base_name:
         type: string
         default: DSMServer
+      app_config_file:
+        type: string
+        default: vault.conf
     steps:
       - set-deployment-env
       - auth-gcp-service-account
@@ -297,7 +302,7 @@ commands:
           output_file: << parameters.tcell_config_file >>
       - render-secrets:
           secret_name: study-manager-config
-          output_file: vault.conf
+          output_file: << parameters.app_config_file >>
       - install-tcell
       - run:
           name: gather deployment assets
@@ -307,7 +312,8 @@ commands:
             rm -rf $DEPLOY_DIR
             mkdir -p $DEPLOY_DIR
             cd $DEPLOY_DIR
-            cp "../dsm-server/target/<<parameters.jar_base_name>>.jar" .
+            cp ../dsm-server/target/<<parameters.jar_base_name>>.jar .
+            cp ../<< parameters.app_config_file >> .
             cat ../dsm-server/appengine/StudyManager.tmpl.yaml \
               | sed "s/{{project_id}}/broad-ddp-${ENVIRONMENT}/g" \
               > << parameters.jar_base_name >>.yaml
