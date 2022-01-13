@@ -100,7 +100,7 @@ commands:
       - run:
           name: Run maven package
           command: |
-            mvn package -DskipTests -pl << parameters.module >> -am -Dcheckstyle.skip -Dmaven.repo.local=<< parameters.m2_repo >>
+            mvn install -DskipTests -pl << parameters.module >> -am -Dcheckstyle.skip -Dmaven.repo.local=<< parameters.m2_repo >>
 
   setup-shared-env:
     description: "Setup shared ENV vars used by multiple scripts"
