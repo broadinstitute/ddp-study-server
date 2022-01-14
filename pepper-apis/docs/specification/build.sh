@@ -4,8 +4,6 @@ set -e
 
 SRC="src"
 BUILD="build"
-
-
 usage() {
     cat <<-EOM
 
