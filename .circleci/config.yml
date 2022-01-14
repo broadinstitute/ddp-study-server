@@ -1,6 +1,6 @@
 version: 2.1
 
-setup: false
+setup: true
 
 orbs:
   path-filtering: circleci/path-filtering@0.0.1
