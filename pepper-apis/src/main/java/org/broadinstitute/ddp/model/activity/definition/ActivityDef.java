@@ -167,11 +167,7 @@ public abstract class ActivityDef {
         this.maxInstancesPerUser = maxInstancesPerUser;
         this.displayOrder = displayOrder;
         this.writeOnce = writeOnce;
-        if (translatedNames != null && !translatedNames.isEmpty()) {
-            this.translatedNames = translatedNames;
-        } else {
-            throw new IllegalArgumentException("Need at least one name translation");
-        }
+        this.translatedNames = translatedNames;
         this.translatedSecondNames = new ArrayList<>();
         this.translatedTitles = translatedTitles;
         this.translatedSubtitles = translatedSubtitles;
