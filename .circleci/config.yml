@@ -19,7 +19,7 @@ workflows:
 
     jobs:
       - path-filtering/filter:
-          base-revision: 560d824e48eb9f5655b963dd716d5ac255a52968
+          base-revision: develop
           config-path: .circleci/main-config.yml
           mapping: |
             pepper-apis/docs/.* project api-docs
