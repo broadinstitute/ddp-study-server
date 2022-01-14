@@ -8,7 +8,7 @@ jobs:
     steps:
       - checkout
       - run: echo "this is the build job"
-      - run: echo "Go an echo parameter called << pipeline.parameters.project >>
+      - run: echo "Go an echo parameter called << pipeline.parameters.project >>"
 
 parameters:
   on_demand:
@@ -22,5 +22,8 @@ parameters:
 # Orchestrate our job run sequence
 workflows:
   build_and_test:
+    when: << pipeline.parameters.api-docs >>
     jobs:
       - build
+
+
