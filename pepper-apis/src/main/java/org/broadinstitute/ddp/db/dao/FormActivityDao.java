@@ -138,7 +138,8 @@ public interface FormActivityDao extends SqlObject {
                 activity.getMaxInstancesPerUser(), activity.getDisplayOrder(), activity.isWriteOnce(), activity.getEditTimeoutSec(),
                 activity.isOndemandTriggerAllowed(), activity.isExcludeFromDisplay(), activity.isExcludeStatusIconFromDisplay(),
                 activity.isAllowUnauthenticated(), activity.isFollowup(), activity.isHideInstances(),
-                activity.isCreateOnParentCreation(), activity.canDeleteInstances(), activity.getCanDeleteFirstInstance());
+                activity.isCreateOnParentCreation(), activity.canDeleteInstances(), activity.getCanDeleteFirstInstance(),
+                activity.isShowActivityStatus());
         activity.setActivityId(activityId);
         return activityId;
     }
@@ -253,7 +254,8 @@ public interface FormActivityDao extends SqlObject {
                 .setCreateOnParentCreation(activityDto.isCreateOnParentCreation())
                 .setCanDeleteInstances(activityDto.canDeleteInstances())
                 .setCanDeleteFirstInstance(activityDto.getCanDeleteFirstInstance())
-                .setIsFollowup(activityDto.isFollowup());
+                .setIsFollowup(activityDto.isFollowup())
+                .setShowActivityStatus(activityDto.isShowActivityStatus());
 
         List<Translation> names = new ArrayList<>();
         List<Translation> secondNames = new ArrayList<>();
