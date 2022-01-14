@@ -98,7 +98,7 @@ commands:
     steps:
       - restore_cache: *m2_cache_keys
       - run:
-          name: Run maven package
+          name: Run maven install on module << parameters.module >>
           command: |
             mvn install -DskipTests -pl << parameters.module >> -am -Dcheckstyle.skip -Dmaven.repo.local=<< parameters.m2_repo >>
 
@@ -779,8 +779,16 @@ jobs:
       #            - match-file-patterns-or-halt:
       #                file_patterns: "pepper-apis/config pepper-apis/src study-builder/src pom.xml checkstyle.xml"
       - setup-shared-env
-      - compile-all-jars:
+      - run-maven-with-pepper-options:
+          module: dsm-core
+          phase: install
+          skip_tests: true
+          skip_checkstyle: false
+          additional_options: -am
           restore_m2_cache: true
+          save_m2_cache: false
+#      - compile-all-jars:
+#          restore_m2_cache: true
       # When only pepper code or configuration changes, run the standalone tests.
       #      - when:
       #          condition: << parameters.allow_skip_job >>
@@ -912,7 +920,7 @@ jobs:
           module: dsm-server
           jar_base_name: DSMServer
 
-  deploy-jar-from-workspace-job:
+  deploy-dss-jar-from-workspace-job:
     executor:
       name: build-deploy-executor
     working_directory: *pepper_apis_path
@@ -948,7 +956,7 @@ jobs:
           module: dsm-server
       - deploy-dsm-jar
 
-  deploy-stored-jar-job:
+  deploy-dss-stored-jar-job:
     executor:
       name: build-deploy-executor
     working_directory: *pepper_apis_path
@@ -958,9 +966,6 @@ jobs:
       - setup-shared-env
       # Deploy Housekeeping first so hopefully liquibase migrations
       # are ran before DDP boots up.
-      - retrieve-jar:
-          jar_base_name: DSMServer
-      - deploy-dsm-jar
       - retrieve-jar:
           jar_base_name: Housekeeping
       - deploy-jar:
@@ -1006,7 +1011,7 @@ parameters:
 workflows:
   version: 2
 
-  parallel-compile-and-test-workflow:
+  dss-parallel-compile-and-test-workflow:
     unless: << pipeline.parameters.on_demand >>
     jobs:
       - compile-and-run-test-suite-job: &compile_and_test_filters
@@ -1022,7 +1027,7 @@ workflows:
           <<: *compile_and_test_filters
       - build-api-docs-job:
           <<: *compile_and_test_filters
-      - deploy-jar-from-workspace-job:
+      - deploy-dss-jar-from-workspace-job:
           filters:
             branches:
               only:
@@ -1065,9 +1070,9 @@ workflows:
       - dsm-compile-and-run-tests-job:
           allow_skip_job: true
 
-  deploy-workflow:
+  deploy-dss-workflow:
     jobs:
-      - deploy-stored-jar-job:
+      - deploy-dss-stored-jar-job:
           filters:
             branches:
               only:
