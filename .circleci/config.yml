@@ -24,7 +24,7 @@ workflows:
           #          config-path: .circleci/config.yml
           config-path: .circleci/main-config.yml
           mapping: |
-            pepper-apis/docs.* project api-docs
+            pepper-apis/docs/.* project api-docs
           filters:
             branches:
               only:
