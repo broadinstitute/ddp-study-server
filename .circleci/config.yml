@@ -1005,7 +1005,7 @@ parameters:
 
   project:
     type: enum
-    enum: ["dss", "dsm"]
+    enum: ["dss", "dsm","api-docs"]
     default: "dss"
 
 workflows:
@@ -1025,8 +1025,8 @@ workflows:
       - parallel-compile-and-test-job:
           parallelism: *test_parallelism
           <<: *compile_and_test_filters
-      - build-api-docs-job:
-          <<: *compile_and_test_filters
+#      - build-api-docs-job:
+#          <<: *compile_and_test_filters
       - deploy-dss-jar-from-workspace-job:
           filters:
             branches:
@@ -1058,8 +1058,16 @@ workflows:
       - parallel-compile-and-test-job:
           parallelism: *test_parallelism
           allow_skip_job: true
+#      - build-api-docs-job:
+#          allow_skip_job: true
+
+  build-api-docs-workflow:
+    when:
+      equal: ["api-docs", << pipeline.parameters.project >>]
+    jobs:
       - build-api-docs-job:
-          allow_skip_job: true
+          allow_skip_job: false
+
 
   run-dsm-tests-on-demand-workflow:
     when:
