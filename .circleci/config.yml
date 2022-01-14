@@ -20,7 +20,7 @@ workflows:
 #      << pipeline.parameters.on_demand >>
     jobs:
       - path-filtering/filter:
-          base-revision: develop
+          base-revision: e12fe8721678a7ba4429ca0369e404a5a1a34ece
           #          config-path: .circleci/config.yml
           config-path: .circleci/main-config.yml
           mapping: |
