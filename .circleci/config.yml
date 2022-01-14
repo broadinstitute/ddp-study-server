@@ -16,8 +16,8 @@ parameters:
 
 workflows:
   conditional-workflow:
-    when:
-      << pipeline.parameters.on_demand >>
+#    when:
+#      << pipeline.parameters.on_demand >>
     jobs:
       - path-filtering/filter:
           base-revision: develop
