@@ -1010,7 +1010,7 @@ parameters:
 
   project:
     type: enum
-    enum: ["dss", "dsm","api-docs"]
+    enum: ["dss", "dsm","api-docs", "nothing"]
     default: "dss"
 
 workflows:
