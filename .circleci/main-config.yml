@@ -8,6 +8,7 @@ jobs:
     steps:
       - checkout
       - run: echo "this is the build job"
+      - run: echo "Go an echo parameter called << pipeline.parameters.project >>
 
 
 # Orchestrate our job run sequence
