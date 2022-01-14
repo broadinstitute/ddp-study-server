@@ -22,7 +22,8 @@ parameters:
 # Orchestrate our job run sequence
 workflows:
   build_and_test:
-    when: << pipeline.parameters.api-docs >>
+    when:
+      equal: ["api-docs", << pipeline.parameters.project >>]
     jobs:
       - build
 
