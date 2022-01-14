@@ -3,23 +3,19 @@ version: 2.1
 setup: true
 
 orbs:
-  path-filtering: circleci/path-filtering@0.0.2
-  continuation: circleci/continuation@0.1.2
+  path-filtering: circleci/path-filtering@0.1.1
 
 parameters:
-  on_demand:
-    type: boolean
-    default: false
   project:
     type: enum
     enum: ["dss", "dsm","api-docs", "nothing"]
     default: "dss"
 
 workflows:
-  conditional-workflow:
-
+  filter-based-on-changes-workflow:
     jobs:
       - path-filtering/filter:
+          name: check-files
           base-revision: develop
           config-path: .circleci/main-config.yml
           mapping: |
