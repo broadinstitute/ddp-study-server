@@ -34,7 +34,7 @@ public interface JdbiActivity extends SqlObject {
             + ":studyId,:activityCode,"
             + ":maxInstancesPerUser,:displayOrder,:writeOnce,0,:editTimeoutSec,:allowOndemandTrigger,"
             + ":excludeFromDisplay, :excludeStatusIconFromDisplay, :allowUnauthenticated, :isFollowup, :hideExistingInstancesOnCreation,"
-            + ":createOnParentCreation, :canDeleteInstances, :canDeleteFirstInstance :showActivityStatus)")
+            + ":createOnParentCreation, :canDeleteInstances, :canDeleteFirstInstance, :showActivityStatus)")
     @GetGeneratedKeys()
     long insertActivity(
             @Bind("activityType") ActivityType activityType,
