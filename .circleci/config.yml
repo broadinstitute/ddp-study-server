@@ -3,7 +3,8 @@ version: 2.1
 setup: true
 
 orbs:
-  path-filtering: circleci/path-filtering@0.1.1
+  path-filtering: circleci/path-filtering@0.0.2
+    continuation: circleci/continuation@0.1.2
 
 parameters:
   on_demand:
