@@ -9,6 +9,10 @@ parameters:
   on_demand:
     type: boolean
     default: false
+  project:
+    type: enum
+    enum: ["dss", "dsm","api-docs", "nothing"]
+    default: "dss"
 
 workflows:
   conditional-workflow:
