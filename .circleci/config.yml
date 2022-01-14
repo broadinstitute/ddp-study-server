@@ -1064,11 +1064,13 @@ workflows:
 #      - build-api-docs-job:
 #          allow_skip_job: true
 
-  generate-config:
+  conditional-workflow:
+    when:
+      << pipeline.parameters.on_demand >>
     jobs:
       - path-filtering/filter:
-          base-revision: main
-          config-path: .circleci/continue-config.yml
+          base-revision: <<pipeline.git.base_revision >>
+          config-path: .circleci/config.yml
           mapping: |
             pepper-apis/docs.* project api-docs
           filters:
