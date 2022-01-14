@@ -1,20 +1,4 @@
 {
-
-  "consent_name": "Consent",
-  "consent_title": "Consent",
-  "consent_header": "Consent",
-
-  "mr_name": "Medical Release Form",
-  "mr_title": "Medical Release Form",
-  "mr_header": "Medical Release Form",
-
-  "ayc_name": "About Your Cancer Survey",
-  "ayc_title": "About Your Cancer Survey",
-  "ayc_header": "About Your Cancer Survey",
-
-  "ay_name": "About You",
-  "ay_title": "Survey: About $ddp.isGovernedParticipant(\"your child\",\"you\")",
-  "ay_header": "About You",
   "prequal": {
     "intro_header": "Let's get started",
     "name": "Join Us",
@@ -69,16 +53,7 @@
     "afro_hispanic_note": "(An Afro-Latino or Afro-Hispanic is a Latino or Hispanic with black African ancestry)",
     "indigenous_native_prompt": "Do you consider $ddp.isGovernedParticipant(\"your child\",\"yourself\") to be indigenous or Native American (such as Purepecha, Mixteco, Zapoteco, Nahua, Maya, Tzotzil, Taino, Arawak, Quiche, Aymara, Quechua, Kwichua, Mapuche, Guarani, or some other indigenous or Native American origin), or not?",
     "other_comments_prompt": "Tell us anything else you would like about $ddp.isGovernedParticipant(\"your child\",\"yourself\") or $ddp.isGovernedParticipant(\"their\",\"your\") cancer.",
-    "how_hear_prompt": "How did you hear about the project?",
-    "read_hospital_materials": "How often do you have someone (like a family member, friend, hospital/clinic worker or caregiver) help you read hospital materials?",
-    "problem_understanding_written": "How often do you have problems learning about your medical condition because of difficulty understanding written information?",
-    "confidence_level_question": "How confident are you filling out forms by yourself?",
-    "highest_level_school_question": "What is the highest level of school you have completed? Please check one.",
-    "speak_language": "What language do you speak at home?",
-    "agreement": "I understand that the information I entered here will be stored in a secure database. I understand that the study team may reach out to contact me for next steps or additional information. I understand that if I would like to be withdrawn from the project, I can contact the study team at info@lmsprojrect.org at any time. Any information that has already been entered into the system cannot be withdrawn, however no additional data  will be generated. ",
-    "citation_1": "Survey questions 3, 3a, 3b, and 3c use some of the language developed for race & ethnicity questions and responses created either as part of the All of Us Research Program from the National Institutes of Health or as part of the Pew Research Center 2014 National Survey of Latinos. Below is the citation information for these questions:",
-    "citation_2": "Cronin RM, Jerome RN, Mapes B, Andrade R, Johnston R, Ayala J, Schlundt D, Bonnet K, Kripalani S, Goggins K, Wallston KA, Couper MP, Elliott MR, Harris P, Begale M, Munoz F, Lopez-Class M, Cella D, Condon D, AuYoung M, Mazor KM, Mikita S, Manganiello M, Borselli N, Fowler S, Rutter JL, Denny JC, Karlson EW, Ahmedani BK, O'Donnell CJ; Vanderbilt University Medical Center Pilot Team, and the Participant Provided Information Committee. Development of the Initial Surveys for the All of Us Research Program. Epidemiology. 2019 Jul;30(4):597-608. doi: 10.1097/EDE.0000000000001028. PMID: 31045611; PMCID: PMC6548672.",
-    "citation_3": "Mapes BM, Foster CS, Kusnoor SV, Epelbaum MI, AuYoung M, Jenkins G, Lopez-Class M, Richardson-Heron D, Elmi A, Surkan K, Cronin RM, Wilkins CH, Pérez-Stable EJ, Dishman E, Denny JC, Rutter JL; All of Us Research Program. Diversity and inclusion for the All of Us research program: A scoping review. PLoS One. 2020 Jul 1;15(7):e0234962. doi: 10.1371/journal.pone.0234962. PMID: 32609747; PMCID: PMC7329113."
+    "how_hear_prompt": "How did you hear about the project?"
   },
 
   "race": {
@@ -179,17 +154,7 @@
     "twospirit_tip": "An umbrella term used by some Indigenous North Americans to describe Native people in their communities who fulfill a traditional third-gender ceremonial and social role in their cultures",
     "questioning": "Questioning or unsure of gender identity",
     "prefer_not_answer": "Prefer not to answer"
-  },
-  "sex": {
-    "male": "Male",
-    "female": "Female",
-    "intersex": "Intersex"
-  },
 
-  "lang": {
-    "english": "English",
-    "spanish": "Spanish",
-    "other": "Other"
   },
 
   "source": {
@@ -232,6 +197,7 @@
     "networking_event": "Networking event"
   },
 
+
   "option": {
     "yes": "Yes",
     "no": "No",
@@ -243,27 +209,19 @@
     "dk": "Don't know"
   },
 
-  "times": {
-    "all": "All of the time",
-    "most": "Most of the time",
-    "some": "Some of the time",
-    "little": "A little of the time",
-    "none": "None of the time"
-  },
-  "freq": {
-    "always": "Always",
-    "often": "Often",
-    "sometimes": "Sometimes",
-    "occasionally": "Occasionally",
-    "never": "Never"
-  },
+  "consent_name": "Consent",
+  "consent_title": "Consent",
+  "consent_header": "Consent",
 
-  "school": {
-    "8orLess": "8th grade or less",
-    "some": "Some high school",
-    "high": "High school graduate or equivalent",
-    "someCollege": "Some college or technical school",
-    "collegeGrad": "College graduate (Associates or Bachelors)",
-    "gradProf": "Graduate or professional school (for example Masters, PhD, MD, JD/LLB)"
-  }
+  "mr_name": "Medical Release Form",
+  "mr_title": "Medical Release Form",
+  "mr_header": "Medical Release Form",
+
+  "ayc_name": "About Your Cancer Survey",
+  "ayc_title": "About Your Cancer Survey",
+  "ayc_header": "About Your Cancer Survey",
+
+  "ay_name": "About You",
+  "ay_title": "About You",
+  "ay_header": "About You"
 }
