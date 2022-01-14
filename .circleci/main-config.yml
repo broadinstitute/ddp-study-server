@@ -10,6 +10,14 @@ jobs:
       - run: echo "this is the build job"
       - run: echo "Go an echo parameter called << pipeline.parameters.project >>
 
+parameters:
+  on_demand:
+    type: boolean
+    default: false
+  project:
+    type: enum
+    enum: ["dss", "dsm","api-docs", "nothing"]
+    default: "dss"
 
 # Orchestrate our job run sequence
 workflows:
