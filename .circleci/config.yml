@@ -5,6 +5,10 @@ setup: true
 orbs:
   path-filtering: circleci/path-filtering@0.0.1
 
+parameters:
+  on_demand:
+    type: boolean
+    default: false
 
 workflows:
   conditional-workflow:
