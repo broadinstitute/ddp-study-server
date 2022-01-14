@@ -1,5 +1,8 @@
 version: 2.1
 
+orbs:
+  path-filtering: circleci/path-filtering@0.0.1
+
 references:
   tcell_dir: &tcell_dir
       tcell
@@ -1060,6 +1063,18 @@ workflows:
           allow_skip_job: true
 #      - build-api-docs-job:
 #          allow_skip_job: true
+
+  generate-config:
+    jobs:
+      - path-filtering/filter:
+          base-revision: main
+          config-path: .circleci/continue-config.yml
+          mapping: |
+            pepper-apis/docs.* project api-docs
+          filters:
+            branches:
+              only:
+                - DSMMavenRefactor-build
 
   build-api-docs-workflow:
     when:
