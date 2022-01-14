@@ -270,7 +270,7 @@ commands:
         type: string
     steps:
       - run:
-          name: gather deployment assets
+          name: Extract secret <<parameters.secret_name>> to file
           command: |
             gcloud --project "broad-ddp-${ENVIRONMENT}" secrets versions access latest \
                 --secret='<<parameters.secret_name>>' > '<<parameters.output_file>>'
