@@ -1072,7 +1072,8 @@ workflows:
     jobs:
       - path-filtering/filter:
           base-revision: develop
-          config-path: .circleci/config.yml
+#          config-path: .circleci/config.yml
+          config-path: .circleci/test-config.yml
           mapping: |
             pepper-apis/docs.* project api-docs
           filters:
