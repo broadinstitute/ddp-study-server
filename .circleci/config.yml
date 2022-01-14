@@ -1016,55 +1016,55 @@ parameters:
 workflows:
   version: 2
 
-#  dss-parallel-compile-and-test-workflow:
-#    unless: << pipeline.parameters.on_demand >>
-#    jobs:
-#      - compile-and-run-test-suite-job: &compile_and_test_filters
-#          filters:
-#            branches:
-#              only:
-#                - develop
-#                - DSMMavenRefactor # REMOVE WHEN DONE
-#                - &rc /^rc.*/
-#                - &hotfix /^hotfix.*/
-#      - parallel-compile-and-test-job:
-#          parallelism: *test_parallelism
+  dss-parallel-compile-and-test-workflow:
+    unless: << pipeline.parameters.on_demand >>
+    jobs:
+      - compile-and-run-test-suite-job: &compile_and_test_filters
+          filters:
+            branches:
+              only:
+                - develop
+                - DSMMavenRefactor # REMOVE WHEN DONE
+                - &rc /^rc.*/
+                - &hotfix /^hotfix.*/
+      - parallel-compile-and-test-job:
+          parallelism: *test_parallelism
+          <<: *compile_and_test_filters
+#      - build-api-docs-job:
 #          <<: *compile_and_test_filters
-##      - build-api-docs-job:
-##          <<: *compile_and_test_filters
-#      - deploy-dss-jar-from-workspace-job:
-#          filters:
-#            branches:
-#              only:
-#                - develop
-#                - DSMMavenRefactor
-#          requires:
-#            - parallel-compile-and-test-job
-#            - compile-and-run-test-suite-job
-#      - store-jar-job:
-#          filters:
-#            branches:
-#              only:
-#                - *rc
-#                - *hotfix
-#                - DSMMavenRefactor # REMOVE WHEN DONE
-#          requires:
-#            - compile-and-run-test-suite-job
-#            - parallel-compile-and-test-job
-#
-#  run-dss-tests-on-demand-workflow:
-#    when:
-#      and:
-#        - << pipeline.parameters.on_demand >>
-#        - equal: ["dss", << pipeline.parameters.project >>]
-#    jobs:
-#      - compile-and-run-test-suite-job:
+      - deploy-dss-jar-from-workspace-job:
+          filters:
+            branches:
+              only:
+                - develop
+                - DSMMavenRefactor
+          requires:
+            - parallel-compile-and-test-job
+            - compile-and-run-test-suite-job
+      - store-jar-job:
+          filters:
+            branches:
+              only:
+                - *rc
+                - *hotfix
+                - DSMMavenRefactor # REMOVE WHEN DONE
+          requires:
+            - compile-and-run-test-suite-job
+            - parallel-compile-and-test-job
+
+  run-dss-tests-on-demand-workflow:
+    when:
+      and:
+        - << pipeline.parameters.on_demand >>
+        - equal: ["dss", << pipeline.parameters.project >>]
+    jobs:
+      - compile-and-run-test-suite-job:
+          allow_skip_job: true
+      - parallel-compile-and-test-job:
+          parallelism: *test_parallelism
+          allow_skip_job: true
+#      - build-api-docs-job:
 #          allow_skip_job: true
-#      - parallel-compile-and-test-job:
-#          parallelism: *test_parallelism
-#          allow_skip_job: true
-##      - build-api-docs-job:
-##          allow_skip_job: true
 
   conditional-workflow:
     when:
@@ -1081,49 +1081,49 @@ workflows:
               only:
                 - DSMMavenRefactor-build
 
-#  build-api-docs-workflow:
-#    when:
-#      equal: ["api-docs", << pipeline.parameters.project >>]
-#    jobs:
-#      - build-api-docs-job:
-#          allow_skip_job: false
-#
-#
-#  run-dsm-tests-on-demand-workflow:
-#    when:
-#      and:
-#        - << pipeline.parameters.on_demand >>
-#        - equal: ["dsm", << pipeline.parameters.project >>]
-#    jobs:
-#      - dsm-compile-and-run-tests-job:
-#          allow_skip_job: true
-#
-#  deploy-dss-workflow:
-#    jobs:
-#      - deploy-dss-stored-jar-job:
-#          filters:
-#            branches:
-#              only:
-#                - test
-#                - staging
-#                - production
-#
-#  deploy-api-docs-workflow:
-#    jobs:
-#      - deploy-docs-job:
-#          filters:
-#            branches:
-#              only:
-#                - develop
-#                - test
-#                - staging
-#                - production
-#
-#  deploy-and-build-dsm-workflow:
-#    jobs:
-#      - deploy-dsm-job:
-#          filters:
-#            branches:
-#              only:
-#                - DSMMavenRefactor-build-1
+  build-api-docs-workflow:
+    when:
+      equal: ["api-docs", << pipeline.parameters.project >>]
+    jobs:
+      - build-api-docs-job:
+          allow_skip_job: false
+
+
+  run-dsm-tests-on-demand-workflow:
+    when:
+      and:
+        - << pipeline.parameters.on_demand >>
+        - equal: ["dsm", << pipeline.parameters.project >>]
+    jobs:
+      - dsm-compile-and-run-tests-job:
+          allow_skip_job: true
+
+  deploy-dss-workflow:
+    jobs:
+      - deploy-dss-stored-jar-job:
+          filters:
+            branches:
+              only:
+                - test
+                - staging
+                - production
+
+  deploy-api-docs-workflow:
+    jobs:
+      - deploy-docs-job:
+          filters:
+            branches:
+              only:
+                - develop
+                - test
+                - staging
+                - production
+
+  deploy-and-build-dsm-workflow:
+    jobs:
+      - deploy-dsm-job:
+          filters:
+            branches:
+              only:
+                - DSMMavenRefactor-build-1
 
