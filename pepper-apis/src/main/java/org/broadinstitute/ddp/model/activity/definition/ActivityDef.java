@@ -1,5 +1,15 @@
 package org.broadinstitute.ddp.model.activity.definition;
 
+import java.lang.reflect.Type;
+import java.util.Collections;
+import java.util.Collection;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import javax.validation.Valid;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
@@ -12,12 +22,6 @@ import org.broadinstitute.ddp.model.activity.types.ActivityType;
 import org.broadinstitute.ddp.model.activity.types.FormType;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.broadinstitute.ddp.util.MiscUtil;
-
-import javax.validation.Valid;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
-import java.lang.reflect.Type;
-import java.util.*;
 
 public abstract class ActivityDef {
 
@@ -160,7 +164,6 @@ public abstract class ActivityDef {
         this.maxInstancesPerUser = maxInstancesPerUser;
         this.displayOrder = displayOrder;
         this.writeOnce = writeOnce;
-        this.translatedNames = translatedNames;
         this.translatedSecondNames = new ArrayList<>();
         this.translatedTitles = translatedTitles;
         this.translatedSubtitles = translatedSubtitles;
