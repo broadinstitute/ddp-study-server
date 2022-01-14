@@ -164,6 +164,7 @@ public abstract class ActivityDef {
         this.maxInstancesPerUser = maxInstancesPerUser;
         this.displayOrder = displayOrder;
         this.writeOnce = writeOnce;
+        this.translatedNames = translatedNames;
         this.translatedSecondNames = new ArrayList<>();
         this.translatedTitles = translatedTitles;
         this.translatedSubtitles = translatedSubtitles;
