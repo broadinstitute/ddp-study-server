@@ -20,7 +20,7 @@ workflows:
       << pipeline.parameters.on_demand >>
     jobs:
       - path-filtering/filter:
-          base-revision: develop
+          base-revision: DSMMavenRefactor
           #          config-path: .circleci/config.yml
           config-path: .circleci/main-config.yml
           mapping: |
