@@ -53,7 +53,8 @@
     "afro_hispanic_note": "(An Afro-Latino or Afro-Hispanic is a Latino or Hispanic with black African ancestry)",
     "indigenous_native_prompt": "Do you consider $ddp.isGovernedParticipant(\"your child\",\"yourself\") to be indigenous or Native American (such as Purepecha, Mixteco, Zapoteco, Nahua, Maya, Tzotzil, Taino, Arawak, Quiche, Aymara, Quechua, Kwichua, Mapuche, Guarani, or some other indigenous or Native American origin), or not?",
     "other_comments_prompt": "Tell us anything else you would like about $ddp.isGovernedParticipant(\"your child\",\"yourself\") or $ddp.isGovernedParticipant(\"their\",\"your\") cancer.",
-    "how_hear_prompt": "How did you hear about the project?"
+    "how_hear_prompt": "How did you hear about the project?",
+    "nested-race-hint-text": "Provide the name of the tribe in which you are enrolled or affiliated or your tribal descent."
   },
 
   "race": {
