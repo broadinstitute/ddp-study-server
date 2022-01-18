@@ -182,7 +182,7 @@
 
   "consent_important_points_about_study_title": "Below are some important points about texting in this research study: ",
   "consent_important_points_about_study_p1_l1": "Please do not text us any information about your health.  This is to protect your privacy.  If you need to tell us anything related to your health, please call us instead.",
-  "consent_important_points_about_study_p1_l2": "Should you opt to receive text messages to your personal mobile phone number, you will be responsible for all fees charged by your carrier’s service plan for text messaging. This research study and MGB/Partners Healthcare are not responsible for any increased charges, data usage against plan limits or changes to data fees from the research texts. Participants will not be responsible for text message fees sent to the provided study smart-phone. ",
+  "consent_important_points_about_study_p1_l2": "Should you opt to receive text messages to your personal mobile phone number, you will be responsible for all fees charged by your carrier’s service plan for text messaging. This research study and MGB/Partners Healthcare are not responsible for any increased charges, data usage against plan limits or changes to data fees from the research texts. ",
   "consent_important_points_about_study_p1_l3": "Text messages will only be read during regular business hours or during scheduled at-home procedures, to provide additional support to participants. Texts sent on nights or weekends will not be read until the next business day, unless to provide support or guidance to participants completed an at-home study procedure. ",
   "consent_important_points_about_study_p1_l4": "Text messaging should not be used in case of an emergency. If you experience a medical emergency, call 911 or go to the nearest hospital emergency department.",
   "consent_important_points_about_study_p1_l5": "You may decide to not send or receive text messages with staff associated with this research study at any time. You can do this in person or by sending the research number a text message that says “Stop Research Text.”",
@@ -195,15 +195,23 @@
   "consent_receive_text_messages_about_study_no_answer": "I do not consent to receiving any text messages related to this study to my personal mobile/cell phone number for text messages.",
   "consent_receive_text_messages_about_study_hint": "Please select one of the following options",
 
-  "consent_study_communication_via_email_title": "Study Communication via Unsecured Email",
-  "consent_study_communication_via_email_p1": "This study may communicate with you via email. The Partners standard is to send email securely. This requires you to initially set up and activate an account with a password. You can then use the password to access secure emails sent to you from Partners HealthCare. ",
-  "consent_study_communication_via_email_p2": "However, this study uses “unencrypted” email that is not secure and could result in the unauthorized use or disclosure of your information. If you want to receive communications by unencrypted email despite these risks, Partners HealthCare will not be held responsible. Your preference to receive unencrypted email will apply to emails sent from this research group/study only. ",
-  "consent_study_communication_via_email_p3_italic": "I have had the chance to ask questions about the use of unencrypted email with staff associated with this research study. I have been informed of the risks and other information covered above and consent to the use of unencrypted email communications associated with this research study.",
+  "consent_study_communication_via_email_unsecured_title": "Study Communication via Unsecured Email",
+  "consent_study_communication_via_email_unsecured_p1": "This study may communicate with you via email. The Partners standard is to send email securely. This requires you to initially set up and activate an account with a password. You can then use the password to access secure emails sent to you from Partners HealthCare. ",
+  "consent_study_communication_via_email_unsecured_p2": "However, this study uses “unencrypted” email that is not secure and could result in the unauthorized use or disclosure of your information. If you want to receive communications by unencrypted email despite these risks, Partners HealthCare will not be held responsible. Your preference to receive unencrypted email will apply to emails sent from this research group/study only. ",
+  "consent_study_communication_via_email_unsecured_p3_italic": "I have had the chance to ask questions about the use of unencrypted email with staff associated with this research study. I have been informed of the risks and other information covered above and consent to the use of unencrypted email communications associated with this research study.",
+
+  "consent_study_communication_via_email_title": "Study Communication via Mail",
+  "consent_study_communication_via_email_p1": "For you to participate in this study, our team will need to send materials to your preferred mailing address, including materials you will need to complete the study, study-themed gifts, and your compensation at the conclusion of the study. ",
 
   "consent_receive_unencrypted_email_communications_title": "Please select one of the following options",
   "consent_receive_unencrypted_email_communications_yes_answer": "I consent to receive unencrypted email communications.",
   "consent_receive_unencrypted_email_communications_no_answer": "I do not consent to receive unencrypted email communications.",
   "consent_receive_unencrypted_email_communications_hint": "Please select one of the following options",
+
+  "consent_receive_email_communications_title": "Please select one of the following options",
+  "consent_receive_email_communications_yes_answer": "I consent to receive mail shipped to my preferred address.",
+  "consent_receive_email_communications_no_answer": "I do not consent to receive mail shipped to my provided address.",
+  "consent_receive_email_communications_hint": "Please select one of the following options",
 
   "consent_risks_and_possible_discomforts_title": "What are the risks and possible discomforts from being in this research study?",
   "consent_risks_and_possible_discomforts_p1": "Risks are minor in this research study, and are limited to the following:",
@@ -232,7 +240,7 @@
   "consent_loss_of_confidentiality_p3": "There may be other risks that are not known at this time.",
 
   "consent_possible_benefits_question": "What are the possible benefits from being in this research study?",
-  "consent_possible_benefits_p1": "There are no benefits from being in this study.",
+  "consent_possible_benefits_p1": " You will not directly benefit from taking part in this research study. Others may benefit in the future from what we learn in this study.",
 
   "consent_medical_care_question": "Can you still get medical care within Partners if you don’t take part in this research study, or if you stop taking part? ",
   "consent_medical_care_p1": "Yes.  Your decision won’t change the medical care you get within Partners now or in the future.  There will be no penalty, and you won’t lose any benefits you receive now or have a right to receive. We will tell you if we learn new information that could make you change your mind about taking part in this research study.",
@@ -847,7 +855,8 @@
   "post_collection_attestation_2_question_title": "Select an option below to attest to your completed DLMO Collection 2:",
   "post_collection_attestation_2_question_text": "I completed my DLMO collection, and upon completion, the samples were placed in a freezer.",
   "post_collection_attestation_2_yes": "Yes",
-  "post_collection_attestation_2_no": "No"
+  "post_collection_attestation_2_no": "No",
 
-
+  "con_your_phone": "Please input your phone number here:",
+  "address_title": "Your Mailing Address"
 }
