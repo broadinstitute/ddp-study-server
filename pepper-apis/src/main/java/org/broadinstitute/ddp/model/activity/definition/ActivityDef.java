@@ -360,7 +360,7 @@ public abstract class ActivityDef {
         return canDeleteFirstInstance;
     }
 
-    public boolean isShowActivityStatus() {
+    public boolean showActivityStatus() {
         return showActivityStatus;
     }
 

@@ -160,7 +160,7 @@ public class ActivityDto {
         return canDeleteFirstInstance;
     }
 
-    public boolean isShowActivityStatus() {
+    public boolean showActivityStatus() {
         return showActivityStatus;
     }
 

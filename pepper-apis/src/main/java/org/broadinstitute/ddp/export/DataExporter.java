@@ -381,7 +381,7 @@ public class DataExporter {
             activityDefinitions.put("activityVersion", activity.getDefinition().getVersionTag());
             activityDefinitions.put("parentActivityCode", activity.getDefinition().getParentActivityCode());
             activityDefinitions.put("displayOrder", activity.getDefinition().getDisplayOrder());
-            activityDefinitions.put("showActivityStatus", activity.getDefinition().isShowActivityStatus());
+            activityDefinitions.put("showActivityStatus", activity.getDefinition().showActivityStatus());
             activityDefinitions.putAll(formatter.questionDefinitions());
 
             allActivityDefs.put(activity.getTag(), activityDefinitions);
