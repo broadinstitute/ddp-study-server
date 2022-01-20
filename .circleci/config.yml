@@ -22,7 +22,7 @@ workflows:
 
   ondemand-api-docs:
     when:
-      equal: ["api-docs", << pipeline.project-from-client >>]
+      equal: ["api-docs", << pipeline.parameters.project-from-client >>]
     jobs:
       - continuation/continue:
           configuration_path: .circleci/config.yml
