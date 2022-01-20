@@ -19,4 +19,4 @@ workflows:
           base-revision: develop
           config-path: .circleci/main-config.yml
           mapping: |
-            pepper-apis/docs/.* project api-docs
+            pepper-apis/docs/.* project "api-docs"
