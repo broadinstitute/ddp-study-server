@@ -43,6 +43,16 @@ public class QuestionCachedDao extends SQLObjectWrapper<QuestionDao> implements 
     }
 
     @Override
+    public JdbiActivityInstanceSelectQuestion getJdbiActivityInstanceSelectQuestion() {
+        return delegate.getJdbiActivityInstanceSelectQuestion();
+    }
+
+    @Override
+    public JdbiActivityInstanceSelectActivityCodes getJdbiActivityInstanceSelectActivityCodes() {
+        return delegate.getJdbiActivityInstanceSelectActivityCodes();
+    }
+
+    @Override
     public JdbiDateQuestion getJdbiDateQuestion() {
         return delegate.getJdbiDateQuestion();
     }
@@ -75,6 +85,16 @@ public class QuestionCachedDao extends SQLObjectWrapper<QuestionDao> implements 
     @Override
     public JdbiPicklistQuestion getJdbiPicklistQuestion() {
         return delegate.getJdbiPicklistQuestion();
+    }
+
+    @Override
+    public JdbiMatrixQuestion getJdbiMatrixQuestion() {
+        return delegate.getJdbiMatrixQuestion();
+    }
+
+    @Override
+    public JdbiMatrixGroup getJdbiMatrixGroup() {
+        return delegate.getJdbiMatrixGroup();
     }
 
     @Override
@@ -115,6 +135,11 @@ public class QuestionCachedDao extends SQLObjectWrapper<QuestionDao> implements 
     @Override
     public PicklistQuestionDao getPicklistQuestionDao() {
         return new PicklistQuestionCachedDao(getHandle());
+    }
+
+    @Override
+    public MatrixQuestionDao getMatrixQuestionDao() {
+        return new MatrixQuestionCachedDao(getHandle());
     }
 
     @Override

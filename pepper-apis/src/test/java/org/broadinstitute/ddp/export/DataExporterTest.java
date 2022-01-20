@@ -16,8 +16,8 @@ import java.io.StringWriter;
 import java.lang.reflect.Type;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -61,6 +61,10 @@ import org.broadinstitute.ddp.model.activity.definition.question.BoolQuestionDef
 import org.broadinstitute.ddp.model.activity.definition.question.CompositeQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.DateQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.FileQuestionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.MatrixGroupDef;
+import org.broadinstitute.ddp.model.activity.definition.question.MatrixOptionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.MatrixQuestionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.MatrixRowDef;
 import org.broadinstitute.ddp.model.activity.definition.question.NumericQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistOptionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistQuestionDef;
@@ -81,6 +85,7 @@ import org.broadinstitute.ddp.model.activity.types.DateFieldType;
 import org.broadinstitute.ddp.model.activity.types.DateRenderMode;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.broadinstitute.ddp.model.activity.types.InstitutionType;
+import org.broadinstitute.ddp.model.activity.types.MatrixSelectMode;
 import org.broadinstitute.ddp.model.activity.types.NumericType;
 import org.broadinstitute.ddp.model.activity.types.PicklistRenderMode;
 import org.broadinstitute.ddp.model.activity.types.PicklistSelectMode;
@@ -154,6 +159,7 @@ public class DataExporterTest extends TxnAwareBaseTest {
         mockGovernancePolicy = mock(GovernancePolicy.class);
         Mockito.when(mockGovernancePolicy.getApplicableAgeOfMajorityRule(Mockito.any(Handle.class),
                 Mockito.any(PexInterpreter.class),
+                Mockito.anyString(),
                 Mockito.anyString())).thenReturn(Optional.of(ageOfMajorityRule));
 
         Mockito.when(ageOfMajorityRule.getDateOfMajority(Mockito.any(LocalDate.class))).thenReturn(testDateOfMajority);
@@ -335,7 +341,8 @@ public class DataExporterTest extends TxnAwareBaseTest {
                 mockMedicalRecordService,
                 mockGovernancePolicy,
                 testData.getStudyId(),
-                Collections.singletonList(participant)));
+                Collections.singletonList(participant),
+                Collections.singletonMap(testData.getUserGuid(), Collections.singletonList(testData.getUserGuid()))));
 
         assertEquals(testBirthdate.asLocalDate().orElse(null), participant.getBirthDate());
         assertEquals(testDateOfMajority, participant.getDateOfMajority());
@@ -344,6 +351,20 @@ public class DataExporterTest extends TxnAwareBaseTest {
     @Test
     public void testExtractActivityDefinitions() {
         TransactionWrapper.useTxn(handle -> {
+            MatrixQuestionDef matrixDef = MatrixQuestionDef.builder().setStableId("TEST_MAQ")
+                    .setSelectMode(MatrixSelectMode.MULTIPLE)
+                    .setPrompt(Template.text("matrix prompt"))
+                    .addOptions(List.of(
+                            new MatrixOptionDef("OPT_1", Template.text("option 1"), "DEFAULT"),
+                            new MatrixOptionDef("OPT_2", Template.text("option 2"), "GROUP")))
+                    .addRows(List.of(
+                            new MatrixRowDef("ROW_1", Template.text("row 1")),
+                            new MatrixRowDef("ROW_2", Template.text("row 2"))))
+                    .addGroups(List.of(
+                            new MatrixGroupDef("DEFAULT", null),
+                            new MatrixGroupDef("GROUP", Template.text("group 1"))))
+                    .build();
+
             PicklistQuestionDef picklistDef = PicklistQuestionDef.builder().setStableId("TEST_PLQ")
                     .setSelectMode(PicklistSelectMode.MULTIPLE)
                     .setRenderMode(PicklistRenderMode.LIST)
@@ -398,7 +419,7 @@ public class DataExporterTest extends TxnAwareBaseTest {
             FormActivityDef def = FormActivityDef.generalFormBuilder(activityCode, "v1", testData.getStudyGuid())
                     .addName(new Translation("en", "test activity"))
                     .addSection(new FormSectionDef(null, TestUtil.wrapQuestions(
-                            textDef, picklistDef, dateDef, fileDef, numericDef, compQ)))
+                            textDef, picklistDef, dateDef, fileDef, numericDef, compQ, matrixDef)))
                     .build();
 
             ActivityVersionDto versioDto = handle.attach(ActivityDao.class)
@@ -452,7 +473,15 @@ public class DataExporterTest extends TxnAwareBaseTest {
             Assert.assertTrue(esDoc.contains("{\"stableId\":\"TEST_COMPOSITEQ\",\"allowMultiple\":true,\"questionType\":\"COMPOSITE\","
                     + "\"questionText\":\"Comp1\",\"childQuestions\":[{\"stableId\":\"TEST_CHILD_TEXTQ\",\"questionType\":\"TEXT\","
                     + "\"questionText\":\"text prompt\"},{\"stableId\":\"TEST_CHILD_DATEQ\",\"questionType\":\"DATE\","
-                    + "\"questionText\":\"date prompt\"}]}]"));
+                    + "\"questionText\":\"date prompt\"}]},"));
+
+            //check Picklist Question
+            Assert.assertTrue(esDoc.contains("{\"stableId\":\"TEST_MAQ\",\"questionType\":\"MATRIX\",\"questionText\":\"matrix prompt\","
+                    + "\"selectMode\":\"MULTIPLE\",\"groups\":[{\"groupStableId\":\"DEFAULT\"},{\"groupStableId\":\"GROUP\","
+                    + "\"groupText\":\"group 1\"}],"
+                    + "\"options\":[{\"optionStableId\":\"OPT_1\",\"optionText\":\"option 1\"},{\"optionStableId\":\"OPT_2\","
+                    + "\"optionText\":\"option 2\"}],\"rows\":[{\"rowStableId\":\"ROW_1\",\"rowText\":\"row 1\"},"
+                    + "{\"rowStableId\":\"ROW_2\",\"rowText\":\"row 2\"}]}]"));
 
             handle.rollback();
         });

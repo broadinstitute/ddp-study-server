@@ -311,6 +311,7 @@ Answer:
   discriminator:
     propertyName: type
     mapping:
+      ACTIVITY_INSTANCE_SELECT: '#/Answer.ActivityInstance'
       AGREEMENT: '#/Answer.Boolean'
       BOOLEAN: '#/Answer.Boolean'
       COMPOSITE: '#/Answer.Composite'
@@ -318,6 +319,7 @@ Answer:
       FILE: '#/Answer.File'
       NUMERIC: '#/Answer.Numeric'
       PICKLIST: '#/Answer.Picklist'
+      MATRIX: '#/Answer.Matrix'
       TEXT: '#/Answer.String'
   required:
     - answerGuid
@@ -418,6 +420,19 @@ Answer.Picklist:
           type: array
           items:
             $ref: '#/SelectedOption'
+Answer.ActivityInstance:
+  allOf:
+    - $ref: '#/Answer'
+    - type: object
+      required:
+        - value
+      properties:
+        value:
+          type: string
+          format: guid
+          nullable: true
+          description: |
+            GUID of selected activity instance.
 SelectedOption:
   type: object
   required:
@@ -430,6 +445,29 @@ SelectedOption:
     detail:
       type: string
       nullable: true
+Answer.Matrix:
+  allOf:
+    - $ref: '#/Answer'
+    - type: object
+      required:
+        - value
+      properties:
+        value:
+          type: array
+          items:
+            $ref: '#/SelectedCell'
+SelectedCell:
+  type: object
+  required:
+    - rowStableId
+    - optionStableId
+  properties:
+    rowStableId:
+      type: string
+      format: guid
+    optionStableId:
+      type: string
+      format: guid
 DateValue:
   type: object
   description: an object which represents a day, month, and year in UTC.
@@ -468,6 +506,7 @@ AnswerSubmission:
   discriminator:
     propertyName: type
     mapping:
+      ACTIVITY_INSTANCE_SELECT: '#/AnswerSubmission.ActivityInstance'
       AGREEMENT: '#/AnswerSubmission.Boolean'
       BOOLEAN: '#/AnswerSubmission.Boolean'
       COMPOSITE: '#/AnswerSubmission.Composite'
@@ -475,6 +514,7 @@ AnswerSubmission:
       FILE: '#/AnswerSubmission.File'
       NUMERIC: '#/AnswerSubmission.Numeric.Integer'
       PICKLIST: '#/AnswerSubmission.Picklist'
+      MATRIX: '#/AnswerSubmission.Matrix'
       TEXT: '#/AnswerSubmission.String'
   required:
     - stableId
@@ -558,6 +598,17 @@ AnswerSubmission.Picklist:
           type: array
           items:
             $ref: '#/SelectedOption'
+AnswerSubmission.Matrix:
+  allOf:
+    - $ref: '#/AnswerSubmission'
+    - type: object
+      required:
+        - value
+      properties:
+        value:
+          type: array
+          items:
+            $ref: '#/SelectedCell'
 AnswerSubmission.String:
   allOf:
     - $ref: '#/AnswerSubmission'
@@ -567,6 +618,21 @@ AnswerSubmission.String:
       properties:
         value:
           type: string
+AnswerSubmission.ActivityInstance:
+  allOf:
+    - $ref: '#/AnswerSubmission'
+    - type: object
+      required:
+        - value
+      properties:
+        value:
+          type: string
+          format: guid
+          nullable: true
+          description: |
+            GUID of instance of activity available for selection. If this
+            answer is currently associated with an instance, then submitting a `null`
+            value will unassociate it.
 #####
 #
 # Blocks
@@ -587,6 +653,7 @@ Block:
     - blockType
     - blockGuid
     - shown
+    - enabled
   properties:
     blockType:
       type: string
@@ -594,6 +661,8 @@ Block:
       type: string
       format: guid
     shown:
+      type: boolean
+    enabled:
       type: boolean
 Block.Component:
   allOf:
@@ -755,6 +824,22 @@ Block.Content:
           type: string
         body:
           type: string
+Block.Visibility:
+  type: object
+  required:
+    - blockGuid
+    - shown
+    - enabled
+  properties:
+    blockGuid:
+      type: string
+      description: identifier for the block
+    shown:
+      type: boolean
+      description: whether block is shown or not
+    enabled:
+      type: boolean
+      description: whether block is enabled or not (used in cases when block inputs should be disabled but still visible)
 #####
 #
 # Components
@@ -1290,6 +1375,39 @@ PicklistOption:
       type: string
     exclusive:
       type: boolean
+MatrixOption:
+  type: object
+  required:
+    - stableId
+    - optionLabel
+    - exclusive
+    - groupId
+  properties:
+    stableId:
+      type: string
+    groupId:
+      type: string
+    optionLabel:
+      type: string
+    tooltip:
+      type: string
+      description: tooltip for the option, in plain text
+    exclusive:
+      type: boolean
+      description: if `exclusive` option selected, other options in the group will be cleared (applicable for MULTIPLE select mode)
+MatrixRowQuestion:
+  type: object
+  required:
+    - stableId
+    - questionLabel
+  properties:
+    stableId:
+      type: string
+    questionLabel:
+      type: string
+    tooltip:
+      type: string
+      description: tooltip for the option, in plain text
 PrequalifierModel:
   type: object
   required:
@@ -1364,6 +1482,7 @@ Question:
   discriminator:
     propertyName: questionType
     mapping:
+      ACTIVITY_INSTANCE_SELECT: '#/Question.ActivityInstanceSelect'
       AGREEMENT: '#/Question.Agreement'
       BOOLEAN: '#/Question.Boolean'
       COMPOSITE: '#/Question.Composite'
@@ -1371,6 +1490,7 @@ Question:
       FILE: '#/Question.File'
       NUMERIC: '#/Question.Numeric'
       PICKLIST: '#/Question.Picklist'
+      MATRIX: '#/Question.Matrix'
       TEXT: '#/Question.Text'
   required:
   - questionType
@@ -1417,6 +1537,29 @@ Question:
       type: array
       items:
         $ref: '#/ValidationFailure'
+Question.ActivityInstanceSelect:
+  allOf:
+    - $ref: '#/Question'
+    - type: object
+      required:
+        - answers
+        - activityCodes
+      properties:
+        questionType:
+          type: string
+          default: ACTIVITY_INSTANCE_SELECT
+          enum:
+            - ACTIVITY_INSTANCE_SELECT
+        activityCodes:
+          description: 'List of activity codes for instance lookup'
+          type: array
+          items:
+            type: string
+            format: guid
+        answers:
+          type: array
+          items:
+            $ref: '#/Answer.ActivityInstance'
 Question.Agreement:
   allOf:
   - $ref: '#/Question'
@@ -1647,6 +1790,55 @@ Question.Picklist:
         type: array
         items:
           $ref: '#/Answer.Picklist'
+Question.Matrix:
+  allOf:
+    - $ref: '#/Question'
+    - type: object
+      required:
+        - selectMode
+        - options
+        - questions
+        - answers
+      properties:
+        questionType:
+          type: string
+          default: MATRIX
+          enum:
+            - MATRIX
+        selectMode:
+          type: string
+          description: |
+            * `MULTIPLE` - Allows user to select as many options as needed (checkbox)
+            * `SINGLE` - Only one selection is allowed inside group (radio button)
+          enum:
+            - MULTIPLE
+            - SINGLE
+        groups:
+          type: array
+          description: A list of groups used in the `matrixOptions` values. If there are no options which explicity request grouping, this will be an empty array.
+          minItems: 0
+          items:
+            type: object
+            required:
+              - identifier
+              - name
+            properties:
+              identifier:
+                type: string
+              name:
+                type: string
+        options:
+          type: array
+          items:
+            $ref: '#/MatrixOption'
+        questions:
+          type: array
+          items:
+            $ref: '#/MatrixRowQuestion'
+        answers:
+          type: array
+          items:
+            $ref: '#/Answer.Matrix'
 Question.Text:
   allOf:
   - $ref: '#/Question'
@@ -2566,3 +2758,18 @@ ParticipantsLookupProxyItem:
       description: The proxy's email
       type: string
       format: email
+Suggestion.ActivityInstance:
+  type: object
+  required:
+    - guid
+    - name
+  properties:
+    guid:
+      description: Activity Instance GUID
+      type: string
+      format: guid
+      example: TY51BW3M6S
+    name:
+      description: Activity Instance Name, rendered, as could be seen on the dashboard
+      type: string
+      example: "Medical Record Release Form #2"

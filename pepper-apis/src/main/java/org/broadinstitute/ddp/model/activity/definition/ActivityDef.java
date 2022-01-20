@@ -1,12 +1,13 @@
 package org.broadinstitute.ddp.model.activity.definition;
 
 import java.lang.reflect.Type;
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Collection;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 
 import com.google.gson.JsonDeserializationContext;
@@ -19,6 +20,7 @@ import org.broadinstitute.ddp.model.activity.definition.i18n.Translation;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.activity.types.ActivityType;
 import org.broadinstitute.ddp.model.activity.types.FormType;
+import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.broadinstitute.ddp.util.MiscUtil;
 
 public abstract class ActivityDef {
@@ -78,29 +80,56 @@ public abstract class ActivityDef {
     @SerializedName("canDeleteFirstInstance")
     protected Boolean canDeleteFirstInstance;
 
-    @NotEmpty
+    @SerializedName("showActivityStatus")
+    protected boolean showActivityStatus;
+
     @SerializedName("translatedNames")
     protected List<@Valid @NotNull Translation> translatedNames;
 
-    @NotNull
     @SerializedName("translatedSecondNames")
     protected List<@Valid @NotNull Translation> translatedSecondNames;
 
-    @NotNull
     @SerializedName("translatedTitles")
     protected List<@Valid @NotNull Translation> translatedTitles;
 
-    @NotNull
     @SerializedName("translatedSubtitles")
     protected List<@Valid @NotNull Translation> translatedSubtitles;
 
-    @NotNull
     @SerializedName("translatedDescriptions")
     protected List<@Valid @NotNull Translation> translatedDescriptions;
 
-    @NotNull
     @SerializedName("translatedSummaries")
     protected List<@Valid @NotNull SummaryTranslation> translatedSummaries;
+
+    /**
+     * These properties used to serialize the activity JSON (conf document).
+     * It adds template components in order to be possible to define
+     * in a conf file standard templates (instead of non-standard lists of translations).
+     * After a conf file serialization the templates are rendered and copied to
+     * the translations properties defined in {@link ActivityDef}.<br>
+     * The following rules of translations copying:
+     * <pre>
+     *     nameTemplate -> translatedNames
+     *     secondNameTemplate -> translatedSecondNames
+     *     titleTemplate -> translatedTitles
+     *     subtitleTemplate -> translatedSubtitles
+     *     descriptionTemplate ->translatedDescriptions
+     *     summaryTemplates -> translatedSummaries
+     * </pre>
+     */
+    @Valid   @SerializedName("nameTemplate")
+    protected Template nameTemplate;
+    @Valid   @SerializedName("secondNameTemplate")
+    protected Template secondNameTemplate;
+    @Valid   @SerializedName("titleTemplate")
+    protected Template titleTemplate;
+    @Valid   @SerializedName("subtitleTemplate")
+    protected Template subtitleTemplate;
+    @Valid   @SerializedName("descriptionTemplate")
+    protected Template descriptionTemplate;
+    @Valid   @SerializedName("summaryTemplates")
+    protected Map<InstanceStatusType, @Valid @NotNull Template> summaryTemplates;
+
 
     @Valid
     @SerializedName("readonlyHintTemplate")
@@ -138,11 +167,7 @@ public abstract class ActivityDef {
         this.maxInstancesPerUser = maxInstancesPerUser;
         this.displayOrder = displayOrder;
         this.writeOnce = writeOnce;
-        if (translatedNames != null && !translatedNames.isEmpty()) {
-            this.translatedNames = translatedNames;
-        } else {
-            throw new IllegalArgumentException("Need at least one name translation");
-        }
+        this.translatedNames = translatedNames;
         this.translatedSecondNames = new ArrayList<>();
         this.translatedTitles = translatedTitles;
         this.translatedSubtitles = translatedSubtitles;
@@ -207,27 +232,75 @@ public abstract class ActivityDef {
     }
 
     public List<Translation> getTranslatedNames() {
-        return translatedNames;
+        return translatedNames != null ? translatedNames : Collections.emptyList();
+    }
+
+    public void setTranslatedNames(List<Translation> translatedNames) {
+        this.translatedNames = translatedNames;
     }
 
     public List<Translation> getTranslatedSecondNames() {
-        return translatedSecondNames;
+        return translatedSecondNames != null ? translatedSecondNames : Collections.emptyList();
+    }
+
+    public void setTranslatedSecondNames(List<Translation> translatedSecondNames) {
+        this.translatedSecondNames = translatedSecondNames;
     }
 
     public List<Translation> getTranslatedTitles() {
-        return translatedTitles;
+        return translatedTitles != null ? translatedTitles : Collections.emptyList();
+    }
+
+    public void setTranslatedTitles(List<Translation> translatedTitles) {
+        this.translatedTitles = translatedTitles;
     }
 
     public List<Translation> getTranslatedSubtitles() {
-        return translatedSubtitles;
+        return translatedSubtitles != null ? translatedSubtitles : Collections.emptyList();
+    }
+
+    public void setTranslatedSubtitles(List<Translation> translatedSubtitles) {
+        this.translatedSubtitles = translatedSubtitles;
     }
 
     public List<Translation> getTranslatedDescriptions() {
-        return translatedDescriptions;
+        return translatedDescriptions != null ? translatedDescriptions : Collections.emptyList();
+    }
+
+    public void setTranslatedDescriptions(List<Translation> translatedDescriptions) {
+        this.translatedDescriptions = translatedDescriptions;
     }
 
     public List<SummaryTranslation> getTranslatedSummaries() {
-        return translatedSummaries;
+        return translatedSummaries != null ? translatedSummaries : Collections.emptyList();
+    }
+
+    public Template getNameTemplate() {
+        return nameTemplate;
+    }
+
+    public Template getSecondNameTemplate() {
+        return secondNameTemplate;
+    }
+
+    public Template getTitleTemplate() {
+        return titleTemplate;
+    }
+
+    public Template getSubtitleTemplate() {
+        return subtitleTemplate;
+    }
+
+    public Template getDescriptionTemplate() {
+        return descriptionTemplate;
+    }
+
+    public Map<InstanceStatusType, Template> getSummaryTemplates() {
+        return summaryTemplates;
+    }
+
+    public void setTranslatedSummaries(List<SummaryTranslation> translatedSummaries) {
+        this.translatedSummaries = translatedSummaries;
     }
 
     public Template getReadonlyHintTemplate() {
@@ -287,6 +360,10 @@ public abstract class ActivityDef {
         return canDeleteFirstInstance;
     }
 
+    public boolean showActivityStatus() {
+        return showActivityStatus;
+    }
+
     /**
      * Builder that helps construct common elements of an activity definition.
      *
@@ -320,6 +397,7 @@ public abstract class ActivityDef {
         protected boolean createOnParentCreation;
         protected boolean canDeleteInstances;
         protected Boolean canDeleteFirstInstance;
+        protected boolean showActivityStatus;
 
         /**
          * Returns the subclass builder instance to enable method chaining.
@@ -346,6 +424,7 @@ public abstract class ActivityDef {
             activity.createOnParentCreation = createOnParentCreation;
             activity.canDeleteInstances = canDeleteInstances;
             activity.canDeleteFirstInstance = canDeleteFirstInstance;
+            activity.showActivityStatus = showActivityStatus;
         }
 
         public T setParentActivityCode(String parentActivityCode) {
@@ -535,6 +614,11 @@ public abstract class ActivityDef {
 
         public T setCanDeleteFirstInstance(Boolean canDeleteFirstInstance) {
             this.canDeleteFirstInstance = canDeleteFirstInstance;
+            return self();
+        }
+
+        public T setShowActivityStatus(boolean showActivityStatus) {
+            this.showActivityStatus = showActivityStatus;
             return self();
         }
     }

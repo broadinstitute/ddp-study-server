@@ -1,7 +1,7 @@
 package org.broadinstitute.ddp.export;
 
-import static org.broadinstitute.ddp.export.ExportUtil.getSnapshottedMailAddress;
 import static org.broadinstitute.ddp.export.ExportUtil.extractParticipantsFromResultSet;
+import static org.broadinstitute.ddp.export.ExportUtil.getSnapshottedMailAddress;
 import static org.broadinstitute.ddp.model.activity.types.ComponentType.MAILING_ADDRESS;
 
 import java.io.BufferedWriter;
@@ -37,6 +37,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.constants.ConfigFile;
+import org.broadinstitute.ddp.content.I18nTemplateRenderFacade;
 import org.broadinstitute.ddp.db.ActivityDefStore;
 import org.broadinstitute.ddp.db.DaoException;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
@@ -72,6 +73,7 @@ import org.broadinstitute.ddp.export.json.structured.ParticipantProfile;
 import org.broadinstitute.ddp.export.json.structured.ParticipantRecord;
 import org.broadinstitute.ddp.export.json.structured.PdfConfigRecord;
 import org.broadinstitute.ddp.export.json.structured.PicklistQuestionRecord;
+import org.broadinstitute.ddp.export.json.structured.MatrixQuestionRecord;
 import org.broadinstitute.ddp.export.json.structured.QuestionRecord;
 import org.broadinstitute.ddp.export.json.structured.SimpleQuestionRecord;
 import org.broadinstitute.ddp.export.json.structured.UserRecord;
@@ -88,7 +90,6 @@ import org.broadinstitute.ddp.model.activity.definition.i18n.Translation;
 import org.broadinstitute.ddp.model.activity.definition.question.CompositeQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
-import org.broadinstitute.ddp.model.activity.definition.template.TemplateUtil;
 import org.broadinstitute.ddp.model.activity.definition.validation.RuleDef;
 import org.broadinstitute.ddp.model.activity.instance.ActivityResponse;
 import org.broadinstitute.ddp.model.activity.instance.FormResponse;
@@ -100,6 +101,8 @@ import org.broadinstitute.ddp.model.activity.instance.answer.FileAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.FileInfo;
 import org.broadinstitute.ddp.model.activity.instance.answer.PicklistAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.SelectedPicklistOption;
+import org.broadinstitute.ddp.model.activity.instance.answer.MatrixAnswer;
+import org.broadinstitute.ddp.model.activity.instance.answer.SelectedMatrixCell;
 import org.broadinstitute.ddp.model.activity.types.ActivityType;
 import org.broadinstitute.ddp.model.activity.types.BlockType;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
@@ -373,9 +376,12 @@ public class DataExporter {
             Map<String, Object> activityDefinitions = new HashMap<>();
             activityDefinitions.put("studyGuid", studyDto.getGuid());
             activityDefinitions.put("activityCode", activity.getDefinition().getActivityCode());
-            activityDefinitions.put("activityName", TemplateUtil.renderWithDefaultValues(activityName, null, "en"));
+            activityDefinitions.put("activityName", I18nTemplateRenderFacade.INSTANCE.renderTemplateWithDefaultValues(
+                    activityName, null, "en"));
             activityDefinitions.put("activityVersion", activity.getDefinition().getVersionTag());
             activityDefinitions.put("parentActivityCode", activity.getDefinition().getParentActivityCode());
+            activityDefinitions.put("displayOrder", activity.getDefinition().getDisplayOrder());
+            activityDefinitions.put("showActivityStatus", activity.getDefinition().showActivityStatus());
             activityDefinitions.putAll(formatter.questionDefinitions());
 
             allActivityDefs.put(activity.getTag(), activityDefinitions);
@@ -590,7 +596,7 @@ public class DataExporter {
         GovernancePolicy governancePolicy = handle.attach(StudyGovernanceDao.class)
                 .findPolicyByStudyId(studyDto.getId()).orElse(null);
 
-        enrichWithDSMEventDates(handle, medicalRecordService, governancePolicy, studyDto.getId(), participants);
+        enrichWithDSMEventDates(handle, medicalRecordService, governancePolicy, studyDto.getId(), participants, participantProxyGuids);
         enrichWithFileRecords(handle, fileService, studyDto.getId(), participants);
 
         StudyExtract studyExtract = new StudyExtract(activities,
@@ -624,7 +630,8 @@ public class DataExporter {
                                  MedicalRecordService medicalRecordService,
                                  GovernancePolicy governancePolicy,
                                  long studyId,
-                                 List<Participant> dataset) {
+                                 List<Participant> dataset,
+                                 Map<String, List<String>> participantProxyGuids) {
 
         PexInterpreter pexInterpreter = new TreeWalkInterpreter();
 
@@ -641,10 +648,15 @@ public class DataExporter {
                     .orElse(null);
 
             LocalDate dateOfMajority = null;
+            String participantGuid = participant.getUser().getGuid();
+            String operatorGuid = (participantProxyGuids.containsKey(participantGuid))
+                    ? participantProxyGuids.get(participantGuid).stream().findFirst().get()
+                    : participantGuid;
             if (governancePolicy != null) {
                 AgeOfMajorityRule aomRule = governancePolicy.getApplicableAgeOfMajorityRule(handle,
                         pexInterpreter,
-                        participant.getUser().getGuid())
+                        participantGuid,
+                        operatorGuid)
                         .orElse(null);
 
                 if (birthDate != null && aomRule != null) {
@@ -1030,6 +1042,9 @@ public class DataExporter {
         } else if (answer.getQuestionType() == QuestionType.PICKLIST) {
             List<SelectedPicklistOption> selected = ((PicklistAnswer) answer).getValue();
             return new PicklistQuestionRecord(question.getStableId(), selected);
+        } else if (answer.getQuestionType() == QuestionType.MATRIX) {
+            List<SelectedMatrixCell> selected = ((MatrixAnswer) answer).getValue();
+            return new MatrixQuestionRecord(question.getStableId(), selected);
         } else if (answer.getQuestionType() == QuestionType.COMPOSITE) {
             List<AnswerRow> rows = ((CompositeAnswer) answer).getValue();
             return new CompositeQuestionRecord(question.getStableId(), rows);

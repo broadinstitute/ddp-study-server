@@ -91,6 +91,7 @@ import org.broadinstitute.ddp.route.GetActivityInstanceRoute;
 import org.broadinstitute.ddp.route.GetActivityInstanceStatusTypeListRoute;
 import org.broadinstitute.ddp.route.GetActivityInstanceSummaryRoute;
 import org.broadinstitute.ddp.route.GetCancerSuggestionsRoute;
+import org.broadinstitute.ddp.route.GetActivityInstanceListForActivityInstanceSelectQuestionRoute;
 import org.broadinstitute.ddp.route.GetConsentSummariesRoute;
 import org.broadinstitute.ddp.route.GetConsentSummaryRoute;
 import org.broadinstitute.ddp.route.GetCountryAddressInfoRoute;
@@ -169,7 +170,7 @@ import org.broadinstitute.ddp.service.PdfBucketService;
 import org.broadinstitute.ddp.service.PdfGenerationService;
 import org.broadinstitute.ddp.service.PdfService;
 import org.broadinstitute.ddp.service.SendGridEventService;
-import org.broadinstitute.ddp.service.UserService;
+import org.broadinstitute.ddp.service.UserDeleteService;
 import org.broadinstitute.ddp.service.WorkflowService;
 import org.broadinstitute.ddp.transformers.NullableJsonTransformer;
 import org.broadinstitute.ddp.transformers.SimpleJsonTransformer;
@@ -433,7 +434,7 @@ public class DataDonationPlatform {
         post(API.USER_PROFILE, new AddProfileRoute(), responseSerializer);
         patch(API.USER_PROFILE, new PatchProfileRoute(), responseSerializer);
 
-        delete(API.USER_SPECIFIC, new DeleteUserRoute(new UserService(esClient)), responseSerializer);
+        delete(API.USER_SPECIFIC, new DeleteUserRoute(new UserDeleteService(esClient)), responseSerializer);
 
         // User mailing address routes
         AddressService addressService = new AddressService(cfg.getString(ConfigFile.EASY_POST_API_KEY),
@@ -557,6 +558,9 @@ public class DataDonationPlatform {
         get(API.DSM_DRUG_SUGGESTION, new GetDsmDrugSuggestionsRoute(DrugStore.getInstance()), responseSerializer);
 
         get(API.CANCER_SUGGESTION, new GetCancerSuggestionsRoute(CancerStore.getInstance()), responseSerializer);
+
+        get(API.ACTIVITY_INSTANCE_SELECT_SUGGESTION,
+                new GetActivityInstanceListForActivityInstanceSelectQuestionRoute(actInstService), responseSerializer);
 
         get(API.STUDY_STATISTICS, new GetStudyStatisticsRoute(i18nContentRenderer), responseSerializer);
 

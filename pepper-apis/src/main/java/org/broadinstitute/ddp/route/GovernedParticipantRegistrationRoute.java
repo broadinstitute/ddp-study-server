@@ -79,7 +79,7 @@ public class GovernedParticipantRegistrationRoute extends ValidatedJsonInputRout
 
             GovernancePolicy policy = handle.attach(StudyGovernanceDao.class).findPolicyByStudyGuid(studyGuid).orElse(null);
             if (policy != null && !policy.getAgeOfMajorityRules().isEmpty()) {
-                handle.attach(StudyGovernanceDao.class).addAgeUpCandidate(policy.getStudyId(), governedUser.getId());
+                handle.attach(StudyGovernanceDao.class).addAgeUpCandidate(policy.getStudyId(), governedUser.getId(), operatorUser.getId());
                 LOG.info("Added governed user {} as age-up candidate in study {}", governedUser.getGuid(), policy.getStudyGuid());
             }
 

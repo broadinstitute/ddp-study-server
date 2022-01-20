@@ -24,7 +24,7 @@ public interface JdbiActivityVersion extends SqlObject {
             + " where av.study_activity_id = :activityId"
             + " order by rev.start_date asc")
     @RegisterRowMapper(ActivityVersionDto.ActivityVersionDtoMapper.class)
-    List<ActivityVersionDto> findAllVersionsInAscendingOrder(long activityId);
+    List<ActivityVersionDto> findAllVersionsInAscendingOrder(@Bind("activityId") long activityId);
 
     @SqlQuery("select av.*, rev.start_date, rev.end_date"
             + " from activity_version as av"

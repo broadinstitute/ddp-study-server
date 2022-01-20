@@ -11,6 +11,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -37,9 +38,15 @@ import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.json.ActivityInstanceCreationPayload;
 import org.broadinstitute.ddp.json.ActivityInstanceCreationResponse;
+import org.broadinstitute.ddp.json.form.BlockVisibility;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
+import org.broadinstitute.ddp.model.activity.definition.FormSectionDef;
+import org.broadinstitute.ddp.model.activity.definition.QuestionBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.i18n.Translation;
+import org.broadinstitute.ddp.model.activity.definition.question.TextQuestionDef;
+import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
+import org.broadinstitute.ddp.model.activity.types.TextInputType;
 import org.broadinstitute.ddp.util.GsonUtil;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
 import org.broadinstitute.ddp.util.TestFormActivity;
@@ -76,9 +83,14 @@ public class CreateActivityInstanceRouteTest extends IntegrationTestSuite.TestCa
                     .addName(new Translation("en", "nested activity"))
                     .setParentActivityCode(activityCode)
                     .build();
+
+            QuestionBlockDef questionBlockDef = new QuestionBlockDef(
+                    TextQuestionDef.builder(TextInputType.TEXT, "sid-text", Template.text("")).build());
+            questionBlockDef.setShownExpr("true");
             parentActivity = FormActivityDef.generalFormBuilder(activityCode, "v1", testData.getStudyGuid())
                     .addName(new Translation("en", "parent activity"))
                     .setMaxInstancesPerUser(1)
+                    .addSection(new FormSectionDef(null, Arrays.asList(questionBlockDef)))
                     .setHideInstances(true)
                     .build();
             handle.attach(ActivityDao.class).insertActivity(
@@ -286,15 +298,15 @@ public class CreateActivityInstanceRouteTest extends IntegrationTestSuite.TestCa
     }
 
     @Test
-    public void testCreateChildActivity_success() {
+    public void testCreateChildActivityAndParentInstanceBlockVisibility_success() {
         String parentInstanceGuid = makeCreationRequest(parentActivity.getActivityCode())
                 .statusCode(200).and().extract().path("instanceGuid");
         parentInstancesToDelete.add(parentInstanceGuid);
 
-        String instanceGuid = makeChildCreationRequest(nestedActivity.getActivityCode(), parentInstanceGuid)
-                .statusCode(200).contentType(ContentType.JSON)
-                .and().extract().path("instanceGuid");
+        ValidatableResponse response = makeChildCreationRequest(nestedActivity.getActivityCode(), parentInstanceGuid)
+                .statusCode(200).contentType(ContentType.JSON);
 
+        String instanceGuid = response.extract().path("instanceGuid");
         assertTrue(StringUtils.isNotBlank(instanceGuid));
         activityInstancesToDelete.add(instanceGuid);
 
@@ -304,6 +316,10 @@ public class CreateActivityInstanceRouteTest extends IntegrationTestSuite.TestCa
                 .orElse(null));
         assertNotNull(instance);
         assertEquals(parentInstanceGuid, instance.getParentInstanceGuid());
+
+        List<BlockVisibility> blockVisibility = response.extract().path("blockVisibility");
+        assertNotNull(blockVisibility);
+        assertEquals(1, blockVisibility.size());
     }
 
     @Test

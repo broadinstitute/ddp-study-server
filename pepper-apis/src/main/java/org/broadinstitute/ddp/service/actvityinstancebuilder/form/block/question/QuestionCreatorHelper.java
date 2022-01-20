@@ -13,7 +13,9 @@ import org.broadinstitute.ddp.model.activity.definition.question.FileQuestionDef
 import org.broadinstitute.ddp.model.activity.definition.question.NumericQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistGroupDef;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistQuestionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.MatrixQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.TextQuestionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.ActivityInstanceSelectQuestionDef;
 import org.broadinstitute.ddp.model.activity.instance.question.AgreementQuestion;
 import org.broadinstitute.ddp.model.activity.instance.question.BoolQuestion;
 import org.broadinstitute.ddp.model.activity.instance.question.CompositeQuestion;
@@ -24,7 +26,12 @@ import org.broadinstitute.ddp.model.activity.instance.question.NumericQuestion;
 import org.broadinstitute.ddp.model.activity.instance.question.PicklistGroup;
 import org.broadinstitute.ddp.model.activity.instance.question.PicklistOption;
 import org.broadinstitute.ddp.model.activity.instance.question.PicklistQuestion;
+import org.broadinstitute.ddp.model.activity.instance.question.MatrixGroup;
+import org.broadinstitute.ddp.model.activity.instance.question.MatrixOption;
+import org.broadinstitute.ddp.model.activity.instance.question.MatrixQuestion;
+import org.broadinstitute.ddp.model.activity.instance.question.MatrixRow;
 import org.broadinstitute.ddp.model.activity.instance.question.TextQuestion;
+import org.broadinstitute.ddp.model.activity.instance.question.ActivityInstanceSelectQuestion;
 import org.broadinstitute.ddp.service.actvityinstancebuilder.context.AIBuilderContext;
 import org.broadinstitute.ddp.util.CollectionMiscUtil;
 
@@ -246,6 +253,40 @@ public class QuestionCreatorHelper {
         );
     }
 
+    MatrixQuestion createMatrixQuestion(AIBuilderContext ctx, MatrixQuestionDef questionDef) {
+        QuestionCreator questionCreator = ctx.getAIBuilderFactory().getQuestionCreator();
+
+        List<MatrixGroup> matrixGroups = CollectionMiscUtil.createListFromAnotherList(questionDef.getGroups(),
+                (matrixGroupDef) -> ctx.getAIBuilderFactory().getMatrixCreatorHelper().createMatrixGroup(ctx, matrixGroupDef));
+
+        List<MatrixOption> matrixOptions = CollectionMiscUtil.createListFromAnotherList(questionDef.getOptions(),
+                (matrixOptionDef) -> ctx.getAIBuilderFactory().getMatrixCreatorHelper().createMatrixOption(ctx, matrixOptionDef));
+
+        List<MatrixRow> matrixQuestionsRows = CollectionMiscUtil.createListFromAnotherList(questionDef.getRows(),
+                (matrixQuestionDef) -> ctx.getAIBuilderFactory().getMatrixCreatorHelper().createMatrixQuestionRow(ctx, matrixQuestionDef));
+
+        return new MatrixQuestion(
+                questionDef.getStableId(),
+                ctx.getAIBuilderFactory().getTemplateRenderHelper().addTemplate(
+                        ctx, questionDef.getPromptTemplate()),
+                questionDef.isRestricted(),
+                questionDef.isDeprecated(),
+                isReadOnly(questionDef, ctx.getFormResponse().getLatestStatus().getType(), ctx.getPreviousInstanceId()),
+                ctx.getAIBuilderFactory().getTemplateRenderHelper().addTemplate(
+                        ctx, questionDef.getTooltipTemplate()),
+                ctx.getAIBuilderFactory().getTemplateRenderHelper().addTemplate(
+                        ctx, questionDef.getAdditionalInfoHeaderTemplate()),
+                ctx.getAIBuilderFactory().getTemplateRenderHelper().addTemplate(
+                        ctx, questionDef.getAdditionalInfoFooterTemplate()),
+                questionCreator.getAnswers(ctx, questionDef.getStableId()),
+                questionCreator.getValidationRules(ctx, questionDef),
+                questionDef.getSelectMode(),
+                matrixGroups,
+                matrixOptions,
+                matrixQuestionsRows
+        );
+    }
+
     TextQuestion createTextQuestion(AIBuilderContext ctx, TextQuestionDef questionDef) {
         QuestionCreator questionCreator = ctx.getAIBuilderFactory().getQuestionCreator();
         return new TextQuestion(
@@ -276,5 +317,26 @@ public class QuestionCreatorHelper {
                 ctx.getAIBuilderFactory().getTemplateRenderHelper().addTemplate(
                         ctx, questionDef.getMismatchMessageTemplate())
         );
+    }
+
+    ActivityInstanceSelectQuestion createActivityInstanceSelectQuestion(AIBuilderContext ctx,
+                                                                        ActivityInstanceSelectQuestionDef questionDef) {
+        QuestionCreator questionCreator = ctx.getAIBuilderFactory().getQuestionCreator();
+        return new ActivityInstanceSelectQuestion(
+                questionDef.getStableId(),
+                ctx.getAIBuilderFactory().getTemplateRenderHelper().addTemplate(
+                        ctx, questionDef.getPromptTemplate()),
+                questionDef.isRestricted(),
+                questionDef.isDeprecated(),
+                isReadOnly(questionDef, ctx.getFormResponse().getLatestStatus().getType(), ctx.getPreviousInstanceId()),
+                ctx.getAIBuilderFactory().getTemplateRenderHelper().addTemplate(
+                        ctx, questionDef.getTooltipTemplate()),
+                ctx.getAIBuilderFactory().getTemplateRenderHelper().addTemplate(
+                        ctx, questionDef.getAdditionalInfoHeaderTemplate()),
+                ctx.getAIBuilderFactory().getTemplateRenderHelper().addTemplate(
+                        ctx, questionDef.getAdditionalInfoFooterTemplate()),
+                questionCreator.getAnswers(ctx, questionDef.getStableId()),
+                questionCreator.getValidationRules(ctx, questionDef),
+                questionDef.getActivityCodes());
     }
 }

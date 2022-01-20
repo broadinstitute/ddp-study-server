@@ -1,6 +1,9 @@
 package org.broadinstitute.ddp.route;
 
 import static io.restassured.RestAssured.given;
+import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTask.ATTR_NAME__PARTICIPANT_GUID;
+import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTask.ATTR_NAME__STUDY_GUID;
+import static org.broadinstitute.ddp.event.pubsubtask.api.PubSubTask.ATTR_NAME__TASK_TYPE;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.isEmptyOrNullString;
 import static org.hamcrest.Matchers.not;
@@ -35,7 +38,6 @@ import org.broadinstitute.ddp.db.dao.UserProfileDao;
 import org.broadinstitute.ddp.db.dao.UserProfileSql;
 import org.broadinstitute.ddp.event.publish.pubsub.PubSubPublisherInitializer;
 import org.broadinstitute.ddp.event.publish.pubsub.TaskPubSubPublisher;
-import org.broadinstitute.ddp.event.pubsubtask.api.PubSubTask;
 import org.broadinstitute.ddp.json.admin.CreateStudyParticipantPayload;
 import org.broadinstitute.ddp.util.ConfigManager;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
@@ -176,9 +178,9 @@ public class AdminCreateStudyParticipantRouteStandaloneTest extends IntegrationT
 
         verify(mockPublisher).publish(argThat(msg -> {
             var attributes = msg.getAttributesMap();
-            assertEquals(TaskPubSubPublisher.TASK_PARTICIPANT_REGISTERED, attributes.get(PubSubTask.ATTR_TASK_TYPE));
-            assertEquals(testData.getStudyGuid(), attributes.get(TaskPubSubPublisher.ATTR_STUDY_GUID));
-            assertEquals(createdUserGuid.get(), attributes.get(TaskPubSubPublisher.ATTR_PARTICIPANT_GUID));
+            assertEquals(TaskPubSubPublisher.TASK_PARTICIPANT_REGISTERED, attributes.get(ATTR_NAME__TASK_TYPE));
+            assertEquals(testData.getStudyGuid(), attributes.get(ATTR_NAME__STUDY_GUID));
+            assertEquals(createdUserGuid.get(), attributes.get(ATTR_NAME__PARTICIPANT_GUID));
             return true;
         }));
     }

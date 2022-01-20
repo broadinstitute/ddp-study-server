@@ -1,10 +1,14 @@
 package org.broadinstitute.ddp.studybuilder;
 
+import java.io.File;
+import java.net.URL;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import com.google.gson.Gson;
 import com.typesafe.config.Config;
 import org.broadinstitute.ddp.exception.DDPException;
+import org.broadinstitute.ddp.model.activity.definition.ActivityDef;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.studybuilder.task.CustomTask;
 import org.broadinstitute.ddp.util.ConfigUtil;
@@ -92,5 +96,23 @@ public class BuilderUtils {
             throw new DDPException(path + " has validation errors: " + errors);
         }
         return tmpl;
+    }
+
+    public static void validateActivityDef(ActivityDef def, GsonPojoValidator validator) {
+        List<JsonValidationError> errors = validator.validateAsJson(def);
+        if (!errors.isEmpty()) {
+            String msg = errors.stream()
+                    .map(JsonValidationError::toDisplayMessage)
+                    .collect(Collectors.joining(", "));
+            throw new DDPException(String.format(
+                    "Activity definition with code=%s and versionTag=%s has validation errors: %s",
+                    def.getActivityCode(), def.getVersionTag(), msg));
+        }
+    }
+
+    public static File[] getResourceFolderFiles(String filePath) {
+        ClassLoader loader = Thread.currentThread().getContextClassLoader();
+        URL url = loader.getResource(filePath);
+        return new File(url != null ? url.getPath() : filePath).listFiles();
     }
 }

@@ -50,4 +50,7 @@ public interface InvitationSql extends SqlObject {
 
     @SqlUpdate("delete from invitation where invitation_id = :id")
     int deleteById(@Bind("id") long invitationId);
+
+    @SqlUpdate("delete from invitation where user_id = :userId")
+    int deleteByUserId(@Bind("userId") long userId);
 }

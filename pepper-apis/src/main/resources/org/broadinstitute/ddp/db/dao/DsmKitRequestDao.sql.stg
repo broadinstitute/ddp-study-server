@@ -149,3 +149,11 @@ findKitRequestIdsByParticipantId() ::= <<
     WHERE
         participant_user_id = :participantId
 >>
+
+deleteKitRequestByParticipantId() ::= <<
+    DELETE
+    FROM
+        kit_request
+    WHERE
+        participant_user_id = :participantId
+>>

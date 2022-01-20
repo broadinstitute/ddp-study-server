@@ -25,6 +25,9 @@ public interface JdbiActivityInstanceStatus extends SqlObject {
             + " and activity_instance_status_type_id = :typeId")
     void deleteStatusByActivityIdAndUpdatedAtAndStatusType(long activityInstanceId, long updatedAt, long typeId);
 
+    @SqlUpdate("delete from activity_instance_status where operator_id = :operatorId")
+    void deleteStatusByOperatorId(@Bind("operatorId") long operatorId);
+
     @SqlUpdate("delete from activity_instance_status where"
             + " activity_instance_id = :id and updated_at = :updatedAt")
     void deleteMostRecentStatusByActivityId(@Bind long id, @Bind long updatedAt);

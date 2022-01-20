@@ -215,7 +215,7 @@ public class DeleteActivityInstanceRouteTest extends IntegrationTestSuite.TestCa
         given().auth().oauth2(token)
                 .pathParam("instanceGuid", instanceDto.getGuid())
                 .when().delete(url).then().assertThat()
-                .statusCode(204);
+                .statusCode(200);
 
         TransactionWrapper.useTxn(handle -> {
             var jdbiInstance = handle.attach(JdbiActivityInstance.class);

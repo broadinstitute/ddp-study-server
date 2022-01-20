@@ -128,6 +128,10 @@ public final class TextQuestionDef extends QuestionDef {
         return confirmPromptTemplate;
     }
 
+    public void setSuggestions(List<String> suggestions) {
+        this.suggestions = suggestions;
+    }
+
     public static final class Builder extends AbstractQuestionBuilder<Builder> {
 
         private TextInputType inputType;

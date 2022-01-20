@@ -73,6 +73,7 @@ public class AgeUpService {
 
         for (var candidate : potentialCandidates) {
             String userGuid = candidate.getParticipantUserGuid();
+            String operatorGuid = candidate.getOperatorUserGuid();
             if (candidate.getBirthDate() == null) {
                 LOG.info("Age-up candidate with guid {} in study {} does not have birth date, skipping", userGuid, studyGuid);
                 continue;
@@ -84,7 +85,7 @@ public class AgeUpService {
 
             AgeOfMajorityRule rule;
             try {
-                rule = policy.getApplicableAgeOfMajorityRule(handle, interpreter, userGuid).orElse(null);
+                rule = policy.getApplicableAgeOfMajorityRule(handle, interpreter, userGuid, operatorGuid).orElse(null);
             } catch (PexException e) {
                 LOG.error("Error while evaluating age-of-majority rules for participant {} and study {}, skipping", userGuid, studyGuid, e);
                 continue;

@@ -15,7 +15,9 @@ public class AgeUpCandidate {
     private long studyId;
     private String studyGuid;
     private long participantUserId;
+    private long operatorUserId;
     private String participantUserGuid;
+    private String operatorUserGuid;
     private EnrollmentStatusType status;
     private LocalDate birthDate;
     private boolean hasInitiatedPrep;
@@ -25,7 +27,9 @@ public class AgeUpCandidate {
                           @ColumnName("study_id") long studyId,
                           @ColumnName("study_guid") String studyGuid,
                           @ColumnName("participant_user_id") long participantUserId,
+                          @ColumnName("operator_user_id") long operatorUserId,
                           @ColumnName("participant_user_guid") String participantUserGuid,
+                          @ColumnName("operator_user_guid") String operatorUserGuid,
                           @ColumnName("enrollment_status") EnrollmentStatusType status,
                           @ColumnName("birth_date") LocalDate birthDate,
                           @ColumnName("initiated_preparation") boolean hasInitiatedPrep) {
@@ -33,7 +37,9 @@ public class AgeUpCandidate {
         this.studyId = studyId;
         this.studyGuid = studyGuid;
         this.participantUserId = participantUserId;
+        this.operatorUserId = operatorUserId;
         this.participantUserGuid = participantUserGuid;
+        this.operatorUserGuid = operatorUserGuid;
         this.status = status;
         this.birthDate = birthDate;
         this.hasInitiatedPrep = hasInitiatedPrep;
@@ -41,6 +47,10 @@ public class AgeUpCandidate {
 
     public long getId() {
         return id;
+    }
+
+    public long getOperatorUserId() {
+        return operatorUserId;
     }
 
     public long getStudyId() {
@@ -57,6 +67,10 @@ public class AgeUpCandidate {
 
     public String getParticipantUserGuid() {
         return participantUserGuid;
+    }
+
+    public String getOperatorUserGuid() {
+        return operatorUserGuid;
     }
 
     public EnrollmentStatusType getStatus() {

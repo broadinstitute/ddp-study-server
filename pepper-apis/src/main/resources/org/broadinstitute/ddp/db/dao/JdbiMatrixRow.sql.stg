@@ -1,0 +1,52 @@
+group JdbiMatrixRow;
+
+insertMatrixRow() ::= <<
+insert into matrix_row (matrix_question_id, matrix_row_stable_id, row_label_template_id,
+       tooltip_template_id, display_order, revision_id)
+values (:matrixQuestionId, :stableId, :questionLabelTemplateId, :tooltipTemplateId, :displayOrder, :revisionId)
+>>
+
+queryAllActiveOrderedMatrixRowsByQuestionId() ::= <<
+select mr.matrix_row_id,
+       mr.matrix_row_stable_id,
+       mr.row_label_template_id,
+       mr.tooltip_template_id,
+       mr.display_order,
+       mr.revision_id,
+       rev.start_date as revision_start_timestamp,
+       rev.end_date as revision_end_timestamp
+  from matrix_row as mr
+  join revision as rev on rev.revision_id = mr.revision_id
+ where mr.matrix_question_id = :questionId
+   and rev.end_date is null
+ order by mr.display_order asc, mr.matrix_row_id asc
+>>
+
+queryMatrixRowsByStableIdsQuestionIdAndRevision(stableIds) ::= <<
+select mr.matrix_row_id,
+       mr.matrix_row_stable_id,
+       mr.row_label_template_id,
+       mr.tooltip_template_id,
+       mr.display_order,
+       mr.revision_id,
+       rev.start_date as revision_start_timestamp,
+       rev.end_date as revision_end_timestamp
+  from matrix_row as mr
+  join revision as rev on mr.revision_id = rev.revision_id
+  join activity_instance as ai on ai.activity_instance_guid = :instanceGuid
+ where mr.matrix_question_id = :questionId
+   and mr.matrix_row_stable_id in (<stableIds>)
+   and rev.start_date \<= ai.created_at
+   and (rev.end_date is null or ai.created_at \< rev.end_date)
+>>
+
+isMatrixRowStableIdCurrentlyActive() ::= <<
+select 1
+from
+    matrix_row as mr,
+    revision as rev
+where mr.matrix_question_id = :questionId
+and mr.matrix_row_stable_id = :stableId
+and mr.revision_id = rev.revision_id
+and rev.end_date is null
+>>
