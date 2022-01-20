@@ -16,6 +16,10 @@ parameters:
     enum: ["dss", "dsm","api-docs", "nothing"]
     default: "dss"
 
+  project-from-client:
+    type: string
+    default: nothing
+
 # Orchestrate our job run sequence
 workflows:
   build_and_test:
