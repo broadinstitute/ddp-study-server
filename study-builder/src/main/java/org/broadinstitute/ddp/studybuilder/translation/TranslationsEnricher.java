@@ -102,8 +102,7 @@ public class TranslationsEnricher {
      *    </li>
      * </ul>
      */
-    public static void addTemplateTranslations(Template template, Map<String, TranslationData> allTranslations,
-                                               boolean isActivityTranslations) {
+    public static void addTemplateTranslations(Template template, Map<String, TranslationData> allTranslations) {
         if (isProcessTemplate(template)) {
             if (template.getTemplateType() == null) {
                 template.setTemplateType(TEXT);
@@ -117,7 +116,7 @@ public class TranslationsEnricher {
                     v.setTranslation(translations);
                 });
             }
-            addVariablesToTemplate(template, variablesInTemplate, allTranslations, isActivityTranslations);
+            addVariablesToTemplate(template, variablesInTemplate, allTranslations);
         }
     }
 
@@ -128,8 +127,7 @@ public class TranslationsEnricher {
     private static void addVariablesToTemplate(
             Template template,
             Collection<String> variablesInTemplate,
-            Map<String, TranslationData> allTranslations,
-            boolean isActivityTranslations) {
+            Map<String, TranslationData> allTranslations) {
 
         Collection<String> extraVariables = detectVariablesNotPresentInList(template.getVariables(), variablesInTemplate);
         extraVariables.forEach(v -> {
