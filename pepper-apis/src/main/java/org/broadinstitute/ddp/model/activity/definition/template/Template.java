@@ -19,7 +19,6 @@ public class Template {
 
     public static final String VELOCITY_VAR_PREFIX = "$";
 
-    @NotNull
     @SerializedName("templateType")
     private TemplateType templateType;
 
@@ -67,7 +66,7 @@ public class Template {
     }
 
     public TemplateType getTemplateType() {
-        return templateType;
+        return templateType != null ? templateType : TemplateType.TEXT;
     }
 
     public void setTemplateType(TemplateType templateType) {

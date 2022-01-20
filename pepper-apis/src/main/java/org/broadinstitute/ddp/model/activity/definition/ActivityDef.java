@@ -80,6 +80,9 @@ public abstract class ActivityDef {
     @SerializedName("canDeleteFirstInstance")
     protected Boolean canDeleteFirstInstance;
 
+    @SerializedName("showActivityStatus")
+    protected boolean showActivityStatus;
+
     @SerializedName("translatedNames")
     protected List<@Valid @NotNull Translation> translatedNames;
 
@@ -164,11 +167,7 @@ public abstract class ActivityDef {
         this.maxInstancesPerUser = maxInstancesPerUser;
         this.displayOrder = displayOrder;
         this.writeOnce = writeOnce;
-        if (translatedNames != null && !translatedNames.isEmpty()) {
-            this.translatedNames = translatedNames;
-        } else {
-            throw new IllegalArgumentException("Need at least one name translation");
-        }
+        this.translatedNames = translatedNames;
         this.translatedSecondNames = new ArrayList<>();
         this.translatedTitles = translatedTitles;
         this.translatedSubtitles = translatedSubtitles;
@@ -361,6 +360,10 @@ public abstract class ActivityDef {
         return canDeleteFirstInstance;
     }
 
+    public boolean showActivityStatus() {
+        return showActivityStatus;
+    }
+
     /**
      * Builder that helps construct common elements of an activity definition.
      *
@@ -394,6 +397,7 @@ public abstract class ActivityDef {
         protected boolean createOnParentCreation;
         protected boolean canDeleteInstances;
         protected Boolean canDeleteFirstInstance;
+        protected boolean showActivityStatus;
 
         /**
          * Returns the subclass builder instance to enable method chaining.
@@ -420,6 +424,7 @@ public abstract class ActivityDef {
             activity.createOnParentCreation = createOnParentCreation;
             activity.canDeleteInstances = canDeleteInstances;
             activity.canDeleteFirstInstance = canDeleteFirstInstance;
+            activity.showActivityStatus = showActivityStatus;
         }
 
         public T setParentActivityCode(String parentActivityCode) {
@@ -609,6 +614,11 @@ public abstract class ActivityDef {
 
         public T setCanDeleteFirstInstance(Boolean canDeleteFirstInstance) {
             this.canDeleteFirstInstance = canDeleteFirstInstance;
+            return self();
+        }
+
+        public T setShowActivityStatus(boolean showActivityStatus) {
+            this.showActivityStatus = showActivityStatus;
             return self();
         }
     }
