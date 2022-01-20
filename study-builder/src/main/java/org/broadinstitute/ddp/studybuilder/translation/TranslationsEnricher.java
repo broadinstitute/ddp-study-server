@@ -136,7 +136,7 @@ public class TranslationsEnricher {
             List<Translation> translations = detectTranslationsForTemplateVariable(null, v, allTranslations);
 
             // add variables to template only if feature 'saveTranslationsToDbJson' is disabled
-            if (!TranslationsProcessingData.INSTANCE.isSaveTranslationsToDbJson() || isActivityTranslations) {
+            if (TranslationsProcessingData.INSTANCE.isSaveTranslationsToDbJson()) {
                 template.addVariable(new TemplateVariable(v, translations));
             } else {
                 if (template.getVariables() == null) {
