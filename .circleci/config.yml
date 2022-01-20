@@ -6,10 +6,9 @@ orbs:
   path-filtering: circleci/path-filtering@0.1.1
 
 parameters:
-  project:
-    type: enum
-    enum: ["dss", "dsm","api-docs", "nothing"]
-    default: "dss"
+  project-from-client:
+    type: string
+    default: nothing
 
 workflows:
   filter-based-on-changes-workflow:
@@ -20,3 +19,11 @@ workflows:
           config-path: .circleci/main-config.yml
           mapping: |
             pepper-apis/docs/.* project "api-docs"
+
+  ondemand-api-docs:
+    when:
+      equal: ["api-docs", << pipeline.project-from-client >>]
+    jobs:
+      - continuation/continue:
+          configuration_path: .circleci/config.yml
+          parameters: '{"project": "api-docs"}'
