@@ -28,5 +28,5 @@ workflows:
       equal: ["api-docs", << pipeline.parameters.project-from-client >>]
     jobs:
       - continuation/continue:
-          configuration_path: .circleci/config.yml
+          configuration_path: .circleci/main-config.yml
           parameters: '{"project": "api-docs"}'
