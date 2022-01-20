@@ -16,16 +16,15 @@ parameters:
 
 workflows:
   conditional-workflow:
-#    when:
-#      << pipeline.parameters.on_demand >>
+    when:
+      << pipeline.parameters.on_demand >>
     jobs:
       - path-filtering/filter:
-          base-revision: e12fe8721678a7ba4429ca0369e404a5a1a34ece
-          #          config-path: .circleci/config.yml
+          base-revision: develop
           config-path: .circleci/main-config.yml
           mapping: |
-            pepper-apis/docs/.* project api-docs
-#          filters:
-#            branches:
-#              only:
-#                - DSMMavenRefactor-build
+            pepper-apis/docs/.* project "api-docs"
+          filters:
+            branches:
+              only:
+                - DSMMavenRefactor-build
