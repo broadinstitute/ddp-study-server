@@ -13,6 +13,8 @@ parameters:
 
 workflows:
   filter-based-on-changes-workflow:
+    when:
+      equal: ["nothing", << pipeline.parameters.project-from-client >>]
     jobs:
       - path-filtering/filter:
           name: check-files
