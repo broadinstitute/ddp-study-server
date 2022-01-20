@@ -93,7 +93,8 @@ public class UpdateActivityBaseSettings implements CustomTask {
                 definition.getBoolean("hideExistingInstancesOnCreation"),
                 ConfigUtil.getBoolOrElse(definition, "createOnParentCreation", false),
                 ConfigUtil.getBoolOrElse(definition, "canDeleteInstances", false),
-                ConfigUtil.getBoolIfPresent(definition, "canDeleteFirstInstance"));
+                ConfigUtil.getBoolIfPresent(definition, "canDeleteFirstInstance"),
+                ConfigUtil.getBoolOrElse(definition, "showActivityStatus", false));
         if (!currentDto.equals(latestDto)) {
             if (currentDto.canDeleteInstances() != latestDto.canDeleteInstances()) {
                 throw new UnsupportedOperationException("Updating `canDeleteInstances` setting is currently not supported"
