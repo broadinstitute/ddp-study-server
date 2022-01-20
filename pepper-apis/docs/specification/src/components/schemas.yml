@@ -74,12 +74,6 @@ ListStyle:
     - BULLET
     - UPPER_ALPHA
     - NONE
-NumericType:
-  title: NumericType
-  type: string
-  enum:
-    - INTEGER
-  description: describes what type of numeric value it is
 Presentation:
   title: Presentation
   type: string
@@ -391,6 +385,7 @@ Answer.Numeric:
         propertyName: numericType
         mapping:
           INTEGER: '#/Answer.Numeric.Integer'
+          DECIMAL: '#/Answer.Numeric.Decimal'
       required:
         - numericType
       properties:
@@ -409,6 +404,32 @@ Answer.Numeric.Integer:
         value:
           type: integer
           nullable: true
+Answer.Numeric.Decimal:
+  allOf:
+    - $ref: '#/Answer.Numeric'
+    - type: object
+      required:
+        - answerGuid
+        - numericType
+        - value
+      properties:
+        numericType:
+          type: string
+          default: DECIMAL
+        value:
+          type: integer
+          format: int64
+          nullable: true
+        precision:
+          type: integer
+          description: the total number of digits allowed in the number, including digits on both sides of the decimal point
+          minimum: 0
+          default: 0
+        scale:
+          type: integer
+          description: the number of digits allowed to the right of the decimal point.
+          minimum: 0
+          default: 0
 Answer.Picklist:
   allOf:
     - $ref: '#/Answer'
@@ -1719,26 +1740,55 @@ Question.File:
             $ref: '#/Answer.File'
 Question.Numeric:
   allOf:
-  - $ref: '#/Question'
-  - type: object
-    required:
-      - answers
-      - numericType
-    properties:
-      questionType:
-        type: string
-        default: NUMERIC
-        enum:
-          - NUMERIC
-      placeholderText:
-        type: string
-        description: if present, this text string can be used as a placeholder hint
-      numericType:
-        $ref: '#/NumericType'
-      answers:
-        type: array
-        items:
-          $ref: '#/Answer.Numeric.Integer'
+    - $ref: '#/Question'
+    - type: object
+      discriminator:
+        propertyName: numericType
+        mapping:
+          INTEGER: '#/Question.Numeric.Integer'
+          DECIMAL: '#/Question.Numeric.Decimal'
+      required:
+        - answers
+        - numericType
+      properties:
+        placeholderText:
+          type: string
+          nullable: true
+          description: if present, this text string can be used as a placeholder hint
+        numericType:
+          type: string
+Question.Numeric.Integer:
+  allOf:
+    - $ref: '#/Question.Numeric'
+    - type: object
+      required:
+        - answers
+      properties:
+        answers:
+          type: array
+          items:
+            $ref: '#/Answer.Numeric.Integer'
+Question.Numeric.Decimal:
+  allOf:
+    - $ref: '#/Question.Numeric'
+    - type: object
+      required:
+        - answers
+      properties:
+        precision:
+          type: integer
+          description: the total number of digits allowed in the number, including digits on both sides of the decimal point
+          minimum: 0
+          default: 0
+        scale:
+          type: integer
+          description: the number of digits allowed to the right of the decimal point.
+          minimum: 0
+          default: 0
+        answers:
+          type: array
+          items:
+            $ref: '#/Answer.Numeric.Decimal'
 Question.Picklist:
   allOf:
   - $ref: '#/Question'
