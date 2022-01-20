@@ -79,8 +79,8 @@ public class ActivityDefTranslationsProcessor {
         LOG.info("Add translations for languages {} to a generated activity definition {}",
                 TranslationsProcessingData.INSTANCE.getTranslations().keySet(), activityDef.getActivityCode());
 
-        addTemplateTranslations(activityDef.getReadonlyHintTemplate(), allTranslations);
-        addTemplateTranslations(activityDef.getLastUpdatedTextTemplate(), allTranslations);
+        addTemplateTranslations(activityDef.getReadonlyHintTemplate(), allTranslations, false);
+        addTemplateTranslations(activityDef.getLastUpdatedTextTemplate(), allTranslations, false);
 
         new ActivityNonStandardTranslationsProcessor().run(activityDef, allTranslations);
 
@@ -93,7 +93,7 @@ public class ActivityDefTranslationsProcessor {
 
     private void enrichSectionWithTranslations(FormSectionDef sectionDef) {
         if (sectionDef != null) {
-            addTemplateTranslations(sectionDef.getNameTemplate(), allTranslations);
+            addTemplateTranslations(sectionDef.getNameTemplate(), allTranslations, false);
             if (sectionDef.getBlocks() != null) {
                 sectionDef.getBlocks().forEach(this::enrichBlockWithTranslations);
             }
@@ -128,14 +128,14 @@ public class ActivityDefTranslationsProcessor {
     private void enrichComponentBlockWithTranslations(ComponentBlockDef blockDef) {
         switch (blockDef.getComponentType()) {
             case MAILING_ADDRESS:
-                addTemplateTranslations(((MailingAddressComponentDef) blockDef).getTitleTemplate(), allTranslations);
-                addTemplateTranslations(((MailingAddressComponentDef) blockDef).getSubtitleTemplate(), allTranslations);
+                addTemplateTranslations(((MailingAddressComponentDef) blockDef).getTitleTemplate(), allTranslations, false);
+                addTemplateTranslations(((MailingAddressComponentDef) blockDef).getSubtitleTemplate(), allTranslations, false);
                 break;
             case INSTITUTION:
             case PHYSICIAN:
-                addTemplateTranslations(((PhysicianInstitutionComponentDef) blockDef).getTitleTemplate(), allTranslations);
-                addTemplateTranslations(((PhysicianInstitutionComponentDef) blockDef).getSubtitleTemplate(), allTranslations);
-                addTemplateTranslations(((PhysicianInstitutionComponentDef) blockDef).getAddButtonTemplate(), allTranslations);
+                addTemplateTranslations(((PhysicianInstitutionComponentDef) blockDef).getTitleTemplate(), allTranslations, false);
+                addTemplateTranslations(((PhysicianInstitutionComponentDef) blockDef).getSubtitleTemplate(), allTranslations, false);
+                addTemplateTranslations(((PhysicianInstitutionComponentDef) blockDef).getAddButtonTemplate(), allTranslations, false);
                 break;
             default:
                 throw new StudyBuilderException("Unsupported block type specified: " + blockDef.getBlockType());
@@ -143,12 +143,12 @@ public class ActivityDefTranslationsProcessor {
     }
 
     private void enrichContentBlockWithTranslations(ContentBlockDef blockDef) {
-        addTemplateTranslations(blockDef.getTitleTemplate(), allTranslations);
-        addTemplateTranslations(blockDef.getBodyTemplate(), allTranslations);
+        addTemplateTranslations(blockDef.getTitleTemplate(), allTranslations, false);
+        addTemplateTranslations(blockDef.getBodyTemplate(), allTranslations, false);
     }
 
     private void enrichActivityBlockWithTranslations(NestedActivityBlockDef blockDef) {
-        addTemplateTranslations(blockDef.getAddButtonTemplate(), allTranslations);
+        addTemplateTranslations(blockDef.getAddButtonTemplate(), allTranslations, false);
     }
 
     private void enrichConditionalBlockWithTranslations(ConditionalBlockDef blockDef) {
@@ -159,7 +159,7 @@ public class ActivityDefTranslationsProcessor {
     }
 
     private void enrichGroupBlockWithTranslations(GroupBlockDef blockDef) {
-        addTemplateTranslations(blockDef.getTitleTemplate(), allTranslations);
+        addTemplateTranslations(blockDef.getTitleTemplate(), allTranslations, false);
         if (blockDef.getNested() != null) {
             blockDef.getNested().forEach(this::enrichBlockWithTranslations);
         }
@@ -170,41 +170,41 @@ public class ActivityDefTranslationsProcessor {
     }
 
     private void enrichQuestionWithTranslations(QuestionDef questionDef) {
-        addTemplateTranslations(questionDef.getPromptTemplate(), allTranslations);
-        addTemplateTranslations(questionDef.getTooltipTemplate(), allTranslations);
-        addTemplateTranslations(questionDef.getAdditionalInfoHeaderTemplate(), allTranslations);
-        addTemplateTranslations(questionDef.getAdditionalInfoFooterTemplate(), allTranslations);
+        addTemplateTranslations(questionDef.getPromptTemplate(), allTranslations, false);
+        addTemplateTranslations(questionDef.getTooltipTemplate(), allTranslations, false);
+        addTemplateTranslations(questionDef.getAdditionalInfoHeaderTemplate(), allTranslations, false);
+        addTemplateTranslations(questionDef.getAdditionalInfoFooterTemplate(), allTranslations, false);
         if (questionDef.getValidations() != null) {
             questionDef.getValidations().forEach(this::enrichRuleWithTranslations);
         }
         switch (questionDef.getQuestionType()) {
             case DATE:
                 if (((DateQuestionDef) questionDef).getRenderMode() != PICKLIST) {
-                    addTemplateTranslations(((DateQuestionDef) questionDef).getPlaceholderTemplate(), allTranslations);
+                    addTemplateTranslations(((DateQuestionDef) questionDef).getPlaceholderTemplate(), allTranslations, false);
                 }
                 break;
             case BOOLEAN:
-                addTemplateTranslations(((BoolQuestionDef) questionDef).getTrueTemplate(), allTranslations);
-                addTemplateTranslations(((BoolQuestionDef) questionDef).getFalseTemplate(), allTranslations);
+                addTemplateTranslations(((BoolQuestionDef) questionDef).getTrueTemplate(), allTranslations, false);
+                addTemplateTranslations(((BoolQuestionDef) questionDef).getFalseTemplate(), allTranslations, false);
                 break;
             case TEXT:
-                addTemplateTranslations(((TextQuestionDef) questionDef).getConfirmPlaceholderTemplate(), allTranslations);
-                addTemplateTranslations(((TextQuestionDef) questionDef).getPlaceholderTemplate(), allTranslations);
-                addTemplateTranslations(((TextQuestionDef) questionDef).getConfirmPromptTemplate(), allTranslations);
-                addTemplateTranslations(((TextQuestionDef) questionDef).getMismatchMessageTemplate(), allTranslations);
+                addTemplateTranslations(((TextQuestionDef) questionDef).getConfirmPlaceholderTemplate(), allTranslations, false);
+                addTemplateTranslations(((TextQuestionDef) questionDef).getPlaceholderTemplate(), allTranslations, false);
+                addTemplateTranslations(((TextQuestionDef) questionDef).getConfirmPromptTemplate(), allTranslations, false);
+                addTemplateTranslations(((TextQuestionDef) questionDef).getMismatchMessageTemplate(), allTranslations, false);
                 break;
             case NUMERIC:
-                addTemplateTranslations(((NumericQuestionDef) questionDef).getPlaceholderTemplate(), allTranslations);
+                addTemplateTranslations(((NumericQuestionDef) questionDef).getPlaceholderTemplate(), allTranslations, false);
                 break;
             case PICKLIST:
-                addTemplateTranslations(((PicklistQuestionDef) questionDef).getPicklistLabelTemplate(), allTranslations);
+                addTemplateTranslations(((PicklistQuestionDef) questionDef).getPicklistLabelTemplate(), allTranslations, false);
                 ((PicklistQuestionDef) questionDef).getGroups().forEach(
-                        g -> addTemplateTranslations(g.getNameTemplate(), allTranslations));
+                        g -> addTemplateTranslations(g.getNameTemplate(), allTranslations, false));
                 ((PicklistQuestionDef) questionDef).getPicklistOptions().forEach(this::processPickListOptionTemplates);
                 break;
             case COMPOSITE:
-                addTemplateTranslations(((CompositeQuestionDef) questionDef).getAddButtonTemplate(), allTranslations);
-                addTemplateTranslations(((CompositeQuestionDef) questionDef).getAdditionalItemTemplate(), allTranslations);
+                addTemplateTranslations(((CompositeQuestionDef) questionDef).getAddButtonTemplate(), allTranslations, false);
+                addTemplateTranslations(((CompositeQuestionDef) questionDef).getAdditionalItemTemplate(), allTranslations, false);
                 if (((CompositeQuestionDef) questionDef).getChildren() != null) {
                     ((CompositeQuestionDef) questionDef).getChildren().forEach(this::enrichQuestionWithTranslations);
                 }
@@ -226,16 +226,16 @@ public class ActivityDefTranslationsProcessor {
     }
 
     private void processPickListOptionTemplates(PicklistOptionDef optionDef) {
-        addTemplateTranslations(optionDef.getTooltipTemplate(), allTranslations);
-        addTemplateTranslations(optionDef.getDetailLabelTemplate(), allTranslations);
-        addTemplateTranslations(optionDef.getOptionLabelTemplate(), allTranslations);
-        addTemplateTranslations(optionDef.getNestedOptionsLabelTemplate(), allTranslations);
+        addTemplateTranslations(optionDef.getTooltipTemplate(), allTranslations, false);
+        addTemplateTranslations(optionDef.getDetailLabelTemplate(), allTranslations, false);
+        addTemplateTranslations(optionDef.getOptionLabelTemplate(), allTranslations, false);
+        addTemplateTranslations(optionDef.getNestedOptionsLabelTemplate(), allTranslations, false);
         if (optionDef.getNestedOptions() != null) {
             optionDef.getNestedOptions().forEach(this::processPickListOptionTemplates);
         }
     }
 
     private void enrichRuleWithTranslations(RuleDef ruleDef) {
-        addTemplateTranslations(ruleDef.getHintTemplate(), allTranslations);
+        addTemplateTranslations(ruleDef.getHintTemplate(), allTranslations, false);
     }
 }

@@ -33,34 +33,34 @@ public class ActivityNonStandardTranslationsProcessor {
 
     void run(FormActivityDef activityDef, Map<String, TranslationData> allTranslations) {
         if (activityDef.getNameTemplate() != null) {
-            addTemplateTranslations(activityDef.getNameTemplate(), allTranslations);
+            addTemplateTranslations(activityDef.getNameTemplate(), allTranslations, true);
             activityDef.setTranslatedNames(getTranslationByTemplateVariable(activityDef.getNameTemplate(), allTranslations));
         }
 
         if (activityDef.getSecondNameTemplate() != null) {
-            addTemplateTranslations(activityDef.getSecondNameTemplate(), allTranslations);
+            addTemplateTranslations(activityDef.getSecondNameTemplate(), allTranslations, true);
             activityDef.setTranslatedSecondNames(getTranslationByTemplateVariable(activityDef.getSecondNameTemplate(), allTranslations));
         }
 
         if (activityDef.getTitleTemplate() != null) {
-            addTemplateTranslations(activityDef.getTitleTemplate(), allTranslations);
+            addTemplateTranslations(activityDef.getTitleTemplate(), allTranslations, true);
             activityDef.setTranslatedTitles(getTranslationByTemplateVariable(activityDef.getTitleTemplate(), allTranslations));
         }
 
         if (activityDef.getSubtitleTemplate() != null) {
-            addTemplateTranslations(activityDef.getSubtitleTemplate(), allTranslations);
+            addTemplateTranslations(activityDef.getSubtitleTemplate(), allTranslations, true);
             activityDef.setTranslatedSubtitles(getTranslationByTemplateVariable(activityDef.getSubtitleTemplate(), allTranslations));
         }
 
         if (activityDef.getDescriptionTemplate() != null) {
-            addTemplateTranslations(activityDef.getDescriptionTemplate(), allTranslations);
+            addTemplateTranslations(activityDef.getDescriptionTemplate(), allTranslations, true);
             activityDef.setTranslatedDescriptions(getTranslationByTemplateVariable(activityDef.getDescriptionTemplate(), allTranslations));
         }
 
         if (activityDef.getSummaryTemplates() != null) {
             List<SummaryTranslation> translatedSummaries = new ArrayList<>();
             activityDef.getSummaryTemplates().forEach((k, v) -> {
-                addTemplateTranslations(v, allTranslations);
+                addTemplateTranslations(v, allTranslations, true);
                 List<Translation> templateRendered = getTranslationByTemplateVariable(v, allTranslations);
                 if (templateRendered != null) {
                     translatedSummaries.addAll(

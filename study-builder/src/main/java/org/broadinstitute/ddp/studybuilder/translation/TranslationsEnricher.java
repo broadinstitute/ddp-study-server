@@ -102,7 +102,8 @@ public class TranslationsEnricher {
      *    </li>
      * </ul>
      */
-    public static void addTemplateTranslations(Template template, Map<String, TranslationData> allTranslations) {
+    public static void addTemplateTranslations(Template template, Map<String, TranslationData> allTranslations,
+                                               boolean isActivityTranslations) {
         if (isProcessTemplate(template)) {
             if (template.getTemplateType() == null) {
                 template.setTemplateType(TEXT);
@@ -116,7 +117,7 @@ public class TranslationsEnricher {
                     v.setTranslation(translations);
                 });
             }
-            addVariablesToTemplate(template, variablesInTemplate, allTranslations);
+            addVariablesToTemplate(template, variablesInTemplate, allTranslations, isActivityTranslations);
         }
     }
 
@@ -127,14 +128,15 @@ public class TranslationsEnricher {
     private static void addVariablesToTemplate(
             Template template,
             Collection<String> variablesInTemplate,
-            Map<String, TranslationData> allTranslations) {
+            Map<String, TranslationData> allTranslations,
+            boolean isActivityTranslations) {
 
         Collection<String> extraVariables = detectVariablesNotPresentInList(template.getVariables(), variablesInTemplate);
         extraVariables.forEach(v -> {
             List<Translation> translations = detectTranslationsForTemplateVariable(null, v, allTranslations);
 
             // add variables to template only if feature 'saveTranslationsToDbJson' is disabled
-            if (!TranslationsProcessingData.INSTANCE.isSaveTranslationsToDbJson()) {
+            if (!TranslationsProcessingData.INSTANCE.isSaveTranslationsToDbJson() || isActivityTranslations) {
                 template.addVariable(new TemplateVariable(v, translations));
             } else {
                 if (template.getVariables() == null) {
