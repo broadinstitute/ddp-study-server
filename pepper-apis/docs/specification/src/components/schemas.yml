@@ -381,15 +381,10 @@ Answer.File:
           default: FILE
         value:
           $ref: '#/FileInfo'
-Answer.Numeric:
+Answer.Integer:
   allOf:
     - $ref: '#/Answer'
     - type: object
-      discriminator:
-        propertyName: numericType
-        mapping:
-          INTEGER: '#/Answer.Numeric.Integer'
-          DECIMAL: '#/Answer.Numeric.Decimal'
       required:
         - numericType
         - type
@@ -399,31 +394,20 @@ Answer.Numeric:
           default: NUMERIC
         numericType:
           type: string
-Answer.Numeric.Integer:
-  allOf:
-    - $ref: '#/Answer.Numeric'
-    - type: object
-      required:
-        - value
-      properties:
-        numericType:
-          type: string
           default: INTEGER
         value:
           type: integer
           nullable: true
-Answer.Numeric.Decimal:
+Answer.Decimal:
   allOf:
-    - $ref: '#/Answer.Numeric'
+    - $ref: '#/Answer'
     - type: object
       required:
         - type
-        - numericType
         - value
+        - precision
+        - scale
       properties:
-        numericType:
-          type: string
-          default: DECIMAL
         value:
           type: integer
           format: int64
@@ -549,7 +533,7 @@ AnswerSubmission:
       COMPOSITE: '#/AnswerSubmission.Composite'
       DATE: '#/AnswerSubmission.Date'
       FILE: '#/AnswerSubmission.File'
-      NUMERIC: '#/AnswerSubmission.Numeric.Integer'
+      NUMERIC: '#/AnswerSubmission.Integer'
       DECIMAL: '#/AnswerSubmission.Decimal'
       PICKLIST: '#/AnswerSubmission.Picklist'
       MATRIX: '#/AnswerSubmission.Matrix'
@@ -615,7 +599,7 @@ AnswerSubmission.File:
             File upload guid provided by server when upload URL was requested. If this
             answer is currently associated with a file upload, then submitting a `null`
             value will unassociate it and the uploaded file will subsequently get deleted.
-AnswerSubmission.Numeric.Integer:
+AnswerSubmission.Integer:
   allOf:
     - $ref: '#/AnswerSubmission'
     - type: object
@@ -1550,6 +1534,7 @@ Question:
       DATE: '#/Question.Date'
       FILE: '#/Question.File'
       NUMERIC: '#/Question.Numeric'
+      DECIMAL: '#/Question.Decimal'
       PICKLIST: '#/Question.Picklist'
       MATRIX: '#/Question.Matrix'
       TEXT: '#/Question.Text'
@@ -1782,11 +1767,6 @@ Question.Numeric:
   allOf:
     - $ref: '#/Question'
     - type: object
-      discriminator:
-        propertyName: numericType
-        mapping:
-          INTEGER: '#/Question.Numeric.Integer'
-          DECIMAL: '#/Question.Numeric.Decimal'
       required:
         - answers
         - numericType
@@ -1797,20 +1777,14 @@ Question.Numeric:
           description: if present, this text string can be used as a placeholder hint
         numericType:
           type: string
-Question.Numeric.Integer:
-  allOf:
-    - $ref: '#/Question.Numeric'
-    - type: object
-      required:
-        - answers
-      properties:
+          default: INTEGER
         answers:
           type: array
           items:
-            $ref: '#/Answer.Numeric.Integer'
-Question.Numeric.Decimal:
+            $ref: '#/Answer.Integer'
+Question.Decimal:
   allOf:
-    - $ref: '#/Question.Numeric'
+    - $ref: '#/Question'
     - type: object
       required:
         - answers
@@ -1828,7 +1802,7 @@ Question.Numeric.Decimal:
         answers:
           type: array
           items:
-            $ref: '#/Answer.Numeric.Decimal'
+            $ref: '#/Answer.Decimal'
 Question.Picklist:
   allOf:
   - $ref: '#/Question'
