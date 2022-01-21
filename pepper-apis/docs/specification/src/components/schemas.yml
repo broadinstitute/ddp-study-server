@@ -302,35 +302,23 @@ Activity.Summary:
 ###
 Answer:
   type: object
-  discriminator:
-    propertyName: type
-    mapping:
-      ACTIVITY_INSTANCE_SELECT: '#/Answer.ActivityInstance'
-      AGREEMENT: '#/Answer.Boolean'
-      BOOLEAN: '#/Answer.Boolean'
-      COMPOSITE: '#/Answer.Composite'
-      DATE: '#/Answer.Date'
-      FILE: '#/Answer.File'
-      NUMERIC: '#/Answer.Numeric'
-      PICKLIST: '#/Answer.Picklist'
-      MATRIX: '#/Answer.Matrix'
-      TEXT: '#/Answer.String'
   required:
     - answerGuid
-    - type
   properties:
     answerGuid:
       type: string
       format: guid
-    type:
-      type: string
 Answer.String:
   allOf:
     - $ref: '#/Answer'
     - type: object
       required:
+        - type
         - value
       properties:
+        type:
+          type: string
+          default: STRING
         value:
           type: string
           nullable: true
@@ -339,8 +327,12 @@ Answer.Date:
     - $ref: '#/Answer'
     - type: object
       required:
+        - type
         - value
       properties:
+        type:
+          type: string
+          default: DATE
         value:
           $ref: '#/DateValue'
 Answer.Composite:
@@ -348,8 +340,12 @@ Answer.Composite:
     - $ref: '#/Answer'
     - type: object
       required:
+        - type
         - value
       properties:
+        type:
+          type: string
+          default: COMPOSITE
         value:
           type: array
           items:
@@ -364,8 +360,12 @@ Answer.Boolean:
     - $ref: '#/Answer'
     - type: object
       required:
+        - type
         - value
       properties:
+        type:
+          type: string
+          default: BOOLEAN
         value:
           type: boolean
 Answer.File:
@@ -374,7 +374,11 @@ Answer.File:
     - type: object
       required:
         - value
+        - type
       properties:
+        type:
+          type: string
+          default: FILE
         value:
           $ref: '#/FileInfo'
 Answer.Numeric:
@@ -388,7 +392,11 @@ Answer.Numeric:
           DECIMAL: '#/Answer.Numeric.Decimal'
       required:
         - numericType
+        - type
       properties:
+        type:
+          type: string
+          default: NUMERIC
         numericType:
           type: string
 Answer.Numeric.Integer:
@@ -409,7 +417,7 @@ Answer.Numeric.Decimal:
     - $ref: '#/Answer.Numeric'
     - type: object
       required:
-        - answerGuid
+        - type
         - numericType
         - value
       properties:
@@ -435,8 +443,12 @@ Answer.Picklist:
     - $ref: '#/Answer'
     - type: object
       required:
+        - type
         - value
       properties:
+        type:
+          type: string
+          default: PICKLIST
         value:
           type: array
           items:
@@ -446,8 +458,12 @@ Answer.ActivityInstance:
     - $ref: '#/Answer'
     - type: object
       required:
+        - type
         - value
       properties:
+        type:
+          type: string
+          default: ACTIVITY_INSTANCE_SELECT
         value:
           type: string
           format: guid
