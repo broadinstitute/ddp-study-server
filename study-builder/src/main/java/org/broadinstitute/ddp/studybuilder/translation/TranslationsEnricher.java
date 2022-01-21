@@ -133,8 +133,8 @@ public class TranslationsEnricher {
         extraVariables.forEach(v -> {
             List<Translation> translations = detectTranslationsForTemplateVariable(null, v, allTranslations);
 
-            // add variables to template only if feature 'saveTranslationsToDbJson' is disabled
-            if (!TranslationsProcessingData.INSTANCE.isSaveTranslationsToDbJson()) {
+            // add variables to template only if feature 'saveTranslationsToDbJson' is enabled
+            if (TranslationsProcessingData.INSTANCE.isSaveTranslationsToDbJson()) {
                 template.addVariable(new TemplateVariable(v, translations));
             } else {
                 if (template.getVariables() == null) {
@@ -177,17 +177,16 @@ public class TranslationsEnricher {
      */
     private static List<Translation> detectTranslationsForTemplateVariable(
             List<Translation> translations, String templateVariable, Map<String, TranslationData> allTranslations) {
-        String translationKey = templateVariable;
-        if (translationKey != null) {
+        if (templateVariable != null) {
             List<String> langCdeToAdd = detectLanguagesToBeAddedToTranslations(translations, allTranslations);
             final List<Translation> addedTranslations = !isTranslationsEmpty(translations) ? translations : new ArrayList<>();
             langCdeToAdd.forEach(langCde -> {
-                String translationValue = getTranslationForLang(langCde, translationKey, allTranslations);
+                String translationValue = getTranslationForLang(langCde, templateVariable, allTranslations);
                 if (translationValue != null) {
                     addedTranslations.add(new Translation(langCde, translationValue));
-                    LOG.debug("Added translation: langCde={}, key={}, value={}", langCde, translationKey, translationValue);
+                    LOG.debug("Added translation: langCde={}, key={}, value={}", langCde, templateVariable, translationValue);
                 } else {
-                    throw new RuntimeException(format("Translation not found: langCde=%s, key=%s", langCde, translationKey));
+                    throw new RuntimeException(format("Translation not found: langCde=%s, key=%s", langCde, templateVariable));
                 }
             });
             return addedTranslations;

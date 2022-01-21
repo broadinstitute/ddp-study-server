@@ -1,7 +1,6 @@
 package org.broadinstitute.ddp.model.activity.definition;
 
 import java.lang.reflect.Type;
-import java.util.Collections;
 import java.util.Collection;
 import java.util.ArrayList;
 import java.util.List;
@@ -80,21 +79,30 @@ public abstract class ActivityDef {
     @SerializedName("canDeleteFirstInstance")
     protected Boolean canDeleteFirstInstance;
 
+    @SerializedName("showActivityStatus")
+    protected boolean showActivityStatus;
+
+    @NotNull
     @SerializedName("translatedNames")
     protected List<@Valid @NotNull Translation> translatedNames;
 
+    @NotNull
     @SerializedName("translatedSecondNames")
     protected List<@Valid @NotNull Translation> translatedSecondNames;
 
+    @NotNull
     @SerializedName("translatedTitles")
     protected List<@Valid @NotNull Translation> translatedTitles;
 
+    @NotNull
     @SerializedName("translatedSubtitles")
     protected List<@Valid @NotNull Translation> translatedSubtitles;
 
+    @NotNull
     @SerializedName("translatedDescriptions")
     protected List<@Valid @NotNull Translation> translatedDescriptions;
 
+    @NotNull
     @SerializedName("translatedSummaries")
     protected List<@Valid @NotNull SummaryTranslation> translatedSummaries;
 
@@ -233,7 +241,7 @@ public abstract class ActivityDef {
     }
 
     public List<Translation> getTranslatedNames() {
-        return translatedNames != null ? translatedNames : Collections.emptyList();
+        return this.translatedNames;
     }
 
     public void setTranslatedNames(List<Translation> translatedNames) {
@@ -241,7 +249,7 @@ public abstract class ActivityDef {
     }
 
     public List<Translation> getTranslatedSecondNames() {
-        return translatedSecondNames != null ? translatedSecondNames : Collections.emptyList();
+        return this.translatedSecondNames;
     }
 
     public void setTranslatedSecondNames(List<Translation> translatedSecondNames) {
@@ -249,7 +257,7 @@ public abstract class ActivityDef {
     }
 
     public List<Translation> getTranslatedTitles() {
-        return translatedTitles != null ? translatedTitles : Collections.emptyList();
+        return this.translatedTitles;
     }
 
     public void setTranslatedTitles(List<Translation> translatedTitles) {
@@ -257,7 +265,7 @@ public abstract class ActivityDef {
     }
 
     public List<Translation> getTranslatedSubtitles() {
-        return translatedSubtitles != null ? translatedSubtitles : Collections.emptyList();
+        return this.translatedSubtitles;
     }
 
     public void setTranslatedSubtitles(List<Translation> translatedSubtitles) {
@@ -265,7 +273,7 @@ public abstract class ActivityDef {
     }
 
     public List<Translation> getTranslatedDescriptions() {
-        return translatedDescriptions != null ? translatedDescriptions : Collections.emptyList();
+        return this.translatedDescriptions;
     }
 
     public void setTranslatedDescriptions(List<Translation> translatedDescriptions) {
@@ -273,7 +281,7 @@ public abstract class ActivityDef {
     }
 
     public List<SummaryTranslation> getTranslatedSummaries() {
-        return translatedSummaries != null ? translatedSummaries : Collections.emptyList();
+        return this.translatedSummaries;
     }
 
     public Template getNameTemplate() {
@@ -361,6 +369,10 @@ public abstract class ActivityDef {
         return canDeleteFirstInstance;
     }
 
+    public boolean showActivityStatus() {
+        return showActivityStatus;
+    }
+
     /**
      * Builder that helps construct common elements of an activity definition.
      *
@@ -394,6 +406,7 @@ public abstract class ActivityDef {
         protected boolean createOnParentCreation;
         protected boolean canDeleteInstances;
         protected Boolean canDeleteFirstInstance;
+        protected boolean showActivityStatus;
 
         /**
          * Returns the subclass builder instance to enable method chaining.
@@ -420,6 +433,7 @@ public abstract class ActivityDef {
             activity.createOnParentCreation = createOnParentCreation;
             activity.canDeleteInstances = canDeleteInstances;
             activity.canDeleteFirstInstance = canDeleteFirstInstance;
+            activity.showActivityStatus = showActivityStatus;
         }
 
         public T setParentActivityCode(String parentActivityCode) {
@@ -609,6 +623,11 @@ public abstract class ActivityDef {
 
         public T setCanDeleteFirstInstance(Boolean canDeleteFirstInstance) {
             this.canDeleteFirstInstance = canDeleteFirstInstance;
+            return self();
+        }
+
+        public T setShowActivityStatus(boolean showActivityStatus) {
+            this.showActivityStatus = showActivityStatus;
             return self();
         }
     }

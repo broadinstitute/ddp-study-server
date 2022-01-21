@@ -13,13 +13,11 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Collections;
 
 public class Template {
 
     public static final String VELOCITY_VAR_PREFIX = "$";
 
-    @NotNull
     @SerializedName("templateType")
     private TemplateType templateType;
 
@@ -30,6 +28,7 @@ public class Template {
     @SerializedName("templateText") 
     private final String templateText;
 
+    @NotNull
     @SerializedName("variables")
     private Collection<@Valid @NotNull TemplateVariable> variables = new ArrayList<>();
 
@@ -67,7 +66,7 @@ public class Template {
     }
 
     public TemplateType getTemplateType() {
-        return templateType;
+        return templateType != null ? templateType : TemplateType.TEXT;
     }
 
     public void setTemplateType(TemplateType templateType) {
@@ -87,7 +86,7 @@ public class Template {
     }
 
     public Collection<TemplateVariable> getVariables() {
-        return variables == null ? Collections.emptyList() : variables;
+        return this.variables;
     }
 
     public void setVariables(Collection<TemplateVariable> variables) {
