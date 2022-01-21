@@ -26,7 +26,7 @@ public class MatrixQuestionTest {
         thrown.expect(IllegalArgumentException.class);
         thrown.expectMessage("options");
         thrown.expectMessage("non-empty");
-        new MatrixQuestion("sid", 1, MatrixSelectMode.SINGLE, emptyList(), emptyList(),
+        new MatrixQuestion("sid", 1, MatrixSelectMode.SINGLE, false, 1, emptyList(), emptyList(),
                 emptyList(), emptyList(), emptyList());
     }
 
@@ -35,7 +35,7 @@ public class MatrixQuestionTest {
         thrown.expect(IllegalArgumentException.class);
         thrown.expectMessage("rows");
         thrown.expectMessage("non-empty");
-        new MatrixQuestion("sid", 1, MatrixSelectMode.SINGLE, emptyList(), emptyList(),
+        new MatrixQuestion("sid", 1, MatrixSelectMode.SINGLE, false, 1, emptyList(), emptyList(),
                 List.of(new MatrixOption("opt", 2, "DEFAULT")), emptyList(), emptyList());
     }
 
@@ -48,7 +48,7 @@ public class MatrixQuestionTest {
 
         MatrixOption option = new MatrixOption("opt", 2, "DEFAULT");
         MatrixRow row = new MatrixRow("row", 3, null);
-        MatrixQuestion question = new MatrixQuestion("sid", 1, MatrixSelectMode.SINGLE, emptyList(), emptyList(),
+        MatrixQuestion question = new MatrixQuestion("sid", 1, MatrixSelectMode.SINGLE, false, 1, emptyList(), emptyList(),
                 singletonList(option), singletonList(row), null);
         question.applyRenderedTemplates(rendered::get, ContentStyle.STANDARD);
 
@@ -67,7 +67,7 @@ public class MatrixQuestionTest {
 
         MatrixOption option = new MatrixOption("opt", 2, "DEFAULT");
         MatrixRow row = new MatrixRow("row", 3, null);
-        MatrixQuestion question = new MatrixQuestion("sid", 1, MatrixSelectMode.SINGLE, emptyList(), emptyList(),
+        MatrixQuestion question = new MatrixQuestion("sid", 1, MatrixSelectMode.SINGLE, false, 1, emptyList(), emptyList(),
                 singletonList(option), singletonList(row), null);
         question.applyRenderedTemplates(rendered::get, ContentStyle.BASIC);
 

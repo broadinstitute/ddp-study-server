@@ -281,6 +281,8 @@ public class QuestionCreatorHelper {
                 questionCreator.getAnswers(ctx, questionDef.getStableId()),
                 questionCreator.getValidationRules(ctx, questionDef),
                 questionDef.getSelectMode(),
+                questionDef.isRenderModal(),
+                questionDef.getModalTemplateId(),
                 matrixGroups,
                 matrixOptions,
                 matrixQuestionsRows

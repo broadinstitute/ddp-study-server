@@ -19,6 +19,14 @@ public final class MatrixQuestion extends Question<MatrixAnswer> {
     @SerializedName("selectMode")
     private final MatrixSelectMode selectMode;
 
+    @NotNull
+    @SerializedName("renderModal")
+    private boolean renderModal;
+
+    @NotNull
+    @SerializedName("modalTemplateId")
+    private long modalTemplateId;
+
     @SerializedName("groups")
     private final List<MatrixGroup> groups;
 
@@ -33,13 +41,16 @@ public final class MatrixQuestion extends Question<MatrixAnswer> {
     public MatrixQuestion(String stableId, long promptTemplateId, boolean isRestricted,
                           boolean isDeprecated, Boolean readonly, Long tooltipTemplateId, Long additionalInfoHeaderTemplateId,
                           Long additionalInfoFooterTemplateId, List<MatrixAnswer> answers, List<Rule<MatrixAnswer>> validations,
-                          MatrixSelectMode selectMode, List<MatrixGroup> groups, List<MatrixOption> matrixOptions,
+                          MatrixSelectMode selectMode, boolean renderModal, long modalTemplateId,
+                          List<MatrixGroup> groups, List<MatrixOption> matrixOptions,
                           List<MatrixRow> matrixQuestionRows) {
         super(QuestionType.MATRIX, stableId, promptTemplateId, isRestricted, isDeprecated, readonly, tooltipTemplateId,
                 additionalInfoHeaderTemplateId, additionalInfoFooterTemplateId, answers, validations);
 
         this.selectMode = MiscUtil.checkNonNull(selectMode, "selectMode");
         this.groups = groups;
+        this.renderModal = renderModal;
+        this.modalTemplateId = modalTemplateId;
 
         if (matrixOptions == null || matrixOptions.isEmpty()) {
             throw new IllegalArgumentException("options list needs to be non-empty");
@@ -58,6 +69,7 @@ public final class MatrixQuestion extends Question<MatrixAnswer> {
      * Construct an instance view of picklist question, where list of picklist options must be non-empty.
      */
     public MatrixQuestion(String stableId, long promptTemplateId, MatrixSelectMode selectMode,
+                          boolean renderModal, long modalTemplateId,
                           List<MatrixAnswer> answers, List<Rule<MatrixAnswer>> validations,
                           List<MatrixOption> options, List<MatrixRow> rows, List<MatrixGroup> groups) {
         this(stableId,
@@ -71,6 +83,8 @@ public final class MatrixQuestion extends Question<MatrixAnswer> {
                 answers,
                 validations,
                 selectMode,
+                renderModal,
+                modalTemplateId,
                 groups,
                 options,
                 rows);

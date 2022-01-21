@@ -102,7 +102,7 @@ public class RequiredRuleTest {
     @Test
     public void testValidate_matrixAnswer() {
         MatrixQuestion unused =
-                new MatrixQuestion("sid", 1L, MatrixSelectMode.SINGLE, emptyList(), emptyList(),
+                new MatrixQuestion("sid", 1L, MatrixSelectMode.SINGLE, false, 1, emptyList(), emptyList(),
                         List.of(new MatrixOption("opt 1", 3L, null, "DEFAULT", false),
                                 new MatrixOption("opt 2", 3L, null, "group", false)),
                         singletonList(new MatrixRow("row 1", 4L, null)),

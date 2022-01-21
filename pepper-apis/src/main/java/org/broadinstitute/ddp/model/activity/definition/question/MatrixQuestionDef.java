@@ -20,6 +20,14 @@ public final class MatrixQuestionDef extends QuestionDef {
     private final MatrixSelectMode selectMode;
 
     @NotNull
+    @SerializedName("renderModal")
+    private boolean renderModal;
+
+    @NotNull
+    @SerializedName("modalTemplateId")
+    private long modalTemplateId;
+
+    @NotNull
     @SerializedName("groups")
     private final List<@Valid @NotNull MatrixGroupDef> groups = new ArrayList<>();
 
@@ -47,7 +55,9 @@ public final class MatrixQuestionDef extends QuestionDef {
      */
     public MatrixQuestionDef(String stableId, boolean isRestricted, Template promptTemplate,
                              Template additionalInfoHeaderTemplate, Template additionalInfoFooterTemplate,
-                             List<RuleDef> validations, MatrixSelectMode selectMode, List<MatrixGroupDef> groups,
+                             List<RuleDef> validations, MatrixSelectMode selectMode,
+                             boolean renderModal, long modalTemplateId,
+                             List<MatrixGroupDef> groups,
                              List<MatrixOptionDef> options, List<MatrixRowDef> questions,
                              boolean hideNumber, boolean writeOnce) {
         super(QuestionType.MATRIX,
@@ -60,6 +70,8 @@ public final class MatrixQuestionDef extends QuestionDef {
                 hideNumber,
                 writeOnce);
         this.selectMode = MiscUtil.checkNonNull(selectMode, "selectMode");
+        this.renderModal = renderModal;
+        this.modalTemplateId = modalTemplateId;
 
         groups = (groups == null) ? new ArrayList<>() : groups;
         options = (options == null) ? new ArrayList<>() : options;
@@ -78,6 +90,14 @@ public final class MatrixQuestionDef extends QuestionDef {
         return selectMode;
     }
 
+    public boolean isRenderModal() {
+        return renderModal;
+    }
+
+    public long getModalTemplateId() {
+        return modalTemplateId;
+    }
+
     public List<MatrixGroupDef> getGroups() {
         return groups;
     }
@@ -93,6 +113,8 @@ public final class MatrixQuestionDef extends QuestionDef {
     public static final class Builder extends AbstractQuestionBuilder<Builder> {
 
         private MatrixSelectMode selectMode;
+        private boolean renderModal;
+        private long modalTemplateId;
 
         private final List<MatrixGroupDef> groups = new ArrayList<>();
         private final List<MatrixOptionDef> options = new ArrayList<>();
@@ -109,6 +131,16 @@ public final class MatrixQuestionDef extends QuestionDef {
 
         public Builder setSelectMode(MatrixSelectMode selectMode) {
             this.selectMode = selectMode;
+            return this;
+        }
+
+        public Builder setRenderModal(boolean renderModal) {
+            this.renderModal = renderModal;
+            return this;
+        }
+
+        public Builder setModalTemplateId(long modalTemplateId) {
+            this.modalTemplateId = modalTemplateId;
             return this;
         }
 
@@ -150,6 +182,8 @@ public final class MatrixQuestionDef extends QuestionDef {
                     getAdditionalInfoFooter(),
                     validations,
                     selectMode,
+                    renderModal,
+                    modalTemplateId,
                     groups,
                     options,
                     rows,

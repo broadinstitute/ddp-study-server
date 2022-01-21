@@ -15,15 +15,31 @@ public final class MatrixQuestionDto extends QuestionDto implements Serializable
 
     private MatrixSelectMode selectMode;
 
+    private boolean renderModal;
+
+    private long modalTemplateId;
+
     @JdbiConstructor
     public MatrixQuestionDto(@Nested QuestionDto questionDto,
-                             @ColumnName("matrix_select_mode") MatrixSelectMode selectMode) {
+                             @ColumnName("matrix_select_mode") MatrixSelectMode selectMode,
+                             @ColumnName("render_modal") boolean renderModal,
+                             @ColumnName("modal_template_id") long modalTemplateId) {
         super(questionDto);
         this.selectMode = selectMode;
+        this.renderModal = renderModal;
+        this.modalTemplateId = modalTemplateId;
     }
 
     public MatrixSelectMode getSelectMode() {
         return selectMode;
+    }
+
+    public boolean isRenderModal() {
+        return renderModal;
+    }
+
+    public long getModalTemplateId() {
+        return modalTemplateId;
     }
 
     @Override

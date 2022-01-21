@@ -611,7 +611,7 @@ public interface QuestionDao extends SqlObject {
         return new MatrixQuestion(dto.getStableId(), dto.getPromptTemplateId(),
                 dto.isRestricted(), dto.isDeprecated(), isReadonly, dto.getTooltipTemplateId(),
                 dto.getAdditionalInfoHeaderTemplateId(), dto.getAdditionalInfoFooterTemplateId(),
-                picklistAnswers, rules, dto.getSelectMode(), groups, options, questions);
+                picklistAnswers, rules, dto.getSelectMode(), dto.isRenderModal(), dto.getModalTemplateId(), groups, options, questions);
     }
 
     /**
@@ -1328,7 +1328,8 @@ public interface QuestionDao extends SqlObject {
 
         insertBaseQuestion(activityId, matrix, revisionId);
 
-        int numInserted = getJdbiMatrixQuestion().insert(matrix.getQuestionId(), matrix.getSelectMode());
+        int numInserted = getJdbiMatrixQuestion().insert(matrix.getQuestionId(), matrix.getSelectMode(),
+                                                         matrix.isRenderModal(), matrix.getModalTemplateId());
 
         if (numInserted != 1) {
             throw new DaoException("Inserted " + numInserted + " for picklist question " + matrix.getStableId());
@@ -2064,6 +2065,8 @@ public interface QuestionDao extends SqlObject {
         var builder = MatrixQuestionDef
                 .builder(dto.getSelectMode(), dto.getStableId(), prompt)
                 .setSelectMode(dto.getSelectMode())
+                .setRenderModal(dto.isRenderModal())
+                .setModalTemplateId(dto.getModalTemplateId())
                 .addGroups(groups)
                 .addOptions(options)
                 .addRows(questions);
