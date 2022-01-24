@@ -251,6 +251,8 @@ public class ActivityDefTranslationsProcessor {
                 ((MatrixQuestionDef) questionDef).getGroups().forEach(this::enrichMatrixGroupWithTranslations);
                 ((MatrixQuestionDef) questionDef).getOptions().forEach(this::enrichMatrixGroupWithTranslations);
                 ((MatrixQuestionDef) questionDef).getRows().forEach(this::enrichMatrixOptionWithTranslations);
+                Template modalTemplate = ((MatrixQuestionDef) questionDef).getModalTemplate();
+                addTemplateTranslations(modalTemplate, allTranslations);
                 break;
             case ACTIVITY_INSTANCE_SELECT:
             case AGREEMENT:
