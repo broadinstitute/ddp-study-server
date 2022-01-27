@@ -37,7 +37,6 @@ import org.broadinstitute.ddp.model.activity.instance.answer.SelectedPicklistOpt
 import org.broadinstitute.ddp.model.activity.instance.answer.SelectedMatrixCell;
 import org.broadinstitute.ddp.model.activity.instance.answer.MatrixAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
-import org.broadinstitute.ddp.model.activity.types.NumericType;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
 import org.jdbi.v3.core.result.LinkedHashMapRowReducer;
 import org.jdbi.v3.core.result.RowView;
@@ -120,9 +119,6 @@ public interface AnswerDao extends SqlObject {
             createAnswerFileValue(answerId, (FileAnswer) answer);
         } else if (type == QuestionType.NUMERIC) {
             NumericAnswer ans = (NumericAnswer) answer;
-            if (ans.getNumericType() != NumericType.INTEGER) {
-                throw new DaoException("Unhandled numeric type: " + ans.getNumericType());
-            }
             Long value = ((NumericIntegerAnswer) ans).getValue();
             DBUtils.checkInsert(1, answerSql.insertNumericIntValue(answerId, value));
         } else if (type == QuestionType.PICKLIST) {
@@ -214,9 +210,6 @@ public interface AnswerDao extends SqlObject {
             updateAnswerFileValue(answerId, (FileAnswer) newAnswer);
         } else if (type == QuestionType.NUMERIC) {
             NumericAnswer ans = (NumericAnswer) newAnswer;
-            if (ans.getNumericType() != NumericType.INTEGER) {
-                throw new DaoException("Unhandled numeric type: " + ans.getNumericType());
-            }
             Long value = ((NumericIntegerAnswer) ans).getValue();
             DBUtils.checkInsert(1, answerSql.updateNumericIntValueById(answerId, value));
         } else if (type == QuestionType.PICKLIST) {
@@ -492,13 +485,8 @@ public interface AnswerDao extends SqlObject {
                     answer = new FileAnswer(answerId, questionStableId, answerGuid, info, actInstanceGuid);
                     break;
                 case NUMERIC:
-                    var numericType = NumericType.valueOf(view.getColumn("na_numeric_type", String.class));
-                    if (numericType == NumericType.INTEGER) {
-                        answer = new NumericIntegerAnswer(answerId, questionStableId, answerGuid,
-                                view.getColumn("na_int_value", Long.class), actInstanceGuid);
-                    } else {
-                        throw new DaoException("Unhandled numeric answer type " + numericType);
-                    }
+                    answer = new NumericIntegerAnswer(answerId, questionStableId, answerGuid,
+                            view.getColumn("na_int_value", Long.class), actInstanceGuid);
                     break;
                 case PICKLIST:
                     var picklistMap = isChildAnswer ? childAnswers : container;

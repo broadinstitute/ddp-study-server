@@ -43,7 +43,6 @@ import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
 import org.broadinstitute.ddp.model.activity.types.DateFieldType;
 import org.broadinstitute.ddp.model.activity.types.DateRenderMode;
 import org.broadinstitute.ddp.model.activity.types.MatrixSelectMode;
-import org.broadinstitute.ddp.model.activity.types.NumericType;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
 import org.broadinstitute.ddp.model.activity.types.TextInputType;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
@@ -339,7 +338,6 @@ public class AnswerDaoTest extends TxnAwareBaseTest {
 
             assertTrue(created.getAnswerId() > 0);
             assertEquals(QuestionType.NUMERIC, created.getQuestionType());
-            assertEquals(NumericType.INTEGER, ((NumericAnswer) created).getNumericType());
             assertEquals(25L, (long) created.getValue());
 
             NumericIntegerAnswer updatedNumber = new NumericIntegerAnswer(null, act.getNumericIntQuestion().getStableId(), null, 100L);

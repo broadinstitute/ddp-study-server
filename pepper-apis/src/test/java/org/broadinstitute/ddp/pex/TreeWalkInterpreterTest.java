@@ -64,7 +64,6 @@ import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
 import org.broadinstitute.ddp.model.activity.types.DateFieldType;
 import org.broadinstitute.ddp.model.activity.types.DateRenderMode;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
-import org.broadinstitute.ddp.model.activity.types.NumericType;
 import org.broadinstitute.ddp.model.activity.types.PicklistRenderMode;
 import org.broadinstitute.ddp.model.activity.types.PicklistSelectMode;
 import org.broadinstitute.ddp.model.activity.types.MatrixSelectMode;
@@ -176,7 +175,6 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
         numericStableId = "PEX_NUMERIC_" + timestamp;
         NumericQuestionDef numericDef = NumericQuestionDef.builder().setStableId(numericStableId)
                 .setPrompt(Template.text("numeric prompt"))
-                .setNumericType(NumericType.INTEGER)
                 .build();
 
         compositeDef = CompositeQuestionDef.builder()

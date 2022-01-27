@@ -86,7 +86,6 @@ import org.broadinstitute.ddp.model.activity.types.DateRenderMode;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.broadinstitute.ddp.model.activity.types.InstitutionType;
 import org.broadinstitute.ddp.model.activity.types.MatrixSelectMode;
-import org.broadinstitute.ddp.model.activity.types.NumericType;
 import org.broadinstitute.ddp.model.activity.types.PicklistRenderMode;
 import org.broadinstitute.ddp.model.activity.types.PicklistSelectMode;
 import org.broadinstitute.ddp.model.activity.types.TemplateType;
@@ -391,7 +390,6 @@ public class DataExporterTest extends TxnAwareBaseTest {
                     .build();
 
             NumericQuestionDef numericDef = NumericQuestionDef.builder().setStableId("TEST_NUMERICQ")
-                    .setNumericType(NumericType.INTEGER)
                     .setPrompt(new Template(TemplateType.TEXT, null, "numeric prompt"))
                     .build();
 
@@ -768,7 +766,7 @@ public class DataExporterTest extends TxnAwareBaseTest {
                                     .builder(TextInputType.ESSAY, "Q_TEXT", Template.text("text prompt"))
                                     .build()),
                             new QuestionBlockDef(NumericQuestionDef
-                                    .builder(NumericType.INTEGER, "Q_NUMERIC", Template.text("numeric prompt"))
+                                    .builder("Q_NUMERIC", Template.text("numeric prompt"))
                                     .build()),
                             new QuestionBlockDef(FileQuestionDef
                                     .builder("Q_FILE", Template.text("file prompt"))

@@ -8,7 +8,6 @@ import java.util.List;
 
 import org.broadinstitute.ddp.model.activity.instance.answer.NumericIntegerAnswer;
 import org.broadinstitute.ddp.model.activity.instance.question.NumericQuestion;
-import org.broadinstitute.ddp.model.activity.types.NumericType;
 import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
@@ -23,7 +22,7 @@ public class IntRangeRuleTest {
 
     @BeforeClass
     public static void setup() {
-        unused = new NumericQuestion("sid", 1L, 2L, false, false, false, null, null, null, List.of(), List.of(), NumericType.INTEGER);
+        unused = new NumericQuestion("sid", 1L, 2L, false, false, false, null, null, null, List.of(), List.of());
     }
 
     @Test

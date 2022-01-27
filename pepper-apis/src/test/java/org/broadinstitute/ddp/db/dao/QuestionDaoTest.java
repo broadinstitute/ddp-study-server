@@ -101,7 +101,6 @@ import org.broadinstitute.ddp.model.activity.instance.validation.Rule;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
 import org.broadinstitute.ddp.model.activity.types.DateFieldType;
 import org.broadinstitute.ddp.model.activity.types.DateRenderMode;
-import org.broadinstitute.ddp.model.activity.types.NumericType;
 import org.broadinstitute.ddp.model.activity.types.OrientationType;
 import org.broadinstitute.ddp.model.activity.types.PicklistRenderMode;
 import org.broadinstitute.ddp.model.activity.types.PicklistSelectMode;
@@ -1963,7 +1962,7 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
         TransactionWrapper.useTxn(handle -> {
             Template placeholder = Template.text("some placeholder");
             NumericQuestionDef questionDef = NumericQuestionDef
-                    .builder(NumericType.INTEGER, sid, prompt)
+                    .builder(sid, prompt)
                     .setPlaceholderTemplate(placeholder)
                     .addValidation(new IntRangeRuleDef(Template.text("int_range"), 5L, 100L))
                     .build();
@@ -1989,7 +1988,6 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
             assertEquals(prompt.getTemplateId(), (Long) actual.getPromptTemplateId());
 
             NumericQuestion numericQuestion = (NumericQuestion) actual;
-            assertEquals(NumericType.INTEGER, numericQuestion.getNumericType());
             assertEquals(placeholder.getTemplateId(), numericQuestion.getPlaceholderTemplateId());
 
             assertEquals(1, numericQuestion.getValidations().size());
@@ -2001,7 +1999,6 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
             assertEquals(1, numericQuestion.getAnswers().size());
             assertEquals(QuestionType.NUMERIC, numericQuestion.getAnswers().get(0).getQuestionType());
             NumericAnswer numericAnswer = numericQuestion.getAnswers().get(0);
-            assertEquals(NumericType.INTEGER, numericAnswer.getNumericType());
             assertEquals((Long) 25L, ((NumericIntegerAnswer) numericAnswer).getValue());
 
             handle.rollback();

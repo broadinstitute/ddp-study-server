@@ -25,7 +25,6 @@ import org.broadinstitute.ddp.model.activity.instance.answer.CompositeAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.NumericIntegerAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
-import org.broadinstitute.ddp.model.activity.types.NumericType;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
 import org.broadinstitute.ddp.model.copy.CopyAnswerLocation;
 import org.broadinstitute.ddp.model.copy.CopyConfiguration;
@@ -170,7 +169,7 @@ public class CopyExecutorTest extends TxnAwareBaseTest {
                     .withBoolQuestion(true)
                     .withTextQuestion(true)
                     .withCompositeQuestion(true, NumericQuestionDef
-                            .builder(NumericType.INTEGER, "child-num", Template.text("child-num-prompt"))
+                            .builder("child-num", Template.text("child-num-prompt"))
                             .build())
                     .build(handle, testData.getUserId(), testData.getStudyGuid());
             long instance1Id = createInstance(handle, act.getDef().getActivityId()).getId();

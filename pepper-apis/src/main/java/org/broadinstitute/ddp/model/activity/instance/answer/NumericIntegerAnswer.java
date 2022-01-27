@@ -1,7 +1,6 @@
 package org.broadinstitute.ddp.model.activity.instance.answer;
 
 import com.google.gson.annotations.SerializedName;
-import org.broadinstitute.ddp.model.activity.types.NumericType;
 
 /**
  * A numeric answer that only supports integers, i.e. whole numbers. Represented using a `long` to cover a wider range of integers.
@@ -12,12 +11,12 @@ public class NumericIntegerAnswer extends NumericAnswer<Long> {
     private Long value;
 
     public NumericIntegerAnswer(Long answerId, String questionStableId, String answerGuid, Long value) {
-        super(answerId, questionStableId, answerGuid, NumericType.INTEGER);
+        super(answerId, questionStableId, answerGuid);
         this.value = value;
     }
 
     public NumericIntegerAnswer(Long answerId, String questionStableId, String answerGuid, Long value, String actInstanceGuid) {
-        super(answerId, questionStableId, answerGuid, NumericType.INTEGER, actInstanceGuid);
+        super(answerId, questionStableId, answerGuid, actInstanceGuid);
         this.value = value;
     }
 
