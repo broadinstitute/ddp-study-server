@@ -386,15 +386,11 @@ Answer.Integer:
     - $ref: '#/Answer'
     - type: object
       required:
-        - numericType
         - type
       properties:
         type:
           type: string
           default: NUMERIC
-        numericType:
-          type: string
-          default: INTEGER
         value:
           type: integer
           nullable: true
@@ -1769,15 +1765,11 @@ Question.Numeric:
     - type: object
       required:
         - answers
-        - numericType
       properties:
         placeholderText:
           type: string
           nullable: true
           description: if present, this text string can be used as a placeholder hint
-        numericType:
-          type: string
-          default: INTEGER
         answers:
           type: array
           items:
