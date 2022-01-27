@@ -1529,7 +1529,7 @@ Question:
       COMPOSITE: '#/Question.Composite'
       DATE: '#/Question.Date'
       FILE: '#/Question.File'
-      NUMERIC: '#/Question.Numeric'
+      NUMERIC: '#/Question.Integer'
       DECIMAL: '#/Question.Decimal'
       PICKLIST: '#/Question.Picklist'
       MATRIX: '#/Question.Matrix'
@@ -1759,7 +1759,7 @@ Question.File:
           type: array
           items:
             $ref: '#/Answer.File'
-Question.Numeric:
+Question.Integer:
   allOf:
     - $ref: '#/Question'
     - type: object
