@@ -21,16 +21,7 @@ import org.broadinstitute.ddp.model.activity.definition.question.PicklistOptionD
 import org.broadinstitute.ddp.model.activity.definition.question.TextQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.activity.instance.FormResponse;
-import org.broadinstitute.ddp.model.activity.instance.answer.AgreementAnswer;
-import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
-import org.broadinstitute.ddp.model.activity.instance.answer.BoolAnswer;
-import org.broadinstitute.ddp.model.activity.instance.answer.CompositeAnswer;
-import org.broadinstitute.ddp.model.activity.instance.answer.DateAnswer;
-import org.broadinstitute.ddp.model.activity.instance.answer.DateValue;
-import org.broadinstitute.ddp.model.activity.instance.answer.NumericIntegerAnswer;
-import org.broadinstitute.ddp.model.activity.instance.answer.PicklistAnswer;
-import org.broadinstitute.ddp.model.activity.instance.answer.SelectedPicklistOption;
-import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
+import org.broadinstitute.ddp.model.activity.instance.answer.*;
 import org.broadinstitute.ddp.model.activity.types.DateFieldType;
 import org.broadinstitute.ddp.model.activity.types.DateRenderMode;
 import org.broadinstitute.ddp.model.activity.types.EventTriggerType;
@@ -189,7 +180,7 @@ public class CopyAnswerEventActionTest extends TxnAwareBaseTest {
             answerDao.createAnswer(testData.getUserId(), instance1.getId(),
                     new DateAnswer(null, act1.getDateFullQuestion().getStableId(), null, 1987, 3, 14));
             answerDao.createAnswer(testData.getUserId(), instance1.getId(),
-                    new NumericIntegerAnswer(null, act1.getNumericIntQuestion().getStableId(), null, 21L));
+                    new NumericAnswer(null, act1.getNumericIntQuestion().getStableId(), null, 21L));
             answerDao.createAnswer(testData.getUserId(), instance1.getId(),
                     new TextAnswer(null, act1.getTextQuestion().getStableId(), null, "from-source"));
             answerDao.createAnswer(testData.getUserId(), instance1.getId(),
@@ -287,7 +278,7 @@ public class CopyAnswerEventActionTest extends TxnAwareBaseTest {
             actualAnswer = actualInstance.getAnswer(act2.getNumericIntQuestion().getStableId());
             assertNotNull(actualAnswer);
             assertEquals(QuestionType.NUMERIC, actualAnswer.getQuestionType());
-            assertEquals((Long) 21L, ((NumericIntegerAnswer) actualAnswer).getValue());
+            assertEquals((Long) 21L, ((NumericAnswer) actualAnswer).getValue());
 
             actualAnswer = actualInstance.getAnswer(act2.getTextQuestion().getStableId());
             assertNotNull(actualAnswer);

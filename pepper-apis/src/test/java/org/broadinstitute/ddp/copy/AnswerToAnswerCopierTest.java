@@ -26,18 +26,7 @@ import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.TextQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.activity.instance.FormResponse;
-import org.broadinstitute.ddp.model.activity.instance.answer.AgreementAnswer;
-import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
-import org.broadinstitute.ddp.model.activity.instance.answer.BoolAnswer;
-import org.broadinstitute.ddp.model.activity.instance.answer.CompositeAnswer;
-import org.broadinstitute.ddp.model.activity.instance.answer.DateAnswer;
-import org.broadinstitute.ddp.model.activity.instance.answer.DateValue;
-import org.broadinstitute.ddp.model.activity.instance.answer.NumericIntegerAnswer;
-import org.broadinstitute.ddp.model.activity.instance.answer.PicklistAnswer;
-import org.broadinstitute.ddp.model.activity.instance.answer.SelectedPicklistOption;
-import org.broadinstitute.ddp.model.activity.instance.answer.MatrixAnswer;
-import org.broadinstitute.ddp.model.activity.instance.answer.SelectedMatrixCell;
-import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
+import org.broadinstitute.ddp.model.activity.instance.answer.*;
 import org.broadinstitute.ddp.model.activity.types.DateFieldType;
 import org.broadinstitute.ddp.model.activity.types.DateRenderMode;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
@@ -171,7 +160,7 @@ public class AnswerToAnswerCopierTest extends TxnAwareBaseTest {
         TransactionWrapper.useTxn(handle -> {
             var sourceInstance = newDummyInstance();
             var sourceQuestion = newDummyQuestion(QuestionType.NUMERIC, "q1");
-            sourceInstance.putAnswer(new NumericIntegerAnswer(1L, "q1", "a", 35L));
+            sourceInstance.putAnswer(new NumericAnswer(1L, "q1", "a", 35L));
 
             TestFormActivity act = TestFormActivity.builder()
                     .withNumericIntQuestion(true)
@@ -189,7 +178,7 @@ public class AnswerToAnswerCopierTest extends TxnAwareBaseTest {
                     .findAnswerById(targetInstance.getAnswer(targetSid).getAnswerId()).orElse(null);
             assertNotNull(actual);
             assertEquals(QuestionType.NUMERIC, actual.getQuestionType());
-            assertEquals((Long) 35L, ((NumericIntegerAnswer) actual).getValue());
+            assertEquals((Long) 35L, ((NumericAnswer) actual).getValue());
 
             handle.rollback();
         });

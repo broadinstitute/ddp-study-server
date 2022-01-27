@@ -13,20 +13,7 @@ import org.broadinstitute.ddp.db.dto.CompositeQuestionDto;
 import org.broadinstitute.ddp.db.dto.QuestionDto;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.activity.instance.FormResponse;
-import org.broadinstitute.ddp.model.activity.instance.answer.ActivityInstanceSelectAnswer;
-import org.broadinstitute.ddp.model.activity.instance.answer.AgreementAnswer;
-import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
-import org.broadinstitute.ddp.model.activity.instance.answer.AnswerRow;
-import org.broadinstitute.ddp.model.activity.instance.answer.BoolAnswer;
-import org.broadinstitute.ddp.model.activity.instance.answer.CompositeAnswer;
-import org.broadinstitute.ddp.model.activity.instance.answer.DateAnswer;
-import org.broadinstitute.ddp.model.activity.instance.answer.DateValue;
-import org.broadinstitute.ddp.model.activity.instance.answer.NumericIntegerAnswer;
-import org.broadinstitute.ddp.model.activity.instance.answer.PicklistAnswer;
-import org.broadinstitute.ddp.model.activity.instance.answer.SelectedPicklistOption;
-import org.broadinstitute.ddp.model.activity.instance.answer.MatrixAnswer;
-import org.broadinstitute.ddp.model.activity.instance.answer.SelectedMatrixCell;
-import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
+import org.broadinstitute.ddp.model.activity.instance.answer.*;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
 import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
@@ -159,8 +146,8 @@ public class AnswerToAnswerCopier {
             DateValue value = ((DateAnswer) sourceAnswer).getValue();
             targetAnswer = new DateAnswer(null, targetQuestion.getStableId(), null, value);
         } else if (type == QuestionType.NUMERIC) {
-            Long value = ((NumericIntegerAnswer) sourceAnswer).getValue();
-            targetAnswer = new NumericIntegerAnswer(null, targetQuestion.getStableId(), null, value);
+            Long value = ((NumericAnswer) sourceAnswer).getValue();
+            targetAnswer = new NumericAnswer(null, targetQuestion.getStableId(), null, value);
         } else if (type == QuestionType.PICKLIST) {
             List<SelectedPicklistOption> value = ((PicklistAnswer) sourceAnswer).getValue();
             targetAnswer = new PicklistAnswer(null, targetQuestion.getStableId(), null, value);

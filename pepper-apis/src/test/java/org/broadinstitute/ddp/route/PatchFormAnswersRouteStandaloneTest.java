@@ -1903,7 +1903,7 @@ public class PatchFormAnswersRouteStandaloneTest {
         assertNotNull(answer);
         assertEquals(guid, answer.getAnswerGuid());
         assertEquals(numericIntegerSid, answer.getQuestionStableId());
-        assertEquals(25L, answer.getValue());
+        assertEquals(25L, (long) answer.getValue());
     }
 
     @Test
@@ -1933,7 +1933,7 @@ public class PatchFormAnswersRouteStandaloneTest {
                 new AnswerCachedDao(handle).findAnswerByGuid(guid).get());
 
         assertNotNull(answer);
-        assertEquals(75L, answer.getValue());
+        assertEquals(75L, (long) answer.getValue());
     }
 
     @Test

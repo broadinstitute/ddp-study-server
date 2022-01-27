@@ -31,7 +31,6 @@ import org.broadinstitute.ddp.model.activity.instance.answer.DateValue;
 import org.broadinstitute.ddp.model.activity.instance.answer.FileAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.FileInfo;
 import org.broadinstitute.ddp.model.activity.instance.answer.NumericAnswer;
-import org.broadinstitute.ddp.model.activity.instance.answer.NumericIntegerAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.PicklistAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.SelectedPicklistOption;
 import org.broadinstitute.ddp.model.activity.instance.answer.SelectedMatrixCell;
@@ -119,8 +118,7 @@ public interface AnswerDao extends SqlObject {
             createAnswerFileValue(answerId, (FileAnswer) answer);
         } else if (type == QuestionType.NUMERIC) {
             NumericAnswer ans = (NumericAnswer) answer;
-            Long value = ((NumericIntegerAnswer) ans).getValue();
-            DBUtils.checkInsert(1, answerSql.insertNumericIntValue(answerId, value));
+            DBUtils.checkInsert(1, answerSql.insertNumericIntValue(answerId, ans.getValue()));
         } else if (type == QuestionType.PICKLIST) {
             if (questionDef == null) {
                 createAnswerPicklistValue(instanceId, answerId, (PicklistAnswer) answer);
@@ -210,8 +208,7 @@ public interface AnswerDao extends SqlObject {
             updateAnswerFileValue(answerId, (FileAnswer) newAnswer);
         } else if (type == QuestionType.NUMERIC) {
             NumericAnswer ans = (NumericAnswer) newAnswer;
-            Long value = ((NumericIntegerAnswer) ans).getValue();
-            DBUtils.checkInsert(1, answerSql.updateNumericIntValueById(answerId, value));
+            DBUtils.checkInsert(1, answerSql.updateNumericIntValueById(answerId, ans.getValue()));
         } else if (type == QuestionType.PICKLIST) {
             if (questionDef == null) {
                 updateAnswerPicklistValue(answerId, (PicklistAnswer) newAnswer);
@@ -485,7 +482,7 @@ public interface AnswerDao extends SqlObject {
                     answer = new FileAnswer(answerId, questionStableId, answerGuid, info, actInstanceGuid);
                     break;
                 case NUMERIC:
-                    answer = new NumericIntegerAnswer(answerId, questionStableId, answerGuid,
+                    answer = new NumericAnswer(answerId, questionStableId, answerGuid,
                             view.getColumn("na_int_value", Long.class), actInstanceGuid);
                     break;
                 case PICKLIST:

@@ -72,13 +72,7 @@ import org.broadinstitute.ddp.model.activity.definition.question.TextQuestionDef
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.activity.instance.ActivityResponse;
 import org.broadinstitute.ddp.model.activity.instance.FormResponse;
-import org.broadinstitute.ddp.model.activity.instance.answer.BoolAnswer;
-import org.broadinstitute.ddp.model.activity.instance.answer.DateAnswer;
-import org.broadinstitute.ddp.model.activity.instance.answer.DateValue;
-import org.broadinstitute.ddp.model.activity.instance.answer.FileAnswer;
-import org.broadinstitute.ddp.model.activity.instance.answer.FileInfo;
-import org.broadinstitute.ddp.model.activity.instance.answer.NumericIntegerAnswer;
-import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
+import org.broadinstitute.ddp.model.activity.instance.answer.*;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
 import org.broadinstitute.ddp.model.activity.types.ActivityType;
 import org.broadinstitute.ddp.model.activity.types.DateFieldType;
@@ -810,7 +804,7 @@ public class DataExporterTest extends TxnAwareBaseTest {
                         new ActivityInstanceStatusDto(2L, 1L, 1L, lastUpdatedAt, InstanceStatusType.COMPLETE));
                 instance.putAnswer(new BoolAnswer(1L, "Q_BOOL", "guid", true));
                 instance.putAnswer(new TextAnswer(2L, "Q_TEXT", "guid", "john smith"));
-                instance.putAnswer(new NumericIntegerAnswer(3L, "Q_NUMERIC", "guid", 25L));
+                instance.putAnswer(new NumericAnswer(3L, "Q_NUMERIC", "guid", 25L));
                 instance.putAnswer(new DateAnswer(4L, "Q_BIRTHDAY", "guid", new DateValue(1978, 5, 16)));
                 instance.putAnswer(new FileAnswer(5L, "Q_FILE", "guid", new FileInfo(1L, "file1", "file.pdf", 123L)));
                 participant.addResponse(instance);

@@ -70,7 +70,6 @@ import org.broadinstitute.ddp.model.activity.instance.answer.DateValue;
 import org.broadinstitute.ddp.model.activity.instance.answer.FileAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.FileInfo;
 import org.broadinstitute.ddp.model.activity.instance.answer.NumericAnswer;
-import org.broadinstitute.ddp.model.activity.instance.answer.NumericIntegerAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.PicklistAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.SelectedPicklistOption;
 import org.broadinstitute.ddp.model.activity.instance.answer.MatrixAnswer;
@@ -626,7 +625,7 @@ public class PatchFormAnswersRoute implements Route {
             if (value != null && !value.isJsonNull()) {
                 intValue = value.getAsLong();
             }
-            return new NumericIntegerAnswer(null, numericDto.getStableId(), guid, intValue, actInstanceGuid);
+            return new NumericAnswer(null, numericDto.getStableId(), guid, intValue, actInstanceGuid);
         } else {
             return null;
         }

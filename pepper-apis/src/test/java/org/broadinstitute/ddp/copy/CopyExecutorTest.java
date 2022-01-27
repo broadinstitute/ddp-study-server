@@ -20,10 +20,7 @@ import org.broadinstitute.ddp.db.dao.UserProfileDao;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.model.activity.definition.question.NumericQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
-import org.broadinstitute.ddp.model.activity.instance.answer.BoolAnswer;
-import org.broadinstitute.ddp.model.activity.instance.answer.CompositeAnswer;
-import org.broadinstitute.ddp.model.activity.instance.answer.NumericIntegerAnswer;
-import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
+import org.broadinstitute.ddp.model.activity.instance.answer.*;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
 import org.broadinstitute.ddp.model.copy.CopyAnswerLocation;
@@ -182,8 +179,8 @@ public class CopyExecutorTest extends TxnAwareBaseTest {
             answerDao.createAnswer(testData.getUserId(), instance1Id, answer);
 
             var compAnswer = new CompositeAnswer(null, act.getCompositeQuestion().getStableId(), null);
-            compAnswer.addRowOfChildAnswers(new NumericIntegerAnswer(null, "child-num", null, 1L));
-            compAnswer.addRowOfChildAnswers(new NumericIntegerAnswer(null, "child-num", null, 25L));
+            compAnswer.addRowOfChildAnswers(new NumericAnswer(null, "child-num", null, 1L));
+            compAnswer.addRowOfChildAnswers(new NumericAnswer(null, "child-num", null, 25L));
             answerDao.createAnswer(testData.getUserId(), instance1Id, compAnswer);
 
             var config = new CopyConfiguration(testData.getStudyId(), true,

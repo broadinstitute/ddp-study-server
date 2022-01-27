@@ -75,7 +75,6 @@ import org.broadinstitute.ddp.model.activity.instance.answer.CompositeAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.DateAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.DateValue;
 import org.broadinstitute.ddp.model.activity.instance.answer.NumericAnswer;
-import org.broadinstitute.ddp.model.activity.instance.answer.NumericIntegerAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.PicklistAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.SelectedPicklistOption;
 import org.broadinstitute.ddp.model.activity.instance.answer.MatrixAnswer;
@@ -1974,7 +1973,7 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
                     .generateTestFormActivityInstanceForUser(handle, version1.getActivityId(), testData.getUserGuid());
 
             handle.attach(AnswerDao.class).createAnswer(testData.getUserId(), instanceDto.getId(),
-                    new NumericIntegerAnswer(null, sid, null, 25L));
+                    new NumericAnswer(null, sid, null, 25L));
 
             NumericQuestionDto questionDto = (NumericQuestionDto) handle.attach(JdbiQuestion.class)
                     .findQuestionDtoById(questionDef.getQuestionId()).get();
@@ -1999,7 +1998,7 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
             assertEquals(1, numericQuestion.getAnswers().size());
             assertEquals(QuestionType.NUMERIC, numericQuestion.getAnswers().get(0).getQuestionType());
             NumericAnswer numericAnswer = numericQuestion.getAnswers().get(0);
-            assertEquals((Long) 25L, ((NumericIntegerAnswer) numericAnswer).getValue());
+            assertEquals((Long) 25L, numericAnswer.getValue());
 
             handle.rollback();
         });
