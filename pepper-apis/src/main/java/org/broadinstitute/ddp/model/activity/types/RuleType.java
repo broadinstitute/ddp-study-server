@@ -12,5 +12,6 @@ public enum RuleType {
     REGEX,
     REQUIRED,
     UNIQUE,
+    UNIQUE_VALUE,
     YEAR_REQUIRED
 }

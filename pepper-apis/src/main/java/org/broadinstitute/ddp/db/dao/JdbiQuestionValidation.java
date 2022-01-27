@@ -111,6 +111,9 @@ public interface JdbiQuestionValidation extends SqlObject {
                 case UNIQUE:
                     ruleDto = view.getRow(RuleDto.class);
                     break;
+                case UNIQUE_VALUE:
+                    ruleDto = view.getRow(RuleDto.class);
+                    break;
                 default:
                     throw new DaoException("Unknown validation rule type " + type);
             }
