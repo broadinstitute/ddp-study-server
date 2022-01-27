@@ -5,7 +5,8 @@
                    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
 
     <changeSet author="Dmitrii Eliseev" id="20220127-drop-numeric-type column">
-        <dropForeignKeyConstraint baseTableName="numeric_question" constraintName="numeric_question_question_fk"/>
+        <dropIndex tableName="numeric_question" indexName=""/>
+        <dropForeignKeyConstraint baseTableName="numeric_question" constraintName="numeric_question_numeric_type_fk"/>
         <dropColumn tableName="numeric_question" columnName="numeric_type_id"/>
     </changeSet>
 
