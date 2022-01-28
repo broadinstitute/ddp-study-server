@@ -12,13 +12,17 @@ parameters:
   project:
     type: enum
     enum: ["dss", "dsm","api-docs", "nothing"]
-    default: "dss"
+    default: "nothing"
 
 workflows:
-  conditional-workflow:
+  build-test-workflow:
+    when:
+      and:
+        - << pipeline.parameters.on_demand >>
+        - equal: ["nothing", project]
     jobs:
       - path-filtering/filter:
-          base-revision: DSMMavenRefactor
+          base-revision: develop
           config-path: .circleci/main-config.yml
           mapping: |
             pepper-apis/.* action "build-test"
@@ -26,7 +30,23 @@ workflows:
             pepper-apis/(dss-.*)|(ddp-.*)|(pex-antlr)|(housekeeping)|(studybuilder-cli)/.* dss true
             pepper-apis/(dsm-.*)|(ddp-.*)/.* dsm true
             pepper-apis/docs/.* api-docs true
-          filters:
+
+  build-test-deploy-workflow:
+    when:
+      and:
+        - << pipeline.parameters.on_demand >>
+        - equal: ["1", "2"]
+    jobs:
+      - path-filtering/filter:
+          base-revision: DSMMavenRefactor #todo rename to develop
+          config-path: .circleci/main-config.yml
+          mapping: |
+            pepper-apis/.* action "build-test-deploy"
+            pepper-apis/pom.xml dss true
+            pepper-apis/(dss-.*)|(ddp-.*)|(pex-antlr)|(housekeeping)|(studybuilder-cli)/.* dss true
+            pepper-apis/(dsm-.*)|(ddp-.*)/.* dsm true
+            pepper-apis/docs/.* api-docs true
+          filters: #todo get rid of this filter when done
             branches:
               only:
                 - DSMMavenRefactor-build
