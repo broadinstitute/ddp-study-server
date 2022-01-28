@@ -1010,7 +1010,7 @@ jobs:
         default: *docs-path
     steps:
       - run:
-          command: rmdir << parameters.docs_dir >>
+          command: rm -r << parameters.docs_dir >>
       - checkout:
           path: *repo_path
       - run:
