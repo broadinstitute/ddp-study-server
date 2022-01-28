@@ -1059,14 +1059,40 @@ parameters:
 workflows:
   version: 2
 
-  all-build-test-workflow: #FOR PRs. build-test what has changed in branch
+#  all-build-test-workflow: #FOR PRs. build-test what has changed in branch
+#    when:
+#      equal: ["build-test", << pipeline.parameters.action >>]
+#    jobs:
+#      - dss-compile-and-run-test-suite-job
+#      - dss-parallel-compile-and-test-job:
+#          parallelism: *test_parallelism
+#      - build-api-docs-job
+#      - dsm-compile-and-run-tests-job
+
+  dss-build-test-workflow:
     when:
-      equal: ["build-test", << pipeline.parameters.action >>]
+      and:
+        - equal: ["build-test", << pipeline.parameters.action >>]
+        - << pipeline.parameters.dss >>
+      jobs:
+        - dss-compile-and-run-test-suite-job
+        - dss-parallel-compile-and-test-job:
+            parallelism: *test_parallelism
+
+  dsm-build-test-workflow: #FOR PRs. build-test what has changed in branch
+    when:
+      and:
+        - equal: ["build-test", << pipeline.parameters.action >>]
+        - << pipeline.parameters.dsm >>
     jobs:
-      - dss-compile-and-run-test-suite-job
-      - dss-parallel-compile-and-test-job:
-          parallelism: *test_parallelism
       - build-api-docs-job
+
+  api-docs-build-test-workflow: #FOR PRs. build-test what has changed in branch
+    when:
+      and:
+        - equal: ["build-test", << pipeline.parameters.action >>]
+        - << pipeline.parameters.api-docs >>
+    jobs:
       - dsm-compile-and-run-tests-job
 
   all-build-test-deploy-workflow: #FOR develop. build-test-deploy what has changed
@@ -1091,8 +1117,7 @@ workflows:
 
   dss-store-build-workflow: #store dss builds in buckets
     when:
-      equal: ["build-test", << pipeline.parameters.action >>]
-    #  equal: ["build-test-store", << pipeline.parameters.action >>]
+      equal: ["build-test-store", << pipeline.parameters.action >>]
     jobs:
       - dss-compile-and-run-test-suite-job #running tests before we store!
       - dss-parallel-compile-and-test-job:
