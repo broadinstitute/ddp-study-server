@@ -762,8 +762,6 @@ jobs:
       - when:
           condition: << pipeline.parameters.api-docs >>
           steps:
-            - run:
-                command: ls -l /home/circleci/repo/pepper-apis/docs/specification
             - checkout
             - when:
                 condition: << parameters.allow_skip_job >>
