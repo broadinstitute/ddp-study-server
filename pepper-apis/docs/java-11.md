@@ -17,7 +17,7 @@ To install:
 $ brew tap homebrew/cask-versions
 $ brew cask install java11
 ```
-You can also setup jenv to switch between Java 8 and Java 11:
+You can also setup jenv to switch between Java 8 and Java 11: 
 ```
 $ brew install jenv
 $ echo 'export PATH="$HOME/.jenv/bin:$PATH"' >> ~/.bash_profile
