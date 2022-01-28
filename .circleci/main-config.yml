@@ -873,45 +873,45 @@ jobs:
       allow_skip_job:
         type: boolean
         default: false
+      pepper_apis_path:
+        type: string
+        default: *pepper_apis_path
     steps:
       - run:
           command: |
-            echo 'dss-parallel-compile-and-test-job: dss=<< pipeline.parameters.dss >>'
-      - when:
-          condition: << pipeline.parameters.dss >>
-          steps:
-            - checkout:
-                path: *repo_path
-            - setup-shared-env
-            - render-configs
-            - run-maven-with-pepper-options:
-                phase: install
-                module: dss-core
-                restore_m2_cache: true
-                skip_checkstyle: true
-                additional_options: -am
-            - create-test-dbs
-            - start-ddp-test-server # starts DDP server. And execute Liquibase DB population
-            - compute-parallel-test-split
-            - restore-ddp-cache
-            - run-maven-with-pepper-options:
-                phase: test
-                skip_tests: false
-                module: dss-core
-                additional_options: '-PCircleciParallelBuild -Dsurefire.excludesFile=$IGNORE_CLASS_LIST_PATH -DcachingDisabled=true'
-                save_m2_cache: true
-            - save-ddp-cache
-            - run:
-                name: 'Check node index to save workspace only once'
-                command: |
-                  if [[ "$CIRCLE_NODE_INDEX" -ne 0 ]]; then
-                    echo "Skip persist workspace on this node";
-                    circleci step halt;
-                  fi
-            - persist_to_workspace:
-                root: *root_path
-                paths:
-                  - repo
+            rmdir << parameters.pepper_apis_path >>
+      - checkout:
+          path: *repo_path
+      - setup-shared-env
+      - render-configs
+      - run-maven-with-pepper-options:
+          phase: install
+          module: dss-core
+          restore_m2_cache: true
+          skip_checkstyle: true
+          additional_options: -am
+      - create-test-dbs
+      - start-ddp-test-server # starts DDP server. And execute Liquibase DB population
+      - compute-parallel-test-split
+      - restore-ddp-cache
+      - run-maven-with-pepper-options:
+          phase: test
+          skip_tests: false
+          module: dss-core
+          additional_options: '-PCircleciParallelBuild -Dsurefire.excludesFile=$IGNORE_CLASS_LIST_PATH -DcachingDisabled=true'
+          save_m2_cache: true
+      - save-ddp-cache
+      - run:
+          name: 'Check node index to save workspace only once'
+          command: |
+            if [[ "$CIRCLE_NODE_INDEX" -ne 0 ]]; then
+              echo "Skip persist workspace on this node";
+              circleci step halt;
+            fi
+      - persist_to_workspace:
+          root: *root_path
+          paths:
+            - repo
 
   dss-store-jar-job:
     executor:
