@@ -1,5 +1,6 @@
 package org.broadinstitute.ddp.analytics;
 
+
 public class GoogleAnalyticsMetrics {
 
     public static final String EVENT_CATEGORY_USER_REGISTRATION = "user-registration";
