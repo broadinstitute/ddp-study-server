@@ -21,7 +21,7 @@ workflows:
           base-revision: DSMMavenRefactor
           config-path: .circleci/main-config.yml
           mapping: |
-            pepper-apis/* action "build-test"
+            pepper-apis/.* action "build-test"
             pepper-apis/pom.xml "dss" true
             pepper-apis/(dss-.*)|(ddp-.*)|(pex-antlr)|(housekeeping)|(studybuilder-cli)/.* "dss" true
             pepper-apis/(dsm-.*)|(ddp-.*)/.* "dsm" true
