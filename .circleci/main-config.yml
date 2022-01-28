@@ -27,6 +27,8 @@ references:
                   /home/circleci/.m2/repository
   pepper_apis_path: &pepper_apis_path
                       /home/circleci/repo/pepper-apis
+  docs-path: &docs-path
+                   /home/circleci/repo/pepper-apis/docs
   api-spec-path: &api-spec-path
                    /home/circleci/repo/pepper-apis/docs/specification
   circleci_path: &circleci_path
@@ -1003,12 +1005,12 @@ jobs:
       name: build-deploy-executor
     working_directory: *api-spec-path
     parameters:
-      spec_dir:
+      docs_dir:
         type: string
-        default: *api-spec-path
+        default: *docs-path
     steps:
       - run:
-          command: rmdir << parameters.spec_dir >>
+          command: rmdir << parameters.docs_dir >>
       - checkout:
           path: *repo_path
       - run:
