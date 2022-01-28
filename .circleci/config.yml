@@ -19,7 +19,7 @@ workflows:
     when:
       and:
         - << pipeline.parameters.on_demand >>
-        - equal: ["nothing", project]
+        - equal: ["nothing", << pipeline.parameters.project >>]
     jobs:
       - path-filtering/filter:
           base-revision: develop
