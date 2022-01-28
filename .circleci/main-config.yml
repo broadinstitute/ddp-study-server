@@ -1074,10 +1074,10 @@ workflows:
       and:
         - equal: ["build-test", << pipeline.parameters.action >>]
         - << pipeline.parameters.dss >>
-      jobs:
-        - dss-compile-and-run-test-suite-job
-        - dss-parallel-compile-and-test-job:
-            parallelism: *test_parallelism
+    jobs:
+      - dss-compile-and-run-test-suite-job
+      - dss-parallel-compile-and-test-job:
+          parallelism: *test_parallelism
 
   dsm-build-test-workflow: #FOR PRs. build-test what has changed in branch
     when:
