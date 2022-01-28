@@ -1011,7 +1011,7 @@ jobs:
     steps:
       - run:
           command: |
-            rmdir << parameters.pepper_apis_path >>
+            rm -r << parameters.pepper_apis_path >>
       - checkout:
           path: *repo_path
       - run:
