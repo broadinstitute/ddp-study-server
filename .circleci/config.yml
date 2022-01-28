@@ -34,8 +34,8 @@ workflows:
   build-test-deploy-workflow:
     when:
       and:
-        - << pipeline.parameters.on_demand >>
-        - equal: ["1", "2"]
+        - not: << pipeline.parameters.on_demand >>
+        - equal: ["nothing", << pipeline.parameters.project >>]
     jobs:
       - path-filtering/filter:
           base-revision: DSMMavenRefactor #todo rename to develop
