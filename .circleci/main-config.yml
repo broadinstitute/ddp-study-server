@@ -760,7 +760,7 @@ jobs:
           condition: << pipeline.parameters.api-docs >>
           steps:
             - run:
-                command: ls -l /home/circleci/repo
+                command: ls -l /home/circleci/repo/pepper-apis
             - checkout:
                 path: *repo_path
             - when:
