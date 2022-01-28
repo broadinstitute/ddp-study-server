@@ -773,8 +773,8 @@ jobs:
             - run:
                 name: Build docs
                 command: |
-                cd << parameters.spec_dir >>
-                ./build.sh documentation
+                  cd << parameters.spec_dir >>
+                  ./build.sh documentation
 
   dsm-compile-and-run-tests-job:
     executor:
