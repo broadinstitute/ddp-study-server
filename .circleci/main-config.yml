@@ -1126,6 +1126,20 @@ workflows:
     jobs:
       - build-deploy-docs-job
 
+  dss-build-test-deploy-workflow: #FOR develop. build-test-deploy what has changed
+    when:
+      and:
+        - equal: ["build-test-deploy", << pipeline.parameters.action >>]
+        - << pipeline.parameters.dss >>
+    jobs:
+      - dss-compile-and-run-test-suite-job
+      - dss-parallel-compile-and-test-job:
+          parallelism: *test_parallelism
+      - dss-deploy-jar-from-workspace-job:
+          requires:
+            - dss-parallel-compile-and-test-job
+            - dss-compile-and-run-test-suite-job
+
   dss-store-build-workflow: #store dss builds in buckets
     when:
       equal: ["build-test-store", << pipeline.parameters.action >>]
