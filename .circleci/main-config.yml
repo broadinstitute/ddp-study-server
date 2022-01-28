@@ -756,23 +756,12 @@ jobs:
         type: string
         default: *api-spec-path
     steps:
+      - checkout
       - run:
+          name: Build docs
           command: |
-            echo 'build-api-docs-job: api-docs=<< pipeline.parameters.api-docs >>'
-      - when:
-          condition: << pipeline.parameters.api-docs >>
-          steps:
-            - checkout
-            - when:
-                condition: << parameters.allow_skip_job >>
-                steps:
-                  - match-file-patterns-or-halt:
-                      file_patterns: "pepper-apis/docs/specification"
-            - run:
-                name: Build docs
-                command: |
-                  cd << parameters.spec_dir >>
-                  ./build.sh documentation
+            cd << parameters.spec_dir >>
+            ./build.sh documentation
 
   dsm-compile-and-run-tests-job:
     executor:
@@ -1013,7 +1002,13 @@ jobs:
     executor:
       name: build-deploy-executor
     working_directory: *api-spec-path
+    parameters:
+      spec_dir:
+        type: string
+        default: *api-spec-path
     steps:
+      - run:
+          command: rmdir << parameters.spec_dir >>
       - checkout:
           path: *repo_path
       - run:
@@ -1098,25 +1093,35 @@ workflows:
     jobs:
       - build-api-docs-job
 
-  all-build-test-deploy-workflow: #FOR develop. build-test-deploy what has changed
+#  all-build-test-deploy-workflow: #FOR develop. build-test-deploy what has changed
+#    when:
+#      equal:
+#        - ["build-test-deploy", << pipeline.parameters.action >>]
+#        - << pipeline.parameters.api-docs >>
+#    jobs:
+#      - dss-compile-and-run-test-suite-job
+#      - dss-parallel-compile-and-test-job:
+#          parallelism: *test_parallelism
+#      - dss-deploy-jar-from-workspace-job:
+#          requires:
+#            - dss-parallel-compile-and-test-job
+#            - dss-compile-and-run-test-suite-job
+#      - build-api-docs-job
+#      - build-deploy-docs-job:
+#          requires:
+#            - build-api-docs-job
+#      - dsm-compile-and-run-tests-job
+#      - deploy-dsm-job:
+#          requires:
+#            - dsm-compile-and-run-tests-job
+
+  api-docs-build-test-deploy-workflow: #FOR develop. build-test-deploy what has changed
     when:
-      equal: ["build-test-deploy", << pipeline.parameters.action >>]
+      and:
+        - equal: ["build-test-deploy", << pipeline.parameters.action >>]
+        - << pipeline.parameters.api-docs >>
     jobs:
-      - dss-compile-and-run-test-suite-job
-      - dss-parallel-compile-and-test-job:
-          parallelism: *test_parallelism
-      - dss-deploy-jar-from-workspace-job:
-          requires:
-            - dss-parallel-compile-and-test-job
-            - dss-compile-and-run-test-suite-job
-      - build-api-docs-job
-      - build-deploy-docs-job:
-          requires:
-            - build-api-docs-job
-      - dsm-compile-and-run-tests-job
-      - deploy-dsm-job:
-          requires:
-            - dsm-compile-and-run-tests-job
+      - build-deploy-docs-job
 
   dss-store-build-workflow: #store dss builds in buckets
     when:
