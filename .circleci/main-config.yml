@@ -1066,6 +1066,8 @@ workflows:
       - dsm-compile-and-run-tests-job
 
   all-build-test-deploy-workflow: #FOR develop. build-test-deploy what has changed
+    when:
+      equal: ["build-test-deploy", << pipeline.parameters.action >>]
     jobs:
       - dss-compile-and-run-test-suite-job
       - dss-parallel-compile-and-test-job:
@@ -1084,6 +1086,8 @@ workflows:
             - dsm-compile-and-run-tests-job
 
   dss-store-build-workflow: #store dss builds in buckets
+    when:
+      equal: ["build-test-store", << pipeline.parameters.action >>]
     jobs:
       - dss-compile-and-run-test-suite-job #running tests before we store!
       - dss-parallel-compile-and-test-job:
@@ -1095,11 +1099,15 @@ workflows:
             - dss-parallel-compile-and-test-job
 
   dss-deploy-workflow: #deploy dss builds in buckets
+    when:
+      equal: ["retrieve-deploy", << pipeline.parameters.action >>]
     jobs:
       - deploy-dss-stored-jar-job
       - build-deploy-docs-job
   
   dsm-store-build-workflow: #store dsm build in buckets
+    when:
+      equal: ["1", "2"]
     jobs:
       - dsm-compile-and-run-tests-job
       - dsm-store-jar-job:
