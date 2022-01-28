@@ -1005,12 +1005,13 @@ jobs:
       name: build-deploy-executor
     working_directory: *api-spec-path
     parameters:
-      docs_dir:
+      pepper_apis_path:
         type: string
-        default: *docs-path
+        default: *pepper_apis_path
     steps:
       - run:
-          command: rm -r << parameters.docs_dir >>
+          command: |
+            rmdir << parameters.pepper_apis_path >>
       - checkout:
           path: *repo_path
       - run:
