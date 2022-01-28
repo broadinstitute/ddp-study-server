@@ -834,10 +834,16 @@ jobs:
       allow_skip_job:
         type: boolean
         default: false
+      pepper_apis_path:
+        type: string
+        default: *pepper_apis_path
     steps:
       - run:
           command: |
             echo 'dss-compile-and-run-test-suite-job: dss=<< pipeline.parameters.dss >>'
+      - run:
+          command: |
+            rmdir << parameters.pepper_apis_path >>
       - checkout:
           path: *repo_path
       - setup-shared-env
