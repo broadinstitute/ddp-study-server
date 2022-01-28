@@ -1091,7 +1091,8 @@ workflows:
 
   dss-store-build-workflow: #store dss builds in buckets
     when:
-      equal: ["build-test-store", << pipeline.parameters.action >>]
+      ["build-test-deploy", << pipeline.parameters.action >>]
+    #  equal: ["build-test-store", << pipeline.parameters.action >>]
     jobs:
       - dss-compile-and-run-test-suite-job #running tests before we store!
       - dss-parallel-compile-and-test-job:
