@@ -51,13 +51,6 @@ workflows:
             branches:
               only:
                 - develop
-
-  build-test-store-workflow:
-    when:
-      and:
-        - not: << pipeline.parameters.on_demand >>
-        - equal: ["nothing", << pipeline.parameters.project >>]
-    jobs:
       - continuation/continue:
           configuration_path: .circleci/main-config.yml
           parameters: '{"action":"build-test-store","dss": true,"api-docs": true}'
@@ -74,6 +67,14 @@ workflows:
               only:
                 - /^dsm_rc_.*/
                 - /^dsm_hotfix_.*/
+
+#  build-test-store-workflow:
+#    when:
+#      and:
+#        - not: << pipeline.parameters.on_demand >>
+#        - equal: ["nothing", << pipeline.parameters.project >>]
+#    jobs:
+
 
 
 
