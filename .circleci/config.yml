@@ -39,7 +39,7 @@ workflows:
         - equal: ["nothing", << pipeline.parameters.project >>]
     jobs:
       - path-filtering/filter:
-          base-revision: DSMMavenRefactor #todo rename to develop? What is the base-revision when you are merging back to develop?
+          base-revision: develop
           config-path: .circleci/main-config.yml
           mapping: |
             pepper-apis/.* action "build-test-deploy"
@@ -50,7 +50,7 @@ workflows:
           filters: #todo get rid of this filter when done
             branches:
               only:
-                - DSMMavenRefactor-build
+                - develop
 
   dss-api-build-test-store-workflow:
     when:
