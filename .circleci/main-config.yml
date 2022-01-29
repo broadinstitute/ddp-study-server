@@ -810,7 +810,7 @@ jobs:
       - restore-ddp-cache
       - run-maven-with-pepper-options:
           module: dsm-core
-          phase: validate
+          phase: validate #NOTE: NOT RUNNING TESTS YET!
           skip_tests: false
           skip_checkstyle: true
           restore_m2_cache: false
@@ -1139,6 +1139,17 @@ workflows:
           requires:
             - dss-parallel-compile-and-test-job
             - dss-compile-and-run-test-suite-job
+
+  dsm-build-test-deploy-workflow:
+    when:
+      and:
+        - equal: ["build-test-deploy", << pipeline.parameters.action >>]
+        - << pipeline.parameters.dsm >>
+    jobs:
+      - dsm-compile-and-run-tests-job
+      - dsm-store-jar-job:
+          requires:
+            - dsm-compile-and-run-tests-job
 
   dss-store-build-workflow: #store dss builds in buckets
     when:
