@@ -4,6 +4,7 @@ setup: true
 
 orbs:
   path-filtering: circleci/path-filtering@0.1.1
+  continuation: circleci/continuation@0.2.0
 
 parameters:
   on_demand:
@@ -27,8 +28,8 @@ workflows:
           mapping: |
             pepper-apis/.* action "build-test"
             pepper-apis/pom.xml dss true
-            pepper-apis/(dss-.*)|(ddp-.*)|(pex-antlr)|(housekeeping)|(studybuilder-cli)/.* dss true
-            pepper-apis/(dsm-.*)|(ddp-.*)/.* dsm true
+            pepper-apis/((dss-.*)|(ddp-.*)|(pex-antlr)|(housekeeping)|(studybuilder-cli))/.* dss true
+            pepper-apis/((dsm-.*)|(ddp-.*))/.* dsm true
             pepper-apis/docs/.* api-docs true
 
   build-test-deploy-workflow:
@@ -38,15 +39,60 @@ workflows:
         - equal: ["nothing", << pipeline.parameters.project >>]
     jobs:
       - path-filtering/filter:
-          base-revision: DSMMavenRefactor #todo rename to develop
+          base-revision: develop
           config-path: .circleci/main-config.yml
           mapping: |
             pepper-apis/.* action "build-test-deploy"
             pepper-apis/pom.xml dss true
-            pepper-apis/(dss-.*)|(ddp-.*)|(pex-antlr)|(housekeeping)|(studybuilder-cli)/.* dss true
-            pepper-apis/(dsm-.*)|(ddp-.*)/.* dsm true
+            pepper-apis/((dss-.*)|(ddp-.*)|(pex-antlr)|(housekeeping)|(studybuilder-cli))/.* dss true
+            pepper-apis/((dsm-.*)|(ddp-.*))/.* dsm true
             pepper-apis/docs/.* api-docs true
           filters: #todo get rid of this filter when done
             branches:
               only:
-                - DSMMavenRefactor-build
+                - develop
+      - continuation/continue:
+          configuration_path: .circleci/main-config.yml
+          parameters: '{"action":"build-test-store","dss": true,"api-docs": true}'
+          filters:
+            branches:
+              only:
+                - /^rc_.*/
+                - /^hotfix_.*/
+      - continuation/continue:
+          configuration_path: .circleci/main-config.yml
+          parameters: '{"action":"build-test-store","dsm": true}'
+          filters:
+            branches:
+              only:
+                - /^dsm_rc_.*/
+                - /^dsm_hotfix_.*/
+      - continuation/continue:
+          configuration_path: .circleci/main-config.yml
+          parameters: '{"action":"retrieve-deploy","dss": true,"api-docs": true}'
+          filters:
+            branches:
+              only:
+                - test
+                - staging
+                - production
+      - continuation/continue:
+          configuration_path: .circleci/main-config.yml
+          parameters: '{"action":"retrieve-deploy","dsm": true}'
+          filters:
+            branches:
+              only:
+                - dsm_test
+                - dsm_staging
+                - dsm_production
+
+#  build-test-store-workflow:
+#    when:
+#      and:
+#        - not: << pipeline.parameters.on_demand >>
+#        - equal: ["nothing", << pipeline.parameters.project >>]
+#    jobs:
+
+
+
+

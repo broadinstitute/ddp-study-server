@@ -919,25 +919,19 @@ jobs:
       name: build-deploy-executor
     working_directory: *pepper_apis_path
     steps:
-      - run:
-          command: |
-            echo 'dss-store-jar-job: dss=<< pipeline.parameters.dss >>'
-      - when:
-          condition: << pipeline.parameters.dss >>
-          steps:
-            - attach_workspace:
-                at: *root_path
-            - setup-shared-env
-            - build-jar:
-                module: dss-server
-            - store-jar:
-                module: dss-server
-                jar_base_name: DataDonationPlatform
-            - build-jar:
-                module: housekeeping
-            - store-jar:
-                module: housekeeping
-                jar_base_name: Housekeeping
+      - attach_workspace:
+          at: *root_path
+      - setup-shared-env
+      - build-jar:
+          module: dss-server
+      - store-jar:
+          module: dss-server
+          jar_base_name: DataDonationPlatform
+      - build-jar:
+          module: housekeeping
+      - store-jar:
+          module: housekeeping
+          jar_base_name: Housekeeping
 
   dsm-store-jar-job:
     executor:
@@ -998,7 +992,7 @@ jobs:
           path: *repo_path
       - setup-shared-env
       # Deploy Housekeeping first so hopefully liquibase migrations
-      # are ran before DDP boots up.
+      # run before DDP boots up.
       - retrieve-jar:
           jar_base_name: Housekeeping
       - deploy-jar:
@@ -1009,6 +1003,19 @@ jobs:
       - deploy-jar:
           jar_base_name: DataDonationPlatform
           deploy_config_file_dir: ../output-config
+
+  deploy-dsm-stored-jar-job:
+    executor:
+      name: build-deploy-executor
+    working_directory: *pepper_apis_path
+    steps:
+      - checkout:
+          path: *repo_path
+      - setup-shared-env
+      - retrieve-jar:
+          jar_base_name: DSMServer
+      - deploy-dsm-jar
+
 
   build-deploy-docs-job:
     executor:
@@ -1101,7 +1108,9 @@ workflows:
   api-docs-build-test-workflow: #FOR PRs. build-test what has changed in branch
     when:
       and:
-        - equal: ["build-test", << pipeline.parameters.action >>]
+        - or:
+            - equal: ["build-test", << pipeline.parameters.action >>]
+            - equal: ["build-test-store", << pipeline.parameters.action >>]
         - << pipeline.parameters.api-docs >>
     jobs:
       - build-api-docs-job
@@ -1161,14 +1170,15 @@ workflows:
           requires:
             - dsm-compile-and-run-tests-job
 
-  dss-store-build-workflow: #store dss builds in buckets
+  dss-build-test-store-workflow: #store dss builds in buckets
     when:
-      equal: ["build-test-store", << pipeline.parameters.action >>]
+      and:
+        - equal: ["build-test-store", << pipeline.parameters.action >>]
+        - << pipeline.parameters.dss >>
     jobs:
       - dss-compile-and-run-test-suite-job #running tests before we store!
       - dss-parallel-compile-and-test-job:
           parallelism: *test_parallelism
-      - build-api-docs-job #doesn't really store, but let's build anyways
       - dss-store-jar-job:
           requires:
             - dss-compile-and-run-test-suite-job
@@ -1176,14 +1186,26 @@ workflows:
 
   dss-deploy-workflow: #deploy dss builds in buckets
     when:
-      equal: ["retrieve-deploy", << pipeline.parameters.action >>]
+      and:
+        - equal: ["retrieve-deploy", << pipeline.parameters.action >>]
+        - << pipeline.parameters.dss >>
     jobs:
       - deploy-dss-stored-jar-job
       - build-deploy-docs-job
 
-  dsm-store-build-workflow: #store dsm build in buckets
+  dsm-deploy-workflow: #deploy dsm builds in buckets
     when:
-      equal: ["1", "2"]
+      and:
+        - equal: ["retrieve-deploy", << pipeline.parameters.action >>]
+        - << pipeline.parameters.dsm >>
+    jobs:
+      - deploy-dsm-stored-jar-job
+
+  dsm-build-test-store-workflow: #store dsm build in buckets
+    when:
+      and:
+        - equal: ["build-test-store", << pipeline.parameters.action >>]
+        - << pipeline.parameters.dsm >>
     jobs:
       - dsm-compile-and-run-tests-job
       - dsm-store-jar-job:
