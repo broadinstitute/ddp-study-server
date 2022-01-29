@@ -1,8 +1,5 @@
 version: 2.1
 
-orbs:
-  path-filtering: circleci/path-filtering@0.0.1
-
 references:
   tcell_dir: &tcell_dir
                tcell
