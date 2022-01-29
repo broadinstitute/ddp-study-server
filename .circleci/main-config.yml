@@ -266,6 +266,7 @@ commands:
             mkdir -p $(dirname $JAR_FILE_PATH)
             gsutil cp  $JAR_FILE_URL $JAR_FILE_PATH
             echo ""
+
   render-secrets:
     description: Get secret <<parameters.secret_name>>
     parameters:
@@ -537,6 +538,9 @@ commands:
       additional_options:
         type: string
         default: ''
+      config_file_path:
+        type: string
+        default: output-build-config/testing-inmemorydb.conf
       skip_checkstyle:
         type: boolean
         default: true
@@ -578,7 +582,13 @@ commands:
             if [[ ! -d "$ddp_cache_dir" ]]; then
               mkdir -p "$ddp_cache_dir"
             fi
-            CONFIG_FILE_PATH=$(readlink -f output-build-config/testing-inmemorydb.conf)
+
+            CONFIG_FILE_OPTION=''
+            if [[ ! -z '<< parameters.config_file_path >>' ]]; then
+              CONFIG_FILE_PATH=$(readlink -f << parameters.config_file_path >>)
+              CONFIG_FILE_OPTION="-Dconfig.file=$CONFIG_FILE_PATH"
+            fi
+
             MODULES_OPTION=''
             if [[ ! -z '<<parameters.module>>' ]]; then
               MODULES_OPTION='-pl <<parameters.module>>'
@@ -589,7 +599,7 @@ commands:
                     $SKIPTESTS_OPTION \
                     -Dddp.cacheDir="$ddp_cache_dir" \
                     -Ditext.license=output-config/itextkey.xml \
-                    -Dconfig.file="$CONFIG_FILE_PATH"  \
+                    $CONFIG_FILE_OPTION  \
                     -Dmaven.repo.local=<< parameters.m2_repo >> <<parameters.additional_options>> \
                     $MODULES_OPTION
           background: <<parameters.background>>
@@ -794,6 +804,7 @@ jobs:
           phase: install
           skip_tests: true
           skip_checkstyle: false
+          config_file_path: ''
           additional_options: -am
           restore_m2_cache: true
           save_m2_cache: false
@@ -812,6 +823,7 @@ jobs:
           module: dsm-core
           phase: validate #NOTE: NOT RUNNING TESTS YET!
           skip_tests: false
+          config_file_path: ''
           skip_checkstyle: true
           restore_m2_cache: false
           save_m2_cache: true    #REMOVE WHEN DONE
