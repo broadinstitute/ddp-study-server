@@ -1160,7 +1160,7 @@ workflows:
         - << pipeline.parameters.dsm >>
     jobs:
       - dsm-compile-and-run-tests-job
-      - dsm-store-jar-job:
+      - deploy-dsm-job:
           requires:
             - dsm-compile-and-run-tests-job
 
