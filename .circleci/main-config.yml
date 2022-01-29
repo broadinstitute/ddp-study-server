@@ -919,25 +919,19 @@ jobs:
       name: build-deploy-executor
     working_directory: *pepper_apis_path
     steps:
-      - run:
-          command: |
-            echo 'dss-store-jar-job: dss=<< pipeline.parameters.dss >>'
-      - when:
-          condition: << pipeline.parameters.dss >>
-          steps:
-            - attach_workspace:
-                at: *root_path
-            - setup-shared-env
-            - build-jar:
-                module: dss-server
-            - store-jar:
-                module: dss-server
-                jar_base_name: DataDonationPlatform
-            - build-jar:
-                module: housekeeping
-            - store-jar:
-                module: housekeeping
-                jar_base_name: Housekeeping
+      - attach_workspace:
+          at: *root_path
+      - setup-shared-env
+      - build-jar:
+          module: dss-server
+      - store-jar:
+          module: dss-server
+          jar_base_name: DataDonationPlatform
+      - build-jar:
+          module: housekeeping
+      - store-jar:
+          module: housekeeping
+          jar_base_name: Housekeeping
 
   dsm-store-jar-job:
     executor:
