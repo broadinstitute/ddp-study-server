@@ -64,16 +64,16 @@ workflows:
           filters:
             branches:
               only:
-                - /^rc.*/
-                - /^hotfix.*/
+                - /^rc_.*/
+                - /^hotfix_.*/
       - continuation/continue:
           configuration_path: .circleci/main-config.yml
           parameters: '{"action":"build-test-store","dsm": true}'
           filters:
             branches:
               only:
-                - /^dsm_rc.*/
-                - /^dsm_hotfix.*/
+                - /^dsm_rc_.*/
+                - /^dsm_hotfix_.*/
 
 
 
