@@ -86,12 +86,6 @@ workflows:
                 - dsm_staging
                 - dsm_production
 
-#  build-test-store-workflow:
-#    when:
-#      and:
-#        - not: << pipeline.parameters.on_demand >>
-#        - equal: ["nothing", << pipeline.parameters.project >>]
-#    jobs:
 
 
 

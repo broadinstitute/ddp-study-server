@@ -145,6 +145,7 @@ commands:
             echo "Setting deployment ENVIRONMENT to $DEPLOY_ENV"
             echo "export ENVIRONMENT=$DEPLOY_ENV" >> $BASH_ENV
             source $BASH_ENV
+            source $BASH_ENV
 
   render-configs:
     description: render config files
@@ -1012,6 +1013,7 @@ jobs:
     steps:
       - checkout:
           path: *repo_path
+      - set-deployment-env # deleteme when done
       - setup-shared-env
       - retrieve-jar:
           jar_base_name: DSMServer
