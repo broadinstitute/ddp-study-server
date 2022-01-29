@@ -120,20 +120,21 @@ commands:
       - run:
           name: Determine deployment environment for branch << pipeline.git.branch >>
           command: |
+            shopt  -s extglob
             case "${CIRCLE_BRANCH}" in
             DSMMavenRefactor*) # REMOVE WHEN DONE
               DEPLOY_ENV=dev
             ;;
-            develop)
+            ?(*_)develop)
               DEPLOY_ENV=dev
             ;;
-            test)
+            ?(*_)test)
               DEPLOY_ENV=test
             ;;
-            staging)
+            ?(*_)staging)
               DEPLOY_ENV=staging
             ;;
-            production)
+            ?(*_)production)
               DEPLOY_ENV=prod
             ;;
             *)
