@@ -67,6 +67,24 @@ workflows:
               only:
                 - /^dsm_rc_.*/
                 - /^dsm_hotfix_.*/
+      - continuation/continue:
+          configuration_path: .circleci/main-config.yml
+          parameters: '{"action":"retrieve-deploy","dss": true,"api-docs": true}'
+          filters:
+            branches:
+              only:
+                - test
+                - staging
+                - production
+      - continuation/continue:
+          configuration_path: .circleci/main-config.yml
+          parameters: '{"action":"retrieve-deploy","dsm": true}'
+          filters:
+            branches:
+              only:
+                - dsm_test
+                - dsm_staging
+                - dsm_production
 
 #  build-test-store-workflow:
 #    when:
