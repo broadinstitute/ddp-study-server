@@ -985,8 +985,8 @@ jobs:
       name: build-deploy-executor
     working_directory: *pepper_apis_path
     steps:
-      - checkout:
-          path: *repo_path
+      - attach_workspace:
+          at: *root_path
       - setup-shared-env
       - build-jar:
           module: dsm-server
