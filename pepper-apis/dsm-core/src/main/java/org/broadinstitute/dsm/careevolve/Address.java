@@ -6,7 +6,6 @@ import org.apache.commons.lang3.StringUtils;
 
 public class Address {
 
-
     @SerializedName("Line1")
     private String line1;
 

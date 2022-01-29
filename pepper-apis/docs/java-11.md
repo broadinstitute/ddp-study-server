@@ -11,7 +11,6 @@ Oracle's JDK.
 On macOS, the preferred way is to use [Homebrew][brew]. You may also want a "version
 manager" to easily switch between Java versions, like the [jenv] tool.
 
-
 To install:
 
 ```
