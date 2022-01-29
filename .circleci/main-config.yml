@@ -828,6 +828,10 @@ jobs:
           restore_m2_cache: false
           save_m2_cache: true    #REMOVE WHEN DONE
       - save-ddp-cache
+      - persist_to_workspace:
+          root: *root_path
+          paths:
+            - repo
 
   dss-compile-and-run-test-suite-job:
     executor:
@@ -841,9 +845,6 @@ jobs:
         type: string
         default: *pepper_apis_path
     steps:
-      - run:
-          command: |
-            echo 'dss-compile-and-run-test-suite-job: dss=<< pipeline.parameters.dss >>'
       - run:
           command: |
             rmdir << parameters.pepper_apis_path >>
