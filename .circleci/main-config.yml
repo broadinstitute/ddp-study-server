@@ -1,8 +1,5 @@
 version: 2.1
 
-orbs:
-  path-filtering: circleci/path-filtering@0.0.1
-
 references:
   tcell_dir: &tcell_dir
                tcell
@@ -27,6 +24,8 @@ references:
                   /home/circleci/.m2/repository
   pepper_apis_path: &pepper_apis_path
                       /home/circleci/repo/pepper-apis
+  docs-path: &docs-path
+                   /home/circleci/repo/pepper-apis/docs
   api-spec-path: &api-spec-path
                    /home/circleci/repo/pepper-apis/docs/specification
   circleci_path: &circleci_path
@@ -264,6 +263,7 @@ commands:
             mkdir -p $(dirname $JAR_FILE_PATH)
             gsutil cp  $JAR_FILE_URL $JAR_FILE_PATH
             echo ""
+
   render-secrets:
     description: Get secret <<parameters.secret_name>>
     parameters:
@@ -535,6 +535,9 @@ commands:
       additional_options:
         type: string
         default: ''
+      config_file_path:
+        type: string
+        default: output-build-config/testing-inmemorydb.conf
       skip_checkstyle:
         type: boolean
         default: true
@@ -576,7 +579,13 @@ commands:
             if [[ ! -d "$ddp_cache_dir" ]]; then
               mkdir -p "$ddp_cache_dir"
             fi
-            CONFIG_FILE_PATH=$(readlink -f output-build-config/testing-inmemorydb.conf)
+
+            CONFIG_FILE_OPTION=''
+            if [[ ! -z '<< parameters.config_file_path >>' ]]; then
+              CONFIG_FILE_PATH=$(readlink -f << parameters.config_file_path >>)
+              CONFIG_FILE_OPTION="-Dconfig.file=$CONFIG_FILE_PATH"
+            fi
+
             MODULES_OPTION=''
             if [[ ! -z '<<parameters.module>>' ]]; then
               MODULES_OPTION='-pl <<parameters.module>>'
@@ -587,7 +596,7 @@ commands:
                     $SKIPTESTS_OPTION \
                     -Dddp.cacheDir="$ddp_cache_dir" \
                     -Ditext.license=output-config/itextkey.xml \
-                    -Dconfig.file="$CONFIG_FILE_PATH"  \
+                    $CONFIG_FILE_OPTION  \
                     -Dmaven.repo.local=<< parameters.m2_repo >> <<parameters.additional_options>> \
                     $MODULES_OPTION
           background: <<parameters.background>>
@@ -756,23 +765,12 @@ jobs:
         type: string
         default: *api-spec-path
     steps:
+      - checkout
       - run:
+          name: Build docs
           command: |
-            echo 'build-api-docs-job: api-docs=<< pipeline.parameters.api-docs >>'
-      - when:
-          condition: << pipeline.parameters.api-docs >>
-          steps:
-            - checkout
-            - when:
-                condition: << parameters.allow_skip_job >>
-                steps:
-                  - match-file-patterns-or-halt:
-                      file_patterns: "pepper-apis/docs/specification"
-            - run:
-                name: Build docs
-                command: |
-                  cd << parameters.spec_dir >>
-                  ./build.sh documentation
+            cd << parameters.spec_dir >>
+            ./build.sh documentation
 
   dsm-compile-and-run-tests-job:
     executor:
@@ -803,6 +801,7 @@ jobs:
           phase: install
           skip_tests: true
           skip_checkstyle: false
+          config_file_path: ''
           additional_options: -am
           restore_m2_cache: true
           save_m2_cache: false
@@ -819,12 +818,17 @@ jobs:
       - restore-ddp-cache
       - run-maven-with-pepper-options:
           module: dsm-core
-          phase: validate
+          phase: validate #NOTE: NOT RUNNING TESTS YET!
           skip_tests: false
+          config_file_path: ''
           skip_checkstyle: true
           restore_m2_cache: false
           save_m2_cache: true    #REMOVE WHEN DONE
       - save-ddp-cache
+      - persist_to_workspace:
+          root: *root_path
+          paths:
+            - repo
 
   dss-compile-and-run-test-suite-job:
     executor:
@@ -838,9 +842,6 @@ jobs:
         type: string
         default: *pepper_apis_path
     steps:
-      - run:
-          command: |
-            echo 'dss-compile-and-run-test-suite-job: dss=<< pipeline.parameters.dss >>'
       - run:
           command: |
             rmdir << parameters.pepper_apis_path >>
@@ -981,8 +982,8 @@ jobs:
       name: build-deploy-executor
     working_directory: *pepper_apis_path
     steps:
-      - checkout:
-          path: *repo_path
+      - attach_workspace:
+          at: *root_path
       - setup-shared-env
       - build-jar:
           module: dsm-server
@@ -1013,7 +1014,14 @@ jobs:
     executor:
       name: build-deploy-executor
     working_directory: *api-spec-path
+    parameters:
+      pepper_apis_path:
+        type: string
+        default: *pepper_apis_path
     steps:
+      - run:
+          command: |
+            rm -r << parameters.pepper_apis_path >>
       - checkout:
           path: *repo_path
       - run:
@@ -1098,9 +1106,41 @@ workflows:
     jobs:
       - build-api-docs-job
 
-  all-build-test-deploy-workflow: #FOR develop. build-test-deploy what has changed
+#  all-build-test-deploy-workflow: #FOR develop. build-test-deploy what has changed
+#    when:
+#      equal:
+#        - ["build-test-deploy", << pipeline.parameters.action >>]
+#        - << pipeline.parameters.api-docs >>
+#    jobs:
+#      - dss-compile-and-run-test-suite-job
+#      - dss-parallel-compile-and-test-job:
+#          parallelism: *test_parallelism
+#      - dss-deploy-jar-from-workspace-job:
+#          requires:
+#            - dss-parallel-compile-and-test-job
+#            - dss-compile-and-run-test-suite-job
+#      - build-api-docs-job
+#      - build-deploy-docs-job:
+#          requires:
+#            - build-api-docs-job
+#      - dsm-compile-and-run-tests-job
+#      - deploy-dsm-job:
+#          requires:
+#            - dsm-compile-and-run-tests-job
+
+  api-docs-build-test-deploy-workflow: #FOR develop. build-test-deploy what has changed
     when:
-      equal: ["build-test-deploy", << pipeline.parameters.action >>]
+      and:
+        - equal: ["build-test-deploy", << pipeline.parameters.action >>]
+        - << pipeline.parameters.api-docs >>
+    jobs:
+      - build-deploy-docs-job
+
+  dss-build-test-deploy-workflow: #FOR develop. build-test-deploy what has changed
+    when:
+      and:
+        - equal: ["build-test-deploy", << pipeline.parameters.action >>]
+        - << pipeline.parameters.dss >>
     jobs:
       - dss-compile-and-run-test-suite-job
       - dss-parallel-compile-and-test-job:
@@ -1109,10 +1149,13 @@ workflows:
           requires:
             - dss-parallel-compile-and-test-job
             - dss-compile-and-run-test-suite-job
-      - build-api-docs-job
-      - build-deploy-docs-job:
-          requires:
-            - build-api-docs-job
+
+  dsm-build-test-deploy-workflow:
+    when:
+      and:
+        - equal: ["build-test-deploy", << pipeline.parameters.action >>]
+        - << pipeline.parameters.dsm >>
+    jobs:
       - dsm-compile-and-run-tests-job
       - deploy-dsm-job:
           requires:
