@@ -27,8 +27,8 @@ workflows:
           mapping: |
             pepper-apis/.* action "build-test"
             pepper-apis/pom.xml dss true
-            pepper-apis/(dss-.*)|(ddp-.*)|(pex-antlr)|(housekeeping)|(studybuilder-cli)/.* dss true
-            pepper-apis/(dsm-.*)|(ddp-.*)/.* dsm true
+            pepper-apis/((dss-.*)|(ddp-.*)|(pex-antlr)|(housekeeping)|(studybuilder-cli))/.* dss true
+            pepper-apis/((dsm-.*)|(ddp-.*))/.* dsm true
             pepper-apis/docs/.* api-docs true
 
   build-test-deploy-workflow:
@@ -43,8 +43,8 @@ workflows:
           mapping: |
             pepper-apis/.* action "build-test-deploy"
             pepper-apis/pom.xml dss true
-            pepper-apis/(dss-.*)|(ddp-.*)|(pex-antlr)|(housekeeping)|(studybuilder-cli)/.* dss true
-            pepper-apis/(dsm-.*)|(ddp-.*)/.* dsm true
+            pepper-apis/((dss-.*)|(ddp-.*)|(pex-antlr)|(housekeeping)|(studybuilder-cli))/.* dss true
+            pepper-apis/((dsm-.*)|(ddp-.*))/.* dsm true
             pepper-apis/docs/.* api-docs true
           filters: #todo get rid of this filter when done
             branches:
