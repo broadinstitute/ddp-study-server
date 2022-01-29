@@ -1101,7 +1101,9 @@ workflows:
   api-docs-build-test-workflow: #FOR PRs. build-test what has changed in branch
     when:
       and:
-        - equal: ["build-test", << pipeline.parameters.action >>]
+        - or:
+            - equal: ["build-test", << pipeline.parameters.action >>]
+            - equal: ["build-test-store", << pipeline.parameters.action >>]
         - << pipeline.parameters.api-docs >>
     jobs:
       - build-api-docs-job
@@ -1161,14 +1163,15 @@ workflows:
           requires:
             - dsm-compile-and-run-tests-job
 
-  dss-store-build-workflow: #store dss builds in buckets
+  dss-build-test-store-workflow: #store dss builds in buckets
     when:
-      equal: ["build-test-store", << pipeline.parameters.action >>]
+      and:
+        - equal: ["build-test-store", << pipeline.parameters.action >>]
+        - << pipeline.parameters.dss >>
     jobs:
       - dss-compile-and-run-test-suite-job #running tests before we store!
       - dss-parallel-compile-and-test-job:
           parallelism: *test_parallelism
-      - build-api-docs-job #doesn't really store, but let's build anyways
       - dss-store-jar-job:
           requires:
             - dss-compile-and-run-test-suite-job
@@ -1181,9 +1184,11 @@ workflows:
       - deploy-dss-stored-jar-job
       - build-deploy-docs-job
 
-  dsm-store-build-workflow: #store dsm build in buckets
+  dsm-build-test-store-workflow: #store dsm build in buckets
     when:
-      equal: ["1", "2"]
+      and:
+        - equal: ["build-test-store", << pipeline.parameters.action >>]
+        - << pipeline.parameters.dsm >>
     jobs:
       - dsm-compile-and-run-tests-job
       - dsm-store-jar-job:
