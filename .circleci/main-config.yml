@@ -120,7 +120,7 @@ commands:
       - run:
           name: Determine deployment environment for branch << pipeline.git.branch >>
           command: |
-            shopt  -s extglob
+            shopt  -s extglob # We are going to use Bash extended glob patterns
             case "${CIRCLE_BRANCH}" in
             DSMMavenRefactor*) # REMOVE WHEN DONE
               DEPLOY_ENV=dev
@@ -145,10 +145,9 @@ commands:
             echo "Setting deployment ENVIRONMENT to $DEPLOY_ENV"
             echo "export ENVIRONMENT=$DEPLOY_ENV" >> $BASH_ENV
             source $BASH_ENV
-            source $BASH_ENV
 
   render-configs:
-    description: render config files
+    description: Run api-build.sh for specified application and current development environment
     parameters:
       application:
         type: string
@@ -160,13 +159,13 @@ commands:
       - run:
           name: api-build.sh
           command: |
-            echo "We are generating api-build.sh for application << parameters.application >>"
+            echo "We are generating api-build.sh for application << parameters.application >> on ${ENVIRONMENT:-dev}"
             ./api-build.sh v1 ${ENVIRONMENT:-dev} . << parameters.application >> --gae-config
-          environment:
+          environment: # needed because api-build.sh scripts want to start new docker containers
             USE_DOCKER: false
 
   create-test-dbs:
-    description: setup the test databases. Ensure up and running
+    description: Create databases that will be used to run all the tests
     parameters:
       studyserverdb:
         type: string
@@ -201,7 +200,7 @@ commands:
             echo "pipeline.git.base_revision << pipeline.git.base_revision >>"
 
   store-jar:
-    description: Store jar in bucket
+    description: Store jar generated for Java module in a Google bucket.
     parameters:
       module:
         type: string
@@ -271,7 +270,7 @@ commands:
             echo ""
 
   render-secrets:
-    description: Get secret <<parameters.secret_name>>
+    description: Get secret <<parameters.secret_name>> from GCP
     parameters:
       secret_name:
         type: string
@@ -279,7 +278,7 @@ commands:
         type: string
     steps:
       - run:
-          name: Extract secret <<parameters.secret_name>> to file
+          name: Extract secret <<parameters.secret_name>> to file <<parameters.output_file>>
           command: |
             gcloud --project "broad-ddp-${ENVIRONMENT}" secrets versions access latest \
                 --secret='<<parameters.secret_name>>' > '<<parameters.output_file>>'
@@ -287,6 +286,7 @@ commands:
             ls -l
 
   deploy-dsm-jar:
+    description: Deploy DSM jar to GCP runtime environment. Note that it assumes DSM jar is found in dsm-server module target directory
     parameters:
       deploy_dir:
         type: string
@@ -335,6 +335,8 @@ commands:
           deploy_dir: <<parameters.deploy_dir>>
 
   deploy-jar:
+    description: |
+      Deploy DSS jar to GCP runtime environment. Note that it assumes DSS jar is found in corresponding Maven module target directory.
     parameters:
       jar_base_name:
         type: string
@@ -433,6 +435,7 @@ commands:
             exit 0
 
   update-deployment-sheet:
+    description: Update our running Google sheet with this deployment
     parameters:
       jar_base_name:
         type: string
@@ -446,6 +449,7 @@ commands:
             /opt/build-utils/reportdeploy.sh "$RELEASE_SHEET_ID" '<<parameters.jar_base_name>> server' "$ENVIRONMENT" "$CIRCLE_BUILD_NUM" "$CIRCLE_BUILD_URL"
 
   auth-gcp-service-account:
+    description: Authenticate service account with credentials stored in vault for specified environment
     parameters:
       env:
         type: string
@@ -734,6 +738,7 @@ commands:
           destination: ddp-cache-md5.txt
 
   match-file-patterns-or-halt:
+    description: Halt execution if matching file patter has been modified (currently not used!)
     parameters:
       file_patterns:
         type: string
@@ -764,9 +769,6 @@ jobs:
       name: build-deploy-executor
     working_directory: *repo_path
     parameters:
-      allow_skip_job:
-        type: boolean
-        default: false
       spec_dir:
         type: string
         default: *api-spec-path
@@ -783,24 +785,16 @@ jobs:
       name: test-executor
     working_directory: *pepper_apis_path
     parameters:
-      allow_skip_job:
-        type: boolean
-        default: false
       pepper_apis_path:
         type: string
         default: *pepper_apis_path
     steps:
       - run:
+          name: Remove directory << parameters.pepper_apis_path >> for checkout of files
           command: |
             rmdir << parameters.pepper_apis_path >>
       - checkout:
           path: *repo_path
-      # When any code or configuration changes, run compile step below.
-      #      - when:
-      #          condition: << parameters.allow_skip_job >>
-      #          steps:
-      #            - match-file-patterns-or-halt:
-      #                file_patterns: "pepper-apis/config pepper-apis/src study-builder/src pom.xml checkstyle.xml"
       - setup-shared-env
       - run-maven-with-pepper-options:
           module: dsm-core
@@ -811,14 +805,6 @@ jobs:
           additional_options: -am
           restore_m2_cache: true
           save_m2_cache: false
-      #      - compile-all-jars:
-      #          restore_m2_cache: true
-      # When only pepper code or configuration changes, run the standalone tests.
-      #      - when:
-      #          condition: << parameters.allow_skip_job >>
-      #          steps:
-      #            - match-file-patterns-or-halt:
-      #                file_patterns: "pepper-apis/config pepper-apis/src pepper-apis/.*pom.xml"
       - render-configs
       - create-test-dbs
       - restore-ddp-cache
@@ -837,6 +823,7 @@ jobs:
             - repo
 
   dss-compile-and-run-test-suite-job:
+    description: Job that runs DSS tests that cannot be done in parallel
     executor:
       name: test-executor
     working_directory: *pepper_apis_path
@@ -849,6 +836,7 @@ jobs:
         default: *pepper_apis_path
     steps:
       - run:
+          name: Remove directory << parameters.pepper_apis_path >> to allow checkout of code
           command: |
             rmdir << parameters.pepper_apis_path >>
       - checkout:
@@ -869,6 +857,7 @@ jobs:
       - save-ddp-cache
 
   dss-parallel-compile-and-test-job:
+    description: Job that runs DSS tests that CAN be done in parallel
     executor:
       name: test-executor
     working_directory: *pepper_apis_path
@@ -877,31 +866,30 @@ jobs:
       parallelism:
         type: integer
         default: 2
-      allow_skip_job:
-        type: boolean
-        default: false
       pepper_apis_path:
         type: string
         default: *pepper_apis_path
     steps:
       - run:
+          name: Remove directory << parameters.pepper_apis_path >> to allow checkout of code
           command: |
             rmdir << parameters.pepper_apis_path >>
       - checkout:
           path: *repo_path
       - setup-shared-env
       - render-configs
-      - run-maven-with-pepper-options:
+      - run-maven-with-pepper-options: # Build stuff first so we can setup everything
           phase: install
           module: dss-core
           restore_m2_cache: true
           skip_checkstyle: true
+          skip_tests: true
           additional_options: -am
       - create-test-dbs
       - start-ddp-test-server # starts DDP server. And execute Liquibase DB population
       - compute-parallel-test-split
       - restore-ddp-cache
-      - run-maven-with-pepper-options:
+      - run-maven-with-pepper-options: # Running the tests. Only those assigned to this parallel job!
           phase: test
           skip_tests: false
           module: dss-core
@@ -921,6 +909,7 @@ jobs:
             - repo
 
   dss-store-jar-job:
+    description: Build DSS specific jars and store them in buckets
     executor:
       name: build-deploy-executor
     working_directory: *pepper_apis_path
@@ -940,6 +929,7 @@ jobs:
           jar_base_name: Housekeeping
 
   dsm-store-jar-job:
+    description: Build DSM jar and store it in bucket
     executor:
       name: build-deploy-executor
     working_directory: *pepper_apis_path
@@ -977,7 +967,8 @@ jobs:
           module: dss-server
           deploy_config_file_dir: ../output-config
 
-  deploy-dsm-job:
+  deploy-dsm-from-workspace-job:
+    description: Deploy DSM from workspace created in another job that contains build.
     executor:
       name: build-deploy-executor
     working_directory: *pepper_apis_path
@@ -1021,7 +1012,6 @@ jobs:
     steps:
       - checkout:
           path: *repo_path
-      - set-deployment-env # deleteme when done
       - setup-shared-env
       - retrieve-jar:
           jar_base_name: DSMServer
@@ -1039,6 +1029,7 @@ jobs:
         default: *pepper_apis_path
     steps:
       - run:
+          name: Remove recursively << parameters.pepper_apis_path >>
           command: |
             rm -r << parameters.pepper_apis_path >>
       - checkout:
@@ -1085,20 +1076,10 @@ parameters:
     default: false
 
 
-
 workflows:
   version: 2
 
-  #  all-build-test-workflow: #FOR PRs. build-test what has changed in branch
-  #    when:
-  #      equal: ["build-test", << pipeline.parameters.action >>]
-  #    jobs:
-  #      - dss-compile-and-run-test-suite-job
-  #      - dss-parallel-compile-and-test-job:
-  #          parallelism: *test_parallelism
-  #      - build-api-docs-job
-  #      - dsm-compile-and-run-tests-job
-
+  # Run all tests on DSS project
   dss-build-test-workflow:
     when:
       and:
@@ -1109,7 +1090,8 @@ workflows:
       - dss-parallel-compile-and-test-job:
           parallelism: *test_parallelism
 
-  dsm-build-test-workflow: #FOR PRs. build-test what has changed in branch
+  # Run tests on DSM
+  dsm-build-test-workflow:
     when:
       and:
         - equal: ["build-test", << pipeline.parameters.action >>]
@@ -1117,7 +1099,8 @@ workflows:
     jobs:
       - dsm-compile-and-run-tests-job
 
-  api-docs-build-test-workflow: #FOR PRs. build-test what has changed in branch
+  # Build API docs (we never really store)
+  api-docs-build-test-workflow:
     when:
       and:
         - or:
@@ -1127,29 +1110,8 @@ workflows:
     jobs:
       - build-api-docs-job
 
-  #  all-build-test-deploy-workflow: #FOR develop. build-test-deploy what has changed
-  #    when:
-  #      equal:
-  #        - ["build-test-deploy", << pipeline.parameters.action >>]
-  #        - << pipeline.parameters.api-docs >>
-  #    jobs:
-  #      - dss-compile-and-run-test-suite-job
-  #      - dss-parallel-compile-and-test-job:
-  #          parallelism: *test_parallelism
-  #      - dss-deploy-jar-from-workspace-job:
-  #          requires:
-  #            - dss-parallel-compile-and-test-job
-  #            - dss-compile-and-run-test-suite-job
-  #      - build-api-docs-job
-  #      - build-deploy-docs-job:
-  #          requires:
-  #            - build-api-docs-job
-  #      - dsm-compile-and-run-tests-job
-  #      - deploy-dsm-job:
-  #          requires:
-  #            - dsm-compile-and-run-tests-job
-
-  api-docs-build-test-deploy-workflow: #FOR develop. build-test-deploy what has changed
+  # Build and deploy API docs
+  api-docs-build-test-deploy-workflow:
     when:
       and:
         - equal: ["build-test-deploy", << pipeline.parameters.action >>]
@@ -1157,7 +1119,8 @@ workflows:
     jobs:
       - build-deploy-docs-job
 
-  dss-build-test-deploy-workflow: #FOR develop. build-test-deploy what has changed
+  # Build , run all tests, and immediately deploy DSS. Currently used in develop branch and dev environment
+  dss-build-test-deploy-workflow:
     when:
       and:
         - equal: ["build-test-deploy", << pipeline.parameters.action >>]
@@ -1171,6 +1134,7 @@ workflows:
             - dss-parallel-compile-and-test-job
             - dss-compile-and-run-test-suite-job
 
+  # Run DSM tests
   dsm-build-test-deploy-workflow:
     when:
       and:
@@ -1178,11 +1142,12 @@ workflows:
         - << pipeline.parameters.dsm >>
     jobs:
       - dsm-compile-and-run-tests-job
-      - deploy-dsm-job:
+      - deploy-dsm-from-workspace-job:
           requires:
             - dsm-compile-and-run-tests-job
 
-  dss-build-test-store-workflow: #store dss builds in buckets
+  # Build and tests DSS applications and then store the corresponding jars
+  dss-build-test-store-workflow:
     when:
       and:
         - equal: ["build-test-store", << pipeline.parameters.action >>]
@@ -1196,7 +1161,8 @@ workflows:
             - dss-compile-and-run-test-suite-job
             - dss-parallel-compile-and-test-job
 
-  dss-deploy-workflow: #deploy dss builds in buckets
+  # Deploy DSS applications from previously built jars in buckets
+  dss-deploy-workflow:
     when:
       and:
         - equal: ["retrieve-deploy", << pipeline.parameters.action >>]
@@ -1205,15 +1171,8 @@ workflows:
       - deploy-dss-stored-jar-job
       - build-deploy-docs-job
 
-  dsm-deploy-workflow: #deploy dsm builds in buckets
-    when:
-      and:
-        - equal: ["retrieve-deploy", << pipeline.parameters.action >>]
-        - << pipeline.parameters.dsm >>
-    jobs:
-      - deploy-dsm-stored-jar-job
-
-  dsm-build-test-store-workflow: #store dsm build in buckets
+  # DSM build and test and then store the jar in a bucket for later deployment
+  dsm-build-test-store-workflow:
     when:
       and:
         - equal: ["build-test-store", << pipeline.parameters.action >>]
@@ -1223,5 +1182,15 @@ workflows:
       - dsm-store-jar-job:
           requires:
             - dsm-compile-and-run-tests-job
+
+  # Retrieve the DSM jar from bucket and deploy it
+  dsm-deploy-workflow:
+    when:
+      and:
+        - equal: ["retrieve-deploy", << pipeline.parameters.action >>]
+        - << pipeline.parameters.dsm >>
+    jobs:
+      - deploy-dsm-stored-jar-job
+
 
 

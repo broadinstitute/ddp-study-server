@@ -17,6 +17,8 @@ parameters:
 
 workflows:
   build-test-workflow:
+    description: |
+      The workflow to run tests on PRs. Will compare the branch to develop and trigger workflows for modified projects
     when:
       and:
         - << pipeline.parameters.on_demand >>
@@ -32,12 +34,15 @@ workflows:
             pepper-apis/((dsm-.*)|(ddp-.*))/.* dsm true
             pepper-apis/docs/.* api-docs true
 
-  build-test-deploy-workflow:
+  branch-triggered-workflow:
+    description: Will initiate workflows based on updates to branches
     when:
       and:
         - not: << pipeline.parameters.on_demand >>
         - equal: ["nothing", << pipeline.parameters.project >>]
     jobs:
+
+      # Triggered on develop branch updates. Build test and deploy whatever has changed
       - path-filtering/filter:
           base-revision: develop
           config-path: .circleci/main-config.yml
@@ -47,10 +52,14 @@ workflows:
             pepper-apis/((dss-.*)|(ddp-.*)|(pex-antlr)|(housekeeping)|(studybuilder-cli))/.* dss true
             pepper-apis/((dsm-.*)|(ddp-.*))/.* dsm true
             pepper-apis/docs/.* api-docs true
-          filters: #todo get rid of this filter when done
+          filters:
             branches:
               only:
                 - develop
+
+      # Build DSS backend, Housekeeping and API docs, test and store build artifacts
+      # Triggered on updates or creation of release candidate and hotfix branches with prefix specified in filter.
+      # Only DSS projects and API docs affected!
       - continuation/continue:
           configuration_path: .circleci/main-config.yml
           parameters: '{"action":"build-test-store","dss": true,"api-docs": true}'
@@ -59,14 +68,13 @@ workflows:
               only:
                 - /^rc_.*/
                 - /^hotfix_.*/
-      - continuation/continue:
-          configuration_path: .circleci/main-config.yml
-          parameters: '{"action":"build-test-store","dsm": true}'
-          filters:
-            branches:
-              only:
-                - /^dsm_rc_.*/
-                - /^dsm_hotfix_.*/
+
+      # Deploy DSS backend and housekeeping as well as API docs
+      # Triggered on updates to branches that correspond to target environment
+      # Note this workflow retrieves and deploy jars created in workflow above for rc_* and hotfix_*!
+      # So git commit SHA for test/staging/production branches need to match the git commit SHA used to trigger the
+      # the rc_* and hotfix_* workflow above
+      # Only DSS is affected. DSM handled separately in workflows below
       - continuation/continue:
           configuration_path: .circleci/main-config.yml
           parameters: '{"action":"retrieve-deploy","dss": true,"api-docs": true}'
@@ -76,6 +84,26 @@ workflows:
                 - test
                 - staging
                 - production
+
+      # Build DSM backend
+      # Triggered on updates or creation of release candidate and hotfix branches with prefix specified in filter.
+      # Only DSM affected!
+      - continuation/continue:
+          configuration_path: .circleci/main-config.yml
+          parameters: '{"action":"build-test-store","dsm": true}'
+          filters:
+            branches:
+              only:
+                - /^dsm_rc_.*/
+                - /^dsm_hotfix_.*/
+
+
+      # Deploy DSM backend from stored builds
+      # Triggered on updates to branches that correspond to target environment
+      # Note this workflow retrieves and deploy jars created in workflow above for dsm_rc_* and dsm_hotfix_*!
+      # So git commit SHA for test/staging/production branches need to match the git commit SHA used to trigger the
+      # the dsm_rc_* and dsm_hotfix_* workflow above
+      # Only DSM is affected. DSS handled separately in workflows above
       - continuation/continue:
           configuration_path: .circleci/main-config.yml
           parameters: '{"action":"retrieve-deploy","dsm": true}'
@@ -86,12 +114,6 @@ workflows:
                 - dsm_staging
                 - dsm_production
 
-#  build-test-store-workflow:
-#    when:
-#      and:
-#        - not: << pipeline.parameters.on_demand >>
-#        - equal: ["nothing", << pipeline.parameters.project >>]
-#    jobs:
 
 
 
