@@ -251,7 +251,7 @@ commands:
           command: |
             set -u
             set +e
-            JAVA_MODULE_NAME='<< parameter.module >>'
+            JAVA_MODULE_NAME='<< parameters.module >>'
             BUILDS_BUCKET='<<parameters.builds_bucket>>'
             JAR_BASE_NAME='<<parameters.jar_base_name>>'
             JAR_BUILD_BUCKET_DIR='<<parameters.jar_build_bucket_dir>>'
