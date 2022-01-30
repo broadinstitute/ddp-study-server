@@ -25,7 +25,7 @@ references:
   pepper_apis_path: &pepper_apis_path
                       /home/circleci/repo/pepper-apis
   docs-path: &docs-path
-                   /home/circleci/repo/pepper-apis/docs
+               /home/circleci/repo/pepper-apis/docs
   api-spec-path: &api-spec-path
                    /home/circleci/repo/pepper-apis/docs/specification
   circleci_path: &circleci_path
@@ -145,6 +145,7 @@ commands:
             echo "Setting deployment ENVIRONMENT to $DEPLOY_ENV"
             echo "export ENVIRONMENT=$DEPLOY_ENV" >> $BASH_ENV
             source $BASH_ENV
+            source $BASH_ENV
 
   render-configs:
     description: render config files
@@ -234,6 +235,8 @@ commands:
     parameters:
       jar_base_name:
         type: string
+      module:
+        type: string
       builds_bucket:
         type: string
         default: *builds_bucket
@@ -248,6 +251,7 @@ commands:
           command: |
             set -u
             set +e
+            JAVA_MODULE_NAME='<< parameter.module >>'
             BUILDS_BUCKET='<<parameters.builds_bucket>>'
             JAR_BASE_NAME='<<parameters.jar_base_name>>'
             JAR_BUILD_BUCKET_DIR='<<parameters.jar_build_bucket_dir>>'
@@ -260,9 +264,10 @@ commands:
                 echo "Could not find archive using pattern ${JAR_FILE_URL_PATTERN}"
                 exit 1
             fi
-            JAR_FILE_PATH="target/${JAR_BASE_NAME}.jar"
+            JAR_FILE_PATH="$JAVA_MODULE_NAME/target/${JAR_BASE_NAME}.jar"
             mkdir -p $(dirname $JAR_FILE_PATH)
             gsutil cp  $JAR_FILE_URL $JAR_FILE_PATH
+            ls -l $JAR_FILE_PATH
             echo ""
 
   render-secrets:
@@ -996,13 +1001,17 @@ jobs:
       # run before DDP boots up.
       - retrieve-jar:
           jar_base_name: Housekeeping
+          module: housekeeping
       - deploy-jar:
           jar_base_name: Housekeeping
+          module: housekeeping
           deploy_config_file_dir: ../output-config
       - retrieve-jar:
           jar_base_name: DataDonationPlatform
+          module: dss-server
       - deploy-jar:
           jar_base_name: DataDonationPlatform
+          module: dss-server
           deploy_config_file_dir: ../output-config
 
   deploy-dsm-stored-jar-job:
@@ -1012,9 +1021,11 @@ jobs:
     steps:
       - checkout:
           path: *repo_path
+      - set-deployment-env # deleteme when done
       - setup-shared-env
       - retrieve-jar:
           jar_base_name: DSMServer
+          module: dsm-server
       - deploy-dsm-jar
 
 
@@ -1078,15 +1089,15 @@ parameters:
 workflows:
   version: 2
 
-#  all-build-test-workflow: #FOR PRs. build-test what has changed in branch
-#    when:
-#      equal: ["build-test", << pipeline.parameters.action >>]
-#    jobs:
-#      - dss-compile-and-run-test-suite-job
-#      - dss-parallel-compile-and-test-job:
-#          parallelism: *test_parallelism
-#      - build-api-docs-job
-#      - dsm-compile-and-run-tests-job
+  #  all-build-test-workflow: #FOR PRs. build-test what has changed in branch
+  #    when:
+  #      equal: ["build-test", << pipeline.parameters.action >>]
+  #    jobs:
+  #      - dss-compile-and-run-test-suite-job
+  #      - dss-parallel-compile-and-test-job:
+  #          parallelism: *test_parallelism
+  #      - build-api-docs-job
+  #      - dsm-compile-and-run-tests-job
 
   dss-build-test-workflow:
     when:
@@ -1116,27 +1127,27 @@ workflows:
     jobs:
       - build-api-docs-job
 
-#  all-build-test-deploy-workflow: #FOR develop. build-test-deploy what has changed
-#    when:
-#      equal:
-#        - ["build-test-deploy", << pipeline.parameters.action >>]
-#        - << pipeline.parameters.api-docs >>
-#    jobs:
-#      - dss-compile-and-run-test-suite-job
-#      - dss-parallel-compile-and-test-job:
-#          parallelism: *test_parallelism
-#      - dss-deploy-jar-from-workspace-job:
-#          requires:
-#            - dss-parallel-compile-and-test-job
-#            - dss-compile-and-run-test-suite-job
-#      - build-api-docs-job
-#      - build-deploy-docs-job:
-#          requires:
-#            - build-api-docs-job
-#      - dsm-compile-and-run-tests-job
-#      - deploy-dsm-job:
-#          requires:
-#            - dsm-compile-and-run-tests-job
+  #  all-build-test-deploy-workflow: #FOR develop. build-test-deploy what has changed
+  #    when:
+  #      equal:
+  #        - ["build-test-deploy", << pipeline.parameters.action >>]
+  #        - << pipeline.parameters.api-docs >>
+  #    jobs:
+  #      - dss-compile-and-run-test-suite-job
+  #      - dss-parallel-compile-and-test-job:
+  #          parallelism: *test_parallelism
+  #      - dss-deploy-jar-from-workspace-job:
+  #          requires:
+  #            - dss-parallel-compile-and-test-job
+  #            - dss-compile-and-run-test-suite-job
+  #      - build-api-docs-job
+  #      - build-deploy-docs-job:
+  #          requires:
+  #            - build-api-docs-job
+  #      - dsm-compile-and-run-tests-job
+  #      - deploy-dsm-job:
+  #          requires:
+  #            - dsm-compile-and-run-tests-job
 
   api-docs-build-test-deploy-workflow: #FOR develop. build-test-deploy what has changed
     when:
@@ -1213,99 +1224,4 @@ workflows:
           requires:
             - dsm-compile-and-run-tests-job
 
-#  dss-parallel-compile-and-test-workflow:
-#    unless: << pipeline.parameters.on_demand >>
-#    jobs:
-#      - dss-compile-and-run-test-suite-job: &compile_and_test_filters
-#          filters:
-#            branches:
-#              only:
-#                - develop
-#                - DSMMavenRefactor # REMOVE WHEN DONE
-#                - &rc /^rc.*/
-#                - &hotfix /^hotfix.*/
-#      - dss-parallel-compile-and-test-job:
-#          parallelism: *test_parallelism
-#          <<: *compile_and_test_filters
-#      #      - build-api-docs-job:
-#      #          <<: *compile_and_test_filters
-#      - dss-deploy-jar-from-workspace-job:
-#          filters:
-#            branches:
-#              only:
-#                - develop
-#                - DSMMavenRefactor
-#          requires:
-#            - dss-parallel-compile-and-test-job
-#            - dss-compile-and-run-test-suite-job
-#      - dss-store-jar-job:
-#          filters:
-#            branches:
-#              only:
-#                - *rc
-#                - *hotfix
-#                - DSMMavenRefactor # REMOVE WHEN DONE
-#          requires:
-#            - dss-compile-and-run-test-suite-job
-#            - dss-parallel-compile-and-test-job
-
-#  run-dss-tests-on-demand-workflow:
-#    when:
-#      and:
-#        - << pipeline.parameters.on_demand >>
-#        - equal: ["dss", << pipeline.parameters.project >>]
-#    jobs:
-#      - dss-compile-and-run-test-suite-job:
-#          allow_skip_job: true
-#      - dss-parallel-compile-and-test-job:
-#          parallelism: *test_parallelism
-#          allow_skip_job: true
-##      - build-api-docs-job:
-##          allow_skip_job: true
-
-#  build-api-docs-workflow:
-#    when:
-#      equal: ["api-docs", << pipeline.parameters.project >>]
-#    jobs:
-#      - build-api-docs-job:
-#          allow_skip_job: false
-
-
-#  run-dsm-tests-on-demand-workflow:
-#    when:
-#      and:
-#        - << pipeline.parameters.on_demand >>
-#        - equal: ["dsm", << pipeline.parameters.project >>]
-#    jobs:
-#      - dsm-compile-and-run-tests-job:
-#          allow_skip_job: true
-
-#  deploy-dss-workflow:
-#    jobs:
-#      - deploy-dss-stored-jar-job:
-#          filters:
-#            branches:
-#              only:
-#                - test
-#                - staging
-#                - production
-
-#  build-deploy-api-docs-workflow:
-#    jobs:
-#      - build-deploy-docs-job:
-#          filters:
-#            branches:
-#              only:
-#                - develop
-#                - test
-#                - staging
-#                - production
-#
-#  deploy-and-build-dsm-workflow:
-#    jobs:
-#      - deploy-dsm-job:
-#          filters:
-#            branches:
-#              only:
-#                - DSMMavenRefactor-build-1
 
