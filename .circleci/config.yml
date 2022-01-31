@@ -44,7 +44,7 @@ workflows:
 
       # Triggered on develop branch updates. Build test and deploy whatever has changed
       - path-filtering/filter:
-          base-revision: develop
+          base-revision: DSMMavenRefactor-build
           config-path: .circleci/main-config.yml
           mapping: |
             pepper-apis/.* action "build-test-deploy"
@@ -55,7 +55,7 @@ workflows:
           filters:
             branches:
               only:
-                - develop
+                - DSMMavenRefactor-build
 
       # Build DSS backend, Housekeeping and API docs, test and store build artifacts
       # Triggered on updates or creation of release candidate and hotfix branches with prefix specified in filter.
