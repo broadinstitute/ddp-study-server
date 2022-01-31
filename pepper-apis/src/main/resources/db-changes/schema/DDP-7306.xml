@@ -9,4 +9,8 @@
         <dropColumn tableName="numeric_question" columnName="numeric_type_id"/>
     </changeSet>
 
+    <changeSet author="Dmitrii Eliseev" id="20220127-drop-numeric-type table">
+        <dropTable tableName="numeric_type" />
+    </changeSet>
+
 </databaseChangeLog>
