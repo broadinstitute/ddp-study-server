@@ -19,6 +19,12 @@ public final class MatrixQuestion extends Question<MatrixAnswer> {
     @SerializedName("selectMode")
     private final MatrixSelectMode selectMode;
 
+    @SerializedName("renderModal")
+    private boolean renderModal;
+
+    @SerializedName("modal")
+    private String modal;
+
     @SerializedName("groups")
     private final List<MatrixGroup> groups;
 
@@ -30,9 +36,14 @@ public final class MatrixQuestion extends Question<MatrixAnswer> {
     @SerializedName("questions")
     private final List<MatrixRow> matrixQuestionRows;
 
-    public MatrixQuestion(String stableId, long promptTemplateId, boolean isRestricted,
+    private transient Long modalTemplateId;
+
+    private String renderMode = "INLINE";
+
+    public MatrixQuestion(String stableId, long promptTemplateId, boolean isRestricted, boolean renderModal,
                           boolean isDeprecated, Boolean readonly, Long tooltipTemplateId, Long additionalInfoHeaderTemplateId,
-                          Long additionalInfoFooterTemplateId, List<MatrixAnswer> answers, List<Rule<MatrixAnswer>> validations,
+                          Long additionalInfoFooterTemplateId, Long modalTemplateId,
+                          List<MatrixAnswer> answers, List<Rule<MatrixAnswer>> validations,
                           MatrixSelectMode selectMode, List<MatrixGroup> groups, List<MatrixOption> matrixOptions,
                           List<MatrixRow> matrixQuestionRows) {
         super(QuestionType.MATRIX, stableId, promptTemplateId, isRestricted, isDeprecated, readonly, tooltipTemplateId,
@@ -40,6 +51,11 @@ public final class MatrixQuestion extends Question<MatrixAnswer> {
 
         this.selectMode = MiscUtil.checkNonNull(selectMode, "selectMode");
         this.groups = groups;
+        this.renderModal = renderModal;
+        this.modalTemplateId = modalTemplateId;
+        if (renderModal) {
+            renderMode = "MODAL";
+        }
 
         if (matrixOptions == null || matrixOptions.isEmpty()) {
             throw new IllegalArgumentException("options list needs to be non-empty");
@@ -65,6 +81,8 @@ public final class MatrixQuestion extends Question<MatrixAnswer> {
                 false,
                 false,
                 false,
+                false,
+                null,
                 null,
                 null,
                 null,
@@ -92,9 +110,17 @@ public final class MatrixQuestion extends Question<MatrixAnswer> {
         return matrixQuestionRows;
     }
 
+    public String getRenderMode() {
+        return renderMode;
+    }
+
     @Override
     public void registerTemplateIds(Consumer<Long> registry) {
         super.registerTemplateIds(registry);
+
+        if (modalTemplateId != null) {
+            registry.accept(modalTemplateId);
+        }
 
         for (MatrixGroup group : groups) {
             group.registerTemplateIds(registry);
@@ -112,6 +138,10 @@ public final class MatrixQuestion extends Question<MatrixAnswer> {
     @Override
     public void applyRenderedTemplates(Provider<String> rendered, ContentStyle style) {
         super.applyRenderedTemplates(rendered, style);
+
+        if (modalTemplateId != null) {
+            modal = rendered.get(modalTemplateId);
+        }
 
         if (groups != null) {
             for (MatrixGroup group : groups) {
