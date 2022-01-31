@@ -458,8 +458,7 @@ public class DataExporterTest extends TxnAwareBaseTest {
 
             //check Numeric Question
             Assert.assertTrue(esDoc.contains("{\"stableId\":\"TEST_NUMERICQ\","
-                    + "\"questionType\":\"NUMERIC\",\"questionText\":\"numeric prompt\","
-                    + "\"numericType\":\"INTEGER\"}"));
+                    + "\"questionType\":\"NUMERIC\",\"questionText\":\"numeric prompt\"}"));
 
             //check Picklist Question
             Assert.assertTrue(esDoc.contains("{\"stableId\":\"TEST_PLQ\",\"questionType\":\"PICKLIST\",\"questionText\":"
