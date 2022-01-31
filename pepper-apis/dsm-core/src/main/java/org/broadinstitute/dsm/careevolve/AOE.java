@@ -5,6 +5,7 @@ import java.util.List;
 
 import com.google.gson.annotations.SerializedName;
 
+
 /**
  * Ask at Order Entry tuple, which has a code,
  * description, and value
