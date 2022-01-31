@@ -14,21 +14,38 @@ import java.util.Set;
 public final class MatrixQuestionDto extends QuestionDto implements Serializable {
 
     private MatrixSelectMode selectMode;
+    private boolean renderModal;
+    private Long modalTemplateId;
 
     @JdbiConstructor
     public MatrixQuestionDto(@Nested QuestionDto questionDto,
-                             @ColumnName("matrix_select_mode") MatrixSelectMode selectMode) {
+                             @ColumnName("matrix_select_mode") MatrixSelectMode selectMode,
+                             @ColumnName("render_modal") boolean renderModal,
+                             @ColumnName("modal_template_id") Long modalTemplateId) {
         super(questionDto);
         this.selectMode = selectMode;
+        this.renderModal = renderModal;
+        this.modalTemplateId = modalTemplateId;
     }
 
     public MatrixSelectMode getSelectMode() {
         return selectMode;
     }
 
+    public boolean isRenderModal() {
+        return renderModal;
+    }
+
+    public Long getModalTemplateId() {
+        return modalTemplateId;
+    }
+
     @Override
     public Set<Long> getTemplateIds() {
         var ids = super.getTemplateIds();
+        if (modalTemplateId != null) {
+            ids.add(modalTemplateId);
+        }
         return ids;
     }
 }

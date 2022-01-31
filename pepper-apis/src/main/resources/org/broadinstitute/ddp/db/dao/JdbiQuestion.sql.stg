@@ -108,6 +108,9 @@ select qt.question_type_code as question_type,
          where matrix_select_mode_id = mq.matrix_select_mode_id
        ) as matrix_select_mode,
 
+       mq.render_modal,
+       mq.modal_template_id,
+
        (select text_question_input_type_code from text_question_input_type
          where text_question_input_type_id = tq.input_type_id
        ) as input_type,
