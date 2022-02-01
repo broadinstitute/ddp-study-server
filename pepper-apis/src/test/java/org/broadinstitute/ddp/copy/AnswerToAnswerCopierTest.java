@@ -220,7 +220,7 @@ public class AnswerToAnswerCopierTest extends TxnAwareBaseTest {
                     .findAnswerById(targetInstance.getAnswer(targetSid).getAnswerId()).orElse(null);
             assertNotNull(actual);
             assertEquals(QuestionType.DECIMAL, actual.getQuestionType());
-            assertEquals(BigDecimal.TEN, ((DecimalAnswer) actual).getValue());
+            assertEquals(0, BigDecimal.TEN.compareTo(((DecimalAnswer) actual).getValue()));
 
             handle.rollback();
         });

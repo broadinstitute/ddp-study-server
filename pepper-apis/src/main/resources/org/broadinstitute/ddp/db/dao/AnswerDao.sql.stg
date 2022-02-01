@@ -16,7 +16,8 @@ select ans.answer_id,
        fd.file_upload_guid as fa_upload_guid,
        fd.file_name      as fa_file_name,
        fd.file_size      as fa_file_size,
-       na.int_value         as na_int_value,
+       na.int_value      as na_int_value,
+       deca.decimal_value  as da_decimal_value,
        po.picklist_option_stable_id as pa_option_stable_id,
        (select ppo.picklist_option_stable_id from picklist_nested_option as pno join picklist_option as ppo
          on ppo.picklist_option_id = pno.parent_option_id
@@ -47,6 +48,7 @@ select ans.answer_id,
   join question_stable_code as qsc on qsc.question_stable_code_id = q.question_stable_code_id
   left join composite_question as cq on cq.question_id = q.question_id
   left join numeric_question as nq on nq.question_id = q.question_id
+  left join decimal_question as dq on dq.question_id = q.question_id
   left join agreement_answer as aa on aa.answer_id = ans.answer_id
   left join boolean_answer as ba on ba.answer_id = ans.answer_id
   left join text_answer as ta on ta.answer_id = ans.answer_id
@@ -55,6 +57,7 @@ select ans.answer_id,
   left join file_answer as fa on fa.answer_id = ans.answer_id
   left join file_upload as fd on fd.file_upload_id = fa.file_upload_id
   left join numeric_answer as na on na.answer_id = ans.answer_id
+  left join decimal_answer as deca on deca.answer_id = ans.answer_id
   left join picklist_option__answer as pa on pa.answer_id = ans.answer_id
   left join picklist_option as po on po.picklist_option_id = pa.picklist_option_id
   left join picklist_nested_option as npo on npo.nested_option_id = pa.picklist_option_id

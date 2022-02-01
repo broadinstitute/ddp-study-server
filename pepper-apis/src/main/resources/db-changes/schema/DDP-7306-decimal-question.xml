@@ -41,4 +41,16 @@
         </createTable>
     </changeSet>
 
+    <changeSet author="Dmitrii Eliseev" id="20220201-add-decimal-question-type">
+        <insert tableName="question_type">
+            <column name="question_type_code" value="DECIMAL"/>
+        </insert>
+    </changeSet>
+
+    <changeSet author="Dmitrii Eliseev" id="20220201-add-decimal-range-validation-type">
+        <insert tableName="validation_type">
+            <column name="validation_type_code" value="DECIMAL_RANGE"/>
+        </insert>
+    </changeSet>
+
 </databaseChangeLog>

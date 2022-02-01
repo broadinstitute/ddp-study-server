@@ -164,6 +164,7 @@ public interface JdbiQuestion extends SqlObject {
     @RegisterConstructorMapper(DateQuestionDto.class)
     @RegisterConstructorMapper(FileQuestionDto.class)
     @RegisterConstructorMapper(NumericQuestionDto.class)
+    @RegisterConstructorMapper(DecimalQuestionDto.class)
     @RegisterConstructorMapper(PicklistQuestionDto.class)
     @RegisterConstructorMapper(MatrixQuestionDto.class)
     @RegisterConstructorMapper(TextQuestionDto.class)
