@@ -3,9 +3,7 @@ package org.broadinstitute.ddp.export.collectors;
 import org.broadinstitute.ddp.content.HtmlConverter;
 import org.broadinstitute.ddp.elastic.MappingUtil;
 import org.broadinstitute.ddp.model.activity.definition.question.DecimalQuestionDef;
-import org.broadinstitute.ddp.model.activity.definition.question.NumericQuestionDef;
 import org.broadinstitute.ddp.model.activity.instance.answer.DecimalAnswer;
-import org.broadinstitute.ddp.model.activity.instance.answer.NumericAnswer;
 
 import java.util.HashMap;
 import java.util.LinkedHashMap;
