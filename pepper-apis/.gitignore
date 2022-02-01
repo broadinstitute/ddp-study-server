@@ -30,3 +30,5 @@ output-build-config/
 docker-compose.yaml
 
 !**/src/main/resources/*.conf
+
+.java-version

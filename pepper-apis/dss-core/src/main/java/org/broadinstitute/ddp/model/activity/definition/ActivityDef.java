@@ -1,13 +1,12 @@
 package org.broadinstitute.ddp.model.activity.definition;
 
 import java.lang.reflect.Type;
-import java.util.ArrayList;
 import java.util.Collection;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 
 import com.google.gson.JsonDeserializationContext;
@@ -80,7 +79,10 @@ public abstract class ActivityDef {
     @SerializedName("canDeleteFirstInstance")
     protected Boolean canDeleteFirstInstance;
 
-    @NotEmpty
+    @SerializedName("showActivityStatus")
+    protected boolean showActivityStatus;
+
+    @NotNull
     @SerializedName("translatedNames")
     protected List<@Valid @NotNull Translation> translatedNames;
 
@@ -239,7 +241,7 @@ public abstract class ActivityDef {
     }
 
     public List<Translation> getTranslatedNames() {
-        return translatedNames;
+        return this.translatedNames;
     }
 
     public void setTranslatedNames(List<Translation> translatedNames) {
@@ -247,7 +249,7 @@ public abstract class ActivityDef {
     }
 
     public List<Translation> getTranslatedSecondNames() {
-        return translatedSecondNames;
+        return this.translatedSecondNames;
     }
 
     public void setTranslatedSecondNames(List<Translation> translatedSecondNames) {
@@ -255,7 +257,7 @@ public abstract class ActivityDef {
     }
 
     public List<Translation> getTranslatedTitles() {
-        return translatedTitles;
+        return this.translatedTitles;
     }
 
     public void setTranslatedTitles(List<Translation> translatedTitles) {
@@ -263,7 +265,7 @@ public abstract class ActivityDef {
     }
 
     public List<Translation> getTranslatedSubtitles() {
-        return translatedSubtitles;
+        return this.translatedSubtitles;
     }
 
     public void setTranslatedSubtitles(List<Translation> translatedSubtitles) {
@@ -271,7 +273,7 @@ public abstract class ActivityDef {
     }
 
     public List<Translation> getTranslatedDescriptions() {
-        return translatedDescriptions;
+        return this.translatedDescriptions;
     }
 
     public void setTranslatedDescriptions(List<Translation> translatedDescriptions) {
@@ -279,7 +281,7 @@ public abstract class ActivityDef {
     }
 
     public List<SummaryTranslation> getTranslatedSummaries() {
-        return translatedSummaries;
+        return this.translatedSummaries;
     }
 
     public Template getNameTemplate() {
@@ -367,6 +369,10 @@ public abstract class ActivityDef {
         return canDeleteFirstInstance;
     }
 
+    public boolean showActivityStatus() {
+        return showActivityStatus;
+    }
+
     /**
      * Builder that helps construct common elements of an activity definition.
      *
@@ -400,6 +406,7 @@ public abstract class ActivityDef {
         protected boolean createOnParentCreation;
         protected boolean canDeleteInstances;
         protected Boolean canDeleteFirstInstance;
+        protected boolean showActivityStatus;
 
         /**
          * Returns the subclass builder instance to enable method chaining.
@@ -426,6 +433,7 @@ public abstract class ActivityDef {
             activity.createOnParentCreation = createOnParentCreation;
             activity.canDeleteInstances = canDeleteInstances;
             activity.canDeleteFirstInstance = canDeleteFirstInstance;
+            activity.showActivityStatus = showActivityStatus;
         }
 
         public T setParentActivityCode(String parentActivityCode) {
@@ -615,6 +623,11 @@ public abstract class ActivityDef {
 
         public T setCanDeleteFirstInstance(Boolean canDeleteFirstInstance) {
             this.canDeleteFirstInstance = canDeleteFirstInstance;
+            return self();
+        }
+
+        public T setShowActivityStatus(boolean showActivityStatus) {
+            this.showActivityStatus = showActivityStatus;
             return self();
         }
     }

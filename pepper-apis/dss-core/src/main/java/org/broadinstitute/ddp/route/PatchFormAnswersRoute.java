@@ -70,7 +70,6 @@ import org.broadinstitute.ddp.model.activity.instance.answer.DateValue;
 import org.broadinstitute.ddp.model.activity.instance.answer.FileAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.FileInfo;
 import org.broadinstitute.ddp.model.activity.instance.answer.NumericAnswer;
-import org.broadinstitute.ddp.model.activity.instance.answer.NumericIntegerAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.PicklistAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.SelectedPicklistOption;
 import org.broadinstitute.ddp.model.activity.instance.answer.MatrixAnswer;
@@ -83,7 +82,6 @@ import org.broadinstitute.ddp.model.activity.instance.validation.ActivityValidat
 import org.broadinstitute.ddp.model.activity.instance.validation.Rule;
 import org.broadinstitute.ddp.model.activity.types.ActivityType;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
-import org.broadinstitute.ddp.model.activity.types.NumericType;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
 import org.broadinstitute.ddp.model.activity.types.TextInputType;
 import org.broadinstitute.ddp.model.user.User;
@@ -623,15 +621,11 @@ public class PatchFormAnswersRoute implements Route {
     private NumericAnswer convertNumericAnswer(Handle handle, NumericQuestionDto numericDto, String guid, String actInstanceGuid,
                                                JsonElement value) {
         if (value == null || value.isJsonNull() || (value.isJsonPrimitive() && value.getAsJsonPrimitive().isNumber())) {
-            if (numericDto.getNumericType() == NumericType.INTEGER) {
-                Long intValue = null;
-                if (value != null && !value.isJsonNull()) {
-                    intValue = value.getAsLong();
-                }
-                return new NumericIntegerAnswer(null, numericDto.getStableId(), guid, intValue, actInstanceGuid);
-            } else {
-                throw new DDPException("Unhandled numeric answer type " + numericDto.getNumericType());
+            Long intValue = null;
+            if (value != null && !value.isJsonNull()) {
+                intValue = value.getAsLong();
             }
+            return new NumericAnswer(null, numericDto.getStableId(), guid, intValue, actInstanceGuid);
         } else {
             return null;
         }

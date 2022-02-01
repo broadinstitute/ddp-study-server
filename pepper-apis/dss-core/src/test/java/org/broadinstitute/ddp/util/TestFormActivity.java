@@ -31,7 +31,6 @@ import org.broadinstitute.ddp.model.activity.definition.validation.RequiredRuleD
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
 import org.broadinstitute.ddp.model.activity.types.DateFieldType;
 import org.broadinstitute.ddp.model.activity.types.DateRenderMode;
-import org.broadinstitute.ddp.model.activity.types.NumericType;
 import org.broadinstitute.ddp.model.activity.types.PicklistRenderMode;
 import org.broadinstitute.ddp.model.activity.types.MatrixSelectMode;
 import org.broadinstitute.ddp.model.activity.types.TextInputType;
@@ -312,7 +311,7 @@ public class TestFormActivity {
 
             if (withNumericIntQuestion) {
                 var question = NumericQuestionDef
-                        .builder(NumericType.INTEGER, "NUM" + Instant.now().toEpochMilli(), Template.text("numeric prompt"))
+                        .builder("NUM" + Instant.now().toEpochMilli(), Template.text("numeric prompt"))
                         .build();
                 result.numericIntQuestion = question;
                 builder.addSection(new FormSectionDef(null, List.of(new QuestionBlockDef(question))));

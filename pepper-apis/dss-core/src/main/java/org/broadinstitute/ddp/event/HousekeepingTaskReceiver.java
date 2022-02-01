@@ -134,6 +134,7 @@ public class HousekeepingTaskReceiver implements MessageReceiver {
 
     private void handleElasticExport(PubsubMessage message, AckReplyConsumer reply) {
         String data = message.getData() != null ? message.getData().toStringUtf8() : null;
+        LOG.info("Housekeeping PubSub ELASTIC_EXPORT Task message received [subscription={}]: {}", subName, data);
         var payload = gson.fromJson(data, ExportPayload.class);
         if (payload == null || payload.getStudy() == null) {
             LOG.error("Study needs to be provided for ELASTIC_EXPORT task message, ack-ing");

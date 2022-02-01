@@ -1,12 +1,5 @@
 package org.broadinstitute.ddp.model.activity.definition.template;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Map;
-import java.util.Optional;
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
-
 import com.google.gson.annotations.SerializedName;
 import org.broadinstitute.ddp.content.I18nTemplateRenderFacade;
 import org.broadinstitute.ddp.model.activity.types.TemplateType;
@@ -14,11 +7,17 @@ import org.broadinstitute.ddp.util.MiscUtil;
 import org.jdbi.v3.core.mapper.reflect.ColumnName;
 import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
 
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Map;
+import java.util.Optional;
+
 public class Template {
 
     public static final String VELOCITY_VAR_PREFIX = "$";
 
-    @NotNull
     @SerializedName("templateType")
     private TemplateType templateType;
 
@@ -67,7 +66,7 @@ public class Template {
     }
 
     public TemplateType getTemplateType() {
-        return templateType;
+        return templateType != null ? templateType : TemplateType.TEXT;
     }
 
     public void setTemplateType(TemplateType templateType) {
@@ -87,7 +86,7 @@ public class Template {
     }
 
     public Collection<TemplateVariable> getVariables() {
-        return variables;
+        return this.variables;
     }
 
     public void setVariables(Collection<TemplateVariable> variables) {
@@ -130,10 +129,10 @@ public class Template {
      */
     public Optional<TemplateVariable> getVariable(String name) {
         if (variables == null) {
-            return null;
-        } else {
-            return variables.stream().filter(var -> var.getName().equals(name)).findFirst();
+            return Optional.empty();
         }
+
+        return variables.stream().filter(var -> var.getName().equals(name)).findFirst();
     }
 
     public Long getTemplateId() {

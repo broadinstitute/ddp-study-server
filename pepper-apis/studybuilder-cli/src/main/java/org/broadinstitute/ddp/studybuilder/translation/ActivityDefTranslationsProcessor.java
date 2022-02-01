@@ -17,14 +17,19 @@ import org.broadinstitute.ddp.model.activity.definition.NestedActivityBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.PhysicianInstitutionComponentDef;
 import org.broadinstitute.ddp.model.activity.definition.QuestionBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.i18n.Translation;
-import org.broadinstitute.ddp.model.activity.definition.question.BoolQuestionDef;
-import org.broadinstitute.ddp.model.activity.definition.question.CompositeQuestionDef;
-import org.broadinstitute.ddp.model.activity.definition.question.DateQuestionDef;
-import org.broadinstitute.ddp.model.activity.definition.question.NumericQuestionDef;
-import org.broadinstitute.ddp.model.activity.definition.question.PicklistOptionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.TextQuestionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.CompositeQuestionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.PicklistOptionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.BoolQuestionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.DateQuestionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.NumericQuestionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.MatrixQuestionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.MatrixOptionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.MatrixRowDef;
+import org.broadinstitute.ddp.model.activity.definition.question.MatrixGroupDef;
+import org.broadinstitute.ddp.model.activity.definition.question.PicklistGroupDef;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.activity.definition.template.TemplateVariable;
 import org.broadinstitute.ddp.model.activity.definition.validation.RuleDef;
@@ -83,7 +88,7 @@ public class ActivityDefTranslationsProcessor {
         enrichSectionWithTranslations(activityDef.getIntroduction());
         enrichSectionWithTranslations(activityDef.getClosing());
         if (activityDef.getSections() != null) {
-            activityDef.getSections().forEach(s -> enrichSectionWithTranslations(s));
+            activityDef.getSections().forEach(this::enrichSectionWithTranslations);
         }
     }
 
@@ -91,7 +96,7 @@ public class ActivityDefTranslationsProcessor {
         if (sectionDef != null) {
             addTemplateTranslations(sectionDef.getNameTemplate(), allTranslations);
             if (sectionDef.getBlocks() != null) {
-                sectionDef.getBlocks().forEach(b -> enrichBlockWithTranslations(b));
+                sectionDef.getBlocks().forEach(this::enrichBlockWithTranslations);
             }
         }
     }
@@ -150,14 +155,14 @@ public class ActivityDefTranslationsProcessor {
     private void enrichConditionalBlockWithTranslations(ConditionalBlockDef blockDef) {
         enrichQuestionWithTranslations(blockDef.getControl());
         if (blockDef.getNested() != null) {
-            blockDef.getNested().forEach(b -> enrichBlockWithTranslations(b));
+            blockDef.getNested().forEach(this::enrichBlockWithTranslations);
         }
     }
 
     private void enrichGroupBlockWithTranslations(GroupBlockDef blockDef) {
         addTemplateTranslations(blockDef.getTitleTemplate(), allTranslations);
         if (blockDef.getNested() != null) {
-            blockDef.getNested().forEach(b -> enrichBlockWithTranslations(b));
+            blockDef.getNested().forEach(this::enrichBlockWithTranslations);
         }
     }
 
@@ -165,14 +170,52 @@ public class ActivityDefTranslationsProcessor {
         enrichQuestionWithTranslations(blockDef.getQuestion());
     }
 
+    private void enrichPickListOptionGroup(PicklistGroupDef groupDef) {
+        addTemplateTranslations(groupDef.getNameTemplate(), allTranslations);
+
+        if (groupDef.getOptions() != null) {
+            groupDef.getOptions().forEach(this::enrichPickListOptionTemplates);
+        }
+    }
+
+    private void enrichPickListOptionTemplates(PicklistOptionDef optionDef) {
+        addTemplateTranslations(optionDef.getTooltipTemplate(), allTranslations);
+        addTemplateTranslations(optionDef.getDetailLabelTemplate(), allTranslations);
+        addTemplateTranslations(optionDef.getOptionLabelTemplate(), allTranslations);
+        addTemplateTranslations(optionDef.getNestedOptionsLabelTemplate(), allTranslations);
+        if (optionDef.getNestedOptions() != null) {
+            optionDef.getNestedOptions().forEach(this::enrichPickListOptionTemplates);
+        }
+    }
+
+    private void enrichRuleWithTranslations(RuleDef ruleDef) {
+        addTemplateTranslations(ruleDef.getHintTemplate(), allTranslations);
+    }
+
+    private void enrichMatrixGroupWithTranslations(MatrixGroupDef matrixGroupDef) {
+        addTemplateTranslations(matrixGroupDef.getNameTemplate(), allTranslations);
+    }
+
+    private void enrichMatrixGroupWithTranslations(MatrixOptionDef matrixOptionDef) {
+        addTemplateTranslations(matrixOptionDef.getOptionLabelTemplate(), allTranslations);
+        addTemplateTranslations(matrixOptionDef.getTooltipTemplate(), allTranslations);
+    }
+
+    private void enrichMatrixOptionWithTranslations(MatrixRowDef matrixRowDef) {
+        addTemplateTranslations(matrixRowDef.getRowLabelTemplate(), allTranslations);
+        addTemplateTranslations(matrixRowDef.getTooltipTemplate(), allTranslations);
+    }
+
     private void enrichQuestionWithTranslations(QuestionDef questionDef) {
         addTemplateTranslations(questionDef.getPromptTemplate(), allTranslations);
         addTemplateTranslations(questionDef.getTooltipTemplate(), allTranslations);
         addTemplateTranslations(questionDef.getAdditionalInfoHeaderTemplate(), allTranslations);
         addTemplateTranslations(questionDef.getAdditionalInfoFooterTemplate(), allTranslations);
+
         if (questionDef.getValidations() != null) {
-            questionDef.getValidations().forEach(r -> enrichRuleWithTranslations(r));
+            questionDef.getValidations().forEach(this::enrichRuleWithTranslations);
         }
+
         switch (questionDef.getQuestionType()) {
             case DATE:
                 if (((DateQuestionDef) questionDef).getRenderMode() != PICKLIST) {
@@ -194,36 +237,28 @@ public class ActivityDefTranslationsProcessor {
                 break;
             case PICKLIST:
                 addTemplateTranslations(((PicklistQuestionDef) questionDef).getPicklistLabelTemplate(), allTranslations);
-                ((PicklistQuestionDef) questionDef).getGroups().forEach(
-                        g -> addTemplateTranslations(g.getNameTemplate(), allTranslations));
-                ((PicklistQuestionDef) questionDef).getPicklistOptions().forEach(o -> processPickListOptionTemplates(o));
+                ((PicklistQuestionDef) questionDef).getGroups().forEach(this::enrichPickListOptionGroup);
+                ((PicklistQuestionDef) questionDef).getPicklistOptions().forEach(this::enrichPickListOptionTemplates);
                 break;
             case COMPOSITE:
                 addTemplateTranslations(((CompositeQuestionDef) questionDef).getAddButtonTemplate(), allTranslations);
                 addTemplateTranslations(((CompositeQuestionDef) questionDef).getAdditionalItemTemplate(), allTranslations);
                 if (((CompositeQuestionDef) questionDef).getChildren() != null) {
-                    ((CompositeQuestionDef) questionDef).getChildren().forEach(q -> enrichQuestionWithTranslations(q));
+                    ((CompositeQuestionDef) questionDef).getChildren().forEach(this::enrichQuestionWithTranslations);
                 }
                 break;
+            case MATRIX:
+                addTemplateTranslations(((MatrixQuestionDef) questionDef).getModalTemplate(), allTranslations);
+                ((MatrixQuestionDef) questionDef).getGroups().forEach(this::enrichMatrixGroupWithTranslations);
+                ((MatrixQuestionDef) questionDef).getOptions().forEach(this::enrichMatrixGroupWithTranslations);
+                ((MatrixQuestionDef) questionDef).getRows().forEach(this::enrichMatrixOptionWithTranslations);
+                break;
+            case ACTIVITY_INSTANCE_SELECT:
             case AGREEMENT:
             case FILE:
                 break;
             default:
                 throw new IllegalStateException("Unexpected value: " + questionDef.getQuestionType());
         }
-    }
-
-    private void processPickListOptionTemplates(PicklistOptionDef optionDef) {
-        addTemplateTranslations(optionDef.getTooltipTemplate(), allTranslations);
-        addTemplateTranslations(optionDef.getDetailLabelTemplate(), allTranslations);
-        addTemplateTranslations(optionDef.getOptionLabelTemplate(), allTranslations);
-        addTemplateTranslations(optionDef.getNestedOptionsLabelTemplate(), allTranslations);
-        if (optionDef.getNestedOptions() != null) {
-            optionDef.getNestedOptions().forEach(n -> processPickListOptionTemplates(n));
-        }
-    }
-
-    private void enrichRuleWithTranslations(RuleDef ruleDef) {
-        addTemplateTranslations(ruleDef.getHintTemplate(), allTranslations);
     }
 }
