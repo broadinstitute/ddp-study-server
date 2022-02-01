@@ -2047,13 +2047,13 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
             assertEquals(1, decimalQuestion.getValidations().size());
             assertEquals(RuleType.DECIMAL_RANGE, decimalQuestion.getValidations().get(0).getRuleType());
             DecimalRangeRule decimalRule = (DecimalRangeRule) decimalQuestion.getValidations().get(0);
-            assertEquals(BigDecimal.ZERO, decimalRule.getMin());
-            assertEquals(BigDecimal.TEN, decimalRule.getMax());
+            assertEquals(0, BigDecimal.ZERO.compareTo(decimalRule.getMin()));
+            assertEquals(0, BigDecimal.TEN.compareTo(decimalRule.getMax()));
 
             assertEquals(1, decimalQuestion.getAnswers().size());
             assertEquals(QuestionType.DECIMAL, decimalQuestion.getAnswers().get(0).getQuestionType());
             DecimalAnswer numericAnswer = decimalQuestion.getAnswers().get(0);
-            assertEquals(BigDecimal.ONE, numericAnswer.getValue());
+            assertEquals(0, BigDecimal.ONE.compareTo(numericAnswer.getValue()));
 
             handle.rollback();
         });
