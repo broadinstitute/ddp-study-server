@@ -27,7 +27,7 @@ public class TranslationsToDbJsonSaver {
     public void saveTranslations(Handle handle, StudyDto studyDto) {
         if (TranslationsProcessingData.INSTANCE.isSaveTranslationsToDbJson()) {
             TranslationsProcessingData.INSTANCE.getTranslations()
-                    .entrySet().forEach(i18n -> saveTranslationsForLanguage(handle, studyDto, i18n.getKey(), i18n.getValue()));
+                    .forEach((languageCode, translations) -> saveTranslationsForLanguage(handle, studyDto, languageCode, translations));
         }
     }
 

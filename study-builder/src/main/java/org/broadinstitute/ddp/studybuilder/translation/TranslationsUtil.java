@@ -39,9 +39,9 @@ public class TranslationsUtil {
      */
     public static Map<String, TranslationData> getTranslations(Config conf, String translationsPath) {
         Map<String, TranslationData> translationsMap = new HashMap<>();
-        conf.getConfig(translationsPath).root().entrySet().forEach(i18n -> {
-            Config translations = ((ConfigObject)i18n.getValue()).toConfig().resolve();
-            translationsMap.put(i18n.getKey(), new TranslationData(
+        conf.getConfig(translationsPath).root().forEach((key, value) -> {
+            Config translations = ((ConfigObject) value).toConfig().resolve();
+            translationsMap.put(key, new TranslationData(
                     toProperties(translations),
                     ConfigUtil.toJson(translations)));
         });
@@ -98,7 +98,7 @@ public class TranslationsUtil {
         allTranslations.keySet().forEach(langCde -> {
             boolean addLangCde = true;
             if (!isTranslationsEmpty(translations)) {
-                addLangCde = !translations.stream().anyMatch(tr -> langCde.equals(tr.getLanguageCode()));
+                addLangCde = translations.stream().noneMatch(tr -> langCde.equals(tr.getLanguageCode()));
             }
             if (addLangCde) {
                 langCdeList.add(langCde);
@@ -120,7 +120,7 @@ public class TranslationsUtil {
             return variablesFromTemplateText;
         } else {
             return variablesFromTemplateText.stream()
-                .filter(vtt -> variablesFromTemplateText != null && !variablesList.stream().anyMatch(v -> v.getName().equals(vtt)))
+                .filter(vtt -> variablesList.stream().noneMatch(v -> v.getName().equals(vtt)))
                 .collect(Collectors.toList());
         }
     }
