@@ -54,7 +54,7 @@ public class TestFormActivity {
     private DateQuestionDef dateFullQuestion;
     private FileQuestionDef fileQuestion;
     private NumericQuestionDef numericIntQuestion;
-    private DecimalQuestionDef decimalQuestionDef;
+    private DecimalQuestionDef decimalQuestion;
     private PicklistQuestionDef picklistSingleListQuestion;
     private PicklistQuestionDef picklistMultiListQuestion;
     private MatrixQuestionDef matrixListQuestion;
@@ -102,7 +102,7 @@ public class TestFormActivity {
     }
 
     public DecimalQuestionDef getDecimalQuestion() {
-        return decimalQuestionDef;
+        return decimalQuestion;
     }
 
     public PicklistQuestionDef getPicklistSingleListQuestion() {
@@ -326,6 +326,14 @@ public class TestFormActivity {
                         .builder("NUM" + Instant.now().toEpochMilli(), Template.text("numeric prompt"))
                         .build();
                 result.numericIntQuestion = question;
+                builder.addSection(new FormSectionDef(null, List.of(new QuestionBlockDef(question))));
+            }
+
+            if (withDecimalQuestion) {
+                var question = DecimalQuestionDef
+                        .builder("DEC" + Instant.now().toEpochMilli(), Template.text("decimal prompt"))
+                        .build();
+                result.decimalQuestion = question;
                 builder.addSection(new FormSectionDef(null, List.of(new QuestionBlockDef(question))));
             }
 
