@@ -6,6 +6,7 @@ public enum RuleType {
     DATE_RANGE,
     DAY_REQUIRED,
     INT_RANGE,
+    DECIMAL_RANGE,
     LENGTH,
     MONTH_REQUIRED,
     NUM_OPTIONS_SELECTED,
