@@ -375,7 +375,8 @@ public class AnswerDaoTest extends TxnAwareBaseTest {
             assertEquals(QuestionType.DECIMAL, created.getQuestionType());
             assertEquals(BigDecimal.valueOf(25L), created.getValue());
 
-            DecimalAnswer updatedNumber = new DecimalAnswer(null, act.getNumericIntQuestion().getStableId(), null, BigDecimal.valueOf(100L));
+            DecimalAnswer updatedNumber = new DecimalAnswer(null, act.getNumericIntQuestion().getStableId(),
+                    null, BigDecimal.valueOf(100L));
             answerDao.updateAnswer(testData.getUserId(), created.getAnswerId(), updatedNumber);
 
             assertEquals(created.getAnswerId(), updatedNumber.getAnswerId());
