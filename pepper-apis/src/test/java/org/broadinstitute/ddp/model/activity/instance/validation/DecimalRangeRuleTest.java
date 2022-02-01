@@ -41,7 +41,7 @@ public class DecimalRangeRuleTest {
 
     @Test
     public void testValidate_onlyMinimum() {
-        DecimalRangeRule rule = DecimalRangeRule.of("msg", "hint", false, BigDecimal.ZERO, null);
+        DecimalRangeRule rule = DecimalRangeRule.of("msg", "hint", false, BigDecimal.ONE, null);
         assertFalse(run(rule, BigDecimal.ZERO));
         assertTrue(run(rule, BigDecimal.ONE));
         assertTrue(run(rule, BigDecimal.TEN));
