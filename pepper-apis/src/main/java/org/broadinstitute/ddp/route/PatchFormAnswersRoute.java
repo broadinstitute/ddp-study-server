@@ -3,6 +3,7 @@ package org.broadinstitute.ddp.route;
 import static java.util.stream.Collectors.toList;
 
 import java.lang.reflect.Type;
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -40,14 +41,7 @@ import org.broadinstitute.ddp.db.dao.JdbiMatrixOption;
 import org.broadinstitute.ddp.db.dao.JdbiQuestionCached;
 import org.broadinstitute.ddp.db.dao.QuestionCachedDao;
 import org.broadinstitute.ddp.db.dao.UserDao;
-import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
-import org.broadinstitute.ddp.db.dto.AnswerDto;
-import org.broadinstitute.ddp.db.dto.CompositeQuestionDto;
-import org.broadinstitute.ddp.db.dto.LanguageDto;
-import org.broadinstitute.ddp.db.dto.MatrixGroupDto;
-import org.broadinstitute.ddp.db.dto.NumericQuestionDto;
-import org.broadinstitute.ddp.db.dto.QuestionDto;
-import org.broadinstitute.ddp.db.dto.UserActivityInstanceSummary;
+import org.broadinstitute.ddp.db.dto.*;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.exception.OperationNotAllowedException;
 import org.broadinstitute.ddp.exception.RequiredParameterMissingException;
@@ -60,21 +54,7 @@ import org.broadinstitute.ddp.json.errors.AnswerValidationError;
 import org.broadinstitute.ddp.json.errors.ApiError;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
 import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
-import org.broadinstitute.ddp.model.activity.instance.answer.ActivityInstanceSelectAnswer;
-import org.broadinstitute.ddp.model.activity.instance.answer.AgreementAnswer;
-import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
-import org.broadinstitute.ddp.model.activity.instance.answer.BoolAnswer;
-import org.broadinstitute.ddp.model.activity.instance.answer.CompositeAnswer;
-import org.broadinstitute.ddp.model.activity.instance.answer.DateAnswer;
-import org.broadinstitute.ddp.model.activity.instance.answer.DateValue;
-import org.broadinstitute.ddp.model.activity.instance.answer.FileAnswer;
-import org.broadinstitute.ddp.model.activity.instance.answer.FileInfo;
-import org.broadinstitute.ddp.model.activity.instance.answer.NumericAnswer;
-import org.broadinstitute.ddp.model.activity.instance.answer.PicklistAnswer;
-import org.broadinstitute.ddp.model.activity.instance.answer.SelectedPicklistOption;
-import org.broadinstitute.ddp.model.activity.instance.answer.MatrixAnswer;
-import org.broadinstitute.ddp.model.activity.instance.answer.SelectedMatrixCell;
-import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
+import org.broadinstitute.ddp.model.activity.instance.answer.*;
 import org.broadinstitute.ddp.model.activity.instance.question.CompositeQuestion;
 import org.broadinstitute.ddp.model.activity.instance.question.Question;
 import org.broadinstitute.ddp.model.activity.instance.question.TextQuestion;
@@ -436,6 +416,8 @@ public class PatchFormAnswersRoute implements Route {
                 return convertFileAnswer(handle, response, stableId, guid, instanceGuid, value);
             case NUMERIC:
                 return convertNumericAnswer(handle, (NumericQuestionDto) questionDto, guid, instanceGuid, value);
+            case DECIMAL:
+                return convertDecimalAnswer(handle, (DecimalQuestionDto) questionDto, guid, instanceGuid, value);
             case AGREEMENT:
                 return convertAgreementAnswer(stableId, guid, instanceGuid, value);
             case COMPOSITE:
@@ -629,6 +611,15 @@ public class PatchFormAnswersRoute implements Route {
         } else {
             return null;
         }
+    }
+
+    private DecimalAnswer convertDecimalAnswer(Handle handle, DecimalQuestionDto numericDto, String guid, String actInstanceGuid,
+                                               JsonElement value) {
+        BigDecimal decimalValue = null;
+        if (value != null && !value.isJsonNull()) {
+            decimalValue = value.getAsBigDecimal();
+        }
+        return new DecimalAnswer(null, numericDto.getStableId(), guid, decimalValue, actInstanceGuid);
     }
 
     private CompositeAnswer convertCompositeAnswer(Handle handle, Response response, String instanceGuid,

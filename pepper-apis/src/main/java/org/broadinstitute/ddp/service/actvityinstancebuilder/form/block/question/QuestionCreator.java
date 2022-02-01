@@ -5,17 +5,7 @@ import static org.broadinstitute.ddp.model.activity.types.DateRenderMode.PICKLIS
 import java.util.ArrayList;
 import java.util.List;
 
-import org.broadinstitute.ddp.model.activity.definition.question.AgreementQuestionDef;
-import org.broadinstitute.ddp.model.activity.definition.question.BoolQuestionDef;
-import org.broadinstitute.ddp.model.activity.definition.question.CompositeQuestionDef;
-import org.broadinstitute.ddp.model.activity.definition.question.DateQuestionDef;
-import org.broadinstitute.ddp.model.activity.definition.question.FileQuestionDef;
-import org.broadinstitute.ddp.model.activity.definition.question.NumericQuestionDef;
-import org.broadinstitute.ddp.model.activity.definition.question.PicklistQuestionDef;
-import org.broadinstitute.ddp.model.activity.definition.question.MatrixQuestionDef;
-import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
-import org.broadinstitute.ddp.model.activity.definition.question.TextQuestionDef;
-import org.broadinstitute.ddp.model.activity.definition.question.ActivityInstanceSelectQuestionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.*;
 import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
 import org.broadinstitute.ddp.model.activity.instance.question.Question;
 import org.broadinstitute.ddp.model.activity.instance.validation.Rule;
@@ -49,6 +39,9 @@ public class QuestionCreator {
                     break;
                 case NUMERIC:
                     question = creatorHelper.createNumericQuestion(ctx, (NumericQuestionDef) questionDef);
+                    break;
+                case DECIMAL:
+                    question = creatorHelper.createDecimalQuestion(ctx, (DecimalQuestionDef) questionDef);
                     break;
                 case PICKLIST:
                     question = creatorHelper.createPicklistQuestion(ctx, (PicklistQuestionDef) questionDef);

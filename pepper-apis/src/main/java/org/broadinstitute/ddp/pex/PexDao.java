@@ -1,5 +1,6 @@
 package org.broadinstitute.ddp.pex;
 
+import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Optional;
@@ -104,9 +105,21 @@ interface PexDao extends SqlObject {
                                         @Bind("studyId") long studyId);
 
     @UseStringTemplateSqlLocator
+    @SqlQuery("queryLatestDecimalAnswerByUserGuidActivityCodeAndQuestionStableId")
+    BigDecimal findLatestDecimalAnswer(@Bind("userGuid") String userGuid,
+                                       @Bind("activityCode") String activityCode,
+                                       @Bind("stableId") String stableId,
+                                       @Bind("studyId") long studyId);
+
+    @UseStringTemplateSqlLocator
     @SqlQuery("queryNumericIntegerAnswerByStableIdAndActivityInstance")
     Long findSpecificNumericIntegerAnswer(@Bind("activityInstanceGuid") String activityInstanceGuid,
                                           @Bind("stableId") String stableId);
+
+    @UseStringTemplateSqlLocator
+    @SqlQuery("queryDecimalAnswerByStableIdAndActivityInstance")
+    BigDecimal findSpecificDecimalAnswer(@Bind("activityInstanceGuid") String activityInstanceGuid,
+                                         @Bind("stableId") String stableId);
 
     class ZeroedDateValueMapper implements RowMapper<DateValue> {
         @Override

@@ -12,17 +12,7 @@ import java.util.stream.Stream;
 
 import org.broadinstitute.ddp.constants.SqlConstants;
 import org.broadinstitute.ddp.db.DaoException;
-import org.broadinstitute.ddp.db.dto.AgreementQuestionDto;
-import org.broadinstitute.ddp.db.dto.BooleanQuestionDto;
-import org.broadinstitute.ddp.db.dto.CompositeQuestionDto;
-import org.broadinstitute.ddp.db.dto.DateQuestionDto;
-import org.broadinstitute.ddp.db.dto.FileQuestionDto;
-import org.broadinstitute.ddp.db.dto.NumericQuestionDto;
-import org.broadinstitute.ddp.db.dto.PicklistQuestionDto;
-import org.broadinstitute.ddp.db.dto.MatrixQuestionDto;
-import org.broadinstitute.ddp.db.dto.QuestionDto;
-import org.broadinstitute.ddp.db.dto.TextQuestionDto;
-import org.broadinstitute.ddp.db.dto.ActivityInstanceSelectQuestionDto;
+import org.broadinstitute.ddp.db.dto.*;
 import org.broadinstitute.ddp.model.activity.definition.question.DatePicklistDef;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
 import org.jdbi.v3.core.mapper.RowMapper;
@@ -221,6 +211,9 @@ public interface JdbiQuestion extends SqlObject {
                     break;
                 case NUMERIC:
                     questionDto = view.getRow(NumericQuestionDto.class);
+                    break;
+                case DECIMAL:
+                    questionDto = view.getRow(DecimalQuestionDto.class);
                     break;
                 case PICKLIST:
                     questionDto = view.getRow(PicklistQuestionDto.class);

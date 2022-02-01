@@ -21,7 +21,7 @@ public final class DecimalQuestion extends Question<DecimalAnswer> {
                            boolean isRestricted, boolean isDeprecated, Boolean readonly, Long tooltipTemplateId,
                            Long additionalInfoHeaderTemplateId, Long additionalInfoFooterTemplateId,
                            List<DecimalAnswer> answers, List<Rule<DecimalAnswer>> validations) {
-        super(QuestionType.NUMERIC, stableId, promptTemplateId, isRestricted, isDeprecated, readonly, tooltipTemplateId,
+        super(QuestionType.DECIMAL, stableId, promptTemplateId, isRestricted, isDeprecated, readonly, tooltipTemplateId,
                 additionalInfoHeaderTemplateId, additionalInfoFooterTemplateId, answers, validations);
         this.placeholderTemplateId = placeholderTemplateId;
     }

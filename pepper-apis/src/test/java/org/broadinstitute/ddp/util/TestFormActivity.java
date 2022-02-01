@@ -11,21 +11,7 @@ import org.broadinstitute.ddp.model.activity.definition.FormBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.FormSectionDef;
 import org.broadinstitute.ddp.model.activity.definition.QuestionBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.i18n.Translation;
-import org.broadinstitute.ddp.model.activity.definition.question.AgreementQuestionDef;
-import org.broadinstitute.ddp.model.activity.definition.question.BoolQuestionDef;
-import org.broadinstitute.ddp.model.activity.definition.question.CompositeQuestionDef;
-import org.broadinstitute.ddp.model.activity.definition.question.DateQuestionDef;
-import org.broadinstitute.ddp.model.activity.definition.question.FileQuestionDef;
-import org.broadinstitute.ddp.model.activity.definition.question.NumericQuestionDef;
-import org.broadinstitute.ddp.model.activity.definition.question.PicklistOptionDef;
-import org.broadinstitute.ddp.model.activity.definition.question.PicklistQuestionDef;
-import org.broadinstitute.ddp.model.activity.definition.question.MatrixOptionDef;
-import org.broadinstitute.ddp.model.activity.definition.question.MatrixQuestionDef;
-import org.broadinstitute.ddp.model.activity.definition.question.MatrixRowDef;
-import org.broadinstitute.ddp.model.activity.definition.question.MatrixGroupDef;
-import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
-import org.broadinstitute.ddp.model.activity.definition.question.TextQuestionDef;
-import org.broadinstitute.ddp.model.activity.definition.question.ActivityInstanceSelectQuestionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.*;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.activity.definition.validation.RequiredRuleDef;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
@@ -53,6 +39,7 @@ public class TestFormActivity {
     private DateQuestionDef dateFullQuestion;
     private FileQuestionDef fileQuestion;
     private NumericQuestionDef numericIntQuestion;
+    private DecimalQuestionDef decimalQuestionDef;
     private PicklistQuestionDef picklistSingleListQuestion;
     private PicklistQuestionDef picklistMultiListQuestion;
     private MatrixQuestionDef matrixListQuestion;
@@ -99,6 +86,10 @@ public class TestFormActivity {
         return numericIntQuestion;
     }
 
+    public DecimalQuestionDef getDecimalQuestion() {
+        return decimalQuestionDef;
+    }
+
     public PicklistQuestionDef getPicklistSingleListQuestion() {
         return picklistSingleListQuestion;
     }
@@ -127,6 +118,7 @@ public class TestFormActivity {
         private boolean withDateFullQuestion = false;
         private boolean withFileQuestion = false;
         private boolean withNumericIntQuestion = false;
+        private boolean withDecimalQuestion = false;
         private boolean withTextQuestion = false;
         private boolean withActivityInstanceSelectQuestion = false;
         private List<PicklistOptionDef> picklistSingleListOptions = null;
@@ -182,6 +174,11 @@ public class TestFormActivity {
 
         public Builder withNumericIntQuestion(boolean include) {
             this.withNumericIntQuestion = include;
+            return this;
+        }
+
+        public Builder withDecimalQuestion(boolean include) {
+            this.withDecimalQuestion = include;
             return this;
         }
 

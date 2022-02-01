@@ -16,6 +16,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -73,38 +74,10 @@ import org.broadinstitute.ddp.json.errors.ApiError;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
 import org.broadinstitute.ddp.model.activity.definition.FormSectionDef;
 import org.broadinstitute.ddp.model.activity.definition.i18n.Translation;
-import org.broadinstitute.ddp.model.activity.definition.question.AgreementQuestionDef;
-import org.broadinstitute.ddp.model.activity.definition.question.BoolQuestionDef;
-import org.broadinstitute.ddp.model.activity.definition.question.CompositeQuestionDef;
-import org.broadinstitute.ddp.model.activity.definition.question.DateQuestionDef;
-import org.broadinstitute.ddp.model.activity.definition.question.FileQuestionDef;
-import org.broadinstitute.ddp.model.activity.definition.question.NumericQuestionDef;
-import org.broadinstitute.ddp.model.activity.definition.question.PicklistOptionDef;
-import org.broadinstitute.ddp.model.activity.definition.question.PicklistQuestionDef;
-import org.broadinstitute.ddp.model.activity.definition.question.MatrixOptionDef;
-import org.broadinstitute.ddp.model.activity.definition.question.MatrixQuestionDef;
-import org.broadinstitute.ddp.model.activity.definition.question.MatrixGroupDef;
-import org.broadinstitute.ddp.model.activity.definition.question.MatrixRowDef;
-import org.broadinstitute.ddp.model.activity.definition.question.TextQuestionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.*;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
-import org.broadinstitute.ddp.model.activity.definition.validation.DateFieldRequiredRuleDef;
-import org.broadinstitute.ddp.model.activity.definition.validation.DateRangeRuleDef;
-import org.broadinstitute.ddp.model.activity.definition.validation.IntRangeRuleDef;
-import org.broadinstitute.ddp.model.activity.definition.validation.LengthRuleDef;
-import org.broadinstitute.ddp.model.activity.definition.validation.RequiredRuleDef;
-import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
-import org.broadinstitute.ddp.model.activity.instance.answer.AnswerRow;
-import org.broadinstitute.ddp.model.activity.instance.answer.BoolAnswer;
-import org.broadinstitute.ddp.model.activity.instance.answer.CompositeAnswer;
-import org.broadinstitute.ddp.model.activity.instance.answer.DateAnswer;
-import org.broadinstitute.ddp.model.activity.instance.answer.DateValue;
-import org.broadinstitute.ddp.model.activity.instance.answer.FileAnswer;
-import org.broadinstitute.ddp.model.activity.instance.answer.NumericAnswer;
-import org.broadinstitute.ddp.model.activity.instance.answer.PicklistAnswer;
-import org.broadinstitute.ddp.model.activity.instance.answer.SelectedPicklistOption;
-import org.broadinstitute.ddp.model.activity.instance.answer.MatrixAnswer;
-import org.broadinstitute.ddp.model.activity.instance.answer.SelectedMatrixCell;
-import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
+import org.broadinstitute.ddp.model.activity.definition.validation.*;
+import org.broadinstitute.ddp.model.activity.instance.answer.*;
 import org.broadinstitute.ddp.model.activity.instance.question.CompositeQuestion;
 import org.broadinstitute.ddp.model.activity.instance.question.Question;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
@@ -162,10 +135,16 @@ public class PatchFormAnswersRouteStandaloneTest {
     private static String childTextStableId;
     private static String childDateStableId;
     private static String compStabledId;
+
     private static NumericQuestionDef numericQuestionDef;
     private static String numericIntegerSid;
     private static String numericIntegerReqSid;
     private static String numericIntegerWithMultipleRulesSid;
+
+    private static DecimalQuestionDef decimalQuestionDef;
+    private static String decimalIntegerSid;
+    private static String decimalIntegerReqSid;
+    private static String decimalIntegerWithMultipleRulesSid;
 
     private static String plistSingle_option1_sid;
     private static String plistSingle_option2_sid;
@@ -280,6 +259,10 @@ public class PatchFormAnswersRouteStandaloneTest {
         numericIntegerSid = "PATCH_NUMERIC_INTEGER_Q" + timestamp;
         numericIntegerReqSid = "PATCH_NUMERIC_INTEGER_REQ" + timestamp;
         numericIntegerWithMultipleRulesSid = "PATCH_NUM_INT_W_MULT_RULES" + timestamp;
+
+        decimalIntegerSid = "PATCH_DECIMAL_Q" + timestamp;
+        decimalIntegerReqSid = "PATCH_DECIMAL_REQ" + timestamp;
+        decimalIntegerWithMultipleRulesSid = "PATCH_DECIMAL_W_MULT_RULES" + timestamp;
 
         BoolQuestionDef b1 = BoolQuestionDef.builder(boolStableId, newTemplate(), newTemplate(), newTemplate()).build();
         FormSectionDef boolSection = new FormSectionDef(null, TestUtil.wrapQuestions(b1));
@@ -397,6 +380,21 @@ public class PatchFormAnswersRouteStandaloneTest {
                 .build();
         FormSectionDef numericSection = new FormSectionDef(null, TestUtil.wrapQuestions(numericQuestionDef, n2, n3));
 
+        decimalQuestionDef = DecimalQuestionDef
+                .builder(decimalIntegerSid, newTemplate())
+                .addValidation(new DecimalRangeRuleDef(null, BigDecimal.valueOf(5L), BigDecimal.valueOf(100L)))
+                .build();
+        DecimalQuestionDef dec2 = DecimalQuestionDef
+                .builder(decimalIntegerReqSid, newTemplate())
+                .addValidation(new RequiredRuleDef(null))
+                .build();
+        DecimalQuestionDef dec3 = DecimalQuestionDef
+                .builder(decimalIntegerWithMultipleRulesSid, newTemplate())
+                .addValidation(new DecimalRangeRuleDef(null, BigDecimal.valueOf(5L), BigDecimal.valueOf(100L)))
+                .addValidation(new DecimalRangeRuleDef(null, BigDecimal.valueOf(200L), BigDecimal.valueOf(500L)))
+                .build();
+        FormSectionDef decimalSection = new FormSectionDef(null, TestUtil.wrapQuestions(decimalQuestionDef, n2, n3));
+
         fileQuestion = FileQuestionDef.builder("FILE" + timestamp, Template.text("file"))
                 .setMaxFileSize(DEFAULT_MAX_FILE_SIZE_FOR_TEST)
                 .build();
@@ -415,7 +413,7 @@ public class PatchFormAnswersRouteStandaloneTest {
                         Arrays.asList(
                                 boolSection, textSection, textSection2, textSection3, plistSection,
                                 dateSection, compositeSection, essayTextSection, agreementSection,
-                                numericSection, fileSection, matrixSection
+                                numericSection, decimalSection, fileSection, matrixSection
                         )
                 )
                 .build();
@@ -1993,6 +1991,120 @@ public class PatchFormAnswersRouteStandaloneTest {
                 .statusCode(422).contentType(ContentType.JSON)
                 .body("code", equalTo(ErrorCodes.ANSWER_VALIDATION))
                 .body("violations[0].stableId", equalTo(numericIntegerReqSid))
+                .body("violations[0].rules[0]", equalTo(RuleType.REQUIRED.name()));
+    }
+
+    @Test
+    public void testPatch_decimalAnswer_newAnswer() {
+        AnswerSubmission submission = new AnswerSubmission(decimalIntegerSid, null, gson.toJsonTree(BigDecimal.valueOf(25L)));
+        PatchAnswerPayload data = new PatchAnswerPayload(List.of(submission));
+
+        String guid = givenAnswerPatchRequest(instanceGuid, data)
+                .then().assertThat()
+                .log().all()
+                .statusCode(200).contentType(ContentType.JSON)
+                .body("answers.size()", equalTo(1))
+                .body("answers[0].stableId", equalTo(decimalIntegerSid))
+                .body("answers[0].answerGuid", not(isEmptyOrNullString()))
+                .and().extract().path("answers[0].answerGuid");
+
+        answerGuidsToDelete.get(QuestionType.DECIMAL).add(guid);
+        DecimalAnswer answer = (DecimalAnswer) TransactionWrapper.withTxn(handle ->
+                new AnswerCachedDao(handle).findAnswerByGuid(guid).get());
+
+        assertNotNull(answer);
+        assertEquals(guid, answer.getAnswerGuid());
+        assertEquals(decimalIntegerSid, answer.getQuestionStableId());
+        assertEquals(BigDecimal.valueOf(25L), answer.getValue());
+    }
+
+    @Test
+    public void testPatch_decimalAnswer_updateAnswer() {
+        AnswerSubmission submission = new AnswerSubmission(decimalIntegerSid, null, gson.toJsonTree(BigDecimal.valueOf(25L)));
+        PatchAnswerPayload data = new PatchAnswerPayload(List.of(submission));
+
+        String guid = givenAnswerPatchRequest(instanceGuid, data)
+                .then().assertThat()
+                .log().all()
+                .statusCode(200).contentType(ContentType.JSON)
+                .and().extract().path("answers[0].answerGuid");
+        answerGuidsToDelete.get(QuestionType.DECIMAL).add(guid);
+
+        submission = new AnswerSubmission(decimalIntegerSid, guid, gson.toJsonTree(75));
+        data = new PatchAnswerPayload(List.of(submission));
+        String nextGuid = givenAnswerPatchRequest(instanceGuid, data)
+                .then().assertThat()
+                .statusCode(200).contentType(ContentType.JSON)
+                .body("answers.size()", equalTo(1))
+                .body("answers[0].stableId", equalTo(decimalIntegerSid))
+                .body("answers[0].answerGuid", not(isEmptyOrNullString()))
+                .and().extract().path("answers[0].answerGuid");
+
+        assertEquals(guid, nextGuid);
+        DecimalAnswer answer = (DecimalAnswer) TransactionWrapper.withTxn(handle ->
+                new AnswerCachedDao(handle).findAnswerByGuid(guid).get());
+
+        assertNotNull(answer);
+        assertEquals(BigDecimal.valueOf(75L), answer.getValue());
+    }
+
+    @Test
+    public void testPatch_decimalAnswer_acceptsNull() {
+        AnswerSubmission submission = new AnswerSubmission(decimalIntegerSid, null, null);
+        PatchAnswerPayload data = new PatchAnswerPayload(List.of(submission));
+
+        String guid = givenAnswerPatchRequest(instanceGuid, data)
+                .then().assertThat()
+                .log().all()
+                .statusCode(200).contentType(ContentType.JSON)
+                .body("answers.size()", equalTo(1))
+                .body("answers[0].stableId", equalTo(decimalIntegerSid))
+                .body("answers[0].answerGuid", not(isEmptyOrNullString()))
+                .and().extract().path("answers[0].answerGuid");
+
+        answerGuidsToDelete.get(QuestionType.DECIMAL).add(guid);
+        NumericAnswer answer = (NumericAnswer) TransactionWrapper.withTxn(handle ->
+                new AnswerCachedDao(handle).findAnswerByGuid(guid).get());
+
+        assertNotNull(answer);
+        assertEquals(guid, answer.getAnswerGuid());
+        assertEquals(decimalIntegerSid, answer.getQuestionStableId());
+        assertNull(answer.getValue());
+    }
+
+    @Test
+    public void testPatch_decimalAnswer_rangeRule_lessThanMin() {
+        AnswerSubmission submission = new AnswerSubmission(decimalIntegerSid, null, gson.toJsonTree(BigDecimal.ONE));
+        PatchAnswerPayload data = new PatchAnswerPayload(List.of(submission));
+        givenAnswerPatchRequest(instanceGuid, data)
+                .then().assertThat()
+                .statusCode(422).contentType(ContentType.JSON)
+                .body("code", equalTo(ErrorCodes.ANSWER_VALIDATION))
+                .body("violations[0].stableId", equalTo(decimalIntegerSid))
+                .body("violations[0].rules[0]", equalTo(RuleType.DECIMAL_RANGE.name()));
+    }
+
+    @Test
+    public void testPatch_decimalAnswer_rangeRule_greaterThanMax() {
+        AnswerSubmission submission = new AnswerSubmission(decimalIntegerSid, null, gson.toJsonTree(BigDecimal.valueOf(1024L)));
+        PatchAnswerPayload data = new PatchAnswerPayload(List.of(submission));
+        givenAnswerPatchRequest(instanceGuid, data)
+                .then().assertThat()
+                .statusCode(422).contentType(ContentType.JSON)
+                .body("code", equalTo(ErrorCodes.ANSWER_VALIDATION))
+                .body("violations[0].stableId", equalTo(decimalIntegerSid))
+                .body("violations[0].rules[0]", equalTo(RuleType.DECIMAL_RANGE.name()));
+    }
+
+    @Test
+    public void testPatch_decimalAnswer_requiredRule_failsValidation() {
+        AnswerSubmission submission = new AnswerSubmission(decimalIntegerReqSid, null, null);
+        PatchAnswerPayload data = new PatchAnswerPayload(List.of(submission));
+        givenAnswerPatchRequest(instanceGuid, data)
+                .then().assertThat()
+                .statusCode(422).contentType(ContentType.JSON)
+                .body("code", equalTo(ErrorCodes.ANSWER_VALIDATION))
+                .body("violations[0].stableId", equalTo(decimalIntegerReqSid))
                 .body("violations[0].rules[0]", equalTo(RuleType.REQUIRED.name()));
     }
 

@@ -200,3 +200,32 @@ select na.answer
  where ai.activity_instance_guid = :activityInstanceGuid
    and qsc.stable_id = :stableId
 >>
+
+queryLatestDecimalAnswerByUserGuidActivityCodeAndQuestionStableId() ::= <<
+select da.decimal_value
+  from decimal_answer as da
+  join answer as a on da.answer_id = a.answer_id
+  join question as q on a.question_id = q.question_id
+  join question_stable_code as qsc on q.question_stable_code_id = qsc.question_stable_code_id
+  join numeric_question as nq on nq.question_id = q.question_id
+  join activity_instance as ai on a.activity_instance_id = ai.activity_instance_id
+  join study_activity as sa on ai.study_activity_id = sa.study_activity_id
+  join user as u on ai.participant_id = u.user_id
+ where u.guid = :userGuid
+   and sa.study_activity_code = :activityCode
+   and sa.study_id = :studyId
+   and qsc.stable_id = :stableId
+ order by ai.created_at desc limit 1
+>>
+
+queryDecimalAnswerByStableIdAndActivityInstance() ::= <<
+select da.answer
+  from decimal_answer as da
+  join answer as a on da.answer_id = a.answer_id
+  join question as q on a.question_id = q.question_id
+  join question_stable_code as qsc on q.question_stable_code_id = qsc.question_stable_code_id
+  join numeric_question as nq on nq.question_id = q.question_id
+  join activity_instance as ai on ai.activity_instance_id = a.activity_instance_id
+ where ai.activity_instance_guid = :activityInstanceGuid
+   and qsc.stable_id = :stableId
+>>

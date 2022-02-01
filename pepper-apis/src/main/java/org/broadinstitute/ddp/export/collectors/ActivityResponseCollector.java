@@ -28,6 +28,7 @@ import org.broadinstitute.ddp.model.activity.definition.question.CompositeQuesti
 import org.broadinstitute.ddp.model.activity.definition.question.DateQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.FileQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.NumericQuestionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.DecimalQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.MatrixQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
@@ -35,17 +36,7 @@ import org.broadinstitute.ddp.model.activity.definition.question.TextQuestionDef
 import org.broadinstitute.ddp.model.activity.definition.question.ActivityInstanceSelectQuestionDef;
 import org.broadinstitute.ddp.model.activity.instance.ActivityResponse;
 import org.broadinstitute.ddp.model.activity.instance.FormResponse;
-import org.broadinstitute.ddp.model.activity.instance.answer.AgreementAnswer;
-import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
-import org.broadinstitute.ddp.model.activity.instance.answer.BoolAnswer;
-import org.broadinstitute.ddp.model.activity.instance.answer.CompositeAnswer;
-import org.broadinstitute.ddp.model.activity.instance.answer.DateAnswer;
-import org.broadinstitute.ddp.model.activity.instance.answer.FileAnswer;
-import org.broadinstitute.ddp.model.activity.instance.answer.NumericAnswer;
-import org.broadinstitute.ddp.model.activity.instance.answer.PicklistAnswer;
-import org.broadinstitute.ddp.model.activity.instance.answer.MatrixAnswer;
-import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
-import org.broadinstitute.ddp.model.activity.instance.answer.ActivityInstanceSelectAnswer;
+import org.broadinstitute.ddp.model.activity.instance.answer.*;
 import org.broadinstitute.ddp.model.activity.types.ActivityType;
 import org.broadinstitute.ddp.model.activity.types.InstitutionType;
 
@@ -65,6 +56,7 @@ public class ActivityResponseCollector {
     private DateQuestionFormatStrategy dateFmt = new DateQuestionFormatStrategy();
     private FileQuestionFormatStrategy fileFmt = new FileQuestionFormatStrategy();
     private NumericQuestionFormatStrategy numericFmt = new NumericQuestionFormatStrategy();
+    private DecimalQuestionFormatStrategy decimalFmt = new DecimalQuestionFormatStrategy();
     private PicklistQuestionFormatStrategy picklistFmt = new PicklistQuestionFormatStrategy();
     private MatrixQuestionFormatStrategy matrixFmt = new MatrixQuestionFormatStrategy();
     private CompositeQuestionFormatStrategy compositeFmt = new CompositeQuestionFormatStrategy();
@@ -242,6 +234,9 @@ public class ActivityResponseCollector {
             case NUMERIC:
                 currProps.putAll(numericFmt.mappings((NumericQuestionDef) questionDef));
                 break;
+            case DECIMAL:
+                currProps.putAll(decimalFmt.mappings((DecimalQuestionDef) questionDef));
+                break;
             case PICKLIST:
                 currProps.putAll(picklistFmt.mappings((PicklistQuestionDef) questionDef));
                 break;
@@ -283,6 +278,9 @@ public class ActivityResponseCollector {
                 break;
             case NUMERIC:
                 questions.add(numericFmt.questionDef((NumericQuestionDef) questionDef));
+                break;
+            case DECIMAL:
+                questions.add(decimalFmt.questionDef((DecimalQuestionDef) questionDef));
                 break;
             case PICKLIST:
                 questions.add(picklistFmt.questionDef((PicklistQuestionDef) questionDef));
@@ -445,6 +443,9 @@ public class ActivityResponseCollector {
             case NUMERIC:
                 headers.addAll(numericFmt.headers((NumericQuestionDef) questionDef));
                 break;
+            case DECIMAL:
+                headers.addAll(decimalFmt.headers((DecimalQuestionDef) questionDef));
+                break;
             case PICKLIST:
                 headers.addAll(picklistFmt.headers((PicklistQuestionDef) questionDef));
                 break;
@@ -565,6 +566,9 @@ public class ActivityResponseCollector {
                 break;
             case NUMERIC:
                 record.putAll(numericFmt.collect((NumericQuestionDef) question, (NumericAnswer) answer));
+                break;
+            case DECIMAL:
+                record.putAll(decimalFmt.collect((DecimalQuestionDef) question, (DecimalAnswer) answer));
                 break;
             case PICKLIST:
                 record.putAll(picklistFmt.collect((PicklistQuestionDef) question, (PicklistAnswer) answer));

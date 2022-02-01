@@ -1,5 +1,6 @@
 package org.broadinstitute.ddp.db.dao;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -17,25 +18,10 @@ import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.DaoException;
 import org.broadinstitute.ddp.db.dto.AnswerDto;
 import org.broadinstitute.ddp.db.dto.CompositeAnswerSummaryDto;
-import org.broadinstitute.ddp.model.activity.instance.answer.ActivityInstanceSelectAnswer;
+import org.broadinstitute.ddp.model.activity.instance.answer.*;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.MatrixQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
-import org.broadinstitute.ddp.model.activity.instance.answer.AgreementAnswer;
-import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
-import org.broadinstitute.ddp.model.activity.instance.answer.AnswerRow;
-import org.broadinstitute.ddp.model.activity.instance.answer.BoolAnswer;
-import org.broadinstitute.ddp.model.activity.instance.answer.CompositeAnswer;
-import org.broadinstitute.ddp.model.activity.instance.answer.DateAnswer;
-import org.broadinstitute.ddp.model.activity.instance.answer.DateValue;
-import org.broadinstitute.ddp.model.activity.instance.answer.FileAnswer;
-import org.broadinstitute.ddp.model.activity.instance.answer.FileInfo;
-import org.broadinstitute.ddp.model.activity.instance.answer.NumericAnswer;
-import org.broadinstitute.ddp.model.activity.instance.answer.PicklistAnswer;
-import org.broadinstitute.ddp.model.activity.instance.answer.SelectedPicklistOption;
-import org.broadinstitute.ddp.model.activity.instance.answer.SelectedMatrixCell;
-import org.broadinstitute.ddp.model.activity.instance.answer.MatrixAnswer;
-import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
 import org.jdbi.v3.core.result.LinkedHashMapRowReducer;
 import org.jdbi.v3.core.result.RowView;
@@ -119,6 +105,9 @@ public interface AnswerDao extends SqlObject {
         } else if (type == QuestionType.NUMERIC) {
             NumericAnswer ans = (NumericAnswer) answer;
             DBUtils.checkInsert(1, answerSql.insertNumericIntValue(answerId, ans.getValue()));
+        } else if (type == QuestionType.DECIMAL) {
+            DecimalAnswer ans = (DecimalAnswer) answer;
+            DBUtils.checkInsert(1, answerSql.insertDecimalValue(answerId, ans.getValue()));
         } else if (type == QuestionType.PICKLIST) {
             if (questionDef == null) {
                 createAnswerPicklistValue(instanceId, answerId, (PicklistAnswer) answer);
@@ -209,6 +198,9 @@ public interface AnswerDao extends SqlObject {
         } else if (type == QuestionType.NUMERIC) {
             NumericAnswer ans = (NumericAnswer) newAnswer;
             DBUtils.checkInsert(1, answerSql.updateNumericIntValueById(answerId, ans.getValue()));
+        } else if (type == QuestionType.DECIMAL) {
+            DecimalAnswer ans = (DecimalAnswer) newAnswer;
+            DBUtils.checkInsert(1, answerSql.updateDecimalValueById(answerId, ans.getValue()));
         } else if (type == QuestionType.PICKLIST) {
             if (questionDef == null) {
                 updateAnswerPicklistValue(answerId, (PicklistAnswer) newAnswer);
@@ -484,6 +476,10 @@ public interface AnswerDao extends SqlObject {
                 case NUMERIC:
                     answer = new NumericAnswer(answerId, questionStableId, answerGuid,
                             view.getColumn("na_int_value", Long.class), actInstanceGuid);
+                    break;
+                case DECIMAL:
+                    answer = new DecimalAnswer(answerId, questionStableId, answerGuid,
+                            view.getColumn("da_decimal_value", BigDecimal.class), actInstanceGuid);
                     break;
                 case PICKLIST:
                     var picklistMap = isChildAnswer ? childAnswers : container;

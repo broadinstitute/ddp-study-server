@@ -41,23 +41,7 @@ import org.broadinstitute.ddp.db.dto.ActivityInstanceSelectQuestionDto;
 import org.broadinstitute.ddp.db.dto.TypedQuestionId;
 import org.broadinstitute.ddp.db.dto.validation.RuleDto;
 import org.broadinstitute.ddp.model.activity.definition.QuestionBlockDef;
-import org.broadinstitute.ddp.model.activity.definition.question.AgreementQuestionDef;
-import org.broadinstitute.ddp.model.activity.definition.question.BoolQuestionDef;
-import org.broadinstitute.ddp.model.activity.definition.question.CompositeQuestionDef;
-import org.broadinstitute.ddp.model.activity.definition.question.DatePicklistDef;
-import org.broadinstitute.ddp.model.activity.definition.question.DateQuestionDef;
-import org.broadinstitute.ddp.model.activity.definition.question.FileQuestionDef;
-import org.broadinstitute.ddp.model.activity.definition.question.NumericQuestionDef;
-import org.broadinstitute.ddp.model.activity.definition.question.PicklistGroupDef;
-import org.broadinstitute.ddp.model.activity.definition.question.PicklistOptionDef;
-import org.broadinstitute.ddp.model.activity.definition.question.PicklistQuestionDef;
-import org.broadinstitute.ddp.model.activity.definition.question.MatrixGroupDef;
-import org.broadinstitute.ddp.model.activity.definition.question.MatrixOptionDef;
-import org.broadinstitute.ddp.model.activity.definition.question.MatrixQuestionDef;
-import org.broadinstitute.ddp.model.activity.definition.question.MatrixRowDef;
-import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
-import org.broadinstitute.ddp.model.activity.definition.question.TextQuestionDef;
-import org.broadinstitute.ddp.model.activity.definition.question.ActivityInstanceSelectQuestionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.*;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.activity.definition.validation.RequiredRuleDef;
 import org.broadinstitute.ddp.model.activity.definition.validation.RuleDef;
@@ -172,6 +156,9 @@ public interface QuestionDao extends SqlObject {
 
     @CreateSqlObject
     JdbiNumericQuestion getJdbiNumericQuestion();
+
+    @CreateSqlObject
+    JdbiDecimalQuestion getJdbiDecimalQuestion();
 
     @CreateSqlObject
     JdbiBlockQuestion getJdbiBlockQuestion();
@@ -1001,6 +988,9 @@ public interface QuestionDao extends SqlObject {
             case NUMERIC:
                 insertQuestion(activityId, (NumericQuestionDef) question, revisionId);
                 break;
+            case DECIMAL:
+                insertQuestion(activityId, (DecimalQuestionDef) question, revisionId);
+                break;
             case PICKLIST:
                 insertQuestion(activityId, (PicklistQuestionDef) question, revisionId);
                 break;
@@ -1046,6 +1036,9 @@ public interface QuestionDao extends SqlObject {
                 break;
             case NUMERIC:
                 disableNumericQuestion(qid.getId(), meta);
+                break;
+            case DECIMAL:
+                disableDecimalQuestion(qid.getId(), meta);
                 break;
             case PICKLIST:
                 disablePicklistQuestion(qid.getId(), meta);
@@ -1355,6 +1348,28 @@ public interface QuestionDao extends SqlObject {
     }
 
     /**
+     * Create new decimal question by inserting common data and numeric specific data.
+     *
+     * @param activityId  the associated activity
+     * @param questionDef the question definition, without generated things like ids
+     * @param revisionId  the revision to use, will be shared by all created data
+     */
+    default void insertQuestion(long activityId, DecimalQuestionDef questionDef, long revisionId) {
+        insertBaseQuestion(activityId, questionDef, revisionId);
+
+        TemplateDao templateDao = getTemplateDao();
+        Long placeholderTemplateId = null;
+        if (questionDef.getPlaceholderTemplate() != null) {
+            placeholderTemplateId = templateDao.insertTemplate(questionDef.getPlaceholderTemplate(), revisionId);
+        }
+
+        int numInserted = getJdbiNumericQuestion().insert(questionDef.getQuestionId(), placeholderTemplateId);
+        if (numInserted != 1) {
+            throw new DaoException("Inserted " + numInserted + " for decimal question " + questionDef.getStableId());
+        }
+    }
+
+    /**
      * Create new matrix question by inserting common data and matrix specific data.
      *
      * @param activityId the associated activity
@@ -1432,7 +1447,7 @@ public interface QuestionDao extends SqlObject {
         boolean acceptable = compositeQuestion.getChildren().stream().allMatch(child -> {
             QuestionType type = child.getQuestionType();
             return type == QuestionType.DATE || type == QuestionType.PICKLIST
-                    || type == QuestionType.TEXT || type == QuestionType.NUMERIC;
+                    || type == QuestionType.TEXT || type == QuestionType.NUMERIC || type == QuestionType.DECIMAL;
         });
         if (!acceptable) {
             throw new DaoException("Composites only support DATE, PICKLIST, TEXT and NUMERIC child questions");
@@ -1581,6 +1596,25 @@ public interface QuestionDao extends SqlObject {
         NumericQuestionDto questionDto = dto == null ? null : (NumericQuestionDto) dto;
         if (questionDto == null || questionDto.getRevisionEnd() != null) {
             throw new NoSuchElementException("Cannot find active numeric question with id " + questionId);
+        }
+
+        disableBaseQuestion(questionDto, meta);
+        if (questionDto.getPlaceholderTemplateId() != null) {
+            getTemplateDao().disableTemplate(questionDto.getPlaceholderTemplateId(), meta);
+        }
+    }
+
+    /**
+     * End currently active numeric question by terminating common data and numeric specific data.
+     *
+     * @param questionId the question id
+     * @param meta       the revision metadata used for terminating data
+     */
+    default void disableDecimalQuestion(long questionId, RevisionMetadata meta) {
+        QuestionDto dto = getJdbiQuestion().findQuestionDtoById(questionId).orElse(null);
+        DecimalQuestionDto questionDto = dto == null ? null : (DecimalQuestionDto) dto;
+        if (questionDto == null || questionDto.getRevisionEnd() != null) {
+            throw new NoSuchElementException("Cannot find active decimal question with id " + questionId);
         }
 
         disableBaseQuestion(questionDto, meta);
@@ -1747,6 +1781,10 @@ public interface QuestionDao extends SqlObject {
                     break;
                 case NUMERIC:
                     questionDef = buildNumericQuestionDef((NumericQuestionDto) questionDto, ruleDefs, templates);
+                    questionDefs.put(questionId, questionDef);
+                    break;
+                case DECIMAL:
+                    questionDef = buildDecimalQuestionDef((DecimalQuestionDto) questionDto, ruleDefs, templates);
                     questionDefs.put(questionId, questionDef);
                     break;
                 case PICKLIST:
@@ -1963,6 +2001,18 @@ public interface QuestionDao extends SqlObject {
         Template prompt = templates.get(dto.getPromptTemplateId());
         Template placeholderTemplate = templates.getOrDefault(dto.getPlaceholderTemplateId(), null);
         var builder = NumericQuestionDef
+                .builder(dto.getStableId(), prompt)
+                .setPlaceholderTemplate(placeholderTemplate);
+        configureBaseQuestionDef(builder, dto, ruleDefs, templates);
+        return builder.build();
+    }
+
+    private DecimalQuestionDef buildDecimalQuestionDef(DecimalQuestionDto dto,
+                                                       List<RuleDef> ruleDefs,
+                                                       Map<Long, Template> templates) {
+        Template prompt = templates.get(dto.getPromptTemplateId());
+        Template placeholderTemplate = templates.getOrDefault(dto.getPlaceholderTemplateId(), null);
+        var builder = DecimalQuestionDef
                 .builder(dto.getStableId(), prompt)
                 .setPlaceholderTemplate(placeholderTemplate);
         configureBaseQuestionDef(builder, dto, ruleDefs, templates);

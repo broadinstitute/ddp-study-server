@@ -5,33 +5,8 @@ import static org.broadinstitute.ddp.util.QuestionUtil.isReadOnly;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.broadinstitute.ddp.model.activity.definition.question.AgreementQuestionDef;
-import org.broadinstitute.ddp.model.activity.definition.question.BoolQuestionDef;
-import org.broadinstitute.ddp.model.activity.definition.question.CompositeQuestionDef;
-import org.broadinstitute.ddp.model.activity.definition.question.DateQuestionDef;
-import org.broadinstitute.ddp.model.activity.definition.question.FileQuestionDef;
-import org.broadinstitute.ddp.model.activity.definition.question.NumericQuestionDef;
-import org.broadinstitute.ddp.model.activity.definition.question.PicklistGroupDef;
-import org.broadinstitute.ddp.model.activity.definition.question.PicklistQuestionDef;
-import org.broadinstitute.ddp.model.activity.definition.question.MatrixQuestionDef;
-import org.broadinstitute.ddp.model.activity.definition.question.TextQuestionDef;
-import org.broadinstitute.ddp.model.activity.definition.question.ActivityInstanceSelectQuestionDef;
-import org.broadinstitute.ddp.model.activity.instance.question.AgreementQuestion;
-import org.broadinstitute.ddp.model.activity.instance.question.BoolQuestion;
-import org.broadinstitute.ddp.model.activity.instance.question.CompositeQuestion;
-import org.broadinstitute.ddp.model.activity.instance.question.DatePicklistQuestion;
-import org.broadinstitute.ddp.model.activity.instance.question.DateQuestion;
-import org.broadinstitute.ddp.model.activity.instance.question.FileQuestion;
-import org.broadinstitute.ddp.model.activity.instance.question.NumericQuestion;
-import org.broadinstitute.ddp.model.activity.instance.question.PicklistGroup;
-import org.broadinstitute.ddp.model.activity.instance.question.PicklistOption;
-import org.broadinstitute.ddp.model.activity.instance.question.PicklistQuestion;
-import org.broadinstitute.ddp.model.activity.instance.question.MatrixGroup;
-import org.broadinstitute.ddp.model.activity.instance.question.MatrixOption;
-import org.broadinstitute.ddp.model.activity.instance.question.MatrixQuestion;
-import org.broadinstitute.ddp.model.activity.instance.question.MatrixRow;
-import org.broadinstitute.ddp.model.activity.instance.question.TextQuestion;
-import org.broadinstitute.ddp.model.activity.instance.question.ActivityInstanceSelectQuestion;
+import org.broadinstitute.ddp.model.activity.definition.question.*;
+import org.broadinstitute.ddp.model.activity.instance.question.*;
 import org.broadinstitute.ddp.service.actvityinstancebuilder.context.AIBuilderContext;
 import org.broadinstitute.ddp.util.CollectionMiscUtil;
 
@@ -187,6 +162,28 @@ public class QuestionCreatorHelper {
     NumericQuestion createNumericQuestion(AIBuilderContext ctx, NumericQuestionDef questionDef) {
         QuestionCreator questionCreator = ctx.getAIBuilderFactory().getQuestionCreator();
         return new NumericQuestion(
+                questionDef.getStableId(),
+                ctx.getAIBuilderFactory().getTemplateRenderHelper().addTemplate(
+                        ctx, questionDef.getPromptTemplate()),
+                ctx.getAIBuilderFactory().getTemplateRenderHelper().addTemplate(
+                        ctx, questionDef.getPlaceholderTemplate()),
+                questionDef.isRestricted(),
+                questionDef.isDeprecated(),
+                isReadOnly(questionDef, ctx.getFormResponse().getLatestStatus().getType(), ctx.getPreviousInstanceId()),
+                ctx.getAIBuilderFactory().getTemplateRenderHelper().addTemplate(
+                        ctx, questionDef.getTooltipTemplate()),
+                ctx.getAIBuilderFactory().getTemplateRenderHelper().addTemplate(
+                        ctx, questionDef.getAdditionalInfoHeaderTemplate()),
+                ctx.getAIBuilderFactory().getTemplateRenderHelper().addTemplate(
+                        ctx, questionDef.getAdditionalInfoFooterTemplate()),
+                questionCreator.getAnswers(ctx, questionDef.getStableId()),
+                questionCreator.getValidationRules(ctx, questionDef)
+        );
+    }
+
+    DecimalQuestion createDecimalQuestion(AIBuilderContext ctx, DecimalQuestionDef questionDef) {
+        QuestionCreator questionCreator = ctx.getAIBuilderFactory().getQuestionCreator();
+        return new DecimalQuestion(
                 questionDef.getStableId(),
                 ctx.getAIBuilderFactory().getTemplateRenderHelper().addTemplate(
                         ctx, questionDef.getPromptTemplate()),
