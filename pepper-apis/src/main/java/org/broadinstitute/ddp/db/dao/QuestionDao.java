@@ -27,6 +27,7 @@ import org.broadinstitute.ddp.db.dto.DateQuestionDto;
 import org.broadinstitute.ddp.db.dto.FileQuestionDto;
 import org.broadinstitute.ddp.db.dto.FormBlockDto;
 import org.broadinstitute.ddp.db.dto.NumericQuestionDto;
+import org.broadinstitute.ddp.db.dto.DecimalQuestionDto;
 import org.broadinstitute.ddp.db.dto.PicklistGroupDto;
 import org.broadinstitute.ddp.db.dto.PicklistOptionDto;
 import org.broadinstitute.ddp.db.dto.PicklistQuestionDto;
@@ -67,6 +68,7 @@ import org.broadinstitute.ddp.model.activity.instance.answer.CompositeAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.DateAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.FileAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.NumericAnswer;
+import org.broadinstitute.ddp.model.activity.instance.answer.DecimalAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.PicklistAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.MatrixAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
@@ -77,6 +79,7 @@ import org.broadinstitute.ddp.model.activity.instance.question.DatePicklistQuest
 import org.broadinstitute.ddp.model.activity.instance.question.DateQuestion;
 import org.broadinstitute.ddp.model.activity.instance.question.FileQuestion;
 import org.broadinstitute.ddp.model.activity.instance.question.NumericQuestion;
+import org.broadinstitute.ddp.model.activity.instance.question.DecimalQuestion;
 import org.broadinstitute.ddp.model.activity.instance.question.PicklistGroup;
 import org.broadinstitute.ddp.model.activity.instance.question.PicklistOption;
 import org.broadinstitute.ddp.model.activity.instance.question.PicklistQuestion;
@@ -406,6 +409,9 @@ public interface QuestionDao extends SqlObject {
                 break;
             case NUMERIC:
                 question = getNumericQuestion((NumericQuestionDto) dto, activityInstanceGuid, answerIds, untypedRules);
+                break;
+            case DECIMAL:
+                question = getDecimalQuestion((DecimalQuestionDto) dto, activityInstanceGuid, answerIds, untypedRules);
                 break;
             case AGREEMENT:
                 question = getAgreementQuestion((AgreementQuestionDto) dto, activityInstanceGuid, answerIds, untypedRules);
@@ -822,6 +828,43 @@ public interface QuestionDao extends SqlObject {
         boolean isReadonly = QuestionUtil.isReadonly(getHandle(), dto, activityInstanceGuid);
 
         return new NumericQuestion(
+                dto.getStableId(),
+                dto.getPromptTemplateId(),
+                dto.getPlaceholderTemplateId(),
+                dto.isRestricted(),
+                dto.isDeprecated(),
+                isReadonly,
+                dto.getTooltipTemplateId(),
+                dto.getAdditionalInfoHeaderTemplateId(),
+                dto.getAdditionalInfoFooterTemplateId(),
+                answers,
+                rules);
+    }
+
+    /**
+     * Build a decimal question.
+     *
+     * @param dto                  the question dto
+     * @param activityInstanceGuid the activity instance guid
+     * @param answerIds            list of base answer ids to question (may be empty)
+     * @param untypedRules         list of untyped validations for question (may be empty)
+     * @return numeric question object
+     */
+    default Question getDecimalQuestion(DecimalQuestionDto dto, String activityInstanceGuid,
+                                        List<Long> answerIds, List<Rule> untypedRules) {
+        AnswerDao answerDao = getAnswerDao();
+        List<DecimalAnswer> answers = answerIds.stream()
+                .map(answerId -> (DecimalAnswer) answerDao.findAnswerById(answerId)
+                        .orElseThrow(() -> new DaoException("Could not find decimal answer with id " + answerId)))
+                .collect(toList());
+
+        List<Rule<DecimalAnswer>> rules = untypedRules.stream()
+                .map(rule -> (Rule<DecimalAnswer>) rule)
+                .collect(toList());
+
+        boolean isReadonly = QuestionUtil.isReadonly(getHandle(), dto, activityInstanceGuid);
+
+        return new DecimalQuestion(
                 dto.getStableId(),
                 dto.getPromptTemplateId(),
                 dto.getPlaceholderTemplateId(),
