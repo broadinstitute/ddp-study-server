@@ -51,6 +51,12 @@
         <insert tableName="validation_type">
             <column name="validation_type_code" value="DECIMAL_RANGE"/>
         </insert>
+
+        <insert tableName="i18n_validation_msg_trans">
+            <column name="validation_type_id" valueComputed="(select validation_type_id from validation_type where validation_type_code = 'DECIMAL_RANGE')"/>
+            <column name="language_code_id" valueComputed="(select language_code_id from language_code where iso_language_code = 'en')"/>
+            <column name="translation_text" value="Minimum or maximum number requirement is not met."/>
+        </insert>
     </changeSet>
 
 </databaseChangeLog>
