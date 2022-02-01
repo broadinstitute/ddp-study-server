@@ -362,7 +362,7 @@ public class AnswerDaoTest extends TxnAwareBaseTest {
     public void testCreateUpdateDelete_decimal() {
         TransactionWrapper.useTxn(handle -> {
             TestFormActivity act = TestFormActivity.builder()
-                    .withNumericIntQuestion(true)
+                    .withDecimalQuestion(true)
                     .build(handle, testData.getUserId(), testData.getStudyGuid());
             long instanceId = createInstance(handle, act.getDef().getActivityId()).getId();
 
