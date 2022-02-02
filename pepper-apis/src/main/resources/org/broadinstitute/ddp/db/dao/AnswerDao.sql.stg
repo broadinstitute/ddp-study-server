@@ -18,6 +18,7 @@ select ans.answer_id,
        fd.file_size      as fa_file_size,
        na.int_value      as na_int_value,
        deca.decimal_value  as da_decimal_value,
+       na.int_value         as na_int_value,
        po.picklist_option_stable_id as pa_option_stable_id,
        (select ppo.picklist_option_stable_id from picklist_nested_option as pno join picklist_option as ppo
          on ppo.picklist_option_id = pno.parent_option_id
