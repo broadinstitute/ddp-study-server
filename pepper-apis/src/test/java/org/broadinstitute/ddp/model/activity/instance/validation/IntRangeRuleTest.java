@@ -6,9 +6,8 @@ import static org.junit.Assert.assertTrue;
 
 import java.util.List;
 
-import org.broadinstitute.ddp.model.activity.instance.answer.NumericIntegerAnswer;
+import org.broadinstitute.ddp.model.activity.instance.answer.NumericAnswer;
 import org.broadinstitute.ddp.model.activity.instance.question.NumericQuestion;
-import org.broadinstitute.ddp.model.activity.types.NumericType;
 import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
@@ -23,7 +22,7 @@ public class IntRangeRuleTest {
 
     @BeforeClass
     public static void setup() {
-        unused = new NumericQuestion("sid", 1L, 2L, false, false, false, null, null, null, List.of(), List.of(), NumericType.INTEGER);
+        unused = new NumericQuestion("sid", 1L, 2L, false, false, false, null, null, null, List.of(), List.of());
     }
 
     @Test
@@ -37,7 +36,7 @@ public class IntRangeRuleTest {
     public void testValidate_noValue() {
         IntRangeRule rule = IntRangeRule.of("msg", "hint", false, 1L, 10L);
         assertFalse(rule.validate(unused, null));
-        assertTrue(rule.validate(unused, new NumericIntegerAnswer(1L, "q", "a", null)));
+        assertTrue(rule.validate(unused, new NumericAnswer(1L, "q", "a", null)));
     }
 
     @Test
@@ -77,6 +76,6 @@ public class IntRangeRuleTest {
 
     // Helper to run the rule.
     private boolean run(IntRangeRule rule, long value) {
-        return rule.validate(unused, new NumericIntegerAnswer(1L, "q", "a", value));
+        return rule.validate(unused, new NumericAnswer(1L, "q", "a", value));
     }
 }

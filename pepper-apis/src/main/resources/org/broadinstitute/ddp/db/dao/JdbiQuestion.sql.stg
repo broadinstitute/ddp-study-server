@@ -96,10 +96,6 @@ select qt.question_type_code as question_type,
        ) as mime_types,
        fq.max_file_size,
 
-       (select numeric_type_code from numeric_type
-         where numeric_type_id = nq.numeric_type_id
-       ) as numeric_type,
-
        (select picklist_select_mode_code from picklist_select_mode
          where picklist_select_mode_id = pq.picklist_select_mode_id
        ) as picklist_select_mode,

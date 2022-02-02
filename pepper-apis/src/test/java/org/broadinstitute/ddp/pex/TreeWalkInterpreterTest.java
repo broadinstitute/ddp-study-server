@@ -54,7 +54,7 @@ import org.broadinstitute.ddp.model.activity.instance.answer.BoolAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.CompositeAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.DateAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.DateValue;
-import org.broadinstitute.ddp.model.activity.instance.answer.NumericIntegerAnswer;
+import org.broadinstitute.ddp.model.activity.instance.answer.NumericAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.PicklistAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.SelectedPicklistOption;
 import org.broadinstitute.ddp.model.activity.instance.answer.MatrixAnswer;
@@ -64,7 +64,6 @@ import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
 import org.broadinstitute.ddp.model.activity.types.DateFieldType;
 import org.broadinstitute.ddp.model.activity.types.DateRenderMode;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
-import org.broadinstitute.ddp.model.activity.types.NumericType;
 import org.broadinstitute.ddp.model.activity.types.PicklistRenderMode;
 import org.broadinstitute.ddp.model.activity.types.PicklistSelectMode;
 import org.broadinstitute.ddp.model.activity.types.MatrixSelectMode;
@@ -176,7 +175,6 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
         numericStableId = "PEX_NUMERIC_" + timestamp;
         NumericQuestionDef numericDef = NumericQuestionDef.builder().setStableId(numericStableId)
                 .setPrompt(Template.text("numeric prompt"))
-                .setNumericType(NumericType.INTEGER)
                 .build();
 
         compositeDef = CompositeQuestionDef.builder()
@@ -776,8 +774,8 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
                 studyGuid, activityCode, numericStableId);
         TransactionWrapper.useTxn(handle -> {
             var answerDao = handle.attach(AnswerDao.class);
-            var answer = (NumericIntegerAnswer) answerDao.createAnswer(testData.getUserId(), firstInstance.getId(),
-                    new NumericIntegerAnswer(null, numericStableId, null, 7L));
+            var answer = (NumericAnswer) answerDao.createAnswer(testData.getUserId(), firstInstance.getId(),
+                    new NumericAnswer(null, numericStableId, null, 7L));
             assertTrue(run(handle, expr));
 
             answer.setValue(21L);
@@ -795,8 +793,8 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
                 studyGuid, activityCode, numericStableId);
         TransactionWrapper.useTxn(handle -> {
             var answerDao = handle.attach(AnswerDao.class);
-            var answer = (NumericIntegerAnswer) answerDao.createAnswer(testData.getUserId(), firstInstance.getId(),
-                    new NumericIntegerAnswer(null, numericStableId, null, 7L));
+            var answer = (NumericAnswer) answerDao.createAnswer(testData.getUserId(), firstInstance.getId(),
+                    new NumericAnswer(null, numericStableId, null, 7L));
             assertTrue(run(handle, expr));
 
             answer.setValue(18L);
@@ -818,8 +816,8 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
                 studyGuid, activityCode, numericStableId);
         TransactionWrapper.useTxn(handle -> {
             AnswerDao answerDao = handle.attach(AnswerDao.class);
-            var answer = (NumericIntegerAnswer) answerDao.createAnswer(testData.getUserId(), firstInstance.getId(),
-                    new NumericIntegerAnswer(null, numericStableId, null, 21L));
+            var answer = (NumericAnswer) answerDao.createAnswer(testData.getUserId(), firstInstance.getId(),
+                    new NumericAnswer(null, numericStableId, null, 21L));
             assertTrue(run(handle, expr));
 
             answer.setValue(7L);
@@ -837,8 +835,8 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
                 studyGuid, activityCode, numericStableId);
         TransactionWrapper.useTxn(handle -> {
             var answerDao = handle.attach(AnswerDao.class);
-            var answer = (NumericIntegerAnswer) answerDao.createAnswer(testData.getUserId(), firstInstance.getId(),
-                    new NumericIntegerAnswer(null, numericStableId, null, 21L));
+            var answer = (NumericAnswer) answerDao.createAnswer(testData.getUserId(), firstInstance.getId(),
+                    new NumericAnswer(null, numericStableId, null, 21L));
             assertTrue(run(handle, expr));
 
             answer.setValue(18L);
@@ -860,8 +858,8 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
                 studyGuid, activityCode, numericStableId);
         TransactionWrapper.useTxn(handle -> {
             var answerDao = handle.attach(AnswerDao.class);
-            var answer = (NumericIntegerAnswer) answerDao.createAnswer(testData.getUserId(), firstInstance.getId(),
-                    new NumericIntegerAnswer(null, numericStableId, null, 7L));
+            var answer = (NumericAnswer) answerDao.createAnswer(testData.getUserId(), firstInstance.getId(),
+                    new NumericAnswer(null, numericStableId, null, 7L));
             assertFalse(run(handle, expr));
 
             answer.setValue(18L);
@@ -879,8 +877,8 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
                 studyGuid, activityCode, numericStableId);
         TransactionWrapper.useTxn(handle -> {
             var answerDao = handle.attach(AnswerDao.class);
-            var answer = (NumericIntegerAnswer) answerDao.createAnswer(testData.getUserId(), firstInstance.getId(),
-                    new NumericIntegerAnswer(null, numericStableId, null, 7L));
+            var answer = (NumericAnswer) answerDao.createAnswer(testData.getUserId(), firstInstance.getId(),
+                    new NumericAnswer(null, numericStableId, null, 7L));
             assertTrue(run(handle, expr));
 
             answer.setValue(18L);
@@ -1184,15 +1182,15 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
 
         TransactionWrapper.useTxn(handle -> {
             var answerDao = handle.attach(AnswerDao.class);
-            var answer = new NumericIntegerAnswer(null, numericStableId, null, 25L);
+            var answer = new NumericAnswer(null, numericStableId, null, 25L);
             answerDao.createAnswer(testData.getUserId(), firstInstance.getId(), answer);
             assertFalse("should be false because first instance is not latest", run(handle, expr));
 
-            answer = (NumericIntegerAnswer) answerDao.createAnswer(testData.getUserId(), secondInstance.getId(),
-                    new NumericIntegerAnswer(null, numericStableId, null, null));
+            answer = (NumericAnswer) answerDao.createAnswer(testData.getUserId(), secondInstance.getId(),
+                    new NumericAnswer(null, numericStableId, null, null));
             assertFalse("should be false because answer is null", run(handle, expr));
 
-            var newAnswer = new NumericIntegerAnswer(null, textStableId, null, 50L);
+            var newAnswer = new NumericAnswer(null, textStableId, null, 50L);
             answerDao.updateAnswer(testData.getUserId(), answer.getAnswerId(), newAnswer);
             assertTrue("should be true because answer is non-null", run(handle, expr));
 
@@ -1444,7 +1442,7 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
                 "18 <= user.studies[\"%s\"].forms[\"%s\"].questions[\"%s\"].answers.value()",
                 studyGuid, activityCode, numericStableId);
         TransactionWrapper.useTxn(handle -> {
-            var answer = new NumericIntegerAnswer(null, numericStableId, null, 21L);
+            var answer = new NumericAnswer(null, numericStableId, null, 21L);
             handle.attach(AnswerDao.class).createAnswer(testData.getUserId(), firstInstance.getId(), answer);
             assertTrue(run(handle, expr));
             handle.rollback();

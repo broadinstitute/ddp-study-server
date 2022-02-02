@@ -1,22 +1,14 @@
 package org.broadinstitute.ddp.model.activity.definition.question;
 
-import java.util.List;
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
-
 import com.google.gson.annotations.SerializedName;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.activity.definition.validation.RuleDef;
-import org.broadinstitute.ddp.model.activity.types.NumericType;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
-import org.broadinstitute.ddp.util.MiscUtil;
+
+import javax.validation.Valid;
+import java.util.List;
 
 public final class NumericQuestionDef extends QuestionDef {
-
-    @NotNull
-    @SerializedName("numericType")
-    private NumericType numericType;
-
     @Valid
     @SerializedName("placeholderTemplate")
     private Template placeholderTemplate;
@@ -25,9 +17,8 @@ public final class NumericQuestionDef extends QuestionDef {
         return new Builder();
     }
 
-    public static Builder builder(NumericType numericType, String stableId, Template prompt) {
+    public static Builder builder(String stableId, Template prompt) {
         return new Builder()
-                .setNumericType(numericType)
                 .setStableId(stableId)
                 .setPrompt(prompt);
     }
@@ -35,15 +26,10 @@ public final class NumericQuestionDef extends QuestionDef {
     public NumericQuestionDef(String stableId, Template promptTemplate, Template placeholderTemplate,
                               boolean isRestricted, boolean hideNumber, boolean writeOnce,
                               Template additionalInfoHeaderTemplate, Template additionalInfoFooterTemplate,
-                              List<RuleDef> validations, NumericType numericType) {
+                              List<RuleDef> validations) {
         super(QuestionType.NUMERIC, stableId, isRestricted, promptTemplate,
                 additionalInfoHeaderTemplate, additionalInfoFooterTemplate, validations, hideNumber, writeOnce);
-        this.numericType = MiscUtil.checkNonNull(numericType, "numericType");
         this.placeholderTemplate = placeholderTemplate;
-    }
-
-    public NumericType getNumericType() {
-        return numericType;
     }
 
     public Template getPlaceholderTemplate() {
@@ -51,8 +37,6 @@ public final class NumericQuestionDef extends QuestionDef {
     }
 
     public static final class Builder extends AbstractQuestionBuilder<Builder> {
-
-        private NumericType numericType;
         private Template placeholderTemplate;
 
         private Builder() {
@@ -61,11 +45,6 @@ public final class NumericQuestionDef extends QuestionDef {
 
         @Override
         protected Builder self() {
-            return this;
-        }
-
-        public Builder setNumericType(NumericType numericType) {
-            this.numericType = numericType;
             return this;
         }
 
@@ -84,8 +63,7 @@ public final class NumericQuestionDef extends QuestionDef {
                     writeOnce,
                     getAdditionalInfoHeader(),
                     getAdditionalInfoFooter(),
-                    validations,
-                    numericType);
+                    validations);
             configure(question);
             return question;
         }

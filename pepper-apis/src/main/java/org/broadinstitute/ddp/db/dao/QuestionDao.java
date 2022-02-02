@@ -832,8 +832,7 @@ public interface QuestionDao extends SqlObject {
                 dto.getAdditionalInfoHeaderTemplateId(),
                 dto.getAdditionalInfoFooterTemplateId(),
                 answers,
-                rules,
-                dto.getNumericType());
+                rules);
     }
 
     /**
@@ -1306,7 +1305,7 @@ public interface QuestionDao extends SqlObject {
             placeholderTemplateId = templateDao.insertTemplate(questionDef.getPlaceholderTemplate(), revisionId);
         }
 
-        int numInserted = getJdbiNumericQuestion().insert(questionDef.getQuestionId(), questionDef.getNumericType(), placeholderTemplateId);
+        int numInserted = getJdbiNumericQuestion().insert(questionDef.getQuestionId(), placeholderTemplateId);
         if (numInserted != 1) {
             throw new DaoException("Inserted " + numInserted + " for numeric question " + questionDef.getStableId());
         }
@@ -1921,7 +1920,7 @@ public interface QuestionDao extends SqlObject {
         Template prompt = templates.get(dto.getPromptTemplateId());
         Template placeholderTemplate = templates.getOrDefault(dto.getPlaceholderTemplateId(), null);
         var builder = NumericQuestionDef
-                .builder(dto.getNumericType(), dto.getStableId(), prompt)
+                .builder(dto.getStableId(), prompt)
                 .setPlaceholderTemplate(placeholderTemplate);
         configureBaseQuestionDef(builder, dto, ruleDefs, templates);
         return builder.build();

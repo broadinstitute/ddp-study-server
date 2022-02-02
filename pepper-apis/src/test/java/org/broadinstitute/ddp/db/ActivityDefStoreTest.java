@@ -36,7 +36,6 @@ import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
 import org.broadinstitute.ddp.model.activity.types.DateFieldType;
 import org.broadinstitute.ddp.model.activity.types.DateRenderMode;
-import org.broadinstitute.ddp.model.activity.types.NumericType;
 import org.broadinstitute.ddp.model.activity.types.PicklistRenderMode;
 import org.broadinstitute.ddp.model.activity.types.TextInputType;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
@@ -106,7 +105,7 @@ public class ActivityDefStoreTest extends TxnAwareBaseTest {
 
         var group = new GroupBlockDef();
         group.addNestedBlock(new QuestionBlockDef(NumericQuestionDef
-                .builder(NumericType.INTEGER, "NUM1", Template.text("4"))
+                .builder("NUM1", Template.text("4"))
                 .build()));
 
         var child1 = PicklistQuestionDef
