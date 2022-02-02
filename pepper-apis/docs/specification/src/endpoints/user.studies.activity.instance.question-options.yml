@@ -1,0 +1,36 @@
+get:
+  operationId: getOptionsForActivityInstanceQuestion
+  tags:
+    - Suggestion
+  summary: get a list of question options from server to select
+  description: For specific Activity Instance Question - returns a list of options that can be selected as an answer to this specific question
+  parameters:
+    - in: path
+      name: user
+      required: true
+      description: the user's unique identifier
+      schema:
+        type: string
+    - in: path
+      name: study
+      required: true
+      description: the unique identifier for the study
+      schema:
+        type: string
+    - in: path
+      name: instance
+      required: true
+      description: the unique identifier for the instance
+      schema:
+        type: string
+    - in: path
+      name: stableId
+      required: true
+      description: the activity instance select question's unique identifier
+      schema:
+        type: string
+  responses:
+    200:
+      $ref: '../pepper.yml#/components/responses/ActivityInstanceSelectAnswersResponse'
+    default:
+      $ref: '../pepper.yml#/components/responses/ErrorResponse'
