@@ -375,7 +375,7 @@ public class AnswerDaoTest extends TxnAwareBaseTest {
             assertEquals(QuestionType.DECIMAL, created.getQuestionType());
             assertEquals(BigDecimal.valueOf(25L), created.getValue());
 
-            DecimalAnswer updatedNumber = new DecimalAnswer(null, act.getNumericIntQuestion().getStableId(),
+            DecimalAnswer updatedNumber = new DecimalAnswer(null, act.getDecimalQuestion().getStableId(),
                     null, BigDecimal.valueOf(100L));
             answerDao.updateAnswer(testData.getUserId(), created.getAnswerId(), updatedNumber);
 
@@ -384,7 +384,7 @@ public class AnswerDaoTest extends TxnAwareBaseTest {
             assertTrue(updatedOpt.isPresent());
             Answer updated = updatedOpt.get();
             assertEquals(created.getAnswerGuid(), updated.getAnswerGuid());
-            assertEquals(BigDecimal.valueOf(100L), updated.getValue());
+            assertEquals(0, BigDecimal.valueOf(100L).compareTo((BigDecimal) updated.getValue()));
 
             answerDao.deleteAnswer(created.getAnswerId());
             assertFalse(answerDao.findAnswerById(created.getAnswerId()).isPresent());
