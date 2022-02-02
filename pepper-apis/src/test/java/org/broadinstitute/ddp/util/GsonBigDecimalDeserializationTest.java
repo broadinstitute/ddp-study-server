@@ -1,17 +1,12 @@
 package org.broadinstitute.ddp.util;
 
 import com.google.gson.Gson;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import org.broadinstitute.ddp.json.AnswerSubmission;
 import org.junit.Test;
 
-import java.io.FileNotFoundException;
 import java.math.BigDecimal;
-import java.util.List;
-import java.util.Map;
 
-import static org.broadinstitute.ddp.util.TestUtil.readJsonObjectFromFile;
 import static org.junit.Assert.assertEquals;
 
 public class GsonBigDecimalDeserializationTest {
