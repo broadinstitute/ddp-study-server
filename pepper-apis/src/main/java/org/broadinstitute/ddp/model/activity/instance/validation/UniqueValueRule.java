@@ -32,11 +32,14 @@ public class UniqueValueRule extends Rule<TextAnswer> {
     public boolean validate(Question question, TextAnswer answer) {
         //Take the question , answer and search across All the participant's QA of the study and the same Question.
         if (answer != null && answer.getValue() != null) {
-            String textToCheck = answer.getValue();
             return TransactionWrapper.withTxn((handle) -> {
                 int answerCount =  handle.attach(AnswerSql.class).findAllTextAnswersCountByQuestionIdAndTextAnswer(
                         question.getQuestionId(), answer.getValue());
-                if (answerCount > 0) {
+                int answerCountToCompare = 0;
+                if (allowSave) {
+                    answerCountToCompare = 1; //existing answer is already saved
+                }
+                if (answerCount > answerCountToCompare) {
                     return false;
                 } else {
                     return true;
