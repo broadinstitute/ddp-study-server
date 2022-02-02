@@ -2046,7 +2046,7 @@ public class PatchFormAnswersRouteStandaloneTest {
         assertNotNull(answer);
         assertEquals(guid, answer.getAnswerGuid());
         assertEquals(decimalIntegerSid, answer.getQuestionStableId());
-        assertEquals(BigDecimal.valueOf(25L), answer.getValue());
+        assertEquals(0, BigDecimal.valueOf(25L).compareTo(answer.getValue()));
     }
 
     @Test
@@ -2076,7 +2076,7 @@ public class PatchFormAnswersRouteStandaloneTest {
                 new AnswerCachedDao(handle).findAnswerByGuid(guid).get());
 
         assertNotNull(answer);
-        assertEquals(BigDecimal.valueOf(75L), answer.getValue());
+        assertEquals(0, BigDecimal.valueOf(75L).compareTo(answer.getValue()));
     }
 
     @Test
@@ -2094,7 +2094,7 @@ public class PatchFormAnswersRouteStandaloneTest {
                 .and().extract().path("answers[0].answerGuid");
 
         answerGuidsToDelete.get(QuestionType.DECIMAL).add(guid);
-        NumericAnswer answer = (NumericAnswer) TransactionWrapper.withTxn(handle ->
+        DecimalAnswer answer = (DecimalAnswer) TransactionWrapper.withTxn(handle ->
                 new AnswerCachedDao(handle).findAnswerByGuid(guid).get());
 
         assertNotNull(answer);
