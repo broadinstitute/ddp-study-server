@@ -91,6 +91,8 @@ paths:
     $ref: 'endpoints/studies.suggestions.cancers.yml'
   /user/{user}/studies/{study}/activity-instance-select/{stableId}:
     $ref: 'endpoints/user.studies.activity-instance-select.yml'
+  /user/{user}/studies/{study}/activities/{instance}/questions/{questionStableId}/options:
+     $ref: 'endpoints/user.studies.activity.instance.question-options.yml'
   /studies/{study}/statistics:
     $ref: 'endpoints/studies.statistics.yml'
   /user/{user}:
