@@ -424,7 +424,7 @@ public class PatchFormAnswersRouteStandaloneTest {
                 .addValidation(new DecimalRangeRuleDef(null, BigDecimal.valueOf(5L), BigDecimal.valueOf(100L)))
                 .addValidation(new DecimalRangeRuleDef(null, BigDecimal.valueOf(200L), BigDecimal.valueOf(500L)))
                 .build();
-        FormSectionDef decimalSection = new FormSectionDef(null, TestUtil.wrapQuestions(decimalQuestionDef, n2, n3));
+        FormSectionDef decimalSection = new FormSectionDef(null, TestUtil.wrapQuestions(decimalQuestionDef, dec2, dec3));
 
         fileQuestion = FileQuestionDef.builder("FILE" + timestamp, Template.text("file"))
                 .setMaxFileSize(DEFAULT_MAX_FILE_SIZE_FOR_TEST)
