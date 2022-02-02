@@ -1766,6 +1766,7 @@ Question.Picklist:
           - DROPDOWN
           - CHECKBOX_LIST
           - AUTOCOMPLETE
+          - REMOTE_AUTOCOMPLETE
       groups:
         type: array
         description: A list of groups used in the `picklistOptions` values. If there are no options which explicity request grouping, this will be an empty array.
