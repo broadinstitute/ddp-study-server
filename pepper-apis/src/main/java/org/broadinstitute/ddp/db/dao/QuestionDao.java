@@ -1380,7 +1380,7 @@ public interface QuestionDao extends SqlObject {
             placeholderTemplateId = templateDao.insertTemplate(questionDef.getPlaceholderTemplate(), revisionId);
         }
 
-        int numInserted = getJdbiNumericQuestion().insert(questionDef.getQuestionId(), placeholderTemplateId);
+        int numInserted = getJdbiDecimalQuestion().insert(questionDef.getQuestionId(), placeholderTemplateId);
         if (numInserted != 1) {
             throw new DaoException("Inserted " + numInserted + " for decimal question " + questionDef.getStableId());
         }
