@@ -85,6 +85,8 @@ public abstract class RuleDef {
                     return ctx.deserialize(elem, DateFieldRequiredRuleDef.class);
                 case INT_RANGE:
                     return ctx.deserialize(elem, IntRangeRuleDef.class);
+                case DECIMAL_RANGE:
+                    return ctx.deserialize(elem, DecimalRangeRuleDef.class);
                 case LENGTH:
                     return ctx.deserialize(elem, LengthRuleDef.class);
                 case NUM_OPTIONS_SELECTED:
