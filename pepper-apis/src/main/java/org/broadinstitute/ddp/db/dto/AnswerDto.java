@@ -1,54 +1,29 @@
 package org.broadinstitute.ddp.db.dto;
 
+import lombok.AllArgsConstructor;
+import lombok.Value;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
 import org.jdbi.v3.core.mapper.reflect.ColumnName;
 import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
 
+@Value
+@AllArgsConstructor(onConstructor = @__(@JdbiConstructor))
 public class AnswerDto {
+    @ColumnName("answer_id")
+    Long id;
 
-    private Long id;
-    private String guid;
-    private long questionId;
-    private String questionStableId;
-    private QuestionType questionType;
-    private long activityInstanceId;
+    @ColumnName("answer_guid")
+    String guid;
 
-    @JdbiConstructor
-    public AnswerDto(@ColumnName("answer_id") Long id,
-                     @ColumnName("answer_guid") String guid,
-                     @ColumnName("question_id") long questionId,
-                     @ColumnName("question_stable_id") String questionStableId,
-                     @ColumnName("question_type") QuestionType questionType,
-                     @ColumnName("activity_instance_id") long activityInstanceId) {
-        this.id = id;
-        this.guid = guid;
-        this.questionId = questionId;
-        this.questionStableId = questionStableId;
-        this.questionType = questionType;
-        this.activityInstanceId = activityInstanceId;
-    }
+    @ColumnName("question_id")
+    long questionId;
 
-    public Long getId() {
-        return id;
-    }
+    @ColumnName("question_stable_id")
+    String questionStableId;
 
-    public String getGuid() {
-        return guid;
-    }
+    @ColumnName("question_type")
+    QuestionType questionType;
 
-    public long getQuestionId() {
-        return questionId;
-    }
-
-    public String getQuestionStableId() {
-        return questionStableId;
-    }
-
-    public QuestionType getQuestionType() {
-        return questionType;
-    }
-
-    public long getActivityInstanceId() {
-        return activityInstanceId;
-    }
+    @ColumnName("activity_instance_id")
+    long activityInstanceId;
 }
