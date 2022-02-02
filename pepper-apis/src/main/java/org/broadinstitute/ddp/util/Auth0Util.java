@@ -187,18 +187,23 @@ public class Auth0Util {
     /**
      * Updates the user's email in Auth0
      *
-     * @param mgmtAPI  Auth0 Management API instance
-     * @param userDto  user for which you want to update the email
-     * @param newEmail A new email of this user
+     * @param mgmtAPI    Auth0 Management API instance
+     * @param userDto    user for which you want to update the email
+     * @param newEmail   A new email of this user
+     * @param isVerified Whether email is verified or not, will not set status if `null` (so we get the default behavior)
      * @return The result of the Auth0 call
      */
     public static Auth0CallResponse updateUserEmail(
             ManagementAPI mgmtAPI,
             UserDto userDto,
-            String newEmail
+            String newEmail,
+            Boolean isVerified
     ) {
         User payload = new User();
         payload.setEmail(newEmail);
+        if (isVerified != null) {
+            payload.setEmailVerified(isVerified);
+        }
         LOG.info("Trying to set the email to {} for the user {}", newEmail, userDto.getUserGuid());
         return updateUserData(mgmtAPI, userDto, payload);
     }
@@ -311,7 +316,7 @@ public class Auth0Util {
     public List<User> getAuth0UsersByEmail(String emailAddress, String mgmtApiToken, String connection) throws Auth0Exception {
         ManagementAPI auth0Mgmt = new ManagementAPI(baseUrl, mgmtApiToken);
         String query = "email:" + emailAddress + " AND identities.connection:" + connection;
-        UserFilter userFilter = new UserFilter().withQuery(query);
+        UserFilter userFilter = new UserFilter().withQuery(query).withSearchEngine("v3");
         return auth0Mgmt.users().list(userFilter).execute().getItems();
     }
 
@@ -356,13 +361,13 @@ public class Auth0Util {
      * API errors during the process will be consumed. This means results might not contain all requested user emails and caller should
      * handle such scenario.
      *
-     * <p>Note: this is restricted to querying emails from the Username-Password-Authentication Connection.
-     *
-     * @param auth0UserIds the auth0UserIds to query emails for
-     * @param mgmtApiToken management token to access API
+     * @param auth0UserIds    the auth0UserIds to query emails for
+     * @param mgmtApiToken    management token to access API
+     * @param auth0Connection the auth0 connection, if not provided will fallback to 'Username-Password-Authentication'
      * @return mapping of auth0UserId to email
      */
-    public Map<String, String> getUserPassConnEmailsByAuth0UserIds(Set<String> auth0UserIds, String mgmtApiToken) {
+    public Map<String, String> getEmailsByAuth0UserIdsAndConnection(Set<String> auth0UserIds, String mgmtApiToken,
+                                                                    String auth0Connection) {
         if (auth0UserIds == null || auth0UserIds.isEmpty()) {
             return new HashMap<>();
         }
@@ -371,6 +376,8 @@ public class Auth0Util {
         Map<String, String> results = new HashMap<>();
         List<String> ids = new ArrayList<>(auth0UserIds);
         ManagementAPI auth0Mgmt = new ManagementAPI(baseUrl, mgmtApiToken);
+        String connection = auth0Connection == null || auth0Connection.isBlank()
+                ? USERNAME_PASSWORD_AUTH0_CONN_NAME : auth0Connection;
 
         // IMPORTANT: In order to satisfy certain limits and restrictions, especially URL length limits, we "pagination"
         // through the auth0UserIds. We had issues with 100 auth0UserIds, so 50 in the Lucene query seems like a safe bet.
@@ -380,8 +387,7 @@ public class Auth0Util {
             List<String> subset = ids.subList(i, end);
 
             // NOTE: Lucene syntax likes OR operator, but using a space also works. We do the latter to save space on URL limit.
-            String query = String.format("identities.connection:\"%s\" AND user_id:(%s)",
-                    USERNAME_PASSWORD_AUTH0_CONN_NAME, String.join(" ", subset));
+            String query = String.format("user_id:(%s)", String.join(" ", subset));
 
             UserFilter filter = new UserFilter()
                     .withFields("user_id,email", true)

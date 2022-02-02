@@ -11,6 +11,7 @@ public enum AIBuildStep {
     CHECK_PARAMS,
         READ_FORM_INSTANCE,
         READ_ACTIVITY_DEF,
+        CREATE_RENDERER_CONTEXT,
     START_BUILD,
         BUILD_FORM_INSTANCE,
         BUILD_FORM_CHILDREN,
@@ -18,5 +19,6 @@ public enum AIBuildStep {
         RENDER_CONTENT,
         UPDATE_BLOCK_STATUSES,
         SET_DISPLAY_NUMBERS,
+        POPULATE_SNAPSHOTTED_ADDRESS,
     END_BUILD
 }

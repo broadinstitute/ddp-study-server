@@ -1,11 +1,18 @@
-openapi: 3.0.0
-servers: []
+openapi: 3.0.3
+servers:
+  - url: https://pepper-dev.datadonationplatform.org/pepper/v1
+    description: Development server (uses test data)
+  - url: https://pepper.datadonationplatform.org/pepper/v1
+    description: Production server (uses real data)
 info:
   description: 'Pepper API specification'
-  version: 1.9.8
+  version: '1.16.1-863fa496'
   title: Pepper
   contact:
     email: info@datadonationplatform.org
+  license:
+    name: BSD 3-Clause (Revised)
+    url: https://raw.githubusercontent.com/broadinstitute/ddp-study-server/develop/LICENSE
 tags:
   - name: Admin
     description: administrative & internal calls
@@ -64,6 +71,10 @@ paths:
     $ref: 'endpoints/admin.studies.invitation-lookup.yml'
   /admin/studies/{study}/participants:
     $ref: 'endpoints/admin.studies.participants.yml'
+  /admin/studies/{study}/participants/{user}:
+    $ref: 'endpoints/admin.studies.participant.yml'
+  /admin/studies/{study}/participants-lookup:
+    $ref: 'endpoints/admin.studies.participants-lookup.yml'
   /admin/studies/{study}/user/{user}/login-account:
     $ref: 'endpoints/admin.studies.user.login-account.yml'
   /studies/{study}:
@@ -78,6 +89,8 @@ paths:
     $ref: 'endpoints/studies.suggestions.drugs.yml'
   /studies/{study}/suggestions/cancers:
     $ref: 'endpoints/studies.suggestions.cancers.yml'
+  /user/{user}/studies/{study}/activity-instance-select/{stableId}:
+    $ref: 'endpoints/user.studies.activity-instance-select.yml'
   /studies/{study}/statistics:
     $ref: 'endpoints/studies.statistics.yml'
   /user/{user}:

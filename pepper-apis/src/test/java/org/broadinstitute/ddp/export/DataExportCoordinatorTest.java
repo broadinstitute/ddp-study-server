@@ -37,36 +37,37 @@ public class DataExportCoordinatorTest {
         Arrays.fill(testData, 'x');
         //Simulate running the DataExporter
         //mocking the method that does the writing and the one that does reading. Writing first:
-        when(coordinator.buildExportToCsvRunnable(any(StudyDto.class), isNull(), any(Writer.class), anyList(), any())).thenAnswer(
-                (InvocationOnMock invocation) ->
-                        (Runnable) () -> {
-                            Writer writer = invocation.getArgument(2);
-                            for (int i = 0; i < numberOfChunks; i++) {
-                                try {
-                                    writer.write(testData);
-                                } catch (IOException e) {
-                                    fail("Error writing test data");
-                                    throw new RuntimeException(e);
-                                }
-                                // To make this a little more interesting!
-                                try {
-                                    Thread.sleep(5);
-                                } catch (InterruptedException e) {
-                                    fail("Thread sleep failed");
-                                    throw new RuntimeException(e);
+        when(coordinator.buildExportToCsvRunnable(any(StudyDto.class), isNull(), any(Writer.class), anyList(), any()))
+                .thenAnswer(
+                        (InvocationOnMock invocation) ->
+                                (Runnable) () -> {
+                                    Writer writer = invocation.getArgument(2);
+                                    for (int i = 0; i < numberOfChunks; i++) {
+                                        try {
+                                            writer.write(testData);
+                                        } catch (IOException e) {
+                                            fail("Error writing test data");
+                                            throw new RuntimeException(e);
+                                        }
+                                        // To make this a little more interesting!
+                                        try {
+                                            Thread.sleep(5);
+                                        } catch (InterruptedException e) {
+                                            fail("Thread sleep failed");
+                                            throw new RuntimeException(e);
+                                        }
+
+                                    }
+                                    try {
+                                        // turns out we need to close the writer or we don't see the
+                                        // end of stream on the reader. Need to do this in actual code too!
+                                        writer.close();
+                                    } catch (IOException e) {
+                                        throw new RuntimeException(e);
+                                    }
                                 }
 
-                            }
-                            try {
-                                // turns out we need to close the writer or we don't see the
-                                // end of stream on the reader. Need to do this in actual code too!
-                                writer.close();
-                            } catch (IOException e) {
-                                throw new RuntimeException(e);
-                            }
-                        }
-
-        );
+                );
         AtomicBoolean saveToGoogleBucketRanOk = new AtomicBoolean(false);
 
         // We read the data back. Presumably this is what the Google Bucket would be doing
@@ -90,7 +91,7 @@ public class DataExportCoordinatorTest {
 
         // minimal studyDto that will make this work. Really irrelevant for our tests except needed to avoid null pointer exceptions.
         StudyDto testStudyDto = new StudyDto(123, "theguid", "studyname", null,
-                "http://blah.boo.com", 2, 1, null, false, null, null, true);
+                "http://blah.boo.com", 2, 1, null, false, null, null, true, null);
 
         // run the real thing when we call this
         Iterator<Participant> iterator = Collections.emptyIterator();

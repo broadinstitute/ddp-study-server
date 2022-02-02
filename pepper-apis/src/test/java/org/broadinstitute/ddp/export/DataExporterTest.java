@@ -1,6 +1,7 @@
 package org.broadinstitute.ddp.export;
 
 import static java.util.stream.Collectors.toList;
+import static org.broadinstitute.ddp.util.TestFormActivity.DEFAULT_MAX_FILE_SIZE_FOR_TEST;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -15,8 +16,8 @@ import java.io.StringWriter;
 import java.lang.reflect.Type;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -60,6 +61,10 @@ import org.broadinstitute.ddp.model.activity.definition.question.BoolQuestionDef
 import org.broadinstitute.ddp.model.activity.definition.question.CompositeQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.DateQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.FileQuestionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.MatrixGroupDef;
+import org.broadinstitute.ddp.model.activity.definition.question.MatrixOptionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.MatrixQuestionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.MatrixRowDef;
 import org.broadinstitute.ddp.model.activity.definition.question.NumericQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistOptionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistQuestionDef;
@@ -72,7 +77,7 @@ import org.broadinstitute.ddp.model.activity.instance.answer.DateAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.DateValue;
 import org.broadinstitute.ddp.model.activity.instance.answer.FileAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.FileInfo;
-import org.broadinstitute.ddp.model.activity.instance.answer.NumericIntegerAnswer;
+import org.broadinstitute.ddp.model.activity.instance.answer.NumericAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
 import org.broadinstitute.ddp.model.activity.types.ActivityType;
@@ -80,7 +85,7 @@ import org.broadinstitute.ddp.model.activity.types.DateFieldType;
 import org.broadinstitute.ddp.model.activity.types.DateRenderMode;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.broadinstitute.ddp.model.activity.types.InstitutionType;
-import org.broadinstitute.ddp.model.activity.types.NumericType;
+import org.broadinstitute.ddp.model.activity.types.MatrixSelectMode;
 import org.broadinstitute.ddp.model.activity.types.PicklistRenderMode;
 import org.broadinstitute.ddp.model.activity.types.PicklistSelectMode;
 import org.broadinstitute.ddp.model.activity.types.TemplateType;
@@ -97,6 +102,7 @@ import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
 import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.model.user.UserProfile;
 import org.broadinstitute.ddp.pex.PexInterpreter;
+import org.broadinstitute.ddp.service.AddressService;
 import org.broadinstitute.ddp.service.DsmAddressValidationStatus;
 import org.broadinstitute.ddp.service.MedicalRecordService;
 import org.broadinstitute.ddp.util.ElasticsearchServiceUtil;
@@ -123,6 +129,7 @@ public class DataExporterTest extends TxnAwareBaseTest {
     DateValue testBirthdate = new DateValue(1978, 5, 16);
     private MedicalRecordService mockMedicalRecordService;
     private GovernancePolicy mockGovernancePolicy;
+    private AddressService addressService;
 
     @BeforeClass
     public static void setup() {
@@ -151,10 +158,12 @@ public class DataExporterTest extends TxnAwareBaseTest {
         mockGovernancePolicy = mock(GovernancePolicy.class);
         Mockito.when(mockGovernancePolicy.getApplicableAgeOfMajorityRule(Mockito.any(Handle.class),
                 Mockito.any(PexInterpreter.class),
+                Mockito.anyString(),
                 Mockito.anyString())).thenReturn(Optional.of(ageOfMajorityRule));
 
         Mockito.when(ageOfMajorityRule.getDateOfMajority(Mockito.any(LocalDate.class))).thenReturn(testDateOfMajority);
 
+        addressService = new AddressService();
     }
 
     @Test
@@ -239,6 +248,11 @@ public class DataExporterTest extends TxnAwareBaseTest {
             handle.attach(InvitationFactory.class)
                     .createInvitation(InvitationType.AGE_UP, invitationCode2, testData.getStudyId(),
                             testData.getUserId(), email2);
+
+            // insert snapshotted address
+            MailAddress snapshottedAdress = addressService.snapshotAddress(
+                    handle, testData.getUserGuid(), testData.getUserGuid(), instanceDto.getId());
+
             // Extract and test
             List<Participant> extracts = exporter.extractParticipantDataSet(handle, testData.getTestingStudy());
 
@@ -249,6 +263,12 @@ public class DataExporterTest extends TxnAwareBaseTest {
             assertEquals(EnrollmentStatusType.ENROLLED, actual.getStatus().getEnrollmentStatus());
             assertEquals(testData.getUserGuid(), actual.getStatus().getUserGuid());
             assertEquals(testData.getStudyGuid(), actual.getStatus().getStudyGuid());
+
+            // verify non-default (snapshotted) address fetched to Participant object
+            assertEquals(1, actual.getNonDefaultMailAddresses().size());
+            assertEquals(instanceDto.getId(), actual.getNonDefaultMailAddresses().keySet().iterator().next().longValue());
+            MailAddress nonDefaultAddress = actual.getNonDefaultMailAddresses().values().iterator().next();
+            assertEquals(snapshottedAdress.getGuid(), nonDefaultAddress.getGuid());
 
             assertEquals(testData.getTestingUser().getEmail(), actual.getUser().getEmail());
 
@@ -320,7 +340,8 @@ public class DataExporterTest extends TxnAwareBaseTest {
                 mockMedicalRecordService,
                 mockGovernancePolicy,
                 testData.getStudyId(),
-                Collections.singletonList(participant)));
+                Collections.singletonList(participant),
+                Collections.singletonMap(testData.getUserGuid(), Collections.singletonList(testData.getUserGuid()))));
 
         assertEquals(testBirthdate.asLocalDate().orElse(null), participant.getBirthDate());
         assertEquals(testDateOfMajority, participant.getDateOfMajority());
@@ -329,6 +350,20 @@ public class DataExporterTest extends TxnAwareBaseTest {
     @Test
     public void testExtractActivityDefinitions() {
         TransactionWrapper.useTxn(handle -> {
+            MatrixQuestionDef matrixDef = MatrixQuestionDef.builder().setStableId("TEST_MAQ")
+                    .setSelectMode(MatrixSelectMode.MULTIPLE)
+                    .setPrompt(Template.text("matrix prompt"))
+                    .addOptions(List.of(
+                            new MatrixOptionDef("OPT_1", Template.text("option 1"), "DEFAULT"),
+                            new MatrixOptionDef("OPT_2", Template.text("option 2"), "GROUP")))
+                    .addRows(List.of(
+                            new MatrixRowDef("ROW_1", Template.text("row 1")),
+                            new MatrixRowDef("ROW_2", Template.text("row 2"))))
+                    .addGroups(List.of(
+                            new MatrixGroupDef("DEFAULT", null),
+                            new MatrixGroupDef("GROUP", Template.text("group 1"))))
+                    .build();
+
             PicklistQuestionDef picklistDef = PicklistQuestionDef.builder().setStableId("TEST_PLQ")
                     .setSelectMode(PicklistSelectMode.MULTIPLE)
                     .setRenderMode(PicklistRenderMode.LIST)
@@ -346,6 +381,7 @@ public class DataExporterTest extends TxnAwareBaseTest {
 
             FileQuestionDef fileDef = FileQuestionDef
                     .builder("TEST_FILEQ", Template.text("file prompt"))
+                    .setMaxFileSize(DEFAULT_MAX_FILE_SIZE_FOR_TEST)
                     .build();
 
             TextQuestionDef textDef = TextQuestionDef.builder().setStableId("TEST_TEXTQ")
@@ -354,7 +390,6 @@ public class DataExporterTest extends TxnAwareBaseTest {
                     .build();
 
             NumericQuestionDef numericDef = NumericQuestionDef.builder().setStableId("TEST_NUMERICQ")
-                    .setNumericType(NumericType.INTEGER)
                     .setPrompt(new Template(TemplateType.TEXT, null, "numeric prompt"))
                     .build();
 
@@ -382,7 +417,7 @@ public class DataExporterTest extends TxnAwareBaseTest {
             FormActivityDef def = FormActivityDef.generalFormBuilder(activityCode, "v1", testData.getStudyGuid())
                     .addName(new Translation("en", "test activity"))
                     .addSection(new FormSectionDef(null, TestUtil.wrapQuestions(
-                            textDef, picklistDef, dateDef, fileDef, numericDef, compQ)))
+                            textDef, picklistDef, dateDef, fileDef, numericDef, compQ, matrixDef)))
                     .build();
 
             ActivityVersionDto versioDto = handle.attach(ActivityDao.class)
@@ -423,8 +458,7 @@ public class DataExporterTest extends TxnAwareBaseTest {
 
             //check Numeric Question
             Assert.assertTrue(esDoc.contains("{\"stableId\":\"TEST_NUMERICQ\","
-                    + "\"questionType\":\"NUMERIC\",\"questionText\":\"numeric prompt\","
-                    + "\"numericType\":\"INTEGER\"}"));
+                    + "\"questionType\":\"NUMERIC\",\"questionText\":\"numeric prompt\"}"));
 
             //check Picklist Question
             Assert.assertTrue(esDoc.contains("{\"stableId\":\"TEST_PLQ\",\"questionType\":\"PICKLIST\",\"questionText\":"
@@ -436,7 +470,15 @@ public class DataExporterTest extends TxnAwareBaseTest {
             Assert.assertTrue(esDoc.contains("{\"stableId\":\"TEST_COMPOSITEQ\",\"allowMultiple\":true,\"questionType\":\"COMPOSITE\","
                     + "\"questionText\":\"Comp1\",\"childQuestions\":[{\"stableId\":\"TEST_CHILD_TEXTQ\",\"questionType\":\"TEXT\","
                     + "\"questionText\":\"text prompt\"},{\"stableId\":\"TEST_CHILD_DATEQ\",\"questionType\":\"DATE\","
-                    + "\"questionText\":\"date prompt\"}]}]"));
+                    + "\"questionText\":\"date prompt\"}]},"));
+
+            //check Picklist Question
+            Assert.assertTrue(esDoc.contains("{\"stableId\":\"TEST_MAQ\",\"questionType\":\"MATRIX\",\"questionText\":\"matrix prompt\","
+                    + "\"selectMode\":\"MULTIPLE\",\"groups\":[{\"groupStableId\":\"DEFAULT\"},{\"groupStableId\":\"GROUP\","
+                    + "\"groupText\":\"group 1\"}],"
+                    + "\"options\":[{\"optionStableId\":\"OPT_1\",\"optionText\":\"option 1\"},{\"optionStableId\":\"OPT_2\","
+                    + "\"optionText\":\"option 2\"}],\"rows\":[{\"rowStableId\":\"ROW_1\",\"rowText\":\"row 1\"},"
+                    + "{\"rowStableId\":\"ROW_2\",\"rowText\":\"row 2\"}]}]"));
 
             handle.rollback();
         });
@@ -723,10 +765,11 @@ public class DataExporterTest extends TxnAwareBaseTest {
                                     .builder(TextInputType.ESSAY, "Q_TEXT", Template.text("text prompt"))
                                     .build()),
                             new QuestionBlockDef(NumericQuestionDef
-                                    .builder(NumericType.INTEGER, "Q_NUMERIC", Template.text("numeric prompt"))
+                                    .builder("Q_NUMERIC", Template.text("numeric prompt"))
                                     .build()),
                             new QuestionBlockDef(FileQuestionDef
                                     .builder("Q_FILE", Template.text("file prompt"))
+                                    .setMaxFileSize(DEFAULT_MAX_FILE_SIZE_FOR_TEST)
                                     .build()))))
                     .addSection(new FormSectionDef(null, Arrays.asList(
                             new MailingAddressComponentDef(null, null),
@@ -766,7 +809,7 @@ public class DataExporterTest extends TxnAwareBaseTest {
                         new ActivityInstanceStatusDto(2L, 1L, 1L, lastUpdatedAt, InstanceStatusType.COMPLETE));
                 instance.putAnswer(new BoolAnswer(1L, "Q_BOOL", "guid", true));
                 instance.putAnswer(new TextAnswer(2L, "Q_TEXT", "guid", "john smith"));
-                instance.putAnswer(new NumericIntegerAnswer(3L, "Q_NUMERIC", "guid", 25L));
+                instance.putAnswer(new NumericAnswer(3L, "Q_NUMERIC", "guid", 25L));
                 instance.putAnswer(new DateAnswer(4L, "Q_BIRTHDAY", "guid", new DateValue(1978, 5, 16)));
                 instance.putAnswer(new FileAnswer(5L, "Q_FILE", "guid", new FileInfo(1L, "file1", "file.pdf", 123L)));
                 participant.addResponse(instance);

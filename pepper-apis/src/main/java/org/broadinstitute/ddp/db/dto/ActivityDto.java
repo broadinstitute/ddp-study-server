@@ -26,6 +26,7 @@ public class ActivityDto {
     private final boolean createOnParentCreation;
     private final boolean canDeleteInstances;
     private final Boolean canDeleteFirstInstance;
+    private final boolean showActivityStatus;
     private String activityCode;
 
     @JdbiConstructor
@@ -49,7 +50,8 @@ public class ActivityDto {
             @ColumnName("hide_existing_instances_on_creation") boolean hideExistingInstancesOnCreation,
             @ColumnName("create_on_parent_creation") boolean createOnParentCreation,
             @ColumnName("can_delete_instances") boolean canDeleteInstances,
-            @ColumnName("can_delete_first_instance") Boolean canDeleteFirstInstance
+            @ColumnName("can_delete_first_instance") Boolean canDeleteFirstInstance,
+            @ColumnName("show_activity_status") boolean showActivityStatus
     ) {
         this.activityId = activityId;
         this.activityTypeId = activityTypeId;
@@ -71,6 +73,7 @@ public class ActivityDto {
         this.createOnParentCreation = createOnParentCreation;
         this.canDeleteInstances = canDeleteInstances;
         this.canDeleteFirstInstance = canDeleteFirstInstance;
+        this.showActivityStatus = showActivityStatus;
     }
 
     public long getActivityId() {
@@ -157,6 +160,10 @@ public class ActivityDto {
         return canDeleteFirstInstance;
     }
 
+    public boolean showActivityStatus() {
+        return showActivityStatus;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {
@@ -185,6 +192,7 @@ public class ActivityDto {
                 && hideExistingInstancesOnCreation == that.hideExistingInstancesOnCreation
                 && createOnParentCreation == that.createOnParentCreation
                 && canDeleteInstances == that.canDeleteInstances
+                && showActivityStatus == that.showActivityStatus
                 && Objects.equals(canDeleteFirstInstance, that.canDeleteFirstInstance);
     }
 
@@ -210,6 +218,7 @@ public class ActivityDto {
                 hideExistingInstancesOnCreation,
                 createOnParentCreation,
                 canDeleteInstances,
-                canDeleteFirstInstance);
+                canDeleteFirstInstance,
+                showActivityStatus);
     }
 }

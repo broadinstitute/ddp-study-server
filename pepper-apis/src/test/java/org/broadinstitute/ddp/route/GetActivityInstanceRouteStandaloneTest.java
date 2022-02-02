@@ -1,6 +1,7 @@
 package org.broadinstitute.ddp.route;
 
 import static io.restassured.RestAssured.given;
+import static org.broadinstitute.ddp.util.TestFormActivity.DEFAULT_MAX_FILE_SIZE_FOR_TEST;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasItems;
@@ -20,6 +21,7 @@ import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -69,6 +71,10 @@ import org.broadinstitute.ddp.model.activity.definition.question.FileQuestionDef
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistGroupDef;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistOptionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistQuestionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.MatrixGroupDef;
+import org.broadinstitute.ddp.model.activity.definition.question.MatrixOptionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.MatrixRowDef;
+import org.broadinstitute.ddp.model.activity.definition.question.MatrixQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.TextQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.activity.definition.template.TemplateVariable;
@@ -90,6 +96,7 @@ import org.broadinstitute.ddp.model.activity.types.FormType;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.broadinstitute.ddp.model.activity.types.NestedActivityRenderHint;
 import org.broadinstitute.ddp.model.activity.types.PicklistRenderMode;
+import org.broadinstitute.ddp.model.activity.types.MatrixSelectMode;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
 import org.broadinstitute.ddp.model.activity.types.RuleType;
 import org.broadinstitute.ddp.model.activity.types.SuggestionType;
@@ -109,6 +116,17 @@ import org.junit.Test;
 public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite.TestCaseWithCacheEnabled {
 
     public static final String TEXT_QUESTION_STABLE_ID = "TEXT_Q";
+
+    public static final String MIME_TYPE_1 = "image/gif";
+    public static final String MIME_TYPE_2 = "image/jpeg";
+
+    private static final Set<String> MIME_TYPES = new LinkedHashSet<>() {
+        {
+            add(MIME_TYPE_1);
+            add(MIME_TYPE_2);
+        }
+    };
+
     private static TestDataSetupUtil.GeneratedTestData testData;
     private static FormActivityDef parentActivity;
     private static FormActivityDef activity;
@@ -201,7 +219,7 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
                 .buildMultiSelect(PicklistRenderMode.LIST, "PL_GROUPS", newTemplate())
                 .addGroup(new PicklistGroupDef("G1", newTemplate(), Arrays.asList(
                         new PicklistOptionDef(null, "G1_OPT1", newTemplate(),
-                                Template.text("option tooltip"), null, false))))
+                                Template.text("option tooltip"), null, false, false))))
                 .addGroup(new PicklistGroupDef("G2", newTemplate(), Arrays.asList(
                         new PicklistOptionDef("G2_OPT1", newTemplate()),
                         new PicklistOptionDef("G2_OPT2", newTemplate()))))
@@ -210,7 +228,20 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
         TextQuestionDef t5 = TextQuestionDef.builder(TextInputType.TEXT, "TEXT_Q3_DISABLED", newTemplate())
                 .setDeprecated(true)
                 .build();
-        FormSectionDef plistSection = new FormSectionDef(null, TestUtil.wrapQuestions(p1, p2, p3, t5));
+
+        //add picklist nested options question
+        PicklistOptionDef nestedOptionDef1 = new PicklistOptionDef("NESTED_OPT1", new Template(TemplateType.TEXT, null, "nested option 1"));
+        PicklistOptionDef nestedOptionDef2 = new PicklistOptionDef("NESTED_OPT2", new Template(TemplateType.TEXT, null, "nested option 2"));
+        List<PicklistOptionDef> nestedOpts = List.of(nestedOptionDef1, nestedOptionDef2);
+        PicklistOptionDef nestedPLOptionDef = new PicklistOptionDef("PARENT_OPT", new Template(TemplateType.TEXT, null, "parent option1"),
+                new Template(TemplateType.TEXT, null, "nested options Label"), nestedOpts);
+        String stableIdNPL = "PQ_NESTED_OPTS";
+        PicklistQuestionDef nestedPLOptionsQuestion = PicklistQuestionDef.buildSingleSelect(PicklistRenderMode.LIST, stableIdNPL,
+                new Template(TemplateType.TEXT, null, "prompt for Nested PL Question"))
+                .addOption(nestedPLOptionDef)
+                .build();
+
+        FormSectionDef plistSection = new FormSectionDef(null, TestUtil.wrapQuestions(p1, p2, p3, t5, nestedPLOptionsQuestion));
 
         //------------- create SECTION[3] ---------
         essayQuestionStableId = "PATCH_TEXT_Q2";
@@ -263,9 +294,36 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
         //------------- create SECTION[8] ---------
         FileQuestionDef file1 = FileQuestionDef
                 .builder("FILE" + System.currentTimeMillis(), Template.text("file"))
+                .setMaxFileSize(DEFAULT_MAX_FILE_SIZE_FOR_TEST)
+                .setMimeTypes(MIME_TYPES)
                 .build();
         var fileSection = new FormSectionDef(null, List.of(new QuestionBlockDef(file1)));
 
+        //------------- create SECTION[9] ---------
+        MatrixQuestionDef mqf1 = MatrixQuestionDef.builder(MatrixSelectMode.SINGLE, "MA_SINGLE", newTemplate())
+                .addRow(new MatrixRowDef("MA_SINGLE_ROW_1", newTemplate()))
+                .addRow(new MatrixRowDef("MA_SINGLE_ROW_2", newTemplate()))
+                .addOption(new MatrixOptionDef("MA_SINGLE_OPT_1", newTemplate(), "DEFAULT"))
+                .addOption(new MatrixOptionDef("MA_SINGLE_OPT_2", newTemplate(), "MA_SINGLE_GROUP"))
+                .addOption(new MatrixOptionDef("MA_SINGLE_OPT_3", newTemplate(), "MA_SINGLE_GROUP"))
+                .addGroups(List.of(
+                        new MatrixGroupDef("DEFAULT", null),
+                        new MatrixGroupDef("MA_SINGLE_GROUP", newTemplate())))
+                .build();
+
+        MatrixQuestionDef mqf2 = MatrixQuestionDef.builder(MatrixSelectMode.MULTIPLE, "MA_MULTI", newTemplate())
+                .addRow(new MatrixRowDef("MA_MULTI_ROW_1", newTemplate()))
+                .addRow(new MatrixRowDef("MA_MULTI_ROW_2", newTemplate()))
+                .addOption(new MatrixOptionDef("MA_MULTI_OPT_1", newTemplate(), "DEFAULT"))
+                .addOption(new MatrixOptionDef("MA_MULTI_OPT_2", newTemplate(), "MA_MULTI_GROUP"))
+                .addOption(new MatrixOptionDef("MA_MULTI_OPT_3", newTemplate(), "MA_MULTI_GROUP"))
+                .addGroups(List.of(
+                        new MatrixGroupDef("DEFAULT", null),
+                        new MatrixGroupDef("MA_MULTI_GROUP", newTemplate())))
+                .addValidation(new RequiredRuleDef(newTemplate()))
+                .build();
+
+        FormSectionDef matrixSection = new FormSectionDef(null, TestUtil.wrapQuestions(mqf1, mqf2));
 
         //------------- create STUDY ACTIVITY ---------
         String parentActCode = "ACT_ROUTE_PARENT" + Instant.now().toEpochMilli();
@@ -289,6 +347,7 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
                 .addSection(iconSection)
                 .addSection(compSection)
                 .addSection(fileSection)
+                .addSection(matrixSection)
                 .build();
         activityVersionDto = handle.attach(ActivityDao.class).insertActivity(
                 parentActivity, List.of(activity), RevisionMetadata.now(testData.getUserId(), "add " + activityCode)
@@ -482,7 +541,7 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
     public void testGet_picklistQuestion_withGroups() {
         testFor200()
                 .body("sections.size()", equalTo(activity.getSections().size()))
-                .body("sections[2].blocks.size()", equalTo(3))
+                .body("sections[2].blocks.size()", equalTo(4))
                 .root("sections[2].blocks[2].question")
                 .body("stableId", equalTo("PL_GROUPS"))
                 .body("groups.size()", equalTo(2))
@@ -497,6 +556,54 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
                 .body("picklistOptions[2].groupId", equalTo("G2"))
                 .body("picklistOptions[3].stableId", equalTo("G2_OPT2"))
                 .body("picklistOptions[3].groupId", equalTo("G2"));
+    }
+
+    @Test
+    public void testGet_matrixQuestion() {
+        Response resp = testFor200AndExtractResponse();
+
+        resp.then().assertThat()
+                .body("sections.size()", equalTo(activity.getSections().size()))
+                .body("sections[9].blocks.size()", equalTo(2));
+
+        resp.then().assertThat()
+                .root("sections[9].blocks[0].question")
+                .body("questionType", equalTo("MATRIX"))
+                .body("stableId", equalTo("MA_SINGLE"))
+                .body("selectMode", equalTo("SINGLE"))
+                .body("groups.size()", equalTo(2))
+                .body("groups[0].identifier", equalTo("DEFAULT"))
+                .body("groups[1].identifier", equalTo("MA_SINGLE_GROUP"))
+                .body("options.size()", equalTo(3))
+                .body("options[0].stableId", equalTo("MA_SINGLE_OPT_1"))
+                .body("options[0].groupId", equalTo("DEFAULT"))
+                .body("options[1].stableId", equalTo("MA_SINGLE_OPT_2"))
+                .body("options[1].groupId", equalTo("MA_SINGLE_GROUP"))
+                .body("options[2].stableId", equalTo("MA_SINGLE_OPT_3"))
+                .body("options[2].groupId", equalTo("MA_SINGLE_GROUP"))
+                .body("questions.size()", equalTo(2))
+                .body("questions[0].stableId", equalTo("MA_SINGLE_ROW_1"))
+                .body("questions[1].stableId", equalTo("MA_SINGLE_ROW_2"));
+
+        resp.then().assertThat()
+                .root("sections[9].blocks[1].question")
+                .body("questionType", equalTo("MATRIX"))
+                .body("stableId", equalTo("MA_MULTI"))
+                .body("selectMode", equalTo("MULTIPLE"))
+                .body("groups.size()", equalTo(2))
+                .body("groups[0].identifier", equalTo("DEFAULT"))
+                .body("groups[1].identifier", equalTo("MA_MULTI_GROUP"))
+                .body("options.size()", equalTo(3))
+                .body("options[0].stableId", equalTo("MA_MULTI_OPT_1"))
+                .body("options[0].groupId", equalTo("DEFAULT"))
+                .body("options[1].stableId", equalTo("MA_MULTI_OPT_2"))
+                .body("options[1].groupId", equalTo("MA_MULTI_GROUP"))
+                .body("options[2].stableId", equalTo("MA_MULTI_OPT_3"))
+                .body("options[2].groupId", equalTo("MA_MULTI_GROUP"))
+                .body("questions.size()", equalTo(2))
+                .body("questions[0].stableId", equalTo("MA_MULTI_ROW_1"))
+                .body("questions[1].stableId", equalTo("MA_MULTI_ROW_2"))
+                .body("validations[0].rule", equalTo("REQUIRED"));
     }
 
     @Test
@@ -609,7 +716,7 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
                 .body("sections.size()", equalTo(activity.getSections().size()))
                 .body("sections[0].blocks.size()", equalTo(3))
                 .body("sections[1].blocks.size()", equalTo(3))
-                .body("sections[2].blocks.size()", equalTo(3));
+                .body("sections[2].blocks.size()", equalTo(4));
 
         // Check rules are rendered
         resp.then().assertThat()
@@ -923,7 +1030,16 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
                 .body("sections.size()", equalTo(activity.getSections().size()))
                 .body("sections[0].blocks.size()", equalTo(3))
                 .body("sections[1].blocks.size()", equalTo(3))
-                .body("sections[2].blocks.size()", equalTo(3));
+                .body("sections[2].blocks.size()", equalTo(4));
+    }
+
+    @Test
+    public void testFileQuestionProperties() {
+        testFor200()
+                .body("sections[8].blocks[0].question.questionType", equalTo(QuestionType.FILE.name()))
+                .body("sections[8].blocks[0].question.maxFileSize", equalTo(Long.valueOf(DEFAULT_MAX_FILE_SIZE_FOR_TEST).intValue()))
+                .body("sections[8].blocks[0].question.mimeTypes[0]", equalTo(MIME_TYPE_1))
+                .body("sections[8].blocks[0].question.mimeTypes[1]", equalTo(MIME_TYPE_2));
     }
 
     private Response testFor200AndExtractResponse() {

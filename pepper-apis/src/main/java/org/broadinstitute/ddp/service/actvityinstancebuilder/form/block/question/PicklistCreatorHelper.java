@@ -16,7 +16,7 @@ public class PicklistCreatorHelper {
     public PicklistGroup createPicklistGroup(AIBuilderContext ctx, PicklistGroupDef picklistGroupDef) {
         return new PicklistGroup(
                 picklistGroupDef.getStableId(),
-                ctx.getAIBuilderFactory().getTemplateRenderHelper().renderTemplate(
+                ctx.getAIBuilderFactory().getTemplateRenderHelper().addTemplate(
                         ctx, picklistGroupDef.getNameTemplate())
         );
     }
@@ -30,15 +30,16 @@ public class PicklistCreatorHelper {
                                                List<PicklistGroupDef> picklistGroupDefs, boolean isNested) {
         PicklistOption picklistOption = new PicklistOption(
                 picklistOptionDef.getStableId(),
-                ctx.getAIBuilderFactory().getTemplateRenderHelper().renderTemplate(
+                ctx.getAIBuilderFactory().getTemplateRenderHelper().addTemplate(
                         ctx, picklistOptionDef.getOptionLabelTemplate()),
-                ctx.getAIBuilderFactory().getTemplateRenderHelper().renderTemplate(
+                ctx.getAIBuilderFactory().getTemplateRenderHelper().addTemplate(
                         ctx, picklistOptionDef.getTooltipTemplate()),
-                ctx.getAIBuilderFactory().getTemplateRenderHelper().renderTemplate(
+                ctx.getAIBuilderFactory().getTemplateRenderHelper().addTemplate(
                         ctx, picklistOptionDef.getDetailLabelTemplate()),
                 picklistOptionDef.isDetailsAllowed(),
                 picklistOptionDef.isExclusive(),
-                isNested ? null : ctx.getAIBuilderFactory().getTemplateRenderHelper().renderTemplate(
+                picklistOptionDef.isDefault(),
+                isNested ? null : ctx.getAIBuilderFactory().getTemplateRenderHelper().addTemplate(
                         ctx, picklistOptionDef.getNestedOptionsLabelTemplate()),
                 isNested ? null :
                     CollectionMiscUtil.createListFromAnotherList(picklistOptionDef.getNestedOptions(),

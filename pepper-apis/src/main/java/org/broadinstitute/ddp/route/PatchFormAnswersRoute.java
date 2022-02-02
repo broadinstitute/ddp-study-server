@@ -35,6 +35,8 @@ import org.broadinstitute.ddp.db.dao.ActivityInstanceStatusDao;
 import org.broadinstitute.ddp.db.dao.AnswerCachedDao;
 import org.broadinstitute.ddp.db.dao.DataExportDao;
 import org.broadinstitute.ddp.db.dao.FileUploadDao;
+import org.broadinstitute.ddp.db.dao.JdbiMatrixGroup;
+import org.broadinstitute.ddp.db.dao.JdbiMatrixOption;
 import org.broadinstitute.ddp.db.dao.JdbiQuestionCached;
 import org.broadinstitute.ddp.db.dao.QuestionCachedDao;
 import org.broadinstitute.ddp.db.dao.UserDao;
@@ -42,6 +44,7 @@ import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.db.dto.AnswerDto;
 import org.broadinstitute.ddp.db.dto.CompositeQuestionDto;
 import org.broadinstitute.ddp.db.dto.LanguageDto;
+import org.broadinstitute.ddp.db.dto.MatrixGroupDto;
 import org.broadinstitute.ddp.db.dto.NumericQuestionDto;
 import org.broadinstitute.ddp.db.dto.QuestionDto;
 import org.broadinstitute.ddp.db.dto.UserActivityInstanceSummary;
@@ -57,6 +60,7 @@ import org.broadinstitute.ddp.json.errors.AnswerValidationError;
 import org.broadinstitute.ddp.json.errors.ApiError;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
 import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
+import org.broadinstitute.ddp.model.activity.instance.answer.ActivityInstanceSelectAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.AgreementAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
 import org.broadinstitute.ddp.model.activity.instance.answer.BoolAnswer;
@@ -66,9 +70,10 @@ import org.broadinstitute.ddp.model.activity.instance.answer.DateValue;
 import org.broadinstitute.ddp.model.activity.instance.answer.FileAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.FileInfo;
 import org.broadinstitute.ddp.model.activity.instance.answer.NumericAnswer;
-import org.broadinstitute.ddp.model.activity.instance.answer.NumericIntegerAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.PicklistAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.SelectedPicklistOption;
+import org.broadinstitute.ddp.model.activity.instance.answer.MatrixAnswer;
+import org.broadinstitute.ddp.model.activity.instance.answer.SelectedMatrixCell;
 import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
 import org.broadinstitute.ddp.model.activity.instance.question.CompositeQuestion;
 import org.broadinstitute.ddp.model.activity.instance.question.Question;
@@ -77,7 +82,6 @@ import org.broadinstitute.ddp.model.activity.instance.validation.ActivityValidat
 import org.broadinstitute.ddp.model.activity.instance.validation.Rule;
 import org.broadinstitute.ddp.model.activity.types.ActivityType;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
-import org.broadinstitute.ddp.model.activity.types.NumericType;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
 import org.broadinstitute.ddp.model.activity.types.TextInputType;
 import org.broadinstitute.ddp.model.user.User;
@@ -235,7 +239,7 @@ public class PatchFormAnswersRoute implements Route {
                     }
 
                     Answer answer = convertAnswer(handle, response, instanceGuid, questionStableId,
-                            submission.getAnswerGuid(), questionDto, submission.getValue());
+                            submission.getAnswerGuid(), studyGuid, participantGuid, questionDto, submission.getValue());
                     if (answer == null) {
                         String msg = "Answer value does not have expected format for question stable id " + questionStableId;
                         LOG.info(msg);
@@ -330,7 +334,7 @@ public class PatchFormAnswersRoute implements Route {
                 throw ResponseUtil.haltError(response, 400, new ApiError(ErrorCodes.REQUIRED_PARAMETER_MISSING, e.getMessage()));
             }
 
-            res.setBlockVisibilities(formService.getBlockVisibilities(handle, instanceSummary, activityDef, participantGuid,
+            res.setBlockVisibilities(formService.getBlockVisibilitiesAndEnabled(handle, instanceSummary, activityDef, participantGuid,
                     operatorGuid, instanceGuid));
 
             List<ActivityValidationFailure> failures = getActivityValidationFailures(
@@ -414,14 +418,18 @@ public class PatchFormAnswersRoute implements Route {
      * @return answer object, or null if no answer value given
      */
     private Answer convertAnswer(Handle handle, Response response, String instanceGuid, String stableId, String guid,
-                                 QuestionDto questionDto, JsonElement value) {
+                                 String studyGuid, String userGuid, QuestionDto questionDto, JsonElement value) {
         switch (questionDto.getType()) {
             case BOOLEAN:
                 return convertBoolAnswer(stableId, guid, instanceGuid, value);
             case PICKLIST:
                 return convertPicklistAnswer(stableId, guid, instanceGuid, value);
+            case MATRIX:
+                return convertMatrixAnswer(handle, stableId, guid, instanceGuid, value);
             case TEXT:
                 return convertTextAnswer(stableId, guid, instanceGuid, value);
+            case ACTIVITY_INSTANCE_SELECT:
+                return convertActivityInstanceSelectAnswer(handle, response, studyGuid, userGuid, questionDto, guid, instanceGuid, value);
             case DATE:
                 return convertDateAnswer(stableId, guid, instanceGuid, value);
             case FILE:
@@ -431,7 +439,8 @@ public class PatchFormAnswersRoute implements Route {
             case AGREEMENT:
                 return convertAgreementAnswer(stableId, guid, instanceGuid, value);
             case COMPOSITE:
-                return convertCompositeAnswer(handle, response, instanceGuid, (CompositeQuestionDto) questionDto, guid, value);
+                return convertCompositeAnswer(handle, response, instanceGuid, studyGuid, userGuid,
+                        (CompositeQuestionDto) questionDto, guid, value);
             default:
                 throw new RuntimeException("Unhandled question type " + questionDto.getType());
         }
@@ -478,6 +487,49 @@ public class PatchFormAnswersRoute implements Route {
     }
 
     /**
+     * Convert given data to matrix answer.
+     *
+     *
+     * @param handle    the database handle
+     * @param stableId the question stable id
+     * @param guid     the answer guid, or null
+     * @param value    the answer value
+     * @return matrix answer object, or null if value is not a list of options
+     */
+    private MatrixAnswer convertMatrixAnswer(Handle handle, String stableId, String guid, String actInstanceGuid,
+                                             JsonElement value) {
+        if (value == null || !value.isJsonArray()) {
+            return null;
+        }
+        try {
+            Type selectedOptionListType = new TypeToken<ArrayList<SelectedMatrixCell>>() {
+            }.getType();
+            List<SelectedMatrixCell> selected = gson.fromJson(value, selectedOptionListType);
+            List<String> optionStableIds = selected.stream().map(SelectedMatrixCell::getOptionStableId).collect(Collectors.toList());
+            var jdbiQuestion = new JdbiQuestionCached(handle);
+            var questionId = jdbiQuestion.findIdByStableIdAndInstanceGuid(stableId, actInstanceGuid).orElseThrow();
+            Map<String, Long> optionStableIdToGroupId = new HashMap<>();
+            Map<Long, MatrixGroupDto> selectedGroupMap = new HashMap<>();
+            handle.attach(JdbiMatrixOption.class)
+                    .findOptions(questionId, optionStableIds, actInstanceGuid)
+                    .forEach(dto -> optionStableIdToGroupId.put(dto.getStableId(), dto.getGroupId()));
+            List<Long> groupIds = new ArrayList<>(optionStableIdToGroupId.values());
+            handle.attach(JdbiMatrixGroup.class).findGroupsByIds(questionId, groupIds, actInstanceGuid).forEach(g ->
+                    selectedGroupMap.put(g.getId(), g));
+            selected.forEach(s -> {
+                Long groupId = optionStableIdToGroupId.get(s.getOptionStableId());
+                if (groupId != null) {
+                    s.setGroupStableId(selectedGroupMap.get(groupId).getStableId());
+                }
+            });
+            return new MatrixAnswer(null, stableId, guid, selected, actInstanceGuid);
+        } catch (JsonSyntaxException e) {
+            LOG.warn("Failed to convert submitted answer to a matrix answer", e);
+            return null;
+        }
+    }
+
+    /**
      * Converts the text answer.
      *
      * @param stableId the question stable id
@@ -489,6 +541,35 @@ public class PatchFormAnswersRoute implements Route {
         if (value != null && value.isJsonPrimitive() && value.getAsJsonPrimitive().isString()) {
             String textValue = value.getAsJsonPrimitive().getAsString();
             return new TextAnswer(null, stableId, guid, textValue, actInstanceGuid);
+        } else {
+            return null;
+        }
+    }
+
+    /**
+     * Converts the activity instance select answer.
+     *
+     * @param handle   the database handle
+     * @param questionDto the question dto object
+     * @param guid     the answer guid, or null
+     * @param value    the answer value
+     * @return activity instance select answer object, or null if value is not a string
+     */
+    private ActivityInstanceSelectAnswer convertActivityInstanceSelectAnswer(Handle handle, Response response, String studyGuid,
+                                                                             String userGuid, QuestionDto questionDto,
+                                                                             String guid, String actInstanceGuid, JsonElement value) {
+        if (value != null && value.isJsonPrimitive() && value.getAsJsonPrimitive().isString()) {
+            String textValue = value.getAsJsonPrimitive().getAsString();
+            var jdbiQuestion = new JdbiQuestionCached(handle);
+            Set<String> activityCodes = new HashSet<>(jdbiQuestion
+                    .getActivityCodesByActivityInstanceSelectQuestionId(questionDto.getId()));
+            var instanceSummaries = handle.attach(org.broadinstitute.ddp.db.dao.ActivityInstanceDao.class)
+                    .findSortedInstanceSummaries(userGuid, studyGuid, activityCodes);
+            if (instanceSummaries.stream().noneMatch(summary -> summary.getGuid().equals(textValue))) {
+                throw ResponseUtil.haltError(response, HttpStatus.SC_NOT_FOUND, new ApiError(ErrorCodes.NOT_FOUND,
+                        "Could not find activity instance with guid " + textValue));
+            }
+            return new ActivityInstanceSelectAnswer(null, questionDto.getStableId(), guid, textValue, actInstanceGuid);
         } else {
             return null;
         }
@@ -540,22 +621,19 @@ public class PatchFormAnswersRoute implements Route {
     private NumericAnswer convertNumericAnswer(Handle handle, NumericQuestionDto numericDto, String guid, String actInstanceGuid,
                                                JsonElement value) {
         if (value == null || value.isJsonNull() || (value.isJsonPrimitive() && value.getAsJsonPrimitive().isNumber())) {
-            if (numericDto.getNumericType() == NumericType.INTEGER) {
-                Long intValue = null;
-                if (value != null && !value.isJsonNull()) {
-                    intValue = value.getAsLong();
-                }
-                return new NumericIntegerAnswer(null, numericDto.getStableId(), guid, intValue, actInstanceGuid);
-            } else {
-                throw new DDPException("Unhandled numeric answer type " + numericDto.getNumericType());
+            Long intValue = null;
+            if (value != null && !value.isJsonNull()) {
+                intValue = value.getAsLong();
             }
+            return new NumericAnswer(null, numericDto.getStableId(), guid, intValue, actInstanceGuid);
         } else {
             return null;
         }
     }
 
     private CompositeAnswer convertCompositeAnswer(Handle handle, Response response, String instanceGuid,
-                                                   CompositeQuestionDto compositeDto, String answerGuid, JsonElement value) {
+                                                   String studyGuid, String userGuid, CompositeQuestionDto compositeDto,
+                                                   String answerGuid, JsonElement value) {
         String parentStableId = compositeDto.getStableId();
         final Consumer<String> haltError = (String msg) -> {
             LOG.info(msg);
@@ -601,7 +679,8 @@ public class PatchFormAnswersRoute implements Route {
 
                         QuestionDto childQuestionDto = extractQuestionDto(response, childAnswerStableId, correspondingChildQuestion);
                         childAnswersRow.add(convertAnswer(handle, response, instanceGuid, childAnswerStableId,
-                                childAnswerSubmission.getAnswerGuid(), childQuestionDto, childAnswerSubmission.getValue()));
+                                childAnswerSubmission.getAnswerGuid(), studyGuid, userGuid, childQuestionDto,
+                                childAnswerSubmission.getValue()));
                     }
 
                     compAnswer.addRowOfChildAnswers(childAnswersRow);

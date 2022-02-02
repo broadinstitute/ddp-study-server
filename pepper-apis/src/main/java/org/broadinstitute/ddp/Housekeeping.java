@@ -10,7 +10,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -20,7 +19,6 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
-
 
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutureCallback;
@@ -47,9 +45,11 @@ import org.broadinstitute.ddp.client.GoogleBucketClient;
 import org.broadinstitute.ddp.client.SendGridClient;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.constants.RouteConstants;
+import org.broadinstitute.ddp.customexport.housekeeping.schedule.CustomExportJob;
 import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.DaoException;
 import org.broadinstitute.ddp.db.TransactionWrapper;
+import org.broadinstitute.ddp.db.dao.DataExportDao;
 import org.broadinstitute.ddp.db.dao.EventDao;
 import org.broadinstitute.ddp.db.dao.JdbiMessageDestination;
 import org.broadinstitute.ddp.db.dao.JdbiQueuedEvent;
@@ -57,7 +57,6 @@ import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudyCached;
 import org.broadinstitute.ddp.db.dao.QueuedEventDao;
 import org.broadinstitute.ddp.db.dao.StudyDao;
 import org.broadinstitute.ddp.db.dao.UserDao;
-import org.broadinstitute.ddp.db.dto.EventConfigurationDto;
 import org.broadinstitute.ddp.db.dto.QueuedEventDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.db.housekeeping.dao.JdbiEvent;
@@ -92,6 +91,7 @@ import org.broadinstitute.ddp.model.activity.types.EventActionType;
 import org.broadinstitute.ddp.model.event.ActivityInstanceCreationEventAction;
 import org.broadinstitute.ddp.model.event.EventConfiguration;
 import org.broadinstitute.ddp.model.event.EventSignal;
+import org.broadinstitute.ddp.model.event.UpdateUserStatusEventAction;
 import org.broadinstitute.ddp.model.study.StudySettings;
 import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.monitoring.PointsReducerFactory;
@@ -163,7 +163,7 @@ public class Housekeeping {
      */
     private static final Executor PUBSUB_PUBLISH_CALLBACK_EXECUTOR = Executors.newFixedThreadPool(10);
     private static final AtomicBoolean afterHandlerGuard = new AtomicBoolean();
-    public static final String IGNORE_EVENT_LOG_MESSAGE = "Ignoring and removing occurrence of event ";
+    private static final String IGNORE_EVENT_LOG_MESSAGE = "Ignoring and removing occurrence of event ";
 
     private static final String ENV_PORT = "PORT";
 
@@ -187,8 +187,6 @@ public class Housekeeping {
     private static Scheduler scheduler;
     private static Subscriber taskSubscriber;
     private static Subscriber fileScanResultSubscriber;
-
-    private static PubSubTaskConnectionService pubSubTaskConnectionService;
 
     public static void setAfterHandler(AfterHandlerCallback afterHandler) {
         synchronized (afterHandlerGuard) {
@@ -242,7 +240,7 @@ public class Housekeeping {
 
         final PubSubConnectionManager pubsubConnectionManager = new PubSubConnectionManager(usePubSubEmulator);
 
-        pubSubTaskConnectionService = new PubSubTaskConnectionService(
+        PubSubTaskConnectionService pubSubTaskConnectionService = new PubSubTaskConnectionService(
                 pubsubConnectionManager,
                 pubSubProject,
                 cfg.getString(ConfigFile.PUBSUB_TASKS_SUB),
@@ -278,7 +276,7 @@ public class Housekeeping {
 
         PexInterpreter pexInterpreter = new TreeWalkInterpreter();
         PubSubMessageBuilder messageBuilder = new PubSubMessageBuilder(cfg);
-        StackdriverMetricsTracker heartbeatMonitor = null;
+        StackdriverMetricsTracker heartbeatMonitor;
 
         heartbeatMonitor = new StackdriverMetricsTracker(StackdriverCustomMetric.HOUSEKEEPING_CYCLES,
                 PointsReducerFactory.buildMaxPointReducer());
@@ -308,9 +306,9 @@ public class Housekeeping {
                     TransactionWrapper.useTxn(TransactionWrapper.DB.APIS, apisHandle -> {
                         boolean shouldSkipEvent = false;
                         JdbiQueuedEvent queuedEventDao = apisHandle.attach(JdbiQueuedEvent.class);
-                        EventDao eventDao = apisHandle.attach(EventDao.class);
+                        User participant = null;
                         if (pendingEvent.getParticipantGuid() != null) {
-                            User participant = apisHandle.attach(UserDao.class)
+                            participant = apisHandle.attach(UserDao.class)
                                     .findUserByGuid(pendingEvent.getParticipantGuid())
                                     .orElse(null);
                             if (participant == null) {
@@ -367,18 +365,7 @@ public class Housekeeping {
                                 }
 
                                 if (hasMetPrecondition) {
-                                    if (pendingEvent.getActionType() == EventActionType.ACTIVITY_INSTANCE_CREATION) {
-                                        Optional<EventConfigurationDto> eventConfOptDto =
-                                                eventDao.getEventConfigurationDtoById(pendingEvent.getEventConfigurationId());
-                                        if (!eventConfOptDto.isPresent()) {
-                                            LOG.error("No event configuration found for ID: {} . skipping queued event : {} ",
-                                                    pendingEvent.getEventConfigurationId(), pendingEvent.getQueuedEventId());
-                                        } else {
-                                            createActivityInstance(apisHandle, eventConfOptDto.get(), pendingEvent);
-                                            queuedEventDao.deleteAllByQueuedEventId(pendingEvent.getQueuedEventId());
-                                            shouldSkipEvent = true;
-                                        }
-                                    }
+                                    shouldSkipEvent = handleDelayedEventActions(apisHandle, participant, pendingEvent);
 
                                     if (!shouldSkipEvent) {
                                         TransactionWrapper.useTxn(TransactionWrapper.DB.HOUSEKEEPING, housekeepingHandle -> {
@@ -421,7 +408,7 @@ public class Housekeeping {
 
                                                 if (message != null) {
                                                     // publish the message and delete it from the queue when published
-                                                    Publisher publisher = null;
+                                                    Publisher publisher;
                                                     try {
                                                         publisher = pubsubConnectionManager.getOrCreatePublisher(ProjectTopicName.of(
                                                                 pubSubProject, pendingEvent.getPubSubTopic()));
@@ -515,6 +502,7 @@ public class Housekeeping {
                     FileUploadCleanupJob.register(scheduler, cfg);
                     TemporaryUserCleanupJob.register(scheduler, cfg);
                     StudyDataExportJob.register(scheduler, cfg);
+                    CustomExportJob.register(scheduler, cfg);
                 }
                 // Setup jobs needed for housekeeping-tasks if that's enabled.
                 if (cfg.getBoolean(ConfigFile.PUBSUB_ENABLE_HKEEP_TASKS)) {
@@ -840,19 +828,52 @@ public class Housekeeping {
         }
     }
 
-    private static void createActivityInstance(Handle apisHandle, EventConfigurationDto eventConfDto, QueuedEventDto pendingEvent) {
-        User participant = apisHandle.attach(UserDao.class)
-                .findUserByGuid(pendingEvent.getParticipantGuid())
-                .orElse(null);
-        StudyDto studyDto = new JdbiUmbrellaStudyCached(apisHandle).findByStudyGuid(pendingEvent.getStudyGuid());
-        EventConfiguration eventConf = new EventConfiguration(eventConfDto);
-        ActivityInstanceCreationEventAction eventAction = new ActivityInstanceCreationEventAction(
-                eventConf, eventConfDto.getActivityInstanceCreationStudyActivityId());
-        eventAction.doAction(apisHandle, new EventSignal(pendingEvent.getOperatorUserId(),
-                participant.getId(), pendingEvent.getParticipantGuid(), pendingEvent.getOperatorGuid(),
-                studyDto.getId(), pendingEvent.getTriggerType()));
-    }
+    private static boolean handleDelayedEventActions(Handle apisHandle, User participant, QueuedEventDto pendingEvent) {
+        var eventDao = apisHandle.attach(EventDao.class);
+        var jdbiQueuedEvent = apisHandle.attach(JdbiQueuedEvent.class);
+        EventActionType actionType = pendingEvent.getActionType();
+        if (actionType == EventActionType.ACTIVITY_INSTANCE_CREATION
+                || actionType == EventActionType.UPDATE_USER_STATUS) {
+            EventConfiguration event = eventDao
+                    .getEventConfigurationDtoById(pendingEvent.getEventConfigurationId())
+                    .map(EventConfiguration::new)
+                    .orElse(null);
+            if (event == null) {
+                LOG.error("No event configuration found for id={}, skipping queued event {}",
+                        pendingEvent.getEventConfigurationId(), pendingEvent.getQueuedEventId());
+                return true;
+            }
 
+            long operatorUserId = pendingEvent.getOperatorUserId() != null
+                    ? pendingEvent.getOperatorUserId() : participant.getId();
+            String operatorGuid = pendingEvent.getOperatorGuid() != null
+                    ? pendingEvent.getOperatorGuid() : participant.getGuid();
+            StudyDto studyDto = new JdbiUmbrellaStudyCached(apisHandle)
+                    .findByStudyGuid(pendingEvent.getStudyGuid());
+            var signal = new EventSignal(
+                    operatorUserId,
+                    participant.getId(),
+                    participant.getGuid(),
+                    operatorGuid,
+                    studyDto.getId(),
+                    studyDto.getGuid(),
+                    pendingEvent.getTriggerType());
+
+            if (actionType == EventActionType.ACTIVITY_INSTANCE_CREATION) {
+                // fixme: build an ActivityInstanceStatusChangeSignal instead
+                var action = (ActivityInstanceCreationEventAction) event.getEventAction();
+                action.doActionSynchronously(apisHandle, signal);
+            } else {
+                var action = (UpdateUserStatusEventAction) event.getEventAction();
+                action.doActionSynchronously(apisHandle, signal);
+            }
+
+            jdbiQueuedEvent.deleteAllByQueuedEventId(pendingEvent.getQueuedEventId());
+            apisHandle.attach(DataExportDao.class).queueDataSync(participant.getId(), studyDto.getId());
+            return true;
+        }
+        return false;
+    }
 
     private static boolean checkUserExists(String participantGuid) {
         return TransactionWrapper.withTxn(TransactionWrapper.DB.APIS, apihandle ->
@@ -883,8 +904,7 @@ public class Housekeeping {
     /**
      * Supplier of SendGrid service.
      */
-    @FunctionalInterface
-    public interface SendGridSupplier {
+    @FunctionalInterface interface SendGridSupplier {
         SendGridClient get(String apiKey);
     }
 }

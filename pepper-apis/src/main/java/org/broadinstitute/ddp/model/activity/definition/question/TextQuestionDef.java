@@ -26,6 +26,10 @@ public final class TextQuestionDef extends QuestionDef {
     @SerializedName("placeholderTemplate")
     private Template placeholderTemplate;
 
+    @Valid
+    @SerializedName("confirmPlaceholderTemplate")
+    private Template confirmPlaceholderTemplate;
+
     @SerializedName("suggestions")
     private List<String> suggestions;
 
@@ -50,25 +54,8 @@ public final class TextQuestionDef extends QuestionDef {
                 .setPrompt(prompt);
     }
 
-    public TextQuestionDef(String stableId, boolean isRestricted, Template promptTemplate, Template placeholderTemplate,
-                           Template additionalInfoHeaderTemplate, Template additionalInfoFooterTemplate,
-                           List<RuleDef> validations, TextInputType inputType, SuggestionType suggestionType, boolean hideNumber,
-                           boolean writeOnce) {
-        this(stableId,
-                isRestricted,
-                promptTemplate,
-                placeholderTemplate,
-                additionalInfoHeaderTemplate,
-                additionalInfoFooterTemplate,
-                validations,
-                inputType,
-                hideNumber,
-                writeOnce);
-        this.suggestionType = suggestionType;
-    }
-
     public TextQuestionDef(String stableId, boolean isRestricted, Template promptTemplate,
-                           Template placeholderTemplate,
+                           Template placeholderTemplate, Template confirmPlaceholderTemplate,
                            Template additionalInfoHeaderTemplate, Template additionalInfoFooterTemplate,
                            List<RuleDef> validations, TextInputType inputType, boolean hideNumber, boolean writeOnce) {
         super(QuestionType.TEXT,
@@ -82,9 +69,11 @@ public final class TextQuestionDef extends QuestionDef {
                 writeOnce);
         this.inputType = MiscUtil.checkNonNull(inputType, "inputType");
         this.placeholderTemplate = placeholderTemplate;
+        this.confirmPlaceholderTemplate = confirmPlaceholderTemplate;
     }
 
-    public TextQuestionDef(String stableId, boolean isRestricted, Template promptTemplate, Template placeholderTemplate,
+    public TextQuestionDef(String stableId, boolean isRestricted, Template promptTemplate,
+                           Template placeholderTemplate, Template confirmPlaceholderTemplate,
                            Template additionalInfoHeaderTemplate, Template additionalInfoFooterTemplate,
                            List<RuleDef> validations, TextInputType inputType, SuggestionType suggestionType,
                            List<String> suggestions, boolean hideNumber, boolean writeOnce, boolean confirmEntry,
@@ -93,6 +82,7 @@ public final class TextQuestionDef extends QuestionDef {
                 isRestricted,
                 promptTemplate,
                 placeholderTemplate,
+                confirmPlaceholderTemplate,
                 additionalInfoHeaderTemplate,
                 additionalInfoFooterTemplate,
                 validations,
@@ -118,6 +108,10 @@ public final class TextQuestionDef extends QuestionDef {
         return placeholderTemplate;
     }
 
+    public Template getConfirmPlaceholderTemplate() {
+        return confirmPlaceholderTemplate;
+    }
+
     public List<String> getSuggestions() {
         return suggestions;
     }
@@ -134,12 +128,17 @@ public final class TextQuestionDef extends QuestionDef {
         return confirmPromptTemplate;
     }
 
+    public void setSuggestions(List<String> suggestions) {
+        this.suggestions = suggestions;
+    }
+
     public static final class Builder extends AbstractQuestionBuilder<Builder> {
 
         private TextInputType inputType;
 
         private SuggestionType suggestionType;
         private Template placeholderTemplate;
+        private Template confirmPlaceholderTemplate;
         private List<String> suggestions;
         private boolean confirmEntry;
         private Template confirmPromptTemplate;
@@ -166,6 +165,11 @@ public final class TextQuestionDef extends QuestionDef {
 
         public Builder setPlaceholderTemplate(Template placeholderTemplate) {
             this.placeholderTemplate = placeholderTemplate;
+            return this;
+        }
+
+        public Builder setConfirmPlaceholderTemplate(Template confirmPlaceholderTemplate) {
+            this.confirmPlaceholderTemplate = confirmPlaceholderTemplate;
             return this;
         }
 
@@ -197,6 +201,7 @@ public final class TextQuestionDef extends QuestionDef {
                                                             isRestricted,
                                                             prompt,
                                                             placeholderTemplate,
+                                                            confirmPlaceholderTemplate,
                                                             getAdditionalInfoHeader(),
                                                             getAdditionalInfoFooter(),
                                                             validations,

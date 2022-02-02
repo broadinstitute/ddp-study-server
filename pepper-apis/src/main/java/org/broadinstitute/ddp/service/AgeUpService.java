@@ -73,6 +73,7 @@ public class AgeUpService {
 
         for (var candidate : potentialCandidates) {
             String userGuid = candidate.getParticipantUserGuid();
+            String operatorGuid = candidate.getOperatorUserGuid();
             if (candidate.getBirthDate() == null) {
                 LOG.info("Age-up candidate with guid {} in study {} does not have birth date, skipping", userGuid, studyGuid);
                 continue;
@@ -84,7 +85,7 @@ public class AgeUpService {
 
             AgeOfMajorityRule rule;
             try {
-                rule = policy.getApplicableAgeOfMajorityRule(handle, interpreter, userGuid).orElse(null);
+                rule = policy.getApplicableAgeOfMajorityRule(handle, interpreter, userGuid, operatorGuid).orElse(null);
             } catch (PexException e) {
                 LOG.error("Error while evaluating age-of-majority rules for participant {} and study {}, skipping", userGuid, studyGuid, e);
                 continue;
@@ -109,7 +110,9 @@ public class AgeUpService {
                                 candidate.getParticipantUserId(),
                                 candidate.getParticipantUserGuid(),
                                 null,
-                                policy.getStudyId(), EventTriggerType.CONSENT_SUSPENDED);
+                                policy.getStudyId(),
+                                policy.getStudyGuid(),
+                                EventTriggerType.CONSENT_SUSPENDED);
                         EventService.getInstance().processAllActionsForEventSignal(handle, signal);
                     });
                 } catch (Exception e) {
@@ -130,7 +133,9 @@ public class AgeUpService {
                                 candidate.getParticipantUserId(),
                                 candidate.getParticipantUserGuid(),
                                 null,
-                                policy.getStudyId(), EventTriggerType.REACHED_AOM_PREP);
+                                policy.getStudyId(),
+                                policy.getStudyGuid(),
+                                EventTriggerType.REACHED_AOM_PREP);
                         EventService.getInstance().processAllActionsForEventSignal(handle, signal);
                     });
                     preppedCandidateIds.add(candidate.getId());
@@ -156,7 +161,9 @@ public class AgeUpService {
                                     candidate.getParticipantUserId(),
                                     candidate.getParticipantUserGuid(),
                                     null,
-                                    policy.getStudyId(), EventTriggerType.REACHED_AOM);
+                                    policy.getStudyId(),
+                                    policy.getStudyGuid(),
+                                    EventTriggerType.REACHED_AOM);
                             EventService.getInstance().processAllActionsForEventSignal(handle, signal);
                         });
                         completedCandidateIds.add(candidate.getId());

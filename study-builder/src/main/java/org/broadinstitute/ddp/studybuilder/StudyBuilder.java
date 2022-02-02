@@ -48,6 +48,8 @@ import org.broadinstitute.ddp.model.statistics.StatisticsType;
 import org.broadinstitute.ddp.model.study.StudyLanguage;
 import org.broadinstitute.ddp.security.AesUtil;
 import org.broadinstitute.ddp.security.EncryptionKey;
+import org.broadinstitute.ddp.studybuilder.translation.TranslationsProcessingData;
+import org.broadinstitute.ddp.studybuilder.translation.TranslationsToDbJsonSaver;
 import org.broadinstitute.ddp.util.ConfigUtil;
 import org.broadinstitute.ddp.util.GuidUtils;
 import org.jdbi.v3.core.Handle;
@@ -62,6 +64,7 @@ import org.slf4j.LoggerFactory;
 public class StudyBuilder {
 
     private static final Logger LOG = LoggerFactory.getLogger(StudyBuilder.class);
+    private static final String UMBRELLA_UNASSIGNED = "unassigned";
 
     private boolean doWorkflow = true;
     private boolean doEvents = true;
@@ -110,6 +113,9 @@ public class StudyBuilder {
         Path dirPath = cfgPath.getParent();
         new ActivityBuilder(dirPath, cfg, varsCfg, studyDto, adminDto.getUserId()).run(handle);
         new PdfBuilder(dirPath, cfg, studyDto, adminDto.getUserId()).run(handle);
+
+        // save translations (stored in i18n-files) to DB table `i18n_translation`
+        new TranslationsToDbJsonSaver().saveTranslations(handle, studyDto);
 
         if (doWorkflow) {
             new WorkflowBuilder(cfg, studyDto).run(handle);
@@ -205,16 +211,17 @@ public class StudyBuilder {
             newGuid = GuidUtils.randomStandardGuid();
         }
 
-        numRows = helper.renameStudy(studyDto.getId(), newGuid);
+        var umbrellaDto = helper.findOrInsertUmbrella(UMBRELLA_UNASSIGNED);
+        numRows = helper.renameStudy(studyDto.getId(), newGuid, umbrellaDto.getId());
         if (numRows != 1) {
             throw new DDPException("unable to rename study for invalidation");
         }
 
         StudyDto renamedStudy = handle.attach(JdbiUmbrellaStudy.class).findById(studyDto.getId());
-        LOG.info("renamed study with guid={}", renamedStudy.getGuid());
+        LOG.info("renamed study with guid={} and moved to umbrella '{}'", renamedStudy.getGuid(), UMBRELLA_UNASSIGNED);
     }
 
-    private Auth0TenantDto getTenantOrInsert(Handle handle) {
+    public Auth0TenantDto getTenantOrInsert(Handle handle) {
         Config tenantCfg = cfg.getConfig("tenant");
         String domain = tenantCfg.getString("domain");
         String mgmtClientId = tenantCfg.getString("mgmtClientId");
@@ -254,7 +261,7 @@ public class StudyBuilder {
         return dto;
     }
 
-    private StudyDto getStudy(Handle handle) {
+    public StudyDto getStudy(Handle handle) {
         Config studyCfg = cfg.getConfig("study");
         String guid = studyCfg.getString("guid");
 
@@ -285,9 +292,8 @@ public class StudyBuilder {
         }
 
         String recaptchaSiteKey = ConfigUtil.getStrIfPresent(studyCfg, "recaptchaSiteKey");
-
-
         boolean shareLocationInformation = studyCfg.getBoolean("shareParticipantLocation");
+        String defaultAuth0Connection = ConfigUtil.getStrIfPresent(studyCfg, "defaultAuth0Connection");
 
         JdbiUmbrellaStudy jdbiStudy = handle.attach(JdbiUmbrellaStudy.class);
         StudyDto dto = jdbiStudy.findByStudyGuid(guid);
@@ -300,7 +306,8 @@ public class StudyBuilder {
                 olcPrecisionId = handle.attach(JdbiOLCPrecision.class).findDtoForCode(olcPrecision).getId();
             }
             long studyId = jdbiStudy.insert(name, guid, umbrellaId, baseWebUrl,
-                    tenantId, irbPassword, olcPrecisionId, shareLocationInformation, studyEmail, recaptchaSiteKey);
+                    tenantId, irbPassword, olcPrecisionId, shareLocationInformation, studyEmail, recaptchaSiteKey,
+                    defaultAuth0Connection);
             dto = handle.attach(JdbiUmbrellaStudy.class).findById(studyId);
             LOG.info("Created study with id={}, name={}, guid={}", studyId, name, guid);
         } else {
@@ -310,7 +317,7 @@ public class StudyBuilder {
         return dto;
     }
 
-    private List<ClientDto> getClientsOrInsert(Handle handle, Auth0TenantDto tenantDto) {
+    public List<ClientDto> getClientsOrInsert(Handle handle, Auth0TenantDto tenantDto) {
         List<Config> clientsCfg = new ArrayList<>();
         if (cfg.hasPath("client")) {
             clientsCfg.add(cfg.getConfig("client"));
@@ -348,7 +355,7 @@ public class StudyBuilder {
         return clientDtos;
     }
 
-    private void grantClientsAccessToStudy(Handle handle, List<ClientDto> clientDtos, StudyDto studyDto) {
+    public void grantClientsAccessToStudy(Handle handle, List<ClientDto> clientDtos, StudyDto studyDto) {
         JdbiClientUmbrellaStudy jdbiACL = handle.attach(JdbiClientUmbrellaStudy.class);
         for (var clientDto : clientDtos) {
             List<String> studyGuids = jdbiACL.findPermittedStudyGuidsByAuth0ClientIdAndAuth0TenantId(
@@ -476,6 +483,8 @@ public class StudyBuilder {
             if (langCodeId == null) {
                 throw new DDPException("Could not find language using code: " + lang);
             }
+
+            TranslationsProcessingData.INSTANCE.getLanguages().put(lang, langCodeId);
 
             var latest = new StudyLanguage(lang, name, isDefault, studyId, langCodeId);
             StudyLanguage current = currentLanguages.stream()
@@ -702,8 +711,17 @@ public class StudyBuilder {
         @SqlUpdate("update umbrella_study"
                 + "    set study_name = concat(study_name, '-', umbrella_study_id),"
                 + "        guid = :newGuid,"
+                + "        umbrella_id = :umbrellaId,"
                 + "        enable_data_export = false"
                 + "  where umbrella_study_id = :studyId")
-        int renameStudy(@Bind("studyId") long studyId, @Bind("newGuid") String newGuid);
+        int renameStudy(@Bind("studyId") long studyId, @Bind("newGuid") String newGuid, @Bind("umbrellaId") long umbrellaId);
+
+        default UmbrellaDto findOrInsertUmbrella(String umbrella) {
+            var jdbiUmbrella = getHandle().attach(JdbiUmbrella.class);
+            return jdbiUmbrella.findByGuid(umbrella).or(() -> {
+                long id = jdbiUmbrella.insert(umbrella, umbrella);
+                return jdbiUmbrella.findById(id);
+            }).get();
+        }
     }
 }

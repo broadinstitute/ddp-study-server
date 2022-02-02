@@ -1,6 +1,7 @@
 package org.broadinstitute.ddp.util;
 
 import java.time.Duration;
+import java.time.LocalDate;
 import java.time.Period;
 import java.time.ZoneId;
 
@@ -38,5 +39,9 @@ public class DateTimeUtils {
         } else {
             return null;
         }
+    }
+
+    public static Long localDateToEpochSeconds(LocalDate date) {
+        return date == null ? null : date.atStartOfDay(ZoneId.of("UTC")).toEpochSecond();
     }
 }

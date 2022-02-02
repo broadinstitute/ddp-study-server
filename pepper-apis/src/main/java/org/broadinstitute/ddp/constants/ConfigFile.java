@@ -62,6 +62,7 @@ public class ConfigFile {
     public static final String DB_BACKUP_SCHEDULE = "schedules.dbBackup";
     public static final String DB_BACKUP_CHECK_SCHEDULE = "schedules.dbBackupCheck";
     public static final String STUDY_EXPORT_SCHEDULE = "schedules.studyExport";
+    public static final String CUSTOM_EXPORT_SCHEDULE = "schedules.customExport";
     public static final String FILE_UPLOAD_CLEANUP_SCHEDULE = "schedules.fileUploadCleanup";
     public static final String TEMP_USER_CLEANUP_SCHEDULE = "schedules.tempUserCleanup";
 
@@ -104,6 +105,7 @@ public class ConfigFile {
     public static final String PUBSUB_TASKS_SUB = "pubsub.pubSubTasksSubscription";
     public static final String PUBSUB_TASKS_RESULT_TOPIC = "pubsub.pubSubTasksResultTopic";
     public static final String PUBSUB_TASKS_SUBSCRIBER_AWAIT_RUNNING_TIMEOUT = "pubsub.pubSubTaskSubscriberAwaitRunningTimeout";
+    public static final String PUBSUB_DSM_TASKS_TOPIC = "pubsub.pubSubDsmTasksTopic";
     public static final String SLACK_HOOK = "slack.hook";
     public static final String SLACK_CHANNEL = "slack.channel";
     public static final String SLACK_QUEUE_SIZE = "slack.queueSize";

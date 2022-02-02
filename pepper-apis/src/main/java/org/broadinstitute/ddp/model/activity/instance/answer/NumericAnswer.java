@@ -1,25 +1,34 @@
 package org.broadinstitute.ddp.model.activity.instance.answer;
 
 import com.google.gson.annotations.SerializedName;
-import org.broadinstitute.ddp.model.activity.types.NumericType;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
 
-public abstract class NumericAnswer<T extends Number> extends Answer<T> {
+public final class NumericAnswer extends Answer<Long> {
+    @SerializedName("value")
+    private Long value;
 
-    @SerializedName("numericType")
-    protected NumericType numericType;
-
-    NumericAnswer(Long answerId, String questionStableId, String answerGuid, NumericType numericType) {
+    public NumericAnswer(Long answerId, String questionStableId, String answerGuid, Long value) {
         super(QuestionType.NUMERIC, answerId, questionStableId, answerGuid);
-        this.numericType = numericType;
+        this.value = value;
     }
 
-    NumericAnswer(Long answerId, String questionStableId, String answerGuid, NumericType numericType, String actInstanceGuid) {
+    public NumericAnswer(Long answerId, String questionStableId, String answerGuid, Long value, String actInstanceGuid) {
         super(QuestionType.NUMERIC, answerId, questionStableId, answerGuid, actInstanceGuid);
-        this.numericType = numericType;
+        this.value = value;
     }
 
-    public NumericType getNumericType() {
-        return numericType;
+    @Override
+    public Long getValue() {
+        return value;
+    }
+
+    @Override
+    public void setValue(Long value) {
+        this.value = value;
+    }
+
+    @Override
+    public boolean isEmpty() {
+        return value == null;
     }
 }

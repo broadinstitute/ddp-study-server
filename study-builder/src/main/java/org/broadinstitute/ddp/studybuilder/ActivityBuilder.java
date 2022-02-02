@@ -1,5 +1,7 @@
 package org.broadinstitute.ddp.studybuilder;
 
+import static org.broadinstitute.ddp.studybuilder.BuilderUtils.validateActivityDef;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -8,7 +10,6 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import com.google.gson.Gson;
 import com.typesafe.config.Config;
@@ -32,10 +33,11 @@ import org.broadinstitute.ddp.model.activity.types.ActivityType;
 import org.broadinstitute.ddp.model.activity.types.FormType;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.broadinstitute.ddp.model.study.ActivityMappingType;
+import org.broadinstitute.ddp.studybuilder.translation.ActivityDefTranslationsProcessor;
+import org.broadinstitute.ddp.studybuilder.translation.TranslationsProcessingData;
 import org.broadinstitute.ddp.util.ConfigUtil;
 import org.broadinstitute.ddp.util.GsonPojoValidator;
 import org.broadinstitute.ddp.util.GsonUtil;
-import org.broadinstitute.ddp.util.JsonValidationError;
 import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,6 +54,8 @@ public class ActivityBuilder {
     private StudyDto studyDto;
     private long adminUserId;
 
+    private ActivityDefTranslationsProcessor activityDefTranslationsProcessor;
+
     // Helper to find id based on study and activity code.
     public static long findActivityId(Handle handle, long studyId, String activityCode) {
         return handle.attach(JdbiActivity.class)
@@ -67,6 +71,8 @@ public class ActivityBuilder {
         this.varsCfg = varsCfg;
         this.studyDto = studyDto;
         this.adminUserId = adminUserId;
+
+        this.activityDefTranslationsProcessor = new ActivityDefTranslationsProcessor(TranslationsProcessingData.INSTANCE.getTranslations());
     }
 
     void run(Handle handle) {
@@ -93,8 +99,7 @@ public class ActivityBuilder {
             }
             if (activityCode.equals(definition.getString("activityCode"))) {
                 LOG.info("Using configuration for activityCode={} with filepath={}", activityCode, activityCfg.getString("filepath"));
-                ActivityDef def = gson.fromJson(ConfigUtil.toJson(definition), ActivityDef.class);
-                validateDefinition(def);
+                ActivityDef def = buildActivityDefFromConfig(definition);
                 List<ActivityDef> nestedDefs = loadNestedActivities(activityCfg);
                 insertActivity(handle, def, nestedDefs, timestamp);
                 insertActivityMappings(handle, activityCfg, def);
@@ -114,9 +119,7 @@ public class ActivityBuilder {
                 : Collections.emptyList();
         List<ActivityDef> nestedDefs = new ArrayList<>();
         for (var nestedPath : nestedPaths) {
-            Config nestedCfg = readDefinitionConfig(nestedPath);
-            ActivityDef nestedDef = gson.fromJson(ConfigUtil.toJson(nestedCfg), ActivityDef.class);
-            validateDefinition(nestedDef);
+            ActivityDef nestedDef = buildActivityDefFromConfig(readDefinitionConfig(nestedPath));
             nestedDefs.add(nestedDef);
         }
         return nestedDefs;
@@ -132,9 +135,7 @@ public class ActivityBuilder {
             return;
         }
         for (Config activityCfg : activitiesCfg.getConfigList("activities")) {
-            Config definitionCfg = readDefinitionConfig(activityCfg.getString("filepath"));
-            ActivityDef def = gson.fromJson(ConfigUtil.toJson(definitionCfg), ActivityDef.class);
-            validateDefinition(def);
+            ActivityDef def = buildActivityDefFromConfig(readDefinitionConfig(activityCfg.getString("filepath")));
             List<ActivityDef> nestedDefs = loadNestedActivities(activityCfg);
             long activityRevisionId = insertActivity(handle, def, nestedDefs, timestamp).getRevId();
             insertActivityMappings(handle, activityCfg, def);
@@ -143,13 +144,11 @@ public class ActivityBuilder {
     }
 
     public ActivityVersionDto insertActivity(Handle handle, Config definition, List<Config> nestedCfgs, Instant timestamp) {
-        ActivityDef def = gson.fromJson(ConfigUtil.toJson(definition), ActivityDef.class);
-        validateDefinition(def);
+        ActivityDef def = buildActivityDefFromConfig(definition);
 
         List<ActivityDef> nestedDefs = new ArrayList<>();
         for (var nestedCfg : nestedCfgs) {
-            ActivityDef nestedDef = gson.fromJson(ConfigUtil.toJson(nestedCfg), ActivityDef.class);
-            validateDefinition(nestedDef);
+            ActivityDef nestedDef = buildActivityDefFromConfig(nestedCfg);
             nestedDefs.add(nestedDef);
         }
 
@@ -313,6 +312,10 @@ public class ActivityBuilder {
     }
 
     public Config readDefinitionConfig(String filepath) {
+        return readDefinitionConfig(filepath, true);
+    }
+
+    public Config readDefinitionConfig(String filepath, boolean allowUnresolved) {
         File file = dirPath.resolve(filepath).toFile();
         if (!file.exists()) {
             throw new DDPException("Activity definition file is missing: " + file);
@@ -320,24 +323,36 @@ public class ActivityBuilder {
 
         Config definition = ConfigFactory.parseFile(file)
                 // going to resolve first the external global variables that might be used in this configuration
-                // using setAllowUnresolved so we can do a second pass that will allow us to resolve variables
+                // using setAllowUnresolved = true so we can do a second pass that will allow us to resolve variables
                 // within the configuration
-                .resolveWith(varsCfg, ConfigResolveOptions.defaults().setAllowUnresolved(true));
+                .resolveWith(varsCfg, ConfigResolveOptions.defaults().setAllowUnresolved(allowUnresolved));
         if (definition.isEmpty()) {
             throw new DDPException("Activity definition file is empty: " + file);
         }
         return definition;
     }
 
-    public void validateDefinition(ActivityDef def) {
-        List<JsonValidationError> errors = validator.validateAsJson(def);
-        if (!errors.isEmpty()) {
-            String msg = errors.stream()
-                    .map(JsonValidationError::toDisplayMessage)
-                    .collect(Collectors.joining(", "));
-            throw new DDPException(String.format(
-                    "Activity definition with code=%s and versionTag=%s has validation errors: %s",
-                    def.getActivityCode(), def.getVersionTag(), msg));
+    /**
+     * Build an instance of {@link ActivityDef}.
+     *
+     * <p><b>Steps:</b>
+     * <ul>
+     *   <li>build an instance of {@link ActivityDef} from {@link Config} definition;</li>
+     *   <li>if command-line option `process-translations` is specified then run the process of
+     *       translations' references automatic generation;</li>
+     *   <li>validate the {@link ActivityDef}.</li>
+     * </ul>
+     */
+    private ActivityDef buildActivityDefFromConfig(Config definition) {
+        ActivityDef activityDef = gson.fromJson(ConfigUtil.toJson(definition), ActivityDef.class);
+        if (TranslationsProcessingData.INSTANCE.getTranslationsProcessingType() != null) {
+            activityDefTranslationsProcessor.run((FormActivityDef) activityDef);
         }
+        validateDefinition(activityDef);
+        return activityDef;
+    }
+
+    public void validateDefinition(ActivityDef def) {
+        validateActivityDef(def, validator);
     }
 }

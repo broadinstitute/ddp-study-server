@@ -42,9 +42,8 @@ public class SendGridEventService {
                         event.getAttempt(),
                         event.getSmtpId());
             } else {
-                LOG.info("SendGrid-EVENT[{}]: email={}, timestamp={}, sg_event_id={}, reason={}, status={}",
+                LOG.info("SendGrid-EVENT[{}]: timestamp={}, sg_event_id={}, reason={}, status={}",
                         event.getEventType(),
-                        event.getEmail(),
                         event.getTimestamp(),
                         event.getSgEventId(),
                         event.getReason(),

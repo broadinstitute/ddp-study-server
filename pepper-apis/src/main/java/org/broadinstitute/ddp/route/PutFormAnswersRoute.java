@@ -1,8 +1,12 @@
 package org.broadinstitute.ddp.route;
 
+import static java.lang.String.format;
+
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -11,12 +15,14 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.http.HttpStatus;
 import org.broadinstitute.ddp.analytics.GoogleAnalyticsMetrics;
 import org.broadinstitute.ddp.analytics.GoogleAnalyticsMetricsTracker;
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants.PathParam;
 import org.broadinstitute.ddp.content.I18nContentRenderer;
 import org.broadinstitute.ddp.db.ActivityDefStore;
+import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceStatusDao;
@@ -56,6 +62,7 @@ import org.broadinstitute.ddp.pex.PexInterpreter;
 import org.broadinstitute.ddp.security.DDPAuth;
 import org.broadinstitute.ddp.service.ActivityInstanceService;
 import org.broadinstitute.ddp.service.ActivityValidationService;
+import org.broadinstitute.ddp.service.AddressService;
 import org.broadinstitute.ddp.service.DsmAddressValidationStatus;
 import org.broadinstitute.ddp.service.WorkflowService;
 import org.broadinstitute.ddp.util.ActivityInstanceUtil;
@@ -76,17 +83,20 @@ public class PutFormAnswersRoute implements Route {
     private final ActivityInstanceService actInstService;
     private final ActivityValidationService actValidationService;
     private final PexInterpreter interpreter;
+    private final AddressService addressService;
 
     public PutFormAnswersRoute(
             WorkflowService workflowService,
             ActivityInstanceService actInstService,
             ActivityValidationService actValidationService,
-            PexInterpreter interpreter
+            PexInterpreter interpreter,
+            AddressService addressService
     ) {
         this.workflowService = workflowService;
         this.actInstService = actInstService;
         this.actValidationService = actValidationService;
         this.interpreter = interpreter;
+        this.addressService = addressService;
     }
 
     @Override
@@ -145,8 +155,9 @@ public class PutFormAnswersRoute implements Route {
                         throw ResponseUtil.haltError(response, 422, new ApiError(ErrorCodes.QUESTION_REQUIREMENTS_NOT_MET, msg));
                     }
 
+                    Map<Long, List<ActivityInstanceDto>> hiddenAndDisabledChildInstances = null;
                     if (parentInstanceDto == null) {
-                        checkChildInstancesCompleteness(
+                        hiddenAndDisabledChildInstances = checkStateOfChildInstances(
                                 response, handle, userGuid, operatorGuid, studyGuid, instanceGuid,
                                 form, preferredUserLangDto, instanceSummary);
                     }
@@ -165,15 +176,24 @@ public class PutFormAnswersRoute implements Route {
                         throw ResponseUtil.haltError(response, 422, new ApiError(ErrorCodes.ACTIVITY_VALIDATION, msg));
                     }
 
-                    boolean shouldSnapshotSubstitutions = handle.attach(JdbiFormActivitySetting.class)
-                            .findSettingDtoByInstanceGuid(instanceGuid)
-                            .map(FormActivitySettingDto::shouldSnapshotSubstitutionsOnSubmit)
-                            .orElse(false);
-                    if (instanceDto.getFirstCompletedAt() == null && shouldSnapshotSubstitutions) {
-                        // This is the first submit for the activity instance, so save a snapshot of substitutions.
-                        handle.attach(ActivityInstanceDao.class).saveSubstitutions(
-                                form.getInstanceId(),
-                                I18nContentRenderer.newValueProvider(handle, form.getParticipantUserId()).getSnapshot());
+                    Optional<FormActivitySettingDto> formActivitySettingDto = handle.attach(JdbiFormActivitySetting.class)
+                            .findSettingDtoByInstanceGuid(instanceGuid);
+                    // if this is the first submit for the activity instance, then do snapshots
+                    if (formActivitySettingDto.isPresent() && instanceDto.getFirstCompletedAt() == null) {
+                        snapshotSubstitutions(handle, studyGuid, operatorGuid, form,
+                                formActivitySettingDto.get().shouldSnapshotSubstitutionsOnSubmit());
+                        if (formActivitySettingDto.get().shouldSnapshotAddressOnSubmit()) {
+                            var address = addressService.snapshotAddress(handle, userGuid, operatorGuid, form.getInstanceId());
+                            if (address != null) {
+                                LOG.info("Default address is snapshotted with guid {}, for user {}, activity instance {}",
+                                        address.getGuid(), userGuid, instanceGuid);
+                            } else {
+                                String errorMsg = format("Default mail address is not found, therefore the snapshotting is not possible. "
+                                        + "User %s, activity instance %s", userGuid, instanceGuid);
+                                throw ResponseUtil.haltError(response, HttpStatus.SC_NOT_FOUND,
+                                        new ApiError(ErrorCodes.MAIL_ADDRESS_NOT_FOUND, errorMsg));
+                            }
+                        }
                     }
 
                     User participantUser = instanceSummary.getParticipantUser();
@@ -191,15 +211,8 @@ public class PutFormAnswersRoute implements Route {
                                 Instant.now().toEpochMilli(), operatorUser, participantUser);
                     }
 
-                    // Cleanup hidden answers.
-                    Set<Long> answerIdsToDelete = form.collectHiddenAnswers()
-                            .stream()
-                            .map(Answer::getAnswerId)
-                            .filter(Objects::nonNull)
-                            .collect(Collectors.toSet());
-                    handle.attach(AnswerDao.class).deleteAnswers(answerIdsToDelete);
-                    LOG.info("Deleted {} hidden answers for user {} and activity instance {}",
-                            answerIdsToDelete.size(), userGuid, instanceGuid);
+                    cleanupHiddenAndDisabledAnswers(handle, userGuid, form);
+                    cleanupChildInstances(handle, activityStore, userGuid, form, hiddenAndDisabledChildInstances);
 
                     WorkflowState fromState = new ActivityState(form.getActivityId());
                     WorkflowResponse workflowResp = workflowService
@@ -228,6 +241,20 @@ public class PutFormAnswersRoute implements Route {
         return resp;
     }
 
+    /**
+     * If this is the first submit for the activity instance and should snapshot flag is true,
+     * then save a snapshot of substitutions.
+     */
+    private void snapshotSubstitutions(Handle handle, String studyGuid, String operatorGuid,
+                                       FormInstance form, boolean shouldSnapshotSubstitutionsOnSubmit) {
+        if (shouldSnapshotSubstitutionsOnSubmit) {
+            handle.attach(ActivityInstanceDao.class).saveSubstitutions(
+                    form.getInstanceId(),
+                    I18nContentRenderer.newValueProvider(
+                            handle, form.getParticipantUserId(), operatorGuid, studyGuid).getSnapshot());
+        }
+    }
+
     private FormInstance loadFormInstance(Response response,
                                           Handle handle,
                                           String userGuid,
@@ -241,7 +268,7 @@ public class PutFormAnswersRoute implements Route {
         Optional<ActivityInstance> activityInstance = actInstService.buildInstanceFromDefinition(
                 handle, userGuid, operatorGuid, studyGuid, instanceGuid, isoLangCode, instanceSummary);
         if (activityInstance.isEmpty()) {
-            String msg = String.format("Could not find activity instance %s for user %s using language %s",
+            String msg = format("Could not find activity instance %s for user %s using language %s",
                     instanceGuid, userGuid, isoLangCode);
             LOG.warn(msg);
             throw ResponseUtil.haltError(response, 404, new ApiError(ErrorCodes.ACTIVITY_NOT_FOUND, msg));
@@ -250,45 +277,118 @@ public class PutFormAnswersRoute implements Route {
     }
 
     // For a parent instance, check if there are any child instances that are not hidden and if those are complete.
-    private void checkChildInstancesCompleteness(Response response,
-                                                 Handle handle,
-                                                 String userGuid,
-                                                 String operatorGuid,
-                                                 String studyGuid,
-                                                 String instanceGuid,
-                                                 FormInstance form,
-                                                 LanguageDto preferredLangDto,
-                                                 UserActivityInstanceSummary instanceSummary) {
+    // For efficiency, we also keep track of which child instances are hidden so we can clean them up later.
+    private Map<Long, List<ActivityInstanceDto>> checkStateOfChildInstances(Response response,
+                                                                            Handle handle,
+                                                                            String userGuid,
+                                                                            String operatorGuid,
+                                                                            String studyGuid,
+                                                                            String instanceGuid,
+                                                                            FormInstance form,
+                                                                            LanguageDto preferredLangDto,
+                                                                            UserActivityInstanceSummary instanceSummary) {
         Map<String, List<ActivityInstanceDto>> childInstances = new HashMap<>();
+        Map<Long, List<ActivityInstanceDto>> hiddenOrDisabledChildInstances = new HashMap<>();
         instanceSummary.getInstancesStream()
                 .filter(instance -> instanceGuid.equals(instance.getParentInstanceGuid()))
                 .forEach(instance -> childInstances
                         .computeIfAbsent(instance.getActivityCode(), key -> new ArrayList<>())
                         .add(instance));
+
         for (FormSection section : form.getAllSections()) {
             for (FormBlock block : section.getBlocks()) {
-                if (block.getBlockType() != BlockType.ACTIVITY || !block.isShown()) {
+                if (block.getBlockType() != BlockType.ACTIVITY) {
                     continue;
                 }
+
                 var nestedActivityBlock = (NestedActivityBlock) block;
                 List<ActivityInstanceDto> childInstanceDtos = childInstances
                         .getOrDefault(nestedActivityBlock.getActivityCode(), new ArrayList<>());
+                if (!nestedActivityBlock.isShown() || !nestedActivityBlock.isEnabled()) {
+                    if (!childInstanceDtos.isEmpty()) {
+                        long childActivityId = childInstanceDtos.get(0).getActivityId();
+                        hiddenOrDisabledChildInstances.put(childActivityId, childInstanceDtos);
+                    }
+                    continue;
+                }
+
                 for (var childInstanceDto : childInstanceDtos) {
-                    if (childInstanceDto.getStatusType() != InstanceStatusType.COMPLETE) {
-                        // Child instance is not finished but it might not have required questions, so check it.
-                        FormInstance childForm = loadFormInstance(
-                                response, handle, userGuid, operatorGuid, studyGuid,
-                                childInstanceDto.getGuid(), preferredLangDto, instanceSummary);
-                        if (!childForm.isComplete()) {
-                            String msg = "Status for instance " + instanceGuid + " cannot be set to COMPLETE because the"
-                                    + " question requirements are not met for child instance " + childInstanceDto.getGuid();
-                            LOG.info(msg);
-                            throw ResponseUtil.haltError(response, 422,
-                                    new ApiError(ErrorCodes.QUESTION_REQUIREMENTS_NOT_MET, msg));
-                        }
+                    FormInstance childForm = loadFormInstance(
+                            response, handle, userGuid, operatorGuid, studyGuid,
+                            childInstanceDto.getGuid(), preferredLangDto, instanceSummary);
+                    if (!childForm.isComplete()) {
+                        String msg = "Status for instance " + instanceGuid + " cannot be set to COMPLETE because the"
+                                + " question requirements are not met for child instance " + childInstanceDto.getGuid();
+                        LOG.info(msg);
+                        throw ResponseUtil.haltError(response, 422,
+                                new ApiError(ErrorCodes.QUESTION_REQUIREMENTS_NOT_MET, msg));
                     }
                 }
             }
+        }
+
+        return hiddenOrDisabledChildInstances;
+    }
+
+    public void cleanupHiddenAndDisabledAnswers(Handle handle, String userGuid, FormInstance form) {
+        Set<Long> answerIdsToDelete = form.collectHiddenAndDisabledAnswers()
+                .stream()
+                .map(Answer::getAnswerId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+        handle.attach(AnswerDao.class).deleteAnswers(answerIdsToDelete);
+        LOG.info("Deleted {} hidden answers for user {} and activity instance {}",
+                answerIdsToDelete.size(), userGuid, form.getGuid());
+    }
+
+    private void cleanupChildInstances(Handle handle,
+                                       ActivityDefStore activityStore,
+                                       String userGuid,
+                                       FormInstance form,
+                                       Map<Long, List<ActivityInstanceDto>> hiddenChildInstances) {
+        if (hiddenChildInstances == null || hiddenChildInstances.isEmpty()) {
+            return;
+        }
+
+        var answerDao = handle.attach(AnswerDao.class);
+        var instanceDao = handle.attach(ActivityInstanceDao.class);
+        for (var entry : hiddenChildInstances.entrySet()) {
+            var childInstanceDtos = entry.getValue();
+            if (childInstanceDtos.isEmpty()) {
+                continue;
+            }
+            var childActivity = activityStore.findActivityDto(handle, entry.getKey())
+                    .orElseThrow(() -> new DDPException("Could not find child activity with id " + entry.getKey()));
+            if (!childActivity.canDeleteInstances()) {
+                continue;
+            }
+
+            childInstanceDtos.sort(Comparator.comparing(ActivityInstanceDto::getCreatedAtMillis));
+            Set<Long> deletableInstanceIds = new HashSet<>();
+            Set<Long> deleteOnlyAnswers = new HashSet<>();
+
+            for (int i = 0; i < childInstanceDtos.size(); i++) {
+                boolean isFirstInstance = (i == 0);
+                boolean canDelete = ActivityInstanceUtil.computeCanDelete(
+                        childActivity.canDeleteInstances(),
+                        childActivity.getCanDeleteFirstInstance(),
+                        isFirstInstance);
+                if (canDelete) {
+                    // Should delete the instance and all its answers.
+                    deletableInstanceIds.add(childInstanceDtos.get(i).getId());
+                } else {
+                    // Can't delete the instance itself, but let's at the very least cleanup its answers.
+                    deleteOnlyAnswers.add(childInstanceDtos.get(i).getId());
+                }
+            }
+
+            DBUtils.checkDelete(deletableInstanceIds.size(), instanceDao.deleteAllByIds(deletableInstanceIds));
+            LOG.info("Deleted {} hidden child instances for user {}, parent instance {}, child activity {}",
+                    deletableInstanceIds.size(), userGuid, form.getGuid(), childActivity.getActivityCode());
+
+            answerDao.deleteAllByInstanceIds(deleteOnlyAnswers);
+            LOG.info("Cleared answers for {} hidden child instances for user {}, parent instance {}, child activity {}",
+                    deleteOnlyAnswers.size(), userGuid, form.getGuid(), childActivity.getActivityCode());
         }
     }
 

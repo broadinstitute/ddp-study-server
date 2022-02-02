@@ -1,6 +1,7 @@
 package org.broadinstitute.ddp.service;
 
 import java.util.List;
+import java.util.stream.Stream;
 
 import org.apache.commons.lang.StringUtils;
 import org.broadinstitute.ddp.db.DaoException;
@@ -108,8 +109,12 @@ public class EventService {
     }
 
     public void processAllActionsForEventSignal(Handle handle, EventSignal eventSignal) {
-        processSynchronousActionsForEventSignal(handle, eventSignal);
-        queueAsynchronousActionsForEventSignal(handle, eventSignal);
+        List<EventConfiguration> eventConfigs =
+                handle.attach(EventDao.class).getAllEventConfigurationsByStudyIdAndTriggerType(eventSignal.getStudyId(),
+                        eventSignal.getEventTriggerType());
+
+        processEventSignalForConfiguration(handle, eventSignal, eventConfigs.stream().filter(EventConfiguration::isAsynchronous));
+        processEventSignalForConfiguration(handle, eventSignal, eventConfigs.stream().filter(EventConfiguration::isSynchronous));
     }
 
     public void processSynchronousActionsForEventSignal(Handle handle, EventSignal eventSignal) {
@@ -119,20 +124,10 @@ public class EventService {
                         eventSignal.getStudyId(),
                         eventSignal.getEventTriggerType());
 
-        PexInterpreter pexInterpreter = new TreeWalkInterpreter();
-        eventConfigs.forEach(eventConfiguration -> processEventSignalForEventConfiguration(handle,
-                eventSignal,
-                eventConfiguration,
-                pexInterpreter));
+        processEventSignalForConfiguration(handle, eventSignal, eventConfigs.stream());
     }
 
-    public void queueAsynchronousActionsForEventSignal(Handle handle, EventSignal eventSignal) {
-        // Look up interested EventConfigs:
-        List<EventConfiguration> eventConfigs = handle.attach(EventDao.class)
-                .getAsynchronousEventConfigurationsByStudyIdAndTriggerType(
-                        eventSignal.getStudyId(),
-                        eventSignal.getEventTriggerType());
-
+    private void processEventSignalForConfiguration(Handle handle, EventSignal eventSignal, Stream<EventConfiguration> eventConfigs) {
         PexInterpreter pexInterpreter = new TreeWalkInterpreter();
         eventConfigs.forEach(eventConfiguration -> processEventSignalForEventConfiguration(handle,
                 eventSignal,

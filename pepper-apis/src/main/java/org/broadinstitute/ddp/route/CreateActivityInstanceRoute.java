@@ -22,6 +22,7 @@ import org.broadinstitute.ddp.security.DDPAuth;
 import org.broadinstitute.ddp.util.ActivityInstanceUtil;
 import org.broadinstitute.ddp.util.ResponseUtil;
 import org.broadinstitute.ddp.util.RouteUtil;
+import org.broadinstitute.ddp.util.QuestionUtil;
 import org.broadinstitute.ddp.util.ValidatedJsonInputRoute;
 import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
@@ -60,14 +61,19 @@ public class CreateActivityInstanceRoute extends ValidatedJsonInputRoute<Activit
             long participantId = found.getUser().getId();
 
             var activityInstanceDao = handle.attach(ActivityInstanceDao.class);
+
+            createMutexLock(activityCode, studyId, participantId, activityInstanceDao);
+
             ActivityInstanceCreationValidation validation = activityInstanceDao
-                    .checkSuitabilityForActivityInstanceCreation(studyId, activityCode, participantGuid)
+                    .checkSuitabilityForActivityInstanceCreation(studyId, activityCode, participantId)
                     .orElse(null);
             if (validation == null) {
                 String msg = "Could not find creation validation information for activity " + activityCode;
                 warnAndHalt(response, HttpStatus.SC_NOT_FOUND, ErrorCodes.ACTIVITY_NOT_FOUND, msg);
                 return null;
             }
+
+            ActivityInstanceCreationResponse res = new ActivityInstanceCreationResponse();
 
             Long parentInstanceId = null;
             if (validation.getParentActivityCode() != null) {
@@ -95,9 +101,20 @@ public class CreateActivityInstanceRoute extends ValidatedJsonInputRoute<Activit
             handle.attach(DataExportDao.class).queueDataSync(participantGuid, studyGuid);
             LOG.info("Created activity instance {} for activity {} and user {}",
                     instanceGuid, activityCode, participantGuid);
-
-            return new ActivityInstanceCreationResponse(instanceGuid);
+            res.setInstanceGuid(instanceGuid);
+            res.setBlockVisibilities(QuestionUtil.getBlockVisibility(handle,
+                        response, parentInstanceGuid, found.getUser(), found.getStudyDto(), operatorGuid, isStudyAdmin));
+            return res;
         });
+    }
+
+    // Insert or update row for which this transaction will have to hold a lock before proceeding.
+    // This enforces that for a given activity and participant only one transaction is allowed to execute
+    // this code at a time.
+    // Lessens chance of deadlocks and ensures the counts of activity instances for a given activity are
+    // accurate so we can enforce max number of activity instances accurately
+    private void createMutexLock(String activityCode, long studyId, long participantId, ActivityInstanceDao activityInstanceDao) {
+        activityInstanceDao.upsertActivityInstanceCreationMutex(participantId, studyId, activityCode);
     }
 
     private void warnAndHalt(Response response, int status, String code, String message) {

@@ -93,7 +93,8 @@ public class UpdateActivityBaseSettings implements CustomTask {
                 definition.getBoolean("hideExistingInstancesOnCreation"),
                 ConfigUtil.getBoolOrElse(definition, "createOnParentCreation", false),
                 ConfigUtil.getBoolOrElse(definition, "canDeleteInstances", false),
-                ConfigUtil.getBoolIfPresent(definition, "canDeleteFirstInstance"));
+                ConfigUtil.getBoolIfPresent(definition, "canDeleteFirstInstance"),
+                ConfigUtil.getBoolOrElse(definition, "showActivityStatus", false));
         if (!currentDto.equals(latestDto)) {
             if (currentDto.canDeleteInstances() != latestDto.canDeleteInstances()) {
                 throw new UnsupportedOperationException("Updating `canDeleteInstances` setting is currently not supported"
@@ -198,7 +199,7 @@ public class UpdateActivityBaseSettings implements CustomTask {
                 current.getRevisionId());
     }
 
-    private void compareStatusSummaries(Handle handle, Config definition, long activityId) {
+    protected void compareStatusSummaries(Handle handle, Config definition, long activityId) {
         var activityI18nDao = handle.attach(ActivityI18nDao.class);
         Map<String, SummaryTranslation> currentSummaries = activityI18nDao
                 .findSummariesByActivityId(activityId)

@@ -88,6 +88,33 @@ select ta.answer
      and qsc.stable_id = :stableId
 >>
 
+queryLatestActivityInstanceSelectAnswerByUserGuidActivityCodeAndQuestionStableId() ::= <<
+select aia.instance_guid
+  from activity_instance_select_answer as aia
+  join answer as a on aia.answer_id = a.answer_id
+  join question as q on a.question_id = q.question_id
+  join question_stable_code as qsc on q.question_stable_code_id = qsc.question_stable_code_id
+  join activity_instance as ai on a.activity_instance_id = ai.activity_instance_id
+  join study_activity as sa on ai.study_activity_id = sa.study_activity_id
+  join user as u on ai.participant_id = u.user_id
+ where u.guid = :userGuid
+   and sa.study_activity_code = :activityCode
+   and sa.study_id = :studyId
+   and qsc.stable_id = :stableId
+ order by ai.created_at desc limit 1
+>>
+
+queryActivityInstanceSelectAnswerByStableIdAndActivityInstance() ::= <<
+select aia.instance_guid
+    from activity_instance_select_answer as aia
+    join answer as a on aia.answer_id = a.answer_id
+    join question as q on a.question_id = q.question_id
+    join question_stable_code as qsc on q.question_stable_code_id = qsc.question_stable_code_id
+    join activity_instance as ai on ai.activity_instance_id = a.activity_instance_id
+   where ai.activity_instance_guid = :activityInstanceGuid
+     and qsc.stable_id = :stableId
+>>
+
 queryLatestDateAnswerByUserGuidActivityCodeAndQuestionStableId() ::= <<
 select da.year, da.month, da.day
   from date_answer as da
@@ -152,7 +179,6 @@ select na.int_value
   join question as q on a.question_id = q.question_id
   join question_stable_code as qsc on q.question_stable_code_id = qsc.question_stable_code_id
   join numeric_question as nq on nq.question_id = q.question_id
-  join numeric_type as nt on nt.numeric_type_id = nq.numeric_type_id
   join activity_instance as ai on a.activity_instance_id = ai.activity_instance_id
   join study_activity as sa on ai.study_activity_id = sa.study_activity_id
   join user as u on ai.participant_id = u.user_id
@@ -160,7 +186,6 @@ select na.int_value
    and sa.study_activity_code = :activityCode
    and sa.study_id = :studyId
    and qsc.stable_id = :stableId
-   and nt.numeric_type_code = 'INTEGER'
  order by ai.created_at desc limit 1
 >>
 
@@ -171,9 +196,7 @@ select na.answer
   join question as q on a.question_id = q.question_id
   join question_stable_code as qsc on q.question_stable_code_id = qsc.question_stable_code_id
   join numeric_question as nq on nq.question_id = q.question_id
-  join numeric_type as nt on nt.numeric_type_id = nq.numeric_type_id
   join activity_instance as ai on ai.activity_instance_id = a.activity_instance_id
  where ai.activity_instance_guid = :activityInstanceGuid
    and qsc.stable_id = :stableId
-   and nt.numeric_type_code = 'INTEGER'
 >>

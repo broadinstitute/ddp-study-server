@@ -1,0 +1,13 @@
+#set(
+  $text = {
+    "subject": "Important Study Information",
+    "salutation": "Hello {{ participant_firstName }} {{ participant_lastName }},",
+    "consent_received": "We have successfully received your consent through the Circadia web-based portal.",
+    "sign_in_link": "Sign in",
+    "sign_in_text": " to your account to access and review a copy of your consent form.",
+    "thank_you": "Thank you.",
+    "closing": "The Circadia Study Team"
+  }
+)
+
+#parse("consent_received.tmpl.html")

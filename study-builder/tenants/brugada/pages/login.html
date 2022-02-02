@@ -1,0 +1,1577 @@
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0"
+    />
+
+    <title>Brugada Project</title>
+
+    <link
+      rel="icon"
+      type="image/x-icon"
+      href="https://storage.googleapis.com/##ASSETS_BUCKET##/auth0-assets/favicon.ico"
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=PT+Sans:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.5.0/font/bootstrap-icons.css"
+    />
+
+    <style type="text/css">
+      :root {
+        --color-white: #ffffff;
+        --color-beige: #f8f5ec;
+        --color-scarlet: #c4353d;
+        --color-scarlet-hover: #bc323a;
+        --color-scarlet-active: #b43038;
+        --color-teal: #589297;
+        --color-success: #30b44c;
+
+        --font-dark: #281d1c;
+        --font-light: #ffffff;
+
+        --header-height-default: 10rem;
+        --header-height-sm: 9.2rem;
+        --header-height-xs: 8.4rem;
+        --main-bg: #f6f6f6;
+        --input-border: #8b8f92;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+      }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: inherit;
+      }
+
+      html {
+        height: 100%;
+
+        font-size: 62.5%;
+      }
+
+      body {
+        display: flex;
+        flex-flow: column;
+
+        height: 100%;
+
+        font-family: 'PT Sans', sans-serif;
+        font-weight: normal;
+        font-style: normal;
+        font-size: 1.8rem;
+        line-height: 1.5;
+        color: var(--font-dark);
+
+        box-sizing: border-box;
+      }
+
+      .overflow-hidden {
+        overflow: hidden;
+      }
+
+      .header {
+        flex-shrink: 0;
+        height: var(--header-height-default);
+      }
+
+      .header__container {
+        display: flex;
+        align-items: center;
+
+        position: relative;
+
+        max-width: 120rem;
+        height: 100%;
+
+        margin: 0 auto;
+        padding: 0 2.4rem;
+      }
+
+      .header__logo {
+        height: 3.6rem;
+
+        margin-right: 3.2rem;
+      }
+
+      .header__logo-img {
+        height: 100%;
+      }
+
+      .header__nav {
+        display: flex;
+        align-items: center;
+
+        width: 100%;
+      }
+
+      .pull-right {
+        margin-left: auto;
+      }
+
+      .toggle {
+        display: none;
+
+        position: relative;
+
+        width: 3.2rem;
+        height: 2rem;
+
+        background: transparent;
+        border: none;
+
+        cursor: pointer;
+      }
+
+      .toggle__bar {
+        display: block;
+
+        position: absolute;
+        left: 0;
+
+        width: 100%;
+        height: 2px;
+
+        background: var(--font-dark);
+
+        transform-origin: left;
+        transition: transform 0.3s ease, opacity 0.3s ease;
+        backface-visibility: hidden;
+      }
+
+      .toggle__bar:nth-of-type(1) {
+        top: 0;
+      }
+
+      .toggle__bar:nth-of-type(2) {
+        top: 50%;
+
+        margin-top: -1px;
+      }
+
+      .toggle__bar:nth-of-type(3) {
+        bottom: 0;
+      }
+
+      .toggle--shown .toggle__bar:nth-of-type(1) {
+        transform: rotate(45deg) translate3d(0rem, -0.3rem, 0);
+      }
+
+      .toggle--shown .toggle__bar:nth-of-type(2) {
+        opacity: 0;
+      }
+
+      .toggle--shown .toggle__bar:nth-of-type(3) {
+        transform: rotate(-45deg) translate3d(0rem, 0.3rem, 0);
+      }
+
+      .links-list {
+        display: flex;
+        align-items: center;
+
+        list-style: none;
+      }
+
+      .links-list__item + .links-list__item {
+        margin-left: 2.8rem;
+      }
+
+      .link {
+        background: transparent;
+        border: none;
+
+        font: inherit;
+        color: inherit;
+        text-decoration: none;
+
+        cursor: pointer;
+        transition: opacity 0.3s ease;
+      }
+
+      .link:hover {
+        opacity: 0.75;
+      }
+
+      .btn {
+        display: inline-block;
+
+        padding: 1rem 2.2rem;
+
+        border: 2px solid transparent;
+        border-radius: 100px;
+
+        font-family: 'PT Sans', 'sans-serif';
+        font-weight: bold;
+        font-style: normal;
+        font-size: 1.8rem;
+        line-height: 1;
+        text-decoration: none;
+
+        cursor: pointer;
+
+        transition: background-color 0.3s ease, border-color 0.3s ease,
+          color 0.3s ease;
+        outline: none;
+      }
+
+      .btn--lg {
+        padding: 1.4rem 4.8rem;
+      }
+
+      .btn:disabled {
+        opacity: 0.8;
+
+        cursor: not-allowed;
+      }
+
+      .btn--scarlet {
+        background: var(--color-scarlet);
+        border-color: var(--color-scarlet);
+
+        color: var(--color-white);
+      }
+
+      .btn--scarlet:not(:disabled):hover,
+      .btn--scarlet:not(:disabled):focus {
+        background: var(--color-scarlet-hover);
+        border-color: var(--color-scarlet-hover);
+      }
+
+      .btn--scarlet:not(:disabled):active {
+        background: var(--color-scarlet-active);
+        border-color: var(--color-scarlet-active);
+      }
+
+      .text-bold {
+        font-weight: bold;
+      }
+
+      .footer {
+        padding: 4.2rem 0;
+
+        background: var(--color-scarlet);
+
+        color: var(--font-light);
+      }
+
+      .footer__container {
+        display: flex;
+        justify-content: space-between;
+
+        max-width: 120rem;
+
+        margin: 0 auto;
+        padding: 0 2.4rem;
+      }
+
+      .footer__logo {
+        height: 3.6rem;
+
+        margin-top: 2.4rem;
+      }
+
+      .footer-list {
+        display: flex;
+
+        list-style: none;
+      }
+
+      .footer-list__item + .footer-list__item {
+        margin-left: 2.4rem;
+      }
+
+      .link-icon {
+        position: relative;
+      }
+
+      .link-icon [class^='bi'] {
+        position: absolute;
+
+        margin-top: -0.8rem;
+
+        font-size: 2.8rem;
+      }
+
+      .link-icon .text {
+        margin-left: 2.8rem;
+      }
+
+      .contact-us {
+        display: flex;
+      }
+
+      .contact-us__label {
+        margin-right: 3.2rem;
+
+        font-weight: normal;
+
+        opacity: 0.8;
+      }
+
+      .main {
+        flex: 1;
+
+        padding: 5.6rem 0 8rem;
+
+        background: var(--main-bg);
+      }
+
+      .view {
+        display: none;
+      }
+
+      .view--visible {
+        display: block;
+      }
+
+      .view__container {
+        max-width: 54rem;
+
+        margin: 0 auto;
+        padding: 0 2.4rem;
+      }
+
+      .view__title {
+        margin-bottom: 1.6rem;
+
+        font-size: 3.6rem;
+        text-align: center;
+      }
+
+      .view__title + .form {
+        margin-top: 4.2rem;
+      }
+
+      .view__description {
+        margin-bottom: 4.2rem;
+
+        font-size: 2rem;
+        text-align: center;
+      }
+
+      .form__feedback {
+        display: none;
+
+        margin-top: 2rem;
+      }
+
+      .form__feedback.visible {
+        display: block;
+      }
+
+      .form__feedback--error {
+        color: var(--color-scarlet);
+      }
+
+      .form__footer {
+        display: flex;
+        align-items: flex-start;
+
+        margin-top: 3.6rem;
+      }
+
+      .accent-link {
+        display: inline-block;
+
+        background: none;
+        border: none;
+
+        font-family: inherit;
+        font-size: inherit;
+        font-weight: 700;
+        text-decoration: none;
+        color: var(--color-teal);
+
+        cursor: pointer;
+      }
+
+      .accent-link:hover {
+        text-decoration: underline;
+      }
+
+      .field {
+        display: flex;
+        flex-flow: column;
+      }
+
+      .field + .field {
+        margin-top: 2rem;
+      }
+
+      .field__label {
+        align-self: flex-start;
+
+        margin-bottom: 0.6rem;
+
+        font-size: 2.4rem;
+        font-weight: 700;
+      }
+
+      .field__input {
+        padding: 2rem;
+
+        background: var(--color-white);
+        border: 1px solid var(--input-border);
+        border-radius: 4px;
+
+        font-family: inherit;
+        font-size: 2rem;
+        line-height: 1;
+        color: var(--font-dark);
+
+        outline: none;
+        transition: border-color 0.3s ease;
+      }
+
+      .field__input:focus {
+        border-color: var(--color-teal);
+      }
+
+      .field__input.error {
+        border-color: var(--color-scarlet);
+      }
+
+      .field__feedback {
+        margin-top: 4px;
+      }
+
+      .field__feedback--error {
+        display: none;
+
+        color: var(--color-scarlet);
+      }
+
+      .field__input.error + .field__feedback--error {
+        display: block;
+      }
+
+      .simple-list {
+        padding-left: 2.4rem;
+      }
+
+      #login-submit-btn {
+        flex-shrink: 0;
+
+        margin-right: 2.4rem;
+      }
+
+      .paragraph {
+        margin: 1em 0;
+      }
+
+      .flash-message {
+        display: none;
+
+        padding: 2.4rem 3.2rem;
+
+        text-align: center;
+      }
+
+      .flash-message--success {
+        background: var(--color-success);
+
+        color: var(--color-white);
+      }
+
+      .flash-message.visible {
+        display: block;
+      }
+
+      /* lg - 1080px */
+      @media (max-width: 67.5em) {
+        html {
+          font-size: 56.25%;
+        }
+      }
+
+      /* md - 980px */
+      @media (max-width: 61.25em) {
+        .header__logo {
+          margin-right: auto;
+        }
+
+        .header__nav {
+          flex-flow: column nowrap;
+
+          position: absolute;
+          top: 100%;
+          left: 0;
+
+          height: calc(100vh - var(--header-height-default));
+
+          padding: 2.4rem;
+
+          background: var(--color-white);
+          border-top: 1px solid var(--color-beige);
+          box-shadow: 0 2.4rem 2.4rem rgba(0, 0, 0, 0.05);
+
+          transform: translate3d(-120%, 0, 0);
+          transition: transform 0.3s ease;
+          z-index: 10;
+        }
+
+        .header__nav--shown {
+          transform: translate3d(0, 0, 0);
+        }
+
+        .pull-right {
+          margin-top: auto;
+          margin-left: 0;
+        }
+
+        .toggle {
+          display: block;
+        }
+
+        .links-list {
+          flex-flow: column nowrap;
+        }
+
+        .links-list__item + .links-list__item {
+          margin-top: 1.6rem;
+          margin-left: 0;
+        }
+
+        .footer__left-side {
+          display: flex;
+          flex-direction: column-reverse;
+          align-items: flex-start;
+        }
+
+        .footer__logo {
+          margin-top: 0;
+          margin-bottom: 2.4rem;
+        }
+
+        .footer-list {
+          flex-direction: column;
+        }
+
+        .footer-list__item + .footer-list__item {
+          margin-top: 0.8rem;
+          margin-left: 2.8rem;
+        }
+      }
+
+      /* sm - 600px */
+      @media (max-width: 37.5em) {
+        .header {
+          height: var(--header-height-sm);
+        }
+
+        .header__logo {
+          height: 3.2rem;
+        }
+
+        .header__nav {
+          height: calc(100vh - var(--header-height-sm));
+        }
+
+        .footer {
+          padding: 2.4rem 0;
+        }
+
+        .footer__container {
+          flex-flow: column nowrap;
+        }
+
+        .contact-us {
+          flex-flow: column nowrap;
+
+          margin-top: 2.4rem;
+          padding-left: 2.8rem;
+        }
+
+        .contact-us__label {
+          margin-right: 0;
+        }
+
+        .main {
+          padding: 3.2rem 0 4.4rem;
+        }
+
+        .view__title {
+          margin-bottom: 1.2rem;
+
+          font-size: 2.8rem;
+        }
+
+        .view__description {
+          margin-bottom: 2.4rem;
+
+          font-size: 1.8rem;
+        }
+
+        .form__footer {
+          flex-flow: column-reverse;
+
+          margin-top: 3.6rem;
+        }
+
+        .field + .field {
+          margin-top: 1.6rem;
+        }
+
+        .field__label {
+          margin-bottom: 0.4rem;
+
+          font-size: 2rem;
+        }
+
+        .field__input {
+          padding: 1.6rem;
+
+          font-size: 1.8rem;
+        }
+
+        #login-submit-btn {
+          margin-top: 2rem;
+          margin-right: 0;
+        }
+      }
+
+      /* xs - 450px */
+      @media (max-width: 28.125em) {
+        .header {
+          height: var(--header-height-xs);
+        }
+
+        .header__logo {
+          height: 2.8rem;
+        }
+
+        .header__nav {
+          height: calc(100vh - var(--header-height-xs));
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="header">
+      <div class="header__container">
+        <a href="##BASE_URL##" class="header__logo">
+          <img
+            src="https://storage.googleapis.com/##ASSETS_BUCKET##/auth0-assets/logo-transparent.png"
+            class="header__logo-img"
+            alt="Brugada Project logo"
+          />
+        </a>
+
+        <button
+          type="button"
+          aria-label="Navigation toggle button"
+          class="toggle"
+          id="header-toggle"
+        >
+          <span class="toggle__bar"></span>
+          <span class="toggle__bar"></span>
+          <span class="toggle__bar"></span>
+        </button>
+
+        <nav class="header__nav" id="header-nav">
+          <ul class="links-list">
+            <li class="links-list__item">
+              <a href="##BASE_URL##/about" class="link">About</a>
+            </li>
+
+            <li class="links-list__item">
+              <a href="##BASE_URL##/team" class="link">Our Team</a>
+            </li>
+
+            <li class="links-list__item">
+              <a href="##BASE_URL##/faq" class="link">FAQ</a>
+            </li>
+
+            <li class="links-list__item">
+              <a
+                href="##BASE_URL##/assets/pdf/for-physicians.pdf"
+                target="_blank"
+                class="link"
+              >
+                For Physicians
+              </a>
+            </li>
+
+            <li class="links-list__item">
+              <a href="##BASE_URL##?joinMailingList=show" class="link">
+                Join Mailing List
+              </a>
+            </li>
+          </ul>
+
+          <ul class="links-list pull-right">
+            <li class="links-list__item">
+              <a href="##BASE_URL##/join" class="btn btn--scarlet">
+                Join the Brugada Project
+              </a>
+            </li>
+
+            <li class="links-list__item">
+              <button
+                type="button"
+                aria-label="Go to Log In page"
+                class="link"
+                id="login-btn"
+              >
+                Log In
+              </button>
+            </li>
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+    <!-- Messages -->
+    <div
+      class="flash-message flash-message--success"
+      id="password-reset-success-message"
+    >
+      <p>
+        If you have previously registered, please check your email to reset your
+        password.
+      </p>
+    </div>
+
+    <main class="main">
+      <!-- Sign Up view -->
+      <div class="view" id="signup-view">
+        <div class="view__container">
+          <h2 class="view__title">Create your account</h2>
+
+          <p class="view__description">
+            You will use this information to later sign in to your Brugada
+            Project account. The Brugada Project will use the email address
+            provided to communicate with you.
+          </p>
+
+          <form class="form" id="signup-form">
+            <div class="field">
+              <label for="signup-first-name" class="field__label">
+                First Name
+              </label>
+
+              <input
+                type="text"
+                name="firstName"
+                placeholder="Your first name"
+                class="field__input"
+                id="signup-first-name"
+              />
+
+              <span class="field__feedback field__feedback--error">
+                First name is required
+              </span>
+            </div>
+
+            <div class="field">
+              <label for="signup-last-name" class="field__label">
+                Last Name
+              </label>
+
+              <input
+                type="text"
+                name="lastName"
+                placeholder="Your last name"
+                class="field__input"
+                id="signup-last-name"
+              />
+
+              <span class="field__feedback field__feedback--error">
+                Last name is required
+              </span>
+            </div>
+
+            <div class="field">
+              <label for="signup-email" class="field__label">
+                Email address
+              </label>
+
+              <input
+                type="email"
+                name="email"
+                placeholder="name@email.com"
+                class="field__input"
+                id="signup-email"
+              />
+
+              <span class="field__feedback field__feedback--error">
+                Email is not valid
+              </span>
+            </div>
+
+            <div class="field">
+              <label for="signup-password" class="field__label">
+                Password
+              </label>
+
+              <input
+                type="password"
+                name="password"
+                placeholder="Choose a password"
+                class="field__input"
+                id="signup-password"
+              />
+
+              <span class="field__feedback field__feedback--error">
+                <p>Password should contain:</p>
+
+                <ul class="simple-list">
+                  <li>at least 1 number</li>
+                  <li>at least 1 lower case letter</li>
+                  <li>at least 1 upper case letter</li>
+                </ul>
+              </span>
+            </div>
+
+            <p
+              class="form__feedback form__feedback--error"
+              id="signup-generic-error"
+            >
+              Something went wrong, please try again
+            </p>
+
+            <footer class="form__footer">
+              <button
+                type="submit"
+                class="btn btn--lg btn--scarlet"
+                id="signup-submit-btn"
+              >
+                Submit
+              </button>
+            </footer>
+          </form>
+        </div>
+      </div>
+
+      <!-- Log In view -->
+      <div class="view" id="login-view">
+        <div class="view__container">
+          <h2 class="view__title">Log in to your account</h2>
+
+          <form class="form" id="login-form">
+            <div class="field">
+              <label for="login-email" class="field__label">
+                Email address
+              </label>
+
+              <input
+                type="email"
+                name="email"
+                placeholder="name@email.com"
+                class="field__input"
+                id="login-email"
+              />
+
+              <span class="field__feedback field__feedback--error">
+                Email address is required
+              </span>
+            </div>
+
+            <div class="field">
+              <label for="login-password" class="field__label">
+                Password
+              </label>
+
+              <input
+                type="password"
+                name="password"
+                placeholder="Your password"
+                class="field__input"
+                id="login-password"
+              />
+
+              <span class="field__feedback field__feedback--error">
+                Password is required
+              </span>
+            </div>
+
+            <p
+              class="form__feedback form__feedback--error"
+              id="login-wrong-credentials-error"
+            >
+              Wrong email address or password
+            </p>
+
+            <footer class="form__footer">
+              <button
+                type="submit"
+                class="btn btn--lg btn--scarlet"
+                id="login-submit-btn"
+              >
+                Log in
+              </button>
+
+              <div>
+                <button type="button" class="accent-link" id="forgot-password">
+                  Don't remember your password?
+                </button>
+
+                <p class="paragraph">
+                  If you haven't registered yet, please
+                  <a href="##BASE_URL##/join" class="accent-link">do so here</a
+                  >.
+                </p>
+              </div>
+            </footer>
+          </form>
+        </div>
+      </div>
+
+      <!-- Password Reset view -->
+      <div class="view" id="password-reset-view">
+        <div class="view__container">
+          <h2 class="view__title">Reset your password</h2>
+
+          <p class="view__description">
+            Please enter your email address. We will send you an email to reset
+            your password.
+          </p>
+
+          <form class="form" id="password-reset-form">
+            <div class="field">
+              <label for="password-reset-email" class="field__label">
+                Email address
+              </label>
+
+              <input
+                type="email"
+                name="email"
+                placeholder="yours@example.com"
+                class="field__input"
+                id="password-reset-email"
+              />
+
+              <span class="field__feedback field__feedback--error">
+                Email address is required
+              </span>
+            </div>
+
+            <p class="paragraph">
+              If you haven't registered yet, please
+              <a href="##BASE_URL##/join" class="accent-link">do so here</a>.
+            </p>
+
+            <footer class="form__footer">
+              <button
+                type="submit"
+                class="btn btn--lg btn--scarlet"
+                id="password-reset-submit-btn"
+              >
+                Send Email
+              </button>
+            </footer>
+          </form>
+        </div>
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer__container">
+        <div class="footer__left-side">
+          <ul class="footer-list">
+            <li class="footer-list__item">
+              <button
+                type="button"
+                aria-label="Scroll to top"
+                class="link link-icon"
+                id="back-to-top-btn"
+              >
+                <i class="bi-arrow-up-short"></i>
+                <span class="text">Back to top</span>
+              </button>
+            </li>
+
+            <li class="footer-list__item">
+              <a href="##BASE_URL##/about" class="link">About</a>
+            </li>
+
+            <li class="footer-list__item">
+              <a href="##BASE_URL##/team" class="link">Our Team</a>
+            </li>
+
+            <li class="footer-list__item">
+              <a href="##BASE_URL##/faq" class="link">FAQ</a>
+            </li>
+
+            <li class="footer-list__item">
+              <a
+                href="##BASE_URL##/assets/pdf/for-physicians.pdf"
+                target="_blank"
+                class="link"
+              >
+                For Physicians
+              </a>
+            </li>
+
+            <li class="footer-list__item">
+              <a href="##BASE_URL##?joinMailingList=show" class="link">
+                Join Mailing List
+              </a>
+            </li>
+          </ul>
+
+          <img
+            src="https://storage.googleapis.com/##ASSETS_BUCKET##/auth0-assets/logo-transparent-white.png"
+            alt="Brugada Project logo"
+            class="footer__logo"
+          />
+        </div>
+
+        <div class="contact-us">
+          <h4 class="contact-us__label">Contact Us</h4>
+
+          <div>
+            <p class="info text-bold">
+              <a href="mailto:##STUDY_EMAIL##" class="link" tabindex="-1">
+                ##STUDY_EMAIL##
+              </a>
+            </p>
+
+            <p class="info text-bold">
+              <a href="tel:6177147560" class="link" tabindex="-1">
+                (617) 714-7560
+              </a>
+            </p>
+
+            <p class="info" style="margin-top: 1.4rem">Link My Heart</p>
+
+            <p class="info">The Broad Institute of MIT and Harvard</p>
+
+            <p class="info">415 Main Street</p>
+
+            <p class="info">Cambridge, MA 02142</p>
+
+            <p class="info">United States</p>
+          </div>
+        </div>
+      </div>
+    </footer>
+
+    <!--[if IE 8]>
+      <script src="//cdnjs.cloudflare.com/ajax/libs/ie8/0.2.5/ie8.js"></script>
+    <![endif]-->
+
+    <!--[if lte IE 9]>
+      <script src="https://cdn.auth0.com/js/base64.js"></script>
+      <script src="https://cdn.auth0.com/js/es5-shim.min.js"></script>
+    <![endif]-->
+
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/auth0-js/9.16.4/auth0.min.js"
+      integrity="sha512-BaGDtTEN7xL0GZLlmhJ8Ap6h6OExOn+Fc6jGUFJEYFmBymBczqnWcg3oRo3dbFVGNmLus+BGIXFzclZMqs/PLw=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    ></script>
+
+    <script>
+      /**
+       * Header scripts
+       */
+      const headerToggleBtnEl = document.getElementById('header-toggle');
+      const headerNavEl = document.getElementById('header-nav');
+
+      headerToggleBtnEl.addEventListener('click', () => {
+        document.body.classList.toggle('overflow-hidden');
+
+        headerToggleBtnEl.classList.toggle('toggle--shown');
+        headerNavEl.classList.toggle('header__nav--shown');
+      });
+
+      headerNavEl.addEventListener('click', e => {
+        const clickTargetEl = e.target;
+
+        if (['a', 'button'].includes(clickTargetEl.tagName.toLowerCase())) {
+          document.body.classList.remove('overflow-hidden');
+
+          headerToggleBtnEl.classList.remove('toggle--shown');
+          headerNavEl.classList.remove('header__nav--shown');
+        }
+      });
+    </script>
+
+    <script>
+      /**
+       * Footer scripts
+       */
+      const backToTopBtnEl = document.getElementById('back-to-top-btn');
+
+      backToTopBtnEl.addEventListener('click', () => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+    </script>
+
+    <script>
+      /**
+       * Views
+       */
+      const View = {
+        SignUp: 'signup-view',
+        Login: 'login-view',
+        PasswordReset: 'password-reset-view',
+      };
+      const Mode = {
+        Login: 'login',
+        SignUp: 'signup',
+      };
+      const VISIBLE_VIEW_CLASS = 'view--visible';
+
+      const ViewManager = {
+        __showView(id) {
+          const currentViewEl = document.querySelector(
+            `.${VISIBLE_VIEW_CLASS}`,
+          );
+          const nextViewEl = document.getElementById(id);
+
+          if (currentViewEl) {
+            currentViewEl.classList.remove(VISIBLE_VIEW_CLASS);
+          }
+
+          nextViewEl.classList.add(VISIBLE_VIEW_CLASS);
+        },
+        showSignUpView() {
+          this.__showView(View.SignUp);
+        },
+        showLoginView(showPasswordResetMessage) {
+          this.__showView(View.Login);
+        },
+        showPasswordResetView() {
+          this.__showView(View.PasswordReset);
+        },
+        determineStartView(mode) {
+          if (mode === Mode.SignUp) {
+            this.showSignUpView();
+          }
+
+          if (mode === Mode.Login) {
+            this.showLoginView();
+          }
+        },
+      };
+
+      const loginBtnEl = document.getElementById('login-btn');
+      const forgotPasswordBtnEl = document.getElementById('forgot-password');
+
+      loginBtnEl.addEventListener('click', () => {
+        ViewManager.showLoginView();
+      });
+
+      forgotPasswordBtnEl.addEventListener('click', () => {
+        ViewManager.showPasswordResetView();
+      });
+    </script>
+
+    <script>
+      /**
+       * Auth0 init
+       */
+      var config = JSON.parse(
+        decodeURIComponent(escape(window.atob('@@config@@'))),
+      );
+
+      config.extraParams = config.extraParams || {};
+
+      var webAuth = new auth0.WebAuth({
+        domain: config.auth0Domain,
+        clientID: config.clientID,
+        redirectUri: config.callbackURL,
+        responseType: config.internalOptions.response_type,
+        params: config.internalOptions,
+        configurationBaseUrl: config.clientConfigurationBaseUrl,
+        scope: config.internalOptions.scope,
+      });
+
+      ViewManager.determineStartView(config.extraParams.mode);
+    </script>
+
+    <script>
+      /**
+       * Validators
+       */
+      var Validators = {
+        isEmail(value) {
+          var regex =
+            /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+
+          return regex.test(value);
+        },
+        isLength(length, value) {
+          return value.toString().length >= length;
+        },
+        hasNumber(value) {
+          return /\d/.test(value);
+        },
+        hasUppercaseChar(value) {
+          return /[A-Z]/.test(value);
+        },
+        hasLowercaseChar(value) {
+          return /[a-z]/.test(value);
+        },
+        isRequired(value) {
+          return !!value.toString().length;
+        },
+      };
+
+      var UIUtil = {
+        markAsTouched(node) {
+          node.dataset.touched = true;
+        },
+        showPasswordResetMessage() {
+          const el = document.getElementById('password-reset-success-message');
+
+          el.classList.add('visible');
+        },
+        hidePasswordResetMessage() {
+          const el = document.getElementById('password-reset-success-message');
+
+          el.classList.remove('visible');
+        },
+      };
+    </script>
+
+    <script>
+      /**
+       * Sign Up scripts
+       */
+      // iife for scoping
+      (() => {
+        const signupFormEl = document.getElementById('signup-form');
+        const firstNameInputEl = document.getElementById('signup-first-name');
+        const lastNameInputEl = document.getElementById('signup-last-name');
+        const emailInputEl = document.getElementById('signup-email');
+        const passwordInputEl = document.getElementById('signup-password');
+        const submitBtnEl = document.getElementById('signup-submit-btn');
+        const formGenericErrorEl = document.getElementById(
+          'signup-generic-error',
+        );
+
+        firstNameInputEl.addEventListener('blur', () =>
+          UIUtil.markAsTouched(firstNameInputEl),
+        );
+        firstNameInputEl.addEventListener('input', validateFirstName);
+
+        lastNameInputEl.addEventListener('blur', () =>
+          UIUtil.markAsTouched(lastNameInputEl),
+        );
+        lastNameInputEl.addEventListener('input', validateLastName);
+
+        emailInputEl.addEventListener('blur', () =>
+          UIUtil.markAsTouched(emailInputEl),
+        );
+        emailInputEl.addEventListener('input', validateEmail);
+
+        passwordInputEl.addEventListener('blur', () =>
+          UIUtil.markAsTouched(passwordInputEl),
+        );
+        passwordInputEl.addEventListener('input', validatePassword);
+
+        signupFormEl.addEventListener('submit', e => {
+          e.preventDefault();
+
+          const formElements = [
+            firstNameInputEl,
+            lastNameInputEl,
+            emailInputEl,
+            passwordInputEl,
+          ];
+          const validators = [
+            validateFirstName,
+            validateLastName,
+            validateEmail,
+            validatePassword,
+          ];
+
+          formElements.forEach(UIUtil.markAsTouched);
+
+          const isFormValid = formElements
+            .map((el, i) => validators[i](el.value))
+            .every(Boolean);
+
+          if (isFormValid) {
+            const formValues = formElements.reduce((values, el) => {
+              const name = el.name;
+              const value = el.value;
+
+              values[name] = value;
+
+              return values;
+            }, {});
+
+            signup(formValues);
+          }
+        });
+
+        function validateFirstName() {
+          if (!firstNameInputEl.dataset.touched) {
+            return true;
+          }
+
+          const value = firstNameInputEl.value;
+          const isValid = Validators.isRequired(value);
+
+          firstNameInputEl.classList.toggle('error', !isValid);
+
+          return isValid;
+        }
+
+        function validateLastName() {
+          if (!lastNameInputEl.dataset.touched) {
+            return true;
+          }
+
+          const value = lastNameInputEl.value;
+          const isValid = Validators.isRequired(value);
+
+          lastNameInputEl.classList.toggle('error', !isValid);
+
+          return isValid;
+        }
+
+        function validateEmail() {
+          if (!emailInputEl.dataset.touched) {
+            return true;
+          }
+
+          const value = emailInputEl.value;
+          const isValid = Validators.isEmail(value);
+
+          emailInputEl.classList.toggle('error', !isValid);
+
+          return isValid;
+        }
+
+        function validatePassword() {
+          if (!passwordInputEl.dataset.touched) {
+            return true;
+          }
+
+          const value = passwordInputEl.value;
+          const isValid =
+            Validators.isLength(8, value) &&
+            Validators.hasNumber(value) &&
+            Validators.hasLowercaseChar(value) &&
+            Validators.hasUppercaseChar(value);
+
+          passwordInputEl.classList.toggle('error', !isValid);
+
+          return isValid;
+        }
+
+        function signup(formValues) {
+          submitBtnEl.setAttribute('disabled', true);
+          formGenericErrorEl.classList.remove('visible');
+
+          webAuth.signup(
+            {
+              connection: '##DB_NAME##',
+              username: formValues.email,
+              email: formValues.email,
+              password: formValues.password,
+              user_metadata: {
+                temp_user_guid: config.extraParams.temp_user_guid,
+                first_name: formValues.firstName,
+                last_name: formValues.lastName,
+              },
+            },
+            signUpErr => {
+              if (signUpErr) {
+                submitBtnEl.removeAttribute('disabled');
+                formGenericErrorEl.classList.add('visible');
+
+                return;
+              }
+
+              webAuth.login({
+                username: formValues.email,
+                password: formValues.password,
+                realm: '##DB_NAME##',
+                state: config.extraParams.state,
+              });
+            },
+          );
+        }
+      })();
+    </script>
+
+    <script>
+      /**
+       * Log In scripts
+       */
+      // iife for scoping
+      (() => {
+        const loginFormEl = document.getElementById('login-form');
+        const emailInputEl = document.getElementById('login-email');
+        const passwordInputEl = document.getElementById('login-password');
+        const submitBtnEl = document.getElementById('login-submit-btn');
+        const wrongCredentialsErrorEl = document.getElementById(
+          'login-wrong-credentials-error',
+        );
+
+        emailInputEl.addEventListener('blur', () =>
+          UIUtil.markAsTouched(emailInputEl),
+        );
+        emailInputEl.addEventListener('input', validateEmail);
+
+        passwordInputEl.addEventListener('blur', () =>
+          UIUtil.markAsTouched(passwordInputEl),
+        );
+        passwordInputEl.addEventListener('input', validatePassword);
+
+        loginFormEl.addEventListener('submit', e => {
+          e.preventDefault();
+
+          const formElements = [emailInputEl, passwordInputEl];
+          const validators = [validateEmail, validatePassword];
+
+          formElements.forEach(UIUtil.markAsTouched);
+
+          const isFormValid = formElements
+            .map((el, i) => validators[i](el.value))
+            .every(Boolean);
+
+          if (isFormValid) {
+            const formValues = formElements.reduce((values, el) => {
+              const name = el.name;
+              const value = el.value;
+
+              values[name] = value;
+
+              return values;
+            }, {});
+
+            login(formValues);
+          }
+        });
+
+        function validateEmail() {
+          if (!emailInputEl.dataset.touched) {
+            return true;
+          }
+
+          const value = emailInputEl.value;
+          const isValid = Validators.isRequired(value);
+
+          emailInputEl.classList.toggle('error', !isValid);
+
+          return isValid;
+        }
+
+        function validatePassword() {
+          if (!passwordInputEl.dataset.touched) {
+            return true;
+          }
+
+          const value = passwordInputEl.value;
+          const isValid = Validators.isRequired(value);
+
+          passwordInputEl.classList.toggle('error', !isValid);
+
+          return isValid;
+        }
+
+        function login(formValues) {
+          submitBtnEl.setAttribute('disabled', true);
+          wrongCredentialsErrorEl.classList.remove('visible');
+
+          webAuth.login(
+            {
+              username: formValues.email,
+              password: formValues.password,
+              realm: '##DB_NAME##',
+              state: config.extraParams.state,
+            },
+            err => {
+              if (err) {
+                submitBtnEl.removeAttribute('disabled');
+
+                if (err.code === 'invalid_user_password') {
+                  wrongCredentialsErrorEl.classList.add('visible');
+                }
+
+                return;
+              }
+            },
+          );
+        }
+      })();
+    </script>
+
+    <script>
+      /**
+       * Password Reset scripts
+       */
+      // iife for scoping
+      (() => {
+        const passwordResetFormEl = document.getElementById(
+          'password-reset-form',
+        );
+        const emailInputEl = document.getElementById('password-reset-email');
+        const submitBtnEl = document.getElementById(
+          'password-reset-submit-btn',
+        );
+
+        emailInputEl.addEventListener('blur', () =>
+          UIUtil.markAsTouched(emailInputEl),
+        );
+        emailInputEl.addEventListener('input', validateEmail);
+
+        passwordResetFormEl.addEventListener('submit', e => {
+          e.preventDefault();
+
+          UIUtil.markAsTouched(emailInputEl);
+
+          const isFormValid = validateEmail(emailInputEl.value);
+
+          if (isFormValid) {
+            sendResetPasswordInstructions(emailInputEl.value);
+          }
+        });
+
+        function validateEmail() {
+          if (!emailInputEl.dataset.touched) {
+            return true;
+          }
+
+          const value = emailInputEl.value;
+          const isValid = Validators.isRequired(value);
+
+          emailInputEl.classList.toggle('error', !isValid);
+
+          return isValid;
+        }
+
+        function sendResetPasswordInstructions(email) {
+          webAuth.changePassword(
+            {
+              connection: '##DB_NAME##',
+              email: email,
+            },
+            err => {
+              if (err) {
+                console.log(err);
+
+                return;
+              }
+
+              ViewManager.showLoginView();
+              UIUtil.showPasswordResetMessage();
+            },
+          );
+        }
+      })();
+    </script>
+  </body>
+</html>

@@ -8,6 +8,8 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Map;
+import java.util.HashMap;
 
 import com.typesafe.config.Config;
 import org.apache.commons.collections4.CollectionUtils;
@@ -41,6 +43,7 @@ import org.broadinstitute.ddp.model.pdf.PdfTemplate;
 import org.broadinstitute.ddp.model.pdf.PdfTemplateType;
 import org.broadinstitute.ddp.model.pdf.PdfVersion;
 import org.broadinstitute.ddp.model.pdf.PhysicianInstitutionTemplate;
+import org.broadinstitute.ddp.model.pdf.PicklistAnswerSubstitution;
 import org.broadinstitute.ddp.model.pdf.ProfileSubstitution;
 import org.broadinstitute.ddp.model.pdf.SubstitutionType;
 import org.broadinstitute.ddp.util.ConfigUtil;
@@ -342,7 +345,7 @@ public class PdfBuilder {
         CustomTemplate template = new CustomTemplate(rawBytes, languageCodeId);
         for (Config subCfg : fileCfg.getConfigList("substitutions")) {
             String type = subCfg.getString("type");
-            String field = subCfg.getString("field");
+            String field = ConfigUtil.getStrIfPresent(subCfg, "field");
 
             if (SubstitutionType.PROFILE.name().equals(type)) {
                 String profileField = subCfg.getString("profileField");
@@ -368,7 +371,16 @@ public class PdfBuilder {
                 template.addSubstitution(new BooleanAnswerSubstitution(field, activityId, stableId, checkIfFalse, parentStableId));
             } else if (QuestionType.PICKLIST.name().equals(type)) {
                 String stableId = subCfg.getString("questionStableId");
-                template.addSubstitution(new AnswerSubstitution(field, activityId, QuestionType.PICKLIST, stableId, parentStableId));
+                Map<String, String> fields = new HashMap<>();
+                if (subCfg.hasPath("fields")) {
+                    for (var fieldCfg : subCfg.getConfig("fields").entrySet()) {
+                        String fieldName = fieldCfg.getKey();
+                        String optionStableId = (String) fieldCfg.getValue().unwrapped();
+                        fields.put(fieldName, optionStableId);
+                    }
+                }
+                template.addSubstitution(new PicklistAnswerSubstitution(field, fields, activityId, QuestionType.PICKLIST,
+                        stableId, parentStableId));
             } else {
                 throw new DDPException("Unsupported custom pdf substitution type " + type);
             }

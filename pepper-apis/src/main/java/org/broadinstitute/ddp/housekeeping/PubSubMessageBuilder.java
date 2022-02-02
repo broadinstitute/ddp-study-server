@@ -8,12 +8,14 @@ import static org.broadinstitute.ddp.Housekeeping.DDP_IGNORE_AFTER;
 import static org.broadinstitute.ddp.Housekeeping.DDP_MESSAGE_ID;
 import static org.broadinstitute.ddp.Housekeeping.DDP_STUDY_GUID;
 import static org.broadinstitute.ddp.constants.NotificationTemplateVariables.DDP_PROXY_FIRST_NAME;
+import static org.broadinstitute.ddp.constants.NotificationTemplateVariables.DDP_PROXY_GUID;
 import static org.broadinstitute.ddp.constants.NotificationTemplateVariables.DDP_PROXY_LAST_NAME;
 
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -30,6 +32,7 @@ import org.broadinstitute.ddp.constants.NotificationTemplateVariables;
 import org.broadinstitute.ddp.db.dao.EventDao;
 import org.broadinstitute.ddp.db.dao.InvitationDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
+import org.broadinstitute.ddp.db.dao.JdbiMailingList;
 import org.broadinstitute.ddp.db.dao.StudyLanguageCachedDao;
 import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dao.UserGovernanceDao;
@@ -46,6 +49,7 @@ import org.broadinstitute.ddp.exception.NoSendableEmailAddressException;
 import org.broadinstitute.ddp.housekeeping.message.NotificationMessage;
 import org.broadinstitute.ddp.housekeeping.message.PdfGenerationMessage;
 import org.broadinstitute.ddp.model.activity.types.EventActionType;
+import org.broadinstitute.ddp.model.activity.types.EventTriggerType;
 import org.broadinstitute.ddp.model.event.NotificationTemplate;
 import org.broadinstitute.ddp.model.event.NotificationType;
 import org.broadinstitute.ddp.model.governance.Governance;
@@ -96,8 +100,15 @@ public class PubSubMessageBuilder {
                 } else if (StringUtils.isNotBlank(queuedNotificationDto.getToEmail())) {
                     // if there's a non-user email address specified, use it
                     sendToList.add(queuedNotificationDto.getToEmail());
-                    // Likely a non-user, so use study default language instead.
-                    userPreferredLangCode = null;
+                    // Likely a non study user/participant:
+                    // If join mailing list event look for user's preferred language else use study default language.
+                    if (EventTriggerType.JOIN_MAILING_LIST.equals(pendingEvent.getTriggerType())) {
+                        Optional<JdbiMailingList.MailingListEntryDto> jmlDtoOpt =  apisHandle.attach(JdbiMailingList.class)
+                                .findByEmailAndStudy(queuedNotificationDto.getToEmail(), studyGuid);
+                        if (jmlDtoOpt.isPresent()) {
+                            userPreferredLangCode = jmlDtoOpt.get().getLanguageCode();
+                        }
+                    }
                 } else {
                     // otherwise, lookup address information for the auth0 account
                     UserDao userDao = apisHandle.attach(UserDao.class);
@@ -142,6 +153,7 @@ public class PubSubMessageBuilder {
                                 .findProfileByUserId(gov.getProxyUserId()).orElse(null);
                         if (profile != null) {
                             queuedNotificationDto.addTemplateSubstitutions(
+                                    new NotificationTemplateSubstitutionDto(DDP_PROXY_GUID, gov.getProxyUserGuid()),
                                     new NotificationTemplateSubstitutionDto(DDP_PROXY_FIRST_NAME, profile.getFirstName()),
                                     new NotificationTemplateSubstitutionDto(DDP_PROXY_LAST_NAME, profile.getLastName()));
                             // User proxy's preferred language since email will be sent to proxy.

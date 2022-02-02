@@ -17,6 +17,13 @@ pages:
     html: ./passwordResetPage.html
     enabled: true
 
+emailProvider:
+  name: "sendgrid"
+  enabled: true
+  default_from_address: ##SENDGRID_EMAIL##
+  credentials:
+    api_key: ##SENDGRID_TOKEN##
+
 emailTemplates:
   - template: reset_email
     body: ./passwordResetEmail.html
@@ -45,6 +52,7 @@ clients:
     ]
     allowed_logout_urls: [
       '##BASE_URL##',
+      '##BASE_URL##/error',
       '##BASE_URL##/session-expired'
       ##LOCALHOST_LOGOUTS##
     ]

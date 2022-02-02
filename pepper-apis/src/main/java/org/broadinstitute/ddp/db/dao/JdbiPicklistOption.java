@@ -1,5 +1,6 @@
 package org.broadinstitute.ddp.db.dao;
 
+import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 
@@ -28,6 +29,7 @@ public interface JdbiPicklistOption extends SqlObject {
                 @Bind("detailLabelTemplateId") Long detailLabelTemplateId,
                 @Bind("allowDetails") boolean allowDetails,
                 @Bind("isExclusive") boolean isExclusive,
+                @Bind("isDefault") boolean isDefault,
                 @Bind("displayOrder") int displayOrder,
                 @Bind("revisionId") long revisionId);
 
@@ -41,9 +43,25 @@ public interface JdbiPicklistOption extends SqlObject {
                 @Bind("detailLabelTemplateId") Long detailLabelTemplateId,
                 @Bind("allowDetails") boolean allowDetails,
                 @Bind("isExclusive") boolean isExclusive,
+                @Bind("isDefault") boolean isDefault,
                 @Bind("displayOrder") int displayOrder,
                 @Bind("revisionId") long revisionId,
                 @Bind("nestedOptionsTemplateId") Long nestedOptionsTemplateId);
+
+    @UseStringTemplateSqlLocator
+    @SqlBatch("insertOption")
+    @GetGeneratedKeys
+    long[] insert(@Bind("picklistQuestionId") long picklistQuestionId,
+                @Bind("stableId") Iterator<String> stableIds,
+                @Bind("optionLabelTemplateId") Iterator<Long> optionLabelTemplateIds,
+                @Bind("tooltipTemplateId") Iterator<Long> tooltipTemplateIds,
+                @Bind("detailLabelTemplateId") Iterator<Long> detailLabelTemplateIds,
+                @Bind("allowDetails") Iterator<Boolean> allowDetails,
+                @Bind("isExclusive") Iterator<Boolean> isExclusive,
+                @Bind("isDefault") Iterator<Boolean> isDefault,
+                @Bind("displayOrder") Iterator<Integer> displayOrder,
+                @Bind("revisionId") long revisionId,
+                @Bind("nestedOptionsTemplateId") Iterator<Long> nestedOptionsTemplateId);
 
     @UseStringTemplateSqlLocator
     @SqlBatch("insertOptionByDto")
@@ -135,4 +153,6 @@ public interface JdbiPicklistOption extends SqlObject {
                 .findFirst()
                 .isPresent();
     }
+
+
 }

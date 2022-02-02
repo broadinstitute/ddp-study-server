@@ -1,5 +1,6 @@
 package org.broadinstitute.ddp.db.dao;
 
+import static org.broadinstitute.ddp.util.TestFormActivity.DEFAULT_MAX_FILE_SIZE_FOR_TEST;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -33,6 +34,7 @@ import org.broadinstitute.ddp.db.dto.DateQuestionDto;
 import org.broadinstitute.ddp.db.dto.FileQuestionDto;
 import org.broadinstitute.ddp.db.dto.NumericQuestionDto;
 import org.broadinstitute.ddp.db.dto.PicklistQuestionDto;
+import org.broadinstitute.ddp.db.dto.MatrixQuestionDto;
 import org.broadinstitute.ddp.db.dto.QuestionDto;
 import org.broadinstitute.ddp.db.dto.TextQuestionDto;
 import org.broadinstitute.ddp.db.dto.validation.RuleDto;
@@ -52,13 +54,19 @@ import org.broadinstitute.ddp.model.activity.definition.question.NumericQuestion
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistGroupDef;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistOptionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistQuestionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.MatrixQuestionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.MatrixRowDef;
+import org.broadinstitute.ddp.model.activity.definition.question.MatrixOptionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.MatrixGroupDef;
 import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.TextQuestionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.ActivityInstanceSelectQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.activity.definition.validation.DateRangeRuleDef;
 import org.broadinstitute.ddp.model.activity.definition.validation.IntRangeRuleDef;
 import org.broadinstitute.ddp.model.activity.definition.validation.LengthRuleDef;
 import org.broadinstitute.ddp.model.activity.definition.validation.RequiredRuleDef;
+import org.broadinstitute.ddp.model.activity.instance.answer.ActivityInstanceSelectAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.AgreementAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
 import org.broadinstitute.ddp.model.activity.instance.answer.AnswerRow;
@@ -67,9 +75,10 @@ import org.broadinstitute.ddp.model.activity.instance.answer.CompositeAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.DateAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.DateValue;
 import org.broadinstitute.ddp.model.activity.instance.answer.NumericAnswer;
-import org.broadinstitute.ddp.model.activity.instance.answer.NumericIntegerAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.PicklistAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.SelectedPicklistOption;
+import org.broadinstitute.ddp.model.activity.instance.answer.MatrixAnswer;
+import org.broadinstitute.ddp.model.activity.instance.answer.SelectedMatrixCell;
 import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
 import org.broadinstitute.ddp.model.activity.instance.question.AgreementQuestion;
 import org.broadinstitute.ddp.model.activity.instance.question.BoolQuestion;
@@ -78,8 +87,12 @@ import org.broadinstitute.ddp.model.activity.instance.question.DateQuestion;
 import org.broadinstitute.ddp.model.activity.instance.question.NumericQuestion;
 import org.broadinstitute.ddp.model.activity.instance.question.PicklistOption;
 import org.broadinstitute.ddp.model.activity.instance.question.PicklistQuestion;
+import org.broadinstitute.ddp.model.activity.instance.question.MatrixQuestion;
+import org.broadinstitute.ddp.model.activity.instance.question.MatrixRow;
+import org.broadinstitute.ddp.model.activity.instance.question.MatrixOption;
 import org.broadinstitute.ddp.model.activity.instance.question.Question;
 import org.broadinstitute.ddp.model.activity.instance.question.TextQuestion;
+import org.broadinstitute.ddp.model.activity.instance.question.ActivityInstanceSelectQuestion;
 import org.broadinstitute.ddp.model.activity.instance.validation.DateRangeRule;
 import org.broadinstitute.ddp.model.activity.instance.validation.IntRangeRule;
 import org.broadinstitute.ddp.model.activity.instance.validation.RequiredRule;
@@ -87,10 +100,10 @@ import org.broadinstitute.ddp.model.activity.instance.validation.Rule;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
 import org.broadinstitute.ddp.model.activity.types.DateFieldType;
 import org.broadinstitute.ddp.model.activity.types.DateRenderMode;
-import org.broadinstitute.ddp.model.activity.types.NumericType;
 import org.broadinstitute.ddp.model.activity.types.OrientationType;
 import org.broadinstitute.ddp.model.activity.types.PicklistRenderMode;
 import org.broadinstitute.ddp.model.activity.types.PicklistSelectMode;
+import org.broadinstitute.ddp.model.activity.types.MatrixSelectMode;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
 import org.broadinstitute.ddp.model.activity.types.RuleType;
 import org.broadinstitute.ddp.model.activity.types.SuggestionType;
@@ -116,6 +129,7 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
     private String sid;
     private Template prompt;
     private Template placeholder;
+    private Template confirmPlaceholder;
 
     @BeforeClass
     public static void setup() {
@@ -130,6 +144,7 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
         sid = "QID" + Instant.now().toEpochMilli();
         prompt = new Template(TemplateType.TEXT, null, "dummy prompt");
         placeholder = new Template(TemplateType.TEXT, null, "dummy placeholder");
+        confirmPlaceholder = new Template(TemplateType.TEXT, null, "dummy confirm placeholder");
     }
 
     @Test
@@ -315,13 +330,16 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
             JdbiTemplate jdbiTmpl = handle.attach(JdbiTemplate.class);
 
             TextQuestionDef question = TextQuestionDef.builder(TextInputType.TEXT, sid, prompt)
-                    .setPlaceholderTemplate(placeholder).build();
+                    .setPlaceholderTemplate(placeholder)
+                    .setConfirmPlaceholderTemplate(confirmPlaceholder)
+                    .build();
             FormActivityDef form = buildSingleSectionForm(testData.getStudyGuid(), question);
             ActivityVersionDto version1 = actDao.insertActivity(form, RevisionMetadata.now(testData.getUserId(), "test"));
 
             assertNotNull(question.getQuestionId());
             assertTrue(jdbiTmpl.getRevisionIdIfActive(prompt.getTemplateId()).isPresent());
             assertTrue(jdbiTmpl.getRevisionIdIfActive(placeholder.getTemplateId()).isPresent());
+            assertTrue(jdbiTmpl.getRevisionIdIfActive(confirmPlaceholder.getTemplateId()).isPresent());
 
             RevisionMetadata meta = new RevisionMetadata(version1.getRevStart() + 5, testData.getUserId(), "test");
             actDao.changeVersion(form.getActivityId(), "v2", meta);
@@ -332,6 +350,7 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
                     .isPresent());
             assertFalse(jdbiTmpl.getRevisionIdIfActive(prompt.getTemplateId()).isPresent());
             assertFalse(jdbiTmpl.getRevisionIdIfActive(placeholder.getTemplateId()).isPresent());
+            assertFalse(jdbiTmpl.getRevisionIdIfActive(confirmPlaceholder.getTemplateId()).isPresent());
 
             handle.rollback();
         });
@@ -581,6 +600,293 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
         TransactionWrapper.useTxn(handle -> {
             QuestionDao dao = handle.attach(QuestionDao.class);
             dao.disablePicklistQuestion(12345L, RevisionMetadata.now(testData.getUserId(), "test"));
+        });
+    }
+
+    @Test
+    public void testInsertMatrixQuestion_noOptionsAndRows() {
+        thrown.expect(IllegalStateException.class);
+        thrown.expectMessage("need to have at least one option and one question");
+        TransactionWrapper.useTxn(handle -> {
+            ActivityDao actDao = handle.attach(ActivityDao.class);
+
+            MatrixQuestionDef def = MatrixQuestionDef.builder(MatrixSelectMode.SINGLE, sid, prompt)
+                    .addOption(new MatrixOptionDef("NO_USED_OPT", Template.text("no used"), "DEFAULT"))
+                    .addRow(new MatrixRowDef("NO_USED_ROW", Template.text("no used")))
+                    .addGroup(new MatrixGroupDef("DEFAULT", null))
+                    .build();
+            def.getGroups().clear();
+            def.getOptions().clear();
+            def.getRows().clear();
+
+            FormActivityDef form = buildSingleSectionForm(testData.getStudyGuid(), def);
+            actDao.insertActivity(form, RevisionMetadata.now(testData.getUserId(), "test"));
+
+            fail("expected exception was not thrown");
+        });
+    }
+
+    @Test
+    public void testInsertMatrixQuestion_rowWithNoOptions() {
+        thrown.expect(IllegalStateException.class);
+        thrown.expectMessage("need to have at least one option and one question");
+        TransactionWrapper.useTxn(handle -> {
+            ActivityDao actDao = handle.attach(ActivityDao.class);
+
+            MatrixQuestionDef def = MatrixQuestionDef.builder(MatrixSelectMode.SINGLE, sid, prompt)
+                    .addOption(new MatrixOptionDef("NO_USED_OPT", Template.text("no used"), "DEFAULT"))
+                    .addRow(new MatrixRowDef("NO_USED_ROW", Template.text("no used")))
+                    .addGroup(new MatrixGroupDef("DEFAULT", null))
+                    .build();
+            def.getGroups().clear();
+            def.getRows().clear();
+
+            FormActivityDef form = buildSingleSectionForm(testData.getStudyGuid(), def);
+            actDao.insertActivity(form, RevisionMetadata.now(testData.getUserId(), "test"));
+
+            fail("expected exception was not thrown");
+        });
+    }
+
+    @Test
+    public void testInsertMatrixQuestion_optionWithNoRows() {
+        thrown.expect(IllegalStateException.class);
+        thrown.expectMessage("need to have at least one option and one question");
+        TransactionWrapper.useTxn(handle -> {
+            ActivityDao actDao = handle.attach(ActivityDao.class);
+
+            MatrixQuestionDef def = MatrixQuestionDef.builder(MatrixSelectMode.SINGLE, sid, prompt)
+                    .addOption(new MatrixOptionDef("NO_USED_OPT", Template.text("no used"), "DEFAULT"))
+                    .addRow(new MatrixRowDef("NO_USED_ROW", Template.text("no used")))
+                    .addGroup(new MatrixGroupDef("DEFAULT", null))
+                    .build();
+            def.getGroups().clear();
+            def.getOptions().clear();
+
+            FormActivityDef form = buildSingleSectionForm(testData.getStudyGuid(), def);
+            actDao.insertActivity(form, RevisionMetadata.now(testData.getUserId(), "test"));
+
+            fail("expected exception was not thrown");
+        });
+    }
+
+    @Test
+    public void testInsertSingleMatrixQuestion_withOptionsAndRows() {
+        MatrixQuestionDef def = MatrixQuestionDef.builder(MatrixSelectMode.SINGLE, sid, prompt)
+                .addOptions(List.of(
+                        new MatrixOptionDef("OPT_1", Template.text("option 1"), "DEFAULT"),
+                        new MatrixOptionDef("OPT_2", Template.text("option 2"), "DEFAULT"),
+                        new MatrixOptionDef("OPT_3", Template.text("option 3"), "DEFAULT"),
+                        new MatrixOptionDef("OPT_4", Template.text("option 4"), "DEFAULT"),
+                        new MatrixOptionDef("OPT_5", Template.text("option 5"), "DEFAULT")))
+                .addRows(List.of(
+                        new MatrixRowDef("ROW_1", Template.text("row 1")),
+                        new MatrixRowDef("ROW_2", Template.text("row 2")),
+                        new MatrixRowDef("ROW_3", Template.text("row 3")),
+                        new MatrixRowDef("ROW_4", Template.text("row 4"))))
+                .addGroup(new MatrixGroupDef("DEFAULT", null))
+                .build();
+
+        runMatrixQuestionWithGivenScenarioTests(def);
+    }
+
+    @Test
+    public void testInsertMultipleMatrixQuestion_withOptionsAndRows() {
+        MatrixQuestionDef def = MatrixQuestionDef.builder(MatrixSelectMode.MULTIPLE, sid, prompt)
+                .addOptions(List.of(
+                        new MatrixOptionDef("OPT_1", Template.text("option 1"), "DEFAULT"),
+                        new MatrixOptionDef("OPT_2", Template.text("option 2"), "DEFAULT"),
+                        new MatrixOptionDef("OPT_3", Template.text("option 3"), "DEFAULT"),
+                        new MatrixOptionDef("OPT_4", Template.text("option 4"), "DEFAULT"),
+                        new MatrixOptionDef("OPT_5", Template.text("option 5"), "DEFAULT")))
+                .addRows(List.of(
+                        new MatrixRowDef("ROW_1", Template.text("row 1")),
+                        new MatrixRowDef("ROW_2", Template.text("row 2")),
+                        new MatrixRowDef("ROW_3", Template.text("row 3")),
+                        new MatrixRowDef("ROW_4", Template.text("row 4"))))
+                .addGroup(new MatrixGroupDef("DEFAULT", null))
+                .build();
+
+        runMatrixQuestionWithGivenScenarioTests(def);
+    }
+
+    @Test
+    public void testInsertSingleMatrixQuestion_withGroups_andOptionsAndRows() {
+        MatrixQuestionDef def = MatrixQuestionDef.builder(MatrixSelectMode.SINGLE, sid, prompt)
+                .addOptions(List.of(
+                        new MatrixOptionDef("OPT_1", Template.text("option 1"), "DEFAULT"),
+                        new MatrixOptionDef("OPT_2", Template.text("option 2"), "DEFAULT"),
+                        new MatrixOptionDef("OPT_3", Template.text("option 3"), "GROUP_1"),
+                        new MatrixOptionDef("OPT_4", Template.text("option 4"), "GROUP_1"),
+                        new MatrixOptionDef("OPT_5", Template.text("option 5"), "GROUP_2")))
+                .addRows(List.of(
+                        new MatrixRowDef("ROW_1", Template.text("row 1")),
+                        new MatrixRowDef("ROW_2", Template.text("row 2")),
+                        new MatrixRowDef("ROW_3", Template.text("row 3")),
+                        new MatrixRowDef("ROW_4", Template.text("row 4"))))
+                .addGroups(List.of(
+                        new MatrixGroupDef("DEFAULT", null),
+                        new MatrixGroupDef("GROUP_1", Template.text("group 1")),
+                        new MatrixGroupDef("GROUP_2", Template.text("group 2"))))
+                .build();
+
+        runMatrixQuestionWithGivenScenarioTests(def);
+    }
+
+    @Test
+    public void testInsertMultipleMatrixQuestion_withGroups_andOptionsAndRows() {
+        MatrixQuestionDef def = MatrixQuestionDef.builder(MatrixSelectMode.MULTIPLE, sid, prompt)
+                .addOptions(List.of(
+                        new MatrixOptionDef("OPT_1", Template.text("option 1"), "DEFAULT"),
+                        new MatrixOptionDef("OPT_2", Template.text("option 2"), "DEFAULT"),
+                        new MatrixOptionDef("OPT_3", Template.text("option 3"), "GROUP_1"),
+                        new MatrixOptionDef("OPT_4", Template.text("option 4"), "GROUP_1"),
+                        new MatrixOptionDef("OPT_5", Template.text("option 5"), "GROUP_2")))
+                .addRows(List.of(
+                        new MatrixRowDef("ROW_1", Template.text("row 1")),
+                        new MatrixRowDef("ROW_2", Template.text("row 2")),
+                        new MatrixRowDef("ROW_3", Template.text("row 3")),
+                        new MatrixRowDef("ROW_4", Template.text("row 4"))))
+                .addGroups(List.of(
+                        new MatrixGroupDef("DEFAULT", null),
+                        new MatrixGroupDef("GROUP_1", Template.text("group 1")),
+                        new MatrixGroupDef("GROUP_2", Template.text("group 2"))))
+                .build();
+
+        runMatrixQuestionWithGivenScenarioTests(def);
+    }
+
+    private void runMatrixQuestionWithGivenScenarioTests(MatrixQuestionDef def) {
+        TransactionWrapper.useTxn(handle -> {
+            QuestionDao dao = handle.attach(QuestionDao.class);
+            ActivityDao actDao = handle.attach(ActivityDao.class);
+            JdbiQuestion jdbiQuestion = handle.attach(JdbiQuestion.class);
+
+            FormActivityDef form = buildSingleSectionForm(testData.getStudyGuid(), def);
+            ActivityVersionDto version = actDao.insertActivity(form, RevisionMetadata.now(testData.getUserId(), "test"));
+
+            QuestionDto question = jdbiQuestion.findQuestionDtoById(def.getQuestionId()).get();
+            assertEquals(question.getType(), QuestionType.MATRIX);
+
+            MatrixQuestionDto questionDto = (MatrixQuestionDto) question;
+            MatrixQuestionDef actual = (MatrixQuestionDef) dao
+                    .collectQuestionDefs(Set.of(questionDto.getId()), version.getRevStart())
+                    .get(questionDto.getId());
+
+            assertNotNull(actual);
+            assertEquals(def.getQuestionId(), actual.getQuestionId());
+            assertEquals(def.getStableId(), actual.getStableId());
+            assertEquals(def.getSelectMode(), actual.getSelectMode());
+            assertEquals(def.getGroups().size(), actual.getGroups().size());
+            assertEquals(def.getOptions().size(), actual.getOptions().size());
+            assertEquals(def.getRows().size(), actual.getRows().size());
+
+            for (int i = 0; i < def.getOptions().size(); i++) {
+                MatrixOptionDef expectedOption = def.getOptions().get(i);
+                MatrixOptionDef actualOption = def.getOptions().get(i);
+                assertNotNull(actualOption);
+
+                assertEquals(expectedOption.getOptionId(), actualOption.getOptionId());
+                assertEquals(expectedOption.getStableId(), actualOption.getStableId());
+                assertEquals(expectedOption.getGroupStableId(), actualOption.getGroupStableId());
+            }
+
+            for (int i = 0; i < def.getRows().size(); i++) {
+                MatrixRowDef expectedRow = def.getRows().get(i);
+                MatrixRowDef actualRow = def.getRows().get(i);
+                assertNotNull(actualRow);
+
+                assertEquals(expectedRow.getRowId(), actualRow.getRowId());
+                assertEquals(expectedRow.getStableId(), actualRow.getStableId());
+            }
+
+            for (int i = 0; i < def.getGroups().size(); i++) {
+                MatrixGroupDef expectedGroup = def.getGroups().get(i);
+                MatrixGroupDef actualGroup = def.getGroups().get(i);
+                assertNotNull(actualGroup);
+
+                assertEquals(expectedGroup.getGroupId(), actualGroup.getGroupId());
+                assertEquals(expectedGroup.getStableId(), actualGroup.getStableId());
+            }
+
+            handle.rollback();
+        });
+    }
+
+    @Test
+    public void testDisableMatrixQuestion() {
+        TransactionWrapper.useTxn(handle -> {
+            QuestionDao dao = handle.attach(QuestionDao.class);
+            ActivityDao actDao = handle.attach(ActivityDao.class);
+            JdbiQuestion jdbiQuestion = handle.attach(JdbiQuestion.class);
+            JdbiTemplate jdbiTmpl = handle.attach(JdbiTemplate.class);
+            JdbiMatrixOption jdbiOption = handle.attach(JdbiMatrixOption.class);
+            JdbiMatrixRow jdbiRow = handle.attach(JdbiMatrixRow.class);
+            JdbiMatrixGroup jdbiGroup = handle.attach(JdbiMatrixGroup.class);
+
+            Template label = new Template(TemplateType.TEXT, null, "matrix label");
+            MatrixQuestionDef question = MatrixQuestionDef.builder(MatrixSelectMode.SINGLE, sid, prompt)
+                    .addOption(new MatrixOptionDef("OPT_1", new Template(TemplateType.TEXT, null, "option 1"), "DEFAULT"))
+                    .addOption(new MatrixOptionDef("OPT_2", new Template(TemplateType.TEXT, null, "option 2"), "DEFAULT"))
+                    .addOption(new MatrixOptionDef("OPT_3", new Template(TemplateType.TEXT, null, "option 3"), "GROUP_1"))
+                    .addRow(new MatrixRowDef("ROW_1", new Template(TemplateType.TEXT, null, "row 1")))
+                    .addRow(new MatrixRowDef("ROW_2", new Template(TemplateType.TEXT, null, "row 2")))
+                    .addGroups(List.of(
+                            new MatrixGroupDef("DEFAULT", null),
+                            new MatrixGroupDef("GROUP_1", new Template(TemplateType.TEXT, null, "group 1"))
+                    ))
+                    .build();
+            FormActivityDef form = buildSingleSectionForm(testData.getStudyGuid(), question);
+            ActivityVersionDto version1 = actDao.insertActivity(form, RevisionMetadata.now(testData.getUserId(), "test"));
+
+            assertNotNull(question.getQuestionId());
+            assertTrue(jdbiTmpl.getRevisionIdIfActive(prompt.getTemplateId()).isPresent());
+
+            assertTrue(jdbiOption.isCurrentlyActive(question.getQuestionId(), "OPT_1"));
+            assertTrue(jdbiOption.isCurrentlyActive(question.getQuestionId(), "OPT_2"));
+            assertTrue(jdbiOption.isCurrentlyActive(question.getQuestionId(), "OPT_3"));
+            assertTrue(jdbiRow.isCurrentlyActive(question.getQuestionId(), "ROW_1"));
+            assertTrue(jdbiRow.isCurrentlyActive(question.getQuestionId(), "ROW_2"));
+            assertTrue(jdbiGroup.isCurrentlyActive(question.getQuestionId(), "GROUP_1"));
+
+            assertEquals(question.getOptions().size(),
+                    jdbiOption.findAllActiveOrderedMatrixOptionsByQuestionId(question.getQuestionId()).size());
+            assertEquals(question.getRows().size(),
+                    jdbiRow.findAllActiveOrderedMatrixRowsByQuestionId(question.getQuestionId()).size());
+            assertEquals(question.getGroups().size(),
+                    jdbiGroup.findAllActiveOrderedMatrixGroupsQuestionId(question.getQuestionId()).size());
+
+            RevisionMetadata meta = new RevisionMetadata(version1.getRevStart() + 5, testData.getUserId(), "test");
+            actDao.changeVersion(form.getActivityId(), "v2", meta);
+            dao.disableMatrixQuestion(question.getQuestionId(), meta);
+
+            QuestionDto questionDto = jdbiQuestion.findQuestionDtoById(question.getQuestionId()).orElse(null);
+            assertNotNull(questionDto);
+            assertNotNull(questionDto.getRevisionEnd());
+            assertFalse(jdbiTmpl.getRevisionIdIfActive(prompt.getTemplateId()).isPresent());
+
+            assertFalse(jdbiOption.isCurrentlyActive(question.getQuestionId(), "OPT_1"));
+            assertFalse(jdbiOption.isCurrentlyActive(question.getQuestionId(), "OPT_2"));
+            assertFalse(jdbiOption.isCurrentlyActive(question.getQuestionId(), "OPT_3"));
+            assertFalse(jdbiRow.isCurrentlyActive(question.getQuestionId(), "ROW_1"));
+            assertFalse(jdbiRow.isCurrentlyActive(question.getQuestionId(), "ROW_2"));
+            assertFalse(jdbiGroup.isCurrentlyActive(question.getQuestionId(), "GROUP_1"));
+
+            assertEquals(0, jdbiOption.findAllActiveOrderedMatrixOptionsByQuestionId(question.getQuestionId()).size());
+            assertEquals(0, jdbiRow.findAllActiveOrderedMatrixRowsByQuestionId(question.getQuestionId()).size());
+            assertEquals(0, jdbiGroup.findAllActiveOrderedMatrixGroupsQuestionId(question.getQuestionId()).size());
+
+            handle.rollback();
+        });
+    }
+
+    @Test
+    public void testDisableMatrixQuestion_notFound() {
+        thrown.expect(NoSuchElementException.class);
+        thrown.expectMessage("Cannot find active matrix question with id");
+        TransactionWrapper.useTxn(handle -> {
+            QuestionDao dao = handle.attach(QuestionDao.class);
+            dao.disableMatrixQuestion(12345L, RevisionMetadata.now(testData.getUserId(), "test"));
         });
     }
 
@@ -1180,6 +1486,109 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
         });
     }
 
+
+    @Test
+    public void testGetMatrixQuestion_success() {
+        TransactionWrapper.useTxn(handle -> {
+            Template opt1OptTemp = Template.text("option 1");
+            Template opt2OptTemp = Template.text("option 2");
+            Template opt3OptTemp = Template.text("option 3");
+            Template opt1RowTemp = Template.text("row 1");
+            Template opt2RowTemp = Template.text("row 2");
+            Template optGroupTemp = Template.text("group 1");
+            RequiredRuleDef rule = new RequiredRuleDef(null);
+
+            MatrixQuestionDef question = MatrixQuestionDef.builder(MatrixSelectMode.SINGLE, sid, prompt)
+                    .addOptions(List.of(
+                            new MatrixOptionDef("OPT_1", opt1OptTemp, "DEFAULT"),
+                            new MatrixOptionDef("OPT_2", opt2OptTemp, "DEFAULT"),
+                            new MatrixOptionDef("OPT_3", opt3OptTemp, "GROUP_1")))
+                    .addRows(List.of(
+                            new MatrixRowDef("ROW_1", opt1RowTemp),
+                            new MatrixRowDef("ROW_2", opt2RowTemp)))
+                    .addGroup(new MatrixGroupDef("DEFAULT", null))
+                    .addGroup(new MatrixGroupDef("GROUP_1", optGroupTemp))
+                    .addValidation(rule)
+                    .build();
+            FormActivityDef form = buildSingleSectionForm(testData.getStudyGuid(), question);
+
+            ActivityVersionDto version1 = handle.attach(ActivityDao.class)
+                    .insertActivity(form, RevisionMetadata.now(testData.getUserId(), "test"));
+            ActivityInstanceDto activityInstanceDto = TestDataSetupUtil
+                    .generateTestFormActivityInstanceForUser(handle, version1.getActivityId(), testData.getUserGuid());
+
+            MatrixAnswer answer = (MatrixAnswer) handle.attach(AnswerDao.class)
+                    .createAnswer(testData.getUserId(), activityInstanceDto.getId(),
+                            new MatrixAnswer(null, sid, null, List.of(
+                                    new SelectedMatrixCell("ROW_2", "OPT_1", "GROUP_1"))));
+
+            QuestionDto questionDto = handle.attach(JdbiQuestion.class)
+                    .findQuestionDtoById(question.getQuestionId()).get();
+
+            List<Long> answers = new ArrayList<>();
+            answers.add(answer.getAnswerId());
+            List<org.broadinstitute.ddp.model.activity.instance.validation.Rule> rules = new ArrayList<>();
+            rules.add(new RequiredRule<MatrixAnswer>(rule.getRuleId(), "hint", "message", false));
+
+            Question question1 = handle.attach(QuestionDao.class).getMatrixQuestion(
+                    (MatrixQuestionDto) questionDto,
+                    activityInstanceDto.getGuid(),
+                    answers,
+                    rules
+            );
+
+            assertEquals(QuestionType.MATRIX, question1.getQuestionType());
+            assertEquals(prompt.getTemplateId(), (Long) question1.getPromptTemplateId());
+            assertEquals(sid, question1.getStableId());
+
+            MatrixQuestion matrixQ = (MatrixQuestion) question1;
+            assertEquals(MatrixSelectMode.SINGLE, matrixQ.getSelectMode());
+            assertEquals(question.getOptions().size(), matrixQ.getMatrixOptions().size());
+            assertEquals(question.getRows().size(), matrixQ.getMatrixQuestionRows().size());
+            assertEquals(question.getGroups().size(), matrixQ.getGroups().size());
+
+            for (MatrixOption option : matrixQ.getMatrixOptions()) {
+                if ("OPT_1".equals(option.getStableId())) {
+                    assertEquals(opt1OptTemp.getTemplateId(), (Long) option.getOptionLabelTemplateId());
+                    assertEquals("DEFAULT", option.getGroupStableId());
+                    assertFalse(option.isExclusive());
+                    assertNull(option.getTooltip());
+                } else if ("OPT_2".equals(option.getStableId())) {
+                    assertEquals(opt2OptTemp.getTemplateId(), (Long) option.getOptionLabelTemplateId());
+                    assertEquals("DEFAULT", option.getGroupStableId());
+                    assertFalse(option.isExclusive());
+                    assertNull(option.getTooltip());
+                } else if ("OPT_3".equals(option.getStableId())) {
+                    assertEquals(opt3OptTemp.getTemplateId(), (Long) option.getOptionLabelTemplateId());
+                    assertEquals("GROUP_1", option.getGroupStableId());
+                    assertFalse(option.isExclusive());
+                    assertNull(option.getTooltip());
+                } else {
+                    fail("unexpected option stable id: " + option.getStableId());
+                }
+            }
+
+            for (MatrixRow row : matrixQ.getMatrixQuestionRows()) {
+                if ("ROW_1".equals(row.getStableId())) {
+                    assertEquals(opt1RowTemp.getTemplateId(), (Long) row.getQuestionLabelTemplateId());
+                    assertNull(row.getTooltip());
+                } else if ("ROW_2".equals(row.getStableId())) {
+                    assertEquals(opt2RowTemp.getTemplateId(), (Long) row.getQuestionLabelTemplateId());
+                    assertNull(row.getTooltip());
+                } else {
+                    fail("unexpected row stable id: " + row.getStableId());
+                }
+            }
+
+            var group = matrixQ.getGroups().get(1);
+            assertEquals("GROUP_1", group.getStableId());
+            assertEquals(optGroupTemp.getTemplateId(), group.getNameTemplateId());
+
+            handle.rollback();
+
+        });
+    }
+
     @Test
     public void testGetTextQuestion_success() {
         TransactionWrapper.useTxn(handle -> {
@@ -1281,6 +1690,78 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
             assertNotNull(actual.getSuggestions());
             assertEquals(2, suggestions.size());
             assertEquals("test type ahead#2", suggestions.get(1));
+
+            handle.rollback();
+        });
+    }
+
+    @Test
+    public void testGetActivityInstanceSelectQuestion_success() {
+        TransactionWrapper.useTxn(handle -> {
+            var actSelection1 = FormActivityDef.generalFormBuilder("AS1_" + Instant.now().toEpochMilli(),
+                    "v1", testData.getStudyGuid())
+                    .addName(new Translation("en", "Activity1"))
+                    .addSection(new FormSectionDef(null, List.of(
+                            new ContentBlockDef(
+                                    new Template(TemplateType.TEXT, null, "intro template")))))
+                    .build();
+
+            var actSelection2 = FormActivityDef.generalFormBuilder("AS2_" + Instant.now().toEpochMilli(),
+                    "v1", testData.getStudyGuid())
+                    .addName(new Translation("en", "Activity2"))
+                    .addSection(new FormSectionDef(null, List.of(
+                            new ContentBlockDef(
+                                    new Template(TemplateType.TEXT, null, "intro template")))))
+                    .build();
+
+            ActivityInstanceSelectQuestionDef activityInstanceSelectQuestionDef = ActivityInstanceSelectQuestionDef.builder(sid, prompt)
+                    .setActivityCodes(List.of(actSelection1.getActivityCode(), actSelection2.getActivityCode()))
+                    .addValidation(new RequiredRuleDef(null))
+                    .build();
+
+            var block = new QuestionBlockDef(activityInstanceSelectQuestionDef);
+            var activity = FormActivityDef.generalFormBuilder("ACT" + Instant.now().toEpochMilli(),
+                    "v1", testData.getStudyGuid())
+                    .addName(new Translation("en", "activity test ActivityInstanceSelect Question success"))
+                    .addSection(new FormSectionDef(null, List.of(block)))
+                    .build();
+
+            var activityVersionDto = handle.attach(ActivityDao.class)
+                    .insertActivity(activity, RevisionMetadata.now(testData.getUserId(), "add " + activity.getActivityCode()));
+            var activityVersionDto1 = handle.attach(ActivityDao.class)
+                    .insertActivity(actSelection1, RevisionMetadata.now(testData.getUserId(), "add " + activity.getActivityCode()));
+            var activityVersionDto2 = handle.attach(ActivityDao.class)
+                    .insertActivity(actSelection2, RevisionMetadata.now(testData.getUserId(), "add " + activity.getActivityCode()));
+
+            var instanceDto = handle.attach(ActivityInstanceDao.class)
+                    .insertInstance(activityVersionDto.getActivityId(), testData.getUserGuid());
+            var instanceDto1 = handle.attach(ActivityInstanceDao.class)
+                    .insertInstance(activityVersionDto1.getActivityId(), testData.getUserGuid());
+            var instanceDto2 = handle.attach(ActivityInstanceDao.class)
+                    .insertInstance(activityVersionDto2.getActivityId(), testData.getUserGuid());
+
+            String answerGuid = handle.attach(AnswerDao.class)
+                    .createAnswer(testData.getUserId(), instanceDto.getId(),
+                            new ActivityInstanceSelectAnswer(null, sid, null, instanceDto1.getGuid()))
+                    .getAnswerGuid();
+
+            assertNotNull(answerGuid);
+
+            Answer testAnswer = handle.attach(AnswerDao.class).findAnswerByGuid(answerGuid).get();
+
+            assertEquals(answerGuid, testAnswer.getAnswerGuid());
+
+            ActivityInstanceSelectQuestion question = (ActivityInstanceSelectQuestion) handle.attach(QuestionDao.class)
+                    .getQuestionByBlockId(block.getBlockId(), instanceDto.getGuid(), instanceDto.getCreatedAtMillis(), langCodeId).get();
+
+            assertEquals(QuestionType.ACTIVITY_INSTANCE_SELECT, question.getQuestionType());
+            assertEquals(prompt.getTemplateId(), (Long) question.getPromptTemplateId());
+            assertEquals(sid, question.getStableId());
+            assertEquals(2, question.getActivityCodes().size());
+            assertEquals(actSelection1.getActivityCode(), question.getActivityCodes().get(0));
+
+            ActivityInstanceSelectAnswer activityInstanceSelectAnswer = question.getAnswers().get(0);
+            assertEquals(instanceDto1.getGuid(), activityInstanceSelectAnswer.getValue());
 
             handle.rollback();
         });
@@ -1450,7 +1931,9 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
     @Test
     public void testGetFileQuestion() {
         TransactionWrapper.useTxn(handle -> {
-            FileQuestionDef questionDef = FileQuestionDef.builder(sid, prompt).build();
+            FileQuestionDef questionDef = FileQuestionDef.builder(sid, prompt)
+                    .setMaxFileSize(DEFAULT_MAX_FILE_SIZE_FOR_TEST)
+                    .build();
             FormActivityDef form = buildSingleSectionForm(testData.getStudyGuid(), questionDef);
 
             ActivityVersionDto version1 = handle.attach(ActivityDao.class)
@@ -1478,7 +1961,7 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
         TransactionWrapper.useTxn(handle -> {
             Template placeholder = Template.text("some placeholder");
             NumericQuestionDef questionDef = NumericQuestionDef
-                    .builder(NumericType.INTEGER, sid, prompt)
+                    .builder(sid, prompt)
                     .setPlaceholderTemplate(placeholder)
                     .addValidation(new IntRangeRuleDef(Template.text("int_range"), 5L, 100L))
                     .build();
@@ -1490,7 +1973,7 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
                     .generateTestFormActivityInstanceForUser(handle, version1.getActivityId(), testData.getUserGuid());
 
             handle.attach(AnswerDao.class).createAnswer(testData.getUserId(), instanceDto.getId(),
-                    new NumericIntegerAnswer(null, sid, null, 25L));
+                    new NumericAnswer(null, sid, null, 25L));
 
             NumericQuestionDto questionDto = (NumericQuestionDto) handle.attach(JdbiQuestion.class)
                     .findQuestionDtoById(questionDef.getQuestionId()).get();
@@ -1504,7 +1987,6 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
             assertEquals(prompt.getTemplateId(), (Long) actual.getPromptTemplateId());
 
             NumericQuestion numericQuestion = (NumericQuestion) actual;
-            assertEquals(NumericType.INTEGER, numericQuestion.getNumericType());
             assertEquals(placeholder.getTemplateId(), numericQuestion.getPlaceholderTemplateId());
 
             assertEquals(1, numericQuestion.getValidations().size());
@@ -1516,8 +1998,7 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
             assertEquals(1, numericQuestion.getAnswers().size());
             assertEquals(QuestionType.NUMERIC, numericQuestion.getAnswers().get(0).getQuestionType());
             NumericAnswer numericAnswer = numericQuestion.getAnswers().get(0);
-            assertEquals(NumericType.INTEGER, numericAnswer.getNumericType());
-            assertEquals((Long) 25L, ((NumericIntegerAnswer) numericAnswer).getValue());
+            assertEquals((Long) 25L, numericAnswer.getValue());
 
             handle.rollback();
         });

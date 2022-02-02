@@ -16,8 +16,9 @@ public class ActivityInstanceStatusChangeSignal extends EventSignal {
                                               long activityInstanceIdThatChanged,
                                               long activityIdThatChanged,
                                               long studyId,
+                                              String studyGuid,
                                               InstanceStatusType targetStatusType) {
-        super(operatorId, participantId, participantGuid, operatorGuid, studyId, EventTriggerType.ACTIVITY_STATUS);
+        super(operatorId, participantId, participantGuid, operatorGuid, studyId, studyGuid, EventTriggerType.ACTIVITY_STATUS);
         this.activityInstanceIdThatChanged = activityInstanceIdThatChanged;
         this.activityIdThatChanged = activityIdThatChanged;
         this.targetStatusType = targetStatusType;

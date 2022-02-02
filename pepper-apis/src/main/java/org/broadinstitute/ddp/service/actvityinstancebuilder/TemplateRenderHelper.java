@@ -1,16 +1,13 @@
 package org.broadinstitute.ddp.service.actvityinstancebuilder;
 
 import java.time.LocalDate;
-import java.util.HashMap;
 import java.util.Map;
 
 import org.broadinstitute.ddp.content.I18nContentRenderer;
 import org.broadinstitute.ddp.content.I18nTemplateConstants;
-import org.broadinstitute.ddp.content.RenderValueProvider;
-import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
+import org.broadinstitute.ddp.content.RendererInitialContextCreator;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.activity.instance.ActivityInstance;
-import org.broadinstitute.ddp.model.activity.instance.FormInstance;
 import org.broadinstitute.ddp.service.actvityinstancebuilder.context.AIBuilderContext;
 
 /**
@@ -21,7 +18,7 @@ import org.broadinstitute.ddp.service.actvityinstancebuilder.context.AIBuilderCo
 public class TemplateRenderHelper {
 
     /**
-     * Creates renderer initial context and popualtes it with common data.
+     * Creates renderer initial context and populates it with common data.
      * The created context stored in {@link AIBuilderContext#getRendererInitialContext()}
      *
      * <p>The following types of data stored to the renderer context:
@@ -31,33 +28,21 @@ public class TemplateRenderHelper {
      *     <li>form activity last updated date (if previous version exists).</li>
      * </ul>
      */
-    public void createRendererInitialContext(AIBuilderContext ctx) {
-        Map<String, String> commonSnapshot = I18nContentRenderer
-                .newValueProviderBuilder(ctx.getHandle(), ctx.getFormResponse().getParticipantId())
-                .build().getSnapshot();
-
-        Map<String, String> snapshot = ctx.getHandle().attach(ActivityInstanceDao.class).findSubstitutions(
-                ctx.getFormResponse().getId());
-
-        Map<String, Object> context = new HashMap<>();
-        context.put(I18nTemplateConstants.DDP, new RenderValueProvider.Builder()
-                .withSnapshot(commonSnapshot)
-                .withSnapshot(snapshot)
-                .build());
-
+    public void createRendererInitialContext(AIBuilderContext ctx, RendererInitialContextCreator.RenderContextSource renderContextSource) {
+        Map<String, Object> context = RendererInitialContextCreator.createRendererInitialContext(
+                ctx.getHandle(),
+                ctx.getFormResponse() != null ? ctx.getFormResponse().getParticipantId() : ctx.getFormInstance().getParticipantUserId(),
+                ctx.getOperatorGuid(),
+                ctx.getStudyGuid(),
+                ctx.getIsoLangCode(),
+                ctx.getFormActivityDef(),
+                ctx.getFormResponse(),
+                ctx.getFormInstance(),
+                ctx.getActivitySnapshots(),
+                renderContextSource
+        );
         putLastUpdatedToRenderContext(ctx, context);
-
         ctx.getRendererInitialContext().putAll(context);
-    }
-
-    /**
-     * Rebuild renderer initial context by adding to already existing data the generated {@link FormInstance}
-     */
-    public void addInstanceToRendererInitialContext(AIBuilderContext ctx, FormInstance formInstance) {
-        ctx.getRendererInitialContext().put(I18nTemplateConstants.DDP, new RenderValueProvider.Builder(
-                (RenderValueProvider) ctx.getRendererInitialContext().get(I18nTemplateConstants.DDP))
-                .withFormInstance(formInstance)
-                .build());
     }
 
     protected void putLastUpdatedToRenderContext(AIBuilderContext ctx, Map<String, Object> context) {
@@ -67,17 +52,16 @@ public class TemplateRenderHelper {
     }
 
     /**
-     * Add to {@link AIBuilderContext#getRenderedTemplates()} map a key/value pair: templateId/rendered template string.
-     * This map will be used when applying templates to built {@link ActivityInstance} parts.
-     * @param ctx Context where map {@link AIBuilderContext#getRenderedTemplates()} stored.
-     * @param template added and rendered template
+     * Add to {@link AIBuilderContext#getTemplates()} map a key/value pair: templateId/template.
+     * This map will be used when rendering templates and applying templates to built {@link ActivityInstance} parts.
+     * @param ctx Context where map {@link AIBuilderContext#getTemplates()} stored.
+     * @param template added template
      * @return Long templateID
      */
-    public Long renderTemplate(AIBuilderContext ctx, Template template) {
+    public Long addTemplate(AIBuilderContext ctx, Template template) {
         if (template != null) {
             if (!ctx.getParams().isDisableTemplatesRendering()) {
-                ctx.getRenderedTemplates().put(template.getTemplateId(), template.render(
-                        ctx.getIsoLangCode(), ctx.getI18nContentRenderer(), ctx.getRendererInitialContext()));
+                ctx.getTemplates().put(template.getTemplateId(), template);
             }
             return template.getTemplateId();
         }
@@ -88,7 +72,7 @@ public class TemplateRenderHelper {
      * A detected {@link Template} text can contain a template engine expression and needs to be rendered (processed)
      * by TemplateEngine (currently used Velocity Engine).
      * This method try to render 'templateText' by a template engine.
-     * @param ctx Context where map {@link AIBuilderContext#getRenderedTemplates()} stored.
+     * @param ctx Context where map {@link AIBuilderContext#getTemplates()} stored.
      * @param templateText - template text of a {@link Template} for e certain language
      * @return String rendered (processed by a template engine); if no expression detected or 'templateText' is
      *     null then returned a value of 'templateText'

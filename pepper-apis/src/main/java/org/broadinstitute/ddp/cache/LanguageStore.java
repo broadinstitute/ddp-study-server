@@ -36,6 +36,10 @@ public class LanguageStore {
         return languages.get(DEFAULT_LANG_CODE);
     }
 
+    public static boolean isDefault(String isoCode) {
+        return getDefault().getIsoCode().equals(isoCode);
+    }
+
     public static LanguageDto getOrCompute(Handle handle, String isoCode) {
         if (isoCode == null) {
             return null;

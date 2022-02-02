@@ -47,14 +47,16 @@ public class FormBlockCreatorHelper {
             case MAILING_ADDRESS:
                 MailingAddressComponentDef mailingAddressComponentDef = (MailingAddressComponentDef) componentBlockDef;
                 formComponent = new MailingAddressComponent(
-                        ctx.getAIBuilderFactory().getTemplateRenderHelper().renderTemplate(
+                        ctx.getAIBuilderFactory().getTemplateRenderHelper().addTemplate(
                                 ctx, mailingAddressComponentDef.getTitleTemplate()),
-                        ctx.getAIBuilderFactory().getTemplateRenderHelper().renderTemplate(
+                        ctx.getAIBuilderFactory().getTemplateRenderHelper().addTemplate(
                                 ctx, mailingAddressComponentDef.getSubtitleTemplate()),
                         mailingAddressComponentDef.shouldHideNumber(),
                         mailingAddressComponentDef.shouldRequireVerified(),
                         mailingAddressComponentDef.shouldRequirePhone()
                 );
+                // remember mailing address component in order to save to it addressGuid (stored in activity instance substitutions)
+                ctx.setMailingAddressComponent((MailingAddressComponent)formComponent);
                 break;
             default:
                 throw new IllegalStateException("Unexpected value: " + componentBlockDef.getComponentType());
@@ -78,8 +80,8 @@ public class FormBlockCreatorHelper {
 
     ContentBlock createContentBlock(AIBuilderContext ctx, ContentBlockDef contentBlockDef) {
         return new ContentBlock(
-                ctx.getAIBuilderFactory().getTemplateRenderHelper().renderTemplate(ctx, contentBlockDef.getTitleTemplate()),
-                ctx.getAIBuilderFactory().getTemplateRenderHelper().renderTemplate(ctx, contentBlockDef.getBodyTemplate())
+                ctx.getAIBuilderFactory().getTemplateRenderHelper().addTemplate(ctx, contentBlockDef.getTitleTemplate()),
+                ctx.getAIBuilderFactory().getTemplateRenderHelper().addTemplate(ctx, contentBlockDef.getBodyTemplate())
         );
     }
 
@@ -87,7 +89,7 @@ public class FormBlockCreatorHelper {
         GroupBlock groupBlock = new GroupBlock(
                 groupBlockDef.getListStyleHint(),
                 groupBlockDef.getPresentationHint(),
-                ctx.getAIBuilderFactory().getTemplateRenderHelper().renderTemplate(
+                ctx.getAIBuilderFactory().getTemplateRenderHelper().addTemplate(
                         ctx, groupBlockDef.getTitleTemplate())
         );
         groupBlock.getNested().addAll(
@@ -102,7 +104,7 @@ public class FormBlockCreatorHelper {
                 nestedActivityBlockDef.getActivityCode(),
                 nestedActivityBlockDef.getRenderHint(),
                 nestedActivityBlockDef.isAllowMultiple(),
-                ctx.getAIBuilderFactory().getTemplateRenderHelper().renderTemplate(
+                ctx.getAIBuilderFactory().getTemplateRenderHelper().addTemplate(
                         ctx, nestedActivityBlockDef.getAddButtonTemplate())
         );
     }
@@ -124,11 +126,11 @@ public class FormBlockCreatorHelper {
                         physicianInstitutionComponentDef.getComponentRevisionId()
                 ),
                 physicianInstitutionComponentDef.getInstitutionType(),
-                ctx.getAIBuilderFactory().getTemplateRenderHelper().renderTemplate(
+                ctx.getAIBuilderFactory().getTemplateRenderHelper().addTemplate(
                         ctx, physicianInstitutionComponentDef.getTitleTemplate()),
-                ctx.getAIBuilderFactory().getTemplateRenderHelper().renderTemplate(
+                ctx.getAIBuilderFactory().getTemplateRenderHelper().addTemplate(
                         ctx, physicianInstitutionComponentDef.getSubtitleTemplate()),
-                ctx.getAIBuilderFactory().getTemplateRenderHelper().renderTemplate(
+                ctx.getAIBuilderFactory().getTemplateRenderHelper().addTemplate(
                         ctx, physicianInstitutionComponentDef.getAddButtonTemplate()),
                 physicianInstitutionComponentDef.allowMultiple(),
                 physicianInstitutionComponentDef.showFields(),

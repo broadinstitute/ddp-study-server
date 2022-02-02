@@ -5,8 +5,10 @@ import static spark.Spark.halt;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
@@ -34,6 +36,8 @@ import org.broadinstitute.ddp.db.dto.Auth0TenantDto;
 import org.broadinstitute.ddp.db.dto.InvitationDto;
 import org.broadinstitute.ddp.db.dto.LanguageDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
+import org.broadinstitute.ddp.event.publish.TaskPublisher;
+import org.broadinstitute.ddp.event.publish.pubsub.TaskPubSubPublisher;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.json.LocalRegistrationResponse;
 import org.broadinstitute.ddp.json.UserRegistrationPayload;
@@ -75,9 +79,11 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
     private static final String MODE_LOGIN = "login";
 
     private final PexInterpreter interpreter;
+    private final TaskPublisher taskPublisher;
 
-    public UserRegistrationRoute(PexInterpreter interpreter) {
+    public UserRegistrationRoute(PexInterpreter interpreter, TaskPublisher taskPublisher) {
         this.interpreter = interpreter;
+        this.taskPublisher = taskPublisher;
     }
 
     @Override
@@ -179,6 +185,7 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
                         payload, clientConfig, mgmtClient);
                 operatorUser = pair.getOperatorUser();
                 triggerUserRegisteredEvents(handle, study, operatorUser, pair.getParticipantUser());
+                publishRegisteredPubSubMessage(studyGuid, pair.getParticipantUser().getGuid());
                 ddpUserGuid.set(operatorUser.getGuid());
             } else {
                 LOG.info("Attempting to register existing user {} with client {} and study {}", auth0UserId, auth0ClientId, studyGuid);
@@ -209,11 +216,21 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
                 throw new DDPException("There is already an account-bearing user for invitation " + invitationGuid);
             }
 
+            List<Governance> governances;
+            try (Stream<Governance> governanceStream = handle.attach(UserGovernanceDao.class)
+                    .findActiveGovernancesByParticipantAndStudyGuids(user.getGuid(), studyGuid)) {
+                governances = governanceStream.collect(Collectors.toList());
+            }
+
+            String operatorGuid = (!governances.isEmpty())
+                    ? governances.stream().findFirst().get().getProxyUserGuid()
+                    : user.getGuid();
+
             // verify that there is governance policy configured for the study and that the
             // user has reached age of majority.
             GovernancePolicy policy = handle.attach(StudyGovernanceDao.class).findPolicyByStudyGuid(studyGuid).orElse(null);
             if (policy != null) {
-                if (policy.hasReachedAgeOfMajority(handle, interpreter, user.getGuid())) {
+                if (policy.hasReachedAgeOfMajority(handle, interpreter, user.getGuid(), operatorGuid)) {
                     LOG.info("Assigning {} to user {} for invitation {}", auth0UserId, user.getGuid(), invitationGuid);
 
                     var numRows = userDao.updateAuth0UserId(user.getGuid(), auth0UserId);
@@ -225,7 +242,7 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
                     invitationDao.markAccepted(invitation.getInvitationId(), Instant.now());
 
                     EventSignal signal = new EventSignal(user.getId(), user.getId(), user.getGuid(), user.getGuid(),
-                            study.getId(), EventTriggerType.GOVERNED_USER_REGISTERED);
+                            study.getId(), study.getGuid(), EventTriggerType.GOVERNED_USER_REGISTERED);
                     EventService.getInstance().processAllActionsForEventSignal(handle, signal);
                 } else {
                     LOG.error("User {} is not allowed to create an account yet because they have not reached age of majority "
@@ -245,6 +262,7 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
             LOG.info("Assigned invitation {} of type {} to participant user {}", invitation.getInvitationGuid(),
                     invitation.getInvitationType(), pair.getParticipantUser().getGuid());
             triggerUserRegisteredEvents(handle, study, pair.getOperatorUser(), pair.getParticipantUser());
+            publishRegisteredPubSubMessage(studyGuid, pair.getParticipantUser().getGuid());
             return pair.getOperatorUser();
         } else {
             throw new DDPException("Unhandled invitation type " + invitation.getInvitationType());
@@ -255,8 +273,9 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
                                        UserRegistrationPayload payload, StudyClientConfiguration clientConfig,
                                        Auth0ManagementClient mgmtClient) {
         String studyGuid = study.getGuid();
-        LOG.info("Attempting to register new user {} with client {} and study {}",
-                auth0UserId, clientConfig.getAuth0ClientId(), studyGuid);
+        LOG.info("Attempting to register new user {}, with client {}  study {}  {}",
+                auth0UserId, clientConfig.getAuth0ClientId(), studyGuid,
+                payload.getTempUserGuid() != null ? " (temp user " + payload.getTempUserGuid() + ")" : " NO-Temp-User");
 
         User operatorUser = registerUser(response, payload, handle,
                 clientConfig.getAuth0Domain(), clientConfig.getAuth0ClientId(), auth0UserId);
@@ -411,7 +430,7 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
                 numEventsReassigned, policy.getStudyGuid(), operatorUser.getGuid(), gov.getGovernedUserGuid());
 
         if (!policy.getAgeOfMajorityRules().isEmpty()) {
-            handle.attach(StudyGovernanceDao.class).addAgeUpCandidate(policy.getStudyId(), governedUser.getId());
+            handle.attach(StudyGovernanceDao.class).addAgeUpCandidate(policy.getStudyId(), governedUser.getId(), operatorUser.getId());
             LOG.info("Added governed user {} as age-up candidate in study {}", governedUser.getGuid(), policy.getStudyGuid());
         }
 
@@ -588,8 +607,17 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
                 participant.getId(),
                 participant.getGuid(),
                 operator.getGuid(),
-                studyDto.getId(), EventTriggerType.USER_REGISTERED);
+                studyDto.getId(),
+                studyDto.getGuid(),
+                EventTriggerType.USER_REGISTERED);
         EventService.getInstance().processAllActionsForEventSignal(handle, signal);
+    }
+
+    private void publishRegisteredPubSubMessage(String studyGuid, String participantGuid) {
+        String payload = ""; // No payload.
+        taskPublisher.publishTask(
+                TaskPubSubPublisher.TASK_PARTICIPANT_REGISTERED,
+                payload, studyGuid, participantGuid);
     }
 
     private static class UserPair {

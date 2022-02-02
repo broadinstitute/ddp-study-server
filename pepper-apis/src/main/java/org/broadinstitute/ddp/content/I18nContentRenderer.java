@@ -1,5 +1,8 @@
 package org.broadinstitute.ddp.content;
 
+import static org.apache.commons.lang3.StringUtils.contains;
+import static org.broadinstitute.ddp.content.VelocityUtil.VARIABLE_PREFIX;
+
 import java.io.StringWriter;
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -21,7 +24,10 @@ import org.apache.velocity.app.VelocityEngine;
 import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.db.dao.TemplateDao;
 import org.broadinstitute.ddp.db.dao.UserDao;
+import org.broadinstitute.ddp.db.dao.UserGovernanceDao;
 import org.broadinstitute.ddp.db.dao.UserProfileDao;
+import org.broadinstitute.ddp.model.activity.definition.template.Template;
+import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.model.user.UserProfile;
 import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
@@ -36,7 +42,7 @@ public class I18nContentRenderer {
 
     private VelocityEngine engine;
 
-    private static Long getDefaultLanguageId(Handle handle) {
+    private static Long getDefaultLanguageId() {
         if (defaultLangId != null) {
             return defaultLangId;
         } else {
@@ -45,12 +51,14 @@ public class I18nContentRenderer {
         }
     }
 
-    public static RenderValueProvider newValueProvider(Handle handle, long participantUserId) {
-        return newValueProvider(handle, participantUserId, new HashMap<>());
+    public static RenderValueProvider newValueProvider(Handle handle, long participantUserId, String operatorGuid, String studyGuid) {
+        return newValueProvider(handle, participantUserId, operatorGuid, studyGuid, new HashMap<>());
     }
 
-    public static RenderValueProvider newValueProvider(Handle handle, long participantUserId, Map<String, String> snapshot) {
-        var builder = newValueProviderBuilder(handle, participantUserId);
+    public static RenderValueProvider newValueProvider(Handle handle,
+                                       long participantUserId, String operatorGuid, String studyGuid,
+                                       Map<String, String> snapshot) {
+        var builder = newValueProviderBuilder(handle, participantUserId, operatorGuid, studyGuid);
 
         // If there are saved snapshot substitution values, override with those so final rendered
         // content will be consistent with what user last saw when snapshot was taken.
@@ -59,15 +67,22 @@ public class I18nContentRenderer {
         return builder.build();
     }
 
-    public static RenderValueProvider.Builder newValueProviderBuilder(Handle handle, long participantUserId) {
+    public static RenderValueProvider.Builder newValueProviderBuilder(Handle handle,
+                      long participantUserId, String operatorGuid, String studyGuid) {
+
         var builder = new RenderValueProvider.Builder();
 
-        handle.attach(UserDao.class).findUserById(participantUserId)
-                .ifPresent(user -> builder.setParticipantGuid(user.getGuid()));
+        Optional<User> user = handle.attach(UserDao.class).findUserById(participantUserId);
+        if (user.isPresent()) {
+            builder.setParticipantGuid(user.get().getGuid());
+            builder.setGovernedParticipant(handle.attach(UserGovernanceDao.class)
+                    .isGovernedParticipant(user.get().getGuid(), operatorGuid, studyGuid));
+        }
 
         UserProfile profile = handle.attach(UserProfileDao.class)
                 .findProfileByUserId(participantUserId)
                 .orElse(null);
+
         ZoneId zone = ZoneOffset.UTC;
         if (profile != null) {
             if (profile.getFirstName() != null) {
@@ -117,7 +132,7 @@ public class I18nContentRenderer {
      * @throws NoSuchElementException   Thrown when a db search returns no element
      */
     public String renderContent(Handle handle, Long contentTemplateId, Long languageCodeId, long timestamp) {
-        return renderContent(handle, contentTemplateId, languageCodeId, getDefaultLanguageId(handle), timestamp);
+        return renderContent(handle, contentTemplateId, languageCodeId, getDefaultLanguageId(), timestamp);
     }
 
     /**
@@ -139,7 +154,7 @@ public class I18nContentRenderer {
         for (Map.Entry<String, ?> entry : varNameToValueMap.entrySet()) {
             varNameToString.put(entry.getKey(), convertToString(entry.getValue()));
         }
-        return render(handle, templateId, languageCodeId, getDefaultLanguageId(handle), varNameToString, timestamp);
+        return render(handle, templateId, languageCodeId, getDefaultLanguageId(), varNameToString, timestamp);
     }
 
     /**
@@ -236,7 +251,7 @@ public class I18nContentRenderer {
         TemplateDao tmplDao = handle.attach(TemplateDao.class);
         Map<Long, TemplateDao.TextAndVarCount> templateData = tmplDao.findAllTextAndVarCountsByIds(templateIds);
         Map<Long, Map<String, String>> variables = tmplDao
-                .findAllTranslatedVariablesByIds(templateIds, langCodeId, getDefaultLanguageId(handle), timestamp);
+                .findAllTranslatedVariablesByIds(templateIds, langCodeId, getDefaultLanguageId(), timestamp);
         Map<Long, String> rendered = new HashMap<>(templateIds.size());
 
         for (long templateId : templateIds) {
@@ -291,12 +306,23 @@ public class I18nContentRenderer {
         }
     }
 
+    /**
+     * Render Velocity template (resolving Variables specified in parameter `context`).<br>
+     * NOTE: this version of the method supports a new feature `translations' references automatic generation`
+     * which means that Velocity variables can contain dots ('.') in it's names.
+     * Therefore right before loading to Velocity context the Variables' names are converted: '.' replaced to '-'
+     * (except $ddp.) - in both context map and template text. This is done with help of {@link VelocityUtil} methods.
+     *
+     * @param template  template text (stored in {@link Template#getTemplateText()}
+     * @param context   map with Velocity variables to be loaded to Velocity context
+     * @return a string with rendered template text
+     */
     public String renderToString(String template, Map<String, Object> context) {
         VelocityContext ctx = new VelocityContext(context);
         StringWriter writer = new StringWriter();
         engine.evaluate(ctx, writer, TEMPLATE_NAME, template);
         String result = writer.toString();
-        if (result.contains("$")) {
+        if (contains(result, VARIABLE_PREFIX)) {
             // Here we have a second pass in case of variables in the substitution values,
             // e.g. participantName() with locale-dependent position in the sentence.
             writer = new StringWriter();

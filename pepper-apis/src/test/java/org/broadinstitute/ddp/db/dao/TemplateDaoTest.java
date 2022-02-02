@@ -10,6 +10,7 @@ import java.util.NoSuchElementException;
 
 import org.broadinstitute.ddp.TxnAwareBaseTest;
 import org.broadinstitute.ddp.content.HtmlConverter;
+import org.broadinstitute.ddp.content.RenderValueProvider;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.model.activity.definition.i18n.Translation;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
@@ -153,6 +154,78 @@ public class TemplateDaoTest extends TxnAwareBaseTest {
 
             // Terminate it again
             dao.disableTemplate(tmpl.getTemplateId(), meta);
+
+            handle.rollback();
+        });
+    }
+
+    /**
+     * Test usage of method {@link Template#renderWithDefaultValues(String)} which
+     * sets `useDefaultsToDdpMethods=true` and as a result DDP methods `isGovernedParticipant()` and `answer()`
+     * return default values.
+     * NOTE: this parameter works only in that case if no any user and instance data assigned to
+     * {@link RenderValueProvider} (i.e. objects FormInstance and FormResponse are null).
+     */
+    @Test
+    public void testRenderWithDefaultValues() {
+        TransactionWrapper.useTxn(handle -> {
+            TemplateDao dao = handle.attach(TemplateDao.class);
+            JdbiTemplate jdbiTmpl = handle.attach(JdbiTemplate.class);
+            JdbiRevision jdbiRev = handle.attach(JdbiRevision.class);
+            JdbiVariableSubstitution jdbiSub = handle.attach(JdbiVariableSubstitution.class);
+
+            // define templates
+            Template tmpl = new Template(TemplateType.HTML, null, "<p>$var</p>");
+            tmpl.addVariable(new TemplateVariable("var", Arrays.asList(
+                    new Translation("en", "variable $ddp.isGovernedParticipant('aaa', 'bbb')"),
+                    new Translation("ru", "variable $ddp.answer('st01', '333')"))));
+
+            // insert revision and template data
+            long millis = Instant.now().toEpochMilli();
+            long revId = jdbiRev.insert(testData.getUserId(), millis, null, "test");
+            dao.insertTemplate(tmpl, revId);
+
+            //load template
+            Template loadedTmpl = dao.loadTemplateByIdAndTimestamp(tmpl.getTemplateId(), millis);
+            assertNotNull(loadedTmpl.getTemplateId());
+            assertNotNull(loadedTmpl.getTemplateCode());
+            assertEquals("variable aaa/bbb", HtmlConverter.getPlainText(loadedTmpl.renderWithDefaultValues("en")));
+            assertEquals("variable 333", HtmlConverter.getPlainText(loadedTmpl.renderWithDefaultValues("ru")));
+
+            handle.rollback();
+        });
+    }
+
+    /**
+     * Verify that templates containing variables with dots in it's names are rendered correctly
+     * (correctly supported a new feature "translations' references automatic generation:).
+     */
+    @Test
+    public void testRenderWithCompoundValues() {
+        TransactionWrapper.useTxn(handle -> {
+            TemplateDao dao = handle.attach(TemplateDao.class);
+            JdbiTemplate jdbiTmpl = handle.attach(JdbiTemplate.class);
+            JdbiRevision jdbiRev = handle.attach(JdbiRevision.class);
+            JdbiVariableSubstitution jdbiSub = handle.attach(JdbiVariableSubstitution.class);
+
+            // define templates
+            Template tmpl = new Template(TemplateType.HTML, null, "<p>$prequal.var</p>");
+            tmpl.addVariable(new TemplateVariable("prequal.var", Arrays.asList(
+                    new Translation("en", "variable (en)"),
+                    new Translation("ru", "variable (ru)"))));
+
+            // insert revision and template data
+            long millis = Instant.now().toEpochMilli();
+            long revId = jdbiRev.insert(testData.getUserId(), millis, null, "test");
+            dao.insertTemplate(tmpl, revId);
+
+            //load template
+            Template loadedTmpl = dao.loadTemplateByIdAndTimestamp(tmpl.getTemplateId(), millis);
+            assertNotNull(loadedTmpl.getTemplateId());
+            assertNotNull(loadedTmpl.getTemplateCode());
+            HtmlConverter.getPlainText(loadedTmpl.renderWithDefaultValues("en"));
+            assertEquals("variable (en)", HtmlConverter.getPlainText(loadedTmpl.renderWithDefaultValues("en")));
+            assertEquals("variable (ru)", HtmlConverter.getPlainText(loadedTmpl.renderWithDefaultValues("ru")));
 
             handle.rollback();
         });

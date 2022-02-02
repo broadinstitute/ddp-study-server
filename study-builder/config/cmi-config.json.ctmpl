@@ -10,8 +10,10 @@
   "AUTH0_KEYWORD_REPLACE_MAPPINGS": {
   {{if eq $environment "dev"}}
     {{/* These end up in a yaml inlined list, so the comma in front is needed. */}}
+    "LOCALHOST_ADMIN_CALLBACKS": ",http://localhost:4200/auth,http://localhost:4200/admin-login-landing",
     "LOCALHOST_CALLBACKS": ",http://localhost:4200/auth,http://localhost:4200/login-landing",
-    "LOCALHOST_LOGOUTS": ",http://localhost:4200,http://localhost:4200/session-expired",
+    "LOCALHOST_ADMIN_LOGOUTS": ",http://localhost:4200,http://localhost:4200/error,http://localhost:4200/admin-session-expired",
+    "LOCALHOST_LOGOUTS": ",http://localhost:4200,http://localhost:4200/error,http://localhost:4200/session-expired",
     "LOCALHOST_ORIGINS": ",http://localhost:4200",
   {{else}}
     {{/* Need to set these as blank, otherwise they won't get substituted and auth0 deploy will complain. */}}
@@ -37,9 +39,14 @@
   {{with $resp := vault (printf "secret/pepper/%s/%s/esc/conf" $environment $version)}}
     "ESC_BASE_URL": "{{$resp.Data.baseWebUrl}}",
   {{end}}
-    "ASSETS_BUCKET_URL": "{{$conf.assetsBucketUrl}}",
+  {{with $resp := vault (printf "secret/pepper/%s/%s/pancan/conf" $environment $version)}}
+   "PANCAN_BASE_URL": "{{$resp.Data.baseWebUrl}}",
+  {{end}}
+   "ASSETS_BUCKET_URL": "{{$conf.assetsBucketUrl}}",
     "LOGIN_DOMAIN": "{{$conf.auth0.loginDomain}}",
-    "SERVER_BASE_URL": "{{$conf.serverBaseUrl}}"
+    "SERVER_BASE_URL": "{{$conf.serverBaseUrl}}",
+    "SENDGRID_EMAIL": "{{$conf.sendgridFromEmail}}",
+    "SENDGRID_TOKEN": "{{$conf.sendgridApiKey}}"
   },
   "AUTH0_ALLOW_DELETE": false,
   "INCLUDED_PROPS": {

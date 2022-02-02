@@ -12,7 +12,7 @@
 
     <link
       rel="icon"
-      href="https://storage.googleapis.com/ddp-rgp-assets/images/favicon.ico"
+      href="https://storage.googleapis.com/##ASSETS_BUCKET##/images/favicon.ico"
     />
     <link rel="preconnect" href="https://fonts.gstatic.com" />
     <link
@@ -153,13 +153,13 @@
 
       .header--white {
         background-color: #ffffff;
-        box-shadow: 3px 3px 10px rgb(0, 0, 0, 0.1);
+        box-shadow: 3px 3px 10px rgba(0, 0, 0, 0.1);
 
         transition: none;
       }
 
       .header--white .navbar-brand {
-        background-image: url('https://storage.googleapis.com/ddp-rgp-assets/images/rgp-logo.svg');
+        background-image: url('https://storage.googleapis.com/##ASSETS_BUCKET##/images/rgp-logo.svg');
       }
 
       .header--white .nav-link {
@@ -185,7 +185,7 @@
         margin: 0;
         margin-right: auto;
 
-        background-image: url('https://storage.googleapis.com/ddp-rgp-assets/images/rgp-logo-inverted.svg');
+        background-image: url('https://storage.googleapis.com/##ASSETS_BUCKET##/images/rgp-logo-inverted.svg');
         background-repeat: no-repeat;
         background-position: center;
         background-size: cover;
@@ -291,7 +291,10 @@
       }
 
       .page-header__title {
-        margin: 104px 0 25px;
+        margin: 43px 0 25px;
+
+        /* Uncomment if COVID banner is present */
+        /* margin: 104px 0 25px; */
 
         font-family: 'Roboto', sans-serif;
         font-size: 2.2rem;
@@ -784,9 +787,10 @@
     <![endif]-->
 
     <div class="fixed">
-      <section class="banner">
+      <!-- Commented unless COVID banner needed -->
+      <!-- <section class="banner">
         <p class="banner__text" data-translate="banner.text"></p>
-      </section>
+      </section> -->
 
       <header class="header" id="page-header">
         <nav class="navbar navbar-expand-lg">
@@ -950,10 +954,7 @@
                 <div class="dropdown">
                   <button
                     type="button"
-                    class="btn btn-link dropdown-toggle nav-link btn-icon"
-                    id="languageListDropdownBtn"
-                    data-toggle="dropdown"
-                    aria-expanded="false"
+                    class="btn btn-link nav-link btn-icon"
                   >
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
@@ -969,28 +970,6 @@
                     </svg>
                     <span id="current-language"></span>
                   </button>
-
-                  <ul
-                    class="dropdown-menu"
-                    aria-labelledby="languageListDropdownBtn"
-                  >
-                    <li>
-                      <button
-                        type="button"
-                        class="dropdown-item"
-                        data-change-language="en"
-                        data-translate="languages.en"
-                      ></button>
-                    </li>
-                    <li>
-                      <button
-                        type="button"
-                        class="dropdown-item"
-                        data-change-language="es"
-                        data-translate="languages.es"
-                      ></button>
-                    </li>
-                  </ul>
                 </div>
               </li>
 
@@ -1325,7 +1304,7 @@
     <footer class="footer">
       <a href="#" class="footer__logo-link" data-href="/">
         <img
-          src="https://storage.googleapis.com/ddp-rgp-assets/images/rgp-logo.svg"
+          src="https://storage.googleapis.com/##ASSETS_BUCKET##/images/rgp-logo.svg"
           class="footer__logo-img"
         />
       </a>
@@ -1381,7 +1360,7 @@
                 target="_blank"
               >
                 <img
-                  src="https://storage.googleapis.com/ddp-rgp-assets/images/facebook.svg"
+                  src="https://storage.googleapis.com/##ASSETS_BUCKET##/images/facebook.svg"
                   alt="Facebook Rare Genomes Project"
                   height="15px"
                 />
@@ -1686,128 +1665,128 @@
         languages: languages,
         banner: {
           text:
-            '[es] For updates on how COVID-19 is impacting our study, please click <a href="https://www.facebook.com/RareGenomesProject" class="link link--banner" target="_blank">here.</a>',
+            'Para obtener actualizaciones sobre cómo COVID-19 está afectando nuestro estudio, haga clic <a href="https://www.facebook.com/RareGenomesProject" class="link link--banner" target="_blank">aquí</a>.',
         },
         header: {
           links: {
             forFamilies: {
-              text: '[es] For Families',
-              item1: '[es] Eligibility Criteria',
-              item2: '[es] Getting Started',
-              item3: '[es] Privacy & Data Use',
-              item4: '[es] For Your Physician',
+              text: 'Para las familias',
+              item1: 'Criterios de idoneidad',
+              item2: 'Para comenzar',
+              item3: 'Privacidad y empleo de los datos',
+              item4: 'Para el médico',
             },
             forResearchers: {
-              text: '[es] For Researchers',
-              item1: '[es] Data Access',
+              text: 'Para los investigadores',
+              item1: 'Acceso a los datos',
             },
             specialtyProjects: {
-              text: '[es] Specialty Projects',
-              item1: '[es] LGMD',
-              item2: '[es] Craniofacial',
+              text: 'Proyectos especializados',
+              item1: 'Distrofia muscular de cinturas',
+              item2: 'Craneofacial',
             },
             aboutUs: {
-              text: '[es] About Us',
+              text: 'Quiénes somos',
             },
             faqs: {
-              text: '[es] FAQs',
+              text: 'Preguntas y respuestas',
             },
             getStarted: {
-              text: '[es] Get Started',
+              text: 'Cómo comenzar',
             },
             signIn: {
-              text: '[es] Sign In',
+              text: 'Ingresar',
             },
           },
         },
         footer: {
           links: {
-            home: '[es] Home',
-            aboutUs: '[es] About Us',
-            signIn: '[es] Sign In',
-            apply: '[es] Apply',
-            backToTop: '[es] Back to Top',
+            home: 'Página principal',
+            aboutUs: 'Quiénes somos',
+            signIn: 'Ingresar',
+            apply: 'Solicitud',
+            backToTop: 'Volver arriba',
           },
-          contactUs: '[es] Contact Us:',
+          contactUs: 'Comuníquese con nosotros:',
         },
         signUp: {
-          header: '[es] Create an account',
+          header: 'Abrir una cuenta',
           form: {
             intro:
-              '[es] Please create an account to begin your application questionnaire',
+              'Abra una cuenta para comenzar su solicitud',
             fields: {
               email: {
-                label: '[es] Email address *',
+                label: 'Dirección de correo electrónico *',
                 errors: {
-                  emailNotValid: '[es] Please enter a valid email address',
+                  emailNotValid: 'Por favor, introduce una dirección de correo electrónico válida',
                 },
               },
               password: {
-                label: '[es] Password *',
+                label: 'Contraseña *',
                 hint:
-                  '[es] Password must be at least 8 characters long and contain at least one number, one upper case letter, and one lower case letter.',
+                  'La contraseña debe tener por lo menos 8 caracteres y contener por lo menos un número, una mayúscula y una minúscula.',
               },
             },
             error:
-              '[es] Error: please try again. If you are having trouble call RGP at 617-714-7395 or email us at raregenomes@broadinstitute.org for assistance.',
-            submit: '[es] Submit',
+              'Error: inténtelo de nuevo. Si tiene dificultades, llámenos al Proyecto Genomas Raros al (617) 714-7395 o escríbanos por correo electrónico a raregenomes@broadinstitute.org a pedir ayuda.',
+            submit: 'Enviar',
             links: {
-              signIn: '[es] Already have an account? Sign in here',
-              forgotPassword: '[es] Forgot your password?',
+              signIn: '¿Ya tiene cuenta? Ingrese aquí.',
+              forgotPassword: '¿Olvidó su contraseña?',
             },
           },
         },
         signIn: {
-          header: '[es] Sign In',
+          header: 'Ingresar',
           form: {
-            intro: '[es] Welcome back! Please sign in to your account.',
+            intro: '¡Bienvenido! Ingrese a su cuenta',
             fields: {
               email: {
-                label: '[es] Email address *',
+                label: 'Dirección de correo electrónico *',
                 errors: {
-                  emailNotValid: '[es] Please enter a valid email address',
+                  emailNotValid: 'Por favor, introduce una dirección de correo electrónico válida',
                 },
               },
               password: {
-                label: '[es] Password *',
+                label: 'Contraseña *',
                 errors: {
-                  required: '[es] Please enter your password',
+                  required: 'Por favor, introduzca su contraseña',
                 },
               },
             },
-            wrongCredentials: '[es] Wrong username or password',
-            submit: '[es] Submit',
+            wrongCredentials: 'Nombre de usuario o contraseña incorrectos',
+            submit: 'Iniciar sesión',
             links: {
               dontHaveAnAccount:
-                "[es] Don't have an account? Learn about how to get started",
-              forgotPassword: '[es] Forgot your password?',
+                "¿No tiene cuenta? Entérese de cómo abrir una.",
+              forgotPassword: '¿Olvidó su contraseña?',
             },
           },
         },
         passwordReset: {
-          header: '[es] Forgot Password?',
+          header: '¿Has olvidado tu contraseña?',
           form: {
             intro:
-              '[es] Please enter your email address and we will send you password reset instructions.',
+              'Ingrese su dirección de correo electrónico y le enviaremos instrucciones para restablecer la contraseña.',
             fields: {
               email: {
-                label: '[es] Email address *',
+                label: 'Dirección de correo electrónico *',
                 errors: {
-                  emailNotValid: '[es] Please enter a valid email address',
+                  emailNotValid: 'Por favor, introduce una dirección de correo electrónico válida',
                 },
               },
             },
             feedback:
-              '[es] Thank you. Please check your email for reset instructions.',
-            submit: '[es] Submit',
+              'Gracias. Consulte su correo electrónico para obtener instrucciones de restablecimiento.',
+            submit: 'Enviar',
           },
         },
         accountVerification: {
-          header: '[es] Account Verification',
+          header: 'Verificación de cuenta',
           paragraph1:
-            '[es] An email has been sent to the address that you provided. Please check your inbox, open the email and click <span class="bold">"Verify my account and complete questionnaire"</span> to move forward in the submission process.',
+            'Se le ha enviado un mensaje por correo electrónico a la dirección que suministró. Revise su bandeja de entrada, abra el mensaje y haga clic en <span class="bold">«Verificar mi cuenta e iniciar solicitud»</span> para comenzar su solicitud.',
           paragraph2:
-            '[es] If you do not receive an email, contact us at <a href="mailto:raregenomes@broadinstitute.org" class="link link--orange">raregenomes@broadinstitute.org</a>.',
+            'Si no recibe un mensaje por correo electrónico, escríbanos a <a href="mailto:raregenomes@broadinstitute.org" class="link link--orange">raregenomes@broadinstitute.org</a>.',
         },
       };
 
@@ -1818,6 +1797,12 @@
         en: EN_DICTIONARY,
         es: ES_DICTIONARY,
       };
+      var LOCALES = Object.keys(DICTIONARY);
+
+      /**
+       * Currently selected locale
+       */
+      var currentLocale;
 
       $(document).ready(function () {
         var currentLanguageEl = $('#current-language');
@@ -1834,31 +1819,34 @@
           }
         }
 
-        var currentLocale = studyLanguage;
+        currentLocale = studyLanguage;
 
-        translatePage(studyLanguage);
+        translatePage(
+          findOtherLocale(currentLocale),
+          currentLocale
+        );
 
         /**
          * Language switcher listener
          */
-        $('[data-change-language]').click(function () {
-          var selectedLocale = $(this).data('change-language');
+        currentLanguageEl.click(function () {
+          var oldLocale = currentLocale;
+          var newLocale = findOtherLocale(oldLocale);
 
-          if (currentLocale !== selectedLocale) {
-            currentLocale = selectedLocale;
-            translatePage(selectedLocale);
-          }
+          currentLocale = newLocale;
+
+          translatePage(oldLocale, newLocale);
         });
 
         /**
          * Function to translate whole document
          */
-        function translatePage(locale) {
-          localStorage.setItem('studyLanguage', locale);
+        function translatePage(oldLocale, newLocale) {
+          localStorage.setItem('studyLanguage', newLocale);
 
-          var localeDictionary = DICTIONARY[locale];
+          var localeDictionary = DICTIONARY[newLocale];
 
-          currentLanguageEl.text(localeDictionary.languages[locale]);
+          currentLanguageEl.text(localeDictionary.languages[oldLocale]);
 
           $('[data-translate]').each(function (i, el) {
             var translateKey = el.dataset.translate;
@@ -1870,6 +1858,13 @@
 
             el.innerHTML = translation;
           });
+        }
+
+        /**
+         * Find other locale
+         */
+        function findOtherLocale(currentLocale) {
+          return LOCALES.find(locale => locale !== currentLocale);
         }
       });
     </script>
@@ -1993,12 +1988,13 @@
 
           webAuth.signup(
             {
-              connection: 'Username-Password-Authentication',
+              connection: '##DB_NAME##',
               username: email,
               email: email,
               password: password,
               user_metadata: {
                 temp_user_guid: config.extraParams.temp_user_guid,
+                language: currentLocale,
               },
             },
             function (err) {
@@ -2088,7 +2084,7 @@
           webAuth.login(
             {
               state: config.extraParams.state,
-              realm: 'Username-Password-Authentication',
+              realm: '##DB_NAME##',
               email: email,
               password: password,
             },
@@ -2153,7 +2149,7 @@
 
           webAuth.changePassword(
             {
-              connection: 'Username-Password-Authentication',
+              connection: '##DB_NAME##',
               email: email,
             },
             function (err) {

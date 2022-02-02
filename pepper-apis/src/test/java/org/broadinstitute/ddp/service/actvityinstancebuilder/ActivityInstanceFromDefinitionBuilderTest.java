@@ -1,5 +1,6 @@
 package org.broadinstitute.ddp.service.actvityinstancebuilder;
 
+import static org.broadinstitute.ddp.content.RendererInitialContextCreator.RenderContextSource.FORM_RESPONSE_AND_ACTIVITY_DEF;
 import static org.broadinstitute.ddp.service.actvityinstancebuilder.context.AIBuilderParams.createParams;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -45,6 +46,7 @@ public class ActivityInstanceFromDefinitionBuilderTest extends ActivityInstanceS
                     .checkParams()
                     .readFormInstanceData()
                     .readActivityDef()
+                    .createRendererContext(FORM_RESPONSE_AND_ACTIVITY_DEF)
                     .startBuild()
                     .buildFormInstance()
                     .buildFormChildren()
@@ -52,12 +54,13 @@ public class ActivityInstanceFromDefinitionBuilderTest extends ActivityInstanceS
                     .renderContent()
                     .setDisplayNumbers()
                     .updateBlockStatuses()
+                    .populateSnapshottedAddress()
                     .endBuild()
                     .getContext();
 
             assertEquals(userGuid, context.getParams().getOperatorGuid());
 
-            assertEquals(12, context.getPassedBuildSteps().size());
+            assertEquals(14, context.getPassedBuildSteps().size());
             assertTrue(context.isBuildStepPassed(AIBuildStep.SET_DISPLAY_NUMBERS));
             assertTrue(context.isBuildStepPassed(AIBuildStep.UPDATE_BLOCK_STATUSES));
 
@@ -90,16 +93,18 @@ public class ActivityInstanceFromDefinitionBuilderTest extends ActivityInstanceS
                     .checkParams()
                     .readFormInstanceData()
                     .readActivityDef()
+                    .createRendererContext(FORM_RESPONSE_AND_ACTIVITY_DEF)
                     .startBuild()
                     .buildFormInstance()
                     .buildFormChildren()
                     .renderFormTitles()
+                    .populateSnapshottedAddress()
                     .endBuild()
                     .getContext();
 
             assertEquals(userGuid, context.getParams().getOperatorGuid());
 
-            assertEquals(9, context.getPassedBuildSteps().size());
+            assertEquals(11, context.getPassedBuildSteps().size());
             assertFalse(context.isBuildStepPassed(AIBuildStep.RENDER_CONTENT));
             assertFalse(context.isBuildStepPassed(AIBuildStep.SET_DISPLAY_NUMBERS));
             assertFalse(context.isBuildStepPassed(AIBuildStep.UPDATE_BLOCK_STATUSES));
@@ -133,9 +138,11 @@ public class ActivityInstanceFromDefinitionBuilderTest extends ActivityInstanceS
                         .checkParams()
                         .readActivityDef()
                         .readFormInstanceData()
+                        .createRendererContext(FORM_RESPONSE_AND_ACTIVITY_DEF)
                         .startBuild()
                         .buildFormInstance()
                         .buildFormChildren()
+                        .populateSnapshottedAddress()
                         .endBuild()
                         .getContext();
 
@@ -167,9 +174,11 @@ public class ActivityInstanceFromDefinitionBuilderTest extends ActivityInstanceS
                                 .setStyle(CONTENT_STYLE))
                         .readActivityDef()
                         .readFormInstanceData()
+                        .createRendererContext(FORM_RESPONSE_AND_ACTIVITY_DEF)
                         .startBuild()
                         .buildFormInstance()
                         .buildFormChildren()
+                        .populateSnapshottedAddress()
                         .endBuild()
                         .getContext();
 
@@ -201,6 +210,7 @@ public class ActivityInstanceFromDefinitionBuilderTest extends ActivityInstanceS
                     .checkParams()
                     .readFormInstanceData()
                     .readActivityDef()
+                    .createRendererContext(FORM_RESPONSE_AND_ACTIVITY_DEF)
                     .startBuild()
                     .buildFormInstance()
                     .endBuild()
@@ -239,9 +249,11 @@ public class ActivityInstanceFromDefinitionBuilderTest extends ActivityInstanceS
                         .checkParams()
                         .readFormInstanceData()
                         .readActivityDef()
+                        .createRendererContext(FORM_RESPONSE_AND_ACTIVITY_DEF)
                         .startBuild()
                         .buildFormInstance()
                         .buildFormChildren()
+                        .populateSnapshottedAddress()
                         .renderContent()
                         .endBuild()
                         .getContext();

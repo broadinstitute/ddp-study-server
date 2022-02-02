@@ -32,6 +32,7 @@ import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.activity.definition.ComponentBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.ConditionalBlockDef;
+import org.broadinstitute.ddp.model.activity.definition.NestedActivityBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.ContentBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
 import org.broadinstitute.ddp.model.activity.definition.FormBlockDef;
@@ -209,16 +210,36 @@ public class UpdateTemplatesInPlace implements CustomTask {
         var jdbiActVersion = handle.attach(JdbiActivityVersion.class);
 
         for (Config activityCfg : studyCfg.getConfigList("activities")) {
-            Config definition = activityBuilder.readDefinitionConfig(activityCfg.getString("filepath"));
-            String activityCode = definition.getString("activityCode");
-            String versionTag = definition.getString("versionTag");
+            traverseActivity(handle, studyId, activityBuilder, activityDao,
+                    jdbiActivity, jdbiActVersion, activityCfg.getString("filepath"));
 
-            ActivityDto activityDto = jdbiActivity.findActivityByStudyIdAndCode(studyId, activityCode).get();
-            ActivityVersionDto versionDto = jdbiActVersion.findByActivityCodeAndVersionTag(studyId, activityCode, versionTag).get();
-            FormActivityDef activity = (FormActivityDef) activityDao.findDefByDtoAndVersion(activityDto, versionDto);
-
-            traverseActivity(handle, activityCode, definition, activity, versionDto.getRevStart());
+            if (activityCfg.hasPath("nestedActivities")) {
+                for (String nestedActivity : activityCfg.getStringList("nestedActivities")) {
+                    traverseActivity(handle, studyId, activityBuilder, activityDao, jdbiActivity, jdbiActVersion, nestedActivity);
+                }
+            }
         }
+    }
+
+    void traverseActivity(Handle handle, long studyId, ActivityBuilder activityBuilder, ActivityDao activityDao,
+                          JdbiActivity jdbiActivity, JdbiActivityVersion jdbiActVersion, String filepath) {
+        Config definition = activityBuilder.readDefinitionConfig(filepath);
+        String activityCode = definition.getString("activityCode");
+        String versionTag = definition.getString("versionTag");
+
+        ActivityDto activityDto = jdbiActivity.findActivityByStudyIdAndCode(studyId, activityCode).get();
+        ActivityVersionDto versionDto = jdbiActVersion.findByActivityCodeAndVersionTag(studyId, activityCode, versionTag).get();
+        FormActivityDef activity = (FormActivityDef) activityDao.findDefByDtoAndVersion(activityDto, versionDto);
+
+        long activityId = ActivityBuilder.findActivityId(handle, studyId, activityCode);
+
+        LOG.info("Comparing activity {} naming details...", activityCode);
+        var task = new UpdateActivityBaseSettings();
+        task.init(cfgPath, studyCfg, varsCfg);
+        task.compareNamingDetails(handle, definition, activityId, versionDto);
+        task.compareStatusSummaries(handle, definition, activityId);
+
+        traverseActivity(handle, activityCode, definition, activity, versionDto.getRevStart());
     }
 
     void traverseActivity(Handle handle, String activityCode, Config definition, FormActivityDef activity, long timestamp) {
@@ -272,6 +293,9 @@ public class UpdateTemplatesInPlace implements CustomTask {
             case COMPONENT:
                 traverseComponent(handle, sectionNum, blockNum, nestedNum, blockCfg, (ComponentBlockDef) block);
                 break;
+            case ACTIVITY:
+                traverseNestedActivity(handle, sectionNum, blockNum, blockCfg, (NestedActivityBlockDef) block);
+                break;
             case CONDITIONAL:
                 ConditionalBlockDef condBlock = (ConditionalBlockDef) block;
                 traverseQuestion(handle, blockCfg.getConfig("control"), condBlock.getControl(), timestamp);
@@ -309,6 +333,12 @@ public class UpdateTemplatesInPlace implements CustomTask {
             default:
                 throw new DDPException("Unhandled block type: " + block.getBlockType());
         }
+    }
+
+    private void traverseNestedActivity(Handle handle, int sectionNum, int blockNum, Config blockCfg, NestedActivityBlockDef block) {
+        String type = block.getBlockType().name();
+        String prefix = String.format("section %d block %d %s", sectionNum, blockNum, type);
+        extractAndCompare(handle, prefix, block.getAddButtonTemplate(), blockCfg, "addButtonTemplate");
     }
 
     // Note: for now, we're querying the content block templates here.
@@ -377,6 +407,7 @@ public class UpdateTemplatesInPlace implements CustomTask {
                 TextQuestionDef textQuestion = (TextQuestionDef) question;
                 extractAndCompare(handle, prefix, textQuestion.getPlaceholderTemplate(), questionCfg, "placeholderTemplate");
                 extractAndCompare(handle, prefix, textQuestion.getConfirmPromptTemplate(), questionCfg, "confirmPromptTemplate");
+                extractAndCompare(handle, prefix, textQuestion.getConfirmPlaceholderTemplate(), questionCfg, "confirmPlaceholderTemplate");
                 extractAndCompare(handle, prefix, textQuestion.getMismatchMessageTemplate(), questionCfg, "mismatchMessageTemplate");
                 break;
             case COMPOSITE:
@@ -403,6 +434,11 @@ public class UpdateTemplatesInPlace implements CustomTask {
         Map<String, Config> allOptionCfgs = new HashMap<>();
         for (var optionCfg : questionCfg.getConfigList("picklistOptions")) {
             allOptionCfgs.put(optionCfg.getString("stableId"), optionCfg);
+            if (optionCfg.hasPath("nestedOptions")) {
+                for (var nestedOptionCfg : optionCfg.getConfigList("nestedOptions")) {
+                    allOptionCfgs.put(nestedOptionCfg.getString("stableId"), nestedOptionCfg);
+                }
+            }
         }
 
         for (int i = 0; i < groups.size(); i++) {

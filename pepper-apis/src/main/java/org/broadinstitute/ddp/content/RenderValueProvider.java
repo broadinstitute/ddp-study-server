@@ -1,5 +1,7 @@
 package org.broadinstitute.ddp.content;
 
+import static org.broadinstitute.ddp.content.SelectedPickListOptionRenderUtil.selectedOptionsRender;
+
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -7,22 +9,17 @@ import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
-import org.broadinstitute.ddp.model.activity.definition.question.PicklistOptionDef;
-import org.broadinstitute.ddp.model.activity.definition.question.PicklistQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
 import org.broadinstitute.ddp.model.activity.instance.FormInstance;
 import org.broadinstitute.ddp.model.activity.instance.FormResponse;
 import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
 import org.broadinstitute.ddp.model.activity.instance.answer.PicklistAnswer;
-import org.broadinstitute.ddp.model.activity.instance.question.PicklistOption;
-import org.broadinstitute.ddp.model.activity.instance.question.PicklistQuestion;
 import org.broadinstitute.ddp.model.activity.instance.question.Question;
+import org.broadinstitute.ddp.model.activity.types.QuestionType;
 import org.broadinstitute.ddp.model.dsm.KitReasonType;
 import org.broadinstitute.ddp.model.dsm.TestResult;
 import org.slf4j.Logger;
@@ -35,6 +32,16 @@ public class RenderValueProvider {
 
     private static final Logger LOG = LoggerFactory.getLogger(RenderValueProvider.class);
 
+    /**
+     * If this value is `true` then  DDP methods (answer(), isGovernedParticipant()) defined in {@link RenderValueProvider} will
+     * return pre-defined values:
+     * <pre>
+     *     - isGovernedParticipant() returns both parameters separated with slash (`isTrueString`/`isFalseString`);
+     *     - answer() returns fallbackValue.
+     * </pre>
+     */
+    private boolean useDefaultsForDdpMethods = false;
+
     private String participantGuid;
     private String participantFirstName;
     private String participantLastName;
@@ -46,6 +53,8 @@ public class RenderValueProvider {
     private String testResultCode;
     private Instant testResultTimeCompleted;
     private Integer activityInstanceNumber;
+    private Boolean governedParticipant;
+    private String addressGuid;
 
     // To minimize database round-trips, we lookup answers using existing objects that should have the answer objects.
     // Depending on what's available for the provider, we'll use either response + activity or the instance object.
@@ -106,6 +115,14 @@ public class RenderValueProvider {
         }
     }
 
+    public void setDate(LocalDate date) {
+        this.date = date;
+    }
+
+    public void setUseDefaultsForDdpMethods(boolean useDefaultsForDdpMethods) {
+        this.useDefaultsForDdpMethods = useDefaultsForDdpMethods;
+    }
+
     /**
      * Returns the kit request id, if available.
      */
@@ -164,6 +181,19 @@ public class RenderValueProvider {
     }
 
     /**
+     * Select a string depending on the type of the current participant: if he/she a governed participant or
+     *
+     * @return String - if governedParticipant is not null and == true, then return 'ifTrueString', else return 'ifFalseString'
+     */
+    public String isGovernedParticipant(String ifTrueString, String ifFalseString) {
+        if (governedParticipant == null && useDefaultsForDdpMethods) {
+            return ifTrueString + '/' + ifFalseString;
+        } else {
+            return governedParticipant != null && governedParticipant ? ifTrueString : ifFalseString;
+        }
+    }
+
+    /**
      * Provides more flexibility for how to display an activity instance number, if available. The activity instance
      * number will first be adjusted by subtracting the given offset. Then, if the adjusted number is less than the
      * given cutoff number, then no number will be displayed. The cutoff number effectively serves as the first number
@@ -188,6 +218,30 @@ public class RenderValueProvider {
     }
 
     /**
+     * checkAnswer
+     *
+     * @param questionStableId the question stable id
+     * @param optionStableId    the option stable Id
+     * @param stringIfMatches    string if question is answered with option stable Id
+     * @param stringOtherwise    string if question is not answered with option stable Id
+     * @return string stringIfMatches or stringOtherwise
+     */
+    public String checkAnswer(String questionStableId, String optionStableId,
+                              String stringIfMatches, String stringOtherwise) {
+        Answer answer = null;
+        if (formResponse != null) {
+            answer = formResponse.getAnswer(questionStableId);
+            if (answer.getQuestionType() != QuestionType.PICKLIST) {
+                throw new DDPException(String.format("Activity code: %s. Rendering questionStableId: %s must be PICKLIST type.",
+                        formResponse.getActivityCode(), questionStableId));
+            }
+        }
+        return answer == null || ((PicklistAnswer) answer).getValue().stream()
+                .anyMatch(selected -> selected.getStableId().equals(optionStableId))
+                ? stringIfMatches : stringOtherwise;
+    }
+
+    /**
      * Returns the answer for the question, or the fallback value if no answer. Need to assign the appropriate form
      * object(s) beforehand as sources for looking up answers, otherwise no substitution will be performed.
      *
@@ -197,21 +251,42 @@ public class RenderValueProvider {
      *
      * @param questionStableId the question stable id
      * @param fallbackValue    the fallback value
-     * @return answer string representation if available, otherwise null
+     * @return answer string representation of answer (in case of picklist: option) if formResponse
+     *     or formInstance objects are available, otherwise null
      */
     public String answer(String questionStableId, String fallbackValue) {
+        return answer(questionStableId, fallbackValue, false);
+    }
+
+    /**
+     * Returns the answer for the question, or the fallback value if no answer.
+     *
+     * @param questionStableId         the question stable id
+     * @param fallbackValue            the fallback value
+     * @param useDetailTextForPickList if true and detecting answer of a picklist then get a detailText instead of
+     *                                 option label.
+     * @return answer string representation of answer (in case of picklist: option or detailText) if formResponse
+     *     or formInstance objects are available, otherwise null
+     * @see #answer(String, String)
+     */
+    public String answer(String questionStableId, String fallbackValue, boolean useDetailTextForPickList) {
         if (formResponse != null) {
-            return renderAnswerUsingFormResponse(questionStableId, fallbackValue);
+            return renderAnswerUsingFormResponse(questionStableId, fallbackValue, useDetailTextForPickList);
         } else if (formInstance != null) {
-            return renderAnswerUsingFormInstance(questionStableId, fallbackValue);
+            return renderAnswerUsingFormInstance(questionStableId, fallbackValue, useDetailTextForPickList);
         } else {
-            // No objects to use to lookup answers. Returning null here will keep this part of the template untouched,
-            // in case we want to come back and do a second round of rendering.
-            return null;
+            if (useDefaultsForDdpMethods) {
+                return fallbackValue;
+            } else {
+                // No objects to use to lookup answers. Returning null here will keep this part of the template untouched,
+                // in case we want to come back and do a second round of rendering.
+                return null;
+            }
         }
     }
 
-    private String renderAnswerUsingFormResponse(String questionStableId, String fallbackValue) {
+    private String renderAnswerUsingFormResponse(String questionStableId, String fallbackValue, boolean useDetailTextForPickList) {
+        QuestionDef questionDef = formActivity.getQuestionByStableId(questionStableId);
         Answer answer = formResponse.getAnswer(questionStableId);
         if (answer == null || answer.isEmpty()) {
             // No answer response for this question yet, so use fallback.
@@ -219,15 +294,8 @@ public class RenderValueProvider {
         }
         switch (answer.getQuestionType()) {
             case PICKLIST:
-                QuestionDef questionDef = formActivity.getQuestionByStableId(questionStableId);
-                Map<String, PicklistOptionDef> options = ((PicklistQuestionDef) questionDef)
-                        .getAllPicklistOptions().stream()
-                        .collect(Collectors.toMap(PicklistOptionDef::getStableId, Function.identity()));
-                return ((PicklistAnswer) answer).getValue().stream()
-                        .map(selected -> options.get(selected.getStableId())
-                                .getOptionLabelTemplate()
-                                .render(isoLangCode))
-                        .collect(Collectors.joining(","));
+                return selectedOptionsRender(questionDef, answer, isoLangCode, useDetailTextForPickList);
+            case MATRIX: // Fall-through
             case COMPOSITE: // Fall-through
             case FILE:
                 // Have not decided what composite or file answers will look like yet.
@@ -238,21 +306,25 @@ public class RenderValueProvider {
         }
     }
 
-    private String renderAnswerUsingFormInstance(String questionStableId, String fallbackValue) {
+    /**
+     * Render template with setting an answer value instead of $ddp.answer(...).
+     * NOTE: in order to avoid NPE replace null values of getDetailLabel() or getOptionLabel() with `fallbackValue`.
+     *
+     * @param questionStableId         stable ID of a question which answer to render
+     * @param fallbackValue            default value which set in case if answer not set or empty
+     * @param useDetailTextForPickList if it is `true` then use detailText() (instead of option) in case of picklist.
+     * @return String - rendered template
+     */
+    private String renderAnswerUsingFormInstance(String questionStableId, String fallbackValue, boolean useDetailTextForPickList) {
         Question question = formInstance.getQuestionByStableId(questionStableId);
-        Answer answer = question != null && question.isAnswered()
-                ? (Answer) question.getAnswers().get(0) : null;
+        Answer answer = question != null && question.isAnswered() ? (Answer) question.getAnswers().get(0) : null;
         if (answer == null || answer.isEmpty()) {
             return fallbackValue;
         }
         switch (answer.getQuestionType()) {
             case PICKLIST:
-                Map<String, String> options = ((PicklistQuestion) question)
-                        .streamAllPicklistOptions()
-                        .collect(Collectors.toMap(PicklistOption::getStableId, PicklistOption::getOptionLabel));
-                return ((PicklistAnswer) answer).getValue().stream()
-                        .map(selected -> options.get(selected.getStableId()))
-                        .collect(Collectors.joining(","));
+                return selectedOptionsRender(question, answer, useDetailTextForPickList);
+            case MATRIX: // Fall-through
             case COMPOSITE: // Fall-through
             case FILE:
                 throw new DDPException("Rendering answer type " + answer.getQuestionType() + " is currently not supported");
@@ -293,6 +365,12 @@ public class RenderValueProvider {
         }
         if (testResultTimeCompleted != null) {
             snapshot.put(I18nTemplateConstants.Snapshot.TEST_RESULT_TIME_COMPLETED, testResultTimeCompleted.toString());
+        }
+        if (governedParticipant != null) {
+            snapshot.put(I18nTemplateConstants.Snapshot.IS_GOVERNED_PARTICIPANT, governedParticipant.toString());
+        }
+        if (addressGuid != null) {
+            snapshot.put(I18nTemplateConstants.Snapshot.ADDRESS_GUID, addressGuid);
         }
         return snapshot;
     }
@@ -360,6 +438,21 @@ public class RenderValueProvider {
 
         public Builder setActivityInstanceNumber(Integer activityInstanceNumber) {
             provider.activityInstanceNumber = activityInstanceNumber;
+            return this;
+        }
+
+        public Builder setGovernedParticipant(Boolean governedParticipant) {
+            provider.governedParticipant = governedParticipant;
+            return this;
+        }
+
+        public Builder setAddressGuid(String addressGuid) {
+            provider.addressGuid = addressGuid;
+            return this;
+        }
+
+        public Builder setUseDefaultsForDdpMethods(boolean useDefaultsForDdpMethods) {
+            provider.useDefaultsForDdpMethods = useDefaultsForDdpMethods;
             return this;
         }
 
@@ -432,6 +525,16 @@ public class RenderValueProvider {
                 provider.testResultTimeCompleted = Instant.parse(value);
             }
 
+            value = snapshot.get(I18nTemplateConstants.Snapshot.IS_GOVERNED_PARTICIPANT);
+            if (value != null) {
+                provider.governedParticipant = Boolean.valueOf(value);
+            }
+
+            value = snapshot.get(I18nTemplateConstants.Snapshot.ADDRESS_GUID);
+            if (value != null) {
+                provider.addressGuid = value;
+            }
+
             return this;
         }
 
@@ -456,6 +559,9 @@ public class RenderValueProvider {
             copy.formActivity = provider.formActivity;
             copy.isoLangCode = provider.isoLangCode;
             copy.formInstance = provider.formInstance;
+            copy.governedParticipant = provider.governedParticipant;
+            copy.addressGuid = provider.addressGuid;
+            copy.useDefaultsForDdpMethods = provider.useDefaultsForDdpMethods;
             return copy;
         }
     }

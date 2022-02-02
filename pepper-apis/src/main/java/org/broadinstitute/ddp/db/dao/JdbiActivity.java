@@ -29,12 +29,12 @@ public interface JdbiActivity extends SqlObject {
             + "is_write_once, instantiate_upon_registration,edit_timeout_sec,allow_ondemand_trigger,"
             + "exclude_from_display, exclude_status_icon_from_display, allow_unauthenticated, "
             + "is_followup, hide_existing_instances_on_creation, create_on_parent_creation, "
-            + "can_delete_instances, can_delete_first_instance)"
+            + "can_delete_instances, can_delete_first_instance, show_activity_status)"
             + " values((select activity_type_id from activity_type where activity_type_code = :activityType),"
             + ":studyId,:activityCode,"
             + ":maxInstancesPerUser,:displayOrder,:writeOnce,0,:editTimeoutSec,:allowOndemandTrigger,"
             + ":excludeFromDisplay, :excludeStatusIconFromDisplay, :allowUnauthenticated, :isFollowup, :hideExistingInstancesOnCreation,"
-            + ":createOnParentCreation, :canDeleteInstances, :canDeleteFirstInstance)")
+            + ":createOnParentCreation, :canDeleteInstances, :canDeleteFirstInstance, :showActivityStatus)")
     @GetGeneratedKeys()
     long insertActivity(
             @Bind("activityType") ActivityType activityType,
@@ -52,7 +52,8 @@ public interface JdbiActivity extends SqlObject {
             @Bind("hideExistingInstancesOnCreation") boolean hideExistingInstancesOnCreation,
             @Bind("createOnParentCreation") boolean createOnParentCreation,
             @Bind("canDeleteInstances") boolean canDeleteInstances,
-            @Bind("canDeleteFirstInstance") Boolean canDeleteFirstInstance
+            @Bind("canDeleteFirstInstance") Boolean canDeleteFirstInstance,
+            @Bind("showActivityStatus") boolean showActivityStatus
     );
 
     @SqlUpdate("update study_activity"
@@ -158,6 +159,13 @@ public interface JdbiActivity extends SqlObject {
             + " where parent_activity_id = :parentActId"
             + "   and create_on_parent_creation is true")
     List<Long> findChildActivityIdsThatNeedCreation(@Bind("parentActId") long parentActivityId);
+
+    @SqlQuery("select act.*, (select study_activity_code from study_activity"
+            + "       where study_activity_id = act.parent_activity_id) as parent_activity_code"
+            + "  from study_activity as act "
+            + "where act.parent_activity_id = :parentActId")
+    @RegisterConstructorMapper(ActivityDto.class)
+    List<ActivityDto> findChildActivitiesByParentId(@Bind("parentActId") long parentActivityId);
 
     @SqlUpdate("update study_activity set parent_activity_id = :parentActId where study_activity_id = :id")
     int updateParentActivityId(@Bind("id") long studyActivityId, @Bind("parentActId") long parentActivityId);

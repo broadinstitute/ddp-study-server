@@ -260,4 +260,33 @@
     <include file="db-changes/seed/DDP-5749-completed-status.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/DDP-5771-nested-activity-can-delete-first-instance.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/DDP-5822-add-pdf-base-template-language.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/DDP-5973-add-confirm-placeholder-template-id.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/DDP-6032-add-studymailinglist-language.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/DDP-5096-custom-export-last-completed.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/seed/DDP-6597-add-dsm-notification-event-types-circadia.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/DDP-5808-create-file-question-mime-type-tables.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/DDP-6115-fix-guam-state-code.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/DDP-5750-new-enrollment-events.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/DDP-6278-create-update-custom-workflow-event-action-table.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/DDP-6281-add-picklist-render-mode-autocomplete.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/DDP-6501-study-default-auth0-connection.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/DDP-5910-always-generate-pdf.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/DDP-6306-add-activity-instance-creation-properties.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/DDP-5910-pdf-picklist-fields-mapping.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/DDP-6313-add-study-redirect-workflow.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/DDP-6338-workflow-check-each-instance.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/DDP-6490-form_activity_setting_snapshot_address_on_submit.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/seed/DDP-6689-add-dlmo-date-notification-event-types-circadia.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/DDP-6339-add-unique-validation-type.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/DDP-6983-activity-instance-creation-mutex-table.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/DDP-7004-auth0-logging-error-fix.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/DDP-7074-default-picklist-option.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/DDP-6520-singular-add-operator-id-to-age-up-candidate.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/DDP-7095-create-table-i18n-translation.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/activity-instance-select-question-type.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/DDP-7085-disabling-activity-block.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/DDP-7069-matrix-question-type.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/DDP-7292-activity-def-show-activity-status.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/DDP-7417-add-matrix-modal-columns.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/DDP-7306.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>

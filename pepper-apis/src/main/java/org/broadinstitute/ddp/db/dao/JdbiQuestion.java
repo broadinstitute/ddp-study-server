@@ -19,8 +19,10 @@ import org.broadinstitute.ddp.db.dto.DateQuestionDto;
 import org.broadinstitute.ddp.db.dto.FileQuestionDto;
 import org.broadinstitute.ddp.db.dto.NumericQuestionDto;
 import org.broadinstitute.ddp.db.dto.PicklistQuestionDto;
+import org.broadinstitute.ddp.db.dto.MatrixQuestionDto;
 import org.broadinstitute.ddp.db.dto.QuestionDto;
 import org.broadinstitute.ddp.db.dto.TextQuestionDto;
+import org.broadinstitute.ddp.db.dto.ActivityInstanceSelectQuestionDto;
 import org.broadinstitute.ddp.model.activity.definition.question.DatePicklistDef;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
 import org.jdbi.v3.core.mapper.RowMapper;
@@ -65,6 +67,10 @@ public interface JdbiQuestion extends SqlObject {
     Optional<QuestionDto> findLatestDtoByStudyIdAndQuestionStableId(
             @Bind("studyId") long studyId,
             @Bind("questionStableId") String questionStableId);
+
+    @SqlQuery("select study_activity_code from activity_instance_select_activity_code where"
+            + " activity_instance_select_question_id = :questionId")
+    List<String> getActivityCodesByActivityInstanceSelectQuestionId(@Bind("questionId") Long questionId);
 
     @UseStringTemplateSqlLocator
     @SqlQuery("queryLatestDtosByStudyIdAndQuestionStableIds")
@@ -158,7 +164,9 @@ public interface JdbiQuestion extends SqlObject {
     @RegisterConstructorMapper(FileQuestionDto.class)
     @RegisterConstructorMapper(NumericQuestionDto.class)
     @RegisterConstructorMapper(PicklistQuestionDto.class)
+    @RegisterConstructorMapper(MatrixQuestionDto.class)
     @RegisterConstructorMapper(TextQuestionDto.class)
+    @RegisterConstructorMapper(ActivityInstanceSelectQuestionDto.class)
     @RegisterConstructorMapper(CompositeQuestionDto.class)
     @RegisterRowMapper(DatePicklistDefMapper.class)
     @UseRowReducer(QuestionDtoReducer.class)
@@ -168,6 +176,28 @@ public interface JdbiQuestion extends SqlObject {
     default Optional<QuestionDto> findQuestionDtoById(long questionId) {
         try (var stream = findQuestionDtosByIds(Set.of(questionId))) {
             return stream.findFirst();
+        }
+    }
+
+    @SqlUpdate("insert into file_question (question_id, max_file_size) values (:questionId, :maxFileSize)")
+    int insertFileQuestion(@Bind("questionId") long questionId, @Bind("maxFileSize") long maxFileSize);
+
+    @SqlUpdate("insert into mime_type (mime_type_code) values (:mimeTypeCode)")
+    @GetGeneratedKeys
+    long insertMimeType(@Bind("mimeTypeCode") String mimeTypeCode);
+
+    @SqlUpdate("insert into file_question__mime_type (file_question_id, mime_type_id) values (:fileQuestionId, :mimeTypeId)")
+    int insertFileQuestionMimeType(@Bind("fileQuestionId") long fileQuestionId, @Bind("mimeTypeId") long mimeTypeId);
+
+    @SqlQuery("select mime_type_id from mime_type where mime_type_code = :mime_type_code")
+    Optional<Long> findMimeTypeIdByMimeType(@Bind("mime_type_code") String mimeTypeCode);
+
+    default long findMimeTypeIdOrInsert(String mimeType) {
+        Optional<Long> mimeTypeId = findMimeTypeIdByMimeType(mimeType);
+        if (mimeTypeId.isPresent()) {
+            return mimeTypeId.get();
+        } else {
+            return insertMimeType(mimeType);
         }
     }
 
@@ -195,8 +225,14 @@ public interface JdbiQuestion extends SqlObject {
                 case PICKLIST:
                     questionDto = view.getRow(PicklistQuestionDto.class);
                     break;
+                case MATRIX:
+                    questionDto = view.getRow(MatrixQuestionDto.class);
+                    break;
                 case TEXT:
                     questionDto = view.getRow(TextQuestionDto.class);
+                    break;
+                case ACTIVITY_INSTANCE_SELECT:
+                    questionDto = view.getRow(ActivityInstanceSelectQuestionDto.class);
                     break;
                 case COMPOSITE:
                     questionDto = view.getRow(CompositeQuestionDto.class);

@@ -17,5 +17,6 @@ public interface JdbiUserLegacyInfo extends SqlObject {
             @Bind("releaseSurveyAddress") String releaseSurveyAddress
     );
 
-
+    @SqlUpdate("delete from user_legacy_info where participant_user_id = :participantUserId")
+    int deleteByUserId(@Bind("participantUserId") long participantUserId);
 }

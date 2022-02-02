@@ -138,7 +138,8 @@ public interface FormActivityDao extends SqlObject {
                 activity.getMaxInstancesPerUser(), activity.getDisplayOrder(), activity.isWriteOnce(), activity.getEditTimeoutSec(),
                 activity.isOndemandTriggerAllowed(), activity.isExcludeFromDisplay(), activity.isExcludeStatusIconFromDisplay(),
                 activity.isAllowUnauthenticated(), activity.isFollowup(), activity.isHideInstances(),
-                activity.isCreateOnParentCreation(), activity.canDeleteInstances(), activity.getCanDeleteFirstInstance());
+                activity.isCreateOnParentCreation(), activity.canDeleteInstances(), activity.getCanDeleteFirstInstance(),
+                activity.showActivityStatus());
         activity.setActivityId(activityId);
         return activityId;
     }
@@ -225,7 +226,7 @@ public interface FormActivityDao extends SqlObject {
         getJdbiFormActivitySetting().insert(
                 activityId, activity.getListStyleHint(), introductionSectionId,
                 closingSectionId, revisionId, readonlyHintTemplateId, activity.getLastUpdated(), lastUpdatedTextTemplateId,
-                activity.shouldSnapshotSubstitutionsOnSubmit());
+                activity.shouldSnapshotSubstitutionsOnSubmit(), activity.shouldSnapshotAddressOnSubmit());
     }
 
     default FormActivityDef findDefByDtoAndVersion(ActivityDto activityDto, ActivityVersionDto revisionDto) {
@@ -253,7 +254,8 @@ public interface FormActivityDao extends SqlObject {
                 .setCreateOnParentCreation(activityDto.isCreateOnParentCreation())
                 .setCanDeleteInstances(activityDto.canDeleteInstances())
                 .setCanDeleteFirstInstance(activityDto.getCanDeleteFirstInstance())
-                .setIsFollowup(activityDto.isFollowup());
+                .setIsFollowup(activityDto.isFollowup())
+                .setShowActivityStatus(activityDto.showActivityStatus());
 
         List<Translation> names = new ArrayList<>();
         List<Translation> secondNames = new ArrayList<>();
@@ -296,6 +298,7 @@ public interface FormActivityDao extends SqlObject {
             builder.setListStyleHint(settingDto.getListStyleHint());
             builder.setLastUpdated(settingDto.getLastUpdated());
             builder.setSnapshotSubstitutionsOnSubmit(settingDto.shouldSnapshotSubstitutionsOnSubmit());
+            builder.setSnapshotAddressOnSubmit(settingDto.shouldSnapshotAddressOnSubmit());
 
             Map<Long, Template> templates = getTemplateDao().collectTemplatesByIdsAndTimestamp(settingDto.getTemplateIds(), revisionStart);
             builder.setLastUpdatedTextTemplate(templates.getOrDefault(settingDto.getLastUpdatedTextTemplateId(), null));

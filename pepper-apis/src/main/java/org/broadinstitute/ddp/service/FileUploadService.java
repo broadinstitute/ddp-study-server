@@ -1,5 +1,8 @@
 package org.broadinstitute.ddp.service;
 
+import static org.broadinstitute.ddp.service.FileUploadService.AuthorizeResultType.FILE_SIZE_EXCEEDS_MAXIMUM;
+import static org.broadinstitute.ddp.service.FileUploadService.AuthorizeResultType.MIME_TYPE_NOT_ALLOWED;
+
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -24,6 +27,7 @@ import org.broadinstitute.ddp.client.GoogleBucketClient;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.db.dao.FileUploadDao;
 import org.broadinstitute.ddp.exception.DDPException;
+import org.broadinstitute.ddp.interfaces.FileUploadSettings;
 import org.broadinstitute.ddp.model.files.FileScanResult;
 import org.broadinstitute.ddp.model.files.FileUpload;
 import org.broadinstitute.ddp.util.ConfigUtil;
@@ -45,7 +49,6 @@ public class FileUploadService {
     private final String uploadsBucket;
     private final String scannedBucket;
     private final String quarantineBucket;
-    private final long maxFileSizeBytes;
     private final int maxSignedUrlMins;
     private final long removalExpireTime;
     private final TimeUnit removalExpireUnit;
@@ -80,21 +83,18 @@ public class FileUploadService {
                 cfg.getString(ConfigFile.FileUploads.UPLOADS_BUCKET),
                 cfg.getString(ConfigFile.FileUploads.SCANNED_BUCKET),
                 cfg.getString(ConfigFile.FileUploads.QUARANTINE_BUCKET),
-                cfg.getLong(ConfigFile.FileUploads.MAX_FILE_SIZE_BYTES),
                 cfg.getInt(ConfigFile.FileUploads.MAX_SIGNED_URL_MINS),
                 removalExpireTime, removalExpireUnit, removalBatchSize);
     }
 
     public FileUploadService(ServiceAccountSigner signer, GoogleBucketClient storageClient,
                              String uploadsBucket, String scannedBucket, String quarantineBucket,
-                             long maxFileSizeBytes, int maxSignedUrlMins,
-                             long removalExpireTime, TimeUnit removalExpireUnit, int removalBatchSize) {
+                             int maxSignedUrlMins, long removalExpireTime, TimeUnit removalExpireUnit, int removalBatchSize) {
         this.signer = signer;
         this.storageClient = storageClient;
         this.uploadsBucket = uploadsBucket;
         this.scannedBucket = scannedBucket;
         this.quarantineBucket = quarantineBucket;
-        this.maxFileSizeBytes = maxFileSizeBytes;
         this.maxSignedUrlMins = maxSignedUrlMins;
         this.removalExpireTime = removalExpireTime;
         this.removalExpireUnit = removalExpireUnit;
@@ -106,10 +106,6 @@ public class FileUploadService {
 
     public String getUploadsBucket() {
         return uploadsBucket;
-    }
-
-    public long getMaxFileSizeBytes() {
-        return maxFileSizeBytes;
     }
 
     /**
@@ -135,6 +131,7 @@ public class FileUploadService {
      * @param studyId           the study to authorize upload for
      * @param operatorUserId    the operator who instantiated this request
      * @param participantUserId the participant who will own the file
+     * @param fileUploadSettings file upload parameters
      * @param blobPrefix        a prefix to prepend to blob name, e.g. for organizational purposes
      * @param mimeType          the user-reported mime type
      * @param fileName          the user-reported name for the file
@@ -143,14 +140,20 @@ public class FileUploadService {
      * @return authorization result
      */
     public AuthorizeResult authorizeUpload(Handle handle, long studyId, long operatorUserId, long participantUserId,
+                                           FileUploadSettings fileUploadSettings,
                                            String blobPrefix, String mimeType,
                                            String fileName, long fileSize, boolean resumable) {
-        if (fileSize > maxFileSizeBytes) {
-            return new AuthorizeResult(true, null, null);
+        if (fileSize > fileUploadSettings.getMaxFileSize()) {
+            return new AuthorizeResult(FILE_SIZE_EXCEEDS_MAXIMUM, null, null, fileUploadSettings);
+        }
+        if (mimeType != null && fileUploadSettings.getMimeTypes() != null && !fileUploadSettings.getMimeTypes().isEmpty()
+                && !fileUploadSettings.getMimeTypes().contains(mimeType)) {
+            return new AuthorizeResult(MIME_TYPE_NOT_ALLOWED, null, null, fileUploadSettings);
         }
 
         blobPrefix = blobPrefix != null ? blobPrefix + "/" : "";
         mimeType = mimeType != null ? mimeType : DEFAULT_MIME_TYPE;
+
         HttpMethod method = resumable ? HttpMethod.POST : HttpMethod.PUT;
         String uploadGuid = GuidUtils.randomFileUploadGuid();
         String blobName = blobPrefix + uploadGuid;
@@ -164,7 +167,7 @@ public class FileUploadService {
                 maxSignedUrlMins, TimeUnit.MINUTES,
                 method, headers);
 
-        return new AuthorizeResult(false, upload, signedURL);
+        return new AuthorizeResult(AuthorizeResultType.OK, upload, signedURL, fileUploadSettings);
     }
 
     // Convenience helper to lock file upload before verifying.
@@ -310,19 +313,31 @@ public class FileUploadService {
         OK,
     }
 
-    public static class AuthorizeResult {
-        private boolean exceededSize;
-        private FileUpload fileUpload;
-        private URL signedUrl;
+    public enum AuthorizeResultType {
+        FILE_SIZE_EXCEEDS_MAXIMUM,
+        MIME_TYPE_NOT_ALLOWED,
+        OK
+    }
 
-        public AuthorizeResult(boolean exceededSize, FileUpload fileUpload, URL signedUrl) {
-            this.exceededSize = exceededSize;
+    public static class AuthorizeResult {
+        private final AuthorizeResultType authorizeResultType;
+        private final FileUpload fileUpload;
+        private final URL signedUrl;
+        private final FileUploadSettings fileUploadSettings;
+
+        public AuthorizeResult(
+                AuthorizeResultType authorizeResultType,
+                FileUpload fileUpload,
+                URL signedUrl,
+                FileUploadSettings fileUploadSettings) {
+            this.authorizeResultType = authorizeResultType;
             this.fileUpload = fileUpload;
             this.signedUrl = signedUrl;
+            this.fileUploadSettings = fileUploadSettings;
         }
 
-        public boolean isExceededSize() {
-            return exceededSize;
+        public AuthorizeResultType getAuthorizeResultType() {
+            return authorizeResultType;
         }
 
         public FileUpload getFileUpload() {
@@ -331,6 +346,10 @@ public class FileUploadService {
 
         public URL getSignedUrl() {
             return signedUrl;
+        }
+
+        public FileUploadSettings getFileUploadSettings() {
+            return fileUploadSettings;
         }
     }
 }

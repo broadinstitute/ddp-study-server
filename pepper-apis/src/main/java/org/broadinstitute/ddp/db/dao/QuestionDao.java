@@ -1,6 +1,7 @@
 package org.broadinstitute.ddp.db.dao;
 
 import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toMap;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -12,6 +13,7 @@ import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.broadinstitute.ddp.db.ActivityDefStore;
@@ -28,8 +30,13 @@ import org.broadinstitute.ddp.db.dto.NumericQuestionDto;
 import org.broadinstitute.ddp.db.dto.PicklistGroupDto;
 import org.broadinstitute.ddp.db.dto.PicklistOptionDto;
 import org.broadinstitute.ddp.db.dto.PicklistQuestionDto;
+import org.broadinstitute.ddp.db.dto.MatrixGroupDto;
+import org.broadinstitute.ddp.db.dto.MatrixOptionDto;
+import org.broadinstitute.ddp.db.dto.MatrixQuestionDto;
+import org.broadinstitute.ddp.db.dto.MatrixRowDto;
 import org.broadinstitute.ddp.db.dto.QuestionDto;
 import org.broadinstitute.ddp.db.dto.TextQuestionDto;
+import org.broadinstitute.ddp.db.dto.ActivityInstanceSelectQuestionDto;
 import org.broadinstitute.ddp.db.dto.TypedQuestionId;
 import org.broadinstitute.ddp.db.dto.validation.RuleDto;
 import org.broadinstitute.ddp.model.activity.definition.QuestionBlockDef;
@@ -43,11 +50,17 @@ import org.broadinstitute.ddp.model.activity.definition.question.NumericQuestion
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistGroupDef;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistOptionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistQuestionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.MatrixGroupDef;
+import org.broadinstitute.ddp.model.activity.definition.question.MatrixOptionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.MatrixQuestionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.MatrixRowDef;
 import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.TextQuestionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.ActivityInstanceSelectQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.activity.definition.validation.RequiredRuleDef;
 import org.broadinstitute.ddp.model.activity.definition.validation.RuleDef;
+import org.broadinstitute.ddp.model.activity.instance.answer.ActivityInstanceSelectAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.AgreementAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.BoolAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.CompositeAnswer;
@@ -55,6 +68,7 @@ import org.broadinstitute.ddp.model.activity.instance.answer.DateAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.FileAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.NumericAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.PicklistAnswer;
+import org.broadinstitute.ddp.model.activity.instance.answer.MatrixAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
 import org.broadinstitute.ddp.model.activity.instance.question.AgreementQuestion;
 import org.broadinstitute.ddp.model.activity.instance.question.BoolQuestion;
@@ -66,8 +80,13 @@ import org.broadinstitute.ddp.model.activity.instance.question.NumericQuestion;
 import org.broadinstitute.ddp.model.activity.instance.question.PicklistGroup;
 import org.broadinstitute.ddp.model.activity.instance.question.PicklistOption;
 import org.broadinstitute.ddp.model.activity.instance.question.PicklistQuestion;
+import org.broadinstitute.ddp.model.activity.instance.question.MatrixGroup;
+import org.broadinstitute.ddp.model.activity.instance.question.MatrixOption;
+import org.broadinstitute.ddp.model.activity.instance.question.MatrixQuestion;
+import org.broadinstitute.ddp.model.activity.instance.question.MatrixRow;
 import org.broadinstitute.ddp.model.activity.instance.question.Question;
 import org.broadinstitute.ddp.model.activity.instance.question.TextQuestion;
+import org.broadinstitute.ddp.model.activity.instance.question.ActivityInstanceSelectQuestion;
 import org.broadinstitute.ddp.model.activity.instance.validation.Rule;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
 import org.broadinstitute.ddp.model.activity.types.DateFieldType;
@@ -76,6 +95,7 @@ import org.broadinstitute.ddp.model.activity.types.PicklistRenderMode;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
 import org.broadinstitute.ddp.model.activity.types.SuggestionType;
 import org.broadinstitute.ddp.model.activity.types.TemplateType;
+import org.broadinstitute.ddp.util.FileUploadValidator;
 import org.broadinstitute.ddp.util.QuestionUtil;
 import org.jdbi.v3.sqlobject.CreateSqlObject;
 import org.jdbi.v3.sqlobject.SqlObject;
@@ -109,6 +129,12 @@ public interface QuestionDao extends SqlObject {
     JdbiTextQuestionSuggestion getJdbiTextQuestionSuggestion();
 
     @CreateSqlObject
+    JdbiActivityInstanceSelectQuestion getJdbiActivityInstanceSelectQuestion();
+
+    @CreateSqlObject
+    JdbiActivityInstanceSelectActivityCodes getJdbiActivityInstanceSelectActivityCodes();
+
+    @CreateSqlObject
     JdbiDateQuestion getJdbiDateQuestion();
 
     @CreateSqlObject
@@ -128,6 +154,12 @@ public interface QuestionDao extends SqlObject {
 
     @CreateSqlObject
     JdbiPicklistQuestion getJdbiPicklistQuestion();
+
+    @CreateSqlObject
+    JdbiMatrixQuestion getJdbiMatrixQuestion();
+
+    @CreateSqlObject
+    JdbiMatrixGroup getJdbiMatrixGroup();
 
     @CreateSqlObject
     JdbiPicklistOption getJdbiPicklistOption();
@@ -155,6 +187,9 @@ public interface QuestionDao extends SqlObject {
 
     @CreateSqlObject
     PicklistQuestionDao getPicklistQuestionDao();
+
+    @CreateSqlObject
+    MatrixQuestionDao getMatrixQuestionDao();
 
     @CreateSqlObject
     JdbiAgreementQuestion getJdbiAgreementQuestion();
@@ -353,8 +388,15 @@ public interface QuestionDao extends SqlObject {
             case PICKLIST:
                 question = getPicklistQuestion((PicklistQuestionDto) dto, activityInstanceGuid, answerIds, untypedRules);
                 break;
+            case MATRIX:
+                question = getMatrixQuestion((MatrixQuestionDto) dto, activityInstanceGuid, answerIds, untypedRules);
+                break;
             case TEXT:
                 question = getTextQuestion((TextQuestionDto) dto, activityInstanceGuid, answerIds, untypedRules);
+                break;
+            case ACTIVITY_INSTANCE_SELECT:
+                question = getActivityInstanceSelectQuestion((ActivityInstanceSelectQuestionDto) dto, activityInstanceGuid,
+                        answerIds, untypedRules);
                 break;
             case DATE:
                 question = getDateQuestion((DateQuestionDto) dto, activityInstanceGuid, answerIds, untypedRules);
@@ -461,7 +503,7 @@ public interface QuestionDao extends SqlObject {
             if (CollectionUtils.isEmpty(optionDto.getNestedOptions())) {
                 option = new PicklistOption(optionDto.getStableId(),
                         optionDto.getOptionLabelTemplateId(), optionDto.getTooltipTemplateId(), optionDto.getDetailLabelTemplateId(),
-                        optionDto.getAllowDetails(), optionDto.isExclusive());
+                        optionDto.getAllowDetails(), optionDto.isExclusive(), optionDto.isDefault());
             } else {
                 //add nested options
                 List<PicklistOption> nestedOptions = new ArrayList<>();
@@ -469,12 +511,13 @@ public interface QuestionDao extends SqlObject {
                     nestedOptions.add(new PicklistOption(nestedOptionDto.getStableId(),
                             nestedOptionDto.getOptionLabelTemplateId(), nestedOptionDto.getTooltipTemplateId(),
                             nestedOptionDto.getDetailLabelTemplateId(), nestedOptionDto.getAllowDetails(),
-                            nestedOptionDto.isExclusive()));
+                            nestedOptionDto.isExclusive(), nestedOptionDto.isDefault()));
                 });
 
                 option = new PicklistOption(optionDto.getStableId(),
                         optionDto.getOptionLabelTemplateId(), optionDto.getTooltipTemplateId(), optionDto.getDetailLabelTemplateId(),
-                        optionDto.getAllowDetails(), optionDto.isExclusive(), optionDto.getNestedOptionsTemplateId(), nestedOptions);
+                        optionDto.getAllowDetails(), optionDto.isExclusive(), optionDto.isDefault(), optionDto.getNestedOptionsTemplateId(),
+                        nestedOptions);
             }
             allOptions.add(option);
         }
@@ -486,7 +529,7 @@ public interface QuestionDao extends SqlObject {
             for (PicklistOptionDto optionDto : optionDtos) {
                 allOptions.add(new PicklistOption(groupDto.getStableId(), optionDto.getStableId(),
                         optionDto.getOptionLabelTemplateId(), optionDto.getTooltipTemplateId(), optionDto.getDetailLabelTemplateId(),
-                        optionDto.getAllowDetails(), optionDto.isExclusive()));
+                        optionDto.getAllowDetails(), optionDto.isExclusive(), optionDto.isDefault()));
             }
         }
 
@@ -500,6 +543,76 @@ public interface QuestionDao extends SqlObject {
                 dto.getRenderMode(),
                 dto.getLabelTemplateId(),
                 allOptions, groups);
+    }
+
+    /**
+     * Build a matrix question.
+     *
+     * @param dto                  the question dto
+     * @param activityInstanceGuid the activity instance guid
+     * @param answerIds            list of base answer ids to question (may be empty)
+     * @param untypedRules         list of untyped validations for question (may be empty)
+     * @return matrix question object
+     */
+    default MatrixQuestion getMatrixQuestion(MatrixQuestionDto dto,
+                                               String activityInstanceGuid,
+                                               List<Long> answerIds,
+                                               List<Rule> untypedRules) {
+        AnswerDao answerDao = getAnswerDao();
+        List<MatrixAnswer> picklistAnswers = answerIds.stream()
+                .map(answerId -> (MatrixAnswer) answerDao.findAnswerById(answerId)
+                        .orElseThrow(() -> new DaoException("Could not find matrix answer with id " + answerId)))
+                .collect(toList());
+
+        List<Rule<MatrixAnswer>> rules = untypedRules
+                .stream()
+                .map(rule -> (Rule<MatrixAnswer>) rule)
+                .collect(toList());
+
+        ActivityInstanceDto instanceDto = getHandle().attach(JdbiActivityInstance.class)
+                .getByActivityInstanceGuid(activityInstanceGuid)
+                .orElseThrow(() -> new DaoException("Could not find activity instance using guid " + activityInstanceGuid
+                        + " while getting matrix question " + dto.getStableId()));
+        ActivityVersionDto versionDto = ActivityDefStore.getInstance()
+                .findVersionDto(getHandle(), instanceDto.getActivityId(), instanceDto.getCreatedAtMillis())
+                .orElseThrow(() -> new DaoException(String.format(
+                        "Could not find activity version for instance with guid=%s using"
+                                + " activityId=%d and createdAt=%d while getting picklist question %s",
+                        activityInstanceGuid, instanceDto.getActivityId(), instanceDto.getCreatedAtMillis(), dto.getStableId())));
+
+        MatrixQuestionDao.GroupOptionRowDtos container = getMatrixQuestionDao()
+                .findOrderedGroupOptionRowDtos(dto.getId(), versionDto.getRevStart());
+
+        List<MatrixGroup> groups = new ArrayList<>();
+        List<MatrixOption> options = new ArrayList<>();
+        List<MatrixRow> questions = new ArrayList<>();
+
+        for (MatrixOptionDto optionDto : container.getOptions()) {
+            options.add(new MatrixOption(optionDto.getStableId(), optionDto.getOptionLabelTemplateId(),
+                    optionDto.getTooltipTemplateId(),
+                    getJdbiMatrixGroup().findGroupCodeById(optionDto.getGroupId()),
+                    optionDto.isExclusive()));
+        }
+
+        for (MatrixRowDto questionDto : container.getRows()) {
+            questions.add(new MatrixRow(questionDto.getStableId(), questionDto.getQuestionLabelTemplateId(),
+                    questionDto.getTooltipTemplateId()));
+        }
+
+        for (MatrixGroupDto groupDto : container.getGroups()) {
+            if (groupDto.getStableId() == null) {
+                continue;
+            }
+            groups.add(new MatrixGroup(groupDto.getStableId(), groupDto.getNameTemplateId()));
+        }
+
+        boolean isReadonly = QuestionUtil.isReadonly(getHandle(), dto, activityInstanceGuid);
+
+        return new MatrixQuestion(dto.getStableId(), dto.getPromptTemplateId(),
+                dto.isRestricted(), dto.isRenderModal(), dto.isDeprecated(), isReadonly, dto.getTooltipTemplateId(),
+                dto.getAdditionalInfoHeaderTemplateId(), dto.getAdditionalInfoFooterTemplateId(),
+                dto.getModalTemplateId(), picklistAnswers,
+                rules, dto.getSelectMode(), groups, options, questions);
     }
 
     /**
@@ -535,6 +648,7 @@ public interface QuestionDao extends SqlObject {
 
         return new TextQuestion(dto.getStableId(), dto.getPromptTemplateId(),
                 dto.getPlaceholderTemplateId(),
+                dto.getConfirmPlaceholderTemplateId(),
                 dto.isRestricted(),
                 dto.isDeprecated(),
                 isReadonly,
@@ -549,6 +663,46 @@ public interface QuestionDao extends SqlObject {
                 dto.isConfirmEntry(),
                 dto.getConfirmPromptTemplateId(),
                 dto.getMismatchMessageTemplateId());
+    }
+
+    /**
+     * Build an activity instance select question.
+     *
+     * @param dto                  the question dto
+     * @param activityInstanceGuid the activity instance guid
+     * @param answerIds            list of base answer ids to question (may be empty)
+     * @param untypedRules         list of untyped validations for question (may be empty)
+     * @return activity instance select question object
+     */
+    default ActivityInstanceSelectQuestion getActivityInstanceSelectQuestion(ActivityInstanceSelectQuestionDto dto,
+                                                                             String activityInstanceGuid,
+                                                                             List<Long> answerIds,
+                                                                             List<Rule> untypedRules) {
+        AnswerDao answerDao = getAnswerDao();
+        List<ActivityInstanceSelectAnswer> activityInstanceSelectAnswers = answerIds.stream()
+                .map(answerId -> (ActivityInstanceSelectAnswer) answerDao.findAnswerById(answerId)
+                        .orElseThrow(() -> new DaoException("Could not find the Activity Instance Select answer with id "
+                                + answerId)))
+                .collect(toList());
+
+        List<Rule<ActivityInstanceSelectAnswer>> rules = untypedRules
+                .stream()
+                .map(rule -> (Rule<ActivityInstanceSelectAnswer>) rule)
+                .collect(toList());
+
+        boolean isReadonly = QuestionUtil.isReadonly(getHandle(), dto, activityInstanceGuid);
+        List<String> activityCodes = getJdbiQuestion().getActivityCodesByActivityInstanceSelectQuestionId(dto.getId());
+
+        return new ActivityInstanceSelectQuestion(dto.getStableId(), dto.getPromptTemplateId(),
+                dto.isRestricted(),
+                dto.isDeprecated(),
+                isReadonly,
+                dto.getTooltipTemplateId(),
+                dto.getAdditionalInfoHeaderTemplateId(),
+                dto.getAdditionalInfoFooterTemplateId(),
+                activityInstanceSelectAnswers,
+                rules,
+                activityCodes);
     }
 
     /**
@@ -639,7 +793,9 @@ public interface QuestionDao extends SqlObject {
                 dto.getAdditionalInfoHeaderTemplateId(),
                 dto.getAdditionalInfoFooterTemplateId(),
                 answers,
-                rules);
+                rules,
+                dto.getMaxFileSize(),
+                dto.getMimeTypes());
     }
 
     /**
@@ -676,8 +832,7 @@ public interface QuestionDao extends SqlObject {
                 dto.getAdditionalInfoHeaderTemplateId(),
                 dto.getAdditionalInfoFooterTemplateId(),
                 answers,
-                rules,
-                dto.getNumericType());
+                rules);
     }
 
     /**
@@ -791,6 +946,9 @@ public interface QuestionDao extends SqlObject {
             case TEXT:
                 insertQuestion(activityId, (TextQuestionDef) question, revisionId);
                 break;
+            case ACTIVITY_INSTANCE_SELECT:
+                insertQuestion(activityId, (ActivityInstanceSelectQuestionDef) question, revisionId);
+                break;
             case DATE:
                 insertQuestion(activityId, (DateQuestionDef) question, revisionId);
                 break;
@@ -802,6 +960,9 @@ public interface QuestionDao extends SqlObject {
                 break;
             case PICKLIST:
                 insertQuestion(activityId, (PicklistQuestionDef) question, revisionId);
+                break;
+            case MATRIX:
+                insertQuestion(activityId, (MatrixQuestionDef) question, revisionId);
                 break;
             case COMPOSITE:
                 insertQuestion(activityId, (CompositeQuestionDef) question, revisionId);
@@ -831,6 +992,9 @@ public interface QuestionDao extends SqlObject {
             case TEXT:
                 disableTextQuestion(qid.getId(), meta);
                 break;
+            case ACTIVITY_INSTANCE_SELECT:
+                disableActivityInstanceSelectQuestion(qid.getId(), meta);
+                break;
             case DATE:
                 disableDateQuestion(qid.getId(), meta);
                 break;
@@ -842,6 +1006,9 @@ public interface QuestionDao extends SqlObject {
                 break;
             case PICKLIST:
                 disablePicklistQuestion(qid.getId(), meta);
+                break;
+            case MATRIX:
+                disableMatrixQuestion(qid.getId(), meta);
                 break;
             case AGREEMENT:
                 disableAgreementQuestion(qid.getId(), meta);
@@ -977,25 +1144,17 @@ public interface QuestionDao extends SqlObject {
     default void insertQuestion(long activityId, TextQuestionDef textQuestion, long revisionId) {
         insertBaseQuestion(activityId, textQuestion, revisionId);
         TemplateDao templateDao = getTemplateDao();
-        Long placeholderTemplateId = null;
-        if (textQuestion.getPlaceholderTemplate() != null) {
-            placeholderTemplateId = templateDao.insertTemplate(textQuestion.getPlaceholderTemplate(), revisionId);
-        }
 
-        Long confirmEntryTemplateId = null;
-        if (textQuestion.getConfirmPromptTemplate() != null) {
-            confirmEntryTemplateId = templateDao.insertTemplate(textQuestion.getConfirmPromptTemplate(), revisionId);
-        }
-
-        Long mismatchMessageTemplateId = null;
-        if (textQuestion.getMismatchMessageTemplate() != null) {
-            mismatchMessageTemplateId = templateDao.insertTemplate(textQuestion.getMismatchMessageTemplate(), revisionId);
-        }
+        Long placeholderTemplateId = templateDao.insertTemplateIfNotNull(textQuestion.getPlaceholderTemplate(), revisionId);
+        Long confirmPlaceholderTemplateId = templateDao.insertTemplateIfNotNull(textQuestion.getConfirmPlaceholderTemplate(), revisionId);
+        Long confirmEntryTemplateId = templateDao.insertTemplateIfNotNull(textQuestion.getConfirmPromptTemplate(), revisionId);
+        Long mismatchMessageTemplateId = templateDao.insertTemplateIfNotNull(textQuestion.getMismatchMessageTemplate(), revisionId);
 
         int numInserted = getJdbiTextQuestion().insert(textQuestion.getQuestionId(),
                 textQuestion.getInputType(),
                 textQuestion.getSuggestionType(),
                 placeholderTemplateId,
+                confirmPlaceholderTemplateId,
                 textQuestion.isConfirmEntry(),
                 confirmEntryTemplateId,
                 mismatchMessageTemplateId);
@@ -1004,15 +1163,42 @@ public interface QuestionDao extends SqlObject {
         }
 
         if (CollectionUtils.isNotEmpty(textQuestion.getSuggestions())) {
-            int displayOrder = 0;
-            for (String suggestion : textQuestion.getSuggestions()) {
-                displayOrder += DISPLAY_ORDER_GAP;
-                numInserted = getJdbiTextQuestionSuggestion().insert(textQuestion.getQuestionId(),
-                        suggestion, displayOrder);
-                if (numInserted != 1) {
-                    throw new DaoException("Inserted " + numInserted + " for text question: " + textQuestion.getStableId()
-                            + "  suggestion: " + suggestion);
-                }
+            int[] ids = getJdbiTextQuestionSuggestion().insert(textQuestion.getQuestionId(), textQuestion.getSuggestions(),
+                    Stream.iterate(0, i -> i + DISPLAY_ORDER_GAP).iterator());
+            if (ids.length != textQuestion.getSuggestions().size()) {
+                throw new DaoException("Inserted " + numInserted + " suggestions" + textQuestion.getStableId());
+            }
+        }
+    }
+
+    /**
+     * Create new activity instance select question by inserting common data and text specific data.
+     *
+     * @param activityId      the associated activity
+     * @param activityInstanceSelectQuestion the question definition, without generated things like ids
+     * @param revisionId      the revision to use, will be shared by all created data
+     */
+    default void insertQuestion(long activityId, ActivityInstanceSelectQuestionDef activityInstanceSelectQuestion,
+                                long revisionId) {
+        insertBaseQuestion(activityId, activityInstanceSelectQuestion, revisionId);
+
+        int numInserted = getJdbiActivityInstanceSelectQuestion().insert(activityInstanceSelectQuestion.getQuestionId());
+
+        if (numInserted != 1) {
+            throw new DaoException("Expected 1 activity instance select question with stableId "
+                    + activityInstanceSelectQuestion.getStableId()
+                    + " to be inserted, but " + numInserted + " inserted instead");
+        }
+
+        if (CollectionUtils.isNotEmpty(activityInstanceSelectQuestion.getActivityCodes())) {
+            int[] ids = getJdbiActivityInstanceSelectActivityCodes().insert(activityInstanceSelectQuestion.getQuestionId(),
+                    activityInstanceSelectQuestion.getActivityCodes(),
+                    Stream.iterate(0, i -> i + DISPLAY_ORDER_GAP).iterator());
+            if (ids.length != activityInstanceSelectQuestion.getActivityCodes().size()) {
+                throw new DaoException("Expected " + activityInstanceSelectQuestion.getActivityCodes().size()
+                        + " activity codes to be inserted for activity instance select questions with stableId "
+                        + activityInstanceSelectQuestion.getStableId()
+                        + " but " + ids.length + " inserted instead");
             }
         }
     }
@@ -1086,12 +1272,21 @@ public interface QuestionDao extends SqlObject {
     /**
      * Create new file question by inserting common data and file question specific data.
      *
+     *
      * @param activityId   the associated activity
      * @param fileQuestion the file question definition, without generated things like ids
      * @param revisionId   the revision to use, will be shared by all created data
      */
     default void insertQuestion(long activityId, FileQuestionDef fileQuestion, long revisionId) {
         insertBaseQuestion(activityId, fileQuestion, revisionId);
+        FileUploadValidator.validateFileMaxSize(fileQuestion.getMaxFileSize());
+        JdbiQuestion jdbiQuestion = getJdbiQuestion();
+        jdbiQuestion.insertFileQuestion(fileQuestion.getQuestionId(), fileQuestion.getMaxFileSize());
+        Collection<String> mimeTypes = fileQuestion.getMimeTypes();
+        for (String mimeType : mimeTypes) {
+            long mimeTypeId = jdbiQuestion.findMimeTypeIdOrInsert(mimeType);
+            jdbiQuestion.insertFileQuestionMimeType(fileQuestion.getQuestionId(), mimeTypeId);
+        }
     }
 
     /**
@@ -1110,10 +1305,50 @@ public interface QuestionDao extends SqlObject {
             placeholderTemplateId = templateDao.insertTemplate(questionDef.getPlaceholderTemplate(), revisionId);
         }
 
-        int numInserted = getJdbiNumericQuestion().insert(questionDef.getQuestionId(), questionDef.getNumericType(), placeholderTemplateId);
+        int numInserted = getJdbiNumericQuestion().insert(questionDef.getQuestionId(), placeholderTemplateId);
         if (numInserted != 1) {
             throw new DaoException("Inserted " + numInserted + " for numeric question " + questionDef.getStableId());
         }
+    }
+
+    /**
+     * Create new matrix question by inserting common data and matrix specific data.
+     *
+     * @param activityId the associated activity
+     * @param matrix   the question definition, without generated things like ids
+     * @param revisionId the revision to use, will be shared by all created data
+     */
+    default void insertQuestion(long activityId, MatrixQuestionDef matrix, long revisionId) {
+
+        if (matrix.getRows().isEmpty() || matrix.getOptions().isEmpty()) {
+            throw new IllegalStateException(String.format(
+                    "matrix question %s need to have at least one option and one question",
+                    matrix.getStableId()));
+        }
+
+        insertBaseQuestion(activityId, matrix, revisionId);
+
+        TemplateDao templateDao = getTemplateDao();
+        Long modalTemplateId = null;
+        if (matrix.getModalTemplate() != null) {
+            modalTemplateId = templateDao.insertTemplate(matrix.getModalTemplate(), revisionId);
+        }
+
+        int numInserted = getJdbiMatrixQuestion().insert(matrix.getQuestionId(), matrix.getSelectMode(),
+                matrix.isRenderModal(), modalTemplateId);
+
+        if (numInserted != 1) {
+            throw new DaoException("Inserted " + numInserted + " for picklist question " + matrix.getStableId());
+        }
+
+        Map<String, Long> groupMap = new HashMap<>();
+        if (!matrix.getGroups().isEmpty()) {
+            getMatrixQuestionDao().insertGroups(matrix.getQuestionId(), matrix.getGroups(), revisionId);
+            groupMap = matrix.getGroups().stream().collect(toMap(MatrixGroupDef::getStableId, MatrixGroupDef::getGroupId));
+        }
+
+        getMatrixQuestionDao().insertOptions(matrix.getQuestionId(), matrix.getOptions(), groupMap, revisionId);
+        getMatrixQuestionDao().insertRowsQuestions(matrix.getQuestionId(), matrix.getRows(), revisionId);
     }
 
     /**
@@ -1242,6 +1477,25 @@ public interface QuestionDao extends SqlObject {
         if (placeholderTemplateId != null) {
             tmplDao.disableTemplate(placeholderTemplateId, meta);
         }
+        Long confirmPlaceholderTemplateId = question.getConfirmPlaceholderTemplateId();
+        if (confirmPlaceholderTemplateId != null) {
+            tmplDao.disableTemplate(confirmPlaceholderTemplateId, meta);
+        }
+    }
+
+    /**
+     * End currently active activity instance select question by terminating common data and text specific data.
+     *
+     * @param questionId the question id
+     * @param meta       the revision metadata used for terminating data
+     */
+    default void disableActivityInstanceSelectQuestion(long questionId, RevisionMetadata meta) {
+        QuestionDto dto = getJdbiQuestion().findQuestionDtoById(questionId).orElse(null);
+        ActivityInstanceSelectQuestionDto question = dto == null ? null : (ActivityInstanceSelectQuestionDto) dto;
+        if (question == null || question.getRevisionEnd() != null) {
+            throw new NoSuchElementException("Cannot find active text question with id " + questionId);
+        }
+        disableBaseQuestion(question, meta);
     }
 
     /**
@@ -1315,6 +1569,24 @@ public interface QuestionDao extends SqlObject {
         getPicklistQuestionDao().disableOptions(questionId, meta);
     }
 
+    /**
+     * End currently active matrix question by terminating common data and matrix specific data.
+     *
+     * @param questionId the question id
+     * @param meta       the revision metadata used for terminating data
+     */
+    default void disableMatrixQuestion(long questionId, RevisionMetadata meta) {
+
+        QuestionDto dto = getJdbiQuestion().findQuestionDtoById(questionId).orElse(null);
+        MatrixQuestionDto matrixQuestion = dto == null ? null : (MatrixQuestionDto) dto;
+
+        if (matrixQuestion == null || matrixQuestion.getRevisionEnd() != null) {
+            throw new NoSuchElementException("Cannot find active matrix question with id " + questionId);
+        }
+
+        disableBaseQuestion(matrixQuestion, meta);
+        getMatrixQuestionDao().disableOptionsGroupsRowQuestions(questionId, meta);
+    }
 
     /**
      * End currently active agreement question by terminating common data and agreement question specific data Since the
@@ -1379,6 +1651,7 @@ public interface QuestionDao extends SqlObject {
             blockDef.setBlockId(blockDto.getId());
             blockDef.setBlockGuid(blockDto.getGuid());
             blockDef.setShownExpr(blockDto.getShownExpr());
+            blockDef.setEnabledExpr(blockDto.getEnabledExpr());
 
             blockDefs.put(blockDto.getId(), blockDef);
         }
@@ -1405,6 +1678,7 @@ public interface QuestionDao extends SqlObject {
 
         Map<Long, QuestionDef> questionDefs = new HashMap<>();
         List<PicklistQuestionDto> picklistDtos = new ArrayList<>();
+        List<MatrixQuestionDto> matrixDtos = new ArrayList<>();
         List<CompositeQuestionDto> compositeDtos = new ArrayList<>();
 
         for (var questionDto : questionDtos) {
@@ -1435,8 +1709,16 @@ public interface QuestionDao extends SqlObject {
                 case PICKLIST:
                     picklistDtos.add((PicklistQuestionDto) questionDto);
                     break;
+                case MATRIX:
+                    matrixDtos.add((MatrixQuestionDto) questionDto);
+                    break;
                 case TEXT:
                     questionDef = buildTextQuestionDef((TextQuestionDto) questionDto, ruleDefs, templates);
+                    questionDefs.put(questionId, questionDef);
+                    break;
+                case ACTIVITY_INSTANCE_SELECT:
+                    questionDef = buildActivityInstanceSelectQuestionDef((ActivityInstanceSelectQuestionDto) questionDto,
+                            ruleDefs, templates);
                     questionDefs.put(questionId, questionDef);
                     break;
                 case COMPOSITE:
@@ -1448,6 +1730,7 @@ public interface QuestionDao extends SqlObject {
         }
 
         questionDefs.putAll(collectPicklistQuestionDefs(picklistDtos, questionIdToRuleDefs, templates, timestamp));
+        questionDefs.putAll(collectMatrixQuestionDefs(matrixDtos, questionIdToRuleDefs, templates, timestamp));
         questionDefs.putAll(collectCompositeQuestionDefs(compositeDtos, questionIdToRuleDefs, templates, timestamp));
 
         return questionDefs;
@@ -1485,6 +1768,43 @@ public interface QuestionDao extends SqlObject {
         }
 
         return picklistDefs;
+    }
+
+    private Map<Long, MatrixQuestionDef> collectMatrixQuestionDefs(Collection<MatrixQuestionDto> matrixDtos,
+                                                                   Map<Long, List<RuleDef>> questionIdToRuleDefs,
+                                                                   Map<Long, Template> templates,
+                                                                   long timestamp) {
+        Set<Long> questionIds = new HashSet<>();
+        for (var matrixDto : matrixDtos) {
+            questionIds.add(matrixDto.getId());
+        }
+
+        Map<Long, MatrixQuestionDao.GroupOptionRowDtos> questionIdToContainer = getMatrixQuestionDao()
+                    .findOrderedGroupOptionRowDtos(questionIds, timestamp);
+
+        Set<Long> templateIds = new HashSet<>();
+
+        for (var matrixDto : matrixDtos) {
+            templateIds.addAll(matrixDto.getTemplateIds());
+        }
+
+        for (var container : questionIdToContainer.values()) {
+            templateIds.addAll(container.getTemplateIds());
+        }
+
+        Map<Long, Template> matrixTemplates = getTemplateDao().collectTemplatesByIdsAndTimestamp(templateIds, timestamp);
+        templates.putAll(matrixTemplates);
+
+        Map<Long, MatrixQuestionDef> matrixDefs = new HashMap<>();
+        for (var matrixDto : matrixDtos) {
+            long questionId = matrixDto.getId();
+            List<RuleDef> ruleDefs = questionIdToRuleDefs.getOrDefault(questionId, new ArrayList<>());
+            var container = questionIdToContainer.get(questionId);
+            var matrixDef = buildMatrixQuestionDef(matrixDto, container, ruleDefs, templates);
+            matrixDefs.put(questionId, matrixDef);
+        }
+
+        return matrixDefs;
     }
 
     private Map<Long, CompositeQuestionDef> collectCompositeQuestionDefs(Collection<CompositeQuestionDto> compositeDtos,
@@ -1587,7 +1907,9 @@ public interface QuestionDao extends SqlObject {
                                                  List<RuleDef> ruleDefs,
                                                  Map<Long, Template> templates) {
         Template prompt = templates.get(dto.getPromptTemplateId());
-        var builder = FileQuestionDef.builder(dto.getStableId(), prompt);
+        var builder = FileQuestionDef.builder(dto.getStableId(), prompt)
+                .setMaxFileSize(dto.getMaxFileSize())
+                .setMimeTypes(dto.getMimeTypes());
         configureBaseQuestionDef(builder, dto, ruleDefs, templates);
         return builder.build();
     }
@@ -1598,7 +1920,7 @@ public interface QuestionDao extends SqlObject {
         Template prompt = templates.get(dto.getPromptTemplateId());
         Template placeholderTemplate = templates.getOrDefault(dto.getPlaceholderTemplateId(), null);
         var builder = NumericQuestionDef
-                .builder(dto.getNumericType(), dto.getStableId(), prompt)
+                .builder(dto.getStableId(), prompt)
                 .setPlaceholderTemplate(placeholderTemplate);
         configureBaseQuestionDef(builder, dto, ruleDefs, templates);
         return builder.build();
@@ -1609,6 +1931,7 @@ public interface QuestionDao extends SqlObject {
                                                  Map<Long, Template> templates) {
         Template prompt = templates.get(dto.getPromptTemplateId());
         Template placeholderTemplate = templates.getOrDefault(dto.getPlaceholderTemplateId(), null);
+        Template confirmPlaceholderTemplate = templates.getOrDefault(dto.getConfirmPlaceholderTemplateId(), null);
         Template confirmPromptTemplate = templates.getOrDefault(dto.getConfirmPromptTemplateId(), null);
         Template mismatchMessageTemplate = templates.getOrDefault(dto.getMismatchMessageTemplateId(), null);
 
@@ -1621,10 +1944,27 @@ public interface QuestionDao extends SqlObject {
                 .builder(dto.getInputType(), dto.getStableId(), prompt)
                 .setSuggestionType(dto.getSuggestionType())
                 .setPlaceholderTemplate(placeholderTemplate)
+                .setConfirmPlaceholderTemplate(confirmPlaceholderTemplate)
                 .setConfirmEntry(dto.isConfirmEntry())
                 .setConfirmPromptTemplate(confirmPromptTemplate)
                 .setMismatchMessage(mismatchMessageTemplate)
                 .addSuggestions(suggestions);
+        configureBaseQuestionDef(builder, dto, ruleDefs, templates);
+
+        return builder.build();
+    }
+
+    private ActivityInstanceSelectQuestionDef buildActivityInstanceSelectQuestionDef(ActivityInstanceSelectQuestionDto dto,
+                                                                                     List<RuleDef> ruleDefs,
+                                                                                     Map<Long, Template> templates) {
+        Template prompt = templates.get(dto.getPromptTemplateId());
+
+        List<String> activityCodes = getJdbiQuestion().getActivityCodesByActivityInstanceSelectQuestionId(dto.getId());
+
+        var builder = ActivityInstanceSelectQuestionDef
+                .builder(dto.getStableId(), prompt)
+                .setActivityCodes(activityCodes);
+
         configureBaseQuestionDef(builder, dto, ruleDefs, templates);
 
         return builder.build();
@@ -1650,7 +1990,7 @@ public interface QuestionDao extends SqlObject {
                                 : templates.get(optionDto.getDetailLabelTemplateId());
                         Template tooltipTemplate = templates.getOrDefault(optionDto.getTooltipTemplateId(), null);
                         return new PicklistOptionDef(optionDto.getId(), optionDto.getStableId(),
-                                optionLabel, tooltipTemplate, detailLabel, optionDto.isExclusive());
+                                optionLabel, tooltipTemplate, detailLabel, optionDto.isExclusive(), optionDto.isDefault());
                     })
                     .collect(Collectors.toList());
             groups.add(new PicklistGroupDef(groupDto.getId(), groupDto.getStableId(), nameTemplate, options));
@@ -1667,7 +2007,7 @@ public interface QuestionDao extends SqlObject {
                     PicklistOptionDef optionDef = null;
                     if (CollectionUtils.isEmpty(optionDto.getNestedOptions())) {
                         optionDef = new PicklistOptionDef(optionDto.getId(), optionDto.getStableId(),
-                                optionLabel, tooltipTemplate, detailLabel, optionDto.isExclusive());
+                                optionLabel, tooltipTemplate, detailLabel, optionDto.isExclusive(), optionDto.isDefault());
                     } else {
                         List<PicklistOptionDef> nestedOptions = new ArrayList<>();
                         for (PicklistOptionDto nestedOptionDto : optionDto.getNestedOptions()) {
@@ -1677,11 +2017,11 @@ public interface QuestionDao extends SqlObject {
                             Template nestedTooltipTemplate = templates.getOrDefault(nestedOptionDto.getTooltipTemplateId(), null);
                             nestedOptions.add(new PicklistOptionDef(nestedOptionDto.getId(), nestedOptionDto.getStableId(),
                                     nestedOptionLabel, nestedTooltipTemplate, nestedDetailLabel,
-                                    nestedOptionDto.isExclusive()));
+                                    nestedOptionDto.isExclusive(), nestedOptionDto.isDefault()));
                         }
                         optionDef = new PicklistOptionDef(optionDto.getId(), optionDto.getStableId(),
                                 optionLabel, tooltipTemplate, detailLabel, optionDto.isExclusive(),
-                                nestedOptionsTemplate, nestedOptions);
+                                optionDto.isDefault(), nestedOptionsTemplate, nestedOptions);
                     }
                     return optionDef;
                 })
@@ -1692,6 +2032,51 @@ public interface QuestionDao extends SqlObject {
                 .setLabel(label)
                 .addGroups(groups)
                 .addOptions(ungroupedOptions);
+        configureBaseQuestionDef(builder, dto, ruleDefs, templates);
+
+        return builder.build();
+    }
+
+    private MatrixQuestionDef buildMatrixQuestionDef(MatrixQuestionDto dto,
+                                                     MatrixQuestionDao.GroupOptionRowDtos container,
+                                                     List<RuleDef> ruleDefs,
+                                                     Map<Long, Template> templates) {
+        Template prompt = templates.get(dto.getPromptTemplateId());
+        Template modal = templates.get(dto.getModalTemplateId());
+
+        List<MatrixGroupDef> groups = new ArrayList<>();
+        for (MatrixGroupDto groupDto : container.getGroups()) {
+            if (groupDto.getStableId() == null) {
+                continue;
+            }
+            Template nameTemplate = null;
+            if (groupDto.getNameTemplateId() != null) {
+                nameTemplate = templates.get(groupDto.getNameTemplateId());
+            }
+            groups.add(new MatrixGroupDef(groupDto.getId(), groupDto.getStableId(), nameTemplate));
+        }
+
+        List<MatrixOptionDef> options = container.getOptions().stream().map(optionDto -> {
+            Template optionLabel = templates.get(optionDto.getOptionLabelTemplateId());
+            Template tooltipTemplate = templates.getOrDefault(optionDto.getTooltipTemplateId(), null);
+            return new MatrixOptionDef(optionDto.getId(), optionDto.getStableId(), optionLabel, tooltipTemplate,
+                    getJdbiMatrixGroup().findGroupCodeById(optionDto.getGroupId()), optionDto.isExclusive());
+        }).collect(Collectors.toList());
+
+        List<MatrixRowDef> questions = container.getRows().stream().map(questionDto -> {
+            Template questionLabel = templates.get(questionDto.getQuestionLabelTemplateId());
+            Template tooltipTemplate = templates.getOrDefault(questionDto.getTooltipTemplateId(), null);
+            return new MatrixRowDef(questionDto.getId(), questionDto.getStableId(), questionLabel, tooltipTemplate);
+        }).collect(Collectors.toList());
+
+        var builder = MatrixQuestionDef
+                .builder(dto.getSelectMode(), dto.getStableId(), prompt)
+                .setSelectMode(dto.getSelectMode())
+                .setRenderModal(dto.isRenderModal())
+                .setModalTemplate(modal)
+                .addGroups(groups)
+                .addOptions(options)
+                .addRows(questions);
         configureBaseQuestionDef(builder, dto, ruleDefs, templates);
 
         return builder.build();

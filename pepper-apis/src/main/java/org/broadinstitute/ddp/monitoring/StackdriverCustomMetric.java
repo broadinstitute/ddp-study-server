@@ -31,6 +31,10 @@ public enum StackdriverCustomMetric {
             "Number of data exports from housekeeping",
             MetricDescriptor.MetricKind.GAUGE,
             MetricDescriptor.ValueType.INT64),
+    CUSTOM_EXPORTS("custom_exports",
+            "Number of custom exports from housekeeping",
+            MetricDescriptor.MetricKind.GAUGE,
+            MetricDescriptor.ValueType.INT64),
     DB_BACKUP("db_backup",
             "Number of Database backups",
             MetricDescriptor.MetricKind.GAUGE,
@@ -45,10 +49,10 @@ public enum StackdriverCustomMetric {
 
     private final MetricDescriptor.ValueType valueType;
 
-    private StackdriverCustomMetric(String metricName,
-                                    String metricDescription,
-                                    MetricDescriptor.MetricKind metricKind,
-                                    MetricDescriptor.ValueType valueType) {
+    StackdriverCustomMetric(String metricName,
+                            String metricDescription,
+                            MetricDescriptor.MetricKind metricKind,
+                            MetricDescriptor.ValueType valueType) {
         this.metricName = metricName;
         this.metricDescription = metricDescription;
         this.metricKind = metricKind;

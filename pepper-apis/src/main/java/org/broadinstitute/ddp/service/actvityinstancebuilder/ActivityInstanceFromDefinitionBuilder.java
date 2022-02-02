@@ -4,8 +4,10 @@ import static org.broadinstitute.ddp.model.activity.types.ActivityType.FORMS;
 import static org.broadinstitute.ddp.service.actvityinstancebuilder.context.AIBuildStep.BUILD_FORM_CHILDREN;
 import static org.broadinstitute.ddp.service.actvityinstancebuilder.context.AIBuildStep.BUILD_FORM_INSTANCE;
 import static org.broadinstitute.ddp.service.actvityinstancebuilder.context.AIBuildStep.CHECK_PARAMS;
+import static org.broadinstitute.ddp.service.actvityinstancebuilder.context.AIBuildStep.CREATE_RENDERER_CONTEXT;
 import static org.broadinstitute.ddp.service.actvityinstancebuilder.context.AIBuildStep.END_BUILD;
 import static org.broadinstitute.ddp.service.actvityinstancebuilder.context.AIBuildStep.INIT;
+import static org.broadinstitute.ddp.service.actvityinstancebuilder.context.AIBuildStep.POPULATE_SNAPSHOTTED_ADDRESS;
 import static org.broadinstitute.ddp.service.actvityinstancebuilder.context.AIBuildStep.READ_ACTIVITY_DEF;
 import static org.broadinstitute.ddp.service.actvityinstancebuilder.context.AIBuildStep.READ_FORM_INSTANCE;
 import static org.broadinstitute.ddp.service.actvityinstancebuilder.context.AIBuildStep.RENDER_CONTENT;
@@ -17,6 +19,7 @@ import static org.broadinstitute.ddp.service.actvityinstancebuilder.context.AIBu
 import java.util.Optional;
 
 import org.broadinstitute.ddp.cache.LanguageStore;
+import org.broadinstitute.ddp.content.RendererInitialContextCreator.RenderContextSource;
 import org.broadinstitute.ddp.db.ActivityDefStore;
 import org.broadinstitute.ddp.db.dto.LanguageDto;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
@@ -46,7 +49,7 @@ import org.slf4j.LoggerFactory;
  * from DB: answers, validation messages.. Btw, validation messages saved then to
  * {@link ActivityDefStore} cache for further reusing.
  *
- *<p>NOTE: it needs to use {@link AIBuilderFactory#createAIBuilder(AIBuilderFactory, Handle, AIBuilderParams)}
+ * <p>NOTE: it needs to use {@link AIBuilderFactory#createAIBuilder(AIBuilderFactory, Handle, AIBuilderParams)}
  * or {@link AIBuilderFactory#createAIBuilder(Handle, AIBuilderParams)} in order to create an
  * instance of {@link ActivityInstanceFromDefinitionBuilder}.
  *
@@ -163,7 +166,7 @@ public class ActivityInstanceFromDefinitionBuilder {
         if (checkStep(READ_FORM_INSTANCE, READ_ACTIVITY_DEF)) {
 
             if (context.getFormResponse() == null) {
-                context.setFailedMessage("FormInstance data not fetched");
+                context.setFailedMessage("FormResponse data not fetched");
                 context.setFailedStep(READ_ACTIVITY_DEF);
             } else {
                 FormActivityDef formActivityDef = existingFormActivityDef != null ? existingFormActivityDef :
@@ -182,8 +185,18 @@ public class ActivityInstanceFromDefinitionBuilder {
         return this;
     }
 
+    public ActivityInstanceFromDefinitionBuilder createRendererContext(RenderContextSource renderContextSource) {
+        if (checkStep(READ_ACTIVITY_DEF, CREATE_RENDERER_CONTEXT)) {
+
+            context.getAIBuilderFactory().getTemplateRenderHelper().createRendererInitialContext(context, renderContextSource);
+
+            context.setBuildStep(CREATE_RENDERER_CONTEXT);
+        }
+        return this;
+    }
+
     public ActivityInstanceFromDefinitionBuilder startBuild() {
-        if (checkStep(READ_ACTIVITY_DEF, START_BUILD)) {
+        if (checkStep(CREATE_RENDERER_CONTEXT, START_BUILD)) {
 
             LOG.debug("Start ActivityInstance building from definition (ActivityDefStore). StudyGuid={}, instanceGuid={}",
                     context.getStudyGuid(), context.getInstanceGuid());
@@ -200,10 +213,8 @@ public class ActivityInstanceFromDefinitionBuilder {
                 context.setFailedMessage("Cannot build ActivityInstance of type other than FORMS");
                 context.setFailedStep(BUILD_FORM_INSTANCE);
             } else {
-                context.getAIBuilderFactory().getTemplateRenderHelper().createRendererInitialContext(context);
                 var formInstance = context.getAIBuilderFactory().getFormInstanceCreator().createFormInstance(context);
                 context.setFormInstance(formInstance);
-
                 context.setBuildStep(BUILD_FORM_INSTANCE);
             }
         }
@@ -223,8 +234,6 @@ public class ActivityInstanceFromDefinitionBuilder {
     public ActivityInstanceFromDefinitionBuilder renderFormTitles() {
         if (checkStep(BUILD_FORM_INSTANCE, RENDER_FORM_TITLES)) {
 
-            context.getAIBuilderFactory().getTemplateRenderHelper().addInstanceToRendererInitialContext(
-                    context, context.getFormInstance());
             context.getAIBuilderFactory().getFormInstanceCreator().renderTitleAndSubtitle(context);
 
             context.setBuildStep(RENDER_FORM_TITLES);
@@ -242,8 +251,7 @@ public class ActivityInstanceFromDefinitionBuilder {
                         + " disableTemplatesRendering");
                 context.setFailedStep(RENDER_CONTENT);
             } else {
-                context.getAIBuilderFactory().getFormInstanceCreator().renderContent(
-                        context, context.getRenderedTemplates()::get);
+                context.getAIBuilderFactory().getFormInstanceCreator().renderContent(context);
 
                 context.setBuildStep(RENDER_CONTENT);
             }
@@ -267,6 +275,17 @@ public class ActivityInstanceFromDefinitionBuilder {
             context.getAIBuilderFactory().getFormInstanceCreatorHelper().setDisplayNumbers(context.getFormInstance());
 
             context.setBuildStep(SET_DISPLAY_NUMBERS);
+        }
+        return this;
+    }
+
+    public ActivityInstanceFromDefinitionBuilder populateSnapshottedAddress() {
+        if (checkStep(BUILD_FORM_CHILDREN, POPULATE_SNAPSHOTTED_ADDRESS)) {
+
+            context.getAIBuilderFactory().getFormInstanceCreatorHelper().populateSnapshottedAddress(
+                    context.getMailingAddressComponent(), context.getActivitySnapshots());
+
+            context.setBuildStep(POPULATE_SNAPSHOTTED_ADDRESS);
         }
         return this;
     }

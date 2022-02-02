@@ -1,6 +1,7 @@
 package org.broadinstitute.ddp.service.actvityinstancebuilder;
 
 import static java.util.Collections.emptyList;
+import static org.broadinstitute.ddp.content.RendererInitialContextCreator.RenderContextSource.FORM_RESPONSE_AND_ACTIVITY_DEF;
 import static org.broadinstitute.ddp.service.actvityinstancebuilder.AIBuilderTestUtil.Q_ID_1;
 import static org.broadinstitute.ddp.service.actvityinstancebuilder.AIBuilderTestUtil.Q_ID_2;
 import static org.broadinstitute.ddp.service.actvityinstancebuilder.AIBuilderTestUtil.Q_ID_3;
@@ -23,6 +24,7 @@ import java.util.Map;
 import org.broadinstitute.ddp.content.ContentStyle;
 import org.broadinstitute.ddp.content.I18nTemplateConstants;
 import org.broadinstitute.ddp.content.RenderValueProvider;
+import org.broadinstitute.ddp.content.RendererInitialContextCreator.RenderContextSource;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
 import org.broadinstitute.ddp.model.activity.definition.FormBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.FormSectionDef;
@@ -93,6 +95,7 @@ public class AIBuilderTestHelper {
                 .checkParams()
                 .readFormInstanceData(createFormResponse(INSTANCE_GUID, CREATED_AT, UPDATED_AT))
                 .readActivityDef(formActivityDef)
+                .createRendererContext(FORM_RESPONSE_AND_ACTIVITY_DEF)
                 .startBuild()
                 .buildFormInstance()
                 .buildFormChildren()
@@ -100,6 +103,7 @@ public class AIBuilderTestHelper {
                 .renderContent()
                 .setDisplayNumbers()
                 .updateBlockStatuses()
+                .populateSnapshottedAddress()
                 .endBuild()
                 .getContext();
     }
@@ -188,10 +192,11 @@ public class AIBuilderTestHelper {
     static class TemplateRenderHelperTest extends TemplateRenderHelper {
 
         @Override
-        public void createRendererInitialContext(AIBuilderContext ctx) {
+        public void createRendererInitialContext(AIBuilderContext ctx, RenderContextSource renderContextSource) {
             Map<String, Object> context = new HashMap<>();
             context.put(I18nTemplateConstants.DDP,
                     new RenderValueProvider.Builder()
+                            .withFormResponse(ctx.getFormResponse(), ctx.getFormActivityDef(), ctx.getIsoLangCode())
                             .setParticipantFirstName(PARTICIPANT_FIRST_NAME)
                             .setParticipantLastName(PARTICIPANT_LAST_NAME)
                             .build());
