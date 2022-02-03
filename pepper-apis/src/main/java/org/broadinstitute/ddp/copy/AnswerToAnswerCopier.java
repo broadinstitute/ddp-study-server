@@ -1,6 +1,5 @@
 package org.broadinstitute.ddp.copy;
 
-import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -13,6 +12,7 @@ import org.broadinstitute.ddp.db.dao.JdbiQuestionCached;
 import org.broadinstitute.ddp.db.dto.CompositeQuestionDto;
 import org.broadinstitute.ddp.db.dto.QuestionDto;
 import org.broadinstitute.ddp.exception.DDPException;
+import org.broadinstitute.ddp.model.activity.definition.types.DecimalDef;
 import org.broadinstitute.ddp.model.activity.instance.FormResponse;
 import org.broadinstitute.ddp.model.activity.instance.answer.ActivityInstanceSelectAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.AgreementAnswer;
@@ -164,7 +164,7 @@ public class AnswerToAnswerCopier {
             Long value = ((NumericAnswer) sourceAnswer).getValue();
             targetAnswer = new NumericAnswer(null, targetQuestion.getStableId(), null, value);
         } else if (type == QuestionType.DECIMAL) {
-            BigDecimal value = ((DecimalAnswer) sourceAnswer).getValue();
+            DecimalDef value = ((DecimalAnswer) sourceAnswer).getValue();
             targetAnswer = new DecimalAnswer(null, targetQuestion.getStableId(), null, value);
         } else if (type == QuestionType.PICKLIST) {
             List<SelectedPicklistOption> value = ((PicklistAnswer) sourceAnswer).getValue();

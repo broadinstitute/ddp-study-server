@@ -2030,7 +2030,7 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
                     .generateTestFormActivityInstanceForUser(handle, version1.getActivityId(), testData.getUserGuid());
 
             handle.attach(AnswerDao.class).createAnswer(testData.getUserId(), instanceDto.getId(),
-                    new DecimalAnswer(null, sid, null, BigDecimal.ONE));
+                    new DecimalAnswer(null, sid, null, new DecimalDef(1)));
 
             DecimalQuestionDto questionDto = (DecimalQuestionDto) handle.attach(JdbiQuestion.class)
                     .findQuestionDtoById(questionDef.getQuestionId()).get();
@@ -2054,8 +2054,8 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
 
             assertEquals(1, decimalQuestion.getAnswers().size());
             assertEquals(QuestionType.DECIMAL, decimalQuestion.getAnswers().get(0).getQuestionType());
-            DecimalAnswer numericAnswer = decimalQuestion.getAnswers().get(0);
-            assertEquals(0, BigDecimal.ONE.compareTo(numericAnswer.getValue()));
+            DecimalAnswer decimalAnswer = decimalQuestion.getAnswers().get(0);
+            assertEquals(0, new DecimalDef(1).compareTo(decimalAnswer.getValue()));
 
             handle.rollback();
         });

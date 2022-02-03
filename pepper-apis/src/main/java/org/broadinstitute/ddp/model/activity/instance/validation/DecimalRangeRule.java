@@ -45,7 +45,7 @@ public class DecimalRangeRule extends Rule<DecimalAnswer> {
             return true;
         }
 
-        BigDecimal value = answer.getValue();
+        BigDecimal value = answer.getValue().toBigDecimal();
         return (min == null || min.compareTo(value) <= 0) && (max == null || value.compareTo(max) <= 0);
     }
 

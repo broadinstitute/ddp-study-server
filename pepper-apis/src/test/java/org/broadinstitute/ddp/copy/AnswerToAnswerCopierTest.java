@@ -7,7 +7,6 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import java.math.BigDecimal;
 import java.util.List;
 
 import org.broadinstitute.ddp.TxnAwareBaseTest;
@@ -26,6 +25,7 @@ import org.broadinstitute.ddp.model.activity.definition.question.MatrixGroupDef;
 import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.TextQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
+import org.broadinstitute.ddp.model.activity.definition.types.DecimalDef;
 import org.broadinstitute.ddp.model.activity.instance.FormResponse;
 import org.broadinstitute.ddp.model.activity.instance.answer.AgreementAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
@@ -202,7 +202,7 @@ public class AnswerToAnswerCopierTest extends TxnAwareBaseTest {
         TransactionWrapper.useTxn(handle -> {
             var sourceInstance = newDummyInstance();
             var sourceQuestion = newDummyQuestion(QuestionType.DECIMAL, "q1");
-            sourceInstance.putAnswer(new DecimalAnswer(1L, "q1", "a", BigDecimal.TEN));
+            sourceInstance.putAnswer(new DecimalAnswer(1L, "q1", "a", new DecimalDef(10)));
 
             TestFormActivity act = TestFormActivity.builder()
                     .withDecimalQuestion(true)
@@ -220,7 +220,7 @@ public class AnswerToAnswerCopierTest extends TxnAwareBaseTest {
                     .findAnswerById(targetInstance.getAnswer(targetSid).getAnswerId()).orElse(null);
             assertNotNull(actual);
             assertEquals(QuestionType.DECIMAL, actual.getQuestionType());
-            assertEquals(0, BigDecimal.TEN.compareTo(((DecimalAnswer) actual).getValue()));
+            assertEquals(0, new DecimalDef(10).compareTo(((DecimalAnswer) actual).getValue()));
 
             handle.rollback();
         });

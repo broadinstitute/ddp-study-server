@@ -2048,7 +2048,7 @@ public class PatchFormAnswersRouteStandaloneTest {
         assertNotNull(answer);
         assertEquals(guid, answer.getAnswerGuid());
         assertEquals(decimalIntegerSid, answer.getQuestionStableId());
-        assertEquals(0, BigDecimal.valueOf(25L).compareTo(answer.getValue()));
+        assertEquals(0, new DecimalDef(25).compareTo(answer.getValue()));
     }
 
     @Test
@@ -2080,7 +2080,7 @@ public class PatchFormAnswersRouteStandaloneTest {
                 new AnswerCachedDao(handle).findAnswerByGuid(guid).get());
 
         assertNotNull(answer);
-        assertEquals(0, BigDecimal.valueOf(75L).compareTo(answer.getValue()));
+        assertEquals(0, new DecimalDef(75).compareTo(answer.getValue()));
     }
 
     @Test

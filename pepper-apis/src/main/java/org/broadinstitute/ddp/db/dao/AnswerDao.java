@@ -18,6 +18,7 @@ import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.DaoException;
 import org.broadinstitute.ddp.db.dto.AnswerDto;
 import org.broadinstitute.ddp.db.dto.CompositeAnswerSummaryDto;
+import org.broadinstitute.ddp.model.activity.definition.types.DecimalDef;
 import org.broadinstitute.ddp.model.activity.instance.answer.ActivityInstanceSelectAnswer;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.MatrixQuestionDef;
@@ -123,7 +124,7 @@ public interface AnswerDao extends SqlObject {
             DBUtils.checkInsert(1, answerSql.insertNumericIntValue(answerId, ans.getValue()));
         } else if (type == QuestionType.DECIMAL) {
             DecimalAnswer ans = (DecimalAnswer) answer;
-            DBUtils.checkInsert(1, answerSql.insertDecimalValue(answerId, ans.getValue()));
+            DBUtils.checkInsert(1, answerSql.insertDecimalValue(answerId, ans.getValue().toBigDecimal()));
         } else if (type == QuestionType.PICKLIST) {
             if (questionDef == null) {
                 createAnswerPicklistValue(instanceId, answerId, (PicklistAnswer) answer);
@@ -216,7 +217,7 @@ public interface AnswerDao extends SqlObject {
             DBUtils.checkInsert(1, answerSql.updateNumericIntValueById(answerId, ans.getValue()));
         } else if (type == QuestionType.DECIMAL) {
             DecimalAnswer ans = (DecimalAnswer) newAnswer;
-            DBUtils.checkInsert(1, answerSql.updateDecimalValueById(answerId, ans.getValue()));
+            DBUtils.checkInsert(1, answerSql.updateDecimalValueById(answerId, ans.getValue().toBigDecimal()));
         } else if (type == QuestionType.PICKLIST) {
             if (questionDef == null) {
                 updateAnswerPicklistValue(answerId, (PicklistAnswer) newAnswer);
@@ -495,7 +496,7 @@ public interface AnswerDao extends SqlObject {
                     break;
                 case DECIMAL:
                     answer = new DecimalAnswer(answerId, questionStableId, answerGuid,
-                            view.getColumn("da_decimal_value", BigDecimal.class), actInstanceGuid);
+                            new DecimalDef(view.getColumn("da_decimal_value", BigDecimal.class)), actInstanceGuid);
                     break;
                 case PICKLIST:
                     var picklistMap = isChildAnswer ? childAnswers : container;

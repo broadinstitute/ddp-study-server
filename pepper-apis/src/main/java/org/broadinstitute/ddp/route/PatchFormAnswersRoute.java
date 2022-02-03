@@ -63,6 +63,7 @@ import org.broadinstitute.ddp.json.errors.AnswerValidationError;
 import org.broadinstitute.ddp.json.errors.ApiError;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
 import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
+import org.broadinstitute.ddp.model.activity.definition.types.DecimalDef;
 import org.broadinstitute.ddp.model.activity.instance.answer.ActivityInstanceSelectAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.AgreementAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
@@ -639,11 +640,11 @@ public class PatchFormAnswersRoute implements Route {
 
     private DecimalAnswer convertDecimalAnswer(Handle handle, DecimalQuestionDto numericDto, String guid, String actInstanceGuid,
                                                JsonElement value) {
-        BigDecimal decimalValue = null;
+        DecimalDef decimalValue = null;
         if (value != null && !value.isJsonNull() && value.isJsonObject()) {
             final JsonObject jsonObject = value.getAsJsonObject();
             if (jsonObject.has("value") && jsonObject.has("scale")) {
-                decimalValue = new BigDecimal(jsonObject.get("value").getAsBigInteger(), jsonObject.get("scale").getAsInt());
+                decimalValue = new DecimalDef(jsonObject.get("value").getAsBigInteger(), jsonObject.get("scale").getAsInt());
             }
         }
         return new DecimalAnswer(null, numericDto.getStableId(), guid, decimalValue, actInstanceGuid);

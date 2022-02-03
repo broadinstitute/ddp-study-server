@@ -26,6 +26,7 @@ import org.broadinstitute.ddp.model.activity.definition.question.MatrixRowDef;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistOptionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.TextQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
+import org.broadinstitute.ddp.model.activity.definition.types.DecimalDef;
 import org.broadinstitute.ddp.model.activity.instance.answer.ActivityInstanceSelectAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.AgreementAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
@@ -368,7 +369,7 @@ public class AnswerDaoTest extends TxnAwareBaseTest {
 
             AnswerDao answerDao = daoBuilder.buildDao(handle);
 
-            DecimalAnswer created = new DecimalAnswer(null, act.getDecimalQuestion().getStableId(), null, BigDecimal.valueOf(25L));
+            DecimalAnswer created = new DecimalAnswer(null, act.getDecimalQuestion().getStableId(), null, new DecimalDef(25));
             answerDao.createAnswer(testData.getUserId(), instanceId, created);
 
             assertTrue(created.getAnswerId() > 0);
@@ -376,7 +377,7 @@ public class AnswerDaoTest extends TxnAwareBaseTest {
             assertEquals(BigDecimal.valueOf(25L), created.getValue());
 
             DecimalAnswer updatedNumber = new DecimalAnswer(null, act.getDecimalQuestion().getStableId(),
-                    null, BigDecimal.valueOf(100L));
+                    null, new DecimalDef(100));
             answerDao.updateAnswer(testData.getUserId(), created.getAnswerId(), updatedNumber);
 
             assertEquals(created.getAnswerId(), updatedNumber.getAnswerId());

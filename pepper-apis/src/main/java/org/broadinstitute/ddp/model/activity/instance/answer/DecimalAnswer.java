@@ -1,31 +1,30 @@
 package org.broadinstitute.ddp.model.activity.instance.answer;
 
 import com.google.gson.annotations.SerializedName;
+import org.broadinstitute.ddp.model.activity.definition.types.DecimalDef;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
 
-import java.math.BigDecimal;
-
-public final class DecimalAnswer extends Answer<BigDecimal> {
+public final class DecimalAnswer extends Answer<DecimalDef> {
     @SerializedName("value")
-    private BigDecimal value;
+    private DecimalDef value;
 
-    public DecimalAnswer(Long answerId, String questionStableId, String answerGuid, BigDecimal value) {
+    public DecimalAnswer(Long answerId, String questionStableId, String answerGuid, DecimalDef value) {
         super(QuestionType.DECIMAL, answerId, questionStableId, answerGuid);
         this.value = value;
     }
 
-    public DecimalAnswer(Long answerId, String questionStableId, String answerGuid, BigDecimal value, String actInstanceGuid) {
+    public DecimalAnswer(Long answerId, String questionStableId, String answerGuid, DecimalDef value, String actInstanceGuid) {
         super(QuestionType.DECIMAL, answerId, questionStableId, answerGuid, actInstanceGuid);
         this.value = value;
     }
 
     @Override
-    public BigDecimal getValue() {
+    public DecimalDef getValue() {
         return value;
     }
 
     @Override
-    public void setValue(BigDecimal value) {
+    public void setValue(DecimalDef value) {
         this.value = value;
     }
 

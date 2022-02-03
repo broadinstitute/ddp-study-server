@@ -1,5 +1,6 @@
 package org.broadinstitute.ddp.model.activity.definition.types;
 
+import com.google.gson.annotations.SerializedName;
 import lombok.AllArgsConstructor;
 import lombok.Value;
 
@@ -9,7 +10,10 @@ import java.math.BigInteger;
 @Value
 @AllArgsConstructor
 public class DecimalDef implements Comparable<DecimalDef> {
+    @SerializedName("value")
     BigInteger value;
+
+    @SerializedName("scale")
     int scale;
 
     public DecimalDef(final BigDecimal decimal) {

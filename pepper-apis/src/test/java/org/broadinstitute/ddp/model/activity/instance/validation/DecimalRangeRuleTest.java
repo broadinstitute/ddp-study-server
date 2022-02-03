@@ -1,5 +1,6 @@
 package org.broadinstitute.ddp.model.activity.instance.validation;
 
+import org.broadinstitute.ddp.model.activity.definition.types.DecimalDef;
 import org.broadinstitute.ddp.model.activity.instance.answer.DecimalAnswer;
 import org.broadinstitute.ddp.model.activity.instance.question.DecimalQuestion;
 import org.junit.BeforeClass;
@@ -76,6 +77,6 @@ public class DecimalRangeRuleTest {
 
     // Helper to run the rule.
     private boolean run(DecimalRangeRule rule, BigDecimal value) {
-        return rule.validate(unused, new DecimalAnswer(1L, "q", "a", value));
+        return rule.validate(unused, new DecimalAnswer(1L, "q", "a", new DecimalDef(value)));
     }
 }
