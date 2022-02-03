@@ -1275,7 +1275,7 @@
                   "type": "boolean"
                 },
                 "assigneeIdMr": {
-                  "type": "long"
+                  "type": "text"
                 },
                 "notes": {
                   "type": "text",
@@ -1300,7 +1300,7 @@
                   "type": "keyword"
                 },
                 "assigneeIdTissue": {
-                  "type": "long"
+                  "type": "text"
                 },
                 "tissueAttentionFlagD": {
                   "type": "long"
