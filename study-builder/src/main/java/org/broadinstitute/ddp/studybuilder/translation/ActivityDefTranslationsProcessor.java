@@ -17,19 +17,7 @@ import org.broadinstitute.ddp.model.activity.definition.NestedActivityBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.PhysicianInstitutionComponentDef;
 import org.broadinstitute.ddp.model.activity.definition.QuestionBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.i18n.Translation;
-import org.broadinstitute.ddp.model.activity.definition.question.PicklistQuestionDef;
-import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
-import org.broadinstitute.ddp.model.activity.definition.question.TextQuestionDef;
-import org.broadinstitute.ddp.model.activity.definition.question.CompositeQuestionDef;
-import org.broadinstitute.ddp.model.activity.definition.question.PicklistOptionDef;
-import org.broadinstitute.ddp.model.activity.definition.question.BoolQuestionDef;
-import org.broadinstitute.ddp.model.activity.definition.question.DateQuestionDef;
-import org.broadinstitute.ddp.model.activity.definition.question.NumericQuestionDef;
-import org.broadinstitute.ddp.model.activity.definition.question.MatrixQuestionDef;
-import org.broadinstitute.ddp.model.activity.definition.question.MatrixOptionDef;
-import org.broadinstitute.ddp.model.activity.definition.question.MatrixRowDef;
-import org.broadinstitute.ddp.model.activity.definition.question.MatrixGroupDef;
-import org.broadinstitute.ddp.model.activity.definition.question.PicklistGroupDef;
+import org.broadinstitute.ddp.model.activity.definition.question.*;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.activity.definition.template.TemplateVariable;
 import org.broadinstitute.ddp.model.activity.definition.validation.RuleDef;
@@ -234,6 +222,9 @@ public class ActivityDefTranslationsProcessor {
                 break;
             case NUMERIC:
                 addTemplateTranslations(((NumericQuestionDef) questionDef).getPlaceholderTemplate(), allTranslations);
+                break;
+            case DECIMAL:
+                addTemplateTranslations(((DecimalQuestionDef) questionDef).getPlaceholderTemplate(), allTranslations);
                 break;
             case PICKLIST:
                 addTemplateTranslations(((PicklistQuestionDef) questionDef).getPicklistLabelTemplate(), allTranslations);
