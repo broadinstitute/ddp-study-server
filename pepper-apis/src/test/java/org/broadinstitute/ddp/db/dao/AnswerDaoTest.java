@@ -385,7 +385,7 @@ public class AnswerDaoTest extends TxnAwareBaseTest {
             assertTrue(updatedOpt.isPresent());
             Answer updated = updatedOpt.get();
             assertEquals(created.getAnswerGuid(), updated.getAnswerGuid());
-            assertEquals(0, BigDecimal.valueOf(100L).compareTo((BigDecimal) updated.getValue()));
+            assertEquals(0, new DecimalDef(100).compareTo((DecimalDef) updated.getValue()));
 
             answerDao.deleteAnswer(created.getAnswerId());
             assertFalse(answerDao.findAnswerById(created.getAnswerId()).isPresent());
