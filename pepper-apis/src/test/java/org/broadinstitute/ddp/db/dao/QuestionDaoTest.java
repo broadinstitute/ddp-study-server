@@ -65,6 +65,7 @@ import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.TextQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.ActivityInstanceSelectQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
+import org.broadinstitute.ddp.model.activity.definition.types.DecimalDef;
 import org.broadinstitute.ddp.model.activity.definition.validation.DateRangeRuleDef;
 import org.broadinstitute.ddp.model.activity.definition.validation.IntRangeRuleDef;
 import org.broadinstitute.ddp.model.activity.definition.validation.DecimalRangeRuleDef;
@@ -2018,7 +2019,8 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
             DecimalQuestionDef questionDef = DecimalQuestionDef
                     .builder(sid, prompt)
                     .setPlaceholderTemplate(placeholder)
-                    .addValidation(new DecimalRangeRuleDef(Template.text("decimal_range"), BigDecimal.ZERO, BigDecimal.TEN))
+                    .addValidation(new DecimalRangeRuleDef(Template.text("decimal_range"),
+                            new DecimalDef(0), new DecimalDef(10)))
                     .build();
             FormActivityDef form = buildSingleSectionForm(testData.getStudyGuid(), questionDef);
 
