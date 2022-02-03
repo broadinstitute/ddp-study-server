@@ -658,6 +658,21 @@
 
   "pcq_confident_set_two_question": "I felt confident completing the second dim light melatonin collection set (set two of two collections)",
 
+  "pcq_confident_set_material_question": "What material, if any, did you use to block light from your windows during the DLMO Collections?",
+
+  "pcq_confident_set_material_prompt": "What material, if any, did you use to block light from your windows during the DLMO Collections?",
+  "pcq_confident_set_material_aluminum": "Aluminum Foil",
+  "pcq_confident_set_material_garbage": "Black Garbage Bags",
+  "pcq_confident_set_material_tape": "Tape",
+  "pcq_confident_set_material_other": "Other",
+
+  "pcq_confident_sleep_question": "How easy was it to remember to complete your daily sleep log?",
+  "pcq_confident_sleep_not_easy": "Not at all easy",
+  "pcq_confident_sleep_slightly_easy": "Slightly easy",
+  "pcq_confident_sleep_moderately_easy": "Moderately easy",
+  "pcq_confident_sleep_very_easy": "Very easy",
+  "pcq_confident_sleep_extremely_easy": "Extremely easy",
+
   "meq_name": "Morning Evening Questionnaire",
   "meq_title": "Morning Evening Questionnaire",
 
