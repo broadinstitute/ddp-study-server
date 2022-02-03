@@ -35,7 +35,6 @@ import org.broadinstitute.ddp.model.activity.instance.answer.DateValue;
 import org.broadinstitute.ddp.model.activity.instance.answer.FileAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.MatrixAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.NumericAnswer;
-import org.broadinstitute.ddp.model.activity.instance.answer.NumericIntegerAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.PicklistAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.SelectedMatrixCell;
 import org.broadinstitute.ddp.model.activity.instance.answer.SelectedPicklistOption;
@@ -43,7 +42,6 @@ import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
 import org.broadinstitute.ddp.model.activity.types.DateFieldType;
 import org.broadinstitute.ddp.model.activity.types.DateRenderMode;
 import org.broadinstitute.ddp.model.activity.types.MatrixSelectMode;
-import org.broadinstitute.ddp.model.activity.types.NumericType;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
 import org.broadinstitute.ddp.model.activity.types.TextInputType;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
@@ -334,15 +332,14 @@ public class AnswerDaoTest extends TxnAwareBaseTest {
 
             AnswerDao answerDao = daoBuilder.buildDao(handle);
 
-            NumericIntegerAnswer created = new NumericIntegerAnswer(null, act.getNumericIntQuestion().getStableId(), null, 25L);
+            NumericAnswer created = new NumericAnswer(null, act.getNumericIntQuestion().getStableId(), null, 25L);
             answerDao.createAnswer(testData.getUserId(), instanceId, created);
 
             assertTrue(created.getAnswerId() > 0);
             assertEquals(QuestionType.NUMERIC, created.getQuestionType());
-            assertEquals(NumericType.INTEGER, ((NumericAnswer) created).getNumericType());
             assertEquals(25L, (long) created.getValue());
 
-            NumericIntegerAnswer updatedNumber = new NumericIntegerAnswer(null, act.getNumericIntQuestion().getStableId(), null, 100L);
+            NumericAnswer updatedNumber = new NumericAnswer(null, act.getNumericIntQuestion().getStableId(), null, 100L);
             answerDao.updateAnswer(testData.getUserId(), created.getAnswerId(), updatedNumber);
 
             assertEquals(created.getAnswerId(), updatedNumber.getAnswerId());

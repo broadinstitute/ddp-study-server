@@ -22,10 +22,9 @@ import org.broadinstitute.ddp.model.activity.definition.question.NumericQuestion
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.activity.instance.answer.BoolAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.CompositeAnswer;
-import org.broadinstitute.ddp.model.activity.instance.answer.NumericIntegerAnswer;
+import org.broadinstitute.ddp.model.activity.instance.answer.NumericAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
-import org.broadinstitute.ddp.model.activity.types.NumericType;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
 import org.broadinstitute.ddp.model.copy.CopyAnswerLocation;
 import org.broadinstitute.ddp.model.copy.CopyConfiguration;
@@ -170,7 +169,7 @@ public class CopyExecutorTest extends TxnAwareBaseTest {
                     .withBoolQuestion(true)
                     .withTextQuestion(true)
                     .withCompositeQuestion(true, NumericQuestionDef
-                            .builder(NumericType.INTEGER, "child-num", Template.text("child-num-prompt"))
+                            .builder("child-num", Template.text("child-num-prompt"))
                             .build())
                     .build(handle, testData.getUserId(), testData.getStudyGuid());
             long instance1Id = createInstance(handle, act.getDef().getActivityId()).getId();
@@ -183,8 +182,8 @@ public class CopyExecutorTest extends TxnAwareBaseTest {
             answerDao.createAnswer(testData.getUserId(), instance1Id, answer);
 
             var compAnswer = new CompositeAnswer(null, act.getCompositeQuestion().getStableId(), null);
-            compAnswer.addRowOfChildAnswers(new NumericIntegerAnswer(null, "child-num", null, 1L));
-            compAnswer.addRowOfChildAnswers(new NumericIntegerAnswer(null, "child-num", null, 25L));
+            compAnswer.addRowOfChildAnswers(new NumericAnswer(null, "child-num", null, 1L));
+            compAnswer.addRowOfChildAnswers(new NumericAnswer(null, "child-num", null, 25L));
             answerDao.createAnswer(testData.getUserId(), instance1Id, compAnswer);
 
             var config = new CopyConfiguration(testData.getStudyId(), true,

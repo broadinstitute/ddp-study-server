@@ -1,7 +1,6 @@
 package org.broadinstitute.ddp.model.activity.definition;
 
 import java.lang.reflect.Type;
-import java.util.Collections;
 import java.util.Collection;
 import java.util.ArrayList;
 import java.util.List;
@@ -83,21 +82,27 @@ public abstract class ActivityDef {
     @SerializedName("showActivityStatus")
     protected boolean showActivityStatus;
 
+    @NotNull
     @SerializedName("translatedNames")
     protected List<@Valid @NotNull Translation> translatedNames;
 
+    @NotNull
     @SerializedName("translatedSecondNames")
     protected List<@Valid @NotNull Translation> translatedSecondNames;
 
+    @NotNull
     @SerializedName("translatedTitles")
     protected List<@Valid @NotNull Translation> translatedTitles;
 
+    @NotNull
     @SerializedName("translatedSubtitles")
     protected List<@Valid @NotNull Translation> translatedSubtitles;
 
+    @NotNull
     @SerializedName("translatedDescriptions")
     protected List<@Valid @NotNull Translation> translatedDescriptions;
 
+    @NotNull
     @SerializedName("translatedSummaries")
     protected List<@Valid @NotNull SummaryTranslation> translatedSummaries;
 
@@ -167,7 +172,11 @@ public abstract class ActivityDef {
         this.maxInstancesPerUser = maxInstancesPerUser;
         this.displayOrder = displayOrder;
         this.writeOnce = writeOnce;
-        this.translatedNames = translatedNames;
+        if (translatedNames != null && !translatedNames.isEmpty()) {
+            this.translatedNames = translatedNames;
+        } else {
+            throw new IllegalArgumentException("Need at least one name translation");
+        }
         this.translatedSecondNames = new ArrayList<>();
         this.translatedTitles = translatedTitles;
         this.translatedSubtitles = translatedSubtitles;
@@ -232,7 +241,7 @@ public abstract class ActivityDef {
     }
 
     public List<Translation> getTranslatedNames() {
-        return translatedNames != null ? translatedNames : Collections.emptyList();
+        return this.translatedNames;
     }
 
     public void setTranslatedNames(List<Translation> translatedNames) {
@@ -240,7 +249,7 @@ public abstract class ActivityDef {
     }
 
     public List<Translation> getTranslatedSecondNames() {
-        return translatedSecondNames != null ? translatedSecondNames : Collections.emptyList();
+        return this.translatedSecondNames;
     }
 
     public void setTranslatedSecondNames(List<Translation> translatedSecondNames) {
@@ -248,7 +257,7 @@ public abstract class ActivityDef {
     }
 
     public List<Translation> getTranslatedTitles() {
-        return translatedTitles != null ? translatedTitles : Collections.emptyList();
+        return this.translatedTitles;
     }
 
     public void setTranslatedTitles(List<Translation> translatedTitles) {
@@ -256,7 +265,7 @@ public abstract class ActivityDef {
     }
 
     public List<Translation> getTranslatedSubtitles() {
-        return translatedSubtitles != null ? translatedSubtitles : Collections.emptyList();
+        return this.translatedSubtitles;
     }
 
     public void setTranslatedSubtitles(List<Translation> translatedSubtitles) {
@@ -264,7 +273,7 @@ public abstract class ActivityDef {
     }
 
     public List<Translation> getTranslatedDescriptions() {
-        return translatedDescriptions != null ? translatedDescriptions : Collections.emptyList();
+        return this.translatedDescriptions;
     }
 
     public void setTranslatedDescriptions(List<Translation> translatedDescriptions) {
@@ -272,7 +281,7 @@ public abstract class ActivityDef {
     }
 
     public List<SummaryTranslation> getTranslatedSummaries() {
-        return translatedSummaries != null ? translatedSummaries : Collections.emptyList();
+        return this.translatedSummaries;
     }
 
     public Template getNameTemplate() {

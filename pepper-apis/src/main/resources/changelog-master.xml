@@ -287,4 +287,6 @@
     <include file="db-changes/schema/DDP-7085-disabling-activity-block.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/DDP-7069-matrix-question-type.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/DDP-7292-activity-def-show-activity-status.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/DDP-7417-add-matrix-modal-columns.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/DDP-7306.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>
