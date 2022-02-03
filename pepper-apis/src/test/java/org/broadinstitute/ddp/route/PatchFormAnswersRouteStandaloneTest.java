@@ -17,6 +17,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -40,6 +41,8 @@ import io.restassured.http.ContentType;
 import io.restassured.mapper.ObjectMapperType;
 import io.restassured.response.Response;
 import liquibase.util.StringUtils;
+import lombok.AllArgsConstructor;
+import lombok.Value;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.fluent.Request;
 import org.apache.http.util.EntityUtils;
@@ -2105,7 +2108,8 @@ public class PatchFormAnswersRouteStandaloneTest {
 
     @Test
     public void testPatch_decimalAnswer_rangeRule_lessThanMin() {
-        AnswerSubmission submission = new AnswerSubmission(decimalIntegerSid, null, gson.toJsonTree(BigDecimal.ONE));
+        AnswerSubmission submission = new AnswerSubmission(decimalIntegerSid, null,
+                gson.toJsonTree(new DecimalWrapper(1)));
         PatchAnswerPayload data = new PatchAnswerPayload(List.of(submission));
         givenAnswerPatchRequest(instanceGuid, data)
                 .then().assertThat()
@@ -2117,7 +2121,8 @@ public class PatchFormAnswersRouteStandaloneTest {
 
     @Test
     public void testPatch_decimalAnswer_rangeRule_greaterThanMax() {
-        AnswerSubmission submission = new AnswerSubmission(decimalIntegerSid, null, gson.toJsonTree(BigDecimal.valueOf(1024L)));
+        AnswerSubmission submission = new AnswerSubmission(decimalIntegerSid, null,
+                gson.toJsonTree(new DecimalWrapper(1024)));
         PatchAnswerPayload data = new PatchAnswerPayload(List.of(submission));
         givenAnswerPatchRequest(instanceGuid, data)
                 .then().assertThat()
@@ -2405,6 +2410,21 @@ public class PatchFormAnswersRouteStandaloneTest {
                 handle.attach(AuthDao.class).removeAdminFromAllStudies(testData.getUserId());
                 assertEquals(1, handle.execute(updateSql, false, numericQuestionDef.getQuestionId()));
             });
+        }
+    }
+
+    @Value
+    @AllArgsConstructor
+    public static class DecimalWrapper {
+        BigInteger value;
+        int scale;
+
+        public DecimalWrapper(final BigDecimal decimal) {
+            this(decimal.unscaledValue(), decimal.scale());
+        }
+
+        public DecimalWrapper(final int integer) {
+            this(BigDecimal.valueOf(integer));
         }
     }
 }
