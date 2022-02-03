@@ -3,7 +3,6 @@ package org.broadinstitute.ddp.route;
 import static java.util.stream.Collectors.toList;
 
 import java.lang.reflect.Type;
-import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
