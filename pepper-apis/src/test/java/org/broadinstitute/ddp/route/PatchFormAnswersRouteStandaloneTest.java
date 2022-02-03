@@ -2030,7 +2030,8 @@ public class PatchFormAnswersRouteStandaloneTest {
 
     @Test
     public void testPatch_decimalAnswer_newAnswer() {
-        AnswerSubmission submission = new AnswerSubmission(decimalIntegerSid, null, gson.toJsonTree(BigDecimal.valueOf(25L)));
+        AnswerSubmission submission = new AnswerSubmission(decimalIntegerSid, null,
+                gson.toJsonTree(new DecimalWrapper(25)));
         PatchAnswerPayload data = new PatchAnswerPayload(List.of(submission));
 
         String guid = givenAnswerPatchRequest(instanceGuid, data)
@@ -2054,7 +2055,8 @@ public class PatchFormAnswersRouteStandaloneTest {
 
     @Test
     public void testPatch_decimalAnswer_updateAnswer() {
-        AnswerSubmission submission = new AnswerSubmission(decimalIntegerSid, null, gson.toJsonTree(BigDecimal.valueOf(25L)));
+        AnswerSubmission submission = new AnswerSubmission(decimalIntegerSid, null,
+                gson.toJsonTree(new DecimalWrapper(25)));
         PatchAnswerPayload data = new PatchAnswerPayload(List.of(submission));
 
         String guid = givenAnswerPatchRequest(instanceGuid, data)
