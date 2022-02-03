@@ -2066,7 +2066,8 @@ public class PatchFormAnswersRouteStandaloneTest {
                 .and().extract().path("answers[0].answerGuid");
         answerGuidsToDelete.get(QuestionType.DECIMAL).add(guid);
 
-        submission = new AnswerSubmission(decimalIntegerSid, guid, gson.toJsonTree(75));
+        submission = new AnswerSubmission(decimalIntegerSid, guid,
+                gson.toJsonTree(new DecimalWrapper(75)));
         data = new PatchAnswerPayload(List.of(submission));
         String nextGuid = givenAnswerPatchRequest(instanceGuid, data)
                 .then().assertThat()
