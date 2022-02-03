@@ -25,6 +25,7 @@ import org.broadinstitute.ddp.db.dto.validation.RegexRuleDto;
 import org.broadinstitute.ddp.db.dto.validation.RuleDto;
 import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
+import org.broadinstitute.ddp.model.activity.definition.types.DecimalDef;
 import org.broadinstitute.ddp.model.activity.definition.validation.AgeRangeRuleDef;
 import org.broadinstitute.ddp.model.activity.definition.validation.CompleteRuleDef;
 import org.broadinstitute.ddp.model.activity.definition.validation.DateFieldRequiredRuleDef;
@@ -432,7 +433,7 @@ public interface ValidationDao extends SqlObject {
 
     default void insert(long questionId, DecimalRangeRuleDef rule, long revisionId) {
         insertBaseRule(questionId, rule, revisionId);
-        getJdbiDecimalRangeValidation().insert(rule.getRuleId(), rule.getMin(), rule.getMax());
+        getJdbiDecimalRangeValidation().insert(rule.getRuleId(), rule.getMin().toBigDecimal(), rule.getMax().toBigDecimal());
     }
 
     default Map<Long, List<RuleDef>> collectRuleDefs(Collection<Long> questionIds, long timestamp) {
@@ -505,7 +506,9 @@ public interface ValidationDao extends SqlObject {
                 break;
             case DECIMAL_RANGE:
                 var decimalRangeDto = (DecimalRangeRuleDto) dto;
-                ruleDef = new DecimalRangeRuleDef(hintTmpl, decimalRangeDto.getMin(), decimalRangeDto.getMax());
+                ruleDef = new DecimalRangeRuleDef(hintTmpl,
+                        new DecimalDef(decimalRangeDto.getMin()),
+                        new DecimalDef(decimalRangeDto.getMax()));
                 break;
             default:
                 throw new DaoException("Unhandled validation rule type " + dto.getRuleType());

@@ -131,16 +131,8 @@ public class TranslationsEnricher {
 
         Collection<String> extraVariables = detectVariablesNotPresentInList(template.getVariables(), variablesInTemplate);
         extraVariables.forEach(v -> {
-            List<Translation> translations = detectTranslationsForTemplateVariable(null, v, allTranslations);
-
-            // add variables to template only if feature 'saveTranslationsToDbJson' is enabled
-            if (TranslationsProcessingData.INSTANCE.isSaveTranslationsToDbJson()) {
-                template.addVariable(new TemplateVariable(v, translations));
-            } else {
-                if (template.getVariables() == null) {
-                    template.setVariables(new ArrayList<>());
-                }
-            }
+            template.addVariable(new TemplateVariable(v,
+                    detectTranslationsForTemplateVariable(null, v, allTranslations)));
         });
     }
 

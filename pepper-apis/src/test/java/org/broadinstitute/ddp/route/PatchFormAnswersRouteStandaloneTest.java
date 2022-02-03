@@ -89,6 +89,7 @@ import org.broadinstitute.ddp.model.activity.definition.question.MatrixGroupDef;
 import org.broadinstitute.ddp.model.activity.definition.question.MatrixRowDef;
 import org.broadinstitute.ddp.model.activity.definition.question.TextQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
+import org.broadinstitute.ddp.model.activity.definition.types.DecimalDef;
 import org.broadinstitute.ddp.model.activity.definition.validation.DateFieldRequiredRuleDef;
 import org.broadinstitute.ddp.model.activity.definition.validation.DateRangeRuleDef;
 import org.broadinstitute.ddp.model.activity.definition.validation.IntRangeRuleDef;
@@ -413,7 +414,7 @@ public class PatchFormAnswersRouteStandaloneTest {
 
         decimalQuestionDef = DecimalQuestionDef
                 .builder(decimalIntegerSid, newTemplate())
-                .addValidation(new DecimalRangeRuleDef(null, BigDecimal.valueOf(5L), BigDecimal.valueOf(100L)))
+                .addValidation(new DecimalRangeRuleDef(null, new DecimalDef(5), new DecimalDef(100)))
                 .build();
         DecimalQuestionDef dec2 = DecimalQuestionDef
                 .builder(decimalIntegerReqSid, newTemplate())
@@ -421,8 +422,8 @@ public class PatchFormAnswersRouteStandaloneTest {
                 .build();
         DecimalQuestionDef dec3 = DecimalQuestionDef
                 .builder(decimalIntegerWithMultipleRulesSid, newTemplate())
-                .addValidation(new DecimalRangeRuleDef(null, BigDecimal.valueOf(5L), BigDecimal.valueOf(100L)))
-                .addValidation(new DecimalRangeRuleDef(null, BigDecimal.valueOf(200L), BigDecimal.valueOf(500L)))
+                .addValidation(new DecimalRangeRuleDef(null, new DecimalDef(5), new DecimalDef(100)))
+                .addValidation(new DecimalRangeRuleDef(null, new DecimalDef(200), new DecimalDef(500)))
                 .build();
         FormSectionDef decimalSection = new FormSectionDef(null, TestUtil.wrapQuestions(decimalQuestionDef, dec2, dec3));
 
@@ -2027,7 +2028,8 @@ public class PatchFormAnswersRouteStandaloneTest {
 
     @Test
     public void testPatch_decimalAnswer_newAnswer() {
-        AnswerSubmission submission = new AnswerSubmission(decimalIntegerSid, null, gson.toJsonTree(BigDecimal.valueOf(25L)));
+        AnswerSubmission submission = new AnswerSubmission(decimalIntegerSid, null,
+                gson.toJsonTree(new DecimalDef(25)));
         PatchAnswerPayload data = new PatchAnswerPayload(List.of(submission));
 
         String guid = givenAnswerPatchRequest(instanceGuid, data)
@@ -2051,7 +2053,8 @@ public class PatchFormAnswersRouteStandaloneTest {
 
     @Test
     public void testPatch_decimalAnswer_updateAnswer() {
-        AnswerSubmission submission = new AnswerSubmission(decimalIntegerSid, null, gson.toJsonTree(BigDecimal.valueOf(25L)));
+        AnswerSubmission submission = new AnswerSubmission(decimalIntegerSid, null,
+                gson.toJsonTree(new DecimalDef(25)));
         PatchAnswerPayload data = new PatchAnswerPayload(List.of(submission));
 
         String guid = givenAnswerPatchRequest(instanceGuid, data)
@@ -2061,7 +2064,8 @@ public class PatchFormAnswersRouteStandaloneTest {
                 .and().extract().path("answers[0].answerGuid");
         answerGuidsToDelete.get(QuestionType.DECIMAL).add(guid);
 
-        submission = new AnswerSubmission(decimalIntegerSid, guid, gson.toJsonTree(75));
+        submission = new AnswerSubmission(decimalIntegerSid, guid,
+                gson.toJsonTree(new DecimalDef(75)));
         data = new PatchAnswerPayload(List.of(submission));
         String nextGuid = givenAnswerPatchRequest(instanceGuid, data)
                 .then().assertThat()
@@ -2105,7 +2109,8 @@ public class PatchFormAnswersRouteStandaloneTest {
 
     @Test
     public void testPatch_decimalAnswer_rangeRule_lessThanMin() {
-        AnswerSubmission submission = new AnswerSubmission(decimalIntegerSid, null, gson.toJsonTree(BigDecimal.ONE));
+        AnswerSubmission submission = new AnswerSubmission(decimalIntegerSid, null,
+                gson.toJsonTree(new DecimalDef(1)));
         PatchAnswerPayload data = new PatchAnswerPayload(List.of(submission));
         givenAnswerPatchRequest(instanceGuid, data)
                 .then().assertThat()
@@ -2117,7 +2122,8 @@ public class PatchFormAnswersRouteStandaloneTest {
 
     @Test
     public void testPatch_decimalAnswer_rangeRule_greaterThanMax() {
-        AnswerSubmission submission = new AnswerSubmission(decimalIntegerSid, null, gson.toJsonTree(BigDecimal.valueOf(1024L)));
+        AnswerSubmission submission = new AnswerSubmission(decimalIntegerSid, null,
+                gson.toJsonTree(new DecimalDef(1024)));
         PatchAnswerPayload data = new PatchAnswerPayload(List.of(submission));
         givenAnswerPatchRequest(instanceGuid, data)
                 .then().assertThat()
@@ -2407,4 +2413,5 @@ public class PatchFormAnswersRouteStandaloneTest {
             });
         }
     }
+
 }

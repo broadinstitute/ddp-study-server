@@ -22,6 +22,7 @@ import java.util.stream.Stream;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 import org.apache.commons.lang3.StringUtils;
@@ -639,8 +640,11 @@ public class PatchFormAnswersRoute implements Route {
     private DecimalAnswer convertDecimalAnswer(Handle handle, DecimalQuestionDto numericDto, String guid, String actInstanceGuid,
                                                JsonElement value) {
         BigDecimal decimalValue = null;
-        if (value != null && !value.isJsonNull()) {
-            decimalValue = value.getAsBigDecimal();
+        if (value != null && !value.isJsonNull() && value.isJsonObject()) {
+            final JsonObject jsonObject = value.getAsJsonObject();
+            if (jsonObject.has("value") && jsonObject.has("scale")) {
+                decimalValue = new BigDecimal(jsonObject.get("value").getAsBigInteger(), jsonObject.get("scale").getAsInt());
+            }
         }
         return new DecimalAnswer(null, numericDto.getStableId(), guid, decimalValue, actInstanceGuid);
     }
