@@ -16,7 +16,6 @@ select ans.answer_id,
        fd.file_upload_guid as fa_upload_guid,
        fd.file_name      as fa_file_name,
        fd.file_size      as fa_file_size,
-       nt.numeric_type_code as na_numeric_type,
        na.int_value         as na_int_value,
        po.picklist_option_stable_id as pa_option_stable_id,
        (select ppo.picklist_option_stable_id from picklist_nested_option as pno join picklist_option as ppo
@@ -48,7 +47,6 @@ select ans.answer_id,
   join question_stable_code as qsc on qsc.question_stable_code_id = q.question_stable_code_id
   left join composite_question as cq on cq.question_id = q.question_id
   left join numeric_question as nq on nq.question_id = q.question_id
-  left join numeric_type as nt on nt.numeric_type_id = nq.numeric_type_id
   left join agreement_answer as aa on aa.answer_id = ans.answer_id
   left join boolean_answer as ba on ba.answer_id = ans.answer_id
   left join text_answer as ta on ta.answer_id = ans.answer_id

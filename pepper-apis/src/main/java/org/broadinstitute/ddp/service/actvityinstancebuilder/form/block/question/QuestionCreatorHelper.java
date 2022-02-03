@@ -202,8 +202,7 @@ public class QuestionCreatorHelper {
                 ctx.getAIBuilderFactory().getTemplateRenderHelper().addTemplate(
                         ctx, questionDef.getAdditionalInfoFooterTemplate()),
                 questionCreator.getAnswers(ctx, questionDef.getStableId()),
-                questionCreator.getValidationRules(ctx, questionDef),
-                questionDef.getNumericType()
+                questionCreator.getValidationRules(ctx, questionDef)
         );
     }
 
@@ -270,6 +269,7 @@ public class QuestionCreatorHelper {
                 ctx.getAIBuilderFactory().getTemplateRenderHelper().addTemplate(
                         ctx, questionDef.getPromptTemplate()),
                 questionDef.isRestricted(),
+                questionDef.isRenderModal(),
                 questionDef.isDeprecated(),
                 isReadOnly(questionDef, ctx.getFormResponse().getLatestStatus().getType(), ctx.getPreviousInstanceId()),
                 ctx.getAIBuilderFactory().getTemplateRenderHelper().addTemplate(
@@ -278,6 +278,8 @@ public class QuestionCreatorHelper {
                         ctx, questionDef.getAdditionalInfoHeaderTemplate()),
                 ctx.getAIBuilderFactory().getTemplateRenderHelper().addTemplate(
                         ctx, questionDef.getAdditionalInfoFooterTemplate()),
+                ctx.getAIBuilderFactory().getTemplateRenderHelper().addTemplate(
+                        ctx, questionDef.getModalTemplate()),
                 questionCreator.getAnswers(ctx, questionDef.getStableId()),
                 questionCreator.getValidationRules(ctx, questionDef),
                 questionDef.getSelectMode(),

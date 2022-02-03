@@ -7,21 +7,16 @@ import java.util.Map;
 
 import org.broadinstitute.ddp.content.HtmlConverter;
 import org.broadinstitute.ddp.elastic.MappingUtil;
-import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.activity.definition.question.NumericQuestionDef;
 import org.broadinstitute.ddp.model.activity.instance.answer.NumericAnswer;
-import org.broadinstitute.ddp.model.activity.types.NumericType;
 
 public class NumericQuestionFormatStrategy implements ResponseFormatStrategy<NumericQuestionDef, NumericAnswer> {
 
     @Override
     public Map<String, Object> mappings(NumericQuestionDef definition) {
         Map<String, Object> props = new LinkedHashMap<>();
-        if (definition.getNumericType() == NumericType.INTEGER) {
-            props.put(definition.getStableId(), MappingUtil.newLongType());
-        } else {
-            throw new DDPException("Unhandled numeric type " + definition.getNumericType());
-        }
+        props.put(definition.getStableId(), MappingUtil.newLongType());
+
         return props;
     }
 
@@ -31,7 +26,6 @@ public class NumericQuestionFormatStrategy implements ResponseFormatStrategy<Num
         props.put("stableId", definition.getStableId());
         props.put("questionType", definition.getQuestionType().name());
         props.put("questionText", HtmlConverter.getPlainText(definition.getPromptTemplate().renderWithDefaultValues("en")));
-        props.put("numericType", definition.getNumericType().name());
         return props;
     }
 
