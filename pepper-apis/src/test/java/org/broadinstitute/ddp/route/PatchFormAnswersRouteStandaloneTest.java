@@ -111,7 +111,6 @@ import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
 import org.broadinstitute.ddp.model.activity.types.DateFieldType;
 import org.broadinstitute.ddp.model.activity.types.DateRenderMode;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
-import org.broadinstitute.ddp.model.activity.types.NumericType;
 import org.broadinstitute.ddp.model.activity.types.PicklistRenderMode;
 import org.broadinstitute.ddp.model.activity.types.MatrixSelectMode;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
@@ -384,15 +383,15 @@ public class PatchFormAnswersRouteStandaloneTest {
         FormSectionDef agreementSection = new FormSectionDef(null, TestUtil.wrapQuestions(a1));
 
         numericQuestionDef = NumericQuestionDef
-                .builder(NumericType.INTEGER, numericIntegerSid, newTemplate())
+                .builder(numericIntegerSid, newTemplate())
                 .addValidation(new IntRangeRuleDef(null, 5L, 100L))
                 .build();
         NumericQuestionDef n2 = NumericQuestionDef
-                .builder(NumericType.INTEGER, numericIntegerReqSid, newTemplate())
+                .builder(numericIntegerReqSid, newTemplate())
                 .addValidation(new RequiredRuleDef(null))
                 .build();
         NumericQuestionDef n3 = NumericQuestionDef
-                .builder(NumericType.INTEGER, numericIntegerWithMultipleRulesSid, newTemplate())
+                .builder(numericIntegerWithMultipleRulesSid, newTemplate())
                 .addValidation(new IntRangeRuleDef(null, 5L, 100L))
                 .addValidation(new IntRangeRuleDef(null, 200L, 500L))
                 .build();
@@ -1904,7 +1903,7 @@ public class PatchFormAnswersRouteStandaloneTest {
         assertNotNull(answer);
         assertEquals(guid, answer.getAnswerGuid());
         assertEquals(numericIntegerSid, answer.getQuestionStableId());
-        assertEquals(25L, answer.getValue());
+        assertEquals(25L, (long) answer.getValue());
     }
 
     @Test
@@ -1934,7 +1933,7 @@ public class PatchFormAnswersRouteStandaloneTest {
                 new AnswerCachedDao(handle).findAnswerByGuid(guid).get());
 
         assertNotNull(answer);
-        assertEquals(75L, answer.getValue());
+        assertEquals(75L, (long) answer.getValue());
     }
 
     @Test

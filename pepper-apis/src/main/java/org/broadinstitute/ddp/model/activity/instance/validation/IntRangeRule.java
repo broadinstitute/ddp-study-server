@@ -2,9 +2,7 @@ package org.broadinstitute.ddp.model.activity.instance.validation;
 
 import com.google.gson.annotations.SerializedName;
 import org.broadinstitute.ddp.model.activity.instance.answer.NumericAnswer;
-import org.broadinstitute.ddp.model.activity.instance.answer.NumericIntegerAnswer;
 import org.broadinstitute.ddp.model.activity.instance.question.Question;
-import org.broadinstitute.ddp.model.activity.types.NumericType;
 import org.broadinstitute.ddp.model.activity.types.RuleType;
 
 /**
@@ -43,12 +41,10 @@ public class IntRangeRule extends Rule<NumericAnswer> {
             return false;
         } else if (answer.getValue() == null) {
             return true;
-        } else if (answer.getNumericType() == NumericType.INTEGER) {
-            Long value = ((NumericIntegerAnswer) answer).getValue();
-            return (min == null || min <= value) && (max == null || value <= max);
-        } else {
-            return false;
         }
+
+        Long value = answer.getValue();
+        return (min == null || min <= value) && (max == null || value <= max);
     }
 
     public Long getMin() {

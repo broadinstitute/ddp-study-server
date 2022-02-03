@@ -77,7 +77,7 @@ import org.broadinstitute.ddp.model.activity.instance.answer.DateAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.DateValue;
 import org.broadinstitute.ddp.model.activity.instance.answer.FileAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.FileInfo;
-import org.broadinstitute.ddp.model.activity.instance.answer.NumericIntegerAnswer;
+import org.broadinstitute.ddp.model.activity.instance.answer.NumericAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
 import org.broadinstitute.ddp.model.activity.types.ActivityType;
@@ -86,7 +86,6 @@ import org.broadinstitute.ddp.model.activity.types.DateRenderMode;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.broadinstitute.ddp.model.activity.types.InstitutionType;
 import org.broadinstitute.ddp.model.activity.types.MatrixSelectMode;
-import org.broadinstitute.ddp.model.activity.types.NumericType;
 import org.broadinstitute.ddp.model.activity.types.PicklistRenderMode;
 import org.broadinstitute.ddp.model.activity.types.PicklistSelectMode;
 import org.broadinstitute.ddp.model.activity.types.TemplateType;
@@ -391,7 +390,6 @@ public class DataExporterTest extends TxnAwareBaseTest {
                     .build();
 
             NumericQuestionDef numericDef = NumericQuestionDef.builder().setStableId("TEST_NUMERICQ")
-                    .setNumericType(NumericType.INTEGER)
                     .setPrompt(new Template(TemplateType.TEXT, null, "numeric prompt"))
                     .build();
 
@@ -460,8 +458,7 @@ public class DataExporterTest extends TxnAwareBaseTest {
 
             //check Numeric Question
             Assert.assertTrue(esDoc.contains("{\"stableId\":\"TEST_NUMERICQ\","
-                    + "\"questionType\":\"NUMERIC\",\"questionText\":\"numeric prompt\","
-                    + "\"numericType\":\"INTEGER\"}"));
+                    + "\"questionType\":\"NUMERIC\",\"questionText\":\"numeric prompt\"}"));
 
             //check Picklist Question
             Assert.assertTrue(esDoc.contains("{\"stableId\":\"TEST_PLQ\",\"questionType\":\"PICKLIST\",\"questionText\":"
@@ -768,7 +765,7 @@ public class DataExporterTest extends TxnAwareBaseTest {
                                     .builder(TextInputType.ESSAY, "Q_TEXT", Template.text("text prompt"))
                                     .build()),
                             new QuestionBlockDef(NumericQuestionDef
-                                    .builder(NumericType.INTEGER, "Q_NUMERIC", Template.text("numeric prompt"))
+                                    .builder("Q_NUMERIC", Template.text("numeric prompt"))
                                     .build()),
                             new QuestionBlockDef(FileQuestionDef
                                     .builder("Q_FILE", Template.text("file prompt"))
@@ -812,7 +809,7 @@ public class DataExporterTest extends TxnAwareBaseTest {
                         new ActivityInstanceStatusDto(2L, 1L, 1L, lastUpdatedAt, InstanceStatusType.COMPLETE));
                 instance.putAnswer(new BoolAnswer(1L, "Q_BOOL", "guid", true));
                 instance.putAnswer(new TextAnswer(2L, "Q_TEXT", "guid", "john smith"));
-                instance.putAnswer(new NumericIntegerAnswer(3L, "Q_NUMERIC", "guid", 25L));
+                instance.putAnswer(new NumericAnswer(3L, "Q_NUMERIC", "guid", 25L));
                 instance.putAnswer(new DateAnswer(4L, "Q_BIRTHDAY", "guid", new DateValue(1978, 5, 16)));
                 instance.putAnswer(new FileAnswer(5L, "Q_FILE", "guid", new FileInfo(1L, "file1", "file.pdf", 123L)));
                 participant.addResponse(instance);
