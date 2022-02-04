@@ -280,6 +280,8 @@ public class QuestionCreatorHelper {
                         ctx, questionDef.getAdditionalInfoFooterTemplate()),
                 ctx.getAIBuilderFactory().getTemplateRenderHelper().addTemplate(
                         ctx, questionDef.getModalTemplate()),
+                ctx.getAIBuilderFactory().getTemplateRenderHelper().addTemplate(
+                        ctx, questionDef.getModalTitleTemplate()),
                 questionCreator.getAnswers(ctx, questionDef.getStableId()),
                 questionCreator.getValidationRules(ctx, questionDef),
                 questionDef.getSelectMode(),
