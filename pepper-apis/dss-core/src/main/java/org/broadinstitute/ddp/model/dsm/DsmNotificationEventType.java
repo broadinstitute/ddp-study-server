@@ -48,5 +48,6 @@ public enum DsmNotificationEventType {
     /**
      * Message sent by DSM when DLMO Collection Date #2 is entered for Circadia
      */
-    DLMO_DATE_2
+    DLMO_DATE_2,
+    STOOL_SENT
 }
