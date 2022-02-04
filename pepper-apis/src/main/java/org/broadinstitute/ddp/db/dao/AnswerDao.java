@@ -217,7 +217,7 @@ public interface AnswerDao extends SqlObject {
             DBUtils.checkInsert(1, answerSql.updateNumericIntValueById(answerId, ans.getValue()));
         } else if (type == QuestionType.DECIMAL) {
             DecimalAnswer ans = (DecimalAnswer) newAnswer;
-            DBUtils.checkInsert(1, answerSql.updateDecimalValueById(answerId, ans.getValue().toBigDecimal()));
+            DBUtils.checkInsert(1, answerSql.updateDecimalValueById(answerId, ans.getValueAsBigDecimal()));
         } else if (type == QuestionType.PICKLIST) {
             if (questionDef == null) {
                 updateAnswerPicklistValue(answerId, (PicklistAnswer) newAnswer);

@@ -433,7 +433,7 @@ public interface ValidationDao extends SqlObject {
 
     default void insert(long questionId, DecimalRangeRuleDef rule, long revisionId) {
         insertBaseRule(questionId, rule, revisionId);
-        getJdbiDecimalRangeValidation().insert(rule.getRuleId(), rule.getMin().toBigDecimal(), rule.getMax().toBigDecimal());
+        getJdbiDecimalRangeValidation().insert(rule.getRuleId(), rule.getMinAsBigDecimal(), rule.getMaxAsBigDecimal());
     }
 
     default Map<Long, List<RuleDef>> collectRuleDefs(Collection<Long> questionIds, long timestamp) {

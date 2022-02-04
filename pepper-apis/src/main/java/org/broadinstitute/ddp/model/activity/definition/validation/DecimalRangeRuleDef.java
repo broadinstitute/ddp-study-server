@@ -5,6 +5,9 @@ import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.activity.definition.types.DecimalDef;
 import org.broadinstitute.ddp.model.activity.types.RuleType;
 
+import java.math.BigDecimal;
+import java.util.Optional;
+
 public class DecimalRangeRuleDef extends RuleDef {
 
     @SerializedName("min")
@@ -29,4 +32,13 @@ public class DecimalRangeRuleDef extends RuleDef {
     public DecimalDef getMax() {
         return max;
     }
+
+    public BigDecimal getMinAsBigDecimal() {
+        return Optional.ofNullable(min).map(DecimalDef::toBigDecimal).orElse(null);
+    }
+
+    public BigDecimal getMaxAsBigDecimal() {
+        return Optional.ofNullable(max).map(DecimalDef::toBigDecimal).orElse(null);
+    }
+
 }
