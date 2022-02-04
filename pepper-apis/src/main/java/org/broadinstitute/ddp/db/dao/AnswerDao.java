@@ -124,9 +124,7 @@ public interface AnswerDao extends SqlObject {
             DBUtils.checkInsert(1, answerSql.insertNumericIntValue(answerId, ans.getValue()));
         } else if (type == QuestionType.DECIMAL) {
             DecimalAnswer ans = (DecimalAnswer) answer;
-            DBUtils.checkInsert(1, answerSql.insertDecimalValue(answerId, Optional.ofNullable(ans.getValue())
-                    .map(DecimalDef::toBigDecimal)
-                    .orElse(null)));
+            DBUtils.checkInsert(1, answerSql.insertDecimalValue(answerId, ans.getValueAsBigDecimal()));
         } else if (type == QuestionType.PICKLIST) {
             if (questionDef == null) {
                 createAnswerPicklistValue(instanceId, answerId, (PicklistAnswer) answer);

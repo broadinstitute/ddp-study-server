@@ -41,11 +41,11 @@ public class DecimalRangeRule extends Rule<DecimalAnswer> {
     public boolean validate(Question<DecimalAnswer> question, DecimalAnswer answer) {
         if (answer == null) {
             return false;
-        } else if (answer.getValue() == null) {
+        } else if (answer.getValueAsBigDecimal() == null) {
             return true;
         }
 
-        BigDecimal value = answer.getValue().toBigDecimal();
+        BigDecimal value = answer.getValueAsBigDecimal();
         return (min == null || min.compareTo(value) <= 0) && (max == null || value.compareTo(max) <= 0);
     }
 

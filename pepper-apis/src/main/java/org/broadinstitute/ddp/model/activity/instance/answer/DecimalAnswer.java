@@ -4,6 +4,9 @@ import com.google.gson.annotations.SerializedName;
 import org.broadinstitute.ddp.model.activity.definition.types.DecimalDef;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
 
+import java.math.BigDecimal;
+import java.util.Optional;
+
 public final class DecimalAnswer extends Answer<DecimalDef> {
     @SerializedName("value")
     private DecimalDef value;
@@ -31,5 +34,9 @@ public final class DecimalAnswer extends Answer<DecimalDef> {
     @Override
     public boolean isEmpty() {
         return value == null;
+    }
+
+    public BigDecimal getValueAsBigDecimal() {
+        return Optional.ofNullable(value).map(DecimalDef::toBigDecimal).orElse(null);
     }
 }
