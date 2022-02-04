@@ -249,6 +249,7 @@ public class ActivityDefTranslationsProcessor {
                 break;
             case MATRIX:
                 addTemplateTranslations(((MatrixQuestionDef) questionDef).getModalTemplate(), allTranslations);
+                addTemplateTranslations(((MatrixQuestionDef) questionDef).getModalTitleTemplate(), allTranslations);
                 ((MatrixQuestionDef) questionDef).getGroups().forEach(this::enrichMatrixGroupWithTranslations);
                 ((MatrixQuestionDef) questionDef).getOptions().forEach(this::enrichMatrixGroupWithTranslations);
                 ((MatrixQuestionDef) questionDef).getRows().forEach(this::enrichMatrixOptionWithTranslations);
