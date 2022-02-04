@@ -1865,7 +1865,7 @@ public class PatchFormAnswersRouteStandaloneTest {
 
         assertEquals(guid, nextGuid);
         answer = (FileAnswer) TransactionWrapper.withTxn(handle ->
-                new AnswerCachedDao(handle).findAnswerByGuid(guid).get());
+                new AnswerCachedDao(handle).findAnswerByGuid(guid).orElse(null));
         assertEquals(upload2.getFileName(), answer.getValue().getFileName());
     }
 
@@ -1880,7 +1880,7 @@ public class PatchFormAnswersRouteStandaloneTest {
                 .and().extract().path("answers[0].answerGuid");
         answerGuidsToDelete.get(QuestionType.FILE).add(guid);
         var answer = (FileAnswer) TransactionWrapper.withTxn(handle ->
-                new AnswerCachedDao(handle).findAnswerByGuid(guid).get());
+                new AnswerCachedDao(handle).findAnswerByGuid(guid).orElse(null));
         assertNull("created answer should have null for value", answer.getValue());
 
         // Set a value then clear it.
@@ -1888,7 +1888,7 @@ public class PatchFormAnswersRouteStandaloneTest {
         givenAnswerPatchRequest(instanceGuid, data)
                 .then().assertThat().statusCode(200);
         answer = (FileAnswer) TransactionWrapper.withTxn(handle ->
-                new AnswerCachedDao(handle).findAnswerByGuid(guid).get());
+                new AnswerCachedDao(handle).findAnswerByGuid(guid).orElse(null));
         assertNotNull(answer.getValue());
         assertEquals(upload1.getFileName(), answer.getValue().getFileName());
 
@@ -1896,7 +1896,7 @@ public class PatchFormAnswersRouteStandaloneTest {
         givenAnswerPatchRequest(instanceGuid, data)
                 .then().assertThat().statusCode(200);
         answer = (FileAnswer) TransactionWrapper.withTxn(handle ->
-                new AnswerCachedDao(handle).findAnswerByGuid(guid).get());
+                new AnswerCachedDao(handle).findAnswerByGuid(guid).orElse(null));
         assertNull("answer value should be cleared", answer.getValue());
     }
 
@@ -1927,7 +1927,7 @@ public class PatchFormAnswersRouteStandaloneTest {
 
         answerGuidsToDelete.get(QuestionType.NUMERIC).add(guid);
         NumericAnswer answer = (NumericAnswer) TransactionWrapper.withTxn(handle ->
-                new AnswerCachedDao(handle).findAnswerByGuid(guid).get());
+                new AnswerCachedDao(handle).findAnswerByGuid(guid).orElse(null));
 
         assertNotNull(answer);
         assertEquals(guid, answer.getAnswerGuid());
@@ -1959,7 +1959,7 @@ public class PatchFormAnswersRouteStandaloneTest {
 
         assertEquals(guid, nextGuid);
         NumericAnswer answer = (NumericAnswer) TransactionWrapper.withTxn(handle ->
-                new AnswerCachedDao(handle).findAnswerByGuid(guid).get());
+                new AnswerCachedDao(handle).findAnswerByGuid(guid).orElse(null));
 
         assertNotNull(answer);
         assertEquals(75L, (long) answer.getValue());
@@ -1981,7 +1981,7 @@ public class PatchFormAnswersRouteStandaloneTest {
 
         answerGuidsToDelete.get(QuestionType.NUMERIC).add(guid);
         NumericAnswer answer = (NumericAnswer) TransactionWrapper.withTxn(handle ->
-                new AnswerCachedDao(handle).findAnswerByGuid(guid).get());
+                new AnswerCachedDao(handle).findAnswerByGuid(guid).orElse(null));
 
         assertNotNull(answer);
         assertEquals(guid, answer.getAnswerGuid());
@@ -2042,7 +2042,7 @@ public class PatchFormAnswersRouteStandaloneTest {
 
         answerGuidsToDelete.get(QuestionType.DECIMAL).add(guid);
         DecimalAnswer answer = (DecimalAnswer) TransactionWrapper.withTxn(handle ->
-                new AnswerCachedDao(handle).findAnswerByGuid(guid).get());
+                new AnswerCachedDao(handle).findAnswerByGuid(guid).orElse(null));
 
         assertNotNull(answer);
         assertEquals(guid, answer.getAnswerGuid());
@@ -2076,7 +2076,7 @@ public class PatchFormAnswersRouteStandaloneTest {
 
         assertEquals(guid, nextGuid);
         DecimalAnswer answer = (DecimalAnswer) TransactionWrapper.withTxn(handle ->
-                new AnswerCachedDao(handle).findAnswerByGuid(guid).get());
+                new AnswerCachedDao(handle).findAnswerByGuid(guid).orElse(null));
 
         assertNotNull(answer);
         assertEquals(0, new DecimalDef(75).compareTo(answer.getValue()));
@@ -2098,7 +2098,7 @@ public class PatchFormAnswersRouteStandaloneTest {
 
         answerGuidsToDelete.get(QuestionType.DECIMAL).add(guid);
         DecimalAnswer answer = (DecimalAnswer) TransactionWrapper.withTxn(handle ->
-                new AnswerCachedDao(handle).findAnswerByGuid(guid).get());
+                new AnswerCachedDao(handle).findAnswerByGuid(guid).orElse(null));
 
         assertNotNull(answer);
         assertEquals(guid, answer.getAnswerGuid());
@@ -2165,14 +2165,6 @@ public class PatchFormAnswersRouteStandaloneTest {
             ActivityInstanceStatusDao statusDao = handle.attach(ActivityInstanceStatusDao.class);
             return statusDao.getCurrentStatus(instanceGuid).get();
         });
-    }
-
-    /**
-     * Given an activity code, get status.
-     */
-    private long getActivityStatusTypeId(InstanceStatusType statusType) {
-        return TransactionWrapper.withTxn(handle ->
-                handle.attach(JdbiActivityInstanceStatusType.class).getStatusTypeId(statusType));
     }
 
     @Test
@@ -2260,9 +2252,8 @@ public class PatchFormAnswersRouteStandaloneTest {
                     .then().assertThat()
                     .statusCode(200).contentType(ContentType.JSON);
         } finally {
-            TransactionWrapper.useTxn(handle -> {
-                handle.attach(JdbiActivity.class).deleteValidationsByCode(activity.getActivityId());
-            });
+            TransactionWrapper.useTxn(handle -> handle.attach(JdbiActivity.class)
+                    .deleteValidationsByCode(activity.getActivityId()));
         }
     }
 
