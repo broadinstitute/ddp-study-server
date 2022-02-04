@@ -1085,7 +1085,7 @@
                 "noReturn": {
                   "type": "boolean"
                 },
-                "kitTypeName": {
+                "kitType": {
                   "type": "text",
                   "fields": {
                     "keyword": {
