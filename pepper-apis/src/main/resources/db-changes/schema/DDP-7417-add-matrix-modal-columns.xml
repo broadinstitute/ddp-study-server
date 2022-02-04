@@ -8,7 +8,6 @@
         <addColumn tableName="matrix_question">
             <column name="render_modal" type="boolean" defaultValueBoolean="false"/>
             <column name="modal_template_id" type="bigint" />
-            <column name="modal_title_template_id" type="bigint" />
         </addColumn>
     </changeSet>
 
