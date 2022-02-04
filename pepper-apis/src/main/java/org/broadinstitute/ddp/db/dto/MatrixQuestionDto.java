@@ -16,20 +16,16 @@ public final class MatrixQuestionDto extends QuestionDto implements Serializable
     private MatrixSelectMode selectMode;
     private boolean renderModal;
     private Long modalTemplateId;
-    private Long modalTitleTemplateId;
 
     @JdbiConstructor
     public MatrixQuestionDto(@Nested QuestionDto questionDto,
                              @ColumnName("matrix_select_mode") MatrixSelectMode selectMode,
                              @ColumnName("render_modal") boolean renderModal,
-                             @ColumnName("modal_template_id") Long modalTemplateId,
-                             @ColumnName("modal_title_template_id") Long modalTitleTemplateId
-                             ) {
+                             @ColumnName("modal_template_id") Long modalTemplateId) {
         super(questionDto);
         this.selectMode = selectMode;
         this.renderModal = renderModal;
         this.modalTemplateId = modalTemplateId;
-        this.modalTitleTemplateId = modalTitleTemplateId;
     }
 
     public MatrixSelectMode getSelectMode() {
@@ -44,18 +40,11 @@ public final class MatrixQuestionDto extends QuestionDto implements Serializable
         return modalTemplateId;
     }
 
-    public Long getModalTitleTemplateId() {
-        return modalTitleTemplateId;
-    }
-
     @Override
     public Set<Long> getTemplateIds() {
         var ids = super.getTemplateIds();
         if (modalTemplateId != null) {
             ids.add(modalTemplateId);
-        }
-        if (modalTitleTemplateId != null) {
-            ids.add(modalTitleTemplateId);
         }
         return ids;
     }

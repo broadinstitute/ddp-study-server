@@ -25,9 +25,6 @@ public final class MatrixQuestion extends Question<MatrixAnswer> {
     @SerializedName("modal")
     private String modal;
 
-    @SerializedName("modalTitle")
-    private String modalTitle;
-
     @SerializedName("groups")
     private final List<MatrixGroup> groups;
 
@@ -41,13 +38,11 @@ public final class MatrixQuestion extends Question<MatrixAnswer> {
 
     private transient Long modalTemplateId;
 
-    private transient Long modalTitleTemplateId;
-
     private String renderMode = "INLINE";
 
     public MatrixQuestion(String stableId, long promptTemplateId, boolean isRestricted, boolean renderModal,
                           boolean isDeprecated, Boolean readonly, Long tooltipTemplateId, Long additionalInfoHeaderTemplateId,
-                          Long additionalInfoFooterTemplateId, Long modalTemplateId, Long modalTitleTemplateId,
+                          Long additionalInfoFooterTemplateId, Long modalTemplateId,
                           List<MatrixAnswer> answers, List<Rule<MatrixAnswer>> validations,
                           MatrixSelectMode selectMode, List<MatrixGroup> groups, List<MatrixOption> matrixOptions,
                           List<MatrixRow> matrixQuestionRows) {
@@ -58,7 +53,6 @@ public final class MatrixQuestion extends Question<MatrixAnswer> {
         this.groups = groups;
         this.renderModal = renderModal;
         this.modalTemplateId = modalTemplateId;
-        this.modalTitleTemplateId = modalTitleTemplateId;
         if (renderModal) {
             renderMode = "MODAL";
         }
@@ -88,7 +82,6 @@ public final class MatrixQuestion extends Question<MatrixAnswer> {
                 false,
                 false,
                 false,
-                null,
                 null,
                 null,
                 null,
@@ -129,10 +122,6 @@ public final class MatrixQuestion extends Question<MatrixAnswer> {
             registry.accept(modalTemplateId);
         }
 
-        if (modalTitleTemplateId != null) {
-            registry.accept(modalTitleTemplateId);
-        }
-
         for (MatrixGroup group : groups) {
             group.registerTemplateIds(registry);
         }
@@ -152,10 +141,6 @@ public final class MatrixQuestion extends Question<MatrixAnswer> {
 
         if (modalTemplateId != null) {
             modal = rendered.get(modalTemplateId);
-        }
-
-        if (modalTitleTemplateId != null) {
-            modalTitle = rendered.get(modalTitleTemplateId);
         }
 
         if (groups != null) {
