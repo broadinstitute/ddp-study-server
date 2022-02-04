@@ -1231,7 +1231,7 @@
                     }
                   }
                 },
-                "testResult": {
+                "result": {
                   "type": "text",
                   "fields": {
                     "keyword": {
