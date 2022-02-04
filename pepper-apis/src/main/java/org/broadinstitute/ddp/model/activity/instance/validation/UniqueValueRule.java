@@ -35,11 +35,8 @@ public class UniqueValueRule extends Rule<TextAnswer> {
             return TransactionWrapper.withTxn((handle) -> {
                 int answerCount =  handle.attach(AnswerSql.class).findAllTextAnswersCountByQuestionIdAndTextAnswer(
                         question.getQuestionId(), answer.getValue());
-                int answerCountToCompare = 0;
-                if (allowSave) {
-                    answerCountToCompare = 1; //existing answer is already saved
-                }
-                if (answerCount > answerCountToCompare) {
+
+                if ((allowSave && answerCount > 1)  || (!allowSave && answerCount > 0)) {
                     return false;
                 } else {
                     return true;
