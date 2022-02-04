@@ -473,6 +473,9 @@ public interface ValidationDao extends SqlObject {
             case UNIQUE:
                 ruleDef = new UniqueRuleDef(hintTmpl);
                 break;
+            case UNIQUE_VALUE:
+                ruleDef = new UniqueValueRuleDef(hintTmpl);
+                break;
             case LENGTH:
                 var lengthDto = (LengthRuleDto) dto;
                 ruleDef = new LengthRuleDef(hintTmpl, lengthDto.getMinLength(), lengthDto.getMaxLength());
