@@ -12,12 +12,12 @@
         <insert tableName="i18n_validation_msg_trans">
             <column name="validation_type_id" valueComputed="(select validation_type_id from validation_type where validation_type_code = 'UNIQUE_VALUE')"/>
             <column name="language_code_id" valueComputed="(select language_code_id from language_code where iso_language_code = 'en')"/>
-            <column name="translation_text" value="Value should be unique."/>
+            <column name="translation_text" value="Value should be unique with the study question answers."/>
         </insert>
         <insert tableName="i18n_validation_msg_trans">
             <column name="validation_type_id" valueComputed="(select validation_type_id from validation_type where validation_type_code = 'UNIQUE_VALUE')"/>
             <column name="language_code_id" valueComputed="(select language_code_id from language_code where iso_language_code = 'es')"/>
-            <column name="translation_text" value="Los valores deben ser únicos."/>
+            <column name="translation_text" value="El valor debe ser único con las respuestas a las preguntas del estudio."/>
         </insert>
     </changeSet>
 

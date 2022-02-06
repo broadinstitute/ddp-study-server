@@ -189,8 +189,6 @@ public class ValidationRuleTask implements CustomTask {
                     validationDao.insert(questionDto.getId(),
                             gson.fromJson(ConfigUtil.toJson(ruleConfig), UniqueValueRuleDef.class),
                             questionDto.getRevisionId());
-                    LOG.info("*********** Inserted validation rule of type={} to question with stableId={}",
-                            rule.getRuleType(), questionDto.getStableId());
                     break;
                 default:
                     throw new DDPException("Unhandled validation rule type: " + rule.getRuleType());

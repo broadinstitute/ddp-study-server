@@ -349,7 +349,7 @@ public interface ValidationDao extends SqlObject {
     }
 
     /**
-     * Create a unique value validation rule.
+     * Create a unique value validation rule with scope: same question answers among all participants of the study
      *
      * @param questionId the associated question
      * @param rule       the rule definition
