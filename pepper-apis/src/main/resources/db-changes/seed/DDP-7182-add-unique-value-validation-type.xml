@@ -4,7 +4,7 @@
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
                    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
 
-    <changeSet author="sampath" id="20220125-add-unique-value-validation-type">
+    <changeSet author="sampath" id="20220207-add-unique-value-validation-type">
         <insert tableName="validation_type">
             <column name="validation_type_code" value="UNIQUE_VALUE"/>
         </insert>
