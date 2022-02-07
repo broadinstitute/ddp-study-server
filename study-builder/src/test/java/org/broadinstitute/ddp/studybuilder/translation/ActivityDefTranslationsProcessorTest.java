@@ -165,7 +165,7 @@ public class ActivityDefTranslationsProcessorTest {
         assertEquals(LANG_EN, formDef.getTranslatedNames().get(1).getLanguageCode());
         assertEquals(1, formDef.getSections().size());
         assertEquals(3, formDef.getSections().get(0).getBlocks().size());
-        assertEquals(2, questionDef1.getPromptTemplate().getVariables().size());
+        assertEquals(4, questionDef1.getPromptTemplate().getVariables().size());
         assertEquals(1, questionDef2.getPromptTemplate().getVariables().size());
         assertEquals(3, questionDef2.getPromptTemplate().getVariables().iterator().next().getTranslations().size());
         assertEquals(3, questionDef3.getPromptTemplate().getVariables().size());
