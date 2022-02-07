@@ -49,5 +49,9 @@ public enum DsmNotificationEventType {
      * Message sent by DSM when DLMO Collection Date #2 is entered for Circadia
      */
     DLMO_DATE_2,
+
+    /**
+     * Message sent by DSM on stoolkit sent/scanned event.
+     */
     STOOL_SENT
 }
