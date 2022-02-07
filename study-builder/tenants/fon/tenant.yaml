@@ -79,7 +79,6 @@ connections:
     strategy: google-oauth2
     enabled_clients:
       - fon-angular-client
-      - auth0-deploy-cli
     is_domain_connection: false
     options:
       email: true
