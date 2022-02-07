@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Optional;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -507,8 +508,8 @@ public interface ValidationDao extends SqlObject {
             case DECIMAL_RANGE:
                 var decimalRangeDto = (DecimalRangeRuleDto) dto;
                 ruleDef = new DecimalRangeRuleDef(hintTmpl,
-                        new DecimalDef(decimalRangeDto.getMin()),
-                        new DecimalDef(decimalRangeDto.getMax()));
+                        Optional.ofNullable(decimalRangeDto.getMin()).map(DecimalDef::new).orElse(null),
+                        Optional.ofNullable(decimalRangeDto.getMax()).map(DecimalDef::new).orElse(null));
                 break;
             default:
                 throw new DaoException("Unhandled validation rule type " + dto.getRuleType());

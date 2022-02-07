@@ -496,7 +496,8 @@ public interface AnswerDao extends SqlObject {
                     break;
                 case DECIMAL:
                     answer = new DecimalAnswer(answerId, questionStableId, answerGuid,
-                            new DecimalDef(view.getColumn("da_decimal_value", BigDecimal.class)), actInstanceGuid);
+                            Optional.ofNullable(view.getColumn("da_decimal_value", BigDecimal.class))
+                                    .map(DecimalDef::new).orElse(null), actInstanceGuid);
                     break;
                 case PICKLIST:
                     var picklistMap = isChildAnswer ? childAnswers : container;

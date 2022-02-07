@@ -10,6 +10,7 @@ import org.junit.rules.ExpectedException;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -77,6 +78,7 @@ public class DecimalRangeRuleTest {
 
     // Helper to run the rule.
     private boolean run(DecimalRangeRule rule, BigDecimal value) {
-        return rule.validate(unused, new DecimalAnswer(1L, "q", "a", new DecimalDef(value)));
+        return rule.validate(unused, new DecimalAnswer(1L, "q", "a",
+                Optional.ofNullable(value).map(DecimalDef::new).orElse(null)));
     }
 }
