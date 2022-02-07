@@ -1,0 +1,215 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+       http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+    <changeSet id="DDP-3378_03132019" author="pegah">
+        <createTable tableName="cancer_list">
+            <column name="cancer_id" autoIncrement="true" type="INT">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="display_name" type="VARCHAR(200)">
+                <constraints nullable="false"></constraints>
+            </column>
+            <column name="active" type="TINYINT(1)" defaultValue="1"></column>
+        </createTable>
+    </changeSet>
+    <changeSet id="DDP-3378_03132019_insertData" author="pegah">
+        <insert tableName="cancer_list">
+            <column name="display_name" type="VARCHAR(200)" value="Adrenocortical Carcinoma"></column>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" type="VARCHAR(200)" value="Anal Cancer"></column>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" type="VARCHAR(200)" value="Angiosarcoma"></column>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" type="VARCHAR(200)" value="Appendix Cancer"></column>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" type="VARCHAR(200)" value="Bladder Cancer"></column>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" type="VARCHAR(200)" value="Bone Cancer"></column>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" type="VARCHAR(200)" value="Brain Cancer"></column>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" type="VARCHAR(200)" value="Breast Cancer"></column>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" type="VARCHAR(200)" value="Cervical Cancer"></column>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" type="VARCHAR(200)" value="Cholangiocarcinoma"></column>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" type="VARCHAR(200)" value="Chondrosarcoma"></column>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" type="VARCHAR(200)" value="Chordoma"></column>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" type="VARCHAR(200)" value="Colorectal Cancer"></column>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" type="VARCHAR(200)" value="Desmoid-Type Fibromatosis"></column>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" type="VARCHAR(200)" value="Esophageal Cancer"></column>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" type="VARCHAR(200)" value="Ewing’s Sarcoma"></column>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" type="VARCHAR(200)" value="Eye Cancer"></column>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" type="VARCHAR(200)" value="Fallopian Tube Cancer"></column>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" type="VARCHAR(200)" value="Gallbladder Cancer"></column>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" type="VARCHAR(200)" value="Gastric (Stomach) Cancer"></column>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" type="VARCHAR(200)" value="Gastrointestinal Stromal Tumors (GIST)"></column>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" type="VARCHAR(200)" value="Gestational Trophoblastic Disease"></column>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" type="VARCHAR(200)" value="Giant Cell Tumor of the Bone (GCT)"></column>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" type="VARCHAR(200)" value="Head and Neck Cancer"></column>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" type="VARCHAR(200)" value="Kaposi’s Sarcoma"></column>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" type="VARCHAR(200)" value="Kidney (Renal Cell) Cancer"></column>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" type="VARCHAR(200)" value="Leukemia"></column>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" type="VARCHAR(200)" value="Liposarcoma"></column>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" type="VARCHAR(200)" value="Liver Cancer"></column>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" type="VARCHAR(200)" value="Lung Cancer (Non-Small Cell and Small Cell)"></column>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" type="VARCHAR(200)" value="Lymphoma"></column>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" type="VARCHAR(200)" value="Melanoma"></column>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" type="VARCHAR(200)" value="Merkel Cell Carcinoma"></column>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" type="VARCHAR(200)" value="Mesothelioma"></column>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" type="VARCHAR(200)" value="Multiple Myeloma"></column>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" type="VARCHAR(200)" value="Osteosarcoma"></column>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" type="VARCHAR(200)" value="Ovarian Cancer"></column>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" type="VARCHAR(200)" value="Pancreatic Cancer"></column>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" type="VARCHAR(200)" value="Paraganglioma"></column>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" type="VARCHAR(200)" value="Parathyroid Cancer"></column>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" type="VARCHAR(200)" value="Penile Cancer"></column>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" type="VARCHAR(200)" value="Pheochromocytoma"></column>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" type="VARCHAR(200)" value="Pleuropulmonary Blastoma"></column>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" type="VARCHAR(200)" value="Primary Peritoneal Cancer"></column>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" type="VARCHAR(200)" value="Prostate Cancer"></column>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" type="VARCHAR(200)" value="Rectal Cancer"></column>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" type="VARCHAR(200)" value="Renal Cell (Kidney) Cancer"></column>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" type="VARCHAR(200)" value="Retinoblastoma"></column>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" type="VARCHAR(200)" value="Retroperitoneal Sarcoma"></column>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" type="VARCHAR(200)" value="Rhabdomyosarcoma"></column>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" type="VARCHAR(200)" value="Sarcoma"></column>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" type="VARCHAR(200)" value="Skin Cancer"></column>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" type="VARCHAR(200)" value="Small Intestine Cancer"></column>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" type="VARCHAR(200)" value="Soft Tissue Ewing's Sarcoma"></column>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" type="VARCHAR(200)" value="Soft Tissue Sarcoma"></column>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" type="VARCHAR(200)" value="Stomach (Gastric) Cancer"></column>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" type="VARCHAR(200)" value="Synovial Sarcoma"></column>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" type="VARCHAR(200)" value="Testicular Cancer"></column>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" type="VARCHAR(200)" value="Throat Cancer"></column>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" type="VARCHAR(200)" value="Thyroid Cancer"></column>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" type="VARCHAR(200)" value="Urethral Cancer"></column>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" type="VARCHAR(200)" value="Uterine Cancer"></column>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" type="VARCHAR(200)" value="Uterine Sarcoma"></column>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" type="VARCHAR(200)" value="Vaginal Cancer"></column>
+        </insert>
+        <insert tableName="cancer_list">
+            <column name="display_name" type="VARCHAR(200)" value="Vulvar Cancer"></column>
+        </insert>
+    </changeSet>
+</databaseChangeLog>

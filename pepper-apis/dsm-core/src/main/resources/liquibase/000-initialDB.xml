@@ -1,0 +1,1023 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+    <changeSet author="simone (generated)" id="1523366316339-1">
+        <createTable tableName="EMAIL_QUEUE">
+            <column autoIncrement="true" name="EMAIL_ID" type="INT">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="EMAIL_DATE_CREATED" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="EMAIL_DATE_SCHEDULED" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="EMAIL_DATE_PROCESSED" type="BIGINT"/>
+            <column name="REMINDER_TYPE" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="EMAIL_RECORD_ID" type="VARCHAR(200)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="EMAIL_TEMPLATE" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="EMAIL_DATA" type="VARCHAR(2000)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+    <changeSet author="simone (generated)" id="1523366316339-2">
+        <createTable tableName="EVENT_QUEUE">
+            <column autoIncrement="true" name="EVENT_ID" type="INT">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="EVENT_DATE_CREATED" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="EVENT_TYPE" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="DDP_INSTANCE_ID" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="DSM_KIT_REQUEST_ID" type="INT">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+    <changeSet author="simone (generated)" id="1523366316339-3">
+        <createTable tableName="access_role">
+            <column autoIncrement="true" name="role_id" type="INT">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="name" type="VARCHAR(45)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+    <changeSet author="simone (generated)" id="1523366316339-4">
+        <createTable tableName="access_user">
+            <column autoIncrement="true" name="user_id" type="INT">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="name" type="VARCHAR(45)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="email" type="VARCHAR(45)">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValueBoolean="false" name="is_active" type="TINYINT(1)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+    <changeSet author="simone (generated)" id="1523366316339-5">
+        <createTable tableName="access_user_role_group">
+            <column autoIncrement="true" name="user_role_group_id" type="INT">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="user_id" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="role_id" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="group_id" type="INT">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+    <changeSet author="simone (generated)" id="1523366316339-6">
+        <createTable tableName="bookmark">
+            <column autoIncrement="true" name="bookmark_id" type="INT">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="value" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="instance" type="VARCHAR(10)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+    <changeSet author="simone (generated)" id="1523366316339-7">
+        <createTable tableName="carrier_service">
+            <column autoIncrement="true" name="carrier_service_id" type="INT">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="carrier" type="VARCHAR(45)"/>
+            <column name="easypost_carrier_id" type="VARCHAR(45)"/>
+            <column name="service" type="VARCHAR(45)"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="simone (generated)" id="1523366316339-8">
+        <createTable tableName="ddp_group">
+            <column autoIncrement="true" name="group_id" type="INT">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="name" type="VARCHAR(45)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="VARCHAR(255)"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="simone (generated)" id="1523366316339-9">
+        <createTable tableName="ddp_instance">
+            <column autoIncrement="true" name="ddp_instance_id" type="INT">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="instance_name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="base_url" type="VARCHAR(1000)"/>
+            <column defaultValueBoolean="false" name="is_active" type="TINYINT(1)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="bsp_group" type="VARCHAR(255)"/>
+            <column name="bsp_collection" type="VARCHAR(255)"/>
+            <column name="bsp_organism" type="VARCHAR(255)"/>
+            <column name="collaborator_id_prefix" type="VARCHAR(45)"/>
+            <column name="reminder_notification_wks" type="INT"/>
+            <column name="mr_attention_flag_d" type="INT"/>
+            <column name="tissue_attention_flag_d" type="INT"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="simone (generated)" id="1523366316339-10">
+        <createTable tableName="ddp_instance_group">
+            <column autoIncrement="true" name="instance_group_id" type="INT">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="ddp_instance_id" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="ddp_group_id" type="INT">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+    <changeSet author="simone (generated)" id="1523366316339-11">
+        <createTable tableName="ddp_instance_role">
+            <column autoIncrement="true" name="ddp_instance_role_id" type="INT">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="ddp_instance_id" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="instance_role_id" type="INT">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+    <changeSet author="simone (generated)" id="1523366316339-12">
+        <createTable tableName="ddp_institution">
+            <column autoIncrement="true" name="institution_id" type="INT">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="ddp_institution_id" type="VARCHAR(45)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="type" type="VARCHAR(45)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="participant_id" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="last_changed" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+    <changeSet author="simone (generated)" id="1523366316339-13">
+        <createTable tableName="ddp_kit">
+            <column autoIncrement="true" name="dsm_kit_id" type="INT">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="dsm_kit_request_id" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="kit_label" type="VARCHAR(255)"/>
+            <column name="label_url_to" type="VARCHAR(255)"/>
+            <column name="label_url_return" type="VARCHAR(255)"/>
+            <column name="easypost_to_id" type="VARCHAR(45)"/>
+            <column name="easypost_return_id" type="VARCHAR(45)"/>
+            <column name="easypost_tracking_to_id" type="VARCHAR(45)"/>
+            <column name="easypost_tracking_return_id" type="VARCHAR(45)"/>
+            <column name="easypost_tracking_to_url" type="VARCHAR(255)"/>
+            <column name="easypost_tracking_return_url" type="VARCHAR(255)"/>
+            <column name="scan_date" type="BIGINT"/>
+            <column name="scan_by" type="VARCHAR(45)"/>
+            <column name="kit_complete" type="TINYINT(1)"/>
+            <column name="error" type="TINYINT(1)"/>
+            <column name="message" type="VARCHAR(1000)"/>
+            <column name="receive_date" type="BIGINT"/>
+            <column name="receive_by" type="VARCHAR(45)"/>
+            <column name="easypost_address_id_to" type="VARCHAR(45)"/>
+            <column name="deactivated_date" type="BIGINT"/>
+            <column name="deactivation_reason" type="VARCHAR(500)"/>
+            <column name="deactivated_by" type="VARCHAR(45)"/>
+            <column defaultValueBoolean="false" name="express" type="TINYINT(1)"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="simone (generated)" id="1523366316339-14">
+        <createTable tableName="ddp_kit_request">
+            <column autoIncrement="true" name="dsm_kit_request_id" type="INT">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="ddp_instance_id" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="ddp_kit_request_id" type="VARCHAR(45)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="kit_type_id" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="bsp_collaborator_participant_id" type="VARCHAR(200)"/>
+            <column name="bsp_collaborator_sample_id" type="VARCHAR(200)"/>
+            <column name="ddp_participant_id" type="VARCHAR(200)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="ddp_label" type="VARCHAR(45)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_by" type="VARCHAR(45)"/>
+            <column name="created_date" type="BIGINT"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="simone (generated)" id="1523366316339-15">
+        <createTable tableName="ddp_kit_request_settings">
+            <column autoIncrement="true" name="ddp_kit_carrier_id" type="INT">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="ddp_instance_id" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="kit_type_id" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="kit_return_id" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="carrier_service_to_id" type="INT"/>
+            <column name="carrier_service_return_id" type="INT"/>
+            <column name="kit_dimension_id" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="collaborator_sample_type_overwrite" type="VARCHAR(45)"/>
+            <column name="collaborator_participant_length_overwrite" type="INT"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="simone (generated)" id="1523366316339-16">
+        <createTable tableName="ddp_kit_tracking">
+            <column autoIncrement="true" name="kit_tracking_id" type="INT">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="kit_label" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="tracking_id" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="scan_date" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="scan_by" type="VARCHAR(45)"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="simone (generated)" id="1523366316339-17">
+        <createTable tableName="ddp_medical_record">
+            <column autoIncrement="true" name="medical_record_id" type="INT">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="institution_id" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="name" type="VARCHAR(200)"/>
+            <column name="contact" type="VARCHAR(200)"/>
+            <column name="phone" type="VARCHAR(45)"/>
+            <column name="fax" type="VARCHAR(45)"/>
+            <column name="fax_sent" type="VARCHAR(45)"/>
+            <column name="fax_sent_by" type="VARCHAR(45)"/>
+            <column name="fax_confirmed" type="VARCHAR(45)"/>
+            <column name="fax_sent_2" type="VARCHAR(45)"/>
+            <column name="fax_sent_2_by" type="VARCHAR(45)"/>
+            <column name="fax_confirmed_2" type="VARCHAR(45)"/>
+            <column name="fax_sent_3" type="VARCHAR(45)"/>
+            <column name="fax_sent_3_by" type="VARCHAR(45)"/>
+            <column name="fax_confirmed_3" type="VARCHAR(45)"/>
+            <column name="mr_received" type="VARCHAR(45)"/>
+            <column name="mr_document" type="VARCHAR(45)"/>
+            <column name="mr_problem" type="TINYINT(1)"/>
+            <column name="mr_problem_text" type="VARCHAR(1000)"/>
+            <column name="unable_obtain" type="TINYINT(1)"/>
+            <column name="duplicate" type="TINYINT(1)"/>
+            <column name="international" type="TINYINT(1)"/>
+            <column name="cr_required" type="TINYINT(1)"/>
+            <column name="pathology_present" type="VARCHAR(10)"/>
+            <column name="notes" type="VARCHAR(1000)"/>
+            <column name="last_changed" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="changed_by" type="VARCHAR(45)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+    <changeSet author="simone (generated)" id="1523366316339-18">
+        <createTable tableName="ddp_medical_record_log">
+            <column autoIncrement="true" name="medical_record_log_id" type="INT">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="medical_record_id" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="date" type="VARCHAR(45)"/>
+            <column name="comments" type="VARCHAR(1000)"/>
+            <column name="type" type="VARCHAR(45)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="last_changed" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+    <changeSet author="simone (generated)" id="1523366316339-19">
+        <createTable tableName="ddp_onc_history">
+            <column autoIncrement="true" name="onc_history_id" type="INT">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="participant_id" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created" type="VARCHAR(45)"/>
+            <column name="reviewed" type="VARCHAR(45)"/>
+            <column name="last_changed" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="changed_by" type="VARCHAR(45)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+    <changeSet author="simone (generated)" id="1523366316339-20">
+        <createTable tableName="ddp_onc_history_detail">
+            <column autoIncrement="true" name="onc_history_detail_id" type="INT">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="medical_record_id" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="date_px" type="VARCHAR(45)"/>
+            <column name="type_px" type="VARCHAR(200)"/>
+            <column name="location_px" type="VARCHAR(200)"/>
+            <column name="histology" type="VARCHAR(200)"/>
+            <column name="accession_number" type="VARCHAR(200)"/>
+            <column name="facility" type="VARCHAR(200)"/>
+            <column name="phone" type="VARCHAR(45)"/>
+            <column name="fax" type="VARCHAR(45)"/>
+            <column name="notes" type="VARCHAR(1000)"/>
+            <column name="additional_values" type="VARCHAR(1000)"/>
+            <column name="request" type="VARCHAR(45)"/>
+            <column name="fax_sent" type="VARCHAR(45)"/>
+            <column name="fax_sent_by" type="VARCHAR(45)"/>
+            <column name="fax_confirmed" type="VARCHAR(45)"/>
+            <column name="fax_sent_2" type="VARCHAR(45)"/>
+            <column name="fax_sent_2_by" type="VARCHAR(45)"/>
+            <column name="fax_confirmed_2" type="VARCHAR(45)"/>
+            <column name="fax_sent_3" type="VARCHAR(45)"/>
+            <column name="fax_sent_3_by" type="VARCHAR(45)"/>
+            <column name="fax_confirmed_3" type="VARCHAR(45)"/>
+            <column name="tissue_received" type="VARCHAR(45)"/>
+            <column name="tissue_problem" type="TINYINT(1)"/>
+            <column name="tissue_problem_text" type="VARCHAR(1000)"/>
+            <column name="unable_obtain" type="TINYINT(1)"/>
+            <column name="gender" type="VARCHAR(45)"/>
+            <column name="last_changed" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="changed_by" type="VARCHAR(45)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="deleted" type="TINYINT(1)"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="simone (generated)" id="1523366316339-21">
+        <createTable tableName="ddp_participant">
+            <column autoIncrement="true" name="participant_id" type="INT">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="ddp_participant_id" type="VARCHAR(200)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="last_version" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="last_version_date" type="VARCHAR(45)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="ddp_instance_id" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="release_completed" type="TINYINT(1)"/>
+            <column name="assignee_id_mr" type="INT"/>
+            <column name="assignee_id_tissue" type="INT"/>
+            <column name="last_changed" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="changed_by" type="VARCHAR(45)"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="simone (generated)" id="1523366316339-22">
+        <createTable tableName="ddp_participant_event">
+            <column autoIncrement="true" name="ddp_participant_event_id" type="INT">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="ddp_instance_id" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="ddp_participant_id" type="VARCHAR(200)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="event" type="VARCHAR(45)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="date" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="done_by" type="INT">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+    <changeSet author="simone (generated)" id="1523366316339-23">
+        <createTable tableName="ddp_participant_exit">
+            <column autoIncrement="true" name="ddp_participant_exit_id" type="INT">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="ddp_instance_id" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="ddp_participant_id" type="VARCHAR(200)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="exit_date" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="exit_by" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="in_ddp" type="TINYINT(1)"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="simone (generated)" id="1523366316339-24">
+        <createTable tableName="ddp_participant_record">
+            <column autoIncrement="true" name="participant_record_id" type="INT">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="participant_id" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="cr_sent" type="VARCHAR(45)"/>
+            <column name="cr_received" type="VARCHAR(45)"/>
+            <column name="notes" type="VARCHAR(1000)"/>
+            <column name="last_changed" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="changed_by" type="VARCHAR(45)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+    <changeSet author="simone (generated)" id="1523366316339-25">
+        <createTable tableName="ddp_tissue">
+            <column autoIncrement="true" name="tissue_id" type="INT">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="onc_history_detail_id" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="notes" type="VARCHAR(1000)"/>
+            <column name="count_received" type="INT"/>
+            <column name="tissue_type" type="VARCHAR(45)"/>
+            <column name="tissue_site" type="VARCHAR(200)"/>
+            <column name="tumor_type" type="VARCHAR(45)"/>
+            <column name="h_e" type="VARCHAR(10)"/>
+            <column name="pathology_report" type="VARCHAR(10)"/>
+            <column name="collaborator_sample_id" type="VARCHAR(200)"/>
+            <column name="block_sent" type="VARCHAR(45)"/>
+            <column name="scrolls_received" type="VARCHAR(45)"/>
+            <column name="sk_id" type="VARCHAR(200)"/>
+            <column name="sm_id" type="VARCHAR(200)"/>
+            <column name="sent_gp" type="VARCHAR(45)"/>
+            <column name="last_changed" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="changed_by" type="VARCHAR(45)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="deleted" type="TINYINT(1)"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="simone (generated)" id="1523366316339-26">
+        <createTable tableName="eel_follow_up">
+            <column autoIncrement="true" name="eel_follow_up_id" type="INT">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="SGE_ID" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="ddp_instance_id" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="follow_up" type="VARCHAR(45)"/>
+            <column name="last_changed" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="changed_by" type="VARCHAR(45)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+    <changeSet author="simone (generated)" id="1523366316339-27">
+        <createTable tableName="eel_settings">
+            <column autoIncrement="true" name="eel_setting_id" type="INT">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="instance_id" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="template_id" type="VARCHAR(200)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="name" type="VARCHAR(200)"/>
+            <column name="workflow_id" type="INT"/>
+            <column name="response_days" type="INT"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="simone (generated)" id="1523366316339-28">
+        <createTable tableName="event_type">
+            <column autoIncrement="true" name="event_type_id" type="INT">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="ddp_instance_id" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="event_name" type="VARCHAR(45)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="event_description" type="VARCHAR(200)"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="simone (generated)" id="1523366316339-29">
+        <createTable tableName="instance_role">
+            <column autoIncrement="true" name="instance_role_id" type="INT">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="name" type="VARCHAR(45)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+    <changeSet author="simone (generated)" id="1523366316339-30">
+        <createTable tableName="kit_dimension">
+            <column autoIncrement="true" name="kit_dimension_id" type="INT">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="kit_width" type="DOUBLE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="kit_height" type="DOUBLE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="kit_length" type="DOUBLE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="kit_weight" type="DOUBLE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="kit_description" type="VARCHAR(45)"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="simone (generated)" id="1523366316339-31">
+        <createTable tableName="kit_return_information">
+            <column autoIncrement="true" name="kit_return_id" type="INT">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="return_address_name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="return_address_street1" type="VARCHAR(255)"/>
+            <column name="return_address_street2" type="VARCHAR(255)"/>
+            <column name="return_address_city" type="VARCHAR(255)"/>
+            <column name="return_address_state" type="VARCHAR(45)"/>
+            <column name="return_address_zip" type="VARCHAR(45)"/>
+            <column name="return_address_country" type="VARCHAR(45)"/>
+            <column name="return_address_phone" type="VARCHAR(45)"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="simone (generated)" id="1523366316339-32">
+        <createTable tableName="kit_type">
+            <column autoIncrement="true" name="kit_type_id" type="INT">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="kit_type_name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="bsp_material_type" type="VARCHAR(255)"/>
+            <column name="bsp_receptacle_type" type="VARCHAR(255)"/>
+            <column name="customs_json" type="VARCHAR(500)"/>
+            <column name="required_role" type="INT"/>
+            <column name="manual_sent_track" type="TINYINT(1)"/>
+            <column defaultValueBoolean="false" name="requires_insert_in_kit_tracking" type="TINYINT(1)"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="simone (generated)" id="1523366316339-33">
+        <createTable tableName="label_setting">
+            <column autoIncrement="true" name="label_setting_id" type="INT">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="name" type="VARCHAR(45)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="VARCHAR(200)"/>
+            <column name="default_page" type="TINYINT(1)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="label_on_page" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="label_height" type="DOUBLE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="label_width" type="DOUBLE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="top_margin" type="DOUBLE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="right_margin" type="DOUBLE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="bottom_margin" type="DOUBLE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="left_margin" type="DOUBLE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="deleted" type="TINYINT(1)"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="simone (generated)" id="1523366316339-34">
+        <createTable tableName="onc_history_detail_settings">
+            <column autoIncrement="true" name="onc_history_detail_settings_id" type="INT">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="ddp_instance_id" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="column_name" type="VARCHAR(45)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="column_display" type="VARCHAR(45)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="deleted" type="TINYINT(1)"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="simone (generated)" id="1523366316339-35">
+        <createTable tableName="user_settings">
+            <column autoIncrement="true" name="user_settings_id" type="INT">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="user_id" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="mr_rows_on_page" type="INT"/>
+            <column name="mr_rows_set_0" type="INT"/>
+            <column name="mr_rows_set_1" type="INT"/>
+            <column name="mr_rows_set_2" type="INT"/>
+            <column name="sample_rows_on_page" type="INT"/>
+            <column name="sample_rows_set_0" type="INT"/>
+            <column name="sample_rows_set_1" type="INT"/>
+            <column name="sample_rows_set_2" type="INT"/>
+            <column name="mailing_rows_on_page" type="INT"/>
+            <column name="mailing_rows_set_0" type="INT"/>
+            <column name="mailing_rows_set_1" type="INT"/>
+            <column name="mailing_rows_set_2" type="INT"/>
+            <column name="emailEvents_rows_on_page" type="INT"/>
+            <column name="emailEvents_rows_set_0" type="INT"/>
+            <column name="emailEvents_rows_set_1" type="INT"/>
+            <column name="emailEvents_rows_set_2" type="INT"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="simone (generated)" id="1523366316339-36">
+        <addUniqueConstraint columnNames="carrier_service_id" constraintName="carrier_service_id_UNIQUE" tableName="carrier_service"/>
+    </changeSet>
+    <changeSet author="simone (generated)" id="1523366316339-37">
+        <addUniqueConstraint columnNames="instance_id, template_id" constraintName="ddp_instance_template_UNIQUE" tableName="eel_settings"/>
+    </changeSet>
+    <changeSet author="simone (generated)" id="1523366316339-38">
+        <addUniqueConstraint columnNames="ddp_kit_carrier_id" constraintName="ddp_kit_carrier_id_UNIQUE" tableName="ddp_kit_request_settings"/>
+    </changeSet>
+    <changeSet author="simone (generated)" id="1523366316339-39">
+        <addUniqueConstraint columnNames="ddp_kit_request_id, ddp_instance_id" constraintName="ddp_kit_req_instance_uid_idx" tableName="ddp_kit_request"/>
+    </changeSet>
+    <changeSet author="simone (generated)" id="1523366316339-40">
+        <addUniqueConstraint columnNames="ddp_label" constraintName="ddp_label_UNIQUE" tableName="ddp_kit_request"/>
+    </changeSet>
+    <changeSet author="simone (generated)" id="1523366316339-41">
+        <addUniqueConstraint columnNames="ddp_participant_id, ddp_instance_id" constraintName="ddp_participant_id_UNIQUE" tableName="ddp_participant"/>
+    </changeSet>
+    <changeSet author="simone (generated)" id="1523366316339-42">
+        <addUniqueConstraint columnNames="email" constraintName="email_UNIQUE" tableName="access_user"/>
+    </changeSet>
+    <changeSet author="simone (generated)" id="1523366316339-43">
+        <addUniqueConstraint columnNames="ddp_institution_id, type, participant_id" constraintName="fk_institution_uq" tableName="ddp_institution"/>
+    </changeSet>
+    <changeSet author="simone (generated)" id="1523366316339-44">
+        <addUniqueConstraint columnNames="instance_name" constraintName="instance_name_UNIQUE" tableName="ddp_instance"/>
+    </changeSet>
+    <changeSet author="simone (generated)" id="1523366316339-45">
+        <addUniqueConstraint columnNames="instance_id, workflow_id" constraintName="instance_workflow_UNIQUE" tableName="eel_settings"/>
+    </changeSet>
+    <changeSet author="simone (generated)" id="1523366316339-46">
+        <addUniqueConstraint columnNames="kit_dimension_id" constraintName="kit_dimension_id_UNIQUE" tableName="kit_dimension"/>
+    </changeSet>
+    <changeSet author="simone (generated)" id="1523366316339-47">
+        <addUniqueConstraint columnNames="kit_label" constraintName="kit_label_UNIQUE" tableName="ddp_kit"/>
+    </changeSet>
+    <changeSet author="simone (generated)" id="1523366316339-48">
+        <addUniqueConstraint columnNames="kit_label" constraintName="kit_label_UNIQUE" tableName="ddp_kit_tracking"/>
+    </changeSet>
+    <changeSet author="simone (generated)" id="1523366316339-49">
+        <addUniqueConstraint columnNames="kit_type_name" constraintName="kit_type_name_UNIQUE" tableName="kit_type"/>
+    </changeSet>
+    <changeSet author="simone (generated)" id="1523366316339-50">
+        <addUniqueConstraint columnNames="label_setting_id" constraintName="label_setting_id_UNIQUE" tableName="label_setting"/>
+    </changeSet>
+    <changeSet author="simone (generated)" id="1523366316339-51">
+        <addUniqueConstraint columnNames="name" constraintName="name_UNIQUE" tableName="access_role"/>
+    </changeSet>
+    <changeSet author="simone (generated)" id="1523366316339-52">
+        <addUniqueConstraint columnNames="name" constraintName="name_UNIQUE" tableName="ddp_group"/>
+    </changeSet>
+    <changeSet author="simone (generated)" id="1523366316339-53">
+        <addUniqueConstraint columnNames="name" constraintName="name_UNIQUE" tableName="instance_role"/>
+    </changeSet>
+    <changeSet author="simone (generated)" id="1523366316339-54">
+        <addUniqueConstraint columnNames="name" constraintName="name_UNIQUE" tableName="label_setting"/>
+    </changeSet>
+    <changeSet author="simone (generated)" id="1523366316339-55">
+        <addUniqueConstraint columnNames="participant_id" constraintName="participant_id_UNIQUE" tableName="ddp_onc_history"/>
+    </changeSet>
+    <changeSet author="simone (generated)" id="1523366316339-56">
+        <addUniqueConstraint columnNames="participant_id" constraintName="participant_id_UNIQUE" tableName="ddp_participant_record"/>
+    </changeSet>
+    <changeSet author="simone (generated)" id="1523366316339-57">
+        <addUniqueConstraint columnNames="tracking_id" constraintName="tracking_id_UNIQUE" tableName="ddp_kit_tracking"/>
+    </changeSet>
+    <changeSet author="simone (generated)" id="1523366316339-58">
+        <addUniqueConstraint columnNames="user_id" constraintName="user_id_UNIQUE" tableName="user_settings"/>
+    </changeSet>
+    <changeSet author="simone (generated)" id="1523366316339-59">
+        <createIndex indexName="FK_DDP_INSTANCE_ID_idx" tableName="EVENT_QUEUE">
+            <column name="DDP_INSTANCE_ID"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="simone (generated)" id="1523366316339-60">
+        <createIndex indexName="ddp_instance_fk_idx" tableName="ddp_instance_role">
+            <column name="ddp_instance_id"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="simone (generated)" id="1523366316339-61">
+        <createIndex indexName="ddp_instance_id_fk_idx" tableName="onc_history_detail_settings">
+            <column name="ddp_instance_id"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="simone (generated)" id="1523366316339-62">
+        <createIndex indexName="ddp_instance_pk_idx" tableName="eel_settings">
+            <column name="instance_id"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="simone (generated)" id="1523366316339-63">
+        <createIndex indexName="ddp_instance_role_fk_idx" tableName="ddp_instance_role">
+            <column name="instance_role_id"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="simone (generated)" id="1523366316339-64">
+        <createIndex indexName="ddp_kit_carrier_service_return_fk_idx" tableName="ddp_kit_request_settings">
+            <column name="carrier_service_return_id"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="simone (generated)" id="1523366316339-65">
+        <createIndex indexName="ddp_kit_carrier_service_to_fk_idx" tableName="ddp_kit_request_settings">
+            <column name="carrier_service_to_id"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="simone (generated)" id="1523366316339-66">
+        <createIndex indexName="ddp_kit_dimension_fk_idx" tableName="ddp_kit_request_settings">
+            <column name="kit_dimension_id"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="simone (generated)" id="1523366316339-67">
+        <createIndex indexName="ddp_kit_kit_req_fk_idx" tableName="ddp_kit">
+            <column name="dsm_kit_request_id"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="simone (generated)" id="1523366316339-68">
+        <createIndex indexName="ddp_kit_req_instance_fk_idx" tableName="ddp_kit_request">
+            <column name="ddp_instance_id"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="simone (generated)" id="1523366316339-69">
+        <createIndex indexName="ddp_kit_req_kit_type_fk_idx" tableName="ddp_kit_request">
+            <column name="kit_type_id"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="simone (generated)" id="1523366316339-70">
+        <createIndex indexName="ddp_onc_history_medical_record_fk_idx" tableName="ddp_onc_history_detail">
+            <column name="medical_record_id"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="simone (generated)" id="1523366316339-71">
+        <createIndex indexName="ddp_tissue_onc_his_detail_fk_idx" tableName="ddp_tissue">
+            <column name="onc_history_detail_id"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="simone (generated)" id="1523366316339-72">
+        <createIndex indexName="event_instance_idx" tableName="event_type">
+            <column name="ddp_instance_id"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="simone (generated)" id="1523366316339-73">
+        <createIndex indexName="fk_institution_idx" tableName="ddp_medical_record">
+            <column name="institution_id"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="simone (generated)" id="1523366316339-74">
+        <createIndex indexName="fk_medical_record_idx" tableName="ddp_medical_record_log">
+            <column name="medical_record_id"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="simone (generated)" id="1523366316339-75">
+        <createIndex indexName="fk_participant_ddp_instance1_idx" tableName="ddp_participant">
+            <column name="ddp_instance_id"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="simone (generated)" id="1523366316339-76">
+        <createIndex indexName="fk_participant_idx" tableName="ddp_institution">
+            <column name="participant_id"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="simone (generated)" id="1523366316339-77">
+        <createIndex indexName="instance_fk_idx" tableName="ddp_instance_group">
+            <column name="ddp_instance_id"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="simone (generated)" id="1523366316339-78">
+        <createIndex indexName="instance_group_fk_idx" tableName="ddp_instance_group">
+            <column name="ddp_group_id"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="simone (generated)" id="1523366316339-79">
+        <createIndex indexName="participant_event_instance_fk_idx" tableName="ddp_participant_event">
+            <column name="ddp_instance_id"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="simone (generated)" id="1523366316339-80">
+        <createIndex indexName="participant_event_user_fk_idx" tableName="ddp_participant_event">
+            <column name="done_by"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="simone (generated)" id="1523366316339-81">
+        <createIndex indexName="participant_exit_instance_fk_idx" tableName="ddp_participant_exit">
+            <column name="ddp_instance_id"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="simone (generated)" id="1523366316339-82">
+        <createIndex indexName="participant_exit_user_fk_idx" tableName="ddp_participant_exit">
+            <column name="exit_by"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="simone (generated)" id="1523366316339-83">
+        <createIndex indexName="participant_user_fk_idx" tableName="ddp_participant">
+            <column name="assignee_id_mr"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="simone (generated)" id="1523366316339-84">
+        <createIndex indexName="participant_user_tissue_fk_idx" tableName="ddp_participant">
+            <column name="assignee_id_tissue"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="simone (generated)" id="1523366316339-85">
+        <createIndex indexName="user_role_group_fk_idx" tableName="access_user_role_group">
+            <column name="group_id"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="simone (generated)" id="1523366316339-86">
+        <createIndex indexName="user_role_role_fk_idx" tableName="access_user_role_group">
+            <column name="role_id"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="simone (generated)" id="1523366316339-87">
+        <createIndex indexName="user_role_user_fk_idx" tableName="access_user_role_group">
+            <column name="user_id"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="simone (generated)" id="1523366316339-88">
+        <addForeignKeyConstraint baseColumnNames="DDP_INSTANCE_ID" baseTableName="EVENT_QUEUE" constraintName="FK_DDP_INSTANCE_ID" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="ddp_instance_id" referencedTableName="ddp_instance"/>
+    </changeSet>
+    <changeSet author="simone (generated)" id="1523366316339-89">
+        <addForeignKeyConstraint baseColumnNames="ddp_instance_id" baseTableName="ddp_instance_role" constraintName="ddp_instance_fk" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="ddp_instance_id" referencedTableName="ddp_instance"/>
+    </changeSet>
+    <changeSet author="simone (generated)" id="1523366316339-90">
+        <addForeignKeyConstraint baseColumnNames="ddp_group_id" baseTableName="ddp_instance_group" constraintName="ddp_instance_group_fk" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="group_id" referencedTableName="ddp_group"/>
+    </changeSet>
+    <changeSet author="simone (generated)" id="1523366316339-91">
+        <addForeignKeyConstraint baseColumnNames="ddp_instance_id" baseTableName="onc_history_detail_settings" constraintName="ddp_instance_id_fk" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="ddp_instance_id" referencedTableName="ddp_instance"/>
+    </changeSet>
+    <changeSet author="simone (generated)" id="1523366316339-92">
+        <addForeignKeyConstraint baseColumnNames="instance_id" baseTableName="eel_settings" constraintName="ddp_instance_pk" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="ddp_instance_id" referencedTableName="ddp_instance"/>
+    </changeSet>
+    <changeSet author="simone (generated)" id="1523366316339-93">
+        <addForeignKeyConstraint baseColumnNames="instance_role_id" baseTableName="ddp_instance_role" constraintName="ddp_instance_role_fk" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="instance_role_id" referencedTableName="instance_role"/>
+    </changeSet>
+    <changeSet author="simone (generated)" id="1523366316339-94">
+        <addForeignKeyConstraint baseColumnNames="carrier_service_return_id" baseTableName="ddp_kit_request_settings" constraintName="ddp_kit_carrier_service_return_fk" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="carrier_service_id" referencedTableName="carrier_service"/>
+    </changeSet>
+    <changeSet author="simone (generated)" id="1523366316339-95">
+        <addForeignKeyConstraint baseColumnNames="carrier_service_to_id" baseTableName="ddp_kit_request_settings" constraintName="ddp_kit_carrier_service_to_fk" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="carrier_service_id" referencedTableName="carrier_service"/>
+    </changeSet>
+    <changeSet author="simone (generated)" id="1523366316339-96">
+        <addForeignKeyConstraint baseColumnNames="kit_dimension_id" baseTableName="ddp_kit_request_settings" constraintName="ddp_kit_dimension_fk" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="kit_dimension_id" referencedTableName="kit_dimension"/>
+    </changeSet>
+    <changeSet author="simone (generated)" id="1523366316339-97">
+        <addForeignKeyConstraint baseColumnNames="dsm_kit_request_id" baseTableName="ddp_kit" constraintName="ddp_kit_kit_req_fk" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="dsm_kit_request_id" referencedTableName="ddp_kit_request"/>
+    </changeSet>
+    <changeSet author="simone (generated)" id="1523366316339-98">
+        <addForeignKeyConstraint baseColumnNames="ddp_instance_id" baseTableName="ddp_kit_request" constraintName="ddp_kit_req_instance_fk" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="ddp_instance_id" referencedTableName="ddp_instance"/>
+    </changeSet>
+    <changeSet author="simone (generated)" id="1523366316339-99">
+        <addForeignKeyConstraint baseColumnNames="kit_type_id" baseTableName="ddp_kit_request" constraintName="ddp_kit_req_kit_type_fk" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="kit_type_id" referencedTableName="kit_type"/>
+    </changeSet>
+    <changeSet author="simone (generated)" id="1523366316339-100">
+        <addForeignKeyConstraint baseColumnNames="participant_id" baseTableName="ddp_participant_record" constraintName="ddp_participant_record_participant_fk" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="participant_id" referencedTableName="ddp_participant"/>
+    </changeSet>
+    <changeSet author="simone (generated)" id="1523366316339-101">
+        <addForeignKeyConstraint baseColumnNames="onc_history_detail_id" baseTableName="ddp_tissue" constraintName="ddp_tissue_onc_his_detail_fk" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="onc_history_detail_id" referencedTableName="ddp_onc_history_detail"/>
+    </changeSet>
+    <changeSet author="simone (generated)" id="1523366316339-102">
+        <addForeignKeyConstraint baseColumnNames="ddp_instance_id" baseTableName="event_type" constraintName="event_instance" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="ddp_instance_id" referencedTableName="ddp_instance"/>
+    </changeSet>
+    <changeSet author="simone (generated)" id="1523366316339-103">
+        <addForeignKeyConstraint baseColumnNames="institution_id" baseTableName="ddp_medical_record" constraintName="fk_institution" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="institution_id" referencedTableName="ddp_institution"/>
+    </changeSet>
+    <changeSet author="simone (generated)" id="1523366316339-104">
+        <addForeignKeyConstraint baseColumnNames="medical_record_id" baseTableName="ddp_medical_record_log" constraintName="fk_medical_record" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="medical_record_id" referencedTableName="ddp_medical_record"/>
+    </changeSet>
+    <changeSet author="simone (generated)" id="1523366316339-105">
+        <addForeignKeyConstraint baseColumnNames="participant_id" baseTableName="ddp_onc_history" constraintName="fk_onc_his_participant1" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="participant_id" referencedTableName="ddp_participant"/>
+    </changeSet>
+    <changeSet author="simone (generated)" id="1523366316339-106">
+        <addForeignKeyConstraint baseColumnNames="participant_id" baseTableName="ddp_institution" constraintName="fk_participant" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="participant_id" referencedTableName="ddp_participant"/>
+    </changeSet>
+    <changeSet author="simone (generated)" id="1523366316339-107">
+        <addForeignKeyConstraint baseColumnNames="ddp_instance_id" baseTableName="ddp_participant" constraintName="fk_participant_ddp_instance1" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="ddp_instance_id" referencedTableName="ddp_instance"/>
+    </changeSet>
+    <changeSet author="simone (generated)" id="1523366316339-108">
+        <addForeignKeyConstraint baseColumnNames="ddp_instance_id" baseTableName="ddp_instance_group" constraintName="instance_group_instance_fk" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="ddp_instance_id" referencedTableName="ddp_instance"/>
+    </changeSet>
+    <changeSet author="simone (generated)" id="1523366316339-109">
+        <addForeignKeyConstraint baseColumnNames="medical_record_id" baseTableName="ddp_onc_history_detail" constraintName="onc_history_medical_record_fk" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="medical_record_id" referencedTableName="ddp_medical_record"/>
+    </changeSet>
+    <changeSet author="simone (generated)" id="1523366316339-110">
+        <addForeignKeyConstraint baseColumnNames="ddp_instance_id" baseTableName="ddp_participant_event" constraintName="participant_event_instance_fk" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="ddp_instance_id" referencedTableName="ddp_instance"/>
+    </changeSet>
+    <changeSet author="simone (generated)" id="1523366316339-111">
+        <addForeignKeyConstraint baseColumnNames="done_by" baseTableName="ddp_participant_event" constraintName="participant_event_user_fk" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="user_id" referencedTableName="access_user"/>
+    </changeSet>
+    <changeSet author="simone (generated)" id="1523366316339-112">
+        <addForeignKeyConstraint baseColumnNames="ddp_instance_id" baseTableName="ddp_participant_exit" constraintName="participant_exit_instance_fk" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="ddp_instance_id" referencedTableName="ddp_instance"/>
+    </changeSet>
+    <changeSet author="simone (generated)" id="1523366316339-113">
+        <addForeignKeyConstraint baseColumnNames="exit_by" baseTableName="ddp_participant_exit" constraintName="participant_exit_user_fk" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="user_id" referencedTableName="access_user"/>
+    </changeSet>
+    <changeSet author="simone (generated)" id="1523366316339-114">
+        <addForeignKeyConstraint baseColumnNames="assignee_id_mr" baseTableName="ddp_participant" constraintName="participant_user_mr_fk" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="user_id" referencedTableName="access_user"/>
+    </changeSet>
+    <changeSet author="simone (generated)" id="1523366316339-115">
+        <addForeignKeyConstraint baseColumnNames="assignee_id_tissue" baseTableName="ddp_participant" constraintName="participant_user_tissue_fk" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="user_id" referencedTableName="access_user"/>
+    </changeSet>
+    <changeSet author="simone (generated)" id="1523366316339-116">
+        <addForeignKeyConstraint baseColumnNames="group_id" baseTableName="access_user_role_group" constraintName="user_role_grup_fk" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="group_id" referencedTableName="ddp_group"/>
+    </changeSet>
+    <changeSet author="simone (generated)" id="1523366316339-117">
+        <addForeignKeyConstraint baseColumnNames="role_id" baseTableName="access_user_role_group" constraintName="user_role_role_fk" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="role_id" referencedTableName="access_role"/>
+    </changeSet>
+    <changeSet author="simone (generated)" id="1523366316339-118">
+        <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="access_user_role_group" constraintName="user_role_user_fk" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="user_id" referencedTableName="access_user"/>
+    </changeSet>
+    <changeSet author="simone (generated)" id="1523366316339-119">
+        <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="user_settings" constraintName="user_settings_user_fk" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="user_id" referencedTableName="access_user"/>
+    </changeSet>
+</databaseChangeLog>

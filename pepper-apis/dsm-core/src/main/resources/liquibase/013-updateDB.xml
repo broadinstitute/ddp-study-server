@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+    <changeSet author="simone" id="DDP-2111_01222019">
+        <addColumn tableName="ddp_kit_request_settings">
+            <column name="external_client_id" type="VARCHAR(25)">
+            </column>
+        </addColumn>
+    </changeSet>
+</databaseChangeLog>

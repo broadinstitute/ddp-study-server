@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+    <changeSet author="ikhaladz" id="createMessageStatusTable">
+        <createTable tableName="message">
+            <column name="message_id" autoIncrement="true" type="INT">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="user_id" type="INT"/>
+            <column name="message_status" type="VARCHAR(200)"/>
+            <column name="published_at" type="BIGINT"/>
+            <column name="received_message" type="VARCHAR(500)"/>
+            <column name="received_at" type="BIGINT"/>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="ikhaladz" id="createMessageUserForeignKey">
+        <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="message" constraintName="fk_message_user"
+                                 deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION"
+                                    referencedColumnNames="user_id" referencedTableName="access_user"/>
+    </changeSet>
+</databaseChangeLog>
