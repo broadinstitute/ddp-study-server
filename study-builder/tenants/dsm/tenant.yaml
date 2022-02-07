@@ -1,5 +1,5 @@
 tenant:
-  default_directory: Username-Password-Authentication
+  default_directory: ##DB_NAME##
 
 rules:
   - name: Add claims
@@ -7,6 +7,10 @@ rules:
     stage: login_success
     enabled: true
     order: 1
+rulesConfigs:
+  # Key/Value pairs for Rule configuration settings
+  - key: "pepperBaseUrl"
+    value: ##SERVER_BASE_URL##
 
 pages:
   - name: login
@@ -55,3 +59,31 @@ clients:
       alg: RS256
       lifetime_in_seconds: 36000
     oidc_conformant: true
+
+databases:
+  - name: Username-Password-Authentication
+    strategy: auth0
+    enabled_clients:
+      - dsm-angular-client
+      - auth0-deploy-cli
+    is_domain_connection: false
+    options:
+      mfa:
+        active: true
+        return_enroll_settings: true
+      passwordPolicy: fair
+    realms:
+      - Username-Password-Authentication
+connections:
+  - name: google-oauth2
+    strategy: google-oauth2
+    enabled_clients:
+      - dsm-angular-client
+      - auth0-deploy-cli
+    is_domain_connection: false
+    options:
+      email: true
+      scope:
+        - email
+        - profile
+      profile: true
