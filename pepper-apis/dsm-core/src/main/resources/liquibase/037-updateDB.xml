@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+    <changeSet author="pegah" id="ups-status">
+        <addColumn tableName="ddp_kit">
+            <column name="ups_tracking_status" type="VARCHAR(200)">
+            </column>
+        </addColumn>
+        <addColumn tableName="ddp_kit">
+            <column name="ups_return_status" type="VARCHAR(200)">
+            </column>
+        </addColumn>
+
+    </changeSet>
+    <changeSet id="ups_update_time" author="pegah">
+        <addColumn tableName="ddp_kit">
+            <column name="ups_tracking_date" type="varchar(100)">
+            </column>
+        </addColumn>
+        <addColumn tableName="ddp_kit">
+            <column name="ups_return_date" type="varchar(100)">
+            </column>
+        </addColumn>
+    </changeSet>
+    <changeSet id="CE-order-flag" author="pegah">
+        <addColumn tableName="ddp_kit">
+            <column name="CE_order" type="TINYINT(1)">
+            </column>
+        </addColumn>
+    </changeSet>
+</databaseChangeLog>

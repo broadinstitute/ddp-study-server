@@ -1,0 +1,9 @@
+[{"participantId":"FAKE_DDP_PARTICIPANT_ID",
+  "kitRequestId":"FAKE_NEWER_KIT",
+  "kitType":"SALIVA"},
+  {"participantId":"FAKE_DDP_PARTICIPANT_ID",
+    "kitRequestId":"FAKE_NEWER_KIT_666",
+    "kitType":"BLOOD"},
+  {"participantId":"FAKE_DDP_PARTICIPANT_ID",
+    "kitRequestId":"FAKE_NEWER_KIT_667",
+    "kitType":"SALIVA"}]
