@@ -27,6 +27,7 @@ import org.broadinstitute.ddp.db.dto.DateQuestionDto;
 import org.broadinstitute.ddp.db.dto.FileQuestionDto;
 import org.broadinstitute.ddp.db.dto.FormBlockDto;
 import org.broadinstitute.ddp.db.dto.NumericQuestionDto;
+import org.broadinstitute.ddp.db.dto.DecimalQuestionDto;
 import org.broadinstitute.ddp.db.dto.PicklistGroupDto;
 import org.broadinstitute.ddp.db.dto.PicklistOptionDto;
 import org.broadinstitute.ddp.db.dto.PicklistQuestionDto;
@@ -47,6 +48,7 @@ import org.broadinstitute.ddp.model.activity.definition.question.DatePicklistDef
 import org.broadinstitute.ddp.model.activity.definition.question.DateQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.FileQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.NumericQuestionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.DecimalQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistGroupDef;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistOptionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistQuestionDef;
@@ -67,6 +69,7 @@ import org.broadinstitute.ddp.model.activity.instance.answer.CompositeAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.DateAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.FileAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.NumericAnswer;
+import org.broadinstitute.ddp.model.activity.instance.answer.DecimalAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.PicklistAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.MatrixAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
@@ -77,6 +80,7 @@ import org.broadinstitute.ddp.model.activity.instance.question.DatePicklistQuest
 import org.broadinstitute.ddp.model.activity.instance.question.DateQuestion;
 import org.broadinstitute.ddp.model.activity.instance.question.FileQuestion;
 import org.broadinstitute.ddp.model.activity.instance.question.NumericQuestion;
+import org.broadinstitute.ddp.model.activity.instance.question.DecimalQuestion;
 import org.broadinstitute.ddp.model.activity.instance.question.PicklistGroup;
 import org.broadinstitute.ddp.model.activity.instance.question.PicklistOption;
 import org.broadinstitute.ddp.model.activity.instance.question.PicklistQuestion;
@@ -169,6 +173,9 @@ public interface QuestionDao extends SqlObject {
 
     @CreateSqlObject
     JdbiNumericQuestion getJdbiNumericQuestion();
+
+    @CreateSqlObject
+    JdbiDecimalQuestion getJdbiDecimalQuestion();
 
     @CreateSqlObject
     JdbiBlockQuestion getJdbiBlockQuestion();
@@ -406,6 +413,9 @@ public interface QuestionDao extends SqlObject {
                 break;
             case NUMERIC:
                 question = getNumericQuestion((NumericQuestionDto) dto, activityInstanceGuid, answerIds, untypedRules);
+                break;
+            case DECIMAL:
+                question = getDecimalQuestion((DecimalQuestionDto) dto, activityInstanceGuid, answerIds, untypedRules);
                 break;
             case AGREEMENT:
                 question = getAgreementQuestion((AgreementQuestionDto) dto, activityInstanceGuid, answerIds, untypedRules);
@@ -836,6 +846,43 @@ public interface QuestionDao extends SqlObject {
     }
 
     /**
+     * Build a decimal question.
+     *
+     * @param dto                  the question dto
+     * @param activityInstanceGuid the activity instance guid
+     * @param answerIds            list of base answer ids to question (may be empty)
+     * @param untypedRules         list of untyped validations for question (may be empty)
+     * @return numeric question object
+     */
+    default Question getDecimalQuestion(DecimalQuestionDto dto, String activityInstanceGuid,
+                                        List<Long> answerIds, List<Rule> untypedRules) {
+        AnswerDao answerDao = getAnswerDao();
+        List<DecimalAnswer> answers = answerIds.stream()
+                .map(answerId -> (DecimalAnswer) answerDao.findAnswerById(answerId)
+                        .orElseThrow(() -> new DaoException("Could not find decimal answer with id " + answerId)))
+                .collect(toList());
+
+        List<Rule<DecimalAnswer>> rules = untypedRules.stream()
+                .map(rule -> (Rule<DecimalAnswer>) rule)
+                .collect(toList());
+
+        boolean isReadonly = QuestionUtil.isReadonly(getHandle(), dto, activityInstanceGuid);
+
+        return new DecimalQuestion(
+                dto.getStableId(),
+                dto.getPromptTemplateId(),
+                dto.getPlaceholderTemplateId(),
+                dto.isRestricted(),
+                dto.isDeprecated(),
+                isReadonly,
+                dto.getTooltipTemplateId(),
+                dto.getAdditionalInfoHeaderTemplateId(),
+                dto.getAdditionalInfoFooterTemplateId(),
+                answers,
+                rules);
+    }
+
+    /**
      * Build a agreement question.
      *
      * @param dto                  the question dto
@@ -958,6 +1005,9 @@ public interface QuestionDao extends SqlObject {
             case NUMERIC:
                 insertQuestion(activityId, (NumericQuestionDef) question, revisionId);
                 break;
+            case DECIMAL:
+                insertQuestion(activityId, (DecimalQuestionDef) question, revisionId);
+                break;
             case PICKLIST:
                 insertQuestion(activityId, (PicklistQuestionDef) question, revisionId);
                 break;
@@ -1003,6 +1053,9 @@ public interface QuestionDao extends SqlObject {
                 break;
             case NUMERIC:
                 disableNumericQuestion(qid.getId(), meta);
+                break;
+            case DECIMAL:
+                disableDecimalQuestion(qid.getId(), meta);
                 break;
             case PICKLIST:
                 disablePicklistQuestion(qid.getId(), meta);
@@ -1312,6 +1365,28 @@ public interface QuestionDao extends SqlObject {
     }
 
     /**
+     * Create new decimal question by inserting common data and numeric specific data.
+     *
+     * @param activityId  the associated activity
+     * @param questionDef the question definition, without generated things like ids
+     * @param revisionId  the revision to use, will be shared by all created data
+     */
+    default void insertQuestion(long activityId, DecimalQuestionDef questionDef, long revisionId) {
+        insertBaseQuestion(activityId, questionDef, revisionId);
+
+        TemplateDao templateDao = getTemplateDao();
+        Long placeholderTemplateId = null;
+        if (questionDef.getPlaceholderTemplate() != null) {
+            placeholderTemplateId = templateDao.insertTemplate(questionDef.getPlaceholderTemplate(), revisionId);
+        }
+
+        int numInserted = getJdbiDecimalQuestion().insert(questionDef.getQuestionId(), placeholderTemplateId);
+        if (numInserted != 1) {
+            throw new DaoException("Inserted " + numInserted + " for decimal question " + questionDef.getStableId());
+        }
+    }
+
+    /**
      * Create new matrix question by inserting common data and matrix specific data.
      *
      * @param activityId the associated activity
@@ -1389,7 +1464,7 @@ public interface QuestionDao extends SqlObject {
         boolean acceptable = compositeQuestion.getChildren().stream().allMatch(child -> {
             QuestionType type = child.getQuestionType();
             return type == QuestionType.DATE || type == QuestionType.PICKLIST
-                    || type == QuestionType.TEXT || type == QuestionType.NUMERIC;
+                    || type == QuestionType.TEXT || type == QuestionType.NUMERIC || type == QuestionType.DECIMAL;
         });
         if (!acceptable) {
             throw new DaoException("Composites only support DATE, PICKLIST, TEXT and NUMERIC child questions");
@@ -1538,6 +1613,25 @@ public interface QuestionDao extends SqlObject {
         NumericQuestionDto questionDto = dto == null ? null : (NumericQuestionDto) dto;
         if (questionDto == null || questionDto.getRevisionEnd() != null) {
             throw new NoSuchElementException("Cannot find active numeric question with id " + questionId);
+        }
+
+        disableBaseQuestion(questionDto, meta);
+        if (questionDto.getPlaceholderTemplateId() != null) {
+            getTemplateDao().disableTemplate(questionDto.getPlaceholderTemplateId(), meta);
+        }
+    }
+
+    /**
+     * End currently active numeric question by terminating common data and numeric specific data.
+     *
+     * @param questionId the question id
+     * @param meta       the revision metadata used for terminating data
+     */
+    default void disableDecimalQuestion(long questionId, RevisionMetadata meta) {
+        QuestionDto dto = getJdbiQuestion().findQuestionDtoById(questionId).orElse(null);
+        DecimalQuestionDto questionDto = dto == null ? null : (DecimalQuestionDto) dto;
+        if (questionDto == null || questionDto.getRevisionEnd() != null) {
+            throw new NoSuchElementException("Cannot find active decimal question with id " + questionId);
         }
 
         disableBaseQuestion(questionDto, meta);
@@ -1704,6 +1798,10 @@ public interface QuestionDao extends SqlObject {
                     break;
                 case NUMERIC:
                     questionDef = buildNumericQuestionDef((NumericQuestionDto) questionDto, ruleDefs, templates);
+                    questionDefs.put(questionId, questionDef);
+                    break;
+                case DECIMAL:
+                    questionDef = buildDecimalQuestionDef((DecimalQuestionDto) questionDto, ruleDefs, templates);
                     questionDefs.put(questionId, questionDef);
                     break;
                 case PICKLIST:
@@ -1920,6 +2018,18 @@ public interface QuestionDao extends SqlObject {
         Template prompt = templates.get(dto.getPromptTemplateId());
         Template placeholderTemplate = templates.getOrDefault(dto.getPlaceholderTemplateId(), null);
         var builder = NumericQuestionDef
+                .builder(dto.getStableId(), prompt)
+                .setPlaceholderTemplate(placeholderTemplate);
+        configureBaseQuestionDef(builder, dto, ruleDefs, templates);
+        return builder.build();
+    }
+
+    private DecimalQuestionDef buildDecimalQuestionDef(DecimalQuestionDto dto,
+                                                       List<RuleDef> ruleDefs,
+                                                       Map<Long, Template> templates) {
+        Template prompt = templates.get(dto.getPromptTemplateId());
+        Template placeholderTemplate = templates.getOrDefault(dto.getPlaceholderTemplateId(), null);
+        var builder = DecimalQuestionDef
                 .builder(dto.getStableId(), prompt)
                 .setPlaceholderTemplate(placeholderTemplate);
         configureBaseQuestionDef(builder, dto, ruleDefs, templates);

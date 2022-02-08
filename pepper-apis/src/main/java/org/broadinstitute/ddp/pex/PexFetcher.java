@@ -2,6 +2,7 @@ package org.broadinstitute.ddp.pex;
 
 import static java.util.stream.Collectors.toList;
 
+import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -287,6 +288,24 @@ class PexFetcher {
     }
 
     /**
+     * Get latest numeric answer value of integer type for given question. An activity instance needs to exist for user and activity.
+     *
+     * @param ictx         the interpreter context
+     * @param activityCode the activity
+     * @param stableId     the question stable id
+     * @return numeric integer answer value
+     */
+    BigDecimal findLatestDecimalAnswer(InterpreterContext ictx, String userGuid, String activityCode, String stableId, long studyId) {
+        try {
+            return ictx.getHandle().attach(PexDao.class)
+                    .findLatestDecimalAnswer(userGuid, activityCode, stableId, studyId);
+        } catch (Exception e) {
+            throw new PexFetchException("Could not fetch latest numeric integer answer for form "
+                    + activityCode + " question " + stableId, e);
+        }
+    }
+
+    /**
      * Get a specific numeric answer value of integer type for given question.
      *
      * @param ictx                 the interpreter context
@@ -299,6 +318,25 @@ class PexFetcher {
         try {
             return ictx.getHandle().attach(PexDao.class)
                     .findSpecificNumericIntegerAnswer(activityInstanceGuid, stableId);
+        } catch (Exception e) {
+            throw new PexFetchException("Could not fetch specific numeric integer answer for form "
+                    + activityCode + " of instance " + activityInstanceGuid + ", question" + stableId, e);
+        }
+    }
+
+    /**
+     * Get a specific numeric answer value of integer type for given question.
+     *
+     * @param ictx                 the interpreter context
+     * @param activityCode         the activity
+     * @param activityInstanceGuid the activity instance guid
+     * @param stableId             the question stable id
+     * @return numeric integer answer value
+     */
+    BigDecimal findSpecificDecimalAnswer(InterpreterContext ictx, String activityCode, String activityInstanceGuid, String stableId) {
+        try {
+            return ictx.getHandle().attach(PexDao.class)
+                    .findSpecificDecimalAnswer(activityInstanceGuid, stableId);
         } catch (Exception e) {
             throw new PexFetchException("Could not fetch specific numeric integer answer for form "
                     + activityCode + " of instance " + activityInstanceGuid + ", question" + stableId, e);
