@@ -1,0 +1,530 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+    <changeSet author="simone" id="optionalFileInfo">
+        <addColumn tableName="medical_record_abstraction_field">
+            <column name="file_info" type="TINYINT(1)" afterColumn="help_text">
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet author="simone" id="fieldSettingOrder">
+        <addColumn tableName="field_settings">
+            <column name="order_number" type="INT(11)" afterColumn="possible_values">
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet author="simone" id="fieldSettingAction">
+        <addColumn tableName="field_settings">
+            <column name="actions" type="VARCHAR(500)" afterColumn="possible_values">
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet author="simone" id="fieldSettingSize">
+        <modifyDataType columnName="column_name" newDataType="VARCHAR(100)" tableName="field_settings"/>
+        <modifyDataType columnName="column_display" newDataType="VARCHAR(500)" tableName="field_settings"/>
+    </changeSet>
+
+    <changeSet id="dynamicFormsData" author="simone">
+        <createTable tableName="ddp_participant_data">
+            <column autoIncrement="true" name="participant_data_id" type="INT">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="ddp_participant_id" type="VARCHAR(200)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="field_type_id" type="VARCHAR(200)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="data" type="VARCHAR(10000)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="last_changed" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="changed_by" type="VARCHAR(45)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="simone" id="instanceId">
+        <addColumn tableName="ddp_participant_data">
+            <column name="ddp_instance_id" type="INT(11)" afterColumn="ddp_participant_id">
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet author="simone" id="atForm">
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='atcp')"></column>
+            <column name="column_name" value="AT_GROUP_ELIGIBILITY"/>
+            <column name="column_display" value="Eligibility"/>
+            <column name="display_type" value="TAB"/>
+            <column name="order_number" value="2"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='atcp')"></column>
+            <column name="field_type" value="AT_GROUP_ELIGIBILITY"/>
+            <column name="column_name" value="ELIGIBILITY"/>
+            <column name="column_display" value="Eligibility"/>
+            <column name="display_type" value="RADIO"/>
+            <column name="possible_values" value="[{&#34;value&#34;:&#34;2&#34;,&#34;name&#34;:&#34;Pending&#34;},{&#34;value&#34;:&#34;1&#34;,&#34;name&#34;:&#34;Eligible&#34;},{&#34;value&#34;:&#34;0&#34;,&#34;name&#34;:&#34;Not Eligible&#34;}]"/>
+            <column name="actions" value="[{&#34;name&#34;:&#34;workflows&#34;,&#34;value&#34;:&#34;ELIGIBILITY&#34;,&#34;type&#34;:&#34;ELASTIC_EXPORT&#34;}]"/>
+            <column name="order_number" value="1"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='atcp')"></column>
+            <column name="field_type" value="AT_GROUP_ELIGIBILITY"/>
+            <column name="column_name" value="PARTICIPANT_DECEASED"/>
+            <column name="column_display" value="Check here if this participant is deceased"/>
+            <column name="display_type" value="RADIO"/>
+            <column name="possible_values" value="[{&#34;value&#34;:&#34;1&#34;,&#34;name&#34;:&#34;Yes&#34;},{&#34;value&#34;:&#34;0&#34;,&#34;name&#34;:&#34;No&#34;}]"/>
+            <column name="order_number" value="2"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='atcp')"></column>
+            <column name="field_type" value="AT_GROUP_ELIGIBILITY"/>
+            <column name="column_name" value="PARTICIPANT_DEATH_DATE"/>
+            <column name="column_display" value="Date of death for participant"/>
+            <column name="display_type" value="DATE"/>
+            <column name="order_number" value="3"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='atcp')"></column>
+            <column name="field_type" value="AT_GROUP_ELIGIBILITY"/>
+            <column name="column_name" value="PARTICIPANT_DEATH_AGE"/>
+            <column name="column_display" value="Age of participant at time of death"/>
+            <column name="display_type" value="NUMBER"/>
+            <column name="order_number" value="4"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='atcp')"></column>
+            <column name="field_type" value="AT_GROUP_ELIGIBILITY"/>
+            <column name="column_name" value="PARTICIPANT_DEATH_CAUSE"/>
+            <column name="column_display" value="Cause of death for participant"/>
+            <column name="display_type" value="TEXTAREA"/>
+            <column name="order_number" value="5"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='atcp')"></column>
+            <column name="field_type" value="AT_GROUP_ELIGIBILITY"/>
+            <column name="column_name" value="PARTICIPANT_DEATH_CAUSE_NOTES"/>
+            <column name="column_display" value="Notes about participant cause of death"/>
+            <column name="display_type" value="TEXTAREA"/>
+            <column name="order_number" value="6"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='atcp')"></column>
+            <column name="column_name" value="AT_GROUP_MISCELLANEOUS"/>
+            <column name="column_display" value="Registration"/>
+            <column name="display_type" value="TAB"/>
+            <column name="order_number" value="3"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='atcp')"></column>
+            <column name="field_type" value="AT_GROUP_MISCELLANEOUS"/>
+            <column name="column_name" value="REGISTRATION_TYPE"/>
+            <column name="column_display" value="Type of participant registration"/>
+            <column name="display_type" value="RADIO"/>
+            <column name="possible_values" value="[{&#34;value&#34;:&#34;2&#34;,&#34;name&#34;:&#34;Dependent&#34;},{&#34;value&#34;:&#34;3&#34;,&#34;name&#34;:&#34;Portal User&#34;},{&#34;value&#34;:&#34;1&#34;,&#34;name&#34;:&#34;Self&#34;}]"/>
+            <column name="order_number" value="1"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='atcp')"></column>
+            <column name="field_type" value="AT_GROUP_MISCELLANEOUS"/>
+            <column name="column_name" value="REGISTRATION_STATUS"/>
+            <column name="column_display" value="Status of participant registration"/>
+            <column name="display_type" value="RADIO"/>
+            <column name="possible_values" value="[{&#34;value&#34;:&#34;0&#34;,&#34;name&#34;:&#34;Not Registered&#34;},{&#34;value&#34;:&#34;1&#34;,&#34;name&#34;:&#34;Registered&#34;},{&#34;value&#34;:&#34;3&#34;,&#34;name&#34;:&#34;Consented&#34;},{&#34;value&#34;:&#34;2&#34;,&#34;name&#34;:&#34;Consented, Needs Assent&#34;},{&#34;value&#34;:&#34;4&#34;,&#34;name&#34;:&#34;Submitted Physician Info&#34;},{&#34;value&#34;:&#34;5&#34;,&#34;name&#34;:&#34;Submitted Medical History&#34;},{&#34;value&#34;:&#34;6&#34;,&#34;name&#34;:&#34;Submitted Genome Study Shipping Info&#34;},{&#34;value&#34;:&#34;7&#34;,&#34;name&#34;:&#34;Submitted Enrollment/Pending Confirmation&#34;},{&#34;value&#34;:&#34;8&#34;,&#34;name&#34;:&#34;Enrolled&#34;},{&#34;value&#34;:&#34;9&#34;,&#34;name&#34;:&#34;Not Eligible&#34;},{&#34;value&#34;:&#34;10&#34;,&#34;name&#34;:&#34;Duplicate&#34;}]"/>
+            <column name="actions" value="[{&#34;name&#34;:&#34;workflows&#34;,&#34;value&#34;:&#34;REGISTRATION_STATUS&#34;,&#34;type&#34;:&#34;ELASTIC_EXPORT&#34;}]"/>
+            <column name="order_number" value="2"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='atcp')"></column>
+            <column name="field_type" value="AT_GROUP_MISCELLANEOUS"/>
+            <column name="column_name" value="HAS_UPDATED_MEDICAL_HISTORY"/>
+            <column name="column_display" value="Has updated medical history?"/>
+            <column name="display_type" value="RADIO"/>
+            <column name="possible_values" value="[{&#34;value&#34;:&#34;1&#34;,&#34;name&#34;:&#34;Yes&#34;},{&#34;value&#34;:&#34;0&#34;,&#34;name&#34;:&#34;No&#34;}]"/>
+            <column name="order_number" value="3"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='atcp')"></column>
+            <column name="column_name" value="AT_GROUP_GENOME_STUDY"/>
+            <column name="column_display" value="Genome Study"/>
+            <column name="display_type" value="TAB"/>
+            <column name="order_number" value="3"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='atcp')"></column>
+            <column name="field_type" value="AT_GROUP_GENOME_STUDY"/>
+            <column name="column_name" value="GENOME_STUDY_CPT_ID"/>
+            <column name="column_display" value="Genome study Collaborator Participant ID"/>
+            <column name="display_type" value="ACTIVITY"/>
+            <column name="order_number" value="1"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='atcp')"></column>
+            <column name="field_type" value="AT_GROUP_GENOME_STUDY"/>
+            <column name="column_name" value="GENOME_STUDY_HAS_SIBLING"/>
+            <column name="column_display" value="Does participant have a sibling in the study?"/>
+            <column name="display_type" value="RADIO"/>
+            <column name="possible_values" value="[{&#34;value&#34;:&#34;1&#34;,&#34;name&#34;:&#34;Yes&#34;},{&#34;value&#34;:&#34;0&#34;,&#34;name&#34;:&#34;No&#34;}]"/>
+            <column name="order_number" value="2"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='atcp')"></column>
+            <column name="field_type" value="AT_GROUP_GENOME_STUDY"/>
+            <column name="column_name" value="GENOME_STUDY_STATUS"/>
+            <column name="column_display" value="Status of genome study sample kit"/>
+            <column name="display_type" value="RADIO"/>
+            <column name="possible_values" value="[{&#34;value&#34;:&#34;1&#34;,&#34;name&#34;:&#34;Consented, sample kit not shipped&#34;},{&#34;value&#34;:&#34;2&#34;,&#34;name&#34;:&#34;Sample kit sent to participant&#34;},{&#34;value&#34;:&#34;3&#34;,&#34;name&#34;:&#34;Sample kit received from participant&#34;},{&#34;value&#34;:&#34;4&#34;,&#34;name&#34;:&#34;Sample sequenced, pending release&#34;},{&#34;value&#34;:&#34;5&#34;,&#34;name&#34;:&#34;Completed, de-identified data available&#34;},{&#34;value&#34;:&#34;6&#34;,&#34;name&#34;:&#34;Repeat sample collection pending&#34;}]"/>
+            <column name="order_number" value="3"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='atcp')"></column>
+            <column name="field_type" value="AT_GROUP_GENOME_STUDY"/>
+            <column name="column_name" value="GENOME_STUDY_SPIT_KIT_BARCODE"/>
+            <column name="column_display" value="Sample kit barcode for genome study"/>
+            <column name="display_type" value="TEXT"/>
+            <column name="order_number" value="4"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='atcp')"></column>
+            <column name="field_type" value="AT_GROUP_GENOME_STUDY"/>
+            <column name="column_name" value="GENOME_STUDY_KIT_TRACKING_NUMBER"/>
+            <column name="column_display" value="Tracking number for genome study sample kit"/>
+            <column name="display_type" value="TEXT"/>
+            <column name="order_number" value="5"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='atcp')"></column>
+            <column name="field_type" value="AT_GROUP_GENOME_STUDY"/>
+            <column name="column_name" value="GENOME_STUDY_DATE_SHIPPED"/>
+            <column name="column_display" value="Genome study sample kit shipped on"/>
+            <column name="display_type" value="DATE"/>
+            <column name="actions" value="[{&#34;name&#34;:&#34;GENOME_STUDY_STATUS&#34;,&#34;value&#34;:&#34;2&#34;}]"/>
+            <column name="order_number" value="6"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='atcp')"></column>
+            <column name="field_type" value="AT_GROUP_GENOME_STUDY"/>
+            <column name="column_name" value="GENOME_STUDY_KIT_RECEIVED_PARTICIPANT"/>
+            <column name="column_display" value="Date genome study sample kit is received by participant"/>
+            <column name="display_type" value="DATE"/>
+            <column name="order_number" value="7"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='atcp')"></column>
+            <column name="field_type" value="AT_GROUP_GENOME_STUDY"/>
+            <column name="column_name" value="GENOME_STUDY_DATE_RECEIVED"/>
+            <column name="column_display" value="Genome study date of receipt of sample kit from participant"/>
+            <column name="display_type" value="DATE"/>
+            <column name="order_number" value="8"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='atcp')"></column>
+            <column name="field_type" value="AT_GROUP_GENOME_STUDY"/>
+            <column name="column_name" value="GENOME_STUDY_DATE_SEQUENCED"/>
+            <column name="column_display" value="Genome study date of completion of sequencing"/>
+            <column name="display_type" value="DATE"/>
+            <column name="order_number" value="9"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='atcp')"></column>
+            <column name="field_type" value="AT_GROUP_GENOME_STUDY"/>
+            <column name="column_name" value="GENOME_STUDY_DATE_COMPLETED"/>
+            <column name="column_display" value="Genome study date of completion (data released in repository)"/>
+            <column name="display_type" value="DATE"/>
+            <column name="order_number" value="10"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='atcp')"></column>
+            <column name="field_type" value="AT_GROUP_GENOME_STUDY"/>
+            <column name="column_name" value="GENOME_STUDY_PREVIOUS_SPITKIT_NOTES"/>
+            <column name="column_display" value="Notes about previous sample kits"/>
+            <column name="display_type" value="TEXTAREA"/>
+            <column name="order_number" value="11"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='atcp')"></column>
+            <column name="column_name" value="AT_GROUP_ASSENT"/>
+            <column name="column_display" value="Platform Assent"/>
+            <column name="display_type" value="TAB"/>
+            <column name="order_number" value="5"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='atcp')"></column>
+            <column name="field_type" value="AT_GROUP_ASSENT"/>
+            <column name="column_name" value="PLATFORM_ASSENT_GENSEQ_STUDY"/>
+            <column name="column_display" value="You can do tests on the genes in my spit."/>
+            <column name="display_type" value="ACTIVITY_STAFF"/>
+            <column name="possible_values" value="[{&#34;value&#34;:&#34;ASSENT.ASSENT_CAN_DO_TESTS&#34;,&#34;type&#34;:&#34;RADIO&#34;}]"/>
+            <column name="order_number" value="1"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='atcp')"></column>
+            <column name="field_type" value="AT_GROUP_ASSENT"/>
+            <column name="column_name" value="PLATFORM_ASSENT_RECONTACT_PARTICIPANT_FOLLOWUP"/>
+            <column name="column_display" value="You can contact me later with more questions or information about future research. I do not have to answer these questions or take part in future research."/>
+            <column name="display_type" value="ACTIVITY_STAFF"/>
+            <column name="possible_values" value="[{&#34;value&#34;:&#34;ASSENT.CAN_CONTACT_LATER&#34;,&#34;type&#34;:&#34;RADIO&#34;}]"/>
+            <column name="order_number" value="2"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='atcp')"></column>
+            <column name="field_type" value="AT_GROUP_ASSENT"/>
+            <column name="column_name" value="PLATFORM_ASSENT_RECONTACT_RESEARCH_RESULTS"/>
+            <column name="column_display" value="Later, it might be possible to get the results of the tests on my genes. Please let me know if this becomes possible."/>
+            <column name="display_type" value="ACTIVITY_STAFF"/>
+            <column name="possible_values" value="[{&#34;value&#34;:&#34;ASSENT.GET_THE_RESULT&#34;,&#34;type&#34;:&#34;RADIO&#34;}]"/>
+            <column name="order_number" value="3"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='atcp')"></column>
+            <column name="field_type" value="AT_GROUP_ASSENT"/>
+            <column name="column_name" value="PLATFORM_ASSENT_MEDICAL_RECORD_RETRIEVAL"/>
+            <column name="column_display" value="You may ask my doctor or hospital to share information about my health."/>
+            <column name="display_type" value="ACTIVITY_STAFF"/>
+            <column name="possible_values" value="[{&#34;value&#34;:&#34;ASSENT.MAY_ASK_MY_DOCTOR&#34;,&#34;type&#34;:&#34;RADIO&#34;}]"/>
+            <column name="order_number" value="4"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='atcp')"></column>
+            <column name="field_type" value="AT_GROUP_ASSENT"/>
+            <column name="column_name" value="PLATFORM_ASSENT_RECONTACT_PHYSICIAN_DIAGNOSIS_RESULTS"/>
+            <column name="column_display" value="If the researchers learn something about my health issues by testing my genes, please tell my doctor about this."/>
+            <column name="display_type" value="ACTIVITY_STAFF"/>
+            <column name="possible_values" value="[{&#34;value&#34;:&#34;ASSENT.RESEARCHERS_LEARN_SOMETHING&#34;,&#34;type&#34;:&#34;RADIO&#34;}]"/>
+            <column name="order_number" value="5"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='atcp')"></column>
+            <column name="field_type" value="AT_GROUP_ASSENT"/>
+            <column name="column_name" value="PLATFORM_ASSENT_DOB"/>
+            <column name="column_display" value="Platform assent date of birth"/>
+            <column name="display_type" value="ACTIVITY_STAFF"/>
+            <column name="possible_values" value="[{&#34;value&#34;:&#34;ASSENT.ASSENT_DOB&#34;,&#34;type&#34;:&#34;DATE&#34;}]"/>
+            <column name="order_number" value="6"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='atcp')"></column>
+            <column name="field_type" value="AT_GROUP_ASSENT"/>
+            <column name="column_name" value="PLATFORM_ASSENT_SIGNED_ON"/>
+            <column name="column_display" value="Date of assent signature"/>
+            <column name="display_type" value="ACTIVITY_STAFF"/>
+            <column name="possible_values" value="[{&#34;value&#34;:&#34;ASSENT.completedAt&#34;,&#34;type&#34;:&#34;DATE&#34;}]"/>
+            <column name="order_number" value="7"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='atcp')"></column>
+            <column name="column_name" value="AT_GROUP_CONSENT"/>
+            <column name="column_display" value="Platform Consent"/>
+            <column name="display_type" value="TAB"/>
+            <column name="order_number" value="6"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='atcp')"></column>
+            <column name="field_type" value="AT_GROUP_CONSENT"/>
+            <column name="column_name" value="PLATFORM_CONSENT"/>
+            <column name="column_display" value="Overall platform consent"/>
+            <column name="display_type" value="ACTIVITY_STAFF"/>
+            <column name="possible_values" value="[{&#34;value&#34;:&#34;CONSENT.completedAt&#34;,&#34;type&#34;:&#34;DATE&#34;}]"/>
+            <column name="order_number" value="1"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='atcp')"></column>
+            <column name="field_type" value="AT_GROUP_CONSENT"/>
+            <column name="column_name" value="PLATFORM_CONSENT_GENSEQ_STUDY"/>
+            <column name="column_display" value="You may perform (or collaborate with others to perform) DNA sequencing on the saliva sample that I will send you and store the sample until genomic sequencing was successfully completed."/>
+            <column name="display_type" value="ACTIVITY_STAFF"/>
+            <column name="possible_values" value="[{&#34;value&#34;:&#34;CONSENT.PERFORM_DNA&#34;,&#34;type&#34;:&#34;RADIO&#34;}]"/>
+            <column name="order_number" value="2"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='atcp')"></column>
+            <column name="field_type" value="AT_GROUP_CONSENT"/>
+            <column name="column_name" value="PLATFORM_CONSENT_MEDICAL_RECORD_RETRIEVAL"/>
+            <column name="column_display" value="You may request my medical records from my physicians and hospitals."/>
+            <column name="display_type" value="ACTIVITY_STAFF"/>
+            <column name="possible_values" value="[{&#34;value&#34;:&#34;CONSENT.MEDICAL_RECORDS&#34;,&#34;type&#34;:&#34;RADIO&#34;}]"/>
+            <column name="order_number" value="3"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='atcp')"></column>
+            <column name="field_type" value="AT_GROUP_CONSENT"/>
+            <column name="column_name" value="PLATFORM_CONSENT_RECONTACT_RESEARCH_RESULTS"/>
+            <column name="column_display" value="You may re-contact me in the event that it becomes possible to return genetic results to my physician or me."/>
+            <column name="display_type" value="ACTIVITY_STAFF"/>
+            <column name="possible_values" value="[{&#34;value&#34;:&#34;CONSENT.RE_CONTACT_RETURN_RESULTS&#34;,&#34;type&#34;:&#34;RADIO&#34;}]"/>
+            <column name="order_number" value="4"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='atcp')"></column>
+            <column name="field_type" value="AT_GROUP_CONSENT"/>
+            <column name="column_name" value="PLATFORM_CONSENT_RECONTACT_PHYSICIAN_DIAGNOSIS_RESULTS"/>
+            <column name="column_display" value="I allow the A-T Children’s Project to contact my physician if a researcher reports genetic analysis results that may impact my diagnosis of A-T."/>
+            <column name="display_type" value="ACTIVITY_STAFF"/>
+            <column name="possible_values" value="[{&#34;value&#34;:&#34;CONSENT.CONTACT_MY_PHYSICIAN&#34;,&#34;type&#34;:&#34;RADIO&#34;}]"/>
+            <column name="order_number" value="5"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='atcp')"></column>
+            <column name="field_type" value="AT_GROUP_CONSENT"/>
+            <column name="column_name" value="PLATFORM_CONSENT_RECONTACT_PARTICIPANT_FOLLOWUP"/>
+            <column name="column_display" value="I agree to be re-contacted with follow-up research questionnaires and invitations to participate in additional studies. I may choose to ignore these questionnaires/invitations."/>
+            <column name="display_type" value="ACTIVITY_STAFF"/>
+            <column name="possible_values" value="[{&#34;value&#34;:&#34;CONSENT.RE_CONTACT_FOLLOW_UP&#34;,&#34;type&#34;:&#34;RADIO&#34;}]"/>
+            <column name="order_number" value="6"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='atcp')"></column>
+            <column name="field_type" value="AT_GROUP_CONSENT"/>
+            <column name="column_name" value="PLATFORM_CONSENT_PARTICIPANT"/>
+            <column name="column_display" value="I am a legal guardian of:"/>
+            <column name="display_type" value="ACTIVITY_STAFF"/>
+            <column name="possible_values" value="[{&#34;value&#34;:&#34;CONSENT.CONSENT_PARENT_SIGNATURE&#34;}]"/>
+            <column name="order_number" value="7"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='atcp')"></column>
+            <column name="field_type" value="AT_GROUP_CONSENT"/>
+            <column name="column_name" value="PLATFORM_CONSENT_RELATIONSHIP"/>
+            <column name="column_display" value="My relationship to the participant is:"/>
+            <column name="display_type" value="ACTIVITY_STAFF"/>
+            <column name="possible_values" value="[{&#34;value&#34;:&#34;CONSENT.CONSENT_RELATIONSHIP&#34;}]"/>
+            <column name="order_number" value="8"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='atcp')"></column>
+            <column name="field_type" value="AT_GROUP_CONSENT"/>
+            <column name="column_name" value="PLATFORM_CONSENT_DOB"/>
+            <column name="column_display" value="Platform consent date of birth"/>
+            <column name="display_type" value="ACTIVITY_STAFF"/>
+            <column name="possible_values" value="[{&#34;value&#34;:&#34;CONSENT.CONSENT_GUARDIAN_DOB&#34;,&#34;type&#34;:&#34;DATE&#34;}]"/>
+            <column name="order_number" value="9"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='atcp')"></column>
+            <column name="field_type" value="AT_GROUP_CONSENT"/>
+            <column name="column_name" value="PLATFORM_CONSENT_SIGNED_ON"/>
+            <column name="column_display" value="Date of consent signature"/>
+            <column name="display_type" value="ACTIVITY_STAFF"/>
+            <column name="possible_values" value="[{&#34;value&#34;:&#34;CONSENT.completedAt&#34;,&#34;type&#34;:&#34;DATE&#34;}]"/>
+            <column name="order_number" value="10"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='atcp')"></column>
+            <column name="field_type" value="AT_GROUP_CONSENT"/>
+            <column name="column_name" value="PLATFORM_CONSENT_REASON_LAST_CHANGE"/>
+            <column name="column_display" value="Reason for latest change in consent"/>
+            <column name="display_type" value="ACTIVITY_STAFF"/>
+            <column name="possible_values" value="[{&#34;value&#34;:&#34;CONSENT_EDIT.CONSENT_MAKE_CHANGES_DESCRIPTION&#34;}]"/>
+            <column name="order_number" value="11"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='atcp')"></column>
+            <column name="field_type" value="AT_GROUP_CONSENT"/>
+            <column name="column_name" value="PLATFORM_CONSENT_CONTACT_PHONE"/>
+            <column name="column_display" value="Best phone number to contact"/>
+            <column name="display_type" value="ACTIVITY_STAFF"/>
+            <column name="possible_values" value="[{&#34;value&#34;:&#34;CONSENT_EDIT.CONSENT_MAKE_CHANGES_PHONE&#34;}]"/>
+            <column name="order_number" value="12"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='atcp')"></column>
+            <column name="column_name" value="AT_GROUP_RE-CONSENT"/>
+            <column name="column_display" value="Platform Re-consent"/>
+            <column name="display_type" value="TAB"/>
+            <column name="order_number" value="7"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='atcp')"></column>
+            <column name="field_type" value="AT_GROUP_RE-CONSENT"/>
+            <column name="column_name" value="RECONSENT_DATE_NEEDED"/>
+            <column name="column_display" value="Re-consent needed by"/>
+            <column name="display_type" value="DATE"/>
+            <column name="order_number" value="1"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='atcp')"></column>
+            <column name="field_type" value="AT_GROUP_RE-CONSENT"/>
+            <column name="column_name" value="RECONSENT_DATE_ENTERED"/>
+            <column name="column_display" value="Re-consent entered on"/>
+            <column name="display_type" value="DATE"/>
+            <column name="order_number" value="2"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='atcp')"></column>
+            <column name="field_type" value="AT_GROUP_RE-CONSENT"/>
+            <column name="column_name" value="RECONSENT_NAME"/>
+            <column name="column_display" value="Name of person giving re-consent"/>
+            <column name="display_type" value="TEXT"/>
+            <column name="order_number" value="3"/>
+        </insert>
+        <insert tableName="field_settings">
+            <column name="ddp_instance_id"
+                    valueComputed="(SELECT ddp_instance_id FROM ddp_instance WHERE instance_name='atcp')"></column>
+            <column name="field_type" value="AT_GROUP_RE-CONSENT"/>
+            <column name="column_name" value="RECONSENT_RELATIONSHIP"/>
+            <column name="column_display" value="Relationship to participant for re-consent"/>
+            <column name="display_type" value="TEXT"/>
+            <column name="order_number" value="4"/>
+        </insert>
+    </changeSet>
+</databaseChangeLog>
