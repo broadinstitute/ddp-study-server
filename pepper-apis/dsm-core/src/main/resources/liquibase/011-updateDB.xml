@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+    <changeSet author="simone" id="DDP-2111_07262018">
+        <dropNotNullConstraint columnName="kit_dimension_id"
+                               columnDataType="INT"
+                               tableName="ddp_kit_request_settings"/>
+        <dropNotNullConstraint columnName="kit_return_id"
+                               columnDataType="INT"
+                               tableName="ddp_kit_request_settings"/>
+    </changeSet>
+
+    <changeSet author="simone" id="DDP-2111_07272018">
+        <dropNotNullConstraint columnName="ddp_label"
+                               columnDataType="VARCHAR(45)"
+                               tableName="ddp_kit_request"/>
+    </changeSet>
+
+    <changeSet author="simone" id="DDP-2111_07292018">
+        <addColumn tableName="ddp_kit_request_settings">
+            <column name="external_shipper" type="VARCHAR(25)">
+            </column>
+        </addColumn>
+        <addColumn tableName="ddp_kit_request_settings">
+            <column name="kit_type_display_name" type="VARCHAR(25)">
+            </column>
+        </addColumn>
+        <addColumn tableName="ddp_kit_request_settings">
+            <column name="external_name" type="VARCHAR(25)">
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet author="simone" id="DDP-2111_07302018">
+        <addColumn tableName="ddp_kit_request">
+            <column name="external_order_number" type="VARCHAR(45)">
+            </column>
+        </addColumn>
+        <addColumn tableName="ddp_kit_request">
+            <column name="external_order_date" type="BIGINT">
+            </column>
+        </addColumn>
+        <addColumn tableName="ddp_kit_request">
+            <column name="external_order_status" type="VARCHAR(255)">
+            </column>
+        </addColumn>
+        <addColumn tableName="ddp_kit_request">
+            <column name="external_response" type="VARCHAR(1500)">
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet author="simone" id="DDP-2111_07312018">
+        <createTable tableName="sub_kits_settings">
+            <column autoIncrement="true" name="sub_kits_settings_id" type="INT">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="ddp_kit_request_settings_id" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="kit_type_id" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="kit_count" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="external_name" type="VARCHAR(25)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="simone" id="DDP-2111_08032018">
+        <renameColumn columnDataType="VARCHAR(45)"
+                      newColumnName="tracking_to_id"
+                      oldColumnName="easypost_tracking_to_id"
+                      tableName="ddp_kit"/>
+        <renameColumn columnDataType="VARCHAR(45)"
+                      newColumnName="tracking_return_id"
+                      oldColumnName="easypost_tracking_return_id"
+                      tableName="ddp_kit"/>
+    </changeSet>
+
+    <changeSet author="simone" id="DDP-2111_08072018">
+        <addColumn tableName="carrier_service">
+            <column name="carrier_account_number" type="VARCHAR(45)">
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet author="simone" id="DDP-2111_08102018">
+        <insert tableName="bookmark">
+            <column name="instance" value="gbf_confirmation"/>
+            <column name="value" value="0"/>
+        </insert>
+    </changeSet>
+
+    <changeSet author="simone" id="DDP-2111_08152018">
+        <addColumn tableName="kit_type">
+            <column name="no_return" type="TINYINT(1)">
+            </column>
+        </addColumn>
+    </changeSet>
+
+
+    <changeSet author="simone" id="DDP-2111_11142018">
+        <!--renaming row setting-->
+        <renameColumn columnDataType="INT"
+                      newColumnName="ddp_kit_request_settings_id"
+                      oldColumnName="ddp_kit_carrier_id"
+                      tableName="ddp_kit_request_settings"/>
+    </changeSet>
+
+    <changeSet author="simone" id="DDP-2111_11142018_insert">
+        <insert tableName="kit_type">
+            <column name="kit_type_name" value="SUB_KITS"/>
+        </insert>
+        <insert tableName="kit_type">
+            <column name="kit_type_name" value="NO_RETURN"/>
+        </insert>
+    </changeSet>
+</databaseChangeLog>

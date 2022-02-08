@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+    <changeSet author="simone" id="07162018">
+        <addColumn tableName="ddp_kit">
+            <column name="label_by" type="VARCHAR(45)" afterColumn="easypost_tracking_return_url">
+            </column>
+        </addColumn>
+        <addColumn tableName="ddp_kit">
+            <column name="label_date" type="BIGINT" afterColumn="label_by">
+            </column>
+        </addColumn>
+    </changeSet>
+    <changeSet author="simone" id="07192018">
+        <insert tableName="access_role">
+            <column name="name" value="kit_shipping_view"/>
+        </insert>
+    </changeSet>
+    <changeSet author="simone" id="07202018">
+        <modifyDataType columnName="instance"
+                        newDataType="VARCHAR(25)"
+                        tableName="bookmark"/>
+        <modifyDataType columnName="value"
+                        newDataType="BIGINT"
+                        tableName="bookmark"/>
+        <insert tableName="bookmark">
+            <column name="instance" value="label_creation_running"/>
+            <column name="value" value="0"/>
+        </insert>
+    </changeSet>
+    <changeSet author="simone" id="07222018">
+        <insert tableName="instance_role">
+            <column name="name" value="pdf_download_consent"/>
+        </insert>
+        <insert tableName="instance_role">
+            <column name="name" value="pdf_download_release"/>
+        </insert>
+        <insert tableName="access_role">
+            <column name="name" value="pdf_download"/>
+        </insert>
+    </changeSet>
+</databaseChangeLog>

@@ -1,12 +1,12 @@
 {
   "name": "pepper-api-spec",
-  "version": "1.16.1-863fa496",
+  "version": "1.25.0-71",
   "private": true,
   "description": "",
   "dependencies": {
-    "@redocly/openapi-cli": "v1.0.0-beta.54",
-    "redoc": "2.0.0-rc.55",
-    "redoc-cli": "~0.12.2"
+    "@redocly/openapi-cli": "v1.0.0-beta.79",
+    "redoc": "2.0.0-rc.59",
+    "redoc-cli": "0.13.2"
   },
   "scripts": {
     "start": "npx @redocly/openapi-cli preview-docs src/pepper.yml",
