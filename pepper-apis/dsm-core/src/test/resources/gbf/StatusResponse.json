@@ -1,0 +1,10 @@
+{
+  "success": true,
+  "statuses": [{
+    "orderNumber": "%1",
+    "orderStatus": "SHIPPED"
+  },{
+    "orderNumber": "%2",
+    "orderStatus": "SHIPPED"
+  }]
+}

@@ -152,7 +152,7 @@
   "consent_what_will_happen_in_the_study_p4": "To participate in this study you will need to receive an at-home study kit, mailed to your address on behalf of the study. It will contain DLMO collection materials, an Actiwatch, and materials for return shipping. You will need to provide an address where you prefer to receive the at-home study kit.",
 
   "consent_part_1_dim_light_melatonin_title": "PART 1: Dim Light Melatonin Saliva Sample Collection",
-  "consent_part_1_dim_light_melatonin_p1": "We will ask you to collect dim light melatonin onset (DLMO) saliva samples two times during the course of the study. These series of samples will be collected on two separate days, separated by about one week. For each DLMO collection, you will saliva samples hourly for 8 hours before, during, and after your typical bedtime (determined by the research team using your daily sleep log). Samples will be collected each hour over 8 consecutive hours for a total of 9 samples per DLMO collection. The collection will start about 6 hours before your usual bedtime and end about two hours after your usual bedtime. You can schedule your collection dates that fit your schedule using our secure study scheduling site and provided instructions. You will need to schedule your sample collection dates through our study website portal before we ship your At-Home Study Kit to you. ",
+  "consent_part_1_dim_light_melatonin_p1": "We will ask you to collect dim light melatonin onset (DLMO) saliva samples two times during the course of the study. These series of samples will be collected on two separate days, separated by about one week. For each DLMO collection, you will saliva samples hourly for 8 hours before, during, and after your typical bedtime (determined by the research team using your daily sleep log). Samples will be collected each hour over 8 consecutive hours for a total of 9 samples per DLMO collection. The collection will start about 6 hours before your usual bedtime and end about two hours after your usual bedtime. You can schedule collection dates that fit your schedule using our secure study scheduling site and provided instructions. You will need to schedule your sample collection dates through our study website portal before we ship your At-Home Study Kit to you. ",
   "consent_part_1_dim_light_melatonin_p2": "You will need to collect DLMO samples in dim light. During this protocol, you will need to dim any electronics present in the room, such as a smartphone or television, to the dimmest possible setting. We provide instructions and tools for monitoring your light levels in your At-Home Study Kit to aid in a successful and valid DLMO collection. ",
   "consent_part_1_dim_light_melatonin_p3": "The dim light melatonin saliva sample collection will be assessing your naturally occurring melatonin levels. Since melatonin levels can be altered by certain products, we ask you to refrain from using alcohol, caffeine, recreational drugs, nicotine and tobacco products,  melatonin supplements, and to avoid certain foods for about 24 hours around your collection start time. We will also ask you to refrain from using certain products, like lip balm and toothpaste, during the saliva sample collections in an effort to protect sample integrity. We provide a comprehensive list in our instructions to aid you in preparation for sample collection. ",
   "consent_part_1_dim_light_melatonin_p4": "We will send you timed reminders for sample collection through text, if you consent to receiving text. You may contact study staff if you need immediate help during your dim light melatonin saliva sample collection. ",
@@ -209,8 +209,8 @@
   "consent_receive_unencrypted_email_communications_hint": "Please select one of the following options",
 
   "consent_receive_email_communications_title": "Please select one of the following options",
-  "consent_receive_email_communications_yes_answer": "I consent to receive mail shipped to my preferred address.",
-  "consent_receive_email_communications_no_answer": "I do not consent to receive mail shipped to my provided address.",
+  "consent_receive_email_communications_yes_answer": "Yes, I consent to receive mail shipped to my preferred address.",
+  "consent_receive_email_communications_no_answer": "No, I do not consent to receive mail shipped to my provided address.",
   "consent_receive_email_communications_hint": "Please select one of the following options",
 
   "consent_risks_and_possible_discomforts_title": "What are the risks and possible discomforts from being in this research study?",
@@ -308,7 +308,7 @@
   "dlmo_instructions_name": "Circadia Instructions",
   "dlmo_instructions_title": "Dim Light Melatonin Saliva Sample Collection: Scheduling Collection Dates",
 
-  "dlmo_instructions_summary": "Please watch the Circadia At-Home Kit Unboxing video when you receive your kit and the DLMO Collection video prior to starting your DLMO collections.",
+  "dlmo_instructions_summary": "Please begin by watching the “Welcome to the Circadia Study” video.",
 
   "dlmo_instructions_overview_title": "Overview",
   "dlmo_instructions_overview_paragraph_1": "One of our study goals is to better understand your biological bedtime. To do so, we require two 8-hour melatonin sample collections, consisting of 8 hourly saliva sample collections. We will analyze your hourly melatonin levels from the saliva sample collections you provide.",
@@ -652,9 +652,26 @@
 
   "pcq_confident_access_to_research_question": "I felt I had enough resources to successfully complete the dim light melatonin collection (i.e. written instructions, video instructions, access to research coordinators)",
 
+  "pcq_confident_dlmo_collections_question": "I felt confident preparing my environment for the DLMO Collections.",
+
   "pcq_confident_set_one_question": "I felt confident completing the first dim light melatonin collection set (set one of two collections) ",
 
   "pcq_confident_set_two_question": "I felt confident completing the second dim light melatonin collection set (set two of two collections)",
+
+  "pcq_confident_set_material_question": "What material, if any, did you use to block light from your windows during the DLMO Collections?",
+
+  "pcq_confident_set_material_prompt": "What material, if any, did you use to block light from your windows during the DLMO Collections?",
+  "pcq_confident_set_material_aluminum": "Aluminum Foil",
+  "pcq_confident_set_material_garbage": "Black Garbage Bags",
+  "pcq_confident_set_material_tape": "Tape",
+  "pcq_confident_set_material_other": "Other",
+
+  "pcq_confident_sleep_question": "How easy was it to remember to complete your daily sleep log?",
+  "pcq_confident_sleep_not_easy": "Not at all easy",
+  "pcq_confident_sleep_slightly_easy": "Slightly easy",
+  "pcq_confident_sleep_moderately_easy": "Moderately easy",
+  "pcq_confident_sleep_very_easy": "Very easy",
+  "pcq_confident_sleep_extremely_easy": "Extremely easy",
 
   "meq_name": "Morning Evening Questionnaire",
   "meq_title": "Morning Evening Questionnaire",

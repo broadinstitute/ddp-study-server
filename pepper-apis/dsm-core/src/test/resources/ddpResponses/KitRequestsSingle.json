@@ -1,0 +1,6 @@
+[{ "participantId": "MULTIPLE_ACCOUNT_TEST",
+    "kitRequestId": "MULTIPLE_ACCOUNT_TEST_1",
+    "kitType": "SHIPPING-1" },
+  { "participantId": "MULTIPLE_ACCOUNT_TEST",
+    "kitRequestId": "MULTIPLE_ACCOUNT_TEST_2",
+    "kitType": "SHIPPING-2" }]
