@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+       http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+    <changeSet author="pegah" id="DDP-1926_tissue.notes_changeLength">
+        <modifyDataType columnName="notes"
+                        newDataType="VARCHAR(2000)"
+                        tableName="ddp_tissue"/>
+    </changeSet>
+    <changeSet author="pegah" id="DDP-1926_onHist.notes_changeLength">
+        <modifyDataType columnName="notes"
+                        newDataType="VARCHAR(2000)"
+                        tableName="ddp_onc_history_detail"/>
+    </changeSet>
+    <!--remember to first convert this back manually so liquibase doesn't break-->
+</databaseChangeLog>

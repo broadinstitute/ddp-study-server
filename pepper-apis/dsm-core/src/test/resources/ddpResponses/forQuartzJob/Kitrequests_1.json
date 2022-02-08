@@ -1,0 +1,6 @@
+[{"participantId":"FAKE_PARTICIPANT1",
+  "kitRequestId":"fake0001-d034-4d8c-acbf-00391050115e",
+  "kitType":"SALIVA"},
+  {"participantId":"FAKE_PARTICIPANT2",
+    "kitRequestId":"fake0002-d034-4d8c-acbf-00391050115e",
+    "kitType":"SALIVA"}]

@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+       http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+    <changeSet id="DDP-3730_07162019_filterTable" author="pegah">
+        <createTable tableName="view_filters">
+            <column name="filter_id" autoIncrement="true" type="INT">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="display_name" type="VARCHAR(200)">
+                <constraints nullable="false" unique="true"></constraints>
+            </column>
+            <column name="created_by" type="VARCHAR(45)">
+                <constraints nullable="false"></constraints>
+            </column>
+            <column name="shared" type="TINYINT(1)">
+            </column>
+            <column name="view_columns" type="VARCHAR(1000)">
+            </column>
+            <column name="icon" type="VARCHAR(100)">
+            </column>
+            <column name="query_items" type="VARCHAR(2000)">
+            </column>
+            <column name="quick_filter_name" type="VARCHAR(100)">
+            </column>
+            <column name="parent" type="VARCHAR(45)">
+            </column>
+            <column name="ddp_group_id" type="VARCHAR(45)">
+            </column>
+            <column name="changed_by" type="VARCHAR(45)">
+                <constraints nullable="false"></constraints>
+            </column>
+            <column name="last_changed" type="BIGINT(20)">
+                <constraints nullable="false"></constraints>
+            </column>
+            <column name="deleted" type="TINYINT(1)">
+                <constraints nullable="false"></constraints>
+            </column>
+        </createTable>
+    </changeSet>
+    <changeSet id="DDP-3730_quickFilters" author="pegah">
+        <insert tableName="view_filters">
+            <column name="view_columns" type="VARCHAR(1000)"
+                    value="data.hruid,data.firstName,data.lastName,oD.accessionNumber,oD.datePX,oD.typePX,oD.histology,oD.gender,oD.request,t.tissueType,t.skId,t.smId"></column>
+            <column name="parent" type="VARCHAR(45)" value="tissueList"></column>
+            <column name="query_items" type="VARCHAR(2000)" value=" AND ( oD.request = 'review' )"></column>
+            <column name="icon" type="VARCHAR(150)" value="fas fa-clipboard-list fa-lg"></column>
+            <column name="last_changed" type="BIGINT(20)" value="1561141562269"></column>
+            <column name="display_name" type="VARCHAR(200)" value="Review Queue"></column>
+            <column name="ddp_group_id" type="VARCHAR(45)"
+                    valueComputed="(SELECT group_id FROM ddp_group WHERE ddp_group.name='cmi')"></column>
+            <column name="changed_by" type="VARCHAR(45)" value="System"></column>
+            <column name="created_by" type="VARCHAR(45)" value="System"></column>
+            <column name="deleted" type="INT(11)" value="0"></column>
+        </insert>
+        <insert tableName="view_filters">
+            <column name="view_columns" type="VARCHAR(1000)"
+                    value="data.hruid,data.firstName,data.lastName,oD.fPhone,oD.fFax,oD.accessionNumber,oD.datePX,oD.typePX,oD.histology,oD.gender,oD.request,t.tissueType,t.skId,t.smId,"></column>
+            <column name="parent" type="VARCHAR(45)" value="tissueList"></column>
+            <column name="query_items" type="VARCHAR(2000)" value=" AND ( oD.request = 'request' )"></column>
+            <column name="icon" type="VARCHAR(150)" value="far fa-folder fa-lg"></column>
+            <column name="last_changed" type="BIGINT(20)" value="1561141562270"></column>
+            <column name="display_name" type="VARCHAR(200)" value="Request Queue"></column>
+            <column name="ddp_group_id" type="VARCHAR(45)"
+                    valueComputed="(SELECT group_id FROM ddp_group WHERE ddp_group.name='cmi')"></column>
+            <column name="changed_by" type="VARCHAR(45)" value="System"></column>
+            <column name="created_by" type="VARCHAR(45)" value="System"></column>
+            <column name="deleted" type="INT(11)" value="0"></column>
+        </insert>
+        <insert tableName="view_filters">
+            <column name="view_columns" type="VARCHAR(1000)"
+                    value="data.hruid,data.firstName,data.lastName,oD.fPhone,oD.fFax,oD.accessionNumber,oD.datePX,oD.typePX,oD.histology,oD.gender,oD.request,oD.tFaxSent,oD.tFaxSent2,oD.tFaxSent3,oD.fPhone,oD.fFax,oD.oncHisNotes,t.tissueType,t.skId,t.smId,"></column>
+            <column name="parent" type="VARCHAR(45)" value="tissueList"></column>
+            <column name="query_items" type="VARCHAR(2000)" value=" AND ( oD.request = 'sent' )"></column>
+            <column name="icon" type="VARCHAR(150)" value="far fa-paper-plane fa-lg"></column>
+            <column name="last_changed" type="BIGINT(20)" value="1561141562270"></column>
+            <column name="display_name" type="VARCHAR(200)" value="Re-request Queue"></column>
+            <column name="ddp_group_id" type="VARCHAR(45)"
+                    valueComputed="(SELECT group_id FROM ddp_group WHERE ddp_group.name='cmi')"></column>
+            <column name="changed_by" type="VARCHAR(45)" value="System"></column>
+            <column name="created_by" type="VARCHAR(45)" value="System"></column>
+            <column name="deleted" type="INT(11)" value="0"></column>
+        </insert>
+        <insert tableName="view_filters">
+            <column name="view_columns" type="VARCHAR(1000)"
+                    value="data.hruid,t.shlWorkNumber,oD.tissueReceived,t.collaboratorSampleId"></column>
+            <column name="parent" type="VARCHAR(45)" value="tissueList"></column>
+            <column name="query_items" type="VARCHAR(2000)"
+                    value=" AND oD.request = 'received'  AND ( t.tissue_type = 'block' ) AND t.block_sent IS NULL"></column>
+            <column name="icon" type="VARCHAR(150)" value="fas fa-cube fa-lg"></column>
+            <column name="last_changed" type="BIGINT(20)" value="1561141562270"></column>
+            <column name="display_name" type="VARCHAR(200)" value="SHL Queue"></column>
+            <column name="ddp_group_id" type="VARCHAR(45)"
+                    valueComputed="(SELECT group_id FROM ddp_group WHERE ddp_group.name='cmi')"></column>
+            <column name="changed_by" type="VARCHAR(45)" value="System"></column>
+            <column name="created_by" type="VARCHAR(45)" value="System"></column>
+            <column name="deleted" type="INT(11)" value="0"></column>
+        </insert>
+        <insert tableName="view_filters">
+            <column name="view_columns" type="VARCHAR(1000)"
+                    value="data.hruid,t.shlWorkNumber,t.scrollsReceived,t.collaboratorSampleId"></column>
+            <column name="parent" type="VARCHAR(45)" value="tissueList"></column>
+            <column name="query_items" type="VARCHAR(2000)"
+                    value=" AND oD.request = 'received' AND ( t.tissue_type = 'slide' OR ( t.tissue_type = 'block' AND t.scrolls_received IS NOT NULL ) ) AND t.sent_gp IS NULL AND t.sm_id IS NULL"></column>
+            <column name="icon" type="VARCHAR(150)" value=" fas fa-tags fa-lg"></column>
+            <column name="last_changed" type="BIGINT(20)" value="1561141562271"></column>
+            <column name="display_name" type="VARCHAR(200)" value="Labelling Queue"></column>
+            <column name="ddp_group_id" type="VARCHAR(45)"
+                    valueComputed="(SELECT group_id FROM ddp_group WHERE ddp_group.name='cmi')"></column>
+            <column name="changed_by" type="VARCHAR(45)" value="System"></column>
+            <column name="created_by" type="VARCHAR(45)" value="System"></column>
+            <column name="deleted" type="INT(11)" value="0"></column>
+        </insert>
+        <insert tableName="view_filters">
+            <column name="view_columns" type="VARCHAR(1000)"
+                    value="data.hruid,t.collaboratorSampleId,t.sentGp"></column>
+            <column name="parent" type="VARCHAR(45)" value="tissueList"></column>
+            <column name="query_items" type="VARCHAR(2000)"
+                    value=" AND oD.request = 'received' AND ( t.tissue_type = 'slide' OR ( t.tissue_type = 'block' AND t.scrolls_received IS NOT NULL ) ) AND t.sent_gp IS NULL AND t.sm_id IS NOT NULL"></column>
+            <column name="icon" type="VARCHAR(150)" value=" fas fa-vials fa-lg"></column>
+            <column name="last_changed" type="BIGINT(20)" value="1561141562271"></column>
+            <column name="display_name" type="VARCHAR(200)" value="GP drop off Queue"></column>
+            <column name="ddp_group_id" type="VARCHAR(45)"
+                    valueComputed="(SELECT group_id FROM ddp_group WHERE ddp_group.name='cmi')"></column>
+            <column name="changed_by" type="VARCHAR(45)" value="System"></column>
+            <column name="created_by" type="VARCHAR(45)" value="System"></column>
+            <column name="deleted" type="INT(11)" value="0"></column>
+        </insert>
+        <insert tableName="view_filters">
+            <column name="view_columns" type="VARCHAR(1000)"
+                    value="data.hruid,t.collaboratorSampleId,t.expectedReturn"></column>
+            <column name="parent" type="VARCHAR(45)" value="tissueList"></column>
+            <column name="query_items" type="VARCHAR(2000)"
+                    value=" AND oD.request = 'received'  AND ( t.tissue_type = 'block' ) AND ( t.tissue_sequence = 'success' )"></column>
+            <column name="icon" type="VARCHAR(150)" value="fas fa-project-diagram"></column>
+            <column name="last_changed" type="BIGINT(20)" value="1561141562271"></column>
+            <column name="display_name" type="VARCHAR(200)" value="Tissue Sendback Queue"></column>
+            <column name="ddp_group_id" type="VARCHAR(45)"
+                    valueComputed="(SELECT group_id FROM ddp_group WHERE ddp_group.name='cmi')"></column>
+            <column name="changed_by" type="VARCHAR(45)" value="System"></column>
+            <column name="created_by" type="VARCHAR(45)" value="System"></column>
+            <column name="deleted" type="INT(11)" value="0"></column>
+        </insert>
+    </changeSet>
+    <changeSet id="DDP-3793_unableToObtain" author="pegah">
+        <addColumn tableName="ddp_onc_history_detail">
+            <column name="unable_obtain_tissue" type="TINYINT(1)" defaultValue="NULL" afterColumn="gender"></column>
+        </addColumn>
+    </changeSet>
+    <changeSet id="DDP-3730_defaultFilters" author="pegah">
+        <addColumn tableName="view_filters">
+            <column name="default_users" type="VARCHAR(1000)" defaultValue="NULL" afterColumn="query_items"></column>
+        </addColumn>
+    </changeSet>
+</databaseChangeLog>
