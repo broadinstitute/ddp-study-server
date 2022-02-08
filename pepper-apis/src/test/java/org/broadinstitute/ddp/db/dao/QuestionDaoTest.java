@@ -9,6 +9,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -33,6 +34,7 @@ import org.broadinstitute.ddp.db.dto.CompositeQuestionDto;
 import org.broadinstitute.ddp.db.dto.DateQuestionDto;
 import org.broadinstitute.ddp.db.dto.FileQuestionDto;
 import org.broadinstitute.ddp.db.dto.NumericQuestionDto;
+import org.broadinstitute.ddp.db.dto.DecimalQuestionDto;
 import org.broadinstitute.ddp.db.dto.PicklistQuestionDto;
 import org.broadinstitute.ddp.db.dto.MatrixQuestionDto;
 import org.broadinstitute.ddp.db.dto.QuestionDto;
@@ -51,6 +53,7 @@ import org.broadinstitute.ddp.model.activity.definition.question.DatePicklistDef
 import org.broadinstitute.ddp.model.activity.definition.question.DateQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.FileQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.NumericQuestionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.DecimalQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistGroupDef;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistOptionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistQuestionDef;
@@ -62,8 +65,10 @@ import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.TextQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.ActivityInstanceSelectQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
+import org.broadinstitute.ddp.model.activity.definition.types.DecimalDef;
 import org.broadinstitute.ddp.model.activity.definition.validation.DateRangeRuleDef;
 import org.broadinstitute.ddp.model.activity.definition.validation.IntRangeRuleDef;
+import org.broadinstitute.ddp.model.activity.definition.validation.DecimalRangeRuleDef;
 import org.broadinstitute.ddp.model.activity.definition.validation.LengthRuleDef;
 import org.broadinstitute.ddp.model.activity.definition.validation.RequiredRuleDef;
 import org.broadinstitute.ddp.model.activity.instance.answer.ActivityInstanceSelectAnswer;
@@ -75,6 +80,7 @@ import org.broadinstitute.ddp.model.activity.instance.answer.CompositeAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.DateAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.DateValue;
 import org.broadinstitute.ddp.model.activity.instance.answer.NumericAnswer;
+import org.broadinstitute.ddp.model.activity.instance.answer.DecimalAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.PicklistAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.SelectedPicklistOption;
 import org.broadinstitute.ddp.model.activity.instance.answer.MatrixAnswer;
@@ -85,6 +91,7 @@ import org.broadinstitute.ddp.model.activity.instance.question.BoolQuestion;
 import org.broadinstitute.ddp.model.activity.instance.question.CompositeQuestion;
 import org.broadinstitute.ddp.model.activity.instance.question.DateQuestion;
 import org.broadinstitute.ddp.model.activity.instance.question.NumericQuestion;
+import org.broadinstitute.ddp.model.activity.instance.question.DecimalQuestion;
 import org.broadinstitute.ddp.model.activity.instance.question.PicklistOption;
 import org.broadinstitute.ddp.model.activity.instance.question.PicklistQuestion;
 import org.broadinstitute.ddp.model.activity.instance.question.MatrixQuestion;
@@ -95,6 +102,7 @@ import org.broadinstitute.ddp.model.activity.instance.question.TextQuestion;
 import org.broadinstitute.ddp.model.activity.instance.question.ActivityInstanceSelectQuestion;
 import org.broadinstitute.ddp.model.activity.instance.validation.DateRangeRule;
 import org.broadinstitute.ddp.model.activity.instance.validation.IntRangeRule;
+import org.broadinstitute.ddp.model.activity.instance.validation.DecimalRangeRule;
 import org.broadinstitute.ddp.model.activity.instance.validation.RequiredRule;
 import org.broadinstitute.ddp.model.activity.instance.validation.Rule;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
@@ -1957,7 +1965,7 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
     }
 
     @Test
-    public void testGetNumericQuestion_integerType() {
+    public void testGetNumericQuestion() {
         TransactionWrapper.useTxn(handle -> {
             Template placeholder = Template.text("some placeholder");
             NumericQuestionDef questionDef = NumericQuestionDef
@@ -1999,6 +2007,55 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
             assertEquals(QuestionType.NUMERIC, numericQuestion.getAnswers().get(0).getQuestionType());
             NumericAnswer numericAnswer = numericQuestion.getAnswers().get(0);
             assertEquals((Long) 25L, numericAnswer.getValue());
+
+            handle.rollback();
+        });
+    }
+
+    @Test
+    public void testGetDecimalQuestion() {
+        TransactionWrapper.useTxn(handle -> {
+            Template placeholder = Template.text("some placeholder");
+            DecimalQuestionDef questionDef = DecimalQuestionDef
+                    .builder(sid, prompt)
+                    .setPlaceholderTemplate(placeholder)
+                    .addValidation(new DecimalRangeRuleDef(Template.text("decimal_range"),
+                            new DecimalDef(0), new DecimalDef(10)))
+                    .build();
+            FormActivityDef form = buildSingleSectionForm(testData.getStudyGuid(), questionDef);
+
+            ActivityVersionDto version1 = handle.attach(ActivityDao.class)
+                    .insertActivity(form, RevisionMetadata.now(testData.getUserId(), "test"));
+            ActivityInstanceDto instanceDto = TestDataSetupUtil
+                    .generateTestFormActivityInstanceForUser(handle, version1.getActivityId(), testData.getUserGuid());
+
+            handle.attach(AnswerDao.class).createAnswer(testData.getUserId(), instanceDto.getId(),
+                    new DecimalAnswer(null, sid, null, new DecimalDef(1)));
+
+            DecimalQuestionDto questionDto = (DecimalQuestionDto) handle.attach(JdbiQuestion.class)
+                    .findQuestionDtoById(questionDef.getQuestionId()).get();
+
+            Question actual = handle.attach(QuestionDao.class)
+                    .getQuestionByActivityInstanceAndDto(questionDto, instanceDto.getGuid(),
+                            instanceDto.getCreatedAtMillis(),
+                            LanguageStore.getDefault().getId());
+            assertEquals(QuestionType.DECIMAL, actual.getQuestionType());
+            assertEquals(sid, actual.getStableId());
+            assertEquals(prompt.getTemplateId(), (Long) actual.getPromptTemplateId());
+
+            DecimalQuestion decimalQuestion = (DecimalQuestion) actual;
+            assertEquals(placeholder.getTemplateId(), decimalQuestion.getPlaceholderTemplateId());
+
+            assertEquals(1, decimalQuestion.getValidations().size());
+            assertEquals(RuleType.DECIMAL_RANGE, decimalQuestion.getValidations().get(0).getRuleType());
+            DecimalRangeRule decimalRule = (DecimalRangeRule) decimalQuestion.getValidations().get(0);
+            assertEquals(0, BigDecimal.ZERO.compareTo(decimalRule.getMin()));
+            assertEquals(0, BigDecimal.TEN.compareTo(decimalRule.getMax()));
+
+            assertEquals(1, decimalQuestion.getAnswers().size());
+            assertEquals(QuestionType.DECIMAL, decimalQuestion.getAnswers().get(0).getQuestionType());
+            DecimalAnswer decimalAnswer = decimalQuestion.getAnswers().get(0);
+            assertEquals(0, new DecimalDef(1).compareTo(decimalAnswer.getValue()));
 
             handle.rollback();
         });
