@@ -108,9 +108,7 @@ public interface JdbiQuestionValidation extends SqlObject {
                 case YEAR_REQUIRED:     // fall-through
                 case COMPLETE:          // fall-through
                 case REQUIRED:          // fall-through
-                case UNIQUE:
-                    ruleDto = view.getRow(RuleDto.class);
-                    break;
+                case UNIQUE:            // fall-through
                 case UNIQUE_VALUE:
                     ruleDto = view.getRow(RuleDto.class);
                     break;
