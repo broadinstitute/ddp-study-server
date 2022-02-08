@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+       http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+    <changeSet id="DDP-3409_05162019" author="pegah">
+        <createTable tableName="ddp_ndi">
+            <column name="ndi_id" autoIncrement="true" type="INT">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="ddp_participant_id" type="VARCHAR(200)">
+                <constraints nullable="false"></constraints>
+            </column>
+            <column name="ndi_control_number" type="VARCHAR(10)">
+                <constraints nullable="false"></constraints>
+            </column>
+            <column name="changed_by" type="VARCHAR(45)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="last_changed" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+    <changeSet id="DDP-3634_shl_lengthChange" author="pegah">
+        <modifyDataType columnName="shl_work_number"
+                        newDataType="VARCHAR(200)"
+                        tableName="ddp_tissue"/>
+    </changeSet>
+    <changeSet id="DDP-3634_firstSmId_lengthChange" author="pegah">
+        <modifyDataType columnName="first_sm_id"
+                        newDataType="VARCHAR(200)"
+                        tableName="ddp_tissue"/>
+    </changeSet>
+    <changeSet id="DDP-3409_newRole" author="pegah">
+        <insert tableName="access_role">
+            <column name="name" type="VARCHAR(45)" value="ndi_download"></column>
+        </insert>
+    </changeSet>
+</databaseChangeLog>
