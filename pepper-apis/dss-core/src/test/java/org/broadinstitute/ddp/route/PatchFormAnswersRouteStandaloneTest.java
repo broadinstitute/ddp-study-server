@@ -1845,15 +1845,16 @@ public class PatchFormAnswersRouteStandaloneTest {
                 .body("answers[0].answerGuid", not(isEmptyOrNullString()))
                 .and().extract().path("answers[0].answerGuid");
         answerGuidsToDelete.get(QuestionType.FILE).add(guid);
-        var answer = (FileAnswer) TransactionWrapper.withTxn(handle ->
-                new AnswerCachedDao(handle).findAnswerByGuid(guid).get());
+        var answer = (Optional<Answer>) TransactionWrapper.withTxn(handle ->
+                new AnswerCachedDao(handle).findAnswerByGuid(guid));
 
-        assertNotNull(answer);
-        assertEquals(guid, answer.getAnswerGuid());
-        assertEquals(stableId, answer.getQuestionStableId());
-        assertEquals(QuestionType.FILE, answer.getQuestionType());
-        assertEquals(upload1.getFileName(), answer.getValue().getFileName());
-        assertEquals(upload1.getFileSize(), answer.getValue().getFileSize());
+        assertTrue(answer.isPresent());
+        assertNotNull(answer.get());
+        assertEquals(guid, answer.get().getAnswerGuid());
+        assertEquals(stableId, answer.get().getQuestionStableId());
+        assertEquals(QuestionType.FILE, answer.get().getQuestionType());
+        assertEquals(upload1.getFileName(), ((FileAnswer)answer.get()).getValue().getFileName());
+        assertEquals(upload1.getFileSize(), ((FileAnswer)answer.get()).getValue().getFileSize());
 
         submission = new AnswerSubmission(stableId, guid, gson.toJsonTree(upload2.getGuid()));
         data = new PatchAnswerPayload(List.of(submission));
@@ -1863,9 +1864,10 @@ public class PatchFormAnswersRouteStandaloneTest {
                 .and().extract().path("answers[0].answerGuid");
 
         assertEquals(guid, nextGuid);
-        answer = (FileAnswer) TransactionWrapper.withTxn(handle ->
-                new AnswerCachedDao(handle).findAnswerByGuid(guid).orElse(null));
-        assertEquals(upload2.getFileName(), answer.getValue().getFileName());
+        answer =  TransactionWrapper.withTxn(handle ->
+                new AnswerCachedDao(handle).findAnswerByGuid(guid));
+        assertTrue(answer.isPresent());
+        assertEquals(upload2.getFileName(), ((FileAnswer) answer.get()).getValue().getFileName());
     }
 
     @Test
@@ -1878,25 +1880,28 @@ public class PatchFormAnswersRouteStandaloneTest {
                 .body("answers[0].answerGuid", not(isEmptyOrNullString()))
                 .and().extract().path("answers[0].answerGuid");
         answerGuidsToDelete.get(QuestionType.FILE).add(guid);
-        var answer = (FileAnswer) TransactionWrapper.withTxn(handle ->
-                new AnswerCachedDao(handle).findAnswerByGuid(guid).orElse(null));
-        assertNull("created answer should have null for value", answer.getValue());
+        var answer = TransactionWrapper.withTxn(handle ->
+                new AnswerCachedDao(handle).findAnswerByGuid(guid));
+        assertTrue(answer.isPresent());
+        assertNull("created answer should have null for value", answer.get().getValue());
 
         // Set a value then clear it.
         data = new PatchAnswerPayload(List.of(new AnswerSubmission(stableId, guid, gson.toJsonTree(upload1.getGuid()))));
         givenAnswerPatchRequest(instanceGuid, data)
                 .then().assertThat().statusCode(200);
-        answer = (FileAnswer) TransactionWrapper.withTxn(handle ->
-                new AnswerCachedDao(handle).findAnswerByGuid(guid).orElse(null));
-        assertNotNull(answer.getValue());
-        assertEquals(upload1.getFileName(), answer.getValue().getFileName());
+        answer = TransactionWrapper.withTxn(handle ->
+                new AnswerCachedDao(handle).findAnswerByGuid(guid));
+        assertTrue(answer.isPresent());
+        assertNotNull(answer.get().getValue());
+        assertEquals(upload1.getFileName(), ((FileAnswer) answer.get()).getValue().getFileName());
 
         data = new PatchAnswerPayload(List.of(new AnswerSubmission(stableId, guid, null)));
         givenAnswerPatchRequest(instanceGuid, data)
                 .then().assertThat().statusCode(200);
-        answer = (FileAnswer) TransactionWrapper.withTxn(handle ->
-                new AnswerCachedDao(handle).findAnswerByGuid(guid).orElse(null));
-        assertNull("answer value should be cleared", answer.getValue());
+        answer = TransactionWrapper.withTxn(handle ->
+                new AnswerCachedDao(handle).findAnswerByGuid(guid));
+        assertTrue(answer.isPresent());
+        assertNull("answer value should be cleared", answer.get().getValue());
     }
 
     @Test
@@ -1911,7 +1916,7 @@ public class PatchFormAnswersRouteStandaloneTest {
     }
 
     @Test
-    public void testPatch_numericAnswer_integerType_newAnswer() {
+    public void testPatch_numericAnswer_newAnswer() {
         AnswerSubmission submission = new AnswerSubmission(numericIntegerSid, null, gson.toJsonTree(25));
         PatchAnswerPayload data = new PatchAnswerPayload(List.of(submission));
 
@@ -1925,17 +1930,18 @@ public class PatchFormAnswersRouteStandaloneTest {
                 .and().extract().path("answers[0].answerGuid");
 
         answerGuidsToDelete.get(QuestionType.NUMERIC).add(guid);
-        NumericAnswer answer = (NumericAnswer) TransactionWrapper.withTxn(handle ->
-                new AnswerCachedDao(handle).findAnswerByGuid(guid).orElse(null));
+        var answer = TransactionWrapper.withTxn(handle ->
+                new AnswerCachedDao(handle).findAnswerByGuid(guid));
 
         assertNotNull(answer);
-        assertEquals(guid, answer.getAnswerGuid());
-        assertEquals(numericIntegerSid, answer.getQuestionStableId());
-        assertEquals(25L, (long) answer.getValue());
+        assertTrue(answer.isPresent());
+        assertEquals(guid, answer.get().getAnswerGuid());
+        assertEquals(numericIntegerSid, answer.get().getQuestionStableId());
+        assertEquals(25L, (long) answer.get().getValue());
     }
 
     @Test
-    public void testPatch_numericAnswer_integerType_updateAnswer() {
+    public void testPatch_numericAnswer_updateAnswer() {
         AnswerSubmission submission = new AnswerSubmission(numericIntegerSid, null, gson.toJsonTree(25));
         PatchAnswerPayload data = new PatchAnswerPayload(List.of(submission));
 
@@ -1957,11 +1963,12 @@ public class PatchFormAnswersRouteStandaloneTest {
                 .and().extract().path("answers[0].answerGuid");
 
         assertEquals(guid, nextGuid);
-        NumericAnswer answer = (NumericAnswer) TransactionWrapper.withTxn(handle ->
-                new AnswerCachedDao(handle).findAnswerByGuid(guid).orElse(null));
+        var answer = TransactionWrapper.withTxn(handle ->
+                new AnswerCachedDao(handle).findAnswerByGuid(guid));
 
         assertNotNull(answer);
-        assertEquals(75L, (long) answer.getValue());
+        assertTrue(answer.isPresent());
+        assertEquals(75L, (long) answer.get().getValue());
     }
 
     @Test
@@ -1979,13 +1986,14 @@ public class PatchFormAnswersRouteStandaloneTest {
                 .and().extract().path("answers[0].answerGuid");
 
         answerGuidsToDelete.get(QuestionType.NUMERIC).add(guid);
-        NumericAnswer answer = (NumericAnswer) TransactionWrapper.withTxn(handle ->
-                new AnswerCachedDao(handle).findAnswerByGuid(guid).orElse(null));
+        var answer = TransactionWrapper.withTxn(handle ->
+                new AnswerCachedDao(handle).findAnswerByGuid(guid));
 
         assertNotNull(answer);
-        assertEquals(guid, answer.getAnswerGuid());
-        assertEquals(numericIntegerSid, answer.getQuestionStableId());
-        assertNull(answer.getValue());
+        assertTrue(answer.isPresent());
+        assertEquals(guid, answer.get().getAnswerGuid());
+        assertEquals(numericIntegerSid, answer.get().getQuestionStableId());
+        assertNull(answer.get().getValue());
     }
 
     @Test
@@ -2040,13 +2048,14 @@ public class PatchFormAnswersRouteStandaloneTest {
                 .and().extract().path("answers[0].answerGuid");
 
         answerGuidsToDelete.get(QuestionType.DECIMAL).add(guid);
-        DecimalAnswer answer = (DecimalAnswer) TransactionWrapper.withTxn(handle ->
-                new AnswerCachedDao(handle).findAnswerByGuid(guid).orElse(null));
+        var answer = TransactionWrapper.withTxn(handle ->
+                new AnswerCachedDao(handle).findAnswerByGuid(guid));
 
         assertNotNull(answer);
-        assertEquals(guid, answer.getAnswerGuid());
-        assertEquals(decimalIntegerSid, answer.getQuestionStableId());
-        assertEquals(0, new DecimalDef(25).compareTo(answer.getValue()));
+        assertTrue(answer.isPresent());
+        assertEquals(guid, answer.get().getAnswerGuid());
+        assertEquals(decimalIntegerSid, answer.get().getQuestionStableId());
+        assertEquals(0, new DecimalDef(25).compareTo(((DecimalAnswer) answer.get()).getValue()));
     }
 
     @Test
@@ -2074,11 +2083,12 @@ public class PatchFormAnswersRouteStandaloneTest {
                 .and().extract().path("answers[0].answerGuid");
 
         assertEquals(guid, nextGuid);
-        DecimalAnswer answer = (DecimalAnswer) TransactionWrapper.withTxn(handle ->
-                new AnswerCachedDao(handle).findAnswerByGuid(guid).orElse(null));
+        var answer = TransactionWrapper.withTxn(handle ->
+                new AnswerCachedDao(handle).findAnswerByGuid(guid));
 
         assertNotNull(answer);
-        assertEquals(0, new DecimalDef(75).compareTo(answer.getValue()));
+        assertTrue(answer.isPresent());
+        assertEquals(0, new DecimalDef(75).compareTo(((DecimalAnswer) answer.get()).getValue()));
     }
 
     @Test
@@ -2096,13 +2106,14 @@ public class PatchFormAnswersRouteStandaloneTest {
                 .and().extract().path("answers[0].answerGuid");
 
         answerGuidsToDelete.get(QuestionType.DECIMAL).add(guid);
-        DecimalAnswer answer = (DecimalAnswer) TransactionWrapper.withTxn(handle ->
-                new AnswerCachedDao(handle).findAnswerByGuid(guid).orElse(null));
+        var answer = TransactionWrapper.withTxn(handle ->
+                new AnswerCachedDao(handle).findAnswerByGuid(guid));
 
         assertNotNull(answer);
-        assertEquals(guid, answer.getAnswerGuid());
-        assertEquals(decimalIntegerSid, answer.getQuestionStableId());
-        assertNull(answer.getValue());
+        assertTrue(answer.isPresent());
+        assertEquals(guid, answer.get().getAnswerGuid());
+        assertEquals(decimalIntegerSid, answer.get().getQuestionStableId());
+        assertNull(answer.get().getValue());
     }
 
     @Test
