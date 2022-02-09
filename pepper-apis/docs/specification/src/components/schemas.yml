@@ -2211,13 +2211,13 @@ Validation.UniqueValue:
   allOf:
     - $ref: '#/Validation'
     - type: object
+      description: check for uniqueness in same question answers among all participants of the study
       properties:
         rule:
           type: string
           default: UNIQUE_VALUE
           enum:
             - UNIQUE_VALUE
-          description: check for uniqueness in same question answers among all participants of the study
 AnnouncementModel:
   type: object
   required:
