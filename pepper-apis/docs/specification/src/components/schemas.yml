@@ -11,6 +11,21 @@ ActivityInstanceStatusType:
     - COMPLETE
     - CREATED
     - IN_PROGRESS
+DecimalNumber:
+  type: object
+  description: |
+    A representation of a BigDecimal number. The represented number is equal to `value * 10 ^ scale`.
+  required:
+    - scale
+    - value
+  properties:
+    scale:
+      type: integer
+      format: int64
+    value:
+      description: the unscaled value 
+      type: integer
+      format: int64
 FormType:
   title: FormType
   type: string
