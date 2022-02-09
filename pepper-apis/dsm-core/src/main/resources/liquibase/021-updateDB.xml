@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+       http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+    <changeSet author="pegah" id="DDP-3429-mrfollowUp">
+        <addColumn tableName="ddp_medical_record">
+            <column defaultValue="NULL" name="followup_required" type="TINYINT(1)"
+                    afterColumn="unable_obtain">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+        <addColumn tableName="ddp_medical_record">
+            <column defaultValue="NULL" name="follow_ups" type="VARCHAR(2000)"
+                    afterColumn="notes">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+    </changeSet>
+    <changeSet id="DDP-3429_followup_required_text" author="pegah">
+        <addColumn tableName="ddp_medical_record">
+            <column name="followup_required_text" defaultValue="NULL" type="VARCHAR(1000)" afterColumn="followup_required">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+    </changeSet>
+</databaseChangeLog>

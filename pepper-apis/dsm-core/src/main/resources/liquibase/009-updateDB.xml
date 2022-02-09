@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+    <changeSet author="simone" id="08142018">
+        <!--renaming row setting-->
+        <renameColumn columnDataType="INT"
+                      newColumnName="rows_on_page"
+                      oldColumnName="mr_rows_on_page"
+                      tableName="user_settings"/>
+        <renameColumn columnDataType="INT"
+                      newColumnName="rows_set_0"
+                      oldColumnName="mr_rows_set_0"
+                      tableName="user_settings"/>
+        <renameColumn columnDataType="INT"
+                      newColumnName="rows_set_1"
+                      oldColumnName="mr_rows_set_1"
+                      tableName="user_settings"/>
+        <renameColumn columnDataType="INT"
+                      newColumnName="rows_set_2"
+                      oldColumnName="mr_rows_set_2"
+                      tableName="user_settings"/>
+        <!--deleting other row settings-->
+        <dropColumn columnName="sample_rows_on_page"
+                    tableName="user_settings"/>
+        <dropColumn columnName="sample_rows_set_0"
+                    tableName="user_settings"/>
+        <dropColumn columnName="sample_rows_set_1"
+                    tableName="user_settings"/>
+        <dropColumn columnName="sample_rows_set_2"
+                    tableName="user_settings"/>
+
+        <dropColumn columnName="mailing_rows_on_page"
+                    tableName="user_settings"/>
+        <dropColumn columnName="mailing_rows_set_0"
+                    tableName="user_settings"/>
+        <dropColumn columnName="mailing_rows_set_1"
+                    tableName="user_settings"/>
+        <dropColumn columnName="mailing_rows_set_2"
+                    tableName="user_settings"/>
+
+        <dropColumn columnName="emailEvents_rows_on_page"
+                    tableName="user_settings"/>
+        <dropColumn columnName="emailEvents_rows_set_0"
+                    tableName="user_settings"/>
+        <dropColumn columnName="emailEvents_rows_set_1"
+                    tableName="user_settings"/>
+        <dropColumn columnName="emailEvents_rows_set_2"
+                    tableName="user_settings"/>
+        <!--adding column for view and filter-->
+        <addColumn tableName="user_settings">
+            <column name="fav_views" type="VARCHAR(200)">
+            </column>
+        </addColumn>
+        <addColumn tableName="user_settings">
+            <column name="date_format" type="VARCHAR(20)">
+            </column>
+        </addColumn>
+    </changeSet>
+    <changeSet author="simone" id="081518">
+        <createTable tableName="mr_tissue_views">
+            <column autoIncrement="true" name="mr_tissue_views_id" type="INT">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="user_id" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="name" type="VARCHAR(200)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="view_json" type="VARCHAR(5000)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="shared" type="INT">
+            </column>
+            <column name="deleted" type="INT">
+            </column>
+        </createTable>
+
+        <addDefaultValue columnDataType="INT"
+                         columnName="shared"
+                         defaultValue="0"
+                         tableName="mr_tissue_views"/>
+        <addDefaultValue columnDataType="INT"
+                         columnName="deleted"
+                         defaultValue="0"
+                         tableName="mr_tissue_views"/>
+    </changeSet>
+    <changeSet author="simone" id="091018">
+        <addUniqueConstraint columnNames="sk_id"
+                             constraintName="sk_id_UNIQUE"
+                             tableName="ddp_tissue"/>
+        <addUniqueConstraint columnNames="sm_id"
+                             constraintName="sm_id_UNIQUE"
+                             tableName="ddp_tissue"/>
+    </changeSet>
+    <changeSet author="simone" id="09172018">
+        <insert tableName="access_role">
+            <column name="name" value="mr_no_request_tissue"/>
+        </insert>
+    </changeSet>
+    <changeSet author="simone" id="09212018">
+        <modifyDataType columnName="fav_views"
+                        newDataType="VARCHAR(600)"
+                        tableName="user_settings"/>
+    </changeSet>
+</databaseChangeLog>
