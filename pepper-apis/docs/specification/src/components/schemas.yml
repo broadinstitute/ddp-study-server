@@ -99,6 +99,7 @@ ValidationType:
     - REQUIRED
     - UNIQUE
     - YEAR_REQUIRED
+    - UNIQUE_VALUE
 Activity:
   type: object
   required:
@@ -2019,6 +2020,7 @@ Validation:
       REQUIRED: '#/Validation.Required'
       UNIQUE: '#/Validation.Unique'
       YEAR_REQUIRED: '#/Validation.YearRequired'
+      UNIQUE_VALUE: '#/Validation.UniqueValue'
   required:
     - rule
     - message
@@ -2205,6 +2207,17 @@ Validation.Unique:
           default: UNIQUE
           enum:
             - UNIQUE
+Validation.UniqueValue:
+  allOf:
+    - $ref: '#/Validation'
+    - type: object
+      description: check for uniqueness in same question answers among all participants of the study
+      properties:
+        rule:
+          type: string
+          default: UNIQUE_VALUE
+          enum:
+            - UNIQUE_VALUE
 AnnouncementModel:
   type: object
   required:
