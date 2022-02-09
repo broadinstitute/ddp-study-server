@@ -101,7 +101,6 @@ import org.broadinstitute.ddp.model.activity.instance.answer.CompositeAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.DateAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.DateValue;
 import org.broadinstitute.ddp.model.activity.instance.answer.FileAnswer;
-import org.broadinstitute.ddp.model.activity.instance.answer.NumericAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.DecimalAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.PicklistAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.SelectedPicklistOption;
