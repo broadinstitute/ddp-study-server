@@ -2016,6 +2016,7 @@ Validation:
       DATE_RANGE: '#/Validation.DateRange'
       DAY_REQUIRED: '#/Validation.DayRequired'
       INT_RANGE: '#/Validation.IntRange'
+      DECIMAL_RANGE: '#/Validation.DecimalRange'
       LENGTH: '#/Validation.Length'
       MONTH_REQUIRED: '#/Validation.MonthRequired'
       NUM_OPTIONS_SELECTED: '#/Validation.OptionsSelected'
@@ -2199,6 +2200,26 @@ Validation.IntRange:
           type: integer
           nullable: true
           description: the maximum acceptable number, inclusive
+Validation.DecimalRange:
+  allOf:
+    - $ref: '#/Validation'
+    - type: object
+      properties:
+        rule:
+          type: string
+          default: DECIMAL_RANGE
+          enum:
+            - DECIMAL_RANGE
+        min:
+          allOf:
+            - $ref: '#/DecimalNumber'
+            - description: the minimum acceptable number, inclusive
+              nullable: true
+        max:
+          allOf:
+            - $ref: '#/DecimalNumber'
+            - description: the maximum acceptable number, inclusive
+              nullable: true
 Validation.Unique:
   allOf:
     - $ref: '#/Validation'
