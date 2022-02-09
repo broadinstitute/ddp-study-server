@@ -30,6 +30,9 @@ public class AuthenticationRoute implements Route {
     private final String authUserEmail = "USER_MAIL";
     private final String userAccessRoles = "USER_ACCESS_ROLE";
     private final String userSettings = "USER_SETTINGS";
+    private final String clientId = "https://datadonationplatform.org/cid";
+    private final String tenantDomain = "https://datadonationplatform.org/t";
+
 
     private final Auth0Util auth0Util;
 
@@ -80,6 +83,8 @@ public class AuthenticationRoute implements Route {
                 claims.put(authUserId, String.valueOf(userDto.getId()));
                 claims.put(authUserName, userDto.getName().orElse(""));
                 claims.put(authUserEmail, email);
+                auth0Util.getClaimValue(auth0Token, tenantDomain).ifPresent( claim -> claims.put(tenantDomain, claim.asString()));
+                auth0Util.getClaimValue(auth0Token, clientId).ifPresent( claim -> claims.put(clientId, claim.asString()));
 
                 long auth0Expiration = auth0UserInfo.getTokenExpiration();
                 int cookieAgeInSeconds = new Long(auth0Expiration - new Double(System.currentTimeMillis() / 1000d).intValue()).intValue();

@@ -3,6 +3,7 @@ package org.broadinstitute.lddp.security;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import com.auth0.client.auth.AuthAPI;
 import com.auth0.client.mgmt.ManagementAPI;
@@ -73,6 +74,11 @@ public class Auth0Util {
         verifyUserConnection(auth0Claims.get("sub").asString(), userInfo.getEmail());
 
         return userInfo;
+    }
+
+    public Optional<Claim> getClaimValue(@NonNull String idToken, @NonNull String claimKey){
+        Map<String, Claim> auth0Claims = verifyAndParseAuth0TokenClaims(idToken);
+        return Optional.ofNullable(auth0Claims.getOrDefault(claimKey, null));
     }
 
     private ManagementAPI configManagementApi() {
