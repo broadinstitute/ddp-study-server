@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+    <changeSet author="simone" id="05292018">
+        <addColumn tableName="event_type">
+            <column name="kit_type_id" type="INT">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+        <addColumn tableName="event_type">
+            <column name="event_type" type="VARCHAR(45)">
+            </column>
+        </addColumn>
+        <addColumn tableName="event_type">
+            <column name="hours" type="INT">
+            </column>
+        </addColumn>
+    </changeSet>
+</databaseChangeLog>
