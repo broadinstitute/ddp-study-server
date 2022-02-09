@@ -416,17 +416,9 @@ Answer.Decimal:
       required:
         - type
         - value
-        - scale
       properties:
         value:
-          type: integer
-          format: int64
-          nullable: true
-        scale:
-          type: integer
-          description: the number of digits allowed to the right of the decimal point.
-          minimum: 0
-          default: 0
+          $ref: '#/DecimalNumber'
 Answer.Picklist:
   allOf:
     - $ref: '#/Answer'
