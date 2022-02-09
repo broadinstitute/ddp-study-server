@@ -74,12 +74,6 @@ ListStyle:
     - BULLET
     - UPPER_ALPHA
     - NONE
-NumericType:
-  title: NumericType
-  type: string
-  enum:
-    - INTEGER
-  description: describes what type of numeric value it is
 Presentation:
   title: Presentation
   type: string
@@ -308,33 +302,23 @@ Activity.Summary:
 ###
 Answer:
   type: object
-  discriminator:
-    propertyName: type
-    mapping:
-      AGREEMENT: '#/Answer.Boolean'
-      BOOLEAN: '#/Answer.Boolean'
-      COMPOSITE: '#/Answer.Composite'
-      DATE: '#/Answer.Date'
-      FILE: '#/Answer.File'
-      NUMERIC: '#/Answer.Numeric'
-      PICKLIST: '#/Answer.Picklist'
-      TEXT: '#/Answer.String'
   required:
     - answerGuid
-    - type
   properties:
     answerGuid:
       type: string
       format: guid
-    type:
-      type: string
 Answer.String:
   allOf:
     - $ref: '#/Answer'
     - type: object
       required:
+        - type
         - value
       properties:
+        type:
+          type: string
+          default: STRING
         value:
           type: string
           nullable: true
@@ -343,8 +327,12 @@ Answer.Date:
     - $ref: '#/Answer'
     - type: object
       required:
+        - type
         - value
       properties:
+        type:
+          type: string
+          default: DATE
         value:
           $ref: '#/DateValue'
 Answer.Composite:
@@ -352,8 +340,12 @@ Answer.Composite:
     - $ref: '#/Answer'
     - type: object
       required:
+        - type
         - value
       properties:
+        type:
+          type: string
+          default: COMPOSITE
         value:
           type: array
           items:
@@ -368,8 +360,12 @@ Answer.Boolean:
     - $ref: '#/Answer'
     - type: object
       required:
+        - type
         - value
       properties:
+        type:
+          type: string
+          default: BOOLEAN
         value:
           type: boolean
 Answer.File:
@@ -378,46 +374,82 @@ Answer.File:
     - type: object
       required:
         - value
+        - type
       properties:
+        type:
+          type: string
+          default: FILE
         value:
           $ref: '#/FileInfo'
-Answer.Numeric:
+Answer.Integer:
   allOf:
     - $ref: '#/Answer'
     - type: object
-      discriminator:
-        propertyName: numericType
-        mapping:
-          INTEGER: '#/Answer.Numeric.Integer'
       required:
-        - numericType
+        - type
       properties:
-        numericType:
+        type:
           type: string
-Answer.Numeric.Integer:
-  allOf:
-    - $ref: '#/Answer.Numeric'
-    - type: object
-      required:
-        - value
-      properties:
-        numericType:
-          type: string
-          default: INTEGER
+          default: NUMERIC
         value:
           type: integer
           nullable: true
+Answer.Decimal:
+  allOf:
+    - $ref: '#/Answer'
+    - type: object
+      required:
+        - type
+        - value
+        - precision
+        - scale
+      properties:
+        value:
+          type: integer
+          format: int64
+          nullable: true
+        precision:
+          type: integer
+          description: the total number of digits allowed in the number, including digits on both sides of the decimal point
+          minimum: 0
+          default: 0
+        scale:
+          type: integer
+          description: the number of digits allowed to the right of the decimal point.
+          minimum: 0
+          default: 0
 Answer.Picklist:
   allOf:
     - $ref: '#/Answer'
     - type: object
       required:
+        - type
         - value
       properties:
+        type:
+          type: string
+          default: PICKLIST
         value:
           type: array
           items:
             $ref: '#/SelectedOption'
+Answer.ActivityInstance:
+  allOf:
+    - $ref: '#/Answer'
+    - type: object
+      required:
+        - type
+        - value
+      properties:
+        type:
+          type: string
+          default: ACTIVITY_INSTANCE_SELECT
+        value:
+          type: string
+          format: guid
+          nullable: true
+          description: |
+            GUID of selected activity instance.
 SelectedOption:
   type: object
   required:
@@ -430,6 +462,29 @@ SelectedOption:
     detail:
       type: string
       nullable: true
+Answer.Matrix:
+  allOf:
+    - $ref: '#/Answer'
+    - type: object
+      required:
+        - value
+      properties:
+        value:
+          type: array
+          items:
+            $ref: '#/SelectedCell'
+SelectedCell:
+  type: object
+  required:
+    - rowStableId
+    - optionStableId
+  properties:
+    rowStableId:
+      type: string
+      format: guid
+    optionStableId:
+      type: string
+      format: guid
 DateValue:
   type: object
   description: an object which represents a day, month, and year in UTC.
@@ -468,13 +523,16 @@ AnswerSubmission:
   discriminator:
     propertyName: type
     mapping:
+      ACTIVITY_INSTANCE_SELECT: '#/AnswerSubmission.ActivityInstance'
       AGREEMENT: '#/AnswerSubmission.Boolean'
       BOOLEAN: '#/AnswerSubmission.Boolean'
       COMPOSITE: '#/AnswerSubmission.Composite'
       DATE: '#/AnswerSubmission.Date'
       FILE: '#/AnswerSubmission.File'
-      NUMERIC: '#/AnswerSubmission.Numeric.Integer'
+      NUMERIC: '#/AnswerSubmission.Integer'
+      DECIMAL: '#/AnswerSubmission.Decimal'
       PICKLIST: '#/AnswerSubmission.Picklist'
+      MATRIX: '#/AnswerSubmission.Matrix'
       TEXT: '#/AnswerSubmission.String'
   required:
     - stableId
@@ -537,7 +595,7 @@ AnswerSubmission.File:
             File upload guid provided by server when upload URL was requested. If this
             answer is currently associated with a file upload, then submitting a `null`
             value will unassociate it and the uploaded file will subsequently get deleted.
-AnswerSubmission.Numeric.Integer:
+AnswerSubmission.Integer:
   allOf:
     - $ref: '#/AnswerSubmission'
     - type: object
@@ -547,6 +605,29 @@ AnswerSubmission.Numeric.Integer:
         value:
           type: integer
           nullable: true
+AnswerSubmission.Decimal:
+  allOf:
+    - $ref: '#/AnswerSubmission'
+    - type: object
+      required:
+        - value
+        - precision
+        - scale
+      properties:
+        value:
+          type: integer
+          format: int64
+          nullable: true
+        precision:
+          type: integer
+          description: the total number of digits allowed in the number, including digits on both sides of the decimal point
+          minimum: 0
+          default: 0
+        scale:
+          type: integer
+          description: the number of digits allowed to the right of the decimal point.
+          minimum: 0
+          default: 0
 AnswerSubmission.Picklist:
   allOf:
     - $ref: '#/AnswerSubmission'
@@ -558,6 +639,17 @@ AnswerSubmission.Picklist:
           type: array
           items:
             $ref: '#/SelectedOption'
+AnswerSubmission.Matrix:
+  allOf:
+    - $ref: '#/AnswerSubmission'
+    - type: object
+      required:
+        - value
+      properties:
+        value:
+          type: array
+          items:
+            $ref: '#/SelectedCell'
 AnswerSubmission.String:
   allOf:
     - $ref: '#/AnswerSubmission'
@@ -567,6 +659,21 @@ AnswerSubmission.String:
       properties:
         value:
           type: string
+AnswerSubmission.ActivityInstance:
+  allOf:
+    - $ref: '#/AnswerSubmission'
+    - type: object
+      required:
+        - value
+      properties:
+        value:
+          type: string
+          format: guid
+          nullable: true
+          description: |
+            GUID of instance of activity available for selection. If this
+            answer is currently associated with an instance, then submitting a `null`
+            value will unassociate it.
 #####
 #
 # Blocks
@@ -587,6 +694,7 @@ Block:
     - blockType
     - blockGuid
     - shown
+    - enabled
   properties:
     blockType:
       type: string
@@ -594,6 +702,8 @@ Block:
       type: string
       format: guid
     shown:
+      type: boolean
+    enabled:
       type: boolean
 Block.Component:
   allOf:
@@ -760,6 +870,7 @@ Block.Visibility:
   required:
     - blockGuid
     - shown
+    - enabled
   properties:
     blockGuid:
       type: string
@@ -767,6 +878,9 @@ Block.Visibility:
     shown:
       type: boolean
       description: whether block is shown or not
+    enabled:
+      type: boolean
+      description: whether block is enabled or not (used in cases when block inputs should be disabled but still visible)
 #####
 #
 # Components
@@ -1302,6 +1416,39 @@ PicklistOption:
       type: string
     exclusive:
       type: boolean
+MatrixOption:
+  type: object
+  required:
+    - stableId
+    - optionLabel
+    - exclusive
+    - groupId
+  properties:
+    stableId:
+      type: string
+    groupId:
+      type: string
+    optionLabel:
+      type: string
+    tooltip:
+      type: string
+      description: tooltip for the option, in plain text
+    exclusive:
+      type: boolean
+      description: if `exclusive` option selected, other options in the group will be cleared (applicable for MULTIPLE select mode)
+MatrixRowQuestion:
+  type: object
+  required:
+    - stableId
+    - questionLabel
+  properties:
+    stableId:
+      type: string
+    questionLabel:
+      type: string
+    tooltip:
+      type: string
+      description: tooltip for the option, in plain text
 PrequalifierModel:
   type: object
   required:
@@ -1376,13 +1523,16 @@ Question:
   discriminator:
     propertyName: questionType
     mapping:
+      ACTIVITY_INSTANCE_SELECT: '#/Question.ActivityInstanceSelect'
       AGREEMENT: '#/Question.Agreement'
       BOOLEAN: '#/Question.Boolean'
       COMPOSITE: '#/Question.Composite'
       DATE: '#/Question.Date'
       FILE: '#/Question.File'
-      NUMERIC: '#/Question.Numeric'
+      NUMERIC: '#/Question.Integer'
+      DECIMAL: '#/Question.Decimal'
       PICKLIST: '#/Question.Picklist'
+      MATRIX: '#/Question.Matrix'
       TEXT: '#/Question.Text'
   required:
   - questionType
@@ -1429,6 +1579,29 @@ Question:
       type: array
       items:
         $ref: '#/ValidationFailure'
+Question.ActivityInstanceSelect:
+  allOf:
+    - $ref: '#/Question'
+    - type: object
+      required:
+        - answers
+        - activityCodes
+      properties:
+        questionType:
+          type: string
+          default: ACTIVITY_INSTANCE_SELECT
+          enum:
+            - ACTIVITY_INSTANCE_SELECT
+        activityCodes:
+          description: 'List of activity codes for instance lookup'
+          type: array
+          items:
+            type: string
+            format: guid
+        answers:
+          type: array
+          items:
+            $ref: '#/Answer.ActivityInstance'
 Question.Agreement:
   allOf:
   - $ref: '#/Question'
@@ -1586,28 +1759,42 @@ Question.File:
           type: array
           items:
             $ref: '#/Answer.File'
-Question.Numeric:
+Question.Integer:
   allOf:
-  - $ref: '#/Question'
-  - type: object
-    required:
-      - answers
-      - numericType
-    properties:
-      questionType:
-        type: string
-        default: NUMERIC
-        enum:
-          - NUMERIC
-      placeholderText:
-        type: string
-        description: if present, this text string can be used as a placeholder hint
-      numericType:
-        $ref: '#/NumericType'
-      answers:
-        type: array
-        items:
-          $ref: '#/Answer.Numeric.Integer'
+    - $ref: '#/Question'
+    - type: object
+      required:
+        - answers
+      properties:
+        placeholderText:
+          type: string
+          nullable: true
+          description: if present, this text string can be used as a placeholder hint
+        answers:
+          type: array
+          items:
+            $ref: '#/Answer.Integer'
+Question.Decimal:
+  allOf:
+    - $ref: '#/Question'
+    - type: object
+      required:
+        - answers
+      properties:
+        precision:
+          type: integer
+          description: the total number of digits allowed in the number, including digits on both sides of the decimal point
+          minimum: 0
+          default: 0
+        scale:
+          type: integer
+          description: the number of digits allowed to the right of the decimal point.
+          minimum: 0
+          default: 0
+        answers:
+          type: array
+          items:
+            $ref: '#/Answer.Decimal'
 Question.Picklist:
   allOf:
   - $ref: '#/Question'
@@ -1659,6 +1846,55 @@ Question.Picklist:
         type: array
         items:
           $ref: '#/Answer.Picklist'
+Question.Matrix:
+  allOf:
+    - $ref: '#/Question'
+    - type: object
+      required:
+        - selectMode
+        - options
+        - questions
+        - answers
+      properties:
+        questionType:
+          type: string
+          default: MATRIX
+          enum:
+            - MATRIX
+        selectMode:
+          type: string
+          description: |
+            * `MULTIPLE` - Allows user to select as many options as needed (checkbox)
+            * `SINGLE` - Only one selection is allowed inside group (radio button)
+          enum:
+            - MULTIPLE
+            - SINGLE
+        groups:
+          type: array
+          description: A list of groups used in the `matrixOptions` values. If there are no options which explicity request grouping, this will be an empty array.
+          minItems: 0
+          items:
+            type: object
+            required:
+              - identifier
+              - name
+            properties:
+              identifier:
+                type: string
+              name:
+                type: string
+        options:
+          type: array
+          items:
+            $ref: '#/MatrixOption'
+        questions:
+          type: array
+          items:
+            $ref: '#/MatrixRowQuestion'
+        answers:
+          type: array
+          items:
+            $ref: '#/Answer.Matrix'
 Question.Text:
   allOf:
   - $ref: '#/Question'
@@ -2578,3 +2814,18 @@ ParticipantsLookupProxyItem:
       description: The proxy's email
       type: string
       format: email
+Suggestion.ActivityInstance:
+  type: object
+  required:
+    - guid
+    - name
+  properties:
+    guid:
+      description: Activity Instance GUID
+      type: string
+      format: guid
+      example: TY51BW3M6S
+    name:
+      description: Activity Instance Name, rendered, as could be seen on the dashboard
+      type: string
+      example: "Medical Record Release Form #2"

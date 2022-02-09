@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="evgeniipr" id="20211101-create-table-i18n-translation">
+        <createTable tableName="i18n_translation">
+            <column name="i18n_translation_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="i18n_translation_pk"/>
+            </column>
+            <column name="study_id" type="bigint">
+                <constraints nullable="false"
+                             references="umbrella_study(umbrella_study_id)"
+                             foreignKeyName="i18n_translation_umbrella_study_fk"/>
+
+            </column>
+            <column name="language_code_id" type="bigint">
+                <constraints nullable="false"
+                             references="language_code(language_code_id)"
+                             foreignKeyName="i18n_translation_language_code_fk"/>
+            </column>
+            <column name="i18n_translation_doc" type="json">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addUniqueConstraint
+                columnNames="study_id, language_code_id"
+                constraintName="i18n_translation_uk"
+                tableName="i18n_translation"/>
+        <createIndex tableName="i18n_translation" indexName="i18n_translation_created_at_idx">
+            <column name="created_at"/>
+        </createIndex>
+        <createIndex tableName="i18n_translation" indexName="i18n_translation_updated_at_idx">
+            <column name="updated_at"/>
+        </createIndex>
+
+    </changeSet>
+</databaseChangeLog>

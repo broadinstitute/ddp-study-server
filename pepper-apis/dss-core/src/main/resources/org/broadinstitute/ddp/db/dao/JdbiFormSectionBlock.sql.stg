@@ -1,0 +1,30 @@
+group JdbiFormSectionBlock;
+
+queryOrderedFormBlockDtosBySectionIdsAndInstanceGuid() ::= <<
+select fsb.form_section_id,
+       null as parent_block_id,
+       bt.block_type_code,
+       b.block_id,
+       b.block_guid,
+       ev.expression_text as shown_expression_text,
+       ee.expression_text as enabled_expression_text
+  from form_section__block as fsb
+  join revision as rev on rev.revision_id = fsb.revision_id
+  join block as b on b.block_id = fsb.block_id
+  join block_type as bt on bt.block_type_id = b.block_type_id
+  left join block__expression as bve on bve.block_id = b.block_id
+  left join expression as ev on ev.expression_id = bve.expression_id
+  left join revision as bve_rev on bve_rev.revision_id = bve.revision_id
+  left join block_enabled_expression as bee on bee.block_id = b.block_id
+  left join expression as ee on ee.expression_id = bee.expression_id
+  left join revision as bee_rev on bee_rev.revision_id = bee.revision_id
+  join activity_instance as ai on ai.activity_instance_guid = :instanceGuid
+ where fsb.form_section_id in (\<sectionIds\>)
+   and rev.start_date \<= ai.created_at
+   and (rev.end_date is null or ai.created_at \< rev.end_date)
+   and (bve.block__expression_id is null or
+       (bve_rev.start_date \<= ai.created_at and (bve_rev.end_date is null or ai.created_at \< bve_rev.end_date)))
+   and (bee.block_enabled_expression_id is null or
+       (bee_rev.start_date \<= ai.created_at and (bee_rev.end_date is null or ai.created_at \< bee_rev.end_date)))
+ order by fsb.form_section_id asc, fsb.display_order asc
+>>

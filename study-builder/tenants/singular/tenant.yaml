@@ -7,6 +7,10 @@ rules:
     stage: login_success
     enabled: true
     order: 1
+rulesConfigs:
+  # Key/Value pairs for Rule configuration settings
+  - key: "pepperBaseUrl"
+    value: ##SERVER_BASE_URL##
 
 pages:
   - name: login
@@ -15,6 +19,13 @@ pages:
   - name: password_reset
     enabled: true
     html: ./pages/password_reset.html
+
+emailProvider:
+  name: "sendgrid"
+  enabled: true
+  default_from_address: ##SENDGRID_EMAIL##
+  credentials:
+    api_key: ##SENDGRID_TOKEN##
 
 emailTemplates:
   - template: reset_email
@@ -30,7 +41,7 @@ emailTemplates:
     enabled: true
 
 clients:
-  - name: Dev
+  - name: singular-angular-client
     app_type: spa
     callbacks: [
         '##BASE_URL##/auth',

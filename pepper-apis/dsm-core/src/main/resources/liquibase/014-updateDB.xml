@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+       http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+    <changeSet author="simone" id="DDP-3077_01162019">
+        <addColumn tableName="ddp_instance">
+            <column defaultValueBoolean="false" name="migrated_ddp" type="TINYINT(1)">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+    <changeSet author="simone" id="01242019">
+        <modifyDataType columnName="last_version"
+                        newDataType="BIGINT"
+                        tableName="ddp_participant"/>
+    </changeSet>
+</databaseChangeLog>

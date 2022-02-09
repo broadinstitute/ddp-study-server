@@ -1,0 +1,63 @@
+group JdbiMatrixOption;
+
+insertMatrixOption() ::= <<
+insert into matrix_option (matrix_question_id, matrix_option_stable_id, option_label_template_id, tooltip_template_id,
+       matrix_group_id, is_exclusive, display_order, revision_id)
+values (:matrixQuestionId, :stableId, :optionLabelTemplateId, :tooltipTemplateId, :groupId, :isExclusive, :displayOrder, :revisionId)
+>>
+
+queryAllActiveOrderedMatrixOptionsByQuestionId() ::= <<
+select mo.matrix_option_id,
+       mo.matrix_option_stable_id,
+       mo.option_label_template_id,
+       mo.tooltip_template_id,
+       mo.matrix_group_id,
+       mo.is_exclusive,
+       mo.display_order,
+       mo.revision_id,
+       rev.start_date as revision_start_timestamp,
+       rev.end_date as revision_end_timestamp
+  from matrix_option as mo
+  join revision as rev on rev.revision_id = mo.revision_id
+ where mo.matrix_question_id = :questionId
+   and rev.end_date is null
+ order by mo.display_order asc, mo.matrix_option_id asc
+>>
+
+queryMatrixOptionsByStableIdsQuestionIdAndRevision(stableIds) ::= <<
+select mo.matrix_option_id,
+       mo.matrix_option_stable_id,
+       mo.option_label_template_id,
+       mo.tooltip_template_id,
+       mo.matrix_group_id,
+       mo.is_exclusive,
+       mo.display_order,
+       mo.revision_id,
+       rev.start_date as revision_start_timestamp,
+       rev.end_date as revision_end_timestamp
+  from matrix_option as mo
+  join revision as rev on mo.revision_id = rev.revision_id
+  join activity_instance as ai on ai.activity_instance_guid = :instanceGuid
+ where mo.matrix_question_id = :questionId
+   and mo.matrix_option_stable_id in (<stableIds>)
+   and rev.start_date \<= ai.created_at
+   and (rev.end_date is null or ai.created_at \< rev.end_date)
+>>
+
+isMatrixOptionStableIdCurrentlyActive() ::= <<
+select 1
+from
+    matrix_option as mo,
+    revision as rev
+where mo.matrix_question_id = :questionId
+and mo.matrix_option_stable_id = :stableId
+and mo.revision_id = rev.revision_id
+and rev.end_date is null
+>>
+
+insertMatrixOptionByDto() ::= <<
+insert into matrix_option (matrix_question_id, matrix_option_stable_id, option_label_template_id, tooltip_template_id,
+       matrix_group_id, is_exclusive, display_order, revision_id)
+values (:matrixQuestionId, :dto.getStableId, :dto.getOptionLabelTemplateId, :dto.getTooltipTemplateId,
+       :dto.getGroupId, :dto.isExclusive, :dto.getDisplayOrder, :revisionId)
+>>

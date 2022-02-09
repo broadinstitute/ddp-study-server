@@ -1,0 +1,189 @@
+group ActivityInstanceDao;
+
+queryActivityInstanceCreationValidation() ::= <<
+select act.study_activity_id,
+       act.parent_activity_id,
+       (select study_activity_code
+          from study_activity
+         where study_activity_id = act.parent_activity_id
+       ) as parent_activity_code,
+       act.hide_existing_instances_on_creation,
+       act.max_instances_per_user,
+       (select count(ai.activity_instance_id)
+          from activity_instance as ai
+         where ai.study_activity_id = act.study_activity_id
+           and ai.participant_id = :participantUserId
+       ) as num_instances_for_user
+  from study_activity as act
+ where act.study_activity_code = :activityCode
+   and act.study_id = :studyId
+>>
+
+upsertActivityInstanceCreationMutex() ::= <<
+INSERT INTO activity_instance_creation_mutex
+(participant_id,study_activity_id,update_time)
+VALUES(
+    :participantId,
+    (SELECT study_activity_id
+    FROM study_activity
+    WHERE
+        study_activity_code=:activityCode
+        AND study_id=:studyId),
+    :updateTime)
+ON DUPLICATE KEY UPDATE
+    update_time = :updateTime
+>>
+
+queryLastUpdateForActivityInstanceCreationMutex() ::= <<
+SELECT update_time
+FROM
+    activity_instance_creation_mutex aicm
+JOIN
+    study_activity sa ON aicm.study_activity_id= sa.study_activity_id
+WHERE
+    sa.study_id=:studyId
+    AND sa.study_activity_code=:activityCode
+    AND aicm.participant_id=:participantId
+>>
+
+select_all_base_instance_responses_with_latest_status() ::= <<
+select ai.activity_instance_id   as instance_id,
+       ai.activity_instance_guid as instance_guid,
+       ai.participant_id,
+       ai.is_readonly,
+       ai.created_at,
+       ai.first_completed_at,
+       ai.parent_instance_id,
+       ai.is_hidden,
+       ai.section_index,
+       (select activity_instance_guid
+          from activity_instance
+         where activity_instance_id = ai.parent_instance_id
+       ) as parent_instance_guid,
+       act.study_activity_id     as activity_id,
+       act.study_activity_code   as activity_code,
+       (select ver.version_tag
+          from activity_version as ver
+          join revision as rev on rev.revision_id = ver.revision_id
+         where ver.study_activity_id = ai.study_activity_id
+           and rev.start_date \<= ai.created_at
+           and (rev.end_date is null or ai.created_at \< rev.end_date)
+       ) as activity_version_tag,
+       ais.activity_instance_status_id      as activity_instance_status_id,
+       ais.activity_instance_id             as activity_instance_id,
+       ais.operator_id                      as operator_id,
+       ais.updated_at                       as updated_at,
+       ais.activity_instance_status_type_id as activity_instance_status_type_id,
+       (select activity_instance_status_type_code
+          from activity_instance_status_type
+         where activity_instance_status_type_id = ais.activity_instance_status_type_id
+       ) as activity_instance_status_type_code
+  from activity_instance as ai
+  join activity_instance_status as ais on ais.activity_instance_id = ai.activity_instance_id
+       and ais.updated_at = (select max(s2.updated_at) from activity_instance_status as s2 where s2.activity_instance_id = ai.activity_instance_id)
+  join study_activity as act on act.study_activity_id = ai.study_activity_id
+  join umbrella_study as s on s.umbrella_study_id = act.study_id
+  join user as u on u.user_id = ai.participant_id
+>>
+
+queryBaseResponsesByInstanceId() ::= <<
+<select_all_base_instance_responses_with_latest_status()>
+where ai.activity_instance_id = :instanceId
+>>
+
+queryBaseResponsesByInstanceGuid() ::= <<
+<select_all_base_instance_responses_with_latest_status()>
+where ai.activity_instance_guid = :instanceGuid
+>>
+
+queryBaseResponsesByStudyAndUserGuid() ::= <<
+<select_all_base_instance_responses_with_latest_status()>
+where s.guid = :studyGuid
+  and u.guid = :userGuid
+>>
+
+queryBaseResponsesByStudyIdAndUserIdsLimitedToActivityIds(userIds, limitActivities, activityIds) ::= <<
+<select_all_base_instance_responses_with_latest_status()>
+where s.umbrella_study_id = :studyId
+  and u.user_id in (<userIds>)
+<if(limitActivities)>
+  and ai.study_activity_id in (<activityIds>)
+<endif>
+>>
+
+select_all_latest_instance_summaries() ::= <<
+select ai.activity_instance_id,
+       ai.activity_instance_guid,
+       s.umbrella_study_id as study_id,
+       act.study_activity_id,
+       act.study_activity_code,
+       aip.activity_instance_id as parent_instance_id,
+       aip.activity_instance_guid as parent_instance_guid,
+       actp.study_activity_id as parent_activity_id,
+       actp.study_activity_code as parent_activity_code,
+       ai.participant_id,
+       ai.created_at,
+       ai.is_readonly,
+       ai.is_hidden,
+       (select activity_instance_status_type_code
+          from activity_instance_status_type
+         where activity_instance_status_type_id = ais.activity_instance_status_type_id
+       ) as activity_instance_status_type
+  from activity_instance as ai
+  join study_activity           as act  on ai.study_activity_id = act.study_activity_id
+  join umbrella_study           as s    on s.umbrella_study_id = act.study_id
+  join user                     as u    on ai.participant_id = u.user_id
+  join activity_instance_status as ais
+       on ais.activity_instance_id = ai.activity_instance_id
+       and ais.updated_at = (
+       select max(stat.updated_at)
+         from activity_instance_status as stat
+        where stat.activity_instance_id = ai.activity_instance_id)
+  left join activity_instance as aip on ai.parent_instance_id = aip.activity_instance_id
+  left join study_activity as actp on aip.study_activity_id = actp.study_activity_id
+>>
+
+findNonNestedSortedInstanceSummariesByUserAndStudyGuids() ::= <<
+<select_all_latest_instance_summaries()>
+ where u.guid = :userGuid
+   and s.guid = :studyGuid
+   and actp.study_activity_id is null
+ order by act.display_order asc, ai.created_at desc
+>>
+
+findNestedSortedInstanceSummariesByUserStudyGuidsAndParentInstanceId() ::= <<
+<select_all_latest_instance_summaries()>
+ where u.guid = :userGuid
+   and s.guid = :studyGuid
+   and ai.parent_instance_id = :parentInstanceId
+ order by act.display_order asc, ai.created_at asc
+>>
+
+findSortedInstanceSummariesByUserStudyActivityCode() ::= <<
+<select_all_latest_instance_summaries()>
+ where u.guid = :userGuid
+   and s.guid = :studyGuid
+   and act.study_activity_code = :activityCode
+ order by ai.created_at asc
+>>
+
+findSortedInstanceSummariesByUserStudyActivityCodes(userGuid, studyGuid, activityCodes) ::= <<
+<select_all_latest_instance_summaries()>
+ where u.guid = :userGuid
+   and s.guid = :studyGuid
+   and act.study_activity_code in (<activityCodes>)
+ order by ai.created_at asc
+>>
+
+queryLatestActivityInstanceGuidByUserGuidStudyIdAndActivityCode() ::= <<
+select ai.activity_instance_guid
+ from activity_instance as ai
+  join study_activity as sa on sa.study_activity_id = ai.study_activity_id
+  join umbrella_study as us on us.umbrella_study_id = sa.study_id
+  join user as u on u.user_id = ai.participant_id
+where us.umbrella_study_id = :studyId
+  and u.guid = :userGuid
+  and sa.study_activity_code = :activityCode
+ order by ai.created_at desc
+ limit 1
+>>

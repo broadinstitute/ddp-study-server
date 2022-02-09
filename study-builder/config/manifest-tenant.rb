@@ -6,6 +6,7 @@ render "rarex-config.json.ctmpl"
 render "circadia-config.json.ctmpl"
 render "atcp-config.json.ctmpl"
 render "brugada-config.json.ctmpl"
+render "singular-config.json.ctmpl"
 
 if $env != "prod"
   render "basil-config.json.ctmpl"

@@ -1,0 +1,9 @@
+[{"id":1668888666,
+  "participantId":"FAKE_DDP_PARTICIPANT_Pepper",
+  "lastUpdated":"2017-02-07T18:07:02Z",
+  "institutions":
+  [{"id":"FAKE_DDP_PHYSICIAN_ID",
+    "type":"PHYSICIAN"},
+    {"id":"FAKE_DDP_INSTITUTION_ID",
+      "type":"INSTITUTION"}]
+}]
