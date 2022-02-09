@@ -191,8 +191,8 @@
   "consent_important_points_about_study_p2": "I have had the chance to ask questions about texting with staff associated with this research study. I have been informed of the risks and other information covered above and consent to the use of unencrypted text communications associated with this research study.",
 
   "consent_receive_text_messages_about_study_title": "Please select one of the following options",
-  "consent_receive_text_messages_about_study_yes_answer": "I consent to receive text messages related to this study to both my personal mobile/cell phone number.",
-  "consent_receive_text_messages_about_study_no_answer": "I do not consent to receiving any text messages related to this study to my personal mobile/cell phone number for text messages.",
+  "consent_receive_text_messages_about_study_yes_answer": "YES, I consent to receive text messages related to this study to both my personal mobile/cell phone number.",
+  "consent_receive_text_messages_about_study_no_answer": "NO, I do not consent to receiving any text messages related to this study to my personal mobile/cell phone number for text messages.",
   "consent_receive_text_messages_about_study_hint": "Please select one of the following options",
 
   "consent_study_communication_via_email_unsecured_title": "Study Communication via Unsecured Email",
@@ -204,13 +204,13 @@
   "consent_study_communication_via_email_p1": "For you to participate in this study, our team will need to send materials to your preferred mailing address, including materials you will need to complete the study, study-themed gifts, and your compensation at the conclusion of the study. ",
 
   "consent_receive_unencrypted_email_communications_title": "Please select one of the following options",
-  "consent_receive_unencrypted_email_communications_yes_answer": "I consent to receive unencrypted email communications.",
-  "consent_receive_unencrypted_email_communications_no_answer": "I do not consent to receive unencrypted email communications.",
+  "consent_receive_unencrypted_email_communications_yes_answer": "YES, I consent to receive unencrypted email communications.",
+  "consent_receive_unencrypted_email_communications_no_answer": "NO, I do not consent to receive unencrypted email communications.",
   "consent_receive_unencrypted_email_communications_hint": "Please select one of the following options",
 
   "consent_receive_email_communications_title": "Please select one of the following options",
-  "consent_receive_email_communications_yes_answer": "Yes, I consent to receive mail shipped to my preferred address.",
-  "consent_receive_email_communications_no_answer": "No, I do not consent to receive mail shipped to my provided address.",
+  "consent_receive_email_communications_yes_answer": "YES, I consent to receive mail shipped to my preferred address.",
+  "consent_receive_email_communications_no_answer": "NO, I do not consent to receive mail shipped to my provided address.",
   "consent_receive_email_communications_hint": "Please select one of the following options",
 
   "consent_risks_and_possible_discomforts_title": "What are the risks and possible discomforts from being in this research study?",
