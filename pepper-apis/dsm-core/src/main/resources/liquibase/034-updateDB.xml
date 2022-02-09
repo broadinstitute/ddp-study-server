@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+    <changeSet author="simone" id="DDP-4677_subField">
+        <addColumn tableName="ddp_medical_record_abstraction">
+            <column name="match_phrase" type="VARCHAR(1500)" afterColumn="file_name">
+            </column>
+        </addColumn>
+        <addColumn tableName="ddp_medical_record_review">
+            <column name="match_phrase" type="VARCHAR(1500)" afterColumn="file_name">
+            </column>
+        </addColumn>
+        <addColumn tableName="ddp_medical_record_qc">
+            <column name="match_phrase" type="VARCHAR(1500)" afterColumn="file_name">
+            </column>
+        </addColumn>
+    </changeSet>
+</databaseChangeLog>

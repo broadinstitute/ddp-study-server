@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+    <changeSet author="charlotte" id="DDP-3726_07152019_additionalOncValues">
+        <addColumn tableName="ddp_onc_history_detail">
+            <column name="additional_values_json" defaultValue="NULL" type="VARCHAR(1000)" afterColumn="additional_values"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="charlotte" id="DDP-3726_07152019_additionalTissueValues">
+        <addColumn tableName="ddp_tissue">
+            <column name="additional_tissue_value_json" defaultValue="NULL" type="VARCHAR(1000)" afterColumn="additional_tissue_value"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="charlotte" id="DDP-3726_07232019_fieldSettings">
+        <createTable tableName="field_settings">
+            <column name="field_settings_id" autoIncrement="true" type="INT">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="ddp_instance_id" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="field_type" type="VARCHAR(45)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="column_name" type="VARCHAR(45)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="column_display" type="VARCHAR(45)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="deleted" type="TINYINT(1)"/>
+        </createTable>
+        <sql>INSERT INTO field_settings (ddp_instance_id, field_type, column_name, column_display, deleted) SELECT ddp_instance_id, 'oD',
+            column_name, column_display, deleted FROM onc_history_detail_settings</sql>
+        <sql>INSERT INTO field_settings (ddp_instance_id, field_type, column_name, column_display, deleted) SELECT ddp_instance_id, 't',
+            column_name, column_display, deleted FROM tissue_settings</sql>
+    </changeSet>
+    <changeSet author="charlotte" id="DDP-3726_08122019_fieldSettingsType">
+        <addColumn tableName="field_settings">
+            <column name="display_type" defaultValue="NULL" type="VARCHAR(45)" afterColumn="column_display"/>
+            <column name="possible_values" defaultValue="NULL" type="VARCHAR(1000)" afterColumn="display_type"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="charlotte" id="DDP-3726_09162019_convertAddlValues">
+        <createTable tableName="TempConvTable">
+            <column name="idTempConvTable" autoIncrement="true" type="INT">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="onc_history_detail_id" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="toconvert" type="VARCHAR(1000)"/>
+        </createTable>
+        <addForeignKeyConstraint baseColumnNames="onc_history_detail_id" baseTableName="TempConvTable"
+                                 constraintName="onc_history_detail_id_fk" deferrable="false" initiallyDeferred="false"
+                                 onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="onc_history_detail_id"
+                                 referencedTableName="ddp_onc_history_detail"/>
+        <sql>INSERT INTO TempConvTable (onc_history_detail_id, toconvert) SELECT onc_history_detail_id, additional_values
+            FROM ddp_onc_history_detail WHERE additional_values IS NOT NULL AND
+            additional_values LIKE '[{"name":%}]'</sql>
+        <sql>UPDATE ddp_onc_history_detail SET ddp_onc_history_detail.additional_values_json = (SELECT
+            REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(TempConvTable.toconvert, '"name":', ''), ',"value":', ':'),
+            ']', ''), '[', ''), '},{', ',') FROM TempConvTable WHERE ddp_onc_history_detail.onc_history_detail_id = TempConvTable.onc_history_detail_id)
+            WHERE ddp_onc_history_detail.onc_history_detail_id > -1</sql>
+        <dropTable tableName="TempConvTable"/>
+        <createTable tableName="TempConvTable">
+            <column name="idTempConvTable" autoIncrement="true" type="INT">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="tissue_id" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="toconvert" type="VARCHAR(1000)"/>
+        </createTable>
+        <addForeignKeyConstraint baseColumnNames="tissue_id" baseTableName="TempConvTable"
+                                 constraintName="tissue_id_fk" deferrable="false" initiallyDeferred="false"
+                                 onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="tissue_id"
+                                 referencedTableName="ddp_tissue"/>
+        <sql>INSERT INTO TempConvTable (tissue_id, toconvert) SELECT tissue_id, additional_tissue_value
+            FROM ddp_tissue WHERE additional_tissue_value IS NOT NULL AND additional_tissue_value LIKE '[{"name":%}]'</sql>
+        <sql>UPDATE ddp_tissue SET ddp_tissue.additional_tissue_value_json = (SELECT
+            REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(TempConvTable.toconvert, '"name":', ''), ',"value":', ':'),
+            ']', ''), '[', ''), '},{', ',') FROM TempConvTable WHERE ddp_tissue.tissue_id = TempConvTable.tissue_id)
+            WHERE ddp_tissue.tissue_id > -1</sql>
+        <dropTable tableName="TempConvTable"/>
+    </changeSet>
+</databaseChangeLog>

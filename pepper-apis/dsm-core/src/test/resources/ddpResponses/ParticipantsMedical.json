@@ -1,0 +1,19 @@
+{"participantId":"FAKE_DDP_PARTICIPANT_ID",
+  "dob":"12-02-1990",
+  "dateOfDiagnosis":"1/1999",
+  "institutions":
+  [{"physician":"dr 1",
+    "Institution":null,
+    "streetAddress":null,
+    "City":null,
+    "State":null,
+    "id":"FAKE_DDP_PHYSICIAN_ID",
+    "type":"PHYSICIAN"},
+    {"physician":null,
+      "institution":"institution 1",
+      "streetAddress":null,
+      "City":null,
+      "State":null,
+      "id":"FAKE_DDP_INSTITUTION_ID",
+      "type":"INSTITUTION"}]
+}
