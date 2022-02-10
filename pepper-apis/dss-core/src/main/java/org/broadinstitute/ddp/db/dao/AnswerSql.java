@@ -228,4 +228,10 @@ public interface AnswerSql extends SqlObject {
             @Bind("questionStableId") String questionStableId,
             @Bind("userId") long userId,
             @Bind("studyId") long studyId);
+
+    @UseStringTemplateSqlLocator
+    @SqlQuery("findAllTextAnswersCountByQuestionIdAndTextAnswer")
+    int findAllTextAnswersCountByQuestionIdAndTextAnswer(
+            @Bind("textQuestionId") long textQuestionId,
+            @Bind("textAnswer") String textAnswer);
 }

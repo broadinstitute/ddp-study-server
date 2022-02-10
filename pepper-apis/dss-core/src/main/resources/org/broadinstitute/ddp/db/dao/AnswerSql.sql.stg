@@ -54,3 +54,14 @@ select da.year, da.month, da.day
    and us.umbrella_study_id = :studyId
  order by ai.created_at desc limit 1
 >>
+
+findAllTextAnswersCountByQuestionIdAndTextAnswer() ::= <<
+select count(ans.answer_id)
+from question q, study_activity sa , answer ans, text_answer ta, activity_instance ai
+where q.study_activity_id = sa.study_activity_id
+and ai.study_activity_id = sa.study_activity_id
+and ai.activity_instance_id = ans.activity_instance_id
+and ans.question_id = q.question_id and ta.answer_id = ans.answer_id
+and q.question_id = :textQuestionId
+and ta.answer = :textAnswer
+>>
