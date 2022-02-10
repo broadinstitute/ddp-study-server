@@ -1,0 +1,25 @@
+[{"id":1668888444,
+  "participantId":"FAKE_DDP_PARTICIPANT_Pepper1",
+  "lastUpdated":"2017-02-07T18:07:01Z",
+  "institutions":
+  [{"id":"FAKE_DDP_PHYSICIAN_ID1",
+    "type":"PHYSICIAN"},
+    {"id":"FAKE_DDP_INSTITUTION_ID1",
+      "type":"INSTITUTION"}]
+},{"id":1668888444,
+  "participantId":"FAKE_DDP_PARTICIPANT_Pepper2",
+  "lastUpdated":"2017-02-07T18:07:02Z",
+  "institutions":
+  [{"id":"FAKE_DDP_PHYSICIAN_ID2",
+    "type":"PHYSICIAN"},
+    {"id":"FAKE_DDP_INSTITUTION_ID2",
+      "type":"INSTITUTION"}]
+},{"id":1668888444,
+  "participantId":"FAKE_DDP_PARTICIPANT_Pepper3",
+  "lastUpdated":"2017-02-07T18:07:03Z",
+  "institutions":
+  [{"id":"FAKE_DDP_PHYSICIAN_ID3",
+    "type":"PHYSICIAN"},
+    {"id":"FAKE_DDP_INSTITUTION_ID3",
+      "type":"INSTITUTION"}]
+}]
