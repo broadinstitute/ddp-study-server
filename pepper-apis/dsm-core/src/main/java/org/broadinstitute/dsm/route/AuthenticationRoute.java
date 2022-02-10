@@ -31,6 +31,7 @@ public class AuthenticationRoute implements Route {
     private final String userAccessRoles = "USER_ACCESS_ROLE";
     private final String userSettings = "USER_SETTINGS";
     private final String clientId = "https://datadonationplatform.org/cid";
+    private final String userId = "https://datadonationplatform.org/uid";
     private final String tenantDomain = "https://datadonationplatform.org/t";
 
 
