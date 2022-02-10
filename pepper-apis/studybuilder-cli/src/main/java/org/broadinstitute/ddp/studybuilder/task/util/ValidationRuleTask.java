@@ -31,6 +31,7 @@ import org.broadinstitute.ddp.model.activity.definition.validation.RegexRuleDef;
 import org.broadinstitute.ddp.model.activity.definition.validation.RequiredRuleDef;
 import org.broadinstitute.ddp.model.activity.definition.validation.RuleDef;
 import org.broadinstitute.ddp.model.activity.definition.validation.UniqueRuleDef;
+import org.broadinstitute.ddp.model.activity.definition.validation.UniqueValueRuleDef;
 import org.broadinstitute.ddp.studybuilder.task.CustomTask;
 import org.broadinstitute.ddp.util.ConfigUtil;
 import org.broadinstitute.ddp.util.GsonUtil;
@@ -182,6 +183,11 @@ public class ValidationRuleTask implements CustomTask {
                 case UNIQUE:
                     validationDao.insert(questionDto.getId(),
                             gson.fromJson(ConfigUtil.toJson(ruleConfig), UniqueRuleDef.class),
+                            questionDto.getRevisionId());
+                    break;
+                case UNIQUE_VALUE:
+                    validationDao.insert(questionDto.getId(),
+                            gson.fromJson(ConfigUtil.toJson(ruleConfig), UniqueValueRuleDef.class),
                             questionDto.getRevisionId());
                     break;
                 default:
