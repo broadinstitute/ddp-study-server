@@ -1,0 +1,92 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+    <changeSet id="DDP-7172_user_profile_changes" author="pegah">
+        <addColumn tableName="user_profile">
+            <column name="phone" type="" afterColumn=""></column>
+        </addColumn>
+        <addColumn tableName="user_profile">
+            <column name="email" type="" afterColumn=""></column>
+        </addColumn>
+    </changeSet>
+    <changeSet id="DDP-7172_permission_table" author="pegah">
+        <createTable tableName="permission" schemaName="pepper-dev">
+            <column name="permission_id" type="INT" autoIncrement="true">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="name" type="VARCHAR(500)">
+                <constraints unique="true"/>
+            </column>
+            <column name="description" type="VARCAR(2000)"></column>
+        </createTable>
+    </changeSet>
+    <changeSet id="DDP-7172_role_table" author="pegah">
+        <createTable tableName="role" schemaName="pepper-dev">
+            <column name="role_id" type="INT" autoIncrement="true">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="name" type="VARCHAR(500)">
+                <constraints unique="true"/>
+            </column>
+            <column name="description" type="VARCAR(2000)"></column>
+            <column name="umbrella_id" type="INT"></column>
+        </createTable>
+        <addForeignKeyConstraint baseTableName="role"
+                                 baseColumnNames="umbrella_id"
+                                 constraintName="umbrella_study_umbrella_study_id_fk"
+                                 referencedTableName="umbrella_study"
+                                 referencedColumnNames="umbrella_study_id"/>
+    </changeSet>
+    <changeSet id="DDP-7172_role_permission_table" author="pegah">
+        <createTable tableName="role_permission" schemaName="pepper-dev">
+            <column name="role_permission_id" type="INT" autoIncrement="true">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="role_id" type="INT"></column>
+            <column name="permission_id" type="INT"></column>
+        </createTable>
+        <addForeignKeyConstraint baseTableName="role_permission"
+                                 baseColumnNames="role_id"
+                                 constraintName="role_permission_role_id_fk"
+                                 referencedTableName="role"
+                                 referencedColumnNames="role_id"/>
+
+        <addForeignKeyConstraint baseTableName="role_permission"
+                                 baseColumnNames="permission_id"
+                                 constraintName="role_permission_permission_id_fk"
+                                 referencedTableName="role"
+                                 referencedColumnNames="role_id"/>
+    </changeSet>
+    <changeSet id="DDP-7172_user_role_table" author="pegah">
+        <createTable tableName="user_role" schemaName="pepper-dev">
+            <column name="user_role_id" type="INT" autoIncrement="true">
+                <constraints primaryKey="true"></constraints>
+            </column>
+            <column name="user_id" type="INT"></column>
+            <column name="role_id" type="INT"></column>
+        </createTable>
+        <addForeignKeyConstraint baseTableName="user_role"
+                                 baseColumnNames="user_id"
+                                 constraintName="user_role_user_id_fk"
+                                 referencedTableName="user"
+                                 referencedColumnNames="user_id"/>
+        <addForeignKeyConstraint baseTableName="user_role"
+                                 baseColumnNames="role_id"
+                                 constraintName="user_role_role_id_fk"
+                                 referencedTableName="role"
+                                 referencedColumnNames="role_id"/>
+    </changeSet>
+    <changeSet id="DDP-7172_user_settings_table" author="pegah">
+        <createTable tableName="user_settings" schemaName="pepper-dev">
+            <column name="user_settings_id" type="INT" autoIncrement="true">
+                <constraints primaryKey="true"></constraints>
+            </column>
+            <column name="user_id" type="INT"></column>
+            <column name="rows_per_page " type="INT"></column>
+        </createTable>
+        <addForeignKeyConstraint baseTableName="user_settings"
+                                 baseColumnNames="user_id"
+                                 constraintName="user_settings_user_id_fk"
+                                 referencedTableName="user"
+                                 referencedColumnNames="user_id"/>
+    </changeSet>
+</databaseChangeLog>
