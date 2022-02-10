@@ -65,7 +65,7 @@ select qt.question_type_code as question_type,
        rev.start_date as revision_start,
        rev.end_date   as revision_end,
        coalesce(
-         dq.placeholder_template_id, nq.placeholder_template_id, tq.placeholder_template_id
+         dq.placeholder_template_id, nq.placeholder_template_id, dcq.placeholder_template_id, tq.placeholder_template_id
        ) as placeholder_template_id,
 
        bq.true_template_id,
@@ -140,6 +140,7 @@ select qt.question_type_code as question_type,
   left join date_question_month_picklist as dqmp on dqmp.date_question_id = dq.question_id
   left join date_question_year_picklist as dqyp on dqyp.date_question_id = dq.question_id
   left join numeric_question as nq on nq.question_id = q.question_id
+  left join decimal_question as dcq on dcq.question_id = q.question_id
   left join picklist_question as pq on pq.question_id = q.question_id
   left join matrix_question as mq on mq.question_id = q.question_id
   left join text_question as tq on tq.question_id = q.question_id

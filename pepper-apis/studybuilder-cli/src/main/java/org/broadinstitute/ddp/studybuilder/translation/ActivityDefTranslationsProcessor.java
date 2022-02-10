@@ -25,6 +25,7 @@ import org.broadinstitute.ddp.model.activity.definition.question.PicklistOptionD
 import org.broadinstitute.ddp.model.activity.definition.question.BoolQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.DateQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.NumericQuestionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.DecimalQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.MatrixQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.MatrixOptionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.MatrixRowDef;
@@ -234,6 +235,9 @@ public class ActivityDefTranslationsProcessor {
                 break;
             case NUMERIC:
                 addTemplateTranslations(((NumericQuestionDef) questionDef).getPlaceholderTemplate(), allTranslations);
+                break;
+            case DECIMAL:
+                addTemplateTranslations(((DecimalQuestionDef) questionDef).getPlaceholderTemplate(), allTranslations);
                 break;
             case PICKLIST:
                 addTemplateTranslations(((PicklistQuestionDef) questionDef).getPicklistLabelTemplate(), allTranslations);
