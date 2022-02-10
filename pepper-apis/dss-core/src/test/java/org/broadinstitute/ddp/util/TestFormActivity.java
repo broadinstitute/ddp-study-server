@@ -17,6 +17,7 @@ import org.broadinstitute.ddp.model.activity.definition.question.CompositeQuesti
 import org.broadinstitute.ddp.model.activity.definition.question.DateQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.FileQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.NumericQuestionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.DecimalQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistOptionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.MatrixOptionDef;
@@ -53,6 +54,7 @@ public class TestFormActivity {
     private DateQuestionDef dateFullQuestion;
     private FileQuestionDef fileQuestion;
     private NumericQuestionDef numericIntQuestion;
+    private DecimalQuestionDef decimalQuestion;
     private PicklistQuestionDef picklistSingleListQuestion;
     private PicklistQuestionDef picklistMultiListQuestion;
     private MatrixQuestionDef matrixListQuestion;
@@ -99,6 +101,10 @@ public class TestFormActivity {
         return numericIntQuestion;
     }
 
+    public DecimalQuestionDef getDecimalQuestion() {
+        return decimalQuestion;
+    }
+
     public PicklistQuestionDef getPicklistSingleListQuestion() {
         return picklistSingleListQuestion;
     }
@@ -127,6 +133,7 @@ public class TestFormActivity {
         private boolean withDateFullQuestion = false;
         private boolean withFileQuestion = false;
         private boolean withNumericIntQuestion = false;
+        private boolean withDecimalQuestion = false;
         private boolean withTextQuestion = false;
         private boolean withActivityInstanceSelectQuestion = false;
         private List<PicklistOptionDef> picklistSingleListOptions = null;
@@ -182,6 +189,11 @@ public class TestFormActivity {
 
         public Builder withNumericIntQuestion(boolean include) {
             this.withNumericIntQuestion = include;
+            return this;
+        }
+
+        public Builder withDecimalQuestion(boolean include) {
+            this.withDecimalQuestion = include;
             return this;
         }
 
@@ -314,6 +326,14 @@ public class TestFormActivity {
                         .builder("NUM" + Instant.now().toEpochMilli(), Template.text("numeric prompt"))
                         .build();
                 result.numericIntQuestion = question;
+                builder.addSection(new FormSectionDef(null, List.of(new QuestionBlockDef(question))));
+            }
+
+            if (withDecimalQuestion) {
+                var question = DecimalQuestionDef
+                        .builder("DEC" + Instant.now().toEpochMilli(), Template.text("decimal prompt"))
+                        .build();
+                result.decimalQuestion = question;
                 builder.addSection(new FormSectionDef(null, List.of(new QuestionBlockDef(question))));
             }
 

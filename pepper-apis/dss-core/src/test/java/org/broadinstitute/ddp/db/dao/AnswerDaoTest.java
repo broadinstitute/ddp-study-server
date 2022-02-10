@@ -25,6 +25,7 @@ import org.broadinstitute.ddp.model.activity.definition.question.MatrixRowDef;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistOptionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.TextQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
+import org.broadinstitute.ddp.model.activity.definition.types.DecimalDef;
 import org.broadinstitute.ddp.model.activity.instance.answer.ActivityInstanceSelectAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.AgreementAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
@@ -35,6 +36,7 @@ import org.broadinstitute.ddp.model.activity.instance.answer.DateValue;
 import org.broadinstitute.ddp.model.activity.instance.answer.FileAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.MatrixAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.NumericAnswer;
+import org.broadinstitute.ddp.model.activity.instance.answer.DecimalAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.PicklistAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.SelectedMatrixCell;
 import org.broadinstitute.ddp.model.activity.instance.answer.SelectedPicklistOption;
@@ -323,7 +325,7 @@ public class AnswerDaoTest extends TxnAwareBaseTest {
     }
 
     @Test
-    public void testCreateUpdateDelete_numericInteger() {
+    public void testCreateUpdateDelete_numeric() {
         TransactionWrapper.useTxn(handle -> {
             TestFormActivity act = TestFormActivity.builder()
                     .withNumericIntQuestion(true)
@@ -348,6 +350,41 @@ public class AnswerDaoTest extends TxnAwareBaseTest {
             Answer updated = updatedOpt.get();
             assertEquals(created.getAnswerGuid(), updated.getAnswerGuid());
             assertEquals(100L, updated.getValue());
+
+            answerDao.deleteAnswer(created.getAnswerId());
+            assertFalse(answerDao.findAnswerById(created.getAnswerId()).isPresent());
+
+            handle.rollback();
+        });
+    }
+
+    @Test
+    public void testCreateUpdateDelete_decimal() {
+        TransactionWrapper.useTxn(handle -> {
+            TestFormActivity act = TestFormActivity.builder()
+                    .withDecimalQuestion(true)
+                    .build(handle, testData.getUserId(), testData.getStudyGuid());
+            long instanceId = createInstance(handle, act.getDef().getActivityId()).getId();
+
+            AnswerDao answerDao = daoBuilder.buildDao(handle);
+
+            DecimalAnswer created = new DecimalAnswer(null, act.getDecimalQuestion().getStableId(), null, new DecimalDef(25));
+            answerDao.createAnswer(testData.getUserId(), instanceId, created);
+
+            assertTrue(created.getAnswerId() > 0);
+            assertEquals(QuestionType.DECIMAL, created.getQuestionType());
+            assertEquals(0, new DecimalDef(25).compareTo(created.getValue()));
+
+            DecimalAnswer updatedNumber = new DecimalAnswer(null, act.getDecimalQuestion().getStableId(),
+                    null, new DecimalDef(100));
+            answerDao.updateAnswer(testData.getUserId(), created.getAnswerId(), updatedNumber);
+
+            assertEquals(created.getAnswerId(), updatedNumber.getAnswerId());
+            Optional<Answer> updatedOpt = answerDao.findAnswerById(updatedNumber.getAnswerId());
+            assertTrue(updatedOpt.isPresent());
+            Answer updated = updatedOpt.get();
+            assertEquals(created.getAnswerGuid(), updated.getAnswerGuid());
+            assertEquals(0, new DecimalDef(100).compareTo((DecimalDef) updated.getValue()));
 
             answerDao.deleteAnswer(created.getAnswerId());
             assertFalse(answerDao.findAnswerById(created.getAnswerId()).isPresent());
