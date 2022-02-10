@@ -11,6 +11,7 @@ public enum RuleType {
     NUM_OPTIONS_SELECTED,
     REGEX,
     REQUIRED,
-    UNIQUE,
+    UNIQUE, //check for uniqueness in answers of a composite question
+    UNIQUE_VALUE, //check for uniqueness in same question answers. Scope: All participants of the study
     YEAR_REQUIRED
 }
