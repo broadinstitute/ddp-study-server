@@ -77,6 +77,8 @@ public abstract class RuleDef {
                     return ctx.deserialize(elem, CompleteRuleDef.class);
                 case UNIQUE:
                     return ctx.deserialize(elem, UniqueRuleDef.class);
+                case UNIQUE_VALUE:
+                    return ctx.deserialize(elem, UniqueValueRuleDef.class);
                 case DATE_RANGE:
                     return ctx.deserialize(elem, DateRangeRuleDef.class);
                 case DAY_REQUIRED:

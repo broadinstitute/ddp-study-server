@@ -17,6 +17,7 @@ import org.broadinstitute.ddp.model.activity.definition.validation.RegexRuleDef;
 import org.broadinstitute.ddp.model.activity.definition.validation.RequiredRuleDef;
 import org.broadinstitute.ddp.model.activity.definition.validation.RuleDef;
 import org.broadinstitute.ddp.model.activity.definition.validation.UniqueRuleDef;
+import org.broadinstitute.ddp.model.activity.definition.validation.UniqueValueRuleDef;
 import org.broadinstitute.ddp.model.activity.instance.validation.AgeRangeRule;
 import org.broadinstitute.ddp.model.activity.instance.validation.CompleteRule;
 import org.broadinstitute.ddp.model.activity.instance.validation.DateFieldRequiredRule;
@@ -28,6 +29,7 @@ import org.broadinstitute.ddp.model.activity.instance.validation.RegexRule;
 import org.broadinstitute.ddp.model.activity.instance.validation.RequiredRule;
 import org.broadinstitute.ddp.model.activity.instance.validation.Rule;
 import org.broadinstitute.ddp.model.activity.instance.validation.UniqueRule;
+import org.broadinstitute.ddp.model.activity.instance.validation.UniqueValueRule;
 import org.broadinstitute.ddp.model.activity.types.RuleType;
 import org.broadinstitute.ddp.service.actvityinstancebuilder.context.AIBuilderContext;
 import org.jdbi.v3.core.Handle;
@@ -63,6 +65,8 @@ public class ValidationRuleCreator {
                 return createNumOptionsSelectedRule(ctx, (NumOptionsSelectedRuleDef) ruleDef);
             case UNIQUE:
                 return createUniqueRule(ctx, (UniqueRuleDef) ruleDef);
+            case UNIQUE_VALUE:
+                return createUniqueValueRule(ctx, (UniqueValueRuleDef) ruleDef);
             default:
                 throw new IllegalStateException("Unexpected value: " + ruleDef.getRuleType());
         }
@@ -163,6 +167,15 @@ public class ValidationRuleCreator {
 
     private UniqueRule createUniqueRule(AIBuilderContext ctx, UniqueRuleDef ruleDef) {
         return UniqueRule.of(
+                ruleDef.getRuleId(),
+                findRuleMessage(ctx, ruleDef),
+                getHintTitle(ctx, ruleDef),
+                ruleDef.getAllowSave()
+        );
+    }
+
+    private UniqueValueRule createUniqueValueRule(AIBuilderContext ctx, UniqueValueRuleDef ruleDef) {
+        return UniqueValueRule.of(
                 ruleDef.getRuleId(),
                 findRuleMessage(ctx, ruleDef),
                 getHintTitle(ctx, ruleDef),
