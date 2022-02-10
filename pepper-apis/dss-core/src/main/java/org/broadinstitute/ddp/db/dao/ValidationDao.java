@@ -35,6 +35,7 @@ import org.broadinstitute.ddp.model.activity.definition.validation.RegexRuleDef;
 import org.broadinstitute.ddp.model.activity.definition.validation.RequiredRuleDef;
 import org.broadinstitute.ddp.model.activity.definition.validation.RuleDef;
 import org.broadinstitute.ddp.model.activity.definition.validation.UniqueRuleDef;
+import org.broadinstitute.ddp.model.activity.definition.validation.UniqueValueRuleDef;
 import org.broadinstitute.ddp.model.activity.instance.validation.AgeRangeRule;
 import org.broadinstitute.ddp.model.activity.instance.validation.CompleteRule;
 import org.broadinstitute.ddp.model.activity.instance.validation.DateFieldRequiredRule;
@@ -46,6 +47,7 @@ import org.broadinstitute.ddp.model.activity.instance.validation.RegexRule;
 import org.broadinstitute.ddp.model.activity.instance.validation.RequiredRule;
 import org.broadinstitute.ddp.model.activity.instance.validation.Rule;
 import org.broadinstitute.ddp.model.activity.instance.validation.UniqueRule;
+import org.broadinstitute.ddp.model.activity.instance.validation.UniqueValueRule;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
 import org.broadinstitute.ddp.model.activity.types.RuleType;
 import org.jdbi.v3.sqlobject.CreateSqlObject;
@@ -123,6 +125,8 @@ public interface ValidationDao extends SqlObject {
                 insert(questionId, (IntRangeRuleDef) rule, revisionId);
             } else if (rule instanceof UniqueRuleDef) {
                 insert(questionId, (UniqueRuleDef) rule, revisionId);
+            } else if (rule instanceof UniqueValueRuleDef) {
+                insert(questionId, (UniqueValueRuleDef) rule, revisionId);
             } else {
                 throw new DaoException("Unknown validation rule type " + rule.getRuleType());
             }
@@ -179,6 +183,8 @@ public interface ValidationDao extends SqlObject {
                 return new CompleteRule<>(dto.getId(), message, hint, dto.isAllowSave());
             case UNIQUE:
                 return UniqueRule.of(dto.getId(), message, hint, dto.isAllowSave());
+            case UNIQUE_VALUE:
+                return UniqueValueRule.of(dto.getId(), message, hint, dto.isAllowSave());
             case LENGTH:
                 var lengthDto = (LengthRuleDto) dto;
                 return LengthRule.of(dto.getId(), message, hint, dto.isAllowSave(),
@@ -343,6 +349,17 @@ public interface ValidationDao extends SqlObject {
     }
 
     /**
+     * Create a unique value validation rule with scope: same question answers among all participants of the study
+     *
+     * @param questionId the associated question
+     * @param rule       the rule definition
+     * @param revisionId the revision to use, will be shared by all created data
+     */
+    default void insert(long questionId, UniqueValueRuleDef rule, long revisionId) {
+        insertBaseRule(questionId, rule, revisionId);
+    }
+
+    /**
      * Create a regex validation rule.
      *
      * @param questionId the associated question
@@ -455,6 +472,9 @@ public interface ValidationDao extends SqlObject {
                 break;
             case UNIQUE:
                 ruleDef = new UniqueRuleDef(hintTmpl);
+                break;
+            case UNIQUE_VALUE:
+                ruleDef = new UniqueValueRuleDef(hintTmpl);
                 break;
             case LENGTH:
                 var lengthDto = (LengthRuleDto) dto;
