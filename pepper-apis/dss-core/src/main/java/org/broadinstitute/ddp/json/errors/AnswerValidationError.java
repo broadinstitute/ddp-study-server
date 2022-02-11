@@ -48,6 +48,7 @@ public class AnswerValidationError extends ApiError {
         public RuleType getRuleType() {
             return ruleType;
         }
+
         public String getMessage() {
             return message;
         }
