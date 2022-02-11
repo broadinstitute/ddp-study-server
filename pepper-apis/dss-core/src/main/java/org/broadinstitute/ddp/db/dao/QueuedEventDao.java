@@ -13,7 +13,7 @@ import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public interface    QueuedEventDao extends SqlObject {
+public interface QueuedEventDao extends SqlObject {
 
     Logger LOG = LoggerFactory.getLogger(QueuedEventDao.class);
 
