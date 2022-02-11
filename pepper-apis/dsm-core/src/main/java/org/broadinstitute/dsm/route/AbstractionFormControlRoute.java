@@ -2,13 +2,13 @@ package org.broadinstitute.dsm.route;
 
 import com.google.gson.GsonBuilder;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.ddp.handlers.util.Result;
 import org.broadinstitute.dsm.db.AbstractionGroup;
 import org.broadinstitute.dsm.security.RequestHandler;
 import org.broadinstitute.dsm.statics.RoutePath;
 import org.broadinstitute.dsm.statics.UserErrorMessages;
 import org.broadinstitute.dsm.util.AbstractionUtil;
 import org.broadinstitute.dsm.util.UserUtil;
-import org.broadinstitute.lddp.handlers.util.Result;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import spark.QueryParamsMap;
@@ -25,7 +25,8 @@ public class AbstractionFormControlRoute extends RequestHandler {
         String realm;
         if (queryParams.value(RoutePath.REALM) != null) {
             realm = queryParams.get(RoutePath.REALM).value();
-        } else {
+        }
+        else {
             throw new RuntimeException("No realm query param was sent");
         }
 
@@ -33,18 +34,20 @@ public class AbstractionFormControlRoute extends RequestHandler {
             if (RoutePath.RequestMethod.GET.toString().equals(request.requestMethod())) {
                 if (UserUtil.checkUserAccess(realm, userId, "mr_view", null)) {
                     return AbstractionUtil.getFormControls(realm);
-                } else {
+                }
+                else {
                     response.status(500);
                     return new Result(500, UserErrorMessages.NO_RIGHTS);
                 }
-            } else if (RoutePath.RequestMethod.PATCH.toString().equals(request.requestMethod())) {
+            }
+            else if (RoutePath.RequestMethod.PATCH.toString().equals(request.requestMethod())) {
                 if (UserUtil.checkUserAccess(realm, userId, "mr_abstraction_admin", null)) {
                     String requestBody = request.body();
-                    AbstractionGroup[] receivedAbstractionGroups = new GsonBuilder().create().fromJson(requestBody,
-                            AbstractionGroup[].class);
+                    AbstractionGroup[] receivedAbstractionGroups = new GsonBuilder().create().fromJson(requestBody, AbstractionGroup[].class);
                     AbstractionGroup.saveFormControls(realm, receivedAbstractionGroups);
                     return new Result(200);
-                } else {
+                }
+                else {
                     response.status(500);
                     return new Result(500, UserErrorMessages.NO_RIGHTS);
                 }

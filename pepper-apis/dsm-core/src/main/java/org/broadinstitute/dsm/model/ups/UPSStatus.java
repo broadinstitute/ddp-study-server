@@ -4,13 +4,17 @@ import lombok.Data;
 
 @Data
 public class UPSStatus {
-    public static final String IN_TRANSIT_TYPE = "I";
-    public static final String DELIVERED_TYPE = "D";
-    public static final String PICKUP_TYPE = "P";
-    public static final String OUT_FOR_DELIVERY_TYPE = "O";
     String type;
     String description;
     String code;
+
+    public static final String IN_TRANSIT_TYPE = "I";
+
+    public static final String DELIVERED_TYPE = "D";
+
+    public static final String PICKUP_TYPE = "P";
+
+    public static final String OUT_FOR_DELIVERY_TYPE = "O";
 
 
     public UPSStatus(String type, String description, String code) {
@@ -18,7 +22,6 @@ public class UPSStatus {
         this.description = description;
         this.code = code;
     }
-
     /**
      * Returns whether this status indicates physical
      * movement of the package according to heuristics

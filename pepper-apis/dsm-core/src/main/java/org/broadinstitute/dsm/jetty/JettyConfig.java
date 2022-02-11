@@ -80,7 +80,7 @@ public class JettyConfig {
      * the source IP properly in the appengine environment
      */
     public static class JettyCustomRemoteAddrHeaderHandler extends SessionHandler {
-        private Filter filter;
+        private javax.servlet.Filter filter;
         private String preferredIPSourceHeader;
 
         public JettyCustomRemoteAddrHeaderHandler(Filter filter, String preferredIPSourceHeader) {

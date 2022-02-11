@@ -1,14 +1,5 @@
 package org.broadinstitute.dsm.model.PDF;
 
-import java.text.SimpleDateFormat;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
-
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import lombok.NonNull;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -21,39 +12,43 @@ import org.broadinstitute.dsm.files.CoverPDFProcessor;
 import org.broadinstitute.dsm.files.PDFProcessor;
 import org.broadinstitute.dsm.files.RequestPDFProcessor;
 import org.broadinstitute.dsm.util.SystemUtil;
+import org.json.JSONObject;
 
-public class MRCoverPDF {
+import java.text.SimpleDateFormat;
+import java.util.*;
+
+public class MRCoverPDF{
     private final String JSON_START_DATE = "startDate";
     private final String JSON_END_DATE = "endDate";
     private DownloadPDF originalDownloadPDF;
 
-    public MRCoverPDF(@NonNull DownloadPDF downloadPDF) {
+    public MRCoverPDF(@NonNull DownloadPDF downloadPDF){
         this.originalDownloadPDF = downloadPDF;
     }
 
     public Map<String, Object> getValuesFromRequest(@NonNull String requestBody, DDPInstance ddpInstance, UserDto user) {
-        JsonObject jsonObject = new JsonParser().parse(requestBody).getAsJsonObject();
+        JSONObject jsonObject = new JSONObject(requestBody);
         Set keySet = jsonObject.keySet();
         String startDate = null;
         String endDate = null;
         if (keySet.contains(JSON_START_DATE)) {
-            startDate = jsonObject.get(JSON_START_DATE).getAsString();
+            startDate = (String) jsonObject.get(JSON_START_DATE);
             if (!"0/0".equals(startDate) && !startDate.contains("/") && startDate.contains("-")) {
                 startDate = SystemUtil.changeDateFormat(SystemUtil.DATE_FORMAT, SystemUtil.US_DATE_FORMAT, startDate);
-            } else if (StringUtils.isNotBlank(startDate) && startDate.startsWith("0/") && !startDate.equals("0/0")) {
+            }
+            else if (StringUtils.isNotBlank(startDate) && startDate.startsWith("0/") && !startDate.equals("0/0")) {
                 startDate = "01/" + startDate.split("/")[1];
             }
         }
         if (keySet.contains(JSON_END_DATE)) {
-            endDate = jsonObject.get(JSON_END_DATE).getAsString();
+            endDate = (String) jsonObject.get(JSON_END_DATE);
             endDate = SystemUtil.changeDateFormat(SystemUtil.DATE_FORMAT, SystemUtil.US_DATE_FORMAT, endDate);
         }
         if (StringUtils.isBlank(originalDownloadPDF.getMedicalRecordId())) {
             throw new RuntimeException("MedicalRecordID is missing. Can't create cover pdf");
         }
         //get information from db
-        MedicalRecord medicalRecord = MedicalRecord.getMedicalRecord(ddpInstance.getName(), originalDownloadPDF.getDdpParticipantId(),
-                originalDownloadPDF.getMedicalRecordId());
+        MedicalRecord medicalRecord = MedicalRecord.getMedicalRecord(ddpInstance.getName(), originalDownloadPDF.getDdpParticipantId(), originalDownloadPDF.getMedicalRecordId());
 
         Map<String, Object> valueMap = new HashMap<>();
         //values same no matter from where participant/institution data comes from
@@ -65,9 +60,7 @@ public class MRCoverPDF {
         valueMap.put(CoverPDFProcessor.FIELD_DATE_2, StringUtils.isNotBlank(endDate) ? endDate : today); //end date
 
         valueMap.put(RequestPDFProcessor.USER_NAME, user.getName().get());
-        user.getPhoneNumber().ifPresent(phone -> {
-            valueMap.put(RequestPDFProcessor.USER_PHONE, phone);
-        });
+        user.getPhoneNumber().ifPresent(phone->{valueMap.put(RequestPDFProcessor.USER_PHONE, phone);});
 
 
         //adding checkboxes configured under instance_settings
@@ -78,21 +71,19 @@ public class MRCoverPDF {
                 .orElse(Collections.emptyList())
                 .forEach(mrCoverSetting -> {
                     if (keySet.contains(mrCoverSetting.getValue())) {
-                        valueMap.put(mrCoverSetting.getValue(),
-                                BooleanUtils.toBoolean(jsonObject.get(mrCoverSetting.getValue()).getAsBoolean()));
+                        valueMap.put(mrCoverSetting.getValue(), BooleanUtils.toBoolean((Boolean) jsonObject.get(mrCoverSetting.getValue())));
                     }
                 });
 
-        originalDownloadPDF.addDDPParticipantDataToValueMap(ddpInstance, valueMap, true, originalDownloadPDF.getDdpParticipantId());
+        originalDownloadPDF.addDDPParticipantDataToValueMap(ddpInstance,  valueMap, true, originalDownloadPDF.getDdpParticipantId());
 
-        valueMap.put(CoverPDFProcessor.START_DATE_2, StringUtils.isNotBlank(startDate) ? startDate :
-                valueMap.get(CoverPDFProcessor.FIELD_DATE_OF_DIAGNOSIS)); //start date
+        valueMap.put(CoverPDFProcessor.START_DATE_2, StringUtils.isNotBlank(startDate) ? startDate : valueMap.get(CoverPDFProcessor.FIELD_DATE_OF_DIAGNOSIS)); //start date
         return valueMap;
     }
 
-    public byte[] getMRCoverPDF(@NonNull String requestBody, DDPInstance ddpInstance, UserDto user) {
+    public byte[] getMRCoverPDF(@NonNull String requestBody, DDPInstance ddpInstance, UserDto user){
         PDFProcessor processor = new CoverPDFProcessor(ddpInstance.getName());
-        return originalDownloadPDF.generatePDFFromValues(getValuesFromRequest(requestBody, ddpInstance, user), ddpInstance, processor);
+       return originalDownloadPDF.generatePDFFromValues(getValuesFromRequest(requestBody, ddpInstance, user), ddpInstance, processor);
     }
 
 }

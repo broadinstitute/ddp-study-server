@@ -1,9 +1,10 @@
 package org.broadinstitute.dsm.db.dto.ddp.kitrequest;
 
-import java.sql.Timestamp;
-
 import lombok.Data;
 import org.apache.commons.lang3.StringUtils;
+
+import java.sql.Date;
+import java.sql.Timestamp;
 
 @Data
 public class KitRequestDto {
@@ -26,22 +27,22 @@ public class KitRequestDto {
     private Timestamp orderTransmitted_at;
 
     public KitRequestDto(
-            int dsmKitRequestId,
-            int ddpInstanceId,
-            String ddpKitRequestId,
-            int kitTypeId,
-            String bspCollaboratorParticipnatId,
-            String bspCollaboratorSampleId,
-            String ddpParticipantId,
-            String ddpLabel,
-            String createdBy,
-            long createdDate,
-            String externalOrderNumber,
-            long externalOrderDate,
-            String externalOrderStatus,
-            String externalResponse,
-            String uploadReason,
-            Timestamp orderTransmitted_at) {
+             int dsmKitRequestId,
+             int ddpInstanceId,
+             String ddpKitRequestId,
+             int kitTypeId,
+             String bspCollaboratorParticipnatId,
+             String bspCollaboratorSampleId,
+             String ddpParticipantId,
+             String ddpLabel,
+             String createdBy,
+             long createdDate,
+             String externalOrderNumber,
+             long externalOrderDate,
+             String externalOrderStatus,
+             String externalResponse,
+             String uploadReason,
+             Timestamp orderTransmitted_at) {
         this.dsmKitRequestId = dsmKitRequestId;
         this.ddpInstanceId = ddpInstanceId;
         this.ddpKitRequestId = ddpKitRequestId;

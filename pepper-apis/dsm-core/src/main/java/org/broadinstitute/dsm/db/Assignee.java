@@ -1,6 +1,10 @@
 package org.broadinstitute.dsm.db;
 
-import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
+import lombok.Data;
+import org.broadinstitute.ddp.db.SimpleResult;
+import org.broadinstitute.dsm.statics.DBConstants;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -8,29 +12,22 @@ import java.sql.SQLException;
 import java.util.Collection;
 import java.util.HashMap;
 
-import lombok.Data;
-import org.broadinstitute.dsm.statics.DBConstants;
-import org.broadinstitute.lddp.db.SimpleResult;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
 
 @Data
 public class Assignee {
 
     private static final Logger logger = LoggerFactory.getLogger(Assignee.class);
 
-    private static final String SQL_SELECT_ASSIGNEE = "SELECT user.user_id, user.name, user.email FROM access_user_role_group roleGroup, "
-            + "access_user user, access_role role, ddp_group," +
-            " ddp_instance_group realmGroup, ddp_instance realm WHERE roleGroup.user_id = user.user_id AND roleGroup.role_id = role"
-            + ".role_id AND realm.ddp_instance_id = realmGroup.ddp_instance_id" +
-            " AND realmGroup.ddp_group_id = ddp_group.group_id AND ddp_group.group_id = roleGroup.group_id AND role.name = \"mr_request\""
-            + " AND realm.instance_name = ?";
+    private static final String SQL_SELECT_ASSIGNEE = "SELECT user.user_id, user.name, user.email FROM access_user_role_group roleGroup, access_user user, access_role role, ddp_group," +
+            " ddp_instance_group realmGroup, ddp_instance realm WHERE roleGroup.user_id = user.user_id AND roleGroup.role_id = role.role_id AND realm.ddp_instance_id = realmGroup.ddp_instance_id" +
+            " AND realmGroup.ddp_group_id = ddp_group.group_id AND ddp_group.group_id = roleGroup.group_id AND role.name = \"mr_request\" AND realm.instance_name = ?";
 
     private final String assigneeId;
     private final String name;
     private final String email;
 
-    public Assignee(String assigneeId, String name, String email) {
+    public Assignee(String assigneeId, String name, String email){
         this.assigneeId = assigneeId;
         this.name = name;
         this.email = email;
@@ -42,7 +39,6 @@ public class Assignee {
 
     /**
      * Read assignees form assignee table
-     *
      * @return List<Assignee>
      */
     public static HashMap<String, Assignee> getAssigneeMap(String realm) {
@@ -60,7 +56,8 @@ public class Assignee {
                         ));
                     }
                 }
-            } catch (SQLException ex) {
+            }
+            catch (SQLException ex) {
                 dbVals.resultException = ex;
             }
             return dbVals;

@@ -1,10 +1,5 @@
 package org.broadinstitute.dsm.util;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.DDPInstance;
@@ -19,19 +14,14 @@ import org.broadinstitute.dsm.statics.RoutePath;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.*;
+
 public class DDPKitRequest {
+
+    private static final Logger logger = LoggerFactory.getLogger(DDPKitRequest.class);
 
     public static final String UPLOADED_KIT_REQUEST = "UPLOADED_";
     public static final String MIGRATED_KIT_REQUEST = "MIGRATED_";
-    private static final Logger logger = LoggerFactory.getLogger(DDPKitRequest.class);
-
-    public static String generateExternalOrderNumber() {
-        String externalOrderNumber = NanoIdUtil.getNanoId("1234567890QWERTYUIOPASDFGHJKLZXCVBNM", 20);
-        while (DBUtil.existsExternalOrderNumber(externalOrderNumber)) {
-            externalOrderNumber = NanoIdUtil.getNanoId("1234567890QWERTYUIOPASDFGHJKLZXCVBNM", 20);
-        }
-        return externalOrderNumber;
-    }
 
     /**
      * Requesting 'new' DDPKitRequests and write them into ddp_kit_request
@@ -48,14 +38,12 @@ public class DDPKitRequest {
                     if (latestKit.getLatestDDPKitRequestID() != null) {
                         dsmRequest += "/" + latestKit.getLatestDDPKitRequestID();
                     }
-                    KitDetail[] kitDetails = DDPRequestUtil.getResponseObject(KitDetail[].class, dsmRequest, latestKit.getInstanceName(),
-                            latestKit.isHasAuth0Token());
+                    KitDetail[] kitDetails = DDPRequestUtil.getResponseObject(KitDetail[].class, dsmRequest, latestKit.getInstanceName(), latestKit.isHasAuth0Token());
                     if (kitDetails != null) {
                         logger.info("Got " + kitDetails.length + " 'new' KitRequests from " + latestKit.getInstanceName());
                         if (kitDetails.length > 0) {
                             Map<String, KitType> kitTypes = KitType.getKitLookup();
-                            Map<Integer, KitRequestSettings> kitRequestSettingsMap =
-                                    KitRequestSettings.getKitRequestSettings(latestKit.getInstanceID());
+                            Map<Integer, KitRequestSettings> kitRequestSettingsMap = KitRequestSettings.getKitRequestSettings(latestKit.getInstanceID());
 
                             Map<KitRequestSettings, ArrayList<KitRequest>> kitsToOrder = new HashMap<>();
                             for (KitDetail kitDetail : kitDetails) {
@@ -75,34 +63,24 @@ public class DDPKitRequest {
                                             if (StringUtils.isNotBlank(latestKit.getParticipantIndexES())) {
                                                 //without order list, that was only added for promise and currently is not used!
                                                 DDPInstance ddpInstance = DDPInstance.getDDPInstance(latestKit.getInstanceName());
-                                                Map<String, Map<String, Object>> participantsESData =
-                                                        ElasticSearchUtil.getFilteredDDPParticipantsFromES(ddpInstance,
-                                                                ElasticSearchUtil.BY_GUID + kitDetail.getParticipantId());
+                                                Map<String, Map<String, Object>> participantsESData = ElasticSearchUtil.getFilteredDDPParticipantsFromES(ddpInstance, ElasticSearchUtil.BY_GUID + kitDetail.getParticipantId());
                                                 if (participantsESData != null && !participantsESData.isEmpty()) {
-                                                    Map<String, Object> participantESData =
-                                                            participantsESData.get(kitDetail.getParticipantId());
+                                                    Map<String, Object> participantESData = participantsESData.get(kitDetail.getParticipantId());
                                                     if (participantESData != null && !participantESData.isEmpty()) {
-                                                        Map<String, Object> profile = (Map<String, Object>) participantESData.get(
-                                                                "profile");
+                                                        Map<String, Object> profile = (Map<String, Object>) participantESData.get("profile");
                                                         if (profile != null && !profile.isEmpty()) {
-                                                            String collaboratorParticipantId =
-                                                                    KitRequestShipping.getCollaboratorParticipantId(latestKit.getBaseURL(), latestKit.getInstanceID(), latestKit.isMigrated(),
-                                                                    latestKit.getCollaboratorIdPrefix(), (String) profile.get("guid"),
-                                                                            (String) profile.get("hruid"),
-                                                                            kitRequestSettings.getCollaboratorParticipantLengthOverwrite());
+                                                            String collaboratorParticipantId = KitRequestShipping.getCollaboratorParticipantId(latestKit.getBaseURL(), latestKit.getInstanceID(), latestKit.isMigrated(),
+                                                                    latestKit.getCollaboratorIdPrefix(), (String) profile.get("guid"), (String) profile.get("hruid"), kitRequestSettings.getCollaboratorParticipantLengthOverwrite());
 
                                                             if (kitHasSubKits) {
                                                                 List<KitSubKits> subKits = kitRequestSettings.getSubKits();
-                                                                addSubKits(subKits, kitDetail, collaboratorParticipantId,
-                                                                        kitRequestSettings, latestKit.getInstanceID(), null);
+                                                                addSubKits(subKits, kitDetail, collaboratorParticipantId, kitRequestSettings, latestKit.getInstanceID(), null, ddpInstance);
                                                             } else {
-                                                                KitRequestShipping.addKitRequests(latestKit.getInstanceID(), kitDetail,
-                                                                        kitType.getKitTypeId(),
-                                                                        kitRequestSettings, collaboratorParticipantId, null, null);
+                                                                KitRequestShipping.addKitRequests(latestKit.getInstanceID(), kitDetail, kitType.getKitTypeId(),
+                                                                        kitRequestSettings, collaboratorParticipantId, null, null, ddpInstance);
                                                             }
                                                         } else {
-                                                            logger.error("ES profile data was empty for participant with "
-                                                                    + "ddp_kit_request_id " + kitDetail.getKitRequestId());
+                                                            logger.error("ES profile data was empty for participant with ddp_kit_request_id " + kitDetail.getKitRequestId());
                                                         }
                                                     } else {
                                                         logger.error("Participant of ddp_kit_request_id " + kitDetail.getKitRequestId() + " not found in ES ");
@@ -111,34 +89,38 @@ public class DDPKitRequest {
                                             } else {
                                                 logger.error("Cannot process gen2 kit request for {}", latestKit.getInstanceName());
                                             }
-                                        } else {
+                                        }
+                                        else {
                                             throw new RuntimeException("KitTypeId is not in kit_type table. KitTypeId " + kitDetail.getKitType());
                                         }
                                     }
-                                } else {
+                                }
+                                else {
                                     logger.error("Important information for DDPKitRequest is missing. " +
-                                            kitDetail == null ? " DDPKitRequest is null " :
-                                            " participantId " + kitDetail.getParticipantId() +
-                                            " kitRequest.getKitRequestId() " + kitDetail.getKitRequestId() +
-                                            " kitRequest.getKitType() " + kitDetail.getKitType());
+                                                         kitDetail == null ? " DDPKitRequest is null " : " participantId " + kitDetail.getParticipantId() +
+                                                         " kitRequest.getKitRequestId() " + kitDetail.getKitRequestId() +
+                                                         " kitRequest.getKitType() " + kitDetail.getKitType());
                                     throw new RuntimeException("Important information for kitRequest is missing");
                                 }
                             }
                         }
-                    } else {
+                    }
+                    else {
                         logger.info("Didn't receive any kit requests from " + latestKit.getInstanceName());
                     }
-                } catch (Exception ex) {
+                }
+                catch (Exception ex) {
                     logger.error("Error requesting KitRequests from " + latestKit.getInstanceName(), ex);
                 }
             }
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             throw new RuntimeException("Error getting KitRequests ", e);
         }
     }
 
     private String addSubKits(@NonNull List<KitSubKits> subKits, @NonNull KitDetail kitDetail, @NonNull String collaboratorParticipantId,
-                              @NonNull KitRequestSettings kitRequestSettings, @NonNull String instanceId, String uploadReason) {
+                              @NonNull KitRequestSettings kitRequestSettings, @NonNull String instanceId, String uploadReason, DDPInstance ddpInstance) {
         int subCounter = 0;
         String externalOrderNumber = null;
         if (StringUtils.isNotBlank(kitRequestSettings.getExternalShipper())) {
@@ -148,13 +130,20 @@ public class DDPKitRequest {
             for (int i = 0; i < subKit.getKitCount(); i++) {
                 //kitRequestId needs to stay unique -> add `_[SUB_COUNTER]` to it
                 KitRequestShipping.addKitRequests(instanceId, subKit.getKitName(), kitDetail.getParticipantId(),
-                        subCounter == 0 ? kitDetail.getKitRequestId() : kitDetail.getKitRequestId() + "_" + subCounter,
-                        subKit.getKitTypeId(), kitRequestSettings,
-                        collaboratorParticipantId, kitDetail.isNeedsApproval(), externalOrderNumber, uploadReason);
+                        subCounter == 0 ? kitDetail.getKitRequestId() : kitDetail.getKitRequestId() + "_" + subCounter, subKit.getKitTypeId(), kitRequestSettings,
+                        collaboratorParticipantId, kitDetail.isNeedsApproval(), externalOrderNumber,  uploadReason, ddpInstance);
                 subCounter = subCounter + 1;
             }
         }
 
+        return externalOrderNumber;
+    }
+
+    public static String generateExternalOrderNumber() {
+        String externalOrderNumber =NanoIdUtil.getNanoId("1234567890QWERTYUIOPASDFGHJKLZXCVBNM", 20);
+        while (DBUtil.existsExternalOrderNumber(externalOrderNumber)) {
+            externalOrderNumber = NanoIdUtil.getNanoId("1234567890QWERTYUIOPASDFGHJKLZXCVBNM", 20);
+        }
         return externalOrderNumber;
     }
 

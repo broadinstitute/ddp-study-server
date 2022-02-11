@@ -8,17 +8,16 @@ import java.util.NoSuchElementException;
 
 import com.google.gson.Gson;
 import com.google.gson.annotations.SerializedName;
+import org.broadinstitute.ddp.handlers.util.Result;
+import org.broadinstitute.dsm.db.dto.user.UserDto;
 import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
 import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDataDao;
 import org.broadinstitute.dsm.db.dao.user.UserDao;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
-import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDataDto;
-import org.broadinstitute.dsm.db.dto.user.UserDto;
+import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantData;
 import org.broadinstitute.dsm.model.participant.data.AddFamilyMemberPayload;
 import org.broadinstitute.dsm.model.participant.data.FamilyMemberDetails;
-import org.broadinstitute.dsm.model.participant.data.ParticipantData;
 import org.broadinstitute.dsm.util.DBTestUtil;
-import org.broadinstitute.lddp.handlers.util.Result;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -26,25 +25,33 @@ import org.junit.Test;
 
 public class AddFamilyMemberRouteTest {
 
-    private static final String participantId = "RBMJW6ZIXVXBMXUX6M3Q";
-    private static final Map<String, String> familyMemberData = new HashMap<>();
-    private static final Map<String, String> probandData = new HashMap<>();
-    private static final DDPInstanceDao ddpInstanceDao = new DDPInstanceDao();
-    private static final UserDao userDao = new UserDao();
-    private static final ParticipantDataDao participantDataDao = new ParticipantDataDao();
     private static Gson gson;
+
+    private static final String participantId = "RBMJW6ZIXVXBMXUX6M3Q";
+
     private static UserDto userDto;
+
     private static int ddpFamilyMemberParticipantDataId;
     private static int ddpExistingProbandParticipantDataId;
     private static int ddpCopiedProbandFamilyMemberParticipantDataId;
+
+    private static final Map<String, String> familyMemberData = new HashMap<>();
+
+    private static final Map<String, String> probandData = new HashMap<>();
+
     private static DDPInstanceDto ddpInstanceDto;
+    private static final DDPInstanceDao ddpInstanceDao = new DDPInstanceDao();
+
+    private static final UserDao userDao = new UserDao();
+
+    private static final ParticipantDataDao participantDataDao = new ParticipantDataDao();
 
     @BeforeClass
     public static void doFirst() {
         setupDB();
         gson = new Gson();
 
-        ddpInstanceDto = DBTestUtil.createTestDdpInstance(ddpInstanceDto, ddpInstanceDao, "AddFamilyMemberInstance");
+        ddpInstanceDto =  DBTestUtil.createTestDdpInstance(ddpInstanceDto, ddpInstanceDao, "AddFamilyMemberInstance");
 
         userDto = DBTestUtil.createTestDsmUser("AddFamilyMemberUser", "addfamilymember@family.com", userDao, userDto);
 
@@ -68,16 +75,16 @@ public class AddFamilyMemberRouteTest {
     }
 
     private static void createProbandTestParticipantData() {
-        ParticipantDataDto probandParticipantDataDto =
-                new ParticipantDataDto.Builder()
-                        .withDdpParticipantId(participantId)
-                        .withDdpInstanceId(ddpInstanceDto.getDdpInstanceId())
-                        .withFieldTypeId(ParticipantData.FIELD_TYPE_PARTICIPANTS)
-                        .withData(gson.toJson(probandData))
-                        .withLastChanged(System.currentTimeMillis())
-                        .withChangedBy(userDto.getEmail().orElse("SYSTEM"))
-                        .build();
-        ddpExistingProbandParticipantDataId = participantDataDao.create(probandParticipantDataDto);
+        ParticipantData probandParticipantData =
+                new ParticipantData.Builder()
+                    .withDdpParticipantId(participantId)
+                    .withDdpInstanceId(ddpInstanceDto.getDdpInstanceId())
+                    .withFieldTypeId(org.broadinstitute.dsm.model.participant.data.ParticipantData.FIELD_TYPE_PARTICIPANTS)
+                    .withData(gson.toJson(probandData))
+                    .withLastChanged(System.currentTimeMillis())
+                    .withChangedBy(userDto.getEmail().orElse("SYSTEM"))
+                    .build();
+        ddpExistingProbandParticipantDataId = participantDataDao.create(probandParticipantData);
     }
 
 
@@ -94,32 +101,6 @@ public class AddFamilyMemberRouteTest {
         }
         userDao.delete(userDto.getId());
         ddpInstanceDao.delete(ddpInstanceDto.getDdpInstanceId());
-    }
-
-    public static String payloadFactory(String participantGuid, String realm, Map<String, String> data, Integer userId) {
-        FamilyMemberDetails familyMemberDetails = null;
-        if (data != null) {
-            try {
-                familyMemberDetails = new FamilyMemberDetails(
-                        //reflection applied here, to match field namesm because FamilyMemberDetails toMap method uses reflection as well
-                        data.get(FamilyMemberDetails.class.getDeclaredField("firstName").getAnnotation(SerializedName.class).value()),
-                        data.get(FamilyMemberDetails.class.getDeclaredField("lastName").getAnnotation(SerializedName.class).value()),
-                        data.get(FamilyMemberDetails.class.getDeclaredField("memberType").getAnnotation(SerializedName.class).value()),
-                        Long.parseLong(data.get(FamilyMemberDetails.class.getDeclaredField("familyId").getAnnotation(SerializedName.class).value())),
-                        data.get(FamilyMemberDetails.class.getDeclaredField("collaboratorParticipantId").getAnnotation(SerializedName.class).value())
-                );
-            } catch (Exception e) {
-                Assert.fail();
-            }
-        }
-        AddFamilyMemberPayload addFamilyMemberPayload = new AddFamilyMemberPayload.Builder(participantGuid, realm)
-                .withData(familyMemberDetails)
-                .withUserId(userId)
-                .withCopyProbandInfo(false)
-                .withProbandDataId(0)
-                .build();
-
-        return gson.toJson(addFamilyMemberPayload);
     }
 
     @Test
@@ -145,7 +126,7 @@ public class AddFamilyMemberRouteTest {
     }
 
     @Test
-    public void noFamilyMemberDataProvided() {
+    public void noFamilyMemberDataProvided(){
         String payload = payloadFactory(participantId, ddpInstanceDto.getInstanceName(), Map.of(), userDto.getId());
         Result res = new Result(200);
         AddFamilyMemberPayload addFamilyMemberPayload = gson.fromJson(payload, AddFamilyMemberPayload.class);
@@ -171,9 +152,9 @@ public class AddFamilyMemberRouteTest {
     public void relationshipIdAlreadyExists() {
         String payload = payloadFactory(participantId, ddpInstanceDto.getInstanceName(), probandData, userDto.getId());
         AddFamilyMemberPayload addFamilyMemberPayload = gson.fromJson(payload, AddFamilyMemberPayload.class);
-        ParticipantData participantData = new ParticipantData(participantDataDao);
+        org.broadinstitute.dsm.model.participant.data.ParticipantData participantData = new org.broadinstitute.dsm.model.participant.data.ParticipantData(participantDataDao);
         participantData.setData(addFamilyMemberPayload.getParticipantId().get(), ddpInstanceDto.getDdpInstanceId(),
-                ddpInstanceDto.getInstanceName() + ParticipantData.FIELD_TYPE_PARTICIPANTS, probandData);
+                ddpInstanceDto.getInstanceName() + org.broadinstitute.dsm.model.participant.data.ParticipantData.FIELD_TYPE_PARTICIPANTS, probandData);
         Assert.assertTrue(participantData.isRelationshipIdExists());
     }
 
@@ -183,20 +164,48 @@ public class AddFamilyMemberRouteTest {
         Result result = new Result(200);
         AddFamilyMemberPayload addFamilyMemberPayload = gson.fromJson(payload, AddFamilyMemberPayload.class);
         try {
-            ParticipantDataDto participantDataDto =
-                    new ParticipantDataDto.Builder()
-                            .withDdpParticipantId(addFamilyMemberPayload.getParticipantId().get())
-                            .withDdpInstanceId(ddpInstanceDto.getDdpInstanceId())
-                            .withFieldTypeId(ddpInstanceDto.getInstanceName() + ParticipantData.FIELD_TYPE_PARTICIPANTS)
-                            .withData(gson.toJson(addFamilyMemberPayload.getData().get()))
-                            .withLastChanged(System.currentTimeMillis())
-                            .withChangedBy(userDto.getEmail().orElse("SYSTEM"))
-                            .build();
-            ddpFamilyMemberParticipantDataId = participantDataDao.create(participantDataDto);
+            ParticipantData participantData =
+                    new ParticipantData.Builder()
+                        .withDdpParticipantId(addFamilyMemberPayload.getParticipantId().get())
+                        .withDdpInstanceId(ddpInstanceDto.getDdpInstanceId())
+                        .withFieldTypeId(ddpInstanceDto.getInstanceName() + org.broadinstitute.dsm.model.participant.data.ParticipantData.FIELD_TYPE_PARTICIPANTS)
+                        .withData(gson.toJson(addFamilyMemberPayload.getData().get()))
+                        .withLastChanged(System.currentTimeMillis())
+                        .withChangedBy(userDto.getEmail().orElse("SYSTEM"))
+                        .build();
+            ddpFamilyMemberParticipantDataId = participantDataDao.create(participantData);
         } catch (Exception e) {
             result = new Result(500);
         }
         Assert.assertEquals(200, result.getCode());
+    }
+
+
+
+    public static String payloadFactory(String participantGuid, String realm, Map<String, String> data, Integer userId) {
+        FamilyMemberDetails familyMemberDetails = null;
+        if (data != null) {
+            try {
+                familyMemberDetails = new FamilyMemberDetails(
+                    //reflection applied here, to match field namesm because FamilyMemberDetails toMap method uses reflection as well
+                    data.get(FamilyMemberDetails.class.getDeclaredField("firstName").getAnnotation(SerializedName.class).value()),
+                    data.get(FamilyMemberDetails.class.getDeclaredField("lastName").getAnnotation(SerializedName.class).value()),
+                    data.get(FamilyMemberDetails.class.getDeclaredField("memberType").getAnnotation(SerializedName.class).value()),
+                    Long.parseLong(data.get(FamilyMemberDetails.class.getDeclaredField("familyId").getAnnotation(SerializedName.class).value())),
+                    data.get(FamilyMemberDetails.class.getDeclaredField("collaboratorParticipantId").getAnnotation(SerializedName.class).value())
+                );
+            } catch (Exception e) {
+                Assert.fail();
+            }
+        }
+        AddFamilyMemberPayload addFamilyMemberPayload = new AddFamilyMemberPayload.Builder(participantGuid, realm)
+                .withData(familyMemberDetails)
+                .withUserId(userId)
+                .withCopyProbandInfo(false)
+                .withProbandDataId(0)
+                .build();
+
+        return gson.toJson(addFamilyMemberPayload);
     }
 
 }

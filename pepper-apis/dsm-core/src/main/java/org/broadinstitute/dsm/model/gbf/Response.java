@@ -1,8 +1,8 @@
 package org.broadinstitute.dsm.model.gbf;
 
-import java.util.List;
-
 import lombok.Data;
+
+import java.util.List;
 
 @Data
 public class Response {

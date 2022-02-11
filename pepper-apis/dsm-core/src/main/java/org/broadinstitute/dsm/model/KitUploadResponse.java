@@ -9,8 +9,7 @@ public class KitUploadResponse {
     private Collection<KitRequest> specialKitList;
     private String specialMessage;
 
-    public KitUploadResponse(Collection<KitRequest> invalidKitAddressList, Collection<KitRequest> duplicateKitList,
-                             Collection<KitRequest> specialKitList,
+    public KitUploadResponse(Collection<KitRequest> invalidKitAddressList, Collection<KitRequest> duplicateKitList, Collection<KitRequest> specialKitList,
                              String specialMessage) {
         this.invalidKitAddressList = invalidKitAddressList;
         this.duplicateKitList = duplicateKitList;

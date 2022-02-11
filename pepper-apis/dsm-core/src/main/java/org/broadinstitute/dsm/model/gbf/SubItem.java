@@ -1,8 +1,8 @@
 package org.broadinstitute.dsm.model.gbf;
 
-import java.util.List;
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
+import java.util.List;
 
 public class SubItem {
 
@@ -23,7 +23,7 @@ public class SubItem {
         this.tube = tube;
     }
 
-    @XmlAttribute(name = "ItemNumber")
+    @XmlAttribute(name="ItemNumber")
     public String getItemNumber() {
         return itemNumber;
     }
@@ -32,7 +32,7 @@ public class SubItem {
         this.itemNumber = itemNumber;
     }
 
-    @XmlAttribute(name = "LotNumber")
+    @XmlAttribute(name="LotNumber")
     public String getLotNumber() {
         return lotNumber;
     }
@@ -41,7 +41,7 @@ public class SubItem {
         this.lotNumber = lotNumber;
     }
 
-    @XmlAttribute(name = "SerialNumber")
+    @XmlAttribute(name="SerialNumber")
     public String getSerialNumber() {
         return serialNumber;
     }
@@ -50,7 +50,7 @@ public class SubItem {
         this.serialNumber = serialNumber;
     }
 
-    @XmlElement(name = "ReturnTracking")
+    @XmlElement(name="ReturnTracking")
     public String getReturnTracking() {
         return returnTracking;
     }
@@ -59,7 +59,7 @@ public class SubItem {
         this.returnTracking = returnTracking;
     }
 
-    @XmlElement(name = "Tube")
+    @XmlElement(name="Tube")
     public List<Tube> getTube() {
         return tube;
     }

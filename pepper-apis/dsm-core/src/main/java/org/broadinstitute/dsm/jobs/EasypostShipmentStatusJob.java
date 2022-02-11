@@ -10,7 +10,8 @@ public class EasypostShipmentStatusJob implements Job {
     public void execute(JobExecutionContext context) throws JobExecutionException {
         try {
             KitUtil.getKitStatus();
-        } catch (Exception ex) {
+        }
+        catch (Exception ex) {
             throw new RuntimeException(ex);
         }
     }

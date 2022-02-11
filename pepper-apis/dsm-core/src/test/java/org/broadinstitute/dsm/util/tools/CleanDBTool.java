@@ -1,4 +1,4 @@
-package org.broadinstitute.dsm.util.tools;//package org.broadinstitute.dsm.util.tools;
+//package org.broadinstitute.dsm.util.tools;
 //
 //import com.typesafe.config.Config;
 //import com.typesafe.config.ConfigFactory;
@@ -48,9 +48,7 @@ package org.broadinstitute.dsm.util.tools;//package org.broadinstitute.dsm.util.
 //    }
 //
 //    private static void cleanDB(@NonNull String realm, boolean leaveLastPT) {
-//        List<String> ddpParticipantIds = DBTestUtil.getStringList("select * from ddp_participant part, ddp_instance inst where part
-//        .ddp_instance_id = inst.ddp_instance_id and  inst.instance_name = \"" + realm + "\" order by participant_id desc",
-//        "ddp_participant_id");
+//        List<String> ddpParticipantIds = DBTestUtil.getStringList("select * from ddp_participant part, ddp_instance inst where part.ddp_instance_id = inst.ddp_instance_id and  inst.instance_name = \"" + realm + "\" order by participant_id desc", "ddp_participant_id");
 //        int startIndex = 0;
 //        if (leaveLastPT) {
 //            startIndex = 1;

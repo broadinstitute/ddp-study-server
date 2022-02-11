@@ -1,6 +1,19 @@
 package org.broadinstitute.dsm.util.tools;
 
-import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
+import lombok.NonNull;
+import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.ddp.db.SimpleResult;
+import org.broadinstitute.ddp.db.TransactionWrapper;
+import org.broadinstitute.dsm.db.DDPInstance;
+import org.broadinstitute.dsm.db.ParticipantEvent;
+import org.broadinstitute.dsm.model.KitDDPNotification;
+import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
+import org.broadinstitute.dsm.statics.DBConstants;
+import org.broadinstitute.dsm.util.EventUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.sql.Connection;
@@ -10,19 +23,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 
-import com.typesafe.config.Config;
-import com.typesafe.config.ConfigFactory;
-import lombok.NonNull;
-import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.ddp.db.TransactionWrapper;
-import org.broadinstitute.dsm.db.DDPInstance;
-import org.broadinstitute.dsm.db.ParticipantEvent;
-import org.broadinstitute.dsm.model.KitDDPNotification;
-import org.broadinstitute.dsm.statics.DBConstants;
-import org.broadinstitute.dsm.util.EventUtil;
-import org.broadinstitute.lddp.db.SimpleResult;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
 
 /*Tool to stop reminder emails from going out after migration */
 public class EventQueueTool {
@@ -41,8 +42,7 @@ public class EventQueueTool {
         littleMain();
     }
 
-    public static void argumentsForTesting(@NonNull String propFileTesting, @NonNull String realmTesting,
-                                           @NonNull String eventTypeTesting) {
+    public static void argumentsForTesting(@NonNull String propFileTesting, @NonNull String realmTesting, @NonNull String eventTypeTesting) {
         testScenario = true;
         propFile = propFileTesting;
         realm = realmTesting;
@@ -63,14 +63,16 @@ public class EventQueueTool {
                     eventQueue(conn, realm, eventType);
                     return null;
                 });
-            } else {
+            }
+            else {
                 setup(propFile);
                 TransactionWrapper.inTransaction(conn -> {
                     eventQueue(conn, realm, eventType);
                     return null;
                 });
             }
-        } catch (Exception ex) {
+        }
+        catch (Exception ex) {
             logger.error("Failed to migrate data ", ex);
             System.exit(-1);
         }
@@ -81,14 +83,13 @@ public class EventQueueTool {
         //secrets from vault in a config file
         cfg = cfg.withFallback(ConfigFactory.parseFile(new File(config)));
 
-        //TODO DSM add back in
-//        TransactionWrapper.configureSslProperties(cfg.getString("portal.dbSslKeyStore"),
-//                cfg.getString("portal.dbSslKeyStorePwd"),
-//                cfg.getString("portal.dbSslTrustStore"),
-//                cfg.getString("portal.dbSslTrustStorePwd"));
-//
-//        TransactionWrapper.init(cfg.getInt(ApplicationConfigConstants.DSM_DB_MAX_CONNECTIONS),
-//                cfg.getString(ApplicationConfigConstants.DSM_DB_URL), cfg, false);
+        TransactionWrapper.configureSslProperties(cfg.getString("portal.dbSslKeyStore"),
+                cfg.getString("portal.dbSslKeyStorePwd"),
+                cfg.getString("portal.dbSslTrustStore"),
+                cfg.getString("portal.dbSslTrustStorePwd"));
+
+        TransactionWrapper.init(cfg.getInt(ApplicationConfigConstants.DSM_DB_MAX_CONNECTIONS),
+                cfg.getString(ApplicationConfigConstants.DSM_DB_URL), cfg, false);
     }
 
     private static void eventQueue(Connection conn, @NonNull String realm, @NonNull String eventName) {
@@ -111,8 +112,7 @@ public class EventQueueTool {
         ArrayList<KitDDPNotification> kitDDPNotifications = new ArrayList<>();
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement stmt = conn.prepareStatement(EventUtil.SQL_SELECT_KIT_FOR_REMINDER_EMAILS + " AND realm.instance_name "
-                    + "= ?")) {
+            try (PreparedStatement stmt = conn.prepareStatement(EventUtil.SQL_SELECT_KIT_FOR_REMINDER_EMAILS + " AND realm.instance_name = ?")) {
                 stmt.setString(1, DBConstants.KIT_PARTICIPANT_NOTIFICATIONS_ACTIVATED);
                 stmt.setString(2, realmName);
                 try (ResultSet rs = stmt.executeQuery()) {
@@ -132,7 +132,8 @@ public class EventQueueTool {
                         }
                     }
                 }
-            } catch (SQLException ex) {
+            }
+            catch (SQLException ex) {
                 dbVals.resultException = ex;
             }
             return dbVals;

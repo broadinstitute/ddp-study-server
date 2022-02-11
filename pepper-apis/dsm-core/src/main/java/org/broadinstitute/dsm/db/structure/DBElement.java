@@ -30,34 +30,6 @@ public class DBElement {
     }
 
     /**
-     * Defines how to translate different storage formats
-     * of dates for proper comparison.  Returned values
-     * should be valid SQL.
-     */
-    public interface DateConverter {
-
-        /**
-         * Convert a search term into SQL for exact match
-         */
-        String convertArgToSql(Instant arg);
-
-        /**
-         * Convert the column into SQL for exact match
-         */
-        String convertColumnForSql(String column);
-
-        /**
-         * Convert the arg into SQL for a "in this day" match
-         */
-        String convertArgToSqlForDay(Instant arg);
-
-        /**
-         * Convert the column into SQl for a "in this day" match
-         */
-        String convertColumnForSqlForDay(String column);
-    }
-
-    /**
      * Use this for dates that are stored as millis since the epoch.
      */
     public static class EpochDateConverter implements DateConverter {
@@ -71,7 +43,7 @@ public class DBElement {
         }
 
         public String convertArgToSqlForDay(Instant arg) {
-            return "DATE(FROM_UNIXTIME(" + arg.toEpochMilli() / 1000 + "))";
+            return "DATE(FROM_UNIXTIME(" + arg.toEpochMilli()/1000 + "))";
         }
 
         public String convertColumnForSqlForDay(String column) {
@@ -99,5 +71,33 @@ public class DBElement {
         public String convertColumnForSqlForDay(String column) {
             return convertColumnForSql(column);
         }
+    }
+
+    /**
+     * Defines how to translate different storage formats
+     * of dates for proper comparison.  Returned values
+     * should be valid SQL.
+     */
+    public interface DateConverter {
+
+        /**
+         * Convert a search term into SQL for exact match
+         */
+        String convertArgToSql(Instant arg);
+
+        /**
+         * Convert the column into SQL for exact match
+         */
+        String convertColumnForSql(String column);
+
+        /**
+         * Convert the arg into SQL for a "in this day" match
+         */
+        String convertArgToSqlForDay(Instant arg);
+
+        /**
+         * Convert the column into SQl for a "in this day" match
+         */
+        String convertColumnForSqlForDay(String column);
     }
 }

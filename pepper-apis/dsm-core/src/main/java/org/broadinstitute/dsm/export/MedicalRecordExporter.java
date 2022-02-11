@@ -1,8 +1,5 @@
 package org.broadinstitute.dsm.export;
 
-import java.util.ArrayDeque;
-import java.util.Map;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.dao.ddp.medical.records.ESMedicalRecordsDao;
@@ -11,6 +8,9 @@ import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.ArrayDeque;
+import java.util.Map;
 
 public class MedicalRecordExporter implements Exporter {
 
@@ -22,8 +22,7 @@ public class MedicalRecordExporter implements Exporter {
     public void export(DDPInstance instance) {
         int instanceId = instance.getDdpInstanceIdAsInt();
         logger.info("Started exporting medical records for instance with id " + instanceId);
-        ArrayDeque<ESMedicalRecordsDto> esMedicalRecords =
-                new ArrayDeque<>(esMedicalRecordsDao.getESMedicalRecordsByInstanceId(instanceId));
+        ArrayDeque<ESMedicalRecordsDto> esMedicalRecords = new ArrayDeque<>(esMedicalRecordsDao.getESMedicalRecordsByInstanceId(instanceId));
         while (!esMedicalRecords.isEmpty()) {
             ESMedicalRecordsDto medicalRecord = esMedicalRecords.pop();
             Map<String, Object> map = oMapper.convertValue(medicalRecord, Map.class);

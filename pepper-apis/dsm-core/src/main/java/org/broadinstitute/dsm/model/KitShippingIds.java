@@ -1,16 +1,16 @@
 package org.broadinstitute.dsm.model;
 
-import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
+import lombok.Data;
+import lombok.NonNull;
+import org.broadinstitute.ddp.db.SimpleResult;
+import org.broadinstitute.dsm.db.KitRequestShipping;
+import org.broadinstitute.dsm.statics.DBConstants;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-import lombok.Data;
-import lombok.NonNull;
-import org.broadinstitute.dsm.db.KitRequestShipping;
-import org.broadinstitute.dsm.statics.DBConstants;
-import org.broadinstitute.lddp.db.SimpleResult;
+import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
 
 @Data
 public class KitShippingIds {
@@ -25,11 +25,11 @@ public class KitShippingIds {
         this.easyPostShipmentReturnId = easyPostShipmentReturnId;
     }
 
-    public static KitShippingIds getKitShippingIds(@NonNull String kitRequestId, @NonNull String easypostApiKey) {
+    public static KitShippingIds getKitShippingIds(@NonNull long kitRequestId, @NonNull String easypostApiKey) {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement stmt = conn.prepareStatement(KitRequestShipping.SQL_SELECT_KIT)) {
-                stmt.setString(1, kitRequestId);
+                stmt.setLong(1, kitRequestId);
                 try (ResultSet rs = stmt.executeQuery()) {
                     int numRows = 0;
                     while (rs.next()) {
@@ -42,15 +42,15 @@ public class KitShippingIds {
                         throw new RuntimeException("Found " + numRows + " kits for dsm_kit_request_id " + kitRequestId);
                     }
                 }
-            } catch (SQLException ex) {
+            }
+            catch (SQLException ex) {
                 dbVals.resultException = ex;
             }
             return dbVals;
         });
 
         if (results.resultException != null) {
-            throw new RuntimeException("Error setting kitRequest to deactivated w/ dsm_kit_request_id " + kitRequestId,
-                    results.resultException);
+            throw new RuntimeException("Error setting kitRequest to deactivated w/ dsm_kit_request_id " + kitRequestId, results.resultException);
         }
         return (KitShippingIds) results.resultValue;
     }

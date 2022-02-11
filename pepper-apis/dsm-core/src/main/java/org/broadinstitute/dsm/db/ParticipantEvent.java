@@ -1,6 +1,16 @@
 package org.broadinstitute.dsm.db;
 
-import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
+import lombok.Data;
+import lombok.NonNull;
+import org.broadinstitute.ddp.db.SimpleResult;
+import org.broadinstitute.ddp.db.TransactionWrapper;
+import org.broadinstitute.dsm.model.ddp.DDPParticipant;
+import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
+import org.broadinstitute.dsm.statics.DBConstants;
+import org.broadinstitute.dsm.statics.RoutePath;
+import org.broadinstitute.dsm.util.DDPRequestUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -8,33 +18,26 @@ import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.Collection;
 
-import lombok.Data;
-import lombok.NonNull;
-import org.broadinstitute.ddp.util.ConfigUtil;
-import org.broadinstitute.dsm.model.ddp.DDPParticipant;
-import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
-import org.broadinstitute.dsm.statics.DBConstants;
-import org.broadinstitute.dsm.statics.RoutePath;
-import org.broadinstitute.dsm.util.DDPRequestUtil;
-import org.broadinstitute.lddp.db.SimpleResult;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
 
 @Data
 public class ParticipantEvent {
 
     private static final Logger logger = LoggerFactory.getLogger(ParticipantEvent.class);
+
+    private final String participantId;
+    private final String eventType;
+    private final String user;
+    private final long date;
+
+    private String shortId;
+
     private static String GET_PARTICIPANT_EVENT = "select event " +
             "        from " +
             "        ddp_participant_event ev " +
             "        where " +
             "        ev.ddp_instance_id = ? " +
             "        and ev.ddp_participant_id = ?";
-    private final String participantId;
-    private final String eventType;
-    private final String user;
-    private final long date;
-    private String shortId;
 
     public ParticipantEvent(String participantId, String eventType, String user, long date) {
         this.participantId = participantId;
@@ -47,8 +50,7 @@ public class ParticipantEvent {
         ArrayList<ParticipantEvent> skippedParticipantEvents = new ArrayList();
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement stmt =
-                         conn.prepareStatement(ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.GET_PARTICIPANT_EVENTS))) {
+            try (PreparedStatement stmt = conn.prepareStatement(TransactionWrapper.getSqlFromConfig(ApplicationConfigConstants.GET_PARTICIPANT_EVENTS))) {
                 stmt.setString(1, realm);
                 try (ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
@@ -58,7 +60,8 @@ public class ParticipantEvent {
                                 rs.getLong(DBConstants.DATE)));
                     }
                 }
-            } catch (Exception ex) {
+            }
+            catch (Exception ex) {
                 dbVals.resultException = ex;
             }
             return dbVals;
@@ -66,17 +69,18 @@ public class ParticipantEvent {
 
         if (results.resultException != null) {
             logger.error("Couldn't get list of skipped participant events for " + realm, results.resultException);
-        } else {
+        }
+        else {
             DDPInstance instance = DDPInstance.getDDPInstance(realm);
             for (ParticipantEvent skippedParticipant : skippedParticipantEvents) {
                 String sendRequest = instance.getBaseUrl() + RoutePath.DDP_PARTICIPANTS_PATH + "/" + skippedParticipant.getParticipantId();
                 try {
-                    DDPParticipant ddpParticipant = DDPRequestUtil.getResponseObject(DDPParticipant.class, sendRequest, realm,
-                            instance.isHasAuth0Token());
+                    DDPParticipant ddpParticipant = DDPRequestUtil.getResponseObject(DDPParticipant.class, sendRequest, realm, instance.isHasAuth0Token());
                     if (ddpParticipant != null) {
                         skippedParticipant.setShortId(ddpParticipant.getShortId());
                     }
-                } catch (Exception ioe) {
+                }
+                catch (Exception ioe) {
                     logger.error("Couldn't get shortId of skipped participant from " + sendRequest, ioe);
                 }
             }
@@ -88,8 +92,7 @@ public class ParticipantEvent {
                                             @NonNull DDPInstance instance, @NonNull String eventType) {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement stmt =
-                         conn.prepareStatement(ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.INSERT_PARTICIPANT_EVENT))) {
+            try (PreparedStatement stmt = conn.prepareStatement(TransactionWrapper.getSqlFromConfig(ApplicationConfigConstants.INSERT_PARTICIPANT_EVENT))) {
                 stmt.setString(1, instance.getDdpInstanceId());
                 stmt.setString(2, ddpParticipantId);
                 stmt.setLong(3, currentTime);
@@ -98,10 +101,12 @@ public class ParticipantEvent {
                 int result = stmt.executeUpdate();
                 if (result == 1) {
                     logger.info("Skip event " + eventType + " for participant w/ ddpParticipantId " + ddpParticipantId + " from " + instance.getName());
-                } else {
+                }
+                else {
                     throw new RuntimeException("Something is wrong w/ ddpParticipantId " + ddpParticipantId);
                 }
-            } catch (Exception ex) {
+            }
+            catch (Exception ex) {
                 dbVals.resultException = ex;
             }
             return dbVals;
@@ -124,7 +129,8 @@ public class ParticipantEvent {
                         skippedEvents.add(rs.getString(DBConstants.EVENT));
                     }
                 }
-            } catch (Exception ex) {
+            }
+            catch (Exception ex) {
                 dbVals.resultException = ex;
             }
             return dbVals;
@@ -146,7 +152,8 @@ public class ParticipantEvent {
                     skippedEvents.add(rs.getString(DBConstants.EVENT));
                 }
             }
-        } catch (Exception ex) {
+        }
+        catch (Exception ex) {
             logger.error("Couldn't get exited participants for " + instanceId, ex);
         }
 

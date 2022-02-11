@@ -1,18 +1,7 @@
 package org.broadinstitute.dsm.cf;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.List;
-
 import com.google.cloud.functions.BackgroundFunction;
 import com.google.cloud.functions.Context;
-import com.google.gson.Gson;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.typesafe.config.Config;
 import lombok.NonNull;
@@ -29,9 +18,19 @@ import org.broadinstitute.dsm.model.ups.UPSStatus;
 import org.broadinstitute.dsm.pubsub.KitTrackerPubSubPublisher;
 import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
 import org.broadinstitute.dsm.statics.DBConstants;
+import org.json.JSONArray;
+import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import spark.utils.StringUtils;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.List;
 
 /**
  * Identifies kits whose shipping history should be
@@ -41,10 +40,11 @@ import spark.utils.StringUtils;
 public class TestBostonKitTrackerDispatcher implements BackgroundFunction<PubsubMessage> {
 
     private static final Logger logger = LoggerFactory.getLogger(TestBostonKitTrackerDispatcher.class.getName());
-    private final InstanceSettings instanceSettings;
-    KitTrackerPubSubPublisher kitTrackerPubSubPublisher = new KitTrackerPubSubPublisher();
+
     private String STUDY_MANAGER_SCHEMA = System.getenv("STUDY_MANAGER_SCHEMA") + ".";
     private int LOOKUP_CHUNK_SIZE;
+    KitTrackerPubSubPublisher kitTrackerPubSubPublisher = new KitTrackerPubSubPublisher();
+    private final InstanceSettings instanceSettings;
 
     public TestBostonKitTrackerDispatcher() {
         instanceSettings = new InstanceSettings();
@@ -59,8 +59,7 @@ public class TestBostonKitTrackerDispatcher implements BackgroundFunction<Pubsub
         final String SQL_SELECT_KITS_WITH_LATEST_ACTIVITY = "SELECT  * " +
                 " FROM  " + STUDY_MANAGER_SCHEMA + "ddp_kit kit  " +
                 " LEFT JOIN     " + STUDY_MANAGER_SCHEMA + "ddp_kit_request req  ON (kit.dsm_kit_request_id = req.dsm_kit_request_id)   " +
-                " left join    " + STUDY_MANAGER_SCHEMA + "ups_shipment shipment on (shipment.dsm_kit_request_id = kit"
-                + ".dsm_kit_request_id) " +
+                " left join    " + STUDY_MANAGER_SCHEMA + "ups_shipment shipment on (shipment.dsm_kit_request_id = kit.dsm_kit_request_id) " +
                 " left join  " + STUDY_MANAGER_SCHEMA + "ups_package pack on ( pack.ups_shipment_id = shipment.ups_shipment_id) " +
                 " left join  " + STUDY_MANAGER_SCHEMA + "ups_activity activity on (pack.ups_package_id = activity.ups_package_id) " +
                 " WHERE req.ddp_instance_id = ? and ( kit_label not like \"%\\\\_1\") and kit.dsm_kit_request_id > ? " +
@@ -74,15 +73,14 @@ public class TestBostonKitTrackerDispatcher implements BackgroundFunction<Pubsub
                 "    AND lastActivity.maxId = ac.ups_activity_id  " +
                 " ))";
         String SQL_AVOID_DELIVERED = " and (tracking_to_id is not null or tracking_return_id is not null ) and kit.test_result is null " +
-                " and ( ups_status_description is null or ups_status_description not like \"%Delivered%\") " +
-                " and from_unixtime(created_date/1000) > NOW() - INTERVAL 360 DAY" +
-                " and (kit.ups_tracking_status is null or kit.ups_tracking_status not like \"%Delivered%\" or kit.ups_return_status is "
-                + "null or kit.ups_return_status not like \"%Delivered%\") " +
+                " and ( ups_status_description is null or ups_status_description not like \"%Delivered%\") "+
+                " and from_unixtime(created_date/1000) > NOW() - INTERVAL 360 DAY"+
+                " and (kit.ups_tracking_status is null or kit.ups_tracking_status not like \"%Delivered%\" or kit.ups_return_status is null or kit.ups_return_status not like \"%Delivered%\") " +
                 " order by kit.dsm_kit_request_id ASC LIMIT ?";
         logger.info("Starting the UPS lookup job");
         LOOKUP_CHUNK_SIZE = new JsonParser().parse(data).getAsJsonObject().get("size").getAsInt();
         logger.info("The chunk size for each cloud function is " + LOOKUP_CHUNK_SIZE);
-        JsonArray subsetOfKits = new JsonArray();
+        JSONArray subsetOfKits = new JSONArray();
         String project = cfg.getString(ApplicationConfigConstants.PUBSUB_PROJECT_ID);
         String topicId = cfg.getString(ApplicationConfigConstants.PUBSUB_TOPIC_ID);
         try (Connection conn = dataSource.getConnection()) {
@@ -102,17 +100,16 @@ public class TestBostonKitTrackerDispatcher implements BackgroundFunction<Pubsub
                             stmt.setString(1, ddpInstance.getDdpInstanceId());
                             stmt.setInt(2, lastKitId);
                             stmt.setInt(3, LOOKUP_CHUNK_SIZE);
-                            subsetOfKits = new JsonArray();
+                            subsetOfKits = new JSONArray();
                             stmt.setFetchSize(LOOKUP_CHUNK_SIZE);
                             try (ResultSet rs = stmt.executeQuery()) {
                                 while (rs.next()) {
                                     String shipmentId = rs.getString(DBConstants.UPS_SHIPMENT_ID);
                                     UPSPackage upsPackage;
                                     if (StringUtils.isNotBlank(shipmentId)) {
-                                        UPSStatus latestStatus =
-                                                new UPSStatus(rs.getString(DBConstants.UPS_ACTIVITY_TABLE_ABBR + DBConstants.UPS_STATUS_TYPE),
-                                                        rs.getString(DBConstants.UPS_ACTIVITY_TABLE_ABBR + DBConstants.UPS_STATUS_DESCRIPTION),
-                                                        rs.getString(DBConstants.UPS_ACTIVITY_TABLE_ABBR + DBConstants.UPS_STATUS_CODE));
+                                        UPSStatus latestStatus = new UPSStatus(rs.getString(DBConstants.UPS_ACTIVITY_TABLE_ABBR + DBConstants.UPS_STATUS_TYPE),
+                                                rs.getString(DBConstants.UPS_ACTIVITY_TABLE_ABBR + DBConstants.UPS_STATUS_DESCRIPTION),
+                                                rs.getString(DBConstants.UPS_ACTIVITY_TABLE_ABBR + DBConstants.UPS_STATUS_CODE));
                                         UPSActivity packageLastActivity = new UPSActivity(
                                                 rs.getString(DBConstants.UPS_ACTIVITY_TABLE_ABBR + DBConstants.UPS_LOCATION),
                                                 latestStatus,
@@ -124,11 +121,12 @@ public class TestBostonKitTrackerDispatcher implements BackgroundFunction<Pubsub
                                         );
                                         upsPackage = new UPSPackage(
                                                 rs.getString(DBConstants.UPS_PACKAGE_TABLE_ABBR + DBConstants.UPS_TRACKING_NUMBER),
-                                                new UPSActivity[] {packageLastActivity},
+                                                new UPSActivity[] { packageLastActivity },
                                                 rs.getString(DBConstants.UPS_PACKAGE_TABLE_ABBR + DBConstants.UPS_SHIPMENT_ID),
                                                 rs.getString(DBConstants.UPS_PACKAGE_TABLE_ABBR + DBConstants.UPS_PACKAGE_ID),
                                                 null, null);
-                                    } else {
+                                    }
+                                    else {
                                         upsPackage = new UPSPackage(
                                                 null,
                                                 null,
@@ -147,15 +145,17 @@ public class TestBostonKitTrackerDispatcher implements BackgroundFunction<Pubsub
                                             rs.getString(DBConstants.DDP_KIT_REQUEST_TABLE_ABBR + DBConstants.COLLABORATOR_PARTICIPANT_ID),
                                             gbfShippedTriggerDSSDelivered
                                     );
-                                    JsonObject jsonKit = new JsonParser().parse(new Gson().toJson(kit)).getAsJsonObject();
-                                    subsetOfKits.add(jsonKit);
-                                    logger.info("added label " + kit.getKitLabel() + " with tracking number " + kit.getUpsPackage().getTrackingNumber() + " size of array " + subsetOfKits.size());
+                                    JSONObject jsonKit = new JSONObject(kit);
+                                    subsetOfKits.put(jsonKit);
+                                    logger.info("added label " + kit.getKitLabel() + " with tracking number " + kit.getUpsPackage().getTrackingNumber() + " size of array " + subsetOfKits.length());
                                 }
-                            } catch (Exception e) {
+                            }
+                            catch (Exception e) {
                                 logger.error("Trouble executing select query", e);
                             }
 
-                        } catch (Exception e) {
+                        }
+                        catch (Exception e) {
                             logger.error("Trouble creating the statement ", e);
                         }
                         logger.info("kit is " + (kit == null ? "null" : kit.getDsmKitRequestId()));
@@ -163,8 +163,9 @@ public class TestBostonKitTrackerDispatcher implements BackgroundFunction<Pubsub
                             logger.info("lastKitId in this batch is " + kit.getDsmKitRequestId());
                             lastKitId = Integer.parseInt(kit.getDsmKitRequestId());
                             kitTrackerPubSubPublisher.publishMessage(project, topicId, subsetOfKits.toString());
-                            subsetOfKits = new JsonArray();
-                        } else {
+                            subsetOfKits = new JSONArray();
+                        }
+                        else {
                             break loop;
                         }
                         kit = null;
@@ -172,19 +173,18 @@ public class TestBostonKitTrackerDispatcher implements BackgroundFunction<Pubsub
                 }
             }
             kitTrackerPubSubPublisher.publishMessage(project, topicId, subsetOfKits.toString());
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             logger.error("Trouble creating a connection to DB ", e);
         }
 
     }
 
     public List<DDPInstance> getDDPInstanceListWithRole(Connection conn, @NonNull String role) {
-        final String SQL_SELECT_INSTANCE_WITH_ROLE = "SELECT ddp_instance_id, instance_name, base_url, collaborator_id_prefix, "
-                + "migrated_ddp, billing_reference, " +
+        final String SQL_SELECT_INSTANCE_WITH_ROLE = "SELECT ddp_instance_id, instance_name, base_url, collaborator_id_prefix, migrated_ddp, billing_reference, " +
                 "es_participant_index, es_activity_definition_index,  es_users_index, (SELECT count(role.name) " +
                 "FROM " + STUDY_MANAGER_SCHEMA + "ddp_instance realm, " + STUDY_MANAGER_SCHEMA + "ddp_instance_role inRol, " + STUDY_MANAGER_SCHEMA + "instance_role role WHERE realm.ddp_instance_id = inRol.ddp_instance_id AND inRol.instance_role_id = role.instance_role_id AND role.name = ? " +
-                "AND realm.ddp_instance_id = main.ddp_instance_id) AS 'has_role', mr_attention_flag_d, tissue_attention_flag_d, "
-                + "auth0_token, notification_recipients FROM  " + STUDY_MANAGER_SCHEMA + "ddp_instance main " +
+                "AND realm.ddp_instance_id = main.ddp_instance_id) AS 'has_role', mr_attention_flag_d, tissue_attention_flag_d, auth0_token, notification_recipients FROM  " + STUDY_MANAGER_SCHEMA + "ddp_instance main " +
                 "WHERE is_active = 1";
 
         List<DDPInstance> ddpInstances = new ArrayList<>();
@@ -196,7 +196,8 @@ public class TestBostonKitTrackerDispatcher implements BackgroundFunction<Pubsub
                     ddpInstances.add(ddpInstance);
                 }
             }
-        } catch (SQLException ex) {
+        }
+        catch (SQLException ex) {
             throw new RuntimeException("Error looking ddpInstances ", ex);
         }
 

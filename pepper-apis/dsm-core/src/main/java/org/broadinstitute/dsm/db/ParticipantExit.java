@@ -1,34 +1,30 @@
 package org.broadinstitute.dsm.db;
 
-import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
-
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-
 import lombok.Data;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.ddp.db.SimpleResult;
 import org.broadinstitute.dsm.model.ddp.DDPParticipant;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
-import org.broadinstitute.lddp.db.SimpleResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.util.*;
+
+import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
 
 @Data
 public class ParticipantExit {
 
     private static final Logger logger = LoggerFactory.getLogger(ParticipantExit.class);
 
-    private static final String SQL_SELECT_EXITED_PT = "SELECT realm.instance_name, ex.ddp_participant_id, u.name, ex.exit_date, ex"
-            + ".in_ddp " +
+    private static final String SQL_SELECT_EXITED_PT = "SELECT realm.instance_name, ex.ddp_participant_id, u.name, ex.exit_date, ex.in_ddp " +
             "FROM ddp_participant_exit ex, ddp_instance realm, access_user u WHERE ex.ddp_instance_id = realm.ddp_instance_id " +
             "AND ex.exit_by = u.user_id AND realm.instance_name = ?";
-    private static final String SQL_INSERT_EXIT_PT = "INSERT INTO ddp_participant_exit (ddp_instance_id, ddp_participant_id, exit_date, "
-            + "exit_by, in_ddp) " +
+    private static final String SQL_INSERT_EXIT_PT = "INSERT INTO ddp_participant_exit (ddp_instance_id, ddp_participant_id, exit_date, exit_by, in_ddp) " +
             "VALUES (?,?,?,?,?)";
 
     private final String realm;
@@ -67,7 +63,8 @@ public class ParticipantExit {
                                 rs.getBoolean(DBConstants.IN_DDP)));
                     }
                 }
-            } catch (Exception ex) {
+            }
+            catch (Exception ex) {
                 dbVals.resultException = ex;
             }
             return dbVals;
@@ -75,7 +72,8 @@ public class ParticipantExit {
 
         if (results.resultException != null) {
             logger.error("Couldn't get exited participants for " + realm, results.resultException);
-        } else {
+        }
+        else {
             if (addParticipantInformation) {
                 addParticipantInformation(realm, exitedParticipants.values());
             }
@@ -87,11 +85,9 @@ public class ParticipantExit {
         DDPInstance instance = DDPInstance.getDDPInstance(realm);
         if (!instance.isHasRole()) {
             if (StringUtils.isNotBlank(instance.getParticipantIndexES())) {
-                Map<String, Map<String, Object>> participantsESData = ElasticSearchUtil.getDDPParticipantsFromES(realm,
-                        instance.getParticipantIndexES());
+                Map<String, Map<String, Object>> participantsESData = ElasticSearchUtil.getDDPParticipantsFromES(realm, instance.getParticipantIndexES());
                 for (ParticipantExit exitParticipant : exitedParticipants) {
-                    DDPParticipant ddpParticipant = ElasticSearchUtil.getParticipantAsDDPParticipant(participantsESData,
-                            exitParticipant.getParticipantId());
+                    DDPParticipant ddpParticipant = ElasticSearchUtil.getParticipantAsDDPParticipant(participantsESData, exitParticipant.getParticipantId());
                     if (ddpParticipant != null) {
                         exitParticipant.setShortId(ddpParticipant.getShortId());
                         exitParticipant.setLegacyShortId(ddpParticipant.getLegacyShortId());
@@ -114,10 +110,12 @@ public class ParticipantExit {
                 int result = stmt.executeUpdate();
                 if (result == 1) {
                     logger.info("Exited participant w/ ddpParticipantId " + ddpParticipantId + " from " + instance.getName());
-                } else {
+                }
+                else {
                     throw new RuntimeException("Something is wrong w/ ddpParticipantId " + ddpParticipantId);
                 }
-            } catch (Exception ex) {
+            }
+            catch (Exception ex) {
                 dbVals.resultException = ex;
             }
             return dbVals;

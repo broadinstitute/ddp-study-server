@@ -16,9 +16,7 @@ public class Bookmark {
     }
 
     public long getBookmarkFamilyIdAndUpdate(String realm) {
-        if (StringUtils.isBlank(realm)) {
-            throw new IllegalArgumentException("realm should not be blank");
-        }
+        if (StringUtils.isBlank(realm)) throw new IllegalArgumentException("realm should not be blank");
         final String familyIdInstance = realm + FAMILY_ID_SUFFIX;
         Optional<BookmarkDto> maybeBookmarkByInstance = bookmarkDao.getBookmarkByInstance(familyIdInstance);
         return maybeBookmarkByInstance

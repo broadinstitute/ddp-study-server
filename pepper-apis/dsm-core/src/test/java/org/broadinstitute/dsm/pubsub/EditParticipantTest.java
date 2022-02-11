@@ -1,8 +1,5 @@
 package org.broadinstitute.dsm.pubsub;
 
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
-
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.typesafe.config.Config;
@@ -19,6 +16,9 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 public class EditParticipantTest extends TestHelper {
 
@@ -61,8 +61,7 @@ public class EditParticipantTest extends TestHelper {
 
             String data = messageJsonObject.get("data").getAsJsonObject().toString();
 
-            Map<String, String> attributeMap = EditParticipantPublisherRoute.getStringStringMap(Integer.toString(userId),
-                    messageJsonObject);
+            Map<String, String> attributeMap = EditParticipantPublisherRoute.getStringStringMap(Integer.toString(userId), messageJsonObject);
 
             try {
                 EditParticipantMessagePublisher.publishMessage(data, attributeMap, projectId, topicId);
@@ -92,8 +91,7 @@ public class EditParticipantTest extends TestHelper {
             String studyGuid = DDPInstance.getStudyGuidByInstanceName(instanceName);
 
             Assert.assertEquals(studyGuid, receivedMessageJsonObject.get("studyGuid").getAsString());
-            Assert.assertEquals(messageJsonObject.get("data").getAsJsonObject().get("firstName"), receivedMessageJsonObject.get(
-                    "firstName"));
+            Assert.assertEquals(messageJsonObject.get("data").getAsJsonObject().get("firstName"), receivedMessageJsonObject.get("firstName"));
             Assert.assertEquals(userId, receivedMessageJsonObject.get("userId").getAsInt());
 
             EditParticipantMessage.updateMessageStatusById(messageId, DBConstants.MESSAGE_SENT_BACK_STATUS);

@@ -49,8 +49,7 @@ public class GBFOrderFinderTest extends TestHelper {
             "where\n" +
             "dsm_kit_request_id in (select req.dsm_kit_request_id from ddp_kit_request req where req.external_order_number = ?)";
 
-    private static final String INSERT_KIT_REQUEST = "insert into ddp_kit_request(ddp_instance_id,kit_type_id,ddp_participant_id,"
-            + "external_order_number,ddp_label)\n" +
+    private static final String INSERT_KIT_REQUEST = "insert into ddp_kit_request(ddp_instance_id,kit_type_id,ddp_participant_id,external_order_number,ddp_label)\n" +
             "    (select distinct i.ddp_instance_id, subkit.kit_type_id, ?,?,concat(?,'_',kt.kit_type_name)\n" +
             "     from ddp_instance i,\n" +
             "          ddp_kit_request_settings s,\n" +
@@ -64,10 +63,10 @@ public class GBFOrderFinderTest extends TestHelper {
 
     private static final String INSERT_KIT = "insert into ddp_kit(dsm_kit_request_id, kit_label) values (?,?)";
 
-    private static final String DELETE_KITS = "delete from ddp_kit_request\n" +
-            "where\n" +
-            "external_order_number like ?\n" +
-            "and\n" +
+    private static final String DELETE_KITS = "delete from ddp_kit_request\n"+
+            "where\n"+
+            "external_order_number like ?\n"+
+            "and\n"+
             "ddp_instance_id = (select i.ddp_instance_id from ddp_instance i where i.instance_name = ?)";
 
     private static final String DELETE_KIT_REQUESTS = "delete from ddp_kit\n" +
@@ -79,11 +78,11 @@ public class GBFOrderFinderTest extends TestHelper {
             "and\n" +
             "ddp_instance_id = (select i.ddp_instance_id from ddp_instance i where i.instance_name = ?))\n";
 
-    private static final String SET_TRANSMISSION_DATES = "\n" +
-            "update ddp_kit_request set order_transmitted_at = now()\n" +
-            "where\n" +
-            "order_transmitted_at is null\n" +
-            "and\n" +
+    private static final String SET_TRANSMISSION_DATES = "\n"+
+            "update ddp_kit_request set order_transmitted_at = now()\n"+
+            "where\n"+
+            "order_transmitted_at is null\n"+
+            "and\n"+
             "ddp_instance_id = (select i.ddp_instance_id from ddp_instance i where i.instance_name = ?)\n";
 
     @BeforeClass
@@ -125,7 +124,7 @@ public class GBFOrderFinderTest extends TestHelper {
     private void hidePendingKitRequests(Connection conn) {
         // delete any of kits that we added previous for this test
         // mark all kits as ordered
-        try {
+        try  {
             PreparedStatement update = conn.prepareStatement(SET_TRANSMISSION_DATES);
             update.setString(1, TEST_STUDY);
             int numRows = update.executeUpdate();
@@ -142,7 +141,7 @@ public class GBFOrderFinderTest extends TestHelper {
 
             update = conn.prepareStatement(DELETE_KITS);
             update.setString(1, TEST_PREFIX + "%");
-            update.setString(2, TEST_STUDY);
+            update.setString(2,TEST_STUDY);
 
             numRows = update.executeUpdate();
 
@@ -156,7 +155,7 @@ public class GBFOrderFinderTest extends TestHelper {
 
     @Test
     public void testFirstKitGetsOrdered() {
-        GBFOrderFinder finder = new GBFOrderFinder(null, 1, esClient, "participants_structured.testboston.testboston");
+        GBFOrderFinder finder = new GBFOrderFinder(null,1,esClient, "participants_structured.testboston.testboston");
 
         TransactionWrapper.inTransaction(conn -> {
             try {
@@ -180,7 +179,7 @@ public class GBFOrderFinderTest extends TestHelper {
 
     @Test
     public void testKitNotOrderedWhenNoPreviousKitReturned() {
-        GBFOrderFinder finder = new GBFOrderFinder(null, 1, esClient, "participants_structured.testboston.testboston");
+        GBFOrderFinder finder = new GBFOrderFinder(null,1,esClient, "participants_structured.testboston.testboston");
 
         TransactionWrapper.inTransaction(conn -> {
             try {
@@ -190,8 +189,7 @@ public class GBFOrderFinderTest extends TestHelper {
                 Assert.assertEquals(1, kitsToOrder.size());
                 String secondKit = createTestKit(conn);
                 kitsToOrder = finder.findKitsToOrder("testboston", conn);
-                Assert.assertTrue("Should not allow the 2nd kit request to go through while no previous ones have been returned",
-                        kitsToOrder.isEmpty());
+                Assert.assertTrue("Should not allow the 2nd kit request to go through while no previous ones have been returned",kitsToOrder.isEmpty());
             } finally {
                 try {
                     conn.rollback();
@@ -206,7 +204,7 @@ public class GBFOrderFinderTest extends TestHelper {
 
     @Test
     public void testDuplicateKitNotOrdered() {
-        GBFOrderFinder finder = new GBFOrderFinder(null, 1, esClient, "participants_structured.testboston.testboston");
+        GBFOrderFinder finder = new GBFOrderFinder(null,1,esClient, "participants_structured.testboston.testboston");
 
         TransactionWrapper.inTransaction(conn -> {
             try {
@@ -217,7 +215,7 @@ public class GBFOrderFinderTest extends TestHelper {
                 Assert.assertEquals(firstKit, kitsToOrder.iterator().next().getExternalKitOrderNumber());
                 markOrderTransmittedAt(conn, firstKit, Instant.now());
                 kitsToOrder = finder.findKitsToOrder("testboston", conn);
-                Assert.assertTrue("Should not have found the same order since we just transmitted it", kitsToOrder.isEmpty());
+                Assert.assertTrue("Should not have found the same order since we just transmitted it",kitsToOrder.isEmpty());
             } finally {
                 try {
                     conn.rollback();
@@ -232,7 +230,7 @@ public class GBFOrderFinderTest extends TestHelper {
 
     @Test
     public void testSubsequentKitOrderGoesThroughWhenPreviousOneIsReturnedBeforeTimeout() {
-        GBFOrderFinder finder = new GBFOrderFinder(null, 1, esClient, "participants_structured.testboston.testboston");
+        GBFOrderFinder finder = new GBFOrderFinder(null,1,esClient, "participants_structured.testboston.testboston");
 
         TransactionWrapper.inTransaction(conn -> {
             try {
@@ -257,8 +255,7 @@ public class GBFOrderFinderTest extends TestHelper {
                 SimpleKitOrder kitToOrder = kitsToOrder.iterator().next();
                 Assert.assertEquals(secondKit, kitToOrder.getExternalKitOrderNumber());
                 Assert.assertEquals(TEST_PARTICIPANT_GUID, kitToOrder.getParticipantGuid());
-                Assert.assertEquals("Subsequent kit order should have gone through because the previous one was recently returned", 1,
-                        kitsToOrder.size());
+                Assert.assertEquals("Subsequent kit order should have gone through because the previous one was recently returned",1, kitsToOrder.size());
 
             } finally {
                 try {
@@ -273,7 +270,7 @@ public class GBFOrderFinderTest extends TestHelper {
 
     @Test
     public void testSubsequentKitOrderIsBlockedThroughWhenPreviousOneIsReturnedAfterTimeout() {
-        GBFOrderFinder finder = new GBFOrderFinder(null, 1, esClient, "participants_structured.testboston.testboston");
+        GBFOrderFinder finder = new GBFOrderFinder(null,1,esClient, "participants_structured.testboston.testboston");
 
         TransactionWrapper.inTransaction(conn -> {
             try {
@@ -283,15 +280,13 @@ public class GBFOrderFinderTest extends TestHelper {
                 Collection<SimpleKitOrder> kitsToOrder = finder.findKitsToOrder("testboston", conn);
                 for (SimpleKitOrder simpleKitOrder : kitsToOrder) {
                     // if the kit was returned long after delivery, a new kit should not be ordered
-                    markOrderDeliveredToRecipientAt(conn, simpleKitOrder.getExternalKitOrderNumber(), Instant.now().minus(daysPrior,
-                            ChronoUnit.DAYS));
+                    markOrderDeliveredToRecipientAt(conn, simpleKitOrder.getExternalKitOrderNumber(), Instant.now().minus(daysPrior, ChronoUnit.DAYS));
                     markOrderAsReturned(conn, simpleKitOrder.getExternalKitOrderNumber());
                 }
                 String secondKit = createTestKit(conn);
                 kitsToOrder = finder.findKitsToOrder("testboston", conn);
 
-                Assert.assertTrue("Subsequent kit order should have been blocked since the return was " + daysPrior + " days ago",
-                        kitsToOrder.isEmpty());
+                Assert.assertTrue("Subsequent kit order should have been blocked since the return was " + daysPrior + " days ago",kitsToOrder.isEmpty());
 
 
             } finally {

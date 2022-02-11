@@ -1,9 +1,5 @@
 package org.broadinstitute.dsm.pubsub;
 
-import java.io.IOException;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
-
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutureCallback;
 import com.google.api.core.ApiFutures;
@@ -17,6 +13,10 @@ import org.broadinstitute.dsm.db.EditParticipantMessage;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 public class EditParticipantMessagePublisher {
 
@@ -49,37 +49,33 @@ public class EditParticipantMessagePublisher {
 
             // Add an asynchronous callback to handle success / failure
             ApiFutures.addCallback(
-                    future,
-                    new ApiFutureCallback<String>() {
+                future,
+                new ApiFutureCallback<String>() {
 
-                        @Override
-                        public void onFailure(Throwable throwable) {
-                            if (throwable instanceof ApiException) {
-                                ApiException apiException = ((ApiException) throwable);
-                                // details on the API exception
-                                logger.info(String.valueOf(apiException.getStatusCode().getCode()));
-                                logger.info(String.valueOf(apiException.isRetryable()));
-                            }
-                            logger.info("Error publishing message");
+                    @Override
+                    public void onFailure(Throwable throwable) {
+                        if (throwable instanceof ApiException) {
+                            ApiException apiException = ((ApiException) throwable);
+                            // details on the API exception
+                            logger.info(String.valueOf(apiException.getStatusCode().getCode()));
+                            logger.info(String.valueOf(apiException.isRetryable()));
                         }
+                        logger.info("Error publishing message");
+                    }
 
-                        @Override
-                        public void onSuccess(String messageId) {
-                            // Once published, returns server-assigned message ids (unique within the topic)
-                            logger.info("Published message ID: " + messageId);
-                        }
-                    },
-                    MoreExecutors.directExecutor()
+                    @Override
+                    public void onSuccess(String messageId) {
+                        // Once published, returns server-assigned message ids (unique within the topic)
+                        logger.info("Published message ID: " + messageId);
+                    }
+                },
+                MoreExecutors.directExecutor()
             );
         } finally {
             if (publisher != null) {
                 // When finished with the publisher, shutdown to free up resources.
-                try {
-                    publisher.shutdown();
-                    publisher.awaitTermination(1, TimeUnit.MINUTES);
-                } catch (Exception e) {
-                    //TODO DSM
-                }
+                publisher.shutdown();
+                publisher.awaitTermination(1, TimeUnit.MINUTES);
             }
         }
     }

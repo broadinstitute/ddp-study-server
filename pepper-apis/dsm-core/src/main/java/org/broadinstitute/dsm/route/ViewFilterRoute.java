@@ -1,9 +1,8 @@
 package org.broadinstitute.dsm.route;
 
-import java.util.Collection;
-
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.ddp.handlers.util.Result;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.ViewFilter;
 import org.broadinstitute.dsm.security.RequestHandler;
@@ -13,10 +12,11 @@ import org.broadinstitute.dsm.statics.RoutePath;
 import org.broadinstitute.dsm.statics.UserErrorMessages;
 import org.broadinstitute.dsm.util.PatchUtil;
 import org.broadinstitute.dsm.util.UserUtil;
-import org.broadinstitute.lddp.handlers.util.Result;
 import spark.QueryParamsMap;
 import spark.Request;
 import spark.Response;
+
+import java.util.Collection;
 
 public class ViewFilterRoute extends RequestHandler {
 
@@ -28,7 +28,7 @@ public class ViewFilterRoute extends RequestHandler {
 
     @Override
     public Object processRequest(Request request, Response response, String userId) throws Exception {
-        if (PatchUtil.getColumnNameMap() == null) {
+        if (patchUtil.getColumnNameMap() == null) {
             throw new RuntimeException("ColumnNameMap is null!");
         }
         QueryParamsMap queryParams = request.queryMap();
@@ -41,34 +41,35 @@ public class ViewFilterRoute extends RequestHandler {
         if (queryParams.value(RoutePath.REALM) != null) {
             realm = queryParams.get(RoutePath.REALM).value();
             instance = DDPInstance.getDDPInstance(realm);
-        } else {
+        }
+        else {
             throw new RuntimeException("No realm is sent!");
         }
         String userIdRequest = null;
         if (queryParams.value(UserUtil.USER_ID) != null) {
             userIdRequest = UserUtil.getUserId(request);
         }
-        if (UserUtil.checkUserAccess(realm, userId, "mr_view", userIdRequest) || UserUtil.checkUserAccess(realm, userId, "pt_list_view",
-                userIdRequest)) {
+        if (UserUtil.checkUserAccess(realm, userId, "mr_view", userIdRequest) || UserUtil.checkUserAccess(realm, userId, "pt_list_view", userIdRequest)) {
             String json = request.body();
             if (request.url().contains(RoutePath.GET_FILTERS)) {
                 if (StringUtils.isNotBlank(realm)) {
                     String ddpGroupId = DDPInstance.getDDPGroupId(realm);
-                    return ViewFilter.getAllFilters(userIdRequest, PatchUtil.getColumnNameMap(), parent, ddpGroupId,
-                            instance.getDdpInstanceId());
-                } else {
+                    return ViewFilter.getAllFilters(userIdRequest, patchUtil.getColumnNameMap(), parent, ddpGroupId, instance.getDdpInstanceId());
+                }
+                else {
                     if (!request.url().contains(RoutePath.GET_DEFAULT_FILTERS)) {
                         Collection<String> realms = UserUtil.getListOfAllowedRealms(userIdRequest);
                         realm = realms.iterator().next();
                         String ddpGroupId = DDPInstance.getDDPGroupId(realm);
-                        return ViewFilter.getAllFilters(userIdRequest, PatchUtil.getColumnNameMap(), parent, ddpGroupId,
-                                instance.getDdpInstanceId());
+                        return ViewFilter.getAllFilters(userIdRequest, patchUtil.getColumnNameMap(), parent, ddpGroupId, instance.getDdpInstanceId());
                     }
                 }
-            } else if (request.url().contains(RoutePath.SAVE_FILTER)) {
+            }
+            else if (request.url().contains(RoutePath.SAVE_FILTER)) {
                 String ddpGroupId = DDPInstance.getDDPGroupId(realm);
-                return ViewFilter.saveFilter(json, userIdRequest, PatchUtil.getColumnNameMap(), ddpGroupId);
-            } else if (request.url().contains(RoutePath.FILTER_DEFAULT)) {
+                return ViewFilter.saveFilter(json, userIdRequest, patchUtil.getColumnNameMap(), ddpGroupId);
+            }
+            else if (request.url().contains(RoutePath.FILTER_DEFAULT)) {
                 if (StringUtils.isBlank(parent)) {
                     throw new RuntimeException("No parent was sent in the request.");
                 }
@@ -77,7 +78,8 @@ public class ViewFilterRoute extends RequestHandler {
                 return ViewFilter.setDefaultFilter(filterName, userMail, parent);
             }
             throw new RuntimeException("Path was not known");
-        } else {
+        }
+        else {
             response.status(500);
             return new Result(500, UserErrorMessages.NO_RIGHTS);
         }

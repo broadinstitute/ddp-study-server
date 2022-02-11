@@ -1,21 +1,6 @@
 package org.broadinstitute.dsm.careevolve;
 
-import java.io.IOException;
-import java.net.MalformedURLException;
-import java.sql.Connection;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
+import com.google.gson.*;
 import com.typesafe.config.Config;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -34,11 +19,23 @@ import org.elasticsearch.client.RestHighLevelClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.sql.Connection;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+
 /**
  * Places orders with CareEvolve for COVID-19 virology
  */
 public class Covid19OrderRegistrar {
 
+    private static final Logger logger = LoggerFactory.getLogger(Covid19OrderRegistrar.class);
     public static final String ADDRESS_FIELD = "address";
     public static final String PROFILE_FIELD = "profile";
     public static final String GUID_FIELD = "guid";
@@ -46,14 +43,20 @@ public class Covid19OrderRegistrar {
     public static final String LAST_NAME_FIELD = "lastName";
     public static final String ACTIVITIES_FIELD = "activities";
     public static final String ANSWER_FIELD = "answer";
-    public static final String BASELINE_COVID_ACTIVITY = "BASELINE_COVID";
-    private static final Logger logger = LoggerFactory.getLogger(Covid19OrderRegistrar.class);
+
     private final String endpoint;
+
     private final String careEvolveAccount;
+
     private final Provider provider;
+
     private final int maxRetries;
+
     private final long retryWaitMillis;
+
     private RestHighLevelClient esClient;
+
+    public static final String BASELINE_COVID_ACTIVITY = "BASELINE_COVID";
 
     /**
      * Create a new one that uses the given endpoint
@@ -71,6 +74,83 @@ public class Covid19OrderRegistrar {
         this.retryWaitMillis = retryWaitSeconds * 1000;
     }
 
+    public OrderResponse orderTest(Authentication auth, Patient participant, String kitLabel, String kitId, Instant kitPickupTime) throws CareEvolveException {
+        String patientId = participant.getPatientId();
+        if (!(participant.hasFullName() && participant.hasDateOfBirth() && participant.hasAddress())) {
+            throw new CareEvolveException("Cannot place order with incomplete data for " + patientId);
+        }
+        List<AOE> aoes = AOE.forTestBoston(patientId, kitId);
+        Message message = new Message(new Order(careEvolveAccount, participant, kitLabel, kitPickupTime, provider, aoes), kitId);
+
+        OrderResponse orderResponse = null;
+
+        boolean orderSucceeded = false;
+        Collection<Exception> orderExceptions = new ArrayList<>();
+        int numAttempts = 0;
+        do {
+            try {
+                orderResponse = orderTest(auth, message);
+                orderSucceeded = true;
+                logger.info("Placed CE order {} {} for Participant {}", orderResponse.getHandle(), orderResponse.getHl7Ack(), participant.getPatientId());
+            } catch (IOException e) {
+                orderExceptions.add(e);
+                logger.warn("Could not order test for " + patientId + ".  Pausing for " + retryWaitMillis + "ms before retry " + numAttempts + "/" + maxRetries, e);
+                try {
+                    Thread.sleep(retryWaitMillis);
+                } catch (InterruptedException interruptedException) {
+                    logger.error("Interrupted while waiting for CE order retry for patient " + patientId, e);
+                }
+            }
+            numAttempts++;
+        } while (numAttempts < maxRetries && !orderSucceeded);
+
+        if (!orderSucceeded) {
+            String exceptionsText = StringUtils.join(orderExceptions, "\n");
+            throw new CareEvolveException("Could not order test for " + patientId + " after " + maxRetries + ":\n" + exceptionsText);
+        }
+
+        if (StringUtils.isNotBlank(orderResponse.getError())) {
+            throw new CareEvolveException("Order for participant " + patientId + " with handle  " + orderResponse.getHandle() + " placed with error " + orderResponse.getError());
+        }
+        return orderResponse;
+    }
+
+    /**
+     * Places an order in CareEvolve
+     *  @param auth             the API credentials
+     * @param participantHruid hruid for the participant
+     * @param kitLabel         The label on the swab.  Corresponds to ORC-2 and GP sample_id
+     * @param kitId            an identifier that will show up in Birch to help
+*                         associate the result back to the proper kit
+     * @param kitPickupTime    the time at which the kit was picked
+     * @param cfg
+     */
+    public OrderResponse orderTest(Authentication auth, String participantHruid, String kitLabel,
+                                   String kitId, Instant kitPickupTime, Connection conn, Config cfg) throws CareEvolveException {
+        if (kitPickupTime == null) {
+            throw new CareEvolveException("Cannot place order for " + kitLabel + " without a pickup time");
+        }
+        try {
+            esClient = ElasticSearchUtil.getClientForElasticsearchCloudCF(cfg.getString(ApplicationConfigConstants.ES_URL), cfg.getString(ApplicationConfigConstants.ES_USERNAME), cfg.getString(ApplicationConfigConstants.ES_PASSWORD), cfg.getString(ApplicationConfigConstants.ES_PROXY));
+        } catch (MalformedURLException e) {
+            throw new RuntimeException("Could not initialize es client",e);
+        }
+        DDPInstance ddpInstance = DDPInstance.getDDPInstanceWithRole("testboston", DBConstants.HAS_KIT_REQUEST_ENDPOINTS, conn);
+        Map<String, Map<String, Object>> esData = ElasticSearchUtil.getSingleParticipantFromES(ddpInstance.getName(), ddpInstance.getParticipantIndexES(), esClient, participantHruid);
+
+        if (esData.size() == 1) {
+            JsonObject data = new JsonParser().parse(new Gson().toJson(esData.values().iterator().next())).getAsJsonObject();
+            if (data != null) {
+                Patient patient = fromElasticData(data);
+                return orderTest(auth, patient, kitLabel, kitId, kitPickupTime);
+            } else {
+                throw new CareEvolveException("No participant data for " + participantHruid + ".  Cannot register order.");
+            }
+        } else {
+            throw new CareEvolveException("No participant data found for " + participantHruid + ".  Cannot register order.");
+        }
+    }
+
     public static JsonObject getBaselineCovidActivity(JsonArray activities) {
         JsonObject baselineCovidActivity = null;
         for (int i = 0; i < activities.size(); i++) {
@@ -80,6 +160,31 @@ public class Covid19OrderRegistrar {
             }
         }
         return baselineCovidActivity;
+    }
+
+    /**
+     * Order a test using the given auth and message details.
+     * Returns an {@link OrderResponse} when the order has been
+     * placed successfully.  Otherwise, an exception is thrown.
+     */
+    private OrderResponse orderTest(Authentication auth, Message message) throws IOException {
+        logger.info("About to send {} as {} to {}", message.getName(), endpoint);
+        AuthenticatedMessage careEvolveMessage = new AuthenticatedMessage(auth, message);
+
+        String json = new GsonBuilder().serializeNulls().setPrettyPrinting().create().toJson(careEvolveMessage);
+
+        Response response = Request.Post(endpoint).bodyString(json, ContentType.APPLICATION_JSON).execute();
+        HttpResponse httpResponse = response.returnResponse();
+
+        String responseString = EntityUtils.toString(httpResponse.getEntity());
+
+        if (httpResponse.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
+            OrderResponse orderResponse = new Gson().fromJson(IOUtils.toString(httpResponse.getEntity().getContent()), OrderResponse.class);
+            return orderResponse;
+        } else {
+            logger.error("Order {} returned {} with {}", message.getName(), httpResponse.getStatusLine().getStatusCode(), responseString);
+            throw new CareEvolveException("CareEvolve returned " + httpResponse.getStatusLine().getStatusCode() + " with " + responseString);
+        }
     }
 
     public static Patient fromElasticData(JsonObject data) {
@@ -186,113 +291,5 @@ public class Covid19OrderRegistrar {
             throw new IllegalArgumentException("data must be non-null");
         }
         return patient;
-    }
-
-    public OrderResponse orderTest(Authentication auth, Patient participant, String kitLabel, String kitId, Instant kitPickupTime) throws CareEvolveException {
-        String patientId = participant.getPatientId();
-        if (!(participant.hasFullName() && participant.hasDateOfBirth() && participant.hasAddress())) {
-            throw new CareEvolveException("Cannot place order with incomplete data for " + patientId);
-        }
-        List<AOE> aoes = AOE.forTestBoston(patientId, kitId);
-        Message message = new Message(new Order(careEvolveAccount, participant, kitLabel, kitPickupTime, provider, aoes), kitId);
-
-        OrderResponse orderResponse = null;
-
-        boolean orderSucceeded = false;
-        Collection<Exception> orderExceptions = new ArrayList<>();
-        int numAttempts = 0;
-        do {
-            try {
-                orderResponse = orderTest(auth, message);
-                orderSucceeded = true;
-                logger.info("Placed CE order {} {} for Participant {}", orderResponse.getHandle(), orderResponse.getHl7Ack(),
-                        participant.getPatientId());
-            } catch (IOException e) {
-                orderExceptions.add(e);
-                logger.warn("Could not order test for " + patientId + ".  Pausing for " + retryWaitMillis + "ms before retry " + numAttempts + "/" + maxRetries, e);
-                try {
-                    Thread.sleep(retryWaitMillis);
-                } catch (InterruptedException interruptedException) {
-                    logger.error("Interrupted while waiting for CE order retry for patient " + patientId, e);
-                }
-            }
-            numAttempts++;
-        } while (numAttempts < maxRetries && !orderSucceeded);
-
-        if (!orderSucceeded) {
-            String exceptionsText = StringUtils.join(orderExceptions, "\n");
-            throw new CareEvolveException("Could not order test for " + patientId + " after " + maxRetries + ":\n" + exceptionsText);
-        }
-
-        if (StringUtils.isNotBlank(orderResponse.getError())) {
-            throw new CareEvolveException("Order for participant " + patientId + " with handle  " + orderResponse.getHandle() + " placed "
-                    + "with error " + orderResponse.getError());
-        }
-        return orderResponse;
-    }
-
-    /**
-     * Places an order in CareEvolve
-     *
-     * @param auth             the API credentials
-     * @param participantHruid hruid for the participant
-     * @param kitLabel         The label on the swab.  Corresponds to ORC-2 and GP sample_id
-     * @param kitId            an identifier that will show up in Birch to help
-     *                         associate the result back to the proper kit
-     * @param kitPickupTime    the time at which the kit was picked
-     * @param cfg
-     */
-    public OrderResponse orderTest(Authentication auth, String participantHruid, String kitLabel,
-                                   String kitId, Instant kitPickupTime, Connection conn, Config cfg) throws CareEvolveException {
-        if (kitPickupTime == null) {
-            throw new CareEvolveException("Cannot place order for " + kitLabel + " without a pickup time");
-        }
-        try {
-            esClient = ElasticSearchUtil.getClientForElasticsearchCloudCF(cfg.getString(ApplicationConfigConstants.ES_URL),
-                    cfg.getString(ApplicationConfigConstants.ES_USERNAME), cfg.getString(ApplicationConfigConstants.ES_PASSWORD),
-                    cfg.getString(ApplicationConfigConstants.ES_PROXY));
-        } catch (MalformedURLException e) {
-            throw new RuntimeException("Could not initialize es client", e);
-        }
-        DDPInstance ddpInstance = DDPInstance.getDDPInstanceWithRole("testboston", DBConstants.HAS_KIT_REQUEST_ENDPOINTS, conn);
-        Map<String, Map<String, Object>> esData = ElasticSearchUtil.getSingleParticipantFromES(ddpInstance.getName(),
-                ddpInstance.getParticipantIndexES(), esClient, participantHruid);
-
-        if (esData.size() == 1) {
-            JsonObject data = new JsonParser().parse(new Gson().toJson(esData.values().iterator().next())).getAsJsonObject();
-            if (data != null) {
-                Patient patient = fromElasticData(data);
-                return orderTest(auth, patient, kitLabel, kitId, kitPickupTime);
-            } else {
-                throw new CareEvolveException("No participant data for " + participantHruid + ".  Cannot register order.");
-            }
-        } else {
-            throw new CareEvolveException("No participant data found for " + participantHruid + ".  Cannot register order.");
-        }
-    }
-
-    /**
-     * Order a test using the given auth and message details.
-     * Returns an {@link OrderResponse} when the order has been
-     * placed successfully.  Otherwise, an exception is thrown.
-     */
-    private OrderResponse orderTest(Authentication auth, Message message) throws IOException {
-        logger.info("About to send {} as {} to {}", message.getName(), endpoint);
-        AuthenticatedMessage careEvolveMessage = new AuthenticatedMessage(auth, message);
-
-        String json = new GsonBuilder().serializeNulls().setPrettyPrinting().create().toJson(careEvolveMessage);
-
-        Response response = Request.Post(endpoint).bodyString(json, ContentType.APPLICATION_JSON).execute();
-        HttpResponse httpResponse = response.returnResponse();
-
-        String responseString = EntityUtils.toString(httpResponse.getEntity());
-
-        if (httpResponse.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
-            OrderResponse orderResponse = new Gson().fromJson(IOUtils.toString(httpResponse.getEntity().getContent()), OrderResponse.class);
-            return orderResponse;
-        } else {
-            logger.error("Order {} returned {} with {}", message.getName(), httpResponse.getStatusLine().getStatusCode(), responseString);
-            throw new CareEvolveException("CareEvolve returned " + httpResponse.getStatusLine().getStatusCode() + " with " + responseString);
-        }
     }
 }

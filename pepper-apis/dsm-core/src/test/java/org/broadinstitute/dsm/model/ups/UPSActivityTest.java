@@ -13,15 +13,12 @@ public class UPSActivityTest {
 
     private UPSActivity deliveredActivity;
 
-    private UPSActivity labelGenerated = new UPSActivity((String) null, new UPSStatus("M", "Printed some stuff", "MO"), "20201117",
-            "015327", null, null, null);
+    private UPSActivity labelGenerated = new UPSActivity((String) null, new UPSStatus("M", "Printed some stuff", "MO"), "20201117", "015327", null, null, null);
 
     @Before
     public void setUp() {
-        inTransitActivity = new UPSActivity((UPSLocation) null, new UPSStatus("I", "On the way!", "IX"), "20201113", "195327", null, null
-                , null);
-        deliveredActivity = new UPSActivity((UPSLocation) null, new UPSStatus("D", "You got it!", "DX"), "20201117", "015327", null, null
-                , null);
+        inTransitActivity = new UPSActivity((UPSLocation) null, new UPSStatus("I", "On the way!", "IX"), "20201113", "195327", null, null, null);
+        deliveredActivity = new UPSActivity((UPSLocation) null, new UPSStatus("D", "You got it!", "DX"), "20201117", "015327", null, null, null);
     }
 
 

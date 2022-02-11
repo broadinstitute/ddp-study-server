@@ -1,16 +1,21 @@
 package org.broadinstitute.dsm.route;
 
-import com.google.gson.JsonPrimitive;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import org.broadinstitute.ddp.handlers.util.Result;
 import org.broadinstitute.dsm.db.EditParticipantMessage;
 import org.broadinstitute.dsm.security.RequestHandler;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.RoutePath;
 import org.broadinstitute.dsm.statics.UserErrorMessages;
-import org.broadinstitute.lddp.handlers.util.Result;
+import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import spark.Request;
 import spark.Response;
+
+import java.util.List;
+import java.util.Map;
 
 public class EditParticipantMessageReceiverRoute extends RequestHandler {
 
@@ -28,9 +33,9 @@ public class EditParticipantMessageReceiverRoute extends RequestHandler {
 
             if (DBConstants.MESSAGE_RECEIVED_STATUS.equals(status)) {
                 EditParticipantMessage.updateMessageStatusById(messageId, DBConstants.MESSAGE_SENT_BACK_STATUS);
-                return new Result(200, new JsonPrimitive(message).toString());
+                return new Result(200, new JSONObject(message).toString());
             }
-            return new Result(200, new JsonPrimitive("").toString());
+            return new Result(200, new JSONObject("{}").toString());
         }
         logger.error("Request method not known");
         response.status(500);

@@ -1,37 +1,16 @@
 package org.broadinstitute.dsm;
 
-import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
-
-import java.io.File;
-import java.io.FileInputStream;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import com.google.gson.JsonObject;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.dsm.db.Cancer;
-import org.broadinstitute.dsm.db.DDPInstance;
-import org.broadinstitute.dsm.db.Drug;
-import org.broadinstitute.dsm.db.FieldSettings;
-import org.broadinstitute.dsm.db.InstanceSettings;
-import org.broadinstitute.dsm.db.MedicalRecord;
-import org.broadinstitute.dsm.db.NationalDeathIndex;
-import org.broadinstitute.dsm.db.OncHistoryDetail;
-import org.broadinstitute.dsm.db.ParticipantExit;
-import org.broadinstitute.dsm.db.Tissue;
+import org.broadinstitute.ddp.db.SimpleResult;
+import org.broadinstitute.ddp.util.GoogleBucket;
+import org.broadinstitute.dsm.db.*;
 import org.broadinstitute.dsm.db.dto.settings.InstanceSettingsDto;
+import org.broadinstitute.dsm.model.NDIUploadObject;
 import org.broadinstitute.dsm.exception.FileColumnMissing;
 import org.broadinstitute.dsm.model.KitRequestSettings;
 import org.broadinstitute.dsm.model.KitType;
-import org.broadinstitute.dsm.model.NDIUploadObject;
 import org.broadinstitute.dsm.model.Value;
 import org.broadinstitute.dsm.model.gbf.LineItem;
 import org.broadinstitute.dsm.model.gbf.Orders;
@@ -42,15 +21,14 @@ import org.broadinstitute.dsm.util.DBTestUtil;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.broadinstitute.dsm.util.TestUtil;
 import org.broadinstitute.dsm.util.externalShipper.GBFRequestUtil;
-import org.broadinstitute.lddp.db.SimpleResult;
-import org.broadinstitute.lddp.util.GoogleBucket;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.*;
 import org.w3c.dom.Node;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.util.*;
+
+import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
 
 public class DirectMethodTest extends TestHelper {
 
@@ -92,8 +70,7 @@ public class DirectMethodTest extends TestHelper {
         String stringFromQuery = DBTestUtil.getStringFromQuery("select count(*) from field_settings where ddp_instance_id = (" +
                         "select ddp_instance_id from ddp_instance where instance_name = ?) and not (deleted <=> 1)",
                 strings, "count(*)");
-        Assert.assertEquals("getFieldSettingsTest: Configuration error: More than two settings found for TEST_DDP", 2,
-                Integer.parseInt(stringFromQuery));
+        Assert.assertEquals("getFieldSettingsTest: Configuration error: More than two settings found for TEST_DDP", 2, Integer.parseInt(stringFromQuery));
 
         //Test the getFieldSettings method
         Map<String, Collection<FieldSettings>> fieldSettings = FieldSettings.getFieldSettings(TEST_DDP);
@@ -225,14 +202,12 @@ public class DirectMethodTest extends TestHelper {
 
     @Test
     public void tissue() {
-        String medicalRecordId = DBTestUtil.getQueryDetail(MedicalRecord.SQL_SELECT_MEDICAL_RECORD + " and inst.ddp_institution_id = "
-                + "\"TEST_INSTITUTION\" and p.ddp_participant_id = \"TEST_PARTICIPANT\"", TEST_DDP, "medical_record_id");
+        String medicalRecordId = DBTestUtil.getQueryDetail(MedicalRecord.SQL_SELECT_MEDICAL_RECORD + " and inst.ddp_institution_id = \"TEST_INSTITUTION\" and p.ddp_participant_id = \"TEST_PARTICIPANT\"", TEST_DDP, "medical_record_id");
 
         //get oncHistoryDetailId
         ArrayList strings = new ArrayList<>();
         strings.add(medicalRecordId);
-        String oncHistoryDetailId = DBTestUtil.getStringFromQuery("select * from ddp_onc_history_detail where medical_record_id = ?",
-                strings, "onc_history_detail_id");
+        String oncHistoryDetailId = DBTestUtil.getStringFromQuery("select * from ddp_onc_history_detail where medical_record_id = ?", strings, "onc_history_detail_id");
 
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
@@ -249,20 +224,17 @@ public class DirectMethodTest extends TestHelper {
 
         strings = new ArrayList<>();
         strings.add(oncHistoryDetailId);
-        Assert.assertEquals(DBTestUtil.getStringFromQuery("select count(*) from ddp_tissue where onc_history_detail_id = ?", strings,
-                "count(*)"), String.valueOf(tissues.size()));
+        Assert.assertEquals(DBTestUtil.getStringFromQuery("select count(*) from ddp_tissue where onc_history_detail_id = ?", strings, "count(*)"), String.valueOf(tissues.size()));
     }
 
     @Test
     public void oncHistoryDetail() {
-        String medicalRecordId = DBTestUtil.getQueryDetail(MedicalRecord.SQL_SELECT_MEDICAL_RECORD + " and inst.ddp_institution_id = "
-                + "\"TEST_INSTITUTION\" and p.ddp_participant_id = \"TEST_PARTICIPANT\"", TEST_DDP, "medical_record_id");
+        String medicalRecordId = DBTestUtil.getQueryDetail(MedicalRecord.SQL_SELECT_MEDICAL_RECORD + " and inst.ddp_institution_id = \"TEST_INSTITUTION\" and p.ddp_participant_id = \"TEST_PARTICIPANT\"", TEST_DDP, "medical_record_id");
 
         //get oncHistoryDetailId
         ArrayList strings = new ArrayList<>();
         strings.add(medicalRecordId);
-        String oncHistoryDetailId = DBTestUtil.getStringFromQuery("select * from ddp_onc_history_detail where medical_record_id = ?",
-                strings, "onc_history_detail_id");
+        String oncHistoryDetailId = DBTestUtil.getStringFromQuery("select * from ddp_onc_history_detail where medical_record_id = ?", strings, "onc_history_detail_id");
 
 
         SimpleResult results = inTransaction((conn) -> {
@@ -281,8 +253,7 @@ public class DirectMethodTest extends TestHelper {
 
     @Test
     public void medicalRecord() {
-        String medicalRecordId = DBTestUtil.getQueryDetail(MedicalRecord.SQL_SELECT_MEDICAL_RECORD + " and inst.ddp_institution_id = "
-                + "\"TEST_INSTITUTION\" and p.ddp_participant_id = \"TEST_PARTICIPANT\"", TEST_DDP, "medical_record_id");
+        String medicalRecordId = DBTestUtil.getQueryDetail(MedicalRecord.SQL_SELECT_MEDICAL_RECORD + " and inst.ddp_institution_id = \"TEST_INSTITUTION\" and p.ddp_participant_id = \"TEST_PARTICIPANT\"", TEST_DDP, "medical_record_id");
 
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
@@ -319,9 +290,7 @@ public class DirectMethodTest extends TestHelper {
         List<MedicalRecord> medicalRecords = medicalRecord.get("TEST_PARTICIPANT");
         List strings = new ArrayList<>();
         strings.add(participantId);
-        Assert.assertEquals(DBTestUtil.getStringFromQuery("select count(*) from ddp_medical_record mr, ddp_institution inst, "
-                + "ddp_participant pat where mr.institution_id = inst.institution_id and inst.participant_id = pat.participant_id and pat"
-                + ".participant_id = ? ", strings, "count(*)"), String.valueOf(medicalRecords.size()));
+        Assert.assertEquals(DBTestUtil.getStringFromQuery("select count(*) from ddp_medical_record mr, ddp_institution inst, ddp_participant pat where mr.institution_id = inst.institution_id and inst.participant_id = pat.participant_id and pat.participant_id = ? ", strings, "count(*)"), String.valueOf(medicalRecords.size()));
     }
 
     @Test
@@ -362,8 +331,7 @@ public class DirectMethodTest extends TestHelper {
         strings.add("EXIT_PARTICIPANT");
 
         //check that the participant is in the exit table
-        Assert.assertEquals("1", DBTestUtil.getStringFromQuery("select count(*) from ddp_participant_exit where ddp_instance_id = (select"
-                + " ddp_instance_id from ddp_instance where instance_name = ?) and ddp_participant_id = ?", strings, "count(*)"));
+        Assert.assertEquals("1", DBTestUtil.getStringFromQuery("select count(*) from ddp_participant_exit where ddp_instance_id = (select ddp_instance_id from ddp_instance where instance_name = ?) and ddp_participant_id = ?", strings, "count(*)"));
 
         //get list of exit participants for the test ddp
         Collection<ParticipantExit> exitedParticipants = ParticipantExit.getExitedParticipants(TEST_DDP).values();
@@ -377,16 +345,14 @@ public class DirectMethodTest extends TestHelper {
 
         input += headers + "\n";
 
-        String participantId1 =
-                "IAMGROOTIAMGROOTIAMGROOTIAMGROOTIAMGROOTIAMGROOTIAMGROOTVERYLONGPARTICIPANTIDWHICHDOESNOTMAKESENSEBUTWILLTHROWERRORFORCOLLABORATORPARTICIPANTIDANDSAMPLEIDIAMGROOTHOPEFULLYITISNOWLONGENOUGHIAMGROOTIAMGROOT";
+        String participantId1 = "IAMGROOTIAMGROOTIAMGROOTIAMGROOTIAMGROOTIAMGROOTIAMGROOTVERYLONGPARTICIPANTIDWHICHDOESNOTMAKESENSEBUTWILLTHROWERRORFORCOLLABORATORPARTICIPANTIDANDSAMPLEIDIAMGROOTHOPEFULLYITISNOWLONGENOUGHIAMGROOTIAMGROOT";
         String firstNameShort = randomStringGenerator(10, true, false, false);
         String lastNameShort = randomStringGenerator(15, true, false, false);
         String middleLetter = randomStringGenerator(1, true, false, false);
         String year1 = randomStringGenerator(4, false, false, true);
         String month1 = randomStringGenerator(2, false, false, true);
         String day1 = randomStringGenerator(2, false, false, true);
-        String line1 =
-                participantId1 + "\t" + firstNameShort + "\t" + middleLetter + "\t" + lastNameShort + "\t" + year1 + "\t" + month1 + "\t" + day1;
+        String line1 = participantId1 + "\t" + firstNameShort + "\t" + middleLetter + "\t" + lastNameShort + "\t" + year1 + "\t" + month1 + "\t" + day1;
         input += line1 + "\n";
 
 
@@ -396,7 +362,8 @@ public class DirectMethodTest extends TestHelper {
         String output = null;
         try {
             output = NationalDeathIndex.createOutputTxtFile(requests, "test");
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             Assert.assertEquals("Error inserting control numbers into DB ", e.getMessage());
         }
         Assert.assertNull(output);
@@ -410,11 +377,9 @@ public class DirectMethodTest extends TestHelper {
         String secondCNumber = controlNumber1.get(1);
         Assert.assertNotEquals(firstCNumber, secondCNumber);
 
-        String uniqueness = DBTestUtil.getQueryDetail("SELECT * FROM ddp_ndi WHERE BINARY ndi_control_number = ?", firstCNumber,
-                "ndi_control_number");
+        String uniqueness = DBTestUtil.getQueryDetail("SELECT * FROM ddp_ndi WHERE BINARY ndi_control_number = ?", firstCNumber, "ndi_control_number");
         Assert.assertNull(uniqueness);
-        uniqueness = DBTestUtil.getQueryDetail("SELECT * FROM ddp_ndi WHERE BINARY ndi_control_number = ?", secondCNumber,
-                "ndi_control_number");
+        uniqueness = DBTestUtil.getQueryDetail("SELECT * FROM ddp_ndi WHERE BINARY ndi_control_number = ?", secondCNumber, "ndi_control_number");
         Assert.assertNull(uniqueness);
 
         String afterFirstCNumber = NationalDeathIndex.generateNextControlNumber(firstCNumber);
@@ -432,8 +397,7 @@ public class DirectMethodTest extends TestHelper {
         String year1 = randomStringGenerator(4, false, false, true);
         String month1 = randomStringGenerator(2, false, false, true);
         String day1 = randomStringGenerator(2, false, false, true);
-        String line1 =
-                participantId1 + "\t" + firstNameShort + "\t" + middleLetter + "\t" + lastNameShort + "\t" + year1 + "\t" + month1 + "\t" + day1;
+        String line1 = participantId1 + "\t" + firstNameShort + "\t" + middleLetter + "\t" + lastNameShort + "\t" + year1 + "\t" + month1 + "\t" + day1;
         input += line1 + "\n";
 
         String participantId2 = "2";
@@ -443,8 +407,7 @@ public class DirectMethodTest extends TestHelper {
         String year2 = randomStringGenerator(4, false, false, true);
         String month2 = randomStringGenerator(1, false, false, true);
         String day2 = randomStringGenerator(1, false, false, true);
-        String line2 = participantId2 + "\t" + firstNameLong + "\t" + middleEmpty + "\t" + lastNameLong + "\t" + year2 + "\t" + month2 +
-                "\t" + day2;
+        String line2 = participantId2 + "\t" + firstNameLong + "\t" + middleEmpty + "\t" + lastNameLong + "\t" + year2 + "\t" + month2 + "\t" + day2;
         input += line2;
 
         List<NDIUploadObject> requests = NDIRoute.isFileValid(input);
@@ -482,8 +445,7 @@ public class DirectMethodTest extends TestHelper {
         String junks = String.valueOf(junk);
         Assert.assertEquals(junks, ndiRow1.substring(53, 81));
         Assert.assertEquals("         ", ndiRow1.substring(91));
-        String ptIdInDB = DBTestUtil.getQueryDetail("SELECT * FROM ddp_ndi WHERE ndi_control_number = ? COLLATE utf8_bin",
-                controlNumber1.get(0), "ddp_participant_id");
+        String ptIdInDB = DBTestUtil.getQueryDetail("SELECT * FROM ddp_ndi WHERE ndi_control_number = ? COLLATE utf8_bin", controlNumber1.get(0), "ddp_participant_id");
         Assert.assertEquals(participantId1, ptIdInDB);
 
         String ndiRow2 = output.substring(101, output.indexOf("\n", 102));
@@ -530,15 +492,15 @@ public class DirectMethodTest extends TestHelper {
         String year1 = randomStringGenerator(4, false, false, true);
         String month1 = randomStringGenerator(2, false, false, true);
         String day1 = randomStringGenerator(2, false, false, true);
-        String line1 =
-                participantId1 + "\t" + firstNameShort + "\t" + middleLetter + "\t" + lastNameShort + "\t" + year1 + "\t" + month1 + "\t" + day1;
+        String line1 = participantId1 + "\t" + firstNameShort + "\t" + middleLetter + "\t" + lastNameShort + "\t" + year1 + "\t" + month1 + "\t" + day1;
         input += line1 + "\n";
         int size1 = Integer.parseInt(DBTestUtil.selectFromTable("count(*)", "ddp_ndi"));
 
         List<NDIUploadObject> requests = null;
         try {
             requests = NDIRoute.isFileValid(input);
-        } catch (FileColumnMissing exception) {
+        }
+        catch (FileColumnMissing exception) {
             int size2 = Integer.parseInt(DBTestUtil.selectFromTable("count(*)", "ddp_ndi"));
             Assert.assertEquals(size1, size2);
             Assert.assertEquals(exception.getMessage(), "File is missing column participantId");
@@ -555,13 +517,13 @@ public class DirectMethodTest extends TestHelper {
         String year2 = randomStringGenerator(4, false, false, true);
         String month2 = randomStringGenerator(1, false, false, true);
         String day2 = randomStringGenerator(1, false, false, true);
-        String line2 =
-                participantId2 + "\t" + firstName + "\t" + middleEmpty + "\t" + lastName + "\t" + year2 + "\t" + month2 + "\t" + day2;
+        String line2 = participantId2 + "\t" + firstName + "\t" + middleEmpty + "\t" + lastName + "\t" + year2 + "\t" + month2 + "\t" + day2;
         input += line2;
 
         try {
             requests = NDIRoute.isFileValid(input);
-        } catch (RuntimeException exception) {
+        }
+        catch (RuntimeException exception) {
 
             Assert.assertEquals(exception.getMessage(), "Text file is not valid. Couldn't be parsed to upload object ");
         }
@@ -584,7 +546,8 @@ public class DirectMethodTest extends TestHelper {
 
         try {
             requests = NDIRoute.isFileValid(input);
-        } catch (RuntimeException exception) {
+        }
+        catch (RuntimeException exception) {
             Assert.assertEquals(exception.getMessage(), "Please use tab as separator in the text file");
         }
         Assert.assertNull(requests);
@@ -598,7 +561,8 @@ public class DirectMethodTest extends TestHelper {
 
         try {
             requests = NDIRoute.isFileValid(input);
-        } catch (RuntimeException exception) {
+        }
+        catch (RuntimeException exception) {
             Assert.assertEquals(exception.getMessage(), "Error in line 2");
         }
         Assert.assertNull(requests);
@@ -636,15 +600,13 @@ public class DirectMethodTest extends TestHelper {
 
     @Test // add new drug
     public void drugListingsPATCH() {
-        String oldDrugId = DBTestUtil.getStringFromQuery("select drug_id from drug_list where display_name = \'DRUG (TEST)\'", null,
-                "drug_id");
+        String oldDrugId = DBTestUtil.getStringFromQuery("select drug_id from drug_list where display_name = \'DRUG (TEST)\'", null, "drug_id");
         DBTestUtil.executeQuery("DELETE FROM drug_list WHERE drug_id = " + oldDrugId);
 
         Drug sampleDrug = new Drug(-1, "DRUG (TEST)", "DRUG", "TEST", "DRUGTEST", "D", false, "H", "N", true);
         Drug.addDrug("1", sampleDrug);
 
-        String drugId = DBTestUtil.getStringFromQuery("select drug_id from drug_list where display_name = \'DRUG (TEST)\'", null,
-                "drug_id");
+        String drugId = DBTestUtil.getStringFromQuery("select drug_id from drug_list where display_name = \'DRUG (TEST)\'", null, "drug_id");
 
         // check that the value was changed
         List<String> values = new ArrayList<>();
@@ -683,20 +645,17 @@ public class DirectMethodTest extends TestHelper {
         String nameInBucket = "unitTest_fileUpload";
         File file = TestUtil.getResouresFile("BSPscreenshot.png");
         //upload File
-        String fileName = GoogleBucket.uploadFile(cfg.getString("portal.googleProjectCredentials"), cfg.getString("portal"
-                        + ".googleProjectName"),
+        String fileName = GoogleBucket.uploadFile(cfg.getString("portal.googleProjectCredentials"), cfg.getString("portal.googleProjectName"),
                 cfg.getString("portal.discardSampleBucket"), nameInBucket, new FileInputStream(file));
         Assert.assertNotNull(fileName);
 
         //download file
-        byte[] downloadedFile = GoogleBucket.downloadFile(cfg.getString("portal.googleProjectCredentials"), cfg.getString("portal"
-                        + ".googleProjectName"),
+        byte[] downloadedFile = GoogleBucket.downloadFile(cfg.getString("portal.googleProjectCredentials"), cfg.getString("portal.googleProjectName"),
                 cfg.getString("portal.discardSampleBucket"), nameInBucket);
         Assert.assertNotNull(downloadedFile);
 
         //delete file
-        boolean fileDeleted = GoogleBucket.deleteFile(cfg.getString("portal.googleProjectCredentials"), cfg.getString("portal"
-                        + ".googleProjectName"),
+        boolean fileDeleted = GoogleBucket.deleteFile(cfg.getString("portal.googleProjectCredentials"), cfg.getString("portal.googleProjectName"),
                 cfg.getString("portal.discardSampleBucket"), nameInBucket);
         Assert.assertTrue(fileDeleted);
     }
@@ -710,8 +669,7 @@ public class DirectMethodTest extends TestHelper {
         List<LineItem> lineItems = new ArrayList<>();
         lineItems.add(new LineItem("378186", "1"));
         lineItems.add(new LineItem("378188", "2"));
-        org.broadinstitute.dsm.model.gbf.Order order = new org.broadinstitute.dsm.model.gbf.Order("ID-000814", "C7037154", "A10000018",
-                shippingInfo, lineItems);
+        org.broadinstitute.dsm.model.gbf.Order order = new org.broadinstitute.dsm.model.gbf.Order("ID-000814", "C7037154", "A10000018", shippingInfo, lineItems);
         Orders orders = new Orders();
         orders.setOrders(new ArrayList<>());
         orders.getOrders().add(order);
@@ -722,8 +680,7 @@ public class DirectMethodTest extends TestHelper {
     @Test
     public void gbfConfirmation() throws Exception {
         String shippingConfirmationResponse = TestUtil.readFile("gbf/ShippingConfirmation.xml");
-        ShippingConfirmations shippingConfirmations = GBFRequestUtil.objectFromXMLString(ShippingConfirmations.class,
-                shippingConfirmationResponse);
+        ShippingConfirmations shippingConfirmations = GBFRequestUtil.objectFromXMLString(ShippingConfirmations.class, shippingConfirmationResponse);
         Assert.assertNotNull(shippingConfirmations);
         Assert.assertTrue(!shippingConfirmations.getShippingConfirmations().isEmpty());
         Assert.assertTrue(shippingConfirmations.getShippingConfirmations().size() == 1);
@@ -732,8 +689,7 @@ public class DirectMethodTest extends TestHelper {
     @Test
     public void findOrderInShippingConfirmation() throws Exception {
         String shippingConfirmationResponse = TestUtil.readFile("gbf/ShippingConfirmation.xml");
-        Node node = GBFRequestUtil.getXMLNode(shippingConfirmationResponse,
-                "/ShippingConfirmations/ShippingConfirmation[@OrderNumber=\'" + "PROM-000824" + "\']");
+        Node node = GBFRequestUtil.getXMLNode(shippingConfirmationResponse, "/ShippingConfirmations/ShippingConfirmation[@OrderNumber=\'" + "PROM-000824" + "\']");
         Assert.assertNotNull(node);
         String nodeAsString = GBFRequestUtil.getStringFromNode(node);
         Assert.assertTrue(StringUtils.isNotBlank(nodeAsString));
@@ -778,7 +734,7 @@ public class DirectMethodTest extends TestHelper {
                 }), Assert::fail);
     }
 
-    @Ignore("ES values are changing a lot because of testing")
+    @Ignore ("ES values are changing a lot because of testing")
     @Test
     public void mbcLegacyPTGUID() {
         DDPInstance instance = DDPInstance.getDDPInstance("Pepper-MBC");
@@ -787,7 +743,7 @@ public class DirectMethodTest extends TestHelper {
         Assert.assertTrue(!participants.isEmpty());
     }
 
-    @Ignore("ES values are changing a lot because of testing")
+    @Ignore ("ES values are changing a lot because of testing")
     @Test
     public void mbcLegacyPTAltPID() {
         DDPInstance instance = DDPInstance.getDDPInstance("Pepper-MBC");

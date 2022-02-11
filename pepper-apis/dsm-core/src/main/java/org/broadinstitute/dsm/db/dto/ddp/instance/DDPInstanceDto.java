@@ -1,12 +1,12 @@
 package org.broadinstitute.dsm.db.dto.ddp.instance;
 
+import lombok.Data;
+import org.apache.commons.lang3.StringUtils;
+
 import java.lang.reflect.Field;
-import java.util.Arrays;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-
-import lombok.Data;
 
 @Data
 public class DDPInstanceDto {
@@ -31,6 +31,15 @@ public class DDPInstanceDto {
     String esParticipantIndex;
     String esActivityDefinitionIndex;
     String esUsersIndex;
+
+    public List<String> getNotificationRecipients() {
+        if (StringUtils.isBlank(notificationRecipients)) {
+            return Collections.emptyList();
+        }
+        notificationRecipients = notificationRecipients.replaceAll("\\s", "");
+        return Arrays.asList(notificationRecipients.split(","));
+    }
+
 
     private DDPInstanceDto(Builder builder) {
         Class<DDPInstanceDto> ddpInstanceDtoClazz = DDPInstanceDto.class;

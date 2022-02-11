@@ -1,9 +1,5 @@
 package org.broadinstitute.dsm.pubsub;
 
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.concurrent.TimeUnit;
-
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutureCallback;
 import com.google.api.core.ApiFutures;
@@ -16,6 +12,10 @@ import com.google.pubsub.v1.PubsubMessage;
 import com.google.pubsub.v1.TopicName;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.concurrent.TimeUnit;
 
 
 public class KitTrackerPubSubPublisher {
@@ -68,12 +68,8 @@ public class KitTrackerPubSubPublisher {
         } finally {
             if (publisher != null) {
                 // When finished with the publisher, shutdown to free up resources.
-                try {
-                    publisher.shutdown();
-                    publisher.awaitTermination(1, TimeUnit.MINUTES);
-                } catch (Exception e) {
-                    //TODO DSM 
-                }
+                publisher.shutdown();
+                publisher.awaitTermination(1, TimeUnit.MINUTES);
             }
         }
 

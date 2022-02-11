@@ -7,7 +7,7 @@ public class StatusPair {
     String type;
     String trackingId;
 
-    public StatusPair(String type, String trackingId) {
+    public StatusPair(String type, String trackingId){
         this.type = type;
         this.trackingId = trackingId;
     }

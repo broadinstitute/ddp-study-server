@@ -8,22 +8,20 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Optional;
 
+import org.broadinstitute.ddp.db.SimpleResult;
 import org.broadinstitute.dsm.db.dao.Dao;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDto;
-import org.broadinstitute.lddp.db.SimpleResult;
 
 public class ParticipantDao implements Dao<ParticipantDto> {
 
-    private static final String SQL_INSERT_PARTICIPANT = "INSERT INTO ddp_participant (ddp_participant_id, last_version, "
-            + "last_version_date, ddp_instance_id, release_completed, " +
-            "assignee_id_mr, assignee_id_tissue, last_changed, changed_by) VALUES (?,?,?,?,?,?,?,?,?) ON DUPLICATE KEY UPDATE "
-            + "last_changed = ?, changed_by = ?";
+    private static final String SQL_INSERT_PARTICIPANT = "INSERT INTO ddp_participant (ddp_participant_id, last_version, last_version_date, ddp_instance_id, release_completed, " +
+            "assignee_id_mr, assignee_id_tissue, last_changed, changed_by) VALUES (?,?,?,?,?,?,?,?,?) ON DUPLICATE KEY UPDATE last_changed = ?, changed_by = ?";
 
     @Override
     public int create(ParticipantDto participantDto) {
         SimpleResult simpleResult = inTransaction(conn -> {
             SimpleResult dbVals = new SimpleResult(-1);
-            try (PreparedStatement stmt = conn.prepareStatement(SQL_INSERT_PARTICIPANT, Statement.RETURN_GENERATED_KEYS)) {
+            try (PreparedStatement stmt = conn.prepareStatement(SQL_INSERT_PARTICIPANT, Statement.RETURN_GENERATED_KEYS )) {
                 stmt.setString(1, participantDto.getDdpParticipantId().orElse(null));
                 stmt.setObject(2, participantDto.getLastVersion().orElse(null));
                 stmt.setString(3, participantDto.getLastVersionDate().orElse(null));
@@ -48,8 +46,7 @@ public class ParticipantDao implements Dao<ParticipantDto> {
             return dbVals;
         });
         if (simpleResult.resultException != null) {
-            throw new RuntimeException("Error inserting participant with id: " + participantDto.getDdpParticipantId().orElse(""),
-                    simpleResult.resultException);
+            throw new RuntimeException("Error inserting participant with id: " + participantDto.getDdpParticipantId().orElse(""), simpleResult.resultException);
         }
         return (int) simpleResult.resultValue;
     }

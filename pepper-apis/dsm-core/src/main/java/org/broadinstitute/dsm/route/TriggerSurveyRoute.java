@@ -1,22 +1,15 @@
 package org.broadinstitute.dsm.route;
 
-import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
-
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.Statement;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import javax.servlet.http.HttpServletRequest;
-
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.ddp.util.ConfigUtil;
+import org.broadinstitute.ddp.db.SimpleResult;
+import org.broadinstitute.ddp.db.TransactionWrapper;
+import org.broadinstitute.ddp.handlers.util.ParticipantSurveyInfo;
+import org.broadinstitute.ddp.handlers.util.Result;
+import org.broadinstitute.ddp.handlers.util.SimpleFollowUpSurvey;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.SurveyTrigger;
 import org.broadinstitute.dsm.exception.SurveyNotCreated;
@@ -24,23 +17,26 @@ import org.broadinstitute.dsm.model.ParticipantSurveyStatusResponse;
 import org.broadinstitute.dsm.model.ParticipantSurveyUploadObject;
 import org.broadinstitute.dsm.model.ParticipantSurveyUploadResponse;
 import org.broadinstitute.dsm.security.RequestHandler;
-import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
-import org.broadinstitute.dsm.statics.DBConstants;
-import org.broadinstitute.dsm.statics.RequestParameter;
-import org.broadinstitute.dsm.statics.RoutePath;
-import org.broadinstitute.dsm.statics.UserErrorMessages;
+import org.broadinstitute.dsm.statics.*;
 import org.broadinstitute.dsm.util.DDPRequestUtil;
 import org.broadinstitute.dsm.util.SystemUtil;
 import org.broadinstitute.dsm.util.UserUtil;
-import org.broadinstitute.lddp.db.SimpleResult;
-import org.broadinstitute.lddp.handlers.util.ParticipantSurveyInfo;
-import org.broadinstitute.lddp.handlers.util.Result;
-import org.broadinstitute.lddp.handlers.util.SimpleFollowUpSurvey;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import spark.QueryParamsMap;
 import spark.Request;
 import spark.Response;
+
+import javax.servlet.http.HttpServletRequest;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+
+import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
 
 public class TriggerSurveyRoute extends RequestHandler {
 
@@ -75,25 +71,31 @@ public class TriggerSurveyRoute extends RequestHandler {
                                         infoReason.setUser(trigger.getUser());
                                         infoReason.setTriggeredDate(trigger.getTriggeredDate());
                                     }
-                                } else if (surveyInfo.getTriggerId() == -1) {
+                                }
+                                else if (surveyInfo.getTriggerId() == -1) {
                                     infoReason.setReason("Was not triggered through DSM");
-                                } else if (surveyInfo.getTriggerId() == -2) {
+                                }
+                                else if (surveyInfo.getTriggerId() == -2) {
                                     infoReason.setReason("Was triggered per Gen2");
                                 }
                                 surveyInfoReasons.add(infoReason);
                             }
                             return surveyInfoReasons;
-                        } else {
+                        }
+                        else {
                             return new Result(200, NO_SURVEY_STATUS);
                         }
-                    } else {
+                    }
+                    else {
                         //follow up surveys
                         return DDPRequestUtil.getFollowupSurveys(instance);
                     }
-                } else {
+                }
+                else {
                     throw new RuntimeException("Realm was missing");
                 }
-            } else {
+            }
+            else {
                 response.status(500);
                 return new Result(500, UserErrorMessages.NO_RIGHTS);
             }
@@ -106,26 +108,30 @@ public class TriggerSurveyRoute extends RequestHandler {
             if (queryParams.value(RoutePath.REALM) != null) {
                 realm = queryParams.get(RoutePath.REALM).value();
                 instance = DDPInstance.getDDPInstanceWithRole(realm, DBConstants.SURVEY_STATUS_ENDPOINTS);
-            } else {
+            }
+            else {
                 throw new RuntimeException("No realm query param was sent");
             }
             if (UserUtil.checkUserAccess(realm, userId, "survey_creation", userIdRequest)) {
                 String surveyName;
                 if (queryParams.value("surveyName") != null) {
                     surveyName = queryParams.get("surveyName").value();
-                } else {
+                }
+                else {
                     throw new RuntimeException("No surveyName query param was sent");
                 }
                 String surveyType;
                 if (queryParams.value("surveyType") != null) {
                     surveyType = queryParams.get("surveyType").value();
-                } else {
+                }
+                else {
                     throw new RuntimeException("No surveyType query param was sent");
                 }
                 Boolean isFileUpload;
                 if (queryParams.value("isFileUpload") != null) {
                     isFileUpload = queryParams.get("isFileUpload").booleanValue();
-                } else {
+                }
+                else {
                     throw new RuntimeException("No isFileUpload query param was sent");
                 }
 
@@ -143,7 +149,8 @@ public class TriggerSurveyRoute extends RequestHandler {
                     if (instance.isHasRole()) {
                         if (queryParams.value("comment") != null) {
                             comment = queryParams.get("comment").value();
-                        } else {
+                        }
+                        else {
                             throw new RuntimeException("No comment query param was sent");
                         }
                         surveyInfos = DDPRequestUtil.getFollowupSurveysStatus(instance, surveyName);
@@ -154,7 +161,8 @@ public class TriggerSurveyRoute extends RequestHandler {
                         if (triggerAgain) { //already participants and no file
                             String requestBody = request.body();
                             participantList = Arrays.asList(new Gson().fromJson(requestBody, ParticipantSurveyUploadObject[].class));
-                        } else {
+                        }
+                        else {
                             if (isFileUpload) {
                                 HttpServletRequest rawRequest = request.raw();
                                 String content = SystemUtil.getBody(rawRequest);
@@ -169,7 +177,8 @@ public class TriggerSurveyRoute extends RequestHandler {
                                 if (!triggerSurvey(instance, participant, surveyTriggerId, surveyName, instance.isHasRole())) {
                                     failed.add(participant);
                                 }
-                            } else {
+                            }
+                            else {
                                 boolean alreadyTriggered = false;
                                 if (surveyInfos != null) {
                                     for (ParticipantSurveyInfo inf0 : surveyInfos) {
@@ -183,13 +192,15 @@ public class TriggerSurveyRoute extends RequestHandler {
                                     if (!triggerSurvey(instance, participant, surveyTriggerId, surveyName, instance.isHasRole())) {
                                         failed.add(participant);
                                     }
-                                } else {
+                                }
+                                else {
                                     alreadyUploaded.add(participant);
                                 }
                             }
                         }
                         return new ParticipantSurveyUploadResponse(failed, alreadyUploaded);
-                    } else {
+                    }
+                    else {
                         JsonObject jsonObject = new JsonParser().parse(request.body()).getAsJsonObject();
                         String ddpParticipantId = jsonObject.getAsJsonObject().get("participantId").getAsString();
                         SimpleFollowUpSurvey followUpSurvey = null;
@@ -216,7 +227,8 @@ public class TriggerSurveyRoute extends RequestHandler {
                         }
                     }
                 }
-            } else {
+            }
+            else {
                 response.status(500);
                 return new Result(500, UserErrorMessages.NO_RIGHTS);
             }
@@ -227,9 +239,7 @@ public class TriggerSurveyRoute extends RequestHandler {
     private long addTriggerCommentIntoDB(@NonNull String userId, @NonNull String reason, @NonNull long currentTime) {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement stmt =
-                         conn.prepareStatement(ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.INSERT_SURVEY_TRIGGER),
-                                 Statement.RETURN_GENERATED_KEYS)) {
+            try (PreparedStatement stmt = conn.prepareStatement(TransactionWrapper.getSqlFromConfig(ApplicationConfigConstants.INSERT_SURVEY_TRIGGER), Statement.RETURN_GENERATED_KEYS)) {
                 stmt.setString(1, reason);
                 stmt.setLong(2, currentTime);
                 stmt.setString(3, userId);
@@ -241,13 +251,16 @@ public class TriggerSurveyRoute extends RequestHandler {
                             logger.info("Entered survey trigger reason into db w/ id " + surveyTriggerId);
                             dbVals.resultValue = surveyTriggerId;
                         }
-                    } catch (Exception e) {
+                    }
+                    catch (Exception e) {
                         throw new RuntimeException("Error getting id of new survey trigger reason ", e);
                     }
-                } else {
+                }
+                else {
                     throw new RuntimeException("Something went wrong entering survey trigger reason into db");
                 }
-            } catch (Exception ex) {
+            }
+            catch (Exception ex) {
                 dbVals.resultException = ex;
             }
             return dbVals;
@@ -264,14 +277,16 @@ public class TriggerSurveyRoute extends RequestHandler {
         SimpleFollowUpSurvey survey = null;
         if (hasSurveyStatusEndpoint) {
             survey = new SimpleFollowUpSurvey(participant.getDDPParticipantID(), surveyTriggerId);
-        } else {
+        }
+        else {
             survey = new SimpleFollowUpSurvey(participant.getDDPParticipantID());
         }
         try {
             if (DDPRequestUtil.triggerFollowupSurvey(instance, survey, surveyName).getCode() != 200) {
                 return false;
             }
-        } catch (SurveyNotCreated e) {
+        }
+        catch (SurveyNotCreated e) {
             return false;
         }
         return true;

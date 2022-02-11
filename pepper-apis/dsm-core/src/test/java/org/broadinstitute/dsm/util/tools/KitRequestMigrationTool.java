@@ -1,25 +1,31 @@
 package org.broadinstitute.dsm.util.tools;
 
-import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
-
-import java.io.File;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.util.HashMap;
-
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import lombok.NonNull;
+import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.dsm.db.KitRequestShipping;
 import org.broadinstitute.dsm.model.KitRequestSettings;
+import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
 import org.broadinstitute.dsm.util.DBTestUtil;
 import org.broadinstitute.dsm.util.DDPKitRequest;
 import org.broadinstitute.dsm.util.KitUtil;
 import org.broadinstitute.dsm.util.TestUtil;
 import org.broadinstitute.dsm.util.tools.util.DBUtil;
+import org.broadinstitute.dsm.util.tools.util.FileUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.util.*;
+
+import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
 
 /**
  * Tool to migrate already sent kits into dsm db
@@ -78,11 +84,13 @@ public class KitRequestMigrationTool {
                 String fileFormat = "txt";
 
                 migrate(realm, kitType, migrationFile, fileFormat);
-            } else {
+            }
+            else {
                 setup(propFile);
                 migrate(realmName, typeName, testJson, testFormat);
             }
-        } catch (Exception ex) {
+        }
+        catch (Exception ex) {
             logger.error("Failed to migrate data ", ex);
             System.exit(-1);
         }
@@ -105,15 +113,17 @@ public class KitRequestMigrationTool {
                     }
                     String bspCollaboratorParticipantLength = kitRequestSettings.getCollaboratorParticipantLengthOverwrite();
 
-                    migrateData(file, realmId, typeId, bspCollaboratorSampleType, collaboratorIdPrefix, fileFormat,
-                            bspCollaboratorParticipantLength, realm);
-                } else {
-                    logger.error("Failed to get kit request settings for typeID " + typeId + " and realmID " + realmId);
+                    migrateData(file, realmId, typeId, bspCollaboratorSampleType, collaboratorIdPrefix, fileFormat, bspCollaboratorParticipantLength, realm);
                 }
-            } else {
+                else {
+                    logger.error("Failed to get kit request settings for typeID " + typeId + " and realmID "+ realmId);
+                }
+            }
+            else {
                 logger.error("Lookup was not populated right!");
             }
-        } catch (Exception ex) {
+        }
+        catch (Exception ex) {
             throw new RuntimeException(ex);
         }
     }
@@ -123,9 +133,8 @@ public class KitRequestMigrationTool {
         //secrets from vault in a config file
         cfg = cfg.withFallback(ConfigFactory.parseFile(new File(config)));
 
-        //TODO DSM add back in
-//        TransactionWrapper.init(cfg.getInt(ApplicationConfigConstants.DSM_DB_MAX_CONNECTIONS),
-//                cfg.getString(ApplicationConfigConstants.DSM_DB_URL), cfg, false);
+        TransactionWrapper.init(cfg.getInt(ApplicationConfigConstants.DSM_DB_MAX_CONNECTIONS),
+                cfg.getString(ApplicationConfigConstants.DSM_DB_URL), cfg, false);
 
         kitUtil = new KitUtil();
     }
@@ -135,43 +144,37 @@ public class KitRequestMigrationTool {
                                     String bspCollaboratorParticipantLength, String realmName) throws Exception {
         // Request KitRequests
         String fileContent = TestUtil.readFile(jsonFile);
-        //TODO DSM add query back in
-//        if ("json".equals(fileFormat)) {
-//            JsonArray scans = (JsonArray) (new JsonParser().parse(fileContent));
-//            for (JsonElement scan : scans) {
-//                String ddpParticipantId = scan.getAsJsonObject().get("ddpParticipantId").getAsString();
-//                String shortId = scan.getAsJsonObject().get("shortId").getAsString();
-//                String kitlabel = scan.getAsJsonObject().get("kitlabel").getAsString();
-//                insertIntoDB(cfg.getString(ApplicationConfigConstants.INSERT_KIT_REQUEST), cfg.getString(ApplicationConfigConstants
-//                .INSERT_KIT),
-//                        ddpParticipantId, shortId, realmId, typeId, kitlabel, bspCollaboratorParticipantLength,
-//                        bspCollaboratorSampleType, collaboratorIdPrefix,
-//                        null, null, null, null);
-//            }
-//        }
-//        else {
-//            List<Map<String, String>> content = FileUtil.readFileContent(fileContent);
-//            for(Map<String, String> line : content) {
-//                if (RGP.equals(realmName)) {
-//                    insertIntoDB(cfg.getString(ApplicationConfigConstants.INSERT_KIT_REQUEST), cfg.getString(ApplicationConfigConstants
-//                    .INSERT_KIT),
-//                            line.get(DATSTAT_ALTPID), line.get(SHORTID), realmId, typeId, line.get(DBUtil.SM_ID),
-//                            line.get(BSP_PARTICIPANT_ID), line.get(BSP_PARTICIPANT_ID) , DBUtil.getLong(line.get(SHIPPED)), DBUtil
-//                            .getLong(line.get(DBUtil.RECEIVED)),
-//                            line.get(TRACKING_TO), line.get(TRACKING_RETURN));
-//
-//                }
-//                else {
-//                    insertIntoDB(cfg.getString(ApplicationConfigConstants.INSERT_KIT_REQUEST), cfg.getString(ApplicationConfigConstants
-//                    .INSERT_KIT),
-//                            line.get(DATSTAT_ALTPID), line.get(DATSTAT_ALTPID), realmId, typeId, line.get(DBUtil.SM_ID),
-//                            bspCollaboratorParticipantLength,
-//                            bspCollaboratorSampleType, collaboratorIdPrefix, DBUtil.getLong(line.get(SHIPPED)), DBUtil.getLong(line.get
-//                            (DBUtil.RECEIVED)),
-//                            line.get(TRACKING_TO), line.get(TRACKING_RETURN));
-//                }
-//            }
-//        }
+        if ("json".equals(fileFormat)) {
+            JsonArray scans = (JsonArray) (new JsonParser().parse(fileContent));
+            for (JsonElement scan : scans) {
+                String ddpParticipantId = scan.getAsJsonObject().get("ddpParticipantId").getAsString();
+                String shortId = scan.getAsJsonObject().get("shortId").getAsString();
+                String kitlabel = scan.getAsJsonObject().get("kitlabel").getAsString();
+                insertIntoDB(cfg.getString(ApplicationConfigConstants.INSERT_KIT_REQUEST), cfg.getString(ApplicationConfigConstants.INSERT_KIT),
+                        ddpParticipantId, shortId, realmId, typeId, kitlabel, bspCollaboratorParticipantLength,
+                        bspCollaboratorSampleType, collaboratorIdPrefix,
+                        null, null, null, null);
+            }
+        }
+        else {
+            List<Map<String, String>> content = FileUtil.readFileContent(fileContent);
+            for(Map<String, String> line : content) {
+                if (RGP.equals(realmName)) {
+                    insertIntoDB(cfg.getString(ApplicationConfigConstants.INSERT_KIT_REQUEST), cfg.getString(ApplicationConfigConstants.INSERT_KIT),
+                            line.get(DATSTAT_ALTPID), line.get(SHORTID), realmId, typeId, line.get(DBUtil.SM_ID),
+                            line.get(BSP_PARTICIPANT_ID), line.get(BSP_PARTICIPANT_ID) , DBUtil.getLong(line.get(SHIPPED)), DBUtil.getLong(line.get(DBUtil.RECEIVED)),
+                            line.get(TRACKING_TO), line.get(TRACKING_RETURN));
+
+                }
+                else {
+                    insertIntoDB(cfg.getString(ApplicationConfigConstants.INSERT_KIT_REQUEST), cfg.getString(ApplicationConfigConstants.INSERT_KIT),
+                            line.get(DATSTAT_ALTPID), line.get(DATSTAT_ALTPID), realmId, typeId, line.get(DBUtil.SM_ID),
+                            bspCollaboratorParticipantLength,
+                            bspCollaboratorSampleType, collaboratorIdPrefix, DBUtil.getLong(line.get(SHIPPED)), DBUtil.getLong(line.get(DBUtil.RECEIVED)),
+                            line.get(TRACKING_TO), line.get(TRACKING_RETURN));
+                }
+            }
+        }
     }
 
     private static void insertIntoDB(String insertKitRequestQuery, String insertKitQuery, String ddpParticipantId, String shortId,
@@ -180,14 +183,13 @@ public class KitRequestMigrationTool {
                                      Long sendDate, Long receivedDate, String trackingTo, String trackingReturn) throws Exception {
         inTransaction((conn) -> {
             try {
-                String collaboratorParticipantId = KitRequestShipping.generateBspParticipantID(collaboratorIdPrefix,
-                        bspCollaboratorParticipantLength, shortId);
+                String collaboratorParticipantId = KitRequestShipping.generateBspParticipantID(collaboratorIdPrefix, bspCollaboratorParticipantLength, shortId);
                 insertIntoDB(insertKitRequestQuery, insertKitQuery, ddpParticipantId, shortId, realm, typeId, kitLabel,
                         collaboratorParticipantId,
-                        KitRequestShipping.generateBspSampleID(conn, collaboratorParticipantId, bspCollaboratorSampleType,
-                                Integer.parseInt(typeId)),
-                        sendDate, receivedDate, trackingTo, trackingReturn);
-            } catch (Exception e) {
+                        KitRequestShipping.generateBspSampleID(conn, collaboratorParticipantId, bspCollaboratorSampleType, Integer.parseInt(typeId)),
+                        sendDate, receivedDate,trackingTo, trackingReturn);
+            }
+            catch (Exception e) {
                 throw new RuntimeException(" insertIntoDB ", e);
             }
             return null;
@@ -195,9 +197,8 @@ public class KitRequestMigrationTool {
     }
 
     private static void insertIntoDB(String insertKitRequestQuery, String insertKitQuery, String ddpParticipantId, String shortId,
-                                     String realm, String typeId, String kitLabel, String bspCollaboratorParticipantId,
-                                     String bspCollaboratorSampleId,
-                                     Long sendDate, Long receivedDate, String trackingTo, String trackingReturn) throws Exception {
+                String realm, String typeId, String kitLabel, String bspCollaboratorParticipantId, String bspCollaboratorSampleId,
+                Long sendDate, Long receivedDate, String trackingTo, String trackingReturn) throws Exception {
         inTransaction((conn) -> {
             try {
                 try (PreparedStatement stmt = conn.prepareStatement(insertKitRequestQuery)) {
@@ -242,7 +243,8 @@ public class KitRequestMigrationTool {
                         }
                     }
                 }
-            } catch (Exception e) {
+            }
+            catch (Exception e) {
                 throw new RuntimeException(" insertIntoDB ", e);
             }
             return null;
@@ -254,7 +256,8 @@ public class KitRequestMigrationTool {
             if (sendDate == null) {
                 long currentTime = System.currentTimeMillis();
                 stmt.setLong(1, currentTime);
-            } else {
+            }
+            else {
                 stmt.setLong(1, sendDate);
             }
             stmt.setString(2, "");

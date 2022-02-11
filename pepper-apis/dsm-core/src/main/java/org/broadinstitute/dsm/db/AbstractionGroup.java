@@ -1,33 +1,28 @@
 package org.broadinstitute.dsm.db;
 
-import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
+import lombok.Getter;
+import lombok.NonNull;
+import org.broadinstitute.ddp.db.SimpleResult;
+import org.broadinstitute.dsm.statics.DBConstants;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
-import lombok.Getter;
-import lombok.NonNull;
-import org.broadinstitute.dsm.statics.DBConstants;
-import org.broadinstitute.lddp.db.SimpleResult;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
 
 @Getter
 public class AbstractionGroup {
 
     private static final Logger logger = LoggerFactory.getLogger(AbstractionGroup.class);
 
-    private static final String SQL_INSERT_FORM_GROUP = "INSERT INTO medical_record_abstraction_group SET display_name = ?, "
-            + "ddp_instance_id = (SELECT ddp_instance_id from ddp_instance where instance_name = ?), order_number = ?";
-    private static final String SQL_DELETE_FORM_GROUP = "UPDATE medical_record_abstraction_group SET deleted = 1 WHERE "
-            + "medical_record_abstraction_group_id = ?";
-    private static final String SQL_UPDATE_FORM_GROUP = "UPDATE medical_record_abstraction_group SET order_number = ? WHERE "
-            + "medical_record_abstraction_group_id = ?";
+    private static final String SQL_INSERT_FORM_GROUP = "INSERT INTO medical_record_abstraction_group SET display_name = ?, ddp_instance_id = (SELECT ddp_instance_id from ddp_instance where instance_name = ?), order_number = ?";
+    private static final String SQL_DELETE_FORM_GROUP = "UPDATE medical_record_abstraction_group SET deleted = 1 WHERE medical_record_abstraction_group_id = ?";
+    private static final String SQL_UPDATE_FORM_GROUP = "UPDATE medical_record_abstraction_group SET order_number = ? WHERE medical_record_abstraction_group_id = ?";
 
     private final int abstractionGroupId;
     private final String displayName;
@@ -52,6 +47,12 @@ public class AbstractionGroup {
         return group;
     }
 
+    public void addField(AbstractionField field) {
+        if (fields != null) {
+            fields.add(field);
+        }
+    }
+
     public static void saveFormControls(@NonNull String realm, @NonNull AbstractionGroup[] receivedAbstractionGroups) {
         for (AbstractionGroup group : receivedAbstractionGroups) {
             if (group.getFields() != null && !group.getFields().isEmpty()) {
@@ -62,23 +63,27 @@ public class AbstractionGroup {
                             AbstractionField.insertNewField(realm, abstractionGroupId, field);
                         }
                     }
-                } else if (group.isDeleted()) {
+                }
+                else if (group.isDeleted()) {
                     AbstractionGroup.deleteView(group.getAbstractionGroupId());
                     if (group.getFields() != null) {
                         for (AbstractionField field : group.getFields()) {
                             AbstractionField.deleteField(field);
                         }
                     }
-                } else {
+                }
+                else {
                     //for group only the order_number can be changed
                     AbstractionGroup.updateOrderNumber(group);
                     if (group.getFields() != null) {
                         for (AbstractionField field : group.getFields()) {
                             if (field.isNewAdded()) {
                                 AbstractionField.insertNewField(realm, group.getAbstractionGroupId(), field);
-                            } else if (field.isDeleted()) {
+                            }
+                            else if (field.isDeleted()) {
                                 AbstractionField.deleteField(field);
-                            } else {
+                            }
+                            else {
                                 AbstractionField.updateField(field);
                             }
                         }
@@ -101,13 +106,16 @@ public class AbstractionGroup {
                         if (rs.next()) {
                             dbVals.resultValue = rs.getInt(1);
                         }
-                    } catch (Exception e) {
+                    }
+                    catch (Exception e) {
                         throw new RuntimeException("Error getting groupId of new abstraction group ", e);
                     }
-                } else {
+                }
+                else {
                     throw new RuntimeException("Error adding new abstraction group. It was updating " + result + " rows");
                 }
-            } catch (SQLException ex) {
+            }
+            catch (SQLException ex) {
                 dbVals.resultException = ex;
             }
             return dbVals;
@@ -115,7 +123,8 @@ public class AbstractionGroup {
 
         if (results.resultException != null) {
             throw new RuntimeException("Error adding new abstraction group", results.resultException);
-        } else {
+        }
+        else {
             return (int) results.resultValue;
         }
     }
@@ -129,7 +138,8 @@ public class AbstractionGroup {
                 if (result != 1) {
                     throw new RuntimeException("Error deleting abstraction group. Query changed " + result + " rows");
                 }
-            } catch (SQLException ex) {
+            }
+            catch (SQLException ex) {
                 dbVals.resultException = ex;
             }
             return dbVals;
@@ -150,7 +160,8 @@ public class AbstractionGroup {
                 if (result != 1) {
                     throw new RuntimeException("Error updating abstraction group. Query changed " + result + " rows");
                 }
-            } catch (SQLException ex) {
+            }
+            catch (SQLException ex) {
                 dbVals.resultException = ex;
             }
             return dbVals;
@@ -158,12 +169,6 @@ public class AbstractionGroup {
 
         if (results.resultException != null) {
             throw new RuntimeException("Error updating abstraction group", results.resultException);
-        }
-    }
-
-    public void addField(AbstractionField field) {
-        if (fields != null) {
-            fields.add(field);
         }
     }
 

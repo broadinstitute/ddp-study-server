@@ -1,9 +1,11 @@
 package org.broadinstitute.dsm.model.elastic;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.google.gson.annotations.SerializedName;
 import lombok.Setter;
 
 @Setter
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class ESAddress {
 
     @SerializedName("street1")
@@ -65,7 +67,5 @@ public class ESAddress {
         return recipient;
     }
 
-    public boolean isValid() {
-        return valid;
-    }
+    public boolean isValid() { return valid; }
 }

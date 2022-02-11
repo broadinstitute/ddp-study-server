@@ -1,30 +1,26 @@
 package org.broadinstitute.dsm.util;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.HashMap;
-import java.util.Map;
-import javax.servlet.http.Cookie;
-
 import com.google.gson.GsonBuilder;
 import com.typesafe.config.Config;
 import org.apache.http.client.fluent.Request;
 import org.apache.http.client.fluent.Response;
 import org.apache.http.entity.ContentType;
-import org.broadinstitute.lddp.security.CookieUtil;
-import org.broadinstitute.lddp.security.SecurityHelper;
+import org.broadinstitute.ddp.security.CookieUtil;
+import org.broadinstitute.ddp.security.SecurityHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.servlet.http.Cookie;
+import java.io.*;
+import java.util.HashMap;
+import java.util.Map;
+
 public class TestUtil {
 
-    public static final String UNIT_TEST = "UNIT_TEST";
     private static final Logger logger = LoggerFactory.getLogger(TestUtil.class);
+
+    public static final String UNIT_TEST = "UNIT_TEST";
+
     private String jwtToken;
     private Cookie csrfCookie;
     private String cookieName;
@@ -72,30 +68,49 @@ public class TestUtil {
         return request.execute();
     }
 
-    public static Response perform(Request request, Object objectToPost, Map<String, String> headers) throws IOException {
+    public static Response perform(Request request, Object objectToPost, Map<String,String> headers) throws IOException {
         if (headers != null) {
             for (Map.Entry<String, String> headerEntry : headers.entrySet()) {
                 request = request.addHeader(headerEntry.getKey(), headerEntry.getValue());
             }
         }
 
-        if (objectToPost != null) {
+        if (objectToPost != null)
+        {
             String content = null;
             if (!(objectToPost instanceof String)) {
                 content = new GsonBuilder().serializeNulls().create().toJson(objectToPost);
-            } else {
-                content = (String) objectToPost;
+            }
+            else {
+                content = (String)objectToPost;
             }
             request.bodyString(content, ContentType.APPLICATION_JSON);
         }
         return request.execute();
     }
 
-    public static void generatePDF(InputStream inputStream, String folder, String file) {
+    public Map<String,String> buildAuthHeaders() {
+        Map<String,String> authHeaders = new HashMap<>();
+        authHeaders.put("Cookie", cookieName + "=" + csrfCookie.getValue() + ";");
+        authHeaders.put("Authorization", "Bearer " + jwtToken);
+        return authHeaders;
+    }
+
+    public Map<String,String> buildHeaders(String secret) {
+        int cookieAgeInSeconds = 60;
+        Map<String, String> claims = new HashMap<>();
+        String jwtToken = new SecurityHelper().createToken(secret, cookieAgeInSeconds + (System.currentTimeMillis() / 1000) + (60 * 5), claims);
+
+        Map<String,String> authHeaders = new HashMap<>();
+        authHeaders.put("Authorization", "Bearer " + jwtToken);
+        return authHeaders;
+    }
+
+    public static void generatePDF(InputStream inputStream, String folder, String file){
         OutputStream outputStream = null;
-        try {
+        try{
             File destFile = new File(folder, file);
-            if (!destFile.getParentFile().exists()) {
+            if(!destFile.getParentFile().exists()){
                 destFile.getParentFile().mkdirs();
             }
             destFile.createNewFile();
@@ -107,41 +122,27 @@ public class TestUtil {
             while ((read = inputStream.read(bytes)) != -1) {
                 outputStream.write(bytes, 0, read);
             }
-        } catch (IOException e) {
+        }
+        catch (IOException e) {
             logger.error("Failed to generate PDF " + file + " at directory " + folder, e);
-        } finally {
+        }
+        finally {
             if (inputStream != null) {
                 try {
                     inputStream.close();
-                } catch (IOException e) {
+                }
+                catch (IOException e) {
                     logger.error("Failed to generate PDF " + file + " at directory " + folder, e);
                 }
             }
             if (outputStream != null) {
                 try {
                     outputStream.close();
-                } catch (IOException e) {
+                }
+                catch (IOException e) {
                     logger.error("Failed to generate PDF " + file + " at directory " + folder, e);
                 }
             }
         }
-    }
-
-    public Map<String, String> buildAuthHeaders() {
-        Map<String, String> authHeaders = new HashMap<>();
-        authHeaders.put("Cookie", cookieName + "=" + csrfCookie.getValue() + ";");
-        authHeaders.put("Authorization", "Bearer " + jwtToken);
-        return authHeaders;
-    }
-
-    public Map<String, String> buildHeaders(String secret) {
-        int cookieAgeInSeconds = 60;
-        Map<String, String> claims = new HashMap<>();
-        String jwtToken = new SecurityHelper().createToken(secret, cookieAgeInSeconds + (System.currentTimeMillis() / 1000) + (60 * 5),
-                claims);
-
-        Map<String, String> authHeaders = new HashMap<>();
-        authHeaders.put("Authorization", "Bearer " + jwtToken);
-        return authHeaders;
     }
 }

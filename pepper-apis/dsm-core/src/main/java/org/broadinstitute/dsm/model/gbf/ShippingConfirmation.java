@@ -16,8 +16,7 @@ public class ShippingConfirmation {
     public ShippingConfirmation() {
     }
 
-    public ShippingConfirmation(String orderNumber, String shipper, String shipVia, String shipDate, String clientID, String tracking,
-                                Item item) {
+    public ShippingConfirmation(String orderNumber, String shipper, String shipVia, String shipDate, String clientID, String tracking, Item item) {
         this.orderNumber = orderNumber;
         this.shipper = shipper;
         this.shipVia = shipVia;
@@ -27,7 +26,7 @@ public class ShippingConfirmation {
         this.item = item;
     }
 
-    @XmlAttribute(name = "OrderNumber")
+    @XmlAttribute(name="OrderNumber")
     public String getOrderNumber() {
         return orderNumber;
     }
@@ -36,7 +35,7 @@ public class ShippingConfirmation {
         this.orderNumber = orderNumber;
     }
 
-    @XmlAttribute(name = "Shipper")
+    @XmlAttribute(name="Shipper")
     public String getShipper() {
         return shipper;
     }
@@ -45,7 +44,7 @@ public class ShippingConfirmation {
         this.shipper = shipper;
     }
 
-    @XmlAttribute(name = "ShipVia")
+    @XmlAttribute(name="ShipVia")
     public String getShipVia() {
         return shipVia;
     }
@@ -54,7 +53,7 @@ public class ShippingConfirmation {
         this.shipVia = shipVia;
     }
 
-    @XmlAttribute(name = "ShipDate")
+    @XmlAttribute(name="ShipDate")
     public String getShipDate() {
         return shipDate;
     }
@@ -63,7 +62,7 @@ public class ShippingConfirmation {
         this.shipDate = shipDate;
     }
 
-    @XmlAttribute(name = "ClientID")
+    @XmlAttribute(name="ClientID")
     public String getClientID() {
         return clientID;
     }
@@ -72,7 +71,7 @@ public class ShippingConfirmation {
         this.clientID = clientID;
     }
 
-    @XmlElement(name = "Tracking")
+    @XmlElement(name="Tracking")
     public String getTracking() {
         return tracking;
     }
@@ -81,7 +80,7 @@ public class ShippingConfirmation {
         this.tracking = tracking;
     }
 
-    @XmlElement(name = "Item")
+    @XmlElement(name="Item")
     public Item getItem() {
         return item;
     }

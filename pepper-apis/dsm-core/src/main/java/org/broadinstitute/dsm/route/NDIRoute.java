@@ -1,12 +1,6 @@
 package org.broadinstitute.dsm.route;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import javax.servlet.http.HttpServletRequest;
-
+import org.broadinstitute.ddp.handlers.util.Result;
 import org.broadinstitute.dsm.db.NationalDeathIndex;
 import org.broadinstitute.dsm.exception.FileColumnMissing;
 import org.broadinstitute.dsm.exception.FileWrongFormat;
@@ -17,11 +11,13 @@ import org.broadinstitute.dsm.security.RequestHandler;
 import org.broadinstitute.dsm.statics.UserErrorMessages;
 import org.broadinstitute.dsm.util.SystemUtil;
 import org.broadinstitute.dsm.util.UserUtil;
-import org.broadinstitute.lddp.handlers.util.Result;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import spark.Request;
 import spark.Response;
+
+import javax.servlet.http.HttpServletRequest;
+import java.util.*;
 
 public class NDIRoute extends RequestHandler {
 
@@ -34,6 +30,41 @@ public class NDIRoute extends RequestHandler {
     private static final String YEAR = "Year";
     private static final String MONTH = "Month";
     private static final String DAY = "Day";
+
+    @Override
+    public Object processRequest(Request request, Response response, String userId) throws Exception {
+        String userIdRequest = UserUtil.getUserId(request);
+        if (UserUtil.checkUserAccess(null, userId, "ndi_download", userIdRequest)) {
+            HttpServletRequest rawRequest = request.raw();
+            String content = SystemUtil.getBody(rawRequest);
+            try {
+                List<NDIUploadObject> requests = isFileValid(content);
+                if (requests != null) {
+                    response.header("Content-Type", "text/plain; charset=utf-8");
+                    String s = NationalDeathIndex.createOutputTxtFile(requests, userIdRequest);
+                    return s;
+                }
+            }
+            catch (FileColumnMissing e) {
+                response.status(500);
+                return new Result(500, e.getMessage());
+            }
+            catch (FileWrongFormat e) {
+                response.status(500);
+                return new Result(500, e.getMessage());
+            }
+            catch (FileWrongSeparator e) {
+                response.status(500);
+                return new Result(500, e.getMessage());
+            }
+        }
+        else {
+            response.status(500);
+            return new Result(500, UserErrorMessages.NO_RIGHTS);
+        }
+        response.status(500);
+        return new Result(500, "Failed to generate NDI file,\n please contact your DSM Developer");
+    }
 
     public static List<NDIUploadObject> isFileValid(String fileContent) throws FileWrongFormat, FileColumnMissing {
         if (fileContent != null) {
@@ -62,7 +93,8 @@ public class NDIRoute extends RequestHandler {
                                         }
                                         if (obj.get(MONTH).length() == 1) {
                                             obj.put(MONTH, "0" + obj.get(MONTH));
-                                        } else if (obj.get(YEAR).length() != 4) {
+                                        }
+                                        else if (obj.get(YEAR).length() != 4) {
                                             throw new FileWrongFormat("Please use the YYYY format for year");
                                         }
                                     }
@@ -73,24 +105,27 @@ public class NDIRoute extends RequestHandler {
                                     if (obj.get(MIDDLE).length() > 1) {
                                         obj.put(MIDDLE, obj.get(MIDDLE).charAt(0) + "");
                                     }
-                                    object = new NDIUploadObject(obj.get(FIRST_NAME), obj.get(LAST_NAME), obj.get(MIDDLE), obj.get(YEAR),
-                                            obj.get(MONTH),
+                                    object = new NDIUploadObject(obj.get(FIRST_NAME), obj.get(LAST_NAME), obj.get(MIDDLE), obj.get(YEAR), obj.get(MONTH),
                                             obj.get(DAY), obj.get(PARTICIPANT_ID));
                                     uploadObjects.add(object);
-                                } catch (Exception e) {
+                                }
+                                catch (Exception e) {
                                     throw new RuntimeException("Text file is not valid. Couldn't be parsed to upload object ", e);
                                 }
-                            } else {
+                            }
+                            else {
                                 throw new UploadLineException("Error in line " + (rowIndex + 1));
                             }
                         }
                         logger.info(uploadObjects.size() + " NDI requests were uploaded. ");
 
                         return uploadObjects;
-                    } else {
+                    }
+                    else {
                         throw new FileColumnMissing("File is missing column " + missingFieldName);
                     }
-                } else {
+                }
+                else {
                     throw new FileWrongSeparator("Please use tab as separator in the text file");
                 }
             }
@@ -121,36 +156,5 @@ public class NDIRoute extends RequestHandler {
             return DAY;
         }
         return null;
-    }
-
-    @Override
-    public Object processRequest(Request request, Response response, String userId) throws Exception {
-        String userIdRequest = UserUtil.getUserId(request);
-        if (UserUtil.checkUserAccess(null, userId, "ndi_download", userIdRequest)) {
-            HttpServletRequest rawRequest = request.raw();
-            String content = SystemUtil.getBody(rawRequest);
-            try {
-                List<NDIUploadObject> requests = isFileValid(content);
-                if (requests != null) {
-                    response.header("Content-Type", "text/plain; charset=utf-8");
-                    String s = NationalDeathIndex.createOutputTxtFile(requests, userIdRequest);
-                    return s;
-                }
-            } catch (FileColumnMissing e) {
-                response.status(500);
-                return new Result(500, e.getMessage());
-            } catch (FileWrongFormat e) {
-                response.status(500);
-                return new Result(500, e.getMessage());
-            } catch (FileWrongSeparator e) {
-                response.status(500);
-                return new Result(500, e.getMessage());
-            }
-        } else {
-            response.status(500);
-            return new Result(500, UserErrorMessages.NO_RIGHTS);
-        }
-        response.status(500);
-        return new Result(500, "Failed to generate NDI file,\n please contact your DSM Developer");
     }
 }

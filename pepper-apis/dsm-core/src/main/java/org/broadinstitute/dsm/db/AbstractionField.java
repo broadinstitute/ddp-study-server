@@ -1,6 +1,15 @@
 package org.broadinstitute.dsm.db;
 
-import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import lombok.Data;
+import lombok.NonNull;
+import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.ddp.db.SimpleResult;
+import org.broadinstitute.dsm.db.structure.ColumnName;
+import org.broadinstitute.dsm.model.AbstractionQCWrapper;
+import org.broadinstitute.dsm.model.Value;
+import org.broadinstitute.dsm.statics.DBConstants;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -9,32 +18,19 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import lombok.Data;
-import lombok.NonNull;
-import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.dsm.db.structure.ColumnName;
-import org.broadinstitute.dsm.model.AbstractionQCWrapper;
-import org.broadinstitute.dsm.model.Value;
-import org.broadinstitute.dsm.statics.DBConstants;
-import org.broadinstitute.lddp.db.SimpleResult;
+import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
 
 @Data
 public class AbstractionField {
 
-    private static final String SQL_INSERT_FORM_FIELD = "INSERT INTO medical_record_abstraction_field SET display_name = ?, type = ?, "
-            + "additional_type = ?, possible_values = ?, help_text = ?, medical_record_abstraction_group_id = ?, ddp_instance_id = "
-            + "(SELECT ddp_instance_id from ddp_instance where instance_name = ?), order_number = ?";
-    private static final String SQL_DELETE_FORM_FIELD = "UPDATE medical_record_abstraction_field SET deleted = 1 WHERE "
-            + "medical_record_abstraction_field_id = ?";
-    private static final String SQL_UPDATE_FORM_FIELD = "UPDATE medical_record_abstraction_field SET display_name = ?, type = ?, "
-            + "additional_type = ?, possible_values = ?, help_text = ?, order_number = ? WHERE medical_record_abstraction_field_id = ?";
+    private static final String SQL_INSERT_FORM_FIELD = "INSERT INTO medical_record_abstraction_field SET display_name = ?, type = ?, additional_type = ?, possible_values = ?, help_text = ?, medical_record_abstraction_group_id = ?, ddp_instance_id = (SELECT ddp_instance_id from ddp_instance where instance_name = ?), order_number = ?";
+    private static final String SQL_DELETE_FORM_FIELD = "UPDATE medical_record_abstraction_field SET deleted = 1 WHERE medical_record_abstraction_field_id = ?";
+    private static final String SQL_UPDATE_FORM_FIELD = "UPDATE medical_record_abstraction_field SET display_name = ?, type = ?, additional_type = ?, possible_values = ?, help_text = ?, order_number = ? WHERE medical_record_abstraction_field_id = ?";
 
-    @ColumnName(DBConstants.MEDICAL_RECORD_ABSTRACTION_FIELD_ID)
+    @ColumnName (DBConstants.MEDICAL_RECORD_ABSTRACTION_FIELD_ID)
     private final int medicalRecordAbstractionFieldId;
 
-    @ColumnName(DBConstants.DISPLAY_NAME)
+    @ColumnName (DBConstants.DISPLAY_NAME)
     private final String displayName;
     private final String type;
     private final String additionalType;
@@ -49,8 +45,7 @@ public class AbstractionField {
     private boolean newAdded;
     private boolean changed;
 
-    public AbstractionField(int medicalRecordAbstractionFieldId, String displayName, String type, String additionalType,
-                            List<Value> possibleValues, String helpText, int orderNumber) {
+    public AbstractionField(int medicalRecordAbstractionFieldId, String displayName, String type, String additionalType, List<Value> possibleValues, String helpText, int orderNumber) {
         this.medicalRecordAbstractionFieldId = medicalRecordAbstractionFieldId;
         this.displayName = displayName;
         this.type = type;
@@ -92,7 +87,8 @@ public class AbstractionField {
                 if (result != 1) {
                     throw new RuntimeException("Error inserting new abstraction field. Query changed " + result + " rows");
                 }
-            } catch (SQLException ex) {
+            }
+            catch (SQLException ex) {
                 dbVals.resultException = ex;
             }
             return dbVals;
@@ -112,7 +108,8 @@ public class AbstractionField {
                 if (result != 1) {
                     throw new RuntimeException("Error deleting abstraction field. Query changed " + result + " rows");
                 }
-            } catch (SQLException ex) {
+            }
+            catch (SQLException ex) {
                 dbVals.resultException = ex;
             }
             return dbVals;
@@ -133,7 +130,8 @@ public class AbstractionField {
                 stmt.setString(3, abstractionField.getAdditionalType());
                 if (possibleValues != null && !possibleValues.equals("null")) {
                     stmt.setString(4, possibleValues);
-                } else {
+                }
+                else {
                     stmt.setString(4, null);
                 }
                 stmt.setString(5, abstractionField.getHelpText());
@@ -143,7 +141,8 @@ public class AbstractionField {
                 if (result != 1) {
                     throw new RuntimeException("Error updating abstraction field. Query changed " + result + " rows");
                 }
-            } catch (SQLException ex) {
+            }
+            catch (SQLException ex) {
                 dbVals.resultException = ex;
             }
             return dbVals;

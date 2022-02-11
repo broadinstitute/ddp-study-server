@@ -1,15 +1,9 @@
 package org.broadinstitute.dsm.route;
 
-import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
-
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
-
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.ddp.db.SimpleResult;
+import org.broadinstitute.ddp.handlers.util.Result;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.KitRequestShipping;
 import org.broadinstitute.dsm.model.LookupResponse;
@@ -19,16 +13,21 @@ import org.broadinstitute.dsm.statics.RequestParameter;
 import org.broadinstitute.dsm.statics.RoutePath;
 import org.broadinstitute.dsm.statics.UserErrorMessages;
 import org.broadinstitute.dsm.util.UserUtil;
-import org.broadinstitute.lddp.db.SimpleResult;
-import org.broadinstitute.lddp.handlers.util.Result;
 import spark.QueryParamsMap;
 import spark.Request;
 import spark.Response;
 
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+
+import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
+
 public class LookupRoute extends RequestHandler {
 
-    private static final String SQL_SELECT_COLLABORATOR_PREFIX = "SELECT collaborator_id_prefix FROM ddp_instance WHERE instance_name "
-            + "LIKE ?";
+    private static final String SQL_SELECT_COLLABORATOR_PREFIX = "SELECT collaborator_id_prefix FROM ddp_instance WHERE instance_name LIKE ?";
     private static final String SQL_SELECT_TISSUE_SITE = "SELECT DISTINCT tissue_site FROM ddp_tissue WHERE tissue_site LIKE ?";
     private static final String SQL_SELECT_TYPE = "SELECT DISTINCT type_px " +
             "FROM ddp_onc_history_detail oD " +
@@ -49,12 +48,9 @@ public class LookupRoute extends RequestHandler {
             "WHERE facility LIKE ? AND NOT (oD.deleted <=> 1) AND gr.ddp_group_id = ?";
 
 
-    private static final String SQL_SELECT_HISTOLOGY = "SELECT DISTINCT histology FROM ddp_onc_history_detail onc, ddp_medical_record "
-            + "rec, ddp_institution inst, ddp_participant part," +
-            " ddp_instance realm WHERE onc.medical_record_id = rec.medical_record_id AND rec.institution_id = inst.institution_id AND "
-            + "inst.participant_id = part.participant_id" +
-            " AND NOT rec.deleted <=> 1 AND realm.ddp_instance_id = part.ddp_instance_id AND onc.histology LIKE ? AND realm.instance_name"
-            + " = ?";
+    private static final String SQL_SELECT_HISTOLOGY = "SELECT DISTINCT histology FROM ddp_onc_history_detail onc, ddp_medical_record rec, ddp_institution inst, ddp_participant part," +
+            " ddp_instance realm WHERE onc.medical_record_id = rec.medical_record_id AND rec.institution_id = inst.institution_id AND inst.participant_id = part.participant_id" +
+            " AND NOT rec.deleted <=> 1 AND realm.ddp_instance_id = part.ddp_instance_id AND onc.histology LIKE ? AND realm.instance_name = ?";
 
     private static final String MEDICAL_RECORD_CONTACT = "mrContact";
     private static final String TISSUE_FACILITY = "tFacility";
@@ -90,27 +86,31 @@ public class LookupRoute extends RequestHandler {
                 String query = null;
                 if (MEDICAL_RECORD_CONTACT.equals(field)) {
                     query = SQL_SELECT_CONTACT;
-                } else if (TISSUE_FACILITY.equals(field)) {
+                }
+                else if (TISSUE_FACILITY.equals(field)) {
                     query = SQL_SELECT_FACILITY_IN_GROUP;
                     group = DDPInstance.getDDPGroupId(realm);
-                } else if (TISSUE_TYPE.equals(field)) {
+                }
+                else if (TISSUE_TYPE.equals(field)) {
                     query = SQL_SELECT_TYPE;
                     group = DDPInstance.getDDPGroupId(realm);
-                } else if (TISSUE_HISTOLOGY.equals(field)) {
+                }
+                else if (TISSUE_HISTOLOGY.equals(field)) {
                     query = SQL_SELECT_HISTOLOGY;
                     if (StringUtils.isBlank(realm)) {
                         throw new RuntimeException("Error getting histology, realm is missing ");
                     }
-                } else if (TISSUE_SITE.equals(field)) {
+                }
+                else if (TISSUE_SITE.equals(field)) {
                     query = SQL_SELECT_TISSUE_SITE;
-                } else if (COLLABORATOR_ID.equals(field)) {
+                }
+                else if (COLLABORATOR_ID.equals(field)) {
                     query = SQL_SELECT_COLLABORATOR_PREFIX;
                     if (StringUtils.isBlank(realm)) {
                         throw new RuntimeException("Error getting collaboratorId, realm is missing ");
                     }
                     DDPInstance ddpInstance = DDPInstance.getDDPInstance(realm);
-                    String collaboratorParticipantId = KitRequestShipping.getCollaboratorParticipantId(ddpInstance.getBaseUrl(),
-                            ddpInstance.getDdpInstanceId(), ddpInstance.isMigratedDDP(),
+                    String collaboratorParticipantId = KitRequestShipping.getCollaboratorParticipantId(ddpInstance.getBaseUrl(), ddpInstance.getDdpInstanceId(), ddpInstance.isMigratedDDP(),
                             ddpInstance.getCollaboratorIdPrefix(), value, shortId, "4"); //4 was length of CMI in Gen2
                     if (StringUtils.isNotBlank(collaboratorParticipantId)) {
                         //if participant has already a sample collaborator participant id, return just the participant id
@@ -120,7 +120,8 @@ public class LookupRoute extends RequestHandler {
                     }
                 }
                 return getLookupValue(field, query, value, realm, group);
-            } else {
+            }
+            else {
                 response.status(500);
                 return new Result(500, UserErrorMessages.NO_RIGHTS);
             }
@@ -136,7 +137,8 @@ public class LookupRoute extends RequestHandler {
                 stmt.setString(1, value.concat("%"));
                 if (StringUtils.isNotBlank(group)) {
                     stmt.setString(2, group);
-                } else if (StringUtils.isNotBlank(realm)) {
+                }
+                else if (StringUtils.isNotBlank(realm)) {
                     stmt.setString(2, realm);
                 }
                 if (stmt.toString().contains("like ?") || stmt.toString().contains("= ?")) {
@@ -148,7 +150,8 @@ public class LookupRoute extends RequestHandler {
                         response.add(lookupResponse);
                     }
                 }
-            } catch (SQLException ex) {
+            }
+            catch (SQLException ex) {
                 dbVals.resultException = ex;
             }
             return dbVals;
@@ -166,18 +169,23 @@ public class LookupRoute extends RequestHandler {
                     rs.getString(DBConstants.CONTACT),
                     rs.getString(DBConstants.PHONE),
                     rs.getString(DBConstants.FAX), null);
-        } else if (TISSUE_FACILITY.equals(field)) {
+        }
+        else if (TISSUE_FACILITY.equals(field)) {
             return new LookupResponse(rs.getString(DBConstants.FACILITY), null,
                     rs.getString(DBConstants.PHONE),
                     rs.getString(DBConstants.FAX),
                     rs.getString(DBConstants.DESTRUCTION_POLICY));
-        } else if (TISSUE_TYPE.equals(field)) {
+        }
+        else if (TISSUE_TYPE.equals(field)) {
             return new LookupResponse(rs.getString(DBConstants.TYPE_PX));
-        } else if (TISSUE_HISTOLOGY.equals(field)) {
+        }
+        else if (TISSUE_HISTOLOGY.equals(field)) {
             return new LookupResponse(rs.getString(DBConstants.HISTOLOGY));
-        } else if (TISSUE_SITE.equals(field)) {
+        }
+        else if (TISSUE_SITE.equals(field)) {
             return new LookupResponse(rs.getString(DBConstants.TISSUE_SITE));
-        } else if (COLLABORATOR_ID.equals(field)) {
+        }
+        else if (COLLABORATOR_ID.equals(field)) {
             return new LookupResponse(rs.getString(DBConstants.COLLABORATOR_ID_PREFIX));
         }
         return null;

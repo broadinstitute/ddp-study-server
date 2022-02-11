@@ -6,7 +6,6 @@ import java.security.interfaces.RSAPublicKey;
 import com.auth0.jwk.JwkException;
 import com.auth0.jwk.JwkProvider;
 import com.auth0.jwt.interfaces.RSAKeyProvider;
-
 /**
  * A factory class creating specific RSAKeyProvider instances.
  */
@@ -22,7 +21,8 @@ public class RSAKeyProviderFactory {
                 RSAPublicKey publicKey;
                 try {
                     publicKey = (RSAPublicKey) provider.get(kid).getPublicKey();
-                } catch (JwkException e) {
+                }
+                catch (JwkException e) {
                     throw new RuntimeException("Error reading jwk", e);
                 }
                 return publicKey;

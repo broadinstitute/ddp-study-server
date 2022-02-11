@@ -1,12 +1,9 @@
 package org.broadinstitute.dsm;
 
-import static org.mockserver.model.HttpRequest.request;
-import static org.mockserver.model.HttpResponse.response;
-
+import org.broadinstitute.ddp.handlers.util.FollowUpSurvey;
+import org.broadinstitute.ddp.handlers.util.SimpleFollowUpSurvey;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.util.DDPRequestUtil;
-import org.broadinstitute.lddp.handlers.util.FollowUpSurvey;
-import org.broadinstitute.lddp.handlers.util.SimpleFollowUpSurvey;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -14,7 +11,12 @@ import org.junit.Test;
 import org.mockserver.matchers.MatchType;
 import org.mockserver.model.JsonBody;
 
+import static org.mockserver.model.HttpRequest.request;
+import static org.mockserver.model.HttpResponse.response;
+
+
 public class DDPRequestUtilTest extends TestHelper {
+
 
     @BeforeClass
     public static void first() throws Exception {
@@ -43,7 +45,7 @@ public class DDPRequestUtilTest extends TestHelper {
         DDPInstance ddpInstance = DDPInstance.getDDPInstance(TEST_DDP);
         String sendRequest = ddpInstance.getBaseUrl() + "/ddp/followupsurvey/" + "test-consent";
 
-        Integer ddpResponse = DDPRequestUtil.postRequest(sendRequest, survey, ddpInstance.getName(), ddpInstance.isHasAuth0Token());
+        Integer ddpResponse  = DDPRequestUtil.postRequest(sendRequest, survey, ddpInstance.getName(), ddpInstance.isHasAuth0Token());
 
         Assert.assertTrue(404 == ddpResponse);
     }
@@ -63,7 +65,7 @@ public class DDPRequestUtilTest extends TestHelper {
         DDPInstance ddpInstance = DDPInstance.getDDPInstance(TEST_DDP);
         String sendRequest = ddpInstance.getBaseUrl() + "/ddp/followupsurvey/" + "test-consent";
 
-        Integer ddpResponse = DDPRequestUtil.postRequest(sendRequest, survey, ddpInstance.getName(), ddpInstance.isHasAuth0Token());
+        Integer ddpResponse  = DDPRequestUtil.postRequest(sendRequest, survey, ddpInstance.getName(), ddpInstance.isHasAuth0Token());
 
         Assert.assertTrue(200 == ddpResponse);
     }

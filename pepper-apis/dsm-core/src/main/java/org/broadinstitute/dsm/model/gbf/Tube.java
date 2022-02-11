@@ -13,7 +13,7 @@ public class Tube {
         this.serial = serial;
     }
 
-    @XmlAttribute(name = "Serial")
+    @XmlAttribute(name="Serial")
     public String getSerial() {
         return serial;
     }

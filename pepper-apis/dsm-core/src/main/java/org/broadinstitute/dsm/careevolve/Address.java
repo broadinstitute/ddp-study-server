@@ -6,19 +6,19 @@ import org.apache.commons.lang3.StringUtils;
 
 public class Address {
 
-    @SerializedName("Line1")
+    @SerializedName ("Line1")
     private String line1;
 
-    @SerializedName("Line2")
+    @SerializedName ("Line2")
     private String line2;
 
-    @SerializedName("City")
+    @SerializedName ("City")
     private String city;
 
-    @SerializedName("State")
+    @SerializedName ("State")
     private String state;
 
-    @SerializedName("ZipCode")
+    @SerializedName ("ZipCode")
     private String zipCode;
 
     public Address(String line1, String line2, String city, String state, String zipCode) {

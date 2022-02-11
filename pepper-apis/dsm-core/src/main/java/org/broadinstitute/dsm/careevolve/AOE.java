@@ -31,9 +31,9 @@ public class AOE {
      */
     public static List<AOE> forTestBoston(String userGuid, String kitGuid) {
         List<AOE> aoes = new ArrayList<>();
-        aoes.add(new AOE("Q1", "Type of Swab", "AN SWAB"));
-        aoes.add(new AOE("PEPPER_USER_ID", "Pepper User Guid", userGuid));
-        aoes.add(new AOE("PEPPER_KIT_ID", "Pepper Kit Guid", kitGuid));
+        aoes.add(new AOE("Q1","Type of Swab","AN SWAB"));
+        aoes.add(new AOE("PEPPER_USER_ID","Pepper User Guid",userGuid));
+        aoes.add(new AOE("PEPPER_KIT_ID","Pepper Kit Guid",kitGuid));
         return aoes;
     }
 }

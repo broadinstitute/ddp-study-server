@@ -1,43 +1,32 @@
 package org.broadinstitute.dsm;
 
-import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
-import static org.mockserver.model.HttpRequest.request;
-import static org.mockserver.model.HttpResponse.response;
-import static org.quartz.SimpleScheduleBuilder.simpleSchedule;
-
-import java.io.File;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
-
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.ddp.db.SimpleResult;
+import org.broadinstitute.ddp.util.BasicTriggerListener;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.LatestKitRequest;
 import org.broadinstitute.dsm.jobs.DDPRequestJob;
 import org.broadinstitute.dsm.statics.DBConstants;
-import org.broadinstitute.dsm.util.DBTestUtil;
-import org.broadinstitute.dsm.util.TestUtil;
+import org.broadinstitute.dsm.util.*;
 import org.broadinstitute.dsm.util.tools.util.DBUtil;
 import org.broadinstitute.dsm.util.triggerListener.DDPRequestTriggerListener;
-import org.broadinstitute.lddp.db.SimpleResult;
-import org.broadinstitute.lddp.util.BasicTriggerListener;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.quartz.JobBuilder;
-import org.quartz.JobDetail;
-import org.quartz.Scheduler;
-import org.quartz.SimpleTrigger;
-import org.quartz.TriggerBuilder;
-import org.quartz.TriggerKey;
+import org.junit.*;
+import org.quartz.*;
 import org.quartz.impl.StdSchedulerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
+
+import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
+import static org.mockserver.model.HttpRequest.request;
+import static org.mockserver.model.HttpResponse.response;
+import static org.quartz.SimpleScheduleBuilder.simpleSchedule;
 
 public class QuartzDDPRequestTest extends TestHelper {
 
@@ -96,8 +85,7 @@ public class QuartzDDPRequestTest extends TestHelper {
     @Test
     public void quartzKitRequestTest() throws Exception {
         String roleId = DBTestUtil.getQueryDetail("SELECT * from instance_role where name = ?", "pdf_download_consent", "instance_role_id");
-        String secondRoleId = DBTestUtil.getQueryDetail("SELECT * from instance_role where name = ?", "pdf_download_release",
-                "instance_role_id");
+        String secondRoleId = DBTestUtil.getQueryDetail("SELECT * from instance_role where name = ?", "pdf_download_release", "instance_role_id");
         try {
             DBTestUtil.executeQuery("INSERT INTO ddp_instance_role SET ddp_instance_id = " + INSTANCE_ID + ", instance_role_id = " + roleId);
             DBTestUtil.executeQuery("INSERT INTO ddp_instance_role SET ddp_instance_id = " + INSTANCE_ID + ", instance_role_id = " + secondRoleId);
@@ -130,17 +118,20 @@ public class QuartzDDPRequestTest extends TestHelper {
                     Thread.sleep(180L * 1000L);//2 min
                     logger.info("Enough testing going to stop scheduler ...");
                     scheduler.shutdown(true);
-                } catch (Exception e) {
+                }
+                catch (Exception e) {
                     logger.error("something went wrong, while waiting for quartz jon to finish...", e);
                     throw new RuntimeException("something went wrong, while waiting for quartz jon to finish...", e);
                 }
                 nowCheckDBForKitRequests();
                 nowCheckDBForMR();
             }
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             logger.error(e.getMessage());
             Assert.fail();
-        } finally {
+        }
+        finally {
             DBTestUtil.executeQuery("DELETE FROM ddp_instance_role WHERE ddp_instance_id = " + INSTANCE_ID + " and instance_role_id = " + roleId);
             DBTestUtil.executeQuery("DELETE FROM ddp_instance_role WHERE ddp_instance_id = " + INSTANCE_ID + " and instance_role_id = " + secondRoleId);
         }
@@ -151,8 +142,7 @@ public class QuartzDDPRequestTest extends TestHelper {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
             try {
-                try (PreparedStatement stmt = conn.prepareStatement(LatestKitRequest.SQL_SELECT_LATEST_KIT_REQUESTS + " and site"
-                        + ".instance_name = '" + TEST_DDP + "'")) {
+                try (PreparedStatement stmt = conn.prepareStatement(LatestKitRequest.SQL_SELECT_LATEST_KIT_REQUESTS + " and site.instance_name = '" + TEST_DDP + "'")) {
                     stmt.setString(1, DBConstants.HAS_KIT_REQUEST_ENDPOINTS);
                     stmt.setString(2, DBConstants.PDF_DOWNLOAD_CONSENT);
                     stmt.setString(3, DBConstants.PDF_DOWNLOAD_RELEASE);
@@ -160,12 +150,14 @@ public class QuartzDDPRequestTest extends TestHelper {
                         if (rs.next()) {
                             dbVals.resultValue = rs.getString(DBConstants.LAST_KIT);
                         }
-                    } catch (SQLException e) {
+                    }
+                    catch (SQLException e) {
                         throw new RuntimeException("Error getting list of kitRequests for mock ddp", e);
                     }
                 }
 
-            } catch (Exception e) {
+            }
+            catch (Exception e) {
                 throw new RuntimeException("stopDSMServer ", e);
             }
             return dbVals;
@@ -178,7 +170,8 @@ public class QuartzDDPRequestTest extends TestHelper {
                     request().withPath("/ddp/kitrequests/" + last))
                     .respond(response().withStatusCode(200)
                             .withBody(message));
-        } else {
+        }
+        else {
             mockDDP.when(
                     request().withPath("/ddp/kitrequests"))
                     .respond(response().withStatusCode(200)

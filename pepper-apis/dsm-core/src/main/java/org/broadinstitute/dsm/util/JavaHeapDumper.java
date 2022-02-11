@@ -1,5 +1,14 @@
 package org.broadinstitute.dsm.util;
 
+import com.sun.management.HotSpotDiagnosticMXBean;
+import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.ddp.db.TransactionWrapper;
+import org.broadinstitute.ddp.util.GoogleBucket;
+import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.management.MBeanServer;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -7,21 +16,13 @@ import java.lang.management.ManagementFactory;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import javax.management.MBeanServer;
-
-import com.sun.management.HotSpotDiagnosticMXBean;
-import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.ddp.util.ConfigUtil;
-import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
-import org.broadinstitute.lddp.util.GoogleBucket;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class JavaHeapDumper {
 
+    private static final Logger logger = LoggerFactory.getLogger(JavaHeapDumper.class);
+
     public static final String DEFAULT_LOCAL_PATH = "/tmp";
     public static final String DEFAULT_BUCKET_PATH = "heap_dumps";
-    private static final Logger logger = LoggerFactory.getLogger(JavaHeapDumper.class);
 
     public void dumpHeapToLocalFile(String filePath) throws IOException {
         MBeanServer server = ManagementFactory.getPlatformMBeanServer();
@@ -36,23 +37,23 @@ public class JavaHeapDumper {
     }
 
     public void dumpHeapToBucket(String bucketName, final String fileName) throws IOException {
-        String gcpName = ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.GOOGLE_PROJECT_NAME);
+        String gcpName = TransactionWrapper.getSqlFromConfig(ApplicationConfigConstants.GOOGLE_PROJECT_NAME);
         dumpHeapToLocalFile(DEFAULT_LOCAL_PATH + "/" + fileName);
         File localDumpFile = Paths.get(DEFAULT_LOCAL_PATH, fileName).toFile();
         if (localDumpFile.exists()) {
             logger.info("Created local dump file: " + localDumpFile.getAbsolutePath() + " with size: " + localDumpFile.length());
         } else {
-            throw new RuntimeException("Could not locate local dump file" + DEFAULT_LOCAL_PATH + "/" + fileName);
+            throw new RuntimeException("Could not locate local dump file"  + DEFAULT_LOCAL_PATH + "/" + fileName);
         }
         try (FileInputStream localDumpFileStream = new FileInputStream(localDumpFile)) {
             String credentials = null;
-            if (StringUtils.isNotBlank(ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.GOOGLE_CREDENTIALS))) {
-                String tmp = ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.GOOGLE_CREDENTIALS);
+            if (TransactionWrapper.hasConfigPath(ApplicationConfigConstants.GOOGLE_CREDENTIALS)) {
+                String tmp = TransactionWrapper.getSqlFromConfig(ApplicationConfigConstants.GOOGLE_CREDENTIALS);
                 if (StringUtils.isNotBlank(tmp) && new File(tmp).exists()) {
                     credentials = tmp;
                 }
             }
-            GoogleBucket.uploadFile(credentials, gcpName, bucketName, DEFAULT_BUCKET_PATH + "/" + fileName,
+           GoogleBucket.uploadFile(credentials, gcpName, bucketName, DEFAULT_BUCKET_PATH + "/" + fileName,
                     localDumpFileStream);
 
             logger.info("Heap dump saved to bucket:" + bucketName + " to path: " + DEFAULT_BUCKET_PATH + "/" + fileName);

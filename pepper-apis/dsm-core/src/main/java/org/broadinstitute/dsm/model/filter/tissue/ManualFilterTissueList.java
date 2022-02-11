@@ -29,13 +29,9 @@ public class ManualFilterTissueList extends BaseFilterTissueList {
     @Override
     public List<TissueListWrapper> filter(QueryParamsMap queryParamsMap) {
         List<TissueListWrapper> wrapperList = new ArrayList<>();
-        if (Objects.isNull(queryParamsMap)) {
-            return wrapperList;
-        }
+        if (Objects.isNull(queryParamsMap)) return wrapperList;
         prepareNeccesaryData(queryParamsMap);
-        if (!queryParamsMap.hasKey(RoutePath.REALM)) {
-            throw new NoSuchElementException("realm is necessary");
-        }
+        if (!queryParamsMap.hasKey(RoutePath.REALM)) throw new NoSuchElementException("realm is necessary");
         String realm = queryParamsMap.get(RoutePath.REALM).value();
         DDPInstance ddpInstance = DDPInstance.getDDPInstance(realm);
         String defaultFilter = queryParamsMap.get(RoutePath.FILTER_DEFAULT).value();

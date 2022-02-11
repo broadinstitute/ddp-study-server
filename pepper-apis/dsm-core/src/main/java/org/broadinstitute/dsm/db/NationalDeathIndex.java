@@ -1,6 +1,10 @@
 package org.broadinstitute.dsm.db;
 
-import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
+import org.broadinstitute.ddp.db.SimpleResult;
+import org.broadinstitute.dsm.model.NDIUploadObject;
+import org.broadinstitute.dsm.statics.DBConstants;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.sql.PreparedStatement;
@@ -9,19 +13,14 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.broadinstitute.dsm.model.NDIUploadObject;
-import org.broadinstitute.dsm.statics.DBConstants;
-import org.broadinstitute.lddp.db.SimpleResult;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
 
 public class NationalDeathIndex {
 
     private static final Logger logger = LoggerFactory.getLogger(NationalDeathIndex.class);
 
     private static final String SQL_SELECT_LAST_CONTROL_NUMBER = "SELECT ndi_control_number FROM ddp_ndi  order by ndi_id desc limit 1";
-    private static final String SQL_INSERT_CONTROL_NUMBER = "INSERT INTO ddp_ndi (ddp_participant_id, ndi_control_number, last_changed, "
-            + "changed_by) VALUES ";
+    private static final String SQL_INSERT_CONTROL_NUMBER = "INSERT INTO ddp_ndi (ddp_participant_id, ndi_control_number, last_changed, changed_by) VALUES ";
     private static final String FIRST_NDI = "0000000000";
     private static final String LAST_NDI = "zzzzzzzzzz";
     private static final int LAST_NAME_MAX_LENGHT = 20;
@@ -65,10 +64,12 @@ public class NationalDeathIndex {
                 ResultSet rs = stmt.executeQuery();
                 if (rs.next()) {
                     dbVals.resultValue = rs.getString(DBConstants.NDI_CONTROL_NUMBER);
-                } else {
+                }
+                else {
                     dbVals.resultValue = null;
                 }
-            } catch (SQLException e) {
+            }
+            catch (SQLException e) {
                 dbVals.resultException = e;
             }
 
@@ -82,7 +83,8 @@ public class NationalDeathIndex {
                 lastControlNumber = s;
             }
             return controlNumbers;
-        } else {
+        }
+        else {
             throw new RuntimeException("Error getting the last inserted ndi control number. ", result.resultException);
         }
     }
@@ -100,7 +102,8 @@ public class NationalDeathIndex {
             String paddedLastName = lastName;
             if (lastName.length() > LAST_NAME_MAX_LENGHT) {
                 paddedLastName = lastName.substring(0, LAST_NAME_MAX_LENGHT);
-            } else {
+            }
+            else {
                 paddedLastName = String.format("%-20s", lastName);
             }
             line.append(paddedLastName);
@@ -108,7 +111,8 @@ public class NationalDeathIndex {
             String paddedFirstName = firstName;
             if (firstName.length() > FIRST_NAME_MAX_LENGHT) {
                 paddedFirstName = firstName.substring(0, FIRST_NAME_MAX_LENGHT);
-            } else {
+            }
+            else {
                 paddedFirstName = String.format("%-15s", firstName);
             }
             line.append(paddedFirstName);
@@ -139,7 +143,8 @@ public class NationalDeathIndex {
                 String stmtString = finalStatement.substring(0, finalStatement.length() - 2);
                 PreparedStatement stmt = conn.prepareStatement(stmtString);
                 int i = stmt.executeUpdate();
-            } catch (SQLException e) {
+            }
+            catch (SQLException e) {
                 dbVals.resultException = e;
             }
             return dbVals;
@@ -147,7 +152,8 @@ public class NationalDeathIndex {
         if (result.resultException != null) {
 
             throw new RuntimeException("Error inserting control numbers into DB ", result.resultException);
-        } else {
+        }
+        else {
             logger.info("Created NDI file");
             return textToPutInTextFile.toString();
         }

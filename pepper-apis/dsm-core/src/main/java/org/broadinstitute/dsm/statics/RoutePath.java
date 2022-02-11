@@ -6,11 +6,16 @@ import spark.Request;
 
 public class RoutePath {
 
+    public enum RequestMethod {
+        GET, PATCH, POST, PUT
+    }
+
     public static final String REALM = "realm";
     public static final String KIT_TYPE = "kitType";
     public static final String UPLOAD_REASONS = "uploadReasons";
     public static final String CARRIERS = "carriers";
     public static final String DDP_PARTICIPANT_ID = "ddpParticipantId";
+
     //DDP - routes
     public static final String DDP_PARTICIPANTS_PATH = "/ddp/participants";
     public static final String DDP_KIT_REQUEST = "/ddp/kitrequests";
@@ -22,18 +27,23 @@ public class RoutePath {
     public static final String DDP_PARTICIPANT_EXIT_PATH = "/ddp/exitparticipantrequest";
     public static final String DDP_FOLLOW_UP_SURVEY_PATH = "/ddp/followupsurvey";
     public static final String DDP_FOLLOW_UP_SURVEYS_PATH = "/ddp/followupsurveys";
+
     //BSP - routes
     public static final String BSP_KIT_QUERY_PATH = "/Kits/:label";
     public static final String BSP_KIT_REGISTERED = "/KitsRegistered";
     public static final String DUMMY_ENDPOINT = "/createDummy/:label";
     public static final String CREATE_CLINICAL_KIT_ENDPOINT = "/createClinicalDummy/:label/:type";
     public static final String CLINICAL_KIT_ENDPOINT = "/ClinicalKits/:label";
+
     //Drug list endpoint route
     public static final String DRUG_LIST_REQUEST = "/drugs"; // display names only (for survey display)
+
     public static final String CANCER_LIST_REQUEST = "/cancers";
-    public static final String PARTICIPANT_STATUS_REQUEST =
-            "/participantstatus/" + RequestParameter.REALM + "/" + RequestParameter.PARTICIPANTID;
+
+    public static final String PARTICIPANT_STATUS_REQUEST = "/participantstatus/" + RequestParameter.REALM + "/" + RequestParameter.PARTICIPANTID;
+
     public static final String ROUTE_SEPARATOR = "/";
+
     //DSM UI - routes
     public static final String AUTHENTICATION_REQUEST = "auth0";
     public static final String KIT_REQUESTS_PATH = "kitRequests";
@@ -47,8 +57,7 @@ public class RoutePath {
     public static final String DOWNLOAD_PDF = "downloadPDF";
     public static final String PDF_TYPE_REQUEST = "pdfs";
     public static final String PERMALINK_PARTICIPANT_REQUEST = "participant/" + RequestParameter.PARTICIPANTID;
-    public static final String PERMALINK_INSTITUTION_REQUEST =
-            "participant/" + RequestParameter.PARTICIPANTID + "/institution/" + RequestParameter.MEDICALRECORDID;
+    public static final String PERMALINK_INSTITUTION_REQUEST = "participant/" + RequestParameter.PARTICIPANTID + "/institution/" +RequestParameter.MEDICALRECORDID;
     public static final String MEDICAL_RECORD_LOG_REQUEST = "medicalRecord/" + RequestParameter.MEDICALRECORDID + "/log";
     public static final String FIELD_SETTINGS_ROUTE = "fieldSettings/" + RequestParameter.REALM;
     public static final String DISPLAY_SETTINGS_ROUTE = "displaySettings/" + RequestParameter.REALM;
@@ -109,9 +118,5 @@ public class RoutePath {
             throw new RuntimeException("No realm query param was sent");
         }
         return realm;
-    }
-
-    public enum RequestMethod {
-        GET, PATCH, POST, PUT
     }
 }

@@ -1,8 +1,13 @@
 package org.broadinstitute.dsm.model.filter.participant;
 
+import java.util.Collections;
+import java.util.List;
+
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.db.ViewFilter;
 import org.broadinstitute.dsm.model.Filter;
+import org.broadinstitute.dsm.model.participant.ParticipantWrapper;
+import org.broadinstitute.dsm.model.participant.ParticipantWrapperDto;
 import org.broadinstitute.dsm.model.participant.ParticipantWrapperResult;
 import org.broadinstitute.dsm.statics.RequestParameter;
 import org.broadinstitute.dsm.util.PatchUtil;
@@ -16,9 +21,7 @@ public class QuickFilterParticipantList extends BaseFilterParticipantList {
         prepareNeccesaryData(queryParamsMap);
         ParticipantWrapperResult participantWrapperResult = new ParticipantWrapperResult();
         String filterName = queryParamsMap.get(RequestParameter.FILTER_NAME).value();
-        if (StringUtils.isBlank(filterName)) {
-            return participantWrapperResult;
-        }
+        if (StringUtils.isBlank(filterName)) return participantWrapperResult;
         ViewFilter requestForFiltering = new ViewFilter(filterName, parent);
         requestForFiltering.setFilterQuery(ViewFilter.getFilterQuery(filterName, parent));
         if (requestForFiltering.getFilters() == null && StringUtils.isNotBlank(requestForFiltering.getFilterQuery())) {

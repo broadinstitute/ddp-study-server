@@ -6,12 +6,12 @@ import static org.mockserver.model.HttpResponse.response;
 import java.net.URI;
 import java.net.URISyntaxException;
 
-import ch.qos.logback.classic.Level;
-import ch.qos.logback.classic.Logger;
-import ch.qos.logback.classic.spi.LoggingEvent;
 import com.google.gson.Gson;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigValueFactory;
+import org.apache.log4j.Level;
+import org.apache.log4j.spi.LoggingEvent;
+import org.apache.log4j.spi.RootLogger;
 import org.broadinstitute.dsm.TestHelper;
 import org.junit.Assert;
 import org.junit.Before;
@@ -19,15 +19,17 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.mockserver.junit.MockServerRule;
 import org.mockserver.model.JsonBody;
-import org.slf4j.LoggerFactory;
 
 public class SlackAppenderTest extends TestHelper {
 
+
     @Rule
     public MockServerRule mockServerRule = new MockServerRule(this);
+
+    private LoggingEvent loggingEvent = new LoggingEvent(null, new RootLogger(Level.ERROR), Level.ERROR, null, new Throwable());
+
     public Config cfg;
-    private LoggingEvent loggingEvent = new LoggingEvent(null,
-            (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME), Level.ERROR, null, null, null);
+
 
     @Before
     public void setUp() {

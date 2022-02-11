@@ -1,65 +1,54 @@
 package org.broadinstitute.dsm.util;
 
-import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
-
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
-
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.ddp.db.SimpleResult;
 import org.broadinstitute.dsm.statics.DBConstants;
-import org.broadinstitute.lddp.db.SimpleResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.sql.*;
+
+import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
+
 public class MedicalRecordUtil {
 
-    public static final String SYSTEM = "SYSTEM";
+    private static final Logger logger = LoggerFactory.getLogger(MedicalRecordUtil.class);
+
+    private static final String SQL_UPDATE_PARTICIPANT = "UPDATE ddp_participant SET last_version = ?, last_version_date = ?, last_changed = ?, changed_by = ? WHERE ddp_participant_id = ? " +
+            "AND ddp_instance_id = ? AND last_version != ?";
+    private static final String SQL_INSERT_INSTITUTION = "INSERT INTO ddp_institution (ddp_institution_id, type, participant_id, last_changed) VALUES (?, ?, (SELECT participant_id " +
+            "FROM ddp_participant WHERE ddp_participant_id = ? and ddp_instance_id = ?), ?) ON DUPLICATE KEY UPDATE last_changed = ?";
+    private static final String SQL_INSERT_INSTITUTION_BY_PARTICIPANT = "INSERT INTO ddp_institution (ddp_institution_id, type, participant_id, last_changed) values (?, ?, ?, ?) " +
+            "ON DUPLICATE KEY UPDATE last_changed = ?";
+    private static final String SQL_INSERT_MEDICAL_RECORD = "INSERT INTO ddp_medical_record SET institution_id = ?, last_changed = ?, changed_by = ?";
+    private static final String SQL_SELECT_PARTICIPANT_EXISTS = "SELECT count(ddp_participant_id) as participantCount FROM ddp_participant WHERE ddp_participant_id = ? AND ddp_instance_id = ?";
+    private static final String SQL_SELECT_PARTICIPANT_LAST_VERSION = "SELECT last_version FROM ddp_participant WHERE ddp_participant_id = ? AND ddp_instance_id = ?";
+    private static final String SQL_SELECT_MEDICAL_RECORD_ID_FOR_PARTICIPANT = "SELECT rec.medical_record_id FROM ddp_institution inst, ddp_participant part, ddp_medical_record rec " +
+            "WHERE part.participant_id = inst.participant_id AND rec.institution_id = inst.institution_id AND NOT rec.deleted <=> 1 AND part.ddp_participant_id = ? AND inst.ddp_institution_id = ? AND part.ddp_instance_id = ? AND inst.type = ?";
+    private static final String SQL_SELECT_MEDICAL_RECORD_ID_AND_TYPE_FOR_PARTICIPANT = "SELECT rec.medical_record_id, inst.type FROM ddp_institution inst, ddp_participant part, ddp_medical_record rec " +
+            "WHERE part.participant_id = inst.participant_id AND rec.institution_id = inst.institution_id AND NOT rec.deleted <=> 1 AND part.participant_id = ? AND inst.type = ?";
+
     public static final String NOT_SPECIFIED = "NOT_SPECIFIED";
     public static final String OTHER = "OTHER";
-    private static final Logger logger = LoggerFactory.getLogger(MedicalRecordUtil.class);
-    private static final String SQL_UPDATE_PARTICIPANT = "UPDATE ddp_participant SET last_version = ?, last_version_date = ?, "
-            + "last_changed = ?, changed_by = ? WHERE ddp_participant_id = ? " +
-            "AND ddp_instance_id = ? AND last_version != ?";
-    private static final String SQL_INSERT_INSTITUTION = "INSERT INTO ddp_institution (ddp_institution_id, type, participant_id, "
-            + "last_changed) VALUES (?, ?, (SELECT participant_id " +
-            "FROM ddp_participant WHERE ddp_participant_id = ? and ddp_instance_id = ?), ?) ON DUPLICATE KEY UPDATE last_changed = ?";
-    private static final String SQL_INSERT_INSTITUTION_BY_PARTICIPANT = "INSERT INTO ddp_institution (ddp_institution_id, type, "
-            + "participant_id, last_changed) values (?, ?, ?, ?) " +
-            "ON DUPLICATE KEY UPDATE last_changed = ?";
-    private static final String SQL_INSERT_MEDICAL_RECORD = "INSERT INTO ddp_medical_record SET institution_id = ?, last_changed = ?, "
-            + "changed_by = ?";
-    private static final String SQL_SELECT_PARTICIPANT_EXISTS = "SELECT count(ddp_participant_id) as participantCount FROM "
-            + "ddp_participant WHERE ddp_participant_id = ? AND ddp_instance_id = ?";
-    private static final String SQL_SELECT_PARTICIPANT_LAST_VERSION = "SELECT last_version FROM ddp_participant WHERE ddp_participant_id "
-            + "= ? AND ddp_instance_id = ?";
-    private static final String SQL_SELECT_MEDICAL_RECORD_ID_FOR_PARTICIPANT = "SELECT rec.medical_record_id FROM ddp_institution inst, "
-            + "ddp_participant part, ddp_medical_record rec " +
-            "WHERE part.participant_id = inst.participant_id AND rec.institution_id = inst.institution_id AND NOT rec.deleted <=> 1 AND "
-            + "part.ddp_participant_id = ? AND inst.ddp_institution_id = ? AND part.ddp_instance_id = ? AND inst.type = ?";
-    private static final String SQL_SELECT_MEDICAL_RECORD_ID_AND_TYPE_FOR_PARTICIPANT = "SELECT rec.medical_record_id, inst.type FROM "
-            + "ddp_institution inst, ddp_participant part, ddp_medical_record rec " +
-            "WHERE part.participant_id = inst.participant_id AND rec.institution_id = inst.institution_id AND NOT rec.deleted <=> 1 AND "
-            + "part.participant_id = ? AND inst.type = ?";
 
     public static void writeNewMedicalRecordIntoDb(Connection conn, String query, String id) {
         if (conn != null) {
             try (PreparedStatement insertNewRecord = conn.prepareStatement(query)) {
                 insertNewRecord.setString(1, id);
                 insertNewRecord.setLong(2, System.currentTimeMillis());
-                insertNewRecord.setString(3, SYSTEM);
+                insertNewRecord.setString(3, SystemUtil.SYSTEM);
                 int result = insertNewRecord.executeUpdate();
                 if (result > 1) { // 0 or 1 is good
                     throw new RuntimeException("Error updating row");
                 }
                 logger.info("Added new medical record for institution w/ id " + id);
-            } catch (SQLException e) {
+            }
+            catch (SQLException e) {
                 throw new RuntimeException("Error inserting new medical record ", e);
             }
-        } else {
+        }
+        else {
             throw new RuntimeException("DB connection was null");
         }
     }
@@ -71,22 +60,26 @@ public class MedicalRecordUtil {
                 insertNewRecord.setString(1, id);
                 insertNewRecord.setString(2, instanceId);
                 insertNewRecord.setLong(3, currentMilli);
-                insertNewRecord.setString(4, SYSTEM);
+                insertNewRecord.setString(4, SystemUtil.SYSTEM);
                 insertNewRecord.setLong(5, currentMilli);
-                insertNewRecord.setString(6, SYSTEM);
+                insertNewRecord.setString(6, SystemUtil.SYSTEM);
                 int result = insertNewRecord.executeUpdate();
                 // 1 (inserted) or 2 (updated) is good
                 if (result == 2) {
                     logger.info("Updated record for participant w/ id " + id);
-                } else if (result == 1) {
+                }
+                else if (result == 1) {
                     logger.info("Inserted new record for participant w/ id " + id);
-                } else {
+                }
+                else {
                     throw new RuntimeException("Error updating row");
                 }
-            } catch (SQLException e) {
+            }
+            catch (SQLException e) {
                 throw new RuntimeException("Error inserting new record ", e);
             }
-        } else {
+        }
+        else {
             throw new RuntimeException("DB connection was null");
         }
     }
@@ -103,7 +96,8 @@ public class MedicalRecordUtil {
                     return rs.getInt(DBConstants.MEDICAL_RECORD_ID);
                 }
             }
-        } catch (SQLException e) {
+        }
+        catch (SQLException e) {
             throw new RuntimeException("Error updating/inserting participant ", e);
         }
         return null;
@@ -112,8 +106,7 @@ public class MedicalRecordUtil {
     public static void writeInstitutionIntoDb(@NonNull String participantId, @NonNull String type) {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement insertInstitution = conn.prepareStatement(SQL_INSERT_INSTITUTION_BY_PARTICIPANT,
-                    Statement.RETURN_GENERATED_KEYS)) {
+            try (PreparedStatement insertInstitution = conn.prepareStatement(SQL_INSERT_INSTITUTION_BY_PARTICIPANT, Statement.RETURN_GENERATED_KEYS)) {
                 insertInstitution.setString(1, java.util.UUID.randomUUID().toString());
                 insertInstitution.setString(2, type);
                 insertInstitution.setString(3, participantId);
@@ -123,13 +116,16 @@ public class MedicalRecordUtil {
                 // 1 (inserted) or 2 (updated) is good
                 if (result == 2) {
                     logger.info("Updated institution for participant w/ id " + participantId);
-                } else if (result == 1) {
+                }
+                else if (result == 1) {
                     logger.info("Inserted new institution for participant w/ id " + participantId);
                     insertInstitution(conn, insertInstitution, participantId, false);
-                } else {
+                }
+                else {
                     throw new RuntimeException("Error updating row");
                 }
-            } catch (SQLException e) {
+            }
+            catch (SQLException e) {
                 dbVals.resultException = e;
             }
             return dbVals;
@@ -159,22 +155,25 @@ public class MedicalRecordUtil {
                 // 1 (inserted) or 2 (updated) is good
                 if (result == 2) {
                     logger.info("Updated institution w/ id " + ddpInstitutionId);
-                } else if (result == 1) {
+                }
+                else if (result == 1) {
                     logger.info("Inserted new institution for participant w/ id " + ddpParticipantId);
                     insertInstitution(conn, insertInstitution, ddpParticipantId, setDuplicateFlag);
-                } else {
+                }
+                else {
                     throw new RuntimeException("Error updating row");
                 }
-            } catch (SQLException e) {
+            }
+            catch (SQLException e) {
                 throw new RuntimeException("Error inserting new institution ", e);
             }
-        } else {
+        }
+        else {
             throw new RuntimeException("DB connection was null");
         }
     }
 
-    private static void insertInstitution(@NonNull Connection conn, @NonNull PreparedStatement insertInstitution, @NonNull String id,
-                                          boolean setDuplicateFlag) {
+    private static void insertInstitution(@NonNull Connection conn, @NonNull PreparedStatement insertInstitution, @NonNull String id, boolean setDuplicateFlag) {
         try (ResultSet rs = insertInstitution.getGeneratedKeys()) {
             if (rs.next()) { //no next if no generated return key -> update of institution timestamp does not return new key
                 String institutionId = rs.getString(1);
@@ -188,7 +187,8 @@ public class MedicalRecordUtil {
                     MedicalRecordUtil.writeNewMedicalRecordIntoDb(conn, query, institutionId);
                 }
             }
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             throw new RuntimeException("Error getting id of new institution ", e);
         }
     }
@@ -204,7 +204,8 @@ public class MedicalRecordUtil {
                     }
                 }
             }
-        } catch (SQLException e) {
+        }
+        catch (SQLException e) {
             throw new RuntimeException("Error updating/inserting participant ", e);
         }
         return false;
@@ -219,7 +220,8 @@ public class MedicalRecordUtil {
                     return rs.getInt(DBConstants.LAST_VERSION);
                 }
             }
-        } catch (SQLException e) {
+        }
+        catch (SQLException e) {
             throw new RuntimeException("Error updating/inserting participant ", e);
         }
         return null;
@@ -239,7 +241,8 @@ public class MedicalRecordUtil {
                 logger.info("Participant already existed; Updated participant w/ id " + participantId);
                 return true;
             }
-        } catch (SQLException e) {
+        }
+        catch (SQLException e) {
             throw new RuntimeException("Error updating participant ", e);
         }
         return false;
@@ -260,7 +263,8 @@ public class MedicalRecordUtil {
                         dbVals.resultValue = rs.getInt(DBConstants.MEDICAL_RECORD_ID);
                     }
                 }
-            } catch (SQLException ex) {
+            }
+            catch (SQLException ex) {
                 dbVals.resultException = ex;
             }
             return dbVals;

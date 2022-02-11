@@ -8,9 +8,9 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Optional;
 
+import org.broadinstitute.ddp.db.SimpleResult;
 import org.broadinstitute.dsm.db.dao.Dao;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantRecordDto;
-import org.broadinstitute.lddp.db.SimpleResult;
 
 public class ParticipantRecordDao implements Dao<ParticipantRecordDto> {
 
@@ -29,7 +29,7 @@ public class ParticipantRecordDao implements Dao<ParticipantRecordDto> {
     public int create(ParticipantRecordDto participantRecordDto) {
         SimpleResult simpleResult = inTransaction(conn -> {
             SimpleResult dbVals = new SimpleResult(-1);
-            try (PreparedStatement stmt = conn.prepareStatement(SQL_INSERT_PARTICIPANT, Statement.RETURN_GENERATED_KEYS)) {
+            try (PreparedStatement stmt = conn.prepareStatement(SQL_INSERT_PARTICIPANT, Statement.RETURN_GENERATED_KEYS )) {
                 stmt.setInt(1, participantRecordDto.getParticipantId());
                 stmt.setString(2, participantRecordDto.getCrSent().orElse(null));
                 stmt.setString(3, participantRecordDto.getCrReceived().orElse(null));

@@ -1,23 +1,26 @@
 package org.broadinstitute.dsm.util;
 
+import com.typesafe.config.Config;
+import lombok.NonNull;
+import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.ddp.email.Recipient;
+import org.broadinstitute.dsm.model.KitDDPSummary;
+import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.typesafe.config.Config;
-import lombok.NonNull;
-import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.dsm.model.KitDDPSummary;
-import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
-import org.broadinstitute.lddp.email.Recipient;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 public class GPNotificationUtil {
 
-    public static final String EMAIL_TYPE = "GP_NOTIFICATION";
-    public static final String KITREQUEST_LINK = "/permalink/shipping?target=queue";
     private static final Logger logger = LoggerFactory.getLogger(GPNotificationUtil.class);
+
+    public static final String EMAIL_TYPE = "GP_NOTIFICATION";
+
+    public static final String KITREQUEST_LINK = "/permalink/shipping?target=queue";
+
     private String gpNotificationRecipient;
 
     private String frontendUrl;
@@ -28,7 +31,7 @@ public class GPNotificationUtil {
     public GPNotificationUtil(@NonNull Config config, @NonNull NotificationUtil notificationUtil,
                               @NonNull KitUtil kitUtil) {
         this.gpNotificationRecipient = config.getString(ApplicationConfigConstants.EMAIL_GP_RECIPIENT);
-        this.frontendUrl = config.getString(ApplicationConfigConstants.EMAIL_FRONTEND_URL_FOR_LINKS);
+        this.frontendUrl =  config.getString(ApplicationConfigConstants.EMAIL_FRONTEND_URL_FOR_LINKS);
         this.notificationUtil = notificationUtil;
         this.kitUtil = kitUtil;
 
@@ -42,7 +45,7 @@ public class GPNotificationUtil {
      */
     public void queryAndWriteNotification() {
         logger.info("GP notification job");
-        HashMap<String, String> unsentExpressKits = kitUtil.getUnsentExpressKits(true);
+        HashMap<String, String> unsentExpressKits = kitUtil.getUnsentExpressKits( true);
         List<KitDDPSummary> unsentKits = KitDDPSummary.getUnsentKits(false, null);
         if (!unsentKits.isEmpty() && !unsentExpressKits.isEmpty()) {
             String message = "";
@@ -52,7 +55,8 @@ public class GPNotificationUtil {
                     if (realm.contains("_")) {
                         String[] key = realm.split("_");
                         message += key[0] + " has " + value + " express " + key[1] + " kit requests @ Queue.<br>";
-                    } else {
+                    }
+                    else {
                         message += realm + " has " + value + " express kit requests @ Queue.<br>";
                     }
                 }
@@ -78,7 +82,8 @@ public class GPNotificationUtil {
                 emailRecipient.setSurveyLinks(mapy);
 
                 notificationUtil.queueCurrentAndFutureEmails(EMAIL_TYPE, emailRecipient, EMAIL_TYPE);
-            } else {
+            }
+            else {
                 logger.info("No (express/normal) kits are in queue/error, skipping GP notification");
             }
         }

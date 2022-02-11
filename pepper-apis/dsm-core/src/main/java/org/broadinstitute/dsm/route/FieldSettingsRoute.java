@@ -1,23 +1,23 @@
 package org.broadinstitute.dsm.route;
 
-import java.lang.reflect.Type;
-import java.util.Collection;
-import java.util.Map;
-
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.ddp.handlers.util.Result;
 import org.broadinstitute.dsm.db.FieldSettings;
 import org.broadinstitute.dsm.security.RequestHandler;
 import org.broadinstitute.dsm.statics.RequestParameter;
 import org.broadinstitute.dsm.statics.RoutePath;
 import org.broadinstitute.dsm.statics.UserErrorMessages;
 import org.broadinstitute.dsm.util.UserUtil;
-import org.broadinstitute.lddp.handlers.util.Result;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import spark.Request;
 import spark.Response;
+
+import java.lang.reflect.Type;
+import java.util.Collection;
+import java.util.Map;
 
 public class FieldSettingsRoute extends RequestHandler {
 
@@ -31,10 +31,10 @@ public class FieldSettingsRoute extends RequestHandler {
         String userIdRequest = UserUtil.getUserId(request);
         if (StringUtils.isNotBlank(realm)) {
             if (RoutePath.RequestMethod.GET.toString().equals(request.requestMethod())) {
-                if (UserUtil.checkUserAccess(realm, userId, "mr_view", userIdRequest) || UserUtil.checkUserAccess(realm, userId,
-                        "pt_list_view", userIdRequest)) {
+                if (UserUtil.checkUserAccess(realm, userId, "mr_view", userIdRequest) || UserUtil.checkUserAccess(realm, userId, "pt_list_view", userIdRequest)) {
                     return FieldSettings.getFieldSettings(realm);
-                } else {
+                }
+                else {
                     response.status(500);
                     return new Result(500, NO_RIGHTS_OF_ACCESS);
                 }
@@ -48,12 +48,14 @@ public class FieldSettingsRoute extends RequestHandler {
                         Map<String, Collection<FieldSettings>> fieldSettingsLists = new Gson().fromJson(requestBody, settingsType);
                         FieldSettings.saveFieldSettings(realm, fieldSettingsLists, userId);
                         return new Result(200);
-                    } catch (Exception e) {
+                    }
+                    catch (Exception e) {
                         logger.error("Failed to save field setting ", e);
                         response.status(500);
                         return new Result(500, UserErrorMessages.CONTACT_DEVELOPER);
                     }
-                } else {
+                }
+                else {
                     response.status(500);
                     return new Result(500, NO_RIGHTS_OF_CHANGES);
                 }

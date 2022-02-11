@@ -1,6 +1,21 @@
 package org.broadinstitute.dsm.cf;
 
-import static org.broadinstitute.dsm.statics.ApplicationConfigConstants.DSM_DB_URL;
+import com.google.cloud.functions.BackgroundFunction;
+import com.google.cloud.functions.Context;
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import com.google.gson.annotations.SerializedName;
+import com.typesafe.config.Config;
+import org.apache.commons.dbcp2.PoolableConnection;
+import org.apache.commons.dbcp2.PoolingDataSource;
+import org.broadinstitute.dsm.careevolve.*;
+import org.broadinstitute.dsm.db.DDPInstance;
+import org.broadinstitute.dsm.db.DdpKit;
+import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
+import org.broadinstitute.dsm.statics.DBConstants;
+import org.broadinstitute.dsm.util.ElasticSearchUtil;
+import org.elasticsearch.client.RestHighLevelClient;
 
 import java.sql.Connection;
 import java.text.ParseException;
@@ -11,28 +26,9 @@ import java.util.TimeZone;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import com.google.cloud.functions.BackgroundFunction;
-import com.google.cloud.functions.Context;
-import com.google.gson.Gson;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
-import com.google.gson.annotations.SerializedName;
-import com.typesafe.config.Config;
-import org.apache.commons.dbcp2.PoolableConnection;
-import org.apache.commons.dbcp2.PoolingDataSource;
-import org.broadinstitute.dsm.careevolve.Authentication;
-import org.broadinstitute.dsm.careevolve.Covid19OrderRegistrar;
-import org.broadinstitute.dsm.careevolve.OrderResponse;
-import org.broadinstitute.dsm.careevolve.Patient;
-import org.broadinstitute.dsm.careevolve.Provider;
-import org.broadinstitute.dsm.db.DDPInstance;
-import org.broadinstitute.dsm.db.DdpKit;
-import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
-import org.broadinstitute.dsm.statics.DBConstants;
-import org.broadinstitute.dsm.util.ElasticSearchUtil;
-import org.elasticsearch.client.RestHighLevelClient;
+import static org.broadinstitute.dsm.statics.ApplicationConfigConstants.DSM_DB_URL;
 
-public class Covid19OrderRegistrarFunction implements BackgroundFunction<Covid19OrderRegistrarFunction.OrderPayload> {
+public class Covid19OrderRegistrarFunction  implements BackgroundFunction<Covid19OrderRegistrarFunction.OrderPayload> {
 
     private static final Logger logger = Logger.getLogger(TestBostonKitTrackerDispatcher.class.getName());
 
@@ -73,16 +69,14 @@ public class Covid19OrderRegistrarFunction implements BackgroundFunction<Covid19
 
         Covid19OrderRegistrar orderRegistrar = new Covid19OrderRegistrar(careEvolveOrderEndpoint, careEvolveAccount, provider, 0, 0);
 
-        Map<String, Map<String, Object>> esData = ElasticSearchUtil.getSingleParticipantFromES(ddpInstance.getName(),
-                ddpInstance.getParticipantIndexES(), esClient, orderPayload.getParticipantHruid());
+        Map<String, Map<String, Object>> esData = ElasticSearchUtil.getSingleParticipantFromES(ddpInstance.getName(), ddpInstance.getParticipantIndexES(), esClient, orderPayload.getParticipantHruid());
 
         if (esData.size() == 1) {
             JsonObject participantJsonData = new JsonParser().parse(new Gson().toJson(esData.values().iterator().next())).getAsJsonObject();
             Patient cePatient = Covid19OrderRegistrar.fromElasticData(participantJsonData);
             System.out.println(cePatient);
 
-            OrderResponse orderResponse = orderRegistrar.orderTest(auth, cePatient, orderPayload.getKitLabel(),
-                    orderPayload.getExternalOrderId(), orderPayload.getCollectionTime());
+            OrderResponse orderResponse = orderRegistrar.orderTest(auth, cePatient, orderPayload.getKitLabel(), orderPayload.getExternalOrderId(), orderPayload.getCollectionTime());
 
             if (orderResponse.hasError()) {
                 logger.log(Level.SEVERE, "Trouble placing order for " + orderPayload.getKitLabel() + ":" + orderResponse.getError());
@@ -133,8 +127,8 @@ public class Covid19OrderRegistrarFunction implements BackgroundFunction<Covid19
             try {
                 var dateFormat = new SimpleDateFormat("yyyy-MM-dd hh:mm");
                 dateFormat.setTimeZone(TimeZone.getTimeZone("America/New_York"));
-                collectionInstant = dateFormat.parse(collectionTime).toInstant();
-            } catch (ParseException e) {
+                collectionInstant =  dateFormat.parse(collectionTime).toInstant();
+            } catch(ParseException e) {
                 throw new RuntimeException("Could not parse " + collectionTime + " for " + kitLabel, e);
             }
             return collectionInstant;

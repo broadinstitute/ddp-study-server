@@ -5,6 +5,7 @@ import java.util.Optional;
 
 import org.broadinstitute.dsm.db.OncHistory;
 import org.broadinstitute.dsm.db.OncHistoryDetail;
+import org.broadinstitute.dsm.db.structure.DBElement;
 import org.broadinstitute.dsm.model.NameValue;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.util.MedicalRecordUtil;
@@ -13,21 +14,13 @@ import org.slf4j.LoggerFactory;
 
 public class OncHistoryDetailPatch extends BasePatch {
 
-    static final Logger logger = LoggerFactory.getLogger(OncHistoryDetailPatch.class);
     private static final String ONC_HISTORY_DETAIL_ID = "oncHistoryDetailId";
-
-    static {
-        NULL_KEY = new HashMap<>();
-        NULL_KEY.put(NAME_VALUE, null);
-    }
 
     private Number mrID;
     private String oncHistoryDetailId;
 
-    {
-        nameValues.add(new NameValue("request", OncHistoryDetail.STATUS_REVIEW));
-        resultMap.put(NAME_VALUE, GSON.toJson(nameValues));
-    }
+    static final Logger logger = LoggerFactory.getLogger(OncHistoryDetailPatch.class);
+
 
     public OncHistoryDetailPatch(Patch patch) {
         super(patch);
@@ -36,6 +29,16 @@ public class OncHistoryDetailPatch extends BasePatch {
     @Override
     public Object doPatch() {
         return isNameValuePairs() ? patchNameValuePairs() : patchNameValuePair();
+    }
+
+    {
+        nameValues.add(new NameValue("request", OncHistoryDetail.STATUS_REVIEW));
+        resultMap.put(NAME_VALUE, GSON.toJson(nameValues));
+    }
+    
+    static {
+        NULL_KEY = new HashMap<>();
+        NULL_KEY.put(NAME_VALUE, null);
     }
 
     private void prepare() {
@@ -73,7 +76,7 @@ public class OncHistoryDetailPatch extends BasePatch {
     Object handleSingleNameValue() {
         if (Patch.patch(oncHistoryDetailId, patch.getUser(), patch.getNameValue(), dbElement)) {
             nameValues.addAll(setWorkflowRelatedFields(patch));
-            exportToESWithId(mrID.toString(), patch.getNameValue());
+            exportToESWithId(oncHistoryDetailId, patch.getNameValue());
             //set oncHistoryDetails created if it is a oncHistoryDetails value without a ID, otherwise created should already be set
             if (dbElement.getTableName().equals(DBConstants.DDP_ONC_HISTORY_DETAIL)) {
                 NameValue oncHistoryCreated = OncHistory.setOncHistoryCreated(patch.getParentId(), patch.getUser());
@@ -89,7 +92,7 @@ public class OncHistoryDetailPatch extends BasePatch {
     @Override
     Optional<Object> processEachNameValue(NameValue nameValue) {
         Patch.patch(oncHistoryDetailId, patch.getUser(), nameValue, dbElement);
-        exportToESWithId(mrID.toString(), nameValue);
+        exportToESWithId(oncHistoryDetailId, nameValue);
         return Optional.empty();
     }
 

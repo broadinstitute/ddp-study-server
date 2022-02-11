@@ -37,21 +37,20 @@ public class CreateBSPDummyKitRoute implements Route {
             int kitTypeId = (int) DBUtil.getBookmark(DUMMY_KIT_TYPE_NAME);
             logger.info("Found kit type for Mercury Dummy Endpoint " + kitTypeId);
             String ddpParticipantId = new BSPDummyKitDao().getRandomParticipantForStudy(mockDdpInstance);
-            String participantCollaboratorId = KitRequestShipping.getCollaboratorParticipantId(mockDdpInstance.getBaseUrl(),
-                    mockDdpInstance.getDdpInstanceId(), mockDdpInstance.isMigratedDDP(),
+            String participantCollaboratorId = KitRequestShipping.getCollaboratorParticipantId(mockDdpInstance.getBaseUrl(), mockDdpInstance.getDdpInstanceId(), mockDdpInstance.isMigratedDDP(),
                     mockDdpInstance.getCollaboratorIdPrefix(), ddpParticipantId, "", null);
-            String collaboratorSampleId = KitRequestShipping.getCollaboratorSampleId(kitTypeId, participantCollaboratorId,
-                    DUMMY_KIT_TYPE_NAME);
+            String collaboratorSampleId = KitRequestShipping.getCollaboratorSampleId(kitTypeId, participantCollaboratorId, DUMMY_KIT_TYPE_NAME);
             if (ddpParticipantId != null) {
                 //if instance not null
                 String dsmKitRequestId = KitRequestShipping.writeRequest(mockDdpInstance.getDdpInstanceId(), mercuryKitRequestId, kitTypeId,
                         ddpParticipantId, participantCollaboratorId, collaboratorSampleId,
-                        USER_ID, "", "", "", false, "");
+                        USER_ID, "", "", "", false, "", null);
                 new BSPDummyKitDao().updateKitLabel(kitLabel, dsmKitRequestId);
             }
             logger.info("Returning 200 to Mercury");
             response.status(200);
-        } else {
+        }
+        else {
             logger.error("Returning 500 to Mercury");
             response.status(500);
         }

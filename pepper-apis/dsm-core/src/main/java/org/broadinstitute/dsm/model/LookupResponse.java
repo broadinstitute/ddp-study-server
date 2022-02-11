@@ -1,6 +1,7 @@
 package org.broadinstitute.dsm.model;
 
 import lombok.Data;
+import org.broadinstitute.dsm.model.NameValue;
 
 @Data
 public class LookupResponse {

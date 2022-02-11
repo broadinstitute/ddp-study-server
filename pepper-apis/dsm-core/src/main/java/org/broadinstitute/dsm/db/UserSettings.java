@@ -1,29 +1,27 @@
 package org.broadinstitute.dsm.db;
 
-import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
+import lombok.Data;
+import lombok.NonNull;
+import org.broadinstitute.ddp.db.SimpleResult;
+import org.broadinstitute.dsm.statics.DBConstants;
+import org.broadinstitute.dsm.statics.QueryExtension;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-import lombok.Data;
-import lombok.NonNull;
-import org.broadinstitute.dsm.statics.DBConstants;
-import org.broadinstitute.dsm.statics.QueryExtension;
-import org.broadinstitute.lddp.db.SimpleResult;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
 
 @Data
 public class UserSettings {
 
     private static final Logger logger = LoggerFactory.getLogger(UserSettings.class);
 
-    private static final String SQL_UPDATE_USER_SETTINGS = "UPDATE user_settings SET rows_on_page = ?, rows_set_0 = ?, rows_set_1 = ?, "
-            + "rows_set_2 = ?, date_format = ? WHERE user_id = ?";
-    private static final String SQL_SELECT_USER_SETTINGS = "SELECT rows_on_page, rows_set_0, rows_set_1, rows_set_2, date_format FROM "
-            + "user_settings settings, access_user user WHERE user.user_id = settings.user_id AND user.is_active = 1";
+    private static final String SQL_UPDATE_USER_SETTINGS = "UPDATE user_settings SET rows_on_page = ?, rows_set_0 = ?, rows_set_1 = ?, rows_set_2 = ?, date_format = ? WHERE user_id = ?";
+    private static final String SQL_SELECT_USER_SETTINGS = "SELECT rows_on_page, rows_set_0, rows_set_1, rows_set_2, date_format FROM user_settings settings, access_user user WHERE user.user_id = settings.user_id AND user.is_active = 1";
     private static final String SQL_INSERT_USER_SETTINGS = "INSERT INTO user_settings SET user_id = ?";
 
     private static final String USER_ID = "userId";
@@ -59,10 +57,12 @@ public class UserSettings {
                 int result = stmt.executeUpdate();
                 if (result == 1) {
                     logger.info("Updated user settings for user w/ userID " + userId);
-                } else {
+                }
+                else {
                     throw new RuntimeException("Error updating user settings for user w/ userID " + userId + " it was updating " + result + " rows");
                 }
-            } catch (SQLException e) {
+            }
+            catch (SQLException e) {
                 dbVals.resultException = e;
             }
             return dbVals;
@@ -88,13 +88,14 @@ public class UserSettings {
                         );
                     }
                 }
-            } catch (SQLException ex) {
+            }
+            catch (SQLException ex) {
                 dbVals.resultException = ex;
             }
             return dbVals;
         });
         UserSettings us = (UserSettings) results.resultValue;
-        if (us != null) {
+        if(us != null) {
             us.defaultTissueFilter = ViewFilter.getDefaultFilterForUser(email, "tissueList");
             us.defaultParticipantFilter = ViewFilter.getDefaultFilterForUser(email, "participantList");
         }
@@ -106,7 +107,8 @@ public class UserSettings {
         try (PreparedStatement insertKit = conn.prepareStatement(SQL_INSERT_USER_SETTINGS)) {
             insertKit.setInt(1, userId);
             insertKit.executeUpdate();
-        } catch (SQLException e) {
+        }
+        catch (SQLException e) {
             throw new RuntimeException("Error inserting new user_settings ", e);
         }
     }

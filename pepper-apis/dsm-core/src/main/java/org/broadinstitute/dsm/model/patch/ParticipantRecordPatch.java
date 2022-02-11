@@ -7,6 +7,7 @@ import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDao;
 import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantRecordDao;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantDto;
 import org.broadinstitute.dsm.db.dto.ddp.participant.ParticipantRecordDto;
+import org.broadinstitute.dsm.db.structure.DBElement;
 import org.broadinstitute.dsm.model.NameValue;
 
 public class ParticipantRecordPatch extends BasePatch {
@@ -16,7 +17,7 @@ public class ParticipantRecordPatch extends BasePatch {
     public ParticipantRecordPatch(Patch patch) {
         super(patch);
     }
-
+    
     @Override
     public Object doPatch() {
         return patchNameValuePair();

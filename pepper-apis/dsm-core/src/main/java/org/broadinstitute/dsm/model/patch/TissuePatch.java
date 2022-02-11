@@ -3,19 +3,20 @@ package org.broadinstitute.dsm.model.patch;
 import java.util.Optional;
 
 import org.broadinstitute.dsm.db.Tissue;
+import org.broadinstitute.dsm.db.structure.DBElement;
 import org.broadinstitute.dsm.model.NameValue;
 
 public class TissuePatch extends BasePatch {
 
     public static final String TISSUE_ID = "tissueId";
     private String tissueId;
+    
+    private void prepare() {
+        tissueId = Tissue.createNewTissue(patch.getParentId(), patch.getUser());
+    }
 
     public TissuePatch(Patch patch) {
         super(patch);
-    }
-
-    private void prepare() {
-        tissueId = Tissue.createNewTissue(patch.getParentId(), patch.getUser());
     }
 
     @Override

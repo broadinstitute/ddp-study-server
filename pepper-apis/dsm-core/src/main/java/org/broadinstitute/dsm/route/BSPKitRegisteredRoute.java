@@ -1,20 +1,19 @@
 package org.broadinstitute.dsm.route;
 
-import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
+import com.google.gson.Gson;
+import org.broadinstitute.ddp.db.SimpleResult;
+import org.broadinstitute.dsm.model.gp.bsp.BSPKitRegistration;
+import org.broadinstitute.dsm.statics.DBConstants;
+import spark.Request;
+import spark.Response;
+import spark.Route;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
-import com.google.gson.Gson;
-import org.broadinstitute.dsm.model.bsp.BSPKitRegistration;
-import org.broadinstitute.dsm.statics.DBConstants;
-import org.broadinstitute.lddp.db.SimpleResult;
-import spark.Request;
-import spark.Response;
-import spark.Route;
+import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
 
 public class BSPKitRegisteredRoute implements Route {
 
@@ -49,7 +48,8 @@ public class BSPKitRegisteredRoute implements Route {
                         }
                     }
                 }
-            } catch (SQLException ex) {
+            }
+            catch (SQLException ex) {
                 dbVals.resultException = ex;
             }
             return dbVals;

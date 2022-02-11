@@ -1,8 +1,8 @@
 package org.broadinstitute.dsm.db.dto.user;
 
-import java.util.Optional;
-
 import lombok.Setter;
+
+import java.util.Optional;
 
 @Setter
 public class UserDto {
@@ -34,7 +34,6 @@ public class UserDto {
     public Optional<String> getEmail() {
         return Optional.ofNullable(email);
     }
-
     public Optional<String> getPhoneNumber() {
         return Optional.ofNullable(phoneNumber);
     }

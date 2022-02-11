@@ -1,7 +1,5 @@
 package org.broadinstitute.dsm.util.tools;
 
-import java.io.File;
-
 import com.easypost.exception.EasyPostException;
 import com.easypost.model.Address;
 import com.easypost.model.Parcel;
@@ -9,10 +7,14 @@ import com.easypost.model.Shipment;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import com.typesafe.config.ConfigValueFactory;
+import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.dsm.model.ddp.DDPParticipant;
 import org.broadinstitute.dsm.util.EasyPostUtil;
+import org.broadinstitute.dsm.util.TestUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.File;
 
 public class CreateLabelTool {
 
@@ -27,14 +29,13 @@ public class CreateLabelTool {
         cfg = cfg.withValue("portal.port", ConfigValueFactory.fromAnyRef("9999"));
         cfg = cfg.withValue("errorAlert.recipientAddress", ConfigValueFactory.fromAnyRef(""));
 
-        //TODO DSM add back in
-//        TransactionWrapper.configureSslProperties(cfg.getString("portal.dbSslKeyStore"),
-//                cfg.getString("portal.dbSslKeyStorePwd"),
-//                cfg.getString("portal.dbSslTrustStore"),
-//                cfg.getString("portal.dbSslTrustStorePwd"));
-//
-//        TransactionWrapper.reset(TestUtil.UNIT_TEST);
-//        TransactionWrapper.init(cfg.getInt("portal.maxConnections"), cfg.getString("portal.dbUrl"), cfg, false);
+        TransactionWrapper.configureSslProperties(cfg.getString("portal.dbSslKeyStore"),
+                cfg.getString("portal.dbSslKeyStorePwd"),
+                cfg.getString("portal.dbSslTrustStore"),
+                cfg.getString("portal.dbSslTrustStorePwd"));
+
+        TransactionWrapper.reset(TestUtil.UNIT_TEST);
+        TransactionWrapper.init(cfg.getInt("portal.maxConnections"), cfg.getString("portal.dbUrl"), cfg, false);
 
         //select the method you want to run!
 //        createEasyPostLabel();
@@ -78,7 +79,8 @@ public class CreateLabelTool {
             Shipment shipment2Participant = easyPostUtil.buyShipment(carrier, carrierID, service,
                     toAddress, returnAddress, parcel, billingRef, null);
             logger.info(shipment2Participant.getLabelUrl());
-        } catch (EasyPostException e) {
+        }
+        catch (EasyPostException e) {
             logger.error(e.toString());
         }
     }
@@ -90,7 +92,8 @@ public class CreateLabelTool {
             EasyPostUtil easyPostUtil = new EasyPostUtil(null, apiKey);
             Address address = easyPostUtil.getAddress(easyPostAddressId);
             logger.info(address.getName());
-        } catch (EasyPostException e) {
+        }
+        catch (EasyPostException e) {
             logger.error(e.toString());
         }
     }
@@ -112,7 +115,8 @@ public class CreateLabelTool {
             Address address = easyPostUtil.createAddress(participant, "617-714-8952");
             Address veri = address.verify(apiKey);
             logger.info(veri.getName());
-        } catch (EasyPostException e) {
+        }
+        catch (EasyPostException e) {
             logger.error(e.toString());
         }
     }

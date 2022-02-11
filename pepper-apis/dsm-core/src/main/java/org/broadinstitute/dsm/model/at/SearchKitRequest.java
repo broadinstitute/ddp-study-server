@@ -1,34 +1,31 @@
 package org.broadinstitute.dsm.model.at;
 
-import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
-
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.ddp.db.SimpleResult;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.KitRequestShipping;
 import org.broadinstitute.dsm.db.ParticipantData;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
-import org.broadinstitute.lddp.db.SimpleResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.*;
+
+import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
+
 public class SearchKitRequest {
 
-    public static final String SQL_SELECT_KIT_REQUEST = "SELECT participant_data_id, ddp_participant_id, data, JSON_EXTRACT(data,'$"
-            + ".GENOME_STUDY_KIT_TRACKING_NUMBER'), " +
-            "JSON_EXTRACT(data,'$.GENOME_STUDY_SPIT_KIT_BARCODE'), JSON_EXTRACT(data,'$.GENOME_STUDY_CPT_ID'), JSON_EXTRACT(data,'$"
-            + ".GENOME_STUDY_DATE_RECEIVED') " +
-            "FROM ddp_participant_data where ";
     private static final Logger logger = LoggerFactory.getLogger(SearchKitRequest.class);
+
+    public static final String SQL_SELECT_KIT_REQUEST = "SELECT participant_data_id, ddp_participant_id, data, JSON_EXTRACT(data,'$.GENOME_STUDY_KIT_TRACKING_NUMBER'), " +
+            "JSON_EXTRACT(data,'$.GENOME_STUDY_SPIT_KIT_BARCODE'), JSON_EXTRACT(data,'$.GENOME_STUDY_CPT_ID'), JSON_EXTRACT(data,'$.GENOME_STUDY_DATE_RECEIVED') " +
+            "FROM ddp_participant_data where ";
+
     private static final String SHORT_ID = "SHORT_ID";
     private static final String SEARCH_TRACKING_NUMBER = "TRACKING_NUMBER";
     private static final String SEARCH_MF_BAR = "MF_BAR";
@@ -41,15 +38,14 @@ public class SearchKitRequest {
     public static ParticipantData findATKitRequest(@NonNull String mfBarcode) {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_KIT_REQUEST.concat(MF_BARCODE + " like \"%" + mfBarcode +
-                    "%\""))) {
+            try (PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_KIT_REQUEST.concat(MF_BARCODE + " like \"%" + mfBarcode + "%\""))) {
                 try (ResultSet rs = stmt.executeQuery()) {
                     if (rs.next()) {
-                        dbVals.resultValue = new ParticipantData(rs.getString(DBConstants.PARTICIPANT_DATA_ID), null,
-                                rs.getString(DBConstants.DATA));
+                        dbVals.resultValue = new ParticipantData(rs.getLong(DBConstants.PARTICIPANT_DATA_ID), null, rs.getString(DBConstants.DATA));
                     }
                 }
-            } catch (SQLException ex) {
+            }
+            catch (SQLException ex) {
                 dbVals.resultException = ex;
             }
             return dbVals;
@@ -69,11 +65,14 @@ public class SearchKitRequest {
             String search = "";
             if (SEARCH_TRACKING_NUMBER.equals(field)) {
                 search = TRACKING_ID + " like \"%" + value + "%\"";
-            } else if (SEARCH_MF_BAR.equals(field)) {
+            }
+            else if (SEARCH_MF_BAR.equals(field)) {
                 search = MF_BARCODE + " like \"%" + value + "%\"";
-            } else if (SHORT_ID.equals(field)) {
+            }
+            else if (SHORT_ID.equals(field)) {
                 search = COLLABORATOR_PARTICIPANT_ID + " like \"%" + value + "%\"";
-            } else {
+            }
+            else {
                 throw new RuntimeException("Search field not known: " + field);
             }
             try (PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_KIT_REQUEST.concat(search))) {
@@ -88,11 +87,11 @@ public class SearchKitRequest {
                         trackingId = removeApostrophe(trackingId);
                         mfBarcode = removeApostrophe(mfBarcode);
                         receivedDate = removeApostrophe(receivedDate);
-                        kitRequests.put(ddpParticipantId, new KitRequestShipping(ddpParticipantId, bspParticipantId, mfBarcode, "AT",
-                                trackingId, receivedDate, "hruid", "gender"));
+                        kitRequests.put(ddpParticipantId, new KitRequestShipping(ddpParticipantId, bspParticipantId, mfBarcode, "AT", trackingId, receivedDate, "hruid", "gender"));
                     }
                 }
-            } catch (SQLException ex) {
+            }
+            catch (SQLException ex) {
                 dbVals.resultException = ex;
             }
             return dbVals;
@@ -110,8 +109,7 @@ public class SearchKitRequest {
                 Map<String, Map<String, Object>> participantESData = ElasticSearchUtil.getFilteredDDPParticipantsFromES(ddpInstance,
                         ElasticSearchUtil.BY_GUID + ddpParticipantId);
                 if (participantESData == null || participantESData.isEmpty()) {
-                    participantESData = ElasticSearchUtil.getFilteredDDPParticipantsFromES(ddpInstance,
-                            ElasticSearchUtil.BY_LEGACY_ALTPID + ddpParticipantId);
+                    participantESData = ElasticSearchUtil.getFilteredDDPParticipantsFromES(ddpInstance, ElasticSearchUtil.BY_LEGACY_ALTPID + ddpParticipantId);
                 }
                 if (participantESData != null && !participantESData.isEmpty()) {
                     Map<String, Object> esParticipant = participantESData.get(ddpParticipantId);
@@ -125,8 +123,7 @@ public class SearchKitRequest {
                             for (Map<String, Object> activity : activities) {
                                 Object activityCode = activity.get("activityCode");
                                 if ("GENOME_STUDY".equals(activityCode)) {
-                                    List<Map<String, Object>> questionsAnswers = (List<Map<String, Object>>) activity.get(
-                                            "questionsAnswers");
+                                    List<Map<String, Object>> questionsAnswers = (List<Map<String, Object>>) activity.get("questionsAnswers");
                                     if (questionsAnswers != null) {
                                         for (Map<String, Object> questionsAnswer : questionsAnswers) {
                                             Object stableId = questionsAnswer.get("stableId");
@@ -150,7 +147,7 @@ public class SearchKitRequest {
 
     private static String removeApostrophe(String input) {
         if (StringUtils.isNotBlank(input)) {
-            return input.replace("\"", "");
+            return  input.replace("\"","");
         }
         return input;
     }

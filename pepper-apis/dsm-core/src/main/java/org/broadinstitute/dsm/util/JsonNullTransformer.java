@@ -4,7 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import spark.ResponseTransformer;
 
-public class JsonNullTransformer implements ResponseTransformer {
+public class JsonNullTransformer  implements ResponseTransformer {
 
     private Gson gson = new GsonBuilder().serializeNulls().create();
 

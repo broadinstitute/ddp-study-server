@@ -40,7 +40,7 @@ public class CFUtil {
         return dataSource;
     }
 
-    public static Config loadConfig(String projectId, String secretId) throws IOException {
+    public static Config loadConfig(String projectId, String secretId) throws IOException  {
         logger.info("Looking up secrets from project " + projectId + " and secret " + secretId);
         try (SecretManagerServiceClient secretManagerServiceClient = SecretManagerServiceClient.create()) {
             var latestSecretVersion = SecretVersionName.of(projectId, secretId, "latest");

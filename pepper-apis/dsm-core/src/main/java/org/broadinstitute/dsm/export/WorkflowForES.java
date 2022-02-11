@@ -12,8 +12,7 @@ public class WorkflowForES {
     String status;
     StudySpecificData studySpecificData;
 
-    private WorkflowForES(DDPInstance instance, String ddpParticipantId, String workflow, String status,
-                          StudySpecificData studySpecificData) {
+    private WorkflowForES(DDPInstance instance, String ddpParticipantId, String workflow, String status, StudySpecificData studySpecificData) {
         this.instance = instance;
         this.ddpParticipantId = ddpParticipantId;
         this.workflow = workflow;

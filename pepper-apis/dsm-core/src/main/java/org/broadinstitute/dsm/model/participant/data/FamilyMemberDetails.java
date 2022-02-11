@@ -48,8 +48,7 @@ public class FamilyMemberDetails {
     private boolean isApplicant;
 
 
-    public FamilyMemberDetails() {
-    }
+    public FamilyMemberDetails() {}
 
     public FamilyMemberDetails(String firstName, String lastName, String memberType, long familyId,
                                String collaboratorParticipantId) {
@@ -65,12 +64,10 @@ public class FamilyMemberDetails {
         List<Field> declaredFields = Arrays.stream(FamilyMemberDetails.class.getDeclaredFields())
                 .filter(f -> !Modifier.isStatic(f.getModifiers()))
                 .collect(Collectors.toList());
-        for (Field f : declaredFields) {
+        for (Field f: declaredFields) {
             try {
                 Object fieldValue = f.get(this);
-                if (Objects.isNull(fieldValue)) {
-                    continue;
-                }
+                if (Objects.isNull(fieldValue)) continue;
                 familyMemberDetailMap.put(f.getAnnotation(SerializedName.class).value(), String.valueOf(fieldValue));
             } catch (Exception e) {
                 throw new RuntimeException(e);
@@ -81,8 +78,9 @@ public class FamilyMemberDetails {
 
     public boolean isFamilyMemberFieldsEmpty() {
         return StringUtils.isBlank(this.firstName) || StringUtils.isBlank(this.lastName) || StringUtils.isBlank(this.memberType)
-                || StringUtils.isBlank(this.subjectId);
+                     || StringUtils.isBlank(this.subjectId);
     }
+
 
 
 }

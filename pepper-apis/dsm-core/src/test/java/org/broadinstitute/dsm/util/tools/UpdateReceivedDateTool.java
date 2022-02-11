@@ -1,15 +1,11 @@
 package org.broadinstitute.dsm.util.tools;
 
-import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
-
-import java.io.File;
-import java.util.List;
-import java.util.Map;
-
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.ddp.db.TransactionWrapper;
+import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.util.TestUtil;
 import org.broadinstitute.dsm.util.tools.util.DBUtil;
@@ -17,10 +13,16 @@ import org.broadinstitute.dsm.util.tools.util.FileUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
+import java.util.*;
+
+import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
+
 public class UpdateReceivedDateTool {
 
-    public static final String SELECT_KIT_RECEIVED_QUERY = "select receive_date from ddp_kit where kit_label = ?";
     private static final Logger logger = LoggerFactory.getLogger(UpdateReceivedDateTool.class);
+
+    public static final String SELECT_KIT_RECEIVED_QUERY = "select receive_date from ddp_kit where kit_label = ?";
     private static final String SET_KIT_RECEIVED_QUERY = "update ddp_kit set receive_date = ? where kit_label = ?";
 
     private static Config cfg;
@@ -48,11 +50,13 @@ public class UpdateReceivedDateTool {
 
                 String migrationFile = "receivedUpdate.txt";
                 update(migrationFile);
-            } else {
+            }
+            else {
                 setup(propFile);
                 update(testJson);
             }
-        } catch (Exception ex) {
+        }
+        catch (Exception ex) {
             logger.error("Failed to migrate data ", ex);
             System.exit(-1);
         }
@@ -63,14 +67,13 @@ public class UpdateReceivedDateTool {
         //secrets from vault in a config file
         cfg = cfg.withFallback(ConfigFactory.parseFile(new File(config)));
 
-        //TODO DSM add back in
-//        TransactionWrapper.configureSslProperties(cfg.getString("portal.dbSslKeyStore"),
-//                cfg.getString("portal.dbSslKeyStorePwd"),
-//                cfg.getString("portal.dbSslTrustStore"),
-//                cfg.getString("portal.dbSslTrustStorePwd"));
-//
-//        TransactionWrapper.init(cfg.getInt(ApplicationConfigConstants.DSM_DB_MAX_CONNECTIONS),
-//                cfg.getString(ApplicationConfigConstants.DSM_DB_URL), cfg, false);
+        TransactionWrapper.configureSslProperties(cfg.getString("portal.dbSslKeyStore"),
+                cfg.getString("portal.dbSslKeyStorePwd"),
+                cfg.getString("portal.dbSslTrustStore"),
+                cfg.getString("portal.dbSslTrustStorePwd"));
+
+        TransactionWrapper.init(cfg.getInt(ApplicationConfigConstants.DSM_DB_MAX_CONNECTIONS),
+                cfg.getString(ApplicationConfigConstants.DSM_DB_URL), cfg, false);
     }
 
     private static void update(@NonNull String file) throws Exception {
@@ -86,12 +89,14 @@ public class UpdateReceivedDateTool {
                     if (StringUtils.isNotBlank(smId) && StringUtils.isNotBlank(receivedDateString)) {
                         if (StringUtils.isBlank(receiveDate)) {
                             DBUtil.setToReceived(conn, SET_KIT_RECEIVED_QUERY, smId, DBUtil.getLong(receivedDateString));
-                        } else {
+                        }
+                        else {
                             logger.warn("Kit w/ SM-ID " + smId + " had already a receive_date");
                         }
                     }
                 }
-            } catch (Exception e) {
+            }
+            catch (Exception e) {
                 throw new RuntimeException(" insertIntoDB ", e);
             }
             return null;

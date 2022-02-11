@@ -1,14 +1,13 @@
 package org.broadinstitute.dsm.model;
 
-import java.util.List;
-
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 
+import java.util.List;
+
 //EqualsAndHashCode ensures Collection.contains can be used to check for a Value object with a particular value property
-@Getter
-@EqualsAndHashCode
-public class Value {
+@Getter @EqualsAndHashCode
+public class Value{
 
     private String value;
     private String name;

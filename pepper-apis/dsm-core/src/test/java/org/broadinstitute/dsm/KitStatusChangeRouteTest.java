@@ -1,27 +1,24 @@
 package org.broadinstitute.dsm;
 
-import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
-
-import java.util.ArrayList;
-import java.util.List;
-
 import com.google.gson.JsonArray;
 import com.google.gson.JsonParser;
+import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.dsm.route.KitStatusChangeRoute;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.util.DBTestUtil;
 import org.broadinstitute.dsm.util.TestUtil;
 import org.broadinstitute.dsm.util.tools.UpdateReceivedDateTool;
 import org.broadinstitute.dsm.util.tools.util.DBUtil;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.*;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
 
 public class KitStatusChangeRouteTest extends TestHelper {
 
-    private static final String CHECK_KITLABEL = "select count(*) as count from ddp_kit_request request, ddp_kit kit where request"
-            + ".dsm_kit_request_id = kit.dsm_kit_request_id and request.ddp_kit_request_id = ? and kit_label = ?";
+    private static final String CHECK_KITLABEL = "select count(*) as count from ddp_kit_request request, ddp_kit kit where request.dsm_kit_request_id = kit.dsm_kit_request_id and request.ddp_kit_request_id = ? and kit_label = ?";
     private static final String CHECK_TRACKING = "select count(*) as count from ddp_kit_tracking where kit_label = ?";
 
     private static KitStatusChangeRoute route;
@@ -56,7 +53,7 @@ public class KitStatusChangeRouteTest extends TestHelper {
         String json = TestUtil.readFile("FinalScanPayload.json");
         JsonArray scans = (JsonArray) (new JsonParser().parse(json));
         List<KitStatusChangeRoute.ScanError> scanErrorList = new ArrayList<>();
-        route.updateKits("finalScan", scans, System.currentTimeMillis(), scanErrorList, "3");
+        route.updateKits("finalScan", scans, System.currentTimeMillis(), scanErrorList, "3", null);
 
         List<String> strings = new ArrayList<>();
         strings.add(FAKE_LATEST_KIT + "_1");
@@ -72,8 +69,7 @@ public class KitStatusChangeRouteTest extends TestHelper {
         //check if kitlabel was added to dsmlabel
         Assert.assertEquals("1", count);
 
-        //TODO DSM add back in
-//        TransactionWrapper.reset(TestUtil.UNIT_TEST);
+        TransactionWrapper.reset(TestUtil.UNIT_TEST);
         //update receive_date per tool
         UpdateReceivedDateTool.argumentsForTesting("config/test-config.conf", "receivedUpdate.txt");
         UpdateReceivedDateTool.littleMain();
@@ -81,13 +77,12 @@ public class KitStatusChangeRouteTest extends TestHelper {
         //check receive_dates
         inTransaction((conn) -> {
             try {
-                String receiveDate = DBUtil.checkNotReceived(conn, UpdateReceivedDateTool.SELECT_KIT_RECEIVED_QUERY, "spk-FAKE-KITLABEL-1"
-                        , DBConstants.DSM_RECEIVE_DATE);
+                String receiveDate = DBUtil.checkNotReceived(conn, UpdateReceivedDateTool.SELECT_KIT_RECEIVED_QUERY, "spk-FAKE-KITLABEL-1", DBConstants.DSM_RECEIVE_DATE);
                 Assert.assertEquals(String.valueOf(DBUtil.getLong("11/03/2016")), receiveDate);
-                receiveDate = DBUtil.checkNotReceived(conn, UpdateReceivedDateTool.SELECT_KIT_RECEIVED_QUERY, "spk-FAKE-KITLABEL-2",
-                        DBConstants.DSM_RECEIVE_DATE);
+                receiveDate = DBUtil.checkNotReceived(conn, UpdateReceivedDateTool.SELECT_KIT_RECEIVED_QUERY, "spk-FAKE-KITLABEL-2", DBConstants.DSM_RECEIVE_DATE);
                 Assert.assertEquals(String.valueOf(DBUtil.getLong("05/24/2017")), receiveDate);
-            } catch (Exception e) {
+            }
+            catch (Exception e) {
                 Assert.fail();
             }
             return null;
@@ -99,14 +94,15 @@ public class KitStatusChangeRouteTest extends TestHelper {
         try {
             DBTestUtil.insertLatestKitRequest(cfg.getString("portal.insertKitRequest"), cfg.getString("portal.insertKit"),
                     "_3", 2, DBTestUtil.getQueryDetail(DBUtil.GET_REALM_QUERY, TEST_DDP, DDP_INSTANCE_ID));
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             //in case kit is not already in db
         }
 
         String json = TestUtil.readFile("TrackingScanPayload.json");
         JsonArray scans = (JsonArray) (new JsonParser().parse(json));
         List<KitStatusChangeRoute.ScanError> scanErrorList = new ArrayList<>();
-        route.updateKits("trackingScan", scans, System.currentTimeMillis(), scanErrorList, "3");
+        route.updateKits("trackingScan", scans, System.currentTimeMillis(), scanErrorList, "3", null);
 
         List<String> strings = new ArrayList<>();
         strings.add(FAKE_DSM_LABEL_UID + "_3");
@@ -114,7 +110,7 @@ public class KitStatusChangeRouteTest extends TestHelper {
         //check if kitlabel was added to tracking table
         Assert.assertEquals("1", count);
 
-        route.updateKits("finalScan", scans, System.currentTimeMillis(), scanErrorList, "3");
+        route.updateKits("finalScan", scans, System.currentTimeMillis(), scanErrorList, "3", null);
 
         strings = new ArrayList<>();
         strings.add(FAKE_LATEST_KIT + "_3");
@@ -132,7 +128,7 @@ public class KitStatusChangeRouteTest extends TestHelper {
         String json = TestUtil.readFile("TrackingScanPayload.json");
         JsonArray scans = (JsonArray) (new JsonParser().parse(json));
         List<KitStatusChangeRoute.ScanError> scanErrorList = new ArrayList<>();
-        route.updateKits("finalScan", scans, System.currentTimeMillis(), scanErrorList, "3");
+        route.updateKits("finalScan", scans, System.currentTimeMillis(), scanErrorList, "3", null);
 
         List<String> strings = new ArrayList<>();
         strings.add(FAKE_LATEST_KIT + "_4");
@@ -148,13 +144,14 @@ public class KitStatusChangeRouteTest extends TestHelper {
         try {
             DBTestUtil.insertLatestKitRequest(cfg.getString("portal.insertKitRequest"), cfg.getString("portal.insertKit"),
                     "_3", 2, DBTestUtil.getQueryDetail(DBUtil.GET_REALM_QUERY, TEST_DDP, DDP_INSTANCE_ID));
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             //in case kit is not already in db
         }
         String json = TestUtil.readFile("TrackingScanPayload.json");
         JsonArray scans = (JsonArray) (new JsonParser().parse(json));
         List<KitStatusChangeRoute.ScanError> scanErrorList = new ArrayList<>();
-        route.updateKits("trackingScan", scans, System.currentTimeMillis(), scanErrorList, "3");
+        route.updateKits("trackingScan", scans, System.currentTimeMillis(), scanErrorList, "3", null);
 
         List<String> strings = new ArrayList<>();
         strings.add(FAKE_DSM_LABEL_UID + "_3");
@@ -163,6 +160,6 @@ public class KitStatusChangeRouteTest extends TestHelper {
         Assert.assertEquals("1", count);
 
         scanErrorList = new ArrayList<>();
-        route.updateKits("trackingScan", scans, System.currentTimeMillis(), scanErrorList, "3");
+        route.updateKits("trackingScan", scans, System.currentTimeMillis(), scanErrorList, "3", null);
     }
 }

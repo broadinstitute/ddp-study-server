@@ -15,8 +15,7 @@ public class DDPParticipantInstitution {
     private String city;
     private String state;
 
-    public DDPParticipantInstitution(String firstName, String lastName, String shortId, String legacyShortId, String physician,
-                                     String institution,
+    public DDPParticipantInstitution(String firstName, String lastName, String shortId, String legacyShortId, String physician, String institution,
                                      String streetAddress, String city, String state) {
         this.firstName = firstName;
         this.lastName = lastName;

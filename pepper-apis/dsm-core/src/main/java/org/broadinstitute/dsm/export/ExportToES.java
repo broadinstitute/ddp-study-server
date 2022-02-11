@@ -5,6 +5,8 @@ import java.time.Instant;
 
 import com.google.gson.Gson;
 import org.broadinstitute.dsm.db.DDPInstance;
+import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
+import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,9 +46,13 @@ public class ExportToES {
 
     public static class ExportPayload {
         private String study;
+        private boolean isMigration;
 
         public String getStudy() {
             return study;
+        }
+        public boolean isMigration() {
+            return isMigration;
         }
     }
 }

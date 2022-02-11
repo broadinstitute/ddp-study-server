@@ -27,13 +27,15 @@ public class JWTConverter {
         try {
             JwkProvider jwkProvider = new JwkProviderBuilder(auth0Domain).build();
             keyProvider = RSAKeyProviderFactory.createRSAKeyProviderWithPrivateKeyOnly(jwkProvider);
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             logger.warn("Could not verify token {} due to jwk error", jwt);
         }
         if (keyProvider != null) {
             try {
                 validToken = JWT.require(Algorithm.RSA256(keyProvider)).acceptLeeway(10).build().verify(jwt);
-            } catch (Exception e) {
+            }
+            catch (Exception e) {
                 logger.warn("Could not verify token {}", jwt, e);
             }
         }

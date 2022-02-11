@@ -15,8 +15,7 @@ public class ESTissueRecordsDto {
     private String received;
     private String sent;
 
-    public ESTissueRecordsDto(String ddpParticipantId, Integer tissueRecordId, String typePx, String locationPX, String datePX,
-                              String histology, String accessionNumber, String request, String received, String sent) {
+    public ESTissueRecordsDto(String ddpParticipantId, Integer tissueRecordId, String typePx, String locationPX, String datePX, String histology, String accessionNumber, String request, String received, String sent) {
         this.ddpParticipantId = ddpParticipantId;
         this.tissueRecordId = tissueRecordId;
         this.typePx = typePx;

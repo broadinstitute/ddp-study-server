@@ -1,21 +1,23 @@
 package org.broadinstitute.dsm.model.elastic.export;
 
-import java.util.Objects;
+import java.util.Map;
 
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.elasticsearch.client.RestHighLevelClient;
 
-public abstract class BaseExporter implements Exportable {
+public abstract class BaseExporter implements Exportable, ExportableHelper {
 
-    protected RestHighLevelClient clientInstance = ElasticSearchUtil.getClientInstance();
-    protected UpsertDataRequestPayload upsertDataRequestPayload;
-    protected UpsertMappingRequestPayload upsertMappingRequestPayload;
+    protected RequestPayload requestPayload;
+    protected Map<String, Object> source;
 
-    public void setUpdateRequestPayload(UpsertDataRequestPayload upsertDataRequestPayload) {
-        this.upsertDataRequestPayload = Objects.requireNonNull(upsertDataRequestPayload);
+    @Override
+    public void setRequestPayload(RequestPayload requestPayload) {
+        this.requestPayload = requestPayload;
     }
 
-    public void setUpsertMappingRequestPayload(UpsertMappingRequestPayload upsertMappingRequestPayload) {
-        this.upsertMappingRequestPayload = Objects.requireNonNull(upsertMappingRequestPayload);
+    @Override
+    public void setSource(Map<String, Object> source) {
+        this.source = source;
     }
+
 }

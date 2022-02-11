@@ -1,12 +1,5 @@
 package org.broadinstitute.dsm.util;
 
-import static org.apache.http.client.fluent.Request.Get;
-import static org.apache.http.client.fluent.Request.Post;
-
-import java.security.cert.X509Certificate;
-import java.util.HashMap;
-import java.util.Map;
-
 import com.auth0.jwt.interfaces.Claim;
 import com.google.gson.GsonBuilder;
 import lombok.NonNull;
@@ -17,10 +10,17 @@ import org.apache.http.entity.ContentType;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.ssl.SSLContextBuilder;
 import org.apache.http.ssl.TrustStrategy;
+import org.broadinstitute.ddp.security.Auth0Util;
+import org.broadinstitute.ddp.security.SecurityHelper;
 import org.broadinstitute.dsm.DSMServer;
-import org.broadinstitute.lddp.security.Auth0Util;
-import org.broadinstitute.lddp.security.SecurityHelper;
 import spark.Request;
+
+import java.security.cert.X509Certificate;
+import java.util.HashMap;
+import java.util.Map;
+
+import static org.apache.http.client.fluent.Request.Get;
+import static org.apache.http.client.fluent.Request.Post;
 
 public class SecurityUtil {
 
@@ -29,8 +29,12 @@ public class SecurityUtil {
 
     private static String secret;
 
-    public SecurityUtil(@NonNull String secret) {
-        SecurityUtil.secret = secret;
+    public SecurityUtil(@NonNull String secret){
+        this.secret = secret;
+    }
+
+    public enum ResultType {
+        AUTHENTICATION_ERROR, AUTHORIZATION_ERROR, AUTHORIZED
     }
 
     /**
@@ -45,7 +49,8 @@ public class SecurityUtil {
         String secret = null;
         if (auth0Token) {
             token = DSMServer.getAuth0Util().getAccessToken();
-        } else {
+        }
+        else {
             secret = DSMServer.getDDPTokenSecret(instanceName);
         }
         if (StringUtils.isBlank(token) && StringUtils.isNotBlank(secret)) {
@@ -128,13 +133,13 @@ public class SecurityUtil {
         return addBodyToRequest(objectToPost, request);
     }
 
-    private static org.apache.http.client.fluent.Request addBodyToRequest(Object objectToPost,
-                                                                          org.apache.http.client.fluent.Request request) {
+    private static org.apache.http.client.fluent.Request addBodyToRequest(Object objectToPost, org.apache.http.client.fluent.Request request) {
         if (objectToPost != null) {
             String content = null;
             if (!(objectToPost instanceof String)) {
                 content = new GsonBuilder().create().toJson(objectToPost);
-            } else {
+            }
+            else {
                 content = (String) objectToPost;
             }
             request.bodyString(content, ContentType.APPLICATION_JSON);
@@ -195,13 +200,13 @@ public class SecurityUtil {
         }
         return addBodyToRequest(objectToPost, request);
     }
-
     public static Map<String, String> createHeader(@NonNull String instanceName, boolean auth0Token, Auth0Util auth0Util) {
         String token = null;
         String secret = null;
         if (auth0Token) {
-            token = auth0Util.getAccessToken();
-        } else {
+            token =auth0Util.getAccessToken();
+        }
+        else {
             secret = DSMServer.getDDPTokenSecret(instanceName);
         }
         if (StringUtils.isBlank(token) && StringUtils.isNotBlank(secret)) {
@@ -214,9 +219,5 @@ public class SecurityUtil {
             throw new RuntimeException("No token available for " + instanceName);
         }
         return createHeaderWithBearer(token);
-    }
-
-    public enum ResultType {
-        AUTHENTICATION_ERROR, AUTHORIZATION_ERROR, AUTHORIZED
     }
 }

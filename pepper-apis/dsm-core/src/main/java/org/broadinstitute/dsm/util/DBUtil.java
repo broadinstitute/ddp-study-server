@@ -1,19 +1,15 @@
 package org.broadinstitute.dsm.util;
 
-import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
+import lombok.NonNull;
+import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.ddp.db.SimpleResult;
+import org.broadinstitute.dsm.statics.DBConstants;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import lombok.NonNull;
-import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.dsm.statics.DBConstants;
-import org.broadinstitute.lddp.db.SimpleResult;
+import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
 
 public class DBUtil {
 
@@ -25,7 +21,8 @@ public class DBUtil {
             SimpleResult dbVals = new SimpleResult(-1);
             try {
                 dbVals.resultValue = getBookmark(conn, bookmarkName);
-            } catch (Exception ex) {
+            }
+            catch (Exception ex) {
                 dbVals.resultException = ex;
             }
             return dbVals;
@@ -39,8 +36,7 @@ public class DBUtil {
 
     public static Long getBookmark(Connection conn, String bookmarkName) {
         if (conn != null) {
-            try (PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_BOOKMARK, ResultSet.TYPE_SCROLL_SENSITIVE,
-                    ResultSet.CONCUR_READ_ONLY)) {
+            try (PreparedStatement stmt = conn.prepareStatement(SQL_SELECT_BOOKMARK, ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_READ_ONLY)) {
                 stmt.setString(1, bookmarkName);
                 try (ResultSet rs = stmt.executeQuery()) {
                     rs.last();
@@ -51,7 +47,8 @@ public class DBUtil {
                     }
                     throw new RuntimeException("Error getting bookmark " + bookmarkName);
                 }
-            } catch (Exception ex) {
+            }
+            catch (Exception ex) {
                 throw new RuntimeException("Error getting bookmark " + bookmarkName, ex);
             }
         }
@@ -63,7 +60,8 @@ public class DBUtil {
             SimpleResult dbVals = new SimpleResult(-1);
             try {
                 updateBookmark(conn, value, bookmarkName);
-            } catch (Exception ex) {
+            }
+            catch (Exception ex) {
                 dbVals.resultException = ex;
             }
             return dbVals;
@@ -83,7 +81,8 @@ public class DBUtil {
                 if (result != 1) {
                     throw new RuntimeException("Error updating bookmark " + bookmarkName);
                 }
-            } catch (SQLException e) {
+            }
+            catch (SQLException e) {
                 throw new RuntimeException("Error updating bookmark " + bookmarkName, e);
             }
         }
@@ -102,13 +101,20 @@ public class DBUtil {
             SimpleResult dbVals = new SimpleResult();
             try (PreparedStatement selectKitRequest = conn.prepareStatement(query)) {
                 selectKitRequest.setString(1, externalOrderNumber);
-                try (ResultSet rs = selectKitRequest.executeQuery()) {
-                    dbVals.resultValue = rs.next();
+                try (ResultSet rs = selectKitRequest.executeQuery();) {
+                    if (rs.next()) {
+                        dbVals.resultValue = true;
+                    }
+                    else {
+                        dbVals.resultValue = false;
+                    }
 
-                } catch (Exception e) {
+                }
+                catch (Exception e) {
                     throw new RuntimeException("Error getting values from db", e);
                 }
-            } catch (SQLException ex) {
+            }
+            catch (SQLException ex) {
                 dbVals.resultException = ex;
             }
             return dbVals;
@@ -133,7 +139,8 @@ public class DBUtil {
                     return true;
                 }
             }
-        } catch (SQLException e) {
+        }
+        catch (SQLException e) {
             throw new RuntimeException("Unable to get column names ", e);
         }
         return false;
