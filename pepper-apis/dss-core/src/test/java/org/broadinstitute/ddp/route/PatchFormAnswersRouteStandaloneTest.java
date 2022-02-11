@@ -56,7 +56,6 @@ import org.broadinstitute.ddp.db.dao.AuthDao;
 import org.broadinstitute.ddp.db.dao.FileUploadDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
-import org.broadinstitute.ddp.db.dao.JdbiActivityInstanceStatusType;
 import org.broadinstitute.ddp.db.dao.JdbiQuestion;
 import org.broadinstitute.ddp.db.dao.JdbiUser;
 import org.broadinstitute.ddp.db.dao.QuestionDao;
@@ -79,6 +78,7 @@ import org.broadinstitute.ddp.model.activity.definition.question.CompositeQuesti
 import org.broadinstitute.ddp.model.activity.definition.question.DateQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.FileQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.NumericQuestionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.DecimalQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistOptionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.MatrixOptionDef;
@@ -87,9 +87,11 @@ import org.broadinstitute.ddp.model.activity.definition.question.MatrixGroupDef;
 import org.broadinstitute.ddp.model.activity.definition.question.MatrixRowDef;
 import org.broadinstitute.ddp.model.activity.definition.question.TextQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
+import org.broadinstitute.ddp.model.activity.definition.types.DecimalDef;
 import org.broadinstitute.ddp.model.activity.definition.validation.DateFieldRequiredRuleDef;
 import org.broadinstitute.ddp.model.activity.definition.validation.DateRangeRuleDef;
 import org.broadinstitute.ddp.model.activity.definition.validation.IntRangeRuleDef;
+import org.broadinstitute.ddp.model.activity.definition.validation.DecimalRangeRuleDef;
 import org.broadinstitute.ddp.model.activity.definition.validation.LengthRuleDef;
 import org.broadinstitute.ddp.model.activity.definition.validation.RequiredRuleDef;
 import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
@@ -99,7 +101,7 @@ import org.broadinstitute.ddp.model.activity.instance.answer.CompositeAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.DateAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.DateValue;
 import org.broadinstitute.ddp.model.activity.instance.answer.FileAnswer;
-import org.broadinstitute.ddp.model.activity.instance.answer.NumericAnswer;
+import org.broadinstitute.ddp.model.activity.instance.answer.DecimalAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.PicklistAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.SelectedPicklistOption;
 import org.broadinstitute.ddp.model.activity.instance.answer.MatrixAnswer;
@@ -162,10 +164,16 @@ public class PatchFormAnswersRouteStandaloneTest {
     private static String childTextStableId;
     private static String childDateStableId;
     private static String compStabledId;
+
     private static NumericQuestionDef numericQuestionDef;
     private static String numericIntegerSid;
     private static String numericIntegerReqSid;
     private static String numericIntegerWithMultipleRulesSid;
+
+    private static DecimalQuestionDef decimalQuestionDef;
+    private static String decimalIntegerSid;
+    private static String decimalIntegerReqSid;
+    private static String decimalIntegerWithMultipleRulesSid;
 
     private static String plistSingle_option1_sid;
     private static String plistSingle_option2_sid;
@@ -280,6 +288,10 @@ public class PatchFormAnswersRouteStandaloneTest {
         numericIntegerSid = "PATCH_NUMERIC_INTEGER_Q" + timestamp;
         numericIntegerReqSid = "PATCH_NUMERIC_INTEGER_REQ" + timestamp;
         numericIntegerWithMultipleRulesSid = "PATCH_NUM_INT_W_MULT_RULES" + timestamp;
+
+        decimalIntegerSid = "PATCH_DECIMAL_Q" + timestamp;
+        decimalIntegerReqSid = "PATCH_DECIMAL_REQ" + timestamp;
+        decimalIntegerWithMultipleRulesSid = "PATCH_DECIMAL_W_MULT_RULES" + timestamp;
 
         BoolQuestionDef b1 = BoolQuestionDef.builder(boolStableId, newTemplate(), newTemplate(), newTemplate()).build();
         FormSectionDef boolSection = new FormSectionDef(null, TestUtil.wrapQuestions(b1));
@@ -397,6 +409,21 @@ public class PatchFormAnswersRouteStandaloneTest {
                 .build();
         FormSectionDef numericSection = new FormSectionDef(null, TestUtil.wrapQuestions(numericQuestionDef, n2, n3));
 
+        decimalQuestionDef = DecimalQuestionDef
+                .builder(decimalIntegerSid, newTemplate())
+                .addValidation(new DecimalRangeRuleDef(null, new DecimalDef(5), new DecimalDef(100)))
+                .build();
+        DecimalQuestionDef dec2 = DecimalQuestionDef
+                .builder(decimalIntegerReqSid, newTemplate())
+                .addValidation(new RequiredRuleDef(null))
+                .build();
+        DecimalQuestionDef dec3 = DecimalQuestionDef
+                .builder(decimalIntegerWithMultipleRulesSid, newTemplate())
+                .addValidation(new DecimalRangeRuleDef(null, new DecimalDef(5), new DecimalDef(100)))
+                .addValidation(new DecimalRangeRuleDef(null, new DecimalDef(200), new DecimalDef(500)))
+                .build();
+        FormSectionDef decimalSection = new FormSectionDef(null, TestUtil.wrapQuestions(decimalQuestionDef, dec2, dec3));
+
         fileQuestion = FileQuestionDef.builder("FILE" + timestamp, Template.text("file"))
                 .setMaxFileSize(DEFAULT_MAX_FILE_SIZE_FOR_TEST)
                 .build();
@@ -415,7 +442,7 @@ public class PatchFormAnswersRouteStandaloneTest {
                         Arrays.asList(
                                 boolSection, textSection, textSection2, textSection3, plistSection,
                                 dateSection, compositeSection, essayTextSection, agreementSection,
-                                numericSection, fileSection, matrixSection
+                                numericSection, decimalSection, fileSection, matrixSection
                         )
                 )
                 .build();
@@ -1817,15 +1844,16 @@ public class PatchFormAnswersRouteStandaloneTest {
                 .body("answers[0].answerGuid", not(isEmptyOrNullString()))
                 .and().extract().path("answers[0].answerGuid");
         answerGuidsToDelete.get(QuestionType.FILE).add(guid);
-        var answer = (FileAnswer) TransactionWrapper.withTxn(handle ->
-                new AnswerCachedDao(handle).findAnswerByGuid(guid).get());
+        var answer = (Optional<Answer>) TransactionWrapper.withTxn(handle ->
+                new AnswerCachedDao(handle).findAnswerByGuid(guid));
 
-        assertNotNull(answer);
-        assertEquals(guid, answer.getAnswerGuid());
-        assertEquals(stableId, answer.getQuestionStableId());
-        assertEquals(QuestionType.FILE, answer.getQuestionType());
-        assertEquals(upload1.getFileName(), answer.getValue().getFileName());
-        assertEquals(upload1.getFileSize(), answer.getValue().getFileSize());
+        assertTrue(answer.isPresent());
+        assertNotNull(answer.get());
+        assertEquals(guid, answer.get().getAnswerGuid());
+        assertEquals(stableId, answer.get().getQuestionStableId());
+        assertEquals(QuestionType.FILE, answer.get().getQuestionType());
+        assertEquals(upload1.getFileName(), ((FileAnswer)answer.get()).getValue().getFileName());
+        assertEquals(upload1.getFileSize(), ((FileAnswer)answer.get()).getValue().getFileSize());
 
         submission = new AnswerSubmission(stableId, guid, gson.toJsonTree(upload2.getGuid()));
         data = new PatchAnswerPayload(List.of(submission));
@@ -1835,9 +1863,10 @@ public class PatchFormAnswersRouteStandaloneTest {
                 .and().extract().path("answers[0].answerGuid");
 
         assertEquals(guid, nextGuid);
-        answer = (FileAnswer) TransactionWrapper.withTxn(handle ->
-                new AnswerCachedDao(handle).findAnswerByGuid(guid).get());
-        assertEquals(upload2.getFileName(), answer.getValue().getFileName());
+        answer =  TransactionWrapper.withTxn(handle ->
+                new AnswerCachedDao(handle).findAnswerByGuid(guid));
+        assertTrue(answer.isPresent());
+        assertEquals(upload2.getFileName(), ((FileAnswer) answer.get()).getValue().getFileName());
     }
 
     @Test
@@ -1850,25 +1879,28 @@ public class PatchFormAnswersRouteStandaloneTest {
                 .body("answers[0].answerGuid", not(isEmptyOrNullString()))
                 .and().extract().path("answers[0].answerGuid");
         answerGuidsToDelete.get(QuestionType.FILE).add(guid);
-        var answer = (FileAnswer) TransactionWrapper.withTxn(handle ->
-                new AnswerCachedDao(handle).findAnswerByGuid(guid).get());
-        assertNull("created answer should have null for value", answer.getValue());
+        var answer = TransactionWrapper.withTxn(handle ->
+                new AnswerCachedDao(handle).findAnswerByGuid(guid));
+        assertTrue(answer.isPresent());
+        assertNull("created answer should have null for value", answer.get().getValue());
 
         // Set a value then clear it.
         data = new PatchAnswerPayload(List.of(new AnswerSubmission(stableId, guid, gson.toJsonTree(upload1.getGuid()))));
         givenAnswerPatchRequest(instanceGuid, data)
                 .then().assertThat().statusCode(200);
-        answer = (FileAnswer) TransactionWrapper.withTxn(handle ->
-                new AnswerCachedDao(handle).findAnswerByGuid(guid).get());
-        assertNotNull(answer.getValue());
-        assertEquals(upload1.getFileName(), answer.getValue().getFileName());
+        answer = TransactionWrapper.withTxn(handle ->
+                new AnswerCachedDao(handle).findAnswerByGuid(guid));
+        assertTrue(answer.isPresent());
+        assertNotNull(answer.get().getValue());
+        assertEquals(upload1.getFileName(), ((FileAnswer) answer.get()).getValue().getFileName());
 
         data = new PatchAnswerPayload(List.of(new AnswerSubmission(stableId, guid, null)));
         givenAnswerPatchRequest(instanceGuid, data)
                 .then().assertThat().statusCode(200);
-        answer = (FileAnswer) TransactionWrapper.withTxn(handle ->
-                new AnswerCachedDao(handle).findAnswerByGuid(guid).get());
-        assertNull("answer value should be cleared", answer.getValue());
+        answer = TransactionWrapper.withTxn(handle ->
+                new AnswerCachedDao(handle).findAnswerByGuid(guid));
+        assertTrue(answer.isPresent());
+        assertNull("answer value should be cleared", answer.get().getValue());
     }
 
     @Test
@@ -1883,7 +1915,7 @@ public class PatchFormAnswersRouteStandaloneTest {
     }
 
     @Test
-    public void testPatch_numericAnswer_integerType_newAnswer() {
+    public void testPatch_numericAnswer_newAnswer() {
         AnswerSubmission submission = new AnswerSubmission(numericIntegerSid, null, gson.toJsonTree(25));
         PatchAnswerPayload data = new PatchAnswerPayload(List.of(submission));
 
@@ -1897,17 +1929,18 @@ public class PatchFormAnswersRouteStandaloneTest {
                 .and().extract().path("answers[0].answerGuid");
 
         answerGuidsToDelete.get(QuestionType.NUMERIC).add(guid);
-        NumericAnswer answer = (NumericAnswer) TransactionWrapper.withTxn(handle ->
-                new AnswerCachedDao(handle).findAnswerByGuid(guid).get());
+        var answer = TransactionWrapper.withTxn(handle ->
+                new AnswerCachedDao(handle).findAnswerByGuid(guid));
 
         assertNotNull(answer);
-        assertEquals(guid, answer.getAnswerGuid());
-        assertEquals(numericIntegerSid, answer.getQuestionStableId());
-        assertEquals(25L, (long) answer.getValue());
+        assertTrue(answer.isPresent());
+        assertEquals(guid, answer.get().getAnswerGuid());
+        assertEquals(numericIntegerSid, answer.get().getQuestionStableId());
+        assertEquals(25L, (long) answer.get().getValue());
     }
 
     @Test
-    public void testPatch_numericAnswer_integerType_updateAnswer() {
+    public void testPatch_numericAnswer_updateAnswer() {
         AnswerSubmission submission = new AnswerSubmission(numericIntegerSid, null, gson.toJsonTree(25));
         PatchAnswerPayload data = new PatchAnswerPayload(List.of(submission));
 
@@ -1929,11 +1962,12 @@ public class PatchFormAnswersRouteStandaloneTest {
                 .and().extract().path("answers[0].answerGuid");
 
         assertEquals(guid, nextGuid);
-        NumericAnswer answer = (NumericAnswer) TransactionWrapper.withTxn(handle ->
-                new AnswerCachedDao(handle).findAnswerByGuid(guid).get());
+        var answer = TransactionWrapper.withTxn(handle ->
+                new AnswerCachedDao(handle).findAnswerByGuid(guid));
 
         assertNotNull(answer);
-        assertEquals(75L, (long) answer.getValue());
+        assertTrue(answer.isPresent());
+        assertEquals(75L, (long) answer.get().getValue());
     }
 
     @Test
@@ -1951,13 +1985,14 @@ public class PatchFormAnswersRouteStandaloneTest {
                 .and().extract().path("answers[0].answerGuid");
 
         answerGuidsToDelete.get(QuestionType.NUMERIC).add(guid);
-        NumericAnswer answer = (NumericAnswer) TransactionWrapper.withTxn(handle ->
-                new AnswerCachedDao(handle).findAnswerByGuid(guid).get());
+        var answer = TransactionWrapper.withTxn(handle ->
+                new AnswerCachedDao(handle).findAnswerByGuid(guid));
 
         assertNotNull(answer);
-        assertEquals(guid, answer.getAnswerGuid());
-        assertEquals(numericIntegerSid, answer.getQuestionStableId());
-        assertNull(answer.getValue());
+        assertTrue(answer.isPresent());
+        assertEquals(guid, answer.get().getAnswerGuid());
+        assertEquals(numericIntegerSid, answer.get().getQuestionStableId());
+        assertNull(answer.get().getValue());
     }
 
     @Test
@@ -1997,6 +2032,128 @@ public class PatchFormAnswersRouteStandaloneTest {
     }
 
     @Test
+    public void testPatch_decimalAnswer_newAnswer() {
+        AnswerSubmission submission = new AnswerSubmission(decimalIntegerSid, null,
+                gson.toJsonTree(new DecimalDef(25)));
+        PatchAnswerPayload data = new PatchAnswerPayload(List.of(submission));
+
+        String guid = givenAnswerPatchRequest(instanceGuid, data)
+                .then().assertThat()
+                .log().all()
+                .statusCode(200).contentType(ContentType.JSON)
+                .body("answers.size()", equalTo(1))
+                .body("answers[0].stableId", equalTo(decimalIntegerSid))
+                .body("answers[0].answerGuid", not(isEmptyOrNullString()))
+                .and().extract().path("answers[0].answerGuid");
+
+        answerGuidsToDelete.get(QuestionType.DECIMAL).add(guid);
+        var answer = TransactionWrapper.withTxn(handle ->
+                new AnswerCachedDao(handle).findAnswerByGuid(guid));
+
+        assertNotNull(answer);
+        assertTrue(answer.isPresent());
+        assertEquals(guid, answer.get().getAnswerGuid());
+        assertEquals(decimalIntegerSid, answer.get().getQuestionStableId());
+        assertEquals(0, new DecimalDef(25).compareTo(((DecimalAnswer) answer.get()).getValue()));
+    }
+
+    @Test
+    public void testPatch_decimalAnswer_updateAnswer() {
+        AnswerSubmission submission = new AnswerSubmission(decimalIntegerSid, null,
+                gson.toJsonTree(new DecimalDef(25)));
+        PatchAnswerPayload data = new PatchAnswerPayload(List.of(submission));
+
+        String guid = givenAnswerPatchRequest(instanceGuid, data)
+                .then().assertThat()
+                .log().all()
+                .statusCode(200).contentType(ContentType.JSON)
+                .and().extract().path("answers[0].answerGuid");
+        answerGuidsToDelete.get(QuestionType.DECIMAL).add(guid);
+
+        submission = new AnswerSubmission(decimalIntegerSid, guid,
+                gson.toJsonTree(new DecimalDef(75)));
+        data = new PatchAnswerPayload(List.of(submission));
+        String nextGuid = givenAnswerPatchRequest(instanceGuid, data)
+                .then().assertThat()
+                .statusCode(200).contentType(ContentType.JSON)
+                .body("answers.size()", equalTo(1))
+                .body("answers[0].stableId", equalTo(decimalIntegerSid))
+                .body("answers[0].answerGuid", not(isEmptyOrNullString()))
+                .and().extract().path("answers[0].answerGuid");
+
+        assertEquals(guid, nextGuid);
+        var answer = TransactionWrapper.withTxn(handle ->
+                new AnswerCachedDao(handle).findAnswerByGuid(guid));
+
+        assertNotNull(answer);
+        assertTrue(answer.isPresent());
+        assertEquals(0, new DecimalDef(75).compareTo(((DecimalAnswer) answer.get()).getValue()));
+    }
+
+    @Test
+    public void testPatch_decimalAnswer_acceptsNull() {
+        AnswerSubmission submission = new AnswerSubmission(decimalIntegerSid, null, null);
+        PatchAnswerPayload data = new PatchAnswerPayload(List.of(submission));
+
+        String guid = givenAnswerPatchRequest(instanceGuid, data)
+                .then().assertThat()
+                .log().all()
+                .statusCode(200).contentType(ContentType.JSON)
+                .body("answers.size()", equalTo(1))
+                .body("answers[0].stableId", equalTo(decimalIntegerSid))
+                .body("answers[0].answerGuid", not(isEmptyOrNullString()))
+                .and().extract().path("answers[0].answerGuid");
+
+        answerGuidsToDelete.get(QuestionType.DECIMAL).add(guid);
+        var answer = TransactionWrapper.withTxn(handle ->
+                new AnswerCachedDao(handle).findAnswerByGuid(guid));
+
+        assertNotNull(answer);
+        assertTrue(answer.isPresent());
+        assertEquals(guid, answer.get().getAnswerGuid());
+        assertEquals(decimalIntegerSid, answer.get().getQuestionStableId());
+        assertNull(answer.get().getValue());
+    }
+
+    @Test
+    public void testPatch_decimalAnswer_rangeRule_lessThanMin() {
+        AnswerSubmission submission = new AnswerSubmission(decimalIntegerSid, null,
+                gson.toJsonTree(new DecimalDef(1)));
+        PatchAnswerPayload data = new PatchAnswerPayload(List.of(submission));
+        givenAnswerPatchRequest(instanceGuid, data)
+                .then().assertThat()
+                .statusCode(422).contentType(ContentType.JSON)
+                .body("code", equalTo(ErrorCodes.ANSWER_VALIDATION))
+                .body("violations[0].stableId", equalTo(decimalIntegerSid))
+                .body("violations[0].rules[0]", equalTo(RuleType.DECIMAL_RANGE.name()));
+    }
+
+    @Test
+    public void testPatch_decimalAnswer_rangeRule_greaterThanMax() {
+        AnswerSubmission submission = new AnswerSubmission(decimalIntegerSid, null,
+                gson.toJsonTree(new DecimalDef(1024)));
+        PatchAnswerPayload data = new PatchAnswerPayload(List.of(submission));
+        givenAnswerPatchRequest(instanceGuid, data)
+                .then().assertThat()
+                .statusCode(422).contentType(ContentType.JSON)
+                .body("code", equalTo(ErrorCodes.ANSWER_VALIDATION))
+                .body("violations[0].stableId", equalTo(decimalIntegerSid))
+                .body("violations[0].rules[0]", equalTo(RuleType.DECIMAL_RANGE.name()));
+    }
+
+    @Test
+    public void testPatch_decimalAnswer_requiredRule_failsValidation() {
+        AnswerSubmission submission = new AnswerSubmission(decimalIntegerReqSid, null, null);
+        PatchAnswerPayload data = new PatchAnswerPayload(List.of(submission));
+        givenAnswerPatchRequest(instanceGuid, data)
+                .then().assertThat()
+                .statusCode(422).contentType(ContentType.JSON)
+                .body("code", equalTo(ErrorCodes.ANSWER_VALIDATION))
+                .body("violations[0].stableId", equalTo(decimalIntegerReqSid))
+                .body("violations[0].rules[0]", equalTo(RuleType.REQUIRED.name()));
+    }
+
+    @Test
     public void testPath_whenMultipleRulesFail_allOfThemAreCommunicated() {
         AnswerSubmission submission = new AnswerSubmission(numericIntegerWithMultipleRulesSid, null, gson.toJsonTree(1024));
         PatchAnswerPayload data = new PatchAnswerPayload(List.of(submission));
@@ -2017,14 +2174,6 @@ public class PatchFormAnswersRouteStandaloneTest {
             ActivityInstanceStatusDao statusDao = handle.attach(ActivityInstanceStatusDao.class);
             return statusDao.getCurrentStatus(instanceGuid).get();
         });
-    }
-
-    /**
-     * Given an activity code, get status.
-     */
-    private long getActivityStatusTypeId(InstanceStatusType statusType) {
-        return TransactionWrapper.withTxn(handle ->
-                handle.attach(JdbiActivityInstanceStatusType.class).getStatusTypeId(statusType));
     }
 
     @Test
@@ -2112,9 +2261,8 @@ public class PatchFormAnswersRouteStandaloneTest {
                     .then().assertThat()
                     .statusCode(200).contentType(ContentType.JSON);
         } finally {
-            TransactionWrapper.useTxn(handle -> {
-                handle.attach(JdbiActivity.class).deleteValidationsByCode(activity.getActivityId());
-            });
+            TransactionWrapper.useTxn(handle -> handle.attach(JdbiActivity.class)
+                    .deleteValidationsByCode(activity.getActivityId()));
         }
     }
 
@@ -2264,4 +2412,5 @@ public class PatchFormAnswersRouteStandaloneTest {
             });
         }
     }
+
 }

@@ -268,6 +268,8 @@ public abstract class QuestionDef {
                     return ctx.deserialize(elem, FileQuestionDef.class);
                 case NUMERIC:
                     return ctx.deserialize(elem, NumericQuestionDef.class);
+                case DECIMAL:
+                    return ctx.deserialize(elem, DecimalQuestionDef.class);
                 case PICKLIST:
                     return ctx.deserialize(elem, PicklistQuestionDef.class);
                 case MATRIX:

@@ -103,6 +103,7 @@ public class CompositeQuestionFormatStrategy implements ResponseFormatStrategy<C
             case ACTIVITY_INSTANCE_SELECT:
                 return StringUtils.defaultString(((ActivityInstanceSelectAnswer) answer).getValue(), "");
             case NUMERIC:
+            case DECIMAL:
                 return (answer.getValue() == null ? "" : answer.getValue().toString());
             case DATE:
                 DateValue dateValue = ((DateAnswer) answer).getValue();
