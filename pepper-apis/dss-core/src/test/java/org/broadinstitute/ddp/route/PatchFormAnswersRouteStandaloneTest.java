@@ -1305,7 +1305,7 @@ public class PatchFormAnswersRouteStandaloneTest {
                 .statusCode(422).contentType(ContentType.JSON)
                 .body("code", equalTo(ErrorCodes.ANSWER_VALIDATION))
                 .body("violations[0].stableId", equalTo(plistMultiSelectSid))
-                .body("violations[0].rules[0]", equalTo(RuleType.REQUIRED.name()));
+                .body("violations[0].rules[0].ruleType", equalTo(RuleType.REQUIRED.name()));
     }
 
     @Test
@@ -1511,7 +1511,7 @@ public class PatchFormAnswersRouteStandaloneTest {
                 .statusCode(422).contentType(ContentType.JSON)
                 .body("code", equalTo(ErrorCodes.ANSWER_VALIDATION))
                 .body("violations[0].stableId", equalTo(matrixMultiSelectSid))
-                .body("violations[0].rules[0]", equalTo(RuleType.REQUIRED.name()));
+                .body("violations[0].rules[0].ruleType", equalTo(RuleType.REQUIRED.name()));
     }
 
     @Test
@@ -1735,7 +1735,7 @@ public class PatchFormAnswersRouteStandaloneTest {
                 .statusCode(422).contentType(ContentType.JSON)
                 .body("code", equalTo(ErrorCodes.ANSWER_VALIDATION))
                 .body("violations[0].stableId", equalTo(dateSingleTextSid))
-                .body("violations[0].rules[0]", equalTo(RuleType.YEAR_REQUIRED.name()));
+                .body("violations[0].rules[0].ruleType", equalTo(RuleType.YEAR_REQUIRED.name()));
     }
 
     @Test
@@ -1748,7 +1748,7 @@ public class PatchFormAnswersRouteStandaloneTest {
                 .statusCode(422).contentType(ContentType.JSON)
                 .body("code", equalTo(ErrorCodes.ANSWER_VALIDATION))
                 .body("violations[0].stableId", equalTo(dateSingleTextSid))
-                .body("violations[0].rules[0]", equalTo(RuleType.DATE_RANGE.name()));
+                .body("violations[0].rules[0].ruleType", equalTo(RuleType.DATE_RANGE.name()));
     }
 
     @Test
@@ -2004,7 +2004,7 @@ public class PatchFormAnswersRouteStandaloneTest {
                 .statusCode(422).contentType(ContentType.JSON)
                 .body("code", equalTo(ErrorCodes.ANSWER_VALIDATION))
                 .body("violations[0].stableId", equalTo(numericIntegerSid))
-                .body("violations[0].rules[0]", equalTo(RuleType.INT_RANGE.name()));
+                .body("violations[0].rules[0].ruleType", equalTo(RuleType.INT_RANGE.name()));
     }
 
     @Test
@@ -2016,7 +2016,7 @@ public class PatchFormAnswersRouteStandaloneTest {
                 .statusCode(422).contentType(ContentType.JSON)
                 .body("code", equalTo(ErrorCodes.ANSWER_VALIDATION))
                 .body("violations[0].stableId", equalTo(numericIntegerSid))
-                .body("violations[0].rules[0]", equalTo(RuleType.INT_RANGE.name()));
+                .body("violations[0].rules[0].ruleType", equalTo(RuleType.INT_RANGE.name()));
     }
 
     @Test
@@ -2028,7 +2028,7 @@ public class PatchFormAnswersRouteStandaloneTest {
                 .statusCode(422).contentType(ContentType.JSON)
                 .body("code", equalTo(ErrorCodes.ANSWER_VALIDATION))
                 .body("violations[0].stableId", equalTo(numericIntegerReqSid))
-                .body("violations[0].rules[0]", equalTo(RuleType.REQUIRED.name()));
+                .body("violations[0].rules[0].ruleType", equalTo(RuleType.REQUIRED.name()));
     }
 
     @Test
@@ -2125,7 +2125,7 @@ public class PatchFormAnswersRouteStandaloneTest {
                 .statusCode(422).contentType(ContentType.JSON)
                 .body("code", equalTo(ErrorCodes.ANSWER_VALIDATION))
                 .body("violations[0].stableId", equalTo(decimalIntegerSid))
-                .body("violations[0].rules[0]", equalTo(RuleType.DECIMAL_RANGE.name()));
+                .body("violations[0].rules[0].ruleType", equalTo(RuleType.DECIMAL_RANGE.name()));
     }
 
     @Test
@@ -2138,7 +2138,7 @@ public class PatchFormAnswersRouteStandaloneTest {
                 .statusCode(422).contentType(ContentType.JSON)
                 .body("code", equalTo(ErrorCodes.ANSWER_VALIDATION))
                 .body("violations[0].stableId", equalTo(decimalIntegerSid))
-                .body("violations[0].rules[0]", equalTo(RuleType.DECIMAL_RANGE.name()));
+                .body("violations[0].rules[0].ruleType", equalTo(RuleType.DECIMAL_RANGE.name()));
     }
 
     @Test
@@ -2150,7 +2150,7 @@ public class PatchFormAnswersRouteStandaloneTest {
                 .statusCode(422).contentType(ContentType.JSON)
                 .body("code", equalTo(ErrorCodes.ANSWER_VALIDATION))
                 .body("violations[0].stableId", equalTo(decimalIntegerReqSid))
-                .body("violations[0].rules[0]", equalTo(RuleType.REQUIRED.name()));
+                .body("violations[0].rules[0].ruleType", equalTo(RuleType.REQUIRED.name()));
     }
 
     @Test
@@ -2162,8 +2162,9 @@ public class PatchFormAnswersRouteStandaloneTest {
                 .statusCode(422).contentType(ContentType.JSON)
                 .body("code", equalTo(ErrorCodes.ANSWER_VALIDATION))
                 .body("violations[0].stableId", equalTo(numericIntegerWithMultipleRulesSid))
-                .body("violations[0].rules[0]", equalTo(RuleType.INT_RANGE.name()))
-                .body("violations[0].rules[1]", equalTo(RuleType.INT_RANGE.name()));
+                .body("violations[0].rules[0].ruleType", equalTo(RuleType.INT_RANGE.name()))
+                .body("violations[0].rules[0].message", notNullValue())
+                .body("violations[0].rules[1].ruleType", equalTo(RuleType.INT_RANGE.name()));
     }
 
     /**
