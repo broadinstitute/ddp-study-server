@@ -2,15 +2,18 @@ package org.broadinstitute.ddp.service.actvityinstancebuilder.form.block.questio
 
 import java.time.LocalDate;
 import java.time.ZoneOffset;
+import java.util.Optional;
 
 import org.broadinstitute.ddp.content.I18nContentRenderer;
 import org.broadinstitute.ddp.db.ActivityDefStore;
 import org.broadinstitute.ddp.db.dao.ValidationDao;
+import org.broadinstitute.ddp.model.activity.definition.types.DecimalDef;
 import org.broadinstitute.ddp.model.activity.definition.validation.AgeRangeRuleDef;
 import org.broadinstitute.ddp.model.activity.definition.validation.CompleteRuleDef;
 import org.broadinstitute.ddp.model.activity.definition.validation.DateFieldRequiredRuleDef;
 import org.broadinstitute.ddp.model.activity.definition.validation.DateRangeRuleDef;
 import org.broadinstitute.ddp.model.activity.definition.validation.IntRangeRuleDef;
+import org.broadinstitute.ddp.model.activity.definition.validation.DecimalRangeRuleDef;
 import org.broadinstitute.ddp.model.activity.definition.validation.LengthRuleDef;
 import org.broadinstitute.ddp.model.activity.definition.validation.NumOptionsSelectedRuleDef;
 import org.broadinstitute.ddp.model.activity.definition.validation.RegexRuleDef;
@@ -23,6 +26,7 @@ import org.broadinstitute.ddp.model.activity.instance.validation.CompleteRule;
 import org.broadinstitute.ddp.model.activity.instance.validation.DateFieldRequiredRule;
 import org.broadinstitute.ddp.model.activity.instance.validation.DateRangeRule;
 import org.broadinstitute.ddp.model.activity.instance.validation.IntRangeRule;
+import org.broadinstitute.ddp.model.activity.instance.validation.DecimalRangeRule;
 import org.broadinstitute.ddp.model.activity.instance.validation.LengthRule;
 import org.broadinstitute.ddp.model.activity.instance.validation.NumOptionsSelectedRule;
 import org.broadinstitute.ddp.model.activity.instance.validation.RegexRule;
@@ -55,6 +59,8 @@ public class ValidationRuleCreator {
                 return createAgeRangeRule(ctx, (AgeRangeRuleDef) ruleDef);
             case INT_RANGE:
                 return createIntRangeRule(ctx, (IntRangeRuleDef) ruleDef);
+            case DECIMAL_RANGE:
+                return createDecimalRangeRule(ctx, (DecimalRangeRuleDef) ruleDef);
             case DATE_RANGE:
                 return createDateRangeRule(ctx, (DateRangeRuleDef) ruleDef);
             case DAY_REQUIRED:      // fall through
@@ -130,6 +136,17 @@ public class ValidationRuleCreator {
                 ruleDef.getAllowSave(),
                 ruleDef.getMin(),
                 ruleDef.getMax()
+        );
+    }
+
+    private DecimalRangeRule createDecimalRangeRule(AIBuilderContext ctx, DecimalRangeRuleDef ruleDef) {
+        return DecimalRangeRule.of(
+                ruleDef.getRuleId(),
+                findRuleMessage(ctx, ruleDef),
+                getHintTitle(ctx, ruleDef),
+                ruleDef.getAllowSave(),
+                Optional.ofNullable(ruleDef.getMin()).map(DecimalDef::toBigDecimal).orElse(null),
+                Optional.ofNullable(ruleDef.getMax()).map(DecimalDef::toBigDecimal).orElse(null)
         );
     }
 
