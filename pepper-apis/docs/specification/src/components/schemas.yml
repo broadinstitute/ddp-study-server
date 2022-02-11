@@ -1210,7 +1210,12 @@ Error.ActivityAnswersPatchInvalid:
               rules:
                 type: array
                 items:
-                  $ref: '#/ValidationType'
+                  type: object
+                  properties:
+                    ruleType:
+                      $ref: '#/ValidationType'
+                    message:
+                      type: string
 Error.ActivityAnswersPatchNotFound:
   allOf:
     - $ref: '#/Error'
