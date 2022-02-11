@@ -106,6 +106,7 @@ public class UniqueRule extends Rule<CompositeAnswer> {
                 case DATE:
                 case AGREEMENT:
                 case NUMERIC:
+                case DECIMAL:
                 case TEXT:
                 case ACTIVITY_INSTANCE_SELECT:
                 case BOOLEAN:

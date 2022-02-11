@@ -49,6 +49,11 @@ public class ValidationCachedDao extends SQLObjectWrapper<ValidationDao> impleme
     }
 
     @Override
+    public JdbiDecimalRangeValidation getJdbiDecimalRangeValidation() {
+        return delegate.getJdbiDecimalRangeValidation();
+    }
+
+    @Override
     public JdbiQuestionValidation getJdbiQuestionValidation() {
         return new JdbiQuestionValidationCached(getHandle());
     }
