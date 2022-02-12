@@ -1106,38 +1106,6 @@ workflows:
       - dsm-compile-and-run-tests-job
       - build-api-docs-job
 
-
-  # Run all tests on DSS project
-#  dss-build-test-workflow:
-#    when:
-#      and:
-#        - equal: ["build-test", << pipeline.parameters.action >>]
-#        - << pipeline.parameters.dss >>
-#    jobs:
-#      - dss-compile-and-run-test-suite-job
-#      - dss-parallel-compile-and-test-job:
-#          parallelism: *test_parallelism
-
-  # Run tests on DSM
-  dsm-build-test-workflow:
-    when:
-      and:
-        - equal: ["build-test", << pipeline.parameters.action >>]
-        - << pipeline.parameters.dsm >>
-    jobs:
-      - dsm-compile-and-run-tests-job
-
-  # Build API docs (we never really store)
-  api-docs-build-test-workflow:
-    when:
-      and:
-        - or:
-            - equal: ["build-test", << pipeline.parameters.action >>]
-            - equal: ["build-test-store", << pipeline.parameters.action >>]
-        - << pipeline.parameters.api-docs >>
-    jobs:
-      - build-api-docs-job
-
   # Build and deploy API docs
   api-docs-build-test-deploy-workflow:
     when:
