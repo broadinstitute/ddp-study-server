@@ -146,8 +146,6 @@ public class PutFormAnswersRoute implements Route {
                         }
                     }
 
-
-
                     FormInstance form = loadFormInstance(
                             response, handle, userGuid, operatorGuid,
                             studyGuid, instanceGuid, preferredUserLangDto, instanceSummary);
