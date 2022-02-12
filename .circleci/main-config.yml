@@ -122,9 +122,6 @@ commands:
           command: |
             shopt  -s extglob # We are going to use Bash extended glob patterns
             case "${CIRCLE_BRANCH}" in
-            DSMMavenRefactor*) # REMOVE WHEN DONE
-              DEPLOY_ENV=dev
-            ;;
             ?(*_)develop)
               DEPLOY_ENV=dev
             ;;
