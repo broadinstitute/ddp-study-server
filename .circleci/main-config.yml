@@ -770,7 +770,7 @@ jobs:
         type: string
         default: *api-spec-path
     steps:
-      - run: echo "Doing build-api-docs-job"
+      - run: echo "Doing build-api-docs-job << pipeline.parameters.api-docs >>"
       - when:
           condition: << pipeline.parameters.api-docs >>
           steps:
@@ -790,7 +790,7 @@ jobs:
         type: string
         default: *pepper_apis_path
     steps:
-      - run: echo "Doing dsm-compile-and-run-tests-job"
+      - run: echo 'Doing dsm-compile-and-run-tests-job << pipeline.parameters.dsm >>'
       - when:
           condition: << pipeline.parameters.dsm >>
           steps:
@@ -840,6 +840,7 @@ jobs:
         type: string
         default: *pepper_apis_path
     steps:
+      - run: echo "Doing dss-compile-and-run-test-suite-job << pipeline.parameters.dss >>"
       - when:
           condition: << pipeline.parameters.dss >>
           steps:
@@ -878,6 +879,7 @@ jobs:
         type: string
         default: *pepper_apis_path
     steps:
+      - run: echo "Doing dss-parallel-compile-and-test-job << pipeline.parameters.dss >>"
       - when:
           condition: << pipeline.parameters.dss >>
           steps:
