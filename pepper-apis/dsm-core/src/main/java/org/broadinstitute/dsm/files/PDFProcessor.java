@@ -7,6 +7,7 @@ import org.apache.pdfbox.pdmodel.interactive.form.PDAcroForm;
 import org.apache.pdfbox.pdmodel.interactive.form.PDCheckBox;
 import org.apache.pdfbox.pdmodel.interactive.form.PDField;
 import org.broadinstitute.ddp.db.TransactionWrapper;
+import org.broadinstitute.ddp.util.ConfigUtil;
 import org.broadinstitute.lddp.exception.FileProcessingException;
 import org.broadinstitute.lddp.util.GoogleBucket;
 import org.broadinstitute.dsm.statics.ApplicationConfigConstants;

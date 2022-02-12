@@ -2,6 +2,7 @@ package org.broadinstitute.dsm.db;
 
 import lombok.Data;
 import lombok.NonNull;
+import org.broadinstitute.ddp.util.ConfigUtil;
 import org.broadinstitute.lddp.db.SimpleResult;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.dsm.model.ddp.DDPParticipant;

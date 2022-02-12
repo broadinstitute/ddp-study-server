@@ -2,8 +2,6 @@ package org.broadinstitute.dsm.model.birch;
 
 import com.google.gson.annotations.SerializedName;
 import lombok.Data;
-import org.broadinstitute.dsm.jobs.PubSubLookUp;
-import org.junit.Test;
 
 
 @Data

@@ -182,8 +182,8 @@ public class GBFOrderFinder {
         String esUrl = args[3];
         int numDays = Integer.parseInt(args[4]);
         Config cfg = ConfigFactory.load();
-        TransactionWrapper.init(1, dbUrl,cfg, true);
-
+        int maxConnections = cfg.getInt("portal.maxConnections");
+        TransactionWrapper.init(new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.DSM, maxConnections, dbUrl));
 
         try {
             esClient = ElasticSearchUtil.getClientForElasticsearchCloud(esUrl, esUser, esPassword);

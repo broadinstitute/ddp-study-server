@@ -4,6 +4,9 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.dao.settings.EventTypeDao;
 import org.broadinstitute.dsm.db.dao.user.UserDao;
@@ -18,8 +21,6 @@ import org.broadinstitute.dsm.model.settings.field.FieldSettings;
 import org.broadinstitute.dsm.statics.ESObjectConstants;
 import org.broadinstitute.dsm.util.ElasticSearchUtil;
 import org.broadinstitute.dsm.util.NotificationUtil;
-import org.json.JSONArray;
-import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -73,22 +74,27 @@ public class ExistingRecordPatch extends BasePatch {
     private Optional<Object> sendNotificationEmailAndUpdateStatus(Patch patch, NameValue nameValue, DBElement dbElement) {
         Optional<Object> maybeUpdatedNameValue = Optional.empty();
         UserDto userDto = new UserDao().getUserByEmail(patch.getUser()).orElseThrow();
-        JSONObject jsonObject = new JSONObject(nameValue.getValue().toString());
-        JSONArray questionArray = new JSONArray(jsonObject.get("questions").toString());
+        JsonObject jsonObject = new JsonObject();
+        jsonObject.addProperty(nameValue.getValue().toString(), nameValue.getValue().toString());
+
+        JsonArray questionArray = new JsonArray();
+        questionArray.add(jsonObject.get("questions").toString());
         boolean writeBack = false;
-        for (int i = 0; i < questionArray.length(); i++) {
-            JSONObject question = questionArray.getJSONObject(i);
+        for (int i = 0; i < questionArray.size(); i++) {
+            JsonObject question = questionArray.get(i).getAsJsonObject();
             if (isSent(question)) {
-                if (question.optString("email") != null && question.optString("question") != null) {
-                    notificationUtil.sentAbstractionExpertQuestion(userDto.getEmail().orElse(""), userDto.getName().orElse(""), question.optString("email"),
-                            patch.getFieldName(), question.optString("question"), notificationUtil.getTemplate("DSM_ABSTRACTION_EXPERT_QUESTION"));
+                if (question.get("email") != null && question.get("question") != null) {
+                    notificationUtil.sentAbstractionExpertQuestion(userDto.getEmail().orElse(""), userDto.getName().orElse(""),
+                            question.get("email").getAsString(),
+                            patch.getFieldName(), question.get("question").getAsString(), notificationUtil.getTemplate(
+                                    "DSM_ABSTRACTION_EXPERT_QUESTION"));
                 }
-                question.put(STATUS, "done");
+                question.addProperty(STATUS, "done");
                 writeBack = true;
             }
         }
         if (writeBack) {
-            jsonObject.put("questions", questionArray);
+            jsonObject.add("questions", questionArray);
             String str = jsonObject.toString();
             nameValue.setValue(str);
             Patch.patch(patch.getId(), patch.getUser(), nameValue, dbElement);
@@ -97,8 +103,8 @@ public class ExistingRecordPatch extends BasePatch {
         return maybeUpdatedNameValue;
     }
 
-    private boolean isSent(JSONObject question) {
-        return question.optString(STATUS) != null && question.optString(STATUS).equals("sent");
+    private boolean isSent(JsonObject question) {
+        return question.get(STATUS) != null && question.get(STATUS).equals("sent");
     }
 
     private void controlWorkflowByEmail(Patch patch, NameValue nameValue, DDPInstance ddpInstance, ESProfile profile) {

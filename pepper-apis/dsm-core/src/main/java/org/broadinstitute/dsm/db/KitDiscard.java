@@ -2,6 +2,7 @@ package org.broadinstitute.dsm.db;
 
 import lombok.Data;
 import lombok.NonNull;
+import org.broadinstitute.ddp.util.ConfigUtil;
 import org.broadinstitute.lddp.db.SimpleResult;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
@@ -98,7 +99,8 @@ public class KitDiscard {
         List<KitDiscard> exitedKits = new ArrayList();
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement stmt = conn.prepareStatement(ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.GET_KIT_OF_EXITED_PARTICIPANTS) + QueryExtension.BY_INSTANCE_NAME)) {
+            try (PreparedStatement stmt = conn.prepareStatement(
+                    ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.GET_KIT_OF_EXITED_PARTICIPANTS) + QueryExtension.BY_INSTANCE_NAME)) {
                 stmt.setString(1, realm);
                 try (ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {

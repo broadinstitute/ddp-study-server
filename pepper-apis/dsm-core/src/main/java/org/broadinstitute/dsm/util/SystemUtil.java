@@ -1,9 +1,9 @@
 package org.broadinstitute.dsm.util;
 
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.BufferedReader;
@@ -21,6 +21,8 @@ import java.time.format.DateTimeFormatterBuilder;
 import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoField;
 import java.util.Date;
+import java.util.Map;
+import java.util.Set;
 
 public class SystemUtil {
 
@@ -236,25 +238,22 @@ public class SystemUtil {
         return null;
     }
 
-    public static JSONObject mergeJSONStrings(@NonNull String json1, @NonNull String json2) {
+    public static JsonObject mergeJSONStrings(@NonNull String json1, @NonNull String json2) {
         if (StringUtils.isNotBlank(json1) && StringUtils.isNotBlank(json2)) {
-            System.out.println(json1 + " " + json2);
-            return mergeJSONObjects(new JSONObject(json1), new JSONObject(json2));
+            JsonObject object = new JsonObject();
+            object.addProperty(json1, json1);
+            JsonObject object2 = new JsonObject();
+            object2.addProperty(json2, json2);
+            return mergeJSONObjects(object, object2);
         }
         return null;
     }
 
-    public static JSONObject mergeJSONObjects(@NonNull JSONObject json1, @NonNull JSONObject json2) {
-        JSONObject mergedJson = new JSONObject();
-        try {
-            mergedJson = new JSONObject(json1, JSONObject.getNames(json1));
-            for (String key : JSONObject.getNames(json2)) {
-                mergedJson.put(key, json2.get(key));
-            }
-        }
-        catch (JSONException e) {
-            throw new RuntimeException("JSON exception ", e);
-        }
-        return mergedJson;
+    public static JsonObject mergeJSONObjects(@NonNull JsonObject json1, @NonNull JsonObject json2) {
+        Set<Map.Entry<String, JsonElement>> entrySet = json2.entrySet();
+        entrySet.forEach((next) -> {
+            json1.add(next.getKey(), next.getValue());
+        });
+        return json1;
     }
 }

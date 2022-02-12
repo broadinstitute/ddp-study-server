@@ -1,5 +1,7 @@
 package org.broadinstitute.dsm.route;
 
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.lddp.db.SimpleResult;
@@ -11,7 +13,6 @@ import org.broadinstitute.dsm.statics.RequestParameter;
 import org.broadinstitute.dsm.statics.RoutePath;
 import org.broadinstitute.dsm.statics.UserErrorMessages;
 import org.broadinstitute.dsm.util.UserUtil;
-import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import spark.Request;
@@ -34,12 +35,12 @@ public class InstitutionRoute extends RequestHandler {
     @Override
     public Object processRequest(Request request, Response response, String userId) throws Exception {
         String requestBody = request.body();
-        JSONObject jsonObject = new JSONObject(requestBody);
+        JsonObject jsonObject = new JsonParser().parse(requestBody).getAsJsonObject();
         String user = String.valueOf(jsonObject.get(RequestParameter.USER_ID));
         if (RoutePath.RequestMethod.POST.toString().equals(request.requestMethod())) {
             if (StringUtils.isNotBlank(requestBody)) {
-                String ddpParticipantId = (String) jsonObject.get(RequestParameter.DDP_PARTICIPANT_ID);
-                String realm = (String) jsonObject.get(RequestParameter.DDP_REALM);
+                String ddpParticipantId = jsonObject.get(RequestParameter.DDP_PARTICIPANT_ID).getAsString();
+                String realm = jsonObject.get(RequestParameter.DDP_REALM).getAsString();
                 if (UserUtil.checkUserAccess(realm, userId, "mr_view", user)) {
                     if (StringUtils.isNotBlank(ddpParticipantId) && StringUtils.isNotBlank(realm)) {
                         DDPInstance ddpInstance = DDPInstance.getDDPInstance(realm);

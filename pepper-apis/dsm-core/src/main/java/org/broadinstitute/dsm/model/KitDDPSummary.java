@@ -1,6 +1,7 @@
 package org.broadinstitute.dsm.model;
 
 import lombok.Getter;
+import org.broadinstitute.ddp.util.ConfigUtil;
 import org.broadinstitute.lddp.db.SimpleResult;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.dsm.statics.ApplicationConfigConstants;

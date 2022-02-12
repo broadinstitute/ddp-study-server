@@ -14,6 +14,7 @@ import org.apache.http.impl.NoConnectionReuseStrategy;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.lucene.search.join.ScoreMode;
 import org.broadinstitute.ddp.db.TransactionWrapper;
+import org.broadinstitute.ddp.util.ConfigUtil;
 import org.broadinstitute.lddp.handlers.util.MedicalInfo;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.export.WorkflowForES;
@@ -158,8 +159,7 @@ public class ElasticSearchUtil {
         credentialsProvider.setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(userName, password));
 
         URL url = new URL(baseUrl);
-        String proxy = TransactionWrapper.hasConfigPath(ApplicationConfigConstants.ES_PROXY)
-                ? ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.ES_PROXY) : null;
+        String proxy = ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.ES_PROXY);
         return getClientForElasticsearchCloud(baseUrl, userName, password, proxy);
     }
 

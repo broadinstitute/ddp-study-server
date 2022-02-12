@@ -1,5 +1,7 @@
 package org.broadinstitute.dsm.route;
 
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.dsm.model.PDF.DownloadPDF;
 import org.broadinstitute.dsm.model.PDF.MiscPDFDownload;
@@ -8,7 +10,6 @@ import org.broadinstitute.dsm.statics.RequestParameter;
 import org.broadinstitute.dsm.statics.RoutePath;
 import org.broadinstitute.dsm.statics.UserErrorMessages;
 import org.broadinstitute.dsm.util.UserUtil;
-import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import spark.QueryParamsMap;
@@ -48,7 +49,9 @@ public class DownloadPDFRoute extends RequestHandler {
                     response.status(500);
                     throw new RuntimeException("Error missing requestBody");
                 }
-                Long userIdRequest = Long.parseLong((String) new JSONObject(requestBody).get(RequestParameter.USER_ID));
+                JsonObject jsonObject = new JsonParser().parse(requestBody).getAsJsonObject();
+                String tempUserIdR = jsonObject.get(RequestParameter.USER_ID).getAsString();
+                Long userIdRequest = Long.parseLong(tempUserIdR);
                 DownloadPDF downloadPDFRequest = new DownloadPDF(requestBody);
                 Optional<byte[]> pdfBytes = downloadPDFRequest.getPDFs(userIdRequest, realm, requestBody);
                 pdfBytes.ifPresent(pdfBytesArray -> {

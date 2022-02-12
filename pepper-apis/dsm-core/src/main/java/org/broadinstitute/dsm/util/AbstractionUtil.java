@@ -11,13 +11,12 @@ import org.broadinstitute.dsm.model.AbstractionQCWrapper;
 import org.broadinstitute.dsm.model.patch.Patch;
 import org.broadinstitute.dsm.model.Value;
 import org.broadinstitute.dsm.statics.DBConstants;
-import org.json.JSONArray;
-import org.json.JSONObject;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static org.broadinstitute.ddp.db.TransactionWrapper.inTransaction;
 
@@ -167,35 +166,35 @@ public class AbstractionUtil {
                                     }
                                     //compare multi_type_array -> array is ordered by first date field. ignore estimated of date
                                     else if ("multi_type_array".equals(field.getType()) && !absValue.equals(revValue)) {
-                                        JSONArray abstractionArray = null;
+                                        JsonParser parser = new JsonParser();
+                                        JsonArray abstractionArray = null;
                                         if (absValue.startsWith("[")) {
-                                            abstractionArray = new JSONArray(absValue);
+                                            abstractionArray = parser.parse(absValue).getAsJsonArray();
                                         }
-                                        JSONArray reviewArray = null;
+                                        JsonArray reviewArray = null;
                                         if (revValue.startsWith("[")) {
-                                            reviewArray = new JSONArray(revValue);
+                                            reviewArray = parser.parse(revValue).getAsJsonArray();
                                         }
                                         //array is same length so data must be different
-                                        if (abstractionArray != null && reviewArray != null && abstractionArray.length() == reviewArray.length()) {
+                                        if (abstractionArray != null && reviewArray != null && abstractionArray.size() == reviewArray.size()) {
                                             //first check estimated
-                                            for (int i = 0; i < abstractionArray.length(); i++) {
-                                                JSONObject j = abstractionArray.getJSONObject(i);
+                                            for (int i = 0; i < abstractionArray.size(); i++) {
+                                                JsonObject j = abstractionArray.get(i).getAsJsonObject();
                                                 Set<String> entries = j.keySet();
                                                 for (String entry : entries) {
-                                                    String test = j.optString(entry);
                                                     List <Value> values = field.getPossibleValues();
                                                     Value typeTest = values.stream().filter(e -> e.getValue().equals(entry)).findFirst().orElse(null);
                                                     String abstractionValue = null;
                                                     String reviewValue = null;
                                                     if (typeTest != null && "date".equals(typeTest.getType())) {
                                                         //only get date string and ignore estimated checkbox
-                                                        abstractionValue = getDateString(j.optString(entry));
-                                                        reviewValue = getDateString(reviewArray.getJSONObject(i).optString(entry));
+                                                        abstractionValue = getDateString(j.get(entry).getAsString());
+                                                        reviewValue = getDateString(reviewArray.get(i).getAsJsonObject().get(entry).getAsString());
                                                     }
                                                     else {
                                                         //get value
-                                                        abstractionValue = (j.optString(entry));
-                                                        reviewValue = (reviewArray.getJSONObject(i).optString(entry));
+                                                        abstractionValue = j.get(entry).getAsString();
+                                                        reviewValue = reviewArray.get(i).getAsJsonObject().get(entry).getAsString();
                                                     }
                                                     // compare values
                                                     if (StringUtils.isNotBlank(abstractionValue) && StringUtils.isNotBlank(reviewValue) && abstractionValue.equals(reviewValue)) {
@@ -314,21 +313,18 @@ public class AbstractionUtil {
     }
 
     public static boolean isDateStringSet(@NonNull String jsonValue) {
-        JSONObject jsonField = new JSONObject(jsonValue);
-        Set keySet = jsonField.keySet();
+        JsonObject jsonField = new JsonParser().parse(jsonValue).getAsJsonObject();
+        Set keySet = jsonField.entrySet().stream().map(Map.Entry::getKey).collect(Collectors.toSet());
         //dateString is not allowed to be null (otherwise user would be able to submit with just estimated selected)
-        if (keySet.contains(DATE_STRING) && (jsonField.isNull(DATE_STRING) || StringUtils.isBlank((String) jsonField.get(DATE_STRING)))) {
-            return false;
-        }
-        return true;
+        return !keySet.contains(DATE_STRING) || (!jsonField.has(DATE_STRING) && !StringUtils.isBlank(jsonField.get(DATE_STRING).getAsString()));
     }
 
     public static String getDateString(@NonNull String jsonValue) {
-        JSONObject jsonField = new JSONObject(jsonValue);
-        Set keySet = jsonField.keySet();
+        JsonObject jsonField = new JsonParser().parse(jsonValue).getAsJsonObject();
+        Set keySet = jsonField.entrySet().stream().map(Map.Entry::getKey).collect(Collectors.toSet());
         //dateString is not allowed to be null (otherwise user would be able to submit with just estimated selected)
-        if (keySet.contains(DATE_STRING) && !jsonField.isNull(DATE_STRING) && !StringUtils.isBlank((String) jsonField.get(DATE_STRING))) {
-            return (String) jsonField.get(DATE_STRING);
+        if (keySet.contains(DATE_STRING) && !jsonField.has(DATE_STRING) && !StringUtils.isBlank(jsonField.get(DATE_STRING).getAsString())) {
+            return jsonField.get(DATE_STRING).getAsString();
         }
         return null;
     }

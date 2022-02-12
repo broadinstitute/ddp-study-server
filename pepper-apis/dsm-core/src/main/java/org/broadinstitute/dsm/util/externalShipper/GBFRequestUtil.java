@@ -2,6 +2,8 @@ package org.broadinstitute.dsm.util.externalShipper;
 
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 import lombok.NonNull;
 import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.StringUtils;
@@ -16,7 +18,6 @@ import org.broadinstitute.dsm.model.*;
 import org.broadinstitute.dsm.model.gbf.*;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.util.*;
-import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
@@ -181,7 +182,9 @@ public class GBFRequestUtil implements ExternalShipper {
 
                 //                logger.info("orderXML: " + orderXml);
                 boolean test = DSMServer.isTest(getExternalShipperName());//true for dev in `not-secret.conf`
-                JSONObject payload = new JSONObject().put("orderXml", orderXml).put("test", test);
+                JsonObject payload = new JsonObject();
+                payload.addProperty("orderXml", orderXml);
+                payload.addProperty("test", test);
                 String sendRequest = DSMServer.getBaseUrl(getExternalShipperName()) + ORDER_ENDPOINT;
                 String apiKey = DSMServer.getApiKey(getExternalShipperName());
                 Response gbfResponse = null;
@@ -225,7 +228,13 @@ public class GBFRequestUtil implements ExternalShipper {
         logger.info("checking status of " + kit.getExternalOrderNumber() + " for participant " + kit.getParticipantId());
         List<String> orderNumbers = new ArrayList<>();
         orderNumbers.addAll(Arrays.asList(new String[] { kit.getExternalOrderNumber() }));
-        JSONObject payload = new JSONObject().put("orderNumbers", orderNumbers);
+
+        JsonObject payload = new JsonObject();
+        JsonArray orderNumbersJson = new JsonArray();
+        for (String orderNumber : orderNumbers) {
+            orderNumbersJson.add(orderNumber);
+        }
+        payload.add("orderNumbers", orderNumbersJson);
         String sendRequest = DSMServer.getBaseUrl(getExternalShipperName()) + STATUS_ENDPOINT;
         Response gbfResponse = executePost(Response.class, sendRequest, payload.toString(), DSMServer.getApiKey(getExternalShipperName()));
         if (gbfResponse != null && gbfResponse.isSuccess()) {
@@ -335,7 +344,9 @@ public class GBFRequestUtil implements ExternalShipper {
     // The confirmation, dependent upon level of detail required, is a shipping receipt to prove completion.
     // Confirmation may include order number, client(participant) ID, outbound tracking number, return tracking number(s), line item(s), kit serial number(s), etc.
     public void orderConfirmation(long startDate, long endDate, int ddpInstanceId) throws Exception {
-        JSONObject payload = new JSONObject().put("startDate", SystemUtil.getDateFormatted(startDate)).put("endDate", SystemUtil.getDateFormatted(endDate));
+        JsonObject payload = new JsonObject();
+        payload.addProperty("startDate", SystemUtil.getDateFormatted(startDate));
+        payload.addProperty("endDate", SystemUtil.getDateFormatted(endDate));
         String sendRequest = DSMServer.getBaseUrl(getExternalShipperName()) + CONFIRM_ENDPOINT;
         logger.info("payload: " + payload.toString());
         Response gbfResponse = executePost(Response.class, sendRequest, payload.toString(), DSMServer.getApiKey(getExternalShipperName()));
