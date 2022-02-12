@@ -1,6 +1,7 @@
 package org.broadinstitute.dsm;
 
 import org.broadinstitute.ddp.db.TransactionWrapper;
+import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
 import org.broadinstitute.dsm.util.DBTestUtil;
 import org.broadinstitute.dsm.util.TestUtil;
 import org.broadinstitute.dsm.util.tools.TissueDataMigrationTool;
@@ -30,14 +31,15 @@ public class TissueDataMigrationToolTest extends TestHelper {
         DBTestUtil.deleteAllParticipantData("FAKE_ANGIO_MIGRATION_2", true);
         DBTestUtil.deleteAllParticipantData("FAKE_ANGIO_MIGRATION_3", true);
         DBTestUtil.deleteAllParticipantData("FAKE_ANGIO_MIGRATION_4", true);
-        TransactionWrapper.reset(TestUtil.UNIT_TEST);
-        TransactionWrapper.init(cfg.getInt("portal.maxConnections"), cfg.getString("portal.dbUrl"), cfg, false);
+        TransactionWrapper.reset();
+        TransactionWrapper.init(new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.DSM, cfg.getInt(
+                ApplicationConfigConstants.DSM_DB_MAX_CONNECTIONS), cfg.getString(ApplicationConfigConstants.DSM_DB_URL)));
         //delete all KitRequests added by the test
     }
 
     @Test
     public void testMigrationTool() {
-        TransactionWrapper.reset(TestUtil.UNIT_TEST);
+        TransactionWrapper.reset();
 
         TissueDataMigrationTool tool = new TissueDataMigrationTool("AngioTissueMigrationTestFile.txt", "GEC");
         String phone = DBTestUtil.getQueryDetail(query, "TEST_ACC_NUM1", "phone");

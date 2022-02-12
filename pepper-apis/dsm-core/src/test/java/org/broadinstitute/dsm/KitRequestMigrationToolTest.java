@@ -35,15 +35,13 @@ public class KitRequestMigrationToolTest extends TestHelper {
                 DBTestUtil.getStringFromQuery(LatestKitRequest.SQL_SELECT_LATEST_KIT_REQUESTS + " and site.instance_name = ?", strings,
                         "last_kit");
 
-        TransactionWrapper.reset(TestUtil.UNIT_TEST);
+        TransactionWrapper.reset();
     }
 
     @AfterClass
     public static void stopMockServer() {
-        TransactionWrapper.reset(TestUtil.UNIT_TEST);
-
-        TransactionWrapper.init(cfg.getInt(ApplicationConfigConstants.DSM_DB_MAX_CONNECTIONS),
-                cfg.getString(ApplicationConfigConstants.DSM_DB_URL), cfg, false);
+        TransactionWrapper.reset();
+        TransactionWrapper.init(new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.DSM, cfg.getInt(ApplicationConfigConstants.DSM_DB_MAX_CONNECTIONS), cfg.getString(ApplicationConfigConstants.DSM_DB_URL)));
         //delete all KitRequests added by the test
         DBTestUtil.deleteAllKitData("66666");
         DBTestUtil.deleteAllKitData("66667");
@@ -52,7 +50,7 @@ public class KitRequestMigrationToolTest extends TestHelper {
         DBTestUtil.deleteAllKitData("66670");
         DBTestUtil.deleteAllKitData("66671");
         DBTestUtil.executeQuery("UPDATE ddp_instance set is_active = 0 where instance_name = \"" + TEST_DDP + "\"");
-        TransactionWrapper.reset(TestUtil.UNIT_TEST);
+        TransactionWrapper.reset();
     }
 
     @Test

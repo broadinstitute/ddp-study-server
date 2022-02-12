@@ -113,12 +113,11 @@ public class TissueDataMigrationTool {
         File c = new File(config);
 
         cfg = cfg.withFallback(ConfigFactory.parseFile(c));
-        TransactionWrapper.configureSslProperties(cfg.getString("portal.dbSslKeyStore"),
-                cfg.getString("portal.dbSslKeyStorePwd"),
-                cfg.getString("portal.dbSslTrustStore"),
-                cfg.getString("portal.dbSslTrustStorePwd"));
-        TransactionWrapper.init(cfg.getInt(ApplicationConfigConstants.DSM_DB_MAX_CONNECTIONS),
-                cfg.getString(ApplicationConfigConstants.DSM_DB_URL), cfg, false);
+//        TransactionWrapper.configureSslProperties(cfg.getString("portal.dbSslKeyStore"),
+//                cfg.getString("portal.dbSslKeyStorePwd"),
+//                cfg.getString("portal.dbSslTrustStore"),
+//                cfg.getString("portal.dbSslTrustStorePwd"));
+        TransactionWrapper.init(new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.DSM, cfg.getInt(ApplicationConfigConstants.DSM_DB_MAX_CONNECTIONS), cfg.getString(ApplicationConfigConstants.DSM_DB_URL)));
         logger.info("TISSUE MIGRATION TOOL SETUP COMPLETED ");
     }
 

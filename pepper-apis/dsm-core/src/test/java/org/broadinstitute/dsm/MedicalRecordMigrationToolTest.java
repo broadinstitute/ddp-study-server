@@ -1,6 +1,7 @@
 package org.broadinstitute.dsm;
 
 import org.broadinstitute.ddp.db.TransactionWrapper;
+import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
 import org.broadinstitute.dsm.util.DBTestUtil;
 import org.broadinstitute.dsm.util.TestUtil;
 import org.broadinstitute.dsm.util.tools.MedicalRecordMigrationTool;
@@ -19,8 +20,9 @@ public class MedicalRecordMigrationToolTest extends TestHelper {
 
     @AfterClass
     public static void stopMockServer() {
-        TransactionWrapper.reset(TestUtil.UNIT_TEST);
-        TransactionWrapper.init(cfg.getInt("portal.maxConnections"), cfg.getString("portal.dbUrl"), cfg, false);
+        TransactionWrapper.reset();
+        TransactionWrapper.init(new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.DSM, cfg.getInt(
+                ApplicationConfigConstants.DSM_DB_MAX_CONNECTIONS), cfg.getString(ApplicationConfigConstants.DSM_DB_URL)));
         //delete all KitRequests added by the test
         DBTestUtil.deleteAllParticipantData("66666");
         DBTestUtil.deleteAllParticipantData("20160", true);
@@ -30,7 +32,7 @@ public class MedicalRecordMigrationToolTest extends TestHelper {
 
     @Test
     public void testMigrationTool() {
-        TransactionWrapper.reset(TestUtil.UNIT_TEST);
+        TransactionWrapper.reset();
         MedicalRecordMigrationTool.argumentsForTesting("config/test-config.conf", TEST_DDP, "MedicalRecordMigrationMBC.txt");
         MedicalRecordMigrationTool.littleMain();
 

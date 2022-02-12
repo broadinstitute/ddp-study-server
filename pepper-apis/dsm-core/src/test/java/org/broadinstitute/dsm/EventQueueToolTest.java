@@ -45,14 +45,13 @@ public class EventQueueToolTest {
         if (!cfg.getString("portal.dbUrl").contains("local")) {
             throw new RuntimeException("Not your test db");
         }
-
-        TransactionWrapper.configureSslProperties(cfg.getString("portal.dbSslKeyStore"),
-                cfg.getString("portal.dbSslKeyStorePwd"),
-                cfg.getString("portal.dbSslTrustStore"),
-                cfg.getString("portal.dbSslTrustStorePwd"));
-        TransactionWrapper.reset(TestUtil.UNIT_TEST);
-        TransactionWrapper.init(cfg.getInt("portal.maxConnections"), cfg.getString("portal.dbUrl"), cfg, false);
-
+//
+//        TransactionWrapper.configureSslProperties(cfg.getString("portal.dbSslKeyStore"),
+//                cfg.getString("portal.dbSslKeyStorePwd"),
+//                cfg.getString("portal.dbSslTrustStore"),
+//                cfg.getString("portal.dbSslTrustStorePwd"));
+        TransactionWrapper.reset();
+        TransactionWrapper.init(new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.DSM, cfg.getInt("portal.maxConnections"), cfg.getString("portal.dbUrl")));
         DBTestUtil.executeQuery("UPDATE ddp_instance set is_active = 1 where instance_name = \"" + TestHelper.TEST_DDP + "\"");
         INSTANCE_ID = DBTestUtil.getQueryDetail(DBUtil.GET_REALM_QUERY, TestHelper.TEST_DDP, TestHelper.DDP_INSTANCE_ID);
         //delete second reminder
@@ -71,7 +70,7 @@ public class EventQueueToolTest {
         addSentKit("_skipReminder6");
         addSentKit("_skipReminder7");
         addSentKit("_skipReminder8");
-        TransactionWrapper.reset(TestUtil.UNIT_TEST);
+        TransactionWrapper.reset();
 
         eventUtil = new EventUtil();
         logger.info("Finished setting up system");
@@ -80,11 +79,8 @@ public class EventQueueToolTest {
     @AfterClass
     public static void last() {
         logger.info("Removing test cases");
-        TransactionWrapper.reset(TestUtil.UNIT_TEST);
-
-        TransactionWrapper.init(cfg.getInt(ApplicationConfigConstants.DSM_DB_MAX_CONNECTIONS),
-                cfg.getString(ApplicationConfigConstants.DSM_DB_URL), cfg, false);
-
+        TransactionWrapper.reset();
+        TransactionWrapper.init(new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.DSM, cfg.getInt("portal.maxConnections"), cfg.getString("portal.dbUrl")));
         DBTestUtil.executeQuery("UPDATE ddp_instance set is_active = 0 where instance_name = \"" + TestHelper.TEST_DDP + "\"");
 
         //delete kits again
@@ -103,8 +99,7 @@ public class EventQueueToolTest {
             DBTestUtil.executeQuery("INSERT INTO event_type set ddp_instance_id = " + INSTANCE_ID +
                     ", event_name=\"BLOOD_SENT_2WK\", event_description=\"Blood kit - reminder email - 2 WKS\", kit_type_id=\"2\", event_type=\"REMINDER\", hours=\"336\"");
         }
-
-        TransactionWrapper.reset(TestUtil.UNIT_TEST);
+        TransactionWrapper.reset();
     }
 
     private static void addSentKit(@NonNull String suffix) {

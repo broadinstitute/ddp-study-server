@@ -44,10 +44,8 @@ public class Covid19OrderRegistrarTest {
     @BeforeClass
     public static void beforeClass() throws Exception {
         cfg = ConfigFactory.load();
-        TransactionWrapper.init(20, cfg.getString("portal.dbUrl"), cfg, true);
-
+        TransactionWrapper.init(new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.DSM, 20, cfg.getString("portal.dbUrl")));
         // todo pull this out to a file, refresh from secret manager
-
     }
 
     @Ignore
