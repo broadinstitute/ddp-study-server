@@ -790,6 +790,7 @@ jobs:
         type: string
         default: *pepper_apis_path
     steps:
+      - run: echo "Doing dsm-compile-and-run-tests-job"
       - when:
           condition: << pipeline.parameters.dsm >>
           steps:
