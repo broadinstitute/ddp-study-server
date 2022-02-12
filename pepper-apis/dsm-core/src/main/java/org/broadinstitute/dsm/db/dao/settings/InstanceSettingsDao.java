@@ -14,7 +14,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 import com.google.gson.Gson;
-import org.broadinstitute.ddp.db.SimpleResult;
+import org.broadinstitute.lddp.db.SimpleResult;
 import org.broadinstitute.dsm.db.dao.Dao;
 import org.broadinstitute.dsm.db.dto.settings.InstanceSettingsDto;
 import org.broadinstitute.dsm.model.Value;

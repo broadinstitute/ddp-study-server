@@ -1,8 +1,8 @@
 package org.broadinstitute.dsm;
 
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.ddp.db.SimpleResult;
-import org.broadinstitute.ddp.util.BasicTriggerListener;
+import org.broadinstitute.lddp.db.SimpleResult;
+import org.broadinstitute.lddp.util.BasicTriggerListener;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.LatestKitRequest;
 import org.broadinstitute.dsm.jobs.DDPRequestJob;

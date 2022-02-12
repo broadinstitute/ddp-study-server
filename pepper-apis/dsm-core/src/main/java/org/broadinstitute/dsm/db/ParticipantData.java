@@ -7,7 +7,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.gson.annotations.SerializedName;
 import lombok.Data;
 import lombok.NonNull;
-import org.broadinstitute.ddp.db.SimpleResult;
+import org.broadinstitute.lddp.db.SimpleResult;
 import org.broadinstitute.dsm.db.structure.ColumnName;
 import org.broadinstitute.dsm.db.structure.TableName;
 import org.broadinstitute.dsm.statics.DBConstants;

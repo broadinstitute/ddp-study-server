@@ -2,8 +2,8 @@ package org.broadinstitute.dsm.util;
 
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.ddp.handlers.util.Institution;
-import org.broadinstitute.ddp.handlers.util.InstitutionRequest;
+import org.broadinstitute.lddp.handlers.util.Institution;
+import org.broadinstitute.lddp.handlers.util.InstitutionRequest;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.MedicalRecordLog;
 import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDao;

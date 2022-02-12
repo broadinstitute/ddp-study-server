@@ -1,7 +1,7 @@
 package org.broadinstitute.dsm.db;
 
 import lombok.NonNull;
-import org.broadinstitute.ddp.db.SimpleResult;
+import org.broadinstitute.lddp.db.SimpleResult;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.util.AbstractionUtil;
 import org.broadinstitute.dsm.util.DBUtil;

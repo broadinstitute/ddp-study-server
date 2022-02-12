@@ -14,7 +14,7 @@ import java.util.Map;
 import com.google.gson.Gson;
 import lombok.Data;
 import lombok.NonNull;
-import org.broadinstitute.ddp.db.SimpleResult;
+import org.broadinstitute.lddp.db.SimpleResult;
 import org.broadinstitute.dsm.db.AbstractionActivity;
 import org.broadinstitute.dsm.db.AbstractionFinal;
 import org.broadinstitute.dsm.db.AbstractionGroup;

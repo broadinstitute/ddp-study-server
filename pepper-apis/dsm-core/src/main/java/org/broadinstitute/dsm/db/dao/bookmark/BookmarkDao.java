@@ -8,7 +8,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Optional;
 
-import org.broadinstitute.ddp.db.SimpleResult;
+import org.broadinstitute.lddp.db.SimpleResult;
 import org.broadinstitute.dsm.db.dao.Dao;
 import org.broadinstitute.dsm.db.dto.bookmark.BookmarkDto;
 

@@ -9,9 +9,9 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.fluent.Executor;
 import org.apache.http.util.EntityUtils;
 import org.broadinstitute.ddp.db.TransactionWrapper;
-import org.broadinstitute.ddp.handlers.util.*;
-import org.broadinstitute.ddp.security.Auth0Util;
-import org.broadinstitute.ddp.util.GoogleBucket;
+import org.broadinstitute.lddp.handlers.util.*;
+import org.broadinstitute.lddp.security.Auth0Util;
+import org.broadinstitute.lddp.util.GoogleBucket;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.exception.SurveyNotCreated;
 import org.broadinstitute.dsm.model.PDF.MiscPDFDownload;
@@ -37,7 +37,7 @@ public class DDPRequestUtil {
 
     public DDPRequestUtil() {
         try {
-            if (Boolean.valueOf(TransactionWrapper.getSqlFromConfig("portal.enableBlindTrustDDP"))) {
+            if (Boolean.valueOf(ConfigUtil.getSqlFromConfig("portal.enableBlindTrustDDP"))) {
                 if (blindTrustEverythingExecutor == null) {
                     blindTrustEverythingExecutor = Executor.newInstance(SecurityUtil.buildHttpClient());
                     logger.info("Loaded blindTrustEverythingExecutor for DDP requests.");
@@ -258,7 +258,7 @@ public class DDPRequestUtil {
     public static void savePDFsInBucket(@NonNull String baseURL, @NonNull String instanceName, @NonNull String ddpParticipantId, @NonNull boolean hasAuth0Token, @NonNull String pdfEndpoint,
                                         @NonNull long time, @NonNull String userId, @NonNull String reason) {
         String fileName = pdfEndpoint.replace("/", "").replace("pdf", "");
-        String gcpName = TransactionWrapper.getSqlFromConfig(ApplicationConfigConstants.GOOGLE_PROJECT_NAME);
+        String gcpName = ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.GOOGLE_PROJECT_NAME);
         if (StringUtils.isNotBlank(gcpName)) {
             String bucketName = gcpName + "_dsm_" + instanceName.toLowerCase();
             try {

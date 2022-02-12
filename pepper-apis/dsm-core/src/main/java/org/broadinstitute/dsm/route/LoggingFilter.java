@@ -9,7 +9,7 @@ import com.auth0.jwt.impl.JWTParser;
 import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.ddp.util.Utility;
+import org.broadinstitute.lddp.util.Utility;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.log4j.MDC;

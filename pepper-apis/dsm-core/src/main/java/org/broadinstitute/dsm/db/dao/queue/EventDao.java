@@ -2,7 +2,7 @@ package org.broadinstitute.dsm.db.dao.queue;
 
 import com.sun.istack.NotNull;
 import lombok.NonNull;
-import org.broadinstitute.ddp.db.SimpleResult;
+import org.broadinstitute.lddp.db.SimpleResult;
 import org.broadinstitute.dsm.db.dao.Dao;
 import org.broadinstitute.dsm.db.dto.queue.EventDto;
 import org.slf4j.Logger;

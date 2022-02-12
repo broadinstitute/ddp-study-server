@@ -2,7 +2,7 @@ package org.broadinstitute.dsm.model;
 
 import lombok.Data;
 import lombok.NonNull;
-import org.broadinstitute.ddp.handlers.util.ParticipantSurveyInfo;
+import org.broadinstitute.lddp.handlers.util.ParticipantSurveyInfo;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.exception.FileColumnMissing;
 import org.broadinstitute.dsm.exception.UploadLineException;

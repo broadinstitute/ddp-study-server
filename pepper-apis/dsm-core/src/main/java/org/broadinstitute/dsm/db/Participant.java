@@ -8,7 +8,7 @@ import com.google.gson.annotations.SerializedName;
 import lombok.Data;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.ddp.db.SimpleResult;
+import org.broadinstitute.lddp.db.SimpleResult;
 import org.broadinstitute.dsm.db.structure.ColumnName;
 import org.broadinstitute.dsm.db.structure.DbDateConversion;
 import org.broadinstitute.dsm.db.structure.SqlDateConverter;

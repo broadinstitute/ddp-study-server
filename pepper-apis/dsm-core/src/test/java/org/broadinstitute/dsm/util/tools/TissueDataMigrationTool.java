@@ -7,7 +7,7 @@ import com.typesafe.config.ConfigFactory;
 import lombok.Data;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.ddp.db.SimpleResult;
+import org.broadinstitute.lddp.db.SimpleResult;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.dao.ddp.participant.ParticipantDao;

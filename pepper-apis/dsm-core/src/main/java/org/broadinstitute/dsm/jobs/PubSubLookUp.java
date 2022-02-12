@@ -4,7 +4,7 @@ import com.google.gson.Gson;
 import com.google.pubsub.v1.PubsubMessage;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.ddp.db.SimpleResult;
+import org.broadinstitute.lddp.db.SimpleResult;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.KitRequestShipping;
 import org.broadinstitute.dsm.db.dto.ddp.instance.DDPInstanceDto;

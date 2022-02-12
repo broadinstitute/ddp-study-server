@@ -791,8 +791,8 @@ public class ElasticSearchTest extends TestHelper {
 
     @Test
     public void testRemoveWorkflowIfNoDataOrWrongSubject() throws Exception {
-        try (RestHighLevelClient client = ElasticSearchUtil.getClientForElasticsearchCloud(TransactionWrapper.getSqlFromConfig(ApplicationConfigConstants.ES_URL),
-                TransactionWrapper.getSqlFromConfig(ApplicationConfigConstants.ES_USERNAME), TransactionWrapper.getSqlFromConfig(ApplicationConfigConstants.ES_PASSWORD))) {
+        try (RestHighLevelClient client = ElasticSearchUtil.getClientForElasticsearchCloud(ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.ES_URL),
+                ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.ES_USERNAME), ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.ES_PASSWORD))) {
             String ddpParticipantId = "TZYO5WQ7N58HX4WSJJG0";
             String collaboratorParticipantId = "RGP_2046_3";
             DDPInstance ddpInstance = new DDPInstance(null,null, null, null, false, 0, 0,

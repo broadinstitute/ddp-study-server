@@ -1,7 +1,7 @@
 package org.broadinstitute.dsm.model;
 
 import lombok.Getter;
-import org.broadinstitute.ddp.db.SimpleResult;
+import org.broadinstitute.lddp.db.SimpleResult;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
 import org.broadinstitute.dsm.statics.DBConstants;
@@ -46,7 +46,7 @@ public class KitDDPSummary {
         List<KitDDPSummary> kits = new ArrayList<>();
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement stmt = conn.prepareStatement(TransactionWrapper.getSqlFromConfig(ApplicationConfigConstants.GET_UNSENT_KIT_REQUESTS_FOR_REALM))) {
+            try (PreparedStatement stmt = conn.prepareStatement(ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.GET_UNSENT_KIT_REQUESTS_FOR_REALM))) {
                 stmt.setString(1, DBConstants.KIT_REQUEST_ACTIVATED);
                 try (ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {

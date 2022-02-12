@@ -9,7 +9,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
-import org.broadinstitute.ddp.db.SimpleResult;
+import org.broadinstitute.lddp.db.SimpleResult;
 import org.broadinstitute.dsm.db.dao.Dao;
 import org.broadinstitute.dsm.db.dto.onchistory.OncHistoryDto;
 import org.broadinstitute.dsm.statics.DBConstants;

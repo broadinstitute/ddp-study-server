@@ -2,7 +2,7 @@ package org.broadinstitute.dsm.db.dao.settings;
 
 import com.sun.istack.NotNull;
 import lombok.NonNull;
-import org.broadinstitute.ddp.db.SimpleResult;
+import org.broadinstitute.lddp.db.SimpleResult;
 import org.broadinstitute.dsm.db.dao.Dao;
 import org.broadinstitute.dsm.db.dto.settings.EventTypeDto;
 import org.broadinstitute.dsm.statics.DBConstants;

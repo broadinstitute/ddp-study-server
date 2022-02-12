@@ -5,10 +5,10 @@ import com.easypost.model.Address;
 import com.easypost.model.Shipment;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.ddp.db.SimpleResult;
+import org.broadinstitute.lddp.db.SimpleResult;
 import org.broadinstitute.ddp.db.TransactionWrapper;
-import org.broadinstitute.ddp.email.Recipient;
-import org.broadinstitute.ddp.handlers.util.Result;
+import org.broadinstitute.lddp.email.Recipient;
+import org.broadinstitute.lddp.handlers.util.Result;
 import org.broadinstitute.dsm.DSMServer;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.KitRequestShipping;
@@ -117,7 +117,7 @@ public class KitExpressRoute extends RequestHandler {
     private String getKitId(@NonNull String kitRequestId) {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement stmt = conn.prepareStatement(TransactionWrapper.getSqlFromConfig(ApplicationConfigConstants.GET_UPLOADED_KITS) + QueryExtension.KIT_BY_KIT_REQUEST_ID)) {
+            try (PreparedStatement stmt = conn.prepareStatement(ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.GET_UPLOADED_KITS) + QueryExtension.KIT_BY_KIT_REQUEST_ID)) {
                 stmt.setString(1, kitRequestId);
                 try (ResultSet rs = stmt.executeQuery()) {
                     if (rs.next()) {
@@ -159,8 +159,8 @@ public class KitExpressRoute extends RequestHandler {
         String message = "An express label for " + realm + " was created.<br>";
         Map<String, String> mapy = new HashMap<>();
         mapy.put(":customText", message);
-        Recipient emailRecipient = new Recipient(TransactionWrapper.getSqlFromConfig(ApplicationConfigConstants.EMAIL_GP_RECIPIENT));
-        emailRecipient.setUrl(TransactionWrapper.getSqlFromConfig(ApplicationConfigConstants.EMAIL_FRONTEND_URL_FOR_LINKS) + KITREQUEST_LINK);
+        Recipient emailRecipient = new Recipient(ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.EMAIL_GP_RECIPIENT));
+        emailRecipient.setUrl(ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.EMAIL_FRONTEND_URL_FOR_LINKS) + KITREQUEST_LINK);
         emailRecipient.setSurveyLinks(mapy);
         notificationUtil.queueCurrentAndFutureEmails(EMAIL_TYPE, emailRecipient, EMAIL_TYPE);
     }

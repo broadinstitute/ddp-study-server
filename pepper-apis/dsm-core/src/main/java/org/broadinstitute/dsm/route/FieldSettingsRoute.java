@@ -3,7 +3,7 @@ package org.broadinstitute.dsm.route;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.ddp.handlers.util.Result;
+import org.broadinstitute.lddp.handlers.util.Result;
 import org.broadinstitute.dsm.db.FieldSettings;
 import org.broadinstitute.dsm.security.RequestHandler;
 import org.broadinstitute.dsm.statics.RequestParameter;

@@ -45,7 +45,7 @@ public class BSPKit extends GPReceivedKit {
     public void triggerDDP(Connection conn, @NonNull BSPKitDto bspKitInfo, boolean firstTimeReceived, String kitLabel) {
         try {
             if (bspKitInfo.isHasParticipantNotifications() && firstTimeReceived) {
-                KitDDPNotification kitDDPNotification = KitDDPNotification.getKitDDPNotification(TransactionWrapper.getSqlFromConfig(ApplicationConfigConstants.GET_RECEIVED_KIT_INFORMATION_FOR_NOTIFICATION_EMAIL), kitLabel, 1);
+                KitDDPNotification kitDDPNotification = KitDDPNotification.getKitDDPNotification(ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.GET_RECEIVED_KIT_INFORMATION_FOR_NOTIFICATION_EMAIL), kitLabel, 1);
                 if (kitDDPNotification != null) {
                     EventUtil.triggerDDP(conn, kitDDPNotification);
                 }

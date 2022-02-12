@@ -10,8 +10,8 @@ import org.apache.http.entity.ContentType;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.ssl.SSLContextBuilder;
 import org.apache.http.ssl.TrustStrategy;
-import org.broadinstitute.ddp.security.Auth0Util;
-import org.broadinstitute.ddp.security.SecurityHelper;
+import org.broadinstitute.lddp.security.Auth0Util;
+import org.broadinstitute.lddp.security.SecurityHelper;
 import org.broadinstitute.dsm.DSMServer;
 import spark.Request;
 

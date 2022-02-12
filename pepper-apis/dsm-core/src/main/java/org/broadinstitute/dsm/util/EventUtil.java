@@ -2,9 +2,9 @@ package org.broadinstitute.dsm.util;
 
 import com.sun.istack.NotNull;
 import lombok.NonNull;
-import org.broadinstitute.ddp.db.SimpleResult;
+import org.broadinstitute.lddp.db.SimpleResult;
 import org.broadinstitute.ddp.db.TransactionWrapper;
-import org.broadinstitute.ddp.security.Auth0Util;
+import org.broadinstitute.lddp.security.Auth0Util;
 import org.broadinstitute.dsm.db.ParticipantEvent;
 import org.broadinstitute.dsm.db.dto.settings.EventTypeDto;
 import org.broadinstitute.dsm.model.KitDDPNotification;

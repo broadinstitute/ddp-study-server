@@ -8,9 +8,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.pdfbox.io.MemoryUsageSetting;
 import org.apache.pdfbox.multipdf.PDFMergerUtility;
 import org.broadinstitute.ddp.db.TransactionWrapper;
-import org.broadinstitute.ddp.exception.FileProcessingException;
-import org.broadinstitute.ddp.handlers.util.MedicalInfo;
-import org.broadinstitute.ddp.util.GoogleBucket;
+import org.broadinstitute.lddp.exception.FileProcessingException;
+import org.broadinstitute.lddp.handlers.util.MedicalInfo;
+import org.broadinstitute.lddp.util.GoogleBucket;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.dao.user.UserDao;
 import org.broadinstitute.dsm.db.dto.user.UserDto;
@@ -187,13 +187,13 @@ public class DownloadPDF {
     }
 
     private void savePDFinBucket(@NonNull String realm, @NonNull String ddpParticipantId, @NonNull InputStream stream, @NonNull String fileType, @NonNull Integer userId) {
-        String gcpName = TransactionWrapper.getSqlFromConfig(ApplicationConfigConstants.GOOGLE_PROJECT_NAME);
+        String gcpName = ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.GOOGLE_PROJECT_NAME);
         if (StringUtils.isNotBlank(gcpName)) {
             String bucketName = gcpName + "_dsm_" + realm.toLowerCase();
             try {
                 String credentials = null;
                 if (TransactionWrapper.hasConfigPath(ApplicationConfigConstants.GOOGLE_CREDENTIALS)) {
-                    String tmp = TransactionWrapper.getSqlFromConfig(ApplicationConfigConstants.GOOGLE_CREDENTIALS);
+                    String tmp = ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.GOOGLE_CREDENTIALS);
                     if (StringUtils.isNotBlank(tmp) && new File(tmp).exists()) {
                         credentials = tmp;
                     }

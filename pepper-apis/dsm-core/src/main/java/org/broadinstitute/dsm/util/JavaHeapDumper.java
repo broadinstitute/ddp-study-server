@@ -3,7 +3,8 @@ package org.broadinstitute.dsm.util;
 import com.sun.management.HotSpotDiagnosticMXBean;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.db.TransactionWrapper;
-import org.broadinstitute.ddp.util.GoogleBucket;
+import org.broadinstitute.ddp.util.ConfigUtil;
+import org.broadinstitute.lddp.util.GoogleBucket;
 import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,7 +38,7 @@ public class JavaHeapDumper {
     }
 
     public void dumpHeapToBucket(String bucketName, final String fileName) throws IOException {
-        String gcpName = TransactionWrapper.getSqlFromConfig(ApplicationConfigConstants.GOOGLE_PROJECT_NAME);
+        String gcpName = ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.GOOGLE_PROJECT_NAME);
         dumpHeapToLocalFile(DEFAULT_LOCAL_PATH + "/" + fileName);
         File localDumpFile = Paths.get(DEFAULT_LOCAL_PATH, fileName).toFile();
         if (localDumpFile.exists()) {
@@ -47,11 +48,9 @@ public class JavaHeapDumper {
         }
         try (FileInputStream localDumpFileStream = new FileInputStream(localDumpFile)) {
             String credentials = null;
-            if (TransactionWrapper.hasConfigPath(ApplicationConfigConstants.GOOGLE_CREDENTIALS)) {
-                String tmp = TransactionWrapper.getSqlFromConfig(ApplicationConfigConstants.GOOGLE_CREDENTIALS);
-                if (StringUtils.isNotBlank(tmp) && new File(tmp).exists()) {
-                    credentials = tmp;
-                }
+            String tmp = ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.GOOGLE_CREDENTIALS);
+            if (StringUtils.isNotBlank(tmp) && new File(tmp).exists()) {
+                credentials = tmp;
             }
            GoogleBucket.uploadFile(credentials, gcpName, bucketName, DEFAULT_BUCKET_PATH + "/" + fileName,
                     localDumpFileStream);

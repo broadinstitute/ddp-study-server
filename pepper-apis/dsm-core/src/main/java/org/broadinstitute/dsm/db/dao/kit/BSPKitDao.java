@@ -1,7 +1,7 @@
 package org.broadinstitute.dsm.db.dao.kit;
 
 import lombok.NonNull;
-import org.broadinstitute.ddp.db.SimpleResult;
+import org.broadinstitute.lddp.db.SimpleResult;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.dsm.db.dao.Dao;
 import org.broadinstitute.dsm.db.dto.kit.BSPKitDto;

@@ -2,7 +2,7 @@ package org.broadinstitute.dsm.db;
 
 import lombok.Data;
 import lombok.NonNull;
-import org.broadinstitute.ddp.db.SimpleResult;
+import org.broadinstitute.lddp.db.SimpleResult;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.statics.QueryExtension;
 import org.slf4j.Logger;

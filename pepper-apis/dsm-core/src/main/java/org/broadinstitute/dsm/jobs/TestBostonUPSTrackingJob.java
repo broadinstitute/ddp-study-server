@@ -10,7 +10,7 @@ import com.typesafe.config.Config;
 import org.apache.commons.dbcp2.PoolableConnection;
 import org.apache.commons.dbcp2.PoolingDataSource;
 import org.apache.commons.lang3.tuple.Pair;
-import org.broadinstitute.ddp.security.Auth0Util;
+import org.broadinstitute.lddp.security.Auth0Util;
 import org.broadinstitute.dsm.careevolve.Authentication;
 import org.broadinstitute.dsm.careevolve.Covid19OrderRegistrar;
 import org.broadinstitute.dsm.careevolve.Provider;

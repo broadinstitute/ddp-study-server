@@ -1,6 +1,6 @@
 package org.broadinstitute.dsm.db.dao.kit;
 
-import org.broadinstitute.ddp.db.SimpleResult;
+import org.broadinstitute.lddp.db.SimpleResult;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.OncHistoryDetail;
 import org.broadinstitute.dsm.db.dao.Dao;

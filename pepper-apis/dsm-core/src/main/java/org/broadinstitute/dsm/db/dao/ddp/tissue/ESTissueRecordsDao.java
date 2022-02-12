@@ -1,6 +1,6 @@
 package org.broadinstitute.dsm.db.dao.ddp.tissue;
 
-import org.broadinstitute.ddp.db.SimpleResult;
+import org.broadinstitute.lddp.db.SimpleResult;
 import org.broadinstitute.dsm.db.dao.Dao;
 import org.broadinstitute.dsm.db.dto.ddp.tissue.ESTissueRecordsDto;
 import org.broadinstitute.dsm.statics.DBConstants;

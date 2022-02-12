@@ -2,7 +2,7 @@ package org.broadinstitute.dsm.util;
 
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.ddp.db.SimpleResult;
+import org.broadinstitute.lddp.db.SimpleResult;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.dsm.db.UserSettings;
 import org.broadinstitute.dsm.model.NameValue;
@@ -258,7 +258,7 @@ public class UserUtil {
                     getList(conn, query, instanceRole, userId, listOfRealms);
                 }
                 else if (PDF_DOWNLOAD_MENU.equals(menu)) {
-                    query = TransactionWrapper.getSqlFromConfig(ApplicationConfigConstants.GET_ALLOWED_REALMS_FOR_USER_ROLE_STARTS_LIKE);
+                    query = ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.GET_ALLOWED_REALMS_FOR_USER_ROLE_STARTS_LIKE);
                     query = query.replace("%1", DBConstants.PDF_DOWNLOAD);
                     query = query + QueryExtension.BY_ROLE_NAME;
                     query = query.replace("%1", DBConstants.PDF_DOWNLOAD);

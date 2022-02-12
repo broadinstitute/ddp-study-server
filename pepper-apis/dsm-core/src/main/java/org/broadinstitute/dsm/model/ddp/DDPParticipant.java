@@ -3,7 +3,7 @@ package org.broadinstitute.dsm.model.ddp;
 import lombok.Data;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.ddp.util.DeliveryAddress;
+import org.broadinstitute.lddp.util.DeliveryAddress;
 import org.broadinstitute.dsm.statics.RoutePath;
 import org.broadinstitute.dsm.util.DDPRequestUtil;
 import org.slf4j.Logger;

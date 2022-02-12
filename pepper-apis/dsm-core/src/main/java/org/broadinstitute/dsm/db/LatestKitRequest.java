@@ -2,7 +2,7 @@ package org.broadinstitute.dsm.db;
 
 import lombok.Data;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.ddp.db.SimpleResult;
+import org.broadinstitute.lddp.db.SimpleResult;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.broadinstitute.dsm.util.DDPKitRequest;
 import org.slf4j.Logger;

@@ -1,7 +1,7 @@
 package org.broadinstitute.dsm.route;
 
 import com.google.gson.Gson;
-import org.broadinstitute.ddp.handlers.util.Result;
+import org.broadinstitute.lddp.handlers.util.Result;
 import org.broadinstitute.dsm.db.KitRequestCreateLabel;
 import org.broadinstitute.dsm.db.KitRequestShipping;
 import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;

@@ -13,7 +13,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
-import org.broadinstitute.ddp.db.SimpleResult;
+import org.broadinstitute.lddp.db.SimpleResult;
 import org.broadinstitute.dsm.db.Tissue;
 import org.broadinstitute.dsm.db.dao.Dao;
 import org.broadinstitute.dsm.statics.DBConstants;

@@ -5,7 +5,7 @@ import com.google.gson.GsonBuilder;
 import lombok.Data;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.ddp.db.SimpleResult;
+import org.broadinstitute.lddp.db.SimpleResult;
 import org.broadinstitute.dsm.model.Value;
 import org.broadinstitute.dsm.statics.DBConstants;
 import org.slf4j.Logger;

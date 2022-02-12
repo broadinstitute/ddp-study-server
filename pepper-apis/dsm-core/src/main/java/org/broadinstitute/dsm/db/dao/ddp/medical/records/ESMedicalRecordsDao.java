@@ -1,6 +1,6 @@
 package org.broadinstitute.dsm.db.dao.ddp.medical.records;
 
-import org.broadinstitute.ddp.db.SimpleResult;
+import org.broadinstitute.lddp.db.SimpleResult;
 import org.broadinstitute.dsm.db.dao.Dao;
 import org.broadinstitute.dsm.db.dto.medical.records.ESMedicalRecordsDto;
 import org.broadinstitute.dsm.statics.DBConstants;

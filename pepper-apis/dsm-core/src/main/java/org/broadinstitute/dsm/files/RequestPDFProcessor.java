@@ -2,7 +2,7 @@ package org.broadinstitute.dsm.files;
 
 import org.apache.pdfbox.io.MemoryUsageSetting;
 import org.apache.pdfbox.multipdf.PDFMergerUtility;
-import org.broadinstitute.ddp.exception.FileProcessingException;
+import org.broadinstitute.lddp.exception.FileProcessingException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -1,7 +1,7 @@
 package org.broadinstitute.dsm.db.dao.user;
 
 import lombok.NonNull;
-import org.broadinstitute.ddp.db.SimpleResult;
+import org.broadinstitute.lddp.db.SimpleResult;
 import org.broadinstitute.dsm.db.dao.Dao;
 import org.broadinstitute.dsm.db.dto.user.UserDto;
 

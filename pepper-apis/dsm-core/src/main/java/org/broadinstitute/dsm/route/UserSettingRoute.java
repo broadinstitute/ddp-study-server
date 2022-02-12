@@ -2,7 +2,7 @@ package org.broadinstitute.dsm.route;
 
 import com.google.gson.Gson;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.ddp.handlers.util.Result;
+import org.broadinstitute.lddp.handlers.util.Result;
 import org.broadinstitute.dsm.db.UserSettings;
 import org.broadinstitute.dsm.security.RequestHandler;
 import org.broadinstitute.dsm.statics.UserErrorMessages;

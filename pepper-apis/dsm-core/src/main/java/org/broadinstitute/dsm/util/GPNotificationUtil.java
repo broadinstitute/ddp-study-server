@@ -3,7 +3,7 @@ package org.broadinstitute.dsm.util;
 import com.typesafe.config.Config;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.ddp.email.Recipient;
+import org.broadinstitute.lddp.email.Recipient;
 import org.broadinstitute.dsm.model.KitDDPSummary;
 import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
 import org.slf4j.Logger;

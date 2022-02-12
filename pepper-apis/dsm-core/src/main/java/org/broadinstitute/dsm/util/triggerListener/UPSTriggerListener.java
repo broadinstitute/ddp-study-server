@@ -3,14 +3,14 @@ package org.broadinstitute.dsm.util.triggerListener;
 import com.netflix.servo.DefaultMonitorRegistry;
 import com.netflix.servo.monitor.MonitorConfig;
 import com.netflix.servo.monitor.NumberGauge;
-import org.broadinstitute.ddp.util.BasicTriggerListener;
+import org.broadinstitute.lddp.util.BasicTriggerListener;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.netflix.servo.DefaultMonitorRegistry;
 import com.netflix.servo.monitor.MonitorConfig;
 import com.netflix.servo.monitor.NumberGauge;
-import org.broadinstitute.ddp.util.BasicTriggerListener;
+import org.broadinstitute.lddp.util.BasicTriggerListener;
 
 import java.util.concurrent.atomic.AtomicInteger;
 

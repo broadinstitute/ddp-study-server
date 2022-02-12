@@ -2,7 +2,7 @@ package org.broadinstitute.dsm.route;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import org.broadinstitute.ddp.handlers.util.Result;
+import org.broadinstitute.lddp.handlers.util.Result;
 import org.broadinstitute.dsm.db.EditParticipantMessage;
 import org.broadinstitute.dsm.security.RequestHandler;
 import org.broadinstitute.dsm.statics.DBConstants;

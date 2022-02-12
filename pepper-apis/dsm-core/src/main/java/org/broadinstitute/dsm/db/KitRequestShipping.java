@@ -8,7 +8,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.Data;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.ddp.db.SimpleResult;
+import org.broadinstitute.lddp.db.SimpleResult;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.dsm.DSMServer;
 import org.broadinstitute.dsm.db.dao.ddp.instance.DDPInstanceDao;
@@ -870,7 +870,7 @@ public class KitRequestShipping extends KitRequest {
                                       @NonNull String createdBy, String addressIdTo, String errorMessage, String externalOrderNumber, boolean needsApproval, String uploadReason, DDPInstance ddpInstance) {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult(0);
-            try (PreparedStatement insertKitRequest = conn.prepareStatement(TransactionWrapper.getSqlFromConfig(ApplicationConfigConstants.INSERT_KIT_REQUEST), Statement.RETURN_GENERATED_KEYS)) {
+            try (PreparedStatement insertKitRequest = conn.prepareStatement(ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.INSERT_KIT_REQUEST), Statement.RETURN_GENERATED_KEYS)) {
                 insertKitRequest.setString(1, instanceId);
                 insertKitRequest.setString(2, ddpKitRequestId);
                 insertKitRequest.setInt(3, kitTypeId);
@@ -1191,7 +1191,7 @@ public class KitRequestShipping extends KitRequest {
     }
 
     public static int getKitCounter(@NonNull Connection conn, String collaboratorSampleId, int kitTypeId) {
-        String query = TransactionWrapper.getSqlFromConfig(ApplicationConfigConstants.GET_COUNT_KITS_WITH_SAME_COLLABORATOR_SAMPLE_ID_AND_KIT_TYPE).replace("%1", collaboratorSampleId);
+        String query = ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.GET_COUNT_KITS_WITH_SAME_COLLABORATOR_SAMPLE_ID_AND_KIT_TYPE).replace("%1", collaboratorSampleId);
         try (PreparedStatement stmt = conn.prepareStatement(query, ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_READ_ONLY)) {
             stmt.setInt(1, kitTypeId);
             try (ResultSet rs = stmt.executeQuery()) {
@@ -1217,7 +1217,7 @@ public class KitRequestShipping extends KitRequest {
      * @throws Exception
      */
     public static String generateDdpLabelID() {
-        return generateDdpLabelID(15, TransactionWrapper.getSqlFromConfig(ApplicationConfigConstants.GET_FOUND_IF_KIT_WITH_DDP_LABEL_ALREADY_EXISTS));
+        return generateDdpLabelID(15, ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.GET_FOUND_IF_KIT_WITH_DDP_LABEL_ALREADY_EXISTS));
     }
 
     public static String generateDdpLabelID(int length, String query) {
@@ -1378,7 +1378,7 @@ public class KitRequestShipping extends KitRequest {
     public static void updateKitError(@NonNull long dsmKitRequestId, @NonNull String message, DDPInstanceDto ddpInstanceDto) {
         SimpleResult results = inTransaction((conn) -> {
             SimpleResult dbVals = new SimpleResult();
-            try (PreparedStatement stmt = conn.prepareStatement(TransactionWrapper.getSqlFromConfig(ApplicationConfigConstants.UPDATE_KIT_ERROR))) {
+            try (PreparedStatement stmt = conn.prepareStatement(ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.UPDATE_KIT_ERROR))) {
                 stmt.setInt(1, 1);
                 stmt.setString(2, message);
                 stmt.setLong(3, dsmKitRequestId);

@@ -7,8 +7,8 @@ import org.apache.pdfbox.pdmodel.interactive.form.PDAcroForm;
 import org.apache.pdfbox.pdmodel.interactive.form.PDCheckBox;
 import org.apache.pdfbox.pdmodel.interactive.form.PDField;
 import org.broadinstitute.ddp.db.TransactionWrapper;
-import org.broadinstitute.ddp.exception.FileProcessingException;
-import org.broadinstitute.ddp.util.GoogleBucket;
+import org.broadinstitute.lddp.exception.FileProcessingException;
+import org.broadinstitute.lddp.util.GoogleBucket;
 import org.broadinstitute.dsm.statics.ApplicationConfigConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -101,9 +101,9 @@ public abstract class PDFProcessor implements BasicProcessor {
     }
 
     public static byte[] getTemplateFromGoogleBucket(@NonNull String fileName) {
-        String gcpName = TransactionWrapper.getSqlFromConfig(ApplicationConfigConstants.GOOGLE_PROJECT_NAME);
+        String gcpName = ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.GOOGLE_PROJECT_NAME);
         if (StringUtils.isNotBlank(gcpName)) {
-            String bucketName = TransactionWrapper.getSqlFromConfig(ApplicationConfigConstants.GOOGLE_CONFIG_BUCKET);
+            String bucketName = ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.GOOGLE_CONFIG_BUCKET);
             try {
                 if (GoogleBucket.bucketExists(null, gcpName, bucketName)) {
                     logger.info("Downloading template " + fileName + " from bucket " + bucketName);

@@ -1,6 +1,6 @@
 package org.broadinstitute.dsm.db.dao.ddp.kitrequest;
 
-import org.broadinstitute.ddp.db.SimpleResult;
+import org.broadinstitute.lddp.db.SimpleResult;
 import org.broadinstitute.dsm.db.dao.Dao;
 import org.broadinstitute.dsm.db.dto.ddp.kitrequest.ESSamplesDto;
 import org.broadinstitute.dsm.db.dto.ddp.kitrequest.KitRequestDto;

@@ -1,7 +1,7 @@
 package org.broadinstitute.dsm.db.dao.kit;
 
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.ddp.db.SimpleResult;
+import org.broadinstitute.lddp.db.SimpleResult;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.db.dto.kit.ClinicalKitDto;
 import org.broadinstitute.dsm.model.gp.ClinicalKitWrapper;

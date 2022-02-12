@@ -14,7 +14,7 @@ import org.apache.http.impl.NoConnectionReuseStrategy;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.lucene.search.join.ScoreMode;
 import org.broadinstitute.ddp.db.TransactionWrapper;
-import org.broadinstitute.ddp.handlers.util.MedicalInfo;
+import org.broadinstitute.lddp.handlers.util.MedicalInfo;
 import org.broadinstitute.dsm.db.DDPInstance;
 import org.broadinstitute.dsm.export.WorkflowForES;
 import org.broadinstitute.dsm.model.Filter;
@@ -124,9 +124,9 @@ public class ElasticSearchUtil {
         if (client == null) {
             try {
                 client = getClientForElasticsearchCloud(
-                        TransactionWrapper.getSqlFromConfig(ApplicationConfigConstants.ES_URL),
-                        TransactionWrapper.getSqlFromConfig(ApplicationConfigConstants.ES_USERNAME),
-                        TransactionWrapper.getSqlFromConfig(ApplicationConfigConstants.ES_PASSWORD));
+                        ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.ES_URL),
+                        ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.ES_USERNAME),
+                        ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.ES_PASSWORD));
             } catch (MalformedURLException e) {
                 throw new RuntimeException("Error while initializing ES client", e);
             }
@@ -159,7 +159,7 @@ public class ElasticSearchUtil {
 
         URL url = new URL(baseUrl);
         String proxy = TransactionWrapper.hasConfigPath(ApplicationConfigConstants.ES_PROXY)
-                ? TransactionWrapper.getSqlFromConfig(ApplicationConfigConstants.ES_PROXY) : null;
+                ? ConfigUtil.getSqlFromConfig(ApplicationConfigConstants.ES_PROXY) : null;
         return getClientForElasticsearchCloud(baseUrl, userName, password, proxy);
     }
 
