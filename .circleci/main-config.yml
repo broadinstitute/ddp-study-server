@@ -1096,13 +1096,14 @@ parameters:
 workflows:
   version: 2
 
+  # Triggered from a local script to test PR changes
   combined-build-test-workflow:
     when:
       equal: ["build-test", << pipeline.parameters.action >>]
     jobs:
       - dss-compile-and-run-test-suite-job
       - dss-parallel-compile-and-test-job:
-          parallelism: << pipeline.parameters.test_parallelism >>
+          parallelism: << pipeline.parameters.test_parallelism >> # the caller of this workflow will tell us the parallelism
       - dsm-compile-and-run-tests-job
       - build-api-docs-job
 
