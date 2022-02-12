@@ -50,7 +50,6 @@ workflows:
             pepper-apis/.* action "build-test-deploy"
             pepper-apis/pom.xml dss true
             pepper-apis/((dss-.*)|(ddp-.*)|(pex-antlr)|(housekeeping)|(studybuilder-cli))/.* parallelism 99
-            pepper-apis/((dss-.*)|(ddp-.*)|(pex-antlr)|(studybuilder-cli)|(housekeeping))/.* dss true
             pepper-apis/((dsm-.*)|(ddp-.*))/.* dsm true
             pepper-apis/docs/.* api-docs true
           filters:
