@@ -10,6 +10,8 @@ references:
                        tcell_agent.config
   ci_support_image: &ci_support_image
                       broadinstitute/study-server-build:2020-04-30A
+  circle_base_image: &circle_base_image
+                       cimg/base:2020.01
   root_path: &root_path
                /home/circleci
   repo_path: &repo_path
@@ -63,6 +65,12 @@ executors:
   build-deploy-executor:
     docker: # todo: create new image endpoint, add this in admin tab for faster starts
       - image: *ci_support_image
+
+  minimal-executor: #Smallest plainest image
+    docker:
+      - image: *circle_base_image
+    resource_class: small
+
 
 commands:
   install-tcell:
@@ -1032,6 +1040,8 @@ jobs:
       - deploy-dsm-jar
 
   do-nothing-job:
+    executor:
+      name: minimal-executor
     description: Workflows to succeed need at least on job to execute and succeed. This one will always succeed
     steps:
       - run: echo 'Doing nothing so at least one job will succeed'
