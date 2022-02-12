@@ -28,7 +28,7 @@ workflows:
           base-revision: develop
           config-path: .circleci/main-config.yml
           mapping: |
-            pepper-apis/.* action "build-test"
+            .* action "build-test"
             pepper-apis/pom.xml dss true
             pepper-apis/((dss-.*)|(ddp-.*)|(pex-antlr)|(housekeeping)|(studybuilder-cli))/.* test_parallelism 15
             pepper-apis/((dss-.*)|(ddp-.*)|(pex-antlr)|(housekeeping)|(studybuilder-cli))/.* dss true
