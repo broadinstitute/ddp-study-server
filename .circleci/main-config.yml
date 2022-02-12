@@ -64,7 +64,6 @@ executors:
     docker: # todo: create new image endpoint, add this in admin tab for faster starts
       - image: *ci_support_image
 
-
 commands:
   install-tcell:
     parameters:
