@@ -1031,6 +1031,11 @@ jobs:
           module: dsm-server
       - deploy-dsm-jar
 
+  do-nothing-job:
+    description: Workflows to succeed need at least on job to execute and succeed. This one will always succeed
+    steps:
+      - run: echo 'Doing nothing so at least one job will succeed'
+
 
   build-deploy-docs-job:
     executor:
@@ -1100,6 +1105,7 @@ workflows:
     when:
       equal: ["build-test", << pipeline.parameters.action >>]
     jobs:
+      - do-nothing-job
       - dss-compile-and-run-test-suite-job
       - dss-parallel-compile-and-test-job:
           parallelism: << pipeline.parameters.test_parallelism >>
