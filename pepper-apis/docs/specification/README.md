@@ -7,7 +7,7 @@ This is a (very) rough OpenAPI specification for the Pepper platform.
 brew install node
 ```
 
-Once you have  Node.js installed, start a local ReDoc server daemon with:
+Once you have Node.js installed, start a local ReDoc server daemon with:
 ```shell
 cd /path/to/ddp/pepper-apis/docs/specification
 npm install && npm start
